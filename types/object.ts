@@ -9,8 +9,19 @@ export interface ZodObjectDef<T extends z.ZodRawShape = z.ZodRawShape>
   shape: T; //{ [k in keyof T]: T[k]['_def'] };
 }
 
+// type asdf = {asdf:string}  & {asdf:number};
+
+type OptionalKeys<T extends z.ZodRawShape> = {
+  [k in keyof T]: undefined extends T[k]['_type'] ? k : never;
+}[keyof T];
+type RequiredKeys<T extends z.ZodRawShape> = Exclude<keyof T, OptionalKeys<T>>;
+type ObjectType<T extends z.ZodRawShape> = {
+  [k in OptionalKeys<T>]?: T[k]['_type'];
+} &
+  { [k in RequiredKeys<T>]: T[k]['_type'] };
+
 export class ZodObject<T extends z.ZodRawShape> extends z.ZodType<
-  { [k in keyof T]: T[k]['_type'] },
+  ObjectType<T>, // { [k in keyof T]: T[k]['_type'] },
   ZodObjectDef<T>
 > {
   toJSON = () => ({
@@ -26,13 +37,14 @@ export class ZodObject<T extends z.ZodRawShape> extends z.ZodType<
   merge = <U extends z.ZodRawShape>(
     other: ZodObject<U>
   ): ZodObject<MergeShapes<T, U>> => {
-    return new ZodObject({
+    const merged: ZodObject<MergeShapes<T, U>> = new ZodObject({
       t: z.ZodTypes.object,
       shape: {
         ...this._def.shape,
         ...other._def.shape,
       },
-    });
+    }) as any;
+    return merged;
   };
 
   optional: () => ZodUnion<[this, ZodUndefined]> = () =>
