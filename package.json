@@ -1,0 +1,9 @@
+{
+  "name": "zod",
+  "version": "1.0.0",
+  "description": "Typescript-first schema declaration and validation library with static type inference",
+  "main": "index.ts",
+  "repository": "github.com",
+  "author": "Colin McDonnell @vriad",
+  "license": "MIT"
+}
