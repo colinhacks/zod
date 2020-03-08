@@ -1,4 +1,7 @@
 import * as z from './base';
+import { ZodUndefined } from './undefined';
+import { ZodNull } from './null';
+import { ZodUnion } from './union';
 
 export interface ZodLazyDef<T extends z.ZodAny = z.ZodAny>
   extends z.ZodTypeDef {
@@ -14,12 +17,14 @@ export class ZodLazy<T extends z.ZodAny> extends z.ZodType<
     return this._def.getter();
   }
 
+  optional: () => ZodUnion<[this, ZodUndefined]> = () =>
+    ZodUnion.create([this, ZodUndefined.create()]);
+
+  nullable: () => ZodUnion<[this, ZodNull]> = () =>
+    ZodUnion.create([this, ZodNull.create()]);
+
   toJSON = () => {
-    throw new Error("Can't JSONify recursive structcture");
-    // return {
-    //   t: this._def.t,
-    //   getter: this._def.getter().toJSON(),
-    // };
+    throw new Error("Can't JSONify recursive structure");
   };
 
   static create = <T extends z.ZodAny>(getter: () => T): ZodLazy<T> => {

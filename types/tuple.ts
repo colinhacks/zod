@@ -1,6 +1,7 @@
 import * as z from './base';
 import { ZodUnion } from './union';
 import { ZodUndefined } from './undefined';
+import { ZodNull } from './null';
 
 export interface ZodTupleDef<
   T extends [z.ZodAny, ...z.ZodAny[]] = [z.ZodAny, ...z.ZodAny[]]
@@ -19,6 +20,8 @@ export class ZodTuple<
 
   optional: () => ZodUnion<[this, ZodUndefined]> = () =>
     ZodUnion.create([this, ZodUndefined.create()]);
+  nullable: () => ZodUnion<[this, ZodNull]> = () =>
+    ZodUnion.create([this, ZodNull.create()]);
 
   static create = <T extends [z.ZodAny, ...z.ZodAny[]]>(
     schemas: T

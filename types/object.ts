@@ -1,15 +1,14 @@
 import * as z from './base';
-import { MergeShapes } from '../util';
 import { ZodUndefined } from './undefined';
+import { ZodNull } from './null';
 import { ZodUnion } from './union';
+import { ZodIntersection } from './intersection';
 
 export interface ZodObjectDef<T extends z.ZodRawShape = z.ZodRawShape>
   extends z.ZodTypeDef {
   t: z.ZodTypes.object;
   shape: T; //{ [k in keyof T]: T[k]['_def'] };
 }
-
-// type asdf = {asdf:string}  & {asdf:number};
 
 type OptionalKeys<T extends z.ZodRawShape> = {
   [k in keyof T]: undefined extends T[k]['_type'] ? k : never;
@@ -19,6 +18,10 @@ type ObjectType<T extends z.ZodRawShape> = {
   [k in OptionalKeys<T>]?: T[k]['_type'];
 } &
   { [k in RequiredKeys<T>]: T[k]['_type'] };
+
+// type adsf  = OptionalKeys<{name:ZodString}>;
+// type asdfqwe = {name:ZodString}['name']['_type']
+// type lkjljk  = (undefined) extends (string) ? true : false
 
 export class ZodObject<T extends z.ZodRawShape> extends z.ZodType<
   ObjectType<T>, // { [k in keyof T]: T[k]['_type'] },
@@ -34,21 +37,45 @@ export class ZodObject<T extends z.ZodRawShape> extends z.ZodType<
     ),
   });
 
-  merge = <U extends z.ZodRawShape>(
-    other: ZodObject<U>
-  ): ZodObject<MergeShapes<T, U>> => {
-    const merged: ZodObject<MergeShapes<T, U>> = new ZodObject({
+  merge = <U extends ZodObject<any>>(other: U): ZodObject<T & U> => {
+    const currShape = this._def.shape;
+    const mergeShape = other._def.shape;
+    const currKeys = Object.keys(currShape);
+    const mergeKeys = Object.keys(mergeShape);
+    const sharedKeys = currKeys.filter(k => mergeKeys.indexOf(k) !== -1);
+
+    const sharedShape: any = {};
+    for (const k of sharedKeys) {
+      sharedShape[k] = ZodIntersection.create(currShape[k], mergeShape[k]);
+    }
+    const merged: ZodObject<T & U> = new ZodObject({
       t: z.ZodTypes.object,
       shape: {
-        ...this._def.shape,
-        ...other._def.shape,
+        ...(this._def.shape as object),
+        ...(other._def.shape as object),
+        ...sharedShape,
       },
     }) as any;
     return merged;
   };
 
+  //  merge = <U extends z.ZodRawShape>(
+  //    other: ZodObject<U>
+  //  ): ZodObject<MergeShapes<T, U>> => {
+  //    const merged: ZodObject<MergeShapes<T, U>> = new ZodObject({
+  //      t: z.ZodTypes.object,
+  //      shape: {
+  //        ...this._def.shape,
+  //        ...other._def.shape,
+  //      },
+  //    }) as any;
+  //    return merged;
+  //  };
+
   optional: () => ZodUnion<[this, ZodUndefined]> = () =>
     ZodUnion.create([this, ZodUndefined.create()]);
+  nullable: () => ZodUnion<[this, ZodNull]> = () =>
+    ZodUnion.create([this, ZodNull.create()]);
 
   static create = <T extends z.ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({

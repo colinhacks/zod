@@ -30,6 +30,9 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
     case z.ZodTypes.array:
       if (!Array.isArray(obj)) throw new Error(`Non-array type: ${typeof obj}`);
       const arrayErrors: string[] = [];
+      if (def.nonempty === true && obj.length === 0) {
+        throw new Error('Array cannot be empty');
+      }
       const parsedArray = obj.map((item, i) => {
         try {
           const parsedItem = def.type.parse(item);
@@ -101,7 +104,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
       }
       if (def.items.length !== obj.length) {
         throw new Error(
-          `Not enough elements in tuple: expected ${def.items.length}, got ${obj.length}`
+          `Incorrect number of elements in tuple: expected ${def.items.length}, got ${obj.length}`
         );
       }
       const parsedTuple: any[] = [];

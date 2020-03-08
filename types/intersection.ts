@@ -1,5 +1,6 @@
 import * as z from './base';
 import { ZodUndefined } from './undefined';
+import { ZodNull } from './null';
 import { ZodUnion } from './union';
 
 export interface ZodIntersectionDef<
@@ -20,6 +21,8 @@ export class ZodIntersection<
 
   optional: () => ZodUnion<[this, ZodUndefined]> = () =>
     ZodUnion.create([this, ZodUndefined.create()]);
+  nullable: () => ZodUnion<[this, ZodNull]> = () =>
+    ZodUnion.create([this, ZodNull.create()]);
 
   toJSON = () => ({
     t: this._def.t,

@@ -49,4 +49,6 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   }
 
   abstract toJSON: () => object;
+  abstract optional: () => any;
+  abstract nullable: () => any;
 }

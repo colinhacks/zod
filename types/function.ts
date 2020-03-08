@@ -10,18 +10,28 @@ export interface ZodFunctionDef<
   returns: Returns;
 }
 
-export class ZodFunction<
-  Args extends ZodTuple<any>,
-  Returns extends z.ZodAny
-> extends z.ZodType<
-  z.TypeOfFunction<Args, Returns>,
-  ZodFunctionDef<Args, Returns>
-> {
-  toJSON = () => ({
-    t: this._def.t,
-    args: this._def.args.toJSON(),
-    returns: this._def.returns.toJSON(),
-  });
+export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodAny> {
+  _def: ZodFunctionDef<Args, Returns>;
+
+  constructor(def: ZodFunctionDef<Args, Returns>) {
+    this._def = def;
+  }
+
+  validate = (
+    func: (...args: any[]) => any
+  ): z.TypeOfFunction<Args, Returns> => {
+    const validatedFunc = (...args: any[]) => {
+      try {
+        this._def.args.parse(args);
+        const result = func(args);
+        this._def.returns.parse(result);
+        return result;
+      } catch (err) {
+        throw err;
+      }
+    };
+    return validatedFunc as z.TypeOfFunction<Args, Returns>;
+  };
 
   static create = <T extends ZodTuple<any>, U extends z.ZodAny>(
     args: T,

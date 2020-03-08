@@ -44,9 +44,9 @@ const intersection = ZodIntersection.create;
 const tuple = ZodTuple.create;
 const functionType = ZodFunction.create;
 const lazy = ZodLazy.create;
-const ostring = () => string();
-const onumber = () => number();
-const oboolean = () => boolean();
+const ostring = () => string().optional();
+const onumber = () => number().optional();
+const oboolean = () => boolean().optional();
 
 export {
   string,
