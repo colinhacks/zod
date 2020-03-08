@@ -12,3 +12,10 @@ const Cat: z.ZodType<Category> = z.lazy(() => {
     categories: z.array(Cat),
   });
 });
+
+// const inp = z.string();
+// const outp = z.number();
+// const fun = z.function(z.tuple([inp]), outp);
+// fun.validate((s)=>{
+//   return 4
+// })

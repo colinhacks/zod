@@ -18,19 +18,19 @@ export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodAny> {
   }
 
   validate = (
-    func: (...args: any[]) => any
+    func: z.TypeOfFunction<Args, Returns>
   ): z.TypeOfFunction<Args, Returns> => {
     const validatedFunc = (...args: any[]) => {
       try {
         this._def.args.parse(args);
-        const result = func(args);
+        const result = func(...(args as any));
         this._def.returns.parse(result);
         return result;
       } catch (err) {
         throw err;
       }
     };
-    return validatedFunc as z.TypeOfFunction<Args, Returns>;
+    return (validatedFunc as any) as z.TypeOfFunction<Args, Returns>;
   };
 
   static create = <T extends ZodTuple<any>, U extends z.ZodAny>(

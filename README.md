@@ -1,18 +1,17 @@
 ### Table of contents
 
 - [Installation](#installation)
-- [Usage](#basic-usage)
+- [Usage](#usage)
   - [Primitives](#primitives)
   - [Parsing](#parsing)
   - [Type inference](#type-inference)
-  - [Union types](#union-types)
-  - [Object types](#object-types)
-  - [Array types](#array-types)
-  - [Tuple types](#tuple-types)
-  - [Intersection types](#intersection-types)
+  - [Object types](#objects)
+  - [Array types](#arrays)
+  - [Union types](#unions)
+  - [Tuple types](#tuples)
+  - [Intersection types](#intersections)
   - [Recursive types](#recursive-types)
-  - [Validated functions](#validated-functions)
-- [Reference](#reference)
+  - [Function schemas](#function-schemas)
 - [Comparison](#comparison)
 
 # Installation
@@ -31,7 +30,7 @@ yarn add zod
 
 Zod 1.0.x is compatible with Typescript 3.0+.
 
-# Basic usage
+# Usage
 
 Zod is a validation library designed for optimal developer experience.
 
@@ -39,7 +38,7 @@ Zod is a validation library designed for optimal developer experience.
 - It has a composable, declarative API that makes it easy to define complex types concisely.
 - Schemas are immutable. All methods return a new schema instance.
 
-### Primitives
+## Primitives
 
 ```ts
 import * as z from 'zod';
@@ -51,7 +50,7 @@ const undefinedSchema = z.undefined(); // => ZodType<undefined>
 const nullTypeSchema = z.null(); // => ZodType<null>
 ```
 
-### Parsing
+## Parsing
 
 ```ts
 // every ZodType instance has a .parse() method
@@ -60,7 +59,7 @@ stringSchema.parse('fish'); // => "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
 
-### Type inference
+## Type inference
 
 You can extract the Typescript type of any schema with `z.TypeOf<>`.
 
@@ -74,50 +73,14 @@ const u: A = 'asdf'; // compiles
 
 We'll include examples of inferred types throughout the rest of the documentation.
 
-### Union types
-
-Including Nullable and Optional types.
-
-Zod includes a built-in for `z.union` method for composing "OR" types.
-
-```ts
-/* Optional Types */
-
-const A = z.string();
-A.parse(undefined); // throws Error!
-
-type A = z.TypeOf<typeof A>; // string
-
-// "optional string" === the union of string and undefined
-const B = z.union([z.string(), z.undefined()]);
-B.parse(undefined); // => passes, returns undefined
-type B = z.TypeOf<typeof B>; // string | undefined
-
-const C = z.string().optional(); // equivalent to B
-
-/* Nullable Types */
-const C = z.union([z.string(), z.null()]);
-const D = z.string().nullable(); // equivalent to C
-type D = z.TypeOf<typeof D>; // string | null
-
-/* Custom Union Types */
-
-const F = z.union([z.string(), z.number()]).optional();
-F.parse('tuna'); // => tuna
-F.parse(42); // => 42
-F.parse(undefined); // => undefined
-F.parse(false); // => throws Error!
-type F = z.TypeOf<typeof F>; // string | number | undefined;
-```
-
-### Object types
+## Objects
 
 ```ts
 // all properties are required by default
 const dogSchema = z.object({
   name: z.string(),
-  age: z.number().optional(),
-  neutered: z.boolean().nullable(),
+  age: z.number(),
+  neutered: z.boolean(),
 });
 
 type Dog = z.TypeOf<typeof dogSchema>;
@@ -125,22 +88,24 @@ type Dog = z.TypeOf<typeof dogSchema>;
 equivalent to:
 type Dog = { 
   name:string; 
-  age?: number | undefined; 
-  neutered: boolean | null;
+  age: number; 
+  neutered: boolean;
 }
 */
 
 const cujo = dogSchema.parse({
   name: 'Cujo',
-  neutered: null,
+  age: 4,
+  neutered: true,
 }); // passes, returns Dog
 
 const fido: Dog = {
   name: 'Fido',
+  age: 2,
 }; // TypeError: missing required property `neutered`
 ```
 
-### Array types
+## Arrays
 
 ```ts
 const dogsList = z.array(dogSchema);
@@ -158,25 +123,70 @@ const nonEmptyDogsList = z.array(dogSchema).nonempty();
 nonEmptyDogsList.parse([]); // throws Error("Array cannot be empty")
 ```
 
-### Tuple types
+## Unions
 
-These differ from arrays in that they have a fixed number of elements, and each element can have a different type.
+Including Nullable and Optional types.
+
+Zod includes a built-in `z.union` method for composing "OR" types.
 
 ```ts
-const athleteSchema = z.tuple([
-  // takes an array of schemas
-  z.string(), // name
-  z.number(), // jersey number
-  z.object({
-    pointsScored: z.number(),
-  }), // statistics
-]);
+const stringOrNumber = z.union([z.string(), z.number()]);
 
-type Athlete = z.TypeOf<typeof athleteSchema>;
-// type Athlete = [string, number, { pointsScored: number }]
+stringOrNumber.parse('foo'); // passes
+stringOrNumber.parse(14); // passes
 ```
 
-### Intersection types
+Unions are the basis for defining nullable and optional values.
+
+```ts
+/* Optional Types */
+
+// "optional string" === the union of string and undefined
+const A = z.union([z.string(), z.undefined()]);
+A.parse(undefined); // => passes, returns undefined
+type A = z.TypeOf<typeof A>; // string | undefined
+```
+
+There is also a shorthand way to make a schema "optional":
+
+```ts
+const B = z.string().optional(); // equivalent to A
+
+const C = z.object({
+  username: z.string().optional(),
+});
+type C = z.TypeOf<typeof C>; // { username?: string | undefined };
+```
+
+Similarly, you can create nullable types like so:
+
+```ts
+/* Nullable Types */
+const D = z.union([z.string(), z.null()]);
+
+const E = z.string().nullable(); // equivalent to D
+type E = z.TypeOf<typeof D>; // string | null
+```
+
+You can create unions of any two schemas.
+
+```ts
+/* Custom Union Types */
+
+const F = z
+  .union([z.string(), z.number()])
+  .optional()
+  .nullable();
+F.parse('tuna'); // => tuna
+F.parse(42); // => 42
+F.parse(undefined); // => undefined
+F.parse(null); // => 42
+F.parse({}); // => throws Error!
+
+type F = z.TypeOf<typeof F>; // string | number | undefined | null;
+```
+
+## Intersections
 
 Intersections are useful for creating "logical AND" types.
 
@@ -225,7 +235,27 @@ const Teacher = BaseTeacher.merge(HasId)
   .merge(HasAddress);
 ```
 
-### Recursive types
+## Tuples
+
+These differ from arrays in that they have a fixed number of elements, and each element can have a different type.
+
+```ts
+const athleteSchema = z.tuple([
+  // takes an array of schemas
+  z.string(), // name
+  z.number(), // jersey number
+  z.object({
+    pointsScored: z.number(),
+  }), // statistics
+]);
+
+type Athlete = z.TypeOf<typeof athleteSchema>;
+// type Athlete = [string, number, { pointsScored: number }]
+```
+
+## Recursive types
+
+You can define a recursive schema in Zod, but because of a limitation of Typescript, their type can't be statically inferred. If you need a recursive Zod schema you'll need to define the type definition manually, and provide it to Zod as a "type hint".
 
 ```ts
 interface Category {
@@ -233,19 +263,16 @@ interface Category {
   subcategories: Category[];
 }
 
-// must provide a type hint: `z.ZodType<Category>`
-// because Typescript can't infer recursive types
 const Category: z.ZodType<Category> = z.lazy(() => {
   return z.object({
     name: z.string(),
-    subcategories: z.array(Cat),
+    subcategories: z.array(Category),
   });
 });
 
 Category.parse({
   name: 'People',
   subcategories: [
-    { name: 'Actors', subcategories: [] },
     {
       name: 'Politicians',
       subcategories: [{ name: 'Presidents', subcategories: [] }],
@@ -254,12 +281,14 @@ Category.parse({
 }); // passes
 ```
 
-### Function schemas
+## Function schemas
 
-Zod also lets you define "function schemas". You can create these with `z.function(args: ZodTuple, returnType: ZodType)`.
+Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".
 
-- The first argument is a tuple (created with `z.tuple([...])`. If the function doesn't accept arguments, you can use an empty tuple (`z.tuple([])`).
-- The second argument is a return type. This can be any Zod schema.
+You can create a function schema with `z.function(args, returnType)` which accepts these arguments.
+
+- `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
+- `returnType: ZodType` The second argument is the function's return type. This can be any Zod schema.
 
 ```ts
 const args = z.tuple([
@@ -274,22 +303,28 @@ const returnType = z.array(
   })
 );
 
-const FetcherFunction = z.function(args, returnType);
+const FetcherFactory = z.function(args, returnType);
+```
 
-const queryUsers = (filters: any, pagination: any): any => {
-  // const results = db.fetch(...)
-  // return results;
-};
+`z.function` returns a higher-order "function factory". Every "factory" has `.validate()` method which accepts a function as input and returns a new function. The returned function automatically validates both its inputs and return value against the schemas provided to `z.function`. If either is invalid, the function throws.
 
-const validatedQueryUser = FetchFunction.create((filters, pagination) => {
+This lets you confidently This way you can confidently execute business logic in a "validated function" without worrying about invalid inputs or return types, mixing your validation and business logic, or writing duplicative types for your functions.
+
+Here's an example.
+
+```ts
+const validatedQueryUser = FetchFunction.validate((filters, pagination) => {
   // the arguments automatically have the appropriate types
   // as defined by the args tuple passed to `z.function()`
-  // Typescript statically verifies that the return value
-  // of this function is of type { id: string; name: string; }[]
-  // If either the arguments or the return type do not pass validation,
-  // an Error is thrown. This way you can confidently execute business
-  // logic in a "validated function" without worrying about invalid
-  // inputs or return types.
+  // without needing to provide types in the function declaration
+
+  filters.nameStartsWith; // autocompletes
+  filters.ageLessThan; // TypeError
+
+  // Typescript statically verifies that value returned by
+  // this function is of type { id: string; name: string; }[]
+
+  return 'salmon'; // TypeError
 });
 
 const users = validatedQueryUser(
@@ -302,6 +337,8 @@ const users = validatedQueryUser(
   }
 ); // => returns { id: string; name: string; }[]
 ```
+
+This is particularly useful for defining HTTP or RPC endpoints that accept complex payloads that require validation. Moreover, you can define your endpoints once with Zod and share the code with both your client and server code to achieve end-to-end type safety.
 
 # Comparison
 
