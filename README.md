@@ -218,7 +218,9 @@ type Teacher = z.TypeOf<typeof Teacher>;
 // { id:string; name:string };
 ```
 
-In the examples above, the return value of `z.intersection` is an instance of `ZodIntersection`, a class that wraps the two schemas passed in as arguments.
+### Object merging
+
+In the examples above, the return value of `z.intersection` is an instance of `ZodIntersection`, a generic class that wraps the two schemas passed in as arguments.
 
 But if you're trying to combine two object schemas, there is a shorthand:
 
@@ -226,7 +228,7 @@ But if you're trying to combine two object schemas, there is a shorthand:
 const Teacher = BaseTeacher.merge(HasId);
 ```
 
-The benefit of using this shorthand is that the returned value is a new object schema (`ZodObject`), instead of a generic `ZodIntersection` instance. This was, you're able to fluently chain together many `.merge` calls:
+The benefit of using this shorthand is that the returned value is a new object schema (`ZodObject`), instead of a generic `ZodIntersection` instance. This way, you're able to fluently chain together many `.merge` calls:
 
 ```ts
 // chaining mixins
@@ -426,6 +428,6 @@ This more declarative API makes schema definitions vastly more concise.
 
 `io-ts` also requires the use of gcanti's functional programming library `fp-ts` to parse results and handle errors. This is another fantastic resource for developers looking to keep their codebase strictly functional. But depending on `fp-ts` necessarily comes with a lot of intellectual overhead; a developer has to be familiar with functional programming concepts, `fp-ts`'s nomenclature, and the `Either` monad to do a simple schema validation. It's just not worth it for many people.
 
-### Joi
+### Joi ([https://github.com/hapijs/joi](https://github.com/hapijs/joi))
 
 Doesn't support static type inference. 😕
