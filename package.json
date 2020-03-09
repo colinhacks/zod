@@ -7,6 +7,26 @@
     "type": "git",
     "url": "https://github.com/vriad/zod"
   },
-  "author": "Colin McDonnell @vriad",
-  "license": "MIT"
+  "author": "Colin McDonnell <colin@vriad.com>",
+  "license": "MIT",
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/vriad/zod/issues"
+  },
+  "homepage": "https://github.com/vriad/zod",
+  "dependencies": {},
+  "tags": [
+    "typescript",
+    "schema",
+    "validation",
+    "type",
+    "inference"
+  ],
+  "keywords": [
+    "typescript",
+    "schema",
+    "validation",
+    "type",
+    "inference"
+  ]
 }
