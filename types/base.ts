@@ -42,6 +42,14 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   _def: Def;
 
   parse: (x: unknown) => Type;
+  is(u: unknown): u is Type {
+    try {
+      this.parse(u);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
 
   constructor(def: Def) {
     this.parse = ZodParser(def);

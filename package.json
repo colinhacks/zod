@@ -28,5 +28,8 @@
     "validation",
     "type",
     "inference"
-  ]
+  ],
+  "scripts": {
+    "play": "nodemon -e ts -w . -x ts-node playground.ts"
+  }
 }
