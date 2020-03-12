@@ -110,10 +110,7 @@ const fido: Dog = {
 ```ts
 const dogsList = z.array(dogSchema);
 
-dogSchema.parse([
-  { name: 'Cujo', neutered: null },
-  { name: 'Fido', age: 4, neutered: true },
-]); // passes
+dogsList.parse([{ name: 'Fido', age: 4, neutered: true }]); // passes
 
 dogsList.parse([]); // passes
 
