@@ -37,12 +37,21 @@ export type TypeOfFunction<
   ? (...args: Args['_type']) => Returns['_type']
   : never;
 
+//   interface Assertable<T> {
+//     is(value: any): value is T;
+//     assert(value: any): asserts value is T;
+// }
+
 export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   _type: Type;
   _def: Def;
 
+  //  is(value: any): value is Type;
+  //  assert(value: any): asserts value is Type;
+
   parse: (x: unknown) => Type;
-  is(u: unknown): u is Type {
+
+  is(u: any): u is Type {
     try {
       this.parse(u);
       return true;
@@ -50,6 +59,14 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
       return false;
     }
   }
+
+  // assert(u: unknown): asserts u is Type {
+  //   try {
+  //     this.parse(u);
+  //   } catch (err) {
+  //     throw new Error(err.message);
+  //   }
+  // }
 
   constructor(def: Def) {
     this.parse = ZodParser(def);
