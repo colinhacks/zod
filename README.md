@@ -1,3 +1,7 @@
+# Zod
+
+![logo](logo.svg)
+
 ### Table of contents
 
 - [Installation](#installation)
