@@ -194,7 +194,7 @@ const b = z.union([z.number(), z.boolean()]);
 const c = z.intersection(a, b);
 type c = z.TypeOf<typeof C>; // => number
 
-const neverType = z.intersection(z.string(), z.number());
+const stringAndNumber = z.intersection(z.string(), z.number());
 type Never = z.TypeOf<typeof stringAndNumber>; // => never
 ```
 
@@ -307,7 +307,7 @@ const FetcherFactory = z.function(args, returnType);
 
 `z.function` returns a higher-order "function factory". Every "factory" has `.validate()` method which accepts a function as input and returns a new function. The returned function automatically validates both its inputs and return value against the schemas provided to `z.function`. If either is invalid, the function throws.
 
-This lets you confidently This way you can confidently execute business logic in a "validated function" without worrying about invalid inputs or return types, mixing your validation and business logic, or writing duplicative types for your functions.
+This way you can confidently execute business logic in a "validated function" without worrying about invalid inputs or return types, mixing your validation and business logic, or writing duplicative types for your functions.
 
 Here's an example.
 
