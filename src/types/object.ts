@@ -4,8 +4,7 @@ import { ZodNull } from './null';
 import { ZodUnion } from './union';
 import { ZodIntersection } from './intersection';
 
-export interface ZodObjectDef<T extends z.ZodRawShape = z.ZodRawShape>
-  extends z.ZodTypeDef {
+export interface ZodObjectDef<T extends z.ZodRawShape = z.ZodRawShape> extends z.ZodTypeDef {
   t: z.ZodTypes.object;
   shape: T; //{ [k in keyof T]: T[k]['_def'] };
 }
@@ -33,7 +32,7 @@ export class ZodObject<T extends z.ZodRawShape> extends z.ZodType<
       {},
       Object.keys(this._def.shape).map(k => ({
         [k]: this._def.shape[k].toJSON(),
-      }))
+      })),
     ),
   });
 
@@ -59,23 +58,9 @@ export class ZodObject<T extends z.ZodRawShape> extends z.ZodType<
     return merged;
   };
 
-  //  merge = <U extends z.ZodRawShape>(
-  //    other: ZodObject<U>
-  //  ): ZodObject<MergeShapes<T, U>> => {
-  //    const merged: ZodObject<MergeShapes<T, U>> = new ZodObject({
-  //      t: z.ZodTypes.object,
-  //      shape: {
-  //        ...this._def.shape,
-  //        ...other._def.shape,
-  //      },
-  //    }) as any;
-  //    return merged;
-  //  };
+  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
-  optional: () => ZodUnion<[this, ZodUndefined]> = () =>
-    ZodUnion.create([this, ZodUndefined.create()]);
-  nullable: () => ZodUnion<[this, ZodNull]> = () =>
-    ZodUnion.create([this, ZodNull.create()]);
+  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   static create = <T extends z.ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({

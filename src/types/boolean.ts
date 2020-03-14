@@ -8,10 +8,9 @@ export interface ZodBooleanDef extends z.ZodTypeDef {
 }
 
 export class ZodBoolean extends z.ZodType<boolean, ZodBooleanDef> {
-  optional: () => ZodUnion<[this, ZodUndefined]> = () =>
-    ZodUnion.create([this, ZodUndefined.create()]);
-  nullable: () => ZodUnion<[this, ZodNull]> = () =>
-    ZodUnion.create([this, ZodNull.create()]);
+  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+
+  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   toJSON = () => this._def;
   static create = (): ZodBoolean => {

@@ -13,10 +13,6 @@ import { ZodTuple, ZodTupleDef } from './types/tuple';
 import { ZodFunction, ZodFunctionDef } from './types/function';
 import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { TypeOf, ZodType, ZodAny } from './types/base';
-import Schema from './schema';
-
-export * from './schema';
-export { Schema };
 
 export type ZodDef =
   | ZodStringDef
@@ -32,35 +28,35 @@ export type ZodDef =
   | ZodFunctionDef
   | ZodLazyDef;
 
-const string = ZodString.create;
-const number = ZodNumber.create;
-const boolean = ZodBoolean.create;
-const undefined = ZodUndefined.create;
+const stringType = ZodString.create;
+const numberType = ZodNumber.create;
+const booleanType = ZodBoolean.create;
+const undefinedType = ZodUndefined.create;
 const nullType = ZodNull.create;
-const array = ZodArray.create;
-const object = ZodObject.create;
-const union = ZodUnion.create;
-const intersection = ZodIntersection.create;
-const tuple = ZodTuple.create;
+const arrayType = ZodArray.create;
+const objectType = ZodObject.create;
+const unionType = ZodUnion.create;
+const intersectionType = ZodIntersection.create;
+const tupleType = ZodTuple.create;
 const functionType = ZodFunction.create;
-const lazy = ZodLazy.create;
-const ostring = () => string().optional();
-const onumber = () => number().optional();
-const oboolean = () => boolean().optional();
+const lazyType = ZodLazy.create;
+const ostring = () => stringType().optional();
+const onumber = () => numberType().optional();
+const oboolean = () => booleanType().optional();
 
 export {
-  string,
-  number,
-  boolean,
-  undefined,
-  nullType as null,
-  array,
-  object,
-  union,
-  intersection,
-  tuple,
-  functionType as function,
-  lazy,
+  stringType as string,
+  numberType as number,
+  booleanType as boolean,
+  undefinedType as undefined,
+  nullType,
+  arrayType as array,
+  objectType as object,
+  unionType as union,
+  intersectionType as intersection,
+  tupleType as tuple,
+  functionType,
+  lazyType as lazy,
   ostring,
   onumber,
   oboolean,

@@ -6,23 +6,19 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
 
   switch (def.t) {
     case z.ZodTypes.string:
-      if (typeof obj !== 'string')
-        throw new Error(`Non-string type: ${typeof obj}`);
+      if (typeof obj !== 'string') throw new Error(`Non-string type: ${typeof obj}`);
       return obj as any;
     case z.ZodTypes.number:
-      if (typeof obj !== 'number')
-        throw new Error(`Non-number type: ${typeof obj}`);
+      if (typeof obj !== 'number') throw new Error(`Non-number type: ${typeof obj}`);
       if (Number.isNaN(obj)) {
         throw new Error(`Non-number type: NaN`);
       }
       return obj as any;
     case z.ZodTypes.boolean:
-      if (typeof obj !== 'boolean')
-        throw new Error(`Non-boolean type: ${typeof obj}`);
+      if (typeof obj !== 'boolean') throw new Error(`Non-boolean type: ${typeof obj}`);
       return obj as any;
     case z.ZodTypes.undefined:
-      if (obj !== undefined)
-        throw new Error(`Non-undefined type:Found: ${typeof obj}`);
+      if (obj !== undefined) throw new Error(`Non-undefined type:Found: ${typeof obj}`);
       return obj as any;
     case z.ZodTypes.null:
       if (obj !== null) throw new Error(`Non-null type: ${typeof obj}`);
@@ -48,8 +44,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
       }
       return parsedArray as any;
     case z.ZodTypes.object:
-      if (typeof obj !== 'object')
-        throw new Error(`Non-object type: ${typeof obj}`);
+      if (typeof obj !== 'object') throw new Error(`Non-object type: ${typeof obj}`);
       if (Array.isArray(obj)) throw new Error(`Non-object type: array`);
       const shape = def.shape;
       const objectErrors: string[] = [];
@@ -73,11 +68,9 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
         } catch (err) {}
       }
       throw new Error(
-        `Type mismatch in union.\nReceived: ${JSON.stringify(
-          obj,
-          null,
-          2
-        )}\n\nExpected: ${def.options.map(x => x._def.t).join(' OR ')}`
+        `Type mismatch in union.\nReceived: ${JSON.stringify(obj, null, 2)}\n\nExpected: ${def.options
+          .map(x => x._def.t)
+          .join(' OR ')}`,
       );
     case z.ZodTypes.intersection:
       const errors: string[] = [];
@@ -103,9 +96,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
         throw new Error('Non-array type detected; invalid tuple.');
       }
       if (def.items.length !== obj.length) {
-        throw new Error(
-          `Incorrect number of elements in tuple: expected ${def.items.length}, got ${obj.length}`
-        );
+        throw new Error(`Incorrect number of elements in tuple: expected ${def.items.length}, got ${obj.length}`);
       }
       const parsedTuple: any[] = [];
       for (const index in obj) {

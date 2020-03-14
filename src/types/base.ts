@@ -30,10 +30,7 @@ export type TypeOfTuple<T extends [ZodAny, ...ZodAny[]] | []> = {
   [k in keyof T]: T[k] extends ZodType<infer U> ? U : never;
 };
 
-export type TypeOfFunction<
-  Args extends ZodTuple<any>,
-  Returns extends ZodAny
-> = Args['_type'] extends Array<any>
+export type TypeOfFunction<Args extends ZodTuple<any>, Returns extends ZodAny> = Args['_type'] extends Array<any>
   ? (...args: Args['_type']) => Returns['_type']
   : never;
 
@@ -43,8 +40,8 @@ export type TypeOfFunction<
 // }
 
 export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
-  _type: Type;
-  _def: Def;
+  readonly _type!: Type;
+  readonly _def!: Def;
 
   //  is(value: any): value is Type;
   //  assert(value: any): asserts value is Type;
@@ -71,6 +68,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   constructor(def: Def) {
     this.parse = ZodParser(def);
     this._def = def;
+    // this._type = null as any as Type;
   }
 
   abstract toJSON: () => object;

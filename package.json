@@ -2,7 +2,11 @@
   "name": "zod",
   "version": "1.0.5",
   "description": "Typescript-first schema declaration and validation library with static type inference",
-  "main": "index.ts",
+  "main": "./lib/main.js",
+  "types": "./lib/main.d.ts",
+  "files": [
+    "lib"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/vriad/zod"
@@ -29,7 +33,30 @@
     "type",
     "inference"
   ],
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/__tests__/*"
+  ],
   "scripts": {
+    "clean": "rm -rf lib/*",
+    "build": "yarn run clean && tsc",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "test": "jest --config jestconfig.json",
+    "prepare": "npm run build",
     "play": "nodemon -e ts -w . -x ts-node playground.ts"
+  },
+  "devDependencies": {
+    "@types/jest": "^25.1.4",
+    "jest": "^25.1.0",
+    "nodemon": "^2.0.2",
+    "prettier": "^1.19.1",
+    "ts-jest": "^25.2.1",
+    "tslint": "^6.1.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.8.3"
   }
 }

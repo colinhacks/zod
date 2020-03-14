@@ -9,10 +9,9 @@ export interface ZodUndefinedDef extends z.ZodTypeDef {
 export class ZodUndefined extends z.ZodType<undefined> {
   toJSON = () => this._def;
 
-  optional: () => ZodUnion<[this, ZodUndefined]> = () =>
-    ZodUnion.create([this, ZodUndefined.create()]);
-  nullable: () => ZodUnion<[this, ZodNull]> = () =>
-    ZodUnion.create([this, ZodNull.create()]);
+  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+
+  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   static create = (): ZodUndefined => {
     return new ZodUndefined({

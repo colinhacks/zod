@@ -177,7 +177,7 @@ const F = z
 F.parse('tuna'); // => tuna
 F.parse(42); // => 42
 F.parse(undefined); // => undefined
-F.parse(null); // => 42
+F.parse(null); // => null
 F.parse({}); // => throws Error!
 
 type F = z.TypeOf<typeof F>; // string | number | undefined | null;
@@ -262,12 +262,12 @@ interface Category {
   subcategories: Category[];
 }
 
-const Category: z.ZodType<Category> = z.lazy(() => {
-  return z.object({
+const Category: z.ZodType<Category> = z.lazy(() =>
+  z.object({
     name: z.string(),
     subcategories: z.array(Category),
-  });
-});
+  })
+);
 
 Category.parse({
   name: 'People',
@@ -291,8 +291,8 @@ You can create a function schema with `z.function(args, returnType)` which accep
 
 ```ts
 const args = z.tuple([
-  z.object({ nameStartsWith: z.string() }),
-  z.object({ skip: z.number(), limit: z.number() }),
+  z.object({ nameStartsWith: z.string() }), // filters
+  z.object({ skip: z.number(), limit: z.number() }), // pagination
 ]);
 
 const returnType = z.array(
@@ -334,7 +334,9 @@ const users = validatedQueryUser(
     skip: 0,
     limit: 20,
   }
-); // => returns { id: string; name: string; }[]
+);
+
+// `typeof users` => { id: string; name: string; }[]
 ```
 
 This is particularly useful for defining HTTP or RPC endpoints that accept complex payloads that require validation. Moreover, you can define your endpoints once with Zod and share the code with both your client and server code to achieve end-to-end type safety.
