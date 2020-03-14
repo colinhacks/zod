@@ -14,6 +14,8 @@ export enum ZodTypes {
   tuple = 'tuple',
   function = 'function',
   lazy = 'lazy',
+  literal = 'literal',
+  enum = 'enum',
 }
 
 export type ZodRawShape = { [k: string]: ZodAny };
@@ -57,13 +59,13 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  // assert(u: unknown): asserts u is Type {
+  // assert: (u: unknown) => asserts u is Type = u => {
   //   try {
   //     this.parse(u);
   //   } catch (err) {
   //     throw new Error(err.message);
   //   }
-  // }
+  // };
 
   constructor(def: Def) {
     this.parse = ZodParser(def);

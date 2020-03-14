@@ -1,6 +1,10 @@
 import * as z from './types/base';
 import { ZodDef } from '.';
 
+function assertNever(x: never): never {
+  throw new Error('Unexpected object: ' + x);
+}
+
 export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
   const def: ZodDef = schemaDef as any;
 
@@ -108,7 +112,20 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
       const lazySchema = def.getter();
       lazySchema.parse(obj);
       return obj;
+    case z.ZodTypes.literal:
+      if (obj === def.value) return obj;
+      throw new Error(`${obj} !== Literal<${def.value}>`);
+    case z.ZodTypes.enum:
+      for (const literalDef of def.values) {
+        try {
+          literalDef.parse(obj);
+          return obj;
+        } catch (err) {}
+      }
+      throw new Error(`"${obj}" does not match any value in enum`);
+    case z.ZodTypes.function:
+      return obj;
     default:
-      throw new Error(`Invalid schema type: ${def.t}`);
+      assertNever(def);
   }
 };

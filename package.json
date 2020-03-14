@@ -47,7 +47,7 @@
     "lint": "tslint -p tsconfig.json",
     "test": "jest --config jestconfig.json",
     "prepare": "npm run build",
-    "play": "nodemon -e ts -w . -x ts-node playground.ts"
+    "play": "nodemon -e ts -w . -x ts-node src/playground.ts"
   },
   "devDependencies": {
     "@types/jest": "^25.1.4",

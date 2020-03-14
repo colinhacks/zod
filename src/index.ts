@@ -12,6 +12,8 @@ import { ZodIntersection, ZodIntersectionDef } from './types/intersection';
 import { ZodTuple, ZodTupleDef } from './types/tuple';
 import { ZodFunction, ZodFunctionDef } from './types/function';
 import { ZodLazy, ZodLazyDef } from './types/lazy';
+import { ZodLiteral, ZodLiteralDef } from './types/literal';
+import { ZodEnum, ZodEnumDef } from './types/enum';
 import { TypeOf, ZodType, ZodAny } from './types/base';
 
 export type ZodDef =
@@ -26,7 +28,9 @@ export type ZodDef =
   | ZodIntersectionDef
   | ZodTupleDef
   | ZodFunctionDef
-  | ZodLazyDef;
+  | ZodLazyDef
+  | ZodLiteralDef
+  | ZodEnumDef;
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -40,6 +44,8 @@ const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
 const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
+const literalType = ZodLiteral.create;
+const enumType = ZodEnum.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -49,14 +55,16 @@ export {
   numberType as number,
   booleanType as boolean,
   undefinedType as undefined,
-  nullType,
+  nullType as null,
   arrayType as array,
   objectType as object,
   unionType as union,
   intersectionType as intersection,
   tupleType as tuple,
-  functionType,
+  functionType as function,
   lazyType as lazy,
+  literalType as literal,
+  enumType as enum,
   ostring,
   onumber,
   oboolean,
@@ -75,8 +83,10 @@ export {
   ZodTuple,
   ZodFunction,
   ZodLazy,
+  ZodLiteral,
+  ZodEnum,
   ZodType,
   ZodAny,
 };
 
-export { TypeOf };
+export { TypeOf, TypeOf as Infer };
