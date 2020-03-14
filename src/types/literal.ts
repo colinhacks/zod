@@ -3,7 +3,7 @@ import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
 
-type LiteralValue = string | number | boolean;
+type LiteralValue = string | number | boolean | undefined | null;
 
 export interface ZodLiteralDef<T extends LiteralValue = LiteralValue> extends z.ZodTypeDef {
   t: z.ZodTypes.literal;

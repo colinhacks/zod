@@ -36,11 +36,18 @@ Zod 1.0.x is compatible with Typescript 3.0+.
 
 # Usage
 
-Zod is a validation library designed for optimal developer experience.
+Zod is a validation library designed for optimal developer experience. It's a Typescript-first schema declaration library with rigorous (and correct!) inferred types, incredible developer experience, and a few killer features missing from the existing libraries.
 
 - It takes advantage of Typescript generic inference to statically infer the types of your schemas, eliminating the need to define static types and runtime validators separately.
+- Eliminates the need to keep static types and runtime validators in sync by hand
 - It has a composable, declarative API that makes it easy to define complex types concisely.
 - Schemas are immutable. All methods return a new schema instance.
+
+Zod was also designed with some core principles designed to make all declarations as non-magical and developer-friendly as possible:
+
+- All fields are required unless explicitly marked as optional (just like Typescript!)
+- Schemas are immutable; methods (i.e. `.optional()` return a new instance.
+- Zod schemas operate on a ["Parse, don't validate!"](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/) basis!
 
 ## Primitives
 
@@ -54,13 +61,48 @@ const undefinedSchema = z.undefined(); // => ZodType<undefined>
 const nullTypeSchema = z.null(); // => ZodType<null>
 ```
 
-## Parsing
+## Literals
 
 ```ts
-// every ZodType instance has a .parse() method
+const tuna = z.literal('tuna'); // => ZodType<'tuna'>
+const twelve = z.literal(12); // => ZodType<12>
+const tru = z.boolean(true); // => ZodType<true>
+```
+
+## Parsing and validation
+
+Given a Zod schema, you can call its `.parse(data)` method to check `data` is valid. If it is, `data` is returned (with full type information!). Otherwise, an error is thrown.
+
+```ts
 const stringSchema = z.string();
 stringSchema.parse('fish'); // => "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
+```
+
+You can also use a Zod schema as a type guard using the schema's `.is()` method, like so:
+
+```ts
+const stringSchema = z.string();
+const blob: any = 'Albuquerque';
+if (stringSchema.check(blob)) {
+  // blob is now of type `string`
+  // within this if statement
+}
+```
+
+The same method can be used to check a _lack_ of
+
+```ts
+const stringSchema = z.string();
+
+const process = (blob: any) => {
+  if (!stringSchema.is(blob)) {
+    throw new Error('Not a string');
+  }
+
+  // blob is now of type `string`
+  // underneath the if statement
+};
 ```
 
 ## Type inference
@@ -126,8 +168,6 @@ nonEmptyDogsList.parse([]); // throws Error("Array cannot be empty")
 
 ## Unions
 
-Including Nullable and Optional types.
-
 Zod includes a built-in `z.union` method for composing "OR" types.
 
 ```ts
@@ -137,18 +177,18 @@ stringOrNumber.parse('foo'); // passes
 stringOrNumber.parse(14); // passes
 ```
 
-Unions are the basis for defining nullable and optional values.
+### Optional types
+
+Unions are the basis for defining optional schemas. An "optional string" is just the union of `string` and `undefined`.
 
 ```ts
-/* Optional Types */
-
-// "optional string" === the union of string and undefined
 const A = z.union([z.string(), z.undefined()]);
+
 A.parse(undefined); // => passes, returns undefined
 type A = z.TypeOf<typeof A>; // string | undefined
 ```
 
-There is also a shorthand way to make a schema "optional":
+Zod provides a shorthand way to make any schema optional:
 
 ```ts
 const B = z.string().optional(); // equivalent to A
@@ -159,32 +199,68 @@ const C = z.object({
 type C = z.TypeOf<typeof C>; // { username?: string | undefined };
 ```
 
+### Nullable types
+
 Similarly, you can create nullable types like so:
 
 ```ts
-/* Nullable Types */
 const D = z.union([z.string(), z.null()]);
+```
 
+Or you can use the shorthand `.nullable()`:
+
+```ts
 const E = z.string().nullable(); // equivalent to D
 type E = z.TypeOf<typeof D>; // string | null
 ```
 
-You can create unions of any two schemas.
+You can create unions of any two or more schemas.
 
 ```ts
 /* Custom Union Types */
 
 const F = z
-  .union([z.string(), z.number()])
+  .union([z.string(), z.number(), z.boolean()])
   .optional()
   .nullable();
+
 F.parse('tuna'); // => tuna
 F.parse(42); // => 42
+F.parse(true); // => true
 F.parse(undefined); // => undefined
 F.parse(null); // => null
 F.parse({}); // => throws Error!
 
-type F = z.TypeOf<typeof F>; // string | number | undefined | null;
+type F = z.TypeOf<typeof F>; // string | number | boolean | undefined | null;
+```
+
+### Enums
+
+You can combine unions and string literals to create an enum schemas.
+
+```ts
+const FishEnum = t.union([t.literal('Salmon'), t.literal('Tuna'), t.literal('Trout')]);
+
+FishEnum.parse('Salmon'); // => "Salmon"
+FishEnum.parse('Flounder'); // => throws
+```
+
+You can also use the built-in `z.enum()` function, like so:
+
+```ts
+const FishEnum = t.enum([t.literal('Salmon'), t.literal('Tuna'), t.literal('Trout')]);
+
+// you can autocomplete values
+// with the `.Values` variable
+FishEnum.Values.Salmon; // => autocompletes
+FishEnum.Values;
+/* 
+{
+  Salmon: "Salmon",
+  Tuna: "Tuna",
+  Trout: "Trout",
+} 
+*/
 ```
 
 ## Intersections
@@ -270,7 +346,7 @@ const Category: z.ZodType<Category> = z.lazy(() =>
   z.object({
     name: z.string(),
     subcategories: z.array(Category),
-  })
+  }),
 );
 
 Category.parse({
@@ -303,7 +379,7 @@ const returnType = z.array(
   z.object({
     id: string(),
     name: string(),
-  })
+  }),
 );
 
 const FetcherFactory = z.function(args, returnType);
@@ -337,7 +413,7 @@ const users = validatedQueryUser(
   {
     skip: 0,
     limit: 20,
-  }
+  },
 );
 
 // `typeof users` => { id: string; name: string; }[]
