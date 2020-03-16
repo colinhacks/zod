@@ -7,16 +7,25 @@
 - [Installation](#installation)
 - [Usage](#usage)
   - [Primitives](#primitives)
+  - [Literals](#literals)
   - [Parsing](#parsing)
   - [Type inference](#type-inference)
-  - [Object types](#objects)
-  - [Array types](#arrays)
-  - [Union types](#unions)
-  - [Tuple types](#tuples)
-  - [Intersection types](#intersections)
+  - [Objects](#objects)
+  - [Arrays](#arrays)
+  - [Unions](#unions)
+    - [Optional types](#optional-types)
+    - [Nullable types](#nullable-types)
+  - [Enums](#enums)
+  - [Tuples](#tuples)
+  - [Intersections](#intersections)
   - [Recursive types](#recursive-types)
   - [Function schemas](#function-schemas)
 - [Comparison](#comparison)
+
+  - [Joi](#joi)
+  - [Yup](#yup)
+  - [io-ts](#io-ts)
+  - [Runtypes](#runtypes)
 
 # Installation
 
@@ -30,22 +39,22 @@ npm install --save zod
 yarn add zod
 ```
 
-### Typescript versions
+### TypeScript versions
 
-Zod 1.0.x is compatible with Typescript 3.0+.
+Zod 1.0.x is compatible with TypeScript 3.0+.
 
 # Usage
 
-Zod is a validation library designed for optimal developer experience. It's a Typescript-first schema declaration library with rigorous (and correct!) inferred types, incredible developer experience, and a few killer features missing from the existing libraries.
+Zod is a validation library designed for optimal developer experience. It's a TypeScript-first schema declaration library with rigorous (and correct!) inferred types, incredible developer experience, and a few killer features missing from the existing libraries.
 
-- It takes advantage of Typescript generic inference to statically infer the types of your schemas, eliminating the need to define static types and runtime validators separately.
+- It takes advantage of TypeScript generic inference to statically infer the types of your schemas, eliminating the need to define static types and runtime validators separately.
 - Eliminates the need to keep static types and runtime validators in sync by hand
 - It has a composable, declarative API that makes it easy to define complex types concisely.
 - Schemas are immutable. All methods return a new schema instance.
 
 Zod was also designed with some core principles designed to make all declarations as non-magical and developer-friendly as possible:
 
-- All fields are required unless explicitly marked as optional (just like Typescript!)
+- All fields are required unless explicitly marked as optional (just like TypeScript!)
 - Schemas are immutable; methods (i.e. `.optional()` return a new instance.
 - Zod schemas operate on a ["Parse, don't validate!"](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/) basis!
 
@@ -107,7 +116,7 @@ const process = (blob: any) => {
 
 ## Type inference
 
-You can extract the Typescript type of any schema with `z.TypeOf<>`.
+You can extract the TypeScript type of any schema with `z.TypeOf<>`.
 
 ```ts
 const A = z.string();
@@ -234,7 +243,7 @@ F.parse({}); // => throws Error!
 type F = z.TypeOf<typeof F>; // string | number | boolean | undefined | null;
 ```
 
-### Enums
+## Enums
 
 You can combine unions and string literals to create an enum schemas.
 
@@ -334,7 +343,7 @@ type Athlete = z.TypeOf<typeof athleteSchema>;
 
 ## Recursive types
 
-You can define a recursive schema in Zod, but because of a limitation of Typescript, their type can't be statically inferred. If you need a recursive Zod schema you'll need to define the type definition manually, and provide it to Zod as a "type hint".
+You can define a recursive schema in Zod, but because of a limitation of TypeScript, their type can't be statically inferred. If you need a recursive Zod schema you'll need to define the type definition manually, and provide it to Zod as a "type hint".
 
 ```ts
 interface Category {
@@ -400,7 +409,7 @@ const validatedQueryUser = FetchFunction.validate((filters, pagination) => {
   filters.nameStartsWith; // autocompletes
   filters.ageLessThan; // TypeError
 
-  // Typescript statically verifies that value returned by
+  // TypeScript statically verifies that value returned by
   // this function is of type { id: string; name: string; }[]
 
   return 'salmon'; // TypeError
@@ -425,9 +434,17 @@ This is particularly useful for defining HTTP or RPC endpoints that accept compl
 
 There are a handful of other widely-used validation libraries, but all of them have certain design limitations that make for a non-ideal developer experience.
 
-### Yup (https://github.com/jquense/yup)
+### Joi
 
-Yup is a full-featured library that was implemented first in vanilla JS, with Typescript typings added later.
+[https://github.com/hapijs/joi](https://github.com/hapijs/joi)
+
+Doesn't support static type inference. 😕
+
+### Yup
+
+[https://github.com/jquense/yup](https://github.com/jquense/yup)
+
+Yup is a full-featured library that was implemented first in vanilla JS, with TypeScript typings added later.
 
 Yup supports static type inference, but unfortunately the inferred types aren't actually correct. Currently, the yup package treats all object properties as optional by default:
 
@@ -459,9 +476,11 @@ type NumList = yup.InferType<typeof numList>;
 // should be 	[string,...string[]]
 ```
 
-These may sound like nitpicks. But it's not acceptable that an object that's assignable to the inferred Typescript type can fail validation by the validator it was inferred from.
+These may sound like nitpicks. But it's not acceptable that an object that's assignable to the inferred TypeScript type can fail validation by the validator it was inferred from.
 
-### io-ts ([https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts))
+### io-ts
+
+[https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
 
 io-ts is an excellent library by gcanti. The API of io-ts heavily inspired the design of Zod.
 
@@ -507,6 +526,6 @@ This more declarative API makes schema definitions vastly more concise.
 
 `io-ts` also requires the use of gcanti's functional programming library `fp-ts` to parse results and handle errors. This is another fantastic resource for developers looking to keep their codebase strictly functional. But depending on `fp-ts` necessarily comes with a lot of intellectual overhead; a developer has to be familiar with functional programming concepts, `fp-ts`'s nomenclature, and the `Either` monad to do a simple schema validation. It's just not worth it for many people.
 
-### Joi ([https://github.com/hapijs/joi](https://github.com/hapijs/joi))
+### Runtypes
 
-Doesn't support static type inference. 😕
+[https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
