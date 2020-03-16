@@ -500,12 +500,7 @@ const B = t.partial({
 const C = t.intersection([A, B]);
 
 type C = t.TypeOf<typeof C>;
-/*
-returns {
-	foo: string;
-	bar?: number | undefined
-}
-*/
+// returns { foo: string; bar?: number | undefined }
 ```
 
 You must define the required and optional props in separate object validators, pass the optionals through `t.partial` (which marks all properties as optional), then combine them with `t.intersection`.
