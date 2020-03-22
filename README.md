@@ -93,7 +93,7 @@ You can also use a Zod schema as a type guard using the schema's `.is()` method,
 ```ts
 const stringSchema = z.string();
 const blob: any = 'Albuquerque';
-if (stringSchema.check(blob)) {
+if (stringSchema.is(blob)) {
   // blob is now of type `string`
   // within this if statement
 }
