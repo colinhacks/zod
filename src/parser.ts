@@ -5,6 +5,10 @@ function assertNever(x: never): never {
   throw new Error('Unexpected object: ' + x);
 }
 
+// export class ZodError extends Error{
+
+// }
+
 export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
   const def: ZodDef = schemaDef as any;
 

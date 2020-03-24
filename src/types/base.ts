@@ -27,6 +27,7 @@ export interface ZodTypeDef {
 export type ZodAny = ZodType<any>;
 
 export type TypeOf<T extends ZodAny> = T['_type'];
+export type Infer<T extends ZodAny> = T['_type'];
 
 export type TypeOfTuple<T extends [ZodAny, ...ZodAny[]] | []> = {
   [k in keyof T]: T[k] extends ZodType<infer U> ? U : never;
@@ -50,7 +51,16 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
 
   parse: (x: unknown) => Type;
 
-  is(u: any): u is Type {
+  is(u: unknown): u is Type {
+    try {
+      this.parse(u);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  check(u: unknown): u is Type {
     try {
       this.parse(u);
       return true;

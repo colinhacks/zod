@@ -88,7 +88,7 @@ stringSchema.parse('fish'); // => "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
 
-You can also use a Zod schema as a type guard using the schema's `.is()` method, like so:
+You can also use a Zod schema as a type guard using the schema's `.check()` method, like so:
 
 ```ts
 const stringSchema = z.string();
@@ -105,7 +105,7 @@ The same method can be used to check a _lack_ of
 const stringSchema = z.string();
 
 const process = (blob: any) => {
-  if (!stringSchema.is(blob)) {
+  if (!stringSchema.check(blob)) {
     throw new Error('Not a string');
   }
 
