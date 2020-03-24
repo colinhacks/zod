@@ -99,7 +99,7 @@ if (stringSchema.check(blob)) {
 }
 ```
 
-The same method can be used to check a _lack_ of
+You can use the same method to check for invalid data:
 
 ```ts
 const stringSchema = z.string();
