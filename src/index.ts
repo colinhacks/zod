@@ -15,8 +15,9 @@ import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
 import { TypeOf, ZodType, ZodAny } from './types/base';
+import { ZodError } from './ZodError';
 
-export type ZodDef =
+type ZodDef =
   | ZodStringDef
   | ZodNumberDef
   | ZodBooleanDef
@@ -87,6 +88,8 @@ export {
   ZodEnum,
   ZodType,
   ZodAny,
+  ZodDef,
+  ZodError,
 };
 
 export { TypeOf, TypeOf as Infer };

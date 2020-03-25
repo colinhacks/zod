@@ -20,6 +20,7 @@
   - [Intersections](#intersections)
   - [Recursive types](#recursive-types)
   - [Function schemas](#function-schemas)
+  - [Errors](#errors)
 - [Comparison](#comparison)
 
   - [Joi](#joi)
@@ -114,6 +115,8 @@ const process = (blob: any) => {
 };
 ```
 
+To learn more about error handling with Zod, jump to [Errors](#errors).
+
 ## Type inference
 
 You can extract the TypeScript type of any schema with `z.TypeOf<>`.
@@ -168,9 +171,11 @@ const dogsList = z.array(dogSchema);
 dogsList.parse([{ name: 'Fido', age: 4, neutered: true }]); // passes
 
 dogsList.parse([]); // passes
+```
 
-// Non-empty lists
+### Non-empty lists
 
+```ts
 const nonEmptyDogsList = z.array(dogSchema).nonempty();
 nonEmptyDogsList.parse([]); // throws Error("Array cannot be empty")
 ```
@@ -430,9 +435,112 @@ const users = validatedQueryUser(
 
 This is particularly useful for defining HTTP or RPC endpoints that accept complex payloads that require validation. Moreover, you can define your endpoints once with Zod and share the code with both your client and server code to achieve end-to-end type safety.
 
+## Errors
+
+Zod includes a custom `Error` subclass called `ZodError`. All validation errors thrown by Zod are instances of `ZodError`.
+
+A `ZodError` instance has an `errors` property of type
+
+```ts
+// ZodError#errors
+{
+  path: (string | number)[],
+  message: string
+}[]
+```
+
+This array represents all errors Zod encounters when attempting to parse a value.
+
+```ts
+const person = z.object({
+  name: {
+    first: z.string(),
+    last: z.string(),
+  },
+  age: z.number(),
+  address: z.array(z.string()),
+});
+
+try {
+  person.parse({
+    name: { first: 'Dave', last: 42 },
+    age: 'threeve',
+    address: ['123 Maple Street', {}],
+  });
+} catch (err) {
+  if (err instanceof ZodError) {
+    console.log(JSON.stringify(err.errors));
+    /*
+      [
+        {
+          "path": [ "name", "last" ],
+          "message": "Non-string type: number"
+        },
+        {
+          "path": [ "age" ],
+          "message": "Non-number type: string"
+        },
+        {
+          "path": [ "address", 1 ],
+          "message": "Non-string type: object"
+        }
+      ]
+    */
+
+    // err.message returns a formatted error message
+    console.log(err.message);
+    /*
+      `name.last`: Non-string type: number
+      `age`: Non-number type: string
+      `address.1`: Non-string type: object
+    */
+  } else {
+    // should never happen
+  }
+}
+```
+
 # Comparison
 
 There are a handful of other widely-used validation libraries, but all of them have certain design limitations that make for a non-ideal developer experience.
+
+The table below summarizes the feature differences. Below the table there are more involved discussions of certain alternatives, where necessary.
+
+| Feature                                                                                                                | [Zod](https://github.com/vriad) | [Joi](https://github.com/hapijs/joi) | [Yup](https://github.com/jquense/yup) | [io-ts](https://github.com/gcanti/io-ts) | [Runtypes](https://github.com/pelotom/runtypes) | [ow](https://github.com/sindresorhus/ow) | [class-validator](https://github.com/typestack/class-validator) |
+| ---------------------------------------------------------------------------------------------------------------------- | :-----------------------------: | :----------------------------------: | :-----------------------------------: | :--------------------------------------: | :---------------------------------------------: | :--------------------------------------: | :-------------------------------------------------------------: |
+| <abbr title='Any ability to extract a TypeScript type from a validator instance counts.'>Type inference</abbr>         |               🟢                |                  🔴                  |                  🟢                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
+| <abbr title="Yup's inferred types are incorrect in certain cases, see discussion below.">Correct type inference</abbr> |               🟢                |                  🔴                  |                  🔴                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
+
+<abbr title="number, string, boolean, null, undefined">Primitive Types</abbr>
+<abbr title="Includes any checks beyond 'Is this a string?', e.g. min/max length, isEmail, isURL, case checking, etc.">String Validation</abbr>
+<abbr title="Includes any checks beyond 'Is this a number?', e.g. min/max, isPositive, integer vs float, etc.">Number Validation</abbr>
+Dates
+
+Primitive Literals
+Object Literals
+Tuple Literals
+Objects
+Arrays
+Non-empty arrays
+Unions
+Optionals
+Nullable
+Enums
+Enum Autocomplete
+Intersections
+Object Merging
+Tuples
+Recursive Types
+Function Schemas
+
+<abbr title="For instance, Yup allows custmo error messages with the syntax yup.number().min(5, 'Number must be more than 5!')">Validation Messages</abbr>
+Immutable instances
+Type Guards
+Validity Checking
+Casting
+Default Values
+Rich Errors
+Branded
 
 ### Joi
 

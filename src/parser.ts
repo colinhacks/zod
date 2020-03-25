@@ -1,71 +1,79 @@
 import * as z from './types/base';
 import { ZodDef } from '.';
+import { ZodError } from './ZodError';
 
 function assertNever(x: never): never {
-  throw new Error('Unexpected object: ' + x);
+  throw ZodError.fromString('Unexpected object: ' + x);
 }
-
-// export class ZodError extends Error{
-
-// }
 
 export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
   const def: ZodDef = schemaDef as any;
 
   switch (def.t) {
     case z.ZodTypes.string:
-      if (typeof obj !== 'string') throw new Error(`Non-string type: ${typeof obj}`);
+      if (typeof obj !== 'string') throw ZodError.fromString(`Non-string type: ${typeof obj}`);
       return obj as any;
     case z.ZodTypes.number:
-      if (typeof obj !== 'number') throw new Error(`Non-number type: ${typeof obj}`);
+      if (typeof obj !== 'number') throw ZodError.fromString(`Non-number type: ${typeof obj}`);
       if (Number.isNaN(obj)) {
-        throw new Error(`Non-number type: NaN`);
+        throw ZodError.fromString(`Non-number type: NaN`);
       }
       return obj as any;
     case z.ZodTypes.boolean:
-      if (typeof obj !== 'boolean') throw new Error(`Non-boolean type: ${typeof obj}`);
+      if (typeof obj !== 'boolean') throw ZodError.fromString(`Non-boolean type: ${typeof obj}`);
       return obj as any;
     case z.ZodTypes.undefined:
-      if (obj !== undefined) throw new Error(`Non-undefined type:Found: ${typeof obj}`);
+      if (obj !== undefined) throw ZodError.fromString(`Non-undefined type:Found: ${typeof obj}`);
       return obj as any;
     case z.ZodTypes.null:
-      if (obj !== null) throw new Error(`Non-null type: ${typeof obj}`);
+      if (obj !== null) throw ZodError.fromString(`Non-null type: ${typeof obj}`);
       return obj as any;
     case z.ZodTypes.array:
-      if (!Array.isArray(obj)) throw new Error(`Non-array type: ${typeof obj}`);
-      const arrayErrors: string[] = [];
+      if (!Array.isArray(obj)) throw ZodError.fromString(`Non-array type: ${typeof obj}`);
+      const arrayError = ZodError.create([]);
       if (def.nonempty === true && obj.length === 0) {
-        throw new Error('Array cannot be empty');
+        throw ZodError.fromString('Array cannot be empty');
       }
       const parsedArray = obj.map((item, i) => {
         try {
           const parsedItem = def.type.parse(item);
           return parsedItem;
         } catch (err) {
-          arrayErrors.push(`[${i}]: ${err.message}`);
-          return null;
+          if (err instanceof ZodError) {
+            arrayError.mergeChild(i, err);
+            // arrayErrors.push(`[${i}]: ${err.message}`);
+            return null;
+          } else {
+            arrayError.mergeChild(i, ZodError.fromString(err.message));
+            // arrayErrors.push(`[${i}]: ${err.message}`);
+            return null;
+          }
         }
       });
-      if (arrayErrors.length > 0) {
-        // throw new Error(arrayErrors.join('\n\n'));
-        throw new Error(arrayErrors.join('\n'));
+      if (!arrayError.empty) {
+        // throw ZodError.fromString(arrayErrors.join('\n\n'));
+        throw arrayError;
       }
       return parsedArray as any;
     case z.ZodTypes.object:
-      if (typeof obj !== 'object') throw new Error(`Non-object type: ${typeof obj}`);
-      if (Array.isArray(obj)) throw new Error(`Non-object type: array`);
+      if (typeof obj !== 'object') throw ZodError.fromString(`Non-object type: ${typeof obj}`);
+      if (Array.isArray(obj)) throw ZodError.fromString(`Non-object type: array`);
       const shape = def.shape;
-      const objectErrors: string[] = [];
+      const objectError = ZodError.create([]);
       for (const key in shape) {
         try {
           def.shape[key].parse(obj[key]);
         } catch (err) {
-          objectErrors.push(`${key}: ${err.message}`);
+          if (err instanceof ZodError) {
+            objectError.mergeChild(key, err);
+          } else {
+            objectError.mergeChild(key, ZodError.fromString(err.message));
+          }
         }
       }
 
-      if (Object.keys(objectErrors).length > 0) {
-        throw new Error(objectErrors.join('\n'));
+      if (!objectError.empty) {
+        throw objectError; //ZodError.fromString(objectErrors.join('\n'));
       }
       return obj;
     case z.ZodTypes.union:
@@ -75,7 +83,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
           return obj;
         } catch (err) {}
       }
-      throw new Error(
+      throw ZodError.fromString(
         `Type mismatch in union.\nReceived: ${JSON.stringify(obj, null, 2)}\n\nExpected: ${def.options
           .map(x => x._def.t)
           .join(' OR ')}`,
@@ -97,19 +105,30 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
       if (!errors.length) {
         return obj;
       }
-      throw new Error(errors.join('\n'));
+      throw ZodError.fromString(errors.join('\n'));
 
     case z.ZodTypes.tuple:
       if (!Array.isArray(obj)) {
-        throw new Error('Non-array type detected; invalid tuple.');
+        throw ZodError.fromString('Non-array type detected; invalid tuple.');
       }
       if (def.items.length !== obj.length) {
-        throw new Error(`Incorrect number of elements in tuple: expected ${def.items.length}, got ${obj.length}`);
+        throw ZodError.fromString(
+          `Incorrect number of elements in tuple: expected ${def.items.length}, got ${obj.length}`,
+        );
       }
       const parsedTuple: any[] = [];
       for (const index in obj) {
         const item = obj[index];
-        parsedTuple.push(def.items[index].parse(item));
+        const itemParser = def.items[index];
+        try {
+          parsedTuple.push(itemParser.parse(item));
+        } catch (err) {
+          if (err instanceof ZodError) {
+            throw err.bubbleUp(index);
+          } else {
+            throw ZodError.fromString(err.message);
+          }
+        }
       }
       return parsedTuple as any;
     case z.ZodTypes.lazy:
@@ -118,7 +137,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
       return obj;
     case z.ZodTypes.literal:
       if (obj === def.value) return obj;
-      throw new Error(`${obj} !== Literal<${def.value}>`);
+      throw ZodError.fromString(`${obj} !== Literal<${def.value}>`);
     case z.ZodTypes.enum:
       for (const literalDef of def.values) {
         try {
@@ -126,7 +145,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
           return obj;
         } catch (err) {}
       }
-      throw new Error(`"${obj}" does not match any value in enum`);
+      throw ZodError.fromString(`"${obj}" does not match any value in enum`);
     case z.ZodTypes.function:
       return obj;
     default:

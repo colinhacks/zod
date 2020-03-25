@@ -3,7 +3,15 @@ import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
 
-type LiteralValue = string | number | boolean | undefined | null;
+type Primitive = string | number | boolean | null | undefined;
+// type Compound<U extends Primitive> =
+//   | U
+//   | { [name: string]: Compound<U> }
+//   | []
+//   | [Compound<U>]
+//   | [Compound<U>, ...Compound<U>[]];
+// type LiteralValue<U extends Primitive = Primitive> = U | Compound<U>;
+type LiteralValue = Primitive;
 
 export interface ZodLiteralDef<T extends LiteralValue = LiteralValue> extends z.ZodTypeDef {
   t: z.ZodTypes.literal;

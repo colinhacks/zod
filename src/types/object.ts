@@ -13,10 +13,12 @@ type OptionalKeys<T extends z.ZodRawShape> = {
   [k in keyof T]: undefined extends T[k]['_type'] ? k : never;
 }[keyof T];
 type RequiredKeys<T extends z.ZodRawShape> = Exclude<keyof T, OptionalKeys<T>>;
-type ObjectType<T extends z.ZodRawShape> = {
+type ObjectIntersection<T extends z.ZodRawShape> = {
   [k in OptionalKeys<T>]?: T[k]['_type'];
 } &
   { [k in RequiredKeys<T>]: T[k]['_type'] };
+type Flatten<T extends z.ZodRawShape> = { [k in keyof T]: T[k] };
+type ObjectType<T extends z.ZodRawShape> = Flatten<ObjectIntersection<T>>;
 
 // type adsf  = OptionalKeys<{name:ZodString}>;
 // type asdfqwe = {name:ZodString}['name']['_type']
