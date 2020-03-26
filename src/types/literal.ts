@@ -5,13 +5,14 @@ import { ZodUnion } from './union';
 
 // type Primitive = string | number | boolean | null | undefined;
 type Primitive = string | number | boolean | null | undefined;
-type Compound<U extends Primitive = Primitive> =
-  | U
-  | { [name: string]: Compound<U> }
-  | []
-  | [Compound<U>]
-  | [Compound<U>, ...Compound<U>[]];
-type LiteralValue<U extends Primitive> = U | Compound<U>;
+// type Compound<U extends Primitive = Primitive> =
+//   | U
+//   | { [name: string]: Compound<U> }
+//   | []
+//   | [Compound<U>]
+//   | [Compound<U>, ...Compound<U>[]];
+// type LiteralValue<U extends Primitive> = U | Compound<U>;
+type LiteralValue = Primitive;
 
 // this function infers the EXACT type of the value passed into it
 // and returns it as a const will full type information
@@ -40,7 +41,8 @@ export class ZodLiteral<T extends any> extends z.ZodType<T, ZodLiteralDef<T>> {
 
   toJSON = () => this._def;
 
-  static create = <U extends Primitive, T extends LiteralValue<U>>(value: T): ZodLiteral<T> => {
+  // static create = <U extends Primitive, T extends LiteralValue<U>>(value: T): ZodLiteral<T> => {
+  static create = <T extends LiteralValue>(value: T): ZodLiteral<T> => {
     return new ZodLiteral({
       t: z.ZodTypes.literal,
       value: value,
