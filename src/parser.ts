@@ -58,7 +58,17 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
     case z.ZodTypes.object:
       if (typeof obj !== 'object') throw ZodError.fromString(`Non-object type: ${typeof obj}`);
       if (Array.isArray(obj)) throw ZodError.fromString(`Non-object type: array`);
+
       const shape = def.shape;
+      if (def.strict) {
+        const shapeKeys = Object.keys(def.shape);
+        const objKeys = Object.keys(obj);
+        const extraKeys = objKeys.filter(k => shapeKeys.indexOf(k) === -1);
+        if (extraKeys.length) {
+          throw ZodError.fromString(`Unexpected keys in object: ${extraKeys.join(', ')}`);
+        }
+      }
+
       const objectError = ZodError.create([]);
       for (const key in shape) {
         try {
@@ -136,7 +146,8 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
       lazySchema.parse(obj);
       return obj;
     case z.ZodTypes.literal:
-      if (obj === def.value) return obj;
+      const literalValue = def.value;
+      if (typeof literalValue === 'string') if (obj === def.value) return obj;
       throw ZodError.fromString(`${obj} !== Literal<${def.value}>`);
     case z.ZodTypes.enum:
       for (const literalDef of def.values) {

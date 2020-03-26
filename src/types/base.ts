@@ -9,6 +9,7 @@ export enum ZodTypes {
   null = 'null',
   array = 'array',
   object = 'object',
+  interface = 'interface',
   union = 'union',
   intersection = 'intersection',
   tuple = 'tuple',
@@ -69,7 +70,8 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  // assert: (u: unknown) => asserts u is Type = u => {
+  // assert: zodAssertion<Type> = (value: unknown) => zodAssert(this, value);
+  //  (u: unknown) => asserts u is Type = u => {
   //   try {
   //     this.parse(u);
   //   } catch (err) {
