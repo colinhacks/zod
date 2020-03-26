@@ -137,7 +137,6 @@ We'll include examples of inferred types throughout the rest of the documentatio
 // all properties are required by default
 const dogSchema = z.object({
   name: z.string(),
-  age: z.number(),
   neutered: z.boolean(),
 });
 
@@ -153,14 +152,42 @@ type Dog = {
 
 const cujo = dogSchema.parse({
   name: 'Cujo',
-  age: 4,
   neutered: true,
 }); // passes, returns Dog
 
 const fido: Dog = {
   name: 'Fido',
-  age: 2,
 }; // TypeError: missing required property `neutered`
+```
+
+### Unknown keys
+
+IMPORTANT: By default, Zod object schemas _do not_ allow unknown keys. This is an intentional decision to make Zod's behavior consistent with TypeScript. Consider this:
+
+```ts
+const spot: Dog = {
+  name: 'Spot',
+  age: 8,
+  neutered: true,
+  color: 'brown',
+};
+// TypeError: Object literal may only specify known
+// properties, and 'color' does not exist in type Dog
+```
+
+TypeScript doesn't allow unknown keys when assigning to an object type, so neither does Zod (by default). If you want to allow this, just call the `.nonstrict()` method on any object schema:
+
+```ts
+const dogData = {
+  name: 'Spot',
+  neutered: true,
+  color: 'brown',
+};
+
+dogSchema.parse(dogData); // Error(`Unexpected keys in object: 'color'`)
+
+const dogSchemaNonstrict = dogSchema.nonstrict();
+dogSchemaNonstrict.parse(dogData); // passes
 ```
 
 ## Arrays

@@ -1,4 +1,28 @@
-// import * as z from '.';
+import * as z from '.';
+
+const dogSchema = z
+  .object({
+    name: z.string(),
+
+    neutered: z.boolean(),
+  })
+  .nonstrict();
+
+console.log(
+  dogSchema.parse({
+    name: 'Spot',
+    neutered: true,
+    color: 'brown',
+  }),
+);
+
+// type Dog = z.TypeOf<typeof dogSchema>;
+// const spot: Dog = {
+//   name: 'Spot',
+//   age: 8,
+//   neutered: true,
+//   color: 'brown', //
+// };
 
 // type Primitive = string | number | boolean | null | undefined;
 // type Compound<U extends Primitive = Primitive> =

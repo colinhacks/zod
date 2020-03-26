@@ -65,7 +65,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
         const objKeys = Object.keys(obj);
         const extraKeys = objKeys.filter(k => shapeKeys.indexOf(k) === -1);
         if (extraKeys.length) {
-          throw ZodError.fromString(`Unexpected keys in object: ${extraKeys.join(', ')}`);
+          throw ZodError.fromString(`Unexpected key(s) in object: ${extraKeys.map(k => `'${k}'`).join(', ')}`);
         }
       }
 
