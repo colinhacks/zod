@@ -145,7 +145,6 @@ type Dog = z.TypeOf<typeof dogSchema>;
 equivalent to:
 type Dog = { 
   name:string; 
-  age: number; 
   neutered: boolean;
 }
 */
@@ -162,12 +161,21 @@ const fido: Dog = {
 
 ### Unknown keys
 
-IMPORTANT: By default, Zod object schemas _do not_ allow unknown keys. This is an intentional decision to make Zod's behavior consistent with TypeScript. Consider this:
+IMPORTANT: By default, Zod object schemas _do not_ allow unknown keys.
+
+```ts
+dogSchema.parse({
+  name: 'Spot',
+  neutered: true,
+  color: 'brown',
+}); // Error(`Unexpected keys in object: 'color'`)
+```
+
+This is an intentional decision to make Zod's behavior consistent with TypeScript. Consider this:
 
 ```ts
 const spot: Dog = {
   name: 'Spot',
-  age: 8,
   neutered: true,
   color: 'brown',
 };
@@ -178,16 +186,26 @@ const spot: Dog = {
 TypeScript doesn't allow unknown keys when assigning to an object type, so neither does Zod (by default). If you want to allow this, just call the `.nonstrict()` method on any object schema:
 
 ```ts
-const dogData = {
+const dogSchemaNonstrict = dogSchema.nonstrict();
+
+dogSchemaNonstrict.parse({
   name: 'Spot',
   neutered: true,
   color: 'brown',
-};
+}); // passes
+```
 
-dogSchema.parse(dogData); // Error(`Unexpected keys in object: 'color'`)
+This change is reflected in the inferred type as well:
 
-const dogSchemaNonstrict = dogSchema.nonstrict();
-dogSchemaNonstrict.parse(dogData); // passes
+```ts
+type NonstrictDog = z.TypeOf<typeof dogSchemaNonstrict>;
+/*
+{
+  name:string; 
+  neutered: boolean;
+  [k:string]: any;
+} 
+*/
 ```
 
 ## Arrays

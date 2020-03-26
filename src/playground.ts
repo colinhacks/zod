@@ -3,18 +3,22 @@ import * as z from '.';
 const dogSchema = z
   .object({
     name: z.string(),
-
     neutered: z.boolean(),
   })
+  .merge(
+    z.object({
+      age: z.number(),
+    }),
+  )
   .nonstrict();
 
-console.log(
-  dogSchema.parse({
-    name: 'Spot',
-    neutered: true,
-    color: 'brown',
-  }),
-);
+const dog = dogSchema.parse({
+  name: 'Spot',
+  neutered: true,
+  age: 12,
+  color: 'brown',
+});
+console.log(JSON.stringify(dog, null, 2));
 
 // type Dog = z.TypeOf<typeof dogSchema>;
 // const spot: Dog = {
