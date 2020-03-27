@@ -1,6 +1,7 @@
-# Zod
-
-<img src="logo.svg" alt="logo" width="200"/>
+<p align="center">
+  <img src="logo.svg" width="200px" align="center" />
+  <h1 align="center">Zod</h1>
+</p>
 
 ### Table of contents
 

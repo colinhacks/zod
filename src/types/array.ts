@@ -1,6 +1,4 @@
 import * as z from './base';
-
-type z = typeof z;
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
