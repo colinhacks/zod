@@ -76,7 +76,7 @@ const nullTypeSchema = z.null(); // => ZodType<null>
 ```ts
 const tuna = z.literal('tuna'); // => ZodType<'tuna'>
 const twelve = z.literal(12); // => ZodType<12>
-const tru = z.boolean(true); // => ZodType<true>
+const tru = z.literal(true); // => ZodType<true>
 ```
 
 ## Parsing and validation

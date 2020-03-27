@@ -5,13 +5,13 @@ import { ZodUnion } from './union';
 
 // type Primitive = string | number | boolean | null | undefined;
 type Primitive = string | number | boolean | null | undefined;
-// type Compound<U extends Primitive = Primitive> =
+// type LiteralValue<U extends Primitive = Primitive> =
 //   | U
-//   | { [name: string]: Compound<U> }
+//   | { [name: string]: LiteralValue<U> }
 //   | []
-//   | [Compound<U>]
-//   | [Compound<U>, ...Compound<U>[]];
-// type LiteralValue<U extends Primitive> = U | Compound<U>;
+//   | [LiteralValue<U>]
+//   | [LiteralValue<U>, ...LiteralValue<U>[]];
+// type LiteralValue<U extends Primitive> = Compound<U>;
 type LiteralValue = Primitive;
 
 // this function infers the EXACT type of the value passed into it

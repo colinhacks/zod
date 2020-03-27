@@ -1,5 +1,15 @@
 import * as z from '.';
 
+// const objLit = z.literal({
+//   asdf: 'adsf',
+//   qwer: ['sdf', 1234],
+//   lkjl: {
+//     qwer: {
+//       oiuwer: [5, 3, { asdf: ['12'] }],
+//     },
+//   },
+// });
+
 const dogSchema = z
   .object({
     name: z.string(),
