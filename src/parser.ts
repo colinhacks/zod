@@ -2,9 +2,9 @@ import * as z from './types/base';
 import { ZodDef } from '.';
 import { ZodError } from './ZodError';
 
-function assertNever(x: never): never {
-  throw ZodError.fromString('Unexpected object: ' + x);
-}
+// function assertNever(x: never): never {
+//   throw ZodError.fromString('Unexpected object: ' + x);
+// }
 
 export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
   const def: ZodDef = schemaDef as any;
@@ -157,9 +157,15 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
         } catch (err) {}
       }
       throw ZodError.fromString(`"${obj}" does not match any value in enum`);
-    case z.ZodTypes.function:
-      return obj;
+    // case z.ZodTypes.function:
+    //   return obj;
     default:
-      assertNever(def);
+      // function
+      return obj;
+    // assertNever(def);
+    // break;
   }
+
+  // assertNever();
+  // return obj;
 };

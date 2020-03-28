@@ -43,7 +43,7 @@ yarn add zod
 
 ### TypeScript versions
 
-Zod 1.0.x is compatible with TypeScript 3.0+.
+Zod 1.0.x is compatible with TypeScript 3.1+.
 
 # Usage
 
