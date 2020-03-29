@@ -43,7 +43,7 @@ yarn add zod
 
 ### TypeScript versions
 
-Zod 1.0.x is compatible with TypeScript 3.1+.
+Zod 1.0.x is compatible with TypeScript 3.2+. Earlier versions contain bugs that will interfere there were known type inference bugs in TypeScript that will cause errors.
 
 # Usage
 
@@ -418,6 +418,22 @@ Category.parse({
     },
   ],
 }); // passes
+```
+
+Validation still works as expected even when there are cycles in the data.
+
+```ts
+const untypedCategory: any = {
+  name: 'Category A',
+};
+
+// creating a cycle
+untypedCategory.subcategories = [untypedCategory];
+
+const parsedCategory = Category.parse(untypedCategory); // parses successfully
+
+parsedCategory.subcategories[0].subcategories[0].subcategories[0];
+// => parsedCategory: Category;
 ```
 
 ## Function schemas

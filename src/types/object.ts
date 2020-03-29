@@ -15,6 +15,17 @@ export interface ZodObjectDef<T extends z.ZodRawShape = z.ZodRawShape> extends z
   strict: boolean;
 }
 
+// type T = { t: ZodString };
+// type eee<T extends { [k: string]: z.ZodType<any> }> = {
+//   [k in keyof T]: { key: k; ztype: T[k]; type: T[k]['_type']; und: undefined extends T[k]['_type'] ? true : false }; //}//undefined extends T[k]['_type'] ? k : never;
+// }[keyof T];
+// type qqq = eee<T>;
+// type asdf = undefined extends string ? true : false;
+// type qwer = undefined extends { t: ZodString }['t']['_type'] ? true : false;
+// type klj = OptionalKeys<{ t: ZodString }>;
+// type y = ZodString['_type'];
+// type c = RequiredKeys<{ t: ZodString }>;
+
 type OptionalKeys<T extends z.ZodRawShape> = {
   [k in keyof T]: undefined extends T[k]['_type'] ? k : never;
 }[keyof T];
@@ -24,7 +35,8 @@ type ObjectIntersection<T extends z.ZodRawShape> = {
 } &
   { [k in RequiredKeys<T>]: T[k]['_type'] };
 type Flatten<T extends object> = { [k in keyof T]: T[k] };
-type ObjectType<T extends z.ZodRawShape> = Flatten<ObjectIntersection<T>>;
+type FlattenObject<T extends z.ZodRawShape> = { [k in keyof T]: T[k] };
+type ObjectType<T extends z.ZodRawShape> = FlattenObject<ObjectIntersection<T>>;
 
 const mergeShapes = <U extends z.ZodRawShape, T extends z.ZodRawShape>(first: U, second: T): T & U => {
   const firstKeys = Object.keys(first);

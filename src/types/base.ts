@@ -1,5 +1,5 @@
 import { ZodTuple } from './tuple';
-import { ZodParser } from '../parser';
+import { ZodParser, ParseParams } from '../parser';
 
 export enum ZodTypes {
   string = 'string',
@@ -50,7 +50,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   //  is(value: any): value is Type;
   //  assert(value: any): asserts value is Type;
 
-  parse: (x: unknown) => Type;
+  parse: (x: unknown, params?: ParseParams) => Type;
 
   is(u: unknown): u is Type {
     try {

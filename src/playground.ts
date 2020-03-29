@@ -11,25 +11,56 @@ import * as z from '.';
 //   },
 // });
 
-const dogSchema = z
-  .object({
-    name: z.string(),
-    neutered: z.boolean(),
-  })
-  .merge(
-    z.object({
-      age: z.number(),
-    }),
-  )
-  .nonstrict();
+interface Category {
+  name: string;
+  subcategories: Category[];
+}
 
-const dog = dogSchema.parse({
-  name: 'Spot',
-  neutered: true,
-  age: 12,
-  color: 'brown',
+const Category: z.ZodType<Category> = z.lazy(() =>
+  z.object({
+    name: z.string(),
+    subcategories: z.array(Category),
+  }),
+);
+
+const untypedCategory: any = {
+  name: 'Category A',
+};
+
+// creating a cycle
+untypedCategory.subcategories = [untypedCategory];
+
+const parsedCategory = Category.parse(untypedCategory); // parses successfully
+
+parsedCategory.subcategories[0].subcategories[0].subcategories[0];
+// => parsedCategory;
+
+export const cat = z.object({
+  name: z.string(),
+  // subcategories: z.array(Category),
 });
-console.log(JSON.stringify(dog, null, 2));
+
+export type Cat = z.TypeOf<z.ZodObject<{ t: z.ZodString }>>;
+
+// const dogSchema = z
+//   .object({
+//     name: z.string(),
+//     neutered: z.boolean(),
+//   })
+//   .merge(
+//     z.object({
+//       age: z.number(),
+//     }),
+//   )
+//   .nonstrict();
+
+// const dog = dogSchema.parse({
+//   name: 'Spot',
+//   neutered: true,
+//   age: 12,
+//   color: 'brown',
+// });
+// console.log(JSON.stringify(dog, null, 2));
 
 // type Dog = z.TypeOf<typeof dogSchema>;
 // const spot: Dog = {

@@ -5,9 +5,25 @@ import { ZodError } from './ZodError';
 // function assertNever(x: never): never {
 //   throw ZodError.fromString('Unexpected object: ' + x);
 // }
+export type ParseParams = {
+  seen: any[];
+};
 
-export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
+// const seen: any[] = [];
+// export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any) => ZodParserFactory(schemaDef)(obj, { seen: [] });
+export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParseParams = { seen: [] }) => {
   const def: ZodDef = schemaDef as any;
+  // const { seen } = params;
+
+  // console.log(`visit ${schemaDef.t}: ${typeof obj} - ${obj.name || ''}`);
+  // if (!['number', 'string', 'boolean', 'undefined'].includes(typeof obj)) {
+  if (params.seen.indexOf(schemaDef) !== -1) {
+    console.log(`seen ${typeof obj} before: ${obj.name}`);
+    return obj;
+  } else {
+    params.seen.push(schemaDef);
+  }
+  // }
 
   switch (def.t) {
     case z.ZodTypes.string:
@@ -36,7 +52,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
       }
       const parsedArray = obj.map((item, i) => {
         try {
-          const parsedItem = def.type.parse(item);
+          const parsedItem = def.type.parse(item, params);
           return parsedItem;
         } catch (err) {
           if (err instanceof ZodError) {
@@ -72,7 +88,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
       const objectError = ZodError.create([]);
       for (const key in shape) {
         try {
-          def.shape[key].parse(obj[key]);
+          def.shape[key].parse(obj[key], params);
         } catch (err) {
           if (err instanceof ZodError) {
             objectError.mergeChild(key, err);
@@ -89,7 +105,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
     case z.ZodTypes.union:
       for (const option of def.options) {
         try {
-          option.parse(obj);
+          option.parse(obj, params);
           return obj;
         } catch (err) {}
       }
@@ -101,13 +117,13 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
     case z.ZodTypes.intersection:
       const errors: string[] = [];
       try {
-        def.left.parse(obj);
+        def.left.parse(obj, params);
       } catch (err) {
         errors.push(`Left side of intersection: ${err.message}`);
       }
 
       try {
-        def.right.parse(obj);
+        def.right.parse(obj, params);
       } catch (err) {
         errors.push(`Right side of intersection: ${err.message}`);
       }
@@ -131,7 +147,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
         const item = obj[index];
         const itemParser = def.items[index];
         try {
-          parsedTuple.push(itemParser.parse(item));
+          parsedTuple.push(itemParser.parse(item, params));
         } catch (err) {
           if (err instanceof ZodError) {
             throw err.bubbleUp(index);
@@ -143,7 +159,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
       return parsedTuple as any;
     case z.ZodTypes.lazy:
       const lazySchema = def.getter();
-      lazySchema.parse(obj);
+      lazySchema.parse(obj, params);
       return obj;
     case z.ZodTypes.literal:
       const literalValue = def.value;
@@ -152,7 +168,7 @@ export const ZodParser = <T>(schemaDef: z.ZodTypeDef) => (obj: any): T => {
     case z.ZodTypes.enum:
       for (const literalDef of def.values) {
         try {
-          literalDef.parse(obj);
+          literalDef.parse(obj, params);
           return obj;
         } catch (err) {}
       }
