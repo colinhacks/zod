@@ -6,7 +6,7 @@ import { ZodError } from './ZodError';
 //   throw ZodError.fromString('Unexpected object: ' + x);
 // }
 export type ParseParams = {
-  seen: any[];
+  seen: { schema: any; objects: any[] }[];
 };
 
 // const seen: any[] = [];
@@ -17,11 +17,16 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
 
   // console.log(`visit ${schemaDef.t}: ${typeof obj} - ${obj.name || ''}`);
   // if (!['number', 'string', 'boolean', 'undefined'].includes(typeof obj)) {
-  if (params.seen.indexOf(schemaDef) !== -1) {
-    console.log(`seen ${typeof obj} before: ${obj.name}`);
-    return obj;
+  const schemaSeen = params.seen.find(x => x.schema === schemaDef);
+  if (schemaSeen) {
+    if (schemaSeen.objects.indexOf(obj) !== -1) {
+      console.log(`seen ${typeof obj} before: ${obj.name}`);
+      return obj;
+    } else {
+      schemaSeen.objects.push(obj);
+    }
   } else {
-    params.seen.push(schemaDef);
+    params.seen.push({ schema: schemaDef, objects: [obj] });
   }
   // }
 

@@ -34,3 +34,24 @@ test('recursives', () => {
   B.parse(b);
   expect(() => A.parse({})).toThrow();
 });
+
+test('self recursion', () => {
+  const BaseCategory = z.object({
+    name: z.string(),
+  });
+  interface Category extends z.Infer<typeof BaseCategory> {
+    subcategories: Category[];
+  }
+  const Category: z.ZodType<Category> = BaseCategory.merge(
+    z.object({
+      subcategories: z.lazy(() => z.array(Category)),
+    }),
+  );
+
+  const untypedCategory: any = {
+    name: 'Category A',
+  };
+  // creating a cycle
+  untypedCategory.subcategories = [untypedCategory];
+  Category.parse(untypedCategory); // parses successfully
+});
