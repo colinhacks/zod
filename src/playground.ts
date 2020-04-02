@@ -1,5 +1,5 @@
-// import * as z from '.';
-
+import * as z from '.';
+z.union([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
 // import zod from ".";
 
 // const objLit = z.literal({

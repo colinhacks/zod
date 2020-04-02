@@ -20,7 +20,7 @@ export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodAny> {
     this._def = def;
   }
 
-  validate = (func: TypeOfFunction<Args, Returns>): TypeOfFunction<Args, Returns> => {
+  implement = (func: TypeOfFunction<Args, Returns>): TypeOfFunction<Args, Returns> => {
     const validatedFunc = (...args: any[]) => {
       try {
         this._def.args.parse(args as any);
@@ -33,6 +33,8 @@ export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodAny> {
     };
     return (validatedFunc as any) as TypeOfFunction<Args, Returns>;
   };
+
+  validate = this.implement;
 
   static create = <T extends ZodTuple<any>, U extends z.ZodAny>(args: T, returns: U): ZodFunction<T, U> => {
     return new ZodFunction({

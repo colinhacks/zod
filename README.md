@@ -314,14 +314,15 @@ FishEnum.parse('Flounder'); // => throws
 You can also use the built-in `z.enum()` function, like so:
 
 ```ts
-const FishEnum = z.enum([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
+const FishEnum = z.enum(['Salmon', 'Tuna', 'Trout']);
 
-// you can autocomplete values
-// with the `.Values` variable
+// if you use `z.enum([ ... ])`
+// you can also autocomplete enum values
+// with the computed `.Values` property
 FishEnum.Values.Salmon; // => autocompletes
 FishEnum.Values;
 /* 
-{
+=> {
   Salmon: "Salmon",
   Tuna: "Tuna",
   Trout: "Trout",
@@ -478,6 +479,31 @@ You can create a function schema with `z.function(args, returnType)` which accep
 - `returnType: ZodType` The second argument is the function's return type. This can be any Zod schema.
 
 ```ts
+const args = z.tuple([z.string()]);
+
+const returnType = z.number();
+
+const myFunction = z.function(args, returnType);
+type myFunction = z.TypeOf<typeof myFunction>;
+// => (arg0: string)=>number
+```
+
+`z.function` actually returns a higher-order "function factory". Every "factory" has `.implement()` method which accepts a function as input and returns a new function.
+
+```ts
+const myValidatedFunction = myFunction(x => {
+  // TypeScript knows x is a string!
+  return x.trim().length;
+});
+```
+
+`myValidatedFunction` now automatically validates both its inputs and return value against the schemas provided to `z.function`. If either is invalid, the function throws.
+
+This way you can confidently write application logic in a "validated function" without worrying about invalid inputs, scattering `schema.validate()` calls in your endpoint definitions,or writing duplicative types for your functions.
+
+Here's a more complex example showing how to write a typesafe API query endpoint:
+
+```ts
 const args = z.tuple([
   z.object({ nameStartsWith: z.string() }), // filters
   z.object({ skip: z.number(), limit: z.number() }), // pagination
@@ -490,17 +516,9 @@ const returnType = z.array(
   }),
 );
 
-const FetcherFactory = z.function(args, returnType);
-```
+const FetcherEndpoint = z.function(args, returnType);
 
-`z.function` returns a higher-order "function factory". Every "factory" has `.validate()` method which accepts a function as input and returns a new function. The returned function automatically validates both its inputs and return value against the schemas provided to `z.function`. If either is invalid, the function throws.
-
-This way you can confidently execute business logic in a "validated function" without worrying about invalid inputs or return types, mixing your validation and business logic, or writing duplicative types for your functions.
-
-Here's an example.
-
-```ts
-const validatedQueryUser = FetchFunction.validate((filters, pagination) => {
+const searchUsers = FetcherEndpoint.validate((filters, pagination) => {
   // the arguments automatically have the appropriate types
   // as defined by the args tuple passed to `z.function()`
   // without needing to provide types in the function declaration
@@ -508,13 +526,17 @@ const validatedQueryUser = FetchFunction.validate((filters, pagination) => {
   filters.nameStartsWith; // autocompletes
   filters.ageLessThan; // TypeError
 
+  const users = User.findAll({
+    // ... apply filters here
+  });
+
   // TypeScript statically verifies that value returned by
   // this function is of type { id: string; name: string; }[]
 
   return 'salmon'; // TypeError
 });
 
-const users = validatedQueryUser(
+const users = searchUsers(
   {
     nameStartsWith: 'John',
   },
