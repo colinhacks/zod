@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1585800834571" clover="3.2.0">
+  <project timestamp="1585800834572" name="All files">
+    <metrics statements="447" coveredstatements="441" conditionals="120" coveredconditionals="114" methods="128" coveredmethods="107" elements="695" coveredelements="662" complexity="0" loc="447" ncloc="447" packages="3" files="19" classes="19"/>
+    <package name="src">
+      <metrics statements="195" coveredstatements="189" conditionals="74" coveredconditionals="68" methods="23" coveredmethods="19"/>
+      <file name="ZodError.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/ZodError.ts">
+        <metrics statements="27" coveredstatements="27" conditionals="6" coveredconditionals="5" methods="12" coveredmethods="12"/>
+        <line num="6" count="9" type="stmt"/>
+        <line num="7" count="119" type="stmt"/>
+        <line num="10" count="119" type="cond" truecount="1" falsecount="1"/>
+        <line num="13" count="119" type="stmt"/>
+        <line num="14" count="119" type="stmt"/>
+        <line num="17" count="9" type="stmt"/>
+        <line num="18" count="119" type="stmt"/>
+        <line num="19" count="119" type="stmt"/>
+        <line num="20" count="119" type="stmt"/>
+        <line num="23" count="9" type="stmt"/>
+        <line num="24" count="135" type="stmt"/>
+        <line num="25" count="146" type="stmt"/>
+        <line num="26" count="146" type="cond" truecount="2" falsecount="0"/>
+        <line num="31" count="9" type="stmt"/>
+        <line num="32" count="38" type="stmt"/>
+        <line num="35" count="9" type="stmt"/>
+        <line num="36" count="65" type="stmt"/>
+        <line num="44" count="119" type="stmt"/>
+        <line num="45" count="12" type="stmt"/>
+        <line num="48" count="119" type="stmt"/>
+        <line num="49" count="13" type="stmt"/>
+        <line num="51" count="14" type="stmt"/>
+        <line num="56" count="119" type="stmt"/>
+        <line num="57" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="60" count="119" type="stmt"/>
+        <line num="61" count="13" type="stmt"/>
+        <line num="63" count="9" type="stmt"/>
+      </file>
+      <file name="index.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/index.ts">
+        <metrics statements="66" coveredstatements="66" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="0"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="5" count="8" type="stmt"/>
+        <line num="6" count="8" type="stmt"/>
+        <line num="7" count="8" type="stmt"/>
+        <line num="8" count="8" type="stmt"/>
+        <line num="9" count="8" type="stmt"/>
+        <line num="10" count="8" type="stmt"/>
+        <line num="11" count="8" type="stmt"/>
+        <line num="12" count="8" type="stmt"/>
+        <line num="13" count="8" type="stmt"/>
+        <line num="14" count="8" type="stmt"/>
+        <line num="15" count="8" type="stmt"/>
+        <line num="16" count="8" type="stmt"/>
+        <line num="17" count="8" type="stmt"/>
+        <line num="18" count="8" type="stmt"/>
+        <line num="36" count="8" type="stmt"/>
+        <line num="37" count="8" type="stmt"/>
+        <line num="38" count="8" type="stmt"/>
+        <line num="39" count="8" type="stmt"/>
+        <line num="40" count="8" type="stmt"/>
+        <line num="41" count="8" type="stmt"/>
+        <line num="42" count="8" type="stmt"/>
+        <line num="43" count="8" type="stmt"/>
+        <line num="44" count="8" type="stmt"/>
+        <line num="45" count="8" type="stmt"/>
+        <line num="46" count="8" type="stmt"/>
+        <line num="47" count="8" type="stmt"/>
+        <line num="49" count="8" type="stmt"/>
+        <line num="50" count="8" type="stmt"/>
+        <line num="51" count="8" type="stmt"/>
+        <line num="52" count="8" type="stmt"/>
+        <line num="53" count="8" type="stmt"/>
+        <line num="56" count="8" type="stmt"/>
+        <line num="57" count="8" type="stmt"/>
+        <line num="58" count="8" type="stmt"/>
+        <line num="59" count="8" type="stmt"/>
+        <line num="60" count="8" type="stmt"/>
+        <line num="61" count="8" type="stmt"/>
+        <line num="62" count="8" type="stmt"/>
+        <line num="63" count="8" type="stmt"/>
+        <line num="64" count="8" type="stmt"/>
+        <line num="65" count="8" type="stmt"/>
+        <line num="66" count="8" type="stmt"/>
+        <line num="67" count="8" type="stmt"/>
+        <line num="69" count="8" type="stmt"/>
+        <line num="70" count="8" type="stmt"/>
+        <line num="71" count="8" type="stmt"/>
+        <line num="72" count="8" type="stmt"/>
+        <line num="73" count="8" type="stmt"/>
+        <line num="77" count="8" type="stmt"/>
+        <line num="78" count="8" type="stmt"/>
+        <line num="79" count="8" type="stmt"/>
+        <line num="80" count="8" type="stmt"/>
+        <line num="81" count="8" type="stmt"/>
+        <line num="82" count="8" type="stmt"/>
+        <line num="83" count="8" type="stmt"/>
+        <line num="84" count="8" type="stmt"/>
+        <line num="85" count="8" type="stmt"/>
+        <line num="86" count="8" type="stmt"/>
+        <line num="87" count="8" type="stmt"/>
+        <line num="88" count="8" type="stmt"/>
+        <line num="89" count="8" type="stmt"/>
+        <line num="90" count="8" type="stmt"/>
+        <line num="91" count="8" type="stmt"/>
+        <line num="94" count="8" type="stmt"/>
+      </file>
+      <file name="parser.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/parser.ts">
+        <metrics statements="102" coveredstatements="96" conditionals="68" coveredconditionals="63" methods="8" coveredmethods="7"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="6" count="0" type="stmt"/>
+        <line num="14" count="282" type="cond" truecount="2" falsecount="0"/>
+        <line num="15" count="213" type="stmt"/>
+        <line num="20" count="1685" type="stmt"/>
+        <line num="21" count="213" type="cond" truecount="2" falsecount="0"/>
+        <line num="22" count="16" type="cond" truecount="2" falsecount="0"/>
+        <line num="23" count="7" type="stmt"/>
+        <line num="24" count="7" type="stmt"/>
+        <line num="26" count="9" type="stmt"/>
+        <line num="29" count="197" type="stmt"/>
+        <line num="33" count="206" type="stmt"/>
+        <line num="35" count="29" type="cond" truecount="2" falsecount="0"/>
+        <line num="36" count="16" type="stmt"/>
+        <line num="38" count="27" type="cond" truecount="2" falsecount="0"/>
+        <line num="39" count="18" type="cond" truecount="2" falsecount="0"/>
+        <line num="40" count="1" type="stmt"/>
+        <line num="42" count="17" type="stmt"/>
+        <line num="44" count="11" type="cond" truecount="2" falsecount="0"/>
+        <line num="45" count="7" type="stmt"/>
+        <line num="47" count="10" type="cond" truecount="2" falsecount="0"/>
+        <line num="48" count="6" type="stmt"/>
+        <line num="50" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="51" count="3" type="stmt"/>
+        <line num="53" count="11" type="cond" truecount="2" falsecount="0"/>
+        <line num="54" count="10" type="stmt"/>
+        <line num="55" count="10" type="cond" truecount="4" falsecount="0"/>
+        <line num="56" count="1" type="stmt"/>
+        <line num="58" count="9" type="stmt"/>
+        <line num="59" count="19" type="stmt"/>
+        <line num="60" count="19" type="stmt"/>
+        <line num="61" count="18" type="stmt"/>
+        <line num="63" count="1" type="cond" truecount="1" falsecount="1"/>
+        <line num="64" count="1" type="stmt"/>
+        <line num="66" count="1" type="stmt"/>
+        <line num="68" count="0" type="stmt"/>
+        <line num="69" count="0" type="stmt"/>
+        <line num="73" count="9" type="cond" truecount="2" falsecount="0"/>
+        <line num="75" count="1" type="stmt"/>
+        <line num="77" count="8" type="stmt"/>
+        <line num="79" count="27" type="cond" truecount="2" falsecount="0"/>
+        <line num="80" count="23" type="cond" truecount="1" falsecount="1"/>
+        <line num="82" count="23" type="stmt"/>
+        <line num="83" count="23" type="cond" truecount="2" falsecount="0"/>
+        <line num="84" count="20" type="stmt"/>
+        <line num="85" count="20" type="stmt"/>
+        <line num="86" count="38" type="stmt"/>
+        <line num="87" count="20" type="cond" truecount="2" falsecount="0"/>
+        <line num="88" count="1" type="stmt"/>
+        <line num="92" count="22" type="stmt"/>
+        <line num="93" count="22" type="stmt"/>
+        <line num="94" count="48" type="stmt"/>
+        <line num="95" count="48" type="stmt"/>
+        <line num="97" count="6" type="cond" truecount="1" falsecount="1"/>
+        <line num="98" count="6" type="stmt"/>
+        <line num="100" count="0" type="stmt"/>
+        <line num="105" count="22" type="cond" truecount="2" falsecount="0"/>
+        <line num="106" count="3" type="stmt"/>
+        <line num="108" count="19" type="stmt"/>
+        <line num="110" count="45" type="stmt"/>
+        <line num="111" count="45" type="stmt"/>
+        <line num="112" count="45" type="stmt"/>
+        <line num="113" count="34" type="stmt"/>
+        <line num="116" count="2" type="stmt"/>
+        <line num="118" count="4" type="stmt"/>
+        <line num="122" count="5" type="stmt"/>
+        <line num="123" count="5" type="stmt"/>
+        <line num="124" count="5" type="stmt"/>
+        <line num="126" count="1" type="stmt"/>
+        <line num="129" count="5" type="stmt"/>
+        <line num="130" count="5" type="stmt"/>
+        <line num="132" count="1" type="stmt"/>
+        <line num="135" count="5" type="cond" truecount="2" falsecount="0"/>
+        <line num="136" count="3" type="stmt"/>
+        <line num="138" count="2" type="stmt"/>
+        <line num="141" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="143" count="1" type="stmt"/>
+        <line num="145" count="7" type="cond" truecount="2" falsecount="0"/>
+        <line num="147" count="1" type="stmt"/>
+        <line num="152" count="6" type="stmt"/>
+        <line num="153" count="6" type="stmt"/>
+        <line num="154" count="6" type="stmt"/>
+        <line num="155" count="15" type="stmt"/>
+        <line num="156" count="15" type="stmt"/>
+        <line num="157" count="15" type="stmt"/>
+        <line num="158" count="15" type="stmt"/>
+        <line num="160" count="4" type="cond" truecount="1" falsecount="1"/>
+        <line num="161" count="4" type="stmt"/>
+        <line num="164" count="0" type="stmt"/>
+        <line num="168" count="6" type="cond" truecount="2" falsecount="0"/>
+        <line num="169" count="2" type="stmt"/>
+        <line num="171" count="4" type="stmt"/>
+        <line num="173" count="7" type="stmt"/>
+        <line num="174" count="7" type="stmt"/>
+        <line num="175" count="5" type="stmt"/>
+        <line num="180" count="24" type="cond" truecount="2" falsecount="0"/>
+        <line num="181" count="15" type="stmt"/>
+        <line num="183" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="184" count="1" type="stmt"/>
+        <line num="186" count="2" type="stmt"/>
+        <line num="192" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.helpers">
+      <metrics statements="27" coveredstatements="27" conditionals="0" coveredconditionals="0" methods="14" coveredmethods="14"/>
+      <file name="Mocker.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/helpers/Mocker.ts">
+        <metrics statements="27" coveredstatements="27" conditionals="0" coveredconditionals="0" methods="14" coveredmethods="14"/>
+        <line num="2" count="6" type="stmt"/>
+        <line num="5" count="2" type="stmt"/>
+        <line num="6" count="24" type="stmt"/>
+        <line num="7" count="6" type="stmt"/>
+        <line num="10" count="2" type="stmt"/>
+        <line num="11" count="9" type="stmt"/>
+        <line num="15" count="2" type="stmt"/>
+        <line num="16" count="8" type="stmt"/>
+        <line num="18" count="2" type="stmt"/>
+        <line num="19" count="9" type="stmt"/>
+        <line num="21" count="2" type="stmt"/>
+        <line num="22" count="9" type="stmt"/>
+        <line num="24" count="2" type="stmt"/>
+        <line num="25" count="9" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="1" type="stmt"/>
+        <line num="30" count="2" type="stmt"/>
+        <line num="31" count="1" type="stmt"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="36" count="2" type="stmt"/>
+        <line num="37" count="1" type="stmt"/>
+        <line num="39" count="2" type="stmt"/>
+        <line num="40" count="1" type="stmt"/>
+        <line num="42" count="2" type="stmt"/>
+        <line num="43" count="1" type="stmt"/>
+        <line num="45" count="2" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.types">
+      <metrics statements="225" coveredstatements="225" conditionals="46" coveredconditionals="46" methods="91" coveredmethods="74"/>
+      <file name="array.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/array.ts">
+        <metrics statements="20" coveredstatements="20" conditionals="6" coveredconditionals="6" methods="10" coveredmethods="7"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="12" count="8" type="cond" truecount="3" falsecount="0"/>
+        <line num="13" count="7" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="21" count="7" type="stmt"/>
+        <line num="23" count="7" type="stmt"/>
+        <line num="25" count="7" type="stmt"/>
+        <line num="26" count="2" type="stmt"/>
+        <line num="29" count="8" type="stmt"/>
+        <line num="30" count="7" type="stmt"/>
+        <line num="36" count="8" type="stmt"/>
+        <line num="38" count="8" type="cond" truecount="3" falsecount="0"/>
+        <line num="39" count="2" type="stmt"/>
+        <line num="40" count="1" type="stmt"/>
+        <line num="46" count="2" type="stmt"/>
+        <line num="48" count="2" type="stmt"/>
+        <line num="57" count="8" type="stmt"/>
+      </file>
+      <file name="base.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/base.ts">
+        <metrics statements="31" coveredstatements="31" conditionals="2" coveredconditionals="2" methods="5" coveredmethods="5"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="4" count="8" type="cond" truecount="2" falsecount="0"/>
+        <line num="5" count="8" type="stmt"/>
+        <line num="6" count="8" type="stmt"/>
+        <line num="7" count="8" type="stmt"/>
+        <line num="8" count="8" type="stmt"/>
+        <line num="9" count="8" type="stmt"/>
+        <line num="10" count="8" type="stmt"/>
+        <line num="11" count="8" type="stmt"/>
+        <line num="12" count="8" type="stmt"/>
+        <line num="13" count="8" type="stmt"/>
+        <line num="14" count="8" type="stmt"/>
+        <line num="15" count="8" type="stmt"/>
+        <line num="16" count="8" type="stmt"/>
+        <line num="17" count="8" type="stmt"/>
+        <line num="18" count="8" type="stmt"/>
+        <line num="19" count="8" type="stmt"/>
+        <line num="38" count="8" type="stmt"/>
+        <line num="54" count="8" type="stmt"/>
+        <line num="55" count="2" type="stmt"/>
+        <line num="56" count="2" type="stmt"/>
+        <line num="57" count="1" type="stmt"/>
+        <line num="59" count="1" type="stmt"/>
+        <line num="63" count="8" type="stmt"/>
+        <line num="64" count="2" type="stmt"/>
+        <line num="65" count="2" type="stmt"/>
+        <line num="66" count="1" type="stmt"/>
+        <line num="68" count="1" type="stmt"/>
+        <line num="82" count="177" type="stmt"/>
+        <line num="83" count="177" type="stmt"/>
+        <line num="90" count="8" type="stmt"/>
+      </file>
+      <file name="boolean.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/boolean.ts">
+        <metrics statements="11" coveredstatements="11" conditionals="3" coveredconditionals="3" methods="5" coveredmethods="5"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="10" count="8" type="cond" truecount="3" falsecount="0"/>
+        <line num="11" count="6" type="stmt"/>
+        <line num="13" count="6" type="stmt"/>
+        <line num="15" count="6" type="stmt"/>
+        <line num="16" count="8" type="stmt"/>
+        <line num="17" count="6" type="stmt"/>
+        <line num="21" count="8" type="stmt"/>
+      </file>
+      <file name="enum.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/enum.ts">
+        <metrics statements="16" coveredstatements="16" conditionals="3" coveredconditionals="3" methods="6" coveredmethods="4"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="26" count="8" type="cond" truecount="3" falsecount="0"/>
+        <line num="27" count="5" type="stmt"/>
+        <line num="29" count="5" type="stmt"/>
+        <line num="31" count="5" type="stmt"/>
+        <line num="33" count="8" type="stmt"/>
+        <line num="34" count="1" type="stmt"/>
+        <line num="35" count="3" type="stmt"/>
+        <line num="36" count="3" type="stmt"/>
+        <line num="38" count="1" type="stmt"/>
+        <line num="40" count="8" type="stmt"/>
+        <line num="41" count="5" type="stmt"/>
+        <line num="46" count="8" type="stmt"/>
+      </file>
+      <file name="function.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/function.ts">
+        <metrics statements="16" coveredstatements="16" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="5"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="15" count="8" type="stmt"/>
+        <line num="19" count="3" type="stmt"/>
+        <line num="20" count="3" type="stmt"/>
+        <line num="23" count="3" type="stmt"/>
+        <line num="24" count="9" type="stmt"/>
+        <line num="25" count="3" type="stmt"/>
+        <line num="26" count="3" type="stmt"/>
+        <line num="27" count="2" type="stmt"/>
+        <line num="28" count="2" type="stmt"/>
+        <line num="29" count="1" type="stmt"/>
+        <line num="31" count="2" type="stmt"/>
+        <line num="34" count="3" type="stmt"/>
+        <line num="37" count="8" type="stmt"/>
+        <line num="38" count="3" type="stmt"/>
+        <line num="44" count="8" type="stmt"/>
+      </file>
+      <file name="intersection.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/intersection.ts">
+        <metrics statements="11" coveredstatements="11" conditionals="3" coveredconditionals="3" methods="5" coveredmethods="3"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="12" count="8" type="cond" truecount="3" falsecount="0"/>
+        <line num="16" count="5" type="stmt"/>
+        <line num="18" count="5" type="stmt"/>
+        <line num="20" count="5" type="stmt"/>
+        <line num="26" count="8" type="stmt"/>
+        <line num="27" count="5" type="stmt"/>
+        <line num="33" count="8" type="stmt"/>
+      </file>
+      <file name="lazy.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/lazy.ts">
+        <metrics statements="14" coveredstatements="14" conditionals="3" coveredconditionals="3" methods="6" coveredmethods="4"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="12" count="8" type="cond" truecount="3" falsecount="0"/>
+        <line num="13" count="8" type="stmt"/>
+        <line num="14" count="1" type="stmt"/>
+        <line num="17" count="3" type="stmt"/>
+        <line num="19" count="3" type="stmt"/>
+        <line num="21" count="3" type="stmt"/>
+        <line num="22" count="1" type="stmt"/>
+        <line num="25" count="8" type="stmt"/>
+        <line num="26" count="3" type="stmt"/>
+        <line num="35" count="8" type="stmt"/>
+      </file>
+      <file name="literal.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/literal.ts">
+        <metrics statements="11" coveredstatements="11" conditionals="3" coveredconditionals="3" methods="5" coveredmethods="4"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="36" count="8" type="cond" truecount="3" falsecount="0"/>
+        <line num="37" count="8" type="stmt"/>
+        <line num="39" count="8" type="stmt"/>
+        <line num="41" count="8" type="stmt"/>
+        <line num="44" count="8" type="stmt"/>
+        <line num="45" count="8" type="stmt"/>
+        <line num="50" count="8" type="stmt"/>
+      </file>
+      <file name="null.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/null.ts">
+        <metrics statements="10" coveredstatements="10" conditionals="3" coveredconditionals="3" methods="5" coveredmethods="4"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="9" count="14" type="cond" truecount="3" falsecount="0"/>
+        <line num="10" count="14" type="stmt"/>
+        <line num="12" count="14" type="stmt"/>
+        <line num="14" count="14" type="stmt"/>
+        <line num="15" count="8" type="stmt"/>
+        <line num="16" count="14" type="stmt"/>
+        <line num="20" count="8" type="stmt"/>
+      </file>
+      <file name="number.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/number.ts">
+        <metrics statements="11" coveredstatements="11" conditionals="3" coveredconditionals="3" methods="5" coveredmethods="5"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="10" count="24" type="cond" truecount="3" falsecount="0"/>
+        <line num="11" count="24" type="stmt"/>
+        <line num="13" count="24" type="stmt"/>
+        <line num="15" count="24" type="stmt"/>
+        <line num="16" count="8" type="stmt"/>
+        <line num="17" count="24" type="stmt"/>
+        <line num="21" count="8" type="stmt"/>
+      </file>
+      <file name="object.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/object.ts">
+        <metrics statements="30" coveredstatements="30" conditionals="5" coveredconditionals="5" methods="12" coveredmethods="10"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="5" count="8" type="stmt"/>
+        <line num="30" count="8" type="stmt"/>
+        <line num="31" count="2" type="stmt"/>
+        <line num="32" count="2" type="stmt"/>
+        <line num="33" count="2" type="stmt"/>
+        <line num="35" count="2" type="stmt"/>
+        <line num="36" count="4" type="stmt"/>
+        <line num="37" count="1" type="stmt"/>
+        <line num="39" count="2" type="stmt"/>
+        <line num="50" count="8" type="stmt"/>
+        <line num="52" count="27" type="stmt"/>
+        <line num="55" count="2" type="stmt"/>
+        <line num="56" count="2" type="stmt"/>
+        <line num="61" count="2" type="stmt"/>
+        <line num="64" count="8" type="stmt"/>
+        <line num="68" count="12" type="stmt"/>
+        <line num="86" count="27" type="cond" truecount="3" falsecount="0"/>
+        <line num="92" count="27" type="stmt"/>
+        <line num="94" count="27" type="stmt"/>
+        <line num="95" count="3" type="stmt"/>
+        <line num="106" count="27" type="stmt"/>
+        <line num="110" count="27" type="stmt"/>
+        <line num="112" count="27" type="stmt"/>
+        <line num="134" count="8" type="stmt"/>
+        <line num="135" count="22" type="stmt"/>
+        <line num="148" count="8" type="stmt"/>
+      </file>
+      <file name="string.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/string.ts">
+        <metrics statements="11" coveredstatements="11" conditionals="3" coveredconditionals="3" methods="5" coveredmethods="5"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="10" count="22" type="cond" truecount="3" falsecount="0"/>
+        <line num="11" count="22" type="stmt"/>
+        <line num="13" count="22" type="stmt"/>
+        <line num="15" count="22" type="stmt"/>
+        <line num="17" count="8" type="stmt"/>
+        <line num="18" count="22" type="stmt"/>
+        <line num="22" count="8" type="stmt"/>
+      </file>
+      <file name="tuple.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/tuple.ts">
+        <metrics statements="12" coveredstatements="12" conditionals="3" coveredconditionals="3" methods="6" coveredmethods="4"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="4" count="8" type="stmt"/>
+        <line num="16" count="8" type="cond" truecount="3" falsecount="0"/>
+        <line num="20" count="7" type="stmt"/>
+        <line num="22" count="6" type="stmt"/>
+        <line num="25" count="7" type="stmt"/>
+        <line num="27" count="7" type="stmt"/>
+        <line num="29" count="8" type="stmt"/>
+        <line num="30" count="7" type="stmt"/>
+        <line num="35" count="8" type="stmt"/>
+      </file>
+      <file name="undefined.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/undefined.ts">
+        <metrics statements="10" coveredstatements="10" conditionals="3" coveredconditionals="3" methods="5" coveredmethods="4"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="9" count="17" type="cond" truecount="3" falsecount="0"/>
+        <line num="10" count="17" type="stmt"/>
+        <line num="12" count="17" type="stmt"/>
+        <line num="14" count="17" type="stmt"/>
+        <line num="16" count="8" type="stmt"/>
+        <line num="17" count="17" type="stmt"/>
+        <line num="21" count="8" type="stmt"/>
+      </file>
+      <file name="union.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/union.ts">
+        <metrics statements="11" coveredstatements="11" conditionals="3" coveredconditionals="3" methods="6" coveredmethods="5"/>
+        <line num="1" count="8" type="stmt"/>
+        <line num="2" count="8" type="stmt"/>
+        <line num="3" count="8" type="stmt"/>
+        <line num="10" count="30" type="cond" truecount="3" falsecount="0"/>
+        <line num="14" count="30" type="stmt"/>
+        <line num="16" count="30" type="stmt"/>
+        <line num="18" count="30" type="stmt"/>
+        <line num="20" count="34" type="stmt"/>
+        <line num="23" count="8" type="stmt"/>
+        <line num="24" count="30" type="stmt"/>
+        <line num="29" count="8" type="stmt"/>
+      </file>
+    </package>
+  </project>
+</coverage>
