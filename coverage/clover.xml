@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1585800834571" clover="3.2.0">
-  <project timestamp="1585800834572" name="All files">
-    <metrics statements="447" coveredstatements="441" conditionals="120" coveredconditionals="114" methods="128" coveredmethods="107" elements="695" coveredelements="662" complexity="0" loc="447" ncloc="447" packages="3" files="19" classes="19"/>
+<coverage generated="1585802084593" clover="3.2.0">
+  <project timestamp="1585802084594" name="All files">
+    <metrics statements="448" coveredstatements="442" conditionals="120" coveredconditionals="114" methods="128" coveredmethods="107" elements="696" coveredelements="663" complexity="0" loc="448" ncloc="448" packages="3" files="19" classes="19"/>
     <package name="src">
       <metrics statements="195" coveredstatements="189" conditionals="74" coveredconditionals="68" methods="23" coveredmethods="19"/>
       <file name="ZodError.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/ZodError.ts">
@@ -9,30 +9,30 @@
         <line num="6" count="9" type="stmt"/>
         <line num="7" count="119" type="stmt"/>
         <line num="10" count="119" type="cond" truecount="1" falsecount="1"/>
+        <line num="12" count="119" type="stmt"/>
         <line num="13" count="119" type="stmt"/>
-        <line num="14" count="119" type="stmt"/>
-        <line num="17" count="9" type="stmt"/>
+        <line num="16" count="9" type="stmt"/>
+        <line num="17" count="119" type="stmt"/>
         <line num="18" count="119" type="stmt"/>
         <line num="19" count="119" type="stmt"/>
-        <line num="20" count="119" type="stmt"/>
-        <line num="23" count="9" type="stmt"/>
-        <line num="24" count="135" type="stmt"/>
-        <line num="25" count="146" type="stmt"/>
-        <line num="26" count="146" type="cond" truecount="2" falsecount="0"/>
-        <line num="31" count="9" type="stmt"/>
-        <line num="32" count="38" type="stmt"/>
-        <line num="35" count="9" type="stmt"/>
-        <line num="36" count="65" type="stmt"/>
-        <line num="44" count="119" type="stmt"/>
-        <line num="45" count="12" type="stmt"/>
-        <line num="48" count="119" type="stmt"/>
-        <line num="49" count="13" type="stmt"/>
-        <line num="51" count="14" type="stmt"/>
-        <line num="56" count="119" type="stmt"/>
-        <line num="57" count="3" type="cond" truecount="2" falsecount="0"/>
-        <line num="60" count="119" type="stmt"/>
-        <line num="61" count="13" type="stmt"/>
-        <line num="63" count="9" type="stmt"/>
+        <line num="22" count="9" type="stmt"/>
+        <line num="23" count="135" type="stmt"/>
+        <line num="24" count="146" type="stmt"/>
+        <line num="25" count="146" type="cond" truecount="2" falsecount="0"/>
+        <line num="30" count="9" type="stmt"/>
+        <line num="31" count="38" type="stmt"/>
+        <line num="34" count="9" type="stmt"/>
+        <line num="35" count="65" type="stmt"/>
+        <line num="43" count="119" type="stmt"/>
+        <line num="44" count="12" type="stmt"/>
+        <line num="47" count="119" type="stmt"/>
+        <line num="48" count="13" type="stmt"/>
+        <line num="50" count="14" type="stmt"/>
+        <line num="55" count="119" type="stmt"/>
+        <line num="56" count="3" type="cond" truecount="2" falsecount="0"/>
+        <line num="59" count="119" type="stmt"/>
+        <line num="60" count="13" type="stmt"/>
+        <line num="62" count="9" type="stmt"/>
       </file>
       <file name="index.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/index.ts">
         <metrics statements="66" coveredstatements="66" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="0"/>
@@ -243,7 +243,7 @@
       </file>
     </package>
     <package name="src.types">
-      <metrics statements="225" coveredstatements="225" conditionals="46" coveredconditionals="46" methods="91" coveredmethods="74"/>
+      <metrics statements="226" coveredstatements="226" conditionals="46" coveredconditionals="46" methods="91" coveredmethods="74"/>
       <file name="array.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/array.ts">
         <metrics statements="20" coveredstatements="20" conditionals="6" coveredconditionals="6" methods="10" coveredmethods="7"/>
         <line num="1" count="8" type="stmt"/>
@@ -335,7 +335,7 @@
         <line num="46" count="8" type="stmt"/>
       </file>
       <file name="function.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/function.ts">
-        <metrics statements="16" coveredstatements="16" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="5"/>
+        <metrics statements="17" coveredstatements="17" conditionals="0" coveredconditionals="0" methods="5" coveredmethods="5"/>
         <line num="1" count="8" type="stmt"/>
         <line num="15" count="8" type="stmt"/>
         <line num="19" count="3" type="stmt"/>
@@ -349,9 +349,10 @@
         <line num="29" count="1" type="stmt"/>
         <line num="31" count="2" type="stmt"/>
         <line num="34" count="3" type="stmt"/>
-        <line num="37" count="8" type="stmt"/>
-        <line num="38" count="3" type="stmt"/>
-        <line num="44" count="8" type="stmt"/>
+        <line num="37" count="3" type="stmt"/>
+        <line num="39" count="8" type="stmt"/>
+        <line num="40" count="3" type="stmt"/>
+        <line num="46" count="8" type="stmt"/>
       </file>
       <file name="intersection.ts" path="/Users/colinmcd94/Documents/Projects/zod/src/types/intersection.ts">
         <metrics statements="11" coveredstatements="11" conditionals="3" coveredconditionals="3" methods="5" coveredmethods="3"/>
