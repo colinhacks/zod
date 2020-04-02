@@ -8,7 +8,6 @@ export class ZodError extends Error {
 
   constructor() {
     super();
-
     // restore prototype chain
     const actualProto = new.target.prototype;
     Object.setPrototypeOf(this, actualProto);
@@ -54,7 +53,7 @@ export class ZodError extends Error {
   };
 
   addError = (path: string | number, message: string) => {
-    this.errors = [...this.errors, { path: [path], message }];
+    this.errors = [...this.errors, { path: path === '' ? [] : [path], message }];
   };
 
   merge = (error: ZodError) => {

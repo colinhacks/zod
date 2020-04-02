@@ -1,6 +1,5 @@
-import { ZodTuple } from './tuple';
 import { ZodParser, ParseParams } from '../parser';
-import { MaskParams, MaskedType } from './object';
+// import { MaskParams, MaskedType } from './object';
 
 export enum ZodTypes {
   string = 'string',
@@ -28,16 +27,8 @@ export interface ZodTypeDef {
 
 export type ZodAny = ZodType<any>;
 
-export type TypeOf<T extends ZodAny> = T['_type'];
-export type Infer<T extends ZodAny> = T['_type'];
-
-export type TypeOfTuple<T extends [ZodAny, ...ZodAny[]] | []> = {
-  [k in keyof T]: T[k] extends ZodType<infer U> ? U : never;
-};
-
-export type TypeOfFunction<Args extends ZodTuple<any>, Returns extends ZodAny> = Args['_type'] extends Array<any>
-  ? (...args: Args['_type']) => Returns['_type']
-  : never;
+export type TypeOf<T extends { _type: any }> = T['_type'];
+export type Infer<T extends { _type: any }> = T['_type'];
 
 //   interface Assertable<T> {
 //     is(value: any): value is T;
@@ -47,28 +38,31 @@ export type TypeOfFunction<Args extends ZodTuple<any>, Returns extends ZodAny> =
 export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   readonly _type!: Type;
   readonly _def!: Def;
+  readonly _maskParams!: Def;
 
   //  is(value: any): value is Type;
   //  assert(value: any): asserts value is Type;
 
-  parse: (x: unknown, params?: ParseParams) => Type;
+  parse: (x: Type, params?: ParseParams) => Type;
 
-  mask = <P extends MaskParams<Type>>(params: P): MaskedType<Type, P> => {
-    return params as any;
-  };
+  //  mask: (params: MaskParams, params?: ParseParams) => Type;
 
-  is(u: unknown): u is Type {
+  //  mask = <P extends MaskParams<Type>>(params: P): MaskedType<Type, P> => {
+  //    return params as any;
+  //  };
+
+  is(u: Type): u is Type {
     try {
-      this.parse(u);
+      this.parse(u as any);
       return true;
     } catch (err) {
       return false;
     }
   }
 
-  check(u: unknown): u is Type {
+  check(u: Type): u is Type {
     try {
-      this.parse(u);
+      this.parse(u as any);
       return true;
     } catch (err) {
       return false;

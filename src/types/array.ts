@@ -47,11 +47,11 @@ export class ZodNonEmptyArray<T extends z.ZodAny> extends z.ZodType<[T['_type'],
 
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  static create = <T extends z.ZodAny>(schema: T): ZodArray<T> => {
-    return new ZodArray({
-      t: z.ZodTypes.array,
-      nonempty: true,
-      type: schema,
-    });
-  };
+  // static create = <T extends z.ZodAny>(schema: T): ZodArray<T> => {
+  //   return new ZodArray({
+  //     t: z.ZodTypes.array,
+  //     nonempty: true,
+  //     type: schema,
+  //   });
+  // };
 }

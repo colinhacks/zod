@@ -3,6 +3,10 @@ import { ZodUnion } from './union';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 
+export type TypeOfTuple<T extends [z.ZodAny, ...z.ZodAny[]] | []> = {
+  [k in keyof T]: T[k] extends z.ZodType<infer U> ? U : never;
+};
+
 export interface ZodTupleDef<T extends [z.ZodAny, ...z.ZodAny[]] | [] = [z.ZodAny, ...z.ZodAny[]]>
   extends z.ZodTypeDef {
   t: z.ZodTypes.tuple;
@@ -10,7 +14,7 @@ export interface ZodTupleDef<T extends [z.ZodAny, ...z.ZodAny[]] | [] = [z.ZodAn
 }
 
 export class ZodTuple<T extends [z.ZodAny, ...z.ZodAny[]] | [] = [z.ZodAny, ...z.ZodAny[]]> extends z.ZodType<
-  z.TypeOfTuple<T>,
+  TypeOfTuple<T>,
   ZodTupleDef<T>
 > {
   toJSON = () => ({

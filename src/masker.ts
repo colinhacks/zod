@@ -168,13 +168,10 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       if (obj === def.value) return obj;
       throw ZodError.fromString(`${obj} !== ${def.value}`);
     case z.ZodTypes.enum:
-      for (const literalDef of def.values) {
-        try {
-          literalDef.parse(obj, params);
-          return obj;
-        } catch (err) {}
+      if (def.values.indexOf(obj) === -1) {
+        throw ZodError.fromString(`"${obj}" does not match any value in enum`);
       }
-      throw ZodError.fromString(`"${obj}" does not match any value in enum`);
+      return obj;
     // case z.ZodTypes.function:
     //   return obj;
     default:

@@ -305,7 +305,7 @@ type F = z.TypeOf<typeof F>; // string | number | boolean | undefined | null;
 You can combine unions and string literals to create an enum schemas.
 
 ```ts
-const FishEnum = t.union([t.literal('Salmon'), t.literal('Tuna'), t.literal('Trout')]);
+const FishEnum = z.union([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
 
 FishEnum.parse('Salmon'); // => "Salmon"
 FishEnum.parse('Flounder'); // => throws
@@ -314,7 +314,7 @@ FishEnum.parse('Flounder'); // => throws
 You can also use the built-in `z.enum()` function, like so:
 
 ```ts
-const FishEnum = t.enum([t.literal('Salmon'), t.literal('Tuna'), t.literal('Trout')]);
+const FishEnum = z.enum([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
 
 // you can autocomplete values
 // with the `.Values` variable
@@ -691,6 +691,8 @@ In our experience, io-ts prioritizes functional programming purity over develope
 For instance, consider how to define an object with optional properties in io-ts:
 
 ```ts
+import * as t from 'io-ts';
+
 const A = t.type({
   foo: t.string,
 });

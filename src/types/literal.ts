@@ -2,9 +2,8 @@ import * as z from './base';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
+import { Primitive } from '../helpers/primitive';
 
-// type Primitive = string | number | boolean | null | undefined;
-export type Primitive = string | number | boolean | null | undefined;
 // type LiteralValue<U extends Primitive = Primitive> =
 //   | U
 //   | { [name: string]: LiteralValue<U> }

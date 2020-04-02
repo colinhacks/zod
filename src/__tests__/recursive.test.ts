@@ -10,29 +10,42 @@ interface B {
   a: A;
 }
 
-test('recursives', () => {
-  const A: z.ZodType<A> = z.lazy(() =>
-    z.object({
-      val: z.number(),
-      b: B,
-      // fun: z.function(z.tuple([z.string()]), z.number()),
-    }),
-  );
+const A: z.ZodType<A> = z.lazy(() =>
+  z.object({
+    val: z.number(),
+    b: B,
+    // fun: z.function(z.tuple([z.string()]), z.number()),
+  }),
+);
 
-  const B: z.ZodType<B> = z.lazy(() =>
-    z.object({
-      val: z.number(),
-      a: A,
-    }),
-  );
+const B: z.ZodType<B> = z.lazy(() =>
+  z.object({
+    val: z.number(),
+    a: A,
+  }),
+);
 
-  const a: any = { val: 1 };
-  const b: any = { val: 2 };
-  a.b = b;
-  b.a = a;
+const a: any = { val: 1 };
+const b: any = { val: 2 };
+a.b = b;
+b.a = a;
+
+test('valid check', () => {
   A.parse(a);
   B.parse(b);
-  expect(() => A.parse({})).toThrow();
+});
+
+test('invalid check', () => {
+  expect(() => A.parse({} as any)).toThrow();
+});
+
+test('toJSON throws', () => {
+  const checker = () => A.toJSON();
+  expect(checker).toThrow();
+});
+
+test('schema getter', () => {
+  (A as z.ZodLazy<any>).schema;
 });
 
 test('self recursion', () => {

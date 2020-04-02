@@ -2,9 +2,9 @@ import * as z from './types/base';
 import { ZodDef } from '.';
 import { ZodError } from './ZodError';
 
-// function assertNever(x: never): never {
-//   throw ZodError.fromString('Unexpected object: ' + x);
-// }
+function assertNever(x: never): never {
+  throw ZodError.fromString('Unexpected object: ' + x);
+}
 export type ParseParams = {
   seen: { schema: any; objects: any[] }[];
 };
@@ -66,7 +66,6 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
             return null;
           } else {
             arrayError.mergeChild(i, ZodError.fromString(err.message));
-            // arrayErrors.push(`[${i}]: ${err.message}`);
             return null;
           }
         }
@@ -140,13 +139,17 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
 
     case z.ZodTypes.tuple:
       if (!Array.isArray(obj)) {
+        // tupleError.addError('','Non-array type detected; invalid tuple.')
         throw ZodError.fromString('Non-array type detected; invalid tuple.');
       }
       if (def.items.length !== obj.length) {
+        // tupleError.addError('',`Incorrect number of elements in tuple: expected ${def.items.length}, got ${obj.length}`)
         throw ZodError.fromString(
           `Incorrect number of elements in tuple: expected ${def.items.length}, got ${obj.length}`,
         );
       }
+
+      const tupleError = ZodError.create([]);
       const parsedTuple: any[] = [];
       for (const index in obj) {
         const item = obj[index];
@@ -155,11 +158,15 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
           parsedTuple.push(itemParser.parse(item, params));
         } catch (err) {
           if (err instanceof ZodError) {
-            throw err.bubbleUp(index);
+            tupleError.mergeChild(index, err);
+            // throw err.bubbleUp(index);
           } else {
             throw ZodError.fromString(err.message);
           }
         }
+      }
+      if (!tupleError.empty) {
+        throw tupleError;
       }
       return parsedTuple as any;
     case z.ZodTypes.lazy:
@@ -173,19 +180,16 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       if (obj === def.value) return obj;
       throw ZodError.fromString(`${obj} !== ${def.value}`);
     case z.ZodTypes.enum:
-      for (const literalDef of def.values) {
-        try {
-          literalDef.parse(obj, params);
-          return obj;
-        } catch (err) {}
+      if (def.values.indexOf(obj) === -1) {
+        throw ZodError.fromString(`"${obj}" does not match any value in enum`);
       }
-      throw ZodError.fromString(`"${obj}" does not match any value in enum`);
+      return obj;
     // case z.ZodTypes.function:
     //   return obj;
     default:
       // function
-      return obj;
-    // assertNever(def);
+      // return obj;
+      assertNever(def);
     // break;
   }
 

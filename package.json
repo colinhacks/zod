@@ -45,7 +45,7 @@
     "build": "yarn run clean && tsc --p tsconfig.package.json",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
-    "test": "jest --config jestconfig.json",
+    "test": "jest --config jestconfig.json --coverage",
     "prepare": "npm run build",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts"
   },

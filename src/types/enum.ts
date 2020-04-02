@@ -2,39 +2,45 @@ import * as z from './base';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
-import { ZodLiteral } from './literal';
 
 export type ArrayKeys = keyof any[];
 export type Indices<T> = Exclude<keyof T, ArrayKeys>;
-type EnumValues = [ZodLiteral<string>, ...ZodLiteral<string>[]];
-type StringValues<T extends EnumValues> = {
-  [k in Indices<T>]: T[k] extends ZodLiteral<infer U> ? (U extends string ? U : never) : never;
-}[Indices<T>];
+
+// type EnumValues = [ZodLiteral<string>, ...ZodLiteral<string>[]];
+
+type EnumValues = [string, ...string[]];
+
+type Values<T extends EnumValues> = {
+  [k in T[number]]: k;
+};
+
+// type Vals = StringValues<['asdf','qwer']>
+// const infer = <U extends string, T extends [U, ...U[]]>(args: T):T => args;
+// const e = infer(['asdf']);
 
 export interface ZodEnumDef<T extends EnumValues = EnumValues> extends z.ZodTypeDef {
   t: z.ZodTypes.enum;
   values: T;
 }
 
-export class ZodEnum<T extends EnumValues = EnumValues> extends z.ZodType<T[number]['_type'], ZodEnumDef<T>> {
+export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<T[number], ZodEnumDef<T>> {
   optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   toJSON = () => this._def;
 
-  get Values(): { [k in StringValues<T>]: k } {
+  get Values(): Values<T> {
     const enumValues: any = {};
-    for (const lit of this._def.values) {
-      enumValues[lit._def.value] = lit._def.value;
+    for (const val of this._def.values) {
+      enumValues[val] = val;
     }
     return enumValues as any;
   }
-
-  static create = <T extends EnumValues>(values: T): ZodEnum<T> => {
+  static create = <U extends string, T extends [U, ...U[]]>(values: T): ZodEnum<T> => {
     return new ZodEnum({
       t: z.ZodTypes.enum,
       values: values,
-    });
+    }) as any;
   };
 }

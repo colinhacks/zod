@@ -1,5 +1,5 @@
 import * as z from '../index';
-import { AssertEqual } from '../util';
+import { AssertEqual } from '../helpers/util';
 
 const Test = z.object({
   f1: z.number(),
@@ -44,5 +44,14 @@ test('correct parsing', () => {
 });
 
 test('incorrect #1', () => {
-  expect(() => Test.parse({})).toThrow();
+  expect(() => Test.parse({} as any)).toThrow();
+});
+
+test('nonstrict', () => {
+  z.object({ points: z.number() })
+    .nonstrict()
+    .parse({
+      points: 2314,
+      unknown: 'asdf',
+    });
 });
