@@ -162,9 +162,11 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       lazySchema.parse(obj, params);
       return obj;
     case z.ZodTypes.literal:
-      const literalValue = def.value;
-      if (typeof literalValue === 'string') if (obj === def.value) return obj;
-      throw ZodError.fromString(`${obj} !== Literal<${def.value}>`);
+      // const literalValue = def.value;
+      // if (typeof literalValue === 'object' && obj !== null) throw ZodError.fromString(`Can't process non-primitive literals.`);
+      // if (['string','']typeof obj === 'object') throw ZodError.fromString(`Invalid type: ${object}.`);
+      if (obj === def.value) return obj;
+      throw ZodError.fromString(`${obj} !== ${def.value}`);
     case z.ZodTypes.enum:
       for (const literalDef of def.values) {
         try {

@@ -33,10 +33,11 @@
     "noFallthroughCasesInSwitch": true /* Report errors for fallthrough cases in switch statement. */,
   },
   "include": [
-    "src"
+    "src",
+    "tsconfig.package.json"
   ],
   "exclude": [
     "node_modules",
-    "**/__tests__/"
+    // "**/__tests__/"
   ]
 }

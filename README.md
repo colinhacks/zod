@@ -3,6 +3,12 @@
   <h1 align="center">Zod</h1>
 </p>
 
+Created and maintained by [@vriad](https://twitter.com/vriad).
+
+The motivation for this library and a detailed comparison to various alternatives can be found at https://vriad.com/blog/zod.
+<br/>
+<br/>
+
 ### Table of contents
 
 - [Installation](#installation)
@@ -420,17 +426,43 @@ Category.parse({
 }); // passes
 ```
 
+Unfortunately this code is a bit duplicative, since you're declaring the types twice: once in the interface and again in the Zod definition. If your schema has lots of primitive fields, there's a way of reducing the amount of duplication:
+
+```ts
+// define all the non-recursive stuff here
+const BaseCategory = z.object({
+  name: z.string(),
+  tags: z.array(z.string()),
+  itemCount: z.number(),
+});
+
+// create an interface that extends the base schema
+interface Category extends z.Infer<typeof BaseCategory> {
+  subcategories: Category[];
+}
+
+// merge the base schema with
+// a new Zod schema containing relations
+const Category: z.ZodType<Category> = BaseCategory.merge(
+  z.object({
+    subcategories: z.lazy(() => z.array(Category)),
+  }),
+);
+```
+
+### Cyclical objects
+
 Validation still works as expected even when there are cycles in the data.
 
 ```ts
-const untypedCategory: any = {
+const cyclicalCategory: any = {
   name: 'Category A',
 };
 
 // creating a cycle
-untypedCategory.subcategories = [untypedCategory];
+cyclicalCategory.subcategories = [cyclicalCategory];
 
-const parsedCategory = Category.parse(untypedCategory); // parses successfully
+const parsedCategory = Category.parse(cyclicalCategory); // parses successfully
 
 parsedCategory.subcategories[0].subcategories[0].subcategories[0];
 // => parsedCategory: Category;

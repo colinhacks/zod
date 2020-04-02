@@ -42,7 +42,7 @@
   ],
   "scripts": {
     "clean": "rm -rf lib/*",
-    "build": "yarn run clean && tsc",
+    "build": "yarn run clean && tsc --p tsconfig.package.json",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
     "test": "jest --config jestconfig.json",

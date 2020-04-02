@@ -45,6 +45,7 @@ const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
 const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
+// const recursionType = ZodObject.recursion;
 const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
 const ostring = () => stringType().optional();
@@ -64,6 +65,7 @@ export {
   tupleType as tuple,
   functionType as function,
   lazyType as lazy,
+  // recursionType as recursion,
   literalType as literal,
   enumType as enum,
   ostring,

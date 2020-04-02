@@ -4,7 +4,7 @@ import { ZodNull } from './null';
 import { ZodUnion } from './union';
 
 // type Primitive = string | number | boolean | null | undefined;
-type Primitive = string | number | boolean | null | undefined;
+export type Primitive = string | number | boolean | null | undefined;
 // type LiteralValue<U extends Primitive = Primitive> =
 //   | U
 //   | { [name: string]: LiteralValue<U> }

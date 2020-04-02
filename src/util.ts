@@ -1,7 +1,5 @@
 import { ZodRawShape } from './types/base';
 
-// import { ZodRawShape } from '.';
-
 export type Merge<U extends object, V extends object> = {
   [k in Exclude<keyof U, keyof V>]: U[k];
 } &
@@ -11,3 +9,5 @@ export type MergeShapes<U extends ZodRawShape, V extends ZodRawShape> = {
   [k in Exclude<keyof U, keyof V>]: U[k];
 } &
   V;
+
+export type AssertEqual<T, Expected> = T extends Expected ? (Expected extends T ? true : never) : never;
