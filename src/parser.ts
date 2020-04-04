@@ -45,10 +45,10 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       return obj as any;
     case z.ZodTypes.undefined:
       if (obj !== undefined) throw ZodError.fromString(`Non-undefined type:Found: ${typeof obj}`);
-      return obj as any;
+      return undefined;
     case z.ZodTypes.null:
       if (obj !== null) throw ZodError.fromString(`Non-null type: ${typeof obj}`);
-      return obj as any;
+      return null;
     case z.ZodTypes.array:
       if (!Array.isArray(obj)) throw ZodError.fromString(`Non-array type: ${typeof obj}`);
       const arrayError = ZodError.create([]);
@@ -60,14 +60,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
           const parsedItem = def.type.parse(item, params);
           return parsedItem;
         } catch (err) {
-          if (err instanceof ZodError) {
-            arrayError.mergeChild(i, err);
-            // arrayErrors.push(`[${i}]: ${err.message}`);
-            return null;
-          } else {
-            arrayError.mergeChild(i, ZodError.fromString(err.message));
-            return null;
-          }
+          arrayError.mergeChild(i, err);
         }
       });
       if (!arrayError.empty) {
@@ -89,23 +82,21 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
         }
       }
 
+      const parsedObject: any = {};
       const objectError = ZodError.create([]);
       for (const key in shape) {
         try {
-          def.shape[key].parse(obj[key], params);
+          const parsedEntry = def.shape[key].parse(obj[key], params);
+          parsedObject[key] = parsedEntry;
         } catch (err) {
-          if (err instanceof ZodError) {
-            objectError.mergeChild(key, err);
-          } else {
-            objectError.mergeChild(key, ZodError.fromString(err.message));
-          }
+          objectError.mergeChild(key, err);
         }
       }
 
       if (!objectError.empty) {
         throw objectError; //ZodError.fromString(objectErrors.join('\n'));
       }
-      return obj;
+      return parsedObject;
     case z.ZodTypes.union:
       for (const option of def.options) {
         try {
@@ -157,12 +148,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
         try {
           parsedTuple.push(itemParser.parse(item, params));
         } catch (err) {
-          if (err instanceof ZodError) {
-            tupleError.mergeChild(index, err);
-            // throw err.bubbleUp(index);
-          } else {
-            throw ZodError.fromString(err.message);
-          }
+          tupleError.mergeChild(index, err);
         }
       }
       if (!tupleError.empty) {
@@ -186,6 +172,21 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       return obj;
     // case z.ZodTypes.function:
     //   return obj;
+    case z.ZodTypes.record:
+      if (typeof obj !== 'object') throw ZodError.fromString(`Non-object type: ${typeof obj}`);
+      if (Array.isArray(obj)) throw ZodError.fromString(`Non-object type: array`);
+
+      const parsedRecord: any = {};
+      const recordError = new ZodError();
+      for (const key in obj) {
+        try {
+          parsedRecord[key] = def.valueType.parse(obj[key]);
+        } catch (err) {
+          recordError.mergeChild(key, err);
+        }
+      }
+      if (!recordError.empty) throw recordError;
+      return parsedRecord;
     default:
       // function
       // return obj;

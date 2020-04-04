@@ -3,6 +3,13 @@
   <h1 align="center">Zod</h1>
 </p>
 
+[![License][license-image]][license-url]
+[![npm](https://img.shields.io/npm/dw/jest-coverage-badges.svg)](https://www.npmjs.com/package/jest-coverage-badges)
+![coverage](coverage/badge.svg)
+
+[license-url]: https://opensource.org/licenses/MIT
+[license-image]: https://img.shields.io/npm/l/make-coverage-badge.svg
+
 Created and maintained by [@vriad](https://twitter.com/vriad).
 
 The motivation for this library and a detailed comparison to various alternatives can be found at https://vriad.com/blog/zod.

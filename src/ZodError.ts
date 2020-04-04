@@ -40,8 +40,12 @@ export class ZodError extends Error {
     ]);
   };
 
-  mergeChild = (pathElement: string | number, child: ZodError) => {
-    this.merge(child.bubbleUp(pathElement));
+  mergeChild = (pathElement: string | number, child: Error) => {
+    if (child instanceof ZodError) {
+      this.merge(child.bubbleUp(pathElement));
+    } else {
+      this.merge(ZodError.fromString(child.message).bubbleUp(pathElement));
+    }
   };
 
   bubbleUp = (pathElement: string | number) => {

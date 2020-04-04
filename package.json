@@ -45,13 +45,15 @@
     "build": "yarn run clean && tsc --p tsconfig.package.json",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
-    "test": "jest --config jestconfig.json --coverage",
+    "test": "jest --config jestconfig.json --coverage && yarn run badge",
+    "badge": "make-coverage-badge --output-path ./coverage.svg",
     "prepare": "npm run build",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts"
   },
   "devDependencies": {
     "@types/jest": "^25.1.4",
     "jest": "^25.1.0",
+    "make-coverage-badge": "^1.2.0",
     "nodemon": "^2.0.2",
     "prettier": "^1.19.1",
     "ts-jest": "^25.2.1",

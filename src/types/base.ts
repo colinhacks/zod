@@ -13,6 +13,7 @@ export enum ZodTypes {
   union = 'union',
   intersection = 'intersection',
   tuple = 'tuple',
+  record = 'record',
   function = 'function',
   lazy = 'lazy',
   literal = 'literal',

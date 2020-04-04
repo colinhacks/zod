@@ -10,5 +10,10 @@
     "jsx",
     "json",
     "node"
+  ],
+  "coverageReporters": [
+    "json-summary",
+    "text",
+    "lcov"
   ]
 }

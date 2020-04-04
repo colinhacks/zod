@@ -10,6 +10,7 @@ import { ZodObject, ZodObjectDef } from './types/object';
 import { ZodUnion, ZodUnionDef } from './types/union';
 import { ZodIntersection, ZodIntersectionDef } from './types/intersection';
 import { ZodTuple, ZodTupleDef } from './types/tuple';
+import { ZodRecord, ZodRecordDef } from './types/record';
 import { ZodFunction } from './types/function';
 import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
@@ -28,6 +29,7 @@ type ZodDef =
   | ZodUnionDef
   | ZodIntersectionDef
   | ZodTupleDef
+  | ZodRecordDef
   // | ZodFunctionDef
   | ZodLazyDef
   | ZodLiteralDef
@@ -43,6 +45,7 @@ const objectType = ZodObject.create;
 const unionType = ZodUnion.create;
 const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
+const recordType = ZodRecord.create;
 const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
 // const recursionType = ZodObject.recursion;
@@ -51,6 +54,10 @@ const enumType = ZodEnum.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
+
+// const stringRecord = <T extends ZodAny>(x:T)=>recordType(stringType(),x);
+// const stringMap = stringRecord(objectType({asf:stringType()}))
+// const stringMap2 = recordType(stringType(),objectType({ asf: stringType() }));
 
 export {
   stringType as string,
@@ -63,6 +70,7 @@ export {
   unionType as union,
   intersectionType as intersection,
   tupleType as tuple,
+  recordType as record,
   functionType as function,
   lazyType as lazy,
   // recursionType as recursion,
@@ -84,6 +92,7 @@ export {
   ZodUnion,
   ZodIntersection,
   ZodTuple,
+  ZodRecord,
   ZodFunction,
   ZodLazy,
   ZodLiteral,
