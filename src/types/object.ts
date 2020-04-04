@@ -15,14 +15,22 @@ export interface ZodObjectDef<T extends z.ZodRawShape = z.ZodRawShape> extends z
   strict: boolean;
 }
 
-type OptionalKeys<T extends z.ZodRawShape> = {
-  [k in keyof T]: undefined extends T[k]['_type'] ? k : never;
+type OptionalKeys<T extends object> = {
+  [k in keyof T]: undefined extends T[k] ? k : never;
 }[keyof T];
-type RequiredKeys<T extends z.ZodRawShape> = Exclude<keyof T, OptionalKeys<T>>;
-type ObjectIntersection<T extends z.ZodRawShape> = {
-  [k in OptionalKeys<T>]?: T[k]['_type'];
+type RequiredKeys<T extends object> = Exclude<keyof T, OptionalKeys<T>>;
+
+type AddQuestionMarks<T extends object> = {
+  [k in OptionalKeys<T>]?: T[k];
 } &
-  { [k in RequiredKeys<T>]: T[k]['_type'] };
+  { [k in RequiredKeys<T>]: T[k] };
+
+type ObjectIntersection<T extends z.ZodRawShape> = AddQuestionMarks<
+  {
+    [k in keyof T]: T[k]['_type'];
+  }
+>;
+
 type Flatten<T extends object> = { [k in keyof T]: T[k] };
 type FlattenObject<T extends z.ZodRawShape> = { [k in keyof T]: T[k] };
 type ObjectType<T extends z.ZodRawShape> = FlattenObject<ObjectIntersection<T>>;

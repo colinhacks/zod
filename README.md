@@ -25,6 +25,7 @@ The motivation for this library and a detailed comparison to various alternative
   - [Parsing](#parsing)
   - [Type inference](#type-inference)
   - [Objects](#objects)
+  - [Records](#records)
   - [Arrays](#arrays)
   - [Unions](#unions)
     - [Optional types](#optional-types)
@@ -95,7 +96,9 @@ const tru = z.literal(true); // => ZodType<true>
 
 ## Parsing and validation
 
-Given a Zod schema, you can call its `.parse(data)` method to check `data` is valid. If it is, `data` is returned (with full type information!). Otherwise, an error is thrown.
+Given a Zod schema, you can call its `.parse(data)` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
+
+IMPORTANT: The variable you pass into `.parse` is not the same variable you get back out. Assuming the value passes validation, you get back a deep clone of the object you passed in.
 
 ```ts
 const stringSchema = z.string();
@@ -133,11 +136,11 @@ To learn more about error handling with Zod, jump to [Errors](#errors).
 
 ## Type inference
 
-You can extract the TypeScript type of any schema with `z.TypeOf<>`.
+You can extract the TypeScript type of any schema with `z.infer<>`.
 
 ```ts
 const A = z.string();
-type A = z.TypeOf<typeof A>; // string
+type A = z.infer<typeof A>; // string
 
 const u: A = 12; // TypeError
 const u: A = 'asdf'; // compiles
@@ -154,7 +157,7 @@ const dogSchema = z.object({
   neutered: z.boolean(),
 });
 
-type Dog = z.TypeOf<typeof dogSchema>;
+type Dog = z.infer<typeof dogSchema>;
 /* 
 equivalent to:
 type Dog = { 
@@ -212,7 +215,7 @@ dogSchemaNonstrict.parse({
 This change is reflected in the inferred type as well:
 
 ```ts
-type NonstrictDog = z.TypeOf<typeof dogSchemaNonstrict>;
+type NonstrictDog = z.infer<typeof dogSchemaNonstrict>;
 /*
 {
   name:string; 
@@ -221,6 +224,78 @@ type NonstrictDog = z.TypeOf<typeof dogSchemaNonstrict>;
 } 
 */
 ```
+
+## Records
+
+Records are similar to object schemas, but don't enforce a type restriction on the keys. For instance:
+
+```ts
+const objectSchema = z.object({ name: z.string() });
+```
+
+`objectSchema` only accepts objects with single key: `name`. You could use `.nonstrict()` to create a schema that accepts unknown keys, but that schema won't validated the values associated with those unknown keys.
+
+```ts
+const nonstrict = objectSchema.nonstrict();
+type nonstrict = z.infer<typeof nonstrict>;
+// => { name: string, [k:string]: any}
+
+const parsed = nonstrict.parse({ name: 'Serena', bar: ['whatever'] });
+parsed.bar; // no type information
+```
+
+But what if you want an object that enforces a schema on all of the values it contains? That's when you would use a record.
+
+```ts
+const User = z.object({
+  name: z.string(),
+});
+
+const UserStore = z.record(User);
+type UserStore = z.infer<typeof UserStore>;
+// => { [k: string]: { name: string } }
+```
+
+This is particularly useful for storing or caching items by ID.
+
+```ts
+const userStore: UserStore = {};
+
+userStore['77d2586b-9e8e-4ecf-8b21-ea7e0530eadd'] = {
+  name: 'Carlotta',
+}; // passes
+
+userStore['77d2586b-9e8e-4ecf-8b21-ea7e0530eadd'] = {
+  whatever: 'Ice cream sundae',
+}; // TypeError
+```
+
+And of course you can call `.parse` just like any other Zod schema.
+
+```ts
+UserStore.parse({
+  user_1328741234: { name: 'James' },
+}); // => passes
+```
+
+### A note on string keys
+
+You may have expected `z.record()` to accept two arguments: one for the keys and one for the values. Otherwise, how do you represent `{ [k: number]: string }` in Zod?
+
+As it turns out, TypeScript's behavior surrounding `[k: number]` is a little unintuitive:
+
+```ts
+const testMap: { [k: number]: string } = {
+  1: 'one',
+};
+
+for (const key in testMap) {
+  console.log(`${key}: ${typeof key}`);
+}
+// prints: `1: string`
+```
+
+As you can see, JavaScript automatically casts all object keys to strings under the hood. Since Zod is trying to bridge the gap between static and runtime types, it doesn't make sense to provide a way of creating a record schema with numerical keys, since there's no such thing as a numerical key in runtime JavaScript.
 
 ## Arrays
 
@@ -258,7 +333,7 @@ Unions are the basis for defining optional schemas. An "optional string" is just
 const A = z.union([z.string(), z.undefined()]);
 
 A.parse(undefined); // => passes, returns undefined
-type A = z.TypeOf<typeof A>; // string | undefined
+type A = z.infer<typeof A>; // string | undefined
 ```
 
 Zod provides a shorthand way to make any schema optional:
@@ -269,7 +344,7 @@ const B = z.string().optional(); // equivalent to A
 const C = z.object({
   username: z.string().optional(),
 });
-type C = z.TypeOf<typeof C>; // { username?: string | undefined };
+type C = z.infer<typeof C>; // { username?: string | undefined };
 ```
 
 ### Nullable types
@@ -284,7 +359,7 @@ Or you can use the shorthand `.nullable()`:
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
-type E = z.TypeOf<typeof D>; // string | null
+type E = z.infer<typeof D>; // string | null
 ```
 
 You can create unions of any two or more schemas.
@@ -304,7 +379,7 @@ F.parse(undefined); // => undefined
 F.parse(null); // => null
 F.parse({}); // => throws Error!
 
-type F = z.TypeOf<typeof F>; // string | number | boolean | undefined | null;
+type F = z.infer<typeof F>; // string | number | boolean | undefined | null;
 ```
 
 ## Enums
@@ -346,10 +421,10 @@ const a = z.union([z.number(), z.string()]);
 const b = z.union([z.number(), z.boolean()]);
 
 const c = z.intersection(a, b);
-type c = z.TypeOf<typeof C>; // => number
+type c = z.infer<typeof C>; // => number
 
 const stringAndNumber = z.intersection(z.string(), z.number());
-type Never = z.TypeOf<typeof stringAndNumber>; // => never
+type Never = z.infer<typeof stringAndNumber>; // => never
 ```
 
 This is particularly useful for defining "schema mixins" that you can apply to multiple schemas.
@@ -365,7 +440,7 @@ const BaseTeacher = z.object({
 
 const Teacher = z.intersection(BaseTeacher, HasId);
 
-type Teacher = z.TypeOf<typeof Teacher>;
+type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };
 ```
 
@@ -402,7 +477,7 @@ const athleteSchema = z.tuple([
   }), // statistics
 ]);
 
-type Athlete = z.TypeOf<typeof athleteSchema>;
+type Athlete = z.infer<typeof athleteSchema>;
 // type Athlete = [string, number, { pointsScored: number }]
 ```
 
@@ -445,7 +520,7 @@ const BaseCategory = z.object({
 });
 
 // create an interface that extends the base schema
-interface Category extends z.Infer<typeof BaseCategory> {
+interface Category extends z.infer<typeof BaseCategory> {
   subcategories: Category[];
 }
 
@@ -491,7 +566,7 @@ const args = z.tuple([z.string()]);
 const returnType = z.number();
 
 const myFunction = z.function(args, returnType);
-type myFunction = z.TypeOf<typeof myFunction>;
+type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string)=>number
 ```
 
@@ -746,7 +821,7 @@ const C = z.object({
   bar: z.string().optional(),
 });
 
-type C = z.TypeOf<typeof C>;
+type C = z.infer<typeof C>;
 // returns { foo: string; bar?: number | undefined }
 ```
 

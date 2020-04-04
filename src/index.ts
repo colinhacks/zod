@@ -103,4 +103,4 @@ export {
   ZodError,
 };
 
-export { TypeOf, TypeOf as Infer };
+export { TypeOf, TypeOf as infer };

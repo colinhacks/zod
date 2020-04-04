@@ -35,6 +35,27 @@ test('valid check', () => {
   B.parse(b);
 });
 
+test('masking check', () => {
+  const FragmentOnA = z
+    .object({
+      val: z.number(),
+      b: z
+        .object({
+          val: z.number(),
+          a: z
+            .object({
+              val: z.number(),
+            })
+            .nonstrict(),
+        })
+        .nonstrict(),
+    })
+    .nonstrict();
+
+  const fragment = FragmentOnA.parse(a);
+  console.log(JSON.stringify(fragment, null, 2));
+});
+
 test('invalid check', () => {
   expect(() => A.parse({} as any)).toThrow();
 });
@@ -52,7 +73,7 @@ test('self recursion', () => {
   const BaseCategory = z.object({
     name: z.string(),
   });
-  interface Category extends z.Infer<typeof BaseCategory> {
+  interface Category extends z.infer<typeof BaseCategory> {
     subcategories: Category[];
   }
   const Category: z.ZodType<Category> = BaseCategory.merge(

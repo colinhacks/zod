@@ -3,7 +3,7 @@ import { AssertEqual } from '../helpers/util';
 import { ZodError } from '../ZodError';
 
 // const blue = z.literal('blue');
-// type blue = z.Infer<typeof blue>;
+// type blue = z.infer<typeof blue>;
 
 // const FishEnum = z.enum([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
 

@@ -8,7 +8,7 @@ test('create enum', () => {
 
 test('infer enum', () => {
   const MyEnum = z.enum(['Red', 'Green', 'Blue']);
-  type MyEnum = z.Infer<typeof MyEnum>;
+  type MyEnum = z.infer<typeof MyEnum>;
   const t1: AssertEqual<MyEnum, 'Red' | 'Green' | 'Blue'> = true;
   [t1];
 });

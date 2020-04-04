@@ -2,7 +2,7 @@ import * as z from '..';
 import { AssertEqual } from '../helpers/util';
 
 const booleanRecord = z.record(z.boolean());
-type booleanRecord = z.Infer<typeof booleanRecord>;
+type booleanRecord = z.infer<typeof booleanRecord>;
 
 test('type inference', () => {
   const f1: AssertEqual<booleanRecord, Record<string, boolean>> = true;
