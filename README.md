@@ -278,9 +278,9 @@ UserStore.parse({
 }); // => passes
 ```
 
-### A note on string keys
+### A note on numerical keys
 
-You may have expected `z.record()` to accept two arguments: one for the keys and one for the values. Otherwise, how do you represent `{ [k: number]: string }` in Zod?
+You may have expected `z.record()` to accept two arguments, one for the keys and one for the values. After all, TypeScript's built-in Record type does (`Record<KeyType, ValueType>`)Otherwise, how do you represent the TypeScript type `Record<number, any>` in Zod?
 
 As it turns out, TypeScript's behavior surrounding `[k: number]` is a little unintuitive:
 
