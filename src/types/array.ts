@@ -2,6 +2,9 @@ import * as z from './base';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
+// import { maskUtil } from '../helpers/maskUtil';
+import { zodmaskUtil } from '../helpers/zodmaskUtil';
+import { applyMask } from '../masker';
 
 export interface ZodArrayDef<T extends z.ZodAny = z.ZodAny> extends z.ZodTypeDef {
   t: z.ZodTypes.array;
@@ -24,6 +27,14 @@ export class ZodArray<T extends z.ZodAny> extends z.ZodType<T['_type'][], ZodArr
 
   nonempty: () => ZodNonEmptyArray<T> = () => {
     return new ZodNonEmptyArray({ ...this._def, nonempty: true });
+  };
+
+  whitelist = <Mask extends zodmaskUtil.Params<T>>(mask: Mask): ZodArray<zodmaskUtil.Whitelist<T, Mask>> => {
+    return applyMask(this, mask, 'whitelist');
+  };
+
+  blacklist = <Mask extends zodmaskUtil.Params<T>>(mask: Mask): ZodArray<zodmaskUtil.Blacklist<T, Mask>> => {
+    return applyMask(this, mask, 'blacklist');
   };
 
   static create = <T extends z.ZodAny>(schema: T): ZodArray<T> => {

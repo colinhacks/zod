@@ -463,6 +463,16 @@ const Teacher = BaseTeacher.merge(HasId)
   .merge(HasAddress);
 ```
 
+IMPORTANT: the schema returned by `.merge` is the intersection of the two schemas. The schema passed into `.merge` does not "overwrite" properties of the original schema. T demonstrate:
+
+```ts
+const merged = z.object({ field: z.string() }).merge(z.object({ field: z.number() }));
+
+type merged = z.infer<typeof merged>;
+// => { field: never }
+// because no type can simultaneously be both a string and a number
+```
+
 ## Tuples
 
 These differ from arrays in that they have a fixed number of elements, and each element can have a different type.

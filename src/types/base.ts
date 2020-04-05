@@ -1,5 +1,4 @@
 import { ZodParser, ParseParams } from '../parser';
-// import { MaskParams, MaskedType } from './object';
 
 export enum ZodTypes {
   string = 'string',
@@ -39,7 +38,8 @@ export type Infer<T extends { _type: any }> = T['_type'];
 export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   readonly _type!: Type;
   readonly _def!: Def;
-  readonly _maskParams!: Def;
+  // abstract _t:ZodTypes;
+  //  readonly _maskParams!: Def;
 
   //  is(value: any): value is Type;
   //  assert(value: any): asserts value is Type;
@@ -69,6 +69,10 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
       return false;
     }
   }
+
+  // whitelist = <Params extends mask.Params<Type>>(_params: Params): mask.Mask<Type, Params> => {
+  //   return 'asdf' as any;
+  // };
 
   // assert: zodAssertion<Type> = (value: unknown) => zodAssert(this, value);
   //  (u: unknown) => asserts u is Type = u => {

@@ -1,15 +1,8 @@
-import { ZodRawShape } from '../types/base';
+// import { ZodRawShape } from '../types/base';
+// import { ZodIntersection } from '../types/intersection';
+// import { ZodObject } from '../types/object';
 
-export type Merge<U extends object, V extends object> = {
-  [k in Exclude<keyof U, keyof V>]: U[k];
-} &
-  V;
-
-export type MergeShapes<U extends ZodRawShape, V extends ZodRawShape> = {
-  [k in Exclude<keyof U, keyof V>]: U[k];
-} &
-  V;
-
-export type AssertEqual<T, Expected> = T extends Expected ? (Expected extends T ? true : never) : never;
-
-export type Flatten<T extends object> = { [k in keyof T]: T[k] };
+// export type Merge<U extends object, V extends object> = {
+//   [k in Exclude<keyof U, keyof V>]: U[k];
+// } &
+//   V;

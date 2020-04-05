@@ -14,6 +14,7 @@ export type ParseParams = {
 export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParseParams = { seen: [] }) => {
   const def: ZodDef = schemaDef as any;
   // const { seen } = params;
+  // const y:ZodObject<any> = "asdf" as any;
 
   // console.log(`visit ${schemaDef.t}: ${typeof obj} - ${obj.name || ''}`);
   // if (!['number', 'string', 'boolean', 'undefined'].includes(typeof obj)) {
@@ -100,8 +101,8 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
     case z.ZodTypes.union:
       for (const option of def.options) {
         try {
-          option.parse(obj, params);
-          return obj;
+          return option.parse(obj, params);
+          // return obj;
         } catch (err) {}
       }
       throw ZodError.fromString(
@@ -157,8 +158,8 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       return parsedTuple as any;
     case z.ZodTypes.lazy:
       const lazySchema = def.getter();
-      lazySchema.parse(obj, params);
-      return obj;
+      return lazySchema.parse(obj, params);
+    // return obj;
     case z.ZodTypes.literal:
       // const literalValue = def.value;
       // if (typeof literalValue === 'object' && obj !== null) throw ZodError.fromString(`Can't process non-primitive literals.`);
