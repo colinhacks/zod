@@ -4,8 +4,8 @@ import { ZodNull } from './null';
 import { ZodUnion } from './union';
 import { objectUtil } from '../helpers/objectUtil';
 // import { maskUtil } from '../helpers/maskUtil';
-import { zodmaskUtil } from '../helpers/zodmaskUtil';
-import { applyMask } from '../masker';
+// import { zodmaskUtil } from '../helpers/zodmaskUtil';
+// import { applyMask } from '../masker';
 
 export interface ZodObjectDef<T extends z.ZodRawShape = z.ZodRawShape> extends z.ZodTypeDef {
   t: z.ZodTypes.object;
@@ -54,6 +54,21 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
 
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
+  augment = <Augmentation extends z.ZodRawShape>(
+    augmentation: Augmentation,
+  ): ZodObject<
+    { [k in Exclude<keyof T, keyof Augmentation>]: T[k] } & { [k in keyof Augmentation]: Augmentation[k] },
+    Params
+  > => {
+    return new ZodObject({
+      ...this._def,
+      shape: {
+        ...this._def.shape,
+        ...augmentation,
+      },
+    }) as any;
+  };
+
   /**
    * Prior to zod@1.0.12 there was a bug in the
    * inferred type of merged objects. Please
@@ -63,17 +78,46 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
     other: ZodObject<MergeShape, MergeParams>,
   ) => ZodObject<T & MergeShape, objectUtil.MergeObjectParams<Params, MergeParams>> = objectUtil.mergeObjects(this);
 
-  whitelist = <Mask extends zodmaskUtil.Params<ZodObject<T>>>(
+  pick = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask,
-  ): zodmaskUtil.Whitelist<ZodObject<T, Params>, Mask> => {
-    return applyMask(this, mask, 'whitelist');
+  ): ZodObject<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }, Params> => {
+    const shape: any = {};
+    Object.keys(mask).map(key => {
+      shape[key] = this._def.shape[key];
+    });
+    return new ZodObject({
+      ...this._def,
+      shape,
+    });
   };
 
-  blacklist = <Mask extends zodmaskUtil.Params<ZodObject<T>>>(
+  // omitKeys = <OmitKeys extends (keyof T)[]>(...omit:OmitKeys):OmitKeys => omit;
+  omit = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask,
-  ): zodmaskUtil.Blacklist<ZodObject<T, Params>, Mask> => {
-    return applyMask(this, mask, 'blacklist');
+  ): ZodObject<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }, Params> => {
+    const shape: any = {};
+    Object.keys(this._def.shape).map(key => {
+      if (!Object.keys(mask).includes(key)) {
+        shape[key] = this._def.shape[key];
+      }
+    });
+    return new ZodObject({
+      ...this._def,
+      shape,
+    });
   };
+
+  // pick = <Mask extends zodmaskUtil.Params<ZodObject<T>>>(
+  //   mask: Mask,
+  // ): zodmaskUtil.pick<ZodObject<T, Params>, Mask> => {
+  //   return applyMask(this, mask, 'pick');
+  // };
+
+  // omit = <Mask extends zodmaskUtil.Params<ZodObject<T>>>(
+  //   mask: Mask,
+  // ): zodmaskUtil.omit<ZodObject<T, Params>, Mask> => {
+  //   return applyMask(this, mask, 'omit');
+  // };
 
   // relations = <Rels extends { [k: string]: any }>(
   //   lazyShape: { [k in keyof Rels]: ZodLazy<z.ZodType<Rels[k]>> },

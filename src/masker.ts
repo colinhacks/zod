@@ -3,7 +3,7 @@ import { ZodArray } from './types/array';
 import { ZodDef } from '.';
 import { ZodObject } from './types/object';
 
-export const applyMask = (schema: z.ZodAny, mask: any, mode: 'blacklist' | 'whitelist'): any => {
+export const applyMask = (schema: z.ZodAny, mask: any, mode: 'omit' | 'pick'): any => {
   const _def = schema._def;
   const def: ZodDef = _def as any;
 
@@ -23,17 +23,17 @@ export const applyMask = (schema: z.ZodAny, mask: any, mode: 'blacklist' | 'whit
     } else if (def.t === z.ZodTypes.object) {
       const modShape: any = {};
       const shape = def.shape;
-      if (mode === 'whitelist') {
+      if (mode === 'pick') {
         if (mask === true) return shape;
         for (const key in mask) {
-          if (!Object.keys(shape).includes(key)) throw new Error(`Unknown key in whitelist: ${key}`);
+          if (!Object.keys(shape).includes(key)) throw new Error(`Unknown key in pick: ${key}`);
           modShape[key] = applyMask(shape[key], mask[key], mode);
         }
       }
 
-      if (mode === 'blacklist') {
+      if (mode === 'omit') {
         for (const maskKey in mask) {
-          if (!Object.keys(shape).includes(maskKey)) throw new Error(`Unknown key in blacklist: ${maskKey}`);
+          if (!Object.keys(shape).includes(maskKey)) throw new Error(`Unknown key in omit: ${maskKey}`);
         }
         for (const key in shape) {
           if (mask[key] === true) {

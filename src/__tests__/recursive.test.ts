@@ -10,7 +10,7 @@ interface B {
   a: A;
 }
 
-const A: z.ZodType<A> = z.lazy(() =>
+const A: z.ZodLazy<z.ZodObject<any>> = z.lazy(() =>
   z.object({
     val: z.number(),
     b: B,
@@ -18,7 +18,7 @@ const A: z.ZodType<A> = z.lazy(() =>
   }),
 );
 
-const B: z.ZodType<B> = z.lazy(() =>
+const B = z.lazy(() =>
   z.object({
     val: z.number(),
     a: A,

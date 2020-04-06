@@ -3,8 +3,8 @@ import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
 // import { maskUtil } from '../helpers/maskUtil';
-import { zodmaskUtil } from '../helpers/zodmaskUtil';
-import { applyMask } from '../masker';
+// import { zodmaskUtil } from '../helpers/zodmaskUtil';
+// import { applyMask } from '../masker';
 
 export interface ZodArrayDef<T extends z.ZodAny = z.ZodAny> extends z.ZodTypeDef {
   t: z.ZodTypes.array;
@@ -29,13 +29,13 @@ export class ZodArray<T extends z.ZodAny> extends z.ZodType<T['_type'][], ZodArr
     return new ZodNonEmptyArray({ ...this._def, nonempty: true });
   };
 
-  whitelist = <Mask extends zodmaskUtil.Params<T>>(mask: Mask): ZodArray<zodmaskUtil.Whitelist<T, Mask>> => {
-    return applyMask(this, mask, 'whitelist');
-  };
+  // pick = <Mask extends zodmaskUtil.Params<T>>(mask: Mask): ZodArray<zodmaskUtil.pick<T, Mask>> => {
+  //   return applyMask(this, mask, 'pick');
+  // };
 
-  blacklist = <Mask extends zodmaskUtil.Params<T>>(mask: Mask): ZodArray<zodmaskUtil.Blacklist<T, Mask>> => {
-    return applyMask(this, mask, 'blacklist');
-  };
+  // omit = <Mask extends zodmaskUtil.Params<T>>(mask: Mask): ZodArray<zodmaskUtil.omit<T, Mask>> => {
+  //   return applyMask(this, mask, 'omit');
+  // };
 
   static create = <T extends z.ZodAny>(schema: T): ZodArray<T> => {
     return new ZodArray({

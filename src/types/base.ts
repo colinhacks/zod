@@ -1,4 +1,5 @@
 import { ZodParser, ParseParams } from '../parser';
+// import { maskUtil } from '../helpers/maskUtil';
 
 export enum ZodTypes {
   string = 'string',
@@ -70,7 +71,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  // whitelist = <Params extends mask.Params<Type>>(_params: Params): mask.Mask<Type, Params> => {
+  // pick = <Params extends maskUtil.Params<Type>>(_params: Params): maskUtil.Mask<Type, Params> => {
   //   return 'asdf' as any;
   // };
 
