@@ -12,7 +12,10 @@
 [license-image]: https://img.shields.io/github/license/vriad/zod
 
 <br/>
+
 Created and maintained by [@vriad](https://twitter.com/vriad). The motivation for this library and a detailed comparison to various alternatives can be found at https://vriad.com/blog/zod.
+
+If you find this package useful, leave a star to help more folks find it ⭐️🤏
 
 <br/>
 <br/>
