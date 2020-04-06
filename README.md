@@ -18,7 +18,6 @@ Created and maintained by [@vriad](https://twitter.com/vriad). The motivation fo
 If you find this package useful, leave a star to help more folks find it ⭐️🤏
 
 <br/>
-<br/>
 
 ### Table of contents
 
