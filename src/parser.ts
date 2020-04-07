@@ -21,7 +21,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
   const schemaSeen = params.seen.find(x => x.schema === schemaDef);
   if (schemaSeen) {
     if (schemaSeen.objects.indexOf(obj) !== -1) {
-      console.log(`seen ${typeof obj} before: ${obj.name}`);
+      // console.log(`seen ${typeof obj} before: ${obj.name}`);
       return obj;
     } else {
       schemaSeen.objects.push(obj);

@@ -53,7 +53,8 @@ test('masking check', () => {
     .nonstrict();
 
   const fragment = FragmentOnA.parse(a);
-  console.log(JSON.stringify(fragment, null, 2));
+  fragment;
+  // console.log(JSON.stringify(fragment, null, 2));
 });
 
 test('invalid check', () => {
