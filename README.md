@@ -91,6 +91,7 @@ import * as z from 'zod';
 const stringSchema = z.string(); // => ZodType<string>
 const numberSchema = z.number(); // => ZodType<number>
 const booleanSchema = z.boolean(); // => ZodType<boolean>
+const dateSchema = z.Date(); // => ZodType<Date>
 const undefinedSchema = z.undefined(); // => ZodType<undefined>
 const nullTypeSchema = z.null(); // => ZodType<null>
 ```
@@ -102,6 +103,8 @@ const tuna = z.literal('tuna'); // => ZodType<'tuna'>
 const twelve = z.literal(12); // => ZodType<12>
 const tru = z.literal(true); // => ZodType<true>
 ```
+
+Currently there is no support for Date literals in Zod. If you have a use case for this feature, please file an issue.
 
 ## Parsing and validation
 
@@ -145,7 +148,7 @@ To learn more about error handling with Zod, jump to [Errors](#errors).
 
 ## Type inference
 
-You can extract the TypeScript type of any schema with `z.infer<>`.
+You can extract the TypeScript type of any schema with `z.infer<typeof [schema]>`.
 
 ```ts
 const A = z.string();

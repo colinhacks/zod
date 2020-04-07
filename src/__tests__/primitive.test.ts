@@ -7,6 +7,7 @@ const literalBooleanSchema = z.literal(true);
 const stringSchema = z.string();
 const numberSchema = z.number();
 const booleanSchema = z.boolean();
+const dateSchema = z.date();
 const nullSchema = z.null();
 const undefinedSchema = z.undefined();
 const stringSchemaOptional = z.string().optional();
@@ -15,6 +16,8 @@ const numberSchemaOptional = z.number().optional();
 const numberSchemaNullable = z.number().nullable();
 const booleanSchemaOptional = z.boolean().optional();
 const booleanSchemaNullable = z.boolean().nullable();
+const dateSchemaOptional = z.date().optional();
+const dateSchemaNullable = z.date().nullable();
 
 const val = new Mocker();
 
@@ -29,6 +32,11 @@ test('literal string incorrect', () => {
 
 test('literal string number', () => {
   const f = () => literalStringSchema.parse(123 as any);
+  expect(f).toThrow();
+});
+
+test('literal string boolean', () => {
+  const f = () => literalStringSchema.parse(true as any);
   expect(f).toThrow();
 });
 
@@ -162,6 +170,38 @@ test('parse booleanSchema null', () => {
   expect(f).toThrow();
 });
 
+// ==============
+
+test('parse dateSchema string', () => {
+  const f = () => dateSchema.parse(val.string as any);
+  expect(f).toThrow();
+});
+
+test('parse dateSchema number', () => {
+  const f = () => dateSchema.parse(val.number as any);
+  expect(f).toThrow();
+});
+
+test('parse dateSchema boolean', () => {
+  const f = () => dateSchema.parse(val.boolean as any);
+  expect(f).toThrow();
+});
+
+test('parse dateSchema date', () => {
+  dateSchema.parse(val.date);
+});
+
+test('parse dateSchema undefined', () => {
+  const f = () => dateSchema.parse(val.undefined as any);
+  expect(f).toThrow();
+});
+
+test('parse dateSchema null', () => {
+  const f = () => dateSchema.parse(val.null as any);
+  expect(f).toThrow();
+});
+// ==============
+
 test('parse undefinedSchema string', () => {
   const f = () => undefinedSchema.parse(val.string as any);
   expect(f).toThrow();
@@ -225,6 +265,7 @@ test('primitive inference', () => {
   const stringSchemaTest: AssertEqual<z.TypeOf<typeof stringSchema>, string> = true;
   const numberSchemaTest: AssertEqual<z.TypeOf<typeof numberSchema>, number> = true;
   const booleanSchemaTest: AssertEqual<z.TypeOf<typeof booleanSchema>, boolean> = true;
+  const dateSchemaTest: AssertEqual<z.TypeOf<typeof dateSchema>, Date> = true;
   const nullSchemaTest: AssertEqual<z.TypeOf<typeof nullSchema>, null> = true;
   const undefinedSchemaTest: AssertEqual<z.TypeOf<typeof undefinedSchema>, undefined> = true;
   const stringSchemaOptionalTest: AssertEqual<z.TypeOf<typeof stringSchemaOptional>, string | undefined> = true;
@@ -233,6 +274,8 @@ test('primitive inference', () => {
   const numberSchemaNullableTest: AssertEqual<z.TypeOf<typeof numberSchemaNullable>, number | null> = true;
   const booleanSchemaOptionalTest: AssertEqual<z.TypeOf<typeof booleanSchemaOptional>, boolean | undefined> = true;
   const booleanSchemaNullableTest: AssertEqual<z.TypeOf<typeof booleanSchemaNullable>, boolean | null> = true;
+  const dateSchemaOptionalTest: AssertEqual<z.TypeOf<typeof dateSchemaOptional>, Date | undefined> = true;
+  const dateSchemaNullableTest: AssertEqual<z.TypeOf<typeof dateSchemaNullable>, Date | null> = true;
 
   [
     literalStringSchemaTest,
@@ -241,6 +284,7 @@ test('primitive inference', () => {
     stringSchemaTest,
     numberSchemaTest,
     booleanSchemaTest,
+    dateSchemaTest,
     nullSchemaTest,
     undefinedSchemaTest,
     stringSchemaOptionalTest,
@@ -249,5 +293,7 @@ test('primitive inference', () => {
     numberSchemaNullableTest,
     booleanSchemaOptionalTest,
     booleanSchemaNullableTest,
+    dateSchemaOptionalTest,
+    dateSchemaNullableTest,
   ];
 });

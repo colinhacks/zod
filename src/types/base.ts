@@ -5,6 +5,7 @@ export enum ZodTypes {
   string = 'string',
   number = 'number',
   boolean = 'boolean',
+  date = 'date',
   undefined = 'undefined',
   null = 'null',
   array = 'array',

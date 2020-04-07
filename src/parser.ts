@@ -188,6 +188,15 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       }
       if (!recordError.empty) throw recordError;
       return parsedRecord;
+    case z.ZodTypes.date:
+      if (obj instanceof Date) {
+        if (!isNaN(obj.getTime())) {
+          return obj;
+        } else {
+          throw ZodError.fromString(`Invalid date.`);
+        }
+      }
+      throw ZodError.fromString(`Non-Date type: ${obj.type}`);
     default:
       // function
       // return obj;

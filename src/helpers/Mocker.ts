@@ -18,6 +18,9 @@ export class Mocker {
   get boolean() {
     return Math.random() < 0.5;
   }
+  get date() {
+    return new Date(Math.floor(Date.now() * Math.random()));
+  }
   get null() {
     return null;
   }
