@@ -1006,4 +1006,4 @@ This more declarative API makes schema definitions vastly more concise.
 | zod@1.0.11  | `.nonstrict`                                               |
 | zod@1.1.0   | Records                                                    |
 | zod@1.2.0   | `.pick`, `.omit`, and `.augment` on object schemas         |
-| zod@1.2.2   | Date schemas                                               |
+| zod@1.2.3   | Date schemas                                               |
