@@ -45,8 +45,8 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
   - [Function schemas](#function-schemas)
   - [Masking](#masking)
   - [Errors](#errors)
+- [Changelog](#changelog)
 - [Comparison](#comparison)
-
   - [Joi](#joi)
   - [Yup](#yup)
   - [io-ts](#io-ts)
@@ -994,3 +994,16 @@ This more declarative API makes schema definitions vastly more concise.
 ### Runtypes
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
+
+# Changelog
+
+| zod version | release notes                                              |
+| ----------- | ---------------------------------------------------------- |
+| zod@1.0.0   | Initial release                                            |
+| zod@1.0.0   | Type assertions, literals, enums, detailed error reporting |
+| zod@1.0.4   | Empty tuples                                               |
+| zod@1.0.10  | Type assertions with `.check`                              |
+| zod@1.0.11  | `.nonstrict`                                               |
+| zod@1.1.0   | Records                                                    |
+| zod@1.2.0   | `.pick`, `.omit`, and `.augment` on object schemas         |
+| zod@1.2.2   | Date schemas                                               |
