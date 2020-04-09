@@ -1,12 +1,23 @@
-// import * as z from '.';
+import * as z from '.';
 
-// const Animal = z
-//   .object({
-//     species: z.string(),
-//   })
-//   .augment({
-//     population: z.number(),
-//   });
+const Animal = z
+  .object({
+    species: z.string(),
+  })
+  .augment({
+    population: z.number(),
+  });
+
+type Animal = z.infer<typeof Animal>;
+
+const NewAnimal = Animal.omit({
+  species: true,
+});
+type NewAnimal = z.infer<typeof NewAnimal>;
+
+NewAnimal.parse({
+  population: 1234,
+});
 
 // // overwrites `species`
 // const ModifiedAnimal = Animal.augment({
@@ -20,7 +31,7 @@
 // ({
 //   population:11324,
 // })
-// import { util } from './types/utils';
+// import { util } from './helpers/util';;
 
 // const fish = z.object({
 //   name: z.string(),

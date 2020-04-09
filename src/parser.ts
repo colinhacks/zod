@@ -1,16 +1,12 @@
 import * as z from './types/base';
 import { ZodDef } from '.';
 import { ZodError } from './ZodError';
+import { util } from './helpers/util';
 
-function assertNever(x: never): never {
-  throw ZodError.fromString('Unexpected object: ' + x);
-}
 export type ParseParams = {
   seen: { schema: any; objects: any[] }[];
 };
 
-// const seen: any[] = [];
-// export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any) => ZodParserFactory(schemaDef)(obj, { seen: [] });
 export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParseParams = { seen: [] }) => {
   const def: ZodDef = schemaDef as any;
   // const { seen } = params;
@@ -74,7 +70,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       if (Array.isArray(obj)) throw ZodError.fromString(`Non-object type: array`);
 
       const shape = def.shape;
-      if (def.strict) {
+      if (def.params.strict) {
         const shapeKeys = Object.keys(def.shape);
         const objKeys = Object.keys(obj);
         const extraKeys = objKeys.filter(k => shapeKeys.indexOf(k) === -1);
@@ -200,7 +196,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
     default:
       // function
       // return obj;
-      assertNever(def);
+      util.assertNever(def);
     // break;
   }
 

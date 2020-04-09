@@ -66,7 +66,7 @@ yarn add zod
 
 ### TypeScript versions
 
-Zod 1.0.x is compatible with TypeScript 3.2+. Earlier versions contain bugs that will interfere there were known type inference bugs in TypeScript that will cause errors.
+Zod 1.0.x is compatible with TypeScript 3.2+.
 
 # Usage
 
@@ -91,7 +91,7 @@ import * as z from 'zod';
 const stringSchema = z.string(); // => ZodType<string>
 const numberSchema = z.number(); // => ZodType<number>
 const booleanSchema = z.boolean(); // => ZodType<boolean>
-const dateSchema = z.Date(); // => ZodType<Date>
+const dateSchema = z.date(); // => ZodType<Date>
 const undefinedSchema = z.undefined(); // => ZodType<undefined>
 const nullTypeSchema = z.null(); // => ZodType<null>
 ```

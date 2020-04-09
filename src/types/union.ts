@@ -2,7 +2,8 @@ import * as z from './base';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 
-export interface ZodUnionDef<T extends [z.ZodAny, ...z.ZodAny[]] = [z.ZodAny, ...z.ZodAny[]]> extends z.ZodTypeDef {
+export interface ZodUnionDef<T extends [z.ZodAny, z.ZodAny, ...z.ZodAny[]] = [z.ZodAny, z.ZodAny, ...z.ZodAny[]]>
+  extends z.ZodTypeDef {
   t: z.ZodTypes.union;
   options: T;
 }

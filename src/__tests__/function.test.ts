@@ -1,12 +1,12 @@
 import * as z from '../index';
-import { AssertEqual } from '../helpers/util';
+import { util } from '../helpers/util';
 
 test('function inference 1', () => {
   const args1 = z.tuple([z.string()]);
   const returns1 = z.number();
   const func1 = z.function(args1, returns1);
   type func1 = z.TypeOf<typeof func1>;
-  const t1: AssertEqual<func1, (k: string) => number> = true;
+  const t1: util.AssertEqual<func1, (k: string) => number> = true;
   [t1];
 });
 
@@ -23,7 +23,7 @@ const func2 = z.function(args2, returns2);
 
 test('function inference 2', () => {
   type func2 = z.TypeOf<typeof func2>;
-  const t2: AssertEqual<
+  const t2: util.AssertEqual<
     func2,
     (arg: { f1: number; f2: string | null; f3?: (boolean | undefined)[] | undefined }) => string | number
   > = true;

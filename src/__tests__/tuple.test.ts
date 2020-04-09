@@ -1,6 +1,6 @@
 import * as z from '../index';
-import { AssertEqual } from '../helpers/util';
 import { ZodError } from '../ZodError';
+import { util } from '../helpers/util';
 
 // const blue = z.literal('blue');
 // type blue = z.infer<typeof blue>;
@@ -16,7 +16,7 @@ test('tuple inference', () => {
   const returns1 = z.number();
   const func1 = z.function(args1, returns1);
   type func1 = z.TypeOf<typeof func1>;
-  const t1: AssertEqual<func1, (k: string) => number> = true;
+  const t1: util.AssertEqual<func1, (k: string) => number> = true;
   [t1];
 });
 

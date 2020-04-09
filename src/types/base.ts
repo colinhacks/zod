@@ -1,5 +1,7 @@
 import { ZodParser, ParseParams } from '../parser';
 // import { maskUtil } from '../helpers/maskUtil';
+// import { Masker } from '../masker';
+// import { maskUtil } from '../helpers/maskUtil';
 
 export enum ZodTypes {
   string = 'string',
@@ -10,7 +12,7 @@ export enum ZodTypes {
   null = 'null',
   array = 'array',
   object = 'object',
-  interface = 'interface',
+  // interface = 'interface',
   union = 'union',
   intersection = 'intersection',
   tuple = 'tuple',
@@ -21,13 +23,12 @@ export enum ZodTypes {
   enum = 'enum',
 }
 
+export type ZodAny = ZodType<any>;
 export type ZodRawShape = { [k: string]: ZodAny };
 
 export interface ZodTypeDef {
   t: ZodTypes;
 }
-
-export type ZodAny = ZodType<any>;
 
 export type TypeOf<T extends { _type: any }> = T['_type'];
 export type Infer<T extends { _type: any }> = T['_type'];
@@ -40,19 +41,13 @@ export type Infer<T extends { _type: any }> = T['_type'];
 export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   readonly _type!: Type;
   readonly _def!: Def;
-  // abstract _t:ZodTypes;
-  //  readonly _maskParams!: Def;
 
-  //  is(value: any): value is Type;
-  //  assert(value: any): asserts value is Type;
+  // get subclass() {
+  //   console.log(this.constructor);
+  //   return this.constructor;
+  // }
 
   parse: (x: Type, params?: ParseParams) => Type;
-
-  //  mask: (params: MaskParams, params?: ParseParams) => Type;
-
-  //  mask = <P extends MaskParams<Type>>(params: P): MaskedType<Type, P> => {
-  //    return params as any;
-  //  };
 
   is(u: Type): u is Type {
     try {
@@ -72,23 +67,21 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
+  //  ZodType<maskUtil.Pick<Type,P>>
+  // mask = <P extends maskUtil.Params<Type>>(_params: P): ZodType<maskUtil.Pick<Type, P>> => {
+  //   return Masker(this, _params) as any;
+  // };
+  // {
+  //   return Masker(this,_params);
+  // }
+
   // pick = <Params extends maskUtil.Params<Type>>(_params: Params): maskUtil.Mask<Type, Params> => {
   //   return 'asdf' as any;
-  // };
-
-  // assert: zodAssertion<Type> = (value: unknown) => zodAssert(this, value);
-  //  (u: unknown) => asserts u is Type = u => {
-  //   try {
-  //     this.parse(u);
-  //   } catch (err) {
-  //     throw new Error(err.message);
-  //   }
   // };
 
   constructor(def: Def) {
     this.parse = ZodParser(def);
     this._def = def;
-    // this._type = null as any as Type;
   }
 
   abstract toJSON: () => object;

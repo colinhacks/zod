@@ -1,5 +1,5 @@
 import * as z from '../index';
-import { AssertEqual } from '../helpers/util';
+import { util } from '../helpers/util';
 
 const Test = z.object({
   f1: z.number(),
@@ -16,7 +16,7 @@ test('object type inference', () => {
     f4: { t: string | boolean }[];
   };
 
-  const t1: AssertEqual<z.TypeOf<typeof Test>, TestType> = true;
+  const t1: util.AssertEqual<z.TypeOf<typeof Test>, TestType> = true;
   [t1];
 });
 

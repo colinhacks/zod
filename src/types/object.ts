@@ -1,19 +1,43 @@
-import * as z from './base';
+import * as z from './base'; // change
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
 import { objectUtil } from '../helpers/objectUtil';
+// import { ZodString } from './string';
 // import { maskUtil } from '../helpers/maskUtil';
 // import { zodmaskUtil } from '../helpers/zodmaskUtil';
 // import { applyMask } from '../masker';
 
-export interface ZodObjectDef<T extends z.ZodRawShape = z.ZodRawShape> extends z.ZodTypeDef {
+const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <Augmentation extends z.ZodRawShape>(
+  augmentation: Augmentation,
+): ZodObject<
+  { [k in Exclude<keyof Def['shape'], keyof Augmentation>]: Def['shape'][k] } &
+    { [k in keyof Augmentation]: Augmentation[k] },
+  Def['params']
+> => {
+  return new ZodObject({
+    ...def,
+    shape: {
+      ...def.shape,
+      ...augmentation,
+    },
+  }) as any;
+};
+
+export interface ZodObjectDef<
+  T extends z.ZodRawShape = z.ZodRawShape,
+  Params extends ZodObjectParams = ZodObjectParams
+> extends z.ZodTypeDef {
   t: z.ZodTypes.object;
   shape: T;
-  strict: boolean;
+  // strict: boolean;
+  params: Params;
 }
 
-const objectDefToJson = (def: ZodObjectDef<any>) => ({
+// const infer = <T extends ZodObjectDef<any>>(def: T): T => def;
+// const qewr = infer({ t: z.ZodTypes.object, shape: { asfd: ZodString.create() }, params: { strict: true } });
+
+const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
   t: def.t,
   shape: Object.assign(
     {},
@@ -37,37 +61,52 @@ type ZodObjectType<T extends z.ZodRawShape, Params extends ZodObjectParams> = Pa
 
 export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams = { strict: true }> extends z.ZodType<
   ZodObjectType<T, Params>, // { [k in keyof T]: T[k]['_type'] },
-  ZodObjectDef<T>
+  ZodObjectDef<T, Params>
 > {
   readonly _shape!: T;
-  readonly _params!: Params;
+  private readonly _params!: Params;
+
+  get shape() {
+    return this._def.shape;
+  }
+
+  get params() {
+    return this._def.params;
+  }
+
   toJSON = () => objectDefToJson(this._def);
 
   nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>> =>
     new ZodObject({
       shape: this._def.shape,
-      strict: false,
+      //  strict: false,
       t: z.ZodTypes.object,
-    });
+      params: {
+        ...this._params,
+        strict: false,
+      },
+    }) as any;
 
   optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  augment = <Augmentation extends z.ZodRawShape>(
-    augmentation: Augmentation,
-  ): ZodObject<
-    { [k in Exclude<keyof T, keyof Augmentation>]: T[k] } & { [k in keyof Augmentation]: Augmentation[k] },
-    Params
-  > => {
-    return new ZodObject({
-      ...this._def,
-      shape: {
-        ...this._def.shape,
-        ...augmentation,
-      },
-    }) as any;
-  };
+  //
+  augment = AugmentFactory<ZodObjectDef<T, Params>>(this._def);
+  // augment = <Augmentation extends z.ZodRawShape>(
+  //   augmentation: Augmentation,
+  // ): ZodObject<
+  //   { [k in Exclude<keyof T, keyof Augmentation>]: T[k] } & { [k in keyof Augmentation]: Augmentation[k] },
+  //   Params
+  // > => {
+  //   return new ZodObject({
+  //     ...this._def,
+  //     shape: {
+  //       ...this._def.shape,
+  //       ...augmentation,
+  //     },
+  //   }) as any;
+  // };
 
   /**
    * Prior to zod@1.0.12 there was a bug in the
@@ -149,8 +188,11 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
   static create = <T extends z.ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({
       t: z.ZodTypes.object,
-      strict: true,
+      //  strict: true,
       shape,
+      params: {
+        strict: true,
+      },
     });
   };
 }

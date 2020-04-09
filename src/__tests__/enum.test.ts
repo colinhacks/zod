@@ -1,5 +1,5 @@
 import * as z from '../index';
-import { AssertEqual } from '../helpers/util';
+import { util } from '../helpers/util';
 
 test('create enum', () => {
   const MyEnum = z.enum(['Red', 'Green', 'Blue']);
@@ -9,6 +9,6 @@ test('create enum', () => {
 test('infer enum', () => {
   const MyEnum = z.enum(['Red', 'Green', 'Blue']);
   type MyEnum = z.infer<typeof MyEnum>;
-  const t1: AssertEqual<MyEnum, 'Red' | 'Green' | 'Blue'> = true;
+  const t1: util.AssertEqual<MyEnum, 'Red' | 'Green' | 'Blue'> = true;
   [t1];
 });
