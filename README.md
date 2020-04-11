@@ -91,7 +91,7 @@ import * as z from 'zod';
 const stringSchema = z.string(); // => ZodType<string>
 const numberSchema = z.number(); // => ZodType<number>
 const booleanSchema = z.boolean(); // => ZodType<boolean>
-const dateSchema = z.Date(); // => ZodType<Date>
+const dateSchema = z.date(); // => ZodType<Date>
 const undefinedSchema = z.undefined(); // => ZodType<undefined>
 const nullTypeSchema = z.null(); // => ZodType<null>
 ```
