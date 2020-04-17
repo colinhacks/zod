@@ -10,8 +10,9 @@ interface B {
   a: A;
 }
 
-const A: z.ZodLazy<z.ZodObject<any>> = z.lazy(() =>
+const A: z.ZodType<A> = z.lazy(() =>
   z.object({
+    // firstName: z.string(),
     val: z.number(),
     b: B,
     // fun: z.function(z.tuple([z.string()]), z.number()),
@@ -20,6 +21,7 @@ const A: z.ZodLazy<z.ZodObject<any>> = z.lazy(() =>
 
 const B = z.lazy(() =>
   z.object({
+    // firstName:z.string(),
     val: z.number(),
     a: A,
   }),
@@ -80,6 +82,7 @@ test('self recursion', () => {
   const Category: z.ZodType<Category> = BaseCategory.merge(
     z.object({
       subcategories: z.lazy(() => z.array(Category)),
+      // firstName:z.string()
     }),
   );
 

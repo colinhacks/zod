@@ -1,5 +1,5 @@
 import * as z from './types/base';
-import { ZodDef } from '.';
+import { ZodDef, ZodObject } from '.';
 // import { util } from './helpers/util';;
 // import { ZodArray } from './types/array';
 // import { ZodObject } from './types/object';
@@ -10,19 +10,24 @@ import { ZodDef } from '.';
 // import { ZodLazy } from './types/lazy';
 // import { ZodError } from './ZodError';
 import { ParamVisitor } from './sampleParamVisitor';
+// import { ZodObject } from './types/object';
 
 // type Params = any; //{ [k: string]: boolean | Params } | boolean;
 
 export const Masker = ParamVisitor((schema, params) => {
   const def: ZodDef = schema._def as any;
+  console.log(`visiting ${def.t}`);
+  console.log(`params: ${JSON.stringify(params, null, 2)}`, null, 2);
   if (def.t === z.ZodTypes.object) {
+    console.log(schema);
+    // console.log(JSON.stringify(params, null, 2));
     const visitedShape: any = {};
     for (const key in def.shape) {
       if (params[key]) {
         visitedShape[key] = def.shape[key];
       }
     }
-    return visitedShape;
+    return ZodObject.create(visitedShape);
   } else {
     return schema;
   }
