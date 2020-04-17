@@ -320,7 +320,7 @@ const user = z.object({
 We can create a partial version:
 
 ```ts
-const partialUser = user.partial(); // => { username?: string | undefined }
+const partialUser = user.partial();
 /*
 { 
   username?: string | undefined,
