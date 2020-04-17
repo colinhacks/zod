@@ -192,9 +192,9 @@ const fido: Dog = {
 #### `.shape` property
 
 ```ts
-const Location = z.shape({ latitude: z.number(), longitude: z.number() });
+const Location = z.object({ latitude: z.number(), longitude: z.number() });
 
-const Business = z.shape({
+const Business = z.object({
   location: Location,
 });
 
