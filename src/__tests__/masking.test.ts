@@ -9,7 +9,9 @@ const player = z.object({
 // const masked = player.mask({});
 
 test('masking test', () => {
-  player;
-  // const masked = player.mask({ points: true });
-  // masked.parse({ points: 1234 });
+  const masked1 = player.mask({ points: true });
+  masked1.parse({ points: 1234 });
+
+  const bad1 = () => masked1.parse({ points: 1324, username: 'bob' } as any);
+  expect(bad1).toThrow();
 });

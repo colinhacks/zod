@@ -18,6 +18,7 @@ import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
 import { TypeOf, ZodType, ZodAny } from './types/base';
 import { ZodError } from './ZodError';
+// import { ZodLazyObject, ZodLazyObjectDef } from './types/lazyobject';
 
 type ZodDef =
   | ZodStringDef
@@ -34,6 +35,7 @@ type ZodDef =
   | ZodRecordDef
   // | ZodFunctionDef
   | ZodLazyDef
+  //  | ZodLazyObjectDef
   | ZodLiteralDef
   | ZodEnumDef;
 
@@ -51,6 +53,7 @@ const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
 const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
+// const lazyobjectType = ZodLazyObject.create;
 // const recursionType = ZodObject.recursion;
 const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
@@ -77,6 +80,7 @@ export {
   recordType as record,
   functionType as function,
   lazyType as lazy,
+  // lazyobjectType as lazyobject,
   // recursionType as recursion,
   literalType as literal,
   enumType as enum,
@@ -100,6 +104,7 @@ export {
   ZodRecord,
   ZodFunction,
   ZodLazy,
+  // ZodLazyObject,
   ZodLiteral,
   ZodEnum,
   ZodType,
