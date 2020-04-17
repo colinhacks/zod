@@ -1,6 +1,7 @@
 import { ZodParser, ParseParams } from '../parser';
 import { maskUtil } from '../helpers/maskUtil';
 import { Masker } from '../masker';
+// import { ZodString } from './string';
 // import { maskUtil } from '../helpers/maskUtil';
 
 export enum ZodTypes {
@@ -26,6 +27,9 @@ export enum ZodTypes {
 
 export type ZodAny = ZodType<any>;
 export type ZodRawShape = { [k: string]: ZodAny };
+
+// const asdf = { asdf: ZodString.create() };
+// type tset1 = typeof asdf extends ZodRawShape ? true :false
 
 export interface ZodTypeDef {
   t: ZodTypes;

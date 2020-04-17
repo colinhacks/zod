@@ -146,6 +146,17 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
     });
   };
 
+  // partial = <P extends {deep:boolean} | undefined>(params:P):ZodObject<{[k in keyof T]?: T[k]}, Params> => {
+  //   const newShape:any = {};
+  //   for (const key in this.shape){
+  //     newShape[key] = this.shape[key].optional();
+  //   }
+  //   return new ZodObject({
+  //     ...this._def,
+  //     shape
+  //   })
+  // }
+
   // pick = <Mask extends zodmaskUtil.Params<ZodObject<T>>>(
   //   mask: Mask,
   // ): zodmaskUtil.pick<ZodObject<T, Params>, Mask> => {
