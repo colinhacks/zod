@@ -1,6 +1,6 @@
 import { ZodParser, ParseParams } from '../parser';
-import { maskUtil } from '../helpers/maskUtil';
-import { Masker } from '../masker';
+// import { maskUtil } from '../helpers/maskUtil';
+// import { Masker } from '../masker';
 // import { ZodString } from './string';
 // import { maskUtil } from '../helpers/maskUtil';
 
@@ -72,9 +72,9 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  mask = <P extends maskUtil.Params<Type>>(_params: P): ZodType<maskUtil.Pick<Type, P>> => {
-    return Masker(this, _params) as any;
-  };
+  // mask = <P extends maskUtil.Params<Type>>(_params: P): ZodType<maskUtil.Pick<Type, P>> => {
+  //   return Masker(this, _params) as any;
+  // };
 
   // pick = <Params extends maskUtil.Params<Type>>(_params: Params): maskUtil.Mask<Type, Params> => {
   //   return 'asdf' as any;

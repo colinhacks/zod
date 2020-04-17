@@ -3,6 +3,7 @@ import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
 import { objectUtil } from '../helpers/objectUtil';
+import { partialUtil } from '../helpers/partialUtil';
 // import { ZodString } from './string';
 // import { maskUtil } from '../helpers/maskUtil';
 // import { zodmaskUtil } from '../helpers/zodmaskUtil';
@@ -146,16 +147,32 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
     });
   };
 
-  // partial = <P extends {deep:boolean} | undefined>(params:P):ZodObject<{[k in keyof T]?: T[k]}, Params> => {
-  //   const newShape:any = {};
-  //   for (const key in this.shape){
-  //     newShape[key] = this.shape[key].optional();
-  //   }
-  //   return new ZodObject({
-  //     ...this._def,
-  //     shape
-  //   })
-  // }
+  partial = (): ZodObject<{ [k in keyof T]: ZodUnion<[T[k], ZodUndefined]> }, Params> => {
+    const newShape: any = {};
+    for (const key in this.shape) {
+      newShape[key] = this.shape[key].optional();
+    }
+    return new ZodObject({
+      ...this._def,
+      shape: newShape,
+    });
+  };
+
+  deepPartial = (): partialUtil.RootDeepPartial<ZodObject<T>> => {
+    const newShape: any = {};
+    for (const key in this.shape) {
+      const fieldSchema = this.shape[key];
+      if (fieldSchema instanceof ZodObject) {
+        newShape[key] = fieldSchema.deepPartial().optional();
+      } else {
+        newShape[key] = this.shape[key].optional();
+      }
+    }
+    return new ZodObject({
+      ...this._def,
+      shape: newShape,
+    }) as any;
+  };
 
   // pick = <Mask extends zodmaskUtil.Params<ZodObject<T>>>(
   //   mask: Mask,
