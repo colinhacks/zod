@@ -716,7 +716,7 @@ parsedCategory.subcategories[0].subcategories[0].subcategories[0];
 
 ## Promises
 
-As of zod@1.2.7, there is also support for Promise schemas!
+As of zod@1.3, there is also support for Promise schemas!
 
 ```ts
 const numberPromise = z.promise(z.number());
