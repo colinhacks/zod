@@ -20,6 +20,11 @@ test('object type inference', () => {
   [t1];
 });
 
+test('unknown throw', () => {
+  const asdf: unknown = 35;
+  expect(() => Test.parse(asdf)).toThrow();
+});
+
 test('correct parsing', () => {
   Test.parse({
     f1: 12,

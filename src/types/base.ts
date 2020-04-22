@@ -1,8 +1,4 @@
 import { ZodParser, ParseParams } from '../parser';
-// import { maskUtil } from '../helpers/maskUtil';
-// import { Masker } from '../masker';
-// import { ZodString } from './string';
-// import { maskUtil } from '../helpers/maskUtil';
 
 export enum ZodTypes {
   string = 'string',
@@ -52,7 +48,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   //   return this.constructor;
   // }
 
-  parse: (x: Type, params?: ParseParams) => Type;
+  parse: (x: Type | unknown, params?: ParseParams) => Type;
 
   is(u: Type): u is Type {
     try {
