@@ -19,10 +19,11 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <br/>
 
-### Table of contents
+#### Table of contents
 
 - [Installation](#installation)
 - [Usage](#usage)
+
   - [Primitives](#primitives)
   - [Literals](#literals)
   - [Parsing](#parsing)
@@ -39,14 +40,17 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
   - [Unions](#unions)
     - [.optional](#optional-types)
     - [.nullable](#nullable-types)
-  - [Enums](#enums)
-  - [Tuples](#tuples)
+    - [enums](#enums)
   - [Intersections](#intersections)
+  - [Tuples](#tuples)
   - [Recursive types](#recursive-types)
-  - [Function schemas](#function-schemas)
   - [Promises](#promises)
+  - [Function schemas](#function-schemas)
+
     <!-- - [Masking](#masking) -->
+
   - [Errors](#errors)
+
 - [Changelog](#changelog)
 - [Comparison](#comparison)
   - [Joi](#joi)
@@ -66,7 +70,7 @@ npm install --save zod
 yarn add zod
 ```
 
-### TypeScript versions
+#### TypeScript versions
 
 Zod 1.0.x is compatible with TypeScript 3.2+.
 
@@ -496,6 +500,24 @@ const nonEmptyDogsList = z.array(dogSchema).nonempty();
 nonEmptyDogsList.parse([]); // throws Error("Array cannot be empty")
 ```
 
+## Tuples
+
+These differ from arrays in that they have a fixed number of elements, and each element can have a different type.
+
+```ts
+const athleteSchema = z.tuple([
+  // takes an array of schemas
+  z.string(), // name
+  z.number(), // jersey number
+  z.object({
+    pointsScored: z.number(),
+  }), // statistics
+]);
+
+type Athlete = z.infer<typeof athleteSchema>;
+// type Athlete = [string, number, { pointsScored: number }]
+```
+
 ## Unions
 
 Zod includes a built-in `z.union` method for composing "OR" types.
@@ -507,7 +529,7 @@ stringOrNumber.parse('foo'); // passes
 stringOrNumber.parse(14); // passes
 ```
 
-### Optional types
+#### Optional types
 
 Unions are the basis for defining optional schemas. An "optional string" is just the union of `string` and `undefined`.
 
@@ -529,7 +551,7 @@ const C = z.object({
 type C = z.infer<typeof C>; // { username?: string | undefined };
 ```
 
-### Nullable types
+#### Nullable types
 
 Similarly, you can create nullable types like so:
 
@@ -564,7 +586,7 @@ F.parse({}); // => throws Error!
 type F = z.infer<typeof F>; // string | number | boolean | undefined | null;
 ```
 
-## Enums
+#### Enums
 
 You can combine unions and string literals to create an enum schemas.
 
@@ -626,24 +648,6 @@ type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };
 ```
 
-## Tuples
-
-These differ from arrays in that they have a fixed number of elements, and each element can have a different type.
-
-```ts
-const athleteSchema = z.tuple([
-  // takes an array of schemas
-  z.string(), // name
-  z.number(), // jersey number
-  z.object({
-    pointsScored: z.number(),
-  }), // statistics
-]);
-
-type Athlete = z.infer<typeof athleteSchema>;
-// type Athlete = [string, number, { pointsScored: number }]
-```
-
 ## Recursive types
 
 You can define a recursive schema in Zod, but because of a limitation of TypeScript, their type can't be statically inferred. If you need a recursive Zod schema you'll need to define the type definition manually, and provide it to Zod as a "type hint".
@@ -696,7 +700,7 @@ const Category: z.ZodType<Category> = BaseCategory.merge(
 );
 ```
 
-### Cyclical objects
+#### Cyclical objects
 
 Validation still works as expected even when there are cycles in the data.
 
@@ -743,7 +747,7 @@ const test = async () => {
 };
 ```
 
-### Non-native promise implementations
+#### Non-native promise implementations
 
 When "parsing" a promise, Zod checks that the passed value is an object with `.then` and `.catch` methods - that's it. So you should be able to pass non-native Promises (Bluebird, etc) into `z.promise(...).parse` with no trouble. One gotcha: the return type of the parse function will be a _native_ `Promise`, so if you have downstream logic that uses non-standard Promise methods, this won't work.
 
@@ -842,7 +846,7 @@ If this example sounds contrived, check out the homepage of the popular GraphQL 
 Zod's solution to this is "masking". Masking is known by a lot of other names too: _derived types_, _views_ (especially in the SQL world), _projections_, and more.
 
 
-### Picking
+#### Picking
 ```ts
 const User = z.object({
   id: z.string(),
@@ -864,7 +868,7 @@ type createUserInput = z.infer<typeof createUserInput>;
 // => { name: string }
 ```
 
-### Nested objects
+#### Nested objects
 
 Masking also works on nested object schemas:
 
@@ -892,7 +896,7 @@ User.omit({ outer: { inner: { prop2: true } } }); // { outer: { prop1: string, i
 ```
 
 
-### Recursive schemas -->
+#### Recursive schemas -->
 
 ## Errors
 
@@ -1001,13 +1005,13 @@ Default Values
 Rich Errors
 Branded -->
 
-### Joi
+#### Joi
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
 Doesn't support static type inference. 😕
 
-### Yup
+#### Yup
 
 [https://github.com/jquense/yup](https://github.com/jquense/yup)
 
@@ -1045,7 +1049,7 @@ type NumList = yup.InferType<typeof numList>;
 
 These may sound like nitpicks. But it's not acceptable that an object that's assignable to the inferred TypeScript type can fail validation by the validator it was inferred from.
 
-### io-ts
+#### io-ts
 
 [https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
 
@@ -1090,7 +1094,7 @@ This more declarative API makes schema definitions vastly more concise.
 
 `io-ts` also requires the use of gcanti's functional programming library `fp-ts` to parse results and handle errors. This is another fantastic resource for developers looking to keep their codebase strictly functional. But depending on `fp-ts` necessarily comes with a lot of intellectual overhead; a developer has to be familiar with functional programming concepts, `fp-ts`'s nomenclature, and the `Either` monad to do a simple schema validation. It's just not worth it for many people.
 
-### Runtypes
+#### Runtypes
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
