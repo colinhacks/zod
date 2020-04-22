@@ -17,6 +17,7 @@ import { ZodFunction } from './types/function';
 import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
+import { ZodPromise, ZodPromiseDef } from './types/promise';
 import { TypeOf, ZodType, ZodAny } from './types/base';
 import { ZodError } from './ZodError';
 // import { ZodLazyObject, ZodLazyObjectDef } from './types/lazyobject';
@@ -39,7 +40,8 @@ type ZodDef =
   | ZodLazyDef
   //  | ZodLazyObjectDef
   | ZodLiteralDef
-  | ZodEnumDef;
+  | ZodEnumDef
+  | ZodPromiseDef;
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -60,6 +62,7 @@ const lazyType = ZodLazy.create;
 // const recursionType = ZodObject.recursion;
 const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
+const promiseType = ZodPromise.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -88,6 +91,7 @@ export {
   // recursionType as recursion,
   literalType as literal,
   enumType as enum,
+  promiseType as promise,
   ostring,
   onumber,
   oboolean,
@@ -112,6 +116,7 @@ export {
   // ZodLazyObject,
   ZodLiteral,
   ZodEnum,
+  ZodPromise,
   ZodType,
   ZodAny,
   ZodDef,

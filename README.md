@@ -44,6 +44,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
   - [Intersections](#intersections)
   - [Recursive types](#recursive-types)
   - [Function schemas](#function-schemas)
+  - [Promises](#promises)
     <!-- - [Masking](#masking) -->
   - [Errors](#errors)
 - [Changelog](#changelog)
@@ -91,6 +92,7 @@ import * as z from 'zod';
 
 const stringSchema = z.string(); // => ZodType<string>
 const numberSchema = z.number(); // => ZodType<number>
+const bigintSchema = z.bigint(); // => ZodType<bigint>
 const booleanSchema = z.boolean(); // => ZodType<boolean>
 const dateSchema = z.date(); // => ZodType<Date>
 const undefinedSchema = z.undefined(); // => ZodType<undefined>
@@ -712,6 +714,39 @@ parsedCategory.subcategories[0].subcategories[0].subcategories[0];
 // => parsedCategory: Category;
 ```
 
+## Promises
+
+As of zod@1.2.7, there is also support for Promise schemas!
+
+```ts
+const numberPromise = z.promise(z.number());
+```
+
+"Parsing" works a little differently with promise schemas. Validation happens in two parts:
+
+1. Zod synchronously checks that the input is an instance of Promise (i.e. an object with `.then` and `.catch` methods.).
+2. Zod _waits for the promise to resolve_ then validates the resolved value.
+
+```ts
+numberPromise.parse('tuna');
+// ZodError: Non-Promise type: string
+
+numberPromise.parse(Promise.resolve('tuna'));
+// => Promise<number>
+
+const test = async () => {
+  await numberPromise.parse(Promise.resolve('tuna'));
+  // ZodError: Non-number type: string
+
+  await numberPromise.parse(Promise.resolve(3.14));
+  // => 3.14
+};
+```
+
+### Non-native promise implementations
+
+When "parsing" a promise, Zod checks that the passed value is an object with `.then` and `.catch` methods - that's it. So you should be able to pass non-native Promises (Bluebird, etc) into `z.promise(...).parse` with no trouble. One gotcha: the return type of the parse function will be a _native_ `Promise`, so if you have downstream logic that uses non-standard Promise methods, this won't work.
+
 ## Function schemas
 
 Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".
@@ -719,7 +754,7 @@ Zod also lets you define "function schemas". This makes it easy to validate the 
 You can create a function schema with `z.function(args, returnType)` which accepts these arguments.
 
 - `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
-- `returnType: ZodType` The second argument is the function's return type. This can be any Zod schema.
+- `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema.
 
 ```ts
 const args = z.tuple([z.string()]);
@@ -731,7 +766,7 @@ type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string)=>number
 ```
 
-`z.function` actually returns a higher-order "function factory". Every "factory" has `.implement()` method which accepts a function as input and returns a new function.
+Function schemas have an `.implement()` method which accepts a function as input and returns a new function.
 
 ```ts
 const myValidatedFunction = myFunction(x => {
@@ -748,11 +783,10 @@ Here's a more complex example showing how to write a typesafe API query endpoint
 
 ```ts
 const args = z.tuple([
-  z.object({ nameStartsWith: z.string() }), // filters
-  z.object({ skip: z.number(), limit: z.number() }), // pagination
+  z.object({ id: z.string() }), // get by ID
 ]);
 
-const returnType = z.array(
+const returnType = z.promise(
   z.object({
     id: string(),
     name: string(),
@@ -761,38 +795,31 @@ const returnType = z.array(
 
 const FetcherEndpoint = z.function(args, returnType);
 
-const searchUsers = FetcherEndpoint.validate((filters, pagination) => {
-  // the arguments automatically have the appropriate types
-  // as defined by the args tuple passed to `z.function()`
-  // without needing to provide types in the function declaration
+const getUserByID = FetcherEndpoint.validate(args => {
+  args; // => { id: string }
 
-  filters.nameStartsWith; // autocompletes
-  filters.ageLessThan; // TypeError
-
-  const users = User.findAll({
-    // ... apply filters here
-  });
+  const user = await User.findByID(args.id);
 
   // TypeScript statically verifies that value returned by
-  // this function is of type { id: string; name: string; }[]
-
+  // this function is of type Promise<{ id: string; name: string; }>
   return 'salmon'; // TypeError
+
+  return user; // success
 });
-
-const users = searchUsers(
-  {
-    nameStartsWith: 'John',
-  },
-  {
-    skip: 0,
-    limit: 20,
-  },
-);
-
-// `typeof users` => { id: string; name: string; }[]
 ```
 
 This is particularly useful for defining HTTP or RPC endpoints that accept complex payloads that require validation. Moreover, you can define your endpoints once with Zod and share the code with both your client and server code to achieve end-to-end type safety.
+
+```ts
+// Express example
+server.get(`/user/:id`, async (req, res) => {
+  const user = await getUserByID({ id: req.params.id }).catch(err => {
+    res.status(400).send(err.message);
+  });
+
+  res.status(200).send(user);
+});
+```
 
 <!--
 ## Masking
@@ -863,6 +890,7 @@ User.omit({ outer: { prop1: true } }); // { outer: { inner: { prop2: number }}}
 User.omit({ outer: { inner: true } }); // { outer: { prop1: string }}
 User.omit({ outer: { inner: { prop2: true } } }); // { outer: { prop1: string, inner: {} }}
 ```
+
 
 ### Recursive schemas -->
 

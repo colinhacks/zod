@@ -20,6 +20,7 @@ export enum ZodTypes {
   lazyobject = 'lazyobject',
   literal = 'literal',
   enum = 'enum',
+  promise = 'promise',
 }
 
 export type ZodAny = ZodType<any>;
@@ -60,7 +61,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  check(u: Type): u is Type {
+  check(u: Type | unknown): u is Type {
     try {
       this.parse(u as any);
       return true;

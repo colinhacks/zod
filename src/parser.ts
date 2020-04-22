@@ -39,7 +39,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       return obj as any;
     case z.ZodTypes.bigint:
       if (typeof obj !== 'bigint') {
-        throw ZodError.fromString(`Invalid bigint.`);
+        throw ZodError.fromString(`Non-bigint type: ${typeof obj}.`);
       }
       return obj;
     case z.ZodTypes.boolean:
@@ -199,7 +199,28 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
           throw ZodError.fromString(`Invalid date.`);
         }
       }
-      throw ZodError.fromString(`Non-Date type: ${obj.type}`);
+      throw ZodError.fromString(`Non-Date type: ${typeof obj}`);
+    case z.ZodTypes.promise:
+      if (!obj.then || typeof obj.then !== 'function') {
+        console.log(JSON.stringify(obj, null, 2));
+        throw ZodError.fromString(`Non-Promise type: ${typeof obj}`);
+      }
+      if (!obj.catch || typeof obj.catch !== 'function') {
+        console.log(JSON.stringify(obj, null, 2));
+        throw ZodError.fromString(`Non-Promise type: ${typeof obj}`);
+      }
+      // if (util.getObjectType(obj) !== 'Promise') {
+      //   throw ZodError.fromString(`Non-Promise type.`);
+      // }
+      return new Promise(async (res, rej) => {
+        const objValue = await obj;
+        try {
+          const parsed = def.type.parse(objValue);
+          res(parsed);
+        } catch (err) {
+          rej(err);
+        }
+      });
 
     default:
       // function

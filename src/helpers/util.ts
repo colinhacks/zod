@@ -11,4 +11,13 @@ export namespace util {
   export function assertNever(_x: never): never {
     throw new Error();
   }
+
+  export const getObjectType = (value: unknown): string | undefined => {
+    const objectName = toString.call(value).slice(8, -1);
+    if (objectName) {
+      return objectName;
+    }
+
+    return undefined;
+  };
 }
