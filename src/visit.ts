@@ -1,5 +1,5 @@
 import * as z from './types/base';
-import { ZodDef } from '.';
+import { ZodDef, ZodPromise } from '.';
 import { util } from './helpers/util';
 import { ZodArray } from './types/array';
 import { ZodObject } from './types/object';
@@ -18,6 +18,8 @@ export const Visitor = (visit: (_schema: z.ZodAny) => z.ZodAny) => (schema: z.Zo
     case z.ZodTypes.string:
       return visit(schema);
     case z.ZodTypes.number:
+      return visit(schema);
+    case z.ZodTypes.bigint:
       return visit(schema);
     case z.ZodTypes.boolean:
       return visit(schema);
@@ -85,6 +87,13 @@ export const Visitor = (visit: (_schema: z.ZodAny) => z.ZodAny) => (schema: z.Zo
       return visit(schema);
     case z.ZodTypes.enum:
       return visit(schema);
+    case z.ZodTypes.promise:
+      return visit(
+        new ZodPromise({
+          ...def,
+          type: visit(def.type),
+        }),
+      );
     default:
       util.assertNever(def);
       break;
