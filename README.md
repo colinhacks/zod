@@ -1098,6 +1098,8 @@ This more declarative API makes schema definitions vastly more concise.
 
 | zod version | release notes                                              |
 | ----------- | ---------------------------------------------------------- |
+| zod@1.3     | Promise schemas                                            |
+| zod@1.2.6   | `.parse` accepts `unknown`, `bigint` schemas               |
 | zod@1.2.5   | `.partial` and `.deepPartial` on object schemas            |
 | zod@1.2.3   | Date schemas                                               |
 | zod@1.2.0   | `.pick`, `.omit`, and `.augment` on object schemas         |
