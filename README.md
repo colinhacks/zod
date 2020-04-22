@@ -23,7 +23,6 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 - [Installation](#installation)
 - [Usage](#usage)
-
   - [Primitives](#primitives)
   - [Literals](#literals)
   - [Parsing](#parsing)
@@ -46,11 +45,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
   - [Recursive types](#recursive-types)
   - [Promises](#promises)
   - [Function schemas](#function-schemas)
-
-    <!-- - [Masking](#masking) -->
-
   - [Errors](#errors)
-
 - [Changelog](#changelog)
 - [Comparison](#comparison)
   - [Joi](#joi)
