@@ -768,7 +768,7 @@ type myFunction = z.infer<typeof myFunction>;
 Function schemas have an `.implement()` method which accepts a function as input and returns a new function.
 
 ```ts
-const myValidatedFunction = myFunction(x => {
+const myValidatedFunction = myFunction.implement(x => {
   // TypeScript knows x is a string!
   return x.trim().length;
 });
