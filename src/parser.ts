@@ -37,6 +37,11 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
         throw ZodError.fromString(`Non-number type: NaN`);
       }
       return obj as any;
+    case z.ZodTypes.bigint:
+      if (typeof obj !== 'bigint') {
+        throw ZodError.fromString(`Invalid bigint.`);
+      }
+      return obj;
     case z.ZodTypes.boolean:
       if (typeof obj !== 'boolean') throw ZodError.fromString(`Non-boolean type: ${typeof obj}`);
       return obj as any;
@@ -195,6 +200,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
         }
       }
       throw ZodError.fromString(`Non-Date type: ${obj.type}`);
+
     default:
       // function
       // return obj;

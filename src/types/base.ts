@@ -3,6 +3,7 @@ import { ZodParser, ParseParams } from '../parser';
 export enum ZodTypes {
   string = 'string',
   number = 'number',
+  bigint = 'bigint',
   boolean = 'boolean',
   date = 'date',
   undefined = 'undefined',

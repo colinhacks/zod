@@ -2,6 +2,7 @@
 
 import { ZodString, ZodStringDef } from './types/string';
 import { ZodNumber, ZodNumberDef } from './types/number';
+import { ZodBigInt, ZodBigIntDef } from './types/bigint';
 import { ZodBoolean, ZodBooleanDef } from './types/boolean';
 import { ZodDate, ZodDateDef } from './types/date';
 import { ZodUndefined, ZodUndefinedDef } from './types/undefined';
@@ -23,6 +24,7 @@ import { ZodError } from './ZodError';
 type ZodDef =
   | ZodStringDef
   | ZodNumberDef
+  | ZodBigIntDef
   | ZodBooleanDef
   | ZodDateDef
   | ZodUndefinedDef
@@ -41,6 +43,7 @@ type ZodDef =
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
+const bigIntType = ZodBigInt.create;
 const booleanType = ZodBoolean.create;
 const dateType = ZodDate.create;
 const undefinedType = ZodUndefined.create;
@@ -68,6 +71,7 @@ const oboolean = () => booleanType().optional();
 export {
   stringType as string,
   numberType as number,
+  bigIntType as bigint,
   booleanType as boolean,
   dateType as date,
   undefinedType as undefined,
@@ -92,6 +96,7 @@ export {
 export {
   ZodString,
   ZodNumber,
+  ZodBigInt,
   ZodBoolean,
   ZodDate,
   ZodUndefined,

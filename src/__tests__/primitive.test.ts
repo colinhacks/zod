@@ -6,6 +6,7 @@ const literalNumberSchema = z.literal(12);
 const literalBooleanSchema = z.literal(true);
 const stringSchema = z.string();
 const numberSchema = z.number();
+const bigintSchema = z.bigint();
 const booleanSchema = z.boolean();
 const dateSchema = z.date();
 const nullSchema = z.null();
@@ -14,6 +15,8 @@ const stringSchemaOptional = z.string().optional();
 const stringSchemaNullable = z.string().nullable();
 const numberSchemaOptional = z.number().optional();
 const numberSchemaNullable = z.number().nullable();
+const bigintSchemaOptional = z.bigint().optional();
+const bigintSchemaNullable = z.bigint().nullable();
 const booleanSchemaOptional = z.boolean().optional();
 const booleanSchemaNullable = z.boolean().nullable();
 const dateSchemaOptional = z.date().optional();
@@ -131,6 +134,11 @@ test('parse numberSchema number', () => {
   numberSchema.parse(val.number);
 });
 
+test('parse numberSchema bigint', () => {
+  const f = () => numberSchema.parse(val.bigint as any);
+  expect(f).toThrow();
+});
+
 test('parse numberSchema boolean', () => {
   const f = () => numberSchema.parse(val.boolean as any);
   expect(f).toThrow();
@@ -143,6 +151,35 @@ test('parse numberSchema undefined', () => {
 
 test('parse numberSchema null', () => {
   const f = () => numberSchema.parse(val.null as any);
+  expect(f).toThrow();
+});
+
+test('parse bigintSchema string', () => {
+  const f = () => bigintSchema.parse(val.string as any);
+  expect(f).toThrow();
+});
+
+test('parse bigintSchema number', () => {
+  const f = () => bigintSchema.parse(val.number as any);
+  expect(f).toThrow();
+});
+
+test('parse bigintSchema bigint', () => {
+  bigintSchema.parse(val.bigint);
+});
+
+test('parse bigintSchema boolean', () => {
+  const f = () => bigintSchema.parse(val.boolean as any);
+  expect(f).toThrow();
+});
+
+test('parse bigintSchema undefined', () => {
+  const f = () => bigintSchema.parse(val.undefined as any);
+  expect(f).toThrow();
+});
+
+test('parse bigintSchema null', () => {
+  const f = () => bigintSchema.parse(val.null as any);
   expect(f).toThrow();
 });
 
@@ -264,6 +301,7 @@ test('primitive inference', () => {
   const literalBooleanSchemaTest: AssertEqual<z.TypeOf<typeof literalBooleanSchema>, true> = true;
   const stringSchemaTest: AssertEqual<z.TypeOf<typeof stringSchema>, string> = true;
   const numberSchemaTest: AssertEqual<z.TypeOf<typeof numberSchema>, number> = true;
+  const bigintSchemaTest: AssertEqual<z.TypeOf<typeof bigintSchema>, bigint> = true;
   const booleanSchemaTest: AssertEqual<z.TypeOf<typeof booleanSchema>, boolean> = true;
   const dateSchemaTest: AssertEqual<z.TypeOf<typeof dateSchema>, Date> = true;
   const nullSchemaTest: AssertEqual<z.TypeOf<typeof nullSchema>, null> = true;
@@ -272,6 +310,8 @@ test('primitive inference', () => {
   const stringSchemaNullableTest: AssertEqual<z.TypeOf<typeof stringSchemaNullable>, string | null> = true;
   const numberSchemaOptionalTest: AssertEqual<z.TypeOf<typeof numberSchemaOptional>, number | undefined> = true;
   const numberSchemaNullableTest: AssertEqual<z.TypeOf<typeof numberSchemaNullable>, number | null> = true;
+  const bigintSchemaOptionalTest: AssertEqual<z.TypeOf<typeof bigintSchemaOptional>, bigint | undefined> = true;
+  const bigintSchemaNullableTest: AssertEqual<z.TypeOf<typeof bigintSchemaNullable>, bigint | null> = true;
   const booleanSchemaOptionalTest: AssertEqual<z.TypeOf<typeof booleanSchemaOptional>, boolean | undefined> = true;
   const booleanSchemaNullableTest: AssertEqual<z.TypeOf<typeof booleanSchemaNullable>, boolean | null> = true;
   const dateSchemaOptionalTest: AssertEqual<z.TypeOf<typeof dateSchemaOptional>, Date | undefined> = true;
@@ -283,6 +323,7 @@ test('primitive inference', () => {
     literalBooleanSchemaTest,
     stringSchemaTest,
     numberSchemaTest,
+    bigintSchemaTest,
     booleanSchemaTest,
     dateSchemaTest,
     nullSchemaTest,
@@ -291,6 +332,8 @@ test('primitive inference', () => {
     stringSchemaNullableTest,
     numberSchemaOptionalTest,
     numberSchemaNullableTest,
+    bigintSchemaOptionalTest,
+    bigintSchemaNullableTest,
     booleanSchemaOptionalTest,
     booleanSchemaNullableTest,
     dateSchemaOptionalTest,

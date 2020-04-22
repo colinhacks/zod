@@ -15,6 +15,9 @@ export class Mocker {
   get number() {
     return Math.random() * 100;
   }
+  get bigint() {
+    return BigInt(Math.floor(Math.random() * 10000));
+  }
   get boolean() {
     return Math.random() < 0.5;
   }
