@@ -39,7 +39,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
   - [Unions](#unions)
     - [.optional](#optional-types)
     - [.nullable](#nullable-types)
-    - [enums](#enums)
+    - [.enum](#enums)
   - [Intersections](#intersections)
   - [Tuples](#tuples)
   - [Recursive types](#recursive-types)
