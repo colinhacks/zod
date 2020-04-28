@@ -55,7 +55,7 @@ const obj = z
   .object({
     asdf: z.string(),
   })
-  .refine({ check: val => val.asdf.includes('hello') });
+  .refine(val => val.asdf.includes('hello'), 'asdf');
 
 console.log(obj.parse({ asdf: 'hello there' }));
 console.log(obj.parse({ asdf: 'bye bye' }));

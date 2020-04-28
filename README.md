@@ -163,13 +163,10 @@ Every Zod schema has a `.refine` method that lets you define custom validation c
 In these cases, you would use the `.refine` method.
 
 ```ts
-const myString = z.string().refine({
-  check: val => val.length <= 255, // `val` has `string` type
-  message: "String can't be more than 255 characters", // optional
-});
+const myString = z.string().refine(val => val.length <= 255, "String can't be more than 255 characters");
 ```
 
-As you can see, the argument is an object with two properties: `check` (the validation function) and `message` a custom error message for failed validations. The argument to the `check` function (`val` in the example above) is properly typed automatically.
+As you can see, `.refine` takes two arguments. The first is the validation function, and the second is a custom error message . The argument to the validation function (`val` in the example above) is statically typed to be the inferred type of the schema.
 
 Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of useful string validation functions.
 
