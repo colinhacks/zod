@@ -171,6 +171,8 @@ const myString = z.string().refine({
 
 As you can see, the argument is an object with two properties: `check` (the validation function) and `message` a custom error message for failed validations. The argument to the `check` function (`val` in the example above) is properly typed automatically.
 
+Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of useful string validation functions.
+
 ## Type inference
 
 You can extract the TypeScript type of any schema with `z.infer<typeof [schema]>`.
