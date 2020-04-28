@@ -2,22 +2,25 @@
   <img src="logo.svg" width="200px" align="center" />
   <h1 align="center">Zod</h1>
 </p>
+<div style="display:flex;flex-direction:row;justify-content:center;flex-wrap:wrap;">
 
 [![License][license-image]][license-url]
 [![npm](https://img.shields.io/npm/dw/zod.svg)](https://www.npmjs.com/package/zod)
 [![stars](https://img.shields.io/github/stars/vriad/zod)](https://img.shields.io/github/stars/vriad/zod)
 [![coverage](./coverage.svg)](./src/__tests__)
 
+</div>
+
 [license-url]: https://opensource.org/licenses/MIT
 [license-image]: https://img.shields.io/github/license/vriad/zod
 
 <br/>
 
-Created and maintained by [@vriad](https://twitter.com/vriad). The motivation for this library and a detailed comparison to various alternatives can be found at https://vriad.com/blog/zod.
+<!-- Created and maintained by [@vriad](https://twitter.com/vriad). The motivation for this library and a detailed comparison to various alternatives can be found at https://vriad.com/blog/zod.
 
-If you find this package useful, leave a star to help more folks find it ⭐️🤏
+If you find this package useful, leave a star to help more folks find it ⭐️🤏 -->
 
-<br/>
+<!-- <br/> -->
 
 #### Table of contents
 
@@ -110,15 +113,19 @@ Currently there is no support for Date literals in Zod. If you have a use case f
 
 ## Parsing and validation
 
+### Parsing
+
 Given a Zod schema, you can call its `.parse(data)` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
-IMPORTANT: The variable you pass into `.parse` is not the same variable you get back out. Assuming the value passes validation, you get back a deep clone of the object you passed in.
+IMPORTANT: As of Zod 1.4, the value returned by `.parse` is _the same variable you passed in_. Previously it returned a deep clone. One exception: "parsing" a `Promise` schemas returns a new Promise for reasons explained in the documentation.
 
 ```ts
 const stringSchema = z.string();
 stringSchema.parse('fish'); // => "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
+
+### Type guards
 
 You can also use a Zod schema as a type guard using the schema's `.check()` method, like so:
 
@@ -147,6 +154,21 @@ const process = (blob: any) => {
 ```
 
 To learn more about error handling with Zod, jump to [Errors](#errors).
+
+### Custom validation
+
+Every Zod schema has a `.refine` method that lets you define custom validation checks. Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an Int or that a string is a valid email address.
+
+In these cases, you would use the `.refine` method.
+
+```ts
+const myString = z.string().refine({
+  check: val => val.length <= 255, // `val` has `string` type
+  message: "String can't be more than 255 characters", // optional
+});
+```
+
+As you can see, the argument is an object with two properties: `check` (the validation function) and `message` a custom error message for failed validations. The argument to the `check` function (`val` in the example above) is properly typed automatically.
 
 ## Type inference
 
@@ -1095,16 +1117,17 @@ This more declarative API makes schema definitions vastly more concise.
 
 # Changelog
 
-| zod version | release notes                                              |
-| ----------- | ---------------------------------------------------------- |
-| zod@1.3     | Promise schemas                                            |
-| zod@1.2.6   | `.parse` accepts `unknown`, `bigint` schemas               |
-| zod@1.2.5   | `.partial` and `.deepPartial` on object schemas            |
-| zod@1.2.3   | Date schemas                                               |
-| zod@1.2.0   | `.pick`, `.omit`, and `.augment` on object schemas         |
-| zod@1.1.0   | Records                                                    |
-| zod@1.0.11  | `.nonstrict`                                               |
-| zod@1.0.10  | Type assertions with `.check`                              |
-| zod@1.0.4   | Empty tuples                                               |
-| zod@1.0.0   | Type assertions, literals, enums, detailed error reporting |
-| zod@1.0.0   | Initial release                                            |
+| zod version | release notes                                                       |
+| ----------- | ------------------------------------------------------------------- |
+| zod@1.4     | Refinement types (`.refine`), `.parse` no longer returns deep clone |
+| zod@1.3     | Promise schemas                                                     |
+| zod@1.2.6   | `.parse` accepts `unknown`, `bigint` schemas                        |
+| zod@1.2.5   | `.partial` and `.deepPartial` on object schemas                     |
+| zod@1.2.3   | Date schemas                                                        |
+| zod@1.2.0   | `.pick`, `.omit`, and `.augment` on object schemas                  |
+| zod@1.1.0   | Records                                                             |
+| zod@1.0.11  | `.nonstrict`                                                        |
+| zod@1.0.10  | Type assertions with `.check`                                       |
+| zod@1.0.4   | Empty tuples                                                        |
+| zod@1.0.0   | Type assertions, literals, enums, detailed error reporting          |
+| zod@1.0.0   | Initial release                                                     |

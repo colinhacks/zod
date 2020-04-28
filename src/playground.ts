@@ -1,42 +1,61 @@
 import * as z from '.';
-import { util } from './helpers/util';
-const promSchema = z.promise(
-  z.object({
-    name: z.string(),
-    age: z.number(),
-  }),
-);
 
-const y = () => util.getObjectType(new Promise(() => {}));
-y.toString();
-
-const run = async () => {
-  await promSchema.parse(Promise.resolve({ name: 'Bobby', age: 10 }));
-
-  const bad = promSchema.parse(Promise.resolve({ name: 'Bobby', age: '10' }));
-  // await bad;
-
-  bad
-    .then(val => {
-      console.log(JSON.stringify(val, null, 2));
-    })
-    .catch(err => {
-      if (err instanceof z.ZodError) {
-        console.log(JSON.stringify(err.errors, null, 2));
-      }
-    });
-  return bad;
-};
-run().catch((err: any) => {
-  console.log('caught zod error!');
-  console.log(err);
-});
-
-// expect(bad).toThrow();
-
-// const failPromise = promSchema.parse(Promise.resolve({ name: 'Bobby', age: '10' }));
-// failPromise.catch(err => {
-//   console.log(err);
-//   console.log(err.message);
-//   expect(err instanceof ZodError).toBeTruthy();
+// const CellResults = z.object({
+//   kind: z.literal('results'),
+//   results: z
+//     .array(
+//       z.union([
+//         z.object({
+//           kind: z.literal('data'),
+//           data: z.tuple([z.string(), z.string(), z.string()]),
+//         }),
+//         z.object({
+//           kind: z.literal('error'),
+//           error: z.tuple([z.string(), z.string(), z.object({})]),
+//         }),
+//         z.object({
+//           kind: z.literal('skipped'),
+//         }),
+//       ]),
+//     )
+//     .nonempty(),
 // });
+
+// export const CellResultsAPIValidator = z.union([
+//   z.object({
+//     kind: z.literal('error'),
+//     error: z.object({
+//       message: z.string(),
+//       type: z.string(),
+//     }),
+//   }),
+//   CellResults,
+// ]);
+
+// CellResults.parse({
+//   kind: 'results',
+//   results: [
+//     {
+//       kind: 'error',
+//       error: [
+//         'InvalidReferenceError',
+//         "object type or alias 'User' does not exist",
+//         {
+//           '65521': '7',
+//           '65522': '11',
+//           '65523': '1',
+//           '65524': '8',
+//         },
+//       ],
+//     },
+//   ],
+// });
+
+const obj = z
+  .object({
+    asdf: z.string(),
+  })
+  .refine({ check: val => val.asdf.includes('hello') });
+
+console.log(obj.parse({ asdf: 'hello there' }));
+console.log(obj.parse({ asdf: 'bye bye' }));

@@ -29,8 +29,10 @@ export type ZodRawShape = { [k: string]: ZodAny };
 // const asdf = { asdf: ZodString.create() };
 // type tset1 = typeof asdf extends ZodRawShape ? true :false
 
+type Check<T> = { message?: string; check: (arg: T) => boolean };
 export interface ZodTypeDef {
   t: ZodTypes;
+  checks?: Check<any>[];
 }
 
 export type TypeOf<T extends { _type: any }> = T['_type'];
@@ -69,6 +71,12 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
       return false;
     }
   }
+
+  refine = <Val extends Check<this['_type']>>(check: Val) => {
+    this._def.checks = this._def.checks || [];
+    this._def.checks.push(check);
+    return this;
+  };
 
   // mask = <P extends maskUtil.Params<Type>>(_params: P): ZodType<maskUtil.Pick<Type, P>> => {
   //   return Masker(this, _params) as any;
