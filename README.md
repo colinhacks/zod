@@ -436,12 +436,12 @@ Records are similar to object schemas, but don't enforce a type restriction on t
 const objectSchema = z.object({ name: z.string() });
 ```
 
-`objectSchema` only accepts objects with single key: `name`. You could use `.nonstrict()` to create a schema that accepts unknown keys, but that schema won't validated the values associated with those unknown keys.
+`objectSchema` only accepts objects with single key: `name`. You could use `.nonstrict()` to create a schema that accepts unknown keys, but that schema doesn't enforce a type on the _values_ associated with those unknown keys.
 
 ```ts
 const nonstrict = objectSchema.nonstrict();
 type nonstrict = z.infer<typeof nonstrict>;
-// => { name: string, [k:string]: any}
+// => { name: string, [k:string]: any }
 
 const parsed = nonstrict.parse({ name: 'Serena', bar: ['whatever'] });
 parsed.bar; // no type information
