@@ -30,6 +30,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
   - [Literals](#literals)
   - [Parsing](#parsing)
   - [Type inference](#type-inference)
+  - [Custom validation](#custom-validation)
   - [Objects](#objects)
     - [.nonstrict](#unknown-keys)
     - [.merge](#merging)
