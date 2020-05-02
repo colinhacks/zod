@@ -12,10 +12,10 @@
 
 // type Params = any;
 
-// export const ParamVisitor = (visit: (_schema: z.ZodAny, params: Params) => z.ZodAny) => (
-//   schema: z.ZodAny,
+// export const ParamVisitor = (visit: (_schema: z.ZodTypeAny, params: Params) => z.ZodTypeAny) => (
+//   schema: z.ZodTypeAny,
 //   params: Params,
-// ): z.ZodAny => {
+// ): z.ZodTypeAny => {
 //   const def: ZodDef = schema._def as any;
 
 //   switch (def.t) {

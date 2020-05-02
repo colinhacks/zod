@@ -1,17 +1,17 @@
-// import { ZodAny } from '../types/base';
+// import { ZodTypeAny } from '../types/base';
 // import { ZodObject } from '../types/object';
 // import { ZodArray } from '..';
 
 // type AnyObject = { [k: string]: any };
 
 // export namespace zodmaskUtil {
-//   export type Params<T extends ZodAny> = {
+//   export type Params<T extends ZodTypeAny> = {
 //     object: true | (T extends ZodObject<infer U, any> ? { [k in keyof U]?: Params<U[k]> } : 'objectnever');
 //     array: true | (T extends ZodArray<ZodObject<infer U, any>> ? Params<ZodObject<U, any>> : 'arraynever');
 //     rest: true;
 //   }[T extends ZodObject<any, any> ? 'object' : T extends ZodArray<ZodObject<any>> ? 'array' : 'rest'];
 
-//   export type pick<T extends ZodAny, P extends Params<T>> = {
+//   export type pick<T extends ZodTypeAny, P extends Params<T>> = {
 //     false: never;
 //     true: T;
 //     array: T extends ZodArray<infer U> ? ZodArray<pick<U, P>> : never;
@@ -35,7 +35,7 @@
 //       : 'never'
 //     : 'never'];
 
-//   export type omit<T extends ZodAny, P extends Params<T>> = {
+//   export type omit<T extends ZodTypeAny, P extends Params<T>> = {
 //     false: T;
 //     true: never;
 //     array: T extends ZodArray<infer U> ? ZodArray<omit<U, P>> : never;

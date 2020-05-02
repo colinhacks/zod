@@ -6,13 +6,13 @@ import { ZodUnion } from './union';
 // import { zodmaskUtil } from '../helpers/zodmaskUtil';
 // import { applyMask } from '../masker';
 
-export interface ZodArrayDef<T extends z.ZodAny = z.ZodAny> extends z.ZodTypeDef {
+export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
   t: z.ZodTypes.array;
   type: T;
   nonempty: boolean;
 }
 
-export class ZodArray<T extends z.ZodAny> extends z.ZodType<T['_type'][], ZodArrayDef<T>> {
+export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], ZodArrayDef<T>> {
   toJSON = () => {
     return {
       t: this._def.t,
@@ -37,7 +37,7 @@ export class ZodArray<T extends z.ZodAny> extends z.ZodType<T['_type'][], ZodArr
   //   return applyMask(this, mask, 'omit');
   // };
 
-  static create = <T extends z.ZodAny>(schema: T): ZodArray<T> => {
+  static create = <T extends z.ZodTypeAny>(schema: T): ZodArray<T> => {
     return new ZodArray({
       t: z.ZodTypes.array,
       type: schema,
@@ -46,7 +46,7 @@ export class ZodArray<T extends z.ZodAny> extends z.ZodType<T['_type'][], ZodArr
   };
 }
 
-export class ZodNonEmptyArray<T extends z.ZodAny> extends z.ZodType<[T['_type'], ...T['_type'][]], ZodArrayDef<T>> {
+export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_type'], ...T['_type'][]], ZodArrayDef<T>> {
   toJSON = () => {
     return {
       t: this._def.t,
@@ -58,7 +58,7 @@ export class ZodNonEmptyArray<T extends z.ZodAny> extends z.ZodType<[T['_type'],
 
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  // static create = <T extends z.ZodAny>(schema: T): ZodArray<T> => {
+  // static create = <T extends z.ZodTypeAny>(schema: T): ZodArray<T> => {
   //   return new ZodArray({
   //     t: z.ZodTypes.array,
   //     nonempty: true,

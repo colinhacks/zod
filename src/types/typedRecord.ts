@@ -7,14 +7,14 @@ import { ZodNumber } from './number';
 
 type RecordKey = ZodString | ZodNumber;
 
-export interface ZodRecordDef<Key extends RecordKey = ZodString, Value extends z.ZodAny = z.ZodAny>
+export interface ZodRecordDef<Key extends RecordKey = ZodString, Value extends z.ZodTypeAny = z.ZodTypeAny>
   extends z.ZodTypeDef {
   t: z.ZodTypes.record;
   keyType: Key;
   valueType: Value;
 }
 
-type ZodRecordType<Key extends RecordKey = ZodString, Value extends z.ZodAny = z.ZodAny> = Key extends ZodString
+type ZodRecordType<Key extends RecordKey = ZodString, Value extends z.ZodTypeAny = z.ZodTypeAny> = Key extends ZodString
   ? Key extends ZodNumber
     ? Record<string | number, Value['_type']>
     : Record<string, Value['_type']> & { [k: number]: never }
@@ -22,7 +22,7 @@ type ZodRecordType<Key extends RecordKey = ZodString, Value extends z.ZodAny = z
   ? Record<number, Value['_type']> & { [k: string]: never }
   : never;
 
-export class ZodRecord<Key extends RecordKey = ZodString, Value extends z.ZodAny = z.ZodAny> extends z.ZodType<
+export class ZodRecord<Key extends RecordKey = ZodString, Value extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodType<
   ZodRecordType<Key, Value>, // { [k in keyof T]: T[k]['_type'] },
   ZodRecordDef<Key, Value>
 > {
@@ -39,7 +39,7 @@ export class ZodRecord<Key extends RecordKey = ZodString, Value extends z.ZodAny
 
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  static create = <Key extends RecordKey = ZodString, Value extends z.ZodAny = z.ZodAny>(
+  static create = <Key extends RecordKey = ZodString, Value extends z.ZodTypeAny = z.ZodTypeAny>(
     keyType: Key,
     valueType: Value,
   ): ZodRecord<Key, Value> => {

@@ -3,13 +3,14 @@ import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
 
-export interface ZodIntersectionDef<T extends z.ZodAny = z.ZodAny, U extends z.ZodAny = z.ZodAny> extends z.ZodTypeDef {
+export interface ZodIntersectionDef<T extends z.ZodTypeAny = z.ZodTypeAny, U extends z.ZodTypeAny = z.ZodTypeAny>
+  extends z.ZodTypeDef {
   t: z.ZodTypes.intersection;
   left: T;
   right: U;
 }
 
-export class ZodIntersection<T extends z.ZodAny, U extends z.ZodAny> extends z.ZodType<
+export class ZodIntersection<T extends z.ZodTypeAny, U extends z.ZodTypeAny> extends z.ZodType<
   T['_type'] & U['_type'],
   ZodIntersectionDef<T, U>
 > {
@@ -23,7 +24,7 @@ export class ZodIntersection<T extends z.ZodAny, U extends z.ZodAny> extends z.Z
     right: this._def.right.toJSON(),
   });
 
-  static create = <T extends z.ZodAny, U extends z.ZodAny>(left: T, right: U): ZodIntersection<T, U> => {
+  static create = <T extends z.ZodTypeAny, U extends z.ZodTypeAny>(left: T, right: U): ZodIntersection<T, U> => {
     return new ZodIntersection({
       t: z.ZodTypes.intersection,
       left: left,

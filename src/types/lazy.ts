@@ -4,12 +4,12 @@ import { ZodNull } from './null';
 import { ZodUnion } from './union';
 // import { ZodObject } from './object';
 
-export interface ZodLazyDef<T extends z.ZodAny = z.ZodAny> extends z.ZodTypeDef {
+export interface ZodLazyDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
   t: z.ZodTypes.lazy;
   getter: () => T;
 }
 
-export class ZodLazy<T extends z.ZodAny> extends z.ZodType<z.TypeOf<T>, ZodLazyDef<T>> {
+export class ZodLazy<T extends z.ZodTypeAny> extends z.ZodType<z.TypeOf<T>, ZodLazyDef<T>> {
   get schema(): T {
     return this._def.getter();
   }
@@ -22,7 +22,7 @@ export class ZodLazy<T extends z.ZodAny> extends z.ZodType<z.TypeOf<T>, ZodLazyD
     throw new Error("Can't JSONify recursive structure");
   };
 
-  static create = <T extends z.ZodAny>(getter: () => T): ZodLazy<T> => {
+  static create = <T extends z.ZodTypeAny>(getter: () => T): ZodLazy<T> => {
     return new ZodLazy({
       t: z.ZodTypes.lazy,
       getter: getter,

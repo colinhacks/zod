@@ -33,8 +33,8 @@
 //   }
 // });
 
-// // export const Masker = (visit: (_schema: z.ZodAny, params: Params) => z.ZodAny) => (
-// //   schema: z.ZodAny,
+// // export const Masker = (visit: (_schema: z.ZodTypeAny, params: Params) => z.ZodTypeAny) => (
+// //   schema: z.ZodTypeAny,
 // //   params: Params,
 // // ) => {
 // //   const def: ZodDef = schema._def as any;

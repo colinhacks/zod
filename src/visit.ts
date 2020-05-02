@@ -10,7 +10,7 @@ import { ZodRecord } from './types/record';
 import { ZodLazy } from './types/lazy';
 import { ZodError } from './ZodError';
 
-export const Visitor = (visit: (_schema: z.ZodAny) => z.ZodAny) => (schema: z.ZodAny) => {
+export const Visitor = (visit: (_schema: z.ZodTypeAny) => z.ZodTypeAny) => (schema: z.ZodTypeAny) => {
   const _def = schema._def;
   const def: ZodDef = _def as any;
 
@@ -28,6 +28,10 @@ export const Visitor = (visit: (_schema: z.ZodAny) => z.ZodAny) => (schema: z.Zo
     case z.ZodTypes.undefined:
       return visit(schema);
     case z.ZodTypes.null:
+      return visit(schema);
+    case z.ZodTypes.any:
+      return visit(schema);
+    case z.ZodTypes.unknown:
       return visit(schema);
     case z.ZodTypes.array:
       return visit(
@@ -94,6 +98,7 @@ export const Visitor = (visit: (_schema: z.ZodAny) => z.ZodAny) => (schema: z.Zo
           type: visit(def.type),
         }),
       );
+
     default:
       util.assertNever(def);
       break;

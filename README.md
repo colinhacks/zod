@@ -98,8 +98,12 @@ const numberSchema = z.number(); // => ZodType<number>
 const bigintSchema = z.bigint(); // => ZodType<bigint>
 const booleanSchema = z.boolean(); // => ZodType<boolean>
 const dateSchema = z.date(); // => ZodType<Date>
+
 const undefinedSchema = z.undefined(); // => ZodType<undefined>
-const nullTypeSchema = z.null(); // => ZodType<null>
+const nullSchema = z.null(); // => ZodType<null>
+
+const anySchema = z.any(); // => ZodType<any>
+const unknownSchema = z.unknown(); // => ZodType<unknown>
 ```
 
 ## Literals
@@ -1119,6 +1123,7 @@ This more declarative API makes schema definitions vastly more concise.
 
 | zod version | release notes                                                       |
 | ----------- | ------------------------------------------------------------------- |
+| zod@1.5     | Any and unknown types                                               |
 | zod@1.4     | Refinement types (`.refine`), `.parse` no longer returns deep clone |
 | zod@1.3     | Promise schemas                                                     |
 | zod@1.2.6   | `.parse` accepts `unknown`, `bigint` schemas                        |

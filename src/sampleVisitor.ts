@@ -2,7 +2,7 @@
 // import { ZodDef } from '.';
 // import { util } from './helpers/util';
 
-// export const sampleVisitor = (schema: z.ZodAny) => {
+// export const sampleVisitor = (schema: z.ZodTypeAny) => {
 //   const _def = schema._def;
 //   const def: ZodDef = _def as any;
 

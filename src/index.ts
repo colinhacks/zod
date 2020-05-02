@@ -7,6 +7,8 @@ import { ZodBoolean, ZodBooleanDef } from './types/boolean';
 import { ZodDate, ZodDateDef } from './types/date';
 import { ZodUndefined, ZodUndefinedDef } from './types/undefined';
 import { ZodNull, ZodNullDef } from './types/null';
+import { ZodAny, ZodAnyDef } from './types/any';
+import { ZodUnknown, ZodUnknownDef } from './types/unknown';
 import { ZodArray, ZodArrayDef } from './types/array';
 import { ZodObject, ZodObjectDef } from './types/object';
 import { ZodUnion, ZodUnionDef } from './types/union';
@@ -18,7 +20,7 @@ import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
-import { TypeOf, ZodType, ZodAny } from './types/base';
+import { TypeOf, ZodType, ZodTypeAny } from './types/base';
 import { ZodError } from './ZodError';
 // import { ZodLazyObject, ZodLazyObjectDef } from './types/lazyobject';
 
@@ -30,6 +32,8 @@ type ZodDef =
   | ZodDateDef
   | ZodUndefinedDef
   | ZodNullDef
+  | ZodAnyDef
+  | ZodUnknownDef
   | ZodArrayDef
   | ZodObjectDef
   | ZodUnionDef
@@ -50,6 +54,8 @@ const booleanType = ZodBoolean.create;
 const dateType = ZodDate.create;
 const undefinedType = ZodUndefined.create;
 const nullType = ZodNull.create;
+const anyType = ZodAny.create;
+const unknownType = ZodUnknown.create;
 const arrayType = ZodArray.create;
 const objectType = ZodObject.create;
 const unionType = ZodUnion.create;
@@ -67,7 +73,7 @@ const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
 
-// const stringRecord = <T extends ZodAny>(x:T)=>recordType(stringType(),x);
+// const stringRecord = <T extends ZodTypeAny>(x:T)=>recordType(stringType(),x);
 // const stringMap = stringRecord(objectType({asf:stringType()}))
 // const stringMap2 = recordType(stringType(),objectType({ asf: stringType() }));
 
@@ -79,6 +85,8 @@ export {
   dateType as date,
   undefinedType as undefined,
   nullType as null,
+  anyType as any,
+  unknownType as unknown,
   arrayType as array,
   objectType as object,
   unionType as union,
@@ -105,6 +113,8 @@ export {
   ZodDate,
   ZodUndefined,
   ZodNull,
+  ZodAny,
+  ZodUnknown,
   ZodArray,
   ZodObject,
   ZodUnion,
@@ -118,7 +128,7 @@ export {
   ZodEnum,
   ZodPromise,
   ZodType,
-  ZodAny,
+  ZodTypeAny,
   ZodDef,
   ZodError,
 };

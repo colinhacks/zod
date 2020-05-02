@@ -55,7 +55,10 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       break;
     case z.ZodTypes.null:
       if (obj !== null) throw ZodError.fromString(`Non-null type: ${typeof obj}`);
-      // return null;
+      break;
+    case z.ZodTypes.any:
+      break;
+    case z.ZodTypes.unknown:
       break;
     case z.ZodTypes.array:
       if (!Array.isArray(obj)) throw ZodError.fromString(`Non-array type: ${typeof obj}`);

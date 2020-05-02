@@ -3,7 +3,7 @@ import { ZodArray } from './types/array';
 import { ZodDef } from '.';
 import { ZodObject } from './types/object';
 
-export const applyMask = (schema: z.ZodAny, mask: any, mode: 'omit' | 'pick'): any => {
+export const applyMask = (schema: z.ZodTypeAny, mask: any, mode: 'omit' | 'pick'): any => {
   const _def = schema._def;
   const def: ZodDef = _def as any;
 

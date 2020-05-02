@@ -21,10 +21,12 @@ export enum ZodTypes {
   literal = 'literal',
   enum = 'enum',
   promise = 'promise',
+  any = 'any',
+  unknown = 'unknown',
 }
 
-export type ZodAny = ZodType<any>;
-export type ZodRawShape = { [k: string]: ZodAny };
+export type ZodTypeAny = ZodType<any>;
+export type ZodRawShape = { [k: string]: ZodTypeAny };
 
 // const asdf = { asdf: ZodString.create() };
 // type tset1 = typeof asdf extends ZodRawShape ? true :false
