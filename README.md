@@ -73,6 +73,8 @@ yarn add zod
 
 Zod 1.0.x is compatible with TypeScript 3.2+.
 
+You must use strict mode for Zod to correctly infer the types of your schemas! Add `"strict": true` inside "compilerOptions" in your `tsconfig.json`.
+
 # Usage
 
 Zod is a validation library designed for optimal developer experience. It's a TypeScript-first schema declaration library with rigorous (and correct!) inferred types, incredible developer experience, and a few killer features missing from the existing libraries.

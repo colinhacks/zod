@@ -4,6 +4,7 @@ import { ZodNull } from './null';
 import { ZodUnion } from './union';
 import { objectUtil } from '../helpers/objectUtil';
 import { partialUtil } from '../helpers/partialUtil';
+
 // import { ZodString } from './string';
 // import { maskUtil } from '../helpers/maskUtil';
 // import { zodmaskUtil } from '../helpers/zodmaskUtil';
@@ -224,15 +225,3 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
     });
   };
 }
-
-// type RelationsReturnType<Rels extends { [k: string]: any }, Shape extends z.ZodRawShape> = ZodObject<
-//   Without<Shape, keyof Rels> & { [k in keyof Rels]: ZodLazy<z.ZodType<Rels[k]>> }
-// >;
-
-// type Without<T, K> = Pick<T, Exclude<keyof T, K>>;
-
-// type withRefsInputType<T extends z.ZodObject, Refs extends { [k in keyof T]: any }> = ZodObject<
-//   Without<T['_shape'], keyof Refs> & { [k in keyof Refs]: ZodLazy<Refs[k]> }
-// >;
-// type withRefsReturnType<T extends z.ZodRawShape, Refs extends { [k in keyof T]?: any }> = Without<T, keyof Refs> &
-//   { [k in keyof Refs]: z.ZodType<Refs[k]> };

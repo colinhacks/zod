@@ -48,6 +48,7 @@ export namespace objectUtil {
   };
 
   export type ObjectType<T extends ZodRawShape> = FlattenObject<ObjectIntersection<NoNever<T>>>;
+  // export type ObjectType<T extends ZodRawShape> = FlattenObject<ObjectIntersection<T>>;
 
   export const mergeShapes = <U extends ZodRawShape, T extends ZodRawShape>(first: U, second: T): T & U => {
     const firstKeys = Object.keys(first);
