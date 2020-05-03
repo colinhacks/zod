@@ -1040,20 +1040,7 @@ Doesn't support static type inference. 😕
 
 Yup is a full-featured library that was implemented first in vanilla JS, with TypeScript typings added later.
 
-Yup supports static type inference, but unfortunately the inferred types aren't actually correct. Currently, the yup package treats all object properties as optional by default:
-
-```ts
-const schema = yup.object({
-  asdf: yup.string(),
-});
-schema.validate({}); // passes
-
-type SchemaType = yup.InferType<typeof schema>;
-// returns { asdf: string }
-// should be { asdf?: string }
-```
-
-Yup also mis-infers the type of required arrays.
+Yup mis-infers the type of required arrays.
 
 ```ts
 const numList = yup
