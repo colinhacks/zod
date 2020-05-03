@@ -1070,7 +1070,7 @@ type NumList = yup.InferType<typeof numList>;
 // should be 	[string,...string[]]
 ```
 
-These may sound like nitpicks. But it's not acceptable that an object that's assignable to the inferred TypeScript type can fail validation by the validator it was inferred from.
+These may sound like nitpicks but it can result in some very unintuitive behavior/bugs.
 
 #### io-ts
 
