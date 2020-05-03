@@ -50,12 +50,12 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
   - [Promises](#promises)
   - [Function schemas](#function-schemas)
   - [Errors](#errors)
-- [Changelog](#changelog)
 - [Comparison](#comparison)
   - [Joi](#joi)
   - [Yup](#yup)
   - [io-ts](#io-ts)
   - [Runtypes](#runtypes)
+- [Changelog](#changelog)
 
 # Installation
 
@@ -1119,17 +1119,17 @@ This more declarative API makes schema definitions vastly more concise.
 
 #### Runtypes
 
-[https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
+[https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
 Good type inference support, but limited options for object type masking (no `.pick`, `.omit`, `.augment`, etc.). No support for `Record`s (their `Record` is equivalent to Zod's `object`). They DO support branded and readonly types, which Zod does not.
 
 #### Ow
 
+[https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
+
 Ow is focused on function input validation. It's a library that makes it easy to express complicated assert statements, but it doesn't let you parse untyped data. They support a much wider variety of types; Zod has a nearly one-to-one mapping iwhtwith TypeScript's type system, whereas ow lets you validate several highly-specific types out of the box (e.g. `int32Array`, see full list in their README).
 
 If you want to validate function inputs, use function schemas in Zod! It's a much simpler approach that lets you reuse a function type declaration without repeating yourself (namely, copy-pasting a bunch of ow assertions at the beginning of every function). Also Zod lets you validate your return types as well, so you can be sure there won't be any unexpected data passed downstream.
-
-[https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
 # Changelog
 
