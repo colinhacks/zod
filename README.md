@@ -47,6 +47,8 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
   - [Intersections](#intersections)
   - [Tuples](#tuples)
   - [Recursive types](#recursive-types)
+    - [JSON type](#json-type)
+    - [Cyclical data](#cyclical-objects)
   - [Promises](#promises)
   - [Function schemas](#function-schemas)
   - [Errors](#errors)
@@ -523,24 +525,6 @@ const nonEmptyDogsList = z.array(dogSchema).nonempty();
 nonEmptyDogsList.parse([]); // throws Error("Array cannot be empty")
 ```
 
-## Tuples
-
-These differ from arrays in that they have a fixed number of elements, and each element can have a different type.
-
-```ts
-const athleteSchema = z.tuple([
-  // takes an array of schemas
-  z.string(), // name
-  z.number(), // jersey number
-  z.object({
-    pointsScored: z.number(),
-  }), // statistics
-]);
-
-type Athlete = z.infer<typeof athleteSchema>;
-// type Athlete = [string, number, { pointsScored: number }]
-```
-
 ## Unions
 
 Zod includes a built-in `z.union` method for composing "OR" types.
@@ -671,6 +655,24 @@ type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };
 ```
 
+## Tuples
+
+These differ from arrays in that they have a fixed number of elements, and each element can have a different type.
+
+```ts
+const athleteSchema = z.tuple([
+  // takes an array of schemas
+  z.string(), // name
+  z.number(), // jersey number
+  z.object({
+    pointsScored: z.number(),
+  }), // statistics
+]);
+
+type Athlete = z.infer<typeof athleteSchema>;
+// type Athlete = [string, number, { pointsScored: number }]
+```
+
 ## Recursive types
 
 You can define a recursive schema in Zod, but because of a limitation of TypeScript, their type can't be statically inferred. If you need a recursive Zod schema you'll need to define the type definition manually, and provide it to Zod as a "type hint".
@@ -722,6 +724,23 @@ const Category: z.ZodType<Category> = BaseCategory.merge(
   }),
 );
 ```
+
+#### JSON type
+
+There isn't a built-in method for validating any JSON, because representing that requires recursive type aliases (a feature that TypeScript started supporting with version 3.7). In order to support a wider range of TypeScript versions (see the top of the README for details) we aren't providing a JSON type out of the box at this time. If you want to validate JSON and you're using TypeScript 3.7+, you can use this snippet to achieve that:
+
+```ts
+type Literal = boolean | null | number | string;
+type Json = Literal | { [key: string]: Json } | Json[];
+const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+const jsonSchema: z.ZodType<Json> = z.lazy(() => z.union([Literal, z.array(Json), z.record(Json)]));
+
+jsonSchema.parse({
+  // ...
+});
+```
+
+Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
 
 #### Cyclical objects
 
