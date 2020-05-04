@@ -77,6 +77,15 @@ const oboolean = () => booleanType().optional();
 // const stringMap = stringRecord(objectType({asf:stringType()}))
 // const stringMap2 = recordType(stringType(),objectType({ asf: stringType() }));
 
+// type Literal = boolean | null | number | string;
+// type Json = Literal | { [key: string]: Json } | Json[];
+
+// const Literal = ZodUnion.create([ZodBoolean.create(), ZodNull.create(), ZodNumber.create(), ZodString.create()]);
+// const JsonSchema: ZodType<Json> = ZodLazy.create(() =>
+//   ZodUnion.create([Literal, ZodArray.create(JsonSchema), ZodRecord.create(JsonSchema)]),
+// );
+// const jsonType = () => JsonSchema;
+
 export {
   stringType as string,
   numberType as number,
@@ -100,6 +109,7 @@ export {
   literalType as literal,
   enumType as enum,
   promiseType as promise,
+  // jsonType as json,
   ostring,
   onumber,
   oboolean,
