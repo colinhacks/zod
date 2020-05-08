@@ -1,10 +1,26 @@
 import * as z from '../index';
 import { util } from '../helpers/util';
 
+const args1 = z.tuple([z.string()]);
+const returns1 = z.number();
+const func1 = z.function(args1, returns1);
+
+test('function parsing', () => {
+  const parsed = func1.parse((arg: any) => arg.length);
+  parsed('asdf');
+});
+
+test('parsed function fail 1', () => {
+  const parsed = func1.parse((x: string) => x);
+  expect(() => parsed('asdf')).toThrow();
+});
+
+test('parsed function fail 2', () => {
+  const parsed = func1.parse((x: string) => x);
+  expect(() => parsed(13 as any)).toThrow();
+});
+
 test('function inference 1', () => {
-  const args1 = z.tuple([z.string()]);
-  const returns1 = z.number();
-  const func1 = z.function(args1, returns1);
   type func1 = z.TypeOf<typeof func1>;
   const t1: util.AssertEqual<func1, (k: string) => number> = true;
   [t1];

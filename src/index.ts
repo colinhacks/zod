@@ -15,7 +15,7 @@ import { ZodUnion, ZodUnionDef } from './types/union';
 import { ZodIntersection, ZodIntersectionDef } from './types/intersection';
 import { ZodTuple, ZodTupleDef } from './types/tuple';
 import { ZodRecord, ZodRecordDef } from './types/record';
-import { ZodFunction } from './types/function';
+import { ZodFunction, ZodFunctionDef } from './types/function';
 import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
@@ -40,7 +40,7 @@ type ZodDef =
   | ZodIntersectionDef
   | ZodTupleDef
   | ZodRecordDef
-  // | ZodFunctionDef
+  | ZodFunctionDef
   | ZodLazyDef
   //  | ZodLazyObjectDef
   | ZodLiteralDef

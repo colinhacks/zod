@@ -33,6 +33,8 @@ export const Visitor = (visit: (_schema: z.ZodTypeAny) => z.ZodTypeAny) => (sche
       return visit(schema);
     case z.ZodTypes.unknown:
       return visit(schema);
+    case z.ZodTypes.function:
+      return visit(schema);
     case z.ZodTypes.array:
       return visit(
         new ZodArray({

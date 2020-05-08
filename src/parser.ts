@@ -197,8 +197,22 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       }
       // return obj;
       break;
-    // case z.ZodTypes.function:
-    //   return obj;
+    case z.ZodTypes.function:
+      if (typeof obj !== 'function') {
+        throw ZodError.fromString(`Non-function type: "${typeof obj}"`);
+      }
+      const validatedFunc = (...args: any[]) => {
+        try {
+          def.args.parse(args as any);
+          const result = obj(...(args as any));
+          def.returns.parse(result);
+          return result;
+        } catch (err) {
+          throw err;
+        }
+      };
+      return validatedFunc;
+    // return obj;
     case z.ZodTypes.record:
       if (typeof obj !== 'object') throw ZodError.fromString(`Non-object type: ${typeof obj}`);
       if (Array.isArray(obj)) throw ZodError.fromString(`Non-object type: array`);
