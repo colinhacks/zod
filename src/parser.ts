@@ -114,21 +114,26 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       break;
     case z.ZodTypes.union:
       let isValid = false;
+      const unionErrors: string[] = [];
+      // unionError.addError('union', 'Error parsing union type.');
       for (const option of def.options) {
         try {
           option.parse(obj, params);
           isValid = true;
         } catch (err) {
+          unionErrors.push(`\tunion option #${def.options.indexOf(option)}: ${err.message}`);
+
           // isValid = false;
         }
       }
 
       if (isValid === false) {
-        throw ZodError.fromString(
-          `Error parsing union.\nReceived: ${JSON.stringify(obj, null, 2)}\nExpected: ${def.options
-            .map(x => x._def.t)
-            .join(' OR ')}`,
-        );
+        throw ZodError.fromString('\n' + unionErrors.join('\n'));
+        // throw ZodError.fromString(
+        //   `Error parsing union.\nReceived: ${JSON.stringify(obj, null, 2)}\nExpected: ${def.options
+        //     .map(x => x._def.t)
+        //     .join(' OR ')}`,
+        // );
       }
       break;
     case z.ZodTypes.intersection:
@@ -170,6 +175,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
         try {
           parsedTuple.push(itemParser.parse(item, params));
         } catch (err) {
+          console.log(`mering child: ${index}`);
           tupleError.mergeChild(index, err);
         }
       }

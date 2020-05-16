@@ -22,7 +22,7 @@ export class ZodError extends Error {
   get message() {
     return this.errors
       .map(({ path, message }) => {
-        return path.length ? `\`${path.join('.')}\`: ${message}` : `${message}`;
+        return path.length ? `${path.join('.')}: ${message}` : `${message}`;
       })
       .join('\n');
   }
