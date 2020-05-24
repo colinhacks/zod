@@ -1051,7 +1051,7 @@ Branded -->
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
-Doesn't support static type inference. 😕
+Doesn't support static type inference. Boo. 😕
 
 #### Yup
 
@@ -1059,20 +1059,32 @@ Doesn't support static type inference. 😕
 
 Yup is a full-featured library that was implemented first in vanilla JS, with TypeScript typings added later.
 
-Yup supports static type inference, but unfortunately the inferred types aren't actually correct. Currently, the yup package treats all object properties as optional by default:
+Yup supports static type inference! But unfortunately the inferred types aren't actually correct.
+
+##### Incorrect object typing (now fixed!)
+
+This issue was fixed on May 19, 2020 ([here](https://github.com/DefinitelyTyped/DefinitelyTyped/pull/44589)).
+
+<del>Currently, the yup package treats all object properties as optional by default:</del>.
 
 ```ts
 const schema = yup.object({
   asdf: yup.string(),
 });
 schema.validate({}); // passes
+```
 
+Yet the inferred type indicates that all properties are required:
+
+```ts
 type SchemaType = yup.InferType<typeof schema>;
 // returns { asdf: string }
 // should be { asdf?: string }
 ```
 
-Yup also mis-infers the type of required arrays.
+##### Unintuitive `.required()` behavior
+
+In general, Yup's interpretation of `.required()` is odd and non-standard. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. For Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom validator.
 
 ```ts
 const numList = yup
@@ -1090,6 +1102,10 @@ type NumList = yup.InferType<typeof numList>;
 ```
 
 These may sound like nitpicks but it can result in some very unintuitive behavior/bugs.
+
+##### Unions and intersections
+
+Finally, Yup doesn't support any generic `union` or `intersection` operator.
 
 #### io-ts
 
