@@ -82,8 +82,12 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     return this;
   };
 
-  error(customError: Partial<ZodErrorArrayCustomItem>) {
-      this._def.customError = customError;
+  error(customError: Partial<ZodErrorArrayCustomItem> | string) {
+      if(typeof customError === 'string') {
+        this._def.customError = {message: customError}
+      } else {
+        this._def.customError = customError;
+      }
       return this;
   }
 

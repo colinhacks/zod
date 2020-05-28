@@ -136,12 +136,21 @@ test('parse stringSchema with refine with false predicate', () => {
   expect(f).toThrow();
 });
 
-test('parse stringSchema string with custom error', () => {
+test('parse stringSchema string with custom error object', () => {
   const refineSchema = stringSchema.error({details: {test:1}});
   try {
     refineSchema.parse(val.number);
   } catch (e) {
     expect(e.errors[0].details).toEqual({test:1});
+  }
+});
+
+test('parse stringSchema string with custom error string', () => {
+  const refineSchema = stringSchema.error('testError');
+  try {
+    refineSchema.parse(val.number);
+  } catch (e) {
+    expect(e.errors[0].message).toEqual('testError');
   }
 });
 
