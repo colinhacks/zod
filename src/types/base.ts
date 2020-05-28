@@ -1,4 +1,5 @@
 import { ZodParser, ParseParams } from '../parser';
+import { ZodErrorArrayCustomItem } from '../ZodError';
 
 export enum ZodTypes {
   string = 'string',
@@ -35,7 +36,7 @@ type Check<T> = { message?: string; check: (arg: T) => boolean };
 export interface ZodTypeDef {
   t: ZodTypes;
   checks?: Check<any>[];
-  customError?: object;
+  customError?: Partial<ZodErrorArrayCustomItem>;
 }
 
 export type TypeOf<T extends { _type: any }> = T['_type'];
@@ -81,7 +82,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     return this;
   };
 
-  error(customError: object) {
+  error(customError: Partial<ZodErrorArrayCustomItem>) {
       this._def.customError = customError;
       return this;
   }

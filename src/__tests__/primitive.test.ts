@@ -1,6 +1,5 @@
 import * as z from '../index';
 import { Mocker } from '../helpers/Mocker';
-import { ZodError } from '../index';
 
 const literalStringSchema = z.literal('asdf');
 const literalNumberSchema = z.literal(12);
@@ -138,9 +137,12 @@ test('parse stringSchema with refine with false predicate', () => {
 });
 
 test('parse stringSchema string with custom error', () => {
-  const refineSchema = stringSchema.error({test:1});
-  const f = () => refineSchema.parse(val.number);
-  expect(f).toThrow(ZodError.fromObject({test:1}));
+  const refineSchema = stringSchema.error({details: {test:1}});
+  try {
+    refineSchema.parse(val.number);
+  } catch (e) {
+    expect(e.errors[0].details).toEqual({test:1});
+  }
 });
 
 test('parse numberSchema string', () => {

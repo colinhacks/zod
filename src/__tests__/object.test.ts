@@ -63,13 +63,15 @@ test('nonstrict', () => {
 
 test('object error', () => {
   try {
-    z.object({ points: z.number().error({e:1}), dots: z.boolean().error({e:2}) })
+    z.object({ points: z.number().error({details: {e:1}, message: 't1'}), dots: z.boolean().error({details: {e:2}, message: 't2'}) })
     .parse({
       points: '1',
       dots: 1,
     });
   } catch (e) {
     expect(e.errors[0].details).toEqual({e:1});
+    expect(e.errors[0].message).toEqual('t1');
     expect(e.errors[1].details).toEqual({e:2});
+    expect(e.errors[1].message).toEqual('t2');
   }
 });

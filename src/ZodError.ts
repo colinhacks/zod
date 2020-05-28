@@ -4,6 +4,11 @@ type ZodErrorArray = {
   details?: object;
 }[];
 
+export type ZodErrorArrayCustomItem = {
+    message: string;
+    details?: object;
+};
+
 export class ZodError extends Error {
   errors: ZodErrorArray = [];
 
@@ -41,12 +46,13 @@ export class ZodError extends Error {
     ]);
   };
 
-  static fromObject = (details: object) => {
+  static fromObject = (errorObject: ZodErrorArrayCustomItem) => {
+
     return ZodError.create([
       {
         path: [],
-        message: '',
-        details
+        message: errorObject.message,
+        details: errorObject.details,
       },
     ]);
   }

@@ -39,7 +39,7 @@ test('failed validation', () => {
 });
 
 test('custom errors', () => {
-  const schema = z.tuple([z.string().error({e:1})]);
+  const schema = z.tuple([z.string().error({ details: {e:1}})]);
   try {
     schema.parse([1]);
   } catch (e) {
