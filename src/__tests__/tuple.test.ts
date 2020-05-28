@@ -37,3 +37,12 @@ test('failed validation', () => {
   }
   // expect(checker).toThrow()
 });
+
+test('custom errors', () => {
+  const schema = z.tuple([z.string().error({e:1})]);
+  try {
+    schema.parse([1]);
+  } catch (e) {
+    expect(e.errors[0].details).toEqual({e:1});
+  }
+});

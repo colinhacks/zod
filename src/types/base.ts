@@ -35,6 +35,7 @@ type Check<T> = { message?: string; check: (arg: T) => boolean };
 export interface ZodTypeDef {
   t: ZodTypes;
   checks?: Check<any>[];
+  customError?: object;
 }
 
 export type TypeOf<T extends { _type: any }> = T['_type'];
@@ -79,6 +80,11 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     this._def.checks.push({ check, message });
     return this;
   };
+
+  error(customError: object) {
+      this._def.customError = customError;
+      return this;
+  }
 
   // mask = <P extends maskUtil.Params<Type>>(_params: P): ZodType<maskUtil.Pick<Type, P>> => {
   //   return Masker(this, _params) as any;

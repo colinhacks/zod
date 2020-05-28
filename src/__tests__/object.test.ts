@@ -60,3 +60,16 @@ test('nonstrict', () => {
       unknown: 'asdf',
     });
 });
+
+test('object error', () => {
+  try {
+    z.object({ points: z.number().error({e:1}), dots: z.boolean().error({e:2}) })
+    .parse({
+      points: '1',
+      dots: 1,
+    });
+  } catch (e) {
+    expect(e.errors[0].details).toEqual({e:1});
+    expect(e.errors[1].details).toEqual({e:2});
+  }
+});

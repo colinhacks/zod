@@ -1,6 +1,7 @@
 type ZodErrorArray = {
   path: (string | number)[];
   message: string;
+  details?: object;
 }[];
 
 export class ZodError extends Error {
@@ -40,6 +41,16 @@ export class ZodError extends Error {
     ]);
   };
 
+  static fromObject = (details: object) => {
+    return ZodError.create([
+      {
+        path: [],
+        message: '',
+        details
+      },
+    ]);
+  }
+
   mergeChild = (pathElement: string | number, child: Error) => {
     if (child instanceof ZodError) {
       this.merge(child.bubbleUp(pathElement));
@@ -51,13 +62,13 @@ export class ZodError extends Error {
   bubbleUp = (pathElement: string | number) => {
     return ZodError.create(
       this.errors.map(err => {
-        return { path: [pathElement, ...err.path], message: err.message };
+        return { path: [pathElement, ...err.path], message: err.message, details: err.details };
       }),
     );
   };
 
-  addError = (path: string | number, message: string) => {
-    this.errors = [...this.errors, { path: path === '' ? [] : [path], message }];
+  addError = (path: string | number, message: string, details?: object) => {
+    this.errors = [...this.errors, { path: path === '' ? [] : [path], message, details }];
   };
 
   merge = (error: ZodError) => {

@@ -4,3 +4,5 @@ node_modules
 /lib
 /coverage
 .vscode
+.idea
+package-lock.json
