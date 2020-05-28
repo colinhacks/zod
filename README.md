@@ -2,17 +2,17 @@
   <img src="logo.svg" width="200px" align="center" />
   <h1 align="center">Zod</h1>
 </p>
-<div style="display:flex;flex-direction:row;justify-content:center;flex-wrap:wrap;">
-
-[![License][license-image]][license-url]
-[![npm](https://img.shields.io/npm/dw/zod.svg)](https://www.npmjs.com/package/zod)
-[![stars](https://img.shields.io/github/stars/vriad/zod)](https://img.shields.io/github/stars/vriad/zod)
-[![coverage](./coverage.svg)](./src/__tests__)
-
-</div>
-
-[license-url]: https://opensource.org/licenses/MIT
-[license-image]: https://img.shields.io/github/license/vriad/zod
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/vriad/zod" alt="License"></a>
+  <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
+  <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/vriad/zod" alt="stars"></a>
+  <a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
+</p>
+<p align="center">
+if you're happy and you know it, star this repo ⭐
+<br/>
+created by <a href="https://twitter.com/vriad" target="_blank">@vriad</a> 👋
+</p>
 
 <br/>
 
@@ -22,7 +22,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- <br/> -->
 
-#### Table of contents
+# Table of contents
 
 - [Installation](#installation)
 - [Usage](#usage)
@@ -1100,8 +1100,6 @@ type NumList = yup.InferType<typeof numList>;
 // returns 		string[]
 // should be 	[string,...string[]]
 ```
-
-These may sound like nitpicks but it can result in some very unintuitive behavior/bugs.
 
 ##### Unions and intersections
 
