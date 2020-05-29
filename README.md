@@ -39,7 +39,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
     - [.partial/.deepPartial](#partials)
   - [Records](#records)
   - [Arrays](#arrays)
-    - [.nonempty](#nonempty-arrays)
+    - [.nonempty](#non-empty-lists)
   - [Unions](#unions)
     - [.optional](#optional-types)
     - [.nullable](#nullable-types)
