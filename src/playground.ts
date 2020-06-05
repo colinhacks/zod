@@ -1,15 +1,36 @@
 // import * as z from '.';
+// // const stringSchema = z.string();
+// // try {
+// //   stringSchema.parse(12);
+// // } catch (err) {
+// //   const zerr: z.ZodError = err;
+// //   zerr.stack;
+// //   console.log(err instanceof z.ZodError);
+// //   if (err instanceof z.ZodError) {
+// //     // handle
+// //     // err.
+// //   }
+// // }
 
-// const testUnion = z.object({ asdf: z.string(), qwer:z.any() }).nonstrict();
-// const asdf = testUnion.parse({ asdf: [false] });
-// asdf.qwerasdf;
+// const myObject = z
+//   .object({
+//     first: z.string(),
+//     second: z.string(),
+//   })
+//   .partial()
+//   .refine(data => data.first || data.second, 'Either first or second should be filled in.');
 
-// const test = z.object({ asdf: z.string() }).nonstrict()
-// type test = z.infer<typeof test>;
+// myObject.parse({
+//   first: 'asdf',
+// });
 
-// const x: test = { asdf: "asdf", qwer: 1234 } // should work
+// myObject.parse({
+//   second: 'asdf',
+// });
 
-// const User = z.object({ username: z.string() });
-// type User = z.infer<typeof User>;
+// myObject.parse({
+//   first: 'wqewdscsdf',
+//   second: 'asdf',
+// });
 
-// const user: User = User.nonstrict().parse("whatever");
+// myObject.parse({});

@@ -28,4 +28,11 @@ export class ZodUnion<T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]>
       options: types,
     });
   };
+
+  static make = <T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]>(...types: T): ZodUnion<T> => {
+    return new ZodUnion({
+      t: z.ZodTypes.union,
+      options: types,
+    });
+  };
 }

@@ -282,7 +282,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
 
   const customChecks = def.checks || [];
   for (const check of customChecks) {
-    if (check.check(obj) !== true) {
+    if (!check.check(obj)) {
       throw ZodError.fromString(check.message || `Failed custom check.`);
     }
   }

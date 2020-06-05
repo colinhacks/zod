@@ -522,7 +522,7 @@ dogsList.parse([]); // passes
 
 ```ts
 const nonEmptyDogsList = z.array(dogSchema).nonempty();
-nonEmptyDogsList.parse([]); // throws Error("Array cannot be empty")
+nonEmptyDogsList.parse([]); // throws: "Array cannot be empty"
 ```
 
 ## Unions

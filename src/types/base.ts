@@ -74,7 +74,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  refine = <Val extends (arg: this['_type']) => boolean>(check: Val, message: string) => {
+  refine = <Val extends (arg: this['_type']) => any>(check: Val, message: string = 'Invalid value.') => {
     this._def.checks = this._def.checks || [];
     this._def.checks.push({ check, message });
     return this;
