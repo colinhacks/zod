@@ -46,6 +46,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
     "test": "jest --config jestconfig.json --coverage && yarn run badge",
+    "testone": "jest --config jestconfig.json ",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
     "prepare": "npm run build",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts"

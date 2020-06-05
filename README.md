@@ -75,66 +75,76 @@ yarn add zod
 
 Zod 1.0.x is compatible with TypeScript 3.2+.
 
-You must use strict mode for Zod to correctly infer the types of your schemas! Add `"strict": true` inside "compilerOptions" in your `tsconfig.json`.
+> You must use strict mode for Zod to correctly infer the types of your schemas! Add `"strict": true` inside "compilerOptions" in your `tsconfig.json`.
 
 # Usage
 
 Zod is a validation library designed for optimal developer experience. It's a TypeScript-first schema declaration library with rigorous (and correct!) inferred types, incredible developer experience, and a few killer features missing from the existing libraries.
 
-- It takes advantage of TypeScript generic inference to statically infer the types of your schemas, eliminating the need to define static types and runtime validators separately.
+<!-- - It infers the statically types of your schemas
 - Eliminates the need to keep static types and runtime validators in sync by hand
 - It has a composable, declarative API that makes it easy to define complex types concisely.
-- Schemas are immutable. All methods return a new schema instance.
+- Schemas are immutable. All methods return a new schema instance. -->
 
-Zod was also designed with some core principles designed to make all declarations as non-magical and developer-friendly as possible:
+<!-- Zod was also designed with some core principles designed to make all declarations as non-magical and developer-friendly as possible: -->
 
-- All fields are required unless explicitly marked as optional (just like TypeScript!)
-- Schemas are immutable; methods (i.e. `.optional()` return a new instance.
-- Zod schemas operate on a ["Parse, don't validate!"](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/) basis!
+- Zero dependencies (5kb compressed)
+- Immutability; methods (i.e. `.optional()` return a new instance
+- Concise, chainable interface
+- Functional approach (["Parse, don't validate!"](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/))
 
 ## Primitives
+
+You can create a Zod schema for any TypeScript primitive.
 
 ```ts
 import * as z from 'zod';
 
-const stringSchema = z.string(); // => ZodType<string>
-const numberSchema = z.number(); // => ZodType<number>
-const bigintSchema = z.bigint(); // => ZodType<bigint>
-const booleanSchema = z.boolean(); // => ZodType<boolean>
-const dateSchema = z.date(); // => ZodType<Date>
+// primitive values
+z.string();
+z.number();
+z.bigint();
+z.boolean();
+z.date();
 
-const undefinedSchema = z.undefined(); // => ZodType<undefined>
-const nullSchema = z.null(); // => ZodType<null>
+// empty types
+z.undefined();
+z.null();
 
-const anySchema = z.any(); // => ZodType<any>
-const unknownSchema = z.unknown(); // => ZodType<unknown>
+// catch-all types
+z.any();
+z.unknown();
 ```
 
 ## Literals
 
 ```ts
-const tuna = z.literal('tuna'); // => ZodType<'tuna'>
-const twelve = z.literal(12); // => ZodType<12>
-const tru = z.literal(true); // => ZodType<true>
+const tuna = z.literal('tuna');
+const twelve = z.literal(12);
+const tru = z.literal(true);
 ```
 
-Currently there is no support for Date literals in Zod. If you have a use case for this feature, please file an issue.
+> Currently there is no support for Date or bigint literals in Zod. If you have a use case for this feature, please file an issue.
 
-## Parsing and validation
+## Validation
 
 ### Parsing
 
-Given a Zod schema, you can call its `.parse(data)` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
+`.parse(data:unknown)`
 
-IMPORTANT: As of Zod 1.4, the value returned by `.parse` is _the same variable you passed in_. Previously it returned a deep clone. One exception: "parsing" a `Promise` schemas returns a new Promise for reasons explained in the documentation.
+Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
+
+> IMPORTANT: As of Zod 1.4, the value returned by `.parse` is _the same variable you passed in_. Previously it returned a deep clone. The only exception to this is `Promise` schemas, which return a new Promise for reasons explained in the documentation.
 
 ```ts
 const stringSchema = z.string();
-stringSchema.parse('fish'); // => "fish"
+stringSchema.parse('fish'); // => returns "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
 
 ### Type guards
+
+`.check(data:unknown)`
 
 You can also use a Zod schema as a type guard using the schema's `.check()` method, like so:
 
@@ -166,21 +176,28 @@ To learn more about error handling with Zod, jump to [Errors](#errors).
 
 ### Custom validation
 
-Every Zod schema has a `.refine` method that lets you define custom validation checks. Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an Int or that a string is a valid email address.
+`.refine(validator: (data:T)=>any, err?: string)`
 
-In these cases, you would use the `.refine` method.
+Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an Int or that a string is a valid email address.
+
+For this instances, you can define custom a validation check on _any_ Zod schema with `.refine`:
 
 ```ts
 const myString = z.string().refine(val => val.length <= 255, "String can't be more than 255 characters");
 ```
 
-As you can see, `.refine` takes two arguments. The first is the validation function, and the second is a custom error message . The argument to the validation function (`val` in the example above) is statically typed to be the inferred type of the schema.
+Here is the type signature for `.refine`:
+
+As you can see, `.refine` takes two arguments.
+
+1. The first is the validation function. This function takes one input (of type `T` — the inferred type of the schema) and returns `any`. Any truthy value will pass validation. (Prior to zod@1.6.2 the validation function had to return a boolean.)
+2. The second argument is a custom error message. Read more about error handling in Zod [here](#errors)
 
 Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of useful string validation functions.
 
 ## Type inference
 
-You can extract the TypeScript type of any schema with `z.infer<typeof [schema]>`.
+You can extract the TypeScript type of any schema with `z.infer<typeof mySchema>`.
 
 ```ts
 const A = z.string();
@@ -191,6 +208,52 @@ const u: A = 'asdf'; // compiles
 ```
 
 We'll include examples of inferred types throughout the rest of the documentation.
+
+## Strings
+
+There are a handful of string-specific validations.
+
+All of these validations allow you to _optionally_ specify a custom error message.
+
+```ts
+z.string().min(5);
+z.string().max(5);
+z.string().length(5);
+z.string().email();
+z.string().url();
+```
+
+### Custom error messages
+
+Like `.refine`, the final argument accepts a custom error message.
+
+```ts
+z.string().min(5, 'Must be 5 or more characters long');
+z.string().max(5, 'Must be 5 or fewer characters long');
+z.string().length(5, 'Must be exactly 5 characters long');
+z.string().email('Invalid email address.');
+z.string().url('Invalid url');
+```
+
+> To see the email and url regexes, check out [this file](https://github.com/vriad/zod/blob/master/src/types/string.ts). To use a more advanced method, use a custom refinement.
+
+## Numbers
+
+There are a handful of number-specific validations.
+
+All of these validations allow you to _optionally_ specify a custom error message as a final `string` argument.
+
+```ts
+z.number().min(5);
+z.number().max(5);
+
+z.number().int(5); // value must be an integer
+
+z.number().positive(); //     > 0
+z.number().nonnegative(); //  >= 0
+z.number().negative(); //     < 0
+z.number().nonpositive(); //  <= 0
+```
 
 ## Objects
 
@@ -222,8 +285,13 @@ const fido: Dog = {
 
 #### `.shape` property
 
+Use `.shape` to access an object schema's property schemas.
+
 ```ts
-const Location = z.object({ latitude: z.number(), longitude: z.number() });
+const Location = z.object({
+  latitude: z.number(),
+  longitude: z.number(),
+});
 
 const Business = z.object({
   location: Location,
@@ -255,7 +323,7 @@ const Teacher = BaseTeacher.merge(HasId)
 
 `.merge` is just syntactic sugar over the more generic `z.intersection` which is documented below.
 
-IMPORTANT: the schema returned by `.merge` is the _intersection_ of the two schemas. The schema passed into `.merge` does not "overwrite" properties of the original schema. To demonstrate:
+> IMPORTANT: the schema returned by `.merge` is the _intersection_ of the two schemas. The schema passed into `.merge` does not "overwrite" properties of the original schema. To demonstrate:
 
 ```ts
 const Obj1 = z.object({ field: z.string() });
@@ -523,6 +591,19 @@ dogsList.parse([]); // passes
 ```ts
 const nonEmptyDogsList = z.array(dogSchema).nonempty();
 nonEmptyDogsList.parse([]); // throws: "Array cannot be empty"
+```
+
+#### Length validations
+
+```ts
+// must contain 5 or more items
+z.array(z.string()).min(5);
+
+// must contain 5 or fewer items
+z.array(z.string()).max(5);
+
+// must contain exactly 5 items
+z.array(z.string()).length(5);
 ```
 
 ## Unions
@@ -1166,18 +1247,19 @@ If you want to validate function inputs, use function schemas in Zod! It's a muc
 
 # Changelog
 
-| zod version | release notes                                                       |
-| ----------- | ------------------------------------------------------------------- |
-| zod@1.5     | Any and unknown types                                               |
-| zod@1.4     | Refinement types (`.refine`), `.parse` no longer returns deep clone |
-| zod@1.3     | Promise schemas                                                     |
-| zod@1.2.6   | `.parse` accepts `unknown`, `bigint` schemas                        |
-| zod@1.2.5   | `.partial` and `.deepPartial` on object schemas                     |
-| zod@1.2.3   | Date schemas                                                        |
-| zod@1.2.0   | `.pick`, `.omit`, and `.augment` on object schemas                  |
-| zod@1.1.0   | Records                                                             |
-| zod@1.0.11  | `.nonstrict`                                                        |
-| zod@1.0.10  | Type assertions with `.check`                                       |
-| zod@1.0.4   | Empty tuples                                                        |
-| zod@1.0.0   | Type assertions, literals, enums, detailed error reporting          |
-| zod@1.0.0   | Initial release                                                     |
+| zod version | release notes                                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------------------------------------- |
+| zod@1.7     | Added several built-in validators to string, number, and array schemas. Calls to `.refine` now return new instance. |
+| zod@1.5     | Any and unknown types                                                                                               |
+| zod@1.4     | Refinement types (`.refine`), `.parse` no longer returns deep clone                                                 |
+| zod@1.3     | Promise schemas                                                                                                     |
+| zod@1.2.6   | `.parse` accepts `unknown`, `bigint` schemas                                                                        |
+| zod@1.2.5   | `.partial` and `.deepPartial` on object schemas                                                                     |
+| zod@1.2.3   | Date schemas                                                                                                        |
+| zod@1.2.0   | `.pick`, `.omit`, and `.augment` on object schemas                                                                  |
+| zod@1.1.0   | Records                                                                                                             |
+| zod@1.0.11  | `.nonstrict`                                                                                                        |
+| zod@1.0.10  | Type assertions with `.check`                                                                                       |
+| zod@1.0.4   | Empty tuples                                                                                                        |
+| zod@1.0.0   | Type assertions, literals, enums, detailed error reporting                                                          |
+| zod@1.0.0   | Initial release                                                                                                     |

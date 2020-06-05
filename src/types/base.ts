@@ -75,9 +75,13 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   }
 
   refine = <Val extends (arg: this['_type']) => any>(check: Val, message: string = 'Invalid value.') => {
-    this._def.checks = this._def.checks || [];
-    this._def.checks.push({ check, message });
-    return this;
+    // const newChecks = [...this._def.checks || [], { check, message }];
+    // console.log((this as any).constructor);
+    return new (this as any).constructor({
+      ...this._def,
+      checks: [...(this._def.checks || []), { check, message }],
+    }) as this;
+    // return this;
   };
 
   // mask = <P extends maskUtil.Params<Type>>(_params: P): ZodType<maskUtil.Pick<Type, P>> => {

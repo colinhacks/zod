@@ -1,18 +1,5 @@
 import * as z from '../index';
 
-test('parse NaN', () => {
-  expect(() => z.number().parse(NaN)).toThrow();
-});
-
-test('parse empty array in nonempty', () => {
-  expect(() =>
-    z
-      .array(z.string())
-      .nonempty()
-      .parse([] as any),
-  ).toThrow();
-});
-
 test('parse strict object with unknown keys', () => {
   expect(() => z.object({ name: z.string() }).parse({ name: 'bill', unknownKey: 12 } as any)).toThrow();
 });
