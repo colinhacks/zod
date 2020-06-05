@@ -249,7 +249,7 @@ All of these validations allow you to _optionally_ specify a custom error messag
 z.number().min(5);
 z.number().max(5);
 
-z.number().int(5); // value must be an integer
+z.number().int(); // value must be an integer
 
 z.number().positive(); //     > 0
 z.number().nonnegative(); //  >= 0
