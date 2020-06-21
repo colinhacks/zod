@@ -288,7 +288,4 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
   }
 
   return obj as any;
-
-  // assertNever();
-  // return obj;
 };

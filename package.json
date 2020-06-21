@@ -33,13 +33,6 @@
     "type",
     "inference"
   ],
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules",
-    "**/__tests__/*"
-  ],
   "scripts": {
     "clean": "rm -rf lib/*",
     "build": "yarn run clean && tsc --p tsconfig.package.json",
@@ -48,7 +41,7 @@
     "test": "jest --config jestconfig.json --coverage && yarn run badge",
     "testone": "jest --config jestconfig.json ",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
-    "prepare": "npm run build",
+    "prepublishOnly": "npm run build",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts"
   },
   "devDependencies": {

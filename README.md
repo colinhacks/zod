@@ -637,7 +637,7 @@ stringOrNumber.parse('foo'); // passes
 stringOrNumber.parse(14); // passes
 ```
 
-#### Optional types
+### Optional types
 
 Unions are the basis for defining optional schemas. An "optional string" is just the union of `string` and `undefined`.
 
@@ -659,7 +659,7 @@ const C = z.object({
 type C = z.infer<typeof C>; // { username?: string | undefined };
 ```
 
-#### Nullable types
+### Nullable types
 
 Similarly, you can create nullable types like so:
 
@@ -694,9 +694,9 @@ F.parse({}); // => throws Error!
 type F = z.infer<typeof F>; // string | number | boolean | undefined | null;
 ```
 
-#### Enums
+### Enums
 
-You can combine unions and string literals to create an enum schemas.
+An enum is just a union of string literals, so you can "build your own enum" like this:
 
 ```ts
 const FishEnum = z.union([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
@@ -705,15 +705,36 @@ FishEnum.parse('Salmon'); // => "Salmon"
 FishEnum.parse('Flounder'); // => throws
 ```
 
-You can also use the built-in `z.enum()` function, like so:
+But for convenience Zod provides a built-in `z.enum()` function, like so:
 
 ```ts
 const FishEnum = z.enum(['Salmon', 'Tuna', 'Trout']);
+type FishEnum = z.infer<typeof FishEnum>;
+// 'Salmon' | 'Tuna' | 'Trout'
+```
 
-// if you use `z.enum([ ... ])`
-// you can also autocomplete enum values
-// with the computed `.Values` property
+> You need to either need to pass the literal array directly into z.enum:
+>
+> ```ts
+> const FishEnum = z.enum(['Salmon', 'Tuna', 'Trout']);
+> ```
+>
+> or use `as const` (introduced in TypeScript 3.4):
+>
+> ```ts
+> const fishTypes = ['Salmon', 'Tuna', 'Trout'] as const;
+> const FishEnum = z.enum(fishTypes);
+> ```
+>
+> otherwise type inference won't work properly.
+
+#### Autocompletion
+
+You can get autocompletion of enum values with the `.Values` property of an enum schema:
+
+```ts
 FishEnum.Values.Salmon; // => autocompletes
+
 FishEnum.Values;
 /* 
 => {

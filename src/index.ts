@@ -138,6 +138,7 @@ export {
   ZodEnum,
   ZodPromise,
   ZodType,
+  ZodType as Schema,
   ZodTypeAny,
   ZodDef,
   ZodError,

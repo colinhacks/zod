@@ -95,6 +95,7 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
 
   //
   augment = AugmentFactory<ZodObjectDef<T, Params>>(this._def);
+  extend = AugmentFactory<ZodObjectDef<T, Params>>(this._def);
   // augment = <Augmentation extends z.ZodRawShape>(
   //   augmentation: Augmentation,
   // ): ZodObject<
