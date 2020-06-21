@@ -30,7 +30,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<T[number
 
   toJSON = () => this._def;
 
-  get OptionsArray() {
+  get OptionsList() {
     return this._def.values;
   }
   get Values(): Values<T> {
