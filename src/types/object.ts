@@ -13,16 +13,16 @@ import { partialUtil } from '../helpers/partialUtil';
 const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <Augmentation extends z.ZodRawShape>(
   augmentation: Augmentation,
 ): ZodObject<
-  { [k in Exclude<keyof Def['shape'], keyof Augmentation>]: Def['shape'][k] } &
+  { [k in Exclude<keyof ReturnType<Def['shape']>, keyof Augmentation>]: ReturnType<Def['shape']>[k] } &
     { [k in keyof Augmentation]: Augmentation[k] },
   Def['params']
 > => {
   return new ZodObject({
     ...def,
-    shape: {
-      ...def.shape,
+    shape: () => ({
+      ...def.shape(),
       ...augmentation,
-    },
+    }),
   }) as any;
 };
 
@@ -31,7 +31,7 @@ export interface ZodObjectDef<
   Params extends ZodObjectParams = ZodObjectParams
 > extends z.ZodTypeDef {
   t: z.ZodTypes.object;
-  shape: T;
+  shape: () => T;
   // strict: boolean;
   params: Params;
 }
@@ -43,8 +43,8 @@ const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
   t: def.t,
   shape: Object.assign(
     {},
-    Object.keys(def.shape).map(k => ({
-      [k]: def.shape[k].toJSON(),
+    Object.keys(def.shape()).map(k => ({
+      [k]: def.shape()[k].toJSON(),
     })),
   ),
 });
@@ -69,7 +69,7 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
   private readonly _params!: Params;
 
   get shape() {
-    return this._def.shape;
+    return this._def.shape();
   }
 
   get params() {
@@ -125,11 +125,11 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
   ): ZodObject<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }, Params> => {
     const shape: any = {};
     Object.keys(mask).map(key => {
-      shape[key] = this._def.shape[key];
+      shape[key] = this.shape[key];
     });
     return new ZodObject({
       ...this._def,
-      shape,
+      shape: () => shape,
     });
   };
 
@@ -138,14 +138,14 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
     mask: Mask,
   ): ZodObject<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }, Params> => {
     const shape: any = {};
-    Object.keys(this._def.shape).map(key => {
+    Object.keys(this.shape).map(key => {
       if (!Object.keys(mask).includes(key)) {
-        shape[key] = this._def.shape[key];
+        shape[key] = this.shape[key];
       }
     });
     return new ZodObject({
       ...this._def,
-      shape,
+      shape: () => shape,
     });
   };
 
@@ -156,12 +156,13 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
     }
     return new ZodObject({
       ...this._def,
-      shape: newShape,
+      shape: () => newShape,
     });
   };
 
   deepPartial = (): partialUtil.RootDeepPartial<ZodObject<T>> => {
     const newShape: any = {};
+    // const shape = this.shape;
     for (const key in this.shape) {
       const fieldSchema = this.shape[key];
       if (fieldSchema instanceof ZodObject) {
@@ -172,7 +173,7 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
     }
     return new ZodObject({
       ...this._def,
-      shape: newShape,
+      shape: () => newShape,
     }) as any;
   };
 
@@ -216,6 +217,17 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
   // };
 
   static create = <T extends z.ZodRawShape>(shape: T): ZodObject<T> => {
+    return new ZodObject({
+      t: z.ZodTypes.object,
+      //  strict: true,
+      shape: () => shape,
+      params: {
+        strict: true,
+      },
+    });
+  };
+
+  static lazycreate = <T extends z.ZodRawShape>(shape: () => T): ZodObject<T> => {
     return new ZodObject({
       t: z.ZodTypes.object,
       //  strict: true,

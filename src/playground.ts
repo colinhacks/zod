@@ -1,4 +1,16 @@
-// import * as z from '.';
+import * as z from '.';
+
+interface Category {
+  name: string;
+  subcategories: Category[];
+}
+
+// const y = z.lazy(()=>z.string());
+
+const Category: z.lazyobject<Category> = z.lazy.object(() => ({
+  name: z.string(),
+  subcategories: z.array(Category),
+}));
 
 // const STATUSES = ['Assigned', 'In Progress', 'On Location', 'Succeeded', 'Failed'] as const;
 // const literals = STATUSES.map(z.literal);

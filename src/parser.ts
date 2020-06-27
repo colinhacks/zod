@@ -84,9 +84,10 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       if (typeof obj !== 'object') throw ZodError.fromString(`Non-object type: ${typeof obj}`);
       if (Array.isArray(obj)) throw ZodError.fromString(`Non-object type: array`);
 
-      const shape = def.shape;
+      console.log(def.shape);
+      const shape = def.shape();
       if (def.params.strict) {
-        const shapeKeys = Object.keys(def.shape);
+        const shapeKeys = Object.keys(shape);
         const objKeys = Object.keys(obj);
         const extraKeys = objKeys.filter(k => shapeKeys.indexOf(k) === -1);
 
@@ -100,7 +101,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       const objectError = ZodError.create([]);
       for (const key in shape) {
         try {
-          const parsedEntry = def.shape[key].parse(obj[key], params);
+          const parsedEntry = shape[key].parse(obj[key], params);
           parsedObject[key] = parsedEntry;
         } catch (err) {
           objectError.mergeChild(key, err);

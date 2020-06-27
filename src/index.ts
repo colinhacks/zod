@@ -63,7 +63,7 @@ const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
 const functionType = ZodFunction.create;
-const lazyType = ZodLazy.create;
+// const lazyType = ZodLazy.create;
 // const lazyobjectType = ZodLazyObject.create;
 // const recursionType = ZodObject.recursion;
 const literalType = ZodLiteral.create;
@@ -103,7 +103,7 @@ export {
   tupleType as tuple,
   recordType as record,
   functionType as function,
-  lazyType as lazy,
+  // lazyType as lazy,
   // lazyobjectType as lazyobject,
   // recursionType as recursion,
   literalType as literal,
@@ -114,6 +114,20 @@ export {
   onumber,
   oboolean,
 };
+
+export const lazy = {
+  object: ZodObject.lazycreate,
+};
+
+// interface lazy {
+//   <T extends ZodTypeAny>(getter: () => T): ZodLazy<T>;
+//   object: typeof ZodObject.lazycreate
+// }
+
+// const lazy:lazy = lazyType as any;
+// lazy.object = ZodObject.lazycreate;
+
+// lazy.o
 
 export {
   ZodString,
@@ -143,5 +157,11 @@ export {
   ZodDef,
   ZodError,
 };
+
+export type lazyobject<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k]> }>;
+// export namespace lazy {
+//   export type objectType<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k]> }>;
+// export objectType; //as object};
+// }
 
 export { TypeOf, TypeOf as infer };
