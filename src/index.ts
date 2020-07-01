@@ -158,7 +158,7 @@ export {
   ZodError,
 };
 
-export type lazyobject<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k]> }>;
+export type lazyobject<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k], any> }>;
 // export namespace lazy {
 //   export type objectType<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k]> }>;
 // export objectType; //as object};
