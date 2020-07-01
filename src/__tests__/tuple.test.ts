@@ -31,6 +31,7 @@ test('failed validation', () => {
   try {
     checker();
   } catch (err) {
+    // console.log(err);
     if (err instanceof ZodError) {
       expect(err.errors.length).toEqual(3);
     }

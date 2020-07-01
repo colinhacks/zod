@@ -31,7 +31,12 @@ export type ZodRawShape = { [k: string]: ZodTypeAny };
 // const asdf = { asdf: ZodString.create() };
 // type tset1 = typeof asdf extends ZodRawShape ? true :false
 
-type Check<T> = { message?: string; check: (arg: T) => boolean };
+type Check<T> = {
+  check: (arg: T) => any;
+  message?: string;
+  params?: { [k: string]: any };
+  // code: string
+};
 export interface ZodTypeDef {
   t: ZodTypes;
   checks?: Check<any>[];
@@ -80,6 +85,22 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     return new (this as any).constructor({
       ...this._def,
       checks: [...(this._def.checks || []), { check, message }],
+    }) as this;
+    // return this;
+  };
+
+  refinement = (refinement: Check<this['_type']>) => {
+    // const finalRefinement = {
+    //   check: refinement.check,
+
+    // code: refinement.code || 'custom-refinement-failed',
+    //   message: refinement.message,
+    // };
+    // const newChecks = [...this._def.checks || [], { check, message }];
+    // console.log((this as any).constructor);
+    return new (this as any).constructor({
+      ...this._def,
+      checks: [...(this._def.checks || []), refinement],
     }) as this;
     // return this;
   };
