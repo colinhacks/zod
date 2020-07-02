@@ -1,11 +1,11 @@
 Arguments: 
-  /Users/colinmcd94/.nvm/versions/node/v10.15.3/bin/node /Users/colinmcd94/.yarn/bin/yarn.js add -D make-coverage-badge
+  /Users/colinmcd94/.nvm/versions/node/v10.15.3/bin/node /Users/colinmcd94/.nvm/versions/node/v10.15.3/bin/yarn add typescript @3.5
 
 PATH: 
-  /Users/colinmcd94/google-cloud-sdk/bin:/Users/colinmcd94/mongodb/bin:/Users/colinmcd94/.config/yarn/global/node_modules/.bin:/usr/local/Cellar/node/8.1.0_1/bin:/Users/colinmcd94/anaconda/bin:/opt/local/bin:/opt/local/sbin:/Users/colinmcd94/.fastlane/bin:/Users/colinmcd94/.nvm/versions/node/v10.15.3/bin:/Users/colinmcd94/.yarn/bin:/Users/colinmcd94/.config/yarn/global/node_modules/.bin:/Library/Frameworks/Python.framework/Versions/2.7/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/MacGPG2/bin:/opt/X11/bin:/usr/local/bin:/Users/colinmcd94/Documents/Projects/flutter/bin:/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home:/Library/gurobi651/mac64/bin/:/Applications/Julia-0.4.5.app/Contents/Resources/julia/bin/julia:/Library/Frameworks/Python.framework/Versions/3.5/bin:/Users/colinmcd94/Library/Android/sdk/tools:/Users/colinmcd94/Library/Android/sdk/platform-tools
+  /Users/colinmcd94/google-cloud-sdk/bin:/Users/colinmcd94/mongodb/bin:/Users/colinmcd94/.config/yarn/global/node_modules/.bin:/usr/local/Cellar/node/8.1.0_1/bin:/opt/local/bin:/opt/local/sbin:/Users/colinmcd94/.nvm/versions/node/v10.15.3/bin:/Users/colinmcd94/.yarn/bin:/Users/colinmcd94/.config/yarn/global/node_modules/.bin:/Library/Frameworks/Python.framework/Versions/2.7/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/MacGPG2/bin:/opt/X11/bin:/usr/local/bin:/Users/colinmcd94/Documents/Projects/flutter/bin:/Library/Java/JavaVirtualMachines/1.6.0.jdk/Contents/Home:/Library/gurobi651/mac64/bin/:/Applications/Julia-0.4.5.app/Contents/Resources/julia/bin/julia:/Users/colinmcd94/Library/Android/sdk/tools:/Users/colinmcd94/Library/Android/sdk/platform-tools
 
 Yarn version: 
-  1.13.0
+  1.22.4
 
 Node version: 
   10.15.3
@@ -14,12 +14,22 @@ Platform:
   darwin x64
 
 Trace: 
-  Error: ENOENT: no such file or directory, copyfile '/Users/colinmcd94/Library/Caches/Yarn/v4/npm-jest-coverage-badges-1.1.2-a70786b139fd8fb685db732e1e2d916d8a47287e/node_modules/jest-coverage-badges/README.md' -> '/Users/colinmcd94/Documents/Projects/zod/node_modules/jest-coverage-badges/README.md'
+  Error: https://registry.yarnpkg.com/@3.5: Request "https://registry.yarnpkg.com/@3.5" returned a 405
+      at Request.params.callback [as _callback] (/Users/colinmcd94/.nvm/versions/node/v10.15.3/lib/node_modules/yarn/lib/cli.js:66996:18)
+      at Request.self.callback (/Users/colinmcd94/.nvm/versions/node/v10.15.3/lib/node_modules/yarn/lib/cli.js:140748:22)
+      at Request.emit (events.js:189:13)
+      at Request.<anonymous> (/Users/colinmcd94/.nvm/versions/node/v10.15.3/lib/node_modules/yarn/lib/cli.js:141720:10)
+      at Request.emit (events.js:189:13)
+      at IncomingMessage.<anonymous> (/Users/colinmcd94/.nvm/versions/node/v10.15.3/lib/node_modules/yarn/lib/cli.js:141642:12)
+      at Object.onceWrapper (events.js:277:13)
+      at IncomingMessage.emit (events.js:194:15)
+      at endReadableNT (_stream_readable.js:1125:12)
+      at process._tickCallback (internal/process/next_tick.js:63:19)
 
 npm manifest: 
   {
     "name": "zod",
-    "version": "1.1.1",
+    "version": "1.7.1",
     "description": "TypeScript-first schema declaration and validation library with static type inference",
     "main": "./lib/src/index.js",
     "types": "./lib/src/index.d.ts",
@@ -52,26 +62,21 @@ npm manifest:
       "type",
       "inference"
     ],
-    "include": [
-      "src"
-    ],
-    "exclude": [
-      "node_modules",
-      "**/__tests__/*"
-    ],
     "scripts": {
       "clean": "rm -rf lib/*",
       "build": "yarn run clean && tsc --p tsconfig.package.json",
       "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
       "lint": "tslint -p tsconfig.json",
-      "test": "jest --config jestconfig.json --coverage && yarn run badges",
-      "badges": "jest-coverage-badges",
-      "prepare": "npm run build",
+      "test": "jest --config jestconfig.json --coverage && yarn run badge",
+      "testone": "jest --config jestconfig.json ",
+      "badge": "make-coverage-badge --output-path ./coverage.svg",
+      "prepublishOnly": "npm run build",
       "play": "nodemon -e ts -w . -x ts-node src/playground.ts"
     },
     "devDependencies": {
       "@types/jest": "^25.1.4",
       "jest": "^25.1.0",
+      "make-coverage-badge": "^1.2.0",
       "nodemon": "^2.0.2",
       "prettier": "^1.19.1",
       "ts-jest": "^25.2.1",
@@ -2085,13 +2090,6 @@ Lockfile:
       pretty-format "^25.1.0"
       realpath-native "^1.1.0"
   
-  jest-coverage-badges@^1.1.2:
-    version "1.1.2"
-    resolved "https://registry.yarnpkg.com/jest-coverage-badges/-/jest-coverage-badges-1.1.2.tgz#a70786b139fd8fb685db732e1e2d916d8a47287e"
-    integrity sha512-44A7i2xR6os8+fWk8ZRM6W4fKiD2jwKOLU9eB3iTIIWACd9RbdvmiCNpQZTOsUBhKvz7aQ/ASFhu5JOEhWUOlg==
-    dependencies:
-      mkdirp "0.5.1"
-  
   jest-diff@^25.1.0:
     version "25.1.0"
     resolved "https://registry.yarnpkg.com/jest-diff/-/jest-diff-25.1.0.tgz#58b827e63edea1bc80c1de952b80cec9ac50e1ad"
@@ -2567,6 +2565,13 @@ Lockfile:
       pseudomap "^1.0.2"
       yallist "^2.1.2"
   
+  make-coverage-badge@^1.2.0:
+    version "1.2.0"
+    resolved "https://registry.yarnpkg.com/make-coverage-badge/-/make-coverage-badge-1.2.0.tgz#125c337531ce7e036c64fa96a8b42ce60e33b437"
+    integrity sha512-nA1eQZJ9vcY2UoQLVIdzqyRoNtAZHWlXJfrHkaMB/pQgTYBPmbImkykfxWeAtUQuLJXzb6eAhbR7nEgrt+S7FA==
+    dependencies:
+      mri "1.1.4"
+  
   make-dir@^1.0.0:
     version "1.3.0"
     resolved "https://registry.yarnpkg.com/make-dir/-/make-dir-1.3.0.tgz#79c1033b80515bd6d24ec9933e860ca75ee27f0c"
@@ -2679,12 +2684,17 @@ Lockfile:
       for-in "^1.0.2"
       is-extendable "^1.0.1"
   
-  mkdirp@0.5.1, mkdirp@0.x, mkdirp@^0.5.1:
+  mkdirp@0.x, mkdirp@^0.5.1:
     version "0.5.1"
     resolved "https://registry.yarnpkg.com/mkdirp/-/mkdirp-0.5.1.tgz#30057438eac6cf7f8c4767f38648d6697d75c903"
     integrity sha1-MAV0OOrGz3+MR2fzhkjWaX11yQM=
     dependencies:
       minimist "0.0.8"
+  
+  mri@1.1.4:
+    version "1.1.4"
+    resolved "https://registry.yarnpkg.com/mri/-/mri-1.1.4.tgz#7cb1dd1b9b40905f1fac053abe25b6720f44744a"
+    integrity sha512-6y7IjGPm8AzlvoUrwAaw1tLnUBudaS3752vcd8JtrpGGQn+rXIe63LFVHm/YMwtqAuh+LJPCFdlLYPWM1nYn6w==
   
   ms@2.0.0:
     version "2.0.0"

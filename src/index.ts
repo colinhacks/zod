@@ -117,7 +117,7 @@ export {
   oboolean,
 };
 
-export type toZod<T> = toZod<T>;
+export { toZod };
 export const lazy = {
   object: ZodObject.lazycreate,
 };

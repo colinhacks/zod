@@ -60,7 +60,7 @@ export const ParsedType = util.arrayToEnum([
 // export const ParsedType = arrayToEnum(ParsedTypeArray);
 export type ParsedType = keyof typeof ParsedType;
 
-type StripErrorKeys<T> = T extends any ? util.Omit<T, 'path'> : never;
+type StripErrorKeys<T extends object> = T extends any ? util.OmitKeys<T, 'path'> : never;
 
 export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   obj: any,

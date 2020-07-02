@@ -79,7 +79,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  refine = <Val extends (arg: this['_type']) => any>(check: Val, message: string = 'Invalid value.') => {
+  refine = <Val extends (arg: Type) => any>(check: Val, message: string = 'Invalid value.') => {
     // const newChecks = [...this._def.checks || [], { check, message }];
     // console.log((this as any).constructor);
     return new (this as any).constructor({
@@ -89,7 +89,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     // return this;
   };
 
-  refinement = (refinement: Check<this['_type']>) => {
+  refinement = (refinement: Check<Type>) => {
     // const finalRefinement = {
     //   check: refinement.check,
 
@@ -113,6 +113,27 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   //   return 'asdf' as any;
   // };
 
+  //  Wrapper = class<Type, Schema> {
+  //    value: Type;
+  //    schema: Schema;
+  //    constructor(schema: Schema, value: Type) {
+  //      this.value = value;
+  //      this.schema = schema;
+  //    }
+  //  };
+
+  //  wrap: (value: this['_type'], params?: ParseParams) => any = (value, params) => {
+  //    const parsed = this.parse(value, params);
+  //    return new this.Wrapper<this['_type'], this>(this, parsed);
+  //   //  return new  ZodValue(this, this.parse(value, params));
+  //  };
+
+  // wrap: (value: Type, params?: ParseParams) => ZodValue<this> = (value, params) => {
+  //   const parsed = this.parse(value, params);
+  //   return new ZodValue(this, parsed);
+  //   //  return new  ZodValue(this, this.parse(value, params));
+  // };
+
   constructor(def: Def) {
     this.parse = ZodParser(def);
     this._def = def;
@@ -122,3 +143,12 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   abstract optional: () => any;
   abstract nullable: () => any;
 }
+
+// export class ZodValue<S extends ZodType<any, any>> {
+//   value: S['_type'];
+//   schema: S;
+//   constructor(schema: S, value: S['_type']) {
+//     this.value = value;
+//     this.schema = schema;
+//   }
+// }

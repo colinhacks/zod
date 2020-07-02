@@ -11,31 +11,45 @@ type ErrorMapCtx = {
 
 export type ErrorMap = typeof defaultErrorMap;
 export const defaultErrorMap = (error: ZodSuberrorOptionalMessage, _ctx: ErrorMapCtx): string => {
+  let message: string;
   switch (error.code) {
     case ZodErrorCode.invalid_type:
-      return `Invalid input: expected ${error.expected}, received ${error.received}`;
+      message = `Invalid input: expected ${error.expected}, received ${error.received}`;
+      break;
     case ZodErrorCode.nonempty_array_is_empty:
-      return `List must contain at least one item`;
+      message = `List must contain at least one item`;
+      break;
     case ZodErrorCode.unrecognized_keys:
-      return `Unrecognized key(s) in object: ${error.keys.map(k => `'${k}'`).join(', ')}`;
+      message = `Unrecognized key(s) in object: ${error.keys.map(k => `'${k}'`).join(', ')}`;
+      break;
     case ZodErrorCode.invalid_union:
-      return `Invalid input`;
+      message = `Invalid input`;
+      break;
     case ZodErrorCode.invalid_array_length:
-      return `Expected list of ${error.expected} items, received ${error.received} items`;
+      message = `Expected list of ${error.expected} items, received ${error.received} items`;
+      break;
     case ZodErrorCode.invalid_literal_value:
-      return `Input must be "${error.expected}"`;
+      message = `Input must be "${error.expected}"`;
+      break;
     case ZodErrorCode.invalid_enum_value:
-      return `Input must be one of these values: ${error.options.join(', ')}`;
+      message = `Input must be one of these values: ${error.options.join(', ')}`;
+      break;
     case ZodErrorCode.invalid_arguments:
-      return `Invalid function arguments`;
+      message = `Invalid function arguments`;
+      break;
     case ZodErrorCode.invalid_return_type:
-      return `Invalid function return type`;
+      message = `Invalid function return type`;
+      break;
     case ZodErrorCode.invalid_date:
-      return `Invalid date`;
+      message = `Invalid date`;
+      break;
     case ZodErrorCode.custom_error:
-      return `Invalid input.`;
+      message = `Invalid input.`;
+      break;
     default:
+      message = `Invalid input.`;
       util.assertNever(error);
   }
-  return `Invalid input.`;
+  return message;
+  // return `Invalid input.`;
 };
