@@ -245,9 +245,10 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         throw error;
       }
 
-      const shape = def.shape;
+      console.log(def.shape);
+      const shape = def.shape();
       if (def.params.strict) {
-        const shapeKeys = Object.keys(def.shape);
+        const shapeKeys = Object.keys(shape);
         const objKeys = Object.keys(obj);
         const extraKeys = objKeys.filter(k => shapeKeys.indexOf(k) === -1);
 
@@ -264,7 +265,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
       for (const key in shape) {
         try {
           // const parsedEntry =
-          def.shape[key].parse(obj[key], { ...params, path: [...params.path, key] });
+          def.shape()[key].parse(obj[key], { ...params, path: [...params.path, key] });
           // parsedObject[key] = parsedEntry;
         } catch (err) {
           const zerr: ZodError = err;

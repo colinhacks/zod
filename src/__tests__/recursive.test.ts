@@ -10,22 +10,18 @@ interface B {
   a: A;
 }
 
-const A: z.ZodType<A> = z.lazy(() =>
-  z.object({
-    // firstName: z.string(),
-    val: z.number(),
-    b: B,
-    // fun: z.function(z.tuple([z.string()]), z.number()),
-  }),
-);
+const A: z.ZodType<A> = z.lazy.object(() => ({
+  // firstName: z.string(),
+  val: z.number(),
+  b: B,
+  // fun: z.function(z.tuple([z.string()]), z.number()),
+}));
 
-const B = z.lazy(() =>
-  z.object({
-    // firstName:z.string(),
-    val: z.number(),
-    a: A,
-  }),
-);
+const B: z.ZodType<B> = z.lazy.object(() => ({
+  // firstName:z.string(),
+  val: z.number(),
+  a: A,
+}));
 
 const a: any = { val: 1 };
 const b: any = { val: 2 };
@@ -73,18 +69,53 @@ test('schema getter', () => {
 });
 
 test('self recursion', () => {
+  interface Category {
+    name: string;
+    subcategories: Category[];
+  }
+
+  const Category: z.toZod<Category> = z.lazy.object(() => ({
+    name: z.string(),
+    subcategories: z.array(Category),
+  }));
+
+  const untypedCategory: any = {
+    name: 'Category A',
+  };
+  // creating a cycle
+  untypedCategory.subcategories = [untypedCategory];
+  Category.parse(untypedCategory); // parses successfully
+});
+
+test('self recursion with base type', () => {
   const BaseCategory = z.object({
     name: z.string(),
   });
-  interface Category extends z.infer<typeof BaseCategory> {
-    subcategories: Category[];
-  }
-  const Category: z.ZodType<Category> = BaseCategory.merge(
-    z.object({
-      subcategories: z.lazy(() => z.array(Category)),
-      // firstName:z.string()
-    }),
-  );
+  type BaseCategory = z.infer<typeof BaseCategory>;
+
+  type Category = BaseCategory & { subcategories: Category[] };
+
+  const Category: z.toZod<Category> = z.lazy
+    .object(() => ({
+      // ...adf,
+      subcategories: z.array(Category),
+    }))
+    .extend({
+      name: z.string(),
+    });
+
+  // const BaseCategory = z.object({
+  //   name: z.string(),
+  // });
+  // interface Category extends z.infer<typeof BaseCategory> {
+  //   subcategories: Category[];
+  // }
+  // const Category: z.Schema<Category> = BaseCategory.merge(
+  //   z.object({
+  //     subcategories: z.lazy(() => z.array(Category)),
+  //     // firstName:z.string()
+  //   }),
+  // );
 
   const untypedCategory: any = {
     name: 'Category A',

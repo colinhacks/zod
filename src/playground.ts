@@ -2,6 +2,16 @@ import * as z from '.';
 import { ZodErrorCode } from './ZodError';
 import { ErrorMap } from './errorMap';
 
+interface Category {
+  name: string;
+  subcategories: Category[];
+}
+
+const Category: z.toZod<Category> = z.lazy.object(() => ({
+  name: z.string(),
+  subcategories: z.array(Category),
+}));
+
 const errorMap: ErrorMap = (error, ctx) => {
   if (error.code === ZodErrorCode.invalid_type) {
     if (error.expected === 'string') {
@@ -54,6 +64,18 @@ try {
 }
 
 // z.number().parse('12', { errorMap });
+
+// interface Category {
+//   name: string;
+//   subcategories: Category[];
+// }
+
+// const y = z.lazy(()=>z.string());
+
+// const Category: z.lazyobject<Category> = z.lazy.object(() => ({
+//   name: z.string(),
+//   subcategories: z.array(Category),
+// }));
 
 // const STATUSES = ['Assigned', 'In Progress', 'On Location', 'Succeeded', 'Failed'] as const;
 // const literals = STATUSES.map(z.literal);
