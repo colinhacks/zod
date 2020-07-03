@@ -61,7 +61,10 @@ export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAn
 
   validate = this.implement;
 
-  static create = <T extends ZodTuple<any>, U extends z.ZodTypeAny>(args?: T, returns?: U): ZodFunction<T, U> => {
+  static create = <T extends ZodTuple<any> = ZodTuple<[]>, U extends z.ZodTypeAny = ZodVoid>(
+    args?: T,
+    returns?: U,
+  ): ZodFunction<T, U> => {
     return new ZodFunction({
       t: z.ZodTypes.function,
       args: args || ZodTuple.create([]),

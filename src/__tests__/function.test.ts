@@ -26,6 +26,24 @@ test('function inference 1', () => {
   [t1];
 });
 
+test('args method', () => {
+  const t1 = z.function();
+  type t1 = z.infer<typeof t1>;
+  const f1: util.AssertEqual<t1, () => void> = true;
+
+  const t2 = t1.args(z.string());
+  type t2 = z.infer<typeof t2>;
+  const f2: util.AssertEqual<t2, (arg: string) => void> = true;
+
+  const t3 = t2.returns(z.boolean());
+  type t3 = z.infer<typeof t3>;
+  const f3: util.AssertEqual<t3, (arg: string) => boolean> = true;
+
+  f1;
+  f2;
+  f3;
+});
+
 const args2 = z.tuple([
   z.object({
     f1: z.number(),
