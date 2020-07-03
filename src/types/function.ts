@@ -3,6 +3,7 @@ import { ZodTuple } from './tuple';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
+import { ZodVoid } from './void';
 
 export interface ZodFunctionDef<
   Args extends ZodTuple<any> = ZodTuple<any>,
@@ -24,6 +25,24 @@ export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAn
   readonly _def!: ZodFunctionDef<Args, Returns>;
   readonly _type!: TypeOfFunction<Args, Returns>;
 
+  args = <Items extends Parameters<typeof ZodTuple['create']>[0]>(
+    ...items: Items
+  ): ZodFunction<ZodTuple<Items>, Returns> => {
+    return new ZodFunction({
+      ...this._def,
+      args: ZodTuple.create(items),
+    });
+  };
+
+  returns = <NewReturnType extends z.ZodType<any, any>>(
+    returnType: NewReturnType,
+  ): ZodFunction<Args, NewReturnType> => {
+    return new ZodFunction({
+      ...this._def,
+      returns: returnType,
+    });
+  };
+
   // implement = this.parse;
   implement = (func: TypeOfFunction<Args, Returns>): TypeOfFunction<Args, Returns> => {
     const validatedFunc = this.parse(func);
@@ -42,11 +61,11 @@ export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAn
 
   validate = this.implement;
 
-  static create = <T extends ZodTuple<any>, U extends z.ZodTypeAny>(args: T, returns: U): ZodFunction<T, U> => {
+  static create = <T extends ZodTuple<any>, U extends z.ZodTypeAny>(args?: T, returns?: U): ZodFunction<T, U> => {
     return new ZodFunction({
       t: z.ZodTypes.function,
-      args,
-      returns,
+      args: args || ZodTuple.create([]),
+      returns: returns || ZodVoid.create(),
     });
   };
 

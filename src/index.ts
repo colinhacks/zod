@@ -9,6 +9,7 @@ import { ZodUndefined, ZodUndefinedDef } from './types/undefined';
 import { ZodNull, ZodNullDef } from './types/null';
 import { ZodAny, ZodAnyDef } from './types/any';
 import { ZodUnknown, ZodUnknownDef } from './types/unknown';
+import { ZodVoid, ZodVoidDef } from './types/void';
 import { ZodArray, ZodArrayDef } from './types/array';
 import { ZodObject, ZodObjectDef } from './types/object';
 import { ZodUnion, ZodUnionDef } from './types/union';
@@ -36,6 +37,7 @@ type ZodDef =
   | ZodNullDef
   | ZodAnyDef
   | ZodUnknownDef
+  | ZodVoidDef
   | ZodArrayDef
   | ZodObjectDef
   | ZodUnionDef
@@ -58,6 +60,7 @@ const undefinedType = ZodUndefined.create;
 const nullType = ZodNull.create;
 const anyType = ZodAny.create;
 const unknownType = ZodUnknown.create;
+const voidType = ZodVoid.create;
 const arrayType = ZodArray.create;
 const objectType = ZodObject.create;
 const unionType = ZodUnion.create;
@@ -98,6 +101,7 @@ export {
   nullType as null,
   anyType as any,
   unknownType as unknown,
+  voidType as void,
   arrayType as array,
   objectType as object,
   unionType as union,
@@ -142,6 +146,7 @@ export {
   ZodNull,
   ZodAny,
   ZodUnknown,
+  ZodVoid,
   ZodArray,
   ZodObject,
   ZodUnion,
