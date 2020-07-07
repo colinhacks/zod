@@ -2,5 +2,6 @@
 **/.DS_Store
 node_modules
 /lib
+/build
 /coverage
 .vscode
