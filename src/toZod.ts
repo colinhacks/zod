@@ -16,7 +16,7 @@ export type toZod<T> = {
   number: z.ZodNumber;
   boolean: z.ZodBoolean;
   date: z.ZodDate;
-  object: T extends { [k: string]: any } ? z.ZodObject<{ [k in keyof T]: toZod<T[k]> }> : never;
+  object: z.ZodObject<{ [k in keyof T]: toZod<T[k]> }, { strict: true }, T>;
   rest: never;
 }[zodKey<T>];
 
@@ -41,31 +41,3 @@ type zodKey<T> = isAny<T> extends true
   : T extends { [k: string]: any } //[T] extends [structUtil.Type]
   ? 'object'
   : 'rest';
-
-type User = {
-  name: string;
-  age: number | undefined;
-  active: boolean | null;
-  posts: Post[];
-};
-
-type Post = {
-  content: string;
-  author: User;
-};
-
-const User: toZod<User> = z.lazy.object(() => ({
-  name: z
-    .string()
-    .min(5)
-    .max(2314)
-    .refine(() => false, 'asdf'),
-  age: z.number().optional(),
-  active: z.boolean().nullable(),
-  posts: z.array(
-    z.object({
-      content: z.string(),
-      author: User,
-    }),
-  ),
-}));

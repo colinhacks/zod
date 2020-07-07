@@ -107,3 +107,24 @@ test('output validation error', () => {
 
   expect(checker).toThrow();
 });
+
+test('special function error codes', () => {
+  const checker = z.function(z.tuple([z.string()]), z.boolean()).implement(arg => {
+    return arg.length as any;
+  });
+  try {
+    checker('12' as any);
+  } catch (err) {
+    const zerr: z.ZodError = err;
+    expect(zerr.errors[0].code).toEqual(z.ZodErrorCode.invalid_return_type);
+    expect(zerr.errors[0].suberrors!.length).toEqual(1);
+  }
+
+  try {
+    checker(12 as any);
+  } catch (err) {
+    const zerr: z.ZodError = err;
+    expect(zerr.errors[0].code).toEqual(z.ZodErrorCode.invalid_arguments);
+    expect(zerr.errors[0].suberrors!.length).toEqual(1);
+  }
+});

@@ -21,12 +21,14 @@ import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
-import { TypeOf, ZodType, ZodTypeAny } from './types/base';
-import { ZodError } from './ZodError';
-
+import { TypeOf, ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './types/base';
+import { ZodError, ZodErrorCode } from './ZodError';
+import { ErrorMap } from './errorMap';
 import { toZod } from './toZod';
-// import { ZodLazyObject, ZodLazyObjectDef } from './types/lazyobject';
+import { ZodCodeGenerator } from './codegen';
 
+// import { ZodLazyObject, ZodLazyObjectDef } from './types/lazyobject';
+export { ZodTypeDef, ZodTypes };
 type ZodDef =
   | ZodStringDef
   | ZodNumberDef
@@ -164,6 +166,9 @@ export {
   ZodTypeAny,
   ZodDef,
   ZodError,
+  ErrorMap,
+  ZodErrorCode,
+  ZodCodeGenerator,
 };
 
 export type lazyobject<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k], any> }>;

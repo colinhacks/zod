@@ -61,8 +61,12 @@ type ZodObjectType<T extends z.ZodRawShape, Params extends ZodObjectParams> = Pa
   ? objectUtil.ObjectType<T>
   : objectUtil.Flatten<objectUtil.ObjectType<T> & { [k: string]: any }>;
 
-export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams = { strict: true }> extends z.ZodType<
-  ZodObjectType<T, Params>, // { [k in keyof T]: T[k]['_type'] },
+export class ZodObject<
+  T extends z.ZodRawShape,
+  Params extends ZodObjectParams = { strict: true },
+  Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
+> extends z.ZodType<
+  Type, //ZodObjectType<T, Params>, // { [k in keyof T]: T[k]['_type'] },
   ZodObjectDef<T, Params>
 > {
   readonly _shape!: T;

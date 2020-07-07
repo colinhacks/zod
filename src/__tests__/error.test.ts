@@ -1,3 +1,4 @@
+import * as z from '..';
 import { ZodError, ZodErrorCode } from '../ZodError';
 import { ParsedType } from '../parser';
 
@@ -19,4 +20,27 @@ test('error creation', () => {
   err1.message;
   err2.message;
   err3.message;
+});
+
+test('custom errormap', () => {
+  const errorMap: z.ErrorMap = (error, ctx) => {
+    if (error.code === ZodErrorCode.invalid_type) {
+      if (error.expected === 'string') {
+        return "This ain't no string!";
+      }
+    }
+    if (error.code === ZodErrorCode.custom_error) {
+      return JSON.stringify(error.params, null, 2);
+    }
+    return ctx.defaultError;
+  };
+  errorMap;
+
+  z.string()
+    .refinement({
+      check: val => val.length > 12,
+      // params: { test: 15 },
+      message: 'Override!',
+    })
+    .parse('asdf', { errorMap });
 });
