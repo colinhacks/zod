@@ -34,10 +34,10 @@
   ],
   "scripts": {
     "clean": "gts clean",
-    "build": "yarn.cmd run compile && yarn.cmd run test",
+    "build": "npm.cmd run compile && npm.cmd run test",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
-    "test": "jest.cmd --config jestconfig.json --coverage && yarn.cmd run badge",
+    "test": "jest.cmd --config jestconfig.json --coverage && npm.cmd run badge",
     "testone": "jest.cmd --config jestconfig.json ",
     "badge": "make-coverage-badge.cmd --output-path ./coverage.svg",
     "prepublishOnly": "npm run build",
@@ -45,9 +45,9 @@
     "check": "gts check src/**/*.ts",
     "compile": "tsc",
     "fix": "gts fix src/**/*.ts",
-    "prepare": "yarn.cmd run compile",
-    "pretest": "yarn.cmd run compile",
-    "posttest": "yarn.cmd run check"
+    "prepare": "npm.cmd run compile",
+    "pretest": "npm.cmd run compile",
+    "posttest": "npm.cmd run check"
   },
   "devDependencies": {
     "@types/expect": "^24.3.0",
