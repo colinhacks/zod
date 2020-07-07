@@ -80,6 +80,8 @@ const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
 
+const codegen = ZodCodeGenerator.create;
+
 // const stringRecord = <T extends ZodTypeAny>(x:T)=>recordType(stringType(),x);
 // const stringMap = stringRecord(objectType({asf:stringType()}))
 // const stringMap2 = recordType(stringType(),objectType({ asf: stringType() }));
@@ -121,6 +123,7 @@ export {
   ostring,
   onumber,
   oboolean,
+  codegen,
 };
 
 export { toZod };

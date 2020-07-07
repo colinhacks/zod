@@ -82,7 +82,7 @@ export class ZodObject<
 
   toJSON = () => objectDefToJson(this._def);
 
-  nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>> =>
+  nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>, Type & { [k: string]: any }> =>
     new ZodObject({
       shape: this._def.shape,
       //  strict: false,
@@ -122,7 +122,9 @@ export class ZodObject<
    */
   merge: <MergeShape extends z.ZodRawShape, MergeParams extends ZodObjectParams>(
     other: ZodObject<MergeShape, MergeParams>,
-  ) => ZodObject<T & MergeShape, objectUtil.MergeObjectParams<Params, MergeParams>> = objectUtil.mergeObjects(this);
+  ) => ZodObject<T & MergeShape, objectUtil.MergeObjectParams<Params, MergeParams>> = objectUtil.mergeObjects(
+    this as any,
+  );
 
   pick = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask,

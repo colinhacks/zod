@@ -129,9 +129,9 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   //   //  return new  ZodValue(this, this.parse(value, params));
   //  };
 
-  // wrap: (value: Type, params?: ParseParams) => ZodValue<this> = (value, params) => {
+  // wrap: (value: Type, params?: ParseParams) => ZodWrapped<this> = (value, params) => {
   //   const parsed = this.parse(value, params);
-  //   return new ZodValue(this, parsed);
+  //   return new ZodWrapped(this, parsed);
   //   //  return new  ZodValue(this, this.parse(value, params));
   // };
 
@@ -145,13 +145,13 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   abstract nullable: () => any;
 }
 
-// export class ZodWrappedTypeBase<Type, Def extends ZodTypeDef = ZodTypeDef> extends ZodType<Type, Def> {
-//          value: Type;
-//          constructor(def:Def,value: Type) {
-//            super(def);
-//            this.value = value;
-//          };
+// export class ZodWrapped<T extends ZodType<any, any>> {
+//   value: T['_type'];
+//   schema: T;
+//   constructor(schema: T, value: T['_type']) {
+//     this.schema = schema;
+//     this.value = value;
+//   }
 
-//          toJSON =()=>this.toJSON();
-
-//        }
+//   //  toJSON =()=>this.toJSON();
+// }

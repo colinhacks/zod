@@ -29,6 +29,7 @@ export const Post: z.toZod<Post> = z.lazy.object(() => ({
   author: User,
 }));
 
+User.shape.posts.element.shape.author;
 type genUser = z.infer<typeof User>;
 type genPost = z.infer<typeof Post>;
 const t1: util.AssertEqual<User, genUser> = true;

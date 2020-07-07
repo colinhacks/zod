@@ -36,7 +36,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 - [Objects](#objects)
   - [.nonstrict](#unknown-keys)
   - [.merge](#merging)
-  - [.augment](#augmentation)
+  - [.extend](#extending)
   - [.pick/.omit](#masking)
   - [.partial/.deepPartial](#partials)
 - [Records](#records)
@@ -338,27 +338,29 @@ type Merged = z.infer<typeof merged>;
 // because no type can simultaneously be both a string and a number
 ```
 
-To "overwrite" existing keys, use `.augment` (documented below).
+To "overwrite" existing keys, use `.extend` (documented below).
 
 #### Augmentation
 
-You can augment an object schema with the `.augment` method.
+You can augment an object schema with the `.extend` method.
+
+> Before zod@1.8 this method was called `.augment`. The `augment` method is still available for backwards compatibility but it is deprecated and will be removed in a future release.
 
 ```ts
 const Animal = z
   .object({
     species: z.string(),
   })
-  .augment({
+  .extend({
     population: z.number(),
   });
 ```
 
-> ⚠️ You can use `.augment` to overwrite fields! Be careful with this power!
+> ⚠️ You can use `.extend` to overwrite fields! Be careful with this power!
 
 ```ts
 // overwrites `species`
-const ModifiedAnimal = Animal.augment({
+const ModifiedAnimal = Animal.extend({
   species: z.array(z.string()),
 });
 
@@ -1278,7 +1280,7 @@ This more declarative API makes schema definitions vastly more concise.
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
-Good type inference support, but limited options for object type masking (no `.pick`, `.omit`, `.augment`, etc.). No support for `Record`s (their `Record` is equivalent to Zod's `object`). They DO support branded and readonly types, which Zod does not.
+Good type inference support, but limited options for object type masking (no `.pick`, `.omit`, `.extend`, etc.). No support for `Record`s (their `Record` is equivalent to Zod's `object`). They DO support branded and readonly types, which Zod does not.
 
 #### Ow
 
@@ -1299,7 +1301,7 @@ If you want to validate function inputs, use function schemas in Zod! It's a muc
 | zod@1.2.6   | `.parse` accepts `unknown`, `bigint` schemas                                                                        |
 | zod@1.2.5   | `.partial` and `.deepPartial` on object schemas                                                                     |
 | zod@1.2.3   | Date schemas                                                                                                        |
-| zod@1.2.0   | `.pick`, `.omit`, and `.augment` on object schemas                                                                  |
+| zod@1.2.0   | `.pick`, `.omit`, and `.extend` on object schemas                                                                   |
 | zod@1.1.0   | Records                                                                                                             |
 | zod@1.0.11  | `.nonstrict`                                                                                                        |
 | zod@1.0.10  | Type assertions with `.check`                                                                                       |

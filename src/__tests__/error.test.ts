@@ -23,7 +23,7 @@ test('error creation', () => {
 });
 
 test('custom errormap', () => {
-  const errorMap: z.ErrorMap = (error, ctx) => {
+  const errorMap: z.ZodErrorMap = (error, ctx) => {
     if (error.code === ZodErrorCode.invalid_type) {
       if (error.expected === 'string') {
         return "This ain't no string!";
@@ -36,11 +36,18 @@ test('custom errormap', () => {
   };
   errorMap;
 
-  z.string()
-    .refinement({
-      check: val => val.length > 12,
-      // params: { test: 15 },
-      message: 'Override!',
-    })
-    .parse('asdf', { errorMap });
+  try {
+    z.string()
+      .refinement({
+        check: val => val.length > 12,
+        // params: { test: 15 },
+        message: 'override',
+      })
+      .parse('asdf', { errorMap });
+  } catch (err) {
+    const zerr: z.ZodError = err;
+    expect(zerr.errors[0].message).toEqual('override');
+  }
 });
+
+// implement test for semi-smart union logic that checks for type error on either left or right
