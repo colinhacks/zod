@@ -9,7 +9,7 @@ type ErrorMapCtx = {
   metadata: object;
 };
 
-export type ErrorMap = typeof defaultErrorMap;
+export type ZodErrorMap = typeof defaultErrorMap;
 export const defaultErrorMap = (error: ZodSuberrorOptionalMessage, _ctx: ErrorMapCtx): string => {
   let message: string;
   switch (error.code) {
