@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ZodDef } from '.';
+import { ZodDef, ZodLazy, ZodUnion } from '.';
 import * as util from './helpers/util';
 import * as z from './types/base';
 import { ZodError } from './ZodError';
@@ -21,10 +21,9 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
     params.seen.push({ schema: schemaDef, objects: [obj] });
   }
 
-  let isValid = false;
+  let parsedObject: any = undefined;
+  let options: ZodUnion<any>;
   const errorCollection: ZodError = ZodError.create([]);
-  const parsedObject: any = {};
-  const parsedArray: any[] = [];
 
   switch (def.t) {
     case z.ZodTypes.string:
@@ -59,7 +58,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       if (def.nonempty === true && obj.length === 0) {
         throw ZodError.fromString('Array cannot be empty');
       }
-      obj.map((item, i) => {
+      parsedObject = obj.map((item, i) => {
         try {
           const parsedItem = def.type.parse(item, params);
           return parsedItem;
@@ -78,9 +77,11 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       if (typeof obj !== 'object') throw ZodError.fromString(`Non-object type: ${typeof obj}`);
       if (Array.isArray(obj)) throw ZodError.fromString('Non-object type: array');
 
+      parsedObject = {};
       if (def.params.strict) {
         const shapeKeys = new Set<string>();
         Object.keys(def.shape).forEach((k) => shapeKeys.add(k));
+
         const objKeys = Object.keys(obj);
         const extraKeys = objKeys.filter((k) => !shapeKeys.has(k));
 
@@ -89,10 +90,9 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
         }
       }
 
-      Object.keys(def.shape).forEach((k) => {
+      Object.keys(def.shape).map((k) => {
         try {
-          const parsedEntry = def.shape[k].parse(obj[k], params);
-          parsedObject[k] = parsedEntry;
+          parsedObject[k] = def.shape[k].parse(obj[k], params);
         } catch (err) {
           if (!(err instanceof ZodError)) {
             throw err;
@@ -109,8 +109,8 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
     case z.ZodTypes.union:
       for (let i = 0; i < def.options.length; i++) {
         try {
-          def.options[i].parse(obj, params);
-          isValid = true;
+          parsedObject = def.options[i].parse(obj, params);
+          errorCollection.errors = [];
           break;
         } catch (err) {
           if (!(err instanceof ZodError)) {
@@ -120,15 +120,15 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
         }
       }
 
-      if (!isValid) {
+      if (errorCollection.errors.length !== 0) {
         throw errorCollection;
       }
       break;
     case z.ZodTypes.generic:
-      for (let i = 0; i < def.options._def.options.length; i++) {
+      options = def.options instanceof ZodLazy ? def.options._def.getter() : def.options;
+      for (let i = 0; i < options._def.options.length; i++) {
         try {
-          def.body(def.options._def.options[i]).parse(obj, params);
-          isValid = true;
+          parsedObject = def.body(options._def.options[i]).parse(obj, params);
           break;
         } catch (err) {
           if (!(err instanceof ZodError)) {
@@ -137,14 +137,13 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
           errorCollection.mergeChild(`[${i}]`, err);
         }
       }
-      if (!isValid) {
+      if (errorCollection.errors.length !== 0) {
         throw errorCollection;
       }
       break;
-
     case z.ZodTypes.intersection:
       try {
-        def.left.parse(obj, params);
+        parsedObject = def.left.parse(obj, params);
       } catch (err) {
         if (!(err instanceof ZodError)) {
           throw err;
@@ -153,7 +152,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       }
 
       try {
-        def.right.parse(obj, params);
+        parsedObject = def.right.parse(obj, params);
       } catch (err) {
         if (!(err instanceof ZodError)) {
           throw err;
@@ -165,7 +164,6 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
         throw errorCollection;
       }
       break;
-
     case z.ZodTypes.tuple:
       if (!Array.isArray(obj)) {
         throw ZodError.fromString('Non-array type detected; invalid tuple.');
@@ -176,11 +174,12 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
         );
       }
 
+      parsedObject = [];
       for (let index = 0; index < obj.length; index++) {
         const item = obj[index];
         const itemParser = def.items[index];
         try {
-          parsedArray.push(itemParser.parse(item, params));
+          parsedObject.push(itemParser.parse(item, params));
         } catch (err) {
           if (!(err instanceof ZodError)) {
             throw err;
@@ -194,7 +193,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       }
       break;
     case z.ZodTypes.lazy:
-      def.getter().parse(obj, params);
+      parsedObject = def.getter().parse(obj, params);
       break;
     case z.ZodTypes.literal:
       if (obj !== def.value) {
@@ -210,7 +209,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       if (typeof obj !== 'function') {
         throw ZodError.fromString(`Non-function type: '${typeof obj}'`);
       }
-      return (...args: any[]) => {
+      parsedObject = (...args: any[]) => {
         def.args.parse(args as any);
 
         const result = obj(...(args as any));
@@ -218,10 +217,12 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
 
         return result;
       };
+      break;
     case z.ZodTypes.record:
       if (typeof obj !== 'object') throw ZodError.fromString(`Non-object type: ${typeof obj}`);
       if (Array.isArray(obj)) throw ZodError.fromString('Non-object type: array');
 
+      parsedObject = {};
       Object.keys(obj).forEach((k) => {
         try {
           parsedObject[k] = def.valueType.parse(obj[k]);
@@ -257,7 +258,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
       if (def.checks) {
         throw ZodError.fromString("Can't apply custom validators to Promise schemas.");
       }
-      return new Promise((res, rej) => {
+      parsedObject = new Promise((res, rej) => {
         obj.then((objValue: any) => {
           try {
             res(def.type.parse(objValue));
@@ -269,6 +270,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
           }
         });
       });
+      break;
     default:
       util.assertNever(def);
   }
@@ -280,11 +282,8 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (obj: any, params: ParsePa
     }
   }
 
-  if (Object.keys(parsedObject).length !== 0) {
+  if (typeof parsedObject !== 'undefined') {
     return parsedObject;
-  }
-  if (parsedArray.length !== 0) {
-    return parsedArray;
   }
   return obj as any;
 };
