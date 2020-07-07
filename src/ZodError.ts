@@ -1,26 +1,12 @@
 import { ParsedType } from './parser';
 import { util } from './helpers/util';
 
-// import { ErrorMap } from "./errorMap";
-
-// type Codes = "not-a-string" | string
 export const ZodErrorCode = util.arrayToEnum([
   'invalid_type',
   'nonempty_array_is_empty',
   'custom_error',
   'invalid_union',
   'invalid_array_length',
-  // 'not_string',
-  // 'not_nan',
-  // 'not_number',
-  // 'not_boolean',
-  // 'not_bigint',
-  // 'not_symbol',
-  // 'not_function',
-  // 'not_undefined',
-  // 'not_null',
-  // 'not_array',
-  // 'not_object',
   'array_empty',
   'invalid_literal_value',
   'invalid_enum_value',
@@ -33,13 +19,10 @@ export const ZodErrorCode = util.arrayToEnum([
 export type ZodErrorCode = keyof typeof ZodErrorCode;
 
 export type ZodSuberrorBase = {
-  // zodPath: (string | number)[];
   path: (string | number)[];
   code: ZodErrorCode;
   message?: string;
   suberrors?: ZodError[];
-  // internalMessage: string;
-  // code: string;
 };
 
 interface InvalidTypeError extends ZodSuberrorBase {
@@ -138,48 +121,11 @@ export class ZodError extends Error {
     return this.errors.length === 0;
   }
 
-  //  static fromString = (message: string) => {
-  //    return ZodError.create([
-  //      {
-  //        path: [],
-  //        message,
-  //      },
-  //    ]);
-  //  };
-
-  //  mergeChild = (pathElement: string | number, child: Error) => {
-  //    if (child instanceof ZodError) {
-  //      this.merge(child.bubbleUp(pathElement));
-  //    } else {
-  //      this.merge(ZodError.fromString(child.message).bubbleUp(pathElement));
-  //    }
-  //  };
-
-  //  bubbleUp = (pathElement: string | number) => {
-  //    return ZodError.create(
-  //      this.errors.map(err => {
-  //        return { path: [pathElement, ...err.path], message: err.message };
-  //      }),
-  //    );
-  //  };
-
-  //  addError = (path: string | number, message: string) => {
-  //    this.errors = [...this.errors, { path: path === '' ? [] : [path], message }];
-  //  };
-
   addError = (sub: ZodSuberror) => {
     this.errors = [...this.errors, sub];
   };
 
   addErrors = (subs: ZodSuberror[] = []) => {
     this.errors = [...this.errors, ...subs];
-  };
-
-  // addSub = (sub: ZodSuberror) => {
-  //   this.errors = [...this.errors, { path: path === '' ? [] : [path], message }];
-  // };
-
-  merge = (error: ZodError) => {
-    this.errors = [...this.errors, ...error.errors];
   };
 }

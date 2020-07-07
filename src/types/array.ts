@@ -21,6 +21,10 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
     };
   };
 
+  get element() {
+    return this._def.type;
+  }
+
   optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);

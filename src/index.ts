@@ -9,6 +9,7 @@ import { ZodUndefined, ZodUndefinedDef } from './types/undefined';
 import { ZodNull, ZodNullDef } from './types/null';
 import { ZodAny, ZodAnyDef } from './types/any';
 import { ZodUnknown, ZodUnknownDef } from './types/unknown';
+import { ZodVoid, ZodVoidDef } from './types/void';
 import { ZodArray, ZodArrayDef } from './types/array';
 import { ZodObject, ZodObjectDef } from './types/object';
 import { ZodUnion, ZodUnionDef } from './types/union';
@@ -20,12 +21,14 @@ import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
-import { TypeOf, ZodType, ZodTypeAny } from './types/base';
-import { ZodError } from './ZodError';
-
+import { TypeOf, ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './types/base';
+import { ZodError, ZodErrorCode } from './ZodError';
+import { ZodErrorMap } from './errorMap';
 import { toZod } from './toZod';
-// import { ZodLazyObject, ZodLazyObjectDef } from './types/lazyobject';
+import { ZodCodeGenerator } from './codegen';
 
+// import { ZodLazyObject, ZodLazyObjectDef } from './types/lazyobject';
+export { ZodTypeDef, ZodTypes };
 type ZodDef =
   | ZodStringDef
   | ZodNumberDef
@@ -36,6 +39,7 @@ type ZodDef =
   | ZodNullDef
   | ZodAnyDef
   | ZodUnknownDef
+  | ZodVoidDef
   | ZodArrayDef
   | ZodObjectDef
   | ZodUnionDef
@@ -58,6 +62,7 @@ const undefinedType = ZodUndefined.create;
 const nullType = ZodNull.create;
 const anyType = ZodAny.create;
 const unknownType = ZodUnknown.create;
+const voidType = ZodVoid.create;
 const arrayType = ZodArray.create;
 const objectType = ZodObject.create;
 const unionType = ZodUnion.create;
@@ -74,6 +79,8 @@ const promiseType = ZodPromise.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
+
+const codegen = ZodCodeGenerator.create;
 
 // const stringRecord = <T extends ZodTypeAny>(x:T)=>recordType(stringType(),x);
 // const stringMap = stringRecord(objectType({asf:stringType()}))
@@ -98,6 +105,7 @@ export {
   nullType as null,
   anyType as any,
   unknownType as unknown,
+  voidType as void,
   arrayType as array,
   objectType as object,
   unionType as union,
@@ -115,6 +123,7 @@ export {
   ostring,
   onumber,
   oboolean,
+  codegen,
 };
 
 export { toZod };
@@ -142,6 +151,7 @@ export {
   ZodNull,
   ZodAny,
   ZodUnknown,
+  ZodVoid,
   ZodArray,
   ZodObject,
   ZodUnion,
@@ -159,6 +169,9 @@ export {
   ZodTypeAny,
   ZodDef,
   ZodError,
+  ZodErrorMap,
+  ZodErrorCode,
+  ZodCodeGenerator,
 };
 
 export type lazyobject<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k], any> }>;

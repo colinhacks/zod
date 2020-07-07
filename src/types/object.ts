@@ -61,8 +61,12 @@ type ZodObjectType<T extends z.ZodRawShape, Params extends ZodObjectParams> = Pa
   ? objectUtil.ObjectType<T>
   : objectUtil.Flatten<objectUtil.ObjectType<T> & { [k: string]: any }>;
 
-export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams = { strict: true }> extends z.ZodType<
-  ZodObjectType<T, Params>, // { [k in keyof T]: T[k]['_type'] },
+export class ZodObject<
+  T extends z.ZodRawShape,
+  Params extends ZodObjectParams = { strict: true },
+  Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
+> extends z.ZodType<
+  Type, //ZodObjectType<T, Params>, // { [k in keyof T]: T[k]['_type'] },
   ZodObjectDef<T, Params>
 > {
   readonly _shape!: T;
@@ -78,7 +82,7 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
 
   toJSON = () => objectDefToJson(this._def);
 
-  nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>> =>
+  nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>, Type & { [k: string]: any }> =>
     new ZodObject({
       shape: this._def.shape,
       //  strict: false,
@@ -118,7 +122,9 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
    */
   merge: <MergeShape extends z.ZodRawShape, MergeParams extends ZodObjectParams>(
     other: ZodObject<MergeShape, MergeParams>,
-  ) => ZodObject<T & MergeShape, objectUtil.MergeObjectParams<Params, MergeParams>> = objectUtil.mergeObjects(this);
+  ) => ZodObject<T & MergeShape, objectUtil.MergeObjectParams<Params, MergeParams>> = objectUtil.mergeObjects(
+    this as any,
+  );
 
   pick = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask,

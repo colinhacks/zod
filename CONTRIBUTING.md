@@ -6,25 +6,28 @@ your contribution.
 
 Before you start working on a contribution, create an issue describing what you want to build. It's possible someone else is already working on something similar, or perhaps there is a reason that feature isn't implemented. The maintainers will point you in the right direction.
 
-## Submitting a Pull Request
+<!-- ## Submitting a Pull Request
 
-- Clone the zod repository: `git clone git@github.com:vriad/zod.git`
+- Fork the repo
+- Clone your forked repository: `git clone git@github.com:{your_username}/zod.git`
 - Enter the zod directory: `cd zod`
 - Create a new branch off the `master` branch: `git checkout -b your-feature-name`
-- Implement your contributions (see the Development section for more information!)
+- Implement your contributions (see the Development section for more information)
 - Push your branch to the repo: `git push origin your-feature-name`
 - Go to https://github.com/vriad/zod/compare and select the branch you just pushed in the "compare:" dropdown
-- Submit the PR. The maintainers will follow up ASAP.
+- Submit the PR. The maintainers will follow up ASAP. -->
 
 ## Development
 
 The following steps will get you setup to contribute changes to this repo:
 
-1. Clone the repo: `git clone git@github.com:vriad/zod.git`
+1. Fork this repo.
 
-2. Run `yarn` to install dependencies.
+2. Clone your forked repo: `git clone git@github.com:{your_username}/zod.git`
 
-3. Start playing with the code! You can do some simple experimentation in `src/playground.ts` (see `yarn play` below).
+3. Run `yarn` to install dependencies.
+
+4. Start playing with the code! You can do some simple experimentation in `src/playground.ts` (see `yarn play` below) or start implementing a feature right away.
 
 ### Commands
 

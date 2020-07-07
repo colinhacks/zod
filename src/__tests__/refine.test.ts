@@ -18,3 +18,23 @@ test('refinement', () => {
   obj3.parse({ second: 'a' });
   obj3.parse({ first: 'a', second: 'a' });
 });
+
+test('refinement 2', () => {
+  try {
+    const validationSchema = z
+      .object({
+        email: z.string().email(),
+        password: z.string(),
+        confirmPassword: z.string(),
+      })
+      .refine(data => data.password === data.confirmPassword, 'Both password and confirmation must match');
+
+    validationSchema.parse({
+      email: 'aaaa@gmail.com',
+      password: 'aaaaaaaa',
+      confirmPassword: 'bbbbbbbb',
+    });
+  } catch (err) {
+    console.log(JSON.stringify(err.errors, null, 2));
+  }
+});

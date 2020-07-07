@@ -66,11 +66,17 @@ export namespace objectUtil {
     };
   };
 
-  export const mergeObjects = <FirstShape extends ZodRawShape, FirstParams extends ZodObjectParams>(
-    first: ZodObject<FirstShape, FirstParams>,
-  ) => <SecondShape extends ZodRawShape, SecondParams extends ZodObjectParams>(
-    second: ZodObject<SecondShape, SecondParams>,
-  ): ZodObject<FirstShape & SecondShape, MergeObjectParams<FirstParams, SecondParams>> => {
+  export const mergeObjects = <First extends ZodObject<any, any, any>>(first: First) => <
+    //  SecondShape extends ZodRawShape,
+    //  SecondParams extends ZodObjectParams
+    Second extends ZodObject<any, any, any>
+  >(
+    second: Second,
+  ): ZodObject<
+    First['_shape'] & Second['_shape'],
+    MergeObjectParams<First['_params'], Second['_params']>,
+    First['_type'] & Second['_type']
+  > => {
     const mergedShape = mergeShapes(first._def.shape(), second._def.shape());
     const merged: any = new ZodObject({
       t: ZodTypes.object,

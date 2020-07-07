@@ -2,12 +2,12 @@ import * as z from './types/base';
 import { ZodDef } from '.';
 import { ZodError, ZodErrorCode, ZodSuberror, ZodSuberrorOptionalMessage } from './ZodError';
 import { util } from './helpers/util';
-import { ErrorMap, defaultErrorMap } from './errorMap';
+import { ZodErrorMap, defaultErrorMap } from './errorMap';
 
 export type ParseParams = {
   seen?: { schema: any; objects: any[] }[];
   path?: (string | number)[];
-  errorMap?: ErrorMap;
+  errorMap?: ZodErrorMap;
 };
 
 export const getParsedType = (data: any): ParsedType => {
@@ -55,12 +55,17 @@ export const ParsedType = util.arrayToEnum([
   'object',
   'unknown',
   'promise',
+  'void',
 ]);
 
 // export const ParsedType = arrayToEnum(ParsedTypeArray);
 export type ParsedType = keyof typeof ParsedType;
 
+<<<<<<< HEAD
 type StripErrorKeys<T> = T extends any ? util.OmitKeys<T, 'path'> : never;
+=======
+type StripErrorKeys<T extends object> = T extends any ? util.OmitKeys<T, 'path'> : never;
+>>>>>>> zod2
 
 export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   obj: any,
@@ -204,6 +209,12 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
     case z.ZodTypes.any:
       break;
     case z.ZodTypes.unknown:
+      break;
+    case z.ZodTypes.void:
+      if (parsedType !== ParsedType.undefined && parsedType !== ParsedType.null) {
+        error.addError(makeError({ code: ZodErrorCode.invalid_type, expected: ParsedType.void, received: parsedType }));
+        throw error;
+      }
       break;
     case z.ZodTypes.array:
       if (parsedType !== ParsedType.array) {

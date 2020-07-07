@@ -2,6 +2,7 @@ import * as z from './base';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
+// import { ParseParams } from '../parser';
 
 export interface ZodStringDef extends z.ZodTypeDef {
   t: z.ZodTypes.string;
@@ -47,6 +48,9 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
   //     },
   //   });
   // }
+  // wrap: (value: this['_type'], params?: ParseParams) => ZodValue<this> = (value, params) => {
+  //   return new ZodValue(this, this.parse(value, params));
+  // };
 
   static create = (): ZodString => {
     return new ZodString({
@@ -55,3 +59,11 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     });
   };
 }
+// export class ZodValue<S extends z.ZodType<any, any>> {
+//   value: S['_type'];
+//   schema: S;
+//   constructor(schema: S, value: S['_type']) {
+//     this.value = value;
+//     this.schema = schema;
+//   }
+// }

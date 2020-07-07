@@ -26,6 +26,24 @@ test('function inference 1', () => {
   [t1];
 });
 
+test('args method', () => {
+  const t1 = z.function();
+  type t1 = z.infer<typeof t1>;
+  const f1: util.AssertEqual<t1, () => void> = true;
+
+  const t2 = t1.args(z.string());
+  type t2 = z.infer<typeof t2>;
+  const f2: util.AssertEqual<t2, (arg: string) => void> = true;
+
+  const t3 = t2.returns(z.boolean());
+  type t3 = z.infer<typeof t3>;
+  const f3: util.AssertEqual<t3, (arg: string) => boolean> = true;
+
+  f1;
+  f2;
+  f3;
+});
+
 const args2 = z.tuple([
   z.object({
     f1: z.number(),
@@ -88,4 +106,25 @@ test('output validation error', () => {
   };
 
   expect(checker).toThrow();
+});
+
+test('special function error codes', () => {
+  const checker = z.function(z.tuple([z.string()]), z.boolean()).implement(arg => {
+    return arg.length as any;
+  });
+  try {
+    checker('12' as any);
+  } catch (err) {
+    const zerr: z.ZodError = err;
+    expect(zerr.errors[0].code).toEqual(z.ZodErrorCode.invalid_return_type);
+    expect(zerr.errors[0].suberrors!.length).toEqual(1);
+  }
+
+  try {
+    checker(12 as any);
+  } catch (err) {
+    const zerr: z.ZodError = err;
+    expect(zerr.errors[0].code).toEqual(z.ZodErrorCode.invalid_arguments);
+    expect(zerr.errors[0].suberrors!.length).toEqual(1);
+  }
 });
