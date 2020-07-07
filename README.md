@@ -75,7 +75,7 @@ yarn add zod
 
 #### TypeScript versions
 
-Zod 1.0.x is compatible with TypeScript 3.2+.
+⚠ Zod 2.0.x requires TypeScript 4.0+
 
 > You must use strict mode for Zod to correctly infer the types of your schemas! Add `"strict": true` inside "compilerOptions" in your `tsconfig.json`.
 
