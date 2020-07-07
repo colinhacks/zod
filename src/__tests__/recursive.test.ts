@@ -10,14 +10,14 @@ interface B {
   a: A;
 }
 
-const A: z.ZodType<A> = z.lazy.object(() => ({
+const A: z.ZodType<A> = z.late.object(() => ({
   // firstName: z.string(),
   val: z.number(),
   b: B,
   // fun: z.function(z.tuple([z.string()]), z.number()),
 }));
 
-const B: z.ZodType<B> = z.lazy.object(() => ({
+const B: z.ZodType<B> = z.late.object(() => ({
   // firstName:z.string(),
   val: z.number(),
   a: A,
@@ -74,7 +74,7 @@ test('self recursion', () => {
     subcategories: Category[];
   }
 
-  const Category: z.toZod<Category> = z.lazy.object(() => ({
+  const Category: z.Schema<Category> = z.late.object(() => ({
     name: z.string(),
     subcategories: z.array(Category),
   }));
@@ -95,7 +95,7 @@ test('self recursion with base type', () => {
 
   type Category = BaseCategory & { subcategories: Category[] };
 
-  const Category: z.toZod<Category> = z.lazy
+  const Category: z.Schema<Category> = z.late
     .object(() => ({
       // ...adf,
       subcategories: z.array(Category),

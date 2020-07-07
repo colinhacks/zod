@@ -1,9 +1,8 @@
 import * as z from '..';
-import { User, Post } from '../userpost';
+import { crazySchema } from './complex.test';
 
 test('ZodCodeGenerator', () => {
   const gen = new z.ZodCodeGenerator();
-  gen.generate(User);
-  gen.generate(Post);
+  gen.generate(crazySchema);
   console.log(gen.dump());
 });

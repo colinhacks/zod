@@ -24,7 +24,7 @@ import { ZodPromise, ZodPromiseDef } from './types/promise';
 import { TypeOf, ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './types/base';
 import { ZodError, ZodErrorCode } from './ZodError';
 import { ZodErrorMap } from './errorMap';
-import { toZod } from './toZod';
+
 import { ZodCodeGenerator } from './codegen';
 
 // import { ZodLazyObject, ZodLazyObjectDef } from './types/lazyobject';
@@ -70,7 +70,7 @@ const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
 const functionType = ZodFunction.create;
-// const lazyType = ZodLazy.create;
+const lazyType = ZodLazy.create;
 // const lazyobjectType = ZodLazyObject.create;
 // const recursionType = ZodObject.recursion;
 const literalType = ZodLiteral.create;
@@ -113,7 +113,7 @@ export {
   tupleType as tuple,
   recordType as record,
   functionType as function,
-  // lazyType as lazy,
+  lazyType as lazy,
   // lazyobjectType as lazyobject,
   // recursionType as recursion,
   literalType as literal,
@@ -126,8 +126,7 @@ export {
   codegen,
 };
 
-export { toZod };
-export const lazy = {
+export const late = {
   object: ZodObject.lazycreate,
 };
 

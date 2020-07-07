@@ -8,7 +8,7 @@ import * as z from '../index';
 
 // const FishEnum = z.enum([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
 
-const crazySchema = z.object({
+export const crazySchema = z.object({
   tuple: z.tuple([
     z
       .string()

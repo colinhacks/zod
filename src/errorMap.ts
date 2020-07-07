@@ -50,9 +50,6 @@ export const defaultErrorMap = (error: ZodSuberrorOptionalMessage, _ctx: ErrorMa
       message = `Invalid input.`;
       util.assertNever(error);
   }
-<<<<<<< HEAD
-=======
   return message;
->>>>>>> zod2
   // return `Invalid input.`;
 };

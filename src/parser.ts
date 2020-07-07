@@ -61,11 +61,7 @@ export const ParsedType = util.arrayToEnum([
 // export const ParsedType = arrayToEnum(ParsedTypeArray);
 export type ParsedType = keyof typeof ParsedType;
 
-<<<<<<< HEAD
-type StripErrorKeys<T> = T extends any ? util.OmitKeys<T, 'path'> : never;
-=======
 type StripErrorKeys<T extends object> = T extends any ? util.OmitKeys<T, 'path'> : never;
->>>>>>> zod2
 
 export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   obj: any,
@@ -256,7 +252,6 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         throw error;
       }
 
-      console.log(def.shape);
       const shape = def.shape();
       if (def.params.strict) {
         const shapeKeys = Object.keys(shape);

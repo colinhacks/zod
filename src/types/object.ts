@@ -166,7 +166,7 @@ export class ZodObject<
     });
   };
 
-  deepPartial = (): partialUtil.RootDeepPartial<ZodObject<T>> => {
+  deepPartial: () => partialUtil.RootDeepPartial<ZodObject<T>> = () => {
     const newShape: any = {};
     // const shape = this.shape;
     for (const key in this.shape) {

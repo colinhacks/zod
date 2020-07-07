@@ -91,49 +91,11 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   };
 
   refinement = (refinement: Check<Type>) => {
-    // const finalRefinement = {
-    //   check: refinement.check,
-
-    // code: refinement.code || 'custom-refinement-failed',
-    //   message: refinement.message,
-    // };
-    // const newChecks = [...this._def.checks || [], { check, message }];
-    // console.log((this as any).constructor);
     return new (this as any).constructor({
       ...this._def,
       checks: [...(this._def.checks || []), refinement],
     }) as this;
-    // return this;
   };
-
-  // mask = <P extends maskUtil.Params<Type>>(_params: P): ZodType<maskUtil.Pick<Type, P>> => {
-  //   return Masker(this, _params) as any;
-  // };
-
-  // pick = <Params extends maskUtil.Params<Type>>(_params: Params): maskUtil.Mask<Type, Params> => {
-  //   return 'asdf' as any;
-  // };
-
-  //  Wrapper = class<Type, Schema> {
-  //    value: Type;
-  //    schema: Schema;
-  //    constructor(schema: Schema, value: Type) {
-  //      this.value = value;
-  //      this.schema = schema;
-  //    }
-  //  };
-
-  //  wrap: (value: this['_type'], params?: ParseParams) => any = (value, params) => {
-  //    const parsed = this.parse(value, params);
-  //    return new this.Wrapper<this['_type'], this>(this, parsed);
-  //   //  return new  ZodValue(this, this.parse(value, params));
-  //  };
-
-  // wrap: (value: Type, params?: ParseParams) => ZodWrapped<this> = (value, params) => {
-  //   const parsed = this.parse(value, params);
-  //   return new ZodWrapped(this, parsed);
-  //   //  return new  ZodValue(this, this.parse(value, params));
-  // };
 
   constructor(def: Def) {
     this.parse = ZodParser(def);
@@ -144,14 +106,3 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   abstract optional: () => any;
   abstract nullable: () => any;
 }
-
-// export class ZodWrapped<T extends ZodType<any, any>> {
-//   value: T['_type'];
-//   schema: T;
-//   constructor(schema: T, value: T['_type']) {
-//     this.schema = schema;
-//     this.value = value;
-//   }
-
-//   //  toJSON =()=>this.toJSON();
-// }
