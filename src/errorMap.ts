@@ -37,5 +37,5 @@ export const defaultErrorMap = (error: ZodSuberrorOptionalMessage, _ctx: ErrorMa
     default:
       util.assertNever(error);
   }
-  return `Invalid input.`;
+  // return `Invalid input.`;
 };
