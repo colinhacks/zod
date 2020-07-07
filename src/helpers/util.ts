@@ -22,7 +22,7 @@ export namespace util {
   };
 
   export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
-
+  export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
   // const infer = <T extends string, U extends [T, ...T[]]>(items: U): U => {
   //   return items;
   // };
