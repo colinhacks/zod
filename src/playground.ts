@@ -27,5 +27,5 @@ const $Dog = z.object({
 const $Animal = z.union([$Cat, $Dog]);
 type Animal = z.infer<typeof $Animal>;
 
-const $AnimalAbility = z.generic($Animal, (t) => t._shape.ability);
+const $AnimalAbility = z.generic($Animal, (A) => A.shape.ability);
 type AnimalAbility = z.infer<typeof $AnimalAbility>;
