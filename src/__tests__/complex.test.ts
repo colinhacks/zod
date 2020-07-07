@@ -1,39 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as z from '../index';
-// import { AssertEqual } from '../helpers/util';
-
-// const blue = z.literal('blue');
-// type blue = z.infer<typeof blue>;
-
-// const FishEnum = z.enum([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
-
-// const FishEnum = z.enum([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
 
 const crazySchema = z.object({
   tuple: z.tuple([
-    z
-      .string()
-      .nullable()
-      .optional(),
-    z
-      .number()
-      .nullable()
-      .optional(),
-    z
-      .boolean()
-      .nullable()
-      .optional(),
-    z
-      .null()
-      .nullable()
-      .optional(),
-    z
-      .undefined()
-      .nullable()
-      .optional(),
-    z
-      .literal('1234')
-      .nullable()
-      .optional(),
+    z.string().nullable().optional(),
+    z.number().nullable().optional(),
+    z.boolean().nullable().optional(),
+    z.null().nullable().optional(),
+    z.undefined().nullable().optional(),
+    z.literal('1234').nullable().optional(),
   ]),
   merged: z
     .object({
@@ -65,20 +40,16 @@ test('to JSON', () => {
 
 const stringSchema = z.string();
 test('type guard', () => {
-  if (stringSchema.check('adsf' as any)) {
-  }
+  expect(stringSchema.check('adsf')).toBeTruthy();
 });
 
 test('type guard fail', () => {
-  if (crazySchema.check('asdf' as any)) {
-  }
+  expect(crazySchema.check('adsf' as any)).toBeFalsy();
 });
 
 test('type guard (is)', () => {
-  if (stringSchema.is('asdf' as any)) {
-  }
+  expect(stringSchema.is('adsf' as any)).toBeTruthy();
 });
 test('type guard failure (is)', () => {
-  if (crazySchema.is('asdf' as any)) {
-  }
+  expect(crazySchema.is('adsf' as any)).toBeFalsy();
 });

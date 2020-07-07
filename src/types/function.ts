@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as z from './base';
+import { ZodNull } from './null';
 import { ZodTuple } from './tuple';
 import { ZodUndefined } from './undefined';
-import { ZodNull } from './null';
 import { ZodUnion } from './union';
 
 export interface ZodFunctionDef<
@@ -13,7 +14,7 @@ export interface ZodFunctionDef<
   returns: Returns;
 }
 
-export type TypeOfFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAny> = Args['_type'] extends Array<any>
+export type TypeOfFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAny> = Args['_type'] extends any[]
   ? (...args: Args['_type']) => Returns['_type']
   : never;
 
@@ -27,14 +28,10 @@ export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAn
   // implement = this.parse;
   implement = (func: TypeOfFunction<Args, Returns>): TypeOfFunction<Args, Returns> => {
     const validatedFunc = (...args: any[]) => {
-      try {
-        this._def.args.parse(args as any);
-        const result = func(...(args as any));
-        this._def.returns.parse(result);
-        return result;
-      } catch (err) {
-        throw err;
-      }
+      this._def.args.parse(args as any);
+      const result = func(...(args as any));
+      this._def.returns.parse(result);
+      return result;
     };
     return (validatedFunc as any) as TypeOfFunction<Args, Returns>;
   };

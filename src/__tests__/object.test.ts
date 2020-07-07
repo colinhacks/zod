@@ -1,5 +1,5 @@
 import * as z from '../index';
-import { util } from '../helpers/util';
+import * as util from '../helpers/util';
 
 const Test = z.object({
   f1: z.number(),
@@ -17,7 +17,7 @@ test('object type inference', () => {
   };
 
   const t1: util.AssertEqual<z.TypeOf<typeof Test>, TestType> = true;
-  [t1];
+  expect(t1).toBeTruthy();
 });
 
 test('unknown throw', () => {
@@ -49,14 +49,12 @@ test('correct parsing', () => {
 });
 
 test('incorrect #1', () => {
-  expect(() => Test.parse({} as any)).toThrow();
+  expect(() => Test.parse({})).toThrow();
 });
 
 test('nonstrict', () => {
-  z.object({ points: z.number() })
-    .nonstrict()
-    .parse({
-      points: 2314,
-      unknown: 'asdf',
-    });
+  z.object({ points: z.number() }).nonstrict().parse({
+    points: 2314,
+    unknown: 'asdf',
+  });
 });

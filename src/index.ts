@@ -1,30 +1,30 @@
 /* ZOD */
 
-import { ZodString, ZodStringDef } from './types/string';
-import { ZodNumber, ZodNumberDef } from './types/number';
+import { ZodAny, ZodAnyDef } from './types/any';
+import { ZodArray, ZodArrayDef } from './types/array';
+import { TypeOf, ZodType, ZodTypeAny } from './types/base';
 import { ZodBigInt, ZodBigIntDef } from './types/bigint';
 import { ZodBoolean, ZodBooleanDef } from './types/boolean';
 import { ZodDate, ZodDateDef } from './types/date';
-import { ZodUndefined, ZodUndefinedDef } from './types/undefined';
-import { ZodNull, ZodNullDef } from './types/null';
-import { ZodAny, ZodAnyDef } from './types/any';
-import { ZodUnknown, ZodUnknownDef } from './types/unknown';
-import { ZodArray, ZodArrayDef } from './types/array';
-import { ZodObject, ZodObjectDef } from './types/object';
-import { ZodUnion, ZodUnionDef } from './types/union';
-import { ZodIntersection, ZodIntersectionDef } from './types/intersection';
-import { ZodTuple, ZodTupleDef } from './types/tuple';
-import { ZodRecord, ZodRecordDef } from './types/record';
+import { ZodGeneric, ZodGenericDef } from './types/generic';
+import { ZodEnum, ZodEnumDef } from './types/enum';
 import { ZodFunction, ZodFunctionDef } from './types/function';
+import { ZodIntersection, ZodIntersectionDef } from './types/intersection';
 import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
-import { ZodEnum, ZodEnumDef } from './types/enum';
+import { ZodNull, ZodNullDef } from './types/null';
+import { ZodNumber, ZodNumberDef } from './types/number';
+import { ZodObject, ZodObjectDef } from './types/object';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
-import { TypeOf, ZodType, ZodTypeAny } from './types/base';
+import { ZodRecord, ZodRecordDef } from './types/record';
+import { ZodString, ZodStringDef } from './types/string';
+import { ZodTuple, ZodTupleDef } from './types/tuple';
+import { ZodUndefined, ZodUndefinedDef } from './types/undefined';
+import { ZodUnion, ZodUnionDef } from './types/union';
+import { ZodUnknown, ZodUnknownDef } from './types/unknown';
 import { ZodError } from './ZodError';
-// import { ZodLazyObject, ZodLazyObjectDef } from './types/lazyobject';
 
-type ZodDef =
+export type ZodDef =
   | ZodStringDef
   | ZodNumberDef
   | ZodBigIntDef
@@ -37,12 +37,12 @@ type ZodDef =
   | ZodArrayDef
   | ZodObjectDef
   | ZodUnionDef
+  | ZodGenericDef
   | ZodIntersectionDef
   | ZodTupleDef
   | ZodRecordDef
   | ZodFunctionDef
   | ZodLazyDef
-  //  | ZodLazyObjectDef
   | ZodLiteralDef
   | ZodEnumDef
   | ZodPromiseDef;
@@ -59,6 +59,7 @@ const unknownType = ZodUnknown.create;
 const arrayType = ZodArray.create;
 const objectType = ZodObject.create;
 const unionType = ZodUnion.create;
+const genericType = ZodGeneric.create;
 const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
@@ -99,6 +100,7 @@ export {
   arrayType as array,
   objectType as object,
   unionType as union,
+  genericType as generic,
   intersectionType as intersection,
   tupleType as tuple,
   recordType as record,
@@ -114,7 +116,6 @@ export {
   onumber,
   oboolean,
 };
-
 export {
   ZodString,
   ZodNumber,
@@ -128,6 +129,7 @@ export {
   ZodArray,
   ZodObject,
   ZodUnion,
+  ZodGeneric,
   ZodIntersection,
   ZodTuple,
   ZodRecord,
@@ -140,8 +142,6 @@ export {
   ZodType,
   ZodType as Schema,
   ZodTypeAny,
-  ZodDef,
   ZodError,
 };
-
 export { TypeOf, TypeOf as infer };

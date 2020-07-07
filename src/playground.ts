@@ -1,4 +1,4 @@
-// import * as z from '.';
+import * as z from '.';
 
 // const STATUSES = ['Assigned', 'In Progress', 'On Location', 'Succeeded', 'Failed'] as const;
 // const literals = STATUSES.map(z.literal);
@@ -13,3 +13,19 @@
 
 // const fishTypes = ['Salmon', 'Tuna', 'Trout'] as const;
 // const FishEnum = z.enum(fishTypes);
+
+const $Cat = z.object({
+  name: z.literal('Cat'),
+  ability: z.literal('meow'),
+});
+
+const $Dog = z.object({
+  name: z.literal('Dog'),
+  ability: z.literal('bark'),
+});
+
+const $Animal = z.union([$Cat, $Dog]);
+type Animal = z.infer<typeof $Animal>;
+
+const $AnimalAbility = z.generic($Animal, (t) => t._shape.ability);
+type AnimalAbility = z.infer<typeof $AnimalAbility>;

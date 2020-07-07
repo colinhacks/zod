@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function getRandomInt(max: number) {
   return Math.floor(Math.random() * Math.floor(max));
 }
@@ -8,9 +9,7 @@ export class Mocker {
   };
 
   get string() {
-    return Math.random()
-      .toString(36)
-      .substring(7);
+    return Math.random().toString(36).substring(7);
   }
   get number() {
     return Math.random() * 100;

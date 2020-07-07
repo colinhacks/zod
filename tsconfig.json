@@ -1,40 +1,10 @@
 {
+  "extends": "./node_modules/gts/tsconfig-google.json",
   "compilerOptions": {
-    "lib": [
-      "es5",
-      "es6",
-      "es7",
-      "esnext",
-      "dom"
-    ],
-    "target": "es5",
-    "module": "commonjs",
-    "declaration": true,
-    // "moduleResolution": "node",
-    "outDir": "./lib",
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "esModuleInterop": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "sourceMap": true,
-    "resolveJsonModule": true,
     "strict": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noImplicitThis": true,
-    "alwaysStrict": true,
-    "strictPropertyInitialization": false,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
+    "rootDir": "src",
+    "outDir": "build"
   },
-  "include": [
-    "src",
-    "tsconfig.package.json"
-  ],
-  "exclude": [
-    "node_modules",
-  ]
+  "include": ["src/**/*.ts"],
+  "exclude": ["build", "coverage"]
 }

@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as z from './base';
-import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
+import { ZodUndefined } from './undefined';
 import { ZodUnion } from './union';
 
 export interface ZodAnyDef extends z.ZodTypeDef {

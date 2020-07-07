@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as z from '../index';
-import { util } from '../helpers/util';
+import * as util from '../helpers/util';
 
 const args1 = z.tuple([z.string()]);
 const returns1 = z.number();
@@ -21,9 +22,9 @@ test('parsed function fail 2', () => {
 });
 
 test('function inference 1', () => {
-  type func1 = z.TypeOf<typeof func1>;
-  const t1: util.AssertEqual<func1, (k: string) => number> = true;
-  [t1];
+  type $func1 = z.TypeOf<typeof func1>;
+  const t1: util.AssertEqual<$func1, (k: string) => number> = true;
+  expect(t1).toBeTruthy();
 });
 
 const args2 = z.tuple([
@@ -33,21 +34,21 @@ const args2 = z.tuple([
     f3: z.array(z.boolean().optional()).optional(),
   }),
 ]);
-const returns2 = z.union([z.string(), z.number()]);
 
+const returns2 = z.union([z.string(), z.number()]);
 const func2 = z.function(args2, returns2);
 
 test('function inference 2', () => {
-  type func2 = z.TypeOf<typeof func2>;
+  type $func2 = z.TypeOf<typeof func2>;
   const t2: util.AssertEqual<
-    func2,
+    $func2,
     (arg: { f1: number; f2: string | null; f3?: (boolean | undefined)[] | undefined }) => string | number
   > = true;
-  [t2];
+  expect(t2).toBeTruthy();
 });
 
 test('valid function run', () => {
-  const validFunc2Instance = func2.validate(_x => {
+  const validFunc2Instance = func2.validate(() => {
     return 'adf' as any;
   });
 
@@ -63,7 +64,7 @@ test('valid function run', () => {
 });
 
 test('input validation error', () => {
-  const invalidFuncInstance = func2.validate(_x => {
+  const invalidFuncInstance = func2.validate(() => {
     return 'adf' as any;
   });
 
@@ -75,7 +76,7 @@ test('input validation error', () => {
 });
 
 test('output validation error', () => {
-  const invalidFuncInstance = func2.validate(_x => {
+  const invalidFuncInstance = func2.validate(() => {
     return ['this', 'is', 'not', 'valid', 'output'] as any;
   });
 

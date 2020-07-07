@@ -1,5 +1,5 @@
 import * as z from '..';
-import { util } from '../helpers/util';
+import * as util from '../helpers/util';
 
 const fish = z.object({
   name: z.string(),
@@ -11,7 +11,7 @@ test('pick type inference', () => {
   const nameonlyFish = fish.pick({ name: true });
   type nameonlyFish = z.infer<typeof nameonlyFish>;
   const f1: util.AssertEqual<nameonlyFish, { name: string }> = true;
-  f1;
+  expect(f1).toBeTruthy();
 });
 
 test('pick parse - success', () => {
@@ -21,9 +21,9 @@ test('pick parse - success', () => {
 
 test('pick parse - fail', () => {
   const nameonlyFish = fish.pick({ name: true });
-  const bad1 = () => nameonlyFish.parse({ name: 12 } as any);
-  const bad2 = () => nameonlyFish.parse({ name: 'bob', age: 12 } as any);
-  const bad3 = () => nameonlyFish.parse({ age: 12 } as any);
+  const bad1 = () => nameonlyFish.parse({ name: 12 });
+  const bad2 = () => nameonlyFish.parse({ name: 'bob', age: 12 });
+  const bad3 = () => nameonlyFish.parse({ age: 12 });
 
   expect(bad1).toThrow();
   expect(bad2).toThrow();
@@ -34,7 +34,7 @@ test('omit type inference', () => {
   const nonameFish = fish.omit({ name: true });
   type nonameFish = z.infer<typeof nonameFish>;
   const f1: util.AssertEqual<nonameFish, { age: number; nested: {} }> = true;
-  f1;
+  expect(f1).toBeTruthy();
 });
 
 test('omit parse - success', () => {
@@ -44,9 +44,9 @@ test('omit parse - success', () => {
 
 test('omit parse - fail', () => {
   const nonameFish = fish.omit({ name: true });
-  const bad1 = () => nonameFish.parse({ name: 12 } as any);
-  const bad2 = () => nonameFish.parse({ age: 12 } as any);
-  const bad3 = () => nonameFish.parse({} as any);
+  const bad1 = () => nonameFish.parse({ name: 12 });
+  const bad2 = () => nonameFish.parse({ age: 12 });
+  const bad3 = () => nonameFish.parse({});
 
   expect(bad1).toThrow();
   expect(bad2).toThrow();
@@ -56,8 +56,8 @@ test('omit parse - fail', () => {
 test('nonstrict inference', () => {
   const laxfish = fish.nonstrict().pick({ name: true });
   type laxfish = z.infer<typeof laxfish>;
-  const f1: util.AssertEqual<laxfish, { [k: string]: any; name: string }> = true;
-  f1;
+  const f1: util.AssertEqual<laxfish, { [k: string]: unknown; name: string }> = true;
+  expect(f1).toBeTruthy();
 });
 
 test('nonstrict parsing - pass', () => {
@@ -68,6 +68,6 @@ test('nonstrict parsing - pass', () => {
 
 test('nonstrict parsing - fail', () => {
   const laxfish = fish.nonstrict().pick({ name: true });
-  const bad = () => laxfish.parse({ whatever: 'asdf' } as any);
+  const bad = () => laxfish.parse({ whatever: 'asdf' });
   expect(bad).toThrow();
 });

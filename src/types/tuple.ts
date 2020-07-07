@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as z from './base';
 import { ZodUnion } from './union';
 import { ZodUndefined } from './undefined';
@@ -18,7 +19,7 @@ export class ZodTuple<
 > extends z.ZodType<TypeOfTuple<T>, ZodTupleDef<T>> {
   toJSON = () => ({
     t: this._def.t,
-    items: (this._def.items as any[]).map(item => item.toJSON()),
+    items: (this._def.items as any[]).map((item) => item.toJSON()),
   });
 
   optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);

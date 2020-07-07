@@ -1,4 +1,5 @@
-import { ZodParser, ParseParams } from '../parser';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { ParseParams, ZodParser } from '../parser';
 
 export enum ZodTypes {
   string = 'string',
@@ -12,6 +13,7 @@ export enum ZodTypes {
   object = 'object',
   // interface = 'interface',
   union = 'union',
+  generic = 'dependent',
   intersection = 'intersection',
   tuple = 'tuple',
   record = 'record',
@@ -40,21 +42,11 @@ export interface ZodTypeDef {
 export type TypeOf<T extends { _type: any }> = T['_type'];
 export type Infer<T extends { _type: any }> = T['_type'];
 
-//   interface Assertable<T> {
-//     is(value: any): value is T;
-//     assert(value: any): asserts value is T;
-// }
-
 export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   readonly _type!: Type;
   readonly _def!: Def;
 
-  // get subclass() {
-  //   console.log(this.constructor);
-  //   return this.constructor;
-  // }
-
-  parse: (x: Type | unknown, params?: ParseParams) => Type;
+  parse: <X>(x: X, params?: ParseParams) => X extends Type ? (Type extends X ? X : Type) : Type;
 
   is(u: Type): u is Type {
     try {
@@ -74,7 +66,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  refine = <Val extends (arg: this['_type']) => any>(check: Val, message: string = 'Invalid value.') => {
+  refine = <Val extends (arg: this['_type']) => any>(check: Val, message = 'Invalid value.') => {
     // const newChecks = [...this._def.checks || [], { check, message }];
     // console.log((this as any).constructor);
     return new (this as any).constructor({

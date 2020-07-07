@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as z from './types/base';
 import { ZodArray } from './types/array';
 import { ZodDef } from '.';
@@ -24,11 +25,15 @@ export const applyMask = (schema: z.ZodTypeAny, mask: any, mode: 'omit' | 'pick'
       const modShape: any = {};
       const shape = def.shape;
       if (mode === 'pick') {
-        if (mask === true) return shape;
-        for (const key in mask) {
-          if (!Object.keys(shape).includes(key)) throw new Error(`Unknown key in pick: ${key}`);
-          modShape[key] = applyMask(shape[key], mask[key], mode);
+        if (mask === true) {
+          return shape;
         }
+        const shapeKeys = new Set<string>();
+        Object.keys(shape).forEach((k) => shapeKeys.add(k));
+        Object.keys(mask).forEach((k) => {
+          if (!shapeKeys.has(k)) throw new Error(`Unknown key in pick: ${k}`);
+          modShape[k] = applyMask(shape[k], mask[k], mode);
+        });
       }
 
       if (mode === 'omit') {

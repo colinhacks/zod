@@ -27,8 +27,8 @@ export class ZodIntersection<T extends z.ZodTypeAny, U extends z.ZodTypeAny> ext
   static create = <T extends z.ZodTypeAny, U extends z.ZodTypeAny>(left: T, right: U): ZodIntersection<T, U> => {
     return new ZodIntersection({
       t: z.ZodTypes.intersection,
-      left: left,
-      right: right,
+      left,
+      right,
     });
   };
 }

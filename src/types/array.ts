@@ -26,13 +26,13 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   min = (minLength: number, msg?: string) =>
-    this.refine(data => data.length >= minLength, msg || `Array must contain ${minLength} or more items.`);
+    this.refine((data) => data.length >= minLength, msg || `Array must contain ${minLength} or more items.`);
 
   max = (maxLength: number, msg?: string) =>
-    this.refine(data => data.length <= maxLength, msg || `Array must contain ${maxLength} or fewer items.`);
+    this.refine((data) => data.length <= maxLength, msg || `Array must contain ${maxLength} or fewer items.`);
 
   length = (len: number, msg?: string) =>
-    this.refine(data => data.length == len, msg || `Array must contain ${len} items.`);
+    this.refine((data) => data.length === len, msg || `Array must contain ${len} items.`);
 
   nonempty: () => ZodNonEmptyArray<T> = () => {
     return new ZodNonEmptyArray({ ...this._def, nonempty: true });
@@ -55,6 +55,7 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
   };
 }
 
+// tslint:disable-next-line: max-classes-per-file
 export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_type'], ...T['_type'][]], ZodArrayDef<T>> {
   toJSON = () => {
     return {

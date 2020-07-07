@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as z from '../index';
 
 interface A {
@@ -55,8 +56,7 @@ test('masking check', () => {
     .nonstrict();
 
   const fragment = FragmentOnA.parse(a);
-  fragment;
-  // console.log(JSON.stringify(fragment, null, 2));
+  expect(fragment).toBeDefined();
 });
 
 test('invalid check', () => {
@@ -69,7 +69,7 @@ test('toJSON throws', () => {
 });
 
 test('schema getter', () => {
-  (A as z.ZodLazy<any>).schema;
+  expect((A as z.ZodLazy<any>).schema).toBeDefined();
 });
 
 test('self recursion', () => {

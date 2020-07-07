@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/src/index.js",
   "types": "./lib/src/index.d.ts",
@@ -18,7 +18,9 @@
     "url": "https://github.com/vriad/zod/issues"
   },
   "homepage": "https://github.com/vriad/zod",
-  "dependencies": {},
+  "dependencies": {
+    "gts": "^2.0.2"
+  },
   "tags": [
     "typescript",
     "schema",
@@ -34,25 +36,38 @@
     "inference"
   ],
   "scripts": {
-    "clean": "rm -rf lib/*",
-    "build": "yarn run clean && tsc --p tsconfig.package.json",
+    "clean": "gts clean",
+    "build": "yarn.cmd run compile && yarn.cmd run test",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
-    "test": "jest --config jestconfig.json --coverage && yarn run badge",
-    "testone": "jest --config jestconfig.json ",
-    "badge": "make-coverage-badge --output-path ./coverage.svg",
+    "test": "jest.cmd --config jestconfig.json --coverage && yarn.cmd run badge",
+    "testone": "jest.cmd --config jestconfig.json ",
+    "badge": "make-coverage-badge.cmd --output-path ./coverage.svg",
     "prepublishOnly": "npm run build",
-    "play": "nodemon -e ts -w . -x ts-node src/playground.ts"
+    "play": "nodemon -e ts -w . -x ts-node src/playground.ts",
+    "check": "gts check src/**/*.ts",
+    "compile": "tsc",
+    "fix": "gts fix src/**/*.ts",
+    "prepare": "yarn.cmd run compile",
+    "pretest": "yarn.cmd run compile",
+    "posttest": "yarn.cmd run check"
   },
   "devDependencies": {
-    "@types/jest": "^25.1.4",
-    "jest": "^25.1.0",
+    "@types/expect": "^24.3.0",
+    "@types/jest": "^26.0.3",
+    "@types/node": "^13.11.1",
+    "eslint-plugin-jest": "^23.18.0",
+    "gts": "^2.0.2",
+    "jest": "^26.1.0",
     "make-coverage-badge": "^1.2.0",
-    "nodemon": "^2.0.2",
-    "prettier": "^1.19.1",
-    "ts-jest": "^25.2.1",
-    "tslint": "^6.1.0",
+    "nodemon": "^2.0.4",
+    "prettier": "^2.0.5",
+    "ts-jest": "^26.1.1",
+    "tslint": "^6.1.2",
     "tslint-config-prettier": "^1.18.0",
-    "typescript": "3.2"
+    "typescript": "^3.8.3"
+  },
+  "engines": {
+    "node": ">=10.4.0"
   }
 }

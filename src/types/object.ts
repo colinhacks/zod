@@ -1,14 +1,49 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import * as objectUtil from '../helpers/objectUtil';
+import * as partialUtil from '../helpers/partialUtil';
 import * as z from './base'; // change
-import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
+import { ZodUndefined } from './undefined';
 import { ZodUnion } from './union';
-import { objectUtil } from '../helpers/objectUtil';
-import { partialUtil } from '../helpers/partialUtil';
+import { ZodError } from '..';
 
-// import { ZodString } from './string';
-// import { maskUtil } from '../helpers/maskUtil';
-// import { zodmaskUtil } from '../helpers/zodmaskUtil';
-// import { applyMask } from '../masker';
+type Mask<T extends z.ZodRawShape> =
+  | true
+  | {
+      [k in keyof T]?: T[k] extends ZodObjectType<infer S, infer _> ? Mask<S> : true;
+    };
+
+type MaskPick<T extends z.ZodRawShape, M extends Mask<T>> = M extends true
+  ? T
+  : {
+      [k in keyof M]: k extends keyof T
+        ? M[k] extends true
+          ? T[k]
+          : T[k] extends ZodObjectType<infer S, infer _>
+          ? M[k] extends infer Y
+            ? Y extends Mask<S>
+              ? MaskPick<S, Y>
+              : never
+            : never
+          : never
+        : never;
+    };
+
+type MaskOmit<T extends z.ZodRawShape, M extends Mask<T>> = M extends true
+  ? never
+  : {
+      [k in keyof T]: k extends keyof M
+        ? M[k] extends true
+          ? never
+          : T[k] extends ZodObjectType<infer S, infer _>
+          ? M[k] extends infer Y
+            ? Y extends Mask<S>
+              ? MaskOmit<S, Y>
+              : T[k]
+            : T[k]
+          : T[k]
+        : T[k];
+    };
 
 const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <Augmentation extends z.ZodRawShape>(
   augmentation: Augmentation,
@@ -32,18 +67,14 @@ export interface ZodObjectDef<
 > extends z.ZodTypeDef {
   t: z.ZodTypes.object;
   shape: T;
-  // strict: boolean;
   params: Params;
 }
-
-// const infer = <T extends ZodObjectDef<any>>(def: T): T => def;
-// const qewr = infer({ t: z.ZodTypes.object, shape: { asfd: ZodString.create() }, params: { strict: true } });
 
 const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
   t: def.t,
   shape: Object.assign(
     {},
-    Object.keys(def.shape).map(k => ({
+    Object.keys(def.shape).map((k) => ({
       [k]: def.shape[k].toJSON(),
     })),
   ),
@@ -81,7 +112,6 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
   nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>> =>
     new ZodObject({
       shape: this._def.shape,
-      //  strict: false,
       t: z.ZodTypes.object,
       params: {
         ...this._params,
@@ -96,20 +126,6 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
   //
   augment = AugmentFactory<ZodObjectDef<T, Params>>(this._def);
   extend = AugmentFactory<ZodObjectDef<T, Params>>(this._def);
-  // augment = <Augmentation extends z.ZodRawShape>(
-  //   augmentation: Augmentation,
-  // ): ZodObject<
-  //   { [k in Exclude<keyof T, keyof Augmentation>]: T[k] } & { [k in keyof Augmentation]: Augmentation[k] },
-  //   Params
-  // > => {
-  //   return new ZodObject({
-  //     ...this._def,
-  //     shape: {
-  //       ...this._def.shape,
-  //       ...augmentation,
-  //     },
-  //   }) as any;
-  // };
 
   /**
    * Prior to zod@1.0.12 there was a bug in the
@@ -120,100 +136,138 @@ export class ZodObject<T extends z.ZodRawShape, Params extends ZodObjectParams =
     other: ZodObject<MergeShape, MergeParams>,
   ) => ZodObject<T & MergeShape, objectUtil.MergeObjectParams<Params, MergeParams>> = objectUtil.mergeObjects(this);
 
-  pick = <Mask extends { [k in keyof T]?: true }>(
-    mask: Mask,
-  ): ZodObject<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }, Params> => {
+  pick = <M extends Mask<T>>(mask: M): ZodObject<MaskPick<T, M>, Params> => {
+    if (mask === true) {
+      return this as any;
+    }
+
+    if (typeof mask !== 'object' || mask instanceof Array) {
+      throw ZodError.fromString(`Cannot pick keys from non-object type '${typeof mask}'`);
+    }
+
+    const unknownKeys = Object.keys(mask).filter((key) => !(key in this._def.shape));
+    if (unknownKeys.length !== 0) {
+      throw ZodError.fromString(`Undefined key(s) for shape: ${unknownKeys.map((x) => `'${x}'`).join(', ')}`);
+    }
+
     const shape: any = {};
-    Object.keys(mask).map(key => {
-      shape[key] = this._def.shape[key];
+    const maskObj: any = mask;
+    Object.keys(mask).forEach((key) => {
+      const subShape = this._def.shape[key];
+      if (key in this._def.shape) {
+        if (maskObj[key] === true) {
+          shape[key] = subShape;
+        } else if (typeof maskObj[key] === 'object') {
+          if (!(subShape instanceof ZodObject)) {
+            throw ZodError.create([
+              {
+                path: [`['${key}']`],
+                message: `Value of type '${typeof subShape}' could not be parsed as a ZodObject`,
+              },
+            ]);
+          }
+
+          try {
+            const subObject = subShape.pick(maskObj[key]);
+            if (Object.keys(subObject).length !== 0) {
+              shape[key] = subObject;
+            }
+          } catch (err) {
+            if (!(err instanceof ZodError)) {
+              throw err;
+            }
+            throw err.bubbleUp(`['${key}']`);
+          }
+        }
+      }
     });
+
     return new ZodObject({
-      ...this._def,
+      t: z.ZodTypes.object,
+      params: this.params,
       shape,
     });
   };
 
-  // omitKeys = <OmitKeys extends (keyof T)[]>(...omit:OmitKeys):OmitKeys => omit;
-  omit = <Mask extends { [k in keyof T]?: true }>(
-    mask: Mask,
-  ): ZodObject<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }, Params> => {
+  omit = <M extends Mask<T>>(mask: M): ZodObject<MaskOmit<T, M>, Params> => {
+    if (typeof mask !== 'object' || mask instanceof Array) {
+      throw ZodError.fromString(`Cannot omit keys from non-object type '${typeof mask}'`);
+    }
+
+    const unknownKeys = Object.keys(mask).filter((key) => !(key in this._def.shape));
+    if (unknownKeys.length !== 0) {
+      throw ZodError.fromString(`Undefined key(s) for shape: ${unknownKeys.map((x) => `'${x}'`).join(', ')}`);
+    }
+
     const shape: any = {};
-    Object.keys(this._def.shape).map(key => {
-      if (!Object.keys(mask).includes(key)) {
-        shape[key] = this._def.shape[key];
+    const maskObj: any = mask;
+
+    Object.keys(this._def.shape).forEach((key) => {
+      const subShape = this._def.shape[key];
+      if (!(key in mask) || (typeof maskObj[key] === 'boolean' && maskObj[key] !== true)) {
+        shape[key] = subShape;
+      } else {
+        if (typeof maskObj[key] === 'object') {
+          if (!(subShape instanceof ZodObject)) {
+            throw ZodError.create([
+              {
+                path: [`['${key}']`],
+                message: `Value of type '${typeof subShape}' could not be parsed as a ZodObject`,
+              },
+            ]);
+          }
+
+          try {
+            const subObject = subShape.omit(maskObj[key]);
+            if (Object.keys(subObject).length !== 0) {
+              shape[key] = subObject;
+            }
+          } catch (err) {
+            if (!(err instanceof ZodError)) {
+              throw err;
+            }
+            throw err.bubbleUp(`['${key}']`);
+          }
+        }
       }
     });
+
     return new ZodObject({
-      ...this._def,
+      t: z.ZodTypes.object,
+      params: this.params,
       shape,
     });
   };
 
   partial = (): ZodObject<{ [k in keyof T]: ZodUnion<[T[k], ZodUndefined]> }, Params> => {
     const newShape: any = {};
-    for (const key in this.shape) {
-      newShape[key] = this.shape[key].optional();
-    }
+    Object.keys(this.shape).forEach((k) => {
+      newShape[k] = this.shape[k].optional();
+    });
+
     return new ZodObject({
       ...this._def,
       shape: newShape,
     });
   };
 
+  // eslint-disable-next-line @typescript-eslint/ban-ts-ignore
+  // @ts-ignore
   deepPartial = (): partialUtil.RootDeepPartial<ZodObject<T>> => {
     const newShape: any = {};
-    for (const key in this.shape) {
-      const fieldSchema = this.shape[key];
+    Object.keys(this.shape).forEach((k) => {
+      const fieldSchema = this.shape[k];
       if (fieldSchema instanceof ZodObject) {
-        newShape[key] = fieldSchema.deepPartial().optional();
+        newShape[k] = fieldSchema.deepPartial().optional();
       } else {
-        newShape[key] = this.shape[key].optional();
+        newShape[k] = this.shape[k].optional();
       }
-    }
+    });
     return new ZodObject({
       ...this._def,
       shape: newShape,
     }) as any;
   };
-
-  // pick = <Mask extends zodmaskUtil.Params<ZodObject<T>>>(
-  //   mask: Mask,
-  // ): zodmaskUtil.pick<ZodObject<T, Params>, Mask> => {
-  //   return applyMask(this, mask, 'pick');
-  // };
-
-  // omit = <Mask extends zodmaskUtil.Params<ZodObject<T>>>(
-  //   mask: Mask,
-  // ): zodmaskUtil.omit<ZodObject<T, Params>, Mask> => {
-  //   return applyMask(this, mask, 'omit');
-  // };
-
-  // relations = <Rels extends { [k: string]: any }>(
-  //   lazyShape: { [k in keyof Rels]: ZodLazy<z.ZodType<Rels[k]>> },
-  // ): RelationsReturnType<Rels, T> => {
-  //   // const relationShape: any = {};
-  //   // for (const key in lazyShape) {
-  //   //   relationShape[key] = lazyShape[key]();
-  //   // }
-  //   // console.log(relationShape);
-  //   // const relationKeys = Object.keys(lazyShape);
-  //   // const existingKeys = Object.keys(this._def.shape);
-  //   return new ZodObject({
-  //     t: z.ZodTypes.object,
-  //     strict: this._def.strict,
-  //     shape: {
-  //       ...this._def.shape,
-  //       ...lazyShape,
-  //     },
-  //   }) as any;
-  // };
-
-  // static recursion = <R extends { [k: string]: any }>() => <T extends ZodObject<any>>(
-  //   shape: withRefsInputType<T, R>,
-  // ): ZodObject<withRefsReturnType<T, R>> => {
-  //   //  const getters =
-  //   return new ZodObject({ t: z.ZodTypes.object, strict: true, shape(); });
-  // };
 
   static create = <T extends z.ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({

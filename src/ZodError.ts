@@ -46,21 +46,23 @@ export class ZodError extends Error {
     } else {
       this.merge(ZodError.fromString(child.message).bubbleUp(pathElement));
     }
+    return this;
   };
 
   bubbleUp = (pathElement: string | number) => {
-    return ZodError.create(
-      this.errors.map(err => {
-        return { path: [pathElement, ...err.path], message: err.message };
-      }),
-    );
+    this.errors = this.errors.map((err) => {
+      return { path: [pathElement, ...err.path], message: err.message };
+    });
+    return this;
   };
 
   addError = (path: string | number, message: string) => {
-    this.errors = [...this.errors, { path: path === '' ? [] : [path], message }];
+    this.errors.push({ path: path === '' ? [] : [path], message });
+    return this;
   };
 
   merge = (error: ZodError) => {
     this.errors = [...this.errors, ...error.errors];
+    return this;
   };
 }

@@ -1,6 +1,6 @@
 import * as z from './base';
-import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
+import { ZodUndefined } from './undefined';
 
 export interface ZodUnionDef<
   T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]] = [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]
@@ -19,7 +19,7 @@ export class ZodUnion<T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]>
 
   toJSON = () => ({
     t: this._def.t,
-    options: this._def.options.map(x => x.toJSON()),
+    options: this._def.options.map((x) => x.toJSON()),
   });
 
   static create = <T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]>(types: T): ZodUnion<T> => {

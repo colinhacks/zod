@@ -23,10 +23,5 @@ test('failing validations', () => {
 });
 
 test('parse empty array in nonempty', () => {
-  expect(() =>
-    z
-      .array(z.string())
-      .nonempty()
-      .parse([] as any),
-  ).toThrow();
+  expect(() => z.array(z.string()).nonempty().parse([])).toThrow();
 });

@@ -6,9 +6,9 @@ test('refinement', () => {
     second: z.string(),
   });
   const obj2 = obj1.partial();
-  const obj3 = obj2.refine(data => data.first || data.second, 'Either first or second should be filled in.');
+  const obj3 = obj2.refine((data) => data.first || data.second, 'Either first or second should be filled in.');
 
-  expect(obj1 === (obj2 as any)).toEqual(false);
+  expect(obj1 === (obj2 as unknown)).toEqual(false);
   expect(obj2 === obj3).toEqual(false);
 
   expect(() => obj1.parse({})).toThrow();

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as z from './base';
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
@@ -16,14 +17,12 @@ export class ZodLazyObject<T extends ZodObject<any>> extends z.ZodType<z.TypeOf<
   }
 
   optional = () => {
-    console.log(`nullable does nothing on ZodLazyObject`);
     return this;
-  }; // ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+  };
 
   nullable = () => {
-    console.log(`nullable does nothing on ZodLazyObject`);
     return this;
-  }; // ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  };
 
   toJSON = () => {
     throw new Error("Can't JSONify recursive structure");
@@ -32,7 +31,7 @@ export class ZodLazyObject<T extends ZodObject<any>> extends z.ZodType<z.TypeOf<
   static create = <T extends ZodObject<any>>(getter: () => T): ZodLazyObject<T> => {
     return new ZodLazyObject({
       t: z.ZodTypes.lazyobject,
-      getter: getter,
+      getter,
     });
   };
 

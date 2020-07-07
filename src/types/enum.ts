@@ -1,22 +1,14 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as z from './base';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
-
-export type ArrayKeys = keyof any[];
-export type Indices<T> = Exclude<keyof T, ArrayKeys>;
-
-// type EnumValues = [ZodLiteral<string>, ...ZodLiteral<string>[]];
 
 type EnumValues = [string, ...string[]];
 
 type Values<T extends EnumValues> = {
   [k in T[number]]: k;
 };
-
-// type Vals = StringValues<['asdf','qwer']>
-// const infer = <U extends string, T extends [U, ...U[]]>(args: T):T => args;
-// const e = infer(['asdf']);
 
 export interface ZodEnumDef<T extends EnumValues = EnumValues> extends z.ZodTypeDef {
   t: z.ZodTypes.enum;
@@ -50,7 +42,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<T[number
   static create = <U extends string, T extends [U, ...U[]]>(values: T): ZodEnum<T> => {
     return new ZodEnum({
       t: z.ZodTypes.enum,
-      values: values,
+      values,
     }) as any;
   };
 }

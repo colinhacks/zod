@@ -25,7 +25,7 @@ export class ZodLazy<T extends z.ZodTypeAny> extends z.ZodType<z.TypeOf<T>, ZodL
   static create = <T extends z.ZodTypeAny>(getter: () => T): ZodLazy<T> => {
     return new ZodLazy({
       t: z.ZodTypes.lazy,
-      getter: getter,
+      getter,
     });
   };
 

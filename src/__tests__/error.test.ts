@@ -6,10 +6,10 @@ test('error creation', () => {
   err.addError('path', 'message 1');
   err.addError(5, 'message 1');
   err.bubbleUp('upper');
-  err.empty;
+  expect(err.empty).toBeFalsy();
+  expect(err.errors.length).toEqual(3);
 
   err.merge(ZodError.create([]));
   err.mergeChild('adsf', ZodError.create([]));
-  err.message;
-  err.name;
+  expect(err.errors.length).toEqual(3);
 });

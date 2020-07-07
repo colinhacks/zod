@@ -1,5 +1,5 @@
 import * as z from '..';
-import { util } from '../helpers/util';
+import * as util from '../helpers/util';
 
 const nested = z.object({
   name: z.string(),
@@ -18,7 +18,7 @@ test('shallow inference', () => {
     outer?: { inner: string } | undefined;
   };
   const t1: util.AssertEqual<shallow, correct> = true;
-  t1;
+  expect(t1).toBeTruthy();
 });
 
 test('shallow partial parse', () => {
@@ -40,7 +40,7 @@ test('deep partial inference', () => {
   };
 
   const t1: util.AssertEqual<deep, correct> = true;
-  t1;
+  expect(t1).toBeTruthy();
 });
 
 test('deep partial parse', () => {

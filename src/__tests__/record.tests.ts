@@ -1,12 +1,12 @@
 import * as z from '..';
-import { util } from '../helpers/util';
+import * as util from '../helpers/util';
 
 const booleanRecord = z.record(z.boolean());
 type booleanRecord = z.infer<typeof booleanRecord>;
 
 test('type inference', () => {
   const f1: util.AssertEqual<booleanRecord, Record<string, boolean>> = true;
-  f1;
+  expect(f1).toBeTruthy();
 });
 
 test('methods', () => {
@@ -27,7 +27,7 @@ test('string record parse - fail', () => {
   const badCheck = () =>
     booleanRecord.parse({
       asdf: 1234,
-    } as any);
+    });
   expect(badCheck).toThrow();
 });
 
@@ -35,7 +35,7 @@ test('string record parse - fail', () => {
   const badCheck = () =>
     booleanRecord.parse({
       asdf: {},
-    } as any);
+    });
   expect(badCheck).toThrow();
 });
 
@@ -43,6 +43,6 @@ test('string record parse - fail', () => {
   const badCheck = () =>
     booleanRecord.parse({
       asdf: [],
-    } as any);
+    });
   expect(badCheck).toThrow();
 });

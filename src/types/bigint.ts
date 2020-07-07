@@ -1,6 +1,6 @@
 import * as z from './base';
-import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
+import { ZodUndefined } from './undefined';
 import { ZodUnion } from './union';
 
 export interface ZodBigIntDef extends z.ZodTypeDef {

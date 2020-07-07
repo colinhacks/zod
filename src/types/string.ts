@@ -7,7 +7,7 @@ export interface ZodStringDef extends z.ZodTypeDef {
   t: z.ZodTypes.string;
   validation: {
     uuid?: true;
-    custom?: ((val: any) => boolean)[];
+    custom?: ((val: unknown) => boolean)[];
   };
 }
 
@@ -24,19 +24,19 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
   toJSON = () => this._def;
 
   min = (minLength: number, msg?: string) =>
-    this.refine(data => data.length >= minLength, msg || `Value must be ${minLength} or more characters long`);
+    this.refine((data) => data.length >= minLength, msg || `Value must be ${minLength} or more characters long`);
 
   max = (maxLength: number, msg?: string) =>
-    this.refine(data => data.length <= maxLength, msg || `Value must be ${maxLength} or fewer characters long`);
+    this.refine((data) => data.length <= maxLength, msg || `Value must be ${maxLength} or fewer characters long`);
 
   length = (len: number, msg?: string) =>
-    this.refine(data => data.length == len, msg || `Value must be ${len} characters long.`);
+    this.refine((data) => data.length === len, msg || `Value must be ${len} characters long.`);
 
-  email = (msg?: string) => this.refine(data => emailRegex.test(data), msg || 'Invalid email address.');
+  email = (msg?: string) => this.refine((data) => emailRegex.test(data), msg || 'Invalid email address.');
 
-  url = (msg?: string) => this.refine(data => urlRegex.test(data), msg || 'Invalid URL.');
+  url = (msg?: string) => this.refine((data) => urlRegex.test(data), msg || 'Invalid URL.');
 
-  nonempty = (msg?: string) => this.refine(data => data.length > 0, msg || 'Value cannot be empty string');
+  nonempty = (msg?: string) => this.refine((data) => data.length > 0, msg || 'Value cannot be empty string');
   // validate = <Val extends (arg:this['_type'])=>boolean>(check:Val)=>{
   //   const currChecks = this._def.validation.custom || [];
   //   return new ZodString({
