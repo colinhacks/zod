@@ -46,7 +46,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   readonly _type!: Type;
   readonly _def!: Def;
 
-  parse: <X>(x: X, params?: ParseParams) => X extends Type ? (Type extends X ? X : Type) : Type;
+  parse: (x: Type | unknown, params?: ParseParams) => Type;
 
   is(u: Type): u is Type {
     try {
