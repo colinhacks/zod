@@ -2,12 +2,12 @@ import * as z from './types/base';
 import { ZodDef } from '.';
 import { ZodError, ZodErrorCode, ZodSuberror, ZodSuberrorOptionalMessage } from './ZodError';
 import { util } from './helpers/util';
-import { ErrorMap, defaultErrorMap } from './errorMap';
+import { ZodErrorMap, defaultErrorMap } from './errorMap';
 
 export type ParseParams = {
   seen?: { schema: any; objects: any[] }[];
   path?: (string | number)[];
-  errorMap?: ErrorMap;
+  errorMap?: ZodErrorMap;
 };
 
 export const getParsedType = (data: any): ParsedType => {
