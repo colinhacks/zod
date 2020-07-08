@@ -246,7 +246,7 @@ z.string().max(5, { message: 'Must be 5 or fewer characters long' });
 z.string().length(5, { message: 'Must be exactly 5 characters long' });
 z.string().email({ message: 'Invalid email address.' });
 z.string().url({ message: 'Invalid url' });
-z.string().url({ message: 'Invalid url' });
+z.string().uuid({ message: 'Invalid UUID' });
 ```
 
 > To see the email and url regexes, check out [this file](https://github.com/vriad/zod/blob/master/src/types/string.ts). To use a more advanced method, use a custom refinement.
@@ -1082,7 +1082,7 @@ User.omit({ outer: { inner: { prop2: true } } }); // { outer: { prop1: string, i
 
 ## Errors
 
-There is a dedicated guide on Zod's error handling system here: [ERROR_HANDLING.md](https://github.com/vriad/zod/blob/master/ERROR_HANDLING.md)
+There is a dedicated guide on Zod's error handling system here: [ERROR_HANDLING.md](https://github.com/vriad/zod/blob/beta/ERROR_HANDLING.md)
 
 # Comparison
 
@@ -1245,19 +1245,20 @@ If you want to validate function inputs, use function schemas in Zod! It's a muc
 
 # Changelog
 
-| zod version | release notes                                                                                                       |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- |
-| zod@1.7     | Added several built-in validators to string, number, and array schemas. Calls to `.refine` now return new instance. |
-| zod@1.5     | Any and unknown types                                                                                               |
-| zod@1.4     | Refinement types (`.refine`), `.parse` no longer returns deep clone                                                 |
-| zod@1.3     | Promise schemas                                                                                                     |
-| zod@1.2.6   | `.parse` accepts `unknown`, `bigint` schemas                                                                        |
-| zod@1.2.5   | `.partial` and `.deepPartial` on object schemas                                                                     |
-| zod@1.2.3   | Date schemas                                                                                                        |
-| zod@1.2.0   | `.pick`, `.omit`, and `.extend` on object schemas                                                                   |
-| zod@1.1.0   | Records                                                                                                             |
-| zod@1.0.11  | `.nonstrict`                                                                                                        |
-| zod@1.0.10  | Type assertions with `.check`                                                                                       |
-| zod@1.0.4   | Empty tuples                                                                                                        |
-| zod@1.0.0   | Type assertions, literals, enums, detailed error reporting                                                          |
-| zod@1.0.0   | Initial release                                                                                                     |
+| zod version | release notes                                                                                                                                                                                              |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| zod@1.8     | Introduced z.void(). Major overhaul to error handling system, including the introduction of custom error maps. Wrote new [error handling guide](https://github.com/vriad/zod/blob/beta/ERROR_HANDLING.md). |
+| zod@1.7     | Added several built-in validators to string, number, and array schemas. Calls to `.refine` now return new instance.                                                                                        |
+| zod@1.5     | Any and unknown types                                                                                                                                                                                      |
+| zod@1.4     | Refinement types (`.refine`), `.parse` no longer returns deep clone                                                                                                                                        |
+| zod@1.3     | Promise schemas                                                                                                                                                                                            |
+| zod@1.2.6   | `.parse` accepts `unknown`, `bigint` schemas                                                                                                                                                               |
+| zod@1.2.5   | `.partial` and `.deepPartial` on object schemas                                                                                                                                                            |
+| zod@1.2.3   | Date schemas                                                                                                                                                                                               |
+| zod@1.2.0   | `.pick`, `.omit`, and `.extend` on object schemas                                                                                                                                                          |
+| zod@1.1.0   | Records                                                                                                                                                                                                    |
+| zod@1.0.11  | `.nonstrict`                                                                                                                                                                                               |
+| zod@1.0.10  | Type assertions with `.check`                                                                                                                                                                              |
+| zod@1.0.4   | Empty tuples                                                                                                                                                                                               |
+| zod@1.0.0   | Type assertions, literals, enums, detailed error reporting                                                                                                                                                 |
+| zod@1.0.0   | Initial release                                                                                                                                                                                            |
