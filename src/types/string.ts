@@ -24,7 +24,6 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   toJSON = () => this._def;
-
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
     this._refinement({
       check: data => data.length >= minLength,
