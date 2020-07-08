@@ -21,3 +21,60 @@ test('failing validations', () => {
   expect(() => justFive.parse('1234')).toThrow();
   expect(() => justFive.parse('123456')).toThrow();
 });
+
+test('email validations', () => {
+  const email = z.string().email();
+  email.parse('mojojojo@example.com');
+  expect(() => email.parse('asdf')).toThrow();
+  expect(() => email.parse('@lkjasdf.com')).toThrow();
+  expect(() => email.parse('asdf@sdf.')).toThrow();
+});
+
+test('url validations', () => {
+  const url = z.string().url();
+  try {
+    url.parse('http://google.com');
+    url.parse('https://google.com/asdf?asdf=ljk3lk4&asdf=234#asdf');
+    expect(() => url.parse('asdf')).toThrow();
+    expect(() => url.parse('https:/')).toThrow();
+    expect(() => url.parse('asdfj@lkjsdf.com')).toThrow();
+  } catch (err) {
+    console.log(JSON.stringify(err, null, 2));
+  }
+});
+
+test('url error overrides', () => {
+  try {
+    z.string()
+      .url()
+      .parse('https');
+  } catch (err) {
+    expect(err.errors[0].message).toEqual('Invalid url');
+  }
+  try {
+    z.string()
+      .url('badurl')
+      .parse('https');
+  } catch (err) {
+    expect(err.errors[0].message).toEqual('badurl');
+  }
+  try {
+    z.string()
+      .url({ message: 'badurl' })
+      .parse('https');
+  } catch (err) {
+    expect(err.errors[0].message).toEqual('badurl');
+  }
+});
+
+test('uuid', () => {
+  z.string()
+    .uuid()
+    .parse('9491d710-3185-4e06-bea0-6a2f275345e0');
+  expect(() =>
+    z
+      .string()
+      .uuid()
+      .parse('9491d710-3185-4e06-bea0-6a2f275345e'),
+  ).toThrow();
+});
