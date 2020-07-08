@@ -86,11 +86,11 @@ The link above the the best way to learn about the concept. Discriminated unions
 
 Every ZodSuberror has these fields:
 
-| field     | type                  | details                                                                                               |
-| --------- | --------------------- | ----------------------------------------------------------------------------------------------------- |
-| `code`    | `z.ZodErrorCode`      | You can access all possible values using the `z.ZodErrorCode` enum e.g. `z.ZodErrorCode.invalid_type` |
-| `path`    | `(string | number)[]` | `['addresses', 0, 'line1']`                                                                           |
-| `message` | `string`              | `Invalid type. Expected string, received number.`                                                     |
+| field     | type                  | details                                                                                           |
+| --------- | --------------------- | ------------------------------------------------------------------------------------------------- |
+| `code`    | `z.ZodErrorCode`      | You can access this enum with `z.ZodErrorCode`. A full breakdown of the possible values is below. |
+| `path`    | `(string | number)[]` | e.g, `['addresses', 0, 'line1']`                                                                  |
+| `message` | `string`              | e.g. `Invalid type. Expected string, received number.`                                            |
 
 **However** depending on the error code, there may be additional properties as well. Here is a full breakdown of the additional fields by error code:
 
