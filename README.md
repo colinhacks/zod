@@ -73,15 +73,24 @@ npm install --save zod
 yarn add zod
 ```
 
-#### TypeScript versions
+#### TypeScript requirements
 
-⚠ Zod 2.0.x requires TypeScript 4.0+
-
-> You must use strict mode for Zod to correctly infer the types of your schemas! Add `"strict": true` inside "compilerOptions" in your `tsconfig.json`.
+1. Zod 1.x requires TypeScript 3.2+
+2. You must configure your project to use TypeScript's **strict mode**. Otherwise Zod can't correctly infer the types of your schemas!
+   ```ts
+   // tsconfig.json
+   {
+     // ...
+     "compilerOptions": {
+       // ...
+       "strict": true
+     }
+   }
+   ```
 
 # Usage
 
-Zod is a validation library designed for optimal developer experience. It's a TypeScript-first schema declaration library with rigorous (and correct!) inferred types, incredible developer experience, and a few killer features missing from the existing libraries.
+Zod is a validation library designed for optimal developer experience. It's a TypeScript-first schema declaration library with rigorous inferred types, incredible developer experience, and a few killer features missing from the existing libraries.
 
 <!-- - It infers the statically types of your schemas
 - Eliminates the need to keep static types and runtime validators in sync by hand
@@ -112,6 +121,7 @@ z.date();
 // empty types
 z.undefined();
 z.null();
+z.void();
 
 // catch-all types
 z.any();
@@ -223,18 +233,20 @@ z.string().max(5);
 z.string().length(5);
 z.string().email();
 z.string().url();
+z.string().uuid();
 ```
 
 ### Custom error messages
 
-Like `.refine`, the final argument accepts a custom error message.
+Like `.refine`, The final (optional) argument is an object that lets you provide a custom error in the `message` field.
 
 ```ts
-z.string().min(5, 'Must be 5 or more characters long');
-z.string().max(5, 'Must be 5 or fewer characters long');
-z.string().length(5, 'Must be exactly 5 characters long');
-z.string().email('Invalid email address.');
-z.string().url('Invalid url');
+z.string().min(5, { message: 'Must be 5 or more characters long' });
+z.string().max(5, { message: 'Must be 5 or fewer characters long' });
+z.string().length(5, { message: 'Must be exactly 5 characters long' });
+z.string().email({ message: 'Invalid email address.' });
+z.string().url({ message: 'Invalid url' });
+z.string().url({ message: 'Invalid url' });
 ```
 
 > To see the email and url regexes, check out [this file](https://github.com/vriad/zod/blob/master/src/types/string.ts). To use a more advanced method, use a custom refinement.
@@ -243,11 +255,11 @@ z.string().url('Invalid url');
 
 There are a handful of number-specific validations.
 
-All of these validations allow you to _optionally_ specify a custom error message as a final `string` argument.
+The final (optional) argument is a params object that lets you provide a custom error in the `message` field.
 
 ```ts
 z.number().min(5);
-z.number().max(5);
+z.number().max(5, { message: 'this👏is👏too👏big' });
 
 z.number().int(); // value must be an integer
 
@@ -928,6 +940,8 @@ You can create a function schema with `z.function(args, returnType)` which accep
 - `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
 - `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema.
 
+> You can the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning function can actually return either undefined or null.)
+
 ```ts
 const args = z.tuple([z.string()]);
 
@@ -1068,68 +1082,7 @@ User.omit({ outer: { inner: { prop2: true } } }); // { outer: { prop1: string, i
 
 ## Errors
 
-Zod includes a custom `Error` subclass called `ZodError`. All validation errors thrown by Zod are instances of `ZodError`.
-
-A `ZodError` instance has an `errors` property of type
-
-```ts
-// ZodError#errors
-{
-  path: (string | number)[],
-  message: string
-}[]
-```
-
-This array represents all errors Zod encounters when attempting to parse a value.
-
-```ts
-const person = z.object({
-  name: {
-    first: z.string(),
-    last: z.string(),
-  },
-  age: z.number(),
-  address: z.array(z.string()),
-});
-
-try {
-  person.parse({
-    name: { first: 'Dave', last: 42 },
-    age: 'threeve',
-    address: ['123 Maple Street', {}],
-  });
-} catch (err) {
-  if (err instanceof ZodError) {
-    console.log(JSON.stringify(err.errors));
-    /*
-      [
-        {
-          "path": [ "name", "last" ],
-          "message": "Non-string type: number"
-        },
-        {
-          "path": [ "age" ],
-          "message": "Non-number type: string"
-        },
-        {
-          "path": [ "address", 1 ],
-          "message": "Non-string type: object"
-        }
-      ]
-    */
-
-    // err.message returns a formatted error message
-    console.log(err.message);
-    /*
-      `name.last`: Non-string type: number
-      `age`: Non-number type: string
-      `address.1`: Non-string type: object
-    */
-  } else {
-    // should never happen
-  }
-}
-```
+There is a dedicated guide on Zod's error handling system here: [ERROR_HANDLING.md](https://github.com/vriad/zod/blob/master/ERROR_HANDLING.md)
 
 # Comparison
 

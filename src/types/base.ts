@@ -1,4 +1,6 @@
-import { ZodParser, ParseParams } from '../parser';
+import { ZodParser, ParseParams, MakeErrorData } from '../parser';
+import { util } from '../helpers/util';
+import { ZodErrorCode } from '..';
 
 export enum ZodTypes {
   string = 'string',
@@ -32,15 +34,19 @@ export type ZodRawShape = { [k: string]: ZodTypeAny };
 // const asdf = { asdf: ZodString.create() };
 // type tset1 = typeof asdf extends ZodRawShape ? true :false
 
+type InternalCheck<T> = {
+  check: (arg: T) => any;
+} & MakeErrorData;
+
 type Check<T> = {
   check: (arg: T) => any;
   message?: string;
   params?: { [k: string]: any };
-  // code: string
+  // code?: ZodErrorCode;
 };
 export interface ZodTypeDef {
   t: ZodTypes;
-  checks?: Check<any>[];
+  checks?: InternalCheck<any>[];
 }
 
 export type TypeOf<T extends { _type: any }> = T['_type'];
@@ -62,6 +68,18 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
 
   parse: (x: Type | unknown, params?: ParseParams) => Type;
 
+  parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = value => {
+    return new Promise((res, rej) => {
+      try {
+        const parsed = this.parse(value);
+        return res(parsed);
+      } catch (err) {
+        // console.log(err);
+        return rej(err);
+      }
+    });
+  };
+
   is(u: Type): u is Type {
     try {
       this.parse(u as any);
@@ -80,17 +98,21 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  refine = <Val extends (arg: Type) => any>(check: Val, message: string = 'Invalid value.') => {
-    // const newChecks = [...this._def.checks || [], { check, message }];
-    // console.log((this as any).constructor);
-    return new (this as any).constructor({
-      ...this._def,
-      checks: [...(this._def.checks || []), { check, message }],
-    }) as this;
-    // return this;
+  refine = <Val extends (arg: Type) => any>(
+    check: Val,
+    message: string | util.Omit<Check<Type>, 'check'> = 'Invalid value.',
+  ) => {
+    if (typeof message === 'string') {
+      return this.refinement({ check, message });
+    }
+    return this.refinement({ check, ...message });
   };
 
   refinement = (refinement: Check<Type>) => {
+    return this._refinement({ code: ZodErrorCode.custom_error, ...refinement });
+  };
+
+  protected _refinement: (refinement: InternalCheck<Type>) => this = refinement => {
     return new (this as any).constructor({
       ...this._def,
       checks: [...(this._def.checks || []), refinement],

@@ -23,7 +23,9 @@ import { ZodEnum, ZodEnumDef } from './types/enum';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
 import { TypeOf, ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './types/base';
 import { ZodError, ZodErrorCode } from './ZodError';
-import { ZodErrorMap } from './errorMap';
+import { ZodParsedType } from './parser';
+
+import { ZodErrorMap } from './defaultErrorMap';
 
 import { ZodCodeGenerator } from './codegen';
 
@@ -170,6 +172,7 @@ export {
   ZodError,
   ZodErrorMap,
   ZodErrorCode,
+  ZodParsedType,
   ZodCodeGenerator,
 };
 

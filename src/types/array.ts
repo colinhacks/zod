@@ -2,6 +2,7 @@ import * as z from './base';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
+import { ZodErrorCode } from '..';
 // import { maskUtil } from '../helpers/maskUtil';
 // import { zodmaskUtil } from '../helpers/zodmaskUtil';
 // import { applyMask } from '../masker';
@@ -29,14 +30,31 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
 
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  min = (minLength: number, msg?: string) =>
-    this.refine(data => data.length >= minLength, msg || `Array must contain ${minLength} or more items.`);
+  min = (minLength: number, message?: string | { message?: string }) =>
+    this._refinement({
+      check: data => data.length >= minLength,
+      code: ZodErrorCode.too_small,
+      type: 'array',
+      inclusive: true,
+      minimum: minLength,
+      ...(typeof message === 'string' ? { message } : message),
+    });
 
-  max = (maxLength: number, msg?: string) =>
-    this.refine(data => data.length <= maxLength, msg || `Array must contain ${maxLength} or fewer items.`);
+  // this.refine(data => data.length >= minLength, msg || `Array must contain ${minLength} or more items.`);
 
-  length = (len: number, msg?: string) =>
-    this.refine(data => data.length == len, msg || `Array must contain ${len} items.`);
+  max = (maxLength: number, message?: string | { message?: string }) =>
+    this._refinement({
+      check: data => data.length <= maxLength,
+      code: ZodErrorCode.too_big,
+      type: 'array',
+      inclusive: true,
+      maximum: maxLength,
+      ...(typeof message === 'string' ? { message } : message),
+    });
+  // this.refine(data => data.length <= maxLength, msg || `Array must contain ${maxLength} or fewer items.`);
+
+  length = (len: number, message?: string) => this.min(len, { message }).max(len, { message });
+  //  .refine(data => data.length === len, msg || `Array must contain ${len} items.`);
 
   nonempty: () => ZodNonEmptyArray<T> = () => {
     return new ZodNonEmptyArray({ ...this._def, nonempty: true });
@@ -71,6 +89,29 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_typ
 
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
+  min = (minLength: number, message?: string | { message?: string }) =>
+    this._refinement({
+      check: data => data.length >= minLength,
+      code: ZodErrorCode.too_small,
+      minimum: minLength,
+      type: 'array',
+      inclusive: true,
+      ...(typeof message === 'string' ? { message } : message),
+    });
+
+  // this.refine(data => data.length >= minLength, msg || `Array must contain ${minLength} or more items.`);
+
+  max = (maxLength: number, message?: string | { message?: string }) =>
+    this._refinement({
+      check: data => data.length >= maxLength,
+      code: ZodErrorCode.too_big,
+      maximum: maxLength,
+      type: 'array',
+      inclusive: true,
+      ...(typeof message === 'string' ? { message } : message),
+    });
+
+  length = (len: number, message?: string) => this.min(len, { message }).max(len, { message });
   // static create = <T extends z.ZodTypeAny>(schema: T): ZodArray<T> => {
   //   return new ZodArray({
   //     t: z.ZodTypes.array,
