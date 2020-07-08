@@ -119,7 +119,7 @@ interface TooBigError extends ZodSuberrorBase {
   type: 'array' | 'string' | 'number';
 }
 
-interface CustomError extends ZodSuberrorBase {
+export interface CustomError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.custom_error;
   params?: { [k: string]: any };
 }
@@ -182,4 +182,6 @@ export class ZodError extends Error {
   addErrors = (subs: ZodSuberror[] = []) => {
     this.errors = [...this.errors, ...subs];
   };
+
+  // toFormError =
 }

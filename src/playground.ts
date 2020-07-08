@@ -1,49 +1,57 @@
 import * as z from '.';
 
-const run = async () => {
-  const errorMap: z.ZodErrorMap = (error, ctx) => {
-    /*
+z.object({
+  password: z.string(),
+  confirm: z.string(),
+})
+  .refine(data => data.confirm === data.password, { path: ['confirm'] })
+  .parseAsync({ password: 'asdf', confirm: 'qewr' })
+  .catch(err => console.log(JSON.stringify(err, null, 2)));
 
-  If error.message is set, that means the user is trying to
-  override the error message. This is how method-specific
-  error overrides work, like this:
+// const run = async () => {
+//   const errorMap: z.ZodErrorMap = (error, ctx) => {
+//     /*
 
-  z.string().min(5, { message: "TOO SMALL 🤬" })
+//   If error.message is set, that means the user is trying to
+//   override the error message. This is how method-specific
+//   error overrides work, like this:
 
-  It is a best practice to return `error.message` if it is set.
-  
-  */
-    if (error.message) return { message: error.message };
+//   z.string().min(5, { message: "TOO SMALL 🤬" })
 
-    /*
-  This is where you override the various error codes
-  */
-    switch (error.code) {
-      case z.ZodErrorCode.invalid_type:
-        if (error.expected === 'string') {
-          return { message: `This ain't a string!` };
-        }
-        break;
-      case z.ZodErrorCode.custom_error:
-        // produce a custom message using error.params
-        // error.params won't be set unless you passed
-        // a `params` arguments into a custom validator
-        const params = error.params || {};
-        if (params.myField) {
-          return { message: `Bad input: ${params.myField}` };
-        }
-        break;
-    }
+//   It is a best practice to return `error.message` if it is set.
 
-    // fall back to default message!
-    return { message: ctx.defaultError };
-  };
+//   */
+//     if (error.message) return { message: error.message };
 
-  try {
-    z.string().parse(12, { errorMap });
-  } catch (err) {
-    console.log(JSON.stringify(err.errors, null, 2));
-  }
-};
+//     /*
+//   This is where you override the various error codes
+//   */
+//     switch (error.code) {
+//       case z.ZodErrorCode.invalid_type:
+//         if (error.expected === 'string') {
+//           return { message: `This ain't a string!` };
+//         }
+//         break;
+//       case z.ZodErrorCode.custom_error:
+//         // produce a custom message using error.params
+//         // error.params won't be set unless you passed
+//         // a `params` arguments into a custom validator
+//         const params = error.params || {};
+//         if (params.myField) {
+//           return { message: `Bad input: ${params.myField}` };
+//         }
+//         break;
+//     }
 
-run();
+//     // fall back to default message!
+//     return { message: ctx.defaultError };
+//   };
+
+//   try {
+//     z.string().parse(12, { errorMap });
+//   } catch (err) {
+//     console.log(JSON.stringify(err.errors, null, 2));
+//   }
+// };
+
+// run();

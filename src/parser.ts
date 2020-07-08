@@ -63,7 +63,7 @@ export const ZodParsedType = util.arrayToEnum([
 export type ZodParsedType = keyof typeof ZodParsedType;
 
 type StripErrorKeys<T extends object> = T extends any ? util.OmitKeys<T, 'path'> : never;
-export type MakeErrorData = StripErrorKeys<ZodSuberrorOptionalMessage>;
+export type MakeErrorData = StripErrorKeys<ZodSuberrorOptionalMessage> & { path?: (string | number)[] };
 
 export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   obj: any,
@@ -96,7 +96,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         : defaultErrorMap(errorArg, { ...ctxArg, defaultError: `Invalid value.` });
     return {
       ...errorData,
-      path: params.path,
+      path: [...params.path, ...(errorData.path || [])],
       message:
         errorData.message || params.errorMap(errorArg, { ...ctxArg, defaultError: defaultError.message }).message,
     };

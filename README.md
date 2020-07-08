@@ -34,11 +34,12 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 - [Strings](#strings)
 - [Numbers](#numbers)
 - [Objects](#objects)
-  - [.nonstrict](#unknown-keys)
+  - [.shape](#shape-property)
   - [.merge](#merging)
-  - [.extend](#extending)
+  - [.extend](#extending-objects)
   - [.pick/.omit](#masking)
   - [.partial/.deepPartial](#partials)
+  - [.nonstrict](#unknown-keys)
 - [Records](#records)
 - [Arrays](#arrays)
   - [.nonempty](#non-empty-lists)
@@ -184,28 +185,68 @@ const process = (blob: any) => {
 };
 ```
 
-To learn more about error handling with Zod, jump to [Errors](#errors).
-
 ### Custom validation
 
-`.refine(validator: (data:T)=>any, err?: string)`
+`.refine(validator: (data:T)=>any, params?: RefineParams)`
 
 Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an Int or that a string is a valid email address.
 
 For this instances, you can define custom a validation check on _any_ Zod schema with `.refine`:
 
 ```ts
-const myString = z.string().refine(val => val.length <= 255, "String can't be more than 255 characters");
+const myString = z.string().refine(val => val.length <= 255, {
+  message: "String can't be more than 255 characters",
+});
 ```
-
-Here is the type signature for `.refine`:
 
 As you can see, `.refine` takes two arguments.
 
 1. The first is the validation function. This function takes one input (of type `T` — the inferred type of the schema) and returns `any`. Any truthy value will pass validation. (Prior to zod@1.6.2 the validation function had to return a boolean.)
-2. The second argument is a custom error message. Read more about error handling in Zod [here](#errors)
+2. The second argument is a params object. You can use this to customize certain error-handling behavior:
 
-Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of useful string validation functions.
+   ```ts
+   type RefineParams = {
+     // override error message
+     message?: string;
+
+     // override error path
+     path?: (string | number)[];
+
+     // params object you can use to customize message
+     // in error map
+     params?: object;
+   };
+   ```
+
+These params let you define powerful custom behavior. Zod is commonly used for form validation. If you want to verify that "password" and "confirmPassword" match, you can do so like this:
+
+```ts
+z.object({
+  password: z.string(),
+  confirm: z.string(),
+})
+  .refine(data => data.confirm === data.password, {
+    message: "Passwords don't match",
+    path: ['confirm'],
+  })
+  .parse({ password: 'asdf', confirmPassword: 'qwer' });
+```
+
+Because you provided a `path` parameter, the resulting error will be:
+
+```ts
+ZodError {
+  errors: [{
+    "code": "custom_error",
+    "path": [ "confirm" ],
+    "message": "Invalid input."
+  }]
+}
+```
+
+Note that the `path` is set to `["confirm"]`, so you can easily display this error underneath the "Confirm password" textbox.
+
+j
 
 ## Type inference
 
@@ -236,6 +277,8 @@ z.string().url();
 z.string().uuid();
 ```
 
+> Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
+
 ### Custom error messages
 
 Like `.refine`, The final (optional) argument is an object that lets you provide a custom error in the `message` field.
@@ -255,11 +298,9 @@ z.string().uuid({ message: 'Invalid UUID' });
 
 There are a handful of number-specific validations.
 
-The final (optional) argument is a params object that lets you provide a custom error in the `message` field.
-
 ```ts
 z.number().min(5);
-z.number().max(5, { message: 'this👏is👏too👏big' });
+z.number().max(5);
 
 z.number().int(); // value must be an integer
 
@@ -267,6 +308,12 @@ z.number().positive(); //     > 0
 z.number().nonnegative(); //  >= 0
 z.number().negative(); //     < 0
 z.number().nonpositive(); //  <= 0
+```
+
+You can optionally pass in a params object as the second argument to provide a custom error message.
+
+```ts
+z.number().max(5, { message: 'this👏is👏too👏big' });
 ```
 
 ## Objects
@@ -352,9 +399,9 @@ type Merged = z.infer<typeof merged>;
 
 To "overwrite" existing keys, use `.extend` (documented below).
 
-#### Augmentation
+#### Extending objects
 
-You can augment an object schema with the `.extend` method.
+You can add additional fields an object schema with the `.extend` method.
 
 > Before zod@1.8 this method was called `.augment`. The `augment` method is still available for backwards compatibility but it is deprecated and will be removed in a future release.
 

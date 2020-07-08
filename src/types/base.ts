@@ -1,6 +1,7 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
 import { ZodErrorCode } from '..';
+import { CustomError } from '../ZodError';
 
 export enum ZodTypes {
   string = 'string',
@@ -40,10 +41,11 @@ type InternalCheck<T> = {
 
 type Check<T> = {
   check: (arg: T) => any;
-  message?: string;
-  params?: { [k: string]: any };
+  // message?: string;
+  path?: (string | number)[];
+  // params?: { [k: string]: any };
   // code?: ZodErrorCode;
-};
+} & util.Omit<CustomError, 'code' | 'path'>;
 export interface ZodTypeDef {
   t: ZodTypes;
   checks?: InternalCheck<any>[];

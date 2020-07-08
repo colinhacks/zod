@@ -20,21 +20,32 @@ test('refinement', () => {
 });
 
 test('refinement 2', () => {
-  try {
-    const validationSchema = z
-      .object({
-        email: z.string().email(),
-        password: z.string(),
-        confirmPassword: z.string(),
-      })
-      .refine(data => data.password === data.confirmPassword, 'Both password and confirmation must match');
+  const validationSchema = z
+    .object({
+      email: z.string().email(),
+      password: z.string(),
+      confirmPassword: z.string(),
+    })
+    .refine(data => data.password === data.confirmPassword, 'Both password and confirmation must match');
 
+  expect(() =>
     validationSchema.parse({
       email: 'aaaa@gmail.com',
       password: 'aaaaaaaa',
       confirmPassword: 'bbbbbbbb',
+    }),
+  ).toThrow();
+});
+
+test('custom path', () => {
+  z.object({
+    password: z.string(),
+    confirm: z.string(),
+  })
+    .refine(data => data.confirm === data.password, { path: ['confirm'] })
+    .parseAsync({ password: 'asdf', confirm: 'qewr' })
+    .catch(err => {
+      console.log(JSON.stringify(err, null, 2));
+      expect(err.errors[0].path).toEqual(['confirm']);
     });
-  } catch (err) {
-    console.log(JSON.stringify(err.errors, null, 2));
-  }
 });
