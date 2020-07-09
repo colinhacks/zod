@@ -1,40 +1,58 @@
 import * as z from '.';
 
-const A = z
+const FormData = z
   .object({
-    a: z.string().optional(),
-    b: z.number().min(3),
-    c: z.boolean().array(),
+    email: z.string().email(),
+    password: z.string().min(10),
+    confirm: z.string().min(10),
   })
-  .refine(obj => obj.c[0] === true, { message: 'First item in c must be true', path: ['c'] })
-  .optional();
+  .refine(obj => obj.password === obj.confirm, {
+    message: 'Passwords do not match',
+    path: ['confirm'], // sets the path of the error thrown by this refinement
+  });
 
-// A.parse({ asdf: 'asdf' });
-// A.parse({ asdf: undefined });
-// A.parse(undefined);
-// A.parse({});
-// A.parse({ asdf: 1234 });
+try {
+  FormData.parse({
+    email: 'not an email',
+    password: 'tooshort',
+    confirm: 'nomatch',
+  });
+} catch (err) {
+  if (!(err instanceof z.ZodError)) throw err;
 
-A.parseAsync({ a: 1324, b: 2, c: [false, 'false'], d: 1234 }).catch(err => {
+  console.log(err.errors);
+  /*
+  [
+    { code: 'invalid_string', validation: 'email', path: ['email'], message: 'Invalid email' },
+    {
+      code: 'too_small',
+      minimum: 10,
+      type: 'string',
+      inclusive: true,
+      path: ['password'],
+      message: 'Should be at least 10 characters',
+    },
+    {
+      code: 'too_small',
+      minimum: 10,
+      type: 'string',
+      inclusive: true,
+      path: ['confirm'],
+      message: 'Should be at least 10 characters',
+    },
+    { code: 'custom_error', message: 'Passwords do not match', path: ['confirm'] },
+  ]; 
+  */
+
   console.log(err.formErrors);
-});
-// // z.date().parse(new Date('invalid'));
-
-// // const myFunc = z.function(z.tuple([z.string()]), z.boolean()).implement(str => str.length > 5);
-
-// // try {
-// //   myFunc(12 as any);
-// // } catch (err) {
-// //   console.log(JSON.stringify(err, null, 2));
-// // }
-
-// const $Cat = z.object({
-//   type: z.literal('cat'),
-//   ability: z.literal('meow'),
-// });
-// const $Dog = z.object({
-//   type: z.literal('dog'),
-//   ability: z.literal('bark'),
-// });
-// const $AnimalAbility = z.union([$Cat, $Dog]).distribute($A => $A.shape.ability);
-// type Ability = z.infer<typeof $AnimalAbility>; // "meow" | "bark"
+  /*
+    {
+    formErrors: [],
+    fieldErrors: {
+      email: ['Invalid email'],
+      password: ['Should be at least 10 characters'],
+      confirm: ['Should be at least 10 characters', 'Passwords do not match'],
+    },
+  }
+  */
+}

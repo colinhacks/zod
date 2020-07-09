@@ -215,3 +215,82 @@ z.string().parse(12, { errorMap });
   }
 */
 ```
+
+## Error handling for forms
+
+If you're using Zod to validate the inputs from a web form, there is a convenient way to "flatten" a ZodError to a format that can be easily displayed to the end user.
+
+Consider this example of a simple signup form:
+
+```ts
+const FormData = z
+  .object({
+    email: z.string().email(),
+    password: z.string().min(10),
+    confirm: z.string().min(10),
+  })
+  .refine(obj => obj.password === obj.confirm, {
+    message: 'Passwords do not match',
+    path: ['confirm'], // sets the path of the error thrown by this refinement
+  });
+}
+```
+
+Now lets pass in some invalid data:
+
+```ts
+FormData.parse({
+  email: 'not an email',
+  password: 'tooshort',
+  confirm: 'nomatch',
+});
+```
+
+This will throw a ZodError with four suberrors:
+
+```ts
+console.log(err.errors);
+/*
+  [
+    { code: 'invalid_string', validation: 'email', path: ['email'], message: 'Invalid email' },
+    {
+      code: 'too_small',
+      minimum: 10,
+      type: 'string',
+      inclusive: true,
+      path: ['password'],
+      message: 'Should be at least 10 characters',
+    },
+    {
+      code: 'too_small',
+      minimum: 10,
+      type: 'string',
+      inclusive: true,
+      path: ['confirm'],
+      message: 'Should be at least 10 characters',
+    },
+    { code: 'custom_error', message: 'Passwords do not match', path: ['confirm'] },
+  ]; 
+  */
+```
+
+But using the `formErrors` property, we can "flatten" all those errors down to a form that's much easier to work with:
+
+```ts
+console.log(err.formErrors);
+/*
+  {
+  formErrors: [],
+  fieldErrors: {
+    email: ['Invalid email'],
+    password: ['Should be at least 10 characters'],
+    confirm: ['Should be at least 10 characters', 'Passwords do not match'],
+  },
+}
+```
+
+- `fieldErrors` is an object. The keys are the field(s) that threw the error. The values are an array of error strings that can be easily presented in the interface.
+- `formErrors: string[]` is an array of errors that occured on the root of the form schema. For instance if you called `FormData.parse(null)`, `formErrors` would be:
+  ```ts
+  ['Invalid input: expected object, received null'];
+  ```
