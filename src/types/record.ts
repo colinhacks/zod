@@ -1,7 +1,7 @@
 import * as z from './base';
-import { ZodUndefined } from './undefined';
-import { ZodNull } from './null';
-import { ZodUnion } from './union';
+// import { ZodUndefined } from './undefined';
+// import { ZodNull } from './null';
+// import { ZodUnion } from './union';
 
 export interface ZodRecordDef<Value extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
   t: z.ZodTypes.record;
@@ -19,9 +19,9 @@ export class ZodRecord<Value extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodT
     valueType: this._def.valueType.toJSON(),
   });
 
-  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
-  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   static create = <Value extends z.ZodTypeAny = z.ZodTypeAny>(valueType: Value): ZodRecord<Value> => {
     return new ZodRecord({

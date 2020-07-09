@@ -1,6 +1,6 @@
 import * as z from './base';
 import { ZodUndefined } from './undefined';
-import { ZodNull } from './null';
+// import { ZodNull } from './null';
 import { ZodUnion } from './union';
 import { objectUtil } from '../helpers/objectUtil';
 import { partialUtil } from '../helpers/partialUtil';
@@ -81,9 +81,9 @@ export class ZodObject<
       },
     }) as any;
 
-  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
-  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  // nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   augment = AugmentFactory<ZodObjectDef<T, Params>>(this._def);
   extend = AugmentFactory<ZodObjectDef<T, Params>>(this._def);

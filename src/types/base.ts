@@ -1,6 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray } from '..';
+import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined } from '..';
 import { CustomError } from '../ZodError';
 
 export enum ZodTypes {
@@ -108,8 +108,8 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   }
 
   abstract toJSON: () => object;
-  abstract optional: () => any;
-  abstract nullable: () => any;
-
+  //  abstract // opt optional: () => any;
+  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
   array: () => ZodArray<this> = () => ZodArray.create(this);
 }

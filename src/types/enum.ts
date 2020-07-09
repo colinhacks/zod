@@ -1,7 +1,7 @@
 import * as z from './base';
-import { ZodUndefined } from './undefined';
-import { ZodNull } from './null';
-import { ZodUnion } from './union';
+// import { ZodUndefined } from './undefined';
+// import { ZodNull } from './null';
+// import { ZodUnion } from './union';
 
 export type ArrayKeys = keyof any[];
 export type Indices<T> = Exclude<keyof T, ArrayKeys>;
@@ -18,9 +18,9 @@ export interface ZodEnumDef<T extends EnumValues = EnumValues> extends z.ZodType
 }
 
 export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<T[number], ZodEnumDef<T>> {
-  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
-  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   toJSON = () => this._def;
 

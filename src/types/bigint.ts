@@ -1,16 +1,16 @@
 import * as z from './base';
-import { ZodUndefined } from './undefined';
-import { ZodNull } from './null';
-import { ZodUnion } from './union';
+// import { ZodUndefined } from './undefined';
+// import { ZodNull } from './null';
+// import { ZodUnion } from './union';
 
 export interface ZodBigIntDef extends z.ZodTypeDef {
   t: z.ZodTypes.bigint;
 }
 
 export class ZodBigInt extends z.ZodType<bigint, ZodBigIntDef> {
-  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
-  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   toJSON = () => this._def;
 

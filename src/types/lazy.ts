@@ -1,7 +1,7 @@
 import * as z from './base';
-import { ZodUndefined } from './undefined';
-import { ZodNull } from './null';
-import { ZodUnion } from './union';
+// import { ZodUndefined } from './undefined';
+// import { ZodNull } from './null';
+// import { ZodUnion } from './union';
 
 export interface ZodLazyDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
   t: z.ZodTypes.lazy;
@@ -13,9 +13,9 @@ export class ZodLazy<T extends z.ZodTypeAny> extends z.ZodType<z.TypeOf<T>, ZodL
     return this._def.getter();
   }
 
-  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
-  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   toJSON = () => {
     throw new Error("Can't JSONify recursive structure");

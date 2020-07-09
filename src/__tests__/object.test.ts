@@ -7,6 +7,7 @@ const Test = z.object({
   f3: z.string().nullable(),
   f4: z.array(z.object({ t: z.union([z.string(), z.boolean()]) })),
 });
+type Test = z.infer<typeof Test>;
 
 test('object type inference', () => {
   type TestType = {

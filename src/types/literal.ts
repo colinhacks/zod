@@ -1,7 +1,7 @@
 import * as z from './base';
-import { ZodUndefined } from './undefined';
-import { ZodNull } from './null';
-import { ZodUnion } from './union';
+// import { ZodUndefined } from './undefined';
+// import { ZodNull } from './null';
+// import { ZodUnion } from './union';
 import { Primitive } from '../helpers/primitive';
 
 type LiteralValue = Primitive;
@@ -12,9 +12,9 @@ export interface ZodLiteralDef<T extends any = any> extends z.ZodTypeDef {
 }
 
 export class ZodLiteral<T extends any> extends z.ZodType<T, ZodLiteralDef<T>> {
-  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
-  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   toJSON = () => this._def;
 

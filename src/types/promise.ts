@@ -1,7 +1,7 @@
 import * as z from './base';
-import { ZodUndefined } from './undefined';
-import { ZodNull } from './null';
-import { ZodUnion } from './union';
+// import { ZodUndefined } from './undefined';
+// import { ZodNull } from './null';
+// import { ZodUnion } from './union';
 
 export interface ZodPromiseDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
   t: z.ZodTypes.promise;
@@ -16,9 +16,9 @@ export class ZodPromise<T extends z.ZodTypeAny> extends z.ZodType<Promise<T['_ty
     };
   };
 
-  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
-  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   static create = <T extends z.ZodTypeAny>(schema: T): ZodPromise<T> => {
     return new ZodPromise({

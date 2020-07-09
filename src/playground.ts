@@ -1,4 +1,13 @@
-// import * as z from '.';
+import * as z from '.';
+
+const A = z
+  .object({
+    asdf: z.string().optional(),
+  })
+  .optional();
+
+console.log(A);
+
 // // z.date().parse(new Date('invalid'));
 
 // // const myFunc = z.function(z.tuple([z.string()]), z.boolean()).implement(str => str.length > 5);
