@@ -3,6 +3,7 @@ import * as z from '..';
 test('', () => {
   z;
 });
+
 // const fish = z.object({
 //   name: z.string(),
 //   props: z.object({

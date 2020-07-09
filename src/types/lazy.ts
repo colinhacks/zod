@@ -2,7 +2,6 @@ import * as z from './base';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
-// import { ZodObject } from './object';
 
 export interface ZodLazyDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
   t: z.ZodTypes.lazy;
@@ -28,10 +27,4 @@ export class ZodLazy<T extends z.ZodTypeAny> extends z.ZodType<z.TypeOf<T>, ZodL
       getter: getter,
     });
   };
-
-  //  static recursion = <Rels extends { [k: string]: any }, T extends ZodObject<any>>(
-  //    getter: () => T,
-  //  ) => {};
 }
-
-// type

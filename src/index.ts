@@ -29,7 +29,6 @@ import { ZodErrorMap } from './defaultErrorMap';
 
 import { ZodCodeGenerator } from './codegen';
 
-// import { ZodLazyObject, ZodLazyObjectDef } from './types/lazyobject';
 export { ZodTypeDef, ZodTypes };
 type ZodDef =
   | ZodStringDef
@@ -50,7 +49,6 @@ type ZodDef =
   | ZodRecordDef
   | ZodFunctionDef
   | ZodLazyDef
-  //  | ZodLazyObjectDef
   | ZodLiteralDef
   | ZodEnumDef
   | ZodPromiseDef;
@@ -73,8 +71,6 @@ const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
 const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
-// const lazyobjectType = ZodLazyObject.create;
-// const recursionType = ZodObject.recursion;
 const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
 const promiseType = ZodPromise.create;
@@ -84,18 +80,6 @@ const oboolean = () => booleanType().optional();
 
 const codegen = ZodCodeGenerator.create;
 
-// const stringRecord = <T extends ZodTypeAny>(x:T)=>recordType(stringType(),x);
-// const stringMap = stringRecord(objectType({asf:stringType()}))
-// const stringMap2 = recordType(stringType(),objectType({ asf: stringType() }));
-
-// type Literal = boolean | null | number | string;
-// type Json = Literal | { [key: string]: Json } | Json[];
-
-// const Literal = ZodUnion.create([ZodBoolean.create(), ZodNull.create(), ZodNumber.create(), ZodString.create()]);
-// const JsonSchema: ZodType<Json> = ZodLazy.create(() =>
-//   ZodUnion.create([Literal, ZodArray.create(JsonSchema), ZodRecord.create(JsonSchema)]),
-// );
-// const jsonType = () => JsonSchema;
 const custom = <T>(check: (data: unknown) => any, params?: Parameters<ZodAny['refine']>[1]): ZodType<T> =>
   anyType().refine(check, params);
 
@@ -123,12 +107,9 @@ export {
   recordType as record,
   functionType as function,
   lazyType as lazy,
-  // lazyobjectType as lazyobject,
-  // recursionType as recursion,
   literalType as literal,
   enumType as enum,
   promiseType as promise,
-  // jsonType as json,
   instanceOfType as instanceof,
   ostring,
   onumber,
@@ -139,16 +120,6 @@ export {
 export const late = {
   object: ZodObject.lazycreate,
 };
-
-// interface lazy {
-//   <T extends ZodTypeAny>(getter: () => T): ZodLazy<T>;
-//   object: typeof ZodObject.lazycreate
-// }
-
-// const lazy:lazy = lazyType as any;
-// lazy.object = ZodObject.lazycreate;
-
-// lazy.o
 
 export {
   ZodString,
@@ -169,7 +140,6 @@ export {
   ZodRecord,
   ZodFunction,
   ZodLazy,
-  // ZodLazyObject,
   ZodLiteral,
   ZodEnum,
   ZodPromise,
@@ -184,11 +154,5 @@ export {
   ZodParsedType,
   ZodCodeGenerator,
 };
-
-// export type lazyobject<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k], any> }>;
-// export namespace lazy {
-//   export type objectType<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k]> }>;
-// export objectType; //as object};
-// }
 
 export { TypeOf, TypeOf as infer };

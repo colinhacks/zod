@@ -53,6 +53,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
   - [JSON type](#json-type)
   - [Cyclical data](#cyclical-objects)
 - [Promises](#promises)
+- [Instanceof](#instanceof)
 - [Function schemas](#function-schemas)
 - [Errors](#errors)
 - [Comparison](#comparison)
@@ -659,22 +660,56 @@ Since Zod is trying to bridge the gap between static and runtime types, it doesn
 
 ## Arrays
 
-`z.array(arg: ZodSchema)`
-You can create an array schema with the `z.array()` function; it accepts another ZodSchema, which
+There are two ways to define array schemas:
+
+#### `z.array(arg: ZodSchema)`
+
+First, you can create an array schema with the `z.array()` function; it accepts another ZodSchema, which defines the type of each array element.
+
+```ts
+const stringArray = z.array(z.string());
+// inferred type: string[]
+```
+
+#### the `.array()` method
+
+Second, you can call the `.array()` method on **any** Zod schema:
+
+```ts
+const stringArray = z.string().array();
+// inferred type: string[]
+```
+
+You have to be careful with the `.array()` method. It returns a new `ZodArray` instance. This means you need to be careful about the _order_ in which you call methods. These two schemas are very different:
+
+```ts
+z.string()
+  .undefined()
+  .array(); // (string | undefined)[]
+z.string()
+  .array()
+  .undefined(); // string[] | undefined
+```
+
+<!-- You can define arrays of **any** other Zod schema, no matter how complicated.
 
 ```ts
 const dogsList = z.array(dogSchema);
-
 dogsList.parse([{ name: 'Fido', age: 4, neutered: true }]); // passes
-
 dogsList.parse([]); // passes
-```
+``` -->
 
 #### Non-empty lists
 
 ```ts
-const nonEmptyDogsList = z.array(dogSchema).nonempty();
-nonEmptyDogsList.parse([]); // throws: "Array cannot be empty"
+const nonEmptyStrings = z
+  .string()
+  .array()
+  .nonempty();
+// [string, ...string[]]
+
+nonEmptyStrings.parse([]); // throws: "Array cannot be empty"
+nonEmptyStrings.parse(['Ariana Grande']); // passes
 ```
 
 #### Length validations
@@ -979,6 +1014,23 @@ const test = async () => {
 #### Non-native promise implementations
 
 When "parsing" a promise, Zod checks that the passed value is an object with `.then` and `.catch` methods — that's it. So you should be able to pass non-native Promises (Bluebird, etc) into `z.promise(...).parse` with no trouble. One gotcha: the return type of the parse function will be a _native_ `Promise`, so if you have downstream logic that uses non-standard Promise methods, this won't work.
+
+## Instanceof
+
+You can use `z.instanceof` to create a schema that checks if the input is an instance of a class.
+
+```ts
+class Test {
+  name: string;
+}
+
+const TestSchema = z.instanceof(Test);
+
+const blob: any = 'whatever';
+if (TestSchema.check(blob)) {
+  blob.name; // Test instance
+}
+```
 
 ## Function schemas
 

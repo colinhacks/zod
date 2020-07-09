@@ -11,14 +11,11 @@ interface B {
 }
 
 const A: z.ZodType<A> = z.late.object(() => ({
-  // firstName: z.string(),
   val: z.number(),
   b: B,
-  // fun: z.function(z.tuple([z.string()]), z.number()),
 }));
 
 const B: z.ZodType<B> = z.late.object(() => ({
-  // firstName:z.string(),
   val: z.number(),
   a: A,
 }));
@@ -52,7 +49,6 @@ test('masking check', () => {
 
   const fragment = FragmentOnA.parse(a);
   fragment;
-  // console.log(JSON.stringify(fragment, null, 2));
 });
 
 test('invalid check', () => {
@@ -84,7 +80,7 @@ test('self recursion', () => {
   };
   // creating a cycle
   untypedCategory.subcategories = [untypedCategory];
-  Category.parse(untypedCategory); // parses successfully
+  Category.parse(untypedCategory);
 });
 
 test('self recursion with base type', () => {
@@ -97,25 +93,11 @@ test('self recursion with base type', () => {
 
   const Category: z.Schema<Category> = z.late
     .object(() => ({
-      // ...adf,
       subcategories: z.array(Category),
     }))
     .extend({
       name: z.string(),
     });
-
-  // const BaseCategory = z.object({
-  //   name: z.string(),
-  // });
-  // interface Category extends z.infer<typeof BaseCategory> {
-  //   subcategories: Category[];
-  // }
-  // const Category: z.Schema<Category> = BaseCategory.merge(
-  //   z.object({
-  //     subcategories: z.lazy(() => z.array(Category)),
-  //     // firstName:z.string()
-  //   }),
-  // );
 
   const untypedCategory: any = {
     name: 'Category A',

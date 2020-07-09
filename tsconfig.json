@@ -10,7 +10,6 @@
     "target": "es5",
     "module": "commonjs",
     "declaration": true,
-    // "moduleResolution": "node",
     "outDir": "./lib",
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

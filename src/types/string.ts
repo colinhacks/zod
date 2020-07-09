@@ -4,7 +4,6 @@ import { ZodNull } from './null';
 import { ZodUnion } from './union';
 import { ZodErrorCode } from '..';
 import { errorUtil } from '../helpers/errorUtil';
-// import { ParseParams } from '../parser';
 
 export interface ZodStringDef extends z.ZodTypeDef {
   t: z.ZodTypes.string;
@@ -33,7 +32,6 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
       inclusive: true,
       ...errorUtil.errToObj(message),
     });
-  // this.refine(data => data.length >= minLength, msg || `Value must be ${minLength} or more characters long`);
 
   max = (maxLength: number, message?: errorUtil.ErrMessage) =>
     this._refinement({
@@ -44,11 +42,8 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
       inclusive: true,
       ...errorUtil.errToObj(message),
     });
-  //  max = (maxLength: number, msg?: string) =>
-  //    this.refine(data => data.length <= maxLength, msg || `Value must be ${maxLength} or fewer characters long`);
+
   length = (len: number, message?: errorUtil.ErrMessage) => this.min(len, message).max(len, message);
-  //  length = (len: number, msg?: string) =>
-  //    this.refine(data => data.length == len, msg || `Value must be ${len} characters long.`);
 
   email = (message?: errorUtil.ErrMessage) =>
     this._refinement({
@@ -57,7 +52,6 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
       validation: 'email',
       ...errorUtil.errToObj(message),
     });
-  //this.refine(data => emailRegex.test(data), errorUtil.errToObj(message));
 
   url = (message?: errorUtil.ErrMessage) =>
     this._refinement({
@@ -66,7 +60,6 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
       validation: 'url',
       ...errorUtil.errToObj(message),
     });
-  //  url = (message?: errorUtil.ErrMessage) => this.refine(data => urlRegex.test(data), errorUtil.errToObj(message));
 
   uuid = (message?: errorUtil.ErrMessage) =>
     this._refinement({
@@ -77,19 +70,6 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     });
 
   nonempty = (message?: errorUtil.ErrMessage) => this.min(1, errorUtil.errToObj(message));
-  // validate = <Val extends (arg:this['_type'])=>boolean>(check:Val)=>{
-  //   const currChecks = this._def.validation.custom || [];
-  //   return new ZodString({
-  //     ...this._def,
-  //     validation: {
-  //       ...this._def.validation,
-  //       custom: [...currChecks, check],
-  //     },
-  //   });
-  // }
-  // wrap: (value: this['_type'], params?: ParseParams) => ZodValue<this> = (value, params) => {
-  //   return new ZodValue(this, this.parse(value, params));
-  // };
 
   static create = (): ZodString => {
     return new ZodString({
@@ -98,11 +78,3 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     });
   };
 }
-// export class ZodValue<S extends z.ZodType<any, any>> {
-//   value: S['_type'];
-//   schema: S;
-//   constructor(schema: S, value: S['_type']) {
-//     this.value = value;
-//     this.schema = schema;
-//   }
-// }

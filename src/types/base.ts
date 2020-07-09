@@ -13,14 +13,12 @@ export enum ZodTypes {
   null = 'null',
   array = 'array',
   object = 'object',
-  // interface = 'interface',
   union = 'union',
   intersection = 'intersection',
   tuple = 'tuple',
   record = 'record',
   function = 'function',
   lazy = 'lazy',
-  // lazyobject = 'lazyobject',
   literal = 'literal',
   enum = 'enum',
   promise = 'promise',
@@ -32,19 +30,13 @@ export enum ZodTypes {
 export type ZodTypeAny = ZodType<any>;
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 
-// const asdf = { asdf: ZodString.create() };
-// type tset1 = typeof asdf extends ZodRawShape ? true :false
-
 type InternalCheck<T> = {
   check: (arg: T) => any;
 } & MakeErrorData;
 
 type Check<T> = {
   check: (arg: T) => any;
-  // message?: string;
   path?: (string | number)[];
-  // params?: { [k: string]: any };
-  // code?: ZodErrorCode;
 } & util.Omit<CustomError, 'code' | 'path'>;
 export interface ZodTypeDef {
   t: ZodTypes;
@@ -54,19 +46,9 @@ export interface ZodTypeDef {
 export type TypeOf<T extends { _type: any }> = T['_type'];
 export type Infer<T extends { _type: any }> = T['_type'];
 
-//   interface Assertable<T> {
-//     is(value: any): value is T;
-//     assert(value: any): asserts value is T;
-// }
-
 export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   readonly _type!: Type;
   readonly _def!: Def;
-
-  // get subclass() {
-  //   console.log(this.constructor);
-  //   return this.constructor;
-  // }
 
   parse: (x: Type | unknown, params?: ParseParams) => Type;
 
@@ -76,7 +58,6 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
         const parsed = this.parse(value);
         return res(parsed);
       } catch (err) {
-        // console.log(err);
         return rej(err);
       }
     });

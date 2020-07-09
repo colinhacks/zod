@@ -1,4 +1,4 @@
-import * as z from './base'; // change
+import * as z from './base';
 import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
@@ -27,12 +27,8 @@ export interface ZodObjectDef<
 > extends z.ZodTypeDef {
   t: z.ZodTypes.object;
   shape: () => T;
-  // strict: boolean;
   params: Params;
 }
-
-// const infer = <T extends ZodObjectDef<any>>(def: T): T => def;
-// const qewr = infer({ t: z.ZodTypes.object, shape: { asfd: ZodString.create() }, params: { strict: true } });
 
 const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
   t: def.t,
@@ -60,10 +56,7 @@ export class ZodObject<
   T extends z.ZodRawShape,
   Params extends ZodObjectParams = { strict: true },
   Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
-> extends z.ZodType<
-  Type, //ZodObjectType<T, Params>, // { [k in keyof T]: T[k]['_type'] },
-  ZodObjectDef<T, Params>
-> {
+> extends z.ZodType<Type, ZodObjectDef<T, Params>> {
   readonly _shape!: T;
   readonly _params!: Params;
 
@@ -80,7 +73,7 @@ export class ZodObject<
   nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>, Type & { [k: string]: any }> =>
     new ZodObject({
       shape: this._def.shape,
-      //  strict: false,
+
       t: z.ZodTypes.object,
       params: {
         ...this._params,
@@ -92,23 +85,8 @@ export class ZodObject<
 
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  //
   augment = AugmentFactory<ZodObjectDef<T, Params>>(this._def);
   extend = AugmentFactory<ZodObjectDef<T, Params>>(this._def);
-  // augment = <Augmentation extends z.ZodRawShape>(
-  //   augmentation: Augmentation,
-  // ): ZodObject<
-  //   { [k in Exclude<keyof T, keyof Augmentation>]: T[k] } & { [k in keyof Augmentation]: Augmentation[k] },
-  //   Params
-  // > => {
-  //   return new ZodObject({
-  //     ...this._def,
-  //     shape: {
-  //       ...this._def.shape,
-  //       ...augmentation,
-  //     },
-  //   }) as any;
-  // };
 
   /**
    * Prior to zod@1.0.12 there was a bug in the
@@ -134,7 +112,6 @@ export class ZodObject<
     });
   };
 
-  // omitKeys = <OmitKeys extends (keyof T)[]>(...omit:OmitKeys):OmitKeys => omit;
   omit = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask,
   ): ZodObject<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }, Params> => {
@@ -163,7 +140,7 @@ export class ZodObject<
 
   deepPartial: () => partialUtil.RootDeepPartial<ZodObject<T>> = () => {
     const newShape: any = {};
-    // const shape = this.shape;
+
     for (const key in this.shape) {
       const fieldSchema = this.shape[key];
       if (fieldSchema instanceof ZodObject) {
@@ -178,49 +155,10 @@ export class ZodObject<
     }) as any;
   };
 
-  // pick = <Mask extends zodmaskUtil.Params<ZodObject<T>>>(
-  //   mask: Mask,
-  // ): zodmaskUtil.pick<ZodObject<T, Params>, Mask> => {
-  //   return applyMask(this, mask, 'pick');
-  // };
-
-  // omit = <Mask extends zodmaskUtil.Params<ZodObject<T>>>(
-  //   mask: Mask,
-  // ): zodmaskUtil.omit<ZodObject<T, Params>, Mask> => {
-  //   return applyMask(this, mask, 'omit');
-  // };
-
-  // relations = <Rels extends { [k: string]: any }>(
-  //   lazyShape: { [k in keyof Rels]: ZodLazy<z.ZodType<Rels[k]>> },
-  // ): RelationsReturnType<Rels, T> => {
-  //   // const relationShape: any = {};
-  //   // for (const key in lazyShape) {
-  //   //   relationShape[key] = lazyShape[key]();
-  //   // }
-  //   // console.log(relationShape);
-  //   // const relationKeys = Object.keys(lazyShape);
-  //   // const existingKeys = Object.keys(this._def.shape);
-  //   return new ZodObject({
-  //     t: z.ZodTypes.object,
-  //     strict: this._def.strict,
-  //     shape: {
-  //       ...this._def.shape,
-  //       ...lazyShape,
-  //     },
-  //   }) as any;
-  // };
-
-  // static recursion = <R extends { [k: string]: any }>() => <T extends ZodObject<any>>(
-  //   shape: withRefsInputType<T, R>,
-  // ): ZodObject<withRefsReturnType<T, R>> => {
-  //   //  const getters =
-  //   return new ZodObject({ t: z.ZodTypes.object, strict: true, shape(); });
-  // };
-
   static create = <T extends z.ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({
       t: z.ZodTypes.object,
-      //  strict: true,
+
       shape: () => shape,
       params: {
         strict: true,
@@ -231,7 +169,7 @@ export class ZodObject<
   static lazycreate = <T extends z.ZodRawShape>(shape: () => T): ZodObject<T> => {
     return new ZodObject({
       t: z.ZodTypes.object,
-      //  strict: true,
+
       shape,
       params: {
         strict: true,

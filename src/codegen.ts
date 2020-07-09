@@ -1,11 +1,7 @@
-// import { ZodTypes, SomeSkiiType, SkiiType } from '.';
 import * as z from '.';
 import { util } from './helpers/util';
 
 type TypeResult = { schema: any; id: string; type: string };
-
-// type adsf = {str:string} | {qwer:number};
-// const y:adsf = {plpl:true}
 
 const isOptional = (schema: z.ZodType<any, any>): boolean => {
   const def: z.ZodDef = schema._def;
@@ -24,9 +20,6 @@ export class ZodCodeGenerator {
 
   randomId = () => {
     return `IZod${this.serial++}`;
-    // return `I${Math.random()
-    //   .toString(26)
-    //   .substring(2, 15)}`
   };
 
   findBySchema = (schema: z.ZodType<any, any>) => {
@@ -38,10 +31,6 @@ export class ZodCodeGenerator {
     if (!found) throw new Error(`Unfound ID: ${id}`);
     return found;
   };
-
-  // add = (id: string, schema: SkiiType<any, any>, type: string) => {
-  //   this.seen.push({ id, schema, type });
-  // };
 
   dump = () => {
     return `
@@ -62,7 +51,6 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
     if (found) return found;
 
     const def: z.ZodDef = schema._def;
-    // const schema: SomeSkiiType = _schema as any;
 
     const id = this.randomId();
 
@@ -73,11 +61,6 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
     };
 
     this.seen.push(ty);
-
-    // const rawDef = schema.__def as any;
-    // const ARR = rawDef.array ? `[]` : ``;
-    // const NUL = rawDef.nullable ? ` | null` : ``;
-    // const UND = rawDef.optional ? ` | undefined` : ``;
 
     switch (def.t) {
       case z.ZodTypes.string:

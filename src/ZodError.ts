@@ -6,18 +6,13 @@ export const ZodErrorCode = util.arrayToEnum([
   'nonempty_array_is_empty',
   'custom_error',
   'invalid_union',
-  // 'invalid_tuple_length',
   'invalid_literal_value',
   'invalid_enum_value',
   'unrecognized_keys',
   'invalid_arguments',
   'invalid_return_type',
   'invalid_date',
-  //  'too_short',
-  //  'too_long',
   'invalid_string',
-  // 'invalid_url',
-  // 'invalid_uuid',
   'too_small',
   'too_big',
 ]);
@@ -50,12 +45,6 @@ interface InvalidUnionError extends ZodSuberrorBase {
   unionErrors: ZodError[];
 }
 
-// interface InvalidArrayLengthError extends ZodSuberrorBase {
-//   code: typeof ZodErrorCode.invalid_tuple_length;
-//   expected: number;
-//   received: number;
-// }
-
 interface InvalidLiteralValueError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_literal_value;
   expected: string | number | boolean;
@@ -80,30 +69,10 @@ interface InvalidDateError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_date;
 }
 
-// interface TooShortError extends ZodSuberrorBase {
-//   code: typeof ZodErrorCode.too_small;
-//   minimum: number;
-// }
-
-// interface TooLongError extends ZodSuberrorBase {
-//   code: typeof ZodErrorCode.too_big;
-//   maximum: number;
-// }
-
 interface InvalidStringError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_string;
   validation: 'email' | 'url' | 'uuid';
 }
-
-// interface InvalidUrlError extends ZodSuberrorBase {
-//   code: typeof ZodErrorCode.invalid_url;
-//   validation: | 'url';
-// }
-
-// interface InvalidUuidError extends ZodSuberrorBase {
-//   code: typeof ZodErrorCode.invalid_uuid;
-//   validation: | 'uuid';
-// }
 
 interface TooSmallError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.too_small;
@@ -129,17 +98,12 @@ export type ZodSuberrorOptionalMessage =
   | NonEmptyArrayIsEmptyError
   | UnrecognizedKeysError
   | InvalidUnionError
-  // | InvalidArrayLengthError
   | InvalidLiteralValueError
   | InvalidEnumValueError
   | InvalidArgumentsError
   | InvalidReturnTypeError
   | InvalidDateError
-  // | TooShortError
-  // | TooLongError
-  | InvalidStringError // | InvalidEmailError
-  // | InvalidUrlError
-  // | InvalidUuidError
+  | InvalidStringError
   | TooSmallError
   | TooBigError
   | CustomError;
@@ -159,7 +123,6 @@ export class ZodError extends Error {
 
   static create = (errors: ZodSuberror[]) => {
     const error = new ZodError(errors);
-    // error.errors = errors;
     return error;
   };
 
@@ -182,6 +145,4 @@ export class ZodError extends Error {
   addErrors = (subs: ZodSuberror[] = []) => {
     this.errors = [...this.errors, ...subs];
   };
-
-  // toFormError =
 }

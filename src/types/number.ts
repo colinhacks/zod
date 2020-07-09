@@ -21,7 +21,6 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
     });
   };
 
-  // min = (minimum: number, msg?: string) => this.refine(data => data >= minimum, msg || `Value must be >= ${minimum}`);
   min = (minimum: number, message?: errorUtil.ErrMessage) =>
     this._refinement({
       check: data => data >= minimum,
@@ -32,7 +31,6 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
       ...errorUtil.errToObj(message),
     });
 
-  // max = (maximum: number, msg?: string) => this.refine(data => data <= maximum, msg || `Value must be <= ${maximum}`);
   max = (maximum: number, message?: errorUtil.ErrMessage) =>
     this._refinement({
       check: data => data <= maximum,
@@ -43,7 +41,6 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
       ...errorUtil.errToObj(message),
     });
 
-  // int = (msg?: string) => this.refine(data => Number.isInteger(data), msg || 'Value must be an integer.');
   int = (message?: errorUtil.ErrMessage) =>
     this._refinement({
       check: data => Number.isInteger(data),
@@ -53,7 +50,6 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
       ...errorUtil.errToObj(message),
     });
 
-  //  positive = (msg?: string) => this.refine(data => data > 0, msg || `Value must be positive`);
   positive = (message?: errorUtil.ErrMessage) =>
     this._refinement({
       check: data => data > 0,
@@ -64,7 +60,6 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
       ...errorUtil.errToObj(message),
     });
 
-  //  negative = (msg?: string) => this.refine(data => data < 0, msg || `Value must be negative`);
   negative = (message?: errorUtil.ErrMessage) =>
     this._refinement({
       check: data => data < 0,
@@ -75,7 +70,6 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
       ...errorUtil.errToObj(message),
     });
 
-  //  nonpositive = (msg?: string) => this.refine(data => data <= 0, msg || `Value must be non-positive`);
   nonpositive = (message?: errorUtil.ErrMessage) =>
     this._refinement({
       check: data => data <= 0,
@@ -86,7 +80,6 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
       ...errorUtil.errToObj(message),
     });
 
-  //  nonnegative = (msg?: string) => this.refine(data => data >= 0, msg || `Value must be non-negative`);
   nonnegative = (message?: errorUtil.ErrMessage) =>
     this._refinement({
       check: data => data >= 0,

@@ -41,14 +41,11 @@ export namespace objectUtil {
     [k in keyof T]: T[k] extends never ? never : k;
   }[keyof T];
 
-  // type test = (never) extends (never | string) ? true :false
-
   export type NoNever<T extends object> = {
     [k in NoNeverKeys<T>]: T[k];
   };
 
   export type ObjectType<T extends ZodRawShape> = FlattenObject<ObjectIntersection<NoNever<T>>>;
-  // export type ObjectType<T extends ZodRawShape> = FlattenObject<ObjectIntersection<T>>;
 
   export const mergeShapes = <U extends ZodRawShape, T extends ZodRawShape>(first: U, second: T): T & U => {
     const firstKeys = Object.keys(first);
@@ -67,8 +64,6 @@ export namespace objectUtil {
   };
 
   export const mergeObjects = <First extends ZodObject<any, any, any>>(first: First) => <
-    //  SecondShape extends ZodRawShape,
-    //  SecondParams extends ZodObjectParams
     Second extends ZodObject<any, any, any>
   >(
     second: Second,
@@ -81,7 +76,7 @@ export namespace objectUtil {
     const merged: any = new ZodObject({
       t: ZodTypes.object,
       checks: [...(first._def.checks || []), ...(second._def.checks || [])],
-      // strict: first.params.strict && second.params.strict,
+
       params: {
         strict: first.params.strict && second.params.strict,
       },

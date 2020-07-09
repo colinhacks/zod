@@ -37,8 +37,6 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
       ...(typeof message === 'string' ? { message } : message),
     });
 
-  // this.refine(data => data.length >= minLength, msg || `Array must contain ${minLength} or more items.`);
-
   max = (maxLength: number, message?: string | { message?: string }) =>
     this._refinement({
       check: data => data.length <= maxLength,
@@ -48,22 +46,12 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
       maximum: maxLength,
       ...(typeof message === 'string' ? { message } : message),
     });
-  // this.refine(data => data.length <= maxLength, msg || `Array must contain ${maxLength} or fewer items.`);
 
   length = (len: number, message?: string) => this.min(len, { message }).max(len, { message });
-  //  .refine(data => data.length === len, msg || `Array must contain ${len} items.`);
 
   nonempty: () => ZodNonEmptyArray<T> = () => {
     return new ZodNonEmptyArray({ ...this._def, nonempty: true });
   };
-
-  // pick = <Mask extends zodmaskUtil.Params<T>>(mask: Mask): ZodArray<zodmaskUtil.pick<T, Mask>> => {
-  //   return applyMask(this, mask, 'pick');
-  // };
-
-  // omit = <Mask extends zodmaskUtil.Params<T>>(mask: Mask): ZodArray<zodmaskUtil.omit<T, Mask>> => {
-  //   return applyMask(this, mask, 'omit');
-  // };
 
   static create = <T extends z.ZodTypeAny>(schema: T): ZodArray<T> => {
     return new ZodArray({
@@ -96,8 +84,6 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_typ
       ...(typeof message === 'string' ? { message } : message),
     });
 
-  // this.refine(data => data.length >= minLength, msg || `Array must contain ${minLength} or more items.`);
-
   max = (maxLength: number, message?: string | { message?: string }) =>
     this._refinement({
       check: data => data.length >= maxLength,
@@ -109,11 +95,4 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_typ
     });
 
   length = (len: number, message?: string) => this.min(len, { message }).max(len, { message });
-  // static create = <T extends z.ZodTypeAny>(schema: T): ZodArray<T> => {
-  //   return new ZodArray({
-  //     t: z.ZodTypes.array,
-  //     nonempty: true,
-  //     type: schema,
-  //   });
-  // };
 }
