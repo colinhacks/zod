@@ -516,7 +516,7 @@ const deepPartialUser = user.deepPartial();
 */
 ```
 
-> Important limitation: deep partials only work as expected in hierarchies of object schemas. It also can't be used on recursive schemas currently, since creating a recursive schema requires casting to the generic `ZodType` type (which doesn't include all the methods of the `ZodObject` class). Currently an improved version of Zod is under development that will have better support for recursive schemas.
+> Important limitation: deep partials only work as expected in hierarchies of object schemas. It also can't be used on recursive schemas currently, since creating a recursive schema requires casting to the generic `ZodSchema` type (which doesn't include all the methods of the `ZodObject` class). Currently an improved version of Zod is under development that will have better support for recursive schemas.
 
 #### Unknown keys
 
@@ -658,6 +658,9 @@ As you can see, JavaScript automatically casts all object keys to strings under 
 Since Zod is trying to bridge the gap between static and runtime types, it doesn't make sense to provide a way of creating a record schema with numerical keys, since there's no such thing as a numerical key in runtime JavaScript.
 
 ## Arrays
+
+`z.array(arg: ZodSchema)`
+You can create an array schema with the `z.array()` function; it accepts another ZodSchema, which
 
 ```ts
 const dogsList = z.array(dogSchema);
@@ -865,7 +868,7 @@ interface Category {
   subcategories: Category[];
 }
 
-const Category: z.ZodType<Category> = z.lazy(() =>
+const Category: z.ZodSchema<Category> = z.lazy(() =>
   z.object({
     name: z.string(),
     subcategories: z.array(Category),
@@ -902,7 +905,7 @@ interface Category extends z.infer<typeof BaseCategory> {
 
 // merge the base schema with
 // a new Zod schema containing relations
-const Category: z.ZodType<Category> = BaseCategory.merge(
+const Category: z.ZodSchema<Category> = BaseCategory.merge(
   z.object({
     subcategories: z.lazy(() => z.array(Category)),
   }),
@@ -917,7 +920,7 @@ There isn't a built-in method for validating any JSON, because representing that
 type Literal = boolean | null | number | string;
 type Json = Literal | { [key: string]: Json } | Json[];
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-const jsonSchema: z.ZodType<Json> = z.lazy(() => z.union([Literal, z.array(Json), z.record(Json)]));
+const jsonSchema: z.ZodSchema<Json> = z.lazy(() => z.union([Literal, z.array(Json), z.record(Json)]));
 
 jsonSchema.parse({
   // ...
@@ -1293,6 +1296,7 @@ If you want to validate function inputs, use function schemas in Zod! It's a muc
 
 | zod version | release notes                                                                                                                                                                                              |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| zod@1.9     | Added z.instanceof() and z.custom(). Implemented ZodSchema.array() method.                                                                                                                                 |
 | zod@1.8     | Introduced z.void(). Major overhaul to error handling system, including the introduction of custom error maps. Wrote new [error handling guide](https://github.com/vriad/zod/blob/beta/ERROR_HANDLING.md). |
 | zod@1.7     | Added several built-in validators to string, number, and array schemas. Calls to `.refine` now return new instance.                                                                                        |
 | zod@1.5     | Any and unknown types                                                                                                                                                                                      |

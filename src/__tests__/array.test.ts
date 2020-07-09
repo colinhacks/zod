@@ -1,9 +1,28 @@
 import * as z from '..';
 
-const minTwo = z.array(z.string()).min(2);
-const maxTwo = z.array(z.string()).max(2);
-const justTwo = z.array(z.string()).length(2);
-const intNum = z.array(z.string()).nonempty();
+// const minTwo = z.array(z.string()).min(2);
+// const maxTwo = z.array(z.string()).max(2);
+// const justTwo = z.array(z.string()).length(2);
+// const intNum = z.array(z.string()).nonempty();
+const minTwo = z
+  .string()
+  .array()
+  .min(2);
+
+const maxTwo = z
+  .string()
+  .array()
+  .max(2);
+
+const justTwo = z
+  .string()
+  .array()
+  .length(2);
+
+const intNum = z
+  .string()
+  .array()
+  .nonempty();
 
 test('passing validations', () => {
   minTwo.parse(['a', 'a']);

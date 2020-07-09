@@ -1,12 +1,12 @@
 import * as z from '.';
 
-z.object({
-  password: z.string(),
-  confirm: z.string(),
-})
-  .refine(data => data.confirm === data.password, { path: ['confirm'] })
-  .parseAsync({ password: 'asdf', confirm: 'qewr' })
-  .catch(err => console.log(JSON.stringify(err, null, 2)));
+// z.object({
+//   password: z.string(),
+//   confirm: z.string(),
+// })
+//   .refine(data => data.confirm === data.password, { path: ['confirm'] })
+//   .parseAsync({ password: 'asdf', confirm: 'qewr' })
+//   .catch(err => console.log(JSON.stringify(err, null, 2)));
 
 // const run = async () => {
 //   const errorMap: z.ZodErrorMap = (error, ctx) => {
@@ -55,3 +55,8 @@ z.object({
 // };
 
 // run();
+
+z.array(z.string())
+  .min(5)
+  .array()
+  .parse([['asdf', 'qwer', 'asdf', 'qwer', 'asdf', 'qwer']]);

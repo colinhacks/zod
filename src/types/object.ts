@@ -5,11 +5,6 @@ import { ZodUnion } from './union';
 import { objectUtil } from '../helpers/objectUtil';
 import { partialUtil } from '../helpers/partialUtil';
 
-// import { ZodString } from './string';
-// import { maskUtil } from '../helpers/maskUtil';
-// import { zodmaskUtil } from '../helpers/zodmaskUtil';
-// import { applyMask } from '../masker';
-
 const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <Augmentation extends z.ZodRawShape>(
   augmentation: Augmentation,
 ): ZodObject<

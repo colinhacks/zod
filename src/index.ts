@@ -96,6 +96,13 @@ const codegen = ZodCodeGenerator.create;
 //   ZodUnion.create([Literal, ZodArray.create(JsonSchema), ZodRecord.create(JsonSchema)]),
 // );
 // const jsonType = () => JsonSchema;
+const custom = <T>(check: (data: unknown) => any, params?: Parameters<ZodAny['refine']>[1]): ZodType<T> =>
+  anyType().refine(check, params);
+
+const instanceOfType = <T extends new (...args: any[]) => any>(
+  cls: T,
+  params: Parameters<ZodAny['refine']>[1] = { message: `Input not instance of ${cls.name}` },
+) => custom<InstanceType<T>>(data => data instanceof cls, params);
 
 export {
   stringType as string,
@@ -122,6 +129,7 @@ export {
   enumType as enum,
   promiseType as promise,
   // jsonType as json,
+  instanceOfType as instanceof,
   ostring,
   onumber,
   oboolean,
@@ -167,6 +175,7 @@ export {
   ZodPromise,
   ZodType,
   ZodType as Schema,
+  ZodType as ZodSchema,
   ZodTypeAny,
   ZodDef,
   ZodError,
@@ -176,7 +185,7 @@ export {
   ZodCodeGenerator,
 };
 
-export type lazyobject<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k], any> }>;
+// export type lazyobject<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k], any> }>;
 // export namespace lazy {
 //   export type objectType<T extends object> = ZodObject<{ [k in keyof T]: ZodType<T[k]> }>;
 // export objectType; //as object};

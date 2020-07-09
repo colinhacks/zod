@@ -1,6 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode } from '..';
+import { ZodErrorCode, ZodArray } from '..';
 import { CustomError } from '../ZodError';
 
 export enum ZodTypes {
@@ -20,7 +20,7 @@ export enum ZodTypes {
   record = 'record',
   function = 'function',
   lazy = 'lazy',
-  lazyobject = 'lazyobject',
+  // lazyobject = 'lazyobject',
   literal = 'literal',
   enum = 'enum',
   promise = 'promise',
@@ -129,4 +129,6 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   abstract toJSON: () => object;
   abstract optional: () => any;
   abstract nullable: () => any;
+
+  array: () => ZodArray<this> = () => ZodArray.create(this);
 }

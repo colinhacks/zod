@@ -3,9 +3,6 @@ import { ZodUndefined } from './undefined';
 import { ZodNull } from './null';
 import { ZodUnion } from './union';
 import { ZodErrorCode } from '..';
-// import { maskUtil } from '../helpers/maskUtil';
-// import { zodmaskUtil } from '../helpers/zodmaskUtil';
-// import { applyMask } from '../masker';
 
 export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
   t: z.ZodTypes.array;
