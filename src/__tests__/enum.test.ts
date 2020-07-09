@@ -12,3 +12,7 @@ test('infer enum', () => {
   const t1: util.AssertEqual<MyEnum, 'Red' | 'Green' | 'Blue'> = true;
   [t1];
 });
+
+test('get options', () => {
+  expect(z.enum(['tuna', 'trout']).options).toEqual(['tuna', 'trout']);
+});

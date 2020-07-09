@@ -774,29 +774,22 @@ type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
-> You need to either need to pass the literal array directly into z.enum:
+> You need to pass the literal array directly into z.enum():
 >
 > ```ts
 > const FishEnum = z.enum(['Salmon', 'Tuna', 'Trout']);
 > ```
 >
-> or use `as const` (introduced in TypeScript 3.4):
->
-> ```ts
-> const fishTypes = ['Salmon', 'Tuna', 'Trout'] as const;
-> const FishEnum = z.enum(fishTypes);
-> ```
->
-> otherwise type inference won't work properly.
+> If you define the array as a separate variable, then pass it into z.enum, type inference won't work properly.
 
 #### Autocompletion
 
-You can get autocompletion of enum values with the `.Values` property of an enum schema:
+You can autocomplete the enum values with the `.enum` property of an enum schema:
 
 ```ts
-FishEnum.Values.Salmon; // => autocompletes
+FishEnum.enum.Salmon; // => autocompletes
 
-FishEnum.Values;
+FishEnum.enum;
 /* 
 => {
   Salmon: "Salmon",
@@ -804,6 +797,12 @@ FishEnum.Values;
   Trout: "Trout",
 } 
 */
+```
+
+You can also retrieve the list of options as a tuple with the `.options` property:
+
+```ts
+FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
 ```
 
 ## Intersections

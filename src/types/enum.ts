@@ -30,9 +30,18 @@ export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<T[number
 
   toJSON = () => this._def;
 
-  get OptionsList() {
+  get options() {
     return this._def.values;
   }
+
+  get enum(): Values<T> {
+    const enumValues: any = {};
+    for (const val of this._def.values) {
+      enumValues[val] = val;
+    }
+    return enumValues as any;
+  }
+
   get Values(): Values<T> {
     const enumValues: any = {};
     for (const val of this._def.values) {
@@ -40,6 +49,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<T[number
     }
     return enumValues as any;
   }
+
   get Enum(): Values<T> {
     const enumValues: any = {};
     for (const val of this._def.values) {
@@ -47,6 +57,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<T[number
     }
     return enumValues as any;
   }
+
   static create = <U extends string, T extends [U, ...U[]]>(values: T): ZodEnum<T> => {
     return new ZodEnum({
       t: z.ZodTypes.enum,
