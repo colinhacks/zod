@@ -22,6 +22,10 @@ export class ZodUnion<T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]>
     options: this._def.options.map(x => x.toJSON()),
   });
 
+  distribute = <U extends z.ZodTypeAny>(f: (option: T[number]) => U): ZodUnion<[U, U, ...U[]]> => {
+    return ZodUnion.create(this._def.options.map(f) as [U, U, ...U[]]);
+  }
+
   static create = <T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]>(types: T): ZodUnion<T> => {
     return new ZodUnion({
       t: z.ZodTypes.union,
