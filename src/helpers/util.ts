@@ -5,15 +5,6 @@ export namespace util {
     throw new Error();
   }
 
-  export const getObjectType = (value: unknown): string | undefined => {
-    const objectName = toString.call(value).slice(8, -1);
-    if (objectName) {
-      return objectName;
-    }
-
-    return undefined;
-  };
-
   export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
   export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
 
