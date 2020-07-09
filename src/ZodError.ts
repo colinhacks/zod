@@ -110,6 +110,11 @@ export type ZodSuberrorOptionalMessage =
 
 export type ZodSuberror = ZodSuberrorOptionalMessage & { message: string };
 
+export const quotelessJson = (obj: any) => {
+  const json = JSON.stringify(obj, null, 2); // {"name":"John Smith"}
+  return json.replace(/"([^"]+)":/g, '$1:');
+};
+
 export class ZodError extends Error {
   errors: ZodSuberror[] = [];
 
@@ -127,11 +132,18 @@ export class ZodError extends Error {
   };
 
   get message() {
-    return this.errors
-      .map(({ path, message }) => {
-        return path.length ? `${path.join('.')}: ${message}` : `${message}`;
-      })
-      .join('\n');
+    const errorMessage: string[] = [`${this.errors.length} validation issue(s)`, ''];
+    for (const err of this.errors) {
+      errorMessage.push(`  Issue #${this.errors.indexOf(err)}: ${err.code} at ${err.path.join('.')}`);
+      errorMessage.push(`  ` + err.message);
+      errorMessage.push('');
+    }
+    return errorMessage.join('\n');
+    // return quotelessJson(this);
+    // .map(({ path, message }) => {
+    //   return path.length ? `${path.join('.')}: ${message}` : `${message}`;
+    // })
+    // .join('\n');
   }
 
   get isEmpty(): boolean {
@@ -145,4 +157,18 @@ export class ZodError extends Error {
   addErrors = (subs: ZodSuberror[] = []) => {
     this.errors = [...this.errors, ...subs];
   };
+
+  get formErrors(): { formErrors: string[]; fieldErrors: { [k: string]: string[] } } {
+    const fieldErrors: any = {};
+    const formErrors: string[] = [];
+    for (const sub of this.errors) {
+      if (sub.path.length > 0) {
+        fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
+        fieldErrors[sub.path[0]].push(sub.message);
+      } else {
+        formErrors.push(sub.message);
+      }
+    }
+    return { formErrors, fieldErrors };
+  }
 }
