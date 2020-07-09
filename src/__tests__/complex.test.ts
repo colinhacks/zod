@@ -37,6 +37,8 @@ export const crazySchema = z.object({
   intersection: z.intersection(z.object({ p1: z.string().optional() }), z.object({ p1: z.number().optional() })),
   enum: z.intersection(z.enum(['zero', 'one']), z.enum(['one', 'two'])),
   nonstrict: z.object({ points: z.number() }).nonstrict(),
+  numProm: z.promise(z.number()),
+  lenfun: z.function(z.tuple([z.string()]), z.boolean()),
 });
 
 test('parse', () => {
@@ -48,6 +50,8 @@ test('parse', () => {
     intersection: {},
     enum: 'one',
     nonstrict: { points: 1234 },
+    numProm: Promise.resolve(12),
+    lenfun: (x: string) => x.length,
   });
 });
 

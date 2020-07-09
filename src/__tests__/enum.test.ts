@@ -3,7 +3,9 @@ import { util } from '../helpers/util';
 
 test('create enum', () => {
   const MyEnum = z.enum(['Red', 'Green', 'Blue']);
-  MyEnum.Values.Red === 'Red';
+  expect(MyEnum.Values.Red).toEqual('Red');
+  expect(MyEnum.Enum.Red).toEqual('Red');
+  expect(MyEnum.enum.Red).toEqual('Red');
 });
 
 test('infer enum', () => {

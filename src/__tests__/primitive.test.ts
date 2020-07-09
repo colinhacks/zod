@@ -29,27 +29,27 @@ test('literal string correct', () => {
 });
 
 test('literal string incorrect', () => {
-  const f = () => literalStringSchema.parse('not_asdf' as any);
+  const f = () => literalStringSchema.parse('not_asdf');
   expect(f).toThrow();
 });
 
 test('literal string number', () => {
-  const f = () => literalStringSchema.parse(123 as any);
+  const f = () => literalStringSchema.parse(123);
   expect(f).toThrow();
 });
 
 test('literal string boolean', () => {
-  const f = () => literalStringSchema.parse(true as any);
+  const f = () => literalStringSchema.parse(true);
   expect(f).toThrow();
 });
 
 test('literal string boolean', () => {
-  const f = () => literalStringSchema.parse(true as any);
+  const f = () => literalStringSchema.parse(true);
   expect(f).toThrow();
 });
 
 test('literal string object', () => {
-  const f = () => literalStringSchema.parse({} as any);
+  const f = () => literalStringSchema.parse({});
   expect(f).toThrow();
 });
 
@@ -58,22 +58,22 @@ test('literal number correct', () => {
 });
 
 test('literal number incorrect', () => {
-  const f = () => literalNumberSchema.parse(13 as any);
+  const f = () => literalNumberSchema.parse(13);
   expect(f).toThrow();
 });
 
 test('literal number number', () => {
-  const f = () => literalNumberSchema.parse(val.string as any);
+  const f = () => literalNumberSchema.parse(val.string);
   expect(f).toThrow();
 });
 
 test('literal number boolean', () => {
-  const f = () => literalNumberSchema.parse(val.boolean as any);
+  const f = () => literalNumberSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
 test('literal number object', () => {
-  const f = () => literalStringSchema.parse({} as any);
+  const f = () => literalStringSchema.parse({});
   expect(f).toThrow();
 });
 
@@ -82,22 +82,22 @@ test('literal boolean correct', () => {
 });
 
 test('literal boolean incorrect', () => {
-  const f = () => literalBooleanSchema.parse(false as any);
+  const f = () => literalBooleanSchema.parse(false);
   expect(f).toThrow();
 });
 
 test('literal boolean number', () => {
-  const f = () => literalBooleanSchema.parse('asdf' as any);
+  const f = () => literalBooleanSchema.parse('asdf');
   expect(f).toThrow();
 });
 
 test('literal boolean boolean', () => {
-  const f = () => literalBooleanSchema.parse(123 as any);
+  const f = () => literalBooleanSchema.parse(123);
   expect(f).toThrow();
 });
 
 test('literal boolean object', () => {
-  const f = () => literalBooleanSchema.parse({} as any);
+  const f = () => literalBooleanSchema.parse({});
   expect(f).toThrow();
 });
 
@@ -106,27 +106,27 @@ test('parse stringSchema string', () => {
 });
 
 test('parse stringSchema number', () => {
-  const f = () => stringSchema.parse(val.number as any);
+  const f = () => stringSchema.parse(val.number);
   expect(f).toThrow();
 });
 
 test('parse stringSchema boolean', () => {
-  const f = () => stringSchema.parse(val.boolean as any);
+  const f = () => stringSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
 test('parse stringSchema undefined', () => {
-  const f = () => stringSchema.parse(val.undefined as any);
+  const f = () => stringSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
 test('parse stringSchema null', () => {
-  const f = () => stringSchema.parse(val.null as any);
+  const f = () => stringSchema.parse(val.null);
   expect(f).toThrow();
 });
 
 test('parse numberSchema string', () => {
-  const f = () => numberSchema.parse(val.string as any);
+  const f = () => numberSchema.parse(val.string);
   expect(f).toThrow();
 });
 
@@ -135,32 +135,32 @@ test('parse numberSchema number', () => {
 });
 
 test('parse numberSchema bigint', () => {
-  const f = () => numberSchema.parse(val.bigint as any);
+  const f = () => numberSchema.parse(val.bigint);
   expect(f).toThrow();
 });
 
 test('parse numberSchema boolean', () => {
-  const f = () => numberSchema.parse(val.boolean as any);
+  const f = () => numberSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
 test('parse numberSchema undefined', () => {
-  const f = () => numberSchema.parse(val.undefined as any);
+  const f = () => numberSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
 test('parse numberSchema null', () => {
-  const f = () => numberSchema.parse(val.null as any);
+  const f = () => numberSchema.parse(val.null);
   expect(f).toThrow();
 });
 
 test('parse bigintSchema string', () => {
-  const f = () => bigintSchema.parse(val.string as any);
+  const f = () => bigintSchema.parse(val.string);
   expect(f).toThrow();
 });
 
 test('parse bigintSchema number', () => {
-  const f = () => bigintSchema.parse(val.number as any);
+  const f = () => bigintSchema.parse(val.number);
   expect(f).toThrow();
 });
 
@@ -169,27 +169,27 @@ test('parse bigintSchema bigint', () => {
 });
 
 test('parse bigintSchema boolean', () => {
-  const f = () => bigintSchema.parse(val.boolean as any);
+  const f = () => bigintSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
 test('parse bigintSchema undefined', () => {
-  const f = () => bigintSchema.parse(val.undefined as any);
+  const f = () => bigintSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
 test('parse bigintSchema null', () => {
-  const f = () => bigintSchema.parse(val.null as any);
+  const f = () => bigintSchema.parse(val.null);
   expect(f).toThrow();
 });
 
 test('parse booleanSchema string', () => {
-  const f = () => booleanSchema.parse(val.string as any);
+  const f = () => booleanSchema.parse(val.string);
   expect(f).toThrow();
 });
 
 test('parse booleanSchema number', () => {
-  const f = () => booleanSchema.parse(val.number as any);
+  const f = () => booleanSchema.parse(val.number);
   expect(f).toThrow();
 });
 
@@ -198,29 +198,29 @@ test('parse booleanSchema boolean', () => {
 });
 
 test('parse booleanSchema undefined', () => {
-  const f = () => booleanSchema.parse(val.undefined as any);
+  const f = () => booleanSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
 test('parse booleanSchema null', () => {
-  const f = () => booleanSchema.parse(val.null as any);
+  const f = () => booleanSchema.parse(val.null);
   expect(f).toThrow();
 });
 
 // ==============
 
 test('parse dateSchema string', () => {
-  const f = () => dateSchema.parse(val.string as any);
+  const f = () => dateSchema.parse(val.string);
   expect(f).toThrow();
 });
 
 test('parse dateSchema number', () => {
-  const f = () => dateSchema.parse(val.number as any);
+  const f = () => dateSchema.parse(val.number);
   expect(f).toThrow();
 });
 
 test('parse dateSchema boolean', () => {
-  const f = () => dateSchema.parse(val.boolean as any);
+  const f = () => dateSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
@@ -229,28 +229,34 @@ test('parse dateSchema date', () => {
 });
 
 test('parse dateSchema undefined', () => {
-  const f = () => dateSchema.parse(val.undefined as any);
+  const f = () => dateSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
 test('parse dateSchema null', () => {
-  const f = () => dateSchema.parse(val.null as any);
+  const f = () => dateSchema.parse(val.null);
   expect(f).toThrow();
+});
+test('parse dateSchema invalid date', () => {
+  expect.assertions(1);
+  dateSchema.parseAsync(new Date('invalid')).catch(err => {
+    expect(err.errors[0].code).toEqual(z.ZodErrorCode.invalid_date);
+  });
 });
 // ==============
 
 test('parse undefinedSchema string', () => {
-  const f = () => undefinedSchema.parse(val.string as any);
+  const f = () => undefinedSchema.parse(val.string);
   expect(f).toThrow();
 });
 
 test('parse undefinedSchema number', () => {
-  const f = () => undefinedSchema.parse(val.number as any);
+  const f = () => undefinedSchema.parse(val.number);
   expect(f).toThrow();
 });
 
 test('parse undefinedSchema boolean', () => {
-  const f = () => undefinedSchema.parse(val.boolean as any);
+  const f = () => undefinedSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
@@ -259,27 +265,27 @@ test('parse undefinedSchema undefined', () => {
 });
 
 test('parse undefinedSchema null', () => {
-  const f = () => undefinedSchema.parse(val.null as any);
+  const f = () => undefinedSchema.parse(val.null);
   expect(f).toThrow();
 });
 
 test('parse nullSchema string', () => {
-  const f = () => nullSchema.parse(val.string as any);
+  const f = () => nullSchema.parse(val.string);
   expect(f).toThrow();
 });
 
 test('parse nullSchema number', () => {
-  const f = () => nullSchema.parse(val.number as any);
+  const f = () => nullSchema.parse(val.number);
   expect(f).toThrow();
 });
 
 test('parse nullSchema boolean', () => {
-  const f = () => nullSchema.parse(val.boolean as any);
+  const f = () => nullSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
 test('parse nullSchema undefined', () => {
-  const f = () => nullSchema.parse(val.undefined as any);
+  const f = () => nullSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 

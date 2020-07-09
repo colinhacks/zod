@@ -29,6 +29,8 @@ test('string record parse - fail', () => {
       asdf: 1234,
     } as any);
   expect(badCheck).toThrow();
+
+  expect(() => booleanRecord.parse('asdf')).toThrow();
 });
 
 test('string record parse - fail', () => {

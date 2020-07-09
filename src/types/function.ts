@@ -45,7 +45,6 @@ export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAn
 
   implement = (func: TypeOfFunction<Args, Returns>): TypeOfFunction<Args, Returns> => {
     const validatedFunc = this.parse(func);
-
     return (validatedFunc as any) as TypeOfFunction<Args, Returns>;
   };
 

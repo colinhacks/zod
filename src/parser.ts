@@ -397,6 +397,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         throw error;
       }
       if (isNaN(obj.getTime())) {
+        console.log('NAN');
         error.addError(
           makeError({
             code: ZodErrorCode.invalid_date,

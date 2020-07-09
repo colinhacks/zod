@@ -45,3 +45,8 @@ test('parse empty array in nonempty', () => {
       .parse([] as any),
   ).toThrow();
 });
+
+test('get element', () => {
+  justTwo.element.parse('asdf');
+  expect(() => justTwo.element.parse(12)).toThrow();
+});
