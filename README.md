@@ -22,7 +22,11 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 # What is Zod
 
-Zod is a validation library designed for optimal developer experience. It's a TypeScript-first schema declaration library with rigorous inferred types, incredible developer experience, and a few killer features missing from the existing libraries.
+Zod is a TypeScript-first schema declaration and validation library. I'm using the term "schema" to broadly refer to any data type/structure, from a simple `string` to a complex nested object.
+
+Zod is designed to be as developer-friendly as possible. My goal is to eliminate duplicative type declarations wherever possible. With Zod, you declare a validator _once_ and Zod will automatically infer the static TypeScript type. It's easy to compose simpler types into complex data structures.
+
+Some other great aspects:
 
 - Zero dependencies
 - Tiny: 8kb minified + zipped
@@ -37,6 +41,8 @@ Hi! 👋
 I'm Colin (AKA [@vriad](https://twitter.com/vriad)), creator/maintainer of Zod. Currently I work on Zod in my spare time, but I'd love to drop my other commitments and work on it (and other OSS projects) full time. To that end, I recently applied and was accepted into the GitHub Sponsors program, which I hope will provide the resources I need to focus on open-source full time.
 
 If you make money from the software you build with Zod, I would massively appreciate a sponsorship at any level! 🙏 https://github.com/sponsors/vriad
+
+— Colin
 
 ### TypeScript developers who know Zod
 
