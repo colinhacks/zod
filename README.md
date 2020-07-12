@@ -42,7 +42,9 @@ I'm Colin (AKA [@vriad](https://twitter.com/vriad)), creator/maintainer of Zod. 
 
 If you make money from the software you build with Zod, I would massively appreciate a sponsorship at any level! 🙏 https://github.com/sponsors/vriad
 
+<p align="right">
 — Colin
+</p>
 
 ### TypeScript developers who know Zod
 
