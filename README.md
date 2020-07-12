@@ -10,8 +10,6 @@
 </p>
 <p align="center">
 if you're happy and you know it, star this repo ⭐
-<br/>
-created by <a href="https://twitter.com/vriad" target="_blank">@vriad</a> 👋
 </p>
 
 <br/>
@@ -62,6 +60,16 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
   - [io-ts](#io-ts)
   - [Runtypes](#runtypes)
 - [Changelog](#changelog)
+
+# Sponsorship
+
+Hi! 👋 I'm Colin, creator/maintainer of Zod. Currently I work on Zod in my spare time, but I'd love to drop my other commitments and work on it (and other OSS projects) full time. To that end, I recently applied and was accepted into the GitHub Sponsors program, which I hope will provide the resources I need to focus on open-source full time.
+
+If you make money from the software you build with Zod, I would massively appreciate a sponsorship at any level! 🙏 https://github.com/sponsors/vriad
+
+### TypeScript developers who know Zod
+
+_To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._
 
 # Installation
 
