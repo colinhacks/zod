@@ -51,7 +51,9 @@ If you make money from the software you build with Zod, I would massively apprec
 <table>
   <tr>
     <td align="center">
-    <a href="https://twitter.com/flybayer"><img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/><br /><sub><b>Brandon Bayer</b></sub></a><br />
+    <a href="https://twitter.com/flybayer"><img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/><br /><b>Brandon Bayer</b></a><br/>
+    <sub>Creator of<a href="https://blitzjs.com"> Blitz.js</a></sub>
+    <br />
     </td>
   </tr>
 </table>
