@@ -46,9 +46,27 @@ If you make money from the software you build with Zod, I would massively apprec
 — Colin
 </p>
 
-### TypeScript developers who know Zod
+### Sponsors
+
+<table>
+  <tr>
+    <td align="center">
+    <a href="https://twitter.com/flybayer"><img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/><br /><sub><b>Brandon Bayer</b></sub></a><br />
+    </td>
+  </tr>
+</table>
 
 _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._
+
+<!--
+|   | |
+|---|-|
+| <p align="center"> Brandon Bayer<br>[@flybayer](https://twitter.com/flybayer)</p> |  _To get your name + Twitter + website here, <br/>sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._ |
+|   | -->
+
+<!-- ### Sponsors who know Zod
+
+_To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._ -->
 
 # Table of contents
 
