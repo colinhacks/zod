@@ -294,8 +294,6 @@ ZodError {
 
 Note that the `path` is set to `["confirm"]`, so you can easily display this error underneath the "Confirm password" textbox.
 
-j
-
 ## Type inference
 
 You can extract the TypeScript type of any schema with `z.infer<typeof mySchema>`.
