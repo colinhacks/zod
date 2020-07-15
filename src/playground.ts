@@ -1,4 +1,10 @@
 import * as z from '.';
+import { ZodCodec } from './types/codec';
+
+const stringToNumber = ZodCodec.create(z.union([z.string(), z.number()]), z.number(), x => parseFloat(`${x}`));
+
+const adsf = stringToNumber.parse('12345');
+console.log(adsf);
 
 const FormData = z
   .object({

@@ -25,6 +25,7 @@ export enum ZodTypes {
   any = 'any',
   unknown = 'unknown',
   void = 'void',
+  codec = 'codec',
 }
 
 export type ZodTypeAny = ZodType<any>;
@@ -41,6 +42,7 @@ type Check<T> = {
 export interface ZodTypeDef {
   t: ZodTypes;
   checks?: InternalCheck<any>[];
+  accepts?: ZodType<any, any>;
 }
 
 export type TypeOf<T extends { _type: any }> = T['_type'];
@@ -112,4 +114,8 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
   array: () => ZodArray<this> = () => ZodArray.create(this);
+  // pre: <T extends ZodType<any, any>>(
+  //   input: T,
+  //   transformer: (arg: T['_type']) => this['_type'],
+  // ) => ZodCodec<T, ZodType<Type>> = (input, transformer) => ZodCodec.create(input, this as any, transformer);
 }
