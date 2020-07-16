@@ -1,10 +1,12 @@
-// import * as z from '.';
+import * as z from '.';
 // import { ZodCodec } from './types/codec';
 
-// const test = ZodCodec.create(z.string(), z.string(), x => x.trim().toUpperCase());
+const test = z.codec(z.string(), z.string(), x => x.trim().toUpperCase());
+const adsf = test.parse(' asdf ');
+console.log(adsf); // => 'ASDF'
 
-// const adsf = test.parse(' asdf12345 asdf  asdfas   ');
-// console.log(adsf);
+const stringToNumber = z.number().accepts(z.string().or(z.number()), data => parseFloat(`${data}`));
+console.log(stringToNumber.parse('5') * 5); // 25
 
 // const FormData = z
 //   .object({

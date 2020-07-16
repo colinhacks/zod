@@ -1,6 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined } from '..';
+import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodCodec } from '..';
 import { CustomError } from '../ZodError';
 
 export enum ZodTypes {
@@ -114,8 +114,19 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
   array: () => ZodArray<this> = () => ZodArray.create(this);
-  // pre: <T extends ZodType<any, any>>(
+  // pre: <T extends string>(
   //   input: T,
-  //   transformer: (arg: T['_type']) => this['_type'],
-  // ) => ZodCodec<T, ZodType<Type>> = (input, transformer) => ZodCodec.create(input, this as any, transformer);
+  //   transformer: (arg: T) => Type,
+  // ) => any = (input, transformer) => 'adsf';
+
+  accepts: <U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
+    x: U,
+    transformer: Tx,
+  ) => ZodCodec<U, this> = (input, transformer) => {
+    return ZodCodec.create(input, this, transformer);
+  };
+
+  or: <U extends ZodType<any>>(arg: U) => ZodUnion<[this, U]> = arg => {
+    return ZodUnion.create([this, arg]);
+  };
 }
