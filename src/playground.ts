@@ -8,60 +8,59 @@ console.log(adsf); // => 'ASDF'
 const stringToNumber = z.number().accepts(z.string().or(z.number()), data => parseFloat(`${data}`));
 console.log(stringToNumber.parse('5') * 5); // 25
 
-// const FormData = z
-//   .object({
-//     email: z.string().email(),
-//     password: z.string().min(10),
-//     confirm: z.string().min(10),
-//   })
-//   .refine(obj => obj.password === obj.confirm, {
-//     message: 'Passwords do not match',
-//     path: ['confirm'], // sets the path of the error thrown by this refinement
-//   });
+export const parseAndCatch = <T extends z.ZodType<any, any>>(schema: T, data: unknown): T['_type'] => {
+  try {
+    return schema.parse(data);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      throw new Error();
+      // transform err.errors and throw custom error class
+    } else {
+      throw new Error();
+    }
+  }
+};
 
-// try {
-//   FormData.parse({
-//     email: 'not an email',
-//     password: 'tooshort',
-//     confirm: 'nomatch',
-//   });
-// } catch (err) {
-//   if (!(err instanceof z.ZodError)) throw err;
+export const parseFactory = <T extends z.ZodType<any, any>>(schema: T) => (data: unknown): T['_type'] => {
+  try {
+    return schema.parse(data);
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      throw new Error();
+      // transform err.errors and throw custom error class
+    } else {
+      throw new Error();
+    }
+  }
+};
 
-//   console.log(err.errors);
-//   /*
-//   [
-//     { code: 'invalid_string', validation: 'email', path: ['email'], message: 'Invalid email' },
-//     {
-//       code: 'too_small',
-//       minimum: 10,
-//       type: 'string',
-//       inclusive: true,
-//       path: ['password'],
-//       message: 'Should be at least 10 characters',
-//     },
-//     {
-//       code: 'too_small',
-//       minimum: 10,
-//       type: 'string',
-//       inclusive: true,
-//       path: ['confirm'],
-//       message: 'Should be at least 10 characters',
-//     },
-//     { code: 'custom_error', message: 'Passwords do not match', path: ['confirm'] },
-//   ];
-//   */
+const user = z.object({ name: z.string() });
+const userParse = parseFactory(user);
+const myUser = userParse({ name: 'asdf' });
+console.log(JSON.stringify(myUser, null, 2));
 
-//   console.log(err.formErrors);
-//   /*
-//     {
-//     formErrors: [],
-//     fieldErrors: {
-//       email: ['Invalid email'],
-//       password: ['Should be at least 10 characters'],
-//       confirm: ['Should be at least 10 characters', 'Passwords do not match'],
-//     },
+// class MyZodString extends z.ZodString {
+//   _length: number;
+
+//   length(...args: Parameters<z.ZodString['length']>): this {
+//     const [len, err] = args;
+//     this._length = len;
+//     return super.length(len, err);
 //   }
-//   */
 // }
-//
+
+// const u = z.string().uuid();
+const uuid = '9491d710-3185-4e06-bea0-6a2f275345e0';
+const uuidRegex = /([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}){1}/i;
+
+console.log(uuidRegex.test(uuid));
+console.log(uuidRegex.test(uuid));
+console.log(uuidRegex.test(uuid));
+console.log(uuidRegex.test(uuid));
+console.log(uuidRegex.test(uuid));
+console.log(uuidRegex.test(uuid));
+console.log(uuidRegex.test(uuid));
+console.log(uuidRegex.test(uuid));
+console.log(uuidRegex.test(uuid));
+// console.log(u.parse(uuid));
+// console.log(u.parse(uuid));

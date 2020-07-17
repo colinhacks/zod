@@ -1274,11 +1274,20 @@ Default Values
 Rich Errors
 Branded -->
 
+- Missing object methods: (pick, omit, partial, deepPartial, merge, extend)
+- Missing nonempty arrays with proper typing (`[T, ...T[]]`)
+- Missing lazy/recursive types
+- Missing promise schemas
+- Missing function schemas
+- Missing union & intersection schemas
+- Missing support for parsing cyclical data (maybe)
+- Missing error customization
+
 #### Joi
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
-Doesn't support static type inference. Boo. 😕
+Doesn't support static type inference 😕
 
 #### Yup
 
@@ -1286,51 +1295,18 @@ Doesn't support static type inference. Boo. 😕
 
 Yup is a full-featured library that was implemented first in vanilla JS, with TypeScript typings added later.
 
-Yup supports static type inference! But unfortunately the inferred types aren't actually correct.
+Differences
 
-##### Incorrect object typing (now fixed!)
+- Supports for casting and transformation
+- All object fields are optional by default
+- Non-standard `.required()`¹
+- Missing object methods: (pick, omit, partial, deepPartial, merge, extend)
+- Missing nonempty arrays with proper typing (`[T, ...T[]]`)
+- Missing promise schemas
+- Missing function schemas
+- Missing union & intersection schemas
 
-This issue was fixed on May 19, 2020 ([here](https://github.com/DefinitelyTyped/DefinitelyTyped/pull/44589)).
-
-<del>Currently, the yup package treats all object properties as optional by default:</del>.
-
-```ts
-const schema = yup.object({
-  asdf: yup.string(),
-});
-schema.validate({}); // passes
-```
-
-Yet the inferred type indicates that all properties are required:
-
-```ts
-type SchemaType = yup.InferType<typeof schema>;
-// returns { asdf: string }
-// should be { asdf?: string }
-```
-
-##### Unintuitive `.required()` behavior
-
-In general, Yup's interpretation of `.required()` is odd and non-standard. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. For Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom validator.
-
-```ts
-const numList = yup
-  .array()
-  .of(yup.string())
-  .required();
-
-// interpreted as a non-empty list
-numList.validateSync([]); // fails
-
-// yet the inferred type doesn't reflect this
-type NumList = yup.InferType<typeof numList>;
-// returns 		string[]
-// should be 	[string,...string[]]
-```
-
-##### Unions and intersections
-
-Finally, Yup doesn't support any generic `union` or `intersection` operator.
+¹ Yup has a strange interpretation of the `.required()` is odd and non-standard. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. For Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom validator.
 
 #### io-ts
 
@@ -1338,9 +1314,7 @@ Finally, Yup doesn't support any generic `union` or `intersection` operator.
 
 io-ts is an excellent library by gcanti. The API of io-ts heavily inspired the design of Zod.
 
-In our experience, io-ts prioritizes functional programming purity over developer experience in many cases. This is a valid and admirable design goal, but it makes io-ts particularly hard to integrate into an existing codebase with a more procedural or object-oriented bias.
-
-For instance, consider how to define an object with optional properties in io-ts:
+In our experience, io-ts prioritizes functional programming purity over developer experience in many cases. This is a valid and admirable design goal, but it makes io-ts particularly hard to integrate into an existing codebase with a more procedural or object-oriented bias. For instance, consider how to define an object with optional properties in io-ts:
 
 ```ts
 import * as t from 'io-ts';
@@ -1375,13 +1349,35 @@ type C = z.infer<typeof C>;
 
 This more declarative API makes schema definitions vastly more concise.
 
-`io-ts` also requires the use of gcanti's functional programming library `fp-ts` to parse results and handle errors. This is another fantastic resource for developers looking to keep their codebase strictly functional. But depending on `fp-ts` necessarily comes with a lot of intellectual overhead; a developer has to be familiar with functional programming concepts, `fp-ts`'s nomenclature, and the `Either` monad to do a simple schema validation. It's just not worth it for many people.
+`io-ts` also requires the use of gcanti's functional programming library `fp-ts` to parse results and handle errors. This is another fantastic resource for developers looking to keep their codebase strictly functional. But depending on `fp-ts` necessarily comes with a lot of intellectual overhead; a developer has to be familiar with functional programming concepts and the `fp-ts` nomenclature to use the library.
+
+- Supports codecs with seria\lization & deserialization transforms
+- Supports branded types
+- Supports advanced functional programming, higher-kinded types, `fp-ts` compatibility
+- Missing object methods: (pick, omit, partial, deepPartial, merge, extend)
+- Missing nonempty arrays with proper typing (`[T, ...T[]]`)
+- Missing lazy/recursive types
+- Missing promise schemas
+- Missing function schemas
+- Missing union & intersection schemas
+- Missing support for parsing cyclical data (maybe)
+- Missing error customization
 
 #### Runtypes
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
 Good type inference support, but limited options for object type masking (no `.pick`, `.omit`, `.extend`, etc.). No support for `Record`s (their `Record` is equivalent to Zod's `object`). They DO support branded and readonly types, which Zod does not.
+
+- Supports "pattern matching": computed properties that distribute over unions
+- Supports readonly types
+- Missing object methods: (pick, omit, partial, deepPartial, merge, extend)
+- Missing nonempty arrays with proper typing (`[T, ...T[]]`)
+- Missing lazy/recursive types
+- Missing promise schemas
+- Missing union & intersection schemas
+- Missing error customization
+- Missing record schemas (their "record" is equivalent to Zod "object")
 
 #### Ow
 
@@ -1393,21 +1389,4 @@ If you want to validate function inputs, use function schemas in Zod! It's a muc
 
 # Changelog
 
-| zod version | release notes                                                                                                                                                                                                |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| zod@1.9     | Added z.instanceof() and z.custom(). Implemented ZodSchema.array() method.                                                                                                                                   |
-| zod@1.8     | Introduced z.void(). Major overhaul to error handling system, including the introduction of custom error maps. Wrote new [error handling guide](https://github.com/vriad/zod/blob/master/ERROR_HANDLING.md). |
-| zod@1.7     | Added several built-in validators to string, number, and array schemas. Calls to `.refine` now return new instance.                                                                                          |
-| zod@1.5     | Any and unknown types                                                                                                                                                                                        |
-| zod@1.4     | Refinement types (`.refine`), `.parse` no longer returns deep clone                                                                                                                                          |
-| zod@1.3     | Promise schemas                                                                                                                                                                                              |
-| zod@1.2.6   | `.parse` accepts `unknown`, `bigint` schemas                                                                                                                                                                 |
-| zod@1.2.5   | `.partial` and `.deepPartial` on object schemas                                                                                                                                                              |
-| zod@1.2.3   | Date schemas                                                                                                                                                                                                 |
-| zod@1.2.0   | `.pick`, `.omit`, and `.extend` on object schemas                                                                                                                                                            |
-| zod@1.1.0   | Records                                                                                                                                                                                                      |
-| zod@1.0.11  | `.nonstrict`                                                                                                                                                                                                 |
-| zod@1.0.10  | Type assertions with `.check`                                                                                                                                                                                |
-| zod@1.0.4   | Empty tuples                                                                                                                                                                                                 |
-| zod@1.0.0   | Type assertions, literals, enums, detailed error reporting                                                                                                                                                   |
-| zod@1.0.0   | Initial release                                                                                                                                                                                              |
+View the changelog at [CHANGELOG.md](https://github.com/vriad/zod/blob/master/CHANGELOG.md)

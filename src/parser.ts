@@ -427,10 +427,12 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
           rej(err);
         }
       });
+
     case z.ZodTypes.codec:
       def.input.parse(obj);
       const transformed = def.transformer(obj);
       return def.output.parse(transformed);
+
     default:
       util.assertNever(def);
   }
