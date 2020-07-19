@@ -55,8 +55,9 @@ export const ZodParsedType = util.arrayToEnum([
 
 export type ZodParsedType = keyof typeof ZodParsedType;
 
-type StripErrorKeys<T extends object> = T extends any ? util.OmitKeys<T, 'path'> : never;
-export type MakeErrorData = StripErrorKeys<ZodSuberrorOptionalMessage> & { path?: (string | number)[] };
+// conditional required to distribute union
+type stripPath<T extends object> = T extends any ? util.OmitKeys<T, 'path'> : never;
+export type MakeErrorData = stripPath<ZodSuberrorOptionalMessage> & { path?: (string | number)[] };
 
 export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   obj: any,
@@ -435,8 +436,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   const customChecks = def.checks || [];
   for (const check of customChecks) {
     if (!check.check(obj)) {
-      const noMethodCheck = { ...check };
-      delete noMethodCheck.check;
+      const { check: checkMethod, ...noMethodCheck } = check;
       error.addError(makeError(noMethodCheck));
     }
   }

@@ -257,7 +257,7 @@ As you can see, `.refine` takes two arguments.
      // override error message
      message?: string;
 
-     // override error path
+     // appended to error path
      path?: (string | number)[];
 
      // params object you can use to customize message
