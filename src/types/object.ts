@@ -70,7 +70,6 @@ export class ZodObject<
 
   toJSON = () => objectDefToJson(this._def);
 
-  // nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>, Type & { [k: string]: any }> =>
   nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>> =>
     new ZodObject({
       shape: this._def.shape,
