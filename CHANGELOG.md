@@ -2,6 +2,7 @@
 
 | zod version | release notes                                                                                                                                                                                                |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| zod@1.10    | Dropping support for TypeScript 3.2                                                                                                                                                                          |
 | zod@1.9     | Added z.instanceof() and z.custom(). Implemented ZodSchema.array() method.                                                                                                                                   |
 | zod@1.8     | Introduced z.void(). Major overhaul to error handling system, including the introduction of custom error maps. Wrote new [error handling guide](https://github.com/vriad/zod/blob/master/ERROR_HANDLING.md). |
 | zod@1.7     | Added several built-in validators to string, number, and array schemas. Calls to `.refine` now return new instance.                                                                                          |
