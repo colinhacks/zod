@@ -14,7 +14,11 @@ export const defaultErrorMap = (error: ZodSuberrorOptionalMessage, _ctx: ErrorMa
   let message: string;
   switch (error.code) {
     case ZodErrorCode.invalid_type:
-      message = `Invalid input: expected ${error.expected}, received ${error.received}`;
+      if (error.received === 'undefined') {
+        message = 'Required';
+      } else {
+        message = `Expected ${error.expected}, received ${error.received}`;
+      }
       break;
     case ZodErrorCode.nonempty_array_is_empty:
       message = `List must contain at least one item`;

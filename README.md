@@ -125,7 +125,8 @@ yarn add zod
 
 #### TypeScript requirements
 
-1. Zod 1.x requires TypeScript 3.2+
+1. Zod 1.x requires TypeScript 3.3+
+   > Support for TS 3.2 was dropped with the release of zod@1.10 on 19 July 2020
 2. You must enable `strictNullChecks` or use `strict` mode which includes `strictNullChecks`. Otherwise Zod can't correctly infer the types of your schemas!
    ```ts
    // tsconfig.json
@@ -257,7 +258,7 @@ As you can see, `.refine` takes two arguments.
      // override error message
      message?: string;
 
-     // override error path
+     // appended to error path
      path?: (string | number)[];
 
      // params object you can use to customize message
@@ -293,8 +294,6 @@ ZodError {
 ```
 
 Note that the `path` is set to `["confirm"]`, so you can easily display this error underneath the "Confirm password" textbox.
-
-j
 
 ## Type inference
 

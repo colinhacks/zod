@@ -45,6 +45,15 @@ test('deep partial inference', () => {
 
 test('deep partial parse', () => {
   const deep = nested.deepPartial();
+  expect(deep.shape.name instanceof z.ZodUnion).toBe(true);
+  expect(deep.shape.outer instanceof z.ZodUnion).toBe(true);
+  expect(deep.shape.outer._def.options[0] instanceof z.ZodObject).toBe(true);
+  expect(deep.shape.outer._def.options[0].shape.inner instanceof z.ZodUnion).toBe(true);
+  expect(deep.shape.outer._def.options[0].shape.inner._def.options[0] instanceof z.ZodString).toBe(true);
+});
+
+test('deep partial runtime tests', () => {
+  const deep = nested.deepPartial();
   deep.parse({});
   deep.parse({
     outer: {},
