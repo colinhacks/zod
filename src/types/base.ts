@@ -25,7 +25,6 @@ export enum ZodTypes {
   any = 'any',
   unknown = 'unknown',
   void = 'void',
-  transformer = 'transformer',
 }
 
 export type ZodTypeAny = ZodType<any, any>;
@@ -114,29 +113,6 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
   array: () => ZodArray<this> = () => ZodArray.create(this);
-  // pre: <T extends string>(
-  //   input: T,
-  //   transformer: (arg: T) => Type,
-  // ) => any = (input, transformer) => 'adsf';
-
-  // accepts: <U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
-  //   x: U,
-  //   transformer: Tx,
-  // ) => ZodCodec<U, this> = (input, transformer) => {
-  //   return ZodCodec.create(input, this, transformer);
-  // };
-
-  //  codec = (): ZodCodec<this, this> => {
-  //    return ZodCodec.create(this, this, x => x);
-  //  };
-
-  //  transform: <U extends ZodType<any>, Tx extends (arg: Type) => U['_type']>(
-  //    x: U,s
-  //    transformer: Tx,
-  //  ) => ZodCodec<this, U> = (input, transformer) => {
-  //    return ZodCodec.create(input, this, transformer);
-  //  };
-
   or: <U extends ZodType<any>>(arg: U) => ZodUnion<[this, U]> = arg => {
     return ZodUnion.create([this, arg]);
   };
