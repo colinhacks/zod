@@ -28,7 +28,7 @@ export enum ZodTypes {
   codec = 'codec',
 }
 
-export type ZodTypeAny = ZodType<any>;
+export type ZodTypeAny = ZodType<any, any>;
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 
 type InternalCheck<T> = {
@@ -125,6 +125,17 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   ) => ZodCodec<U, this> = (input, transformer) => {
     return ZodCodec.create(input, this, transformer);
   };
+
+  //  codec = (): ZodCodec<this, this> => {
+  //    return ZodCodec.create(this, this, x => x);
+  //  };
+
+  //  transform: <U extends ZodType<any>, Tx extends (arg: Type) => U['_type']>(
+  //    x: U,s
+  //    transformer: Tx,
+  //  ) => ZodCodec<this, U> = (input, transformer) => {
+  //    return ZodCodec.create(input, this, transformer);
+  //  };
 
   or: <U extends ZodType<any>>(arg: U) => ZodUnion<[this, U]> = arg => {
     return ZodUnion.create([this, arg]);

@@ -100,7 +100,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   // }
 
   const error = new ZodError([]);
-
+  let returnValue: any = obj;
   const parsedType = getParsedType(obj);
 
   switch (def.t) {
@@ -347,7 +347,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         const result = obj(...(args as any));
 
         try {
-          def.returns.parse(result);
+          return def.returns.parse(result);
         } catch (err) {
           if (err instanceof ZodError) {
             const returnsError = new ZodError([]);
@@ -361,9 +361,6 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
           }
           throw err;
         }
-
-        def.returns.parse(result);
-        return result;
       };
       return validatedFunc;
     case z.ZodTypes.record:
@@ -431,9 +428,9 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
 
     case z.ZodTypes.codec:
       def.input.parse(obj);
-      const transformed = def.transformer(obj);
-      return def.output.parse(transformed);
-
+      returnValue = def.transformer(obj);
+      def.output.parse(returnValue);
+      break;
     default:
       util.assertNever(def);
   }
@@ -450,5 +447,5 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
     throw error;
   }
 
-  return obj as any;
+  return returnValue as any;
 };
