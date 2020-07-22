@@ -1,13 +1,18 @@
 import * as z from '.';
 
-const trimAndMultiply = z.ZodCodec.fromSchema(z.string())
-  .transform(z.number(), x => parseFloat(x))
-  .transform(z.number(), num => num * 5)
+const trimAndMultiply = z
+  .transformer(z.string(), z.string(), x => {
+    return x.trim();
+  })
+  .transform(z.number(), x => {
+    return parseFloat(x);
+  })
+  .transform(z.number(), num => {
+    return num * 5;
+  })
   .refine(x => {
-    console.log(`x: ${x}`);
-    return x > 30;
+    return x > 20;
   }, 'Number is too small');
 
-console.log(trimAndMultiply.parse('5'));
-
+console.log(trimAndMultiply.parse(' 5 '));
 type trimAndMultiply = z.infer<typeof trimAndMultiply>;

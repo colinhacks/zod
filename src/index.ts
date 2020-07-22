@@ -21,7 +21,7 @@ import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
-import { ZodCodec, ZodCodecDef } from './types/codec';
+import { ZodTransformer, ZodTransformerDef } from './types/transformer';
 import { TypeOf, ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './types/base';
 import { ZodError, ZodErrorCode } from './ZodError';
 import { ZodParsedType } from './parser';
@@ -53,7 +53,7 @@ type ZodDef =
   | ZodLiteralDef
   | ZodEnumDef
   | ZodPromiseDef
-  | ZodCodecDef;
+  | ZodTransformerDef;
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -76,7 +76,7 @@ const lazyType = ZodLazy.create;
 const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
 const promiseType = ZodPromise.create;
-const codecType = ZodCodec.create;
+const transformerType = ZodTransformer.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -113,7 +113,7 @@ export {
   literalType as literal,
   enumType as enum,
   promiseType as promise,
-  codecType as codec,
+  transformerType as transformer,
   instanceOfType as instanceof,
   ostring,
   onumber,
@@ -147,7 +147,7 @@ export {
   ZodLiteral,
   ZodEnum,
   ZodPromise,
-  ZodCodec,
+  ZodTransformer,
   ZodType,
   ZodType as Schema,
   ZodType as ZodSchema,

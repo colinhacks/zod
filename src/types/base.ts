@@ -1,6 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodCodec } from '..';
+import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined } from '..';
 import { CustomError } from '../ZodError';
 
 export enum ZodTypes {
@@ -25,7 +25,7 @@ export enum ZodTypes {
   any = 'any',
   unknown = 'unknown',
   void = 'void',
-  codec = 'codec',
+  transformer = 'transformer',
 }
 
 export type ZodTypeAny = ZodType<any, any>;
@@ -119,12 +119,12 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   //   transformer: (arg: T) => Type,
   // ) => any = (input, transformer) => 'adsf';
 
-  accepts: <U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
-    x: U,
-    transformer: Tx,
-  ) => ZodCodec<U, this> = (input, transformer) => {
-    return ZodCodec.create(input, this, transformer);
-  };
+  // accepts: <U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
+  //   x: U,
+  //   transformer: Tx,
+  // ) => ZodCodec<U, this> = (input, transformer) => {
+  //   return ZodCodec.create(input, this, transformer);
+  // };
 
   //  codec = (): ZodCodec<this, this> => {
   //    return ZodCodec.create(this, this, x => x);

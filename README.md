@@ -1350,7 +1350,7 @@ This more declarative API makes schema definitions vastly more concise.
 
 `io-ts` also requires the use of gcanti's functional programming library `fp-ts` to parse results and handle errors. This is another fantastic resource for developers looking to keep their codebase strictly functional. But depending on `fp-ts` necessarily comes with a lot of intellectual overhead; a developer has to be familiar with functional programming concepts and the `fp-ts` nomenclature to use the library.
 
-- Supports codecs with seria\lization & deserialization transforms
+- Supports codecs with serialization & deserialization transforms
 - Supports branded types
 - Supports advanced functional programming, higher-kinded types, `fp-ts` compatibility
 - Missing object methods: (pick, omit, partial, deepPartial, merge, extend)

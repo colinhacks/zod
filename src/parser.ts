@@ -426,10 +426,13 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         }
       });
 
-    case z.ZodTypes.codec:
-      def.input.parse(obj);
-      returnValue = def.transformer(obj);
-      def.output.parse(returnValue);
+    case z.ZodTypes.transformer:
+      // console.log(`input: "${obj}"`);
+      const inputParseResult = def.input.parse(obj);
+      // console.log(`inputParseResult: "${inputParseResult}"`);
+      const transformedResult = def.transformer(inputParseResult);
+      // console.log(`transformedResult: "${transformedResult}"`);
+      returnValue = def.output.parse(transformedResult);
       break;
     default:
       util.assertNever(def);
@@ -437,7 +440,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
 
   const customChecks = def.checks || [];
   for (const check of customChecks) {
-    if (!check.check(obj)) {
+    if (!check.check(returnValue)) {
       const { check: checkMethod, ...noMethodCheck } = check;
       error.addError(makeError(noMethodCheck));
     }
