@@ -16,3 +16,15 @@ const trimAndMultiply = z
 
 console.log(trimAndMultiply.parse(' 5 '));
 type trimAndMultiply = z.infer<typeof trimAndMultiply>;
+
+const stringToNumber = z.transformer(z.string(), z.number(), data => parseFloat(data));
+
+const myFunc = z
+  .function()
+  .args(stringToNumber)
+  .returns(z.boolean())
+  .implement(num => num > 5);
+
+myFunc(8);
+
+// myFunc("8");
