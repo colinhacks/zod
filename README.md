@@ -196,7 +196,7 @@ const tru = z.literal(true);
 
 Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
-> IMPORTANT: As of Zod 1.4, the value returned by `.parse` is _the same variable you passed in_. Previously it returned a deep clone. The only exception to this is `Promise` schemas, which return a new Promise for reasons explained in the documentation.
+> IMPORTANT: After Zod 1.11, the value returned by `.parse` is a _deep clone_ of the variable you passed in. This was also the case in zod@1.4 and earlier. The only exception to this is `Union` and `Intersection` schemas, which return the same value you pass in.
 
 ```ts
 const stringSchema = z.string();
