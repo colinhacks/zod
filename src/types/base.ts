@@ -119,12 +119,16 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   //   transformer: (arg: T) => Type,
   // ) => any = (input, transformer) => 'adsf';
 
-  // accepts: <U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
-  //   x: U,
-  //   transformer: Tx,
-  // ) => ZodCodec<U, this> = (input, transformer) => {
-  //   return ZodCodec.create(input, this, transformer);
-  // };
+  //  accepts: <U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
+  //    x: U,
+  //    transformer: Tx,
+  //  ) => ZodTransformer<U, this> = (input, transformer) => {
+  //    return ZodTransformer.create(input, this, transformer);
+  //  };
+
+  //  default: (val: Type) => ZodTransformer<ReturnType<this['optional']>, this> = val => {
+  //    return ZodTransformer.create(this.optional(), this, x => x || val) as any;
+  //  };
 
   //  codec = (): ZodCodec<this, this> => {
   //    return ZodCodec.create(this, this, x => x);

@@ -68,6 +68,10 @@ export class ZodObject<
     return this._def.params;
   }
 
+  get t() {
+    return this;
+  }
+
   toJSON = () => objectDefToJson(this._def);
 
   nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>> =>
