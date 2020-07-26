@@ -1,23 +1,25 @@
-// import * as z from '.';
+import * as z from '.';
 
-// const ZodRHF = <T extends z.ZodType<any,any>>(schema:T)=>(values:any)=>{
-//   try{
-//     schema.parse(values)
-//     return {}
-//   }catch(err){
-//     return (err as z.ZodError).formErrors.fieldErrors;
-//   }
-// }
+type SomeObjType = { three?: 'hi'; one: number; anotherSomeObj: SomeObjType };
 
-// z.string()
-//   .parseAsync(undefined)
-//   .catch(err => console.log(JSON.stringify(err.errors, null, 2)));
+const SomeObj: z.Schema<SomeObjType> = z.object({
+  three: z.literal('hi').optional(),
+  one: z.number(),
+  anotherSomeObj: z.lazy(() => SomeObj),
+});
 
-// export const errorMap: z.ZodErrorMap = (err, ctx) => {
-//   if (err.code === z.ZodErrorCode.invalid_type) {
-//     if (err.received === 'undefined') {
-//       return { message: 'Required.' };
-//     }
-//   }
-//   return { message: ctx.defaultError };
-// };
+const TestSchema = z.object({
+  three: z.literal('hi').optional(),
+  one: z.number(),
+  two: z.literal(3),
+  four: SomeObj,
+  five: z.array(
+    z.object({
+      three: z.literal('hi').optional(),
+      one: z.number(),
+      two: z.literal(3),
+      four: SomeObj,
+      five: z.date(),
+    }),
+  ),
+});
