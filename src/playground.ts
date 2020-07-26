@@ -24,7 +24,7 @@ class ZodWithTransform<T extends z.ZodTypeAny> {
 
 const helloThere = ZodWithTransform.from(z.number()).transform(x => Number(x));
 
-helloThere.parse('12');
+console.log(helloThere.parse('12'));
 
 // const NUMBER = (Symbol.for('number') as any) as number;
 // const STRING = (Symbol.for('string') as any) as string;
@@ -40,7 +40,7 @@ helloThere.parse('12');
 //   return Object.create(obj, {
 //     validate: {
 //       value() {
-//         console.log('validate!');
+//         console.log('valireturnValuedate!');
 //       },
 //     },
 //   });
