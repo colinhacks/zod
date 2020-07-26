@@ -155,6 +155,8 @@ export class ZodObject<
     }) as any;
   };
 
+  // keyof: ()=>ZodEnum<{[k in T]: k}>
+
   static create = <T extends z.ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({
       t: z.ZodTypes.object,

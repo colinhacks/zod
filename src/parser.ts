@@ -8,6 +8,7 @@ export type ParseParams = {
   seen?: { schema: any; objects: any[] }[];
   path?: (string | number)[];
   errorMap?: ZodErrorMap;
+  async?: boolean;
 };
 
 export const getParsedType = (data: any): ZodParsedType => {
@@ -67,6 +68,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
     seen: baseParams.seen || [],
     path: baseParams.path || [],
     errorMap: baseParams.errorMap || defaultErrorMap,
+    async: baseParams.async || false,
   };
 
   const makeError = (errorData: MakeErrorData): ZodSuberror => {
@@ -177,12 +179,12 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         );
         throw error;
       }
-      const data: any[] = obj;
+      // const arrayValue: any[] = obj;
       if (def.nonempty === true && obj.length === 0) {
         error.addError(makeError({ code: ZodErrorCode.nonempty_array_is_empty }));
         throw error;
       }
-      data.map((item, i) => {
+      returnValue = (obj as any[]).map((item, i) => {
         try {
           const parsedItem = def.type.parse(item, { ...params, path: [...params.path, i] });
           return parsedItem;
@@ -191,9 +193,9 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
           error.addErrors(zerr.errors);
         }
       });
-      if (!error.isEmpty) {
-        throw error;
-      }
+      // if (!error.isEmpty) {
+      //   throw error;
+      // }
       break;
     case z.ZodTypes.object:
       if (parsedType !== ZodParsedType.object) {
@@ -222,6 +224,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
           error.addErrors(zerr.errors);
         }
       }
+      returnValue = { ...obj };
 
       break;
     case z.ZodTypes.union:
@@ -286,6 +289,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
 
       const parsedTuple: any[] = [];
       const tupleData: any[] = obj;
+
       for (const index in tupleData) {
         const item = tupleData[index];
         const itemParser = def.items[index];
@@ -295,6 +299,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
           error.addErrors(err.errors);
         }
       }
+      returnValue = parsedTuple;
       break;
     case z.ZodTypes.lazy:
       const lazySchema = def.getter();
@@ -305,7 +310,6 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(makeError({ code: ZodErrorCode.invalid_literal_value, expected: def.value }));
       }
       break;
-
     case z.ZodTypes.enum:
       if (def.values.indexOf(obj) === -1) {
         error.addError(
@@ -375,13 +379,15 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         throw error;
       }
 
+      const recordData: any = {};
       for (const key in obj) {
         try {
-          def.valueType.parse(obj[key], { ...params, path: [...params.path, key] });
+          recordData[key] = def.valueType.parse(obj[key], { ...params, path: [...params.path, key] });
         } catch (err) {
           error.addErrors(err.errors);
         }
       }
+      returnValue = recordData;
       break;
     case z.ZodTypes.date:
       if (!(obj instanceof Date)) {
@@ -395,7 +401,6 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         throw error;
       }
       if (isNaN(obj.getTime())) {
-        console.log('NAN');
         error.addError(
           makeError({
             code: ZodErrorCode.invalid_date,
@@ -431,10 +436,34 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   }
 
   const customChecks = def.checks || [];
-  for (const check of customChecks) {
-    if (!check.check(returnValue)) {
-      const { check: checkMethod, ...noMethodCheck } = check;
-      error.addError(makeError(noMethodCheck));
+  if (params.async === true) {
+    const asyncChecks = customChecks.map(check => {
+      return new Promise(async res => {
+        const checkResult = await check.check(returnValue);
+        if (!checkResult) {
+          const { check: checkMethod, ...noMethodCheck } = check;
+          error.addError(makeError(noMethodCheck));
+        }
+        res(checkResult);
+      });
+    });
+    return Promise.all(asyncChecks).then(() => {
+      if (!error.isEmpty) {
+        throw error;
+      }
+
+      return returnValue as any;
+    });
+  } else {
+    for (const check of customChecks) {
+      const checkResult = check.check(returnValue);
+      if (getParsedType(checkResult) === ZodParsedType.promise) {
+        throw new Error("You can't use .parse on a schema containing async refinements. Use .parseAsync instead.");
+      }
+      if (!checkResult) {
+        const { check: checkMethod, ...noMethodCheck } = check;
+        error.addError(makeError(noMethodCheck));
+      }
     }
   }
 

@@ -17,6 +17,23 @@ export const ZodErrorCode = util.arrayToEnum([
   'too_big',
 ]);
 
+const flatten = (err: ZodError): { formErrors: string[]; fieldErrors: { [k: string]: string[] } } => {
+  const fieldErrors: any = {};
+  const formErrors: string[] = [];
+  for (const sub of err.errors) {
+    if (sub.path.length > 0) {
+      fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
+      fieldErrors[sub.path[0]].push(sub.message);
+    } else {
+      formErrors.push(sub.message);
+    }
+  }
+  return {
+    formErrors,
+    fieldErrors,
+  };
+};
+
 export type ZodErrorCode = keyof typeof ZodErrorCode;
 
 export type ZodSuberrorBase = {
@@ -158,17 +175,9 @@ export class ZodError extends Error {
     this.errors = [...this.errors, ...subs];
   };
 
-  get formErrors(): { formErrors: string[]; fieldErrors: { [k: string]: string[] } } {
-    const fieldErrors: any = {};
-    const formErrors: string[] = [];
-    for (const sub of this.errors) {
-      if (sub.path.length > 0) {
-        fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-        fieldErrors[sub.path[0]].push(sub.message);
-      } else {
-        formErrors.push(sub.message);
-      }
-    }
-    return { formErrors, fieldErrors };
+  get formErrors() {
+    return flatten(this);
   }
+
+  flatten = () => flatten(this);
 }

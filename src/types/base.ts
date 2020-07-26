@@ -53,15 +53,9 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
 
   parse: (x: Type | unknown, params?: ParseParams) => Type;
 
-  parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = value => {
-    return new Promise((res, rej) => {
-      try {
-        const parsed = this.parse(value);
-        return res(parsed);
-      } catch (err) {
-        return rej(err);
-      }
-    });
+  parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = async (value, params) => {
+    const parsed = await this.parse(value, { ...params, async: true });
+    return parsed;
   };
 
   is(u: Type): u is Type {
