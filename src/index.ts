@@ -22,7 +22,7 @@ import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
 import { ZodTransformer, ZodTransformerDef } from './types/transformer';
-import { TypeOf, ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './types/base';
+import { TypeOf, input, output, ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './types/base';
 import { ZodError, ZodErrorCode } from './ZodError';
 import { ZodParsedType } from './parser';
 
@@ -160,4 +160,4 @@ export {
   ZodCodeGenerator,
 };
 
-export { TypeOf, TypeOf as infer };
+export { TypeOf, TypeOf as infer, input, output };

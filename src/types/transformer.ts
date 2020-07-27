@@ -15,6 +15,8 @@ export class ZodTransformer<T extends z.ZodTypeAny, U extends z.ZodTypeAny> exte
   U['_type'],
   ZodTransformerDef<T, U>
 > {
+  readonly _input!: T['_type'];
+  readonly _output!: U['_type'];
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
   get input() {
@@ -30,12 +32,12 @@ export class ZodTransformer<T extends z.ZodTypeAny, U extends z.ZodTypeAny> exte
     right: this._def.output.toJSON(),
   });
 
-  transform: <Out extends z.ZodTypeAny>(
-    output: Out,
-    transformer: (arg: U['_type']) => Out['_type'],
-  ) => ZodTransformer<this, Out> = (output, transformer) => {
-    return ZodTransformer.create(this as any, output, transformer) as any;
-  };
+  // transformTo: <Out extends z.ZodTypeAny>(
+  //   output: Out,
+  //   transformer: (arg: U['_type']) => Out['_type'],
+  // ) => ZodTransformer<this, Out> = (output, transformer) => {
+  //   return ZodTransformer.create(this as any, output, transformer) as any;
+  // };
 
   static create = <I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     input: I,

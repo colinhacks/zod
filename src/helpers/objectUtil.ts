@@ -33,6 +33,16 @@ export namespace objectUtil {
       [k in keyof T]: T[k]['_type'];
     }
   >;
+  type ObjectIntersectionInput<T extends ZodRawShape> = AddQuestionMarks<
+    {
+      [k in keyof T]: T[k]['_input'];
+    }
+  >;
+  type ObjectIntersectionOutput<T extends ZodRawShape> = AddQuestionMarks<
+    {
+      [k in keyof T]: T[k]['_input'];
+    }
+  >;
 
   type Identity<T> = T;
   type FlattenObject<T extends ZodRawShape> = Identity<{ [k in keyof T]: T[k] }>;
@@ -46,6 +56,8 @@ export namespace objectUtil {
   };
 
   export type ObjectType<T extends ZodRawShape> = FlattenObject<ObjectIntersection<NoNever<T>>>;
+  export type ObjectTypeInput<T extends ZodRawShape> = FlattenObject<ObjectIntersectionInput<NoNever<T>>>;
+  export type ObjectTypeOutput<T extends ZodRawShape> = FlattenObject<ObjectIntersectionOutput<NoNever<T>>>;
 
   export const mergeShapes = <U extends ZodRawShape, T extends ZodRawShape>(first: U, second: T): T & U => {
     const firstKeys = Object.keys(first);
