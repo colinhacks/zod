@@ -428,6 +428,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
 
     case z.ZodTypes.transformer:
       // console.log(`input: "${obj}"`);
+
       const inputParseResult = def.input.parse(obj);
       // console.log(`inputParseResult: "${inputParseResult}"`);
       const transformedResult = def.transformer(inputParseResult);

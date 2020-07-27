@@ -1,5 +1,13 @@
 import * as z from '.';
 
+console.log(
+  z
+    .object({
+      number: z.transformer(z.string(), z.number(), data => parseFloat(data)),
+    })
+    .parse({ number: '12' }),
+);
+
 const asdf = z
   .any()
   .transform(z.string(), x => x || 'asdf')
@@ -17,8 +25,9 @@ const baseSchema = z.object({
 });
 
 const reqBase = baseSchema.require();
-const ewr = reqBase.shape;
-console.log(ewr);
+reqBase;
+// const ewr = reqBase.shape;
+// console.log(ewr);
 
 // type baseInput = z.input<typeof baseSchema>;
 // type baseOutput = z.output<typeof baseSchema>;
