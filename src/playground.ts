@@ -1,5 +1,24 @@
 import * as z from '.';
 
+// const User = z.lazy(() => z.object({ posts: z.array(Post) }))
+// const Post = z.lazy(() => z.object({ author: User }))
+
+
+// const myObj = z.object({
+//   name: z.string(),
+//   neutered: z.boolean()
+// }).nonstrict();
+
+// const restStrings = z.record(z.number());
+
+// const merged = z.intersection(myObj, restStrings);
+// type merged = z.infer<typeof merged>
+
+// const asdf: merged = { name: 'asdf', qwer: 1234 }
+
+
+
+
 console.log(
   z
     .object({
