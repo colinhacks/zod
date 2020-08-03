@@ -274,11 +274,11 @@ z.object({
   password: z.string(),
   confirm: z.string(),
 })
-  .refine(data => data.confirm === data.password, {
+  .refine(data => data.password === data.confirm, {
     message: "Passwords don't match",
     path: ['confirm'],
   })
-  .parse({ password: 'asdf', confirmPassword: 'qwer' });
+  .parse({ password: 'asdf', confirm: 'qwer' });
 ```
 
 Because you provided a `path` parameter, the resulting error will be:
