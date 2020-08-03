@@ -8,15 +8,15 @@ export interface ZodTransformerDef<T extends z.ZodTypeAny = z.ZodTypeAny, U exte
   t: z.ZodTypes.transformer;
   input: T;
   output: U;
-  transformer: (arg: T['_type']) => U['_type'];
+  transformer: (arg: T['_input']) => U['_output'];
 }
 
 export class ZodTransformer<T extends z.ZodTypeAny, U extends z.ZodTypeAny> extends z.ZodType<
   U['_type'],
   ZodTransformerDef<T, U>
-> {
-  readonly _input!: T['_type'];
-  readonly _output!: U['_type'];
+  > {
+  readonly _input!: T['_input'];
+  readonly _output!: U['_output'];
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
   get input() {

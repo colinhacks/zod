@@ -904,18 +904,18 @@ const stringAndNumber = z.intersection(z.string(), z.number());
 type Never = z.infer<typeof stringAndNumber>; // => never
 ```
 
-This is particularly useful for defining "schema mixins" that you can apply to multiple schemas.
+Intersections in Zod are not smart. Whatever data you pass into `.parse()` gets passed into the two intersected schemas. Because Zod object schemas don't allow any unknown keys by default, there are some unintuitive behavior surrounding intersections of object schemas.
 
 ```ts
-const HasId = z.object({
-  id: z.string(),
+const A = z.object({
+  a: z.string(),
 });
 
-const BaseTeacher = z.object({
-  name: z.string(),
+const B = z.object({
+  b: z.string(),
 });
 
-const Teacher = z.intersection(BaseTeacher, HasId);
+const AB = z.intersection(A, B);
 
 type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };

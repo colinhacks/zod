@@ -130,12 +130,19 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   //   return ZodTransformer.create(input, this, transformer);
   // };
 
-  transform: <This extends this, U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
+  // transformFrom: <This extends this, U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
+  //   x: U,
+  //   transformer: Tx,
+  // ) => ZodTransformer<This, U> = (input, transformer) => {
+  //   return ZodTransformer.create(this as any, input, transformer) as any;
+  // };
+  transform: <This extends this, U extends ZodType<any>, Tx extends (arg: This['_type']) => U['_type']>(
     x: U,
     transformer: Tx,
   ) => ZodTransformer<This, U> = (input, transformer) => {
     return ZodTransformer.create(this as any, input, transformer) as any;
   };
+
 
   default: <T extends Type = Type, Opt extends ZodUnion<[this, ZodUndefined]> = ZodUnion<[this, ZodUndefined]>>(
     def: T,
