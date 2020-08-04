@@ -19,6 +19,7 @@
     "sourceMap": true,
     "resolveJsonModule": true,
     "strict": true,
+    "skipLibCheck": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
     "noImplicitThis": true,
@@ -31,6 +32,7 @@
   },
   "include": [
     "src",
+    // "tsconfig.json",
     "tsconfig.package.json"
   ],
   "exclude": [

@@ -37,15 +37,15 @@ export namespace objectUtil {
   type Identity<T> = T;
   type FlattenObject<T extends ZodRawShape> = Identity<{ [k in keyof T]: T[k] }>;
 
-  export type NoNeverKeys<T extends object> = {
-    [k in keyof T]: T[k] extends never ? never : k;
+  export type NoNeverKeys<T extends ZodRawShape> = {
+    [k in keyof T]: [T[k]] extends [never] ? never : k;
   }[keyof T];
 
-  export type NoNever<T extends object> = {
-    [k in NoNeverKeys<T>]: T[k];
+  export type NoNever<T extends ZodRawShape> = {
+    [k in NoNeverKeys<T>]: k extends keyof T ? T[k] : never;
   };
 
-  export type ObjectType<T extends ZodRawShape> = FlattenObject<ObjectIntersection<NoNever<T>>>;
+  export type ObjectType<T extends ZodRawShape> = FlattenObject<ObjectIntersection<T>>;
 
   export const mergeShapes = <U extends ZodRawShape, T extends ZodRawShape>(first: U, second: T): T & U => {
     const firstKeys = Object.keys(first);
