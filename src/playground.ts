@@ -1,12 +1,13 @@
 import * as z from '.';
 
-const asyncString = z.string().refine(async _val => false);
-asyncString.parse('asdf');
-
 const run = async () => {
-  // console.log(asyncString.parse('asdf'));
-  const result = asyncString.parse('asdf');
-  console.log(result);
+  await z
+    .union([z.string(), z.number().int()])
+    .parseAsync(3.2)
+    .then(console.log)
+    .catch(_err => {
+      console.log('error! oh no!');
+    });
 };
 
 run();

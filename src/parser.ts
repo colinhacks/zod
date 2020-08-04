@@ -436,6 +436,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   }
 
   const customChecks = def.checks || [];
+  console.log(`async: ${params.async}`);
   if (params.async === true) {
     const asyncChecks = customChecks.map(check => {
       return new Promise(async res => {
@@ -444,15 +445,17 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
           const { check: checkMethod, ...noMethodCheck } = check;
           error.addError(makeError(noMethodCheck));
         }
-        res(checkResult);
+        res();
       });
     });
-    return Promise.all(asyncChecks).then(() => {
-      if (!error.isEmpty) {
-        throw error;
-      }
+    return new Promise((res, rej) => {
+      return Promise.all(asyncChecks).then(() => {
+        if (!error.isEmpty) {
+          return rej(error);
+        }
 
-      return returnValue as any;
+        return res(returnValue);
+      });
     });
   } else {
     for (const check of customChecks) {
@@ -465,11 +468,10 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(makeError(noMethodCheck));
       }
     }
-  }
+    if (!error.isEmpty) {
+      throw error;
+    }
 
-  if (!error.isEmpty) {
-    throw error;
+    return returnValue as any;
   }
-
-  return returnValue as any;
 };

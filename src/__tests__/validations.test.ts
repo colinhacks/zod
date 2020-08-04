@@ -1,7 +1,9 @@
 import * as z from '..';
 
-test('array min', () => {
-  z.array(z.string())
+test('array min', async () => {
+  expect.assertions(1);
+  await z
+    .array(z.string())
     .min(4)
     .parseAsync([])
     .catch(err => {
@@ -9,8 +11,10 @@ test('array min', () => {
     });
 });
 
-test('array max', () => {
-  z.array(z.string())
+test('array max', async () => {
+  expect.assertions(1);
+  await z
+    .array(z.string())
     .max(2)
     .parseAsync(['asdf', 'asdf', 'asdf'])
     .catch(err => {
@@ -18,8 +22,10 @@ test('array max', () => {
     });
 });
 
-test('string min', () => {
-  z.string()
+test('string min', async () => {
+  expect.assertions(1);
+  await z
+    .string()
     .min(4)
     .parseAsync('asd')
     .catch(err => {
@@ -27,8 +33,10 @@ test('string min', () => {
     });
 });
 
-test('string max', () => {
-  z.string()
+test('string max', async () => {
+  expect.assertions(1);
+  await z
+    .string()
     .max(4)
     .parseAsync('aasdfsdfsd')
     .catch(err => {
@@ -36,8 +44,10 @@ test('string max', () => {
     });
 });
 
-test('number min', () => {
-  z.number()
+test('number min', async () => {
+  expect.assertions(1);
+  await z
+    .number()
     .min(3)
     .parseAsync(2)
     .catch(err => {
@@ -45,8 +55,10 @@ test('number min', () => {
     });
 });
 
-test('number max', () => {
-  z.number()
+test('number max', async () => {
+  expect.assertions(1);
+  await z
+    .number()
     .max(3)
     .parseAsync(4)
     .catch(err => {
@@ -54,8 +66,10 @@ test('number max', () => {
     });
 });
 
-test('number nonnegative', () => {
-  z.number()
+test('number nonnegative', async () => {
+  expect.assertions(1);
+  await z
+    .number()
     .nonnegative()
     .parseAsync(-1)
     .catch(err => {
@@ -63,8 +77,10 @@ test('number nonnegative', () => {
     });
 });
 
-test('number nonpositive', () => {
-  z.number()
+test('number nonpositive', async () => {
+  expect.assertions(1);
+  await z
+    .number()
     .nonpositive()
     .parseAsync(1)
     .catch(err => {
@@ -72,8 +88,10 @@ test('number nonpositive', () => {
     });
 });
 
-test('number negative', () => {
-  z.number()
+test('number negative', async () => {
+  expect.assertions(1);
+  await z
+    .number()
     .negative()
     .parseAsync(1)
     .catch(err => {
@@ -81,8 +99,10 @@ test('number negative', () => {
     });
 });
 
-test('number positive', () => {
-  z.number()
+test('number positive', async () => {
+  expect.assertions(1);
+  await z
+    .number()
     .positive()
     .parseAsync(-1)
     .catch(err => {

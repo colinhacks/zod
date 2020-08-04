@@ -135,12 +135,20 @@ test('array minimum', () => {
 });
 
 // implement test for semi-smart union logic that checks for type error on either left or right
-test('union smart errors', () => {
+test('union smart errors', async () => {
   expect.assertions(2);
-  z.union([z.string(), z.number().int()])
+  await z
+    .union([z.string(), z.number().int()])
     .parseAsync(3.2)
-    .catch(err => expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_type));
-  z.union([z.string(), z.number()])
-    .parseAsync(false)
-    .catch(err => expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_union));
+    .catch(err => {
+      console.log(err);
+      expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_type);
+    });
+  // await z
+  //   .union([z.string(), z.number()])
+  //   .parseAsync(false)
+  //   .catch(err => {
+  //     console.log(err);
+  //     expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_union);
+  //   });
 });

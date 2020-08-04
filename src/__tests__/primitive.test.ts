@@ -237,9 +237,10 @@ test('parse dateSchema null', () => {
   const f = () => dateSchema.parse(val.null);
   expect(f).toThrow();
 });
-test('parse dateSchema invalid date', () => {
+
+test('parse dateSchema invalid date', async () => {
   expect.assertions(1);
-  dateSchema.parseAsync(new Date('invalid')).catch(err => {
+  await dateSchema.parseAsync(new Date('invalid')).catch(err => {
     expect(err.errors[0].code).toEqual(z.ZodErrorCode.invalid_date);
   });
 });

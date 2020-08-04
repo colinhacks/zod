@@ -37,11 +37,12 @@ test('refinement 2', () => {
   ).toThrow();
 });
 
-test('custom path', () => {
-  z.object({
-    password: z.string(),
-    confirm: z.string(),
-  })
+test('custom path', async () => {
+  await z
+    .object({
+      password: z.string(),
+      confirm: z.string(),
+    })
     .refine(data => data.confirm === data.password, { path: ['confirm'] })
     .parseAsync({ password: 'asdf', confirm: 'qewr' })
     .catch(err => {
