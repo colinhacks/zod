@@ -133,6 +133,9 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
       case z.ZodTypes.lazy:
         const lazyType = def.getter();
         return this.setType(id, this.generate(lazyType).id);
+      case z.ZodTypes.nativeEnum:
+        // const lazyType = def.getter();
+        return this.setType(id, 'asdf');
       default:
         util.assertNever(def);
     }

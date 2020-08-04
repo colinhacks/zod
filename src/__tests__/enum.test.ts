@@ -18,3 +18,30 @@ test('infer enum', () => {
 test('get options', () => {
   expect(z.enum(['tuna', 'trout']).options).toEqual(['tuna', 'trout']);
 });
+
+test('nativeEnum test with consts', () => {
+  const Fruits: { Apple: 'apple'; Banana: 'banana' } = { Apple: 'apple', Banana: 'banana' };
+  const fruitEnum = z.nativeEnum(Fruits);
+  type fruitEnum = z.infer<typeof fruitEnum>;
+  fruitEnum.parse('apple');
+  fruitEnum.parse('banana');
+  fruitEnum.parse(Fruits.Apple);
+  fruitEnum.parse(Fruits.Banana);
+  const t1: util.AssertEqual<fruitEnum, 'apple' | 'banana'> = true;
+  [t1];
+});
+
+test('nativeEnum test with real enum', () => {
+  enum Fruits {
+    Apple = 'apple',
+    Banana = 'banana',
+  }
+  const fruitEnum = z.nativeEnum(Fruits);
+  type fruitEnum = z.infer<typeof fruitEnum>;
+  fruitEnum.parse('apple');
+  fruitEnum.parse('banana');
+  fruitEnum.parse(Fruits.Apple);
+  fruitEnum.parse(Fruits.Banana);
+  const t1: util.AssertEqual<fruitEnum, Fruits> = true;
+  [t1];
+});

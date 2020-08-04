@@ -21,6 +21,7 @@ export enum ZodTypes {
   lazy = 'lazy',
   literal = 'literal',
   enum = 'enum',
+  nativeEnum = 'nativeEnum',
   promise = 'promise',
   any = 'any',
   unknown = 'unknown',

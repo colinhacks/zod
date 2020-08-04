@@ -20,6 +20,7 @@ import { ZodFunction, ZodFunctionDef } from './types/function';
 import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
+import { ZodNativeEnum, ZodNativeEnumDef } from './types/nativeEnum';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
 import { TypeOf, ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './types/base';
 import { ZodError, ZodErrorCode } from './ZodError';
@@ -51,6 +52,7 @@ type ZodDef =
   | ZodLazyDef
   | ZodLiteralDef
   | ZodEnumDef
+  | ZodNativeEnumDef
   | ZodPromiseDef;
 
 const stringType = ZodString.create;
@@ -73,6 +75,7 @@ const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
 const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
+const nativeEnumType = ZodNativeEnum.create;
 const promiseType = ZodPromise.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
@@ -109,6 +112,7 @@ export {
   lazyType as lazy,
   literalType as literal,
   enumType as enum,
+  nativeEnumType as nativeEnum,
   promiseType as promise,
   instanceOfType as instanceof,
   ostring,
@@ -142,6 +146,7 @@ export {
   ZodLazy,
   ZodLiteral,
   ZodEnum,
+  ZodNativeEnum,
   ZodPromise,
   ZodType,
   ZodType as Schema,

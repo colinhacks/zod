@@ -52,7 +52,7 @@ interface InvalidLiteralValueError extends ZodSuberrorBase {
 
 interface InvalidEnumValueError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_enum_value;
-  options: string[];
+  options: (string | number)[];
 }
 
 interface InvalidArgumentsError extends ZodSuberrorBase {
