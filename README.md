@@ -63,7 +63,7 @@ https://github.com/sponsors/vriad
       <br>
       <b>Brandon Bayer</b>
       <br/>
-      <a href="https://github.com/flybayer">@flybayer</a>,
+      <a href="https://twitter.com/flybayer">@flybayer</a>,
       <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
       <br />
     </td>
@@ -71,16 +71,6 @@ https://github.com/sponsors/vriad
 </table>
 
 _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._
-
-<!--
-|   | |
-|---|-|
-| <p align="center"> Brandon Bayer<br>[@flybayer](https://twitter.com/flybayer)</p> |  _To get your name + Twitter + website here, <br/>sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._ |
-|   | -->
-
-<!-- ### Sponsors who know Zod
-
-_To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._ -->
 
 # Table of contents
 
