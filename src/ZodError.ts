@@ -15,6 +15,7 @@ export const ZodErrorCode = util.arrayToEnum([
   'invalid_string',
   'too_small',
   'too_big',
+  'invalid_intersection_types',
 ]);
 
 export type ZodErrorCode = keyof typeof ZodErrorCode;
@@ -88,6 +89,10 @@ interface TooBigError extends ZodSuberrorBase {
   type: 'array' | 'string' | 'number';
 }
 
+interface InvalidIntersectionTypesError extends ZodSuberrorBase {
+  code: typeof ZodErrorCode.invalid_intersection_types;
+}
+
 export interface CustomError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.custom_error;
   params?: { [k: string]: any };
@@ -106,6 +111,7 @@ export type ZodSuberrorOptionalMessage =
   | InvalidStringError
   | TooSmallError
   | TooBigError
+  | InvalidIntersectionTypesError
   | CustomError;
 
 export type ZodSuberror = ZodSuberrorOptionalMessage & { message: string };
