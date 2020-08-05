@@ -78,3 +78,15 @@ test('uuid', () => {
       .parse('9491d710-3185-4e06-bea0-6a2f275345e'),
   ).toThrow();
 });
+
+test('regexp', () => {
+  z.string()
+    .regexp(/^moo+$/)
+    .parse('mooooo');
+  expect(() =>
+    z
+      .string()
+      .uuid()
+      .parse('purr'),
+  ).toThrow();
+});
