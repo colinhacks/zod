@@ -197,7 +197,7 @@ const tru = z.literal(true);
 
 ### Parsing
 
-`.parse(data:unknown)`
+`.parse(data:unknown): T`
 
 Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
@@ -208,6 +208,36 @@ const stringSchema = z.string();
 stringSchema.parse('fish'); // => returns "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
+
+### Safe parse
+
+`.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
+
+If you don't want Zod to throw when validation errors occur, you can use `.safeParse`. This method returns an object, even if validation errors occur:
+
+```ts
+stringSchema.safeParse(12);
+// => { successs: false; error: ZodError }
+
+stringSchema.safeParse('billie');
+// => { successs: true; data: 'billie' }
+```
+
+Because the result is a _discriminated union_ you can handle errors very conveniently:
+
+```ts
+const result = stringSchema.safeParse('billie');
+if (!result.success) {
+  // handle error then return
+  return;
+}
+
+// underneath the if statement, TypeScript knows
+// that validation passed
+console.log(result.data);
+```
+
+> Errors thrown from within refinement functions will _not_ be caught.
 
 ### Type guards
 

@@ -1,6 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined } from '..';
+import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodError } from '..';
 import { CustomError } from '../ZodError';
 
 export enum ZodTypes {
@@ -53,6 +53,27 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
 
   parse: (x: Type | unknown, params?: ParseParams) => Type;
 
+  safeParse: (
+    x: Type | unknown,
+    params?: ParseParams,
+  ) => { success: true; data: Type } | { success: false; error: ZodError } = data => {
+    try {
+      const parsed = this.parse(data);
+      return {
+        success: true,
+        data: parsed,
+      };
+    } catch (err) {
+      if (err instanceof ZodError) {
+        return {
+          success: false,
+          error: err,
+        };
+      }
+      throw err;
+    }
+  };
+
   parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = value => {
     return new Promise((res, rej) => {
       try {
@@ -104,8 +125,8 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   };
 
   constructor(def: Def) {
-    this.parse = ZodParser(def);
     this._def = def;
+    this.parse = ZodParser(def);
   }
 
   abstract toJSON: () => object;
