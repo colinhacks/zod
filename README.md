@@ -20,6 +20,8 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- <br/> -->
 
+> ⚠️ You might be encountering issues building your project is you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later.
+
 # What is Zod
 
 Zod is a TypeScript-first schema declaration and validation library. I'm using the term "schema" to broadly refer to any data type/structure, from a simple `string` to a complex nested object.
@@ -36,39 +38,41 @@ Some other great aspects:
 
 # Sponsorship
 
-Hi! 👋
+Hi! 👋 I'm Colin (AKA [@vriad](https://twitter.com/vriad)), creator/maintainer of Zod. Currently I work on Zod in my spare time, but I'd love to drop my other commitments and work on it (and other OSS projects) full time. To that end, I recently applied and was accepted into the GitHub Sponsors program, which I hope will provide the resources I need to focus on open-source full time.
 
-I'm Colin (AKA [@vriad](https://twitter.com/vriad)), creator/maintainer of Zod. Currently I work on Zod in my spare time, but I'd love to drop my other commitments and work on it (and other OSS projects) full time. To that end, I recently applied and was accepted into the GitHub Sponsors program, which I hope will provide the resources I need to focus on open-source full time.
+If you make money from the software you build with Zod, I would massively appreciate a sponsorship at any level! 🙏
 
-If you make money from the software you build with Zod, I would massively appreciate a sponsorship at any level! 🙏 https://github.com/sponsors/vriad
-
-<p align="right">
-— Colin
-</p>
+Colin
+https://github.com/sponsors/vriad
 
 ### Sponsors
 
 <table>
   <tr>
+  <td align="center">
+      <a href="https://github.com/kevinsimper">
+        <img src="https://avatars1.githubusercontent.com/u/1126497?s=460&v=4" width="100px;" alt="" />
+      </a>
+      <br>
+      <b>Kevin Simper</b>
+      <br>
+      <a href="https://github.com/kevinsimper">@kevinsimper</a>
+    </td>
     <td align="center">
-    <a href="https://twitter.com/flybayer"><img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/><br /><b>Brandon Bayer</b></a><br/>
-    <span>Creator of <a href="https://blitzjs.com">Blitz.js</a></span>
-    <br />
+      <a href="https://twitter.com/flybayer">
+        <img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/>
+      </a>
+      <br>
+      <b>Brandon Bayer</b>
+      <br/>
+      <a href="https://twitter.com/flybayer">@flybayer</a>,
+      <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
+      <br />
     </td>
   </tr>
 </table>
 
 _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._
-
-<!--
-|   | |
-|---|-|
-| <p align="center"> Brandon Bayer<br>[@flybayer](https://twitter.com/flybayer)</p> |  _To get your name + Twitter + website here, <br/>sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._ |
-|   | -->
-
-<!-- ### Sponsors who know Zod
-
-_To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._ -->
 
 # Table of contents
 
@@ -267,18 +271,18 @@ As you can see, `.refine` takes two arguments.
    };
    ```
 
-These params let you define powerful custom behavior. Zod is commonly used for form validation. If you want to verify that "password" and "confirmPassword" match, you can do so like this:
+These params let you define powerful custom behavior. Zod is commonly used for form validation. If you want to verify that "password" and "confirm" match, you can do so like this:
 
 ```ts
 z.object({
   password: z.string(),
   confirm: z.string(),
 })
-  .refine(data => data.confirm === data.password, {
+  .refine(data => data.password === data.confirm, {
     message: "Passwords don't match",
-    path: ['confirm'],
+    path: ['confirm'], // set path of error
   })
-  .parse({ password: 'asdf', confirmPassword: 'qwer' });
+  .parse({ password: 'asdf', confirm: 'qwer' });
 ```
 
 Because you provided a `path` parameter, the resulting error will be:

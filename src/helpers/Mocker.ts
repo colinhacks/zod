@@ -24,10 +24,10 @@ export class Mocker {
   get date() {
     return new Date(Math.floor(Date.now() * Math.random()));
   }
-  get null() {
+  get null(): null {
     return null;
   }
-  get undefined() {
+  get undefined(): undefined {
     return undefined;
   }
   get stringOptional() {

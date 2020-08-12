@@ -114,7 +114,7 @@ export class ZodObject<
 
   pick = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask,
-  ): ZodObject<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }, Params> => {
+  ): ZodObject<objectUtil.NoNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>, Params> => {
     const shape: any = {};
     Object.keys(mask).map(key => {
       shape[key] = this.shape[key];
@@ -127,7 +127,7 @@ export class ZodObject<
 
   omit = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask,
-  ): ZodObject<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }, Params> => {
+  ): ZodObject<objectUtil.NoNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>, Params> => {
     const shape: any = {};
     Object.keys(this.shape).map(key => {
       if (!Object.keys(mask).includes(key)) {
