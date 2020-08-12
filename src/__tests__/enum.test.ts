@@ -45,3 +45,18 @@ test('nativeEnum test with real enum', () => {
   const t1: util.AssertEqual<fruitEnum, Fruits> = true;
   [t1];
 });
+
+test('nativeEnum test with const with numeric keys', () => {
+  const FruitValues = {
+    Apple: 10,
+    Banana: 20,
+  } as const;
+  const fruitEnum = z.nativeEnum(FruitValues);
+  type fruitEnum = z.infer<typeof fruitEnum>;
+  fruitEnum.parse('apple');
+  fruitEnum.parse('banana');
+  fruitEnum.parse(FruitValues.Apple);
+  fruitEnum.parse(FruitValues.Banana);
+  const t1: util.AssertEqual<fruitEnum, 10 | 20> = true;
+  [t1];
+});

@@ -1,5 +1,4 @@
 // import * as z from '.';
-
 // const lit = {
 //   Alpha: 'a',
 //   Beta: 'b',
@@ -26,3 +25,10 @@ const filtered = (obj: any) => {
   return filtered;
 };
 console.log(filtered(Fruits));
+
+// type AcceptedValues = 1|2|3|4|5|6|7|8|9|10|11|12;
+// type AcceptedValues = 1|2|3|4|5|6|7|8|9|10|11|12;
+// const mynumber:z.Schema<AcceptedValues> = z.number().min(1).max(12) as any;
+// const qer = mynumber.parse(5); // type: AcceptedValues
+
+// z.object({ message: 'Gimme object!' });
