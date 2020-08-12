@@ -2,7 +2,7 @@ import * as z from './base';
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
-import { ZodErrorCode } from '..';
+import { StringValidation, ZodErrorCode } from '../ZodError';
 import { errorUtil } from '../helpers/errorUtil';
 
 export interface ZodStringDef extends z.ZodTypeDef {
@@ -47,29 +47,21 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     return this.min(len, message).max(len, message);
   }
 
-  email = (message?: errorUtil.ErrMessage) =>
+  protected _regex = (regexp: RegExp, validation: StringValidation, message?: errorUtil.ErrMessage) =>
     this._refinement({
-      check: data => emailRegex.test(data),
+      validation,
       code: ZodErrorCode.invalid_string,
-      validation: 'email',
+      check: data => regexp.test(data),
       ...errorUtil.errToObj(message),
     });
 
-  url = (message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => urlRegex.test(data),
-      code: ZodErrorCode.invalid_string,
-      validation: 'url',
-      ...errorUtil.errToObj(message),
-    });
+  email = (message?: errorUtil.ErrMessage) => this._regex(emailRegex, 'email', message);
 
-  uuid = (message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => uuidRegex.test(data),
-      code: ZodErrorCode.invalid_string,
-      validation: 'uuid',
-      ...errorUtil.errToObj(message),
-    });
+  url = (message?: errorUtil.ErrMessage) => this._regex(urlRegex, 'url', message);
+
+  uuid = (message?: errorUtil.ErrMessage) => this._regex(uuidRegex, 'uuid', message);
+
+  regex = (regexp: RegExp, message?: errorUtil.ErrMessage) => this._regex(regexp, 'regex', message);
 
   nonempty = (message?: errorUtil.ErrMessage) => this.min(1, errorUtil.errToObj(message));
 
