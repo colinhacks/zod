@@ -151,10 +151,29 @@ export class ZodObject<
     });
   };
 
-  scalars = (): ZodObject<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? T[k] : never }, Params> => {
+  primitives = (): ZodObject<
+    objectUtil.ObjectType<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? T[k] : never }>,
+    Params
+  > => {
     const newShape: any = {};
     for (const key in this.shape) {
       if (isScalar(this.shape[key])) {
+        newShape[key] = this.shape[key].optional();
+      }
+    }
+    return new ZodObject({
+      ...this._def,
+      shape: () => newShape,
+    });
+  };
+
+  nonprimitives = (): ZodObject<
+    objectUtil.ObjectType<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? never : T[k] }>,
+    Params
+  > => {
+    const newShape: any = {};
+    for (const key in this.shape) {
+      if (!isScalar(this.shape[key])) {
         newShape[key] = this.shape[key].optional();
       }
     }
