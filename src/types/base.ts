@@ -1,7 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
 import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodError } from '..';
-import { CustomError } from '../ZodError';
 
 export enum ZodTypes {
   string = 'string',
@@ -34,10 +33,20 @@ type InternalCheck<T> = {
   check: (arg: T) => any;
 } & MakeErrorData;
 
+// type Check<T> = {
+//   check: (arg: T) => any;
+//   path?: (string | number)[];
+//   // message?: string;
+//   // params?: {[k:string]:any}
+// } & util.Omit<CustomError, 'code' | 'path'>;
+
 type Check<T> = {
   check: (arg: T) => any;
   path?: (string | number)[];
-} & util.Omit<CustomError, 'code' | 'path'>;
+  message?: string;
+  params?: { [k: string]: any };
+};
+
 export interface ZodTypeDef {
   t: ZodTypes;
   checks?: InternalCheck<any>[];
@@ -103,8 +112,8 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  refine = <Val extends (arg: Type) => any>(
-    check: Val,
+  refine = <Func extends (arg: Type) => any>(
+    check: Func,
     message: string | util.Omit<Check<Type>, 'check'> = 'Invalid value.',
   ) => {
     if (typeof message === 'string') {
