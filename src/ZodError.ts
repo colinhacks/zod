@@ -21,7 +21,7 @@ export type ZodErrorCode = keyof typeof ZodErrorCode;
 
 export type ZodSuberrorBase = {
   path: (string | number)[];
-  code: ZodErrorCode;
+  // code: ZodErrorCode;
   message?: string;
 };
 

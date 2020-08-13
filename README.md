@@ -144,11 +144,14 @@ yarn add zod
 #### TypeScript requirements
 
 1. Zod 1.x requires TypeScript 3.3+
+
    > Support for TS 3.2 was dropped with the release of zod@1.10 on 19 July 2020
+
 2. You must enable `strictNullChecks` or use `strict` mode which includes `strictNullChecks`. Otherwise Zod can't correctly infer the types of your schemas!
    ```ts
    // tsconfig.json
    {
+     // ...
      "compilerOptions": {
        // ...
        "strictNullChecks": true
