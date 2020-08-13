@@ -3,8 +3,7 @@
   <h1 align="center">Zod</h1>
 </p>
 <p align="center">
-<a href="https://twitter.com/vriad" rel="nofollow"><img src="http://img.shields.io/badge/created%20by-@vriad-61adff.svg" alt="Created by Colin McDonnell"></a>
-
+<a href="https://twitter.com/vriad" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@vriad-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/vriad/zod" alt="License"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/vriad/zod" alt="stars"></a>
@@ -23,7 +22,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- <br/> -->
 
-> ⚠️ You might be encountering issues building your project is you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later.
+> ⚠️ You might be encountering issues building your project if you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later.
 
 # What is Zod
 
@@ -43,7 +42,7 @@ Some other great aspects:
 
 <table>
   <tr>
-  <td align="center">
+    <td align="center">
       <a href="https://github.com/kevinsimper">
         <img src="https://avatars0.githubusercontent.com/u/3084745" width="100px;" alt="" />
       </a>
@@ -53,11 +52,11 @@ Some other great aspects:
       <a href="https://twitter.com/vriad">@vriad</a>,
       <span>creator of Zod</span>
     </td>
-   
+    <td>
+    I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're a freelancer or entrepreneur, get listed below and enjoy Zod can [help you with that](https://github.com/sponsors/vriad). Check out my GitHub Sponsors profile at [github.com/sponsors/vriad](github.com/sponsors/vriad).
+    </td>
   </tr>
 </table>
-
-I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're a freelancer or consultant looking for your next gig, Zod can [help you with that](https://github.com/sponsors/vriad).
 
 ### Sponsors
 
