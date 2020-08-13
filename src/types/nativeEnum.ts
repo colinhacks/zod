@@ -9,7 +9,6 @@ type EnumLike = { [k: string]: string | number; [nu: number]: string };
 
 export class ZodNativeEnum<T extends EnumLike> extends z.ZodType<T[keyof T], ZodNativeEnumDef<T>> {
   toJSON = () => this._def;
-
   static create = <T extends EnumLike>(values: T): ZodNativeEnum<T> => {
     return new ZodNativeEnum({
       t: z.ZodTypes.nativeEnum,

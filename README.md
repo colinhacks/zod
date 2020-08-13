@@ -98,7 +98,7 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
 - [Unions](#unions)
   - [.optional](#optional-types)
   - [.nullable](#nullable-types)
-  - [.enum](#enums)
+- [Enums](#enums)
 - [Intersections](#intersections)
 - [Tuples](#tuples)
 - [Recursive types](#recursive-types)
@@ -845,7 +845,11 @@ type F = z.infer<typeof F>; // string | number | boolean | undefined | null;
 
 ### Enums
 
-An enum is just a union of string literals, so you can "build your own enum" like this:
+There are two ways to define enums in Zod.
+
+#### Zod enums
+
+An enum is just a union of string literals, so you _could_ define an enum like this:
 
 ```ts
 const FishEnum = z.union([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
@@ -854,25 +858,20 @@ FishEnum.parse('Salmon'); // => "Salmon"
 FishEnum.parse('Flounder'); // => throws
 ```
 
-But for convenience Zod provides a built-in `z.enum()` function, like so:
+For convenience Zod provides a built-in `z.enum()` function. Here's is the equivalent code:
 
 ```ts
 const FishEnum = z.enum(['Salmon', 'Tuna', 'Trout']);
+
 type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
-> You need to pass the literal array directly into z.enum():
->
-> ```ts
-> const FishEnum = z.enum(['Salmon', 'Tuna', 'Trout']);
-> ```
->
-> If you define the array as a separate variable, then pass it into z.enum, type inference won't work properly.
+> Important! You need to pass the literal array _directly_ into z.enum(). Do not define it separately, than pass it in as a variable! This is required for proper type inference.
 
-#### Autocompletion
+**Autocompletion**
 
-You can autocomplete the enum values with the `.enum` property of an enum schema:
+To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 
 ```ts
 FishEnum.enum.Salmon; // => autocompletes
@@ -891,6 +890,70 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 
 ```ts
 FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
+```
+
+#### Native enums
+
+> ⚠️ `nativeEnum()` requires TypeScript 3.6 or higher!
+
+Zod enums are the recommended approach to defining and validating enums. But there may be scenarios where you need to validate against an enum from a third-party library, or perhaps you don't want to rewrite your existing enums. For this you can use `z.nativeEnum()`.
+
+**Numeric enums**
+
+```ts
+enum Fruits {
+  Apple,
+  Banana,
+}
+
+const FruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
+
+FruitEnum.parse(Fruits.Apple); // passes
+FruitEnum.parse(Fruits.Banana); // passes
+FruitEnum.parse(0); // passes
+FruitEnum.parse(1); // passes
+FruitEnum.parse(3); // fails
+```
+
+**String enums**
+
+```ts
+enum Fruits {
+  Apple = 'apple',
+  Banana = 'banana',
+  Cantaloupe, // you can mix numerical and string enums
+}
+
+const FruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
+
+FruitEnum.parse(Fruits.Apple); // passes
+FruitEnum.parse(Fruits.Cantaloupe); // passes
+FruitEnum.parse('apple'); // passes
+FruitEnum.parse('banana'); // passes
+FruitEnum.parse(0); // passes
+FruitEnum.parse('Cantaloupe'); // fails
+```
+
+**Const enums**
+
+The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` required TypeScript 3.4+!
+
+```ts
+const Fruits = {
+  Apple: 'apple',
+  Banana: 'banana',
+  Cantaloupe: 3,
+} as const;
+
+const FruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof FruitEnum>; // "apple" | "banana" | 3
+
+FruitEnum.parse('apple'); // passes
+FruitEnum.parse('banana'); // passes
+FruitEnum.parse(3); // passes
+FruitEnum.parse('Cantaloupe'); // fails
 ```
 
 ## Intersections
