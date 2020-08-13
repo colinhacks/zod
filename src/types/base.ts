@@ -1,7 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined } from '..';
-import { CustomError } from '../ZodError';
+import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodError } from '..';
 
 export enum ZodTypes {
   string = 'string',
@@ -35,10 +34,20 @@ type InternalCheck<T> = {
   check: (arg: T) => any;
 } & MakeErrorData;
 
+// type Check<T> = {
+//   check: (arg: T) => any;
+//   path?: (string | number)[];
+//   // message?: string;
+//   // params?: {[k:string]:any}
+// } & util.Omit<CustomError, 'code' | 'path'>;
+
 type Check<T> = {
   check: (arg: T) => any;
   path?: (string | number)[];
-} & util.Omit<CustomError, 'code' | 'path'>;
+  message?: string;
+  params?: { [k: string]: any };
+};
+
 export interface ZodTypeDef {
   t: ZodTypes;
   checks?: InternalCheck<any>[];
@@ -53,6 +62,27 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   readonly _def!: Def;
 
   parse: (x: Type | unknown, params?: ParseParams) => Type;
+
+  safeParse: (
+    x: Type | unknown,
+    params?: ParseParams,
+  ) => { success: true; data: Type } | { success: false; error: ZodError } = data => {
+    try {
+      const parsed = this.parse(data);
+      return {
+        success: true,
+        data: parsed,
+      };
+    } catch (err) {
+      if (err instanceof ZodError) {
+        return {
+          success: false,
+          error: err,
+        };
+      }
+      throw err;
+    }
+  };
 
   parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = value => {
     return new Promise((res, rej) => {
@@ -83,8 +113,8 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  refine = <Val extends (arg: Type) => any>(
-    check: Val,
+  refine = <Func extends (arg: Type) => any>(
+    check: Func,
     message: string | util.Omit<Check<Type>, 'check'> = 'Invalid value.',
   ) => {
     if (typeof message === 'string') {
@@ -105,8 +135,8 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   };
 
   constructor(def: Def) {
-    this.parse = ZodParser(def);
     this._def = def;
+    this.parse = ZodParser(def);
   }
 
   abstract toJSON: () => object;

@@ -3,10 +3,12 @@
   <h1 align="center">Zod</h1>
 </p>
 <p align="center">
-  <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/vriad/zod" alt="License"></a>
-  <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
-  <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/vriad/zod" alt="stars"></a>
-  <a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
+<a href="https://twitter.com/vriad" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@vriad-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
+<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/vriad/zod" alt="License"></a>
+<a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
+<a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/vriad/zod" alt="stars"></a>
+<a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
+
 </p>
 <p align="center">
 if you're happy and you know it, star this repo ⭐
@@ -20,7 +22,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- <br/> -->
 
-> ⚠️ You might be encountering issues building your project is you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later.
+> ⚠️ You might be encountering issues building your project if you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later.
 
 # What is Zod
 
@@ -38,12 +40,23 @@ Some other great aspects:
 
 # Sponsorship
 
-Hi! 👋 I'm Colin (AKA [@vriad](https://twitter.com/vriad)), creator/maintainer of Zod. Currently I work on Zod in my spare time, but I'd love to drop my other commitments and work on it (and other OSS projects) full time. To that end, I recently applied and was accepted into the GitHub Sponsors program, which I hope will provide the resources I need to focus on open-source full time.
-
-If you make money from the software you build with Zod, I would massively appreciate a sponsorship at any level! 🙏
-
-Colin
-https://github.com/sponsors/vriad
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/kevinsimper">
+        <img src="https://avatars0.githubusercontent.com/u/3084745" width="100px;" alt="" />
+      </a>
+      <br>
+      <b>Colin McDonnell</b>
+      <br>
+      <a href="https://twitter.com/vriad">@vriad</a>,
+      <span>creator of Zod</span>
+    </td>
+    <td>
+    I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're a freelancer or entrepreneur, get listed below and enjoy Zod can [help you with that](https://github.com/sponsors/vriad). Check out my GitHub Sponsors profile at [github.com/sponsors/vriad](github.com/sponsors/vriad).
+    </td>
+  </tr>
+</table>
 
 ### Sponsors
 
@@ -89,9 +102,10 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
   - [.shape](#shape-property)
   - [.merge](#merging)
   - [.extend](#extending-objects)
-  - [.pick/.omit](#masking)
+  - [.pick/.omit](#pick-and-omit)
   - [.partial/.deepPartial](#partials)
   - [.nonstrict](#unknown-keys)
+  - [.primitives/.nonprimitives](#primitives-and-nonprimitives)
 - [Records](#records)
 - [Arrays](#arrays)
   - [.nonempty](#non-empty-lists)
@@ -130,11 +144,14 @@ yarn add zod
 #### TypeScript requirements
 
 1. Zod 1.x requires TypeScript 3.3+
+
    > Support for TS 3.2 was dropped with the release of zod@1.10 on 19 July 2020
+
 2. You must enable `strictNullChecks` or use `strict` mode which includes `strictNullChecks`. Otherwise Zod can't correctly infer the types of your schemas!
    ```ts
    // tsconfig.json
    {
+     // ...
      "compilerOptions": {
        // ...
        "strictNullChecks": true
@@ -196,17 +213,47 @@ const tru = z.literal(true);
 
 ### Parsing
 
-`.parse(data:unknown)`
+`.parse(data:unknown): T`
 
 Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
-> IMPORTANT: As of Zod 1.4, the value returned by `.parse` is _the same variable you passed in_. Previously it returned a deep clone. The only exception to this is `Promise` schemas, which return a new Promise for reasons explained in the documentation.
+> IMPORTANT: After Zod 1.11, the value returned by `.parse` is a _deep clone_ of the variable you passed in. This was also the case in zod@1.4 and earlier. The only exception to this is `Union` and `Intersection` schemas, which return the same value you pass in.
 
 ```ts
 const stringSchema = z.string();
 stringSchema.parse('fish'); // => returns "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
+
+### Safe parse
+
+`.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
+
+If you don't want Zod to throw when validation errors occur, you can use `.safeParse`. This method returns an object, even if validation errors occur:
+
+```ts
+stringSchema.safeParse(12);
+// => { successs: false; error: ZodError }
+
+stringSchema.safeParse('billie');
+// => { successs: true; data: 'billie' }
+```
+
+Because the result is a _discriminated union_ you can handle errors very conveniently:
+
+```ts
+const result = stringSchema.safeParse('billie');
+if (!result.success) {
+  // handle error then return
+  return;
+}
+
+// underneath the if statement, TypeScript knows
+// that validation passed
+console.log(result.data);
+```
+
+> Errors thrown from within refinement functions will _not_ be caught.
 
 ### Type guards
 
@@ -326,6 +373,7 @@ z.string().length(5);
 z.string().email();
 z.string().url();
 z.string().uuid();
+z.string().regexp(regexp);
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
@@ -477,7 +525,7 @@ const ModifiedAnimal = Animal.extend({
 // => { population: number, species: string[] }
 ```
 
-#### Masking
+#### Pick and omit
 
 Object masking is one of Zod's killer features. It lets you create slight variations of your object schemas easily and succinctly. Inspired by TypeScript's built-in `Pick` and `Omit` utility types, all Zod object schemas have `.pick` and `.omit` methods that return a "masked" version of the schema.
 
@@ -510,6 +558,42 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 This is useful for database logic, where endpoints often accept as input slightly modified versions of your database schemas. For instance, the input to a hypothetical `createRecipe` endpoint would accept the `NoIDRecipe` type, since the ID will be generated by your database automatically.
 
 > This is a vital feature for implementing typesafe backend logic, yet as far as I know, no other validation library (yup, Joi, io-ts, runtypes, class-validator, ow...) offers similar functionality as of this writing (April 2020). This is one of the must-have features that inspired the creation of Zod.
+
+#### Primitives and nonprimitives
+
+Zod provides a convenience method for automatically picking all primitive or non-primitive fields from an object schema.
+
+```ts
+const Post = z.object({
+  title: z.string()
+});
+
+const User = z.object({
+  id: z.number(),
+  name: z.string(),
+  posts: z.array(Post)
+});
+
+const UserFields = User.primitives();
+typeof UserFields = z.infer<typeof UserFields>;
+// => { id: number; name; string; }
+
+const UserRelations = User.nonprimitives();
+typeof UserFields = z.infer<typeof UserFields>;
+// => { posts: Post[] }
+```
+
+These schemas are considering "primitive":
+
+- string
+- number
+- boolean
+- bigint
+- date
+- null/undefined
+- enums
+- any array of the above types
+- any union of the above types
 
 #### Partials
 

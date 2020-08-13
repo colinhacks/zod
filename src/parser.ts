@@ -22,10 +22,10 @@ export const getParsedType = (data: any): ZodParsedType => {
   if (data instanceof Date) return 'date';
   if (typeof data === 'function') return 'function';
   if (data === undefined) return 'undefined';
-  if (data === null) return 'null';
   if (typeof data === 'undefined') return 'undefined';
   if (typeof data === 'object') {
     if (Array.isArray(data)) return 'array';
+    if (!data) return 'null';
     if (data.then && typeof data.then === 'function' && data.catch && typeof data.catch === 'function') {
       return 'promise';
     }
@@ -86,9 +86,12 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   };
 
   const def: ZodDef = schemaDef as any;
+  const parsedType = getParsedType(obj);
 
   const schemaSeen = params.seen.find(x => x.schema === schemaDef);
-  if (schemaSeen) {
+  const isPrimitive = typeof obj !== 'object' || obj === null;
+  if (isPrimitive) {
+  } else if (schemaSeen) {
     if (schemaSeen.objects.indexOf(obj) !== -1) {
       return obj;
     } else {
@@ -97,11 +100,9 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   } else {
     params.seen.push({ schema: schemaDef, objects: [obj] });
   }
-  // }
 
   const error = new ZodError([]);
   let returnValue: any = obj;
-  const parsedType = getParsedType(obj);
 
   switch (def.t) {
     case z.ZodTypes.string:

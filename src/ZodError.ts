@@ -21,7 +21,7 @@ export type ZodErrorCode = keyof typeof ZodErrorCode;
 
 export type ZodSuberrorBase = {
   path: (string | number)[];
-  code: ZodErrorCode;
+  // code: ZodErrorCode;
   message?: string;
 };
 
@@ -69,9 +69,11 @@ interface InvalidDateError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_date;
 }
 
+export type StringValidation = 'email' | 'url' | 'uuid' | 'regex';
+
 interface InvalidStringError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_string;
-  validation: 'email' | 'url' | 'uuid';
+  validation: StringValidation;
 }
 
 interface TooSmallError extends ZodSuberrorBase {

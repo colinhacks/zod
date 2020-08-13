@@ -4,6 +4,7 @@ import { ZodUndefined } from './undefined';
 import { ZodUnion } from './union';
 import { objectUtil } from '../helpers/objectUtil';
 import { partialUtil } from '../helpers/partialUtil';
+import { isScalar } from '../isScalar';
 
 const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <Augmentation extends z.ZodRawShape>(
   augmentation: Augmentation,
@@ -43,6 +44,18 @@ const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
 interface ZodObjectParams {
   strict: boolean;
 }
+
+export type Scalars =
+  | string
+  | string[]
+  | number
+  | number[]
+  | boolean
+  | boolean[]
+  | bigint
+  | bigint[]
+  | undefined
+  | null;
 
 type SetKey<Target extends object, Key extends string, Value extends any> = objectUtil.Flatten<
   { [k in Exclude<keyof Target, Key>]: Target[k] } & { [k in Key]: Value }
@@ -131,6 +144,38 @@ export class ZodObject<
     const newShape: any = {};
     for (const key in this.shape) {
       newShape[key] = this.shape[key].optional();
+    }
+    return new ZodObject({
+      ...this._def,
+      shape: () => newShape,
+    });
+  };
+
+  primitives = (): ZodObject<
+    objectUtil.ObjectType<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? T[k] : never }>,
+    Params
+  > => {
+    const newShape: any = {};
+    for (const key in this.shape) {
+      if (isScalar(this.shape[key])) {
+        newShape[key] = this.shape[key].optional();
+      }
+    }
+    return new ZodObject({
+      ...this._def,
+      shape: () => newShape,
+    });
+  };
+
+  nonprimitives = (): ZodObject<
+    objectUtil.ObjectType<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? never : T[k] }>,
+    Params
+  > => {
+    const newShape: any = {};
+    for (const key in this.shape) {
+      if (!isScalar(this.shape[key])) {
+        newShape[key] = this.shape[key].optional();
+      }
     }
     return new ZodObject({
       ...this._def,
