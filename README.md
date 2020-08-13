@@ -3,10 +3,13 @@
   <h1 align="center">Zod</h1>
 </p>
 <p align="center">
-  <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/vriad/zod" alt="License"></a>
-  <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
-  <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/vriad/zod" alt="stars"></a>
-  <a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
+<a href="https://twitter.com/vriad" rel="nofollow"><img src="http://img.shields.io/badge/created%20by-@vriad-61adff.svg" alt="Created by Colin McDonnell"></a>
+
+<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/vriad/zod" alt="License"></a>
+<a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
+<a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/vriad/zod" alt="stars"></a>
+<a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
+
 </p>
 <p align="center">
 if you're happy and you know it, star this repo ⭐
@@ -38,12 +41,23 @@ Some other great aspects:
 
 # Sponsorship
 
-Hi! 👋 I'm Colin (AKA [@vriad](https://twitter.com/vriad)), creator/maintainer of Zod. Currently I work on Zod in my spare time, but I'd love to drop my other commitments and work on it (and other OSS projects) full time. To that end, I recently applied and was accepted into the GitHub Sponsors program, which I hope will provide the resources I need to focus on open-source full time.
+<table>
+  <tr>
+  <td align="center">
+      <a href="https://github.com/kevinsimper">
+        <img src="https://avatars0.githubusercontent.com/u/3084745" width="100px;" alt="" />
+      </a>
+      <br>
+      <b>Colin McDonnell</b>
+      <br>
+      <a href="https://twitter.com/vriad">@vriad</a>,
+      <span>creator of Zod</span>
+    </td>
+   
+  </tr>
+</table>
 
-If you make money from the software you build with Zod, I would massively appreciate a sponsorship at any level! 🙏
-
-Colin
-https://github.com/sponsors/vriad
+I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're a freelancer or consultant looking for your next gig, Zod can [help you with that](https://github.com/sponsors/vriad).
 
 ### Sponsors
 
