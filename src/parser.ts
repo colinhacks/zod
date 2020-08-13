@@ -88,16 +88,17 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   const def: ZodDef = schemaDef as any;
 
   const schemaSeen = params.seen.find(x => x.schema === schemaDef);
-  if (schemaSeen) {
+  const isPrimitive = typeof obj !== 'object' && typeof obj !== 'function';
+  if (isPrimitive) {
+  } else if (schemaSeen) {
     if (schemaSeen.objects.indexOf(obj) !== -1) {
       return obj;
     } else {
       schemaSeen.objects.push(obj);
     }
-  } else {
+  } else if (obj) {
     params.seen.push({ schema: schemaDef, objects: [obj] });
   }
-  // }
 
   const error = new ZodError([]);
   let returnValue: any = obj;
