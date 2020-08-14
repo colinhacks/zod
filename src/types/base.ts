@@ -1,6 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined } from '..';
+import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodTransformer } from '..';
 import { CustomError } from '../ZodError';
 
 export enum ZodTypes {
@@ -25,6 +25,7 @@ export enum ZodTypes {
   any = 'any',
   unknown = 'unknown',
   void = 'void',
+  transformer = 'transformer'
 }
 
 export type ZodTypeAny = ZodType<any, any>;
@@ -45,9 +46,13 @@ export interface ZodTypeDef {
 }
 
 export type TypeOf<T extends { _type: any }> = T['_type'];
-export type Infer<T extends { _type: any }> = T['_type'];
+export type input<T extends { _input: any }> = T['_input'];
+export type output<T extends { _output: any }> = T['_output'];
+export type infer<T extends { _type: any }> = T['_type'];
 
 export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
+  readonly _input!: Type;
+  readonly _output!: Type;
   readonly _type!: Type;
   readonly _def!: Def;
 
@@ -107,6 +112,57 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
   array: () => ZodArray<this> = () => ZodArray.create(this);
+  // pre: <T extends string>(
+  //   input: T,
+  //   transformer: (arg: T) => Type,
+  // ) => any = (input, transformer) => 'adsf';
+
+  // transformFrom: <U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
+  //   x: U,
+  //   transformer: Tx,
+  // ) => ZodTransformer<U, this> = (input, transformer) => {
+  //   return ZodTransformer.create(input, this, transformer);
+  // };
+
+  // transformFrom: <This extends this, U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
+  //   x: U,
+  //   transformer: Tx,
+  // ) => ZodTransformer<This, U> = (input, transformer) => {
+  //   return ZodTransformer.create(this as any, input, transformer) as any;
+  // };
+  transform: <This extends this, U extends ZodType<any>, Tx extends (arg: This['_type']) => U['_type']>(
+    x: U,
+    transformer: Tx,
+  ) => ZodTransformer<This, U> = (input, transformer) => {
+    return ZodTransformer.create(this as any, input, transformer) as any;
+  };
+
+
+  default: <T extends Type = Type, Opt extends ZodUnion<[this, ZodUndefined]> = ZodUnion<[this, ZodUndefined]>>(
+    def: T,
+  ) => ZodTransformer<Opt, this> = def => {
+    return ZodTransformer.create(this.optional(), this, (x: any) => {
+      return (x || def) as any;
+    }) as any;
+  };
+
+  //  default: (val: Type) => ZodTransformer<ZodType<Type | undefined>, this> = val => {
+  //    return ZodTransformer.create(this.optional(), this, x => {
+  //      return (x || val) as any;
+  //    }) as any;
+  //  };
+
+  //  codec = (): ZodCodec<this, this> => {
+  //    return ZodCodec.create(this, this, x => x);
+  //  };
+
+  //  transform: <U extends ZodType<any>, Tx extends (arg: Type) => U['_type']>(
+  //    x: U,s
+  //    transformer: Tx,
+  //  ) => ZodCodec<this, U> = (input, transformer) => {
+  //    return ZodCodec.create(input, this, transformer);
+  //  };
+
   or: <U extends ZodType<any>>(arg: U) => ZodUnion<[this, U]> = arg => {
     return ZodUnion.create([this, arg]);
   };

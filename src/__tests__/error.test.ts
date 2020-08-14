@@ -144,11 +144,11 @@ test('union smart errors', async () => {
       console.log(err);
       expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_type);
     });
-  // await z
-  //   .union([z.string(), z.number()])
-  //   .parseAsync(false)
-  //   .catch(err => {
-  //     console.log(err);
-  //     expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_union);
-  //   });
+  await z
+    .union([z.string(), z.number()])
+    .parseAsync(false)
+    .catch(err => {
+      console.log(err);
+      expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_union);
+    });
 });

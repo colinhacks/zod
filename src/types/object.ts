@@ -48,6 +48,17 @@ type SetKey<Target extends object, Key extends string, Value extends any> = obje
   { [k in Exclude<keyof Target, Key>]: Target[k] } & { [k in Key]: Value }
 >;
 
+type makeKeysRequired<T extends ZodObject<any, any>> = T extends ZodObject<infer U, infer P>
+  ? ZodObject<objectUtil.NoNever<{ [k in keyof U]: makeRequired<U[k]> }>, P>
+  : never;
+type makeRequired<T extends z.ZodType<any>> = T extends ZodUnion<infer U>
+  ? U extends [infer Y, ZodUndefined]
+    ? Y
+    : U extends [ZodUndefined, infer Z]
+    ? Z
+    : T
+  : T;
+
 type ZodObjectType<T extends z.ZodRawShape, Params extends ZodObjectParams> = Params['strict'] extends true
   ? objectUtil.ObjectType<T>
   : objectUtil.Flatten<objectUtil.ObjectType<T> & { [k: string]: any }>;
@@ -66,6 +77,10 @@ export class ZodObject<
 
   get params() {
     return this._def.params;
+  }
+
+  get t() {
+    return this;
   }
 
   toJSON = () => objectDefToJson(this._def);
@@ -136,6 +151,26 @@ export class ZodObject<
       ...this._def,
       shape: () => newShape,
     });
+  };
+
+  require: () => makeKeysRequired<this> = () => {
+    const newShape: any = {};
+    for (const key in this.shape) {
+      const val = this.shape[key];
+      if (val instanceof ZodUnion && val.options.length === 2) {
+        if (val.options[0] instanceof ZodUndefined) {
+          newShape[key] = val.options[1];
+        } else if (val.options[1] instanceof ZodUndefined) {
+          newShape[key] = val.options[0];
+        }
+      } else {
+        newShape[key] = val;
+      }
+    }
+    return new ZodObject({
+      ...this._def,
+      shape: () => newShape,
+    }) as any;
   };
 
   deepPartial: () => partialUtil.RootDeepPartial<this> = () => {
