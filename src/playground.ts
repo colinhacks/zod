@@ -1,11 +1,10 @@
-// import * as z from '.';
 import { PseudoPromise } from './PseudoPromise';
 
 PseudoPromise.object({
   asdf: PseudoPromise.resolve(15),
   qwer: new PseudoPromise().then(() => 'asdfadsf'),
 })
-  .resolveAsync()
+  .toPromise()
   .then(console.log);
 
 // expect.assertions(1);

@@ -462,12 +462,8 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
       });
       break;
     case z.ZodTypes.transformer:
-      // console.log(`input: "${data}"`);
-
       const inputParseResult = def.input.parse(data);
-      // console.log(`inputParseResult: "${inputParseResult}"`);
       const transformedResult = def.transformer(inputParseResult);
-      // console.log(`transformedResult: "${transformedResult}"`);
       returnValue = def.output.parse(transformedResult);
       break;
     default:
@@ -475,7 +471,6 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   }
 
   const customChecks = def.checks || [];
-  console.log(`async: ${params.async}`);
   if (params.async === true) {
     const asyncChecks = customChecks.map(check => {
       return new Promise(async res => {

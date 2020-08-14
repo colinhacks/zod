@@ -130,6 +130,8 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
         return this.setType(id, `${this.generate(def.left).id} & ${this.generate(def.right).id}`);
       case z.ZodTypes.record:
         return this.setType(id, `{[k:string]: ${this.generate(def.valueType).id}}`);
+      case z.ZodTypes.transformer:
+        return this.setType(id, `{[k:string]: ${this.generate(def.output).id}}`);
       case z.ZodTypes.lazy:
         const lazyType = def.getter();
         return this.setType(id, this.generate(lazyType).id);
