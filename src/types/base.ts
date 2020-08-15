@@ -68,7 +68,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     params?: ParseParams,
   ) => { success: true; data: Type } | { success: false; error: ZodError } = data => {
     try {
-      const parsed = this.parse(data);
+      const parsed = this.parse(data, params);
       return {
         success: true,
         data: parsed,
