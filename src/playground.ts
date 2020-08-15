@@ -1,41 +1,48 @@
+import * as z from '.';
 import { PseudoPromise } from './PseudoPromise';
+// import { PseudoPromise } from './PseudoPromise';
 
-PseudoPromise.object({
-  asdf: PseudoPromise.resolve(15),
-  qwer: new PseudoPromise().then(() => 'asdfadsf'),
-})
-  .toPromise()
-  .then(console.log);
+const run1 = async () => {
+  console.log('starting async parse');
+  z.object({
+    password: z.string(),
+    confirm: z.string(),
+  })
+    .refine(data => data.confirm === data.password, { path: ['confirm'] })
+    .parseAsync({ password: 'asdf', confirm: 'qewr' })
+    .then(v => {
+      console.log('FINAL');
+      console.log(v);
+    });
+};
 
-// expect.assertions(1);
+const run2 = async () => {
+  const prom = PseudoPromise.object({
+    asdf: PseudoPromise.resolve(32),
+  });
 
-// PseudoPromise.allAsync([new PseudoPromise().then(async () => 'asdf')]).then(val => expect(val).toEqual('asdf'));
+  console.log(await prom.toValue());
 
-// const myProm = new PseudoPromise()
-//   .then(async () => 15)
-//   .then(arg => arg.toString())
-//   .then(arg => arg.length);
+  console.log('prom');
+  console.log(prom);
+  console.log('prom.toValue');
+  console.log(prom.toValue);
+  console.log('prom.toValue()');
+  console.log(prom.toValue());
+  console.log('PseudoPromise.resolve(prom.toValue())');
+  console.log(PseudoPromise.resolve(prom.toValue()));
+  console.log('PseudoPromise.resolve(prom.toValue()).toValue');
+  console.log(PseudoPromise.resolve(prom.toValue()).toValue);
+  console.log('PseudoPromise.resolve(prom.toValue()).toValue()');
+  console.log(PseudoPromise.resolve(prom.toValue()).toValue());
+  const result = await PseudoPromise.resolve(prom.toValue()).toValue();
+  console.log(result);
 
-// console.log(myProm.resolveSync());
+  const pp1 = PseudoPromise.resolve(Promise.resolve('qwer'));
+  console.log(await pp1.toValue());
+};
 
-// const run = async () => {
-//   await z
-//     .union([z.string(), z.number().int()])
-//     .parseAsync(3.2)
-//     .then(console.log)
-//     .catch(_err => {
-//       console.log('error! oh no!');
-//     });
-// };
+run1;
+run2;
 
-// run();
-
-// PseudoPromise.awaitObj({
-//   asdf: PseudoPromise.resolve(15),
-//   qwer: new PseudoPromise().then(async () => {
-//     if (Math.random() > 0) throw new Error('asdfjasf');
-//     return 'asdfadsf';
-//   }),
-// });
-
-// PseudoPromise.all([new PseudoPromise().then(async () => 'asdf')]);
+run1();

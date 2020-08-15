@@ -38,6 +38,7 @@ test('refinement 2', () => {
 });
 
 test('custom path', async () => {
+  expect.assertions(1);
   await z
     .object({
       password: z.string(),

@@ -25,7 +25,7 @@ export enum ZodTypes {
   any = 'any',
   unknown = 'unknown',
   void = 'void',
-  transformer = 'transformer'
+  transformer = 'transformer',
 }
 
 export type ZodTypeAny = ZodType<any, any>;
@@ -59,7 +59,9 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   parse: (x: Type | unknown, params?: ParseParams) => Type;
 
   parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = async (value, params) => {
+    console.log('ASYNCPARSE');
     const parsed = await this.parse(value, { ...params, async: true });
+    // console.log(parsed);
     return parsed;
   };
 
@@ -136,7 +138,6 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   ) => ZodTransformer<This, U> = (input, transformer) => {
     return ZodTransformer.create(this as any, input, transformer) as any;
   };
-
 
   default: <T extends Type = Type, Opt extends ZodUnion<[this, ZodUndefined]> = ZodUnion<[this, ZodUndefined]>>(
     def: T,
