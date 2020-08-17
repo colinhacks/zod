@@ -2,7 +2,7 @@ import * as z from './base';
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
-import { ZodErrorCode } from '..';
+import { ZodErrorCode } from '../ZodError';
 
 export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
   t: z.ZodTypes.array;
