@@ -272,7 +272,7 @@ if (stringSchema.check(blob)) {
 
 You can use the same method to check for invalid data:
 
-```ts
+````ts
 const stringSchema = z.string();
 
 const process = (blob: any) => {
@@ -297,7 +297,7 @@ For this instances, you can define custom a validation check on _any_ Zod schema
 const myString = z.string().refine(val => val.length <= 255, {
   message: "String can't be more than 255 characters",
 });
-```
+````
 
 As you can see, `.refine` takes two arguments.
 
