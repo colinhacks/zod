@@ -2,7 +2,7 @@ import * as z from './base';
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
-import { ZodErrorCode } from '..';
+import { ZodErrorCode } from '../ZodError';
 import { errorUtil } from '../helpers/errorUtil';
 
 export interface ZodNumberDef extends z.ZodTypeDef {

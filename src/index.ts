@@ -23,7 +23,19 @@ import { ZodEnum, ZodEnumDef } from './types/enum';
 import { ZodNativeEnum, ZodNativeEnumDef } from './types/nativeEnum';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
 import { TypeOf, ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './types/base';
-import { ZodError, ZodErrorCode } from './ZodError';
+// import { ZodError, ZodErrorCode, ZodInvalidTypeError,
+// ZodNonEmptyArrayIsEmptyError,
+// ZodUnrecognizedKeysError,
+// ZodInvalidUnionError,
+// ZodInvalidLiteralValueError,
+// ZodInvalidEnumValueError,
+// ZodInvalidArgumentsError,
+// ZodInvalidReturnTypeError,
+// ZodInvalidDateError,
+// ZodInvalidStringError,
+// ZodTooSmallError,
+// ZodTooBigError,
+// ZodCustomError } from './ZodError';
 import { ZodParsedType } from './parser';
 
 import { ZodErrorMap } from './defaultErrorMap';
@@ -153,11 +165,11 @@ export {
   ZodType as ZodSchema,
   ZodTypeAny,
   ZodDef,
-  ZodError,
   ZodErrorMap,
-  ZodErrorCode,
   ZodParsedType,
   ZodCodeGenerator,
 };
+
+export * from './ZodError';
 
 export { TypeOf, TypeOf as infer };

@@ -25,90 +25,90 @@ export type ZodSuberrorBase = {
   message?: string;
 };
 
-interface InvalidTypeError extends ZodSuberrorBase {
+export interface ZodInvalidTypeError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_type;
   expected: ZodParsedType;
   received: ZodParsedType;
 }
 
-interface NonEmptyArrayIsEmptyError extends ZodSuberrorBase {
+export interface ZodNonEmptyArrayIsEmptyError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.nonempty_array_is_empty;
 }
 
-interface UnrecognizedKeysError extends ZodSuberrorBase {
+export interface ZodUnrecognizedKeysError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.unrecognized_keys;
   keys: string[];
 }
 
-interface InvalidUnionError extends ZodSuberrorBase {
+export interface ZodInvalidUnionError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_union;
   unionErrors: ZodError[];
 }
 
-interface InvalidLiteralValueError extends ZodSuberrorBase {
+export interface ZodInvalidLiteralValueError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_literal_value;
   expected: string | number | boolean;
 }
 
-interface InvalidEnumValueError extends ZodSuberrorBase {
+export interface ZodInvalidEnumValueError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_enum_value;
   options: (string | number)[];
 }
 
-interface InvalidArgumentsError extends ZodSuberrorBase {
+export interface ZodInvalidArgumentsError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_arguments;
   argumentsError: ZodError;
 }
 
-interface InvalidReturnTypeError extends ZodSuberrorBase {
+export interface ZodInvalidReturnTypeError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_return_type;
   returnTypeError: ZodError;
 }
 
-interface InvalidDateError extends ZodSuberrorBase {
+export interface ZodInvalidDateError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_date;
 }
 
 export type StringValidation = 'email' | 'url' | 'uuid' | 'regex';
 
-interface InvalidStringError extends ZodSuberrorBase {
+export interface ZodInvalidStringError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_string;
   validation: StringValidation;
 }
 
-interface TooSmallError extends ZodSuberrorBase {
+export interface ZodTooSmallError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.too_small;
   minimum: number;
   inclusive: boolean;
   type: 'array' | 'string' | 'number';
 }
 
-interface TooBigError extends ZodSuberrorBase {
+export interface ZodTooBigError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.too_big;
   maximum: number;
   inclusive: boolean;
   type: 'array' | 'string' | 'number';
 }
 
-export interface CustomError extends ZodSuberrorBase {
+export interface ZodCustomError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.custom_error;
   params?: { [k: string]: any };
 }
 
 export type ZodSuberrorOptionalMessage =
-  | InvalidTypeError
-  | NonEmptyArrayIsEmptyError
-  | UnrecognizedKeysError
-  | InvalidUnionError
-  | InvalidLiteralValueError
-  | InvalidEnumValueError
-  | InvalidArgumentsError
-  | InvalidReturnTypeError
-  | InvalidDateError
-  | InvalidStringError
-  | TooSmallError
-  | TooBigError
-  | CustomError;
+  | ZodInvalidTypeError
+  | ZodNonEmptyArrayIsEmptyError
+  | ZodUnrecognizedKeysError
+  | ZodInvalidUnionError
+  | ZodInvalidLiteralValueError
+  | ZodInvalidEnumValueError
+  | ZodInvalidArgumentsError
+  | ZodInvalidReturnTypeError
+  | ZodInvalidDateError
+  | ZodInvalidStringError
+  | ZodTooSmallError
+  | ZodTooBigError
+  | ZodCustomError;
 
 export type ZodSuberror = ZodSuberrorOptionalMessage & { message: string };
 

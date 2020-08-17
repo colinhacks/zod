@@ -66,7 +66,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   safeParse: (
     x: Type | unknown,
     params?: ParseParams,
-  ) => { success: true; data: Type } | { success: false; error: ZodError } = data => {
+  ) => { success: true; data: Type } | { success: false; error: ZodError } = (data, params) => {
     try {
       const parsed = this.parse(data, params);
       return {
@@ -84,10 +84,10 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   };
 
-  parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = value => {
+  parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = (value, params) => {
     return new Promise((res, rej) => {
       try {
-        const parsed = this.parse(value);
+        const parsed = this.parse(value, params);
         return res(parsed);
       } catch (err) {
         return rej(err);
