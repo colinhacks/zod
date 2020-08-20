@@ -1,6 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined } from '..';
+import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined } from '../index';
 import { CustomError } from '../ZodError';
 
 export enum ZodTypes {
