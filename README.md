@@ -326,7 +326,7 @@ z.string().length(5);
 z.string().email();
 z.string().url();
 z.string().uuid();
-z.string().regexp(regexp);
+z.string().regex(regex);
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
@@ -1092,7 +1092,7 @@ You can create a function schema with `z.function(args, returnType)` which accep
 - `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
 - `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema.
 
-> You can the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning function can actually return either undefined or null.)
+> You can use the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning function can actually return either undefined or null.)
 
 ```ts
 const args = z.tuple([z.string()]);

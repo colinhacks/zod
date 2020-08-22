@@ -69,7 +69,7 @@ interface InvalidDateError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_date;
 }
 
-export type StringValidation = 'email' | 'url' | 'uuid' | 'regexp';
+export type StringValidation = 'email' | 'url' | 'uuid' | 'regex';
 
 interface InvalidStringError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_string;

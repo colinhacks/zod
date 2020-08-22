@@ -47,21 +47,21 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     return this.min(len, message).max(len, message);
   }
 
-  protected _regexp = (regexp: RegExp, validation: StringValidation, message?: errorUtil.ErrMessage) =>
+  protected _regex = (regex: RegExp, validation: StringValidation, message?: errorUtil.ErrMessage) =>
     this._refinement({
       validation,
       code: ZodErrorCode.invalid_string,
-      check: data => regexp.test(data),
+      check: data => regex.test(data),
       ...errorUtil.errToObj(message),
     });
 
-  email = (message?: errorUtil.ErrMessage) => this._regexp(emailRegex, 'email', message);
+  email = (message?: errorUtil.ErrMessage) => this._regex(emailRegex, 'email', message);
 
-  url = (message?: errorUtil.ErrMessage) => this._regexp(urlRegex, 'url', message);
+  url = (message?: errorUtil.ErrMessage) => this._regex(urlRegex, 'url', message);
 
-  uuid = (message?: errorUtil.ErrMessage) => this._regexp(uuidRegex, 'uuid', message);
+  uuid = (message?: errorUtil.ErrMessage) => this._regex(uuidRegex, 'uuid', message);
 
-  regexp = (regexp: RegExp, message?: errorUtil.ErrMessage) => this._regexp(regexp, 'regexp', message);
+  regex = (regex: RegExp, message?: errorUtil.ErrMessage) => this._regex(regex, 'regex', message);
 
   nonempty = (message?: errorUtil.ErrMessage) => this.min(1, errorUtil.errToObj(message));
 

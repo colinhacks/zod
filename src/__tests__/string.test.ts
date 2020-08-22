@@ -79,9 +79,9 @@ test('uuid', () => {
   ).toThrow();
 });
 
-test('regexp', () => {
+test('regex', () => {
   z.string()
-    .regexp(/^moo+$/)
+    .regex(/^moo+$/)
     .parse('mooooo');
   expect(() =>
     z
