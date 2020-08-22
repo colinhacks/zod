@@ -1,41 +1,26 @@
 import * as z from '.';
 
-try {
-  z.union([z.object({ a: z.number() }), z.object({ b: z.number() })]).parse({ t: 1 });
-} catch (err) {
-  if (err instanceof z.ZodError) {
-    console.log(JSON.stringify(err.errors, null, 2));
-  }
-}
+const myType = z.object({ name: z.string() });
 
-const errorMap: z.ZodErrorMap = (error, ctx) => {
-  switch (error.code) {
-    case z.ZodErrorCode.invalid_union:
-      console.log('CUSTOM UNION ERROR ');
-      error.unionErrors; // InvalidUnionError
-      return { message: 'my custom union error' };
+const run = () => {
+  const blob: unknown = 'MY_JSON_PAYLOAD';
+
+  const result = myType.safeParse(blob);
+  // { success: true; data: { name: string } }
+  //  | { success: false; error: ZodError }
+
+  z.string()
+    .url()
+    .parse(`http://nautil.us//issue/88/love--sex/the-hard-problem-of-breakfast`);
+  // this acts as a type guard
+  if (!result.success) {
+    result.error;
+    console.log(JSON.stringify(result.error, null, 2));
+    return;
   }
 
-  // fall back to default message
-  return { message: ctx.defaultError };
+  // underneath if statement result is now type { name: string }
+  result.data.name.toUpperCase();
 };
 
-z.string()
-  .optional()
-  .parseAsync(12, { errorMap })
-  .catch(err => {
-    console.log(err.message);
-    // => "my custom union error"
-  });
-
-/* throws: 
-  ZodError {
-    errors: [{
-      code: "invalid_type",
-      path: [],
-      message: "This ain't a string!",
-      expected: "string",
-      received: "number",
-    }]
-  }
-*/
+run();
