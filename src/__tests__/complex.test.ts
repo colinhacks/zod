@@ -34,7 +34,10 @@ export const crazySchema = z.object({
     .merge(z.object({ k1: z.string().nullable(), k2: z.number() })),
   union: z.array(z.union([z.literal('asdf'), z.literal(12)])).nonempty(),
   array: z.array(z.number()),
-  intersection: z.intersection(z.object({ p1: z.string().optional() }), z.object({ p1: z.number().optional() })),
+  intersection: z.intersection(
+    z.object({ p1: z.string().optional() }),
+    z.object({ p1: z.number().optional() }),
+  ),
   enum: z.intersection(z.enum(['zero', 'one']), z.enum(['one', 'two'])),
   nonstrict: z.object({ points: z.number() }).nonstrict(),
   numProm: z.promise(z.number()),
@@ -74,7 +77,13 @@ test('type guard (is)', () => {
   if (stringSchema.is('asdf' as any)) {
   }
 });
+
 test('type guard failure (is)', () => {
   if (crazySchema.is('asdf' as any)) {
   }
+});
+
+test('ZodCodeGenerator', () => {
+  const gen = new z.ZodCodeGenerator();
+  gen.generate(crazySchema);
 });

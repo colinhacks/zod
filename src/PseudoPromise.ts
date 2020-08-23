@@ -9,13 +9,19 @@ export class PseudoPromise<ReturnType = undefined> {
 
   static all = <T extends PseudoPromise<any>[]>(
     pps: PseudoPromise<any>[],
-  ): PseudoPromise<{ [k in keyof T]: T[k] extends PseudoPromise<any> ? T[k]['_return'] : never }> => {
-    try {
-      const result = pps.map(pp => pp.toValue());
-      return PseudoPromise.resolve(result) as any;
-    } catch (err) {
-      return PseudoPromise.resolve(Promise.all(pps.map(pp => pp.toValue()))) as any;
+  ): PseudoPromise<
+    {
+      [k in keyof T]: T[k] extends PseudoPromise<any> ? T[k]['_return'] : never;
     }
+  > => {
+    return new PseudoPromise().then((_arg, ctx) => {
+      // const results = pps.map(pp => pp.getValue());
+      if (ctx.async) {
+        return Promise.all(pps.map(pp => pp.getValueAsync()));
+      } else {
+        return pps.map(pp => pp.getValueSync()) as any;
+      }
+    });
   };
 
   // static allAsync = (pps:all PseudoPromise<any>[]) => {
@@ -23,108 +29,123 @@ export class PseudoPromise<ReturnType = undefined> {
   // };
 
   static object = (pps: { [k: string]: PseudoPromise<any> }) => {
-    console.log(`PseudoPromise.object`);
-    console.log(pps);
+    return new PseudoPromise().then((_arg, ctx) => {
+      const value: any = {};
+      // const items = Object.keys(pps).map(k => {
+      //   const v = pps[k].getValue();
+      //   return [k, v] as [string, any];
+      // });
 
-    //  for (const pp of Object.values(pps)) {
-    //    pp.toValue().then(console.log);
-    //    console.log(pp.functions[0]);
-    //  }
-    try {
-      let syncValue: any = {};
-      for (const k in pps) {
-        syncValue[k] = pps[k].toValue();
+      // let isAsync = ctx.async; //items.some(item => item[1] instanceof Promise);
+      // Object.keys(pps).some(
+      //   k => pps[k].getValue() instanceof Promise,
+      // );
+      // console.log(`PP object async: ${isAsync}`);
+      if (ctx.async) {
+        const getAsyncObject = async () => {
+          // const promises = Object.keys(pps).map(async k => {
+          //   const v = await pps[k].getValue();
+          //   return [k, v] as [string, any];
+          // });
+          // const items = await Promise.all(promises);
+          // const asyncValue: any = {};
+          const items = await Promise.all(
+            Object.keys(pps).map(async k => {
+              const v = await pps[k].getValueAsync();
+              return [k, v] as [string, any];
+            }),
+          );
+          // const resolvedItems = await Promise.all(
+          //   items.map(async item => [item[0], await item[1]]),
+          // );
+
+          for (const item of items) {
+            value[item[0]] = item[1];
+          }
+
+          return value;
+        };
+        return getAsyncObject();
+      } else {
+        const items = Object.keys(pps).map(k => {
+          const v = pps[k].getValueSync();
+          return [k, v] as [string, any];
+        });
+        // let syncValue: any = {};
+        for (const item of items) {
+          value[item[0]] = item[1];
+        }
+        return value;
       }
-      return PseudoPromise.resolve(syncValue);
-    } catch (err) {
-      if (err.message === 'found_promise') {
-        // const obj: any = {};
-        // console.log('ASYBCN');
-        // console.log(pps);
-        // const allPromise = Promise.all(
-        //   Object.entries(pps).map(async x => {
-        //     const val = await x[1].toPromise();
-        //     console.log('VAL');
-        //     console.log(val);
-        //     obj[x[0]] = val;
-        //     console.log(`${x[0]}: ${val}`);
-        //     return obj;
-        //   }),
-        // ).then(() => obj);
-        return PseudoPromise.resolve(
-          new Promise(async res => {
-            const obj: any = {};
-            for (const key in pps) {
-              const val = await pps[key].toValue();
-              console.log(`${key}: ${val}`);
-              console.log(JSON.stringify(obj, null, 2));
-              obj[key] = val;
-            }
-            res(obj);
-          }),
-        );
-      }
-      throw err;
-    }
+    });
   };
 
   static resolve = <T>(value: T): PseudoPromise<T> => {
     if (value instanceof PseudoPromise) {
-      return value; //new PseudoPromise().then(() => value.toValue(true));
+      throw new Error('Do not pass PseudoPromise into PseudoPromise.resolve');
     }
     return new PseudoPromise().then(() => value) as any;
   };
 
   then = <NewReturn>(
-    func: (...args: [ReturnType]) => NewReturn,
+    func: (arg: ReturnType, ctx: { async: boolean }) => NewReturn,
   ): PseudoPromise<NewReturn extends Promise<infer U> ? U : NewReturn> => {
     return new PseudoPromise([...this.functions, func]);
   };
 
-  toValue = (): ReturnType | Promise<ReturnType> => {
-    try {
-      let val: any = undefined;
-      for (const f of this.functions) {
-        val = f(val);
-        if (val && val.then) {
-          throw new Error('found_promise');
-        }
-      }
-      return val;
-    } catch (err) {
-      if (err.message === 'found_promise') {
-        return this._toPromise();
-      }
-      throw err;
-    }
-  };
+  // getValue = (
+  //   allowPromises: boolean = false,
+  // ): ReturnType | Promise<ReturnType> => {
+  //   try {
+  //     return this.getValueSync(allowPromises);
+  //   } catch (err) {
+  //     if (err.message === 'found_promise') {
+  //       return this.getValueAsync();
+  //     }
+  //     throw err;
+  //   }
+  // };
 
-  _toPromise = async () => {
+  getValueSync = () => {
+    // // if (this._cached.value) return this._cached.value;
     let val: any = undefined;
-    console.log(`\nTOPROMISE`);
-    console.log(`funcs: ${this.functions.length}`);
-    for (const f of this.functions) {
-      val = await f(val);
 
-      console.log(`func #${this.functions.indexOf(f) + 1}`);
-      console.log(`val: ${val}`);
-      if (val instanceof PseudoPromise) {
-        throw new Error('DO NOT RETURN PSEUDOPROMISE FROM FUNCTIONS');
-      }
-      if (val instanceof Promise) {
-        throw new Error('DO NOT RETURN PROMISE FROM FUNCTIONS');
-      }
-      // while (!!val.then) {
-      //   if (val instanceof PseudoPromise) {
-      //     val = await val.toPromise();
-      //   } else {
-      //     val = await val;
-      //   }
+    for (const f of this.functions) {
+      val = f(val, { async: false });
+
+      // if (val instanceof Promise && allowPromises === false) {
+      //   throw new Error('found_promise');
       // }
     }
-
-    console.log(`finalVal toPromise: ${val}`);
-
+    // this._cached.value = val;
     return val;
+  };
+
+  getValueAsync = async () => {
+    try {
+      // // if (this._cached.value) return this._cached.value;
+      let val: any = undefined;
+      for (const f of this.functions) {
+        val = await f(val, { async: true });
+
+        if (val instanceof PseudoPromise) {
+          throw new Error('DO NOT RETURN PSEUDOPROMISE FROM FUNCTIONS');
+        }
+        if (val instanceof Promise) {
+          throw new Error('DO NOT RETURN PROMISE FROM FUNCTIONS');
+        }
+        // while (!!val.then) {
+        //   if (val instanceof PseudoPromise) {
+        //     val = await val.toPromise();
+        //   } else {
+        //     val = await val;
+        //   }
+        // }
+      }
+      // this._cached.value = val;
+      return val;
+    } catch (err) {
+      throw err;
+    }
   };
 }
