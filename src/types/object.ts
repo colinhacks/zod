@@ -152,13 +152,13 @@ export class ZodObject<
   };
 
   primitives = (): ZodObject<
-    objectUtil.ObjectType<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? T[k] : never }>,
+    objectUtil.NoNever<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? T[k] : never }>,
     Params
   > => {
     const newShape: any = {};
     for (const key in this.shape) {
       if (isScalar(this.shape[key])) {
-        newShape[key] = this.shape[key].optional();
+        newShape[key] = this.shape[key];
       }
     }
     return new ZodObject({
@@ -168,13 +168,13 @@ export class ZodObject<
   };
 
   nonprimitives = (): ZodObject<
-    objectUtil.ObjectType<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? never : T[k] }>,
+    objectUtil.NoNever<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? never : T[k] }>,
     Params
   > => {
     const newShape: any = {};
     for (const key in this.shape) {
       if (!isScalar(this.shape[key])) {
-        newShape[key] = this.shape[key].optional();
+        newShape[key] = this.shape[key];
       }
     }
     return new ZodObject({

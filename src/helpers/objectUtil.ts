@@ -41,9 +41,11 @@ export namespace objectUtil {
     [k in keyof T]: [T[k]] extends [never] ? never : k;
   }[keyof T];
 
-  export type NoNever<T extends ZodRawShape> = {
-    [k in NoNeverKeys<T>]: k extends keyof T ? T[k] : never;
-  };
+  export type NoNever<T extends ZodRawShape> = Identity<
+    {
+      [k in NoNeverKeys<T>]: k extends keyof T ? T[k] : never;
+    }
+  >;
 
   export type ObjectType<T extends ZodRawShape> = FlattenObject<ObjectIntersection<T>>;
 

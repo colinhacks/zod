@@ -1,26 +1,22 @@
 import * as z from './index';
 
-const myType = z.object({ name: z.string() });
+// const myType = z.object({ name: z.string() });
 
 const run = () => {
-  const blob: unknown = 'MY_JSON_PAYLOAD';
-
-  const result = myType.safeParse(blob);
-  // { success: true; data: { name: string } }
-  //  | { success: false; error: ZodError }
-
-  z.string()
-    .url()
-    .parse(`http://nautil.us//issue/88/love--sex/the-hard-problem-of-breakfast`);
-  // this acts as a type guard
-  if (!result.success) {
-    result.error;
-    console.log(JSON.stringify(result.error, null, 2));
-    return;
+  try {
+    z.string().parse(134);
+  } catch (err) {
+    console.log(err);
   }
-
-  // underneath if statement result is now type { name: string }
-  result.data.name.toUpperCase();
+  // const t1 = z.object({
+  //   name: z.string(),
+  //   obj: z.object({}),
+  //   arrayarray: z.array(z.array(z.string())),
+  // });
+  // const i1 = t1.primitives();
+  // type i1 = z.infer<typeof i1>;
+  // const f1: util.AssertEqual<i1, { name: string }> = true;
+  // const i1 = t1.primitives();
 };
 
 run();

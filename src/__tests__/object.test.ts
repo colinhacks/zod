@@ -53,6 +53,28 @@ test('incorrect #1', () => {
   expect(() => Test.parse({} as any)).toThrow();
 });
 
+test('inference', () => {
+  const t1 = z.object({
+    name: z.string(),
+    obj: z.object({}),
+    arrayarray: z.array(z.array(z.string())),
+  });
+
+  const i1 = t1.primitives();
+  type i1 = z.infer<typeof i1>;
+  const f1: util.AssertEqual<i1, { name: string }> = true;
+
+  const i2 = t1.nonprimitives();
+  type i2 = z.infer<typeof i2>;
+  const f2: util.AssertEqual<i2, { obj: {}; arrayarray: string[][] }> = true;
+
+  f1;
+  f2;
+  i1.parse({ name: 'name' });
+  i2.parse({ obj: {}, arrayarray: [['asdf']] });
+  expect(() => i1.parse({} as any)).toThrow();
+});
+
 test('nonstrict', () => {
   z.object({ points: z.number() })
     .nonstrict()
@@ -84,8 +106,6 @@ test('primitives', () => {
     object: z.object({}),
     objectArray: z.object({}).array(),
   });
-
-  // const asdf = baseObj.primitives();
 
   console.log(JSON.stringify(Object.keys(baseObj.nonprimitives()), null, 2));
 
