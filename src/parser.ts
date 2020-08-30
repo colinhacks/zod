@@ -119,7 +119,6 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   //   if (schemaSeen) {
   //     const found = schemaSeen.objects.find(x => x.data === obj);
   //     if (found) {
-  //       //
   //       found.error = error;
   //     }
   //   }
