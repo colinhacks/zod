@@ -22,14 +22,14 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- <br/> -->
 
-**Aug 30**: zod@1.11 was released with lots of cool features!
+**Aug 30 — zod@1.11 was released with lots of cool features!**
 
-- All schemas now have a `.safeParse` method. This lets you validate data in a more functional way, similar to `io-ts`
-- String schemas have a new `.regex` refinement method
-- Object schemas now have two new methods: `.primitives()` and `.nonprimitives()`. These methods let you quickly pick or omit primitive fields from objects, useful for validating API inputs
-- Zod now provides `z.nativeEnum()`, which lets you create z Zod schema from an existing TypeScript `enum`
+- All schemas now have a `.safeParse` method. This lets you validate data in a more functional way, similar to `io-ts`: https://github.com/vriad/zod#safe-parse
+- String schemas have a new `.regex` refinement method: https://github.com/vriad/zod#strings
+- Object schemas now have two new methods: `.primitives()` and `.nonprimitives()`. These methods let you quickly pick or omit primitive fields from objects, useful for validating API inputs: https://github.com/vriad/zod#primitives-and-nonprimitives
+- Zod now provides `z.nativeEnum()`, which lets you create z Zod schema from an existing TypeScript `enum`: https://github.com/vriad/zod#native-enums
 
-> ⚠️ You might be encountering issues building your project if you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later.
+<!-- > ⚠️ You might be encountering issues building your project if you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later. -->
 
 # What is Zod
 
