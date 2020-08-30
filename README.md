@@ -40,23 +40,7 @@ Some other great aspects:
 
 # Sponsorship
 
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/kevinsimper">
-        <img src="https://avatars0.githubusercontent.com/u/3084745" width="100px;" alt="" />
-      </a>
-      <br>
-      <b>Colin McDonnell</b>
-      <br>
-      <a href="https://twitter.com/vriad">@vriad</a>,
-      <span>creator of Zod</span>
-    </td>
-    <td>
-    I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're a freelancer or entrepreneur, get listed below and enjoy Zod can [help you with that](https://github.com/sponsors/vriad). Check out my GitHub Sponsors profile at [github.com/sponsors/vriad](github.com/sponsors/vriad).
-    </td>
-  </tr>
-</table>
+I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're a freelancer or entrepreneur, get listed below and enjoy Zod can [help you with that](https://github.com/sponsors/vriad). Check out my GitHub Sponsors profile at [github.com/sponsors/vriad](github.com/sponsors/vriad).
 
 ### Sponsors
 
