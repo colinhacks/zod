@@ -373,7 +373,7 @@ z.string().length(5);
 z.string().email();
 z.string().url();
 z.string().uuid();
-z.string().regexp(regexp);
+z.string().regex(regex);
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
