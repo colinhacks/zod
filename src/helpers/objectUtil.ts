@@ -7,8 +7,15 @@ export namespace objectUtil {
     strict: boolean;
   }
 
-  export type MergeObjectParams<First extends ZodObjectParams, Second extends ZodObjectParams> = {
-    strict: First['strict'] extends false ? false : Second['strict'] extends false ? false : true;
+  export type MergeObjectParams<
+    First extends ZodObjectParams,
+    Second extends ZodObjectParams
+  > = {
+    strict: First['strict'] extends false
+      ? false
+      : Second['strict'] extends false
+      ? false
+      : true;
   };
 
   export type MergeShapes<U extends ZodRawShape, V extends ZodRawShape> = {
@@ -45,21 +52,36 @@ export namespace objectUtil {
   >;
 
   type Identity<T> = T;
-  type FlattenObject<T extends ZodRawShape> = Identity<{ [k in keyof T]: T[k] }>;
+  type FlattenObject<T extends ZodRawShape> = Identity<
+    { [k in keyof T]: T[k] }
+  >;
 
-  export type NoNeverKeys<T extends object> = {
-    [k in keyof T]: T[k] extends never ? never : k;
+  export type NoNeverKeys<T extends ZodRawShape> = {
+    [k in keyof T]: [T[k]] extends [never] ? never : k;
   }[keyof T];
 
-  export type NoNever<T extends object> = {
-    [k in NoNeverKeys<T>]: T[k];
-  };
+  export type NoNever<T extends ZodRawShape> = Identity<
+    {
+      [k in NoNeverKeys<T>]: k extends keyof T ? T[k] : never;
+    }
+  >;
 
-  export type ObjectType<T extends ZodRawShape> = FlattenObject<ObjectIntersection<NoNever<T>>>;
-  export type ObjectTypeInput<T extends ZodRawShape> = FlattenObject<ObjectIntersectionInput<NoNever<T>>>;
-  export type ObjectTypeOutput<T extends ZodRawShape> = FlattenObject<ObjectIntersectionOutput<NoNever<T>>>;
+  export type ObjectType<T extends ZodRawShape> = FlattenObject<
+    ObjectIntersection<T>
+  >;
+  export type ObjectTypeInput<T extends ZodRawShape> = FlattenObject<
+    ObjectIntersectionInput<T>
+  >;
+  export type ObjectTypeOutput<T extends ZodRawShape> = FlattenObject<
+    ObjectIntersectionOutput<T>
+  >;
 
-  export const mergeShapes = <U extends ZodRawShape, T extends ZodRawShape>(first: U, second: T): T & U => {
+  // export type ObjectType<T extends ZodRawShape> = FlattenObject<ObjectIntersection<T>>;
+
+  export const mergeShapes = <U extends ZodRawShape, T extends ZodRawShape>(
+    first: U,
+    second: T,
+  ): T & U => {
     const firstKeys = Object.keys(first);
     const secondKeys = Object.keys(second);
     const sharedKeys = firstKeys.filter(k => secondKeys.indexOf(k) !== -1);
@@ -75,9 +97,9 @@ export namespace objectUtil {
     };
   };
 
-  export const mergeObjects = <First extends ZodObject<any, any, any>>(first: First) => <
-    Second extends ZodObject<any, any, any>
-  >(
+  export const mergeObjects = <First extends ZodObject<any, any, any>>(
+    first: First,
+  ) => <Second extends ZodObject<any, any, any>>(
     second: Second,
   ): ZodObject<
     First['_shape'] & Second['_shape'],

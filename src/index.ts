@@ -20,10 +20,19 @@ import { ZodFunction, ZodFunctionDef } from './types/function';
 import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
 import { ZodEnum, ZodEnumDef } from './types/enum';
+import { ZodNativeEnum, ZodNativeEnumDef } from './types/nativeEnum';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
 import { ZodTransformer, ZodTransformerDef } from './types/transformer';
-import { TypeOf, input, output, ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './types/base';
-import { ZodError, ZodErrorCode } from './ZodError';
+import {
+  TypeOf,
+  input,
+  output,
+  ZodType,
+  ZodTypeAny,
+  ZodTypeDef,
+  ZodTypes,
+} from './types/base';
+// import { ZodError, ZodErrorCode } from './ZodError';
 import { ZodParsedType } from './parser';
 
 import { ZodErrorMap } from './defaultErrorMap';
@@ -53,7 +62,8 @@ type ZodDef =
   | ZodLiteralDef
   | ZodEnumDef
   | ZodPromiseDef
-  | ZodTransformerDef;
+  | ZodTransformerDef
+  | ZodNativeEnumDef;
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -75,6 +85,7 @@ const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
 const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
+const nativeEnumType = ZodNativeEnum.create;
 const promiseType = ZodPromise.create;
 const transformerType = ZodTransformer.create;
 const ostring = () => stringType().optional();
@@ -83,12 +94,16 @@ const oboolean = () => booleanType().optional();
 
 const codegen = ZodCodeGenerator.create;
 
-const custom = <T>(check: (data: unknown) => any, params?: Parameters<ZodAny['refine']>[1]): ZodType<T> =>
-  anyType().refine(check, params);
+export const custom = <T>(
+  check: (data: unknown) => any,
+  params?: Parameters<ZodAny['refine']>[1],
+): ZodType<T> => anyType().refine(check, params);
 
 const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
-  params: Parameters<ZodAny['refine']>[1] = { message: `Input not instance of ${cls.name}` },
+  params: Parameters<ZodAny['refine']>[1] = {
+    message: `Input not instance of ${cls.name}`,
+  },
 ) => custom<InstanceType<T>>(data => data instanceof cls, params);
 
 export {
@@ -112,6 +127,7 @@ export {
   lazyType as lazy,
   literalType as literal,
   enumType as enum,
+  nativeEnumType as nativeEnum,
   promiseType as promise,
   instanceOfType as instanceof,
   transformerType as transformer,
@@ -146,6 +162,7 @@ export {
   ZodLazy,
   ZodLiteral,
   ZodEnum,
+  ZodNativeEnum,
   ZodPromise,
   ZodTransformer,
   ZodType,
@@ -153,11 +170,10 @@ export {
   ZodType as ZodSchema,
   ZodTypeAny,
   ZodDef,
-  ZodError,
   ZodErrorMap,
-  ZodErrorCode,
   ZodParsedType,
   ZodCodeGenerator,
 };
 
 export { TypeOf, TypeOf as infer, input, output };
+export * from './ZodError';

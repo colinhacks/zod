@@ -1,4 +1,4 @@
-import * as z from '..';
+import * as z from '../index';
 
 const minFive = z.string().min(5, 'min5');
 const maxFive = z.string().max(5, 'max5');
@@ -76,5 +76,36 @@ test('uuid', () => {
       .string()
       .uuid()
       .parse('9491d710-3185-4e06-bea0-6a2f275345e'),
+  ).toThrow();
+});
+
+test('regex', () => {
+  z.string()
+    .regex(/^moo+$/)
+    .parse('mooooo');
+  expect(() =>
+    z
+      .string()
+      .uuid()
+      .parse('purr'),
+  ).toThrow();
+});
+
+test('regexp error message', () => {
+  const result = z
+    .string()
+    .regex(/^moo+$/)
+    .safeParse('boooo');
+  if (!result.success) {
+    expect(result.error.errors[0].message).toEqual('Invalid');
+  } else {
+    throw new Error('validation should have failed');
+  }
+
+  expect(() =>
+    z
+      .string()
+      .uuid()
+      .parse('purr'),
   ).toThrow();
 });

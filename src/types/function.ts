@@ -1,9 +1,6 @@
 import * as z from './base';
 import { ZodTuple } from './tuple';
-// import { ZodUndefined } from './undefined';
-// import { ZodNull } from './null';
-// import { ZodUnion } from './union';
-import { ZodVoid } from './void';
+import { ZodUnknown } from './unknown';
 
 export interface ZodFunctionDef<
   Args extends ZodTuple<any> = ZodTuple<any>,
@@ -43,21 +40,21 @@ export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAn
     });
   };
 
-  implement = (func: TypeOfFunction<Args, Returns>): TypeOfFunction<Args, Returns> => {
+  implement = <F extends TypeOfFunction<Args, Returns>>(func: F): F => {
     const validatedFunc = this.parse(func);
-    return (validatedFunc as any) as TypeOfFunction<Args, Returns>;
+    return validatedFunc as any;
   };
 
   validate = this.implement;
 
-  static create = <T extends ZodTuple<any> = ZodTuple<[]>, U extends z.ZodTypeAny = ZodVoid>(
+  static create = <T extends ZodTuple<any> = ZodTuple<[]>, U extends z.ZodTypeAny = ZodUnknown>(
     args?: T,
     returns?: U,
   ): ZodFunction<T, U> => {
     return new ZodFunction({
       t: z.ZodTypes.function,
       args: args || ZodTuple.create([]),
-      returns: returns || ZodVoid.create(),
+      returns: returns || ZodUnknown.create(),
     });
   };
 

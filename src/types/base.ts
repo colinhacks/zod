@@ -8,7 +8,7 @@ import {
   ZodUndefined,
   ZodTransformer,
 } from '..';
-import { CustomError } from '../ZodError';
+import { ZodError } from '../ZodError';
 
 export enum ZodTypes {
   string = 'string',
@@ -28,6 +28,7 @@ export enum ZodTypes {
   lazy = 'lazy',
   literal = 'literal',
   enum = 'enum',
+  nativeEnum = 'nativeEnum',
   promise = 'promise',
   any = 'any',
   unknown = 'unknown',
@@ -42,10 +43,20 @@ type InternalCheck<T> = {
   check: (arg: T) => any;
 } & MakeErrorData;
 
+// type Check<T> = {
+//   check: (arg: T) => any;
+//   path?: (string | number)[];
+//   // message?: string;
+//   // params?: {[k:string]:any}
+// } & util.Omit<CustomError, 'code' | 'path'>;
+
 type Check<T> = {
   check: (arg: T) => any;
   path?: (string | number)[];
-} & util.Omit<CustomError, 'code' | 'path'>;
+  message?: string;
+  params?: { [k: string]: any };
+};
+
 export interface ZodTypeDef {
   t: ZodTypes;
   checks?: InternalCheck<any>[];
@@ -64,6 +75,30 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   readonly _def!: Def;
 
   parse: (x: Type | unknown, params?: ParseParams) => Type;
+
+  safeParse: (
+    x: Type | unknown,
+    params?: ParseParams,
+  ) => { success: true; data: Type } | { success: false; error: ZodError } = (
+    data,
+    params,
+  ) => {
+    try {
+      const parsed = this.parse(data, params);
+      return {
+        success: true,
+        data: parsed,
+      };
+    } catch (err) {
+      if (err instanceof ZodError) {
+        return {
+          success: false,
+          error: err,
+        };
+      }
+      throw err;
+    }
+  };
 
   parseAsync: (
     x: Type | unknown,
@@ -90,8 +125,8 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   }
 
-  refine = <Val extends (arg: Type) => any>(
-    check: Val,
+  refine = <Func extends (arg: Type) => any>(
+    check: Func,
     message: string | util.Omit<Check<Type>, 'check'> = 'Invalid value.',
   ) => {
     if (typeof message === 'string') {
@@ -101,7 +136,10 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   };
 
   refinement = (refinement: Check<Type>) => {
-    return this._refinement({ code: ZodErrorCode.custom_error, ...refinement });
+    return this._refinement({
+      code: ZodErrorCode.custom_error,
+      ...refinement,
+    });
   };
 
   protected _refinement: (
@@ -114,8 +152,8 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   };
 
   constructor(def: Def) {
-    this.parse = ZodParser(def);
     this._def = def;
+    this.parse = ZodParser(def);
   }
 
   abstract toJSON: () => object;

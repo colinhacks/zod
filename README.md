@@ -3,10 +3,12 @@
   <h1 align="center">Zod</h1>
 </p>
 <p align="center">
-  <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/vriad/zod" alt="License"></a>
-  <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
-  <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/vriad/zod" alt="stars"></a>
-  <a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
+<a href="https://twitter.com/vriad" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@vriad-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
+<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/vriad/zod" alt="License"></a>
+<a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
+<a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/vriad/zod" alt="stars"></a>
+<a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
+
 </p>
 <p align="center">
 if you're happy and you know it, star this repo ⭐
@@ -19,6 +21,15 @@ if you're happy and you know it, star this repo ⭐
 If you find this package useful, leave a star to help more folks find it ⭐️🤏 -->
 
 <!-- <br/> -->
+
+**Aug 30 — zod@1.11 was released with lots of cool features!**
+
+- All schemas now have a `.safeParse` method. This lets you validate data in a more functional way, similar to `io-ts`: https://github.com/vriad/zod#safe-parse
+- String schemas have a new `.regex` refinement method: https://github.com/vriad/zod#strings
+- Object schemas now have two new methods: `.primitives()` and `.nonprimitives()`. These methods let you quickly pick or omit primitive fields from objects, useful for validating API inputs: https://github.com/vriad/zod#primitives-and-nonprimitives
+- Zod now provides `z.nativeEnum()`, which lets you create z Zod schema from an existing TypeScript `enum`: https://github.com/vriad/zod#native-enums
+
+<!-- > ⚠️ You might be encountering issues building your project if you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later. -->
 
 # What is Zod
 
@@ -36,39 +47,36 @@ Some other great aspects:
 
 # Sponsorship
 
-Hi! 👋
-
-I'm Colin (AKA [@vriad](https://twitter.com/vriad)), creator/maintainer of Zod. Currently I work on Zod in my spare time, but I'd love to drop my other commitments and work on it (and other OSS projects) full time. To that end, I recently applied and was accepted into the GitHub Sponsors program, which I hope will provide the resources I need to focus on open-source full time.
-
-If you make money from the software you build with Zod, I would massively appreciate a sponsorship at any level! 🙏 https://github.com/sponsors/vriad
-
-<p align="right">
-— Colin
-</p>
+I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're a freelancer or entrepreneur, get listed below and enjoy Zod can [help you with that](https://github.com/sponsors/vriad). Check out my GitHub Sponsors profile at [github.com/sponsors/vriad](github.com/sponsors/vriad).
 
 ### Sponsors
 
 <table>
   <tr>
+  <td align="center">
+      <a href="https://github.com/kevinsimper">
+        <img src="https://avatars1.githubusercontent.com/u/1126497?s=460&v=4" width="100px;" alt="" />
+      </a>
+      <br>
+      <b>Kevin Simper</b>
+      <br>
+      <a href="https://github.com/kevinsimper">@kevinsimper</a>
+    </td>
     <td align="center">
-    <a href="https://twitter.com/flybayer"><img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/><br /><b>Brandon Bayer</b></a><br/>
-    <span>Creator of <a href="https://blitzjs.com">Blitz.js</a></span>
-    <br />
+      <a href="https://twitter.com/flybayer">
+        <img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/>
+      </a>
+      <br>
+      <b>Brandon Bayer</b>
+      <br/>
+      <a href="https://twitter.com/flybayer">@flybayer</a>,
+      <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
+      <br />
     </td>
   </tr>
 </table>
 
 _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._
-
-<!--
-|   | |
-|---|-|
-| <p align="center"> Brandon Bayer<br>[@flybayer](https://twitter.com/flybayer)</p> |  _To get your name + Twitter + website here, <br/>sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._ |
-|   | -->
-
-<!-- ### Sponsors who know Zod
-
-_To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._ -->
 
 # Table of contents
 
@@ -85,16 +93,17 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
   - [.shape](#shape-property)
   - [.merge](#merging)
   - [.extend](#extending-objects)
-  - [.pick/.omit](#masking)
+  - [.pick/.omit](#pick-and-omit)
   - [.partial/.deepPartial](#partials)
   - [.nonstrict](#unknown-keys)
+  - [.primitives/.nonprimitives](#primitives-and-nonprimitives)
 - [Records](#records)
 - [Arrays](#arrays)
   - [.nonempty](#non-empty-lists)
 - [Unions](#unions)
   - [.optional](#optional-types)
   - [.nullable](#nullable-types)
-  - [.enum](#enums)
+- [Enums](#enums)
 - [Intersections](#intersections)
 - [Tuples](#tuples)
 - [Recursive types](#recursive-types)
@@ -126,11 +135,14 @@ yarn add zod
 #### TypeScript requirements
 
 1. Zod 1.x requires TypeScript 3.3+
+
    > Support for TS 3.2 was dropped with the release of zod@1.10 on 19 July 2020
+
 2. You must enable `strictNullChecks` or use `strict` mode which includes `strictNullChecks`. Otherwise Zod can't correctly infer the types of your schemas!
    ```ts
    // tsconfig.json
    {
+     // ...
      "compilerOptions": {
        // ...
        "strictNullChecks": true
@@ -192,17 +204,47 @@ const tru = z.literal(true);
 
 ### Parsing
 
-`.parse(data:unknown)`
+`.parse(data:unknown): T`
 
 Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
-> IMPORTANT: As of Zod 1.4, the value returned by `.parse` is _the same variable you passed in_. Previously it returned a deep clone. The only exception to this is `Promise` schemas, which return a new Promise for reasons explained in the documentation.
+> IMPORTANT: After Zod 1.11, the value returned by `.parse` is a _deep clone_ of the variable you passed in. This was also the case in zod@1.4 and earlier. The only exception to this is `Union` and `Intersection` schemas, which return the same value you pass in.
 
 ```ts
 const stringSchema = z.string();
 stringSchema.parse('fish'); // => returns "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
+
+### Safe parse
+
+`.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
+
+If you don't want Zod to throw when validation errors occur, you can use `.safeParse`. This method returns an object, even if validation errors occur:
+
+```ts
+stringSchema.safeParse(12);
+// => { successs: false; error: ZodError }
+
+stringSchema.safeParse('billie');
+// => { successs: true; data: 'billie' }
+```
+
+Because the result is a _discriminated union_ you can handle errors very conveniently:
+
+```ts
+const result = stringSchema.safeParse('billie');
+if (!result.success) {
+  // handle error then return
+  return;
+}
+
+// underneath the if statement, TypeScript knows
+// that validation passed
+console.log(result.data);
+```
+
+> Errors thrown from within refinement functions will _not_ be caught.
 
 ### Type guards
 
@@ -221,7 +263,7 @@ if (stringSchema.check(blob)) {
 
 You can use the same method to check for invalid data:
 
-```ts
+````ts
 const stringSchema = z.string();
 
 const process = (blob: any) => {
@@ -246,7 +288,7 @@ For this instances, you can define custom a validation check on _any_ Zod schema
 const myString = z.string().refine(val => val.length <= 255, {
   message: "String can't be more than 255 characters",
 });
-```
+````
 
 As you can see, `.refine` takes two arguments.
 
@@ -267,18 +309,18 @@ As you can see, `.refine` takes two arguments.
    };
    ```
 
-These params let you define powerful custom behavior. Zod is commonly used for form validation. If you want to verify that "password" and "confirmPassword" match, you can do so like this:
+These params let you define powerful custom behavior. Zod is commonly used for form validation. If you want to verify that "password" and "confirm" match, you can do so like this:
 
 ```ts
 z.object({
   password: z.string(),
   confirm: z.string(),
 })
-  .refine(data => data.confirm === data.password, {
+  .refine(data => data.password === data.confirm, {
     message: "Passwords don't match",
-    path: ['confirm'],
+    path: ['confirm'], // set path of error
   })
-  .parse({ password: 'asdf', confirmPassword: 'qwer' });
+  .parse({ password: 'asdf', confirm: 'qwer' });
 ```
 
 Because you provided a `path` parameter, the resulting error will be:
@@ -322,6 +364,7 @@ z.string().length(5);
 z.string().email();
 z.string().url();
 z.string().uuid();
+z.string().regex(regex);
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
@@ -473,7 +516,7 @@ const ModifiedAnimal = Animal.extend({
 // => { population: number, species: string[] }
 ```
 
-#### Masking
+#### Pick and omit
 
 Object masking is one of Zod's killer features. It lets you create slight variations of your object schemas easily and succinctly. Inspired by TypeScript's built-in `Pick` and `Omit` utility types, all Zod object schemas have `.pick` and `.omit` methods that return a "masked" version of the schema.
 
@@ -506,6 +549,42 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 This is useful for database logic, where endpoints often accept as input slightly modified versions of your database schemas. For instance, the input to a hypothetical `createRecipe` endpoint would accept the `NoIDRecipe` type, since the ID will be generated by your database automatically.
 
 > This is a vital feature for implementing typesafe backend logic, yet as far as I know, no other validation library (yup, Joi, io-ts, runtypes, class-validator, ow...) offers similar functionality as of this writing (April 2020). This is one of the must-have features that inspired the creation of Zod.
+
+#### Primitives and nonprimitives
+
+Zod provides a convenience method for automatically picking all primitive or non-primitive fields from an object schema.
+
+```ts
+const Post = z.object({
+  title: z.string()
+});
+
+const User = z.object({
+  id: z.number(),
+  name: z.string(),
+  posts: z.array(Post)
+});
+
+const UserFields = User.primitives();
+typeof UserFields = z.infer<typeof UserFields>;
+// => { id: number; name; string; }
+
+const UserRelations = User.nonprimitives();
+typeof UserFields = z.infer<typeof UserFields>;
+// => { posts: Post[] }
+```
+
+These schemas are considering "primitive":
+
+- string
+- number
+- boolean
+- bigint
+- date
+- null/undefined
+- enums
+- any array of the above types
+- any union of the above types
 
 #### Partials
 
@@ -841,7 +920,11 @@ type F = z.infer<typeof F>; // string | number | boolean | undefined | null;
 
 ### Enums
 
-An enum is just a union of string literals, so you can "build your own enum" like this:
+There are two ways to define enums in Zod.
+
+#### Zod enums
+
+An enum is just a union of string literals, so you _could_ define an enum like this:
 
 ```ts
 const FishEnum = z.union([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
@@ -850,25 +933,20 @@ FishEnum.parse('Salmon'); // => "Salmon"
 FishEnum.parse('Flounder'); // => throws
 ```
 
-But for convenience Zod provides a built-in `z.enum()` function, like so:
+For convenience Zod provides a built-in `z.enum()` function. Here's is the equivalent code:
 
 ```ts
 const FishEnum = z.enum(['Salmon', 'Tuna', 'Trout']);
+
 type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
-> You need to pass the literal array directly into z.enum():
->
-> ```ts
-> const FishEnum = z.enum(['Salmon', 'Tuna', 'Trout']);
-> ```
->
-> If you define the array as a separate variable, then pass it into z.enum, type inference won't work properly.
+> Important! You need to pass the literal array _directly_ into z.enum(). Do not define it separately, than pass it in as a variable! This is required for proper type inference.
 
-#### Autocompletion
+**Autocompletion**
 
-You can autocomplete the enum values with the `.enum` property of an enum schema:
+To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 
 ```ts
 FishEnum.enum.Salmon; // => autocompletes
@@ -887,6 +965,70 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 
 ```ts
 FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
+```
+
+#### Native enums
+
+> ⚠️ `nativeEnum()` requires TypeScript 3.6 or higher!
+
+Zod enums are the recommended approach to defining and validating enums. But there may be scenarios where you need to validate against an enum from a third-party library, or perhaps you don't want to rewrite your existing enums. For this you can use `z.nativeEnum()`.
+
+**Numeric enums**
+
+```ts
+enum Fruits {
+  Apple,
+  Banana,
+}
+
+const FruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
+
+FruitEnum.parse(Fruits.Apple); // passes
+FruitEnum.parse(Fruits.Banana); // passes
+FruitEnum.parse(0); // passes
+FruitEnum.parse(1); // passes
+FruitEnum.parse(3); // fails
+```
+
+**String enums**
+
+```ts
+enum Fruits {
+  Apple = 'apple',
+  Banana = 'banana',
+  Cantaloupe, // you can mix numerical and string enums
+}
+
+const FruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
+
+FruitEnum.parse(Fruits.Apple); // passes
+FruitEnum.parse(Fruits.Cantaloupe); // passes
+FruitEnum.parse('apple'); // passes
+FruitEnum.parse('banana'); // passes
+FruitEnum.parse(0); // passes
+FruitEnum.parse('Cantaloupe'); // fails
+```
+
+**Const enums**
+
+The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` required TypeScript 3.4+!
+
+```ts
+const Fruits = {
+  Apple: 'apple',
+  Banana: 'banana',
+  Cantaloupe: 3,
+} as const;
+
+const FruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof FruitEnum>; // "apple" | "banana" | 3
+
+FruitEnum.parse('apple'); // passes
+FruitEnum.parse('banana'); // passes
+FruitEnum.parse(3); // passes
+FruitEnum.parse('Cantaloupe'); // fails
 ```
 
 ## Intersections
@@ -1087,7 +1229,7 @@ You can create a function schema with `z.function(args, returnType)` which accep
 - `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
 - `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema.
 
-> You can the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning function can actually return either undefined or null.)
+> You can use the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning function can actually return either undefined or null.)
 
 ```ts
 const args = z.tuple([z.string()]);

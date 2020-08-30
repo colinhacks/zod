@@ -1,4 +1,4 @@
-import * as z from '.';
+import * as z from './index';
 import { util } from './helpers/util';
 
 type TypeResult = { schema: any; id: string; type: string };
@@ -135,6 +135,9 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
       case z.ZodTypes.lazy:
         const lazyType = def.getter();
         return this.setType(id, this.generate(lazyType).id);
+      case z.ZodTypes.nativeEnum:
+        // const lazyType = def.getter();
+        return this.setType(id, 'asdf');
       default:
         util.assertNever(def);
     }

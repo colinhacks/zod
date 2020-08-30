@@ -56,7 +56,8 @@ export const defaultErrorMap = (error: ZodSuberrorOptionalMessage, _ctx: ErrorMa
     //   message = `Too short, should be at most ${error.maximum} ${tooLongNoun}`;
     //   break;
     case ZodErrorCode.invalid_string:
-      message = `Invalid ${error.validation}`;
+      if (error.validation !== 'regex') message = `Invalid ${error.validation}`;
+      else message = 'Invalid';
       break;
     // case ZodErrorCode.invalid_url:
     //   message = 'Invalid URL.';

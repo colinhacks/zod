@@ -18,118 +18,103 @@ export const ZodErrorCode = util.arrayToEnum([
   'invalid_intersection_types',
 ]);
 
-const flatten = (err: ZodError): { formErrors: string[]; fieldErrors: { [k: string]: string[] } } => {
-  const fieldErrors: any = {};
-  const formErrors: string[] = [];
-  for (const sub of err.errors) {
-    if (sub.path.length > 0) {
-      fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-      fieldErrors[sub.path[0]].push(sub.message);
-    } else {
-      formErrors.push(sub.message);
-    }
-  }
-  return {
-    formErrors,
-    fieldErrors,
-  };
-};
-
 export type ZodErrorCode = keyof typeof ZodErrorCode;
 
 export type ZodSuberrorBase = {
   path: (string | number)[];
-  code: ZodErrorCode;
+  // code: ZodErrorCode;
   message?: string;
 };
 
-interface InvalidTypeError extends ZodSuberrorBase {
+export interface ZodInvalidTypeError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_type;
   expected: ZodParsedType;
   received: ZodParsedType;
 }
 
-interface NonEmptyArrayIsEmptyError extends ZodSuberrorBase {
+export interface ZodNonEmptyArrayIsEmptyError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.nonempty_array_is_empty;
 }
 
-interface UnrecognizedKeysError extends ZodSuberrorBase {
+export interface ZodUnrecognizedKeysError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.unrecognized_keys;
   keys: string[];
 }
 
-interface InvalidUnionError extends ZodSuberrorBase {
+export interface ZodInvalidUnionError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_union;
   unionErrors: ZodError[];
 }
 
-interface InvalidLiteralValueError extends ZodSuberrorBase {
+export interface ZodInvalidLiteralValueError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_literal_value;
   expected: string | number | boolean;
 }
 
-interface InvalidEnumValueError extends ZodSuberrorBase {
+export interface ZodInvalidEnumValueError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_enum_value;
-  options: string[];
+  options: (string | number)[];
 }
 
-interface InvalidArgumentsError extends ZodSuberrorBase {
+export interface ZodInvalidArgumentsError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_arguments;
   argumentsError: ZodError;
 }
 
-interface InvalidReturnTypeError extends ZodSuberrorBase {
+export interface ZodInvalidReturnTypeError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_return_type;
   returnTypeError: ZodError;
 }
 
-interface InvalidDateError extends ZodSuberrorBase {
+export interface ZodInvalidDateError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_date;
 }
 
-interface InvalidStringError extends ZodSuberrorBase {
+export type StringValidation = 'email' | 'url' | 'uuid' | 'regex';
+
+export interface ZodInvalidStringError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_string;
-  validation: 'email' | 'url' | 'uuid';
+  validation: StringValidation;
 }
 
-interface TooSmallError extends ZodSuberrorBase {
+export interface ZodTooSmallError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.too_small;
   minimum: number;
   inclusive: boolean;
   type: 'array' | 'string' | 'number';
 }
 
-interface TooBigError extends ZodSuberrorBase {
+export interface ZodTooBigError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.too_big;
   maximum: number;
   inclusive: boolean;
   type: 'array' | 'string' | 'number';
 }
 
-interface InvalidIntersectionTypesError extends ZodSuberrorBase {
+export interface ZodInvalidIntersectionTypesError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.invalid_intersection_types;
 }
 
-export interface CustomError extends ZodSuberrorBase {
+export interface ZodCustomError extends ZodSuberrorBase {
   code: typeof ZodErrorCode.custom_error;
   params?: { [k: string]: any };
 }
 
 export type ZodSuberrorOptionalMessage =
-  | InvalidTypeError
-  | NonEmptyArrayIsEmptyError
-  | UnrecognizedKeysError
-  | InvalidUnionError
-  | InvalidLiteralValueError
-  | InvalidEnumValueError
-  | InvalidArgumentsError
-  | InvalidReturnTypeError
-  | InvalidDateError
-  | InvalidStringError
-  | TooSmallError
-  | TooBigError
-  | InvalidIntersectionTypesError
-  | CustomError;
+  | ZodInvalidTypeError
+  | ZodNonEmptyArrayIsEmptyError
+  | ZodUnrecognizedKeysError
+  | ZodInvalidUnionError
+  | ZodInvalidLiteralValueError
+  | ZodInvalidEnumValueError
+  | ZodInvalidArgumentsError
+  | ZodInvalidReturnTypeError
+  | ZodInvalidDateError
+  | ZodInvalidStringError
+  | ZodTooSmallError
+  | ZodTooBigError
+  | ZodInvalidIntersectionTypesError
+  | ZodCustomError;
 
 export type ZodSuberror = ZodSuberrorOptionalMessage & { message: string };
 
@@ -155,16 +140,24 @@ export class ZodError extends Error {
   };
 
   get message() {
-    const errorMessage: string[] = [`${this.errors.length} validation issue(s)`, ''];
+    // return JSON.stringify(this.errors, null, 2);
+    const errorMessage: string[] = [
+      `${this.errors.length} validation issue(s)`,
+      '',
+    ];
     for (const err of this.errors) {
-      errorMessage.push(`  Issue #${this.errors.indexOf(err)}: ${err.code} at ${err.path.join('.')}`);
+      errorMessage.push(
+        `  Issue #${this.errors.indexOf(err)}: ${err.code} at ${err.path.join(
+          './index',
+        )}`,
+      );
       errorMessage.push(`  ` + err.message);
       errorMessage.push('');
     }
     return errorMessage.join('\n');
     // return quotelessJson(this);
     // .map(({ path, message }) => {
-    //   return path.length ? `${path.join('.')}: ${message}` : `${message}`;
+    //   return path.length ? `${path.join('./index')}: ${message}` : `${message}`;
     // })
     // .join('\n');
   }
@@ -181,9 +174,24 @@ export class ZodError extends Error {
     this.errors = [...this.errors, ...subs];
   };
 
-  get formErrors() {
-    return flatten(this);
-  }
+  flatten = (): {
+    formErrors: string[];
+    fieldErrors: { [k: string]: string[] };
+  } => {
+    const fieldErrors: any = {};
+    const formErrors: string[] = [];
+    for (const sub of this.errors) {
+      if (sub.path.length > 0) {
+        fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
+        fieldErrors[sub.path[0]].push(sub.message);
+      } else {
+        formErrors.push(sub.message);
+      }
+    }
+    return { formErrors, fieldErrors };
+  };
 
-  flatten = () => flatten(this);
+  get formErrors() {
+    return this.flatten();
+  }
 }

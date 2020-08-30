@@ -32,10 +32,10 @@ export const getParsedType = (data: any): ZodParsedType => {
   if (data instanceof Date) return 'date';
   if (typeof data === 'function') return 'function';
   if (data === undefined) return 'undefined';
-  if (data === null) return 'null';
   if (typeof data === 'undefined') return 'undefined';
   if (typeof data === 'object') {
     if (Array.isArray(data)) return 'array';
+    if (!data) return 'null';
     if (
       data.then &&
       typeof data.then === 'function' &&
@@ -158,6 +158,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       RESULT.promise = PseudoPromise.resolve(data);
@@ -172,6 +173,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       if (Number.isNaN(data)) {
@@ -182,6 +184,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: ZodParsedType.nan,
           }),
         );
+        // setError(error);
         throw error;
       }
       RESULT.promise = PseudoPromise.resolve(data);
@@ -195,6 +198,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       RESULT.promise = PseudoPromise.resolve(data);
@@ -208,6 +212,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       RESULT.promise = PseudoPromise.resolve(data);
@@ -221,6 +226,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       RESULT.promise = PseudoPromise.resolve(data);
@@ -234,6 +240,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       RESULT.promise = PseudoPromise.resolve(data);
@@ -256,6 +263,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       RESULT.promise = PseudoPromise.resolve(data);
@@ -269,6 +277,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       // const data: any[] = data;
@@ -315,6 +324,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
 
@@ -494,6 +504,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       if (data.length > def.items.length) {
@@ -578,6 +589,16 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
       }
       RESULT.promise = PseudoPromise.resolve(data);
       break;
+    case z.ZodTypes.nativeEnum:
+      if (util.getValidEnumValues(def.values).indexOf(data) === -1) {
+        error.addError(
+          makeError({
+            code: ZodErrorCode.invalid_enum_value,
+            options: Object.values(def.values),
+          }),
+        );
+      }
+      break;
     case z.ZodTypes.function:
       if (parsedType !== ZodParsedType.function) {
         error.addError(
@@ -587,6 +608,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       const validatedFunc = (...args: any[]) => {
@@ -636,6 +658,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
 
@@ -664,6 +687,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       if (isNaN(data.getTime())) {
@@ -672,6 +696,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             code: ZodErrorCode.invalid_date,
           }),
         );
+        // setError(error);
         throw error;
       }
       RESULT.promise = PseudoPromise.resolve(data);
@@ -687,6 +712,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
 

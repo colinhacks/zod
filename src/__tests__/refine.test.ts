@@ -1,4 +1,4 @@
-import * as z from '..';
+import * as z from '../index';
 
 test('refinement', () => {
   const obj1 = z.object({

@@ -1,4 +1,4 @@
-import * as z from '..';
+import * as z from '../index';
 
 export namespace partialUtil {
   export type RootDeepPartial<T extends z.ZodTypeAny> = {

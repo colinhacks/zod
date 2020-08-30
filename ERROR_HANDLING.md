@@ -42,7 +42,7 @@ Every ZodSuberror has these fields:
 
 | code                                 | additional fields                                                                                                                                                                                                                                                                    |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ZodErrorCode.invalid_type            | `expected: ZodParsedType` <br> `received: ZodParsedType` <br><br>Jump to [this section](#parsedtype) for a breakdownthe possible values of ZodParsedType.                                                                                                                            |
+| ZodErrorCode.invalid_type            | `expected: ZodParsedType` <br> `received: ZodParsedType` <br><br>Jump to [this section](#parsedtype) for a breakdown of the possible values of ZodParsedType.                                                                                                                        |
 | ZodErrorCode.nonempty_array_is_empty | _no additional properties_                                                                                                                                                                                                                                                           |
 | ZodErrorCode.unrecognized_keys       | `keys: string[]`<br>The list of unrecognized keys<br>                                                                                                                                                                                                                                |
 | ZodErrorCode.invalid_union           | `unionErrors: ZodError[]` <br> The errors thrown by each element of the union.                                                                                                                                                                                                       |
@@ -58,7 +58,7 @@ Every ZodSuberror has these fields:
 
 ## ZodParsedType
 
-This is an enum used byn Zod internally to represent the type of a parsed value. The possible values are:
+This is an enum used by Zod internally to represent the type of a parsed value. The possible values are:
 
 - `string`
 - `nan`
