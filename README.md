@@ -22,7 +22,14 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- <br/> -->
 
-> ⚠️ You might be encountering issues building your project if you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later.
+**Aug 30 — zod@1.11 was released with lots of cool features!**
+
+- All schemas now have a `.safeParse` method. This lets you validate data in a more functional way, similar to `io-ts`: https://github.com/vriad/zod#safe-parse
+- String schemas have a new `.regex` refinement method: https://github.com/vriad/zod#strings
+- Object schemas now have two new methods: `.primitives()` and `.nonprimitives()`. These methods let you quickly pick or omit primitive fields from objects, useful for validating API inputs: https://github.com/vriad/zod#primitives-and-nonprimitives
+- Zod now provides `z.nativeEnum()`, which lets you create z Zod schema from an existing TypeScript `enum`: https://github.com/vriad/zod#native-enums
+
+<!-- > ⚠️ You might be encountering issues building your project if you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later. -->
 
 # What is Zod
 
@@ -40,23 +47,7 @@ Some other great aspects:
 
 # Sponsorship
 
-<table>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/kevinsimper">
-        <img src="https://avatars0.githubusercontent.com/u/3084745" width="100px;" alt="" />
-      </a>
-      <br>
-      <b>Colin McDonnell</b>
-      <br>
-      <a href="https://twitter.com/vriad">@vriad</a>,
-      <span>creator of Zod</span>
-    </td>
-    <td>
-    I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're a freelancer or entrepreneur, get listed below and enjoy Zod can [help you with that](https://github.com/sponsors/vriad). Check out my GitHub Sponsors profile at [github.com/sponsors/vriad](github.com/sponsors/vriad).
-    </td>
-  </tr>
-</table>
+I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're a freelancer or entrepreneur, get listed below and enjoy Zod can [help you with that](https://github.com/sponsors/vriad). Check out my GitHub Sponsors profile at [github.com/sponsors/vriad](github.com/sponsors/vriad).
 
 ### Sponsors
 

@@ -3,5 +3,5 @@
 node_modules
 /lib
 /coverage
-/src/coverage
+**/coverage
 .vscode
