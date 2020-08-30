@@ -1,4 +1,4 @@
-import * as z from '.';
+import * as z from './index';
 
 const myType = z.object({ name: z.string() });
 

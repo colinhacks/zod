@@ -1,5 +1,5 @@
 import * as z from './types/base';
-import { ZodDef } from '.';
+import { ZodDef } from './index';
 import { ZodError, ZodErrorCode, ZodSuberror, ZodSuberrorOptionalMessage } from './ZodError';
 import { util } from './helpers/util';
 import { ZodErrorMap, defaultErrorMap } from './defaultErrorMap';

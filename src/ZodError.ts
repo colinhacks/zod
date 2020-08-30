@@ -136,14 +136,14 @@ export class ZodError extends Error {
   get message() {
     const errorMessage: string[] = [`${this.errors.length} validation issue(s)`, ''];
     for (const err of this.errors) {
-      errorMessage.push(`  Issue #${this.errors.indexOf(err)}: ${err.code} at ${err.path.join('.')}`);
+      errorMessage.push(`  Issue #${this.errors.indexOf(err)}: ${err.code} at ${err.path.join('./index')}`);
       errorMessage.push(`  ` + err.message);
       errorMessage.push('');
     }
     return errorMessage.join('\n');
     // return quotelessJson(this);
     // .map(({ path, message }) => {
-    //   return path.length ? `${path.join('.')}: ${message}` : `${message}`;
+    //   return path.length ? `${path.join('./index')}: ${message}` : `${message}`;
     // })
     // .join('\n');
   }

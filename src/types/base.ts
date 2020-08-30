@@ -1,6 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodError } from '..';
+import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodError } from '../index';
 
 export enum ZodTypes {
   string = 'string',

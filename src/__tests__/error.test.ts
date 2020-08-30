@@ -1,4 +1,4 @@
-import * as z from '..';
+import * as z from '../index';
 import { ZodError, ZodErrorCode } from '../ZodError';
 import { ZodParsedType } from '../parser';
 

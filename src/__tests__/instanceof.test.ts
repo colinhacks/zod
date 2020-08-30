@@ -1,4 +1,4 @@
-import * as z from '..';
+import * as z from '../index';
 import { util } from '../helpers/util';
 
 test('instanceof', () => {

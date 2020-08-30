@@ -1,4 +1,4 @@
-import * as z from '..';
+import * as z from '../index';
 
 const minFive = z.number().min(5, 'min5');
 const maxFive = z.number().max(5, 'max5');

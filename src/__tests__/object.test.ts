@@ -107,5 +107,6 @@ test('primitives', () => {
     'enumPrimitive',
     'datePrimitive',
   ]);
+
   expect(Object.keys(baseObj.nonprimitives().shape)).toEqual(['nonprimitiveUnion', 'object', 'objectArray']);
 });
