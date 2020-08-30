@@ -936,7 +936,11 @@ There are two ways to define enums in Zod.
 An enum is just a union of string literals, so you _could_ define an enum like this:
 
 ```ts
-const FishEnum = z.union([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
+const FishEnum = z.union([
+  z.literal('Salmon'),
+  z.literal('Tuna'),
+  z.literal('Trout'),
+]);
 
 FishEnum.parse('Salmon'); // => "Salmon"
 FishEnum.parse('Flounder'); // => throws
@@ -1152,7 +1156,9 @@ There isn't a built-in method for validating any JSON, because representing that
 type Literal = boolean | null | number | string;
 type Json = Literal | { [key: string]: Json } | Json[];
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-const jsonSchema: z.ZodSchema<Json> = z.lazy(() => z.union([Literal, z.array(Json), z.record(Json)]));
+const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
+  z.union([Literal, z.array(Json), z.record(Json)]),
+);
 
 jsonSchema.parse({
   // ...

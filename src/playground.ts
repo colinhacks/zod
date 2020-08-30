@@ -1,126 +1,77 @@
 import * as z from '.';
+import { crazySchema } from './crazySchema';
+
 // import { PseudoPromise } from './PseudoPromise';
 // import { PseudoPromise } from './PseudoPromise';
 
-const run1 = async () => {
-  console.log('starting async parse');
-  z.date().parse('asdf');
-  // z.object({
-  //   password: z.string(),
-  //   confirm: z.string(),
-  // })
-  //   .refine(data => data.confirm === data.password, { path: ['confirm'], message: "Passwords don't match." })
-  //   .parseAsync({ password: 'asdf', confirm: 'qewr' })
-  //   .then(v => {
-  //     console.log('FINAL');
-  //     console.log(v);
-  //   });
+const sleep = (time: number) => {
+  return new Promise(res => setTimeout(res, time));
 };
 
-const run2 = async () => {
-  const arg = z.string();
-  const data = 'asdkfhasdfasdf';
-  // z.object({
-  //   f1: z.number(),
-  //   f2: z.string().nullable(),
-  //   f3: z.array(z.boolean().optional()).optional(),
-  // });
-  // const data = {
-  //   f1: 21,
-  //   f2: 'asdf',
-  //   f3: [true, false],
-  // }
-
-  // const returns2 = z.union([z.string(), z.number()]);
-
-  const func = z.function(z.tuple([arg]), arg).validate(_x => {
-    return _x;
+const numToString = z
+  .transformer(z.number(), z.promise(z.string()), async n => {
+    console.log(`n: ${n}`);
+    return String(n);
+  })
+  .refine(async arg => {
+    console.log(arg);
+    const val = await arg;
+    console.log(`val: ${val}`);
+    return val.length > 6;
   });
 
-  console.log('\n\nRUNNING FUNCTION');
-  const val = func(data);
-  console.log('\ngot val');
-  console.log(val);
-  // console.log(typeof val);
-  // const result = await val;
-  // console.log(`got result!!`);
-  // console.log(JSON.stringify(result, null, 2));
+const run1 = async () => {
+  console.log(`run1`);
+  const data = await numToString.parseAsync(57868768);
+  console.log(data);
 };
 
-const run3 = async () => {
-  console.log('\n');
-  const arg = z.string();
-  const func = z.function(z.tuple([arg]), arg).validate(x => x);
-
-  const val = func('asdfasdfafs');
-  console.log('\ngot val');
-  console.log(val);
-  // const func = await prom.getValue();
-  // console.log(func);
+const run2 = () => {
+  console.log(z.string().parse('asdf'));
 };
 
-interface A {
-  val: number;
-  a: A;
-}
-
-const A: z.ZodType<A> = z.late.object(() => ({
-  val: z.number(),
-  a: A,
-}));
-
-const run4 = () => {
-  console.log(`run4`);
-  const a: any = { val: 5 };
-  a.a = a;
-  const res = A.parse(a);
-  console.log(res);
+const run3 = () => {
+  crazySchema.parse({
+    tuple: ['asdf', 1234, true, null, undefined, '1234'],
+    merged: { k1: 'asdf', k2: 12 },
+    union: ['asdf', 12, 'asdf', 12, 'asdf', 12],
+    array: [12, 15, 16],
+    intersection: {},
+    enum: 'one',
+    nonstrict: { points: 1234 },
+    numProm: Promise.resolve(12),
+    lenfun: (x: string) => x.length,
+  });
 };
 
-const run5 = async () => {
-  console.log(
-    await z
-      .object({
-        asdf: z.promise(z.number()),
-      })
-      .parse({ asdf: Promise.resolve(12) }),
-  );
-  // .then(val => {
-  //   console.log(`val: ${val}`);
-  // })
-  // .catch(err => {
-  //   console.log(JSON.stringify(err.errors, null, 2));
-  // });
+const run4 = async () => {
+  const val = await z
+    .string()
+    .transform(z.string(), async val => val.toUpperCase())
+    .transform(z.string().array(), async val => val.split(''))
+    .transform(z.string(), async val => val.join('_'))
+    .refine(async _val => {
+      await sleep(3000);
+      return true;
+    })
+    .refine(async _val => {
+      await sleep(3000);
+      return true;
+    })
+    .refine(async _val => {
+      await sleep(3000);
+      return true;
+    })
+    .parseAsync('asdf');
 
-  // await z
-  //   .union([z.string(), z.number()])
-  //   .parseAsync(false)
-  //   .catch(err => {
-  //     console.log(JSON.stringify(err.errors, null, 2));
-  //   });
+  console.log(`RESULT ${val}`);
 };
-
-const run6 = () => {
-  // const testTuple = z.tuple([
-  //   z.string(),
-  //   z.object({ name: z.literal('Rudy'), score: z.number() }),
-  //   z.array(z.literal('blue')),
-  // ]);
-  try {
-    //   testTuple.parse([
-    //     123,
-    //     { name: 'Rudy2', score: 125334 },
-    //     ['blue', 'red'],
-    //   ] as any);
-    console.log(z.promise(z.string()).parse(Promise.resolve('asfd')));
-  } catch (err) {
-    console.log(JSON.stringify(err.errors, null, 2));
-  }
-};
-
 run1;
 run2;
 run3;
 run4;
-run5;
-run6();
+
+// run1();
+// run2();
+// run3();
+run4();

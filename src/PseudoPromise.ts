@@ -122,6 +122,7 @@ export class PseudoPromise<ReturnType = undefined> {
   };
 
   getValueAsync = async () => {
+    console.log('getValueAsync');
     try {
       // // if (this._cached.value) return this._cached.value;
       let val: any = undefined;

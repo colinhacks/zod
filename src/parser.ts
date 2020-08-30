@@ -144,6 +144,9 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   // const defaultRESULT.promise = Symbol('return_value');
   //  let returnValue: PseudoPromise<any>; // = defaultReturnValue;
   const parsedType = getParsedType(data);
+  console.log(`\nPARSING ${def.t}`);
+  console.log(data);
+  console.log(parsedType);
 
   switch (def.t) {
     case z.ZodTypes.string:
@@ -675,7 +678,8 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
       break;
 
     case z.ZodTypes.promise:
-      if (parsedType !== ZodParsedType.promise) {
+      console.log(`${parsedType} vs ${ZodParsedType.promise}`);
+      if (parsedType !== ZodParsedType.promise && params.async !== true) {
         error.addError(
           makeError({
             code: ZodErrorCode.invalid_type,
@@ -685,8 +689,12 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         );
         throw error;
       }
+
+      const promisified =
+        parsedType === ZodParsedType.promise ? data : Promise.resolve(data);
+
       RESULT.promise = PseudoPromise.resolve(
-        data.then((resolvedData: any) => {
+        promisified.then((resolvedData: any) => {
           try {
             const parsed = def.type.parse(resolvedData, params);
             return parsed;
@@ -695,6 +703,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
           }
         }),
       );
+
       //   new Promise(async (res, rej) => {
       //     const dataValue = await data;
       //     try {
@@ -715,13 +724,13 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             error.addErrors(err.errors);
           }
         })
-        .then(() => {
-          try {
-            return def.input.parse(data, params);
-          } catch (err) {
-            error.addErrors(err.errors);
-          }
-        })
+        // .then(() => {
+        //   try {
+        //     return def.input.parse(data, params);
+        //   } catch (err) {
+        //     error.addErrors(err.errors);
+        //   }
+        // })
         .then(inputParseResult => {
           try {
             return def.transformer(inputParseResult);
@@ -780,11 +789,29 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
 
     return checker();
   } else {
+    const SYNC_ERROR =
+      "You can't use .parse on a schema containing async refinements or transformations. Use .parseAsync instead.";
     const resolvedValue = RESULT.promise.getValueSync();
-    if (resolvedValue instanceof Promise && def.t !== z.ZodTypes.promise) {
-      throw new Error(
-        "You can't use .parse on a schema containing async refinements or transformations. Use .parseAsync instead.",
-      );
+    console.log(`sync parse resolved value:`);
+    console.log(resolvedValue);
+    if (resolvedValue instanceof Promise) {
+      console.log(`found promise in sync parse.`);
+      console.log(def.t);
+
+      if (def.t === z.ZodTypes.transformer) {
+        console.log(def.output._def.t);
+        if (def.output._def.t !== z.ZodTypes.promise) {
+          throw new Error(SYNC_ERROR);
+        }
+      } else if (def.t !== z.ZodTypes.promise) {
+        throw new Error(SYNC_ERROR);
+      } else {
+        //
+      }
+      //  console.log(def.t);
+      // throw new Error(
+      //   "You can't use .parse on a schema containing async refinements or transformations. Use .parseAsync instead.",
+      // );
     }
 
     for (const check of customChecks) {
