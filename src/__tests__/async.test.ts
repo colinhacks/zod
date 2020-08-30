@@ -18,12 +18,23 @@ test('parseAsync async test', async () => {
 });
 
 test('parseAsync async test', async () => {
+  expect.assertions(2);
+
   const schema1 = z.string().refine(_val => Promise.resolve(true));
-  await schema1.parseAsync('asdf');
+  const v1 = await schema1.parseAsync('asdf');
+  expect(v1).toEqual('asdf');
 
   const schema2 = z.string().refine(_val => Promise.resolve(false));
-  expect(schema2.parseAsync('asdf')).rejects;
-  // expect(async () => await schema2.parseAsync('asdf')).toThrow();
+  return await schema2.parseAsync('asdf').catch(err => {
+    expect(err).toBeTruthy();
+  });
+
+  // expect(v2).toEqual('adsf');
+  // await expect(schema1.parseAsync('asdf')).resolves.toEqual(true);
+  // // expect(val1).toEqual(true);
+
+  // const schema2 = z.string().refine(_val => Promise.resolve(false));
+  // await expect(schema2.parseAsync('asdf')).rejects;
 });
 
 test('parseAsync async with value', async () => {

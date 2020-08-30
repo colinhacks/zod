@@ -1,6 +1,13 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodTransformer } from '..';
+import {
+  ZodErrorCode,
+  ZodArray,
+  ZodUnion,
+  ZodNull,
+  ZodUndefined,
+  ZodTransformer,
+} from '..';
 import { CustomError } from '../ZodError';
 
 export enum ZodTypes {
@@ -25,7 +32,7 @@ export enum ZodTypes {
   any = 'any',
   unknown = 'unknown',
   void = 'void',
-  transformer = 'transformer'
+  transformer = 'transformer',
 }
 
 export type ZodTypeAny = ZodType<any, any>;
@@ -58,9 +65,11 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
 
   parse: (x: Type | unknown, params?: ParseParams) => Type;
 
-  parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = async (value, params) => {
-    const parsed = await this.parse(value, { ...params, async: true });
-    return parsed;
+  parseAsync: (
+    x: Type | unknown,
+    params?: ParseParams,
+  ) => Promise<Type> = async (value, params) => {
+    return await this.parse(value, { ...params, async: true });
   };
 
   is(u: Type): u is Type {
@@ -95,7 +104,9 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     return this._refinement({ code: ZodErrorCode.custom_error, ...refinement });
   };
 
-  protected _refinement: (refinement: InternalCheck<Type>) => this = refinement => {
+  protected _refinement: (
+    refinement: InternalCheck<Type>,
+  ) => this = refinement => {
     return new (this as any).constructor({
       ...this._def,
       checks: [...(this._def.checks || []), refinement],
@@ -109,8 +120,10 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
 
   abstract toJSON: () => object;
   //  abstract // opt optional: () => any;
-  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
-  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  optional: () => ZodUnion<[this, ZodUndefined]> = () =>
+    ZodUnion.create([this, ZodUndefined.create()]);
+  nullable: () => ZodUnion<[this, ZodNull]> = () =>
+    ZodUnion.create([this, ZodNull.create()]);
   array: () => ZodArray<this> = () => ZodArray.create(this);
   // pre: <T extends string>(
   //   input: T,
@@ -130,15 +143,21 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   // ) => ZodTransformer<This, U> = (input, transformer) => {
   //   return ZodTransformer.create(this as any, input, transformer) as any;
   // };
-  transform: <This extends this, U extends ZodType<any>, Tx extends (arg: This['_type']) => U['_type']>(
+  transform: <
+    This extends this,
+    U extends ZodType<any>,
+    Tx extends (arg: This['_type']) => U['_type'] | Promise<U['_type']>
+  >(
     x: U,
     transformer: Tx,
   ) => ZodTransformer<This, U> = (input, transformer) => {
     return ZodTransformer.create(this as any, input, transformer) as any;
   };
 
-
-  default: <T extends Type = Type, Opt extends ZodUnion<[this, ZodUndefined]> = ZodUnion<[this, ZodUndefined]>>(
+  default: <
+    T extends Type = Type,
+    Opt extends ZodUnion<[this, ZodUndefined]> = ZodUnion<[this, ZodUndefined]>
+  >(
     def: T,
   ) => ZodTransformer<Opt, this> = def => {
     return ZodTransformer.create(this.optional(), this, (x: any) => {

@@ -59,7 +59,11 @@ test('function inference 2', () => {
   type func2 = z.TypeOf<typeof func2>;
   const t2: util.AssertEqual<
     func2,
-    (arg: { f1: number; f2: string | null; f3?: (boolean | undefined)[] | undefined }) => string | number
+    (arg: {
+      f1: number;
+      f2: string | null;
+      f3?: (boolean | undefined)[] | undefined;
+    }) => string | number
   > = true;
   [t2];
 });
@@ -109,9 +113,11 @@ test('output validation error', () => {
 });
 
 test('special function error codes', () => {
-  const checker = z.function(z.tuple([z.string()]), z.boolean()).implement(arg => {
-    return arg.length as any;
-  });
+  const checker = z
+    .function(z.tuple([z.string()]), z.boolean())
+    .implement(arg => {
+      return arg.length as any;
+    });
   try {
     checker('12' as any);
   } catch (err) {

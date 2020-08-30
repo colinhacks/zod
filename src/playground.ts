@@ -1,41 +1,77 @@
-import { PseudoPromise } from './PseudoPromise';
+import * as z from '.';
+import { crazySchema } from './crazySchema';
 
-PseudoPromise.object({
-  asdf: PseudoPromise.resolve(15),
-  qwer: new PseudoPromise().then(() => 'asdfadsf'),
-})
-  .toPromise()
-  .then(console.log);
+// import { PseudoPromise } from './PseudoPromise';
+// import { PseudoPromise } from './PseudoPromise';
 
-// expect.assertions(1);
+const sleep = (time: number) => {
+  return new Promise(res => setTimeout(res, time));
+};
 
-// PseudoPromise.allAsync([new PseudoPromise().then(async () => 'asdf')]).then(val => expect(val).toEqual('asdf'));
+const numToString = z
+  .transformer(z.number(), z.promise(z.string()), async n => {
+    console.log(`n: ${n}`);
+    return String(n);
+  })
+  .refine(async arg => {
+    console.log(arg);
+    const val = await arg;
+    console.log(`val: ${val}`);
+    return val.length > 6;
+  });
 
-// const myProm = new PseudoPromise()
-//   .then(async () => 15)
-//   .then(arg => arg.toString())
-//   .then(arg => arg.length);
+const run1 = async () => {
+  console.log(`run1`);
+  const data = await numToString.parseAsync(57868768);
+  console.log(data);
+};
 
-// console.log(myProm.resolveSync());
+const run2 = () => {
+  console.log(z.string().parse('asdf'));
+};
 
-// const run = async () => {
-//   await z
-//     .union([z.string(), z.number().int()])
-//     .parseAsync(3.2)
-//     .then(console.log)
-//     .catch(_err => {
-//       console.log('error! oh no!');
-//     });
-// };
+const run3 = () => {
+  crazySchema.parse({
+    tuple: ['asdf', 1234, true, null, undefined, '1234'],
+    merged: { k1: 'asdf', k2: 12 },
+    union: ['asdf', 12, 'asdf', 12, 'asdf', 12],
+    array: [12, 15, 16],
+    intersection: {},
+    enum: 'one',
+    nonstrict: { points: 1234 },
+    numProm: Promise.resolve(12),
+    lenfun: (x: string) => x.length,
+  });
+};
 
-// run();
+const run4 = async () => {
+  const val = await z
+    .string()
+    .transform(z.string(), async val => val.toUpperCase())
+    .transform(z.string().array(), async val => val.split(''))
+    .transform(z.string(), async val => val.join('_'))
+    .refine(async _val => {
+      await sleep(3000);
+      return true;
+    })
+    .refine(async _val => {
+      await sleep(3000);
+      return true;
+    })
+    .refine(async _val => {
+      await sleep(3000);
+      return true;
+    })
+    .parseAsync('asdf');
 
-// PseudoPromise.awaitObj({
-//   asdf: PseudoPromise.resolve(15),
-//   qwer: new PseudoPromise().then(async () => {
-//     if (Math.random() > 0) throw new Error('asdfjasf');
-//     return 'asdfadsf';
-//   }),
-// });
+  console.log(`RESULT ${val}`);
+};
+run1;
+run2;
+run3;
+run4;
 
-// PseudoPromise.all([new PseudoPromise().then(async () => 'asdf')]);
+// run1();
+// run2();
+// run3();
+run4();

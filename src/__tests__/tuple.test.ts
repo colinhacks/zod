@@ -2,7 +2,11 @@ import * as z from '../index';
 import { ZodError } from '../ZodError';
 import { util } from '../helpers/util';
 
-const testTuple = z.tuple([z.string(), z.object({ name: z.literal('Rudy') }), z.array(z.literal('blue'))]);
+const testTuple = z.tuple([
+  z.string(),
+  z.object({ name: z.literal('Rudy') }),
+  z.array(z.literal('blue')),
+]);
 
 test('tuple inference', () => {
   const args1 = z.tuple([z.string()]);

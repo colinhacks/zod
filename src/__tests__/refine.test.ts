@@ -6,7 +6,10 @@ test('refinement', () => {
     second: z.string(),
   });
   const obj2 = obj1.partial();
-  const obj3 = obj2.refine(data => data.first || data.second, 'Either first or second should be filled in.');
+  const obj3 = obj2.refine(
+    data => data.first || data.second,
+    'Either first or second should be filled in.',
+  );
 
   expect(obj1 === (obj2 as any)).toEqual(false);
   expect(obj2 === obj3).toEqual(false);
@@ -26,7 +29,10 @@ test('refinement 2', () => {
       password: z.string(),
       confirmPassword: z.string(),
     })
-    .refine(data => data.password === data.confirmPassword, 'Both password and confirmation must match');
+    .refine(
+      data => data.password === data.confirmPassword,
+      'Both password and confirmation must match',
+    );
 
   expect(() =>
     validationSchema.parse({
@@ -38,6 +44,7 @@ test('refinement 2', () => {
 });
 
 test('custom path', async () => {
+  expect.assertions(1);
   await z
     .object({
       password: z.string(),
@@ -46,7 +53,6 @@ test('custom path', async () => {
     .refine(data => data.confirm === data.password, { path: ['confirm'] })
     .parseAsync({ password: 'asdf', confirm: 'qewr' })
     .catch(err => {
-      console.log(JSON.stringify(err, null, 2));
       expect(err.errors[0].path).toEqual(['confirm']);
     });
 });
