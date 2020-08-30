@@ -5,7 +5,7 @@ import { util } from './helpers/util';
 import { ZodErrorMap, defaultErrorMap } from './defaultErrorMap';
 
 export type ParseParams = {
-  seen?: { schema: any; objects: any[] }[];
+  seen?: { schema: any; objects: { data: any; error?: any; times: number }[] }[];
   path?: (string | number)[];
   errorMap?: ZodErrorMap;
 };
@@ -86,20 +86,44 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   };
 
   const def: ZodDef = schemaDef as any;
+
   const parsedType = getParsedType(obj);
 
   const schemaSeen = params.seen.find(x => x.schema === schemaDef);
   const isPrimitive = typeof obj !== 'object' || obj === null;
-  if (isPrimitive) {
-  } else if (schemaSeen) {
-    if (schemaSeen.objects.indexOf(obj) !== -1) {
-      return obj;
+
+  if (schemaSeen) {
+    const found = schemaSeen.objects.find(x => x.data === obj);
+
+    if (found) {
+      if (found.error) {
+        throw found.error;
+      }
+
+      found.times = found.times + 1;
+
+      if (found.times > 2 && !isPrimitive) {
+        return Symbol('recursion depth exceeded.');
+      } else if (found.times > 2) {
+      }
     } else {
+      //
       schemaSeen.objects.push(obj);
     }
   } else {
-    params.seen.push({ schema: schemaDef, objects: [obj] });
+    params.seen.push({ schema: schemaDef, objects: [{ data: obj, error: undefined, times: 1 }] });
   }
+
+  // const setError = (error: Error) => {
+  //   const schemaSeen = params.seen.find(x => x.schema === schemaDef);
+  //   if (schemaSeen) {
+  //     const found = schemaSeen.objects.find(x => x.data === obj);
+  //     if (found) {
+  //       //
+  //       found.error = error;
+  //     }
+  //   }
+  // };
 
   const error = new ZodError([]);
   let returnValue: any = obj;
@@ -110,6 +134,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.string, received: parsedType }),
         );
+        // setError(error);
         throw error;
       }
       break;
@@ -118,12 +143,14 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.number, received: parsedType }),
         );
+        // setError(error);
         throw error;
       }
       if (Number.isNaN(obj)) {
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.number, received: ZodParsedType.nan }),
         );
+        // setError(error);
         throw error;
       }
       break;
@@ -132,6 +159,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.number, received: parsedType }),
         );
+        // setError(error);
         throw error;
       }
       break;
@@ -140,6 +168,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.boolean, received: parsedType }),
         );
+        // setError(error);
         throw error;
       }
       break;
@@ -148,6 +177,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.undefined, received: parsedType }),
         );
+        // setError(error);
         throw error;
       }
       break;
@@ -156,6 +186,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.null, received: parsedType }),
         );
+        // setError(error);
         throw error;
       }
       break;
@@ -168,6 +199,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.void, received: parsedType }),
         );
+        // setError(error);
         throw error;
       }
       break;
@@ -176,11 +208,13 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.array, received: parsedType }),
         );
+        // setError(error);
         throw error;
       }
       const data: any[] = obj;
       if (def.nonempty === true && obj.length === 0) {
         error.addError(makeError({ code: ZodErrorCode.nonempty_array_is_empty }));
+        // setError(error);
         throw error;
       }
       data.map((item, i) => {
@@ -193,6 +227,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         }
       });
       if (!error.isEmpty) {
+        // setError(error);
         throw error;
       }
       break;
@@ -201,6 +236,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.object, received: parsedType }),
         );
+        // setError(error);
         throw error;
       }
 
@@ -273,6 +309,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.array, received: parsedType }),
         );
+        // setError(error);
         throw error;
       }
       if (obj.length > def.items.length) {
@@ -336,6 +373,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       const validatedFunc = (...args: any[]) => {
@@ -383,6 +421,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
 
@@ -403,15 +442,16 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       if (isNaN(obj.getTime())) {
-        console.log('NAN');
         error.addError(
           makeError({
             code: ZodErrorCode.invalid_date,
           }),
         );
+        // setError(error);
         throw error;
       }
       break;
@@ -425,6 +465,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
             received: parsedType,
           }),
         );
+        // setError(error);
         throw error;
       }
       return new Promise(async (res, rej) => {
@@ -450,6 +491,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   }
 
   if (!error.isEmpty) {
+    // setError(error);
     throw error;
   }
 

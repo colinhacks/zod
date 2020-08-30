@@ -106,3 +106,90 @@ test('self recursion with base type', () => {
   untypedCategory.subcategories = [untypedCategory];
   Category.parse(untypedCategory); // parses successfully
 });
+
+test('repeated parsing', () => {
+  const extensions = z.object({
+    name: z.string(),
+  });
+
+  const dog = z.object({
+    extensions,
+  });
+
+  const cat = z.object({
+    extensions,
+  });
+
+  const animal = z.union([dog, cat]);
+
+  // it should output type error because name is ought to be type of string
+  expect(() => animal.parse({ extensions: { name: 123 } })).toThrow;
+});
+
+test('repeated errors', () => {
+  const Shape = z.array(
+    z.object({
+      name: z.string().nonempty(),
+      value: z.string().nonempty(),
+    }),
+  );
+
+  const data = [
+    {
+      name: 'Name 1',
+      value: 'Value',
+    },
+    {
+      name: '',
+      value: 'Value',
+    },
+    {
+      name: '',
+      value: '',
+    },
+  ];
+
+  try {
+    Shape.parse(data);
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      expect(e.errors.length).toEqual(3);
+    }
+  }
+});
+
+test('unions of object', () => {
+  const base = z.object({
+    id: z.string(),
+  });
+
+  const type1 = base.merge(
+    z.object({
+      type: z.literal('type1'),
+    }),
+  );
+
+  const type2 = base.merge(
+    z.object({
+      type: z.literal('type2'),
+    }),
+  );
+
+  const union1 = z.union([type1, type2]);
+  const union2 = z.union([type2, type1]);
+
+  const value1 = {
+    type: 'type1',
+  };
+
+  const value2 = {
+    type: 'type2',
+  };
+
+  expect(type1.check(value1)).toEqual(false);
+  expect(union1.check(value1)).toEqual(false);
+  expect(union2.check(value1)).toEqual(false);
+  expect(type2.check(value2)).toEqual(false);
+  expect(union1.check(value2)).toEqual(false);
+  expect(union2.check(value2)).toEqual(false);
+});

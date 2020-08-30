@@ -105,6 +105,7 @@ test('primitives', () => {
     nonprimitiveUnion: z.union([z.string(), z.tuple([])]),
     object: z.object({}),
     objectArray: z.object({}).array(),
+    arrayarray: z.array(z.array(z.string())),
   });
 
   console.log(JSON.stringify(Object.keys(baseObj.nonprimitives()), null, 2));
@@ -128,5 +129,10 @@ test('primitives', () => {
     'datePrimitive',
   ]);
 
-  expect(Object.keys(baseObj.nonprimitives().shape)).toEqual(['nonprimitiveUnion', 'object', 'objectArray']);
+  expect(Object.keys(baseObj.nonprimitives().shape)).toEqual([
+    'nonprimitiveUnion',
+    'object',
+    'objectArray',
+    'arrayarray',
+  ]);
 });

@@ -1,22 +1,40 @@
-import * as z from './index';
+// import * as z from './index';
 
-// const myType = z.object({ name: z.string() });
+// const run = () => {
+//   const base = z.object({
+//     id: z.string(),
+//   });
 
-const run = () => {
-  try {
-    z.string().parse(134);
-  } catch (err) {
-    console.log(err);
-  }
-  // const t1 = z.object({
-  //   name: z.string(),
-  //   obj: z.object({}),
-  //   arrayarray: z.array(z.array(z.string())),
-  // });
-  // const i1 = t1.primitives();
-  // type i1 = z.infer<typeof i1>;
-  // const f1: util.AssertEqual<i1, { name: string }> = true;
-  // const i1 = t1.primitives();
-};
+//   const type1 = base.merge(
+//     z.object({
+//       type: z.literal('type1'),
+//     }),
+//   );
 
-run();
+//   const type2 = base.merge(
+//     z.object({
+//       type: z.literal('type2'),
+//     }),
+//   );
+
+//   const union1 = z.union([type1, type2]);
+//   const union2 = z.union([type2, type1]);
+
+//   const value1 = {
+//     type: 'type1',
+//   };
+
+//   const value2 = {
+//     type: 'type2',
+//   };
+
+//   type1.parse(value1);
+//   console.log(type1.check(value1));
+//   console.log(union1.check(value1));
+//   console.log(union2.check(value1));
+//   console.log(type2.check(value2));
+//   console.log(union1.check(value2));
+//   console.log(union2.check(value2));
+// };
+
+// run();
