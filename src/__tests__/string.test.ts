@@ -79,7 +79,7 @@ test('uuid', () => {
   ).toThrow();
 });
 
-test('regexp', () => {
+test('regex', () => {
   z.string()
     .regex(/^moo+$/)
     .parse('mooooo');

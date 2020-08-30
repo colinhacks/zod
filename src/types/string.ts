@@ -46,11 +46,11 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     return this.min(len, message).max(len, message);
   }
 
-  protected _regex = (regexp: RegExp, validation: StringValidation, message?: errorUtil.ErrMessage) =>
+  protected _regex = (regex: RegExp, validation: StringValidation, message?: errorUtil.ErrMessage) =>
     this._refinement({
       validation,
       code: ZodErrorCode.invalid_string,
-      check: data => regexp.test(data),
+      check: data => regex.test(data),
       ...errorUtil.errToObj(message),
     });
 
