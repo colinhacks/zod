@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">58.33% </span>
+                <span class="strong">83.33% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>7/12</span>
+                <span class='fraction'>10/12</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">25% </span>
+                <span class="strong">50% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/4</span>
+                <span class='fraction'>2/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">55.56% </span>
+                <span class="strong">77.78% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>5/9</span>
+                <span class='fraction'>7/9</span>
             </div>
         
             
@@ -55,7 +55,7 @@
             Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
         </p>
     </div>
-    <div class='status-line medium'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -87,7 +87,7 @@
 <a name='L28'></a><a href='#L28'>28</a>
 <a name='L29'></a><a href='#L29'>29</a>
 <a name='L30'></a><a href='#L30'>30</a>
-<a name='L31'></a><a href='#L31'>31</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">24x</span>
+<a name='L31'></a><a href='#L31'>31</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -97,8 +97,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">24x</span>
-<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -106,17 +106,17 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">24x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">27x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import * as z from './base';
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
@@ -127,7 +127,7 @@ export interface ZodLazyDef&lt;T extends z.ZodTypeAny = z.ZodTypeAny&gt; extends
   getter: () =&gt; T;
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export class Z</span>odLazy&lt;T extends z.ZodTypeAny&gt; extends z.ZodType&lt;z.TypeOf&lt;T&gt;, ZodLazyDef&lt;T&gt;&gt; {
+export class ZodLazy&lt;T extends z.ZodTypeAny&gt; extends z.ZodType&lt;z.TypeOf&lt;T&gt;, ZodLazyDef&lt;T&gt;&gt; {
 <span class="fstat-no" title="function not covered" >  get s</span>chema(): T {
 <span class="cstat-no" title="statement not covered" >    return this._def.getter();</span>
   }
@@ -136,12 +136,12 @@ export interface ZodLazyDef&lt;T extends z.ZodTypeAny = z.ZodTypeAny&gt; extends
 &nbsp;
   // null nullable: () =&gt; ZodUnion&lt;[this, ZodNull]&gt; = () =&gt; ZodUnion.create([this, ZodNull.create()]);
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  toJSON = <span class="fstat-no" title="function not covered" >() =&gt; {</span></span>
+  toJSON = <span class="fstat-no" title="function not covered" >() =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    throw new Error("Can't JSONify recursive structure");</span>
   };
 &nbsp;
-  static create = <span class="fstat-no" title="function not covered" >&lt;T extends z.ZodTypeAny&gt;(g</span>etter: () =&gt; T): ZodLazy&lt;T&gt; =&gt; {
-<span class="cstat-no" title="statement not covered" >    return new ZodLazy({</span>
+  static create = &lt;T extends z.ZodTypeAny&gt;(getter: () =&gt; T): ZodLazy&lt;T&gt; =&gt; {
+    return new ZodLazy({
       t: z.ZodTypes.lazy,
       getter: getter,
     });
@@ -154,7 +154,7 @@ export interface ZodLazyDef&lt;T extends z.ZodTypeAny = z.ZodTypeAny&gt; extends
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank">istanbul</a>
-                at Sat Aug 29 2020 22:36:49 GMT-0700 (Pacific Daylight Time)
+                at Sun Aug 30 2020 00:38:15 GMT-0700 (Pacific Daylight Time)
             </div>
         </div>
         <script src="../../prettify.js"></script>
