@@ -116,6 +116,13 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
 
   const def: ZodDef = schemaDef as any;
 
+  const finder = (arr: any[], checker: (arg: any) => any) => {
+    for (const item of arr) {
+      if (checker(item)) return item;
+    }
+    return undefined;
+  };
+
   const defaultPromise = new PseudoPromise();
   (defaultPromise as any)._default = true;
   const RESULT: { data: any; promise: PseudoPromise<any> } = {
@@ -124,9 +131,9 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   }; // = defaultReturnValue;
   params.seen = params.seen || [];
   params.seen.push({ schema: schemaDef, objects: [] });
-  const schemaSeen = params.seen.find(x => x.schema === schemaDef)!;
+  const schemaSeen = finder(params.seen, x => x.schema === schemaDef); // params.seen.find(x => x.schema === schemaDef)!;
 
-  const objectSeen = schemaSeen.objects.find(x => x.data === data);
+  const objectSeen = finder(schemaSeen.objects, arg => arg.data === data); //.find(x => x.data === data);
 
   if (objectSeen && def.t !== z.ZodTypes.transformer) {
     // return objectSeen.promise._cached.value; //.getValue();
@@ -398,7 +405,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         }),
       )
         .then((unionResults: any[]) => {
-          return unionResults.find((val: any) => val !== INVALID);
+          return finder(unionResults, (val: any) => val !== INVALID);
         })
         .then((unionResult: any) => {
           // const unionResults: any[] = _unionResults;
