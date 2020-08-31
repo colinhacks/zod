@@ -54,7 +54,12 @@ export const ZodParsedType = util.arrayToEnum([
 ]);
 
 export type ZodParsedType = keyof typeof ZodParsedType;
-
+const find = (arr: any[], checker: (arg: any) => any) => {
+  for (const item of arr) {
+    if (checker(item)) return item;
+  }
+  return undefined;
+};
 // conditional required to distribute union
 type stripPath<T extends object> = T extends any ? util.OmitKeys<T, 'path'> : never;
 export type MakeErrorData = stripPath<ZodSuberrorOptionalMessage> & { path?: (string | number)[] };
@@ -89,11 +94,11 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
 
   const parsedType = getParsedType(obj);
 
-  const schemaSeen = params.seen.find(x => x.schema === schemaDef);
+  const schemaSeen = find(params.seen, x => x.schema === schemaDef);
   const isPrimitive = typeof obj !== 'object' || obj === null;
 
   if (schemaSeen) {
-    const found = schemaSeen.objects.find(x => x.data === obj);
+    const found = find(schemaSeen.objects, x => x.data === obj);
 
     if (found) {
       if (found.error) {
@@ -359,7 +364,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({
             code: ZodErrorCode.invalid_enum_value,
-            options: Object.values(def.values),
+            options: util.getValues(def.values),
           }),
         );
       }

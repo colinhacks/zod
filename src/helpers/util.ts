@@ -23,6 +23,12 @@ export namespace util {
     for (const k of validKeys) {
       filtered[k] = obj[k];
     }
-    return Object.values(filtered);
+    return getValues(filtered);
+  };
+
+  export const getValues = (obj: any) => {
+    return Object.keys(obj).map(function(e) {
+      return obj[e];
+    });
   };
 }
