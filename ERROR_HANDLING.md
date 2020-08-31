@@ -12,7 +12,7 @@ class ZodError extends Error {
 }
 ```
 
-ZodError is a subclass of `Error`; if you want to place around with this class, you can create an instance like so:
+ZodError is a subclass of `Error`; you can create your own instance easily:
 
 ```ts
 import * as z from 'zod';
@@ -20,15 +20,15 @@ import * as z from 'zod';
 const myError = new z.ZodError([]);
 ```
 
-ZodErrors are just a wrapper class that contain information about the problems that occurred during validation. The list of issues are contained in the `errors` property.
+Each ZodError has an `errors` property that is an array of `ZodSuberrors`. Each suberror documents a problem that occurred during validation.
 
 ## ZodSuberror
 
 `ZodSuberror` is _not_ a class. It is a [discriminated union](https://www.typescriptlang.org/docs/handbook/advanced-types.html#discriminated-unions).
 
-The link above the the best way to learn about the concept. Discriminated unions are an ideal way to represent a data structures that may be one of many possible variants.
+The link above the the best way to learn about the concept. Discriminated unions are an ideal way to represent a data structures that may be one of many possible variants. You can see all the possible variants defined [here](https://github.com/vriad/zod/blob/master/src/ZodError.ts). They are also described in the table below if you prefer.
 
-Every ZodSuberror has these fields:
+_Every_ ZodSuberror has these fields:
 
 | field     | type                   | details                                                                                           |
 | --------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
@@ -290,7 +290,7 @@ console.log(err.flatten());
 ```
 
 - `fieldErrors` is an object. The keys are the field(s) that threw the error. The values are an array of error strings that can be easily presented in the interface.
-- `formErrors: string[]` is an array of errors that occured on the root of the form schema. For instance if you called `FormData.parse(null)`, `formErrors` would be:
+- `formErrors: string[]` is an array of errors that occured on the "root" of the object schema. For instance if you called `FormData.parse(null)`, `formErrors` would be:
   ```ts
   ['Invalid input: expected object, received null'];
   ```
