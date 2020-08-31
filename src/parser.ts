@@ -487,11 +487,20 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
       util.assertNever(def);
   }
 
+  // had to throw earlier to ensure that custom check input value is properly typed
+  if (!error.isEmpty) {
+    throw error;
+  }
+
   const customChecks = def.checks || [];
   for (const check of customChecks) {
-    if (!check.check(returnValue)) {
-      const { check: checkMethod, ...noMethodCheck } = check;
-      error.addError(makeError(noMethodCheck));
+    if (typeof check === 'function') {
+      check(error, returnValue);
+    } else {
+      if (!check.check(returnValue)) {
+        const { check: checkMethod, ...noMethodCheck } = check;
+        error.addError(makeError(noMethodCheck));
+      }
     }
   }
 

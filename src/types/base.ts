@@ -30,9 +30,11 @@ export enum ZodTypes {
 export type ZodTypeAny = ZodType<any, any>;
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 
-type InternalCheck<T> = {
-  check: (arg: T) => any;
-} & MakeErrorData;
+type InternalCheck<T> =
+  | ({
+      check: (arg: T) => any;
+    } & MakeErrorData)
+  | ((error: ZodError, arg: T) => MakeErrorData | void);
 
 // type Check<T> = {
 //   check: (arg: T) => any;
@@ -133,6 +135,8 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
       checks: [...(this._def.checks || []), refinement],
     }) as this;
   };
+
+  dynamicRefinement: (refinement: InternalCheck<Type>) => this = refinement => this._refinement(refinement);
 
   constructor(def: Def) {
     this._def = def;
