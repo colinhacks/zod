@@ -54,12 +54,14 @@ export const ZodParsedType = util.arrayToEnum([
 ]);
 
 export type ZodParsedType = keyof typeof ZodParsedType;
-const find = (arr: any[], checker: (arg: any) => any) => {
+
+export const find = (arr: any[], checker: (arg: any) => any) => {
   for (const item of arr) {
     if (checker(item)) return item;
   }
   return undefined;
 };
+
 // conditional required to distribute union
 type stripPath<T extends object> = T extends any ? util.OmitKeys<T, 'path'> : never;
 export type MakeErrorData = stripPath<ZodSuberrorOptionalMessage> & { path?: (string | number)[] };
@@ -107,7 +109,8 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
 
       found.times = found.times + 1;
 
-      if (found.times > 2 && !isPrimitive) {
+      if (found.times > 5 && !isPrimitive) {
+        console.log('SHORT CIRCUIT');
         return Symbol('recursion depth exceeded.');
       } else if (found.times > 2) {
       }
