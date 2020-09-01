@@ -39,8 +39,8 @@
     "buildall": "yarn add typescript@3.4 && yarn build && yarn add typescript@3.5 && yarn build && yarn add typescript@3.6 && yarn build && yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4 && yarn build && yarn add typescript@3.3 && yarn build",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json",
-    "test": "jest --coverage && yarn run badge",
-    "testone": "jest ",
+    "test": "jest --config jestconfig.json --coverage && yarn run badge",
+    "testone": "jest --config jestconfig.json ",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
     "prepublishOnly": "npm run build",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts"
