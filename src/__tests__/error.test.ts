@@ -39,6 +39,7 @@ test('type error with custom error map', () => {
     z.string().parse('asdf', { errorMap });
   } catch (err) {
     const zerr: z.ZodError = err;
+    console.log(zerr);
     expect(zerr.errors[0].code).toEqual(z.ZodErrorCode.invalid_type);
     expect(zerr.errors[0].message).toEqual(`bad type!`);
   }
@@ -136,11 +137,33 @@ test('array minimum', () => {
 
 // implement test for semi-smart union logic that checks for type error on either left or right
 test('union smart errors', () => {
-  expect.assertions(2);
-  z.union([z.string(), z.number().int()])
-    .parseAsync(3.2)
-    .catch(err => expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_type));
-  z.union([z.string(), z.number()])
-    .parseAsync(false)
-    .catch(err => expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_union));
+  // expect.assertions(2);
+
+  const p1 = z.union([z.string(), z.number().refine(x => x > 0)]).safeParse(-3.2);
+
+  if (p1.success === true) throw new Error();
+  console.log(JSON.stringify(p1.error, null, 2));
+  expect(p1.success).toBe(false);
+  expect(p1.error.errors[0].code).toEqual(ZodErrorCode.custom_error);
+
+  const p2 = z.union([z.string(), z.number()]).safeParse(false);
+  // .catch(err => expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_union));
+  if (p2.success === true) throw new Error();
+  expect(p2.success).toBe(false);
+  expect(p2.error.errors[0].code).toEqual(ZodErrorCode.invalid_union);
+});
+
+test('custom path in custom error map', () => {
+  const schema = z.object({
+    items: z.array(z.string()).refine(data => data.length > 3, {
+      path: ['items-too-few'],
+    }),
+  });
+
+  expect.assertions(1);
+  const errorMap: z.ZodErrorMap = error => {
+    expect(error.path.length).toBe(2);
+    return { message: 'doesnt matter' };
+  };
+  schema.safeParse({ items: ['first'] }, { errorMap });
 });

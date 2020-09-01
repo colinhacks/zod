@@ -231,7 +231,7 @@ const FormData = z
   })
   .refine(obj => obj.password === obj.confirm, {
     message: 'Passwords do not match',
-    path: ['confirm'], // sets the path of the error thrown by this refinement
+    path: ['confirm'], // this value is concatenated to the end of the actual path of the error
   });
 }
 ```
@@ -287,6 +287,7 @@ console.log(err.flatten());
     confirm: ['Should be at least 10 characters', 'Passwords do not match'],
   },
 }
+*/
 ```
 
 - `fieldErrors` is an object. The keys are the field(s) that threw the error. The values are an array of error strings that can be easily presented in the interface.

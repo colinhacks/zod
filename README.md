@@ -312,10 +312,11 @@ As you can see, `.refine` takes two arguments.
 These params let you define powerful custom behavior. Zod is commonly used for form validation. If you want to verify that "password" and "confirm" match, you can do so like this:
 
 ```ts
-z.object({
-  password: z.string(),
-  confirm: z.string(),
-})
+const passwordForm = z
+  .object({
+    password: z.string(),
+    confirm: z.string(),
+  })
   .refine(data => data.password === data.confirm, {
     message: "Passwords don't match",
     path: ['confirm'], // set path of error
@@ -336,6 +337,29 @@ ZodError {
 ```
 
 Note that the `path` is set to `["confirm"]`, so you can easily display this error underneath the "Confirm password" textbox.
+
+Important note, the value passed to the `path` option is _concatenated_ to the actual error path. So if you took `passwordForm` from above and nested it inside another object, you would still get the error path you expect.
+
+```ts
+const allForms = z.object({ passwordForm }).parse({
+  passwordForm: {
+    password: 'asdf',
+    confirm: 'qwer',
+  },
+});
+```
+
+would result in
+
+```
+ZodError {
+  errors: [{
+    "code": "custom_error",
+    "path": [ "passwordForm", "confirm" ],
+    "message": "Invalid input."
+  }]
+}
+```
 
 ## Type inference
 

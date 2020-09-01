@@ -77,7 +77,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   };
 
   const makeError = (errorData: MakeErrorData): ZodSuberror => {
-    const errorArg = { ...errorData, path: params.path };
+    const errorArg = { ...errorData, path: [...params.path, ...(errorData.path || [])] };
     const ctxArg = { data: obj };
 
     const defaultError =
