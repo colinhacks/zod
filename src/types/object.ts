@@ -63,7 +63,7 @@ type SetKey<Target extends object, Key extends string, Value extends any> = obje
 
 type ZodObjectType<T extends z.ZodRawShape, Params extends ZodObjectParams> = Params['strict'] extends true
   ? objectUtil.ObjectType<T>
-  : objectUtil.Flatten<objectUtil.ObjectType<T> & { [k: string]: any }>;
+  : objectUtil.Flatten<objectUtil.ObjectType<T> & { [k: string]: unknown }>;
 
 export class ZodObject<
   T extends z.ZodRawShape,
