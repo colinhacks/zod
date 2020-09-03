@@ -3233,6 +3233,11 @@ set-value@^2.0.0, set-value@^2.0.1:
     is-plain-object "^2.0.3"
     split-string "^3.0.1"
 
+setprototypeof@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/setprototypeof/-/setprototypeof-1.2.0.tgz#66c9a24a73f9fc28cbe66b09fed3d33dcaf1b424"
+  integrity sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==
+
 shebang-command@^1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/shebang-command/-/shebang-command-1.2.0.tgz#44aac65b695b03398968c39f363fee5deafdf1ea"

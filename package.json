@@ -18,7 +18,9 @@
     "url": "https://github.com/vriad/zod/issues"
   },
   "homepage": "https://github.com/vriad/zod",
-  "dependencies": {},
+  "dependencies": {
+    "setprototypeof": "^1.2.0"
+  },
   "tags": [
     "typescript",
     "schema",

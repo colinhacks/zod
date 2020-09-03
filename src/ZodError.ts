@@ -1,5 +1,6 @@
 import { ZodParsedType } from './parser';
 import { util } from './helpers/util';
+import setPrototypeOf from 'setprototypeof'
 
 export const ZodErrorCode = util.arrayToEnum([
   'invalid_type',
@@ -123,8 +124,7 @@ export class ZodError extends Error {
   constructor(errors: ZodSuberror[]) {
     super();
     // restore prototype chain
-    const actualProto = new.target.prototype;
-    Object.setPrototypeOf(this, actualProto);
+    setPrototypeOf(this, ZodError.prototype);
     this.errors = errors;
   }
 
