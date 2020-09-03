@@ -6,7 +6,7 @@ import { performance } from 'perf_hooks';
 test('dynamicRefinement', () => {
   enum DataType {
     STRING = 'STRING',
-    INT = 'NUMBER',
+    INT = 'INT',
   }
 
   const formSchema = z

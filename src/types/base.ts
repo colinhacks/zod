@@ -34,7 +34,7 @@ type InternalCheck<T> =
   | ({
       check: (arg: T) => any;
     } & MakeErrorData)
-  | ((error: ZodError, arg: T) => MakeErrorData | void);
+  | ((error: ZodError, arg: T) => void);
 
 // type Check<T> = {
 //   check: (arg: T) => any;
