@@ -282,7 +282,7 @@ const process = (blob: any) => {
 
 Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an Int or that a string is a valid email address.
 
-For this instances, you can define custom a validation check on _any_ Zod schema with `.refine`:
+For example, you can define a custom validation check on _any_ Zod schema with `.refine`:
 
 ```ts
 const myString = z.string().refine(val => val.length <= 255, {
@@ -331,7 +331,7 @@ ZodError {
   errors: [{
     "code": "custom_error",
     "path": [ "confirm" ],
-    "message": "Invalid input."
+    "message": "Passwords don't match"
   }]
 }
 ```
@@ -356,7 +356,7 @@ ZodError {
   errors: [{
     "code": "custom_error",
     "path": [ "passwordForm", "confirm" ],
-    "message": "Invalid input."
+    "message": "Passwords don't match"
   }]
 }
 ```
