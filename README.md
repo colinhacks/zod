@@ -952,7 +952,11 @@ There are two ways to define enums in Zod.
 An enum is just a union of string literals, so you _could_ define an enum like this:
 
 ```ts
-const FishEnum = z.union([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
+const FishEnum = z.union([
+  z.literal('Salmon'),
+  z.literal('Tuna'),
+  z.literal('Trout'),
+]);
 
 FishEnum.parse('Salmon'); // => "Salmon"
 FishEnum.parse('Flounder'); // => throws
@@ -1164,16 +1168,18 @@ const Category: z.ZodSchema<Category> = BaseCategory.merge(
 
 #### JSON type
 
-There isn't a built-in method for validating any JSON, because representing that requires recursive type aliases (a feature that TypeScript started supporting with version 3.7). In order to support a wider range of TypeScript versions (see the top of the README for details) we aren't providing a JSON type out of the box at this time. If you want to validate JSON and you're using TypeScript 3.7+, you can use this snippet to achieve that:
+If you want to validate any JSON value, you can use the snippet below. This requires TypeScript 3.7 or higher!
 
 ```ts
 type Literal = boolean | null | number | string;
 type Json = Literal | { [key: string]: Json } | Json[];
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-const jsonSchema: z.ZodSchema<Json> = z.lazy(() => z.union([Literal, z.array(Json), z.record(Json)]));
+const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
+  z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)]),
+);
 
 jsonSchema.parse({
-  // ...
+  // data
 });
 ```
 
