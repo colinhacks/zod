@@ -40,6 +40,7 @@ Zod is designed to be as developer-friendly as possible. My goal is to eliminate
 Some other great aspects:
 
 - Zero dependencies
+- Plain JavaScript: works in browsers and Node.js
 - Tiny: 8kb minified + zipped
 - Immutability: methods (i.e. `.optional()` return a new instance
 - Concise, chainable interface
