@@ -1057,6 +1057,8 @@ FruitEnum.parse('Cantaloupe'); // fails
 
 ## Intersections
 
+> ⚠️ Intersections are deprecated. If you are trying to merge objects, use the `.merge` method instead.
+
 Intersections are useful for creating "logical AND" types.
 
 ```ts
@@ -1070,7 +1072,7 @@ const stringAndNumber = z.intersection(z.string(), z.number());
 type Never = z.infer<typeof stringAndNumber>; // => never
 ```
 
-This is particularly useful for defining "schema mixins" that you can apply to multiple schemas.
+<!-- This is particularly useful for defining "schema mixins" that you can apply to multiple schemas.
 
 ```ts
 const HasId = z.object({
@@ -1085,7 +1087,7 @@ const Teacher = z.intersection(BaseTeacher, HasId);
 
 type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };
-```
+``` -->
 
 ## Tuples
 
