@@ -86,7 +86,7 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_typ
 
   max = (maxLength: number, message?: string | { message?: string }) =>
     this._refinement({
-      check: data => data.length >= maxLength,
+      check: data => data.length <= maxLength,
       code: ZodErrorCode.too_big,
       maximum: maxLength,
       type: 'array',

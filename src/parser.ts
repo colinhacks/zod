@@ -70,6 +70,13 @@ export const ZodParsedType = util.arrayToEnum([
 
 export type ZodParsedType = keyof typeof ZodParsedType;
 
+export const find = (arr: any[], checker: (arg: any) => any) => {
+  for (const item of arr) {
+    if (checker(item)) return item;
+  }
+  return undefined;
+};
+
 // conditional required to distribute union
 type stripPath<T extends object> = T extends any
   ? util.OmitKeys<T, 'path'>
@@ -92,8 +99,11 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   };
 
   const makeError = (errorData: MakeErrorData): ZodSuberror => {
-    const errorArg = { ...errorData, path: params.path };
-    const ctxArg = { data: data };
+    const errorArg = {
+      ...errorData,
+      path: [...params.path, ...(errorData.path || [])],
+    };
+    const ctxArg = { data };
 
     const defaultError =
       defaultErrorMap === params.errorMap
@@ -116,30 +126,36 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
 
   const def: ZodDef = schemaDef as any;
 
-  const finder = (arr: any[], checker: (arg: any) => any) => {
-    for (const item of arr) {
-      if (checker(item)) return item;
+  const parsedType = getParsedType(data);
+
+  const schemaSeen = find(params.seen, x => x.schema === schemaDef);
+  const isNonprimitive = ['array', 'object'].indexOf(parsedType) !== -1;
+
+  if (isNonprimitive) {
+    if (schemaSeen) {
+      const found = find(schemaSeen.objects, x => x.data === data);
+
+      if (found) {
+        if (found.error) {
+          throw found.error;
+        }
+
+        found.times = found.times + 1;
+
+        if (found.times > 5 && isNonprimitive) {
+          return Symbol('recursion depth exceeded.');
+        } else if (found.times > 2) {
+        }
+      } else {
+        //
+        schemaSeen.objects.push(data);
+      }
+    } else {
+      params.seen.push({
+        schema: schemaDef,
+        objects: [{ data: data, error: undefined, times: 1 }],
+      });
     }
-    return undefined;
-  };
-
-  const defaultPromise = new PseudoPromise();
-  (defaultPromise as any)._default = true;
-  const RESULT: { data: any; promise: PseudoPromise<any> } = {
-    data,
-    promise: defaultPromise,
-  }; // = defaultReturnValue;
-  params.seen = params.seen || [];
-  params.seen.push({ schema: schemaDef, objects: [] });
-  const schemaSeen = finder(params.seen, x => x.schema === schemaDef); // params.seen.find(x => x.schema === schemaDef)!;
-
-  const objectSeen = finder(schemaSeen.objects, arg => arg.data === data); //.find(x => x.data === data);
-
-  if (objectSeen && def.t !== z.ZodTypes.transformer) {
-    // return objectSeen.promise._cached.value; //.getValue();
-    // return data;
-  } else {
-    schemaSeen.objects.push(RESULT);
   }
 
   //  else {
@@ -150,7 +166,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   const error = new ZodError([]);
   // const defaultRESULT.promise = Symbol('return_value');
   //  let returnValue: PseudoPromise<any>; // = defaultReturnValue;
-  const parsedType = getParsedType(data);
+  // const parsedType = getParsedType(data);
   console.log(`\nPARSING ${def.t}`);
   console.log(data);
   console.log(parsedType);
@@ -601,7 +617,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({
             code: ZodErrorCode.invalid_enum_value,
-            options: Object.values(def.values),
+            options: util.getValues(def.values),
           }),
         );
       }

@@ -130,7 +130,11 @@ export class ZodError extends Error {
     super();
     // restore prototype chain
     const actualProto = new.target.prototype;
-    Object.setPrototypeOf(this, actualProto);
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(this, actualProto);
+    } else {
+      (this as any).__proto__ = actualProto;
+    }
     this.errors = errors;
   }
 
@@ -148,7 +152,11 @@ export class ZodError extends Error {
     for (const err of this.errors) {
       errorMessage.push(
         `  Issue #${this.errors.indexOf(err)}: ${err.code} at ${err.path.join(
+<<<<<<< HEAD
           './index',
+=======
+          '.',
+>>>>>>> dev
         )}`,
       );
       errorMessage.push(`  ` + err.message);

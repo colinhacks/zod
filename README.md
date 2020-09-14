@@ -40,6 +40,7 @@ Zod is designed to be as developer-friendly as possible. My goal is to eliminate
 Some other great aspects:
 
 - Zero dependencies
+- Plain JavaScript: works in browsers and Node.js
 - Tiny: 8kb minified + zipped
 - Immutability: methods (i.e. `.optional()` return a new instance
 - Concise, chainable interface
@@ -263,7 +264,7 @@ if (stringSchema.check(blob)) {
 
 You can use the same method to check for invalid data:
 
-````ts
+```ts
 const stringSchema = z.string();
 
 const process = (blob: any) => {
@@ -282,13 +283,13 @@ const process = (blob: any) => {
 
 Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an Int or that a string is a valid email address.
 
-For this instances, you can define custom a validation check on _any_ Zod schema with `.refine`:
+For example, you can define a custom validation check on _any_ Zod schema with `.refine`:
 
 ```ts
 const myString = z.string().refine(val => val.length <= 255, {
   message: "String can't be more than 255 characters",
 });
-````
+```
 
 As you can see, `.refine` takes two arguments.
 
@@ -312,10 +313,11 @@ As you can see, `.refine` takes two arguments.
 These params let you define powerful custom behavior. Zod is commonly used for form validation. If you want to verify that "password" and "confirm" match, you can do so like this:
 
 ```ts
-z.object({
-  password: z.string(),
-  confirm: z.string(),
-})
+const passwordForm = z
+  .object({
+    password: z.string(),
+    confirm: z.string(),
+  })
   .refine(data => data.password === data.confirm, {
     message: "Passwords don't match",
     path: ['confirm'], // set path of error
@@ -330,12 +332,35 @@ ZodError {
   errors: [{
     "code": "custom_error",
     "path": [ "confirm" ],
-    "message": "Invalid input."
+    "message": "Passwords don't match"
   }]
 }
 ```
 
 Note that the `path` is set to `["confirm"]`, so you can easily display this error underneath the "Confirm password" textbox.
+
+Important note, the value passed to the `path` option is _concatenated_ to the actual error path. So if you took `passwordForm` from above and nested it inside another object, you would still get the error path you expect.
+
+```ts
+const allForms = z.object({ passwordForm }).parse({
+  passwordForm: {
+    password: 'asdf',
+    confirm: 'qwer',
+  },
+});
+```
+
+would result in
+
+```
+ZodError {
+  errors: [{
+    "code": "custom_error",
+    "path": [ "passwordForm", "confirm" ],
+    "message": "Passwords don't match"
+  }]
+}
+```
 
 ## Type inference
 
@@ -927,7 +952,11 @@ There are two ways to define enums in Zod.
 An enum is just a union of string literals, so you _could_ define an enum like this:
 
 ```ts
-const FishEnum = z.union([z.literal('Salmon'), z.literal('Tuna'), z.literal('Trout')]);
+const FishEnum = z.union([
+  z.literal('Salmon'),
+  z.literal('Tuna'),
+  z.literal('Trout'),
+]);
 
 FishEnum.parse('Salmon'); // => "Salmon"
 FishEnum.parse('Flounder'); // => throws
@@ -1033,6 +1062,8 @@ FruitEnum.parse('Cantaloupe'); // fails
 
 ## Intersections
 
+> ⚠️ Intersections are deprecated. If you are trying to merge objects, use the `.merge` method instead.
+
 Intersections are useful for creating "logical AND" types.
 
 ```ts
@@ -1046,7 +1077,11 @@ const stringAndNumber = z.intersection(z.string(), z.number());
 type Never = z.infer<typeof stringAndNumber>; // => never
 ```
 
+<<<<<<< HEAD
 Intersections in Zod are not smart. Whatever data you pass into `.parse()` gets passed into the two intersected schemas. Because Zod object schemas don't allow any unknown keys by default, there are some unintuitive behavior surrounding intersections of object schemas.
+=======
+<!-- This is particularly useful for defining "schema mixins" that you can apply to multiple schemas.
+>>>>>>> dev
 
 ```ts
 const A = z.object({
@@ -1061,7 +1096,7 @@ const AB = z.intersection(A, B);
 
 type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };
-```
+``` -->
 
 ## Tuples
 
@@ -1137,16 +1172,18 @@ const Category: z.ZodSchema<Category> = BaseCategory.merge(
 
 #### JSON type
 
-There isn't a built-in method for validating any JSON, because representing that requires recursive type aliases (a feature that TypeScript started supporting with version 3.7). In order to support a wider range of TypeScript versions (see the top of the README for details) we aren't providing a JSON type out of the box at this time. If you want to validate JSON and you're using TypeScript 3.7+, you can use this snippet to achieve that:
+If you want to validate any JSON value, you can use the snippet below. This requires TypeScript 3.7 or higher!
 
 ```ts
 type Literal = boolean | null | number | string;
 type Json = Literal | { [key: string]: Json } | Json[];
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-const jsonSchema: z.ZodSchema<Json> = z.lazy(() => z.union([Literal, z.array(Json), z.record(Json)]));
+const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
+  z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)]),
+);
 
 jsonSchema.parse({
-  // ...
+  // data
 });
 ```
 

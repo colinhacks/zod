@@ -172,7 +172,7 @@ export class ZodObject<
   > => {
     const shape: any = {};
     Object.keys(this.shape).map(key => {
-      if (!Object.keys(mask).includes(key)) {
+      if (Object.keys(mask).indexOf(key) === -1) {
         shape[key] = this.shape[key];
       }
     });
