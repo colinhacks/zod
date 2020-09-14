@@ -130,7 +130,7 @@ export class ZodObject<
   ): ZodObject<objectUtil.NoNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>, Params> => {
     const shape: any = {};
     Object.keys(this.shape).map(key => {
-      if (!Object.keys(mask).includes(key)) {
+      if (Object.keys(mask).indexOf(key) === -1) {
         shape[key] = this.shape[key];
       }
     });

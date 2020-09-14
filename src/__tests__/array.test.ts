@@ -20,6 +20,12 @@ const intNum = z
   .array()
   .nonempty();
 
+const nonEmptyMax = z
+  .string()
+  .array()
+  .nonempty()
+  .max(2);
+
 test('passing validations', () => {
   minTwo.parse(['a', 'a']);
   minTwo.parse(['a', 'a', 'a']);
@@ -27,6 +33,7 @@ test('passing validations', () => {
   maxTwo.parse(['a']);
   justTwo.parse(['a', 'a']);
   intNum.parse(['a']);
+  nonEmptyMax.parse(['a']);
 });
 
 test('failing validations', () => {
@@ -35,6 +42,8 @@ test('failing validations', () => {
   expect(() => justTwo.parse(['a'])).toThrow();
   expect(() => justTwo.parse(['a', 'a', 'a'])).toThrow();
   expect(() => intNum.parse([])).toThrow();
+  expect(() => nonEmptyMax.parse([])).toThrow();
+  expect(() => nonEmptyMax.parse(['a', 'a', 'a'])).toThrow();
 });
 
 test('parse empty array in nonempty', () => {

@@ -1,8 +1,10 @@
-// import * as z from '.';
+import * as z from '.';
 
-// try {
-//   z.string().parse(1345);
-// } catch (err) {
-//   console.log(err.message);
-//   console.log(err.flatten());
-// }
+const userUpdateSchema = z.object({
+  password: z
+    .string()
+    .min(6)
+    .optional(),
+});
+
+console.log(userUpdateSchema.parse({}));

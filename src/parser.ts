@@ -55,6 +55,13 @@ export const ZodParsedType = util.arrayToEnum([
 
 export type ZodParsedType = keyof typeof ZodParsedType;
 
+export const find = (arr: any[], checker: (arg: any) => any) => {
+  for (const item of arr) {
+    if (checker(item)) return item;
+  }
+  return undefined;
+};
+
 // conditional required to distribute union
 type stripPath<T extends object> = T extends any ? util.OmitKeys<T, 'path'> : never;
 export type MakeErrorData = stripPath<ZodSuberrorOptionalMessage> & { path?: (string | number)[] };
@@ -70,7 +77,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
   };
 
   const makeError = (errorData: MakeErrorData): ZodSuberror => {
-    const errorArg = { ...errorData, path: params.path };
+    const errorArg = { ...errorData, path: [...params.path, ...(errorData.path || [])] };
     const ctxArg = { data: obj };
 
     const defaultError =
@@ -89,29 +96,31 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
 
   const parsedType = getParsedType(obj);
 
-  const schemaSeen = params.seen.find(x => x.schema === schemaDef);
-  const isPrimitive = typeof obj !== 'object' || obj === null;
+  const schemaSeen = find(params.seen, x => x.schema === schemaDef);
+  const isNonprimitive = ['array', 'object'].indexOf(parsedType) !== -1;
 
-  if (schemaSeen) {
-    const found = schemaSeen.objects.find(x => x.data === obj);
+  if (isNonprimitive) {
+    if (schemaSeen) {
+      const found = find(schemaSeen.objects, x => x.data === obj);
 
-    if (found) {
-      if (found.error) {
-        throw found.error;
-      }
+      if (found) {
+        if (found.error) {
+          throw found.error;
+        }
 
-      found.times = found.times + 1;
+        found.times = found.times + 1;
 
-      if (found.times > 2 && !isPrimitive) {
-        return Symbol('recursion depth exceeded.');
-      } else if (found.times > 2) {
+        if (found.times > 5 && isNonprimitive) {
+          return Symbol('recursion depth exceeded.');
+        } else if (found.times > 2) {
+        }
+      } else {
+        //
+        schemaSeen.objects.push(obj);
       }
     } else {
-      //
-      schemaSeen.objects.push(obj);
+      params.seen.push({ schema: schemaDef, objects: [{ data: obj, error: undefined, times: 1 }] });
     }
-  } else {
-    params.seen.push({ schema: schemaDef, objects: [{ data: obj, error: undefined, times: 1 }] });
   }
 
   // const setError = (error: Error) => {
@@ -358,7 +367,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         error.addError(
           makeError({
             code: ZodErrorCode.invalid_enum_value,
-            options: Object.values(def.values),
+            options: util.getValues(def.values),
           }),
         );
       }
