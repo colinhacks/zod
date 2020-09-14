@@ -43,7 +43,7 @@
     "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
     "prepublishOnly": "npm run build",
-    "play": "nodemon -e ts -w . -x ts-node src/playground.ts"
+    "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.package.json"
   },
   "devDependencies": {
     "@types/jest": "^25.1.4",
