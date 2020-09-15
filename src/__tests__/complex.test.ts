@@ -24,6 +24,7 @@ test('to JSON', () => {
 });
 
 const stringSchema = z.string();
+
 test('type guard', () => {
   if (stringSchema.check('adsf' as any)) {
   }
