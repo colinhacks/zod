@@ -3,20 +3,20 @@ import { ZodIntersection } from '../types/intersection';
 import { ZodObject } from '../types/object';
 
 export namespace objectUtil {
-  export interface ZodObjectParams {
-    strict: boolean;
-  }
+  // export interface ZodObjectParams {
+  //   strict: boolean;
+  // }
 
-  export type MergeObjectParams<
-    First extends ZodObjectParams,
-    Second extends ZodObjectParams
-  > = {
-    strict: First['strict'] extends false
-      ? false
-      : Second['strict'] extends false
-      ? false
-      : true;
-  };
+  // export type MergeObjectParams<
+  //   First extends ZodObjectParams,
+  //   Second extends ZodObjectParams
+  // > = {
+  //   strict: First['strict'] extends false
+  //     ? false
+  //     : Second['strict'] extends false
+  //     ? false
+  //     : true;
+  // };
 
   export type MergeShapes<U extends ZodRawShape, V extends ZodRawShape> = {
     [k in Exclude<keyof U, keyof V>]: U[k];
@@ -103,7 +103,8 @@ export namespace objectUtil {
     second: Second,
   ): ZodObject<
     First['_shape'] & Second['_shape'],
-    MergeObjectParams<First['_params'], Second['_params']>,
+    First['_unknownKeys'],
+    // MergeObjectParams<First['_params'], Second['_params']>,
     First['_input'] & Second['_input'],
     First['_output'] & Second['_output']
   > => {
@@ -111,10 +112,10 @@ export namespace objectUtil {
     const merged: any = new ZodObject({
       t: ZodTypes.object,
       checks: [...(first._def.checks || []), ...(second._def.checks || [])],
-
-      params: {
-        strict: first.params.strict && second.params.strict,
-      },
+      unknownKeys: first._def.unknownKeys,
+      // params: {
+      //   strict: first.params.strict && second.params.strict,
+      // },
       shape: () => mergedShape,
     }) as any;
     return merged;

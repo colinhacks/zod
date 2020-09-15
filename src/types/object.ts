@@ -18,7 +18,7 @@ const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
     >]: ReturnType<Def['shape']>[k];
   } &
     { [k in keyof Augmentation]: Augmentation[k] },
-  Def['params']
+  Def['unknownKeys']
 > => {
   return new ZodObject({
     ...def,
@@ -29,13 +29,17 @@ const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
   }) as any;
 };
 
+type UnknownKeysParam = 'allow' | 'strict' | 'strip';
+
 export interface ZodObjectDef<
   T extends z.ZodRawShape = z.ZodRawShape,
-  Params extends ZodObjectParams = ZodObjectParams
+  UnknownKeys extends UnknownKeysParam = UnknownKeysParam
+  // Params extends ZodObjectParams = ZodObjectParams
 > extends z.ZodTypeDef {
   t: z.ZodTypes.object;
   shape: () => T;
-  params: Params;
+  unknownKeys: UnknownKeys;
+  // params: Params;
 }
 
 const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
@@ -48,9 +52,9 @@ const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
   ),
 });
 
-interface ZodObjectParams {
-  strict: boolean;
-}
+// interface ZodObjectParams {
+//   strict: boolean;
+// }
 
 export type Scalars =
   | string
@@ -64,13 +68,13 @@ export type Scalars =
   | undefined
   | null;
 
-type SetKey<
-  Target extends object,
-  Key extends string,
-  Value extends any
-> = objectUtil.Flatten<
-  { [k in Exclude<keyof Target, Key>]: Target[k] } & { [k in Key]: Value }
->;
+// type SetKey<
+//   Target extends object,
+//   Key extends string,
+//   Value extends any
+// > = objectUtil.Flatten<
+//   { [k in Exclude<keyof Target, Key>]: Target[k] } & { [k in Key]: Value }
+// >;
 
 type makeKeysRequired<T extends ZodObject<any, any>> = T extends ZodObject<
   infer U,
@@ -78,6 +82,7 @@ type makeKeysRequired<T extends ZodObject<any, any>> = T extends ZodObject<
 >
   ? ZodObject<objectUtil.NoNever<{ [k in keyof U]: makeRequired<U[k]> }>, P>
   : never;
+
 type makeRequired<T extends z.ZodType<any>> = T extends ZodUnion<infer U>
   ? U extends [infer Y, ZodUndefined]
     ? Y
@@ -95,66 +100,72 @@ type makeRequired<T extends z.ZodType<any>> = T extends ZodUnion<infer U>
 
 export class ZodObject<
   T extends z.ZodRawShape,
-  Params extends ZodObjectParams = { strict: true },
+  UnknownKeys extends UnknownKeysParam = 'allow',
+  // Params extends ZodObjectParams = { strict: true },
   // Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
   Input extends objectUtil.ObjectTypeInput<T> = objectUtil.ObjectTypeInput<T>,
   Output extends objectUtil.ObjectTypeOutput<T> = objectUtil.ObjectTypeOutput<T>
-> extends z.ZodType<Input, ZodObjectDef<T, Params>, Output> {
+> extends z.ZodType<Input, ZodObjectDef<T, UnknownKeys>, Output> {
   readonly _shape!: T;
-  readonly _params!: Params;
+  readonly _unknownKeys!: UnknownKeys;
 
   get shape() {
     return this._def.shape();
   }
 
-  get params() {
-    return this._def.params;
-  }
+  // get params() {
+  //   return this._def.params;
+  // }
 
-  get t() {
-    return this;
-  }
+  //  get t() {
+  //    return this;
+  //  }
 
   toJSON = () => objectDefToJson(this._def);
 
-  nonstrict = (): ZodObject<T, SetKey<Params, 'strict', false>> =>
+  strict = (): ZodObject<T, 'strict'> =>
     new ZodObject({
       shape: this._def.shape,
 
       t: z.ZodTypes.object,
-      params: {
-        ...this._params,
-        strict: false,
-      },
+      unknownKeys: 'strict',
     }) as any;
+
+  allowUnknown = (): ZodObject<T, 'allow'> =>
+    new ZodObject({
+      shape: this._def.shape,
+
+      t: z.ZodTypes.object,
+      unknownKeys: 'allow',
+    }) as any;
+
+  nonstrict = this.allowUnknown;
 
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   // nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  augment = AugmentFactory<ZodObjectDef<T, Params>>(this._def);
-  extend = AugmentFactory<ZodObjectDef<T, Params>>(this._def);
+  augment = AugmentFactory<ZodObjectDef<T, UnknownKeys>>(this._def);
+  extend = AugmentFactory<ZodObjectDef<T, UnknownKeys>>(this._def);
 
   /**
    * Prior to zod@1.0.12 there was a bug in the
    * inferred type of merged objects. Please
    * upgrade if you are experiencing issues.
    */
-  merge: <
-    MergeShape extends z.ZodRawShape,
-    MergeParams extends ZodObjectParams
-  >(
-    other: ZodObject<MergeShape, MergeParams>,
+  merge: <Incoming extends ZodObject<any>>(
+    other: ZodObject<Incoming['_shape']>,
   ) => ZodObject<
-    T & MergeShape,
-    objectUtil.MergeObjectParams<Params, MergeParams>
+    T & Incoming['_shape'],
+    UnknownKeys
+    // objectUtil.MergeObjectParams<Params, MergeUnknownKeys>
   > = objectUtil.mergeObjects(this as any);
 
   pick = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask,
   ): ZodObject<
     objectUtil.NoNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>,
-    Params
+    UnknownKeys
   > => {
     const shape: any = {};
     Object.keys(mask).map(key => {
@@ -170,7 +181,7 @@ export class ZodObject<
     mask: Mask,
   ): ZodObject<
     objectUtil.NoNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>,
-    Params
+    UnknownKeys
   > => {
     const shape: any = {};
     Object.keys(this.shape).map(key => {
@@ -186,7 +197,7 @@ export class ZodObject<
 
   partial = (): ZodObject<
     { [k in keyof T]: ZodUnion<[T[k], ZodUndefined]> },
-    Params
+    UnknownKeys
   > => {
     const newShape: any = {};
     for (const key in this.shape) {
@@ -234,7 +245,7 @@ export class ZodObject<
         [k in keyof T]: [T[k]['_output']] extends [Scalars] ? T[k] : never;
       }
     >,
-    Params
+    UnknownKeys
   > => {
     const newShape: any = {};
     for (const key in this.shape) {
@@ -254,7 +265,7 @@ export class ZodObject<
         [k in keyof T]: [T[k]['_output']] extends [Scalars] ? never : T[k];
       }
     >,
-    Params
+    UnknownKeys
   > => {
     const newShape: any = {};
     for (const key in this.shape) {
@@ -290,11 +301,11 @@ export class ZodObject<
   static create = <T extends z.ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({
       t: z.ZodTypes.object,
-
       shape: () => shape,
-      params: {
-        strict: true,
-      },
+      unknownKeys: 'allow',
+      //  params: {
+      //    strict: true,
+      //  },
     });
   };
 
@@ -303,11 +314,11 @@ export class ZodObject<
   ): ZodObject<T> => {
     return new ZodObject({
       t: z.ZodTypes.object,
-
       shape,
-      params: {
-        strict: true,
-      },
+      unknownKeys: 'allow',
+      //  params: {
+      //    strict: true,
+      //  },
     });
   };
 }

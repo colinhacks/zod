@@ -333,7 +333,6 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             received: parsedType,
           }),
         );
-        // setError(error);
         throw error;
       }
 
@@ -344,20 +343,36 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       const dataKeys = Object.keys(data);
       const extraKeys = dataKeys.filter(k => shapeKeys.indexOf(k) === -1);
 
-      if (extraKeys.length) {
-        if (def.params.strict) {
+      for (const key of extraKeys) {
+        if (def.unknownKeys === 'allow') {
+          objectPromises[key] = PseudoPromise.resolve(data[key]);
+        } else if (def.unknownKeys === 'strict') {
           error.addError(
             makeError({
               code: ZodErrorCode.unrecognized_keys,
               keys: extraKeys,
             }),
           );
+        } else if (def.unknownKeys === 'strip') {
+          // do nothing
         } else {
-          for (const key of extraKeys) {
-            objectPromises[key] = PseudoPromise.resolve(data[key]);
-          }
+          util.assertNever(def.unknownKeys);
         }
       }
+      // if (extraKeys.length) {
+      //   if (def.params.strict) {
+      //     error.addError(
+      //       makeError({
+      //         code: ZodErrorCode.unrecognized_keys,
+      //         keys: extraKeys,
+      //       }),
+      //     );
+      //   } else {
+      //     for (const key of extraKeys) {
+      //       objectPromises[key] = PseudoPromise.resolve(data[key]);
+      //     }
+      //   }
+      // }
 
       for (const key of shapeKeys) {
         objectPromises[key] = new PseudoPromise().then(() => {

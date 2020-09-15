@@ -14,3 +14,31 @@ const run = async () => {
 };
 
 run();
+
+// export type Foo<T> = {
+//   name: string;
+//   value: T;
+// };
+
+// const fooSchema = <T extends z.ZodTypeAny>(
+//   valueSchema: T,
+// ): z.ZodObject<{ name: z.ZodString; value: T }> =>
+//   z.object({
+//     name: z.string(),
+//     value: valueSchema,
+//   });
+
+// const asdf = fooSchema(z.string());
+
+// export type Foo<T> = {
+//   name: string;
+//   value: T;
+// };
+
+// const fooSchema = <T>(valueSchema: z.ZodSchema<T>) =>
+//   z.object({
+//     name: z.string(),
+//     value: valueSchema,
+//   });
+
+//   const asdf = fooSchema(z.string());
