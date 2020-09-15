@@ -1080,6 +1080,7 @@ type Never = z.infer<typeof stringAndNumber>; // => never
 <<<<<<< HEAD
 Intersections in Zod are not smart. Whatever data you pass into `.parse()` gets passed into the two intersected schemas. Because Zod object schemas don't allow any unknown keys by default, there are some unintuitive behavior surrounding intersections of object schemas.
 =======
+
 <!-- This is particularly useful for defining "schema mixins" that you can apply to multiple schemas.
 >>>>>>> dev
 
@@ -1484,7 +1485,7 @@ Differences
 - Missing function schemas
 - Missing union & intersection schemas
 
-¹ Yup has a strange interpretation of the `.required()` is odd and non-standard. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. For Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom validator.
+¹ Yup has a strange interpretation of the word `required`. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. For Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom refinement.
 
 #### io-ts
 

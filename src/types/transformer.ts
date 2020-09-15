@@ -16,9 +16,9 @@ export interface ZodTransformerDef<
 export class ZodTransformer<
   T extends z.ZodTypeAny,
   U extends z.ZodTypeAny
-> extends z.ZodType<U['_type'], ZodTransformerDef<T, U>> {
-  readonly _input!: T['_input'];
-  readonly _output!: U['_output'];
+> extends z.ZodType<T['_input'], ZodTransformerDef<T, U>, U['_output']> {
+  // readonly _input!: T['_input'];
+  // readonly _output!: U['_output'];
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
   get input() {
@@ -44,7 +44,7 @@ export class ZodTransformer<
   static create = <I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     input: I,
     output: O,
-    transformer: (arg: I['_type']) => O['_type'] | Promise<O['_type']>,
+    transformer: (arg: I['_output']) => O['_input'] | Promise<O['_input']>,
   ): ZodTransformer<I, O> => {
     return new ZodTransformer({
       t: z.ZodTypes.transformer,

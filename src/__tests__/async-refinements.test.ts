@@ -5,7 +5,7 @@ test('parse async test', async () => {
   expect(() => schema1.parse('asdf')).toThrow();
 
   const schema2 = z.string().refine(_val => Promise.resolve(true));
-  expect(() => schema2.parse('asdf')).toThrow();
+  return await expect(() => schema2.parse('asdf')).toThrow();
 });
 
 test('parseAsync async test', async () => {
@@ -13,36 +13,31 @@ test('parseAsync async test', async () => {
   await schema1.parseAsync('asdf');
 
   const schema2 = z.string().refine(async _val => false);
-  expect(schema2.parseAsync('asdf')).rejects;
+  return await expect(schema2.parseAsync('asdf')).rejects.toBeDefined();
   // expect(async () => await schema2.parseAsync('asdf')).toThrow();
 });
 
 test('parseAsync async test', async () => {
-  expect.assertions(2);
+  // expect.assertions(2);
 
   const schema1 = z.string().refine(_val => Promise.resolve(true));
   const v1 = await schema1.parseAsync('asdf');
   expect(v1).toEqual('asdf');
 
   const schema2 = z.string().refine(_val => Promise.resolve(false));
-  return await schema2.parseAsync('asdf').catch(err => {
-    expect(err).toBeTruthy();
-  });
+  await expect(schema2.parseAsync('asdf')).rejects.toBeDefined();
 
-  // expect(v2).toEqual('adsf');
-  // await expect(schema1.parseAsync('asdf')).resolves.toEqual(true);
-  // // expect(val1).toEqual(true);
-
-  // const schema2 = z.string().refine(_val => Promise.resolve(false));
-  // await expect(schema2.parseAsync('asdf')).rejects;
+  const schema3 = z.string().refine(_val => Promise.resolve(true));
+  await expect(schema3.parseAsync('asdf')).resolves.toEqual('asdf');
+  return await expect(schema3.parseAsync('qwer')).resolves.toEqual('qwer');
 });
 
 test('parseAsync async with value', async () => {
   const schema1 = z.string().refine(async val => {
     return val.length > 5;
   });
-  expect(schema1.parseAsync('asdf')).rejects;
+  expect(schema1.parseAsync('asdf')).rejects.toBeDefined();
 
   const v = await schema1.parseAsync('asdf123');
-  expect(v).toEqual('asdf123');
+  return await expect(v).toEqual('asdf123');
 });

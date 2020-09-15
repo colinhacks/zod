@@ -24,5 +24,5 @@ test('instanceof', async () => {
   });
 
   const f1: util.AssertEqual<Test, z.infer<typeof TestSchema>> = true;
-  f1;
+  return f1;
 });

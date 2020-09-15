@@ -86,18 +86,20 @@ type makeRequired<T extends z.ZodType<any>> = T extends ZodUnion<infer U>
     : T
   : T;
 
-type ZodObjectType<
-  T extends z.ZodRawShape,
-  Params extends ZodObjectParams
-> = Params['strict'] extends true
-  ? objectUtil.ObjectType<T>
-  : objectUtil.Flatten<objectUtil.ObjectType<T> & { [k: string]: any }>;
+// type ZodObjectType<
+//   T extends z.ZodRawShape,
+//   Params extends ZodObjectParams
+// > = Params['strict'] extends true
+//   ? objectUtil.ObjectType<T>
+//   : objectUtil.Flatten<objectUtil.ObjectType<T> & { [k: string]: any }>;
 
 export class ZodObject<
   T extends z.ZodRawShape,
   Params extends ZodObjectParams = { strict: true },
-  Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
-> extends z.ZodType<Type, ZodObjectDef<T, Params>> {
+  // Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
+  Input extends objectUtil.ObjectTypeInput<T> = objectUtil.ObjectTypeInput<T>,
+  Output extends objectUtil.ObjectTypeOutput<T> = objectUtil.ObjectTypeOutput<T>
+> extends z.ZodType<Input, ZodObjectDef<T, Params>, Output> {
   readonly _shape!: T;
   readonly _params!: Params;
 
@@ -200,11 +202,21 @@ export class ZodObject<
     const newShape: any = {};
     for (const key in this.shape) {
       const val = this.shape[key];
-      if (val instanceof ZodUnion && val.options.length === 2) {
-        if (val.options[0] instanceof ZodUndefined) {
-          newShape[key] = val.options[1];
-        } else if (val.options[1] instanceof ZodUndefined) {
-          newShape[key] = val.options[0];
+      console.log(`key ${key}:`);
+      console.log(val);
+      if (val instanceof ZodUnion) {
+        console.log(`${key} is union!`);
+        const options = (val as ZodUnion<any>)._def.options;
+        if (options.length === 2) {
+          console.log(`found ${options.length} options`);
+          // .length === 2;
+          if (options[0] instanceof ZodUndefined) {
+            newShape[key] = options[1];
+          } else if (options[1] instanceof ZodUndefined) {
+            newShape[key] = options[0];
+          }
+        } else {
+          newShape[key] = val;
         }
       } else {
         newShape[key] = val;
@@ -218,7 +230,9 @@ export class ZodObject<
 
   primitives = (): ZodObject<
     objectUtil.NoNever<
-      { [k in keyof T]: [T[k]['_type']] extends [Scalars] ? T[k] : never }
+      {
+        [k in keyof T]: [T[k]['_output']] extends [Scalars] ? T[k] : never;
+      }
     >,
     Params
   > => {
@@ -236,7 +250,9 @@ export class ZodObject<
 
   nonprimitives = (): ZodObject<
     objectUtil.NoNever<
-      { [k in keyof T]: [T[k]['_type']] extends [Scalars] ? never : T[k] }
+      {
+        [k in keyof T]: [T[k]['_output']] extends [Scalars] ? never : T[k];
+      }
     >,
     Params
   > => {

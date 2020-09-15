@@ -167,5 +167,6 @@ test('custom path in custom error map', () => {
     expect(error.path.length).toBe(2);
     return { message: 'doesnt matter' };
   };
-  schema.safeParse({ items: ['first'] }, { errorMap });
+  const result = schema.safeParse({ items: ['first'] }, { errorMap });
+  console.log(result);
 });

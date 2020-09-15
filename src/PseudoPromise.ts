@@ -7,14 +7,18 @@ export class PseudoPromise<ReturnType = undefined> {
     this.functions = funcs;
   }
 
-  static all = <T extends PseudoPromise<any>[]>(
-    pps: PseudoPromise<any>[],
+  static all = <T extends PseudoPromise<any>[]>(pps: T) => {
+    return new PseudoPromise().all(pps);
+  };
+
+  all = <T extends PseudoPromise<any>[]>(
+    pps: T,
   ): PseudoPromise<
     {
       [k in keyof T]: T[k] extends PseudoPromise<any> ? T[k]['_return'] : never;
     }
   > => {
-    return new PseudoPromise().then((_arg, ctx) => {
+    return this.then((_arg, ctx) => {
       // const results = pps.map(pp => pp.getValue());
       if (ctx.async) {
         return Promise.all(pps.map(pp => pp.getValueAsync()));
@@ -23,6 +27,12 @@ export class PseudoPromise<ReturnType = undefined> {
       }
     });
   };
+
+  // subpromise = <T extends PseudoPromise<any>>(subprom:T)=>{
+  //   return this.then((arg,ctx)=>{
+  //     const subval = subprom.
+  //   })
+  // }
 
   // static allAsync = (pps:all PseudoPromise<any>[]) => {
   //   return PseudoPromise.resolve(Promise.all(pps.map(pp => pp.toPromise())));
@@ -40,7 +50,7 @@ export class PseudoPromise<ReturnType = undefined> {
       // Object.keys(pps).some(
       //   k => pps[k].getValue() instanceof Promise,
       // );
-      // console.log(`PP object async: ${isAsync}`);
+      //
       if (ctx.async) {
         const getAsyncObject = async () => {
           // const promises = Object.keys(pps).map(async k => {
@@ -122,7 +132,6 @@ export class PseudoPromise<ReturnType = undefined> {
   };
 
   getValueAsync = async () => {
-    console.log('getValueAsync');
     try {
       // // if (this._cached.value) return this._cached.value;
       let val: any = undefined;

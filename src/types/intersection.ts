@@ -15,7 +15,11 @@ export interface ZodIntersectionDef<
 export class ZodIntersection<
   T extends z.ZodTypeAny,
   U extends z.ZodTypeAny
-> extends z.ZodType<T['_type'] & U['_type'], ZodIntersectionDef<T, U>> {
+> extends z.ZodType<
+  T['_input'] & U['_input'],
+  ZodIntersectionDef<T, U>,
+  T['_output'] & U['_output']
+> {
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);

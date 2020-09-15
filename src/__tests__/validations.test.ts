@@ -13,24 +13,26 @@ test('array min', async () => {
 
 test('array max', async () => {
   expect.assertions(1);
-  await z
+  const result = await z
     .array(z.string())
     .max(2)
     .parseAsync(['asdf', 'asdf', 'asdf'])
     .catch(err => {
       expect(err.errors[0].message).toEqual('Should have at most 2 items');
     });
+  return result;
 });
 
 test('string min', async () => {
   expect.assertions(1);
-  await z
+  const result = await z
     .string()
     .min(4)
     .parseAsync('asd')
     .catch(err => {
       expect(err.errors[0].message).toEqual('Should be at least 4 characters');
     });
+  return result;
 });
 
 test('string max', async () => {
@@ -40,8 +42,11 @@ test('string max', async () => {
     .max(4)
     .parseAsync('aasdfsdfsd')
     .catch(err => {
-      expect(err.errors[0].message).toEqual('Should be at most 4 characters long');
+      expect(err.errors[0].message).toEqual(
+        'Should be at most 4 characters long',
+      );
     });
+  return 'asdf';
 });
 
 test('number min', async () => {
@@ -51,8 +56,11 @@ test('number min', async () => {
     .min(3)
     .parseAsync(2)
     .catch(err => {
-      expect(err.errors[0].message).toEqual('Value should be greater than or equal to 3');
+      expect(err.errors[0].message).toEqual(
+        'Value should be greater than or equal to 3',
+      );
     });
+  return 'asdf';
 });
 
 test('number max', async () => {
@@ -62,8 +70,11 @@ test('number max', async () => {
     .max(3)
     .parseAsync(4)
     .catch(err => {
-      expect(err.errors[0].message).toEqual('Value should be less than or equal to 3');
+      expect(err.errors[0].message).toEqual(
+        'Value should be less than or equal to 3',
+      );
     });
+  return 'asdf';
 });
 
 test('number nonnegative', async () => {
@@ -73,8 +84,11 @@ test('number nonnegative', async () => {
     .nonnegative()
     .parseAsync(-1)
     .catch(err => {
-      expect(err.errors[0].message).toEqual('Value should be greater than or equal to 0');
+      expect(err.errors[0].message).toEqual(
+        'Value should be greater than or equal to 0',
+      );
     });
+  return 'asdf';
 });
 
 test('number nonpositive', async () => {
@@ -84,8 +98,11 @@ test('number nonpositive', async () => {
     .nonpositive()
     .parseAsync(1)
     .catch(err => {
-      expect(err.errors[0].message).toEqual('Value should be less than or equal to 0');
+      expect(err.errors[0].message).toEqual(
+        'Value should be less than or equal to 0',
+      );
     });
+  return 'asdf';
 });
 
 test('number negative', async () => {
@@ -97,6 +114,7 @@ test('number negative', async () => {
     .catch(err => {
       expect(err.errors[0].message).toEqual('Value should be less than 0');
     });
+  return 'asdf';
 });
 
 test('number positive', async () => {
@@ -108,6 +126,7 @@ test('number positive', async () => {
     .catch(err => {
       expect(err.errors[0].message).toEqual('Value should be greater than 0');
     });
+  return 'asdf';
 });
 
 test('instantiation', () => {

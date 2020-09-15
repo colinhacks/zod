@@ -7,6 +7,8 @@ const testTuple = z.tuple([
   z.object({ name: z.literal('Rudy') }),
   z.array(z.literal('blue')),
 ]);
+const testData = ['asdf', { name: 'Rudy' }, ['blue']];
+const badData = [123, { name: 'Rudy2' }, ['blue', 'red']];
 
 test('tuple inference', () => {
   const args1 = z.tuple([z.string()]);
@@ -18,7 +20,13 @@ test('tuple inference', () => {
 });
 
 test('successful validation', () => {
-  testTuple.parse(['asdf', { name: 'Rudy' }, ['blue']]);
+  const val = testTuple.parse(testData);
+  expect(val).toEqual(['asdf', { name: 'Rudy' }, ['blue']]);
+});
+
+test('successful async validation', async () => {
+  const val = await testTuple.parseAsync(testData);
+  return expect(val).toEqual(testData);
 });
 
 test('failed validation', () => {
@@ -32,4 +40,19 @@ test('failed validation', () => {
       expect(err.errors.length).toEqual(3);
     }
   }
+});
+
+test('failed safe validation', () => {
+  const res = testTuple.safeParse(badData);
+  expect(res.success).toEqual(false);
+  if (!res.success) {
+    expect(res.error.errors.length).toEqual(3);
+  }
+  // try {
+  //   checker();
+  // } catch (err) {
+  //   if (err instanceof ZodError) {
+  //     expect(err.errors.length).toEqual(3);
+  //   }
+  // }
 });

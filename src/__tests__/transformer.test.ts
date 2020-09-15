@@ -1,4 +1,5 @@
 import * as z from '..';
+import { util } from '../helpers/util';
 
 test('basic transformations', () => {
   const r1 = z
@@ -29,6 +30,22 @@ test('async coercion', async () => {
     .parseAsync({ id: 5 });
 
   expect(data).toEqual({ id: '5' });
+  return 'asdf';
+});
+
+test('sync coercion async error', async () => {
+  const numToString = z.transformer(z.number(), z.string(), async n =>
+    String(n),
+  );
+  expect(() =>
+    z
+      .object({
+        id: numToString,
+      })
+      .parse({ id: 5 }),
+  ).toThrow();
+  return 'asdf';
+  // expect(data).toEqual({ id: '5' });
 });
 
 test('default', () => {
@@ -37,4 +54,18 @@ test('default', () => {
     .default('asdf')
     .parse(undefined); // => "asdf"
   expect(data).toEqual('asdf');
+});
+
+test('object typing', () => {
+  const t1 = z.object({
+    stringToNumber: z.string().transform(z.number(), arg => arg.length),
+  });
+
+  type t1 = z.input<typeof t1>;
+  type t2 = z.output<typeof t1>;
+
+  const f1: util.AssertEqual<t1, { stringToNumber: string }> = true;
+  const f2: util.AssertEqual<t2, { stringToNumber: number }> = true;
+  f1;
+  f2;
 });

@@ -55,4 +55,5 @@ test('custom path', async () => {
     .catch(err => {
       expect(err.errors[0].path).toEqual(['confirm']);
     });
+  return 'asdf';
 });

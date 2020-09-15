@@ -35,6 +35,7 @@ test('pseudopromise all', async () => {
   expect.assertions(1);
   const val = await myProm;
   expect(val).toEqual(['asdf', 12]);
+  return val;
 });
 
 test('.resolve sync ', () => {
@@ -64,6 +65,7 @@ test('object', async () => {
   });
 
   expect(await prom.getValueAsync()).toEqual({ asdf: 15, qwer: 'asdfadsf' });
+  return 'asdf';
 });
 
 test('all', async () => {
@@ -71,4 +73,5 @@ test('all', async () => {
   await PseudoPromise.all([asdf])
     .getValueAsync()
     .then(val => expect(val).toEqual(['asdf']));
+  return 'asdf';
 });

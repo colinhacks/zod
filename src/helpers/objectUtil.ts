@@ -35,11 +35,11 @@ export namespace objectUtil {
   } &
     { [k in RequiredKeys<T>]: T[k] };
 
-  type ObjectIntersection<T extends ZodRawShape> = AddQuestionMarks<
-    {
-      [k in keyof T]: T[k]['_type'];
-    }
-  >;
+  // type ObjectIntersection<T extends ZodRawShape> = AddQuestionMarks<
+  //   {
+  //     [k in keyof T]: T[k]['_type'];
+  //   }
+  // >;
   type ObjectIntersectionInput<T extends ZodRawShape> = AddQuestionMarks<
     {
       [k in keyof T]: T[k]['_input'];
@@ -47,7 +47,7 @@ export namespace objectUtil {
   >;
   type ObjectIntersectionOutput<T extends ZodRawShape> = AddQuestionMarks<
     {
-      [k in keyof T]: T[k]['_input'];
+      [k in keyof T]: T[k]['_output'];
     }
   >;
 
@@ -66,9 +66,9 @@ export namespace objectUtil {
     }
   >;
 
-  export type ObjectType<T extends ZodRawShape> = FlattenObject<
-    ObjectIntersection<T>
-  >;
+  // export type ObjectType<T extends ZodRawShape> = FlattenObject<
+  //   ObjectIntersection<T>
+  // >;
   export type ObjectTypeInput<T extends ZodRawShape> = FlattenObject<
     ObjectIntersectionInput<T>
   >;
@@ -104,7 +104,8 @@ export namespace objectUtil {
   ): ZodObject<
     First['_shape'] & Second['_shape'],
     MergeObjectParams<First['_params'], Second['_params']>,
-    First['_type'] & Second['_type']
+    First['_input'] & Second['_input'],
+    First['_output'] & Second['_output']
   > => {
     const mergedShape = mergeShapes(first._def.shape(), second._def.shape());
     const merged: any = new ZodObject({

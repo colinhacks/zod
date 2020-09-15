@@ -1,7 +1,10 @@
 import * as z from './index';
 import { util } from './helpers/util';
 
-export const isScalar = (schema: z.ZodType<any, any>, params: { root: boolean } = { root: true }): boolean => {
+export const isScalar = (
+  schema: z.ZodType<any, any>,
+  params: { root: boolean } = { root: true },
+): boolean => {
   const def = schema._def as z.ZodDef;
 
   let returnValue = false;
@@ -73,7 +76,9 @@ export const isScalar = (schema: z.ZodType<any, any>, params: { root: boolean } 
     case z.ZodTypes.promise:
       returnValue = false;
       break;
-
+    case z.ZodTypes.transformer:
+      returnValue = isScalar(def.output);
+      break;
     default:
       util.assertNever(def);
     // returnValue = false; break;

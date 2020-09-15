@@ -4,13 +4,18 @@ import * as z from './base';
 // import { ZodUnion } from './union';
 import { ZodErrorCode } from '../ZodError';
 
-export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
+export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny>
+  extends z.ZodTypeDef {
   t: z.ZodTypes.array;
   type: T;
   nonempty: boolean;
 }
 
-export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], ZodArrayDef<T>> {
+export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<
+  T['_input'][],
+  ZodArrayDef<T>,
+  T['_output'][]
+> {
   toJSON = () => {
     return {
       t: this._def.t,
@@ -47,7 +52,8 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
       ...(typeof message === 'string' ? { message } : message),
     });
 
-  length = (len: number, message?: string) => this.min(len, { message }).max(len, { message });
+  length = (len: number, message?: string) =>
+    this.min(len, { message }).max(len, { message });
 
   nonempty: () => ZodNonEmptyArray<T> = () => {
     return new ZodNonEmptyArray({ ...this._def, nonempty: true });
@@ -62,7 +68,11 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
   };
 }
 
-export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_type'], ...T['_type'][]], ZodArrayDef<T>> {
+export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<
+  [T['_input'], ...T['_input'][]],
+  ZodArrayDef<T>,
+  [T['_output'], ...T['_output'][]]
+> {
   toJSON = () => {
     return {
       t: this._def.t,
@@ -94,5 +104,6 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_typ
       ...(typeof message === 'string' ? { message } : message),
     });
 
-  length = (len: number, message?: string) => this.min(len, { message }).max(len, { message });
+  length = (len: number, message?: string) =>
+    this.min(len, { message }).max(len, { message });
 }

@@ -1,13 +1,16 @@
-<<<<<<< HEAD
-=======
 import * as z from '.';
 
-const userUpdateSchema = z.object({
-  password: z
-    .string()
-    .min(6)
-    .optional(),
-});
+const run = async () => {
+  const numToString = z.transformer(z.number(), z.string(), async n =>
+    String(n),
+  );
+  const data = await z
+    .object({
+      id: numToString,
+    })
+    .parseAsync({ id: 5 });
 
-console.log(userUpdateSchema.parse({}));
->>>>>>> dev
+  console.log(data);
+};
+
+run();
