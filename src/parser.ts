@@ -4,6 +4,7 @@ import { ZodError, ZodErrorCode, ZodSuberror, ZodSuberrorOptionalMessage } from 
 import { util } from './helpers/util';
 import { ZodErrorMap, defaultErrorMap } from './defaultErrorMap';
 
+
 export type ParseParams = {
   seen?: { schema: any; objects: { data: any; error?: any; times: number }[] }[];
   path?: (string | number)[];
@@ -61,6 +62,8 @@ export const find = (arr: any[], checker: (arg: any) => any) => {
   }
   return undefined;
 };
+
+const UNDEFINED = () => require("./types/undefined").ZodUndefined.create();
 
 // conditional required to distribute union
 type stripPath<T extends object> = T extends any ? util.OmitKeys<T, 'path'> : never;
@@ -297,6 +300,20 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         }
       }
       break;
+      case z.ZodTypes.optional:
+        try {
+          UNDEFINED().parse(obj, params);
+          break;
+        } catch {}
+
+        try {
+          def.realType.parse(obj, params);
+          break;
+        } catch (err) {
+          const zerr: ZodError = err;
+          error.addErrors(zerr.errors);          
+        }
+        break;      
     case z.ZodTypes.intersection:
       try {
         def.left.parse(obj, params);
