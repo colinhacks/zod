@@ -73,7 +73,9 @@ export const isScalar = (schema: z.ZodType<any, any>, params: { root: boolean } 
     case z.ZodTypes.promise:
       returnValue = false;
       break;
-
+    case z.ZodTypes.optional:
+      returnValue = isScalar(def.realType);
+      break;
     default:
       util.assertNever(def);
     // returnValue = false; break;

@@ -41,6 +41,7 @@ import { ZodParsedType } from './parser';
 import { ZodErrorMap } from './defaultErrorMap';
 
 import { ZodCodeGenerator } from './codegen';
+import { ZodOptional, ZodOptionalDef } from "./types/optional";
 
 export { ZodTypeDef, ZodTypes };
 type ZodDef =
@@ -65,6 +66,7 @@ type ZodDef =
   | ZodLiteralDef
   | ZodEnumDef
   | ZodNativeEnumDef
+  | ZodOptionalDef
   | ZodPromiseDef;
 
 const stringType = ZodString.create;
@@ -89,6 +91,7 @@ const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
 const nativeEnumType = ZodNativeEnum.create;
 const promiseType = ZodPromise.create;
+const optionalType = ZodOptional.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -127,6 +130,7 @@ export {
   nativeEnumType as nativeEnum,
   promiseType as promise,
   instanceOfType as instanceof,
+  optionalType as optional,
   ostring,
   onumber,
   oboolean,
@@ -168,6 +172,7 @@ export {
   ZodErrorMap,
   ZodParsedType,
   ZodCodeGenerator,
+  ZodOptional,
 };
 
 export * from './ZodError';

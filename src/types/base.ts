@@ -1,6 +1,7 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodError } from '../index';
+import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodError, ZodOptional } from '../index';
+import { ZodOptionalType } from "./optional";
 
 export enum ZodTypes {
   string = 'string',
@@ -25,6 +26,7 @@ export enum ZodTypes {
   any = 'any',
   unknown = 'unknown',
   void = 'void',
+  optional = 'optional'
 }
 
 export type ZodTypeAny = ZodType<any, any>;
@@ -141,10 +143,11 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
 
   abstract toJSON: () => object;
   //  abstract // opt optional: () => any;
-  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
+  optional: () => ZodOptionalType<this> = () => ZodOptional.create(this);
   nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
   array: () => ZodArray<this> = () => ZodArray.create(this);
   or: <U extends ZodType<any>>(arg: U) => ZodUnion<[this, U]> = arg => {
     return ZodUnion.create([this, arg]);
   };
+  isOptional: () => boolean = () => this._def.t === ZodTypes.optional;
 }

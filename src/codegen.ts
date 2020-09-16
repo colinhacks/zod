@@ -4,14 +4,16 @@ import { util } from './helpers/util';
 type TypeResult = { schema: any; id: string; type: string };
 
 const isOptional = (schema: z.ZodType<any, any>): boolean => {
-  const def: z.ZodDef = schema._def;
-  if (def.t === z.ZodTypes.undefined) return true;
-  else if (def.t === z.ZodTypes.intersection) {
-    return isOptional(def.right) && isOptional(def.left);
-  } else if (def.t === z.ZodTypes.union) {
-    return def.options.map(isOptional).some(x => x === true);
-  }
-  return false;
+  // const def: z.ZodDef = schema._def;
+  // if (def.t === z.ZodTypes.undefined) return true;
+  // else if (def.t === z.ZodTypes.intersection) {
+  //   return isOptional(def.right) && isOptional(def.left);
+  // } else if (def.t === z.ZodTypes.union) {
+  //   return def.options.map(isOptional).some(x => x === true);
+  // }
+  // return false;
+
+  return schema.isOptional();
 };
 
 export class ZodCodeGenerator {
@@ -136,8 +138,10 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
       case z.ZodTypes.nativeEnum:
         // const lazyType = def.getter();
         return this.setType(id, 'asdf');
+      case z.ZodTypes.optional:
+        return this.setType(id, `${this.generate(def.realType).id}?`)
       default:
-        util.assertNever(def);
+        util.assertNever(def); 
     }
     return this.findById(id);
   };
