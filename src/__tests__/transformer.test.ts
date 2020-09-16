@@ -69,3 +69,11 @@ test('object typing', () => {
   f1;
   f2;
 });
+
+test('transform method overloads', () => {
+  const t1 = z.string().transform(val => val.toUpperCase());
+  expect(t1.parse('asdf')).toEqual('ASDF');
+
+  const t2 = z.string().transform(z.number(), val => val.length);
+  expect(t2.parse('asdf')).toEqual(4);
+});

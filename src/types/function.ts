@@ -25,13 +25,14 @@ export type InnerTypeOfFunction<
   ? (...args: Args['_output']) => Returns['_input']
   : never;
 
+// type as df = string extends unknown  ? true : false
 export class ZodFunction<
   Args extends ZodTuple<any>,
   Returns extends z.ZodTypeAny
 > extends z.ZodType<
-  InnerTypeOfFunction<Args, Returns>,
+  OuterTypeOfFunction<Args, Returns>,
   ZodFunctionDef,
-  OuterTypeOfFunction<Args, Returns>
+  InnerTypeOfFunction<Args, Returns>
 > {
   readonly _def!: ZodFunctionDef<Args, Returns>;
   //  readonly _type!: TypeOfFunction<Args, Returns>;

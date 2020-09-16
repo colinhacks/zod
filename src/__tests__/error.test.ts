@@ -39,7 +39,7 @@ test('type error with custom error map', () => {
     z.string().parse('asdf', { errorMap });
   } catch (err) {
     const zerr: z.ZodError = err;
-    console.log(zerr);
+
     expect(zerr.errors[0].code).toEqual(z.ZodErrorCode.invalid_type);
     expect(zerr.errors[0].message).toEqual(`bad type!`);
   }

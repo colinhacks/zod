@@ -10,23 +10,36 @@ export interface ZodTransformerDef<
   t: z.ZodTypes.transformer;
   input: T;
   output: U;
-  transformer: (arg: T['_input']) => U['_output'];
+  transformer: (arg: T['_output']) => U['_input'];
 }
 
 export class ZodTransformer<
   T extends z.ZodTypeAny,
   U extends z.ZodTypeAny
-> extends z.ZodType<T['_input'], ZodTransformerDef<T, U>, U['_output']> {
+> extends z.ZodType<U['_output'], ZodTransformerDef<T, U>, T['_input']> {
   // readonly _input!: T['_input'];
   // readonly _output!: U['_output'];
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
-  get input() {
-    return this._def.input;
-  }
-  get output() {
-    return this._def.output;
-  }
+  // inputSchema():T{
+  //   return this._def.input;
+  // }
+
+  // get output() {
+  //   return this._def.output;
+  // }
+  // set inputSchema(val) {
+  //   val;
+  // }
+  // get inputSchema() {
+  //   return this._def.output;
+  // }
+  // set outputSchema(val) {
+  //   val;
+  // }
+  // get outputSchema() {
+  //   return this._def.output;
+  // }
 
   toJSON = () => ({
     t: this._def.t,

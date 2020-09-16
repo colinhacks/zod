@@ -9,6 +9,7 @@ import { ZodUndefined, ZodUndefinedDef } from './types/undefined';
 import { ZodNull, ZodNullDef } from './types/null';
 import { ZodAny, ZodAnyDef } from './types/any';
 import { ZodUnknown, ZodUnknownDef } from './types/unknown';
+import { ZodNever, ZodNeverDef } from './types/never';
 import { ZodVoid, ZodVoidDef } from './types/void';
 import { ZodArray, ZodArrayDef } from './types/array';
 import { ZodObject, ZodObjectDef } from './types/object';
@@ -32,11 +33,11 @@ import {
   ZodTypeDef,
   ZodTypes,
 } from './types/base';
+
 // import { ZodError, ZodErrorCode } from './ZodError';
+
 import { ZodParsedType } from './parser';
-
 import { ZodErrorMap } from './defaultErrorMap';
-
 import { ZodCodeGenerator } from './codegen';
 
 export { ZodTypeDef, ZodTypes };
@@ -50,6 +51,7 @@ type ZodDef =
   | ZodNullDef
   | ZodAnyDef
   | ZodUnknownDef
+  | ZodNeverDef
   | ZodVoidDef
   | ZodArrayDef
   | ZodObjectDef
@@ -74,6 +76,7 @@ const undefinedType = ZodUndefined.create;
 const nullType = ZodNull.create;
 const anyType = ZodAny.create;
 const unknownType = ZodUnknown.create;
+const neverType = ZodNever.create;
 const voidType = ZodVoid.create;
 const arrayType = ZodArray.create;
 const objectType = ZodObject.create;
@@ -116,6 +119,7 @@ export {
   nullType as null,
   anyType as any,
   unknownType as unknown,
+  neverType as never,
   voidType as void,
   arrayType as array,
   objectType as object,
@@ -151,6 +155,7 @@ export {
   ZodNull,
   ZodAny,
   ZodUnknown,
+  ZodNever,
   ZodVoid,
   ZodArray,
   ZodObject,
@@ -176,4 +181,5 @@ export {
 };
 
 export { TypeOf, TypeOf as infer, input, output };
+
 export * from './ZodError';

@@ -22,7 +22,11 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- <br/> -->
 
-**Aug 30 — zod@1.11 was released with lots of cool features!**
+**Zod 2 is coming! Follow me [@vriad](https://twitter.com/vriad) to stay updated and participate in discussions about the future of Zod.**
+
+---
+
+Aug 30 — zod@1.11 was released with lots of cool features!
 
 - All schemas now have a `.safeParse` method. This lets you validate data in a more functional way, similar to `io-ts`: https://github.com/vriad/zod#safe-parse
 - String schemas have a new `.regex` refinement method: https://github.com/vriad/zod#strings
@@ -48,7 +52,7 @@ Some other great aspects:
 
 # Sponsorship
 
-I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're a freelancer or entrepreneur, get listed below and enjoy Zod can [help you with that](https://github.com/sponsors/vriad). Check out my GitHub Sponsors profile at [github.com/sponsors/vriad](github.com/sponsors/vriad).
+I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad).
 
 ### Sponsors
 
@@ -484,7 +488,7 @@ You can combine two object schemas with `.merge`, like so:
 const BaseTeacher = z.object({ subjects: z.array(z.string()) });
 const HasID = z.object({ id: z.string() });
 
-const Teacher = BaseTeacher.merge(HasId);
+const Teacher = BaseTeacher.merge(HasID);
 type Teacher = z.infer<typeof Teacher>; // => { subjects: string[], id: string }
 ```
 

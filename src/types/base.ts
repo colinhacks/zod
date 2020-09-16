@@ -32,6 +32,7 @@ export enum ZodTypes {
   promise = 'promise',
   any = 'any',
   unknown = 'unknown',
+  never = 'never',
   void = 'void',
   transformer = 'transformer',
 }
@@ -85,14 +86,23 @@ export type output<T extends ZodType<any>> = T['_output'];
 export type infer<T extends ZodType<any>> = T['_output'];
 
 export abstract class ZodType<
-  Input,
+  Output,
   Def extends ZodTypeDef = ZodTypeDef,
-  Output = Input
+  Input = Output
 > {
-  readonly _input!: Input;
+  readonly _type!: Output;
   readonly _output!: Output;
-  //  readonly _type!: Input;
   readonly _def!: Def;
+  readonly _input!: Input;
+
+  // get inputSchema(): ZodTypeAny = this;
+  // outputSchema: ZodTypeAny = this;
+  //  = ()=>{
+  //   return this;
+  // }
+  //  outputSchema = () => {
+  //    return this;
+  //  };
 
   parse: (x: unknown, params?: ParseParams) => Output;
 
@@ -212,16 +222,27 @@ export abstract class ZodType<
   // ) => ZodTransformer<This, U> = (input, transformer) => {
   //   return ZodTransformer.create(this as any, input, transformer) as any;
   // };
-  transform: <
+
+  //  push(...items: T[]): number;
+  //  push(this: BetterArrayClass<T>, value: T): this;
+
+  transform<
     This extends this,
     U extends ZodType<any>,
     Tx extends (arg: This['_output']) => U['_input'] | Promise<U['_input']>
-  >(
-    x: U,
-    transformer: Tx,
-  ) => ZodTransformer<This, U> = (input, transformer) => {
-    return ZodTransformer.create(this as any, input, transformer) as any;
-  };
+  >(input: U, transformer: Tx): ZodTransformer<This, U>;
+  transform<
+    This extends this,
+    Tx extends (
+      arg: This['_output'],
+    ) => This['_input'] | Promise<This['_input']>
+  >(transformer: Tx): ZodTransformer<This, This>;
+  transform(input: any, transformer?: any) {
+    if (transformer) {
+      return ZodTransformer.create(this as any, input, transformer) as any;
+    }
+    return ZodTransformer.create(this as any, this, input) as any;
+  }
 
   default: <
     T extends Output = Output,

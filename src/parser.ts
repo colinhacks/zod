@@ -1,5 +1,5 @@
 import * as z from './types/base';
-import { ZodDef } from '.';
+import { ZodDef, ZodNever } from '.';
 import {
   ZodError,
   ZodErrorCode,
@@ -66,6 +66,7 @@ export const ZodParsedType = util.arrayToEnum([
   'unknown',
   'promise',
   'void',
+  'never',
 ]);
 
 export type ZodParsedType = keyof typeof ZodParsedType;
@@ -257,6 +258,16 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     case z.ZodTypes.unknown:
       RESULT.promise = PseudoPromise.resolve(data);
       break;
+    case z.ZodTypes.never:
+      error.addError(
+        makeError({
+          code: ZodErrorCode.invalid_type,
+          expected: ZodParsedType.never,
+          received: parsedType,
+        }),
+      );
+      RESULT.promise = PseudoPromise.resolve(INVALID);
+      break;
     case z.ZodTypes.void:
       if (
         parsedType !== ZodParsedType.undefined &&
@@ -343,41 +354,18 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       const dataKeys = Object.keys(data);
       const extraKeys = dataKeys.filter(k => shapeKeys.indexOf(k) === -1);
 
-      for (const key of extraKeys) {
-        if (def.unknownKeys === 'allow') {
-          objectPromises[key] = PseudoPromise.resolve(data[key]);
-        } else if (def.unknownKeys === 'strict') {
-          error.addError(
-            makeError({
-              code: ZodErrorCode.unrecognized_keys,
-              keys: extraKeys,
-            }),
-          );
-        } else if (def.unknownKeys === 'strip') {
-          // do nothing
-        } else {
-          util.assertNever(def.unknownKeys);
-        }
-      }
-      // if (extraKeys.length) {
-      //   if (def.params.strict) {
-      //     error.addError(
-      //       makeError({
-      //         code: ZodErrorCode.unrecognized_keys,
-      //         keys: extraKeys,
-      //       }),
-      //     );
-      //   } else {
-      //     for (const key of extraKeys) {
-      //       objectPromises[key] = PseudoPromise.resolve(data[key]);
-      //     }
-      //   }
-      // }
-
       for (const key of shapeKeys) {
+        const keyValidator = shapeKeys.includes(key)
+          ? def.shape()[key]
+          : !(def.catchall instanceof ZodNever)
+          ? def.catchall
+          : undefined;
+
+        if (!keyValidator) continue;
+
         objectPromises[key] = new PseudoPromise().then(() => {
           try {
-            return def.shape()[key].parse(data[key], {
+            return keyValidator.parse(data[key], {
               ...params,
               path: [...params.path, key],
             });
@@ -391,14 +379,27 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             }
           }
         });
-        // try {
-        //   parsedobject[key] = PseudoPromise.resolve(
-        //     def.shape()[key].parse(data[key], { ...params, path: [...params.path, key] }),
-        //   );
-        // } catch (err) {
-        //   const zerr: ZodError = err;
-        //   error.addErrors(zerr.errors);
-        // }
+      }
+
+      if (def.catchall instanceof ZodNever) {
+        if (def.unknownKeys === 'allow') {
+          for (const key of extraKeys) {
+            objectPromises[key] = PseudoPromise.resolve(data[key]);
+          }
+        } else if (def.unknownKeys === 'strict') {
+          if (extraKeys.length > 0) {
+            error.addError(
+              makeError({
+                code: ZodErrorCode.unrecognized_keys,
+                keys: extraKeys,
+              }),
+            );
+          }
+        } else if (def.unknownKeys === 'strip') {
+          // do nothing
+        } else {
+          util.assertNever(def.unknownKeys);
+        }
       }
 
       RESULT.promise = PseudoPromise.object(objectPromises);

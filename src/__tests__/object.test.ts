@@ -75,13 +75,45 @@ test('inference', () => {
   expect(() => i1.parse({} as any)).toThrow();
 });
 
-test('nonstrict', () => {
-  z.object({ points: z.number() })
+test('nonstrict by default', () => {
+  z.object({ points: z.number() }).parse({
+    points: 2314,
+    unknown: 'asdf',
+  });
+});
+
+const data = {
+  points: 2314,
+  unknown: 'asdf',
+};
+test('unknownkeys override', () => {
+  const val = z
+    .object({ points: z.number() })
+    .strict()
+    .allowUnknown()
+    .stripUnknown()
     .nonstrict()
-    .parse({
-      points: 2314,
-      unknown: 'asdf',
-    });
+    .parse(data);
+
+  expect(val).toEqual(data);
+});
+
+test('strip unknown', () => {
+  const val = z
+    .object({ points: z.number() })
+    .stripUnknown()
+    .parse(data);
+
+  expect(val).toEqual({ points: 2314 });
+});
+
+test('strict', () => {
+  const val = z
+    .object({ points: z.number() })
+    .strict()
+    .safeParse(data);
+
+  expect(val.success).toEqual(false);
 });
 
 test('primitives', () => {
@@ -135,4 +167,54 @@ test('primitives', () => {
     'objectArray',
     'arrayarray',
   ]);
+});
+
+test('catchall inference', () => {
+  const o1 = z
+    .object({
+      first: z.string(),
+    })
+    .catchall(z.number());
+
+  const d1 = o1.parse({ first: 'asdf', num: 1243 });
+  const f1: util.AssertEqual<number, typeof d1['asdf']> = true;
+  const f2: util.AssertEqual<string, typeof d1['first']> = true;
+  f1;
+  f2;
+});
+
+test('catchall overrides strict', () => {
+  const o1 = z
+    .object({})
+    .strict()
+    .catchall(z.number());
+
+  // should run fine
+  // setting a catchall overrides the unknownKeys behavior
+  o1.parse({
+    asdf: 1234,
+  });
+
+  // should only run catchall validation
+  // against unknown keys
+  o1.parse({
+    first: 'asdf',
+    asdf: 1234,
+  });
+});
+
+test('catchall overrides strict', () => {
+  const o1 = z
+    .object({
+      first: z.string(),
+    })
+    .strict()
+    .catchall(z.number());
+
+  // should run fine
+  // setting a catchall overrides the unknownKeys behavior
+  o1.parse({
+    first: 'asdf',
+    asdf: 1234,
+  });
 });

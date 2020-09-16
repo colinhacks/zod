@@ -12,9 +12,9 @@ export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny>
 }
 
 export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<
-  T['_input'][],
+  T['_output'][],
   ZodArrayDef<T>,
-  T['_output'][]
+  T['_input'][]
 > {
   toJSON = () => {
     return {
@@ -69,9 +69,9 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<
 }
 
 export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<
-  [T['_input'], ...T['_input'][]],
+  [T['_output'], ...T['_output'][]],
   ZodArrayDef<T>,
-  [T['_output'], ...T['_output'][]]
+  [T['_input'], ...T['_input'][]]
 > {
   toJSON = () => {
     return {

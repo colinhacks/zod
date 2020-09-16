@@ -310,6 +310,7 @@ test('enum async parse', async () => {
 enum nativeEnumTest {
   asdf = 'qwer',
 }
+// @ts-ignore
 const nativeEnumSchema = z.nativeEnum(nativeEnumTest);
 test('nativeEnum async parse', async () => {
   const goodData = nativeEnumTest.asdf;

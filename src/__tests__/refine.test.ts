@@ -5,7 +5,8 @@ test('refinement', () => {
     first: z.string(),
     second: z.string(),
   });
-  const obj2 = obj1.partial();
+  const obj2 = obj1.partial().strict();
+
   const obj3 = obj2.refine(
     data => data.first || data.second,
     'Either first or second should be filled in.',

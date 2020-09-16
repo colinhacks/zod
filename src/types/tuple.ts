@@ -3,8 +3,16 @@ import * as z from './base';
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 
-export type TypeOfTuple<T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []> = {
-  [k in keyof T]: T[k] extends z.ZodType<infer U> ? U : never;
+export type OutputTypeOfTuple<
+  T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []
+> = {
+  [k in keyof T]: T[k] extends z.ZodType<any, any> ? T[k]['_output'] : never;
+};
+
+export type InputTypeOfTuple<
+  T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []
+> = {
+  [k in keyof T]: T[k] extends z.ZodType<any, any> ? T[k]['_input'] : never;
 };
 
 export interface ZodTupleDef<
@@ -22,11 +30,15 @@ export class ZodTuple<
     z.ZodTypeAny,
     ...z.ZodTypeAny[],
   ]
-> extends z.ZodType<TypeOfTuple<T>, ZodTupleDef<T>> {
+> extends z.ZodType<OutputTypeOfTuple<T>, ZodTupleDef<T>, InputTypeOfTuple<T>> {
   toJSON = () => ({
     t: this._def.t,
     items: (this._def.items as any[]).map(item => item.toJSON()),
   });
+
+  get items() {
+    return this._def.items;
+  }
 
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 

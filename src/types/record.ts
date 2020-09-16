@@ -12,9 +12,9 @@ export interface ZodRecordDef<Value extends z.ZodTypeAny = z.ZodTypeAny>
 export class ZodRecord<
   Value extends z.ZodTypeAny = z.ZodTypeAny
 > extends z.ZodType<
-  Record<string, Value['_input']>, // { [k in keyof T]: T[k]['_type'] },
+  Record<string, Value['_output']>, // { [k in keyof T]: T[k]['_type'] },
   ZodRecordDef<Value>,
-  Record<string, Value['_output']>
+  Record<string, Value['_input']>
 > {
   readonly _value!: Value;
 

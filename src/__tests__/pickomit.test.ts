@@ -20,7 +20,11 @@ test('pick parse - success', () => {
 });
 
 test('pick parse - fail', () => {
-  const nameonlyFish = fish.pick({ name: true });
+  fish.pick({ name: true }).parse({ name: '12' } as any);
+  fish.pick({ name: true }).parse({ name: 'bob', age: 12 } as any);
+  fish.pick({ age: true }).parse({ age: 12 } as any);
+
+  const nameonlyFish = fish.pick({ name: true }).strict();
   const bad1 = () => nameonlyFish.parse({ name: 12 } as any);
   const bad2 = () => nameonlyFish.parse({ name: 'bob', age: 12 } as any);
   const bad3 = () => nameonlyFish.parse({ age: 12 } as any);
@@ -56,7 +60,10 @@ test('omit parse - fail', () => {
 test('nonstrict inference', () => {
   const laxfish = fish.nonstrict().pick({ name: true });
   type laxfish = z.infer<typeof laxfish>;
-  const f1: util.AssertEqual<laxfish, { [k: string]: any; name: string }> = true;
+  const f1: util.AssertEqual<
+    laxfish,
+    { [k: string]: any; name: string }
+  > = true;
   f1;
 });
 

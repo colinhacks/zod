@@ -15,7 +15,7 @@ export interface ZodUnionDef<
 
 export class ZodUnion<
   T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]
-> extends z.ZodType<T[number]['_input'], ZodUnionDef<T>, T[number]['_output']> {
+> extends z.ZodType<T[number]['_output'], ZodUnionDef<T>, T[number]['_input']> {
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
@@ -24,6 +24,10 @@ export class ZodUnion<
     t: this._def.t,
     options: this._def.options.map(x => x.toJSON()),
   });
+
+  get options() {
+    return this._def.options;
+  }
 
   // distribute = <F extends (arg: T[number]) => z.ZodTypeAny>(f: F): ZodUnion<{ [k in keyof T]: ReturnType<F> }> => {
   //   return ZodUnion.create(this._def.options.map(f) as any);
