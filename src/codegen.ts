@@ -38,7 +38,9 @@ export class ZodCodeGenerator {
     return `
 type Identity<T> = T;
 
-${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n')}
+${this.seen
+  .map(item => `type ${item.id} = Identity<${item.type}>;`)
+  .join('\n\n')}
 `;
   };
 
@@ -101,7 +103,9 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
           const OPTKEY = isOptional(childSchema) ? '?' : '';
           objectLines.push(`${key}${OPTKEY}: ${childType.id}`);
         }
-        const baseStruct = `{\n${objectLines.map(line => `  ${line};`).join('\n')}\n}`;
+        const baseStruct = `{\n${objectLines
+          .map(line => `  ${line};`)
+          .join('\n')}\n}`;
         this.setType(id, `${baseStruct}`);
         break;
       case z.ZodTypes.tuple:
@@ -110,7 +114,9 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
           const elType = this.generate(elSchema);
           tupleLines.push(elType.id);
         }
-        const baseTuple = `[\n${tupleLines.map(line => `  ${line},`).join('\n')}\n]`;
+        const baseTuple = `[\n${tupleLines
+          .map(line => `  ${line},`)
+          .join('\n')}\n]`;
         return this.setType(id, `${baseTuple}`);
       case z.ZodTypes.array:
         return this.setType(id, `${this.generate(def.type).id}[]`);
@@ -129,9 +135,15 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
         }
         return this.setType(id, unionLines.join(` | `));
       case z.ZodTypes.intersection:
-        return this.setType(id, `${this.generate(def.left).id} & ${this.generate(def.right).id}`);
+        return this.setType(
+          id,
+          `${this.generate(def.left).id} & ${this.generate(def.right).id}`,
+        );
       case z.ZodTypes.record:
-        return this.setType(id, `{[k:string]: ${this.generate(def.valueType).id}}`);
+        return this.setType(
+          id,
+          `{[k:string]: ${this.generate(def.valueType).id}}`,
+        );
       case z.ZodTypes.lazy:
         const lazyType = def.getter();
         return this.setType(id, this.generate(lazyType).id);
@@ -139,9 +151,9 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
         // const lazyType = def.getter();
         return this.setType(id, 'asdf');
       case z.ZodTypes.optional:
-        return this.setType(id, `${this.generate(def.realType).id}?`)
+        return this.setType(id, `${this.generate(def.innerType).id}?`);
       default:
-        util.assertNever(def); 
+        util.assertNever(def);
     }
     return this.findById(id);
   };

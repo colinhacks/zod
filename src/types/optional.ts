@@ -3,20 +3,21 @@ import * as z from './base';
 
 // import { ZodNull } from './null';
 
-
-
-export interface ZodOptionalDef<
-  T extends z.ZodTypeAny = z.ZodTypeAny
-> extends z.ZodTypeDef {
+export interface ZodOptionalDef<T extends z.ZodTypeAny = z.ZodTypeAny>
+  extends z.ZodTypeDef {
   t: z.ZodTypes.optional;
-  realType: T;
+  innerType: T;
 }
 
 // This type allows for optional flattening
-export type ZodOptionalType<T extends z.ZodTypeAny> = T extends ZodOptional<z.ZodTypeAny> ? T : ZodOptional<T>;
+export type ZodOptionalType<T extends z.ZodTypeAny> = T extends ZodOptional<
+  z.ZodTypeAny
+>
+  ? T
+  : ZodOptional<T>;
 
 export class ZodOptional<T extends z.ZodTypeAny> extends z.ZodType<
-  T["_type"] | undefined,
+  T['_type'] | undefined,
   ZodOptionalDef<T>
 > {
   optional: () => ZodOptionalType<this> = () => this as ZodOptionalType<this>; // An optional optional is the original optional
@@ -25,10 +26,10 @@ export class ZodOptional<T extends z.ZodTypeAny> extends z.ZodType<
 
   toJSON = () => ({
     t: this._def.t,
-    realType: this._def.realType
+    innerType: this._def.innerType,
   });
 
-  // distribute = would only need to delegate to the realType i think
+  // distribute = would only need to delegate to the innerType i think
 
   // distribute = <F extends (arg: T[number]) => z.ZodTypeAny>(f: F): ZodOptional<{ [k in keyof T]: ReturnType<F> }> => {
   //   return ZodOptional.create(this._def.options.map(f) as any);
@@ -38,7 +39,7 @@ export class ZodOptional<T extends z.ZodTypeAny> extends z.ZodType<
 
     return new ZodOptional({
       t: z.ZodTypes.optional,
-      realType: type
+      innerType: type,
     }) as ZodOptionalType<T>;
   };
 }

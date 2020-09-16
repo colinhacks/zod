@@ -5,12 +5,18 @@ import * as z from './base';
 import { objectUtil } from '../helpers/objectUtil';
 import { partialUtil } from '../helpers/partialUtil';
 import { isScalar } from '../isScalar';
-import { ZodOptional } from "..";
 
-const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <Augmentation extends z.ZodRawShape>(
+const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
+  Augmentation extends z.ZodRawShape
+>(
   augmentation: Augmentation,
 ): ZodObject<
-  { [k in Exclude<keyof ReturnType<Def['shape']>, keyof Augmentation>]: ReturnType<Def['shape']>[k] } &
+  {
+    [k in Exclude<
+      keyof ReturnType<Def['shape']>,
+      keyof Augmentation
+    >]: ReturnType<Def['shape']>[k];
+  } &
     { [k in keyof Augmentation]: Augmentation[k] },
   Def['params']
 > => {
@@ -58,11 +64,18 @@ export type Scalars =
   | undefined
   | null;
 
-type SetKey<Target extends object, Key extends string, Value extends any> = objectUtil.Flatten<
+type SetKey<
+  Target extends object,
+  Key extends string,
+  Value extends any
+> = objectUtil.Flatten<
   { [k in Exclude<keyof Target, Key>]: Target[k] } & { [k in Key]: Value }
 >;
 
-type ZodObjectType<T extends z.ZodRawShape, Params extends ZodObjectParams> = Params['strict'] extends true
+type ZodObjectType<
+  T extends z.ZodRawShape,
+  Params extends ZodObjectParams
+> = Params['strict'] extends true
   ? objectUtil.ObjectType<T>
   : objectUtil.Flatten<objectUtil.ObjectType<T> & { [k: string]: any }>;
 
@@ -107,15 +120,22 @@ export class ZodObject<
    * inferred type of merged objects. Please
    * upgrade if you are experiencing issues.
    */
-  merge: <MergeShape extends z.ZodRawShape, MergeParams extends ZodObjectParams>(
+  merge: <
+    MergeShape extends z.ZodRawShape,
+    MergeParams extends ZodObjectParams
+  >(
     other: ZodObject<MergeShape, MergeParams>,
-  ) => ZodObject<T & MergeShape, objectUtil.MergeObjectParams<Params, MergeParams>> = objectUtil.mergeObjects(
-    this as any,
-  );
+  ) => ZodObject<
+    T & MergeShape,
+    objectUtil.MergeObjectParams<Params, MergeParams>
+  > = objectUtil.mergeObjects(this as any);
 
   pick = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask,
-  ): ZodObject<objectUtil.NoNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>, Params> => {
+  ): ZodObject<
+    objectUtil.NoNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>,
+    Params
+  > => {
     const shape: any = {};
     Object.keys(mask).map(key => {
       shape[key] = this.shape[key];
@@ -128,7 +148,10 @@ export class ZodObject<
 
   omit = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask,
-  ): ZodObject<objectUtil.NoNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>, Params> => {
+  ): ZodObject<
+    objectUtil.NoNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>,
+    Params
+  > => {
     const shape: any = {};
     Object.keys(this.shape).map(key => {
       if (Object.keys(mask).indexOf(key) === -1) {
@@ -141,11 +164,16 @@ export class ZodObject<
     });
   };
 
-  partial = (): ZodObject<{ [k in keyof T]: ZodOptional<T[k]>}, Params> => {
+  partial = (): ZodObject<
+    { [k in keyof T]: ReturnType<T[k]['optional']> },
+    Params
+  > => {
     const newShape: any = {};
     for (const key in this.shape) {
       const fieldSchema = this.shape[key];
-      newShape[key] = fieldSchema.isOptional() ? fieldSchema : fieldSchema.optional();
+      newShape[key] = fieldSchema.isOptional()
+        ? fieldSchema
+        : fieldSchema.optional();
     }
     return new ZodObject({
       ...this._def,
@@ -154,7 +182,9 @@ export class ZodObject<
   };
 
   primitives = (): ZodObject<
-    objectUtil.NoNever<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? T[k] : never }>,
+    objectUtil.NoNever<
+      { [k in keyof T]: [T[k]['_type']] extends [Scalars] ? T[k] : never }
+    >,
     Params
   > => {
     const newShape: any = {};
@@ -170,7 +200,9 @@ export class ZodObject<
   };
 
   nonprimitives = (): ZodObject<
-    objectUtil.NoNever<{ [k in keyof T]: [T[k]['_type']] extends [Scalars] ? never : T[k] }>,
+    objectUtil.NoNever<
+      { [k in keyof T]: [T[k]['_type']] extends [Scalars] ? never : T[k] }
+    >,
     Params
   > => {
     const newShape: any = {};
@@ -191,9 +223,13 @@ export class ZodObject<
     for (const key in this.shape) {
       const fieldSchema = this.shape[key];
       if (fieldSchema instanceof ZodObject) {
-        newShape[key] = fieldSchema.isOptional() ? fieldSchema : (fieldSchema.deepPartial() as any).optional() ;
+        newShape[key] = fieldSchema.isOptional()
+          ? fieldSchema
+          : (fieldSchema.deepPartial() as any).optional();
       } else {
-        newShape[key] = fieldSchema.isOptional() ? fieldSchema : fieldSchema.optional();
+        newShape[key] = fieldSchema.isOptional()
+          ? fieldSchema
+          : fieldSchema.optional();
       }
     }
     return new ZodObject({
@@ -213,7 +249,9 @@ export class ZodObject<
     });
   };
 
-  static lazycreate = <T extends z.ZodRawShape>(shape: () => T): ZodObject<T> => {
+  static lazycreate = <T extends z.ZodRawShape>(
+    shape: () => T,
+  ): ZodObject<T> => {
     return new ZodObject({
       t: z.ZodTypes.object,
 

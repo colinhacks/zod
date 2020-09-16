@@ -47,9 +47,14 @@ test('deep partial parse', () => {
   const deep = nested.deepPartial();
   expect(deep.shape.name instanceof z.ZodOptional).toBe(true);
   expect(deep.shape.outer instanceof z.ZodOptional).toBe(true);
-  expect(deep.shape.outer._def.realType instanceof z.ZodObject).toBe(true);
-  expect(deep.shape.outer._def.realType.shape.inner instanceof z.ZodOptional).toBe(true);
-  expect(deep.shape.outer._def.realType.shape.inner._def.realType instanceof z.ZodString).toBe(true);
+  expect(deep.shape.outer._def.innerType instanceof z.ZodObject).toBe(true);
+  expect(
+    deep.shape.outer._def.innerType.shape.inner instanceof z.ZodOptional,
+  ).toBe(true);
+  expect(
+    deep.shape.outer._def.innerType.shape.inner._def.innerType instanceof
+      z.ZodString,
+  ).toBe(true);
 });
 
 test('deep partial runtime tests', () => {
