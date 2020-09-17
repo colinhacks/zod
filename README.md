@@ -16,6 +16,8 @@ if you're happy and you know it, star this repo ⭐
 
 <br/>
 
+Zod 2 is in an early beta. Documentation here: https://github.com/vriad/zod/tree/v2.
+
 <!-- **Zod 2 is coming! Follow [@vriad](https://twitter.com/vriad) to stay updated and discuss the future of Zod.** -->
 <!--
 ### **Zod 2 is now in beta!**
