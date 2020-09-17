@@ -86,13 +86,28 @@ const data = {
   points: 2314,
   unknown: 'asdf',
 };
+
+test('strip by default', () => {
+  const val = z.object({ points: z.number() }).parse(data);
+  expect(val).toEqual({ points: 2314 });
+});
+
 test('unknownkeys override', () => {
   const val = z
     .object({ points: z.number() })
     .strict()
-    .allowUnknown()
-    .stripUnknown()
+    .passthrough()
+    .strip()
     .nonstrict()
+    .parse(data);
+
+  expect(val).toEqual(data);
+});
+
+test('passthrough unknown', () => {
+  const val = z
+    .object({ points: z.number() })
+    .passthrough()
     .parse(data);
 
   expect(val).toEqual(data);
@@ -101,7 +116,7 @@ test('unknownkeys override', () => {
 test('strip unknown', () => {
   const val = z
     .object({ points: z.number() })
-    .stripUnknown()
+    .strip()
     .parse(data);
 
   expect(val).toEqual({ points: 2314 });

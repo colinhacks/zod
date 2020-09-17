@@ -31,13 +31,13 @@ Here are some of the new features.
 
 - Transformers! These let you provide default values, do casting/coersion, and a lot more. Read more here: [Transformers](#transformers)
 - Asynchronous refinements and new `.parseAsync` and `.safeParseAsync` methods. Read more here: [Refinements](#refinements)
-- New object methods: `.stripUnknown()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
+- New object methods: `.passthrough()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
 
 In almost all cases, you'll be able to upgrade to Zod 2 without changing any code. Here are some of the (very minor) breaking changes:
 
 - Parsing now returns a _deep clone_ of the data you pass in. Previously it returned the exact same object you passed in.
 - Relatedly, Zod _no longer_ supports cyclical _data_. Recursive schemas are still supported, but Zod can't properly parse nested objects that contain cycles.
-- Object schemas now _allow_ unknown keys by default, instead of throwing an error
+- Object schemas now strip unknown keys by default, instead of throwing an error
 - Optional and nullable schemas are now represented with the dedicated ZodOptional and ZodNullable classes, instead of using ZodUnion.
 
 ---
@@ -116,7 +116,7 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
   - [.extend](#extending-objects)
   - [.pick/.omit](#pick-and-omit)
   - [.partial/.deepPartial](#partials)
-  - [.stripUnknown](#strip-unknown-keys)
+  - [.strip](#strip-unknown-keys)
   - [.strict](#disallow-unknown-keys)
   - [.primitives/.nonprimitives](#primitives-and-nonprimitives)
 - [Records](#records)
@@ -686,9 +686,9 @@ const deepPartialUser = user.deepPartial();
 
 #### Unknown keys
 
-Zod object schemas allow unknown keys.
+By default Zod object schema strip unknown keys from the output.
 
-> ⚠️ Before Zod 2 object schema did NOT allow unknown keys by default.
+> ⚠️ Before version 2, Zod did NOT allow unknown keys by default.
 
 Zod will return
 
@@ -701,30 +701,30 @@ person.parse({
   name: 'bob dylan',
   extraKey: 61,
 });
-// => { name: "bob dylan", extraKey: 61 }
+// => { name: "bob dylan" }
 ```
 
-#### Strip unknown keys
+#### Pass through unknown keys
 
-If you want to strip out unknown keys, use `.stripUnknown`:
+If you want to pass through unknown keys, use `.passthrough()`. For backwards compatibility, you can also call `.nonstrict()` which behaves identically.
 
 ```ts
 const person = z
   .object({
     name: z.string(),
   })
-  .stripUnknown();
+  .passthrough();
 
 person.parse({
   name: 'bob dylan',
   extraKey: 61,
 });
-// => { name: "bob dylan" }
+// => { name: "bob dylan", extraKey: 61 }
 ```
 
 #### Disallow unknown keys
 
-You can _disallow_ unknown keys with `.strict()`
+You can _disallow_ unknown keys with `.strict()`. If there are any unknown keys in the input, Zod will throw an error.
 
 ```ts
 const person = z
@@ -794,7 +794,7 @@ person.parse({
 // => { name: "bob dylan" }
 ```
 
-> Using `.catchall()` overrides `.stripUnknown()` or `.strict()`. All keys are now considered "known".
+> Using `.catchall()` overrides `.passsthrough()`, `.strip()`, or `.strict()`. All keys are now considered "known".
 
 ## Records
 

@@ -31,7 +31,7 @@ const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
   }) as any;
 };
 
-type UnknownKeysParam = 'allow' | 'strict' | 'strip';
+type UnknownKeysParam = 'passthrough' | 'strict' | 'strip';
 
 export interface ZodObjectDef<
   T extends z.ZodRawShape = z.ZodRawShape,
@@ -150,7 +150,7 @@ export type AnyZodObject = ZodObject<any, any, any>;
 // >;
 export class ZodObject<
   T extends z.ZodRawShape,
-  UnknownKeys extends UnknownKeysParam = 'allow',
+  UnknownKeys extends UnknownKeysParam = 'passthrough',
   Catchall extends z.ZodTypeAny = z.ZodTypeAny
   // Params extends ZodObjectParams = { strict: true },
   // Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
@@ -186,19 +186,19 @@ export class ZodObject<
       unknownKeys: 'strict',
     });
 
-  stripUnknown = (): ZodObject<T, 'strip', Catchall> =>
+  strip = (): ZodObject<T, 'strip', Catchall> =>
     new ZodObject({
       ...this._def,
       unknownKeys: 'strip',
     });
 
-  allowUnknown = (): ZodObject<T, 'allow', Catchall> =>
+  passthrough = (): ZodObject<T, 'passthrough', Catchall> =>
     new ZodObject({
       ...this._def,
-      unknownKeys: 'allow',
+      unknownKeys: 'passthrough',
     });
 
-  nonstrict = this.allowUnknown;
+  nonstrict = this.passthrough;
 
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
@@ -388,7 +388,7 @@ export class ZodObject<
     return new ZodObject({
       t: z.ZodTypes.object,
       shape: () => shape,
-      unknownKeys: 'allow',
+      unknownKeys: 'strip',
       catchall: ZodNever.create(),
       //  params: {
       //    strict: true,
@@ -402,7 +402,7 @@ export class ZodObject<
     return new ZodObject({
       t: z.ZodTypes.object,
       shape,
-      unknownKeys: 'allow',
+      unknownKeys: 'strip',
       catchall: ZodNever.create(),
     }) as any;
   };

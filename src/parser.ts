@@ -393,7 +393,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       }
 
       if (def.catchall instanceof ZodNever) {
-        if (def.unknownKeys === 'allow') {
+        if (def.unknownKeys === 'passthrough') {
           for (const key of extraKeys) {
             objectPromises[key] = PseudoPromise.resolve(data[key]);
           }
