@@ -1071,7 +1071,6 @@ Intersections are useful for creating "logical AND" types.
 ```ts
 const a = z.union([z.number(), z.string()]);
 const b = z.union([z.number(), z.boolean()]);
-
 const c = z.intersection(a, b);
 type c = z.infer<typeof C>; // => number
 
@@ -1094,7 +1093,7 @@ const Teacher = z.intersection(BaseTeacher, HasId);
 
 type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };
-``` -->
+```
 
 ## Tuples
 
