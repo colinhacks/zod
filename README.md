@@ -1448,7 +1448,7 @@ Casting
 Default Values
 Rich Errors
 Branded -->
-
+<!--
 - Missing object methods: (pick, omit, partial, deepPartial, merge, extend)
 - Missing nonempty arrays with proper typing (`[T, ...T[]]`)
 - Missing lazy/recursive types
@@ -1456,7 +1456,7 @@ Branded -->
 - Missing function schemas
 - Missing union & intersection schemas
 - Missing support for parsing cyclical data (maybe)
-- Missing error customization
+- Missing error customization -->
 
 #### Joi
 
