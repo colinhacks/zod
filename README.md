@@ -116,7 +116,7 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
   - [.extend](#extending-objects)
   - [.pick/.omit](#pick-and-omit)
   - [.partial/.deepPartial](#partials)
-  - [.strip](#strip-unknown-keys)
+  - [.passthrough](#pass-through-unknown-keys)
   - [.strict](#disallow-unknown-keys)
   - [.primitives/.nonprimitives](#primitives-and-nonprimitives)
 - [Records](#records)
@@ -706,7 +706,9 @@ person.parse({
 
 #### Pass through unknown keys
 
-If you want to pass through unknown keys, use `.passthrough()`. For backwards compatibility, you can also call `.nonstrict()` which behaves identically.
+If you want to pass through unknown keys, use `.passthrough()`.
+
+> For backwards compatibility, you can also use `.nonstrict()` which behaves identically.
 
 ```ts
 const person = z
