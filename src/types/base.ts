@@ -4,11 +4,15 @@ import {
   ZodErrorCode,
   ZodArray,
   ZodUnion,
-  ZodNull,
   ZodUndefined,
   ZodTransformer,
+  ZodError,
+  ZodOptional,
+  ZodNullable,
 } from '../index';
-import { ZodError } from '../ZodError';
+
+import { ZodOptionalType } from './optional';
+import { ZodNullableType } from './nullable';
 
 export enum ZodTypes {
   string = 'string',
@@ -35,6 +39,8 @@ export enum ZodTypes {
   never = 'never',
   void = 'void',
   transformer = 'transformer',
+  optional = 'optional',
+  nullable = 'nullable',
 }
 
 export type ZodTypeAny = ZodType<any, any>;
@@ -199,10 +205,12 @@ export abstract class ZodType<
 
   abstract toJSON: () => object;
   //  abstract // opt optional: () => any;
-  optional: () => ZodUnion<[this, ZodUndefined]> = () =>
-    ZodUnion.create([this, ZodUndefined.create()]);
-  nullable: () => ZodUnion<[this, ZodNull]> = () =>
-    ZodUnion.create([this, ZodNull.create()]);
+  optional: () => ZodOptionalType<this> = () => ZodOptional.create(this);
+  nullable: () => ZodNullableType<this> = () => {
+    return ZodNullable.create(this) as any;
+  };
+  //  nullable: () => ZodUnion<[this, ZodNull]> = () =>
+  //    ZodUnion.create([this, ZodNull.create()]);
   array: () => ZodArray<this> = () => ZodArray.create(this);
   // pre: <T extends string>(
   //   input: T,
@@ -275,4 +283,7 @@ export abstract class ZodType<
   or: <U extends ZodType<any>>(arg: U) => ZodUnion<[this, U]> = arg => {
     return ZodUnion.create([this, arg]);
   };
+
+  isOptional: () => boolean = () => this.safeParse(undefined).success;
+  isNullable: () => boolean = () => this.safeParse(null).success;
 }

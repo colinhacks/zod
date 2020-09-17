@@ -1,7 +1,7 @@
 import * as z from './base';
-import { ZodUndefined } from './undefined';
+// import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
-import { ZodUnion } from './union';
+// import { ZodUnion } from './union';
 import { objectUtil } from '../helpers/objectUtil';
 import { partialUtil } from '../helpers/partialUtil';
 import { isScalar } from '../isScalar';
@@ -272,13 +272,16 @@ export class ZodObject<
   };
 
   partial = (): ZodObject<
-    { [k in keyof T]: ZodUnion<[T[k], ZodUndefined]> },
+    { [k in keyof T]: ReturnType<T[k]['optional']> },
     UnknownKeys,
     Catchall
   > => {
     const newShape: any = {};
     for (const key in this.shape) {
-      newShape[key] = this.shape[key].optional();
+      const fieldSchema = this.shape[key];
+      newShape[key] = fieldSchema.isOptional()
+        ? fieldSchema
+        : fieldSchema.optional();
     }
     return new ZodObject({
       ...this._def,
@@ -364,9 +367,13 @@ export class ZodObject<
     for (const key in this.shape) {
       const fieldSchema = this.shape[key];
       if (fieldSchema instanceof ZodObject) {
-        newShape[key] = fieldSchema.deepPartial().optional();
+        newShape[key] = fieldSchema.isOptional()
+          ? fieldSchema
+          : (fieldSchema.deepPartial() as any).optional();
       } else {
-        newShape[key] = this.shape[key].optional();
+        newShape[key] = fieldSchema.isOptional()
+          ? fieldSchema
+          : fieldSchema.optional();
       }
     }
     return new ZodObject({

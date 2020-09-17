@@ -83,6 +83,12 @@ export const isScalar = (
       returnValue = isScalar(def.output);
       break;
 
+    case z.ZodTypes.optional:
+      returnValue = isScalar(def.innerType);
+      break;
+    case z.ZodTypes.nullable:
+      returnValue = isScalar(def.innerType);
+      break;
     default:
       util.assertNever(def);
     // returnValue = false; break;

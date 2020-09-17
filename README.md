@@ -1081,14 +1081,9 @@ const stringAndNumber = z.intersection(z.string(), z.number());
 type Never = z.infer<typeof stringAndNumber>; // => never
 ```
 
-<<<<<<< HEAD
 Intersections in Zod are not smart. Whatever data you pass into `.parse()` gets passed into the two intersected schemas. Because Zod object schemas don't allow any unknown keys by default, there are some unintuitive behavior surrounding intersections of object schemas.
-=======
 
-<!-- This is particularly useful for defining "schema mixins" that you can apply to multiple schemas.
->>>>>>> dev
-
-```ts
+````ts
 const A = z.object({
   a: z.string(),
 });
@@ -1119,7 +1114,7 @@ const athleteSchema = z.tuple([
 
 type Athlete = z.infer<typeof athleteSchema>;
 // type Athlete = [string, number, { pointsScored: number }]
-```
+````
 
 ## Recursive types
 
@@ -1566,7 +1561,7 @@ Good type inference support, but limited options for object type masking (no `.p
 
 [https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
 
-Ow is focused on function input validation. It's a library that makes it easy to express complicated assert statements, but it doesn't let you parse untyped data. They support a much wider variety of types; Zod has a nearly one-to-one mapping iwhtwith TypeScript's type system, whereas ow lets you validate several highly-specific types out of the box (e.g. `int32Array`, see full list in their README).
+Ow is focused on function input validation. It's a library that makes it easy to express complicated assert statements, but it doesn't let you parse untyped data. They support a much wider variety of types; Zod has a nearly one-to-one mapping with TypeScript's type system, whereas ow lets you validate several highly-specific types out of the box (e.g. `int32Array`, see full list in their README).
 
 If you want to validate function inputs, use function schemas in Zod! It's a much simpler approach that lets you reuse a function type declaration without repeating yourself (namely, copy-pasting a bunch of ow assertions at the beginning of every function). Also Zod lets you validate your return types as well, so you can be sure there won't be any unexpected data passed downstream.
 

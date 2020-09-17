@@ -144,7 +144,7 @@ test('union smart errors', () => {
     .safeParse(-3.2);
 
   if (p1.success === true) throw new Error();
-  console.log(JSON.stringify(p1.error, null, 2));
+  // console.log(JSON.stringify(p1.error, null, 2));
   expect(p1.success).toBe(false);
   expect(p1.error.errors[0].code).toEqual(ZodErrorCode.custom_error);
 
@@ -162,11 +162,13 @@ test('custom path in custom error map', () => {
     }),
   });
 
-  expect.assertions(1);
   const errorMap: z.ZodErrorMap = error => {
     expect(error.path.length).toBe(2);
     return { message: 'doesnt matter' };
   };
   const result = schema.safeParse({ items: ['first'] }, { errorMap });
-  console.log(result);
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.errors[0].path).toEqual(['items', 'items-too-few']);
+  }
 });

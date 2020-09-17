@@ -24,6 +24,8 @@ import { ZodEnum, ZodEnumDef } from './types/enum';
 import { ZodNativeEnum, ZodNativeEnumDef } from './types/nativeEnum';
 import { ZodPromise, ZodPromiseDef } from './types/promise';
 import { ZodTransformer, ZodTransformerDef } from './types/transformer';
+import { ZodOptional, ZodOptionalDef } from './types/optional';
+import { ZodNullable, ZodNullableDef } from './types/nullable';
 import {
   TypeOf,
   input,
@@ -63,9 +65,11 @@ type ZodDef =
   | ZodLazyDef
   | ZodLiteralDef
   | ZodEnumDef
-  | ZodPromiseDef
   | ZodTransformerDef
-  | ZodNativeEnumDef;
+  | ZodNativeEnumDef
+  | ZodOptionalDef
+  | ZodNullableDef
+  | ZodPromiseDef;
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -91,6 +95,8 @@ const enumType = ZodEnum.create;
 const nativeEnumType = ZodNativeEnum.create;
 const promiseType = ZodPromise.create;
 const transformerType = ZodTransformer.create;
+const optionalType = ZodOptional.create;
+const nullableType = ZodNullable.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -135,6 +141,8 @@ export {
   promiseType as promise,
   instanceOfType as instanceof,
   transformerType as transformer,
+  optionalType as optional,
+  nullableType as nullable,
   ostring,
   onumber,
   oboolean,
@@ -170,6 +178,8 @@ export {
   ZodNativeEnum,
   ZodPromise,
   ZodTransformer,
+  ZodOptional,
+  ZodNullable,
   ZodType,
   ZodType as Schema,
   ZodType as ZodSchema,

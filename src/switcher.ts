@@ -52,6 +52,10 @@ export const visitor = (schema: z.ZodType<any, any>) => {
       break;
     case z.ZodTypes.transformer:
       break;
+    case z.ZodTypes.optional:
+      break;
+    case z.ZodTypes.nullable:
+      break;
     default:
       util.assertNever(def);
   }

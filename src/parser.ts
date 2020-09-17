@@ -1,5 +1,5 @@
 import * as z from './types/base';
-import { ZodDef, ZodNever } from '.';
+import { ZodDef, ZodNever } from './index';
 import {
   ZodError,
   ZodErrorCode,
@@ -136,13 +136,15 @@ export const ZodParser = (schema: z.ZodType<any>) => (
   params.seen = params.seen || [];
   params.seen.push({ schema, objects: [] });
   const schemaSeen = finder(params.seen, x => x.schema === schema); // params.seen.find(x => x.schema === schemaDef)!;
-  const objectSeen = finder(schemaSeen.objects, arg => arg.data === data); //.find(x => x.data === data);
+  if (schemaSeen) {
+    const objectSeen = finder(schemaSeen.objects, arg => arg.data === data); //.find(x => x.data === data);
 
-  if (objectSeen && def.t !== z.ZodTypes.transformer) {
-    // return objectSeen.promise._cached.value; //.getValue();
-    // return data;
-  } else {
-    schemaSeen.objects.push(RESULT);
+    if (objectSeen && def.t !== z.ZodTypes.transformer) {
+      // return objectSeen.promise._cached.value; //.getValue();
+      // return data;
+    } else {
+      schemaSeen.objects.push(RESULT);
+    }
   }
 
   //  else {
@@ -533,6 +535,42 @@ export const ZodParser = (schema: z.ZodType<any>) => (
 
       break;
 
+    case z.ZodTypes.optional:
+      if (parsedType === ZodParsedType.undefined) {
+        RESULT.promise = PseudoPromise.resolve(undefined);
+        break;
+      }
+
+      RESULT.promise = new PseudoPromise().then(() => {
+        try {
+          return def.innerType.parse(data, params);
+        } catch (err) {
+          if (err instanceof ZodError) {
+            error.addErrors(err.errors);
+            return INVALID;
+          }
+          throw err;
+        }
+      });
+      break;
+    case z.ZodTypes.nullable:
+      if (parsedType === ZodParsedType.null) {
+        RESULT.promise = PseudoPromise.resolve(null);
+        break;
+      }
+
+      RESULT.promise = new PseudoPromise().then(() => {
+        try {
+          return def.innerType.parse(data, params);
+        } catch (err) {
+          if (err instanceof ZodError) {
+            error.addErrors(err.errors);
+            return INVALID;
+          }
+          throw err;
+        }
+      });
+      break;
     case z.ZodTypes.tuple:
       if (parsedType !== ZodParsedType.array) {
         error.addError(
