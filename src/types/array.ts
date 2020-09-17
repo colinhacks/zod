@@ -10,7 +10,8 @@ export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.Zo
   nonempty: boolean;
 }
 
-export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], ZodArrayDef<T>> {
+
+export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], ZodArrayDef<z.ZodTypeAny>> {
   toJSON = () => {
     return {
       t: this._def.t,
@@ -49,16 +50,16 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
 
   length = (len: number, message?: string) => this.min(len, { message }).max(len, { message });
 
-  nonempty: () => ZodNonEmptyArray<T> = () => {
-    return new ZodNonEmptyArray({ ...this._def, nonempty: true });
+  nonempty: () => ZodNonEmptyArray<T> = <T extends z.ZodTypeAny>() => {
+    return new ZodNonEmptyArray<T> ({ ...this._def, nonempty: true } as any);
   };
 
-  static create = <T extends z.ZodTypeAny>(schema: T): ZodArray<T> => {
+  static create = <T extends z.ZodTypeAny>(schema: T): T extends ZodArray<z.ZodTypeAny> ? ZodArray<ZodArray<z.ZodTypeAny>> : ZodArray<T> => {
     return new ZodArray({
       t: z.ZodTypes.array,
       type: schema,
       nonempty: false,
-    });
+    }) as any;
   };
 }
 
