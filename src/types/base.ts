@@ -61,7 +61,7 @@ export const outputSchema = (schema: ZodType<any>): ZodType<any> => {
 };
 
 type InternalCheck<T> = {
-  check: (arg: T, ctx: { makeError: (arg: MakeErrorData) => void }) => any;
+  check: (arg: T, ctx: { addError: (arg: MakeErrorData) => void }) => any;
   // refinementError: (arg: T) => MakeErrorData;
 };
 
@@ -183,7 +183,7 @@ export abstract class ZodType<
       return this._refinement((val, ctx) => {
         const result = check(val);
         const setError = () =>
-          ctx.makeError({
+          ctx.addError({
             code: ZodErrorCode.custom_error,
             message,
           });
@@ -202,7 +202,7 @@ export abstract class ZodType<
       return this._refinement((val, ctx) => {
         const result = check(val);
         const setError = () =>
-          ctx.makeError({
+          ctx.addError({
             code: ZodErrorCode.custom_error,
             ...message(val),
           });
@@ -220,7 +220,7 @@ export abstract class ZodType<
     return this._refinement((val, ctx) => {
       const result = check(val);
       const setError = () =>
-        ctx.makeError({
+        ctx.addError({
           code: ZodErrorCode.custom_error,
           ...message,
         });
@@ -243,7 +243,7 @@ export abstract class ZodType<
   ) => {
     return this._refinement((val, ctx) => {
       if (!check(val)) {
-        ctx.makeError(
+        ctx.addError(
           typeof refinementData === 'function'
             ? refinementData(val)
             : refinementData,
@@ -252,7 +252,7 @@ export abstract class ZodType<
     });
   };
 
-  protected _refinement: (
+  _refinement: (
     refinement: InternalCheck<Output>['check'],
   ) => this = refinement => {
     return new (this as any).constructor({
