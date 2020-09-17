@@ -16,5 +16,10 @@
     "json-summary",
     "text",
     "lcov"
-  ]
+  ],
+  "globals": {
+    "ts-jest": {
+      "tsConfig": "tsconfig.json"
+    }
+  }
 }

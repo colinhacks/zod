@@ -33,8 +33,7 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   min = (minLength: number, message?: string | { message?: string }) =>
-    this._refinement({
-      check: data => data.length >= minLength,
+    this.refinement(data => data.length >= minLength, {
       code: ZodErrorCode.too_small,
       type: 'array',
       inclusive: true,
@@ -43,8 +42,8 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<
     });
 
   max = (maxLength: number, message?: string | { message?: string }) =>
-    this._refinement({
-      check: data => data.length <= maxLength,
+    this.refinement(data => data.length <= maxLength, {
+      // check: data => data.length <= maxLength,
       code: ZodErrorCode.too_big,
       type: 'array',
       inclusive: true,
@@ -85,8 +84,8 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   min = (minLength: number, message?: string | { message?: string }) =>
-    this._refinement({
-      check: data => data.length >= minLength,
+    this.refinement(data => data.length >= minLength, {
+      // check: data => data.length >= minLength,
       code: ZodErrorCode.too_small,
       minimum: minLength,
       type: 'array',
@@ -95,8 +94,8 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<
     });
 
   max = (maxLength: number, message?: string | { message?: string }) =>
-    this._refinement({
-      check: data => data.length <= maxLength,
+    this.refinement(data => data.length <= maxLength, {
+      // check:
       code: ZodErrorCode.too_big,
       maximum: maxLength,
       type: 'array',

@@ -1,6 +1,12 @@
 import * as z from '..';
 import { util } from '../helpers/util';
 
+const stringToNumber = z.string().transform(z.number(), arg => parseFloat(arg));
+const numberToString = z.transformer(z.number(), z.string(), n => String(n));
+const asyncNumberToString = z.transformer(z.number(), z.string(), async n =>
+  String(n),
+);
+
 test('basic transformations', () => {
   const r1 = z
     .transformer(z.string(), z.number(), data => data.length)
@@ -34,13 +40,10 @@ test('async coercion', async () => {
 });
 
 test('sync coercion async error', async () => {
-  const numToString = z.transformer(z.number(), z.string(), async n =>
-    String(n),
-  );
   expect(() =>
     z
       .object({
-        id: numToString,
+        id: asyncNumberToString,
       })
       .parse({ id: 5 }),
   ).toThrow();
@@ -58,7 +61,7 @@ test('default', () => {
 
 test('object typing', () => {
   const t1 = z.object({
-    stringToNumber: z.string().transform(z.number(), arg => arg.length),
+    stringToNumber,
   });
 
   type t1 = z.input<typeof t1>;
@@ -76,4 +79,11 @@ test('transform method overloads', () => {
 
   const t2 = z.string().transform(z.number(), val => val.length);
   expect(t2.parse('asdf')).toEqual(4);
+});
+
+test('multiple transformers', () => {
+  const doubler = z.transformer(stringToNumber, numberToString, val => {
+    return val * 2;
+  });
+  expect(doubler.parse('5')).toEqual('10');
 });

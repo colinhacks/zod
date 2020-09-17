@@ -19,14 +19,10 @@ const uuidRegex = /([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-
 export class ZodString extends z.ZodType<string, ZodStringDef> {
   inputSchema = this;
   outputSchema = this;
-  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
-
-  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   toJSON = () => this._def;
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => data.length >= minLength,
+    this.refinement(data => data.length >= minLength, {
       code: ZodErrorCode.too_small,
       minimum: minLength,
       type: 'string',
@@ -35,8 +31,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     });
 
   max = (maxLength: number, message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => data.length <= maxLength,
+    this.refinement(data => data.length <= maxLength, {
       code: ZodErrorCode.too_big,
       maximum: maxLength,
       type: 'string',
@@ -53,10 +48,10 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     validation: StringValidation,
     message?: errorUtil.ErrMessage,
   ) =>
-    this._refinement({
+    this.refinement(data => regex.test(data), {
       validation,
       code: ZodErrorCode.invalid_string,
-      check: data => regex.test(data),
+
       ...errorUtil.errToObj(message),
     });
 
@@ -64,8 +59,8 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     this._regex(emailRegex, 'email', message);
 
   url = (message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => {
+    this.refinement(
+      data => {
         try {
           new URL(data);
           return true;
@@ -73,10 +68,12 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
           return false;
         }
       },
-      code: ZodErrorCode.invalid_string,
-      validation: 'url',
-      ...errorUtil.errToObj(message),
-    });
+      {
+        code: ZodErrorCode.invalid_string,
+        validation: 'url',
+        ...errorUtil.errToObj(message),
+      },
+    );
 
   // url = (message?: errorUtil.ErrMessage) => this._regex(urlRegex, 'url', message);
 

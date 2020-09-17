@@ -22,8 +22,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
   };
 
   min = (minimum: number, message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => data >= minimum,
+    this.refinement(data => data >= minimum, {
       code: ZodErrorCode.too_small,
       minimum,
       type: 'number',
@@ -32,8 +31,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
     });
 
   max = (maximum: number, message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => data <= maximum,
+    this.refinement(data => data <= maximum, {
       code: ZodErrorCode.too_big,
       maximum,
       type: 'number',
@@ -42,8 +40,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
     });
 
   int = (message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => Number.isInteger(data),
+    this.refinement(data => Number.isInteger(data), {
       code: ZodErrorCode.invalid_type,
       expected: 'integer',
       received: 'number',
@@ -51,8 +48,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
     });
 
   positive = (message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => data > 0,
+    this.refinement(data => data > 0, {
       code: ZodErrorCode.too_small,
       minimum: 0,
       type: 'number',
@@ -61,8 +57,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
     });
 
   negative = (message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => data < 0,
+    this.refinement(data => data < 0, {
       code: ZodErrorCode.too_big,
       maximum: 0,
       type: 'number',
@@ -71,8 +66,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
     });
 
   nonpositive = (message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => data <= 0,
+    this.refinement(data => data <= 0, {
       code: ZodErrorCode.too_big,
       maximum: 0,
       type: 'number',
@@ -81,8 +75,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
     });
 
   nonnegative = (message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => data >= 0,
+    this.refinement(data => data >= 0, {
       code: ZodErrorCode.too_small,
       minimum: 0,
       type: 'number',

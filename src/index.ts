@@ -105,12 +105,12 @@ const codegen = ZodCodeGenerator.create;
 
 export const custom = <T>(
   check: (data: unknown) => any,
-  params?: Parameters<ZodAny['refine']>[1],
+  params?: Parameters<ZodTypeAny['refine']>[1],
 ): ZodType<T> => anyType().refine(check, params);
 
 const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
-  params: Parameters<ZodAny['refine']>[1] = {
+  params: Parameters<ZodTypeAny['refine']>[1] = {
     message: `Input not instance of ${cls.name}`,
   },
 ) => custom<InstanceType<T>>(data => data instanceof cls, params);

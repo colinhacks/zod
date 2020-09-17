@@ -1,10 +1,7 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
-import { util } from '../helpers/util';
 import {
   ZodErrorCode,
   ZodArray,
-  ZodUnion,
-  ZodUndefined,
   ZodTransformer,
   ZodError,
   ZodOptional,
@@ -13,6 +10,7 @@ import {
 
 import { ZodOptionalType } from './optional';
 import { ZodNullableType } from './nullable';
+import { ZodCustomError } from '../ZodError';
 
 export enum ZodTypes {
   string = 'string',
@@ -63,8 +61,9 @@ export const outputSchema = (schema: ZodType<any>): ZodType<any> => {
 };
 
 type InternalCheck<T> = {
-  check: (arg: T) => any;
-} & MakeErrorData;
+  check: (arg: T, ctx: { makeError: (arg: MakeErrorData) => void }) => any;
+  // refinementError: (arg: T) => MakeErrorData;
+};
 
 // type Check<T> = {
 //   check: (arg: T) => any;
@@ -73,12 +72,11 @@ type InternalCheck<T> = {
 //   // params?: {[k:string]:any}
 // } & util.Omit<CustomError, 'code' | 'path'>;
 
-type Check<T> = {
-  check: (arg: T) => any;
-  path?: (string | number)[];
-  message?: string;
-  params?: { [k: string]: any };
-};
+type CustomErrorParams = Partial<Omit<ZodCustomError, 'code'>>;
+// type Check<T> = {
+//   check: (arg: T) => any;
+//   refinementError: (arg: T) => CustomErrorParams;
+// };
 
 export interface ZodTypeDef {
   t: ZodTypes;
@@ -174,27 +172,61 @@ export abstract class ZodType<
 
   refine = <Func extends (arg: Output) => any>(
     check: Func,
-    message: string | util.Omit<Check<Output>, 'check'> = 'Invalid value.',
+    message: string | CustomErrorParams = 'Invalid value.',
   ) => {
     if (typeof message === 'string') {
-      return this.refinement({ check, message });
+      return this._refinement((val, ctx) => {
+        const result = check(val);
+        const setError = () =>
+          ctx.makeError({
+            code: ZodErrorCode.custom_error,
+            message,
+          });
+        if (result instanceof Promise) {
+          return result.then(data => {
+            if (!data) setError();
+          });
+        }
+        if (!result) {
+          setError();
+          return result;
+        }
+      });
     }
-    return this.refinement({ check, ...message });
+    return this._refinement((val, ctx) => {
+      const result = check(val);
+      const setError = () =>
+        ctx.makeError({
+          code: ZodErrorCode.custom_error,
+          ...message,
+        });
+      if (result instanceof Promise) {
+        return result.then(data => {
+          if (!data) setError();
+        });
+      }
+
+      if (!result) {
+        setError();
+        return result;
+      }
+    });
   };
 
-  refinement = (refinement: Check<Output>) => {
-    return this._refinement({
-      code: ZodErrorCode.custom_error,
-      ...refinement,
+  refinement = (check: (arg: Output) => any, refinementData: MakeErrorData) => {
+    return this._refinement((val, ctx) => {
+      if (!check(val)) {
+        ctx.makeError(refinementData);
+      }
     });
   };
 
   protected _refinement: (
-    refinement: InternalCheck<Output>,
+    refinement: InternalCheck<Output>['check'],
   ) => this = refinement => {
     return new (this as any).constructor({
       ...this._def,
-      checks: [...(this._def.checks || []), refinement],
+      checks: [...(this._def.checks || []), { check: refinement }],
     }) as this;
   };
 
@@ -206,6 +238,8 @@ export abstract class ZodType<
   abstract toJSON: () => object;
   //  abstract // opt optional: () => any;
   optional: () => ZodOptionalType<this> = () => ZodOptional.create(this);
+  or = this.optional;
+
   nullable: () => ZodNullableType<this> = () => {
     return ZodNullable.create(this) as any;
   };
@@ -254,7 +288,7 @@ export abstract class ZodType<
 
   default: <
     T extends Output = Output,
-    Opt extends ZodUnion<[this, ZodUndefined]> = ZodUnion<[this, ZodUndefined]>
+    Opt extends ReturnType<this['optional']> = ReturnType<this['optional']>
   >(
     def: T,
   ) => ZodTransformer<Opt, this> = def => {
@@ -279,10 +313,6 @@ export abstract class ZodType<
   //  ) => ZodCodec<this, U> = (input, transformer) => {
   //    return ZodCodec.create(input, this, transformer);
   //  };
-
-  or: <U extends ZodType<any>>(arg: U) => ZodUnion<[this, U]> = arg => {
-    return ZodUnion.create([this, arg]);
-  };
 
   isOptional: () => boolean = () => this.safeParse(undefined).success;
   isNullable: () => boolean = () => this.safeParse(null).success;

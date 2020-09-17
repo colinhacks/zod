@@ -16,13 +16,33 @@ if you're happy and you know it, star this repo ⭐
 
 <br/>
 
-<!-- Created and maintained by [@vriad](https://twitter.com/vriad). The motivation for this library and a detailed comparison to various alternatives can be found at https://vriad.com/blog/zod.
+<!-- **Zod 2 is coming! Follow [@vriad](https://twitter.com/vriad) to stay updated and discuss the future of Zod.** -->
 
-If you find this package useful, leave a star to help more folks find it ⭐️🤏 -->
+### **Sept 17 — Zod 2 is now in beta!**
 
-<!-- <br/> -->
+You should be able to upgrade from v1 to v2 without any breaking changes to your code. Zod 2 is recommended for all new projects.
 
-**Zod 2 is coming! Follow me [@vriad](https://twitter.com/vriad) to stay updated and participate in discussions about the future of Zod.**
+```
+npm install zod@beta
+yarn add zod@beta
+```
+
+Here are some of the new features.
+
+**Async refinements**
+
+```ts
+const userId = z.string().refine(async id => {
+  // verify that ID exists in database
+  return true;
+});
+```
+
+Once your schema includes async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
+
+```ts
+const validId = await userId.parseAsync('a7105bc93e0');
+```
 
 ---
 
@@ -91,7 +111,7 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
 - [Literals](#literals)
 - [Parsing](#parsing)
 - [Type inference](#type-inference)
-- [Custom validation](#custom-validation)
+- [Refinements](#refinements)
 - [Strings](#strings)
 - [Numbers](#numbers)
 - [Objects](#objects)
@@ -100,7 +120,8 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
   - [.extend](#extending-objects)
   - [.pick/.omit](#pick-and-omit)
   - [.partial/.deepPartial](#partials)
-  - [.nonstrict](#unknown-keys)
+  - [.stripUnknown](#strip-unknown-keys)
+  - [.strict](#disallow-unknown-keys)
   - [.primitives/.nonprimitives](#primitives-and-nonprimitives)
 - [Records](#records)
 - [Arrays](#arrays)
@@ -117,6 +138,7 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
 - [Promises](#promises)
 - [Instanceof](#instanceof)
 - [Function schemas](#function-schemas)
+- [Transformers](#transformers)
 - [Errors](#errors)
 - [Comparison](#comparison)
   - [Joi](#joi)
@@ -127,33 +149,39 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
 
 # Installation
 
-To install the latest version:
+To use the beta of Zod 2 (recommended for new projects).
 
-```sh
-npm install --save zod
 ```
+yarn add zod@beta
+npm install zod@beta
+```
+
+To install the most recent v1 version:
 
 ```sh
 yarn add zod
+npm install zod
 ```
 
 #### TypeScript requirements
 
-1. Zod 1.x requires TypeScript 3.3+
+- Zod 2.0.x requires TypeScript 3.7+
+- Zod 1.x requires TypeScript 3.3+
 
-   > Support for TS 3.2 was dropped with the release of zod@1.10 on 19 July 2020
+> Support for TS 3.2 was dropped with the release of zod@1.10 on 19 July 2020
 
-2. You must enable `strictNullChecks` or use `strict` mode which includes `strictNullChecks`. Otherwise Zod can't correctly infer the types of your schemas!
-   ```ts
-   // tsconfig.json
-   {
-     // ...
-     "compilerOptions": {
-       // ...
-       "strictNullChecks": true
-     }
-   }
-   ```
+You must enable `strictNullChecks` or use `strict` mode which includes `strictNullChecks`. Otherwise Zod can't correctly infer the types of your schemas!
+
+```ts
+// tsconfig.json
+{
+  // ...
+  "compilerOptions": {
+    // ...
+    "strictNullChecks": true
+  }
+}
+```
 
 # Usage
 
@@ -213,7 +241,7 @@ const tru = z.literal(true);
 
 Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
-> IMPORTANT: After Zod 1.11, the value returned by `.parse` is a _deep clone_ of the variable you passed in. This was also the case in zod@1.4 and earlier. The only exception to this is `Union` and `Intersection` schemas, which return the same value you pass in.
+> IMPORTANT: In Zod 2 and Zod 1.11+, the value returned by `.parse` is a _deep clone_ of the variable you passed in. This was also the case in zod@1.4 and earlier. The only exception to this is `Union` and `Intersection` schemas, which return the same value you pass in.
 
 ```ts
 const stringSchema = z.string();
@@ -235,7 +263,15 @@ stringSchema.safeParse('billie');
 // => { successs: true; data: 'billie' }
 ```
 
-Because the result is a _discriminated union_ you can handle errors very conveniently:
+There is also an asynchronous version:
+
+```ts
+await stringSchema.safeParseAsync('billie');
+```
+
+> You must use .parseAsync() or .safeParseAsync() if your schema contains asynchronous refinements for transformers.
+
+The result is a _discriminated union_ so you can handle errors very conveniently:
 
 ```ts
 const result = stringSchema.safeParse('billie');
@@ -281,9 +317,11 @@ const process = (blob: any) => {
 };
 ```
 
-### Custom validation
+### Refinements
 
 `.refine(validator: (data:T)=>any, params?: RefineParams)`
+
+Zod let you provide custom validation logic via _refinements_.
 
 Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an Int or that a string is a valid email address.
 
@@ -294,6 +332,17 @@ const myString = z.string().refine(val => val.length <= 255, {
   message: "String can't be more than 255 characters",
 });
 ```
+
+Refinements can also be async:
+
+```ts
+const userId = z.string().refine(async id => {
+  // verify that ID exists in database
+  return true;
+});
+```
+
+> If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
 
 As you can see, `.refine` takes two arguments.
 
@@ -441,26 +490,26 @@ z.number().max(5, { message: 'this👏is👏too👏big' });
 // all properties are required by default
 const dogSchema = z.object({
   name: z.string(),
-  neutered: z.boolean(),
+  age: z.number(),
 });
 
 type Dog = z.infer<typeof dogSchema>;
 /* 
 equivalent to:
 type Dog = { 
-  name:string; 
-  neutered: boolean;
+  name: string; 
+  age: number;
 }
 */
 
 const cujo = dogSchema.parse({
   name: 'Cujo',
-  neutered: true,
+  age: 4,
 }); // passes, returns Dog
 
 const fido: Dog = {
   name: 'Fido',
-}; // TypeError: missing required property `neutered`
+}; // TypeError: missing required property `age`
 ```
 
 #### `.shape` property
@@ -579,42 +628,6 @@ This is useful for database logic, where endpoints often accept as input slightl
 
 > This is a vital feature for implementing typesafe backend logic, yet as far as I know, no other validation library (yup, Joi, io-ts, runtypes, class-validator, ow...) offers similar functionality as of this writing (April 2020). This is one of the must-have features that inspired the creation of Zod.
 
-#### Primitives and nonprimitives
-
-Zod provides a convenience method for automatically picking all primitive or non-primitive fields from an object schema.
-
-```ts
-const Post = z.object({
-  title: z.string()
-});
-
-const User = z.object({
-  id: z.number(),
-  name: z.string(),
-  posts: z.array(Post)
-});
-
-const UserFields = User.primitives();
-typeof UserFields = z.infer<typeof UserFields>;
-// => { id: number; name; string; }
-
-const UserRelations = User.nonprimitives();
-typeof UserFields = z.infer<typeof UserFields>;
-// => { posts: Post[] }
-```
-
-These schemas are considering "primitive":
-
-- string
-- number
-- boolean
-- bigint
-- date
-- null/undefined
-- enums
-- any array of the above types
-- any union of the above types
-
 #### Partials
 
 Inspired by the built-in TypeScript utility type [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialt), all Zod object schemas have a `.partial` method that makes all properties optional.
@@ -675,59 +688,115 @@ const deepPartialUser = user.deepPartial();
 
 #### Unknown keys
 
-By default, Zod object schemas _do not_ allow unknown keys!
+Zod object schemas allow unknown keys.
+
+> ⚠️ Before Zod 2 object schema did NOT allow unknown keys by default.
+
+Zod will return
 
 ```ts
-const dogSchema = z.object({
+const person = z.object({
   name: z.string(),
-  neutered: z.boolean(),
 });
 
-dogSchema.parse({
-  name: 'Spot',
-  neutered: true,
-  color: 'brown',
-}); // Error(`Unexpected keys in object: 'color'`)
+person.parse({
+  name: 'bob dylan',
+  extraKey: 61,
+});
+// => { name: "bob dylan", extraKey: 61 }
 ```
 
-This is an intentional decision to make Zod's behavior consistent with TypeScript. Consider this:
+#### Strip unknown keys
+
+If you want to strip out unknown keys, use `.stripUnknown`:
 
 ```ts
-type Dog = z.infer<typeof dogSchema>;
+const person = z
+  .object({
+    name: z.string(),
+  })
+  .stripUnknown();
 
-const spot: Dog = {
-  name: 'Spot',
-  neutered: true,
-  color: 'brown',
-};
-// TypeError: Object literal may only specify known
-// properties, and 'color' does not exist in type Dog
+person.parse({
+  name: 'bob dylan',
+  extraKey: 61,
+});
+// => { name: "bob dylan" }
 ```
 
-TypeScript doesn't allow unknown keys when assigning to an object type, so neither does Zod (by default). If you want to allow this, just call the `.nonstrict()` method on any object schema:
+#### Disallow unknown keys
+
+You can _disallow_ unknown keys with `.strict()`
 
 ```ts
-const dogSchemaNonstrict = dogSchema.nonstrict();
+const person = z
+  .object({
+    name: z.string(),
+  })
+  .strict();
 
-dogSchemaNonstrict.parse({
-  name: 'Spot',
-  neutered: true,
-  color: 'brown',
-}); // passes
+person.parse({
+  name: 'bob dylan',
+  extraKey: 61,
+});
+// => throws ZodError
 ```
 
-This change is reflected in the inferred type as well:
+#### Primitives and nonprimitives
+
+Zod provides a convenience method for automatically picking all primitive or non-primitive fields from an object schema.
 
 ```ts
-type NonstrictDog = z.infer<typeof dogSchemaNonstrict>;
-/*
-{
-  name:string; 
-  neutered: boolean;
-  [k:string]: any;
-} 
-*/
+const Post = z.object({
+  title: z.string()
+});
+
+const User = z.object({
+  id: z.number(),
+  name: z.string(),
+  posts: z.array(Post)
+});
+
+const UserFields = User.primitives();
+typeof UserFields = z.infer<typeof UserFields>;
+// => { id: number; name; string; }
+
+const UserRelations = User.nonprimitives();
+typeof UserFields = z.infer<typeof UserFields>;
+// => { posts: Post[] }
 ```
+
+These schemas are considering "primitive":
+
+- string
+- number
+- boolean
+- bigint
+- date
+- null/undefined
+- enums
+- any array of the above types
+- any union of the above types
+
+#### Catchall
+
+You can add a `catchall` schema with `.catchall()`. All unknown keys will be validated against the catchall schema.
+
+```ts
+const person = z
+  .object({
+    name: z.string(),
+  })
+  .catchall(z.number());
+
+person.parse({
+  name: 'bob dylan',
+  validExtraKey: 61, // works fine
+});
+// => { name: "bob dylan" }
+```
+
+> Using `.catchall()` overrides `.stripUnknown()` or `.strict()`. All keys are now considered "known".
 
 ## Records
 
@@ -890,21 +959,25 @@ stringOrNumber.parse('foo'); // passes
 stringOrNumber.parse(14); // passes
 ```
 
-### Optional types
+If the input is valid for multiple
 
-Unions are the basis for defining optional schemas. An "optional string" is just the union of `string` and `undefined`.
+## Optional types
+
+<!-- Unions are the basis for defining optional schemas. An "optional string" is just the union of `string` and `undefined`. -->
+
+You can make any schema optional with `z.optional()`:
 
 ```ts
-const A = z.union([z.string(), z.undefined()]);
+const A = z.optional(z.string());
 
 A.parse(undefined); // => passes, returns undefined
 type A = z.infer<typeof A>; // string | undefined
 ```
 
-Zod provides a shorthand way to make any schema optional:
+You can also call the `.optional()` method on an existing schema:
 
 ```ts
-const B = z.string().optional(); // equivalent to A
+const B = z.boolean().optional();
 
 const C = z.object({
   username: z.string().optional(),
@@ -912,15 +985,17 @@ const C = z.object({
 type C = z.infer<typeof C>; // { username?: string | undefined };
 ```
 
-### Nullable types
+## Nullable types
 
 Similarly, you can create nullable types like so:
 
 ```ts
-const D = z.union([z.string(), z.null()]);
+const D = z.nullable(z.string());
+D.parse('asdf'); // => "asdf"
+D.parse(null); // => null
 ```
 
-Or you can use the shorthand `.nullable()`:
+Or you can use the `.optional()` method on any existing schema:
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
@@ -929,7 +1004,7 @@ type E = z.infer<typeof D>; // string | null
 
 You can create unions of any two or more schemas.
 
-```ts
+<!-- ```ts
 /* Custom Union Types */
 
 const F = z
@@ -945,13 +1020,13 @@ F.parse(null); // => null
 F.parse({}); // => throws Error!
 
 type F = z.infer<typeof F>; // string | number | boolean | undefined | null;
-```
+``` -->
 
-### Enums
+## Enums
 
 There are two ways to define enums in Zod.
 
-#### Zod enums
+### Zod enums
 
 An enum is just a union of string literals, so you _could_ define an enum like this:
 
@@ -1000,7 +1075,7 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
 ```
 
-#### Native enums
+### Native enums
 
 > ⚠️ `nativeEnum()` requires TypeScript 3.6 or higher!
 
@@ -1066,7 +1141,7 @@ FruitEnum.parse('Cantaloupe'); // fails
 
 ## Intersections
 
-> ⚠️ Intersections are deprecated. If you are trying to merge objects, use the `.merge` method instead.
+<!-- > ⚠️ Intersections are deprecated. If you are trying to merge objects, use the `.merge` method instead. -->
 
 Intersections are useful for creating "logical AND" types.
 
@@ -1405,6 +1480,72 @@ User.omit({ outer: { inner: { prop2: true } } }); // { outer: { prop1: string, i
 
 
 #### Recursive schemas -->
+
+## Transformers
+
+You can integrate custom data transformations into your schemas with transformers. Transformers are just another type of Zod schema.
+
+### z.transformer()
+
+```ts
+const countLength = z.transformer(
+  z.string(),
+  z.number(),
+  myString => myString.length,
+);
+
+countLength.parse('string'); // => 6
+```
+
+This lets you perform coercion, similar to Yup. You still need to provide the coercion logic yourself.
+
+```ts
+const coercedString = z.transformer(z.unknown(), z.string(), val => {
+  return `${val}`;
+});
+
+coercedString.parse(false); // => "false"
+coercedString.parse(12); // => "12"
+```
+
+Transformations can also be async.
+
+```ts
+const IdToUser = z.transformer(
+  z.string().uuid(),
+  UserSchema,
+  userId => async id => {
+    return await getUserById(id);
+  },
+);
+```
+
+> ⚠️ If your schema contains asynchronous transformers, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
+
+### .transform()
+
+For convenience, every Zod schema has a `.transform` method. The first argument lets you specify a "destination schema" which defines the type that the data should be transformed _into_.
+
+```ts
+const lengthChecker = z.string().transform(z.boolean(), val => {
+  return val.length > 5;
+});
+
+lengthChecker.parse('asdf'); // => false;
+lengthChecker.parse('qwerty'); // => true;
+```
+
+You can omit the first argument, in which case Zod assumes you aren't transforming the data type:
+
+```ts
+z.string()
+  .transform(val => val.replace('pretty', 'extremely'))
+  .transform(val => val.toUpperCase())
+  .transform(val => val.split(' ').join('👏'))
+  .parse('zod 2 is pretty cool');
+
+// => "ZOD👏2👏IS👏EXTREMELY👏COOL"
+```
 
 ## Errors
 

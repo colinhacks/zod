@@ -48,8 +48,7 @@ test('type error with custom error map', () => {
 test('refinement fail with params', () => {
   try {
     z.number()
-      .refinement({
-        check: val => val >= 3,
+      .refine(val => val >= 3, {
         params: { minimum: 3 },
       })
       .parse(2, { errorMap });
@@ -63,8 +62,7 @@ test('refinement fail with params', () => {
 test('custom error with custom errormap', () => {
   try {
     z.string()
-      .refinement({
-        check: val => val.length > 12,
+      .refine(val => val.length > 12, {
         params: { minimum: 13 },
         message: 'override',
       })
@@ -102,8 +100,7 @@ test('override error in refine', () => {
 test('override error in refinement', () => {
   try {
     z.number()
-      .refinement({
-        check: x => x > 3,
+      .refine(x => x > 3, {
         message: 'override',
       })
       .parse(2);

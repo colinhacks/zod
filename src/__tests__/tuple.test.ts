@@ -70,3 +70,10 @@ test('tuple with transformers', () => {
   f1;
   f2;
 });
+
+// test('tuple with optional elements', () => {
+//   const result = z
+//     .tuple([z.string(), z.number().optional()])
+//     .safeParse(['asdf']);
+//   expect(result).toEqual(['asdf']);
+// });

@@ -1,24 +1,18 @@
 import * as z from '.';
 
 const run = async () => {
-  const userUpdateSchema = z.object({
-    password: z
+  console.log(
+    z
       .string()
-      .min(6)
-      .optional(),
-  });
+      .transform(val => val.replace('pretty', 'extremely'))
+      .transform(val => val.toUpperCase())
+      .transform(val => val.split(' ').join('👏'))
+      .parse('zod 2 is pretty cool'),
+  );
 
-  userUpdateSchema.parse({ password: '123456' }); // OK
-  userUpdateSchema.parse({}); // OK
-
-  // const f1 = z
-  //   .function()
-  //   .args(z.string())
-  //   .returns(z.unknown())
-  // .implement(async val => {
-  //   return { asdf: val };
-  // })
-  // type f1 = z.infer<typeof f1>;
+  const coercedString = z.unknown().transform(z.string(), val => `${val}`);
+  console.log(typeof coercedString.parse(false));
+  console.log(typeof coercedString.parse(12));
 };
 
 run();
