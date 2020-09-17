@@ -1064,7 +1064,7 @@ FruitEnum.parse('Cantaloupe'); // fails
 
 ## Intersections
 
-> ⚠️ Intersections are deprecated. If you are trying to merge objects, use the `.merge` method instead.
+> ⚠️ Intersections are rarely useful. If you are trying to merge objects, use the `.merge` method instead. It's more readable and will provide better error reporting.
 
 Intersections are useful for creating "logical AND" types.
 
