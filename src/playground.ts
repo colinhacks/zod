@@ -8,3 +8,6 @@ const userUpdateSchema = z.object({
 });
 
 console.log(userUpdateSchema.parse({}));
+
+const a = z.number().optional();
+console.log(a.safeParse('1234'));
