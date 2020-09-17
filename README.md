@@ -22,7 +22,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- <br/> -->
 
-Zod 2 is in an early beta. Documentation here: https://github.com/vriad/zod/tree/v2.
+<!-- Zod 2 is in an early beta. Documentation here: https://github.com/vriad/zod/tree/v2. -->
 
 **Aug 30 — zod@1.11 was released with lots of cool features!**
 
