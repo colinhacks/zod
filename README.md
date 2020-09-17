@@ -29,20 +29,16 @@ yarn add zod@beta
 
 Here are some of the new features.
 
-**Async refinements**
+- Transformers! These let you provide default values, do casting/coersion, and a lot more. Read more here: [Transformers](#transformers)
+- Asynchronous refinements and new `.parseAsync` and `.safeParseAsync` methods. Read more here: [Refinements](#refinements)
+- New object methods: `.stripUnknown()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
 
-```ts
-const userId = z.string().refine(async id => {
-  // verify that ID exists in database
-  return true;
-});
-```
+In almost all cases, you'll be able to upgrade to Zod 2 without changing any code. Here are some of the (very minor) breaking changes:
 
-Once your schema includes async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
-
-```ts
-const validId = await userId.parseAsync('a7105bc93e0');
-```
+- Parsing now returns a _deep clone_ of the data you pass in. Previously it returned the exact same object you passed in.
+- Relatedly, Zod _no longer_ supports cyclical _data_. Recursive schemas are still supported, but Zod can't properly parse nested objects that contain cycles.
+- Object schemas now _allow_ unknown keys by default, instead of throwing an error
+- Optional and nullable schemas are now represented with the dedicated ZodOptional and ZodNullable classes, instead of using ZodUnion.
 
 ---
 
@@ -165,7 +161,7 @@ npm install zod
 
 #### TypeScript requirements
 
-- Zod 2.0.x requires TypeScript 3.7+
+- Zod 2.x requires TypeScript 3.7+
 - Zod 1.x requires TypeScript 3.3+
 
 > Support for TS 3.2 was dropped with the release of zod@1.10 on 19 July 2020
@@ -241,7 +237,9 @@ const tru = z.literal(true);
 
 Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
-> IMPORTANT: In Zod 2 and Zod 1.11+, the value returned by `.parse` is a _deep clone_ of the variable you passed in. This was also the case in zod@1.4 and earlier. The only exception to this is `Union` and `Intersection` schemas, which return the same value you pass in.
+> IMPORTANT: In Zod 2 and Zod 1.11+, the value returned by `.parse` is a _deep clone_ of the variable you passed in. This was also the case in zod@1.4 and earlier.
+
+<!-- The only exception to this is `Union` and `Intersection` schemas, which return the same value you pass in. -->
 
 ```ts
 const stringSchema = z.string();
@@ -347,7 +345,7 @@ const userId = z.string().refine(async id => {
 As you can see, `.refine` takes two arguments.
 
 1. The first is the validation function. This function takes one input (of type `T` — the inferred type of the schema) and returns `any`. Any truthy value will pass validation. (Prior to zod@1.6.2 the validation function had to return a boolean.)
-2. The second argument is a params object. You can use this to customize certain error-handling behavior:
+2. The second argument accepts some options. You can use this to customize certain error-handling behavior:
 
    ```ts
    type RefineParams = {
@@ -363,7 +361,7 @@ As you can see, `.refine` takes two arguments.
    };
    ```
 
-These params let you define powerful custom behavior. Zod is commonly used for form validation. If you want to verify that "password" and "confirm" match, you can do so like this:
+These options let you define powerful custom behavior. Zod is commonly used for form validation. If you want to verify that "password" and "confirm" match, you can do so like this:
 
 ```ts
 const passwordForm = z
@@ -373,7 +371,7 @@ const passwordForm = z
   })
   .refine(data => data.password === data.confirm, {
     message: "Passwords don't match",
-    path: ['confirm'], // set path of error
+    path: ['confirm'], // path of error
   })
   .parse({ password: 'asdf', confirm: 'qwer' });
 ```
@@ -959,7 +957,17 @@ stringOrNumber.parse('foo'); // passes
 stringOrNumber.parse(14); // passes
 ```
 
-If the input is valid for multiple
+Zod will test the input against each of the "options" in order and return the first value that validates successfully.
+
+<!-- ```ts
+z.union([
+  z
+    .string()
+    .refine(val => val.length > 5)
+    .transform(val => val.toUpperCase()),
+  z.string().transform(val => val.toLowerCase()),
+]).parse('AsDf'); // => "asdf"
+``` -->
 
 ## Optional types
 
@@ -1266,7 +1274,9 @@ Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
 
 #### Cyclical objects
 
-Validation still works as expected even when there are cycles in the data.
+As of Zod 2, Zod _no longer_ supports cyclical objects. If you absolutely need this feature you can still use Zod v1.
+
+<!-- Validation still works as expected even when there are cycles in the data.
 
 ```ts
 const cyclicalCategory: any = {
@@ -1280,11 +1290,9 @@ const parsedCategory = Category.parse(cyclicalCategory); // parses successfully
 
 parsedCategory.subcategories[0].subcategories[0].subcategories[0];
 // => parsedCategory: Category;
-```
+``` -->
 
 ## Promises
-
-As of zod@1.3, there is also support for Promise schemas!
 
 ```ts
 const numberPromise = z.promise(z.number());
@@ -1336,13 +1344,34 @@ if (TestSchema.check(blob)) {
 
 Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".
 
-You can create a function schema with `z.function(args, returnType)` which accepts these arguments.
+You can create a function schema with `z.function(args, returnType)`.
+
+```ts
+const myFunction = z.function();
+
+type myFunction = z.infer<typeof myFunction>;
+// => ()=>unknown
+```
+
+You can use the `.args` and `.returns` methods to refine your function schema:
+
+```ts
+const myFunction = z
+  .function()
+  .args(z.string(), z.number()) // accepts an arbitrary number of arguments
+  .returns(z.boolean());
+type myFunction = z.infer<typeof myFunction>;
+// => (arg0: string, arg1: number)=>boolean
+```
+
+<!-- `z.function()` accepts two arguments:
 
 - `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
-- `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema.
+- `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema. -->
 
 > You can use the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning function can actually return either undefined or null.)
 
+<!--
 ```ts
 const args = z.tuple([z.string()]);
 
@@ -1351,36 +1380,40 @@ const returnType = z.number();
 const myFunction = z.function(args, returnType);
 type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string)=>number
-```
+``` -->
 
-Function schemas have an `.implement()` method which accepts a function as input and returns a new function.
+Function schemas have an `.implement()` method which accepts a function and returns a new function.
 
 ```ts
-const myValidatedFunction = myFunction.implement(x => {
-  // TypeScript knows x is a string!
-  return x.trim().length;
-});
+const trimmedLength = z
+  .function()
+  .args(z.string()) // accepts an arbitrary number of arguments
+  .returns(z.number())
+  .implement(x => {
+    // TypeScript knows x is a string!
+    return x.trim().length;
+  });
+
+trimmedLength('sandwich'); // => 8
+trimmedLength(' asdf '); // => 4
 ```
 
-`myValidatedFunction` now automatically validates both its inputs and return value against the schemas provided to `z.function`. If either is invalid, the function throws.
-
-This way you can confidently write application logic in a "validated function" without worrying about invalid inputs, scattering `schema.validate()` calls in your endpoint definitions,or writing duplicative types for your functions.
+`myValidatedFunction` now automatically validates both its inputs and return value against the schemas provided to `z.function`. If either is invalid, the function throws. This way you can confidently write application logic in a "validated function" without worrying about invalid inputs, scattering `schema.validate()` calls in your endpoint definitions,or writing duplicative types for your functions.
 
 Here's a more complex example showing how to write a typesafe API query endpoint:
 
 ```ts
-const args = z.tuple([
-  z.object({ id: z.string() }), // get by ID
-]);
-
-const returnType = z.promise(
-  z.object({
-    id: string(),
-    name: string(),
-  }),
-);
-
-const FetcherEndpoint = z.function(args, returnType);
+const FetcherEndpoint = z
+  .function(args, returnType)
+  .args(z.object({ id: z.string() }))
+  .returns(
+    z.promise(
+      z.object({
+        id: string(),
+        name: string(),
+      }),
+    ),
+  );
 
 const getUserByID = FetcherEndpoint.validate(args => {
   args; // => { id: string }
@@ -1391,7 +1424,7 @@ const getUserByID = FetcherEndpoint.validate(args => {
   // this function is of type Promise<{ id: string; name: string; }>
   return 'salmon'; // TypeError
 
-  return user; // success
+  return user; // compiles successfully
 });
 ```
 
@@ -1524,7 +1557,7 @@ const IdToUser = z.transformer(
 
 ### .transform()
 
-For convenience, every Zod schema has a `.transform` method. The first argument lets you specify a "destination schema" which defines the type that the data should be transformed _into_.
+For convenience, ALL Zod schemas (not just transformers) has a `.transform` method. The first argument lets you specify a "destination schema" which defines the type that the data should be transformed _into_.
 
 ```ts
 const lengthChecker = z.string().transform(z.boolean(), val => {
@@ -1545,6 +1578,45 @@ z.string()
   .parse('zod 2 is pretty cool');
 
 // => "ZOD👏2👏IS👏EXTREMELY👏COOL"
+```
+
+### Default values
+
+Using transformers, Zod lets you supply default values for your schemas.
+
+```ts
+const stringWithDefault = z.transformer(
+  z.string().optional(),
+  z.string(),
+  val => val || 'default value',
+);
+```
+
+Equivalently you can express this using the built-in `.default()` method, available on all Zod schemas.
+
+```ts
+z.string().default('default value');
+```
+
+### Type inference for transformers
+
+There are special rules surrounding type inference for transformers.
+
+```ts
+const stringToNumber = z.transformer(
+  z.string(),
+  z.number(),
+  myString => myString.length,
+);
+
+// z.infer<> gives the return type
+type type = z.infer<stringToNumber>; // number
+
+// it is equivalent to z.output<>
+type out = z.output<stringToNumber>; // number
+
+// you can use z.input<> to get the input type
+type in = z.input<stringToNumber>; // string
 ```
 
 ## Errors
