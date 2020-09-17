@@ -152,6 +152,8 @@ export abstract class ZodType<
     }
   };
 
+  spa = this.safeParseAsync;
+
   is(u: Input): u is Input {
     try {
       this.parse(u as any);
@@ -172,7 +174,10 @@ export abstract class ZodType<
 
   refine = <Func extends (arg: Output) => any>(
     check: Func,
-    message: string | CustomErrorParams = 'Invalid value.',
+    message:
+      | string
+      | CustomErrorParams
+      | ((arg: Output) => CustomErrorParams) = 'Invalid value.',
   ) => {
     if (typeof message === 'string') {
       return this._refinement((val, ctx) => {
@@ -181,6 +186,25 @@ export abstract class ZodType<
           ctx.makeError({
             code: ZodErrorCode.custom_error,
             message,
+          });
+        if (result instanceof Promise) {
+          return result.then(data => {
+            if (!data) setError();
+          });
+        }
+        if (!result) {
+          setError();
+          return result;
+        }
+      });
+    }
+    if (typeof message === 'function') {
+      return this._refinement((val, ctx) => {
+        const result = check(val);
+        const setError = () =>
+          ctx.makeError({
+            code: ZodErrorCode.custom_error,
+            ...message(val),
           });
         if (result instanceof Promise) {
           return result.then(data => {
@@ -213,10 +237,17 @@ export abstract class ZodType<
     });
   };
 
-  refinement = (check: (arg: Output) => any, refinementData: MakeErrorData) => {
+  refinement = (
+    check: (arg: Output) => any,
+    refinementData: MakeErrorData | ((arg: Output) => MakeErrorData),
+  ) => {
     return this._refinement((val, ctx) => {
       if (!check(val)) {
-        ctx.makeError(refinementData);
+        ctx.makeError(
+          typeof refinementData === 'function'
+            ? refinementData(val)
+            : refinementData,
+        );
       }
     });
   };
