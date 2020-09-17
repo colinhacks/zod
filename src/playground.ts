@@ -1,21 +1,12 @@
 import * as z from '.';
 
-const run = async () => {
-  const apiString = z.string();
-  z.object({
-    columns: z.record(z.string()),
-    primaryKey: z.array(apiString.nonempty()).nonempty(),
-  })._refinement((data, ctx) => {
-    const invalidPks = data.primaryKey.filter(
-      pk => !Object.keys(data.columns).includes(pk),
-    );
-    if (invalidPks.length) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: `Invalid PKs: ${invalidPks.join(', ')}`,
-      });
-    }
-  });
-};
+const tagsA = z.enum(['a', 'b', 'c']); // type tagsA = 'a' | 'b' | 'c'
+const tagsB = z.enum(['b', 'c', 'd']); // type tagsB = 'b' | 'c' | 'd'
 
-run();
+const bOrC = z.intersection(tagsA, tagsB); // ('a' | 'b' | 'c') & ('b' | 'c' | 'd')
+type bOrC = z.infer<typeof bOrC>; // 'b' | 'c'
+
+console.log(bOrC.safeParse('a'));
+console.log(bOrC.safeParse('b'));
+console.log(bOrC.safeParse('c'));
+console.log(bOrC.safeParse('d'));
