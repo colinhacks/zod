@@ -1462,7 +1462,7 @@ Branded -->
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
-Doesn't support static type inference 😕
+Doesn't support static type inference 😕 Immediate disqualification, sorry Joi!
 
 #### Yup
 
