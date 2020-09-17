@@ -3,12 +3,17 @@ import * as z from './base';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
-export interface ZodLazyDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
+export interface ZodLazyDef<T extends z.ZodTypeAny = z.ZodTypeAny>
+  extends z.ZodTypeDef {
   t: z.ZodTypes.lazy;
   getter: () => T;
 }
 
-export class ZodLazy<T extends z.ZodTypeAny> extends z.ZodType<z.TypeOf<T>, ZodLazyDef<T>> {
+export class ZodLazy<T extends z.ZodTypeAny> extends z.ZodType<
+  z.output<T>,
+  ZodLazyDef<T>,
+  z.input<T>
+> {
   get schema(): T {
     return this._def.getter();
   }

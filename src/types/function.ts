@@ -11,16 +11,31 @@ export interface ZodFunctionDef<
   returns: Returns;
 }
 
-export type TypeOfFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAny> = Args['_type'] extends Array<any>
-  ? (...args: Args['_type']) => Returns['_type']
+export type OuterTypeOfFunction<
+  Args extends ZodTuple<any>,
+  Returns extends z.ZodTypeAny
+> = Args['_input'] extends Array<any>
+  ? (...args: Args['_input']) => Returns['_output']
   : never;
 
-export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAny> extends z.ZodType<
-  TypeOfFunction<Args, Returns>,
-  ZodFunctionDef
+export type InnerTypeOfFunction<
+  Args extends ZodTuple<any>,
+  Returns extends z.ZodTypeAny
+> = Args['_output'] extends Array<any>
+  ? (...args: Args['_output']) => Returns['_input']
+  : never;
+
+// type as df = string extends unknown  ? true : false
+export class ZodFunction<
+  Args extends ZodTuple<any>,
+  Returns extends z.ZodTypeAny
+> extends z.ZodType<
+  OuterTypeOfFunction<Args, Returns>,
+  ZodFunctionDef,
+  InnerTypeOfFunction<Args, Returns>
 > {
   readonly _def!: ZodFunctionDef<Args, Returns>;
-  readonly _type!: TypeOfFunction<Args, Returns>;
+  //  readonly _type!: TypeOfFunction<Args, Returns>;
 
   args = <Items extends Parameters<typeof ZodTuple['create']>[0]>(
     ...items: Items
@@ -40,14 +55,17 @@ export class ZodFunction<Args extends ZodTuple<any>, Returns extends z.ZodTypeAn
     });
   };
 
-  implement = <F extends TypeOfFunction<Args, Returns>>(func: F): F => {
+  implement = <F extends InnerTypeOfFunction<Args, Returns>>(func: F): F => {
     const validatedFunc = this.parse(func);
     return validatedFunc as any;
   };
 
   validate = this.implement;
 
-  static create = <T extends ZodTuple<any> = ZodTuple<[]>, U extends z.ZodTypeAny = ZodUnknown>(
+  static create = <
+    T extends ZodTuple<any> = ZodTuple<[]>,
+    U extends z.ZodTypeAny = ZodUnknown
+  >(
     args?: T,
     returns?: U,
   ): ZodFunction<T, U> => {

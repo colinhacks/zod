@@ -20,3 +20,10 @@ test('check unknown inference', () => {
   const f1: util.AssertEqual<t1, unknown> = true;
   f1;
 });
+
+test('check never inference', () => {
+  const t1 = z.never();
+  expect(() => t1.parse(undefined)).toThrow();
+  expect(() => t1.parse('asdf')).toThrow();
+  expect(() => t1.parse(null)).toThrow();
+});

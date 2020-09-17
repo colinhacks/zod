@@ -237,9 +237,10 @@ test('parse dateSchema null', () => {
   const f = () => dateSchema.parse(val.null);
   expect(f).toThrow();
 });
-test('parse dateSchema invalid date', () => {
+
+test('parse dateSchema invalid date', async () => {
   expect.assertions(1);
-  dateSchema.parseAsync(new Date('invalid')).catch(err => {
+  return await dateSchema.parseAsync(new Date('invalid')).catch(err => {
     expect(err.errors[0].code).toEqual(z.ZodErrorCode.invalid_date);
   });
 });
@@ -299,29 +300,87 @@ export type AssertEqualTest = boolean | undefined extends true
     : never
   : never;
 
-type AssertEqual<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? true : never;
+type AssertEqual<X, Y> = (<T>() => T extends X ? 1 : 2) extends <
+  T
+>() => T extends Y ? 1 : 2
+  ? true
+  : never;
 
 test('primitive inference', () => {
-  const literalStringSchemaTest: AssertEqual<z.TypeOf<typeof literalStringSchema>, 'asdf'> = true;
-  const literalNumberSchemaTest: AssertEqual<z.TypeOf<typeof literalNumberSchema>, 12> = true;
-  const literalBooleanSchemaTest: AssertEqual<z.TypeOf<typeof literalBooleanSchema>, true> = true;
-  const stringSchemaTest: AssertEqual<z.TypeOf<typeof stringSchema>, string> = true;
-  const numberSchemaTest: AssertEqual<z.TypeOf<typeof numberSchema>, number> = true;
-  const bigintSchemaTest: AssertEqual<z.TypeOf<typeof bigintSchema>, bigint> = true;
-  const booleanSchemaTest: AssertEqual<z.TypeOf<typeof booleanSchema>, boolean> = true;
+  const literalStringSchemaTest: AssertEqual<
+    z.TypeOf<typeof literalStringSchema>,
+    'asdf'
+  > = true;
+  const literalNumberSchemaTest: AssertEqual<
+    z.TypeOf<typeof literalNumberSchema>,
+    12
+  > = true;
+  const literalBooleanSchemaTest: AssertEqual<
+    z.TypeOf<typeof literalBooleanSchema>,
+    true
+  > = true;
+  const stringSchemaTest: AssertEqual<
+    z.TypeOf<typeof stringSchema>,
+    string
+  > = true;
+  const numberSchemaTest: AssertEqual<
+    z.TypeOf<typeof numberSchema>,
+    number
+  > = true;
+  const bigintSchemaTest: AssertEqual<
+    z.TypeOf<typeof bigintSchema>,
+    bigint
+  > = true;
+  const booleanSchemaTest: AssertEqual<
+    z.TypeOf<typeof booleanSchema>,
+    boolean
+  > = true;
   const dateSchemaTest: AssertEqual<z.TypeOf<typeof dateSchema>, Date> = true;
   const nullSchemaTest: AssertEqual<z.TypeOf<typeof nullSchema>, null> = true;
-  const undefinedSchemaTest: AssertEqual<z.TypeOf<typeof undefinedSchema>, undefined> = true;
-  const stringSchemaOptionalTest: AssertEqual<z.TypeOf<typeof stringSchemaOptional>, string | undefined> = true;
-  const stringSchemaNullableTest: AssertEqual<z.TypeOf<typeof stringSchemaNullable>, string | null> = true;
-  const numberSchemaOptionalTest: AssertEqual<z.TypeOf<typeof numberSchemaOptional>, number | undefined> = true;
-  const numberSchemaNullableTest: AssertEqual<z.TypeOf<typeof numberSchemaNullable>, number | null> = true;
-  const bigintSchemaOptionalTest: AssertEqual<z.TypeOf<typeof bigintSchemaOptional>, bigint | undefined> = true;
-  const bigintSchemaNullableTest: AssertEqual<z.TypeOf<typeof bigintSchemaNullable>, bigint | null> = true;
-  const booleanSchemaOptionalTest: AssertEqual<z.TypeOf<typeof booleanSchemaOptional>, boolean | undefined> = true;
-  const booleanSchemaNullableTest: AssertEqual<z.TypeOf<typeof booleanSchemaNullable>, boolean | null> = true;
-  const dateSchemaOptionalTest: AssertEqual<z.TypeOf<typeof dateSchemaOptional>, Date | undefined> = true;
-  const dateSchemaNullableTest: AssertEqual<z.TypeOf<typeof dateSchemaNullable>, Date | null> = true;
+  const undefinedSchemaTest: AssertEqual<
+    z.TypeOf<typeof undefinedSchema>,
+    undefined
+  > = true;
+  const stringSchemaOptionalTest: AssertEqual<
+    z.TypeOf<typeof stringSchemaOptional>,
+    string | undefined
+  > = true;
+  const stringSchemaNullableTest: AssertEqual<
+    z.TypeOf<typeof stringSchemaNullable>,
+    string | null
+  > = true;
+  const numberSchemaOptionalTest: AssertEqual<
+    z.TypeOf<typeof numberSchemaOptional>,
+    number | undefined
+  > = true;
+  const numberSchemaNullableTest: AssertEqual<
+    z.TypeOf<typeof numberSchemaNullable>,
+    number | null
+  > = true;
+  const bigintSchemaOptionalTest: AssertEqual<
+    z.TypeOf<typeof bigintSchemaOptional>,
+    bigint | undefined
+  > = true;
+  const bigintSchemaNullableTest: AssertEqual<
+    z.TypeOf<typeof bigintSchemaNullable>,
+    bigint | null
+  > = true;
+  const booleanSchemaOptionalTest: AssertEqual<
+    z.TypeOf<typeof booleanSchemaOptional>,
+    boolean | undefined
+  > = true;
+  const booleanSchemaNullableTest: AssertEqual<
+    z.TypeOf<typeof booleanSchemaNullable>,
+    boolean | null
+  > = true;
+  const dateSchemaOptionalTest: AssertEqual<
+    z.TypeOf<typeof dateSchemaOptional>,
+    Date | undefined
+  > = true;
+  const dateSchemaNullableTest: AssertEqual<
+    z.TypeOf<typeof dateSchemaNullable>,
+    Date | null
+  > = true;
 
   [
     literalStringSchemaTest,

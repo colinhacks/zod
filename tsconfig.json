@@ -36,6 +36,7 @@
     "tsconfig.package.json"
   ],
   "exclude": [
+    "lib",
     "node_modules",
   ]
 }

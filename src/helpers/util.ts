@@ -46,4 +46,14 @@ export namespace util {
       return obj[e];
     });
   };
+
+  export const find = <T>(
+    arr: T[],
+    checker: (arg: T) => any,
+  ): T | undefined => {
+    for (const item of arr) {
+      if (checker(item)) return item;
+    }
+    return undefined;
+  };
 }

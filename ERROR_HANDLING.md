@@ -274,7 +274,7 @@ console.log(err.errors);
   */
 ```
 
-But using the `flatten()` method, we can "flatten" all those errors down to a form that's much easier to work with:
+But using the `flatten()` method, we can make those errors much easier to work with:
 
 ```ts
 console.log(err.flatten());

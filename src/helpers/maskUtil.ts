@@ -4,14 +4,22 @@ type AnyObject = { [k: string]: any };
 type IsAny<T> = any extends T ? (T extends any ? true : false) : false;
 type IsNever<T> = never extends T ? (T extends never ? true : false) : false;
 type IsTrue<T> = true extends T ? (T extends true ? true : false) : false;
-type IsObject<T> = T extends { [k: string]: any } ? (T extends Array<any> ? false : true) : false;
+type IsObject<T> = T extends { [k: string]: any }
+  ? T extends Array<any>
+    ? false
+    : true
+  : false;
 type IsObjectArray<T> = T extends Array<{ [k: string]: any }> ? true : false;
 // type IsObject<T> = T extends { [k: string]: any } ? (T extends Array<any> ? never : true) : never;
 
 export namespace maskUtil {
   export type Params<T> = {
-    array: T extends Array<infer U> ? true | { [k in keyof U]?: true | Params<U[k]> } : never;
-    object: T extends AnyObject ? { [k in keyof T]?: true | Params<T[k]> } : never;
+    array: T extends Array<infer U>
+      ? true | { [k in keyof U]?: true | Params<U[k]> }
+      : never;
+    object: T extends AnyObject
+      ? { [k in keyof T]?: true | Params<T[k]> }
+      : never;
     rest: never;
     never: never;
   }[T extends null | undefined | Primitive | Array<Primitive>

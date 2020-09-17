@@ -85,6 +85,8 @@ ${this.seen
         return this.setType(id, `any`);
       case z.ZodTypes.unknown:
         return this.setType(id, `unknown`);
+      case z.ZodTypes.never:
+        return this.setType(id, `never`);
       case z.ZodTypes.void:
         return this.setType(id, `void`);
       case z.ZodTypes.literal:
@@ -144,6 +146,8 @@ ${this.seen
           id,
           `{[k:string]: ${this.generate(def.valueType).id}}`,
         );
+      case z.ZodTypes.transformer:
+        return this.setType(id, this.generate(def.output).id);
       case z.ZodTypes.lazy:
         const lazyType = def.getter();
         return this.setType(id, this.generate(lazyType).id);
@@ -151,7 +155,12 @@ ${this.seen
         // const lazyType = def.getter();
         return this.setType(id, 'asdf');
       case z.ZodTypes.optional:
-        return this.setType(id, `${this.generate(def.innerType).id}?`);
+        return this.setType(
+          id,
+          `${this.generate(def.innerType).id} | undefined`,
+        );
+      case z.ZodTypes.nullable:
+        return this.setType(id, `${this.generate(def.innerType).id} | null`);
       default:
         util.assertNever(def);
     }

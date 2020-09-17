@@ -4,13 +4,18 @@ import * as z from './base';
 // import { ZodUnion } from './union';
 import { ZodErrorCode } from '../ZodError';
 
-export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
+export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny>
+  extends z.ZodTypeDef {
   t: z.ZodTypes.array;
   type: T;
   nonempty: boolean;
 }
 
-export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], ZodArrayDef<T>> {
+export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<
+  T['_output'][],
+  ZodArrayDef<T>,
+  T['_input'][]
+> {
   toJSON = () => {
     return {
       t: this._def.t,
@@ -28,8 +33,7 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   min = (minLength: number, message?: string | { message?: string }) =>
-    this._refinement({
-      check: data => data.length >= minLength,
+    this.refinement(data => data.length >= minLength, {
       code: ZodErrorCode.too_small,
       type: 'array',
       inclusive: true,
@@ -38,8 +42,8 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
     });
 
   max = (maxLength: number, message?: string | { message?: string }) =>
-    this._refinement({
-      check: data => data.length <= maxLength,
+    this.refinement(data => data.length <= maxLength, {
+      // check: data => data.length <= maxLength,
       code: ZodErrorCode.too_big,
       type: 'array',
       inclusive: true,
@@ -47,7 +51,8 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
       ...(typeof message === 'string' ? { message } : message),
     });
 
-  length = (len: number, message?: string) => this.min(len, { message }).max(len, { message });
+  length = (len: number, message?: string) =>
+    this.min(len, { message }).max(len, { message });
 
   nonempty: () => ZodNonEmptyArray<T> = () => {
     return new ZodNonEmptyArray({ ...this._def, nonempty: true });
@@ -62,7 +67,11 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<T['_type'][], Zo
   };
 }
 
-export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_type'], ...T['_type'][]], ZodArrayDef<T>> {
+export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<
+  [T['_output'], ...T['_output'][]],
+  ZodArrayDef<T>,
+  [T['_input'], ...T['_input'][]]
+> {
   toJSON = () => {
     return {
       t: this._def.t,
@@ -75,8 +84,8 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_typ
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   min = (minLength: number, message?: string | { message?: string }) =>
-    this._refinement({
-      check: data => data.length >= minLength,
+    this.refinement(data => data.length >= minLength, {
+      // check: data => data.length >= minLength,
       code: ZodErrorCode.too_small,
       minimum: minLength,
       type: 'array',
@@ -85,8 +94,8 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_typ
     });
 
   max = (maxLength: number, message?: string | { message?: string }) =>
-    this._refinement({
-      check: data => data.length <= maxLength,
+    this.refinement(data => data.length <= maxLength, {
+      // check:
       code: ZodErrorCode.too_big,
       maximum: maxLength,
       type: 'array',
@@ -94,5 +103,6 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<[T['_typ
       ...(typeof message === 'string' ? { message } : message),
     });
 
-  length = (len: number, message?: string) => this.min(len, { message }).max(len, { message });
+  length = (len: number, message?: string) =>
+    this.min(len, { message }).max(len, { message });
 }

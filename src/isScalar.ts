@@ -33,6 +33,9 @@ export const isScalar = (
     case z.ZodTypes.unknown:
       returnValue = false;
       break;
+    case z.ZodTypes.never:
+      returnValue = false;
+      break;
     case z.ZodTypes.void:
       returnValue = false;
       break;
@@ -76,7 +79,14 @@ export const isScalar = (
     case z.ZodTypes.promise:
       returnValue = false;
       break;
+    case z.ZodTypes.transformer:
+      returnValue = isScalar(def.output);
+      break;
+
     case z.ZodTypes.optional:
+      returnValue = isScalar(def.innerType);
+      break;
+    case z.ZodTypes.nullable:
       returnValue = isScalar(def.innerType);
       break;
     default:

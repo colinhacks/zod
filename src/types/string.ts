@@ -17,14 +17,12 @@ const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF
 const uuidRegex = /([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}){1}/i;
 
 export class ZodString extends z.ZodType<string, ZodStringDef> {
-  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
-
-  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  inputSchema = this;
+  outputSchema = this;
 
   toJSON = () => this._def;
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => data.length >= minLength,
+    this.refinement(data => data.length >= minLength, {
       code: ZodErrorCode.too_small,
       minimum: minLength,
       type: 'string',
@@ -33,8 +31,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     });
 
   max = (maxLength: number, message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => data.length <= maxLength,
+    this.refinement(data => data.length <= maxLength, {
       code: ZodErrorCode.too_big,
       maximum: maxLength,
       type: 'string',
@@ -46,19 +43,24 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     return this.min(len, message).max(len, message);
   }
 
-  protected _regex = (regex: RegExp, validation: StringValidation, message?: errorUtil.ErrMessage) =>
-    this._refinement({
+  protected _regex = (
+    regex: RegExp,
+    validation: StringValidation,
+    message?: errorUtil.ErrMessage,
+  ) =>
+    this.refinement(data => regex.test(data), {
       validation,
       code: ZodErrorCode.invalid_string,
-      check: data => regex.test(data),
+
       ...errorUtil.errToObj(message),
     });
 
-  email = (message?: errorUtil.ErrMessage) => this._regex(emailRegex, 'email', message);
+  email = (message?: errorUtil.ErrMessage) =>
+    this._regex(emailRegex, 'email', message);
 
   url = (message?: errorUtil.ErrMessage) =>
-    this._refinement({
-      check: data => {
+    this.refinement(
+      data => {
         try {
           new URL(data);
           return true;
@@ -66,18 +68,23 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
           return false;
         }
       },
-      code: ZodErrorCode.invalid_string,
-      validation: 'url',
-      ...errorUtil.errToObj(message),
-    });
+      {
+        code: ZodErrorCode.invalid_string,
+        validation: 'url',
+        ...errorUtil.errToObj(message),
+      },
+    );
 
   // url = (message?: errorUtil.ErrMessage) => this._regex(urlRegex, 'url', message);
 
-  uuid = (message?: errorUtil.ErrMessage) => this._regex(uuidRegex, 'uuid', message);
+  uuid = (message?: errorUtil.ErrMessage) =>
+    this._regex(uuidRegex, 'uuid', message);
 
-  regex = (regexp: RegExp, message?: errorUtil.ErrMessage) => this._regex(regexp, 'regex', message);
+  regex = (regexp: RegExp, message?: errorUtil.ErrMessage) =>
+    this._regex(regexp, 'regex', message);
 
-  nonempty = (message?: errorUtil.ErrMessage) => this.min(1, errorUtil.errToObj(message));
+  nonempty = (message?: errorUtil.ErrMessage) =>
+    this.min(1, errorUtil.errToObj(message));
 
   static create = (): ZodString => {
     return new ZodString({

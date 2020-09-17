@@ -20,6 +20,8 @@ export const visitor = (schema: z.ZodType<any, any>) => {
       break;
     case z.ZodTypes.unknown:
       break;
+    case z.ZodTypes.never:
+      break;
     case z.ZodTypes.void:
       break;
     case z.ZodTypes.array:
@@ -48,7 +50,11 @@ export const visitor = (schema: z.ZodType<any, any>) => {
       break;
     case z.ZodTypes.promise:
       break;
+    case z.ZodTypes.transformer:
+      break;
     case z.ZodTypes.optional:
+      break;
+    case z.ZodTypes.nullable:
       break;
     default:
       util.assertNever(def);

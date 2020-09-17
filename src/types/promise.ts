@@ -3,12 +3,17 @@ import * as z from './base';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
-export interface ZodPromiseDef<T extends z.ZodTypeAny = z.ZodTypeAny> extends z.ZodTypeDef {
+export interface ZodPromiseDef<T extends z.ZodTypeAny = z.ZodTypeAny>
+  extends z.ZodTypeDef {
   t: z.ZodTypes.promise;
   type: T;
 }
 
-export class ZodPromise<T extends z.ZodTypeAny> extends z.ZodType<Promise<T['_type']>, ZodPromiseDef<T>> {
+export class ZodPromise<T extends z.ZodTypeAny> extends z.ZodType<
+  Promise<T['_output']>,
+  ZodPromiseDef<T>,
+  Promise<T['_input']>
+> {
   toJSON = () => {
     return {
       t: this._def.t,

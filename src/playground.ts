@@ -1,10 +1,22 @@
 import * as z from '.';
 
-const userUpdateSchema = z.object({
-  password: z
-    .string()
-    .min(6)
-    .optional(),
-});
+const run = async () => {
+  console.log(
+    z
+      .string()
+      .transform(val => val.replace('pretty', 'extremely'))
+      .transform(val => val.toUpperCase())
+      .transform(val => val.split(' ').join('👏'))
+      .parse('zod 2 is pretty cool'),
+  );
 
-console.log(userUpdateSchema.parse({}));
+  const coercedString = z.unknown().transform(z.string(), val => `${val}`);
+  console.log(typeof coercedString.parse(false));
+  console.log(typeof coercedString.parse(12));
+};
+
+run();
+
+// const stringAndNumber = z.intersection(z.string(), z.number());
+// type Never = z.infer<typeof stringAndNumber>; // => never
+// const asdf = stringAndNumber.parse('sdf')
