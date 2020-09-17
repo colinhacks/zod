@@ -1156,17 +1156,17 @@ Intersections are useful for creating "logical AND" types.
 ```ts
 const a = z.union([z.number(), z.string()]);
 const b = z.union([z.number(), z.boolean()]);
-
 const c = z.intersection(a, b);
-type c = z.infer<typeof C>; // => number
+
+type c = z.infer<typeof c>; // => number
 
 const stringAndNumber = z.intersection(z.string(), z.number());
 type Never = z.infer<typeof stringAndNumber>; // => never
 ```
 
-Intersections in Zod are not smart. Whatever data you pass into `.parse()` gets passed into the two intersected schemas. Because Zod object schemas don't allow any unknown keys by default, there are some unintuitive behavior surrounding intersections of object schemas.
+<!-- Intersections in Zod are not smart. Whatever data you pass into `.parse()` gets passed into the two intersected schemas. Because Zod object schemas don't allow any unknown keys by default, there are some unintuitive behavior surrounding intersections of object schemas. -->
 
-````ts
+<!-- ```ts
 const A = z.object({
   a: z.string(),
 });
@@ -1179,7 +1179,7 @@ const AB = z.intersection(A, B);
 
 type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };
-``` -->
+```  -->
 
 ## Tuples
 
@@ -1197,7 +1197,7 @@ const athleteSchema = z.tuple([
 
 type Athlete = z.infer<typeof athleteSchema>;
 // type Athlete = [string, number, { pointsScored: number }]
-````
+```
 
 ## Recursive types
 

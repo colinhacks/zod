@@ -16,3 +16,7 @@ const run = async () => {
 };
 
 run();
+
+// const stringAndNumber = z.intersection(z.string(), z.number());
+// type Never = z.infer<typeof stringAndNumber>; // => never
+// const asdf = stringAndNumber.parse('sdf')
