@@ -17,10 +17,10 @@ test('instanceof', async () => {
   expect(() => TestSchema.parse(12)).toThrow();
 
   await TestSchema.parseAsync(12).catch(err => {
-    expect(err.errors[0].message).toEqual('Input not instance of Test');
+    expect(err.issues[0].message).toEqual('Input not instance of Test');
   });
   await SubtestSchema.parseAsync(12).catch(err => {
-    expect(err.errors[0].message).toEqual('Input not instance of Subtest');
+    expect(err.issues[0].message).toEqual('Input not instance of Subtest');
   });
 
   const f1: util.AssertEqual<Test, z.infer<typeof TestSchema>> = true;

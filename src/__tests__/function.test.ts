@@ -122,8 +122,8 @@ test('special function error codes', () => {
     checker('12' as any);
   } catch (err) {
     const zerr: z.ZodError = err;
-    const first = zerr.errors[0];
-    if (first.code !== z.ZodErrorCode.invalid_return_type) throw new Error();
+    const first = zerr.issues[0];
+    if (first.code !== z.ZodIssueCode.invalid_return_type) throw new Error();
 
     expect(first.returnTypeError).toBeInstanceOf(z.ZodError);
   }
@@ -132,8 +132,8 @@ test('special function error codes', () => {
     checker(12 as any);
   } catch (err) {
     const zerr: z.ZodError = err;
-    const first = zerr.errors[0];
-    if (first.code !== z.ZodErrorCode.invalid_arguments) throw new Error();
+    const first = zerr.issues[0];
+    if (first.code !== z.ZodIssueCode.invalid_arguments) throw new Error();
     expect(first.argumentsError).toBeInstanceOf(z.ZodError);
   }
 });

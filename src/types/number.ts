@@ -2,7 +2,7 @@ import * as z from './base';
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
-import { ZodErrorCode } from '../ZodError';
+import { ZodIssueCode } from '../ZodError';
 import { errorUtil } from '../helpers/errorUtil';
 
 export interface ZodNumberDef extends z.ZodTypeDef {
@@ -23,7 +23,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
 
   min = (minimum: number, message?: errorUtil.ErrMessage) =>
     this.refinement(data => data >= minimum, {
-      code: ZodErrorCode.too_small,
+      code: ZodIssueCode.too_small,
       minimum,
       type: 'number',
       inclusive: true,
@@ -32,7 +32,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
 
   max = (maximum: number, message?: errorUtil.ErrMessage) =>
     this.refinement(data => data <= maximum, {
-      code: ZodErrorCode.too_big,
+      code: ZodIssueCode.too_big,
       maximum,
       type: 'number',
       inclusive: true,
@@ -41,7 +41,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
 
   int = (message?: errorUtil.ErrMessage) =>
     this.refinement(data => Number.isInteger(data), {
-      code: ZodErrorCode.invalid_type,
+      code: ZodIssueCode.invalid_type,
       expected: 'integer',
       received: 'number',
       ...errorUtil.errToObj(message),
@@ -49,7 +49,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
 
   positive = (message?: errorUtil.ErrMessage) =>
     this.refinement(data => data > 0, {
-      code: ZodErrorCode.too_small,
+      code: ZodIssueCode.too_small,
       minimum: 0,
       type: 'number',
       inclusive: false,
@@ -58,7 +58,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
 
   negative = (message?: errorUtil.ErrMessage) =>
     this.refinement(data => data < 0, {
-      code: ZodErrorCode.too_big,
+      code: ZodIssueCode.too_big,
       maximum: 0,
       type: 'number',
       inclusive: false,
@@ -67,7 +67,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
 
   nonpositive = (message?: errorUtil.ErrMessage) =>
     this.refinement(data => data <= 0, {
-      code: ZodErrorCode.too_big,
+      code: ZodIssueCode.too_big,
       maximum: 0,
       type: 'number',
       inclusive: true,
@@ -76,7 +76,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
 
   nonnegative = (message?: errorUtil.ErrMessage) =>
     this.refinement(data => data >= 0, {
-      code: ZodErrorCode.too_small,
+      code: ZodIssueCode.too_small,
       minimum: 0,
       type: 'number',
       inclusive: true,

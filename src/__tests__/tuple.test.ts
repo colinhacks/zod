@@ -37,7 +37,7 @@ test('failed validation', () => {
     checker();
   } catch (err) {
     if (err instanceof ZodError) {
-      expect(err.errors.length).toEqual(3);
+      expect(err.issues.length).toEqual(3);
     }
   }
 });
@@ -46,13 +46,13 @@ test('failed async validation', async () => {
   const res = await testTuple.safeParse(badData);
   expect(res.success).toEqual(false);
   if (!res.success) {
-    expect(res.error.errors.length).toEqual(3);
+    expect(res.error.issues.length).toEqual(3);
   }
   // try {
   //   checker();
   // } catch (err) {
   //   if (err instanceof ZodError) {
-  //     expect(err.errors.length).toEqual(3);
+  //     expect(err.issues.length).toEqual(3);
   //   }
   // }
 });

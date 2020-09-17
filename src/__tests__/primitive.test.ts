@@ -241,7 +241,7 @@ test('parse dateSchema null', () => {
 test('parse dateSchema invalid date', async () => {
   expect.assertions(1);
   return await dateSchema.parseAsync(new Date('invalid')).catch(err => {
-    expect(err.errors[0].code).toEqual(z.ZodErrorCode.invalid_date);
+    expect(err.issues[0].code).toEqual(z.ZodIssueCode.invalid_date);
   });
 });
 // ==============

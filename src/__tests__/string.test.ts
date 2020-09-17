@@ -49,21 +49,21 @@ test('url error overrides', () => {
       .url()
       .parse('https');
   } catch (err) {
-    expect(err.errors[0].message).toEqual('Invalid url');
+    expect(err.issues[0].message).toEqual('Invalid url');
   }
   try {
     z.string()
       .url('badurl')
       .parse('https');
   } catch (err) {
-    expect(err.errors[0].message).toEqual('badurl');
+    expect(err.issues[0].message).toEqual('badurl');
   }
   try {
     z.string()
       .url({ message: 'badurl' })
       .parse('https');
   } catch (err) {
-    expect(err.errors[0].message).toEqual('badurl');
+    expect(err.issues[0].message).toEqual('badurl');
   }
 });
 
@@ -97,7 +97,7 @@ test('regexp error message', () => {
     .regex(/^moo+$/)
     .safeParse('boooo');
   if (!result.success) {
-    expect(result.error.errors[0].message).toEqual('Invalid');
+    expect(result.error.issues[0].message).toEqual('Invalid');
   } else {
     throw new Error('validation should have failed');
   }

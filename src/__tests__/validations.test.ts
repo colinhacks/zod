@@ -7,7 +7,7 @@ test('array min', async () => {
     .min(4)
     .parseAsync([])
     .catch(err => {
-      expect(err.errors[0].message).toEqual('Should have at least 4 items');
+      expect(err.issues[0].message).toEqual('Should have at least 4 items');
     });
 });
 
@@ -18,7 +18,7 @@ test('array max', async () => {
     .max(2)
     .parseAsync(['asdf', 'asdf', 'asdf'])
     .catch(err => {
-      expect(err.errors[0].message).toEqual('Should have at most 2 items');
+      expect(err.issues[0].message).toEqual('Should have at most 2 items');
     });
   return result;
 });
@@ -30,7 +30,7 @@ test('string min', async () => {
     .min(4)
     .parseAsync('asd')
     .catch(err => {
-      expect(err.errors[0].message).toEqual('Should be at least 4 characters');
+      expect(err.issues[0].message).toEqual('Should be at least 4 characters');
     });
   return result;
 });
@@ -42,7 +42,7 @@ test('string max', async () => {
     .max(4)
     .parseAsync('aasdfsdfsd')
     .catch(err => {
-      expect(err.errors[0].message).toEqual(
+      expect(err.issues[0].message).toEqual(
         'Should be at most 4 characters long',
       );
     });
@@ -56,7 +56,7 @@ test('number min', async () => {
     .min(3)
     .parseAsync(2)
     .catch(err => {
-      expect(err.errors[0].message).toEqual(
+      expect(err.issues[0].message).toEqual(
         'Value should be greater than or equal to 3',
       );
     });
@@ -70,7 +70,7 @@ test('number max', async () => {
     .max(3)
     .parseAsync(4)
     .catch(err => {
-      expect(err.errors[0].message).toEqual(
+      expect(err.issues[0].message).toEqual(
         'Value should be less than or equal to 3',
       );
     });
@@ -84,7 +84,7 @@ test('number nonnegative', async () => {
     .nonnegative()
     .parseAsync(-1)
     .catch(err => {
-      expect(err.errors[0].message).toEqual(
+      expect(err.issues[0].message).toEqual(
         'Value should be greater than or equal to 0',
       );
     });
@@ -98,7 +98,7 @@ test('number nonpositive', async () => {
     .nonpositive()
     .parseAsync(1)
     .catch(err => {
-      expect(err.errors[0].message).toEqual(
+      expect(err.issues[0].message).toEqual(
         'Value should be less than or equal to 0',
       );
     });
@@ -112,7 +112,7 @@ test('number negative', async () => {
     .negative()
     .parseAsync(1)
     .catch(err => {
-      expect(err.errors[0].message).toEqual('Value should be less than 0');
+      expect(err.issues[0].message).toEqual('Value should be less than 0');
     });
   return 'asdf';
 });
@@ -124,7 +124,7 @@ test('number positive', async () => {
     .positive()
     .parseAsync(-1)
     .catch(err => {
-      expect(err.errors[0].message).toEqual('Value should be greater than 0');
+      expect(err.issues[0].message).toEqual('Value should be greater than 0');
     });
   return 'asdf';
 });

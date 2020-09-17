@@ -2,7 +2,7 @@ import * as z from './base';
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
-import { ZodErrorCode } from '../ZodError';
+import { ZodIssueCode } from '../ZodError';
 
 export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny>
   extends z.ZodTypeDef {
@@ -34,7 +34,7 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<
 
   min = (minLength: number, message?: string | { message?: string }) =>
     this.refinement(data => data.length >= minLength, {
-      code: ZodErrorCode.too_small,
+      code: ZodIssueCode.too_small,
       type: 'array',
       inclusive: true,
       minimum: minLength,
@@ -44,7 +44,7 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<
   max = (maxLength: number, message?: string | { message?: string }) =>
     this.refinement(data => data.length <= maxLength, {
       // check: data => data.length <= maxLength,
-      code: ZodErrorCode.too_big,
+      code: ZodIssueCode.too_big,
       type: 'array',
       inclusive: true,
       maximum: maxLength,
@@ -86,7 +86,7 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<
   min = (minLength: number, message?: string | { message?: string }) =>
     this.refinement(data => data.length >= minLength, {
       // check: data => data.length >= minLength,
-      code: ZodErrorCode.too_small,
+      code: ZodIssueCode.too_small,
       minimum: minLength,
       type: 'array',
       inclusive: true,
@@ -96,7 +96,7 @@ export class ZodNonEmptyArray<T extends z.ZodTypeAny> extends z.ZodType<
   max = (maxLength: number, message?: string | { message?: string }) =>
     this.refinement(data => data.length <= maxLength, {
       // check:
-      code: ZodErrorCode.too_big,
+      code: ZodIssueCode.too_big,
       maximum: maxLength,
       type: 'array',
       inclusive: true,

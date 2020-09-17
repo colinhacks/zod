@@ -1,7 +1,7 @@
 import { ZodParsedType } from './parser';
 import { util } from './helpers/util';
 
-export const ZodErrorCode = util.arrayToEnum([
+export const ZodIssueCode = util.arrayToEnum([
   'invalid_type',
   'nonempty_array_is_empty',
   'custom_error',
@@ -18,105 +18,105 @@ export const ZodErrorCode = util.arrayToEnum([
   'invalid_intersection_types',
 ]);
 
-export type ZodErrorCode = keyof typeof ZodErrorCode;
+export type ZodIssueCode = keyof typeof ZodIssueCode;
 
-export type ZodSuberrorBase = {
+export type ZodIssueBase = {
   path: (string | number)[];
-  // code: ZodErrorCode;
+  // code: ZodIssueCode;
   message?: string;
 };
 
-export interface ZodInvalidTypeError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_type;
+export interface ZodInvalidTypeIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_type;
   expected: ZodParsedType;
   received: ZodParsedType;
 }
 
-export interface ZodNonEmptyArrayIsEmptyError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.nonempty_array_is_empty;
+export interface ZodNonEmptyArrayIsEmptyIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.nonempty_array_is_empty;
 }
 
-export interface ZodUnrecognizedKeysError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.unrecognized_keys;
+export interface ZodUnrecognizedKeysIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.unrecognized_keys;
   keys: string[];
 }
 
-export interface ZodInvalidUnionError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_union;
+export interface ZodInvalidUnionIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_union;
   unionErrors: ZodError[];
 }
 
-export interface ZodInvalidLiteralValueError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_literal_value;
+export interface ZodInvalidLiteralValueIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_literal_value;
   expected: string | number | boolean;
 }
 
-export interface ZodInvalidEnumValueError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_enum_value;
+export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_enum_value;
   options: (string | number)[];
 }
 
-export interface ZodInvalidArgumentsError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_arguments;
+export interface ZodInvalidArgumentsIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_arguments;
   argumentsError: ZodError;
 }
 
-export interface ZodInvalidReturnTypeError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_return_type;
+export interface ZodInvalidReturnTypeIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_return_type;
   returnTypeError: ZodError;
 }
 
-export interface ZodInvalidDateError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_date;
+export interface ZodInvalidDateIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_date;
 }
 
 export type StringValidation = 'email' | 'url' | 'uuid' | 'regex';
 
-export interface ZodInvalidStringError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_string;
+export interface ZodInvalidStringIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_string;
   validation: StringValidation;
 }
 
-export interface ZodTooSmallError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.too_small;
+export interface ZodTooSmallIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
   type: 'array' | 'string' | 'number';
 }
 
-export interface ZodTooBigError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.too_big;
+export interface ZodTooBigIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
   type: 'array' | 'string' | 'number';
 }
 
-export interface ZodInvalidIntersectionTypesError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_intersection_types;
+export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_intersection_types;
 }
 
-export interface ZodCustomError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.custom_error;
+export interface ZodCustomIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.custom_error;
   params?: { [k: string]: any };
 }
 
-export type ZodSuberrorOptionalMessage =
-  | ZodInvalidTypeError
-  | ZodNonEmptyArrayIsEmptyError
-  | ZodUnrecognizedKeysError
-  | ZodInvalidUnionError
-  | ZodInvalidLiteralValueError
-  | ZodInvalidEnumValueError
-  | ZodInvalidArgumentsError
-  | ZodInvalidReturnTypeError
-  | ZodInvalidDateError
-  | ZodInvalidStringError
-  | ZodTooSmallError
-  | ZodTooBigError
-  | ZodInvalidIntersectionTypesError
-  | ZodCustomError;
+export type ZodIssueOptionalMessage =
+  | ZodInvalidTypeIssue
+  | ZodNonEmptyArrayIsEmptyIssue
+  | ZodUnrecognizedKeysIssue
+  | ZodInvalidUnionIssue
+  | ZodInvalidLiteralValueIssue
+  | ZodInvalidEnumValueIssue
+  | ZodInvalidArgumentsIssue
+  | ZodInvalidReturnTypeIssue
+  | ZodInvalidDateIssue
+  | ZodInvalidStringIssue
+  | ZodTooSmallIssue
+  | ZodTooBigIssue
+  | ZodInvalidIntersectionTypesIssue
+  | ZodCustomIssue;
 
-export type ZodSuberror = ZodSuberrorOptionalMessage & { message: string };
+export type ZodIssue = ZodIssueOptionalMessage & { message: string };
 
 export const quotelessJson = (obj: any) => {
   const json = JSON.stringify(obj, null, 2); // {"name":"John Smith"}
@@ -124,30 +124,34 @@ export const quotelessJson = (obj: any) => {
 };
 
 export class ZodError extends Error {
-  errors: ZodSuberror[] = [];
+  issues: ZodIssue[] = [];
 
-  constructor(errors: ZodSuberror[]) {
+  // get errors() {
+  //   return this.issues;
+  // }
+
+  constructor(errors: ZodIssue[]) {
     super();
     // restore prototype chain
     const actualProto = new.target.prototype;
     Object.setPrototypeOf(this, actualProto);
-    this.errors = errors;
+    this.issues = errors;
   }
 
-  static create = (errors: ZodSuberror[]) => {
+  static create = (errors: ZodIssue[]) => {
     const error = new ZodError(errors);
     return error;
   };
 
   get message() {
-    return JSON.stringify(this.errors, null, 2);
+    return JSON.stringify(this.issues, null, 2);
     // const errorMessage: string[] = [
-    //   `${this.errors.length} validation issue(s)`,
+    //   `${this.issues.length} validation issue(s)`,
     //   '',
     // ];
-    // for (const err of this.errors) {
+    // for (const err of this.issues) {
     //   errorMessage.push(
-    //     `  Issue #${this.errors.indexOf(err)}: ${err.code} at ${err.path.join(
+    //     `  Issue #${this.issues.indexOf(err)}: ${err.code} at ${err.path.join(
     //       './index',
     //     )}`,
     //   );
@@ -163,15 +167,15 @@ export class ZodError extends Error {
   }
 
   get isEmpty(): boolean {
-    return this.errors.length === 0;
+    return this.issues.length === 0;
   }
 
-  addError = (sub: ZodSuberror) => {
-    this.errors = [...this.errors, sub];
+  addError = (sub: ZodIssue) => {
+    this.issues = [...this.issues, sub];
   };
 
-  addErrors = (subs: ZodSuberror[] = []) => {
-    this.errors = [...this.errors, ...subs];
+  addErrors = (subs: ZodIssue[] = []) => {
+    this.issues = [...this.issues, ...subs];
   };
 
   flatten = (): {
@@ -180,7 +184,7 @@ export class ZodError extends Error {
   } => {
     const fieldErrors: any = {};
     const formErrors: string[] = [];
-    for (const sub of this.errors) {
+    for (const sub of this.issues) {
       if (sub.path.length > 0) {
         fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
         fieldErrors[sub.path[0]].push(sub.message);

@@ -154,7 +154,7 @@ test('', () => {});
 //     Shape.parse(data);
 //   } catch (e) {
 //     if (e instanceof z.ZodError) {
-//       expect(e.errors.length).toEqual(3);
+//       expect(e.issues.length).toEqual(3);
 //     }
 //   }
 // });

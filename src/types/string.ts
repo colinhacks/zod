@@ -2,7 +2,7 @@ import * as z from './base';
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
-import { StringValidation, ZodErrorCode } from '../ZodError';
+import { StringValidation, ZodIssueCode } from '../ZodError';
 import { errorUtil } from '../helpers/errorUtil';
 
 export interface ZodStringDef extends z.ZodTypeDef {
@@ -23,7 +23,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
   toJSON = () => this._def;
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
     this.refinement(data => data.length >= minLength, {
-      code: ZodErrorCode.too_small,
+      code: ZodIssueCode.too_small,
       minimum: minLength,
       type: 'string',
       inclusive: true,
@@ -32,7 +32,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
 
   max = (maxLength: number, message?: errorUtil.ErrMessage) =>
     this.refinement(data => data.length <= maxLength, {
-      code: ZodErrorCode.too_big,
+      code: ZodIssueCode.too_big,
       maximum: maxLength,
       type: 'string',
       inclusive: true,
@@ -50,7 +50,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
   ) =>
     this.refinement(data => regex.test(data), {
       validation,
-      code: ZodErrorCode.invalid_string,
+      code: ZodIssueCode.invalid_string,
 
       ...errorUtil.errToObj(message),
     });
@@ -69,7 +69,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
         }
       },
       {
-        code: ZodErrorCode.invalid_string,
+        code: ZodIssueCode.invalid_string,
         validation: 'url',
         ...errorUtil.errToObj(message),
       },

@@ -11,7 +11,7 @@ const run = async () => {
     );
     if (invalidPks.length) {
       ctx.addError({
-        code: z.ZodErrorCode.custom_error,
+        code: z.ZodIssueCode.custom_error,
         message: `Invalid PKs: ${invalidPks.join(', ')}`,
       });
     }

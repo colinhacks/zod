@@ -1,6 +1,6 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import {
-  ZodErrorCode,
+  ZodIssueCode,
   ZodArray,
   ZodTransformer,
   ZodError,
@@ -10,7 +10,7 @@ import {
 
 import { ZodOptionalType } from './optional';
 import { ZodNullableType } from './nullable';
-import { ZodCustomError } from '../ZodError';
+import { ZodCustomIssue } from '../ZodError';
 
 export enum ZodTypes {
   string = 'string',
@@ -72,7 +72,7 @@ type InternalCheck<T> = {
 //   // params?: {[k:string]:any}
 // } & util.Omit<CustomError, 'code' | 'path'>;
 
-type CustomErrorParams = Partial<Omit<ZodCustomError, 'code'>>;
+type CustomErrorParams = Partial<Omit<ZodCustomIssue, 'code'>>;
 // type Check<T> = {
 //   check: (arg: T) => any;
 //   refinementError: (arg: T) => CustomErrorParams;
@@ -184,7 +184,7 @@ export abstract class ZodType<
         const result = check(val);
         const setError = () =>
           ctx.addError({
-            code: ZodErrorCode.custom_error,
+            code: ZodIssueCode.custom_error,
             message,
           });
         if (result instanceof Promise) {
@@ -203,7 +203,7 @@ export abstract class ZodType<
         const result = check(val);
         const setError = () =>
           ctx.addError({
-            code: ZodErrorCode.custom_error,
+            code: ZodIssueCode.custom_error,
             ...message(val),
           });
         if (result instanceof Promise) {
@@ -221,7 +221,7 @@ export abstract class ZodType<
       const result = check(val);
       const setError = () =>
         ctx.addError({
-          code: ZodErrorCode.custom_error,
+          code: ZodIssueCode.custom_error,
           ...message,
         });
       if (result instanceof Promise) {

@@ -1,11 +1,11 @@
 import * as z from '../index';
-import { ZodError, ZodErrorCode } from '../ZodError';
+import { ZodError, ZodIssueCode } from '../ZodError';
 import { ZodParsedType } from '../parser';
 
 test('error creation', () => {
   const err1 = ZodError.create([]);
   err1.addError({
-    code: ZodErrorCode.invalid_type,
+    code: ZodIssueCode.invalid_type,
     expected: ZodParsedType.object,
     received: ZodParsedType.string,
     path: [],
@@ -13,22 +13,22 @@ test('error creation', () => {
   });
   err1.isEmpty;
 
-  const err2 = ZodError.create(err1.errors);
+  const err2 = ZodError.create(err1.issues);
   const err3 = new ZodError([]);
-  err3.addErrors(err1.errors);
-  err3.addError(err1.errors[0]);
+  err3.addErrors(err1.issues);
+  err3.addError(err1.issues[0]);
   err1.message;
   err2.message;
   err3.message;
 });
 
 const errorMap: z.ZodErrorMap = (error, ctx) => {
-  if (error.code === ZodErrorCode.invalid_type) {
+  if (error.code === ZodIssueCode.invalid_type) {
     if (error.expected === 'string') {
       return { message: 'bad type!' };
     }
   }
-  if (error.code === ZodErrorCode.custom_error) {
+  if (error.code === ZodIssueCode.custom_error) {
     return { message: `less-than-${(error.params || {}).minimum}` };
   }
   return { message: ctx.defaultError };
@@ -40,8 +40,8 @@ test('type error with custom error map', () => {
   } catch (err) {
     const zerr: z.ZodError = err;
 
-    expect(zerr.errors[0].code).toEqual(z.ZodErrorCode.invalid_type);
-    expect(zerr.errors[0].message).toEqual(`bad type!`);
+    expect(zerr.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
+    expect(zerr.issues[0].message).toEqual(`bad type!`);
   }
 });
 
@@ -54,8 +54,8 @@ test('refinement fail with params', () => {
       .parse(2, { errorMap });
   } catch (err) {
     const zerr: z.ZodError = err;
-    expect(zerr.errors[0].code).toEqual(z.ZodErrorCode.custom_error);
-    expect(zerr.errors[0].message).toEqual(`less-than-3`);
+    expect(zerr.issues[0].code).toEqual(z.ZodIssueCode.custom_error);
+    expect(zerr.issues[0].message).toEqual(`less-than-3`);
   }
 });
 
@@ -69,7 +69,7 @@ test('custom error with custom errormap', () => {
       .parse('asdf', { errorMap });
   } catch (err) {
     const zerr: z.ZodError = err;
-    expect(zerr.errors[0].message).toEqual('override');
+    expect(zerr.issues[0].message).toEqual('override');
   }
 });
 
@@ -80,8 +80,8 @@ test('default error message', () => {
       .parse(2);
   } catch (err) {
     const zerr: z.ZodError = err;
-    expect(zerr.errors.length).toEqual(1);
-    expect(zerr.errors[0].message).toEqual('Invalid value.');
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual('Invalid value.');
   }
 });
 
@@ -92,8 +92,8 @@ test('override error in refine', () => {
       .parse(2);
   } catch (err) {
     const zerr: z.ZodError = err;
-    expect(zerr.errors.length).toEqual(1);
-    expect(zerr.errors[0].message).toEqual('override');
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual('override');
   }
 });
 
@@ -106,8 +106,8 @@ test('override error in refinement', () => {
       .parse(2);
   } catch (err) {
     const zerr: z.ZodError = err;
-    expect(zerr.errors.length).toEqual(1);
-    expect(zerr.errors[0].message).toEqual('override');
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual('override');
   }
 });
 
@@ -118,8 +118,8 @@ test('array minimum', () => {
       .parse(['asdf', 'qwer']);
   } catch (err) {
     const zerr: ZodError = err;
-    expect(zerr.errors[0].code).toEqual(ZodErrorCode.too_small);
-    expect(zerr.errors[0].message).toEqual('tooshort');
+    expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
+    expect(zerr.issues[0].message).toEqual('tooshort');
   }
   try {
     z.array(z.string())
@@ -127,8 +127,8 @@ test('array minimum', () => {
       .parse(['asdf', 'qwer']);
   } catch (err) {
     const zerr: ZodError = err;
-    expect(zerr.errors[0].code).toEqual(ZodErrorCode.too_small);
-    expect(zerr.errors[0].message).toEqual(`Should have at least 3 items`);
+    expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
+    expect(zerr.issues[0].message).toEqual(`Should have at least 3 items`);
   }
 });
 
@@ -143,13 +143,13 @@ test('union smart errors', () => {
   if (p1.success === true) throw new Error();
   // console.log(JSON.stringify(p1.error, null, 2));
   expect(p1.success).toBe(false);
-  expect(p1.error.errors[0].code).toEqual(ZodErrorCode.custom_error);
+  expect(p1.error.issues[0].code).toEqual(ZodIssueCode.custom_error);
 
   const p2 = z.union([z.string(), z.number()]).safeParse(false);
-  // .catch(err => expect(err.errors[0].code).toEqual(ZodErrorCode.invalid_union));
+  // .catch(err => expect(err.issues[0].code).toEqual(ZodIssueCode.invalid_union));
   if (p2.success === true) throw new Error();
   expect(p2.success).toBe(false);
-  expect(p2.error.errors[0].code).toEqual(ZodErrorCode.invalid_union);
+  expect(p2.error.issues[0].code).toEqual(ZodIssueCode.invalid_union);
 });
 
 test('custom path in custom error map', () => {
@@ -166,7 +166,7 @@ test('custom path in custom error map', () => {
   const result = schema.safeParse({ items: ['first'] }, { errorMap });
   expect(result.success).toEqual(false);
   if (!result.success) {
-    expect(result.error.errors[0].path).toEqual(['items', 'items-too-few']);
+    expect(result.error.issues[0].path).toEqual(['items', 'items-too-few']);
   }
 });
 
@@ -179,8 +179,8 @@ test('error metadata from value', () => {
   const result = dynamicRefine.safeParse('asdf');
   expect(result.success).toEqual(false);
   if (!result.success) {
-    const sub = result.error.errors[0];
-    expect(result.error.errors[0].code).toEqual('custom_error');
+    const sub = result.error.issues[0];
+    expect(result.error.issues[0].code).toEqual('custom_error');
     if (sub.code === 'custom_error') {
       expect(sub.params!.val).toEqual('asdf');
     }
