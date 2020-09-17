@@ -126,20 +126,20 @@ export const quotelessJson = (obj: any) => {
 export class ZodError extends Error {
   issues: ZodIssue[] = [];
 
-  // get errors() {
-  //   return this.issues;
-  // }
+  get errors() {
+    return this.issues;
+  }
 
-  constructor(errors: ZodIssue[]) {
+  constructor(issues: ZodIssue[]) {
     super();
     // restore prototype chain
     const actualProto = new.target.prototype;
     Object.setPrototypeOf(this, actualProto);
-    this.issues = errors;
+    this.issues = issues;
   }
 
-  static create = (errors: ZodIssue[]) => {
-    const error = new ZodError(errors);
+  static create = (issues: ZodIssue[]) => {
+    const error = new ZodError(issues);
     return error;
   };
 

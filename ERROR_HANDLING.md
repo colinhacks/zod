@@ -8,7 +8,7 @@ All validation errors thrown by Zod are instances of `ZodError`.
 
 ```ts
 class ZodError extends Error {
-  errors: ZodIssue[];
+  issues: ZodIssue[];
 }
 ```
 
@@ -20,7 +20,7 @@ import * as z from 'zod';
 const myError = new z.ZodError([]);
 ```
 
-Each ZodError has an `errors` property that is an array of `ZodIssues`. Each issue documents a problem that occurred during validation.
+Each ZodError has an `issues` property that is an array of `ZodIssues`. Each issue documents a problem that occurred during validation.
 
 ## ZodIssue
 

@@ -255,10 +255,10 @@ If you don't want Zod to throw when validation errors occur, you can use `.safeP
 
 ```ts
 stringSchema.safeParse(12);
-// => { successs: false; error: ZodError }
+// => { success: false; error: ZodError }
 
 stringSchema.safeParse('billie');
-// => { successs: true; data: 'billie' }
+// => { success: true; data: 'billie' }
 ```
 
 There is also an asynchronous version:
@@ -380,7 +380,7 @@ Because you provided a `path` parameter, the resulting error will be:
 
 ```ts
 ZodError {
-  errors: [{
+  issues: [{
     "code": "custom_error",
     "path": [ "confirm" ],
     "message": "Passwords don't match"
@@ -405,7 +405,7 @@ would result in
 
 ```
 ZodError {
-  errors: [{
+  issues: [{
     "code": "custom_error",
     "path": [ "passwordForm", "confirm" ],
     "message": "Passwords don't match"
