@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import * as z from "./"
 
 const os = z.optional(z.string());
@@ -20,3 +21,15 @@ console.log(oo.safeParse(undefined))
  
  
  
+=======
+import * as z from '.';
+
+const userUpdateSchema = z.object({
+  password: z
+    .string()
+    .min(6)
+    .optional(),
+});
+
+console.log(userUpdateSchema.parse({}));
+>>>>>>> master
