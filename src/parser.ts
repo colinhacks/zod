@@ -900,7 +900,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
   const customChecks = def.checks || [];
 
   const checkCtx = {
-    makeError: (arg: MakeErrorData) => {
+    addError: (arg: MakeErrorData) => {
       ERROR.addError(makeError(arg));
     },
   };
