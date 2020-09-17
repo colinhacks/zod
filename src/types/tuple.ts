@@ -19,9 +19,7 @@ export interface ZodTupleDef<
 
 export class ZodTuple<
   T extends readonly [z.ZodTypeAny, ...z.ZodTypeAny[]] | readonly [] = readonly [z.ZodTypeAny, ...z.ZodTypeAny[]]
-    z.ZodTypeAny,
-    ...z.ZodTypeAny[],
-  ]
+
 > extends z.ZodType<TypeOfTuple<T>, ZodTupleDef<T>> {
   toJSON = () => ({
     t: this._def.t,
@@ -32,7 +30,7 @@ export class ZodTuple<
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  static create = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []>(schemas: T): ZodTuple<T> => {
+  static create = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []>(
     schemas: T,
   ): ZodTuple<T> => {
     return new ZodTuple({
