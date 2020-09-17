@@ -16,10 +16,10 @@ if you're happy and you know it, star this repo ⭐
 
 <br/>
 
-Zod 2 is in an early beta. Documentation here: https://github.com/vriad/zod/tree/v2.
+<!-- Zod 2 is in an early beta. Documentation here: https://github.com/vriad/zod/tree/v2. -->
 
 <!-- **Zod 2 is coming! Follow [@vriad](https://twitter.com/vriad) to stay updated and discuss the future of Zod.** -->
-<!--
+
 ### **Zod 2 is now in beta!**
 
 You should be able to upgrade from v1 to v2 without any breaking changes to your code. Zod 2 is recommended for all new projects.
@@ -45,7 +45,7 @@ In almost all cases, you'll be able to upgrade to Zod 2 without changing any cod
 - Object schemas now _allow_ unknown keys by default, instead of throwing an error
 - Optional and nullable schemas are now represented with the dedicated ZodOptional and ZodNullable classes, instead of using ZodUnion.
 
-**View the v2 documentation here: https://github.com/vriad/zod/tree/v2** -->
+**View the v2 documentation here: https://github.com/vriad/zod/tree/v2**
 
 <!--
 
