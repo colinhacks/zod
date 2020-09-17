@@ -381,7 +381,7 @@ Because you provided a `path` parameter, the resulting error will be:
 ```ts
 ZodError {
   issues: [{
-    "code": "custom_error",
+    "code": "custom",
     "path": [ "confirm" ],
     "message": "Passwords don't match"
   }]
@@ -406,7 +406,7 @@ would result in
 ```
 ZodError {
   issues: [{
-    "code": "custom_error",
+    "code": "custom",
     "path": [ "passwordForm", "confirm" ],
     "message": "Passwords don't match"
   }]

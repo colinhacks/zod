@@ -102,7 +102,7 @@ export const defaultErrorMap = (
         }${error.maximum}`;
       else message = 'Invalid input';
       break;
-    case ZodIssueCode.custom_error:
+    case ZodIssueCode.custom:
       message = `Invalid input.`;
       break;
     case ZodIssueCode.invalid_intersection_types:

@@ -10,8 +10,8 @@ const run = async () => {
       pk => !Object.keys(data.columns).includes(pk),
     );
     if (invalidPks.length) {
-      ctx.addError({
-        code: z.ZodIssueCode.custom_error,
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
         message: `Invalid PKs: ${invalidPks.join(', ')}`,
       });
     }

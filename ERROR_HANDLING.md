@@ -54,7 +54,7 @@ _Every_ ZodIssue has these fields:
 | ZodIssueCode.invalid_string          | `validation: "url" \| "email" \| "uuid"`<br> Which built-in string validator failed                                                                                                                                                                                                  |
 | ZodIssueCode.too_small               | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `minimum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                   |
 | ZodIssueCode.too_big                 | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `maximum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                   |
-| ZodIssueCode.custom_error            | `params: { [k: string]: any }` <br> This is the error code throw by **all custom refinements**. You are able to pass in a `params` object here that is available in your custom error maps (see [ZodErrorMap](#Customizing-errors-with-ZodErrorMap) below for details on error maps) |
+| ZodIssueCode.custom                  | `params: { [k: string]: any }` <br> This is the error code throw by **all custom refinements**. You are able to pass in a `params` object here that is available in your custom error maps (see [ZodErrorMap](#Customizing-errors-with-ZodErrorMap) below for details on error maps) |
 
 ## ZodParsedType
 
@@ -186,7 +186,7 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
         return { message: `This ain't a string!` };
       }
       break;
-    case z.ZodIssueCode.custom_error:
+    case z.ZodIssueCode.custom:
       // produce a custom message using error.params
       // error.params won't be set unless you passed
       // a `params` arguments into a custom validator
@@ -269,7 +269,7 @@ console.log(err.issues);
       path: ['confirm'],
       message: 'Should be at least 10 characters',
     },
-    { code: 'custom_error', message: 'Passwords do not match', path: ['confirm'] },
+    { code: 'custom', message: 'Passwords do not match', path: ['confirm'] },
   ]; 
   */
 ```

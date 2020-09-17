@@ -167,7 +167,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
   switch (def.t) {
     case z.ZodTypes.string:
       if (parsedType !== ZodParsedType.string) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.string,
@@ -182,7 +182,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.number:
       if (parsedType !== ZodParsedType.number) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.number,
@@ -193,7 +193,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         THROW();
       }
       if (Number.isNaN(data)) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.number,
@@ -207,7 +207,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.bigint:
       if (parsedType !== ZodParsedType.bigint) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.number,
@@ -221,7 +221,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.boolean:
       if (parsedType !== ZodParsedType.boolean) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.boolean,
@@ -235,7 +235,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.undefined:
       if (parsedType !== ZodParsedType.undefined) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.undefined,
@@ -249,7 +249,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.null:
       if (parsedType !== ZodParsedType.null) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.null,
@@ -268,7 +268,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       PROMISE = PseudoPromise.resolve(data);
       break;
     case z.ZodTypes.never:
-      ERROR.addError(
+      ERROR.addIssue(
         makeError({
           code: ZodIssueCode.invalid_type,
           expected: ZodParsedType.never,
@@ -282,7 +282,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         parsedType !== ZodParsedType.undefined &&
         parsedType !== ZodParsedType.null
       ) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.void,
@@ -297,7 +297,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     case z.ZodTypes.array:
       RESULT.output = [];
       if (parsedType !== ZodParsedType.array) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.array,
@@ -309,7 +309,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       }
       // const data: any[] = data;
       if (def.nonempty === true && data.length === 0) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({ code: ZodIssueCode.nonempty_array_is_empty }),
         );
         THROW();
@@ -319,7 +319,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       //     return def.type.parse(item, { ...params, path: [...params.path, i] });
       //   } catch (err) {
       //     const zerr: ZodError = err;
-      //     ERROR.addErrors(zerr.issues);
+      //     ERROR.addIssues(zerr.issues);
       //   }
       // });
       PROMISE = PseudoPromise.all(
@@ -334,7 +334,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           } catch (err) {
             if (err instanceof ZodError) {
               const zerr: ZodError = err;
-              ERROR.addErrors(zerr.issues);
+              ERROR.addIssues(zerr.issues);
               return PseudoPromise.resolve(INVALID);
             }
             throw err;
@@ -348,7 +348,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     case z.ZodTypes.object:
       RESULT.output = {};
       if (parsedType !== ZodParsedType.object) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.object,
@@ -383,7 +383,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           } catch (err) {
             if (err instanceof ZodError) {
               const zerr: ZodError = err;
-              ERROR.addErrors(zerr.issues);
+              ERROR.addIssues(zerr.issues);
               return INVALID;
             } else {
               throw err;
@@ -399,7 +399,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           }
         } else if (def.unknownKeys === 'strict') {
           if (extraKeys.length > 0) {
-            ERROR.addError(
+            ERROR.addIssue(
               makeError({
                 code: ZodIssueCode.unrecognized_keys,
                 keys: extraKeys,
@@ -453,9 +453,9 @@ export const ZodParser = (schema: z.ZodType<any>) => (
               return err.issues[0].code !== 'invalid_type';
             });
             if (filteredErrors.length === 1) {
-              ERROR.addErrors(filteredErrors[0].issues);
+              ERROR.addIssues(filteredErrors[0].issues);
             } else {
-              ERROR.addError(
+              ERROR.addIssue(
                 makeError({
                   code: ZodIssueCode.invalid_union,
                   unionErrors: unionErrors,
@@ -483,9 +483,9 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       //     return err.issues[0].code !== 'invalid_type';
       //   });
       //   if (filteredErrors.length === 1) {
-      //     ERROR.addErrors(filteredErrors[0].issues);
+      //     ERROR.addIssues(filteredErrors[0].issues);
       //   } else {
-      //     ERROR.addError(
+      //     ERROR.addIssue(
       //       makeError({
       //         code: ZodIssueCode.invalid_union,
       //         unionErrors: unionErrors,
@@ -506,7 +506,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             return def.left.parse(data, params);
           } catch (err) {
             if (err instanceof ZodError) {
-              ERROR.addErrors(err.issues);
+              ERROR.addIssues(err.issues);
               return INVALID;
             }
             throw err;
@@ -517,7 +517,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             return def.right.parse(data, params);
           } catch (err) {
             if (err instanceof ZodError) {
-              ERROR.addErrors(err.issues);
+              ERROR.addIssues(err.issues);
               return INVALID;
             }
             throw err;
@@ -537,7 +537,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         ) {
           return { ...parsedLeft, ...parsedRight };
         } else {
-          ERROR.addError(
+          ERROR.addIssue(
             makeError({
               code: ZodIssueCode.invalid_intersection_types,
             }),
@@ -558,7 +558,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           return def.innerType.parse(data, params);
         } catch (err) {
           if (err instanceof ZodError) {
-            ERROR.addErrors(err.issues);
+            ERROR.addIssues(err.issues);
             return INVALID;
           }
           throw err;
@@ -576,7 +576,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           return def.innerType.parse(data, params);
         } catch (err) {
           if (err instanceof ZodError) {
-            ERROR.addErrors(err.issues);
+            ERROR.addIssues(err.issues);
             return INVALID;
           }
           throw err;
@@ -585,7 +585,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.tuple:
       if (parsedType !== ZodParsedType.array) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.array,
@@ -596,7 +596,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         THROW();
       }
       if (data.length > def.items.length) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.too_big,
             maximum: def.items.length,
@@ -605,7 +605,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           }),
         );
       } else if (data.length < def.items.length) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.too_small,
             minimum: def.items.length,
@@ -631,7 +631,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
               });
             } catch (err) {
               if (err instanceof ZodError) {
-                ERROR.addErrors(err.issues);
+                ERROR.addIssues(err.issues);
                 return INVALID;
               }
               throw err;
@@ -647,7 +647,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       //       try {
       //         return itemParser.parse(item, { ...params, path: [...params.path, index] });
       //       } catch (err) {
-      //         ERROR.addErrors(err.issues);
+      //         ERROR.addIssues(err.issues);
       //       }
       //     }),
       //   );
@@ -661,7 +661,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.literal:
       if (data !== def.value) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_literal_value,
             expected: def.value,
@@ -672,7 +672,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.enum:
       if (def.values.indexOf(data) === -1) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_enum_value,
             options: def.values,
@@ -683,7 +683,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.nativeEnum:
       if (util.getValidEnumValues(def.values).indexOf(data) === -1) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_enum_value,
             options: util.objectValues(def.values),
@@ -694,7 +694,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.function:
       if (parsedType !== ZodParsedType.function) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.function,
@@ -710,7 +710,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         } catch (err) {
           if (err instanceof ZodError) {
             const argsError = new ZodError([]);
-            argsError.addError(
+            argsError.addIssue(
               makeError({
                 code: ZodIssueCode.invalid_arguments,
                 argumentsError: err,
@@ -728,7 +728,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         } catch (err) {
           if (err instanceof ZodError) {
             const returnsError = new ZodError([]);
-            returnsError.addError(
+            returnsError.addIssue(
               makeError({
                 code: ZodIssueCode.invalid_return_type,
                 returnTypeError: err,
@@ -744,7 +744,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.record:
       if (parsedType !== ZodParsedType.object) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.object,
@@ -765,7 +765,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             });
           } catch (err) {
             if (err instanceof ZodError) {
-              ERROR.addErrors(err.issues);
+              ERROR.addIssues(err.issues);
               return INVALID;
             }
             throw err;
@@ -777,7 +777,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       break;
     case z.ZodTypes.date:
       if (!(data instanceof Date)) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.date,
@@ -788,7 +788,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         THROW();
       }
       if (isNaN(data.getTime())) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_date,
           }),
@@ -801,7 +801,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
 
     case z.ZodTypes.promise:
       if (parsedType !== ZodParsedType.promise && params.async !== true) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
             code: ZodIssueCode.invalid_type,
             expected: ZodParsedType.promise,
@@ -822,7 +822,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             return parsed;
           } catch (err) {
             if (err instanceof ZodError) {
-              ERROR.addErrors(err.issues);
+              ERROR.addIssues(err.issues);
             }
             throw err;
           }
@@ -847,7 +847,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             return def.input.parse(data, params);
           } catch (err) {
             if (err instanceof ZodError) {
-              ERROR.addErrors(err.issues);
+              ERROR.addIssues(err.issues);
             }
             throw err;
           }
@@ -866,7 +866,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             return transformed;
           } catch (err) {
             if (err instanceof ZodError) {
-              ERROR.addErrors(err.issues);
+              ERROR.addIssues(err.issues);
               return INVALID;
             }
             throw err;
@@ -877,7 +877,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             return def.output.parse(transformedResult, params);
           } catch (err) {
             if (err instanceof ZodError) {
-              ERROR.addErrors(err.issues);
+              ERROR.addIssues(err.issues);
               return INVALID;
             }
             throw err;
@@ -900,8 +900,8 @@ export const ZodParser = (schema: z.ZodType<any>) => (
   const customChecks = def.checks || [];
 
   const checkCtx = {
-    addError: (arg: MakeErrorData) => {
-      ERROR.addError(makeError(arg));
+    addIssue: (arg: MakeErrorData) => {
+      ERROR.addIssue(makeError(arg));
     },
   };
   if (params.async === false) {
@@ -925,16 +925,16 @@ export const ZodParser = (schema: z.ZodType<any>) => (
 
       // if (!checkResult) {
       //   const { check: checkMethod, ...noMethodCheck } = check;
-      //   ERROR.addError(makeError(noMethodCheck));
+      //   ERROR.addIssue(makeError(noMethodCheck));
       // }
     }
     if (!ERROR.isEmpty) {
       THROW();
     }
     // if (resolvedValue === INVALID) {
-    //   throw new ZodError([]).addError(
+    //   throw new ZodError([]).addIssue(
     //     makeError({
-    //       code: ZodIssueCode.custom_error,
+    //       code: ZodIssueCode.custom,
     //       message: 'Invalid',
     //     }),
     //   );
@@ -950,16 +950,16 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           await check.check(resolvedValue, checkCtx);
           // if (!checkResult) {
           //   const { check: checkMethod, ...noMethodCheck } = check;
-          //   ERROR.addError(makeError(noMethodCheck));
+          //   ERROR.addIssue(makeError(noMethodCheck));
           // } else {
           // }
         }),
       );
 
       if (resolvedValue === INVALID && ERROR.isEmpty) {
-        ERROR.addError(
+        ERROR.addIssue(
           makeError({
-            code: ZodIssueCode.custom_error,
+            code: ZodIssueCode.custom,
             message: 'Invalid',
           }),
         );

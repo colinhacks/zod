@@ -4,7 +4,7 @@ import { util } from './helpers/util';
 export const ZodIssueCode = util.arrayToEnum([
   'invalid_type',
   'nonempty_array_is_empty',
-  'custom_error',
+  'custom',
   'invalid_union',
   'invalid_literal_value',
   'invalid_enum_value',
@@ -96,7 +96,7 @@ export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
 }
 
 export interface ZodCustomIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.custom_error;
+  code: typeof ZodIssueCode.custom;
   params?: { [k: string]: any };
 }
 
@@ -170,11 +170,11 @@ export class ZodError extends Error {
     return this.issues.length === 0;
   }
 
-  addError = (sub: ZodIssue) => {
+  addIssue = (sub: ZodIssue) => {
     this.issues = [...this.issues, sub];
   };
 
-  addErrors = (subs: ZodIssue[] = []) => {
+  addIssues = (subs: ZodIssue[] = []) => {
     this.issues = [...this.issues, ...subs];
   };
 

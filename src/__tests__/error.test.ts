@@ -4,7 +4,7 @@ import { ZodParsedType } from '../parser';
 
 test('error creation', () => {
   const err1 = ZodError.create([]);
-  err1.addError({
+  err1.addIssue({
     code: ZodIssueCode.invalid_type,
     expected: ZodParsedType.object,
     received: ZodParsedType.string,
@@ -15,8 +15,8 @@ test('error creation', () => {
 
   const err2 = ZodError.create(err1.issues);
   const err3 = new ZodError([]);
-  err3.addErrors(err1.issues);
-  err3.addError(err1.issues[0]);
+  err3.addIssues(err1.issues);
+  err3.addIssue(err1.issues[0]);
   err1.message;
   err2.message;
   err3.message;
@@ -28,7 +28,7 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
       return { message: 'bad type!' };
     }
   }
-  if (error.code === ZodIssueCode.custom_error) {
+  if (error.code === ZodIssueCode.custom) {
     return { message: `less-than-${(error.params || {}).minimum}` };
   }
   return { message: ctx.defaultError };
@@ -54,7 +54,7 @@ test('refinement fail with params', () => {
       .parse(2, { errorMap });
   } catch (err) {
     const zerr: z.ZodError = err;
-    expect(zerr.issues[0].code).toEqual(z.ZodIssueCode.custom_error);
+    expect(zerr.issues[0].code).toEqual(z.ZodIssueCode.custom);
     expect(zerr.issues[0].message).toEqual(`less-than-3`);
   }
 });
@@ -143,7 +143,7 @@ test('union smart errors', () => {
   if (p1.success === true) throw new Error();
   // console.log(JSON.stringify(p1.error, null, 2));
   expect(p1.success).toBe(false);
-  expect(p1.error.issues[0].code).toEqual(ZodIssueCode.custom_error);
+  expect(p1.error.issues[0].code).toEqual(ZodIssueCode.custom);
 
   const p2 = z.union([z.string(), z.number()]).safeParse(false);
   // .catch(err => expect(err.issues[0].code).toEqual(ZodIssueCode.invalid_union));
@@ -180,8 +180,8 @@ test('error metadata from value', () => {
   expect(result.success).toEqual(false);
   if (!result.success) {
     const sub = result.error.issues[0];
-    expect(result.error.issues[0].code).toEqual('custom_error');
-    if (sub.code === 'custom_error') {
+    expect(result.error.issues[0].code).toEqual('custom');
+    if (sub.code === 'custom') {
       expect(sub.params!.val).toEqual('asdf');
     }
   }

@@ -61,7 +61,7 @@ export const outputSchema = (schema: ZodType<any>): ZodType<any> => {
 };
 
 type InternalCheck<T> = {
-  check: (arg: T, ctx: { addError: (arg: MakeErrorData) => void }) => any;
+  check: (arg: T, ctx: { addIssue: (arg: MakeErrorData) => void }) => any;
   // refinementError: (arg: T) => MakeErrorData;
 };
 
@@ -183,8 +183,8 @@ export abstract class ZodType<
       return this._refinement((val, ctx) => {
         const result = check(val);
         const setError = () =>
-          ctx.addError({
-            code: ZodIssueCode.custom_error,
+          ctx.addIssue({
+            code: ZodIssueCode.custom,
             message,
           });
         if (result instanceof Promise) {
@@ -202,8 +202,8 @@ export abstract class ZodType<
       return this._refinement((val, ctx) => {
         const result = check(val);
         const setError = () =>
-          ctx.addError({
-            code: ZodIssueCode.custom_error,
+          ctx.addIssue({
+            code: ZodIssueCode.custom,
             ...message(val),
           });
         if (result instanceof Promise) {
@@ -220,8 +220,8 @@ export abstract class ZodType<
     return this._refinement((val, ctx) => {
       const result = check(val);
       const setError = () =>
-        ctx.addError({
-          code: ZodIssueCode.custom_error,
+        ctx.addIssue({
+          code: ZodIssueCode.custom,
           ...message,
         });
       if (result instanceof Promise) {
@@ -243,7 +243,7 @@ export abstract class ZodType<
   ) => {
     return this._refinement((val, ctx) => {
       if (!check(val)) {
-        ctx.addError(
+        ctx.addIssue(
           typeof refinementData === 'function'
             ? refinementData(val)
             : refinementData,
