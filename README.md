@@ -31,10 +31,9 @@ yarn add zod@beta
 
 **New features**
 
-- Transformers! These let you provide default values, do casting/coersion, and a lot more. Read more here: [Transformers](#transformers)
-- All schemas now have a `.safeParse` method. This lets you validate data in a more functional way, similar to `io-ts`: https://github.com/vriad/zod#safe-parse
-- Asynchronous refinements and new `.parseAsync` and `.safeParseAsync` methods. Read more here: [Refinements](#refinements)
-- New object methods: `.stripUnknown()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
+- Transformers! These let you provide default values, do casting/coersion, and a lot more
+- Asynchronous refinements and new `.parseAsync` and `.safeParseAsync` methods
+- New object methods: `.stripUnknown()`, `.strict()`, and `.catchall()`
 
 **Migration**
 
