@@ -169,3 +169,20 @@ test('custom path in custom error map', () => {
     expect(result.error.errors[0].path).toEqual(['items', 'items-too-few']);
   }
 });
+
+test('error metadata from value', () => {
+  const dynamicRefine = z.string().refine(
+    val => val === val.toUpperCase(),
+    val => ({ params: { val } }),
+  );
+
+  const result = dynamicRefine.safeParse('asdf');
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    const sub = result.error.errors[0];
+    expect(result.error.errors[0].code).toEqual('custom_error');
+    if (sub.code === 'custom_error') {
+      expect(sub.params!.val).toEqual('asdf');
+    }
+  }
+});
