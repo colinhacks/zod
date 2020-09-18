@@ -53,7 +53,7 @@ export const isScalar = (
       returnValue = isScalar(def.left) && isScalar(def.right);
       break;
     case z.ZodTypes.tuple:
-      returnValue = false;
+      returnValue = def.items.every(x => isScalar(x, { root: false }));
       break;
     case z.ZodTypes.lazy:
       returnValue = isScalar(def.getter());

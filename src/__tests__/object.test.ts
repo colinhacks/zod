@@ -149,10 +149,13 @@ test('primitives', () => {
     literalPrimitive: z.literal('sup'),
     enumPrimitive: z.enum(['asdf', 'qwer']),
     datePrimitive: z.date(),
-    nonprimitiveUnion: z.union([z.string(), z.tuple([])]),
+    primitiveTuple: z.tuple([z.string(), z.number()]),
+
+    nonprimitiveUnion: z.union([z.string(), z.object({})]),
     object: z.object({}),
     objectArray: z.object({}).array(),
     arrayarray: z.array(z.array(z.string())),
+    nonprimitiveTuple: z.tuple([z.string(), z.number().array()]),
   });
 
   expect(Object.keys(baseObj.primitives().shape)).toEqual([
@@ -172,6 +175,7 @@ test('primitives', () => {
     'literalPrimitive',
     'enumPrimitive',
     'datePrimitive',
+    'primitiveTuple',
   ]);
 
   expect(Object.keys(baseObj.nonprimitives().shape)).toEqual([
@@ -179,6 +183,7 @@ test('primitives', () => {
     'object',
     'objectArray',
     'arrayarray',
+    'nonprimitiveTuple',
   ]);
 });
 

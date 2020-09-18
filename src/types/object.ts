@@ -6,6 +6,7 @@ import { objectUtil } from '../helpers/objectUtil';
 import { partialUtil } from '../helpers/partialUtil';
 import { isScalar } from '../isScalar';
 import { ZodNever } from '..';
+import { Scalars } from '../helpers/primitive';
 
 const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
   Augmentation extends z.ZodRawShape
@@ -98,18 +99,6 @@ const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
 // interface ZodObjectParams {
 //   strict: boolean;
 // }
-
-export type Scalars =
-  | string
-  | string[]
-  | number
-  | number[]
-  | boolean
-  | boolean[]
-  | bigint
-  | bigint[]
-  | undefined
-  | null;
 
 // type SetKey<
 //   Target extends object,

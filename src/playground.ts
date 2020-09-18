@@ -1,12 +1,17 @@
 import * as z from '.';
+// import { Scalars } from './helpers/primitive';
 
-const tagsA = z.enum(['a', 'b', 'c']); // type tagsA = 'a' | 'b' | 'c'
-const tagsB = z.enum(['b', 'c', 'd']); // type tagsB = 'b' | 'c' | 'd'
+const obj = z.object({
+  primitiveTuple: z.tuple([z.string(), z.number()]),
+  nonprimitiveTuple: z.tuple([z.string(), z.number().array()]),
+});
 
-const bOrC = z.intersection(tagsA, tagsB); // ('a' | 'b' | 'c') & ('b' | 'c' | 'd')
-type bOrC = z.infer<typeof bOrC>; // 'b' | 'c'
+type obj = z.infer<typeof obj>;
 
-console.log(bOrC.safeParse('a'));
-console.log(bOrC.safeParse('b'));
-console.log(bOrC.safeParse('c'));
-console.log(bOrC.safeParse('d'));
+const prim = obj.primitives();
+console.log(prim.shape);
+const nonprim = obj.nonprimitives();
+console.log(nonprim.shape);
+// .primitives();
+
+// type t1 = [[string, number]] extends [Scalars] ? true : false;
