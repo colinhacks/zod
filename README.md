@@ -29,9 +29,10 @@ yarn add zod@beta
 
 Here are some of the new features.
 
-- Transformers! These let you provide default values, do casting/coersion, and a lot more. Read more here: [Transformers](#transformers)
+- Transformers! These let you provide default values, do casting/coercion, and a lot more. Read more here: [Transformers](#transformers)
 - Asynchronous refinements and new `.parseAsync` and `.safeParseAsync` methods. Read more here: [Refinements](#refinements)
-- New object methods: `.passthrough()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
+- Schema parsing now returns a deep clone of the data you pass in (instead of the _exact_ value you pass in)
+- Object schemas now strip unknown keys by default. There are also new object methods: `.passthrough()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
 
 In almost all cases, you'll be able to upgrade to Zod 2 without changing any code. Here are some of the (very minor) breaking changes:
 
