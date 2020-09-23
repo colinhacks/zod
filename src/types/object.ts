@@ -140,16 +140,16 @@ export type AnyZodObject = ZodObject<any, any, any>;
 export class ZodObject<
   T extends z.ZodRawShape,
   UnknownKeys extends UnknownKeysParam = 'passthrough',
-  Catchall extends z.ZodTypeAny = z.ZodTypeAny
+  Catchall extends z.ZodTypeAny = z.ZodTypeAny,
   // Params extends ZodObjectParams = { strict: true },
   // Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
-  // Input extends objectUtil.objectInputType<T> = objectUtil.objectInputType<T>,
-  // Output extends objectUtil.objectOutputType<T> = objectUtil.objectOutputType<T>
+  Output extends objectOutputType<T, Catchall> = objectOutputType<T, Catchall>,
+  Input extends objectInputType<T, Catchall> = objectInputType<T, Catchall>
 > extends z.ZodType<
   //  objectUtil.objectOutputType<T, UnknownKeys, Catchall>,
-  objectOutputType<T, Catchall>,
+  Output,
   ZodObjectDef<T, UnknownKeys, Catchall>,
-  objectInputType<T, Catchall>
+  Input
 > {
   readonly _shape!: T;
   readonly _unknownKeys!: UnknownKeys;
@@ -208,7 +208,7 @@ export class ZodObject<
     UnknownKeys,
     Catchall
     // objectUtil.MergeObjectParams<Params, MergeUnknownKeys>
-  > = objectUtil.mergeObjects(this as any);
+  > = objectUtil.mergeObjects(this as any) as any;
 
   catchall = <Index extends z.ZodTypeAny>(
     index: Index,
