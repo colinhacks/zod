@@ -13,7 +13,11 @@ export type ZodNullableType<T extends z.ZodTypeAny> = T extends ZodNullable<
   ? T
   : ZodNullable<T>;
 
-export class ZodNullable<T extends z.ZodTypeAny> extends z.ZodType<
+export class ZodNullable<
+  T extends z.ZodTypeAny
+  //  Output extends T['_output'] | null = T['_output'] | null,
+  //  Input extends T['_input'] | null = T['_input'] | null
+> extends z.ZodType<
   T['_output'] | null,
   ZodNullableDef<T>,
   T['_input'] | null
