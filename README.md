@@ -1596,7 +1596,7 @@ const stringWithDefault = z.transformer(
 );
 ```
 
-Equivalently you can express this using the built-in `.default()` method, available on all Zod schemas.
+Equivalently you can express this using the built-in `.default()` method, available on all Zod schemas. A default value will be used if the schema is `null` or `undefined`.
 
 ```ts
 z.string().default('default value');
