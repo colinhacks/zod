@@ -363,10 +363,10 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       const shape = def.shape();
       const shapeKeys = Object.keys(shape);
       const dataKeys = Object.keys(data);
-      const extraKeys = dataKeys.filter(k => shapeKeys.indexOf(k) === -1);
+      const extraKeys = dataKeys.filter((k) => shapeKeys.indexOf(k) === -1);
 
       for (const key of shapeKeys) {
-        const keyValidator = shapeKeys.includes(key)
+        const keyValidator = dataKeys.includes(key)
           ? def.shape()[key]
           : !(def.catchall instanceof ZodNever)
           ? def.catchall
@@ -413,7 +413,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         }
       }
 
-      PROMISE = PseudoPromise.object(objectPromises).then(resolvedObject => {
+      PROMISE = PseudoPromise.object(objectPromises).then((resolvedObject) => {
         Object.assign(RESULT.output, resolvedObject);
         return RESULT.output;
       });
@@ -425,7 +425,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       const unionErrors: ZodError[] = [];
       // const INVALID = Symbol('invalid_data');
       PROMISE = PseudoPromise.all(
-        def.options.map(opt => {
+        def.options.map((opt) => {
           try {
             const unionValueProm = PseudoPromise.resolve(
               opt.parse(data, params),
@@ -449,7 +449,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         .then((unionResult: any) => {
           // const unionResults: any[] = _unionResults;
           if (!isValid) {
-            const filteredErrors = unionErrors.filter(err => {
+            const filteredErrors = unionErrors.filter((err) => {
               return err.issues[0].code !== 'invalid_type';
             });
             if (filteredErrors.length === 1) {
@@ -853,7 +853,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           }
         })
 
-        .then(inputParseResult => {
+        .then((inputParseResult) => {
           try {
             const transformed = def.transformer(inputParseResult);
             if (transformed instanceof Promise && params.async === false) {
@@ -872,7 +872,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             throw err;
           }
         })
-        .then(transformedResult => {
+        .then((transformedResult) => {
           try {
             return def.output.parse(transformedResult, params);
           } catch (err) {
@@ -946,7 +946,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       const resolvedValue = await PROMISE.getValueAsync();
 
       await Promise.all(
-        customChecks.map(async check => {
+        customChecks.map(async (check) => {
           await check.check(resolvedValue, checkCtx);
           // if (!checkResult) {
           //   const { check: checkMethod, ...noMethodCheck } = check;
