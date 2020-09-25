@@ -33,19 +33,19 @@ import * as z from './base';
 // type t5 = string & unknown;
 
 export type OutputTypeOfTuple<
-  T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []
+  T extends readonly [z.ZodTypeAny, ...z.ZodTypeAny[]] | readonly []
 > = {
   [k in keyof T]: T[k] extends z.ZodType<any, any> ? T[k]['_output'] : never;
 };
 
 export type InputTypeOfTuple<
-  T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []
+  T extends readonly [z.ZodTypeAny, ...z.ZodTypeAny[]] | readonly []
 > = {
   [k in keyof T]: T[k] extends z.ZodType<any, any> ? T[k]['_input'] : never;
 };
 
 export interface ZodTupleDef<
-  T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [
+  T extends readonly [z.ZodTypeAny, ...z.ZodTypeAny[]] | readonly [] = [
     z.ZodTypeAny,
     ...z.ZodTypeAny[],
   ]
@@ -55,14 +55,14 @@ export interface ZodTupleDef<
 }
 
 export class ZodTuple<
-  T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [
+  T extends readonly [z.ZodTypeAny, ...z.ZodTypeAny[]] | readonly [] = [
     z.ZodTypeAny,
     ...z.ZodTypeAny[],
   ]
 > extends z.ZodType<OutputTypeOfTuple<T>, ZodTupleDef<T>, InputTypeOfTuple<T>> {
   toJSON = () => ({
     t: this._def.t,
-    items: (this._def.items as any[]).map(item => item.toJSON()),
+    items: (this._def.items as readonly z.ZodTypeAny[]).map(item => item.toJSON()),
   });
 
   get items() {
@@ -73,7 +73,7 @@ export class ZodTuple<
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  static create = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []>(
+  static create = <T extends readonly [z.ZodTypeAny, ...z.ZodTypeAny[]] | readonly []>(
     schemas: T,
   ): ZodTuple<T> => {
     return new ZodTuple({
