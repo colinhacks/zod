@@ -595,6 +595,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         // setError(error);
         THROW();
       }
+      const minLength =  def.items.filter(i => !i.isOptional()).length;
       if (data.length > def.items.length) {
         ERROR.addIssue(
           makeError({
@@ -604,7 +605,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             type: 'array',
           }),
         );
-      } else if (data.length < def.items.length) {
+      } else if (data.length < minLength) {
         ERROR.addIssue(
           makeError({
             code: ZodIssueCode.too_small,
@@ -620,25 +621,36 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       // const parsedTuple: any = [];
       // const tuplePromises: PseudoPromise[] = [];
 
-      PROMISE = PseudoPromise.all(
-        tupleData.map((item, index) => {
-          const itemParser = def.items[index];
-          return new PseudoPromise().then(() => {
+      // PROMISE = PseudoPromise.all();
+      const ps = [];
+      
+        for(let i=0, j=0; i<def.items.length && j<tupleData.length; i++, j++) {
+          const itemParser = def.items[i];
+          // return new PseudoPromise().then(() => {
             try {
-              return itemParser.parse(item, {
+              ps.push(itemParser.parse(tupleData[j], {
                 ...params,
-                path: [...params.path, index],
-              });
+                path: [...params.path, j],
+              }));
             } catch (err) {
-              if (err instanceof ZodError) {
-                ERROR.addIssues(err.issues);
-                return INVALID;
+              if (itemParser.isOptional()) {
+                j--
+                continue;
               }
-              throw err;
+              
+                if (err instanceof ZodError) {
+                  ERROR.addIssues(err.issues);
+                  // return INVALID;
+                }
             }
-          });
-        }),
-      );
+          // });
+        }
+
+        if (!ERROR.isEmpty)
+          THROW();
+
+       
+          PROMISE = PseudoPromise.resolve(ps);
       // for (const index in tupleData) {
       //   const item = tupleData[index];
       //   const itemParser = def.items[index];

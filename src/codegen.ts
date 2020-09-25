@@ -114,6 +114,9 @@ ${this.seen
         const tupleLines: string[] = [];
         for (const elSchema of def.items) {
           const elType = this.generate(elSchema);
+          if (elType.schema.isOptional()) {
+            elType.type = `(${elType.type})?`; console.log(elType)
+          }
           tupleLines.push(elType.id);
         }
         const baseTuple = `[\n${tupleLines

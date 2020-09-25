@@ -6,6 +6,7 @@ import {
   ZodError,
   ZodOptional,
   ZodNullable,
+  ZodUnion,
 } from '../index';
 
 import { ZodOptionalType } from './optional';
@@ -269,7 +270,8 @@ export abstract class ZodType<
   abstract toJSON: () => object;
   //  abstract // opt optional: () => any;
   optional: () => ZodOptionalType<this> = () => ZodOptional.create(this);
-  or = this.optional;
+ 
+  or: (t: ZodTypeAny) => ZodUnion<[ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]> = t => ZodUnion.create([this, t]);
 
   nullable: () => ZodNullableType<this> = () => {
     return ZodNullable.create(this) as any;
