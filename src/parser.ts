@@ -609,7 +609,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         ERROR.addIssue(
           makeError({
             code: ZodIssueCode.too_small,
-            minimum: def.items.length,
+            minimum: minLength,
             inclusive: true,
             type: 'array',
           }),
