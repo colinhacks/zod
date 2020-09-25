@@ -55,7 +55,7 @@ export interface ZodTupleDef<
 }
 
 export class ZodTuple<
-  T extends readonly [z.ZodTypeAny, ...z.ZodTypeAny[]] | readonly [] = [
+  T extends readonly [z.ZodTypeAny, ...z.ZodTypeAny[]] | readonly [] = readonly [
     z.ZodTypeAny,
     ...z.ZodTypeAny[],
   ]

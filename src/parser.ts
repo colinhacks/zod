@@ -633,7 +633,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
                 path: [...params.path, j],
               }));
             } catch (err) {
-              if (itemParser.isOptional()) {
+              if (i< def.items.length-1 && itemParser.isOptional()) {
                 j--
                 continue;
               }
