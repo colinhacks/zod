@@ -60,20 +60,25 @@ test('default', () => {
 });
 
 test('default when property is null or undefined', () => {
-  const data = z.object({
-    foo: z.boolean().nullable().default(true),
-    bar: z.boolean().default(true)
-  }).parse({ foo: null });
+  const data = z
+    .object({
+      foo: z
+        .boolean()
+        .nullable()
+        .default(true),
+      bar: z.boolean().default(true),
+    })
+    .parse({ foo: null });
 
-  expect(data).toEqual({ foo: true, bar: true });
+  expect(data).toEqual({ foo: null, bar: true });
 });
 
 test('default with falsy values', () => {
   const schema = z.object({
     emptyStr: z.string().default('def'),
     zero: z.number().default(5),
-    falseBoolean: z.boolean().default(true)
-  })
+    falseBoolean: z.boolean().default(true),
+  });
   const input = { emptyStr: '', zero: 0, falseBoolean: true };
   const output = schema.parse(input);
   // defaults are not supposed to be used
