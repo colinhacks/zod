@@ -227,10 +227,10 @@ If you don't want Zod to throw when validation errors occur, you can use `.safeP
 
 ```ts
 stringSchema.safeParse(12);
-// => { successs: false; error: ZodError }
+// => { success: false; error: ZodError }
 
 stringSchema.safeParse('billie');
-// => { successs: true; data: 'billie' }
+// => { success: true; data: 'billie' }
 ```
 
 Because the result is a _discriminated union_ you can handle errors very conveniently:
