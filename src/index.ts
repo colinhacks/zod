@@ -36,7 +36,7 @@ import {
   ZodTypes,
 } from './types/base';
 
-// import { ZodError, ZodIssueCode } from './ZodError';
+// export { ZodIssueCode } from './ZodError';
 
 import { ZodParsedType } from './parser';
 import { ZodErrorMap } from './defaultErrorMap';

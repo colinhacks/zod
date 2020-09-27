@@ -143,8 +143,8 @@ export class ZodObject<
   Catchall extends z.ZodTypeAny = z.ZodTypeAny,
   // Params extends ZodObjectParams = { strict: true },
   // Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
-  Output extends objectOutputType<T, Catchall> = objectOutputType<T, Catchall>,
-  Input extends objectInputType<T, Catchall> = objectInputType<T, Catchall>
+  Output = objectOutputType<T, Catchall>,
+  Input = objectInputType<T, Catchall>
 > extends z.ZodType<
   //  objectUtil.objectOutputType<T, UnknownKeys, Catchall>,
   Output,
