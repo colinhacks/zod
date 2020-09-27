@@ -367,19 +367,36 @@ export const ZodParser = (schema: z.ZodType<any>) => (
 
       for (const key of shapeKeys) {
         const keyValidator = shapeKeys.includes(key)
-          ? def.shape()[key]
+          ? shape[key]
           : !(def.catchall instanceof ZodNever)
           ? def.catchall
           : undefined;
 
         if (!keyValidator) continue;
 
+        // check if schema and value are both optional
+        try {
+          keyValidator.parse(undefined, {
+            ...params,
+            path: [...params.path, key],
+          });
+
+          // const keyDataType = getParsedType(data[key]);
+          if (!Object.keys(data).includes(key)) {
+            // schema is optional
+            // data is undefined
+            // don't explicity add undefined to outut
+            continue;
+          }
+        } catch (err) {}
+
         objectPromises[key] = new PseudoPromise().then(() => {
           try {
-            return keyValidator.parse(data[key], {
+            const parsedValue = keyValidator.parse(data[key], {
               ...params,
               path: [...params.path, key],
             });
+            return parsedValue;
           } catch (err) {
             if (err instanceof ZodError) {
               const zerr: ZodError = err;
