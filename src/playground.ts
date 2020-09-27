@@ -1,17 +1,30 @@
 import * as z from '.';
-// import { Scalars } from './helpers/primitive';
 
-const obj = z.object({
-  primitiveTuple: z.tuple([z.string(), z.number()]),
-  nonprimitiveTuple: z.tuple([z.string(), z.number().array()]),
-});
+const run = async () => {
+  const SNamedEntity = z.object({
+    id: z.string(),
+    set: z.string().optional(),
+    unset: z.string().optional(),
+  });
+  const result = await SNamedEntity.parse({
+    id: 'asdf',
+    set: undefined,
+  });
+  console.log(result);
+  console.log(Object.keys(result));
+};
+run();
 
-type obj = z.infer<typeof obj>;
+// export const T = z.object({
+//   test: z.string().optional(),
+// });
 
-const prim = obj.primitives();
-console.log(prim.shape);
-const nonprim = obj.nonprimitives();
-console.log(nonprim.shape);
-// .primitives();
+// console.log(T.safeParse({}));
 
-// type t1 = [[string, number]] extends [Scalars] ? true : false;
+// const r = T.safeParse({});
+
+// if (r.success) {
+//   console.log(JSON.stringify(r.data));
+// }
+
+// console.log(JSON.stringify({ test: undefined, test2: undefined }, null, 2));
