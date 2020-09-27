@@ -375,20 +375,22 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         if (!keyValidator) continue;
 
         // check if schema and value are both optional
-        try {
-          keyValidator.parse(undefined, {
-            ...params,
-            path: [...params.path, key],
-          });
 
-          // const keyDataType = getParsedType(data[key]);
-          if (!Object.keys(data).includes(key)) {
-            // schema is optional
-            // data is undefined
-            // don't explicity add undefined to outut
-            continue;
-          }
-        } catch (err) {}
+        // const keyDataType = getParsedType(data[key]);
+        if (!Object.keys(data).includes(key)) {
+          try {
+            const output = keyValidator.parse(undefined, {
+              ...params,
+              path: [...params.path, key],
+            });
+            if (output === undefined) {
+              // schema is optional
+              // data is undefined
+              // don't explicity add undefined to outut
+              continue;
+            }
+          } catch (err) {}
+        }
 
         objectPromises[key] = new PseudoPromise().then(() => {
           try {

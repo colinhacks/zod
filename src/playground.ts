@@ -1,17 +1,17 @@
 import * as z from '.';
 
 const run = async () => {
-  const SNamedEntity = z.object({
-    id: z.string(),
-    set: z.string().optional(),
-    unset: z.string().optional(),
-  });
-  const result = await SNamedEntity.parse({
-    id: 'asdf',
-    set: undefined,
-  });
-  console.log(result);
-  console.log(Object.keys(result));
+  const data = z
+    .object({
+      foo: z
+        .boolean()
+        .nullable()
+        .default(true),
+      bar: z.boolean().default(true),
+    })
+    .parse({ foo: null });
+
+  console.log(data);
 };
 run();
 

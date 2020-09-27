@@ -324,7 +324,7 @@ export abstract class ZodType<
     def: T,
   ) => ZodTransformer<Opt, this> = def => {
     return ZodTransformer.create(this.optional(), this, (x: any) => {
-      return (x || def) as any;
+      return x === undefined ? def : x;
     }) as any;
   };
 
