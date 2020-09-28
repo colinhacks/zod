@@ -85,6 +85,15 @@ I work on Zod in my free time, so if you're making money from a product that is 
       <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
       <br />
     </td>
+    <td align="center">
+      <a href="https://www.bamboocreative.nz/">
+        <img src="https://avatars1.githubusercontent.com/u/41406870?s=460&v=4" width="100px;" alt="" />
+      </a>
+      <br>
+      <b>Bamboo Creative</b>
+      <br>
+      <a href="https://www.bamboocreative.nz/">https://bamboocreative.nz</a>
+    </td>
   </tr>
 </table>
 
