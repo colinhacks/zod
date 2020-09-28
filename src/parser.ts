@@ -34,6 +34,9 @@ export const getParsedType = (data: any): ZodParsedType => {
     ) {
       return 'promise';
     }
+    if (data instanceof Map) {
+      return 'map';
+    }
     return 'object';
   }
   return 'unknown';
@@ -57,6 +60,7 @@ export const ZodParsedType = util.arrayToEnum([
   'promise',
   'void',
   'never',
+  'map',
 ]);
 
 export type ZodParsedType = keyof typeof ZodParsedType;
@@ -98,7 +102,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       ...errorData,
       path: [...params.path, ...(errorData.path || [])],
     };
-    const ctxArg = { data: data };
+    const ctxArg = { data };
 
     const defaultError =
       defaultErrorMap === params.errorMap
@@ -345,6 +349,65 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       //   THROW();
       // }
       break;
+    case z.ZodTypes.map:
+      if (parsedType !== ZodParsedType.map) {
+        ERROR.addIssue(
+          makeError({
+            code: ZodIssueCode.invalid_type,
+            expected: ZodParsedType.map,
+            received: parsedType,
+          }),
+        );
+        THROW();
+      }
+      const dataMap: Map<unknown, unknown> = data;
+
+      PROMISE = PseudoPromise.all(
+        [...dataMap.entries()].map(([key, value], index) => {
+          const promises = [];
+
+          try {
+            promises.push(
+              PseudoPromise.resolve(
+                def.keyType.parse(key, {
+                  ...params,
+                  path: [...params.path, index, 'key'],
+                }),
+              ),
+            );
+          } catch (err) {
+            if (err instanceof ZodError) {
+              const zerr: ZodError = err;
+              ERROR.addIssues(zerr.issues);
+              promises.push(PseudoPromise.resolve(INVALID));
+            } else {
+              throw err;
+            }
+          }
+
+          try {
+            promises.push(
+              PseudoPromise.resolve(
+                def.valueType.parse(value, {
+                  ...params,
+                  path: [...params.path, index, 'value'],
+                }),
+              ),
+            );
+          } catch (err) {
+            if (err instanceof ZodError) {
+              const zerr: ZodError = err;
+              ERROR.addIssues(zerr.issues);
+              promises.push(PseudoPromise.resolve(INVALID));
+            } else {
+              throw err;
+            }
+          }
+
+          return PseudoPromise.all(promises);
+        }),
+      );
+      break;
     case z.ZodTypes.object:
       RESULT.output = {};
       if (parsedType !== ZodParsedType.object) {
@@ -477,7 +540,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
               ERROR.addIssue(
                 makeError({
                   code: ZodIssueCode.invalid_union,
-                  unionErrors: unionErrors,
+                  unionErrors,
                 }),
               );
             }

@@ -73,6 +73,9 @@ export const isScalar = (
     case z.ZodTypes.record:
       returnValue = false;
       break;
+    case z.ZodTypes.map:
+      returnValue = false;
+      break;
     case z.ZodTypes.date:
       returnValue = true;
       break;
