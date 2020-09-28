@@ -22,7 +22,18 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- <br/> -->
 
-**Zod 2 is in an early beta.** Upgrade with `yarn add zod@beta`. Read more about the new features and migration process here: https://github.com/vriad/zod/tree/v2.
+<!-- **Zod 2 is in an early beta.** Upgrade with `yarn add zod@beta`. Read more about the new features and migration process here: https://github.com/vriad/zod/tree/v2. -->
+
+### Zod 2 is now in beta!
+
+You should be able to upgrade from v1 to v2 without any breaking changes to your code. Zod 2 is recommended for all new projects.
+
+```
+npm install zod@beta
+yarn add zod@beta
+```
+
+Check out the documentation and a simple migration guide here: https://github.com/vriad/zod/tree/v2
 
 <!-- **Aug 30 — zod@1.11 was released with lots of cool features!** -->
 
