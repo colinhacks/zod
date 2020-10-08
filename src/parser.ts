@@ -476,15 +476,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         // setError(error);
         throw error;
       }
-      return new Promise(async (res, rej) => {
-        const objValue = await obj;
-        try {
-          const parsed = def.type.parse(objValue, params);
-          res(parsed);
-        } catch (err) {
-          rej(err);
-        }
-      });
+      return obj.then((objValue) => def.type.parse(objValue, params));
 
     default:
       util.assertNever(def);
