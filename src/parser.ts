@@ -435,7 +435,8 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       PROMISE = PseudoPromise.object(objectPromises).then(resolvedObject => {
         Object.assign(RESULT.output, resolvedObject);
         return RESULT.output;
-      }).catch(err => {
+      })
+      .catch(err => {
         if (err instanceof ZodError) {
           ERROR.addIssues(err.issues);
         } 

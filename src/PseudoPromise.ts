@@ -64,21 +64,42 @@ export class PseudoPromise<ReturnType = undefined> {
           // const asyncValue: any = {};
           const items = await Promise.all(
             Object.keys(pps).map(async k => {
-              // try {
-                const x = pps[k].getValueAsync();
-                const v = await x;
+              try {
+                const v = await pps[k].getValueAsync();
                 return [k, v] as [string, any];
-            }),
+              } catch (err) {
+                if (err instanceof ZodError) {
+                  return [k, err] as [string, ZodError];
+                };
+
+                throw err;
+              }
+            })
           );
           // const resolvedItems = await Promise.all(
           //   items.map(async item => [item[0], await item[1]]),
           // );
 
-          for (const item of items) {
-            value[item[0]] = item[1];
-          }
+          const filtered: any = items
+              .filter(entry => {
+                return (entry[1] instanceof ZodError)
+              })
 
-          return value;
+          if (filtered.length > 0) {
+            const all_issues = filtered.reduce((acc: any[], val: [string, ZodError]) => {
+              const error = val[1]
+              return acc.concat(error.issues)
+            }, [])
+            const base = filtered[0][1];
+            base.issues = all_issues
+            throw base
+          } else {
+            for (const item of items) {
+              value[item[0]] = item[1];
+            }
+
+            return value;
+          }
         };
         return getAsyncObject();
       } else {

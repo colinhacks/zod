@@ -359,7 +359,41 @@ test('transformer async parse', async () => {
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
 
-test('async validation multiple errors', async () => {
+test('async validation non-empty strings', async () => {
+  const base = z.object({
+    hello: z.string().refine(x => x && x.length > 0),
+    foo: z.string().refine(x => x && x.length > 0)
+  })
+
+  const testval = {hello: '', foo: ''}
+  const result1 = base.safeParse(testval)
+  const result2 = base.safeParseAsync(testval)
+  
+  const r1 = result1
+  return result2.then(r2 => {
+    if (r1.success === false && r2.success === false) 
+      expect(r1.error.issues.length).toBe(r2.error.issues.length) // <--- r1 has length 2, r2 has length 1
+  });
+});
+
+test('async validation multiple errors 1', async () => {
+  const base = z.object({
+    hello: z.string(),
+    foo: z.number()
+  })
+
+  const testval = {hello: 3, foo: "hello"}
+  const result1 = base.safeParse(testval)
+  const result2 = base.safeParseAsync(testval)
+  
+  const r1 = result1
+  return result2.then(r2 => {
+    if (r1.success === false && r2.success === false) 
+      expect(r1.error.issues.length).toBe(r2.error.issues.length)
+  });
+});
+
+test('async validation multiple errors 2', async () => {
   const base = (is_async?: boolean) => z.object({
     hello: z.string(),
     foo: z.object({
@@ -374,7 +408,7 @@ test('async validation multiple errors', async () => {
   const r1 = result1
   return result2.then(r2 => {
     if (r1.success === false && r2.success === false) 
-      expect(r1.error.issues.length).toBe(r2.error.issues.length) // <--- r1 has length 2, r2 has length 1
+      expect(r1.error.issues.length).toBe(r2.error.issues.length)
   });
 });
 
