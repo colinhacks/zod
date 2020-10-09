@@ -358,3 +358,23 @@ test('transformer async parse', async () => {
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
+
+test('async validation multiple errors', async () => {
+  const base = (is_async?: boolean) => z.object({
+    hello: z.string(),
+    foo: z.object({
+      bar: z.number().refine(is_async ? async () => false : () => false)
+    })
+  })
+
+  const testval = {hello: 3, foo: {bar: 4}}
+  const result1 = base().safeParse(testval)
+  const result2 = base(true).safeParseAsync(testval)
+  
+  const r1 = result1
+  return result2.then(r2 => {
+    if (r1.success === false && r2.success === false) 
+      expect(r1.error.issues.length).toBe(r2.error.issues.length) // <--- r1 has length 2, r2 has length 1
+  });
+});
+
