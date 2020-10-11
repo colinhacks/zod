@@ -389,7 +389,7 @@ test('async validation multiple errors 1', async () => {
   const r1 = result1
   return result2.then(r2 => {
     if (r1.success === false && r2.success === false) 
-      expect(r1.error.issues.length).toBe(r2.error.issues.length)
+      expect(r2.error.issues.length).toBe(r1.error.issues.length)
   });
 });
 
@@ -408,7 +408,33 @@ test('async validation multiple errors 2', async () => {
   const r1 = result1
   return result2.then(r2 => {
     if (r1.success === false && r2.success === false) 
-      expect(r1.error.issues.length).toBe(r2.error.issues.length)
+      expect(r2.error.issues.length).toBe(r1.error.issues.length)
+  });
+});
+
+test('ensure early async failure prevents follow-up refinement checks', async () => {
+  let count = 0;
+  const base = z.object({
+    hello: z.string(),
+    foo: z.number()
+      .refine(async () => { 
+        count++; 
+        return false; 
+      })
+      .refine(async () => { 
+        count++
+        return true
+      })
+      
+  })
+
+  const testval = {hello: "bye", foo: 3}
+  const result = base.safeParseAsync(testval)
+
+  return result.then(r => {
+    if (r.success === false) 
+      expect(r.error.issues.length).toBe(1)
+      expect(count).toBe(1)
   });
 });
 
