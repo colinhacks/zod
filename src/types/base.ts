@@ -62,7 +62,7 @@ export const outputSchema = (schema: ZodType<any>): ZodType<any> => {
 };
 
 type InternalCheck<T> = {
-  check: (arg: T, ctx: { addIssue: (arg: MakeErrorData) => void }) => any;
+  check: (arg: T, ctx: { addIssue: (arg: MakeErrorData) => void }, path: (string | number)[]) => any;
   // refinementError: (arg: T) => MakeErrorData;
 };
 
@@ -173,7 +173,7 @@ export abstract class ZodType<
     }
   }
 
-  refine = <Func extends (arg: Output) => any>(
+  refine = <Func extends (arg: Output, ctx: any, path: (string | number)[]) => any>(
     check: Func,
     message:
       | string
@@ -181,8 +181,8 @@ export abstract class ZodType<
       | ((arg: Output) => CustomErrorParams) = 'Invalid value.',
   ) => {
     if (typeof message === 'string') {
-      return this._refinement((val, ctx) => {
-        const result = check(val);
+      return this._refinement((val, ctx, path) => {
+        const result = check(val, ctx, path);
         const setError = () =>
           ctx.addIssue({
             code: ZodIssueCode.custom,
@@ -200,8 +200,8 @@ export abstract class ZodType<
       });
     }
     if (typeof message === 'function') {
-      return this._refinement((val, ctx) => {
-        const result = check(val);
+      return this._refinement((val, ctx, path) => {
+        const result = check(val, ctx, path);
         const setError = () =>
           ctx.addIssue({
             code: ZodIssueCode.custom,
@@ -218,8 +218,8 @@ export abstract class ZodType<
         }
       });
     }
-    return this._refinement((val, ctx) => {
-      const result = check(val);
+    return this._refinement((val, ctx, path) => {
+      const result = check(val, ctx, path);
       const setError = () =>
         ctx.addIssue({
           code: ZodIssueCode.custom,
@@ -239,11 +239,11 @@ export abstract class ZodType<
   };
 
   refinement = (
-    check: (arg: Output) => any,
+    check: (arg: Output, ctx: any, path: (string | number)[]) => any,
     refinementData: MakeErrorData | ((arg: Output) => MakeErrorData),
   ) => {
-    return this._refinement((val, ctx) => {
-      if (!check(val)) {
+    return this._refinement((val, ctx, path) => {
+      if (!check(val, ctx, path)) {
         ctx.addIssue(
           typeof refinementData === 'function'
             ? refinementData(val)
