@@ -1,18 +1,19 @@
 import * as z from '.';
 
 const run = async () => {
-  const data = z
-    .object({
-      foo: z
-        .boolean()
-        .nullable()
-        .default(true),
-      bar: z.boolean().default(true),
-    })
-    .parse({ foo: null });
-
-  console.log(data);
+  const base = z.object({
+    hello: z.string(),
+    foo: z.number().refine(
+      async () => {
+        return false;
+      },
+      { message: 'invalid' },
+    ),
+  });
+  const result = await base.safeParseAsync({ hello: 3, foo: 3 });
+  console.log(result);
 };
+
 run();
 
 // export const T = z.object({

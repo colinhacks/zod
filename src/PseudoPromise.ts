@@ -1,13 +1,16 @@
-import {
-  ZodError
-} from './ZodError';
-type Func = (...args: any[]) => any;
-type FunctionTuples = ([string, Func])[];
+import { ZodError } from './ZodError';
+
+type Func = (arg: any, ctx: { async: boolean }) => any;
+type FuncItem = { type: 'function'; function: Func };
+type Catcher = (error: Error, ctx: { async: boolean }) => any;
+type CatcherItem = { type: 'catcher'; catcher: Catcher };
+type Items = (FuncItem | CatcherItem)[];
+
 export class PseudoPromise<ReturnType = undefined> {
   readonly _return: ReturnType;
-  functionTuples: FunctionTuples;
-  constructor(funcs: FunctionTuples = []) {
-    this.functionTuples = funcs;
+  items: Items;
+  constructor(funcs: Items = []) {
+    this.items = funcs;
   }
 
   static all = <T extends PseudoPromise<any>[]>(pps: T) => {
@@ -70,29 +73,31 @@ export class PseudoPromise<ReturnType = undefined> {
               } catch (err) {
                 if (err instanceof ZodError) {
                   return [k, err] as [string, ZodError];
-                };
+                }
 
                 throw err;
               }
-            })
+            }),
           );
           // const resolvedItems = await Promise.all(
           //   items.map(async item => [item[0], await item[1]]),
           // );
 
-          const filtered: any = items
-              .filter(entry => {
-                return (entry[1] instanceof ZodError)
-              })
+          const filtered: any = items.filter(entry => {
+            return entry[1] instanceof ZodError;
+          });
 
           if (filtered.length > 0) {
-            const all_issues = filtered.reduce((acc: any[], val: [string, ZodError]) => {
-              const error = val[1]
-              return acc.concat(error.issues)
-            }, [])
+            const all_issues = filtered.reduce(
+              (acc: any[], val: [string, ZodError]) => {
+                const error = val[1];
+                return acc.concat(error.issues);
+              },
+              [],
+            );
             const base = filtered[0][1];
-            base.issues = all_issues
-            throw base
+            base.issues = all_issues;
+            throw base;
           } else {
             for (const item of items) {
               value[item[0]] = item[1];
@@ -126,13 +131,19 @@ export class PseudoPromise<ReturnType = undefined> {
   then = <NewReturn>(
     func: (arg: ReturnType, ctx: { async: boolean }) => NewReturn,
   ): PseudoPromise<NewReturn extends Promise<infer U> ? U : NewReturn> => {
-    return new PseudoPromise([...this.functionTuples, ['t', func]]);
+    return new PseudoPromise([
+      ...this.items,
+      { type: 'function', function: func },
+    ]);
   };
 
   catch = <NewReturn>(
-    func: (err: ZodError | any, ctx: { async: boolean }) => NewReturn,
+    func: (err: Error, ctx: { async: boolean }) => NewReturn,
   ): PseudoPromise<NewReturn extends Promise<infer U> ? U : NewReturn> => {
-    return new PseudoPromise([...this.functionTuples, ['c', func]]);
+    return new PseudoPromise([
+      ...this.items,
+      { type: 'catcher', catcher: func },
+    ]);
   };
 
   // getValue = (
@@ -152,9 +163,9 @@ export class PseudoPromise<ReturnType = undefined> {
     // // if (this._cached.value) return this._cached.value;
     let val: any = undefined;
 
-    for (const [t, f] of this.functionTuples) {
-      if (t === 't') {
-        val = f(val, { async: false });
+    for (const item of this.items) {
+      if (item.type === 'function') {
+        val = item.function(val, { async: false });
       }
 
       // if (val instanceof Promise && allowPromises === false) {
@@ -165,24 +176,27 @@ export class PseudoPromise<ReturnType = undefined> {
     return val;
   };
 
-  getValueAsync: Function = async (that: PseudoPromise<any> = this) => {
+  getValueAsync: Function = async () => {
     // // if (this._cached.value) return this._cached.value;
     let val: any = undefined;
-    
-    for (let index = 0; index < that.functionTuples.length; index++) {
-      const [t, f] = that.functionTuples[index];
+
+    for (let index = 0; index < this.items.length; index++) {
+      const item = this.items[index];
       try {
-        if (t === 't') {
-          val = await f(val, { async: true }); 
+        if (item.type === 'function') {
+          val = await item.function(val, { async: true });
         }
       } catch (err) {
-        const cIndex = that.functionTuples.findIndex((x, i) => x[0] === 'c' && i > index);
+        const catcherIndex = this.items.findIndex(
+          (x, i) => x.type === 'catcher' && i > index,
+        );
 
-        if (cIndex > -1) {
-          val = await that.functionTuples[cIndex][1](err);
-          index = cIndex;
-        } else {
+        const catcherItem = this.items[catcherIndex];
+        console.log(catcherItem);
+        if (!catcherItem || catcherItem.type !== 'catcher') {
           throw err;
+        } else {
+          val = await catcherItem.catcher(err, { async: true });
         }
       }
 

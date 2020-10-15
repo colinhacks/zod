@@ -432,17 +432,18 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         }
       }
 
-      PROMISE = PseudoPromise.object(objectPromises).then(resolvedObject => {
-        Object.assign(RESULT.output, resolvedObject);
-        return RESULT.output;
-      })
-      .catch(err => {
-        if (err instanceof ZodError) {
-          ERROR.addIssues(err.issues);
-        } 
+      PROMISE = PseudoPromise.object(objectPromises)
+        .then(resolvedObject => {
+          Object.assign(RESULT.output, resolvedObject);
+          return RESULT.output;
+        })
+        .catch(err => {
+          if (err instanceof ZodError) {
+            ERROR.addIssues(err.issues);
+          }
 
-        return INVALID;
-      });
+          return INVALID;
+        });
 
       break;
     case z.ZodTypes.union:
@@ -970,17 +971,17 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     // if (params.async == true) {
     const checker = async () => {
       let resolvedValue = await PROMISE.getValueAsync();
- 
+
       if (resolvedValue !== INVALID) {
-        let someError: boolean = false;
+        // let someError: boolean = false;
         await customChecks.reduce((previousPromise, check) => {
           return previousPromise.then(async () => {
-            if (!someError) {
-              const len = ERROR.issues.length;
-              await check.check(resolvedValue, checkCtx);
-              if (len < ERROR.issues.length)
-                someError = true;
-            }
+            // if (!someError) {
+            // const len = ERROR.issues.length;
+            await check.check(resolvedValue, checkCtx);
+            // if (len < ERROR.issues.length)
+            // someError = true;
+            // }
           });
         }, Promise.resolve());
       }
@@ -997,7 +998,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       //       // }
       //     }),
       //   );
-      // } 
+      // }
       else {
         if (ERROR.isEmpty) {
           ERROR.addIssue(
