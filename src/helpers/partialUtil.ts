@@ -12,7 +12,7 @@ export namespace partialUtil {
           T['_catchall']
         >
       : never;
-    rest: ReturnType<T['optional']>; //z.ZodOptional<T>;
+    rest: ReturnType<T['optional']>; // z.ZodOptional<T>;
   }[T extends z.ZodObject<any>
     ? 'object' // T extends z.ZodOptional<any> // ? 'optional' // :
     : 'rest'];
@@ -20,9 +20,13 @@ export namespace partialUtil {
   export type DeepPartial<T extends z.ZodTypeAny> = {
     // optional: T extends z.ZodOptional<z.ZodTypeAny> ? T : z.ZodOptional<T>;
     // array: T extends z.ZodArray<infer Type> ? z.ZodArray<DeepPartial<Type>> : never;
-    object: T extends z.ZodObject<infer Shape, infer Params>
+    object: T extends z.ZodObject<infer Shape, infer Params, infer Catchall>
       ? z.ZodOptional<
-          z.ZodObject<{ [k in keyof Shape]: DeepPartial<Shape[k]> }, Params>
+          z.ZodObject<
+            { [k in keyof Shape]: DeepPartial<Shape[k]> },
+            Params,
+            Catchall
+          >
         >
       : never;
     rest: ReturnType<T['optional']>;
