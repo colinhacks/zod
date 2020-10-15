@@ -972,34 +972,33 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     const checker = async () => {
       let resolvedValue = await PROMISE.getValueAsync();
 
-      if (resolvedValue !== INVALID) {
-        // let someError: boolean = false;
-        await customChecks.reduce((previousPromise, check) => {
-          return previousPromise.then(async () => {
-            // if (!someError) {
-            // const len = ERROR.issues.length;
-            await check.check(resolvedValue, checkCtx);
-            // if (len < ERROR.issues.length)
-            // someError = true;
-            // }
-          });
-        }, Promise.resolve());
-      }
       // if (resolvedValue !== INVALID) {
-      //   await Promise.all(
-      //     customChecks.map(async check => {
+      //   // let someError: boolean = false;
+      //   await customChecks.reduce((previousPromise, check) => {
+      //     return previousPromise.then(async () => {
+      //       // if (!someError) {
+      //       // const len = ERROR.issues.length;
       //       await check.check(resolvedValue, checkCtx);
-      //         if (ERROR.issues.length > len) someError = true;
-      //       }
-      //       // if (!checkResult) {
-      //       //   const { check: checkMethod, ...noMethodCheck } = check;
-      //       //   ERROR.addIssue(makeError(noMethodCheck));
-      //       // } else {
+      //       // if (len < ERROR.issues.length)
+      //       // someError = true;
       //       // }
-      //     }),
-      //   );
+      //     });
+      //   }, Promise.resolve());
       // }
-      else {
+      if (resolvedValue !== INVALID) {
+        await Promise.all(
+          customChecks.map(async check => {
+            await check.check(resolvedValue, checkCtx);
+            // if (ERROR.issues.length > len) someError = true;
+            // }
+            // if (!checkResult) {
+            //   const { check: checkMethod, ...noMethodCheck } = check;
+            //   ERROR.addIssue(makeError(noMethodCheck));
+            // } else {
+            // }
+          }),
+        );
+      } else {
         if (ERROR.isEmpty) {
           ERROR.addIssue(
             makeError({
