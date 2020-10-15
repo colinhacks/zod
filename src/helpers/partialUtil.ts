@@ -1,7 +1,6 @@
 import * as z from '../index';
 import { AnyZodObject } from '../types/object';
 
-// tslint:disable-next-line: no-namespace
 export namespace partialUtil {
   export type RootDeepPartial<T extends z.ZodTypeAny> = {
     // optional: T extends z.ZodOptional<z.ZodTypeAny> ? T : z.ZodOptional<T>;
@@ -23,7 +22,11 @@ export namespace partialUtil {
     // array: T extends z.ZodArray<infer Type> ? z.ZodArray<DeepPartial<Type>> : never;
     object: T extends z.ZodObject<infer Shape, infer Params, infer Catchall>
       ? z.ZodOptional<
-          z.ZodObject<{ [k in keyof Shape]: DeepPartial<Shape[k]> }, Params, Catchall>
+          z.ZodObject<
+            { [k in keyof Shape]: DeepPartial<Shape[k]> },
+            Params,
+            Catchall
+          >
         >
       : never;
     rest: ReturnType<T['optional']>;
