@@ -1,17 +1,39 @@
 import * as z from '.';
 
 const run = async () => {
+  let count = 0;
+
   const base = z.object({
     hello: z.string(),
-    foo: z.number().refine(
-      async () => {
+    foo: z
+      .number()
+      .refine(async () => {
+        count++;
         return false;
-      },
-      { message: 'invalid' },
-    ),
+      })
+      .refine(async () => {
+        count++;
+        return false;
+      }),
   });
-  const result = await base.safeParseAsync({ hello: 3, foo: 3 });
-  console.log(result);
+
+  const testval = { hello: 'bye', foo: 3 };
+  const result1 = await base.safeParseAsync(testval);
+  const result2 = await base.safeParseAsync(testval, {
+    runAsyncValidationsInSeries: true,
+  });
+
+  if (result1.success === false) {
+    console.log(`count: ${count}`);
+    console.log(`issues: ${result1.error.issues.length}`);
+    console.log(result1);
+  }
+
+  if (result2.success === false) {
+    console.log(`count: ${count}`);
+    console.log(`issues: ${result2.error.issues.length}`);
+    console.log(result2);
+  }
 };
 
 run();
