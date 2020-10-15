@@ -1,10 +1,13 @@
+import {
+  ZodError
+} from './ZodError';
 type Func = (...args: any[]) => any;
-type Functions = Func[];
+type FunctionTuples = ([string, Func])[];
 export class PseudoPromise<ReturnType = undefined> {
   readonly _return: ReturnType;
-  functions: Functions;
-  constructor(funcs: Functions = []) {
-    this.functions = funcs;
+  functionTuples: FunctionTuples;
+  constructor(funcs: FunctionTuples = []) {
+    this.functionTuples = funcs;
   }
 
   static all = <T extends PseudoPromise<any>[]>(pps: T) => {
@@ -61,19 +64,42 @@ export class PseudoPromise<ReturnType = undefined> {
           // const asyncValue: any = {};
           const items = await Promise.all(
             Object.keys(pps).map(async k => {
-              const v = await pps[k].getValueAsync();
-              return [k, v] as [string, any];
-            }),
+              try {
+                const v = await pps[k].getValueAsync();
+                return [k, v] as [string, any];
+              } catch (err) {
+                if (err instanceof ZodError) {
+                  return [k, err] as [string, ZodError];
+                };
+
+                throw err;
+              }
+            })
           );
           // const resolvedItems = await Promise.all(
           //   items.map(async item => [item[0], await item[1]]),
           // );
 
-          for (const item of items) {
-            value[item[0]] = item[1];
-          }
+          const filtered: any = items
+              .filter(entry => {
+                return (entry[1] instanceof ZodError)
+              })
 
-          return value;
+          if (filtered.length > 0) {
+            const all_issues = filtered.reduce((acc: any[], val: [string, ZodError]) => {
+              const error = val[1]
+              return acc.concat(error.issues)
+            }, [])
+            const base = filtered[0][1];
+            base.issues = all_issues
+            throw base
+          } else {
+            for (const item of items) {
+              value[item[0]] = item[1];
+            }
+
+            return value;
+          }
         };
         return getAsyncObject();
       } else {
@@ -100,7 +126,13 @@ export class PseudoPromise<ReturnType = undefined> {
   then = <NewReturn>(
     func: (arg: ReturnType, ctx: { async: boolean }) => NewReturn,
   ): PseudoPromise<NewReturn extends Promise<infer U> ? U : NewReturn> => {
-    return new PseudoPromise([...this.functions, func]);
+    return new PseudoPromise([...this.functionTuples, ['t', func]]);
+  };
+
+  catch = <NewReturn>(
+    func: (err: ZodError | any, ctx: { async: boolean }) => NewReturn,
+  ): PseudoPromise<NewReturn extends Promise<infer U> ? U : NewReturn> => {
+    return new PseudoPromise([...this.functionTuples, ['c', func]]);
   };
 
   // getValue = (
@@ -120,8 +152,10 @@ export class PseudoPromise<ReturnType = undefined> {
     // // if (this._cached.value) return this._cached.value;
     let val: any = undefined;
 
-    for (const f of this.functions) {
-      val = f(val, { async: false });
+    for (const [t, f] of this.functionTuples) {
+      if (t === 't') {
+        val = f(val, { async: false });
+      }
 
       // if (val instanceof Promise && allowPromises === false) {
       //   throw new Error('found_promise');
@@ -131,31 +165,42 @@ export class PseudoPromise<ReturnType = undefined> {
     return val;
   };
 
-  getValueAsync = async () => {
-    try {
-      // // if (this._cached.value) return this._cached.value;
-      let val: any = undefined;
-      for (const f of this.functions) {
-        val = await f(val, { async: true });
+  getValueAsync: Function = async (that: PseudoPromise<any> = this) => {
+    // // if (this._cached.value) return this._cached.value;
+    let val: any = undefined;
+    
+    for (let index = 0; index < that.functionTuples.length; index++) {
+      const [t, f] = that.functionTuples[index];
+      try {
+        if (t === 't') {
+          val = await f(val, { async: true }); 
+        }
+      } catch (err) {
+        const cIndex = that.functionTuples.findIndex((x, i) => x[0] === 'c' && i > index);
 
-        if (val instanceof PseudoPromise) {
-          throw new Error('DO NOT RETURN PSEUDOPROMISE FROM FUNCTIONS');
+        if (cIndex > -1) {
+          val = await that.functionTuples[cIndex][1](err);
+          index = cIndex;
+        } else {
+          throw err;
         }
-        if (val instanceof Promise) {
-          throw new Error('DO NOT RETURN PROMISE FROM FUNCTIONS');
-        }
-        // while (!!val.then) {
-        //   if (val instanceof PseudoPromise) {
-        //     val = await val.toPromise();
-        //   } else {
-        //     val = await val;
-        //   }
-        // }
       }
-      // this._cached.value = val;
-      return val;
-    } catch (err) {
-      throw err;
+
+      if (val instanceof PseudoPromise) {
+        throw new Error('DO NOT RETURN PSEUDOPROMISE FROM FUNCTIONS');
+      }
+      if (val instanceof Promise) {
+        throw new Error('DO NOT RETURN PROMISE FROM FUNCTIONS');
+      }
+      // while (!!val.then) {
+      //   if (val instanceof PseudoPromise) {
+      //     val = await val.toPromise();
+      //   } else {
+      //     val = await val;
+      //   }
+      // }
     }
+    // this._cached.value = val;
+    return val;
   };
 }
