@@ -433,6 +433,27 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         } else {
           util.assertNever(def.unknownKeys);
         }
+      } else {
+        // run cathcall validation
+        for (const key of extraKeys) {
+          objectPromises[key] = new PseudoPromise().then(() => {
+            try {
+              const parsedValue = def.catchall.parse(data[key], {
+                ...params,
+                path: [...params.path, key],
+              });
+              return parsedValue;
+            } catch (err) {
+              if (err instanceof ZodError) {
+                const zerr: ZodError = err;
+                ERROR.addIssues(zerr.issues);
+                return INVALID;
+              } else {
+                throw err;
+              }
+            }
+          });
+        }
       }
 
       PROMISE = PseudoPromise.object(objectPromises)

@@ -220,6 +220,7 @@ export class ZodObject<
   > => {
     return new ZodObject({
       ...this._def,
+      // unknownKeys: 'passthrough',
       catchall: index,
     });
   };

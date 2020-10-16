@@ -13,7 +13,7 @@ export namespace partialUtil {
         >
       : never;
     rest: ReturnType<T['optional']>; // z.ZodOptional<T>;
-  }[T extends z.ZodObject<any>
+  }[T extends AnyZodObject
     ? 'object' // T extends z.ZodOptional<any> // ? 'optional' // :
     : 'rest'];
 
