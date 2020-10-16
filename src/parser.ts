@@ -918,10 +918,11 @@ export const ZodParser = (schema: z.ZodType<any>) => (
 
   const customChecks = def.checks || [];
 
-  const checkCtx = {
+  const checkCtx: z.RefinementCtx = {
     addIssue: (arg: MakeErrorData) => {
       ERROR.addIssue(makeError(arg));
     },
+    path: params.path,
   };
   if (params.async === false) {
     const resolvedValue = PROMISE.getValueSync();
