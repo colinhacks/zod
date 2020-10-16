@@ -160,7 +160,7 @@ export class PseudoPromise<ReturnType = undefined> {
   //   }
   // };
 
-  getValueSync = () => {
+  getValueSync = (): ReturnType => {
     // // if (this._cached.value) return this._cached.value;
     let val: any = undefined;
 
@@ -177,7 +177,7 @@ export class PseudoPromise<ReturnType = undefined> {
     return val;
   };
 
-  getValueAsync: Function = async () => {
+  getValueAsync = async (): Promise<ReturnType> => {
     // // if (this._cached.value) return this._cached.value;
     let val: any = undefined;
 
@@ -193,10 +193,11 @@ export class PseudoPromise<ReturnType = undefined> {
         );
 
         const catcherItem = this.items[catcherIndex];
-        console.log(catcherItem);
+
         if (!catcherItem || catcherItem.type !== 'catcher') {
           throw err;
         } else {
+          index = catcherIndex;
           val = await catcherItem.catcher(err, { async: true });
         }
       }
