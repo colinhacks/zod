@@ -203,7 +203,7 @@ test('catchall inference', () => {
 
 test('catchall overrides strict', () => {
   const o1 = z
-    .object({})
+    .object({ first: z.string().optional() })
     .strict()
     .catchall(z.number());
 
@@ -248,4 +248,21 @@ test('test that optional keys are unset', async () => {
     set: undefined,
   });
   expect(Object.keys(result)).toEqual(['id', 'set']);
+});
+
+test('test catchall parsing', async () => {
+  const result = z
+    .object({ name: z.string() })
+    .catchall(z.number())
+    .parse({ name: 'Foo', validExtraKey: 61 });
+
+  expect(result).toEqual({ name: 'Foo', validExtraKey: 61 });
+
+  const result2 = z
+    .object({ name: z.string() })
+    .catchall(z.number())
+    .safeParse({ name: 'Foo', validExtraKey: 61, invalid: 'asdf' });
+
+  expect(result2.success).toEqual(false);
+  return result2;
 });
