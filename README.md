@@ -1613,7 +1613,7 @@ const stringToNumber = z.transformer(
   myString => myString.length,
 );
 
-// z.infer<> gives the return type
+// ⚠️ Important: z.infer gives the return type!!
 type type = z.infer<stringToNumber>; // number
 
 // it is equivalent to z.output<>

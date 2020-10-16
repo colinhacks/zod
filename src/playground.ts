@@ -1,18 +1,41 @@
 import * as z from '.';
 
 const run = async () => {
-  const data = z
-    .object({
-      foo: z
-        .boolean()
-        .nullable()
-        .default(true),
-      bar: z.boolean().default(true),
-    })
-    .parse({ foo: null });
+  let count = 0;
 
-  console.log(data);
+  const base = z.object({
+    hello: z.string(),
+    foo: z
+      .number()
+      .refine(async () => {
+        count++;
+        return false;
+      })
+      .refine(async () => {
+        count++;
+        return false;
+      }),
+  });
+
+  const testval = { hello: 'bye', foo: 3 };
+  const result1 = await base.safeParseAsync(testval);
+  const result2 = await base.safeParseAsync(testval, {
+    runAsyncValidationsInSeries: true,
+  });
+
+  if (result1.success === false) {
+    console.log(`count: ${count}`);
+    console.log(`issues: ${result1.error.issues.length}`);
+    console.log(result1);
+  }
+
+  if (result2.success === false) {
+    console.log(`count: ${count}`);
+    console.log(`issues: ${result2.error.issues.length}`);
+    console.log(result2);
+  }
 };
+
 run();
 
 // export const T = z.object({
