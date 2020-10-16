@@ -80,6 +80,7 @@ export type ParseParams = {
   path?: (string | number)[];
   errorMap?: ZodErrorMap;
   async?: boolean;
+  runAsyncValidationsInSeries?: boolean;
 };
 
 export const ZodParser = (schema: z.ZodType<any>) => (
@@ -90,7 +91,9 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     seen: baseParams.seen || [],
     path: baseParams.path || [],
     errorMap: baseParams.errorMap || defaultErrorMap,
-    async: baseParams.async || false,
+    async: baseParams.async ?? false,
+    runAsyncValidationsInSeries:
+      baseParams.runAsyncValidationsInSeries ?? false,
   };
 
   const makeError = (errorData: MakeErrorData): ZodIssue => {
@@ -432,10 +435,18 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         }
       }
 
-      PROMISE = PseudoPromise.object(objectPromises).then(resolvedObject => {
-        Object.assign(RESULT.output, resolvedObject);
-        return RESULT.output;
-      });
+      PROMISE = PseudoPromise.object(objectPromises)
+        .then(resolvedObject => {
+          Object.assign(RESULT.output, resolvedObject);
+          return RESULT.output;
+        })
+        .catch(err => {
+          if (err instanceof ZodError) {
+            ERROR.addIssues(err.issues);
+          }
+
+          return INVALID;
+        });
 
       break;
     case z.ZodTypes.union:
@@ -963,26 +974,40 @@ export const ZodParser = (schema: z.ZodType<any>) => (
   } else {
     // if (params.async == true) {
     const checker = async () => {
-      const resolvedValue = await PROMISE.getValueAsync();
+      let resolvedValue = await PROMISE.getValueAsync();
 
-      await Promise.all(
-        customChecks.map(async check => {
-          await check.check(resolvedValue, checkCtx);
-          // if (!checkResult) {
-          //   const { check: checkMethod, ...noMethodCheck } = check;
-          //   ERROR.addIssue(makeError(noMethodCheck));
-          // } else {
-          // }
-        }),
-      );
+      // if (resolvedValue !== INVALID) {
+      //   // let someError: boolean = false;
 
-      if (resolvedValue === INVALID && ERROR.isEmpty) {
-        ERROR.addIssue(
-          makeError({
-            code: ZodIssueCode.custom,
-            message: 'Invalid',
-          }),
-        );
+      // }
+      if (resolvedValue !== INVALID) {
+        if (params.runAsyncValidationsInSeries) {
+          let someError = false;
+          await customChecks.reduce((previousPromise, check) => {
+            return previousPromise.then(async () => {
+              if (!someError) {
+                const len = ERROR.issues.length;
+                await check.check(resolvedValue, checkCtx);
+                if (len < ERROR.issues.length) someError = true;
+              }
+            });
+          }, Promise.resolve());
+        } else {
+          await Promise.all(
+            customChecks.map(async check => {
+              await check.check(resolvedValue, checkCtx);
+            }),
+          );
+        }
+      } else {
+        if (ERROR.isEmpty) {
+          ERROR.addIssue(
+            makeError({
+              code: ZodIssueCode.custom,
+              message: 'Invalid',
+            }),
+          );
+        }
       }
 
       if (!ERROR.isEmpty) {

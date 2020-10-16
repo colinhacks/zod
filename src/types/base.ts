@@ -11,6 +11,7 @@ import {
 import { ZodOptionalType } from './optional';
 import { ZodNullableType } from './nullable';
 import { ZodCustomIssue } from '../ZodError';
+import { util } from '../helpers/util';
 
 export enum ZodTypes {
   string = 'string',
@@ -76,7 +77,7 @@ type InternalCheck<T> = {
 //   // params?: {[k:string]:any}
 // } & util.Omit<CustomError, 'code' | 'path'>;
 
-type CustomErrorParams = Partial<Omit<ZodCustomIssue, 'code'>>;
+type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, 'code'>>;
 // type Check<T> = {
 //   check: (arg: T) => any;
 //   refinementError: (arg: T) => CustomErrorParams;

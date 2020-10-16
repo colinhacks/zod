@@ -20,6 +20,7 @@ const run = async () => {
   console.log(t1);
   console.log(t2);
 };
+
 run();
 
 // export const T = z.object({
