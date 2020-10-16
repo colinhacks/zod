@@ -1,39 +1,24 @@
 import * as z from '.';
+import { ZodIssueCode } from './ZodError';
 
 const run = async () => {
-  let count = 0;
-
-  const base = z.object({
-    hello: z.string(),
-    foo: z
-      .number()
-      .refine(async () => {
-        count++;
-        return false;
-      })
-      .refine(async () => {
-        count++;
-        return false;
-      }),
+  const noNested = z.string()._refinement((_val, ctx) => {
+    if (ctx.path.length > 0) {
+      ctx.addIssue({
+        code: ZodIssueCode.custom,
+        message: `schema cannot be nested. path: ${ctx.path.join('.')}`,
+      });
+    }
   });
 
-  const testval = { hello: 'bye', foo: 3 };
-  const result1 = await base.safeParseAsync(testval);
-  const result2 = await base.safeParseAsync(testval, {
-    runAsyncValidationsInSeries: true,
+  const data = z.object({
+    foo: noNested,
   });
 
-  if (result1.success === false) {
-    console.log(`count: ${count}`);
-    console.log(`issues: ${result1.error.issues.length}`);
-    console.log(result1);
-  }
-
-  if (result2.success === false) {
-    console.log(`count: ${count}`);
-    console.log(`issues: ${result2.error.issues.length}`);
-    console.log(result2);
-  }
+  const t1 = await noNested.spa('asdf');
+  const t2 = await data.spa({ foo: 'asdf' });
+  console.log(t1);
+  console.log(t2);
 };
 
 run();

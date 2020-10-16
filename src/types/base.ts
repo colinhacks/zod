@@ -61,8 +61,12 @@ export const outputSchema = (schema: ZodType<any>): ZodType<any> => {
   }
 };
 
+export type RefinementCtx = {
+  addIssue: (arg: MakeErrorData) => void;
+  path: (string | number)[];
+};
 type InternalCheck<T> = {
-  check: (arg: T, ctx: { addIssue: (arg: MakeErrorData) => void }) => any;
+  check: (arg: T, ctx: RefinementCtx) => any;
   // refinementError: (arg: T) => MakeErrorData;
 };
 
@@ -240,13 +244,15 @@ export abstract class ZodType<
 
   refinement = (
     check: (arg: Output) => any,
-    refinementData: MakeErrorData | ((arg: Output) => MakeErrorData),
+    refinementData:
+      | MakeErrorData
+      | ((arg: Output, ctx: RefinementCtx) => MakeErrorData),
   ) => {
     return this._refinement((val, ctx) => {
       if (!check(val)) {
         ctx.addIssue(
           typeof refinementData === 'function'
-            ? refinementData(val)
+            ? refinementData(val, ctx)
             : refinementData,
         );
       }
