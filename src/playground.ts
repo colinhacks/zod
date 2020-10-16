@@ -1,11 +1,8 @@
-import * as z from '.';
+// import * as z from '.';
 
-const run = async () => {
-  const result = await z
-    .object({ name: z.string() })
-    .catchall(z.number())
-    .spa({ name: 'Foo', validExtraKey: 61 });
-  console.log(result);
-};
+// const run = async () => {
+//   // const schema = await z.object({ name: z.string() }).catchall(z.number());
+//   // type schemaResult = ReturnType<typeof schema['safeParse']>;
+// };
 
-run();
+// run();
