@@ -88,16 +88,17 @@ export class PseudoPromise<ReturnType = undefined> {
           });
 
           if (filtered.length > 0) {
-            const all_issues = filtered.reduce(
+            const allIssues = filtered.reduce(
               (acc: any[], val: [string, ZodError]) => {
                 const error = val[1];
                 return acc.concat(error.issues);
               },
               [],
             );
-            const base = filtered[0][1];
-            base.issues = all_issues;
-            throw base;
+            const error = new ZodError(allIssues);
+            // const base = filtered[0][1];
+            // base.issues = all_issues;
+            throw error;
           } else {
             for (const item of items) {
               value[item[0]] = item[1];
