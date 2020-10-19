@@ -27,6 +27,7 @@ export enum ZodTypes {
   intersection = 'intersection',
   tuple = 'tuple',
   record = 'record',
+  map = 'map',
   function = 'function',
   lazy = 'lazy',
   literal = 'literal',
