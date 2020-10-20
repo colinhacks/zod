@@ -15,7 +15,6 @@ test('parse', () => {
     numProm: Promise.resolve(12),
     lenfun: (x: string) => x.length,
   });
-  console.log(`SUM: ${value.sumTransformer}`);
   expect(typeof value.sumTransformer).toEqual('number');
 });
 

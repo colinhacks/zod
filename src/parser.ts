@@ -128,7 +128,6 @@ export const ZodParser = (schema: z.ZodType<any>) => (
   };
 
   const def: ZodDef = schema._def as any;
-  console.log(`\nPARSING ${def.t}`);
 
   let PROMISE: PseudoPromise<any> = new PseudoPromise();
   (PROMISE as any)._default = true;
@@ -558,12 +557,10 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             return parsedValue;
           } catch (err) {
             if (err instanceof ZodError) {
-              console.log(`caught error at ${key}`);
               const zerr: ZodError = err;
               ERROR.addIssues(zerr.issues);
               return INVALID;
             } else {
-              console.log(`caught non-zod error at ${key}`);
               throw err;
             }
           }
@@ -1048,7 +1045,6 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       // );
       break;
     case z.ZodTypes.transformer:
-      console.log(`TRANSFORMER`);
       PROMISE = new PseudoPromise()
         .then(() => {
           try {
@@ -1062,18 +1058,10 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         })
 
         .then(inputParseResult => {
-          console.log(`inputParseResult`);
-          console.log(inputParseResult);
           // try {
           const transformed = def.transformer(inputParseResult);
           if (transformed instanceof Promise && params.async === false) {
-            console.log(
-              `transformed instanceof Promise && params.async === false`,
-            );
-
-            console.log(`def: ${z.inputSchema(def.output)._def.t}`);
             if (z.inputSchema(def.output)._def.t !== z.ZodTypes.promise) {
-              console.log(`THROWING PROMISE ERROR`);
               throw new Error(
                 "You can't call .parse on a schema containing async transformations.",
               );
@@ -1101,7 +1089,6 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         })
         .catch(err => {
           if (!(err instanceof ZodError)) {
-            console.log(`NON ZOD ERROR`);
             throw err;
           }
           ERROR.addIssues(err.issues);

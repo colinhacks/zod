@@ -59,6 +59,14 @@ test('default', () => {
   expect(data).toEqual('asdf');
 });
 
+test('dynamic default', () => {
+  const data = z
+    .string()
+    .default(s => s._def.t)
+    .parse(undefined); // => "asdf"
+  expect(data).toEqual('string');
+});
+
 test('default when property is null or undefined', () => {
   const data = z
     .object({

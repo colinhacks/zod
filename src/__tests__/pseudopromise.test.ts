@@ -14,7 +14,6 @@ test('sync fail', async () => {
     .then(async () => 15)
     .then(arg => arg.toString())
     .then(arg => {
-      console.log(arg);
       return arg.length;
     });
 

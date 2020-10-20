@@ -132,10 +132,8 @@ export class PseudoPromise<ReturnType = undefined> {
           } catch (err) {
             if (err instanceof ZodError) {
               zerr.addIssues(err.issues);
-              console.log(`caught zod error in sync object!`);
               return [k, INVALID] as [string, any];
             }
-            console.log(`throwing nonzod error in sync object!`);
             throw err;
           }
         });

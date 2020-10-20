@@ -324,16 +324,23 @@ export abstract class ZodType<
     return ZodTransformer.create(this as any, this, input) as any;
   }
 
-  default: <
+  default<
     T extends Output = Output,
     Opt extends ReturnType<this['optional']> = ReturnType<this['optional']>
-  >(
-    def: T,
-  ) => ZodTransformer<Opt, this> = def => {
+  >(def: T): ZodTransformer<Opt, this>;
+  default<
+    T extends (arg: this) => Output,
+    Opt extends ReturnType<this['optional']> = ReturnType<this['optional']>
+  >(def: T): ZodTransformer<Opt, this>;
+  default(def: any) {
     return ZodTransformer.create(this.optional(), this, (x: any) => {
-      return x === undefined ? def : x;
+      return x === undefined
+        ? typeof def === 'function'
+          ? def(this)
+          : def
+        : x;
     }) as any;
-  };
+  }
 
   //  default: (val: Type) => ZodTransformer<ZodType<Type | undefined>, this> = val => {
   //    return ZodTransformer.create(this.optional(), this, x => {

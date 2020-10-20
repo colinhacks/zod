@@ -1,15 +1,11 @@
 import * as z from '.';
-const asyncNumberToString = z.transformer(z.number(), z.string(), async n =>
-  String(n),
-);
+
 const run = async () => {
-  console.log(
-    z
-      .object({
-        id: asyncNumberToString,
-      })
-      .parse({ id: 5 }),
-  );
+  const data = z
+    .string()
+    .default(schema => `${schema._def.t}`)
+    .parse(undefined); // => "string"
+  console.log(data);
 };
 
 run();
