@@ -17,6 +17,7 @@ import { ZodUnion, ZodUnionDef } from './types/union';
 import { ZodIntersection, ZodIntersectionDef } from './types/intersection';
 import { ZodTuple, ZodTupleDef } from './types/tuple';
 import { ZodRecord, ZodRecordDef } from './types/record';
+import { ZodMap, ZodMapDef } from './types/map';
 import { ZodFunction, ZodFunctionDef } from './types/function';
 import { ZodLazy, ZodLazyDef } from './types/lazy';
 import { ZodLiteral, ZodLiteralDef } from './types/literal';
@@ -61,6 +62,7 @@ type ZodDef =
   | ZodIntersectionDef
   | ZodTupleDef
   | ZodRecordDef
+  | ZodMapDef
   | ZodFunctionDef
   | ZodLazyDef
   | ZodLiteralDef
@@ -88,6 +90,7 @@ const unionType = ZodUnion.create;
 const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
+const mapType = ZodMap.create;
 const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
 const literalType = ZodLiteral.create;
@@ -133,6 +136,7 @@ export {
   intersectionType as intersection,
   tupleType as tuple,
   recordType as record,
+  mapType as map,
   functionType as function,
   lazyType as lazy,
   literalType as literal,

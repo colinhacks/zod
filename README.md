@@ -134,6 +134,7 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
   - [JSON type](#json-type)
   - [Cyclical data](#cyclical-objects)
 - [Promises](#promises)
+- [Maps](#maps)
 - [Instanceof](#instanceof)
 - [Function schemas](#function-schemas)
 - [Transformers](#transformers)
@@ -1329,6 +1330,15 @@ const test = async () => {
 #### Non-native promise implementations
 
 When "parsing" a promise, Zod checks that the passed value is an object with `.then` and `.catch` methods — that's it. So you should be able to pass non-native Promises (Bluebird, etc) into `z.promise(...).parse` with no trouble. One gotcha: the return type of the parse function will be a _native_ `Promise`, so if you have downstream logic that uses non-standard Promise methods, this won't work.
+
+## Maps
+
+```ts
+const stringNumberMap = z.map(z.string(), z.number());
+
+type StringNumberMap = z.infer<typeof stringNumberMap>;
+// type StringNumber = Map<string, number>
+```
 
 ## Instanceof
 

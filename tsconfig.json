@@ -29,6 +29,7 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "downlevelIteration": true
   },
   "include": [
     "src",

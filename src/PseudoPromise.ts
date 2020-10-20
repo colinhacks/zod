@@ -1,4 +1,6 @@
+import { INVALID } from './helpers/util';
 import { ZodError } from './ZodError';
+// import { INVALID } from './util';
 
 type Func = (arg: any, ctx: { async: boolean }) => any;
 type FuncItem = { type: 'function'; function: Func };
@@ -26,10 +28,20 @@ export class PseudoPromise<ReturnType = undefined> {
   > => {
     return this.then((_arg, ctx) => {
       // const results = pps.map(pp => pp.getValue());
+      // const caughtPPs = pps.map((pp, index) =>
+      //   pp.catch(err => {
+      //     if (err instanceof ZodError) zerr.addIssues(err.issues);
+      //   }),
+      // );
       if (ctx.async) {
-        return Promise.all(pps.map(pp => pp.getValueAsync()));
+        try {
+          return Promise.all(pps.map(pp => pp.getValueAsync()));
+        } catch (err) {}
+        // return Promise.all(pps.map(pp => pp.getValueAsync()));
       } else {
-        return pps.map(pp => pp.getValueSync()) as any;
+        try {
+          return pps.map(pp => pp.getValueSync()) as any;
+        } catch (err) {}
       }
     });
   };
@@ -57,6 +69,8 @@ export class PseudoPromise<ReturnType = undefined> {
       //   k => pps[k].getValue() instanceof Promise,
       // );
       //
+
+      const zerr = new ZodError([]);
       if (ctx.async) {
         const getAsyncObject = async () => {
           // const promises = Object.keys(pps).map(async k => {
@@ -72,48 +86,61 @@ export class PseudoPromise<ReturnType = undefined> {
                 return [k, v] as [string, any];
               } catch (err) {
                 if (err instanceof ZodError) {
-                  return [k, err] as [string, ZodError];
+                  zerr.addIssues(err.issues);
+                  return [k, INVALID] as [string, any];
                 }
-
                 throw err;
               }
             }),
           );
-          // const resolvedItems = await Promise.all(
-          //   items.map(async item => [item[0], await item[1]]),
-          // );
 
-          const filtered: any = items.filter(entry => {
-            return entry[1] instanceof ZodError;
-          });
+          if (!zerr.isEmpty) throw zerr;
+          // // const resolvedItems = await Promise.all(
+          // //   items.map(async item => [item[0], await item[1]]),
+          // // );
 
-          if (filtered.length > 0) {
-            const allIssues = filtered.reduce(
-              (acc: any[], val: [string, ZodError]) => {
-                const error = val[1];
-                return acc.concat(error.issues);
-              },
-              [],
-            );
-            const error = new ZodError(allIssues);
-            // const base = filtered[0][1];
-            // base.issues = all_issues;
-            throw error;
-          } else {
-            for (const item of items) {
-              value[item[0]] = item[1];
-            }
+          // const filtered: any = items.filter(entry => {
+          //   return entry[1] instanceof ZodError;
+          // });
 
-            return value;
+          // if (filtered.length > 0) {
+          //   const allIssues = filtered.reduce(
+          //     (acc: any[], val: [string, ZodError]) => {
+          //       const error = val[1];
+          //       return acc.concat(error.issues);
+          //     },
+          //     [],
+          //   );
+          //   const error = new ZodError(allIssues);
+          //   // const base = filtered[0][1];
+          //   // base.issues = all_issues;
+          //   throw error;
+          // } else {
+          for (const item of items) {
+            value[item[0]] = item[1];
           }
+
+          return value;
+          // }
         };
         return getAsyncObject();
       } else {
         const items = Object.keys(pps).map(k => {
-          const v = pps[k].getValueSync();
-          return [k, v] as [string, any];
+          try {
+            const v = pps[k].getValueSync();
+            return [k, v] as [string, any];
+          } catch (err) {
+            if (err instanceof ZodError) {
+              zerr.addIssues(err.issues);
+              console.log(`caught zod error in sync object!`);
+              return [k, INVALID] as [string, any];
+            }
+            console.log(`throwing nonzod error in sync object!`);
+            throw err;
+          }
         });
         // let syncValue: any = {};
+        if (!zerr.isEmpty) throw zerr;
         for (const item of items) {
           value[item[0]] = item[1];
         }
@@ -139,12 +166,9 @@ export class PseudoPromise<ReturnType = undefined> {
   };
 
   catch = <NewReturn>(
-    func: (err: Error, ctx: { async: boolean }) => NewReturn,
+    catcher: (err: Error, ctx: { async: boolean }) => NewReturn,
   ): PseudoPromise<NewReturn extends Promise<infer U> ? U : NewReturn> => {
-    return new PseudoPromise([
-      ...this.items,
-      { type: 'catcher', catcher: func },
-    ]);
+    return new PseudoPromise([...this.items, { type: 'catcher', catcher }]);
   };
 
   // getValue = (
@@ -164,13 +188,49 @@ export class PseudoPromise<ReturnType = undefined> {
     // // if (this._cached.value) return this._cached.value;
     let val: any = undefined;
 
-    for (const item of this.items) {
-      if (item.type === 'function') {
-        val = item.function(val, { async: false });
+    // for (const item of this.items) {
+    //   if (item.type === 'function') {
+    //     val = item.function(val, { async: false });
+    //   }
+
+    // if (val instanceof Promise && allowPromises === false) {
+    //   throw new Error('found_promise');
+    // }
+    // }
+    for (let index = 0; index < this.items.length; index++) {
+      try {
+        const item = this.items[index];
+
+        if (item.type === 'function') {
+          val = item.function(val, { async: false });
+        }
+      } catch (err) {
+        const catcherIndex = this.items.findIndex(
+          (x, i) => x.type === 'catcher' && i > index,
+        );
+
+        const catcherItem = this.items[catcherIndex];
+        if (!catcherItem || catcherItem.type !== 'catcher') {
+          throw err;
+        } else {
+          val = catcherItem.catcher(err, { async: false });
+          index = catcherIndex;
+        }
       }
 
-      // if (val instanceof Promise && allowPromises === false) {
-      //   throw new Error('found_promise');
+      // if (val instanceof PseudoPromise) {
+      //   throw new Error('SYNC: DO NOT RETURN PSEUDOPROMISE FROM FUNCTIONS');
+      // }
+      // if (val instanceof Promise) {
+      //   throw new Error('SYNC: DO NOT RETURN PROMISE FROM FUNCTIONS');
+      // }
+
+      // while (!!val.then) {
+      //   if (val instanceof PseudoPromise) {
+      //     val = await val.toPromise();
+      //   } else {
+      //     val = await val;
+      //   }
       // }
     }
     // this._cached.value = val;
@@ -203,10 +263,10 @@ export class PseudoPromise<ReturnType = undefined> {
       }
 
       if (val instanceof PseudoPromise) {
-        throw new Error('DO NOT RETURN PSEUDOPROMISE FROM FUNCTIONS');
+        throw new Error('ASYNC: DO NOT RETURN PSEUDOPROMISE FROM FUNCTIONS');
       }
       if (val instanceof Promise) {
-        throw new Error('DO NOT RETURN PROMISE FROM FUNCTIONS');
+        throw new Error('ASYNC: DO NOT RETURN PROMISE FROM FUNCTIONS');
       }
       // while (!!val.then) {
       //   if (val instanceof PseudoPromise) {

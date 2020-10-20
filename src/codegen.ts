@@ -148,6 +148,13 @@ ${this.seen
         );
       case z.ZodTypes.transformer:
         return this.setType(id, this.generate(def.output).id);
+      case z.ZodTypes.map:
+        return this.setType(
+          id,
+          `Map<${this.generate(def.keyType).id}, ${
+            this.generate(def.valueType).id
+          }>`,
+        );
       case z.ZodTypes.lazy:
         const lazyType = def.getter();
         return this.setType(id, this.generate(lazyType).id);

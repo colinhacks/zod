@@ -152,7 +152,7 @@ export class ZodError extends Error {
     // for (const err of this.issues) {
     //   errorMessage.push(
     //     `  Issue #${this.issues.indexOf(err)}: ${err.code} at ${err.path.join(
-    //       './index',
+    //       '.',
     //     )}`,
     //   );
     //   errorMessage.push(`  ` + err.message);
