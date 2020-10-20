@@ -1,5 +1,6 @@
 import * as z from '../index';
 import { util } from '../helpers/util';
+import { ZodIssueCode } from '../index';
 
 const stringMap = z.map(z.string(), z.string());
 type stringMap = z.infer<typeof stringMap>;
@@ -10,39 +11,53 @@ test('type inference', () => {
 });
 
 test('doesn’t throw when a valid value is given', () => {
-  expect(() =>
-    stringMap.parse(
-      new Map([
-        ['first', 'foo'],
-        ['second', 'bar'],
-      ]),
-    ),
-  ).not.toThrow();
+  const result = stringMap.safeParse(
+    new Map([
+      ['first', 'foo'],
+      ['second', 'bar'],
+    ]),
+  );
+  expect(result.success).toEqual(true);
 });
 
 test('throws when a Set is given', () => {
-  expect(() => stringMap.parse(new Set([]))).toThrow(
-    '1 validation issue(s)\n\n  Issue #0: invalid_type at \n  Expected map, received object\n',
-  );
+  const result = stringMap.safeParse(new Set([]));
+  expect(result.success).toEqual(false);
+  if (result.success === false) {
+    expect(result.error.issues.length).toEqual(1);
+    expect(result.error.issues[0].code).toEqual(ZodIssueCode.invalid_type);
+  }
 });
 
 test('throws when the given map has invalid key and invalid value', () => {
-  expect(() => {
-    stringMap.parse(new Map([[42, Symbol()]]));
-  }).toThrow(
-    '2 validation issue(s)\n\n  Issue #0: invalid_type at 0.key\n  Expected string, received number\n\n  Issue #1: invalid_type at 0.value\n  Expected string, received symbol\n',
-  );
+  const result = stringMap.safeParse(new Map([[42, Symbol()]]));
+  expect(result.success).toEqual(false);
+  if (result.success === false) {
+    expect(result.error.issues.length).toEqual(2);
+    expect(result.error.issues[0].code).toEqual(ZodIssueCode.invalid_type);
+    expect(result.error.issues[0].path).toEqual([0, 'key']);
+    expect(result.error.issues[1].code).toEqual(ZodIssueCode.invalid_type);
+    expect(result.error.issues[1].path).toEqual([0, 'value']);
+  }
 });
 
 test('throws when the given map has multiple invalid entries', () => {
-  expect(() => {
-    stringMap.parse(
-      new Map([
-        [1, 'foo'],
-        ['bar', 2],
-      ] as [any, any][]) as Map<any, any>,
-    );
-  }).toThrow(
-    '2 validation issue(s)\n\n  Issue #0: invalid_type at 0.key\n  Expected string, received number\n\n  Issue #1: invalid_type at 1.value\n  Expected string, received number\n',
+  // const result = stringMap.safeParse(new Map([[42, Symbol()]]));
+
+  const result = stringMap.safeParse(
+    new Map([
+      [1, 'foo'],
+      ['bar', 2],
+    ] as [any, any][]) as Map<any, any>,
   );
+
+  // const result = stringMap.safeParse(new Map([[42, Symbol()]]));
+  expect(result.success).toEqual(false);
+  if (result.success === false) {
+    expect(result.error.issues.length).toEqual(2);
+    expect(result.error.issues[0].code).toEqual(ZodIssueCode.invalid_type);
+    expect(result.error.issues[0].path).toEqual([0, 'key']);
+    expect(result.error.issues[1].code).toEqual(ZodIssueCode.invalid_type);
+    expect(result.error.issues[1].path).toEqual([1, 'value']);
+  }
 });

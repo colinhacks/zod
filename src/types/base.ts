@@ -1,4 +1,3 @@
-import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import {
   ZodIssueCode,
   ZodArray,
@@ -7,7 +6,7 @@ import {
   ZodOptional,
   ZodNullable,
 } from '../index';
-
+import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { ZodOptionalType } from './optional';
 import { ZodNullableType } from './nullable';
 import { ZodCustomIssue } from '../ZodError';

@@ -12,7 +12,11 @@ export interface ZodMapDef<
 export class ZodMap<
   Key extends z.ZodTypeAny = z.ZodTypeAny,
   Value extends z.ZodTypeAny = z.ZodTypeAny
-> extends z.ZodType<Map<Key['_type'], Value['_type']>, ZodMapDef<Key, Value>> {
+> extends z.ZodType<
+  Map<Key['_output'], Value['_output']>,
+  ZodMapDef<Key, Value>,
+  Map<Key['_input'], Value['_input']>
+> {
   readonly _value!: Value;
 
   toJSON = () => ({
