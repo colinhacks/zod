@@ -56,6 +56,8 @@ export const visitor = (schema: z.ZodType<any, any>) => {
       break;
     case z.ZodTypes.nullable:
       break;
+    case z.ZodTypes.map:
+      break;
     default:
       util.assertNever(def);
   }
