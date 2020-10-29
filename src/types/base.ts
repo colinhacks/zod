@@ -1,6 +1,13 @@
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { util } from '../helpers/util';
-import { ZodErrorCode, ZodArray, ZodUnion, ZodNull, ZodUndefined, ZodError } from '../index';
+import {
+  ZodErrorCode,
+  ZodArray,
+  ZodUnion,
+  ZodNull,
+  ZodUndefined,
+  ZodError,
+} from '../index';
 
 export enum ZodTypes {
   string = 'string',
@@ -66,7 +73,10 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
   safeParse: (
     x: Type | unknown,
     params?: ParseParams,
-  ) => { success: true; data: Type } | { success: false; error: ZodError } = (data, params) => {
+  ) => { success: true; data: Type } | { success: false; error: ZodError } = (
+    data,
+    params,
+  ) => {
     try {
       const parsed = this.parse(data, params);
       return {
@@ -84,7 +94,10 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     }
   };
 
-  parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = (value, params) => {
+  parseAsync: (x: Type | unknown, params?: ParseParams) => Promise<Type> = (
+    value,
+    params,
+  ) => {
     return new Promise((res, rej) => {
       try {
         const parsed = this.parse(value, params);
@@ -127,7 +140,7 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
     return this._refinement({ code: ZodErrorCode.custom_error, ...refinement });
   };
 
-  protected _refinement: (refinement: InternalCheck<Type>) => this = refinement => {
+  _refinement: (refinement: InternalCheck<Type>) => this = refinement => {
     return new (this as any).constructor({
       ...this._def,
       checks: [...(this._def.checks || []), refinement],
@@ -141,8 +154,10 @@ export abstract class ZodType<Type, Def extends ZodTypeDef = ZodTypeDef> {
 
   abstract toJSON: () => object;
   //  abstract // opt optional: () => any;
-  optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
-  nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
+  optional: () => ZodUnion<[this, ZodUndefined]> = () =>
+    ZodUnion.create([this, ZodUndefined.create()]);
+  nullable: () => ZodUnion<[this, ZodNull]> = () =>
+    ZodUnion.create([this, ZodNull.create()]);
   array: () => ZodArray<this> = () => ZodArray.create(this);
   or: <U extends ZodType<any>>(arg: U) => ZodUnion<[this, U]> = arg => {
     return ZodUnion.create([this, arg]);
