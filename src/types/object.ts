@@ -90,7 +90,7 @@ const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
   t: def.t,
   shape: Object.assign(
     {},
-    Object.keys(def.shape()).map(k => ({
+    ...Object.keys(def.shape()).map(k => ({
       [k]: def.shape()[k].toJSON(),
     })),
   ),

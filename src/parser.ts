@@ -168,10 +168,22 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     RESULT.error = ERROR;
     throw ERROR;
   };
+  const HANDLE = (err: Error) => {
+    if (err instanceof ZodError) {
+      ERROR.addIssues(err.issues);
+    }
+    throw err;
+  };
   // const defaultPROMISE = Symbol('return_value');
   //  let returnValue: PseudoPromise<any>; // = defaultReturnValue;
   const parsedType = getParsedType(data);
 
+  console.log(
+    `\n============\nPARSING ${def.t.toUpperCase()} at ${params.path.join(
+      '.',
+    )}`,
+  );
+  console.log(JSON.stringify(data, null, 2));
   switch (def.t) {
     case z.ZodTypes.string:
       if (parsedType !== ZodParsedType.string) {
@@ -1047,18 +1059,13 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     case z.ZodTypes.transformer:
       PROMISE = new PseudoPromise()
         .then(() => {
-          try {
-            return def.input.parse(data, params);
-          } catch (err) {
-            if (err instanceof ZodError) {
-              ERROR.addIssues(err.issues);
-            }
-            throw err;
-          }
+          return def.input.parse(data, params);
         })
-
+        .catch(HANDLE)
         .then(inputParseResult => {
           // try {
+          console.log(`TRANSFORMING`);
+          console.log(JSON.stringify(inputParseResult, null, 2));
           const transformed = def.transformer(inputParseResult);
           if (transformed instanceof Promise && params.async === false) {
             if (z.inputSchema(def.output)._def.t !== z.ZodTypes.promise) {
@@ -1067,6 +1074,9 @@ export const ZodParser = (schema: z.ZodType<any>) => (
               );
             }
           }
+
+          console.log(`RESULT`);
+          console.log(JSON.stringify(transformed, null, 2));
           return transformed;
           // } catch (err) {
           //   if (err instanceof ZodError) {
@@ -1077,22 +1087,17 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           // }
         })
         .then(transformedResult => {
-          try {
-            return def.output.parse(transformedResult, params);
-          } catch (err) {
-            if (err instanceof ZodError) {
-              ERROR.addIssues(err.issues);
-              return INVALID;
-            }
-            throw err;
-          }
+          // try {
+          return def.output.parse(transformedResult, params);
+          // } catch (err) {
+          //   if (err instanceof ZodError) {
+          //     ERROR.addIssues(err.issues);
+          //     return INVALID;
+          //   }
+          //   throw err;
+          // }
         })
-        .catch(err => {
-          if (!(err instanceof ZodError)) {
-            throw err;
-          }
-          ERROR.addIssues(err.issues);
-        });
+        .catch(HANDLE);
       break;
     default:
       PROMISE = PseudoPromise.resolve('adsf' as never);

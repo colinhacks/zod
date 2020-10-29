@@ -171,10 +171,14 @@ export class ZodError extends Error {
   }
 
   addIssue = (sub: ZodIssue) => {
+    console.log(`adding issue...`);
+    console.log(JSON.stringify(sub, null, 2));
     this.issues = [...this.issues, sub];
   };
 
   addIssues = (subs: ZodIssue[] = []) => {
+    console.log(`adding issues...`);
+    console.log(JSON.stringify(subs, null, 2));
     this.issues = [...this.issues, ...subs];
   };
 

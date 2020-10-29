@@ -42,7 +42,7 @@ export enum ZodTypes {
   nullable = 'nullable',
 }
 
-export type ZodTypeAny = ZodType<any, any>;
+export type ZodTypeAny = ZodType<unknown, any, unknown>;
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 
 export const inputSchema = (schema: ZodType<any>): ZodType<any> => {
@@ -315,13 +315,13 @@ export abstract class ZodType<
     This extends this,
     Tx extends (
       arg: This['_output'],
-    ) => This['_input'] | Promise<This['_input']>
+    ) => This['_output'] | Promise<This['_output']>
   >(transformer: Tx): ZodTransformer<This, This>;
   transform(input: any, transformer?: any) {
     if (transformer) {
       return ZodTransformer.create(this as any, input, transformer) as any;
     }
-    return ZodTransformer.create(this as any, this, input) as any;
+    return ZodTransformer.create(this as any, outputSchema(this), input) as any;
   }
 
   default<
