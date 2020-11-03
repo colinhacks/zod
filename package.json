@@ -1,9 +1,10 @@
 {
   "name": "zod",
-  "version": "2.0.0-beta.17",
+  "version": "2.0.0-alpha.19",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "main": "./lib/src/index.js",
-  "types": "./lib/src/index.d.ts",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
+  "types": "./lib/esm/index.d.ts",
   "files": [
     "lib"
   ],
@@ -19,13 +20,6 @@
   },
   "homepage": "https://github.com/vriad/zod",
   "dependencies": {},
-  "tags": [
-    "typescript",
-    "schema",
-    "validation",
-    "type",
-    "inference"
-  ],
   "keywords": [
     "typescript",
     "schema",
@@ -35,7 +29,7 @@
   ],
   "scripts": {
     "clean": "rm -rf lib/*",
-    "build": "yarn run clean && tsc --p tsconfig.package.json",
+    "build": "yarn run clean && tsc --p tsconfig.json && tsc --p tsconfig.esm.json",
     "buildall": "yarn add typescript@3.4 && yarn build && yarn add typescript@3.5 && yarn build && yarn add typescript@3.6 && yarn build && yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4 && yarn build && yarn add typescript@3.4",
     "buildallv2": "yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4.0 && yarn build && yarn add typescript@4.1 && yarn build && yarn add typescript@3.7",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
@@ -44,7 +38,7 @@
     "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
     "prepublishOnly": "npm run build",
-    "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.package.json"
+    "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json"
   },
   "devDependencies": {
     "@types/jest": "^25.1.4",
