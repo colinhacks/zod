@@ -9,16 +9,8 @@ const XmlJsonArray = <Key extends string, Schema extends z.ZodTypeAny>(
 
 const test = XmlJsonArray('asdf', z.string());
 
-console.log(
-  test.parse({
-    asdf: 'assdf',
-  }),
-);
-
-console.log(
-  test.parse({
-    asdf: ['assdf'],
-  }),
-);
+// both work
+test.parse({ asdf: 'hello' });
+test.parse({ asdf: ['hello'] });
 
 type test = z.infer<typeof test>;
