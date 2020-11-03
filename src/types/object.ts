@@ -196,6 +196,13 @@ export class ZodObject<
   augment = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
   extend = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
 
+  setKey = <Key extends string, Schema extends z.ZodTypeAny>(
+    key: Key,
+    schema: Schema,
+  ): ZodObject<T & { [k in Key]: Schema }, UnknownKeys, Catchall> => {
+    return this.augment({ [key]: schema }) as any;
+  };
+
   /**
    * Prior to zod@1.0.12 there was a bug in the
    * inferred type of merged objects. Please

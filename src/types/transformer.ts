@@ -54,6 +54,10 @@ export class ZodTransformer<
   //   return ZodTransformer.create(this as any, output, transformer) as any;
   // };
 
+  get output() {
+    return this._def.output;
+  }
+
   static create = <I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     input: I,
     output: O,

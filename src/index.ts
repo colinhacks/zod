@@ -107,9 +107,12 @@ const oboolean = () => booleanType().optional();
 const codegen = ZodCodeGenerator.create;
 
 export const custom = <T>(
-  check: (data: unknown) => any,
+  check?: (data: unknown) => any,
   params?: Parameters<ZodTypeAny['refine']>[1],
-): ZodType<T> => anyType().refine(check, params);
+): ZodType<T> => {
+  if (check) return anyType().refine(check, params);
+  return anyType();
+};
 
 const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
