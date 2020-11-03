@@ -1,16 +1,16 @@
-// import * as z from '.';
+import * as z from '.';
 
-// const XmlJsonArray = <Key extends string, Schema extends z.ZodTypeAny>(
-//   element: Key,
-//   schema: Schema,
-// ) => {
-//   return z.object({}).setKey(element, z.union([schema, z.array(schema)]));
-// };
+const XmlJsonArray = <Key extends string, Schema extends z.Schema<any>>(
+  element: Key,
+  schema: Schema,
+) => {
+  return z.object({}).setKey(element, z.union([schema, z.array(schema)]));
+};
 
-// const test = XmlJsonArray('asdf', z.string());
+const test = XmlJsonArray('asdf', z.string());
 
-// // both work
-// test.parse({ asdf: 'hello' });
-// test.parse({ asdf: ['hello'] });
+// both work
+test.parse({ asdf: 'hello' });
+test.parse({ asdf: ['hello'] });
 
-// type test = z.infer<typeof test>;
+type test = z.infer<typeof test>;
