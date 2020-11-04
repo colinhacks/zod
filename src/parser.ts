@@ -599,7 +599,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           util.assertNever(def.unknownKeys);
         }
       } else {
-        // run cathcall validation
+        // run catchall validation
         for (const key of extraKeys) {
           objectPromises[key] = new PseudoPromise().then(() => {
             try {

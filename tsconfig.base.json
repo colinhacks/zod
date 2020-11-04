@@ -11,6 +11,7 @@
     "module": "commonjs",
     "declaration": true,
     "outDir": "./lib/cjs",
+    "removeComments": true,
     "esModuleInterop": true,
     "sourceMap": true,
     "moduleResolution": "node",
