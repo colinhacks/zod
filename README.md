@@ -1078,7 +1078,8 @@ const stringAndNumber = z.intersection(z.string(), z.number());
 type Never = z.infer<typeof stringAndNumber>; // => never
 ```
 
-<!-- This is particularly useful for defining "schema mixins" that you can apply to multiple schemas.
+<!--
+This is particularly useful for defining "schema mixins" that you can apply to multiple schemas.
 
 ```ts
 const HasId = z.object({
@@ -1093,7 +1094,7 @@ const Teacher = z.intersection(BaseTeacher, HasId);
 
 type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };
-```
+``` -->
 
 ## Tuples
 
@@ -1401,7 +1402,7 @@ User.omit({ outer: { inner: { prop2: true } } }); // { outer: { prop1: string, i
 ```
 
 
-#### Recursive schemas -->
+#### Recursive schemas
 
 ## Errors
 
