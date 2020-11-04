@@ -7,8 +7,8 @@ const testTuple = z.tuple([
   z.object({ name: z.literal('Rudy') }),
   z.array(z.literal('blue')),
 ]);
-const testData = ['asdf', { name: 'Rudy' }, ['blue']];
-const badData = [123, { name: 'Rudy2' }, ['blue', 'red']];
+const testData = ['asdf', { name: 'Rudy' }, ['blue']] as const;
+const badData = [123, { name: 'Rudy2' }, ['blue', 'red']] as const;
 
 test('tuple inference', () => {
   const args1 = z.tuple([z.string()]);
@@ -21,7 +21,7 @@ test('tuple inference', () => {
 
 test('successful validation', () => {
   const val = testTuple.parse(testData);
-  expect(val).toEqual(['asdf', { name: 'Rudy' }, ['blue']]);
+  expect(val).toEqual(['asdf', { name: 'Rudy' }, ['blue']] as const);
 });
 
 test('successful async validation', async () => {
@@ -39,6 +39,38 @@ test('failed validation', () => {
     if (err instanceof ZodError) {
       expect(err.issues.length).toEqual(3);
     }
+  }
+});
+
+
+test('tuple should allow all optional items', () => {
+  const otuple = z.tuple([z.string().optional(), z.number().optional(), z.boolean().optional()]);
+
+  const tests = [
+    [], 
+    [1], ["1"], [true],
+    ["1", 1], [1, true], ["1", true],
+    ["1", 1, true]
+  ] as const;
+
+  for (const test of tests) {
+    const parsed = otuple.safeParse(test);
+    expect(parsed).toMatchObject({success: true, data: test});
+  }
+});
+
+test('tuple should allow some optional items', () => {
+  const otuple = z.tuple([z.string().optional(), z.number(), z.boolean().optional()]);
+
+  const tests = [
+    [1],
+    ["1", 1], [1, true],
+    ["1", 1, true]
+  ] as const;
+
+  for (const test of tests) {
+    const parsed = otuple.safeParse(test);
+    expect(parsed).toMatchObject({success: true, data: test});
   }
 });
 

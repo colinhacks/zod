@@ -5,6 +5,7 @@ import {
   ZodError,
   ZodOptional,
   ZodNullable,
+  ZodUnion,
 } from '../index';
 import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import { ZodOptionalType } from './optional';
@@ -94,6 +95,7 @@ export type input<T extends ZodType<any>> = T['_input'];
 export type output<T extends ZodType<any>> = T['_output'];
 export type infer<T extends ZodType<any>> = T['_output'];
 
+export type ZodMaybe<T> = { success: true; data: T } | { success: false; error: ZodError }
 export abstract class ZodType<
   Output,
   Def extends ZodTypeDef = ZodTypeDef,
@@ -115,10 +117,12 @@ export abstract class ZodType<
 
   parse: (x: unknown, params?: ParseParams) => Output;
 
+
+
   safeParse: (
     x: unknown,
     params?: ParseParams,
-  ) => { success: true; data: Output } | { success: false; error: ZodError } = (
+  ) => ZodMaybe<Output> = (
     data,
     params,
   ) => {
@@ -276,7 +280,8 @@ export abstract class ZodType<
   abstract toJSON: () => object;
   //  abstract // opt optional: () => any;
   optional: () => ZodOptionalType<this> = () => ZodOptional.create(this);
-  or = this.optional;
+ 
+  or: (t: ZodTypeAny) => ZodUnion<[ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]> = t => ZodUnion.create([this, t]);
 
   nullable: () => ZodNullableType<this> = () => {
     return ZodNullable.create(this) as any;
