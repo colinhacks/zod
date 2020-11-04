@@ -1477,6 +1477,10 @@ Branded -->
 - Missing support for parsing cyclical data (maybe)
 - Missing error customization -->
 
+# Comparison
+
+There are a handful of other widely-used validation libraries, but all of them have certain design limitations that make for a non-ideal developer experience.
+
 #### Joi
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
