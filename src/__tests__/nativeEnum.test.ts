@@ -2,7 +2,10 @@ import * as z from '../index';
 import { util } from '../helpers/util';
 
 test('nativeEnum test with consts', () => {
-  const Fruits: { Apple: 'apple'; Banana: 'banana' } = { Apple: 'apple', Banana: 'banana' };
+  const Fruits: { Apple: 'apple'; Banana: 'banana' } = {
+    Apple: 'apple',
+    Banana: 'banana',
+  };
   const fruitEnum = z.nativeEnum(Fruits);
   type fruitEnum = z.infer<typeof fruitEnum>;
   fruitEnum.parse('apple');

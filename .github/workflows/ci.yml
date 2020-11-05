@@ -1,0 +1,22 @@
+name: test and build
+
+on: [push, pull_request]
+
+jobs:
+  build_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - uses: denolib/setup-deno@v2
+        with:
+          deno-version: v1.4.6
+      - run: npm install
+      - run: npm install yarn -g
+      - run: npm build
+      - run: npm test
+      - run: npm run deno_build
+      - run: npm run deno_test

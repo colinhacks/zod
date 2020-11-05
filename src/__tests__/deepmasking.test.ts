@@ -1,7 +1,7 @@
-import * as z from '../index';
+// import * as z from '../index';
 
-test('', () => {
-  z;
+test('dummy test deepmasking', () => {
+  expect(true).toBeTruthy();
 });
 
 // const fish = z.object({

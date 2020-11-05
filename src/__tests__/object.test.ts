@@ -68,8 +68,8 @@ test('inference', () => {
   type i2 = z.infer<typeof i2>;
   const f2: util.AssertEqual<i2, { obj: {}; arrayarray: string[][] }> = true;
 
-  f1;
-  f2;
+  expect(f1).toBeTruthy();
+  expect(f2).toBeTruthy();
   i1.parse({ name: 'name' });
   i2.parse({ obj: {}, arrayarray: [['asdf']] });
   expect(() => i1.parse({} as any)).toThrow();
@@ -264,5 +264,4 @@ test('test catchall parsing', async () => {
     .safeParse({ name: 'Foo', validExtraKey: 61, invalid: 'asdf' });
 
   expect(result2.success).toEqual(false);
-  return result2;
 });

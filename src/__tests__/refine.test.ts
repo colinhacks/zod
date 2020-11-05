@@ -46,18 +46,17 @@ test('refinement 2', () => {
 });
 
 test('custom path', async () => {
-  expect.assertions(1);
-  await z
-    .object({
-      password: z.string(),
-      confirm: z.string(),
-    })
-    .refine(data => data.confirm === data.password, { path: ['confirm'] })
-    .parseAsync({ password: 'asdf', confirm: 'qewr' })
-    .catch(err => {
-      expect(err.issues[0].path).toEqual(['confirm']);
-    });
-  return 'asdf';
+  try {
+    await z
+      .object({
+        password: z.string(),
+        confirm: z.string(),
+      })
+      .refine(data => data.confirm === data.password, { path: ['confirm'] })
+      .parseAsync({ password: 'asdf', confirm: 'qewr' });
+  } catch (err) {
+    expect(err.issues[0].path).toEqual(['confirm']);
+  }
 });
 
 test('use path in refinement context', async () => {
@@ -86,5 +85,4 @@ test('use path in refinement context', async () => {
       'schema cannot be nested. path: foo',
     );
   }
-  return t2;
 });

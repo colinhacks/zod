@@ -10,11 +10,11 @@ function checkErrors(a: z.ZodTypeAny, bad: any) {
   try {
     a.optional().parse(bad);
   } catch (error) {
-    expect(error.formErrors).toStrictEqual(expected);
+    expect(error.formErrors).toEqual(expected);
   }
 }
 
-it('Should have error messages appropriate for the underlying type', () => {
+test('Should have error messages appropriate for the underlying type', () => {
   checkErrors(z.string().min(2), 1);
   z.string()
     .min(2)

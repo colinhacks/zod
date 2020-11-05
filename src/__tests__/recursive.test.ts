@@ -1,4 +1,6 @@
-test('', () => {});
+test('dummy test recursive', () => {
+  expect(true).toBeTruthy();
+});
 // import * as z from '../index';
 
 // interface A {

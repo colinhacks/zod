@@ -14,7 +14,7 @@ test('promise inference', () => {
     promSchemaType,
     Promise<{ name: string; age: number }>
   > = true;
-  t1;
+  expect(t1).toBeTruthy();
 });
 
 test('promise parsing success', async () => {
@@ -24,7 +24,6 @@ test('promise parsing success', async () => {
   expect(typeof result).toBe('object');
   expect(typeof result.age).toBe('number');
   expect(typeof result.name).toBe('string');
-  return result;
 });
 
 test('promise parsing success 2', () => {
@@ -42,7 +41,7 @@ test('promise parsing fail 2', async () => {
   const failPromise = promSchema.parse(
     Promise.resolve({ name: 'Bobby', age: '10' }),
   );
-  return await expect(failPromise).rejects.toBeInstanceOf(Error);
+  await expect(failPromise).rejects.toBeInstanceOf(Error);
   // done();/z
 });
 
@@ -61,7 +60,7 @@ test('async function pass', async () => {
   const validatedFunction = asyncFunction.implement(async () => {
     return { name: 'jimmy', age: 14 };
   });
-  return await expect(validatedFunction()).resolves.toEqual({
+  await expect(validatedFunction()).resolves.toEqual({
     name: 'jimmy',
     age: 14,
   });
@@ -71,7 +70,7 @@ test('async function fail', async () => {
   const validatedFunction = asyncFunction.implement(() => {
     return Promise.resolve('asdf' as any);
   });
-  return await expect(validatedFunction()).rejects.toBeInstanceOf(Error);
+  await expect(validatedFunction()).rejects.toBeInstanceOf(Error);
 });
 
 test('async promise parsing', () => {
