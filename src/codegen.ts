@@ -1,14 +1,16 @@
-import * as z from './index';
+// import * as z from './index';
+import { ZodDef } from '.';
 import { util } from './helpers/util';
+import { ZodType, ZodTypes } from './types/base';
 
 type TypeResult = { schema: any; id: string; type: string };
 
-const isOptional = (schema: z.ZodType<any, any>): boolean => {
+const isOptional = (schema: ZodType<any, any>): boolean => {
   // const def: z.ZodDef = schema._def;
-  // if (def.t === z.ZodTypes.undefined) return true;
-  // else if (def.t === z.ZodTypes.intersection) {
+  // if (def.t === ZodTypes.undefined) return true;
+  // else if (def.t === ZodTypes.intersection) {
   //   return isOptional(def.right) && isOptional(def.left);
-  // } else if (def.t === z.ZodTypes.union) {
+  // } else if (def.t === ZodTypes.union) {
   //   return def.options.map(isOptional).some(x => x === true);
   // }
   // return false;
@@ -24,7 +26,7 @@ export class ZodCodeGenerator {
     return `IZod${this.serial++}`;
   };
 
-  findBySchema = (schema: z.ZodType<any, any>) => {
+  findBySchema = (schema: ZodType<any, any>) => {
     return this.seen.find(s => s.schema === schema);
   };
 
@@ -50,11 +52,11 @@ ${this.seen
     return found;
   };
 
-  generate = (schema: z.ZodType<any, any>): TypeResult => {
+  generate = (schema: ZodType<any, any>): TypeResult => {
     const found = this.findBySchema(schema);
     if (found) return found;
 
-    const def: z.ZodDef = schema._def;
+    const def: ZodDef = schema._def;
 
     const id = this.randomId();
 
@@ -67,35 +69,35 @@ ${this.seen
     this.seen.push(ty);
 
     switch (def.t) {
-      case z.ZodTypes.string:
+      case ZodTypes.string:
         return this.setType(id, `string`);
-      case z.ZodTypes.number:
+      case ZodTypes.number:
         return this.setType(id, `number`);
-      case z.ZodTypes.bigint:
+      case ZodTypes.bigint:
         return this.setType(id, `bigint`);
-      case z.ZodTypes.boolean:
+      case ZodTypes.boolean:
         return this.setType(id, `boolean`);
-      case z.ZodTypes.date:
+      case ZodTypes.date:
         return this.setType(id, `Date`);
-      case z.ZodTypes.undefined:
+      case ZodTypes.undefined:
         return this.setType(id, `undefined`);
-      case z.ZodTypes.null:
+      case ZodTypes.null:
         return this.setType(id, `null`);
-      case z.ZodTypes.any:
+      case ZodTypes.any:
         return this.setType(id, `any`);
-      case z.ZodTypes.unknown:
+      case ZodTypes.unknown:
         return this.setType(id, `unknown`);
-      case z.ZodTypes.never:
+      case ZodTypes.never:
         return this.setType(id, `never`);
-      case z.ZodTypes.void:
+      case ZodTypes.void:
         return this.setType(id, `void`);
-      case z.ZodTypes.literal:
+      case ZodTypes.literal:
         const val = def.value;
         const literalType = typeof val === 'string' ? `"${val}"` : `${val}`;
         return this.setType(id, literalType);
-      case z.ZodTypes.enum:
+      case ZodTypes.enum:
         return this.setType(id, def.values.map(v => `"${v}"`).join(' | '));
-      case z.ZodTypes.object:
+      case ZodTypes.object:
         const objectLines: string[] = [];
         const shape = def.shape();
 
@@ -110,7 +112,7 @@ ${this.seen
           .join('\n')}\n}`;
         this.setType(id, `${baseStruct}`);
         break;
-      case z.ZodTypes.tuple:
+      case ZodTypes.tuple:
         const tupleLines: string[] = [];
         for (const elSchema of def.items) {
           const elType = this.generate(elSchema);
@@ -120,53 +122,53 @@ ${this.seen
           .map(line => `  ${line},`)
           .join('\n')}\n]`;
         return this.setType(id, `${baseTuple}`);
-      case z.ZodTypes.array:
+      case ZodTypes.array:
         return this.setType(id, `${this.generate(def.type).id}[]`);
-      case z.ZodTypes.function:
+      case ZodTypes.function:
         const args = this.generate(def.args);
         const returns = this.generate(def.returns);
         return this.setType(id, `(...args: ${args.id})=>${returns.id}`);
-      case z.ZodTypes.promise:
+      case ZodTypes.promise:
         const promValue = this.generate(def.type);
         return this.setType(id, `Promise<${promValue.id}>`);
-      case z.ZodTypes.union:
+      case ZodTypes.union:
         const unionLines: string[] = [];
         for (const elSchema of def.options) {
           const elType = this.generate(elSchema);
           unionLines.push(elType.id);
         }
         return this.setType(id, unionLines.join(` | `));
-      case z.ZodTypes.intersection:
+      case ZodTypes.intersection:
         return this.setType(
           id,
           `${this.generate(def.left).id} & ${this.generate(def.right).id}`,
         );
-      case z.ZodTypes.record:
+      case ZodTypes.record:
         return this.setType(
           id,
           `{[k:string]: ${this.generate(def.valueType).id}}`,
         );
-      case z.ZodTypes.transformer:
+      case ZodTypes.transformer:
         return this.setType(id, this.generate(def.output).id);
-      case z.ZodTypes.map:
+      case ZodTypes.map:
         return this.setType(
           id,
           `Map<${this.generate(def.keyType).id}, ${
             this.generate(def.valueType).id
           }>`,
         );
-      case z.ZodTypes.lazy:
+      case ZodTypes.lazy:
         const lazyType = def.getter();
         return this.setType(id, this.generate(lazyType).id);
-      case z.ZodTypes.nativeEnum:
+      case ZodTypes.nativeEnum:
         // const lazyType = def.getter();
         return this.setType(id, 'asdf');
-      case z.ZodTypes.optional:
+      case ZodTypes.optional:
         return this.setType(
           id,
           `${this.generate(def.innerType).id} | undefined`,
         );
-      case z.ZodTypes.nullable:
+      case ZodTypes.nullable:
         return this.setType(id, `${this.generate(def.innerType).id} | null`);
       default:
         util.assertNever(def);

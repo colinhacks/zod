@@ -1,19 +1,22 @@
-import * as z from './base';
+import { ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './base';
 
-export interface ZodOptionalDef<T extends z.ZodTypeAny = z.ZodTypeAny>
-  extends z.ZodTypeDef {
-  t: z.ZodTypes.optional;
+// import * as z from './base';
+// type asdf = ZodTypeAny
+
+export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  t: ZodTypes.optional;
   innerType: T;
 }
 
 // This type allows for optional flattening
-export type ZodOptionalType<T extends z.ZodTypeAny> = T extends ZodOptional<
-  z.ZodTypeAny
+export type ZodOptionalType<T extends ZodTypeAny> = T extends ZodOptional<
+  ZodTypeAny
 >
   ? T
   : ZodOptional<T>;
 
-export class ZodOptional<T extends z.ZodTypeAny> extends z.ZodType<
+export class ZodOptional<T extends ZodTypeAny> extends ZodType<
   T['_output'] | undefined,
   ZodOptionalDef<T>,
   T['_input'] | undefined
@@ -25,11 +28,11 @@ export class ZodOptional<T extends z.ZodTypeAny> extends z.ZodType<
     innerType: this._def.innerType.toJSON(),
   });
 
-  static create = <T extends z.ZodTypeAny>(type: T): ZodOptionalType<T> => {
+  static create = <T extends ZodTypeAny>(type: T): ZodOptionalType<T> => {
     if (type instanceof ZodOptional) return type as ZodOptionalType<T>;
 
     return new ZodOptional({
-      t: z.ZodTypes.optional,
+      t: ZodTypes.optional,
       innerType: type,
     }) as ZodOptionalType<T>;
   };

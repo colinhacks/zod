@@ -1,3 +1,5 @@
+import { util } from '../helpers/util';
+import { ZodParser, ParseParams, MakeErrorData } from '../parser';
 import {
   ZodIssueCode,
   ZodArray,
@@ -5,12 +7,11 @@ import {
   ZodError,
   ZodOptional,
   ZodNullable,
+  ZodCustomIssue,
 } from '../index';
-import { ZodParser, ParseParams, MakeErrorData } from '../parser';
+
 import { ZodOptionalType } from './optional';
 import { ZodNullableType } from './nullable';
-import { ZodCustomIssue } from '../ZodError';
-import { util } from '../helpers/util';
 
 export enum ZodTypes {
   string = 'string',
@@ -42,7 +43,7 @@ export enum ZodTypes {
   nullable = 'nullable',
 }
 
-export type ZodTypeAny = ZodType<unknown, any, unknown>;
+export type ZodTypeAny = ZodType<any, any, any>;
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 
 export const inputSchema = (schema: ZodType<any>): ZodType<any> => {
@@ -325,11 +326,11 @@ export abstract class ZodType<
   }
 
   default<
-    T extends Output = Output,
+    T extends Input = Input,
     Opt extends ReturnType<this['optional']> = ReturnType<this['optional']>
   >(def: T): ZodTransformer<Opt, this>;
   default<
-    T extends (arg: this) => Output,
+    T extends (arg: this) => Input,
     Opt extends ReturnType<this['optional']> = ReturnType<this['optional']>
   >(def: T): ZodTransformer<Opt, this>;
   default(def: any) {

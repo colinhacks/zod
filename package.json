@@ -1,24 +1,23 @@
 {
   "name": "zod",
-  "version": "2.0.0-beta.18",
+  "version": "2.0.0-beta.21",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/cjs/index.js",
-  "module": "./lib/esm/index.js",
-  "types": "./lib/esm/index.d.ts",
+  "types": "./lib/cjs/index.d.ts",
   "files": [
     "lib"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/vriad/zod"
+    "url": "https://github.com/colinhacks/zod"
   },
-  "author": "Colin McDonnell <colin@vriad.com>",
+  "author": "Colin McDonnell <colin@colinhacks.com>",
   "license": "MIT",
   "sideEffects": false,
   "bugs": {
-    "url": "https://github.com/vriad/zod/issues"
+    "url": "https://github.com/colinhacks/zod/issues"
   },
-  "homepage": "https://github.com/vriad/zod",
+  "homepage": "https://github.com/colinhacks/zod",
   "dependencies": {},
   "keywords": [
     "typescript",
@@ -29,7 +28,7 @@
   ],
   "scripts": {
     "clean": "rm -rf lib/*",
-    "build": "yarn run clean && tsc --p tsconfig.json && tsc --p tsconfig.esm.json",
+    "build": "yarn run clean && tsc --p tsconfig.json",
     "buildall": "yarn add typescript@3.4 && yarn build && yarn add typescript@3.5 && yarn build && yarn add typescript@3.6 && yarn build && yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4 && yarn build && yarn add typescript@3.4",
     "buildallv2": "yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4.0 && yarn build && yarn add typescript@4.1 && yarn build && yarn add typescript@3.7",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",

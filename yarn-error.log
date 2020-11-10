@@ -38,15 +38,15 @@ npm manifest:
     ],
     "repository": {
       "type": "git",
-      "url": "https://github.com/vriad/zod"
+      "url": "https://github.com/colinhacks/zod"
     },
-    "author": "Colin McDonnell <colin@vriad.com>",
+    "author": "Colin McDonnell <colin@colinhacks.com>",
     "license": "MIT",
     "sideEffects": false,
     "bugs": {
-      "url": "https://github.com/vriad/zod/issues"
+      "url": "https://github.com/colinhacks/zod/issues"
     },
-    "homepage": "https://github.com/vriad/zod",
+    "homepage": "https://github.com/colinhacks/zod",
     "dependencies": {},
     "tags": [
       "typescript",

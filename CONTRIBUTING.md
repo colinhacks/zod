@@ -14,7 +14,7 @@ Before you start working on a contribution, create an issue describing what you 
 - Create a new branch off the `master` branch: `git checkout -b your-feature-name`
 - Implement your contributions (see the Development section for more information)
 - Push your branch to the repo: `git push origin your-feature-name`
-- Go to https://github.com/vriad/zod/compare and select the branch you just pushed in the "compare:" dropdown
+- Go to https://github.com/colinhacks/zod/compare and select the branch you just pushed in the "compare:" dropdown
 - Submit the PR. The maintainers will follow up ASAP. -->
 
 ## Development

@@ -1,95 +1,96 @@
-import * as z from './index';
+import { ZodDef } from '.';
 import { util } from './helpers/util';
+import { ZodType, ZodTypes } from './types/base';
 
 export const isScalar = (
-  schema: z.ZodType<any, any>,
+  schema: ZodType<any, any>,
   params: { root: boolean } = { root: true },
 ): boolean => {
-  const def = schema._def as z.ZodDef;
+  const def = schema._def as ZodDef;
 
   let returnValue = false;
   switch (def.t) {
-    case z.ZodTypes.string:
+    case ZodTypes.string:
       returnValue = true;
       break;
-    case z.ZodTypes.number:
+    case ZodTypes.number:
       returnValue = true;
       break;
-    case z.ZodTypes.bigint:
+    case ZodTypes.bigint:
       returnValue = true;
       break;
-    case z.ZodTypes.boolean:
+    case ZodTypes.boolean:
       returnValue = true;
       break;
-    case z.ZodTypes.undefined:
+    case ZodTypes.undefined:
       returnValue = true;
       break;
-    case z.ZodTypes.null:
+    case ZodTypes.null:
       returnValue = true;
       break;
-    case z.ZodTypes.any:
+    case ZodTypes.any:
       returnValue = false;
       break;
-    case z.ZodTypes.unknown:
+    case ZodTypes.unknown:
       returnValue = false;
       break;
-    case z.ZodTypes.never:
+    case ZodTypes.never:
       returnValue = false;
       break;
-    case z.ZodTypes.void:
+    case ZodTypes.void:
       returnValue = false;
       break;
-    case z.ZodTypes.array:
+    case ZodTypes.array:
       if (params.root === false) return false;
       returnValue = isScalar(def.type, { root: false });
       break;
-    case z.ZodTypes.object:
+    case ZodTypes.object:
       returnValue = false;
       break;
-    case z.ZodTypes.union:
+    case ZodTypes.union:
       returnValue = def.options.every(x => isScalar(x));
       break;
-    case z.ZodTypes.intersection:
+    case ZodTypes.intersection:
       returnValue = isScalar(def.left) && isScalar(def.right);
       break;
-    case z.ZodTypes.tuple:
+    case ZodTypes.tuple:
       returnValue = def.items.every(x => isScalar(x, { root: false }));
       break;
-    case z.ZodTypes.lazy:
+    case ZodTypes.lazy:
       returnValue = isScalar(def.getter());
       break;
-    case z.ZodTypes.literal:
+    case ZodTypes.literal:
       returnValue = true;
       break;
-    case z.ZodTypes.enum:
+    case ZodTypes.enum:
       returnValue = true;
       break;
-    case z.ZodTypes.nativeEnum:
+    case ZodTypes.nativeEnum:
       returnValue = true;
       break;
-    case z.ZodTypes.function:
+    case ZodTypes.function:
       returnValue = false;
       break;
-    case z.ZodTypes.record:
+    case ZodTypes.record:
       returnValue = false;
       break;
-    case z.ZodTypes.map:
+    case ZodTypes.map:
       returnValue = false;
       break;
-    case z.ZodTypes.date:
+    case ZodTypes.date:
       returnValue = true;
       break;
-    case z.ZodTypes.promise:
+    case ZodTypes.promise:
       returnValue = false;
       break;
-    case z.ZodTypes.transformer:
+    case ZodTypes.transformer:
       returnValue = isScalar(def.output);
       break;
 
-    case z.ZodTypes.optional:
+    case ZodTypes.optional:
       returnValue = isScalar(def.innerType);
       break;
-    case z.ZodTypes.nullable:
+    case ZodTypes.nullable:
       returnValue = isScalar(def.innerType);
       break;
     default:

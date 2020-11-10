@@ -44,34 +44,6 @@ import { ZodErrorMap } from './defaultErrorMap';
 import { ZodCodeGenerator } from './codegen';
 
 export { ZodTypeDef, ZodTypes };
-type ZodDef =
-  | ZodStringDef
-  | ZodNumberDef
-  | ZodBigIntDef
-  | ZodBooleanDef
-  | ZodDateDef
-  | ZodUndefinedDef
-  | ZodNullDef
-  | ZodAnyDef
-  | ZodUnknownDef
-  | ZodNeverDef
-  | ZodVoidDef
-  | ZodArrayDef
-  | ZodObjectDef
-  | ZodUnionDef
-  | ZodIntersectionDef
-  | ZodTupleDef
-  | ZodRecordDef
-  | ZodMapDef
-  | ZodFunctionDef
-  | ZodLazyDef
-  | ZodLiteralDef
-  | ZodEnumDef
-  | ZodTransformerDef
-  | ZodNativeEnumDef
-  | ZodOptionalDef
-  | ZodNullableDef
-  | ZodPromiseDef;
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -191,7 +163,6 @@ export {
   ZodType as Schema,
   ZodType as ZodSchema,
   ZodTypeAny,
-  ZodDef,
   ZodErrorMap,
   ZodParsedType,
   ZodCodeGenerator,
@@ -200,3 +171,32 @@ export {
 export { TypeOf, TypeOf as infer, input, output };
 
 export * from './ZodError';
+
+export type ZodDef =
+  | ZodStringDef
+  | ZodNumberDef
+  | ZodBigIntDef
+  | ZodBooleanDef
+  | ZodDateDef
+  | ZodUndefinedDef
+  | ZodNullDef
+  | ZodAnyDef
+  | ZodUnknownDef
+  | ZodNeverDef
+  | ZodVoidDef
+  | ZodArrayDef
+  | ZodObjectDef
+  | ZodUnionDef
+  | ZodIntersectionDef
+  | ZodTupleDef
+  | ZodRecordDef
+  | ZodMapDef
+  | ZodFunctionDef
+  | ZodLazyDef
+  | ZodLiteralDef
+  | ZodEnumDef
+  | ZodTransformerDef
+  | ZodNativeEnumDef
+  | ZodOptionalDef
+  | ZodNullableDef
+  | ZodPromiseDef;

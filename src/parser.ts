@@ -1,5 +1,5 @@
 import * as z from './types/base';
-import { ZodDef, ZodNever } from './index';
+
 import {
   ZodError,
   ZodIssueCode,
@@ -9,6 +9,7 @@ import {
 import { INVALID, util } from './helpers/util';
 import { ZodErrorMap, defaultErrorMap } from './defaultErrorMap';
 import { PseudoPromise } from './PseudoPromise';
+import { ZodDef } from './index';
 
 export const getParsedType = (data: any): ZodParsedType => {
   if (typeof data === 'string') return 'string';
@@ -536,7 +537,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       for (const key of shapeKeys) {
         const keyValidator = shapeKeys.includes(key)
           ? shape[key]
-          : !(def.catchall instanceof ZodNever)
+          : !(def.catchall.constructor.name === 'ZodNever')
           ? def.catchall
           : undefined;
 
@@ -579,7 +580,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         });
       }
 
-      if (def.catchall instanceof ZodNever) {
+      if (def.catchall.constructor.name === 'ZodNever') {
         if (def.unknownKeys === 'passthrough') {
           for (const key of extraKeys) {
             objectPromises[key] = PseudoPromise.resolve(data[key]);
