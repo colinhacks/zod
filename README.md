@@ -3,10 +3,10 @@
   <h1 align="center">Zod</h1>
 </p>
 <p align="center">
-<a href="https://twitter.com/vriad" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@vriad-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
-<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/vriad/zod" alt="License"></a>
+<a href="https://twitter.com/colinhacks" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
+<a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="License"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
-<a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/vriad/zod" alt="stars"></a>
+<a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
 <a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
 
 </p>
@@ -16,17 +16,17 @@ if you're happy and you know it, star this repo ⭐
 
 <br/>
 
-<!-- Created and maintained by [@vriad](https://twitter.com/vriad). The motivation for this library and a detailed comparison to various alternatives can be found at https://vriad.com/blog/zod.
+<!-- Created and maintained by [@colinhacks](https://twitter.com/colinhacks). The motivation for this library and a detailed comparison to various alternatives can be found at https://colinhacks.com/blog/zod.
 
 If you find this package useful, leave a star to help more folks find it ⭐️🤏 -->
 
 <!-- <br/> -->
 
-<!-- **Zod 2 is in an early beta.** Upgrade with `yarn add zod@beta`. Read more about the new features and migration process here: https://github.com/vriad/zod/tree/v2. -->
+<!-- **Zod 2 is in an early beta.** Upgrade with `yarn add zod@beta`. Read more about the new features and migration process here: https://github.com/colinhacks/zod/tree/v2. -->
 
 ### Zod 2 is now in beta!
 
-Most projects will be able to upgrade from v1 to v2 without any breaking changes. Zod 2 is recommended for all new projects. Find a breakdown of the new features and a simple migration guide here: https://github.com/vriad/zod/tree/v2
+Most projects will be able to upgrade from v1 to v2 without any breaking changes. Zod 2 is recommended for all new projects. Find a breakdown of the new features and a simple migration guide here: https://github.com/colinhacks/zod/tree/v2
 
 ```
 npm install zod@beta
@@ -35,10 +35,10 @@ yarn add zod@beta
 
 <!-- **Aug 30 — zod@1.11 was released with lots of cool features!** -->
 
-<!-- - All schemas now have a `.safeParse` method. This lets you validate data in a more functional way, similar to `io-ts`: https://github.com/vriad/zod#safe-parse
-- String schemas have a new `.regex` refinement method: https://github.com/vriad/zod#strings
-- Object schemas now have two new methods: `.primitives()` and `.nonprimitives()`. These methods let you quickly pick or omit primitive fields from objects, useful for validating API inputs: https://github.com/vriad/zod#primitives-and-nonprimitives
-- Zod now provides `z.nativeEnum()`, which lets you create z Zod schema from an existing TypeScript `enum`: https://github.com/vriad/zod#native-enums -->
+<!-- - All schemas now have a `.safeParse` method. This lets you validate data in a more functional way, similar to `io-ts`: https://github.com/colinhacks/zod#safe-parse
+- String schemas have a new `.regex` refinement method: https://github.com/colinhacks/zod#strings
+- Object schemas now have two new methods: `.primitives()` and `.nonprimitives()`. These methods let you quickly pick or omit primitive fields from objects, useful for validating API inputs: https://github.com/colinhacks/zod#primitives-and-nonprimitives
+- Zod now provides `z.nativeEnum()`, which lets you create z Zod schema from an existing TypeScript `enum`: https://github.com/colinhacks/zod#native-enums -->
 
 <!-- > ⚠️ You might be encountering issues building your project if you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later. -->
 
@@ -59,7 +59,7 @@ Some other great aspects:
 
 # Sponsorship
 
-I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/vriad) or the [Cup of Coffee tier](https://github.com/sponsors/vriad). If you're making money from a product you built using Zod, consider the [Startup tier]([Cup of Coffee tier](https://github.com/sponsors/vriad)). You can learn more about the tiers at [github.com/sponsors/vriad](github.com/sponsors/vriad).
+I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/colinhacks) or the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you're making money from a product you built using Zod, consider the [Startup tier]([Cup of Coffee tier](https://github.com/sponsors/colinhacks)). You can learn more about the tiers at [github.com/sponsors/colinhacks](github.com/sponsors/colinhacks).
 
 ### Sponsors
 
@@ -97,7 +97,7 @@ I work on Zod in my free time, so if you're making money from a product that is 
   </tr>
 </table>
 
-_To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/vriad) or [Consultancy](https://github.com/sponsors/vriad) tier._
+_To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/colinhacks) or [Consultancy](https://github.com/sponsors/colinhacks) tier._
 
 # Table of contents
 
@@ -427,7 +427,7 @@ z.string().url({ message: 'Invalid url' });
 z.string().uuid({ message: 'Invalid UUID' });
 ```
 
-> To see the email and url regexes, check out [this file](https://github.com/vriad/zod/blob/master/src/types/string.ts). To use a more advanced method, use a custom refinement.
+> To see the email and url regexes, check out [this file](https://github.com/colinhacks/zod/blob/master/src/types/string.ts). To use a more advanced method, use a custom refinement.
 
 ## Numbers
 
@@ -1424,7 +1424,7 @@ User.omit({ outer: { inner: { prop2: true } } }); // { outer: { prop1: string, i
 
 ## Errors
 
-There is a dedicated guide on Zod's error handling system here: [ERROR_HANDLING.md](https://github.com/vriad/zod/blob/master/ERROR_HANDLING.md)
+There is a dedicated guide on Zod's error handling system here: [ERROR_HANDLING.md](https://github.com/colinhacks/zod/blob/master/ERROR_HANDLING.md)
 
 # Comparison
 
@@ -1432,7 +1432,7 @@ There are a handful of other widely-used validation libraries, but all of them h
 
 <!-- The table below summarizes the feature differences. Below the table there are more involved discussions of certain alternatives, where necessary. -->
 
-<!-- | Feature                                                                                                                | [Zod](https://github.com/vriad) | [Joi](https://github.com/hapijs/joi) | [Yup](https://github.com/jquense/yup) | [io-ts](https://github.com/gcanti/io-ts) | [Runtypes](https://github.com/pelotom/runtypes) | [ow](https://github.com/sindresorhus/ow) | [class-validator](https://github.com/typestack/class-validator) |
+<!-- | Feature                                                                                                                | [Zod](https://github.com/colinhacks) | [Joi](https://github.com/hapijs/joi) | [Yup](https://github.com/jquense/yup) | [io-ts](https://github.com/gcanti/io-ts) | [Runtypes](https://github.com/pelotom/runtypes) | [ow](https://github.com/sindresorhus/ow) | [class-validator](https://github.com/typestack/class-validator) |
 | ---------------------------------------------------------------------------------------------------------------------- | :-----------------------------: | :----------------------------------: | :-----------------------------------: | :--------------------------------------: | :---------------------------------------------: | :--------------------------------------: | :-------------------------------------------------------------: |
 | <abbr title='Any ability to extract a TypeScript type from a validator instance counts.'>Type inference</abbr>         |               🟢                |                  🔴                  |                  🟢                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
 | <abbr title="Yup's inferred types are incorrect in certain cases, see discussion below.">Correct type inference</abbr> |               🟢                |                  🔴                  |                  🔴                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
@@ -1587,4 +1587,4 @@ If you want to validate function inputs, use function schemas in Zod! It's a muc
 
 # Changelog
 
-View the changelog at [CHANGELOG.md](https://github.com/vriad/zod/blob/master/CHANGELOG.md)
+View the changelog at [CHANGELOG.md](https://github.com/colinhacks/zod/blob/master/CHANGELOG.md)
