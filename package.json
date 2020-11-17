@@ -27,6 +27,7 @@
     "inference"
   ],
   "scripts": {
+    "lint:circular": "madge src/index.ts --circular",
     "clean": "rm -rf lib/*",
     "build": "yarn run clean && tsc --p tsconfig.json",
     "buildall": "yarn add typescript@3.4 && yarn build && yarn add typescript@3.5 && yarn build && yarn add typescript@3.6 && yarn build && yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4 && yarn build && yarn add typescript@3.4",
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@types/jest": "^25.1.4",
     "jest": "^25.1.0",
+    "madge": "^3.12.0",
     "make-coverage-badge": "^1.2.0",
     "nodemon": "^2.0.2",
     "prettier": "^1.19.1",
