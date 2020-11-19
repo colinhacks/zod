@@ -1,4 +1,4 @@
-import { Primitive } from './primitive';
+import { Primitive } from '../internal';
 
 type AnyObject = { [k: string]: any };
 type IsAny<T> = any extends T ? (T extends any ? true : false) : false;

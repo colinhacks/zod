@@ -1,6 +1,7 @@
-import { ZodDef } from '.';
-import { util } from './helpers/util';
-import { ZodType, ZodTypes } from './types/base';
+import { ZodDef, util, ZodType, ZodTypes } from './internal';
+// import { ZodDef } from './ZodDef';
+// import { util } from './helpers/util';
+// import { ZodType, ZodTypes } from './types/base';
 
 export const isScalar = (
   schema: ZodType<any, any>,

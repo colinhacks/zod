@@ -1,6 +1,4 @@
-import { INVALID } from './helpers/util';
-import { ZodError } from './ZodError';
-// import { INVALID } from './util';
+import { INVALID, ZodError } from './internal';
 
 type Func = (arg: any, ctx: { async: boolean }) => any;
 type FuncItem = { type: 'function'; function: Func };

@@ -1,5 +1,4 @@
-import { ZodIssueCode, ZodIssueOptionalMessage } from './ZodError';
-import { util } from './helpers/util';
+import { ZodIssueCode, ZodIssueOptionalMessage, util } from './internal';
 
 type ErrorMapCtx = {
   // path: (string | number)[];

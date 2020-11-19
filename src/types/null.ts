@@ -1,12 +1,10 @@
-import * as z from './base';
-// import { ZodUndefined } from './undefined';
-// import { ZodUnion } from './union';
+import { ZodType, ZodTypes, ZodTypeDef } from '../internal';
 
-export interface ZodNullDef extends z.ZodTypeDef {
-  t: z.ZodTypes.null;
+export interface ZodNullDef extends ZodTypeDef {
+  t: ZodTypes.null;
 }
 
-export class ZodNull extends z.ZodType<null, ZodNullDef> {
+export class ZodNull extends ZodType<null, ZodNullDef> {
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
@@ -14,7 +12,7 @@ export class ZodNull extends z.ZodType<null, ZodNullDef> {
   toJSON = () => this._def;
   static create = (): ZodNull => {
     return new ZodNull({
-      t: z.ZodTypes.null,
+      t: ZodTypes.null,
     });
   };
 }

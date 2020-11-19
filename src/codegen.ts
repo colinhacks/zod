@@ -1,12 +1,9 @@
-// import * as z from './index';
-import { ZodDef } from '.';
-import { util } from './helpers/util';
-import { ZodType, ZodTypes } from './types/base';
+import { ZodDef, util, ZodType, ZodTypes } from './internal';
 
 type TypeResult = { schema: any; id: string; type: string };
 
 const isOptional = (schema: ZodType<any, any>): boolean => {
-  // const def: z.ZodDef = schema._def;
+  // const def: ZodDef = schema._def;
   // if (def.t === ZodTypes.undefined) return true;
   // else if (def.t === ZodTypes.intersection) {
   //   return isOptional(def.right) && isOptional(def.left);

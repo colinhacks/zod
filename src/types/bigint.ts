@@ -1,13 +1,10 @@
-import * as z from './base';
-// import { ZodUndefined } from './undefined';
-// import { ZodNull } from './null';
-// import { ZodUnion } from './union';
+import { ZodTypeDef, ZodType, ZodTypes } from '../internal';
 
-export interface ZodBigIntDef extends z.ZodTypeDef {
-  t: z.ZodTypes.bigint;
+export interface ZodBigIntDef extends ZodTypeDef {
+  t: ZodTypes.bigint;
 }
 
-export class ZodBigInt extends z.ZodType<bigint, ZodBigIntDef> {
+export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
@@ -16,7 +13,7 @@ export class ZodBigInt extends z.ZodType<bigint, ZodBigIntDef> {
 
   static create = (): ZodBigInt => {
     return new ZodBigInt({
-      t: z.ZodTypes.bigint,
+      t: ZodTypes.bigint,
     });
   };
 }

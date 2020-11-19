@@ -1,6 +1,5 @@
 import * as z from '../index';
-import { util } from '../helpers/util';
-import { ZodIssueCode } from '../index';
+import { util, ZodIssueCode } from '../internal';
 
 const stringMap = z.map(z.string(), z.string());
 type stringMap = z.infer<typeof stringMap>;
