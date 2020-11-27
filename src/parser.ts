@@ -165,7 +165,7 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
     case z.ZodTypes.bigint:
       if (parsedType !== ZodParsedType.bigint) {
         error.addError(
-          makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.number, received: parsedType }),
+          makeError({ code: ZodErrorCode.invalid_type, expected: ZodParsedType.bigint, received: parsedType }),
         );
         // setError(error);
         throw error;
