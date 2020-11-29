@@ -235,7 +235,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         ERROR.addIssue(
           makeError(params, data, {
             code: ZodIssueCode.invalid_type,
-            expected: ZodParsedType.number,
+            expected: ZodParsedType.bigint,
             received: parsedType,
           }),
         );
