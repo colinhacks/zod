@@ -76,8 +76,6 @@ test('use path in refinement context', async () => {
 
   const t1 = await noNested.spa('asdf');
   const t2 = await data.spa({ foo: 'asdf' });
-  // console.log(t1);
-  // console.log(t2);
 
   expect(t1.success).toBe(true);
   expect(t2.success).toBe(false);

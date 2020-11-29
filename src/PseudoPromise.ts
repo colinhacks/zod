@@ -35,7 +35,19 @@ export class PseudoPromise<ReturnType = undefined> {
       // );
       if (ctx.async) {
         try {
-          return Promise.all(pps.map(pp => pp.getValueAsync()));
+          const allValues = Promise.all(
+            pps.map(pp => {
+              try {
+                const asdf = pp.getValueAsync();
+                return asdf;
+              } catch (err) {
+                return INVALID;
+              }
+            }),
+          ).then(vals => {
+            return vals;
+          });
+          return allValues;
         } catch (err) {}
         // return Promise.all(pps.map(pp => pp.getValueAsync()));
       } else {

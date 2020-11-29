@@ -290,13 +290,9 @@ export class ZodObject<
   //   const newShape: any = {};
   //   for (const key in this.shape) {
   //     const val = this.shape[key];
-  //     console.log(`key ${key}:`);
-  //     console.log(val);
   //     if (val instanceof ZodUnion) {
-  //       console.log(`${key} is union!`);
   //       const options = (val as ZodUnion<any>)._def.options;
   //       if (options.length === 2) {
-  //         console.log(`found ${options.length} options`);
   //         // .length === 2;
   //         if (options[0] instanceof ZodUndefined) {
   //           newShape[key] = options[1];

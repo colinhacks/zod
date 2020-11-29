@@ -266,3 +266,18 @@ test('test catchall parsing', async () => {
   expect(result2.success).toEqual(false);
   return result2;
 });
+
+test('test nonexistent keys', async () => {
+  const Schema = z.union([
+    z.object({
+      a: z.string(),
+    }),
+    z.object({
+      b: z.number(),
+    }),
+  ]);
+  const obj = { a: 'A' };
+  const result = await Schema.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
+  expect(result.success).toBe(true);
+  return result;
+});
