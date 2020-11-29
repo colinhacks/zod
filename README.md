@@ -1538,7 +1538,7 @@ Consider the equivalent in Zod:
 ```ts
 const C = z.object({
   foo: z.string(),
-  bar: z.string().optional(),
+  bar: z.number().optional(),
 });
 
 type C = z.infer<typeof C>;
