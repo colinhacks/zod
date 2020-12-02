@@ -36,9 +36,9 @@ export class PseudoPromise<ReturnType = undefined> {
       if (ctx.async) {
         try {
           const allValues = Promise.all(
-            pps.map(pp => {
+            pps.map(async pp => {
               try {
-                const asdf = pp.getValueAsync();
+                const asdf = await pp.getValueAsync();
                 return asdf;
               } catch (err) {
                 return INVALID;
@@ -175,10 +175,16 @@ export class PseudoPromise<ReturnType = undefined> {
     ]);
   };
 
-  catch = <NewReturn>(
-    catcher: (err: Error, ctx: { async: boolean }) => NewReturn,
-  ): PseudoPromise<NewReturn extends Promise<infer U> ? U : NewReturn> => {
-    return new PseudoPromise([...this.items, { type: 'catcher', catcher }]);
+  // catch = <NewReturn>(
+  //   catcher: (err: Error, ctx: { async: boolean }) => NewReturn,
+  // ): PseudoPromise<NewReturn extends Promise<infer U> ? U : NewReturn> => {
+  //   return new PseudoPromise([...this.items, { type: 'catcher', catcher }]);
+  // };
+  catch = (catcher: (err: Error, ctx: { async: boolean }) => unknown): this => {
+    return new PseudoPromise([
+      ...this.items,
+      { type: 'catcher', catcher },
+    ]) as this;
   };
 
   // getValue = (
@@ -223,7 +229,9 @@ export class PseudoPromise<ReturnType = undefined> {
         if (!catcherItem || catcherItem.type !== 'catcher') {
           throw err;
         } else {
-          val = catcherItem.catcher(err, { async: false });
+          catcherItem.catcher(err, { async: false });
+          // val stays the same
+          val = val;
           index = catcherIndex;
         }
       }
@@ -268,7 +276,9 @@ export class PseudoPromise<ReturnType = undefined> {
           throw err;
         } else {
           index = catcherIndex;
-          val = await catcherItem.catcher(err, { async: true });
+          await catcherItem.catcher(err, { async: true });
+          // val stays the same
+          val = val;
         }
       }
 

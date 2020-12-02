@@ -175,12 +175,19 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     throw ERROR;
   };
 
-  const HANDLE = (err: Error) => {
-    if (err instanceof ZodError) {
-      ERROR.addIssues(err.issues);
-    }
-    throw err;
-  };
+  // const HANDLE = (err: Error) => {
+  //   if (err instanceof ZodError) {
+  //     ERROR.addIssues(err.issues);
+  //   }
+  //   // throw ERROR;
+  // };
+
+  // const HANDLE_AND_THROW = (err: Error) => {
+  //   if (err instanceof ZodError) {
+  //     ERROR.addIssues(err.issues);
+  //   }
+  //   throw ERROR;
+  // };
   // const defaultPROMISE = Symbol('return_value');
   //  let returnValue: PseudoPromise<any>; // = defaultReturnValue;
   const parsedType = getParsedType(data);
@@ -647,6 +654,12 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           Object.assign(RESULT.output, resolvedObject);
           return RESULT.output;
         })
+        .then(finalObject => {
+          if (ERROR.issues.length > 0) {
+            return INVALID;
+          }
+          return finalObject;
+        })
         .catch(err => {
           if (err instanceof ZodError) {
             ERROR.addIssues(err.issues);
@@ -662,7 +675,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       const unionErrors: ZodError[] = [];
       // const INVALID = Symbol('invalid_data');
       PROMISE = PseudoPromise.all(
-        def.options.map(opt => {
+        def.options.map((opt, _j) => {
           try {
             const parseProm = opt.parse(data, params);
 
@@ -860,22 +873,41 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       PROMISE = PseudoPromise.all(
         tupleData.map((item, index) => {
           const itemParser = def.items[index];
-          return new PseudoPromise().then(() => {
-            try {
-              return itemParser.parse(item, {
+          return new PseudoPromise()
+            .then(() => {
+              // try {
+              const tupleDatum = itemParser.parse(item, {
                 ...params,
                 path: [...params.path, index],
               });
-            } catch (err) {
+              return tupleDatum;
+              // } catch (err) {
+              //   if (err instanceof ZodError) {
+              //     ERROR.addIssues(err.issues);
+              //     return INVALID;
+              //   }
+              //   throw err;
+              // }
+            })
+            .catch(err => {
               if (err instanceof ZodError) {
                 ERROR.addIssues(err.issues);
                 return INVALID;
               }
               throw err;
-            }
-          });
+            });
         }),
-      );
+      )
+        .then(tupleData => {
+          if (tupleData.indexOf(INVALID) !== -1) {
+            // invalid
+            THROW();
+          }
+          return tupleData;
+        })
+        .catch(err => {
+          throw err;
+        });
       // for (const index in tupleData) {
       //   const item = tupleData[index];
       //   const itemParser = def.items[index];
@@ -1082,7 +1114,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         .then(() => {
           return def.input.parse(data, params);
         })
-        .catch(HANDLE)
+        // .catch(HANDLE_AND_THROW)
         .then(inputParseResult => {
           // try {
           const transformed = def.transformer(inputParseResult);
@@ -1103,6 +1135,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           //   throw err;
           // }
         })
+        // .catch(HANDLE_AND_THROW)
         .then(transformedResult => {
           // try {
           return def.output.parse(transformedResult, params);
@@ -1113,8 +1146,10 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           //   }
           //   throw err;
           // }
-        })
-        .catch(HANDLE);
+        });
+      // .catch(err => {
+      //   HANDLE_AND_THROW(err);
+      // });
       break;
     default:
       PROMISE = PseudoPromise.resolve('adsf' as never);

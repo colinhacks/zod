@@ -281,3 +281,19 @@ test('test nonexistent keys', async () => {
   expect(result.success).toBe(true);
   return result;
 });
+
+test('test async PseudoPromise.all', async () => {
+  const Schema2 = z.union([
+    z.object({
+      ty: z.string(),
+    }),
+    z.object({
+      ty: z.number(),
+    }),
+  ]);
+
+  const obj = { ty: 'A' };
+  const result = await Schema2.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
+  expect(result.success).toEqual(true);
+  return result;
+});
