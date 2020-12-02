@@ -133,7 +133,6 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
 - [Promises](#promises)
 - [Instanceof](#instanceof)
 - [Function schemas](#function-schemas)
-- [Errors](#errors)
 - [Comparison](#comparison)
   - [Joi](#joi)
   - [Yup](#yup)
