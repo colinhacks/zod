@@ -9,7 +9,7 @@ type CatcherItem = { type: 'catcher'; catcher: Catcher };
 type Items = (FuncItem | CatcherItem)[];
 
 export class PseudoPromise<ReturnType = undefined> {
-  readonly _return: ReturnType;
+  readonly _return: ReturnType | undefined;
   items: Items;
   constructor(funcs: Items = []) {
     this.items = funcs;

@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
-import { describe, expect, test } from 'https://deno.land/x/expect@v0.2.6/mod.ts';
+import { expect } from 'https://deno.land/x/expect@v0.2.6/mod.ts';
+const test = Deno.test;
 
 test('dummy test recursive', () => {
   expect(true).toBeTruthy();
