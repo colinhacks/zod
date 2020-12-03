@@ -1,5 +1,9 @@
 // @ts-ignore TS6133
-import { describe, expect, test } from 'https://deno.land/x/expect@v0.2.6/mod.ts';
+import {
+  describe,
+  expect,
+  test,
+} from 'https://deno.land/x/expect@v0.2.6/mod.ts';
 
 // import * as z from '.';
 import { PseudoPromise } from '../PseudoPromise.ts';

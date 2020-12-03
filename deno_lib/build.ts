@@ -30,51 +30,47 @@ for await (const entry of walk(nodeRoot, {
 
   const nodeSource = await Deno.readTextFile(nodePath);
 
-  const denoSource =
-    nodeSource.replace(
-      /^(?:import|export)[\s\S]*?from\s*['"]([^'"]*)['"];$/gm,
-      (line, target) => {
-        if (target === '@jest/globals') {
-          return line.replace(
-            target,
-            'https://deno.land/x/expect@v0.2.6/mod.ts',
-          );
+  const denoSource = nodeSource.replace(
+    /^(?:import|export)[\s\S]*?from\s*['"]([^'"]*)['"];$/gm,
+    (line, target) => {
+      if (target === '@jest/globals') {
+        return line.replace(target, 'https://deno.land/x/expect@v0.2.6/mod.ts');
+      }
+
+      const targetPath = path.join(path.dirname(nodePath), target);
+      const targetPathIfFile = targetPath + '.ts';
+      const targetPathIfDir = targetPath + '/index.ts';
+
+      let targetFile = null;
+      try {
+        targetFile = Deno.statSync(targetPathIfFile);
+      } catch (error) {
+        if (!(error instanceof Deno.errors.NotFound)) {
+          throw error;
         }
+      }
 
-        const targetPath = path.join(path.dirname(nodePath), target);
-        const targetPathIfFile = targetPath + '.ts';
-        const targetPathIfDir = targetPath + '/index.ts';
+      if (targetFile?.isFile) {
+        return line.replace(target, target + '.ts');
+      }
 
-        let targetFile = null;
-        try {
-          targetFile = Deno.statSync(targetPathIfFile);
-        } catch (error) {
-          if (!(error instanceof Deno.errors.NotFound)) {
-            throw error;
-          }
+      let targetInDir = null;
+      try {
+        targetInDir = Deno.statSync(targetPathIfDir);
+      } catch (error) {
+        if (!(error instanceof Deno.errors.NotFound)) {
+          throw error;
         }
+      }
 
-        if (targetFile?.isFile) {
-          return line.replace(target, target + '.ts');
-        }
+      if (targetInDir?.isFile) {
+        return line.replace(target, target + '/index.ts');
+      }
 
-        let targetInDir = null;
-        try {
-          targetInDir = Deno.statSync(targetPathIfDir);
-        } catch (error) {
-          if (!(error instanceof Deno.errors.NotFound)) {
-            throw error;
-          }
-        }
-
-        if (targetInDir?.isFile) {
-          return line.replace(target, target + '/index.ts');
-        }
-
-        console.warn(`Skipping non-resolvable import:\n  ${line}`);
-        return line;
-      },
-    );
+      console.warn(`Skipping non-resolvable import:\n  ${line}`);
+      return line;
+    },
+  );
 
   await Deno.writeTextFile(denoPath, denoSource);
   console.debug(`wrote ${denoPath}`);
