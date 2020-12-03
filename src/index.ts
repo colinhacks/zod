@@ -43,7 +43,8 @@ import { ZodParsedType } from './parser';
 import { ZodErrorMap } from './defaultErrorMap';
 import { ZodCodeGenerator } from './codegen';
 
-export { ZodTypeDef, ZodTypes };
+export type { ZodTypeDef };
+export { ZodTypes };
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -159,16 +160,19 @@ export {
   ZodTransformer,
   ZodOptional,
   ZodNullable,
+  ZodParsedType,
+  ZodCodeGenerator,
+};
+
+export type {
   ZodType,
   ZodType as Schema,
   ZodType as ZodSchema,
   ZodTypeAny,
   ZodErrorMap,
-  ZodParsedType,
-  ZodCodeGenerator,
 };
 
-export { TypeOf, TypeOf as infer, input, output };
+export type { TypeOf, TypeOf as infer, input, output };
 
 export * from './ZodError';
 

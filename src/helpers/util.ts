@@ -37,13 +37,13 @@ export namespace util {
   };
 
   export const getValues = (obj: any) => {
-    return Object.keys(obj).map(function(e) {
+    return Object.keys(obj).map(function (e) {
       return obj[e];
     });
   };
 
   export const objectValues = (obj: any) => {
-    return Object.keys(obj).map(function(e) {
+    return Object.keys(obj).map(function (e) {
       return obj[e];
     });
   };

@@ -2,30 +2,12 @@ import * as z from './index';
 
 export const crazySchema = z.object({
   tuple: z.tuple([
-    z
-      .string()
-      .nullable()
-      .optional(),
-    z
-      .number()
-      .nullable()
-      .optional(),
-    z
-      .boolean()
-      .nullable()
-      .optional(),
-    z
-      .null()
-      .nullable()
-      .optional(),
-    z
-      .undefined()
-      .nullable()
-      .optional(),
-    z
-      .literal('1234')
-      .nullable()
-      .optional(),
+    z.string().nullable().optional(),
+    z.number().nullable().optional(),
+    z.boolean().nullable().optional(),
+    z.null().nullable().optional(),
+    z.undefined().nullable().optional(),
+    z.literal('1234').nullable().optional(),
   ]),
   merged: z
     .object({

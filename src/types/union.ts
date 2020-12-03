@@ -6,7 +6,7 @@ export interface ZodUnionDef<
   T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]] = [
     z.ZodTypeAny,
     z.ZodTypeAny,
-    ...z.ZodTypeAny[],
+    ...z.ZodTypeAny[]
   ]
 > extends z.ZodTypeDef {
   t: z.ZodTypes.union;

@@ -7,11 +7,9 @@ export interface ZodNullableDef<T extends z.ZodTypeAny = z.ZodTypeAny>
 }
 
 // This type allows for nullable flattening
-export type ZodNullableType<T extends z.ZodTypeAny> = T extends ZodNullable<
-  z.ZodTypeAny
->
-  ? T
-  : ZodNullable<T>;
+export type ZodNullableType<
+  T extends z.ZodTypeAny
+> = T extends ZodNullable<z.ZodTypeAny> ? T : ZodNullable<T>;
 
 export class ZodNullable<
   T extends z.ZodTypeAny

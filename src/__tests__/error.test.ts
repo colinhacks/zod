@@ -1,3 +1,6 @@
+// @ts-ignore TS6133
+import { describe, expect, test } from '@jest/globals';
+
 import * as z from '../index';
 import { ZodError, ZodIssueCode } from '../ZodError';
 import { ZodParsedType } from '../parser';
@@ -113,18 +116,14 @@ test('override error in refinement', () => {
 
 test('array minimum', () => {
   try {
-    z.array(z.string())
-      .min(3, 'tooshort')
-      .parse(['asdf', 'qwer']);
+    z.array(z.string()).min(3, 'tooshort').parse(['asdf', 'qwer']);
   } catch (err) {
     const zerr: ZodError = err;
     expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
     expect(zerr.issues[0].message).toEqual('tooshort');
   }
   try {
-    z.array(z.string())
-      .min(3)
-      .parse(['asdf', 'qwer']);
+    z.array(z.string()).min(3).parse(['asdf', 'qwer']);
   } catch (err) {
     const zerr: ZodError = err;
     expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);

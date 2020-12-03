@@ -10,11 +10,9 @@ export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
 }
 
 // This type allows for optional flattening
-export type ZodOptionalType<T extends ZodTypeAny> = T extends ZodOptional<
-  ZodTypeAny
->
-  ? T
-  : ZodOptional<T>;
+export type ZodOptionalType<
+  T extends ZodTypeAny
+> = T extends ZodOptional<ZodTypeAny> ? T : ZodOptional<T>;
 
 export class ZodOptional<T extends ZodTypeAny> extends ZodType<
   T['_output'] | undefined,

@@ -47,7 +47,7 @@ export type InputTypeOfTuple<
 export interface ZodTupleDef<
   T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [
     z.ZodTypeAny,
-    ...z.ZodTypeAny[],
+    ...z.ZodTypeAny[]
   ]
 > extends z.ZodTypeDef {
   t: z.ZodTypes.tuple;
@@ -57,7 +57,7 @@ export interface ZodTupleDef<
 export class ZodTuple<
   T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [
     z.ZodTypeAny,
-    ...z.ZodTypeAny[],
+    ...z.ZodTypeAny[]
   ]
 > extends z.ZodType<OutputTypeOfTuple<T>, ZodTupleDef<T>, InputTypeOfTuple<T>> {
   toJSON = () => ({
