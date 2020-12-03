@@ -1,3 +1,5 @@
+name: Workflow
+
 on:
   push:
   create:
@@ -8,12 +10,13 @@ on:
 
 jobs:
   node:
+    needs: []
     runs-on: Ubuntu-20.04
     strategy:
       matrix:
         node: [ '14' ]
         typescript: [ '3.8', '4.1' ]
-    name: Test with TypeScript@${{ matrix.typescript }} on Node@${{ matrix.node }}
+    name: 💎 Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
@@ -23,15 +26,75 @@ jobs:
       - run: npm install typescript@${{ matrix.typescript }}
       - run: npm run-script build
       - run: npm test
+      - run: npm run-script check-format
 
   deno:
+    needs: []
     runs-on: Ubuntu-20.04
     strategy:
       matrix:
-        deno: [ ]
-    name: Test with Deno@${{ matrix.deno }}
+        deno: [ '1' ]
+    name: 🦕 Test with Deno ${{ matrix.deno }}
     steps:
       - uses: actions/checkout@v2
       - uses: denolib/setup-deno@v2
         with:
           deno-version: ${{ matrix.deno }}
+      - run: |
+          cd deno_lib
+          deno test
+
+  autofix:
+    needs: []
+    if: github.event_name == 'push'
+    runs-on: Ubuntu-20.04
+    name: ⚙️ Automatically Format and Build
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '14'
+      - uses: denolib/setup-deno@v2
+        with:
+          deno-version: '1'
+      - run: npm install
+      - name: Rebuild deno_lib/
+        run: deno run --allow-read --allow-write deno_lib/build.ts
+      - name: Format with Prettier
+        run: npm run-script format
+      - name: Check for Changes
+        id: check
+        run: |
+          git status
+          declare had_changes="$(
+            [[ -n "$(git status --porcelain)" ]] && echo true || echo false
+          )"
+          echo "::set-output name=had-changes::${had_changes}"
+      - name: Push Changes
+        if: steps.check.outputs.had-changes == 'true'
+        run: |
+          declare br="
+          "
+          declare branch="$(echo ${GITHUB_REF#refs/heads/})"
+          declare date="$(git log -1 --pretty=format:'%ad')"
+          declare short_hash="$(git rev-parse --short=8 HEAD)"
+          declare short_subject="$(git log -1 --pretty=format:'%s')"
+          declare short_subject="$(git log -1 --pretty=format:'%s')"
+          if [[ ${#short_subject} -gt 50 ]]; then
+            short_subject="${short_subject:0:49}…"
+          fi
+          declare author_name="$(git log -1 --pretty=format:'%an')"
+          declare author_email="$(git log -1 --pretty=format:'%ae')"
+          declare current_action_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_id }}"
+          export GIT_AUTHOR_DATE="${date}"
+          export GIT_AUTHOR_NAME="${author_name}"
+          export GIT_AUTHOR_EMAIL="${author_email}"
+          export GIT_COMMITTER_DATE="${date}"
+          export GIT_COMMITTER_NAME="${author_name}"
+          export GIT_COMMITTER_EMAIL="${author_email}"
+          git remote rm origin
+          git remote add origin "https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
+          git checkout "${branch}"
+          git add .
+          git commit -m "⚙️ rebuild ${short_hash} (${short_subject})${br}${br}${current_action_url}"
+          git push --set-upstream origin "${branch}"
