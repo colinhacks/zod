@@ -1,0 +1,25 @@
+on:
+  push:
+  create:
+  pull_request:
+  schedule:
+    - cron: '44 4 * * SAT'
+  workflow_dispatch:
+
+jobs:
+  node:
+    runs-on: Ubuntu-20.04
+    strategy:
+      matrix:
+        node: [ '14' ]
+        typescript: [ '3.8', '4.1' ]
+    name: Test with TypeScript@${{ matrix.typescript }} on Node@${{ matrix.node }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm install
+      - run: npm install typescript@${{ matrix.typescript }}
+      - run: npm run-script build
+      - run: npm test
