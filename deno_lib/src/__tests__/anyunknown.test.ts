@@ -1,9 +1,5 @@
 // @ts-ignore TS6133
-import {
-  describe,
-  expect,
-  test,
-} from 'https://deno.land/x/expect@v0.2.6/mod.ts';
+import { describe, expect, test } from 'https://deno.land/x/expect@v0.2.6/mod.ts';
 
 import * as z from '../index.ts';
 import { util } from '../helpers/util.ts';
@@ -15,7 +11,7 @@ test('check any inference', () => {
   t1.toJSON();
   type t1 = z.infer<typeof t1>;
   const f1: util.AssertEqual<t1, any> = true;
-  f1;
+  expect(f1).toBeTruthy();
 });
 
 test('check unknown inference', () => {
@@ -25,7 +21,7 @@ test('check unknown inference', () => {
   t1.toJSON();
   type t1 = z.infer<typeof t1>;
   const f1: util.AssertEqual<t1, unknown> = true;
-  f1;
+  expect(f1).toBeTruthy();
 });
 
 test('check never inference', () => {

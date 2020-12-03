@@ -1,9 +1,5 @@
 // @ts-ignore TS6133
-import {
-  describe,
-  expect,
-  test,
-} from 'https://deno.land/x/expect@v0.2.6/mod.ts';
+import { describe, expect, test } from 'https://deno.land/x/expect@v0.2.6/mod.ts';
 
 import * as z from '../index.ts';
 import { util } from '../helpers/util.ts';
@@ -43,7 +39,6 @@ test('async coercion', async () => {
     .parseAsync({ id: 5 });
 
   expect(data).toEqual({ id: '5' });
-  return 'asdf';
 });
 
 test('sync coercion async error', async () => {
@@ -54,12 +49,14 @@ test('sync coercion async error', async () => {
       })
       .parse({ id: 5 }),
   ).toThrow();
-  return 'asdf';
   // expect(data).toEqual({ id: '5' });
 });
 
 test('default', () => {
-  const data = z.string().default('asdf').parse(undefined); // => "asdf"
+  const data = z
+    .string()
+    .default('asdf')
+    .parse(undefined); // => "asdf"
   expect(data).toEqual('asdf');
 });
 
@@ -74,7 +71,10 @@ test('dynamic default', () => {
 test('default when property is null or undefined', () => {
   const data = z
     .object({
-      foo: z.boolean().nullable().default(true),
+      foo: z
+        .boolean()
+        .nullable()
+        .default(true),
       bar: z.boolean().default(true),
     })
     .parse({ foo: null });

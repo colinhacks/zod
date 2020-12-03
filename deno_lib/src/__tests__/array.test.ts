@@ -1,21 +1,33 @@
 // @ts-ignore TS6133
-import {
-  describe,
-  expect,
-  test,
-} from 'https://deno.land/x/expect@v0.2.6/mod.ts';
+import { describe, expect, test } from 'https://deno.land/x/expect@v0.2.6/mod.ts';
 
 import * as z from '../index.ts';
 
-const minTwo = z.string().array().min(2);
+const minTwo = z
+  .string()
+  .array()
+  .min(2);
 
-const maxTwo = z.string().array().max(2);
+const maxTwo = z
+  .string()
+  .array()
+  .max(2);
 
-const justTwo = z.string().array().length(2);
+const justTwo = z
+  .string()
+  .array()
+  .length(2);
 
-const intNum = z.string().array().nonempty();
+const intNum = z
+  .string()
+  .array()
+  .nonempty();
 
-const nonEmptyMax = z.string().array().nonempty().max(2);
+const nonEmptyMax = z
+  .string()
+  .array()
+  .nonempty()
+  .max(2);
 
 test('passing validations', () => {
   minTwo.parse(['a', 'a']);

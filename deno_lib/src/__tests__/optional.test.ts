@@ -1,9 +1,5 @@
 // @ts-ignore TS6133
-import {
-  describe,
-  expect,
-  test,
-} from 'https://deno.land/x/expect@v0.2.6/mod.ts';
+import { describe, expect, test } from 'https://deno.land/x/expect@v0.2.6/mod.ts';
 
 import * as z from '../index.ts';
 
@@ -17,25 +13,43 @@ function checkErrors(a: z.ZodTypeAny, bad: any) {
   try {
     a.optional().parse(bad);
   } catch (error) {
-    expect(error.formErrors).toStrictEqual(expected);
+    expect(error.formErrors).toEqual(expected);
   }
 }
 
-it('Should have error messages appropriate for the underlying type', () => {
+test('Should have error messages appropriate for the underlying type', () => {
   checkErrors(z.string().min(2), 1);
-  z.string().min(2).optional().parse(undefined);
+  z.string()
+    .min(2)
+    .optional()
+    .parse(undefined);
   checkErrors(z.number().min(2), 1);
-  z.number().min(2).optional().parse(undefined);
+  z.number()
+    .min(2)
+    .optional()
+    .parse(undefined);
   checkErrors(z.boolean(), '');
-  z.boolean().optional().parse(undefined);
+  z.boolean()
+    .optional()
+    .parse(undefined);
   checkErrors(z.undefined(), null);
-  z.undefined().optional().parse(undefined);
+  z.undefined()
+    .optional()
+    .parse(undefined);
   checkErrors(z.null(), {});
-  z.null().optional().parse(undefined);
+  z.null()
+    .optional()
+    .parse(undefined);
   checkErrors(z.object({}), 1);
-  z.object({}).optional().parse(undefined);
+  z.object({})
+    .optional()
+    .parse(undefined);
   checkErrors(z.tuple([]), 1);
-  z.tuple([]).optional().parse(undefined);
+  z.tuple([])
+    .optional()
+    .parse(undefined);
   checkErrors(z.unknown(), 1);
-  z.unknown().optional().parse(undefined);
+  z.unknown()
+    .optional()
+    .parse(undefined);
 });

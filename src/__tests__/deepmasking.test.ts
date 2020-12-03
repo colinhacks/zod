@@ -1,10 +1,10 @@
 // @ts-ignore TS6133
 import { describe, expect, test } from '@jest/globals';
 
-import * as z from '../index';
+// import * as z from '../index';
 
-test('', () => {
-  z;
+test('dummy test deepmasking', () => {
+  expect(true).toBeTruthy();
 });
 
 // const fish = z.object({

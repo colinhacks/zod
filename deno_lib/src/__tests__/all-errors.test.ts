@@ -1,9 +1,5 @@
 // @ts-ignore TS6133
-import {
-  describe,
-  expect,
-  test,
-} from 'https://deno.land/x/expect@v0.2.6/mod.ts';
+import { describe, expect, test } from 'https://deno.land/x/expect@v0.2.6/mod.ts';
 
 import * as z from '../index.ts';
 
@@ -20,7 +16,7 @@ test('all errors', () => {
       b: null,
     });
   } catch (error) {
-    expect(error.flatten()).toStrictEqual({
+    expect(error.flatten()).toEqual({
       formErrors: [],
       fieldErrors: {
         a: ['Expected string, received null'],

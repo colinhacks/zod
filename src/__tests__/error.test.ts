@@ -116,14 +116,18 @@ test('override error in refinement', () => {
 
 test('array minimum', () => {
   try {
-    z.array(z.string()).min(3, 'tooshort').parse(['asdf', 'qwer']);
+    z.array(z.string())
+      .min(3, 'tooshort')
+      .parse(['asdf', 'qwer']);
   } catch (err) {
     const zerr: ZodError = err;
     expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
     expect(zerr.issues[0].message).toEqual('tooshort');
   }
   try {
-    z.array(z.string()).min(3).parse(['asdf', 'qwer']);
+    z.array(z.string())
+      .min(3)
+      .parse(['asdf', 'qwer']);
   } catch (err) {
     const zerr: ZodError = err;
     expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
@@ -140,6 +144,7 @@ test('union smart errors', () => {
     .safeParse(-3.2);
 
   if (p1.success === true) throw new Error();
+  // console.log(JSON.stringify(p1.error, null, 2));
   expect(p1.success).toBe(false);
   expect(p1.error.issues[0].code).toEqual(ZodIssueCode.custom);
 

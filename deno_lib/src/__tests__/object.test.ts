@@ -1,9 +1,5 @@
 // @ts-ignore TS6133
-import {
-  describe,
-  expect,
-  test,
-} from 'https://deno.land/x/expect@v0.2.6/mod.ts';
+import { describe, expect, test } from 'https://deno.land/x/expect@v0.2.6/mod.ts';
 
 import * as z from '../index.ts';
 import { util } from '../helpers/util.ts';
@@ -75,8 +71,8 @@ test('inference', () => {
   type i2 = z.infer<typeof i2>;
   const f2: util.AssertEqual<i2, { obj: {}; arrayarray: string[][] }> = true;
 
-  f1;
-  f2;
+  expect(f1).toBeTruthy();
+  expect(f2).toBeTruthy();
   i1.parse({ name: 'name' });
   i2.parse({ obj: {}, arrayarray: [['asdf']] });
   expect(() => i1.parse({} as any)).toThrow();
@@ -112,19 +108,28 @@ test('unknownkeys override', () => {
 });
 
 test('passthrough unknown', () => {
-  const val = z.object({ points: z.number() }).passthrough().parse(data);
+  const val = z
+    .object({ points: z.number() })
+    .passthrough()
+    .parse(data);
 
   expect(val).toEqual(data);
 });
 
 test('strip unknown', () => {
-  const val = z.object({ points: z.number() }).strip().parse(data);
+  const val = z
+    .object({ points: z.number() })
+    .strip()
+    .parse(data);
 
   expect(val).toEqual({ points: 2314 });
 });
 
 test('strict', () => {
-  const val = z.object({ points: z.number() }).strict().safeParse(data);
+  const val = z
+    .object({ points: z.number() })
+    .strict()
+    .safeParse(data);
 
   expect(val.success).toEqual(false);
 });
@@ -262,36 +267,4 @@ test('test catchall parsing', async () => {
     .safeParse({ name: 'Foo', validExtraKey: 61, invalid: 'asdf' });
 
   expect(result2.success).toEqual(false);
-  return result2;
-});
-
-test('test nonexistent keys', async () => {
-  const Schema = z.union([
-    z.object({
-      a: z.string(),
-    }),
-    z.object({
-      b: z.number(),
-    }),
-  ]);
-  const obj = { a: 'A' };
-  const result = await Schema.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
-  expect(result.success).toBe(true);
-  return result;
-});
-
-test('test async PseudoPromise.all', async () => {
-  const Schema2 = z.union([
-    z.object({
-      ty: z.string(),
-    }),
-    z.object({
-      ty: z.number(),
-    }),
-  ]);
-
-  const obj = { ty: 'A' };
-  const result = await Schema2.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
-  expect(result.success).toEqual(true);
-  return result;
 });

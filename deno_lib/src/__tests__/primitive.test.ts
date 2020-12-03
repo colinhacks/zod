@@ -1,9 +1,5 @@
 // @ts-ignore TS6133
-import {
-  describe,
-  expect,
-  test,
-} from 'https://deno.land/x/expect@v0.2.6/mod.ts';
+import { describe, expect, test } from 'https://deno.land/x/expect@v0.2.6/mod.ts';
 
 import * as z from '../index.ts';
 import { Mocker } from '../helpers/Mocker.ts';
@@ -246,10 +242,11 @@ test('parse dateSchema null', () => {
 });
 
 test('parse dateSchema invalid date', async () => {
-  expect.assertions(1);
-  return await dateSchema.parseAsync(new Date('invalid')).catch(err => {
+  try {
+    await dateSchema.parseAsync(new Date('invalid'));
+  } catch (err) {
     expect(err.issues[0].code).toEqual(z.ZodIssueCode.invalid_date);
-  });
+  }
 });
 // ==============
 

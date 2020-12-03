@@ -2,7 +2,6 @@ name: Workflow
 
 on:
   push:
-  create:
   pull_request:
   schedule:
     - cron: '44 4 * * SAT'
