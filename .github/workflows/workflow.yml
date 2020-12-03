@@ -23,3 +23,15 @@ jobs:
       - run: npm install typescript@${{ matrix.typescript }}
       - run: npm run-script build
       - run: npm test
+
+  deno:
+    runs-on: Ubuntu-20.04
+    strategy:
+      matrix:
+        deno: [ ]
+    name: Test with Deno@${{ matrix.deno }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: denolib/setup-deno@v2
+        with:
+          deno-version: ${{ matrix.deno }}
