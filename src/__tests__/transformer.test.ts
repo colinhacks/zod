@@ -53,10 +53,7 @@ test('sync coercion async error', async () => {
 });
 
 test('default', () => {
-  const data = z
-    .string()
-    .default('asdf')
-    .parse(undefined); // => "asdf"
+  const data = z.string().default('asdf').parse(undefined); // => "asdf"
   expect(data).toEqual('asdf');
 });
 
@@ -71,10 +68,7 @@ test('dynamic default', () => {
 test('default when property is null or undefined', () => {
   const data = z
     .object({
-      foo: z
-        .boolean()
-        .nullable()
-        .default(true),
+      foo: z.boolean().nullable().default(true),
       bar: z.boolean().default(true),
     })
     .parse({ foo: null });

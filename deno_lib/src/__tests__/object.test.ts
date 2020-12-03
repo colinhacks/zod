@@ -109,28 +109,19 @@ test('unknownkeys override', () => {
 });
 
 test('passthrough unknown', () => {
-  const val = z
-    .object({ points: z.number() })
-    .passthrough()
-    .parse(data);
+  const val = z.object({ points: z.number() }).passthrough().parse(data);
 
   expect(val).toEqual(data);
 });
 
 test('strip unknown', () => {
-  const val = z
-    .object({ points: z.number() })
-    .strip()
-    .parse(data);
+  const val = z.object({ points: z.number() }).strip().parse(data);
 
   expect(val).toEqual({ points: 2314 });
 });
 
 test('strict', () => {
-  const val = z
-    .object({ points: z.number() })
-    .strict()
-    .safeParse(data);
+  const val = z.object({ points: z.number() }).strict().safeParse(data);
 
   expect(val.success).toEqual(false);
 });

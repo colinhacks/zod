@@ -34,7 +34,7 @@ for await (const entry of walk(nodeRoot, {
     /^(?:import|export)[\s\S]*?from\s*['"]([^'"]*)['"];$/gm,
     (line, target) => {
       if (target === '@jest/globals') {
-        return `import { expect } from 'https://deno.land/x/expect@v0.2.6/mod.ts';\nconst test = Deno.test;`
+        return `import { expect } from 'https://deno.land/x/expect@v0.2.6/mod.ts';\nconst test = Deno.test;`;
       }
 
       const targetPath = path.join(path.dirname(nodePath), target);

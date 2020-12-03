@@ -49,37 +49,26 @@ test('url validations', () => {
 
 test('url error overrides', () => {
   try {
-    z.string()
-      .url()
-      .parse('https');
+    z.string().url().parse('https');
   } catch (err) {
     expect(err.issues[0].message).toEqual('Invalid url');
   }
   try {
-    z.string()
-      .url('badurl')
-      .parse('https');
+    z.string().url('badurl').parse('https');
   } catch (err) {
     expect(err.issues[0].message).toEqual('badurl');
   }
   try {
-    z.string()
-      .url({ message: 'badurl' })
-      .parse('https');
+    z.string().url({ message: 'badurl' }).parse('https');
   } catch (err) {
     expect(err.issues[0].message).toEqual('badurl');
   }
 });
 
 test('uuid', () => {
-  z.string()
-    .uuid()
-    .parse('9491d710-3185-4e06-bea0-6a2f275345e0');
+  z.string().uuid().parse('9491d710-3185-4e06-bea0-6a2f275345e0');
   expect(() =>
-    z
-      .string()
-      .uuid()
-      .parse('9491d710-3185-4e06-bea0-6a2f275345e'),
+    z.string().uuid().parse('9491d710-3185-4e06-bea0-6a2f275345e'),
   ).toThrow();
 });
 
@@ -87,12 +76,7 @@ test('regex', () => {
   z.string()
     .regex(/^moo+$/)
     .parse('mooooo');
-  expect(() =>
-    z
-      .string()
-      .uuid()
-      .parse('purr'),
-  ).toThrow();
+  expect(() => z.string().uuid().parse('purr')).toThrow();
 });
 
 test('regexp error message', () => {
@@ -106,10 +90,5 @@ test('regexp error message', () => {
     throw new Error('validation should have failed');
   }
 
-  expect(() =>
-    z
-      .string()
-      .uuid()
-      .parse('purr'),
-  ).toThrow();
+  expect(() => z.string().uuid().parse('purr')).toThrow();
 });
