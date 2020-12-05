@@ -18,7 +18,6 @@
     "url": "https://github.com/colinhacks/zod/issues"
   },
   "homepage": "https://github.com/colinhacks/zod",
-  "dependencies": {},
   "keywords": [
     "typescript",
     "schema",
