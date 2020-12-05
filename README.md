@@ -320,6 +320,8 @@ const process = (blob: any) => {
 
 ### Refinements
 
+> ⚠️ Refinements must not throw. Make sure they always return false to signal failure.
+
 `.refine(validator: (data:T)=>any, params?: RefineParams)`
 
 Zod let you provide custom validation logic via _refinements_.
@@ -1533,6 +1535,8 @@ User.omit({ outer: { inner: { prop2: true } } }); // { outer: { prop1: string, i
 ## Transformers
 
 You can integrate custom data transformations into your schemas with transformers. Transformers are just another type of Zod schema.
+
+> ⚠️ Transformers must not throw. Make sure to use refinements before the transformer to make sure the input can be parsed by the transformer.
 
 ### z.transformer()
 
