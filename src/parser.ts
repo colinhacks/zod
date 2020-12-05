@@ -1134,7 +1134,13 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     // }
 
     for (const check of customChecks) {
+      if (resolvedValue === INVALID) {
+        // Don't refine if the validation of the value already failed.
+        continue;
+      }
+
       const checkResult = check.check(resolvedValue, checkCtx);
+
       if (checkResult instanceof Promise)
         throw new Error(
           "You can't use .parse on a schema containing async refinements. Use .parseAsync instead.",

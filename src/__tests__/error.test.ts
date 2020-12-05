@@ -186,3 +186,50 @@ test('error metadata from value', () => {
     }
   }
 });
+
+test("don't call refine after validation failed", () => {
+  const refinement = jest.fn(() => true);
+  const schema = z
+    .union([z.number(), z.string().transform(z.number(), Number.parseFloat)])
+    .refine(refinement);
+
+  const result = schema.safeParse('foo');
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    const issues = result.error.issues;
+    expect(issues).toHaveLength(1);
+
+    const issue = issues[0];
+    expect(issue).toMatchObject({
+      code: 'invalid_union',
+      message: 'Invalid input',
+    });
+
+    expect(issue.code).toBe('invalid_union');
+    if (issue.code === 'invalid_union') {
+      const unionIssues = issue.unionErrors;
+      expect(unionIssues).toHaveLength(2);
+
+      const unionIssue1 = unionIssues[0];
+      expect(unionIssue1.issues).toHaveLength(1);
+      const unionIssue1SubIssue = unionIssue1.issues[0];
+      expect(unionIssue1SubIssue).toMatchObject({
+        code: 'invalid_type',
+        expected: 'number',
+        received: 'string',
+        message: 'Expected number, received string',
+      });
+
+      const unionIssue2 = unionIssues[1];
+      expect(unionIssue2.issues).toHaveLength(1);
+      const unionIssue2SubIssue = unionIssue2.issues[0];
+      expect(unionIssue2SubIssue).toMatchObject({
+        code: 'invalid_type',
+        expected: 'number',
+        received: 'nan',
+        message: 'Expected number, received nan',
+      });
+    }
+  }
+});
