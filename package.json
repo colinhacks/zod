@@ -18,6 +18,7 @@
     "url": "https://github.com/colinhacks/zod/issues"
   },
   "homepage": "https://github.com/colinhacks/zod",
+  "funding": "https://github.com/sponsors/colinhacks",
   "keywords": [
     "typescript",
     "schema",
