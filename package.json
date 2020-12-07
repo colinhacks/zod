@@ -35,7 +35,7 @@
     "lint": "tslint -p tsconfig.json",
     "test": "jest --coverage && yarn run badge",
     "testone": "jest",
-    "badge": "make-coverage-badge --output-path ./coverage.svg",
+    "badge": "make-coverage-badge --report-path ./src/coverage/coverage-summary.json --output-path ./coverage.svg",
     "prepublishOnly": "npm run build",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json"
   },
