@@ -3,6 +3,6 @@
 node_modules
 /lib
 /coverage
-src/coverage/**.*
+src/coverage/*
 .vscode
 *.log
