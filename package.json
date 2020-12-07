@@ -5,7 +5,7 @@
   "main": "./lib/cjs/index.js",
   "types": "./lib/cjs/index.d.ts",
   "files": [
-    "lib"
+    "/lib"
   ],
   "repository": {
     "type": "git",
