@@ -114,7 +114,7 @@ export abstract class ZodType<
   //    return this;
   //  };
 
-  parse: (x: unknown, params?: ParseParams) => Output;
+  parse: (x: unknown, params?: ParseParams) => Output = ZodParser(this);
 
   safeParse: (
     x: unknown,
@@ -271,7 +271,7 @@ export abstract class ZodType<
 
   constructor(def: Def) {
     this._def = def;
-    this.parse = ZodParser(this);
+    // this.parse = ZodParser(this);
   }
 
   abstract toJSON: () => object;

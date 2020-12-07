@@ -588,14 +588,19 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           continue;
         }
 
-        objectPromises[key] = new PseudoPromise().then(() => {
-          try {
+        objectPromises[key] = new PseudoPromise()
+          .then(() => {
+            // try {
             const parsedValue = keyValidator.parse(data[key], {
               ...params,
               path: [...params.path, key],
             });
             return parsedValue;
-          } catch (err) {
+            // } catch (err) {
+
+            // }
+          })
+          .catch(err => {
             if (err instanceof ZodError) {
               const zerr: ZodError = err;
               ERROR.addIssues(zerr.issues);
@@ -603,8 +608,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
             } else {
               throw err;
             }
-          }
-        });
+          });
       }
 
       if (def.catchall instanceof ZodNever) {

@@ -1,10 +1,19 @@
-import * as z from '.';
+// import * as z from '.';
 
-(async () => {
-  const asyncNumberToString = z.transformer(z.number(), z.string(), async n =>
-    String(n),
-  );
-  z.object({
-    id: asyncNumberToString,
-  }).parse({ id: 5 });
-})();
+// const formValuesSchema = z.object({
+//   name: z.string(),
+//   company: z.string(),
+//   email: z.string().email(),
+// });
+
+// // only informs, that name and company is required, doesn't report about invalid email
+// formValuesSchema.parse({
+//   email: 'aaa',
+// });
+
+// // now when other values are present, informs about invalid email
+// formValuesSchema.parse({
+//   name: 'lorem',
+//   email: 'aaa',
+//   company: 'ipsum',
+// });

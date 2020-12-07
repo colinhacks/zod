@@ -129,6 +129,7 @@ export class PseudoPromise<ReturnType = undefined> {
           //   throw error;
           // } else {
           for (const item of items) {
+            // if (typeof item[1] !== 'undefined') value[item[0]] = item[1];
             value[item[0]] = item[1];
           }
 
@@ -152,6 +153,7 @@ export class PseudoPromise<ReturnType = undefined> {
         // let syncValue: any = {};
         if (!zerr.isEmpty) throw zerr;
         for (const item of items) {
+          // if (typeof item[1] !== 'undefined') value[item[0]] = item[1];
           value[item[0]] = item[1];
         }
         return value;
