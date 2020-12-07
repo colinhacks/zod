@@ -5,7 +5,7 @@
   "main": "./lib/cjs/index.js",
   "types": "./lib/cjs/index.d.ts",
   "files": [
-    "lib"
+    "/lib"
   ],
   "repository": {
     "type": "git",
@@ -41,7 +41,9 @@
   },
   "devDependencies": {
     "@types/jest": "^25.1.4",
+    "husky": "^4.3.4",
     "jest": "^25.1.0",
+    "lint-staged": "^10.5.3",
     "make-coverage-badge": "^1.2.0",
     "nodemon": "^2.0.2",
     "prettier": "^1.19.1",
@@ -49,5 +51,15 @@
     "tslint": "^6.1.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "4.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --write"
+    ]
   }
 }
