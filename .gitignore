@@ -5,3 +5,4 @@ node_modules
 /coverage
 **/coverage
 .vscode
+*.log
