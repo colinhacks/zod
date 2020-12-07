@@ -1,5 +1,16 @@
-// import * as z from '.';
+import * as z from '.';
 
+const asdf = z
+  .union([
+    z.number(),
+    z.string().transform(z.number(), val => {
+      console.log(val);
+      return parseFloat(val);
+    }),
+  ])
+  .refine(v => v >= 1);
+
+console.log(asdf.parse('foo'));
 // const formValuesSchema = z.object({
 //   name: z.string(),
 //   company: z.string(),
