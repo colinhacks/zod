@@ -1,9 +1,9 @@
 {
   "rootDir": "src",
   "transform": {
-    "^.+\\.(t|j)sx?$": "ts-jest"
+    "^.+\\.tsx?$": "ts-jest"
   },
-  "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+  "testRegex": "(__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
   "moduleFileExtensions": [
     "ts",
     "tsx",
@@ -19,7 +19,7 @@
   ],
   "globals": {
     "ts-jest": {
-      "tsConfig": "tsconfig.json"
+      "tsconfig": "tsconfig.json"
     }
   }
 }
