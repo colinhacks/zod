@@ -3,7 +3,6 @@
 node_modules
 /lib
 /coverage
-coverage/**
+src/coverage/**
 .vscode
 *.log
-src/playground.ts
