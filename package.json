@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "2.0.0-beta.28",
+  "version": "2.0.0-beta.29",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/cjs/index.js",
   "types": "./lib/cjs/index.d.ts",
@@ -40,7 +40,7 @@
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json"
   },
   "devDependencies": {
-    "@types/jest": "^26.0.16",
+    "@types/jest": "^26.0.17",
     "husky": "^4.3.4",
     "jest": "^26.6.3",
     "lint-staged": "^10.5.3",
@@ -51,7 +51,7 @@
     "ts-node": "^9.1.0",
     "tslint": "^6.1.0",
     "tslint-config-prettier": "^1.18.0",
-    "typescript": "4.0"
+    "typescript": "3.8"
   },
   "husky": {
     "hooks": {
