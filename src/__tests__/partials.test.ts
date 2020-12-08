@@ -1,5 +1,5 @@
-import * as z from "../index";
 import { util } from "../helpers/util";
+import * as z from "../index";
 
 const nested = z.object({
   name: z.string(),

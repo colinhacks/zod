@@ -1,12 +1,12 @@
-import * as z from "./base";
+import { ZodNever } from "..";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 import { objectUtil } from "../helpers/objectUtil";
 import { partialUtil } from "../helpers/partialUtil";
-import { isScalar } from "../isScalar";
-import { ZodNever } from "..";
 import { Scalars } from "../helpers/primitive";
+import { isScalar } from "../isScalar";
+import * as z from "./base";
 
 const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
   Augmentation extends z.ZodRawShape

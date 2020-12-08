@@ -1,9 +1,9 @@
-import * as z from "./base";
+import { errorUtil } from "../helpers/errorUtil";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 import { ZodIssueCode } from "../ZodError";
-import { errorUtil } from "../helpers/errorUtil";
+import * as z from "./base";
 
 export interface ZodNumberDef extends z.ZodTypeDef {
   t: z.ZodTypes.number;

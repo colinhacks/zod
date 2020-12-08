@@ -1,5 +1,5 @@
-import * as z from "../index";
 import { util } from "../helpers/util";
+import * as z from "../index";
 
 const args1 = z.tuple([z.string()]);
 const returns1 = z.number();
@@ -146,7 +146,7 @@ test("function with async refinements", async () => {
     .implement(async (val) => {
       return val.length;
     });
-  let results = [];
+  const results = [];
   try {
     await func("asdfasdf");
     results.push("success");
@@ -172,7 +172,7 @@ test("non async function with async refinements should fail", async () => {
       return val.length;
     });
 
-  let results = [];
+  const results = [];
   try {
     await func("asdasdfasdffasdf");
     results.push("success");

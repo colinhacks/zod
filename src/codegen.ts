@@ -20,7 +20,7 @@ const isOptional = (schema: ZodType<any, any>): boolean => {
 
 export class ZodCodeGenerator {
   seen: TypeResult[] = [];
-  serial: number = 0;
+  serial = 0;
 
   randomId = () => {
     return `IZod${this.serial++}`;

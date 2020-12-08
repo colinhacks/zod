@@ -1,6 +1,6 @@
 import { ZodRawShape, ZodTypes } from "../types/base";
 import { ZodIntersection } from "../types/intersection";
-import { ZodObject, AnyZodObject } from "../types/object";
+import { AnyZodObject, ZodObject } from "../types/object";
 
 export namespace objectUtil {
   // export interface ZodObjectParams {
