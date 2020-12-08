@@ -29,6 +29,7 @@
   "scripts": {
     "fix:format": "prettier --write \"src/**/*.ts\"",
     "fix:lint": "eslint --fix --ext .ts ./src",
+    "fix": "yarn fix:lint && yarn fix:format",
     "clean": "rm -rf lib/*",
     "build": "yarn run clean && tsc --p tsconfig.cjs.json",
     "buildall": "yarn add typescript@3.4 && yarn build && yarn add typescript@3.5 && yarn build && yarn add typescript@3.6 && yarn build && yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4 && yarn build && yarn add typescript@3.4",
@@ -65,8 +66,8 @@
   },
   "lint-staged": {
     "*.ts": [
-      "fix:format",
-      "fix:lint"
+      "yarn fix:lint",
+      "yarn fix:format"
     ]
   }
 }
