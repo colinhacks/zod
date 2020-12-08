@@ -271,41 +271,16 @@ export abstract class ZodType<
 
   constructor(def: Def) {
     this._def = def;
-    // this.parse = ZodParser(this);
   }
 
   abstract toJSON: () => object;
-  //  abstract // opt optional: () => any;
+
   optional: () => ZodOptionalType<this> = () => ZodOptional.create(this);
   or = this.optional;
-
   nullable: () => ZodNullableType<this> = () => {
     return ZodNullable.create(this) as any;
   };
-  //  nullable: () => ZodUnion<[this, ZodNull]> = () =>
-  //    ZodUnion.create([this, ZodNull.create()]);
   array: () => ZodArray<this> = () => ZodArray.create(this);
-  // pre: <T extends string>(
-  //   input: T,
-  //   transformer: (arg: T) => Type,
-  // ) => any = (input, transformer) => 'adsf';
-
-  // transformFrom: <U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
-  //   x: U,
-  //   transformer: Tx,
-  // ) => ZodTransformer<U, this> = (input, transformer) => {
-  //   return ZodTransformer.create(input, this, transformer);
-  // };
-
-  // transformFrom: <This extends this, U extends ZodType<any>, Tx extends (arg: U['_type']) => this['_type']>(
-  //   x: U,
-  //   transformer: Tx,
-  // ) => ZodTransformer<This, U> = (input, transformer) => {
-  //   return ZodTransformer.create(this as any, input, transformer) as any;
-  // };
-
-  //  push(...items: T[]): number;
-  //  push(this: BetterArrayClass<T>, value: T): this;
 
   transform<
     This extends this,
@@ -342,23 +317,6 @@ export abstract class ZodType<
         : x;
     }) as any;
   }
-
-  //  default: (val: Type) => ZodTransformer<ZodType<Type | undefined>, this> = val => {
-  //    return ZodTransformer.create(this.optional(), this, x => {
-  //      return (x || val) as any;
-  //    }) as any;
-  //  };
-
-  //  codec = (): ZodCodec<this, this> => {
-  //    return ZodCodec.create(this, this, x => x);
-  //  };
-
-  //  transform: <U extends ZodType<any>, Tx extends (arg: Type) => U['_type']>(
-  //    x: U,s
-  //    transformer: Tx,
-  //  ) => ZodCodec<this, U> = (input, transformer) => {
-  //    return ZodCodec.create(input, this, transformer);
-  //  };
 
   isOptional: () => boolean = () => this.safeParse(undefined).success;
   isNullable: () => boolean = () => this.safeParse(null).success;
