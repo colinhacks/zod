@@ -1,4 +1,4 @@
-import * as z from './base';
+import * as z from "./base";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
@@ -16,9 +16,9 @@ export class ZodIntersection<
   T extends z.ZodTypeAny,
   U extends z.ZodTypeAny
 > extends z.ZodType<
-  T['_output'] & U['_output'],
+  T["_output"] & U["_output"],
   ZodIntersectionDef<T, U>,
-  T['_input'] & U['_input']
+  T["_input"] & U["_input"]
 > {
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
@@ -31,7 +31,7 @@ export class ZodIntersection<
 
   static create = <T extends z.ZodTypeAny, U extends z.ZodTypeAny>(
     left: T,
-    right: U,
+    right: U
   ): ZodIntersection<T, U> => {
     return new ZodIntersection({
       t: z.ZodTypes.intersection,

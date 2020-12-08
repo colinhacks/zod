@@ -1,7 +1,7 @@
-import * as z from '../index';
-import { crazySchema } from '../crazySchema';
+import * as z from "../index";
+import { crazySchema } from "../crazySchema";
 
-test('ZodCodeGenerator', () => {
+test("ZodCodeGenerator", () => {
   const gen = new z.ZodCodeGenerator();
   gen.generate(crazySchema);
   gen.dump();

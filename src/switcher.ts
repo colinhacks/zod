@@ -1,5 +1,5 @@
-import * as z from './index';
-import { util } from './helpers/util';
+import * as z from "./index";
+import { util } from "./helpers/util";
 
 export const visitor = (schema: z.ZodType<any, any>) => {
   const def = schema._def as z.ZodDef;

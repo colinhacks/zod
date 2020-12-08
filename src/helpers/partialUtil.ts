@@ -1,5 +1,5 @@
-import * as z from '../index';
-import { AnyZodObject } from '../types/object';
+import * as z from "../index";
+import { AnyZodObject } from "../types/object";
 
 export namespace partialUtil {
   export type RootDeepPartial<T extends z.ZodTypeAny> = {
@@ -7,15 +7,15 @@ export namespace partialUtil {
     // array: T extends z.ZodArray<infer Type> ? z.ZodArray<DeepPartial<Type>> : never;
     object: T extends AnyZodObject
       ? z.ZodObject<
-          { [k in keyof T['_shape']]: DeepPartial<T['_shape'][k]> },
-          T['_unknownKeys'],
-          T['_catchall']
+          { [k in keyof T["_shape"]]: DeepPartial<T["_shape"][k]> },
+          T["_unknownKeys"],
+          T["_catchall"]
         >
       : never;
-    rest: ReturnType<T['optional']>; // z.ZodOptional<T>;
+    rest: ReturnType<T["optional"]>; // z.ZodOptional<T>;
   }[T extends AnyZodObject
-    ? 'object' // T extends z.ZodOptional<any> // ? 'optional' // :
-    : 'rest'];
+    ? "object" // T extends z.ZodOptional<any> // ? 'optional' // :
+    : "rest"];
 
   export type DeepPartial<T extends z.ZodTypeAny> = {
     // optional: T extends z.ZodOptional<z.ZodTypeAny> ? T : z.ZodOptional<T>;
@@ -29,8 +29,8 @@ export namespace partialUtil {
           >
         >
       : never;
-    rest: ReturnType<T['optional']>;
+    rest: ReturnType<T["optional"]>;
   }[T extends z.ZodObject<any>
-    ? 'object' // T extends z.ZodOptional<any> // ? 'optional' // :
-    : 'rest'];
+    ? "object" // T extends z.ZodOptional<any> // ? 'optional' // :
+    : "rest"];
 }

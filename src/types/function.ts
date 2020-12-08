@@ -1,6 +1,6 @@
-import * as z from './base';
-import { ZodTuple } from './tuple';
-import { ZodUnknown } from './unknown';
+import * as z from "./base";
+import { ZodTuple } from "./tuple";
+import { ZodUnknown } from "./unknown";
 
 export interface ZodFunctionDef<
   Args extends ZodTuple<any> = ZodTuple<any>,
@@ -14,15 +14,15 @@ export interface ZodFunctionDef<
 export type OuterTypeOfFunction<
   Args extends ZodTuple<any>,
   Returns extends z.ZodTypeAny
-> = Args['_input'] extends Array<any>
-  ? (...args: Args['_input']) => Returns['_output']
+> = Args["_input"] extends Array<any>
+  ? (...args: Args["_input"]) => Returns["_output"]
   : never;
 
 export type InnerTypeOfFunction<
   Args extends ZodTuple<any>,
   Returns extends z.ZodTypeAny
-> = Args['_output'] extends Array<any>
-  ? (...args: Args['_output']) => Returns['_input']
+> = Args["_output"] extends Array<any>
+  ? (...args: Args["_output"]) => Returns["_input"]
   : never;
 
 // type as df = string extends unknown  ? true : false
@@ -37,7 +37,7 @@ export class ZodFunction<
   readonly _def!: ZodFunctionDef<Args, Returns>;
   //  readonly _type!: TypeOfFunction<Args, Returns>;
 
-  args = <Items extends Parameters<typeof ZodTuple['create']>[0]>(
+  args = <Items extends Parameters<typeof ZodTuple["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items>, Returns> => {
     return new ZodFunction({
@@ -47,7 +47,7 @@ export class ZodFunction<
   };
 
   returns = <NewReturnType extends z.ZodType<any, any>>(
-    returnType: NewReturnType,
+    returnType: NewReturnType
   ): ZodFunction<Args, NewReturnType> => {
     return new ZodFunction({
       ...this._def,
@@ -67,7 +67,7 @@ export class ZodFunction<
     U extends z.ZodTypeAny = ZodUnknown
   >(
     args?: T,
-    returns?: U,
+    returns?: U
   ): ZodFunction<T, U> => {
     return new ZodFunction({
       t: z.ZodTypes.function,

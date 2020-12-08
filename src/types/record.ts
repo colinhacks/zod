@@ -1,4 +1,4 @@
-import * as z from './base';
+import * as z from "./base";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
@@ -12,9 +12,9 @@ export interface ZodRecordDef<Value extends z.ZodTypeAny = z.ZodTypeAny>
 export class ZodRecord<
   Value extends z.ZodTypeAny = z.ZodTypeAny
 > extends z.ZodType<
-  Record<string, Value['_output']>, // { [k in keyof T]: T[k]['_type'] },
+  Record<string, Value["_output"]>, // { [k in keyof T]: T[k]['_type'] },
   ZodRecordDef<Value>,
-  Record<string, Value['_input']>
+  Record<string, Value["_input"]>
 > {
   readonly _value!: Value;
 
@@ -28,7 +28,7 @@ export class ZodRecord<
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   static create = <Value extends z.ZodTypeAny = z.ZodTypeAny>(
-    valueType: Value,
+    valueType: Value
   ): ZodRecord<Value> => {
     return new ZodRecord({
       t: z.ZodTypes.record,

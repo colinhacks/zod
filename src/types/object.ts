@@ -1,27 +1,27 @@
-import * as z from './base';
+import * as z from "./base";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
-import { objectUtil } from '../helpers/objectUtil';
-import { partialUtil } from '../helpers/partialUtil';
-import { isScalar } from '../isScalar';
-import { ZodNever } from '..';
-import { Scalars } from '../helpers/primitive';
+import { objectUtil } from "../helpers/objectUtil";
+import { partialUtil } from "../helpers/partialUtil";
+import { isScalar } from "../isScalar";
+import { ZodNever } from "..";
+import { Scalars } from "../helpers/primitive";
 
 const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
   Augmentation extends z.ZodRawShape
 >(
-  augmentation: Augmentation,
+  augmentation: Augmentation
 ): ZodObject<
   {
     [k in Exclude<
-      keyof ReturnType<Def['shape']>,
+      keyof ReturnType<Def["shape"]>,
       keyof Augmentation
-    >]: ReturnType<Def['shape']>[k];
+    >]: ReturnType<Def["shape"]>[k];
   } &
     { [k in keyof Augmentation]: Augmentation[k] },
-  Def['unknownKeys'],
-  Def['catchall']
+  Def["unknownKeys"],
+  Def["catchall"]
 > => {
   return new ZodObject({
     ...def,
@@ -32,7 +32,7 @@ const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
   }) as any;
 };
 
-type UnknownKeysParam = 'passthrough' | 'strict' | 'strip';
+type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
 export interface ZodObjectDef<
   T extends z.ZodRawShape = z.ZodRawShape,
@@ -53,7 +53,7 @@ export type baseObjectOutputType<
 > = objectUtil.flatten<
   objectUtil.addQuestionMarks<
     {
-      [k in keyof Shape]: Shape[k]['_output'];
+      [k in keyof Shape]: Shape[k]["_output"];
     }
   > //{ [k: string]: Catchall['_output'] }
 >;
@@ -64,7 +64,7 @@ export type objectOutputType<
 > = z.ZodTypeAny extends Catchall
   ? baseObjectOutputType<Shape>
   : objectUtil.flatten<
-      baseObjectOutputType<Shape> & { [k: string]: Catchall['_output'] }
+      baseObjectOutputType<Shape> & { [k: string]: Catchall["_output"] }
     >;
 
 export type baseObjectInputType<
@@ -72,7 +72,7 @@ export type baseObjectInputType<
 > = objectUtil.flatten<
   objectUtil.addQuestionMarks<
     {
-      [k in keyof Shape]: Shape[k]['_input'];
+      [k in keyof Shape]: Shape[k]["_input"];
     }
   >
 >;
@@ -83,16 +83,16 @@ export type objectInputType<
 > = z.ZodTypeAny extends Catchall
   ? baseObjectInputType<Shape>
   : objectUtil.flatten<
-      baseObjectInputType<Shape> & { [k: string]: Catchall['_input'] }
+      baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
     >;
 
 const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
   t: def.t,
   shape: Object.assign(
     {},
-    ...Object.keys(def.shape()).map(k => ({
+    ...Object.keys(def.shape()).map((k) => ({
       [k]: def.shape()[k].toJSON(),
-    })),
+    }))
   ),
 });
 
@@ -139,7 +139,7 @@ export type AnyZodObject = ZodObject<any, any, any>;
 // >;
 export class ZodObject<
   T extends z.ZodRawShape,
-  UnknownKeys extends UnknownKeysParam = 'passthrough',
+  UnknownKeys extends UnknownKeysParam = "passthrough",
   Catchall extends z.ZodTypeAny = z.ZodTypeAny,
   // Params extends ZodObjectParams = { strict: true },
   // Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
@@ -169,22 +169,22 @@ export class ZodObject<
 
   toJSON = () => objectDefToJson(this._def);
 
-  strict = (): ZodObject<T, 'strict', Catchall> =>
+  strict = (): ZodObject<T, "strict", Catchall> =>
     new ZodObject({
       ...this._def,
-      unknownKeys: 'strict',
+      unknownKeys: "strict",
     });
 
-  strip = (): ZodObject<T, 'strip', Catchall> =>
+  strip = (): ZodObject<T, "strip", Catchall> =>
     new ZodObject({
       ...this._def,
-      unknownKeys: 'strip',
+      unknownKeys: "strip",
     });
 
-  passthrough = (): ZodObject<T, 'passthrough', Catchall> =>
+  passthrough = (): ZodObject<T, "passthrough", Catchall> =>
     new ZodObject({
       ...this._def,
-      unknownKeys: 'passthrough',
+      unknownKeys: "passthrough",
     });
 
   nonstrict = this.passthrough;
@@ -198,7 +198,7 @@ export class ZodObject<
 
   setKey = <Key extends string, Schema extends z.ZodTypeAny>(
     key: Key,
-    schema: Schema,
+    schema: Schema
   ): ZodObject<T & { [k in Key]: Schema }, UnknownKeys, Catchall> => {
     return this.augment({ [key]: schema }) as any;
   };
@@ -209,16 +209,16 @@ export class ZodObject<
    * upgrade if you are experiencing issues.
    */
   merge: <Incoming extends AnyZodObject>(
-    other: Incoming,
+    other: Incoming
   ) => ZodObject<
-    T & Incoming['_shape'],
+    T & Incoming["_shape"],
     UnknownKeys,
     Catchall
     // objectUtil.MergeObjectParams<Params, MergeUnknownKeys>
   > = objectUtil.mergeObjects(this as any) as any;
 
   catchall = <Index extends z.ZodTypeAny>(
-    index: Index,
+    index: Index
   ): ZodObject<
     T,
     UnknownKeys,
@@ -233,14 +233,14 @@ export class ZodObject<
   };
 
   pick = <Mask extends { [k in keyof T]?: true }>(
-    mask: Mask,
+    mask: Mask
   ): ZodObject<
     objectUtil.NoNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>,
     UnknownKeys,
     Catchall
   > => {
     const shape: any = {};
-    Object.keys(mask).map(key => {
+    Object.keys(mask).map((key) => {
       shape[key] = this.shape[key];
     });
     return new ZodObject({
@@ -250,14 +250,14 @@ export class ZodObject<
   };
 
   omit = <Mask extends { [k in keyof T]?: true }>(
-    mask: Mask,
+    mask: Mask
   ): ZodObject<
     objectUtil.NoNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>,
     UnknownKeys,
     Catchall
   > => {
     const shape: any = {};
-    Object.keys(this.shape).map(key => {
+    Object.keys(this.shape).map((key) => {
       if (Object.keys(mask).indexOf(key) === -1) {
         shape[key] = this.shape[key];
       }
@@ -269,7 +269,7 @@ export class ZodObject<
   };
 
   partial = (): ZodObject<
-    { [k in keyof T]: ReturnType<T[k]['optional']> },
+    { [k in keyof T]: ReturnType<T[k]["optional"]> },
     UnknownKeys,
     Catchall
   > => {
@@ -315,7 +315,7 @@ export class ZodObject<
   primitives = (): ZodObject<
     objectUtil.NoNever<
       {
-        [k in keyof T]: [T[k]['_output']] extends [Scalars] ? T[k] : never;
+        [k in keyof T]: [T[k]["_output"]] extends [Scalars] ? T[k] : never;
       }
     >,
     UnknownKeys,
@@ -336,7 +336,7 @@ export class ZodObject<
   nonprimitives = (): ZodObject<
     objectUtil.NoNever<
       {
-        [k in keyof T]: [T[k]['_output']] extends [Scalars] ? never : T[k];
+        [k in keyof T]: [T[k]["_output"]] extends [Scalars] ? never : T[k];
       }
     >,
     UnknownKeys,
@@ -381,7 +381,7 @@ export class ZodObject<
     return new ZodObject({
       t: z.ZodTypes.object,
       shape: () => shape,
-      unknownKeys: 'strip',
+      unknownKeys: "strip",
       catchall: ZodNever.create(),
       //  params: {
       //    strict: true,
@@ -390,12 +390,12 @@ export class ZodObject<
   };
 
   static lazycreate = <T extends z.ZodRawShape>(
-    shape: () => T,
+    shape: () => T
   ): ZodObject<T> => {
     return new ZodObject({
       t: z.ZodTypes.object,
       shape,
-      unknownKeys: 'strip',
+      unknownKeys: "strip",
       catchall: ZodNever.create(),
     }) as any;
   };

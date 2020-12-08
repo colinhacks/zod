@@ -1,7 +1,7 @@
-import * as z from '../index';
-import { Mocker } from '../helpers/Mocker';
+import * as z from "../index";
+import { Mocker } from "../helpers/Mocker";
 
-const literalStringSchema = z.literal('asdf');
+const literalStringSchema = z.literal("asdf");
 const literalNumberSchema = z.literal(12);
 const literalBooleanSchema = z.literal(true);
 const stringSchema = z.string();
@@ -24,273 +24,273 @@ const dateSchemaNullable = z.date().nullable();
 
 const val = new Mocker();
 
-test('literal string correct', () => {
-  expect(literalStringSchema.parse('asdf')).toBe('asdf');
+test("literal string correct", () => {
+  expect(literalStringSchema.parse("asdf")).toBe("asdf");
 });
 
-test('literal string incorrect', () => {
-  const f = () => literalStringSchema.parse('not_asdf');
+test("literal string incorrect", () => {
+  const f = () => literalStringSchema.parse("not_asdf");
   expect(f).toThrow();
 });
 
-test('literal string number', () => {
+test("literal string number", () => {
   const f = () => literalStringSchema.parse(123);
   expect(f).toThrow();
 });
 
-test('literal string boolean', () => {
+test("literal string boolean", () => {
   const f = () => literalStringSchema.parse(true);
   expect(f).toThrow();
 });
 
-test('literal string boolean', () => {
+test("literal string boolean", () => {
   const f = () => literalStringSchema.parse(true);
   expect(f).toThrow();
 });
 
-test('literal string object', () => {
+test("literal string object", () => {
   const f = () => literalStringSchema.parse({});
   expect(f).toThrow();
 });
 
-test('literal number correct', () => {
+test("literal number correct", () => {
   expect(literalNumberSchema.parse(12)).toBe(12);
 });
 
-test('literal number incorrect', () => {
+test("literal number incorrect", () => {
   const f = () => literalNumberSchema.parse(13);
   expect(f).toThrow();
 });
 
-test('literal number number', () => {
+test("literal number number", () => {
   const f = () => literalNumberSchema.parse(val.string);
   expect(f).toThrow();
 });
 
-test('literal number boolean', () => {
+test("literal number boolean", () => {
   const f = () => literalNumberSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
-test('literal number object', () => {
+test("literal number object", () => {
   const f = () => literalStringSchema.parse({});
   expect(f).toThrow();
 });
 
-test('literal boolean correct', () => {
+test("literal boolean correct", () => {
   expect(literalBooleanSchema.parse(true)).toBe(true);
 });
 
-test('literal boolean incorrect', () => {
+test("literal boolean incorrect", () => {
   const f = () => literalBooleanSchema.parse(false);
   expect(f).toThrow();
 });
 
-test('literal boolean number', () => {
-  const f = () => literalBooleanSchema.parse('asdf');
+test("literal boolean number", () => {
+  const f = () => literalBooleanSchema.parse("asdf");
   expect(f).toThrow();
 });
 
-test('literal boolean boolean', () => {
+test("literal boolean boolean", () => {
   const f = () => literalBooleanSchema.parse(123);
   expect(f).toThrow();
 });
 
-test('literal boolean object', () => {
+test("literal boolean object", () => {
   const f = () => literalBooleanSchema.parse({});
   expect(f).toThrow();
 });
 
-test('parse stringSchema string', () => {
+test("parse stringSchema string", () => {
   stringSchema.parse(val.string);
 });
 
-test('parse stringSchema number', () => {
+test("parse stringSchema number", () => {
   const f = () => stringSchema.parse(val.number);
   expect(f).toThrow();
 });
 
-test('parse stringSchema boolean', () => {
+test("parse stringSchema boolean", () => {
   const f = () => stringSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
-test('parse stringSchema undefined', () => {
+test("parse stringSchema undefined", () => {
   const f = () => stringSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
-test('parse stringSchema null', () => {
+test("parse stringSchema null", () => {
   const f = () => stringSchema.parse(val.null);
   expect(f).toThrow();
 });
 
-test('parse numberSchema string', () => {
+test("parse numberSchema string", () => {
   const f = () => numberSchema.parse(val.string);
   expect(f).toThrow();
 });
 
-test('parse numberSchema number', () => {
+test("parse numberSchema number", () => {
   numberSchema.parse(val.number);
 });
 
-test('parse numberSchema bigint', () => {
+test("parse numberSchema bigint", () => {
   const f = () => numberSchema.parse(val.bigint);
   expect(f).toThrow();
 });
 
-test('parse numberSchema boolean', () => {
+test("parse numberSchema boolean", () => {
   const f = () => numberSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
-test('parse numberSchema undefined', () => {
+test("parse numberSchema undefined", () => {
   const f = () => numberSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
-test('parse numberSchema null', () => {
+test("parse numberSchema null", () => {
   const f = () => numberSchema.parse(val.null);
   expect(f).toThrow();
 });
 
-test('parse bigintSchema string', () => {
+test("parse bigintSchema string", () => {
   const f = () => bigintSchema.parse(val.string);
   expect(f).toThrow();
 });
 
-test('parse bigintSchema number', () => {
+test("parse bigintSchema number", () => {
   const f = () => bigintSchema.parse(val.number);
   expect(f).toThrow();
 });
 
-test('parse bigintSchema bigint', () => {
+test("parse bigintSchema bigint", () => {
   bigintSchema.parse(val.bigint);
 });
 
-test('parse bigintSchema boolean', () => {
+test("parse bigintSchema boolean", () => {
   const f = () => bigintSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
-test('parse bigintSchema undefined', () => {
+test("parse bigintSchema undefined", () => {
   const f = () => bigintSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
-test('parse bigintSchema null', () => {
+test("parse bigintSchema null", () => {
   const f = () => bigintSchema.parse(val.null);
   expect(f).toThrow();
 });
 
-test('parse booleanSchema string', () => {
+test("parse booleanSchema string", () => {
   const f = () => booleanSchema.parse(val.string);
   expect(f).toThrow();
 });
 
-test('parse booleanSchema number', () => {
+test("parse booleanSchema number", () => {
   const f = () => booleanSchema.parse(val.number);
   expect(f).toThrow();
 });
 
-test('parse booleanSchema boolean', () => {
+test("parse booleanSchema boolean", () => {
   booleanSchema.parse(val.boolean);
 });
 
-test('parse booleanSchema undefined', () => {
+test("parse booleanSchema undefined", () => {
   const f = () => booleanSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
-test('parse booleanSchema null', () => {
+test("parse booleanSchema null", () => {
   const f = () => booleanSchema.parse(val.null);
   expect(f).toThrow();
 });
 
 // ==============
 
-test('parse dateSchema string', () => {
+test("parse dateSchema string", () => {
   const f = () => dateSchema.parse(val.string);
   expect(f).toThrow();
 });
 
-test('parse dateSchema number', () => {
+test("parse dateSchema number", () => {
   const f = () => dateSchema.parse(val.number);
   expect(f).toThrow();
 });
 
-test('parse dateSchema boolean', () => {
+test("parse dateSchema boolean", () => {
   const f = () => dateSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
-test('parse dateSchema date', () => {
+test("parse dateSchema date", () => {
   dateSchema.parse(val.date);
 });
 
-test('parse dateSchema undefined', () => {
+test("parse dateSchema undefined", () => {
   const f = () => dateSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
-test('parse dateSchema null', () => {
+test("parse dateSchema null", () => {
   const f = () => dateSchema.parse(val.null);
   expect(f).toThrow();
 });
 
-test('parse dateSchema invalid date', async () => {
+test("parse dateSchema invalid date", async () => {
   expect.assertions(1);
-  return await dateSchema.parseAsync(new Date('invalid')).catch(err => {
+  return await dateSchema.parseAsync(new Date("invalid")).catch((err) => {
     expect(err.issues[0].code).toEqual(z.ZodIssueCode.invalid_date);
   });
 });
 // ==============
 
-test('parse undefinedSchema string', () => {
+test("parse undefinedSchema string", () => {
   const f = () => undefinedSchema.parse(val.string);
   expect(f).toThrow();
 });
 
-test('parse undefinedSchema number', () => {
+test("parse undefinedSchema number", () => {
   const f = () => undefinedSchema.parse(val.number);
   expect(f).toThrow();
 });
 
-test('parse undefinedSchema boolean', () => {
+test("parse undefinedSchema boolean", () => {
   const f = () => undefinedSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
-test('parse undefinedSchema undefined', () => {
+test("parse undefinedSchema undefined", () => {
   undefinedSchema.parse(val.undefined);
 });
 
-test('parse undefinedSchema null', () => {
+test("parse undefinedSchema null", () => {
   const f = () => undefinedSchema.parse(val.null);
   expect(f).toThrow();
 });
 
-test('parse nullSchema string', () => {
+test("parse nullSchema string", () => {
   const f = () => nullSchema.parse(val.string);
   expect(f).toThrow();
 });
 
-test('parse nullSchema number', () => {
+test("parse nullSchema number", () => {
   const f = () => nullSchema.parse(val.number);
   expect(f).toThrow();
 });
 
-test('parse nullSchema boolean', () => {
+test("parse nullSchema boolean", () => {
   const f = () => nullSchema.parse(val.boolean);
   expect(f).toThrow();
 });
 
-test('parse nullSchema undefined', () => {
+test("parse nullSchema undefined", () => {
   const f = () => nullSchema.parse(val.undefined);
   expect(f).toThrow();
 });
 
-test('parse nullSchema null', () => {
+test("parse nullSchema null", () => {
   nullSchema.parse(val.null);
 });
 
@@ -306,10 +306,10 @@ type AssertEqual<X, Y> = (<T>() => T extends X ? 1 : 2) extends <
   ? true
   : never;
 
-test('primitive inference', () => {
+test("primitive inference", () => {
   const literalStringSchemaTest: AssertEqual<
     z.TypeOf<typeof literalStringSchema>,
-    'asdf'
+    "asdf"
   > = true;
   const literalNumberSchemaTest: AssertEqual<
     z.TypeOf<typeof literalNumberSchema>,

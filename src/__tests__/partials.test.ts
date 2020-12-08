@@ -1,5 +1,5 @@
-import * as z from '../index';
-import { util } from '../helpers/util';
+import * as z from "../index";
+import { util } from "../helpers/util";
 
 const nested = z.object({
   name: z.string(),
@@ -9,7 +9,7 @@ const nested = z.object({
   }),
 });
 
-test('shallow inference', () => {
+test("shallow inference", () => {
   const shallow = nested.partial();
   type shallow = z.infer<typeof shallow>;
   type correct = {
@@ -21,16 +21,16 @@ test('shallow inference', () => {
   t1;
 });
 
-test('shallow partial parse', () => {
+test("shallow partial parse", () => {
   const shallow = nested.partial();
   shallow.parse({});
   shallow.parse({
-    name: 'asdf',
+    name: "asdf",
     age: 23143,
   });
 });
 
-test('deep partial inference', () => {
+test("deep partial inference", () => {
   const deep = nested.deepPartial();
   type deep = z.infer<typeof deep>;
   type correct = {
@@ -43,31 +43,31 @@ test('deep partial inference', () => {
   t1;
 });
 
-test('deep partial parse', () => {
+test("deep partial parse", () => {
   const deep = nested.deepPartial();
   expect(deep.shape.name instanceof z.ZodOptional).toBe(true);
   expect(deep.shape.outer instanceof z.ZodOptional).toBe(true);
   expect(deep.shape.outer._def.innerType instanceof z.ZodObject).toBe(true);
   expect(
-    deep.shape.outer._def.innerType.shape.inner instanceof z.ZodOptional,
+    deep.shape.outer._def.innerType.shape.inner instanceof z.ZodOptional
   ).toBe(true);
   expect(
     deep.shape.outer._def.innerType.shape.inner._def.innerType instanceof
-      z.ZodString,
+      z.ZodString
   ).toBe(true);
 });
 
-test('deep partial runtime tests', () => {
+test("deep partial runtime tests", () => {
   const deep = nested.deepPartial();
   deep.parse({});
   deep.parse({
     outer: {},
   });
   deep.parse({
-    name: 'asdf',
+    name: "asdf",
     age: 23143,
     outer: {
-      inner: 'adsf',
+      inner: "adsf",
     },
   });
 });

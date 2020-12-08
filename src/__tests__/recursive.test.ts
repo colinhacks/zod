@@ -1,4 +1,4 @@
-test('', () => {});
+test("", () => {});
 // import * as z from '../index';
 
 // interface A {

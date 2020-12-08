@@ -1,5 +1,5 @@
-import { util } from '../helpers/util';
-import { ZodParser, ParseParams, MakeErrorData } from '../parser';
+import { util } from "../helpers/util";
+import { ZodParser, ParseParams, MakeErrorData } from "../parser";
 import {
   ZodIssueCode,
   ZodArray,
@@ -8,39 +8,39 @@ import {
   ZodOptional,
   ZodNullable,
   ZodCustomIssue,
-} from '../index';
+} from "../index";
 
-import { ZodOptionalType } from './optional';
-import { ZodNullableType } from './nullable';
+import { ZodOptionalType } from "./optional";
+import { ZodNullableType } from "./nullable";
 
 export enum ZodTypes {
-  string = 'string',
-  number = 'number',
-  bigint = 'bigint',
-  boolean = 'boolean',
-  date = 'date',
-  undefined = 'undefined',
-  null = 'null',
-  array = 'array',
-  object = 'object',
-  union = 'union',
-  intersection = 'intersection',
-  tuple = 'tuple',
-  record = 'record',
-  map = 'map',
-  function = 'function',
-  lazy = 'lazy',
-  literal = 'literal',
-  enum = 'enum',
-  nativeEnum = 'nativeEnum',
-  promise = 'promise',
-  any = 'any',
-  unknown = 'unknown',
-  never = 'never',
-  void = 'void',
-  transformer = 'transformer',
-  optional = 'optional',
-  nullable = 'nullable',
+  string = "string",
+  number = "number",
+  bigint = "bigint",
+  boolean = "boolean",
+  date = "date",
+  undefined = "undefined",
+  null = "null",
+  array = "array",
+  object = "object",
+  union = "union",
+  intersection = "intersection",
+  tuple = "tuple",
+  record = "record",
+  map = "map",
+  function = "function",
+  lazy = "lazy",
+  literal = "literal",
+  enum = "enum",
+  nativeEnum = "nativeEnum",
+  promise = "promise",
+  any = "any",
+  unknown = "unknown",
+  never = "never",
+  void = "void",
+  transformer = "transformer",
+  optional = "optional",
+  nullable = "nullable",
 }
 
 export type ZodTypeAny = ZodType<any, any, any>;
@@ -78,7 +78,7 @@ type InternalCheck<T> = {
 //   // params?: {[k:string]:any}
 // } & util.Omit<CustomError, 'code' | 'path'>;
 
-type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, 'code'>>;
+type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 // type Check<T> = {
 //   check: (arg: T) => any;
 //   refinementError: (arg: T) => CustomErrorParams;
@@ -90,10 +90,10 @@ export interface ZodTypeDef {
   accepts?: ZodType<any, any>;
 }
 
-export type TypeOf<T extends ZodType<any>> = T['_output'];
-export type input<T extends ZodType<any>> = T['_input'];
-export type output<T extends ZodType<any>> = T['_output'];
-export type infer<T extends ZodType<any>> = T['_output'];
+export type TypeOf<T extends ZodType<any>> = T["_output"];
+export type input<T extends ZodType<any>> = T["_input"];
+export type output<T extends ZodType<any>> = T["_output"];
+export type infer<T extends ZodType<any>> = T["_output"];
 
 export abstract class ZodType<
   Output,
@@ -118,10 +118,10 @@ export abstract class ZodType<
 
   safeParse: (
     x: unknown,
-    params?: ParseParams,
+    params?: ParseParams
   ) => { success: true; data: Output } | { success: false; error: ZodError } = (
     data,
-    params,
+    params
   ) => {
     try {
       const parsed = this.parse(data, params);
@@ -136,14 +136,14 @@ export abstract class ZodType<
 
   parseAsync: (x: unknown, params?: ParseParams) => Promise<Output> = async (
     value,
-    params,
+    params
   ) => {
     return await this.parse(value, { ...params, async: true });
   };
 
   safeParseAsync: (
     x: unknown,
-    params?: ParseParams,
+    params?: ParseParams
   ) => Promise<
     { success: true; data: Output } | { success: false; error: ZodError }
   > = async (data, params) => {
@@ -183,9 +183,9 @@ export abstract class ZodType<
     message:
       | string
       | CustomErrorParams
-      | ((arg: Output) => CustomErrorParams) = 'Invalid value.',
+      | ((arg: Output) => CustomErrorParams) = "Invalid value."
   ) => {
-    if (typeof message === 'string') {
+    if (typeof message === "string") {
       return this._refinement((val, ctx) => {
         const result = check(val);
         const setError = () =>
@@ -194,7 +194,7 @@ export abstract class ZodType<
             message,
           });
         if (result instanceof Promise) {
-          return result.then(data => {
+          return result.then((data) => {
             if (!data) setError();
           });
         }
@@ -204,7 +204,7 @@ export abstract class ZodType<
         }
       });
     }
-    if (typeof message === 'function') {
+    if (typeof message === "function") {
       return this._refinement((val, ctx) => {
         const result = check(val);
         const setError = () =>
@@ -213,7 +213,7 @@ export abstract class ZodType<
             ...message(val),
           });
         if (result instanceof Promise) {
-          return result.then(data => {
+          return result.then((data) => {
             if (!data) setError();
           });
         }
@@ -231,7 +231,7 @@ export abstract class ZodType<
           ...message,
         });
       if (result instanceof Promise) {
-        return result.then(data => {
+        return result.then((data) => {
           if (!data) setError();
         });
       }
@@ -247,22 +247,22 @@ export abstract class ZodType<
     check: (arg: Output) => any,
     refinementData:
       | MakeErrorData
-      | ((arg: Output, ctx: RefinementCtx) => MakeErrorData),
+      | ((arg: Output, ctx: RefinementCtx) => MakeErrorData)
   ) => {
     return this._refinement((val, ctx) => {
       if (!check(val)) {
         ctx.addIssue(
-          typeof refinementData === 'function'
+          typeof refinementData === "function"
             ? refinementData(val, ctx)
-            : refinementData,
+            : refinementData
         );
       }
     });
   };
 
-  _refinement: (
-    refinement: InternalCheck<Output>['check'],
-  ) => this = refinement => {
+  _refinement: (refinement: InternalCheck<Output>["check"]) => this = (
+    refinement
+  ) => {
     return new (this as any).constructor({
       ...this._def,
       checks: [...(this._def.checks || []), { check: refinement }],
@@ -289,13 +289,13 @@ export abstract class ZodType<
   transform<
     This extends this,
     U extends ZodType<any>,
-    Tx extends (arg: This['_output']) => U['_input'] | Promise<U['_input']>
+    Tx extends (arg: This["_output"]) => U["_input"] | Promise<U["_input"]>
   >(input: U, transformer: Tx): ZodTransformer<This, U>;
   transform<
     This extends this,
     Tx extends (
-      arg: This['_output'],
-    ) => This['_output'] | Promise<This['_output']>
+      arg: This["_output"]
+    ) => This["_output"] | Promise<This["_output"]>
   >(transformer: Tx): ZodTransformer<This, This>;
   transform(input: any, transformer?: any) {
     if (transformer) {
@@ -306,16 +306,16 @@ export abstract class ZodType<
 
   default<
     T extends Input = Input,
-    Opt extends ReturnType<this['optional']> = ReturnType<this['optional']>
+    Opt extends ReturnType<this["optional"]> = ReturnType<this["optional"]>
   >(def: T): ZodTransformer<Opt, this>;
   default<
     T extends (arg: this) => Input,
-    Opt extends ReturnType<this['optional']> = ReturnType<this['optional']>
+    Opt extends ReturnType<this["optional"]> = ReturnType<this["optional"]>
   >(def: T): ZodTransformer<Opt, this>;
   default(def: any) {
     return ZodTransformer.create(this.optional(), this, (x: any) => {
       return x === undefined
-        ? typeof def === 'function'
+        ? typeof def === "function"
           ? def(this)
           : def
         : x;

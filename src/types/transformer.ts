@@ -1,4 +1,4 @@
-import * as z from './base';
+import * as z from "./base";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
@@ -10,13 +10,13 @@ export interface ZodTransformerDef<
   t: z.ZodTypes.transformer;
   input: T;
   output: U;
-  transformer: (arg: T['_output']) => U['_input'];
+  transformer: (arg: T["_output"]) => U["_input"];
 }
 
 export class ZodTransformer<
   T extends z.ZodTypeAny,
   U extends z.ZodTypeAny
-> extends z.ZodType<U['_output'], ZodTransformerDef<T, U>, T['_input']> {
+> extends z.ZodType<U["_output"], ZodTransformerDef<T, U>, T["_input"]> {
   // readonly _input!: T['_input'];
   // readonly _output!: U['_output'];
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
@@ -61,7 +61,7 @@ export class ZodTransformer<
   static create = <I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
     input: I,
     output: O,
-    transformer: (arg: I['_output']) => O['_input'] | Promise<O['_input']>,
+    transformer: (arg: I["_output"]) => O["_input"] | Promise<O["_input"]>
   ): ZodTransformer<I, O> => {
     return new ZodTransformer({
       t: z.ZodTypes.transformer,
@@ -72,13 +72,13 @@ export class ZodTransformer<
   };
 
   static fromSchema = <I extends z.ZodTypeAny>(
-    input: I,
+    input: I
   ): ZodTransformer<I, I> => {
     return new ZodTransformer({
       t: z.ZodTypes.transformer,
       input,
       output: input,
-      transformer: x => x,
+      transformer: (x) => x,
     });
   };
 }

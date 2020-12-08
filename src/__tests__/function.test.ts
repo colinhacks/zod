@@ -1,32 +1,32 @@
-import * as z from '../index';
-import { util } from '../helpers/util';
+import * as z from "../index";
+import { util } from "../helpers/util";
 
 const args1 = z.tuple([z.string()]);
 const returns1 = z.number();
 const func1 = z.function(args1, returns1);
 
-test('function parsing', () => {
+test("function parsing", () => {
   const parsed = func1.parse((arg: any) => arg.length);
-  parsed('asdf');
+  parsed("asdf");
 });
 
-test('parsed function fail 1', () => {
+test("parsed function fail 1", () => {
   const parsed = func1.parse((x: string) => x);
-  expect(() => parsed('asdf')).toThrow();
+  expect(() => parsed("asdf")).toThrow();
 });
 
-test('parsed function fail 2', () => {
+test("parsed function fail 2", () => {
   const parsed = func1.parse((x: string) => x);
   expect(() => parsed(13 as any)).toThrow();
 });
 
-test('function inference 1', () => {
+test("function inference 1", () => {
   type func1 = z.TypeOf<typeof func1>;
   const t1: util.AssertEqual<func1, (k: string) => number> = true;
   [t1];
 });
 
-test('args method', () => {
+test("args method", () => {
   const t1 = z.function();
   type t1 = z.infer<typeof t1>;
   const f1: util.AssertEqual<t1, () => void> = true;
@@ -55,7 +55,7 @@ const returns2 = z.union([z.string(), z.number()]);
 
 const func2 = z.function(args2, returns2);
 
-test('function inference 2', () => {
+test("function inference 2", () => {
   type func2 = z.TypeOf<typeof func2>;
   const t2: util.AssertEqual<
     func2,
@@ -68,15 +68,15 @@ test('function inference 2', () => {
   [t2];
 });
 
-test('valid function run', () => {
-  const validFunc2Instance = func2.validate(_x => {
-    return 'adf' as any;
+test("valid function run", () => {
+  const validFunc2Instance = func2.validate((_x) => {
+    return "adf" as any;
   });
 
   const checker = () => {
     validFunc2Instance({
       f1: 21,
-      f2: 'asdf',
+      f2: "asdf",
       f3: [true, false],
     });
   };
@@ -84,27 +84,27 @@ test('valid function run', () => {
   checker();
 });
 
-test('input validation error', () => {
-  const invalidFuncInstance = func2.validate(_x => {
-    return 'adf' as any;
+test("input validation error", () => {
+  const invalidFuncInstance = func2.validate((_x) => {
+    return "adf" as any;
   });
 
   const checker = () => {
-    invalidFuncInstance('Invalid_input' as any);
+    invalidFuncInstance("Invalid_input" as any);
   };
 
   expect(checker).toThrow();
 });
 
-test('output validation error', () => {
-  const invalidFuncInstance = func2.validate(_x => {
-    return ['this', 'is', 'not', 'valid', 'output'] as any;
+test("output validation error", () => {
+  const invalidFuncInstance = func2.validate((_x) => {
+    return ["this", "is", "not", "valid", "output"] as any;
   });
 
   const checker = () => {
     invalidFuncInstance({
       f1: 21,
-      f2: 'asdf',
+      f2: "asdf",
       f3: [true, false],
     });
   };
@@ -112,14 +112,14 @@ test('output validation error', () => {
   expect(checker).toThrow();
 });
 
-test('special function error codes', () => {
+test("special function error codes", () => {
   const checker = z
     .function(z.tuple([z.string()]), z.boolean())
-    .implement(arg => {
+    .implement((arg) => {
       return arg.length as any;
     });
   try {
-    checker('12' as any);
+    checker("12" as any);
   } catch (err) {
     const zerr: z.ZodError = err;
     const first = zerr.issues[0];
@@ -138,47 +138,47 @@ test('special function error codes', () => {
   }
 });
 
-test('function with async refinements', async () => {
+test("function with async refinements", async () => {
   const func = z
     .function()
-    .args(z.string().refine(async val => val.length > 10))
-    .returns(z.promise(z.number().refine(async val => val > 10)))
-    .implement(async val => {
+    .args(z.string().refine(async (val) => val.length > 10))
+    .returns(z.promise(z.number().refine(async (val) => val > 10)))
+    .implement(async (val) => {
       return val.length;
     });
   let results = [];
   try {
-    await func('asdfasdf');
-    results.push('success');
+    await func("asdfasdf");
+    results.push("success");
   } catch (err) {
-    results.push('fail');
+    results.push("fail");
   }
   try {
-    await func('asdflkjasdflkjsf');
-    results.push('success');
+    await func("asdflkjasdflkjsf");
+    results.push("success");
   } catch (err) {
-    results.push('fail');
+    results.push("fail");
   }
 
-  expect(results).toEqual(['fail', 'success']);
+  expect(results).toEqual(["fail", "success"]);
 });
 
-test('non async function with async refinements should fail', async () => {
+test("non async function with async refinements should fail", async () => {
   const func = z
     .function()
-    .args(z.string().refine(async val => val.length > 10))
-    .returns(z.number().refine(async val => val > 10))
-    .implement(val => {
+    .args(z.string().refine(async (val) => val.length > 10))
+    .returns(z.number().refine(async (val) => val > 10))
+    .implement((val) => {
       return val.length;
     });
 
   let results = [];
   try {
-    await func('asdasdfasdffasdf');
-    results.push('success');
+    await func("asdasdfasdffasdf");
+    results.push("success");
   } catch (err) {
-    results.push('fail');
+    results.push("fail");
   }
 
-  expect(results).toEqual(['fail']);
+  expect(results).toEqual(["fail"]);
 });

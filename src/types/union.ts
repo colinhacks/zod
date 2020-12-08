@@ -1,4 +1,4 @@
-import * as z from './base';
+import * as z from "./base";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 
@@ -6,7 +6,7 @@ export interface ZodUnionDef<
   T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]] = [
     z.ZodTypeAny,
     z.ZodTypeAny,
-    ...z.ZodTypeAny[],
+    ...z.ZodTypeAny[]
   ]
 > extends z.ZodTypeDef {
   t: z.ZodTypes.union;
@@ -15,14 +15,14 @@ export interface ZodUnionDef<
 
 export class ZodUnion<
   T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]
-> extends z.ZodType<T[number]['_output'], ZodUnionDef<T>, T[number]['_input']> {
+> extends z.ZodType<T[number]["_output"], ZodUnionDef<T>, T[number]["_input"]> {
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   toJSON = (): object => ({
     t: this._def.t,
-    options: this._def.options.map(x => x.toJSON()),
+    options: this._def.options.map((x) => x.toJSON()),
   });
 
   get options() {
@@ -34,7 +34,7 @@ export class ZodUnion<
   // };
 
   static create = <T extends [z.ZodTypeAny, z.ZodTypeAny, ...z.ZodTypeAny[]]>(
-    types: T,
+    types: T
   ): ZodUnion<T> => {
     return new ZodUnion({
       t: z.ZodTypes.union,
