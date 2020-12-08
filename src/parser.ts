@@ -8,8 +8,8 @@ import {
 } from './ZodError';
 import { INVALID, util } from './helpers/util';
 import { ZodErrorMap, defaultErrorMap } from './defaultErrorMap';
-import { PseudoPromise } from './PseudoPromise';
-import { ZodDef, ZodNever } from './index';
+import { NOSET, PseudoPromise } from './PseudoPromise';
+import { ZodDef, ZodNever, ZodPromise } from './index';
 
 export const getParsedType = (data: any): ZodParsedType => {
   if (typeof data === 'string') return 'string';
@@ -175,12 +175,13 @@ export const ZodParser = (schema: z.ZodType<any>) => (
     throw ERROR;
   };
 
-  // const HANDLE = (err: Error) => {
-  //   if (err instanceof ZodError) {
-  //     ERROR.addIssues(err.issues);
-  //   }
-  //   // throw ERROR;
-  // };
+  const HANDLE = (err: Error) => {
+    if (err instanceof ZodError) {
+      ERROR.addIssues(err.issues);
+      return INVALID;
+    }
+    throw ERROR;
+  };
 
   // const HANDLE_AND_THROW = (err: Error) => {
   //   if (err instanceof ZodError) {
@@ -196,6 +197,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
   //     '.',
   //   )}`,
   // );
+  console.log(`\nPARSING ${def.t}`);
   switch (def.t) {
     case z.ZodTypes.string:
       if (parsedType !== ZodParsedType.string) {
@@ -358,20 +360,28 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       // });
       PROMISE = PseudoPromise.all(
         (data as any[]).map((item, i) => {
-          try {
-            return PseudoPromise.resolve(
+          // try {
+          return new PseudoPromise()
+            .then(() =>
               def.type.parse(item, {
                 ...params,
                 path: [...params.path, i],
               }),
-            );
-          } catch (err) {
-            if (!(err instanceof ZodError)) {
-              throw err;
-            }
-            ERROR.addIssues(err.issues);
-            return PseudoPromise.resolve(INVALID);
-          }
+            )
+            .catch(err => {
+              if (!(err instanceof ZodError)) {
+                throw err;
+              }
+              ERROR.addIssues(err.issues);
+              return INVALID;
+            });
+          // } catch (err) {
+          //   if (!(err instanceof ZodError)) {
+          //     throw err;
+          //   }
+          //   ERROR.addIssues(err.issues);
+          //   return PseudoPromise.resolve(INVALID);
+          // }
         }),
       );
       // if (!ERROR.isEmpty) {
@@ -403,14 +413,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
                   path: [...params.path, index, 'key'],
                 });
               })
-              .catch(err => {
-                if (!(err instanceof ZodError)) {
-                  throw err;
-                }
-
-                ERROR.addIssues(err.issues);
-                return INVALID;
-              }),
+              .catch(HANDLE),
             new PseudoPromise()
               .then(() => {
                 const mapValue = def.valueType.parse(value, {
@@ -419,31 +422,14 @@ export const ZodParser = (schema: z.ZodType<any>) => (
                 });
                 return [key, mapValue];
               })
-              .catch(err => {
-                if (!(err instanceof ZodError)) {
-                  throw err;
-                }
-
-                ERROR.addIssues(err.issues);
-                return INVALID;
-              }),
+              .catch(HANDLE),
           ])
             .then((item: any) => {
-              try {
-                if (item[0] !== INVALID && item[1] !== INVALID) {
-                  returnedMap.set(item[0], item[1]);
-                } else {
-                }
-              } catch (err) {}
-            })
-            .catch(err => {
-              if (!(err instanceof ZodError)) {
-                throw err;
+              if (item[0] !== INVALID && item[1] !== INVALID) {
+                returnedMap.set(item[0], item[1]);
               }
-
-              ERROR.addIssues(err.issues);
-              return INVALID;
-            });
+            })
+            .catch(HANDLE);
           // const promises = [
           //   PseudoPromise.resolve(
           //     def.keyType.parse(key, {
@@ -544,7 +530,20 @@ export const ZodParser = (schema: z.ZodType<any>) => (
 
       const shape = def.shape();
       const shapeKeys = Object.keys(shape);
+      // const shapeKeys: string[] = [];
+      // for (let key in shape) {
+      //   console.log(`pushing ${key}`);
+      //   shapeKeys.push(key);
+      // }
       const dataKeys = Object.keys(data);
+      // const dataKeys: string[] = []; //Object.keys(data);
+      // console.log(data);
+      // console.log(data.message);
+      // for (let key in data) {
+      //   console.log(`pushing ${key}`);
+      //   dataKeys.push(key);
+      // }
+      // console.log(JSON.stringify(dataKeys, null, 2));
       const extraKeys = dataKeys.filter(k => shapeKeys.indexOf(k) === -1);
 
       for (const key of shapeKeys) {
@@ -562,40 +561,70 @@ export const ZodParser = (schema: z.ZodType<any>) => (
 
         // const keyDataType = getParsedType(data[key]);
 
-        if (!Object.keys(data).includes(key)) {
-          try {
-            const output = keyValidator.parse(undefined, {
-              ...params,
-              path: [...params.path, key],
+        // first check is required to avoid non-enumerable keys
+        if (typeof data[key] === 'undefined' && !dataKeys.includes(key)) {
+          objectPromises[key] = new PseudoPromise()
+            .then(() => {
+              return keyValidator.parse(undefined, {
+                ...params,
+                path: [...params.path, key],
+              });
+            })
+            .then(output => {
+              if (output === undefined) {
+                // schema is optional
+                // data is undefined
+                // don't explicity add undefined to outut
+                // continue;
+                // console.log(`returning NOSET`);
+                return NOSET;
+              } else {
+                return output;
+              }
+            })
+            .catch(err => {
+              // console.log(err);
+              if (err instanceof ZodError) {
+                const zerr: ZodError = err;
+                ERROR.addIssues(zerr.issues);
+                objectPromises[key] = PseudoPromise.resolve(INVALID);
+              } else {
+                throw err;
+              }
             });
-            if (output === undefined) {
-              // schema is optional
-              // data is undefined
-              // don't explicity add undefined to outut
-              // continue;
-            } else {
-              objectPromises[key] = PseudoPromise.resolve(output);
-            }
-          } catch (err) {
-            if (err instanceof ZodError) {
-              const zerr: ZodError = err;
-              ERROR.addIssues(zerr.issues);
-              objectPromises[key] = PseudoPromise.resolve(INVALID);
-            } else {
-              throw err;
-            }
-          }
+          // try {
+          //   const output = keyValidator.parse(undefined, {
+          //     ...params,
+          //     path: [...params.path, key],
+          //   });
+          //   if (output === undefined) {
+          //     // schema is optional
+          //     // data is undefined
+          //     // don't explicity add undefined to outut
+          //     // continue;
+          //   } else {
+          //     objectPromises[key] = PseudoPromise.resolve(output);
+          //   }
+          // } catch (err) {
+          //   if (err instanceof ZodError) {
+          //     const zerr: ZodError = err;
+          //     ERROR.addIssues(zerr.issues);
+          //     objectPromises[key] = PseudoPromise.resolve(INVALID);
+          //   } else {
+          //     throw err;
+          //   }
+          // }
           continue;
         }
 
         objectPromises[key] = new PseudoPromise()
           .then(() => {
             // try {
-            const parsedValue = keyValidator.parse(data[key], {
+            return keyValidator.parse(data[key], {
               ...params,
               path: [...params.path, key],
             });
-            return parsedValue;
+            // return parsedValue;
             // } catch (err) {
 
             // }
@@ -633,23 +662,36 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       } else {
         // run catchall validation
         for (const key of extraKeys) {
-          objectPromises[key] = new PseudoPromise().then(() => {
-            try {
+          objectPromises[key] = new PseudoPromise()
+            .then(() => {
+              // try {
               const parsedValue = def.catchall.parse(data[key], {
                 ...params,
                 path: [...params.path, key],
               });
+              console.log('parsedValue');
+              console.log(parsedValue);
               return parsedValue;
-            } catch (err) {
+              // } catch (err) {
+              // console.log(`caught erro!`);
+              // if (err instanceof ZodError) {
+              //   const zerr: ZodError = err;
+              //   ERROR.addIssues(zerr.issues);
+              //   return INVALID;
+              // } else {
+              //   throw err;
+              // }
+              // }
+            })
+            .catch(err => {
+              // console.log(`caught error in objectPromise!`);
               if (err instanceof ZodError) {
-                const zerr: ZodError = err;
-                ERROR.addIssues(zerr.issues);
-                return INVALID;
+                // const zerr: ZodError = err;
+                ERROR.addIssues(err.issues);
               } else {
                 throw err;
               }
-            }
-          });
+            });
         }
       }
 
@@ -680,20 +722,40 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       // const INVALID = Symbol('invalid_data');
       PROMISE = PseudoPromise.all(
         def.options.map((opt, _j) => {
-          try {
-            const parseProm = opt.parse(data, params);
+          // return new PseudoPromise().then
+          return new PseudoPromise()
+            .then(() => {
+              return opt.parse(data, params);
+            })
+            .then(optionData => {
+              isValid = true;
+              return optionData;
+            })
+            .catch(err => {
+              if (err instanceof ZodError) {
+                unionErrors.push(err);
+                return;
+              }
+              throw err;
+            })
+            .then(() => {
+              // return INVALID if error is caught
+              return INVALID;
+            });
+          // try {
+          //   const parseProm = opt.parse(data, params);
 
-            const unionValueProm = PseudoPromise.resolve(parseProm);
-            isValid = true;
-            return unionValueProm;
-            // return parsed;
-          } catch (err) {
-            if (err instanceof ZodError) {
-              unionErrors.push(err);
-              return PseudoPromise.resolve(INVALID);
-            }
-            throw err;
-          }
+          //   const unionValueProm = PseudoPromise.resolve(parseProm);
+          //   isValid = true;
+          //   return unionValueProm;
+          //   // return parsed;
+          // } catch (err) {
+          //   if (err instanceof ZodError) {
+          //     unionErrors.push(err);
+          //     return PseudoPromise.resolve(INVALID);
+          //   }
+          //   throw err;
+          // }
           // }
         }),
       )
@@ -755,28 +817,32 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       // let parsedRight: any;
       // PROMISE = PseudoPromise.resolve(data);
       PROMISE = PseudoPromise.all([
-        new PseudoPromise().then(() => {
-          try {
+        new PseudoPromise()
+          .then(() => {
+            // try {
             return def.left.parse(data, params);
-          } catch (err) {
-            if (err instanceof ZodError) {
-              ERROR.addIssues(err.issues);
-              return INVALID;
-            }
-            throw err;
-          }
-        }),
-        new PseudoPromise().then(() => {
-          try {
+            // } catch (err) {
+            //   if (err instanceof ZodError) {
+            //     ERROR.addIssues(err.issues);
+            //     return INVALID;
+            //   }
+            //   throw err;
+            // }
+          })
+          .catch(HANDLE),
+        new PseudoPromise()
+          .then(() => {
+            // try {
             return def.right.parse(data, params);
-          } catch (err) {
-            if (err instanceof ZodError) {
-              ERROR.addIssues(err.issues);
-              return INVALID;
-            }
-            throw err;
-          }
-        }),
+            // } catch (err) {
+            //   if (err instanceof ZodError) {
+            //     ERROR.addIssues(err.issues);
+            //     return INVALID;
+            //   }
+            //   throw err;
+            // }
+          })
+          .catch(HANDLE),
       ]).then(([parsedLeft, parsedRight]: any) => {
         if (parsedLeft === INVALID || parsedRight === INVALID) return INVALID;
 
@@ -807,17 +873,19 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         break;
       }
 
-      PROMISE = new PseudoPromise().then(() => {
-        try {
+      PROMISE = new PseudoPromise()
+        .then(() => {
+          // try {
           return def.innerType.parse(data, params);
-        } catch (err) {
-          if (err instanceof ZodError) {
-            ERROR.addIssues(err.issues);
-            return INVALID;
-          }
-          throw err;
-        }
-      });
+          // } catch (err) {
+          //   if (err instanceof ZodError) {
+          //     ERROR.addIssues(err.issues);
+          //     return INVALID;
+          //   }
+          //   throw err;
+          // }
+        })
+        .catch(HANDLE);
       break;
     case z.ZodTypes.nullable:
       if (parsedType === ZodParsedType.null) {
@@ -825,17 +893,19 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         break;
       }
 
-      PROMISE = new PseudoPromise().then(() => {
-        try {
+      PROMISE = new PseudoPromise()
+        .then(() => {
+          // try {
           return def.innerType.parse(data, params);
-        } catch (err) {
-          if (err instanceof ZodError) {
-            ERROR.addIssues(err.issues);
-            return INVALID;
-          }
-          throw err;
-        }
-      });
+          // } catch (err) {
+          //   if (err instanceof ZodError) {
+          //     ERROR.addIssues(err.issues);
+          //     return INVALID;
+          //   }
+          //   throw err;
+          // }
+        })
+        .catch(HANDLE);
       break;
     case z.ZodTypes.tuple:
       if (parsedType !== ZodParsedType.array) {
@@ -894,22 +964,37 @@ export const ZodParser = (schema: z.ZodType<any>) => (
               // }
             })
             .catch(err => {
+              console.log(`caught error in tuple element`);
+              console.log(err);
               if (err instanceof ZodError) {
                 ERROR.addIssues(err.issues);
-                return INVALID;
+                return;
               }
               throw err;
+            })
+            .then(arg => {
+              console.log(`after error...`);
+              console.log(arg);
+              return arg;
             });
         }),
       )
         .then(tupleData => {
-          if (tupleData.indexOf(INVALID) !== -1) {
-            // invalid
-            THROW();
-          }
+          if (!ERROR.isEmpty) THROW();
           return tupleData;
         })
+        // .then(tupleData => {
+        //   console.log(`got tupledata`);
+        //   console.log(tupleData);
+        //   if (tupleData.indexOf(INVALID) !== -1) {
+        //     // invalid
+        //     THROW();
+        //   }
+        //   return tupleData;
+        // })
         .catch(err => {
+          console.log(`caught tuple error`);
+          console.log(err);
           throw err;
         });
       // for (const index in tupleData) {
@@ -977,11 +1062,19 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         // setError(error);
         THROW();
       }
-      const validatedFunc = (...args: any[]) => {
-        try {
-          def.args.parse(args as any, params);
-        } catch (err) {
-          if (err instanceof ZodError) {
+
+      const isAsyncFunction = def.returns instanceof ZodPromise;
+
+      const validatedFunction = (...args: any[]) => {
+        const internalProm = new PseudoPromise()
+          .then(() => {
+            return def.args.parse(args as any, {
+              ...params,
+              async: isAsyncFunction,
+            });
+          })
+          .catch(err => {
+            if (!(err instanceof ZodError)) throw err;
             const argsError = new ZodError([]);
             argsError.addIssue(
               makeError(params, data, {
@@ -990,29 +1083,77 @@ export const ZodParser = (schema: z.ZodType<any>) => (
               }),
             );
             throw argsError;
-          }
-          throw err;
-        }
+            // setError(error);
+            // THROW();
+          })
+          .then(args => {
+            console.log(`args`);
+            console.log(args);
+            return data(...(args as any));
+          })
+          .then(result => {
+            console.log(`result`);
+            console.log(result);
+            return def.returns.parse(result, {
+              ...params,
+              async: isAsyncFunction,
+            });
+          })
+          .catch(err => {
+            if (err instanceof ZodError) {
+              const returnsError = new ZodError([]);
+              returnsError.addIssue(
+                makeError(params, data, {
+                  code: ZodIssueCode.invalid_return_type,
+                  returnTypeError: err,
+                }),
+              );
+              throw returnsError;
+            }
+            throw err;
+          });
 
-        const result = data(...(args as any));
-
-        try {
-          return def.returns.parse(result, params);
-        } catch (err) {
-          if (err instanceof ZodError) {
-            const returnsError = new ZodError([]);
-            returnsError.addIssue(
-              makeError(params, data, {
-                code: ZodIssueCode.invalid_return_type,
-                returnTypeError: err,
-              }),
-            );
-            throw returnsError;
-          }
-          throw err;
+        if (isAsyncFunction) {
+          return internalProm.getValueAsync();
+        } else {
+          return internalProm.getValueSync();
         }
       };
-      PROMISE = PseudoPromise.resolve(validatedFunc);
+      PROMISE = PseudoPromise.resolve(validatedFunction);
+      // const validatedFunc = (...args: any[]) => {
+      //   try {
+      //     def.args.parse(args as any, params);
+      //   } catch (err) {
+      //     if(!(err instanceof ZodError)) throw err;
+      //     const returnsError = new ZodError([]);
+      //     returnsError.addIssue(
+      //       makeError(params, data, {
+      //         code: ZodIssueCode.invalid_return_type,
+      //         returnTypeError: err,
+      //       }),
+      //     );
+      //     throw returnsError;
+      //   }
+
+      //   const result = data(...(args as any));
+
+      //   try {
+      //     return def.returns.parse(result, params);
+      //   } catch (err) {
+      //     if (err instanceof ZodError) {
+      //       const returnsError = new ZodError([]);
+      //       returnsError.addIssue(
+      //         makeError(params, data, {
+      //           code: ZodIssueCode.invalid_return_type,
+      //           returnTypeError: err,
+      //         }),
+      //       );
+      //       throw returnsError;
+      //     }
+      //     throw err;
+      //   }
+      // };
+      // PROMISE = PseudoPromise.resolve(validatedFunc);
       // return validatedFunc;
       break;
     case z.ZodTypes.record:
@@ -1030,20 +1171,22 @@ export const ZodParser = (schema: z.ZodType<any>) => (
 
       const parsedRecordPromises: { [k: string]: PseudoPromise<any> } = {};
       for (const key in data) {
-        parsedRecordPromises[key] = new PseudoPromise().then(() => {
-          try {
+        parsedRecordPromises[key] = new PseudoPromise()
+          .then(() => {
+            // try {
             return def.valueType.parse(data[key], {
               ...params,
               path: [...params.path, key],
             });
-          } catch (err) {
-            if (err instanceof ZodError) {
-              ERROR.addIssues(err.issues);
-              return INVALID;
-            }
-            throw err;
-          }
-        });
+            // } catch (err) {
+            //   if (err instanceof ZodError) {
+            //     ERROR.addIssues(err.issues);
+            //     return INVALID;
+            //   }
+            //   throw err;
+            // }
+          })
+          .catch(HANDLE);
       }
       PROMISE = PseudoPromise.object(parsedRecordPromises);
       // PROMISE = parsedRecord;
@@ -1090,15 +1233,15 @@ export const ZodParser = (schema: z.ZodType<any>) => (
 
       PROMISE = PseudoPromise.resolve(
         promisified.then((resolvedData: any) => {
-          try {
-            const parsed = def.type.parse(resolvedData, params);
-            return parsed;
-          } catch (err) {
-            if (err instanceof ZodError) {
-              ERROR.addIssues(err.issues);
-            }
-            throw err;
-          }
+          // try {
+          return def.type.parse(resolvedData, params);
+          // return parsed;
+          // } catch (err) {
+          //   if (err instanceof ZodError) {
+          //     ERROR.addIssues(err.issues);
+          //   }
+          //   throw err;
+          // }
         }),
       );
 
@@ -1215,6 +1358,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       // }
     }
     if (!ERROR.isEmpty) {
+      console.log(`throwing sync error`);
       THROW();
     }
     // if (resolvedValue === INVALID) {
@@ -1240,6 +1384,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
           }),
         );
       }
+
       if (!ERROR.isEmpty) {
         THROW();
       }

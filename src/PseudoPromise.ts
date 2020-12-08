@@ -8,6 +8,7 @@ type Catcher = (error: Error, ctx: { async: boolean }) => any;
 type CatcherItem = { type: 'catcher'; catcher: Catcher };
 type Items = (FuncItem | CatcherItem)[];
 
+export const NOSET = Symbol('no_set');
 export class PseudoPromise<ReturnType = undefined> {
   readonly _return: ReturnType;
   items: Items;
@@ -34,26 +35,26 @@ export class PseudoPromise<ReturnType = undefined> {
       //   }),
       // );
       if (ctx.async) {
-        try {
-          const allValues = Promise.all(
-            pps.map(async pp => {
-              try {
-                const asdf = await pp.getValueAsync();
-                return asdf;
-              } catch (err) {
-                return INVALID;
-              }
-            }),
-          ).then(vals => {
-            return vals;
-          });
-          return allValues;
-        } catch (err) {}
+        // try {
+        const allValues = Promise.all(
+          pps.map(async pp => {
+            try {
+              const asdf = await pp.getValueAsync();
+              return asdf;
+            } catch (err) {
+              return INVALID;
+            }
+          }),
+        ).then(vals => {
+          return vals;
+        });
+        return allValues;
+        // } catch (err) {}
         // return Promise.all(pps.map(pp => pp.getValueAsync()));
       } else {
-        try {
-          return pps.map(pp => pp.getValueSync()) as any;
-        } catch (err) {}
+        // try {
+        return pps.map(pp => pp.getValueSync()) as any;
+        // } catch (err) {}
       }
     });
   };
@@ -97,6 +98,7 @@ export class PseudoPromise<ReturnType = undefined> {
                 const v = await pps[k].getValueAsync();
                 return [k, v] as [string, any];
               } catch (err) {
+                console.log(`caught error in getAsyncObject!`);
                 if (err instanceof ZodError) {
                   zerr.addIssues(err.issues);
                   return [k, INVALID] as [string, any];
@@ -130,7 +132,9 @@ export class PseudoPromise<ReturnType = undefined> {
           // } else {
           for (const item of items) {
             // if (typeof item[1] !== 'undefined') value[item[0]] = item[1];
-            value[item[0]] = item[1];
+            // console.log(item);
+            // console.log(item[1]);
+            if (item[1] !== NOSET) value[item[0]] = item[1];
           }
 
           return value;
@@ -154,7 +158,7 @@ export class PseudoPromise<ReturnType = undefined> {
         if (!zerr.isEmpty) throw zerr;
         for (const item of items) {
           // if (typeof item[1] !== 'undefined') value[item[0]] = item[1];
-          value[item[0]] = item[1];
+          if (item[1] !== NOSET) value[item[0]] = item[1];
         }
         return value;
       }
@@ -275,6 +279,7 @@ export class PseudoPromise<ReturnType = undefined> {
         const catcherItem = this.items[catcherIndex];
 
         if (!catcherItem || catcherItem.type !== 'catcher') {
+          console.log(`NO CATCHER`);
           throw err;
         } else {
           index = catcherIndex;

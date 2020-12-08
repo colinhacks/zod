@@ -137,3 +137,48 @@ test('special function error codes', () => {
     expect(first.argumentsError).toBeInstanceOf(z.ZodError);
   }
 });
+
+test('function with async refinements', async () => {
+  const func = z
+    .function()
+    .args(z.string().refine(async val => val.length > 10))
+    .returns(z.promise(z.number().refine(async val => val > 10)))
+    .implement(async val => {
+      return val.length;
+    });
+  let results = [];
+  try {
+    await func('asdfasdf');
+    results.push('success');
+  } catch (err) {
+    results.push('fail');
+  }
+  try {
+    await func('asdflkjasdflkjsf');
+    results.push('success');
+  } catch (err) {
+    results.push('fail');
+  }
+
+  expect(results).toEqual(['fail', 'success']);
+});
+
+test('non async function with async refinements should fail', async () => {
+  const func = z
+    .function()
+    .args(z.string().refine(async val => val.length > 10))
+    .returns(z.number().refine(async val => val > 10))
+    .implement(val => {
+      return val.length;
+    });
+
+  let results = [];
+  try {
+    await func('asdasdfasdffasdf');
+    results.push('success');
+  } catch (err) {
+    results.push('fail');
+  }
+
+  expect(results).toEqual(['fail']);
+});

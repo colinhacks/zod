@@ -191,7 +191,6 @@ test("don't call refine after validation failed", () => {
     .union([
       z.number(),
       z.string().transform(z.number(), val => {
-        console.log(val);
         return parseFloat(val);
       }),
     ])
