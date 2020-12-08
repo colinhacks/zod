@@ -271,6 +271,10 @@ export abstract class ZodType<
 
   constructor(def: Def) {
     this._def = def;
+    this.is = this.is.bind(this);
+    this.check = this.check.bind(this);
+    this.transform = this.transform.bind(this);
+    this.default = this.default.bind(this);
   }
 
   abstract toJSON: () => object;
