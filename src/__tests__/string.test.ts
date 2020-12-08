@@ -39,7 +39,7 @@ test('url validations', () => {
     expect(() => url.parse('https:/')).toThrow();
     expect(() => url.parse('asdfj@lkjsdf.com')).toThrow();
   } catch (err) {
-    console.log(JSON.stringify(err, null, 2));
+    // console.log(JSON.stringify(err, null, 2));
   }
 });
 
