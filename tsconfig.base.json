@@ -9,9 +9,7 @@
     ],
     "target": "es5",
     "removeComments": true,
-    "module": "commonjs",
     "declaration": true,
-    "outDir": "./lib/cjs",
     "esModuleInterop": true,
     "sourceMap": true,
     "moduleResolution": "node",
@@ -27,9 +25,5 @@
   },
   "include": [
     "./src/**/*",
-  ],
-  "exclude": [
-    // "./src/**/__tests__",
-    // "./src/playground.ts",
   ]
 }

@@ -28,7 +28,7 @@
   ],
   "scripts": {
     "clean": "rm -rf lib/*",
-    "build": "yarn run clean && tsc --p tsconfig.json",
+    "build": "yarn run clean && tsc --p tsconfig.cjs.json",
     "buildall": "yarn add typescript@3.4 && yarn build && yarn add typescript@3.5 && yarn build && yarn add typescript@3.6 && yarn build && yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4 && yarn build && yarn add typescript@3.4",
     "buildallv2": "yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4.0 && yarn build && yarn add typescript@4.1 && yarn build && yarn add typescript@3.7",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
