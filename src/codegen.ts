@@ -1,7 +1,7 @@
 // import * as z from './index';
-import { ZodDef } from '.';
-import { util } from './helpers/util';
-import { ZodType, ZodTypes } from './types/base';
+import { ZodDef } from ".";
+import { util } from "./helpers/util";
+import { ZodType, ZodTypes } from "./types/base";
 
 type TypeResult = { schema: any; id: string; type: string };
 
@@ -27,11 +27,11 @@ export class ZodCodeGenerator {
   };
 
   findBySchema = (schema: ZodType<any, any>) => {
-    return this.seen.find(s => s.schema === schema);
+    return this.seen.find((s) => s.schema === schema);
   };
 
   findById = (id: string) => {
-    const found = this.seen.find(s => s.id === id);
+    const found = this.seen.find((s) => s.id === id);
     if (!found) throw new Error(`Unfound ID: ${id}`);
     return found;
   };
@@ -41,8 +41,8 @@ export class ZodCodeGenerator {
 type Identity<T> = T;
 
 ${this.seen
-  .map(item => `type ${item.id} = Identity<${item.type}>;`)
-  .join('\n\n')}
+  .map((item) => `type ${item.id} = Identity<${item.type}>;`)
+  .join("\n\n")}
 `;
   };
 
@@ -93,10 +93,10 @@ ${this.seen
         return this.setType(id, `void`);
       case ZodTypes.literal:
         const val = def.value;
-        const literalType = typeof val === 'string' ? `"${val}"` : `${val}`;
+        const literalType = typeof val === "string" ? `"${val}"` : `${val}`;
         return this.setType(id, literalType);
       case ZodTypes.enum:
-        return this.setType(id, def.values.map(v => `"${v}"`).join(' | '));
+        return this.setType(id, def.values.map((v) => `"${v}"`).join(" | "));
       case ZodTypes.object:
         const objectLines: string[] = [];
         const shape = def.shape();
@@ -104,12 +104,12 @@ ${this.seen
         for (const key in shape) {
           const childSchema = shape[key];
           const childType = this.generate(childSchema);
-          const OPTKEY = isOptional(childSchema) ? '?' : '';
+          const OPTKEY = isOptional(childSchema) ? "?" : "";
           objectLines.push(`${key}${OPTKEY}: ${childType.id}`);
         }
         const baseStruct = `{\n${objectLines
-          .map(line => `  ${line};`)
-          .join('\n')}\n}`;
+          .map((line) => `  ${line};`)
+          .join("\n")}\n}`;
         this.setType(id, `${baseStruct}`);
         break;
       case ZodTypes.tuple:
@@ -119,8 +119,8 @@ ${this.seen
           tupleLines.push(elType.id);
         }
         const baseTuple = `[\n${tupleLines
-          .map(line => `  ${line},`)
-          .join('\n')}\n]`;
+          .map((line) => `  ${line},`)
+          .join("\n")}\n]`;
         return this.setType(id, `${baseTuple}`);
       case ZodTypes.array:
         return this.setType(id, `${this.generate(def.type).id}[]`);
@@ -141,12 +141,12 @@ ${this.seen
       case ZodTypes.intersection:
         return this.setType(
           id,
-          `${this.generate(def.left).id} & ${this.generate(def.right).id}`,
+          `${this.generate(def.left).id} & ${this.generate(def.right).id}`
         );
       case ZodTypes.record:
         return this.setType(
           id,
-          `{[k:string]: ${this.generate(def.valueType).id}}`,
+          `{[k:string]: ${this.generate(def.valueType).id}}`
         );
       case ZodTypes.transformer:
         return this.setType(id, this.generate(def.output).id);
@@ -155,18 +155,18 @@ ${this.seen
           id,
           `Map<${this.generate(def.keyType).id}, ${
             this.generate(def.valueType).id
-          }>`,
+          }>`
         );
       case ZodTypes.lazy:
         const lazyType = def.getter();
         return this.setType(id, this.generate(lazyType).id);
       case ZodTypes.nativeEnum:
         // const lazyType = def.getter();
-        return this.setType(id, 'asdf');
+        return this.setType(id, "asdf");
       case ZodTypes.optional:
         return this.setType(
           id,
-          `${this.generate(def.innerType).id} | undefined`,
+          `${this.generate(def.innerType).id} | undefined`
         );
       case ZodTypes.nullable:
         return this.setType(id, `${this.generate(def.innerType).id} | null`);

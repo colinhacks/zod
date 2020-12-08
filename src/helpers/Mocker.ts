@@ -8,9 +8,7 @@ export class Mocker {
   };
 
   get string() {
-    return Math.random()
-      .toString(36)
-      .substring(7);
+    return Math.random().toString(36).substring(7);
   }
   get number() {
     return Math.random() * 100;

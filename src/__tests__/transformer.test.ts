@@ -1,33 +1,35 @@
-import * as z from '..';
-import { util } from '../helpers/util';
+import * as z from "..";
+import { util } from "../helpers/util";
 
-const stringToNumber = z.string().transform(z.number(), arg => parseFloat(arg));
-const numberToString = z.transformer(z.number(), z.string(), n => String(n));
-const asyncNumberToString = z.transformer(z.number(), z.string(), async n =>
-  String(n),
+const stringToNumber = z
+  .string()
+  .transform(z.number(), (arg) => parseFloat(arg));
+const numberToString = z.transformer(z.number(), z.string(), (n) => String(n));
+const asyncNumberToString = z.transformer(z.number(), z.string(), async (n) =>
+  String(n)
 );
 
-test('basic transformations', () => {
+test("basic transformations", () => {
   const r1 = z
-    .transformer(z.string(), z.number(), data => data.length)
-    .parse('asdf');
+    .transformer(z.string(), z.number(), (data) => data.length)
+    .parse("asdf");
   expect(r1).toEqual(4);
 });
 
-test('coercion', () => {
-  const numToString = z.transformer(z.number(), z.string(), n => String(n));
+test("coercion", () => {
+  const numToString = z.transformer(z.number(), z.string(), (n) => String(n));
   const data = z
     .object({
       id: numToString,
     })
     .parse({ id: 5 });
 
-  expect(data).toEqual({ id: '5' });
+  expect(data).toEqual({ id: "5" });
 });
 
-test('async coercion', async () => {
-  const numToString = z.transformer(z.number(), z.string(), async n =>
-    String(n),
+test("async coercion", async () => {
+  const numToString = z.transformer(z.number(), z.string(), async (n) =>
+    String(n)
   );
   const data = await z
     .object({
@@ -35,45 +37,39 @@ test('async coercion', async () => {
     })
     .parseAsync({ id: 5 });
 
-  expect(data).toEqual({ id: '5' });
-  return 'asdf';
+  expect(data).toEqual({ id: "5" });
+  return "asdf";
 });
 
-test('sync coercion async error', async () => {
+test("sync coercion async error", async () => {
   expect(() =>
     z
       .object({
         id: asyncNumberToString,
       })
-      .parse({ id: 5 }),
+      .parse({ id: 5 })
   ).toThrow();
-  return 'asdf';
+  return "asdf";
   // expect(data).toEqual({ id: '5' });
 });
 
-test('default', () => {
-  const data = z
-    .string()
-    .default('asdf')
-    .parse(undefined); // => "asdf"
-  expect(data).toEqual('asdf');
+test("default", () => {
+  const data = z.string().default("asdf").parse(undefined); // => "asdf"
+  expect(data).toEqual("asdf");
 });
 
-test('dynamic default', () => {
+test("dynamic default", () => {
   const data = z
     .string()
-    .default(s => s._def.t)
+    .default((s) => s._def.t)
     .parse(undefined); // => "asdf"
-  expect(data).toEqual('string');
+  expect(data).toEqual("string");
 });
 
-test('default when property is null or undefined', () => {
+test("default when property is null or undefined", () => {
   const data = z
     .object({
-      foo: z
-        .boolean()
-        .nullable()
-        .default(true),
+      foo: z.boolean().nullable().default(true),
       bar: z.boolean().default(true),
     })
     .parse({ foo: null });
@@ -81,19 +77,19 @@ test('default when property is null or undefined', () => {
   expect(data).toEqual({ foo: null, bar: true });
 });
 
-test('default with falsy values', () => {
+test("default with falsy values", () => {
   const schema = z.object({
-    emptyStr: z.string().default('def'),
+    emptyStr: z.string().default("def"),
     zero: z.number().default(5),
     falseBoolean: z.boolean().default(true),
   });
-  const input = { emptyStr: '', zero: 0, falseBoolean: true };
+  const input = { emptyStr: "", zero: 0, falseBoolean: true };
   const output = schema.parse(input);
   // defaults are not supposed to be used
   expect(output).toEqual(input);
 });
 
-test('object typing', () => {
+test("object typing", () => {
   const t1 = z.object({
     stringToNumber,
   });
@@ -107,17 +103,17 @@ test('object typing', () => {
   f2;
 });
 
-test('transform method overloads', () => {
-  const t1 = z.string().transform(val => val.toUpperCase());
-  expect(t1.parse('asdf')).toEqual('ASDF');
+test("transform method overloads", () => {
+  const t1 = z.string().transform((val) => val.toUpperCase());
+  expect(t1.parse("asdf")).toEqual("ASDF");
 
-  const t2 = z.string().transform(z.number(), val => val.length);
-  expect(t2.parse('asdf')).toEqual(4);
+  const t2 = z.string().transform(z.number(), (val) => val.length);
+  expect(t2.parse("asdf")).toEqual(4);
 });
 
-test('multiple transformers', () => {
-  const doubler = z.transformer(stringToNumber, numberToString, val => {
+test("multiple transformers", () => {
+  const doubler = z.transformer(stringToNumber, numberToString, (val) => {
     return val * 2;
   });
-  expect(doubler.parse('5')).toEqual('10');
+  expect(doubler.parse("5")).toEqual("10");
 });

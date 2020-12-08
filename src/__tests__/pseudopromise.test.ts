@@ -1,19 +1,19 @@
 // import * as z from '.';
-import { PseudoPromise } from '../PseudoPromise';
+import { PseudoPromise } from "../PseudoPromise";
 
-test('sync pass', () => {
+test("sync pass", () => {
   const myProm = new PseudoPromise()
     .then(() => 15)
-    .then(arg => arg.toString())
-    .then(arg => arg.length);
+    .then((arg) => arg.toString())
+    .then((arg) => arg.length);
   expect(myProm.getValueSync()).toEqual(2);
 });
 
-test('sync fail', async () => {
+test("sync fail", async () => {
   const myProm = new PseudoPromise()
     .then(async () => 15)
-    .then(arg => arg.toString())
-    .then(arg => {
+    .then((arg) => arg.toString())
+    .then((arg) => {
       return arg.length;
     });
 
@@ -26,51 +26,51 @@ test('sync fail', async () => {
   // (myProm.getValue() as Promise<any>).then(val => expect(val).toEqual(2));
 });
 
-test('pseudopromise all', async () => {
+test("pseudopromise all", async () => {
   const myProm = PseudoPromise.all([
-    new PseudoPromise().then(() => 'asdf'),
+    new PseudoPromise().then(() => "asdf"),
     PseudoPromise.resolve(12),
   ]).getValueAsync();
   expect.assertions(1);
   const val = await myProm;
-  expect(val).toEqual(['asdf', 12]);
+  expect(val).toEqual(["asdf", 12]);
   return val;
 });
 
-test('.resolve sync ', () => {
+test(".resolve sync ", () => {
   expect(PseudoPromise.resolve(12).getValueSync()).toEqual(12);
 });
 
-test('.resolve async', () => {
+test(".resolve async", () => {
   expect.assertions(1);
 
   return PseudoPromise.resolve(Promise.resolve(12))
     .getValueAsync()
-    .then(val => expect(val).toEqual(12));
+    .then((val) => expect(val).toEqual(12));
 });
 
-test('sync and async', () => {
+test("sync and async", () => {
   expect.assertions(2);
   expect(PseudoPromise.resolve(15).getValueSync()).toEqual(15);
   return PseudoPromise.resolve(15)
     .getValueAsync()
-    .then(val => expect(val).toEqual(15));
+    .then((val) => expect(val).toEqual(15));
 });
 
-test('object', async () => {
+test("object", async () => {
   const prom = PseudoPromise.object({
     asdf: PseudoPromise.resolve(15),
-    qwer: new PseudoPromise().then(async () => 'asdfadsf'),
+    qwer: new PseudoPromise().then(async () => "asdfadsf"),
   });
 
-  expect(await prom.getValueAsync()).toEqual({ asdf: 15, qwer: 'asdfadsf' });
-  return 'asdf';
+  expect(await prom.getValueAsync()).toEqual({ asdf: 15, qwer: "asdfadsf" });
+  return "asdf";
 });
 
-test('all', async () => {
-  const asdf = new PseudoPromise().then(async () => 'asdf');
+test("all", async () => {
+  const asdf = new PseudoPromise().then(async () => "asdf");
   await PseudoPromise.all([asdf])
     .getValueAsync()
-    .then(val => expect(val).toEqual(['asdf']));
-  return 'asdf';
+    .then((val) => expect(val).toEqual(["asdf"]));
+  return "asdf";
 });

@@ -1,13 +1,13 @@
-import { INVALID } from './helpers/util';
-import { ZodError } from './ZodError';
+import { INVALID } from "./helpers/util";
+import { ZodError } from "./ZodError";
 
 type Func = (arg: any, ctx: { async: boolean }) => any;
-type FuncItem = { type: 'function'; function: Func };
+type FuncItem = { type: "function"; function: Func };
 type Catcher = (error: Error, ctx: { async: boolean }) => any;
-type CatcherItem = { type: 'catcher'; catcher: Catcher };
+type CatcherItem = { type: "catcher"; catcher: Catcher };
 type Items = (FuncItem | CatcherItem)[];
 
-export const NOSET = Symbol('no_set');
+export const NOSET = Symbol("no_set");
 export class PseudoPromise<ReturnType = undefined> {
   readonly _return: ReturnType;
   items: Items;
@@ -20,29 +20,29 @@ export class PseudoPromise<ReturnType = undefined> {
   };
 
   all = <T extends PseudoPromise<any>[]>(
-    pps: T,
+    pps: T
   ): PseudoPromise<
     {
-      [k in keyof T]: T[k] extends PseudoPromise<any> ? T[k]['_return'] : never;
+      [k in keyof T]: T[k] extends PseudoPromise<any> ? T[k]["_return"] : never;
     }
   > => {
     return this.then((_arg, ctx) => {
       if (ctx.async) {
         const allValues = Promise.all(
-          pps.map(async pp => {
+          pps.map(async (pp) => {
             try {
               const asdf = await pp.getValueAsync();
               return asdf;
             } catch (err) {
               return INVALID;
             }
-          }),
-        ).then(vals => {
+          })
+        ).then((vals) => {
           return vals;
         });
         return allValues;
       } else {
-        return pps.map(pp => pp.getValueSync()) as any;
+        return pps.map((pp) => pp.getValueSync()) as any;
       }
     });
   };
@@ -55,7 +55,7 @@ export class PseudoPromise<ReturnType = undefined> {
       if (ctx.async) {
         const getAsyncObject = async () => {
           const items = await Promise.all(
-            Object.keys(pps).map(async k => {
+            Object.keys(pps).map(async (k) => {
               try {
                 const v = await pps[k].getValueAsync();
                 return [k, v] as [string, any];
@@ -66,7 +66,7 @@ export class PseudoPromise<ReturnType = undefined> {
                 }
                 throw err;
               }
-            }),
+            })
           );
 
           if (!zerr.isEmpty) throw zerr;
@@ -79,7 +79,7 @@ export class PseudoPromise<ReturnType = undefined> {
         };
         return getAsyncObject();
       } else {
-        const items = Object.keys(pps).map(k => {
+        const items = Object.keys(pps).map((k) => {
           try {
             const v = pps[k].getValueSync();
             return [k, v] as [string, any];
@@ -102,24 +102,24 @@ export class PseudoPromise<ReturnType = undefined> {
 
   static resolve = <T>(value: T): PseudoPromise<T> => {
     if (value instanceof PseudoPromise) {
-      throw new Error('Do not pass PseudoPromise into PseudoPromise.resolve');
+      throw new Error("Do not pass PseudoPromise into PseudoPromise.resolve");
     }
     return new PseudoPromise().then(() => value) as any;
   };
 
   then = <NewReturn>(
-    func: (arg: ReturnType, ctx: { async: boolean }) => NewReturn,
+    func: (arg: ReturnType, ctx: { async: boolean }) => NewReturn
   ): PseudoPromise<NewReturn extends Promise<infer U> ? U : NewReturn> => {
     return new PseudoPromise([
       ...this.items,
-      { type: 'function', function: func },
+      { type: "function", function: func },
     ]);
   };
 
   catch = (catcher: (err: Error, ctx: { async: boolean }) => unknown): this => {
     return new PseudoPromise([
       ...this.items,
-      { type: 'catcher', catcher },
+      { type: "catcher", catcher },
     ]) as this;
   };
 
@@ -130,16 +130,16 @@ export class PseudoPromise<ReturnType = undefined> {
       try {
         const item = this.items[index];
 
-        if (item.type === 'function') {
+        if (item.type === "function") {
           val = item.function(val, { async: false });
         }
       } catch (err) {
         const catcherIndex = this.items.findIndex(
-          (x, i) => x.type === 'catcher' && i > index,
+          (x, i) => x.type === "catcher" && i > index
         );
 
         const catcherItem = this.items[catcherIndex];
-        if (!catcherItem || catcherItem.type !== 'catcher') {
+        if (!catcherItem || catcherItem.type !== "catcher") {
           throw err;
         } else {
           index = catcherIndex;
@@ -157,17 +157,17 @@ export class PseudoPromise<ReturnType = undefined> {
     for (let index = 0; index < this.items.length; index++) {
       const item = this.items[index];
       try {
-        if (item.type === 'function') {
+        if (item.type === "function") {
           val = await item.function(val, { async: true });
         }
       } catch (err) {
         const catcherIndex = this.items.findIndex(
-          (x, i) => x.type === 'catcher' && i > index,
+          (x, i) => x.type === "catcher" && i > index
         );
 
         const catcherItem = this.items[catcherIndex];
 
-        if (!catcherItem || catcherItem.type !== 'catcher') {
+        if (!catcherItem || catcherItem.type !== "catcher") {
           throw err;
         } else {
           index = catcherIndex;
@@ -176,10 +176,10 @@ export class PseudoPromise<ReturnType = undefined> {
       }
 
       if (val instanceof PseudoPromise) {
-        throw new Error('ASYNC: DO NOT RETURN PSEUDOPROMISE FROM FUNCTIONS');
+        throw new Error("ASYNC: DO NOT RETURN PSEUDOPROMISE FROM FUNCTIONS");
       }
       if (val instanceof Promise) {
-        throw new Error('ASYNC: DO NOT RETURN PROMISE FROM FUNCTIONS');
+        throw new Error("ASYNC: DO NOT RETURN PROMISE FROM FUNCTIONS");
       }
     }
     return val;

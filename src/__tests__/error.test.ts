@@ -1,15 +1,15 @@
-import * as z from '../index';
-import { ZodError, ZodIssueCode } from '../ZodError';
-import { ZodParsedType } from '../parser';
+import * as z from "../index";
+import { ZodError, ZodIssueCode } from "../ZodError";
+import { ZodParsedType } from "../parser";
 
-test('error creation', () => {
+test("error creation", () => {
   const err1 = ZodError.create([]);
   err1.addIssue({
     code: ZodIssueCode.invalid_type,
     expected: ZodParsedType.object,
     received: ZodParsedType.string,
     path: [],
-    message: '',
+    message: "",
   });
   err1.isEmpty;
 
@@ -24,8 +24,8 @@ test('error creation', () => {
 
 const errorMap: z.ZodErrorMap = (error, ctx) => {
   if (error.code === ZodIssueCode.invalid_type) {
-    if (error.expected === 'string') {
-      return { message: 'bad type!' };
+    if (error.expected === "string") {
+      return { message: "bad type!" };
     }
   }
   if (error.code === ZodIssueCode.custom) {
@@ -34,9 +34,9 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
   return { message: ctx.defaultError };
 };
 
-test('type error with custom error map', () => {
+test("type error with custom error map", () => {
   try {
-    z.string().parse('asdf', { errorMap });
+    z.string().parse("asdf", { errorMap });
   } catch (err) {
     const zerr: z.ZodError = err;
 
@@ -45,10 +45,10 @@ test('type error with custom error map', () => {
   }
 });
 
-test('refinement fail with params', () => {
+test("refinement fail with params", () => {
   try {
     z.number()
-      .refine(val => val >= 3, {
+      .refine((val) => val >= 3, {
         params: { minimum: 3 },
       })
       .parse(2, { errorMap });
@@ -59,72 +59,68 @@ test('refinement fail with params', () => {
   }
 });
 
-test('custom error with custom errormap', () => {
+test("custom error with custom errormap", () => {
   try {
     z.string()
-      .refine(val => val.length > 12, {
+      .refine((val) => val.length > 12, {
         params: { minimum: 13 },
-        message: 'override',
+        message: "override",
       })
-      .parse('asdf', { errorMap });
+      .parse("asdf", { errorMap });
   } catch (err) {
     const zerr: z.ZodError = err;
-    expect(zerr.issues[0].message).toEqual('override');
+    expect(zerr.issues[0].message).toEqual("override");
   }
 });
 
-test('default error message', () => {
+test("default error message", () => {
   try {
     z.number()
-      .refine(x => x > 3)
+      .refine((x) => x > 3)
       .parse(2);
   } catch (err) {
     const zerr: z.ZodError = err;
     expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual('Invalid value.');
+    expect(zerr.issues[0].message).toEqual("Invalid value.");
   }
 });
 
-test('override error in refine', () => {
+test("override error in refine", () => {
   try {
     z.number()
-      .refine(x => x > 3, 'override')
+      .refine((x) => x > 3, "override")
       .parse(2);
   } catch (err) {
     const zerr: z.ZodError = err;
     expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual('override');
+    expect(zerr.issues[0].message).toEqual("override");
   }
 });
 
-test('override error in refinement', () => {
+test("override error in refinement", () => {
   try {
     z.number()
-      .refine(x => x > 3, {
-        message: 'override',
+      .refine((x) => x > 3, {
+        message: "override",
       })
       .parse(2);
   } catch (err) {
     const zerr: z.ZodError = err;
     expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual('override');
+    expect(zerr.issues[0].message).toEqual("override");
   }
 });
 
-test('array minimum', () => {
+test("array minimum", () => {
   try {
-    z.array(z.string())
-      .min(3, 'tooshort')
-      .parse(['asdf', 'qwer']);
+    z.array(z.string()).min(3, "tooshort").parse(["asdf", "qwer"]);
   } catch (err) {
     const zerr: ZodError = err;
     expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
-    expect(zerr.issues[0].message).toEqual('tooshort');
+    expect(zerr.issues[0].message).toEqual("tooshort");
   }
   try {
-    z.array(z.string())
-      .min(3)
-      .parse(['asdf', 'qwer']);
+    z.array(z.string()).min(3).parse(["asdf", "qwer"]);
   } catch (err) {
     const zerr: ZodError = err;
     expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
@@ -133,11 +129,11 @@ test('array minimum', () => {
 });
 
 // implement test for semi-smart union logic that checks for type error on either left or right
-test('union smart errors', () => {
+test("union smart errors", () => {
   // expect.assertions(2);
 
   const p1 = z
-    .union([z.string(), z.number().refine(x => x > 0)])
+    .union([z.string(), z.number().refine((x) => x > 0)])
     .safeParse(-3.2);
 
   if (p1.success === true) throw new Error();
@@ -151,37 +147,37 @@ test('union smart errors', () => {
   expect(p2.error.issues[0].code).toEqual(ZodIssueCode.invalid_union);
 });
 
-test('custom path in custom error map', () => {
+test("custom path in custom error map", () => {
   const schema = z.object({
-    items: z.array(z.string()).refine(data => data.length > 3, {
-      path: ['items-too-few'],
+    items: z.array(z.string()).refine((data) => data.length > 3, {
+      path: ["items-too-few"],
     }),
   });
 
-  const errorMap: z.ZodErrorMap = error => {
+  const errorMap: z.ZodErrorMap = (error) => {
     expect(error.path.length).toBe(2);
-    return { message: 'doesnt matter' };
+    return { message: "doesnt matter" };
   };
-  const result = schema.safeParse({ items: ['first'] }, { errorMap });
+  const result = schema.safeParse({ items: ["first"] }, { errorMap });
   expect(result.success).toEqual(false);
   if (!result.success) {
-    expect(result.error.issues[0].path).toEqual(['items', 'items-too-few']);
+    expect(result.error.issues[0].path).toEqual(["items", "items-too-few"]);
   }
 });
 
-test('error metadata from value', () => {
+test("error metadata from value", () => {
   const dynamicRefine = z.string().refine(
-    val => val === val.toUpperCase(),
-    val => ({ params: { val } }),
+    (val) => val === val.toUpperCase(),
+    (val) => ({ params: { val } })
   );
 
-  const result = dynamicRefine.safeParse('asdf');
+  const result = dynamicRefine.safeParse("asdf");
   expect(result.success).toEqual(false);
   if (!result.success) {
     const sub = result.error.issues[0];
-    expect(result.error.issues[0].code).toEqual('custom');
-    if (sub.code === 'custom') {
-      expect(sub.params!.val).toEqual('asdf');
+    expect(result.error.issues[0].code).toEqual("custom");
+    if (sub.code === "custom") {
+      expect(sub.params!.val).toEqual("asdf");
     }
   }
 });
@@ -190,11 +186,11 @@ test("don't call refine after validation failed", () => {
   const asdf = z
     .union([
       z.number(),
-      z.string().transform(z.number(), val => {
+      z.string().transform(z.number(), (val) => {
         return parseFloat(val);
       }),
     ])
-    .refine(v => v >= 1);
+    .refine((v) => v >= 1);
 
-  expect(() => asdf.safeParse('foo')).not.toThrow();
+  expect(() => asdf.safeParse("foo")).not.toThrow();
 });

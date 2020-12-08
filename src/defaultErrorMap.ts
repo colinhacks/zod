@@ -1,5 +1,5 @@
-import { ZodIssueCode, ZodIssueOptionalMessage } from './ZodError';
-import { util } from './helpers/util';
+import { ZodIssueCode, ZodIssueOptionalMessage } from "./ZodError";
+import { util } from "./helpers/util";
 
 type ErrorMapCtx = {
   // path: (string | number)[];
@@ -12,13 +12,13 @@ type ErrorMapCtx = {
 export type ZodErrorMap = typeof defaultErrorMap;
 export const defaultErrorMap = (
   error: ZodIssueOptionalMessage,
-  _ctx: ErrorMapCtx,
+  _ctx: ErrorMapCtx
 ): { message: string } => {
   let message: string;
   switch (error.code) {
     case ZodIssueCode.invalid_type:
-      if (error.received === 'undefined') {
-        message = 'Required';
+      if (error.received === "undefined") {
+        message = "Required";
       } else {
         message = `Expected ${error.expected}, received ${error.received}`;
       }
@@ -28,8 +28,8 @@ export const defaultErrorMap = (
       break;
     case ZodIssueCode.unrecognized_keys:
       message = `Unrecognized key(s) in object: ${error.keys
-        .map(k => `'${k}'`)
-        .join(', ')}`;
+        .map((k) => `'${k}'`)
+        .join(", ")}`;
       break;
     case ZodIssueCode.invalid_union:
       message = `Invalid input`;
@@ -42,7 +42,7 @@ export const defaultErrorMap = (
       break;
     case ZodIssueCode.invalid_enum_value:
       message = `Input must be one of these values: ${error.options.join(
-        ', ',
+        ", "
       )}`;
       break;
     case ZodIssueCode.invalid_arguments:
@@ -63,8 +63,8 @@ export const defaultErrorMap = (
     //   message = `Too short, should be at most ${error.maximum} ${tooLongNoun}`;
     //   break;
     case ZodIssueCode.invalid_string:
-      if (error.validation !== 'regex') message = `Invalid ${error.validation}`;
-      else message = 'Invalid';
+      if (error.validation !== "regex") message = `Invalid ${error.validation}`;
+      else message = "Invalid";
       break;
     // case ZodIssueCode.invalid_url:
     //   message = 'Invalid URL.';
@@ -73,34 +73,34 @@ export const defaultErrorMap = (
     //   message = 'Invalid UUID.';
     //   break;
     case ZodIssueCode.too_small:
-      if (error.type === 'array')
+      if (error.type === "array")
         message = `Should have ${error.inclusive ? `at least` : `more than`} ${
           error.minimum
         } items`;
-      else if (error.type === 'string')
+      else if (error.type === "string")
         message = `Should be ${error.inclusive ? `at least` : `over`} ${
           error.minimum
         } characters`;
-      else if (error.type === 'number')
+      else if (error.type === "number")
         message = `Value should be greater than ${
           error.inclusive ? `or equal to ` : ``
         }${error.minimum}`;
-      else message = 'Invalid input';
+      else message = "Invalid input";
       break;
     case ZodIssueCode.too_big:
-      if (error.type === 'array')
+      if (error.type === "array")
         message = `Should have ${error.inclusive ? `at most` : `less than`} ${
           error.maximum
         } items`;
-      else if (error.type === 'string')
+      else if (error.type === "string")
         message = `Should be ${error.inclusive ? `at most` : `under`} ${
           error.maximum
         } characters long`;
-      else if (error.type === 'number')
+      else if (error.type === "number")
         message = `Value should be less than ${
           error.inclusive ? `or equal to ` : ``
         }${error.maximum}`;
-      else message = 'Invalid input';
+      else message = "Invalid input";
       break;
     case ZodIssueCode.custom:
       message = `Invalid input.`;

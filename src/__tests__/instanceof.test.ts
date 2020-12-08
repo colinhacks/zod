@@ -1,7 +1,7 @@
-import * as z from '../index';
-import { util } from '../helpers/util';
+import * as z from "../index";
+import { util } from "../helpers/util";
 
-test('instanceof', async () => {
+test("instanceof", async () => {
   class Test {}
   class Subtest extends Test {}
 
@@ -16,11 +16,11 @@ test('instanceof', async () => {
   expect(() => SubtestSchema.parse(new Test())).toThrow();
   expect(() => TestSchema.parse(12)).toThrow();
 
-  await TestSchema.parseAsync(12).catch(err => {
-    expect(err.issues[0].message).toEqual('Input not instance of Test');
+  await TestSchema.parseAsync(12).catch((err) => {
+    expect(err.issues[0].message).toEqual("Input not instance of Test");
   });
-  await SubtestSchema.parseAsync(12).catch(err => {
-    expect(err.issues[0].message).toEqual('Input not instance of Subtest');
+  await SubtestSchema.parseAsync(12).catch((err) => {
+    expect(err.issues[0].message).toEqual("Input not instance of Subtest");
   });
 
   const f1: util.AssertEqual<Test, z.infer<typeof TestSchema>> = true;
