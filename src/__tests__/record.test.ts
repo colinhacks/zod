@@ -1,5 +1,5 @@
-import * as z from "../index";
 import { util } from "../helpers/util";
+import * as z from "../index";
 
 const booleanRecord = z.record(z.boolean());
 type booleanRecord = z.infer<typeof booleanRecord>;

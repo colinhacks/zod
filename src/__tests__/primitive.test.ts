@@ -1,5 +1,5 @@
-import * as z from "../index";
 import { Mocker } from "../helpers/Mocker";
+import * as z from "../index";
 
 const literalStringSchema = z.literal("asdf");
 const literalNumberSchema = z.literal(12);

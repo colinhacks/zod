@@ -1,8 +1,8 @@
-import * as z from "./base";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 import { ZodIssueCode } from "../ZodError";
+import * as z from "./base";
 
 export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny>
   extends z.ZodTypeDef {

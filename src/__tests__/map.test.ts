@@ -1,5 +1,5 @@
-import * as z from "../index";
 import { util } from "../helpers/util";
+import * as z from "../index";
 import { ZodIssueCode } from "../index";
 
 const stringMap = z.map(z.string(), z.string());

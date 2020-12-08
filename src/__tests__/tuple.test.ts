@@ -1,6 +1,6 @@
+import { util } from "../helpers/util";
 import * as z from "../index";
 import { ZodError } from "../ZodError";
-import { util } from "../helpers/util";
 
 const testTuple = z.tuple([
   z.string(),

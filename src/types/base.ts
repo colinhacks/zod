@@ -1,17 +1,16 @@
 import { util } from "../helpers/util";
-import { ZodParser, ParseParams, MakeErrorData } from "../parser";
 import {
-  ZodIssueCode,
   ZodArray,
-  ZodTransformer,
-  ZodError,
-  ZodOptional,
-  ZodNullable,
   ZodCustomIssue,
+  ZodError,
+  ZodIssueCode,
+  ZodNullable,
+  ZodOptional,
+  ZodTransformer,
 } from "../index";
-
-import { ZodOptionalType } from "./optional";
+import { MakeErrorData, ParseParams, ZodParser } from "../parser";
 import { ZodNullableType } from "./nullable";
+import { ZodOptionalType } from "./optional";
 
 export enum ZodTypes {
   string = "string",
