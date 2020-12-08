@@ -19,6 +19,11 @@
   },
   "homepage": "https://github.com/colinhacks/zod",
   "funding": "https://github.com/sponsors/colinhacks",
+  "support": {
+    "backing": {
+      "npm-funding": true
+    }
+  },
   "keywords": [
     "typescript",
     "schema",
