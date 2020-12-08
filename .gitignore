@@ -1,8 +1,6 @@
-.DS_Store
 **/.DS_Store
 node_modules
-/lib
-/coverage
-src/coverage/*
+lib
+coverage
 .vscode
 *.log
