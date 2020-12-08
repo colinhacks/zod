@@ -201,21 +201,6 @@ test('union async parse', async () => {
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
 
-/// intersection
-// const intersectionSchema = z.intersection();
-// test('intersection async parse', async () => {
-//   const goodData = 'XXX';
-//   const badData = 'XXX';
-
-//   const goodResult = await intersectionSchema.safeParseAsync(goodData);
-//   expect(goodResult.success).toBe(true);
-//   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
-
-//   const badResult = await intersectionSchema.safeParseAsync(badData);
-//   expect(badResult.success).toBe(false);
-//   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
-// });
-
 /// tuple
 const tupleSchema = z.tuple([stringToNumber, z.object({})]);
 test('tuple async parse', async () => {
@@ -260,21 +245,6 @@ test('function async parse', async () => {
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
-
-/// lazy
-// const lazySchema = z.lazy();
-// test('lazy async parse', async () => {
-//   const goodData = 'XXX';
-//   const badData = 'XXX';
-
-//   const goodResult = await lazySchema.safeParseAsync(goodData);
-//   expect(goodResult.success).toBe(true);
-//   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
-
-//   const badResult = await lazySchema.safeParseAsync(badData);
-//   expect(badResult.success).toBe(false);
-//   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
-// });
 
 /// literal
 const literalSchema = z.literal('asdf');
