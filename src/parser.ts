@@ -66,7 +66,6 @@ export const ZodParsedType = util.arrayToEnum([
 
 export type ZodParsedType = keyof typeof ZodParsedType;
 
-// conditional required to distribute union
 type stripPath<T extends object> = T extends any
   ? util.OmitKeys<T, "path">
   : never;
