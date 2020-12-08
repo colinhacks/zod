@@ -1,4 +1,4 @@
-import { Primitive } from './primitive';
+import { Primitive } from "./primitive";
 
 type AnyObject = { [k: string]: any };
 type IsAny<T> = any extends T ? (T extends any ? true : false) : false;
@@ -23,22 +23,22 @@ export namespace maskUtil {
     rest: never;
     never: never;
   }[T extends null | undefined | Primitive | Array<Primitive>
-    ? 'never'
+    ? "never"
     : any extends T
-    ? 'never'
+    ? "never"
     : T extends Array<AnyObject>
-    ? 'array'
+    ? "array"
     : IsObject<T> extends true
-    ? 'object'
-    : 'rest'];
+    ? "object"
+    : "rest"];
 
   export type PickTest<T, P extends any> = P extends true
-    ? 'true'
+    ? "true"
     : true extends IsObject<T>
-    ? 'object'
+    ? "object"
     : true extends IsObjectArray<T>
-    ? 'array'
-    : 'rest';
+    ? "array"
+    : "rest";
 
   export type Pick<T, P> = null extends T
     ? undefined extends T
@@ -57,16 +57,16 @@ export namespace maskUtil {
     never: never;
     any: any;
   }[IsAny<T> extends true
-    ? 'any'
+    ? "any"
     : IsNever<T> extends true
-    ? 'never'
+    ? "never"
     : IsNever<P> extends true
-    ? 'true'
+    ? "true"
     : IsTrue<P> extends true
-    ? 'true'
+    ? "true"
     : true extends IsObject<T>
-    ? 'object'
+    ? "object"
     : true extends IsObjectArray<T>
-    ? 'array'
-    : 'any'];
+    ? "array"
+    : "any"];
 }

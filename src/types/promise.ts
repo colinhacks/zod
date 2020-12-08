@@ -1,4 +1,4 @@
-import * as z from './base';
+import * as z from "./base";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
@@ -10,9 +10,9 @@ export interface ZodPromiseDef<T extends z.ZodTypeAny = z.ZodTypeAny>
 }
 
 export class ZodPromise<T extends z.ZodTypeAny> extends z.ZodType<
-  Promise<T['_output']>,
+  Promise<T["_output"]>,
   ZodPromiseDef<T>,
-  Promise<T['_input']>
+  Promise<T["_input"]>
 > {
   toJSON = () => {
     return {

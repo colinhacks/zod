@@ -1,6 +1,6 @@
-import * as z from '../index';
+import * as z from "../index";
 
-test('', () => {
+test("", () => {
   z;
 });
 

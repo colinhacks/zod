@@ -1,9 +1,9 @@
-import * as z from './base';
+import * as z from "./base";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
-import { StringValidation, ZodIssueCode } from '../ZodError';
-import { errorUtil } from '../helpers/errorUtil';
+import { StringValidation, ZodIssueCode } from "../ZodError";
+import { errorUtil } from "../helpers/errorUtil";
 
 export interface ZodStringDef extends z.ZodTypeDef {
   t: z.ZodTypes.string;
@@ -22,19 +22,19 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
 
   toJSON = () => this._def;
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
-    this.refinement(data => data.length >= minLength, {
+    this.refinement((data) => data.length >= minLength, {
       code: ZodIssueCode.too_small,
       minimum: minLength,
-      type: 'string',
+      type: "string",
       inclusive: true,
       ...errorUtil.errToObj(message),
     });
 
   max = (maxLength: number, message?: errorUtil.ErrMessage) =>
-    this.refinement(data => data.length <= maxLength, {
+    this.refinement((data) => data.length <= maxLength, {
       code: ZodIssueCode.too_big,
       maximum: maxLength,
-      type: 'string',
+      type: "string",
       inclusive: true,
       ...errorUtil.errToObj(message),
     });
@@ -46,9 +46,9 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
   protected _regex = (
     regex: RegExp,
     validation: StringValidation,
-    message?: errorUtil.ErrMessage,
+    message?: errorUtil.ErrMessage
   ) =>
-    this.refinement(data => regex.test(data), {
+    this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
 
@@ -56,11 +56,11 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     });
 
   email = (message?: errorUtil.ErrMessage) =>
-    this._regex(emailRegex, 'email', message);
+    this._regex(emailRegex, "email", message);
 
   url = (message?: errorUtil.ErrMessage) =>
     this.refinement(
-      data => {
+      (data) => {
         try {
           new URL(data);
           return true;
@@ -70,18 +70,18 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
       },
       {
         code: ZodIssueCode.invalid_string,
-        validation: 'url',
+        validation: "url",
         ...errorUtil.errToObj(message),
-      },
+      }
     );
 
   // url = (message?: errorUtil.ErrMessage) => this._regex(urlRegex, 'url', message);
 
   uuid = (message?: errorUtil.ErrMessage) =>
-    this._regex(uuidRegex, 'uuid', message);
+    this._regex(uuidRegex, "uuid", message);
 
   regex = (regexp: RegExp, message?: errorUtil.ErrMessage) =>
-    this._regex(regexp, 'regex', message);
+    this._regex(regexp, "regex", message);
 
   nonempty = (message?: errorUtil.ErrMessage) =>
     this.min(1, errorUtil.errToObj(message));

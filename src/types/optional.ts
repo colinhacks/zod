@@ -1,4 +1,4 @@
-import { ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from './base';
+import { ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from "./base";
 
 // import * as z from './base';
 // type asdf = ZodTypeAny
@@ -10,16 +10,14 @@ export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
 }
 
 // This type allows for optional flattening
-export type ZodOptionalType<T extends ZodTypeAny> = T extends ZodOptional<
-  ZodTypeAny
->
-  ? T
-  : ZodOptional<T>;
+export type ZodOptionalType<
+  T extends ZodTypeAny
+> = T extends ZodOptional<ZodTypeAny> ? T : ZodOptional<T>;
 
 export class ZodOptional<T extends ZodTypeAny> extends ZodType<
-  T['_output'] | undefined,
+  T["_output"] | undefined,
   ZodOptionalDef<T>,
-  T['_input'] | undefined
+  T["_input"] | undefined
 > {
   // An optional optional is the original optional
   // optional: () => ZodOptionalType<this> = () => this as ZodOptionalType<this>;

@@ -1,21 +1,21 @@
-import { util } from './helpers/util';
-import { ZodParsedType } from './parser';
+import { util } from "./helpers/util";
+import { ZodParsedType } from "./parser";
 
 export const ZodIssueCode = util.arrayToEnum([
-  'invalid_type',
-  'nonempty_array_is_empty',
-  'custom',
-  'invalid_union',
-  'invalid_literal_value',
-  'invalid_enum_value',
-  'unrecognized_keys',
-  'invalid_arguments',
-  'invalid_return_type',
-  'invalid_date',
-  'invalid_string',
-  'too_small',
-  'too_big',
-  'invalid_intersection_types',
+  "invalid_type",
+  "nonempty_array_is_empty",
+  "custom",
+  "invalid_union",
+  "invalid_literal_value",
+  "invalid_enum_value",
+  "unrecognized_keys",
+  "invalid_arguments",
+  "invalid_return_type",
+  "invalid_date",
+  "invalid_string",
+  "too_small",
+  "too_big",
+  "invalid_intersection_types",
 ]);
 
 export type ZodIssueCode = keyof typeof ZodIssueCode;
@@ -70,7 +70,7 @@ export interface ZodInvalidDateIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_date;
 }
 
-export type StringValidation = 'email' | 'url' | 'uuid' | 'regex';
+export type StringValidation = "email" | "url" | "uuid" | "regex";
 
 export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
@@ -81,14 +81,14 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
-  type: 'array' | 'string' | 'number';
+  type: "array" | "string" | "number";
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
-  type: 'array' | 'string' | 'number';
+  type: "array" | "string" | "number";
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -120,7 +120,7 @@ export type ZodIssue = ZodIssueOptionalMessage & { message: string };
 
 export const quotelessJson = (obj: any) => {
   const json = JSON.stringify(obj, null, 2); // {"name":"John Smith"}
-  return json.replace(/"([^"]+)":/g, '$1:');
+  return json.replace(/"([^"]+)":/g, "$1:");
 };
 
 export class ZodError extends Error {

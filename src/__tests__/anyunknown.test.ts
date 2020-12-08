@@ -1,7 +1,7 @@
-import * as z from '../index';
-import { util } from '../helpers/util';
+import * as z from "../index";
+import { util } from "../helpers/util";
 
-test('check any inference', () => {
+test("check any inference", () => {
   const t1 = z.any();
   t1.optional();
   t1.nullable();
@@ -11,7 +11,7 @@ test('check any inference', () => {
   f1;
 });
 
-test('check unknown inference', () => {
+test("check unknown inference", () => {
   const t1 = z.unknown();
   t1.optional();
   t1.nullable();
@@ -21,9 +21,9 @@ test('check unknown inference', () => {
   f1;
 });
 
-test('check never inference', () => {
+test("check never inference", () => {
   const t1 = z.never();
   expect(() => t1.parse(undefined)).toThrow();
-  expect(() => t1.parse('asdf')).toThrow();
+  expect(() => t1.parse("asdf")).toThrow();
   expect(() => t1.parse(null)).toThrow();
 });

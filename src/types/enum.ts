@@ -1,4 +1,4 @@
-import * as z from './base';
+import * as z from "./base";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
@@ -12,12 +12,16 @@ type Values<T extends EnumValues> = {
   [k in T[number]]: k;
 };
 
-export interface ZodEnumDef<T extends EnumValues = EnumValues> extends z.ZodTypeDef {
+export interface ZodEnumDef<T extends EnumValues = EnumValues>
+  extends z.ZodTypeDef {
   t: z.ZodTypes.enum;
   values: T;
 }
 
-export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<T[number], ZodEnumDef<T>> {
+export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<
+  T[number],
+  ZodEnumDef<T>
+> {
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
@@ -52,7 +56,9 @@ export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<T[number
     return enumValues as any;
   }
 
-  static create = <U extends string, T extends [U, ...U[]]>(values: T): ZodEnum<T> => {
+  static create = <U extends string, T extends [U, ...U[]]>(
+    values: T
+  ): ZodEnum<T> => {
     return new ZodEnum({
       t: z.ZodTypes.enum,
       values: values,
