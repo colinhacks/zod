@@ -32,7 +32,6 @@
     "buildall": "yarn add typescript@3.4 && yarn build && yarn add typescript@3.5 && yarn build && yarn add typescript@3.6 && yarn build && yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4 && yarn build && yarn add typescript@3.4",
     "buildallv2": "yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4.0 && yarn build && yarn add typescript@4.1 && yarn build && yarn add typescript@3.7",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "tslint -p tsconfig.json",
     "test": "jest --coverage && yarn run badge",
     "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
@@ -49,8 +48,6 @@
     "prettier": "^2.2.1",
     "ts-jest": "^26.4.4",
     "ts-node": "^9.1.0",
-    "tslint": "^6.1.0",
-    "tslint-config-prettier": "^1.18.0",
     "typescript": "3.8"
   },
   "husky": {
