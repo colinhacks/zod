@@ -1,4 +1,5 @@
-import { ZodRawShape, ZodTypes } from "../types/base";
+import { ZodRawShape } from "../types/base";
+import { ZodTypes } from "../ZodTypes";
 import { ZodIntersection } from "../types/intersection";
 import { AnyZodObject, ZodObject } from "../types/object";
 

@@ -1,10 +1,11 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
 export interface ZodUnknownDef extends z.ZodTypeDef {
-  t: z.ZodTypes.unknown;
+  t: ZodTypes.unknown;
 }
 
 export class ZodUnknown extends z.ZodType<unknown, ZodUnknownDef> {
@@ -14,7 +15,7 @@ export class ZodUnknown extends z.ZodType<unknown, ZodUnknownDef> {
 
   static create = (): ZodUnknown => {
     return new ZodUnknown({
-      t: z.ZodTypes.unknown,
+      t: ZodTypes.unknown,
     });
   };
 }

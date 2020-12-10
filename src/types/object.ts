@@ -1,4 +1,5 @@
 import { ZodNever } from "..";
+import { ZodTypes } from "../ZodTypes"
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
@@ -40,7 +41,7 @@ export interface ZodObjectDef<
   Catchall extends z.ZodTypeAny = z.ZodTypeAny
   // Params extends ZodObjectParams = ZodObjectParams
 > extends z.ZodTypeDef {
-  t: z.ZodTypes.object;
+  t: ZodTypes.object;
   shape: () => T;
   catchall: Catchall;
   unknownKeys: UnknownKeys;
@@ -379,7 +380,7 @@ export class ZodObject<
 
   static create = <T extends z.ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({
-      t: z.ZodTypes.object,
+      t: ZodTypes.object,
       shape: () => shape,
       unknownKeys: "strip",
       catchall: ZodNever.create(),
@@ -393,7 +394,7 @@ export class ZodObject<
     shape: () => T
   ): ZodObject<T> => {
     return new ZodObject({
-      t: z.ZodTypes.object,
+      t: ZodTypes.object,
       shape,
       unknownKeys: "strip",
       catchall: ZodNever.create(),

@@ -1,4 +1,5 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 
@@ -9,7 +10,7 @@ export interface ZodUnionDef<
     ...z.ZodTypeAny[]
   ]
 > extends z.ZodTypeDef {
-  t: z.ZodTypes.union;
+  t: ZodTypes.union;
   options: T;
 }
 
@@ -37,7 +38,7 @@ export class ZodUnion<
     types: T
   ): ZodUnion<T> => {
     return new ZodUnion({
-      t: z.ZodTypes.union,
+      t: ZodTypes.union,
       options: types,
     });
   };

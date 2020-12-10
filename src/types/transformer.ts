@@ -1,4 +1,5 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
@@ -7,7 +8,7 @@ export interface ZodTransformerDef<
   T extends z.ZodTypeAny = z.ZodTypeAny,
   U extends z.ZodTypeAny = z.ZodTypeAny
 > extends z.ZodTypeDef {
-  t: z.ZodTypes.transformer;
+  t: ZodTypes.transformer;
   input: T;
   output: U;
   transformer: (arg: T["_output"]) => U["_input"];
@@ -64,7 +65,7 @@ export class ZodTransformer<
     transformer: (arg: I["_output"]) => O["_input"] | Promise<O["_input"]>
   ): ZodTransformer<I, O> => {
     return new ZodTransformer({
-      t: z.ZodTypes.transformer,
+      t: ZodTypes.transformer,
       input,
       output,
       transformer,
@@ -75,7 +76,7 @@ export class ZodTransformer<
     input: I
   ): ZodTransformer<I, I> => {
     return new ZodTransformer({
-      t: z.ZodTypes.transformer,
+      t: ZodTypes.transformer,
       input,
       output: input,
       transformer: (x) => x,

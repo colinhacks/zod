@@ -1,4 +1,5 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
@@ -7,7 +8,7 @@ export interface ZodIntersectionDef<
   T extends z.ZodTypeAny = z.ZodTypeAny,
   U extends z.ZodTypeAny = z.ZodTypeAny
 > extends z.ZodTypeDef {
-  t: z.ZodTypes.intersection;
+  t: ZodTypes.intersection;
   left: T;
   right: U;
 }
@@ -34,7 +35,7 @@ export class ZodIntersection<
     right: U
   ): ZodIntersection<T, U> => {
     return new ZodIntersection({
-      t: z.ZodTypes.intersection,
+      t: ZodTypes.intersection,
       left: left,
       right: right,
     });

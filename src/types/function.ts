@@ -1,4 +1,5 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 import { ZodTuple } from "./tuple";
 import { ZodUnknown } from "./unknown";
 
@@ -6,7 +7,7 @@ export interface ZodFunctionDef<
   Args extends ZodTuple<any> = ZodTuple<any>,
   Returns extends z.ZodTypeAny = z.ZodTypeAny
 > extends z.ZodTypeDef {
-  t: z.ZodTypes.function;
+  t: ZodTypes.function;
   args: Args;
   returns: Returns;
 }
@@ -70,7 +71,7 @@ export class ZodFunction<
     returns?: U
   ): ZodFunction<T, U> => {
     return new ZodFunction({
-      t: z.ZodTypes.function,
+      t: ZodTypes.function,
       args: args || ZodTuple.create([]),
       returns: returns || ZodUnknown.create(),
     });

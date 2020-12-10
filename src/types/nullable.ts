@@ -1,8 +1,9 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 
 export interface ZodNullableDef<T extends z.ZodTypeAny = z.ZodTypeAny>
   extends z.ZodTypeDef {
-  t: z.ZodTypes.nullable;
+  t: ZodTypes.nullable;
   innerType: T;
 }
 
@@ -30,7 +31,7 @@ export class ZodNullable<
   static create = <T extends z.ZodTypeAny>(type: T): ZodNullableType<T> => {
     if (type instanceof ZodNullable) return type as ZodNullableType<T>;
     return new ZodNullable({
-      t: z.ZodTypes.nullable,
+      t: ZodTypes.nullable,
       innerType: type,
     }) as ZodNullableType<T>;
   };

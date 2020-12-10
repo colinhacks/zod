@@ -4,9 +4,10 @@ import { errorUtil } from "../helpers/errorUtil";
 // import { ZodUnion } from './union';
 import { ZodIssueCode } from "../ZodError";
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 
 export interface ZodNumberDef extends z.ZodTypeDef {
-  t: z.ZodTypes.number;
+  t: ZodTypes.number;
 }
 
 export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
@@ -17,7 +18,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
   toJSON = () => this._def;
   static create = (): ZodNumber => {
     return new ZodNumber({
-      t: z.ZodTypes.number,
+      t: ZodTypes.number,
     });
   };
 

@@ -4,8 +4,8 @@ import { ZodCodeGenerator } from "./codegen";
 import { ZodErrorMap } from "./defaultErrorMap";
 // export { ZodIssueCode } from './ZodError';
 import { ZodParsedType } from "./ZodParsedType";
-import { ZodAny, ZodAnyDef } from "./types/any";
-import { ZodArray, ZodArrayDef } from "./types/array";
+import { ZodAny } from "./types/any";
+import { ZodArray } from "./types/array";
 import {
   input,
   output,
@@ -13,33 +13,33 @@ import {
   ZodType,
   ZodTypeAny,
   ZodTypeDef,
-  ZodTypes,
 } from "./types/base";
-import { ZodBigInt, ZodBigIntDef } from "./types/bigint";
-import { ZodBoolean, ZodBooleanDef } from "./types/boolean";
-import { ZodDate, ZodDateDef } from "./types/date";
-import { ZodEnum, ZodEnumDef } from "./types/enum";
-import { ZodFunction, ZodFunctionDef } from "./types/function";
-import { ZodIntersection, ZodIntersectionDef } from "./types/intersection";
-import { ZodLazy, ZodLazyDef } from "./types/lazy";
-import { ZodLiteral, ZodLiteralDef } from "./types/literal";
-import { ZodMap, ZodMapDef } from "./types/map";
-import { ZodNativeEnum, ZodNativeEnumDef } from "./types/nativeEnum";
-import { ZodNever, ZodNeverDef } from "./types/never";
-import { ZodNull, ZodNullDef } from "./types/null";
-import { ZodNullable, ZodNullableDef } from "./types/nullable";
-import { ZodNumber, ZodNumberDef } from "./types/number";
-import { ZodObject, ZodObjectDef } from "./types/object";
-import { ZodOptional, ZodOptionalDef } from "./types/optional";
-import { ZodPromise, ZodPromiseDef } from "./types/promise";
-import { ZodRecord, ZodRecordDef } from "./types/record";
-import { ZodString, ZodStringDef } from "./types/string";
-import { ZodTransformer, ZodTransformerDef } from "./types/transformer";
-import { ZodTuple, ZodTupleDef } from "./types/tuple";
-import { ZodUndefined, ZodUndefinedDef } from "./types/undefined";
-import { ZodUnion, ZodUnionDef } from "./types/union";
-import { ZodUnknown, ZodUnknownDef } from "./types/unknown";
-import { ZodVoid, ZodVoidDef } from "./types/void";
+import { ZodTypes } from "./ZodTypes";
+import { ZodBigInt } from "./types/bigint";
+import { ZodBoolean } from "./types/boolean";
+import { ZodDate } from "./types/date";
+import { ZodEnum } from "./types/enum";
+import { ZodFunction } from "./types/function";
+import { ZodIntersection } from "./types/intersection";
+import { ZodLazy } from "./types/lazy";
+import { ZodLiteral } from "./types/literal";
+import { ZodMap } from "./types/map";
+import { ZodNativeEnum } from "./types/nativeEnum";
+import { ZodNever } from "./types/never";
+import { ZodNull } from "./types/null";
+import { ZodNullable } from "./types/nullable";
+import { ZodNumber } from "./types/number";
+import { ZodObject } from "./types/object";
+import { ZodOptional } from "./types/optional";
+import { ZodPromise } from "./types/promise";
+import { ZodRecord } from "./types/record";
+import { ZodString } from "./types/string";
+import { ZodTransformer } from "./types/transformer";
+import { ZodTuple } from "./types/tuple";
+import { ZodUndefined } from "./types/undefined";
+import { ZodUnion } from "./types/union";
+import { ZodUnknown } from "./types/unknown";
+import { ZodVoid } from "./types/void";
 
 export { ZodTypeDef, ZodTypes };
 
@@ -169,32 +169,4 @@ export {
 export { TypeOf as infer, input, output, TypeOf };
 
 export * from "./ZodError";
-
-export type ZodDef =
-  | ZodStringDef
-  | ZodNumberDef
-  | ZodBigIntDef
-  | ZodBooleanDef
-  | ZodDateDef
-  | ZodUndefinedDef
-  | ZodNullDef
-  | ZodAnyDef
-  | ZodUnknownDef
-  | ZodNeverDef
-  | ZodVoidDef
-  | ZodArrayDef
-  | ZodObjectDef
-  | ZodUnionDef
-  | ZodIntersectionDef
-  | ZodTupleDef
-  | ZodRecordDef
-  | ZodMapDef
-  | ZodFunctionDef
-  | ZodLazyDef
-  | ZodLiteralDef
-  | ZodEnumDef
-  | ZodTransformerDef
-  | ZodNativeEnumDef
-  | ZodOptionalDef
-  | ZodNullableDef
-  | ZodPromiseDef;
+export * from "./ZodDef"

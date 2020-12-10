@@ -3,10 +3,11 @@
 // import { ZodUnion } from './union';
 import { ZodIssueCode } from "../ZodError";
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 
 export interface ZodArrayDef<T extends z.ZodTypeAny = z.ZodTypeAny>
   extends z.ZodTypeDef {
-  t: z.ZodTypes.array;
+  t: ZodTypes.array;
   type: T;
   nonempty: boolean;
 }
@@ -60,7 +61,7 @@ export class ZodArray<T extends z.ZodTypeAny> extends z.ZodType<
 
   static create = <T extends z.ZodTypeAny>(schema: T): ZodArray<T> => {
     return new ZodArray({
-      t: z.ZodTypes.array,
+      t: ZodTypes.array,
       type: schema,
       nonempty: false,
     });

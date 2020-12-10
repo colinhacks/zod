@@ -1,4 +1,5 @@
-import { ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from "./base";
+import { ZodType, ZodTypeAny, ZodTypeDef } from "./base";
+import { ZodTypes } from "../ZodTypes";
 
 // import * as z from './base';
 // type asdf = ZodTypeAny

@@ -1,11 +1,12 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
 export interface ZodLazyDef<T extends z.ZodTypeAny = z.ZodTypeAny>
   extends z.ZodTypeDef {
-  t: z.ZodTypes.lazy;
+  t: ZodTypes.lazy;
   getter: () => T;
 }
 
@@ -28,7 +29,7 @@ export class ZodLazy<T extends z.ZodTypeAny> extends z.ZodType<
 
   static create = <T extends z.ZodTypeAny>(getter: () => T): ZodLazy<T> => {
     return new ZodLazy({
-      t: z.ZodTypes.lazy,
+      t: ZodTypes.lazy,
       getter: getter,
     });
   };
