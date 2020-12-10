@@ -139,7 +139,7 @@ export type AnyZodObject = ZodObject<any, any, any>;
 // >;
 export class ZodObject<
   T extends z.ZodRawShape,
-  UnknownKeys extends UnknownKeysParam = "passthrough",
+  UnknownKeys extends UnknownKeysParam = "strip",
   Catchall extends z.ZodTypeAny = z.ZodTypeAny,
   // Params extends ZodObjectParams = { strict: true },
   // Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>

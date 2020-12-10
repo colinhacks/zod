@@ -148,8 +148,7 @@ ${this.seen
           id,
           `{[k:string]: ${this.generate(def.valueType).id}}`
         );
-      case ZodTypes.transformer:
-        return this.setType(id, this.generate(def.output).id);
+
       case ZodTypes.map:
         return this.setType(
           id,
@@ -170,6 +169,8 @@ ${this.seen
         );
       case ZodTypes.nullable:
         return this.setType(id, `${this.generate(def.innerType).id} | null`);
+      case ZodTypes.transformer:
+        return this.setType(id, `${this.generate(def.schema).id}`);
       default:
         util.assertNever(def);
     }

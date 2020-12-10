@@ -7,6 +7,7 @@ import {
   ZodNullable,
   ZodOptional,
   ZodTransformer,
+  // ZodTransformer,
 } from "../index";
 import { MakeErrorData, ParseParams, ZodParser } from "../parser";
 import { ZodNullableType } from "./nullable";
@@ -37,6 +38,7 @@ export enum ZodTypes {
   unknown = "unknown",
   never = "never",
   void = "void",
+  // transformer = "transformer",
   transformer = "transformer",
   optional = "optional",
   nullable = "nullable",
@@ -45,30 +47,39 @@ export enum ZodTypes {
 export type ZodTypeAny = ZodType<any, any, any>;
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 
-export const inputSchema = (schema: ZodType<any>): ZodType<any> => {
-  if (schema instanceof ZodTransformer) {
-    return inputSchema(schema._def.input);
-  } else {
-    return schema;
-  }
-};
+// export const inputSchema = (schema: ZodType<any>): ZodType<any> => {
+//   if (schema instanceof ZodTransformer) {
+//     return inputSchema(schema._def.input);
+//   } else {
+//     return schema;
+//   }
+// };
 
-export const outputSchema = (schema: ZodType<any>): ZodType<any> => {
-  if (schema instanceof ZodTransformer) {
-    return inputSchema(schema._def.output);
-  } else {
-    return schema;
-  }
-};
+// export const outputSchema = (schema: ZodType<any>): ZodType<any> => {
+//   if (schema instanceof ZodTransformer) {
+//     return inputSchema(schema._def.output);
+//   } else {
+//     return schema;
+//   }
+// };
 
 export type RefinementCtx = {
   addIssue: (arg: MakeErrorData) => void;
   path: (string | number)[];
 };
 type InternalCheck<T> = {
+  type: "check";
   check: (arg: T, ctx: RefinementCtx) => any;
   // refinementError: (arg: T) => MakeErrorData;
 };
+
+type Mod<T> = {
+  type: "mod";
+  mod: (arg: T) => any;
+  // refinementError: (arg: T) => MakeErrorData;
+};
+
+type Effect<T> = InternalCheck<T> | Mod<T>;
 
 // type Check<T> = {
 //   check: (arg: T) => any;
@@ -85,7 +96,8 @@ type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 
 export interface ZodTypeDef {
   t: ZodTypes;
-  checks?: InternalCheck<any>[];
+  effects?: Effect<any>[];
+  // mods?: Mod<any>[];
   accepts?: ZodType<any, any>;
 }
 
@@ -264,7 +276,10 @@ export abstract class ZodType<
   ) => {
     return new (this as any).constructor({
       ...this._def,
-      checks: [...(this._def.checks || []), { check: refinement }],
+      effects: [
+        ...(this._def.effects || []),
+        { type: "check", check: refinement },
+      ],
     }) as this;
   };
 
@@ -285,39 +300,131 @@ export abstract class ZodType<
   };
   array: () => ZodArray<this> = () => ZodArray.create(this);
 
-  transform<
-    This extends this,
-    U extends ZodType<any>,
-    Tx extends (arg: This["_output"]) => U["_input"] | Promise<U["_input"]>
-  >(input: U, transformer: Tx): ZodTransformer<This, U>;
-  transform<
-    This extends this,
-    Tx extends (
-      arg: This["_output"]
-    ) => This["_output"] | Promise<This["_output"]>
-  >(transformer: Tx): ZodTransformer<This, This>;
-  transform(input: any, transformer?: any) {
-    if (transformer) {
-      return ZodTransformer.create(this as any, input, transformer) as any;
-    }
-    return ZodTransformer.create(this as any, outputSchema(this), input) as any;
-  }
+  // transform<
+  //   This extends this,
+  //   U extends ZodType<any>,
+  //   Tx extends (arg: This["_output"]) => U["_input"] | Promise<U["_input"]>
+  // >(input: U, transformer: Tx): ZodTransformer<This, U>;
+  // transform<
+  //   This extends this,
+  //   Tx extends (
+  //     arg: This["_output"]
+  //   ) => This["_input"] | Promise<This["_input"]>
+  // >(transformer: Tx): ZodTransformer<This, This>;
+  // transform(input: any, transformer?: any) {
+  //   if (transformer) {
+  //     return ZodTransformer.create(this as any, input, transformer) as any;
+  //   }
+  //   return ZodTransformer.create(this as any, outputSchema(this), input) as any;
+  // }
 
-  default<
-    T extends Input = Input,
-    Opt extends ReturnType<this["optional"]> = ReturnType<this["optional"]>
-  >(def: T): ZodTransformer<Opt, this>;
-  default<
-    T extends (arg: this) => Input,
-    Opt extends ReturnType<this["optional"]> = ReturnType<this["optional"]>
-  >(def: T): ZodTransformer<Opt, this>;
+  // default<
+  //   T extends Input = Input,
+  //   Opt extends ReturnType<this["optional"]> = ReturnType<this["optional"]>
+  // >(def: T): ZodTransformer<Opt, this>;
+  // default<
+  //   T extends (arg: this) => Input,
+  //   Opt extends ReturnType<this["optional"]> = ReturnType<this["optional"]>
+  // >(def: T): ZodTransformer<Opt, this>;
+  // default(def: any) {
+  //   return ZodTransformer.create(this.optional(), this, (x: any) => {
+  //     return x === undefined
+  //       ? typeof def === "function"
+  //         ? def(this)
+  //         : def
+  //       : x;
+  //   }) as any;
+  // }
+
+  // transform<This extends this, Out, U extends ZodType<any>>(
+  //   input: U,
+  //   transformer: (arg: Output) => Out | Promise<Out>
+  // ): This extends ZodTransformer<infer T, any>
+  //   ? ZodTransformer<T, Out>
+  //   : ZodTransformer<This, Out>;
+  // transform<Out, This extends this>(
+  //   transformer: (arg: Output) => Out | Promise<Out>
+  // ): This extends ZodTransformer<infer T, any>
+  //   ? ZodTransformer<T, Out>
+  //   : ZodTransformer<This, Out>;
+  transform: <Out, This extends this>(
+    transformer: (arg: Output) => Out | Promise<Out>
+  ) => This extends ZodTransformer<infer T, any>
+    ? ZodTransformer<T, Out>
+    : ZodTransformer<This, Out> = (mod) => {
+    // if(typeof first === "function")
+    // const mod = typeof first === "function" ? first : second;
+    // const newSchema = this.transform(txFunc);
+    // if (!second) return newSchema;
+    // if (typeof mod !== "function")
+    //   throw new Error("Must provide a function to the .transform() method");
+
+    let returnType;
+    if (this instanceof ZodTransformer) {
+      returnType = new (this as any).constructor({
+        ...this._def,
+        effects: [...(this._def.effects || []), { type: "mod", mod }],
+      }) as any;
+    } else {
+      returnType = new ZodTransformer({
+        // ...this._def,
+        t: ZodTypes.transformer,
+        schema: this,
+        effects: [{ type: "mod", mod }],
+      }) as any;
+    }
+    return returnType;
+  };
+
+  //   if (!second) {
+  //     return returnType;
+  //   } else {
+  //     return returnType.refine(
+  //       (val: any) => {
+  //         return first.parse(val);
+  //       },
+  //       { message: "Parsing error!" }
+  //     );
+  //   }
+  // };
+
+  prependMod = <Out>(
+    mod: (arg: Output) => Out | Promise<Out>
+  ): ZodType<Out, Def, Input> => {
+    return new (this as any).constructor({
+      ...this._def,
+      effects: [{ type: "mod", mod }, ...(this._def.effects || [])],
+    }) as any;
+  };
+
+  clearEffects = <Out>(): ZodType<Out, Def, Input> => {
+    return new (this as any).constructor({
+      ...this._def,
+      effects: [],
+    }) as any;
+  };
+
+  setEffects = <Out>(effects: Effect<any>[]): ZodType<Out, Def, Input> => {
+    return new (this as any).constructor({
+      ...this._def,
+      effects,
+    }) as any;
+  };
+
+  default<T extends Input, This extends this = this>(
+    def: T
+  ): ZodTransformer<ZodOptional<This>, Input>;
+  default<T extends (arg: this) => Input, This extends this = this>(
+    def: T
+  ): ZodTransformer<ZodOptional<This>, Input>;
+  // default<
+  //   T extends (arg: this) => Input,
+  //   Opt extends ReturnType<this["optional"]> = ReturnType<this["optional"]>
+  // >(def: T): ZodTransformer<Opt, this>;
   default(def: any) {
-    return ZodTransformer.create(this.optional(), this, (x: any) => {
-      return x === undefined
-        ? typeof def === "function"
-          ? def(this)
-          : def
-        : x;
+    return this.optional().transform((val: any) => {
+      const defaultVal = typeof def === "function" ? def(this) : def;
+      return typeof val !== "undefined" ? val : defaultVal;
     }) as any;
   }
 

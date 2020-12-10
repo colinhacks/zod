@@ -182,15 +182,15 @@ test("error metadata from value", () => {
   }
 });
 
-test("don't call refine after validation failed", () => {
-  const asdf = z
-    .union([
-      z.number(),
-      z.string().transform(z.number(), (val) => {
-        return parseFloat(val);
-      }),
-    ])
-    .refine((v) => v >= 1);
+// test("don't call refine after validation failed", () => {
+//   const asdf = z
+//     .union([
+//       z.number(),
+//       z.string().transform(z.number(), (val) => {
+//         return parseFloat(val);
+//       }),
+//     ])
+//     .refine((v) => v >= 1);
 
-  expect(() => asdf.safeParse("foo")).not.toThrow();
-});
+//   expect(() => asdf.safeParse("foo")).not.toThrow();
+// });

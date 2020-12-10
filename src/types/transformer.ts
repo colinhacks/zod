@@ -3,82 +3,51 @@ import * as z from "./base";
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
-export interface ZodTransformerDef<
-  T extends z.ZodTypeAny = z.ZodTypeAny,
-  U extends z.ZodTypeAny = z.ZodTypeAny
-> extends z.ZodTypeDef {
+export interface ZodTransformerDef<T extends z.ZodTypeAny = z.ZodTypeAny>
+  extends z.ZodTypeDef {
   t: z.ZodTypes.transformer;
-  input: T;
-  output: U;
-  transformer: (arg: T["_output"]) => U["_input"];
+  schema: T;
+  // transforms: (arg: T["_output"]) => U["_input"];
 }
 
 export class ZodTransformer<
   T extends z.ZodTypeAny,
-  U extends z.ZodTypeAny
-> extends z.ZodType<U["_output"], ZodTransformerDef<T, U>, T["_input"]> {
-  // readonly _input!: T['_input'];
-  // readonly _output!: U['_output'];
-  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
-  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
-  // inputSchema():T{
-  //   return this._def.input;
-  // }
-
-  // get output() {
-  //   return this._def.output;
-  // }
-  // set inputSchema(val) {
-  //   val;
-  // }
-  // get inputSchema() {
-  //   return this._def.output;
-  // }
-  // set outputSchema(val) {
-  //   val;
-  // }
-  // get outputSchema() {
-  //   return this._def.output;
-  // }
-
+  Output = T["_type"]
+> extends z.ZodType<Output, ZodTransformerDef<T>, T["_input"]> {
   toJSON = () => ({
     t: this._def.t,
-    left: this._def.input.toJSON(),
-    right: this._def.output.toJSON(),
+    schema: this._def.schema.toJSON(),
   });
 
-  // transformTo: <Out extends z.ZodTypeAny>(
-  //   output: Out,
-  //   transformer: (arg: U['_type']) => Out['_type'],
-  // ) => ZodTransformer<this, Out> = (output, transformer) => {
-  //   return ZodTransformer.create(this as any, output, transformer) as any;
+  /** You can't use the .default method on transformers! */
+  default = ((..._args: any[]) => this) as never;
+
+  // static create = <I extends z.ZodTypeAny, O extends z.ZodTypeAny, Out>(
+  static create = <I extends z.ZodTypeAny>(
+    schema: I
+    // outputSchema?: O,
+    // tx?: (arg: I["_output"]) => Out | Promise<Out>
+  ): ZodTransformer<I, I["_output"]> => {
+    // if (schema instanceof ZodTransformer) {
+    //   throw new Error("Can't nest transformers inside each other.");
+    // }
+    const newTx = new ZodTransformer({
+      t: z.ZodTypes.transformer,
+      schema,
+    });
+
+    // if (outputSchema && tx) {
+    //   console.warn(
+    //     `Calling z.transform() with three arguments is deprecated and not recommended.`
+    //   );
+    //   newTx = newTx.transform(tx).transform((val) => outputSchema.parse);
+    // }
+    return newTx;
+  };
+
+  // mod: <NewOut>(
+  //   arg: (curr: Output) => NewOut | Promise<NewOut>
+  // ) => ZodTransformer<T, NewOut> = (arg) => {
+  //   return this.mod(arg);
   // };
-
-  get output() {
-    return this._def.output;
-  }
-
-  static create = <I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
-    input: I,
-    output: O,
-    transformer: (arg: I["_output"]) => O["_input"] | Promise<O["_input"]>
-  ): ZodTransformer<I, O> => {
-    return new ZodTransformer({
-      t: z.ZodTypes.transformer,
-      input,
-      output,
-      transformer,
-    });
-  };
-
-  static fromSchema = <I extends z.ZodTypeAny>(
-    input: I
-  ): ZodTransformer<I, I> => {
-    return new ZodTransformer({
-      t: z.ZodTypes.transformer,
-      input,
-      output: input,
-      transformer: (x) => x,
-    });
-  };
 }

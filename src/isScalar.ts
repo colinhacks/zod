@@ -83,10 +83,10 @@ export const isScalar = (
     case ZodTypes.promise:
       returnValue = false;
       break;
-    case ZodTypes.transformer:
-      returnValue = isScalar(def.output);
-      break;
 
+    case ZodTypes.transformer:
+      returnValue = isScalar(def.schema);
+      break;
     case ZodTypes.optional:
       returnValue = isScalar(def.innerType);
       break;

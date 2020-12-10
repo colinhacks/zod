@@ -880,29 +880,11 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       );
 
       break;
+
     case z.ZodTypes.transformer:
-      PROMISE = new PseudoPromise()
-        .then(() => {
-          return def.input.parse(data, params);
-        })
-
-        .then((inputParseResult) => {
-          const transformed = def.transformer(inputParseResult);
-          if (transformed instanceof Promise && params.async === false) {
-            if (z.inputSchema(def.output)._def.t !== z.ZodTypes.promise) {
-              throw new Error(
-                "You can't call .parse on a schema containing async transformations."
-              );
-            }
-          }
-
-          return transformed;
-        })
-
-        .then((transformedResult) => {
-          return def.output.parse(transformedResult, params);
-        });
-
+      PROMISE = new PseudoPromise().then(() => {
+        return def.schema.parse(data, params);
+      });
       break;
     default:
       PROMISE = PseudoPromise.resolve("adsf" as never);
@@ -916,7 +898,7 @@ export const ZodParser = (schema: z.ZodType<any>) => (
   if (!ERROR.isEmpty) {
     THROW();
   }
-  const customChecks = def.checks || [];
+  const effects = def.effects || [];
 
   const checkCtx: z.RefinementCtx = {
     addIssue: (arg: MakeErrorData) => {
@@ -941,19 +923,36 @@ export const ZodParser = (schema: z.ZodType<any>) => (
       THROW();
     }
 
-    for (const check of customChecks) {
-      const checkResult = check.check(resolvedValue, checkCtx);
+    let finalValue = resolvedValue;
 
-      if (checkResult instanceof Promise)
-        throw new Error(
-          "You can't use .parse on a schema containing async refinements. Use .parseAsync instead."
-        );
+    for (const effect of effects) {
+      // console.log(`running effect: `);
+      // console.log(effect);
+      if (effect.type === "check") {
+        const checkResult = effect.check(finalValue, checkCtx);
+        // console.log(`checkresult: ${checkResult}`);
+        if (checkResult instanceof Promise)
+          throw new Error(
+            "You can't use .parse() on a schema containing async refinements. Use .parseAsync instead."
+          );
+      } else if (effect.type === "mod") {
+        if (def.t !== z.ZodTypes.transformer)
+          throw new Error("Only Modders can contain mods");
+        finalValue = effect.mod(finalValue);
+        if (finalValue instanceof Promise) {
+          throw new Error(
+            `You can't use .parse() on a schema containing async transformations. Use .parseAsync instead.`
+          );
+        }
+      } else {
+        throw new Error(`Invalid effect type.`);
+      }
     }
     if (!ERROR.isEmpty) {
       THROW();
     }
 
-    return resolvedValue as any;
+    return finalValue as any;
   } else {
     // if (params.async == true) {
     const checker = async () => {
@@ -973,30 +972,41 @@ export const ZodParser = (schema: z.ZodType<any>) => (
         THROW();
       }
 
-      if (params.runAsyncValidationsInSeries) {
-        let someError = false;
-        await customChecks.reduce((previousPromise, check) => {
-          return previousPromise.then(async () => {
-            if (!someError) {
-              const len = ERROR.issues.length;
-              await check.check(resolvedValue, checkCtx);
-              if (len < ERROR.issues.length) someError = true;
-            }
-          });
-        }, Promise.resolve());
-      } else {
-        await Promise.all(
-          customChecks.map(async (check) => {
-            await check.check(resolvedValue, checkCtx);
-          })
-        );
+      let finalValue = resolvedValue;
+      for (const effect of effects) {
+        if (effect.type === "check") {
+          await effect.check(finalValue, checkCtx);
+        } else if (effect.type === "mod") {
+          if (def.t !== z.ZodTypes.transformer)
+            throw new Error("Only Modders can contain mods");
+          finalValue = await effect.mod(finalValue);
+        }
       }
+
+      // if (params.runAsyncValidationsInSeries) {
+      //   let someError = false;
+      //   await customChecks.reduce((previousPromise, check) => {
+      //     return previousPromise.then(async () => {
+      //       if (!someError) {
+      //         const len = ERROR.issues.length;
+      //         await check.check(resolvedValue, checkCtx);
+      //         if (len < ERROR.issues.length) someError = true;
+      //       }
+      //     });
+      //   }, Promise.resolve());
+      // } else {
+      //   await Promise.all(
+      //     customChecks.map(async (check) => {
+      //       await check.check(resolvedValue, checkCtx);
+      //     })
+      //   );
+      // }
 
       if (!ERROR.isEmpty) {
         THROW();
       }
 
-      return resolvedValue;
+      return finalValue;
     };
 
     return checker();

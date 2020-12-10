@@ -2,7 +2,7 @@ import * as z from "..";
 import { util } from "../helpers/util";
 
 test("type guard", () => {
-  const stringToNumber = z.string().transform(z.number(), (arg) => arg.length);
+  const stringToNumber = z.string().transform((arg) => arg.length);
 
   const s1 = z.object({
     stringToNumber,

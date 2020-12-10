@@ -1,23 +1,24 @@
 import * as z from "..";
 import { util } from "../helpers/util";
 
-const stringToNumber = z
-  .string()
-  .transform(z.number(), (arg) => parseFloat(arg));
-const numberToString = z.transformer(z.number(), z.string(), (n) => String(n));
-const asyncNumberToString = z.transformer(z.number(), z.string(), async (n) =>
-  String(n)
-);
+const stringToNumber = z.string().transform((arg) => parseFloat(arg));
+// const numberToString = z
+//   .transformer(z.number())
+//   .transform((n) => String(n));
+const asyncNumberToString = z
+  .transformer(z.number())
+  .transform(async (n) => String(n));
 
 test("basic transformations", () => {
   const r1 = z
-    .transformer(z.string(), z.number(), (data) => data.length)
+    .transformer(z.string())
+    .transform((data) => data.length)
     .parse("asdf");
   expect(r1).toEqual(4);
 });
 
 test("coercion", () => {
-  const numToString = z.transformer(z.number(), z.string(), (n) => String(n));
+  const numToString = z.transformer(z.number()).transform((n) => String(n));
   const data = z
     .object({
       id: numToString,
@@ -28,9 +29,9 @@ test("coercion", () => {
 });
 
 test("async coercion", async () => {
-  const numToString = z.transformer(z.number(), z.string(), async (n) =>
-    String(n)
-  );
+  const numToString = z
+    .transformer(z.number())
+    .transform(async (n) => String(n));
   const data = await z
     .object({
       id: numToString,
@@ -107,13 +108,13 @@ test("transform method overloads", () => {
   const t1 = z.string().transform((val) => val.toUpperCase());
   expect(t1.parse("asdf")).toEqual("ASDF");
 
-  const t2 = z.string().transform(z.number(), (val) => val.length);
+  const t2 = z.string().transform((val) => val.length);
   expect(t2.parse("asdf")).toEqual(4);
 });
 
 test("multiple transformers", () => {
-  const doubler = z.transformer(stringToNumber, numberToString, (val) => {
+  const doubler = z.transformer(stringToNumber).transform((val) => {
     return val * 2;
   });
-  expect(doubler.parse("5")).toEqual("10");
+  expect(doubler.parse("5")).toEqual(10);
 });

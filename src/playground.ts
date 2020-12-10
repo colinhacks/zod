@@ -1,15 +1,27 @@
 import * as z from ".";
-const someSchema = z
-  .object({
-    name: z.string().nonempty("name required."),
-    lower_bound: z.number(),
-    upper_bound: z.number(),
-  })
-  .refine((val) => val.lower_bound < val.upper_bound, {
-    message: "Upper bound must be greater than lower bound.",
-    path: ["lower_bound", "upper_bound"],
+
+// const asyncNumberToString = z
+//   .transformer(z.number())
+//   .transform(async (n) => String(n));
+// console.log(
+//   z
+//     .object({
+//       id: asyncNumberToString,
+//     })
+//     .parse({ id: 5 })
+// );
+
+const run = async () => {
+  const numToString = z.transformer(z.number()).transform(async (n) => {
+    const res = String(n);
+    return res;
   });
 
-console.log(
-  someSchema.safeParse({ name: "", lower_bound: 100, upper_bound: 0 })
-);
+  console.log(typeof (await numToString.parseAsync(1234)));
+  const obj = z.object({
+    id: numToString,
+  });
+  const data = await obj.parseAsync({ id: 5 });
+  console.log(data);
+};
+run();

@@ -117,7 +117,7 @@ export namespace objectUtil {
     const mergedShape = mergeShapes(first._def.shape(), second._def.shape());
     const merged: any = new ZodObject({
       t: ZodTypes.object,
-      checks: [...(first._def.checks || []), ...(second._def.checks || [])],
+      effects: [...(first._def.effects || []), ...(second._def.effects || [])],
       unknownKeys: first._def.unknownKeys,
       catchall: first._def.catchall,
       // params: {
