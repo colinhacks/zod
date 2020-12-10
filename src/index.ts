@@ -3,7 +3,7 @@
 import { ZodCodeGenerator } from "./codegen";
 import { ZodErrorMap } from "./defaultErrorMap";
 // export { ZodIssueCode } from './ZodError';
-import { ZodParsedType } from "./parser";
+import { ZodParsedType } from "./ZodParsedType";
 import { ZodAny, ZodAnyDef } from "./types/any";
 import { ZodArray, ZodArrayDef } from "./types/array";
 import {

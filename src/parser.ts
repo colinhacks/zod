@@ -9,6 +9,7 @@ import {
   ZodIssueCode,
   ZodIssueOptionalMessage,
 } from "./ZodError";
+import { ZodParsedType } from "./ZodParsedType";
 
 export const getParsedType = (data: any): ZodParsedType => {
   if (typeof data === "string") return "string";
@@ -41,29 +42,6 @@ export const getParsedType = (data: any): ZodParsedType => {
   }
   return "unknown";
 };
-
-export const ZodParsedType = util.arrayToEnum([
-  "string",
-  "nan",
-  "number",
-  "integer",
-  "boolean",
-  "date",
-  "bigint",
-  "symbol",
-  "function",
-  "undefined",
-  "null",
-  "array",
-  "object",
-  "unknown",
-  "promise",
-  "void",
-  "never",
-  "map",
-]);
-
-export type ZodParsedType = keyof typeof ZodParsedType;
 
 type stripPath<T extends object> = T extends any
   ? util.OmitKeys<T, "path">
