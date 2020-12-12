@@ -1,15 +1,15 @@
-import * as z from "./base";
-import { ZodTypes } from "../ZodTypes"
+import { ZodTypes } from "../ZodTypes";
+import { ZodType, ZodTypeDef } from "./base/type";
 
 export interface ZodNativeEnumDef<T extends EnumLike = EnumLike>
-  extends z.ZodTypeDef {
+  extends ZodTypeDef {
   t: ZodTypes.nativeEnum;
   values: T;
 }
 
 type EnumLike = { [k: string]: string | number; [nu: number]: string };
 
-export class ZodNativeEnum<T extends EnumLike> extends z.ZodType<
+export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   T[keyof T],
   ZodNativeEnumDef<T>
 > {

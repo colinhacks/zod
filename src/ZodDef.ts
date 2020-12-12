@@ -1,5 +1,5 @@
-import { ZodArrayDef } from "./types/array";
 import { ZodAnyDef } from "./types/any";
+import { ZodArrayDef } from "./types/array";
 import { ZodBigIntDef } from "./types/bigint";
 import { ZodBooleanDef } from "./types/boolean";
 import { ZodDateDef } from "./types/date";

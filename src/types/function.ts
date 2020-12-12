@@ -1,12 +1,13 @@
-import * as z from "./base";
-import { ZodTypes } from "../ZodTypes"
+import { ZodTypes } from "../ZodTypes";
+import { ZodType, ZodTypeDef } from "./base/type";
+import { ZodTypeAny } from "./base/type-any";
 import { ZodTuple } from "./tuple";
 import { ZodUnknown } from "./unknown";
 
 export interface ZodFunctionDef<
   Args extends ZodTuple<any> = ZodTuple<any>,
-  Returns extends z.ZodTypeAny = z.ZodTypeAny
-> extends z.ZodTypeDef {
+  Returns extends ZodTypeAny = ZodTypeAny
+> extends ZodTypeDef {
   t: ZodTypes.function;
   args: Args;
   returns: Returns;
@@ -14,14 +15,14 @@ export interface ZodFunctionDef<
 
 export type OuterTypeOfFunction<
   Args extends ZodTuple<any>,
-  Returns extends z.ZodTypeAny
+  Returns extends ZodTypeAny
 > = Args["_input"] extends Array<any>
   ? (...args: Args["_input"]) => Returns["_output"]
   : never;
 
 export type InnerTypeOfFunction<
   Args extends ZodTuple<any>,
-  Returns extends z.ZodTypeAny
+  Returns extends ZodTypeAny
 > = Args["_output"] extends Array<any>
   ? (...args: Args["_output"]) => Returns["_input"]
   : never;
@@ -29,8 +30,8 @@ export type InnerTypeOfFunction<
 // type as df = string extends unknown  ? true : false
 export class ZodFunction<
   Args extends ZodTuple<any>,
-  Returns extends z.ZodTypeAny
-> extends z.ZodType<
+  Returns extends ZodTypeAny
+> extends ZodType<
   OuterTypeOfFunction<Args, Returns>,
   ZodFunctionDef,
   InnerTypeOfFunction<Args, Returns>
@@ -47,7 +48,7 @@ export class ZodFunction<
     });
   };
 
-  returns = <NewReturnType extends z.ZodType<any, any>>(
+  returns = <NewReturnType extends ZodType<any, any>>(
     returnType: NewReturnType
   ): ZodFunction<Args, NewReturnType> => {
     return new ZodFunction({
@@ -65,7 +66,7 @@ export class ZodFunction<
 
   static create = <
     T extends ZodTuple<any> = ZodTuple<[]>,
-    U extends z.ZodTypeAny = ZodUnknown
+    U extends ZodTypeAny = ZodUnknown
   >(
     args?: T,
     returns?: U

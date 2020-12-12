@@ -2,19 +2,11 @@
 
 import { ZodCodeGenerator } from "./codegen";
 import { ZodErrorMap } from "./defaultErrorMap";
-// export { ZodIssueCode } from './ZodError';
-import { ZodParsedType } from "./ZodParsedType";
 import { ZodAny } from "./types/any";
 import { ZodArray } from "./types/array";
-import {
-  input,
-  output,
-  TypeOf,
-  ZodType,
-  ZodTypeAny,
-  ZodTypeDef,
-} from "./types/base";
-import { ZodTypes } from "./ZodTypes";
+import { input, output, TypeOf } from "./types/base";
+import { ZodType, ZodTypeDef } from "./types/base/type";
+import { ZodTypeAny } from "./types/base/type-any";
 import { ZodBigInt } from "./types/bigint";
 import { ZodBoolean } from "./types/boolean";
 import { ZodDate } from "./types/date";
@@ -40,6 +32,9 @@ import { ZodUndefined } from "./types/undefined";
 import { ZodUnion } from "./types/union";
 import { ZodUnknown } from "./types/unknown";
 import { ZodVoid } from "./types/void";
+// export { ZodIssueCode } from './ZodError';
+import { ZodParsedType } from "./ZodParsedType";
+import { ZodTypes } from "./ZodTypes";
 
 export { ZodTypeDef, ZodTypes };
 
@@ -168,5 +163,5 @@ export {
 
 export { TypeOf as infer, input, output, TypeOf };
 
+export * from "./ZodDef";
 export * from "./ZodError";
-export * from "./ZodDef"

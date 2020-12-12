@@ -1,69 +1,26 @@
-import { util } from "../helpers/util";
-import {
-  ZodArray,
-  ZodCustomIssue,
-  ZodError,
-  ZodIssueCode,
-  ZodNullable,
-  ZodOptional,
-  ZodTransformer,
-} from "../index";
-import { MakeErrorData, ParseParams, ZodParser } from "../parser";
-import { ZodNullableType } from "./nullable";
-import { ZodOptionalType } from "./optional";
-import { ZodTypes } from "../ZodTypes";
+import { util } from "../../../helpers/util";
+import { ParseParams, ZodParser } from "../../../parser";
+import { MakeErrorData } from "../../../parser/make-error-data";
+import { ZodCustomIssue, ZodError, ZodIssueCode } from "../../../ZodError";
+import { ZodTypes } from "../../../ZodTypes";
+import { ZodArray } from "../../array";
+import { ZodNullable, ZodNullableType } from "../../nullable";
+import { ZodOptional, ZodOptionalType } from "../../optional";
+import { ZodTransformer } from "../../transformer";
+import { outputSchema } from "../output-schema";
+import { RefinementCtx } from "../refinement-ctx";
 
-export type ZodTypeAny = ZodType<any, any, any>;
-export type ZodRawShape = { [k: string]: ZodTypeAny };
-
-export const inputSchema = (schema: ZodType<any>): ZodType<any> => {
-  if (schema instanceof ZodTransformer) {
-    return inputSchema(schema._def.input);
-  } else {
-    return schema;
-  }
-};
-
-export const outputSchema = (schema: ZodType<any>): ZodType<any> => {
-  if (schema instanceof ZodTransformer) {
-    return inputSchema(schema._def.output);
-  } else {
-    return schema;
-  }
-};
-
-export type RefinementCtx = {
-  addIssue: (arg: MakeErrorData) => void;
-  path: (string | number)[];
-};
+type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 type InternalCheck<T> = {
   check: (arg: T, ctx: RefinementCtx) => any;
   // refinementError: (arg: T) => MakeErrorData;
 };
-
-// type Check<T> = {
-//   check: (arg: T) => any;
-//   path?: (string | number)[];
-//   // message?: string;
-//   // params?: {[k:string]:any}
-// } & util.Omit<CustomError, 'code' | 'path'>;
-
-type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
-// type Check<T> = {
-//   check: (arg: T) => any;
-//   refinementError: (arg: T) => CustomErrorParams;
-// };
 
 export interface ZodTypeDef {
   t: ZodTypes;
   checks?: InternalCheck<any>[];
   accepts?: ZodType<any, any>;
 }
-
-export type TypeOf<T extends ZodType<any>> = T["_output"];
-export type input<T extends ZodType<any>> = T["_input"];
-export type output<T extends ZodType<any>> = T["_output"];
-export type infer<T extends ZodType<any>> = T["_output"];
 
 export abstract class ZodType<
   Output,

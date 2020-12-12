@@ -1,8 +1,6 @@
-import { ZodType, ZodTypeAny, ZodTypeDef } from "./base";
 import { ZodTypes } from "../ZodTypes";
-
-// import * as z from './base';
-// type asdf = ZodTypeAny
+import { ZodType, ZodTypeDef } from "./base/type";
+import { ZodTypeAny } from "./base/type-any";
 
 export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {

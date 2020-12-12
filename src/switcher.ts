@@ -1,7 +1,7 @@
 import { util } from "./helpers/util";
-import { ZodTypes } from "./ZodTypes";
 import { ZodType } from "./types/base";
 import { ZodDef } from "./Zoddef";
+import { ZodTypes } from "./ZodTypes";
 
 export const visitor = (schema: ZodType<any, any>) => {
   const def = schema._def as ZodDef;

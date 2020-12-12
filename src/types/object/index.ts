@@ -1,16 +1,46 @@
-import { ZodNever } from "..";
-import { ZodTypes } from "../ZodTypes"
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
-import { objectUtil } from "../helpers/objectUtil";
-import { partialUtil } from "../helpers/partialUtil";
-import { Scalars } from "../helpers/primitive";
-import { isScalar } from "../isScalar";
-import * as z from "./base";
+import { objectUtil } from "../../helpers/objectUtil";
+import { mergeShapes } from "../../helpers/objectUtil/merge";
+import { partialUtil } from "../../helpers/partialUtil";
+import { Scalars } from "../../helpers/primitive";
+import { isScalar } from "../../isScalar";
+import { ZodTypes } from "../../ZodTypes";
+import { ZodRawShape } from "../base";
+import { ZodType, ZodTypeDef } from "../base/type";
+import { ZodTypeAny } from "../base/type-any";
+import { ZodNever } from "../never";
+import { AnyZodObject } from "./any";
+
+export const mergeObjects = <First extends AnyZodObject>(first: First) => <
+  Second extends AnyZodObject
+>(
+  second: Second
+): ZodObject<
+  First["_shape"] & Second["_shape"],
+  First["_unknownKeys"],
+  First["_catchall"]
+  // MergeObjectParams<First['_params'], Second['_params']>,
+  // First['_input'] & Second['_input'],
+  // First['_output'] & Second['_output']
+> => {
+  const mergedShape = mergeShapes(first._def.shape(), second._def.shape());
+  const merged: any = new ZodObject({
+    t: ZodTypes.object,
+    checks: [...(first._def.checks || []), ...(second._def.checks || [])],
+    unknownKeys: first._def.unknownKeys,
+    catchall: first._def.catchall,
+    // params: {
+    //   strict: first.params.strict && second.params.strict,
+    // },
+    shape: () => mergedShape,
+  }) as any;
+  return merged;
+};
 
 const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
-  Augmentation extends z.ZodRawShape
+  Augmentation extends ZodRawShape
 >(
   augmentation: Augmentation
 ): ZodObject<
@@ -36,11 +66,11 @@ const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
 type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
 export interface ZodObjectDef<
-  T extends z.ZodRawShape = z.ZodRawShape,
+  T extends ZodRawShape = ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
-  Catchall extends z.ZodTypeAny = z.ZodTypeAny
+  Catchall extends ZodTypeAny = ZodTypeAny
   // Params extends ZodObjectParams = ZodObjectParams
-> extends z.ZodTypeDef {
+> extends ZodTypeDef {
   t: ZodTypes.object;
   shape: () => T;
   catchall: Catchall;
@@ -49,8 +79,8 @@ export interface ZodObjectDef<
 }
 
 export type baseObjectOutputType<
-  Shape extends z.ZodRawShape
-  // Catchall extends z.ZodTypeAny
+  Shape extends ZodRawShape
+  // Catchall extends ZodTypeAny
 > = objectUtil.flatten<
   objectUtil.addQuestionMarks<
     {
@@ -60,17 +90,15 @@ export type baseObjectOutputType<
 >;
 
 export type objectOutputType<
-  Shape extends z.ZodRawShape,
-  Catchall extends z.ZodTypeAny
-> = z.ZodTypeAny extends Catchall
+  Shape extends ZodRawShape,
+  Catchall extends ZodTypeAny
+> = ZodTypeAny extends Catchall
   ? baseObjectOutputType<Shape>
   : objectUtil.flatten<
       baseObjectOutputType<Shape> & { [k: string]: Catchall["_output"] }
     >;
 
-export type baseObjectInputType<
-  Shape extends z.ZodRawShape
-> = objectUtil.flatten<
+export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
   objectUtil.addQuestionMarks<
     {
       [k in keyof Shape]: Shape[k]["_input"];
@@ -79,9 +107,9 @@ export type baseObjectInputType<
 >;
 
 export type objectInputType<
-  Shape extends z.ZodRawShape,
-  Catchall extends z.ZodTypeAny
-> = z.ZodTypeAny extends Catchall
+  Shape extends ZodRawShape,
+  Catchall extends ZodTypeAny
+> = ZodTypeAny extends Catchall
   ? baseObjectInputType<Shape>
   : objectUtil.flatten<
       baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
@@ -117,7 +145,7 @@ const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
 //   ? ZodObject<objectUtil.NoNever<{ [k in keyof U]: makeRequired<U[k]> }>, P, C>
 //   : never;
 
-// type makeRequired<T extends z.ZodType<any>> = T extends ZodUnion<infer U>
+// type makeRequired<T extends ZodType<any>> = T extends ZodUnion<infer U>
 //   ? U extends [infer Y, ZodUndefined]
 //     ? Y
 //     : U extends [ZodUndefined, infer Z]
@@ -126,27 +154,21 @@ const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
 //   : T;
 
 // type ZodObjectType<
-//   T extends z.ZodRawShape,
+//   T extends ZodRawShape,
 //   Params extends ZodObjectParams
 // > = Params['strict'] extends true
 //   ? objectUtil.ObjectType<T>
 //   : objectUtil.Flatten<objectUtil.ObjectType<T> & { [k: string]: any }>;
 
-export type AnyZodObject = ZodObject<any, any, any>;
-// export type AnyZodObject = ZodObject<
-// z.ZodRawShape,
-// UnknownKeysParam,
-// z.ZodTypeAny
-// >;
 export class ZodObject<
-  T extends z.ZodRawShape,
+  T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = "passthrough",
-  Catchall extends z.ZodTypeAny = z.ZodTypeAny,
+  Catchall extends ZodTypeAny = ZodTypeAny,
   // Params extends ZodObjectParams = { strict: true },
   // Type extends ZodObjectType<T, Params> = ZodObjectType<T, Params>
   Output = objectOutputType<T, Catchall>,
   Input = objectInputType<T, Catchall>
-> extends z.ZodType<
+> extends ZodType<
   //  objectUtil.objectOutputType<T, UnknownKeys, Catchall>,
   Output,
   ZodObjectDef<T, UnknownKeys, Catchall>,
@@ -197,7 +219,7 @@ export class ZodObject<
   augment = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
   extend = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
 
-  setKey = <Key extends string, Schema extends z.ZodTypeAny>(
+  setKey = <Key extends string, Schema extends ZodTypeAny>(
     key: Key,
     schema: Schema
   ): ZodObject<T & { [k in Key]: Schema }, UnknownKeys, Catchall> => {
@@ -216,9 +238,9 @@ export class ZodObject<
     UnknownKeys,
     Catchall
     // objectUtil.MergeObjectParams<Params, MergeUnknownKeys>
-  > = objectUtil.mergeObjects(this as any) as any;
+  > = mergeObjects(this as any) as any;
 
-  catchall = <Index extends z.ZodTypeAny>(
+  catchall = <Index extends ZodTypeAny>(
     index: Index
   ): ZodObject<
     T,
@@ -378,7 +400,7 @@ export class ZodObject<
 
   // keyof: ()=>ZodEnum<{[k in T]: k}>
 
-  static create = <T extends z.ZodRawShape>(shape: T): ZodObject<T> => {
+  static create = <T extends ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({
       t: ZodTypes.object,
       shape: () => shape,
@@ -390,9 +412,7 @@ export class ZodObject<
     }) as any;
   };
 
-  static lazycreate = <T extends z.ZodRawShape>(
-    shape: () => T
-  ): ZodObject<T> => {
+  static lazycreate = <T extends ZodRawShape>(shape: () => T): ZodObject<T> => {
     return new ZodObject({
       t: ZodTypes.object,
       shape,

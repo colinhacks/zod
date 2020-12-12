@@ -1,14 +1,14 @@
-import * as z from "./base";
-import { ZodTypes } from "../ZodTypes"
+import { ZodTypes } from "../ZodTypes";
+import { ZodType, ZodTypeDef } from "./base/type";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
-export interface ZodDateDef extends z.ZodTypeDef {
+export interface ZodDateDef extends ZodTypeDef {
   t: ZodTypes.date;
 }
 
-export class ZodDate extends z.ZodType<Date, ZodDateDef> {
+export class ZodDate extends ZodType<Date, ZodDateDef> {
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);

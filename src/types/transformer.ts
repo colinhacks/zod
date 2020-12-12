@@ -1,13 +1,14 @@
-import * as z from "./base";
-import { ZodTypes } from "../ZodTypes"
+import { ZodTypes } from "../ZodTypes";
+import { ZodType, ZodTypeDef } from "./base/type";
+import { ZodTypeAny } from "./base/type-any";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
 export interface ZodTransformerDef<
-  T extends z.ZodTypeAny = z.ZodTypeAny,
-  U extends z.ZodTypeAny = z.ZodTypeAny
-> extends z.ZodTypeDef {
+  T extends ZodTypeAny = ZodTypeAny,
+  U extends ZodTypeAny = ZodTypeAny
+> extends ZodTypeDef {
   t: ZodTypes.transformer;
   input: T;
   output: U;
@@ -15,9 +16,9 @@ export interface ZodTransformerDef<
 }
 
 export class ZodTransformer<
-  T extends z.ZodTypeAny,
-  U extends z.ZodTypeAny
-> extends z.ZodType<U["_output"], ZodTransformerDef<T, U>, T["_input"]> {
+  T extends ZodTypeAny,
+  U extends ZodTypeAny
+> extends ZodType<U["_output"], ZodTransformerDef<T, U>, T["_input"]> {
   // readonly _input!: T['_input'];
   // readonly _output!: U['_output'];
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
@@ -48,7 +49,7 @@ export class ZodTransformer<
     right: this._def.output.toJSON(),
   });
 
-  // transformTo: <Out extends z.ZodTypeAny>(
+  // transformTo: <Out extends ZodTypeAny>(
   //   output: Out,
   //   transformer: (arg: U['_type']) => Out['_type'],
   // ) => ZodTransformer<this, Out> = (output, transformer) => {
@@ -59,7 +60,7 @@ export class ZodTransformer<
     return this._def.output;
   }
 
-  static create = <I extends z.ZodTypeAny, O extends z.ZodTypeAny>(
+  static create = <I extends ZodTypeAny, O extends ZodTypeAny>(
     input: I,
     output: O,
     transformer: (arg: I["_output"]) => O["_input"] | Promise<O["_input"]>
@@ -72,7 +73,7 @@ export class ZodTransformer<
     });
   };
 
-  static fromSchema = <I extends z.ZodTypeAny>(
+  static fromSchema = <I extends ZodTypeAny>(
     input: I
   ): ZodTransformer<I, I> => {
     return new ZodTransformer({

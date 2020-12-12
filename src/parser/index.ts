@@ -1,16 +1,16 @@
-import { defaultErrorMap, ZodErrorMap } from "./defaultErrorMap";
-import { INVALID, util } from "./helpers/util";
-import { ZodDef, ZodNever, ZodPromise } from "./index";
-import { NOSET, PseudoPromise } from "./PseudoPromise";
-import { ZodType, RefinementCtx, inputSchema } from "./types/base"
-import {
-  ZodError,
-  ZodIssue,
-  ZodIssueCode,
-  ZodIssueOptionalMessage,
-} from "./ZodError";
-import { ZodParsedType } from "./ZodParsedType";
-import { ZodTypes } from "./ZodTypes";
+import { defaultErrorMap, ZodErrorMap } from "../defaultErrorMap";
+import { INVALID, util } from "../helpers/util";
+import { NOSET, PseudoPromise } from "../PseudoPromise";
+import { inputSchema } from "../types/base/output-schema";
+import { RefinementCtx } from "../types/base/refinement-ctx";
+import { ZodType } from "../types/base/type";
+import { ZodNever } from "../types/never";
+import { ZodPromise } from "../types/promise";
+import { ZodDef } from "../ZodDef";
+import { ZodError, ZodIssue, ZodIssueCode } from "../ZodError";
+import { ZodParsedType } from "../ZodParsedType";
+import { ZodTypes } from "../ZodTypes";
+import { MakeErrorData } from "./make-error-data";
 
 export const getParsedType = (data: any): ZodParsedType => {
   if (typeof data === "string") return "string";
@@ -42,13 +42,6 @@ export const getParsedType = (data: any): ZodParsedType => {
     return "object";
   }
   return "unknown";
-};
-
-type stripPath<T extends object> = T extends any
-  ? util.OmitKeys<T, "path">
-  : never;
-export type MakeErrorData = stripPath<ZodIssueOptionalMessage> & {
-  path?: (string | number)[];
 };
 
 const makeError = (

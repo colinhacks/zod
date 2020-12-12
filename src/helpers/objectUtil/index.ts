@@ -1,7 +1,6 @@
-import { ZodRawShape } from "../types/base";
-import { ZodTypes } from "../ZodTypes";
-import { ZodIntersection } from "../types/intersection";
-import { AnyZodObject, ZodObject } from "../types/object";
+import { ZodRawShape } from "../../types/base";
+import { mergeObjects as mergeObjectsBase } from "../../types/object";
+import { mergeShapes as mergeShapesBase } from "./merge";
 
 export namespace objectUtil {
   // export interface ZodObjectParams {
@@ -84,48 +83,6 @@ export namespace objectUtil {
   //   >
   // >;
 
-  export const mergeShapes = <U extends ZodRawShape, T extends ZodRawShape>(
-    first: U,
-    second: T
-  ): T & U => {
-    const firstKeys = Object.keys(first);
-    const secondKeys = Object.keys(second);
-    const sharedKeys = firstKeys.filter((k) => secondKeys.indexOf(k) !== -1);
-
-    const sharedShape: any = {};
-    for (const k of sharedKeys) {
-      sharedShape[k] = ZodIntersection.create(first[k], second[k]);
-    }
-    return {
-      ...(first as object),
-      ...(second as object),
-      ...sharedShape,
-    };
-  };
-
-  export const mergeObjects = <First extends AnyZodObject>(first: First) => <
-    Second extends AnyZodObject
-  >(
-    second: Second
-  ): ZodObject<
-    First["_shape"] & Second["_shape"],
-    First["_unknownKeys"],
-    First["_catchall"]
-    // MergeObjectParams<First['_params'], Second['_params']>,
-    // First['_input'] & Second['_input'],
-    // First['_output'] & Second['_output']
-  > => {
-    const mergedShape = mergeShapes(first._def.shape(), second._def.shape());
-    const merged: any = new ZodObject({
-      t: ZodTypes.object,
-      checks: [...(first._def.checks || []), ...(second._def.checks || [])],
-      unknownKeys: first._def.unknownKeys,
-      catchall: first._def.catchall,
-      // params: {
-      //   strict: first.params.strict && second.params.strict,
-      // },
-      shape: () => mergedShape,
-    }) as any;
-    return merged;
-  };
+  export const mergeObjects = mergeObjectsBase;
+  export const mergeShapes = mergeShapesBase;
 }

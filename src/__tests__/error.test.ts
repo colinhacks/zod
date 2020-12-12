@@ -1,6 +1,6 @@
 import * as z from "../index";
-import { ZodParsedType } from "../ZodParsedType";
 import { ZodError, ZodIssueCode } from "../ZodError";
+import { ZodParsedType } from "../ZodParsedType";
 
 test("error creation", () => {
   const err1 = ZodError.create([]);
