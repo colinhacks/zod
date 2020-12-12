@@ -1,13 +1,11 @@
 /* ZOD */
 
 import { ZodType, ZodTypeDef } from "./types/base/type";
-export { ZodTypeDef, ZodTypes };
+import { ZodTypeAny } from "./types/base/type-any";
 import { input, output, TypeOf } from "./types/base";
 import { ZodErrorMap } from "./defaultErrorMap";
 import { ZodAny } from "./types/any";
 import { ZodArray } from "./types/array";
-
-import { ZodTypeAny } from "./types/base/type-any";
 import { ZodBigInt } from "./types/bigint";
 import { ZodBoolean } from "./types/boolean";
 import { ZodDate } from "./types/date";
@@ -33,10 +31,11 @@ import { ZodUndefined } from "./types/undefined";
 import { ZodUnion } from "./types/union";
 import { ZodUnknown } from "./types/unknown";
 import { ZodVoid } from "./types/void";
-// export { ZodIssueCode } from './ZodError';
 import { ZodParsedType } from "./ZodParsedType";
 import { ZodTypes } from "./ZodTypes";
 import { ZodCodeGenerator } from "./codegen";
+
+export { ZodTypeDef, ZodTypes };
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -68,7 +67,6 @@ const nullableType = ZodNullable.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
-
 const codegen = ZodCodeGenerator.create;
 
 export const custom = <T>(
