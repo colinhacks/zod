@@ -1,20 +1,27 @@
 import { util } from "../../../helpers/util";
+import { ZodTypes } from "../../../ZodTypes";
 import { ParseParams, ZodParser } from "../../../parser";
 import { MakeErrorData } from "../../../parser/make-error-data";
 import { ZodCustomIssue, ZodError, ZodIssueCode } from "../../../ZodError";
-import { ZodTypes } from "../../../ZodTypes";
-import { ZodArray } from "../../array";
-import { ZodNullable, ZodNullableType } from "../../nullable";
-import { ZodOptional, ZodOptionalType } from "../../optional";
-import { ZodTransformer } from "../../transformer";
-import { outputSchema } from "../output-schema";
 import { RefinementCtx } from "../refinement-ctx";
+
+import {
+  ZodArray,
+  ZodNullable,
+  ZodNullableType,
+  ZodOptional,
+  ZodOptionalType,
+  ZodTransformer,
+} from "../../../index";
+// import { outputSchema } from "../output-schema";
 
 type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 type InternalCheck<T> = {
   check: (arg: T, ctx: RefinementCtx) => any;
   // refinementError: (arg: T) => MakeErrorData;
 };
+
+export function declareZodType() {}
 
 export interface ZodTypeDef {
   t: ZodTypes;
@@ -29,8 +36,8 @@ export abstract class ZodType<
 > {
   readonly _type!: Output;
   readonly _output!: Output;
-  readonly _def!: Def;
   readonly _input!: Input;
+  readonly _def!: Def;
 
   // get inputSchema(): ZodTypeAny = this;
   // outputSchema: ZodTypeAny = this;
@@ -228,7 +235,7 @@ export abstract class ZodType<
     if (transformer) {
       return ZodTransformer.create(this as any, input, transformer) as any;
     }
-    return ZodTransformer.create(this as any, outputSchema(this), input) as any;
+    return ZodTransformer.create(this as any, this, input) as any;
   }
 
   default<

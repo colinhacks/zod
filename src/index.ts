@@ -1,11 +1,12 @@
 /* ZOD */
 
-import { ZodCodeGenerator } from "./codegen";
+import { ZodType, ZodTypeDef } from "./types/base/type";
+export { ZodTypeDef, ZodTypes };
+import { input, output, TypeOf } from "./types/base";
 import { ZodErrorMap } from "./defaultErrorMap";
 import { ZodAny } from "./types/any";
 import { ZodArray } from "./types/array";
-import { input, output, TypeOf } from "./types/base";
-import { ZodType, ZodTypeDef } from "./types/base/type";
+
 import { ZodTypeAny } from "./types/base/type-any";
 import { ZodBigInt } from "./types/bigint";
 import { ZodBoolean } from "./types/boolean";
@@ -19,10 +20,10 @@ import { ZodMap } from "./types/map";
 import { ZodNativeEnum } from "./types/nativeEnum";
 import { ZodNever } from "./types/never";
 import { ZodNull } from "./types/null";
-import { ZodNullable } from "./types/nullable";
+import { ZodNullable, ZodNullableType } from "./types/nullable";
 import { ZodNumber } from "./types/number";
 import { ZodObject } from "./types/object";
-import { ZodOptional } from "./types/optional";
+import { ZodOptional, ZodOptionalType } from "./types/optional";
 import { ZodPromise } from "./types/promise";
 import { ZodRecord } from "./types/record";
 import { ZodString } from "./types/string";
@@ -35,8 +36,7 @@ import { ZodVoid } from "./types/void";
 // export { ZodIssueCode } from './ZodError';
 import { ZodParsedType } from "./ZodParsedType";
 import { ZodTypes } from "./ZodTypes";
-
-export { ZodTypeDef, ZodTypes };
+import { ZodCodeGenerator } from "./codegen";
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -127,6 +127,8 @@ export const late = {
 
 export {
   ZodType as Schema,
+  ZodType as ZodSchema,
+  // ZodType,
   ZodAny,
   ZodArray,
   ZodBigInt,
@@ -143,17 +145,17 @@ export {
   ZodNever,
   ZodNull,
   ZodNullable,
+  ZodNullableType,
   ZodNumber,
   ZodObject,
   ZodOptional,
+  ZodOptionalType,
   ZodParsedType,
   ZodPromise,
   ZodRecord,
-  ZodType as ZodSchema,
   ZodString,
   ZodTransformer,
   ZodTuple,
-  ZodType,
   ZodTypeAny,
   ZodUndefined,
   ZodUnion,

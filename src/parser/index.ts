@@ -1,11 +1,11 @@
 import { defaultErrorMap, ZodErrorMap } from "../defaultErrorMap";
 import { INVALID, util } from "../helpers/util";
 import { NOSET, PseudoPromise } from "../PseudoPromise";
-import { inputSchema } from "../types/base/output-schema";
+// import { inputSchema } from "../types/base/output-schema";
 import { RefinementCtx } from "../types/base/refinement-ctx";
 import { ZodType } from "../types/base/type";
-import { ZodNever } from "../types/never";
-import { ZodPromise } from "../types/promise";
+// import { ZodNever } from "../types/never";
+// import { ZodPromise } from "../types/promise";
 import { ZodDef } from "../ZodDef";
 import { ZodError, ZodIssue, ZodIssueCode } from "../ZodError";
 import { ZodParsedType } from "../ZodParsedType";
@@ -380,7 +380,7 @@ export const ZodParser = (schema: ZodType<any>) => (
       for (const key of shapeKeys) {
         const keyValidator = shapeKeys.includes(key)
           ? shape[key]
-          : !(def.catchall instanceof ZodNever)
+          : !(def.catchall._def.t === ZodTypes.never)
           ? def.catchall
           : undefined;
 
@@ -439,7 +439,7 @@ export const ZodParser = (schema: ZodType<any>) => (
           });
       }
 
-      if (def.catchall instanceof ZodNever) {
+      if (def.catchall._def.t === ZodTypes.never) {
         if (def.unknownKeys === "passthrough") {
           for (const key of extraKeys) {
             objectPromises[key] = PseudoPromise.resolve(data[key]);
@@ -725,7 +725,7 @@ export const ZodParser = (schema: ZodType<any>) => (
         THROW();
       }
 
-      const isAsyncFunction = def.returns instanceof ZodPromise;
+      const isAsyncFunction = def.returns._def.t === ZodTypes.promise;
 
       const validatedFunction = (...args: any[]) => {
         const internalProm = new PseudoPromise()
@@ -861,7 +861,7 @@ export const ZodParser = (schema: ZodType<any>) => (
         .then((inputParseResult) => {
           const transformed = def.transformer(inputParseResult);
           if (transformed instanceof Promise && params.async === false) {
-            if (inputSchema(def.output)._def.t !== ZodTypes.promise) {
+            if (def.output._def.t !== ZodTypes.promise) {
               throw new Error(
                 "You can't call .parse on a schema containing async transformations."
               );

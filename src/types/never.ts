@@ -6,6 +6,7 @@ export interface ZodNeverDef extends ZodTypeDef {
 }
 
 export class ZodNever extends ZodType<never, ZodNeverDef> {
+  __class = "ZodNever";
   toJSON = () => this._def;
 
   static create = (): ZodNever => {

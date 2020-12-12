@@ -24,8 +24,8 @@ module.exports = {
      * eslint-plugin-simple-import-sort @see https://github.com/lydell/eslint-plugin-simple-import-sort
      */
     "sort-imports": 0, // we use eslint-plugin-import instead
-    "simple-import-sort/imports": 1,
-    "simple-import-sort/exports": 1,
+    "simple-import-sort/imports": 0,
+    "simple-import-sort/exports": 0,
     /**
      * @typescript-eslint/eslint-plugin @see https://github.com/typescript-eslint/typescript-eslint/tree/master/packages/eslint-plugin
      */
