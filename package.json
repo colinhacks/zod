@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.0.0-alpha.1",
+  "version": "3.0.0-alpha.2",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/cjs/index.js",
   "types": "./lib/cjs/index.d.ts",
@@ -37,6 +37,7 @@
     "fix": "yarn fix:lint && yarn fix:format",
     "clean": "rm -rf lib/*",
     "build": "yarn run clean && tsc --p tsconfig.cjs.json",
+    "build:esm": "tsc --p tsconfig.esm.json",
     "buildall": "yarn add typescript@3.4 && yarn build && yarn add typescript@3.5 && yarn build && yarn add typescript@3.6 && yarn build && yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4 && yarn build && yarn add typescript@3.4",
     "buildallv2": "yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4.0 && yarn build && yarn add typescript@4.1 && yarn build && yarn add typescript@3.7",
     "test": "jest --coverage && yarn run badge",
@@ -62,7 +63,7 @@
     "prettier": "^2.2.1",
     "ts-jest": "^26.4.4",
     "ts-node": "^9.1.0",
-    "typescript": "3.8"
+    "typescript": "3.7"
   },
   "husky": {
     "hooks": {
