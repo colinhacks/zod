@@ -1,10 +1,11 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
 export interface ZodBigIntDef extends z.ZodTypeDef {
-  t: z.ZodTypes.bigint;
+  t: ZodTypes.bigint;
 }
 
 export class ZodBigInt extends z.ZodType<bigint, ZodBigIntDef> {
@@ -16,7 +17,7 @@ export class ZodBigInt extends z.ZodType<bigint, ZodBigIntDef> {
 
   static create = (): ZodBigInt => {
     return new ZodBigInt({
-      t: z.ZodTypes.bigint,
+      t: ZodTypes.bigint,
     });
   };
 }

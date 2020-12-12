@@ -11,36 +11,7 @@ import {
 import { MakeErrorData, ParseParams, ZodParser } from "../parser";
 import { ZodNullableType } from "./nullable";
 import { ZodOptionalType } from "./optional";
-
-export enum ZodTypes {
-  string = "string",
-  number = "number",
-  bigint = "bigint",
-  boolean = "boolean",
-  date = "date",
-  undefined = "undefined",
-  null = "null",
-  array = "array",
-  object = "object",
-  union = "union",
-  intersection = "intersection",
-  tuple = "tuple",
-  record = "record",
-  map = "map",
-  function = "function",
-  lazy = "lazy",
-  literal = "literal",
-  enum = "enum",
-  nativeEnum = "nativeEnum",
-  promise = "promise",
-  any = "any",
-  unknown = "unknown",
-  never = "never",
-  void = "void",
-  transformer = "transformer",
-  optional = "optional",
-  nullable = "nullable",
-}
+import { ZodTypes } from "../ZodTypes";
 
 export type ZodTypeAny = ZodType<any, any, any>;
 export type ZodRawShape = { [k: string]: ZodTypeAny };

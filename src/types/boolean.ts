@@ -1,10 +1,11 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
 export interface ZodBooleanDef extends z.ZodTypeDef {
-  t: z.ZodTypes.boolean;
+  t: ZodTypes.boolean;
 }
 
 export class ZodBoolean extends z.ZodType<boolean, ZodBooleanDef> {
@@ -15,7 +16,7 @@ export class ZodBoolean extends z.ZodType<boolean, ZodBooleanDef> {
   toJSON = () => this._def;
   static create = (): ZodBoolean => {
     return new ZodBoolean({
-      t: z.ZodTypes.boolean,
+      t: ZodTypes.boolean,
     });
   };
 }

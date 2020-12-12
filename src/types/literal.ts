@@ -3,11 +3,12 @@
 // import { ZodUnion } from './union';
 import { Primitive } from "../helpers/primitive";
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 
 type LiteralValue = Primitive;
 
 export interface ZodLiteralDef<T extends any = any> extends z.ZodTypeDef {
-  t: z.ZodTypes.literal;
+  t: ZodTypes.literal;
   value: T;
 }
 
@@ -20,7 +21,7 @@ export class ZodLiteral<T extends any> extends z.ZodType<T, ZodLiteralDef<T>> {
 
   static create = <T extends LiteralValue>(value: T): ZodLiteral<T> => {
     return new ZodLiteral({
-      t: z.ZodTypes.literal,
+      t: ZodTypes.literal,
       value: value,
     });
   };

@@ -1,7 +1,8 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 
 export interface ZodNeverDef extends z.ZodTypeDef {
-  t: z.ZodTypes.never;
+  t: ZodTypes.never;
 }
 
 export class ZodNever extends z.ZodType<never, ZodNeverDef> {
@@ -9,7 +10,7 @@ export class ZodNever extends z.ZodType<never, ZodNeverDef> {
 
   static create = (): ZodNever => {
     return new ZodNever({
-      t: z.ZodTypes.never,
+      t: ZodTypes.never,
     });
   };
 }

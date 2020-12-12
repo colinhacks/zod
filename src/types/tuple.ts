@@ -1,4 +1,5 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 // import { objectUtil } from '../helpers/objectUtil';
 // import { ZodUnion } from './union';
 // import { ZodUndefined } from './undefined';
@@ -50,7 +51,7 @@ export interface ZodTupleDef<
     ...z.ZodTypeAny[]
   ]
 > extends z.ZodTypeDef {
-  t: z.ZodTypes.tuple;
+  t: ZodTypes.tuple;
   items: T;
 }
 
@@ -77,7 +78,7 @@ export class ZodTuple<
     schemas: T
   ): ZodTuple<T> => {
     return new ZodTuple({
-      t: z.ZodTypes.tuple,
+      t: ZodTypes.tuple,
       items: schemas,
     });
   };

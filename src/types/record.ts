@@ -1,11 +1,12 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
 export interface ZodRecordDef<Value extends z.ZodTypeAny = z.ZodTypeAny>
   extends z.ZodTypeDef {
-  t: z.ZodTypes.record;
+  t: ZodTypes.record;
   valueType: Value;
 }
 
@@ -31,7 +32,7 @@ export class ZodRecord<
     valueType: Value
   ): ZodRecord<Value> => {
     return new ZodRecord({
-      t: z.ZodTypes.record,
+      t: ZodTypes.record,
       valueType,
     });
   };

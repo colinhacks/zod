@@ -1,5 +1,5 @@
 import * as z from "../index";
-import { ZodParsedType } from "../parser";
+import { ZodParsedType } from "../ZodParsedType";
 import { ZodError, ZodIssueCode } from "../ZodError";
 
 test("error creation", () => {

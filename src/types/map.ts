@@ -1,10 +1,11 @@
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 
 export interface ZodMapDef<
   Key extends z.ZodTypeAny = z.ZodTypeAny,
   Value extends z.ZodTypeAny = z.ZodTypeAny
 > extends z.ZodTypeDef {
-  t: z.ZodTypes.map;
+  t: ZodTypes.map;
   valueType: Value;
   keyType: Key;
 }
@@ -33,7 +34,7 @@ export class ZodMap<
     valueType: Value
   ): ZodMap<Key, Value> => {
     return new ZodMap({
-      t: z.ZodTypes.map,
+      t: ZodTypes.map,
       valueType,
       keyType,
     });

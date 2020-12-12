@@ -4,9 +4,10 @@ import { errorUtil } from "../helpers/errorUtil";
 // import { ZodUnion } from './union';
 import { StringValidation, ZodIssueCode } from "../ZodError";
 import * as z from "./base";
+import { ZodTypes } from "../ZodTypes"
 
 export interface ZodStringDef extends z.ZodTypeDef {
-  t: z.ZodTypes.string;
+  t: ZodTypes.string;
   validation: {
     uuid?: true;
     custom?: ((val: any) => boolean)[];
@@ -89,7 +90,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
 
   static create = (): ZodString => {
     return new ZodString({
-      t: z.ZodTypes.string,
+      t: ZodTypes.string,
       validation: {},
     });
   };
