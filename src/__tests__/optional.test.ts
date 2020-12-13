@@ -13,7 +13,7 @@ function checkErrors(a: z.ZodTypeAny, bad: any) {
   try {
     a.optional().parse(bad);
   } catch (error) {
-    expect(error.formErrors).toStrictEqual(expected);
+    expect(error.formErrors).toEqual(expected);
   }
 }
 

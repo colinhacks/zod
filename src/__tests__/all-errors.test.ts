@@ -16,7 +16,7 @@ test("all errors", () => {
       b: null,
     });
   } catch (error) {
-    expect(error.flatten()).toStrictEqual({
+    expect(error.flatten()).toEqual({
       formErrors: [],
       fieldErrors: {
         a: ["Expected string, received null"],
