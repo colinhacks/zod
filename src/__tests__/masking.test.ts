@@ -1,3 +1,6 @@
+// @ts-ignore TS6133
+import { describe, expect, test } from "@jest/globals";
+
 import * as z from "..";
 
 test("masking test", () => {});

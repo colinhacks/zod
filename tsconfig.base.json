@@ -15,7 +15,8 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "downlevelIteration": true
+    "downlevelIteration": true,
+    "isolatedModules": true
   },
   "include": ["./src/**/*", "./.eslintrc.js"]
 }

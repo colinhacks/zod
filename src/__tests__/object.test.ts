@@ -1,3 +1,6 @@
+// @ts-ignore TS6133
+import { describe, expect, test } from "@jest/globals";
+
 import { util } from "../helpers/util";
 import * as z from "../index";
 
