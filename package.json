@@ -32,8 +32,11 @@
     "inference"
   ],
   "scripts": {
+    "check:format": "prettier --check \"src/**/*.ts\"",
     "fix:format": "prettier --write \"src/**/*.ts\"",
+    "check:lint": "eslint --ext .ts ./src",
     "fix:lint": "eslint --fix --ext .ts ./src",
+    "check": "yarn check:lint && yarn check:format",
     "fix": "yarn fix:lint && yarn fix:format",
     "clean": "rm -rf lib/*",
     "build": "yarn run clean && tsc --p tsconfig.cjs.json",

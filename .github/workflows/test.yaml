@@ -1,0 +1,41 @@
+name: Test and Lint
+
+on:
+  push:
+  create:
+  pull_request:
+  schedule:
+    - cron: '44 4 * * SAT'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: Ubuntu-20.04
+    strategy:
+      matrix:
+        node: [ '14' ]
+        typescript: [ '3.8', '4.1' ]
+    name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - run: yarn install
+      - run: yarn add typescript@${{ matrix.typescript }}
+      - run: yarn build
+      - run: yarn test
+
+  lint:
+    needs:
+      - test
+    runs-on: Ubuntu-20.04
+    name: Lint
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - run: yarn install
+      - run: yarn check:format
+      - run: yarn check:lint
