@@ -39,11 +39,9 @@ jobs:
           deno-version: ${{ matrix.deno }}
       - run: deno test
         working-directory: ./deno/lib
+      - run: deno run ./index.ts
+        working-directory: ./deno/lib
       - run: deno run ./mod.ts
-        working-directory: ./deno/lib
-      - run: deno bundle ./mod.ts ./bundle.js
-        working-directory: ./deno/lib
-      - run: deno run ./bundle.js
         working-directory: ./deno/lib
 
   lint:
