@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-test("", () => {});
+test("test", () => {});
 // import * as z from '../index';
 
 // interface A {

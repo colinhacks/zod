@@ -2,8 +2,8 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import * as z from "../index.ts";
 import { util } from "../helpers/util.ts";
+import * as z from "../index.ts";
 
 const stringToNumber = z.string().transform((arg) => parseFloat(arg));
 // const numberToString = z
@@ -43,7 +43,6 @@ test("async coercion", async () => {
     .parseAsync({ id: 5 });
 
   expect(data).toEqual({ id: "5" });
-  return "asdf";
 });
 
 test("sync coercion async error", async () => {
@@ -54,7 +53,6 @@ test("sync coercion async error", async () => {
       })
       .parse({ id: 5 })
   ).toThrow();
-  return "asdf";
   // expect(data).toEqual({ id: '5' });
 });
 

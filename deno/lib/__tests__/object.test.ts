@@ -269,7 +269,6 @@ test("test nonexistent keys", async () => {
   const obj = { a: "A" };
   const result = await Schema.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
   expect(result.success).toBe(true);
-  return result;
 });
 
 test("test async PseudoPromise.all", async () => {
@@ -285,5 +284,4 @@ test("test async PseudoPromise.all", async () => {
   const obj = { ty: "A" };
   const result = await Schema2.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
   expect(result.success).toEqual(true);
-  return result;
 });

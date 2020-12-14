@@ -4,7 +4,7 @@ const test = Deno.test;
 
 import * as z from "../index.ts";
 
-test("", () => {
+test("test", () => {
   z;
 });
 
