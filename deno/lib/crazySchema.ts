@@ -5,7 +5,7 @@ export const crazySchema = z.object({
     z.string().nullable().optional(),
     z.number().nullable().optional(),
     z.boolean().nullable().optional(),
-    z.null().nullable().optional(),
+    z.nullValue().nullable().optional(),
     z.undefined().nullable().optional(),
     z.literal("1234").nullable().optional(),
   ]),
@@ -24,10 +24,13 @@ export const crazySchema = z.object({
     z.object({ p1: z.string().optional() }),
     z.object({ p1: z.number().optional() })
   ),
-  enum: z.intersection(z.enum(["zero", "one"]), z.enum(["one", "two"])),
+  enum: z.intersection(
+    z.enumeration(["zero", "one"]),
+    z.enumeration(["one", "two"])
+  ),
   nonstrict: z.object({ points: z.number() }).nonstrict(),
   numProm: z.promise(z.number()),
-  lenfun: z.function(z.tuple([z.string()]), z.boolean()),
+  lenfun: z.fn(z.tuple([z.string()]), z.boolean()),
 });
 
 export const asyncCrazySchema = crazySchema.extend({

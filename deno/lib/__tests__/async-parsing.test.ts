@@ -95,7 +95,7 @@ test("undefined async parse", async () => {
 });
 
 /// null
-const nullSchema = z.null();
+const nullSchema = z.nullValue();
 test("null async parse", async () => {
   const goodData = null;
   const badData = undefined;
@@ -236,7 +236,7 @@ test("record async parse", async () => {
 });
 
 /// function
-const functionSchema = z.function();
+const functionSchema = z.fn();
 test("function async parse", async () => {
   const goodData = () => {};
   const badData = "XXX";
@@ -266,7 +266,7 @@ test("literal async parse", async () => {
 });
 
 /// enum
-const enumSchema = z.enum(["fish", "whale"]);
+const enumSchema = z.enumeration(["fish", "whale"]);
 test("enum async parse", async () => {
   const goodData = "whale";
   const badData = "leopard";

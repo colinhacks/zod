@@ -17,7 +17,7 @@ const badData = [123, { name: "Rudy2" }, ["blue", "red"]];
 test("tuple inference", () => {
   const args1 = z.tuple([z.string()]);
   const returns1 = z.number();
-  const func1 = z.function(args1, returns1);
+  const func1 = z.fn(args1, returns1);
   type func1 = z.TypeOf<typeof func1>;
   const t1: util.AssertEqual<func1, (k: string) => number> = true;
   [t1];

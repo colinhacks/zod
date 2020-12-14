@@ -79,7 +79,7 @@ class ZodError extends Error {
 const undefined = undefinedType1;
 const union = unionType1;
 const unknown = unknownType1;
-const void = voidType1;
+const voidReturn = voidType1;
 const Schema = ZodType;
 const ZodSchema = ZodType;
 const ZodIssueCode1 = ZodIssueCode;
@@ -691,7 +691,7 @@ const instanceOfType1 = (cls, params = {
     , params)
 ;
 const custom1 = custom;
-const instanceof = instanceOfType1;
+const instanceOf = instanceOfType1;
 const oboolean1 = oboolean;
 const onumber1 = onumber;
 const ostring1 = ostring;
@@ -2175,15 +2175,15 @@ const late = {
 const bigint = bigIntType1;
 const boolean = booleanType1;
 const date = dateType1;
-const enum = enumType1;
-const function = functionType1;
+const enumeration = enumType1;
+const fn = functionType1;
 const intersection = intersectionType1;
 const lazy = lazyType1;
 const literal = literalType1;
 const map = mapType1;
 const nativeEnum = nativeEnumType1;
 const never = neverType1;
-const null = nullType1;
+const nullValue = nullType1;
 const nullable = nullableType1;
 const number = numberType1;
 const object = objectType1;
@@ -2327,4 +2327,4 @@ const array = arrayType1;
 const ZodAny1 = ZodAny;
 const ZodArray1 = ZodArray;
 const ZodArray2 = ZodArray;
-export { ZodTypes1 as ZodTypes, custom1 as custom, anyType as any, arrayType as array, bigIntType as bigint, booleanType as boolean, codegen1 as codegen, dateType as date, enumType as enum, functionType as function, instanceOfType as instanceof, intersectionType as intersection, lazyType as lazy, literalType as literal, mapType as map, nativeEnumType as nativeEnum, neverType as never, nullType as null, nullableType as nullable, numberType as number, objectType as object, oboolean1 as oboolean, onumber1 as onumber, optionalType as optional, ostring1 as ostring, promiseType as promise, recordType as record, stringType as string, transformerType as transformer, tupleType as tuple, undefinedType as undefined, unionType as union, unknownType as unknown, voidType as void, late1 as late, ZodType as Schema, ZodAny1 as ZodAny, ZodArray1 as ZodArray, ZodBigInt1 as ZodBigInt, ZodBoolean1 as ZodBoolean, ZodCodeGenerator1 as ZodCodeGenerator, ZodDate1 as ZodDate, ZodEnum1 as ZodEnum, ZodFunction1 as ZodFunction, ZodIntersection1 as ZodIntersection, ZodLazy1 as ZodLazy, ZodLiteral1 as ZodLiteral, ZodNativeEnum1 as ZodNativeEnum, ZodNever2 as ZodNever, ZodNull1 as ZodNull, ZodNullable1 as ZodNullable, ZodNumber1 as ZodNumber, ZodObject1 as ZodObject, ZodOptional1 as ZodOptional, ZodParsedType1 as ZodParsedType, ZodPromise1 as ZodPromise, ZodRecord1 as ZodRecord, ZodType as ZodSchema, ZodString1 as ZodString, ZodTransformer1 as ZodTransformer, ZodTuple1 as ZodTuple, ZodIssueCode1 as ZodIssueCode, quotelessJson1 as quotelessJson, ZodError1 as ZodError };
+export { ZodTypes1 as ZodTypes, custom1 as custom, anyType as any, arrayType as array, bigIntType as bigint, booleanType as boolean, codegen1 as codegen, dateType as date, enumType as enumeration, functionType as fn, instanceOfType as instanceOf, intersectionType as intersection, lazyType as lazy, literalType as literal, mapType as map, nativeEnumType as nativeEnum, neverType as never, nullType as nullValue, nullableType as nullable, numberType as number, objectType as object, oboolean1 as oboolean, onumber1 as onumber, optionalType as optional, ostring1 as ostring, promiseType as promise, recordType as record, stringType as string, transformerType as transformer, tupleType as tuple, undefinedType as undefined, unionType as union, unknownType as unknown, voidType as voidReturn, late1 as late, ZodType as Schema, ZodAny1 as ZodAny, ZodArray1 as ZodArray, ZodBigInt1 as ZodBigInt, ZodBoolean1 as ZodBoolean, ZodCodeGenerator1 as ZodCodeGenerator, ZodDate1 as ZodDate, ZodEnum1 as ZodEnum, ZodFunction1 as ZodFunction, ZodIntersection1 as ZodIntersection, ZodLazy1 as ZodLazy, ZodLiteral1 as ZodLiteral, ZodNativeEnum1 as ZodNativeEnum, ZodNever2 as ZodNever, ZodNull1 as ZodNull, ZodNullable1 as ZodNullable, ZodNumber1 as ZodNumber, ZodObject1 as ZodObject, ZodOptional1 as ZodOptional, ZodParsedType1 as ZodParsedType, ZodPromise1 as ZodPromise, ZodRecord1 as ZodRecord, ZodType as ZodSchema, ZodString1 as ZodString, ZodTransformer1 as ZodTransformer, ZodTuple1 as ZodTuple, ZodIssueCode1 as ZodIssueCode, quotelessJson1 as quotelessJson, ZodError1 as ZodError };

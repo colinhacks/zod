@@ -41,9 +41,9 @@ jobs:
         working-directory: ./deno/lib
       - run: deno run ./mod.ts
         working-directory: ./deno/lib
-      - run: deno bundle ./mod.ts ./bundle.js
+      - run: deno bundle ./mod.ts ./mod.bundle.cjs
         working-directory: ./deno/lib
-      - run: deno run ./bundle.js
+      - run: deno run ./mod.bundle.cjs
         working-directory: ./deno/lib
 
   lint:

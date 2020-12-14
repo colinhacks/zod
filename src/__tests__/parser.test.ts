@@ -39,7 +39,7 @@ test("incorrect num elements in tuple", () => {
 });
 
 test("invalid enum value", () => {
-  expect(() => z.enum(["Blue"]).parse("Red" as any)).toThrow();
+  expect(() => z.enumeration(["Blue"]).parse("Red" as any)).toThrow();
 });
 
 test("parsing unknown", () => {

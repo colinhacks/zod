@@ -58,7 +58,7 @@ test("promise parsing fail", () => {
 //   expect(() => z.promise(z.string()).parse(Promise.resolve('asfd'))).toThrow();
 // });
 
-const asyncFunction = z.function(z.tuple([]), promSchema);
+const asyncFunction = z.fn(z.tuple([]), promSchema);
 
 test("async function pass", async () => {
   const validatedFunction = asyncFunction.implement(async () => {
