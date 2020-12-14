@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  test-node:
     runs-on: Ubuntu-20.04
     strategy:
       matrix:
@@ -26,11 +26,24 @@ jobs:
       - run: yarn build
       - run: yarn test
 
-  lint:
-    needs:
-      - test
+  test-deno:
     runs-on: Ubuntu-20.04
-    name: Lint
+    strategy:
+      matrix:
+        deno: [ '1.5' ]
+    name: Test with Deno ${{ matrix.deno }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: denolib/setup-deno@v2
+        with:
+          deno-version: ${{ matrix.deno }}
+
+  lint:
+    runs-on: Ubuntu-20.04
+    strategy:
+      matrix:
+        node: [ '14' ]
+    name: Lint on Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1

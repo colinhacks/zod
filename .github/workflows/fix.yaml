@@ -17,11 +17,13 @@ jobs:
         with:
           node-version: 14
       - run: yarn install
-      - run: yarn fix:format
       - run: yarn fix:lint
+      - run: yarn build:deno
+      - run: yarn fix:format
       - name: Check for Changes
         id: check
         run: |
+          git add .
           git status
           declare had_changes="$(
             [[ -n "$(git status --porcelain)" ]] && echo true || echo false

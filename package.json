@@ -32,8 +32,8 @@
     "inference"
   ],
   "scripts": {
-    "check:format": "prettier --check \"src/**/*.ts\"",
-    "fix:format": "prettier --write \"src/**/*.ts\"",
+    "check:format": "prettier --check \"src/**/*.ts\" \"deno/lib/**/*.ts\"",
+    "fix:format": "prettier --write \"src/**/*.ts\" \"deno/lib/**/*.ts\"",
     "check:lint": "eslint --ext .ts ./src",
     "fix:lint": "eslint --fix --ext .ts ./src",
     "check": "yarn check:lint && yarn check:format",

@@ -5,8 +5,12 @@
 //
 // @ts-check
 
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'fs';
-import { dirname, join } from 'path';
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'fs';
+import { dirname } from 'path';
+
+// Node's path.join() normalize explicitly-relative paths like "./index.ts" to
+// paths like "index.ts" which don't work as relative ES imports, so we do this.
+const join = (/** @type string[] */ ...parts) => parts.join('/');
 
 const projectRoot = process.cwd();
 const nodeSrcRoot = join(projectRoot, "src");
@@ -36,12 +40,24 @@ const walkAndBuild = (/** @type string */ dir) => {
           const targetNodePathIfFile = targetNodePath + '.ts';
           const targetNodePathIfDir = join(targetNodePath, 'index.ts');
 
-          if (statSync(targetNodePathIfFile)?.isFile()) {
-            return line.replace(target, target + '.ts');
+          try {
+            if (statSync(targetNodePathIfFile)?.isFile()) {
+              return line.replace(target, target + '.ts');
+            }
+          } catch (error) {
+            if (error?.code !== 'ENOENT') {
+              throw error;
+            }
           }
 
-          if (statSync(targetNodePathIfDir)?.isFile()) {
-            return line.replace(target, join(target, 'index.ts'));
+          try {
+            if (statSync(targetNodePathIfDir)?.isFile()) {
+              return line.replace(target, join(target, 'index.ts'));
+            }
+          } catch (error) {
+            if (error?.code !== 'ENOENT') {
+              throw error;
+            }
           }
 
           console.warn(`Skipping non-resolvable import:\n  ${line}`);
@@ -49,9 +65,10 @@ const walkAndBuild = (/** @type string */ dir) => {
         },
       );
 
+      mkdirSync(dirname(denoPath), {recursive: true});
       writeFileSync(denoPath, denoSource, {encoding: "utf-8"});
     }
   }
 };
 
-walkAndBuild('./');
+walkAndBuild('');
