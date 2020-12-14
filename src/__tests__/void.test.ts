@@ -4,7 +4,7 @@ import { expect, test } from "@jest/globals";
 import { util } from "../helpers/util";
 import * as z from "../index";
 test("void", () => {
-  const v = z.voidReturn();
+  const v = z.void();
   v.parse(null);
   v.parse(undefined);
 

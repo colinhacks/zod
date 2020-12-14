@@ -9,8 +9,8 @@ test("instanceof", async () => {
   class Test {}
   class Subtest extends Test {}
 
-  const TestSchema = z.instanceOf(Test);
-  const SubtestSchema = z.instanceOf(Subtest);
+  const TestSchema = z.instanceof(Test);
+  const SubtestSchema = z.instanceof(Subtest);
 
   TestSchema.parse(new Test());
   TestSchema.parse(new Subtest());

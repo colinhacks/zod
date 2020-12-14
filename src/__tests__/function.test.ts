@@ -6,7 +6,7 @@ import * as z from "../index";
 
 const args1 = z.tuple([z.string()]);
 const returns1 = z.number();
-const func1 = z.fn(args1, returns1);
+const func1 = z.function(args1, returns1);
 
 test("function parsing", () => {
   const parsed = func1.parse((arg: any) => arg.length);
@@ -30,7 +30,7 @@ test("function inference 1", () => {
 });
 
 test("args method", () => {
-  const t1 = z.fn();
+  const t1 = z.function();
   type t1 = z.infer<typeof t1>;
   const f1: util.AssertEqual<t1, () => void> = true;
 
@@ -56,7 +56,7 @@ const args2 = z.tuple([
 ]);
 const returns2 = z.union([z.string(), z.number()]);
 
-const func2 = z.fn(args2, returns2);
+const func2 = z.function(args2, returns2);
 
 test("function inference 2", () => {
   type func2 = z.TypeOf<typeof func2>;
@@ -116,9 +116,11 @@ test("output validation error", () => {
 });
 
 test("special function error codes", () => {
-  const checker = z.fn(z.tuple([z.string()]), z.boolean()).implement((arg) => {
-    return arg.length as any;
-  });
+  const checker = z
+    .function(z.tuple([z.string()]), z.boolean())
+    .implement((arg) => {
+      return arg.length as any;
+    });
   try {
     checker("12" as any);
   } catch (err) {
@@ -141,7 +143,7 @@ test("special function error codes", () => {
 
 test("function with async refinements", async () => {
   const func = z
-    .fn()
+    .function()
     .args(z.string().refine(async (val) => val.length > 10))
     .returns(z.promise(z.number().refine(async (val) => val > 10)))
     .implement(async (val) => {
@@ -166,7 +168,7 @@ test("function with async refinements", async () => {
 
 test("non async function with async refinements should fail", async () => {
   const func = z
-    .fn()
+    .function()
     .args(z.string().refine(async (val) => val.length > 10))
     .returns(z.number().refine(async (val) => val > 10))
     .implement((val) => {

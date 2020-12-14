@@ -229,8 +229,8 @@ z.date();
 
 // empty types
 z.undefined();
-z.nullValue();
-z.voidReturn();
+z.null();
+z.void();
 
 // catch-all types
 z.any();
@@ -516,10 +516,10 @@ const dogSchema = z.object({
 });
 
 type Dog = z.infer<typeof dogSchema>;
-/*
+/* 
 equivalent to:
-type Dog = {
-  name: string;
+type Dog = { 
+  name: string; 
   age: number;
 }
 */
@@ -674,7 +674,7 @@ We can create a partial version:
 ```ts
 const partialUser = user.partial();
 /*
-{
+{ 
   username?: string | undefined,
   location?: {
     city: number;
@@ -695,9 +695,9 @@ Or you can use `.deepPartial` :
 ```ts
 const deepPartialUser = user.deepPartial();
 
-/*
+/* 
 {
-  username?: string | undefined,
+  username?: string | undefined, 
   location?: {
     latitude?: number | undefined;
     longitude?: number | undefined;
@@ -1081,16 +1081,16 @@ FishEnum.parse('Salmon'); // => "Salmon"
 FishEnum.parse('Flounder'); // => throws
 ```
 
-For convenience Zod provides a built-in `z.enumeration()` function. Here's is the equivalent code:
+For convenience Zod provides a built-in `z.enum()` function. Here's is the equivalent code:
 
 ```ts
-const FishEnum = z.enumeration(['Salmon', 'Tuna', 'Trout']);
+const FishEnum = z.enum(['Salmon', 'Tuna', 'Trout']);
 
 type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
-> Important! You need to pass the literal array _directly_ into z.enumeration(). Do not define it separately, than pass it in as a variable! This is required for proper type inference.
+> Important! You need to pass the literal array _directly_ into z.enum(). Do not define it separately, than pass it in as a variable! This is required for proper type inference.
 
 **Autocompletion**
 
@@ -1100,12 +1100,12 @@ To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 FishEnum.enum.Salmon; // => autocompletes
 
 FishEnum.enum;
-/*
+/* 
 => {
   Salmon: "Salmon",
   Tuna: "Tuna",
   Trout: "Trout",
-}
+} 
 */
 ```
 
@@ -1294,7 +1294,7 @@ If you want to validate any JSON value, you can use the snippet below. This requ
 ```ts
 type Literal = boolean | null | number | string;
 type Json = Literal | { [key: string]: Json } | Json[];
-const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.nullValue()]);
+const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
   z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)]),
 );
@@ -1366,16 +1366,16 @@ type StringNumberMap = z.infer<typeof stringNumberMap>;
 // type StringNumber = Map<string, number>
 ```
 
-## InstanceOf
+## Instanceof
 
-You can use `z.instanceOf` to create a schema that checks if the input is an instance of a class.
+You can use `z.instanceof` to create a schema that checks if the input is an instance of a class.
 
 ```ts
 class Test {
   name: string;
 }
 
-const TestSchema = z.instanceOf(Test);
+const TestSchema = z.instanceof(Test);
 
 const blob: any = 'whatever';
 if (TestSchema.check(blob)) {
@@ -1387,10 +1387,10 @@ if (TestSchema.check(blob)) {
 
 Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".
 
-You can create a function schema with `z.fn(args, returnType)` .
+You can create a function schema with `z.function(args, returnType)` .
 
 ```ts
-const myFunction = z.fn();
+const myFunction = z.function();
 
 type myFunction = z.infer<typeof myFunction>;
 // => ()=>unknown
@@ -1400,19 +1400,19 @@ You can use the `.args` and `.returns` methods to refine your function schema:
 
 ```ts
 const myFunction = z
-  .fn()
+  .function()
   .args(z.string(), z.number()) // accepts an arbitrary number of arguments
   .returns(z.boolean());
 type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string, arg1: number)=>boolean
 ```
 
-<!-- `z.fn()` accepts two arguments:
+<!-- `z.function()` accepts two arguments:
 
 * `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
 * `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema. -->
 
-> You can use the special `z.voidReturn()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning function can actually return either undefined or null.)
+> You can use the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning function can actually return either undefined or null.)
 
 <!--
 
@@ -1421,7 +1421,7 @@ const args = z.tuple([z.string()]);
 
 const returnType = z.number();
 
-const myFunction = z.fn(args, returnType);
+const myFunction = z.function(args, returnType);
 type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string)=>number
 ``` -->
@@ -1430,7 +1430,7 @@ Function schemas have an `.implement()` method which accepts a function and retu
 
 ```ts
 const trimmedLength = z
-  .fn()
+  .function()
   .args(z.string()) // accepts an arbitrary number of arguments
   .returns(z.number())
   .implement(x => {
@@ -1448,7 +1448,7 @@ Here's a more complex example showing how to write a typesafe API query endpoint
 
 ```ts
 const FetcherEndpoint = z
-  .fn(args, returnType)
+  .function(args, returnType)
   .args(z.object({ id: z.string() }))
   .returns(
     z.promise(

@@ -5,7 +5,7 @@ const test = Deno.test;
 import { util } from "../helpers/util.ts";
 import * as z from "../index.ts";
 test("void", () => {
-  const v = z.voidReturn();
+  const v = z.void();
   v.parse(null);
   v.parse(undefined);
 

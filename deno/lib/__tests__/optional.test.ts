@@ -27,8 +27,8 @@ test("Should have error messages appropriate for the underlying type", () => {
   z.boolean().optional().parse(undefined);
   checkErrors(z.undefined(), null);
   z.undefined().optional().parse(undefined);
-  checkErrors(z.nullValue(), {});
-  z.nullValue().optional().parse(undefined);
+  checkErrors(z.null(), {});
+  z.null().optional().parse(undefined);
   checkErrors(z.object({}), 1);
   z.object({}).optional().parse(undefined);
   checkErrors(z.tuple([]), 1);
