@@ -242,10 +242,11 @@ test("parse dateSchema null", () => {
 });
 
 test("parse dateSchema invalid date", async () => {
-  expect.assertions(1);
-  return await dateSchema.parseAsync(new Date("invalid")).catch((err) => {
+  try {
+    await dateSchema.parseAsync(new Date("invalid"));
+  } catch (err) {
     expect(err.issues[0].code).toEqual(z.ZodIssueCode.invalid_date);
-  });
+  }
 });
 // ==============
 
