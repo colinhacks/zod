@@ -37,6 +37,10 @@ jobs:
       - uses: denolib/setup-deno@v2
         with:
           deno-version: ${{ matrix.deno }}
+      - run: deno test
+        working-directory: ./deno/lib
+      - run: deno bundle ./mod.ts /dev/null
+        working-directory: ./deno/lib
 
   lint:
     runs-on: Ubuntu-20.04

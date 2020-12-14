@@ -33,7 +33,7 @@ const walkAndBuild = (/** @type string */ dir) => {
         /^(?:import|export)[\s\S]*?from\s*['"]([^'"]*)['"];$/gm,
         (line, target) => {
           if (target === '@jest/globals') {
-            return `import { expect } from 'https://deno.land/x/expect@v0.2.6/mod.ts';\nconst test = Deno.test;`;
+            return `import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";\nconst test = Deno.test;`;
           }
 
           const targetNodePath = join(dirname(nodePath), target);
@@ -72,3 +72,9 @@ const walkAndBuild = (/** @type string */ dir) => {
 };
 
 walkAndBuild('');
+
+writeFileSync(join(denoLibRoot, "mod.ts"), `\
+export * from "./index.ts";
+import * as zod from "./index.ts";
+export default zod;
+`, {encoding: "utf-8"});
