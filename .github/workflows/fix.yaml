@@ -39,8 +39,8 @@ jobs:
           declare short_hash="$(git rev-parse --short=8 HEAD)"
           declare short_subject="$(git log -1 --pretty=format:'%s')"
           declare short_subject="$(git log -1 --pretty=format:'%s')"
-          if [[ ${#short_subject} -gt 50 ]]; then
-            short_subject="${short_subject:0:49}…"
+          if [[ ${#short_subject} -gt 17 ]]; then
+            short_subject="${short_subject:0:16}…"
           fi
           declare author_name="$(git log -1 --pretty=format:'%an')"
           declare author_email="$(git log -1 --pretty=format:'%ae')"
@@ -55,5 +55,5 @@ jobs:
           git remote add origin "https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
           git checkout "${branch}"
           git add .
-          git commit -m "fix ${short_hash} (${short_subject})${br}${br}${current_action_url}"
+          git commit -m "chore: automatic fixes and code generation for ${short_hash} (${short_subject})${br}${br}${current_action_url}"
           git push --set-upstream origin "${branch}"
