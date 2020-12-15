@@ -1490,20 +1490,16 @@ Doesn't support static type inference 😕 Immediate disqualification, sorry Joi
 
 [https://github.com/jquense/yup](https://github.com/jquense/yup)
 
-Yup is a full-featured library that was implemented first in vanilla JS, with TypeScript typings added later.
+Yup is a full-featured library that was implemented first in vanilla JS, and later rewritten in TypeScript.
 
 Differences
 
 - Supports for casting and transformation
 - All object fields are optional by default
-- Non-standard `.required()`¹
-- Missing object methods: (pick, omit, partial, deepPartial, merge, extend)
-- Missing nonempty arrays with proper typing (`[T, ...T[]]`)
+- Missing object methods: (partial, deepPartial)
 - Missing promise schemas
 - Missing function schemas
 - Missing union & intersection schemas
-
-¹ Yup has a strange interpretation of the `.required()` is odd and non-standard. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. For Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom validator.
 
 #### io-ts
 
