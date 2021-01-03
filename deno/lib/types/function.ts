@@ -1,26 +1,28 @@
-import * as z from "./base.ts";
+import { ZodTypes } from "../ZodTypes.ts";
+import { ZodType, ZodTypeDef, ZodTypeAny } from "./base.ts";
+
 import { ZodTuple } from "./tuple.ts";
 import { ZodUnknown } from "./unknown.ts";
 
 export interface ZodFunctionDef<
   Args extends ZodTuple<any> = ZodTuple<any>,
-  Returns extends z.ZodTypeAny = z.ZodTypeAny
-> extends z.ZodTypeDef {
-  t: z.ZodTypes.function;
+  Returns extends ZodTypeAny = ZodTypeAny
+> extends ZodTypeDef {
+  t: ZodTypes.function;
   args: Args;
   returns: Returns;
 }
 
 export type OuterTypeOfFunction<
   Args extends ZodTuple<any>,
-  Returns extends z.ZodTypeAny
+  Returns extends ZodTypeAny
 > = Args["_input"] extends Array<any>
   ? (...args: Args["_input"]) => Returns["_output"]
   : never;
 
 export type InnerTypeOfFunction<
   Args extends ZodTuple<any>,
-  Returns extends z.ZodTypeAny
+  Returns extends ZodTypeAny
 > = Args["_output"] extends Array<any>
   ? (...args: Args["_output"]) => Returns["_input"]
   : never;
@@ -28,8 +30,8 @@ export type InnerTypeOfFunction<
 // type as df = string extends unknown  ? true : false
 export class ZodFunction<
   Args extends ZodTuple<any>,
-  Returns extends z.ZodTypeAny
-> extends z.ZodType<
+  Returns extends ZodTypeAny
+> extends ZodType<
   OuterTypeOfFunction<Args, Returns>,
   ZodFunctionDef,
   InnerTypeOfFunction<Args, Returns>
@@ -46,7 +48,7 @@ export class ZodFunction<
     });
   };
 
-  returns = <NewReturnType extends z.ZodType<any, any>>(
+  returns = <NewReturnType extends ZodType<any, any>>(
     returnType: NewReturnType
   ): ZodFunction<Args, NewReturnType> => {
     return new ZodFunction({
@@ -64,13 +66,13 @@ export class ZodFunction<
 
   static create = <
     T extends ZodTuple<any> = ZodTuple<[]>,
-    U extends z.ZodTypeAny = ZodUnknown
+    U extends ZodTypeAny = ZodUnknown
   >(
     args?: T,
     returns?: U
   ): ZodFunction<T, U> => {
     return new ZodFunction({
-      t: z.ZodTypes.function,
+      t: ZodTypes.function,
       args: args || ZodTuple.create([]),
       returns: returns || ZodUnknown.create(),
     });
