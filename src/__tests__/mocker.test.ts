@@ -1,3 +1,6 @@
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
+
 import { Mocker } from "../helpers/Mocker";
 
 test("mocker", () => {

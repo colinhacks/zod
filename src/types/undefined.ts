@@ -1,12 +1,13 @@
-import * as z from "./base";
+import { ZodTypes } from "../ZodTypes";
+import { ZodType, ZodTypeDef } from "./base";
 // import { ZodUnion } from './union';
 // import { ZodNull } from './null';
 
-export interface ZodUndefinedDef extends z.ZodTypeDef {
-  t: z.ZodTypes.undefined;
+export interface ZodUndefinedDef extends ZodTypeDef {
+  t: ZodTypes.undefined;
 }
 
-export class ZodUndefined extends z.ZodType<undefined> {
+export class ZodUndefined extends ZodType<undefined> {
   toJSON = () => this._def;
 
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
@@ -15,7 +16,7 @@ export class ZodUndefined extends z.ZodType<undefined> {
 
   static create = (): ZodUndefined => {
     return new ZodUndefined({
-      t: z.ZodTypes.undefined,
+      t: ZodTypes.undefined,
     });
   };
 }

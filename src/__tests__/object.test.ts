@@ -1,3 +1,6 @@
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
+
 import { util } from "../helpers/util";
 import * as z from "../index";
 
@@ -68,8 +71,8 @@ test("inference", () => {
   type i2 = z.infer<typeof i2>;
   const f2: util.AssertEqual<i2, { obj: {}; arrayarray: string[][] }> = true;
 
-  f1;
-  f2;
+  expect(f1).toBeTruthy();
+  expect(f2).toBeTruthy();
   i1.parse({ name: "name" });
   i2.parse({ obj: {}, arrayarray: [["asdf"]] });
   expect(() => i1.parse({} as any)).toThrow();
@@ -255,7 +258,6 @@ test("test catchall parsing", async () => {
     .safeParse({ name: "Foo", validExtraKey: 61, invalid: "asdf" });
 
   expect(result2.success).toEqual(false);
-  return result2;
 });
 
 test("test nonexistent keys", async () => {
@@ -266,7 +268,6 @@ test("test nonexistent keys", async () => {
   const obj = { a: "A" };
   const result = await Schema.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
   expect(result.success).toBe(true);
-  return result;
 });
 
 test("test async PseudoPromise.all", async () => {
@@ -282,5 +283,4 @@ test("test async PseudoPromise.all", async () => {
   const obj = { ty: "A" };
   const result = await Schema2.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
   expect(result.success).toEqual(true);
-  return result;
 });

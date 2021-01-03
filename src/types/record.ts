@@ -1,17 +1,17 @@
-import * as z from "./base";
+import { ZodTypes } from "../ZodTypes";
+import { ZodType, ZodTypeDef, ZodTypeAny } from "./base";
+
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
-export interface ZodRecordDef<Value extends z.ZodTypeAny = z.ZodTypeAny>
-  extends z.ZodTypeDef {
-  t: z.ZodTypes.record;
+export interface ZodRecordDef<Value extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  t: ZodTypes.record;
   valueType: Value;
 }
 
-export class ZodRecord<
-  Value extends z.ZodTypeAny = z.ZodTypeAny
-> extends z.ZodType<
+export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
   Record<string, Value["_output"]>, // { [k in keyof T]: T[k]['_type'] },
   ZodRecordDef<Value>,
   Record<string, Value["_input"]>
@@ -27,11 +27,11 @@ export class ZodRecord<
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  static create = <Value extends z.ZodTypeAny = z.ZodTypeAny>(
+  static create = <Value extends ZodTypeAny = ZodTypeAny>(
     valueType: Value
   ): ZodRecord<Value> => {
     return new ZodRecord({
-      t: z.ZodTypes.record,
+      t: ZodTypes.record,
       valueType,
     });
   };

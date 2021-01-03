@@ -1,6 +1,9 @@
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
+
 import * as z from "../index";
 
-test("", () => {
+test("test", () => {
   z;
 });
 
@@ -74,7 +77,7 @@ test("", () => {
 //   const f10 = nonStrict.pick({ name: true });
 //   f10.parse({ name: 'a' });
 //   const val = f10.parse({ name: 'a', color: 'b' });
-//   expect(val).toStrictEqual({ name: 'a' });
+//   expect(val).toEqual({ name: 'a' });
 // });
 // test('f12', () => {
 //   const badfcheck12 = () => nonStrict.omit({ color: true, asdf: true });

@@ -1,3 +1,6 @@
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
+
 import * as z from "..";
 
 /// string
@@ -340,7 +343,7 @@ test("async validation non-empty strings", async () => {
   const result2 = base.safeParseAsync(testval);
 
   const r1 = result1;
-  return result2.then((r2) => {
+  await result2.then((r2) => {
     if (r1.success === false && r2.success === false)
       expect(r1.error.issues.length).toBe(r2.error.issues.length); // <--- r1 has length 2, r2 has length 1
   });
@@ -357,7 +360,7 @@ test("async validation multiple errors 1", async () => {
   const result2 = base.safeParseAsync(testval);
 
   const r1 = result1;
-  return result2.then((r2) => {
+  await result2.then((r2) => {
     if (r1.success === false && r2.success === false)
       expect(r2.error.issues.length).toBe(r1.error.issues.length);
   });
@@ -377,7 +380,7 @@ test("async validation multiple errors 2", async () => {
   const result2 = base(true).safeParseAsync(testval);
 
   const r1 = result1;
-  return result2.then((r2) => {
+  await result2.then((r2) => {
     if (r1.success === false && r2.success === false)
       expect(r2.error.issues.length).toBe(r1.error.issues.length);
   });
@@ -402,7 +405,7 @@ test("ensure early async failure prevents follow-up refinement checks", async ()
   const testval = { hello: "bye", foo: 3 };
   const result = base.safeParseAsync(testval);
 
-  return result.then((r) => {
+  await result.then((r) => {
     if (r.success === false) expect(r.error.issues.length).toBe(1);
     expect(count).toBe(2);
   });

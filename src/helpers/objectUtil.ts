@@ -1,6 +1,9 @@
-import { ZodRawShape, ZodTypes } from "../types/base";
-import { ZodIntersection } from "../types/intersection";
-import { AnyZodObject, ZodObject } from "../types/object";
+// import { ZodRawShape } from "../types/base";
+// import { ZodRawShape } from "../types/base";
+import { ZodRawShape, ZodIntersection } from "..";
+
+// import { mergeObjects as mergeObjectsBase } from "../../types/object";
+// import { mergeShapes as mergeShapesBase } from "./merge";
 
 export namespace objectUtil {
   // export interface ZodObjectParams {
@@ -102,29 +105,6 @@ export namespace objectUtil {
     };
   };
 
-  export const mergeObjects = <First extends AnyZodObject>(first: First) => <
-    Second extends AnyZodObject
-  >(
-    second: Second
-  ): ZodObject<
-    First["_shape"] & Second["_shape"],
-    First["_unknownKeys"],
-    First["_catchall"]
-    // MergeObjectParams<First['_params'], Second['_params']>,
-    // First['_input'] & Second['_input'],
-    // First['_output'] & Second['_output']
-  > => {
-    const mergedShape = mergeShapes(first._def.shape(), second._def.shape());
-    const merged: any = new ZodObject({
-      t: ZodTypes.object,
-      effects: [...(first._def.effects || []), ...(second._def.effects || [])],
-      unknownKeys: first._def.unknownKeys,
-      catchall: first._def.catchall,
-      // params: {
-      //   strict: first.params.strict && second.params.strict,
-      // },
-      shape: () => mergedShape,
-    }) as any;
-    return merged;
-  };
+  // export const mergeObjects = mergeObjectsBase;
+  // export const mergeShapes = mergeShapesBase;
 }

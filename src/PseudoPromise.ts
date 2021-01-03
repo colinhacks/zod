@@ -9,7 +9,7 @@ type Items = (FuncItem | CatcherItem)[];
 
 export const NOSET = Symbol("no_set");
 export class PseudoPromise<ReturnType = undefined> {
-  readonly _return: ReturnType;
+  readonly _return: ReturnType | undefined;
   items: Items;
   constructor(funcs: Items = []) {
     this.items = funcs;
