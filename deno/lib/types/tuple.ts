@@ -1,4 +1,6 @@
-import * as z from "./base.ts";
+import { ZodTypes } from "../ZodTypes.ts";
+import { ZodType, ZodTypeDef, ZodTypeAny } from "./base.ts";
+
 // import { objectUtil } from '../helpers/objectUtil';
 // import { ZodUnion } from './union';
 // import { ZodUndefined } from './undefined';
@@ -32,34 +34,24 @@ import * as z from "./base.ts";
 // const x:t4 = ['asdf'];
 // type t5 = string & unknown;
 
-export type OutputTypeOfTuple<
-  T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []
-> = {
-  [k in keyof T]: T[k] extends z.ZodType<any, any> ? T[k]["_output"] : never;
+export type OutputTypeOfTuple<T extends [ZodTypeAny, ...ZodTypeAny[]] | []> = {
+  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
 };
 
-export type InputTypeOfTuple<
-  T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []
-> = {
-  [k in keyof T]: T[k] extends z.ZodType<any, any> ? T[k]["_input"] : never;
+export type InputTypeOfTuple<T extends [ZodTypeAny, ...ZodTypeAny[]] | []> = {
+  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_input"] : never;
 };
 
 export interface ZodTupleDef<
-  T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [
-    z.ZodTypeAny,
-    ...z.ZodTypeAny[]
-  ]
-> extends z.ZodTypeDef {
-  t: z.ZodTypes.tuple;
+  T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]]
+> extends ZodTypeDef {
+  t: ZodTypes.tuple;
   items: T;
 }
 
 export class ZodTuple<
-  T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | [] = [
-    z.ZodTypeAny,
-    ...z.ZodTypeAny[]
-  ]
-> extends z.ZodType<OutputTypeOfTuple<T>, ZodTupleDef<T>, InputTypeOfTuple<T>> {
+  T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]]
+> extends ZodType<OutputTypeOfTuple<T>, ZodTupleDef<T>, InputTypeOfTuple<T>> {
   toJSON = () => ({
     t: this._def.t,
     items: (this._def.items as any[]).map((item) => item.toJSON()),
@@ -73,11 +65,11 @@ export class ZodTuple<
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  static create = <T extends [z.ZodTypeAny, ...z.ZodTypeAny[]] | []>(
+  static create = <T extends [ZodTypeAny, ...ZodTypeAny[]] | []>(
     schemas: T
   ): ZodTuple<T> => {
     return new ZodTuple({
-      t: z.ZodTypes.tuple,
+      t: ZodTypes.tuple,
       items: schemas,
     });
   };

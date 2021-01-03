@@ -1,27 +1,26 @@
 import * as z from "./index.ts";
 
-// const asyncNumberToString = z
-//   .transformer(z.number())
-//   .transform(async (n) => String(n));
-// console.log(
-//   z
-//     .object({
-//       id: asyncNumberToString,
-//     })
-//     .parse({ id: 5 })
-// );
+const Schema = z.union([
+  z.object({
+    statusCode: z.literal(200),
+    body: z.object({
+      id: z.string(),
+    }),
+  }),
+  z.object({
+    statusCode: z.literal(403),
+    body: z.object({
+      message: z.string(),
+      reason: z.string().nullable(),
+    }),
+  }),
+]);
 
-const run = async () => {
-  const numToString = z.transformer(z.number()).transform(async (n) => {
-    const res = String(n);
-    return res;
-  });
-
-  console.log(typeof (await numToString.parseAsync(1234)));
-  const obj = z.object({
-    id: numToString,
-  });
-  const data = await obj.parseAsync({ id: 5 });
-  console.log(data);
-};
-run();
+(async () => {
+  const obj = {
+    statusCode: 200,
+    body: { id: "f8a2ebc9-72ba-4f45-ad4d-16f956259ed3" },
+  };
+  console.log(Schema.parse(obj)); // Works
+  console.log(await Schema.parseAsync(obj)); // Error
+})();

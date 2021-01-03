@@ -1,15 +1,17 @@
-import * as z from "./base.ts";
+import { ZodTypes } from "../ZodTypes.ts";
+import { ZodType, ZodTypeDef, ZodTypeAny } from "./base.ts";
+
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 
-export interface ZodPromiseDef<T extends z.ZodTypeAny = z.ZodTypeAny>
-  extends z.ZodTypeDef {
-  t: z.ZodTypes.promise;
+export interface ZodPromiseDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  t: ZodTypes.promise;
   type: T;
 }
 
-export class ZodPromise<T extends z.ZodTypeAny> extends z.ZodType<
+export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   Promise<T["_output"]>,
   ZodPromiseDef<T>,
   Promise<T["_input"]>
@@ -25,9 +27,9 @@ export class ZodPromise<T extends z.ZodTypeAny> extends z.ZodType<
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
-  static create = <T extends z.ZodTypeAny>(schema: T): ZodPromise<T> => {
+  static create = <T extends ZodTypeAny>(schema: T): ZodPromise<T> => {
     return new ZodPromise({
-      t: z.ZodTypes.promise,
+      t: ZodTypes.promise,
       type: schema,
     });
   };

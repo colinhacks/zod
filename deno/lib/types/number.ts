@@ -3,13 +3,14 @@ import { errorUtil } from "../helpers/errorUtil.ts";
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
 import { ZodIssueCode } from "../ZodError.ts";
-import * as z from "./base.ts";
+import { ZodTypes } from "../ZodTypes.ts";
+import { ZodType, ZodTypeDef } from "./base.ts";
 
-export interface ZodNumberDef extends z.ZodTypeDef {
-  t: z.ZodTypes.number;
+export interface ZodNumberDef extends ZodTypeDef {
+  t: ZodTypes.number;
 }
 
-export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
+export class ZodNumber extends ZodType<number, ZodNumberDef> {
   // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
 
   // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
@@ -17,7 +18,7 @@ export class ZodNumber extends z.ZodType<number, ZodNumberDef> {
   toJSON = () => this._def;
   static create = (): ZodNumber => {
     return new ZodNumber({
-      t: z.ZodTypes.number,
+      t: ZodTypes.number,
     });
   };
 

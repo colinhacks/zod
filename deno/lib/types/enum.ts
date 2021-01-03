@@ -1,4 +1,5 @@
-import * as z from "./base.ts";
+import { ZodTypes } from "../ZodTypes.ts";
+import { ZodType, ZodTypeDef } from "./base.ts";
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';
 // import { ZodUnion } from './union';
@@ -13,12 +14,12 @@ type Values<T extends EnumValues> = {
 };
 
 export interface ZodEnumDef<T extends EnumValues = EnumValues>
-  extends z.ZodTypeDef {
-  t: z.ZodTypes.enum;
+  extends ZodTypeDef {
+  t: ZodTypes.enum;
   values: T;
 }
 
-export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<
+export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   T[number],
   ZodEnumDef<T>
 > {
@@ -60,7 +61,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends z.ZodType<
     values: T
   ): ZodEnum<T> => {
     return new ZodEnum({
-      t: z.ZodTypes.enum,
+      t: ZodTypes.enum,
       values: values,
     }) as any;
   };

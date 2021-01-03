@@ -1,7 +1,5 @@
-import { ZodType, ZodTypeAny, ZodTypeDef, ZodTypes } from "./base.ts";
-
-// import * as z from './base';
-// type asdf = ZodTypeAny
+import { ZodTypes } from "../ZodTypes.ts";
+import { ZodType, ZodTypeDef, ZodTypeAny } from "./base.ts";
 
 export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
