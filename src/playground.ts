@@ -1,4 +1,5 @@
 import * as z from ".";
+import { ZodIssueCode } from ".";
 
 // const asyncNumberToString = z
 //   .transformer(z.number())
@@ -12,16 +13,25 @@ import * as z from ".";
 // );
 
 const run = async () => {
-  const numToString = z.transformer(z.number()).transform(async (n) => {
-    const res = String(n);
-    return res;
-  });
+  const schema = z
+    .object({
+      start: z.number(),
+      end: z.number(),
+    })
+    .refinement(
+      ({ start, end }) => start <= end,
+      (arg) => ({
+        code: ZodIssueCode.custom,
+        path: ["end"],
+        message: `End must be greater than ${arg.start}`,
+      }) // It won't work :(
+    );
 
-  console.log(typeof (await numToString.parseAsync(1234)));
-  const obj = z.object({
-    id: numToString,
-  });
-  const data = await obj.parseAsync({ id: 5 });
-  console.log(data);
+  console.log(
+    schema.parse({
+      start: 5,
+      end: 3,
+    })
+  );
 };
 run();
