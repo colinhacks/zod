@@ -1,62 +1,64 @@
 import { util } from "./helpers/util";
-import * as z from "./index";
+import { ZodType, ZodDef, ZodTypes } from ".";
+// import { ZodDef } from "./ZodDef";
+// import { ZodTypes } from "./ZodTypes";
 
-export const visitor = (schema: z.ZodType<any, any>) => {
-  const def = schema._def as z.ZodDef;
+export const visitor = (schema: ZodType<any, any>) => {
+  const def = schema._def as ZodDef;
   switch (def.t) {
-    case z.ZodTypes.string:
+    case ZodTypes.string:
       break;
-    case z.ZodTypes.number:
+    case ZodTypes.number:
       break;
-    case z.ZodTypes.bigint:
+    case ZodTypes.bigint:
       break;
-    case z.ZodTypes.boolean:
+    case ZodTypes.boolean:
       break;
-    case z.ZodTypes.undefined:
+    case ZodTypes.undefined:
       break;
-    case z.ZodTypes.null:
+    case ZodTypes.null:
       break;
-    case z.ZodTypes.any:
+    case ZodTypes.any:
       break;
-    case z.ZodTypes.unknown:
+    case ZodTypes.unknown:
       break;
-    case z.ZodTypes.never:
+    case ZodTypes.never:
       break;
-    case z.ZodTypes.void:
+    case ZodTypes.void:
       break;
-    case z.ZodTypes.array:
+    case ZodTypes.array:
       break;
-    case z.ZodTypes.object:
+    case ZodTypes.object:
       break;
-    case z.ZodTypes.union:
+    case ZodTypes.union:
       break;
-    case z.ZodTypes.intersection:
+    case ZodTypes.intersection:
       break;
-    case z.ZodTypes.tuple:
+    case ZodTypes.tuple:
       break;
-    case z.ZodTypes.lazy:
+    case ZodTypes.lazy:
       break;
-    case z.ZodTypes.literal:
+    case ZodTypes.literal:
       break;
-    case z.ZodTypes.enum:
+    case ZodTypes.enum:
       break;
-    case z.ZodTypes.nativeEnum:
+    case ZodTypes.nativeEnum:
       break;
-    case z.ZodTypes.function:
+    case ZodTypes.function:
       break;
-    case z.ZodTypes.record:
+    case ZodTypes.record:
       break;
-    case z.ZodTypes.date:
+    case ZodTypes.date:
       break;
-    case z.ZodTypes.promise:
+    case ZodTypes.promise:
       break;
-    case z.ZodTypes.transformer:
+    case ZodTypes.transformer:
       break;
-    case z.ZodTypes.optional:
+    case ZodTypes.optional:
       break;
-    case z.ZodTypes.nullable:
+    case ZodTypes.nullable:
       break;
-    case z.ZodTypes.map:
+    case ZodTypes.map:
       break;
     default:
       util.assertNever(def);

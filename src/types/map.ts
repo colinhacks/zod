@@ -1,18 +1,19 @@
-import * as z from "./base";
+import { ZodTypes } from "../ZodTypes";
+import { ZodType, ZodTypeDef, ZodTypeAny } from "./base";
 
 export interface ZodMapDef<
-  Key extends z.ZodTypeAny = z.ZodTypeAny,
-  Value extends z.ZodTypeAny = z.ZodTypeAny
-> extends z.ZodTypeDef {
-  t: z.ZodTypes.map;
+  Key extends ZodTypeAny = ZodTypeAny,
+  Value extends ZodTypeAny = ZodTypeAny
+> extends ZodTypeDef {
+  t: ZodTypes.map;
   valueType: Value;
   keyType: Key;
 }
 
 export class ZodMap<
-  Key extends z.ZodTypeAny = z.ZodTypeAny,
-  Value extends z.ZodTypeAny = z.ZodTypeAny
-> extends z.ZodType<
+  Key extends ZodTypeAny = ZodTypeAny,
+  Value extends ZodTypeAny = ZodTypeAny
+> extends ZodType<
   Map<Key["_output"], Value["_output"]>,
   ZodMapDef<Key, Value>,
   Map<Key["_input"], Value["_input"]>
@@ -26,14 +27,14 @@ export class ZodMap<
   });
 
   static create = <
-    Key extends z.ZodTypeAny = z.ZodTypeAny,
-    Value extends z.ZodTypeAny = z.ZodTypeAny
+    Key extends ZodTypeAny = ZodTypeAny,
+    Value extends ZodTypeAny = ZodTypeAny
   >(
     keyType: Key,
     valueType: Value
   ): ZodMap<Key, Value> => {
     return new ZodMap({
-      t: z.ZodTypes.map,
+      t: ZodTypes.map,
       valueType,
       keyType,
     });

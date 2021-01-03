@@ -1,72 +1,38 @@
 import { util } from "../helpers/util";
+import { ZodTypes } from "../ZodTypes";
+import { ParseParams, ZodParser } from "../parser";
 import {
-  ZodArray,
   ZodCustomIssue,
   ZodError,
   ZodIssueCode,
-  ZodNullable,
-  ZodOptional,
-  ZodTransformer,
-  // ZodTransformer,
-} from "../index";
-import { MakeErrorData, ParseParams, ZodParser } from "../parser";
-import { ZodNullableType } from "./nullable";
-import { ZodOptionalType } from "./optional";
-
-export enum ZodTypes {
-  string = "string",
-  number = "number",
-  bigint = "bigint",
-  boolean = "boolean",
-  date = "date",
-  undefined = "undefined",
-  null = "null",
-  array = "array",
-  object = "object",
-  union = "union",
-  intersection = "intersection",
-  tuple = "tuple",
-  record = "record",
-  map = "map",
-  function = "function",
-  lazy = "lazy",
-  literal = "literal",
-  enum = "enum",
-  nativeEnum = "nativeEnum",
-  promise = "promise",
-  any = "any",
-  unknown = "unknown",
-  never = "never",
-  void = "void",
-  // transformer = "transformer",
-  transformer = "transformer",
-  optional = "optional",
-  nullable = "nullable",
-}
-
-export type ZodTypeAny = ZodType<any, any, any>;
-export type ZodRawShape = { [k: string]: ZodTypeAny };
-
-// export const inputSchema = (schema: ZodType<any>): ZodType<any> => {
-//   if (schema instanceof ZodTransformer) {
-//     return inputSchema(schema._def.input);
-//   } else {
-//     return schema;
-//   }
-// };
-
-// export const outputSchema = (schema: ZodType<any>): ZodType<any> => {
-//   if (schema instanceof ZodTransformer) {
-//     return inputSchema(schema._def.output);
-//   } else {
-//     return schema;
-//   }
-// };
+  MakeErrorData,
+} from "../ZodError";
 
 export type RefinementCtx = {
   addIssue: (arg: MakeErrorData) => void;
   path: (string | number)[];
 };
+
+export type ZodRawShape = { [k: string]: ZodTypeAny };
+
+export type TypeOf<T extends ZodType<any>> = T["_output"];
+export type input<T extends ZodType<any>> = T["_input"];
+export type output<T extends ZodType<any>> = T["_output"];
+export type infer<T extends ZodType<any>> = T["_output"];
+
+export type ZodTypeAny = ZodType<any, any, any>;
+
+import {
+  ZodArray,
+  ZodNullable,
+  ZodNullableType,
+  ZodOptional,
+  ZodOptionalType,
+  ZodTransformer,
+} from "../index";
+// import { outputSchema } from "../output-schema";
+
+type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 type InternalCheck<T> = {
   type: "check";
   check: (arg: T, ctx: RefinementCtx) => any;
@@ -88,11 +54,12 @@ type Effect<T> = InternalCheck<T> | Mod<T>;
 //   // params?: {[k:string]:any}
 // } & util.Omit<CustomError, 'code' | 'path'>;
 
-type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
+// type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 // type Check<T> = {
 //   check: (arg: T) => any;
 //   refinementError: (arg: T) => CustomErrorParams;
 // };
+// export function declareZodType() {}
 
 export interface ZodTypeDef {
   t: ZodTypes;
@@ -101,11 +68,6 @@ export interface ZodTypeDef {
   accepts?: ZodType<any, any>;
 }
 
-export type TypeOf<T extends ZodType<any>> = T["_output"];
-export type input<T extends ZodType<any>> = T["_input"];
-export type output<T extends ZodType<any>> = T["_output"];
-export type infer<T extends ZodType<any>> = T["_output"];
-
 export abstract class ZodType<
   Output,
   Def extends ZodTypeDef = ZodTypeDef,
@@ -113,8 +75,8 @@ export abstract class ZodType<
 > {
   readonly _type!: Output;
   readonly _output!: Output;
-  readonly _def!: Def;
   readonly _input!: Input;
+  readonly _def!: Def;
 
   // get inputSchema(): ZodTypeAny = this;
   // outputSchema: ZodTypeAny = this;
