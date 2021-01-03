@@ -1032,7 +1032,7 @@ D.parse('asdf'); // => "asdf"
 D.parse(null); // => null
 ```
 
-Or you can use the `.optional()` method on any existing schema:
+Or you can use the `.nullable()` method on any existing schema:
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
