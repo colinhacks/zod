@@ -816,7 +816,7 @@ person.parse({
   name: 'bob dylan',
   validExtraKey: 61, // works fine
 });
-// => { name: "bob dylan" }
+// => { name: "bob dylan", validExtraKey: 61 }
 ```
 
 > Using `.catchall()` overrides `.passsthrough()` , `.strip()` , or `.strict()` . All keys are now considered "known".
