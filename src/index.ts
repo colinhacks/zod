@@ -13,7 +13,7 @@ import {
 
 import { ZodErrorMap } from "./defaultErrorMap";
 import { ZodAny } from "./types/any";
-import { ZodArray } from "./types/array";
+import { ZodArray, ZodNonEmptyArray } from "./types/array";
 import { ZodBigInt } from "./types/bigint";
 import { ZodBoolean } from "./types/boolean";
 import { ZodDate } from "./types/date";
@@ -111,13 +111,10 @@ export {
   ZodType,
   ZodType as Schema,
   ZodType as ZodSchema,
-  // ZodTypeDef,
-  // ZodRawShape,
-  // RefinementCtx,
   ZodTypes,
-  // ZodType,
   ZodAny,
   ZodArray,
+  ZodNonEmptyArray,
   ZodBigInt,
   ZodBoolean,
   ZodCodeGenerator,
@@ -134,7 +131,6 @@ export {
   ZodNumber,
   ZodObject,
   ZodOptional,
-  // ZodParsedType,
   ZodPromise,
   ZodRecord,
   ZodString,
@@ -144,10 +140,6 @@ export {
   ZodUnion,
   ZodUnknown,
   ZodVoid,
-  // TypeOf as infer,
-  // input,
-  // output,
-  // TypeOf,
   anyType as any,
   arrayType as array,
   bigIntType as bigint,
@@ -181,21 +173,6 @@ export {
   unknownType as unknown,
   voidType as void,
 };
-
-// export type {
-//   TypeOf as infer,
-//   input,
-//   output,
-//   TypeOf,
-//   ZodErrorMap,
-//   ZodType,
-//   ZodTypeAny,
-//   ZodTypeDef,
-//   ZodUndefined,
-//   ZodUnion,
-//   ZodUnknown,
-//   ZodVoid,
-// };
 
 export const late = {
   object: ZodObject.lazycreate,

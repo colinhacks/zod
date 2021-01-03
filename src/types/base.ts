@@ -8,20 +8,6 @@ import {
   MakeErrorData,
 } from "../ZodError";
 
-export type RefinementCtx = {
-  addIssue: (arg: MakeErrorData) => void;
-  path: (string | number)[];
-};
-
-export type ZodRawShape = { [k: string]: ZodTypeAny };
-
-export type TypeOf<T extends ZodType<any>> = T["_output"];
-export type input<T extends ZodType<any>> = T["_input"];
-export type output<T extends ZodType<any>> = T["_output"];
-export type infer<T extends ZodType<any>> = T["_output"];
-
-export type ZodTypeAny = ZodType<any, any, any>;
-
 import {
   ZodArray,
   ZodNullable,
@@ -393,3 +379,17 @@ export abstract class ZodType<
   isOptional: () => boolean = () => this.safeParse(undefined).success;
   isNullable: () => boolean = () => this.safeParse(null).success;
 }
+
+export type RefinementCtx = {
+  addIssue: (arg: MakeErrorData) => void;
+  path: (string | number)[];
+};
+
+export type ZodRawShape = { [k: string]: ZodTypeAny };
+
+export type TypeOf<T extends ZodType<any>> = T["_output"];
+export type input<T extends ZodType<any>> = T["_input"];
+export type output<T extends ZodType<any>> = T["_output"];
+export type infer<T extends ZodType<any>> = T["_output"];
+
+export type ZodTypeAny = ZodType<any, any, any>;
