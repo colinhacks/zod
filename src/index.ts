@@ -1,8 +1,16 @@
 /* ZOD */
 
-import { ZodType, ZodTypeDef } from "./types/base/type";
-import { ZodTypeAny } from "./types/base/type-any";
-import { input, output, TypeOf } from "./types/base";
+import {
+  ZodType,
+  ZodTypeDef,
+  ZodTypeAny,
+  ZodRawShape,
+  input,
+  output,
+  TypeOf,
+  RefinementCtx,
+} from "./types/base";
+
 import { ZodErrorMap } from "./defaultErrorMap";
 import { ZodAny } from "./types/any";
 import { ZodArray } from "./types/array";
@@ -35,7 +43,7 @@ import { ZodParsedType } from "./ZodParsedType";
 import { ZodTypes } from "./ZodTypes";
 import { ZodCodeGenerator } from "./codegen";
 
-export { ZodTypeDef, ZodTypes };
+// export { ZodTypeDef, ZodRawShape, ZodTypes };
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -85,6 +93,50 @@ const instanceOfType = <T extends new (...args: any[]) => any>(
 ) => custom<InstanceType<T>>((data) => data instanceof cls, params);
 
 export {
+  ZodType,
+  ZodType as Schema,
+  ZodType as ZodSchema,
+  ZodTypeDef,
+  ZodRawShape,
+  RefinementCtx,
+  ZodTypes,
+  // ZodType,
+  ZodAny,
+  ZodArray,
+  ZodBigInt,
+  ZodBoolean,
+  ZodCodeGenerator,
+  ZodDate,
+  ZodEnum,
+  ZodErrorMap,
+  ZodFunction,
+  ZodIntersection,
+  ZodLazy,
+  ZodLiteral,
+  ZodNativeEnum,
+  ZodNever,
+  ZodNull,
+  ZodNullable,
+  ZodNullableType,
+  ZodNumber,
+  ZodObject,
+  ZodOptional,
+  ZodOptionalType,
+  ZodParsedType,
+  ZodPromise,
+  ZodRecord,
+  ZodString,
+  ZodTransformer,
+  ZodTuple,
+  ZodTypeAny,
+  ZodUndefined,
+  ZodUnion,
+  ZodUnknown,
+  ZodVoid,
+  TypeOf as infer,
+  input,
+  output,
+  TypeOf,
   anyType as any,
   arrayType as array,
   bigIntType as bigint,
@@ -122,47 +174,6 @@ export {
 export const late = {
   object: ZodObject.lazycreate,
 };
-
-export {
-  ZodType,
-  ZodType as Schema,
-  ZodType as ZodSchema,
-  // ZodType,
-  ZodAny,
-  ZodArray,
-  ZodBigInt,
-  ZodBoolean,
-  ZodCodeGenerator,
-  ZodDate,
-  ZodEnum,
-  ZodErrorMap,
-  ZodFunction,
-  ZodIntersection,
-  ZodLazy,
-  ZodLiteral,
-  ZodNativeEnum,
-  ZodNever,
-  ZodNull,
-  ZodNullable,
-  ZodNullableType,
-  ZodNumber,
-  ZodObject,
-  ZodOptional,
-  ZodOptionalType,
-  ZodParsedType,
-  ZodPromise,
-  ZodRecord,
-  ZodString,
-  ZodTransformer,
-  ZodTuple,
-  ZodTypeAny,
-  ZodUndefined,
-  ZodUnion,
-  ZodUnknown,
-  ZodVoid,
-};
-
-export { TypeOf as infer, input, output, TypeOf };
 
 export * from "./ZodDef";
 export * from "./ZodError";

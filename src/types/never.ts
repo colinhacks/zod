@@ -1,5 +1,5 @@
 import { ZodTypes } from "../ZodTypes";
-import { ZodType, ZodTypeDef } from "./base/type";
+import { ZodType, ZodTypeDef } from "./base";
 
 export interface ZodNeverDef extends ZodTypeDef {
   t: ZodTypes.never;

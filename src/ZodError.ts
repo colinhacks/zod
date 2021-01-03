@@ -199,3 +199,11 @@ export class ZodError extends Error {
     return this.flatten();
   }
 }
+
+type stripPath<T extends object> = T extends any
+  ? util.OmitKeys<T, "path">
+  : never;
+
+export type MakeErrorData = stripPath<ZodIssueOptionalMessage> & {
+  path?: (string | number)[];
+};

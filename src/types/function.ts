@@ -1,6 +1,6 @@
 import { ZodTypes } from "../ZodTypes";
-import { ZodType, ZodTypeDef } from "./base/type";
-import { ZodTypeAny } from "./base/type-any";
+import { ZodType, ZodTypeDef, ZodTypeAny } from "./base";
+
 import { ZodTuple } from "./tuple";
 import { ZodUnknown } from "./unknown";
 

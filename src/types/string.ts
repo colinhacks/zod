@@ -4,7 +4,7 @@ import { errorUtil } from "../helpers/errorUtil";
 // import { ZodUnion } from './union';
 import { StringValidation, ZodIssueCode } from "../ZodError";
 import { ZodTypes } from "../ZodTypes";
-import { ZodType, ZodTypeDef } from "./base/type";
+import { ZodType, ZodTypeDef } from "./base";
 
 export interface ZodStringDef extends ZodTypeDef {
   t: ZodTypes.string;

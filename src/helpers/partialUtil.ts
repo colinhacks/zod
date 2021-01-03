@@ -1,7 +1,6 @@
-import { ZodTypeAny } from "../types/base/type-any";
-import { ZodObject } from "../types/object";
-import { AnyZodObject } from "../types/object/any";
-import { ZodOptional } from "../types/optional";
+import { ZodTypeAny, ZodObject, ZodOptional } from "..";
+
+type AnyZodObject = ZodObject<any, any, any>;
 
 export namespace partialUtil {
   export type RootDeepPartial<T extends ZodTypeAny> = {

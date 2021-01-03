@@ -1,5 +1,5 @@
 import { ZodTypes } from "../ZodTypes";
-import { ZodType, ZodTypeDef } from "./base/type";
+import { ZodType, ZodTypeDef } from "./base";
 // import { ZodUndefined } from './undefined';
 // import { ZodUnion } from './union';
 

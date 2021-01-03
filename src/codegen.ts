@@ -1,8 +1,8 @@
 // import * as z from './index';
-import { ZodDef } from ".";
+
 import { util } from "./helpers/util";
-import { ZodType } from "./types/base";
-import { ZodTypes } from "./ZodTypes";
+import { ZodDef, ZodType, ZodTypes } from ".";
+// import { ZodTypes } from "./ZodTypes";
 
 type TypeResult = { schema: any; id: string; type: string };
 

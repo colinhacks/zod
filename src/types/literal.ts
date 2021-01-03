@@ -3,7 +3,7 @@
 // import { ZodUnion } from './union';
 import { Primitive } from "../helpers/primitive";
 import { ZodTypes } from "../ZodTypes";
-import { ZodType, ZodTypeDef } from "./base/type";
+import { ZodType, ZodTypeDef } from "./base";
 
 type LiteralValue = Primitive;
 
