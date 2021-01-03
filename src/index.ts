@@ -41,7 +41,7 @@ import { ZodUnion, ZodUnionDef } from "./types/union";
 import { ZodUnknown, ZodUnknownDef } from "./types/unknown";
 import { ZodVoid, ZodVoidDef } from "./types/void";
 
-export { ZodTypeDef, ZodTypes };
+export { ZodTypes };
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -139,7 +139,6 @@ export {
   ZodCodeGenerator,
   ZodDate,
   ZodEnum,
-  ZodErrorMap,
   ZodFunction,
   ZodIntersection,
   ZodLazy,
@@ -158,15 +157,22 @@ export {
   ZodString,
   ZodTransformer,
   ZodTuple,
+};
+
+export type {
+  TypeOf as infer,
+  input,
+  output,
+  TypeOf,
+  ZodErrorMap,
   ZodType,
   ZodTypeAny,
+  ZodTypeDef,
   ZodUndefined,
   ZodUnion,
   ZodUnknown,
   ZodVoid,
 };
-
-export { TypeOf as infer, input, output, TypeOf };
 
 export * from "./ZodError";
 

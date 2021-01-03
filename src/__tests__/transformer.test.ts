@@ -1,3 +1,6 @@
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
+
 import * as z from "..";
 import { util } from "../helpers/util";
 
@@ -39,7 +42,6 @@ test("async coercion", async () => {
     .parseAsync({ id: 5 });
 
   expect(data).toEqual({ id: "5" });
-  return "asdf";
 });
 
 test("sync coercion async error", async () => {
@@ -50,7 +52,6 @@ test("sync coercion async error", async () => {
       })
       .parse({ id: 5 })
   ).toThrow();
-  return "asdf";
   // expect(data).toEqual({ id: '5' });
 });
 

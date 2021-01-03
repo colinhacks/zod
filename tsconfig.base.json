@@ -22,6 +22,7 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "downlevelIteration": true,
+    "isolatedModules": true
   },
   "include": [
     "./src/**/*",

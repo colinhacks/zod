@@ -1,3 +1,6 @@
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
+
 import * as z from "../index";
 
 test("all errors", () => {
@@ -13,7 +16,7 @@ test("all errors", () => {
       b: null,
     });
   } catch (error) {
-    expect(error.flatten()).toStrictEqual({
+    expect(error.flatten()).toEqual({
       formErrors: [],
       fieldErrors: {
         a: ["Expected string, received null"],

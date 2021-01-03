@@ -17,30 +17,30 @@ module.exports = {
     /**
      * eslint-plugin-import @see https://github.com/benmosher/eslint-plugin-import
      */
-    "import/order": 0, // turn off in favor of eslint-plugin-simple-import-sort
-    "import/no-unresolved": 0,
-    "import/no-duplicates": 1,
+    "import/order": "off", // turn off in favor of eslint-plugin-simple-import-sort
+    "import/no-unresolved": "off",
+    "import/no-duplicates": "warn",
     /**
      * eslint-plugin-simple-import-sort @see https://github.com/lydell/eslint-plugin-simple-import-sort
      */
-    "sort-imports": 0, // we use eslint-plugin-import instead
-    "simple-import-sort/imports": 1,
-    "simple-import-sort/exports": 1,
+    "sort-imports": "off", // we use eslint-plugin-import instead
+    "simple-import-sort/imports": "warn",
+    "simple-import-sort/exports": "warn",
     /**
      * @typescript-eslint/eslint-plugin @see https://github.com/typescript-eslint/typescript-eslint/tree/master/packages/eslint-plugin
      */
-    "@typescript-eslint/no-namespace": 0,
-    "@typescript-eslint/explicit-module-boundary-types": 0,
-    "@typescript-eslint/no-explicit-any": 0,
-    "@typescript-eslint/ban-types": 0,
-    "@typescript-eslint/no-unused-vars": 0,
-    "@typescript-eslint/no-empty-function": 0,
-    "@typescript-eslint/ban-ts-comment": 0,
-    "@typescript-eslint/no-non-null-assertion": 0,
+    "@typescript-eslint/no-namespace": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/ban-types": "off",
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/ban-ts-comment": "off",
+    "@typescript-eslint/no-non-null-assertion": "off",
     /**
      * ESLint core rules @see https://eslint.org/docs/rules/
      */
-    "no-case-declarations": 0,
-    "no-empty": 0,
+    "no-case-declarations": "off",
+    "no-empty": "off",
   },
 };

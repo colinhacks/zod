@@ -177,6 +177,7 @@ npm install zod
 
 #### TypeScript requirements
 
+- Zod 3.x requires TypeScript 3.8+
 - Zod 2.x requires TypeScript 3.7+
 - Zod 1.x requires TypeScript 3.3+
 

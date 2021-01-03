@@ -32,14 +32,18 @@
     "inference"
   ],
   "scripts": {
-    "fix:format": "prettier --write \"src/**/*.ts\"",
+    "check:format": "prettier --check \"src/**/*.ts\" \"deno/lib/**/*.ts\"",
+    "fix:format": "prettier --write \"src/**/*.ts\" \"deno/lib/**/*.ts\"",
+    "check:lint": "eslint --ext .ts ./src",
     "fix:lint": "eslint --fix --ext .ts ./src",
+    "check": "yarn check:lint && yarn check:format",
     "fix": "yarn fix:lint && yarn fix:format",
-    "clean": "rm -rf lib/*",
+    "clean": "rm -rf lib/* deno/lib/*",
+    "build:deno": "node ./deno/build.mjs",
     "build": "yarn run clean && tsc --p tsconfig.cjs.json",
     "build:esm": "tsc --p tsconfig.esm.json",
     "buildall": "yarn add typescript@3.4 && yarn build && yarn add typescript@3.5 && yarn build && yarn add typescript@3.6 && yarn build && yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4 && yarn build && yarn add typescript@3.4",
-    "buildallv2": "yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4.0 && yarn build && yarn add typescript@4.1 && yarn build && yarn add typescript@3.7",
+    "buildallv3": "yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4.0 && yarn build && yarn add typescript@4.1 && yarn build && yarn add typescript@3.8",
     "test": "jest --coverage && yarn run badge",
     "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
@@ -49,12 +53,12 @@
   "devDependencies": {
     "@types/jest": "^26.0.17",
     "@types/node": "^14.14.10",
-    "@typescript-eslint/eslint-plugin": "^4.9.1",
-    "@typescript-eslint/parser": "^4.9.1",
+    "@typescript-eslint/eslint-plugin": "^4.11.1",
+    "@typescript-eslint/parser": "^4.11.1",
     "eslint": "^7.15.0",
-    "eslint-config-prettier": "^7.0.0",
+    "eslint-config-prettier": "^7.1.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-simple-import-sort": "^6.0.1",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
     "husky": "^4.3.4",
     "jest": "^26.6.3",
     "lint-staged": "^10.5.3",
@@ -63,7 +67,7 @@
     "prettier": "^2.2.1",
     "ts-jest": "^26.4.4",
     "ts-node": "^9.1.0",
-    "typescript": "3.7"
+    "typescript": "3.8"
   },
   "husky": {
     "hooks": {
@@ -75,6 +79,5 @@
       "yarn fix:lint",
       "yarn fix:format"
     ]
-  },
-  "dependencies": {}
+  }
 }
