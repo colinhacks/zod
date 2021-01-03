@@ -124,6 +124,7 @@ export const late = {
 };
 
 export {
+  ZodType,
   ZodType as Schema,
   ZodType as ZodSchema,
   // ZodType,

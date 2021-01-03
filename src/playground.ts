@@ -13,3 +13,33 @@ const someSchema = z
 console.log(
   someSchema.safeParse({ name: "", lower_bound: 100, upper_bound: 0 })
 );
+
+interface RouteDefinition<I, O, P> {
+  path: string;
+  method?: string;
+  validate?: {
+    input?: z.ZodType<I>;
+    output?: z.ZodType<O>;
+    params?: z.ZodType<P>;
+  };
+  // resolve(ctx: P): Promise<O>;
+}
+
+const route = <T extends RouteDefinition<any, any, any>>(arg: T) => {
+  return arg;
+};
+
+const params = z.object({
+  id: z.transformer(z.string(), z.number(), (x) => Number(x)),
+});
+
+route({
+  path: "adf",
+  method: "POST",
+  validate: {
+    input: params,
+    output: params,
+    params: params,
+  },
+  // resolve:
+});
