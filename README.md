@@ -1441,7 +1441,7 @@ trimmedLength('sandwich'); // => 8
 trimmedLength(' asdf '); // => 4
 ```
 
-`myValidatedFunction` now automatically validates both its inputs and return value against the schemas provided to `z.function` . If either is invalid, the function throws. This way you can confidently write application logic in a "validated function" without worrying about invalid inputs, scattering `schema.validate()` calls in your endpoint definitions, or writing duplicative types for your functions.
+`trimmedLength` now automatically validates both its inputs and return value against the schemas provided to `z.function` . If either is invalid, the function throws. This way you can confidently write application logic in a "validated function" without worrying about invalid inputs, scattering `schema.validate()` calls in your endpoint definitions, or writing duplicative types for your functions.
 
 Here's a more complex example showing how to write a typesafe API query endpoint:
 
@@ -1458,7 +1458,7 @@ const FetcherEndpoint = z
     ),
   );
 
-const getUserByID = FetcherEndpoint.validate(args => {
+const getUserByID = FetcherEndpoint.validate(async (args) => {
   args; // => { id: string }
 
   const user = await User.findByID(args.id);
