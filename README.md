@@ -18,17 +18,11 @@ if you're happy and you know it, star this repo ⭐
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-### 3 Jan 2020: Zod 2 is being retired
-
-- Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264).
-- Zod v3 includes a simpler and more intuitive implementation of transformers. Unfortunately this required breaking changes to the transformer API. There are other breaking changes as well, detailed below.
-- _It's recommended that all users upgrade to v3._ If you don't use transformers, you should be able to upgrade without any modifications to your code.
-
-#### Migrating from v1
+### Migrating from v1
 
 If you're upgrading straight to v3 from v1, you'll need to be aware of the breaking changes introduced in both v2 and v3. The v1->v2 migration guide is [here](https://github.com/colinhacks/zod/tree/v2).
 
-#### Migration from v2
+### Migrating from v2
 
 You can install v3 with `zod@next`. (v2 will continue to be availabe with `zod@beta` for the time being.)
 
