@@ -18,12 +18,12 @@ if you're happy and you know it, star this repo ⭐
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-### ⚠️ Zod 2 is being retired (3 Jan 2020)
+### Zod 2 is being retired (3 Jan 2020)
 
-⚠️ It's recommended that all v2 users upgrade to v3. ⚠️
+> It's recommended that all v2 users upgrade to v3 ⚠️
 
 - Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264).
-- Because of this, Zod v2 will _not be leaving beta_. Instead it is being "retired" and the beta of v3 is being released. After an appropriate beta period, a stable v3 will be released.
+- Because of this, Zod v2 will _not be leaving beta_. Instead it is being "retired" and the beta of Zod 3 is being released in its place. After an appropriate beta period, a stable version of v3 will be released.
 - There are breaking changes in v3.
   - The syntax for transformers has been changed
   - The minimum TypeScript version is now _4.1_
