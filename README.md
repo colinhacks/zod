@@ -18,7 +18,13 @@ if you're happy and you know it, star this repo ⭐
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-### Migrating from v1 to v3
+### 3 Jan 2020: Zod 2 is being retired
+
+Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264). Zod v3 includes a simpler and more intuitive implementation of transformers. Unfortunately this required breaking changes to the transformer API.
+
+The beta of v3 is being released. Shortly v3 will become the default version of Zod.
+
+### Migrating from v1
 
 If you're upgrading straight to v3 from v1, you'll need to be aware of the breaking changes introduced in both v2 and v3. The v1->v2 migration guide is [here](https://github.com/colinhacks/zod/tree/v2).
 
@@ -26,7 +32,7 @@ If you're upgrading straight to v3 from v1, you'll need to be aware of the break
 
 It's recommended that all users upgrade to v3. _If you don't use transformers, you should be able to upgrade without any modifications to your code._
 
-You can install v3 with `zod@next`. v2 will continue to be availabe with `zod@beta` for the time being.
+You can install v3 with `zod@next`. (v2 will continue to be availabe with `zod@beta` for the time being.)
 
 ```
 npm install zod@next
@@ -35,9 +41,12 @@ yarn add zod@next
 
 #### Breaking changes in v3
 
-- Transformer syntax. Previously transformers required an input, an output schema, and a function to tranform between them. You created transformers like `z.transform(A, B, func)`, where `A` and `B` are Zod schemas. This is no longer the case.
+- Transformer syntax. Previously transformers required an input, an output schema, and a function to tranform between them. You created transformers like `z.transform(A, B, func)`, where `A` and `B` are Zod schemas. This is no longer the case. Accordingly:
 
-  In v3 transformations don't require an "output" schema. You can simply do things like `z.string().transform(val => val.length)`.
+  ⚠️ The old syntax (`z.transformer(A, B, func)`) is no longer available.
+  ⚠️ The convenience method `A.transform(B, func)` is no longer available.
+
+  Instead, you apply transformations by simply using the `.transform()` method that exists on all Zod schema. For example: `z.string().transform(val => val.length)`.
 
   Importantly, transformations are now _interleaved_ with refinements. So you can build chains of refinement + transformation logic that are executed in sequence:
 
@@ -48,14 +57,16 @@ yarn add zod@next
     .refine((val) => val > 5, { message: "Input is too short" })
     .transform((val) => val * 2);
 
-  test.parse("12characters"); // => 12
+  test.parse("12characters"); // => 24
   ```
 
-  ⚠️ The old syntax (`z.transformer(A, B, func)`) is no longer available.
-  ⚠️ The convenience method `A.transform(B, func)` is no longer available.
+- Type guards (the `.check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
 
-- The `.check()` method (the type guard method) has been removed.
-- Errors that occur inside refinement functions are now caught. If an error occurs, the refinement fails. Previously these errors were considered unexpected, and all refinements functions were expected to return a value.
+_Additional updates + features_
+
+- Support for Deno!
+- Support for ES Modules!
+- Errors that occur inside refinement functions are now caught. Previously these errors were considered unexpected and would crash the process (unless caught externally to Zod). If an error is caught, the refinement fails.
 
 # What is Zod
 
