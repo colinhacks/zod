@@ -18,7 +18,7 @@ if you're happy and you know it, star this repo ⭐
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-### ⚠️ Zod 2 is being retired
+<!-- ### ⚠️ Zod 2 is being retired
 
 It's recommended that all v2 users upgrade to v3! `yarn add zod@next`
 
@@ -29,7 +29,7 @@ It's recommended that all v2 users upgrade to v3! `yarn add zod@next`
   - The minimum TypeScript version is now _4.1_
   - Type guards have been removed
 
-For a more detailed migration guide, go to the [v3 docs](https://github.com/colinhacks/zod/tree/v3)
+For a more detailed migration guide, go to the [v3 docs](https://github.com/colinhacks/zod/tree/v3) -->
 
 #### Migration from v1
 
