@@ -1,6 +1,12 @@
 {
   "compilerOptions": {
-    "lib": ["es5", "es6", "es7", "esnext", "dom"],
+    "lib": [
+      "es5",
+      "es6",
+      "es7",
+      "esnext",
+      "dom"
+    ],
     "target": "es5",
     "removeComments": true,
     "declaration": true,
@@ -17,5 +23,8 @@
     "noFallthroughCasesInSwitch": true,
     "downlevelIteration": true
   },
-  "include": ["./src/**/*", "./.eslintrc.js"]
+  "include": [
+    "./src/**/*",
+    "./.eslintrc.js"
+  ]
 }

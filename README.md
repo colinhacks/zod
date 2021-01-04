@@ -22,6 +22,8 @@ if you're happy and you know it, star this repo ⭐
 
 Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264). Zod v3 includes a simpler and more intuitive implementation of transformers. Unfortunately this required breaking changes to the transformer API.
 
+The beta of v3 is being released. Shortly v3 will become the default version of Zod.
+
 ### Migration to v3
 
 It's recommended that all users upgrade to v3. _If you don't use transformers, you should be able to upgrade without any modifications to your code._
