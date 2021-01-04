@@ -115,8 +115,14 @@ test("transform method overloads", () => {
 });
 
 test("multiple transformers", () => {
-  const doubler = z.transformer(stringToNumber).transform((val) => {
+  const doubler = stringToNumber.transform((val) => {
     return val * 2;
   });
   expect(doubler.parse("5")).toEqual(10);
+});
+
+test("no nesting", () => {
+  expect(() => {
+    z.transformer(z.transformer(z.string()));
+  }).toThrow();
 });

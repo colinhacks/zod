@@ -26,28 +26,6 @@ test("to JSON", () => {
   crazySchema.toJSON();
 });
 
-const stringSchema = z.string();
-
-test("type guard", () => {
-  if (stringSchema.check("adsf" as any)) {
-  }
-});
-
-test("type guard fail", () => {
-  if (crazySchema.check("asdf" as any)) {
-  }
-});
-
-test("type guard (is)", () => {
-  if (stringSchema.is("asdf" as any)) {
-  }
-});
-
-test("type guard failure (is)", () => {
-  if (crazySchema.is("asdf" as any)) {
-  }
-});
-
 test("ZodCodeGenerator", () => {
   const gen = new z.ZodCodeGenerator();
   gen.generate(crazySchema);

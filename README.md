@@ -20,17 +20,15 @@ if you're happy and you know it, star this repo ⭐
 
 ### 3 Jan 2020: Zod 2 is being retired
 
-Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264).
+- Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264).
+- Zod v3 includes a simpler and more intuitive implementation of transformers. Unfortunately this required breaking changes to the transformer API. There are other breaking changes as well, detailed below.
+- _It's recommended that all users upgrade to v3._ If you don't use transformers, you should be able to upgrade without any modifications to your code.
 
-Zod v3 includes a simpler and more intuitive implementation of transformers. Unfortunately this required breaking changes to the transformer API. There are other breaking changes as well, detailed below.
-
-_It's recommended that all users upgrade to v3._ If you don't use transformers, you should be able to upgrade without any modifications to your code.
-
-### Migrating from v1
+#### Migrating from v1
 
 If you're upgrading straight to v3 from v1, you'll need to be aware of the breaking changes introduced in both v2 and v3. The v1->v2 migration guide is [here](https://github.com/colinhacks/zod/tree/v2).
 
-### Migration from v2
+#### Migration from v2
 
 You can install v3 with `zod@next`. (v2 will continue to be availabe with `zod@beta` for the time being.)
 
@@ -61,7 +59,8 @@ yarn add zod@next
   ```
 
 - Type guards (the `.check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
-- Errors that occur inside refinement functions are now caught. Previously these errors were considered unexpected and would crash the process (unless caught externally to Zod). If an error is caught, the refinement fails.
+
+<!-- - Errors that occur inside refinement functions are now caught. Previously these errors were considered unexpected and would crash the process (unless caught externally to Zod). If an error is caught, the refinement fails. -->
 
 <!-- _Additional updates + features_ -->
 
@@ -323,41 +322,17 @@ console.log(result.data);
 
 `.check(data:unknown)`
 
-You can also use a Zod schema as a type guard using the schema's `.check()` method, like so:
-
-```ts
-const stringSchema = z.string();
-const blob: any = "Albuquerque";
-if (stringSchema.check(blob)) {
-  // blob is now of type `string`
-  // within this if statement
-}
-```
-
-You can use the same method to check for invalid data:
-
-```ts
-const stringSchema = z.string();
-
-const process = (blob: any) => {
-  if (!stringSchema.check(blob)) {
-    throw new Error("Not a string");
-  }
-
-  // blob is now of type `string`
-  // underneath the if statement
-};
-```
+> ⚠️ Type guards have been removed in Zod 3 because of compatibility issues with transformers. You should safeParse to achieve a similar result that is compatible with transformers.
 
 ### Refinements
 
-> ⚠️ Refinements must not throw. Make sure they always return false to signal failure.
+> ⚠️ Refinements must not throw. Instead they should return a falsy value to signal failure.
 
 `.refine(validator: (data:T)=>any, params?: RefineParams)`
 
-Zod let you provide custom validation logic via _refinements_.
+Zod lets you provide custom validation logic via _refinements_.
 
-Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an Int or that a string is a valid email address.
+Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an integer or that a string is a valid email address.
 
 For example, you can define a custom validation check on _any_ Zod schema with `.refine` :
 
@@ -1385,8 +1360,9 @@ class Test {
 const TestSchema = z.instanceof(Test);
 
 const blob: any = "whatever";
-if (TestSchema.check(blob)) {
-  blob.name; // Test instance
+const parsed = TestSchema.safeParse(blob);
+if (parsed.success) {
+  parsed.data; // instance of Test
 }
 ```
 
@@ -1569,30 +1545,33 @@ User.omit({ outer: { inner: { prop2: true } } }); // { outer: { prop1: string, i
 
 You can integrate custom data transformations into your schemas with transformers. Transformers are just another type of Zod schema.
 
-> ⚠️ Transformers must not throw. Make sure to use refinements before the transformer to make sure the input can be parsed by the transformer.
+> ⚠️ Transformation functions must not throw. Make sure to use refinements before the transformer to make sure the input can be parsed by the transformer.
+
+> ⚠️ The `z.transformer(A, B, func)` syntax was removed in Zod 3.
 
 ### z.transformer()
 
-```ts
-const countLength = z.transformer(
-  z.string(),
-  z.number(),
-  (myString) => myString.length
-);
-
-countLength.parse("string"); // => 6
-```
-
-This lets you perform coercion, similar to Yup. You still need to provide the coercion logic yourself.
+You use transformers using the `.transform()` method.
 
 ```ts
-const coercedString = z.transformer(z.unknown(), z.string(), (val) => {
-  return `${val}`;
-});
-
-coercedString.parse(false); // => "false"
-coercedString.parse(12); // => "12"
+const stringToNumber = z.string().transform((val) => myString.length);
+stringToNumber.parse("string"); // => 6
 ```
+
+#### Chaining order
+
+Note that `stringToNumber` above is an instance of the `ZodTransformer` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transformations.
+
+```ts
+const emailToDomain = z
+  .string()
+  .email()
+  .transform((val) => val.split("@")[1]);
+
+emailToDomain.parse("colinhacks@example.com"); // => example.com
+```
+
+#### Async transformations
 
 Transformations can also be async.
 
@@ -1608,68 +1587,56 @@ const IdToUser = z.transformer(
 
 > ⚠️ If your schema contains asynchronous transformers, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
 
-### .transform()
-
-For convenience, ALL Zod schemas (not just transformers) has a `.transform` method. The first argument lets you specify a "destination schema" which defines the type that the data should be transformed _into_.
-
-```ts
-const lengthChecker = z.string().transform(z.boolean(), (val) => {
-  return val.length > 5;
-});
-
-lengthChecker.parse("asdf"); // => false;
-lengthChecker.parse("qwerty"); // => true;
-```
-
-You can omit the first argument, in which case Zod assumes you aren't transforming the data type:
-
-```ts
-z.string()
-  .transform((val) => val.replace("pretty", "extremely"))
-  .transform((val) => val.toUpperCase())
-  .transform((val) => val.split(" ").join("👏"))
-  .parse("zod 2 is pretty cool");
-
-// => "ZOD👏2👏IS👏EXTREMELY👏COOL"
-```
-
 ### Default values
 
-Using transformers, Zod lets you supply default values for your schemas.
+You can use transformers to implement the concept of "default values" in Zod.
 
 ```ts
-const stringWithDefault = z.transformer(
-  z.string().optional(),
-  z.string(),
-  (val) => val || "default value"
-);
+const stringWithDefault = z
+  .string()
+  .optional()
+  .transform((val) => {
+    return typeof val !== "undefined" ? val : "tuna";
+  });
+
+stringWithDefault.parse(undefined); // => "tuna"
 ```
 
-Equivalently you can express this using the built-in `.default()` method, available on all Zod schemas. The default value will be used if and only if the schema is `undefined` .
+### .default
+
+You can also use the provided convenience method `.default` like so:
 
 ```ts
-z.string().default("default value");
+const stringWithDefault = z.string().default("tuna");
+```
+
+Optionally, you can pass a function into `.default` that will be re-executed whenever a default value needs to be generated:
+
+```ts
+const numberWithRandomDefault = z.number().default(Math.random);
+
+numberWithRandomDefault.parse(undefined); // => 0.4413456736055323
+numberWithRandomDefault.parse(undefined); // => 0.1871840107401901
+numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
 ```
 
 ### Type inference for transformers
 
-There are special rules surrounding type inference for transformers.
+Every Zod schema is associated with an _input type_ and and _output type_. For most schemas (e.g. `z.string()`) these two are the same. But for Transformers, they are different. For instance `z.string().transform(val => val.length)` has an input of `string` and an output of `number`.
+
+Normally you can use `z.infer<typeof A>` to extract the inferred type of schema A. But for schemas we introduce two new methods that allow you to separately extract the input _and_ output independently.
 
 ```ts
-const stringToNumber = z.transformer(
-  z.string(),
-  z.number(),
-  myString => myString.length,
-);
-
-// ⚠️ Important: z.infer gives the return type!!
-type type = z.infer<stringToNumber>; // number
+const stringToNumber = z.string().transform(val => val.length)
 
 // it is equivalent to z.output<>
 type out = z.output<stringToNumber>; // number
 
 // you can use z.input<> to get the input type
 type in = z.input<stringToNumber>; // string
+
+// ⚠️ Important: z.infer gives the OUTPUT type!
+type type = z.infer<stringToNumber>; // number
 ```
 
 ## Errors

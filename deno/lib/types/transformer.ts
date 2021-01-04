@@ -21,8 +21,19 @@ export class ZodTransformer<
     schema: this._def.schema.toJSON(),
   });
 
+  constructor(def: ZodTransformerDef<T>) {
+    super(def);
+    if (def.schema instanceof ZodTransformer) {
+      throw new Error("ZodTransformers cannot be nested.");
+    }
+  }
+
   /** You can't use the .default method on transformers! */
-  default = ((..._args: any[]) => this) as never;
+  default: (..._args: any[]) => never = (..._args: any[]) => {
+    throw new Error(
+      "You can't use the default method on a ZodTransformer instance."
+    );
+  };
 
   // static create = <I extends ZodTypeAny, O extends ZodTypeAny, Out>(
   static create = <I extends ZodTypeAny>(

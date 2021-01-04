@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.0.0-beta.1",
+  "version": "3.0.0-alpha.4",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/cjs/index.js",
   "types": "./lib/cjs/index.d.ts",
@@ -47,7 +47,7 @@
     "test": "jest --coverage && yarn run badge",
     "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run build && npm run build:deno",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json"
   },
   "devDependencies": {
