@@ -18,28 +18,24 @@ if you're happy and you know it, star this repo ⭐
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-### 3 Jan 2020: Zod 2 is being retired
+### ⚠️ Zod 2 is being retired (3 Jan 2020)
 
 ⚠️ It's recommended that all v2 users upgrade to v3. ⚠️
 
-Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264). Zod v3 includes a simpler and more intuitive implementation of transformers. Unfortunately this required breaking changes to the transformer API.
-
-_If you don't use transformers, you should be able to upgrade without any modifications to your code._ Go to the [v3 docs](https://github.com/colinhacks/zod/tree/v3) for a migration guide.
+- Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264).
+- Because of this, Zod v2 will _not be leaving beta_. Instead it is being "retired" and the beta v3 is being released. After an appropriate beta period, a stable v3 will be released.
+- There are breaking changes in v3. If you don't use transformers or type guards, you should be able to upgrade without any modifications to your code. Otherwise, go to the [v3 docs](https://github.com/colinhacks/zod/tree/v3) for a detailed migration guide.
 
 #### Migration from v1
 
-Here are some of the new features in v2!
+_In almost all cases, you'll be able to upgrade to Zod 2 without changing any code._ Here are the breaking changes + new features:
 
 - Transformers! These let you provide default values, do casting/coercion, and a lot more. Read more here: [Transformers](#transformers)
 - Asynchronous refinements and new `.parseAsync` and `.safeParseAsync` methods. Read more here: [Refinements](#refinements)
-- Schema parsing now returns a deep clone of the data you pass in (instead of the _exact_ value you pass in)
-- Object schemas now strip unknown keys by default. There are also new object methods: `.passthrough()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
-
-_In almost all cases, you'll be able to upgrade to Zod 2 without changing any code._ Here are some of the (very minor) breaking changes:
-
-- Parsing now returns a _deep clone_ of the data you pass in. Previously it returned the exact same object you passed in.
-- Relatedly, Zod _no longer_ supports cyclical _data_. Recursive schemas are still supported, but Zod can't properly parse nested objects that contain cycles.
-- Optional and nullable schemas are now represented with the dedicated ZodOptional and ZodNullable classes, instead of using ZodUnion.
+- \[breaking\] Object schemas now strip unknown keys by default. There are also new object methods: `.passthrough()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
+- \[breaking\] Schema parsing now returns a deep clone of the data you pass in (instead of the _exact_ value you pass in)
+- \[breaking\] Relatedly, Zod _no longer_ supports cyclical _data_. Recursive schemas are still supported, but Zod can't properly parse nested objects that contain cycles.
+- \[breaking\] Optional and nullable schemas are now represented with the dedicated ZodOptional and ZodNullable classes, instead of using ZodUnion.
 
 # What is Zod
 
