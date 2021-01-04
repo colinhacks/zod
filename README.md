@@ -18,40 +18,44 @@ if you're happy and you know it, star this repo ⭐
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-### **Sept 17 — Zod 2 is now in beta!**
+### Migrating from v1 to v3
 
-You should be able to upgrade from v1 to v2 without any breaking changes to your code. Zod 2 is recommended for all new projects.
+If you're upgrading straight to v3 from v1, you'll need to be aware of the breaking changes introduced in both v2 and v3. The v1->v2 migration guide is [here](https://github.com/colinhacks/zod/tree/v2).
+
+### Migration from v2
+
+It's recommended that all users upgrade to v3. _If you don't use transformers, you should be able to upgrade without any modifications to your code._
+
+You can install v3 with `zod@next`. v2 will continue to be availabe with `zod@beta` for the time being.
 
 ```
-
-npm install zod@beta
-yarn add zod@beta
+npm install zod@next
+yarn add zod@next
 ```
 
-Here are some of the new features.
+#### Breaking changes in v3
 
-- Transformers! These let you provide default values, do casting/coercion, and a lot more. Read more here: [Transformers](#transformers)
-- Asynchronous refinements and new `.parseAsync` and `.safeParseAsync` methods. Read more here: [Refinements](#refinements)
-- Schema parsing now returns a deep clone of the data you pass in (instead of the _exact_ value you pass in)
-- Object schemas now strip unknown keys by default. There are also new object methods: `.passthrough()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
+- Transformer syntax. Previously transformers required an input, an output schema, and a function to tranform between them. You created transformers like `z.transform(A, B, func)`, where `A` and `B` are Zod schemas. This is no longer the case.
 
-In almost all cases, you'll be able to upgrade to Zod 2 without changing any code. Here are some of the (very minor) breaking changes:
+  In v3 transformations don't require an "output" schema. You can simply do things like `z.string().transform(val => val.length)`.
 
-- Parsing now returns a _deep clone_ of the data you pass in. Previously it returned the exact same object you passed in.
-- Relatedly, Zod _no longer_ supports cyclical _data_. Recursive schemas are still supported, but Zod can't properly parse nested objects that contain cycles.
-- Object schemas now strip unknown keys by default, instead of throwing an error
-- Optional and nullable schemas are now represented with the dedicated ZodOptional and ZodNullable classes, instead of using ZodUnion.
+  Importantly, transformations are now _interleaved_ with refinements. So you can build chains of refinement + transformation logic that are executed in sequence:
 
----
+  ```ts
+  const test = z
+    .string()
+    .transform((val) => val.length)
+    .refine((val) => val > 5, { message: "Input is too short" })
+    .transform((val) => val * 2);
 
-Aug 30 — zod@1.11 was released with lots of cool features!
+  test.parse("12characters"); // => 12
+  ```
 
-- All schemas now have a `.safeParse` method. This lets you validate data in a more functional way, similar to `io-ts`: https://github.com/colinhacks/zod#safe-parse
-- String schemas have a new `.regex` refinement method: https://github.com/colinhacks/zod#strings
-- Object schemas now have two new methods: `.primitives()` and `.nonprimitives()`. These methods let you quickly pick or omit primitive fields from objects, useful for validating API inputs: https://github.com/colinhacks/zod#primitives-and-nonprimitives
-- Zod now provides `z.nativeEnum()`, which lets you create z Zod schema from an existing TypeScript `enum`: https://github.com/colinhacks/zod#native-enums
+  ⚠️ The old syntax (`z.transformer(A, B, func)`) is no longer available.
+  ⚠️ The convenience method `A.transform(B, func)` is no longer available.
 
-<!-- > ⚠️ You might be encountering issues building your project if you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later. -->
+- The `.check()` method (the type guard method) has been removed.
+- Errors that occur inside refinement functions are now caught. If an error occurs, the refinement fails. Previously these errors were considered unexpected, and all refinements functions were expected to return a value.
 
 # What is Zod
 
