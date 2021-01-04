@@ -23,8 +23,13 @@ if you're happy and you know it, star this repo ⭐
 ⚠️ It's recommended that all v2 users upgrade to v3. ⚠️
 
 - Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264).
-- Because of this, Zod v2 will _not be leaving beta_. Instead it is being "retired" and the beta v3 is being released. After an appropriate beta period, a stable v3 will be released.
-- There are breaking changes in v3. If you don't use transformers or type guards, you should be able to upgrade without any modifications to your code. Otherwise, go to the [v3 docs](https://github.com/colinhacks/zod/tree/v3) for a detailed migration guide.
+- Because of this, Zod v2 will _not be leaving beta_. Instead it is being "retired" and the beta of v3 is being released. After an appropriate beta period, a stable v3 will be released.
+- There are breaking changes in v3.
+  - The syntax for transformers has been changed
+  - The minimum TypeScript version is now _4.1_
+  - Type guards have been removed
+
+For a more detailed migration guide, go to the [v3 docs](https://github.com/colinhacks/zod/tree/v3)
 
 #### Migration from v1
 
