@@ -33,6 +33,7 @@ yarn add zod@next
 
 #### Breaking changes in v3
 
+- The minimum TypeScript version has increased from 3.7 to _4.1_. Several features have been rewritten to use [recursive conditional types](https://devblogs.microsoft.com/typescript/announcing-typescript-4-1/#recursive-conditional-types), an incredibly powerful new feature introduced in TS4.1.
 - Transformer syntax. Previously transformers required an input, an output schema, and a function to tranform between them. You created transformers like `z.transform(A, B, func)`, where `A` and `B` are Zod schemas. This is no longer the case. Accordingly:
 
   ⚠️ The old syntax (`z.transformer(A, B, func)`) is no longer available.
