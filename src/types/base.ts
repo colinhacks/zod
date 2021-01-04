@@ -119,23 +119,28 @@ export abstract class ZodType<
 
   spa = this.safeParseAsync;
 
-  is(u: Input): u is Input {
-    try {
-      this.parse(u as any);
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
+  // is(u: Input): u is Input {
+  //   try {
+  //     this.parse(u as any);
+  //     return true;
+  //   } catch (err) {
+  //     return false;
+  //   }
+  // }
 
-  check(u: unknown): u is Input {
-    try {
-      this.parse(u as any);
-      return true;
-    } catch (err) {
-      return false;
-    }
-  }
+  // check(u: unknown): u is Input {
+  //   try {
+  //     this.parse(u as any);
+  //     return true;
+  //   } catch (err) {
+  //     return false;
+  //   }
+  // }
+  /** The .is method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
+  is: never;
+
+  /** The .check method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
+  check: never;
 
   refine = <Func extends (arg: Output) => any>(
     check: Func,
@@ -233,8 +238,8 @@ export abstract class ZodType<
 
   constructor(def: Def) {
     this._def = def;
-    this.is = this.is.bind(this);
-    this.check = this.check.bind(this);
+    // this.is = this.is.bind(this);
+    // this.check = this.check.bind(this);
     this.transform = this.transform.bind(this);
     this.default = this.default.bind(this);
   }

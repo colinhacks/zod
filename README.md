@@ -20,17 +20,17 @@ if you're happy and you know it, star this repo ⭐
 
 ### 3 Jan 2020: Zod 2 is being retired
 
-Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264). Zod v3 includes a simpler and more intuitive implementation of transformers. Unfortunately this required breaking changes to the transformer API.
+Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264).
 
-The beta of v3 is being released. Shortly v3 will become the default version of Zod.
+Zod v3 includes a simpler and more intuitive implementation of transformers. Unfortunately this required breaking changes to the transformer API. There are other breaking changes as well, detailed below.
+
+_It's recommended that all users upgrade to v3._ If you don't use transformers, you should be able to upgrade without any modifications to your code.
 
 ### Migrating from v1
 
 If you're upgrading straight to v3 from v1, you'll need to be aware of the breaking changes introduced in both v2 and v3. The v1->v2 migration guide is [here](https://github.com/colinhacks/zod/tree/v2).
 
 ### Migration from v2
-
-It's recommended that all users upgrade to v3. _If you don't use transformers, you should be able to upgrade without any modifications to your code._
 
 You can install v3 with `zod@next`. (v2 will continue to be availabe with `zod@beta` for the time being.)
 
@@ -61,12 +61,13 @@ yarn add zod@next
   ```
 
 - Type guards (the `.check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
-
-_Additional updates + features_
-
-- Support for Deno!
-- Support for ES Modules!
 - Errors that occur inside refinement functions are now caught. Previously these errors were considered unexpected and would crash the process (unless caught externally to Zod). If an error is caught, the refinement fails.
+
+<!-- _Additional updates + features_ -->
+
+<!-- - Support for Deno!
+- Support for ES Modules! -->
+<!-- - Errors that occur inside refinement functions are now caught. Previously these errors were considered unexpected and would crash the process (unless caught externally to Zod). If an error is caught, the refinement fails. -->
 
 # What is Zod
 
