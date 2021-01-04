@@ -18,40 +18,29 @@ if you're happy and you know it, star this repo ⭐
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-### **Sept 17 — Zod 2 is now in beta!**
+### ⚠️ Zod 2 is being retired (3 Jan 2020)
 
-You should be able to upgrade from v1 to v2 without any breaking changes to your code. Zod 2 is recommended for all new projects.
+⚠️ It's recommended that all v2 users upgrade to v3. ⚠️
 
-```
+- Zod v2 was released in beta back in September. Since then we've uncovered some archictectural issues with transformers that result in complicated and unintuitive behavior; these issues are documented in detail [here](https://github.com/colinhacks/zod/issues/264).
+- Because of this, Zod v2 will _not be leaving beta_. Instead it is being "retired" and the beta of v3 is being released. After an appropriate beta period, a stable v3 will be released.
+- There are breaking changes in v3.
+  - The syntax for transformers has been changed
+  - The minimum TypeScript version is now _4.1_
+  - Type guards have been removed
 
-npm install zod@beta
-yarn add zod@beta
-```
+For a more detailed migration guide, go to the [v3 docs](https://github.com/colinhacks/zod/tree/v3)
 
-Here are some of the new features.
+#### Migration from v1
+
+_In almost all cases, you'll be able to upgrade to Zod 2 without changing any code._ Here are the breaking changes + new features:
 
 - Transformers! These let you provide default values, do casting/coercion, and a lot more. Read more here: [Transformers](#transformers)
 - Asynchronous refinements and new `.parseAsync` and `.safeParseAsync` methods. Read more here: [Refinements](#refinements)
-- Schema parsing now returns a deep clone of the data you pass in (instead of the _exact_ value you pass in)
-- Object schemas now strip unknown keys by default. There are also new object methods: `.passthrough()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
-
-In almost all cases, you'll be able to upgrade to Zod 2 without changing any code. Here are some of the (very minor) breaking changes:
-
-- Parsing now returns a _deep clone_ of the data you pass in. Previously it returned the exact same object you passed in.
-- Relatedly, Zod _no longer_ supports cyclical _data_. Recursive schemas are still supported, but Zod can't properly parse nested objects that contain cycles.
-- Object schemas now strip unknown keys by default, instead of throwing an error
-- Optional and nullable schemas are now represented with the dedicated ZodOptional and ZodNullable classes, instead of using ZodUnion.
-
----
-
-Aug 30 — zod@1.11 was released with lots of cool features!
-
-- All schemas now have a `.safeParse` method. This lets you validate data in a more functional way, similar to `io-ts`: https://github.com/colinhacks/zod#safe-parse
-- String schemas have a new `.regex` refinement method: https://github.com/colinhacks/zod#strings
-- Object schemas now have two new methods: `.primitives()` and `.nonprimitives()`. These methods let you quickly pick or omit primitive fields from objects, useful for validating API inputs: https://github.com/colinhacks/zod#primitives-and-nonprimitives
-- Zod now provides `z.nativeEnum()`, which lets you create z Zod schema from an existing TypeScript `enum`: https://github.com/colinhacks/zod#native-enums
-
-<!-- > ⚠️ You might be encountering issues building your project if you're using zod@<1.10.2. This is the result of a bug in the TypeScript compiler. To solve this without updating, set `"skipLibCheck": true` in your tsconfig.json "compilerOptions". This issue is resolved in zod@1.10.2 and later. -->
+- \[breaking\] Object schemas now strip unknown keys by default. There are also new object methods: `.passthrough()`, `.strict()`, and `.catchall()`. Read more here: [Objects](#objects)
+- \[breaking\] Schema parsing now returns a deep clone of the data you pass in (instead of the _exact_ value you pass in)
+- \[breaking\] Relatedly, Zod _no longer_ supports cyclical _data_. Recursive schemas are still supported, but Zod can't properly parse nested objects that contain cycles.
+- \[breaking\] Optional and nullable schemas are now represented with the dedicated ZodOptional and ZodNullable classes, instead of using ZodUnion.
 
 # What is Zod
 
@@ -814,7 +803,7 @@ person.parse({
   name: "bob dylan",
   validExtraKey: 61, // works fine
 });
-// => { name: "bob dylan" }
+// => { name: "bob dylan", validExtraKey: 61 }
 ```
 
 > Using `.catchall()` overrides `.passsthrough()` , `.strip()` , or `.strict()` . All keys are now considered "known".
@@ -1023,7 +1012,7 @@ D.parse("asdf"); // => "asdf"
 D.parse(null); // => null
 ```
 
-Or you can use the `.optional()` method on any existing schema:
+Or you can use the `.nullable()` method on any existing schema:
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
@@ -1432,7 +1421,7 @@ trimmedLength("sandwich"); // => 8
 trimmedLength(" asdf "); // => 4
 ```
 
-`myValidatedFunction` now automatically validates both its inputs and return value against the schemas provided to `z.function` . If either is invalid, the function throws. This way you can confidently write application logic in a "validated function" without worrying about invalid inputs, scattering `schema.validate()` calls in your endpoint definitions, or writing duplicative types for your functions.
+`trimmedLength` now automatically validates both its inputs and return value against the schemas provided to `z.function` . If either is invalid, the function throws. This way you can confidently write application logic in a "validated function" without worrying about invalid inputs, scattering `schema.validate()` calls in your endpoint definitions, or writing duplicative types for your functions.
 
 Here's a more complex example showing how to write a typesafe API query endpoint:
 
@@ -1449,7 +1438,7 @@ const FetcherEndpoint = z
     )
   );
 
-const getUserByID = FetcherEndpoint.validate((args) => {
+const getUserByID = FetcherEndpoint.validate(async (args) => {
   args; // => { id: string }
 
   const user = await User.findByID(args.id);
