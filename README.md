@@ -24,14 +24,15 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- **Zod 2 is in an early beta.** Upgrade with `yarn add zod@beta`. Read more about the new features and migration process here: https://github.com/colinhacks/zod/tree/v2. -->
 
-### Zod 2 is now in beta!
+### Zod 3 is now in early beta!
 
-Most projects will be able to upgrade from v1 to v2 without any breaking changes. Zod 2 is recommended for all new projects. Find a breakdown of the new features and a simple migration guide here: https://github.com/colinhacks/zod/tree/v2
+There are now three versions of Zod in existence:
 
-```
-npm install zod@beta
-yarn add zod@beta
-```
+- Zod v1 (`zod`): The page your on now is the documenetation for Zod v1. Minimum TS version is 3.2.
+- Zod v2 (`zod@beta`): was released in beta in September, including support for transformers and async refinements. v2 will _never leave beta_. It is not recommended for use in new projects. Minimum TS version is 3.7.
+- Zod v3 (`zod@next`): over time issues with the v2 implementation of transformers became apparent. These issues are fixed with a simpler, less error-prone implementation in v3. Unfortunately this involved breaking changes to the transformers API, so we've bumped the major version to v3. Minimum TS version is 4.0.
+
+Zod 3 is recommended for all new projects. Install it with `yarn add zod@next`. A migration guide is here: https://github.com/colinhacks/zod/tree/v3.
 
 <!-- **Aug 30 — zod@1.11 was released with lots of cool features!** -->
 
@@ -306,7 +307,7 @@ Zod was designed to mirror TypeScript as closely as possible. But there are many
 For example, you can define a custom validation check on _any_ Zod schema with `.refine`:
 
 ```ts
-const myString = z.string().refine(val => val.length <= 255, {
+const myString = z.string().refine((val) => val.length <= 255, {
   message: "String can't be more than 255 characters",
 });
 ```
@@ -338,7 +339,7 @@ const passwordForm = z
     password: z.string(),
     confirm: z.string(),
   })
-  .refine(data => data.password === data.confirm, {
+  .refine((data) => data.password === data.confirm, {
     message: "Passwords don't match",
     path: ['confirm'], // set path of error
   })
@@ -512,9 +513,7 @@ You're able to fluently chain together many `.merge` calls as well:
 
 ```ts
 // chaining mixins
-const Teacher = BaseTeacher.merge(HasId)
-  .merge(HasName)
-  .merge(HasAddress);
+const Teacher = BaseTeacher.merge(HasId).merge(HasName).merge(HasAddress);
 ```
 
 <!-- `.merge` is just syntactic sugar over the more generic `z.intersection` which is documented below. -->
@@ -853,12 +852,8 @@ const stringArray = z.string().array();
 You have to be careful with the `.array()` method. It returns a new `ZodArray` instance. This means you need to be careful about the _order_ in which you call methods. These two schemas are very different:
 
 ```ts
-z.string()
-  .undefined()
-  .array(); // (string | undefined)[]
-z.string()
-  .array()
-  .undefined(); // string[] | undefined
+z.string().undefined().array(); // (string | undefined)[]
+z.string().array().undefined(); // string[] | undefined
 ```
 
 <!-- You can define arrays of **any** other Zod schema, no matter how complicated.
@@ -872,10 +867,7 @@ dogsList.parse([]); // passes
 #### Non-empty lists
 
 ```ts
-const nonEmptyStrings = z
-  .string()
-  .array()
-  .nonempty();
+const nonEmptyStrings = z.string().array().nonempty();
 // [string, ...string[]]
 
 nonEmptyStrings.parse([]); // throws: "Array cannot be empty"
@@ -948,10 +940,7 @@ You can create unions of any two or more schemas.
 ```ts
 /* Custom Union Types */
 
-const F = z
-  .union([z.string(), z.number(), z.boolean()])
-  .optional()
-  .nullable();
+const F = z.union([z.string(), z.number(), z.boolean()]).optional().nullable();
 
 F.parse('tuna'); // => tuna
 F.parse(42); // => 42
@@ -1297,7 +1286,7 @@ type myFunction = z.infer<typeof myFunction>;
 Function schemas have an `.implement()` method which accepts a function as input and returns a new function.
 
 ```ts
-const myValidatedFunction = myFunction.implement(x => {
+const myValidatedFunction = myFunction.implement((x) => {
   // TypeScript knows x is a string!
   return x.trim().length;
 });
@@ -1323,7 +1312,7 @@ const returnType = z.promise(
 
 const FetcherEndpoint = z.function(args, returnType);
 
-const getUserByID = FetcherEndpoint.validate(args => {
+const getUserByID = FetcherEndpoint.validate((args) => {
   args; // => { id: string }
 
   const user = await User.findByID(args.id);
@@ -1341,7 +1330,7 @@ const getUserByID = FetcherEndpoint.validate(args => {
 ```ts
 // Express example
 server.get(`/user/:id`, async (req, res) => {
-  const user = await getUserByID({ id: req.params.id }).catch(err => {
+  const user = await getUserByID({ id: req.params.id }).catch((err) => {
     res.status(400).send(err.message);
   });
 
