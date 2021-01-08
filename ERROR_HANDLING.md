@@ -142,7 +142,7 @@ As you can see three different issues were identified. Every ZodSuberror has a `
 
 ## Customizing errors with ZodErrorMap
 
-You can customize **all** error messages produced by Zod by providing a custom instance of ZodErrorMap to `.parse()`. Internally, Zod uses a [default error map](https://github.com/colinhacks/zod/blob/master/defaultErrorMap.ts) to produce all error messages.
+You can customize **all** error messages produced by Zod by providing a custom instance of ZodErrorMap to `.parse()`. Internally, Zod uses a [default error map](https://github.com/colinhacks/zod/blob/master/src/defaultErrorMap.ts) to produce all error messages.
 
 `ZodErrorMap` is a special function. It accepts two arguments: `error` and `ctx`. The return type is `{ message: string }`. Essentially the error map accepts some information about the validation that is failing and returns an appropriate error message.
 
