@@ -15,7 +15,7 @@ class ZodError extends Error {
 ZodError is a subclass of `Error`; you can create your own instance easily:
 
 ```ts
-import * as z from 'zod';
+import * as z from "zod";
 
 const myError = new z.ZodError([]);
 ```
@@ -96,11 +96,11 @@ Let's pass in some improperly formatted data.
 ```ts
 try {
   person.parse({
-    names: ['Dave', 12], // 12 is not a string
+    names: ["Dave", 12], // 12 is not a string
     address: {
-      line1: '123 Maple Ave',
+      line1: "123 Maple Ave",
       zipCode: 123, // zip code isnt 5 digits
-      extra: 'other stuff', // unrecognized key
+      extra: "other stuff", // unrecognized key
     },
   });
 } catch (err) {
@@ -115,25 +115,25 @@ Here are the errors that will be printed:
 ```ts
 [
   {
-    code: 'invalid_type',
-    expected: 'string',
-    received: 'number',
-    path: ['names', 1],
-    message: 'Invalid input: expected string, received number',
+    code: "invalid_type",
+    expected: "string",
+    received: "number",
+    path: ["names", 1],
+    message: "Invalid input: expected string, received number",
   },
   {
-    code: 'unrecognized_keys',
-    keys: ['extra'],
-    path: ['address'],
+    code: "unrecognized_keys",
+    keys: ["extra"],
+    path: ["address"],
     message: "Unrecognized key(s) in object: 'extra'",
   },
   {
-    code: 'too_small',
+    code: "too_small",
     minimum: 10000,
-    type: 'number',
+    type: "number",
     inclusive: true,
-    path: ['address', 'zipCode'],
-    message: 'Value should be greater than or equal to 10000',
+    path: ["address", "zipCode"],
+    message: "Value should be greater than or equal to 10000",
   },
 ];
 ```
@@ -142,7 +142,7 @@ As you can see three different issues were identified. Every ZodIssue has a `cod
 
 ## Customizing errors with ZodErrorMap
 
-You can customize **all** error messages produced by Zod by providing a custom instance of ZodErrorMap to `.parse()`. Internally, Zod uses a [default error map](https://github.com/colinhacks/zod/blob/master/defaultErrorMap.ts) to produce all error messages.
+You can customize **all** error messages produced by Zod by providing a custom instance of ZodErrorMap to `.parse()`. Internally, Zod uses a [default error map](https://github.com/colinhacks/zod/blob/master/src/defaultErrorMap.ts) to produce all error messages.
 
 `ZodErrorMap` is a special function. It accepts two arguments: `error` and `ctx`. The return type is `{ message: string }`. Essentially the error map accepts some information about the validation that is failing and returns an appropriate error message.
 
@@ -161,7 +161,7 @@ You can customize **all** error messages produced by Zod by providing a custom i
 Let's look at a practical example of of customized error map:
 
 ```ts
-import * as z from 'zod';
+import * as z from "zod";
 
 const errorMap: z.ZodErrorMap = (error, ctx) => {
   /*
@@ -182,7 +182,7 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
   */
   switch (error.code) {
     case z.ZodIssueCode.invalid_type:
-      if (error.expected === 'string') {
+      if (error.expected === "string") {
         return { message: `This ain't a string!` };
       }
       break;
@@ -240,9 +240,9 @@ Now lets pass in some invalid data:
 
 ```ts
 FormData.parse({
-  email: 'not an email',
-  password: 'tooshort',
-  confirm: 'nomatch',
+  email: "not an email",
+  password: "tooshort",
+  confirm: "nomatch",
 });
 ```
 
@@ -293,5 +293,5 @@ console.log(err.flatten());
 - `fieldErrors` is an object. The keys are the field(s) that threw the error. The values are an array of error strings that can be easily presented in the interface.
 - `formErrors: string[]` is an array of errors that occured on the "root" of the object schema. For instance if you called `FormData.parse(null)`, `formErrors` would be:
   ```ts
-  ['Invalid input: expected object, received null'];
+  ["Invalid input: expected object, received null"];
   ```
