@@ -366,13 +366,13 @@ export const ZodParser = (schema: ZodType<any>) => (
       const objectPromises: { [k: string]: PseudoPromise<any> } = {};
 
       const shape = def.shape();
-      const shapeKeys = Object.keys(shape); // TODO: to set
+      const shapeKeys = new Set(Object.keys(shape));
       const dataKeys = Object.keys(data);
 
-      const extraKeys = dataKeys.filter((k) => shapeKeys.indexOf(k) === -1);
+      const extraKeys = dataKeys.filter((k) => !shapeKeys.has(k));
 
       for (const key of shapeKeys) {
-        const keyValidator = shapeKeys.includes(key)
+        const keyValidator = shapeKeys.has(key)
           ? shape[key]
           : !(def.catchall._def.t === ZodTypes.never)
           ? def.catchall
