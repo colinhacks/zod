@@ -123,7 +123,7 @@ export const quotelessJson = (obj: any) => {
   return json.replace(/"([^"]+)":/g, "$1:");
 };
 
-export class ZodError extends Error {
+export class ZodError {
   issues: ZodIssue[] = [];
 
   get errors() {
@@ -131,7 +131,6 @@ export class ZodError extends Error {
   }
 
   constructor(issues: ZodIssue[]) {
-    super();
     // restore prototype chain
     const actualProto = new.target.prototype;
     Object.setPrototypeOf(this, actualProto);
