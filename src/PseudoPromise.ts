@@ -1,5 +1,5 @@
 import { INVALID } from "./helpers/util";
-import { ZodError } from "./ZodError";
+import { ZodError, ZodIssue } from "./ZodError";
 
 type Func = (arg: any, ctx: { async: boolean }) => any;
 type FuncItem = { type: "function"; function: Func };
@@ -51,7 +51,7 @@ export class PseudoPromise<ReturnType = undefined> {
     return new PseudoPromise().then((_arg, ctx) => {
       const value: any = {};
 
-      const zerr = new ZodError([]);
+      const issues: ZodIssue[] = [];
       if (ctx.async) {
         const getAsyncObject = async () => {
           const items = await Promise.all(
@@ -61,7 +61,7 @@ export class PseudoPromise<ReturnType = undefined> {
                 return [k, v] as [string, any];
               } catch (err) {
                 if (err instanceof ZodError) {
-                  zerr.addIssues(err.issues);
+                  issues.push(...err.issues);
                   return [k, INVALID] as [string, any];
                 }
                 throw err;
@@ -69,7 +69,7 @@ export class PseudoPromise<ReturnType = undefined> {
             })
           );
 
-          if (!zerr.isEmpty) throw zerr;
+          if (issues.length !== 0) throw new ZodError(issues);
 
           for (const item of items) {
             if (item[1] !== NOSET) value[item[0]] = item[1];
@@ -85,13 +85,13 @@ export class PseudoPromise<ReturnType = undefined> {
             return [k, v] as [string, any];
           } catch (err) {
             if (err instanceof ZodError) {
-              zerr.addIssues(err.issues);
+              issues.push(...err.issues);
               return [k, INVALID] as [string, any];
             }
             throw err;
           }
         });
-        if (!zerr.isEmpty) throw zerr;
+        if (issues.length !== 0) throw new ZodError(issues);
         for (const item of items) {
           if (item[1] !== NOSET) value[item[0]] = item[1];
         }
