@@ -26,7 +26,7 @@ Each ZodError has an `errors` property that is an array of `ZodSuberrors`. Each 
 
 `ZodSuberror` is _not_ a class. It is a [discriminated union](https://www.typescriptlang.org/docs/handbook/advanced-types.html#discriminated-unions).
 
-The link above the the best way to learn about the concept. Discriminated unions are an ideal way to represent a data structures that may be one of many possible variants. You can see all the possible variants defined [here](https://github.com/colinhacks/zod/blob/master/src/ZodError.ts). They are also described in the table below if you prefer.
+The link above is the best way to learn about the concept. Discriminated unions are an ideal way to represent a data structures that may be one of many possible variants. You can see all the possible variants defined [here](https://github.com/colinhacks/zod/blob/master/src/ZodError.ts). They are also described in the table below if you prefer.
 
 _Every_ ZodSuberror has these fields:
 
@@ -142,7 +142,7 @@ As you can see three different issues were identified. Every ZodSuberror has a `
 
 ## Customizing errors with ZodErrorMap
 
-You can customize **all** error messages produced by Zod by providing a custom instance of ZodErrorMap to `.parse()`. Internally, Zod uses a [default error map](https://github.com/colinhacks/zod/blob/master/defaultErrorMap.ts) to produce all error messages.
+You can customize **all** error messages produced by Zod by providing a custom instance of ZodErrorMap to `.parse()`. Internally, Zod uses a [default error map](https://github.com/colinhacks/zod/blob/master/src/defaultErrorMap.ts) to produce all error messages.
 
 `ZodErrorMap` is a special function. It accepts two arguments: `error` and `ctx`. The return type is `{ message: string }`. Essentially the error map accepts some information about the validation that is failing and returns an appropriate error message.
 
