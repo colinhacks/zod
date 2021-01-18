@@ -65,6 +65,15 @@ I work on Zod in my free time, so if you're making money from a product that is 
 
 <table>
   <tr>
+   <td align="center">
+      <a href="https://deletype.com/">
+        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="100px;" alt="" />
+      </a>
+      <br>
+      <b>Deletype</b>
+      <br>
+      <a href="https://deletype.com/">https://deletype.com/</a>
+    </td>
   <td align="center">
       <a href="https://github.com/kevinsimper">
         <img src="https://avatars1.githubusercontent.com/u/1126497?s=460&v=4" width="100px;" alt="" />
