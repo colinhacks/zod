@@ -104,6 +104,15 @@ I work on Zod in my free time, so if you're making money from a product that is 
       <br>
       <a href="https://www.bamboocreative.nz/">https://bamboocreative.nz</a>
     </td>
+    <td align="center">
+      <a href="https://github.com/jeremyBanks">
+        <img src="https://avatars.githubusercontent.com/u/18020?s=400&u=dba6c1402ae1746a276a5d256e01d68e774a0e9d&v=4" width="100px;" alt="" />
+      </a>
+      <br>
+      <b>Jeremy Banks</b>
+      <br>
+      <a href="https://github.com/jeremyBanks">https://github.com/jeremyBanks</a>
+    </td>
     
   </tr>
 </table>
