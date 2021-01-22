@@ -104,7 +104,11 @@ I work on Zod in my free time, so if you're making money from a product that is 
       <br>
       <a href="https://www.bamboocreative.nz/">https://bamboocreative.nz</a>
     </td>
-    <td align="center">
+    
+    
+  </tr>
+  <tr>
+  <td align="center">
       <a href="https://github.com/jeremyBanks">
         <img src="https://avatars.githubusercontent.com/u/18020?s=400&u=dba6c1402ae1746a276a5d256e01d68e774a0e9d&v=4" width="100px;" alt="" />
       </a>
@@ -113,8 +117,7 @@ I work on Zod in my free time, so if you're making money from a product that is 
       <br>
       <a href="https://github.com/jeremyBanks">https://github.com/jeremyBanks</a>
     </td>
-    
-  </tr>
+</tr>
 </table>
 
 _To get your name + Twitter + website here, sponsor Zod through [GitHub Sponsors](https://github.com/sponsors/colinhacks) tier._
