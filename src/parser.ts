@@ -487,6 +487,16 @@ export const ZodParser = (schemaDef: z.ZodTypeDef) => (
         );
       }
       break;
+    case z.ZodTypes.keyof:
+      if (util.getValidEnumValues(def.values).indexOf(obj) === -1) {
+        error.addError(
+          makeError(params, obj, {
+            code: ZodErrorCode.invalid_enum_value,
+            options: util.getValues(def.values),
+          }),
+        );
+      }
+      break;
     case z.ZodTypes.function:
       if (parsedType !== ZodParsedType.function) {
         error.addError(

@@ -32,6 +32,7 @@ export enum ZodTypes {
   any = 'any',
   unknown = 'unknown',
   void = 'void',
+  keyof = 'keyof',
 }
 
 export type ZodTypeAny = ZodType<any, any>;
