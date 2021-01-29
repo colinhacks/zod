@@ -17,6 +17,7 @@ jobs:
         with:
           node-version: 14
       - run: yarn install
+      - run: yarn clean
       - run: yarn fix:lint
       - run: yarn build:deno
       - run: yarn fix:format
