@@ -39,7 +39,6 @@ test('type error with custom error map', () => {
     z.string().parse('asdf', { errorMap });
   } catch (err) {
     const zerr: z.ZodError = err;
-    console.log(zerr);
     expect(zerr.errors[0].code).toEqual(z.ZodErrorCode.invalid_type);
     expect(zerr.errors[0].message).toEqual(`bad type!`);
   }
@@ -142,7 +141,6 @@ test('union smart errors', () => {
   const p1 = z.union([z.string(), z.number().refine(x => x > 0)]).safeParse(-3.2);
 
   if (p1.success === true) throw new Error();
-  console.log(JSON.stringify(p1.error, null, 2));
   expect(p1.success).toBe(false);
   expect(p1.error.errors[0].code).toEqual(ZodErrorCode.custom_error);
 
