@@ -59,7 +59,7 @@ Some other great aspects:
 
 # Sponsorship
 
-I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/colinhacks) or the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you're making money from a product you built using Zod, consider the [Startup tier]([Cup of Coffee tier](https://github.com/sponsors/colinhacks)). You can learn more about the tiers at [github.com/sponsors/colinhacks](github.com/sponsors/colinhacks).
+I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/colinhacks) or the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you're making money from a product you built using Zod, consider the [Startup tier]([Cup of Coffee tier](https://github.com/sponsors/colinhacks)). You can learn more about the tiers at [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
 
 ### Sponsors
 
