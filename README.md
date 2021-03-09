@@ -170,18 +170,15 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
 
 # Installation
 
-To use the beta of Zod 2 (recommended for new projects).
+Zod v2 will be retired and is not leaving beta. Instead you can use Zod v3 which is currently in beta (recommended):
 
 ```
-
-yarn add zod@beta
-npm install zod@beta
+npm install zod@next
 ```
 
-To install the most recent v1 version:
+To install the most stable (v1) version:
 
 ```sh
-yarn add zod
 npm install zod
 ```
 
