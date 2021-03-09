@@ -108,8 +108,6 @@ test('primitives', () => {
     arrayarray: z.array(z.array(z.string())),
   });
 
-  console.log(JSON.stringify(Object.keys(baseObj.nonprimitives()), null, 2));
-
   expect(Object.keys(baseObj.primitives().shape)).toEqual([
     'stringPrimitive',
     'stringArrayPrimitive',

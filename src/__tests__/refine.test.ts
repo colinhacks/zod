@@ -45,7 +45,6 @@ test('custom path', () => {
     .refine(data => data.confirm === data.password, { path: ['confirm'] })
     .parseAsync({ password: 'asdf', confirm: 'qewr' })
     .catch(err => {
-      console.log(JSON.stringify(err, null, 2));
       expect(err.errors[0].path).toEqual(['confirm']);
     });
 });
