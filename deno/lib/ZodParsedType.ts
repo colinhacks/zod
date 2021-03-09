@@ -19,6 +19,7 @@ export const ZodParsedType = util.arrayToEnum([
   "void",
   "never",
   "map",
+  "set",
 ]);
 
 export type ZodParsedType = keyof typeof ZodParsedType;

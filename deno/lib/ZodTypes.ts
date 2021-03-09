@@ -13,6 +13,7 @@ export enum ZodTypes {
   tuple = "tuple",
   record = "record",
   map = "map",
+  set = "set",
   function = "function",
   lazy = "lazy",
   literal = "literal",

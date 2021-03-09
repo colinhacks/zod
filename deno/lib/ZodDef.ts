@@ -9,6 +9,7 @@ import { ZodIntersectionDef } from "./types/intersection.ts";
 import { ZodLazyDef } from "./types/lazy.ts";
 import { ZodLiteralDef } from "./types/literal.ts";
 import { ZodMapDef } from "./types/map.ts";
+import { ZodSetDef } from "./types/set.ts";
 import { ZodNativeEnumDef } from "./types/nativeEnum.ts";
 import { ZodNeverDef } from "./types/never.ts";
 import { ZodNullDef } from "./types/null.ts";
@@ -45,6 +46,7 @@ export type ZodDef =
   | ZodTupleDef
   | ZodRecordDef
   | ZodMapDef
+  | ZodSetDef
   | ZodFunctionDef
   | ZodLazyDef
   | ZodLiteralDef

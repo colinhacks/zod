@@ -24,7 +24,9 @@ If you're upgrading straight to v3 from v1, you'll need to be aware of the break
 
 ### Migrating from v2
 
-You can install v3 with `zod@next`. (v2 will continue to be availabe with `zod@beta` for the time being.)
+Zod 2 is being retired and will not leave beta. This is due to some issues with it's implementation of transformers: details [here](https://github.com/colinhacks/zod/issues/264). Zod 3 is recommended for all new projecst.
+
+You can install v3 with `zod@next`. Zod 2 will continue to be available with `zod@beta` for the time being.
 
 ```
 npm install zod@next
@@ -81,7 +83,7 @@ Some other great aspects:
 
 # Sponsorship
 
-I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/colinhacks) or the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you're making money from a product you built using Zod, consider the [Startup tier]([Cup of Coffee tier](https://github.com/sponsors/colinhacks)). You can learn more about the tiers at [github.com/sponsors/colinhacks](github.com/sponsors/colinhacks).
+I work on Zod in my free time, so if you're making money from a product that is built with Zod, I'd massively appreciate sponsorship at any level. For solo devs, I recommend the [Chipotle Bowl tier](https://github.com/sponsors/colinhacks) or the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you're making money from a product you built using Zod, consider the [Startup tier](https://github.com/sponsors/colinhacks). You can learn more about the tiers at [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
 
 ### Sponsors
 
@@ -172,15 +174,22 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
 
 To install Zod v3:
 
-```
+```sh
 npm install zod@next
 ```
 
+<<<<<<< HEAD
 or
 
-```
+````
 yarn add zod@next
-```
+=======
+To install the most stable (v1) version:
+
+```sh
+npm install zod
+>>>>>>> c60762e612e29db4d6d7b36e88e9aeb37a05879d
+````
 
 #### TypeScript requirements
 

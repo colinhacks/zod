@@ -23,6 +23,7 @@ import { ZodIntersection } from "./types/intersection.ts";
 import { ZodLazy } from "./types/lazy.ts";
 import { ZodLiteral } from "./types/literal.ts";
 import { ZodMap } from "./types/map.ts";
+import { ZodSet } from "./types/set.ts";
 import { ZodNativeEnum } from "./types/nativeEnum.ts";
 import { ZodNever } from "./types/never.ts";
 import { ZodNull } from "./types/null.ts";
@@ -63,6 +64,7 @@ const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
 const mapType = ZodMap.create;
+const setType = ZodSet.create;
 const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
 const literalType = ZodLiteral.create;
@@ -153,6 +155,7 @@ export {
   lazyType as lazy,
   literalType as literal,
   mapType as map,
+  setType as set,
   nativeEnumType as nativeEnum,
   neverType as never,
   nullType as null,
