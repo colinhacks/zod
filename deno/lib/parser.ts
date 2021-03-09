@@ -357,6 +357,46 @@ export const ZodParser = (schema: ZodType<any>) => (
         .then(() => {
           return returnedMap;
         });
+
+      break;
+    case ZodTypes.set:
+      if (parsedType !== ZodParsedType.set) {
+        ERROR.addIssue(
+          makeError(params, data, {
+            code: ZodIssueCode.invalid_type,
+            expected: ZodParsedType.set,
+            received: parsedType,
+          })
+        );
+        THROW();
+      }
+
+      const dataSet: Set<unknown> = data;
+      const returnedSet = new Set();
+
+      PROMISE = PseudoPromise.all(
+        [...dataSet.values()].map((item, i) => {
+          return new PseudoPromise()
+            .then(() =>
+              def.valueType.parse(item, {
+                ...params,
+                path: [...params.path, i],
+              })
+            )
+            .catch((err) => {
+              if (!(err instanceof ZodError)) {
+                throw err;
+              }
+              ERROR.addIssues(err.issues);
+              return INVALID;
+            })
+            .then((item) => {
+              returnedSet.add(item);
+            });
+        })
+      ).then(() => {
+        return returnedSet;
+      });
       break;
     case ZodTypes.object:
       RESULT.output = {};

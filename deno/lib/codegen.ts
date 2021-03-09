@@ -157,6 +157,8 @@ ${this.seen
             this.generate(def.valueType).id
           }>`
         );
+      case ZodTypes.set:
+        return this.setType(id, `Set<${this.generate(def.valueType).id}>`);
       case ZodTypes.lazy:
         const lazyType = def.getter();
         return this.setType(id, this.generate(lazyType).id);

@@ -78,6 +78,9 @@ export const isScalar = (
     case ZodTypes.map:
       returnValue = false;
       break;
+    case ZodTypes.set:
+      returnValue = false;
+      break;
     case ZodTypes.date:
       returnValue = true;
       break;
