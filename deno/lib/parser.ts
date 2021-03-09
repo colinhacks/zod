@@ -38,6 +38,9 @@ export const getParsedType = (data: any): ZodParsedType => {
     if (data instanceof Map) {
       return "map";
     }
+    if (data instanceof Set) {
+      return "set";
+    }
     return "object";
   }
   return "unknown";
