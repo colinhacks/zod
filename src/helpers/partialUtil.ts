@@ -1,4 +1,4 @@
-import { ZodTypeAny, ZodObject, ZodOptional } from "..";
+import { ZodTypeAny, ZodObject, ZodOptional } from "../index";
 
 type AnyZodObject = ZodObject<any, any, any>;
 

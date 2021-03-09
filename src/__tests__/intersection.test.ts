@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "..";
+import * as z from "../index";
 
 test("object intersection", () => {
   const BaseTeacher = z.object({

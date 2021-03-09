@@ -170,30 +170,27 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
 
 # Installation
 
-To use the beta of Zod 2 (recommended for new projects).
+To install Zod v3:
 
 ```
-
-yarn add zod@beta
-npm install zod@beta
+npm install zod@next
 ```
 
-To install the most recent v1 version:
+or
 
-```sh
-yarn add zod
-npm install zod
+```
+yarn add zod@next
 ```
 
 #### TypeScript requirements
 
-- Zod 3.x requires TypeScript 3.8+
+- Zod 3.x requires TypeScript 4.1+
 - Zod 2.x requires TypeScript 3.7+
 - Zod 1.x requires TypeScript 3.3+
 
 > Support for TS 3.2 was dropped with the release of zod@1.10 on 19 July 2020
 
-You must enable `strictNullChecks` or use `strict` mode which includes `strictNullChecks` . Otherwise Zod can't correctly infer the types of your schemas!
+⚠️ You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects:
 
 ```ts
 // tsconfig.json
@@ -201,7 +198,7 @@ You must enable `strictNullChecks` or use `strict` mode which includes `strictNu
   // ...
   "compilerOptions": {
     // ...
-    "strictNullChecks": true
+    "strict": true
   }
 }
 ```
