@@ -79,5 +79,8 @@
       "yarn fix:lint",
       "yarn fix:format"
     ]
+  },
+  "dependencies": {
+    "eslint-plugin-unused-imports": "^1.1.0"
   }
 }

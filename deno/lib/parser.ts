@@ -1,11 +1,7 @@
-// import { inputSchema } from "../types/base/output-schema";
-import { RefinementCtx, ZodType } from "./index.ts";
 import { defaultErrorMap, ZodErrorMap } from "./defaultErrorMap.ts";
 import { INVALID, util } from "./helpers/util.ts";
+import { RefinementCtx, ZodType } from "./index.ts";
 import { NOSET, PseudoPromise } from "./PseudoPromise.ts";
-// type adsf = RefinementCtx
-// import { ZodNever } from "../types/never";
-// import { ZodPromise } from "../types/promise";
 import { ZodDef } from "./ZodDef.ts";
 import { MakeErrorData, ZodError, ZodIssue, ZodIssueCode } from "./ZodError.ts";
 import { ZodParsedType } from "./ZodParsedType.ts";
@@ -744,11 +740,12 @@ export const ZodParser = (schema: ZodType<any>) => (
       PROMISE = PseudoPromise.resolve(data);
       break;
     case ZodTypes.nativeEnum:
-      if (util.getValidEnumValues(def.values).indexOf(data) === -1) {
+      const nativeEnumValues = util.getValidEnumValues(def.values);
+      if (nativeEnumValues.indexOf(data) === -1) {
         ERROR.addIssue(
           makeError(params, data, {
             code: ZodIssueCode.invalid_enum_value,
-            options: util.objectValues(def.values),
+            options: util.objectValues(nativeEnumValues),
           })
         );
       }
