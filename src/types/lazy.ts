@@ -1,5 +1,5 @@
 import { ZodTypes } from "../ZodTypes";
-import { input, output, ZodType, ZodTypeDef, ZodTypeAny } from "./base";
+import { input, output, ZodType, ZodTypeAny, ZodTypeDef } from "./base";
 
 // import { ZodUndefined } from './undefined';
 // import { ZodNull } from './null';

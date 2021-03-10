@@ -1,6 +1,6 @@
 // import { ZodRawShape } from "../types/base";
 // import { ZodRawShape } from "../types/base";
-import { ZodRawShape, ZodIntersection } from "../index";
+import { ZodIntersection, ZodRawShape } from "../index";
 
 // import { mergeObjects as mergeObjectsBase } from "../../types/object";
 // import { mergeShapes as mergeShapesBase } from "./merge";

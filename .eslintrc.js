@@ -4,28 +4,30 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   plugins: [
     "@typescript-eslint",
+    // "simple-import-sort",
     "import",
-    "simple-import-sort",
     // 'prettier' commented as we don't want to run prettier through eslint because of performance degradation
   ],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
     "prettier/@typescript-eslint", // Uses eslint-config-prettier to disable ESLint rules from @typescript-eslint/eslint-plugin that would conflict with prettier
+    "plugin:import/errors",
+    "plugin:import/warnings",
   ],
   rules: {
     /**
      * eslint-plugin-import @see https://github.com/benmosher/eslint-plugin-import
      */
-    "import/order": "off", // turn off in favor of eslint-plugin-simple-import-sort
+    // "import/order": "warn", // turn off in favor of eslint-plugin-simple-import-sort
     "import/no-unresolved": "off",
-    "import/no-duplicates": "warn",
+    "import/no-duplicates": "error",
     /**
      * eslint-plugin-simple-import-sort @see https://github.com/lydell/eslint-plugin-simple-import-sort
      */
     "sort-imports": "off", // we use eslint-plugin-import instead
-    "simple-import-sort/imports": "off",
-    "simple-import-sort/exports": "off",
+    // "simple-import-sort/imports": "warn",
+    // "simple-import-sort/exports": "warn",
     /**
      * @typescript-eslint/eslint-plugin @see https://github.com/typescript-eslint/typescript-eslint/tree/master/packages/eslint-plugin
      */

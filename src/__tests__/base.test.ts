@@ -1,8 +1,8 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index";
 import { util } from "../helpers/util";
+import * as z from "../index";
 
 test("type guard", () => {
   const stringToNumber = z.string().transform((arg) => arg.length);

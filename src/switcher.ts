@@ -1,5 +1,5 @@
+import { ZodDef, ZodType, ZodTypes } from ".";
 import { util } from "./helpers/util";
-import { ZodType, ZodDef, ZodTypes } from ".";
 // import { ZodDef } from "./ZodDef";
 // import { ZodTypes } from "./ZodTypes";
 

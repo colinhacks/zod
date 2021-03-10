@@ -1,13 +1,5 @@
+import { errorUtil } from "../helpers/errorUtil";
 import { util } from "../helpers/util";
-import { ZodTypes } from "../ZodTypes";
-import { ParseParams, ZodParser } from "../parser";
-import {
-  ZodCustomIssue,
-  ZodError,
-  ZodIssueCode,
-  MakeErrorData,
-} from "../ZodError";
-
 import {
   ZodArray,
   ZodNullable,
@@ -16,41 +8,32 @@ import {
   ZodOptionalType,
   ZodTransformer,
 } from "../index";
-// import { outputSchema } from "../output-schema";
+import { ParseParams, ZodParser } from "../parser";
+import {
+  StringValidation,
+  MakeErrorData,
+  ZodCustomIssue,
+  ZodError,
+  ZodIssueCode,
+} from "../ZodError";
+import { ZodTypes } from "../ZodTypes";
 
 type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 type InternalCheck<T> = {
   type: "check";
   check: (arg: T, ctx: RefinementCtx) => any;
-  // refinementError: (arg: T) => MakeErrorData;
 };
 
 type Mod<T> = {
   type: "mod";
   mod: (arg: T) => any;
-  // refinementError: (arg: T) => MakeErrorData;
 };
 
 type Effect<T> = InternalCheck<T> | Mod<T>;
 
-// type Check<T> = {
-//   check: (arg: T) => any;
-//   path?: (string | number)[];
-//   // message?: string;
-//   // params?: {[k:string]:any}
-// } & util.Omit<CustomError, 'code' | 'path'>;
-
-// type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
-// type Check<T> = {
-//   check: (arg: T) => any;
-//   refinementError: (arg: T) => CustomErrorParams;
-// };
-// export function declareZodType() {}
-
 export interface ZodTypeDef {
   t: ZodTypes;
   effects?: Effect<any>[];
-  // mods?: Mod<any>[];
   accepts?: ZodType<any, any>;
 }
 
@@ -63,15 +46,6 @@ export abstract class ZodType<
   readonly _output!: Output;
   readonly _input!: Input;
   readonly _def!: Def;
-
-  // get inputSchema(): ZodTypeAny = this;
-  // outputSchema: ZodTypeAny = this;
-  //  = ()=>{
-  //   return this;
-  // }
-  //  outputSchema = () => {
-  //    return this;
-  //  };
 
   parse: (x: unknown, params?: ParseParams) => Output = ZodParser(this);
 
@@ -118,24 +92,6 @@ export abstract class ZodType<
   };
 
   spa = this.safeParseAsync;
-
-  // is(u: Input): u is Input {
-  //   try {
-  //     this.parse(u as any);
-  //     return true;
-  //   } catch (err) {
-  //     return false;
-  //   }
-  // }
-
-  // check(u: unknown): u is Input {
-  //   try {
-  //     this.parse(u as any);
-  //     return true;
-  //   } catch (err) {
-  //     return false;
-  //   }
-  // }
 
   /** The .is method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
   is: never;
@@ -248,71 +204,15 @@ export abstract class ZodType<
   abstract toJSON: () => object;
 
   optional: () => ZodOptionalType<this> = () => ZodOptional.create(this);
-  // or = this.optional;
   nullable: () => ZodNullableType<this> = () => {
     return ZodNullable.create(this) as any;
   };
   array: () => ZodArray<this> = () => ZodArray.create(this);
-
-  // transform<
-  //   This extends this,
-  //   U extends ZodType<any>,
-  //   Tx extends (arg: This["_output"]) => U["_input"] | Promise<U["_input"]>
-  // >(input: U, transformer: Tx): ZodTransformer<This, U>;
-  // transform<
-  //   This extends this,
-  //   Tx extends (
-  //     arg: This["_output"]
-  //   ) => This["_input"] | Promise<This["_input"]>
-  // >(transformer: Tx): ZodTransformer<This, This>;
-  // transform(input: any, transformer?: any) {
-  //   if (transformer) {
-  //     return ZodTransformer.create(this as any, input, transformer) as any;
-  //   }
-  //   return ZodTransformer.create(this as any, outputSchema(this), input) as any;
-  // }
-
-  // default<
-  //   T extends Input = Input,
-  //   Opt extends ReturnType<this["optional"]> = ReturnType<this["optional"]>
-  // >(def: T): ZodTransformer<Opt, this>;
-  // default<
-  //   T extends (arg: this) => Input,
-  //   Opt extends ReturnType<this["optional"]> = ReturnType<this["optional"]>
-  // >(def: T): ZodTransformer<Opt, this>;
-  // default(def: any) {
-  //   return ZodTransformer.create(this.optional(), this, (x: any) => {
-  //     return x === undefined
-  //       ? typeof def === "function"
-  //         ? def(this)
-  //         : def
-  //       : x;
-  //   }) as any;
-  // }
-
-  // transform<This extends this, Out, U extends ZodType<any>>(
-  //   input: U,
-  //   transformer: (arg: Output) => Out | Promise<Out>
-  // ): This extends ZodTransformer<infer T, any>
-  //   ? ZodTransformer<T, Out>
-  //   : ZodTransformer<This, Out>;
-  // transform<Out, This extends this>(
-  //   transformer: (arg: Output) => Out | Promise<Out>
-  // ): This extends ZodTransformer<infer T, any>
-  //   ? ZodTransformer<T, Out>
-  //   : ZodTransformer<This, Out>;
   transform: <Out, This extends this>(
     transformer: (arg: Output) => Out | Promise<Out>
   ) => This extends ZodTransformer<infer T, any>
     ? ZodTransformer<T, Out>
     : ZodTransformer<This, Out> = (mod) => {
-    // if(typeof first === "function")
-    // const mod = typeof first === "function" ? first : second;
-    // const newSchema = this.transform(txFunc);
-    // if (!second) return newSchema;
-    // if (typeof mod !== "function")
-    //   throw new Error("Must provide a function to the .transform() method");
-
     let returnType;
     if (this instanceof ZodTransformer) {
       returnType = new (this as any).constructor({
@@ -329,18 +229,6 @@ export abstract class ZodType<
     }
     return returnType;
   };
-
-  //   if (!second) {
-  //     return returnType;
-  //   } else {
-  //     return returnType.refine(
-  //       (val: any) => {
-  //         return first.parse(val);
-  //       },
-  //       { message: "Parsing error!" }
-  //     );
-  //   }
-  // };
 
   prependMod = <Out>(
     mod: (arg: Output) => Out | Promise<Out>
@@ -371,10 +259,6 @@ export abstract class ZodType<
   default<T extends (arg: this) => Input, This extends this = this>(
     def: T
   ): ZodTransformer<ZodOptional<This>, Input>;
-  // default<
-  //   T extends (arg: this) => Input,
-  //   Opt extends ReturnType<this["optional"]> = ReturnType<this["optional"]>
-  // >(def: T): ZodTransformer<Opt, this>;
   default(def: any) {
     return this.optional().transform((val: any) => {
       const defaultVal = typeof def === "function" ? def(this) : def;
@@ -399,3 +283,93 @@ export type output<T extends ZodType<any>> = T["_output"];
 export type infer<T extends ZodType<any>> = T["_output"];
 
 export type ZodTypeAny = ZodType<any, any, any>;
+
+export interface ZodStringDef extends ZodTypeDef {
+  t: ZodTypes.string;
+  validation: {
+    uuid?: true;
+    custom?: ((val: any) => boolean)[];
+  };
+}
+
+// eslint-disable-next-line
+const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i;
+const uuidRegex = /([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}){1}/i;
+
+export class ZodString extends ZodType<string, ZodStringDef> {
+  inputSchema = this;
+  outputSchema = this;
+
+  toJSON = () => this._def;
+  min = (minLength: number, message?: errorUtil.ErrMessage) =>
+    this.refinement((data) => data.length >= minLength, {
+      code: ZodIssueCode.too_small,
+      minimum: minLength,
+      type: "string",
+      inclusive: true,
+      ...errorUtil.errToObj(message),
+    });
+
+  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
+    this.refinement((data) => data.length <= maxLength, {
+      code: ZodIssueCode.too_big,
+      maximum: maxLength,
+      type: "string",
+      inclusive: true,
+      ...errorUtil.errToObj(message),
+    });
+
+  length(len: number, message?: errorUtil.ErrMessage) {
+    return this.min(len, message).max(len, message);
+  }
+
+  protected _regex = (
+    regex: RegExp,
+    validation: StringValidation,
+    message?: errorUtil.ErrMessage
+  ) =>
+    this.refinement((data) => regex.test(data), {
+      validation,
+      code: ZodIssueCode.invalid_string,
+
+      ...errorUtil.errToObj(message),
+    });
+
+  email = (message?: errorUtil.ErrMessage) =>
+    this._regex(emailRegex, "email", message);
+
+  url = (message?: errorUtil.ErrMessage) =>
+    this.refinement(
+      (data) => {
+        try {
+          new URL(data);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      {
+        code: ZodIssueCode.invalid_string,
+        validation: "url",
+        ...errorUtil.errToObj(message),
+      }
+    );
+
+  // url = (message?: errorUtil.ErrMessage) => this._regex(urlRegex, 'url', message);
+
+  uuid = (message?: errorUtil.ErrMessage) =>
+    this._regex(uuidRegex, "uuid", message);
+
+  regex = (regexp: RegExp, message?: errorUtil.ErrMessage) =>
+    this._regex(regexp, "regex", message);
+
+  nonempty = (message?: errorUtil.ErrMessage) =>
+    this.min(1, errorUtil.errToObj(message));
+
+  static create = (): ZodString => {
+    return new ZodString({
+      t: ZodTypes.string,
+      validation: {},
+    });
+  };
+}

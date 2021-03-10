@@ -7,8 +7,7 @@ import { partialUtil } from "../helpers/partialUtil";
 import { Scalars } from "../helpers/primitive";
 import { isScalar } from "../isScalar";
 import { ZodTypes } from "../ZodTypes";
-import { ZodRawShape, ZodType, ZodTypeDef, ZodTypeAny } from "./base";
-
+import { ZodRawShape, ZodType, ZodTypeAny, ZodTypeDef } from "./base";
 import { ZodNever } from "./never";
 
 export const mergeObjects = <First extends AnyZodObject>(first: First) => <
