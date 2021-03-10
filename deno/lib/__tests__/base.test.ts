@@ -2,8 +2,8 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import * as z from "../index.ts";
 import { util } from "../helpers/util.ts";
+import * as z from "../index.ts";
 
 test("type guard", () => {
   const stringToNumber = z.string().transform((arg) => arg.length);

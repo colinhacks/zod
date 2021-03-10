@@ -1,5 +1,5 @@
+import { ZodDef, ZodType, ZodTypes } from "./index.ts";
 import { util } from "./helpers/util.ts";
-import { ZodType, ZodDef, ZodTypes } from "./index.ts";
 // import { ZodDef } from "./ZodDef";
 // import { ZodTypes } from "./ZodTypes";
 

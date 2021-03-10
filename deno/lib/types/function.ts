@@ -1,6 +1,5 @@
 import { ZodTypes } from "../ZodTypes.ts";
-import { ZodType, ZodTypeDef, ZodTypeAny } from "./base.ts";
-
+import { ZodType, ZodTypeAny, ZodTypeDef } from "./base.ts";
 import { ZodTuple } from "./tuple.ts";
 import { ZodUnknown } from "./unknown.ts";
 
