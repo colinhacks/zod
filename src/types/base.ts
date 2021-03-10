@@ -136,6 +136,7 @@ export abstract class ZodType<
   //     return false;
   //   }
   // }
+
   /** The .is method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
   is: never;
 
@@ -247,7 +248,7 @@ export abstract class ZodType<
   abstract toJSON: () => object;
 
   optional: () => ZodOptionalType<this> = () => ZodOptional.create(this);
-  or = this.optional;
+  // or = this.optional;
   nullable: () => ZodNullableType<this> = () => {
     return ZodNullable.create(this) as any;
   };

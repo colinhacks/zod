@@ -700,9 +700,9 @@ const deepPartialUser = user.deepPartial();
 
 #### Unknown keys
 
-By default Zod object schema strip unknown keys from the output.
+By default Zod objects schemas strip unknown keys from the output!
 
-> ⚠️ Before version 2, Zod did NOT allow unknown keys by default.
+> ⚠️ Before version 2, Zod would throw an error is unknown keys existed on the input.
 
 Zod will return
 
@@ -716,13 +716,14 @@ person.parse({
   extraKey: 61,
 });
 // => { name: "bob dylan" }
+// extraKey has been stripped
 ```
 
 #### Pass through unknown keys
 
 If you want to pass through unknown keys, use `.passthrough()` .
 
-> For backwards compatibility, you can also use `.nonstrict()` which behaves identically.
+> For backwards compatibility with v1, you can also use `.nonstrict()` which behaves identically.
 
 ```ts
 const person = z

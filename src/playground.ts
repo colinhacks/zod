@@ -1,9 +1,17 @@
 import * as z from ".";
 
-const numberWithRandomDefault = z.number().default(Math.random);
-console.log(numberWithRandomDefault.parse(undefined));
-console.log(numberWithRandomDefault.parse(undefined));
-console.log(numberWithRandomDefault.parse(undefined));
-console.log(numberWithRandomDefault.parse(undefined));
+const schema = z.union([
+  z.object({
+    a: z.string(),
+  }),
+  z.object({
+    b: z.boolean(),
+  }),
+]);
+
+schema.parse({ b: "test" });
 
 export {};
+
+z.string().nonempty();
+z.literal("");
