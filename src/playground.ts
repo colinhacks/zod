@@ -1,28 +1,53 @@
 import * as z from ".";
 
-// const schema = z.union([
-//   z.object({
-//     a: z.string(),
-//   }),
-//   z.object({
-//     b: z.boolean(),
-//   }),
-// ]);
+const test = z.object({
+  key: z.literal("asdf"),
+  name: z.string().optional(),
+  age: z.number().nullable(),
+  tuple: z.tuple([z.number(), z.string()]),
+  set: z.set(z.boolean()),
+  union: z.union([z.string(), z.number(), z.boolean()]),
+  enum: z.enum(["Colin", "Ryan"]),
+  record: z.record(z.object({ name: z.string() })),
+  transformer: z.string().transform(async (val) => val.toUpperCase()),
+});
+test;
 
-// schema.parse({ b: "test" });
+const run = async () => {
+  // console.log(
+  //   await test
+  //     .spa({
+  //       key: "asdf",
+  //       name: undefined,
+  //       age: null,
+  //       tuple: [124, "false"],
+  //       set: new Set().add(true).add(false),
+  //       union: "asdf",
+  //       enum: "Ryan",
+  //       record: { asdf: { name: "Colin" } },
+  //       transformer: "colin",
+  //     })
+  //     .catch(console.log)
+  // );
 
-export {};
-
-z.string().nonempty();
-z.literal("");
-
-enum test {
-  A,
-  B = "qwer",
-}
-const asdf = z.nativeEnum(test);
-asdf.parse(test.A);
-asdf.parse(test.B);
-asdf.parse("qwer");
-asdf.parse("qwert");
-// asdf.parse('B');
+  // const myFunc = z
+  //   .function()
+  //   .args(z.string())
+  //   .returns(z.number())
+  //   .implement((arg) => {
+  //     return arg as any;
+  //   });
+  // console.log(myFunc("asdf"));
+  const testTuple = z.tuple([
+    z.object({ name: z.literal("Rudy") }),
+    z.string(),
+    z.array(z.literal("blue")),
+  ]);
+  console.log(
+    await testTuple.spa([{ name: "Rudy2" }, 123, ["blue", "red"]] as any)
+  );
+  // console.log(
+  //   await testTuple.spa([{ name: "Rudy" }, "123", ["blue", "blue"]] as any)
+  // );
+};
+run();

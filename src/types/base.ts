@@ -3,9 +3,9 @@ import { objectUtil } from "../helpers/objectUtil";
 // import { mergeShapes } from "../helpers/objectUtil/merge";
 import { partialUtil } from "../helpers/partialUtil";
 import { Primitive, Scalars } from "../helpers/primitive";
-import { util } from "../helpers/util";
+import { INVALID, util } from "../helpers/util";
 import { isScalar } from "../isScalar";
-import { ParseParams, ZodParser } from "../parser";
+import { ParseParams, ZodParser, ZodParserReturnType } from "../parser";
 import {
   MakeErrorData,
   StringValidation,
@@ -44,10 +44,27 @@ export abstract class ZodType<
   readonly _input!: Input;
   readonly _def!: Def;
 
-  parse: (x: unknown, params?: ParseParams) => Output = ZodParser(this);
+  _parseRaw: (
+    data: unknown,
+    params?: ParseParams
+  ) => ZodParserReturnType<Output> = (data, params) => {
+    const parser = ZodParser(this);
+    const result = parser(data, params);
+    return result;
+  };
+
+  parse: (data: unknown, params?: ParseParams) => Output = (data, params) => {
+    const result = this._parseRaw(data, params);
+    if (result instanceof Promise)
+      throw new Error(
+        "You can't use .parse() on a schema containing async elements. Use .parseAsync instead."
+      );
+    if (result.success) return result.data;
+    throw result.error;
+  };
 
   safeParse: (
-    x: unknown,
+    data: unknown,
     params?: ParseParams
   ) => { success: true; data: Output } | { success: false; error: ZodError } = (
     data,
@@ -65,10 +82,12 @@ export abstract class ZodType<
   };
 
   parseAsync: (x: unknown, params?: ParseParams) => Promise<Output> = async (
-    value,
+    data,
     params
   ) => {
-    return await this.parse(value, { ...params, async: true });
+    const result = await this._parseRaw(data, { ...params, async: true });
+    if (result.success) return result.data;
+    throw result.error;
   };
 
   safeParseAsync: (
@@ -77,18 +96,35 @@ export abstract class ZodType<
   ) => Promise<
     { success: true; data: Output } | { success: false; error: ZodError }
   > = async (data, params) => {
-    try {
-      const parsed = await this.parseAsync(data, params);
-      return { success: true, data: parsed };
-    } catch (err) {
-      if (err instanceof ZodError) {
-        return { success: false, error: err };
-      }
-      throw err;
-    }
+    return await this._parseRaw(data, { ...params, async: true });
+    // try {
+    //   return await this.parseAsync(data, params);
+    //   return { success: true, data: parsed };
+    // } catch (err) {
+    //   if (err instanceof ZodError) {
+    //     return { success: false, error: err };
+    //   }
+    //   throw err;
+    // }
   };
 
   spa = this.safeParseAsync;
+
+  _parseWithInvalidFallback: (
+    x: unknown,
+    params: Required<ParseParams>
+  ) => Output = (x, params) => {
+    const parser = ZodParser(this);
+    const result = parser(x, params);
+    if (result instanceof Promise) {
+      return result.then((result) => {
+        if (result.success) return result.data;
+        return INVALID;
+      });
+    }
+    if (result.success) return result.data;
+    return INVALID;
+  };
 
   /** The .is method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
   is: never;
