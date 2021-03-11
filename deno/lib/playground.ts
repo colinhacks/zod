@@ -1,4 +1,4 @@
-import * as z from ".";
+import * as z from "./index.ts";
 // import { PseudoPromise } from "./PseudoPromise";
 
 // const test = z.object({

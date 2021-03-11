@@ -1,21 +1,21 @@
-import { ZodOptional, ZodOptionalType } from "..";
-import { defaultErrorMap } from "../defaultErrorMap";
-import { errorUtil } from "../helpers/errorUtil";
-import { objectUtil } from "../helpers/objectUtil";
+import { defaultErrorMap } from "../defaultErrorMap.ts";
+import { errorUtil } from "../helpers/errorUtil.ts";
+import { objectUtil } from "../helpers/objectUtil.ts";
 // import { mergeShapes } from "../helpers/objectUtil/merge";
-import { partialUtil } from "../helpers/partialUtil";
-import { Primitive, Scalars } from "../helpers/primitive";
-import { INVALID, util } from "../helpers/util";
-import { isScalar } from "../isScalar";
-import { ParseParams, ZodParser, ZodParserReturnType } from "../parser";
+import { partialUtil } from "../helpers/partialUtil.ts";
+import { Primitive, Scalars } from "../helpers/primitive.ts";
+import { INVALID, util } from "../helpers/util.ts";
+import { ZodOptional, ZodOptionalType } from "../index.ts";
+import { isScalar } from "../isScalar.ts";
+import { ParseParams, ZodParser, ZodParserReturnType } from "../parser.ts";
 import {
   MakeErrorData,
   StringValidation,
   ZodCustomIssue,
   ZodError,
   ZodIssueCode,
-} from "../ZodError";
-import { ZodTypes } from "../ZodTypes";
+} from "../ZodError.ts";
+import { ZodTypes } from "../ZodTypes.ts";
 
 ///////////////////////////////////////
 ///////////////////////////////////////

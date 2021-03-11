@@ -1,5 +1,5 @@
-import { INVALID } from "./helpers/util";
-import { ZodError } from "./ZodError";
+import { INVALID } from "./helpers/util.ts";
+import { ZodError } from "./ZodError.ts";
 
 type Func = (arg: any, ctx: { async: boolean }) => any;
 type FuncItem = { type: "function"; function: Func };

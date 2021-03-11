@@ -1,11 +1,11 @@
-import { RefinementCtx, ZodType } from ".";
-import { defaultErrorMap, ZodErrorMap } from "./defaultErrorMap";
-import { getParsedType, ZodParsedType } from "./helpers/parseUtil";
-import { INVALID, util } from "./helpers/util";
-import { NOSET, PseudoPromise } from "./PseudoPromise";
-import { ZodDef } from "./ZodDef";
-import { MakeErrorData, ZodError, ZodIssueCode } from "./ZodError";
-import { ZodTypes } from "./ZodTypes";
+import { defaultErrorMap, ZodErrorMap } from "./defaultErrorMap.ts";
+import { getParsedType, ZodParsedType } from "./helpers/parseUtil.ts";
+import { INVALID, util } from "./helpers/util.ts";
+import { RefinementCtx, ZodType } from "./index.ts";
+import { NOSET, PseudoPromise } from "./PseudoPromise.ts";
+import { ZodDef } from "./ZodDef.ts";
+import { MakeErrorData, ZodError, ZodIssueCode } from "./ZodError.ts";
+import { ZodTypes } from "./ZodTypes.ts";
 
 const addIssue = (params: ParseParams, data: any, errorData: MakeErrorData) => {
   const errorArg = {
