@@ -1,3 +1,4 @@
+import { ZodOptional, ZodOptionalType } from "..";
 import { errorUtil } from "../helpers/errorUtil";
 import { objectUtil } from "../helpers/objectUtil";
 // import { mergeShapes } from "../helpers/objectUtil/merge";
@@ -70,15 +71,22 @@ export abstract class ZodType<
     data,
     params
   ) => {
-    try {
-      const parsed = this.parse(data, params);
-      return { success: true, data: parsed };
-    } catch (err) {
-      if (err instanceof ZodError) {
-        return { success: false, error: err };
-      }
-      throw err;
-    }
+    const result = this._parseRaw(data, params);
+    if (result instanceof Promise)
+      throw new Error(
+        "You can't use .safeParse() on a schema containing async elements. Use .parseAsync instead."
+      );
+    return result;
+    // try {
+    //   return this._parseRaw(data, params);
+    //   if(result instanceof Promise) return result;
+    //   return { success: true, data:  };
+    // } catch (err) {
+    //   if (err instanceof ZodError) {
+    //     return { success: false, error: err };
+    //   }
+    //   throw err;
+    // }
   };
 
   parseAsync: (x: unknown, params?: ParseParams) => Promise<Output> = async (
@@ -1818,38 +1826,38 @@ export class ZodTransformer<
 //////////                       //////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
-export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
-  t: ZodTypes.optional;
-  innerType: T;
-}
+// export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
+//   extends ZodTypeDef {
+//   t: ZodTypes.optional;
+//   innerType: T;
+// }
 
-// This type allows for optional flattening
-export type ZodOptionalType<
-  T extends ZodTypeAny
-> = T extends ZodOptional<ZodTypeAny> ? T : ZodOptional<T>;
+// // This type allows for optional flattening
+// export type ZodOptionalType<
+//   T extends ZodTypeAny
+// > = T extends ZodOptional<ZodTypeAny> ? T : ZodOptional<T>;
 
-export class ZodOptional<T extends ZodTypeAny> extends ZodType<
-  T["_output"] | undefined,
-  ZodOptionalDef<T>,
-  T["_input"] | undefined
-> {
-  // An optional optional is the original optional
-  // optional: () => ZodOptionalType<this> = () => this as ZodOptionalType<this>;
-  toJSON = () => ({
-    t: this._def.t,
-    innerType: this._def.innerType.toJSON(),
-  });
+// export class ZodOptional<T extends ZodTypeAny> extends ZodType<
+//   T["_output"] | undefined,
+//   ZodOptionalDef<T>,
+//   T["_input"] | undefined
+// > {
+//   // An optional optional is the original optional
+//   // optional: () => ZodOptionalType<this> = () => this as ZodOptionalType<this>;
+//   toJSON = () => ({
+//     t: this._def.t,
+//     innerType: this._def.innerType.toJSON(),
+//   });
 
-  static create = <T extends ZodTypeAny>(type: T): ZodOptionalType<T> => {
-    if (type instanceof ZodOptional) return type as ZodOptionalType<T>;
+//   static create = <T extends ZodTypeAny>(type: T): ZodOptionalType<T> => {
+//     if (type instanceof ZodOptional) return type as ZodOptionalType<T>;
 
-    return new ZodOptional({
-      t: ZodTypes.optional,
-      innerType: type,
-    }) as ZodOptionalType<T>;
-  };
-}
+//     return new ZodOptional({
+//       t: ZodTypes.optional,
+//       innerType: type,
+//     }) as ZodOptionalType<T>;
+//   };
+// }
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////

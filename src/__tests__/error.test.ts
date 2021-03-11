@@ -132,23 +132,23 @@ test("array minimum", () => {
 });
 
 // implement test for semi-smart union logic that checks for type error on either left or right
-test("union smart errors", () => {
-  // expect.assertions(2);
+// test("union smart errors", () => {
+//   // expect.assertions(2);
 
-  const p1 = z
-    .union([z.string(), z.number().refine((x) => x > 0)])
-    .safeParse(-3.2);
+//   const p1 = z
+//     .union([z.string(), z.number().refine((x) => x > 0)])
+//     .safeParse(-3.2);
 
-  if (p1.success === true) throw new Error();
-  expect(p1.success).toBe(false);
-  expect(p1.error.issues[0].code).toEqual(ZodIssueCode.custom);
+//   if (p1.success === true) throw new Error();
+//   expect(p1.success).toBe(false);
+//   expect(p1.error.issues[0].code).toEqual(ZodIssueCode.custom);
 
-  const p2 = z.union([z.string(), z.number()]).safeParse(false);
-  // .catch(err => expect(err.issues[0].code).toEqual(ZodIssueCode.invalid_union));
-  if (p2.success === true) throw new Error();
-  expect(p2.success).toBe(false);
-  expect(p2.error.issues[0].code).toEqual(ZodIssueCode.invalid_union);
-});
+//   const p2 = z.union([z.string(), z.number()]).safeParse(false);
+//   // .catch(err => expect(err.issues[0].code).toEqual(ZodIssueCode.invalid_union));
+//   if (p2.success === true) throw new Error();
+//   expect(p2.success).toBe(false);
+//   expect(p2.error.issues[0].code).toEqual(ZodIssueCode.invalid_union);
+// });
 
 test("custom path in custom error map", () => {
   const schema = z.object({
