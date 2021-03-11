@@ -2,9 +2,9 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
+import { ZodParsedType } from "../helpers/parseUtil.ts";
 import * as z from "../index.ts";
 import { ZodError, ZodIssueCode } from "../ZodError.ts";
-import { ZodParsedType } from "../ZodParsedType.ts";
 
 test("error creation", () => {
   const err1 = ZodError.create([]);

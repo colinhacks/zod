@@ -2,6 +2,7 @@
 export * from "./types/base.ts";
 import { ZodCodeGenerator } from "./codegen.ts";
 import { ZodErrorMap } from "./defaultErrorMap.ts";
+import { ZodParsedType } from "./helpers/parseUtil.ts";
 import { ZodAny } from "./types/any.ts";
 import { ZodArray, ZodNonEmptyArray } from "./types/array.ts";
 import {
@@ -40,7 +41,6 @@ import { ZodUndefined } from "./types/undefined.ts";
 import { ZodUnion } from "./types/union.ts";
 import { ZodUnknown } from "./types/unknown.ts";
 import { ZodVoid } from "./types/void.ts";
-import { ZodParsedType } from "./ZodParsedType.ts";
 import { ZodTypes } from "./ZodTypes.ts";
 
 // export { ZodTypeDef, ZodRawShape, ZodTypes };

@@ -1,5 +1,5 @@
+import { ZodParsedType } from "./helpers/parseUtil.ts";
 import { util } from "./helpers/util.ts";
-import { ZodParsedType } from "./ZodParsedType.ts";
 
 export const ZodIssueCode = util.arrayToEnum([
   "invalid_type",
