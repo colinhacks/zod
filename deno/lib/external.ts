@@ -1,10 +1,9 @@
 /* ZOD */
-
-import { ZodCodeGenerator } from "./codegen";
-import { ZodErrorMap } from "./defaultErrorMap";
-import { ZodParsedType } from "./helpers/parseUtil";
-import { ZodAny } from "./types/any";
-import { ZodArray, ZodNonEmptyArray } from "./types/array";
+export * from "./types/base.ts";
+import { ZodCodeGenerator } from "./codegen.ts";
+import { ZodErrorMap } from "./defaultErrorMap.ts";
+import { ZodAny } from "./types/any.ts";
+import { ZodArray, ZodNonEmptyArray } from "./types/array.ts";
 import {
   input,
   output,
@@ -14,34 +13,35 @@ import {
   ZodType,
   ZodTypeAny,
   ZodTypeDef,
-} from "./types/base";
-import { ZodBigInt } from "./types/bigint";
-import { ZodBoolean } from "./types/boolean";
-import { ZodDate } from "./types/date";
-import { ZodEnum } from "./types/enum";
-import { ZodFunction } from "./types/function";
-import { ZodIntersection } from "./types/intersection";
-import { ZodLazy } from "./types/lazy";
-import { ZodLiteral } from "./types/literal";
-import { ZodMap } from "./types/map";
-import { ZodNativeEnum } from "./types/nativeEnum";
-import { ZodNever } from "./types/never";
-import { ZodNull } from "./types/null";
-import { ZodNullable, ZodNullableType } from "./types/nullable";
-import { ZodNumber } from "./types/number";
-import { ZodObject } from "./types/object";
-import { ZodOptional, ZodOptionalType } from "./types/optional";
-import { ZodPromise } from "./types/promise";
-import { ZodRecord } from "./types/record";
-import { ZodSet } from "./types/set";
-import { ZodString } from "./types/string";
-import { ZodTransformer } from "./types/transformer";
-import { ZodTuple } from "./types/tuple";
-import { ZodUndefined } from "./types/undefined";
-import { ZodUnion } from "./types/union";
-import { ZodUnknown } from "./types/unknown";
-import { ZodVoid } from "./types/void";
-import { ZodTypes } from "./ZodTypes";
+} from "./types/base.ts";
+import { ZodBigInt } from "./types/bigint.ts";
+import { ZodBoolean } from "./types/boolean.ts";
+import { ZodDate } from "./types/date.ts";
+import { ZodEnum } from "./types/enum.ts";
+import { ZodFunction } from "./types/function.ts";
+import { ZodIntersection } from "./types/intersection.ts";
+import { ZodLazy } from "./types/lazy.ts";
+import { ZodLiteral } from "./types/literal.ts";
+import { ZodMap } from "./types/map.ts";
+import { ZodNativeEnum } from "./types/nativeEnum.ts";
+import { ZodNever } from "./types/never.ts";
+import { ZodNull } from "./types/null.ts";
+import { ZodNullable, ZodNullableType } from "./types/nullable.ts";
+import { ZodNumber } from "./types/number.ts";
+import { ZodObject } from "./types/object.ts";
+import { ZodOptional, ZodOptionalType } from "./types/optional.ts";
+import { ZodPromise } from "./types/promise.ts";
+import { ZodRecord } from "./types/record.ts";
+import { ZodSet } from "./types/set.ts";
+import { ZodString } from "./types/string.ts";
+import { ZodTransformer } from "./types/transformer.ts";
+import { ZodTuple } from "./types/tuple.ts";
+import { ZodUndefined } from "./types/undefined.ts";
+import { ZodUnion } from "./types/union.ts";
+import { ZodUnknown } from "./types/unknown.ts";
+import { ZodVoid } from "./types/void.ts";
+import { ZodParsedType } from "./ZodParsedType.ts";
+import { ZodTypes } from "./ZodTypes.ts";
 
 // export { ZodTypeDef, ZodRawShape, ZodTypes };
 
@@ -180,5 +180,5 @@ export const late = {
   object: ZodObject.lazycreate,
 };
 
-export * from "./ZodDef";
-export * from "./ZodError";
+export * from "./ZodDef.ts";
+export * from "./ZodError.ts";

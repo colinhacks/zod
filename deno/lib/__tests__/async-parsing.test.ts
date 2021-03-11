@@ -301,17 +301,32 @@ test("nativeEnum async parse", async () => {
 
 /// promise
 const promiseSchema = z.promise(z.number());
-test("promise async parse", async () => {
+test("promise async parse good", async () => {
   const goodData = Promise.resolve(123);
-  const badData = Promise.resolve("XXX");
 
   const goodResult = await promiseSchema.safeParseAsync(goodData);
   expect(goodResult.success).toBe(true);
-  if (goodResult.success) expect(goodResult.data).toEqual(123);
-
+  if (goodResult.success) {
+    expect(goodResult.data).toBeInstanceOf(Promise);
+    const data = await goodResult.data;
+    expect(data).toEqual(123);
+    // expect(goodResult.data).resolves.toEqual(124);
+    // return goodResult.data;
+  } else {
+    throw new Error("success should be true");
+  }
+});
+test("promise async parse bad", async () => {
+  const badData = Promise.resolve("XXX");
   const badResult = await promiseSchema.safeParseAsync(badData);
-  expect(badResult.success).toBe(false);
-  if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
+  expect(badResult.success).toBe(true);
+  if (badResult.success) {
+    expect(badResult.data).rejects; //.toBeInstanceOf(Error);
+  } else {
+    throw new Error("success should be true");
+  }
+
+  // if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
 
 /// transformer

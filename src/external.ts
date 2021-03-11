@@ -1,5 +1,5 @@
 /* ZOD */
-
+export * from "./types/base";
 import { ZodCodeGenerator } from "./codegen";
 import { ZodErrorMap } from "./defaultErrorMap";
 import { ZodParsedType } from "./helpers/parseUtil";

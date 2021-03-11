@@ -16,18 +16,24 @@ import {
 } from "../ZodError";
 import { ZodTypes } from "../ZodTypes";
 
-type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
+///////////////////////////////////////
+///////////////////////////////////////
+//////////                   //////////
+//////////      ZodType      //////////
+//////////                   //////////
+///////////////////////////////////////
+///////////////////////////////////////
+
 type InternalCheck<T> = {
   type: "check";
   check: (arg: T, ctx: RefinementCtx) => any;
 };
-
 type Mod<T> = {
   type: "mod";
   mod: (arg: T) => any;
 };
-
 type Effect<T> = InternalCheck<T> | Mod<T>;
+type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 
 export interface ZodTypeDef {
   t: ZodTypes;
