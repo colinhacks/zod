@@ -6,7 +6,12 @@ import { Primitive, Scalars } from "../helpers/primitive.ts";
 import { INVALID, util } from "../helpers/util.ts";
 import { ZodOptional, ZodOptionalType } from "../index.ts";
 import { isScalar } from "../isScalar.ts";
-import { ParseParams, ZodParser, ZodParserReturnType } from "../parser.ts";
+import {
+  OptionalParseParams,
+  RequiredParseParams,
+  ZodParser,
+  ZodParserReturnType,
+} from "../parser.ts";
 import {
   MakeErrorData,
   StringValidation,
@@ -53,14 +58,14 @@ export abstract class ZodType<
 
   _parseRaw: (
     data: unknown,
-    params?: Partial<ParseParams>
+    params?: OptionalParseParams
   ) => ZodParserReturnType<Output> = (data, params) => {
     const parser = ZodParser(this);
     const result = parser(data, params);
     return result;
   };
 
-  parse: (data: unknown, params?: Partial<ParseParams>) => Output = (
+  parse: (data: unknown, params?: OptionalParseParams) => Output = (
     data,
     params
   ) => {
@@ -75,7 +80,7 @@ export abstract class ZodType<
 
   safeParse: (
     data: unknown,
-    params?: Partial<ParseParams>
+    params?: OptionalParseParams
   ) => { success: true; data: Output } | { success: false; error: ZodError } = (
     data,
     params
@@ -98,10 +103,10 @@ export abstract class ZodType<
     // }
   };
 
-  parseAsync: (
-    x: unknown,
-    params?: Partial<ParseParams>
-  ) => Promise<Output> = async (data, params) => {
+  parseAsync: (x: unknown, params?: ParseParams) => Promise<Output> = async (
+    data,
+    params
+  ) => {
     const result = await this._parseRaw(data, { ...params, async: true });
     if (result.success) return result.data;
     throw result.error;
@@ -109,7 +114,7 @@ export abstract class ZodType<
 
   safeParseAsync: (
     x: unknown,
-    params?: Partial<ParseParams>
+    params?: ParseParams
   ) => Promise<
     { success: true; data: Output } | { success: false; error: ZodError }
   > = async (data, params) => {
@@ -129,7 +134,7 @@ export abstract class ZodType<
 
   _parseWithInvalidFallback: (
     x: unknown,
-    params: Required<ParseParams>
+    params: RequiredParseParams
   ) => Output = (x, params) => {
     const parser = ZodParser(this);
     const result = parser(x, params);
