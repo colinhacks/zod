@@ -751,7 +751,7 @@ export const ZodParser = (schema: ZodType<any>) => (
             if (!argsError.isEmpty) {
               const newError = new ZodError([]);
 
-              addIssue(params, data, {
+              addIssue({ ...params, error: newError }, data, {
                 code: ZodIssueCode.invalid_arguments,
                 argumentsError: argsError,
               });
