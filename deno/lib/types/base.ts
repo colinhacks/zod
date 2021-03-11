@@ -1,10 +1,10 @@
-import { ZodOptional, ZodOptionalType } from "../index.ts";
 import { errorUtil } from "../helpers/errorUtil.ts";
 import { objectUtil } from "../helpers/objectUtil.ts";
 // import { mergeShapes } from "../helpers/objectUtil/merge";
 import { partialUtil } from "../helpers/partialUtil.ts";
 import { Primitive, Scalars } from "../helpers/primitive.ts";
 import { INVALID, util } from "../helpers/util.ts";
+import { ZodOptional, ZodOptionalType } from "../index.ts";
 import { isScalar } from "../isScalar.ts";
 import { ParseParams, ZodParser, ZodParserReturnType } from "../parser.ts";
 import {
@@ -16,18 +16,24 @@ import {
 } from "../ZodError.ts";
 import { ZodTypes } from "../ZodTypes.ts";
 
-type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
+///////////////////////////////////////
+///////////////////////////////////////
+//////////                   //////////
+//////////      ZodType      //////////
+//////////                   //////////
+///////////////////////////////////////
+///////////////////////////////////////
+
 type InternalCheck<T> = {
   type: "check";
   check: (arg: T, ctx: RefinementCtx) => any;
 };
-
 type Mod<T> = {
   type: "mod";
   mod: (arg: T) => any;
 };
-
 type Effect<T> = InternalCheck<T> | Mod<T>;
+type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 
 export interface ZodTypeDef {
   t: ZodTypes;

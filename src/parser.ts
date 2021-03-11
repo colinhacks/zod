@@ -7,11 +7,7 @@ import { ZodDef } from "./ZodDef";
 import { MakeErrorData, ZodError, ZodIssueCode } from "./ZodError";
 import { ZodTypes } from "./ZodTypes";
 
-const addIssue = (
-  params: Required<ParseParams>,
-  data: any,
-  errorData: MakeErrorData
-) => {
+const addIssue = (params: ParseParams, data: any, errorData: MakeErrorData) => {
   const errorArg = {
     ...errorData,
     path: [...params.path, ...(errorData.path || [])],
@@ -40,15 +36,15 @@ const addIssue = (
 };
 
 export type ParseParams = {
-  seen?: {
+  seen: {
     schema: ZodType<any>;
     objects: { input: any; error?: ZodError; output: any }[];
   }[];
-  path?: (string | number)[];
-  errorMap?: ZodErrorMap;
-  error?: ZodError;
-  async?: boolean;
-  runAsyncValidationsInSeries?: boolean;
+  path: (string | number)[];
+  errorMap: ZodErrorMap;
+  error: ZodError;
+  async: boolean;
+  runAsyncValidationsInSeries: boolean;
 };
 
 export type ZodParserReturnPayload<T> =
@@ -67,9 +63,13 @@ export type ZodParserReturnType<T> =
 
 export const ZodParser = (schema: ZodType<any>) => (
   data: any,
-  baseParams: ParseParams = { seen: [], errorMap: defaultErrorMap, path: [] }
+  baseParams: Partial<ParseParams> = {
+    seen: [],
+    errorMap: defaultErrorMap,
+    path: [],
+  }
 ): ZodParserReturnType<any> => {
-  const params: Required<ParseParams> = {
+  const params: ParseParams = {
     seen: baseParams.seen || [],
     path: baseParams.path || [],
     error: baseParams.error || new ZodError([]),

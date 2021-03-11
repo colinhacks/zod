@@ -160,31 +160,46 @@ const run = async () => {
   //
   // const asdf = await (("asdf" as any) as Promise<Promise<string>>);
 
-  const nested = z.object({
-    name: z.string(),
-    age: z.number(),
-    outer: z.object({
-      inner: z.string(),
-    }),
-  });
-  console.log(nested.shape);
+  // const nested = z.object({
+  //   name: z.string(),
+  //   age: z.number(),
+  //   outer: z.object({
+  //     inner: z.string(),
+  //   }),
+  // });
+  // console.log(nested.shape);
 
-  const deep = nested.deepPartial();
-  // console.log(deep.shape);
-  console.log(`NAME`);
-  console.log(deep.shape.name);
-  console.log(`OUTER`);
-  console.log(deep.shape.outer);
-  console.log(deep.shape.name instanceof z.ZodOptional);
-  console.log(deep.shape.outer instanceof z.ZodOptional);
-  console.log(deep.shape.outer._def.innerType instanceof z.ZodObject);
-  console.log(
-    deep.shape.outer._def.innerType.shape.inner instanceof z.ZodOptional
-  );
-  console.log(
-    deep.shape.outer._def.innerType.shape.inner._def.innerType instanceof
-      z.ZodString
-  );
+  // const deep = nested.deepPartial();
+  // // console.log(deep.shape);
+  // console.log(`NAME`);
+  // console.log(deep.shape.name);
+  // console.log(`OUTER`);
+  // console.log(deep.shape.outer);
+  // console.log(deep.shape.name instanceof z.ZodOptional);
+  // console.log(deep.shape.outer instanceof z.ZodOptional);
+  // console.log(deep.shape.outer._def.innerType instanceof z.ZodObject);
+  // console.log(
+  //   deep.shape.outer._def.innerType.shape.inner instanceof z.ZodOptional
+  // );
+  // console.log(
+  //   deep.shape.outer._def.innerType.shape.inner._def.innerType instanceof
+  //     z.ZodString
+  // );
+  const checker = z
+    .function(z.tuple([z.string()]), z.boolean())
+    .implement((arg) => {
+      return arg.length as any;
+    });
+  try {
+    checker(12 as any);
+  } catch (err) {
+    console.log(err);
+    const zerr: z.ZodError = err;
+    const first = zerr.issues[0];
+    if (first.code !== z.ZodIssueCode.invalid_arguments) throw new Error();
+
+    // expect(first.argumentsError).toBeInstanceOf(z.ZodError);
+  }
 };
 
 run();

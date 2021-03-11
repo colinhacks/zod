@@ -53,14 +53,17 @@ export abstract class ZodType<
 
   _parseRaw: (
     data: unknown,
-    params?: ParseParams
+    params?: Partial<ParseParams>
   ) => ZodParserReturnType<Output> = (data, params) => {
     const parser = ZodParser(this);
     const result = parser(data, params);
     return result;
   };
 
-  parse: (data: unknown, params?: ParseParams) => Output = (data, params) => {
+  parse: (data: unknown, params?: Partial<ParseParams>) => Output = (
+    data,
+    params
+  ) => {
     const result = this._parseRaw(data, params);
     if (result instanceof Promise)
       throw new Error(
@@ -72,7 +75,7 @@ export abstract class ZodType<
 
   safeParse: (
     data: unknown,
-    params?: ParseParams
+    params?: Partial<ParseParams>
   ) => { success: true; data: Output } | { success: false; error: ZodError } = (
     data,
     params
@@ -95,10 +98,10 @@ export abstract class ZodType<
     // }
   };
 
-  parseAsync: (x: unknown, params?: ParseParams) => Promise<Output> = async (
-    data,
-    params
-  ) => {
+  parseAsync: (
+    x: unknown,
+    params?: Partial<ParseParams>
+  ) => Promise<Output> = async (data, params) => {
     const result = await this._parseRaw(data, { ...params, async: true });
     if (result.success) return result.data;
     throw result.error;
@@ -106,7 +109,7 @@ export abstract class ZodType<
 
   safeParseAsync: (
     x: unknown,
-    params?: ParseParams
+    params?: Partial<ParseParams>
   ) => Promise<
     { success: true; data: Output } | { success: false; error: ZodError }
   > = async (data, params) => {
