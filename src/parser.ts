@@ -7,11 +7,7 @@ import { ZodDef } from "./ZodDef";
 import { MakeErrorData, ZodError, ZodIssueCode } from "./ZodError";
 import { ZodTypes } from "./ZodTypes";
 
-const addIssue = (
-  params: Required<ParseParams>,
-  data: any,
-  errorData: MakeErrorData
-) => {
+const addIssue = (params: ParseParams, data: any, errorData: MakeErrorData) => {
   const errorArg = {
     ...errorData,
     path: [...params.path, ...(errorData.path || [])],
@@ -40,15 +36,15 @@ const addIssue = (
 };
 
 export type ParseParams = {
-  seen?: {
+  seen: {
     schema: ZodType<any>;
     objects: { input: any; error?: ZodError; output: any }[];
   }[];
-  path?: (string | number)[];
-  errorMap?: ZodErrorMap;
-  error?: ZodError;
-  async?: boolean;
-  runAsyncValidationsInSeries?: boolean;
+  path: (string | number)[];
+  errorMap: ZodErrorMap;
+  error: ZodError;
+  async: boolean;
+  runAsyncValidationsInSeries: boolean;
 };
 
 export type ZodParserReturnPayload<T> =
@@ -67,9 +63,13 @@ export type ZodParserReturnType<T> =
 
 export const ZodParser = (schema: ZodType<any>) => (
   data: any,
-  baseParams: ParseParams = { seen: [], errorMap: defaultErrorMap, path: [] }
+  baseParams: Partial<ParseParams> = {
+    seen: [],
+    errorMap: defaultErrorMap,
+    path: [],
+  }
 ): ZodParserReturnType<any> => {
-  const params: Required<ParseParams> = {
+  const params: ParseParams = {
     seen: baseParams.seen || [],
     path: baseParams.path || [],
     error: baseParams.error || new ZodError([]),
@@ -82,7 +82,7 @@ export const ZodParser = (schema: ZodType<any>) => (
   const def: ZodDef = schema._def as any;
 
   let PROMISE: PseudoPromise<any> = PseudoPromise.resolve(INVALID);
-  (PROMISE as any)._default = true;
+  // (PROMISE as any)._default = true;
 
   // const RESULT: { input: any; output: any; error?: ZodError } = {
   //   input: data,
@@ -109,6 +109,7 @@ export const ZodParser = (schema: ZodType<any>) => (
 
   const parsedType = getParsedType(data);
 
+  // console.log(`\n#########\nParsing ${def.t}`);
   switch (def.t) {
     case ZodTypes.string:
       if (parsedType !== ZodParsedType.string) {
@@ -261,7 +262,7 @@ export const ZodParser = (schema: ZodType<any>) => (
           // ERROR.addIssues(err.issues);
           //   return INVALID;
           // });
-        })
+        }) as any
       );
 
       break;
@@ -302,7 +303,7 @@ export const ZodParser = (schema: ZodType<any>) => (
             returnedMap.set(item[0], item[1]);
           });
           // .catch(HANDLE);
-        })
+        }) as any
       )
         // .then(() => {
         //   if (!ERROR.isEmpty) {
@@ -350,7 +351,7 @@ export const ZodParser = (schema: ZodType<any>) => (
                 returnedSet.add(item);
               })
           );
-        })
+        }) as any
       ).then(() => {
         return returnedSet;
       });
@@ -527,7 +528,7 @@ export const ZodParser = (schema: ZodType<any>) => (
           //   }
           //   throw err;
           // });
-        })
+        }) as any
       )
         .then((unionResults) => {
           const isValid = !!unionErrors.find((err) => err.isEmpty);
@@ -558,7 +559,7 @@ export const ZodParser = (schema: ZodType<any>) => (
 
           return unionResults;
         })
-        .then((unionResults: any[]) => {
+        .then((unionResults: any) => {
           const validIndex = unionErrors.indexOf(
             unionErrors.find((err) => err.isEmpty)!
           );
@@ -664,7 +665,7 @@ export const ZodParser = (schema: ZodType<any>) => (
             .then((tupleItem) => {
               return tupleItem;
             });
-        })
+        }) as any
       ).then((tupleData) => {
         // if (!ERROR.isEmpty) THROW();
 
@@ -922,8 +923,9 @@ export const ZodParser = (schema: ZodType<any>) => (
   //   throw new Error("Result is not materialized.");
   // }
 
-  const effects = def.effects || [];
+  const isSync = params.async === false || def.t === ZodTypes.promise;
 
+  const effects = def.effects || [];
   const checkCtx: RefinementCtx = {
     addIssue: (arg: MakeErrorData) => {
       addIssue(params, data, arg);
@@ -931,116 +933,198 @@ export const ZodParser = (schema: ZodType<any>) => (
     path: params.path,
   };
 
-  // const isSync = !params.async;
+  console.log(`Running ${effects.length} effects`);
 
-  const isSync = params.async === false || def.t === ZodTypes.promise;
-
-  if (isSync) {
-    const resolvedValue = PROMISE.getValueSync();
-
-    if (resolvedValue === INVALID && ERROR.isEmpty) {
-      throw new Error(
-        "Value is INVALID. This should never happen and means there is an error within Zod. Please file an issue at https://github.com/colinhacks/zod."
-      );
+  let finalPromise = PROMISE.then((data) => {
+    // if (!params.error.isEmpty) {
+    if (data === INVALID) {
+      console.log(`errors already exist! throwing...`);
+      throw params.error;
     }
+    return data;
+  });
 
-    if (!ERROR.isEmpty) {
-      // THROW();
-      return { success: false, error: ERROR };
-      // throw ERROR;
-    }
+  for (const effect of effects) {
+    if (effect.type === "check") {
+      finalPromise = finalPromise
+        .all((data) => {
+          console.log(`CHECK`);
+          return [
+            PseudoPromise.resolve(data),
+            PseudoPromise.resolve(data).then(() => {
+              const result = effect.check(data, checkCtx);
 
-    let finalValue = resolvedValue;
-
-    for (const effect of effects) {
-      //
-      //
-      if (effect.type === "check") {
-        const checkResult = effect.check(finalValue, checkCtx);
-        //
-        if (checkResult instanceof Promise)
-          throw new Error(
-            "You can't use .parse() on a schema containing async refinements. Use .parseAsync instead."
-          );
-      } else if (effect.type === "mod") {
-        if (def.t !== ZodTypes.transformer)
-          throw new Error("Only Modders can contain mods");
-        finalValue = effect.mod(finalValue);
-        if (finalValue instanceof Promise) {
-          throw new Error(
-            `You can't use .parse() on a schema containing async transformations. Use .parseAsync instead.`
-          );
-        }
-      } else {
-        throw new Error(`Invalid effect type.`);
-      }
-    }
-
-    if (!ERROR.isEmpty) {
-      // THROW();
-      // throw ERROR;
-      return { success: false, error: ERROR };
-    }
-
-    return { success: true, data: finalValue };
-  } else {
-    // if (params.async == true) {
-    const checker = async () => {
-      const resolvedValue = await PROMISE.getValueAsync();
-
-      if (resolvedValue === INVALID && ERROR.isEmpty) {
-        // let someError: boolean = false;
-
-        addIssue(params, data, {
-          code: ZodIssueCode.custom,
-          message: "Invalid",
+              if (isSync && result instanceof Promise)
+                throw new Error(
+                  "You can't use .parse() on a schema containing async refinements. Use .parseAsync instead."
+                );
+              return result;
+            }),
+          ];
+        })
+        .then(([data, result]) => {
+          console.log(`after check`);
+          console.log([data, result]);
+          return data;
         });
-      }
-
-      if (!ERROR.isEmpty) {
-        // THROW();
-        return { success: false, error: ERROR };
-      }
-
-      let finalValue = resolvedValue;
-
-      for (const effect of effects) {
-        if (effect.type === "check") {
-          await effect.check(finalValue, checkCtx);
-        } else if (effect.type === "mod") {
+    } else if (effect.type === "mod") {
+      finalPromise = finalPromise
+        .then((data) => {
           if (def.t !== ZodTypes.transformer)
-            throw new Error("Only Modders can contain mods");
-          finalValue = await effect.mod(finalValue);
-        }
-      }
+            throw new Error(
+              "Only transformers can contain transformation functions."
+            );
+          const newData = effect.mod(data);
 
-      // if (params.runAsyncValidationsInSeries) {
-      //   let someError = false;
-      //   await customChecks.reduce((previousPromise, check) => {
-      //     return previousPromise.then(async () => {
-      //       if (!someError) {
-      //         const len = ERROR.issues.length;
-      //         await check.check(resolvedValue, checkCtx);
-      //         if (len < ERROR.issues.length) someError = true;
-      //       }
-      //     });
-      //   }, Promise.resolve());
-      // } else {
-      //   await Promise.all(
-      //     customChecks.map(async (check) => {
-      //       await check.check(resolvedValue, checkCtx);
-      //     })
-      //   );
-      // }
-
-      if (!ERROR.isEmpty) {
-        // THROW();
-        return { success: false, error: ERROR };
-      }
-
-      return { success: true, data: finalValue };
-    };
-
-    return checker() as any;
+          return newData;
+        })
+        .then((data) => {
+          if (isSync && data instanceof Promise) {
+            throw new Error(
+              `You can't use .parse() on a schema containing async transformations. Use .parseAsync instead.`
+            );
+          }
+          return data;
+        });
+    } else {
+      throw new Error(`Invalid effect type.`);
+    }
   }
+
+  finalPromise = finalPromise
+    .then((data) => {
+      if (!params.error.isEmpty) throw params.error;
+      if (data === INVALID && params.error.isEmpty) {
+        throw new Error(
+          "Internal Zod error: please file an issue containing the offending code at https://github.com/colinhacks/zod."
+        );
+      }
+
+      return data;
+    })
+    .then((data) => {
+      return { success: true, data };
+    })
+    .catch((error) => {
+      if (error instanceof ZodError) return { success: false, error };
+      throw error;
+    });
+
+  // get value
+  // if error is not empty, return error
+  // run through effects
+  // return either success or failure payload
+
+  // const isSync = params.async === false || def.t === ZodTypes.promise;
+
+  return isSync ? finalPromise.getValueSync() : finalPromise.getValueAsync();
+
+  // if (isSync) {
+  //   const resolvedValue = PROMISE.getValueSync();
+
+  //   if (resolvedValue === INVALID && ERROR.isEmpty) {
+  //     throw new Error(
+  //       "Value is INVALID. This should never happen and means there is an error within Zod. Please file an issue at https://github.com/colinhacks/zod."
+  //     );
+  //   }
+
+  //   if (!ERROR.isEmpty) {
+  //     // THROW();
+  //     return { success: false, error: ERROR };
+  //     // throw ERROR;
+  //   }
+
+  //   let finalValue = resolvedValue;
+
+  //   for (const effect of effects) {
+  //     //
+  //     //
+  //     if (effect.type === "check") {
+  //       const checkResult = effect.check(finalValue, checkCtx);
+  //       //
+  //       if (checkResult instanceof Promise)
+  //         throw new Error(
+  //           "You can't use .parse() on a schema containing async refinements. Use .parseAsync instead."
+  //         );
+  //     } else if (effect.type === "mod") {
+  //       if (def.t !== ZodTypes.transformer)
+  //         throw new Error("Only Modders can contain mods");
+  //       finalValue = effect.mod(finalValue);
+  //       if (finalValue instanceof Promise) {
+  //         throw new Error(
+  //           `You can't use .parse() on a schema containing async transformations. Use .parseAsync instead.`
+  //         );
+  //       }
+  //     } else {
+  //       throw new Error(`Invalid effect type.`);
+  //     }
+  //   }
+
+  //   if (!ERROR.isEmpty) {
+  //     // THROW();
+  //     // throw ERROR;
+  //     return { success: false, error: ERROR };
+  //   }
+
+  //   return { success: true, data: finalValue };
+  // } else {
+  //   // if (params.async == true) {
+  //   const checker = async () => {
+  //     const resolvedValue = await PROMISE.getValueAsync();
+
+  //     if (resolvedValue === INVALID && ERROR.isEmpty) {
+  //       // let someError: boolean = false;
+
+  //       addIssue(params, data, {
+  //         code: ZodIssueCode.custom,
+  //         message: "Invalid",
+  //       });
+  //     }
+
+  //     if (!ERROR.isEmpty) {
+  //       // THROW();
+  //       return { success: false, error: ERROR };
+  //     }
+
+  //     let finalValue = resolvedValue;
+
+  //     for (const effect of effects) {
+  //       if (effect.type === "check") {
+  //         await effect.check(finalValue, checkCtx);
+  //       } else if (effect.type === "mod") {
+  //         if (def.t !== ZodTypes.transformer)
+  //           throw new Error("Only Modders can contain mods");
+  //         finalValue = await effect.mod(finalValue);
+  //       }
+  //     }
+
+  //     // if (params.runAsyncValidationsInSeries) {
+  //     //   let someError = false;
+  //     //   await customChecks.reduce((previousPromise, check) => {
+  //     //     return previousPromise.then(async () => {
+  //     //       if (!someError) {
+  //     //         const len = ERROR.issues.length;
+  //     //         await check.check(resolvedValue, checkCtx);
+  //     //         if (len < ERROR.issues.length) someError = true;
+  //     //       }
+  //     //     });
+  //     //   }, Promise.resolve());
+  //     // } else {
+  //     //   await Promise.all(
+  //     //     customChecks.map(async (check) => {
+  //     //       await check.check(resolvedValue, checkCtx);
+  //     //     })
+  //     //   );
+  //     // }
+
+  //     if (!ERROR.isEmpty) {
+  //       // THROW();
+  //       return { success: false, error: ERROR };
+  //     }
+
+  //     return { success: true, data: finalValue };
+  //   };
+
+  //   return checker() as any;
+  // }
 };

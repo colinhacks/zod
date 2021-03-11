@@ -8,31 +8,33 @@ type CatcherItem = { type: "catcher"; catcher: Catcher };
 type Items = (FuncItem | CatcherItem)[];
 
 export const NOSET = Symbol("no_set");
-export class PseudoPromise<ReturnType = undefined> {
-  readonly _return: ReturnType | undefined;
+export class PseudoPromise<PayloadType = undefined> {
+  readonly _return: PayloadType | undefined;
   items: Items;
   constructor(funcs: Items = []) {
     this.items = funcs;
   }
 
-  static all = <T extends PseudoPromise<any>[]>(pps: T) => {
-    return new PseudoPromise().all(pps);
+  static all = <T extends [PseudoPromise<any>, ...PseudoPromise<any>[]]>(
+    pps: T
+  ) => {
+    return new PseudoPromise().all(() => pps);
   };
 
-  all = <T extends PseudoPromise<any>[]>(
-    pps: T
+  all = <P extends PseudoPromise<any>, T extends [P, ...P[]]>(
+    func: (arg: PayloadType, ctx: { async: boolean }) => T
   ): PseudoPromise<
     {
-      [k in keyof T]: T[k] extends PseudoPromise<any> ? T[k]["_return"] : never;
+      [k in keyof T]: T[k] extends PseudoPromise<infer U> ? U : never;
     }
   > => {
-    return this.then((_arg, ctx) => {
+    return this.then((arg, ctx) => {
+      const pps = func(arg, ctx);
       if (ctx.async) {
         const allValues = Promise.all(
           pps.map(async (pp) => {
             try {
-              const asdf = await pp.getValueAsync();
-              return asdf;
+              return await pp.getValueAsync();
             } catch (err) {
               return INVALID;
             }
@@ -107,14 +109,36 @@ export class PseudoPromise<ReturnType = undefined> {
     return new PseudoPromise().then(() => value) as any;
   };
 
-  then = <NewReturn>(
-    func: (arg: ReturnType, ctx: { async: boolean }) => NewReturn
-  ): PseudoPromise<NewReturn extends Promise<infer U> ? U : NewReturn> => {
+  then = <NewPayload>(
+    func: (arg: PayloadType, ctx: { async: boolean }) => NewPayload
+  ): PseudoPromise<NewPayload extends Promise<infer U> ? U : NewPayload> => {
     return new PseudoPromise([
       ...this.items,
       { type: "function", function: func },
     ]);
   };
+
+  // parallel = <
+  //   NewFunc extends (arg: PayloadType, ctx: { async: boolean }) => any,
+  //   ParallelArgs extends [NewFunc, ...NewFunc[]]
+  // >(
+  //   ...funcs: ParallelArgs
+  // ): PseudoPromise<
+  //   {
+  //     [k in keyof ParallelArgs]: ParallelArgs[k] extends (
+  //       ...args: any
+  //     ) => infer R
+  //       ? R extends Promise<infer U>
+  //         ? U
+  //         : R
+  //       : never;
+  //   }
+  // > => {
+  //   return new PseudoPromise([
+  //     ...this.items,
+  //     { type: "function", function: func },
+  //   ]);
+  // };
 
   catch = (catcher: (err: Error, ctx: { async: boolean }) => unknown): this => {
     return new PseudoPromise([
@@ -123,7 +147,7 @@ export class PseudoPromise<ReturnType = undefined> {
     ]) as this;
   };
 
-  getValueSync = (): ReturnType => {
+  getValueSync = (): PayloadType => {
     let val: any = undefined;
 
     for (let index = 0; index < this.items.length; index++) {
@@ -151,7 +175,7 @@ export class PseudoPromise<ReturnType = undefined> {
     return val;
   };
 
-  getValueAsync = async (): Promise<ReturnType> => {
+  getValueAsync = async (): Promise<PayloadType> => {
     let val: any = undefined;
 
     for (let index = 0; index < this.items.length; index++) {

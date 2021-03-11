@@ -1,4 +1,5 @@
 import { ZodOptional, ZodOptionalType } from "..";
+import { defaultErrorMap } from "../defaultErrorMap";
 import { errorUtil } from "../helpers/errorUtil";
 import { objectUtil } from "../helpers/objectUtil";
 // import { mergeShapes } from "../helpers/objectUtil/merge";
@@ -51,17 +52,71 @@ export abstract class ZodType<
   readonly _input!: Input;
   readonly _def!: Def;
 
-  _parseRaw: (
+  // _parseInternal
+
+  // _parse: (data: unknown, params: ParseParams) => PseudoPromise<Output> = (
+  //   data,
+  //   params
+  // ) => {
+  //   const def = this._def;
+
+  //   let PROMISE: PseudoPromise<any> = PseudoPromise.resolve(INVALID);
+  //   (PROMISE as any)._default = true;
+
+  //   params.seen = params.seen || [];
+
+  //   const ERROR = params.error;
+  //   const parsedType = getParsedType(data);
+  //   const promise = this;
+  //   return PROMISE;
+  // };
+
+  // _parseInternal: (
+  //   data: unknown,
+  //   params: ParseParams
+  // ) => ZodParserReturnType<Output> = (data, params) => {
+  //   const def = this._def;
+
+  //   let PROMISE: PseudoPromise<any> = PseudoPromise.resolve(INVALID);
+  //   (PROMISE as any)._default = true;
+
+  //   params.seen = params.seen || [];
+
+  //   const ERROR = params.error;
+  //   const parsedType = getParsedType(data);
+
+  //   const promise = this._parse(data, params);
+  // };
+
+  _parseInternal: (
     data: unknown,
-    params?: ParseParams
+    params: ParseParams
   ) => ZodParserReturnType<Output> = (data, params) => {
     const parser = ZodParser(this);
-    const result = parser(data, params);
-    return result;
+    return parser(data, params);
   };
 
-  parse: (data: unknown, params?: ParseParams) => Output = (data, params) => {
-    const result = this._parseRaw(data, params);
+  _parseInternalOptionalParams: (
+    data: unknown,
+    params?: Partial<ParseParams>
+  ) => ZodParserReturnType<Output> = (data, params = {}) => {
+    const fullParams: ParseParams = {
+      seen: params.seen || [],
+      path: params.path || [],
+      error: params.error || new ZodError([]),
+      errorMap: params.errorMap || defaultErrorMap,
+      async: params.async ?? false,
+      runAsyncValidationsInSeries: params.runAsyncValidationsInSeries ?? false,
+    };
+
+    return this._parseInternal(data, fullParams);
+  };
+
+  parse: (data: unknown, params?: Partial<ParseParams>) => Output = (
+    data,
+    params
+  ) => {
+    const result = this._parseInternalOptionalParams(data, params);
     if (result instanceof Promise)
       throw new Error(
         "You can't use .parse() on a schema containing async elements. Use .parseAsync instead."
@@ -72,19 +127,19 @@ export abstract class ZodType<
 
   safeParse: (
     data: unknown,
-    params?: ParseParams
+    params?: Partial<ParseParams>
   ) => { success: true; data: Output } | { success: false; error: ZodError } = (
     data,
     params
   ) => {
-    const result = this._parseRaw(data, params);
+    const result = this._parseInternalOptionalParams(data, params);
     if (result instanceof Promise)
       throw new Error(
         "You can't use .safeParse() on a schema containing async elements. Use .parseAsync instead."
       );
     return result;
     // try {
-    //   return this._parseRaw(data, params);
+    //   return this._parseInternalOptionalParams(data, params);
     //   if(result instanceof Promise) return result;
     //   return { success: true, data:  };
     // } catch (err) {
@@ -95,22 +150,28 @@ export abstract class ZodType<
     // }
   };
 
-  parseAsync: (x: unknown, params?: ParseParams) => Promise<Output> = async (
-    data,
-    params
-  ) => {
-    const result = await this._parseRaw(data, { ...params, async: true });
+  parseAsync: (
+    x: unknown,
+    params?: Partial<ParseParams>
+  ) => Promise<Output> = async (data, params) => {
+    const result = await this._parseInternalOptionalParams(data, {
+      ...params,
+      async: true,
+    });
     if (result.success) return result.data;
     throw result.error;
   };
 
   safeParseAsync: (
     x: unknown,
-    params?: ParseParams
+    params?: Partial<ParseParams>
   ) => Promise<
     { success: true; data: Output } | { success: false; error: ZodError }
   > = async (data, params) => {
-    return await this._parseRaw(data, { ...params, async: true });
+    return await this._parseInternalOptionalParams(data, {
+      ...params,
+      async: true,
+    });
     // try {
     //   return await this.parseAsync(data, params);
     //   return { success: true, data: parsed };
@@ -124,10 +185,10 @@ export abstract class ZodType<
 
   spa = this.safeParseAsync;
 
-  _parseWithInvalidFallback: (
-    x: unknown,
-    params: Required<ParseParams>
-  ) => Output = (x, params) => {
+  _parseWithInvalidFallback: (x: unknown, params: ParseParams) => Output = (
+    x,
+    params
+  ) => {
     const parser = ZodParser(this);
     const result = parser(x, params);
     if (result instanceof Promise) {
