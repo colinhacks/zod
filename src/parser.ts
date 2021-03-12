@@ -134,6 +134,7 @@ export const ZodParser = (schema: ZodType<any>) => (
 
   const parsedType = getParsedType(data);
 
+  console.log(`\n######\nPARSING ${def.t}`);
   switch (def.t) {
     case ZodTypes.string:
       if (parsedType !== ZodParsedType.string) {
@@ -997,6 +998,9 @@ export const ZodParser = (schema: ZodType<any>) => (
   const THROW_ERROR_IF_PRESENT = (key: string) => (data: any) => {
     key;
     if (!ERROR.isEmpty) throw ERROR;
+    if (ERROR.isEmpty && data === INVALID) {
+      throw new Error(`Internal Zod error.`);
+    }
     return data;
   };
 
@@ -1026,12 +1030,13 @@ export const ZodParser = (schema: ZodType<any>) => (
       finalPromise = finalPromise
         .then(THROW_ERROR_IF_PRESENT("before mod"))
         .then((data) => {
+          console.log(`running mod`);
+          console.log(data);
           if (def.t !== ZodTypes.transformer)
             throw new Error(
               "Only transformers can contain transformation functions."
             );
           const newData = effect.mod(data);
-
           return newData;
         })
         .then((data) => {
@@ -1057,13 +1062,6 @@ export const ZodParser = (schema: ZodType<any>) => (
       if (error instanceof ZodError) return { success: false, error: error };
       throw error;
     });
-
-  // get value
-  // if error is not empty, return error
-  // run through effects
-  // return either success or failure payload
-
-  // const isSync = params.async === false || def.t === ZodTypes.promise;
 
   return isSync ? finalPromise.getValueSync() : finalPromise.getValueAsync();
 

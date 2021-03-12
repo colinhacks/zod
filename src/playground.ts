@@ -1,4 +1,5 @@
 import * as z from ".";
+import { ZodString } from "./types/base";
 // import { PseudoPromise } from "./PseudoPromise";
 
 // const test = z.object({
@@ -30,7 +31,6 @@ const run = async () => {
   //     })
   //     .catch(console.log)
   // );
-
   // const myFunc = z
   //   .function()
   //   .args(z.string())
@@ -63,29 +63,24 @@ const run = async () => {
   //     b: z.onumber(),
   //   }),
   // ]);
-
   // console.log(
   //   Schema.parse({
   //     val: "a",
   //     a: 123,
   //   })
   // );
-
   // can either be a string or a positive number
   // const schema = z.union([
   //   z.string()
   // .refine((x) => x > 0, { message: "Number must be positive" }),
   // ]);
-
   // schema.parse(-1);
-
   // const promSchema = z.promise(
   //   z.object({
   //     name: z.string(),
   //     age: z.number(),
   //   })
   // );
-
   // const failPromise = promSchema
   //   .parse(Promise.resolve({ name: "Bobby", age: "10" }))
   //   .catch((err) => {
@@ -93,7 +88,6 @@ const run = async () => {
   //     console.log(err);
   //   });
   // console.log(await failPromise);
-
   // const promiseSchema = z.promise(z.number());
   // const goodData = Promise.resolve(123);
   // const badData = Promise.resolve("XXX");
@@ -101,7 +95,6 @@ const run = async () => {
   // console.log(goodResult);
   // const badResult = await promiseSchema.safeParseAsync(badData);
   // console.log(badResult);
-
   // const crazySchema = z.object({
   //   numProm: z.promise(z.number()),
   // });
@@ -111,9 +104,7 @@ const run = async () => {
   // console.log(prom);
   // console.log(await prom);
   // const promSchema = z.promise(z.any());
-
   // const data = Promise.resolve({ name: "Bobby", age: "10" });
-
   // console.log(`TESTS`);
   // console.log(`parse`);
   // console.log(promSchema.parse(data));
@@ -123,7 +114,6 @@ const run = async () => {
   // console.log(promSchema.parseAsync(data));
   // console.log(`safeParseAsync`);
   // console.log(await promSchema.safeParseAsync(data));
-
   // const test = promSchema.parse({
   //   then() {
   //     return this;
@@ -133,7 +123,6 @@ const run = async () => {
   //   },
   // });
   // console.log(test);
-
   // const fakeProm = {
   //   then() {
   //     return this;
@@ -142,10 +131,8 @@ const run = async () => {
   //     return this;
   //   },
   // };
-
   // console.log(fakeProm.then());
   // console.log(fakeProm.then().then());
-
   // if (failPromise.success) {
   //   console.log(`SUCCESS`);
   //   console.log(
@@ -160,7 +147,6 @@ const run = async () => {
   // console.log(await failPromise);
   //
   // const asdf = await (("asdf" as any) as Promise<Promise<string>>);
-
   // const nested = z.object({
   //   name: z.string(),
   //   age: z.number(),
@@ -169,7 +155,6 @@ const run = async () => {
   //   }),
   // });
   // console.log(nested.shape);
-
   // const deep = nested.deepPartial();
   // // console.log(deep.shape);
   // console.log(`NAME`);
@@ -198,10 +183,8 @@ const run = async () => {
   //   const zerr: z.ZodError = err;
   //   const first = zerr.issues[0];
   //   if (first.code !== z.ZodIssueCode.invalid_arguments) throw new Error();
-
   //   // expect(first.argumentsError).toBeInstanceOf(z.ZodError);
   // }
-
   // const prom = new PseudoPromise()
   //   .then(() => {
   //     throw new Error();
@@ -221,7 +204,6 @@ const run = async () => {
   // const result2 = await base.safeParseAsync(testval);
   // console.log(`RESULT 2`);
   // console.log(result2);
-
   // const prom = PseudoPromise.resolve(5).all(val => {
   //   return [PseudoPromise.resolve(true), PseudoPromise.resolve(val)];
   // })
@@ -229,13 +211,11 @@ const run = async () => {
   //   PseudoPromise.resolve(true),
   //   PseudoPromise.resolve(5),
   // ]);
-
   // const r1 = result1;
   // await result2.then((r2) => {
   //   if (r1.success === false && r2.success === false)
   //     expect(r1.error.issues.length).toBe(r2.error.issues.length); // <--- r1 has length 2, r2 has length 1
   // });
-
   // console.log(
   //   z
   //     .tuple([z.string(), z.number()])
@@ -270,24 +250,41 @@ const run = async () => {
   //   console.log(value.error.message);
   //   console.log(value.error.issues);
   // }
-
   // const fish = z.object({
   //   name: z.string(),
   // });
-
   // console.log(fish.safeParse({ name: 12 }));
   // console.log(z.union([z.string(), z.number()]).safeParse(false));
-
-  const email = z
-    .string()
-    .email()
-    .transform((val) => val.split("@")[0])
-    .transform((val) => val.toUpperCase())
-    .refine((val) => !val.includes("COLIN"), { message: "Colin is banned" })
-    .transform((val) => ({ username: val }));
-
-  const asdf = z.object({ email });
-  console.log(asdf.safeParse({ email: "asdflkjsdfcojllin@gmail.com" }));
+  // class Super {
+  //   speak() {
+  //     console.log("super");
+  //   }
+  //   test() {
+  //     this.speak();
+  //   }
+  // }
+  // class Sub extends Super {
+  //   speak() {
+  //     console.log("subclass");
+  //   }
+  // }
+  // const sub = new Sub();
+  // sub.speak();
+  // sub.test();
+  // ZodString.create()._parse
+  z;
+  console.log(ZodString.create().email().parse("colin@bagel.md"));
+  // .transform((val) => {
+  //   console.log(`TX`);
+  //   console.log(val);
+  //   return val.split("@")[0];
+  // })
+  // .transform((val) => val.toUpperCase())
+  // .refine((val) => !val.includes("COLIN"), { message: "Colin is banned" })
+  // .transform((val) => ({ username: val }));
+  // const asdf = z.object({ email });
+  // console.log(asdf.safeParse({ email: "asdflkjsdfcojllin@gmail.com" }));
+  // email.safeParse("asdflkjsdfcojllin@gmail.com");
 };
 
 run();

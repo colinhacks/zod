@@ -2,7 +2,7 @@ import { ZodOptional, ZodOptionalType } from "..";
 import { defaultErrorMap } from "../defaultErrorMap";
 import { errorUtil } from "../helpers/errorUtil";
 import { objectUtil } from "../helpers/objectUtil";
-import { getParsedType } from "../helpers/parseUtil";
+import { getParsedType, ZodParsedType } from "../helpers/parseUtil";
 // import { mergeShapes } from "../helpers/objectUtil/merge";
 import { partialUtil } from "../helpers/partialUtil";
 import { Primitive, Scalars } from "../helpers/primitive";
@@ -91,26 +91,37 @@ export abstract class ZodType<
     // ctx.
     // const parsedType = getParsedType(ctx.data);
     // const promise = this._parse(data, params);
-    return INVALID;
+    console.log(`calling base class _parse...`);
+    return PseudoPromise.resolve(INVALID);
   }
 
-  _newParseInternal: (params: ParseParams) => ZodParserReturnType<Output> = (
-    params
-  ) => {
-    const def = this._def;
+  _newParseInternal(params: ParseParams): ZodParserReturnType<Output> {
+    const data = params.data;
+    const ERROR = new ZodError([]);
+    const { makeIssue, addIssue } = issueHelpers({ ...params, error: ERROR });
+
+    const def: ZodTypeDef = this._def as any;
     let PROMISE: PseudoPromise<any> = PseudoPromise.resolve(INVALID);
-    const { addIssue, makeIssue } = issueHelpers(params);
-    const parsedType = getParsedType(params.data);
-    const result = this._parse({ ...params, addIssue, makeIssue, parsedType });
-    if (result !== INVALID) {
-      PROMISE = result;
-    } else {
-      if (params.error.isEmpty) {
-        throw new Error(
-          "The _parse method must either supply an error with ctx.addIssue or return a valid PseudoPromise"
-        );
-      }
+    const parsedType = getParsedType(data);
+    try {
+      console.log(`_parse`);
+      const parsedValue = this._parse({
+        ...params,
+        makeIssue,
+        addIssue,
+        parsedType,
+      });
+
+      PROMISE =
+        parsedValue instanceof PseudoPromise
+          ? parsedValue
+          : PseudoPromise.resolve(parsedValue);
+    } catch {
+      // default to invalid
     }
+
+    // params.seen = params.seen || [];
+
     const isSync = params.async === false || def.t === ZodTypes.promise;
 
     const effects = def.effects || [];
@@ -121,22 +132,18 @@ export abstract class ZodType<
       path: params.path,
     };
 
-    console.log(`Running ${effects.length} effects`);
-
-    let finalPromise = PROMISE.then((data) => {
-      // if (!params.error.isEmpty) {
-      if (data === INVALID) {
-        console.log(`errors already exist! throwing...`);
-        throw params.error;
-      }
+    const THROW_ERROR_IF_PRESENT = (key: string) => (data: any) => {
+      key;
+      if (!ERROR.isEmpty) throw ERROR;
       return data;
-    });
+    };
+
+    let finalPromise = PROMISE.then(THROW_ERROR_IF_PRESENT("initial check"));
 
     for (const effect of effects) {
       if (effect.type === "check") {
         finalPromise = finalPromise
           .all((data) => {
-            console.log(`CHECK`);
             return [
               PseudoPromise.resolve(data),
               PseudoPromise.resolve(data).then(() => {
@@ -150,13 +157,12 @@ export abstract class ZodType<
               }),
             ];
           })
-          .then(([data, result]) => {
-            console.log(`after check`);
-            console.log([data, result]);
+          .then(([data, _]) => {
             return data;
           });
       } else if (effect.type === "mod") {
         finalPromise = finalPromise
+          .then(THROW_ERROR_IF_PRESENT("before mod"))
           .then((data) => {
             if (def.t !== ZodTypes.transformer)
               throw new Error(
@@ -180,26 +186,18 @@ export abstract class ZodType<
     }
 
     finalPromise = finalPromise
-      .then((data) => {
-        if (!params.error.isEmpty) throw params.error;
-        if (data === INVALID && params.error.isEmpty) {
-          throw new Error(
-            "Internal Zod error: please file an issue containing the offending code at https://github.com/colinhacks/zod."
-          );
-        }
-
-        return data;
-      })
+      .then(THROW_ERROR_IF_PRESENT("post effects"))
       .then((data) => {
         return { success: true, data };
       })
       .catch((error) => {
-        if (error instanceof ZodError) return { success: false, error };
+        params.error.addIssues(ERROR.issues);
+        if (error instanceof ZodError) return { success: false, error: error };
         throw error;
       });
 
     return isSync ? finalPromise.getValueSync() : finalPromise.getValueAsync();
-  };
+  }
 
   _parseInternal: (params: ParseParams) => ZodParserReturnType<Output> = (
     params
@@ -221,7 +219,7 @@ export abstract class ZodType<
       async: params.async ?? false,
     };
 
-    return this._parseInternal(fullParams);
+    return this._newParseInternal(fullParams);
   };
 
   parse: (data: unknown, params?: Partial<ParseParamsNoData>) => Output = (
@@ -531,6 +529,24 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   outputSchema = this;
 
   toJSON = () => this._def;
+
+  _parse(ctx: ParseContext): PseudoPromise<any> | INVALID {
+    console.log(`calling string _parse`);
+    if (ctx.parsedType !== ZodParsedType.string) {
+      // ERROR.addIssue(
+      ctx.addIssue({
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.string,
+        received: ctx.parsedType,
+      });
+      // );
+
+      // THROW();
+      return INVALID;
+    }
+    return PseudoPromise.resolve(ctx.data);
+  }
+
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
     this.refinement((data) => data.length >= minLength, {
       code: ZodIssueCode.too_small,
