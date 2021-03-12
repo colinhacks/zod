@@ -73,8 +73,8 @@ const run = async () => {
 
   // can either be a string or a positive number
   // const schema = z.union([
-  //   z.string(),
-  //   z.number().refine((x) => x > 0, { message: "Number must be positive" }),
+  //   z.string()
+  // .refine((x) => x > 0, { message: "Number must be positive" }),
   // ]);
 
   // schema.parse(-1);
@@ -210,14 +210,14 @@ const run = async () => {
   //     return "hello";
   //   });
   // console.log(prom.getValueSync());
-  const base = z.object({
-    hello: z.string().refine((x) => x && x.length > 0),
-    foo: z.string().refine((x) => x && x.length > 0),
-  });
-  const testval = { hello: "", foo: "" };
-  const result1 = base.safeParse(testval);
-  console.log(`RESULT 1`);
-  console.log(result1);
+  // const base = z.object({
+  //   hello: z.string().refine((x) => x && x.length > 0),
+  //   foo: z.string().refine((x) => x && x.length > 0),
+  // });
+  // const testval = { hello: "", foo: "" };
+  // const result1 = base.safeParse(testval);
+  // console.log(`RESULT 1`);
+  // console.log(result1);
   // const result2 = await base.safeParseAsync(testval);
   // console.log(`RESULT 2`);
   // console.log(result2);
@@ -235,6 +235,59 @@ const run = async () => {
   //   if (r1.success === false && r2.success === false)
   //     expect(r1.error.issues.length).toBe(r2.error.issues.length); // <--- r1 has length 2, r2 has length 1
   // });
+
+  // console.log(
+  //   z
+  //     .tuple([z.string(), z.number()])
+  //     .refine((arg) => {
+  //       return arg[0].length > 5;
+  //     })
+  //     .parse(["asdf", "asdf"])
+  // );
+  // const schema = z
+  //   .tuple([
+  //     z.number().refine((val) => val > 0),
+  //     z.number().refine((val) => val > 0),
+  //   ])
+  //   .refine((_val) => {
+  //     console.log(`adding to set`);
+  //     // val.add(1234);
+  //     return true;
+  //   });
+  // // .refine(
+  // //   (val) => {
+  // //     console.log("VAL");
+  // //     console.log(val);
+  // //     return val.age > 25;
+  // //   },
+  // //   { message: "Too young" }
+  // // );
+  // const value = schema.safeParse([-1, -324]);
+  // // console.log(const value = schema.safeParse([-1, -324]));
+  // if (!value.success) {
+  //   console.log(`FINAL ERROR`);
+  //   console.log(value.error);
+  //   console.log(value.error.message);
+  //   console.log(value.error.issues);
+  // }
+
+  // const fish = z.object({
+  //   name: z.string(),
+  // });
+
+  // console.log(fish.safeParse({ name: 12 }));
+  // console.log(z.union([z.string(), z.number()]).safeParse(false));
+
+  const email = z
+    .string()
+    .email()
+    .transform((val) => val.split("@")[0])
+    .transform((val) => val.toUpperCase())
+    .refine((val) => !val.includes("COLIN"), { message: "Colin is banned" })
+    .transform((val) => ({ username: val }));
+
+  const asdf = z.object({ email });
+  console.log(asdf.safeParse({ email: "asdflkjsdfcojllin@gmail.com" }));
 };
 
 run();

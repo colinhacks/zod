@@ -143,6 +143,9 @@ export class ZodError extends Error {
     return error;
   };
 
+  toString() {
+    return `ZodError: ${JSON.stringify(this.issues, null, 2)}`;
+  }
   get message() {
     return JSON.stringify(this.issues, null, 2);
     // const errorMessage: string[] = [

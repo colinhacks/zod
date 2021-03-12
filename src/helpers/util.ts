@@ -1,4 +1,5 @@
 export const INVALID = Symbol("invalid_data");
+export type INVALID = typeof INVALID;
 export namespace util {
   export type AssertEqual<T, Expected> = T extends Expected
     ? Expected extends T
