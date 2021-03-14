@@ -1,6 +1,6 @@
 import { defaultErrorMap } from "../defaultErrorMap";
 import { errorUtil } from "../helpers/errorUtil";
-import { objectUtil } from "../helpers/objectUtil";
+// import { objectUtil } from "../helpers/objectUtil";
 import { getParsedType, ZodParsedType } from "../helpers/parseUtil";
 import { partialUtil } from "../helpers/partialUtil";
 import { Primitive, Scalars } from "../helpers/primitive";
@@ -23,7 +23,7 @@ import {
   ZodError,
   ZodIssueCode,
 } from "../ZodError";
-import { ZodTypes } from "../ZodTypes";
+// import { ZodTypes } from "../ZodTypes";
 
 ///////////////////////////////////////
 ///////////////////////////////////////
@@ -60,7 +60,7 @@ type Effect<T> = InternalCheck<T> | Mod<T>;
 type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 
 export interface ZodTypeDef {
-  t: ZodTypes;
+  // t: ZodTypes;
   effects?: Effect<any>[];
   accepts?: ZodType<any, any>;
 }
@@ -117,11 +117,10 @@ export abstract class ZodType<
     const ERROR = new ZodError([]);
     const { makeIssue, addIssue } = issueHelpers(ERROR, { ...params });
 
-    const def: ZodTypeDef = this._def as any;
+    // const def: ZodTypeDef = this._def as any;
     let PROMISE: PseudoPromise<any>;
     const parsedType = getParsedType(data);
     try {
-      console.log(`_parse`);
       const parsedValue = this._parse({
         ...params,
         currentError: ERROR,
@@ -141,9 +140,9 @@ export abstract class ZodType<
 
     // params.seen = params.seen || [];
 
-    const isSync = params.async === false || def.t === ZodTypes.promise;
+    const isSync = params.async === false || this instanceof ZodPromise;
 
-    const effects = def.effects || [];
+    const effects = this._def.effects || [];
     const checkCtx: RefinementCtx = {
       addIssue: (arg: MakeErrorData) => {
         addIssue(arg);
@@ -183,7 +182,7 @@ export abstract class ZodType<
         finalPromise = finalPromise
           .then(THROW_ERROR_IF_PRESENT("before mod"))
           .then((data) => {
-            if (def.t !== ZodTypes.transformer)
+            if (!(this instanceof ZodTransformer))
               throw new Error(
                 "Only transformers can contain transformation functions."
               );
@@ -466,7 +465,7 @@ export abstract class ZodType<
   //     } else {
   //       returnType = new ZodTransformer({
   //         // ...this._def,
-  //         t: ZodTypes.transformer,
+  // t: ZodTypes.transformer,
   //         schema: this,
   //         effects: [{ type: "mod", mod }],
   //       }) as any;
@@ -487,7 +486,7 @@ export abstract class ZodType<
     } else {
       returnType = new ZodTransformer({
         // ...this._def,
-        t: ZodTypes.transformer,
+        // t: ZodTypes.transformer,
         schema: this,
         effects: [{ type: "mod", mod }],
       }) as any;
@@ -522,10 +521,10 @@ export abstract class ZodType<
     T extends Input,
     This extends this = this
     // OptThis extends ZodOptionalType<this> = ZodOptionalType<this>
-  >(def: T): ZodTransformer<ZodOptionalType<This>, Input>;
+  >(def: T): ZodTransformer<ZodOptionalType<This>, Output>;
   default<T extends (arg: this) => Input, This extends this = this>(
     def: T
-  ): ZodTransformer<ZodOptionalType<This>, Input>;
+  ): ZodTransformer<ZodOptionalType<This>, Output>;
   default(def: any) {
     return (this as any).optional().transform((val: any) => {
       const defaultVal = typeof def === "function" ? def(this) : def;
@@ -546,7 +545,7 @@ export abstract class ZodType<
 /////////////////////////////////////////
 
 export interface ZodStringDef extends ZodTypeDef {
-  t: ZodTypes.string;
+  // t: ZodTypes.string;
   validation: {
     uuid?: true;
     custom?: ((val: any) => boolean)[];
@@ -641,7 +640,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
   static create = (): ZodString => {
     return new ZodString({
-      t: ZodTypes.string,
+      // t: ZodTypes.string,
       validation: {},
     });
   };
@@ -655,9 +654,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 /////////////////////////////////////////
 /////////////////////////////////////////
 
-export interface ZodNumberDef extends ZodTypeDef {
-  t: ZodTypes.number;
-}
+export type ZodNumberDef = ZodTypeDef;
 
 export class ZodNumber extends ZodType<number, ZodNumberDef> {
   isScalar() {
@@ -688,7 +685,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 
   static create = (): ZodNumber => {
     return new ZodNumber({
-      t: ZodTypes.number,
+      // t: ZodTypes.number,
     });
   };
 
@@ -763,9 +760,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 /////////////////////////////////////////
 /////////////////////////////////////////
 
-export interface ZodBigIntDef extends ZodTypeDef {
-  t: ZodTypes.bigint;
-}
+export type ZodBigIntDef = ZodTypeDef;
 
 export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
   isScalar() {
@@ -790,7 +785,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
 
   static create = (): ZodBigInt => {
     return new ZodBigInt({
-      t: ZodTypes.bigint,
+      // t: ZodTypes.bigint,
     });
   };
 }
@@ -802,9 +797,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
 //////////                     ///////////
 //////////////////////////////////////////
 //////////////////////////////////////////
-export interface ZodBooleanDef extends ZodTypeDef {
-  t: ZodTypes.boolean;
-}
+export type ZodBooleanDef = ZodTypeDef;
 
 export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
   isScalar() {
@@ -826,7 +819,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
 
   static create = (): ZodBoolean => {
     return new ZodBoolean({
-      t: ZodTypes.boolean,
+      // t: ZodTypes.boolean,
     });
   };
 }
@@ -838,9 +831,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
 //////////                     ////////
 ///////////////////////////////////////
 ///////////////////////////////////////
-export interface ZodDateDef extends ZodTypeDef {
-  t: ZodTypes.date;
-}
+export type ZodDateDef = ZodTypeDef;
 
 export class ZodDate extends ZodType<Date, ZodDateDef> {
   isScalar() {
@@ -870,7 +861,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
 
   static create = (): ZodDate => {
     return new ZodDate({
-      t: ZodTypes.date,
+      // t: ZodTypes.date,
     });
   };
 }
@@ -882,9 +873,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface ZodUndefinedDef extends ZodTypeDef {
-  t: ZodTypes.undefined;
-}
+export type ZodUndefinedDef = ZodTypeDef;
 
 export class ZodUndefined extends ZodType<undefined> {
   isScalar() {
@@ -906,7 +895,7 @@ export class ZodUndefined extends ZodType<undefined> {
 
   static create = (): ZodUndefined => {
     return new ZodUndefined({
-      t: ZodTypes.undefined,
+      // t: ZodTypes.undefined,
     });
   };
 }
@@ -918,9 +907,7 @@ export class ZodUndefined extends ZodType<undefined> {
 //////////                   //////////
 ///////////////////////////////////////
 ///////////////////////////////////////
-export interface ZodNullDef extends ZodTypeDef {
-  t: ZodTypes.null;
-}
+export type ZodNullDef = ZodTypeDef;
 
 export class ZodNull extends ZodType<null, ZodNullDef> {
   isScalar() {
@@ -941,7 +928,7 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
   }
   static create = (): ZodNull => {
     return new ZodNull({
-      t: ZodTypes.null,
+      // t: ZodTypes.null,
     });
   };
 }
@@ -953,9 +940,7 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
 //////////                  //////////
 //////////////////////////////////////
 //////////////////////////////////////
-export interface ZodAnyDef extends ZodTypeDef {
-  t: ZodTypes.any;
-}
+export type ZodAnyDef = ZodTypeDef;
 
 export class ZodAny extends ZodType<any, ZodAnyDef> {
   isScalar() {
@@ -966,7 +951,7 @@ export class ZodAny extends ZodType<any, ZodAnyDef> {
   }
   static create = (): ZodAny => {
     return new ZodAny({
-      t: ZodTypes.any,
+      // t: ZodTypes.any,
     });
   };
 }
@@ -978,9 +963,7 @@ export class ZodAny extends ZodType<any, ZodAnyDef> {
 //////////                      //////////
 //////////////////////////////////////////
 //////////////////////////////////////////
-export interface ZodUnknownDef extends ZodTypeDef {
-  t: ZodTypes.unknown;
-}
+export type ZodUnknownDef = ZodTypeDef;
 
 export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
   isScalar() {
@@ -992,7 +975,7 @@ export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
 
   static create = (): ZodUnknown => {
     return new ZodUnknown({
-      t: ZodTypes.unknown,
+      // t: ZodTypes.unknown,
     });
   };
 }
@@ -1004,9 +987,7 @@ export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-export interface ZodNeverDef extends ZodTypeDef {
-  t: ZodTypes.never;
-}
+export type ZodNeverDef = ZodTypeDef;
 
 export class ZodNever extends ZodType<never, ZodNeverDef> {
   isScalar() {
@@ -1022,7 +1003,7 @@ export class ZodNever extends ZodType<never, ZodNeverDef> {
   }
   static create = (): ZodNever => {
     return new ZodNever({
-      t: ZodTypes.never,
+      // t: ZodTypes.never,
     });
   };
 }
@@ -1034,9 +1015,7 @@ export class ZodNever extends ZodType<never, ZodNeverDef> {
 //////////                   //////////
 ///////////////////////////////////////
 ///////////////////////////////////////
-export interface ZodVoidDef extends ZodTypeDef {
-  t: ZodTypes.void;
-}
+export type ZodVoidDef = ZodTypeDef;
 
 export class ZodVoid extends ZodType<void, ZodVoidDef> {
   isScalar() {
@@ -1060,7 +1039,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
 
   static create = (): ZodVoid => {
     return new ZodVoid({
-      t: ZodTypes.void,
+      // t: ZodTypes.void,
     });
   };
 }
@@ -1074,7 +1053,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
 ////////////////////////////////////////
 export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  t: ZodTypes.array;
+  // t: ZodTypes.array;
   type: T;
 }
 
@@ -1143,7 +1122,7 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
 
   static create = <T extends ZodTypeAny>(schema: T): ZodArray<T> => {
     return new ZodArray({
-      t: ZodTypes.array,
+      // t: ZodTypes.array,
       type: schema,
     });
   };
@@ -1158,7 +1137,7 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
 ////////////////////////////////////////////////
 export interface ZodNonEmptyArrayDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  t: ZodTypes.array;
+  // t: ZodTypes.array;
   type: T;
 }
 
@@ -1234,6 +1213,56 @@ export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
+
+export namespace objectUtil {
+  export type MergeShapes<U extends ZodRawShape, V extends ZodRawShape> = {
+    [k in Exclude<keyof U, keyof V>]: U[k];
+  } &
+    V;
+
+  type optionalKeys<T extends object> = {
+    [k in keyof T]: undefined extends T[k] ? k : never;
+  }[keyof T];
+
+  type requiredKeys<T extends object> = Exclude<keyof T, optionalKeys<T>>;
+
+  export type addQuestionMarks<T extends object> = {
+    [k in optionalKeys<T>]?: T[k];
+  } &
+    { [k in requiredKeys<T>]: T[k] };
+
+  export type identity<T> = T;
+  export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
+
+  export type NoNeverKeys<T extends ZodRawShape> = {
+    [k in keyof T]: [T[k]] extends [never] ? never : k;
+  }[keyof T];
+
+  export type NoNever<T extends ZodRawShape> = identity<
+    {
+      [k in NoNeverKeys<T>]: k extends keyof T ? T[k] : never;
+    }
+  >;
+
+  export const mergeShapes = <U extends ZodRawShape, T extends ZodRawShape>(
+    first: U,
+    second: T
+  ): T & U => {
+    const firstKeys = Object.keys(first);
+    const secondKeys = Object.keys(second);
+    const sharedKeys = firstKeys.filter((k) => secondKeys.indexOf(k) !== -1);
+
+    const sharedShape: any = {};
+    for (const k of sharedKeys) {
+      sharedShape[k] = ZodIntersection.create(first[k], second[k]);
+    }
+    return {
+      ...(first as object),
+      ...(second as object),
+      ...sharedShape,
+    };
+  };
+}
 export const mergeObjects = <First extends AnyZodObject>(first: First) => <
   Second extends AnyZodObject
 >(
@@ -1248,7 +1277,7 @@ export const mergeObjects = <First extends AnyZodObject>(first: First) => <
     second._def.shape()
   );
   const merged: any = new ZodObject({
-    t: ZodTypes.object,
+    // t: ZodTypes.object,
     effects: [...(first._def.effects || []), ...(second._def.effects || [])],
     unknownKeys: first._def.unknownKeys,
     catchall: first._def.catchall,
@@ -1292,7 +1321,7 @@ export interface ZodObjectDef<
   Catchall extends ZodTypeAny = ZodTypeAny
   // Params extends ZodObjectParams = ZodObjectParams
 > extends ZodTypeDef {
-  t: ZodTypes.object;
+  // t: ZodTypes.object;
   shape: () => T;
   catchall: Catchall;
   unknownKeys: UnknownKeys;
@@ -1373,7 +1402,7 @@ export class ZodObject<
     for (const key of shapeKeys) {
       const keyValidator = shapeKeys.includes(key)
         ? shape[key]
-        : !(this._def.catchall._def.t === ZodTypes.never)
+        : !(this._def.catchall instanceof ZodNever)
         ? this._def.catchall
         : undefined;
 
@@ -1423,7 +1452,7 @@ export class ZodObject<
         });
     }
 
-    if (this._def.catchall._def.t === ZodTypes.never) {
+    if (this._def.catchall instanceof ZodNever) {
       const unknownKeys = this._def.unknownKeys;
 
       if (unknownKeys === "passthrough") {
@@ -1646,7 +1675,7 @@ export class ZodObject<
 
   static create = <T extends ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({
-      t: ZodTypes.object,
+      // t: ZodTypes.object,
       shape: () => shape,
       unknownKeys: "strip",
       catchall: ZodNever.create(),
@@ -1658,7 +1687,7 @@ export class ZodObject<
 
   static lazycreate = <T extends ZodRawShape>(shape: () => T): ZodObject<T> => {
     return new ZodObject({
-      t: ZodTypes.object,
+      // t: ZodTypes.object,
       shape,
       unknownKeys: "strip",
       catchall: ZodNever.create(),
@@ -1682,7 +1711,7 @@ export interface ZodUnionDef<
     ...ZodTypeAny[]
   ]
 > extends ZodTypeDef {
-  t: ZodTypes.union;
+  // t: ZodTypes.union;
   options: T;
 }
 
@@ -1752,7 +1781,7 @@ export class ZodUnion<
     types: T
   ): ZodUnion<T> => {
     return new ZodUnion({
-      t: ZodTypes.union,
+      // t: ZodTypes.union,
       options: types,
     });
   };
@@ -1769,7 +1798,7 @@ export interface ZodIntersectionDef<
   T extends ZodTypeAny = ZodTypeAny,
   U extends ZodTypeAny = ZodTypeAny
 > extends ZodTypeDef {
-  t: ZodTypes.intersection;
+  // t: ZodTypes.intersection;
   left: T;
   right: U;
 }
@@ -1829,7 +1858,7 @@ export class ZodIntersection<
     right: U
   ): ZodIntersection<T, U> => {
     return new ZodIntersection({
-      t: ZodTypes.intersection,
+      // t: ZodTypes.intersection,
       left: left,
       right: right,
     });
@@ -1854,7 +1883,7 @@ export type InputTypeOfTuple<T extends [ZodTypeAny, ...ZodTypeAny[]] | []> = {
 export interface ZodTupleDef<
   T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]]
 > extends ZodTypeDef {
-  t: ZodTypes.tuple;
+  // t: ZodTypes.tuple;
   items: T;
 }
 
@@ -1924,7 +1953,7 @@ export class ZodTuple<
     schemas: T
   ): ZodTuple<T> => {
     return new ZodTuple({
-      t: ZodTypes.tuple,
+      // t: ZodTypes.tuple,
       items: schemas,
     });
   };
@@ -1939,7 +1968,7 @@ export class ZodTuple<
 /////////////////////////////////////////
 export interface ZodRecordDef<Value extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  t: ZodTypes.record;
+  // t: ZodTypes.record;
   valueType: Value;
 }
 
@@ -1981,7 +2010,7 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     valueType: Value
   ): ZodRecord<Value> => {
     return new ZodRecord({
-      t: ZodTypes.record,
+      // t: ZodTypes.record,
       valueType,
     });
   };
@@ -1998,7 +2027,7 @@ export interface ZodMapDef<
   Key extends ZodTypeAny = ZodTypeAny,
   Value extends ZodTypeAny = ZodTypeAny
 > extends ZodTypeDef {
-  t: ZodTypes.map;
+  // t: ZodTypes.map;
   valueType: Value;
   keyType: Key;
 }
@@ -2067,7 +2096,7 @@ export class ZodMap<
     valueType: Value
   ): ZodMap<Key, Value> => {
     return new ZodMap({
-      t: ZodTypes.map,
+      // t: ZodTypes.map,
       valueType,
       keyType,
     });
@@ -2083,7 +2112,7 @@ export class ZodMap<
 //////////////////////////////////////
 export interface ZodSetDef<Value extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  t: ZodTypes.set;
+  // t: ZodTypes.set;
   valueType: Value;
 }
 
@@ -2132,7 +2161,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     valueType: Value
   ): ZodSet<Value> => {
     return new ZodSet({
-      t: ZodTypes.set,
+      // t: ZodTypes.set,
       valueType,
     });
   };
@@ -2149,7 +2178,7 @@ export interface ZodFunctionDef<
   Args extends ZodTuple<any> = ZodTuple<any>,
   Returns extends ZodTypeAny = ZodTypeAny
 > extends ZodTypeDef {
-  t: ZodTypes.function;
+  // t: ZodTypes.function;
   args: Args;
   returns: Returns;
 }
@@ -2192,7 +2221,7 @@ export class ZodFunction<
       return;
     }
 
-    const isAsyncFunction = this._def.returns._def.t === ZodTypes.promise;
+    const isAsyncFunction = this._def.returns instanceof ZodPromise;
 
     const validatedFunction = (...args: any[]) => {
       const argsError = new ZodError([]);
@@ -2283,7 +2312,7 @@ export class ZodFunction<
     returns?: U
   ): ZodFunction<T, U> => {
     return new ZodFunction({
-      t: ZodTypes.function,
+      // t: ZodTypes.function,
       args: args || ZodTuple.create([]),
       returns: returns || ZodUnknown.create(),
     }) as any;
@@ -2299,7 +2328,7 @@ export class ZodFunction<
 ///////////////////////////////////////
 export interface ZodLazyDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  t: ZodTypes.lazy;
+  // t: ZodTypes.lazy;
   getter: () => T;
 }
 
@@ -2328,7 +2357,7 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
 
   static create = <T extends ZodTypeAny>(getter: () => T): ZodLazy<T> => {
     return new ZodLazy({
-      t: ZodTypes.lazy,
+      // t: ZodTypes.lazy,
       getter: getter,
     });
   };
@@ -2342,7 +2371,7 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////
 //////////////////////////////////////////
 export interface ZodLiteralDef<T extends any = any> extends ZodTypeDef {
-  t: ZodTypes.literal;
+  // t: ZodTypes.literal;
   value: T;
 }
 
@@ -2365,7 +2394,7 @@ export class ZodLiteral<T extends any> extends ZodType<T, ZodLiteralDef<T>> {
 
   static create = <T extends Primitive>(value: T): ZodLiteral<T> => {
     return new ZodLiteral({
-      t: ZodTypes.literal,
+      // t: ZodTypes.literal,
       value: value,
     });
   };
@@ -2389,7 +2418,7 @@ type Values<T extends EnumValues> = {
 
 export interface ZodEnumDef<T extends EnumValues = EnumValues>
   extends ZodTypeDef {
-  t: ZodTypes.enum;
+  // t: ZodTypes.enum;
   values: T;
 }
 
@@ -2443,7 +2472,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     values: T
   ): ZodEnum<T> => {
     return new ZodEnum({
-      t: ZodTypes.enum,
+      // t: ZodTypes.enum,
       values: values,
     }) as any;
   };
@@ -2458,7 +2487,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
 /////////////////////////////////////////////
 export interface ZodNativeEnumDef<T extends EnumLike = EnumLike>
   extends ZodTypeDef {
-  t: ZodTypes.nativeEnum;
+  // t: ZodTypes.nativeEnum;
   values: T;
 }
 
@@ -2484,7 +2513,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   }
   static create = <T extends EnumLike>(values: T): ZodNativeEnum<T> => {
     return new ZodNativeEnum({
-      t: ZodTypes.nativeEnum,
+      // t: ZodTypes.nativeEnum,
       values: values,
     });
   };
@@ -2499,7 +2528,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
 //////////////////////////////////////////
 export interface ZodPromiseDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  t: ZodTypes.promise;
+  // t: ZodTypes.promise;
   type: T;
 }
 
@@ -2548,7 +2577,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 
   static create = <T extends ZodTypeAny>(schema: T): ZodPromise<T> => {
     return new ZodPromise({
-      t: ZodTypes.promise,
+      // t: ZodTypes.promise,
       type: schema,
     });
   };
@@ -2563,7 +2592,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////////
 export interface ZodTransformerDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  t: ZodTypes.transformer;
+  // t: ZodTypes.transformer;
   schema: T;
 }
 
@@ -2601,7 +2630,7 @@ export class ZodTransformer<
     schema: I
   ): ZodTransformer<I, I["_output"]> => {
     const newTx = new ZodTransformer({
-      t: ZodTypes.transformer,
+      // t: ZodTypes.transformer,
       schema,
     });
 
@@ -2624,7 +2653,7 @@ export class ZodTransformer<
 ///////////////////////////////////////////
 export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  t: ZodTypes.optional;
+  // t: ZodTypes.optional;
   innerType: T;
 }
 
@@ -2659,7 +2688,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
   static create = <T extends ZodTypeAny>(type: T): ZodOptionalType<T> => {
     if (type instanceof ZodOptional) return type as ZodOptionalType<T>;
     return new ZodOptional({
-      t: ZodTypes.optional,
+      // t: ZodTypes.optional,
       innerType: type,
     }) as ZodOptionalType<T>;
   };
@@ -2674,7 +2703,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
 ///////////////////////////////////////////
 export interface ZodNullableDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  t: ZodTypes.nullable;
+  // t: ZodTypes.nullable;
   innerType: T;
 }
 
@@ -2710,7 +2739,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     // An nullable nullable is the original nullable
     if (type instanceof ZodNullable) return type as any;
     return new ZodNullable({
-      t: ZodTypes.nullable,
+      // t: ZodTypes.nullable,
       innerType: type,
     }) as any;
   };

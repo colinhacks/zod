@@ -47,7 +47,8 @@
     "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
     "prepublishOnly": "npm run build && npm run build:deno",
-    "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json --trace-warnings"
+    "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json --trace-warnings",
+    "depcruise": "depcruise -c .dependency-cruiser.js src"
   },
   "devDependencies": {
     "@types/jest": "^26.0.17",
