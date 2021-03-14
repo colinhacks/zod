@@ -1,2 +1,2 @@
-export * from "./types/types";
+export * from "./types";
 export * from "./ZodError";

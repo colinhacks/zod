@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import { crazySchema } from "../crazySchema";
+import { crazySchema } from "./crazySchema";
 // import * as z from "../index";
 
 test("parse", () => {

@@ -1,10 +1,10 @@
-import { defaultErrorMap } from "../defaultErrorMap";
-import { errorUtil } from "../helpers/errorUtil";
+import { defaultErrorMap } from "./defaultErrorMap";
+import { errorUtil } from "./helpers/errorUtil";
 // import { objectUtil } from "../helpers/objectUtil";
-import { getParsedType, ZodParsedType } from "../helpers/parseUtil";
-import { partialUtil } from "../helpers/partialUtil";
-import { Primitive, Scalars } from "../helpers/primitive";
-import { INVALID, util } from "../helpers/util";
+import { getParsedType, ZodParsedType } from "./helpers/parseUtil";
+import { partialUtil } from "./helpers/partialUtil";
+import { Primitive, Scalars } from "./helpers/primitive";
+import { INVALID, util } from "./helpers/util";
 // import { isScalar } from "../isScalar";
 import {
   issueHelpers,
@@ -14,15 +14,15 @@ import {
   ParseParamsWithOptionals,
   // ZodParser,
   ZodParserReturnType,
-} from "../parser";
-import { NOSET, PseudoPromise } from "../PseudoPromise";
+} from "./parser";
+import { NOSET, PseudoPromise } from "./PseudoPromise";
 import {
   MakeErrorData,
   StringValidation,
   ZodCustomIssue,
   ZodError,
   ZodIssueCode,
-} from "../ZodError";
+} from "./ZodError";
 // import { ZodTypes } from "../ZodTypes";
 
 ///////////////////////////////////////
