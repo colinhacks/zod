@@ -514,11 +514,11 @@ export abstract class ZodType<
   };
 
   default<
-    T extends Input,
+    T extends util.noUndefined<Input>,
     This extends this = this
     // OptThis extends ZodOptionalType<this> = ZodOptionalType<this>
   >(def: T): ZodOptionalType<This, true>; //;ZodTransformer<ZodOptionalType<This>, Output>;
-  default<T extends (arg: this) => Input, This extends this = this>(
+  default<T extends () => Input, This extends this = this>(
     def: T
   ): ZodOptionalType<This, true>; //ZodTransformer<ZodOptionalType<This>, Output>;
   default(def: any) {
