@@ -104,7 +104,7 @@ export abstract class ZodType<
   //   // ctx.
   //   // const parsedType = getParsedType(ctx.data);
   //   // const promise = this._parse(data, params);
-  //   console.log(`calling base class _parse...`);
+
   //   return PseudoPromise.resolve(INVALID);
   // }
 
@@ -517,15 +517,27 @@ export abstract class ZodType<
     T extends Input,
     This extends this = this
     // OptThis extends ZodOptionalType<this> = ZodOptionalType<this>
-  >(def: T): ZodTransformer<ZodOptionalType<This>, Output>;
+  >(def: T): ZodOptionalType<This, true>; //;ZodTransformer<ZodOptionalType<This>, Output>;
   default<T extends (arg: this) => Input, This extends this = this>(
     def: T
-  ): ZodTransformer<ZodOptionalType<This>, Output>;
+  ): ZodOptionalType<This, true>; //ZodTransformer<ZodOptionalType<This>, Output>;
   default(def: any) {
-    return (this as any).optional().transform((val: any) => {
-      const defaultVal = typeof def === "function" ? def(this) : def;
-      return typeof val !== "undefined" ? val : defaultVal;
-    }) as any;
+    const defaultValueFunc = typeof def === "function" ? def : () => def;
+    if (this instanceof ZodOptional) {
+      return new ZodOptional({
+        ...this._def,
+        defaultValue: defaultValueFunc,
+      }) as any;
+    }
+
+    return new ZodOptional({
+      innerType: this,
+      defaultValue: defaultValueFunc,
+    });
+    // return (this as any).optional().transform((val: any) => {
+    //   const defaultVal = typeof def === "function" ? def(this) : def;
+    //   return typeof val !== "undefined" ? val : defaultVal;
+    // }) as any;
   }
 
   isOptional: () => boolean = () => this.safeParse(undefined).success;
@@ -2619,11 +2631,11 @@ export class ZodTransformer<
   }
 
   /** You can't use the .default method on transformers! */
-  default: (..._args: any[]) => never = (..._args: any[]) => {
-    throw new Error(
-      "You can't use the .default method on a ZodTransformer instance."
-    );
-  };
+  // default: (..._args: any[]) => never = (..._args: any[]) => {
+  //   throw new Error(
+  //     "You can't use the .default method on a ZodTransformer instance."
+  //   );
+  // };
 
   static create = <I extends ZodTypeAny>(
     schema: I
@@ -2654,17 +2666,24 @@ export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   // t: ZodTypes.optional;
   innerType: T;
+  defaultValue: undefined | (() => T["_input"]);
 }
 
 // This type allows for optional flattening
 // type Awaited<T> = T extends PromiseLike<infer U> ? Awaited<U> : T;
 
-export type ZodOptionalType<T extends ZodTypeAny> = T extends ZodOptional<any>
-  ? T
-  : ZodOptional<T>;
+export type ZodOptionalType<
+  T extends ZodTypeAny,
+  HasDefault extends boolean = false
+> = T extends ZodOptional<infer U, any>
+  ? ZodOptional<U, HasDefault>
+  : ZodOptional<T, HasDefault>;
 
-export class ZodOptional<T extends ZodTypeAny> extends ZodType<
-  T["_output"] | undefined,
+export class ZodOptional<
+  T extends ZodTypeAny,
+  HasDefault extends boolean = false
+> extends ZodType<
+  HasDefault extends true ? T["_output"] : T["_output"] | undefined,
   ZodOptionalDef<T>,
   T["_input"] | undefined
 > {
@@ -2672,12 +2691,17 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType.isScalar(params);
   }
   _parse(ctx: ParseContext): any {
+    let data = ctx.data;
     if (ctx.parsedType === ZodParsedType.undefined) {
-      return undefined;
+      if (this._def.defaultValue !== undefined) {
+        data = this._def.defaultValue();
+      } else {
+        return undefined;
+      }
     }
 
     return new PseudoPromise().then(() => {
-      return this._def.innerType._parseWithInvalidFallback(ctx.data, {
+      return this._def.innerType._parseWithInvalidFallback(data, {
         ...ctx,
         parentError: ctx.currentError,
       });
@@ -2685,11 +2709,12 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
   }
 
   static create = <T extends ZodTypeAny>(type: T): ZodOptionalType<T> => {
-    if (type instanceof ZodOptional) return type as ZodOptionalType<T>;
+    if (type instanceof ZodOptional) return type as any;
     return new ZodOptional({
       // t: ZodTypes.optional,
       innerType: type,
-    }) as ZodOptionalType<T>;
+      defaultValue: undefined,
+    }) as any;
   };
 }
 
@@ -2748,9 +2773,45 @@ export const custom = <T>(
   check?: (data: unknown) => any,
   params?: Parameters<ZodTypeAny["refine"]>[1]
 ): ZodType<T> => {
-  if (check) return anyType().refine(check, params);
-  return anyType();
+  if (check) return ZodAny.create().refine(check, params);
+  return ZodAny.create();
 };
+
+export { ZodType as Schema, ZodType as ZodSchema };
+
+export const late = {
+  object: ZodObject.lazycreate,
+};
+
+export type ZodFirstPartySchemaTypes =
+  | ZodString
+  | ZodNumber
+  | ZodBigInt
+  | ZodBoolean
+  | ZodDate
+  | ZodUndefined
+  | ZodNull
+  | ZodAny
+  | ZodUnknown
+  | ZodNever
+  | ZodVoid
+  | ZodArray<any>
+  | ZodObject<any>
+  | ZodUnion<any>
+  | ZodIntersection<any, any>
+  | ZodTuple
+  | ZodRecord
+  | ZodMap
+  | ZodSet
+  | ZodFunction<any, any>
+  | ZodLazy<any>
+  | ZodLiteral<any>
+  | ZodEnum<any>
+  | ZodTransformer<any>
+  | ZodNativeEnum<any>
+  | ZodOptional<any>
+  | ZodNullable<any>
+  | ZodPromise<any>;
 
 const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
@@ -2791,7 +2852,6 @@ const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
 
-export { ZodType as Schema, ZodType as ZodSchema };
 export {
   anyType as any,
   arrayType as array,
@@ -2826,67 +2886,3 @@ export {
   unknownType as unknown,
   voidType as void,
 };
-
-export const late = {
-  object: ZodObject.lazycreate,
-};
-
-export type ZodDef =
-  | ZodStringDef
-  | ZodNumberDef
-  | ZodBigIntDef
-  | ZodBooleanDef
-  | ZodDateDef
-  | ZodUndefinedDef
-  | ZodNullDef
-  | ZodAnyDef
-  | ZodUnknownDef
-  | ZodNeverDef
-  | ZodVoidDef
-  | ZodArrayDef
-  | ZodObjectDef
-  | ZodUnionDef
-  | ZodIntersectionDef
-  | ZodTupleDef
-  | ZodRecordDef
-  | ZodMapDef
-  | ZodSetDef
-  | ZodFunctionDef
-  | ZodLazyDef
-  | ZodLiteralDef
-  | ZodEnumDef
-  | ZodTransformerDef
-  | ZodNativeEnumDef
-  | ZodOptionalDef
-  | ZodNullableDef
-  | ZodPromiseDef;
-
-export type ZodFirstPartySchemaTypes =
-  | ZodString
-  | ZodNumber
-  | ZodBigInt
-  | ZodBoolean
-  | ZodDate
-  | ZodUndefined
-  | ZodNull
-  | ZodAny
-  | ZodUnknown
-  | ZodNever
-  | ZodVoid
-  | ZodArray<any>
-  | ZodObject<any>
-  | ZodUnion<any>
-  | ZodIntersection<any, any>
-  | ZodTuple
-  | ZodRecord
-  | ZodMap
-  | ZodSet
-  | ZodFunction<any, any>
-  | ZodLazy<any>
-  | ZodLiteral<any>
-  | ZodEnum<any>
-  | ZodTransformer<any>
-  | ZodNativeEnum<any>
-  | ZodOptional<any>
-  | ZodNullable<any>
-  | ZodPromise<any>;
