@@ -58,4 +58,7 @@ export namespace util {
     }
     return undefined;
   };
+
+  export type identity<T> = T;
+  export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
 }

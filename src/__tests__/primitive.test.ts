@@ -1,8 +1,8 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import { Mocker } from "../helpers/Mocker";
 import * as z from "../index";
+import { Mocker } from "./Mocker";
 
 const literalStringSchema = z.literal("asdf");
 const literalNumberSchema = z.literal(12);

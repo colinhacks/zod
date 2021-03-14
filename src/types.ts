@@ -1,28 +1,26 @@
-import { defaultErrorMap } from "./defaultErrorMap";
 import { errorUtil } from "./helpers/errorUtil";
-// import { objectUtil } from "../helpers/objectUtil";
-import { getParsedType, ZodParsedType } from "./helpers/parseUtil";
-import { partialUtil } from "./helpers/partialUtil";
-import { Primitive, Scalars } from "./helpers/primitive";
-import { INVALID, util } from "./helpers/util";
-// import { isScalar } from "../isScalar";
 import {
+  getParsedType,
   issueHelpers,
   ParseContext,
   ParseParams,
   ParseParamsNoData,
   ParseParamsWithOptionals,
-  // ZodParser,
+  ZodParsedType,
   ZodParserReturnType,
-} from "./parser";
+} from "./helpers/parseUtil";
+import { partialUtil } from "./helpers/partialUtil";
+import { INVALID, util } from "./helpers/util";
 import { NOSET, PseudoPromise } from "./PseudoPromise";
 import {
+  defaultErrorMap,
   MakeErrorData,
   StringValidation,
   ZodCustomIssue,
   ZodError,
   ZodIssueCode,
 } from "./ZodError";
+
 // import { ZodTypes } from "../ZodTypes";
 
 ///////////////////////////////////////
@@ -1314,6 +1312,9 @@ const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
 };
 
 type UnknownKeysParam = "passthrough" | "strict" | "strip";
+
+export type Primitive = string | number | bigint | boolean | null | undefined;
+export type Scalars = Primitive | Primitive[];
 
 export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,

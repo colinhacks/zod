@@ -2,14 +2,12 @@ import { util } from "./helpers/util";
 import { ZodIssueCode, ZodIssueOptionalMessage } from "./ZodError";
 
 type ErrorMapCtx = {
-  // path: (string | number)[];
-  // details: any;
   defaultError: string;
   data: any;
-  // metadata: object;
 };
 
 export type ZodErrorMap = typeof defaultErrorMap;
+
 export const defaultErrorMap = (
   error: ZodIssueOptionalMessage,
   _ctx: ErrorMapCtx
