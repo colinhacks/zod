@@ -2,7 +2,7 @@
 import { expect, test } from "@jest/globals";
 
 import { crazySchema } from "../crazySchema";
-import * as z from "../index";
+// import * as z from "../index";
 
 test("parse", () => {
   crazySchema.parse({
@@ -18,15 +18,4 @@ test("parse", () => {
     numProm: Promise.resolve(12),
     lenfun: (x: string) => x.length,
   });
-
-  // expect(typeof value.sumTransformer).toEqual("number");
-});
-
-test("to JSON", () => {
-  crazySchema.toJSON();
-});
-
-test("ZodCodeGenerator", () => {
-  const gen = new z.ZodCodeGenerator();
-  gen.generate(crazySchema);
 });
