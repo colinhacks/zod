@@ -517,10 +517,10 @@ export abstract class ZodType<
     T extends util.noUndefined<Input>,
     This extends this = this
     // OptThis extends ZodOptionalType<this> = ZodOptionalType<this>
-  >(def: T): ZodOptionalType<This, true>; //;ZodTransformer<ZodOptionalType<This>, Output>;
+  >(def: T): addDefaultToOptional<ZodOptionalType<This>>; //;ZodTransformer<ZodOptionalType<This>, Output>;
   default<T extends () => Input, This extends this = this>(
     def: T
-  ): ZodOptionalType<This, true>; //ZodTransformer<ZodOptionalType<This>, Output>;
+  ): addDefaultToOptional<ZodOptionalType<This>>; //ZodTransformer<ZodOptionalType<This>, Output>;
   default(def: any) {
     const defaultValueFunc = typeof def === "function" ? def : () => def;
     if (this instanceof ZodOptional) {
@@ -2672,12 +2672,19 @@ export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
 // This type allows for optional flattening
 // type Awaited<T> = T extends PromiseLike<infer U> ? Awaited<U> : T;
 
+export type addDefaultToOptional<
+  T extends ZodOptional<any, any>
+> = T extends ZodOptional<infer U, any> ? ZodOptional<U, true> : never;
+export type removeDefaultFromOptional<
+  T extends ZodOptional<any, any>
+> = T extends ZodOptional<infer U, any> ? ZodOptional<U, false> : never;
+
 export type ZodOptionalType<
-  T extends ZodTypeAny,
-  HasDefault extends boolean = false
-> = T extends ZodOptional<infer U, any>
-  ? ZodOptional<U, HasDefault>
-  : ZodOptional<T, HasDefault>;
+  T extends ZodTypeAny
+  // HasDefault extends boolean = false
+> = T extends ZodOptional<infer U, infer H>
+  ? ZodOptional<U, H>
+  : ZodOptional<T, false>; // no default by default
 
 export class ZodOptional<
   T extends ZodTypeAny,
@@ -2705,6 +2712,17 @@ export class ZodOptional<
         ...ctx,
         parentError: ctx.currentError,
       });
+    });
+  }
+
+  unwrap() {
+    return this._def.innerType;
+  }
+
+  removeDefault(): ZodOptional<T, false> {
+    return new ZodOptional({
+      ...this._def,
+      defaultValue: undefined,
     });
   }
 
@@ -2757,6 +2775,10 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
         parentError: ctx.currentError,
       });
     });
+  }
+
+  unwrap() {
+    return this._def.innerType;
   }
 
   static create = <T extends ZodTypeAny>(type: T): ZodNullableType<T> => {
