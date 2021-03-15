@@ -1,8 +1,8 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index";
 import { util } from "../helpers/util";
+import * as z from "../index";
 
 const stringToNumber = z.string().transform((arg) => parseFloat(arg));
 // const numberToString = z
@@ -63,7 +63,7 @@ test("default", () => {
 test("dynamic default", () => {
   const data = z
     .string()
-    .default((s) => s._def.t)
+    .default((s) => (s instanceof z.ZodString ? "string" : "notstring"))
     .parse(undefined); // => "asdf"
   expect(data).toEqual("string");
 });

@@ -1,17 +1,9 @@
-import * as z from ".";
+import { z } from ".";
 
-const schema = z.union([
-  z.object({
-    a: z.string(),
-  }),
-  z.object({
-    b: z.boolean(),
-  }),
-]);
+const run = async () => {
+  z;
+};
 
-schema.parse({ b: "test" });
+run();
 
 export {};
-
-z.string().nonempty();
-z.literal("");

@@ -1,5 +1,5 @@
 /* ZOD */
-
+export * from "./types/base.ts";
 import { ZodCodeGenerator } from "./codegen.ts";
 import { ZodErrorMap } from "./defaultErrorMap.ts";
 import { ZodParsedType } from "./helpers/parseUtil.ts";

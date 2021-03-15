@@ -49,6 +49,7 @@ test("deep partial inference", () => {
 
 test("deep partial parse", () => {
   const deep = nested.deepPartial();
+
   expect(deep.shape.name instanceof z.ZodOptional).toBe(true);
   expect(deep.shape.outer instanceof z.ZodOptional).toBe(true);
   expect(deep.shape.outer._def.innerType instanceof z.ZodObject).toBe(true);

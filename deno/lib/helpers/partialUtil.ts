@@ -1,4 +1,4 @@
-import { ZodTypeAny, ZodObject, ZodOptional } from "../index.ts";
+import { ZodObject, ZodOptional, ZodTypeAny } from "../index.ts";
 
 type AnyZodObject = ZodObject<any, any, any>;
 

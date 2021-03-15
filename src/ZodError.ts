@@ -1,12 +1,12 @@
+import { ZodParsedType } from "./helpers/parseUtil";
 import { util } from "./helpers/util";
-import { ZodParsedType } from "./ZodParsedType";
 
 export const ZodIssueCode = util.arrayToEnum([
   "invalid_type",
   "nonempty_array_is_empty",
   "custom",
   "invalid_union",
-  "invalid_literal_value",
+  // "invalid_literal_value",
   "invalid_enum_value",
   "unrecognized_keys",
   "invalid_arguments",
@@ -46,10 +46,10 @@ export interface ZodInvalidUnionIssue extends ZodIssueBase {
   unionErrors: ZodError[];
 }
 
-export interface ZodInvalidLiteralValueIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.invalid_literal_value;
-  expected: string | number | boolean;
-}
+// export interface ZodInvalidLiteralValueIssue extends ZodIssueBase {
+//   code: typeof ZodIssueCode.invalid_literal_value;
+//   expected: string | number | boolean;
+// }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_enum_value;
@@ -105,7 +105,7 @@ export type ZodIssueOptionalMessage =
   | ZodNonEmptyArrayIsEmptyIssue
   | ZodUnrecognizedKeysIssue
   | ZodInvalidUnionIssue
-  | ZodInvalidLiteralValueIssue
+  // | ZodInvalidLiteralValueIssue
   | ZodInvalidEnumValueIssue
   | ZodInvalidArgumentsIssue
   | ZodInvalidReturnTypeIssue
@@ -143,6 +143,9 @@ export class ZodError extends Error {
     return error;
   };
 
+  toString() {
+    return `ZodError: ${JSON.stringify(this.issues, null, 2)}`;
+  }
   get message() {
     return JSON.stringify(this.issues, null, 2);
     // const errorMessage: string[] = [
@@ -206,4 +209,121 @@ type stripPath<T extends object> = T extends any
 
 export type MakeErrorData = stripPath<ZodIssueOptionalMessage> & {
   path?: (string | number)[];
+};
+
+type ErrorMapCtx = {
+  // path: (string | number)[];
+  // details: any;
+  defaultError: string;
+  data: any;
+  // metadata: object;
+};
+
+export type ZodErrorMap = typeof defaultErrorMap;
+export const defaultErrorMap = (
+  error: ZodIssueOptionalMessage,
+  _ctx: ErrorMapCtx
+): { message: string } => {
+  let message: string;
+  switch (error.code) {
+    case ZodIssueCode.invalid_type:
+      if (error.received === "undefined") {
+        message = "Required";
+      } else {
+        message = `Expected ${error.expected}, received ${error.received}`;
+      }
+      break;
+    case ZodIssueCode.nonempty_array_is_empty:
+      message = `List must contain at least one item`;
+      break;
+    case ZodIssueCode.unrecognized_keys:
+      message = `Unrecognized key(s) in object: ${error.keys
+        .map((k) => `'${k}'`)
+        .join(", ")}`;
+      break;
+    case ZodIssueCode.invalid_union:
+      message = `Invalid input`;
+      break;
+    // case ZodIssueCode.invalid_tuple_length:
+    //   message = `Expected list of ${error.expected} items, received ${error.received} items`;
+    //   break;
+    // case ZodIssueCode.invalid_literal_value:
+    //   message = `Input must be "${error.expected}"`;
+    //   break;
+    case ZodIssueCode.invalid_enum_value:
+      message = `Invalid enum value. Expected ${error.options
+        .map((val) => (typeof val === "string" ? `'${val}'` : val))
+        .join(" | ")}, received ${
+        typeof _ctx.data === "string" ? `'${_ctx.data}'` : _ctx.data
+      }`;
+      break;
+    case ZodIssueCode.invalid_arguments:
+      message = `Invalid function arguments`;
+      break;
+    case ZodIssueCode.invalid_return_type:
+      message = `Invalid function return type`;
+      break;
+    case ZodIssueCode.invalid_date:
+      message = `Invalid date`;
+      break;
+    // case ZodIssueCode.too_small:
+    //   const tooShortNoun = _ctx.data === 'string' ? 'characters' : 'items';
+    //   message = `Too short, should be at least ${error.minimum} ${tooShortNoun}`;
+    //   break;
+    // case ZodIssueCode.too_big:
+    //   const tooLongNoun = _ctx.data === 'string' ? 'characters' : 'items';
+    //   message = `Too short, should be at most ${error.maximum} ${tooLongNoun}`;
+    //   break;
+    case ZodIssueCode.invalid_string:
+      if (error.validation !== "regex") message = `Invalid ${error.validation}`;
+      else message = "Invalid";
+      break;
+    // case ZodIssueCode.invalid_url:
+    //   message = 'Invalid URL.';
+    //   break;
+    // case ZodIssueCode.invalid_uuid:
+    //   message = 'Invalid UUID.';
+    //   break;
+    case ZodIssueCode.too_small:
+      if (error.type === "array")
+        message = `Should have ${error.inclusive ? `at least` : `more than`} ${
+          error.minimum
+        } items`;
+      else if (error.type === "string")
+        message = `Should be ${error.inclusive ? `at least` : `over`} ${
+          error.minimum
+        } characters`;
+      else if (error.type === "number")
+        message = `Value should be greater than ${
+          error.inclusive ? `or equal to ` : ``
+        }${error.minimum}`;
+      else message = "Invalid input";
+      break;
+    case ZodIssueCode.too_big:
+      if (error.type === "array")
+        message = `Should have ${error.inclusive ? `at most` : `less than`} ${
+          error.maximum
+        } items`;
+      else if (error.type === "string")
+        message = `Should be ${error.inclusive ? `at most` : `under`} ${
+          error.maximum
+        } characters long`;
+      else if (error.type === "number")
+        message = `Value should be less than ${
+          error.inclusive ? `or equal to ` : ``
+        }${error.maximum}`;
+      else message = "Invalid input";
+      break;
+    case ZodIssueCode.custom:
+      message = `Invalid input.`;
+      break;
+    case ZodIssueCode.invalid_intersection_types:
+      message = `Intersections only support objects`;
+      break;
+    default:
+      message = `Invalid input.`;
+      util.assertNever(error);
+  }
+  return { message };
+  // return `Invalid input.`;
 };

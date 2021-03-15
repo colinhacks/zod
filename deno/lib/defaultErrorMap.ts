@@ -37,13 +37,15 @@ export const defaultErrorMap = (
     // case ZodIssueCode.invalid_tuple_length:
     //   message = `Expected list of ${error.expected} items, received ${error.received} items`;
     //   break;
-    case ZodIssueCode.invalid_literal_value:
-      message = `Input must be "${error.expected}"`;
-      break;
+    // case ZodIssueCode.invalid_literal_value:
+    //   message = `Input must be "${error.expected}"`;
+    //   break;
     case ZodIssueCode.invalid_enum_value:
-      message = `Input must be one of these values: ${error.options.join(
-        ", "
-      )}`;
+      message = `Invalid enum value. Expected ${error.options
+        .map((val) => (typeof val === "string" ? `'${val}'` : val))
+        .join(" | ")}, received ${
+        typeof _ctx.data === "string" ? `'${_ctx.data}'` : _ctx.data
+      }`;
       break;
     case ZodIssueCode.invalid_arguments:
       message = `Invalid function arguments`;

@@ -3,7 +3,7 @@
 // import { ZodUnion } from './union';
 import { ZodIssueCode } from "../ZodError.ts";
 import { ZodTypes } from "../ZodTypes.ts";
-import { ZodType, ZodTypeDef, ZodTypeAny } from "./base.ts";
+import { ZodType, ZodTypeAny, ZodTypeDef } from "./base.ts";
 
 export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {

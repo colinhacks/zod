@@ -30,7 +30,15 @@ test("promise parsing success", async () => {
 });
 
 test("promise parsing success 2", () => {
-  promSchema.parse({ then: () => {}, catch: () => {} });
+  const fakePromise = {
+    then() {
+      return this;
+    },
+    catch() {
+      return this;
+    },
+  };
+  promSchema.parse(fakePromise);
 });
 
 test("promise parsing fail", async () => {

@@ -1,12 +1,12 @@
+import { ZodParsedType } from "./helpers/parseUtil.ts";
 import { util } from "./helpers/util.ts";
-import { ZodParsedType } from "./ZodParsedType.ts";
 
 export const ZodIssueCode = util.arrayToEnum([
   "invalid_type",
   "nonempty_array_is_empty",
   "custom",
   "invalid_union",
-  "invalid_literal_value",
+  // "invalid_literal_value",
   "invalid_enum_value",
   "unrecognized_keys",
   "invalid_arguments",
@@ -46,10 +46,10 @@ export interface ZodInvalidUnionIssue extends ZodIssueBase {
   unionErrors: ZodError[];
 }
 
-export interface ZodInvalidLiteralValueIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.invalid_literal_value;
-  expected: string | number | boolean;
-}
+// export interface ZodInvalidLiteralValueIssue extends ZodIssueBase {
+//   code: typeof ZodIssueCode.invalid_literal_value;
+//   expected: string | number | boolean;
+// }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_enum_value;
@@ -105,7 +105,7 @@ export type ZodIssueOptionalMessage =
   | ZodNonEmptyArrayIsEmptyIssue
   | ZodUnrecognizedKeysIssue
   | ZodInvalidUnionIssue
-  | ZodInvalidLiteralValueIssue
+  // | ZodInvalidLiteralValueIssue
   | ZodInvalidEnumValueIssue
   | ZodInvalidArgumentsIssue
   | ZodInvalidReturnTypeIssue

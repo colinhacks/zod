@@ -6,7 +6,7 @@ module.exports = {
     "@typescript-eslint",
     "import",
     "simple-import-sort",
-    // 'prettier' commented as we don't want to run prettier through eslint because of performance degradation
+    "unused-imports",
   ],
   extends: [
     "eslint:recommended",
@@ -14,18 +14,17 @@ module.exports = {
     "prettier/@typescript-eslint", // Uses eslint-config-prettier to disable ESLint rules from @typescript-eslint/eslint-plugin that would conflict with prettier
   ],
   rules: {
-    /**
-     * eslint-plugin-import @see https://github.com/benmosher/eslint-plugin-import
-     */
-    "import/order": "off", // turn off in favor of eslint-plugin-simple-import-sort
-    "import/no-unresolved": "off",
-    "import/no-duplicates": "warn",
+    "import/order": 0, // turn off in favor of eslint-plugin-simple-import-sort
+    "import/no-unresolved": 0,
+    "import/no-duplicates": 1,
+
     /**
      * eslint-plugin-simple-import-sort @see https://github.com/lydell/eslint-plugin-simple-import-sort
      */
-    "sort-imports": "off", // we use eslint-plugin-import instead
-    "simple-import-sort/imports": "off",
-    "simple-import-sort/exports": "off",
+    "sort-imports": 0, // we use eslint-plugin-import instead
+    "simple-import-sort/imports": 1,
+    "simple-import-sort/exports": 1,
+
     /**
      * @typescript-eslint/eslint-plugin @see https://github.com/typescript-eslint/typescript-eslint/tree/master/packages/eslint-plugin
      */
