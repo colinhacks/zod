@@ -48,24 +48,10 @@ export const defaultErrorMap = (
     case ZodIssueCode.invalid_date:
       message = `Invalid date`;
       break;
-    // case ZodIssueCode.too_small:
-    //   const tooShortNoun = _ctx.data === 'string' ? 'characters' : 'items';
-    //   message = `Too short, should be at least ${error.minimum} ${tooShortNoun}`;
-    //   break;
-    // case ZodIssueCode.too_big:
-    //   const tooLongNoun = _ctx.data === 'string' ? 'characters' : 'items';
-    //   message = `Too short, should be at most ${error.maximum} ${tooLongNoun}`;
-    //   break;
     case ZodIssueCode.invalid_string:
       if (error.validation !== "regex") message = `Invalid ${error.validation}`;
       else message = "Invalid";
       break;
-    // case ZodIssueCode.invalid_url:
-    //   message = 'Invalid URL.';
-    //   break;
-    // case ZodIssueCode.invalid_uuid:
-    //   message = 'Invalid UUID.';
-    //   break;
     case ZodIssueCode.too_small:
       if (error.type === "array")
         message = `Should have ${error.inclusive ? `at least` : `more than`} ${
