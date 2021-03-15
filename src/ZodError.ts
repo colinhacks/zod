@@ -6,7 +6,6 @@ export const ZodIssueCode = util.arrayToEnum([
   "nonempty_array_is_empty",
   "custom",
   "invalid_union",
-  // "invalid_literal_value",
   "invalid_enum_value",
   "unrecognized_keys",
   "invalid_arguments",
@@ -45,11 +44,6 @@ export interface ZodInvalidUnionIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_union;
   unionErrors: ZodError[];
 }
-
-// export interface ZodInvalidLiteralValueIssue extends ZodIssueBase {
-//   code: typeof ZodIssueCode.invalid_literal_value;
-//   expected: string | number | boolean;
-// }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_enum_value;
@@ -244,12 +238,6 @@ export const defaultErrorMap = (
     case ZodIssueCode.invalid_union:
       message = `Invalid input`;
       break;
-    // case ZodIssueCode.invalid_tuple_length:
-    //   message = `Expected list of ${error.expected} items, received ${error.received} items`;
-    //   break;
-    // case ZodIssueCode.invalid_literal_value:
-    //   message = `Input must be "${error.expected}"`;
-    //   break;
     case ZodIssueCode.invalid_enum_value:
       message = `Invalid enum value. Expected ${error.options
         .map((val) => (typeof val === "string" ? `'${val}'` : val))
