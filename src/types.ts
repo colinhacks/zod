@@ -56,7 +56,6 @@ type Effect<T> = InternalCheck<T> | Mod<T>;
 type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 
 export interface ZodTypeDef {
-  // t: ZodTypes;
   effects?: Effect<any>[];
   accepts?: ZodType<any, any>;
 }
@@ -72,41 +71,9 @@ export abstract class ZodType<
   readonly _input!: Input;
   readonly _def!: Def;
 
-  // _parseInternal
-
-  // _parse: (data: unknown, params: ParseParams) => PseudoPromise<Output> = (
-  //   data,
-  //   params
-  // ) => {
-  //   const def = this._def;
-
-  //   let PROMISE: PseudoPromise<any> = PseudoPromise.resolve(INVALID);
-  //   (PROMISE as any)._default = true;
-
-  //   params.seen = params.seen || [];
-
-  //   const ERROR = params.error;
-  //   const parsedType = getParsedType(data);
-  //   const promise = this;
-  //   return PROMISE;
-  // };
-  abstract _parse(
-    // data: unknown,
-    _ctx: ParseContext
-  ): any;
+  abstract _parse(_ctx: ParseContext): any;
 
   abstract isScalar(params?: { root: boolean }): boolean;
-  //  {
-  //   // const def = this._def;
-  //   // let PROMISE: PseudoPromise<any> = PseudoPromise.resolve(INVALID);
-  //   // (PROMISE as any)._default = true;
-  //   // const error = ctx.error;
-  //   // ctx.
-  //   // const parsedType = getParsedType(ctx.data);
-  //   // const promise = this._parse(data, params);
-
-  //   return PseudoPromise.resolve(INVALID);
-  // }
 
   _parseInternal(params: ParseParams): ZodParserReturnType<Output> {
     const data = params.data;
@@ -213,13 +180,6 @@ export abstract class ZodType<
     return isSync ? finalPromise.getValueSync() : finalPromise.getValueAsync();
   }
 
-  // _parseInternal: (params: ParseParams) => ZodParserReturnType<Output> = (
-  //   params
-  // ) => {
-  //   const parser = ZodParser(this);
-  //   return parser(params);
-  // };
-
   _parseInternalOptionalParams: (
     params: ParseParamsWithOptionals
   ) => ZodParserReturnType<Output> = (params) => {
@@ -262,16 +222,6 @@ export abstract class ZodType<
         "You can't use .safeParse() on a schema containing async elements. Use .parseAsync instead."
       );
     return result;
-    // try {
-    //   return this._parseInternalOptionalParams(data, params);
-    //   if(result instanceof Promise) return result;
-    //   return { success: true, data:  };
-    // } catch (err) {
-    //   if (err instanceof ZodError) {
-    //     return { success: false, error: err };
-    //   }
-    //   throw err;
-    // }
   };
 
   parseAsync: (
@@ -298,15 +248,6 @@ export abstract class ZodType<
       ...params,
       async: true,
     });
-    // try {
-    //   return await this.parseAsync(data, params);
-    //   return { success: true, data: parsed };
-    // } catch (err) {
-    //   if (err instanceof ZodError) {
-    //     return { success: false, error: err };
-    //   }
-    //   throw err;
-    // }
   };
 
   spa = this.safeParseAsync;
@@ -430,13 +371,9 @@ export abstract class ZodType<
 
   constructor(def: Def) {
     this._def = def;
-    // this.is = this.is.bind(this);
-    // this.check = this.check.bind(this);
     this.transform = this.transform.bind(this) as any;
     this.default = this.default.bind(this);
   }
-
-  // abstract toJSON: () => object;
 
   optional: <This extends this = this>() => ZodOptionalType<This> = () =>
     ZodOptional.create(this) as any;
@@ -445,29 +382,10 @@ export abstract class ZodType<
 
   array: () => ZodArray<this> = () => ZodArray.create(this);
 
-  // transform<Out, This extends this>(
-  //   transformer: (arg: Output) => Out | Promise<Out>
-  // ): This extends ZodTransformer<infer T, any>
-  //   ? ZodTransformer<T, Out>
-  //   : ZodTransformer<This, Out>;
+  or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
+    return ZodUnion.create([this, option]);
+  }
 
-  // transform(mod) {
-  //     let returnType;
-  //     if (this instanceof ZodTransformer) {
-  //       returnType = new (this as any).constructor({
-  //         ...this._def,
-  //         effects: [...(this._def.effects || []), { type: "mod", mod }],
-  //       }) as any;
-  //     } else {
-  //       returnType = new ZodTransformer({
-  //         // ...this._def,
-  // t: ZodTypes.transformer,
-  //         schema: this,
-  //         effects: [{ type: "mod", mod }],
-  //       }) as any;
-  //     }
-  //     return returnType;
-  // }
   transform: <Out, This extends this>(
     transformer: (arg: Output) => Out | Promise<Out>
   ) => This extends ZodTransformer<infer T, any>
@@ -481,8 +399,6 @@ export abstract class ZodType<
       }) as any;
     } else {
       returnType = new ZodTransformer({
-        // ...this._def,
-        // t: ZodTypes.transformer,
         schema: this,
         effects: [{ type: "mod", mod }],
       }) as any;
@@ -513,14 +429,12 @@ export abstract class ZodType<
     }) as any;
   };
 
-  default<
-    T extends util.noUndefined<Input>,
-    This extends this = this
-    // OptThis extends ZodOptionalType<this> = ZodOptionalType<this>
-  >(def: T): addDefaultToOptional<ZodOptionalType<This>>; //;ZodTransformer<ZodOptionalType<This>, Output>;
+  default<T extends util.noUndefined<Input>, This extends this = this>(
+    def: T
+  ): addDefaultToOptional<ZodOptionalType<This>>;
   default<T extends () => Input, This extends this = this>(
     def: T
-  ): addDefaultToOptional<ZodOptionalType<This>>; //ZodTransformer<ZodOptionalType<This>, Output>;
+  ): addDefaultToOptional<ZodOptionalType<This>>;
   default(def: any) {
     const defaultValueFunc = typeof def === "function" ? def : () => def;
     if (this instanceof ZodOptional) {
@@ -534,10 +448,6 @@ export abstract class ZodType<
       innerType: this,
       defaultValue: defaultValueFunc,
     });
-    // return (this as any).optional().transform((val: any) => {
-    //   const defaultVal = typeof def === "function" ? def(this) : def;
-    //   return typeof val !== "undefined" ? val : defaultVal;
-    // }) as any;
   }
 
   isOptional: () => boolean = () => this.safeParse(undefined).success;
@@ -553,7 +463,6 @@ export abstract class ZodType<
 /////////////////////////////////////////
 
 export interface ZodStringDef extends ZodTypeDef {
-  // t: ZodTypes.string;
   validation: {
     uuid?: true;
     custom?: ((val: any) => boolean)[];
@@ -635,8 +544,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       }
     );
 
-  // url = (message?: errorUtil.ErrMessage) => this._regex(urlRegex, 'url', message);
-
   uuid = (message?: errorUtil.ErrMessage) =>
     this._regex(uuidRegex, "uuid", message);
 
@@ -648,7 +555,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
   static create = (): ZodString => {
     return new ZodString({
-      // t: ZodTypes.string,
       validation: {},
     });
   };
@@ -692,9 +598,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
   }
 
   static create = (): ZodNumber => {
-    return new ZodNumber({
-      // t: ZodTypes.number,
-    });
+    return new ZodNumber({});
   };
 
   min = (minimum: number, message?: errorUtil.ErrMessage) =>
@@ -774,9 +678,6 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
   isScalar() {
     return true;
   }
-  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
-
-  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
 
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.bigint) {
@@ -792,9 +693,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
   }
 
   static create = (): ZodBigInt => {
-    return new ZodBigInt({
-      // t: ZodTypes.bigint,
-    });
+    return new ZodBigInt({});
   };
 }
 
@@ -826,9 +725,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
   }
 
   static create = (): ZodBoolean => {
-    return new ZodBoolean({
-      // t: ZodTypes.boolean,
-    });
+    return new ZodBoolean({});
   };
 }
 
@@ -868,9 +765,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
   }
 
   static create = (): ZodDate => {
-    return new ZodDate({
-      // t: ZodTypes.date,
-    });
+    return new ZodDate({});
   };
 }
 
@@ -902,9 +797,7 @@ export class ZodUndefined extends ZodType<undefined> {
   }
 
   static create = (): ZodUndefined => {
-    return new ZodUndefined({
-      // t: ZodTypes.undefined,
-    });
+    return new ZodUndefined({});
   };
 }
 
@@ -935,9 +828,7 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
     return ctx.data;
   }
   static create = (): ZodNull => {
-    return new ZodNull({
-      // t: ZodTypes.null,
-    });
+    return new ZodNull({});
   };
 }
 
@@ -958,9 +849,7 @@ export class ZodAny extends ZodType<any, ZodAnyDef> {
     return ctx.data;
   }
   static create = (): ZodAny => {
-    return new ZodAny({
-      // t: ZodTypes.any,
-    });
+    return new ZodAny({});
   };
 }
 
@@ -982,9 +871,7 @@ export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
   }
 
   static create = (): ZodUnknown => {
-    return new ZodUnknown({
-      // t: ZodTypes.unknown,
-    });
+    return new ZodUnknown({});
   };
 }
 
@@ -1010,9 +897,7 @@ export class ZodNever extends ZodType<never, ZodNeverDef> {
     return;
   }
   static create = (): ZodNever => {
-    return new ZodNever({
-      // t: ZodTypes.never,
-    });
+    return new ZodNever({});
   };
 }
 
@@ -1046,9 +931,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
   }
 
   static create = (): ZodVoid => {
-    return new ZodVoid({
-      // t: ZodTypes.void,
-    });
+    return new ZodVoid({});
   };
 }
 
@@ -1061,7 +944,6 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
 ////////////////////////////////////////
 export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  // t: ZodTypes.array;
   type: T;
 }
 
@@ -1113,7 +995,6 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
 
   max = (maxLength: number, message?: string | { message?: string }) =>
     this.refinement((data) => data.length <= maxLength, {
-      // check: data => data.length <= maxLength,
       code: ZodIssueCode.too_big,
       type: "array",
       inclusive: true,
@@ -1130,7 +1011,6 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
 
   static create = <T extends ZodTypeAny>(schema: T): ZodArray<T> => {
     return new ZodArray({
-      // t: ZodTypes.array,
       type: schema,
     });
   };
@@ -1145,7 +1025,6 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
 ////////////////////////////////////////////////
 export interface ZodNonEmptyArrayDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  // t: ZodTypes.array;
   type: T;
 }
 
@@ -1285,13 +1164,9 @@ export const mergeObjects = <First extends AnyZodObject>(first: First) => <
     second._def.shape()
   );
   const merged: any = new ZodObject({
-    // t: ZodTypes.object,
     effects: [...(first._def.effects || []), ...(second._def.effects || [])],
     unknownKeys: first._def.unknownKeys,
     catchall: first._def.catchall,
-    // params: {
-    //   strict: first.params.strict && second.params.strict,
-    // },
     shape: () => mergedShape,
   }) as any;
   return merged;
@@ -1330,24 +1205,20 @@ export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny
-  // Params extends ZodObjectParams = ZodObjectParams
 > extends ZodTypeDef {
-  // t: ZodTypes.object;
   shape: () => T;
   catchall: Catchall;
   unknownKeys: UnknownKeys;
-  // params: Params;
 }
 
 export type baseObjectOutputType<
   Shape extends ZodRawShape
-  // Catchall extends ZodTypeAny
 > = objectUtil.flatten<
   objectUtil.addQuestionMarks<
     {
       [k in keyof Shape]: Shape[k]["_output"];
     }
-  > //{ [k: string]: Catchall['_output'] }
+  >
 >;
 
 export type objectOutputType<
@@ -1543,24 +1414,15 @@ export class ZodObject<
    */
   merge: <Incoming extends AnyZodObject>(
     other: Incoming
-  ) => ZodObject<
-    T & Incoming["_shape"],
-    UnknownKeys,
-    Catchall
-    // objectUtil.MergeObjectParams<Params, MergeUnknownKeys>
-  > = mergeObjects(this as any) as any;
+  ) => ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = mergeObjects(
+    this as any
+  ) as any;
 
   catchall = <Index extends ZodTypeAny>(
     index: Index
-  ): ZodObject<
-    T,
-    UnknownKeys,
-    Index
-    // objectUtil.MergeObjectParams<Params, MergeUnknownKeys>
-  > => {
+  ): ZodObject<T, UnknownKeys, Index> => {
     return new ZodObject({
       ...this._def,
-      // unknownKeys: 'passthrough',
       catchall: index,
     }) as any;
   };
@@ -1682,23 +1544,16 @@ export class ZodObject<
     }) as any;
   };
 
-  // keyof: ()=>ZodEnum<{[k in T]: k}>
-
   static create = <T extends ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({
-      // t: ZodTypes.object,
       shape: () => shape,
       unknownKeys: "strip",
       catchall: ZodNever.create(),
-      //  params: {
-      //    strict: true,
-      //  },
     }) as any;
   };
 
   static lazycreate = <T extends ZodRawShape>(shape: () => T): ZodObject<T> => {
     return new ZodObject({
-      // t: ZodTypes.object,
       shape,
       unknownKeys: "strip",
       catchall: ZodNever.create(),
@@ -1715,20 +1570,18 @@ export type AnyZodObject = ZodObject<any, any, any>;
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
+type ZodUnionOptions = [ZodTypeAny, ...ZodTypeAny[]];
 export interface ZodUnionDef<
-  T extends [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]] = [
-    ZodTypeAny,
-    ZodTypeAny,
-    ...ZodTypeAny[]
-  ]
+  T extends ZodUnionOptions = [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]
 > extends ZodTypeDef {
-  // t: ZodTypes.union;
   options: T;
 }
 
-export class ZodUnion<
-  T extends [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]
-> extends ZodType<T[number]["_output"], ZodUnionDef<T>, T[number]["_input"]> {
+export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
+  T[number]["_output"],
+  ZodUnionDef<T>,
+  T[number]["_input"]
+> {
   isScalar(params: { root: boolean } = { root: true }) {
     if (params.root === false) return false;
     return this._def.options.every((x) => x.isScalar(params));
@@ -1792,7 +1645,6 @@ export class ZodUnion<
     types: T
   ): ZodUnion<T> => {
     return new ZodUnion({
-      // t: ZodTypes.union,
       options: types,
     });
   };
@@ -1809,7 +1661,6 @@ export interface ZodIntersectionDef<
   T extends ZodTypeAny = ZodTypeAny,
   U extends ZodTypeAny = ZodTypeAny
 > extends ZodTypeDef {
-  // t: ZodTypes.intersection;
   left: T;
   right: U;
 }
@@ -1835,14 +1686,12 @@ export class ZodIntersection<
           parentError: ctx.currentError,
         });
       }),
-      // .catch(HANDLE)
       new PseudoPromise().then(() => {
         return this._def.right._parseWithInvalidFallback(ctx.data, {
           ...ctx,
           parentError: ctx.currentError,
         });
       }),
-      // .catch(HANDLE),
     ]).then(([parsedLeft, parsedRight]: any) => {
       if (parsedLeft === INVALID || parsedRight === INVALID) return INVALID;
 
@@ -1869,7 +1718,6 @@ export class ZodIntersection<
     right: U
   ): ZodIntersection<T, U> => {
     return new ZodIntersection({
-      // t: ZodTypes.intersection,
       left: left,
       right: right,
     });
@@ -1894,7 +1742,6 @@ export type InputTypeOfTuple<T extends [ZodTypeAny, ...ZodTypeAny[]] | []> = {
 export interface ZodTupleDef<
   T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]]
 > extends ZodTypeDef {
-  // t: ZodTypes.tuple;
   items: T;
 }
 
@@ -1956,15 +1803,10 @@ export class ZodTuple<
     return this._def.items;
   }
 
-  // opt optional: () => ZodUnion<[this, ZodUndefined]> = () => ZodUnion.create([this, ZodUndefined.create()]);
-
-  // null nullable: () => ZodUnion<[this, ZodNull]> = () => ZodUnion.create([this, ZodNull.create()]);
-
   static create = <T extends [ZodTypeAny, ...ZodTypeAny[]] | []>(
     schemas: T
   ): ZodTuple<T> => {
     return new ZodTuple({
-      // t: ZodTypes.tuple,
       items: schemas,
     });
   };
@@ -1979,12 +1821,11 @@ export class ZodTuple<
 /////////////////////////////////////////
 export interface ZodRecordDef<Value extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  // t: ZodTypes.record;
   valueType: Value;
 }
 
 export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
-  Record<string, Value["_output"]>, // { [k in keyof T]: T[k]['_type'] },
+  Record<string, Value["_output"]>,
   ZodRecordDef<Value>,
   Record<string, Value["_input"]>
 > {
@@ -2012,7 +1853,6 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
           parentError: ctx.currentError,
         });
       });
-      // .catch(HANDLE);
     }
     return PseudoPromise.object(parsedRecordPromises);
   }
@@ -2021,7 +1861,6 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     valueType: Value
   ): ZodRecord<Value> => {
     return new ZodRecord({
-      // t: ZodTypes.record,
       valueType,
     });
   };
@@ -2038,7 +1877,6 @@ export interface ZodMapDef<
   Key extends ZodTypeAny = ZodTypeAny,
   Value extends ZodTypeAny = ZodTypeAny
 > extends ZodTypeDef {
-  // t: ZodTypes.map;
   valueType: Value;
   keyType: Key;
 }
@@ -2107,7 +1945,6 @@ export class ZodMap<
     valueType: Value
   ): ZodMap<Key, Value> => {
     return new ZodMap({
-      // t: ZodTypes.map,
       valueType,
       keyType,
     });
@@ -2123,7 +1960,6 @@ export class ZodMap<
 //////////////////////////////////////
 export interface ZodSetDef<Value extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  // t: ZodTypes.set;
   valueType: Value;
 }
 
@@ -2172,7 +2008,6 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     valueType: Value
   ): ZodSet<Value> => {
     return new ZodSet({
-      // t: ZodTypes.set,
       valueType,
     });
   };
@@ -2189,7 +2024,6 @@ export interface ZodFunctionDef<
   Args extends ZodTuple<any> = ZodTuple<any>,
   Returns extends ZodTypeAny = ZodTypeAny
 > extends ZodTypeDef {
-  // t: ZodTypes.function;
   args: Args;
   returns: Returns;
 }
@@ -2208,7 +2042,6 @@ export type InnerTypeOfFunction<
   ? (...args: Args["_output"]) => Returns["_input"]
   : never;
 
-// type as df = string extends unknown  ? true : false
 export class ZodFunction<
   Args extends ZodTuple<any>,
   Returns extends ZodTypeAny
@@ -2323,7 +2156,6 @@ export class ZodFunction<
     returns?: U
   ): ZodFunction<T, U> => {
     return new ZodFunction({
-      // t: ZodTypes.function,
       args: args || ZodTuple.create([]),
       returns: returns || ZodUnknown.create(),
     }) as any;
@@ -2339,7 +2171,6 @@ export class ZodFunction<
 ///////////////////////////////////////
 export interface ZodLazyDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  // t: ZodTypes.lazy;
   getter: () => T;
 }
 
@@ -2368,7 +2199,6 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
 
   static create = <T extends ZodTypeAny>(getter: () => T): ZodLazy<T> => {
     return new ZodLazy({
-      // t: ZodTypes.lazy,
       getter: getter,
     });
   };
@@ -2382,7 +2212,6 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////
 //////////////////////////////////////////
 export interface ZodLiteralDef<T extends any = any> extends ZodTypeDef {
-  // t: ZodTypes.literal;
   value: T;
 }
 
@@ -2404,7 +2233,6 @@ export class ZodLiteral<T extends any> extends ZodType<T, ZodLiteralDef<T>> {
 
   static create = <T extends Primitive>(value: T): ZodLiteral<T> => {
     return new ZodLiteral({
-      // t: ZodTypes.literal,
       value: value,
     });
   };
@@ -2428,7 +2256,6 @@ type Values<T extends EnumValues> = {
 
 export interface ZodEnumDef<T extends EnumValues = EnumValues>
   extends ZodTypeDef {
-  // t: ZodTypes.enum;
   values: T;
 }
 
@@ -2482,7 +2309,6 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     values: T
   ): ZodEnum<T> => {
     return new ZodEnum({
-      // t: ZodTypes.enum,
       values: values,
     }) as any;
   };
@@ -2497,7 +2323,6 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
 /////////////////////////////////////////////
 export interface ZodNativeEnumDef<T extends EnumLike = EnumLike>
   extends ZodTypeDef {
-  // t: ZodTypes.nativeEnum;
   values: T;
 }
 
@@ -2523,7 +2348,6 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   }
   static create = <T extends EnumLike>(values: T): ZodNativeEnum<T> => {
     return new ZodNativeEnum({
-      // t: ZodTypes.nativeEnum,
       values: values,
     });
   };
@@ -2538,7 +2362,6 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
 //////////////////////////////////////////
 export interface ZodPromiseDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  // t: ZodTypes.promise;
   type: T;
 }
 
@@ -2587,7 +2410,6 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 
   static create = <T extends ZodTypeAny>(schema: T): ZodPromise<T> => {
     return new ZodPromise({
-      // t: ZodTypes.promise,
       type: schema,
     });
   };
@@ -2602,7 +2424,6 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////////
 export interface ZodTransformerDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  // t: ZodTypes.transformer;
   schema: T;
 }
 
@@ -2629,29 +2450,15 @@ export class ZodTransformer<
     }
   }
 
-  /** You can't use the .default method on transformers! */
-  // default: (..._args: any[]) => never = (..._args: any[]) => {
-  //   throw new Error(
-  //     "You can't use the .default method on a ZodTransformer instance."
-  //   );
-  // };
-
   static create = <I extends ZodTypeAny>(
     schema: I
   ): ZodTransformer<I, I["_output"]> => {
     const newTx = new ZodTransformer({
-      // t: ZodTypes.transformer,
       schema,
     });
 
     return newTx;
   };
-
-  // mod: <NewOut>(
-  //   arg: (curr: Output) => NewOut | Promise<NewOut>
-  // ) => ZodTransformer<T, NewOut> = (arg) => {
-  //   return this.mod(arg);
-  // };
 }
 
 ///////////////////////////////////////////
@@ -2663,13 +2470,9 @@ export class ZodTransformer<
 ///////////////////////////////////////////
 export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  // t: ZodTypes.optional;
   innerType: T;
   defaultValue: undefined | (() => T["_input"]);
 }
-
-// This type allows for optional flattening
-// type Awaited<T> = T extends PromiseLike<infer U> ? Awaited<U> : T;
 
 export type addDefaultToOptional<
   T extends ZodOptional<any, any>
@@ -2678,10 +2481,10 @@ export type removeDefaultFromOptional<
   T extends ZodOptional<any, any>
 > = T extends ZodOptional<infer U, any> ? ZodOptional<U, false> : never;
 
-export type ZodOptionalType<
-  T extends ZodTypeAny
-  // HasDefault extends boolean = false
-> = T extends ZodOptional<infer U, infer H>
+export type ZodOptionalType<T extends ZodTypeAny> = T extends ZodOptional<
+  infer U,
+  infer H
+>
   ? ZodOptional<U, H>
   : ZodOptional<T, false>; // no default by default
 
@@ -2728,7 +2531,6 @@ export class ZodOptional<
   static create = <T extends ZodTypeAny>(type: T): ZodOptionalType<T> => {
     if (type instanceof ZodOptional) return type as any;
     return new ZodOptional({
-      // t: ZodTypes.optional,
       innerType: type,
       defaultValue: undefined,
     }) as any;
@@ -2744,7 +2546,6 @@ export class ZodOptional<
 ///////////////////////////////////////////
 export interface ZodNullableDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
-  // t: ZodTypes.nullable;
   innerType: T;
 }
 
@@ -2784,7 +2585,6 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     // An nullable nullable is the original nullable
     if (type instanceof ZodNullable) return type as any;
     return new ZodNullable({
-      // t: ZodTypes.nullable,
       innerType: type,
     }) as any;
   };
