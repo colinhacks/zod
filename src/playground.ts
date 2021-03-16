@@ -2,17 +2,32 @@ import { z } from ".";
 
 const run = async () => {
   z;
-  const BaseTeacher = z.object({
-    subjects: z.array(z.string()),
+  const schema = z
+    .object({
+      inner: z.object({
+        name: z
+          .string()
+          .refine((val) => val.length > 5)
+          .array()
+          .refine((val) => val.length > 5),
+      }),
+      password: z.string().refine((val) => val === val.toUpperCase()),
+      confirm: z.string(),
+    })
+    .refine(
+      (val) => {
+        console.log(`FORM DATA`);
+        console.log(JSON.stringify(val, null, 2));
+        return val.confirm === val.password;
+      },
+      { path: ["confirm"] }
+    );
+  const result = schema.safeParse({
+    inner: { name: ["aasd", "asdfasdfasfd", "aasd"] },
+    password: "peanuts",
+    confirm: "peanuts",
   });
-  const HasID = z.object({ id: z.string() });
-
-  const Teacher = BaseTeacher.merge(HasID);
-  const data = {
-    subjects: ["math"],
-    id: "asdfasdf",
-  };
-  console.log(Teacher.safeParse({ ...data, extra: 12 }));
+  console.log(result);
 };
 
 run();
