@@ -269,7 +269,7 @@ type ErrorMapCtx = {
 };
 
 export type ZodErrorMap = typeof defaultErrorMap;
-export const defaultErrorMap = (
+export let defaultErrorMap = (
   error: ZodIssueOptionalMessage,
   _ctx: ErrorMapCtx
 ): { message: string } => {
@@ -371,6 +371,6 @@ export const defaultErrorMap = (
   // return `Invalid input.`;
 };
 
-// export const setErrorMap = (map: ZodErrorMap) => {
-//   defaultErrorMap = map;
-// };
+export const setErrorMap = (map: ZodErrorMap) => {
+  defaultErrorMap = map;
+};
