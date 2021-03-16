@@ -386,11 +386,11 @@ export abstract class ZodType<
     return ZodUnion.create([this, option]);
   }
 
-  transform: <Out, This extends this>(
-    transformer: (arg: Output) => Out | Promise<Out>
+  transform: <NewOut, This extends this>(
+    transformer: (arg: Output) => NewOut | Promise<NewOut>
   ) => This extends ZodTransformer<infer T, any>
-    ? ZodTransformer<T, Out>
-    : ZodTransformer<This, Out> = (mod) => {
+    ? ZodTransformer<T, NewOut>
+    : ZodTransformer<This, NewOut> = (mod) => {
     let returnType;
     if (this instanceof ZodTransformer) {
       returnType = new (this as any).constructor({
