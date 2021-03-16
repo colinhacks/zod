@@ -11,6 +11,7 @@ export const ZodParsedType = util.arrayToEnum([
   "nan",
   "number",
   "integer",
+  "float",
   "boolean",
   "date",
   "bigint",

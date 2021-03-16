@@ -440,10 +440,15 @@ export abstract class ZodType<
 /////////////////////////////////////////
 
 export interface ZodStringDef extends ZodTypeDef {
-  validation: {
-    uuid?: true;
-    custom?: ((val: any) => boolean)[];
-  };
+  // validation: {
+  //   uuid?: true;
+  //   custom?: ((val: any) => boolean)[];
+  // };
+  isEmail: { message?: string } | false;
+  isURL: { message?: string } | false;
+  isUUID: { message?: string } | false;
+  minLength: { value: number; message?: string } | null;
+  maxLength: { value: number; message?: string } | null;
 }
 
 // eslint-disable-next-line
@@ -464,29 +469,62 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       });
       return INVALID;
     }
+
+    if (this._def.isEmail && !emailRegex.test(ctx.data)) {
+      ctx.addIssue({
+        validation: "email",
+        code: ZodIssueCode.invalid_string,
+        message: this._def.isEmail.message,
+      });
+    }
+
+    if (this._def.isURL) {
+      try {
+        new URL(ctx.data);
+      } catch {
+        ctx.addIssue({
+          validation: "url",
+          code: ZodIssueCode.invalid_string,
+          message: this._def.isURL.message,
+        });
+      }
+    }
+
+    if (this._def.isUUID && !uuidRegex.test(ctx.data)) {
+      ctx.addIssue({
+        validation: "email",
+        code: ZodIssueCode.invalid_string,
+        message: this._def.isUUID.message,
+      });
+    }
+
+    if (this._def.minLength !== null) {
+      if (ctx.data.length < this._def.minLength.value) {
+        ctx.addIssue({
+          code: ZodIssueCode.too_small,
+          minimum: this._def.minLength.value,
+          type: "string",
+          inclusive: true,
+          message: this._def.minLength.message,
+          // ...errorUtil.errToObj(this._def.minLength.message),
+        });
+      }
+    }
+
+    if (this._def.maxLength !== null) {
+      if (ctx.data.length > this._def.maxLength.value) {
+        ctx.addIssue({
+          code: ZodIssueCode.too_big,
+          maximum: this._def.maxLength.value,
+          type: "string",
+          inclusive: true,
+          message: this._def.maxLength.message,
+          // ...errorUtil.errToObj(this._def.maxLength.message),
+        });
+      }
+    }
+
     return ctx.data;
-  }
-
-  min = (minLength: number, message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => data.length >= minLength, {
-      code: ZodIssueCode.too_small,
-      minimum: minLength,
-      type: "string",
-      inclusive: true,
-      ...errorUtil.errToObj(message),
-    });
-
-  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => data.length <= maxLength, {
-      code: ZodIssueCode.too_big,
-      maximum: maxLength,
-      type: "string",
-      inclusive: true,
-      ...errorUtil.errToObj(message),
-    });
-
-  length(len: number, message?: errorUtil.ErrMessage) {
-    return this.min(len, message).max(len, message);
   }
 
   protected _regex = (
@@ -497,42 +535,62 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
-
       ...errorUtil.errToObj(message),
     });
 
   email = (message?: errorUtil.ErrMessage) =>
-    this._regex(emailRegex, "email", message);
+    new ZodString({
+      ...this._def,
+      isEmail: errorUtil.errToObj(message),
+    });
 
   url = (message?: errorUtil.ErrMessage) =>
-    this.refinement(
-      (data) => {
-        try {
-          new URL(data);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      {
-        code: ZodIssueCode.invalid_string,
-        validation: "url",
-        ...errorUtil.errToObj(message),
-      }
-    );
+    new ZodString({
+      ...this._def,
+      isURL: errorUtil.errToObj(message),
+    });
 
   uuid = (message?: errorUtil.ErrMessage) =>
-    this._regex(uuidRegex, "uuid", message);
+    new ZodString({
+      ...this._def,
+      isUUID: errorUtil.errToObj(message),
+    });
 
   regex = (regexp: RegExp, message?: errorUtil.ErrMessage) =>
     this._regex(regexp, "regex", message);
+
+  min = (minLength: number, message?: errorUtil.ErrMessage) =>
+    new ZodString({
+      ...this._def,
+      minLength: {
+        value: minLength,
+        message: errorUtil.errToObj(message).message,
+      },
+    });
+
+  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
+    new ZodString({
+      ...this._def,
+      maxLength: {
+        value: maxLength,
+        message: errorUtil.errToObj(message).message,
+      },
+    });
+
+  length(len: number, message?: errorUtil.ErrMessage) {
+    return this.min(len, message).max(len, message);
+  }
 
   nonempty = (message?: errorUtil.ErrMessage) =>
     this.min(1, errorUtil.errToObj(message));
 
   static create = (): ZodString => {
     return new ZodString({
-      validation: {},
+      isEmail: false,
+      isURL: false,
+      isUUID: false,
+      minLength: null,
+      maxLength: null,
     });
   };
 }
@@ -545,7 +603,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 /////////////////////////////////////////
 /////////////////////////////////////////
 
-export type ZodNumberDef = ZodTypeDef;
+export interface ZodNumberDef extends ZodTypeDef {
+  minimum: null | { value: number; inclusive: boolean; message?: string };
+  maximum: null | { value: number; inclusive: boolean; message?: string };
+  isInteger: false | { message?: string };
+}
 
 export class ZodNumber extends ZodType<number, ZodNumberDef> {
   isScalar() {
@@ -571,73 +633,125 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 
       return INVALID;
     }
+
+    if (this._def.minimum) {
+      const MIN = this._def.minimum;
+      const tooSmall = MIN.inclusive
+        ? ctx.data < MIN.value
+        : ctx.data <= MIN.value;
+      if (tooSmall) {
+        ctx.addIssue({
+          code: ZodIssueCode.too_small,
+          minimum: MIN.value,
+          type: "number",
+          inclusive: MIN.inclusive,
+          message: MIN.message,
+        });
+      }
+    }
+
+    if (this._def.maximum) {
+      const MAX = this._def.maximum;
+      const tooBig = MAX.inclusive
+        ? ctx.data > MAX.value
+        : ctx.data >= MAX.value;
+      if (tooBig) {
+        ctx.addIssue({
+          code: ZodIssueCode.too_big,
+          maximum: MAX.value,
+          type: "number",
+          inclusive: MAX.inclusive,
+          message: MAX.message,
+        });
+      }
+    }
+
+    if (this._def.isInteger) {
+      if (!Number.isInteger(ctx.data)) {
+        ctx.addIssue({
+          code: ZodIssueCode.invalid_type,
+          expected: "integer",
+          received: "float",
+          message: this._def.isInteger.message,
+        });
+      }
+    }
+
     return ctx.data as number;
   }
 
   static create = (): ZodNumber => {
-    return new ZodNumber({});
+    return new ZodNumber({
+      minimum: null,
+      maximum: null,
+      isInteger: false,
+    });
   };
 
   min = (minimum: number, message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => data >= minimum, {
-      code: ZodIssueCode.too_small,
-      minimum,
-      type: "number",
-      inclusive: true,
-      ...errorUtil.errToObj(message),
+    new ZodNumber({
+      ...this._def,
+      minimum: {
+        value: minimum,
+        inclusive: true,
+        message: errorUtil.toString(message),
+      },
     });
 
   max = (maximum: number, message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => data <= maximum, {
-      code: ZodIssueCode.too_big,
-      maximum,
-      type: "number",
-      inclusive: true,
-      ...errorUtil.errToObj(message),
+    new ZodNumber({
+      ...this._def,
+      maximum: {
+        value: maximum,
+        inclusive: true,
+        message: errorUtil.toString(message),
+      },
     });
 
   int = (message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => Number.isInteger(data), {
-      code: ZodIssueCode.invalid_type,
-      expected: "integer",
-      received: "number",
-      ...errorUtil.errToObj(message),
+    new ZodNumber({
+      ...this._def,
+      isInteger: { message: errorUtil.toString(message) },
     });
 
   positive = (message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => data > 0, {
-      code: ZodIssueCode.too_small,
-      minimum: 0,
-      type: "number",
-      inclusive: false,
-      ...errorUtil.errToObj(message),
+    new ZodNumber({
+      ...this._def,
+      minimum: {
+        value: 0,
+        inclusive: false,
+        message: errorUtil.toString(message),
+      },
     });
 
   negative = (message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => data < 0, {
-      code: ZodIssueCode.too_big,
-      maximum: 0,
-      type: "number",
-      inclusive: false,
-      ...errorUtil.errToObj(message),
+    new ZodNumber({
+      ...this._def,
+      maximum: {
+        value: 0,
+        inclusive: false,
+        message: errorUtil.toString(message),
+      },
     });
 
   nonpositive = (message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => data <= 0, {
-      code: ZodIssueCode.too_big,
-      maximum: 0,
-      type: "number",
-      inclusive: true,
-      ...errorUtil.errToObj(message),
+    new ZodNumber({
+      ...this._def,
+      maximum: {
+        value: 0,
+        inclusive: true,
+        message: errorUtil.toString(message),
+      },
     });
 
   nonnegative = (message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => data >= 0, {
-      code: ZodIssueCode.too_small,
-      minimum: 0,
-      type: "number",
-      inclusive: true,
-      ...errorUtil.errToObj(message),
+    new ZodNumber({
+      ...this._def,
+      minimum: {
+        value: 0,
+        inclusive: true,
+        message: errorUtil.toString(message),
+      },
     });
 }
 
@@ -922,7 +1036,47 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
 export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   type: T;
+  minLength: { value: number; message?: string } | null;
+  maxLength: { value: number; message?: string } | null;
 }
+
+const parseArray = (ctx: ParseContext, def: ZodArrayDef<any>) => {
+  if (ctx.parsedType !== ZodParsedType.array) {
+    ctx.addIssue({
+      code: ZodIssueCode.invalid_type,
+      expected: ZodParsedType.array,
+      received: ctx.parsedType,
+    });
+
+    return false;
+  }
+
+  if (def.minLength !== null) {
+    if (ctx.data.length < def.minLength.value) {
+      ctx.addIssue({
+        code: ZodIssueCode.too_small,
+        minimum: def.minLength.value,
+        type: "array",
+        inclusive: true,
+        message: def.minLength.message,
+      });
+    }
+  }
+
+  if (def.maxLength !== null) {
+    if (ctx.data.length > def.maxLength.value) {
+      ctx.addIssue({
+        code: ZodIssueCode.too_big,
+        maximum: def.maxLength.value,
+        type: "array",
+        inclusive: true,
+        message: def.maxLength.message,
+      });
+    }
+  }
+
+  return true;
+};
 
 export class ZodArray<T extends ZodTypeAny> extends ZodType<
   T["_output"][],
@@ -934,15 +1088,8 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
     return this._def.type.isScalar({ root: false });
   }
   _parse(ctx: ParseContext): any {
-    if (ctx.parsedType !== ZodParsedType.array) {
-      ctx.addIssue({
-        code: ZodIssueCode.invalid_type,
-        expected: ZodParsedType.array,
-        received: ctx.parsedType,
-      });
-
-      return;
-    }
+    const result = parseArray(ctx, this._def);
+    if (!result) return;
 
     return PseudoPromise.all(
       (ctx.data as any[]).map((item, i) => {
@@ -961,26 +1108,20 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
     return this._def.type;
   }
 
-  min = (minLength: number, message?: string | { message?: string }) =>
-    this.refinement((data) => data.length >= minLength, {
-      code: ZodIssueCode.too_small,
-      type: "array",
-      inclusive: true,
-      minimum: minLength,
-      ...(typeof message === "string" ? { message } : message),
+  min = (minLength: number, message?: errorUtil.ErrMessage) =>
+    new ZodArray({
+      ...this._def,
+      minLength: { value: minLength, message: errorUtil.toString(message) },
     });
 
-  max = (maxLength: number, message?: string | { message?: string }) =>
-    this.refinement((data) => data.length <= maxLength, {
-      code: ZodIssueCode.too_big,
-      type: "array",
-      inclusive: true,
-      maximum: maxLength,
-      ...(typeof message === "string" ? { message } : message),
+  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
+    new ZodArray({
+      ...this._def,
+      maxLength: { value: maxLength, message: errorUtil.toString(message) },
     });
 
-  length = (len: number, message?: string) =>
-    this.min(len, { message }).max(len, { message });
+  length = (len: number, message?: errorUtil.ErrMessage) =>
+    this.min(len, message).max(len, message);
 
   nonempty: () => ZodNonEmptyArray<T> = () => {
     return new ZodNonEmptyArray({ ...this._def });
@@ -989,6 +1130,8 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
   static create = <T extends ZodTypeAny>(schema: T): ZodArray<T> => {
     return new ZodArray({
       type: schema,
+      minLength: null,
+      maxLength: null,
     });
   };
 }
@@ -1003,11 +1146,13 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
 export interface ZodNonEmptyArrayDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   type: T;
+  minLength: { value: number; message?: string } | null;
+  maxLength: { value: number; message?: string } | null;
 }
 
 export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
   [T["_output"], ...T["_output"][]],
-  ZodArrayDef<T>,
+  ZodNonEmptyArrayDef<T>,
   [T["_input"], ...T["_input"][]]
 > {
   isScalar(params: { root: boolean } = { root: true }) {
@@ -1016,22 +1161,28 @@ export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
   }
 
   _parse(ctx: ParseContext): any {
-    if (ctx.parsedType !== ZodParsedType.array) {
+    // if (ctx.parsedType !== ZodParsedType.array) {
+    //   ctx.addIssue({
+    //     code: ZodIssueCode.invalid_type,
+    //     expected: ZodParsedType.array,
+    //     received: ctx.parsedType,
+    //   });
+
+    //   return;
+    // }
+
+    const result = parseArray(ctx, this._def);
+    if (!result) return;
+
+    if (ctx.data.length < 1) {
       ctx.addIssue({
-        code: ZodIssueCode.invalid_type,
-        expected: ZodParsedType.array,
-        received: ctx.parsedType,
+        code: ZodIssueCode.too_small,
+        minimum: 1,
+        type: "array",
+        inclusive: true,
+        // message: this._def.minLength.message,
+        // ...errorUtil.errToObj(this._def.minLength.message),
       });
-
-      return;
-    }
-
-    if (ctx.data.length === 0) {
-      ctx.addIssue({
-        code: ZodIssueCode.nonempty_array_is_empty,
-      });
-
-      return;
     }
 
     return PseudoPromise.all(
@@ -1047,27 +1198,28 @@ export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
     );
   }
 
-  min = (minLength: number, message?: string | { message?: string }) =>
-    this.refinement((data) => data.length >= minLength, {
-      code: ZodIssueCode.too_small,
-      minimum: minLength,
-      type: "array",
-      inclusive: true,
-      ...(typeof message === "string" ? { message } : message),
+  min = (minLength: number, message?: errorUtil.ErrMessage) =>
+    new ZodNonEmptyArray({
+      ...this._def,
+      minLength: { value: minLength, message: errorUtil.toString(message) },
     });
 
-  max = (maxLength: number, message?: string | { message?: string }) =>
-    this.refinement((data) => data.length <= maxLength, {
-      // check:
-      code: ZodIssueCode.too_big,
-      maximum: maxLength,
-      type: "array",
-      inclusive: true,
-      ...(typeof message === "string" ? { message } : message),
+  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
+    new ZodNonEmptyArray({
+      ...this._def,
+      maxLength: { value: maxLength, message: errorUtil.toString(message) },
     });
 
-  length = (len: number, message?: string) =>
-    this.min(len, { message }).max(len, { message });
+  length = (len: number, message?: errorUtil.ErrMessage) =>
+    this.min(len, message).max(len, message);
+
+  static create = <T extends ZodTypeAny>(schema: T): ZodNonEmptyArray<T> => {
+    return new ZodNonEmptyArray({
+      type: schema,
+      minLength: null,
+      maxLength: null,
+    });
+  };
 }
 
 /////////////////////////////////////////
