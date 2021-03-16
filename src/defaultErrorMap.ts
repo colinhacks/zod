@@ -56,13 +56,13 @@ export const defaultErrorMap = (
       if (error.type === "array")
         message = `Should have ${error.inclusive ? `at least` : `more than`} ${
           error.minimum
-        } items`;
+        } item(s)`;
       else if (error.type === "string")
         message = `Should be ${error.inclusive ? `at least` : `over`} ${
           error.minimum
-        } characters`;
+        } character(s) long`;
       else if (error.type === "number")
-        message = `Value should be greater than ${
+        message = `Should be greater than ${
           error.inclusive ? `or equal to ` : ``
         }${error.minimum}`;
       else message = "Invalid input";
@@ -77,7 +77,7 @@ export const defaultErrorMap = (
           error.maximum
         } characters long`;
       else if (error.type === "number")
-        message = `Value should be less than ${
+        message = `Should be less than ${
           error.inclusive ? `or equal to ` : ``
         }${error.maximum}`;
       else message = "Invalid input";

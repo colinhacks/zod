@@ -33,28 +33,22 @@ export type RefinementCtx = {
   addIssue: (arg: MakeErrorData) => void;
   path: (string | number)[];
 };
-
 export type ZodRawShape = { [k: string]: ZodTypeAny };
-
+export type ZodTypeAny = ZodType<any, any, any>;
 export type TypeOf<T extends ZodType<any>> = T["_output"];
-
 export type input<T extends ZodType<any>> = T["_input"];
 export type output<T extends ZodType<any>> = T["_output"];
 export type { TypeOf as infer };
-
-export type ZodTypeAny = ZodType<any, any, any>;
-
-type InternalCheck<T> = {
+export type InternalCheck<T> = {
   type: "check";
   check: (arg: T, ctx: RefinementCtx) => any;
 };
-type Mod<T> = {
+export type Mod<T> = {
   type: "mod";
   mod: (arg: T) => any;
 };
-type Effect<T> = InternalCheck<T> | Mod<T>;
-type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
-
+export type Effect<T> = InternalCheck<T> | Mod<T>;
+export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
   effects?: Effect<any>[];
   accepts?: ZodType<any, any>;
@@ -80,7 +74,6 @@ export abstract class ZodType<
     const ERROR = new ZodError([]);
     const { makeIssue, addIssue } = issueHelpers(ERROR, { ...params });
 
-    // const def: ZodTypeDef = this._def as any;
     let PROMISE: PseudoPromise<any>;
     const parsedType = getParsedType(data);
     try {
@@ -113,13 +106,16 @@ export abstract class ZodType<
       path: params.path,
     };
 
+    // let finalPromise = PROMISE.then(THROW_ERROR_IF_PRESENT("initial check"));
+    let finalPromise = PROMISE;
+    let refinementError: Error | null = null;
+
     const THROW_ERROR_IF_PRESENT = (key: string) => (data: any) => {
       key;
       if (!ERROR.isEmpty) throw ERROR;
+      if (refinementError !== null) throw refinementError;
       return data;
     };
-
-    let finalPromise = PROMISE.then(THROW_ERROR_IF_PRESENT("initial check"));
 
     for (const effect of effects) {
       if (effect.type === "check") {
@@ -128,7 +124,12 @@ export abstract class ZodType<
             return [
               PseudoPromise.resolve(data),
               PseudoPromise.resolve(data).then(() => {
-                const result = effect.check(data, checkCtx);
+                let result;
+                try {
+                  result = effect.check(data, checkCtx);
+                } catch (err) {
+                  refinementError = err;
+                }
 
                 if (isSync && result instanceof Promise)
                   throw new Error(
@@ -212,10 +213,9 @@ export abstract class ZodType<
   safeParse: (
     data: unknown,
     params?: Partial<ParseParamsNoData>
-  ) => { success: true; data: Output } | { success: false; error: ZodError } = (
-    data,
-    params
-  ) => {
+  ) =>
+    | { success: true; data: Output }
+    | { success: false; error: ZodError<Input> } = (data, params) => {
     const result = this._parseInternalOptionalParams({ data, ...params });
     if (result instanceof Promise)
       throw new Error(
@@ -404,29 +404,6 @@ export abstract class ZodType<
       }) as any;
     }
     return returnType;
-  };
-
-  prependMod = <Out>(
-    mod: (arg: Output) => Out | Promise<Out>
-  ): ZodType<Out, Def, Input> => {
-    return new (this as any).constructor({
-      ...this._def,
-      effects: [{ type: "mod", mod }, ...(this._def.effects || [])],
-    }) as any;
-  };
-
-  clearEffects = <Out>(): ZodType<Out, Def, Input> => {
-    return new (this as any).constructor({
-      ...this._def,
-      effects: [],
-    }) as any;
-  };
-
-  setEffects = <Out>(effects: Effect<any>[]): ZodType<Out, Def, Input> => {
-    return new (this as any).constructor({
-      ...this._def,
-      effects,
-    }) as any;
   };
 
   default<T extends util.noUndefined<Input>, This extends this = this>(

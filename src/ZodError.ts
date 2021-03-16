@@ -94,6 +94,8 @@ export interface ZodCustomIssue extends ZodIssueBase {
   params?: { [k: string]: any };
 }
 
+export type DenormalizedError = { [k: string]: DenormalizedError | string[] };
+
 export type ZodIssueOptionalMessage =
   | ZodInvalidTypeIssue
   | ZodNonEmptyArrayIsEmptyIssue
@@ -117,7 +119,15 @@ export const quotelessJson = (obj: any) => {
   return json.replace(/"([^"]+)":/g, "$1:");
 };
 
-export class ZodError extends Error {
+export type ZodFormattedError<T> = T extends [any, ...any]
+  ? { [K in keyof T]?: ZodFormattedError<T[K]> } & { _errors: string[] }
+  : T extends any[]
+  ? ZodFormattedError<T[number]>[] & { _errors: string[] }
+  : T extends object
+  ? { [K in keyof T]?: ZodFormattedError<T[K]> } & { _errors: string[] }
+  : { _errors: string[] };
+
+export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
 
   get errors() {
@@ -131,6 +141,47 @@ export class ZodError extends Error {
     Object.setPrototypeOf(this, actualProto);
     this.issues = issues;
   }
+
+  format = (): ZodFormattedError<T> => {
+    const fieldErrors: ZodFormattedError<T> = {} as any;
+    const processError = (error: ZodError) => {
+      for (const issue of error.issues) {
+        if (issue.code === "invalid_union") {
+          issue.unionErrors.map(processError);
+        } else if (issue.code === "invalid_return_type") {
+          processError(issue.returnTypeError);
+        } else if (issue.code === "invalid_arguments") {
+          processError(issue.argumentsError);
+        } else {
+          let curr: any = fieldErrors;
+          let i = 0;
+          while (i < issue.path.length) {
+            const el = issue.path[i];
+            const terminal = i === issue.path.length - 1;
+
+            if (!terminal) {
+              if (typeof el === "string") {
+                curr[el] = curr[el] || { _errors: [] };
+              } else if (typeof el === "number") {
+                const errorArray: any = [];
+                errorArray._errors = [];
+                curr[el] = curr[el] || errorArray;
+              }
+            } else {
+              curr[el] = curr[el] || { _errors: [] };
+              curr[el]._errors.push(issue.message);
+            }
+
+            curr = curr[el];
+            i++;
+          }
+        }
+      }
+    };
+
+    processError(this);
+    return fieldErrors;
+  };
 
   static create = (issues: ZodIssue[]) => {
     const error = new ZodError(issues);
@@ -191,6 +242,10 @@ export class ZodError extends Error {
     }
     return { formErrors, fieldErrors };
   };
+
+  // denormalize = ():DenormalizedError{
+
+  // }
 
   get formErrors() {
     return this.flatten();
