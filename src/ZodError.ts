@@ -143,7 +143,7 @@ export class ZodError<T = any> extends Error {
   }
 
   format = (): ZodFormattedError<T> => {
-    const fieldErrors: ZodFormattedError<T> = {} as any;
+    const fieldErrors: ZodFormattedError<T> = { _errors: [] } as any;
     const processError = (error: ZodError) => {
       for (const issue of error.issues) {
         if (issue.code === "invalid_union") {
@@ -152,6 +152,8 @@ export class ZodError<T = any> extends Error {
           processError(issue.returnTypeError);
         } else if (issue.code === "invalid_arguments") {
           processError(issue.argumentsError);
+        } else if (issue.path.length === 0) {
+          fieldErrors._errors.push(issue.message);
         } else {
           let curr: any = fieldErrors;
           let i = 0;
