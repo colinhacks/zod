@@ -138,7 +138,6 @@ test("primitives", () => {
     undefinedPrimitive: z.undefined(),
     nullPrimitive: z.null(),
     primitiveUnion: z.union([z.string(), z.number()]),
-    primitiveIntersection: z.intersection(z.string(), z.string()),
     lazyPrimitive: z.lazy(() => z.string()),
     literalPrimitive: z.literal("sup"),
     enumPrimitive: z.enum(["asdf", "qwer"]),
@@ -164,7 +163,6 @@ test("primitives", () => {
     "undefinedPrimitive",
     "nullPrimitive",
     "primitiveUnion",
-    "primitiveIntersection",
     "lazyPrimitive",
     "literalPrimitive",
     "enumPrimitive",
@@ -283,4 +281,34 @@ test("test async PseudoPromise.all", async () => {
   const obj = { ty: "A" };
   const result = await Schema2.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
   expect(result.success).toEqual(true);
+});
+
+test("merging", () => {
+  const BaseTeacher = z.object({
+    subjects: z.array(z.string()),
+  });
+  const HasID = z.object({ id: z.string() });
+
+  const Teacher = BaseTeacher.merge(HasID);
+
+  const data = {
+    subjects: ["math"],
+    id: "asdfasdf",
+  };
+  expect(Teacher.parse(data)).toEqual(data);
+  expect(() => Teacher.parse({ subject: data.subjects })).toThrow();
+  expect(
+    BaseTeacher.passthrough()
+      .merge(HasID)
+      .parse({ ...data, extra: 12 })
+  ).toEqual({
+    ...data,
+    extra: 12,
+  });
+
+  expect(() =>
+    BaseTeacher.strict()
+      .merge(HasID)
+      .parse({ ...data, extra: 12 })
+  ).toThrow();
 });
