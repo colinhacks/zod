@@ -440,10 +440,15 @@ export abstract class ZodType<
 /////////////////////////////////////////
 
 export interface ZodStringDef extends ZodTypeDef {
-  validation: {
-    uuid?: true;
-    custom?: ((val: any) => boolean)[];
-  };
+  // validation: {
+  //   uuid?: true;
+  //   custom?: ((val: any) => boolean)[];
+  // };
+  isEmail: { message?: string } | null;
+  isURL: { message: string } | null;
+  isUUID: { message: string } | null;
+  minLength: number | null;
+  maxLength: number | null;
 }
 
 // eslint-disable-next-line
@@ -463,6 +468,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         received: ctx.parsedType,
       });
       return INVALID;
+    }
+
+    if (this._def.isEmail) {
+      if (!emailRegex.test(ctx.data)) {
+        ctx.addIssue({
+          validation: "email",
+          code: ZodIssueCode.invalid_string,
+          message: this._def.isEmail.message,
+        });
+      }
     }
     return ctx.data;
   }
@@ -497,12 +512,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
-
       ...errorUtil.errToObj(message),
     });
 
-  email = (message?: errorUtil.ErrMessage) =>
-    this._regex(emailRegex, "email", message);
+  email = (message?: errorUtil.ErrMessage) => {
+    // return this._regex(emailRegex, "email", message);
+    return new ZodString({
+      ...this._def,
+      isEmail: errorUtil.errToObj(message),
+    });
+  };
 
   url = (message?: errorUtil.ErrMessage) =>
     this.refinement(
@@ -532,7 +551,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
   static create = (): ZodString => {
     return new ZodString({
-      validation: {},
+      isEmail: null,
+      isURL: null,
+      isUUID: null,
+      minLength: null,
+      maxLength: null,
     });
   };
 }
