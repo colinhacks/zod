@@ -198,6 +198,14 @@ test("error metadata from value", () => {
 //   expect(() => asdf.safeParse("foo")).not.toThrow();
 // });
 
+test("root level formatting", () => {
+  const schema = z.string().email();
+  const result = schema.safeParse("asdfsdf");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.format()._errors).toEqual(["Invalid email"]);
+  }
+});
 test("formatting", () => {
   const schema = z
     .object({
@@ -221,7 +229,7 @@ test("formatting", () => {
   expect(result.success).toEqual(false);
   if (!result.success) {
     const error = result.error.format();
-    expect(error._errors).toEqual(undefined);
+    expect(error._errors).toEqual([]);
     expect(error.inner?._errors).toEqual([]);
     expect(error.inner?.name?._errors).toEqual(["Invalid value."]);
     expect(error.inner?.name?.[0]._errors).toEqual(["Invalid value."]);
