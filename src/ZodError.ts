@@ -3,7 +3,6 @@ import { util } from "./helpers/util";
 
 export const ZodIssueCode = util.arrayToEnum([
   "invalid_type",
-  "nonempty_array_is_empty",
   "custom",
   "invalid_union",
   "invalid_enum_value",
@@ -29,10 +28,6 @@ export interface ZodInvalidTypeIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_type;
   expected: ZodParsedType;
   received: ZodParsedType;
-}
-
-export interface ZodNonEmptyArrayIsEmptyIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.nonempty_array_is_empty;
 }
 
 export interface ZodUnrecognizedKeysIssue extends ZodIssueBase {
@@ -98,7 +93,7 @@ export type DenormalizedError = { [k: string]: DenormalizedError | string[] };
 
 export type ZodIssueOptionalMessage =
   | ZodInvalidTypeIssue
-  | ZodNonEmptyArrayIsEmptyIssue
+  // | ZodNonEmptyArrayIsEmptyIssue
   | ZodUnrecognizedKeysIssue
   | ZodInvalidUnionIssue
   // | ZodInvalidLiteralValueIssue
@@ -283,9 +278,6 @@ export let defaultErrorMap = (
       } else {
         message = `Expected ${error.expected}, received ${error.received}`;
       }
-      break;
-    case ZodIssueCode.nonempty_array_is_empty:
-      message = `List must contain at least one item`;
       break;
     case ZodIssueCode.unrecognized_keys:
       message = `Unrecognized key(s) in object: ${error.keys

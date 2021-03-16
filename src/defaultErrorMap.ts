@@ -21,9 +21,6 @@ export const defaultErrorMap = (
         message = `Expected ${error.expected}, received ${error.received}`;
       }
       break;
-    case ZodIssueCode.nonempty_array_is_empty:
-      message = `List must contain at least one item`;
-      break;
     case ZodIssueCode.unrecognized_keys:
       message = `Unrecognized key(s) in object: ${error.keys
         .map((k) => `'${k}'`)
