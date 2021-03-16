@@ -220,6 +220,7 @@ test("formatting", () => {
       confirm: z.string(),
     })
     .refine((val) => val.confirm === val.password, { path: ["confirm"] });
+
   const result = schema.safeParse({
     inner: { name: ["aasd", "asdfasdfasfd", "aasd"] },
     password: "peanuts",
@@ -229,6 +230,7 @@ test("formatting", () => {
   expect(result.success).toEqual(false);
   if (!result.success) {
     const error = result.error.format();
+    console.log();
     expect(error._errors).toEqual([]);
     expect(error.inner?._errors).toEqual([]);
     expect(error.inner?.name?._errors).toEqual(["Invalid value."]);

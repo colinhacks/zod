@@ -1523,7 +1523,7 @@ stringToNumber.parse("string"); // => 6
 
 #### Chaining order
 
-Note that `stringToNumber` above is an instance of the `ZodTransformer` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transformations.
+Note that `stringToNumber` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transformations.
 
 ```ts
 const emailToDomain = z
