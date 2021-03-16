@@ -2,8 +2,8 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import { Mocker } from "../helpers/Mocker.ts";
 import * as z from "../index.ts";
+import { Mocker } from "./Mocker.ts";
 
 const literalStringSchema = z.literal("asdf");
 const literalNumberSchema = z.literal(12);

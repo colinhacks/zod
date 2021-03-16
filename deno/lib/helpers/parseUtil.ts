@@ -1,3 +1,9 @@
+import {
+  defaultErrorMap,
+  MakeErrorData,
+  ZodError,
+  ZodErrorMap,
+} from "../ZodError.ts";
 import { util } from "./util.ts";
 
 export const ZodParsedType = util.arrayToEnum([
@@ -5,6 +11,7 @@ export const ZodParsedType = util.arrayToEnum([
   "nan",
   "number",
   "integer",
+  "float",
   "boolean",
   "date",
   "bigint",
@@ -25,36 +32,108 @@ export const ZodParsedType = util.arrayToEnum([
 export type ZodParsedType = keyof typeof ZodParsedType;
 
 export const getParsedType = (data: any): ZodParsedType => {
-  if (typeof data === "string") return "string";
+  if (typeof data === "string") return ZodParsedType.string;
   if (typeof data === "number") {
-    if (Number.isNaN(data)) return "nan";
-    return "number";
+    if (Number.isNaN(data)) return ZodParsedType.nan;
+    return ZodParsedType.number;
   }
-  if (typeof data === "boolean") return "boolean";
-  if (typeof data === "bigint") return "bigint";
-  if (typeof data === "symbol") return "symbol";
-  if (data instanceof Date) return "date";
-  if (typeof data === "function") return "function";
-  if (data === undefined) return "undefined";
-  if (typeof data === "undefined") return "undefined";
+  if (typeof data === "boolean") return ZodParsedType.boolean;
+  if (typeof data === "bigint") return ZodParsedType.bigint;
+  if (typeof data === "symbol") return ZodParsedType.symbol;
+  if (data instanceof Date) return ZodParsedType.date;
+  if (typeof data === "function") return ZodParsedType.function;
+  if (data === undefined) return ZodParsedType.undefined;
+  if (typeof data === "undefined") return ZodParsedType.undefined;
   if (typeof data === "object") {
-    if (Array.isArray(data)) return "array";
-    if (data === null) return "null";
+    if (Array.isArray(data)) return ZodParsedType.array;
+    if (data === null) return ZodParsedType.null;
     if (
       data.then &&
       typeof data.then === "function" &&
       data.catch &&
       typeof data.catch === "function"
     ) {
-      return "promise";
+      return ZodParsedType.promise;
     }
     if (data instanceof Map) {
-      return "map";
+      return ZodParsedType.map;
     }
     if (data instanceof Set) {
-      return "set";
+      return ZodParsedType.set;
     }
-    return "object";
+    return ZodParsedType.object;
   }
-  return "unknown";
+  return ZodParsedType.unknown;
 };
+
+export const issueHelpers = (error: ZodError, params: ParseParams) => {
+  const makeIssue = (errorData: MakeErrorData) => {
+    const errorArg = {
+      ...errorData,
+      path: [...params.path, ...(errorData.path || [])],
+    };
+
+    const defaultError =
+      defaultErrorMap === params.errorMap
+        ? { message: `Invalid value.` }
+        : defaultErrorMap(errorArg, {
+            data: params.data,
+            defaultError: `Invalid value.`,
+          });
+    const issue = {
+      ...errorData,
+      path: [...params.path, ...(errorData.path || [])],
+      message:
+        errorData.message ||
+        params.errorMap(errorArg, {
+          data: params.data,
+          defaultError: defaultError.message,
+        }).message,
+    };
+
+    return issue;
+  };
+  const addIssue = (errorData: MakeErrorData) => {
+    const issue = makeIssue(errorData);
+    error.addIssue(issue);
+  };
+
+  return {
+    makeIssue,
+    addIssue,
+  };
+};
+
+export type ParseParams = {
+  data: any;
+  path: (string | number)[];
+  errorMap: ZodErrorMap;
+  parentError: ZodError;
+  async: boolean;
+};
+
+export type ParseParamsWithOptionals = util.flatten<
+  Partial<ParseParams> & { data: any }
+>;
+
+export type ParseParamsNoData = Omit<ParseParams, "data">;
+
+export type ParseContext = ParseParams &
+  ReturnType<typeof issueHelpers> & {
+    parsedType: ZodParsedType;
+    currentError: ZodError;
+  };
+
+export type ZodParserReturnPayload<T> =
+  | {
+      success: false;
+      error: ZodError;
+    }
+  | {
+      success: true;
+      data: T;
+    };
+
+export type ZodParserReturnType<T> =
+  | ZodParserReturnPayload<T>
+  | Promise<ZodParserReturnPayload<T>>;

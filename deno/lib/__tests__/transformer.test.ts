@@ -64,7 +64,7 @@ test("default", () => {
 test("dynamic default", () => {
   const data = z
     .string()
-    .default((s) => s._def.t)
+    .default(() => "string")
     .parse(undefined); // => "asdf"
   expect(data).toEqual("string");
 });

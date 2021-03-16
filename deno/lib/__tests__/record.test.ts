@@ -14,7 +14,6 @@ test("type inference", () => {
 });
 
 test("methods", () => {
-  booleanRecord.toJSON();
   booleanRecord.optional();
   booleanRecord.nullable();
 });

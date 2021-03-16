@@ -2,8 +2,8 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import { crazySchema } from "../crazySchema.ts";
-import * as z from "../index.ts";
+import { crazySchema } from "./crazySchema.ts";
+// import * as z from "../index";
 
 test("parse", () => {
   crazySchema.parse({
@@ -19,15 +19,4 @@ test("parse", () => {
     numProm: Promise.resolve(12),
     lenfun: (x: string) => x.length,
   });
-
-  // expect(typeof value.sumTransformer).toEqual("number");
-});
-
-test("to JSON", () => {
-  crazySchema.toJSON();
-});
-
-test("ZodCodeGenerator", () => {
-  const gen = new z.ZodCodeGenerator();
-  gen.generate(crazySchema);
 });

@@ -2,7 +2,7 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import { Mocker } from "../helpers/Mocker.ts";
+import { Mocker } from "./Mocker.ts";
 
 test("mocker", () => {
   const mocker = new Mocker();

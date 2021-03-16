@@ -1,7 +1,8 @@
 export const INVALID = Symbol("invalid_data");
+export type INVALID = typeof INVALID;
 export namespace util {
-  export type AssertEqual<T, Expected> = T extends Expected
-    ? Expected extends T
+  export type AssertEqual<T, Expected> = [T] extends [Expected]
+    ? [Expected] extends [T]
       ? true
       : false
     : false;
@@ -57,4 +58,8 @@ export namespace util {
     }
     return undefined;
   };
+
+  export type identity<T> = T;
+  export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
+  export type noUndefined<T> = T extends undefined ? never : T;
 }

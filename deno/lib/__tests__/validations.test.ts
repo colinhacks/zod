@@ -108,3 +108,9 @@ test("instantiation", () => {
   z.string().url({ message: "Invalid url" });
   z.string().uuid({ message: "Invalid UUID" });
 });
+
+test("int", async () => {
+  const int = z.number().int();
+  int.parse(4);
+  expect(() => int.parse(3.5)).toThrow();
+});

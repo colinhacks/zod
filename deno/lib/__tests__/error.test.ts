@@ -40,7 +40,7 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
 
 test("type error with custom error map", () => {
   try {
-    z.string().parse("asdf", { errorMap });
+    z.string().parse(234, { errorMap });
   } catch (err) {
     const zerr: z.ZodError = err;
 
@@ -198,3 +198,45 @@ test("error metadata from value", () => {
 
 //   expect(() => asdf.safeParse("foo")).not.toThrow();
 // });
+
+test("root level formatting", () => {
+  const schema = z.string().email();
+  const result = schema.safeParse("asdfsdf");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.format()._errors).toEqual(["Invalid email"]);
+  }
+});
+test("formatting", () => {
+  const schema = z
+    .object({
+      inner: z.object({
+        name: z
+          .string()
+          .refine((val) => val.length > 5)
+          .array()
+          .refine((val) => val.length > 5),
+      }),
+      password: z.string(),
+      confirm: z.string(),
+    })
+    .refine((val) => val.confirm === val.password, { path: ["confirm"] });
+  const result = schema.safeParse({
+    inner: { name: ["aasd", "asdfasdfasfd", "aasd"] },
+    password: "peanuts",
+    confirm: "Peanuts",
+  });
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    const error = result.error.format();
+    expect(error._errors).toEqual([]);
+    expect(error.inner?._errors).toEqual([]);
+    expect(error.inner?.name?._errors).toEqual(["Invalid value."]);
+    expect(error.inner?.name?.[0]._errors).toEqual(["Invalid value."]);
+    expect(error.inner?.name?.[1]).toEqual(undefined);
+    expect(error.inner?.name?.[2]._errors).toEqual(["Invalid value."]);
+    expect(error.confirm?._errors).toEqual(["Invalid input."]);
+    expect(error.password?._errors).toEqual(undefined);
+  }
+});
