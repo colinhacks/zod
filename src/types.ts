@@ -444,11 +444,11 @@ export interface ZodStringDef extends ZodTypeDef {
   //   uuid?: true;
   //   custom?: ((val: any) => boolean)[];
   // };
-  isEmail: { message?: string } | null;
-  isURL: { message: string } | null;
-  isUUID: { message: string } | null;
-  minLength: number | null;
-  maxLength: number | null;
+  isEmail: { message?: string } | false;
+  isURL: { message?: string } | false;
+  isUUID: { message?: string } | false;
+  minLength: { value: number; message?: string } | null;
+  maxLength: { value: number; message?: string } | null;
 }
 
 // eslint-disable-next-line
@@ -470,38 +470,59 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       return INVALID;
     }
 
-    if (this._def.isEmail) {
-      if (!emailRegex.test(ctx.data)) {
+    if (this._def.isEmail && !emailRegex.test(ctx.data)) {
+      ctx.addIssue({
+        validation: "email",
+        code: ZodIssueCode.invalid_string,
+        message: this._def.isEmail.message,
+      });
+    }
+
+    if (this._def.isURL) {
+      try {
+        new URL(ctx.data);
+      } catch {
         ctx.addIssue({
-          validation: "email",
+          validation: "url",
           code: ZodIssueCode.invalid_string,
-          message: this._def.isEmail.message,
+          message: this._def.isURL.message,
         });
       }
     }
+
+    if (this._def.isUUID && !uuidRegex.test(ctx.data)) {
+      ctx.addIssue({
+        validation: "email",
+        code: ZodIssueCode.invalid_string,
+        message: this._def.isUUID.message,
+      });
+    }
+
+    if (this._def.minLength !== null) {
+      if (ctx.data.length < this._def.minLength.value) {
+        ctx.addIssue({
+          code: ZodIssueCode.too_small,
+          minimum: this._def.minLength.value,
+          type: "string",
+          inclusive: true,
+          ...errorUtil.errToObj(this._def.minLength.message),
+        });
+      }
+    }
+
+    if (this._def.maxLength !== null) {
+      if (ctx.data.length > this._def.maxLength.value) {
+        ctx.addIssue({
+          code: ZodIssueCode.too_big,
+          maximum: this._def.maxLength.value,
+          type: "string",
+          inclusive: true,
+          ...errorUtil.errToObj(this._def.maxLength.message),
+        });
+      }
+    }
+
     return ctx.data;
-  }
-
-  min = (minLength: number, message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => data.length >= minLength, {
-      code: ZodIssueCode.too_small,
-      minimum: minLength,
-      type: "string",
-      inclusive: true,
-      ...errorUtil.errToObj(message),
-    });
-
-  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
-    this.refinement((data) => data.length <= maxLength, {
-      code: ZodIssueCode.too_big,
-      maximum: maxLength,
-      type: "string",
-      inclusive: true,
-      ...errorUtil.errToObj(message),
-    });
-
-  length(len: number, message?: errorUtil.ErrMessage) {
-    return this.min(len, message).max(len, message);
   }
 
   protected _regex = (
@@ -515,45 +536,88 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       ...errorUtil.errToObj(message),
     });
 
-  email = (message?: errorUtil.ErrMessage) => {
-    // return this._regex(emailRegex, "email", message);
-    return new ZodString({
+  email = (message?: errorUtil.ErrMessage) =>
+    new ZodString({
       ...this._def,
       isEmail: errorUtil.errToObj(message),
     });
-  };
 
   url = (message?: errorUtil.ErrMessage) =>
-    this.refinement(
-      (data) => {
-        try {
-          new URL(data);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      {
-        code: ZodIssueCode.invalid_string,
-        validation: "url",
-        ...errorUtil.errToObj(message),
-      }
-    );
+    new ZodString({
+      ...this._def,
+      isURL: errorUtil.errToObj(message),
+    });
+
+  // this.refinement(
+  //   (data) => {
+  //     try {
+  //       new URL(data);
+  //       return true;
+  //     } catch {
+  //       return false;
+  //     }
+  //   },
+  //   {
+  //     code: ZodIssueCode.invalid_string,
+  //     validation: "url",
+  //     ...errorUtil.errToObj(message),
+  //   }
+  // );
 
   uuid = (message?: errorUtil.ErrMessage) =>
-    this._regex(uuidRegex, "uuid", message);
+    new ZodString({
+      ...this._def,
+      isUUID: errorUtil.errToObj(message),
+    });
+  // this._regex(uuidRegex, "uuid", message);
 
   regex = (regexp: RegExp, message?: errorUtil.ErrMessage) =>
     this._regex(regexp, "regex", message);
+
+  min = (minLength: number, message?: errorUtil.ErrMessage) =>
+    new ZodString({
+      ...this._def,
+      minLength: {
+        value: minLength,
+        message: errorUtil.errToObj(message).message,
+      },
+    });
+  // this.refinement((data) => data.length >= minLength, {
+  //   code: ZodIssueCode.too_small,
+  //   minimum: minLength,
+  //   type: "string",
+  //   inclusive: true,
+  //   ...errorUtil.errToObj(message),
+  // });
+
+  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
+    new ZodString({
+      ...this._def,
+      maxLength: {
+        value: maxLength,
+        message: errorUtil.errToObj(message).message,
+      },
+    });
+  // this.refinement((data) => data.length <= maxLength, {
+  //   code: ZodIssueCode.too_big,
+  //   maximum: maxLength,
+  //   type: "string",
+  //   inclusive: true,
+  //   ...errorUtil.errToObj(message),
+  // });
+
+  length(len: number, message?: errorUtil.ErrMessage) {
+    return this.min(len, message).max(len, message);
+  }
 
   nonempty = (message?: errorUtil.ErrMessage) =>
     this.min(1, errorUtil.errToObj(message));
 
   static create = (): ZodString => {
     return new ZodString({
-      isEmail: null,
-      isURL: null,
-      isUUID: null,
+      isEmail: false,
+      isURL: false,
+      isUUID: false,
       minLength: null,
       maxLength: null,
     });
