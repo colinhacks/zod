@@ -39,7 +39,7 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
 
 test("type error with custom error map", () => {
   try {
-    z.string().parse("asdf", { errorMap });
+    z.string().parse(234, { errorMap });
   } catch (err) {
     const zerr: z.ZodError = err;
 

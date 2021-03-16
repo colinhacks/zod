@@ -370,3 +370,7 @@ export const defaultErrorMap = (
   return { message };
   // return `Invalid input.`;
 };
+
+// export const setErrorMap = (map: ZodErrorMap) => {
+//   defaultErrorMap = map;
+// };
