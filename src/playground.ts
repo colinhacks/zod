@@ -1,9 +1,9 @@
 import { z } from ".";
 
 const run = async () => {
-  const schema = z.string().min(5);
-  const result = schema.safeParse("adsf");
-  console.log(result);
+  z.string().array().nonempty().max(2);
+  console.log(z.array(z.string()).nonempty().safeParse([]));
+  // const asdf = z.array(z.string()).nonempty().parse([])
 };
 
 run();
