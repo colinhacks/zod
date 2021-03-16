@@ -24,9 +24,9 @@ If you're upgrading straight to v3 from v1, you'll need to be aware of the break
 
 ### Migrating from v2
 
-Zod 2 is being retired and will not leave beta. This is due to some issues with it's implementation of transformers: details [here](https://github.com/colinhacks/zod/issues/264). Zod 3 is recommended for all new projecst.
+Zod 2 is being retired and will not leave beta. This is due to some issues with it's implementation of transformers: details [here](https://github.com/colinhacks/zod/issues/264). Zod 3 is recommended for all new projects.
 
-You can install v3 with `zod@next`. Zod 2 will continue to be available with `zod@beta` for the time being.
+You can install v3 with `zod@next`. (Zod 2 will continue to be available with `zod@beta` for the time being.)
 
 ```
 npm install zod@next
@@ -56,6 +56,8 @@ yarn add zod@next
   ```
 
 - Type guards (the `.check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
+
+- There have been small internal changes to the ZodIssue type. This may impact user who have written a custom error maps. Most users will not be affected.
 
 <!-- - Errors that occur inside refinement functions are now caught. Previously these errors were considered unexpected and would crash the process (unless caught externally to Zod). If an error is caught, the refinement fails. -->
 
