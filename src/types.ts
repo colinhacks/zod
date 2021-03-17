@@ -64,8 +64,6 @@ export abstract class ZodType<
 
   abstract _parse(_ctx: ParseContext): any;
 
-  abstract isScalar(params?: { root: boolean }): boolean;
-
   _parseInternal(params: ParseParams): ZodParserReturnType<Output> {
     const data = params.data;
     let PROMISE: PseudoPromise<any>;
@@ -408,10 +406,6 @@ const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF
 const uuidRegex = /([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}){1}/i;
 
 export class ZodString extends ZodType<string, ZodStringDef> {
-  isScalar() {
-    return true;
-  }
-
   _parse(ctx: ParseContext): ParseReturnType<string> {
     if (ctx.parsedType !== ZodParsedType.string) {
       ctx.addIssue({
@@ -562,10 +556,6 @@ export interface ZodNumberDef extends ZodTypeDef {
 }
 
 export class ZodNumber extends ZodType<number, ZodNumberDef> {
-  isScalar() {
-    return true;
-  }
-
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.number) {
       ctx.addIssue({
@@ -718,10 +708,6 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 export type ZodBigIntDef = ZodTypeDef;
 
 export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
-  isScalar() {
-    return true;
-  }
-
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.bigint) {
       ctx.addIssue({
@@ -750,10 +736,6 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
 export type ZodBooleanDef = ZodTypeDef;
 
 export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
-  isScalar() {
-    return true;
-  }
-
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.boolean) {
       ctx.addIssue({
@@ -782,10 +764,6 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
 export type ZodDateDef = ZodTypeDef;
 
 export class ZodDate extends ZodType<Date, ZodDateDef> {
-  isScalar() {
-    return true;
-  }
-
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.date) {
       ctx.addIssue({
@@ -822,10 +800,6 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
 export type ZodUndefinedDef = ZodTypeDef;
 
 export class ZodUndefined extends ZodType<undefined> {
-  isScalar() {
-    return true;
-  }
-
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.undefined) {
       ctx.addIssue({
@@ -854,10 +828,6 @@ export class ZodUndefined extends ZodType<undefined> {
 export type ZodNullDef = ZodTypeDef;
 
 export class ZodNull extends ZodType<null, ZodNullDef> {
-  isScalar() {
-    return true;
-  }
-
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.null) {
       ctx.addIssue({
@@ -885,9 +855,6 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
 export type ZodAnyDef = ZodTypeDef;
 
 export class ZodAny extends ZodType<any, ZodAnyDef> {
-  isScalar() {
-    return false;
-  }
   _parse(ctx: ParseContext): any {
     return ctx.data;
   }
@@ -906,9 +873,6 @@ export class ZodAny extends ZodType<any, ZodAnyDef> {
 export type ZodUnknownDef = ZodTypeDef;
 
 export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
-  isScalar() {
-    return false;
-  }
   _parse(ctx: ParseContext): any {
     return ctx.data;
   }
@@ -928,9 +892,6 @@ export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
 export type ZodNeverDef = ZodTypeDef;
 
 export class ZodNever extends ZodType<never, ZodNeverDef> {
-  isScalar() {
-    return false;
-  }
   _parse(ctx: ParseContext): any {
     ctx.addIssue({
       code: ZodIssueCode.invalid_type,
@@ -954,9 +915,6 @@ export class ZodNever extends ZodType<never, ZodNeverDef> {
 export type ZodVoidDef = ZodTypeDef;
 
 export class ZodVoid extends ZodType<void, ZodVoidDef> {
-  isScalar() {
-    return false;
-  }
   _parse(ctx: ParseContext): any {
     if (
       ctx.parsedType !== ZodParsedType.undefined &&
@@ -1035,10 +993,6 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
   ZodArrayDef<T>,
   T["_input"][]
 > {
-  isScalar(params: { root: boolean } = { root: true }) {
-    if (params.root === false) return false;
-    return this._def.type.isScalar({ root: false });
-  }
   _parse(ctx: ParseContext): any {
     const result = parseArray(ctx, this._def);
     if (!result) return;
@@ -1107,11 +1061,6 @@ export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
   ZodNonEmptyArrayDef<T>,
   [T["_input"], ...T["_input"][]]
 > {
-  isScalar(params: { root: boolean } = { root: true }) {
-    if (params.root === false) return false;
-    return this._def.type.isScalar({ root: false });
-  }
-
   _parse(ctx: ParseContext): any {
     // if (ctx.parsedType !== ZodParsedType.array) {
     //   ctx.addIssue({
@@ -1318,10 +1267,6 @@ export class ZodObject<
   readonly _shape!: T;
   readonly _unknownKeys!: UnknownKeys;
   readonly _catchall!: Catchall;
-
-  isScalar() {
-    return false;
-  }
 
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.object) {
@@ -1554,48 +1499,6 @@ export class ZodObject<
     }) as any;
   };
 
-  primitives = (): ZodObject<
-    objectUtil.noNever<
-      {
-        [k in keyof T]: [T[k]["_output"]] extends [util.Scalar] ? T[k] : never;
-      }
-    >,
-    UnknownKeys,
-    Catchall
-  > => {
-    const newShape: any = {};
-    for (const key in this.shape) {
-      if (this.shape[key].isScalar()) {
-        newShape[key] = this.shape[key];
-      }
-    }
-    return new ZodObject({
-      ...this._def,
-      shape: () => newShape,
-    }) as any;
-  };
-
-  nonprimitives = (): ZodObject<
-    objectUtil.noNever<
-      {
-        [k in keyof T]: [T[k]["_output"]] extends [util.Scalar] ? never : T[k];
-      }
-    >,
-    UnknownKeys,
-    Catchall
-  > => {
-    const newShape: any = {};
-    for (const key in this.shape) {
-      if (!this.shape[key].isScalar()) {
-        newShape[key] = this.shape[key];
-      }
-    }
-    return new ZodObject({
-      ...this._def,
-      shape: () => newShape,
-    }) as any;
-  };
-
   deepPartial: () => partialUtil.RootDeepPartial<this> = () => {
     const newShape: any = {};
 
@@ -1655,11 +1558,6 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
   ZodUnionDef<T>,
   T[number]["_input"]
 > {
-  isScalar(params: { root: boolean } = { root: true }) {
-    if (params.root === false) return false;
-    return this._def.options.every((x) => x.isScalar(params));
-  }
-
   _parse(ctx: ParseContext): any {
     const unionErrors: ZodError[] = [...Array(this._def.options.length)].map(
       () => new ZodError([])
@@ -1747,10 +1645,6 @@ export interface ZodTupleDef<
 export class ZodTuple<
   T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]]
 > extends ZodType<OutputTypeOfTuple<T>, ZodTupleDef<T>, InputTypeOfTuple<T>> {
-  isScalar(params: { root: boolean } = { root: true }) {
-    if (params.root === false) return false;
-    return this._def.items.every((x) => x.isScalar({ root: false }));
-  }
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.array) {
       ctx.addIssue({
@@ -1828,10 +1722,6 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
   ZodRecordDef<Value>,
   Record<string, Value["_input"]>
 > {
-  isScalar() {
-    return false;
-  }
-
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.object) {
       ctx.addIssue({
@@ -1888,10 +1778,6 @@ export class ZodMap<
   ZodMapDef<Key, Value>,
   Map<Key["_input"], Value["_input"]>
 > {
-  isScalar() {
-    return false;
-  }
-
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.map) {
       ctx.addIssue({
@@ -1967,9 +1853,6 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
   ZodSetDef<Value>,
   Set<Value["_input"]>
 > {
-  isScalar() {
-    return false;
-  }
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.set) {
       ctx.addIssue({
@@ -2049,10 +1932,6 @@ export class ZodFunction<
   ZodFunctionDef<Args, Returns>,
   InnerTypeOfFunction<Args, Returns>
 > {
-  isScalar() {
-    return false;
-  }
-
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.function) {
       ctx.addIssue({
@@ -2178,10 +2057,6 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
   ZodLazyDef<T>,
   input<T>
 > {
-  isScalar(params: { root: boolean } = { root: true }) {
-    return this._def.getter().isScalar(params);
-  }
-
   get schema(): T {
     return this._def.getter();
   }
@@ -2215,9 +2090,6 @@ export interface ZodLiteralDef<T extends any = any> extends ZodTypeDef {
 }
 
 export class ZodLiteral<T extends any> extends ZodType<T, ZodLiteralDef<T>> {
-  isScalar() {
-    return true;
-  }
   _parse(ctx: ParseContext): any {
     if (ctx.data !== this._def.value) {
       ctx.addIssue({
@@ -2262,9 +2134,6 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   T[number],
   ZodEnumDef<T>
 > {
-  isScalar() {
-    return true;
-  }
   _parse(ctx: ParseContext): any {
     if (this._def.values.indexOf(ctx.data) === -1) {
       ctx.addIssue({
@@ -2331,9 +2200,6 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   T[keyof T],
   ZodNativeEnumDef<T>
 > {
-  isScalar() {
-    return true;
-  }
   _parse(ctx: ParseContext): any {
     const nativeEnumValues = util.getValidEnumValues(this._def.values);
     if (nativeEnumValues.indexOf(ctx.data) === -1) {
@@ -2369,10 +2235,6 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   ZodPromiseDef<T>,
   Promise<T["_input"]>
 > {
-  isScalar() {
-    return false;
-  }
-
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.promise && ctx.async === false) {
       ctx.addIssue({
@@ -2441,9 +2303,6 @@ export class ZodEffects<
   T extends ZodTypeAny,
   Output = T["_type"]
 > extends ZodType<Output, ZodEffectsDef<T>, T["_input"]> {
-  isScalar(params: { root: boolean } = { root: true }) {
-    return this._def.schema.isScalar(params);
-  }
   _parse(ctx: ParseContext): any {
     const isSync = ctx.async === false || this instanceof ZodPromise;
     const effects = this._def.effects || [];
@@ -2582,9 +2441,6 @@ export class ZodOptional<
   ZodOptionalDef<T>,
   T["_input"] | undefined
 > {
-  isScalar(params: { root: boolean } = { root: true }) {
-    return this._def.innerType.isScalar(params);
-  }
   _parse(ctx: ParseContext): any {
     let data = ctx.data;
     if (ctx.parsedType === ZodParsedType.undefined) {
@@ -2647,9 +2503,6 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
   ZodNullableDef<T>,
   T["_input"] | null
 > {
-  isScalar(params: { root: boolean } = { root: true }) {
-    return this._def.innerType.isScalar(params);
-  }
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType === ZodParsedType.null) {
       return null;
