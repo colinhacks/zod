@@ -206,38 +206,66 @@ test("root level formatting", () => {
     expect(result.error.format()._errors).toEqual(["Invalid email"]);
   }
 });
-test("formatting", () => {
+
+test("custom path", () => {
   const schema = z
     .object({
-      inner: z.object({
-        name: z
-          .string()
-          .refine((val) => val.length > 5)
-          .array()
-          .refine((val) => val.length > 5),
-      }),
       password: z.string(),
       confirm: z.string(),
     })
     .refine((val) => val.confirm === val.password, { path: ["confirm"] });
 
   const result = schema.safeParse({
-    inner: { name: ["aasd", "asdfasdfasfd", "aasd"] },
     password: "peanuts",
-    confirm: "Peanuts",
+    confirm: "qeanuts",
   });
 
   expect(result.success).toEqual(false);
   if (!result.success) {
     const error = result.error.format();
-    console.log();
+    expect(error._errors).toEqual([]);
+    expect(error.password?._errors).toEqual(undefined);
+    expect(error.confirm?._errors).toEqual(["Invalid input."]);
+  }
+});
+
+test("formatting", () => {
+  const schema = z.object({
+    inner: z.object({
+      name: z
+        .string()
+        .refine((val) => val.length > 5)
+        .array()
+        .refine((val) => val.length <= 1),
+    }),
+  });
+
+  const invalidItem = {
+    inner: { name: ["aasd", "asdfasdfasfd"] },
+  };
+  const invalidArray = {
+    inner: { name: ["asdfasdf", "asdfasdfasfd"] },
+  };
+  const result1 = schema.safeParse(invalidItem);
+  const result2 = schema.safeParse(invalidArray);
+
+  expect(result1.success).toEqual(false);
+  expect(result2.success).toEqual(false);
+  if (!result1.success) {
+    const error = result1.error.format();
+    expect(error._errors).toEqual([]);
+    expect(error.inner?._errors).toEqual([]);
+    expect(error.inner?.name?._errors).toEqual([]);
+    expect(error.inner?.name?.[0]._errors).toEqual(["Invalid value."]);
+    expect(error.inner?.name?.[1]).toEqual(undefined);
+  }
+  if (!result2.success) {
+    const error = result2.error.format();
     expect(error._errors).toEqual([]);
     expect(error.inner?._errors).toEqual([]);
     expect(error.inner?.name?._errors).toEqual(["Invalid value."]);
-    expect(error.inner?.name?.[0]._errors).toEqual(["Invalid value."]);
+    expect(error.inner?.name?.[0]).toEqual(undefined);
     expect(error.inner?.name?.[1]).toEqual(undefined);
-    expect(error.inner?.name?.[2]._errors).toEqual(["Invalid value."]);
-    expect(error.confirm?._errors).toEqual(["Invalid input."]);
-    expect(error.password?._errors).toEqual(undefined);
+    expect(error.inner?.name?.[2]).toEqual(undefined);
   }
 });

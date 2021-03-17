@@ -68,10 +68,10 @@ export abstract class ZodType<
 
   _parseInternal(params: ParseParams): ZodParserReturnType<Output> {
     const data = params.data;
+    let PROMISE: PseudoPromise<any>;
     const ERROR = new ZodError([]);
     const { makeIssue, addIssue } = issueHelpers(ERROR, { ...params });
 
-    let PROMISE: PseudoPromise<any>;
     const parsedType = getParsedType(data);
     try {
       const parsedValue = this._parse({
@@ -86,31 +86,16 @@ export abstract class ZodType<
         parsedValue instanceof PseudoPromise
           ? parsedValue
           : PseudoPromise.resolve(parsedValue);
-    } catch {
+    } catch (err) {
       // default to invalid
       PROMISE = PseudoPromise.resolve(INVALID);
     }
 
-    // params.seen = params.seen || [];
-
     const isSync = params.async === false || this instanceof ZodPromise;
-
-    // const effects = this._def.effects || [];
-    // const checkCtx: RefinementCtx = {
-    //   addIssue: (arg: MakeErrorData) => {
-    //     addIssue(arg);
-    //   },
-    //   path: params.path,
-    // };
-
-    // let finalPromise = PROMISE.then(THROW_ERROR_IF_PRESENT("initial check"));
-    // let finalPromise = PROMISE;
-    // let refinementError: Error | null = null;
 
     const THROW_ERROR_IF_PRESENT = (key: string) => (data: any) => {
       key;
       if (!ERROR.isEmpty) throw ERROR;
-      // if (refinementError !== null) throw refinementError;
       return data;
     };
 
@@ -1447,8 +1432,6 @@ export class ZodObject<
     }
 
     return PseudoPromise.object(objectPromises).then((data) => {
-      console.log(`ZodOBbect data`);
-      console.log(data);
       return data;
     });
   }
@@ -2462,13 +2445,6 @@ export class ZodEffects<
     return this._def.schema.isScalar(params);
   }
   _parse(ctx: ParseContext): any {
-    let finalPromise = new PseudoPromise().then(() => {
-      return this._def.schema._parseWithInvalidFallback(ctx.data, {
-        ...ctx,
-        parentError: ctx.currentError,
-      });
-    });
-
     const isSync = ctx.async === false || this instanceof ZodPromise;
     const effects = this._def.effects || [];
     const checkCtx: RefinementCtx = {
@@ -2478,14 +2454,24 @@ export class ZodEffects<
       path: ctx.path,
     };
 
-    let refinementError: Error | null = null;
+    // let refinementError: Error | null = null;
 
     const THROW_ERROR_IF_PRESENT = (key: string) => (data: any) => {
       key;
       if (!ctx.currentError.isEmpty) throw ctx.currentError;
+      // if (ctx.data === INVALID) throw ctx.currentError;
       // if (refinementError !== null) throw refinementError;
       return data;
     };
+
+    let finalPromise = new PseudoPromise()
+      .then(() => {
+        return this._def.schema._parseWithInvalidFallback(ctx.data, {
+          ...ctx,
+          parentError: ctx.currentError,
+        });
+      })
+      .then(THROW_ERROR_IF_PRESENT("pre-refinement"));
 
     for (const effect of effects) {
       if (effect.type === "refinement") {
@@ -2494,12 +2480,13 @@ export class ZodEffects<
             return [
               PseudoPromise.resolve(data),
               PseudoPromise.resolve(data).then(() => {
-                let result;
-                try {
-                  result = effect.refinement(data, checkCtx);
-                } catch (err) {
-                  if (refinementError === null) refinementError = err;
-                }
+                const result = effect.refinement(data, checkCtx);
+                // try {
+                //   result = effect.refinement(data, checkCtx);
+                // } catch (err) {
+                //   throw err;
+                //   // if (refinementError === null) refinementError = err;
+                // }
 
                 if (isSync && result instanceof Promise)
                   throw new Error(
@@ -2537,10 +2524,7 @@ export class ZodEffects<
       }
     }
 
-    return finalPromise.then((data) => {
-      if (refinementError) throw refinementError;
-      return data;
-    });
+    return finalPromise;
   }
 
   constructor(def: ZodEffectsDef<T>) {
