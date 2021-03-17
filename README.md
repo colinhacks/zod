@@ -146,7 +146,6 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
   - [.partial/.deepPartial](#partials)
   - [.passthrough](#pass-through-unknown-keys)
   - [.strict](#disallow-unknown-keys)
-  - [.primitives/.nonprimitives](#primitives-and-nonprimitives)
 - [Records](#records)
 - [Arrays](#arrays)
   - [.nonempty](#non-empty-lists)
@@ -753,42 +752,6 @@ person.parse({
 });
 // => throws ZodError
 ```
-
-#### Primitives and nonprimitives
-
-Zod provides a convenience method for automatically picking all primitive or non-primitive fields from an object schema.
-
-```ts
-const Post = z.object({
-  title: z.string()
-});
-
-const User = z.object({
-  id: z.number(),
-  name: z.string(),
-  posts: z.array(Post)
-});
-
-const UserFields = User.primitives();
-typeof UserFields = z.infer<typeof UserFields>;
-// => { id: number; name; string; }
-
-const UserRelations = User.nonprimitives();
-typeof UserFields = z.infer<typeof UserFields>;
-// => { posts: Post[] }
-```
-
-These schemas are considering "primitive":
-
-- string
-- number
-- boolean
-- bigint
-- date
-- null/undefined
-- enums
-- any array of the above types
-- any union of the above types
 
 #### Catchall
 
