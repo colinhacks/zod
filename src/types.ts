@@ -39,22 +39,19 @@ export type TypeOf<T extends ZodType<any>> = T["_output"];
 export type input<T extends ZodType<any>> = T["_input"];
 export type output<T extends ZodType<any>> = T["_output"];
 export type { TypeOf as infer };
-export type InternalCheck<T> = {
-  type: "check";
-  check: (arg: T, ctx: RefinementCtx) => any;
-};
-export type Mod<T> = {
-  type: "mod";
-  mod: (arg: T) => any;
-};
-export type Effect<T> = InternalCheck<T> | Mod<T>;
+
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
-  effects?: Effect<any>[];
   accepts?: ZodType<any, any>;
 }
 
 type ParseReturnType<T> = T | INVALID | PseudoPromise<T | INVALID>;
+type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<
+  infer Inner,
+  infer Out
+>
+  ? ZodEffects<Inner, Out>
+  : ZodEffects<T, T["_output"]>;
 export abstract class ZodType<
   Output,
   Def extends ZodTypeDef = ZodTypeDef,
@@ -71,10 +68,10 @@ export abstract class ZodType<
 
   _parseInternal(params: ParseParams): ZodParserReturnType<Output> {
     const data = params.data;
+    let PROMISE: PseudoPromise<any>;
     const ERROR = new ZodError([]);
     const { makeIssue, addIssue } = issueHelpers(ERROR, { ...params });
 
-    let PROMISE: PseudoPromise<any>;
     const parsedType = getParsedType(data);
     try {
       const parsedValue = this._parse({
@@ -89,86 +86,20 @@ export abstract class ZodType<
         parsedValue instanceof PseudoPromise
           ? parsedValue
           : PseudoPromise.resolve(parsedValue);
-    } catch {
+    } catch (err) {
       // default to invalid
       PROMISE = PseudoPromise.resolve(INVALID);
     }
 
-    // params.seen = params.seen || [];
-
     const isSync = params.async === false || this instanceof ZodPromise;
-
-    const effects = this._def.effects || [];
-    const checkCtx: RefinementCtx = {
-      addIssue: (arg: MakeErrorData) => {
-        addIssue(arg);
-      },
-      path: params.path,
-    };
-
-    // let finalPromise = PROMISE.then(THROW_ERROR_IF_PRESENT("initial check"));
-    let finalPromise = PROMISE;
-    let refinementError: Error | null = null;
 
     const THROW_ERROR_IF_PRESENT = (key: string) => (data: any) => {
       key;
       if (!ERROR.isEmpty) throw ERROR;
-      if (refinementError !== null) throw refinementError;
       return data;
     };
 
-    for (const effect of effects) {
-      if (effect.type === "check") {
-        finalPromise = finalPromise
-          .all((data) => {
-            return [
-              PseudoPromise.resolve(data),
-              PseudoPromise.resolve(data).then(() => {
-                let result;
-                try {
-                  result = effect.check(data, checkCtx);
-                } catch (err) {
-                  refinementError = err;
-                }
-
-                if (isSync && result instanceof Promise)
-                  throw new Error(
-                    "You can't use .parse() on a schema containing async refinements. Use .parseAsync instead."
-                  );
-                return result;
-              }),
-            ];
-          })
-          .then(([data, _]) => {
-            return data;
-          });
-      } else if (effect.type === "mod") {
-        finalPromise = finalPromise
-          .then(THROW_ERROR_IF_PRESENT("before mod"))
-          .then((data) => {
-            if (!(this instanceof ZodTransformer))
-              throw new Error(
-                "Only transformers can contain transformation functions."
-              );
-            const newData = effect.mod(data);
-
-            return newData;
-          })
-          .then((data) => {
-            if (isSync && data instanceof Promise) {
-              throw new Error(
-                `You can't use .parse() on a schema containing async transformations. Use .parseAsync instead.`
-              );
-            }
-            return data;
-          });
-      } else {
-        throw new Error(`Invalid effect type.`);
-      }
-    }
-
-    finalPromise = finalPromise
-      .then(THROW_ERROR_IF_PRESENT("post effects"))
+    PROMISE = PROMISE.then(THROW_ERROR_IF_PRESENT("post effects"))
       .then((data) => {
         return { success: true, data };
       })
@@ -178,7 +109,7 @@ export abstract class ZodType<
         throw error;
       });
 
-    return isSync ? finalPromise.getValueSync() : finalPromise.getValueAsync();
+    return isSync ? PROMISE.getValueSync() : PROMISE.getValueAsync();
   }
 
   _parseInternalOptionalParams: (
@@ -275,13 +206,10 @@ export abstract class ZodType<
   /** The .check method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
   check: never;
 
-  refine = <Func extends (arg: Output) => any>(
+  refine: <Func extends (arg: Output) => any, This extends this = this>(
     check: Func,
-    message:
-      | string
-      | CustomErrorParams
-      | ((arg: Output) => CustomErrorParams) = "Invalid value."
-  ) => {
+    message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
+  ) => ZodEffectsType<This> = (check, message = "Invalid value.") => {
     if (typeof message === "string") {
       return this._refinement((val, ctx) => {
         const result = check(val);
@@ -340,12 +268,12 @@ export abstract class ZodType<
     });
   };
 
-  refinement = (
+  refinement: <This extends this = this>(
     check: (arg: Output) => any,
     refinementData:
       | MakeErrorData
       | ((arg: Output, ctx: RefinementCtx) => MakeErrorData)
-  ) => {
+  ) => ZodEffectsType<This> = (check, refinementData) => {
     return this._refinement((val, ctx) => {
       if (!check(val)) {
         ctx.addIssue(
@@ -357,17 +285,38 @@ export abstract class ZodType<
     });
   };
 
-  _refinement: (refinement: InternalCheck<Output>["check"]) => this = (
-    refinement
-  ) => {
-    return new (this as any).constructor({
-      ...this._def,
-      effects: [
-        ...(this._def.effects || []),
-        { type: "check", check: refinement },
-      ],
-    }) as this;
-  };
+  // _refinement: (refinement: InternalCheck<Output>["refinement"]) => this = (
+  //   refinement
+  // ) => {
+  //   return new (this as any).constructor({
+  //     ...this._def,
+  //     effects: [
+  //       // ...(this._def.effects || []),
+  //       { type: "check", check: refinement },
+  //     ],
+  //   }) as this;
+  // };
+  _refinement<This extends this>(
+    refinement: InternalCheck<Output>["refinement"]
+  ): ZodEffectsType<This> {
+    let returnType;
+    if (this instanceof ZodEffects) {
+      returnType = new ZodEffects({
+        ...this._def,
+        effects: [
+          ...(this._def.effects || []),
+          { type: "refinement", refinement },
+        ],
+      }) as any;
+    } else {
+      returnType = new ZodEffects({
+        schema: this,
+        effects: [{ type: "refinement", refinement }],
+      }) as any;
+    }
+    return returnType;
+  }
+  advancedRefine = this._refinement;
 
   constructor(def: Def) {
     this._def = def;
@@ -386,25 +335,28 @@ export abstract class ZodType<
     return ZodUnion.create([this, option]);
   }
 
-  transform: <NewOut, This extends this>(
-    transformer: (arg: Output) => NewOut | Promise<NewOut>
-  ) => This extends ZodTransformer<infer T, any>
-    ? ZodTransformer<T, NewOut>
-    : ZodTransformer<This, NewOut> = (mod) => {
+  transform<NewOut, This extends this>(
+    transform: (arg: Output) => NewOut | Promise<NewOut>
+  ): This extends ZodEffects<infer T, any>
+    ? ZodEffects<T, NewOut>
+    : ZodEffects<This, NewOut> {
     let returnType;
-    if (this instanceof ZodTransformer) {
-      returnType = new (this as any).constructor({
+    if (this instanceof ZodEffects) {
+      returnType = new ZodEffects({
         ...this._def,
-        effects: [...(this._def.effects || []), { type: "mod", mod }],
+        effects: [
+          ...(this._def.effects || []),
+          { type: "transform", transform },
+        ],
       }) as any;
     } else {
-      returnType = new ZodTransformer({
+      returnType = new ZodEffects({
         schema: this,
-        effects: [{ type: "mod", mod }],
+        effects: [{ type: "transform", transform }],
       }) as any;
     }
     return returnType;
-  };
+  }
 
   default<T extends util.noUndefined<Input>, This extends this = this>(
     def: T
@@ -1479,7 +1431,9 @@ export class ZodObject<
       }
     }
 
-    return PseudoPromise.object(objectPromises);
+    return PseudoPromise.object(objectPromises).then((data) => {
+      return data;
+    });
   }
 
   get shape() {
@@ -1529,7 +1483,7 @@ export class ZodObject<
       merging._def.shape()
     );
     const merged: any = new ZodObject({
-      effects: [], // wipe all refinements
+      // effects: [], // wipe all refinements
       unknownKeys: this._def.unknownKeys,
       catchall: this._def.catchall,
       shape: () => mergedShape,
@@ -2463,48 +2417,135 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////////
 //////////////////////////////////////////////
 //////////                          //////////
-//////////      ZodTransformer      //////////
+//////////      ZodEffects      //////////
 //////////                          //////////
 //////////////////////////////////////////////
 //////////////////////////////////////////////
-export interface ZodTransformerDef<T extends ZodTypeAny = ZodTypeAny>
+export type InternalCheck<T> = {
+  type: "refinement";
+  refinement: (arg: T, ctx: RefinementCtx) => any;
+};
+export type Mod<T> = {
+  type: "transform";
+  transform: (arg: T) => any;
+};
+export type Effect<T> = InternalCheck<T> | Mod<T>;
+
+export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   schema: T;
+  effects?: Effect<any>[];
 }
 
-export class ZodTransformer<
+export class ZodEffects<
   T extends ZodTypeAny,
   Output = T["_type"]
-> extends ZodType<Output, ZodTransformerDef<T>, T["_input"]> {
+> extends ZodType<Output, ZodEffectsDef<T>, T["_input"]> {
   isScalar(params: { root: boolean } = { root: true }) {
     return this._def.schema.isScalar(params);
   }
   _parse(ctx: ParseContext): any {
-    return new PseudoPromise().then(() => {
-      return this._def.schema._parseWithInvalidFallback(ctx.data, {
-        ...ctx,
-        parentError: ctx.currentError,
-      });
-    });
+    const isSync = ctx.async === false || this instanceof ZodPromise;
+    const effects = this._def.effects || [];
+    const checkCtx: RefinementCtx = {
+      addIssue: (arg: MakeErrorData) => {
+        ctx.addIssue(arg);
+      },
+      path: ctx.path,
+    };
+
+    // let refinementError: Error | null = null;
+
+    const THROW_ERROR_IF_PRESENT = (key: string) => (data: any) => {
+      key;
+      if (!ctx.currentError.isEmpty) throw ctx.currentError;
+      // if (ctx.data === INVALID) throw ctx.currentError;
+      // if (refinementError !== null) throw refinementError;
+      return data;
+    };
+
+    let finalPromise = new PseudoPromise()
+      .then(() => {
+        return this._def.schema._parseWithInvalidFallback(ctx.data, {
+          ...ctx,
+          parentError: ctx.currentError,
+        });
+      })
+      .then(THROW_ERROR_IF_PRESENT("pre-refinement"));
+
+    for (const effect of effects) {
+      if (effect.type === "refinement") {
+        finalPromise = finalPromise
+          .all((data) => {
+            return [
+              PseudoPromise.resolve(data),
+              PseudoPromise.resolve(data).then(() => {
+                const result = effect.refinement(data, checkCtx);
+                // try {
+                //   result = effect.refinement(data, checkCtx);
+                // } catch (err) {
+                //   throw err;
+                //   // if (refinementError === null) refinementError = err;
+                // }
+
+                if (isSync && result instanceof Promise)
+                  throw new Error(
+                    "You can't use .parse() on a schema containing async refinements. Use .parseAsync instead."
+                  );
+                return result;
+              }),
+            ];
+          })
+          .then(([data, _]) => {
+            return data;
+          });
+      } else if (effect.type === "transform") {
+        finalPromise = finalPromise
+          .then(THROW_ERROR_IF_PRESENT("before transform"))
+          .then((data) => {
+            if (!(this instanceof ZodEffects))
+              throw new Error(
+                "Only transformers can contain transformation functions."
+              );
+            const newData = effect.transform(data);
+
+            return newData;
+          })
+          .then((data) => {
+            if (isSync && data instanceof Promise) {
+              throw new Error(
+                `You can't use .parse() on a schema containing async transformations. Use .parseAsync instead.`
+              );
+            }
+            return data;
+          });
+      } else {
+        throw new Error(`Invalid effect type.`);
+      }
+    }
+
+    return finalPromise;
   }
 
-  constructor(def: ZodTransformerDef<T>) {
+  constructor(def: ZodEffectsDef<T>) {
     super(def);
-    if (def.schema instanceof ZodTransformer) {
-      throw new Error("ZodTransformers cannot be nested.");
+    if (def.schema instanceof ZodEffects) {
+      throw new Error("ZodEffectss cannot be nested.");
     }
   }
 
   static create = <I extends ZodTypeAny>(
     schema: I
-  ): ZodTransformer<I, I["_output"]> => {
-    const newTx = new ZodTransformer({
+  ): ZodEffects<I, I["_output"]> => {
+    const newTx = new ZodEffects({
       schema,
     });
 
     return newTx;
   };
 }
+
+export { ZodEffects as ZodTransformer };
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -2672,7 +2713,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodLazy<any>
   | ZodLiteral<any>
   | ZodEnum<any>
-  | ZodTransformer<any>
+  | ZodEffects<any>
   | ZodNativeEnum<any>
   | ZodOptional<any>
   | ZodNullable<any>
@@ -2709,7 +2750,7 @@ const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
 const nativeEnumType = ZodNativeEnum.create;
 const promiseType = ZodPromise.create;
-const transformerType = ZodTransformer.create;
+const effectsType = ZodEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const ostring = () => stringType().optional();
@@ -2722,6 +2763,7 @@ export {
   bigIntType as bigint,
   booleanType as boolean,
   dateType as date,
+  effectsType as effect,
   enumType as enum,
   functionType as function,
   instanceOfType as instanceof,
@@ -2742,7 +2784,7 @@ export {
   recordType as record,
   setType as set,
   stringType as string,
-  transformerType as transformer,
+  effectsType as transformer,
   tupleType as tuple,
   undefinedType as undefined,
   unionType as union,

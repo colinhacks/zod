@@ -15,7 +15,7 @@ test("default with transform", () => {
     .default("default");
   expect(stringWithDefault.parse(undefined)).toBe("DEFAULT");
   expect(stringWithDefault).toBeInstanceOf(z.ZodOptional);
-  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodTransformer);
+  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodEffects);
   expect(stringWithDefault._def.innerType._def.schema).toBeInstanceOf(
     z.ZodSchema
   );
