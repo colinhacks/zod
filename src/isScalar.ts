@@ -1,7 +1,10 @@
 import * as z from './index';
 import { util } from './helpers/util';
 
-export const isScalar = (schema: z.ZodType<any, any>, params: { root: boolean } = { root: true }): boolean => {
+export const isScalar = (
+  schema: z.ZodType<any, any>,
+  params: { root: boolean } = { root: true },
+): boolean => {
   const def = schema._def as z.ZodDef;
 
   let returnValue = false;
@@ -41,7 +44,7 @@ export const isScalar = (schema: z.ZodType<any, any>, params: { root: boolean } 
       returnValue = false;
       break;
     case z.ZodTypes.union:
-      returnValue = def.options.every(x => isScalar(x));
+      returnValue = def.options.every((x) => isScalar(x));
       break;
     case z.ZodTypes.intersection:
       returnValue = isScalar(def.left) && isScalar(def.right);
@@ -72,6 +75,9 @@ export const isScalar = (schema: z.ZodType<any, any>, params: { root: boolean } 
       break;
     case z.ZodTypes.promise:
       returnValue = false;
+      break;
+    case z.ZodTypes.keyof:
+      returnValue = true;
       break;
 
     default:

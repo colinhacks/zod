@@ -13,7 +13,7 @@ export class ZodKeyof<T extends EnumLike> extends z.ZodType<
 > {
   toJSON = (): object => ({
     t: this._def.t,
-    values: this._def.values.map(x => x.toString()),
+    values: this._def.values.map((x) => x.toString()),
   });
 
   static create = <T extends EnumLike>(object: T): ZodKeyof<T> => {

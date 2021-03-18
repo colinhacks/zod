@@ -9,7 +9,7 @@ const isOptional = (schema: z.ZodType<any, any>): boolean => {
   else if (def.t === z.ZodTypes.intersection) {
     return isOptional(def.right) && isOptional(def.left);
   } else if (def.t === z.ZodTypes.union) {
-    return def.options.map(isOptional).some(x => x === true);
+    return def.options.map(isOptional).some((x) => x === true);
   }
   return false;
 };
@@ -23,11 +23,11 @@ export class ZodCodeGenerator {
   };
 
   findBySchema = (schema: z.ZodType<any, any>) => {
-    return this.seen.find(s => s.schema === schema);
+    return this.seen.find((s) => s.schema === schema);
   };
 
   findById = (id: string) => {
-    const found = this.seen.find(s => s.id === id);
+    const found = this.seen.find((s) => s.id === id);
     if (!found) throw new Error(`Unfound ID: ${id}`);
     return found;
   };
@@ -36,7 +36,9 @@ export class ZodCodeGenerator {
     return `
 type Identity<T> = T;
 
-${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n')}
+${this.seen
+  .map((item) => `type ${item.id} = Identity<${item.type}>;`)
+  .join('\n\n')}
 `;
   };
 
@@ -88,7 +90,7 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
         const literalType = typeof val === 'string' ? `"${val}"` : `${val}`;
         return this.setType(id, literalType);
       case z.ZodTypes.enum:
-        return this.setType(id, def.values.map(v => `"${v}"`).join(' | '));
+        return this.setType(id, def.values.map((v) => `"${v}"`).join(' | '));
       case z.ZodTypes.object:
         const objectLines: string[] = [];
         const shape = def.shape();
@@ -99,7 +101,9 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
           const OPTKEY = isOptional(childSchema) ? '?' : '';
           objectLines.push(`${key}${OPTKEY}: ${childType.id}`);
         }
-        const baseStruct = `{\n${objectLines.map(line => `  ${line};`).join('\n')}\n}`;
+        const baseStruct = `{\n${objectLines
+          .map((line) => `  ${line};`)
+          .join('\n')}\n}`;
         this.setType(id, `${baseStruct}`);
         break;
       case z.ZodTypes.tuple:
@@ -108,7 +112,9 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
           const elType = this.generate(elSchema);
           tupleLines.push(elType.id);
         }
-        const baseTuple = `[\n${tupleLines.map(line => `  ${line},`).join('\n')}\n]`;
+        const baseTuple = `[\n${tupleLines
+          .map((line) => `  ${line},`)
+          .join('\n')}\n]`;
         return this.setType(id, `${baseTuple}`);
       case z.ZodTypes.array:
         return this.setType(id, `${this.generate(def.type).id}[]`);
@@ -127,15 +133,29 @@ ${this.seen.map(item => `type ${item.id} = Identity<${item.type}>;`).join('\n\n'
         }
         return this.setType(id, unionLines.join(` | `));
       case z.ZodTypes.intersection:
-        return this.setType(id, `${this.generate(def.left).id} & ${this.generate(def.right).id}`);
+        return this.setType(
+          id,
+          `${this.generate(def.left).id} & ${this.generate(def.right).id}`,
+        );
       case z.ZodTypes.record:
-        return this.setType(id, `{[k:string]: ${this.generate(def.valueType).id}}`);
+        return this.setType(
+          id,
+          `{[k:string]: ${this.generate(def.valueType).id}}`,
+        );
       case z.ZodTypes.lazy:
         const lazyType = def.getter();
         return this.setType(id, this.generate(lazyType).id);
       case z.ZodTypes.nativeEnum:
         // const lazyType = def.getter();
         return this.setType(id, 'asdf');
+      case z.ZodTypes.keyof:
+        // const lazyType = def.getter();
+        return this.setType(
+          id,
+          `keyof [${def.values
+            .map((val) => (typeof val === 'string' ? `"${val}"` : val))
+            .join(', ')}]`,
+        );
       default:
         util.assertNever(def);
     }
