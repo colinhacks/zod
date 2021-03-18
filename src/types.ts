@@ -41,9 +41,7 @@ export type output<T extends ZodType<any>> = T["_output"];
 export type { TypeOf as infer };
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
-export interface ZodTypeDef {
-  accepts?: ZodType<any, any>;
-}
+export interface ZodTypeDef {}
 
 type ParseReturnType<T> = T | INVALID | PseudoPromise<T | INVALID>;
 type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<
