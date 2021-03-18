@@ -48,6 +48,8 @@ export const visitor = (schema: z.ZodType<any, any>) => {
       break;
     case z.ZodTypes.promise:
       break;
+    case z.ZodTypes.keyof:
+      break;
     default:
       util.assertNever(def);
   }
