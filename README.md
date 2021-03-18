@@ -83,7 +83,7 @@ if you're happy and you know it, star this repo ⭐
 - You can now import Zod like `import { z } a from 'zod';` instead of using `import * as` syntax.
 - Added the `format` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
 - Added the `or` method to ZodType (the base class for all Zod schema) to easily create union types like `z.string().or(z.number())`
-- Added `z.setErrorMap`, an easier way to _globally_ customize the error messages produced by Zod: [setErrorMap](./ERROR_HANDLING#customizing-errors-with-zoderrormap)
+- Added `z.setErrorMap`, an easier way to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING#customizing-errors-with-zoderrormap)
 - ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap
 
 ### Breaking changes in v3
@@ -110,7 +110,7 @@ if you're happy and you know it, star this repo ⭐
   ```
 
 - **Type guards** (the `.check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
-- **ZodIntersection has been removed**. If you have an object schema, you can use the .merge() method instead. Note that this is equivalent to `A.extend(B.shape)` and is therefore not an intersection in the pure sense (`B` takes precedence over `A` if the two schemas share a key).
+- **ZodIntersection has been removed**. If you have an object schema, you can use the `A.merge(B)` instead. Note that this is equivalent to `A.extend(B.shape)` and is therefore not an intersection in the pure sense, as `B` takes precedence over `A` if the two schemas share a key.
 - There have been small internal changes to the ZodIssue type. This may impact user who have written a custom error maps. Most users will not be affected.
 
 ### Migrating from v1
@@ -502,7 +502,7 @@ person.passthrough().parse({
 // => { name: "bob dylan", extraKey: 61 }
 ```
 
-### `strict`
+### `.strict`
 
 You can _disallow_ unknown keys with `.strict()` . If there are any unknown keys in the input, Zod will throw an error.
 
@@ -524,7 +524,7 @@ person.parse({
 
 You can use the `.strip` method to reset an object schema to the default behavior (stripping unrecognized keys).
 
-### `.catchall()`
+### `.catchall`
 
 You can pass a "catchall" schema into an object schema. All unknown keys will be validated against it.
 
@@ -551,27 +551,14 @@ Using `.catchall()` obviates `.passthrough()` , `.strip()` , or `.strict()`. All
 
 ## Arrays
 
-There are two ways to define array schemas:
-
-#### `z.array(arg: ZodSchema)`
-
-First, you can create an array schema with the `z.array()` function; it accepts another ZodSchema, which defines the type of each array element.
-
 ```ts
 const stringArray = z.array(z.string());
-// inferred type: string[]
-```
 
-#### the `.array()` method
-
-For convenience, you can also call the `.array()` method on **any** Zod schema:
-
-```ts
+// equivalent
 const stringArray = z.string().array();
-// inferred type: string[]
 ```
 
-You have to be careful with the `.array()` method. It returns a new `ZodArray` instance. This means you need to be careful about the _order_ in which you call methods. These two schemas are very different:
+Be careful with the `.array()` method. It returns a new `ZodArray` instance. This means the _order_ in which you call methods matters. For instance:
 
 ```ts
 z.string().optional().array(); // (string | undefined)[]
@@ -594,10 +581,9 @@ nonEmptyStrings.parse(["Ariana Grande"]); // passes
 ### `.min/.max/.length`
 
 ```ts
-// must contain 5 or more items
-z.string().array().min(5);
-z.string().array().max(5);
-z.string().array().length(5);
+z.string().array().min(5); // must contain 5 or more items
+z.string().array().max(5); // must contain 5 or fewer items
+z.string().array().length(5); // must contain 5 items exactly
 ```
 
 Unlike `.nonempty()` these methods do not change the inferred type.
@@ -1109,7 +1095,7 @@ stringSchema.parse("fish"); // => returns "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
 
-### `parseAsync`
+### `.parseAsync`
 
 `.parseAsync(data:unknown): Promise<T>`
 
@@ -1334,7 +1320,7 @@ const IdToUser = z.transformer(
 
 > ⚠️ If your schema contains asynchronous transformers, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
 
-## `.default`
+### `.default`
 
 You can use transformers to implement the concept of "default values" in Zod.
 
@@ -1417,7 +1403,7 @@ data.error.format();
 } */
 ```
 
-For detailed information about the possible error codes and how to customize error messages, check out the dedicated error handling guide: [ERROR_HANDLING.md](./ERROR_HANDLING.md)
+For detailed information about the possible error codes and how to customize error messages, check out the dedicated error handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md)
 
 # Comparison
 
@@ -1576,4 +1562,4 @@ If you want to validate function inputs, use function schemas in Zod! It's a muc
 
 # Changelog
 
-View the changelog at [CHANGELOG.md](https://github.com/colinhacks/zod/blob/master/CHANGELOG.md)
+View the changelog at [CHANGELOG.md](CHANGELOG.md)

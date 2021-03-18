@@ -4,6 +4,6 @@ const run = async () => {
   z;
 };
 
-// run();
+run();
 
 export {};
