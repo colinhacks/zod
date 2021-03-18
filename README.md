@@ -30,20 +30,25 @@ if you're happy and you know it, star this repo ⭐
     - [.shape](#shape)
     - [.extend](#extend)
     - [.merge](#merge)
-    - [.pick/.omit](#pick-omit)
+    - [.pick/.omit](#pickomit)
     - [.partial](#partial)
     - [.deepPartial](#deepPartial)
-    - [.passthrough](#pass-through-unknown-keys)
-    - [.strict](#disallow-unknown-keys)
+    - [.passthrough](#passthrough)
+    - [.strict](#strict)
+    - [.strip](#strip)
+    - [.catchall](#catchall)
   - [Records](#records)
   - [Maps](#maps)
   - [Sets](#sets)
   - [Arrays](#arrays)
-    - [.nonempty](#non-empty-lists)
+    - [.nonempty](#nonempty)
+    - [.min/.max/.length](#minmaxlength)
   - [Unions](#unions)
-    - [.optional](#optional-types)
-    - [.nullable](#nullable-types)
+  - [Optionals](#optionals)
+  - [Nullables](#nullables)
   - [Enums](#enums)
+    - [Zod enums](#zod-enums)
+    - [Native enums](#native-enums)
   - [Tuples](#tuples)
   - [Recursive types](#recursive-types)
     - [JSON type](#json-type)
@@ -51,11 +56,16 @@ if you're happy and you know it, star this repo ⭐
   - [Promises](#promises)
   - [Instanceof](#instanceof)
   - [Function schemas](#function-schemas)
-- [Parsing](#parsing)
+- [Methods](#methods)
+  - [.parse](#parse)
+  - [.parseAsync](#parseasync)
+  - [.safeParse](#safeparse)
+  - [.safeParseAsync](#safeparseasync)
+  - [.default](#default)
+  - [.refine](#refine)
+  - [.transform](#transform)
 - [Type inference](#type-inference)
-- [Refinements](#refinements)
-- [Transformers](#transformers)
-- [Error handling](#errors)
+- [Errors](#errors)
 - [Comparison](#comparison)
   - [Joi](#joi)
   - [Yup](#yup)
@@ -540,6 +550,139 @@ person.parse({
 
 Using `.catchall()` obviates `.passthrough()` , `.strip()` , or `.strict()`. All keys are now considered "known".
 
+## Arrays
+
+There are two ways to define array schemas:
+
+#### `z.array(arg: ZodSchema)`
+
+First, you can create an array schema with the `z.array()` function; it accepts another ZodSchema, which defines the type of each array element.
+
+```ts
+const stringArray = z.array(z.string());
+// inferred type: string[]
+```
+
+#### the `.array()` method
+
+For convenience, you can also call the `.array()` method on **any** Zod schema:
+
+```ts
+const stringArray = z.string().array();
+// inferred type: string[]
+```
+
+You have to be careful with the `.array()` method. It returns a new `ZodArray` instance. This means you need to be careful about the _order_ in which you call methods. These two schemas are very different:
+
+```ts
+z.string().optional().array(); // (string | undefined)[]
+z.string().array().optional(); // string[] | undefined
+```
+
+### `.nonempty`
+
+If you want to ensure that an array contains at least one element, use `.nonempty()`.
+
+```ts
+const nonEmptyStrings = z.string().array().nonempty();
+// the inferred type is now
+// [string, ...string[]]
+
+nonEmptyStrings.parse([]); // throws: "Array cannot be empty"
+nonEmptyStrings.parse(["Ariana Grande"]); // passes
+```
+
+### `.min/.max/.length`
+
+```ts
+// must contain 5 or more items
+z.string().array().min(5);
+z.string().array().max(5);
+z.string().array().length(5);
+```
+
+Unlike `.nonempty()` these methods do not change the inferred type.
+
+## Unions
+
+Zod includes a built-in `z.union` method for composing "OR" types.
+
+```ts
+const stringOrNumber = z.union([z.string(), z.number()]);
+
+stringOrNumber.parse("foo"); // passes
+stringOrNumber.parse(14); // passes
+```
+
+Zod will test the input against each of the "options" in order and return the first value that validates successfully.
+
+For convenience, you can also use the `.or` method:
+
+```ts
+const stringOrNumber = z.string().or(z.number());
+```
+
+## Optionals
+
+You can make any schema optional with `z.optional()`:
+
+```ts
+const A = z.optional(z.string());
+
+A.parse(undefined); // => passes, returns undefined
+type A = z.infer<typeof A>; // string | undefined
+```
+
+You can also call the `.optional()` method on an existing schema:
+
+```ts
+const B = z.boolean().optional();
+
+const C = z.object({
+  username: z.string().optional(),
+});
+type C = z.infer<typeof C>; // { username?: string | undefined };
+```
+
+## Nullables
+
+Similarly, you can create nullable types like so:
+
+```ts
+const D = z.nullable(z.string());
+D.parse("asdf"); // => "asdf"
+D.parse(null); // => null
+```
+
+Or you can use the `.nullable()` method on any existing schema:
+
+```ts
+const E = z.string().nullable(); // equivalent to D
+type E = z.infer<typeof D>; // string | null
+```
+
+You can create unions of any two or more schemas.
+
+<!--
+
+``` ts
+/* Custom Union Types */
+
+const F = z
+  .union([z.string(), z.number(), z.boolean()])
+  .optional()
+  .nullable();
+
+F.parse('tuna'); // => tuna
+F.parse(42); // => 42
+F.parse(true); // => true
+F.parse(undefined); // => undefined
+F.parse(null); // => null
+F.parse({}); // => throws Error!
+
+type F = z.infer<typeof F>; // string | number | boolean | undefined | null;
+``` -->
+
 ## Records
 
 Record schemas are used to validate types such as `{ [k: string]: number }`.
@@ -604,139 +747,6 @@ const numberSet = z.set(z.string());
 type numberSet = z.infer<typeof numberSet>;
 // Set<number>
 ```
-
-## Arrays
-
-There are two ways to define array schemas:
-
-#### `z.array(arg: ZodSchema)`
-
-First, you can create an array schema with the `z.array()` function; it accepts another ZodSchema, which defines the type of each array element.
-
-```ts
-const stringArray = z.array(z.string());
-// inferred type: string[]
-```
-
-#### the `.array()` method
-
-For convenience, you can also call the `.array()` method on **any** Zod schema:
-
-```ts
-const stringArray = z.string().array();
-// inferred type: string[]
-```
-
-You have to be careful with the `.array()` method. It returns a new `ZodArray` instance. This means you need to be careful about the _order_ in which you call methods. These two schemas are very different:
-
-```ts
-z.string().optional().array(); // (string | undefined)[]
-z.string().array().optional(); // string[] | undefined
-```
-
-#### Non-empty arrays
-
-If you want to ensure that an array contains at least one element, use `.nonempty()`.
-
-```ts
-const nonEmptyStrings = z.string().array().nonempty();
-// the inferred type is now
-// [string, ...string[]]
-
-nonEmptyStrings.parse([]); // throws: "Array cannot be empty"
-nonEmptyStrings.parse(["Ariana Grande"]); // passes
-```
-
-#### Length validations
-
-```ts
-// must contain 5 or more items
-z.string().array().min(5);
-z.string().array().max(5);
-z.string().array().length(5);
-```
-
-Unlike `.nonempty()` these methods do not change the inferred type.
-
-## Unions
-
-Zod includes a built-in `z.union` method for composing "OR" types.
-
-```ts
-const stringOrNumber = z.union([z.string(), z.number()]);
-
-stringOrNumber.parse("foo"); // passes
-stringOrNumber.parse(14); // passes
-```
-
-Zod will test the input against each of the "options" in order and return the first value that validates successfully.
-
-For convenience, you can also use the `.or` method:
-
-```ts
-const stringOrNumber = z.string().or(z.number());
-```
-
-## Optional types
-
-You can make any schema optional with `z.optional()`:
-
-```ts
-const A = z.optional(z.string());
-
-A.parse(undefined); // => passes, returns undefined
-type A = z.infer<typeof A>; // string | undefined
-```
-
-You can also call the `.optional()` method on an existing schema:
-
-```ts
-const B = z.boolean().optional();
-
-const C = z.object({
-  username: z.string().optional(),
-});
-type C = z.infer<typeof C>; // { username?: string | undefined };
-```
-
-## Nullable types
-
-Similarly, you can create nullable types like so:
-
-```ts
-const D = z.nullable(z.string());
-D.parse("asdf"); // => "asdf"
-D.parse(null); // => null
-```
-
-Or you can use the `.nullable()` method on any existing schema:
-
-```ts
-const E = z.string().nullable(); // equivalent to D
-type E = z.infer<typeof D>; // string | null
-```
-
-You can create unions of any two or more schemas.
-
-<!--
-
-``` ts
-/* Custom Union Types */
-
-const F = z
-  .union([z.string(), z.number(), z.boolean()])
-  .optional()
-  .nullable();
-
-F.parse('tuna'); // => tuna
-F.parse(42); // => 42
-F.parse(true); // => true
-F.parse(undefined); // => undefined
-F.parse(null); // => null
-F.parse({}); // => throws Error!
-
-type F = z.infer<typeof F>; // string | number | boolean | undefined | null;
-``` -->
 
 ## Enums
 
@@ -931,7 +941,7 @@ const Category: z.ZodSchema<Category> = BaseCategory.merge(
 );
 ``` -->
 
-#### JSON type
+### JSON type
 
 If you want to validate any JSON value, you can use the snippet below.
 
@@ -948,7 +958,7 @@ jsonSchema.parse(data);
 
 Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
 
-#### Cyclical objects
+### Cyclical objects
 
 Despite supporting recursive schemas, passing an cyclical data into Zod will cause an infinite loop.
 
@@ -1074,7 +1084,7 @@ myFunction; // (arg: string)=>number[]
 
 All Zod schemas contain certain methods.
 
-## `.parse`
+### `.parse`
 
 `.parse(data:unknown): T`
 
@@ -1140,7 +1150,7 @@ For convenience, this has been aliased to `.spa`:
 await stringSchema.spa("billie");
 ```
 
-## `.refine`
+### `.refine`
 
 `.refine(validator: (data:T)=>any, params?: RefineParams)`
 
@@ -1156,20 +1166,7 @@ const myString = z.string().refine((val) => val.length <= 255, {
 });
 ```
 
-> ⚠️ Refinements must not throw. Instead they should return a falsy value to signal failure.
-
-#### Asynchronous refinements
-
-Refinements can also be async:
-
-```ts
-const userId = z.string().refine(async (id) => {
-  // verify that ID exists in database
-  return true;
-});
-```
-
-> ⚠️If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
+> ⚠️ Refinement functions should not throw. Instead they should return a falsy value to signal failure.
 
 #### Arguments
 
@@ -1201,7 +1198,7 @@ z.string().refine(
 );
 ```
 
-These options let you define powerful custom behavior. Zod is commonly used for form validation. If you want to verify that "password" and "confirm" match, you can do so like this:
+#### Customize error path
 
 ```ts
 const passwordForm = z
@@ -1226,6 +1223,29 @@ ZodError {
     "message": "Passwords don't match"
   }]
 }
+```
+
+#### Asynchronous refinements
+
+Refinements can also be async:
+
+```ts
+const userId = z.string().refine(async (id) => {
+  // verify that ID exists in database
+  return true;
+});
+```
+
+> ⚠️If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
+
+#### Relationship to transforms
+
+Transforms and refinements can be interleaved:
+
+```ts
+z.string()
+  .transform((val) => val.length)
+  .refine((val) => val > 25);
 ```
 
 <!-- Note that the `path` is set to `["confirm"]` , so you can easily display this error underneath the "Confirm password" textbox.
@@ -1253,7 +1273,7 @@ ZodError {
 }
 ``` -->
 
-## `.transform`
+### `.transform`
 
 To transform data after parsing, use the `transform` method.
 
@@ -1277,6 +1297,16 @@ const emailToDomain = z
 emailToDomain.parse("colinhacks@example.com"); // => example.com
 ```
 
+#### Relationship to refinements
+
+Transforms and refinements can be interleaved:
+
+```ts
+z.string()
+  .transform((val) => val.length)
+  .refine((val) => val > 25);
+```
+
 #### Async transformations
 
 Transformations can also be async.
@@ -1292,21 +1322,6 @@ const IdToUser = z.transformer(
 ```
 
 > ⚠️ If your schema contains asynchronous transformers, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
-
-#### Type inference for transformers
-
-Every Zod schema is associated with an _input type_ and and _output type_. For most schemas (e.g. `z.string()`) these two are the same. But for Transformers, they are different. For instance `z.string().transform(val => val.length)` has an input of `string` and an output of `number`.
-
-Normally you can use `z.infer<typeof A>` to extract the inferred type of schema A. But for schemas we introduce two new methods that allow you to separately extract the input _and_ output independently.
-
-```ts
-const stringToNumber = z.string().transform(val => val.length)
-
-// ⚠️ Important: z.infer gives the OUTPUT type!
-type type = z.infer<stringToNumber>; // number
-type out = z.output<stringToNumber>; // number, equivalent to z.infer
-type in = z.input<stringToNumber>; // string, returns input type
-```
 
 ## `.default`
 
@@ -1340,9 +1355,22 @@ const u: A = 12; // TypeError
 const u: A = "asdf"; // compiles
 ```
 
-We'll include examples of inferred types throughout the rest of the documentation.
+#### What about transforms?
 
-# ZodError
+In reality each Zod schema is actually associated with **two** types: an input and an output. For most schemas (e.g. `z.string()`) these two are the same. But once you add transforms into the mix, these two values can diverge. For instance `z.string().transform(val => val.length)` has an input of `string` and an output of `number`.
+
+You can separately extract the input and output types like so:
+
+```ts
+const stringToNumber = z.string().transform(val => val.length)
+
+// ⚠️ Important: z.infer returns the OUTPUT type!
+type type = z.infer<stringToNumber>; // number
+type out = z.output<stringToNumber>; // number, equivalent to z.infer
+type in = z.input<stringToNumber>; // string, returns input type
+```
+
+# Errors
 
 Zod provides a subclass of Error called ZodError. ZodErrors contain an `issues` array containing detailed information about the validation problems.
 

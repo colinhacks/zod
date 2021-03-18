@@ -64,6 +64,7 @@ This is an enum used by Zod internally to represent the type of a parsed value. 
 - `nan`
 - `number`
 - `integer`
+- `float`
 - `boolean`
 - `date`
 - `bigint`
@@ -76,6 +77,9 @@ This is an enum used by Zod internally to represent the type of a parsed value. 
 - `unknown`
 - `promise`
 - `void`
+- `never`
+- `map`
+- `set`
 
 ## A demonstrative example
 

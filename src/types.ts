@@ -315,7 +315,7 @@ export abstract class ZodType<
     }
     return returnType;
   }
-  advancedRefine = this._refinement;
+  superRefine = this._refinement;
 
   constructor(def: Def) {
     this._def = def;
