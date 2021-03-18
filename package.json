@@ -4,6 +4,7 @@
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/cjs/index.js",
   "types": "./lib/cjs/index.d.ts",
+  "module": "./lib/esm/index.js",
   "files": [
     "/lib"
   ],
@@ -39,7 +40,7 @@
     "check": "yarn check:lint && yarn check:format",
     "fix": "yarn fix:lint && yarn fix:format",
     "clean": "rm -rf lib/* deno/lib/*",
-    "build": "yarn run clean && npm run build:cjs && npm run build:deno",
+    "build": "yarn run clean && npm run build:cjs && npm run build:esm && npm run build:deno",
     "build:deno": "node ./deno/build.mjs",
     "build:esm": "tsc --p tsconfig.esm.json",
     "build:cjs": "tsc --p tsconfig.cjs.json",

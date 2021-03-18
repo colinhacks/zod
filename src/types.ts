@@ -1015,20 +1015,20 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
     return this._def.type;
   }
 
-  min = (minLength: number, message?: errorUtil.ErrMessage) =>
+  min = (minLength: number, message?: errorUtil.ErrMessage): this =>
     new ZodArray({
       ...this._def,
       minLength: { value: minLength, message: errorUtil.toString(message) },
-    });
+    }) as any;
 
-  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
+  max = (maxLength: number, message?: errorUtil.ErrMessage): this =>
     new ZodArray({
       ...this._def,
       maxLength: { value: maxLength, message: errorUtil.toString(message) },
-    });
+    }) as any;
 
-  length = (len: number, message?: errorUtil.ErrMessage) =>
-    this.min(len, message).max(len, message);
+  length = (len: number, message?: errorUtil.ErrMessage): this =>
+    this.min(len, message).max(len, message) as any;
 
   nonempty: () => ZodNonEmptyArray<T> = () => {
     return new ZodNonEmptyArray({ ...this._def });

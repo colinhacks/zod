@@ -5,13 +5,9 @@ const test = Deno.test;
 import * as z from "../index.ts";
 
 const minTwo = z.string().array().min(2);
-
 const maxTwo = z.string().array().max(2);
-
 const justTwo = z.string().array().length(2);
-
 const intNum = z.string().array().nonempty();
-
 const nonEmptyMax = z.string().array().nonempty().max(2);
 
 test("passing validations", () => {

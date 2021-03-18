@@ -8,7 +8,7 @@
       "dom"
     ],
     "target": "es5",
-    "removeComments": true,
+    "removeComments": false,
     "declaration": true,
     "esModuleInterop": true,
     "sourceMap": true,

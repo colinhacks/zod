@@ -75,10 +75,10 @@ export const issueHelpers = (error: ZodError, params: ParseParams) => {
 
     const defaultError =
       defaultErrorMap === params.errorMap
-        ? { message: `Invalid value.` }
+        ? { message: `Invalid value` }
         : defaultErrorMap(errorArg, {
             data: params.data,
-            defaultError: `Invalid value.`,
+            defaultError: `Invalid value`,
           });
     const issue = {
       ...errorData,
