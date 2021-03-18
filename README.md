@@ -75,29 +75,34 @@ if you're happy and you know it, star this repo ⭐
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-# Zod v3 is in alpha
+## Zod v3 is in alpha
 
-### New features
+#### New features
 
 - Transformers! But better! See the "breaking changes" section to understand the syntax changes.
 - You can now import Zod like `import { z } a from 'zod';` instead of using `import * as` syntax.
 - Added the `format` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
 - Added the `or` method to ZodType (the base class for all Zod schema) to easily create union types like `z.string().or(z.number())`
-- Added `z.setErrorMap`, an easier way to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING#customizing-errors-with-zoderrormap)
+- Added `z.setErrorMap`, an easier way to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
 - ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap
 
-### Breaking changes in v3
+#### Breaking changes in v3
 
 - The **minimum TypeScript version** is now _4.1_ (up from 3.7 for Zod 2). Several features have been rewritten to use [recursive conditional types](https://devblogs.microsoft.com/typescript/announcing-typescript-4-1/#recursive-conditional-types), an incredibly powerful new feature introduced in TS4.1.
 
 - **Transformers syntax**. Previously, creating a transformer required an input schema, an output schema, and a function to tranform between them. You created transformers like `z.transform(A, B, func)`, where `A` and `B` are Zod schemas. This is no longer the case. Accordingly:
 
-  ⚠️ The old syntax (`z.transformer(A, B, func)`) is no longer available.
-  ⚠️ The convenience method `A.transform(B, func)` is no longer available.
+  The old syntax (`z.transformer(A, B, func)`) is no longer available.
 
-  Instead, you apply transformations by simply using the `.transform()` method that exists on all Zod schemas. For example: `z.string().transform(val => val.length)`.
+  The convenience method `A.transform(B, func)` is no longer available.
 
-  Under the hood, all refinements and transformations are executed inside a dedicated "ZodEffects" class. Post-parsing, ZodEffects passes the data through a chain of refinements and transformations, then returns the final value. As such, you can now _interleave_ transformations and refinements. For instance:
+  Instead, you apply transformations by simply using the `.transform()` method that exists on all Zod schemas.
+
+  ```ts
+  z.string().transform((val) => val.length);
+  ```
+
+- Under the hood, all refinements and transformations are executed inside a dedicated "ZodEffects" class. Post-parsing, ZodEffects passes the data through a chain of refinements and transformations, then returns the final value. As such, you can now _interleave_ transformations and refinements. For instance:
 
   ```ts
   const test = z
@@ -113,11 +118,11 @@ if you're happy and you know it, star this repo ⭐
 - **ZodIntersection has been removed**. If you have an object schema, you can use the `A.merge(B)` instead. Note that this is equivalent to `A.extend(B.shape)` and is therefore not an intersection in the pure sense, as `B` takes precedence over `A` if the two schemas share a key.
 - There have been small internal changes to the ZodIssue type. This may impact user who have written a custom error maps. Most users will not be affected.
 
-### Migrating from v1
+#### Migrating from v1
 
-If you're upgrading straight to v3 from v1, you'll need to be aware of the breaking changes introduced in both v2 and v3. The v1->v2 migration guide is [here](https://github.com/colinhacks/zod/tree/v2).
+If you're upgrading straight to v3 from v1, you'll need to be aware of the breaking changes introduced in both v2 and v3. The v1->v2 migration guide is [here](https://github.com/colinhacks/zod/tree/v2#migration-from-v1).
 
-### Migrating from v2
+#### Migrating from v2
 
 Zod 2 is being retired and will not leave beta. This is due to some issues with it's implementation of transformers: details [here](https://github.com/colinhacks/zod/issues/264). Zod 3 is currently in alpha — install it at `zod@next`. (Zod 2 will continue to be available with `zod@beta` for the time being.)
 
