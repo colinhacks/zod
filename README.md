@@ -303,7 +303,7 @@ z.string().nonempty();
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
 
-### Custom error messages
+#### Custom error messages
 
 Optionally, you can pass in a second argument to provide a custom error message.
 
@@ -478,7 +478,7 @@ const deepPartialUser = user.deepPartial();
 
 > Important limitation: deep partials only work as expected in direct hierarchies of object schemas. A nested object schema can't be optional, nullable, contain refinements, contain transforms, etc.
 
-### Unrecognized keys
+#### Unrecognized keys
 
 By default Zod objects schemas strip out unrecognized keys during parsing.
 
@@ -786,7 +786,7 @@ const FishEnum = z.enum(fish);
 
 In that case, Zod isn't able to infer the individual enum elements; instead the inferred type will be `string` instead of `'Salmon' | 'Tuna' | 'Trout'`
 
-#### Autocompletion
+**Autocompletion**
 
 To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 
@@ -943,7 +943,7 @@ const Category: z.ZodSchema<Category> = BaseCategory.merge(
 );
 ``` -->
 
-### JSON type
+#### JSON type
 
 If you want to validate any JSON value, you can use the snippet below.
 
@@ -960,7 +960,7 @@ jsonSchema.parse(data);
 
 Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
 
-### Cyclical objects
+#### Cyclical objects
 
 Despite supporting recursive schemas, passing an cyclical data into Zod will cause an infinite loop.
 
