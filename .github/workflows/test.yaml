@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         node: [ '14' ]
-        typescript: [ '4.1', '4.1' ]
+        typescript: [ '4.1', '4.2' ]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v2

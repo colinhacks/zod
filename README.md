@@ -81,11 +81,10 @@ if you're happy and you know it, star this repo ⭐
 
 - Transformers! But better! See the "breaking changes" section to understand the syntax changes.
 - You can now import Zod like `import { z } a from 'zod';` instead of using `import * as` syntax.
-- ZodError now has a method to format the error into a strongly-typed, nested object: `error.format()`
-- You can quickly create union types using the `or` method: `z.string().or(z.number())`
-- You can easily customize or localize Zod's built-in error message generation with `z.setErrorMap`
+- Added the `format` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
+- Added the `or` method to ZodType (the base class for all Zod schema) to easily create union types like `z.string().or(z.number())`
+- Added `z.setErrorMap`, an easier way to _globally_ customize the error messages produced by Zod: [setErrorMap](./ERROR_HANDLING#customizing-errors-with-zoderrormap)
 - ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap
-- More intuitive `.default()` behavior
 
 ### Breaking changes in v3
 
@@ -627,21 +626,27 @@ const stringOrNumber = z.string().or(z.number());
 You can make any schema optional with `z.optional()`:
 
 ```ts
-const A = z.optional(z.string());
+const schema = z.optional(z.string());
 
-A.parse(undefined); // => passes, returns undefined
+schema.parse(undefined); // => returns undefined
 type A = z.infer<typeof A>; // string | undefined
 ```
 
-You can also call the `.optional()` method on an existing schema:
+You can make an existing schema optional with the `.optional()` method:
 
 ```ts
-const B = z.boolean().optional();
-
-const C = z.object({
+const user = z.object({
   username: z.string().optional(),
 });
 type C = z.infer<typeof C>; // { username?: string | undefined };
+```
+
+#### `.unwrap`
+
+```ts
+const stringSchema = z.string();
+const optionalString = stringSchema.optional();
+optionalString.unwrap() === stringSchema; // true
 ```
 
 ## Nullables
@@ -649,19 +654,25 @@ type C = z.infer<typeof C>; // { username?: string | undefined };
 Similarly, you can create nullable types like so:
 
 ```ts
-const D = z.nullable(z.string());
-D.parse("asdf"); // => "asdf"
-D.parse(null); // => null
+const nullableString = z.nullable(z.string());
+nullableString.parse("asdf"); // => "asdf"
+nullableString.parse(null); // => null
 ```
 
-Or you can use the `.nullable()` method on any existing schema:
+You can make an existing schema nullable with the `nullable` method:
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
 type E = z.infer<typeof D>; // string | null
 ```
 
-You can create unions of any two or more schemas.
+#### `.unwrap`
+
+```ts
+const stringSchema = z.string();
+const nullableString = stringSchema.nullable();
+nullableString.unwrap() === stringSchema; // true
+```
 
 <!--
 
@@ -1394,6 +1405,8 @@ if (!data.success) {
   ] */
 }
 ```
+
+#### Error formatting
 
 You can use the `.format()` method to convert this error into a nested object.
 

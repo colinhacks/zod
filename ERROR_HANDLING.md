@@ -146,7 +146,25 @@ As you can see three different issues were identified. Every ZodIssue has a `cod
 
 ## Customizing errors with ZodErrorMap
 
-You can customize **all** error messages produced by Zod by providing a custom instance of ZodErrorMap to `.parse()`. Internally, Zod uses a [default error map](https://github.com/colinhacks/zod/blob/master/defaultErrorMap.ts) to produce all error messages.
+You can customize **all** error messages produced by Zod by providing a custom "error map" to Zod, like so:
+
+```ts
+import { z } from "zod";
+
+const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
+  if (issue.code === z.ZodIssueCode.invalid_type) {
+    if (issue.expected === "string") {
+      return { message: "bad type!" };
+    }
+  }
+  if (issue.code === z.ZodIssueCode.custom) {
+    return { message: `less-than-${(issue.params || {}).minimum}` };
+  }
+  return { message: ctx.defaultError };
+};
+
+z.setErrorMap(customErrorMap);
+```
 
 `ZodErrorMap` is a special function. It accepts two arguments: `error` and `ctx`. The return type is `{ message: string }`. Essentially the error map accepts some information about the validation that is failing and returns an appropriate error message.
 
@@ -160,6 +178,8 @@ You can customize **all** error messages produced by Zod by providing a custom i
 
   - `ctx.data` contains the data that was passed into `.parse`. You can use this to customize the error message.
 
+As in the example, you can modify certain error messages and simply fall back to `ctx.defaultError` otherwise.
+
 ### A working example
 
 Let's look at a practical example of of customized error map:
@@ -168,19 +188,6 @@ Let's look at a practical example of of customized error map:
 import * as z from "zod";
 
 const errorMap: z.ZodErrorMap = (error, ctx) => {
-  /*
-
-  If error.message is set, that means the user is trying to
-  override the error message. This is how method-specific
-  error overrides work, like this:
-
-  z.string().min(5, { message: "TOO SMALL 🤬" })
-
-  It is a best practice to return `error.message` if it is set.
-  
-  */
-  if (error.message) return { message: error.message };
-
   /*
   This is where you override the various error codes
   */
@@ -204,6 +211,8 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
   // fall back to default message!
   return { message: ctx.defaultError };
 };
+
+z.setErrorMap(errorMap);
 
 z.string().parse(12, { errorMap });
 
