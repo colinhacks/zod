@@ -24,14 +24,14 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- **Zod 2 is in an early beta.** Upgrade with `yarn add zod@beta`. Read more about the new features and migration process here: https://github.com/colinhacks/zod/tree/v2. -->
 
-### Zod 2 is now in beta!
+<!-- ### Zod 3 is now in beta!
 
-Most projects will be able to upgrade from v1 to v2 without any breaking changes. Zod 2 is recommended for all new projects. Find a breakdown of the new features and a simple migration guide here: https://github.com/colinhacks/zod/tree/v2
+Most projects will be able to upgrade from v1 to v3 without any breaking changes. Zod 3 is recommended for all new projects. Find a breakdown of the new features and a simple migration guide here: https://github.com/colinhacks/zod/tree/v3
 
 ```
 npm install zod@beta
 yarn add zod@beta
-```
+``` -->
 
 <!-- **Aug 30 — zod@1.11 was released with lots of cool features!** -->
 
