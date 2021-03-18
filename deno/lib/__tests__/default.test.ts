@@ -2,8 +2,8 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import { util } from "../helpers/util.ts";
 import { z } from "../index.ts";
+import { util } from "../helpers/util.ts";
 
 test("basic defaults", () => {
   expect(z.string().default("default").parse(undefined)).toBe("default");
@@ -16,7 +16,7 @@ test("default with transform", () => {
     .default("default");
   expect(stringWithDefault.parse(undefined)).toBe("DEFAULT");
   expect(stringWithDefault).toBeInstanceOf(z.ZodOptional);
-  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodTransformer);
+  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodEffects);
   expect(stringWithDefault._def.innerType._def.schema).toBeInstanceOf(
     z.ZodSchema
   );

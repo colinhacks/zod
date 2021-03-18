@@ -57,28 +57,6 @@ test("incorrect #1", () => {
   expect(() => Test.parse({} as any)).toThrow();
 });
 
-test("inference", () => {
-  const t1 = z.object({
-    name: z.string(),
-    obj: z.object({}),
-    arrayarray: z.array(z.array(z.string())),
-  });
-
-  const i1 = t1.primitives();
-  type i1 = z.infer<typeof i1>;
-  const f1: util.AssertEqual<i1, { name: string }> = true;
-
-  const i2 = t1.nonprimitives();
-  type i2 = z.infer<typeof i2>;
-  const f2: util.AssertEqual<i2, { obj: {}; arrayarray: string[][] }> = true;
-
-  expect(f1).toBeTruthy();
-  expect(f2).toBeTruthy();
-  i1.parse({ name: "name" });
-  i2.parse({ obj: {}, arrayarray: [["asdf"]] });
-  expect(() => i1.parse({} as any)).toThrow();
-});
-
 test("nonstrict by default", () => {
   z.object({ points: z.number() }).parse({
     points: 2314,
@@ -124,62 +102,6 @@ test("strict", () => {
   const val = z.object({ points: z.number() }).strict().safeParse(data);
 
   expect(val.success).toEqual(false);
-});
-
-test("primitives", () => {
-  const baseObj = z.object({
-    stringPrimitive: z.string(),
-    stringArrayPrimitive: z.array(z.string()),
-    numberPrimitive: z.number(),
-    numberArrayPrimitive: z.array(z.number()),
-    booleanPrimitive: z.boolean(),
-    booleanArrayPrimitive: z.array(z.boolean()),
-    bigintPrimitive: z.bigint(),
-    bigintArrayPrimitive: z.array(z.bigint()),
-    undefinedPrimitive: z.undefined(),
-    nullPrimitive: z.null(),
-    primitiveUnion: z.union([z.string(), z.number()]),
-    primitiveIntersection: z.intersection(z.string(), z.string()),
-    lazyPrimitive: z.lazy(() => z.string()),
-    literalPrimitive: z.literal("sup"),
-    enumPrimitive: z.enum(["asdf", "qwer"]),
-    datePrimitive: z.date(),
-    primitiveTuple: z.tuple([z.string(), z.number()]),
-
-    nonprimitiveUnion: z.union([z.string(), z.object({})]),
-    object: z.object({}),
-    objectArray: z.object({}).array(),
-    arrayarray: z.array(z.array(z.string())),
-    nonprimitiveTuple: z.tuple([z.string(), z.number().array()]),
-  });
-
-  expect(Object.keys(baseObj.primitives().shape)).toEqual([
-    "stringPrimitive",
-    "stringArrayPrimitive",
-    "numberPrimitive",
-    "numberArrayPrimitive",
-    "booleanPrimitive",
-    "booleanArrayPrimitive",
-    "bigintPrimitive",
-    "bigintArrayPrimitive",
-    "undefinedPrimitive",
-    "nullPrimitive",
-    "primitiveUnion",
-    "primitiveIntersection",
-    "lazyPrimitive",
-    "literalPrimitive",
-    "enumPrimitive",
-    "datePrimitive",
-    "primitiveTuple",
-  ]);
-
-  expect(Object.keys(baseObj.nonprimitives().shape)).toEqual([
-    "nonprimitiveUnion",
-    "object",
-    "objectArray",
-    "arrayarray",
-    "nonprimitiveTuple",
-  ]);
 });
 
 test("catchall inference", () => {
@@ -284,4 +206,34 @@ test("test async PseudoPromise.all", async () => {
   const obj = { ty: "A" };
   const result = await Schema2.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
   expect(result.success).toEqual(true);
+});
+
+test("merging", () => {
+  const BaseTeacher = z.object({
+    subjects: z.array(z.string()),
+  });
+  const HasID = z.object({ id: z.string() });
+
+  const Teacher = BaseTeacher.merge(HasID);
+
+  const data = {
+    subjects: ["math"],
+    id: "asdfasdf",
+  };
+  expect(Teacher.parse(data)).toEqual(data);
+  expect(() => Teacher.parse({ subject: data.subjects })).toThrow();
+  expect(
+    BaseTeacher.passthrough()
+      .merge(HasID)
+      .parse({ ...data, extra: 12 })
+  ).toEqual({
+    ...data,
+    extra: 12,
+  });
+
+  expect(() =>
+    BaseTeacher.strict()
+      .merge(HasID)
+      .parse({ ...data, extra: 12 })
+  ).toThrow();
 });

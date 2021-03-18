@@ -18,7 +18,7 @@ test("refinement", () => {
   );
 
   expect(obj1 === (obj2 as any)).toEqual(false);
-  expect(obj2 === obj3).toEqual(false);
+  expect(obj2 === (obj3 as any)).toEqual(false);
 
   expect(() => obj1.parse({})).toThrow();
   expect(() => obj2.parse({ third: "adsf" })).toThrow();
