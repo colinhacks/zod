@@ -179,6 +179,7 @@ export abstract class ZodType<
     });
   };
 
+  /** Alias of safeParseAsync */
   spa = this.safeParseAsync;
 
   _parseWithInvalidFallback: (
@@ -1553,6 +1554,18 @@ export interface ZodUnionDef<
   options: T;
 }
 
+// export type toOpts<T> = T extends ZodUnionOptions ? T : never;
+// export type ZodUnionType<
+//   A extends ZodTypeAny,
+//   B extends ZodTypeAny
+// > = A extends ZodUnion<infer AOpts>
+//   ? B extends ZodUnion<infer BOpts>
+//     ? ZodUnion<toOpts<[...AOpts, ...BOpts]>>
+//     : ZodUnion<toOpts<[...AOpts, B]>>
+//   : B extends ZodUnion<infer BOpts>
+//   ? ZodUnion<toOpts<[A, ...BOpts]>>
+//   : ZodUnion<toOpts<[A, B]>>;
+
 export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
   T[number]["_output"],
   ZodUnionDef<T>,
@@ -2250,15 +2263,15 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
       ctx.parsedType === ZodParsedType.promise
         ? ctx.data
         : Promise.resolve(ctx.data);
-
     const promiseError = new ZodError([]);
     return PseudoPromise.resolve(
       promisified
         .then((data: any) => {
-          return this._def.type._parseWithInvalidFallback(data, {
+          const value = this._def.type._parseWithInvalidFallback(data, {
             ...ctx,
             parentError: promiseError,
           });
+          return value;
         })
         .then((data: any) => {
           if (!promiseError.isEmpty) {

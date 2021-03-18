@@ -25,8 +25,21 @@ const B = pass({
 });
 const run = async () => {
   z;
+
+  const data = z
+    .object({
+      name: z.string(),
+    })
+    .safeParse({ name: 12 });
+
+  console.log(data);
+  if (!data.success) console.log(data.error.format());
+  // console.log(z.promise(z.any()).safeParse(Promise.resolve("asdf")));
+  // console.log(z.any().safeParse("sdf"));
 };
 
 run();
 
 export {};
+
+// const stringOrNumber = z.string().or(z.number()).or(z.boolean());
