@@ -1,5 +1,13 @@
 # Changelog
 
+### zod@3.0.0-alpha.9
+
+- Added `z.strictCreate`
+
+### zod@3.0.0-alpha.8
+
+- Allowing optional default values on ZodOptional
+
 ### zod@3.0.0-alpha.5
 
 March 17, 2021

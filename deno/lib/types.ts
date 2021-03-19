@@ -1526,6 +1526,16 @@ export class ZodObject<
     }) as any;
   };
 
+  static strictCreate = <T extends ZodRawShape>(
+    shape: T
+  ): ZodObject<T, "strict"> => {
+    return new ZodObject({
+      shape: () => shape,
+      unknownKeys: "strict",
+      catchall: ZodNever.create(),
+    }) as any;
+  };
+
   static lazycreate = <T extends ZodRawShape>(shape: () => T): ZodObject<T> => {
     return new ZodObject({
       shape,
@@ -2603,6 +2613,7 @@ const neverType = ZodNever.create;
 const voidType = ZodVoid.create;
 const arrayType = ZodArray.create;
 const objectType = ZodObject.create;
+const strictObjectType = ZodObject.strictCreate;
 const unionType = ZodUnion.create;
 const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
@@ -2647,6 +2658,7 @@ export {
   promiseType as promise,
   recordType as record,
   setType as set,
+  strictObjectType as strictObject,
   stringType as string,
   effectsType as transformer,
   tupleType as tuple,
