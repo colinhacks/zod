@@ -355,25 +355,24 @@ export abstract class ZodType<
     return returnType;
   }
 
-  default<T extends util.noUndefined<Input>, This extends this = this>(
+  default<T extends Input, This extends this = this>(
     def: T
-  ): addDefaultToOptional<ZodOptionalType<This>>;
+  ): ZodOptional<This, true>;
   default<T extends () => Input, This extends this = this>(
     def: T
-  ): addDefaultToOptional<ZodOptionalType<This>>;
+  ): ZodOptional<This, true>;
   default(def: any) {
     const defaultValueFunc = typeof def === "function" ? def : () => def;
-    if (this instanceof ZodOptional) {
-      return new ZodOptional({
-        ...this._def,
-        defaultValue: defaultValueFunc,
-      }) as any;
-    }
-
+    // if (this instanceof ZodOptional) {
+    //   return new ZodOptional({
+    //     ...this._def,
+    //     defaultValue: defaultValueFunc,
+    //   }) as any;
+    // }
     return new ZodOptional({
       innerType: this,
       defaultValue: defaultValueFunc,
-    });
+    }) as any;
   }
 
   isOptional: () => boolean = () => this.safeParse(undefined).success;
@@ -2433,6 +2432,7 @@ export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
 export type addDefaultToOptional<
   T extends ZodOptional<any, any>
 > = T extends ZodOptional<infer U, any> ? ZodOptional<U, true> : never;
+
 export type removeDefaultFromOptional<
   T extends ZodOptional<any, any>
 > = T extends ZodOptional<infer U, any> ? ZodOptional<U, false> : never;

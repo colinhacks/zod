@@ -28,15 +28,18 @@ test("default with transform", () => {
   f2;
 });
 
-test("default on optional", () => {
+test("default on existing optional", () => {
   const stringWithDefault = z.string().optional().default("asdf");
   expect(stringWithDefault.parse(undefined)).toBe("asdf");
   expect(stringWithDefault).toBeInstanceOf(z.ZodOptional);
-  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodString);
+  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodOptional);
+  expect(stringWithDefault._def.innerType._def.innerType).toBeInstanceOf(
+    z.ZodString
+  );
   type inp = z.input<typeof stringWithDefault>;
   const f1: util.AssertEqual<inp, string | undefined> = true;
   type out = z.output<typeof stringWithDefault>;
-  const f2: util.AssertEqual<out, string> = true;
+  const f2: util.AssertEqual<out, string | undefined> = true;
   f1;
   f2;
 });
