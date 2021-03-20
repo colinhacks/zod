@@ -1,6 +1,5 @@
-**/.DS_Store
-node_modules
-/lib
-coverage
-.vscode
 *.log
+.DS_Store
+node_modules
+dist
+.vscode

@@ -1,4 +1,4 @@
-export const INVALID = Symbol("invalid_data");
+export const INVALID = Symbol('invalid_data');
 export type INVALID = typeof INVALID;
 export namespace util {
   export type AssertEqual<T, Expected> = [T] extends [Expected]
@@ -28,7 +28,7 @@ export namespace util {
 
   export const getValidEnumValues = (obj: any) => {
     const validKeys = Object.keys(obj).filter(
-      (k: any) => typeof obj[obj[k]] !== "number"
+      (k: any) => typeof obj[obj[k]] !== 'number'
     );
     const filtered: any = {};
     for (const k of validKeys) {

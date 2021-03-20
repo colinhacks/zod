@@ -1,17 +1,14 @@
 {
   "name": "zod",
-  "version": "3.0.0-alpha.10",
+  "version": "3.0.0-alpha.17",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "main": "./lib/cjs/index.js",
-  "types": "./lib/cjs/index.d.ts",
-  "module": "./lib/esm/index.js",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "module": "dist/zod.esm.js",
   "exports": {
-    "require": "./lib/cjs/index.js",
-    "import": "./lib/esm/index.js"
+    "require": "./dist/index.js",
+    "import": "./dist/zod.esm.js"
   },
-  "files": [
-    "/lib"
-  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/colinhacks/zod"
@@ -36,55 +33,41 @@
     "type",
     "inference"
   ],
-  "scripts": {
-    "check:format": "prettier --check \"src/**/*.ts\" \"deno/lib/**/*.ts\"",
-    "fix:format": "prettier --write \"src/**/*.ts\" \"deno/lib/**/*.ts\"",
-    "check:lint": "eslint --ext .ts ./src",
-    "fix:lint": "eslint --fix --ext .ts ./src",
-    "check": "yarn check:lint && yarn check:format",
-    "fix": "yarn fix:lint && yarn fix:format",
-    "clean": "rm -rf lib/* deno/lib/*",
-    "build": "yarn run clean && npm run build:cjs && npm run build:esm && npm run build:deno",
-    "build:deno": "node ./deno/build.mjs",
-    "build:esm": "tsc --p tsconfig.esm.json",
-    "build:cjs": "tsc --p tsconfig.cjs.json",
-    "test": "node --trace-warnings node_modules/.bin/jest --coverage && yarn run badge",
-    "testone": "jest",
-    "badge": "make-coverage-badge --output-path ./coverage.svg",
-    "prepublishOnly": "npm run build && npm run build:deno",
-    "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json --trace-warnings",
-    "depcruise": "depcruise -c .dependency-cruiser.js src"
-  },
   "devDependencies": {
-    "@types/jest": "^26.0.17",
     "@types/node": "^14.14.10",
-    "@typescript-eslint/eslint-plugin": "^4.11.1",
-    "@typescript-eslint/parser": "^4.11.1",
-    "dependency-cruiser": "^9.19.0",
-    "eslint": "^7.15.0",
-    "eslint-config-prettier": "^7.1.0",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-simple-import-sort": "^7.0.0",
-    "eslint-plugin-unused-imports": "^1.1.0",
     "husky": "^4.3.4",
-    "jest": "^26.6.3",
-    "lint-staged": "^10.5.3",
-    "make-coverage-badge": "^1.2.0",
     "nodemon": "^2.0.2",
-    "prettier": "^2.2.1",
-    "ts-jest": "^26.4.4",
     "ts-node": "^9.1.0",
+    "tsdx": "^0.14.1",
+    "tslib": "^2.1.0",
     "typescript": "4.1"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "engines": {
+    "node": ">=10"
+  },
+  "scripts": {
+    "start": "tsdx watch",
+    "build": "npm run build:pkg && npm run build:deno",
+    "build:pkg": "tsdx build",
+    "build:deno": "rm -rf deno/lib/* && node ./deno/build.mjs",
+    "test": "tsdx test",
+    "lint": "tsdx lint",
+    "prepare": "tsdx build",
+    "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn build:deno && lint-staged"
+      "pre-commit": "tsdx lint --fix && yarn build:deno"
     }
   },
-  "lint-staged": {
-    "*.ts": [
-      "yarn fix:lint",
-      "yarn fix:format"
-    ]
+  "prettier": {
+    "printWidth": 80,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "es5"
   }
 }
