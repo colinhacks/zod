@@ -6,9 +6,10 @@ const run = async () => {
     .object({ name: string() })
     .refine((val) => val.name.length > 10)
     .and(z.object({ test: z.number() }));
+
   console.log(
     arg.safeParse({
-      name: "asdf",
+      name: "aasdfsdffssdf",
       test: 1234,
     })
   );
