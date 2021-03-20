@@ -82,6 +82,9 @@ export const defaultErrorMap = (
     case ZodIssueCode.custom:
       message = `Invalid input.`;
       break;
+    case ZodIssueCode.invalid_intersection_types:
+      message = `Intersections only support objects`;
+      break;
     default:
       message = `Invalid input.`;
       util.assertNever(error);

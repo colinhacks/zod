@@ -392,6 +392,10 @@ type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
 
 If the two schemas share keys, the properties of the _merged schema_ take precedence.
 
+<!-- `.merge` is just syntactic sugar over the more generic `z.intersection` which is documented below. -->
+
+> IMPORTANT: the schema returned by `.merge` is the _intersection_ of the two schemas. The schema passed into `.merge` does not "overwrite" properties of the original schema. To demonstrate:
+
 ```ts
 const Obj1 = z.object({ field: z.string() });
 const Obj2 = z.object({ field: z.number() });
@@ -870,6 +874,42 @@ FruitEnum.parse("banana"); // passes
 FruitEnum.parse(3); // passes
 FruitEnum.parse("Cantaloupe"); // fails
 ```
+
+## Intersections
+
+<!-- > ⚠️ Intersections are deprecated. If you are trying to merge objects, use the `.merge` method instead. -->
+
+Intersections are useful for creating "logical AND" types.
+
+```ts
+const a = z.union([z.number(), z.string()]);
+const b = z.union([z.number(), z.boolean()]);
+const c = z.intersection(a, b);
+
+type c = z.infer<typeof c>; // => number
+
+const stringAndNumber = z.intersection(z.string(), z.number());
+type Never = z.infer<typeof stringAndNumber>; // => never
+```
+
+<!-- Intersections in Zod are not smart. Whatever data you pass into `.parse()` gets passed into the two intersected schemas. Because Zod object schemas don't allow any unknown keys by default, there are some unintuitive behavior surrounding intersections of object schemas. -->
+
+<!--
+
+``` ts
+const A = z.object({
+  a: z.string(),
+});
+
+const B = z.object({
+  b: z.string(),
+});
+
+const AB = z.intersection(A, B);
+
+type Teacher = z.infer<typeof Teacher>;
+// { id:string; name:string };
+```  -->
 
 ## Tuples
 
@@ -1458,7 +1498,7 @@ Branded -->
 * Missing lazy/recursive types
 * Missing promise schemas
 * Missing function schemas
-* Missing union schemas
+* Missing union & intersection schemas
 * Missing support for parsing cyclical data (maybe)
 * Missing error customization -->
 
@@ -1482,7 +1522,7 @@ Differences
 <!-- - Missing nonempty arrays with proper typing (`[T, ...T[]]`) -->
 - Missing promise schemas
 - Missing function schemas
-- Missing union schemas
+- Missing union & intersection schemas
 
 <!-- ¹Yup has a strange interpretation of the word `required`. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. Instead, Yup us Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom refinement. -->
 
@@ -1537,7 +1577,7 @@ This more declarative API makes schema definitions vastly more concise.
 - Missing lazy/recursive types
 - Missing promise schemas
 - Missing function schemas
-- Missing union schemas
+- Missing union & intersection schemas
 - Missing support for parsing cyclical data (maybe)
 - Missing error customization
 
@@ -1553,7 +1593,7 @@ Good type inference support, but limited options for object type masking (no `.p
 - Missing nonempty arrays with proper typing (`[T, ...T[]]`)
 - Missing lazy/recursive types
 - Missing promise schemas
-- Missing union schemas
+- Missing union & intersection schemas
 - Missing error customization
 - Missing record schemas (their "record" is equivalent to Zod "object")
 
