@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "./lib/cjs"
+  },
+  "exclude": [
+    "./src/**/__tests__",
+    "./src/playground.ts"
+  ]
+}

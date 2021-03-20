@@ -1,3 +1,3 @@
-import * as z from './external';
-export * from './external';
+import * as z from "./external";
+export * from "./external";
 export { z };

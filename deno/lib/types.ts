@@ -1,4 +1,4 @@
-import { errorUtil } from './helpers/errorUtil.ts';
+import { errorUtil } from "./helpers/errorUtil.ts";
 import {
   getParsedType,
   issueHelpers,
@@ -8,11 +8,10 @@ import {
   ParseParamsWithOptionals,
   ZodParsedType,
   ZodParserReturnType,
-} from './helpers/parseUtil.ts';
-import { partialUtil } from './helpers/partialUtil.ts';
-import { INVALID, util } from './helpers/util.ts';
-import { NOSET, PseudoPromise } from './PseudoPromise.ts';
-
+} from "./helpers/parseUtil.ts";
+import { partialUtil } from "./helpers/partialUtil.ts";
+import { INVALID, util } from "./helpers/util.ts";
+import { NOSET, PseudoPromise } from "./PseudoPromise.ts";
 import {
   defaultErrorMap,
   MakeErrorData,
@@ -20,7 +19,7 @@ import {
   ZodCustomIssue,
   ZodError,
   ZodIssueCode,
-} from './ZodError.ts';
+} from "./ZodError.ts";
 
 ///////////////////////////////////////
 ///////////////////////////////////////
@@ -36,12 +35,12 @@ export type RefinementCtx = {
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
-export type TypeOf<T extends ZodType<any>> = T['_output'];
-export type input<T extends ZodType<any>> = T['_input'];
-export type output<T extends ZodType<any>> = T['_output'];
+export type TypeOf<T extends ZodType<any>> = T["_output"];
+export type input<T extends ZodType<any>> = T["_input"];
+export type output<T extends ZodType<any>> = T["_output"];
 export type { TypeOf as infer };
 
-export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, 'code'>>;
+export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {}
 
 type ParseReturnType<T> = T | INVALID | PseudoPromise<T | INVALID>;
@@ -50,7 +49,7 @@ type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<
   infer Out
 >
   ? ZodEffects<Inner, Out>
-  : ZodEffects<T, T['_output']>;
+  : ZodEffects<T, T["_output"]>;
 export abstract class ZodType<
   Output,
   Def extends ZodTypeDef = ZodTypeDef,
@@ -96,7 +95,7 @@ export abstract class ZodType<
       return data;
     };
 
-    PROMISE = PROMISE.then(THROW_ERROR_IF_PRESENT('post effects'))
+    PROMISE = PROMISE.then(THROW_ERROR_IF_PRESENT("post effects"))
       .then((data) => {
         return { success: true, data };
       })
@@ -207,8 +206,8 @@ export abstract class ZodType<
   refine: <Func extends (arg: Output) => any, This extends this = this>(
     check: Func,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
-  ) => ZodEffectsType<This> = (check, message = 'Invalid value.') => {
-    if (typeof message === 'string') {
+  ) => ZodEffectsType<This> = (check, message = "Invalid value.") => {
+    if (typeof message === "string") {
       return this._refinement((val, ctx) => {
         const result = check(val);
         const setError = () =>
@@ -227,7 +226,7 @@ export abstract class ZodType<
         }
       });
     }
-    if (typeof message === 'function') {
+    if (typeof message === "function") {
       return this._refinement((val, ctx) => {
         const result = check(val);
         const setError = () =>
@@ -275,7 +274,7 @@ export abstract class ZodType<
     return this._refinement((val, ctx) => {
       if (!check(val)) {
         ctx.addIssue(
-          typeof refinementData === 'function'
+          typeof refinementData === "function"
             ? refinementData(val, ctx)
             : refinementData
         );
@@ -295,7 +294,7 @@ export abstract class ZodType<
   //   }) as this;
   // };
   _refinement<This extends this>(
-    refinement: InternalCheck<Output>['refinement']
+    refinement: InternalCheck<Output>["refinement"]
   ): ZodEffectsType<This> {
     let returnType;
     if (this instanceof ZodEffects) {
@@ -303,13 +302,13 @@ export abstract class ZodType<
         ...this._def,
         effects: [
           ...(this._def.effects || []),
-          { type: 'refinement', refinement },
+          { type: "refinement", refinement },
         ],
       }) as any;
     } else {
       returnType = new ZodEffects({
         schema: this,
-        effects: [{ type: 'refinement', refinement }],
+        effects: [{ type: "refinement", refinement }],
       }) as any;
     }
     return returnType;
@@ -344,13 +343,13 @@ export abstract class ZodType<
         ...this._def,
         effects: [
           ...(this._def.effects || []),
-          { type: 'transform', transform },
+          { type: "transform", transform },
         ],
       }) as any;
     } else {
       returnType = new ZodEffects({
         schema: this,
-        effects: [{ type: 'transform', transform }],
+        effects: [{ type: "transform", transform }],
       }) as any;
     }
     return returnType;
@@ -363,7 +362,7 @@ export abstract class ZodType<
     def: T
   ): ZodOptional<This, true>;
   default(def: any) {
-    const defaultValueFunc = typeof def === 'function' ? def : () => def;
+    const defaultValueFunc = typeof def === "function" ? def : () => def;
     // if (this instanceof ZodOptional) {
     //   return new ZodOptional({
     //     ...this._def,
@@ -417,7 +416,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
     if (this._def.isEmail && !emailRegex.test(ctx.data)) {
       ctx.addIssue({
-        validation: 'email',
+        validation: "email",
         code: ZodIssueCode.invalid_string,
         message: this._def.isEmail.message,
       });
@@ -428,7 +427,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         new URL(ctx.data);
       } catch {
         ctx.addIssue({
-          validation: 'url',
+          validation: "url",
           code: ZodIssueCode.invalid_string,
           message: this._def.isURL.message,
         });
@@ -437,7 +436,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
     if (this._def.isUUID && !uuidRegex.test(ctx.data)) {
       ctx.addIssue({
-        validation: 'email',
+        validation: "email",
         code: ZodIssueCode.invalid_string,
         message: this._def.isUUID.message,
       });
@@ -448,7 +447,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         ctx.addIssue({
           code: ZodIssueCode.too_small,
           minimum: this._def.minLength.value,
-          type: 'string',
+          type: "string",
           inclusive: true,
           message: this._def.minLength.message,
           // ...errorUtil.errToObj(this._def.minLength.message),
@@ -461,7 +460,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         ctx.addIssue({
           code: ZodIssueCode.too_big,
           maximum: this._def.maxLength.value,
-          type: 'string',
+          type: "string",
           inclusive: true,
           message: this._def.maxLength.message,
           // ...errorUtil.errToObj(this._def.maxLength.message),
@@ -502,7 +501,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
 
   regex = (regexp: RegExp, message?: errorUtil.ErrMessage) =>
-    this._regex(regexp, 'regex', message);
+    this._regex(regexp, "regex", message);
 
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
     new ZodString({
@@ -584,7 +583,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         ctx.addIssue({
           code: ZodIssueCode.too_small,
           minimum: MIN.value,
-          type: 'number',
+          type: "number",
           inclusive: MIN.inclusive,
           message: MIN.message,
         });
@@ -600,7 +599,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         ctx.addIssue({
           code: ZodIssueCode.too_big,
           maximum: MAX.value,
-          type: 'number',
+          type: "number",
           inclusive: MAX.inclusive,
           message: MAX.message,
         });
@@ -611,8 +610,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       if (!Number.isInteger(ctx.data)) {
         ctx.addIssue({
           code: ZodIssueCode.invalid_type,
-          expected: 'integer',
-          received: 'float',
+          expected: "integer",
+          received: "float",
           message: this._def.isInteger.message,
         });
       }
@@ -965,7 +964,7 @@ const parseArray = (ctx: ParseContext, def: ZodArrayDef<any>) => {
       ctx.addIssue({
         code: ZodIssueCode.too_small,
         minimum: def.minLength.value,
-        type: 'array',
+        type: "array",
         inclusive: true,
         message: def.minLength.message,
       });
@@ -977,7 +976,7 @@ const parseArray = (ctx: ParseContext, def: ZodArrayDef<any>) => {
       ctx.addIssue({
         code: ZodIssueCode.too_big,
         maximum: def.maxLength.value,
-        type: 'array',
+        type: "array",
         inclusive: true,
         message: def.maxLength.message,
       });
@@ -988,9 +987,9 @@ const parseArray = (ctx: ParseContext, def: ZodArrayDef<any>) => {
 };
 
 export class ZodArray<T extends ZodTypeAny> extends ZodType<
-  T['_output'][],
+  T["_output"][],
   ZodArrayDef<T>,
-  T['_input'][]
+  T["_input"][]
 > {
   _parse(ctx: ParseContext): any {
     const result = parseArray(ctx, this._def);
@@ -1056,9 +1055,9 @@ export interface ZodNonEmptyArrayDef<T extends ZodTypeAny = ZodTypeAny>
 }
 
 export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
-  [T['_output'], ...T['_output'][]],
+  [T["_output"], ...T["_output"][]],
   ZodNonEmptyArrayDef<T>,
-  [T['_input'], ...T['_input'][]]
+  [T["_input"], ...T["_input"][]]
 > {
   _parse(ctx: ParseContext): any {
     // if (ctx.parsedType !== ZodParsedType.array) {
@@ -1078,7 +1077,7 @@ export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
       ctx.addIssue({
         code: ZodIssueCode.too_small,
         minimum: 1,
-        type: 'array',
+        type: "array",
         inclusive: true,
         // message: this._def.minLength.message,
         // ...errorUtil.errToObj(this._def.minLength.message),
@@ -1193,13 +1192,13 @@ const ExtendFactory = <Def extends ZodObjectDef>(def: Def) => <
 ): ZodObject<
   {
     [k in Exclude<
-      keyof ReturnType<Def['shape']>,
+      keyof ReturnType<Def["shape"]>,
       keyof Augmentation
-    >]: ReturnType<Def['shape']>[k];
+    >]: ReturnType<Def["shape"]>[k];
   } &
     { [k in keyof Augmentation]: Augmentation[k] },
-  Def['unknownKeys'],
-  Def['catchall']
+  Def["unknownKeys"],
+  Def["catchall"]
 > => {
   return new ZodObject({
     ...def,
@@ -1210,7 +1209,7 @@ const ExtendFactory = <Def extends ZodObjectDef>(def: Def) => <
   }) as any;
 };
 
-type UnknownKeysParam = 'passthrough' | 'strict' | 'strip';
+type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
 export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,
@@ -1225,7 +1224,7 @@ export interface ZodObjectDef<
 export type baseObjectOutputType<Shape extends ZodRawShape> = util.flatten<
   objectUtil.addQuestionMarks<
     {
-      [k in keyof Shape]: Shape[k]['_output'];
+      [k in keyof Shape]: Shape[k]["_output"];
     }
   >
 >;
@@ -1236,13 +1235,13 @@ export type objectOutputType<
 > = ZodTypeAny extends Catchall
   ? baseObjectOutputType<Shape>
   : util.flatten<
-      baseObjectOutputType<Shape> & { [k: string]: Catchall['_output'] }
+      baseObjectOutputType<Shape> & { [k: string]: Catchall["_output"] }
     >;
 
 export type baseObjectInputType<Shape extends ZodRawShape> = util.flatten<
   objectUtil.addQuestionMarks<
     {
-      [k in keyof Shape]: Shape[k]['_input'];
+      [k in keyof Shape]: Shape[k]["_input"];
     }
   >
 >;
@@ -1253,12 +1252,12 @@ export type objectInputType<
 > = ZodTypeAny extends Catchall
   ? baseObjectInputType<Shape>
   : util.flatten<
-      baseObjectInputType<Shape> & { [k: string]: Catchall['_input'] }
+      baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
     >;
 
 export class ZodObject<
   T extends ZodRawShape,
-  UnknownKeys extends UnknownKeysParam = 'strip',
+  UnknownKeys extends UnknownKeysParam = "strip",
   Catchall extends ZodTypeAny = ZodTypeAny,
   Output = objectOutputType<T, Catchall>,
   Input = objectInputType<T, Catchall>
@@ -1301,7 +1300,7 @@ export class ZodObject<
       // and schema is optional
       // don't add the
       // first check is required to avoid non-enumerable keys
-      if (typeof ctx.data[key] === 'undefined' && !dataKeys.includes(key)) {
+      if (typeof ctx.data[key] === "undefined" && !dataKeys.includes(key)) {
         objectPromises[key] = new PseudoPromise()
           .then(() => {
             return keyValidator._parseWithInvalidFallback(undefined, {
@@ -1342,18 +1341,18 @@ export class ZodObject<
     if (this._def.catchall instanceof ZodNever) {
       const unknownKeys = this._def.unknownKeys;
 
-      if (unknownKeys === 'passthrough') {
+      if (unknownKeys === "passthrough") {
         for (const key of extraKeys) {
           objectPromises[key] = PseudoPromise.resolve(ctx.data[key]);
         }
-      } else if (unknownKeys === 'strict') {
+      } else if (unknownKeys === "strict") {
         if (extraKeys.length > 0) {
           ctx.addIssue({
             code: ZodIssueCode.unrecognized_keys,
             keys: extraKeys,
           });
         }
-      } else if (unknownKeys === 'strip') {
+      } else if (unknownKeys === "strip") {
       } else {
         throw new Error(`Internal ZodObject error: invalid unknownKeys value.`);
       }
@@ -1384,22 +1383,22 @@ export class ZodObject<
     return this._def.shape();
   }
 
-  strict = (): ZodObject<T, 'strict', Catchall> =>
+  strict = (): ZodObject<T, "strict", Catchall> =>
     new ZodObject({
       ...this._def,
-      unknownKeys: 'strict',
+      unknownKeys: "strict",
     }) as any;
 
-  strip = (): ZodObject<T, 'strip', Catchall> =>
+  strip = (): ZodObject<T, "strip", Catchall> =>
     new ZodObject({
       ...this._def,
-      unknownKeys: 'strip',
+      unknownKeys: "strip",
     }) as any;
 
-  passthrough = (): ZodObject<T, 'passthrough', Catchall> =>
+  passthrough = (): ZodObject<T, "passthrough", Catchall> =>
     new ZodObject({
       ...this._def,
-      unknownKeys: 'passthrough',
+      unknownKeys: "passthrough",
     }) as any;
 
   nonstrict = this.passthrough;
@@ -1421,7 +1420,7 @@ export class ZodObject<
    */
   merge: <Incoming extends AnyZodObject>(
     merging: Incoming
-  ) => ZodObject<T & Incoming['_shape'], UnknownKeys, Catchall> = (merging) => {
+  ) => ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = (merging) => {
     const mergedShape = objectUtil.mergeShapes(
       this._def.shape(),
       merging._def.shape()
@@ -1454,9 +1453,7 @@ export class ZodObject<
     const shape: any = {};
     Object.keys(mask).map((key) => {
       shape[key] = this.shape[key];
-      return null;
     });
-
     return new ZodObject({
       ...this._def,
       shape: () => shape,
@@ -1475,7 +1472,6 @@ export class ZodObject<
       if (Object.keys(mask).indexOf(key) === -1) {
         shape[key] = this.shape[key];
       }
-      return null;
     });
     return new ZodObject({
       ...this._def,
@@ -1484,7 +1480,7 @@ export class ZodObject<
   };
 
   partial = (): ZodObject<
-    { [k in keyof T]: ReturnType<T[k]['optional']> },
+    { [k in keyof T]: ReturnType<T[k]["optional"]> },
     UnknownKeys,
     Catchall
   > => {
@@ -1525,17 +1521,17 @@ export class ZodObject<
   static create = <T extends ZodRawShape>(shape: T): ZodObject<T> => {
     return new ZodObject({
       shape: () => shape,
-      unknownKeys: 'strip',
+      unknownKeys: "strip",
       catchall: ZodNever.create(),
     }) as any;
   };
 
   static strictCreate = <T extends ZodRawShape>(
     shape: T
-  ): ZodObject<T, 'strict'> => {
+  ): ZodObject<T, "strict"> => {
     return new ZodObject({
       shape: () => shape,
-      unknownKeys: 'strict',
+      unknownKeys: "strict",
       catchall: ZodNever.create(),
     }) as any;
   };
@@ -1543,7 +1539,7 @@ export class ZodObject<
   static lazycreate = <T extends ZodRawShape>(shape: () => T): ZodObject<T> => {
     return new ZodObject({
       shape,
-      unknownKeys: 'strip',
+      unknownKeys: "strip",
       catchall: ZodNever.create(),
     }) as any;
   };
@@ -1578,9 +1574,9 @@ export interface ZodUnionDef<
 //   : ZodUnion<toOpts<[A, B]>>;
 
 export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
-  T[number]['_output'],
+  T[number]["_output"],
   ZodUnionDef<T>,
-  T[number]['_input']
+  T[number]["_input"]
 > {
   _parse(ctx: ParseContext): any {
     const unionErrors: ZodError[] = [...Array(this._def.options.length)].map(
@@ -1609,7 +1605,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
             });
           } else {
             const nonTypeErrors = unionErrors.filter((err) => {
-              return err.issues[0].code !== 'invalid_type';
+              return err.issues[0].code !== "invalid_type";
             });
             if (nonTypeErrors.length === 1) {
               ctx.currentError.addIssues(nonTypeErrors[0].issues);
@@ -1653,11 +1649,11 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 ////////////////////////////////////////
 ////////////////////////////////////////
 export type OutputTypeOfTuple<T extends [ZodTypeAny, ...ZodTypeAny[]] | []> = {
-  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]['_output'] : never;
+  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
 };
 
 export type InputTypeOfTuple<T extends [ZodTypeAny, ...ZodTypeAny[]] | []> = {
-  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]['_input'] : never;
+  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_input"] : never;
 };
 
 export interface ZodTupleDef<
@@ -1685,14 +1681,14 @@ export class ZodTuple<
         code: ZodIssueCode.too_big,
         maximum: this._def.items.length,
         inclusive: true,
-        type: 'array',
+        type: "array",
       });
     } else if (ctx.data.length < this._def.items.length) {
       ctx.addIssue({
         code: ZodIssueCode.too_small,
         minimum: this._def.items.length,
         inclusive: true,
-        type: 'array',
+        type: "array",
       });
     }
 
@@ -1742,9 +1738,9 @@ export interface ZodRecordDef<Value extends ZodTypeAny = ZodTypeAny>
 }
 
 export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
-  Record<string, Value['_output']>,
+  Record<string, Value["_output"]>,
   ZodRecordDef<Value>,
-  Record<string, Value['_input']>
+  Record<string, Value["_input"]>
 > {
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.object) {
@@ -1798,9 +1794,9 @@ export class ZodMap<
   Key extends ZodTypeAny = ZodTypeAny,
   Value extends ZodTypeAny = ZodTypeAny
 > extends ZodType<
-  Map<Key['_output'], Value['_output']>,
+  Map<Key["_output"], Value["_output"]>,
   ZodMapDef<Key, Value>,
-  Map<Key['_input'], Value['_input']>
+  Map<Key["_input"], Value["_input"]>
 > {
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.map) {
@@ -1822,7 +1818,7 @@ export class ZodMap<
           new PseudoPromise().then(() => {
             return this._def.keyType._parseWithInvalidFallback(key, {
               ...ctx,
-              path: [...ctx.path, index, 'key'],
+              path: [...ctx.path, index, "key"],
               parentError: ctx.currentError,
             });
           }),
@@ -1831,7 +1827,7 @@ export class ZodMap<
               value,
               {
                 ...ctx,
-                path: [...ctx.path, index, 'value'],
+                path: [...ctx.path, index, "value"],
                 parentError: ctx.currentError,
               }
             );
@@ -1873,9 +1869,9 @@ export interface ZodSetDef<Value extends ZodTypeAny = ZodTypeAny>
 }
 
 export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
-  Set<Value['_output']>,
+  Set<Value["_output"]>,
   ZodSetDef<Value>,
-  Set<Value['_input']>
+  Set<Value["_input"]>
 > {
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.set) {
@@ -1937,15 +1933,15 @@ export interface ZodFunctionDef<
 export type OuterTypeOfFunction<
   Args extends ZodTuple<any>,
   Returns extends ZodTypeAny
-> = Args['_input'] extends Array<any>
-  ? (...args: Args['_input']) => Returns['_output']
+> = Args["_input"] extends Array<any>
+  ? (...args: Args["_input"]) => Returns["_output"]
   : never;
 
 export type InnerTypeOfFunction<
   Args extends ZodTuple<any>,
   Returns extends ZodTypeAny
-> = Args['_output'] extends Array<any>
-  ? (...args: Args['_output']) => Returns['_input']
+> = Args["_output"] extends Array<any>
+  ? (...args: Args["_output"]) => Returns["_input"]
   : never;
 
 export class ZodFunction<
@@ -2025,7 +2021,7 @@ export class ZodFunction<
     return validatedFunction;
   }
 
-  args = <Items extends Parameters<typeof ZodTuple['create']>[0]>(
+  args = <Items extends Parameters<typeof ZodTuple["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items>, Returns> => {
     return new ZodFunction({
@@ -2255,9 +2251,9 @@ export interface ZodPromiseDef<T extends ZodTypeAny = ZodTypeAny>
 }
 
 export class ZodPromise<T extends ZodTypeAny> extends ZodType<
-  Promise<T['_output']>,
+  Promise<T["_output"]>,
   ZodPromiseDef<T>,
-  Promise<T['_input']>
+  Promise<T["_input"]>
 > {
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType !== ZodParsedType.promise && ctx.async === false) {
@@ -2308,11 +2304,11 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////////
 //////////////////////////////////////////////
 export type InternalCheck<T> = {
-  type: 'refinement';
+  type: "refinement";
   refinement: (arg: T, ctx: RefinementCtx) => any;
 };
 export type Mod<T> = {
-  type: 'transform';
+  type: "transform";
   transform: (arg: T) => any;
 };
 export type Effect<T> = InternalCheck<T> | Mod<T>;
@@ -2325,8 +2321,8 @@ export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
 
 export class ZodEffects<
   T extends ZodTypeAny,
-  Output = T['_type']
-> extends ZodType<Output, ZodEffectsDef<T>, T['_input']> {
+  Output = T["_type"]
+> extends ZodType<Output, ZodEffectsDef<T>, T["_input"]> {
   _parse(ctx: ParseContext): any {
     const isSync = ctx.async === false || this instanceof ZodPromise;
     const effects = this._def.effects || [];
@@ -2354,10 +2350,10 @@ export class ZodEffects<
           parentError: ctx.currentError,
         });
       })
-      .then(THROW_ERROR_IF_PRESENT('pre-refinement'));
+      .then(THROW_ERROR_IF_PRESENT("pre-refinement"));
 
     for (const effect of effects) {
-      if (effect.type === 'refinement') {
+      if (effect.type === "refinement") {
         finalPromise = finalPromise
           .all((data) => {
             return [
@@ -2382,13 +2378,13 @@ export class ZodEffects<
           .then(([data, _]) => {
             return data;
           });
-      } else if (effect.type === 'transform') {
+      } else if (effect.type === "transform") {
         finalPromise = finalPromise
-          .then(THROW_ERROR_IF_PRESENT('before transform'))
+          .then(THROW_ERROR_IF_PRESENT("before transform"))
           .then((data) => {
             if (!(this instanceof ZodEffects))
               throw new Error(
-                'Only transformers can contain transformation functions.'
+                "Only transformers can contain transformation functions."
               );
             const newData = effect.transform(data);
 
@@ -2413,13 +2409,13 @@ export class ZodEffects<
   constructor(def: ZodEffectsDef<T>) {
     super(def);
     if (def.schema instanceof ZodEffects) {
-      throw new Error('ZodEffectss cannot be nested.');
+      throw new Error("ZodEffectss cannot be nested.");
     }
   }
 
   static create = <I extends ZodTypeAny>(
     schema: I
-  ): ZodEffects<I, I['_output']> => {
+  ): ZodEffects<I, I["_output"]> => {
     const newTx = new ZodEffects({
       schema,
     });
@@ -2440,7 +2436,7 @@ export { ZodEffects as ZodTransformer };
 export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   innerType: T;
-  defaultValue: undefined | (() => T['_input']);
+  defaultValue: undefined | (() => T["_input"]);
 }
 
 export type addDefaultToOptional<
@@ -2462,9 +2458,9 @@ export class ZodOptional<
   T extends ZodTypeAny,
   HasDefault extends boolean = false
 > extends ZodType<
-  HasDefault extends true ? T['_output'] : T['_output'] | undefined,
+  HasDefault extends true ? T["_output"] : T["_output"] | undefined,
   ZodOptionalDef<T>,
-  T['_input'] | undefined
+  T["_input"] | undefined
 > {
   _parse(ctx: ParseContext): any {
     let data = ctx.data;
@@ -2524,9 +2520,9 @@ export type ZodNullableType<T extends ZodTypeAny> = T extends ZodNullable<
   : ZodNullable<T>;
 
 export class ZodNullable<T extends ZodTypeAny> extends ZodType<
-  T['_output'] | null,
+  T["_output"] | null,
   ZodNullableDef<T>,
-  T['_input'] | null
+  T["_input"] | null
 > {
   _parse(ctx: ParseContext): any {
     if (ctx.parsedType === ZodParsedType.null) {
@@ -2556,7 +2552,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
 
 export const custom = <T>(
   check?: (data: unknown) => any,
-  params?: Parameters<ZodTypeAny['refine']>[1]
+  params?: Parameters<ZodTypeAny["refine"]>[1]
 ): ZodType<T> => {
   if (check) return ZodAny.create().refine(check, params);
   return ZodAny.create();
@@ -2599,7 +2595,7 @@ export type ZodFirstPartySchemaTypes =
 
 const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
-  params: Parameters<ZodTypeAny['refine']>[1] = {
+  params: Parameters<ZodTypeAny["refine"]>[1] = {
     message: `Input not instance of ${cls.name}`,
   }
 ) => custom<InstanceType<T>>((data) => data instanceof cls, params);
