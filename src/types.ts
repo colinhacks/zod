@@ -332,6 +332,10 @@ export abstract class ZodType<
     return ZodUnion.create([this, option]);
   }
 
+  and<T extends ZodTypeAny>(incoming: T): ZodIntersection<this, T> {
+    return ZodIntersection.create(this, incoming);
+  }
+
   transform<NewOut, This extends this>(
     transform: (arg: Output) => NewOut | Promise<NewOut>
   ): This extends ZodEffects<infer T, any>
@@ -1130,34 +1134,32 @@ export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
 /////////////////////////////////////////
 
 export namespace objectUtil {
-  export type extendShape<U extends ZodRawShape, V extends ZodRawShape> = {
+  export type MergeShapes<U extends ZodRawShape, V extends ZodRawShape> = {
     [k in Exclude<keyof U, keyof V>]: U[k];
   } &
     V;
-  export type optionalKeys<T extends object> = {
+
+  type optionalKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? k : never;
   }[keyof T];
 
-  export type requiredKeys<T extends object> = Exclude<
-    keyof T,
-    optionalKeys<T>
-  >;
+  type requiredKeys<T extends object> = Exclude<keyof T, optionalKeys<T>>;
 
   export type addQuestionMarks<T extends object> = {
     [k in optionalKeys<T>]?: T[k];
   } &
     { [k in requiredKeys<T>]: T[k] };
 
-  // export type identity<T> = T;
-  // export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
+  export type identity<T> = T;
+  export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
 
-  export type noNeverKeys<T extends ZodRawShape> = {
+  export type NoNeverKeys<T extends ZodRawShape> = {
     [k in keyof T]: [T[k]] extends [never] ? never : k;
   }[keyof T];
 
-  export type noNever<T extends ZodRawShape> = util.identity<
+  export type NoNever<T extends ZodRawShape> = identity<
     {
-      [k in noNeverKeys<T>]: k extends keyof T ? T[k] : never;
+      [k in NoNeverKeys<T>]: k extends keyof T ? T[k] : never;
     }
   >;
 
@@ -1165,27 +1167,54 @@ export namespace objectUtil {
     first: U,
     second: T
   ): T & U => {
-    // const firstKeys = Object.keys(first);
-    // const secondKeys = Object.keys(second);
-    // const sharedKeys = firstKeys.filter((k) => secondKeys.indexOf(k) !== -1);
-
-    // const sharedShape: any = {};
-    // for (const k of sharedKeys) {
-    //   sharedShape[k] = ZodIntersection.create(first[k], second[k]);
-    // }
-    // return {
-    //   ...(first as object),
-    //   ...(second as object),
-    //   ...sharedShape,
-    // };
     return {
       ...first,
       ...second, // second overwrites first
     };
   };
-}
 
-const ExtendFactory = <Def extends ZodObjectDef>(def: Def) => <
+  export const intersectShapes = <U extends ZodRawShape, T extends ZodRawShape>(
+    first: U,
+    second: T
+  ): T & U => {
+    const firstKeys = Object.keys(first);
+    const secondKeys = Object.keys(second);
+    const sharedKeys = firstKeys.filter((k) => secondKeys.indexOf(k) !== -1);
+
+    const sharedShape: any = {};
+    for (const k of sharedKeys) {
+      sharedShape[k] = ZodIntersection.create(first[k], second[k]);
+    }
+    return {
+      ...(first as object),
+      ...(second as object),
+      ...sharedShape,
+    };
+  };
+}
+export const mergeObjects = <First extends AnyZodObject>(first: First) => <
+  Second extends AnyZodObject
+>(
+  second: Second
+): ZodObject<
+  First["_shape"] & Second["_shape"],
+  First["_unknownKeys"],
+  First["_catchall"]
+> => {
+  const mergedShape = objectUtil.mergeShapes(
+    first._def.shape(),
+    second._def.shape()
+  );
+  const merged: any = new ZodObject({
+    // effects: [...(first._def.effects || []), ...(second._def.effects || [])],
+    unknownKeys: first._def.unknownKeys,
+    catchall: first._def.catchall,
+    shape: () => mergedShape,
+  }) as any;
+  return merged;
+};
+
+const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
   Augmentation extends ZodRawShape
 >(
   augmentation: Augmentation
@@ -1211,6 +1240,9 @@ const ExtendFactory = <Def extends ZodObjectDef>(def: Def) => <
 
 type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
+export type Primitive = string | number | bigint | boolean | null | undefined;
+export type Scalars = Primitive | Primitive[];
+
 export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
@@ -1221,7 +1253,9 @@ export interface ZodObjectDef<
   unknownKeys: UnknownKeys;
 }
 
-export type baseObjectOutputType<Shape extends ZodRawShape> = util.flatten<
+export type baseObjectOutputType<
+  Shape extends ZodRawShape
+> = objectUtil.flatten<
   objectUtil.addQuestionMarks<
     {
       [k in keyof Shape]: Shape[k]["_output"];
@@ -1234,11 +1268,11 @@ export type objectOutputType<
   Catchall extends ZodTypeAny
 > = ZodTypeAny extends Catchall
   ? baseObjectOutputType<Shape>
-  : util.flatten<
+  : objectUtil.flatten<
       baseObjectOutputType<Shape> & { [k: string]: Catchall["_output"] }
     >;
 
-export type baseObjectInputType<Shape extends ZodRawShape> = util.flatten<
+export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
   objectUtil.addQuestionMarks<
     {
       [k in keyof Shape]: Shape[k]["_input"];
@@ -1251,7 +1285,7 @@ export type objectInputType<
   Catchall extends ZodTypeAny
 > = ZodTypeAny extends Catchall
   ? baseObjectInputType<Shape>
-  : util.flatten<
+  : objectUtil.flatten<
       baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
     >;
 
@@ -1403,8 +1437,8 @@ export class ZodObject<
 
   nonstrict = this.passthrough;
 
-  augment = ExtendFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
-  extend = ExtendFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
+  augment = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
+  extend = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
 
   setKey = <Key extends string, Schema extends ZodTypeAny>(
     key: Key,
@@ -1446,7 +1480,7 @@ export class ZodObject<
   pick = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask
   ): ZodObject<
-    objectUtil.noNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>,
+    objectUtil.NoNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>,
     UnknownKeys,
     Catchall
   > => {
@@ -1463,7 +1497,7 @@ export class ZodObject<
   omit = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask
   ): ZodObject<
-    objectUtil.noNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>,
+    objectUtil.NoNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>,
     UnknownKeys,
     Catchall
   > => {
@@ -1637,6 +1671,75 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
   ): ZodUnion<T> => {
     return new ZodUnion({
       options: types,
+    });
+  };
+}
+
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+//////////                           //////////
+//////////      ZodIntersection      //////////
+//////////                           //////////
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+export interface ZodIntersectionDef<
+  T extends ZodTypeAny = ZodTypeAny,
+  U extends ZodTypeAny = ZodTypeAny
+> extends ZodTypeDef {
+  left: T;
+  right: U;
+}
+
+export class ZodIntersection<
+  T extends ZodTypeAny,
+  U extends ZodTypeAny
+> extends ZodType<
+  T["_output"] & U["_output"],
+  ZodIntersectionDef<T, U>,
+  T["_input"] & U["_input"]
+> {
+  _parse(ctx: ParseContext): any {
+    return PseudoPromise.all([
+      new PseudoPromise().then(() => {
+        return this._def.left._parseWithInvalidFallback(ctx.data, {
+          ...ctx,
+          parentError: ctx.currentError,
+        });
+      }),
+      new PseudoPromise().then(() => {
+        return this._def.right._parseWithInvalidFallback(ctx.data, {
+          ...ctx,
+          parentError: ctx.currentError,
+        });
+      }),
+    ]).then(([parsedLeft, parsedRight]: any) => {
+      if (parsedLeft === INVALID || parsedRight === INVALID) return INVALID;
+
+      const parsedLeftType = getParsedType(parsedLeft);
+      const parsedRightType = getParsedType(parsedRight);
+
+      if (parsedLeft === parsedRight) {
+        return parsedLeft;
+      } else if (
+        parsedLeftType === ZodParsedType.object &&
+        parsedRightType === ZodParsedType.object
+      ) {
+        return { ...parsedLeft, ...parsedRight };
+      } else {
+        ctx.addIssue({
+          code: ZodIssueCode.invalid_intersection_types,
+        });
+      }
+    });
+  }
+
+  static create = <T extends ZodTypeAny, U extends ZodTypeAny>(
+    left: T,
+    right: U
+  ): ZodIntersection<T, U> => {
+    return new ZodIntersection({
+      left: left,
+      right: right,
     });
   };
 }
@@ -2122,7 +2225,7 @@ export class ZodLiteral<T extends any> extends ZodType<T, ZodLiteralDef<T>> {
     return ctx.data;
   }
 
-  static create = <T extends util.Primitive>(value: T): ZodLiteral<T> => {
+  static create = <T extends Primitive>(value: T): ZodLiteral<T> => {
     return new ZodLiteral({
       value: value,
     });
@@ -2579,6 +2682,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodArray<any>
   | ZodObject<any>
   | ZodUnion<any>
+  | ZodIntersection<any, any>
   | ZodTuple
   | ZodRecord
   | ZodMap
@@ -2615,6 +2719,7 @@ const arrayType = ZodArray.create;
 const objectType = ZodObject.create;
 const strictObjectType = ZodObject.strictCreate;
 const unionType = ZodUnion.create;
+const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
 const mapType = ZodMap.create;
@@ -2642,6 +2747,7 @@ export {
   enumType as enum,
   functionType as function,
   instanceOfType as instanceof,
+  intersectionType as intersection,
   lazyType as lazy,
   literalType as literal,
   mapType as map,
