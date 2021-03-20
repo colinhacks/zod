@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.0.0-alpha.17",
+  "version": "3.0.0-alpha.18",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -51,12 +51,13 @@
   },
   "scripts": {
     "start": "tsdx watch",
-    "build": "npm run build:pkg && npm run build:deno",
-    "build:pkg": "tsdx build",
-    "build:deno": "rm -rf deno/lib/* && node ./deno/build.mjs",
+    "clean": "rm -rf deno/lib/* dist/*",
     "test": "tsdx test",
     "lint": "tsdx lint",
     "prepare": "tsdx build",
+    "build": "npm run build:pkg && npm run build:deno",
+    "build:pkg": "tsdx build",
+    "build:deno": "rm -rf deno/lib/* && node ./deno/build.mjs",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json"
   },
   "husky": {

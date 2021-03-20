@@ -18,9 +18,8 @@ jobs:
           node-version: 14
       - run: yarn install
       - run: yarn clean
-      - run: yarn fix:lint
+      - run: yarn lint --fix
       - run: yarn build:deno
-      - run: yarn fix:format
       - name: Check for Changes
         id: check
         run: |
