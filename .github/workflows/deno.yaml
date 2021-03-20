@@ -1,0 +1,33 @@
+name: Test and Lint
+
+on:
+  push:
+  create:
+  pull_request:
+  schedule:
+    - cron: '44 4 * * SAT'
+  workflow_dispatch:
+
+jobs:
+  test-deno:
+    runs-on: Ubuntu-20.04
+    strategy:
+      matrix:
+        deno: [ "v1.7.1", "v1.x" ]
+    name: Test with Deno ${{ matrix.deno }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: denolib/setup-deno@v2
+        with:
+          deno-version: ${{ matrix.deno }}
+      - run: deno --version
+      - run: deno test
+        working-directory: ./deno/lib
+      - run: deno run ./index.ts
+        working-directory: ./deno/lib
+      - run: deno run ./mod.ts
+        working-directory: ./deno/lib
+      - run: |
+          deno bundle ./mod.ts ./bundle.js
+          deno run ./bundle.js
+        working-directory: ./deno/lib
