@@ -22,7 +22,7 @@ If you find this package useful, leave a star to help more folks find it ⭐️�
 
 <!-- <br/> -->
 
-<!-- **Zod 2 is in an early beta.** Upgrade with `yarn add zod@beta`. Read more about the new features and migration process here: https://github.com/colinhacks/zod/tree/v2. -->
+**Zod 3 is in alpha.** Upgrade with `yarn add zod@next` to try the new features. Read more about the new features and migration process [here](https://github.com/colinhacks/zod/tree/v3).
 
 <!-- ### Zod 3 is now in beta!
 
