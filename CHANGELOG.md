@@ -1,5 +1,10 @@
 # Changelog
 
+### zod@3.0.0-alpha.24
+
+- Added back ZodIntersection
+- Added .and() method to base class
+
 ### zod@3.0.0-alpha.9
 
 - Added `z.strictCreate`
