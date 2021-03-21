@@ -1153,13 +1153,13 @@ export namespace objectUtil {
   export type identity<T> = T;
   export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
 
-  export type NoNeverKeys<T extends ZodRawShape> = {
+  export type noNeverKeys<T extends ZodRawShape> = {
     [k in keyof T]: [T[k]] extends [never] ? never : k;
   }[keyof T];
 
-  export type NoNever<T extends ZodRawShape> = identity<
+  export type noNever<T extends ZodRawShape> = identity<
     {
-      [k in NoNeverKeys<T>]: k extends keyof T ? T[k] : never;
+      [k in noNeverKeys<T>]: k extends keyof T ? T[k] : never;
     }
   >;
 
@@ -1480,7 +1480,7 @@ export class ZodObject<
   pick = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask
   ): ZodObject<
-    objectUtil.NoNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>,
+    objectUtil.noNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>,
     UnknownKeys,
     Catchall
   > => {
@@ -1497,7 +1497,7 @@ export class ZodObject<
   omit = <Mask extends { [k in keyof T]?: true }>(
     mask: Mask
   ): ZodObject<
-    objectUtil.NoNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>,
+    objectUtil.noNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>,
     UnknownKeys,
     Catchall
   > => {

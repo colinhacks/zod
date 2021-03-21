@@ -56,14 +56,19 @@ if you're happy and you know it, star this repo ⭐
   - [Promises](#promises)
   - [Instanceof](#instanceof)
   - [Function schemas](#function-schemas)
-- [Methods](#methods)
+- [Base class methods (ZodType)](#methods)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
   - [.safeParse](#safeparse)
   - [.safeParseAsync](#safeparseasync)
-  - [.default](#default)
   - [.refine](#refine)
   - [.transform](#transform)
+  - [.default](#default)
+  - [.optional](#optional)
+  - [.nullable](#nullable)
+  - [.array](#array)
+  - [.or](#or)
+  - [.and](#and)
 - [Type inference](#type-inference)
 - [Errors](#errors)
 - [Comparison](#comparison)
@@ -82,7 +87,8 @@ if you're happy and you know it, star this repo ⭐
 - Transformers! But better! See the "breaking changes" section to understand the syntax changes.
 - You can now import Zod like `import { z } a from 'zod';` instead of using `import * as` syntax.
 - Added the `format` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
-- Added the `or` method to ZodType (the base class for all Zod schema) to easily create union types like `z.string().or(z.number())`
+- Added the `or` method to ZodType (the base class for all Zod schemas) to easily create union types like `z.string().or(z.number())`
+- Added the `and` method to ZodType (the base class for all Zod schema) to easily create intersection types
 - Added `z.setErrorMap`, an easier way to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
 - ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap
 
@@ -115,7 +121,7 @@ if you're happy and you know it, star this repo ⭐
   ```
 
 - **Type guards** (the `.check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
-- **ZodIntersection has been removed**. If you have an object schema, you can use the `A.merge(B)` instead. Note that this is equivalent to `A.extend(B.shape)` and is therefore not an intersection in the pure sense, as `B` takes precedence over `A` if the two schemas share a key.
+- Object merging now behaves differently. If you merge two object schema (`A.merge(B)`), the fields of B will overwrite the fields of A if there are shared keys. This is how the `.extend` method already works. If you're looking to create an intersection of the two types, use `z.intersection(A, B)` or use the new `.and` method (`A.and(B)`).
 - There have been small internal changes to the ZodIssue type. This may impact user who have written a custom error maps. Most users will not be affected.
 
 #### Migrating from v1
@@ -380,7 +386,7 @@ You can use `.extend` to overwrite fields! Be careful with this power!
 
 ### `.merge`
 
-Merge two object schemas with `.merge`, like so:
+Equivalent to `A.merge(B.shape)`.
 
 ```ts
 const BaseTeacher = z.object({ students: z.array(z.string()) });
@@ -390,20 +396,7 @@ const Teacher = BaseTeacher.merge(HasID);
 type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
 ```
 
-If the two schemas share keys, the properties of the _merged schema_ take precedence.
-
-<!-- `.merge` is just syntactic sugar over the more generic `z.intersection` which is documented below. -->
-
-> IMPORTANT: the schema returned by `.merge` is the _intersection_ of the two schemas. The schema passed into `.merge` does not "overwrite" properties of the original schema. To demonstrate:
-
-```ts
-const Obj1 = z.object({ field: z.string() });
-const Obj2 = z.object({ field: z.number() });
-const Merged = Obj1.merge(Obj2);
-
-type Merged = z.infer<typeof merged>;
-// => { field: number }
-```
+> If the two schemas share keys, the properties of the _merged schema_ take precedence.
 
 ### `.pick/.omit`
 
@@ -1122,7 +1115,7 @@ const myFunction = z
 myFunction; // (arg: string)=>number[]
 ```
 
-# Methods
+# ZodType: methods and properties
 
 All Zod schemas contain certain methods.
 
@@ -1180,7 +1173,9 @@ if (!result.success) {
 
 ### `.safeParseAsync`
 
-There is also an asynchronous version of `safeParse`:
+> Alias: `.spa`
+
+An asynchronous version of `safeParse`.
 
 ```ts
 await stringSchema.safeParseAsync("billie");
@@ -1383,6 +1378,61 @@ const numberWithRandomDefault = z.number().default(Math.random);
 numberWithRandomDefault.parse(undefined); // => 0.4413456736055323
 numberWithRandomDefault.parse(undefined); // => 0.1871840107401901
 numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
+```
+
+### `.optional`
+
+A convenience method that returns an optional version of a schema.
+
+```ts
+const optionalString = z.string().optional(); // string | undefined
+
+// equivalent to
+z.optional(z.string());
+```
+
+### `.nullable`
+
+A convenience method that returns an nullable version of a schema.
+
+```ts
+const nullableString = z.string().nullable(); // string | null
+
+// equivalent to
+z.nullable(z.string());
+```
+
+### `.array`
+
+A convenience method that returns an array schema for the given type:
+
+```ts
+const nullableString = z.string().array(); // string[]
+
+// equivalent to
+z.array(z.string());
+```
+
+### `.or`
+
+A convenience method for union types.
+
+```ts
+z.string().or(z.number()); // string | number
+
+// equivalent to
+z.union([z.string(), z.number()]);
+```
+
+### `.and`
+
+A convenience method for creating interesection types.
+
+```ts
+z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: string } & { age: number }
+
+// equivalent to
+z.intersection(z.string(), z.number());
 ```
 
 # Type inference

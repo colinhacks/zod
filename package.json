@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.0.0-alpha.21",
+  "version": "3.0.0-alpha.22",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/cjs/index.js",
   "types": "./lib/cjs/index.d.ts",
@@ -51,7 +51,7 @@
     "test": "node --trace-warnings node_modules/.bin/jest --coverage && yarn run badge",
     "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
-    "prepublishOnly": "npm run build && npm run build:deno",
+    "prepublishOnly": "npm run test && npm run build && npm run build:deno",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json --trace-warnings",
     "depcruise": "depcruise -c .dependency-cruiser.js src"
   },
