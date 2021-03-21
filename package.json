@@ -78,7 +78,8 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "yarn build:deno && lint-staged && git add ."
+      "pre-commit": "lint-staged && yarn build:deno && git add .",
+      "pre-push": "lint-staged && yarn build && yarn test"
     }
   },
   "lint-staged": {

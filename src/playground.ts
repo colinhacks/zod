@@ -1,4 +1,4 @@
-import { string, z } from "./index";
+import { z } from "./index";
 
 const run = async () => {
   z;
