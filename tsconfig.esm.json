@@ -3,7 +3,8 @@
   "compilerOptions": {
     "target": "es5",
     "module": "es2015",
-    "outDir": "./lib/esm"
+    // "outDir": "./lib/esm",
+    "declaration": false
   },
   "exclude": [
     "./src/**/__tests__",
