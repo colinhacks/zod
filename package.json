@@ -1,13 +1,13 @@
 {
   "name": "zod",
-  "version": "3.0.0-alpha.24",
+  "version": "3.0.0-alpha.30",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "main": "./lib/cjs/index.js",
-  "types": "./lib/cjs/index.d.ts",
-  "module": "./lib/esm/index.js",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "module": "./lib/index.mjs",
   "exports": {
-    "require": "./lib/cjs/index.js",
-    "import": "./lib/esm/index.js"
+    "require": "./lib/index.js",
+    "import": "./lib/index.mjs"
   },
   "files": [
     "/lib"
@@ -46,8 +46,10 @@
     "clean": "rm -rf lib/* deno/lib/*",
     "build": "yarn run clean && npm run build:cjs && npm run build:esm && npm run build:deno",
     "build:deno": "node ./deno/build.mjs",
-    "build:esm": "tsc --p tsconfig.esm.json",
+    "build:esm": "rollup --config rollup.config.js",
     "build:cjs": "tsc --p tsconfig.cjs.json",
+    "build:types": "tsc --p tsconfig.types.json",
+    "rollup": "rollup --config rollup.config.js",
     "test": "node --trace-warnings node_modules/.bin/jest --coverage && yarn run badge",
     "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
@@ -56,6 +58,7 @@
     "depcruise": "depcruise -c .dependency-cruiser.js src"
   },
   "devDependencies": {
+    "@rollup/plugin-typescript": "^8.2.0",
     "@types/jest": "^26.0.17",
     "@types/node": "^14.14.10",
     "@typescript-eslint/eslint-plugin": "^4.11.1",
@@ -72,8 +75,10 @@
     "make-coverage-badge": "^1.2.0",
     "nodemon": "^2.0.2",
     "prettier": "^2.2.1",
+    "rollup": "^2.42.1",
     "ts-jest": "^26.4.4",
     "ts-node": "^9.1.0",
+    "tslib": "^2.1.0",
     "typescript": "4.1"
   },
   "husky": {
