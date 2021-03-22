@@ -6,7 +6,7 @@ export default [
   //   input: "src/index.ts",
   //   output: [
   //     {
-  //       dir: "lib",
+  //       file: "lib/index.cjs",
   //       format: "cjs",
   //     },
   //   ],
@@ -20,7 +20,7 @@ export default [
     input: "src/index.ts",
     output: [
       {
-        file: "lib/esm/index.mjs",
+        file: "lib/index.mjs",
         format: "es",
       },
     ],

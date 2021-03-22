@@ -1,13 +1,13 @@
 {
   "name": "zod",
-  "version": "3.0.0-alpha.25",
+  "version": "3.0.0-alpha.30",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "main": "./lib/cjs/index.js",
-  "types": "./lib/cjs/index.d.ts",
-  "module": "./lib/esm/index.mjs",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "module": "./lib/index.mjs",
   "exports": {
-    "require": "./lib/cjs/index.js",
-    "import": "./lib/esm/index.mjs"
+    "require": "./lib/index.js",
+    "import": "./lib/index.mjs"
   },
   "files": [
     "/lib"
@@ -48,6 +48,8 @@
     "build:deno": "node ./deno/build.mjs",
     "build:esm": "rollup --config rollup.config.js",
     "build:cjs": "tsc --p tsconfig.cjs.json",
+    "build:types": "tsc --p tsconfig.types.json",
+    "rollup": "rollup --config rollup.config.js",
     "test": "node --trace-warnings node_modules/.bin/jest --coverage && yarn run badge",
     "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
