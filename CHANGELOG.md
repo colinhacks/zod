@@ -1,5 +1,9 @@
 # Changelog
 
+### 3.0.0-alpha.30
+
+- Added Rollup for bundling ESM module
+
 ### zod@3.0.0-alpha.24
 
 - Added back ZodIntersection
