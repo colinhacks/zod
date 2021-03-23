@@ -24,7 +24,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
   toJSON = () => this._def;
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
     this._refinement({
-      check: data => data.length >= minLength,
+      check: (data) => data.length >= minLength,
       code: ZodErrorCode.too_small,
       minimum: minLength,
       type: 'string',
@@ -34,7 +34,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
 
   max = (maxLength: number, message?: errorUtil.ErrMessage) =>
     this._refinement({
-      check: data => data.length <= maxLength,
+      check: (data) => data.length <= maxLength,
       code: ZodErrorCode.too_big,
       maximum: maxLength,
       type: 'string',
@@ -54,7 +54,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
     this._refinement({
       validation,
       code: ZodErrorCode.invalid_string,
-      check: data => regex.test(data),
+      check: (data) => regex.test(data),
       ...errorUtil.errToObj(message),
     });
 
@@ -63,7 +63,7 @@ export class ZodString extends z.ZodType<string, ZodStringDef> {
 
   url = (message?: errorUtil.ErrMessage) =>
     this._refinement({
-      check: data => {
+      check: (data) => {
         try {
           new URL(data);
           return true;
