@@ -2338,7 +2338,7 @@ export class ZodEnum<T extends EnumValues> extends ZodType<
 
   static create = <T extends string>(values: readonly T[]): ZodEnum<T[]> => {
     return new ZodEnum({
-      values: values as T[],
+      values: values,
     }) as any;
   };
 }
