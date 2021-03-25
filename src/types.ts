@@ -13,8 +13,8 @@ import { partialUtil } from "./helpers/partialUtil";
 import { INVALID, util } from "./helpers/util";
 import { NOSET, PseudoPromise } from "./PseudoPromise";
 import {
-  defaultErrorMap,
   MakeErrorData,
+  overrideErrorMap,
   StringValidation,
   ZodCustomIssue,
   ZodError,
@@ -117,7 +117,7 @@ export abstract class ZodType<
       data: params.data,
       path: params.path || [],
       parentError: params.parentError || new ZodError([]),
-      errorMap: params.errorMap || defaultErrorMap,
+      errorMap: params.errorMap || overrideErrorMap,
       async: params.async ?? false,
     };
 
