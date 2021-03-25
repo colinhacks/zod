@@ -774,14 +774,14 @@ type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
-You must pass the array of values directly into `z.enum()`. This does not work:
+You can also pass the array of values directly into `z.enum()`:
 
 ```ts
-const fish = ["Salmon", "Tuna", "Trout"];
+const fish = ["Salmon", "Tuna", "Trout"] as const;
 const FishEnum = z.enum(fish);
 ```
 
-In that case, Zod isn't able to infer the individual enum elements; instead the inferred type will be `string` instead of `'Salmon' | 'Tuna' | 'Trout'`
+In that case, Zod is able to infer type to `'Salmon' | 'Tuna' | 'Trout'`
 
 **Autocompletion**
 

@@ -42,7 +42,7 @@ export interface ZodInvalidUnionIssue extends ZodIssueBase {
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_enum_value;
-  options: (string | number)[];
+  options: readonly (string | number)[];
 }
 
 export interface ZodInvalidArgumentsIssue extends ZodIssueBase {
