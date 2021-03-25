@@ -440,7 +440,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
     if (this._def.isUUID && !uuidRegex.test(ctx.data)) {
       ctx.addIssue({
-        validation: "email",
+        validation: "uuid",
         code: ZodIssueCode.invalid_string,
         message: this._def.isUUID.message,
       });
@@ -1289,6 +1289,10 @@ export type objectInputType<
       baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
     >;
 
+type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U, any>
+  ? deoptional<U>
+  : T;
+
 export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = "strip",
@@ -1545,6 +1549,27 @@ export class ZodObject<
           ? fieldSchema
           : fieldSchema.optional();
       }
+    }
+    return new ZodObject({
+      ...this._def,
+      shape: () => newShape,
+    }) as any;
+  };
+
+  required = (): ZodObject<
+    { [k in keyof T]: deoptional<T[k]> },
+    UnknownKeys,
+    Catchall
+  > => {
+    const newShape: any = {};
+    for (const key in this.shape) {
+      const fieldSchema = this.shape[key];
+      let newField = fieldSchema;
+      while (newField instanceof ZodOptional) {
+        newField = (newField as ZodOptional<any, any>)._def.innerType;
+      }
+
+      newShape[key] = newField;
     }
     return new ZodObject({
       ...this._def,
@@ -2143,6 +2168,13 @@ export class ZodFunction<
   };
 
   implement = <F extends InnerTypeOfFunction<Args, Returns>>(func: F): F => {
+    const validatedFunc = this.parse(func);
+    return validatedFunc as any;
+  };
+
+  strictImplement = (
+    func: InnerTypeOfFunction<Args, Returns>
+  ): InnerTypeOfFunction<Args, Returns> => {
     const validatedFunc = this.parse(func);
     return validatedFunc as any;
   };

@@ -75,3 +75,16 @@ test("deep partial runtime tests", () => {
     },
   });
 });
+
+test("required", () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default(undefined),
+  });
+
+  const requiredObject = object.required();
+  expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
+  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
+  expect(requiredObject.shape.field).toBeInstanceOf(z.ZodString);
+});
