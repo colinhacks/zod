@@ -1,5 +1,9 @@
 # Changelog
 
+### 3.0.0-alpha.33
+
+- Added `.returnType` and `.parameters` methods to ZodFunction
+
 ### 3.0.0-alpha.32
 
 - Added `.required()` method to ZodObject

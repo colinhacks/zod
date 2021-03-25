@@ -2149,6 +2149,14 @@ export class ZodFunction<
     return validatedFunction;
   }
 
+  parameters() {
+    return this._def.args;
+  }
+
+  returnType() {
+    return this._def.returns;
+  }
+
   args = <Items extends Parameters<typeof ZodTuple["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items>, Returns> => {
