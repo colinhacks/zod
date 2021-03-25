@@ -2733,7 +2733,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodEnum<any>
   | ZodEffects<any>
   | ZodNativeEnum<any>
-  | ZodOptional<any>
+  | ZodOptional<any, any>
   | ZodNullable<any>
   | ZodPromise<any>;
 
