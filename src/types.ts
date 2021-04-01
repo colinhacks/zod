@@ -205,7 +205,12 @@ export abstract class ZodType<
 
   refine: <Func extends (arg: Output) => any, This extends this = this>(
     check: Func,
-    message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
+    message?:
+      | string
+      | CustomErrorParams
+      | CustomErrorParams[]
+      | ((arg: Output) => CustomErrorParams)
+      | ((arg: Output) => CustomErrorParams[])
   ) => ZodEffectsType<This> = (check, message = "Invalid value.") => {
     if (typeof message === "string") {
       return this._refinement((val, ctx) => {
@@ -229,11 +234,22 @@ export abstract class ZodType<
     if (typeof message === "function") {
       return this._refinement((val, ctx) => {
         const result = check(val);
-        const setError = () =>
-          ctx.addIssue({
-            code: ZodIssueCode.custom,
-            ...message(val),
-          });
+        const setError = () => {
+          const messageResult = message(val);
+          if (Array.isArray(messageResult)) {
+            messageResult.forEach((issue) => {
+              ctx.addIssue({
+                code: ZodIssueCode.custom,
+                ...issue,
+              });
+            });
+          } else {
+            ctx.addIssue({
+              code: ZodIssueCode.custom,
+              ...message(val),
+            });
+          }
+        };
         if (result instanceof Promise) {
           return result.then((data) => {
             if (!data) setError();

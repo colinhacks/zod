@@ -90,3 +90,42 @@ test("use path in refinement context", async () => {
     );
   }
 });
+
+test("refinement where message is a function returning multiple errors", () => {
+  const validationSchema = z
+    .object({
+      password: z.string(),
+      confirmPassword: z.string(),
+    })
+    .refine(
+      (data) => data.password.length === data.confirmPassword.length,
+      () => {
+        console.log("ashdoashd");
+        return [
+          {
+            message: "password length must equal confirmPassword length",
+            path: ["password"],
+          },
+          {
+            message: "confirmPassword length must equal password length",
+            path: ["confirmPassword"],
+          },
+        ];
+      }
+    );
+
+  expect(() =>
+    validationSchema.parse({
+      password: "1234",
+      confirmPassword: "12345",
+    })
+  ).toThrow();
+  const result = validationSchema.safeParse({
+    password: "1234",
+    confirmPassword: "12345",
+  });
+  if (result.success) {
+    fail("expected result.success to be false");
+  }
+  expect(result.error.issues.length).toBe(2);
+});
