@@ -41,7 +41,7 @@ const objectDefToJson = (def: ZodObjectDef<any, any>) => ({
   ),
 });
 
-interface ZodObjectParams {
+export interface ZodObjectParams {
   strict: boolean;
 }
 
