@@ -85,7 +85,7 @@ if you're happy and you know it, star this repo ⭐
 #### New features
 
 - Transformers! But better! See the "breaking changes" section to understand the syntax changes.
-- You can now import Zod like `import { z } a from 'zod';` instead of using `import * as` syntax.
+- You can now import Zod like `import { z } from 'zod';` instead of using `import * as` syntax.
 - Added the `format` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
 - Added the `or` method to ZodType (the base class for all Zod schemas) to easily create union types like `z.string().or(z.number())`
 - Added the `and` method to ZodType (the base class for all Zod schemas) to easily create intersection types
