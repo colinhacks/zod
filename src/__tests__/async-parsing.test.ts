@@ -303,7 +303,6 @@ test("promise async parse bad", async () => {
   if (badResult.success) {
     await expect(badResult.data).rejects.toBeInstanceOf(Error);
   } else {
-    console.log(`SUCCESS SHOULD BE TRUE`);
     throw new Error("success should be true");
   }
 });

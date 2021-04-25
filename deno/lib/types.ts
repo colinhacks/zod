@@ -438,11 +438,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       }
     }
 
-    console.log(`this._def.isUUID:`, this._def.isUUID);
-    console.log(`uuidRegex.test(ctx.data)`, uuidRegex.test(ctx.data));
-
     if (this._def.isUUID && !uuidRegex.test(ctx.data)) {
-      console.log(`parsing uuid`);
       ctx.addIssue({
         validation: "uuid",
         code: ZodIssueCode.invalid_string,
