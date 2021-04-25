@@ -386,7 +386,7 @@ You can use `.extend` to overwrite fields! Be careful with this power!
 
 ### `.merge`
 
-Equivalent to `A.merge(B.shape)`.
+Equivalent to `A.extend(B.shape)`.
 
 ```ts
 const BaseTeacher = z.object({ students: z.array(z.string()) });
@@ -396,7 +396,7 @@ const Teacher = BaseTeacher.merge(HasID);
 type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
 ```
 
-> If the two schemas share keys, the properties of the _merged schema_ take precedence.
+> If the two schemas share keys, the properties of B overrides the property of A. The returned schema also inherits the "unknownKeys" policy (strip/strict/passthrough) and the catchall schema of B.
 
 ### `.pick/.omit`
 
