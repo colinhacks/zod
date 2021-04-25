@@ -144,10 +144,9 @@ export class ZodError extends Error {
       '',
     ];
     for (const err of this.errors) {
+      const pathString = err.path.join('.') || '[[root]]';
       errorMessage.push(
-        `  Issue #${this.errors.indexOf(err)}: ${err.code} at ${err.path.join(
-          '.',
-        )}`,
+        `  Issue #${this.errors.indexOf(err)}: ${err.code} at ${pathString}`,
       );
       errorMessage.push(`  ` + err.message);
       errorMessage.push('');
