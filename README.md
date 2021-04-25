@@ -1650,13 +1650,10 @@ Good type inference support, but limited options for object type masking (no `.p
 
 - Supports "pattern matching": computed properties that distribute over unions
 - Supports readonly types
-- Missing object methods: (pick, omit, partial, deepPartial, merge, extend)
+- Missing object methods: (deepPartial, merge)
 - Missing nonempty arrays with proper typing (`[T, ...T[]]`)
-- Missing lazy/recursive types
 - Missing promise schemas
-- Missing union & intersection schemas
 - Missing error customization
-- Missing record schemas (their "record" is equivalent to Zod "object")
 
 #### Ow
 
