@@ -206,3 +206,10 @@ test("test async PseudoPromise.all", async () => {
   const result = await Schema2.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
   expect(result.success).toEqual(true);
 });
+
+test("test inferred merged type", async () => {
+  const asdf = z.object({ a: z.string() }).merge(z.object({ a: z.number() }));
+  type asdf = z.infer<typeof asdf>;
+  const f1: util.AssertEqual<asdf, { a: number }> = true;
+  f1;
+});
