@@ -1825,7 +1825,7 @@ export class ZodTuple<
     return PseudoPromise.all(
       tupleData.map((item, index) => {
         const itemParser = this._def.items[index];
-        //
+
         if (!itemParser) {
           // tupleData length != ZodTuple.items length
           // this issue already addressed above
