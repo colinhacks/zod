@@ -120,6 +120,7 @@ yarn add zod@next
   - [.safeParse](#safeparse)
   - [.safeParseAsync](#safeparseasync)
   - [.refine](#refine)
+  - [.superRefine](#superRefine)
   - [.transform](#transform)
   - [.default](#default)
   - [.optional](#optional)
@@ -1213,7 +1214,7 @@ await stringSchema.spa("billie");
 
 `.refine(validator: (data:T)=>any, params?: RefineParams)`
 
-Zod lets you provide custom validation logic via _refinements_.
+Zod lets you provide custom validation logic via _refinements_. (For advanced features like creating multiple issues and customizing error codes, see [`.superRefine`](#superrefine).)
 
 Zod was designed to mirror TypeScript as closely as possible. But there are many so-called "refinement types" you may wish to check for that can't be represented in TypeScript's type system. For instance: checking that a number is an integer or that a string is a valid email address.
 
@@ -1331,6 +1332,35 @@ ZodError {
   }]
 }
 ``` -->
+
+### `.superRefine`
+
+The `.refine` method is actually syntactic sugar atop a more versatile (and verbose) method called `superRefine`. Here's an example:
+
+```ts
+const Strings = z.array(z.string()).superRefine((val, ctx) => {
+  if (val.length > 3) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.too_big,
+      maximum: 3,
+      type: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+    });
+  }
+
+  if (val.length !== new Set(val).size) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `No duplicated allowed.`,
+    });
+  }
+});
+```
+
+You can add as many issues as you like. If `ctx.addIssue` is NOT called during the execution of the function, validation passes.
+
+Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` you can create any issue of any code. Each issue code is described in detail in the Error Handling guide (ERROR_HANDLING.md).
 
 ### `.transform`
 
