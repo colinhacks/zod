@@ -67,6 +67,16 @@ test("url error overrides", () => {
 test("uuid", () => {
   const uuid = z.string().uuid("custom error");
   uuid.parse("9491d710-3185-4e06-bea0-6a2f275345e0");
+  const result = uuid.safeParse("9491d710-3185-4e06-bea0-6a2f275345e0X");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("custom error");
+  }
+});
+
+test("bad uuid", () => {
+  const uuid = z.string().uuid("custom error");
+  uuid.parse("9491d710-3185-4e06-bea0-6a2f275345e0");
   const result = uuid.safeParse("invalid uuid");
   expect(result.success).toEqual(false);
   if (!result.success) {
