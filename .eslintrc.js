@@ -42,5 +42,7 @@ module.exports = {
      */
     "no-case-declarations": "off",
     "no-empty": "off",
+    "no-useless-escape": "off",
+    "no-control-regex": "off",
   },
 };

@@ -33,6 +33,21 @@ test("email validations", () => {
   expect(() => email.parse("asdf@sdf.")).toThrow();
 });
 
+test("more email validations", () => {
+  const data = [
+    `"josé.arrañoça"@domain.com`,
+    `"сайт"@domain.com`,
+    `"💩"@domain.com`,
+    `"🍺🕺🎉"@domain.com`,
+    `poop@💩.la`,
+    `"🌮"@i❤️tacos.ws`,
+  ];
+  const email = z.string().email();
+  for (const datum of data) {
+    email.parse(datum);
+  }
+});
+
 test("url validations", () => {
   const url = z.string().url();
   try {
