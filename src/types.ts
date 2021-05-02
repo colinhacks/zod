@@ -321,10 +321,13 @@ export abstract class ZodType<
     this.default = this.default.bind(this);
   }
 
-  optional: <This extends this = this>() => ZodOptionalType<This> = () =>
+  optional: <This extends this = this>() => ZodOptional<This> = () =>
     ZodOptional.create(this) as any;
-  nullable: <This extends this = this>() => ZodNullableType<This> = () =>
+  nullable: <This extends this = this>() => ZodNullable<This> = () =>
     ZodNullable.create(this) as any;
+  nullish: <This extends this = this>() => ZodNullable<
+    ZodOptional<This>
+  > = () => this.optional().nullable();
 
   array: () => ZodArray<this> = () => ZodArray.create(this);
 
@@ -361,10 +364,10 @@ export abstract class ZodType<
 
   default<T extends Input, This extends this = this>(
     def: T
-  ): ZodOptional<This, true>;
+  ): ZodDefaulter<This>;
   default<T extends () => Input, This extends this = this>(
     def: T
-  ): ZodOptional<This, true>;
+  ): ZodDefaulter<This>;
   default(def: any) {
     const defaultValueFunc = typeof def === "function" ? def : () => def;
     // if (this instanceof ZodOptional) {
@@ -373,7 +376,7 @@ export abstract class ZodType<
     //     defaultValue: defaultValueFunc,
     //   }) as any;
     // }
-    return new ZodOptional({
+    return new ZodDefaulter({
       innerType: this,
       defaultValue: defaultValueFunc,
     }) as any;
@@ -1298,7 +1301,7 @@ export type objectInputType<
       baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
     >;
 
-type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U, any>
+type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
   ? deoptional<U>
   : T;
 
@@ -1578,7 +1581,7 @@ export class ZodObject<
       const fieldSchema = this.shape[key];
       let newField = fieldSchema;
       while (newField instanceof ZodOptional) {
-        newField = (newField as ZodOptional<any, any>)._def.innerType;
+        newField = (newField as ZodOptional<any>)._def.innerType;
       }
 
       newShape[key] = newField;
@@ -2597,40 +2600,35 @@ export { ZodEffects as ZodTransformer };
 export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   innerType: T;
-  defaultValue: undefined | (() => T["_input"]);
+  // defaultValue: undefined | (() => T["_input"]);
 }
 
-export type addDefaultToOptional<
-  T extends ZodOptional<any, any>
-> = T extends ZodOptional<infer U, any> ? ZodOptional<U, true> : never;
+// export type addDefaultToOptional<
+//   T extends ZodOptional<any, any>
+// > = T extends ZodOptional<infer U, any> ? ZodOptional<U, true> : never;
 
-export type removeDefaultFromOptional<
-  T extends ZodOptional<any, any>
-> = T extends ZodOptional<infer U, any> ? ZodOptional<U, false> : never;
+// export type removeDefaultFromOptional<
+//   T extends ZodOptional<any, any>
+// > = T extends ZodOptional<infer U, any> ? ZodOptional<U, false> : never;
 
-export type ZodOptionalType<T extends ZodTypeAny> = T extends ZodOptional<
-  infer U,
-  infer H
->
-  ? ZodOptional<U, H>
-  : ZodOptional<T, false>; // no default by default
+// export type ZodOptionalType<T extends ZodTypeAny> = T extends ZodOptional<
+//   infer U,
+//   infer H
+// >
+//   ? ZodOptional<U, H>
+//   : ZodOptional<T, false>; // no default by default
 
-export class ZodOptional<
-  T extends ZodTypeAny,
-  HasDefault extends boolean = false
-> extends ZodType<
-  HasDefault extends true ? T["_output"] : T["_output"] | undefined,
+export type ZodOptionalType<T extends ZodTypeAny> = ZodOptional<T>;
+
+export class ZodOptional<T extends ZodTypeAny> extends ZodType<
+  T["_output"] | undefined,
   ZodOptionalDef<T>,
   T["_input"] | undefined
 > {
   _parse(ctx: ParseContext): any {
-    let data = ctx.data;
+    const data = ctx.data;
     if (ctx.parsedType === ZodParsedType.undefined) {
-      if (this._def.defaultValue !== undefined) {
-        data = this._def.defaultValue();
-      } else {
-        return undefined;
-      }
+      return undefined;
     }
 
     return new PseudoPromise().then(() => {
@@ -2645,18 +2643,9 @@ export class ZodOptional<
     return this._def.innerType;
   }
 
-  removeDefault(): ZodOptional<T, false> {
-    return new ZodOptional({
-      ...this._def,
-      defaultValue: undefined,
-    });
-  }
-
-  static create = <T extends ZodTypeAny>(type: T): ZodOptionalType<T> => {
-    if (type instanceof ZodOptional) return type as any;
+  static create = <T extends ZodTypeAny>(type: T): ZodOptional<T> => {
     return new ZodOptional({
       innerType: type,
-      defaultValue: undefined,
     }) as any;
   };
 }
@@ -2674,11 +2663,13 @@ export interface ZodNullableDef<T extends ZodTypeAny = ZodTypeAny>
 }
 
 // This type allows for nullable flattening
-export type ZodNullableType<T extends ZodTypeAny> = T extends ZodNullable<
-  infer U
->
-  ? ZodNullable<U>
-  : ZodNullable<T>;
+// export type ZodNullableType<T extends ZodTypeAny> = T extends ZodNullable<
+//   infer U
+// >
+//   ? ZodNullable<U>
+//   : ZodNullable<T>;
+
+export type ZodNullableType<T extends ZodTypeAny> = ZodNullable<T>;
 
 export class ZodNullable<T extends ZodTypeAny> extends ZodType<
   T["_output"] | null,
@@ -2702,10 +2693,53 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType;
   }
 
-  static create = <T extends ZodTypeAny>(type: T): ZodNullableType<T> => {
+  static create = <T extends ZodTypeAny>(type: T): ZodNullable<T> => {
     // An nullable nullable is the original nullable
-    if (type instanceof ZodNullable) return type as any;
+    // if (type instanceof ZodNullable) return type as any;
     return new ZodNullable({
+      innerType: type,
+    }) as any;
+  };
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+//////////                        //////////
+//////////      ZodDefaulter      //////////
+//////////                        //////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+export interface ZodDefaulterDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  innerType: T;
+  defaultValue: () => T["_input"];
+}
+
+export class ZodDefaulter<T extends ZodTypeAny> extends ZodType<
+  util.noUndefined<T["_output"]>,
+  ZodDefaulterDef<T>,
+  T["_input"] | undefined
+> {
+  _parse(ctx: ParseContext): any {
+    const data = ctx.data;
+    if (ctx.parsedType === ZodParsedType.undefined) {
+      return this._def.defaultValue();
+    }
+
+    return new PseudoPromise().then(() => {
+      return this._def.innerType._parseWithInvalidFallback(data, {
+        ...ctx,
+        parentError: ctx.currentError,
+      });
+    });
+  }
+
+  removeDefault() {
+    return this._def.innerType;
+  }
+
+  static create = <T extends ZodTypeAny>(type: T): ZodOptional<T> => {
+    return new ZodOptional({
       innerType: type,
     }) as any;
   };
@@ -2751,8 +2785,9 @@ export type ZodFirstPartySchemaTypes =
   | ZodEnum<any>
   | ZodEffects<any>
   | ZodNativeEnum<any>
-  | ZodOptional<any, any>
+  | ZodOptional<any>
   | ZodNullable<any>
+  | ZodDefaulter<any>
   | ZodPromise<any>;
 
 const instanceOfType = <T extends new (...args: any[]) => any>(

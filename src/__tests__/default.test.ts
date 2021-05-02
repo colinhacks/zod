@@ -36,10 +36,11 @@ test("default on existing optional", () => {
   expect(stringWithDefault._def.innerType._def.innerType).toBeInstanceOf(
     z.ZodString
   );
+
   type inp = z.input<typeof stringWithDefault>;
   const f1: util.AssertEqual<inp, string | undefined> = true;
   type out = z.output<typeof stringWithDefault>;
-  const f2: util.AssertEqual<out, string | undefined> = true;
+  const f2: util.AssertEqual<out, string> = true;
   f1;
   f2;
 });
@@ -50,7 +51,7 @@ test("optional on default", () => {
   type inp = z.input<typeof stringWithDefault>;
   const f1: util.AssertEqual<inp, string | undefined> = true;
   type out = z.output<typeof stringWithDefault>;
-  const f2: util.AssertEqual<out, string> = true;
+  const f2: util.AssertEqual<out, string | undefined> = true;
   f1;
   f2;
 });
@@ -59,7 +60,6 @@ test("complex chain example", () => {
   const complex = z
     .string()
     .default("asdf")
-    .optional()
     .transform((val) => val.toUpperCase())
     .default("qwer")
     .removeDefault()
@@ -73,7 +73,7 @@ test("removeDefault", () => {
   const stringWithRemovedDefault = z.string().default("asdf").removeDefault();
 
   type out = z.output<typeof stringWithRemovedDefault>;
-  const f2: util.AssertEqual<out, string | undefined> = true;
+  const f2: util.AssertEqual<out, string> = true;
   f2;
   expect(stringWithRemovedDefault.parse(undefined)).toBe(undefined);
 });
