@@ -2600,23 +2600,7 @@ export { ZodEffects as ZodTransformer };
 export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   innerType: T;
-  // defaultValue: undefined | (() => T["_input"]);
 }
-
-// export type addDefaultToOptional<
-//   T extends ZodOptional<any, any>
-// > = T extends ZodOptional<infer U, any> ? ZodOptional<U, true> : never;
-
-// export type removeDefaultFromOptional<
-//   T extends ZodOptional<any, any>
-// > = T extends ZodOptional<infer U, any> ? ZodOptional<U, false> : never;
-
-// export type ZodOptionalType<T extends ZodTypeAny> = T extends ZodOptional<
-//   infer U,
-//   infer H
-// >
-//   ? ZodOptional<U, H>
-//   : ZodOptional<T, false>; // no default by default
 
 export type ZodOptionalType<T extends ZodTypeAny> = ZodOptional<T>;
 
@@ -2662,13 +2646,6 @@ export interface ZodNullableDef<T extends ZodTypeAny = ZodTypeAny>
   innerType: T;
 }
 
-// This type allows for nullable flattening
-// export type ZodNullableType<T extends ZodTypeAny> = T extends ZodNullable<
-//   infer U
-// >
-//   ? ZodNullable<U>
-//   : ZodNullable<T>;
-
 export type ZodNullableType<T extends ZodTypeAny> = ZodNullable<T>;
 
 export class ZodNullable<T extends ZodTypeAny> extends ZodType<
@@ -2694,8 +2671,6 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
   }
 
   static create = <T extends ZodTypeAny>(type: T): ZodNullable<T> => {
-    // An nullable nullable is the original nullable
-    // if (type instanceof ZodNullable) return type as any;
     return new ZodNullable({
       innerType: type,
     }) as any;
@@ -2721,9 +2696,9 @@ export class ZodDefaulter<T extends ZodTypeAny> extends ZodType<
   T["_input"] | undefined
 > {
   _parse(ctx: ParseContext): any {
-    const data = ctx.data;
+    let data = ctx.data;
     if (ctx.parsedType === ZodParsedType.undefined) {
-      return this._def.defaultValue();
+      data = this._def.defaultValue();
     }
 
     return new PseudoPromise().then(() => {

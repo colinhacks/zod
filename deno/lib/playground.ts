@@ -4,12 +4,9 @@ const run = async () => {
   z;
   const stringWithDefault = z
     .string()
-    .transform((val) => {
-      console.log(`TRANSFORM`);
-      console.log(val);
-      return val.toUpperCase();
-    })
-    .default("default");
+
+    .default("default")
+    .default("default2");
   console.log(stringWithDefault.parse(undefined));
 };
 

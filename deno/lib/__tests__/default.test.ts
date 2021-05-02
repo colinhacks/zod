@@ -15,7 +15,7 @@ test("default with transform", () => {
     .transform((val) => val.toUpperCase())
     .default("default");
   expect(stringWithDefault.parse(undefined)).toBe("DEFAULT");
-  expect(stringWithDefault).toBeInstanceOf(z.ZodOptional);
+  expect(stringWithDefault).toBeInstanceOf(z.ZodDefaulter);
   expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodEffects);
   expect(stringWithDefault._def.innerType._def.schema).toBeInstanceOf(
     z.ZodSchema
@@ -32,7 +32,7 @@ test("default with transform", () => {
 test("default on existing optional", () => {
   const stringWithDefault = z.string().optional().default("asdf");
   expect(stringWithDefault.parse(undefined)).toBe("asdf");
-  expect(stringWithDefault).toBeInstanceOf(z.ZodOptional);
+  expect(stringWithDefault).toBeInstanceOf(z.ZodDefaulter);
   expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodOptional);
   expect(stringWithDefault._def.innerType._def.innerType).toBeInstanceOf(
     z.ZodString
@@ -76,7 +76,6 @@ test("removeDefault", () => {
   type out = z.output<typeof stringWithRemovedDefault>;
   const f2: util.AssertEqual<out, string> = true;
   f2;
-  expect(stringWithRemovedDefault.parse(undefined)).toBe(undefined);
 });
 
 test("nested", () => {
@@ -96,4 +95,10 @@ test("nested", () => {
   expect(outer.parse(undefined)).toEqual({ inner: "asdf" });
   expect(outer.parse({})).toEqual({ inner: "asdf" });
   expect(outer.parse({ inner: undefined })).toEqual({ inner: "asdf" });
+});
+
+test("chained defaults", () => {
+  const stringWithDefault = z.string().default("inner").default("outer");
+  const result = stringWithDefault.parse(undefined);
+  expect(result).toEqual("outer");
 });
