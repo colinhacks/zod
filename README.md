@@ -1434,7 +1434,7 @@ numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
 
 ### `.optional`
 
-A convenience method that returns an optional version of a schema.
+A convenience method that returns an optional version of the schema.
 
 ```ts
 const optionalString = z.string().optional(); // string | undefined
@@ -1445,13 +1445,25 @@ z.optional(z.string());
 
 ### `.nullable`
 
-A convenience method that returns an nullable version of a schema.
+A convenience method that returns a nullable version of the schema.
 
 ```ts
 const nullableString = z.string().nullable(); // string | null
 
 // equivalent to
 z.nullable(z.string());
+```
+
+### `.nullish`
+
+A convenience method that returns a nullish version of the schema. Nullish means the schema will allow both `undefined` and `null` values.
+
+```ts
+const nullishString = z.string().nullish(); // string | null | undefined
+
+// equivalent to
+z.string().optional().nullable();
+z.nullable(z.optional(z.string()));
 ```
 
 ### `.array`
