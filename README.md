@@ -228,11 +228,11 @@ npm install zod@next
 
 There are a growing number of tools that are built atop or support Zod natively! If you've built a tool or library on top of Zod, tell me about it [on Twitter](https://twitter.com/colinhacks) or [start a Discussion](https://github.com/colinhacks/zod/discussions). I'll add it below and tweet it out.
 
+- [`react-hook-form`](https://github.com/react-hook-form/resolvers): Build type-safe forms easily with React Hook Form and the Zod resolver. I use this all the time and it's glorious.
 - [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): Convert TypeScript definitions into Zod schemas.
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
-- [`react-hook-form`](https://github.com/react-hook-form/resolvers): Build type-safe forms easily with React Hook Form and the Zod resolver. I use this all the time and it's glorious.
-
-> If you like Zod, you'll love [`tRPC`](https://github.com/trpc/trpc), a toolkit for building end-to-end typesafe API without GraphQL or code generation...just plain TypeScript. It makes it easy to validate API payloads with Zod schemas (or other libraries). It's the best way to build a fully typed API, especially for Next.js users. I built the proof-of-concept, and it's currently actively maintained by [@katt](https://github.com/katt).
+- [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): Generate `fast-check` arbitraries from Zod schemas.
+  > If you like Zod, you'll love [`tRPC`](https://github.com/trpc/trpc), a toolkit for building end-to-end typesafe API without GraphQL or code generation...just plain TypeScript. It makes it easy to validate API payloads with Zod schemas (or other libraries). It's the best way to build a fully typed API, especially for Next.js users. I built the proof-of-concept, and it's currently actively maintained by [@katt](https://github.com/katt).
 
 # Basic usage
 
