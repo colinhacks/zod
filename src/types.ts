@@ -318,6 +318,7 @@ export abstract class ZodType<
   constructor(def: Def) {
     this._def = def;
     this.transform = this.transform.bind(this) as any;
+    this.refineWith = this.refineWith.bind(this) as any;
     this.default = this.default.bind(this);
   }
 
@@ -357,6 +358,30 @@ export abstract class ZodType<
       }) as any;
     }
     return returnType;
+  }
+
+  refineWith<NewOut, This extends this>(
+    returnType: ZodType<NewOut>
+  ): This extends ZodEffects<infer T, any>
+    ? ZodEffects<T, NewOut>
+    : ZodEffects<This, NewOut> {
+    let parsed: ReturnType<typeof returnType.safeParse>;
+    const refined: ZodEffects<any> = this._refinement((val, ctx) => {
+      parsed = returnType.safeParse(val);
+      if (!parsed.success) {
+        for (const issue of parsed.error.issues) {
+          ctx.addIssue(issue);
+        }
+      }
+    });
+
+    return refined.transform(() => {
+      if (!parsed.success) {
+        throw new Error(`Unreachable path.`);
+      }
+
+      return parsed.data;
+    }) as any;
   }
 
   default<T extends Input, This extends this = this>(
