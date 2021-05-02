@@ -169,6 +169,15 @@ Sponsorship at any level is appreciated and encouraged. Zod is maintained by a s
 
 <table>
   <tr>
+   <td align="center">
+      <a href="https://deletype.com/">
+        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="100px;" alt="" />
+      </a>
+      <br>
+      <b>Deletype</b>
+      <br>
+      <a href="https://deletype.com/">https://deletype.com/</a>
+    </td>
   <td align="center">
       <a href="https://github.com/kevinsimper">
         <img src="https://avatars1.githubusercontent.com/u/1126497?s=460&v=4" width="100px;" alt="" />
@@ -197,6 +206,17 @@ Sponsorship at any level is appreciated and encouraged. Zod is maintained by a s
       <b>Bamboo Creative</b>
       <br>
       <a href="https://www.bamboocreative.nz/">https://bamboocreative.nz</a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/jeremyBanks">
+        <img src="https://avatars.githubusercontent.com/u/18020?s=400&u=dba6c1402ae1746a276a5d256e01d68e774a0e9d&v=4" width="100px;" alt="" />
+      </a>
+      <br>
+      <b>Jeremy Banks</b>
+      <br>
+      <a href="https://github.com/jeremyBanks">github.com/jeremyBanks</a>
     </td>
   </tr>
 </table>
