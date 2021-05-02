@@ -362,11 +362,11 @@ export abstract class ZodType<
     return returnType;
   }
 
-  default<T extends Input, This extends this = this>(
-    def: T
+  default<This extends this = this>(
+    def: util.noUndefined<Input>
   ): ZodDefaulter<This>;
-  default<T extends () => Input, This extends this = this>(
-    def: T
+  default<This extends this = this>(
+    def: () => util.noUndefined<Input>
   ): ZodDefaulter<This>;
   default(def: any) {
     const defaultValueFunc = typeof def === "function" ? def : () => def;
@@ -2687,7 +2687,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
 export interface ZodDefaulterDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   innerType: T;
-  defaultValue: () => T["_input"];
+  defaultValue: () => util.noUndefined<T["_input"]>;
 }
 
 export class ZodDefaulter<T extends ZodTypeAny> extends ZodType<

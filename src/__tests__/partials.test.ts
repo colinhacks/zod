@@ -80,7 +80,7 @@ test("required", () => {
   const object = z.object({
     name: z.string(),
     age: z.number().optional(),
-    field: z.string().optional().default(undefined),
+    field: z.string().optional().default("asdf"),
   });
 
   const requiredObject = object.required();
