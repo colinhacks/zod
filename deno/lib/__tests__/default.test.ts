@@ -15,7 +15,7 @@ test("default with transform", () => {
     .transform((val) => val.toUpperCase())
     .default("default");
   expect(stringWithDefault.parse(undefined)).toBe("DEFAULT");
-  expect(stringWithDefault).toBeInstanceOf(z.ZodDefaulter);
+  expect(stringWithDefault).toBeInstanceOf(z.ZodDefault);
   expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodEffects);
   expect(stringWithDefault._def.innerType._def.schema).toBeInstanceOf(
     z.ZodSchema
@@ -32,7 +32,7 @@ test("default with transform", () => {
 test("default on existing optional", () => {
   const stringWithDefault = z.string().optional().default("asdf");
   expect(stringWithDefault.parse(undefined)).toBe("asdf");
-  expect(stringWithDefault).toBeInstanceOf(z.ZodDefaulter);
+  expect(stringWithDefault).toBeInstanceOf(z.ZodDefault);
   expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodOptional);
   expect(stringWithDefault._def.innerType._def.innerType).toBeInstanceOf(
     z.ZodString

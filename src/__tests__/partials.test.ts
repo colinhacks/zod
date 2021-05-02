@@ -86,5 +86,5 @@ test("required", () => {
   const requiredObject = object.required();
   expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
   expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
-  expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefaulter);
+  expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
 });

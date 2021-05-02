@@ -364,10 +364,10 @@ export abstract class ZodType<
 
   default<This extends this = this>(
     def: util.noUndefined<Input>
-  ): ZodDefaulter<This>;
+  ): ZodDefault<This>;
   default<This extends this = this>(
     def: () => util.noUndefined<Input>
-  ): ZodDefaulter<This>;
+  ): ZodDefault<This>;
   default(def: any) {
     const defaultValueFunc = typeof def === "function" ? def : () => def;
     // if (this instanceof ZodOptional) {
@@ -376,7 +376,7 @@ export abstract class ZodType<
     //     defaultValue: defaultValueFunc,
     //   }) as any;
     // }
-    return new ZodDefaulter({
+    return new ZodDefault({
       innerType: this,
       defaultValue: defaultValueFunc,
     }) as any;
@@ -2680,19 +2680,19 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 //////////                        //////////
-//////////      ZodDefaulter      //////////
+//////////      ZodDefault      //////////
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface ZodDefaulterDef<T extends ZodTypeAny = ZodTypeAny>
+export interface ZodDefaultDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   innerType: T;
   defaultValue: () => util.noUndefined<T["_input"]>;
 }
 
-export class ZodDefaulter<T extends ZodTypeAny> extends ZodType<
+export class ZodDefault<T extends ZodTypeAny> extends ZodType<
   util.noUndefined<T["_output"]>,
-  ZodDefaulterDef<T>,
+  ZodDefaultDef<T>,
   T["_input"] | undefined
 > {
   _parse(ctx: ParseContext): any {
@@ -2762,7 +2762,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodNativeEnum<any>
   | ZodOptional<any>
   | ZodNullable<any>
-  | ZodDefaulter<any>
+  | ZodDefault<any>
   | ZodPromise<any>;
 
 const instanceOfType = <T extends new (...args: any[]) => any>(
