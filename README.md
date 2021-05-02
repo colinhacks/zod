@@ -884,7 +884,23 @@ FruitEnum.parse("Cantaloupe"); // fails
 
 <!-- > ⚠️ Intersections are deprecated. If you are trying to merge objects, use the `.merge` method instead. -->
 
-Intersections are useful for creating "logical AND" types.
+Intersections are useful for creating "logical AND" types. This is useful for intersecting two object types.
+
+```ts
+const Person = z.object({
+  name: z.string(),
+});
+
+const Employee = z.object({
+  role: z.string(),
+});
+
+const EmployedPerson = z.intersection(Person, Employee);
+// equivalent to:
+const EmployedPerson = Person.and(Employee);
+```
+
+Though in many cases, it is recommended to use `A.merge(B)` to merge two objects. The `.merge` method returns a new `ZodObject` instance, but `A.and(B)` returns a less useful `ZodIntersection` instance that lacks common object methods like `pick` and `omit`.
 
 ```ts
 const a = z.union([z.number(), z.string()]);
@@ -892,9 +908,6 @@ const b = z.union([z.number(), z.boolean()]);
 const c = z.intersection(a, b);
 
 type c = z.infer<typeof c>; // => number
-
-const stringAndNumber = z.intersection(z.string(), z.number());
-type Never = z.infer<typeof stringAndNumber>; // => never
 ```
 
 <!-- Intersections in Zod are not smart. Whatever data you pass into `.parse()` gets passed into the two intersected schemas. Because Zod object schemas don't allow any unknown keys by default, there are some unintuitive behavior surrounding intersections of object schemas. -->
@@ -1434,7 +1447,7 @@ numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
 
 ### `.optional`
 
-A convenience method that returns an optional version of the schema.
+A convenience method that returns an optional version of a schema.
 
 ```ts
 const optionalString = z.string().optional(); // string | undefined
@@ -1445,25 +1458,13 @@ z.optional(z.string());
 
 ### `.nullable`
 
-A convenience method that returns a nullable version of the schema.
+A convenience method that returns an nullable version of a schema.
 
 ```ts
 const nullableString = z.string().nullable(); // string | null
 
 // equivalent to
 z.nullable(z.string());
-```
-
-### `.nullish`
-
-A convenience method that returns a nullish version of the schema. Nullish means the schema will allow both `undefined` and `null` values.
-
-```ts
-const nullishString = z.string().nullish(); // string | null | undefined
-
-// equivalent to
-z.string().optional().nullable();
-z.nullable(z.optional(z.string()));
 ```
 
 ### `.array`
