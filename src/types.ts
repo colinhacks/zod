@@ -206,8 +206,8 @@ export abstract class ZodType<
   refine: <Func extends (arg: Output) => any, This extends this = this>(
     check: Func,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
-  ) => ZodEffectsType<This> = (check, message = "Invalid value.") => {
-    if (typeof message === "string") {
+  ) => ZodEffectsType<This> = (check, message) => {
+    if (typeof message === "string" || typeof message === "undefined") {
       return this._refinement((val, ctx) => {
         const result = check(val);
         const setError = () =>
