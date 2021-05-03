@@ -125,6 +125,7 @@ yarn add zod@next
   - [.default](#default)
   - [.optional](#optional)
   - [.nullable](#nullable)
+  - [.nullish](#nullish)
   - [.array](#array)
   - [.or](#or)
   - [.and](#and)
@@ -1465,6 +1466,17 @@ const nullableString = z.string().nullable(); // string | null
 
 // equivalent to
 z.nullable(z.string());
+```
+
+### `.nullish`
+
+A convenience method that returns a "nullish" version of a schema. Nullish schemas will accept both `undefined` and `null`. Read more about the concept of "nullish" [here](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#nullish-coalescing).
+
+```ts
+const nullishString = z.string().nullish(); // string | null | undefined
+
+// equivalent to
+z.string().optional().nullable();
 ```
 
 ### `.array`
