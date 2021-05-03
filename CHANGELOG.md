@@ -1,5 +1,9 @@
 # Changelog
 
+### 3.0.0-beta.1
+
+- Moved default value logic into ZodDefault. Implemented `.nullish()` method.
+
 ### 3.0.0-alpha.33
 
 - Added `.returnType` and `.parameters` methods to ZodFunction
