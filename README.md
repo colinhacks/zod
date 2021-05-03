@@ -132,6 +132,7 @@ yarn add zod@next
   - [.default](#default)
   - [.optional](#optional)
   - [.nullable](#nullable)
+  - [.nullish](#nullish)
   - [.array](#array)
   - [.or](#or)
   - [.and](#and)
