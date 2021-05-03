@@ -925,11 +925,12 @@ const Employee = z.object({
 });
 
 const EmployedPerson = z.intersection(Person, Employee);
+
 // equivalent to:
 const EmployedPerson = Person.and(Employee);
 ```
 
-Though in many cases, it is recommended to use `A.merge(B)` to merge two objects. The `.merge` method returns a new `ZodObject` instance, but `A.and(B)` returns a less useful `ZodIntersection` instance that lacks common object methods like `pick` and `omit`.
+Though in many cases, it is recommended to use `A.merge(B)` to merge two objects. The `.merge` method returns a new `ZodObject` instance, whereas `A.and(B)` returns a less useful `ZodIntersection` instance that lacks common object methods like `pick` and `omit`.
 
 ```ts
 const a = z.union([z.number(), z.string()]);
