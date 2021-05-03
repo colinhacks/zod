@@ -62,6 +62,7 @@ don't forget to <del>smash that like button</del> leave a star
 
 - **Type guards** (the `.check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
 - Object merging now behaves differently. If you merge two object schema (`A.merge(B)`), the fields of B will overwrite the fields of A if there are shared keys. This is how the `.extend` method already works. If you're looking to create an intersection of the two types, use `z.intersection(A, B)` or use the new `.and` method (`A.and(B)`).
+- **Default values**: default value logic is now implemented inside a `ZodDefault` class, instead of using transformers. (In a previous alpha version of Zod 3, default values were implemented inside the ZodOptional class.)
 - There have been small internal changes to the ZodIssue subtypes. See the new subtypes in the [Error Handling guide](ERROR_HANDLING.md). This may impact user who have written a custom error maps. Most users will not be affected.
 
 ### Migration guide
