@@ -14,16 +14,22 @@ const manual = (str: unknown) => {
 
   return str;
 };
+const stringSchema = z.string();
 
 suite
   .add("empty string", () => {
-    z.string().parse(empty);
+    stringSchema.parse(empty);
   })
   .add("short string", () => {
-    z.string().parse(short);
+    stringSchema.parse(short);
   })
   .add("long string", () => {
-    z.string().parse(long);
+    stringSchema.parse(long);
+  })
+  .add("invalid: null", () => {
+    try {
+      stringSchema.parse(null);
+    } catch (err) {}
   })
   .add("manual parser: long", () => {
     manual(long);
