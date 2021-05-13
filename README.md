@@ -18,7 +18,7 @@ don't forget to <del>smash that like button</del> leave a star
 
 ### Introducing tRPC
 
-If you like Zod, you'll love my new library [`tRPC`](https://github.com/trpc/trpc), a toolkit for building end-to-end typesafe APIs — no GraphQL or code generation required. It makes it easy to validate API payloads with Zod schemas (or other libraries). It's the best way to build a fully typed API, especially for Next.js users. Check it out: [github.com/trpc/trpc](https://github.com/trpc/trpc)
+If you like Zod, you'll love my new library [`tRPC`](https://github.com/trpc/trpc), a toolkit for building end-to-end typesafe APIs — no GraphQL or code generation required. It makes it easy to validate API payloads with Zod schemas (or other libraries). It's the best way to build a fully typed API, especially for Next.js users. Check it out: [github.com/trpc/trpc](https://github.com/trpc/trpc).
 
 ## Zod v3 is in beta!
 
