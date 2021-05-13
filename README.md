@@ -16,6 +16,10 @@ don't forget to <del>smash that like button</del> leave a star
 
 <br/>
 
+### Introducing tRPC
+
+If you like Zod, you'll love my new library [`tRPC`](https://github.com/trpc/trpc), a toolkit for building end-to-end typesafe APIs — no GraphQL or code generation required. It makes it easy to validate API payloads with Zod schemas (or other libraries). It's the best way to build a fully typed API, especially for Next.js users. Check it out: [github.com/trpc/trpc](https://github.com/trpc/trpc)
+
 ## Zod v3 is in beta!
 
 #### New features
@@ -260,8 +264,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): Convert TypeScript definitions into Zod schemas.
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
 - [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): Generate `fast-check` arbitraries from Zod schemas.
-
-If you like Zod, you'll love [`tRPC`](https://github.com/trpc/trpc), a toolkit for building end-to-end typesafe API without GraphQL or code generation...just plain TypeScript. It makes it easy to validate API payloads with Zod schemas (or other libraries). It's the best way to build a fully typed API, especially for Next.js users. I built the proof-of-concept, and it's currently actively maintained by [@katt](https://github.com/katt).
+- [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): Contract-first strictly typed endpoints with Zod. OpenAPI compatible.
 
 # Basic usage
 
