@@ -59,6 +59,16 @@ export namespace util {
     return undefined;
   };
 
+  export const findIndex = <T>(
+    arr: T[],
+    checker: (arg: T, index: number) => any
+  ): number => {
+    for (let index = 0; index < arr.length; index++) {
+      if (checker(arr[index], index)) return index;
+    }
+    return -1;
+  };
+
   export type identity<T> = T;
   export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
   export type noUndefined<T> = T extends undefined ? never : T;

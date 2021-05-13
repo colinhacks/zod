@@ -1,4 +1,4 @@
-import { INVALID } from "./helpers/util";
+import { INVALID, util } from "./helpers/util";
 import { ZodError } from "./ZodError";
 
 type Func = (arg: any, ctx: { async: boolean }) => any;
@@ -158,7 +158,8 @@ export class PseudoPromise<PayloadType = undefined> {
           val = item.function(val, { async: false });
         }
       } catch (err) {
-        const catcherIndex = this.items.findIndex(
+        const catcherIndex = util.findIndex(
+          this.items,
           (x, i) => x.type === "catcher" && i > index
         );
 
@@ -185,7 +186,8 @@ export class PseudoPromise<PayloadType = undefined> {
           val = await item.function(val, { async: true });
         }
       } catch (err) {
-        const catcherIndex = this.items.findIndex(
+        const catcherIndex = util.findIndex(
+          this.items,
           (x, i) => x.type === "catcher" && i > index
         );
 
