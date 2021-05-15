@@ -96,7 +96,10 @@ I work on Zod in my free time, so if you're making money from a product that is 
       <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
       <br />
     </td>
-    <td align="center">
+    
+  </tr>
+  <tr>
+  <td align="center">
       <a href="https://www.bamboocreative.nz/">
         <img src="https://avatars1.githubusercontent.com/u/41406870?s=460&v=4" width="100px;" alt="" />
       </a>
@@ -105,8 +108,6 @@ I work on Zod in my free time, so if you're making money from a product that is 
       <br>
       <a href="https://www.bamboocreative.nz/">https://bamboocreative.nz</a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://github.com/jeremyBanks">
         <img src="https://avatars.githubusercontent.com/u/18020?s=400&u=dba6c1402ae1746a276a5d256e01d68e774a0e9d&v=4" width="100px;" alt="" />
@@ -115,6 +116,15 @@ I work on Zod in my free time, so if you're making money from a product that is 
       <b>Jeremy Banks</b>
       <br>
       <a href="https://github.com/jeremyBanks">github.com/jeremyBanks</a>
+    </td>
+    <td align="center">
+      <a href="https://marcatopartners.com/">
+        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="100px;" alt="Marcato Partners" />
+      </a>
+      <br>
+      <b>Marcato Partners</b>
+      <br>
+      <a href="https://marcatopartners.com/">marcatopartners.com</a>
     </td>
   </tr>
 </table>
