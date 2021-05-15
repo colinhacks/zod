@@ -44,12 +44,7 @@ export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {}
 
 type ParseReturnType<T> = T | INVALID | PseudoPromise<T | INVALID>;
-type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<
-  infer Inner,
-  infer Out
->
-  ? ZodEffects<Inner, Out>
-  : ZodEffects<T, T["_output"]>;
+
 export abstract class ZodType<
   Output,
   Def extends ZodTypeDef = ZodTypeDef,
@@ -2467,10 +2462,17 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////////
 //////////////////////////////////////////////
 //////////                          //////////
-//////////      ZodEffects      //////////
+//////////        ZodEffects        //////////
 //////////                          //////////
 //////////////////////////////////////////////
 //////////////////////////////////////////////
+type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<
+  infer Inner,
+  infer Out
+>
+  ? ZodEffects<Inner, Out>
+  : ZodEffects<T, T["_output"]>;
+
 export type InternalCheck<T> = {
   type: "refinement";
   refinement: (arg: T, ctx: RefinementCtx) => any;
