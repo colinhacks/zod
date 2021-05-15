@@ -106,7 +106,7 @@ test("cuid", () => {
   const result = cuid.safeParse("cifjhdsfhsd-invalid-cuid");
   expect(result.success).toEqual(false);
   if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("custom error");
+    expect(result.error.issues[0].message).toEqual("Invalid cuid");
   }
 });
 
