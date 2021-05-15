@@ -402,10 +402,12 @@ export interface ZodStringDef extends ZodTypeDef {
   isEmail: { message?: string } | false;
   isURL: { message?: string } | false;
   isUUID: { message?: string } | false;
+  isCUID: { message?: string } | false;
   minLength: { value: number; message?: string } | null;
   maxLength: { value: number; message?: string } | null;
 }
 
+const cuidRegex = /^c[^\s-]{8,}$/i;
 const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
 // from https://stackoverflow.com/a/46181/1550155
 // old version: too slow, didn't support unicode
@@ -442,6 +444,14 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           message: this._def.isURL.message,
         });
       }
+    }
+
+    if (this._def.isCUID && !cuidRegex.test(ctx.data)) {
+      ctx.addIssue({
+        validation: "cuid",
+        code: ZodIssueCode.invalid_string,
+        message: this._def.isCUID.message,
+      });
     }
 
     if (this._def.isUUID && !uuidRegex.test(ctx.data)) {
@@ -510,6 +520,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       isUUID: errorUtil.errToObj(message),
     });
 
+  cuid = (message?: errorUtil.ErrMessage) =>
+    new ZodString({
+      ...this._def,
+      isCUID: errorUtil.errToObj(message),
+    });
+
   regex = (regexp: RegExp, message?: errorUtil.ErrMessage) =>
     this._regex(regexp, "regex", message);
 
@@ -543,6 +559,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       isEmail: false,
       isURL: false,
       isUUID: false,
+      isCUID: false,
       minLength: null,
       maxLength: null,
     });
