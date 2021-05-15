@@ -7,7 +7,8 @@ type Catcher = (error: Error, ctx: { async: boolean }) => any;
 type CatcherItem = { type: "catcher"; catcher: Catcher };
 type Items = (FuncItem | CatcherItem)[];
 
-export const NOSET = Symbol("no_set");
+export const NOSET = Object.freeze({ no_set: true });
+
 export class PseudoPromise<PayloadType = undefined> {
   readonly _return: PayloadType | undefined;
   items: Items;
