@@ -349,14 +349,14 @@ const tru = z.literal(true);
 Zod includes a handful of string-specific validations.
 
 ```ts
-z.string().min(5);
 z.string().max(5);
+z.string().min(5);
+z.string().nonempty(); // equivalent to .min(1)
 z.string().length(5);
 z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().regex(regex);
-z.string().nonempty();
 ```
 
 > Use the `.nonempty` method if you want the empty string ( `""` ) to be considered invalid.
