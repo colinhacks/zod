@@ -3,15 +3,9 @@ import { z } from "./index";
 const run = async () => {
   z;
 
-  console.log(
-    z
-      .object({
-        one: z.string().default("1"),
-        two: z.string().default("2"),
-      })
-      .optional()
-      .parse(undefined)
-  );
+  // const schema = z.string().refine((val) => val.length === 5);
+  // const result = schema.safeParse(undefined);
+  // console.log(result);
 };
 
 run();

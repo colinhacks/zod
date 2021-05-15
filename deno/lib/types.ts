@@ -2493,6 +2493,10 @@ export class ZodEffects<
   T extends ZodTypeAny,
   Output = T["_type"]
 > extends ZodType<Output, ZodEffectsDef<T>, T["_input"]> {
+  innerType() {
+    return this._def.schema;
+  }
+
   _parse(ctx: ParseContext): any {
     const isSync = ctx.async === false || this instanceof ZodPromise;
     const effects = this._def.effects || [];
