@@ -1,7 +1,4 @@
-export const INVALID =
-  typeof Symbol === "function"
-    ? Symbol("invalid_data")
-    : { invalid_data: true };
+export const INVALID = Object.freeze({ invalid_data: true });
 export type INVALID = typeof INVALID;
 export namespace util {
   export type AssertEqual<T, Expected> = [T] extends [Expected]
