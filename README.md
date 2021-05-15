@@ -58,10 +58,10 @@ If you like Zod, you'll love my new library [`tRPC`](https://github.com/trpc/trp
   const test = z
     .string()
     .transform((val) => val.length)
-    .refine((val) => val > 5, { message: 'Input is too short' })
+    .refine((val) => val > 5, { message: "Input is too short" })
     .transform((val) => val * 2);
 
-  test.parse('12characters'); // => 24
+  test.parse("12characters"); // => 24
   ```
 
 - **Type guards** (the `.check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
@@ -281,18 +281,18 @@ There are a growing number of tools that are built atop or support Zod natively!
 Creating a simple string schema
 
 ```ts
-import { z } from 'zod';
+import { z } from "zod";
 
 // creating a schema for strings
 const mySchema = z.string();
-mySchema.parse('tuna'); // => "tuna"
+mySchema.parse("tuna"); // => "tuna"
 mySchema.parse(12); // => throws ZodError
 ```
 
 Creating an object schema
 
 ```ts
-import { z } from 'zod';
+import { z } from "zod";
 
 const User = z.object({
   username: z.string(),
@@ -310,7 +310,7 @@ type User = z.infer<typeof User>;
 ## Primitives
 
 ```ts
-import { z } from 'zod';
+import { z } from "zod";
 
 // primitive values
 z.string();
@@ -337,7 +337,7 @@ z.never();
 ## Literals
 
 ```ts
-const tuna = z.literal('tuna');
+const tuna = z.literal("tuna");
 const twelve = z.literal(12);
 const tru = z.literal(true);
 ```
@@ -349,13 +349,15 @@ const tru = z.literal(true);
 Zod includes a handful of string-specific validations.
 
 ```ts
-z.string().min(5);
 z.string().max(5);
+z.string().min(5);
 z.string().length(5);
 z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().regex(regex);
+
+// deprecated, equivalent to .min(1)
 z.string().nonempty();
 ```
 
@@ -368,12 +370,12 @@ z.string().nonempty();
 Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
-z.string().min(5, { message: 'Must be 5 or more characters long' });
-z.string().max(5, { message: 'Must be 5 or fewer characters long' });
-z.string().length(5, { message: 'Must be exactly 5 characters long' });
-z.string().email({ message: 'Invalid email address.' });
-z.string().url({ message: 'Invalid url' });
-z.string().uuid({ message: 'Invalid UUID' });
+z.string().min(5, { message: "Must be 5 or more characters long" });
+z.string().max(5, { message: "Must be 5 or fewer characters long" });
+z.string().length(5, { message: "Must be exactly 5 characters long" });
+z.string().email({ message: "Invalid email address." });
+z.string().url({ message: "Invalid url" });
+z.string().uuid({ message: "Invalid UUID" });
 ```
 
 ## Numbers
@@ -395,7 +397,7 @@ z.number().nonpositive(); //  <= 0
 Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
-z.number().max(5, { message: 'this👏is👏too👏big' });
+z.number().max(5, { message: "this👏is👏too👏big" });
 ```
 
 ## Objects
@@ -539,7 +541,7 @@ const person = z.object({
 });
 
 person.parse({
-  name: 'bob dylan',
+  name: "bob dylan",
   extraKey: 61,
 });
 // => { name: "bob dylan" }
@@ -552,7 +554,7 @@ Instead, if you want to pass through unknown keys, use `.passthrough()` .
 
 ```ts
 person.passthrough().parse({
-  name: 'bob dylan',
+  name: "bob dylan",
   extraKey: 61,
 });
 // => { name: "bob dylan", extraKey: 61 }
@@ -570,7 +572,7 @@ const person = z
   .strict();
 
 person.parse({
-  name: 'bob dylan',
+  name: "bob dylan",
   extraKey: 61,
 });
 // => throws ZodError
@@ -592,12 +594,12 @@ const person = z
   .catchall(z.number());
 
 person.parse({
-  name: 'bob dylan',
+  name: "bob dylan",
   validExtraKey: 61, // works fine
 });
 
 person.parse({
-  name: 'bob dylan',
+  name: "bob dylan",
   validExtraKey: false, // fails
 });
 // => throws ZodError
@@ -631,7 +633,7 @@ const nonEmptyStrings = z.string().array().nonempty();
 // [string, ...string[]]
 
 nonEmptyStrings.parse([]); // throws: "Array cannot be empty"
-nonEmptyStrings.parse(['Ariana Grande']); // passes
+nonEmptyStrings.parse(["Ariana Grande"]); // passes
 ```
 
 ### `.min/.max/.length`
@@ -651,7 +653,7 @@ Zod includes a built-in `z.union` method for composing "OR" types.
 ```ts
 const stringOrNumber = z.union([z.string(), z.number()]);
 
-stringOrNumber.parse('foo'); // passes
+stringOrNumber.parse("foo"); // passes
 stringOrNumber.parse(14); // passes
 ```
 
@@ -697,7 +699,7 @@ Similarly, you can create nullable types like so:
 
 ```ts
 const nullableString = z.nullable(z.string());
-nullableString.parse('asdf'); // => "asdf"
+nullableString.parse("asdf"); // => "asdf"
 nullableString.parse(null); // => null
 ```
 
@@ -754,12 +756,12 @@ This is particularly useful for storing or caching items by ID.
 ```ts
 const userStore: UserStore = {};
 
-userStore['77d2586b-9e8e-4ecf-8b21-ea7e0530eadd'] = {
-  name: 'Carlotta',
+userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
+  name: "Carlotta",
 }; // passes
 
-userStore['77d2586b-9e8e-4ecf-8b21-ea7e0530eadd'] = {
-  whatever: 'Ice cream sundae',
+userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
+  whatever: "Ice cream sundae",
 }; // TypeError
 ```
 
@@ -771,7 +773,7 @@ As it turns out, TypeScript's behavior surrounding `[k: number]` is a little uni
 
 ```ts
 const testMap: { [k: number]: string } = {
-  1: 'one',
+  1: "one",
 };
 
 for (const key in testMap) {
@@ -823,7 +825,7 @@ FishEnum.parse("Flounder"); // => throws
 For convenience Zod provides a built-in `z.enum()` function. Here's is the equivalent code: -->
 
 ```ts
-const FishEnum = z.enum(['Salmon', 'Tuna', 'Trout']);
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
@@ -831,7 +833,7 @@ type FishEnum = z.infer<typeof FishEnum>;
 You must pass the array of values directly into `z.enum()`. This does not work:
 
 ```ts
-const fish = ['Salmon', 'Tuna', 'Trout'];
+const fish = ["Salmon", "Tuna", "Trout"];
 const FishEnum = z.enum(fish);
 ```
 
@@ -886,8 +888,8 @@ FruitEnum.parse(3); // fails
 
 ```ts
 enum Fruits {
-  Apple = 'apple',
-  Banana = 'banana',
+  Apple = "apple",
+  Banana = "banana",
   Cantaloupe, // you can mix numerical and string enums
 }
 
@@ -896,10 +898,10 @@ type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
 
 FruitEnum.parse(Fruits.Apple); // passes
 FruitEnum.parse(Fruits.Cantaloupe); // passes
-FruitEnum.parse('apple'); // passes
-FruitEnum.parse('banana'); // passes
+FruitEnum.parse("apple"); // passes
+FruitEnum.parse("banana"); // passes
 FruitEnum.parse(0); // passes
-FruitEnum.parse('Cantaloupe'); // fails
+FruitEnum.parse("Cantaloupe"); // fails
 ```
 
 **Const enums**
@@ -908,18 +910,18 @@ The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as co
 
 ```ts
 const Fruits = {
-  Apple: 'apple',
-  Banana: 'banana',
+  Apple: "apple",
+  Banana: "banana",
   Cantaloupe: 3,
 } as const;
 
 const FruitEnum = z.nativeEnum(Fruits);
 type FruitEnum = z.infer<typeof FruitEnum>; // "apple" | "banana" | 3
 
-FruitEnum.parse('apple'); // passes
-FruitEnum.parse('banana'); // passes
+FruitEnum.parse("apple"); // passes
+FruitEnum.parse("banana"); // passes
 FruitEnum.parse(3); // passes
-FruitEnum.parse('Cantaloupe'); // fails
+FruitEnum.parse("Cantaloupe"); // fails
 ```
 
 ## Intersections
@@ -1008,11 +1010,11 @@ const Category: z.ZodSchema<Category> = z.lazy(() =>
 );
 
 Category.parse({
-  name: 'People',
+  name: "People",
   subcategories: [
     {
-      name: 'Politicians',
-      subcategories: [{ name: 'Presidents', subcategories: [] }],
+      name: "Politicians",
+      subcategories: [{ name: "Presidents", subcategories: [] }],
     },
   ],
 }); // passes
@@ -1077,14 +1079,14 @@ const numberPromise = z.promise(z.number());
 2. Zod uses `.then` to attach an additional validation step onto the existing Promise. You'll have to use `.catch` on the returned Promise to handle validation failures.
 
 ```ts
-numberPromise.parse('tuna');
+numberPromise.parse("tuna");
 // ZodError: Non-Promise type: string
 
-numberPromise.parse(Promise.resolve('tuna'));
+numberPromise.parse(Promise.resolve("tuna"));
 // => Promise<number>
 
 const test = async () => {
-  await numberPromise.parse(Promise.resolve('tuna'));
+  await numberPromise.parse(Promise.resolve("tuna"));
   // ZodError: Non-number type: string
 
   await numberPromise.parse(Promise.resolve(3.14));
@@ -1107,9 +1109,9 @@ class Test {
 
 const TestSchema = z.instanceof(Test);
 
-const blob: any = 'whatever';
+const blob: any = "whatever";
 TestSchema.parse(new Test()); // passes
-TestSchema.parse('blob'); // throws
+TestSchema.parse("blob"); // throws
 ```
 
 ## Function schemas
@@ -1178,8 +1180,8 @@ const trimmedLength = z
     return x.trim().length;
   });
 
-trimmedLength('sandwich'); // => 8
-trimmedLength(' asdf '); // => 4
+trimmedLength("sandwich"); // => 8
+trimmedLength(" asdf "); // => 4
 ```
 
 If you only care about validating inputs, that's fine:
@@ -1208,7 +1210,7 @@ Given any Zod schema, you can call its `.parse` method to check `data` is valid.
 
 ```ts
 const stringSchema = z.string();
-stringSchema.parse('fish'); // => returns "fish"
+stringSchema.parse("fish"); // => returns "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
 
@@ -1220,7 +1222,7 @@ If you use asynchronous [refinements](#refinements) or [transforms](#transformer
 
 ```ts
 const stringSchema = z.string().refine(async (val) => val.length > 20);
-const value = await stringSchema.parseAsync('hello'); // => hello
+const value = await stringSchema.parseAsync("hello"); // => hello
 ```
 
 ### `.safeParse`
@@ -1233,14 +1235,14 @@ If you don't want Zod to throw errors when validation fails, use `.safeParse`. T
 stringSchema.safeParse(12);
 // => { success: false; error: ZodError }
 
-stringSchema.safeParse('billie');
+stringSchema.safeParse("billie");
 // => { success: true; data: 'billie' }
 ```
 
 The result is a _discriminated union_ so you can handle errors very conveniently:
 
 ```ts
-const result = stringSchema.safeParse('billie');
+const result = stringSchema.safeParse("billie");
 if (!result.success) {
   // handle error then return
   result.error;
@@ -1257,13 +1259,13 @@ if (!result.success) {
 An asynchronous version of `safeParse`.
 
 ```ts
-await stringSchema.safeParseAsync('billie');
+await stringSchema.safeParseAsync("billie");
 ```
 
 For convenience, this has been aliased to `.spa`:
 
 ```ts
-await stringSchema.spa('billie');
+await stringSchema.spa("billie");
 ```
 
 ### `.refine`
@@ -1324,9 +1326,9 @@ const passwordForm = z
   })
   .refine((data) => data.password === data.confirm, {
     message: "Passwords don't match",
-    path: ['confirm'], // path of error
+    path: ["confirm"], // path of error
   })
-  .parse({ password: 'asdf', confirm: 'qwer' });
+  .parse({ password: "asdf", confirm: "qwer" });
 ```
 
 Because you provided a `path` parameter, the resulting error will be:
@@ -1399,9 +1401,9 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
     ctx.addIssue({
       code: z.ZodIssueCode.too_big,
       maximum: 3,
-      type: 'array',
+      type: "array",
       inclusive: true,
-      message: 'Too many items 😡',
+      message: "Too many items 😡",
     });
   }
 
@@ -1424,7 +1426,7 @@ To transform data after parsing, use the `transform` method.
 
 ```ts
 const stringToNumber = z.string().transform((val) => myString.length);
-stringToNumber.parse('string'); // => 6
+stringToNumber.parse("string"); // => 6
 ```
 
 > ⚠️ Transformation functions must not throw. Make sure to use refinements before the transformer to make sure the input can be parsed by the transformer.
@@ -1437,9 +1439,9 @@ Note that `stringToNumber` above is an instance of the `ZodEffects` subclass. It
 const emailToDomain = z
   .string()
   .email()
-  .transform((val) => val.split('@')[1]);
+  .transform((val) => val.split("@")[1]);
 
-emailToDomain.parse('colinhacks@example.com'); // => example.com
+emailToDomain.parse("colinhacks@example.com"); // => example.com
 ```
 
 #### Relationship to refinements
@@ -1473,7 +1475,7 @@ const IdToUser = z.transformer(
 You can use transformers to implement the concept of "default values" in Zod.
 
 ```ts
-const stringWithDefault = z.string().default('tuna');
+const stringWithDefault = z.string().default("tuna");
 
 stringWithDefault.parse(undefined); // => "tuna"
 ```
@@ -1563,7 +1565,7 @@ const A = z.string();
 type A = z.infer<typeof A>; // string
 
 const u: A = 12; // TypeError
-const u: A = 'asdf'; // compiles
+const u: A = "asdf"; // compiles
 ```
 
 #### What about transforms?
@@ -1704,7 +1706,7 @@ io-ts is an excellent library by gcanti. The API of io-ts heavily inspired the d
 In our experience, io-ts prioritizes functional programming purity over developer experience in many cases. This is a valid and admirable design goal, but it makes io-ts particularly hard to integrate into an existing codebase with a more procedural or object-oriented bias. For instance, consider how to define an object with optional properties in io-ts:
 
 ```ts
-import * as t from 'io-ts';
+import * as t from "io-ts";
 
 const A = t.type({
   foo: t.string,
