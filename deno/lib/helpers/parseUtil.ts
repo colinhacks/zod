@@ -73,14 +73,10 @@ export const issueHelpers = (error: ZodError, params: ParseParams) => {
       path: [...params.path, ...(errorData.path || [])],
     };
 
-    const defaultError =
-      // defaultErrorMap === params.errorMap
-      //   ? { message: `Invalid value` }
-      //   :
-      defaultErrorMap(errorArg, {
-        data: params.data,
-        defaultError: `Invalid value`,
-      });
+    const defaultError = defaultErrorMap(errorArg, {
+      data: params.data,
+      defaultError: `Invalid input`,
+    });
     const issue = {
       ...errorData,
       path: [...params.path, ...(errorData.path || [])],
