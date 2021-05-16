@@ -79,7 +79,7 @@
     "ts-jest": "^26.4.4",
     "ts-node": "^9.1.0",
     "tslib": "^2.1.0",
-    "typescript": "4.1"
+    "typescript": "^4.2.4"
   },
   "husky": {
     "hooks": {
