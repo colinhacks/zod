@@ -419,6 +419,32 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       return INVALID;
     }
 
+    if (this._def.minLength !== null) {
+      if (ctx.data.length < this._def.minLength.value) {
+        ctx.addIssue({
+          code: ZodIssueCode.too_small,
+          minimum: this._def.minLength.value,
+          type: "string",
+          inclusive: true,
+          message: this._def.minLength.message,
+          // ...errorUtil.errToObj(this._def.minLength.message),
+        });
+      }
+    }
+
+    if (this._def.maxLength !== null) {
+      if (ctx.data.length > this._def.maxLength.value) {
+        ctx.addIssue({
+          code: ZodIssueCode.too_big,
+          maximum: this._def.maxLength.value,
+          type: "string",
+          inclusive: true,
+          message: this._def.maxLength.message,
+          // ...errorUtil.errToObj(this._def.maxLength.message),
+        });
+      }
+    }
+
     if (this._def.isEmail && !emailRegex.test(ctx.data)) {
       ctx.addIssue({
         validation: "email",
@@ -445,32 +471,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         code: ZodIssueCode.invalid_string,
         message: this._def.isUUID.message,
       });
-    }
-
-    if (this._def.minLength !== null) {
-      if (ctx.data.length < this._def.minLength.value) {
-        ctx.addIssue({
-          code: ZodIssueCode.too_small,
-          minimum: this._def.minLength.value,
-          type: "string",
-          inclusive: true,
-          message: this._def.minLength.message,
-          // ...errorUtil.errToObj(this._def.minLength.message),
-        });
-      }
-    }
-
-    if (this._def.maxLength !== null) {
-      if (ctx.data.length > this._def.maxLength.value) {
-        ctx.addIssue({
-          code: ZodIssueCode.too_big,
-          maximum: this._def.maxLength.value,
-          type: "string",
-          inclusive: true,
-          message: this._def.maxLength.message,
-          // ...errorUtil.errToObj(this._def.maxLength.message),
-        });
-      }
     }
 
     return ctx.data;
@@ -583,6 +583,17 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       return INVALID;
     }
 
+    if (this._def.isInteger) {
+      if (!Number.isInteger(ctx.data)) {
+        ctx.addIssue({
+          code: ZodIssueCode.invalid_type,
+          expected: "integer",
+          received: "float",
+          message: this._def.isInteger.message,
+        });
+      }
+    }
+
     if (this._def.minimum) {
       const MIN = this._def.minimum;
       const tooSmall = MIN.inclusive
@@ -611,17 +622,6 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           type: "number",
           inclusive: MAX.inclusive,
           message: MAX.message,
-        });
-      }
-    }
-
-    if (this._def.isInteger) {
-      if (!Number.isInteger(ctx.data)) {
-        ctx.addIssue({
-          code: ZodIssueCode.invalid_type,
-          expected: "integer",
-          received: "float",
-          message: this._def.isInteger.message,
         });
       }
     }
