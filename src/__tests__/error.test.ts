@@ -84,7 +84,7 @@ test("default error message", () => {
   } catch (err) {
     const zerr: z.ZodError = err;
     expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual("Invalid input.");
+    expect(zerr.issues[0].message).toEqual("Invalid input");
   }
 });
 
