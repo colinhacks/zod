@@ -226,7 +226,7 @@ test("custom path", () => {
     const error = result.error.format();
     expect(error._errors).toEqual([]);
     expect(error.password?._errors).toEqual(undefined);
-    expect(error.confirm?._errors).toEqual(["Invalid input."]);
+    expect(error.confirm?._errors).toEqual(["Invalid input"]);
   }
 });
 
@@ -257,14 +257,14 @@ test("formatting", () => {
     expect(error._errors).toEqual([]);
     expect(error.inner?._errors).toEqual([]);
     expect(error.inner?.name?._errors).toEqual([]);
-    expect(error.inner?.name?.[0]._errors).toEqual(["Invalid input."]);
+    expect(error.inner?.name?.[0]._errors).toEqual(["Invalid input"]);
     expect(error.inner?.name?.[1]).toEqual(undefined);
   }
   if (!result2.success) {
     const error = result2.error.format();
     expect(error._errors).toEqual([]);
     expect(error.inner?._errors).toEqual([]);
-    expect(error.inner?.name?._errors).toEqual(["Invalid input."]);
+    expect(error.inner?.name?._errors).toEqual(["Invalid input"]);
     expect(error.inner?.name?.[0]).toEqual(undefined);
     expect(error.inner?.name?.[1]).toEqual(undefined);
     expect(error.inner?.name?.[2]).toEqual(undefined);

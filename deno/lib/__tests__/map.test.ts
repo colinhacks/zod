@@ -33,7 +33,7 @@ test("throws when a Set is given", () => {
   }
 });
 
-test("throws when the given map has invalid key and invalid value", () => {
+test("throws when the given map has invalid key and invalid input", () => {
   const result = stringMap.safeParse(new Map([[42, Symbol()]]));
   expect(result.success).toEqual(false);
   if (result.success === false) {

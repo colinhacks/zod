@@ -362,7 +362,7 @@ export const defaultErrorMap = (
       util.assertNever(error);
   }
   return { message };
-  // return `Invalid input.`;
+  // return `Invalid input`;
 };
 
 export let overrideErrorMap = defaultErrorMap;
