@@ -9,14 +9,14 @@ This is a migration guide to walk you through the process of upgrading to Zod 3.
 
 Zod 2 is being retired and will not leave beta. This is due to some unintuitive ramifications of the transformers API: details [here](https://github.com/colinhacks/zod/issues/264).
 
-### New features: Zod 2
+### New features
 
 - Transformers! These let you provide default values, do casting/coercion, and a lot more. Read more here: [Transformers](https://github.com/colinhacks/zod#transformers)
 - Asynchronous refinements and new .parseAsync and .safeParseAsync methods. Read more here: [Refinements](https://github.com/colinhacks/zod#refinements)
 - Modify unknown key behavior for object schemas: `.strip()` (the default), `.passthrough()`, and `.strict()`
 - New .catchall() method for object schemas: [catchall](https://github.com/colinhacks/zod#catchall)
 
-### Breaking changes: Zod 2
+### Breaking changes
 
 - Object schemas now _strip_ unknown keys by default.
 - Schema parsing now returns a deep clone of the data you pass in (instead of the exact value you pass in)
@@ -25,7 +25,7 @@ Zod 2 is being retired and will not leave beta. This is due to some unintuitive 
 
 ## Upgrading from Zod 2 → Zod 3
 
-### New features: Zod 3
+### New features
 
 - You can now import Zod like `import { z } from 'zod';` instead of using `import * as` syntax.
 - **Structured error messages**. Use the `.format()` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
@@ -34,9 +34,9 @@ Zod 2 is being retired and will not leave beta. This is due to some unintuitive 
 - **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
 - **Maps and sets**. Zod now supports [`Map`](#maps) and [`Set`](#set) schemas.
 - **Optional and nullable unwrapping**. ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap.
-- **A new implementation of transformers**. See the "breaking changes" section to understand the syntax changes.
+- **A new implementation of transformers**. Details below.
 
-### Breaking changes: Zod 3
+### Breaking changes
 
 - The **minimum TypeScript version** is now _4.1_ (up from 3.7 for Zod 2). Several features have been rewritten to use [recursive conditional types](https://devblogs.microsoft.com/typescript/announcing-typescript-4-1/#recursive-conditional-types), an incredibly powerful new feature introduced in TS4.1.
 
