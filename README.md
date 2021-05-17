@@ -1527,17 +1527,19 @@ In reality each Zod schema is actually associated with **two** types: an input a
 You can separately extract the input and output types like so:
 
 ```ts
-const stringToNumber = z.string().transform(val => val.length)
+const stringToNumber = z.string().transform((val) => val.length);
 
 // ⚠️ Important: z.infer returns the OUTPUT type!
-type type = z.infer<stringToNumber>; // number
-type out = z.output<stringToNumber>; // number, equivalent to z.infer
-type in = z.input<stringToNumber>; // string, returns input type
+type input = z.input<stringToNumber>; // string
+type output = z.output<stringToNumber>; // number
+
+// equivalent to z.output!
+type inferred = z.infer<stringToNumber>; // number
 ```
 
 # Errors
 
-Zod provides a subclass of Error called ZodError. ZodErrors contain an `issues` array containing detailed information about the validation problems.
+Zod provides a subclass of Error called `ZodError`. ZodErrors contain an `issues` array containing detailed information about the validation problems.
 
 ```ts
 const data = z
