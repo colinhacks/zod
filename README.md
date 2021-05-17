@@ -23,7 +23,7 @@ Check out the [Migration Guide](https://github.com/colinhacks/zod/blob/master/MI
 Previous versions:
 
 - [`Zod 1 docs`](https://github.com/colinhacks/zod/tree/v1)
-- [`Zod 2 docs`](⭐https://github.com/colinhacks/zod/tree/v2)
+- [`Zod 2 docs`](https://github.com/colinhacks/zod/tree/v2)
 
 #### New features
 
