@@ -26,7 +26,7 @@
 
 The docs for previous versions are in the [`v1`](https://github.com/colinhacks/zod/tree/v1) and [`v2`](⭐https://github.com/colinhacks/zod/tree/v2) branches.
 
-#### New features
+### New features
 
 - **Easier imports**: you can now import Zod like `import { z } from 'zod';` instead of using `import * as` syntax.
 - **Structured error messages**. Use the `.format()` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
