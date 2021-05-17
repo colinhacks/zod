@@ -16,15 +16,15 @@
 
 <br/>
 
-### Introducing tRPC
-
-If you like Zod, you'll love my new library [`tRPC`](https://github.com/trpc/trpc), a toolkit for building end-to-end typesafe APIs — no GraphQL or code generation required. It makes it easy to validate API payloads with Zod schemas (or other libraries). It's the best way to build a fully typed API, especially for Next.js users. Check it out: [github.com/trpc/trpc](https://github.com/trpc/trpc).
-
 # Zod v3
 
 _May 17, 2021_: Zod v3 is now in stable release! Check out the [Migration Guide](https://github.com/colinhacks/zod/MIGRATION.md) to upgrade to Zod 3.
 
 The docs for previous versions are in the [`v1`](https://github.com/colinhacks/zod/tree/v1) and [`v2`](⭐https://github.com/colinhacks/zod/tree/v2) branches.
+
+> ### Introducing tRPC
+>
+> If you like Zod, you'll love my new library [`tRPC`](https://github.com/trpc/trpc), a toolkit for building end-to-end typesafe APIs — no GraphQL or code generation required. It makes it easy to validate API payloads with Zod schemas (or other libraries). It's the best way to build a fully typed API, especially for Next.js users. Check it out: [github.com/trpc/trpc](https://github.com/trpc/trpc).
 
 #### New features
 
@@ -197,16 +197,10 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
 To install Zod v3:
 
 ```sh
-npm install zod@next
+npm install zod
 ```
 
-#### TypeScript requirements
-
-- Zod 3.x requires TypeScript 4.1+
-- Zod 2.x requires TypeScript 3.7+
-- Zod 1.x requires TypeScript 3.3+
-
-⚠️ You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects:
+⚠️ IMPORTANT: You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
 
 ```ts
 // tsconfig.json
@@ -219,11 +213,17 @@ npm install zod@next
 }
 ```
 
+#### TypeScript requirements
+
+- Zod 3.x requires TypeScript 4.1+
+- Zod 2.x requires TypeScript 3.7+
+- Zod 1.x requires TypeScript 3.3+
+
 # Ecosystem
 
 There are a growing number of tools that are built atop or support Zod natively! If you've built a tool or library on top of Zod, tell me about it [on Twitter](https://twitter.com/colinhacks) or [start a Discussion](https://github.com/colinhacks/zod/discussions). I'll add it below and tweet it out.
 
-- [`react-hook-form`](https://github.com/react-hook-form/resolvers): Build type-safe forms easily with React Hook Form and the Zod resolver. I use this all the time and it's glorious.
+- [`react-hook-form`](https://github.com/react-hook-form/resolvers): Build type-safe forms easily with React Hook Form and the Zod resolver.
 - [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): Convert TypeScript definitions into Zod schemas.
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
 - [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): Generate `fast-check` arbitraries from Zod schemas.

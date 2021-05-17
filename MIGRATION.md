@@ -5,9 +5,9 @@ This is a migration guide to walk you through the process of upgrading to Zod 3.
 - If you're upgrading directly from Zod 1, you should read through the list of features + changes in both Zod 2 and Zod 3.
 - If you're upgrading from Zod 2 -> 3, you can skip to the
 
-## Upgrading from Zod 1 -> 2
+## Upgrading from Zod 1 → Zod 2
 
-Zod 2 is being retired and will not leave beta. It is not recommended. This is due to some issues with it's implementation of transformers: details [here](https://github.com/colinhacks/zod/issues/264).
+Zod 2 is being retired and will not leave beta. This is due to some unintuitive ramifications of the transformers API: details [here](https://github.com/colinhacks/zod/issues/264).
 
 ### New features: Zod 2
 
@@ -23,7 +23,7 @@ Zod 2 is being retired and will not leave beta. It is not recommended. This is d
 - Relatedly, Zod no longer supports cyclical data. Recursive schemas are still supported, but Zod can't properly parse nested objects that contain cycles.
 - Optional and nullable schemas are now represented with the dedicated ZodOptional and ZodNullable classes, instead of using ZodUnion.
 
-## Upgrading from Zod 2
+## Upgrading from Zod 2 → Zod 3
 
 ### New features: Zod 3
 
