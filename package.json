@@ -1,11 +1,16 @@
 {
   "name": "zod",
-  "version": "1.11.17",
+  "version": "3.0.0-beta.4",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "main": "./lib/src/index.js",
-  "types": "./lib/src/index.d.ts",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "module": "./lib/index.mjs",
+  "exports": {
+    "require": "./lib/index.js",
+    "import": "./lib/index.mjs"
+  },
   "files": [
-    "lib"
+    "/lib"
   ],
   "repository": {
     "type": "git",
@@ -18,14 +23,12 @@
     "url": "https://github.com/colinhacks/zod/issues"
   },
   "homepage": "https://github.com/colinhacks/zod",
-  "dependencies": {},
-  "tags": [
-    "typescript",
-    "schema",
-    "validation",
-    "type",
-    "inference"
-  ],
+  "funding": "https://github.com/sponsors/colinhacks",
+  "support": {
+    "backing": {
+      "npm-funding": true
+    }
+  },
   "keywords": [
     "typescript",
     "schema",
@@ -34,26 +37,60 @@
     "inference"
   ],
   "scripts": {
-    "clean": "rm -rf lib/*",
-    "build": "yarn run clean && tsc --p tsconfig.package.json",
-    "buildall": "yarn add typescript@3.4 && yarn build && yarn add typescript@3.5 && yarn build && yarn add typescript@3.6 && yarn build && yarn add typescript@3.7 && yarn build && yarn add typescript@3.8 && yarn build && yarn add typescript@3.9 && yarn build && yarn add typescript@4 && yarn build && yarn add typescript@3.3 && yarn build",
-    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
-    "lint": "tslint -p tsconfig.json",
-    "test": "jest --coverage && yarn run badge",
+    "check:format": "prettier --check \"src/**/*.ts\" \"deno/lib/**/*.ts\"",
+    "fix:format": "prettier --write \"src/**/*.ts\" \"deno/lib/**/*.ts\"",
+    "check:lint": "eslint --ext .ts ./src",
+    "fix:lint": "eslint --fix --ext .ts ./src",
+    "check": "yarn check:lint && yarn check:format",
+    "fix": "yarn fix:lint && yarn fix:format",
+    "clean": "rm -rf lib/* deno/lib/*",
+    "build": "yarn run clean && npm run build:cjs && npm run build:esm && npm run build:deno",
+    "build:deno": "node ./deno/build.mjs",
+    "build:esm": "rollup --config rollup.config.js",
+    "build:cjs": "tsc --p tsconfig.cjs.json",
+    "build:types": "tsc --p tsconfig.types.json",
+    "rollup": "rollup --config rollup.config.js",
+    "test": "node --trace-warnings node_modules/.bin/jest --coverage && yarn run badge",
     "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
-    "prepublishOnly": "npm run build",
-    "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.package.json"
+    "prepublishOnly": "npm run test && npm run build && npm run build:deno",
+    "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json --trace-warnings",
+    "depcruise": "depcruise -c .dependency-cruiser.js src"
   },
   "devDependencies": {
-    "@types/jest": "^25.1.4",
-    "jest": "^25.1.0",
+    "@rollup/plugin-typescript": "^8.2.0",
+    "@types/jest": "^26.0.17",
+    "@types/node": "^14.14.10",
+    "@typescript-eslint/eslint-plugin": "^4.11.1",
+    "@typescript-eslint/parser": "^4.11.1",
+    "dependency-cruiser": "^9.19.0",
+    "eslint": "^7.15.0",
+    "eslint-config-prettier": "^7.1.0",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
+    "eslint-plugin-unused-imports": "^1.1.0",
+    "husky": "^4.3.4",
+    "jest": "^26.6.3",
+    "lint-staged": "^10.5.3",
     "make-coverage-badge": "^1.2.0",
     "nodemon": "^2.0.2",
-    "prettier": "^1.19.1",
-    "ts-jest": "^25.2.1",
-    "tslint": "^6.1.0",
-    "tslint-config-prettier": "^1.18.0",
-    "typescript": "3.5"
+    "prettier": "^2.2.1",
+    "rollup": "^2.42.1",
+    "ts-jest": "^26.4.4",
+    "ts-node": "^9.1.0",
+    "tslib": "^2.1.0",
+    "typescript": "^4.2.4"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged && yarn build:deno && git add .",
+      "pre-push": "lint-staged && yarn build && yarn test"
+    }
+  },
+  "lint-staged": {
+    "*.ts": [
+      "yarn fix:lint",
+      "yarn fix:format"
+    ]
   }
 }

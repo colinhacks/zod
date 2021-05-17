@@ -1,10 +1,19 @@
-import * as z from '../index';
-import { ZodError } from '../ZodError';
-import { util } from '../helpers/util';
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
 
-const testTuple = z.tuple([z.string(), z.object({ name: z.literal('Rudy') }), z.array(z.literal('blue'))]);
+import { util } from "../helpers/util";
+import * as z from "../index";
+import { ZodError } from "../ZodError";
 
-test('tuple inference', () => {
+const testTuple = z.tuple([
+  z.string(),
+  z.object({ name: z.literal("Rudy") }),
+  z.array(z.literal("blue")),
+]);
+const testData = ["asdf", { name: "Rudy" }, ["blue"]];
+const badData = [123, { name: "Rudy2" }, ["blue", "red"]];
+
+test("tuple inference", () => {
   const args1 = z.tuple([z.string()]);
   const returns1 = z.number();
   const func1 = z.function(args1, returns1);
@@ -13,19 +22,61 @@ test('tuple inference', () => {
   [t1];
 });
 
-test('successful validation', () => {
-  testTuple.parse(['asdf', { name: 'Rudy' }, ['blue']]);
+test("successful validation", () => {
+  const val = testTuple.parse(testData);
+  expect(val).toEqual(["asdf", { name: "Rudy" }, ["blue"]]);
 });
 
-test('failed validation', () => {
+test("successful async validation", async () => {
+  const val = await testTuple.parseAsync(testData);
+  return expect(val).toEqual(testData);
+});
+
+test("failed validation", () => {
   const checker = () => {
-    testTuple.parse([123, { name: 'Rudy2' }, ['blue', 'red']] as any);
+    testTuple.parse([123, { name: "Rudy2" }, ["blue", "red"]] as any);
   };
   try {
     checker();
   } catch (err) {
     if (err instanceof ZodError) {
-      expect(err.errors.length).toEqual(3);
+      expect(err.issues.length).toEqual(3);
     }
   }
 });
+
+test("failed async validation", async () => {
+  const res = await testTuple.safeParse(badData);
+  expect(res.success).toEqual(false);
+  if (!res.success) {
+    expect(res.error.issues.length).toEqual(3);
+  }
+  // try {
+  //   checker();
+  // } catch (err) {
+  //   if (err instanceof ZodError) {
+  //     expect(err.issues.length).toEqual(3);
+  //   }
+  // }
+});
+
+// test("tuple with transformers", () => {
+//   const stringToNumber = z.string().transform(z.number(), (val) => val.length);
+//   const val = z.tuple([stringToNumber]);
+
+//   type t1 = z.input<typeof val>;
+//   const f1: util.AssertEqual<t1, [string]> = true;
+//   //  const f1: util.AssertEqual<t1, [string]> =
+//   type t2 = z.output<typeof val>;
+//   const f2: util.AssertEqual<t2, [number]> = true;
+
+//   f1;
+//   f2;
+// });
+
+// test('tuple with optional elements', () => {
+//   const result = z
+//     .tuple([z.string(), z.number().optional()])
+//     .safeParse(['asdf']);
+//   expect(result).toEqual(['asdf']);
+// });

@@ -1,8 +1,6 @@
-.DS_Store
 **/.DS_Store
 node_modules
 /lib
-/coverage
-**/coverage
+coverage
 .vscode
-yarn-error.log
+*.log

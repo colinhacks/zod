@@ -1,6 +1,9 @@
-import { Mocker } from '../helpers/Mocker';
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
 
-test('mocker', () => {
+import { Mocker } from "./Mocker";
+
+test("mocker", () => {
   const mocker = new Mocker();
   mocker.string;
   mocker.number;

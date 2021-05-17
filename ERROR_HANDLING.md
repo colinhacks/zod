@@ -8,53 +8,56 @@ All validation errors thrown by Zod are instances of `ZodError`.
 
 ```ts
 class ZodError extends Error {
-  errors: ZodSuberror[];
+  issues: ZodIssue[];
 }
 ```
 
 ZodError is a subclass of `Error`; you can create your own instance easily:
 
 ```ts
-import * as z from 'zod';
+import * as z from "zod";
 
 const myError = new z.ZodError([]);
 ```
 
-Each ZodError has an `errors` property that is an array of `ZodSuberrors`. Each suberror documents a problem that occurred during validation.
+Each ZodError has an `issues` property that is an array of `ZodIssues`. Each issue documents a problem that occurred during validation.
 
-## ZodSuberror
+## ZodIssue
 
-`ZodSuberror` is _not_ a class. It is a [discriminated union](https://www.typescriptlang.org/docs/handbook/advanced-types.html#discriminated-unions).
+`ZodIssue` is _not_ a class. It is a [discriminated union](https://www.typescriptlang.org/docs/handbook/advanced-types.html#discriminated-unions).
 
-The link above is the best way to learn about the concept. Discriminated unions are an ideal way to represent a data structures that may be one of many possible variants. You can see all the possible variants defined [here](https://github.com/colinhacks/zod/blob/master/src/ZodError.ts). They are also described in the table below if you prefer.
+The link above is the best way to learn about the concept. Discriminated unions are an ideal way to represent a data structures that may be one of many possible variants. You can see all the possible variants defined [here](./src/ZodError.ts). They are also described in the table below if you prefer.
 
-_Every_ ZodSuberror has these fields:
+_Every_ ZodIssue has these fields:
 
 | field     | type                   | details                                                                                           |
 | --------- | ---------------------- | ------------------------------------------------------------------------------------------------- |
-| `code`    | `z.ZodErrorCode`       | You can access this enum with `z.ZodErrorCode`. A full breakdown of the possible values is below. |
+| `code`    | `z.ZodIssueCode`       | You can access this enum with `z.ZodIssueCode`. A full breakdown of the possible values is below. |
 | `path`    | `(string \| number)[]` | e.g, `['addresses', 0, 'line1']`                                                                  |
 | `message` | `string`               | e.g. `Invalid type. Expected string, received number.`                                            |
 
 **However** depending on the error code, there may be additional properties as well. Here is a full breakdown of the additional fields by error code:
 
-## ZodErrorCode
+## ZodIssueCode
 
-| code                                 | additional fields                                                                                                                                                                                                                                                                    |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ZodErrorCode.invalid_type            | `expected: ZodParsedType` <br> `received: ZodParsedType` <br><br>Jump to [this section](#parsedtype) for a breakdown of the possible values of ZodParsedType.                                                                                                                        |
-| ZodErrorCode.nonempty_array_is_empty | _no additional properties_                                                                                                                                                                                                                                                           |
-| ZodErrorCode.unrecognized_keys       | `keys: string[]`<br>The list of unrecognized keys<br>                                                                                                                                                                                                                                |
-| ZodErrorCode.invalid_union           | `unionErrors: ZodError[]` <br> The errors thrown by each element of the union.                                                                                                                                                                                                       |
-| ZodErrorCode.invalid_literal_value   | `expected: string \| number \| boolean` <br> The literal value.                                                                                                                                                                                                                      |
-| ZodErrorCode.invalid_enum_value      | `options: string[]` <br> The set of acceptable string values for this enum.                                                                                                                                                                                                          |
-| ZodErrorCode.invalid_arguments       | `argumentsError: ZodError` <br> This is a special error code only thrown by a wrapped function returned by `ZodFunction.implement()`. The `argumentsError` property is another ZodError containing the validation error details.                                                     |
-| ZodErrorCode.invalid_return_type     | `returnTypeError: ZodError` <br> This is a special error code only thrown by a wrapped function returned by `ZodFunction.implement()`. The `returnTypeError` property is another ZodError containing the validation error details.                                                   |
-| ZodErrorCode.invalid_date            | _no additional properties_                                                                                                                                                                                                                                                           |
-| ZodErrorCode.invalid_string          | `validation: "url" \| "email" \| "uuid"`<br> Which built-in string validator failed                                                                                                                                                                                                  |
-| ZodErrorCode.too_small               | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `minimum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                   |
-| ZodErrorCode.too_big                 | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `maximum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                   |
-| ZodErrorCode.custom_error            | `params: { [k: string]: any }` <br> This is the error code throw by **all custom refinements**. You are able to pass in a `params` object here that is available in your custom error maps (see [ZodErrorMap](#Customizing-errors-with-ZodErrorMap) below for details on error maps) |
+| code                             | additional fields                                                                                                                                                                                                                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ZodIssueCode.invalid_type        | `expected: ZodParsedType` <br> `received: ZodParsedType` <br><br>Jump to [this section](#parsedtype) for a breakdown of the possible values of ZodParsedType.                                                                                                                        |
+| ZodIssueCode.unrecognized_keys   | `keys: string[]`<br>The list of unrecognized keys<br>                                                                                                                                                                                                                                |
+| ZodIssueCode.invalid_union       | `unionErrors: ZodError[]` <br> The errors thrown by each element of the union.                                                                                                                                                                                                       |
+| ZodIssueCode.invalid_enum_value  | `options: string[]` <br> The set of acceptable string values for this enum.                                                                                                                                                                                                          |
+| ZodIssueCode.invalid_arguments   | `argumentsError: ZodError` <br> This is a special error code only thrown by a wrapped function returned by `ZodFunction.implement()`. The `argumentsError` property is another ZodError containing the validation error details.                                                     |
+| ZodIssueCode.invalid_return_type | `returnTypeError: ZodError` <br> This is a special error code only thrown by a wrapped function returned by `ZodFunction.implement()`. The `returnTypeError` property is another ZodError containing the validation error details.                                                   |
+| ZodIssueCode.invalid_date        | _no additional properties_                                                                                                                                                                                                                                                           |
+| ZodIssueCode.invalid_string      | `validation: "url" \| "email" \| "uuid"`<br> Which built-in string validator failed                                                                                                                                                                                                  |
+| ZodIssueCode.too_small           | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `minimum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                   |
+| ZodIssueCode.too_big             | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `maximum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                   |
+| ZodIssueCode.custom              | `params: { [k: string]: any }` <br> This is the error code throw by **all custom refinements**. You are able to pass in a `params` object here that is available in your custom error maps (see [ZodErrorMap](#Customizing-errors-with-ZodErrorMap) below for details on error maps) |
+
+<!--
+| ZodIssueCode.nonempty_array_is_empty | _no additional properties_                                      |
+| ZodIssueCode.invalid_literal_value   | `expected: string \| number \| boolean` <br> The literal value. |
+-->
 
 ## ZodParsedType
 
@@ -64,6 +67,7 @@ This is an enum used by Zod internally to represent the type of a parsed value. 
 - `nan`
 - `number`
 - `integer`
+- `float`
 - `boolean`
 - `date`
 - `bigint`
@@ -76,6 +80,9 @@ This is an enum used by Zod internally to represent the type of a parsed value. 
 - `unknown`
 - `promise`
 - `void`
+- `never`
+- `map`
+- `set`
 
 ## A demonstrative example
 
@@ -96,16 +103,16 @@ Let's pass in some improperly formatted data.
 ```ts
 try {
   person.parse({
-    names: ['Dave', 12], // 12 is not a string
+    names: ["Dave", 12], // 12 is not a string
     address: {
-      line1: '123 Maple Ave',
+      line1: "123 Maple Ave",
       zipCode: 123, // zip code isnt 5 digits
-      extra: 'other stuff', // unrecognized key
+      extra: "other stuff", // unrecognized key
     },
   });
 } catch (err) {
   if (err instanceof z.ZodError) {
-    console.log(err.errors);
+    console.log(err.issues);
   }
 }
 ```
@@ -115,40 +122,58 @@ Here are the errors that will be printed:
 ```ts
 [
   {
-    code: 'invalid_type',
-    expected: 'string',
-    received: 'number',
-    path: ['names', 1],
-    message: 'Invalid input: expected string, received number',
+    code: "invalid_type",
+    expected: "string",
+    received: "number",
+    path: ["names", 1],
+    message: "Invalid input: expected string, received number",
   },
   {
-    code: 'unrecognized_keys',
-    keys: ['extra'],
-    path: ['address'],
+    code: "unrecognized_keys",
+    keys: ["extra"],
+    path: ["address"],
     message: "Unrecognized key(s) in object: 'extra'",
   },
   {
-    code: 'too_small',
+    code: "too_small",
     minimum: 10000,
-    type: 'number',
+    type: "number",
     inclusive: true,
-    path: ['address', 'zipCode'],
-    message: 'Value should be greater than or equal to 10000',
+    path: ["address", "zipCode"],
+    message: "Value should be greater than or equal to 10000",
   },
 ];
 ```
 
-As you can see three different issues were identified. Every ZodSuberror has a `code` property and additional metadata about the validation failure. For instance the `unrecognized_keys` error provides a list of the unrecognized keys detected in the input.
+As you can see three different issues were identified. Every ZodIssue has a `code` property and additional metadata about the validation failure. For instance the `unrecognized_keys` error provides a list of the unrecognized keys detected in the input.
 
 ## Customizing errors with ZodErrorMap
 
-You can customize **all** error messages produced by Zod by providing a custom instance of ZodErrorMap to `.parse()`. Internally, Zod uses a [default error map](https://github.com/colinhacks/zod/blob/master/src/defaultErrorMap.ts) to produce all error messages.
+You can customize **all** error messages produced by Zod by providing a custom "error map" to Zod, like so:
+
+```ts
+import { z } from "zod";
+
+const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
+  if (issue.code === z.ZodIssueCode.invalid_type) {
+    if (issue.expected === "string") {
+      return { message: "bad type!" };
+    }
+  }
+  if (issue.code === z.ZodIssueCode.custom) {
+    return { message: `less-than-${(issue.params || {}).minimum}` };
+  }
+  return { message: ctx.defaultError };
+};
+
+z.setErrorMap(customErrorMap);
+```
 
 `ZodErrorMap` is a special function. It accepts two arguments: `error` and `ctx`. The return type is `{ message: string }`. Essentially the error map accepts some information about the validation that is failing and returns an appropriate error message.
 
-- `error: Omit<ZodSuberror, "message">`
+- `error: Omit<ZodIssue, "message">`
 
-  As mentioned above, ZodSuberror is a discriminated union.
+  As mentioned above, ZodIssue is a discriminated union.
 
 - `ctx: { defaultError: string; data: any }`
 
@@ -156,37 +181,26 @@ You can customize **all** error messages produced by Zod by providing a custom i
 
   - `ctx.data` contains the data that was passed into `.parse`. You can use this to customize the error message.
 
+As in the example, you can modify certain error messages and simply fall back to `ctx.defaultError` otherwise.
+
 ### A working example
 
 Let's look at a practical example of of customized error map:
 
 ```ts
-import * as z from 'zod';
+import * as z from "zod";
 
 const errorMap: z.ZodErrorMap = (error, ctx) => {
-  /*
-
-  If error.message is set, that means the user is trying to
-  override the error message. This is how method-specific
-  error overrides work, like this:
-
-  z.string().min(5, { message: "TOO SMALL 🤬" })
-
-  It is a best practice to return `error.message` if it is set.
-  
-  */
-  if (error.message) return { message: error.message };
-
   /*
   This is where you override the various error codes
   */
   switch (error.code) {
-    case z.ZodErrorCode.invalid_type:
-      if (error.expected === 'string') {
+    case z.ZodIssueCode.invalid_type:
+      if (error.expected === "string") {
         return { message: `This ain't a string!` };
       }
       break;
-    case z.ZodErrorCode.custom_error:
+    case z.ZodIssueCode.custom:
       // produce a custom message using error.params
       // error.params won't be set unless you passed
       // a `params` arguments into a custom validator
@@ -200,6 +214,8 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
   // fall back to default message!
   return { message: ctx.defaultError };
 };
+
+z.setErrorMap(errorMap);
 
 z.string().parse(12, { errorMap });
 
@@ -240,16 +256,16 @@ Now lets pass in some invalid data:
 
 ```ts
 FormData.parse({
-  email: 'not an email',
-  password: 'tooshort',
-  confirm: 'nomatch',
+  email: "not an email",
+  password: "tooshort",
+  confirm: "nomatch",
 });
 ```
 
-This will throw a ZodError with four suberrors:
+This will throw a ZodError with four issues:
 
 ```ts
-console.log(err.errors);
+console.log(err.issues);
 /*
   [
     { code: 'invalid_string', validation: 'email', path: ['email'], message: 'Invalid email' },
@@ -269,12 +285,12 @@ console.log(err.errors);
       path: ['confirm'],
       message: 'Should be at least 10 characters',
     },
-    { code: 'custom_error', message: 'Passwords do not match', path: ['confirm'] },
+    { code: 'custom', message: 'Passwords do not match', path: ['confirm'] },
   ]; 
   */
 ```
 
-But using the `flatten()` method, we can "flatten" all those errors down to a form that's much easier to work with:
+But using the `flatten()` method, we can make those errors much easier to work with:
 
 ```ts
 console.log(err.flatten());
@@ -293,5 +309,5 @@ console.log(err.flatten());
 - `fieldErrors` is an object. The keys are the field(s) that threw the error. The values are an array of error strings that can be easily presented in the interface.
 - `formErrors: string[]` is an array of errors that occured on the "root" of the object schema. For instance if you called `FormData.parse(null)`, `formErrors` would be:
   ```ts
-  ['Invalid input: expected object, received null'];
+  ["Invalid input: expected object, received null"];
   ```

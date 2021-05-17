@@ -1,6 +1,9 @@
-import * as z from '../index';
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
 
-test('all errors', () => {
+import * as z from "../index";
+
+test("all errors", () => {
   const propertySchema = z.string();
   const schema = z.object({
     a: propertySchema,
@@ -13,11 +16,11 @@ test('all errors', () => {
       b: null,
     });
   } catch (error) {
-    expect(error.formErrors).toStrictEqual({
+    expect(error.flatten()).toEqual({
       formErrors: [],
       fieldErrors: {
-        a: ['Expected string, received null'],
-        b: ['Expected string, received null'],
+        a: ["Expected string, received null"],
+        b: ["Expected string, received null"],
       },
     });
   }
