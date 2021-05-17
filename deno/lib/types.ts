@@ -326,8 +326,17 @@ export abstract class ZodType<
 
   array: () => ZodArray<this> = () => ZodArray.create(this);
 
-  or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
-    return ZodUnion.create([this, option]);
+  or<T extends ZodTypeAny, This extends this = this>(
+    option: T
+  ): This extends ZodUnion<infer Opts>
+    ? [...Opts, T] extends ZodUnionOptions
+      ? ZodUnion<[...Opts, T]>
+      : never
+    : ZodUnion<[This, T]> {
+    if (this instanceof ZodUnion) {
+      return ZodUnion.create([...this.options, option] as any) as any;
+    }
+    return ZodUnion.create([this, option]) as any;
   }
 
   and<T extends ZodTypeAny>(incoming: T): ZodIntersection<this, T> {

@@ -11,7 +11,7 @@
 
 </p>
 <p align="center">
-don't forget to <del>smash that like button</del> leave a star
+⭐️ smash that star button ⭐️
 </p>
 
 <br/>
@@ -20,69 +20,22 @@ don't forget to <del>smash that like button</del> leave a star
 
 If you like Zod, you'll love my new library [`tRPC`](https://github.com/trpc/trpc), a toolkit for building end-to-end typesafe APIs — no GraphQL or code generation required. It makes it easy to validate API payloads with Zod schemas (or other libraries). It's the best way to build a fully typed API, especially for Next.js users. Check it out: [github.com/trpc/trpc](https://github.com/trpc/trpc).
 
-## Zod v3 is in beta!
+# Zod v3
+
+_May 17, 2021_: Zod v3 is now in stable release! Check out the [Migration Guide](https://github.com/colinhacks/zod/MIGRATION.md) to upgrade to Zod 3.
+
+The docs for previous versions are in the [`v1`](https://github.com/colinhacks/zod/tree/v1) and [`v2`](⭐https://github.com/colinhacks/zod/tree/v2) branches.
 
 #### New features
 
-- **A new implementation of transformers**. See the "breaking changes" section to understand the syntax changes.
-- You can now import Zod like `import { z } from 'zod';` instead of using `import * as` syntax.
+- **Easier imports**: you can now import Zod like `import { z } from 'zod';` instead of using `import * as` syntax.
 - **Structured error messages**. Use the `.format()` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
 - **Easier unions**. Use the `or` method to ZodType (the base class for all Zod schemas) to easily create union types like `z.string().or(z.number())`
 - **Easier intersections**. Use the `and` method to ZodType (the base class for all Zod schemas) to easily create intersection types
 - **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
+- **Maps ans set**. Zod now supports [`Map`](#maps) and [`Set`](#set) schemas.
 - **Optional and nullable unwrapping**. ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap.
-
-#### Breaking changes in v3
-
-- The **minimum TypeScript version** is now _4.1_ (up from 3.7 for Zod 2). Several features have been rewritten to use [recursive conditional types](https://devblogs.microsoft.com/typescript/announcing-typescript-4-1/#recursive-conditional-types), an incredibly powerful new feature introduced in TS4.1.
-
-- **Transformers syntax**. Previously, creating a transformer required an input schema, an output schema, and a function to tranform between them. You created transformers like `z.transform(A, B, func)`, where `A` and `B` are Zod schemas. This is no longer the case. Accordingly:
-
-  The old syntax is no longer available:
-
-  ```ts
-  # not available
-  z.transformer(A, B, func);
-  A.transform(B, func)
-  ```
-
-  Instead, apply transformations by simply using the `.transform()` method that exists on all Zod schemas.
-
-  ```ts
-  z.string().transform((val) => val.length);
-  ```
-
-- Under the hood, all refinements and transformations are executed inside a dedicated "ZodEffects" class. Post-parsing, ZodEffects passes the data through a chain of refinements and transformations, then returns the final value. As such, you can now _interleave_ transformations and refinements. For instance:
-
-  ```ts
-  const test = z
-    .string()
-    .transform((val) => val.length)
-    .refine((val) => val > 5, { message: "Input is too short" })
-    .transform((val) => val * 2);
-
-  test.parse("12characters"); // => 24
-  ```
-
-- **Type guards** (the `.check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
-- Object merging now behaves differently. If you merge two object schema (`A.merge(B)`), the fields of B will overwrite the fields of A if there are shared keys. This is how the `.extend` method already works. If you're looking to create an intersection of the two types, use `z.intersection(A, B)` or use the new `.and` method (`A.and(B)`).
-- **Default values**: default value logic is now implemented inside a `ZodDefault` class, instead of using transformers. (In a previous alpha version of Zod 3, default values were implemented inside the ZodOptional class.)
-- There have been small internal changes to the ZodIssue subtypes. See the new subtypes in the [Error Handling guide](ERROR_HANDLING.md). This may impact user who have written a custom error maps. Most users will not be affected.
-
-### Migration guide
-
-**From v1 -> v3**
-
-If you're upgrading straight to v3 from v1, you'll need to be aware of the breaking changes introduced in both v2 and v3. The v1->v2 migration guide is [here](https://github.com/colinhacks/zod/tree/v2#migration-from-v1).
-
-**From v2 -> v3**
-
-Zod 2 is being retired and will not leave beta. This is due to some issues with it's implementation of transformers: details [here](https://github.com/colinhacks/zod/issues/264). Zod 3 is currently in alpha — install it at `zod@next`. (Zod 2 will continue to be available with `zod@beta` for the time being.)
-
-```
-npm install zod@next
-yarn add zod@next
-```
+- **A new implementation of transformers**. See the [Migration Guide](https://github.com/colinhacks/zod/MIGRATION.md) section to understand the syntax changes.
 
 # Table of contents
 
