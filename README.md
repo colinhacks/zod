@@ -16,15 +16,9 @@
 
 <br/>
 
-# Zod v3
+## May 17, 2021: Zod v3 is now in stable release!
 
-<h3>
-May 17, 2021
-<br/>
-Zod v3 is now in stable release!
-<br/>
 Check out the [Migration Guide](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) to upgrade.
-</h3>
 
 Previous versions:
 
