@@ -2311,7 +2311,7 @@ export class ZodLiteral<T extends any> extends ZodType<T, ZodLiteralDef<T>> {
 export type ArrayKeys = keyof any[];
 export type Indices<T> = Exclude<keyof T, ArrayKeys>;
 
-type EnumValues = [string, ...string[]];
+type EnumValues = readonly (string | number)[];
 
 type Values<T extends EnumValues> = {
   [k in T[number]]: k;
@@ -2322,7 +2322,7 @@ export interface ZodEnumDef<T extends EnumValues = EnumValues>
   values: T;
 }
 
-export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
+export class ZodEnum<T extends EnumValues> extends ZodType<
   T[number],
   ZodEnumDef<T>
 > {
@@ -2365,9 +2365,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     return enumValues as any;
   }
 
-  static create = <U extends string, T extends [U, ...U[]]>(
-    values: T
-  ): ZodEnum<T> => {
+  static create = <T extends string>(values: readonly T[]): ZodEnum<T[]> => {
     return new ZodEnum({
       values: values,
     }) as any;
