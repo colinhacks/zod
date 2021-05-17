@@ -18,15 +18,20 @@
 
 # Zod v3
 
-### **May 17, 2021**
+<h3>
+May 17, 2021
+<br/>
+Zod v3 is now in stable release!
+<br/>
+Check out the [Migration Guide](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) to upgrade.
+</h3>
 
-### Zod v3 is now in stable release!
+Previous versions:
 
-### Check out the [Migration Guide](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) to upgrade to Zod 3.
+- [`Zod 1 docs`](https://github.com/colinhacks/zod/tree/v1)
+- [`Zod 2 docs`](⭐https://github.com/colinhacks/zod/tree/v2)
 
-The docs for previous versions are in the [`v1`](https://github.com/colinhacks/zod/tree/v1) and [`v2`](⭐https://github.com/colinhacks/zod/tree/v2) branches.
-
-### New features
+#### New features
 
 - **Easier imports**: you can now import Zod like `import { z } from 'zod';` instead of using `import * as` syntax.
 - **Structured error messages**. Use the `.format()` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
