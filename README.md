@@ -18,13 +18,9 @@
 
 # Zod v3
 
-_May 17, 2021_: Zod v3 is now in stable release! Check out the [Migration Guide](https://github.com/colinhacks/zod/MIGRATION.md) to upgrade to Zod 3.
+### **May 17, 2021**: Zod v3 is now in stable release! Check out the [Migration Guide](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) to upgrade to Zod 3.
 
 The docs for previous versions are in the [`v1`](https://github.com/colinhacks/zod/tree/v1) and [`v2`](⭐https://github.com/colinhacks/zod/tree/v2) branches.
-
-> ### Introducing tRPC
->
-> If you like Zod, you'll love my new library [`tRPC`](https://github.com/trpc/trpc), a toolkit for building end-to-end typesafe APIs — no GraphQL or code generation required. It makes it easy to validate API payloads with Zod schemas (or other libraries). It's the best way to build a fully typed API, especially for Next.js users. Check it out: [github.com/trpc/trpc](https://github.com/trpc/trpc).
 
 #### New features
 
@@ -35,7 +31,7 @@ The docs for previous versions are in the [`v1`](https://github.com/colinhacks/z
 - **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
 - **Maps ans set**. Zod now supports [`Map`](#maps) and [`Set`](#set) schemas.
 - **Optional and nullable unwrapping**. ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap.
-- **A new implementation of transformers**. See the [Migration Guide](https://github.com/colinhacks/zod/MIGRATION.md) section to understand the syntax changes.
+- **A new implementation of transformers**. See the [Migration Guide](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) section to understand the syntax changes.
 
 # Table of contents
 
