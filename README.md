@@ -174,14 +174,14 @@ _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](http
 
 # Installation
 
-To install the latest version:
+To install Zod v1
 
 ```sh
-npm install --save zod
+npm install --save zod@1
 ```
 
 ```sh
-yarn add zod
+yarn add zod@1
 ```
 
 #### TypeScript requirements
