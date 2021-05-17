@@ -11,8 +11,8 @@ Zod 2 is being retired and will not leave beta. This is due to some unintuitive 
 
 ### New features
 
-- Transformers! These let you provide default values, do casting/coercion, and a lot more. Read more here: [Transformers](https://github.com/colinhacks/zod#transformers)
-- Asynchronous refinements and new .parseAsync and .safeParseAsync methods. Read more here: [Refinements](https://github.com/colinhacks/zod#refinements)
+- Transformers! These let you provide default values, do casting/coercion, and a lot more. Read more here: [Transformers](https://github.com/colinhacks/zod#transform)
+- Asynchronous refinements and new .parseAsync and .safeParseAsync methods. Read more here: [Refinements](https://github.com/colinhacks/zod#refine)
 - Modify unknown key behavior for object schemas: `.strip()` (the default), `.passthrough()`, and `.strict()`
 - New .catchall() method for object schemas: [catchall](https://github.com/colinhacks/zod#catchall)
 
@@ -28,11 +28,11 @@ Zod 2 is being retired and will not leave beta. This is due to some unintuitive 
 ### New features
 
 - You can now import Zod like `import { z } from 'zod';` instead of using `import * as` syntax.
-- **Structured error messages**. Use the `.format()` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
+- **Structured error messages**. Use the `.format()` method to ZodError to convert the error into a strongly-typed, nested object: [format method](https://github.com/colinhacks/zod#error-formatting)
 - **Easier unions**. Use the `or` method to ZodType (the base class for all Zod schemas) to easily create union types like `z.string().or(z.number())`
 - **Easier intersections**. Use the `and` method to ZodType (the base class for all Zod schemas) to easily create intersection types
-- **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
-- **Maps and sets**. Zod now supports [`Map`](#maps) and [`Set`](#set) schemas.
+- **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [setErrorMap](https://github.com/colinhacks/zod/blob/master/ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
+- **Maps and sets**. Zod now supports [`Map`](https://github.com/colinhacks/zod#maps) and [`Set`](https://github.com/colinhacks/zod#set) schemas.
 - **Optional and nullable unwrapping**. ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap.
 - **A new implementation of transformers**. Details below.
 
@@ -74,4 +74,4 @@ Zod 2 is being retired and will not leave beta. This is due to some unintuitive 
 
 - **Default values**: default value logic is now implemented inside a `ZodDefault` class, instead of using transformers. (In a previous alpha version of Zod 3, default values were implemented inside the ZodOptional class.)
 
-- There have been small internal changes to the ZodIssue subtypes. See the new subtypes in the [Error Handling guide](ERROR_HANDLING.md). This may impact user who have written a custom error maps. Most users will not be affected.
+- There have been small internal changes to the ZodIssue subtypes. See the new subtypes in the [Error Handling guide](https://github.com/colinhacks/zod/blob/master/ERROR_HANDLING.md). This may impact user who have written a custom error maps. Most users will not be affected.
