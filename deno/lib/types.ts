@@ -1153,19 +1153,16 @@ export namespace objectUtil {
   } &
     V;
 
-  type CanBeUndefined<K extends keyof T, T> = undefined extends T[K]
-    ? K
-    : never;
-  type CanNotBeUndefined<K extends keyof T, T> = undefined extends T[K]
-    ? never
-    : K;
+  type optionalKeys<T extends object> = {
+    [k in keyof T]: undefined extends T[k] ? k : never;
+  }[keyof T];
+
+  type requiredKeys<T extends object> = Exclude<keyof T, optionalKeys<T>>;
 
   export type addQuestionMarks<T extends object> = {
-    [K in keyof T as CanBeUndefined<K, T>]?: T[K];
+    [k in optionalKeys<T>]?: T[k];
   } &
-    {
-      [K in keyof T as CanNotBeUndefined<K, T>]: T[K];
-    };
+    { [k in requiredKeys<T>]: T[k] };
 
   export type identity<T> = T;
   export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
