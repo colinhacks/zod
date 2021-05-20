@@ -28,12 +28,12 @@ Previous versions:
 #### New features
 
 - **Easier imports**: you can now import Zod like `import { z } from 'zod';` instead of using `import * as` syntax.
-- **Structured error messages**. ZodError now includes a `format()` method to convert the error into a strongly-typed, nested object: [docs](#error-formatting)
-- **Easier unions**. Use the `or` method to ZodType (the base class for all Zod schemas) to easily create union types like `z.string().or(z.number())`: [docs](#or)
-- **Easier intersections**. Use the `and` method to ZodType (the base class for all Zod schemas) to easily create intersection types: [docs](#and)
-- **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [docs](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
-- **Maps and sets**. Zod now supports [`Map`](#maps) and [`Set`](#sets) schemas
-- **Optional and nullable unwrapping**. ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap: [docs](#unwrap)
+- **Structured error messages**. Use the `.format()` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
+- **Easier unions**. Use the `or` method to ZodType (the base class for all Zod schemas) to easily create union types like `z.string().or(z.number())`
+- **Easier intersections**. Use the `and` method to ZodType (the base class for all Zod schemas) to easily create intersection types
+- **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
+- **Maps and sets**. Zod now supports [`Map`](#maps) and [`Set`](#set) schemas.
+- **Optional and nullable unwrapping**. ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap.
 - **A new implementation of transformers**. See the [Migration Guide](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) section to understand the syntax changes.
 
 # Table of contents
