@@ -3,6 +3,7 @@ import {
   MakeErrorData,
   ZodError,
   ZodErrorMap,
+  ZodIssue,
 } from "../ZodError";
 import { util } from "./util";
 
@@ -66,7 +67,7 @@ export const getParsedType = (data: any): ZodParsedType => {
   return ZodParsedType.unknown;
 };
 
-export const issueHelpers = (error: ZodError, params: ParseParams) => {
+export const issueHelpers = (issues: ZodIssue[], params: ParseParams) => {
   const makeIssue = (errorData: MakeErrorData) => {
     const errorArg = {
       ...errorData,
@@ -92,7 +93,7 @@ export const issueHelpers = (error: ZodError, params: ParseParams) => {
   };
   const addIssue = (errorData: MakeErrorData) => {
     const issue = makeIssue(errorData);
-    error.addIssue(issue);
+    issues.push(issue);
   };
 
   return {
@@ -105,7 +106,7 @@ export type ParseParams = {
   data: any;
   path: (string | number)[];
   errorMap: ZodErrorMap;
-  parentError: ZodError;
+  parentIssues: ZodIssue[];
   async: boolean;
 };
 
@@ -118,7 +119,7 @@ export type ParseParamsNoData = Omit<ParseParams, "data">;
 export type ParseContext = ParseParams &
   ReturnType<typeof issueHelpers> & {
     parsedType: ZodParsedType;
-    currentError: ZodError;
+    currentIssues: ZodIssue[];
   };
 
 export type ZodParserReturnPayload<T> =

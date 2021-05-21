@@ -129,7 +129,7 @@ test("special function error codes", () => {
     const first = zerr.issues[0];
     if (first.code !== z.ZodIssueCode.invalid_return_type) throw new Error();
 
-    expect(first.returnTypeError).toBeInstanceOf(z.ZodError);
+    expect(first.returnTypeIssues).toBeInstanceOf(z.ZodError);
   }
 
   try {
@@ -138,7 +138,7 @@ test("special function error codes", () => {
     const zerr: z.ZodError = err;
     const first = zerr.issues[0];
     if (first.code !== z.ZodIssueCode.invalid_arguments) throw new Error();
-    expect(first.argumentsError).toBeInstanceOf(z.ZodError);
+    expect(first.argumentsIssues).toBeInstanceOf(z.ZodError);
   }
 });
 

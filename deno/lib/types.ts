@@ -18,6 +18,7 @@ import {
   StringValidation,
   ZodCustomIssue,
   ZodError,
+  ZodIssue,
   ZodIssueCode,
 } from "./ZodError.ts";
 
@@ -60,14 +61,14 @@ export abstract class ZodType<
   _parseInternal(params: ParseParams): ZodParserReturnType<Output> {
     const data = params.data;
     let PROMISE: PseudoPromise<any>;
-    const ERROR = new ZodError([]);
-    const { makeIssue, addIssue } = issueHelpers(ERROR, { ...params });
+    const ISSUES: ZodIssue[] = [];
+    const { makeIssue, addIssue } = issueHelpers(ISSUES, { ...params });
 
     const parsedType = getParsedType(data);
     try {
       const parsedValue = this._parse({
         ...params,
-        currentError: ERROR,
+        currentIssues: ISSUES,
         makeIssue,
         addIssue,
         parsedType,
@@ -86,7 +87,7 @@ export abstract class ZodType<
 
     const THROW_ERROR_IF_PRESENT = (key: string) => (data: any) => {
       key;
-      if (!ERROR.isEmpty) throw ERROR;
+      if (ISSUES.length > 0) throw new ZodError(ISSUES);
       return data;
     };
 
@@ -95,7 +96,7 @@ export abstract class ZodType<
         return { success: true, data };
       })
       .catch((error) => {
-        params.parentError.addIssues(ERROR.issues);
+        params.parentIssues.push(...ISSUES);
         if (error instanceof ZodError) return { success: false, error: error };
         throw error;
       });
@@ -111,7 +112,7 @@ export abstract class ZodType<
     const fullParams: ParseParams = {
       data: params.data,
       path: params.path || [],
-      parentError: params.parentError || new ZodError([]),
+      parentIssues: params.parentIssues || [],
       errorMap: params.errorMap || overrideErrorMap,
       async: params.async ?? false,
     };
@@ -1019,7 +1020,7 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
           this._def.type._parseWithInvalidFallback(item, {
             ...ctx,
             path: [...ctx.path, i],
-            parentError: ctx.currentError,
+            parentIssues: ctx.currentIssues,
           })
         );
       }) as any
@@ -1108,7 +1109,7 @@ export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
           this._def.type._parseWithInvalidFallback(item, {
             ...ctx,
             path: [...ctx.path, i],
-            parentError: ctx.currentError,
+            parentIssues: ctx.currentIssues,
           })
         );
       }) as any
@@ -1364,7 +1365,7 @@ export class ZodObject<
             return keyValidator._parseWithInvalidFallback(undefined, {
               ...ctx,
               path: [...ctx.path, key],
-              parentError: ctx.currentError,
+              parentIssues: ctx.currentIssues,
             });
           })
 
@@ -1388,7 +1389,7 @@ export class ZodObject<
           return keyValidator._parseWithInvalidFallback(ctx.data[key], {
             ...ctx,
             path: [...ctx.path, key],
-            parentError: ctx.currentError,
+            parentIssues: ctx.currentIssues,
           });
         })
         .then((data) => {
@@ -1423,7 +1424,7 @@ export class ZodObject<
             {
               ...ctx,
               path: [...ctx.path, key],
-              parentError: ctx.currentError,
+              parentIssues: ctx.currentIssues,
             }
           );
 
@@ -1661,8 +1662,8 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
   T[number]["_input"]
 > {
   _parse(ctx: ParseContext): any {
-    const unionErrors: ZodError[] = [...Array(this._def.options.length)].map(
-      () => new ZodError([])
+    const unionIssues: ZodIssue[][] = [...Array(this._def.options.length)].map(
+      () => [] as ZodIssue[]
     );
 
     return PseudoPromise.all(
@@ -1670,31 +1671,31 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
         return new PseudoPromise().then(() => {
           return opt._parseWithInvalidFallback(ctx.data, {
             ...ctx,
-            parentError: unionErrors[_j],
+            parentIssues: unionIssues[_j],
           });
         });
       }) as any
     )
       .then((unionResults) => {
-        const isValid = !!unionErrors.find((err) => err.isEmpty);
+        const isValid = !!unionIssues.find((err) => err.length === 0);
         const GUESSING = false;
 
         if (!isValid) {
           if (!GUESSING) {
             ctx.addIssue({
               code: ZodIssueCode.invalid_union,
-              unionErrors,
+              unionIssues,
             });
           } else {
-            const nonTypeErrors = unionErrors.filter((err) => {
-              return err.issues[0].code !== "invalid_type";
+            const nonTypeErrors = unionIssues.filter((issues) => {
+              return issues[0].code !== "invalid_type";
             });
             if (nonTypeErrors.length === 1) {
-              ctx.currentError.addIssues(nonTypeErrors[0].issues);
+              ctx.currentIssues.push(...nonTypeErrors.flat());
             } else {
               ctx.addIssue({
                 code: ZodIssueCode.invalid_union,
-                unionErrors,
+                unionIssues,
               });
             }
           }
@@ -1703,8 +1704,8 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
         return unionResults;
       })
       .then((unionResults: any) => {
-        const validIndex = unionErrors.indexOf(
-          unionErrors.find((err) => err.isEmpty)!
+        const validIndex = unionIssues.indexOf(
+          unionIssues.find((iss) => iss.length > 0)!
         );
         return unionResults[validIndex];
       });
@@ -1751,13 +1752,13 @@ export class ZodIntersection<
       new PseudoPromise().then(() => {
         return this._def.left._parseWithInvalidFallback(ctx.data, {
           ...ctx,
-          parentError: ctx.currentError,
+          parentIssues: ctx.currentIssues,
         });
       }),
       new PseudoPromise().then(() => {
         return this._def.right._parseWithInvalidFallback(ctx.data, {
           ...ctx,
-          parentError: ctx.currentError,
+          parentIssues: ctx.currentIssues,
         });
       }),
     ]).then(([parsedLeft, parsedRight]: any) => {
@@ -1859,7 +1860,7 @@ export class ZodTuple<
             return itemParser._parseWithInvalidFallback(item, {
               ...ctx,
               path: [...ctx.path, index],
-              parentError: ctx.currentError,
+              parentIssues: ctx.currentIssues,
             });
           })
           .then((tupleItem) => {
@@ -1916,7 +1917,7 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
         return this._def.valueType._parseWithInvalidFallback(ctx.data[key], {
           ...ctx,
           path: [...ctx.path, key],
-          parentError: ctx.currentError,
+          parentIssues: ctx.currentIssues,
         });
       });
     }
@@ -1976,7 +1977,7 @@ export class ZodMap<
             return this._def.keyType._parseWithInvalidFallback(key, {
               ...ctx,
               path: [...ctx.path, index, "key"],
-              parentError: ctx.currentError,
+              parentIssues: ctx.currentIssues,
             });
           }),
           new PseudoPromise().then(() => {
@@ -1985,7 +1986,7 @@ export class ZodMap<
               {
                 ...ctx,
                 path: [...ctx.path, index, "value"],
-                parentError: ctx.currentError,
+                parentIssues: ctx.currentIssues,
               }
             );
 
@@ -2051,7 +2052,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
             this._def.valueType._parseWithInvalidFallback(item, {
               ...ctx,
               path: [...ctx.path, i],
-              parentError: ctx.currentError,
+              parentIssues: ctx.currentIssues,
             })
           )
           .then((item) => {
@@ -2123,22 +2124,22 @@ export class ZodFunction<
     const isAsyncFunction = this._def.returns instanceof ZodPromise;
 
     const validatedFunction = (...args: any[]) => {
-      const argsError = new ZodError([]);
-      const returnsError = new ZodError([]);
+      const argsIssues: ZodIssue[] = [];
+      const returnsIssues: ZodIssue[] = [];
       const internalProm = new PseudoPromise()
         .then(() => {
           return this._def.args._parseWithInvalidFallback(args as any, {
             ...ctx,
-            parentError: argsError,
+            parentIssues: argsIssues,
             async: isAsyncFunction,
           });
         })
         .then((args) => {
-          if (!argsError.isEmpty) {
+          if (argsIssues.length > 0) {
             const newError = new ZodError([]);
             const issue = ctx.makeIssue({
               code: ZodIssueCode.invalid_arguments,
-              argumentsError: argsError,
+              argumentsIssues: argsIssues,
             });
             newError.addIssue(issue);
             throw newError;
@@ -2152,16 +2153,16 @@ export class ZodFunction<
         .then((result) => {
           return this._def.returns._parseWithInvalidFallback(result, {
             ...ctx,
-            parentError: returnsError,
+            parentIssues: returnsIssues,
             async: isAsyncFunction,
           });
         })
         .then((result) => {
-          if (!returnsError.isEmpty) {
+          if (returnsIssues.length > 0) {
             const newError = new ZodError([]);
             const issue = ctx.makeIssue({
               code: ZodIssueCode.invalid_return_type,
-              returnTypeError: returnsError,
+              returnTypeIssues: returnsIssues,
             });
             newError.addIssue(issue);
             throw newError;
@@ -2258,7 +2259,7 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
     return PseudoPromise.resolve(
       lazySchema._parseWithInvalidFallback(ctx.data, {
         ...ctx,
-        parentError: ctx.currentError,
+        parentIssues: ctx.currentIssues,
       })
     );
   }
@@ -2442,19 +2443,19 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
       ctx.parsedType === ZodParsedType.promise
         ? ctx.data
         : Promise.resolve(ctx.data);
-    const promiseError = new ZodError([]);
+    const promiseIssues: ZodIssue[] = [];
     return PseudoPromise.resolve(
       promisified
         .then((data: any) => {
           const value = this._def.type._parseWithInvalidFallback(data, {
             ...ctx,
-            parentError: promiseError,
+            parentIssues: promiseIssues,
           });
           return value;
         })
         .then((data: any) => {
-          if (!promiseError.isEmpty) {
-            throw promiseError;
+          if (promiseIssues.length > 0) {
+            throw new ZodError(promiseIssues);
           }
           return data;
         })
@@ -2520,7 +2521,7 @@ export class ZodEffects<
 
     const THROW_ERROR_IF_PRESENT = (key: string) => (data: any) => {
       key;
-      if (!ctx.currentError.isEmpty) throw ctx.currentError;
+      if (ctx.currentIssues.length > 0) throw new ZodError(ctx.currentIssues);
       // if (ctx.data === INVALID) throw ctx.currentError;
       // if (refinementError !== null) throw refinementError;
       return data;
@@ -2530,7 +2531,7 @@ export class ZodEffects<
       .then(() => {
         return this._def.schema._parseWithInvalidFallback(ctx.data, {
           ...ctx,
-          parentError: ctx.currentError,
+          parentIssues: ctx.currentIssues,
         });
       })
       .then(THROW_ERROR_IF_PRESENT("pre-refinement"));
@@ -2637,7 +2638,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
     return new PseudoPromise().then(() => {
       return this._def.innerType._parseWithInvalidFallback(data, {
         ...ctx,
-        parentError: ctx.currentError,
+        parentIssues: ctx.currentIssues,
       });
     });
   }
@@ -2680,7 +2681,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     return new PseudoPromise().then(() => {
       return this._def.innerType._parseWithInvalidFallback(ctx.data, {
         ...ctx,
-        parentError: ctx.currentError,
+        parentIssues: ctx.currentIssues,
       });
     });
   }
@@ -2723,7 +2724,7 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
     return new PseudoPromise().then(() => {
       return this._def.innerType._parseWithInvalidFallback(data, {
         ...ctx,
-        parentError: ctx.currentError,
+        parentIssues: ctx.currentIssues,
       });
     });
   }

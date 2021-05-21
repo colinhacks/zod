@@ -37,7 +37,7 @@ export interface ZodUnrecognizedKeysIssue extends ZodIssueBase {
 
 export interface ZodInvalidUnionIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_union;
-  unionErrors: ZodError[];
+  unionIssues: ZodIssue[][];
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
@@ -47,12 +47,12 @@ export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
 
 export interface ZodInvalidArgumentsIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_arguments;
-  argumentsError: ZodError;
+  argumentsIssues: ZodIssue[];
 }
 
 export interface ZodInvalidReturnTypeIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_return_type;
-  returnTypeError: ZodError;
+  returnTypeIssues: ZodIssue[];
 }
 
 export interface ZodInvalidDateIssue extends ZodIssueBase {
@@ -139,14 +139,14 @@ export class ZodError<T = any> extends Error {
 
   format = (): ZodFormattedError<T> => {
     const fieldErrors: ZodFormattedError<T> = { _errors: [] } as any;
-    const processError = (error: ZodError) => {
-      for (const issue of error.issues) {
+    const processError = (issues: ZodIssue[]) => {
+      for (const issue of issues) {
         if (issue.code === "invalid_union") {
-          issue.unionErrors.map(processError);
+          issue.unionIssues.map(processError);
         } else if (issue.code === "invalid_return_type") {
-          processError(issue.returnTypeError);
+          processError(issue.returnTypeIssues);
         } else if (issue.code === "invalid_arguments") {
-          processError(issue.argumentsError);
+          processError(issue.argumentsIssues);
         } else if (issue.path.length === 0) {
           fieldErrors._errors.push(issue.message);
         } else {
@@ -176,7 +176,7 @@ export class ZodError<T = any> extends Error {
       }
     };
 
-    processError(this);
+    processError(this.issues);
     return fieldErrors;
   };
 
