@@ -1677,7 +1677,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       }) as any
     )
       .then((unionResults) => {
-        const isValid = !!unionIssues.find((err) => err.length === 0);
+        const isValid = unionIssues.some((err) => err.length === 0);
         const GUESSING = false;
 
         if (!isValid) {
@@ -1705,7 +1705,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       })
       .then((unionResults: any) => {
         const validIndex = unionIssues.indexOf(
-          unionIssues.find((iss) => iss.length > 0)!
+          unionIssues.find((iss) => iss.length === 0)!
         );
         return unionResults[validIndex];
       });
