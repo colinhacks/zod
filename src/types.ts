@@ -1662,9 +1662,9 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
   T[number]["_input"]
 > {
   _parse(ctx: ParseContext): any {
-    const unionIssues: ZodIssue[][] = [...Array(this._def.options.length)].map(
-      () => [] as ZodIssue[]
-    );
+    const unionIssues: ZodIssue[][] = [
+      ...Array(this._def.options.length),
+    ].map((): ZodIssue[] => []);
 
     return PseudoPromise.all(
       this._def.options.map((opt, _j) => {
