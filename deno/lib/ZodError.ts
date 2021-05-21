@@ -122,7 +122,7 @@ export type ZodFormattedError<T> = T extends [any, ...any]
   ? { [K in keyof T]?: ZodFormattedError<T[K]> } & { _errors: string[] }
   : { _errors: string[] };
 
-export class ZodError<T = any> extends Error {
+export class ZodError<T = any> {
   issues: ZodIssue[] = [];
 
   get errors() {
@@ -130,10 +130,6 @@ export class ZodError<T = any> extends Error {
   }
 
   constructor(issues: ZodIssue[]) {
-    super();
-    // restore prototype chain
-    const actualProto = new.target.prototype;
-    Object.setPrototypeOf(this, actualProto);
     this.issues = issues;
   }
 
