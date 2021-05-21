@@ -55,7 +55,8 @@
     "badge": "make-coverage-badge --output-path ./coverage.svg",
     "prepublishOnly": "npm run test && npm run build && npm run build:deno",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json --trace-warnings",
-    "depcruise": "depcruise -c .dependency-cruiser.js src"
+    "depcruise": "depcruise -c .dependency-cruiser.js src",
+    "benchmark": "ts-node src/benchmarks/index.ts"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.2.0",

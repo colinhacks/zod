@@ -2,7 +2,8 @@ import Benchmark from "benchmark";
 
 import { z } from "../index";
 
-const suite = new Benchmark.Suite("z.string");
+const SUITE_NAME = "z.string";
+const suite = new Benchmark.Suite(SUITE_NAME);
 
 const empty = "";
 const short = "short";
@@ -35,6 +36,9 @@ suite
     manual(long);
   })
   .on("cycle", (e: Benchmark.Event) => {
-    console.log(String(e.target));
-  })
-  .run({ async: true });
+    console.log(`${SUITE_NAME}: ${e.target}`);
+  });
+
+export default {
+  suites: [suite],
+};

@@ -29,9 +29,8 @@ emptySuite
     } catch (err) {}
   })
   .on("cycle", (e: Benchmark.Event) => {
-    console.log(`empty: ${e.target}`);
-  })
-  .run({ async: true });
+    console.log(`${(emptySuite as any).name}: ${e.target}`);
+  });
 
 shortSuite
   .add("valid", () => {
@@ -46,9 +45,8 @@ shortSuite
     } catch (err) {}
   })
   .on("cycle", (e: Benchmark.Event) => {
-    console.log(`short: ${e.target}`);
-  })
-  .run({ async: true });
+    console.log(`${(shortSuite as any).name}: ${e.target}`);
+  });
 
 longSuite
   .add("valid", () => {
@@ -63,6 +61,9 @@ longSuite
     } catch (err) {}
   })
   .on("cycle", (e: Benchmark.Event) => {
-    console.log(`long: ${e.target}`);
-  })
-  .run({ async: true });
+    console.log(`${(longSuite as any).name}: ${e.target}`);
+  });
+
+export default {
+  suites: [emptySuite, shortSuite, longSuite],
+};
