@@ -14,6 +14,8 @@
 ⭐️ smash that star button ⭐️
 </p>
 
+> If you like Zod, you'll love my new library [tRPC](https://trpc.io). It's a way to build end-to-end typesafe APIs without GraphQL or code generation! Check it out at [trpc.io](https://trpc.io).
+
 <br/>
 
 ## May 17, 2021: Zod v3 is now in stable release!
@@ -77,7 +79,7 @@ Previous versions:
   - [Promises](#promises)
   - [Instanceof](#instanceof)
   - [Function schemas](#function-schemas)
-- [Base class methods (ZodType)](#methods)
+- [Base class methods (ZodType)](#zodtype-methods-and-properties)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
   - [.safeParse](#safeparse)
@@ -222,7 +224,9 @@ npm install zod
 
 There are a growing number of tools that are built atop or support Zod natively! If you've built a tool or library on top of Zod, tell me about it [on Twitter](https://twitter.com/colinhacks) or [start a Discussion](https://github.com/colinhacks/zod/discussions). I'll add it below and tweet it out.
 
+- [`tRPC`](https://github.com/trpc/trpc): Build end-to-end typesafe APIs without GraphQL
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers): Build type-safe forms easily with React Hook Form and the Zod resolver.
+- [`express-zod-api`](https://github.com/RobinTail/express-zod-api): Build Express-based APIs with I/O schema validation and custom middlewares
 - [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): Convert TypeScript definitions into Zod schemas.
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
 - [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): Generate `fast-check` arbitraries from Zod schemas.
