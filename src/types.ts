@@ -314,6 +314,7 @@ export abstract class ZodType<
     this._def = def;
     this.transform = this.transform.bind(this) as any;
     this.default = this.default.bind(this);
+    this.preprocess = this.preprocess.bind(this);
   }
 
   optional: <This extends this = this>() => ZodOptional<This> = () =>
@@ -364,6 +365,16 @@ export abstract class ZodType<
       }) as any;
     }
     return returnType;
+  }
+
+  preprocess<This extends this = this>(
+    preprocessFn: (value: Input) => Output
+  ): ZodPreprocess<This> {
+    return new ZodPreprocess({
+      // @ts-expect-error: 'innerType' does not exist on type 'Def'
+      innerType: this._def.innerType || this,
+      preprocessFn,
+    }) as any;
   }
 
   default<This extends this = this>(
@@ -2729,6 +2740,38 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
   }
 
   removeDefault() {
+    return this._def.innerType;
+  }
+
+  static create = <T extends ZodTypeAny>(type: T): ZodOptional<T> => {
+    return new ZodOptional({
+      innerType: type,
+    }) as any;
+  };
+}
+export interface ZodPreprocessDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  innerType: T;
+  preprocessFn: (value: T["_input"]) => T["_output"];
+}
+
+export class ZodPreprocess<T extends ZodTypeAny> extends ZodType<
+  T["_input"],
+  ZodPreprocessDef<T>,
+  T["_output"]
+> {
+  _parse(ctx: ParseContext): any {
+    const data = this._def.preprocessFn(ctx.data);
+
+    return new PseudoPromise().then(() => {
+      return this._def.innerType._parseWithInvalidFallback(data, {
+        ...ctx,
+        parentError: ctx.currentError,
+      });
+    });
+  }
+
+  removePreprocess() {
     return this._def.innerType;
   }
 
