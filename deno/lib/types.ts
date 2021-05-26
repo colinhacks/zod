@@ -397,17 +397,16 @@ export abstract class ZodType<
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
+type ZodStringCheck =
+  | { kind: "min"; value: number; message?: string }
+  | { kind: "max"; value: number; message?: string }
+  | { kind: "email"; message?: string }
+  | { kind: "url"; message?: string }
+  | { kind: "uuid"; message?: string }
+  | { kind: "regex"; regex: RegExp; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
-  // validation: {
-  //   uuid?: true;
-  //   custom?: ((val: any) => boolean)[];
-  // };
-  isEmail: { message?: string } | false;
-  isURL: { message?: string } | false;
-  isUUID: { message?: string } | false;
-  minLength: { value: number; message?: string } | null;
-  maxLength: { value: number; message?: string } | null;
+  checks: ZodStringCheck[];
 }
 
 const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i;
@@ -428,58 +427,63 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       return INVALID;
     }
 
-    if (this._def.minLength !== null) {
-      if (ctx.data.length < this._def.minLength.value) {
-        ctx.addIssue({
-          code: ZodIssueCode.too_small,
-          minimum: this._def.minLength.value,
-          type: "string",
-          inclusive: true,
-          message: this._def.minLength.message,
-          // ...errorUtil.errToObj(this._def.minLength.message),
-        });
+    for (const check of this._def.checks) {
+      if (check.kind === "min") {
+        if (ctx.data.length < check.value) {
+          ctx.addIssue({
+            code: ZodIssueCode.too_small,
+            minimum: check.value,
+            type: "string",
+            inclusive: true,
+            message: check.message,
+          });
+        }
+      } else if (check.kind === "max") {
+        if (ctx.data.length > check.value) {
+          ctx.addIssue({
+            code: ZodIssueCode.too_big,
+            maximum: check.value,
+            type: "string",
+            inclusive: true,
+            message: check.message,
+            // ...errorUtil.errToObj(this._def.maxLength.message),
+          });
+        }
+      } else if (check.kind === "email") {
+        if (!emailRegex.test(ctx.data)) {
+          ctx.addIssue({
+            validation: "email",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+        }
+      } else if (check.kind === "uuid") {
+        if (!uuidRegex.test(ctx.data)) {
+          ctx.addIssue({
+            validation: "uuid",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+        }
+      } else if (check.kind === "url") {
+        try {
+          new URL(ctx.data);
+        } catch {
+          ctx.addIssue({
+            validation: "url",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+        }
+      } else if (check.kind === "regex") {
+        if (!check.regex.test(ctx.data)) {
+          ctx.addIssue({
+            validation: "regex",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+        }
       }
-    }
-
-    if (this._def.maxLength !== null) {
-      if (ctx.data.length > this._def.maxLength.value) {
-        ctx.addIssue({
-          code: ZodIssueCode.too_big,
-          maximum: this._def.maxLength.value,
-          type: "string",
-          inclusive: true,
-          message: this._def.maxLength.message,
-          // ...errorUtil.errToObj(this._def.maxLength.message),
-        });
-      }
-    }
-
-    if (this._def.isEmail && !emailRegex.test(ctx.data)) {
-      ctx.addIssue({
-        validation: "email",
-        code: ZodIssueCode.invalid_string,
-        message: this._def.isEmail.message,
-      });
-    }
-
-    if (this._def.isURL) {
-      try {
-        new URL(ctx.data);
-      } catch {
-        ctx.addIssue({
-          validation: "url",
-          code: ZodIssueCode.invalid_string,
-          message: this._def.isURL.message,
-        });
-      }
-    }
-
-    if (this._def.isUUID && !uuidRegex.test(ctx.data)) {
-      ctx.addIssue({
-        validation: "uuid",
-        code: ZodIssueCode.invalid_string,
-        message: this._def.isUUID.message,
-      });
     }
 
     return ctx.data;
@@ -499,40 +503,55 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   email = (message?: errorUtil.ErrMessage) =>
     new ZodString({
       ...this._def,
-      isEmail: errorUtil.errToObj(message),
+      checks: [
+        ...this._def.checks,
+        { kind: "email", ...errorUtil.errToObj(message) },
+      ],
     });
 
   url = (message?: errorUtil.ErrMessage) =>
     new ZodString({
       ...this._def,
-      isURL: errorUtil.errToObj(message),
+      checks: [
+        ...this._def.checks,
+        { kind: "url", ...errorUtil.errToObj(message) },
+      ],
     });
 
   uuid = (message?: errorUtil.ErrMessage) =>
     new ZodString({
       ...this._def,
-      isUUID: errorUtil.errToObj(message),
+      checks: [
+        ...this._def.checks,
+        { kind: "uuid", ...errorUtil.errToObj(message) },
+      ],
     });
 
-  regex = (regexp: RegExp, message?: errorUtil.ErrMessage) =>
-    this._regex(regexp, "regex", message);
+  regex = (regex: RegExp, message?: errorUtil.ErrMessage) =>
+    new ZodString({
+      ...this._def,
+      checks: [
+        ...this._def.checks,
+        { kind: "regex", regex: regex, ...errorUtil.errToObj(message) },
+      ],
+    });
 
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
     new ZodString({
       ...this._def,
-      minLength: {
-        value: minLength,
-        message: errorUtil.errToObj(message).message,
-      },
+      checks: [
+        ...this._def.checks,
+        { kind: "min", value: minLength, ...errorUtil.errToObj(message) },
+      ],
     });
 
   max = (maxLength: number, message?: errorUtil.ErrMessage) =>
     new ZodString({
       ...this._def,
-      maxLength: {
-        value: maxLength,
-        message: errorUtil.errToObj(message).message,
-      },
+      checks: [
+        ...this._def.checks,
+        { kind: "max", value: maxLength, ...errorUtil.errToObj(message) },
+      ],
     });
 
   length(len: number, message?: errorUtil.ErrMessage) {
@@ -546,13 +565,40 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   nonempty = (message?: errorUtil.ErrMessage) =>
     this.min(1, errorUtil.errToObj(message));
 
+  get isEmail() {
+    return !!this._def.checks.find((ch) => ch.kind === "email");
+  }
+  get isURL() {
+    return !!this._def.checks.find((ch) => ch.kind === "url");
+  }
+  get isUUID() {
+    return !!this._def.checks.find((ch) => ch.kind === "uuid");
+  }
+  get minLength() {
+    let min: number | null = -Infinity;
+    this._def.checks.map((ch) => {
+      if (ch.kind === "min") {
+        if (min === null || ch.value > min) {
+          min = ch.value;
+        }
+      }
+    });
+    return min;
+  }
+  get maxLength() {
+    let max: number | null = null;
+    this._def.checks.map((ch) => {
+      if (ch.kind === "min") {
+        if (max === null || ch.value < max) {
+          max = ch.value;
+        }
+      }
+    });
+    return max;
+  }
   static create = (): ZodString => {
     return new ZodString({
-      isEmail: false,
-      isURL: false,
-      isUUID: false,
-      minLength: null,
-      maxLength: null,
+      checks: [],
     });
   };
 }
@@ -564,11 +610,13 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
+type ZodNumberCheck =
+  | { kind: "min"; value: number; inclusive: boolean; message?: string }
+  | { kind: "max"; value: number; inclusive: boolean; message?: string }
+  | { kind: "int"; message?: string };
 
 export interface ZodNumberDef extends ZodTypeDef {
-  minimum: null | { value: number; inclusive: boolean; message?: string };
-  maximum: null | { value: number; inclusive: boolean; message?: string };
-  isInteger: false | { message?: string };
+  checks: ZodNumberCheck[];
 }
 
 export class ZodNumber extends ZodType<number, ZodNumberDef> {
@@ -592,46 +640,43 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       return INVALID;
     }
 
-    if (this._def.isInteger) {
-      if (!Number.isInteger(ctx.data)) {
-        ctx.addIssue({
-          code: ZodIssueCode.invalid_type,
-          expected: "integer",
-          received: "float",
-          message: this._def.isInteger.message,
-        });
-      }
-    }
-
-    if (this._def.minimum) {
-      const MIN = this._def.minimum;
-      const tooSmall = MIN.inclusive
-        ? ctx.data < MIN.value
-        : ctx.data <= MIN.value;
-      if (tooSmall) {
-        ctx.addIssue({
-          code: ZodIssueCode.too_small,
-          minimum: MIN.value,
-          type: "number",
-          inclusive: MIN.inclusive,
-          message: MIN.message,
-        });
-      }
-    }
-
-    if (this._def.maximum) {
-      const MAX = this._def.maximum;
-      const tooBig = MAX.inclusive
-        ? ctx.data > MAX.value
-        : ctx.data >= MAX.value;
-      if (tooBig) {
-        ctx.addIssue({
-          code: ZodIssueCode.too_big,
-          maximum: MAX.value,
-          type: "number",
-          inclusive: MAX.inclusive,
-          message: MAX.message,
-        });
+    for (const check of this._def.checks) {
+      if (check.kind === "int") {
+        if (!Number.isInteger(ctx.data)) {
+          ctx.addIssue({
+            code: ZodIssueCode.invalid_type,
+            expected: "integer",
+            received: "float",
+            message: check.message,
+          });
+        }
+      } else if (check.kind === "min") {
+        // const MIN = check.value;
+        const tooSmall = check.inclusive
+          ? ctx.data < check.value
+          : ctx.data <= check.value;
+        if (tooSmall) {
+          ctx.addIssue({
+            code: ZodIssueCode.too_small,
+            minimum: check.value,
+            type: "number",
+            inclusive: check.inclusive,
+            message: check.message,
+          });
+        }
+      } else if (check.kind === "max") {
+        const tooBig = check.inclusive
+          ? ctx.data > check.value
+          : ctx.data >= check.value;
+        if (tooBig) {
+          ctx.addIssue({
+            code: ZodIssueCode.too_big,
+            maximum: check.value,
+            type: "number",
+            inclusive: check.inclusive,
+            message: check.message,
+          });
+        }
       }
     }
 
@@ -640,77 +685,129 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 
   static create = (): ZodNumber => {
     return new ZodNumber({
-      minimum: null,
-      maximum: null,
-      isInteger: false,
+      checks: [],
     });
   };
 
-  min = (minimum: number, message?: errorUtil.ErrMessage) =>
+  min = (value: number, message?: errorUtil.ErrMessage) =>
     new ZodNumber({
       ...this._def,
-      minimum: {
-        value: minimum,
-        inclusive: true,
-        message: errorUtil.toString(message),
-      },
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "min",
+          value: value,
+          inclusive: true,
+          message: errorUtil.toString(message),
+        },
+      ],
     });
 
-  max = (maximum: number, message?: errorUtil.ErrMessage) =>
+  max = (value: number, message?: errorUtil.ErrMessage) =>
     new ZodNumber({
       ...this._def,
-      maximum: {
-        value: maximum,
-        inclusive: true,
-        message: errorUtil.toString(message),
-      },
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "max",
+          value: value,
+          inclusive: true,
+          message: errorUtil.toString(message),
+        },
+      ],
     });
 
   int = (message?: errorUtil.ErrMessage) =>
     new ZodNumber({
       ...this._def,
-      isInteger: { message: errorUtil.toString(message) },
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "int",
+          message: errorUtil.toString(message),
+        },
+      ],
     });
 
   positive = (message?: errorUtil.ErrMessage) =>
     new ZodNumber({
       ...this._def,
-      minimum: {
-        value: 0,
-        inclusive: false,
-        message: errorUtil.toString(message),
-      },
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "min",
+          value: 0,
+          inclusive: false,
+          message: errorUtil.toString(message),
+        },
+      ],
     });
 
   negative = (message?: errorUtil.ErrMessage) =>
     new ZodNumber({
       ...this._def,
-      maximum: {
-        value: 0,
-        inclusive: false,
-        message: errorUtil.toString(message),
-      },
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "max",
+          value: 0,
+          inclusive: false,
+          message: errorUtil.toString(message),
+        },
+      ],
     });
 
   nonpositive = (message?: errorUtil.ErrMessage) =>
     new ZodNumber({
       ...this._def,
-      maximum: {
-        value: 0,
-        inclusive: true,
-        message: errorUtil.toString(message),
-      },
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "max",
+          value: 0,
+          inclusive: true,
+          message: errorUtil.toString(message),
+        },
+      ],
     });
 
   nonnegative = (message?: errorUtil.ErrMessage) =>
     new ZodNumber({
       ...this._def,
-      minimum: {
-        value: 0,
-        inclusive: true,
-        message: errorUtil.toString(message),
-      },
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "min",
+          value: 0,
+          inclusive: true,
+          message: errorUtil.toString(message),
+        },
+      ],
     });
+
+  get minValue() {
+    let min: number | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "min") {
+        if (min === null || ch.value > min) min = ch.value;
+      }
+    }
+    return min;
+  }
+
+  get maxValue() {
+    let max: number | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "max") {
+        if (max === null || ch.value < max) max = ch.value;
+      }
+    }
+    return max;
+  }
+
+  get isInt() {
+    return !!this._def.checks.find((ch) => ch.kind === "int");
+  }
 }
 
 /////////////////////////////////////////
