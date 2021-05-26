@@ -46,7 +46,7 @@ Zod 2 is being retired and will not leave beta. This is due to some unintuitive 
 
   ```ts
   # not available
-  z.transformer(A, B, func);
+  z.transform(A, B, func);
   A.transform(B, func)
   ```
 
