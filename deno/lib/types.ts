@@ -32,6 +32,7 @@ import {
 export type RefinementCtx = {
   addIssue: (arg: MakeErrorData) => void;
   path: (string | number)[];
+  userContext: any;
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
@@ -114,6 +115,7 @@ export abstract class ZodType<
       parentError: params.parentError || new ZodError([]),
       errorMap: params.errorMap || overrideErrorMap,
       async: params.async ?? false,
+      userContext: params.userContext,
     };
 
     return this._parseInternal(fullParams);
@@ -2611,6 +2613,7 @@ export class ZodEffects<
         ctx.addIssue(arg);
       },
       path: ctx.path,
+      userContext: ctx.userContext,
     };
 
     // let refinementError: Error | null = null;

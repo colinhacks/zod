@@ -103,6 +103,7 @@ export const issueHelpers = (error: ZodError, params: ParseParams) => {
 
 export type ParseParams = {
   data: any;
+  userContext: any;
   path: (string | number)[];
   errorMap: ZodErrorMap;
   parentError: ZodError;
