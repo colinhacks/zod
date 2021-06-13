@@ -109,9 +109,31 @@ export type ParseParamsNoData = Omit<ParseParams, "data">;
 
 export type ParsePathComponent = string | number;
 
-export type ParsePath = ParsePathComponent[];
+export type ParsePath = null | {
+  readonly component: ParsePathComponent;
+  readonly parent: ParsePath;
+  readonly count: number;
+};
 
-export const EMPTY_PATH: ParsePath = [];
+export const EMPTY_PATH: ParsePath = null;
+
+export const pathToArray = (path: ParsePath): ParsePathComponent[] => {
+  if (path === null) return [];
+  const arr: ParsePathComponent[] = new Array(path.count);
+  while (path !== null) {
+    arr[path.count - 1] = path.component;
+    path = path.parent;
+  }
+  return arr;
+};
+
+export const pathFromArray = (arr: ParsePathComponent[]): ParsePath => {
+  let path: ParsePath = null;
+  for (let i = 0; i < arr.length; i++) {
+    path = { parent: path, component: arr[i], count: i + 1 };
+  }
+  return path;
+};
 
 export type ParseContextParameters = {
   errorMap: ZodErrorMap;
@@ -127,14 +149,21 @@ export class ParseContext {
 
   stepInto(component: ParsePathComponent): ParseContext {
     return new ParseContext(
-      [...this.path, component],
+      this.path === null
+        ? { parent: null, count: 1, component }
+        : { parent: this.path, count: this.path.count + 1, component },
       this.issues,
       this.params
     );
   }
 
   addIssue(data: any, errorData: MakeErrorData): void {
-    const issue = makeIssue(data, this.path, this.params.errorMap, errorData);
+    const issue = makeIssue(
+      data,
+      pathToArray(this.path),
+      this.params.errorMap,
+      errorData
+    );
     this.issues.push(issue);
   }
 }

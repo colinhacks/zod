@@ -11,6 +11,8 @@ import {
   ParseContext,
   ParseParamsNoData,
   ParseReturnType,
+  pathFromArray,
+  pathToArray,
   SyncParseReturnType,
   ZodParsedType,
 } from "./helpers/parseUtil";
@@ -54,7 +56,7 @@ const createTasks = (ctx: ParseContext): AsyncTasks =>
   ctx.params.async ? [] : null;
 
 const createRootContext = (params: Partial<ParseParamsNoData>): ParseContext =>
-  new ParseContext(params.path || [], [], {
+  new ParseContext(pathFromArray(params.path || []), [], {
     async: params.async ?? false,
     errorMap: params.errorMap || overrideErrorMap,
   });
@@ -2209,10 +2211,15 @@ export class ZodFunction<
         | { success: false; error: ZodError }
     ): any => {
       if (!parsedArgs.success) {
-        const issue = makeIssue(args, ctx.path, ctx.params.errorMap, {
-          code: ZodIssueCode.invalid_arguments,
-          argumentsError: parsedArgs.error,
-        });
+        const issue = makeIssue(
+          args,
+          pathToArray(ctx.path),
+          ctx.params.errorMap,
+          {
+            code: ZodIssueCode.invalid_arguments,
+            argumentsError: parsedArgs.error,
+          }
+        );
         throw new ZodError([issue]);
       }
       return parsedArgs.data;
@@ -2225,10 +2232,15 @@ export class ZodFunction<
         | { success: false; error: ZodError }
     ): any => {
       if (!parsedReturns.success) {
-        const issue = makeIssue(returns, ctx.path, ctx.params.errorMap, {
-          code: ZodIssueCode.invalid_return_type,
-          returnTypeError: parsedReturns.error,
-        });
+        const issue = makeIssue(
+          returns,
+          pathToArray(ctx.path),
+          ctx.params.errorMap,
+          {
+            code: ZodIssueCode.invalid_return_type,
+            returnTypeError: parsedReturns.error,
+          }
+        );
         throw new ZodError([issue]);
       }
       return parsedReturns.data;
@@ -2545,7 +2557,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
     return OK(
       promisified.then((data: any) => {
         return this._def.type.parseAsync(data, {
-          path: ctx.path,
+          path: pathToArray(ctx.path),
           errorMap: ctx.params.errorMap,
         });
       })
@@ -2609,7 +2621,7 @@ export class ZodEffects<
         ctx.addIssue(data, arg);
       },
       get path() {
-        return ctx.path;
+        return pathToArray(ctx.path);
       },
     };
 
