@@ -1328,6 +1328,14 @@ export class ZodObject<
   readonly _shape!: T;
   readonly _unknownKeys!: UnknownKeys;
   readonly _catchall!: Catchall;
+  private _cached: { shape: T; keys: string[] } | null = null;
+
+  _getCached(): { shape: T; keys: string[] } {
+    if (this._cached !== null) return this._cached;
+    const shape = this._def.shape();
+    const keys = Object.keys(shape);
+    return (this._cached = { shape, keys });
+  }
 
   _parse(
     ctx: ParseContext,
@@ -1344,14 +1352,11 @@ export class ZodObject<
       return INVALID;
     }
 
-    const shape = this._def.shape();
-    const shapeKeys = Object.keys(shape);
-    const dataKeys = Object.keys(data);
-    const extraKeys = dataKeys.filter((k) => shapeKeys.indexOf(k) === -1);
+    const { shape, keys: shapeKeys } = this._getCached();
 
+    let invalid = false;
     const tasks = createTasks(ctx);
     const resultObject: Record<string, any> = {};
-    let invalid = false;
 
     const handleParsed = (
       key: string,
@@ -1359,7 +1364,7 @@ export class ZodObject<
     ): void => {
       if (isOk(parsedValue)) {
         const value = parsedValue.value;
-        if (typeof value !== "undefined" || dataKeys.includes(key)) {
+        if (typeof value !== "undefined" || key in data) {
           // key was valid but result was undefined: add it to the result object
           // only if key was in the input data object - if it wasn't, then it's
           // an optional key that should not be added
@@ -1375,16 +1380,7 @@ export class ZodObject<
     };
 
     for (const key of shapeKeys) {
-      const keyValidator = shapeKeys.includes(key)
-        ? shape[key]
-        : !(this._def.catchall instanceof ZodNever)
-        ? this._def.catchall
-        : undefined;
-
-      if (!keyValidator) {
-        continue;
-      }
-
+      const keyValidator = shape[key];
       const value = data[key];
       handleParsed(
         key,
@@ -1396,10 +1392,14 @@ export class ZodObject<
       const unknownKeys = this._def.unknownKeys;
 
       if (unknownKeys === "passthrough") {
+        const dataKeys = Object.keys(data);
+        const extraKeys = dataKeys.filter((k) => !(k in shape));
         for (const key of extraKeys) {
           resultObject[key] = data[key];
         }
       } else if (unknownKeys === "strict") {
+        const dataKeys = Object.keys(data);
+        const extraKeys = dataKeys.filter((k) => !(k in shape));
         if (extraKeys.length > 0) {
           invalid = true;
           ctx.addIssue(data, {
@@ -1414,6 +1414,8 @@ export class ZodObject<
     } else {
       // run catchall validation
       const catchall = this._def.catchall;
+      const dataKeys = Object.keys(data);
+      const extraKeys = dataKeys.filter((k) => !(k in shape));
       for (const key of extraKeys) {
         const value = data[key];
         handleParsed(
