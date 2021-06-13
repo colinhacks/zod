@@ -326,16 +326,11 @@ export abstract class ZodType<
 
   array: () => ZodArray<this> = () => ZodArray.create(this);
 
-  or<T extends ZodTypeAny, This extends this = this>(
-    option: T
-  ): This extends ZodUnion<infer Opts>
-    ? [...Opts, T] extends ZodUnionOptions
-      ? ZodUnion<[...Opts, T]>
-      : never
-    : ZodUnion<[This, T]> {
-    if (this instanceof ZodUnion) {
-      return ZodUnion.create([...this.options, option] as any) as any;
-    }
+  or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
+    //   : ZodUnion<[This, T]> //     : never //     ? ZodUnion<[...Opts, T]> //   ? [...Opts, T] extends ZodUnionOptions // : This extends ZodUnion<infer Opts>
+    // if (this instanceof ZodUnion) {
+    //   return ZodUnion.create([...this.options, option] as any) as any;
+    // }
     return ZodUnion.create([this, option]) as any;
   }
 
@@ -343,27 +338,21 @@ export abstract class ZodType<
     return ZodIntersection.create(this, incoming);
   }
 
-  transform<NewOut, This extends this>(
+  transform<NewOut, Inner extends ZodTypeAny = this>(
     transform: (arg: Output) => NewOut | Promise<NewOut>
-  ): This extends ZodEffects<infer T, any>
-    ? ZodEffects<T, NewOut>
-    : ZodEffects<This, NewOut> {
-    let returnType;
-    if (this instanceof ZodEffects) {
-      returnType = new ZodEffects({
-        ...this._def,
-        effects: [
-          ...(this._def.effects || []),
-          { type: "transform", transform },
-        ],
-      }) as any;
-    } else {
-      returnType = new ZodEffects({
-        schema: this,
-        effects: [{ type: "transform", transform }],
-      }) as any;
-    }
-    return returnType;
+  ): ZodEffects<Inner, NewOut> {
+    // This extends ZodEffects<infer T, any>
+    //   ? ZodEffects<Inner, NewOut>
+    //   : ZodEffects<This, NewOut> {
+    return new ZodEffects({
+      schema: this,
+      effects: [{ type: "transform", transform }],
+    }) as any;
+
+    // return new ZodEffects({
+    //   schema: this,
+    //   effects: [{ type: "transform", transform }],
+    // }) as any;
   }
 
   default<This extends this = this>(
@@ -2572,11 +2561,8 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 //////////                          //////////
 //////////////////////////////////////////////
 //////////////////////////////////////////////
-type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<
-  infer Inner,
-  infer Out
->
-  ? ZodEffects<Inner, Out>
+type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<any, any>
+  ? T
   : ZodEffects<T, T["_output"]>;
 
 export type InternalCheck<T> = {
@@ -2601,6 +2587,15 @@ export class ZodEffects<
 > extends ZodType<Output, ZodEffectsDef<T>, T["_input"]> {
   innerType() {
     return this._def.schema;
+  }
+
+  transform<NewOut, Inner extends ZodTypeAny = T>(
+    transform: (arg: Output) => NewOut | Promise<NewOut>
+  ): ZodEffects<Inner, NewOut> {
+    return new ZodEffects({
+      ...this._def,
+      effects: [...(this._def.effects || []), { type: "transform", transform }],
+    }) as any;
   }
 
   _parse(ctx: ParseContext): any {
@@ -2689,7 +2684,7 @@ export class ZodEffects<
   constructor(def: ZodEffectsDef<T>) {
     super(def);
     if (def.schema instanceof ZodEffects) {
-      throw new Error("ZodEffectss cannot be nested.");
+      throw new Error("ZodEffects cannot be nested.");
     }
   }
 

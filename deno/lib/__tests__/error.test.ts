@@ -223,6 +223,7 @@ test("custom path", () => {
 
   expect(result.success).toEqual(false);
   if (!result.success) {
+    // nested errors
     const error = result.error.format();
     expect(error._errors).toEqual([]);
     expect(error.password?._errors).toEqual(undefined);

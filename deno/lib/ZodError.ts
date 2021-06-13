@@ -114,13 +114,27 @@ export const quotelessJson = (obj: any) => {
   return json.replace(/"([^"]+)":/g, "$1:");
 };
 
-export type ZodFormattedError<T> = T extends [any, ...any]
-  ? { [K in keyof T]?: ZodFormattedError<T[K]> } & { _errors: string[] }
+export type ZodFormattedError<T> = { _errors: string[] } & (T extends [
+  any,
+  ...any
+]
+  ? { [K in keyof T]?: ZodFormattedError<T[K]> }
   : T extends any[]
-  ? ZodFormattedError<T[number]>[] & { _errors: string[] }
+  ? ZodFormattedError<T[number]>[]
   : T extends object
-  ? { [K in keyof T]?: ZodFormattedError<T[K]> } & { _errors: string[] }
-  : { _errors: string[] };
+  ? { [K in keyof T]?: ZodFormattedError<T[K]> }
+  : { _errors: string[] });
+
+// type t2 = ZodFormattedError<string>;
+// type asdf = ZodFormattedError<{ outer: { asdf: string } }>;
+
+// export type ZodFormattedError<T> = T extends [any, ...any]
+//   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
+//   : T extends any[]
+//   ? ZodFormattedError<T[number]>[]
+//   : T extends object
+//   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
+//   : { _errors: string[] };
 
 export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
@@ -148,7 +162,7 @@ export class ZodError<T = any> extends Error {
         } else if (issue.code === "invalid_arguments") {
           processError(issue.argumentsError);
         } else if (issue.path.length === 0) {
-          fieldErrors._errors.push(issue.message);
+          (fieldErrors as any)._errors.push(issue.message);
         } else {
           let curr: any = fieldErrors;
           let i = 0;
