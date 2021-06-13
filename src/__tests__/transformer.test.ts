@@ -119,9 +119,3 @@ test("multiple transformers", () => {
   });
   expect(doubler.parse("5")).toEqual(10);
 });
-
-test("no nesting", () => {
-  expect(() => {
-    z.transformer(z.transformer(z.string()));
-  }).toThrow();
-});

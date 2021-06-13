@@ -1,5 +1,20 @@
 # Changelog
 
+### 3.2
+
+- Certain methods (`.or`, `.transform`) now return a new instance that wrap the current instance, instead of trying to avoid additional nesting. For example:
+
+```ts
+z.union([z.string(), z.number()]).or(z.boolean());
+// previously
+// => ZodUnion<[ZodString, ZodNumber, ZodBoolean]>
+
+// now
+// => ZodUnion<[ZodUnion<[ZodString, ZodNumber]>, ZodBoolean]>
+```
+
+This change was made due to recursion limitations in TypeScript 4.3 that made it impossible to properly type these methods.
+
 ### 3.0.0-beta.1
 
 - Moved default value logic into ZodDefault. Implemented `.nullish()` method.

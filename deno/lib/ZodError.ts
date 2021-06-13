@@ -93,10 +93,8 @@ export type DenormalizedError = { [k: string]: DenormalizedError | string[] };
 
 export type ZodIssueOptionalMessage =
   | ZodInvalidTypeIssue
-  // | ZodNonEmptyArrayIsEmptyIssue
   | ZodUnrecognizedKeysIssue
   | ZodInvalidUnionIssue
-  // | ZodInvalidLiteralValueIssue
   | ZodInvalidEnumValueIssue
   | ZodInvalidArgumentsIssue
   | ZodInvalidReturnTypeIssue
@@ -110,7 +108,7 @@ export type ZodIssueOptionalMessage =
 export type ZodIssue = ZodIssueOptionalMessage & { message: string };
 
 export const quotelessJson = (obj: any) => {
-  const json = JSON.stringify(obj, null, 2); // {"name":"John Smith"}
+  const json = JSON.stringify(obj, null, 2);
   return json.replace(/"([^"]+)":/g, "$1:");
 };
 
@@ -124,17 +122,6 @@ export type ZodFormattedError<T> = { _errors: string[] } & (T extends [
   : T extends object
   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
   : { _errors: string[] });
-
-// type t2 = ZodFormattedError<string>;
-// type asdf = ZodFormattedError<{ outer: { asdf: string } }>;
-
-// export type ZodFormattedError<T> = T extends [any, ...any]
-//   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
-//   : T extends any[]
-//   ? ZodFormattedError<T[number]>[]
-//   : T extends object
-//   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
-//   : { _errors: string[] };
 
 export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
