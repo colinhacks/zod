@@ -70,6 +70,9 @@ test("use path in refinement context", async () => {
         code: ZodIssueCode.custom,
         message: `schema cannot be nested. path: ${ctx.path.join(".")}`,
       });
+      return false;
+    } else {
+      return true;
     }
   });
 

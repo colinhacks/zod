@@ -1,8 +1,11 @@
+import { PseudoPromise } from "../PseudoPromise.ts";
 import {
   defaultErrorMap,
   MakeErrorData,
+  overrideErrorMap,
   ZodError,
   ZodErrorMap,
+  ZodIssue,
 } from "../ZodError.ts";
 import { util } from "./util.ts";
 
@@ -66,38 +69,31 @@ export const getParsedType = (data: any): ZodParsedType => {
   return ZodParsedType.unknown;
 };
 
-export const issueHelpers = (error: ZodError, params: ParseParams) => {
-  const makeIssue = (errorData: MakeErrorData) => {
-    const errorArg = {
-      ...errorData,
-      path: [...params.path, ...(errorData.path || [])],
-    };
-
-    const defaultError = defaultErrorMap(errorArg, {
-      data: params.data,
-      defaultError: `Invalid input`,
-    });
-    const issue = {
-      ...errorData,
-      path: [...params.path, ...(errorData.path || [])],
-      message:
-        errorData.message ||
-        params.errorMap(errorArg, {
-          data: params.data,
-          defaultError: defaultError.message,
-        }).message,
-    };
-
-    return issue;
-  };
-  const addIssue = (errorData: MakeErrorData) => {
-    const issue = makeIssue(errorData);
-    error.addIssue(issue);
+export const makeIssue = (
+  data: any,
+  path: (string | number)[],
+  errorMap: ZodErrorMap,
+  errorData: MakeErrorData
+): ZodIssue => {
+  const fullPath = [...path, ...(errorData.path || [])];
+  const errorArg = {
+    ...errorData,
+    path: fullPath,
   };
 
+  const defaultError = defaultErrorMap(errorArg, {
+    data: data,
+    defaultError: `Invalid input`,
+  });
   return {
-    makeIssue,
-    addIssue,
+    ...errorData,
+    path: fullPath,
+    message:
+      errorData.message ||
+      errorMap(errorArg, {
+        data: data,
+        defaultError: defaultError.message,
+      }).message,
   };
 };
 
@@ -109,17 +105,47 @@ export type ParseParams = {
   async: boolean;
 };
 
-export type ParseParamsWithOptionals = util.flatten<
-  Partial<ParseParams> & { data: any }
->;
-
 export type ParseParamsNoData = Omit<ParseParams, "data">;
 
-export type ParseContext = ParseParams &
-  ReturnType<typeof issueHelpers> & {
-    parsedType: ZodParsedType;
-    currentError: ZodError;
-  };
+export type ParsePathComponent = string | number;
+
+export type ParsePath = ParsePathComponent[];
+
+export const EMPTY_PATH: ParsePath = [];
+
+export type ParseContextParameters = {
+  errorMap: ZodErrorMap;
+  async: boolean;
+};
+
+export class ParseContext {
+  constructor(
+    public readonly path: ParsePath,
+    public readonly issues: ZodIssue[],
+    public readonly params: ParseContextParameters
+  ) {}
+
+  stepInto(component: ParsePathComponent): ParseContext {
+    return new ParseContext(
+      [...this.path, component],
+      this.issues,
+      this.params
+    );
+  }
+
+  addIssue(data: any, errorData: MakeErrorData): void {
+    const issue = makeIssue(data, this.path, this.params.errorMap, errorData);
+    this.issues.push(issue);
+  }
+}
+
+export const createRootContext = (
+  params: Partial<ParseParamsNoData>
+): ParseContext =>
+  new ParseContext(EMPTY_PATH, [], {
+    async: params.async ?? false,
+    errorMap: params.errorMap || overrideErrorMap,
+  });
 
 export type ZodParserReturnPayload<T> =
   | {
@@ -131,6 +157,25 @@ export type ZodParserReturnPayload<T> =
       data: T;
     };
 
-export type ZodParserReturnType<T> =
-  | ZodParserReturnPayload<T>
-  | Promise<ZodParserReturnPayload<T>>;
+export type INVALID = { valid: false };
+export const INVALID: INVALID = Object.freeze({ valid: false });
+
+export type OK<T> = { valid: true; value: T };
+export const OK = <T>(value: T): OK<T> => ({ valid: true, value });
+
+export type ASYNC<T> = PseudoPromise<T>;
+export const ASYNC = <T>(promise: Promise<T>): ASYNC<T> =>
+  new PseudoPromise<T>(promise);
+
+export type SyncParseReturnType<T> = OK<T> | INVALID;
+export type ParseReturnType<T> =
+  | SyncParseReturnType<T>
+  | ASYNC<SyncParseReturnType<T>>;
+
+export const isInvalid = (x: ParseReturnType<any>): x is INVALID =>
+  x === INVALID;
+export const isOk = <T>(x: ParseReturnType<T>): x is OK<T> =>
+  (x as any).valid === true;
+export const isAsync = <T>(
+  x: ParseReturnType<T>
+): x is ASYNC<SyncParseReturnType<T>> => x instanceof PseudoPromise;
