@@ -8,11 +8,14 @@ export default [
       {
         file: "lib/index.mjs",
         format: "es",
+        sourcemap: true,
       },
     ],
+
     plugins: [
       typescript({
         tsconfig: "tsconfig.esm.json",
+        sourceMap: true,
       }),
     ],
   },
