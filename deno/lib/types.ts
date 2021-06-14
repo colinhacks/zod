@@ -54,6 +54,14 @@ type AsyncTasks = Promise<void>[] | null;
 const createTasks = (ctx: ParseContext): AsyncTasks =>
   ctx.params.async ? [] : null;
 
+function assertInAsyncMode(
+  tasks: AsyncTasks
+): asserts tasks is Promise<void>[] {
+  if (tasks === null) {
+    throw new Error("Zod internal error: got async work inside .parse");
+  }
+}
+
 const handleResult = <Input, Output>(
   ctx: ParseContext,
   result: SyncParseReturnType<Output>,
@@ -1011,7 +1019,8 @@ const parseArray = <T>(
     } else if (isInvalid(parsedItem)) {
       invalid = true;
     } else {
-      tasks?.push(
+      assertInAsyncMode(tasks);
+      tasks.push(
         parsedItem.promise.then((parsed) => handleParsed(index, parsed))
       );
     }
@@ -1366,7 +1375,8 @@ export class ZodObject<
       } else if (isInvalid(parsedValue)) {
         invalid = true;
       } else {
-        tasks?.push(
+        assertInAsyncMode(tasks);
+        tasks.push(
           parsedValue.promise.then((parsed) => handleParsed(key, parsed))
         );
       }
@@ -1865,7 +1875,8 @@ export class ZodTuple<
       } else if (isInvalid(parsedItem)) {
         invalid = true;
       } else {
-        tasks?.push(
+        assertInAsyncMode(tasks);
+        tasks.push(
           parsedItem.promise.then((parsed) => handleParsed(index, parsed))
         );
       }
@@ -1948,7 +1959,8 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
       } else if (isInvalid(parsedKey)) {
         invalid = true;
       } else {
-        tasks?.push(
+        assertInAsyncMode(tasks);
+        tasks.push(
           parsedKey.promise.then((parsed) => handleParsed(key, parsed))
         );
       }
@@ -2028,7 +2040,8 @@ export class ZodMap<
       parsedValue: ParseReturnType<any>
     ): void => {
       if (isAsync(parsedKey) || isAsync(parsedValue)) {
-        tasks?.push(
+        assertInAsyncMode(tasks);
+        tasks.push(
           PseudoPromise.all([parsedKey, parsedValue]).promise.then(([k, v]) =>
             handleParsed(k, v)
           )
@@ -2121,7 +2134,8 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
       } else if (isInvalid(parsedItem)) {
         invalid = true;
       } else {
-        tasks?.push(parsedItem.promise.then((parsed) => handleParsed(parsed)));
+        assertInAsyncMode(tasks);
+        tasks.push(parsedItem.promise.then((parsed) => handleParsed(parsed)));
       }
     };
 

@@ -121,8 +121,6 @@ export type ParsePath = null | {
   readonly count: number;
 };
 
-export const EMPTY_PATH: ParsePath = null;
-
 export const pathToArray = (path: ParsePath): ParsePathComponent[] => {
   if (path === null) return [];
   const arr: ParsePathComponent[] = new Array(path.count);
