@@ -174,12 +174,14 @@ export class ParseContext {
   }
 }
 
-export const createRootContext = (
-  params: Partial<ParseParamsNoData>
-): ParseContext =>
-  new ParseContext(EMPTY_PATH, [], {
-    async: params.async ?? false,
-    errorMap: params.errorMap || overrideErrorMap,
+export const createRootContext = ({
+  async = false,
+  path = [],
+  errorMap = overrideErrorMap,
+}: Partial<ParseParamsNoData>): ParseContext =>
+  new ParseContext(pathFromArray(path), [], {
+    async,
+    errorMap,
   });
 
 export type ZodParserReturnPayload<T> =

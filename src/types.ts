@@ -1,6 +1,7 @@
 import { errorUtil } from "./helpers/errorUtil";
 import {
   ASYNC,
+  createRootContext,
   getParsedType,
   INVALID,
   isAsync,
@@ -11,7 +12,6 @@ import {
   ParseContext,
   ParseParamsNoData,
   ParseReturnType,
-  pathFromArray,
   pathToArray,
   SyncParseReturnType,
   ZodParsedType,
@@ -21,7 +21,6 @@ import { util } from "./helpers/util";
 import { PseudoPromise } from "./PseudoPromise";
 import {
   MakeErrorData,
-  overrideErrorMap,
   StringValidation,
   ZodCustomIssue,
   ZodError,
@@ -54,12 +53,6 @@ export interface ZodTypeDef {}
 type AsyncTasks = Promise<void>[] | null;
 const createTasks = (ctx: ParseContext): AsyncTasks =>
   ctx.params.async ? [] : null;
-
-const createRootContext = (params: Partial<ParseParamsNoData>): ParseContext =>
-  new ParseContext(pathFromArray(params.path || []), [], {
-    async: params.async ?? false,
-    errorMap: params.errorMap || overrideErrorMap,
-  });
 
 const handleResult = <Input, Output>(
   ctx: ParseContext,
