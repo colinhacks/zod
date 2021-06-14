@@ -184,16 +184,6 @@ export const createRootContext = ({
     errorMap,
   });
 
-export type ZodParserReturnPayload<T> =
-  | {
-      success: false;
-      error: ZodError;
-    }
-  | {
-      success: true;
-      data: T;
-    };
-
 export type INVALID = { valid: false };
 export const INVALID: INVALID = Object.freeze({ valid: false });
 
