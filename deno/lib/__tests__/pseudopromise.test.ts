@@ -2,11 +2,6 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-test("foo", () => {
-  expect(1).toEqual(1);
-});
-
-/*
 // import * as z from '.';
 import { PseudoPromise } from "../PseudoPromise.ts";
 
@@ -72,4 +67,3 @@ test("all", async () => {
     .getValueAsync()
     .then((val) => expect(val).toEqual(["asdf"]));
 });
-*/

@@ -1,4 +1,3 @@
-import { PseudoPromise } from "../PseudoPromise";
 import {
   defaultErrorMap,
   MakeErrorData,
@@ -103,6 +102,21 @@ export const makeIssue = (
   };
 };
 
+export const issueHelpers = (error: ZodError, params: ParseParams) => {
+  const makeIssueBound = (errorData: MakeErrorData) => {
+    return makeIssue(params.data, params.path, params.errorMap, errorData);
+  };
+  const addIssue = (errorData: MakeErrorData) => {
+    const issue = makeIssueBound(errorData);
+    error.addIssue(issue);
+  };
+
+  return {
+    makeIssue: makeIssueBound,
+    addIssue,
+  };
+};
+
 export type ParseParams = {
   data: any;
   path: (string | number)[];
@@ -110,6 +124,12 @@ export type ParseParams = {
   parentError: ZodError;
   async: boolean;
 };
+
+export type ParseContext = ParseParams &
+  ReturnType<typeof issueHelpers> & {
+    parsedType: ZodParsedType;
+    currentError: ZodError;
+  };
 
 export type ParseParamsNoData = Omit<ParseParams, "data">;
 
@@ -144,15 +164,15 @@ export type ParseContextParameters = {
   async: boolean;
 };
 
-export class ParseContext {
+export class InternalParseContext {
   constructor(
     public readonly path: ParsePath,
     public readonly issues: ZodIssue[],
     public readonly params: ParseContextParameters
   ) {}
 
-  stepInto(component: ParsePathComponent): ParseContext {
-    return new ParseContext(
+  stepInto(component: ParsePathComponent): InternalParseContext {
+    return new InternalParseContext(
       this.path === null
         ? { parent: null, count: 1, component }
         : { parent: this.path, count: this.path.count + 1, component },
@@ -176,11 +196,33 @@ export const createRootContext = ({
   async = false,
   path = [],
   errorMap = overrideErrorMap,
-}: Partial<ParseParamsNoData>): ParseContext =>
-  new ParseContext(pathFromArray(path), [], {
+}: Partial<ParseParamsNoData>): InternalParseContext =>
+  new InternalParseContext(pathFromArray(path), [], {
     async,
     errorMap,
   });
+
+export class AsyncValue<PayloadType = undefined> {
+  readonly promise: Promise<PayloadType>;
+
+  constructor(promise: Promise<PayloadType>) {
+    this.promise = promise;
+  }
+
+  then<MappedType>(f: (_v: PayloadType) => MappedType): AsyncValue<MappedType> {
+    return new AsyncValue<MappedType>(this.promise.then(f));
+  }
+
+  static all = <T extends (any | AsyncValue<any>)[]>(
+    pps: T
+  ): AsyncValue<
+    { [K in keyof T]: T[K] extends AsyncValue<infer I> ? I : T[K] }
+  > => {
+    return new AsyncValue(
+      Promise.all(pps.map((v) => (v instanceof AsyncValue ? v.promise : v)))
+    ) as any;
+  };
+}
 
 export type INVALID = { valid: false };
 export const INVALID: INVALID = Object.freeze({ valid: false });
@@ -188,9 +230,9 @@ export const INVALID: INVALID = Object.freeze({ valid: false });
 export type OK<T> = { valid: true; value: T };
 export const OK = <T>(value: T): OK<T> => ({ valid: true, value });
 
-export type ASYNC<T> = PseudoPromise<T>;
+export type ASYNC<T> = AsyncValue<T>;
 export const ASYNC = <T>(promise: Promise<T>): ASYNC<T> =>
-  new PseudoPromise<T>(promise);
+  new AsyncValue<T>(promise);
 
 export type SyncParseReturnType<T> = OK<T> | INVALID;
 export type ParseReturnType<T> =
@@ -203,4 +245,4 @@ export const isOk = <T>(x: ParseReturnType<T>): x is OK<T> =>
   (x as any).valid === true;
 export const isAsync = <T>(
   x: ParseReturnType<T>
-): x is ASYNC<SyncParseReturnType<T>> => x instanceof PseudoPromise;
+): x is ASYNC<SyncParseReturnType<T>> => x instanceof AsyncValue;

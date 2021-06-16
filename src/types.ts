@@ -1,17 +1,21 @@
 import { errorUtil } from "./helpers/errorUtil";
 import {
   ASYNC,
+  AsyncValue,
   createRootContext,
   getParsedType,
+  InternalParseContext,
   INVALID,
   isAsync,
   isInvalid,
   isOk,
+  issueHelpers,
   makeIssue,
   OK,
   ParseContext,
   ParseParamsNoData,
   ParseReturnType,
+  pathFromArray,
   pathToArray,
   SyncParseReturnType,
   ZodParsedType,
@@ -51,7 +55,7 @@ export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {}
 
 type AsyncTasks = Promise<void>[] | null;
-const createTasks = (ctx: ParseContext): AsyncTasks =>
+const createTasks = (ctx: InternalParseContext): AsyncTasks =>
   ctx.params.async ? [] : null;
 
 function assertInAsyncMode(
@@ -63,7 +67,7 @@ function assertInAsyncMode(
 }
 
 const handleResult = <Input, Output>(
-  ctx: ParseContext,
+  ctx: InternalParseContext,
   result: SyncParseReturnType<Output>,
   parentError: ZodError | undefined
 ):
@@ -78,7 +82,7 @@ const handleResult = <Input, Output>(
   }
 };
 
-export abstract class ZodType<
+export class ZodType<
   Output,
   Def extends ZodTypeDef = ZodTypeDef,
   Input = Output
@@ -87,19 +91,116 @@ export abstract class ZodType<
   readonly _output!: Output;
   readonly _input!: Input;
   readonly _def!: Def;
+  readonly _fast: boolean;
 
-  abstract _parse(
-    _ctx: ParseContext,
+  // this function is required for backwards compatibility and super._parse case
+  _parse(parseCtx: ParseContext): any {
+    const ctx = new InternalParseContext(
+      pathFromArray(parseCtx.path),
+      parseCtx.parentError.issues,
+      parseCtx
+    );
+    const result = this._parseFast(ctx, parseCtx.data, parseCtx.parsedType);
+    if (isOk(result)) {
+      return result.value;
+    } else if (isInvalid(result)) {
+      return INVALID;
+    } else {
+      if (!parseCtx.async) {
+        throw new Error(
+          "ZodInternalError: _parseInternal returned async value in sync context"
+        );
+      }
+      return PseudoPromise.resolve(
+        result.promise.then((value) => (isOk(value) ? value.value : value))
+      );
+    }
+  }
+
+  _parseFast(
+    _ctx: InternalParseContext,
     _data: any,
     _parsedType: ZodParsedType
-  ): ParseReturnType<Output>;
+  ): ParseReturnType<Output> {
+    throw new Error(
+      "ZodInternalError: fast parse path not implemented for this type"
+    );
+  }
 
-  _parseSync(
-    _ctx: ParseContext,
+  _parseSlow(
+    ctx: InternalParseContext,
+    data: any,
+    parsedType: ZodParsedType
+  ): ParseReturnType<Output> {
+    const error = new ZodError([]);
+    const path = pathToArray(ctx.path);
+    const errorMap = ctx.params.errorMap;
+    const isAsync = ctx.params.async;
+    const parseCtx: ParseContext = {
+      data: data,
+      path: path,
+      errorMap: errorMap,
+      currentError: error,
+      parentError: error,
+      async: isAsync,
+      parsedType: parsedType,
+      ...issueHelpers(error, {
+        data,
+        path,
+        errorMap,
+        parentError: error,
+        async: isAsync,
+      }),
+    };
+
+    let parsedValue: any;
+    try {
+      parsedValue = this._parse(parseCtx);
+    } catch (_err) {
+      parsedValue = INVALID;
+    }
+
+    if (parsedValue instanceof PseudoPromise) {
+      parsedValue = parsedValue.catch(() => INVALID);
+      if (isAsync) {
+        return ASYNC(
+          parsedValue.getValueAsync().then((value: any) => {
+            if (value === INVALID) {
+              ctx.issues.push(...error.issues);
+              return INVALID;
+            } else {
+              return OK(value);
+            }
+          })
+        );
+      } else {
+        parsedValue = parsedValue.getValueSync();
+      }
+    }
+    if (parsedValue === INVALID) {
+      ctx.issues.push(...error.issues);
+      return INVALID;
+    } else {
+      return OK(parsedValue);
+    }
+  }
+
+  _parseInternal(
+    ctx: InternalParseContext,
+    data: any,
+    parsedType: ZodParsedType
+  ): ParseReturnType<Output> {
+    return this._fast
+      ? this._parseFast(ctx, data, parsedType)
+      : this._parseSlow(ctx, data, parsedType);
+  }
+
+  _parseInternalSync(
+    _ctx: InternalParseContext,
     _data: any,
     _parsedType: ZodParsedType
   ): SyncParseReturnType<Output> {
-    const result = this._parse(_ctx, _data, _parsedType);
+    const result = this._parseInternal(_ctx, _data, _parsedType);
     if (isAsync(result)) {
       throw new Error("TODO");
     }
@@ -122,7 +223,7 @@ export abstract class ZodType<
     | { success: true; data: Output }
     | { success: false; error: ZodError<Input> } = (data, params) => {
     const ctx = createRootContext({ ...params, async: false });
-    const result = this._parseSync(ctx, data, getParsedType(data));
+    const result = this._parseInternalSync(ctx, data, getParsedType(data));
     return handleResult(ctx, result, params?.parentError);
   };
 
@@ -142,7 +243,11 @@ export abstract class ZodType<
     { success: true; data: Output } | { success: false; error: ZodError }
   > = async (data, params) => {
     const ctx = createRootContext({ ...params, async: true });
-    const maybeAsyncResult = this._parse(ctx, data, getParsedType(data));
+    const maybeAsyncResult = this._parseInternal(
+      ctx,
+      data,
+      getParsedType(data)
+    );
     const result = await (isAsync(maybeAsyncResult)
       ? maybeAsyncResult.promise
       : Promise.resolve(maybeAsyncResult));
@@ -254,6 +359,7 @@ export abstract class ZodType<
     this._def = def;
     this.transform = this.transform.bind(this) as any;
     this.default = this.default.bind(this);
+    this._fast = this._parse === ZodType.prototype._parse;
   }
 
   optional: <This extends this = this>() => ZodOptional<This> = () =>
@@ -358,8 +464,8 @@ const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[
 const emailRegex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
 export class ZodString extends ZodType<string, ZodStringDef> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: string,
     parsedType: ZodParsedType
   ): ParseReturnType<string> {
@@ -522,8 +628,8 @@ export interface ZodNumberDef extends ZodTypeDef {
 }
 
 export class ZodNumber extends ZodType<number, ZodNumberDef> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: number,
     parsedType: ZodParsedType
   ): ParseReturnType<number> {
@@ -669,8 +775,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 export type ZodBigIntDef = ZodTypeDef;
 
 export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: bigint,
     parsedType: ZodParsedType
   ): ParseReturnType<bigint> {
@@ -701,8 +807,8 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
 export type ZodBooleanDef = ZodTypeDef;
 
 export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: boolean,
     parsedType: ZodParsedType
   ): ParseReturnType<boolean> {
@@ -733,8 +839,8 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
 export type ZodDateDef = ZodTypeDef;
 
 export class ZodDate extends ZodType<Date, ZodDateDef> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: Date,
     parsedType: ZodParsedType
   ): ParseReturnType<Date> {
@@ -773,8 +879,8 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
 export type ZodUndefinedDef = ZodTypeDef;
 
 export class ZodUndefined extends ZodType<undefined> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: undefined,
     parsedType: ZodParsedType
   ): ParseReturnType<undefined> {
@@ -805,8 +911,8 @@ export class ZodUndefined extends ZodType<undefined> {
 export type ZodNullDef = ZodTypeDef;
 
 export class ZodNull extends ZodType<null, ZodNullDef> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: null,
     parsedType: ZodParsedType
   ): ParseReturnType<null> {
@@ -836,8 +942,8 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
 export type ZodAnyDef = ZodTypeDef;
 
 export class ZodAny extends ZodType<any, ZodAnyDef> {
-  _parse(
-    _ctx: ParseContext,
+  _parseFast(
+    _ctx: InternalParseContext,
     data: any,
     _parsedType: ZodParsedType
   ): ParseReturnType<any> {
@@ -858,8 +964,8 @@ export class ZodAny extends ZodType<any, ZodAnyDef> {
 export type ZodUnknownDef = ZodTypeDef;
 
 export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
-  _parse(
-    _ctx: ParseContext,
+  _parseFast(
+    _ctx: InternalParseContext,
     data: any,
     _parsedType: ZodParsedType
   ): ParseReturnType<unknown> {
@@ -881,8 +987,8 @@ export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
 export type ZodNeverDef = ZodTypeDef;
 
 export class ZodNever extends ZodType<never, ZodNeverDef> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<never> {
@@ -908,8 +1014,8 @@ export class ZodNever extends ZodType<never, ZodNeverDef> {
 export type ZodVoidDef = ZodTypeDef;
 
 export class ZodVoid extends ZodType<void, ZodVoidDef> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<void> {
@@ -948,7 +1054,7 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
 }
 
 const parseArray = <T>(
-  ctx: ParseContext,
+  ctx: InternalParseContext,
   data: any[],
   parsedType: ZodParsedType,
   def: ZodArrayDef<any>,
@@ -1029,7 +1135,7 @@ const parseArray = <T>(
   data.forEach((item, index) => {
     handleParsed(
       index,
-      type._parse(ctx.stepInto(index), item, getParsedType(item))
+      type._parseInternal(ctx.stepInto(index), item, getParsedType(item))
     );
   });
 
@@ -1047,8 +1153,8 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
   ZodArrayDef<T>,
   T["_input"][]
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<T["_output"][]> {
@@ -1107,8 +1213,8 @@ export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
   ZodNonEmptyArrayDef<T>,
   [T["_input"], ...T["_input"][]]
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<[T["_output"], ...T["_output"][]]> {
@@ -1339,8 +1445,8 @@ export class ZodObject<
     return (this._cached = { shape, keys });
   }
 
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<Output> {
@@ -1387,7 +1493,11 @@ export class ZodObject<
       const value = data[key];
       handleParsed(
         key,
-        keyValidator._parse(ctx.stepInto(key), value, getParsedType(value))
+        keyValidator._parseInternal(
+          ctx.stepInto(key),
+          value,
+          getParsedType(value)
+        )
       );
     }
 
@@ -1423,7 +1533,11 @@ export class ZodObject<
         const value = data[key];
         handleParsed(
           key,
-          catchall._parse(ctx.stepInto(key), value, getParsedType(value))
+          catchall._parseInternal(
+            ctx.stepInto(key),
+            value,
+            getParsedType(value)
+          )
         );
       }
     }
@@ -1662,8 +1776,8 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
   ZodUnionDef<T>,
   T[number]["_input"]
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<T[number]["_output"]> {
@@ -1687,11 +1801,11 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 
     if (ctx.params.async) {
       const contexts = options.map(
-        () => new ParseContext(ctx.path, [], ctx.params)
+        () => new InternalParseContext(ctx.path, [], ctx.params)
       );
-      return PseudoPromise.all(
+      return AsyncValue.all(
         options.map((option, index) =>
-          option._parse(contexts[index], data, parsedType)
+          option._parseInternal(contexts[index], data, parsedType)
         )
       ).then((parsedOptions) => {
         for (const parsedOption of parsedOptions) {
@@ -1704,8 +1818,12 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     } else {
       const allIssues: ZodIssue[][] = [];
       for (const option of options) {
-        const optionCtx = new ParseContext(ctx.path, [], ctx.params);
-        const parsedOption = option._parseSync(optionCtx, data, parsedType);
+        const optionCtx = new InternalParseContext(ctx.path, [], ctx.params);
+        const parsedOption = option._parseInternalSync(
+          optionCtx,
+          data,
+          parsedType
+        );
         if (isInvalid(parsedOption)) {
           allIssues.push(optionCtx.issues);
         } else {
@@ -1752,8 +1870,8 @@ export class ZodIntersection<
   ZodIntersectionDef<T, U>,
   T["_input"] & U["_input"]
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<T & U> {
@@ -1785,14 +1903,14 @@ export class ZodIntersection<
     };
 
     if (ctx.params.async) {
-      return PseudoPromise.all([
-        this._def.left._parse(ctx, data, parsedType),
-        this._def.right._parse(ctx, data, parsedType),
+      return AsyncValue.all([
+        this._def.left._parseInternal(ctx, data, parsedType),
+        this._def.right._parseInternal(ctx, data, parsedType),
       ]).then(([left, right]: any) => handleParsed(left, right));
     } else {
       return handleParsed(
-        this._def.left._parseSync(ctx, data, parsedType),
-        this._def.right._parseSync(ctx, data, parsedType)
+        this._def.left._parseInternalSync(ctx, data, parsedType),
+        this._def.right._parseInternalSync(ctx, data, parsedType)
       );
     }
   }
@@ -1832,8 +1950,8 @@ export interface ZodTupleDef<
 export class ZodTuple<
   T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]]
 > extends ZodType<OutputTypeOfTuple<T>, ZodTupleDef<T>, InputTypeOfTuple<T>> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<any> {
@@ -1885,7 +2003,7 @@ export class ZodTuple<
     items.forEach((item, index) => {
       handleParsed(
         index,
-        item._parse(
+        item._parseInternal(
           ctx.stepInto(index),
           data[index],
           getParsedType(data[index])
@@ -1932,8 +2050,8 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
   ZodRecordDef<Value>,
   Record<string, Value["_input"]>
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<Record<string, any>> {
@@ -1969,7 +2087,11 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     for (const key in data) {
       handleParsed(
         key,
-        valueType._parse(ctx.stepInto(key), data[key], getParsedType(data[key]))
+        valueType._parseInternal(
+          ctx.stepInto(key),
+          data[key],
+          getParsedType(data[key])
+        )
       );
     }
 
@@ -2014,8 +2136,8 @@ export class ZodMap<
   ZodMapDef<Key, Value>,
   Map<Key["_input"], Value["_input"]>
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<Map<any, any>> {
@@ -2042,7 +2164,7 @@ export class ZodMap<
       if (isAsync(parsedKey) || isAsync(parsedValue)) {
         assertInAsyncMode(tasks);
         tasks.push(
-          PseudoPromise.all([parsedKey, parsedValue]).promise.then(([k, v]) =>
+          AsyncValue.all([parsedKey, parsedValue]).promise.then(([k, v]) =>
             handleParsed(k, v)
           )
         );
@@ -2055,12 +2177,12 @@ export class ZodMap<
 
     [...dataMap.entries()].forEach(([key, value], index) => {
       const entryCtx = ctx.stepInto(index);
-      const parsedKey = keyType._parse(
+      const parsedKey = keyType._parseInternal(
         entryCtx.stepInto("key"),
         key,
         getParsedType(key)
       );
-      const parsedValue = valueType._parse(
+      const parsedValue = valueType._parseInternal(
         entryCtx.stepInto("value"),
         value,
         getParsedType(value)
@@ -2107,8 +2229,8 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
   ZodSetDef<Value>,
   Set<Value["_input"]>
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<Set<any>> {
@@ -2140,7 +2262,9 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     };
 
     [...dataSet.values()].forEach((item, i) =>
-      handleParsed(valueType._parse(ctx.stepInto(i), item, getParsedType(item)))
+      handleParsed(
+        valueType._parseInternal(ctx.stepInto(i), item, getParsedType(item))
+      )
     );
 
     if (tasks !== null && tasks.length > 0) {
@@ -2198,8 +2322,8 @@ export class ZodFunction<
   ZodFunctionDef<Args, Returns>,
   InnerTypeOfFunction<Args, Returns>
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<any> {
@@ -2360,13 +2484,13 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
     return this._def.getter();
   }
 
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<output<T>> {
     const lazySchema = this._def.getter();
-    return lazySchema._parse(ctx, data, parsedType);
+    return lazySchema._parseInternal(ctx, data, parsedType);
   }
 
   static create = <T extends ZodTypeAny>(getter: () => T): ZodLazy<T> => {
@@ -2388,8 +2512,8 @@ export interface ZodLiteralDef<T extends any = any> extends ZodTypeDef {
 }
 
 export class ZodLiteral<T extends any> extends ZodType<T, ZodLiteralDef<T>> {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     _parsedType: ZodParsedType
   ): ParseReturnType<T> {
@@ -2436,8 +2560,8 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   T[number],
   ZodEnumDef<T>
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     _parsedType: ZodParsedType
   ): ParseReturnType<T[number]> {
@@ -2506,8 +2630,8 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   T[keyof T],
   ZodNativeEnumDef<T>
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     _parsedType: ZodParsedType
   ): ParseReturnType<T[keyof T]> {
@@ -2545,8 +2669,8 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   ZodPromiseDef<T>,
   Promise<T["_input"]>
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<Promise<T["_output"]>> {
@@ -2618,8 +2742,8 @@ export class ZodEffects<
     return this._def.schema;
   }
 
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<Output> {
@@ -2671,7 +2795,7 @@ export class ZodEffects<
     };
 
     if (isSync) {
-      const base = this._def.schema._parseSync(ctx, data, parsedType);
+      const base = this._def.schema._parseInternalSync(ctx, data, parsedType);
       if (isOk(base)) {
         const result = effects.reduce(applyEffect, base.value);
         return invalid ? INVALID : OK(result);
@@ -2693,7 +2817,7 @@ export class ZodEffects<
           return invalid ? INVALID : OK(result);
         }
       };
-      const baseResult = this._def.schema._parse(ctx, data, parsedType);
+      const baseResult = this._def.schema._parseInternal(ctx, data, parsedType);
       if (isOk(baseResult)) {
         return applyAsyncEffects(baseResult.value);
       } else if (isInvalid(baseResult)) {
@@ -2749,15 +2873,15 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
   ZodOptionalDef<T>,
   T["_input"] | undefined
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<T["_output"] | undefined> {
     if (parsedType === ZodParsedType.undefined) {
       return OK(undefined);
     }
-    return this._def.innerType._parse(ctx, data, parsedType);
+    return this._def.innerType._parseInternal(ctx, data, parsedType);
   }
 
   unwrap() {
@@ -2790,15 +2914,15 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
   ZodNullableDef<T>,
   T["_input"] | null
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<T["_output"] | null> {
     if (parsedType === ZodParsedType.null) {
       return OK(null);
     }
-    return this._def.innerType._parse(ctx, data, parsedType);
+    return this._def.innerType._parseInternal(ctx, data, parsedType);
   }
 
   unwrap() {
@@ -2830,15 +2954,15 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
   ZodDefaultDef<T>,
   T["_input"] | undefined
 > {
-  _parse(
-    ctx: ParseContext,
+  _parseFast(
+    ctx: InternalParseContext,
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<util.noUndefined<T["_output"]>> {
     if (parsedType === ZodParsedType.undefined) {
       data = this._def.defaultValue();
     }
-    return this._def.innerType._parse(ctx, data, getParsedType(data));
+    return this._def.innerType._parseInternal(ctx, data, getParsedType(data));
   }
 
   removeDefault() {

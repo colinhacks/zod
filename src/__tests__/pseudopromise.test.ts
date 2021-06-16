@@ -1,11 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-test("foo", () => {
-  expect(1).toEqual(1);
-});
-
-/*
 // import * as z from '.';
 import { PseudoPromise } from "../PseudoPromise";
 
@@ -71,4 +66,3 @@ test("all", async () => {
     .getValueAsync()
     .then((val) => expect(val).toEqual(["asdf"]));
 });
-*/
