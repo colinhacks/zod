@@ -317,7 +317,7 @@ z.string().regex(regex);
 z.string().nonempty();
 ```
 
-> Use the `.nonempty` method if you want the empty string ( `""` ) to be considered invalid.
+> Use the `.min(1)` method if you want the empty string ( `""` ) to be considered invalid.
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
 
