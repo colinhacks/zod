@@ -1,5 +1,8 @@
 # Changelog
 
+### vNext
+
+- Object fields of type `unknown` are no longer inferred as optional.
 ### 3.2
 
 - Certain methods (`.or`, `.transform`) now return a new instance that wrap the current instance, instead of trying to avoid additional nesting. For example:

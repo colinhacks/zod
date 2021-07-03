@@ -131,10 +131,6 @@ export class ZodError<T = any> {
   }
 
   constructor(issues: ZodIssue[]) {
-    // super();
-    // restore prototype chain
-    // const actualProto = new.target.prototype;
-    // Object.setPrototypeOf(this, actualProto);
     this.issues = issues;
   }
 

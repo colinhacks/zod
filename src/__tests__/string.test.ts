@@ -82,6 +82,7 @@ test("url error overrides", () => {
 test("uuid", () => {
   const uuid = z.string().uuid("custom error");
   uuid.parse("9491d710-3185-4e06-bea0-6a2f275345e0");
+  uuid.parse("00000000-0000-0000-0000-000000000000");
   const result = uuid.safeParse("9491d710-3185-4e06-bea0-6a2f275345e0X");
   expect(result.success).toEqual(false);
   if (!result.success) {
