@@ -1814,6 +1814,41 @@ export interface ZodIntersectionDef<
   right: U;
 }
 
+function mergeValues(
+  a: any,
+  b: any
+): { valid: true; data: any } | { valid: false } {
+  const aType = getParsedType(a);
+  const bType = getParsedType(b);
+
+  console.log(`mergeValues`);
+  console.log(a);
+  console.log(b);
+
+  if (a === b) {
+    return { valid: true, data: a };
+  } else if (aType === ZodParsedType.object && bType === ZodParsedType.object) {
+    const bKeysSet = new Set(Object.keys(b));
+    const sharedKeys = Object.keys(a).filter((key) => bKeysSet.has(key));
+
+    const newObj: any = { ...a, ...b };
+    for (const key of sharedKeys) {
+      const sharedValue = mergeValues(a[key], b[key]);
+      if (!sharedValue.valid) {
+        return { valid: false };
+      }
+      newObj[key] = sharedValue.data;
+    }
+
+    console.log(`NEWOBJ`);
+    console.log(newObj);
+
+    return { valid: true, data: newObj };
+  } else {
+    return { valid: false };
+  }
+}
+
 export class ZodIntersection<
   T extends ZodTypeAny,
   U extends ZodTypeAny
@@ -1834,24 +1869,17 @@ export class ZodIntersection<
       if (isInvalid(parsedLeft) || isInvalid(parsedRight)) {
         return INVALID;
       }
-      const parsedLeftValue = parsedLeft.value as any;
-      const parsedRightValue = parsedRight.value as any;
-      const parsedLeftType = getParsedType(parsedLeftValue);
-      const parsedRightType = getParsedType(parsedRightValue);
 
-      if (parsedLeftValue === parsedRightValue) {
-        return OK(parsedLeftValue);
-      } else if (
-        parsedLeftType === ZodParsedType.object &&
-        parsedRightType === ZodParsedType.object
-      ) {
-        return OK({ ...parsedLeftValue, ...parsedRightValue });
-      } else {
+      const merged = mergeValues(parsedLeft.value, parsedRight.value);
+      console.log(`GOTMERGED `);
+      console.log(merged);
+      if (!merged.valid) {
         ctx.addIssue(data, {
           code: ZodIssueCode.invalid_intersection_types,
         });
         return INVALID;
       }
+      return OK(merged.data);
     };
 
     if (ctx.params.async) {

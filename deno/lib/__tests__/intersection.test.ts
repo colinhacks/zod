@@ -23,3 +23,23 @@ test("object intersection", () => {
     z.intersection(BaseTeacher.strict(), HasID).parse({ ...data, extra: 12 })
   ).toThrow();
 });
+
+test("deep intersection", () => {
+  const Animal = z.object({
+    properties: z.object({
+      is_animal: z.boolean(),
+    }),
+  });
+  const Cat = z
+    .object({
+      properties: z.object({
+        jumped: z.boolean(),
+      }),
+    })
+    .and(Animal);
+
+  type Cat = z.infer<typeof Cat>;
+  // const cat:Cat = 'asdf' as any;
+  const cat = Cat.parse({ properties: { is_animal: true, jumped: true } });
+  expect(cat.properties).toEqual({ is_animal: true, jumped: true });
+});
