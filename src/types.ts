@@ -1531,6 +1531,10 @@ export class ZodObject<
       unknownKeys: "passthrough",
     }) as any;
 
+  /**
+   * @deprecated In most cases, this is no longer needed - unknown properties are now silently stripped.
+   * If you want to pass through unknown properies, use `.passthrough()` instead.
+   */
   nonstrict = this.passthrough;
 
   augment = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
