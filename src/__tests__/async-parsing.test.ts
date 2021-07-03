@@ -301,7 +301,7 @@ test("promise async parse bad", async () => {
   const badResult = await promiseSchema.safeParseAsync(badData);
   expect(badResult.success).toBe(true);
   if (badResult.success) {
-    await expect(badResult.data).rejects.toBeInstanceOf(Error);
+    await expect(badResult.data).rejects.toBeInstanceOf(z.ZodError);
   } else {
     throw new Error("success should be true");
   }

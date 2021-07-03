@@ -1,8 +1,11 @@
+import { PseudoPromise } from "../PseudoPromise";
 import {
   defaultErrorMap,
   MakeErrorData,
+  overrideErrorMap,
   ZodError,
   ZodErrorMap,
+  ZodIssue,
 } from "../ZodError";
 import { util } from "./util";
 
@@ -32,72 +35,71 @@ export const ZodParsedType = util.arrayToEnum([
 export type ZodParsedType = keyof typeof ZodParsedType;
 
 export const getParsedType = (data: any): ZodParsedType => {
-  if (typeof data === "string") return ZodParsedType.string;
-  if (typeof data === "number") {
-    if (Number.isNaN(data)) return ZodParsedType.nan;
-    return ZodParsedType.number;
+  const t = typeof data;
+  switch (t) {
+    case "undefined":
+      return ZodParsedType.undefined;
+    case "string":
+      return ZodParsedType.string;
+    case "number":
+      return Number.isNaN(data) ? ZodParsedType.nan : ZodParsedType.number;
+    case "boolean":
+      return ZodParsedType.boolean;
+    case "function":
+      return ZodParsedType.function;
+    case "bigint":
+      return ZodParsedType.bigint;
+    case "object":
+      if (Array.isArray(data)) return ZodParsedType.array;
+      if (data === null) return ZodParsedType.null;
+      if (
+        data.then &&
+        typeof data.then === "function" &&
+        data.catch &&
+        typeof data.catch === "function"
+      ) {
+        return ZodParsedType.promise;
+      }
+      if (data instanceof Map) {
+        return ZodParsedType.map;
+      }
+      if (data instanceof Set) {
+        return ZodParsedType.set;
+      }
+      if (data instanceof Date) {
+        return ZodParsedType.date;
+      }
+      return ZodParsedType.object;
+    default:
+      return ZodParsedType.unknown;
   }
-  if (typeof data === "boolean") return ZodParsedType.boolean;
-  if (typeof data === "bigint") return ZodParsedType.bigint;
-  if (typeof data === "symbol") return ZodParsedType.symbol;
-  if (data instanceof Date) return ZodParsedType.date;
-  if (typeof data === "function") return ZodParsedType.function;
-  if (data === undefined) return ZodParsedType.undefined;
-  if (typeof data === "undefined") return ZodParsedType.undefined;
-  if (typeof data === "object") {
-    if (Array.isArray(data)) return ZodParsedType.array;
-    if (data === null) return ZodParsedType.null;
-    if (
-      data.then &&
-      typeof data.then === "function" &&
-      data.catch &&
-      typeof data.catch === "function"
-    ) {
-      return ZodParsedType.promise;
-    }
-    if (data instanceof Map) {
-      return ZodParsedType.map;
-    }
-    if (data instanceof Set) {
-      return ZodParsedType.set;
-    }
-    return ZodParsedType.object;
-  }
-  return ZodParsedType.unknown;
 };
 
-export const issueHelpers = (error: ZodError, params: ParseParams) => {
-  const makeIssue = (errorData: MakeErrorData) => {
-    const errorArg = {
-      ...errorData,
-      path: [...params.path, ...(errorData.path || [])],
-    };
-
-    const defaultError = defaultErrorMap(errorArg, {
-      data: params.data,
-      defaultError: `Invalid input`,
-    });
-    const issue = {
-      ...errorData,
-      path: [...params.path, ...(errorData.path || [])],
-      message:
-        errorData.message ||
-        params.errorMap(errorArg, {
-          data: params.data,
-          defaultError: defaultError.message,
-        }).message,
-    };
-
-    return issue;
-  };
-  const addIssue = (errorData: MakeErrorData) => {
-    const issue = makeIssue(errorData);
-    error.addIssue(issue);
+export const makeIssue = (
+  data: any,
+  path: (string | number)[],
+  errorMap: ZodErrorMap,
+  errorData: MakeErrorData
+): ZodIssue => {
+  const fullPath = [...path, ...(errorData.path || [])];
+  const errorArg = {
+    ...errorData,
+    path: fullPath,
   };
 
+  const defaultError = defaultErrorMap(errorArg, {
+    data: data,
+    defaultError: `Invalid input`,
+  });
   return {
-    makeIssue,
-    addIssue,
+    ...errorData,
+    path: fullPath,
+    message:
+      errorData.message ||
+      errorMap(errorArg, {
+        data: data,
+        defaultError: defaultError.message,
+      }).message,
   };
 };
 
@@ -109,28 +111,96 @@ export type ParseParams = {
   async: boolean;
 };
 
-export type ParseParamsWithOptionals = util.flatten<
-  Partial<ParseParams> & { data: any }
->;
-
 export type ParseParamsNoData = Omit<ParseParams, "data">;
 
-export type ParseContext = ParseParams &
-  ReturnType<typeof issueHelpers> & {
-    parsedType: ZodParsedType;
-    currentError: ZodError;
-  };
+export type ParsePathComponent = string | number;
 
-export type ZodParserReturnPayload<T> =
-  | {
-      success: false;
-      error: ZodError;
-    }
-  | {
-      success: true;
-      data: T;
-    };
+export type ParsePath = null | {
+  readonly component: ParsePathComponent;
+  readonly parent: ParsePath;
+  readonly count: number;
+};
 
-export type ZodParserReturnType<T> =
-  | ZodParserReturnPayload<T>
-  | Promise<ZodParserReturnPayload<T>>;
+export const EMPTY_PATH: ParsePath = null;
+
+export const pathToArray = (path: ParsePath): ParsePathComponent[] => {
+  if (path === null) return [];
+  const arr: ParsePathComponent[] = new Array(path.count);
+  while (path !== null) {
+    arr[path.count - 1] = path.component;
+    path = path.parent;
+  }
+  return arr;
+};
+
+export const pathFromArray = (arr: ParsePathComponent[]): ParsePath => {
+  let path: ParsePath = null;
+  for (let i = 0; i < arr.length; i++) {
+    path = { parent: path, component: arr[i], count: i + 1 };
+  }
+  return path;
+};
+
+export type ParseContextParameters = {
+  errorMap: ZodErrorMap;
+  async: boolean;
+};
+
+export class ParseContext {
+  constructor(
+    public readonly path: ParsePath,
+    public readonly issues: ZodIssue[],
+    public readonly params: ParseContextParameters
+  ) {}
+
+  stepInto(component: ParsePathComponent): ParseContext {
+    return new ParseContext(
+      this.path === null
+        ? { parent: null, count: 1, component }
+        : { parent: this.path, count: this.path.count + 1, component },
+      this.issues,
+      this.params
+    );
+  }
+
+  addIssue(data: any, errorData: MakeErrorData): void {
+    const issue = makeIssue(
+      data,
+      pathToArray(this.path),
+      this.params.errorMap,
+      errorData
+    );
+    this.issues.push(issue);
+  }
+}
+
+export const createRootContext = (
+  params: Partial<ParseParamsNoData>
+): ParseContext =>
+  new ParseContext(EMPTY_PATH, [], {
+    async: params.async ?? false,
+    errorMap: params.errorMap || overrideErrorMap,
+  });
+
+export type INVALID = { valid: false };
+export const INVALID: INVALID = Object.freeze({ valid: false });
+
+export type OK<T> = { valid: true; value: T };
+export const OK = <T>(value: T): OK<T> => ({ valid: true, value });
+
+export type ASYNC<T> = PseudoPromise<T>;
+export const ASYNC = <T>(promise: Promise<T>): ASYNC<T> =>
+  new PseudoPromise<T>(promise);
+
+export type SyncParseReturnType<T> = OK<T> | INVALID;
+export type ParseReturnType<T> =
+  | SyncParseReturnType<T>
+  | ASYNC<SyncParseReturnType<T>>;
+
+export const isInvalid = (x: ParseReturnType<any>): x is INVALID =>
+  x === INVALID;
+export const isOk = <T>(x: ParseReturnType<T>): x is OK<T> =>
+  (x as any).valid === true;
+export const isAsync = <T>(
+  x: ParseReturnType<T>
+): x is ASYNC<SyncParseReturnType<T>> => x instanceof PseudoPromise;
