@@ -1821,10 +1821,6 @@ function mergeValues(
   const aType = getParsedType(a);
   const bType = getParsedType(b);
 
-  console.log(`mergeValues`);
-  console.log(a);
-  console.log(b);
-
   if (a === b) {
     return { valid: true, data: a };
   } else if (aType === ZodParsedType.object && bType === ZodParsedType.object) {
@@ -1839,9 +1835,6 @@ function mergeValues(
       }
       newObj[key] = sharedValue.data;
     }
-
-    console.log(`NEWOBJ`);
-    console.log(newObj);
 
     return { valid: true, data: newObj };
   } else {
@@ -1871,8 +1864,6 @@ export class ZodIntersection<
       }
 
       const merged = mergeValues(parsedLeft.value, parsedRight.value);
-      console.log(`GOTMERGED `);
-      console.log(merged);
       if (!merged.valid) {
         ctx.addIssue(data, {
           code: ZodIssueCode.invalid_intersection_types,
