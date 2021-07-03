@@ -100,7 +100,7 @@ export abstract class ZodType<
   ): SyncParseReturnType<Output> {
     const result = this._parse(_ctx, _data, _parsedType);
     if (isAsync(result)) {
-      throw new Error("TODO");
+      throw new Error("Synchronous parse encountered promise.");
     }
     return result;
   }
