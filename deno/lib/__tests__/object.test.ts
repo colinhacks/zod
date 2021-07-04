@@ -214,3 +214,10 @@ test("test inferred merged type", async () => {
   const f1: util.AssertEqual<asdf, { a: number }> = true;
   f1;
 });
+
+test("unknown field is not optional", () => {
+  const x = z.object({ a: z.unknown() });
+  type T = z.infer<typeof x>;
+  const f1: util.AssertEqual<T, { a: unknown }> = true;
+  f1;
+});

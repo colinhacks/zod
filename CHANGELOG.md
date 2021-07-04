@@ -1,5 +1,12 @@
 # Changelog
 
+### 3.3
+
+- HUGE speed improvements
+- Added benchmarking: `yarn benchmark`
+- Type signature of `ZodType#_parse` has changed. This will affects users who have implemented custom subclasses of `ZodType`.
+- Object fields of type `unknown` are no longer inferred as optional.
+
 ### 3.2
 
 - Certain methods (`.or`, `.transform`) now return a new instance that wrap the current instance, instead of trying to avoid additional nesting. For example:
