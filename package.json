@@ -79,6 +79,7 @@
     "nodemon": "^2.0.2",
     "prettier": "^2.2.1",
     "rollup": "^2.42.1",
+    "rollup-plugin-uglify": "^6.0.4",
     "ts-jest": "^26.4.4",
     "ts-node": "^9.1.0",
     "tslib": "^2.1.0",

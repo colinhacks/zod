@@ -190,25 +190,6 @@ export class ZodError<T = any> extends Error {
   }
   get message() {
     return JSON.stringify(this.issues, null, 2);
-    // const errorMessage: string[] = [
-    //   `${this.issues.length} validation issue(s)`,
-    //   '',
-    // ];
-    // for (const err of this.issues) {
-    //   errorMessage.push(
-    //     `  Issue #${this.issues.indexOf(err)}: ${err.code} at ${err.path.join(
-    //       '.',
-    //     )}`,
-    //   );
-    //   errorMessage.push(`  ` + err.message);
-    //   errorMessage.push('');
-    // }
-    // return errorMessage.join('\n');
-    // return quotelessJson(this);
-    // .map(({ path, message }) => {
-    //   return path.length ? `${path.join('./index')}: ${message}` : `${message}`;
-    // })
-    // .join('\n');
   }
 
   get isEmpty(): boolean {
@@ -240,10 +221,6 @@ export class ZodError<T = any> extends Error {
     return { formErrors, fieldErrors };
   };
 
-  // denormalize = ():DenormalizedError{
-
-  // }
-
   get formErrors() {
     return this.flatten();
   }
@@ -258,11 +235,8 @@ export type MakeErrorData = stripPath<ZodIssueOptionalMessage> & {
 };
 
 type ErrorMapCtx = {
-  // path: (string | number)[];
-  // details: any;
   defaultError: string;
   data: any;
-  // metadata: object;
 };
 
 export type ZodErrorMap = typeof defaultErrorMap;
@@ -303,24 +277,10 @@ export const defaultErrorMap = (
     case ZodIssueCode.invalid_date:
       message = `Invalid date`;
       break;
-    // case ZodIssueCode.too_small:
-    //   const tooShortNoun = _ctx.data === 'string' ? 'characters' : 'items';
-    //   message = `Too short, should be at least ${error.minimum} ${tooShortNoun}`;
-    //   break;
-    // case ZodIssueCode.too_big:
-    //   const tooLongNoun = _ctx.data === 'string' ? 'characters' : 'items';
-    //   message = `Too short, should be at most ${error.maximum} ${tooLongNoun}`;
-    //   break;
     case ZodIssueCode.invalid_string:
       if (error.validation !== "regex") message = `Invalid ${error.validation}`;
       else message = "Invalid";
       break;
-    // case ZodIssueCode.invalid_url:
-    //   message = 'Invalid URL.';
-    //   break;
-    // case ZodIssueCode.invalid_uuid:
-    //   message = 'Invalid UUID.';
-    //   break;
     case ZodIssueCode.too_small:
       if (error.type === "array")
         message = `Should have ${error.inclusive ? `at least` : `more than`} ${
@@ -362,7 +322,6 @@ export const defaultErrorMap = (
       util.assertNever(error);
   }
   return { message };
-  // return `Invalid input`;
 };
 
 export let overrideErrorMap = defaultErrorMap;
