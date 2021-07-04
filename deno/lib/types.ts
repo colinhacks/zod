@@ -904,6 +904,7 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
 export type ZodAnyDef = ZodTypeDef;
 
 export class ZodAny extends ZodType<any, ZodAnyDef> {
+  _any: true;
   _parse(
     _ctx: ParseContext,
     data: any,
@@ -1364,7 +1365,7 @@ export type baseObjectOutputType<
 export type objectOutputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny
-> = ZodTypeAny extends Catchall
+> = Catchall extends ZodAny
   ? baseObjectOutputType<Shape>
   : objectUtil.flatten<
       baseObjectOutputType<Shape> & { [k: string]: Catchall["_output"] }
@@ -1381,7 +1382,7 @@ export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
 export type objectInputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny
-> = ZodTypeAny extends Catchall
+> = Catchall extends ZodAny
   ? baseObjectInputType<Shape>
   : objectUtil.flatten<
       baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
