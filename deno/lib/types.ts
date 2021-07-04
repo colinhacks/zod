@@ -2497,6 +2497,10 @@ export class ZodLiteral<T extends any> extends ZodType<T, ZodLiteralDef<T>> {
     return OK(data);
   }
 
+  get value() {
+    return this._def.value;
+  }
+
   static create = <T extends Primitive>(value: T): ZodLiteral<T> => {
     return new ZodLiteral({
       value: value,
