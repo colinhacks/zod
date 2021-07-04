@@ -904,7 +904,8 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
 export type ZodAnyDef = ZodTypeDef;
 
 export class ZodAny extends ZodType<any, ZodAnyDef> {
-  _any: true;
+  // to prevent instances of other classes from extending ZodAny. this causes issues with catchall in ZodObject.
+  _any: true = true;
   _parse(
     _ctx: ParseContext,
     data: any,
