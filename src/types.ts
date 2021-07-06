@@ -232,6 +232,7 @@ export abstract class ZodType<
     } else {
       returnType = new ZodEffects({
         schema: this,
+        typeName: "ZodEffects",
         effects: [{ type: "refinement", refinement }],
       }) as any;
     }
@@ -268,6 +269,7 @@ export abstract class ZodType<
   ): ZodEffects<this, NewOut> {
     return new ZodEffects({
       schema: this,
+      typeName: "ZodEffects",
       effects: [{ type: "transform", transform }],
     }) as any;
   }
@@ -2755,6 +2757,7 @@ export type Effect<T> = InternalCheck<T> | Mod<T>;
 export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   schema: T;
+  typeName: "ZodEffects";
   effects?: Effect<any>[];
 }
 
@@ -2874,6 +2877,7 @@ export class ZodEffects<
   ): ZodEffects<I, I["_output"]> => {
     const newTx = new ZodEffects({
       schema,
+      typeName: "ZodEffects",
     });
 
     return newTx;
