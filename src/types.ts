@@ -40,6 +40,7 @@ import {
 export type RefinementCtx = {
   addIssue: (arg: MakeErrorData) => void;
   path: (string | number)[];
+  issueFound: boolean;
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
@@ -2716,7 +2717,9 @@ export class ZodEffects<
     const isSync = ctx.params.async === false;
     const effects = this._def.effects || [];
     const checkCtx: RefinementCtx = {
-      addIssue: (arg: MakeErrorData) => {
+      issueFound: false,
+      addIssue: function (arg: MakeErrorData) {
+        this.issueFound = true;
         ctx.addIssue(data, arg);
       },
       get path() {
@@ -2738,13 +2741,15 @@ export class ZodEffects<
                 "You can't use .parse() on a schema containing async refinements. Use .parseAsync instead."
               );
             } else {
-              return result.then((res) => {
-                invalid = invalid || !res;
+              return result.then((_res) => {
+                const issueFound = checkCtx.issueFound;
+                invalid = invalid || issueFound;
                 return acc;
               });
             }
           } else {
-            invalid = invalid || !result;
+            const issueFound = checkCtx.issueFound;
+            invalid = invalid || issueFound;
             return acc;
           }
         case "transform":

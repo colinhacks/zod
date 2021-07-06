@@ -93,3 +93,31 @@ test("use path in refinement context", async () => {
     );
   }
 });
+
+test("superRefine", () => {
+  const Strings = z.array(z.string()).superRefine((val, ctx) => {
+    if (val.length > 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_big,
+        maximum: 3,
+        type: "array",
+        inclusive: true,
+        message: "Too many items 😡",
+      });
+    }
+
+    if (val.length !== new Set(val).size) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `No duplicates allowed.`,
+      });
+    }
+  });
+
+  const result = Strings.safeParse(["asfd", "asfd", "asfd", "asfd"]);
+
+  expect(result.success).toEqual(false);
+  if (!result.success) expect(result.error.issues.length).toEqual(2);
+
+  Strings.parse(["asfd", "qwer"]);
+});
