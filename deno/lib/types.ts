@@ -1232,11 +1232,7 @@ export namespace objectUtil {
     V;
 
   type optionalKeys<T extends object> = {
-    [k in keyof T]: unknown extends T[k]
-      ? never
-      : undefined extends T[k]
-      ? k
-      : never;
+    [k in keyof T]: undefined extends T[k] ? k : never;
   }[keyof T];
 
   type requiredKeys<T extends object> = Exclude<keyof T, optionalKeys<T>>;

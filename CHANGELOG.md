@@ -1,11 +1,15 @@
 # Changelog
 
+### 3.4
+
+- `unknown` and `any` schemas are always interpreted as optional. Reverts change from 3.3.
+
 ### 3.3
 
 - HUGE speed improvements
 - Added benchmarking: `yarn benchmark`
 - Type signature of `ZodType#_parse` has changed. This will affects users who have implemented custom subclasses of `ZodType`.
-- Object fields of type `unknown` are no longer inferred as optional.
+- [reverted] Object fields of type `unknown` are no longer inferred as optional.
 
 ### 3.2
 
