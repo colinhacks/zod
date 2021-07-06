@@ -9,63 +9,63 @@ test("first party switch", () => {
   const def = myType._def;
 
   switch (def.typeName) {
-    case "ZodString":
+    case z.ZodFirstPartyTypeKind.ZodString:
       break;
-    case "ZodNumber":
+    case z.ZodFirstPartyTypeKind.ZodNumber:
       break;
-    case "ZodBigInt":
+    case z.ZodFirstPartyTypeKind.ZodBigInt:
       break;
-    case "ZodBoolean":
+    case z.ZodFirstPartyTypeKind.ZodBoolean:
       break;
-    case "ZodDate":
+    case z.ZodFirstPartyTypeKind.ZodDate:
       break;
-    case "ZodUndefined":
+    case z.ZodFirstPartyTypeKind.ZodUndefined:
       break;
-    case "ZodNull":
+    case z.ZodFirstPartyTypeKind.ZodNull:
       break;
-    case "ZodAny":
+    case z.ZodFirstPartyTypeKind.ZodAny:
       break;
-    case "ZodUnknown":
+    case z.ZodFirstPartyTypeKind.ZodUnknown:
       break;
-    case "ZodNever":
+    case z.ZodFirstPartyTypeKind.ZodNever:
       break;
-    case "ZodVoid":
+    case z.ZodFirstPartyTypeKind.ZodVoid:
       break;
-    case "ZodArray":
+    case z.ZodFirstPartyTypeKind.ZodArray:
       break;
-    case "ZodObject":
+    case z.ZodFirstPartyTypeKind.ZodObject:
       break;
-    case "ZodUnion":
+    case z.ZodFirstPartyTypeKind.ZodUnion:
       break;
-    case "ZodIntersection":
+    case z.ZodFirstPartyTypeKind.ZodIntersection:
       break;
-    case "ZodTuple":
+    case z.ZodFirstPartyTypeKind.ZodTuple:
       break;
-    case "ZodRecord":
+    case z.ZodFirstPartyTypeKind.ZodRecord:
       break;
-    case "ZodMap":
+    case z.ZodFirstPartyTypeKind.ZodMap:
       break;
-    case "ZodSet":
+    case z.ZodFirstPartyTypeKind.ZodSet:
       break;
-    case "ZodFunction":
+    case z.ZodFirstPartyTypeKind.ZodFunction:
       break;
-    case "ZodLazy":
+    case z.ZodFirstPartyTypeKind.ZodLazy:
       break;
-    case "ZodLiteral":
+    case z.ZodFirstPartyTypeKind.ZodLiteral:
       break;
-    case "ZodEnum":
+    case z.ZodFirstPartyTypeKind.ZodEnum:
       break;
-    case "ZodEffects":
+    case z.ZodFirstPartyTypeKind.ZodEffects:
       break;
-    case "ZodNativeEnum":
+    case z.ZodFirstPartyTypeKind.ZodNativeEnum:
       break;
-    case "ZodOptional":
+    case z.ZodFirstPartyTypeKind.ZodOptional:
       break;
-    case "ZodNullable":
+    case z.ZodFirstPartyTypeKind.ZodNullable:
       break;
-    case "ZodDefault":
+    case z.ZodFirstPartyTypeKind.ZodDefault:
       break;
-    case "ZodPromise":
+    case z.ZodFirstPartyTypeKind.ZodPromise:
       break;
     default:
       util.assertNever(def);
