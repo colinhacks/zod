@@ -1,8 +1,8 @@
-import { ZodFirstPartySchemaTypes } from "..";
 import { util } from "../helpers/util";
+import * as z from "../index";
 
 test("first party switch", () => {
-  const myType: ZodFirstPartySchemaTypes = "asdf" as any;
+  const myType = z.string() as z.ZodFirstPartySchemaTypes;
   const def = myType._def;
 
   switch (def.typeName) {

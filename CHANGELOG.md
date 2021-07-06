@@ -1,5 +1,9 @@
 # Changelog
 
+### 3.5
+
+- Add discriminator to all first-party schema defs
+
 ### 3.4
 
 - `unknown` and `any` schemas are always interpreted as optional. Reverts change from 3.3.
