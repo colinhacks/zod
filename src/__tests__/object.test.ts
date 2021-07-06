@@ -213,3 +213,23 @@ test("test inferred merged type", async () => {
   const f1: util.AssertEqual<asdf, { a: number }> = true;
   f1;
 });
+
+test("inferred type for unknown/any keys", () => {
+  const myType = z.object({
+    anyOptional: z.any().optional(),
+    anyRequired: z.any(),
+    unknownOptional: z.unknown().optional(),
+    unknownRequired: z.unknown(),
+  });
+  type myType = z.infer<typeof myType>;
+  const _f1: util.AssertEqual<
+    myType,
+    {
+      anyOptional?: any;
+      anyRequired?: any;
+      unknownOptional?: unknown;
+      unknownRequired?: unknown;
+    }
+  > = true;
+  _f1;
+});
