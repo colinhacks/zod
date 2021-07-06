@@ -2690,7 +2690,7 @@ type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<any, any>
 
 export type InternalCheck<T> = {
   type: "refinement";
-  refinement: (arg: T, ctx: RefinementCtx) => boolean | Promise<boolean>;
+  refinement: (arg: T, ctx: RefinementCtx) => any;
 };
 export type Mod<T> = {
   type: "transform";
