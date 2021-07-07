@@ -1362,6 +1362,7 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
       inclusive: true,
       message: "Too many items 😡",
     });
+    return false;
   }
 
   if (val.length !== new Set(val).size) {
@@ -1369,9 +1370,14 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
       code: z.ZodIssueCode.custom,
       message: `No duplicated allowed.`,
     });
+    return false;
   }
+  
+  return true;
 });
 ```
+
+> ⚠️ Like `.refine`, `.superRefine` should not throw. Instead it should return a falsy value to signal failure.
 
 You can add as many issues as you like. If `ctx.addIssue` is NOT called during the execution of the function, validation passes.
 
