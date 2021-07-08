@@ -34,7 +34,7 @@ Previous versions:
 - **Easier unions**. Use the `or` method to ZodType (the base class for all Zod schemas) to easily create union types like `z.string().or(z.number())`
 - **Easier intersections**. Use the `and` method to ZodType (the base class for all Zod schemas) to easily create intersection types
 - **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
-- **Maps and sets**. Zod now supports [`Map`](#maps) and [`Set`](#set) schemas.
+- **Maps and sets**. Zod now supports [`Map`](#maps) and [`Set`](#sets) schemas.
 - **Optional and nullable unwrapping**. ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap.
 - **A new implementation of transformers**. See the [Migration Guide](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) section to understand the syntax changes.
 
@@ -1175,7 +1175,7 @@ stringSchema.parse(12); // throws Error('Non-string type: number');
 
 `.parseAsync(data:unknown): Promise<T>`
 
-If you use asynchronous [refinements](#refinements) or [transforms](#transformers) (more on those later), you'll need to use `.parseAsync`
+If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`
 
 ```ts
 const stringSchema = z.string().refine(async (val) => val.length > 20);
