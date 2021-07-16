@@ -25,6 +25,18 @@ test("failing validations", () => {
   expect(() => intNum.parse(3.14)).toThrow();
 });
 
+test("required type validations", () => {
+  const message = "This field is required";
+  const required = z.number({ required: message });
+  expect(() => required.parse(undefined)).toThrow(message);
+});
+
+test("invalid type validations", () => {
+  const message = "Expected number, instead of whatever you input!";
+  const invalid = z.number({ invalid: message });
+  expect(() => invalid.parse(true)).toThrow(message);
+});
+
 test("parse NaN", () => {
   expect(() => z.number().parse(NaN)).toThrow();
 });

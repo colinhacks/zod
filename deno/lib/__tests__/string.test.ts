@@ -26,6 +26,18 @@ test("failing validations", () => {
   expect(() => justFive.parse("123456")).toThrow();
 });
 
+test("required type validations", () => {
+  const message = "This field is required";
+  const required = z.string({ required: message });
+  expect(() => required.parse(undefined)).toThrow(message);
+});
+
+test("invalid type validations", () => {
+  const message = "Expected string, instead of whatever you input!";
+  const invalid = z.string({ invalid: message });
+  expect(() => invalid.parse(1)).toThrow(message);
+});
+
 test("email validations", () => {
   const email = z.string().email();
   email.parse("mojojojo@example.com");

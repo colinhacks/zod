@@ -2,6 +2,7 @@ import { ZodParsedType } from "./helpers/parseUtil";
 import { util } from "./helpers/util";
 
 export const ZodIssueCode = util.arrayToEnum([
+  "required_type",
   "invalid_type",
   "custom",
   "invalid_union",
@@ -23,6 +24,10 @@ export type ZodIssueBase = {
   // code: ZodIssueCode;
   message?: string;
 };
+
+export interface ZodRequiredTypeIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.required_type;
+}
 
 export interface ZodInvalidTypeIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_type;
@@ -92,6 +97,7 @@ export interface ZodCustomIssue extends ZodIssueBase {
 export type DenormalizedError = { [k: string]: DenormalizedError | string[] };
 
 export type ZodIssueOptionalMessage =
+  | ZodRequiredTypeIssue
   | ZodInvalidTypeIssue
   | ZodUnrecognizedKeysIssue
   | ZodInvalidUnionIssue
@@ -255,12 +261,11 @@ export const defaultErrorMap = (
 ): { message: string } => {
   let message: string;
   switch (error.code) {
+    case ZodIssueCode.required_type:
+      message = "Required";
+      break;
     case ZodIssueCode.invalid_type:
-      if (error.received === "undefined") {
-        message = "Required";
-      } else {
-        message = `Expected ${error.expected}, received ${error.received}`;
-      }
+      message = `Expected ${error.expected}, received ${error.received}`;
       break;
     case ZodIssueCode.unrecognized_keys:
       message = `Unrecognized key(s) in object: ${error.keys
