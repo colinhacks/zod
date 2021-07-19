@@ -26,16 +26,41 @@ test("failing validations", () => {
   expect(() => justFive.parse("123456")).toThrow();
 });
 
-test("required type validations", () => {
-  const message = "This field is required";
-  const required = z.string({ required: message });
-  expect(() => required.parse(undefined)).toThrow(message);
+test("required & invalid validations", () => {
+  const requiredMessage = "This field is required";
+  const invalidMessage = "Expected string, instead of whatever you input!";
+
+  const s = z.string({ invalid: invalidMessage, required: requiredMessage });
+  expect(() => s.parse(1)).toThrow(invalidMessage);
+  expect(() => s.parse(undefined)).toThrow(requiredMessage);
 });
 
-test("invalid type validations", () => {
-  const message = "Expected string, instead of whatever you input!";
-  const invalid = z.string({ invalid: message });
-  expect(() => invalid.parse(1)).toThrow(message);
+test("required & invalid validation chain", () => {
+  const message = { invalid: "invalid", required: "required" };
+
+  const email = z.string(message).email();
+  expect(() => email.parse(1)).toThrow(message.invalid);
+  expect(() => email.parse(undefined)).toThrow(message.required);
+
+  const url = z.string(message).url();
+  expect(() => url.parse(1)).toThrow(message.invalid);
+  expect(() => url.parse(undefined)).toThrow(message.required);
+
+  const uuid = z.string(message).uuid("custom error");
+  expect(() => uuid.parse(1)).toThrow(message.invalid);
+  expect(() => uuid.parse(undefined)).toThrow(message.required);
+
+  const regex = z.string(message).regex(/^moo+$/);
+  expect(() => regex.parse(1)).toThrow(message.invalid);
+  expect(() => regex.parse(undefined)).toThrow(message.required);
+
+  const min = z.string(message).min(5, "min5");
+  expect(() => min.parse(1)).toThrow(message.invalid);
+  expect(() => min.parse(undefined)).toThrow(message.required);
+
+  const max = z.string(message).max(5, "max5");
+  expect(() => max.parse(1)).toThrow(message.invalid);
+  expect(() => max.parse(undefined)).toThrow(message.required);
 });
 
 test("email validations", () => {
