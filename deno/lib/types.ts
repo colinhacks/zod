@@ -444,31 +444,40 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
 
   email = (message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "email", ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "email", ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   url = (message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "url", ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "url", ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   uuid = (message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "uuid", ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "uuid", ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   cuid = (message?: errorUtil.ErrMessage) =>
     new ZodString({
@@ -480,31 +489,40 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
 
   regex = (regex: RegExp, message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "regex", regex: regex, ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "regex", regex: regex, ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "min", value: minLength, ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "min", value: minLength, ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   max = (maxLength: number, message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "max", value: maxLength, ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "max", value: maxLength, ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   length(len: number, message?: errorUtil.ErrMessage) {
     return this.min(len, message).max(len, message);
@@ -687,86 +705,104 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     inclusive: boolean,
     message?: string
   ) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind,
-          value,
-          inclusive,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind,
+            value,
+            inclusive,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   int = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "int",
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "int",
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   positive = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "min",
-          value: 0,
-          inclusive: false,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "min",
+            value: 0,
+            inclusive: false,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   negative = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "max",
-          value: 0,
-          inclusive: false,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "max",
+            value: 0,
+            inclusive: false,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   nonpositive = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "max",
-          value: 0,
-          inclusive: true,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "max",
+            value: 0,
+            inclusive: true,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   nonnegative = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "min",
-          value: 0,
-          inclusive: true,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "min",
+            value: 0,
+            inclusive: true,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   get minValue() {
     let min: number | null = null;

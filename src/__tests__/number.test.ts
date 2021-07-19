@@ -25,16 +25,45 @@ test("failing validations", () => {
   expect(() => intNum.parse(3.14)).toThrow();
 });
 
-test("required type validations", () => {
-  const message = "This field is required";
-  const required = z.number({ required: message });
-  expect(() => required.parse(undefined)).toThrow(message);
+test("required & invalid validations", () => {
+  const requiredMessage = "This field is required";
+  const invalidMessage = "Expected number, instead of whatever you input!";
+
+  const n = z.number({ invalid: invalidMessage, required: requiredMessage });
+  expect(() => n.parse(true)).toThrow(invalidMessage);
+  expect(() => n.parse(undefined)).toThrow(requiredMessage);
 });
 
-test("invalid type validations", () => {
-  const message = "Expected number, instead of whatever you input!";
-  const invalid = z.number({ invalid: message });
-  expect(() => invalid.parse(true)).toThrow(message);
+test("required & invalid validations chain", () => {
+  const message = { invalid: "invalid", required: "required" };
+
+  const min = z.number(message).min(5, "min5");
+  expect(() => min.parse(true)).toThrow(message.invalid);
+  expect(() => min.parse(undefined)).toThrow(message.required);
+
+  const max = z.number(message).max(5, "max5");
+  expect(() => max.parse(true)).toThrow(message.invalid);
+  expect(() => max.parse(undefined)).toThrow(message.required);
+
+  const int = z.number(message).int("int error");
+  expect(() => int.parse(true)).toThrow(message.invalid);
+  expect(() => int.parse(undefined)).toThrow(message.required);
+
+  const positive = z.number(message).positive("positive error");
+  expect(() => positive.parse(true)).toThrow(message.invalid);
+  expect(() => positive.parse(undefined)).toThrow(message.required);
+
+  const negative = z.number(message).negative("negative error");
+  expect(() => negative.parse(true)).toThrow(message.invalid);
+  expect(() => negative.parse(undefined)).toThrow(message.required);
+
+  const nonpositive = z.number(message).nonpositive("nonpositive error");
+  expect(() => nonpositive.parse(true)).toThrow(message.invalid);
+  expect(() => nonpositive.parse(undefined)).toThrow(message.required);
+
+  const nonnegative = z.number(message).nonnegative("nonnegative error");
+  expect(() => nonnegative.parse(true)).toThrow(message.invalid);
+  expect(() => nonnegative.parse(undefined)).toThrow(message.required);
 });
 
 test("parse NaN", () => {
