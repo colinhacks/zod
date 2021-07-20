@@ -509,7 +509,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   get maxLength() {
     let max: number | null = null;
     this._def.checks.map((ch) => {
-      if (ch.kind === "min") {
+      if (ch.kind === "max") {
         if (max === null || ch.value < max) {
           max = ch.value;
         }
