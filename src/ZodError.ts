@@ -133,7 +133,12 @@ export class ZodError<T = any> extends Error {
   constructor(issues: ZodIssue[]) {
     super();
     const actualProto = new.target.prototype;
-    Object.setPrototypeOf(this, actualProto);
+    if (Object.setPrototypeOf) {
+      // eslint-disable-next-line ban/ban
+      Object.setPrototypeOf(this, actualProto);
+    } else {
+      (this as any).__proto__ = actualProto;
+    }
     this.issues = issues;
   }
 

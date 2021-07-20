@@ -562,7 +562,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 
     for (const check of this._def.checks) {
       if (check.kind === "int") {
-        if (!Number.isInteger(data)) {
+        if (!util.isInteger(data)) {
           invalid = true;
           ctx.addIssue(data, {
             code: ZodIssueCode.invalid_type,
@@ -1299,8 +1299,8 @@ export namespace objectUtil {
     first: U,
     second: T
   ): T & U => {
-    const firstKeys = Object.keys(first);
-    const secondKeys = Object.keys(second);
+    const firstKeys = util.objectKeys(first);
+    const secondKeys = util.objectKeys(second);
     const sharedKeys = firstKeys.filter((k) => secondKeys.indexOf(k) !== -1);
 
     const sharedShape: any = {};
@@ -1438,7 +1438,7 @@ export class ZodObject<
   _getCached(): { shape: T; keys: string[] } {
     if (this._cached !== null) return this._cached;
     const shape = this._def.shape();
-    const keys = Object.keys(shape);
+    const keys = util.objectKeys(shape);
     return (this._cached = { shape, keys });
   }
 
@@ -1497,13 +1497,13 @@ export class ZodObject<
       const unknownKeys = this._def.unknownKeys;
 
       if (unknownKeys === "passthrough") {
-        const dataKeys = Object.keys(data);
+        const dataKeys = util.objectKeys(data);
         const extraKeys = dataKeys.filter((k) => !(k in shape));
         for (const key of extraKeys) {
           resultObject[key] = data[key];
         }
       } else if (unknownKeys === "strict") {
-        const dataKeys = Object.keys(data);
+        const dataKeys = util.objectKeys(data);
         const extraKeys = dataKeys.filter((k) => !(k in shape));
         if (extraKeys.length > 0) {
           invalid = true;
@@ -1519,7 +1519,7 @@ export class ZodObject<
     } else {
       // run catchall validation
       const catchall = this._def.catchall;
-      const dataKeys = Object.keys(data);
+      const dataKeys = util.objectKeys(data);
       const extraKeys = dataKeys.filter((k) => !(k in shape));
       for (const key of extraKeys) {
         const value = data[key];
@@ -1621,7 +1621,7 @@ export class ZodObject<
     Catchall
   > => {
     const shape: any = {};
-    Object.keys(mask).map((key) => {
+    util.objectKeys(mask).map((key) => {
       shape[key] = this.shape[key];
     });
     return new ZodObject({
@@ -1638,8 +1638,8 @@ export class ZodObject<
     Catchall
   > => {
     const shape: any = {};
-    Object.keys(this.shape).map((key) => {
-      if (Object.keys(mask).indexOf(key) === -1) {
+    util.objectKeys(this.shape).map((key) => {
+      if (util.objectKeys(mask).indexOf(key) === -1) {
         shape[key] = this.shape[key];
       }
     });
@@ -1867,8 +1867,10 @@ function mergeValues(
   if (a === b) {
     return { valid: true, data: a };
   } else if (aType === ZodParsedType.object && bType === ZodParsedType.object) {
-    const bKeysSet = new Set(Object.keys(b));
-    const sharedKeys = Object.keys(a).filter((key) => bKeysSet.has(key));
+    const bKeys = util.objectKeys(b);
+    const sharedKeys = util
+      .objectKeys(a)
+      .filter((key) => bKeys.indexOf(key) !== -1);
 
     const newObj: any = { ...a, ...b };
     for (const key of sharedKeys) {
