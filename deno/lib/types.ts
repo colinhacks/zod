@@ -1005,12 +1005,12 @@ export interface ZodVoidDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodVoid;
 }
 
-export class ZodVoid extends ZodType<void, ZodVoidDef> {
+export class ZodVoid extends ZodType<null | undefined, ZodVoidDef> {
   _parse(
     ctx: ParseContext,
     data: any,
     parsedType: ZodParsedType
-  ): ParseReturnType<void> {
+  ): ParseReturnType<null | undefined> {
     if (
       parsedType !== ZodParsedType.undefined &&
       parsedType !== ZodParsedType.null
