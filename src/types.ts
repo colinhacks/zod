@@ -333,11 +333,20 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<string> {
     if (parsedType !== ZodParsedType.string) {
-      ctx.addIssue(data, {
-        code: ZodIssueCode.invalid_type,
-        expected: ZodParsedType.string,
-        received: parsedType,
-      });
+      if (parsedType === ZodParsedType.undefined) {
+        ctx.addIssue(data, {
+          code: ZodIssueCode.required_type,
+          message: this.message?.required,
+        });
+      } else {
+        ctx.addIssue(data, {
+          code: ZodIssueCode.invalid_type,
+          expected: ZodParsedType.string,
+          received: parsedType,
+          message: this.message?.invalid,
+        });
+      }
+
       return INVALID;
     }
     let invalid = false;
@@ -422,58 +431,76 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
 
   email = (message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "email", ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "email", ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   url = (message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "url", ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "url", ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   uuid = (message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "uuid", ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "uuid", ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   regex = (regex: RegExp, message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "regex", regex: regex, ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "regex", regex: regex, ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   min = (minLength: number, message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "min", value: minLength, ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "min", value: minLength, ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   max = (maxLength: number, message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "max", value: maxLength, ...errorUtil.errToObj(message) },
-      ],
-    });
+    new ZodString(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          { kind: "max", value: maxLength, ...errorUtil.errToObj(message) },
+        ],
+      },
+      this.message
+    );
 
   length(len: number, message?: errorUtil.ErrMessage) {
     return this.min(len, message).max(len, message);
@@ -517,12 +544,20 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
     return max;
   }
-  static create = (): ZodString => {
-    return new ZodString({
-      checks: [],
-      typeName: ZodFirstPartyTypeKind.ZodString,
-    });
+
+  static create = (message?: errorUtil.TypeErrMessage): ZodString => {
+    return new ZodString(
+      {
+        checks: [],
+        typeName: ZodFirstPartyTypeKind.ZodString,
+      },
+      message
+    );
   };
+
+  constructor(def: ZodStringDef, readonly message?: errorUtil.TypeErrMessage) {
+    super(def);
+  }
 }
 
 /////////////////////////////////////////
@@ -549,11 +584,19 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<number> {
     if (parsedType !== ZodParsedType.number) {
-      ctx.addIssue(data, {
-        code: ZodIssueCode.invalid_type,
-        expected: ZodParsedType.number,
-        received: parsedType,
-      });
+      if (parsedType === ZodParsedType.undefined) {
+        ctx.addIssue(data, {
+          code: ZodIssueCode.required_type,
+          message: this.message?.required,
+        });
+      } else {
+        ctx.addIssue(data, {
+          code: ZodIssueCode.invalid_type,
+          expected: ZodParsedType.number,
+          received: parsedType,
+          message: this.message?.invalid,
+        });
+      }
 
       return INVALID;
     }
@@ -606,108 +649,136 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     return invalid ? INVALID : OK(data);
   }
 
-  static create = (): ZodNumber => {
-    return new ZodNumber({
-      checks: [],
-      typeName: ZodFirstPartyTypeKind.ZodNumber,
-    });
+  static create = (message?: errorUtil.TypeErrMessage): ZodNumber => {
+    return new ZodNumber(
+      {
+        checks: [],
+        typeName: ZodFirstPartyTypeKind.ZodNumber,
+      },
+      message
+    );
   };
 
+  constructor(def: ZodNumberDef, readonly message?: errorUtil.TypeErrMessage) {
+    super(def);
+  }
+
   min = (value: number, message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "min",
-          value: value,
-          inclusive: true,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "min",
+            value: value,
+            inclusive: true,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   max = (value: number, message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "max",
-          value: value,
-          inclusive: true,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "max",
+            value: value,
+            inclusive: true,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   int = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "int",
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "int",
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   positive = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "min",
-          value: 0,
-          inclusive: false,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "min",
+            value: 0,
+            inclusive: false,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   negative = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "max",
-          value: 0,
-          inclusive: false,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "max",
+            value: 0,
+            inclusive: false,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   nonpositive = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "max",
-          value: 0,
-          inclusive: true,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "max",
+            value: 0,
+            inclusive: true,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   nonnegative = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "min",
-          value: 0,
-          inclusive: true,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+    new ZodNumber(
+      {
+        ...this._def,
+        checks: [
+          ...this._def.checks,
+          {
+            kind: "min",
+            value: 0,
+            inclusive: true,
+            message: errorUtil.toString(message),
+          },
+        ],
+      },
+      this.message
+    );
 
   get minValue() {
     let min: number | null = null;
@@ -787,20 +858,35 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<boolean> {
     if (parsedType !== ZodParsedType.boolean) {
-      ctx.addIssue(data, {
-        code: ZodIssueCode.invalid_type,
-        expected: ZodParsedType.boolean,
-        received: parsedType,
-      });
+      if (parsedType === ZodParsedType.undefined) {
+        ctx.addIssue(data, {
+          code: ZodIssueCode.required_type,
+          message: this.message?.required,
+        });
+      } else {
+        ctx.addIssue(data, {
+          code: ZodIssueCode.invalid_type,
+          expected: ZodParsedType.boolean,
+          received: parsedType,
+          message: this.message?.invalid,
+        });
+      }
 
       return INVALID;
     }
     return OK(data);
   }
 
-  static create = (): ZodBoolean => {
-    return new ZodBoolean({ typeName: ZodFirstPartyTypeKind.ZodBoolean });
+  static create = (message?: errorUtil.TypeErrMessage): ZodBoolean => {
+    return new ZodBoolean(
+      { typeName: ZodFirstPartyTypeKind.ZodBoolean },
+      message
+    );
   };
+
+  constructor(def: ZodBooleanDef, readonly message?: errorUtil.TypeErrMessage) {
+    super(def);
+  }
 }
 
 ///////////////////////////////////////

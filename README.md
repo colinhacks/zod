@@ -327,6 +327,8 @@ z.string().nonempty();
 Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
+z.string({ required: "This field is required" });
+z.string({ invalid: "Expected string, instead of whatever you input" });
 z.string().min(5, { message: "Must be 5 or more characters long" });
 z.string().max(5, { message: "Must be 5 or fewer characters long" });
 z.string().length(5, { message: "Must be exactly 5 characters long" });
@@ -351,10 +353,25 @@ z.number().negative(); //     < 0
 z.number().nonpositive(); //  <= 0
 ```
 
+#### Custom error messages
+
 Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
+z.number({ required: "This field is required" });
+z.number({ invalid: "Expected number, instead of whatever you input" });
 z.number().max(5, { message: "this👏is👏too👏big" });
+```
+
+## Booleans
+
+#### Custom error messages
+
+Optionally, you can pass in a second argument to provide a custom error message.
+
+```ts
+z.boolean({ required: "This field is required" });
+z.boolean({ invalid: "Expected boolean, instead of whatever you input" });
 ```
 
 ## Objects
