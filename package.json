@@ -69,6 +69,7 @@
     "dependency-cruiser": "^9.19.0",
     "eslint": "^7.15.0",
     "eslint-config-prettier": "^7.1.0",
+    "eslint-plugin-ban": "^1.5.2",
     "eslint-plugin-import": "^2.22.1",
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "eslint-plugin-unused-imports": "^1.1.0",

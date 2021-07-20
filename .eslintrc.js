@@ -7,6 +7,7 @@ module.exports = {
     "import",
     "simple-import-sort",
     "unused-imports",
+    "ban",
   ],
   extends: [
     "eslint:recommended",
@@ -44,5 +45,13 @@ module.exports = {
     "no-empty": "off",
     "no-useless-escape": "off",
     "no-control-regex": "off",
+
+    "ban/ban": [
+      2,
+      { "name": ["Object", "keys"], "message": "Object.keys() is not supported in legacy browsers, use objectKeys()" },
+      { "name": ["Object", "setPrototypeOf"], "message": "Object.setPrototypeOf() is not supported in legacy browsers" },
+      { "name": ["Number", "isNaN"], "message": "Number.isNaN() is not supported in legacy browsers" },
+      { "name": ["Number", "isInteger"], "message": "Number.isInteger() is not supported in legacy browsers" },
+    ]
   },
 };
