@@ -1497,7 +1497,7 @@ z.array(z.string());
 A convenience method for promise types:
 
 ```ts
-const nullableString = z.string().promise(); // Promise<string>
+const stringPromise = z.string().promise(); // Promise<string>
 
 // equivalent to
 z.promise(z.string());
