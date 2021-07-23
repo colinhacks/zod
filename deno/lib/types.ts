@@ -256,6 +256,8 @@ export abstract class ZodType<
 
   array: () => ZodArray<this> = () => ZodArray.create(this);
 
+  promise: () => ZodPromise<this> = () => ZodPromise.create(this);
+
   or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
     return ZodUnion.create([this, option]) as any;
   }
