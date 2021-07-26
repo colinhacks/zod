@@ -198,7 +198,7 @@ export type ParseReturnType<T> =
   | ASYNC<SyncParseReturnType<T>>;
 
 export const isInvalid = (x: ParseReturnType<any>): x is INVALID =>
-  x === INVALID;
+  (x as any).valid === false;
 export const isOk = <T>(x: ParseReturnType<T>): x is OK<T> =>
   (x as any).valid === true;
 export const isAsync = <T>(
