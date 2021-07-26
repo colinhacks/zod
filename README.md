@@ -92,6 +92,7 @@ Previous versions:
   - [.nullable](#nullable)
   - [.nullish](#nullish)
   - [.array](#array)
+  - [.promise](#promise)
   - [.or](#or)
   - [.and](#and)
 - [Type inference](#type-inference)
@@ -1489,6 +1490,17 @@ const nullableString = z.string().array(); // string[]
 
 // equivalent to
 z.array(z.string());
+```
+
+### `.promise`
+
+A convenience method for promise types:
+
+```ts
+const stringPromise = z.string().promise(); // Promise<string>
+
+// equivalent to
+z.promise(z.string());
 ```
 
 ### `.or`
