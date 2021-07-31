@@ -1337,17 +1337,26 @@ export const mergeObjects = <First extends AnyZodObject>(first: First) => <
   return merged;
 };
 
-type extend<A, B> = {
+export type extendShape<A, B> = {
   [k in Exclude<keyof A, keyof B>]: A[k];
 } &
   { [k in keyof B]: B[k] };
+
+export type extendZodObject<
+  Obj extends AnyZodObject,
+  Augmentation extends ZodRawShape
+> = ZodObject<
+  extendShape<ReturnType<Obj["_def"]["shape"]>, Augmentation>,
+  Obj["_def"]["unknownKeys"],
+  Obj["_def"]["catchall"]
+>;
 
 const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
   Augmentation extends ZodRawShape
 >(
   augmentation: Augmentation
 ): ZodObject<
-  extend<ReturnType<Def["shape"]>, Augmentation>,
+  extendShape<ReturnType<Def["shape"]>, Augmentation>,
   // {
   //   [k in Exclude<
   //     keyof ReturnType<Def["shape"]>,
@@ -1587,7 +1596,7 @@ export class ZodObject<
   merge: <Incoming extends AnyZodObject>(
     merging: Incoming
   ) => //ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = (merging) => {
-  ZodObject<extend<T, Incoming["_shape"]>, UnknownKeys, Catchall> = (
+  ZodObject<extendShape<T, Incoming["_shape"]>, UnknownKeys, Catchall> = (
     merging
   ) => {
     const mergedShape = objectUtil.mergeShapes(
