@@ -14,7 +14,7 @@
 ⭐️ smash that star button ⭐️
 </p>
 
-> 如果你喜欢Zod，你会喜欢我的新库 [tRPC](https://trpc.io). 这是一种建立端到端类型安全API的方法，无需GraphQL或代码生成 请在[trpc.io](https://trpc.io)上查看他.
+> 如果你喜欢 Zod，你会喜欢我的新库 [tRPC](https://trpc.io). 这是一种建立端到端类型安全 API 的方法，无需 GraphQL 或代码生成 请在[trpc.io](https://trpc.io)上查看他.
 
 <br/>
 
@@ -29,18 +29,18 @@
 
 #### New features
 
-- **更容易的引入**: 你现在可以像`import { z } from 'zod';`那样导入Zod，而不是使用`import * as`语法。
-- **结构化的错误消息**. 对ZodError使用`.format()`方法，将错误转换为强类型的嵌套对象: [format method](#error-formatting)
-- **更容易的联合类型**. 使用ZodType（所有Zod模式的基类）的`or`方法，可以轻松创建联合类型，如 `z.string().or(z.number())`
-- **更容易的交叉类型**. 对ZodType（所有Zod模式的基类）使用`and`方法，可以轻松创建交叉类型
-- **全局错误定制**. 使用`z.setErrorMap(myErrorMap)`来全面定制Zod产生的错误信息: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
+- **更容易的引入**: 你现在可以像`import { z } from 'zod';`那样导入 Zod，而不是使用`import * as`语法。
+- **结构化的错误消息**. 对 ZodError 使用`.format()`方法，将错误转换为强类型的嵌套对象: [format method](#error-formatting)
+- **更容易的联合类型**. 使用 ZodType（所有 Zod 模式的基类）的`or`方法，可以轻松创建联合类型，如 `z.string().or(z.number())`
+- **更容易的交叉类型**. 对 ZodType（所有 Zod 模式的基类）使用`and`方法，可以轻松创建交叉类型
+- **全局错误定制**. 使用`z.setErrorMap(myErrorMap)`来全面定制 Zod 产生的错误信息: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
 - **Maps and sets**. Zod 现在支持 [`Map`](#maps) 和 [`Set`](#sets) 模式。
-- **可选的和可忽略的解包**. ZodOptional和ZodNullable现在有一个`.unwrap()`方法来检索它们所包裹的模式。
+- **可选的和可忽略的解包**. ZodOptional 和 ZodNullable 现在有一个`.unwrap()`方法来检索它们所包裹的模式。
 - **A new implementation of transformers**. 请参阅[迁移指南](https://github.com/colinhacks/zod/blob/master/MIGRATION.md)部分以了解语法的变化。
 
 # Table of contents
 
-- [什么是Zod](#什么是Zod)
+- [什么是 Zod](#什么是Zod)
 - [安装](#安装)
 - [生态体系](#生态系统)
 - [基本用法](#基本用法)
@@ -105,25 +105,25 @@
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-# 什么是Zod
+# 什么是 Zod
 
-Zod是一个以TypeScript为首的模式声明和验证库。我使用术语 "模式 "来广义地指任何数据类型，从简单的 `字符串` 到复杂的嵌套对象。
+Zod 是一个以 TypeScript 为首的模式声明和验证库。我使用术语 "模式 "来广义地指任何数据类型，从简单的 `字符串` 到复杂的嵌套对象。
 
-Zod被设计成对开发者尽可能友好。其目的是消除重复的类型声明。使用Zod，你只需声明 _一次_ 验证器，Zod就会自动推断出静态TypeScript类型。它很容易将较简单的类型组成复杂的数据结构。
+Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型声明。使用 Zod，你只需声明 _一次_ 验证器，Zod 就会自动推断出静态 TypeScript 类型。它很容易将较简单的类型组成复杂的数据结构。
 
 其他一些重要方面:
 
 - 零依赖
-- 可以工作在浏览器和Node.js
+- 可以工作在浏览器和 Node.js
 - 小巧: 8kb minified + zipped
 - 不可变: 方法(即 `.optional()` 返回一个新的实例
 - 简洁的、可连锁的接口
 - 功能性方法: [解析，不验证](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
-- 也可用于普通的JavaScript! 你不需要使用TypeScript。
+- 也可用于普通的 JavaScript! 你不需要使用 TypeScript。
 
 # 赞助
 
-我们感谢并鼓励任何级别的赞助。Zod是由一个单独的开发者维护的 ([hi!](https://twitter.com/colinhacks)). 对于个人开发者来说，可以考虑[一杯咖啡级别](https://github.com/sponsors/colinhacks). 如果你使用Zod建立了一个付费产品，可以考虑[初创企业级别](https://github.com/sponsors/colinhacks). 你可以在以下网站上了解更多关于等级的信息 [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
+我们感谢并鼓励任何级别的赞助。Zod 是由一个单独的开发者维护的 ([hi!](https://twitter.com/colinhacks)). 对于个人开发者来说，可以考虑[一杯咖啡级别](https://github.com/sponsors/colinhacks). 如果你使用 Zod 建立了一个付费产品，可以考虑[初创企业级别](https://github.com/sponsors/colinhacks). 你可以在以下网站上了解更多关于等级的信息 [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
 
 ### Sponsors
 
@@ -191,7 +191,7 @@ Zod被设计成对开发者尽可能友好。其目的是消除重复的类型�
   </tr>
 </table>
 
-_要在这里看到你的名字 + Twitter + website , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助Zod  ._
+_要在这里看到你的名字 + Twitter + website , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._
 
 # 安装
 
@@ -201,7 +201,7 @@ _要在这里看到你的名字 + Twitter + website , 请在[Freelancer](https:/
 npm install zod
 ```
 
-⚠️ 重要提示：你必须在你的`tsconfig.json`中启用`strict`模式。这是所有TypeScript项目的最佳实践。
+⚠️ 重要提示：你必须在你的`tsconfig.json`中启用`strict`模式。这是所有 TypeScript 项目的最佳实践。
 
 ```ts
 // tsconfig.json
@@ -222,15 +222,15 @@ npm install zod
 
 # 生态系统
 
-有越来越多的工具是建立在Zod之上或原生支持Zod的! 如果你在Zod的基础上建立了一个工具或库，请在[Twitter](https://twitter.com/colinhacks) 或者 [Discussion](https://github.com/colinhacks/zod/discussions)上告诉我。我会在下面添加，并在推特上发布。
+有越来越多的工具是建立在 Zod 之上或原生支持 Zod 的! 如果你在 Zod 的基础上建立了一个工具或库，请在[Twitter](https://twitter.com/colinhacks) 或者 [Discussion](https://github.com/colinhacks/zod/discussions)上告诉我。我会在下面添加，并在推特上发布。
 
-- [`tRPC`](https://github.com/trpc/trpc): 在没有GraphQL的情况下建立端到端的类型安全API
-- [`react-hook-form`](https://github.com/react-hook-form/resolvers): 使用React Hook Form和Zod解析器轻松构建类型安全的表单。
-- [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): 将TypeScript定义转换成Zod模式。
-- [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): 从你的Zod模式中生成模拟数据。
-- [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): 从Zod模式中生成 `fast-check` 的任意数据。
-- [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): 约定优先的严格类型的端点与Zod。兼容OpenAPI。
-- [`express-zod-api`](https://github.com/RobinTail/express-zod-api): 用I/O模式验证和自定义中间件构建基于Express的API服务
+- [`tRPC`](https://github.com/trpc/trpc): 在没有 GraphQL 的情况下建立端到端的类型安全 API
+- [`react-hook-form`](https://github.com/react-hook-form/resolvers): 使用 React Hook Form 和 Zod 解析器轻松构建类型安全的表单。
+- [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): 将 TypeScript 定义转换成 Zod 模式。
+- [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): 从你的 Zod 模式中生成模拟数据。
+- [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): 从 Zod 模式中生成 `fast-check` 的任意数据。
+- [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): 约定优先的严格类型的端点与 Zod。兼容 OpenAPI。
+- [`express-zod-api`](https://github.com/RobinTail/express-zod-api): 用 I/O 模式验证和自定义中间件构建基于 Express 的 API 服务
 
 # 基本用法
 
@@ -245,7 +245,7 @@ mySchema.parse("tuna"); // => "tuna"
 mySchema.parse(12); // => throws ZodError
 ```
 
-创建一个Object模式
+创建一个 Object 模式
 
 ```ts
 import { z } from "zod";
@@ -301,11 +301,11 @@ const tru = z.literal(true);
 tuna.value; // "tuna"
 ```
 
-> 目前在Zod中不支持Date或bigint字面。如果你有这个功能的用例，请提交一个Issue。
+> 目前在 Zod 中不支持 Date 或 bigint 字面。如果你有这个功能的用例，请提交一个 Issue。
 
 ## Strings
 
-Zod包括一些针对字符串的验证。
+Zod 包括一些针对字符串的验证。
 
 ```ts
 z.string().max(5);
@@ -337,11 +337,13 @@ z.string().uuid({ message: "Invalid UUID" });
 
 ## Numbers
 
-Zod包括一些特定的数字验证。
+Zod 包括一些特定的数字验证。
 
 ```ts
-z.number().min(5);
-z.number().max(5);
+z.number().gt(5);
+z.number().gte(5); // alias .min(5)
+z.number().lt(5);
+z.number().lte(5); // alias .max(5)
 
 z.number().int(); // 值必须是一个整数
 
@@ -409,11 +411,11 @@ const Teacher = BaseTeacher.merge(HasID);
 type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
 ```
 
-> 如果两个模式共享keys，那么B的属性将覆盖A的属性。返回的模式也继承了 "unknownKeys密钥 "策略(strip/strict/passthrough+)和B的全面模式。
+> 如果两个模式共享 keys，那么 B 的属性将覆盖 A 的属性。返回的模式也继承了 "unknownKeys 密钥 "策略(strip/strict/passthrough+)和 B 的全面模式。
 
 ### `.pick/.omit`
 
-受TypeScript内置的`Pick`和`Omit`工具类型的启发，所有Zod对象模式都有`.pick`和 `.omit`方法，可以返回一个修改后的版本。考虑一下这个Recipe模式。
+受 TypeScript 内置的`Pick`和`Omit`工具类型的启发，所有 Zod 对象模式都有`.pick`和 `.omit`方法，可以返回一个修改后的版本。考虑一下这个 Recipe 模式。
 
 ```ts
 const Recipe = z.object({
@@ -423,7 +425,7 @@ const Recipe = z.object({
 });
 ```
 
-要想只保留某些Key，使用 `.pick` .
+要想只保留某些 Key，使用 `.pick` .
 
 ```ts
 const JustTheName = Recipe.pick({ name: true });
@@ -431,7 +433,7 @@ type JustTheName = z.infer<typeof JustTheName>;
 // => { name: string }
 ```
 
-要删除某些Key，请使用 `.omit` .
+要删除某些 Key，请使用 `.omit` .
 
 ```ts
 const NoIDRecipe = Recipe.omit({ id: true });
@@ -442,7 +444,7 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 
 ### `.partial`
 
-受TypeScript内置的实用类型[Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialt)的启发, `.partial` 方法使所有属性都是可选的。
+受 TypeScript 内置的实用类型[Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialt)的启发, `.partial` 方法使所有属性都是可选的。
 
 从这个对象开始:
 
@@ -453,7 +455,7 @@ const user = z.object({
 // { username: string }
 ```
 
-我们可以创建一个Partial版本:
+我们可以创建一个 Partial 版本:
 
 ```ts
 const partialUser = user.partial();
@@ -488,9 +490,9 @@ const deepPartialUser = user.deepPartial();
 
 > 重要的限制: `deep partials` 只在对象模式的直接层次中按预期工作。嵌套的对象模式不能是可选的，不能是空的，不能包含细化，不能包含转换，等等...
 
-#### 未被识别的keys
+#### 未被识别的 keys
 
-默认情况下，Zod对象的模式在解析过程中会剥离出未被识别的keys
+默认情况下，Zod 对象的模式在解析过程中会剥离出未被识别的 keys
 
 ```ts
 const person = z.object({
@@ -507,7 +509,7 @@ person.parse({
 
 ### `.passthrough`
 
-相反，如果你想通过未知的keys，使用`.passthrough()`。
+相反，如果你想通过未知的 keys，使用`.passthrough()`。
 
 ```ts
 person.passthrough().parse({
@@ -519,7 +521,7 @@ person.passthrough().parse({
 
 ### `.strict`
 
-你可以用`.strict()`来 _禁止_ 未知键。如果输入中存在任何未知的keys，Zod将抛出一个错误。
+你可以用`.strict()`来 _禁止_ 未知键。如果输入中存在任何未知的 keys，Zod 将抛出一个错误。
 
 ```ts
 const person = z
@@ -537,11 +539,11 @@ person.parse({
 
 ### `.strip`
 
-你可以使用`.strip`方法将一个对象模式重置为默认行为(剥离未识别的keys)。
+你可以使用`.strip`方法将一个对象模式重置为默认行为(剥离未识别的 keys)。
 
 ### `.catchall`
 
-你可以将一个 "catchall "模式传递给一个对象模式。所有未知的keys都将根据它进行验证。
+你可以将一个 "catchall "模式传递给一个对象模式。所有未知的 keys 都将根据它进行验证。
 
 ```ts
 const person = z
@@ -605,7 +607,7 @@ z.string().array().length(5); // 必须正好包含5个元素
 
 ## Unions
 
-Zod包括一个内置的`z.union`方法，用于合成 "OR" 类型。
+Zod 包括一个内置的`z.union`方法，用于合成 "OR" 类型。
 
 ```ts
 const stringOrNumber = z.union([z.string(), z.number()]);
@@ -614,7 +616,7 @@ stringOrNumber.parse("foo"); // 通过
 stringOrNumber.parse(14); // 通过
 ```
 
-Zod将按照每个 "选项" 的顺序测试输入，并返回第一个成功验证的值。
+Zod 将按照每个 "选项" 的顺序测试输入，并返回第一个成功验证的值。
 
 为了方便，你也可以使用`.or`方法:
 
@@ -652,7 +654,7 @@ optionalString.unwrap() === stringSchema; // true
 
 ## Nullables
 
-类似地，你可以这样创建nullable类型:
+类似地，你可以这样创建 nullable 类型:
 
 ```ts
 const nullableString = z.nullable(z.string());
@@ -660,7 +662,7 @@ nullableString.parse("asdf"); // => "asdf"
 nullableString.parse(null); // => null
 ```
 
-你可以用`nullable`方法使一个现有的模式变成nullable:
+你可以用`nullable`方法使一个现有的模式变成 nullable:
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
@@ -697,9 +699,9 @@ type F = z.infer<typeof F>; // string | number | boolean | undefined | null;
 
 ## Records
 
-Record模式用于验证诸如`{ [k: string]: number }`这样的类型。
+Record 模式用于验证诸如`{ [k: string]: number }`这样的类型。
 
-如果你想根据某种模式验证一个对象的 _value_ ，但不关心keys，使用`Record'。
+如果你想根据某种模式验证一个对象的 _value_ ，但不关心 keys，使用`Record'。
 
 ```ts
 const NumberCache = z.record(z.number());
@@ -708,7 +710,7 @@ type NumberCache = z.infer<typeof NumberCache>;
 // => { [k: string]: number }
 ```
 
-这对于按ID存储或缓存项目特别有用。
+这对于按 ID 存储或缓存项目特别有用。
 
 ```ts
 const userStore: UserStore = {};
@@ -724,9 +726,9 @@ userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
 
 #### 关于数字键的说明
 
-你可能期望`z.record()`接受两个参数，一个是key，一个是value。毕竟，TypeScript的内置Record类型是这样的：`Record<KeyType, ValueType>` 。否则，你如何在Zod中表示TypeScript类型`Record<number, any>`？
+你可能期望`z.record()`接受两个参数，一个是 key，一个是 value。毕竟，TypeScript 的内置 Record 类型是这样的：`Record<KeyType, ValueType>` 。否则，你如何在 Zod 中表示 TypeScript 类型`Record<number, any>`？
 
-事实证明，TypeScript围绕`[k: number]`的行为有点不直观:
+事实证明，TypeScript 围绕`[k: number]`的行为有点不直观:
 
 ```ts
 const testMap: { [k: number]: string } = {
@@ -739,9 +741,9 @@ for (const key in testMap) {
 // prints: `1: string`
 ```
 
-正如你所看到的，JavaScript会自动将所有对象key转换为字符串。
+正如你所看到的，JavaScript 会自动将所有对象 key 转换为字符串。
 
-由于Zod试图弥合静态类型和运行时类型之间的差距，提供一种创建带有数字键的记录模式的方法是没有意义的，因为在JavaScript runtime中没有数字键这回事。
+由于 Zod 试图弥合静态类型和运行时类型之间的差距，提供一种创建带有数字键的记录模式的方法是没有意义的，因为在 JavaScript runtime 中没有数字键这回事。
 
 ## Maps
 
@@ -762,7 +764,7 @@ type numberSet = z.infer<typeof numberSet>;
 
 ## Enums
 
-在Zod中，有两种方法来定义枚举。
+在 Zod 中，有两种方法来定义枚举。
 
 ### Zod enums
 
@@ -794,11 +796,11 @@ const fish = ["Salmon", "Tuna", "Trout"];
 const FishEnum = z.enum(fish);
 ```
 
-在这种情况下，Zod无法推断出各个枚举元素；相反，推断出的类型将是 `string` 而不是`'Salmon'|'Tuna'|'Trout'`。
+在这种情况下，Zod 无法推断出各个枚举元素；相反，推断出的类型将是 `string` 而不是`'Salmon'|'Tuna'|'Trout'`。
 
 **自动补全**
 
-为了获得Zod枚举的自动完成，请使用你的模式的`.enum`属性:
+为了获得 Zod 枚举的自动完成，请使用你的模式的`.enum`属性:
 
 ```ts
 FishEnum.enum.Salmon; // => 自动补全
@@ -821,7 +823,7 @@ FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
 
 ### Native enums
 
-Zod枚举是定义和验证枚举的推荐方法。但是如果你需要对第三方库的枚举进行验证（或者你不想重写你现有的枚举），你可以使用`z.nativeEnum()`。
+Zod 枚举是定义和验证枚举的推荐方法。但是如果你需要对第三方库的枚举进行验证（或者你不想重写你现有的枚举），你可以使用`z.nativeEnum()`。
 
 **数字枚举**
 
@@ -863,7 +865,7 @@ FruitEnum.parse("Cantaloupe"); // 未通过
 
 **常量枚举**
 
-`.nativeEnum()`函数也适用于`as const`对象。 ⚠️ `as const`需要TypeScript 3.4+!
+`.nativeEnum()`函数也适用于`as const`对象。 ⚠️ `as const`需要 TypeScript 3.4+!
 
 ```ts
 const Fruits = {
@@ -950,7 +952,7 @@ type Athlete = z.infer<typeof athleteSchema>;
 
 ## Recursive types
 
-你可以在Zod中定义一个递归模式，但由于TypeScript的限制，它们的类型不能被静态推断。相反，你需要手动定义类型，并将其作为 "类型提示" 提供给Zod。
+你可以在 Zod 中定义一个递归模式，但由于 TypeScript 的限制，它们的类型不能被静态推断。相反，你需要手动定义类型，并将其作为 "类型提示" 提供给 Zod。
 
 ```ts
 interface Category {
@@ -977,7 +979,7 @@ Category.parse({
 }); // 通过
 ```
 
-不幸的是，这段代码有点重复，因为你声明了两次类型：一次在接口中，另一次在Zod定义中。
+不幸的是，这段代码有点重复，因为你声明了两次类型：一次在接口中，另一次在 Zod 定义中。
 
 <!-- If your schema has lots of primitive fields, there's a way of reducing the amount of duplication:
 
@@ -1005,7 +1007,7 @@ const Category: z.ZodSchema<Category> = BaseCategory.merge(
 
 #### JSON type
 
-如果你想验证任何JSON值，你可以使用下面的片段。
+如果你想验证任何 JSON 值，你可以使用下面的片段。
 
 ```ts
 type Literal = boolean | null | number | string;
@@ -1022,7 +1024,7 @@ jsonSchema.parse(data);
 
 #### Cyclical objects
 
-尽管支持递归模式，但将一个循环数据传入Zod会导致无限循环。
+尽管支持递归模式，但将一个循环数据传入 Zod 会导致无限循环。
 
 ## Promises
 
@@ -1030,10 +1032,10 @@ jsonSchema.parse(data);
 const numberPromise = z.promise(z.number());
 ```
 
-"Parsing"的工作方式与promise模式有点不同。验证分两部分进行:
+"Parsing"的工作方式与 promise 模式有点不同。验证分两部分进行:
 
-1. Zod同步检查输入是否是Promise的实例(即一个具有`.then`和`.catch`方法的对象)。
-2. Zod使用`.then`在现有的Promise上附加一个额外的验证步骤。你必须在返回的Promise上使用`.catch`来处理验证失败的问题。
+1. Zod 同步检查输入是否是 Promise 的实例(即一个具有`.then`和`.catch`方法的对象)。
+2. Zod 使用`.then`在现有的 Promise 上附加一个额外的验证步骤。你必须在返回的 Promise 上使用`.catch`来处理验证失败的问题。
 
 ```ts
 numberPromise.parse("tuna");
@@ -1073,7 +1075,7 @@ TestSchema.parse("blob"); // throws
 
 ## Function schemas
 
-Zod还允许你定义 "函数模式(function schemas)"。这使得验证一个函数的输入和输出变得很容易，而不需要把验证代码和 "业务逻辑(business logic)"混在一起。
+Zod 还允许你定义 "函数模式(function schemas)"。这使得验证一个函数的输入和输出变得很容易，而不需要把验证代码和 "业务逻辑(business logic)"混在一起。
 
 你可以用`z.function(args, returnType)`创建一个函数模式。
 
@@ -1111,7 +1113,7 @@ myFunction.returnType();
 * `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
 * `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema. -->
 
-> 如果你的函数没有返回任何东西，你可以使用特殊的`z.void()`选项。这将让Zod正确地推断出无效返回的函数的类型。(无效返回的函数实际上可以返回未定义或空。)
+> 如果你的函数没有返回任何东西，你可以使用特殊的`z.void()`选项。这将让 Zod 正确地推断出无效返回的函数的类型。(无效返回的函数实际上可以返回未定义或空。)
 
 <!--
 
@@ -1155,15 +1157,15 @@ myFunction; // (arg: string)=>number[]
 
 # ZodType: methods and properties
 
-所有的Zod模式都包含一些方法。
+所有的 Zod 模式都包含一些方法。
 
 ### `.parse`
 
 `.parse(data:unknown): T`
 
-给定任何Zod模式，你可以调用其`.parse`方法来检查`data`是否有效。如果是的话，就会返回一个带有完整类型信息的值。否则，会产生一个错误。
+给定任何 Zod 模式，你可以调用其`.parse`方法来检查`data`是否有效。如果是的话，就会返回一个带有完整类型信息的值。否则，会产生一个错误。
 
-> IMPORTANT: 在Zod 2和Zod 1.11+中，`.parse`返回的值是你传入的变量的 _deep clone_ 。这在zod@1.4 和更早的版本中也是如此。
+> IMPORTANT: 在 Zod 2 和 Zod 1.11+中，`.parse`返回的值是你传入的变量的 _deep clone_ 。这在zod@1.4 和更早的版本中也是如此。
 
 ```ts
 const stringSchema = z.string();
@@ -1186,7 +1188,7 @@ const value = await stringSchema.parseAsync("hello"); // => hello
 
 `.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
 
-如果你不希望Zod在验证失败时抛出错误，请使用`.safeParse`。该方法返回一个包含成功解析的数据的对象，或者一个包含验证问题详细信息的ZodError实例。
+如果你不希望 Zod 在验证失败时抛出错误，请使用`.safeParse`。该方法返回一个包含成功解析的数据的对象，或者一个包含验证问题详细信息的 ZodError 实例。
 
 ```ts
 stringSchema.safeParse(12);
@@ -1229,11 +1231,11 @@ await stringSchema.spa("billie");
 
 `.refine(validator: (data:T)=>any, params?: RefineParams)`
 
-Zod允许你通过 _refinements_ 提供自定义验证逻辑。(关于创建多个问题和自定义错误代码等高级功能，见[`.superRefine`](#superrefine))。
+Zod 允许你通过 _refinements_ 提供自定义验证逻辑。(关于创建多个问题和自定义错误代码等高级功能，见[`.superRefine`](#superrefine))。
 
-Zod被设计为尽可能地反映TypeScript。但有许多所谓的 "细化类型"，你可能希望检查不能在TypeScript的类型系统中表示。例如：检查一个数字是否是一个整数，或者一个字符串是否是一个有效的电子邮件地址。
+Zod 被设计为尽可能地反映 TypeScript。但有许多所谓的 "细化类型"，你可能希望检查不能在 TypeScript 的类型系统中表示。例如：检查一个数字是否是一个整数，或者一个字符串是否是一个有效的电子邮件地址。
 
-例如，你可以用`.refine`对任何Zod模式定义一个自定义验证检查:
+例如，你可以用`.refine`对任何 Zod 模式定义一个自定义验证检查:
 
 ```ts
 const myString = z.string().refine((val) => val.length <= 255, {
@@ -1311,7 +1313,7 @@ const userId = z.string().refine(async (id) => {
 });
 ```
 
-> ⚠️如果你使用异步细化，你必须使用`.parseAsync`方法来解析数据! 否则Zod会抛出一个错误。
+> ⚠️ 如果你使用异步细化，你必须使用`.parseAsync`方法来解析数据! 否则 Zod 会抛出一个错误。
 
 #### Relationship to transforms
 
@@ -1425,11 +1427,11 @@ const IdToUser = z.transformer(
 );
 ```
 
-> ⚠️ 如果你的模式包含异步变换器，你必须使用.parseAsync()或.safeParseAsync()来解析数据。否则，Zod将抛出一个错误。
+> ⚠️ 如果你的模式包含异步变换器，你必须使用.parseAsync()或.safeParseAsync()来解析数据。否则，Zod 将抛出一个错误。
 
 ### `.default`
 
-你可以使用变换器来实现Zod中 "默认值 "的概念。
+你可以使用变换器来实现 Zod 中 "默认值 "的概念。
 
 ```ts
 const stringWithDefault = z.string().default("tuna");
@@ -1515,7 +1517,7 @@ z.intersection(z.string(), z.number());
 
 # Type inference
 
-你可以用`z.infer<typeof mySchema>`提取任何模式的TypeScript类型。
+你可以用`z.infer<typeof mySchema>`提取任何模式的 TypeScript 类型。
 
 ```ts
 const A = z.string();
@@ -1527,7 +1529,7 @@ const u: A = "asdf"; // compiles
 
 #### What about transforms?
 
-在现实中，每个Zod模式实际上都与**两种**类型相关：一个输入和一个输出。对于大多数模式（例如`z.string()`），这两种类型是相同的。但是一旦你把转换添加到混合中，这两个值就会发生分歧。例如，`z.string().transform(val => val.length)`的输入为`string`，输出为`number`。
+在现实中，每个 Zod 模式实际上都与**两种**类型相关：一个输入和一个输出。对于大多数模式（例如`z.string()`），这两种类型是相同的。但是一旦你把转换添加到混合中，这两个值就会发生分歧。例如，`z.string().transform(val => val.length)`的输入为`string`，输出为`number`。
 
 你可以像这样分别提取输入和输出类型:
 
@@ -1544,7 +1546,7 @@ type inferred = z.infer<stringToNumber>; // number
 
 # Errors
 
-Zod提供了一个名为 `ZodError` 的错误子类。ZodErrors包含一个`issues` 数组，包含关于验证问题的详细信息。
+Zod 提供了一个名为 `ZodError` 的错误子类。ZodErrors 包含一个`issues` 数组，包含关于验证问题的详细信息。
 
 ```ts
 const data = z
@@ -1642,7 +1644,7 @@ Branded -->
 
 [https://github.com/jquense/yup](https://github.com/jquense/yup)
 
-Yup是一个全功能的库，首先用vanilla JS实现，后来又用TypeScript重写。
+Yup 是一个全功能的库，首先用 vanilla JS 实现，后来又用 TypeScript 重写。
 
 不同之处
 
@@ -1660,9 +1662,9 @@ Yup是一个全功能的库，首先用vanilla JS实现，后来又用TypeScript
 
 [https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
 
-io-ts是gcanti的一个优秀库。io-ts的API极大地启发了Zod的设计。
+io-ts 是 gcanti 的一个优秀库。io-ts 的 API 极大地启发了 Zod 的设计。
 
-根据我们的经验，在许多情况下，io-ts优先考虑功能编程的纯洁性，而不是开发者的经验。这是一个有效的和令人钦佩的设计目标，但它使io-ts特别难以集成到一个现有的程序化或面向对象的代码库中。例如，考虑如何在io-ts中定义一个具有可选属性的对象:
+根据我们的经验，在许多情况下，io-ts 优先考虑功能编程的纯洁性，而不是开发者的经验。这是一个有效的和令人钦佩的设计目标，但它使 io-ts 特别难以集成到一个现有的程序化或面向对象的代码库中。例如，考虑如何在 io-ts 中定义一个具有可选属性的对象:
 
 ```ts
 import * as t from "io-ts";
@@ -1683,7 +1685,7 @@ type C = t.TypeOf<typeof C>;
 
 你必须在不同的对象验证器中定义必需的和可选的道具，通过`t.partial`（它将所有属性标记为可选）传递选项，然后用`t.intersection`组合它们。
 
-考虑在Zod中的对应关系:
+考虑在 Zod 中的对应关系:
 
 ```ts
 const C = z.object({
@@ -1695,12 +1697,12 @@ type C = z.infer<typeof C>;
 // returns { foo: string; bar?: number | undefined }
 ```
 
-这种更具声明性的API使模式定义更加简明。
+这种更具声明性的 API 使模式定义更加简明。
 
-`io-ts`也需要使用gcanti的函数式编程库`fp-ts`来解析结果和处理错误。对于希望严格保持代码库功能的开发者来说，这是另一个极好的资源。但是，依赖`fp-ts`必然带来大量的知识开销；开发人员必须熟悉函数式编程的概念和`fp-ts`的命名，才能使用这个库。
+`io-ts`也需要使用 gcanti 的函数式编程库`fp-ts`来解析结果和处理错误。对于希望严格保持代码库功能的开发者来说，这是另一个极好的资源。但是，依赖`fp-ts`必然带来大量的知识开销；开发人员必须熟悉函数式编程的概念和`fp-ts`的命名，才能使用这个库。
 
 - 支持具有序列化和反序列化转换功能的编解码器
-- 支持branded types
+- 支持 branded types
 - 支持高级函数式编程、高级类型、`fp-ts`。compatibility
 - 缺少的方法:(pick, omit, partial, deepPartial, merge, extend)
 - 缺少具有正确类型的非空数组（`[T, ...T[]]）。
@@ -1711,7 +1713,7 @@ type C = z.infer<typeof C>;
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
-良好的类型推理支持，但对象类型屏蔽的选项有限（没有`.pick`，`.omit`，`.extend`，等等）。不支持 `Record`（他们的 `Record` 等同于Zod的 `object` ）。他们确实支持branded和readonly类型，而Zod不支持。
+良好的类型推理支持，但对象类型屏蔽的选项有限（没有`.pick`，`.omit`，`.extend`，等等）。不支持 `Record`（他们的 `Record` 等同于 Zod 的 `object` ）。他们确实支持 branded 和 readonly 类型，而 Zod 不支持。
 
 - 支持 "模式匹配(pattern matching)"：分布在联合体上的计算属性
 - 支持只读类型
@@ -1724,9 +1726,9 @@ type C = z.infer<typeof C>;
 
 [https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
 
-Ow专注于函数输入验证。它是一个使复杂的断言语句容易表达的库，但它不能让你解析未定型的数据。他们支持更多的类型；Zod与TypeScript的类型系统几乎是一对一的映射，而Ow可以让你验证几个高度特定的类型（例如`int32Array`，见他们的README中的完整列表）。
+Ow 专注于函数输入验证。它是一个使复杂的断言语句容易表达的库，但它不能让你解析未定型的数据。他们支持更多的类型；Zod 与 TypeScript 的类型系统几乎是一对一的映射，而 Ow 可以让你验证几个高度特定的类型（例如`int32Array`，见他们的 README 中的完整列表）。
 
-如果你想验证函数输入，请在Zod中使用函数模式! 这是一个更简单的方法，让你可以重复使用一个函数类型声明，而不需要重复自己（即在每个函数的开头复制粘贴一堆ow assertions）。此外，Zod还可以让你验证你的返回类型，所以你可以确保不会有任何意外的数据传递到下游。
+如果你想验证函数输入，请在 Zod 中使用函数模式! 这是一个更简单的方法，让你可以重复使用一个函数类型声明，而不需要重复自己（即在每个函数的开头复制粘贴一堆 ow assertions）。此外，Zod 还可以让你验证你的返回类型，所以你可以确保不会有任何意外的数据传递到下游。
 
 # Changelog
 

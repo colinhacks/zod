@@ -615,29 +615,34 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     });
   };
 
-  min = (value: number, message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "min",
-          value: value,
-          inclusive: true,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+  gte = (value: number, message?: errorUtil.ErrMessage) =>
+    this.setLimit("min", value, true, errorUtil.toString(message));
+  min = this.gte;
 
-  max = (value: number, message?: errorUtil.ErrMessage) =>
+  gt = (value: number, message?: errorUtil.ErrMessage) =>
+    this.setLimit("min", value, false, errorUtil.toString(message));
+
+  lte = (value: number, message?: errorUtil.ErrMessage) =>
+    this.setLimit("max", value, true, errorUtil.toString(message));
+  max = this.lte;
+
+  lt = (value: number, message?: errorUtil.ErrMessage) =>
+    this.setLimit("max", value, false, errorUtil.toString(message));
+
+  protected setLimit = (
+    kind: "min" | "max",
+    value: number,
+    inclusive: boolean,
+    message?: string
+  ) =>
     new ZodNumber({
       ...this._def,
       checks: [
         ...this._def.checks,
         {
-          kind: "max",
-          value: value,
-          inclusive: true,
+          kind,
+          value,
+          inclusive,
           message: errorUtil.toString(message),
         },
       ],
