@@ -1,5 +1,9 @@
 # Changelog
 
+### 4.0
+
+- `.void()` now only accepts undefined, not null.
+
 ### 3.5
 
 - Add discriminator to all first-party schema defs

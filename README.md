@@ -279,7 +279,7 @@ z.date();
 // empty types
 z.undefined();
 z.null();
-z.void(); // accepts null or undefined
+z.void(); // accepts undefined
 
 // catch-all types
 // allows any value
@@ -1112,7 +1112,7 @@ myFunction.returnType();
 * `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
 * `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema. -->
 
-> You can use the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning function can actually return either undefined or null.)
+> You can use the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning functions actually return undefined.)
 
 <!--
 
