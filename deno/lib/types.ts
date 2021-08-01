@@ -1342,15 +1342,6 @@ export type extendShape<A, B> = {
 } &
   { [k in keyof B]: B[k] };
 
-export type extendZodObject<
-  Obj extends AnyZodObject,
-  Augmentation extends ZodRawShape
-> = ZodObject<
-  extendShape<ReturnType<Obj["_def"]["shape"]>, Augmentation>,
-  Obj["_def"]["unknownKeys"],
-  Obj["_def"]["catchall"]
->;
-
 const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
   Augmentation extends ZodRawShape
 >(
@@ -1432,6 +1423,13 @@ type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
   ? deoptional<U>
   : T;
 
+export type SomeZodObject = ZodObject<
+  ZodRawShape,
+  UnknownKeysParam,
+  ZodTypeAny,
+  any,
+  any
+>;
 export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = "strip",
