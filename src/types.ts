@@ -2588,6 +2588,21 @@ export interface ZodEnumDef<T extends EnumValues = EnumValues>
   typeName: ZodFirstPartyTypeKind.ZodEnum;
 }
 
+type Writeable<T> = { -readonly [P in keyof T]: T[P] };
+
+function createZodEnum<U extends string, T extends Readonly<[U, ...U[]]>>(
+  values: T
+): ZodEnum<Writeable<T>>;
+function createZodEnum<U extends string, T extends [U, ...U[]]>(
+  values: T
+): ZodEnum<T>;
+function createZodEnum(values: any) {
+  return new ZodEnum({
+    values: values as any,
+    typeName: ZodFirstPartyTypeKind.ZodEnum,
+  }) as any;
+}
+
 export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   T[number],
   ZodEnumDef<T>
@@ -2635,14 +2650,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     return enumValues as any;
   }
 
-  static create = <U extends string, T extends [U, ...U[]]>(
-    values: T
-  ): ZodEnum<T> => {
-    return new ZodEnum({
-      values: values,
-      typeName: ZodFirstPartyTypeKind.ZodEnum,
-    }) as any;
-  };
+  static create = createZodEnum;
 }
 
 /////////////////////////////////////////////

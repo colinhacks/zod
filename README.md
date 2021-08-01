@@ -788,14 +788,21 @@ type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
-You must pass the array of values directly into `z.enum()`. This does not work:
+You must pass the array of values directly into `z.enum()`. Alternatively, use `as const` to define your enum values as a tuple of strings. See the [const assertion docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions) for details.
+
+```ts
+const VALUES = ["Salmon", "Tuna", "Trout"] as const;
+const FishEnum = z.enum(VALUES);
+```
+
+This is not allowed:
 
 ```ts
 const fish = ["Salmon", "Tuna", "Trout"];
 const FishEnum = z.enum(fish);
 ```
 
-In that case, Zod isn't able to infer the individual enum elements; instead the inferred type will be `string` instead of `'Salmon' | 'Tuna' | 'Trout'`
+In that case, the inferred type of `fish` is simply `string[]`, so Zod isn't able to infer the individual enum elements.
 
 **Autocompletion**
 

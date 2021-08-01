@@ -22,3 +22,13 @@ test("infer enum", () => {
 test("get options", () => {
   expect(z.enum(["tuna", "trout"]).options).toEqual(["tuna", "trout"]);
 });
+
+test("readonly enum", () => {
+  const HTTP_SUCCESS = ["200", "201"] as const;
+  const arg = z.enum(HTTP_SUCCESS);
+  type arg = z.infer<typeof arg>;
+  const f1: util.AssertEqual<arg, "200" | "201"> = true;
+  f1;
+  arg.parse("201");
+  expect(() => arg.parse("202")).toThrow();
+});
