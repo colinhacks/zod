@@ -25,27 +25,34 @@ export namespace util {
   };
 
   export const getValidEnumValues = (obj: any) => {
-    const validKeys = Object.keys(obj).filter(
+    const validKeys = objectKeys(obj).filter(
       (k: any) => typeof obj[obj[k]] !== "number"
     );
     const filtered: any = {};
     for (const k of validKeys) {
       filtered[k] = obj[k];
     }
-    return getValues(filtered);
-  };
-
-  export const getValues = (obj: any) => {
-    return Object.keys(obj).map(function (e) {
-      return obj[e];
-    });
+    return objectValues(filtered);
   };
 
   export const objectValues = (obj: any) => {
-    return Object.keys(obj).map(function (e) {
+    return objectKeys(obj).map(function (e) {
       return obj[e];
     });
   };
+
+  export const objectKeys: ObjectConstructor["keys"] =
+    typeof Object.keys === "function" // eslint-disable-line ban/ban
+      ? (obj: any) => Object.keys(obj) // eslint-disable-line ban/ban
+      : (object: any) => {
+          const keys = [];
+          for (const key in object) {
+            if (Object.prototype.hasOwnProperty.call(object, key)) {
+              keys.push(key);
+            }
+          }
+          return keys;
+        };
 
   export const find = <T>(
     arr: T[],
@@ -60,4 +67,10 @@ export namespace util {
   export type identity<T> = T;
   export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
   export type noUndefined<T> = T extends undefined ? never : T;
+
+  export const isInteger: NumberConstructor["isInteger"] =
+    typeof Number.isInteger === "function"
+      ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban
+      : (val) =>
+          typeof val === "number" && isFinite(val) && Math.floor(val) === val;
 }
