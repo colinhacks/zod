@@ -1,6 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
+import { util } from "../helpers/util";
 import * as z from "../index";
 
 const minTwo = z.string().array().min(2);
@@ -8,6 +9,13 @@ const maxTwo = z.string().array().max(2);
 const justTwo = z.string().array().length(2);
 const intNum = z.string().array().nonempty();
 const nonEmptyMax = z.string().array().nonempty().max(2);
+
+type t1 = z.infer<typeof nonEmptyMax>;
+const f1: util.AssertEqual<[string, ...string[]], t1> = true;
+f1;
+type t2 = z.infer<typeof minTwo>;
+const f2: util.AssertEqual<string[], t2> = true;
+f2;
 
 test("passing validations", () => {
   minTwo.parse(["a", "a"]);

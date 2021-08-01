@@ -1139,18 +1139,31 @@ const parseArray = <T>(
   }
 };
 
-export class ZodArray<T extends ZodTypeAny> extends ZodType<
-  T["_output"][],
+export type ArrayCardinality = "many" | "atleastone";
+type arrayOutputType<
+  T extends ZodTypeAny,
+  Cardinality extends ArrayCardinality = "many"
+> = Cardinality extends "atleastone"
+  ? [T["_output"], ...T["_output"][]]
+  : T["_output"][];
+
+export class ZodArray<
+  T extends ZodTypeAny,
+  Cardinality extends ArrayCardinality = "many"
+> extends ZodType<
+  arrayOutputType<T, Cardinality>,
   ZodArrayDef<T>,
-  T["_input"][]
+  Cardinality extends "atleastone"
+    ? [T["_input"], ...T["_input"][]]
+    : T["_input"][]
 > {
   _parse(
     ctx: ParseContext,
     data: any,
     parsedType: ZodParsedType
-  ): ParseReturnType<T["_output"][]> {
+  ): ParseReturnType<arrayOutputType<T, Cardinality>> {
     const nonEmpty = false;
-    return parseArray(ctx, data, parsedType, this._def, nonEmpty);
+    return parseArray(ctx, data, parsedType, this._def, nonEmpty) as any;
   }
 
   get element() {
@@ -1172,8 +1185,8 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
   length = (len: number, message?: errorUtil.ErrMessage): this =>
     this.min(len, message).max(len, message) as any;
 
-  nonempty: () => ZodNonEmptyArray<T> = () => {
-    return new ZodNonEmptyArray({ ...this._def });
+  nonempty: () => ZodArray<T, "atleastone"> = () => {
+    return this.min(1) as any; // new ZodArray({ ...this._def, cardinality:"atleastone" });
   };
 
   static create = <T extends ZodTypeAny>(schema: T): ZodArray<T> => {
@@ -1186,65 +1199,7 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
   };
 }
 
-////////////////////////////////////////////////
-////////////////////////////////////////////////
-//////////                            //////////
-//////////      ZodNonEmptyArray      //////////
-//////////                            //////////
-////////////////////////////////////////////////
-////////////////////////////////////////////////
-export interface ZodNonEmptyArrayDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
-  type: T;
-  typeName: ZodFirstPartyTypeKind.ZodArray;
-  minLength: { value: number; message?: string } | null;
-  maxLength: { value: number; message?: string } | null;
-}
-
-export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
-  [T["_output"], ...T["_output"][]],
-  ZodNonEmptyArrayDef<T>,
-  [T["_input"], ...T["_input"][]]
-> {
-  _parse(
-    ctx: ParseContext,
-    data: any,
-    parsedType: ZodParsedType
-  ): ParseReturnType<[T["_output"], ...T["_output"][]]> {
-    const nonEmpty = true;
-    return parseArray(
-      ctx,
-      data,
-      parsedType,
-      this._def,
-      nonEmpty
-    ) as ParseReturnType<[T["_output"], ...T["_output"][]]>;
-  }
-
-  min = (minLength: number, message?: errorUtil.ErrMessage) =>
-    new ZodNonEmptyArray({
-      ...this._def,
-      minLength: { value: minLength, message: errorUtil.toString(message) },
-    });
-
-  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
-    new ZodNonEmptyArray({
-      ...this._def,
-      maxLength: { value: maxLength, message: errorUtil.toString(message) },
-    });
-
-  length = (len: number, message?: errorUtil.ErrMessage) =>
-    this.min(len, message).max(len, message);
-
-  static create = <T extends ZodTypeAny>(schema: T): ZodNonEmptyArray<T> => {
-    return new ZodNonEmptyArray({
-      type: schema,
-      minLength: null,
-      maxLength: null,
-      typeName: ZodFirstPartyTypeKind.ZodArray,
-    });
-  };
-}
+export type ZodNonEmptyArray<T extends ZodTypeAny> = ZodArray<T, "atleastone">;
 
 /////////////////////////////////////////
 /////////////////////////////////////////

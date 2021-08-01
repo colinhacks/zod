@@ -1,5 +1,9 @@
 # Changelog
 
+### 3.7
+
+- Eliminate `ZodNonEmptyArray`, add `Cardinality` to `ZodArray`
+
 ### 3.6
 
 - Add IE11 support
