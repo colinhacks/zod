@@ -306,6 +306,26 @@ console.log(err.flatten());
 */
 ```
 
+Additionally, you can pass a mapping function of `(issue: ZodIssue) => U` to `flatten()`, which is applied to the during the transformation of `ZodIssue`s.
+This can be particularly useful when integrating Zod with form validation, as it allows you to pass back whatever `ZodIssue` specific context you might need.
+
+```ts
+err.flatten( (i: ZodIssue) => {
+  message: i.message,
+  errorCode: i.code
+});
+/*
+  {
+  formErrors: [],
+  fieldErrors: {
+    email: [{ message: 'Invalid email', errorCode: 'invalid_string' }],
+    password: [{ message: 'Should be at least 10 characters', errorCode: 'too_small' }],
+    confirm: [{ message: 'Should be at least 10 characters', errorCode: 'too_small' }, { message: 'Passwords do not match', errorCode: 'custom' }],
+  },
+}
+*/
+```
+
 - `fieldErrors` is an object. The keys are the field(s) that threw the error. The values are an array of error strings that can be easily presented in the interface.
 - `formErrors: string[]` is an array of errors that occured on the "root" of the object schema. For instance if you called `FormData.parse(null)`, `formErrors` would be:
   ```ts
