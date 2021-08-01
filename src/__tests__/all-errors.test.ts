@@ -23,5 +23,37 @@ test("all errors", () => {
         b: ["Expected string, received null"],
       },
     });
+    // Test identity
+    expect(error.flatMap((i: z.ZodIssue) => i)).toEqual({
+      formErrors: [],
+      fieldErrors: {
+        a: [
+          {
+            code: "invalid_type",
+            expected: "string",
+            message: "Expected string, received null",
+            path: ["a"],
+            received: "null",
+          },
+        ],
+        b: [
+          {
+            code: "invalid_type",
+            expected: "string",
+            message: "Expected string, received null",
+            path: ["b"],
+            received: "null",
+          },
+        ],
+      },
+    });
+    // Test mapping
+    expect(error.flatMap((i: z.ZodIssue) => i.message.length)).toEqual({
+      formErrors: [],
+      fieldErrors: {
+        a: ["Expected string, received null".length],
+        b: ["Expected string, received null".length],
+      },
+    });
   }
 });

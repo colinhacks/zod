@@ -221,6 +221,25 @@ export class ZodError<T = any> extends Error {
     return { formErrors, fieldErrors };
   };
 
+  flatMap = <U>(
+    mapper: (issue: ZodIssue) => U
+  ): {
+    formErrors: U[];
+    fieldErrors: { [k: string]: U[] };
+  } => {
+    const fieldErrors: any = {};
+    const formErrors: U[] = [];
+    for (const sub of this.issues) {
+      if (sub.path.length > 0) {
+        fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
+        fieldErrors[sub.path[0]].push(mapper(sub));
+      } else {
+        formErrors.push(mapper(sub));
+      }
+    }
+    return { formErrors, fieldErrors };
+  };
+
   get formErrors() {
     return this.flatten();
   }
