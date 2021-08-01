@@ -164,6 +164,7 @@ test("test that optional keys are unset", async () => {
     id: "asdf",
     set: undefined,
   });
+  // eslint-disable-next-line ban/ban
   expect(Object.keys(result)).toEqual(["id", "set"]);
 });
 
