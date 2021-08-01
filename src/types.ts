@@ -1013,10 +1013,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<void> {
-    if (
-      parsedType !== ZodParsedType.undefined &&
-      parsedType !== ZodParsedType.null
-    ) {
+    if (parsedType !== ZodParsedType.undefined) {
       ctx.addIssue(data, {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.void,
