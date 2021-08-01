@@ -4,6 +4,7 @@
 
 - Eliminate `ZodNonEmptyArray`, add `Cardinality` to `ZodArray`
 - Add optional error message to `ZodArray.nonempty`
+- Add `.gt/.gte/.lt/.lte` to `ZodNumber`
 
 ### 3.6
 
