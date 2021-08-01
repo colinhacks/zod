@@ -1185,8 +1185,10 @@ export class ZodArray<
   length = (len: number, message?: errorUtil.ErrMessage): this =>
     this.min(len, message).max(len, message) as any;
 
-  nonempty: () => ZodArray<T, "atleastone"> = () => {
-    return this.min(1) as any; // new ZodArray({ ...this._def, cardinality:"atleastone" });
+  nonempty: (message?: errorUtil.ErrMessage) => ZodArray<T, "atleastone"> = (
+    message?: any
+  ) => {
+    return this.min(1, message) as any; // new ZodArray({ ...this._def, cardinality:"atleastone" });
   };
 
   static create = <T extends ZodTypeAny>(schema: T): ZodArray<T> => {

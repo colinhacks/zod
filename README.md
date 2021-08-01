@@ -319,6 +319,9 @@ z.string().regex(regex);
 
 // deprecated, equivalent to .min(1)
 z.string().nonempty();
+
+// optional custom error message
+z.string().nonempty({ message: "Can't be empty" });
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
@@ -592,6 +595,15 @@ const nonEmptyStrings = z.string().array().nonempty();
 
 nonEmptyStrings.parse([]); // throws: "Array cannot be empty"
 nonEmptyStrings.parse(["Ariana Grande"]); // passes
+```
+
+You can optionally specify a custom error message:
+
+```ts
+// optional custom error message
+const nonEmptyStrings = z.string().array().nonempty({
+  message: "Can't be empty!",
+});
 ```
 
 ### `.min/.max/.length`

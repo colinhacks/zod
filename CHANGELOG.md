@@ -3,6 +3,7 @@
 ### 3.7
 
 - Eliminate `ZodNonEmptyArray`, add `Cardinality` to `ZodArray`
+- Add optional error message to `ZodArray.nonempty`
 
 ### 3.6
 
