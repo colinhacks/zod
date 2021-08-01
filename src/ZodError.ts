@@ -132,11 +132,6 @@ export class ZodError<T = any> extends Error {
 
   constructor(issues: ZodIssue[]) {
     super();
-    this.name = "ZodError";
-    this.stack = (this.stack || "")
-      .split("\n")
-      .filter((line) => !line.includes("node_modules/zod"))
-      .join("\n");
 
     const actualProto = new.target.prototype;
     if (Object.setPrototypeOf) {
@@ -145,6 +140,7 @@ export class ZodError<T = any> extends Error {
     } else {
       (this as any).__proto__ = actualProto;
     }
+    this.name = "ZodError";
     this.issues = issues;
   }
 
@@ -197,7 +193,7 @@ export class ZodError<T = any> extends Error {
   };
 
   toString() {
-    return `ZodError!!!`;
+    return this.message;
   }
   get message() {
     return JSON.stringify(this.issues, null, 2);
