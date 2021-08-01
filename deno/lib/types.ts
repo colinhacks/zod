@@ -615,29 +615,34 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     });
   };
 
-  min = (value: number, message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "min",
-          value: value,
-          inclusive: true,
-          message: errorUtil.toString(message),
-        },
-      ],
-    });
+  gte = (value: number, message?: errorUtil.ErrMessage) =>
+    this.setLimit("min", value, true, errorUtil.toString(message));
+  min = this.gte;
 
-  max = (value: number, message?: errorUtil.ErrMessage) =>
+  gt = (value: number, message?: errorUtil.ErrMessage) =>
+    this.setLimit("min", value, false, errorUtil.toString(message));
+
+  lte = (value: number, message?: errorUtil.ErrMessage) =>
+    this.setLimit("max", value, true, errorUtil.toString(message));
+  max = this.lte;
+
+  lt = (value: number, message?: errorUtil.ErrMessage) =>
+    this.setLimit("max", value, false, errorUtil.toString(message));
+
+  protected setLimit = (
+    kind: "min" | "max",
+    value: number,
+    inclusive: boolean,
+    message?: string
+  ) =>
     new ZodNumber({
       ...this._def,
       checks: [
         ...this._def.checks,
         {
-          kind: "max",
-          value: value,
-          inclusive: true,
+          kind,
+          value,
+          inclusive,
           message: errorUtil.toString(message),
         },
       ],
@@ -1049,8 +1054,7 @@ const parseArray = <T>(
   ctx: ParseContext,
   data: any[],
   parsedType: ZodParsedType,
-  def: ZodArrayDef<any>,
-  nonEmpty: boolean
+  def: ZodArrayDef<any>
 ): ParseReturnType<T[]> => {
   if (parsedType !== ZodParsedType.array) {
     ctx.addIssue(data, {
@@ -1089,22 +1093,6 @@ const parseArray = <T>(
     }
   }
 
-  if (nonEmpty && data.length < 1) {
-    invalid = true;
-    ctx.addIssue(data, {
-      code: ZodIssueCode.too_small,
-      minimum: 1,
-      type: "array",
-      inclusive: true,
-      // message: this._def.minLength.message,
-      // ...errorUtil.errToObj(this._def.minLength.message),
-    });
-  }
-
-  if (invalid) {
-    return INVALID;
-  }
-
   const tasks = createTasks(ctx);
   const result: T[] = new Array(data.length);
   const type = def.type;
@@ -1139,18 +1127,30 @@ const parseArray = <T>(
   }
 };
 
-export class ZodArray<T extends ZodTypeAny> extends ZodType<
-  T["_output"][],
+export type ArrayCardinality = "many" | "atleastone";
+type arrayOutputType<
+  T extends ZodTypeAny,
+  Cardinality extends ArrayCardinality = "many"
+> = Cardinality extends "atleastone"
+  ? [T["_output"], ...T["_output"][]]
+  : T["_output"][];
+
+export class ZodArray<
+  T extends ZodTypeAny,
+  Cardinality extends ArrayCardinality = "many"
+> extends ZodType<
+  arrayOutputType<T, Cardinality>,
   ZodArrayDef<T>,
-  T["_input"][]
+  Cardinality extends "atleastone"
+    ? [T["_input"], ...T["_input"][]]
+    : T["_input"][]
 > {
   _parse(
     ctx: ParseContext,
     data: any,
     parsedType: ZodParsedType
-  ): ParseReturnType<T["_output"][]> {
-    const nonEmpty = false;
-    return parseArray(ctx, data, parsedType, this._def, nonEmpty);
+  ): ParseReturnType<arrayOutputType<T, Cardinality>> {
+    return parseArray(ctx, data, parsedType, this._def) as any;
   }
 
   get element() {
@@ -1172,8 +1172,10 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
   length = (len: number, message?: errorUtil.ErrMessage): this =>
     this.min(len, message).max(len, message) as any;
 
-  nonempty: () => ZodNonEmptyArray<T> = () => {
-    return new ZodNonEmptyArray({ ...this._def });
+  nonempty: (message?: errorUtil.ErrMessage) => ZodArray<T, "atleastone"> = (
+    message?: any
+  ) => {
+    return this.min(1, message) as any; // new ZodArray({ ...this._def, cardinality:"atleastone" });
   };
 
   static create = <T extends ZodTypeAny>(schema: T): ZodArray<T> => {
@@ -1186,65 +1188,7 @@ export class ZodArray<T extends ZodTypeAny> extends ZodType<
   };
 }
 
-////////////////////////////////////////////////
-////////////////////////////////////////////////
-//////////                            //////////
-//////////      ZodNonEmptyArray      //////////
-//////////                            //////////
-////////////////////////////////////////////////
-////////////////////////////////////////////////
-export interface ZodNonEmptyArrayDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
-  type: T;
-  typeName: ZodFirstPartyTypeKind.ZodArray;
-  minLength: { value: number; message?: string } | null;
-  maxLength: { value: number; message?: string } | null;
-}
-
-export class ZodNonEmptyArray<T extends ZodTypeAny> extends ZodType<
-  [T["_output"], ...T["_output"][]],
-  ZodNonEmptyArrayDef<T>,
-  [T["_input"], ...T["_input"][]]
-> {
-  _parse(
-    ctx: ParseContext,
-    data: any,
-    parsedType: ZodParsedType
-  ): ParseReturnType<[T["_output"], ...T["_output"][]]> {
-    const nonEmpty = true;
-    return parseArray(
-      ctx,
-      data,
-      parsedType,
-      this._def,
-      nonEmpty
-    ) as ParseReturnType<[T["_output"], ...T["_output"][]]>;
-  }
-
-  min = (minLength: number, message?: errorUtil.ErrMessage) =>
-    new ZodNonEmptyArray({
-      ...this._def,
-      minLength: { value: minLength, message: errorUtil.toString(message) },
-    });
-
-  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
-    new ZodNonEmptyArray({
-      ...this._def,
-      maxLength: { value: maxLength, message: errorUtil.toString(message) },
-    });
-
-  length = (len: number, message?: errorUtil.ErrMessage) =>
-    this.min(len, message).max(len, message);
-
-  static create = <T extends ZodTypeAny>(schema: T): ZodNonEmptyArray<T> => {
-    return new ZodNonEmptyArray({
-      type: schema,
-      minLength: null,
-      maxLength: null,
-      typeName: ZodFirstPartyTypeKind.ZodArray,
-    });
-  };
-}
+export type ZodNonEmptyArray<T extends ZodTypeAny> = ZodArray<T, "atleastone">;
 
 /////////////////////////////////////////
 /////////////////////////////////////////

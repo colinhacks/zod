@@ -319,6 +319,9 @@ z.string().regex(regex);
 
 // deprecated, equivalent to .min(1)
 z.string().nonempty();
+
+// optional custom error message
+z.string().nonempty({ message: "Can't be empty" });
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
@@ -341,8 +344,10 @@ z.string().uuid({ message: "Invalid UUID" });
 Zod includes a handful of number-specific validations.
 
 ```ts
-z.number().min(5);
-z.number().max(5);
+z.number().gt(5);
+z.number().gte(5); // alias .min(5)
+z.number().lt(5);
+z.number().lte(5); // alias .max(5)
 
 z.number().int(); // value must be an integer
 
@@ -355,7 +360,7 @@ z.number().nonpositive(); //  <= 0
 Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
-z.number().max(5, { message: "this👏is👏too👏big" });
+z.number().lte(5, { message: "this👏is👏too👏big" });
 ```
 
 ## Objects
@@ -592,6 +597,15 @@ const nonEmptyStrings = z.string().array().nonempty();
 
 nonEmptyStrings.parse([]); // throws: "Array cannot be empty"
 nonEmptyStrings.parse(["Ariana Grande"]); // passes
+```
+
+You can optionally specify a custom error message:
+
+```ts
+// optional custom error message
+const nonEmptyStrings = z.string().array().nonempty({
+  message: "Can't be empty!",
+});
 ```
 
 ### `.min/.max/.length`

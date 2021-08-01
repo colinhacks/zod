@@ -39,7 +39,7 @@ test("string max", async () => {
 
 test("number min", async () => {
   try {
-    await z.number().min(3).parseAsync(2);
+    await z.number().gte(3).parseAsync(2);
   } catch (err) {
     expect(err.issues[0].message).toEqual(
       "Value should be greater than or equal to 3"
@@ -49,7 +49,7 @@ test("number min", async () => {
 
 test("number max", async () => {
   try {
-    await z.number().max(3).parseAsync(4);
+    await z.number().lte(3).parseAsync(4);
   } catch (err) {
     expect(err.issues[0].message).toEqual(
       "Value should be less than or equal to 3"

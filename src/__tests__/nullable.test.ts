@@ -20,8 +20,8 @@ function checkErrors(a: z.ZodTypeAny, bad: any) {
 test("Should have error messages appropriate for the underlying type", () => {
   checkErrors(z.string().min(2), 1);
   z.string().min(2).nullable().parse(null);
-  checkErrors(z.number().min(2), 1);
-  z.number().min(2).nullable().parse(null);
+  checkErrors(z.number().gte(2), 1);
+  z.number().gte(2).nullable().parse(null);
   checkErrors(z.boolean(), "");
   z.boolean().nullable().parse(null);
   checkErrors(z.null(), null);

@@ -132,6 +132,12 @@ export class ZodError<T = any> extends Error {
 
   constructor(issues: ZodIssue[]) {
     super();
+    this.name = "ZodError";
+    this.stack = (this.stack || "")
+      .split("\n")
+      .filter((line) => !line.includes("node_modules/zod"))
+      .join("\n");
+
     const actualProto = new.target.prototype;
     if (Object.setPrototypeOf) {
       // eslint-disable-next-line ban/ban
@@ -191,7 +197,7 @@ export class ZodError<T = any> extends Error {
   };
 
   toString() {
-    return `ZodError: ${JSON.stringify(this.issues, null, 2)}`;
+    return `ZodError!!!`;
   }
   get message() {
     return JSON.stringify(this.issues, null, 2);
