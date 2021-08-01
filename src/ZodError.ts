@@ -204,25 +204,8 @@ export class ZodError<T = any> extends Error {
     this.issues = [...this.issues, ...subs];
   };
 
-  flatten = (): {
-    formErrors: string[];
-    fieldErrors: { [k: string]: string[] };
-  } => {
-    const fieldErrors: any = {};
-    const formErrors: string[] = [];
-    for (const sub of this.issues) {
-      if (sub.path.length > 0) {
-        fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-        fieldErrors[sub.path[0]].push(sub.message);
-      } else {
-        formErrors.push(sub.message);
-      }
-    }
-    return { formErrors, fieldErrors };
-  };
-
-  flatMap = <U>(
-    mapper: (issue: ZodIssue) => U
+  flatten = <U = string>(
+    mapper: (issue: ZodIssue) => U = (issue: ZodIssue) => issue.message as any
   ): {
     formErrors: U[];
     fieldErrors: { [k: string]: U[] };
