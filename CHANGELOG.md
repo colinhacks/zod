@@ -1,7 +1,9 @@
 # Changelog
 
-### 4.0
+### 3.6
 
+- Add IE11 support
+- `ZodError.flatten` now optionally accepts a map function for customizing the output
 - `.void()` now only accepts undefined, not null.
 
 ### 3.5
