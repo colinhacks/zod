@@ -2760,6 +2760,8 @@ type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<any, any>
   ? T
   : ZodEffects<T, T["_output"]>;
 
+export type Refinement<T> = (arg: T, ctx: RefinementCtx) => any;
+export type SuperRefinement<T> = (arg: T, ctx: RefinementCtx) => void;
 export type InternalCheck<T> = {
   type: "refinement";
   refinement: (arg: T, ctx: RefinementCtx) => any;
