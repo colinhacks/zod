@@ -51,3 +51,17 @@ test("get element", () => {
   justTwo.element.parse("asdf");
   expect(() => justTwo.element.parse(12)).toThrow();
 });
+
+test("continue parsing despite array size error", () => {
+  const schema = z.object({
+    people: z.string().array().min(2),
+  });
+
+  const result = schema.safeParse({
+    people: [123],
+  });
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues.length).toEqual(2);
+  }
+});

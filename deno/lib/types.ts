@@ -1049,8 +1049,7 @@ const parseArray = <T>(
   ctx: ParseContext,
   data: any[],
   parsedType: ZodParsedType,
-  def: ZodArrayDef<any>,
-  nonEmpty: boolean
+  def: ZodArrayDef<any>
 ): ParseReturnType<T[]> => {
   if (parsedType !== ZodParsedType.array) {
     ctx.addIssue(data, {
@@ -1087,22 +1086,6 @@ const parseArray = <T>(
         message: def.maxLength.message,
       });
     }
-  }
-
-  if (nonEmpty && data.length < 1) {
-    invalid = true;
-    ctx.addIssue(data, {
-      code: ZodIssueCode.too_small,
-      minimum: 1,
-      type: "array",
-      inclusive: true,
-      // message: this._def.minLength.message,
-      // ...errorUtil.errToObj(this._def.minLength.message),
-    });
-  }
-
-  if (invalid) {
-    return INVALID;
   }
 
   const tasks = createTasks(ctx);
@@ -1162,8 +1145,7 @@ export class ZodArray<
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<arrayOutputType<T, Cardinality>> {
-    const nonEmpty = false;
-    return parseArray(ctx, data, parsedType, this._def, nonEmpty) as any;
+    return parseArray(ctx, data, parsedType, this._def) as any;
   }
 
   get element() {
