@@ -256,6 +256,8 @@ export abstract class ZodType<
 
   array: () => ZodArray<this> = () => ZodArray.create(this);
 
+  promise: () => ZodPromise<this> = () => ZodPromise.create(this);
+
   or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
     return ZodUnion.create([this, option]) as any;
   }
@@ -509,7 +511,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   get maxLength() {
     let max: number | null = null;
     this._def.checks.map((ch) => {
-      if (ch.kind === "min") {
+      if (ch.kind === "max") {
         if (max === null || ch.value < max) {
           max = ch.value;
         }
