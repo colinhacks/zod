@@ -1568,11 +1568,11 @@ You can separately extract the input and output types like so:
 const stringToNumber = z.string().transform((val) => val.length);
 
 // ⚠️ Important: z.infer returns the OUTPUT type!
-type input = z.input<stringToNumber>; // string
-type output = z.output<stringToNumber>; // number
+type input = z.input<typeof stringToNumber>; // string
+type output = z.output<typeof stringToNumber>; // number
 
 // equivalent to z.output!
-type inferred = z.infer<stringToNumber>; // number
+type inferred = z.infer<typeof stringToNumber>; // number
 ```
 
 # Errors
