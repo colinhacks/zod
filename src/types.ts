@@ -42,6 +42,10 @@ export type RefinementCtx = {
   path: (string | number)[];
   issueFound: boolean;
 };
+export type SuperRefinement<T> = (
+  val: T,
+  ctx: RefinementCtx
+) => void
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
 export type TypeOf<T extends ZodType<any>> = T["_output"];
