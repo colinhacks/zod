@@ -60,7 +60,7 @@ doubleSuite
       double.parse(null);
     } catch (err) {}
   })
-  .add("invalid: wrong shpae", () => {
+  .add("invalid: wrong shape", () => {
     try {
       double.parse(objC);
     } catch (err) {}
