@@ -1,0 +1,17 @@
+yarn run v1.22.4
+$ ts-node src/benchmarks/index.ts
+z.string: empty string x 6,129,583 ops/sec ±0.30% (91 runs sampled)
+z.string: short string x 6,184,168 ops/sec ±0.34% (92 runs sampled)
+z.string: long string x 6,159,376 ops/sec ±0.52% (90 runs sampled)
+z.string: invalid: null x 77,902 ops/sec ±1.60% (87 runs sampled)
+z.string: manual parser: long x 743,944,192 ops/sec ±0.33% (94 runs sampled)
+z.object: empty: valid x 4,522,512 ops/sec ±0.31% (87 runs sampled)
+z.object: empty: valid: extra keys x 5,289,159 ops/sec ±0.32% (95 runs sampled)
+z.object: empty: invalid: null x 82,345 ops/sec ±0.60% (88 runs sampled)
+z.object: short: valid x 2,767,974 ops/sec ±0.33% (95 runs sampled)
+z.object: short: valid: extra keys x 2,889,744 ops/sec ±3.50% (92 runs sampled)
+z.object: short: invalid: null x 84,672 ops/sec ±0.32% (93 runs sampled)
+z.object: long: valid x 1,332,708 ops/sec ±3.29% (86 runs sampled)
+z.object: long: valid: extra keys x 1,290,209 ops/sec ±0.46% (90 runs sampled)
+z.object: long: invalid: null x 84,594 ops/sec ±1.42% (92 runs sampled)
+Done in 80.90s.
