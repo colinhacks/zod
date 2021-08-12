@@ -233,6 +233,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): Contract-first strictly typed endpoints with Zod. OpenAPI compatible.
 - [`express-zod-api`](https://github.com/RobinTail/express-zod-api): Build Express-based APIs with I/O schema validation and custom middlewares
 - [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema): Convert your Zod schemas into [JSON Schemas](https://json-schema.org/).
+- [`json-to-zod`](https://github.com/StefanTerdell/zod-to-json-schema): Convert json objects into zod schemas. Use it live [here](https://stefanterdell.github.io/json-to-zod-react/).
 
 # Basic usage
 
