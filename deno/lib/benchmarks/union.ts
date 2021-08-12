@@ -7,42 +7,27 @@ const manySuite = new Benchmark.Suite("z.union: many");
 
 const aSchema = z.object({
   type: z.literal("a"),
-  a: z.string(),
 });
 const objA = {
   type: "a",
-  a: "a string",
 };
 
 const bSchema = z.object({
   type: z.literal("b"),
-  b: z.number(),
 });
 const objB = {
   type: "b",
-  b: 42,
 };
 
 const cSchema = z.object({
   type: z.literal("c"),
-  c: z.object({
-    string: z.string(),
-    number: z.number(),
-    bool: z.boolean(),
-  }),
 });
 const objC = {
   type: "c",
-  c: {
-    string: "a string",
-    number: 42,
-    bool: false,
-  },
 };
 
 const dSchema = z.object({
   type: z.literal("d"),
-  d: z.boolean(),
 });
 
 const double = z.union([aSchema, bSchema]);
