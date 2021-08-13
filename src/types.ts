@@ -2748,6 +2748,7 @@ export class ZodEffects<
         return pathToArray(ctx.path);
       },
     };
+    checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
 
     let invalid = false;
     const applyEffect = (
