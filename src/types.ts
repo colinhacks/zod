@@ -1515,7 +1515,7 @@ export class ZodObject<
 
   /**
    * @deprecated In most cases, this is no longer needed - unknown properties are now silently stripped.
-   * If you want to pass through unknown properies, use `.passthrough()` instead.
+   * If you want to pass through unknown properties, use `.passthrough()` instead.
    */
   nonstrict = this.passthrough;
 
