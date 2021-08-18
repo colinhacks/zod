@@ -2303,74 +2303,53 @@ export class ZodFunction<
       return INVALID;
     }
 
-    const handleArgs = (
-      args: any,
-      parsedArgs:
-        | { success: true; data: any }
-        | { success: false; error: ZodError }
-    ): any => {
-      if (!parsedArgs.success) {
-        const issue = makeIssue(
-          args,
-          pathToArray(ctx.path),
-          ctx.params.errorMap,
-          {
-            code: ZodIssueCode.invalid_arguments,
-            argumentsError: parsedArgs.error,
-          }
-        );
-        throw new ZodError([issue]);
-      }
-      return parsedArgs.data;
-    };
+    function makeArgsIssue(args: any, error: ZodError): ZodIssue {
+      return makeIssue(args, pathToArray(ctx.path), ctx.params.errorMap, {
+        code: ZodIssueCode.invalid_arguments,
+        argumentsError: error,
+      });
+    }
 
-    const handleReturns = (
-      returns: any,
-      parsedReturns:
-        | { success: true; data: any }
-        | { success: false; error: ZodError }
-    ): any => {
-      if (!parsedReturns.success) {
-        const issue = makeIssue(
-          returns,
-          pathToArray(ctx.path),
-          ctx.params.errorMap,
-          {
-            code: ZodIssueCode.invalid_return_type,
-            returnTypeError: parsedReturns.error,
-          }
-        );
-        throw new ZodError([issue]);
-      }
-      return parsedReturns.data;
-    };
+    function makeReturnsIssue(returns: any, error: ZodError): ZodIssue {
+      return makeIssue(returns, pathToArray(ctx.path), ctx.params.errorMap, {
+        code: ZodIssueCode.invalid_return_type,
+        returnTypeError: error,
+      });
+    }
 
     const params = { errorMap: ctx.params.errorMap };
     const fn = data;
 
     if (this._def.returns instanceof ZodPromise) {
       return OK(async (...args: any[]) => {
-        const parsedArgs = handleArgs(
-          args,
-          await this._def.args.spa(args, params)
-        );
+        const error = new ZodError([]);
+        const parsedArgs = await this._def.args
+          .parseAsync(args, params)
+          .catch((e) => {
+            error.addIssue(makeArgsIssue(args, e));
+            throw error;
+          });
         const result = await fn(...(parsedArgs as any));
-        return handleReturns(
-          result,
-          await this._def.returns.spa(result, params)
-        );
+        const parsedReturns = await this._def.returns
+          .parseAsync(result, params)
+          .catch((e) => {
+            error.addIssue(makeReturnsIssue(result, e));
+            throw error;
+          });
+        return parsedReturns;
       });
     } else {
       return OK((...args: any[]) => {
-        const parsedArgs = handleArgs(
-          args,
-          this._def.args.safeParse(args, params)
-        );
-        const result = fn(...(parsedArgs as any));
-        return handleReturns(
-          result,
-          this._def.returns.safeParse(result, params)
-        );
+        const parsedArgs = this._def.args.safeParse(args, params);
+        if (!parsedArgs.success) {
+          throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
+        }
+        const result = fn(...(parsedArgs.data as any));
+        const parsedReturns = this._def.returns.safeParse(result, params);
+        if (!parsedReturns.success) {
+          throw new ZodError([makeReturnsIssue(result, parsedReturns.error)]);
+        }
+        return parsedReturns.data;
       });
     }
   }
