@@ -6,3 +6,4 @@ coverage
 .idea
 *.log
 src/playground.ts
+deno/lib/playground.ts
