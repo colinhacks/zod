@@ -10,6 +10,7 @@ const nested = z.object({
   outer: z.object({
     inner: z.string(),
   }),
+  array: z.array(z.object({ asdf: z.string() })),
 });
 
 test("shallow inference", () => {
@@ -19,6 +20,7 @@ test("shallow inference", () => {
     name?: string | undefined;
     age?: number | undefined;
     outer?: { inner: string } | undefined;
+    array?: { asdf: string }[];
   };
   const t1: util.AssertEqual<shallow, correct> = true;
   t1;
@@ -35,8 +37,11 @@ test("shallow partial parse", () => {
 
 test("deep partial inference", () => {
   const deep = nested.deepPartial();
+  const asdf = deep.shape.array.unwrap().element.shape.asdf.unwrap();
+  asdf.parse("asdf");
   type deep = z.infer<typeof deep>;
   type correct = {
+    array?: { asdf?: string }[];
     name?: string | undefined;
     age?: number | undefined;
     outer?: { inner?: string | undefined } | undefined;

@@ -1373,6 +1373,25 @@ export type SomeZodObject = ZodObject<
   any,
   any
 >;
+
+function deepPartialify(schema: ZodTypeAny): any {
+  if (schema instanceof ZodObject) {
+    const newShape: any = {};
+
+    for (const key in schema.shape) {
+      const fieldSchema = schema.shape[key];
+      newShape[key] = ZodOptional.create(deepPartialify(fieldSchema));
+    }
+    return new ZodObject({
+      ...schema._def,
+      shape: () => newShape,
+    }) as any;
+  } else if (schema instanceof ZodArray) {
+    return ZodArray.create(deepPartialify(schema.element));
+  } else {
+    return schema;
+  }
+}
 export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = "strip",
@@ -1617,25 +1636,8 @@ export class ZodObject<
     }) as any;
   };
 
-  deepPartial: () => partialUtil.RootDeepPartial<this> = () => {
-    const newShape: any = {};
-
-    for (const key in this.shape) {
-      const fieldSchema = this.shape[key];
-      if (fieldSchema instanceof ZodObject) {
-        newShape[key] = fieldSchema.isOptional()
-          ? fieldSchema
-          : (fieldSchema.deepPartial() as any).optional();
-      } else {
-        newShape[key] = fieldSchema.isOptional()
-          ? fieldSchema
-          : fieldSchema.optional();
-      }
-    }
-    return new ZodObject({
-      ...this._def,
-      shape: () => newShape,
-    }) as any;
+  deepPartial: () => partialUtil.DeepPartial<this> = () => {
+    return deepPartialify(this) as any;
   };
 
   required = (): ZodObject<
