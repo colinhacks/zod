@@ -324,7 +324,7 @@ export const defaultErrorMap = (
       message = `Invalid input`;
       break;
     case ZodIssueCode.invalid_intersection_types:
-      message = `Intersections only support objects`;
+      message = `Intersection results could not be merged`;
       break;
     default:
       message = _ctx.defaultError;
