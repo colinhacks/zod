@@ -321,6 +321,7 @@ z.string().length(5);
 z.string().email();
 z.string().url();
 z.string().uuid();
+z.string().cuid();
 z.string().regex(regex);
 
 // deprecated, equivalent to .min(1)
@@ -483,6 +484,7 @@ const user = z.object({
     latitude: z.number(),
     longitude: z.number(),
   }),
+  strings: z.array(z.object({ value: z.string() })),
 });
 
 const deepPartialUser = user.deepPartial();
@@ -493,12 +495,13 @@ const deepPartialUser = user.deepPartial();
   location?: {
     latitude?: number | undefined;
     longitude?: number | undefined;
-  } | undefined
+  } | undefined,
+  strings?: { value?: string}[]
 }
 */
 ```
 
-> Important limitation: deep partials only work as expected in direct hierarchies of object schemas. A nested object schema can't be optional, nullable, contain refinements, contain transforms, etc.
+> Important limitation: deep partials only work as expected in hierarchies of objects, arrays, and tuples.
 
 #### Unrecognized keys
 

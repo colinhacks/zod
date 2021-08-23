@@ -314,6 +314,7 @@ type ZodStringCheck =
   | { kind: "email"; message?: string }
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
+  | { kind: "cuid"; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
@@ -321,6 +322,7 @@ export interface ZodStringDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodString;
 }
 
+const cuidRegex = /^c[^\s-]{8,}$/i;
 const uuidRegex = /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 // from https://stackoverflow.com/a/46181/1550155
 // old version: too slow, didn't support unicode
@@ -386,6 +388,15 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             message: check.message,
           });
         }
+      } else if (check.kind === "cuid") {
+        if (!cuidRegex.test(data)) {
+          invalid = true;
+          ctx.addIssue(data, {
+            validation: "cuid",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+        }
       } else if (check.kind === "url") {
         try {
           new URL(data);
@@ -447,6 +458,15 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [
         ...this._def.checks,
         { kind: "uuid", ...errorUtil.errToObj(message) },
+      ],
+    });
+
+  cuid = (message?: errorUtil.ErrMessage) =>
+    new ZodString({
+      ...this._def,
+      checks: [
+        ...this._def.checks,
+        { kind: "cuid", ...errorUtil.errToObj(message) },
       ],
     });
 
@@ -1388,6 +1408,14 @@ function deepPartialify(schema: ZodTypeAny): any {
     }) as any;
   } else if (schema instanceof ZodArray) {
     return ZodArray.create(deepPartialify(schema.element));
+  } else if (schema instanceof ZodOptional) {
+    return ZodOptional.create(deepPartialify(schema.unwrap()));
+  } else if (schema instanceof ZodNullable) {
+    return ZodNullable.create(deepPartialify(schema.unwrap()));
+  } else if (schema instanceof ZodTuple) {
+    return ZodTuple.create(
+      schema.items.map((item: any) => deepPartialify(item))
+    );
   } else {
     return schema;
   }
@@ -1902,17 +1930,17 @@ export class ZodIntersection<
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-export type OutputTypeOfTuple<T extends [ZodTypeAny, ...ZodTypeAny[]] | []> = {
+export type ZodTupleItems = [ZodTypeAny, ...ZodTypeAny[]];
+export type OutputTypeOfTuple<T extends ZodTupleItems | []> = {
   [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
 };
 
-export type InputTypeOfTuple<T extends [ZodTypeAny, ...ZodTypeAny[]] | []> = {
+export type InputTypeOfTuple<T extends ZodTupleItems | []> = {
   [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_input"] : never;
 };
 
-export interface ZodTupleDef<
-  T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]]
-> extends ZodTypeDef {
+export interface ZodTupleDef<T extends ZodTupleItems | [] = ZodTupleItems>
+  extends ZodTypeDef {
   items: T;
   typeName: ZodFirstPartyTypeKind.ZodTuple;
 }
@@ -2701,6 +2729,7 @@ export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   schema: T;
   typeName: ZodFirstPartyTypeKind.ZodEffects;
+  preprocess?: Mod<any>;
   effects?: Effect<any>[];
 }
 
@@ -2714,11 +2743,20 @@ export class ZodEffects<
 
   _parse(
     ctx: ParseContext,
-    data: any,
-    parsedType: ZodParsedType
+    initialData: any,
+    initialParsedType: ZodParsedType
   ): ParseReturnType<Output> {
     const isSync = ctx.params.async === false;
+    const preprocess = this._def.preprocess;
     const effects = this._def.effects || [];
+
+    let data = initialData;
+    let parsedType: ZodParsedType = initialParsedType;
+    if (preprocess) {
+      data = preprocess.transform(initialData);
+      parsedType = getParsedType(data);
+    }
+
     const checkCtx: RefinementCtx = {
       issueFound: false,
       addIssue: function (arg: MakeErrorData) {
@@ -2729,6 +2767,7 @@ export class ZodEffects<
         return pathToArray(ctx.path);
       },
     };
+
     checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
 
     let invalid = false;
@@ -2821,6 +2860,19 @@ export class ZodEffects<
   ): ZodEffects<I, I["_output"]> => {
     const newTx = new ZodEffects({
       schema,
+      typeName: ZodFirstPartyTypeKind.ZodEffects,
+    });
+
+    return newTx;
+  };
+
+  static createWithPreprocess = <I extends ZodTypeAny>(
+    preprocess: (arg: unknown) => unknown,
+    schema: I
+  ): ZodEffects<I, I["_output"]> => {
+    const newTx = new ZodEffects({
+      schema,
+      preprocess: { type: "transform", transform: preprocess },
       typeName: ZodFirstPartyTypeKind.ZodEffects,
     });
 
@@ -3070,6 +3122,7 @@ const promiseType = ZodPromise.create;
 const effectsType = ZodEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
+const preprocessType = ZodEffects.createWithPreprocess;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -3098,6 +3151,7 @@ export {
   onumber,
   optionalType as optional,
   ostring,
+  preprocessType as preprocess,
   promiseType as promise,
   recordType as record,
   setType as set,

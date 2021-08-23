@@ -4,6 +4,7 @@ const test = Deno.test;
 
 import { util } from "../helpers/util.ts";
 import * as z from "../index.ts";
+import { ZodNullable, ZodOptional } from "../index.ts";
 
 const nested = z.object({
   name: z.string(),
@@ -80,6 +81,57 @@ test("deep partial runtime tests", () => {
       inner: "adsf",
     },
   });
+});
+
+test("deep partial optional/nullable", () => {
+  const schema = z
+    .object({
+      name: z.string().optional(),
+      age: z.number().nullable(),
+    })
+    .deepPartial();
+
+  expect(schema.shape.name.unwrap()).toBeInstanceOf(ZodOptional);
+  expect(schema.shape.age.unwrap()).toBeInstanceOf(ZodNullable);
+});
+
+test("deep partial tuple", () => {
+  const schema = z
+    .object({
+      tuple: z.tuple([
+        z.object({
+          name: z.string().optional(),
+          age: z.number().nullable(),
+        }),
+      ]),
+    })
+    .deepPartial();
+
+  expect(schema.shape.tuple.unwrap().items[0].shape.name).toBeInstanceOf(
+    ZodOptional
+  );
+});
+
+test("deep partial inference", () => {
+  const mySchema = z.object({
+    name: z.string(),
+    array: z.array(z.object({ asdf: z.string() })),
+    tuple: z.tuple([z.object({ value: z.string() })]),
+  });
+
+  const partialed = mySchema.deepPartial();
+  type partialed = z.infer<typeof partialed>;
+  type expected = {
+    name?: string | undefined;
+    array?:
+      | {
+          asdf?: string | undefined;
+        }[]
+      | undefined;
+    tuple?: [{ value?: string }] | undefined;
+  };
+  const f1: util.AssertEqual<expected, partialed> = true;
+  f1;
 });
 
 test("required", () => {
