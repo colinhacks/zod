@@ -314,6 +314,7 @@ type ZodStringCheck =
   | { kind: "email"; message?: string }
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
+  | { kind: "cuid"; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
@@ -321,6 +322,7 @@ export interface ZodStringDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodString;
 }
 
+const cuidRegex = /^c[^\s-]{8,}$/i;
 const uuidRegex = /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 // from https://stackoverflow.com/a/46181/1550155
 // old version: too slow, didn't support unicode
@@ -386,6 +388,15 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             message: check.message,
           });
         }
+      } else if (check.kind === "cuid") {
+        if (!cuidRegex.test(data)) {
+          invalid = true;
+          ctx.addIssue(data, {
+            validation: "cuid",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+        }
       } else if (check.kind === "url") {
         try {
           new URL(data);
@@ -447,6 +458,15 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [
         ...this._def.checks,
         { kind: "uuid", ...errorUtil.errToObj(message) },
+      ],
+    });
+
+  cuid = (message?: errorUtil.ErrMessage) =>
+    new ZodString({
+      ...this._def,
+      checks: [
+        ...this._def.checks,
+        { kind: "cuid", ...errorUtil.errToObj(message) },
       ],
     });
 

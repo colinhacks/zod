@@ -59,7 +59,7 @@ export interface ZodInvalidDateIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_date;
 }
 
-export type StringValidation = "email" | "url" | "uuid" | "regex";
+export type StringValidation = "email" | "url" | "uuid" | "regex" | "cuid";
 
 export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
