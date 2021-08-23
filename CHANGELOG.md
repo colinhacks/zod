@@ -3,6 +3,7 @@
 ### 3.8
 
 - Add `z.preprocess`
+- Implement CUID validation on ZodString (`z.string().cuid()`)
 - Improve `.deepPartial()` to include ZodArray
 
 ### 3.7
