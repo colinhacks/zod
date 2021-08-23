@@ -2701,6 +2701,7 @@ export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   schema: T;
   typeName: ZodFirstPartyTypeKind.ZodEffects;
+  preprocess?: Mod<any>;
   effects?: Effect<any>[];
 }
 
@@ -2714,11 +2715,20 @@ export class ZodEffects<
 
   _parse(
     ctx: ParseContext,
-    data: any,
-    parsedType: ZodParsedType
+    initialData: any,
+    initialParsedType: ZodParsedType
   ): ParseReturnType<Output> {
     const isSync = ctx.params.async === false;
+    const preprocess = this._def.preprocess;
     const effects = this._def.effects || [];
+
+    let data = initialData;
+    let parsedType: ZodParsedType = initialParsedType;
+    if (preprocess) {
+      data = preprocess.transform(initialData);
+      parsedType = getParsedType(data);
+    }
+
     const checkCtx: RefinementCtx = {
       issueFound: false,
       addIssue: function (arg: MakeErrorData) {
@@ -2729,6 +2739,7 @@ export class ZodEffects<
         return pathToArray(ctx.path);
       },
     };
+
     checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
 
     let invalid = false;
@@ -2821,6 +2832,19 @@ export class ZodEffects<
   ): ZodEffects<I, I["_output"]> => {
     const newTx = new ZodEffects({
       schema,
+      typeName: ZodFirstPartyTypeKind.ZodEffects,
+    });
+
+    return newTx;
+  };
+
+  static createWithPreprocess = <I extends ZodTypeAny>(
+    preprocess: (arg: unknown) => unknown,
+    schema: I
+  ): ZodEffects<I, I["_output"]> => {
+    const newTx = new ZodEffects({
+      schema,
+      preprocess: { type: "transform", transform: preprocess },
       typeName: ZodFirstPartyTypeKind.ZodEffects,
     });
 
@@ -3070,6 +3094,7 @@ const promiseType = ZodPromise.create;
 const effectsType = ZodEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
+const preprocessType = ZodEffects.createWithPreprocess;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -3098,6 +3123,7 @@ export {
   onumber,
   optionalType as optional,
   ostring,
+  preprocessType as preprocess,
   promiseType as promise,
   recordType as record,
   setType as set,

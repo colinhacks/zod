@@ -120,3 +120,10 @@ test("multiple transformers", () => {
   });
   expect(doubler.parse("5")).toEqual(10);
 });
+
+test("preprocess", () => {
+  const schema = z.preprocess((data) => [data], z.string().array());
+
+  const value = schema.parse("asdf");
+  expect(value).toEqual(["asdf"]);
+});

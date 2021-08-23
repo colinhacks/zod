@@ -1,5 +1,10 @@
 # Changelog
 
+### 3.8
+
+- Add `z.preprocess`
+- Improve `.deepPartial()` to include ZodArray
+
 ### 3.7
 
 - Eliminate `ZodNonEmptyArray`, add `Cardinality` to `ZodArray`
