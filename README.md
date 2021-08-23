@@ -137,7 +137,7 @@ Sponsorship at any level is appreciated and encouraged. Zod is maintained by a s
       <br>
       <b>Deletype</b>
       <br>
-      <a href="https://deletype.com/">https://deletype.com/</a>
+      <a href="https://deletype.com/">deletype.com/</a>
     </td>
   <td align="center">
       <a href="https://github.com/kevinsimper">
@@ -169,7 +169,7 @@ Sponsorship at any level is appreciated and encouraged. Zod is maintained by a s
       <br>
       <b>Bamboo Creative</b>
       <br>
-      <a href="https://www.bamboocreative.nz/">https://bamboocreative.nz</a>
+      <a href="https://www.bamboocreative.nz/">bamboocreative.nz</a>
     </td>
     <td align="center">
       <a href="https://github.com/jeremyBanks">
