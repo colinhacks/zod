@@ -1408,6 +1408,14 @@ function deepPartialify(schema: ZodTypeAny): any {
     }) as any;
   } else if (schema instanceof ZodArray) {
     return ZodArray.create(deepPartialify(schema.element));
+  } else if (schema instanceof ZodOptional) {
+    return ZodOptional.create(deepPartialify(schema.unwrap()));
+  } else if (schema instanceof ZodNullable) {
+    return ZodNullable.create(deepPartialify(schema.unwrap()));
+  } else if (schema instanceof ZodTuple) {
+    return ZodTuple.create(
+      schema.items.map((item: any) => deepPartialify(item))
+    );
   } else {
     return schema;
   }
@@ -1922,17 +1930,17 @@ export class ZodIntersection<
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-export type OutputTypeOfTuple<T extends [ZodTypeAny, ...ZodTypeAny[]] | []> = {
+export type ZodTupleItems = [ZodTypeAny, ...ZodTypeAny[]];
+export type OutputTypeOfTuple<T extends ZodTupleItems | []> = {
   [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
 };
 
-export type InputTypeOfTuple<T extends [ZodTypeAny, ...ZodTypeAny[]] | []> = {
+export type InputTypeOfTuple<T extends ZodTupleItems | []> = {
   [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_input"] : never;
 };
 
-export interface ZodTupleDef<
-  T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]]
-> extends ZodTypeDef {
+export interface ZodTupleDef<T extends ZodTupleItems | [] = ZodTupleItems>
+  extends ZodTypeDef {
   items: T;
   typeName: ZodFirstPartyTypeKind.ZodTuple;
 }

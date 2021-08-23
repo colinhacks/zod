@@ -4,7 +4,7 @@
 
 - Add `z.preprocess`
 - Implement CUID validation on ZodString (`z.string().cuid()`)
-- Improve `.deepPartial()` to include ZodArray
+- Improved `.deepPartial()`: now recursively operates on arrays, tuples, optionals, and nullables (in addition to objects)
 
 ### 3.7
 

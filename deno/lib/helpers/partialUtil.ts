@@ -1,4 +1,12 @@
-import { ZodArray, ZodObject, ZodOptional, ZodTypeAny } from "../index.ts";
+import type {
+  ZodArray,
+  ZodNullable,
+  ZodObject,
+  ZodOptional,
+  ZodTuple,
+  ZodTupleItems,
+  ZodTypeAny,
+} from "../index.ts";
 
 export namespace partialUtil {
   // export type DeepPartial<T extends AnyZodObject> = T extends AnyZodObject
@@ -38,6 +46,20 @@ export namespace partialUtil {
       >
     : T extends ZodArray<infer Type, infer Card>
     ? ZodArray<DeepPartial<Type>, Card>
+    : T extends ZodOptional<infer Type>
+    ? ZodOptional<DeepPartial<Type>>
+    : T extends ZodNullable<infer Type>
+    ? ZodNullable<DeepPartial<Type>>
+    : T extends ZodTuple<infer Items>
+    ? {
+        [k in keyof Items]: Items[k] extends ZodTypeAny
+          ? DeepPartial<Items[k]>
+          : never;
+      } extends infer PI
+      ? PI extends ZodTupleItems
+        ? ZodTuple<PI>
+        : never
+      : never
     : T;
   //  {
   //     // optional: T extends ZodOptional<ZodTypeAny> ? T : ZodOptional<T>;
