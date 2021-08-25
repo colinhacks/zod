@@ -44,9 +44,9 @@ export type RefinementCtx = {
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
-export type TypeOf<T extends ZodType<any>> = T["_output"];
-export type input<T extends ZodType<any>> = T["_input"];
-export type output<T extends ZodType<any>> = T["_output"];
+export type TypeOf<T extends ZodType<any, any, any>> = T["_output"];
+export type input<T extends ZodType<any, any, any>> = T["_input"];
+export type output<T extends ZodType<any, any, any>> = T["_output"];
 export type { TypeOf as infer };
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
@@ -1981,7 +1981,7 @@ export class ZodTuple<
     }
 
     const tasks = createTasks(ctx);
-    const items = this._def.items as ZodType<any>[];
+    const items = this._def.items as ZodType<any, any, any>[];
     const parseResult: any[] = new Array(items.length);
     let invalid = false;
 
