@@ -79,6 +79,7 @@ Previous versions:
   - [Promises](#promises)
   - [Instanceof](#instanceof)
   - [Function schemas](#function-schemas)
+  - [Preprocess](#preprocess)
 - [Base class methods (ZodType)](#zodtype-methods-and-properties)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
@@ -1183,6 +1184,18 @@ const myFunction = z
   });
 myFunction; // (arg: string)=>number[]
 ```
+
+## Preprocess
+
+Typically Zod operates under a "parse, then tranform" paradigm. Zod validates the input first, then passes it through a chain of transformation functions. (For more information about transforms, read the [.transform docs](#transform).)
+
+But sometimes you want to apply some transformation to the input _before_ parsing happens. A common use case: type coercion. Zod enables this with the `z.preprocess()`.
+
+```ts
+const castToString = z.preprocess((val) => String(val), z.string());
+```
+
+This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
 
 # ZodType: methods and properties
 
