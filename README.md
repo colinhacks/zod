@@ -14,29 +14,9 @@
 ⭐️ smash that star button ⭐️
 </p>
 
-> If you like Zod, you'll love my new library [tRPC](https://trpc.io). It's a way to build end-to-end typesafe APIs without GraphQL or code generation! Check it out at [trpc.io](https://trpc.io).
+> Like typesafety? Check out [tRPC](https://trpc.io) — a better way to build end-to-end typesafe APIs without GraphQL or code generation — just TypeScript.
 
 <br/>
-
-## May 17, 2021: Zod v3 is now in stable release!
-
-Check out the [Migration Guide](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) to upgrade.
-
-Previous versions:
-
-- [`Zod 1 docs`](https://github.com/colinhacks/zod/tree/v1)
-- [`Zod 2 docs`](https://github.com/colinhacks/zod/tree/v2)
-
-#### New features
-
-- **Easier imports**: you can now import Zod like `import { z } from 'zod';` instead of using `import * as` syntax.
-- **Structured error messages**. Use the `.format()` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
-- **Easier unions**. Use the `or` method to ZodType (the base class for all Zod schemas) to easily create union types like `z.string().or(z.number())`
-- **Easier intersections**. Use the `and` method to ZodType (the base class for all Zod schemas) to easily create intersection types
-- **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
-- **Maps and sets**. Zod now supports [`Map`](#maps) and [`Set`](#sets) schemas.
-- **Optional and nullable unwrapping**. ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap.
-- **A new implementation of transformers**. See the [Migration Guide](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) section to understand the syntax changes.
 
 # Table of contents
 
