@@ -1934,20 +1934,40 @@ export type ZodTupleItems = [ZodTypeAny, ...ZodTypeAny[]];
 export type OutputTypeOfTuple<T extends ZodTupleItems | []> = {
   [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
 };
+export type OutputTypeOfTupleWithRest<
+  T extends ZodTupleItems | [],
+  Rest extends ZodTypeAny | null = null
+> = Rest extends ZodTypeAny
+  ? [...OutputTypeOfTuple<T>, ...Rest["_output"][]]
+  : OutputTypeOfTuple<T>;
 
 export type InputTypeOfTuple<T extends ZodTupleItems | []> = {
   [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_input"] : never;
 };
+export type InputTypeOfTupleWithRest<
+  T extends ZodTupleItems | [],
+  Rest extends ZodTypeAny | null = null
+> = Rest extends ZodTypeAny
+  ? [...InputTypeOfTuple<T>, ...Rest["_input"][]]
+  : InputTypeOfTuple<T>;
 
-export interface ZodTupleDef<T extends ZodTupleItems | [] = ZodTupleItems>
-  extends ZodTypeDef {
+export interface ZodTupleDef<
+  T extends ZodTupleItems | [] = ZodTupleItems,
+  Rest extends ZodTypeAny | null = null
+> extends ZodTypeDef {
   items: T;
+  rest: Rest;
   typeName: ZodFirstPartyTypeKind.ZodTuple;
 }
 
 export class ZodTuple<
-  T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]]
-> extends ZodType<OutputTypeOfTuple<T>, ZodTupleDef<T>, InputTypeOfTuple<T>> {
+  T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]],
+  Rest extends ZodTypeAny | null = null
+> extends ZodType<
+  OutputTypeOfTupleWithRest<T, Rest>,
+  ZodTupleDef<T, Rest>,
+  InputTypeOfTupleWithRest<T, Rest>
+> {
   _parse(
     ctx: ParseContext,
     data: any,
@@ -1962,7 +1982,8 @@ export class ZodTuple<
       return INVALID;
     }
 
-    if (data.length > this._def.items.length) {
+    const rest = this._def.rest;
+    if (!rest && data.length > this._def.items.length) {
       ctx.addIssue(data, {
         code: ZodIssueCode.too_big,
         maximum: this._def.items.length,
@@ -1970,7 +1991,7 @@ export class ZodTuple<
         type: "array",
       });
       return INVALID;
-    } else if (data.length < this._def.items.length) {
+    } else if (!rest && data.length < this._def.items.length) {
       ctx.addIssue(data, {
         code: ZodIssueCode.too_small,
         minimum: this._def.items.length,
@@ -1982,7 +2003,7 @@ export class ZodTuple<
 
     const tasks = createTasks(ctx);
     const items = this._def.items as ZodType<any, any, any>[];
-    const parseResult: any[] = new Array(items.length);
+    const parseResult: any[] = new Array(data.length);
     let invalid = false;
 
     const handleParsed = (index: number, parsedItem: ParseReturnType<any>) => {
@@ -2008,6 +2029,17 @@ export class ZodTuple<
       );
     });
 
+    if (rest) {
+      const restData: any[] = data.slice(items.length);
+      restData.forEach((item, _index) => {
+        const index = _index + items.length;
+        handleParsed(
+          index,
+          rest._parse(ctx.stepInto(index), item, getParsedType(item))
+        );
+      });
+    }
+
     if (tasks !== null && tasks.length > 0) {
       return ASYNC(
         Promise.all(tasks).then(() => (invalid ? INVALID : OK(parseResult)))
@@ -2021,12 +2053,20 @@ export class ZodTuple<
     return this._def.items;
   }
 
+  rest<Rest extends ZodTypeAny>(rest: Rest): ZodTuple<T, Rest> {
+    return new ZodTuple({
+      ...this._def,
+      rest,
+    });
+  }
+
   static create = <T extends [ZodTypeAny, ...ZodTypeAny[]] | []>(
     schemas: T
   ): ZodTuple<T> => {
     return new ZodTuple({
       items: schemas,
       typeName: ZodFirstPartyTypeKind.ZodTuple,
+      rest: null,
     });
   };
 }
