@@ -37,7 +37,7 @@ test("all errors", () => {
       b: null,
     });
   } catch (_error) {
-    const error: z.ZodError = _error;
+    const error = _error as z.ZodError;
     expect(error.flatten()).toEqual({
       formErrors: [],
       fieldErrors: {
