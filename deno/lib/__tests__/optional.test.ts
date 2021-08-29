@@ -9,12 +9,12 @@ function checkErrors(a: z.ZodTypeAny, bad: any) {
   try {
     a.parse(bad);
   } catch (error) {
-    expected = error.formErrors;
+    expected = (error as z.ZodError).formErrors;
   }
   try {
     a.optional().parse(bad);
   } catch (error) {
-    expect(error.formErrors).toEqual(expected);
+    expect((error as z.ZodError).formErrors).toEqual(expected);
   }
 }
 
