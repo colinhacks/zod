@@ -2078,15 +2078,22 @@ export class ZodTuple<
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
-export interface ZodRecordDef<Value extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodRecordDef<
+  Value extends ZodTypeAny = ZodTypeAny,
+  Key extends KeySchema = ZodString
+> extends ZodTypeDef {
   valueType: Value;
+  keyType: Key;
   typeName: ZodFirstPartyTypeKind.ZodRecord;
 }
 
-export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
+type KeySchema = ZodType<string | number | symbol, any, any>;
+export class ZodRecord<
+  Value extends ZodTypeAny = ZodTypeAny,
+  Key extends KeySchema = ZodString
+> extends ZodType<
   Record<string, Value["_output"]>,
-  ZodRecordDef<Value>,
+  ZodRecordDef<Value, Key>,
   Record<string, Value["_input"]>
 > {
   _parse(
@@ -2104,6 +2111,7 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     }
 
     const tasks = createTasks(ctx);
+    const keyType = this._def.keyType;
     const valueType = this._def.valueType;
     const parseResult: Record<string, ParseReturnType<any>> = {};
     let invalid = false;
