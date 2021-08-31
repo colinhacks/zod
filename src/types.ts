@@ -2146,14 +2146,27 @@ export class ZodRecord<
     }
   }
 
-  static create = <Value extends ZodTypeAny = ZodTypeAny>(
+  static create<Value extends ZodTypeAny>(valueType: Value): ZodRecord<Value>;
+  static create<Keys extends KeySchema, Value extends ZodTypeAny>(
     valueType: Value
-  ): ZodRecord<Value> => {
+  ): ZodRecord<Value>;
+  static create<Value extends ZodTypeAny = ZodTypeAny>(
+    first: any,
+    second?: any
+  ): ZodRecord<Value> {
+    if (second) {
+      return new ZodRecord({
+        keyType: first,
+        valueType: second,
+        typeName: ZodFirstPartyTypeKind.ZodRecord,
+      });
+    }
     return new ZodRecord({
-      valueType,
+      keyType: ZodString.create(),
+      valueType: first,
       typeName: ZodFirstPartyTypeKind.ZodRecord,
     });
-  };
+  }
 }
 
 //////////////////////////////////////
