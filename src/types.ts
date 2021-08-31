@@ -557,7 +557,8 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 type ZodNumberCheck =
   | { kind: "min"; value: number; inclusive: boolean; message?: string }
   | { kind: "max"; value: number; inclusive: boolean; message?: string }
-  | { kind: "int"; message?: string };
+  | { kind: "int"; message?: string }
+  | { kind: "multipleOf"; value: number; message?: string };
 
 export interface ZodNumberDef extends ZodTypeDef {
   checks: ZodNumberCheck[];
@@ -619,6 +620,15 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             maximum: check.value,
             type: "number",
             inclusive: check.inclusive,
+            message: check.message,
+          });
+        }
+      } else if (check.kind === "multipleOf") {
+        if (data % check.value !== 0) {
+          invalid = true;
+          ctx.addIssue(data, {
+            code: ZodIssueCode.not_multiple_of,
+            multipleOf: check.value,
             message: check.message,
           });
         }
@@ -735,6 +745,21 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         },
       ],
     });
+
+  multipleOf = (value: number, message?: errorUtil.ErrMessage) =>
+    new ZodNumber({
+      ...this._def,
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "multipleOf",
+          value: value,
+          message: errorUtil.toString(message),
+        },
+      ],
+    });
+
+  mod = this.multipleOf;
 
   get minValue() {
     let min: number | null = null;
