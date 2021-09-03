@@ -9,6 +9,8 @@ const gteFive = z.number().gte(5);
 const ltFive = z.number().lt(5);
 const lteFive = z.number().lte(5);
 const intNum = z.number().int();
+const multipleOfFive = z.number().multipleOf(5);
+const stepSixPointFour = z.number().step(6.4);
 
 test("passing validations", () => {
   gtFive.parse(6);
@@ -16,6 +18,8 @@ test("passing validations", () => {
   ltFive.parse(4);
   lteFive.parse(5);
   intNum.parse(4);
+  multipleOfFive.parse(15);
+  stepSixPointFour.parse(12.8);
 });
 
 test("failing validations", () => {
@@ -24,6 +28,8 @@ test("failing validations", () => {
   expect(() => gtFive.parse(5)).toThrow();
   expect(() => gteFive.parse(4)).toThrow();
   expect(() => intNum.parse(3.14)).toThrow();
+  expect(() => multipleOfFive.parse(14.9)).toThrow();
+  expect(() => stepSixPointFour.parse(6.41)).toThrow();
 });
 
 test("parse NaN", () => {

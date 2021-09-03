@@ -35,6 +35,7 @@
     - [.merge](#merge)
     - [.pick/.omit](#pickomit)
     - [.partial](#partial)
+    - [.partialBy](#partialBy)
     - [.deepPartial](#deepPartial)
     - [.passthrough](#passthrough)
     - [.strict](#strict)
@@ -242,7 +243,7 @@ const User = z.object({
   username: z.string(),
 });
 
-User.parse({ username: string });
+User.parse({ username: "Ludwig" });
 
 // extract the inferred type
 type User = z.infer<typeof User>;
@@ -343,6 +344,8 @@ z.number().positive(); //     > 0
 z.number().nonnegative(); //  >= 0
 z.number().negative(); //     < 0
 z.number().nonpositive(); //  <= 0
+
+z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
 ```
 
 Optionally, you can pass in a second argument to provide a custom error message.
@@ -452,6 +455,34 @@ We can create a partial version:
 ```ts
 const partialUser = user.partial();
 // { username?: string | undefined }
+```
+
+### `.partialBy`
+
+All Zod object schemas have a `.partialBy` method which returns a modified version with the specified properties optional.
+
+Starting from this object:
+
+```ts
+const Recipe = z.object({
+  id: z.string(),
+  name: z.string(),
+  ingredients: z.array(z.string()),
+});
+```
+
+To make certain keys optional:
+
+```ts
+const OptionalName = Recipe.partialBy({ name: true });
+type OptionalName = z.infer<typeof OptionalName>;
+/* 
+{
+  id: string,
+  name?: string | undefined, 
+  ingredients: string[]
+}
+*/
 ```
 
 ### `.deepPartial`
