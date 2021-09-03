@@ -1879,7 +1879,7 @@ export class ZodIntersection<
     ctx: ParseContext,
     data: any,
     parsedType: ZodParsedType
-  ): ParseReturnType<T & U> {
+  ): ParseReturnType<T["_output"] & U["_output"]> {
     const handleParsed = (
       parsedLeft: SyncParseReturnType<T>,
       parsedRight: SyncParseReturnType<U>
