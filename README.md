@@ -35,6 +35,7 @@
     - [.merge](#merge)
     - [.pick/.omit](#pickomit)
     - [.partial](#partial)
+    - [.partialBy](#partialBy)
     - [.deepPartial](#deepPartial)
     - [.passthrough](#passthrough)
     - [.strict](#strict)
@@ -454,6 +455,34 @@ We can create a partial version:
 ```ts
 const partialUser = user.partial();
 // { username?: string | undefined }
+```
+
+### `.partialBy`
+
+All Zod object schemas have a `.partialBy` method which returns a modified version with the specified properties optional.
+
+Starting from this object:
+
+```ts
+const Recipe = z.object({
+  id: z.string(),
+  name: z.string(),
+  ingredients: z.array(z.string()),
+});
+```
+
+To make certain keys optional:
+
+```ts
+const OptionalName = Recipe.partialBy({ name: true });
+type OptionalName = z.infer<typeof OptionalName>;
+/* 
+{
+  id: string,
+  name?: string | undefined, 
+  ingredients: string[]
+}
+*/
 ```
 
 ### `.deepPartial`

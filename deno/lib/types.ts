@@ -1692,6 +1692,33 @@ export class ZodObject<
     return deepPartialify(this) as any;
   };
 
+  partialBy = <Mask extends { [k in keyof T]?: true }>(
+    mask: Mask
+  ): ZodObject<
+    objectUtil.noNever<
+      {
+        [k in keyof T]: k extends keyof Mask
+          ? ReturnType<T[k]["optional"]>
+          : T[k];
+      }
+    >,
+    UnknownKeys,
+    Catchall
+  > => {
+    const newShape: any = {};
+    util.objectKeys(this.shape).map((key) => {
+      if (util.objectKeys(mask).indexOf(key) === -1) {
+        newShape[key] = this.shape[key];
+      } else {
+        newShape[key] = this.shape[key].optional();
+      }
+    });
+    return new ZodObject({
+      ...this._def,
+      shape: () => newShape,
+    }) as any;
+  };
+
   required = (): ZodObject<
     { [k in keyof T]: deoptional<T[k]> },
     UnknownKeys,
