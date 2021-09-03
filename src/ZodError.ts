@@ -14,6 +14,7 @@ export const ZodIssueCode = util.arrayToEnum([
   "too_small",
   "too_big",
   "invalid_intersection_types",
+  "not_multiple_of",
 ]);
 
 export type ZodIssueCode = keyof typeof ZodIssueCode;
@@ -84,6 +85,11 @@ export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_intersection_types;
 }
 
+export interface ZodNotMultipleOfIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.not_multiple_of;
+  multipleOf: number;
+}
+
 export interface ZodCustomIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.custom;
   params?: { [k: string]: any };
@@ -103,6 +109,7 @@ export type ZodIssueOptionalMessage =
   | ZodTooSmallIssue
   | ZodTooBigIssue
   | ZodInvalidIntersectionTypesIssue
+  | ZodNotMultipleOfIssue
   | ZodCustomIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & { message: string };
@@ -325,6 +332,9 @@ export const defaultErrorMap = (
       break;
     case ZodIssueCode.invalid_intersection_types:
       message = `Intersection results could not be merged`;
+      break;
+    case ZodIssueCode.not_multiple_of:
+      message = `Should be multiple of ${error.multipleOf}`;
       break;
     default:
       message = _ctx.defaultError;

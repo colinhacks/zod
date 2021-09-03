@@ -243,7 +243,7 @@ const User = z.object({
   username: z.string(),
 });
 
-User.parse({ username: string });
+User.parse({ username: "Ludwig" });
 
 // extract the inferred type
 type User = z.infer<typeof User>;
@@ -344,6 +344,8 @@ z.number().positive(); //     > 0
 z.number().nonnegative(); //  >= 0
 z.number().negative(); //     < 0
 z.number().nonpositive(); //  <= 0
+
+z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
 ```
 
 Optionally, you can pass in a second argument to provide a custom error message.
