@@ -758,8 +758,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         },
       ],
     });
-
-  mod = this.multipleOf;
+  step = this.multipleOf;
 
   get minValue() {
     let min: number | null = null;

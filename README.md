@@ -344,7 +344,7 @@ z.number().nonnegative(); //  >= 0
 z.number().negative(); //     < 0
 z.number().nonpositive(); //  <= 0
 
-z.number().multipleOf(5); // Evenly divisible by 5. Alias .mod(5)
+z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
 ```
 
 Optionally, you can pass in a second argument to provide a custom error message.
