@@ -92,6 +92,7 @@ test("tuple with rest schema", () => {
   const f1: util.AssertEqual<t1, [string, number, ...boolean[]]> = true;
   f1;
 });
+
 // test('tuple with optional elements', () => {
 //   const result = z
 //     .tuple([z.string(), z.number().optional()])

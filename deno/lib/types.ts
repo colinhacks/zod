@@ -1931,9 +1931,12 @@ export class ZodIntersection<
 ////////////////////////////////////////
 ////////////////////////////////////////
 export type ZodTupleItems = [ZodTypeAny, ...ZodTypeAny[]];
-export type OutputTypeOfTuple<T extends ZodTupleItems | []> = {
-  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
-};
+export type AssertArray<T extends any> = T extends any[] ? T : never;
+export type OutputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<
+  {
+    [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
+  }
+>;
 export type OutputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
   Rest extends ZodTypeAny | null = null
@@ -1941,9 +1944,11 @@ export type OutputTypeOfTupleWithRest<
   ? [...OutputTypeOfTuple<T>, ...Rest["_output"][]]
   : OutputTypeOfTuple<T>;
 
-export type InputTypeOfTuple<T extends ZodTupleItems | []> = {
-  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_input"] : never;
-};
+export type InputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<
+  {
+    [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_input"] : never;
+  }
+>;
 export type InputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
   Rest extends ZodTypeAny | null = null
@@ -1983,6 +1988,7 @@ export class ZodTuple<
     }
 
     const rest = this._def.rest;
+
     if (!rest && data.length > this._def.items.length) {
       ctx.addIssue(data, {
         code: ZodIssueCode.too_big,
@@ -1991,7 +1997,9 @@ export class ZodTuple<
         type: "array",
       });
       return INVALID;
-    } else if (!rest && data.length < this._def.items.length) {
+    }
+
+    if (data.length < this._def.items.length) {
       ctx.addIssue(data, {
         code: ZodIssueCode.too_small,
         minimum: this._def.items.length,
@@ -2003,6 +2011,7 @@ export class ZodTuple<
 
     const tasks = createTasks(ctx);
     const items = this._def.items as ZodType<any, any, any>[];
+
     const parseResult: any[] = new Array(data.length);
     let invalid = false;
 
@@ -2031,11 +2040,11 @@ export class ZodTuple<
 
     if (rest) {
       const restData: any[] = data.slice(items.length);
-      restData.forEach((item, _index) => {
+      restData.forEach((dataItem, _index) => {
         const index = _index + items.length;
         handleParsed(
           index,
-          rest._parse(ctx.stepInto(index), item, getParsedType(item))
+          rest._parse(ctx.stepInto(index), dataItem, getParsedType(dataItem))
         );
       });
     }
