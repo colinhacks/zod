@@ -2105,6 +2105,12 @@ export class ZodRecord<
   ZodRecordDef<Key, Value>,
   Record<Key["_input"], Value["_input"]>
 > {
+  get keySchema() {
+    return this._def.keyType;
+  }
+  get valueSchema() {
+    return this._def.valueType;
+  }
   _parse(
     ctx: ParseContext,
     data: any,
