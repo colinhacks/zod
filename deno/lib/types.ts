@@ -2088,8 +2088,8 @@ export class ZodTuple<
 /////////////////////////////////////////
 /////////////////////////////////////////
 export interface ZodRecordDef<
-  Value extends ZodTypeAny = ZodTypeAny,
-  Key extends KeySchema = ZodString
+  Key extends KeySchema = ZodString,
+  Value extends ZodTypeAny = ZodTypeAny
 > extends ZodTypeDef {
   valueType: Value;
   keyType: Key;
@@ -2098,18 +2098,18 @@ export interface ZodRecordDef<
 
 type KeySchema = ZodType<string | number | symbol, any, any>;
 export class ZodRecord<
-  Value extends ZodTypeAny = ZodTypeAny,
-  Key extends KeySchema = ZodString
+  Key extends KeySchema = ZodString,
+  Value extends ZodTypeAny = ZodTypeAny
 > extends ZodType<
-  Record<string, Value["_output"]>,
-  ZodRecordDef<Value, Key>,
-  Record<string, Value["_input"]>
+  Record<Key["_output"], Value["_output"]>,
+  ZodRecordDef<Key, Value>,
+  Record<Key["_input"], Value["_input"]>
 > {
   _parse(
     ctx: ParseContext,
     data: any,
     parsedType: ZodParsedType
-  ): ParseReturnType<Record<string, any>> {
+  ): ParseReturnType<Record<any, any>> {
     if (parsedType !== ZodParsedType.object) {
       ctx.addIssue(data, {
         code: ZodIssueCode.invalid_type,
@@ -2125,23 +2125,27 @@ export class ZodRecord<
     const parseResult: Record<string, ParseReturnType<any>> = {};
     let invalid = false;
     const handleParsed = (
-      key: string,
-      parsedKey: ParseReturnType<any>
+      parsedKey: ParseReturnType<any>,
+      parsedValue: ParseReturnType<any>
     ): void => {
-      if (isOk(parsedKey)) {
-        parseResult[key] = parsedKey.value;
+      if (isOk(parsedKey) && isOk(parsedValue)) {
+        parseResult[parsedKey.value] = parsedValue.value;
       } else if (isInvalid(parsedKey)) {
         invalid = true;
-      } else {
+      } else if (isInvalid(parsedValue)) {
+        invalid = true;
+      } else if (isAsync(parsedKey) || isAsync(parsedValue)) {
         tasks?.push(
-          parsedKey.promise.then((parsed) => handleParsed(key, parsed))
+          PseudoPromise.all([parsedKey, parsedValue]).promise.then(([k, v]) =>
+            handleParsed(k, v)
+          )
         );
       }
     };
 
     for (const key in data) {
       handleParsed(
-        key,
+        keyType._parse(ctx.stepInto(key), key, getParsedType(key)),
         valueType._parse(ctx.stepInto(key), data[key], getParsedType(data[key]))
       );
     }
@@ -2155,14 +2159,14 @@ export class ZodRecord<
     }
   }
 
-  static create<Value extends ZodTypeAny>(valueType: Value): ZodRecord<Value>;
-  static create<Keys extends KeySchema, Value extends ZodTypeAny>(
+  static create<Value extends ZodTypeAny>(
     valueType: Value
-  ): ZodRecord<Value>;
-  static create<Value extends ZodTypeAny = ZodTypeAny>(
-    first: any,
-    second?: any
-  ): ZodRecord<Value> {
+  ): ZodRecord<ZodString, Value>;
+  static create<Keys extends KeySchema, Value extends ZodTypeAny>(
+    keySchema: Keys,
+    valueType: Value
+  ): ZodRecord<Keys, Value>;
+  static create(first: any, second?: any): ZodRecord<any, any> {
     if (second) {
       return new ZodRecord({
         keyType: first,
