@@ -2071,7 +2071,7 @@ export class ZodTuple<
 
   static create = <T extends [ZodTypeAny, ...ZodTypeAny[]] | []>(
     schemas: T
-  ): ZodTuple<T> => {
+  ): ZodTuple<T, null> => {
     return new ZodTuple({
       items: schemas,
       typeName: ZodFirstPartyTypeKind.ZodTuple,
@@ -2368,7 +2368,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 export interface ZodFunctionDef<
-  Args extends ZodTuple<any> = ZodTuple<any>,
+  Args extends ZodTuple<any, any> = ZodTuple<any, any>,
   Returns extends ZodTypeAny = ZodTypeAny
 > extends ZodTypeDef {
   args: Args;
@@ -2377,21 +2377,21 @@ export interface ZodFunctionDef<
 }
 
 export type OuterTypeOfFunction<
-  Args extends ZodTuple<any>,
+  Args extends ZodTuple<any, any>,
   Returns extends ZodTypeAny
 > = Args["_input"] extends Array<any>
   ? (...args: Args["_input"]) => Returns["_output"]
   : never;
 
 export type InnerTypeOfFunction<
-  Args extends ZodTuple<any>,
+  Args extends ZodTuple<any, any>,
   Returns extends ZodTypeAny
 > = Args["_output"] extends Array<any>
   ? (...args: Args["_output"]) => Returns["_input"]
   : never;
 
 export class ZodFunction<
-  Args extends ZodTuple<any>,
+  Args extends ZodTuple<any, any>,
   Returns extends ZodTypeAny
 > extends ZodType<
   OuterTypeOfFunction<Args, Returns>,
@@ -2474,7 +2474,7 @@ export class ZodFunction<
 
   args = <Items extends Parameters<typeof ZodTuple["create"]>[0]>(
     ...items: Items
-  ): ZodFunction<ZodTuple<Items>, Returns> => {
+  ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> => {
     return new ZodFunction({
       ...this._def,
       args: ZodTuple.create(items).rest(ZodUnknown.create()) as any,
@@ -2505,7 +2505,7 @@ export class ZodFunction<
   validate = this.implement;
 
   static create = <
-    T extends ZodTuple<any> = ZodTuple<[]>,
+    T extends ZodTuple<any, any> = ZodTuple<[], ZodUnknown>,
     U extends ZodTypeAny = ZodUnknown
   >(
     args?: T,
