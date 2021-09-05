@@ -2477,7 +2477,7 @@ export class ZodFunction<
   ): ZodFunction<ZodTuple<Items>, Returns> => {
     return new ZodFunction({
       ...this._def,
-      args: ZodTuple.create(items),
+      args: ZodTuple.create(items).rest(ZodUnknown.create()) as any,
     });
   };
 
@@ -2512,7 +2512,9 @@ export class ZodFunction<
     returns?: U
   ): ZodFunction<T, U> => {
     return new ZodFunction({
-      args: args || ZodTuple.create([]),
+      args: (args
+        ? args.rest(ZodUnknown.create())
+        : ZodTuple.create([]).rest(ZodUnknown.create())) as any,
       returns: returns || ZodUnknown.create(),
       typeName: ZodFirstPartyTypeKind.ZodFunction,
     }) as any;
