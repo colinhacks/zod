@@ -185,3 +185,23 @@ test("non async function with async refinements should fail", async () => {
 
   expect(results).toEqual(["fail"]);
 });
+
+test("allow extra parameters", () => {
+  const maxLength5 = z
+    .function()
+    .args(z.string())
+    .returns(z.boolean())
+    .implement((str, _arg, _qewr) => {
+      return str.length <= 5;
+    });
+
+  const filteredList = [
+    "apple",
+    "orange",
+    "pear",
+    "banana",
+    "strawberry",
+  ].filter(maxLength5);
+  console.log(filteredList);
+  expect(filteredList.length).toEqual(2);
+});
