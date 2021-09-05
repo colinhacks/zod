@@ -1670,54 +1670,53 @@ export class ZodObject<
     }) as any;
   };
 
-  partial = (): ZodObject<
-    { [k in keyof T]: ReturnType<T[k]["optional"]> },
-    UnknownKeys,
-    Catchall
-  > => {
-    const newShape: any = {};
-    for (const key in this.shape) {
-      const fieldSchema = this.shape[key];
-      newShape[key] = fieldSchema.isOptional()
-        ? fieldSchema
-        : fieldSchema.optional();
-    }
-    return new ZodObject({
-      ...this._def,
-      shape: () => newShape,
-    }) as any;
-  };
-
   deepPartial: () => partialUtil.DeepPartial<this> = () => {
     return deepPartialify(this) as any;
   };
 
-  partialBy = <Mask extends { [k in keyof T]?: true }>(
+  partial(): ZodObject<
+    { [k in keyof T]: ZodOptional<T[k]> },
+    UnknownKeys,
+    Catchall
+  >;
+  partial<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
   ): ZodObject<
     objectUtil.noNever<
       {
-        [k in keyof T]: k extends keyof Mask
-          ? ReturnType<T[k]["optional"]>
-          : T[k];
+        [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
       }
     >,
     UnknownKeys,
     Catchall
-  > => {
+  >;
+  partial(mask?: any) {
     const newShape: any = {};
-    util.objectKeys(this.shape).map((key) => {
-      if (util.objectKeys(mask).indexOf(key) === -1) {
-        newShape[key] = this.shape[key];
-      } else {
-        newShape[key] = this.shape[key].optional();
+    if (mask) {
+      // const newShape: any = {};
+      util.objectKeys(this.shape).map((key) => {
+        if (util.objectKeys(mask).indexOf(key) === -1) {
+          newShape[key] = this.shape[key];
+        } else {
+          newShape[key] = this.shape[key].optional();
+        }
+      });
+      return new ZodObject({
+        ...this._def,
+        shape: () => newShape,
+      }) as any;
+    } else {
+      for (const key in this.shape) {
+        const fieldSchema = this.shape[key];
+        newShape[key] = fieldSchema.optional();
       }
-    });
+    }
+
     return new ZodObject({
       ...this._def,
       shape: () => newShape,
     }) as any;
-  };
+  }
 
   required = (): ZodObject<
     { [k in keyof T]: deoptional<T[k]> },

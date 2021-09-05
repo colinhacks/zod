@@ -11,7 +11,7 @@ const fish = z.object({
 });
 
 test("partial by type inference", () => {
-  const optionalNameFish = fish.partialBy({ name: true });
+  const optionalNameFish = fish.partial({ name: true });
   type optionalNameFish = z.infer<typeof optionalNameFish>;
   const f1: util.AssertEqual<
     optionalNameFish,
@@ -21,18 +21,18 @@ test("partial by type inference", () => {
 });
 
 test("partial by parse - success", () => {
-  const nameOptionalFish = fish.partialBy({ name: true });
+  const nameOptionalFish = fish.partial({ name: true });
   nameOptionalFish.parse({ age: 0, nested: {} });
 });
 
 test("partial by parse - fail", () => {
-  fish.partialBy({ name: true, age: true }).parse({ nested: {} } as any);
+  fish.partial({ name: true, age: true }).parse({ nested: {} } as any);
   fish
-    .partialBy({ name: true })
+    .partial({ name: true })
     .parse({ name: "bob", age: 12, nested: {} } as any);
-  fish.partialBy({ name: true }).parse({ age: 12, nested: {} } as any);
+  fish.partial({ name: true }).parse({ age: 12, nested: {} } as any);
 
-  const nameOptionalFish = fish.partialBy({ name: true });
+  const nameOptionalFish = fish.partial({ name: true });
   const bad1 = () =>
     nameOptionalFish.parse({ name: 12, age: 12, nested: {} } as any);
   const bad2 = () => nameOptionalFish.parse({ age: 12 } as any);
