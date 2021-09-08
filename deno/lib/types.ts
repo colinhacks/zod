@@ -158,10 +158,10 @@ export abstract class ZodType<
   /** The .check method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
   check: never;
 
-  refine: <Func extends (arg: Output) => any, This extends this = this>(
+  refine: <Func extends (arg: Output) => any>(
     check: Func,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
-  ) => ZodEffectsType<This> = (check, message) => {
+  ) => ZodEffects<this> = (check, message) => {
     const getIssueProperties: any = (val: Output) => {
       if (typeof message === "string" || typeof message === "undefined") {
         return { message };
@@ -202,7 +202,7 @@ export abstract class ZodType<
     refinementData:
       | MakeErrorData
       | ((arg: Output, ctx: RefinementCtx) => MakeErrorData)
-  ) => ZodEffectsType<This> = (check, refinementData) => {
+  ) => ZodEffects<This> = (check, refinementData) => {
     return this._refinement((val, ctx) => {
       if (!check(val)) {
         ctx.addIssue(
@@ -219,24 +219,29 @@ export abstract class ZodType<
 
   _refinement<This extends this>(
     refinement: InternalCheck<Output>["refinement"]
-  ): ZodEffectsType<This> {
-    let returnType;
-    if (this instanceof ZodEffects) {
-      returnType = new ZodEffects({
-        ...this._def,
-        effects: [
-          ...(this._def.effects || []),
-          { type: "refinement", refinement },
-        ],
-      }) as any;
-    } else {
-      returnType = new ZodEffects({
-        schema: this,
-        typeName: ZodFirstPartyTypeKind.ZodEffects,
-        effects: [{ type: "refinement", refinement }],
-      }) as any;
-    }
-    return returnType;
+  ): ZodEffects<This> {
+    // let returnType;
+    // if (this instanceof ZodEffects) {
+    //   returnType = new ZodEffects({
+    //     ...this._def,
+    //     effects: [
+    //       ...(this._def.effects || []),
+    //       { type: "refinement", refinement },
+    //     ],
+    //   }) as any;
+    // } else {
+    // returnType = new ZodEffects({
+    //   schema: this,
+    //   typeName: ZodFirstPartyTypeKind.ZodEffects,
+    //   effects: [{ type: "refinement", refinement }],
+    // }) as any;
+    // }
+    // return returnType;
+    return new ZodEffects({
+      schema: this,
+      typeName: ZodFirstPartyTypeKind.ZodEffects,
+      effects: [{ type: "refinement", refinement }],
+    }) as any;
   }
   superRefine = this._refinement;
 
@@ -2791,9 +2796,9 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 //////////                          //////////
 //////////////////////////////////////////////
 //////////////////////////////////////////////
-type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<any, any>
-  ? T
-  : ZodEffects<T, T["_output"]>;
+// type ZodEffectsType<T extends ZodTypeAny> = T extends ZodEffects<any,any>
+//   ? T
+//   : ZodEffects<T, T["_output"]>;
 
 export type Refinement<T> = (arg: T, ctx: RefinementCtx) => any;
 export type SuperRefinement<T> = (arg: T, ctx: RefinementCtx) => void;
