@@ -351,6 +351,8 @@ z.number().positive(); //     > 0
 z.number().nonnegative(); //  >= 0
 z.number().negative(); //     < 0
 z.number().nonpositive(); //  <= 0
+
+z.number().multipleOf(5); // x % 5 === 0
 ```
 
 你可以选择传入第二个参数来提供一个自定义的错误信息。

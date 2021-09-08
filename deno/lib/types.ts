@@ -557,7 +557,8 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 type ZodNumberCheck =
   | { kind: "min"; value: number; inclusive: boolean; message?: string }
   | { kind: "max"; value: number; inclusive: boolean; message?: string }
-  | { kind: "int"; message?: string };
+  | { kind: "int"; message?: string }
+  | { kind: "multipleOf"; value: number; message?: string };
 
 export interface ZodNumberDef extends ZodTypeDef {
   checks: ZodNumberCheck[];
@@ -619,6 +620,15 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             maximum: check.value,
             type: "number",
             inclusive: check.inclusive,
+            message: check.message,
+          });
+        }
+      } else if (check.kind === "multipleOf") {
+        if (data % check.value !== 0) {
+          invalid = true;
+          ctx.addIssue(data, {
+            code: ZodIssueCode.not_multiple_of,
+            multipleOf: check.value,
             message: check.message,
           });
         }
@@ -735,6 +745,20 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         },
       ],
     });
+
+  multipleOf = (value: number, message?: errorUtil.ErrMessage) =>
+    new ZodNumber({
+      ...this._def,
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "multipleOf",
+          value: value,
+          message: errorUtil.toString(message),
+        },
+      ],
+    });
+  step = this.multipleOf;
 
   get minValue() {
     let min: number | null = null;
@@ -1646,27 +1670,53 @@ export class ZodObject<
     }) as any;
   };
 
-  partial = (): ZodObject<
-    { [k in keyof T]: ReturnType<T[k]["optional"]> },
+  deepPartial: () => partialUtil.DeepPartial<this> = () => {
+    return deepPartialify(this) as any;
+  };
+
+  partial(): ZodObject<
+    { [k in keyof T]: ZodOptional<T[k]> },
     UnknownKeys,
     Catchall
-  > => {
+  >;
+  partial<Mask extends { [k in keyof T]?: true }>(
+    mask: Mask
+  ): ZodObject<
+    objectUtil.noNever<
+      {
+        [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
+      }
+    >,
+    UnknownKeys,
+    Catchall
+  >;
+  partial(mask?: any) {
     const newShape: any = {};
-    for (const key in this.shape) {
-      const fieldSchema = this.shape[key];
-      newShape[key] = fieldSchema.isOptional()
-        ? fieldSchema
-        : fieldSchema.optional();
+    if (mask) {
+      // const newShape: any = {};
+      util.objectKeys(this.shape).map((key) => {
+        if (util.objectKeys(mask).indexOf(key) === -1) {
+          newShape[key] = this.shape[key];
+        } else {
+          newShape[key] = this.shape[key].optional();
+        }
+      });
+      return new ZodObject({
+        ...this._def,
+        shape: () => newShape,
+      }) as any;
+    } else {
+      for (const key in this.shape) {
+        const fieldSchema = this.shape[key];
+        newShape[key] = fieldSchema.optional();
+      }
     }
+
     return new ZodObject({
       ...this._def,
       shape: () => newShape,
     }) as any;
-  };
-
-  deepPartial: () => partialUtil.DeepPartial<this> = () => {
-    return deepPartialify(this) as any;
-  };
+  }
 
   required = (): ZodObject<
     { [k in keyof T]: deoptional<T[k]> },
@@ -1879,7 +1929,7 @@ export class ZodIntersection<
     ctx: ParseContext,
     data: any,
     parsedType: ZodParsedType
-  ): ParseReturnType<T & U> {
+  ): ParseReturnType<T["_output"] & U["_output"]> {
     const handleParsed = (
       parsedLeft: SyncParseReturnType<T>,
       parsedRight: SyncParseReturnType<U>

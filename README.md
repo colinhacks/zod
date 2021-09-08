@@ -242,7 +242,7 @@ const User = z.object({
   username: z.string(),
 });
 
-User.parse({ username: string });
+User.parse({ username: "Ludwig" });
 
 // extract the inferred type
 type User = z.infer<typeof User>;
@@ -343,6 +343,8 @@ z.number().positive(); //     > 0
 z.number().nonnegative(); //  >= 0
 z.number().negative(); //     < 0
 z.number().nonpositive(); //  <= 0
+
+z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
 ```
 
 Optionally, you can pass in a second argument to provide a custom error message.
@@ -442,16 +444,31 @@ Starting from this object:
 
 ```ts
 const user = z.object({
+  email: z.string()
   username: z.string(),
 });
-// { username: string }
+// { email: string; username: string }
 ```
 
 We can create a partial version:
 
 ```ts
 const partialUser = user.partial();
-// { username?: string | undefined }
+// { email?: string | undefined; username?: string | undefined }
+```
+
+You can also specify which properties to make optional:
+
+```ts
+const optionalEmail = user.partial({
+  email: true,
+});
+/* 
+{ 
+  email?: string | undefined; 
+  username: string
+} 
+*/
 ```
 
 ### `.deepPartial`
