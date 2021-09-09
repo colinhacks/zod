@@ -2,7 +2,6 @@ import { PseudoPromise } from "../PseudoPromise";
 import {
   defaultErrorMap,
   MakeErrorData,
-  overrideErrorMap,
   ZodError,
   ZodErrorMap,
   ZodIssue,
@@ -173,14 +172,6 @@ export class ParseContext {
     this.issues.push(issue);
   }
 }
-
-export const createRootContext = (
-  params: Partial<ParseParamsNoData>
-): ParseContext =>
-  new ParseContext(EMPTY_PATH, [], {
-    async: params.async ?? false,
-    errorMap: params.errorMap || overrideErrorMap,
-  });
 
 export type INVALID = { valid: false };
 export const INVALID: INVALID = Object.freeze({ valid: false });

@@ -72,6 +72,9 @@ const handleResult = <Input, Output>(
   if (isOk(result)) {
     return { success: true, data: result.value };
   } else {
+    if (parentError) {
+      console.log("PARENTERROR EXISTS");
+    }
     parentError?.addIssues(ctx.issues);
     const error = new ZodError(ctx.issues);
     return { success: false, error };
