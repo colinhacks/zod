@@ -2,7 +2,6 @@ import { PseudoPromise } from "../PseudoPromise.ts";
 import {
   defaultErrorMap,
   MakeErrorData,
-  ZodError,
   ZodErrorMap,
   ZodIssue,
 } from "../ZodError.ts";
@@ -106,7 +105,6 @@ export type ParseParams = {
   data: any;
   path: (string | number)[];
   errorMap: ZodErrorMap;
-  parentError: ZodError;
   async: boolean;
 };
 

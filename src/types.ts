@@ -64,18 +64,13 @@ const createRootContext = (params: Partial<ParseParamsNoData>): ParseContext =>
 
 const handleResult = <Input, Output>(
   ctx: ParseContext,
-  result: SyncParseReturnType<Output>,
-  parentError: ZodError | undefined
+  result: SyncParseReturnType<Output>
 ):
   | { success: true; data: Output }
   | { success: false; error: ZodError<Input> } => {
   if (isOk(result)) {
     return { success: true, data: result.value };
   } else {
-    if (parentError) {
-      console.log("PARENTERROR EXISTS");
-    }
-    parentError?.addIssues(ctx.issues);
     const error = new ZodError(ctx.issues);
     return { success: false, error };
   }
@@ -126,7 +121,7 @@ export abstract class ZodType<
     | { success: false; error: ZodError<Input> } = (data, params) => {
     const ctx = createRootContext({ ...params, async: false });
     const result = this._parseSync(ctx, data, getParsedType(data));
-    return handleResult(ctx, result, params?.parentError);
+    return handleResult(ctx, result);
   };
 
   parseAsync: (
@@ -149,7 +144,7 @@ export abstract class ZodType<
     const result = await (isAsync(maybeAsyncResult)
       ? maybeAsyncResult.promise
       : Promise.resolve(maybeAsyncResult));
-    return handleResult(ctx, result, params?.parentError);
+    return handleResult(ctx, result);
   };
 
   /** Alias of safeParseAsync */
