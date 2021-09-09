@@ -202,6 +202,5 @@ test("allow extra parameters", () => {
     "banana",
     "strawberry",
   ].filter(maxLength5);
-  console.log(filteredList);
   expect(filteredList.length).toEqual(2);
 });

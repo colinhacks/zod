@@ -1,7 +1,7 @@
 import { PseudoPromise } from "../PseudoPromise.ts";
 import {
   defaultErrorMap,
-  MakeErrorData,
+  IssueData,
   overrideErrorMap,
   ZodError,
   ZodErrorMap,
@@ -79,7 +79,7 @@ export const makeIssue = (
   data: any,
   path: (string | number)[],
   errorMap: ZodErrorMap,
-  errorData: MakeErrorData
+  errorData: IssueData
 ): ZodIssue => {
   const fullPath = [...path, ...(errorData.path || [])];
   const errorArg = {
@@ -163,7 +163,7 @@ export class ParseContext {
     );
   }
 
-  addIssue(data: any, errorData: MakeErrorData): void {
+  addIssue(data: any, errorData: IssueData): void {
     const issue = makeIssue(
       data,
       pathToArray(this.path),

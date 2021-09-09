@@ -370,19 +370,26 @@ test("ensure early async failure prevents follow-up refinement checks", async ()
       .number()
       .refine(async () => {
         count++;
-        return false;
+        console.log(`BAD`);
+        return true;
       })
       .refine(async () => {
         count++;
+        console.log(`GOOD`);
         return true;
-      }),
+      }, "Good"),
   });
 
   const testval = { hello: "bye", foo: 3 };
-  const result = base.safeParseAsync(testval);
-
-  await result.then((r) => {
-    if (r.success === false) expect(r.error.issues.length).toBe(1);
+  const result = await base.safeParseAsync(testval);
+  console.log(result);
+  if (result.success === false) {
+    expect(result.error.issues.length).toBe(1);
     expect(count).toBe(2);
-  });
+  }
+  return result;
+  // await result.then((r) => {
+  //   if (r.success === false) expect(r.error.issues.length).toBe(1);
+  //   expect(count).toBe(2);
+  // });
 });
