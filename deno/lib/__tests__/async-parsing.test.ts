@@ -370,12 +370,10 @@ test("ensure early async failure prevents follow-up refinement checks", async ()
       .number()
       .refine(async () => {
         count++;
-        console.log(`BAD`);
         return true;
       })
       .refine(async () => {
         count++;
-        console.log(`GOOD`);
         return true;
       }, "Good"),
   });
@@ -385,7 +383,7 @@ test("ensure early async failure prevents follow-up refinement checks", async ()
   console.log(result);
   if (result.success === false) {
     expect(result.error.issues.length).toBe(1);
-    expect(count).toBe(2);
+    expect(count).toBe(1);
   }
   return result;
   // await result.then((r) => {
