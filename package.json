@@ -9,7 +9,7 @@
     "./package.json": "./package.json",
     ".": {
       "require": "./lib/index.js",
-      "import": "./lib/index.mjs",
+      "import": "./lib/index.mjs"
     }
   },
   "files": [
