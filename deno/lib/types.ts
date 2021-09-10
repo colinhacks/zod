@@ -2902,7 +2902,7 @@ export class ZodEffects<
   constructor(def: ZodEffectsDef<T>) {
     super(def);
     // if (def.schema instanceof ZodEffects) {
-    //   throw new Error(ZodFirstPartyTypeKind.ZodEffectscannot be nested.");
+    //   throw new Error(ZodFirstPartyTypeKind.ZodEffects cannot be nested.");
     // }
   }
 
