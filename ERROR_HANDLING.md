@@ -106,7 +106,7 @@ try {
     names: ["Dave", 12], // 12 is not a string
     address: {
       line1: "123 Maple Ave",
-      zipCode: 123, // zip code isnt 5 digits
+      zipCode: 123, // zip code isn't 5 digits
       extra: "other stuff", // unrecognized key
     },
   });
@@ -327,7 +327,7 @@ err.flatten( (i: ZodIssue) => {
 ```
 
 - `fieldErrors` is an object. The keys are the field(s) that threw the error. The values are an array of error strings that can be easily presented in the interface.
-- `formErrors: string[]` is an array of errors that occured on the "root" of the object schema. For instance if you called `FormData.parse(null)`, `formErrors` would be:
+- `formErrors: string[]` is an array of errors that occurred on the "root" of the object schema. For instance if you called `FormData.parse(null)`, `formErrors` would be:
   ```ts
   ["Invalid input: expected object, received null"];
   ```
