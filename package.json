@@ -6,9 +6,11 @@
   "types": "./lib/index.d.ts",
   "module": "./lib/index.mjs",
   "exports": {
-    "require": "./lib/index.js",
-    "import": "./lib/index.mjs",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    ".": {
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs",
+    }
   },
   "files": [
     "/lib"
