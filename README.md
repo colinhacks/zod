@@ -1198,7 +1198,7 @@ myFunction; // (arg: string)=>number[]
 
 ## Preprocess
 
-Typically Zod operates under a "parse, then tranform" paradigm. Zod validates the input first, then passes it through a chain of transformation functions. (For more information about transforms, read the [.transform docs](#transform).)
+Typically Zod operates under a "parse, then transform" paradigm. Zod validates the input first, then passes it through a chain of transformation functions. (For more information about transforms, read the [.transform docs](#transform).)
 
 But sometimes you want to apply some transformation to the input _before_ parsing happens. A common use case: type coercion. Zod enables this with the `z.preprocess()`.
 
@@ -1570,7 +1570,7 @@ z.union([z.string(), z.number()]);
 
 ### `.and`
 
-A convenience method for creating interesection types.
+A convenience method for creating intersection types.
 
 ```ts
 z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: string } & { age: number }
@@ -1679,7 +1679,7 @@ Tuples
 Recursive Types
 Function Schemas
 
-<abbr title="For instance, Yup allows custmo error messages with the syntax yup.number().min(5, 'Number must be more than 5!')">Validation Messages</abbr>
+<abbr title="For instance, Yup allows custom error messages with the syntax yup.number().min(5, 'Number must be more than 5!')">Validation Messages</abbr>
 Immutable instances
 Type Guards
 Validity Checking

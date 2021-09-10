@@ -91,7 +91,7 @@ module.exports = {
     {
       name: 'no-duplicate-dep-types',
       comment:
-        "Likeley this module depends on an external ('npm') package that occurs more than once " +
+        "Likely this module depends on an external ('npm') package that occurs more than once " +
         "in your package.json i.e. bot as a devDependencies and in dependencies. This will cause " +
         "maintenance problems later on.",
       severity: 'warn',
@@ -140,7 +140,7 @@ module.exports = {
         "This module depends on an npm package that is declared as an optional dependency " +
         "in your package.json. As this makes sense in limited situations only, it's flagged here. " +
         "If you're using an optional dependency here by design - add an exception to your" +
-        "depdency-cruiser configuration.",
+        "dependency-cruiser configuration.",
       from: {},
       to: {
         dependencyTypes: [
