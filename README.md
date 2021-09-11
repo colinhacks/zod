@@ -1593,7 +1593,7 @@ const u: A = "asdf"; // compiles
 
 #### What about transforms?
 
-In reality each Zod schema is actually associated with **two** types: an input and an output. For most schemas (e.g. `z.string()`) these two are the same. But once you add transforms into the mix, these two values can diverge. For instance `z.string().transform(val => val.length)` has an input of `string` and an output of `number`.
+In reality each Zod schema internally tracks **two** types: an input and an output. For most schemas (e.g. `z.string()`) these two are the same. But once you add transforms into the mix, these two values can diverge. For instance `z.string().transform(val => val.length)` has an input of `string` and an output of `number`.
 
 You can separately extract the input and output types like so:
 
