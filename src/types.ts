@@ -71,12 +71,6 @@ const handleResult = <Input, Output>(
   if (isOk(result) && !ctx.issues.length) {
     return { success: true, data: result.value };
   } else {
-    if (isOk(result)) {
-      console.log(`RESULT IS OK BUT ISSUES EXIST`);
-
-      console.log(result);
-      console.log(ctx);
-    }
     const error = new ZodError(ctx.issues);
     return { success: false, error };
   }
@@ -114,6 +108,19 @@ export abstract class ZodType<
       throw new Error("Synchronous parse encountered promise.");
     }
     return result;
+  }
+
+  _parseAsync(
+    _ctx: ParseContext,
+    _data: any,
+    _parsedType: ZodParsedType
+  ): ASYNC<SyncParseReturnType<Output>> {
+    const result = this._parse(_ctx, _data, _parsedType);
+    if (isAsync(result)) {
+      return result;
+    }
+
+    return ASYNC(Promise.resolve(result));
   }
 
   parse: (data: unknown, params?: Partial<ParseParamsNoData>) => Output = (
@@ -2842,7 +2849,6 @@ export class ZodEffects<
     initialParsedType: ZodParsedType
   ): ParseReturnType<Output> {
     const isSync = ctx.params.async === false;
-    // const preprocess = this._def.preprocess;
     const effect = this._def.effect || null;
 
     let data = initialData;
@@ -2907,43 +2913,45 @@ export class ZodEffects<
 
       if (isOk(base)) {
         const result = postEffects.reduce(applyEffect, base.value);
-        // return invalid ? INVALID : OK(result);
+        // refinement errors are non-fatal
         return OK(result);
       } else {
         return INVALID;
       }
     } else {
       const applyAsyncEffects = (base: any): ParseReturnType<any> => {
-        const result = postEffects.reduce((acc, eff) => {
-          return acc instanceof Promise
-            ? acc.then((val) => applyEffect(val, eff))
-            : applyEffect(acc, eff);
-        }, base);
-        if (result instanceof Promise) {
-          return ASYNC(
-            // result.then((val: Output) => (invalid ? INVALID : OK(val)))
-            result.then((val: Output) => OK(val))
-          );
-        } else {
-          // return invalid ? INVALID : OK(result);
-          console.log(`synchronous result from async run`);
-          return OK(result);
-        }
+        const result = postEffects
+          .reduce((acc, eff) => {
+            return acc.then((val) => applyEffect(val, eff));
+          }, Promise.resolve(base))
+          .then((val: any) => {
+            // refinement errors are non-fatal
+            return OK(val);
+          });
+        return ASYNC(result);
       };
-      const baseResult = this._def.schema._parse(ctx, data, parsedType);
-      if (isOk(baseResult)) {
-        return applyAsyncEffects(baseResult.value);
-      } else if (isInvalid(baseResult)) {
-        return INVALID;
-      } else {
-        return ASYNC(
-          baseResult.promise.then((base) => {
-            if (isInvalid(base)) return INVALID;
-            const result = applyAsyncEffects(base.value);
-            return isAsync(result) ? result.promise : result;
-          })
-        );
-      }
+      const baseResult = this._def.schema._parseAsync(ctx, data, parsedType);
+
+      return ASYNC(
+        baseResult.promise.then((base) => {
+          if (isInvalid(base)) return INVALID;
+          const result = applyAsyncEffects(base.value);
+          return isAsync(result) ? result.promise : result;
+        })
+      );
+      // if (isOk(baseResult)) {
+      //   return applyAsyncEffects(baseResult.value);
+      // } else if (isInvalid(baseResult)) {
+      //   return INVALID;
+      // } else {
+      //   return ASYNC(
+      //     baseResult.promise.then((base) => {
+      //       if (isInvalid(base)) return INVALID;
+      //       const result = applyAsyncEffects(base.value);
+      //       return isAsync(result) ? result.promise : result;
+      //     })
+      //   );
+      // }
     }
   }
 
