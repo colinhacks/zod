@@ -1,11 +1,5 @@
 import { PseudoPromise } from "../PseudoPromise.ts";
-import {
-  defaultErrorMap,
-  IssueData,
-  overrideErrorMap,
-  ZodErrorMap,
-  ZodIssue,
-} from "../ZodError.ts";
+import { defaultErrorMap, IssueData, ZodErrorMap, ZodIssue } from "../ZodError.ts";
 import { util } from "./util.ts";
 
 export const ZodParsedType = util.arrayToEnum([
@@ -103,10 +97,9 @@ export const makeIssue = (
 };
 
 export type ParseParams = {
-  data: any;
+  // data: any;
   path: (string | number)[];
   errorMap: ZodErrorMap;
-
   async: boolean;
 };
 
@@ -145,41 +138,55 @@ export type ParseContextParameters = {
   async: boolean;
 };
 
+interface ParseContextDef {
+  readonly path: ParsePath;
+  readonly issues: ZodIssue[];
+  readonly errorMap: ZodErrorMap;
+  readonly async: boolean;
+}
+
 export class ParseContext {
-  constructor(
-    public readonly path: ParsePath,
-    public readonly issues: ZodIssue[],
-    public readonly params: ParseContextParameters
-  ) {}
+  // public readonly path: ParsePath;
+  // public readonly issues: ZodIssue[];
+  // public readonly errorMap: ZodErrorMap;
+  public readonly def: ParseContextDef;
+
+  constructor(def: ParseContextDef) {
+    this.def = def;
+  }
+  get path() {
+    return this.def.path;
+  }
+  get issues() {
+    return this.def.issues;
+  }
+  get errorMap() {
+    return this.def.errorMap;
+  }
+  get async() {
+    return this.def.async;
+  }
 
   stepInto(component: ParsePathComponent): ParseContext {
-    return new ParseContext(
-      this.path === null
-        ? { parent: null, count: 1, component }
-        : { parent: this.path, count: this.path.count + 1, component },
-      this.issues,
-      this.params
-    );
+    return new ParseContext({
+      ...this.def,
+      path:
+        this.path === null
+          ? { parent: null, count: 1, component }
+          : { parent: this.path, count: this.path.count + 1, component },
+    });
   }
 
   addIssue(data: any, errorData: IssueData): void {
     const issue = makeIssue(
       data,
       pathToArray(this.path),
-      this.params.errorMap,
+      this.errorMap,
       errorData
     );
     this.issues.push(issue);
   }
 }
-
-export const createRootContext = (
-  params: Partial<ParseParamsNoData>
-): ParseContext =>
-  new ParseContext(EMPTY_PATH, [], {
-    async: params.async ?? false,
-    errorMap: params.errorMap || overrideErrorMap,
-  });
 
 export type INVALID = { valid: false };
 export const INVALID: INVALID = Object.freeze({ valid: false });

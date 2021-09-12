@@ -231,17 +231,28 @@ test("custom path", () => {
   }
 });
 
-test("formatting", () => {
-  const schema = z.object({
-    inner: z.object({
-      name: z
-        .string()
-        .refine((val) => val.length > 5)
-        .array()
-        .refine((val) => val.length <= 1),
-    }),
-  });
+const schema = z.object({
+  inner: z.object({
+    name: z
+      .string()
+      .refine((val) => val.length > 5)
+      .array()
+      .refine((val) => val.length <= 1),
+  }),
+});
 
+test("no abort early on refinements", () => {
+  const invalidItem = {
+    inner: { name: ["aasd", "asdfasdfasfd"] },
+  };
+
+  const result1 = schema.safeParse(invalidItem);
+  expect(result1.success).toEqual(false);
+  if (!result1.success) {
+    expect(result1.error.issues.length).toEqual(2);
+  }
+});
+test("formatting", () => {
   const invalidItem = {
     inner: { name: ["aasd", "asdfasdfasfd"] },
   };
@@ -254,7 +265,6 @@ test("formatting", () => {
   expect(result1.success).toEqual(false);
   expect(result2.success).toEqual(false);
   if (!result1.success) {
-    expect(result1.error.issues.length).toEqual(2);
     const error = result1.error.format();
     expect(error._errors).toEqual([]);
     expect(error.inner?._errors).toEqual([]);

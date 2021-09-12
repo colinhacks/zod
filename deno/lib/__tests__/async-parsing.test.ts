@@ -380,7 +380,6 @@ test("ensure early async failure prevents follow-up refinement checks", async ()
 
   const testval = { hello: "bye", foo: 3 };
   const result = await base.safeParseAsync(testval);
-  console.log(result);
   if (result.success === false) {
     expect(result.error.issues.length).toBe(1);
     expect(count).toBe(1);

@@ -40,7 +40,6 @@ import {
 export type RefinementCtx = {
   addIssue: (arg: IssueData) => void;
   path: (string | number)[];
-  issueFound: boolean;
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
@@ -53,13 +52,14 @@ export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {}
 
 type AsyncTasks = Promise<void>[] | null;
-const createTasks = (ctx: ParseContext): AsyncTasks =>
-  ctx.params.async ? [] : null;
+const createTasks = (ctx: ParseContext): AsyncTasks => (ctx.async ? [] : null);
 
 const createRootContext = (params: Partial<ParseParamsNoData>): ParseContext =>
-  new ParseContext(pathFromArray(params.path || []), [], {
-    async: params.async ?? false,
+  new ParseContext({
+    path: pathFromArray(params.path || []),
+    issues: [],
     errorMap: params.errorMap || overrideErrorMap,
+    async: params.async ?? false,
   });
 
 const handleResult = <Input, Output>(
@@ -374,6 +374,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       } else if (check.kind === "max") {
         if (data.length > check.value) {
           invalid = true;
+
           ctx.addIssue(data, {
             code: ZodIssueCode.too_big,
             maximum: check.value,
@@ -1789,9 +1790,9 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       return INVALID;
     };
 
-    if (ctx.params.async) {
+    if (ctx.async) {
       const contexts = options.map(
-        () => new ParseContext(ctx.path, [], ctx.params)
+        () => new ParseContext({ ...ctx.def, issues: [] })
       );
       return PseudoPromise.all(
         options.map((option, index) =>
@@ -1808,7 +1809,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     } else {
       const allIssues: ZodIssue[][] = [];
       for (const option of options) {
-        const optionCtx = new ParseContext(ctx.path, [], ctx.params);
+        const optionCtx = new ParseContext({ ...ctx.def, issues: [] });
         const parsedOption = option._parseSync(optionCtx, data, parsedType);
         if (isInvalid(parsedOption)) {
           allIssues.push(optionCtx.issues);
@@ -1911,7 +1912,7 @@ export class ZodIntersection<
       return OK(merged.data);
     };
 
-    if (ctx.params.async) {
+    if (ctx.async) {
       return PseudoPromise.all([
         this._def.left._parse(ctx, data, parsedType),
         this._def.right._parse(ctx, data, parsedType),
@@ -2427,20 +2428,20 @@ export class ZodFunction<
     }
 
     function makeArgsIssue(args: any, error: ZodError): ZodIssue {
-      return makeIssue(args, pathToArray(ctx.path), ctx.params.errorMap, {
+      return makeIssue(args, pathToArray(ctx.path), ctx.errorMap, {
         code: ZodIssueCode.invalid_arguments,
         argumentsError: error,
       });
     }
 
     function makeReturnsIssue(returns: any, error: ZodError): ZodIssue {
-      return makeIssue(returns, pathToArray(ctx.path), ctx.params.errorMap, {
+      return makeIssue(returns, pathToArray(ctx.path), ctx.errorMap, {
         code: ZodIssueCode.invalid_return_type,
         returnTypeError: error,
       });
     }
 
-    const params = { errorMap: ctx.params.errorMap };
+    const params = { errorMap: ctx.errorMap };
     const fn = data;
 
     if (this._def.returns instanceof ZodPromise) {
@@ -2766,7 +2767,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<Promise<T["_output"]>> {
-    if (parsedType !== ZodParsedType.promise && ctx.params.async === false) {
+    if (parsedType !== ZodParsedType.promise && ctx.async === false) {
       ctx.addIssue(data, {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.promise,
@@ -2783,7 +2784,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
       promisified.then((data: any) => {
         return this._def.type.parseAsync(data, {
           path: pathToArray(ctx.path),
-          errorMap: ctx.params.errorMap,
+          errorMap: ctx.errorMap,
         });
       })
     );
@@ -2848,9 +2849,8 @@ export class ZodEffects<
     initialData: any,
     initialParsedType: ZodParsedType
   ): ParseReturnType<Output> {
-    const isSync = ctx.params.async === false;
+    const isSync = ctx.async === false;
     const effect = this._def.effect || null;
-
     let data = initialData;
     let parsedType: ZodParsedType = initialParsedType;
     if (effect.type === "preprocess") {
@@ -2858,10 +2858,10 @@ export class ZodEffects<
       parsedType = getParsedType(data);
     }
 
+    let invalid = false;
     const checkCtx: RefinementCtx = {
-      issueFound: false,
       addIssue: function (arg: IssueData) {
-        this.issueFound = true;
+        invalid = true;
         ctx.addIssue(data, arg);
       },
       get path() {
@@ -2871,7 +2871,6 @@ export class ZodEffects<
 
     checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
 
-    let invalid = false;
     const applyEffect = (acc: any, effect: Effect<any>): any => {
       switch (effect.type) {
         case "refinement":
@@ -2883,14 +2882,10 @@ export class ZodEffects<
               );
             } else {
               return result.then((_res) => {
-                const issueFound = checkCtx.issueFound;
-                invalid = invalid || issueFound;
                 return acc;
               });
             }
           } else {
-            const issueFound = checkCtx.issueFound;
-            invalid = invalid || issueFound;
             return acc;
           }
         case "transform":
@@ -2913,8 +2908,7 @@ export class ZodEffects<
 
       if (isOk(base)) {
         const result = postEffects.reduce(applyEffect, base.value);
-        // refinement errors are non-fatal
-        return OK(result);
+        return invalid ? INVALID : OK(result);
       } else {
         return INVALID;
       }
@@ -2925,8 +2919,7 @@ export class ZodEffects<
             return acc.then((val) => applyEffect(val, eff));
           }, Promise.resolve(base))
           .then((val: any) => {
-            // refinement errors are non-fatal
-            return OK(val);
+            return invalid ? INVALID : OK(val);
           });
         return ASYNC(result);
       };
