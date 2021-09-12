@@ -64,18 +64,28 @@ const createRootContext = (params: Partial<ParseParamsNoData>): ParseContext =>
 
 const handleResult = <Input, Output>(
   ctx: ParseContext,
-  result: SyncParseReturnType<Output>,
-  parentError: ZodError | undefined
+  result: SyncParseReturnType<Output>
 ):
   | { success: true; data: Output }
   | { success: false; error: ZodError<Input> } => {
-  if (isOk(result)) {
+  if (isOk(result) && !ctx.issues.length) {
     return { success: true, data: result.value };
   } else {
-    parentError?.addIssues(ctx.issues);
+    if (isOk(result)) {
+      console.log(`RESULT IS OK BUT ISSUES EXIST`);
+
+      console.log(result);
+      console.log(ctx);
+    }
     const error = new ZodError(ctx.issues);
     return { success: false, error };
   }
+  // if (isOk(result)) {
+  //   return { success: true, data: result.value };
+  // } else {
+  //   const error = new ZodError(ctx.issues);
+  //   return { success: false, error };
+  // }
 };
 
 export abstract class ZodType<
@@ -123,7 +133,7 @@ export abstract class ZodType<
     | { success: false; error: ZodError<Input> } = (data, params) => {
     const ctx = createRootContext({ ...params, async: false });
     const result = this._parseSync(ctx, data, getParsedType(data));
-    return handleResult(ctx, result, params?.parentError);
+    return handleResult(ctx, result);
   };
 
   parseAsync: (
@@ -146,7 +156,7 @@ export abstract class ZodType<
     const result = await (isAsync(maybeAsyncResult)
       ? maybeAsyncResult.promise
       : Promise.resolve(maybeAsyncResult));
-    return handleResult(ctx, result, params?.parentError);
+    return handleResult(ctx, result);
   };
 
   /** Alias of safeParseAsync */
@@ -2897,7 +2907,8 @@ export class ZodEffects<
 
       if (isOk(base)) {
         const result = postEffects.reduce(applyEffect, base.value);
-        return invalid ? INVALID : OK(result);
+        // return invalid ? INVALID : OK(result);
+        return OK(result);
       } else {
         return INVALID;
       }
@@ -2910,10 +2921,13 @@ export class ZodEffects<
         }, base);
         if (result instanceof Promise) {
           return ASYNC(
-            result.then((val: Output) => (invalid ? INVALID : OK(val)))
+            // result.then((val: Output) => (invalid ? INVALID : OK(val)))
+            result.then((val: Output) => OK(val))
           );
         } else {
-          return invalid ? INVALID : OK(result);
+          // return invalid ? INVALID : OK(result);
+          console.log(`synchronous result from async run`);
+          return OK(result);
         }
       };
       const baseResult = this._def.schema._parse(ctx, data, parsedType);

@@ -254,10 +254,11 @@ test("formatting", () => {
   expect(result1.success).toEqual(false);
   expect(result2.success).toEqual(false);
   if (!result1.success) {
+    expect(result1.error.issues.length).toEqual(2);
     const error = result1.error.format();
     expect(error._errors).toEqual([]);
     expect(error.inner?._errors).toEqual([]);
-    expect(error.inner?.name?._errors).toEqual([]);
+    expect(error.inner?.name?._errors).toEqual(["Invalid input"]);
     expect(error.inner?.name?.[0]._errors).toEqual(["Invalid input"]);
     expect(error.inner?.name?.[1]).toEqual(undefined);
   }
