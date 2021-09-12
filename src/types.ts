@@ -2858,10 +2858,11 @@ export class ZodEffects<
       parsedType = getParsedType(data);
     }
 
-    let invalid = false;
+    const invalid = false;
     const checkCtx: RefinementCtx = {
       addIssue: function (arg: IssueData) {
-        invalid = true;
+        // don't abort early on refinement issues
+        // invalid = true;
         ctx.addIssue(data, arg);
       },
       get path() {
