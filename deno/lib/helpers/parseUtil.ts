@@ -1,4 +1,3 @@
-// import { PseudoPromise } from "../PseudoPromise";
 import { defaultErrorMap, IssueData, ZodErrorMap, ZodIssue } from "../ZodError.ts";
 import { util } from "./util.ts";
 
@@ -193,11 +192,6 @@ export const INVALID: INVALID = Object.freeze({ valid: false });
 
 export type OK<T> = { valid: true; value: T };
 export const OK = <T>(value: T): OK<T> => ({ valid: true, value });
-
-// export type ASYNC<T> = Promise<T>;
-// export const ASYNC = <T>(promise: Promise<T>): ASYNC<T> =>
-//   new PseudoPromise<T>(promise);
-export const ASYNC = <T>(promise: Promise<T>) => promise;
 
 export type SyncParseReturnType<T> = OK<T> | INVALID;
 export type AsyncParseReturnType<T> = Promise<SyncParseReturnType<T>>;

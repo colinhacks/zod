@@ -123,3 +123,10 @@ test("preprocess", () => {
   const value = schema.parse("asdf");
   expect(value).toEqual(["asdf"]);
 });
+
+test("async preprocess", async () => {
+  const schema = z.preprocess(async (data) => [data], z.string().array());
+
+  const value = await schema.parseAsync("asdf");
+  expect(value).toEqual(["asdf"]);
+});
