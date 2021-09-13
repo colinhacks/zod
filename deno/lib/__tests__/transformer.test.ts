@@ -9,20 +9,18 @@ const stringToNumber = z.string().transform((arg) => parseFloat(arg));
 // const numberToString = z
 //   .transformer(z.number())
 //   .transform((n) => String(n));
-const asyncNumberToString = z
-  .transformer(z.number())
-  .transform(async (n) => String(n));
+const asyncNumberToString = z.number().transform(async (n) => String(n));
 
 test("basic transformations", () => {
   const r1 = z
-    .transformer(z.string())
+    .string()
     .transform((data) => data.length)
     .parse("asdf");
   expect(r1).toEqual(4);
 });
 
 test("coercion", () => {
-  const numToString = z.transformer(z.number()).transform((n) => String(n));
+  const numToString = z.number().transform((n) => String(n));
   const data = z
     .object({
       id: numToString,
@@ -33,9 +31,7 @@ test("coercion", () => {
 });
 
 test("async coercion", async () => {
-  const numToString = z
-    .transformer(z.number())
-    .transform(async (n) => String(n));
+  const numToString = z.number().transform(async (n) => String(n));
   const data = await z
     .object({
       id: numToString,
@@ -125,5 +121,12 @@ test("preprocess", () => {
   const schema = z.preprocess((data) => [data], z.string().array());
 
   const value = schema.parse("asdf");
+  expect(value).toEqual(["asdf"]);
+});
+
+test("async preprocess", async () => {
+  const schema = z.preprocess(async (data) => [data], z.string().array());
+
+  const value = await schema.parseAsync("asdf");
   expect(value).toEqual(["asdf"]);
 });

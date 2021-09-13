@@ -193,7 +193,7 @@ test("test nonexistent keys", async () => {
   expect(result.success).toBe(true);
 });
 
-test("test async PseudoPromise.all", async () => {
+test("test async union", async () => {
   const Schema2 = z.union([
     z.object({
       ty: z.string(),

@@ -1184,9 +1184,9 @@ myFunction; // (arg: string)=>number[]
 
 ## Preprocess
 
-Typically Zod operates under a "parse, then tranform" paradigm. Zod validates the input first, then passes it through a chain of transformation functions. (For more information about transforms, read the [.transform docs](#transform).)
+Typically Zod operates under a "parse, then tranform" paradigm. Zod validates the input first, then passes it through a chain of transform functions. (For more information about transforms, read the [.transform docs](#transform).)
 
-But sometimes you want to apply some transformation to the input _before_ parsing happens. A common use case: type coercion. Zod enables this with the `z.preprocess()`.
+But sometimes you want to apply some transform to the input _before_ parsing happens. A common use case: type coercion. Zod enables this with the `z.preprocess()`.
 
 ```ts
 const castToString = z.preprocess((val) => String(val), z.string());
@@ -1427,11 +1427,11 @@ const stringToNumber = z.string().transform((val) => myString.length);
 stringToNumber.parse("string"); // => 6
 ```
 
-> ⚠️ Transformation functions must not throw. Make sure to use refinements before the transformer to make sure the input can be parsed by the transformer.
+> ⚠️ Transform functions must not throw. Make sure to use refinements before the transform to make sure the input can be parsed by the transform.
 
 #### Chaining order
 
-Note that `stringToNumber` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transformations.
+Note that `stringToNumber` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transforms.
 
 ```ts
 const emailToDomain = z
@@ -1452,25 +1452,24 @@ z.string()
   .refine((val) => val > 25);
 ```
 
-#### Async transformations
+#### Async transforms
 
-Transformations can also be async.
+Transforms can also be async.
 
 ```ts
-const IdToUser = z.transformer(
-  z.string().uuid(),
-  UserSchema,
-  (userId) => async (id) => {
+const IdToUser = z
+  .string()
+  .uuid()
+  .transform(async (id) => {
     return await getUserById(id);
-  }
-);
+  });
 ```
 
-> ⚠️ If your schema contains asynchronous transformers, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
+> ⚠️ If your schema contains asynchronous transforms, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
 
 ### `.default`
 
-You can use transformers to implement the concept of "default values" in Zod.
+You can use transforms to implement the concept of "default values" in Zod.
 
 ```ts
 const stringWithDefault = z.string().default("tuna");
@@ -1698,7 +1697,7 @@ Yup is a full-featured library that was implemented first in vanilla JS, and lat
 
 Differences
 
-- Supports for casting and transformation
+- Supports casting and transforms
 - All object fields are optional by default
 - Missing object methods: (partial, deepPartial)
 <!-- - Missing nonempty arrays with proper typing (`[T, ...T[]]`) -->

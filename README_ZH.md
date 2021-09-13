@@ -1420,13 +1420,12 @@ z.string()
 转换也可以是异步的。
 
 ```ts
-const IdToUser = z.transformer(
-  z.string().uuid(),
-  UserSchema,
-  (userId) => async (id) => {
+const IdToUser = z
+  .string()
+  .uuid()
+  .transform(async (id) => {
     return await getUserById(id);
-  }
-);
+  });
 ```
 
 > ⚠️ 如果你的模式包含异步变换器，你必须使用.parseAsync()或.safeParseAsync()来解析数据。否则，Zod 将抛出一个错误。

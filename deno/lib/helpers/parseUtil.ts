@@ -1,10 +1,4 @@
-import { PseudoPromise } from "../PseudoPromise.ts";
-import {
-  defaultErrorMap,
-  MakeErrorData,
-  ZodErrorMap,
-  ZodIssue,
-} from "../ZodError.ts";
+import { defaultErrorMap, IssueData, ZodErrorMap, ZodIssue } from "../ZodError.ts";
 import { util } from "./util.ts";
 
 export const ZodParsedType = util.arrayToEnum([
@@ -77,7 +71,7 @@ export const makeIssue = (
   data: any,
   path: (string | number)[],
   errorMap: ZodErrorMap,
-  errorData: MakeErrorData
+  errorData: IssueData
 ): ZodIssue => {
   const fullPath = [...path, ...(errorData.path || [])];
   const errorArg = {
@@ -102,7 +96,7 @@ export const makeIssue = (
 };
 
 export type ParseParams = {
-  data: any;
+  // data: any;
   path: (string | number)[];
   errorMap: ZodErrorMap;
   async: boolean;
@@ -143,28 +137,50 @@ export type ParseContextParameters = {
   async: boolean;
 };
 
-export class ParseContext {
-  constructor(
-    public readonly path: ParsePath,
-    public readonly issues: ZodIssue[],
-    public readonly params: ParseContextParameters
-  ) {}
+interface ParseContextDef {
+  readonly path: ParsePath;
+  readonly issues: ZodIssue[];
+  readonly errorMap: ZodErrorMap;
+  readonly async: boolean;
+}
 
-  stepInto(component: ParsePathComponent): ParseContext {
-    return new ParseContext(
-      this.path === null
-        ? { parent: null, count: 1, component }
-        : { parent: this.path, count: this.path.count + 1, component },
-      this.issues,
-      this.params
-    );
+export class ParseContext {
+  // public readonly path: ParsePath;
+  // public readonly issues: ZodIssue[];
+  // public readonly errorMap: ZodErrorMap;
+  public readonly def: ParseContextDef;
+
+  constructor(def: ParseContextDef) {
+    this.def = def;
+  }
+  get path() {
+    return this.def.path;
+  }
+  get issues() {
+    return this.def.issues;
+  }
+  get errorMap() {
+    return this.def.errorMap;
+  }
+  get async() {
+    return this.def.async;
   }
 
-  addIssue(data: any, errorData: MakeErrorData): void {
+  stepInto(component: ParsePathComponent): ParseContext {
+    return new ParseContext({
+      ...this.def,
+      path:
+        this.path === null
+          ? { parent: null, count: 1, component }
+          : { parent: this.path, count: this.path.count + 1, component },
+    });
+  }
+
+  addIssue(data: any, errorData: IssueData): void {
     const issue = makeIssue(
       data,
       pathToArray(this.path),
-      this.params.errorMap,
+      this.errorMap,
       errorData
     );
     this.issues.push(issue);
@@ -177,14 +193,11 @@ export const INVALID: INVALID = Object.freeze({ valid: false });
 export type OK<T> = { valid: true; value: T };
 export const OK = <T>(value: T): OK<T> => ({ valid: true, value });
 
-export type ASYNC<T> = PseudoPromise<T>;
-export const ASYNC = <T>(promise: Promise<T>): ASYNC<T> =>
-  new PseudoPromise<T>(promise);
-
 export type SyncParseReturnType<T> = OK<T> | INVALID;
+export type AsyncParseReturnType<T> = Promise<SyncParseReturnType<T>>;
 export type ParseReturnType<T> =
   | SyncParseReturnType<T>
-  | ASYNC<SyncParseReturnType<T>>;
+  | AsyncParseReturnType<T>;
 
 export const isInvalid = (x: ParseReturnType<any>): x is INVALID =>
   (x as any).valid === false;
@@ -192,4 +205,4 @@ export const isOk = <T>(x: ParseReturnType<T>): x is OK<T> =>
   (x as any).valid === true;
 export const isAsync = <T>(
   x: ParseReturnType<T>
-): x is ASYNC<SyncParseReturnType<T>> => x instanceof PseudoPromise;
+): x is AsyncParseReturnType<T> => x instanceof Promise;
