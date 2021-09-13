@@ -200,9 +200,10 @@ export const OK = <T>(value: T): OK<T> => ({ valid: true, value });
 export const ASYNC = <T>(promise: Promise<T>) => promise;
 
 export type SyncParseReturnType<T> = OK<T> | INVALID;
+export type AsyncParseReturnType<T> = Promise<SyncParseReturnType<T>>;
 export type ParseReturnType<T> =
   | SyncParseReturnType<T>
-  | Promise<SyncParseReturnType<T>>;
+  | AsyncParseReturnType<T>;
 
 export const isInvalid = (x: ParseReturnType<any>): x is INVALID =>
   (x as any).valid === false;
@@ -210,4 +211,4 @@ export const isOk = <T>(x: ParseReturnType<T>): x is OK<T> =>
   (x as any).valid === true;
 export const isAsync = <T>(
   x: ParseReturnType<T>
-): x is Promise<SyncParseReturnType<T>> => x instanceof Promise;
+): x is AsyncParseReturnType<T> => x instanceof Promise;

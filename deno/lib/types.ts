@@ -1,6 +1,7 @@
 import { errorUtil } from "./helpers/errorUtil.ts";
 import {
   ASYNC,
+  AsyncParseReturnType,
   getParsedType,
   INVALID,
   isAsync,
@@ -50,9 +51,6 @@ export type { TypeOf as infer };
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {}
-
-type AsyncTasks = Promise<void>[] | null;
-const createTasks = (ctx: ParseContext): AsyncTasks => (ctx.async ? [] : null);
 
 const createRootContext = (params: Partial<ParseParamsNoData>): ParseContext =>
   new ParseContext({
@@ -114,7 +112,7 @@ export abstract class ZodType<
     _ctx: ParseContext,
     _data: any,
     _parsedType: ZodParsedType
-  ): Promise<SyncParseReturnType<Output>> {
+  ): AsyncParseReturnType<Output> {
     const result = this._parse(_ctx, _data, _parsedType);
     if (isAsync(result)) {
       return result;
@@ -1127,7 +1125,7 @@ const parseArray = <T>(
     }
   }
 
-  const tasks = createTasks(ctx);
+  const tasks: Promise<any>[] = [];
   const result: T[] = new Array(data.length);
   const type = def.type;
   const handleParsed = (
@@ -1139,7 +1137,7 @@ const parseArray = <T>(
     } else if (isInvalid(parsedItem)) {
       invalid = true;
     } else {
-      tasks?.push(parsedItem.then((parsed) => handleParsed(index, parsed)));
+      tasks.push(parsedItem.then((parsed) => handleParsed(index, parsed)));
     }
   };
 
@@ -1150,10 +1148,8 @@ const parseArray = <T>(
     );
   });
 
-  if (tasks !== null && tasks.length > 0) {
-    return ASYNC(
-      Promise.all(tasks).then(() => (invalid ? INVALID : OK(result)))
-    );
+  if (ctx.async) {
+    return Promise.all(tasks).then(() => (invalid ? INVALID : OK(result)));
   } else {
     return invalid ? INVALID : OK(result);
   }
@@ -1469,7 +1465,7 @@ export class ZodObject<
     const { shape, keys: shapeKeys } = this._getCached();
 
     let invalid = false;
-    const tasks = createTasks(ctx);
+    const tasks: Promise<any>[] = [];
     const resultObject: Record<string, any> = {};
 
     const handleParsed = (
@@ -1487,7 +1483,7 @@ export class ZodObject<
       } else if (isInvalid(parsedValue)) {
         invalid = true;
       } else {
-        tasks?.push(parsedValue.then((parsed) => handleParsed(key, parsed)));
+        tasks.push(parsedValue.then((parsed) => handleParsed(key, parsed)));
       }
     };
 
@@ -1536,12 +1532,9 @@ export class ZodObject<
         );
       }
     }
-
-    if (tasks !== null && tasks.length > 0) {
-      return ASYNC(
-        Promise.all(tasks).then(() =>
-          invalid ? INVALID : OK(resultObject as Output)
-        )
+    if (ctx.async) {
+      return Promise.all(tasks).then(() =>
+        invalid ? INVALID : OK(resultObject as Output)
       );
     } else {
       return invalid ? INVALID : OK(resultObject as Output);
@@ -2019,7 +2012,7 @@ export class ZodTuple<
       return INVALID;
     }
 
-    const tasks = createTasks(ctx);
+    const tasks: Promise<unknown>[] = [];
     const items = this._def.items as ZodType<any, any, any>[];
 
     const parseResult: any[] = new Array(data.length);
@@ -2031,7 +2024,7 @@ export class ZodTuple<
       } else if (isInvalid(parsedItem)) {
         invalid = true;
       } else {
-        tasks?.push(parsedItem.then((parsed) => handleParsed(index, parsed)));
+        tasks.push(parsedItem.then((parsed) => handleParsed(index, parsed)));
       }
     };
 
@@ -2057,9 +2050,9 @@ export class ZodTuple<
       });
     }
 
-    if (tasks !== null && tasks.length > 0) {
-      return ASYNC(
-        Promise.all(tasks).then(() => (invalid ? INVALID : OK(parseResult)))
+    if (ctx.async) {
+      return Promise.all(tasks).then(() =>
+        invalid ? INVALID : OK(parseResult)
       );
     } else {
       return invalid ? INVALID : OK(parseResult);
@@ -2133,7 +2126,7 @@ export class ZodRecord<
       return INVALID;
     }
 
-    const tasks = createTasks(ctx);
+    const tasks: Promise<unknown>[] = [];
     const keyType = this._def.keyType;
     const valueType = this._def.valueType;
     const parseResult: Record<string, ParseReturnType<any>> = {};
@@ -2144,16 +2137,14 @@ export class ZodRecord<
     ): void => {
       if (isOk(parsedKey) && isOk(parsedValue)) {
         parseResult[parsedKey.value] = parsedValue.value;
-      } else if (isInvalid(parsedKey)) {
-        invalid = true;
-      } else if (isInvalid(parsedValue)) {
-        invalid = true;
       } else if (isAsync(parsedKey) || isAsync(parsedValue)) {
-        tasks?.push(
+        tasks.push(
           Promise.all([parsedKey, parsedValue]).then(([k, v]) =>
             handleParsed(k, v)
           )
         );
+      } else {
+        invalid = true;
       }
     };
 
@@ -2164,9 +2155,9 @@ export class ZodRecord<
       );
     }
 
-    if (tasks !== null && tasks.length > 0) {
-      return ASYNC(
-        Promise.all(tasks).then(() => (invalid ? INVALID : OK(parseResult)))
+    if (ctx.async) {
+      return Promise.all(tasks).then(() =>
+        invalid ? INVALID : OK(parseResult)
       );
     } else {
       return invalid ? INVALID : OK(parseResult);
@@ -2239,14 +2230,14 @@ export class ZodMap<
     const valueType = this._def.valueType;
     const dataMap: Map<unknown, unknown> = data;
     const parseResult = new Map();
-    const tasks = createTasks(ctx);
+    const tasks: Promise<unknown>[] = [];
     let invalid = false;
     const handleParsed = (
       parsedKey: ParseReturnType<any>,
       parsedValue: ParseReturnType<any>
     ): void => {
       if (isAsync(parsedKey) || isAsync(parsedValue)) {
-        tasks?.push(
+        tasks.push(
           Promise.all([parsedKey, parsedValue]).then(([k, v]) =>
             handleParsed(k, v)
           )
@@ -2273,9 +2264,9 @@ export class ZodMap<
       handleParsed(parsedKey, parsedValue);
     });
 
-    if (tasks !== null && tasks.length > 0) {
-      return ASYNC(
-        Promise.all(tasks).then(() => (invalid ? INVALID : OK(parseResult)))
+    if (ctx.async) {
+      return Promise.all(tasks).then(() =>
+        invalid ? INVALID : OK(parseResult)
       );
     } else {
       return invalid ? INVALID : OK(parseResult);
@@ -2332,7 +2323,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     const dataSet: Set<unknown> = data;
     const valueType = this._def.valueType;
     const parsedSet = new Set();
-    const tasks = createTasks(ctx);
+    const tasks: Promise<unknown>[] = [];
     let invalid = false;
 
     const handleParsed = (parsedItem: ParseReturnType<any>): void => {
@@ -2341,7 +2332,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
       } else if (isInvalid(parsedItem)) {
         invalid = true;
       } else {
-        tasks?.push(parsedItem.then((parsed) => handleParsed(parsed)));
+        tasks.push(parsedItem.then((parsed) => handleParsed(parsed)));
       }
     };
 
@@ -2349,10 +2340,8 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
       handleParsed(valueType._parse(ctx.stepInto(i), item, getParsedType(item)))
     );
 
-    if (tasks !== null && tasks.length > 0) {
-      return ASYNC(
-        Promise.all(tasks).then(() => (invalid ? INVALID : OK(parsedSet)))
-      );
+    if (ctx.async) {
+      return Promise.all(tasks).then(() => (invalid ? INVALID : OK(parsedSet)));
     } else {
       return invalid ? INVALID : OK(parsedSet);
     }
@@ -2873,14 +2862,11 @@ export class ZodEffects<
               throw new Error(
                 "You can't use .parse() on a schema containing async refinements. Use .parseAsync instead."
               );
-            } else {
-              return result.then((_res) => {
-                return acc;
-              });
             }
-          } else {
-            return acc;
+            return result.then(() => acc);
           }
+          return acc;
+
         case "transform":
           const transformed = effect.transform(acc);
           if (transformed instanceof Promise && isSync) {
@@ -2906,46 +2892,17 @@ export class ZodEffects<
         return INVALID;
       }
     } else {
-      const applyAsyncEffects = (base: any): ParseReturnType<any> => {
-        const result = postEffects
-          .reduce((acc, eff) => {
-            return acc.then((val) => applyEffect(val, eff));
-          }, Promise.resolve(base))
-          .then((val: any) => {
-            return invalid ? INVALID : OK(val);
-          });
-        return ASYNC(result);
-      };
       const baseResult = this._def.schema._parseAsync(ctx, data, parsedType);
 
       return ASYNC(
-        baseResult.then((base) => {
-          if (isInvalid(base)) return INVALID;
-          const result = applyAsyncEffects(base.value);
-          return isAsync(result) ? result : result;
-        })
+        baseResult
+          .then((result) => {
+            if (isInvalid(result)) return INVALID;
+            return applyEffect(result.value, effect);
+          })
+          .then((val) => (invalid ? INVALID : OK(val)))
       );
-      // if (isOk(baseResult)) {
-      //   return applyAsyncEffects(baseResult.value);
-      // } else if (isInvalid(baseResult)) {
-      //   return INVALID;
-      // } else {
-      //   return ASYNC(
-      //     baseResult.then((base) => {
-      //       if (isInvalid(base)) return INVALID;
-      //       const result = applyAsyncEffects(base.value);
-      //       return isAsync(result) ? result : result;
-      //     })
-      //   );
-      // }
     }
-  }
-
-  constructor(def: ZodEffectsDef<T>) {
-    super(def);
-    // if (def.schema instanceof ZodEffects) {
-    //   throw new Error(ZodFirstPartyTypeKind.ZodEffectscannot be nested.");
-    // }
   }
 
   static create = <I extends ZodTypeAny>(
