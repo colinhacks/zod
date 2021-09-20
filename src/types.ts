@@ -2149,6 +2149,10 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     }
   }
 
+  get element() {
+    return this._def.valueType;
+  }
+
   static create = <Value extends ZodTypeAny = ZodTypeAny>(
     valueType: Value
   ): ZodRecord<Value> => {
