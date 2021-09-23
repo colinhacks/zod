@@ -1963,22 +1963,14 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     const options = this._def.options;
     const noMatch = (allIssues: ZodIssue[][]) => {
       const unionErrors = allIssues.map((issues) => new ZodError(issues));
-      const nonTypeErrors = unionErrors.filter((err) => {
-        return err.issues[0].code !== "invalid_type";
-      });
-      if (nonTypeErrors.length === 1) {
-        // TODO encapsulate
-        nonTypeErrors[0].issues.forEach((issue) => ctx.issues.push(issue));
-      } else {
-        this._addIssue(
-          ctx,
-          {
-            code: ZodIssueCode.invalid_union,
-            unionErrors,
-          },
-          { data }
-        );
-      }
+      this._addIssue(
+        ctx,
+        {
+          code: ZodIssueCode.invalid_union,
+          unionErrors,
+        },
+        { data }
+      );
       return INVALID;
     };
 

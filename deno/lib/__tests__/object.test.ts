@@ -235,3 +235,60 @@ test("inferred type for unknown/any keys", () => {
   > = true;
   _f1;
 });
+
+test("inner union", () => {
+  const a = z.object({
+    letter: z.literal("a"),
+  });
+  const b = z.object({
+    letter: z.literal("b").or(z.literal("B")),
+  });
+  const union = z.union([a, b]);
+
+  const result = union.safeParse({
+    letter: "A",
+  });
+
+  if (result.success) {
+    fail("result should not be success");
+  }
+  expect(result.error).toMatchObject({
+    issues: [
+      {
+        code: "invalid_union",
+        unionErrors: [
+          {
+            issues: [
+              { code: "invalid_type", message: "Expected a, received A" },
+            ],
+          },
+          {
+            issues: [
+              {
+                code: "invalid_union",
+                unionErrors: [
+                  {
+                    issues: [
+                      {
+                        code: "invalid_type",
+                        message: "Expected b, received A",
+                      },
+                    ],
+                  },
+                  {
+                    issues: [
+                      {
+                        code: "invalid_type",
+                        message: "Expected B, received A",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+});
