@@ -147,3 +147,9 @@ test("checks getters", () => {
   expect(z.string().cuid().isUUID).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
 });
+
+test("trim", () => {
+  expect(z.string().trim().min(2).parse(" 12 ")).toEqual("12");
+
+  expect(() => z.string().trim().min(2).parse(" 1 ")).toThrow();
+});

@@ -363,8 +363,11 @@ type ZodStringCheck =
   | { kind: "cuid"; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string };
 
+type ZodStringEffect = { kind: "trim" };
+
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
+  effects: ZodStringEffect[];
   typeName: ZodFirstPartyTypeKind.ZodString;
 }
 
@@ -395,6 +398,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       return INVALID;
     }
     let invalid = false;
+
+    for (const effect of this._def.effects) {
+      if (effect.kind === "trim") {
+        data = data.trim();
+      }
+    }
 
     for (const check of this._def.checks) {
       if (check.kind === "min") {
@@ -570,6 +579,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   nonempty = (message?: errorUtil.ErrMessage) =>
     this.min(1, errorUtil.errToObj(message));
 
+  trim = () =>
+    new ZodString({
+      ...this._def,
+      effects: [...this._def.effects, { kind: "trim" }],
+    });
+
   get isEmail() {
     return !!this._def.checks.find((ch) => ch.kind === "email");
   }
@@ -607,6 +622,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   static create = (params?: RawCreateParams): ZodString => {
     return new ZodString({
       checks: [],
+      effects: [],
       typeName: ZodFirstPartyTypeKind.ZodString,
       ...processCreateParams(params),
     });
