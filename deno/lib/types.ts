@@ -153,10 +153,10 @@ export abstract class ZodType<
   spa = this.safeParseAsync;
 
   /** The .is method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
-  is: never;
+  is!: never;
 
   /** The .check method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
-  check: never;
+  check!: never;
 
   refine: <Func extends (arg: Output) => any, This extends this = this>(
     check: Func,
