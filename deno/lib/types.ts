@@ -274,23 +274,6 @@ export abstract class ZodType<
   _refinement(
     refinement: RefinementEffect<Output>["refinement"]
   ): ZodEffects<this> {
-    // let returnType;
-    // if (this instanceof ZodEffects) {
-    //   returnType = new ZodEffects({
-    //     ...this._def,
-    //     effects: [
-    //       ...(this._def.effects || []),
-    //       { type: "refinement", refinement },
-    //     ],
-    //   }) as any;
-    // } else {
-    // returnType = new ZodEffects({
-    //   schema: this,
-    //   typeName: ZodFirstPartyTypeKind.ZodEffects,
-    //   effects: [{ type: "refinement", refinement }],
-    // }) as any;
-    // }
-    // return returnType;
     return new ZodEffects({
       schema: this,
       typeName: ZodFirstPartyTypeKind.ZodEffects,
