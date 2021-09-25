@@ -50,3 +50,7 @@ test("string record parse - fail", () => {
     } as any);
   expect(badCheck).toThrow();
 });
+
+test("record element", () => {
+  expect(booleanRecord.element).toBeInstanceOf(z.ZodBoolean);
+});
