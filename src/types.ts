@@ -2148,6 +2148,10 @@ export class ZodRecord<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     }
   }
 
+  get element() {
+    return this._def.valueType;
+  }
+
   static create = <Value extends ZodTypeAny = ZodTypeAny>(
     valueType: Value
   ): ZodRecord<Value> => {
@@ -2901,7 +2905,7 @@ export class ZodEffects<
   constructor(def: ZodEffectsDef<T>) {
     super(def);
     // if (def.schema instanceof ZodEffects) {
-    //   throw new Error(ZodFirstPartyTypeKind.ZodEffectscannot be nested.");
+    //   throw new Error(ZodFirstPartyTypeKind.ZodEffects cannot be nested.");
     // }
   }
 
