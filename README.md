@@ -404,21 +404,6 @@ There are two ways to define enums in Zod.
 
 ### Zod enums
 
-<!-- An enum is just a union of string literals, so you _could_ define an enum like this:
-
-```ts
-const FishEnum = z.union([
-  z.literal("Salmon"),
-  z.literal("Tuna"),
-  z.literal("Trout"),
-]);
-
-FishEnum.parse("Salmon"); // => "Salmon"
-FishEnum.parse("Flounder"); // => throws
-```
-
-For convenience Zod provides a built-in `z.enum()` function. Here's is the equivalent code: -->
-
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 type FishEnum = z.infer<typeof FishEnum>;
