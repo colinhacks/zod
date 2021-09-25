@@ -8,9 +8,29 @@ import * as z from "../index.ts";
 const booleanRecord = z.record(z.boolean());
 type booleanRecord = z.infer<typeof booleanRecord>;
 
+const recordWithEnumKeys = z.record(z.enum(["Tuna", "Salmon"]), z.string());
+type recordWithEnumKeys = z.infer<typeof recordWithEnumKeys>;
+
+const recordWithLiteralKeys = z.record(
+  z.union([z.literal("Tuna"), z.literal("Salmon")]),
+  z.string()
+);
+type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
+
 test("type inference", () => {
   const f1: util.AssertEqual<booleanRecord, Record<string, boolean>> = true;
   f1;
+
+  const f2: util.AssertEqual<
+    recordWithEnumKeys,
+    Record<"Tuna" | "Salmon", string>
+  > = true;
+  f2;
+  const f3: util.AssertEqual<
+    recordWithLiteralKeys,
+    Record<"Tuna" | "Salmon", string>
+  > = true;
+  f3;
 });
 
 test("methods", () => {
@@ -52,6 +72,43 @@ test("string record parse - fail", () => {
   expect(badCheck).toThrow();
 });
 
-test("record element", () => {
-  expect(booleanRecord.element).toBeInstanceOf(z.ZodBoolean);
+test("key schema", () => {
+  const result1 = recordWithEnumKeys.parse({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
+  expect(result1).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
+
+  const result2 = recordWithLiteralKeys.parse({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
+  expect(result2).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
+
+  expect(() =>
+    recordWithEnumKeys.parse({
+      Tuna: "asdf",
+      Salmon: "asdf",
+      Trout: "asdf",
+    })
+  ).toThrow();
+
+  expect(() =>
+    recordWithLiteralKeys.parse({
+      Tuna: "asdf",
+      Salmon: "asdf",
+
+      Trout: "asdf",
+    })
+  ).toThrow();
 });
+
+// test("record element", () => {
+//   expect(booleanRecord.element).toBeInstanceOf(z.ZodBoolean);
+// });

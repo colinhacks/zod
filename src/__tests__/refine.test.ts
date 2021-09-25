@@ -58,7 +58,7 @@ test("custom path", async () => {
       .refine((data) => data.confirm === data.password, { path: ["confirm"] })
       .parseAsync({ password: "asdf", confirm: "qewr" });
   } catch (err) {
-    expect(err.issues[0].path).toEqual(["confirm"]);
+    expect((err as z.ZodError).issues[0].path).toEqual(["confirm"]);
   }
 });
 

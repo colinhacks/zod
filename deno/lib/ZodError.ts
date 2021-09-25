@@ -246,9 +246,10 @@ type stripPath<T extends object> = T extends any
   ? util.OmitKeys<T, "path">
   : never;
 
-export type MakeErrorData = stripPath<ZodIssueOptionalMessage> & {
+export type IssueData = stripPath<ZodIssueOptionalMessage> & {
   path?: (string | number)[];
 };
+export type MakeErrorData = IssueData;
 
 type ErrorMapCtx = {
   defaultError: string;
@@ -257,20 +258,20 @@ type ErrorMapCtx = {
 
 export type ZodErrorMap = typeof defaultErrorMap;
 export const defaultErrorMap = (
-  error: ZodIssueOptionalMessage,
+  issue: ZodIssueOptionalMessage,
   _ctx: ErrorMapCtx
 ): { message: string } => {
   let message: string;
-  switch (error.code) {
+  switch (issue.code) {
     case ZodIssueCode.invalid_type:
-      if (error.received === "undefined") {
+      if (issue.received === "undefined") {
         message = "Required";
       } else {
-        message = `Expected ${error.expected}, received ${error.received}`;
+        message = `Expected ${issue.expected}, received ${issue.received}`;
       }
       break;
     case ZodIssueCode.unrecognized_keys:
-      message = `Unrecognized key(s) in object: ${error.keys
+      message = `Unrecognized key(s) in object: ${issue.keys
         .map((k) => `'${k}'`)
         .join(", ")}`;
       break;
@@ -278,7 +279,7 @@ export const defaultErrorMap = (
       message = `Invalid input`;
       break;
     case ZodIssueCode.invalid_enum_value:
-      message = `Invalid enum value. Expected ${error.options
+      message = `Invalid enum value. Expected ${issue.options
         .map((val) => (typeof val === "string" ? `'${val}'` : val))
         .join(" | ")}, received ${
         typeof _ctx.data === "string" ? `'${_ctx.data}'` : _ctx.data
@@ -294,37 +295,37 @@ export const defaultErrorMap = (
       message = `Invalid date`;
       break;
     case ZodIssueCode.invalid_string:
-      if (error.validation !== "regex") message = `Invalid ${error.validation}`;
+      if (issue.validation !== "regex") message = `Invalid ${issue.validation}`;
       else message = "Invalid";
       break;
     case ZodIssueCode.too_small:
-      if (error.type === "array")
-        message = `Should have ${error.inclusive ? `at least` : `more than`} ${
-          error.minimum
+      if (issue.type === "array")
+        message = `Should have ${issue.inclusive ? `at least` : `more than`} ${
+          issue.minimum
         } items`;
-      else if (error.type === "string")
-        message = `Should be ${error.inclusive ? `at least` : `over`} ${
-          error.minimum
+      else if (issue.type === "string")
+        message = `Should be ${issue.inclusive ? `at least` : `over`} ${
+          issue.minimum
         } characters`;
-      else if (error.type === "number")
+      else if (issue.type === "number")
         message = `Value should be greater than ${
-          error.inclusive ? `or equal to ` : ``
-        }${error.minimum}`;
+          issue.inclusive ? `or equal to ` : ``
+        }${issue.minimum}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.too_big:
-      if (error.type === "array")
-        message = `Should have ${error.inclusive ? `at most` : `less than`} ${
-          error.maximum
+      if (issue.type === "array")
+        message = `Should have ${issue.inclusive ? `at most` : `less than`} ${
+          issue.maximum
         } items`;
-      else if (error.type === "string")
-        message = `Should be ${error.inclusive ? `at most` : `under`} ${
-          error.maximum
+      else if (issue.type === "string")
+        message = `Should be ${issue.inclusive ? `at most` : `under`} ${
+          issue.maximum
         } characters long`;
-      else if (error.type === "number")
+      else if (issue.type === "number")
         message = `Value should be less than ${
-          error.inclusive ? `or equal to ` : ``
-        }${error.maximum}`;
+          issue.inclusive ? `or equal to ` : ``
+        }${issue.maximum}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.custom:
@@ -334,11 +335,11 @@ export const defaultErrorMap = (
       message = `Intersection results could not be merged`;
       break;
     case ZodIssueCode.not_multiple_of:
-      message = `Should be multiple of ${error.multipleOf}`;
+      message = `Should be multiple of ${issue.multipleOf}`;
       break;
     default:
       message = _ctx.defaultError;
-      util.assertNever(error);
+      util.assertNever(issue);
   }
   return { message };
 };

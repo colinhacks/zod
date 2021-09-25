@@ -29,31 +29,31 @@
   - [Literals](#literals)
   - [Strings](#strings)
   - [Numbers](#numbers)
+  - [Booleans](#booleans)
+  - [Enums](#enums)
+    - [Zod enums](#zod-enums)
+    - [Native enums](#native-enums)
+  - [Optionals](#optionals)
+  - [Nullables](#nullables)
   - [Objects](#objects)
     - [.shape](#shape)
     - [.extend](#extend)
     - [.merge](#merge)
     - [.pick/.omit](#pickomit)
     - [.partial](#partial)
-    - [.partialBy](#partialBy)
     - [.deepPartial](#deepPartial)
     - [.passthrough](#passthrough)
     - [.strict](#strict)
     - [.strip](#strip)
     - [.catchall](#catchall)
-  - [Records](#records)
-  - [Maps](#maps)
-  - [Sets](#sets)
   - [Arrays](#arrays)
     - [.nonempty](#nonempty)
     - [.min/.max/.length](#minmaxlength)
-  - [Unions](#unions)
-  - [Optionals](#optionals)
-  - [Nullables](#nullables)
-  - [Enums](#enums)
-    - [Zod enums](#zod-enums)
-    - [Native enums](#native-enums)
   - [Tuples](#tuples)
+  - [Records](#records)
+  - [Maps](#maps)
+  - [Sets](#sets)
+  - [Unions](#unions)
   - [Recursive types](#recursive-types)
     - [JSON type](#json-type)
     - [Cyclical data](#cyclical-objects)
@@ -61,7 +61,7 @@
   - [Instanceof](#instanceof)
   - [Function schemas](#function-schemas)
   - [Preprocess](#preprocess)
-- [Base class methods (ZodType)](#zodtype-methods-and-properties)
+- [Schema methods](#zodtype-methods-and-properties)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
   - [.safeParse](#safeparse)
@@ -230,8 +230,14 @@ import { z } from "zod";
 
 // creating a schema for strings
 const mySchema = z.string();
+
+// parsing
 mySchema.parse("tuna"); // => "tuna"
 mySchema.parse(12); // => throws ZodError
+
+// "safe" parsing (doesn't throw error if validation fails)
+mySchema.safeParse("tuna"); // => { success: true; data: "tuna" }
+mySchema.safeParse(12); // => { success: false; error: ZodError }
 ```
 
 Creating an object schema
@@ -294,6 +300,15 @@ tuna.value; // "tuna"
 
 ## Strings
 
+You can customize certain errors when creating a string schema.
+
+```ts
+const name = z.string({
+  required: "Name is required",
+  invalid: "Invalid name",
+});
+```
+
 Zod includes a handful of string-specific validations.
 
 ```ts
@@ -317,18 +332,36 @@ z.string().nonempty({ message: "Can't be empty" });
 
 #### Custom error messages
 
-Optionally, you can pass in a second argument to provide a custom error message.
+You can customize certain errors when creating a string schema.
+
+```ts
+const name = z.string({
+  required_error: "Name is required",
+  invalid_type_error: "Name must be a string",
+});
+```
+
+When using validation methods, you can pass in an additional argument to provide a custom error message.
 
 ```ts
 z.string().min(5, { message: "Must be 5 or more characters long" });
 z.string().max(5, { message: "Must be 5 or fewer characters long" });
 z.string().length(5, { message: "Must be exactly 5 characters long" });
-z.string().email({ message: "Invalid email address." });
+z.string().email({ message: "Invalid email address" });
 z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
 ```
 
 ## Numbers
+
+You can customize certain error messages when creating a number schema.
+
+```ts
+const age = z.number({
+  required_error: "Age is required",
+  invalid_type_error: "Age must be a number",
+});
+```
 
 Zod includes a handful of number-specific validations.
 
@@ -352,6 +385,183 @@ Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
 z.number().lte(5, { message: "this👏is👏too👏big" });
+```
+
+## Booleans
+
+You can customize certain error messages when creating a boolean schema.
+
+```ts
+const isActive = z.boolean({
+  required_error: "isActive is required",
+  invalid_type_error: "isActive must be a boolean",
+});
+```
+
+## Enums
+
+There are two ways to define enums in Zod.
+
+### Zod enums
+
+```ts
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+type FishEnum = z.infer<typeof FishEnum>;
+// 'Salmon' | 'Tuna' | 'Trout'
+```
+
+You must pass the array of values directly into `z.enum()`. Alternatively, use `as const` to define your enum values as a tuple of strings. See the [const assertion docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions) for details.
+
+```ts
+const VALUES = ["Salmon", "Tuna", "Trout"] as const;
+const FishEnum = z.enum(VALUES);
+```
+
+This is not allowed:
+
+```ts
+const fish = ["Salmon", "Tuna", "Trout"];
+const FishEnum = z.enum(fish);
+```
+
+In that case, the inferred type of `fish` is simply `string[]`, so Zod isn't able to infer the individual enum elements.
+
+**Autocompletion**
+
+To get autocompletion with a Zod enum, use the `.enum` property of your schema:
+
+```ts
+FishEnum.enum.Salmon; // => autocompletes
+
+FishEnum.enum;
+/* 
+=> {
+  Salmon: "Salmon",
+  Tuna: "Tuna",
+  Trout: "Trout",
+} 
+*/
+```
+
+You can also retrieve the list of options as a tuple with the `.options` property:
+
+```ts
+FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
+```
+
+### Native enums
+
+Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()` .
+
+**Numeric enums**
+
+```ts
+enum Fruits {
+  Apple,
+  Banana,
+}
+
+const FruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
+
+FruitEnum.parse(Fruits.Apple); // passes
+FruitEnum.parse(Fruits.Banana); // passes
+FruitEnum.parse(0); // passes
+FruitEnum.parse(1); // passes
+FruitEnum.parse(3); // fails
+```
+
+**String enums**
+
+```ts
+enum Fruits {
+  Apple = "apple",
+  Banana = "banana",
+  Cantaloupe, // you can mix numerical and string enums
+}
+
+const FruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
+
+FruitEnum.parse(Fruits.Apple); // passes
+FruitEnum.parse(Fruits.Cantaloupe); // passes
+FruitEnum.parse("apple"); // passes
+FruitEnum.parse("banana"); // passes
+FruitEnum.parse(0); // passes
+FruitEnum.parse("Cantaloupe"); // fails
+```
+
+**Const enums**
+
+The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` required TypeScript 3.4+!
+
+```ts
+const Fruits = {
+  Apple: "apple",
+  Banana: "banana",
+  Cantaloupe: 3,
+} as const;
+
+const FruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof FruitEnum>; // "apple" | "banana" | 3
+
+FruitEnum.parse("apple"); // passes
+FruitEnum.parse("banana"); // passes
+FruitEnum.parse(3); // passes
+FruitEnum.parse("Cantaloupe"); // fails
+```
+
+## Optionals
+
+You can make any schema optional with `z.optional()`:
+
+```ts
+const schema = z.optional(z.string());
+
+schema.parse(undefined); // => returns undefined
+type A = z.infer<typeof A>; // string | undefined
+```
+
+You can make an existing schema optional with the `.optional()` method:
+
+```ts
+const user = z.object({
+  username: z.string().optional(),
+});
+type C = z.infer<typeof C>; // { username?: string | undefined };
+```
+
+#### `.unwrap`
+
+```ts
+const stringSchema = z.string();
+const optionalString = stringSchema.optional();
+optionalString.unwrap() === stringSchema; // true
+```
+
+## Nullables
+
+Similarly, you can create nullable types like so:
+
+```ts
+const nullableString = z.nullable(z.string());
+nullableString.parse("asdf"); // => "asdf"
+nullableString.parse(null); // => null
+```
+
+You can make an existing schema nullable with the `nullable` method:
+
+```ts
+const E = z.string().nullable(); // equivalent to D
+type E = z.infer<typeof D>; // string | null
+```
+
+#### `.unwrap`
+
+```ts
+const stringSchema = z.string();
+const nullableString = stringSchema.nullable();
+nullableString.unwrap() === stringSchema; // true
 ```
 
 ## Objects
@@ -445,43 +655,30 @@ Starting from this object:
 
 ```ts
 const user = z.object({
+  email: z.string()
   username: z.string(),
 });
-// { username: string }
+// { email: string; username: string }
 ```
 
 We can create a partial version:
 
 ```ts
 const partialUser = user.partial();
-// { username?: string | undefined }
+// { email?: string | undefined; username?: string | undefined }
 ```
 
-### `.partialBy`
-
-All Zod object schemas have a `.partialBy` method which returns a modified version with the specified properties optional.
-
-Starting from this object:
+You can also specify which properties to make optional:
 
 ```ts
-const Recipe = z.object({
-  id: z.string(),
-  name: z.string(),
-  ingredients: z.array(z.string()),
+const optionalEmail = user.partial({
+  email: true,
 });
-```
-
-To make certain keys optional:
-
-```ts
-const OptionalName = Recipe.partialBy({ name: true });
-type OptionalName = z.infer<typeof OptionalName>;
 /* 
-{
-  id: string,
-  name?: string | undefined, 
-  ingredients: string[]
-}
+{ 
+  email?: string | undefined; 
+  username: string
+} 
 */
 ```
 
@@ -639,6 +836,23 @@ z.string().array().length(5); // must contain 5 items exactly
 
 Unlike `.nonempty()` these methods do not change the inferred type.
 
+## Tuples
+
+Unlike arrays, tuples have a fixed number of elements and each element can have a different type.
+
+```ts
+const athleteSchema = z.tuple([
+  z.string(), // name
+  z.number(), // jersey number
+  z.object({
+    pointsScored: z.number(),
+  }), // statistics
+]);
+
+type Athlete = z.infer<typeof athleteSchema>;
+// type Athlete = [string, number, { pointsScored: number }]
+```
+
 ## Unions
 
 Zod includes a built-in `z.union` method for composing "OR" types.
@@ -657,79 +871,6 @@ For convenience, you can also use the `.or` method:
 ```ts
 const stringOrNumber = z.string().or(z.number());
 ```
-
-## Optionals
-
-You can make any schema optional with `z.optional()`:
-
-```ts
-const schema = z.optional(z.string());
-
-schema.parse(undefined); // => returns undefined
-type A = z.infer<typeof A>; // string | undefined
-```
-
-You can make an existing schema optional with the `.optional()` method:
-
-```ts
-const user = z.object({
-  username: z.string().optional(),
-});
-type C = z.infer<typeof C>; // { username?: string | undefined };
-```
-
-#### `.unwrap`
-
-```ts
-const stringSchema = z.string();
-const optionalString = stringSchema.optional();
-optionalString.unwrap() === stringSchema; // true
-```
-
-## Nullables
-
-Similarly, you can create nullable types like so:
-
-```ts
-const nullableString = z.nullable(z.string());
-nullableString.parse("asdf"); // => "asdf"
-nullableString.parse(null); // => null
-```
-
-You can make an existing schema nullable with the `nullable` method:
-
-```ts
-const E = z.string().nullable(); // equivalent to D
-type E = z.infer<typeof D>; // string | null
-```
-
-#### `.unwrap`
-
-```ts
-const stringSchema = z.string();
-const nullableString = stringSchema.nullable();
-nullableString.unwrap() === stringSchema; // true
-```
-
-<!--
-
-``` ts
-/* Custom Union Types */
-
-const F = z
-  .union([z.string(), z.number(), z.boolean()])
-  .optional()
-  .nullable();
-
-F.parse('tuna'); // => tuna
-F.parse(42); // => 42
-F.parse(true); // => true
-F.parse(undefined); // => undefined
-F.parse(null); // => null
-F.parse({}); // => throws Error!
-
-type F = z.infer<typeof F>; // string | number | boolean | undefined | null;
-``` -->
 
 ## Records
 
@@ -796,134 +937,6 @@ type numberSet = z.infer<typeof numberSet>;
 // Set<number>
 ```
 
-## Enums
-
-There are two ways to define enums in Zod.
-
-### Zod enums
-
-<!-- An enum is just a union of string literals, so you _could_ define an enum like this:
-
-```ts
-const FishEnum = z.union([
-  z.literal("Salmon"),
-  z.literal("Tuna"),
-  z.literal("Trout"),
-]);
-
-FishEnum.parse("Salmon"); // => "Salmon"
-FishEnum.parse("Flounder"); // => throws
-```
-
-For convenience Zod provides a built-in `z.enum()` function. Here's is the equivalent code: -->
-
-```ts
-const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
-type FishEnum = z.infer<typeof FishEnum>;
-// 'Salmon' | 'Tuna' | 'Trout'
-```
-
-You must pass the array of values directly into `z.enum()`. Alternatively, use `as const` to define your enum values as a tuple of strings. See the [const assertion docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions) for details.
-
-```ts
-const VALUES = ["Salmon", "Tuna", "Trout"] as const;
-const FishEnum = z.enum(VALUES);
-```
-
-This is not allowed:
-
-```ts
-const fish = ["Salmon", "Tuna", "Trout"];
-const FishEnum = z.enum(fish);
-```
-
-In that case, the inferred type of `fish` is simply `string[]`, so Zod isn't able to infer the individual enum elements.
-
-**Autocompletion**
-
-To get autocompletion with a Zod enum, use the `.enum` property of your schema:
-
-```ts
-FishEnum.enum.Salmon; // => autocompletes
-
-FishEnum.enum;
-/* 
-=> {
-  Salmon: "Salmon",
-  Tuna: "Tuna",
-  Trout: "Trout",
-} 
-*/
-```
-
-You can also retrieve the list of options as a tuple with the `.options` property:
-
-```ts
-FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
-```
-
-### Native enums
-
-Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()` .
-
-**Numeric enums**
-
-```ts
-enum Fruits {
-  Apple,
-  Banana,
-}
-
-const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
-
-FruitEnum.parse(Fruits.Apple); // passes
-FruitEnum.parse(Fruits.Banana); // passes
-FruitEnum.parse(0); // passes
-FruitEnum.parse(1); // passes
-FruitEnum.parse(3); // fails
-```
-
-**String enums**
-
-```ts
-enum Fruits {
-  Apple = "apple",
-  Banana = "banana",
-  Cantaloupe, // you can mix numerical and string enums
-}
-
-const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
-
-FruitEnum.parse(Fruits.Apple); // passes
-FruitEnum.parse(Fruits.Cantaloupe); // passes
-FruitEnum.parse("apple"); // passes
-FruitEnum.parse("banana"); // passes
-FruitEnum.parse(0); // passes
-FruitEnum.parse("Cantaloupe"); // fails
-```
-
-**Const enums**
-
-The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` required TypeScript 3.4+!
-
-```ts
-const Fruits = {
-  Apple: "apple",
-  Banana: "banana",
-  Cantaloupe: 3,
-} as const;
-
-const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer<typeof FruitEnum>; // "apple" | "banana" | 3
-
-FruitEnum.parse("apple"); // passes
-FruitEnum.parse("banana"); // passes
-FruitEnum.parse(3); // passes
-FruitEnum.parse("Cantaloupe"); // fails
-```
-
 ## Intersections
 
 <!-- > ⚠️ Intersections are deprecated. If you are trying to merge objects, use the `.merge` method instead. -->
@@ -973,23 +986,6 @@ const AB = z.intersection(A, B);
 type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };
 ```  -->
-
-## Tuples
-
-Unlike arrays, tuples have a fixed number of elements and each element can have a different type.
-
-```ts
-const athleteSchema = z.tuple([
-  z.string(), // name
-  z.number(), // jersey number
-  z.object({
-    pointsScored: z.number(),
-  }), // statistics
-]);
-
-type Athlete = z.infer<typeof athleteSchema>;
-// type Athlete = [string, number, { pointsScored: number }]
-```
 
 ## Recursive types
 
@@ -1198,9 +1194,9 @@ myFunction; // (arg: string)=>number[]
 
 ## Preprocess
 
-Typically Zod operates under a "parse, then transform" paradigm. Zod validates the input first, then passes it through a chain of transformation functions. (For more information about transforms, read the [.transform docs](#transform).)
+Typically Zod operates under a "parse then transform" paradigm. Zod validates the input first, then passes it through a chain of transformation functions. (For more information about transforms, read the [.transform docs](#transform).)
 
-But sometimes you want to apply some transformation to the input _before_ parsing happens. A common use case: type coercion. Zod enables this with the `z.preprocess()`.
+But sometimes you want to apply some transform to the input _before_ parsing happens. A common use case: type coercion. Zod enables this with the `z.preprocess()`.
 
 ```ts
 const castToString = z.preprocess((val) => String(val), z.string());
@@ -1441,11 +1437,11 @@ const stringToNumber = z.string().transform((val) => myString.length);
 stringToNumber.parse("string"); // => 6
 ```
 
-> ⚠️ Transformation functions must not throw. Make sure to use refinements before the transformer to make sure the input can be parsed by the transformer.
+> ⚠️ Transform functions must not throw. Make sure to use refinements before the transform to make sure the input can be parsed by the transform.
 
 #### Chaining order
 
-Note that `stringToNumber` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transformations.
+Note that `stringToNumber` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transforms.
 
 ```ts
 const emailToDomain = z
@@ -1466,25 +1462,24 @@ z.string()
   .refine((val) => val > 25);
 ```
 
-#### Async transformations
+#### Async transforms
 
-Transformations can also be async.
+Transforms can also be async.
 
 ```ts
-const IdToUser = z.transformer(
-  z.string().uuid(),
-  UserSchema,
-  (userId) => async (id) => {
+const IdToUser = z
+  .string()
+  .uuid()
+  .transform(async (id) => {
     return await getUserById(id);
-  }
-);
+  });
 ```
 
-> ⚠️ If your schema contains asynchronous transformers, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
+> ⚠️ If your schema contains asynchronous transforms, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
 
 ### `.default`
 
-You can use transformers to implement the concept of "default values" in Zod.
+You can use transforms to implement the concept of "default values" in Zod.
 
 ```ts
 const stringWithDefault = z.string().default("tuna");
@@ -1593,7 +1588,7 @@ const u: A = "asdf"; // compiles
 
 #### What about transforms?
 
-In reality each Zod schema is actually associated with **two** types: an input and an output. For most schemas (e.g. `z.string()`) these two are the same. But once you add transforms into the mix, these two values can diverge. For instance `z.string().transform(val => val.length)` has an input of `string` and an output of `number`.
+In reality each Zod schema internally tracks **two** types: an input and an output. For most schemas (e.g. `z.string()`) these two are the same. But once you add transforms into the mix, these two values can diverge. For instance `z.string().transform(val => val.length)` has an input of `string` and an output of `number`.
 
 You can separately extract the input and output types like so:
 
@@ -1712,7 +1707,7 @@ Yup is a full-featured library that was implemented first in vanilla JS, and lat
 
 Differences
 
-- Supports for casting and transformation
+- Supports casting and transforms
 - All object fields are optional by default
 - Missing object methods: (partial, deepPartial)
 <!-- - Missing nonempty arrays with proper typing (`[T, ...T[]]`) -->

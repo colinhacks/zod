@@ -40,19 +40,20 @@ _Every_ ZodIssue has these fields:
 
 ## ZodIssueCode
 
-| code                             | additional fields                                                                                                                                                                                                                                                                    |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ZodIssueCode.invalid_type        | `expected: ZodParsedType` <br> `received: ZodParsedType` <br><br>Jump to [this section](#parsedtype) for a breakdown of the possible values of ZodParsedType.                                                                                                                        |
-| ZodIssueCode.unrecognized_keys   | `keys: string[]`<br>The list of unrecognized keys<br>                                                                                                                                                                                                                                |
-| ZodIssueCode.invalid_union       | `unionErrors: ZodError[]` <br> The errors thrown by each element of the union.                                                                                                                                                                                                       |
-| ZodIssueCode.invalid_enum_value  | `options: string[]` <br> The set of acceptable string values for this enum.                                                                                                                                                                                                          |
-| ZodIssueCode.invalid_arguments   | `argumentsError: ZodError` <br> This is a special error code only thrown by a wrapped function returned by `ZodFunction.implement()`. The `argumentsError` property is another ZodError containing the validation error details.                                                     |
-| ZodIssueCode.invalid_return_type | `returnTypeError: ZodError` <br> This is a special error code only thrown by a wrapped function returned by `ZodFunction.implement()`. The `returnTypeError` property is another ZodError containing the validation error details.                                                   |
-| ZodIssueCode.invalid_date        | _no additional properties_                                                                                                                                                                                                                                                           |
-| ZodIssueCode.invalid_string      | `validation: "url" \| "email" \| "uuid"`<br> Which built-in string validator failed                                                                                                                                                                                                  |
-| ZodIssueCode.too_small           | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `minimum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                   |
-| ZodIssueCode.too_big             | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `maximum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                   |
-| ZodIssueCode.custom              | `params: { [k: string]: any }` <br> This is the error code throw by **all custom refinements**. You are able to pass in a `params` object here that is available in your custom error maps (see [ZodErrorMap](#Customizing-errors-with-ZodErrorMap) below for details on error maps) |
+| code                             | additional fields                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ZodIssueCode.invalid_type        | `expected: ZodParsedType` <br> `received: ZodParsedType` <br><br>Jump to [this section](#parsedtype) for a breakdown of the possible values of ZodParsedType.                                                                                                                                                                                                        |
+| ZodIssueCode.unrecognized_keys   | `keys: string[]`<br>The list of unrecognized keys<br>                                                                                                                                                                                                                                                                                                                |
+| ZodIssueCode.invalid_union       | `unionErrors: ZodError[]` <br> The errors thrown by each element of the union.                                                                                                                                                                                                                                                                                       |
+| ZodIssueCode.invalid_enum_value  | `options: string[]` <br> The set of acceptable string values for this enum.                                                                                                                                                                                                                                                                                          |
+| ZodIssueCode.invalid_arguments   | `argumentsError: ZodError` <br> This is a special error code only thrown by a wrapped function returned by `ZodFunction.implement()`. The `argumentsError` property is another ZodError containing the validation error details.                                                                                                                                     |
+| ZodIssueCode.invalid_return_type | `returnTypeError: ZodError` <br> This is a special error code only thrown by a wrapped function returned by `ZodFunction.implement()`. The `returnTypeError` property is another ZodError containing the validation error details.                                                                                                                                   |
+| ZodIssueCode.invalid_date        | _no additional properties_                                                                                                                                                                                                                                                                                                                                           |
+| ZodIssueCode.invalid_string      | `validation: "url" \| "email" \| "uuid"`<br> Which built-in string validator failed                                                                                                                                                                                                                                                                                  |
+| ZodIssueCode.too_small           | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `minimum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                                                                                                   |
+| ZodIssueCode.too_big             | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `maximum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                                                                                                   |
+| ZodIssueCode.not_multiple_of     | `multipleOf: number` <br>The value the number should be a multiple of.<br>                                                                                                                                                                                                                                                                                           |
+| ZodIssueCode.custom              | `params: { [k: string]: any }` <br> This is the error code throw by refinements (unless you are using `superRefine` in which case it's possible to throw issues of any `code`). You are able to pass in a `params` object here that is available in your custom error maps (see [ZodErrorMap](#Customizing-errors-with-ZodErrorMap) below for details on error maps) |
 
 <!--
 | ZodIssueCode.nonempty_array_is_empty | _no additional properties_                                      |
@@ -169,9 +170,9 @@ const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
 z.setErrorMap(customErrorMap);
 ```
 
-`ZodErrorMap` is a special function. It accepts two arguments: `error` and `ctx`. The return type is `{ message: string }`. Essentially the error map accepts some information about the validation that is failing and returns an appropriate error message.
+`ZodErrorMap` is a special function. It accepts two arguments: `issue` and `ctx`. The return type is `{ message: string }`. Essentially the error map accepts some information about the validation that is failing and returns an appropriate error message.
 
-- `error: Omit<ZodIssue, "message">`
+- `issue: Omit<ZodIssue, "message">`
 
   As mentioned above, ZodIssue is a discriminated union.
 
@@ -183,7 +184,48 @@ z.setErrorMap(customErrorMap);
 
 As in the example, you can modify certain error messages and simply fall back to `ctx.defaultError` otherwise.
 
-### A working example
+## Error map priority
+
+A custom error maps doesn't need to produce an error message for every kind of issue in Zod. Instead, your error map can override certain errors and return `ctx.defaultError` for everything else.
+
+But how is the value of `ctx.defaultError` determined?
+
+Error messages in Zod are generated by passing metadata about a validation issue through a chain of error maps. Error maps with higher priority override messages generated by maps with lower priority.
+
+The lowest priority map is the `defaultErrorMap`, which defined in [`src/ZodError.ts`](https://github.com/colinhacks/zod/blob/master/src/ZodError.ts). This produces the default error message for all issues in Zod.
+
+### Global error map
+
+This message is then passed as `ctx.defaultError` into `overrideErrorMap`. This is a global error map you can set with `z.setErrorMap`:
+
+```ts
+const myErrorMap: z.ZodErrorMap = /* ... */;
+z.setErrorMap(errorMap);
+```
+
+### Schema-bound error map
+
+The `overrideErrorMap` message is then passed as `ctx.defaultError` into any schema-bound error maps. Every schema can be associated with an error map.
+
+```ts
+z.string({ errorMap: myErrorMap });
+
+// this creates an error map under the hood
+z.string({
+  invalid_type_error: "Invalid name",
+  required_error: "Name is required",
+});
+```
+
+### Contextual error map
+
+Finally, you can pass an error map as a parameter to any `parse` method. This error map, if provided, has highest priority.
+
+```ts
+z.string().parse("adsf", { errorMap: myErrorMap });
+```
+
+## A working example
 
 Let's look at a practical example of of customized error map:
 
@@ -214,8 +256,6 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
   // fall back to default message!
   return { message: ctx.defaultError };
 };
-
-z.setErrorMap(errorMap);
 
 z.string().parse(12, { errorMap });
 
