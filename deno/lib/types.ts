@@ -165,48 +165,45 @@ export abstract class ZodType<
     return Promise.resolve(result);
   }
 
-  parse: (data: unknown, params?: Partial<ParseParamsNoData>) => Output = (
-    data,
-    params
-  ) => {
+  parse(data: unknown, params?: Partial<ParseParamsNoData>): Output {
     const result = this.safeParse(data, params);
     if (result.success) return result.data;
     throw result.error;
-  };
+  }
 
-  safeParse: (
+  safeParse(
     data: unknown,
     params?: Partial<ParseParamsNoData>
-  ) =>
+  ):
     | { success: true; data: Output }
-    | { success: false; error: ZodError<Input> } = (data, params) => {
+    | { success: false; error: ZodError<Input> } {
     const ctx = createRootContext({ ...params, async: false });
     const result = this._parseSync(ctx, data, getParsedType(data));
     return handleResult(ctx, result);
-  };
+  }
 
-  parseAsync: (
-    x: unknown,
+  async parseAsync(
+    data: unknown,
     params?: Partial<ParseParamsNoData>
-  ) => Promise<Output> = async (data, params) => {
+  ): Promise<Output> {
     const result = await this.safeParseAsync(data, params);
     if (result.success) return result.data;
     throw result.error;
-  };
+  }
 
-  safeParseAsync: (
-    x: unknown,
+  async safeParseAsync(
+    data: unknown,
     params?: Partial<ParseParamsNoData>
-  ) => Promise<
+  ): Promise<
     { success: true; data: Output } | { success: false; error: ZodError }
-  > = async (data, params) => {
+  > {
     const ctx = createRootContext({ ...params, async: true });
     const maybeAsyncResult = this._parse(ctx, data, getParsedType(data));
     const result = await (isAsync(maybeAsyncResult)
       ? maybeAsyncResult
       : Promise.resolve(maybeAsyncResult));
     return handleResult(ctx, result);
-  };
+  }
 
   /** Alias of safeParseAsync */
   spa = this.safeParseAsync;
@@ -217,10 +214,10 @@ export abstract class ZodType<
   /** The .check method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
   check: never;
 
-  refine: <Func extends (arg: Output) => any>(
+  refine<Func extends (arg: Output) => any>(
     check: Func,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
-  ) => ZodEffects<this> = (check, message) => {
+  ): ZodEffects<this> {
     const getIssueProperties: any = (val: Output) => {
       if (typeof message === "string" || typeof message === "undefined") {
         return { message };
@@ -254,12 +251,12 @@ export abstract class ZodType<
         return true;
       }
     });
-  };
+  }
 
-  refinement: (
+  refinement(
     check: (arg: Output) => any,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
-  ) => ZodEffects<this> = (check, refinementData) => {
+  ): ZodEffects<this> {
     return this._refinement((val, ctx) => {
       if (!check(val)) {
         ctx.addIssue(
@@ -272,7 +269,7 @@ export abstract class ZodType<
         return true;
       }
     });
-  };
+  }
 
   _refinement(
     refinement: RefinementEffect<Output>["refinement"]
@@ -308,14 +305,21 @@ export abstract class ZodType<
     this.default = this.default.bind(this);
   }
 
-  optional: () => ZodOptional<this> = () => ZodOptional.create(this) as any;
-  nullable: () => ZodNullable<this> = () => ZodNullable.create(this) as any;
-  nullish: () => ZodNullable<ZodOptional<this>> = () =>
-    this.optional().nullable();
-
-  array: () => ZodArray<this> = () => ZodArray.create(this);
-
-  promise: () => ZodPromise<this> = () => ZodPromise.create(this);
+  optional(): ZodOptional<this> {
+    return ZodOptional.create(this) as any;
+  }
+  nullable(): ZodNullable<this> {
+    return ZodNullable.create(this) as any;
+  }
+  nullish(): ZodNullable<ZodOptional<this>> {
+    return this.optional().nullable();
+  }
+  array(): ZodArray<this> {
+    return ZodArray.create(this);
+  }
+  promise(): ZodPromise<this> {
+    return ZodPromise.create(this);
+  }
 
   or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
     return ZodUnion.create([this, option]) as any;
@@ -352,8 +356,12 @@ export abstract class ZodType<
     }) as any;
   }
 
-  isOptional: () => boolean = () => this.safeParse(undefined).success;
-  isNullable: () => boolean = () => this.safeParse(null).success;
+  isOptional(): boolean {
+    return this.safeParse(undefined).success;
+  }
+  isNullable(): boolean {
+    return this.safeParse(null).success;
+  }
 }
 
 /////////////////////////////////////////
@@ -522,68 +530,48 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       ...errorUtil.errToObj(message),
     });
 
-  email = (message?: errorUtil.ErrMessage) =>
-    new ZodString({
+  _addCheck(check: ZodStringCheck) {
+    return new ZodString({
       ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "email", ...errorUtil.errToObj(message) },
-      ],
+      checks: [...this._def.checks, check],
     });
+  }
 
-  url = (message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "url", ...errorUtil.errToObj(message) },
-      ],
+  email(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "email", ...errorUtil.errToObj(message) });
+  }
+  url(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
+  }
+  uuid(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
+  }
+  cuid(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
+  }
+  regex(regex: RegExp, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "regex",
+      regex: regex,
+      ...errorUtil.errToObj(message),
     });
+  }
 
-  uuid = (message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "uuid", ...errorUtil.errToObj(message) },
-      ],
+  min(minLength: number, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: minLength,
+      ...errorUtil.errToObj(message),
     });
+  }
 
-  cuid = (message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "cuid", ...errorUtil.errToObj(message) },
-      ],
+  max(maxLength: number, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "max",
+      value: maxLength,
+      ...errorUtil.errToObj(message),
     });
-
-  regex = (regex: RegExp, message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "regex", regex: regex, ...errorUtil.errToObj(message) },
-      ],
-    });
-
-  min = (minLength: number, message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "min", value: minLength, ...errorUtil.errToObj(message) },
-      ],
-    });
-
-  max = (maxLength: number, message?: errorUtil.ErrMessage) =>
-    new ZodString({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        { kind: "max", value: maxLength, ...errorUtil.errToObj(message) },
-      ],
-    });
+  }
 
   length(len: number, message?: errorUtil.ErrMessage) {
     return this.min(len, message).max(len, message);
@@ -758,27 +746,31 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     });
   };
 
-  gte = (value: number, message?: errorUtil.ErrMessage) =>
-    this.setLimit("min", value, true, errorUtil.toString(message));
+  gte(value: number, message?: errorUtil.ErrMessage) {
+    return this.setLimit("min", value, true, errorUtil.toString(message));
+  }
   min = this.gte;
 
-  gt = (value: number, message?: errorUtil.ErrMessage) =>
-    this.setLimit("min", value, false, errorUtil.toString(message));
+  gt(value: number, message?: errorUtil.ErrMessage) {
+    return this.setLimit("min", value, false, errorUtil.toString(message));
+  }
 
-  lte = (value: number, message?: errorUtil.ErrMessage) =>
-    this.setLimit("max", value, true, errorUtil.toString(message));
+  lte(value: number, message?: errorUtil.ErrMessage) {
+    return this.setLimit("max", value, true, errorUtil.toString(message));
+  }
   max = this.lte;
 
-  lt = (value: number, message?: errorUtil.ErrMessage) =>
-    this.setLimit("max", value, false, errorUtil.toString(message));
+  lt(value: number, message?: errorUtil.ErrMessage) {
+    return this.setLimit("max", value, false, errorUtil.toString(message));
+  }
 
-  protected setLimit = (
+  protected setLimit(
     kind: "min" | "max",
     value: number,
     inclusive: boolean,
     message?: string
-  ) =>
-    new ZodNumber({
+  ) {
+    return new ZodNumber({
       ...this._def,
       checks: [
         ...this._def.checks,
@@ -790,87 +782,66 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         },
       ],
     });
+  }
 
-  int = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
+  _addCheck(check: ZodNumberCheck) {
+    return new ZodNumber({
       ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "int",
-          message: errorUtil.toString(message),
-        },
-      ],
+      checks: [...this._def.checks, check],
     });
+  }
 
-  positive = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "min",
-          value: 0,
-          inclusive: false,
-          message: errorUtil.toString(message),
-        },
-      ],
+  int(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "int",
+      message: errorUtil.toString(message),
     });
+  }
 
-  negative = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "max",
-          value: 0,
-          inclusive: false,
-          message: errorUtil.toString(message),
-        },
-      ],
+  positive(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: 0,
+      inclusive: false,
+      message: errorUtil.toString(message),
     });
+  }
 
-  nonpositive = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "max",
-          value: 0,
-          inclusive: true,
-          message: errorUtil.toString(message),
-        },
-      ],
+  negative(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "max",
+      value: 0,
+      inclusive: false,
+      message: errorUtil.toString(message),
     });
+  }
 
-  nonnegative = (message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "min",
-          value: 0,
-          inclusive: true,
-          message: errorUtil.toString(message),
-        },
-      ],
+  nonpositive(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "max",
+      value: 0,
+      inclusive: true,
+      message: errorUtil.toString(message),
     });
+  }
 
-  multipleOf = (value: number, message?: errorUtil.ErrMessage) =>
-    new ZodNumber({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "multipleOf",
-          value: value,
-          message: errorUtil.toString(message),
-        },
-      ],
+  nonnegative(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: 0,
+      inclusive: true,
+      message: errorUtil.toString(message),
     });
+  }
+
+  multipleOf(value: number, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "multipleOf",
+      value: value,
+      message: errorUtil.toString(message),
+    });
+  }
+
   step = this.multipleOf;
 
   get minValue() {
@@ -1374,26 +1345,27 @@ export class ZodArray<
     return this._def.type;
   }
 
-  min = (minLength: number, message?: errorUtil.ErrMessage): this =>
-    new ZodArray({
+  min(minLength: number, message?: errorUtil.ErrMessage): this {
+    return new ZodArray({
       ...this._def,
       minLength: { value: minLength, message: errorUtil.toString(message) },
     }) as any;
+  }
 
-  max = (maxLength: number, message?: errorUtil.ErrMessage): this =>
-    new ZodArray({
+  max(maxLength: number, message?: errorUtil.ErrMessage): this {
+    return new ZodArray({
       ...this._def,
       maxLength: { value: maxLength, message: errorUtil.toString(message) },
     }) as any;
+  }
 
-  length = (len: number, message?: errorUtil.ErrMessage): this =>
-    this.min(len, message).max(len, message) as any;
+  length(len: number, message?: errorUtil.ErrMessage): this {
+    return this.min(len, message).max(len, message) as any;
+  }
 
-  nonempty: (message?: errorUtil.ErrMessage) => ZodArray<T, "atleastone"> = (
-    message?: any
-  ) => {
+  nonempty(message?: errorUtil.ErrMessage): ZodArray<T, "atleastone"> {
     return this.min(1, message) as any; // new ZodArray({ ...this._def, cardinality:"atleastone" });
-  };
+  }
 
   static create = <T extends ZodTypeAny>(
     schema: T,
@@ -1746,23 +1718,26 @@ export class ZodObject<
     return this._def.shape();
   }
 
-  strict = (): ZodObject<T, "strict", Catchall> =>
-    new ZodObject({
+  strict(): ZodObject<T, "strict", Catchall> {
+    return new ZodObject({
       ...this._def,
       unknownKeys: "strict",
     }) as any;
+  }
 
-  strip = (): ZodObject<T, "strip", Catchall> =>
-    new ZodObject({
+  strip(): ZodObject<T, "strip", Catchall> {
+    return new ZodObject({
       ...this._def,
       unknownKeys: "strip",
     }) as any;
+  }
 
-  passthrough = (): ZodObject<T, "passthrough", Catchall> =>
-    new ZodObject({
+  passthrough(): ZodObject<T, "passthrough", Catchall> {
+    return new ZodObject({
       ...this._def,
       unknownKeys: "passthrough",
     }) as any;
+  }
 
   /**
    * @deprecated In most cases, this is no longer needed - unknown properties are now silently stripped.
@@ -1773,24 +1748,22 @@ export class ZodObject<
   augment = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
   extend = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
 
-  setKey = <Key extends string, Schema extends ZodTypeAny>(
+  setKey<Key extends string, Schema extends ZodTypeAny>(
     key: Key,
     schema: Schema
-  ): ZodObject<T & { [k in Key]: Schema }, UnknownKeys, Catchall> => {
+  ): ZodObject<T & { [k in Key]: Schema }, UnknownKeys, Catchall> {
     return this.augment({ [key]: schema }) as any;
-  };
+  }
 
   /**
    * Prior to zod@1.0.12 there was a bug in the
    * inferred type of merged objects. Please
    * upgrade if you are experiencing issues.
    */
-  merge: <Incoming extends AnyZodObject>(
+  merge<Incoming extends AnyZodObject>(
     merging: Incoming
-  ) => //ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = (merging) => {
-  ZodObject<extendShape<T, Incoming["_shape"]>, UnknownKeys, Catchall> = (
-    merging
-  ) => {
+  ): //ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = (merging) => {
+  ZodObject<extendShape<T, Incoming["_shape"]>, UnknownKeys, Catchall> {
     const mergedShape = objectUtil.mergeShapes(
       this._def.shape(),
       merging._def.shape()
@@ -1803,24 +1776,24 @@ export class ZodObject<
       typeName: ZodFirstPartyTypeKind.ZodObject,
     }) as any;
     return merged;
-  };
+  }
 
-  catchall = <Index extends ZodTypeAny>(
+  catchall<Index extends ZodTypeAny>(
     index: Index
-  ): ZodObject<T, UnknownKeys, Index> => {
+  ): ZodObject<T, UnknownKeys, Index> {
     return new ZodObject({
       ...this._def,
       catchall: index,
     }) as any;
-  };
+  }
 
-  pick = <Mask extends { [k in keyof T]?: true }>(
+  pick<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
   ): ZodObject<
     objectUtil.noNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>,
     UnknownKeys,
     Catchall
-  > => {
+  > {
     const shape: any = {};
     util.objectKeys(mask).map((key) => {
       shape[key] = this.shape[key];
@@ -1829,15 +1802,15 @@ export class ZodObject<
       ...this._def,
       shape: () => shape,
     }) as any;
-  };
+  }
 
-  omit = <Mask extends { [k in keyof T]?: true }>(
+  omit<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
   ): ZodObject<
     objectUtil.noNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>,
     UnknownKeys,
     Catchall
-  > => {
+  > {
     const shape: any = {};
     util.objectKeys(this.shape).map((key) => {
       if (util.objectKeys(mask).indexOf(key) === -1) {
@@ -1848,11 +1821,11 @@ export class ZodObject<
       ...this._def,
       shape: () => shape,
     }) as any;
-  };
+  }
 
-  deepPartial: () => partialUtil.DeepPartial<this> = () => {
+  deepPartial(): partialUtil.DeepPartial<this> {
     return deepPartialify(this) as any;
-  };
+  }
 
   partial(): ZodObject<
     { [k in keyof T]: ZodOptional<T[k]> },
@@ -1898,11 +1871,11 @@ export class ZodObject<
     }) as any;
   }
 
-  required = (): ZodObject<
+  required(): ZodObject<
     { [k in keyof T]: deoptional<T[k]> },
     UnknownKeys,
     Catchall
-  > => {
+  > {
     const newShape: any = {};
     for (const key in this.shape) {
       const fieldSchema = this.shape[key];
@@ -1917,7 +1890,7 @@ export class ZodObject<
       ...this._def,
       shape: () => newShape,
     }) as any;
-  };
+  }
 
   static create = <T extends ZodRawShape>(
     shape: T,
@@ -2771,35 +2744,35 @@ export class ZodFunction<
     return this._def.returns;
   }
 
-  args = <Items extends Parameters<typeof ZodTuple["create"]>[0]>(
+  args<Items extends Parameters<typeof ZodTuple["create"]>[0]>(
     ...items: Items
-  ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> => {
+  ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> {
     return new ZodFunction({
       ...this._def,
       args: ZodTuple.create(items).rest(ZodUnknown.create()) as any,
     });
-  };
+  }
 
-  returns = <NewReturnType extends ZodType<any, any>>(
+  returns<NewReturnType extends ZodType<any, any>>(
     returnType: NewReturnType
-  ): ZodFunction<Args, NewReturnType> => {
+  ): ZodFunction<Args, NewReturnType> {
     return new ZodFunction({
       ...this._def,
       returns: returnType,
     });
-  };
+  }
 
-  implement = <F extends InnerTypeOfFunction<Args, Returns>>(func: F): F => {
+  implement<F extends InnerTypeOfFunction<Args, Returns>>(func: F): F {
     const validatedFunc = this.parse(func);
     return validatedFunc as any;
-  };
+  }
 
-  strictImplement = (
+  strictImplement(
     func: InnerTypeOfFunction<Args, Returns>
-  ): InnerTypeOfFunction<Args, Returns> => {
+  ): InnerTypeOfFunction<Args, Returns> {
     const validatedFunc = this.parse(func);
     return validatedFunc as any;
-  };
+  }
 
   validate = this.implement;
 

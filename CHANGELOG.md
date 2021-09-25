@@ -1,5 +1,61 @@
 # Changelog
 
+### 3.9
+
+- Custom error messages in schemas
+
+```ts
+const name = z.string({
+  invalid_type_error: "Name must be string",
+  required_error: "Name is required",
+});
+```
+
+Under the hood, this creates a custom error map that's bound to the schema. You can also pass a custom error map explicitly.
+
+```ts
+const name = z.string({ errorMap: myErrorMap });
+```
+
+- Rest parameters for tuples
+
+```ts
+const myTuple = z.tuple([z.string(), z.number()]).rest(z.boolean());
+type t1 = z.output<typeof myTuple>; // [string, number, ...boolean[]]
+```
+
+- Selective `.partial`
+
+You can specify certain fields to make optional with the `ZodObject.partial` method.
+
+```ts
+const user = z.object({
+  name: z.string(),
+  age: z.number(),
+});
+
+const optionalNameUser = user.partial({ name: true });
+// { name?: string; age: number; }
+```
+
+- Specify key schema in ZodRecord
+
+Previously, `z.record` only accepted a single schema:
+
+```ts
+z.record(z.boolean()); // Record<string, boolean>;
+```
+
+Now `z.record` has been overloaded to support two schemas. The first validates the _keys_ of the record, and the second validates the _values_.
+
+```ts
+const schema = z.record(z.number(), z.boolean());
+type schema = z.infer<typeof schema>; // Record<number, boolean>
+
+const schema = z.record(z.enum(["Tuna", "Trout"]), z.boolean());
+type schema = z.infer<typeof schema>; // Record<"Tuna" | "Trout", boolean>
+```
+
 ### 3.8
 
 - Add `z.preprocess`
