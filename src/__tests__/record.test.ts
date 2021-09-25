@@ -102,7 +102,12 @@ test("key schema", () => {
     recordWithLiteralKeys.parse({
       Tuna: "asdf",
       Salmon: "asdf",
+
       Trout: "asdf",
     })
   ).toThrow();
 });
+
+// test("record element", () => {
+//   expect(booleanRecord.element).toBeInstanceOf(z.ZodBoolean);
+// });

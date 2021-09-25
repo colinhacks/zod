@@ -741,6 +741,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             { data }
           );
         }
+      } else {
+        util.assertNever(check);
       }
     }
 
@@ -2427,6 +2429,10 @@ export class ZodRecord<
     } else {
       return invalid ? INVALID : OK(parseResult);
     }
+  }
+
+  get element() {
+    return this._def.valueType;
   }
 
   static create<Value extends ZodTypeAny>(
