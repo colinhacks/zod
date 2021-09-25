@@ -282,3 +282,47 @@ test("formatting", () => {
     expect(error.inner?.name?.[2]).toEqual(undefined);
   }
 });
+
+const stringWithCustomError = z.string({
+  errorMap: (issue, ctx) => ({
+    message:
+      issue.code === "invalid_type"
+        ? ctx.data
+          ? "Invalid name"
+          : "Name is required"
+        : ctx.defaultError,
+  }),
+});
+
+test("schema-bound error map", () => {
+  const result = stringWithCustomError.safeParse(1234);
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("Invalid name");
+  }
+
+  const result2 = stringWithCustomError.safeParse(undefined);
+  expect(result2.success).toEqual(false);
+  if (!result2.success) {
+    expect(result2.error.issues[0].message).toEqual("Name is required");
+  }
+
+  // support contextual override
+  const result3 = stringWithCustomError.safeParse(undefined, {
+    errorMap: () => ({ message: "OVERRIDE" }),
+  });
+  expect(result3.success).toEqual(false);
+  if (!result3.success) {
+    expect(result3.error.issues[0].message).toEqual("OVERRIDE");
+  }
+});
+
+test("overrideErrorMap", () => {
+  // support overrideErrorMap
+  z.setErrorMap(() => ({ message: "OVERRIDE" }));
+  const result4 = stringWithCustomError.min(10).safeParse("tooshort");
+  expect(result4.success).toEqual(false);
+  if (!result4.success) {
+    expect(result4.error.issues[0].message).toEqual("OVERRIDE");
+  }
+});

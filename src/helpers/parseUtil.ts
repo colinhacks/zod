@@ -1,4 +1,10 @@
-import { defaultErrorMap, IssueData, ZodErrorMap, ZodIssue } from "../ZodError";
+import {
+  defaultErrorMap,
+  IssueData,
+  overrideErrorMap,
+  ZodErrorMap,
+  ZodIssue,
+} from "../ZodError";
 import { util } from "./util";
 
 export const ZodParsedType = util.arrayToEnum([
@@ -68,30 +74,37 @@ export const getParsedType = (data: any): ZodParsedType => {
 };
 
 export const makeIssue = (
-  data: any,
-  path: (string | number)[],
-  errorMap: ZodErrorMap,
-  errorData: IssueData
+  params: {
+    data: any;
+    path: (string | number)[];
+    errorMaps: (ZodErrorMap | undefined)[];
+    issueData: IssueData;
+  }
+  // data: any,
+  // path: (string | number)[],
+  // errorMap: ZodErrorMap,
+  // issueData: IssueData
 ): ZodIssue => {
-  const fullPath = [...path, ...(errorData.path || [])];
-  const errorArg = {
-    ...errorData,
+  const { data, path, errorMaps, issueData } = params;
+  const fullPath = [...path, ...(issueData.path || [])];
+  const fullIssue = {
+    ...issueData,
     path: fullPath,
   };
 
-  const defaultError = defaultErrorMap(errorArg, {
-    data: data,
-    defaultError: `Invalid input`,
-  });
+  let errorMessage = "";
+  const maps = errorMaps
+    .filter((m) => !!m)
+    .slice()
+    .reverse() as ZodErrorMap[];
+  for (const map of maps) {
+    errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+  }
+
   return {
-    ...errorData,
+    ...issueData,
     path: fullPath,
-    message:
-      errorData.message ||
-      errorMap(errorArg, {
-        data: data,
-        defaultError: defaultError.message,
-      }).message,
+    message: issueData.message || errorMessage,
   };
 };
 
@@ -140,7 +153,7 @@ export type ParseContextParameters = {
 interface ParseContextDef {
   readonly path: ParsePath;
   readonly issues: ZodIssue[];
-  readonly errorMap: ZodErrorMap;
+  readonly errorMap?: ZodErrorMap;
   readonly async: boolean;
 }
 
@@ -176,13 +189,24 @@ export class ParseContext {
     });
   }
 
-  addIssue(data: any, errorData: IssueData): void {
-    const issue = makeIssue(
+  addIssue(
+    data: any,
+    issueData: IssueData,
+    params: { schemaErrorMap?: ZodErrorMap } = {}
+  ): void {
+    const issue = makeIssue({
       data,
-      pathToArray(this.path),
-      this.errorMap,
-      errorData
-    );
+      issueData,
+      path: pathToArray(this.path),
+      errorMaps: [
+        this.def.errorMap, // contextual error map is first priority
+        params.schemaErrorMap, // then schema-bound map if available
+        overrideErrorMap, // then global override map
+        defaultErrorMap, // then global default map
+      ],
+      // errorMaps: [this.errorMap],
+      // issueData,
+    });
     this.issues.push(issue);
   }
 }
