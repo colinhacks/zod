@@ -325,6 +325,7 @@ test("overrideErrorMap", () => {
   if (!result4.success) {
     expect(result4.error.issues[0].message).toEqual("OVERRIDE");
   }
+  z.setErrorMap(z.defaultErrorMap);
 });
 
 test("invalid and required", () => {
