@@ -91,11 +91,31 @@ const handleResult = <Input, Output>(
   // }
 };
 
-type RawCreateParams = { errorMap?: ZodErrorMap } | undefined;
+type RawCreateParams =
+  | {
+      errorMap?: ZodErrorMap;
+      invalid_type_error?: string;
+      required_error?: string;
+    }
+  | undefined;
 type ProcessedCreateParams = { errorMap?: ZodErrorMap };
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
-  return { errorMap: params.errorMap };
+  if (params.errorMap && (params.invalid_type_error || params.required_error)) {
+    throw new Error(
+      `Can't use "invalid" or "required" in conjunction with custom error map.`
+    );
+  }
+  if (params.errorMap) return { errorMap: params.errorMap };
+  const customMap: ZodErrorMap = (iss, ctx) => {
+    if (iss.code !== "invalid_type") return { message: ctx.defaultError };
+    if (typeof ctx.data === "undefined" && params.required_error)
+      return { message: params.required_error };
+    if (params.invalid_type_error)
+      return { message: params.invalid_type_error };
+    return { message: ctx.defaultError };
+  };
+  return { errorMap: customMap };
 }
 
 export abstract class ZodType<

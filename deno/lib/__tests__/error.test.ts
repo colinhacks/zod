@@ -326,3 +326,43 @@ test("overrideErrorMap", () => {
     expect(result4.error.issues[0].message).toEqual("OVERRIDE");
   }
 });
+
+test("invalid and required", () => {
+  const str = z.string({
+    invalid_type_error: "Invalid name",
+    required_error: "Name is required",
+  });
+  const result1 = str.safeParse(1234);
+  expect(result1.success).toEqual(false);
+  if (!result1.success) {
+    expect(result1.error.issues[0].message).toEqual("Invalid name");
+  }
+  const result2 = str.safeParse(undefined);
+  expect(result2.success).toEqual(false);
+  if (!result2.success) {
+    expect(result2.error.issues[0].message).toEqual("Name is required");
+  }
+});
+
+test("Fallback to invalid_type_error without required_error", () => {
+  const str = z.string({
+    invalid_type_error: "Invalid name",
+    // required_error: "Name is required",
+  });
+
+  const result2 = str.safeParse(undefined);
+  expect(result2.success).toEqual(false);
+  if (!result2.success) {
+    expect(result2.error.issues[0].message).toEqual("Invalid name");
+  }
+});
+
+test("invalid and required and errorMap", () => {
+  expect(() => {
+    return z.string({
+      invalid_type_error: "Invalid name",
+      required_error: "Name is required",
+      errorMap: () => ({ message: "OVERRIDE" }),
+    });
+  }).toThrow();
+});
