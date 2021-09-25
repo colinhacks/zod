@@ -383,7 +383,7 @@ test("ensure early async failure prevents follow-up refinement checks", async ()
     expect(result.error.issues.length).toBe(1);
     expect(count).toBe(1);
   }
-  return result;
+
   // await result.then((r) => {
   //   if (r.success === false) expect(r.error.issues.length).toBe(1);
   //   expect(count).toBe(2);
