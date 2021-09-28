@@ -69,6 +69,8 @@ const createRootContext = (params: Partial<ParseParamsNoData>): ParseContext =>
     issues: [],
     errorMap: params.errorMap,
     async: params.async ?? false,
+    parent: null,
+    invalid: false,
   });
 
 const handleResult = <Input, Output>(
@@ -1977,9 +1979,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     };
 
     if (ctx.async) {
-      const contexts = options.map(
-        () => new ParseContext({ ...ctx.def, issues: [] })
-      );
+      const contexts = options.map(() => ctx.clone().clearIssues());
       return Promise.all(
         options.map((option, index) =>
           option._parse(contexts[index], data, parsedType)
@@ -1995,7 +1995,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     } else {
       const allIssues: ZodIssue[][] = [];
       for (const option of options) {
-        const optionCtx = new ParseContext({ ...ctx.def, issues: [] });
+        const optionCtx = ctx.clone().clearIssues(); // new ParseContext({ ...ctx.def, issues: [] });
         const parsedOption = option._parseSync(optionCtx, data, parsedType);
         if (isInvalid(parsedOption)) {
           allIssues.push(optionCtx.issues);

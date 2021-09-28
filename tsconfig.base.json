@@ -7,7 +7,7 @@
       "esnext",
       "dom"
     ],
-    "target": "es5",
+    "target": "es2017",
     "removeComments": false,
     "esModuleInterop": true,
     "moduleResolution": "node",

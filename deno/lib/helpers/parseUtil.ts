@@ -155,13 +155,24 @@ interface ParseContextDef {
   readonly issues: ZodIssue[];
   readonly errorMap?: ZodErrorMap;
   readonly async: boolean;
+  readonly parent: ParseContext | null;
+  invalid: boolean;
 }
 
 export class ParseContext {
   // public readonly path: ParsePath;
   // public readonly issues: ZodIssue[];
   // public readonly errorMap: ZodErrorMap;
-  public readonly def: ParseContextDef;
+  protected readonly def: ParseContextDef;
+
+  get invalid() {
+    return this.def.invalid;
+  }
+
+  protected setInvalid() {
+    if (this.def.parent) this.def.parent.setInvalid();
+    this.def.invalid = true;
+  }
 
   constructor(def: ParseContextDef) {
     this.def = def;
@@ -177,6 +188,27 @@ export class ParseContext {
   }
   get async() {
     return this.def.async;
+  }
+
+  child() {
+    return new ParseContext({
+      ...this.def,
+      parent: this,
+      invalid: true,
+    });
+  }
+
+  clone() {
+    return new ParseContext({
+      ...this.def,
+    });
+  }
+
+  clearIssues() {
+    return new ParseContext({
+      ...this.def,
+      issues: [],
+    });
   }
 
   stepInto(component: ParsePathComponent): ParseContext {
