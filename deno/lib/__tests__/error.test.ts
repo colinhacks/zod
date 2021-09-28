@@ -368,18 +368,18 @@ test("invalid and required and errorMap", () => {
   }).toThrow();
 });
 
-test("dont short circuit on continuable errors", () => {
-  const user = z
-    .object({
-      password: z.string().min(6),
-      confirm: z.string(),
-    })
-    .refine((data) => data.password === data.confirm, {
-      message: "Passwords don't match",
-      path: ["confirm"],
-    });
-  const result = user.safeParse({ password: "asdf", confirm: "qwer" });
-  if (!result.success) {
-    expect(result.error.issues.length).toEqual(2);
-  }
-});
+// test("dont short circuit on continuable errors", () => {
+//   const user = z
+//     .object({
+//       password: z.string().min(6),
+//       confirm: z.string(),
+//     })
+//     .refine((data) => data.password === data.confirm, {
+//       message: "Passwords don't match",
+//       path: ["confirm"],
+//     });
+//   const result = user.safeParse({ password: "asdf", confirm: "qwer" });
+//   if (!result.success) {
+//     expect(result.error.issues.length).toEqual(2);
+//   }
+// });
