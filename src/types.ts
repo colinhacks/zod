@@ -484,8 +484,14 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           );
         }
       } else if (check.kind === "regex") {
-        if (!check.regex.test(data)) {
+        // clear regex state
+        check.regex.lastIndex = 0;
+        const testResult = check.regex.test(data);
+        if (!testResult) {
           invalid = true;
+          console.log(`regex failed!`);
+          console.log(check.regex);
+          console.log(data);
           this._addIssue(
             ctx,
             {
