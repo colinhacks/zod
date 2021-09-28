@@ -394,12 +394,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       );
       return INVALID;
     }
-    const invalid = false;
+    let invalid = false;
 
     for (const check of this._def.checks) {
       if (check.kind === "min") {
         if (data.length < check.value) {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
@@ -414,7 +414,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "max") {
         if (data.length > check.value) {
-          // invalid = true;
+          invalid = true;
 
           this._addIssue(
             ctx,
@@ -431,7 +431,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "email") {
         if (!emailRegex.test(data)) {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
@@ -444,7 +444,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "uuid") {
         if (!uuidRegex.test(data)) {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
@@ -457,7 +457,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "cuid") {
         if (!cuidRegex.test(data)) {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
@@ -472,7 +472,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         try {
           new URL(data);
         } catch {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
@@ -485,7 +485,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "regex") {
         if (!check.regex.test(data)) {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
@@ -645,12 +645,12 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       return INVALID;
     }
 
-    const invalid = false;
+    let invalid = false;
 
     for (const check of this._def.checks) {
       if (check.kind === "int") {
         if (!util.isInteger(data)) {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
@@ -668,7 +668,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           ? data < check.value
           : data <= check.value;
         if (tooSmall) {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
@@ -686,7 +686,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           ? data > check.value
           : data >= check.value;
         if (tooBig) {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
@@ -701,7 +701,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         }
       } else if (check.kind === "multipleOf") {
         if (data % check.value !== 0) {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
@@ -1262,7 +1262,7 @@ export class ZodArray<
     let invalid = false;
     if (def.minLength !== null) {
       if (data.length < def.minLength.value) {
-        // invalid = true;
+        invalid = true;
         this._addIssue(
           ctx,
           {
@@ -1279,7 +1279,7 @@ export class ZodArray<
 
     if (def.maxLength !== null) {
       if (data.length > def.maxLength.value) {
-        // invalid = true;
+        invalid = true;
         this._addIssue(
           ctx,
           {
@@ -1661,7 +1661,7 @@ export class ZodObject<
         const dataKeys = util.objectKeys(data);
         const extraKeys = dataKeys.filter((k) => !(k in shape));
         if (extraKeys.length > 0) {
-          // invalid = true;
+          invalid = true;
           this._addIssue(
             ctx,
             {
