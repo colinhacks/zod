@@ -489,9 +489,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         const testResult = check.regex.test(data);
         if (!testResult) {
           invalid = true;
-          console.log(`regex failed!`);
-          console.log(check.regex);
-          console.log(data);
           this._addIssue(
             ctx,
             {
