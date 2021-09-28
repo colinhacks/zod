@@ -73,18 +73,12 @@ export const getParsedType = (data: any): ZodParsedType => {
   }
 };
 
-export const makeIssue = (
-  params: {
-    data: any;
-    path: (string | number)[];
-    errorMaps: (ZodErrorMap | undefined)[];
-    issueData: IssueData;
-  }
-  // data: any,
-  // path: (string | number)[],
-  // errorMap: ZodErrorMap,
-  // issueData: IssueData
-): ZodIssue => {
+export const makeIssue = (params: {
+  data: any;
+  path: (string | number)[];
+  errorMaps: (ZodErrorMap | undefined)[];
+  issueData: IssueData;
+}): ZodIssue => {
   const { data, path, errorMaps, issueData } = params;
   const fullPath = [...path, ...(issueData.path || [])];
   const fullIssue = {
@@ -109,46 +103,14 @@ export const makeIssue = (
 };
 
 export type ParseParams = {
-  // data: any;
   path: (string | number)[];
   errorMap: ZodErrorMap;
   async: boolean;
 };
 
-export type ParseParamsNoData = Omit<ParseParams, "data">;
-
 export type ParsePathComponent = string | number;
-
-export type ParsePath = null | {
-  readonly component: ParsePathComponent;
-  readonly parent: ParsePath;
-  readonly count: number;
-};
-
-export const EMPTY_PATH: ParsePath = null;
-
-export const pathToArray = (path: ParsePath): ParsePathComponent[] => {
-  if (path === null) return [];
-  const arr: ParsePathComponent[] = new Array(path.count);
-  while (path !== null) {
-    arr[path.count - 1] = path.component;
-    path = path.parent;
-  }
-  return arr;
-};
-
-export const pathFromArray = (arr: ParsePathComponent[]): ParsePath => {
-  let path: ParsePath = null;
-  for (let i = 0; i < arr.length; i++) {
-    path = { parent: path, component: arr[i], count: i + 1 };
-  }
-  return path;
-};
-
-export type ParseContextParameters = {
-  errorMap: ZodErrorMap;
-  async: boolean;
-};
+export type ParsePath = ParsePathComponent[];
+export const EMPTY_PATH: ParsePath = [];
 
 interface ParseContextDef {
   readonly path: ParsePath;
@@ -156,7 +118,8 @@ interface ParseContextDef {
   readonly errorMap?: ZodErrorMap;
   readonly async: boolean;
   readonly parent: ParseContext | null;
-  invalid: boolean;
+  _invalid: boolean;
+  _aborted: boolean;
 }
 
 export class ParseContext {
@@ -166,12 +129,24 @@ export class ParseContext {
   protected readonly def: ParseContextDef;
 
   get invalid() {
-    return this.def.invalid;
+    return this.def._invalid;
+  }
+  get aborted() {
+    return this.def._aborted;
   }
 
-  protected setInvalid() {
-    if (this.def.parent) this.def.parent.setInvalid();
-    this.def.invalid = true;
+  markInvalid() {
+    if (!this.def._invalid) {
+      this.def._invalid = true;
+      if (this.def.parent) this.def.parent.markInvalid();
+    }
+  }
+
+  abort() {
+    if (!this.def._aborted) {
+      this.def._aborted = true;
+      if (this.def.parent) this.def.parent.abort();
+    }
   }
 
   constructor(def: ParseContextDef) {
@@ -190,11 +165,13 @@ export class ParseContext {
     return this.def.async;
   }
 
-  child() {
+  child(component?: ParsePathComponent) {
     return new ParseContext({
       ...this.def,
+      path: component ? [...this.path, component] : this.path,
       parent: this,
-      invalid: true,
+      _invalid: false,
+      _aborted: false,
     });
   }
 
@@ -211,16 +188,6 @@ export class ParseContext {
     });
   }
 
-  stepInto(component: ParsePathComponent): ParseContext {
-    return new ParseContext({
-      ...this.def,
-      path:
-        this.path === null
-          ? { parent: null, count: 1, component }
-          : { parent: this.path, count: this.path.count + 1, component },
-    });
-  }
-
   addIssue(
     data: any,
     issueData: IssueData,
@@ -229,17 +196,16 @@ export class ParseContext {
     const issue = makeIssue({
       data,
       issueData,
-      path: pathToArray(this.path),
+      path: this.path,
       errorMaps: [
         this.def.errorMap, // contextual error map is first priority
         params.schemaErrorMap, // then schema-bound map if available
         overrideErrorMap, // then global override map
         defaultErrorMap, // then global default map
       ],
-      // errorMaps: [this.errorMap],
-      // issueData,
     });
     this.issues.push(issue);
+    this.markInvalid();
   }
 }
 

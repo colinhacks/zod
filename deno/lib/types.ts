@@ -9,10 +9,8 @@ import {
   makeIssue,
   OK,
   ParseContext,
-  ParseParamsNoData,
+  ParseParams,
   ParseReturnType,
-  pathFromArray,
-  pathToArray,
   SyncParseReturnType,
   ZodParsedType,
 } from "./helpers/parseUtil.ts";
@@ -63,14 +61,15 @@ export interface ZodTypeDef {
 //   }
 // }
 
-const createRootContext = (params: Partial<ParseParamsNoData>): ParseContext =>
+const createRootContext = (params: Partial<ParseParams>): ParseContext =>
   new ParseContext({
-    path: pathFromArray(params.path || []),
+    path: params.path || [],
     issues: [],
     errorMap: params.errorMap,
     async: params.async ?? false,
     parent: null,
-    invalid: false,
+    _invalid: false,
+    _aborted: false,
   });
 
 const handleResult = <Input, Output>(
@@ -167,7 +166,7 @@ export abstract class ZodType<
     return Promise.resolve(result);
   }
 
-  parse(data: unknown, params?: Partial<ParseParamsNoData>): Output {
+  parse(data: unknown, params?: Partial<ParseParams>): Output {
     const result = this.safeParse(data, params);
     if (result.success) return result.data;
     throw result.error;
@@ -175,7 +174,7 @@ export abstract class ZodType<
 
   safeParse(
     data: unknown,
-    params?: Partial<ParseParamsNoData>
+    params?: Partial<ParseParams>
   ):
     | { success: true; data: Output }
     | { success: false; error: ZodError<Input> } {
@@ -186,7 +185,7 @@ export abstract class ZodType<
 
   async parseAsync(
     data: unknown,
-    params?: Partial<ParseParamsNoData>
+    params?: Partial<ParseParams>
   ): Promise<Output> {
     const result = await this.safeParseAsync(data, params);
     if (result.success) return result.data;
@@ -195,7 +194,7 @@ export abstract class ZodType<
 
   async safeParseAsync(
     data: unknown,
-    params?: Partial<ParseParamsNoData>
+    params?: Partial<ParseParams>
   ): Promise<
     { success: true; data: Output } | { success: false; error: ZodError }
   > {
@@ -1315,7 +1314,7 @@ export class ZodArray<
     data.forEach((item, index) => {
       handleParsed(
         index,
-        type._parse(ctx.stepInto(index), item, getParsedType(item))
+        type._parse(ctx.child(index), item, getParsedType(item))
       );
     });
 
@@ -1646,7 +1645,7 @@ export class ZodObject<
       const value = data[key];
       handleParsed(
         key,
-        keyValidator._parse(ctx.stepInto(key), value, getParsedType(value))
+        keyValidator._parse(ctx.child(key), value, getParsedType(value))
       );
     }
 
@@ -1686,7 +1685,7 @@ export class ZodObject<
         const value = data[key];
         handleParsed(
           key,
-          catchall._parse(ctx.stepInto(key), value, getParsedType(value))
+          catchall._parse(ctx.child(key), value, getParsedType(value))
         );
       }
     }
@@ -1982,7 +1981,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       const contexts = options.map(() => ctx.clone().clearIssues());
       return Promise.all(
         options.map((option, index) =>
-          option._parse(contexts[index], data, parsedType)
+          option._parse(contexts[index].child(), data, parsedType)
         )
       ).then((parsedOptions) => {
         for (const parsedOption of parsedOptions) {
@@ -1996,7 +1995,11 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       const allIssues: ZodIssue[][] = [];
       for (const option of options) {
         const optionCtx = ctx.clone().clearIssues(); // new ParseContext({ ...ctx.def, issues: [] });
-        const parsedOption = option._parseSync(optionCtx, data, parsedType);
+        const parsedOption = option._parseSync(
+          optionCtx.child(),
+          data,
+          parsedType
+        );
         if (isInvalid(parsedOption)) {
           allIssues.push(optionCtx.issues);
         } else {
@@ -2106,13 +2109,13 @@ export class ZodIntersection<
 
     if (ctx.async) {
       return Promise.all([
-        this._def.left._parse(ctx, data, parsedType),
-        this._def.right._parse(ctx, data, parsedType),
+        this._def.left._parse(ctx.child(), data, parsedType),
+        this._def.right._parse(ctx.child(), data, parsedType),
       ]).then(([left, right]: any) => handleParsed(left, right));
     } else {
       return handleParsed(
-        this._def.left._parseSync(ctx, data, parsedType),
-        this._def.right._parseSync(ctx, data, parsedType)
+        this._def.left._parseSync(ctx.child(), data, parsedType),
+        this._def.right._parseSync(ctx.child(), data, parsedType)
       );
     }
   }
@@ -2248,11 +2251,7 @@ export class ZodTuple<
     items.forEach((item, index) => {
       handleParsed(
         index,
-        item._parse(
-          ctx.stepInto(index),
-          data[index],
-          getParsedType(data[index])
-        )
+        item._parse(ctx.child(index), data[index], getParsedType(data[index]))
       );
     });
 
@@ -2262,7 +2261,7 @@ export class ZodTuple<
         const index = _index + items.length;
         handleParsed(
           index,
-          rest._parse(ctx.stepInto(index), dataItem, getParsedType(dataItem))
+          rest._parse(ctx.child(index), dataItem, getParsedType(dataItem))
         );
       });
     }
@@ -2373,8 +2372,8 @@ export class ZodRecord<
 
     for (const key in data) {
       handleParsed(
-        keyType._parse(ctx.stepInto(key), key, getParsedType(key)),
-        valueType._parse(ctx.stepInto(key), data[key], getParsedType(data[key]))
+        keyType._parse(ctx.child(key), key, getParsedType(key)),
+        valueType._parse(ctx.child(key), data[key], getParsedType(data[key]))
       );
     }
 
@@ -2486,14 +2485,14 @@ export class ZodMap<
     };
 
     [...dataMap.entries()].forEach(([key, value], index) => {
-      const entryCtx = ctx.stepInto(index);
+      const entryCtx = ctx.child(index);
       const parsedKey = keyType._parse(
-        entryCtx.stepInto("key"),
+        entryCtx.child("key"),
         key,
         getParsedType(key)
       );
       const parsedValue = valueType._parse(
-        entryCtx.stepInto("value"),
+        entryCtx.child("value"),
         value,
         getParsedType(value)
       );
@@ -2579,7 +2578,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     };
 
     [...dataSet.values()].forEach((item, i) =>
-      handleParsed(valueType._parse(ctx.stepInto(i), item, getParsedType(item)))
+      handleParsed(valueType._parse(ctx.child(i), item, getParsedType(item)))
     );
 
     if (ctx.async) {
@@ -2661,7 +2660,7 @@ export class ZodFunction<
     function makeArgsIssue(args: any, error: ZodError): ZodIssue {
       return makeIssue({
         data: args,
-        path: pathToArray(ctx.path),
+        path: ctx.path,
         errorMaps: [ctx.errorMap],
         issueData: {
           code: ZodIssueCode.invalid_arguments,
@@ -2673,7 +2672,7 @@ export class ZodFunction<
     function makeReturnsIssue(returns: any, error: ZodError): ZodIssue {
       return makeIssue({
         data: returns,
-        path: pathToArray(ctx.path),
+        path: ctx.path,
         errorMaps: [ctx.errorMap],
         issueData: {
           code: ZodIssueCode.invalid_return_type,
@@ -2806,7 +2805,7 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
     parsedType: ZodParsedType
   ): ParseReturnType<output<T>> {
     const lazySchema = this._def.getter();
-    return lazySchema._parse(ctx, data, parsedType);
+    return lazySchema._parse(ctx.child(), data, parsedType);
   }
 
   static create = <T extends ZodTypeAny>(
@@ -3054,7 +3053,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
     return OK(
       promisified.then((data: any) => {
         return this._def.type.parseAsync(data, {
-          path: pathToArray(ctx.path),
+          path: ctx.path,
           errorMap: ctx.errorMap,
         });
       })
@@ -3132,11 +3131,11 @@ export class ZodEffects<
 
       if (ctx.async) {
         return Promise.resolve(processed).then((val) =>
-          this._def.schema._parseAsync(ctx, val, getParsedType(val))
+          this._def.schema._parseAsync(ctx.child(), val, getParsedType(val))
         );
       } else {
         const result = this._def.schema._parseSync(
-          ctx,
+          ctx.child(),
           processed,
           getParsedType(processed)
         );
@@ -3175,20 +3174,20 @@ export class ZodEffects<
       const checkCtx: RefinementCtx = {
         addIssue: _addIssue,
         get path() {
-          return pathToArray(ctx.path);
+          return ctx.path;
         },
       };
 
       checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
 
       if (isSync) {
-        const base = this._def.schema._parseSync(ctx, data, parsedType);
+        const base = this._def.schema._parseSync(ctx.child(), data, parsedType);
         if (isInvalid(base)) return INVALID;
         const result = executeRefinement(base.value, effect);
         return invalid ? INVALID : OK(result);
       } else {
         return this._def.schema
-          ._parseAsync(ctx, data, parsedType)
+          ._parseAsync(ctx.child(), data, parsedType)
           .then((result) => {
             if (isInvalid(result)) return INVALID;
             return executeRefinement(result.value, effect);
@@ -3209,13 +3208,13 @@ export class ZodEffects<
         return transformed;
       };
       if (isSync) {
-        const base = this._def.schema._parseSync(ctx, data, parsedType);
+        const base = this._def.schema._parseSync(ctx.child(), data, parsedType);
         if (isInvalid(base)) return INVALID;
         const result = applyTransform(base.value, effect);
         return invalid ? INVALID : OK(result);
       } else {
         return this._def.schema
-          ._parseAsync(ctx, data, parsedType)
+          ._parseAsync(ctx.child(), data, parsedType)
           .then((base) => {
             if (isInvalid(base)) return INVALID;
             return applyTransform(base.value, effect);
@@ -3284,7 +3283,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
     if (parsedType === ZodParsedType.undefined) {
       return OK(undefined);
     }
-    return this._def.innerType._parse(ctx, data, parsedType);
+    return this._def.innerType._parse(ctx.child(), data, parsedType);
   }
 
   unwrap() {
@@ -3331,7 +3330,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     if (parsedType === ZodParsedType.null) {
       return OK(null);
     }
-    return this._def.innerType._parse(ctx, data, parsedType);
+    return this._def.innerType._parse(ctx.child(), data, parsedType);
   }
 
   unwrap() {
@@ -3377,7 +3376,7 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
     if (parsedType === ZodParsedType.undefined) {
       data = this._def.defaultValue();
     }
-    return this._def.innerType._parse(ctx, data, getParsedType(data));
+    return this._def.innerType._parse(ctx.child(), data, getParsedType(data));
   }
 
   removeDefault() {
