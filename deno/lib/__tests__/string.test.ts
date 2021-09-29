@@ -140,3 +140,10 @@ test("regex lastIndex reset", () => {
   expect(schema.safeParse("123").success).toEqual(true);
   expect(schema.safeParse("123").success).toEqual(true);
 });
+
+test("checks getters", () => {
+  expect(z.string().uuid().isUUID).toEqual(true);
+  expect(z.string().uuid().isCUID).toEqual(false);
+  expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().cuid().isCUID).toEqual(true);
+});
