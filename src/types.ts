@@ -579,6 +579,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
   }
+  get isCUID() {
+    return !!this._def.checks.find((ch) => ch.kind === "cuid");
+  }
   get minLength() {
     let min: number | null = -Infinity;
     this._def.checks.map((ch) => {
