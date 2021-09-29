@@ -2067,6 +2067,25 @@ function mergeValues(
     }
 
     return { valid: true, data: newObj };
+  } else if (aType === ZodParsedType.array && bType === ZodParsedType.array) {
+    if (a.length !== b.length) {
+      return { valid: false };
+    }
+
+    const newArray = [];
+    for (let index = 0; index < a.length; index++) {
+      const itemA = a[index];
+      const itemB = b[index];
+      const sharedValue = mergeValues(itemA, itemB);
+
+      if (!sharedValue.valid) {
+        return { valid: false };
+      }
+
+      newArray.push(sharedValue.data);
+    }
+
+    return { valid: true, data: newArray };
   } else {
     return { valid: false };
   }
