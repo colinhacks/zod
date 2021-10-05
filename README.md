@@ -553,7 +553,7 @@ You can make an existing schema nullable with the `nullable` method:
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
-type E = z.infer<typeof D>; // string | null
+type D = z.infer<typeof E>; // string | null
 ```
 
 #### `.unwrap`
@@ -1426,7 +1426,7 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
 
 You can add as many issues as you like. If `ctx.addIssue` is NOT called during the execution of the function, validation passes.
 
-Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` you can create any issue of any code. Each issue code is described in detail in the Error Handling guide (ERROR_HANDLING.md).
+Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` you can create any issue of any code. Each issue code is described in detail in the Error Handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md).
 
 ### `.transform`
 

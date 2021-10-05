@@ -668,7 +668,7 @@ nullableString.parse(null); // => null
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
-type E = z.infer<typeof D>; // string | null
+type D = z.infer<typeof E>; // string | null
 ```
 
 #### `.unwrap`
@@ -1379,7 +1379,7 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
 
 你可以随心所欲地添加问题(issues)。如果`ctx.addIssue`在函数的执行过程中没有被调用，则验证通过。
 
-通常情况下，细化总是创建具有`ZodIssueCode.custom`错误代码的问题，但通过`superRefine`你可以创建任何代码的任何问题。每个问题代码在错误处理指南（ERROR_HANDLING.md）中都有详细描述。
+通常情况下，细化总是创建具有`ZodIssueCode.custom`错误代码的问题，但通过`superRefine`你可以创建任何代码的任何问题。每个问题代码在错误处理指南 [ERROR_HANDLING.md](ERROR_HANDLING.md) 中都有详细描述。
 
 ### `.transform`
 
