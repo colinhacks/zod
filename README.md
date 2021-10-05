@@ -18,6 +18,8 @@
 
 <br/>
 
+This docs have been translated into (Chinese)[./README_ZH.md].
+
 # Table of contents
 
 - [What is Zod](#what-is-zod)
@@ -553,7 +555,7 @@ You can make an existing schema nullable with the `nullable` method:
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
-type D = z.infer<typeof E>; // string | null
+type E = z.infer<typeof E>; // string | null
 ```
 
 #### `.unwrap`

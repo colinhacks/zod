@@ -668,7 +668,7 @@ nullableString.parse(null); // => null
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
-type D = z.infer<typeof E>; // string | null
+type E = z.infer<typeof E>; // string | null
 ```
 
 #### `.unwrap`
