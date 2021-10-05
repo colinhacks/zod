@@ -134,8 +134,8 @@ export abstract class ZodType<
     _parsedType: ZodParsedType
   ): ParseReturnType<Output>;
 
-  _addIssue(ctx: ParseContext, issueData: IssueData, params: { data: any }) {
-    ctx.addIssue(params.data, issueData, {
+  addIssue(ctx: ParseContext, issueData: IssueData, params: { data: any }) {
+    ctx._addIssue(params.data, issueData, {
       schemaErrorMap: this._def.errorMap,
     });
   }
@@ -383,7 +383,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<string> {
     if (parsedType !== ZodParsedType.string) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -400,7 +400,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       if (check.kind === "min") {
         if (data.length < check.value) {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               code: ZodIssueCode.too_small,
@@ -416,7 +416,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         if (data.length > check.value) {
           invalid = true;
 
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               code: ZodIssueCode.too_big,
@@ -432,7 +432,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       } else if (check.kind === "email") {
         if (!emailRegex.test(data)) {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               validation: "email",
@@ -445,7 +445,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       } else if (check.kind === "uuid") {
         if (!uuidRegex.test(data)) {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               validation: "uuid",
@@ -458,7 +458,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       } else if (check.kind === "cuid") {
         if (!cuidRegex.test(data)) {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               validation: "cuid",
@@ -473,7 +473,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           new URL(data);
         } catch {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               validation: "url",
@@ -489,7 +489,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         const testResult = check.regex.test(data);
         if (!testResult) {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               validation: "regex",
@@ -638,7 +638,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<number> {
     if (parsedType !== ZodParsedType.number) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -657,7 +657,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       if (check.kind === "int") {
         if (!util.isInteger(data)) {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               code: ZodIssueCode.invalid_type,
@@ -675,7 +675,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           : data <= check.value;
         if (tooSmall) {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               code: ZodIssueCode.too_small,
@@ -693,7 +693,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           : data >= check.value;
         if (tooBig) {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               code: ZodIssueCode.too_big,
@@ -708,7 +708,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       } else if (check.kind === "multipleOf") {
         if (data % check.value !== 0) {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               code: ZodIssueCode.not_multiple_of,
@@ -877,7 +877,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<bigint> {
     if (parsedType !== ZodParsedType.bigint) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -918,7 +918,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<boolean> {
     if (parsedType !== ZodParsedType.boolean) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -959,7 +959,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<Date> {
     if (parsedType !== ZodParsedType.date) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -972,7 +972,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
       return INVALID;
     }
     if (isNaN(data.getTime())) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_date,
@@ -1012,7 +1012,7 @@ export class ZodUndefined extends ZodType<undefined, ZodUndefinedDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<undefined> {
     if (parsedType !== ZodParsedType.undefined) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -1054,7 +1054,7 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<null> {
     if (parsedType !== ZodParsedType.null) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -1152,7 +1152,7 @@ export class ZodNever extends ZodType<never, ZodNeverDef> {
     data: any,
     parsedType: ZodParsedType
   ): ParseReturnType<never> {
-    this._addIssue(
+    this.addIssue(
       ctx,
       {
         code: ZodIssueCode.invalid_type,
@@ -1189,7 +1189,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
     parsedType: ZodParsedType
   ): ParseReturnType<void> {
     if (parsedType !== ZodParsedType.undefined) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -1254,11 +1254,15 @@ export class ZodArray<
     const def = this._def;
 
     if (parsedType !== ZodParsedType.array) {
-      ctx.addIssue(_data, {
-        code: ZodIssueCode.invalid_type,
-        expected: ZodParsedType.array,
-        received: parsedType,
-      });
+      this.addIssue(
+        ctx,
+        {
+          code: ZodIssueCode.invalid_type,
+          expected: ZodParsedType.array,
+          received: parsedType,
+        },
+        { data: _data }
+      );
 
       return INVALID;
     }
@@ -1269,7 +1273,7 @@ export class ZodArray<
     if (def.minLength !== null) {
       if (data.length < def.minLength.value) {
         invalid = true;
-        this._addIssue(
+        this.addIssue(
           ctx,
           {
             code: ZodIssueCode.too_small,
@@ -1286,7 +1290,7 @@ export class ZodArray<
     if (def.maxLength !== null) {
       if (data.length > def.maxLength.value) {
         invalid = true;
-        this._addIssue(
+        this.addIssue(
           ctx,
           {
             code: ZodIssueCode.too_big,
@@ -1607,7 +1611,7 @@ export class ZodObject<
     parsedType: ZodParsedType
   ): ParseReturnType<Output> {
     if (parsedType !== ZodParsedType.object) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -1668,7 +1672,7 @@ export class ZodObject<
         const extraKeys = dataKeys.filter((k) => !(k in shape));
         if (extraKeys.length > 0) {
           invalid = true;
-          this._addIssue(
+          this.addIssue(
             ctx,
             {
               code: ZodIssueCode.unrecognized_keys,
@@ -1970,7 +1974,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
         // TODO encapsulate
         nonTypeErrors[0].issues.forEach((issue) => ctx.issues.push(issue));
       } else {
-        this._addIssue(
+        this.addIssue(
           ctx,
           {
             code: ZodIssueCode.invalid_union,
@@ -2098,7 +2102,7 @@ export class ZodIntersection<
 
       const merged = mergeValues(parsedLeft.value, parsedRight.value);
       if (!merged.valid) {
-        this._addIssue(
+        this.addIssue(
           ctx,
           {
             code: ZodIssueCode.invalid_intersection_types,
@@ -2193,7 +2197,7 @@ export class ZodTuple<
     parsedType: ZodParsedType
   ): ParseReturnType<any> {
     if (parsedType !== ZodParsedType.array) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -2208,7 +2212,7 @@ export class ZodTuple<
     const rest = this._def.rest;
 
     if (!rest && data.length > this._def.items.length) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.too_big,
@@ -2222,7 +2226,7 @@ export class ZodTuple<
     }
 
     if (data.length < this._def.items.length) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.too_small,
@@ -2343,7 +2347,7 @@ export class ZodRecord<
     parsedType: ZodParsedType
   ): ParseReturnType<Record<any, any>> {
     if (parsedType !== ZodParsedType.object) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -2455,7 +2459,7 @@ export class ZodMap<
     parsedType: ZodParsedType
   ): ParseReturnType<Map<any, any>> {
     if (parsedType !== ZodParsedType.map) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -2555,7 +2559,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     parsedType: ZodParsedType
   ): ParseReturnType<Set<any>> {
     if (parsedType !== ZodParsedType.set) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -2651,7 +2655,7 @@ export class ZodFunction<
     parsedType: ZodParsedType
   ): ParseReturnType<any> {
     if (parsedType !== ZodParsedType.function) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -2846,7 +2850,7 @@ export class ZodLiteral<T extends any> extends ZodType<T, ZodLiteralDef<T>> {
     _parsedType: ZodParsedType
   ): ParseReturnType<T> {
     if (data !== this._def.value) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -2923,7 +2927,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     _parsedType: ZodParsedType
   ): ParseReturnType<T[number]> {
     if (this._def.values.indexOf(data) === -1) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_enum_value,
@@ -2993,7 +2997,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   ): ParseReturnType<T[keyof T]> {
     const nativeEnumValues = util.getValidEnumValues(this._def.values);
     if (nativeEnumValues.indexOf(data) === -1) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_enum_value,
@@ -3041,7 +3045,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
     parsedType: ZodParsedType
   ): ParseReturnType<Promise<T["_output"]>> {
     if (parsedType !== ZodParsedType.promise && ctx.async === false) {
-      this._addIssue(
+      this.addIssue(
         ctx,
         {
           code: ZodIssueCode.invalid_type,
@@ -3176,7 +3180,7 @@ export class ZodEffects<
       const _addIssue = (arg: IssueData) => {
         // don't abort early on refinement issues
         invalid = true;
-        this._addIssue(ctx, arg, { data });
+        this.addIssue(ctx, arg, { data });
       };
       const checkCtx: RefinementCtx = {
         addIssue: _addIssue,

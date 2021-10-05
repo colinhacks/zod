@@ -189,7 +189,7 @@ export class ParseContext {
     });
   }
 
-  addIssue(
+  _addIssue(
     data: any,
     issueData: IssueData,
     params: { schemaErrorMap?: ZodErrorMap } = {}
