@@ -18,7 +18,7 @@
 
 <br/>
 
-This docs have been translated into (Chinese)[./README_ZH.md].
+This docs have been translated into [Chinese](./README_ZH.md).
 
 # Table of contents
 
