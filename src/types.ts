@@ -3155,7 +3155,7 @@ export class ZodEffects<
     }
 
     if (effect.type === "refinement") {
-      const invalid = false;
+      let invalid = false;
 
       const executeRefinement = (
         acc: any,
@@ -3175,7 +3175,7 @@ export class ZodEffects<
 
       const _addIssue = (arg: IssueData) => {
         // don't abort early on refinement issues
-        // invalid = true;
+        invalid = true;
         this._addIssue(ctx, arg, { data });
       };
       const checkCtx: RefinementCtx = {
