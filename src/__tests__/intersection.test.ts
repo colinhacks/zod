@@ -62,8 +62,8 @@ test("deep intersection of arrays", () => {
     .and(Author);
 
   const posts = [
-    { post_id: 1, title: 'Novels' },
-    { post_id: 2, title: 'Fairy tales' },
+    { post_id: 1, title: "Novels" },
+    { post_id: 2, title: "Fairy tales" },
   ];
   const cat = Registry.parse({ posts });
   expect(cat.posts).toEqual(posts);
