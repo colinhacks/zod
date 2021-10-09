@@ -326,12 +326,7 @@ export abstract class ZodType<
   default(def: () => util.noUndefined<Input>): ZodDefault<this>;
   default(def: any) {
     const defaultValueFunc = typeof def === "function" ? def : () => def;
-    // if (this instanceof ZodOptional) {
-    //   return new ZodOptional({
-    //     ...this._def,
-    //     defaultValue: defaultValueFunc,
-    //   }) as any;
-    // }
+
     return new ZodDefault({
       innerType: this,
       defaultValue: defaultValueFunc,
