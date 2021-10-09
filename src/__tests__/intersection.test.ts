@@ -42,3 +42,29 @@ test("deep intersection", () => {
   const cat = Cat.parse({ properties: { is_animal: true, jumped: true } });
   expect(cat.properties).toEqual({ is_animal: true, jumped: true });
 });
+
+test("deep intersection of arrays", () => {
+  const Author = z.object({
+    posts: z.array(
+      z.object({
+        post_id: z.number(),
+      })
+    ),
+  });
+  const Registry = z
+    .object({
+      posts: z.array(
+        z.object({
+          title: z.string(),
+        })
+      ),
+    })
+    .and(Author);
+
+  const posts = [
+    { post_id: 1, title: "Novels" },
+    { post_id: 2, title: "Fairy tales" },
+  ];
+  const cat = Registry.parse({ posts });
+  expect(cat.posts).toEqual(posts);
+});

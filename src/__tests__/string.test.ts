@@ -130,3 +130,19 @@ test("regexp error message", () => {
 
   expect(() => z.string().uuid().parse("purr")).toThrow();
 });
+
+test("regex lastIndex reset", () => {
+  const schema = z.string().regex(/^\d+$/g);
+  expect(schema.safeParse("123").success).toEqual(true);
+  expect(schema.safeParse("123").success).toEqual(true);
+  expect(schema.safeParse("123").success).toEqual(true);
+  expect(schema.safeParse("123").success).toEqual(true);
+  expect(schema.safeParse("123").success).toEqual(true);
+});
+
+test("checks getters", () => {
+  expect(z.string().uuid().isUUID).toEqual(true);
+  expect(z.string().uuid().isCUID).toEqual(false);
+  expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().cuid().isCUID).toEqual(true);
+});
