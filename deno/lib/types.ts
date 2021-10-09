@@ -1711,10 +1711,23 @@ export class ZodObject<
     return this._def.shape();
   }
 
-  strict(): ZodObject<T, "strict", Catchall> {
+  strict(message?: errorUtil.ErrMessage): ZodObject<T, "strict", Catchall> {
     return new ZodObject({
       ...this._def,
       unknownKeys: "strict",
+      ...(message !== undefined
+        ? {
+            errorMap: (issue, _ctx) => {
+              if (issue.code === "unrecognized_keys")
+                return { message: message.toString() };
+              return {
+                message:
+                  this._def.errorMap?.(issue, _ctx).message.toString() ??
+                  _ctx.defaultError,
+              };
+            },
+          }
+        : {}),
     }) as any;
   }
 
