@@ -17,3 +17,32 @@ test("union 2", () => {
     .safeParse("a");
   expect(result.success).toEqual(false);
 });
+
+test("return valid over invalid", () => {
+  const schema = z.union([
+    z.object({
+      email: z.string().email(),
+    }),
+    z.string(),
+  ]);
+  expect(schema.parse("asdf")).toEqual("asdf");
+  expect(schema.parse({ email: "asdlkjf@lkajsdf.com" })).toMatchObject({
+    email: "asdlkjf@lkajsdf.com",
+  });
+});
+
+test("return dirty result over aborted", () => {
+  const result = z
+    .union([z.number(), z.string().refine(() => false)])
+    .safeParse("a");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues).toMatchObject([
+      {
+        code: "custom",
+        message: "Invalid input",
+        path: [],
+      },
+    ]);
+  }
+});
