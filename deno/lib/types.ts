@@ -1,4 +1,3 @@
-import { defaultErrorMap, overrideErrorMap } from "./index.ts";
 import { errorUtil } from "./helpers/errorUtil.ts";
 import {
   addIssueToContext,
@@ -22,7 +21,9 @@ import {
 import { partialUtil } from "./helpers/partialUtil.ts";
 import { util } from "./helpers/util.ts";
 import {
+  defaultErrorMap,
   IssueData,
+  overrideErrorMap,
   StringValidation,
   ZodCustomIssue,
   ZodError,

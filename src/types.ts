@@ -1,4 +1,3 @@
-import { defaultErrorMap, overrideErrorMap } from ".";
 import { errorUtil } from "./helpers/errorUtil";
 import {
   addIssueToContext,
@@ -22,7 +21,9 @@ import {
 import { partialUtil } from "./helpers/partialUtil";
 import { util } from "./helpers/util";
 import {
+  defaultErrorMap,
   IssueData,
+  overrideErrorMap,
   StringValidation,
   ZodCustomIssue,
   ZodError,
