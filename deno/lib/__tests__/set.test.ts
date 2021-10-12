@@ -17,6 +17,11 @@ test("type inference", () => {
 test("doesn’t throw when a valid value is given", () => {
   const result = stringSet.safeParse(new Set(["first", "second"]));
   expect(result.success).toEqual(true);
+  if (result.success) {
+    expect(result.data.has("first")).toEqual(true);
+    expect(result.data.has("second")).toEqual(true);
+    expect(result.data.has("third")).toEqual(false);
+  }
 });
 
 test("doesn’t throw when an empty set is given", () => {

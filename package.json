@@ -101,5 +101,7 @@
       "yarn fix:format"
     ]
   },
-  "dependencies": {}
+  "dependencies": {
+    "cowsay": "^1.5.0"
+  }
 }

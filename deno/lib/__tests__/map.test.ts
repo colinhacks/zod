@@ -22,6 +22,12 @@ test("doesn’t throw when a valid value is given", () => {
     ])
   );
   expect(result.success).toEqual(true);
+  if (result.success) {
+    expect(result.data.has("first")).toEqual(true);
+    expect(result.data.has("second")).toEqual(true);
+    expect(result.data.get("first")).toEqual("foo");
+    expect(result.data.get("second")).toEqual("bar");
+  }
 });
 
 test("throws when a Set is given", () => {

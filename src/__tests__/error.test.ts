@@ -230,6 +230,25 @@ test("custom path", () => {
   }
 });
 
+test("custom path", () => {
+  const schema = z
+    .object({
+      password: z.string().min(6),
+      confirm: z.string().min(6),
+    })
+    .refine((val) => val.confirm === val.password);
+
+  const result = schema.safeParse({
+    password: "qwer",
+    confirm: "asdf",
+  });
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues.length).toEqual(3);
+  }
+});
+
 const schema = z.object({
   inner: z.object({
     name: z
@@ -248,7 +267,7 @@ test("no abort early on refinements", () => {
   const result1 = schema.safeParse(invalidItem);
   expect(result1.success).toEqual(false);
   if (!result1.success) {
-    expect(result1.error.issues.length).toEqual(1);
+    expect(result1.error.issues.length).toEqual(2);
   }
 });
 test("formatting", () => {
