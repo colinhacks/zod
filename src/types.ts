@@ -1,3 +1,4 @@
+import { FATAL_CODES } from ".";
 import { errorUtil } from "./helpers/errorUtil";
 import {
   addIssueToContext,
@@ -1742,19 +1743,28 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       results: { ctx: ParseContext; result: SyncParseReturnType<any> }[]
     ) {
       // return first issue-free validation if it exists
+      console.log(JSON.stringify(results, null, 2));
       for (const result of results) {
+        console.log(`######\nresult`);
+        console.log(result.result);
         if (result.result.status === "valid") {
+          console.log(`found clean option`);
           return result.result;
         }
       }
       for (const result of results) {
         if (result.result.status === "dirty") {
           // add issues from dirty option
+          console.log(`found dirty option`);
+          // console.log(result.result);
+          console.log(result);
+          console.log(result.ctx.issues);
           ctx.issues.push(...result.ctx.issues);
           return result.result;
         }
       }
 
+      console.log(`no clean options`);
       // return invalid
       const unionErrors = results.map(
         (result) => new ZodError(result.ctx.issues)
@@ -2882,6 +2892,22 @@ export class ZodEffects<
     }
 
     if (effect.type === "refinement") {
+      const checkCtx: RefinementCtx = {
+        addIssue: (arg: IssueData) => {
+          addIssueToContext(ctx, arg);
+          if (FATAL_CODES.includes(arg.code)) {
+            status.abort();
+          } else {
+            status.dirty();
+          }
+        },
+        get path() {
+          return ctx.path;
+        },
+      };
+
+      checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
+
       const executeRefinement = (
         acc: any,
         effect: RefinementEffect<any>
@@ -2897,18 +2923,6 @@ export class ZodEffects<
         }
         return acc;
       };
-
-      const checkCtx: RefinementCtx = {
-        addIssue: (arg: IssueData) => {
-          addIssueToContext(ctx, arg);
-          status.dirty();
-        },
-        get path() {
-          return ctx.path;
-        },
-      };
-
-      checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
 
       if (ctx.async === false) {
         const base = this._def.schema._parseSync({

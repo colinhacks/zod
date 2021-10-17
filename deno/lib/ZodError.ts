@@ -17,6 +17,15 @@ export const ZodIssueCode = util.arrayToEnum([
   "not_multiple_of",
 ]);
 
+export const FATAL_CODES = [
+  ZodIssueCode.invalid_type,
+  ZodIssueCode.invalid_date,
+  ZodIssueCode.invalid_intersection_types,
+  ZodIssueCode.invalid_return_type,
+  ZodIssueCode.invalid_arguments,
+  ZodIssueCode.invalid_enum_value,
+];
+
 export type ZodIssueCode = keyof typeof ZodIssueCode;
 
 export type ZodIssueBase = {

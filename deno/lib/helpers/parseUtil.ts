@@ -186,6 +186,9 @@ export class ParseStatus {
   dirty() {
     if (this.value === "valid") this.value = "dirty";
   }
+  abort() {
+    if (this.value !== "aborted") this.value = "aborted";
+  }
 
   static mergeArray(
     status: ParseStatus,
