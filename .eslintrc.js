@@ -48,10 +48,23 @@ module.exports = {
 
     "ban/ban": [
       2,
-      { "name": ["Object", "keys"], "message": "Object.keys() is not supported in legacy browsers, use objectKeys()" },
-      { "name": ["Object", "setPrototypeOf"], "message": "Object.setPrototypeOf() is not supported in legacy browsers" },
-      { "name": ["Number", "isNaN"], "message": "Number.isNaN() is not supported in legacy browsers" },
-      { "name": ["Number", "isInteger"], "message": "Number.isInteger() is not supported in legacy browsers" },
-    ]
+      {
+        name: ["Object", "keys"],
+        message:
+          "Object.keys() is not supported in legacy browsers, use objectKeys()",
+      },
+      {
+        name: ["Object", "setPrototypeOf"],
+        message: "Object.setPrototypeOf() is not supported in legacy browsers",
+      },
+      {
+        name: ["Number", "isNaN"],
+        message: "Number.isNaN() is not supported in legacy browsers",
+      },
+      {
+        name: ["Number", "isInteger"],
+        message: "Number.isInteger() is not supported in legacy browsers",
+      },
+    ],
   },
 };

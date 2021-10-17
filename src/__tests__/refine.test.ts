@@ -49,16 +49,16 @@ test("refinement 2", () => {
 });
 
 test("custom path", async () => {
-  try {
-    await z
-      .object({
-        password: z.string(),
-        confirm: z.string(),
-      })
-      .refine((data) => data.confirm === data.password, { path: ["confirm"] })
-      .parseAsync({ password: "asdf", confirm: "qewr" });
-  } catch (err) {
-    expect((err as z.ZodError).issues[0].path).toEqual(["confirm"]);
+  const result = await z
+    .object({
+      password: z.string(),
+      confirm: z.string(),
+    })
+    .refine((data) => data.confirm === data.password, { path: ["confirm"] })
+    .spa({ password: "asdf", confirm: "qewr" });
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].path).toEqual(["confirm"]);
   }
 });
 
@@ -119,4 +119,11 @@ test("superRefine", () => {
   if (!result.success) expect(result.error.issues.length).toEqual(2);
 
   Strings.parse(["asfd", "qwer"]);
+});
+
+test("get inner type", () => {
+  z.string()
+    .refine(() => true)
+    .innerType()
+    .parse("asdf");
 });

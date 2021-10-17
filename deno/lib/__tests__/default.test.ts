@@ -102,3 +102,7 @@ test("chained defaults", () => {
   const result = stringWithDefault.parse(undefined);
   expect(result).toEqual("outer");
 });
+
+test("factory", () => {
+  z.ZodDefault.create(z.string()).parse(undefined);
+});

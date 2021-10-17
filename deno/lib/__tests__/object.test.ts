@@ -235,3 +235,25 @@ test("inferred type for unknown/any keys", () => {
   > = true;
   _f1;
 });
+
+test("setKey", () => {
+  const base = z.object({ name: z.string() });
+  const withNewKey = base.setKey("age", z.number());
+
+  type withNewKey = z.infer<typeof withNewKey>;
+  const _t1: util.AssertEqual<withNewKey, { name: string; age: number }> = true;
+  _t1;
+  withNewKey.parse({ name: "asdf", age: 1234 });
+});
+
+test("strictcreate", async () => {
+  const strictObj = z.strictObject({
+    name: z.string(),
+  });
+
+  const syncResult = strictObj.safeParse({ name: "asdf", unexpected: 13 });
+  expect(syncResult.success).toEqual(false);
+
+  const asyncResult = await strictObj.spa({ name: "asdf", unexpected: 13 });
+  expect(asyncResult.success).toEqual(false);
+});

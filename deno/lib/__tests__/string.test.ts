@@ -142,8 +142,31 @@ test("regex lastIndex reset", () => {
 });
 
 test("checks getters", () => {
-  expect(z.string().uuid().isUUID).toEqual(true);
-  expect(z.string().uuid().isCUID).toEqual(false);
-  expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().email().isEmail).toEqual(true);
+  expect(z.string().email().isURL).toEqual(false);
+  expect(z.string().email().isCUID).toEqual(false);
+  expect(z.string().email().isUUID).toEqual(false);
+
+  expect(z.string().url().isEmail).toEqual(false);
+  expect(z.string().url().isURL).toEqual(true);
+  expect(z.string().url().isCUID).toEqual(false);
+  expect(z.string().url().isUUID).toEqual(false);
+
+  expect(z.string().cuid().isEmail).toEqual(false);
+  expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
+  expect(z.string().cuid().isUUID).toEqual(false);
+
+  expect(z.string().uuid().isEmail).toEqual(false);
+  expect(z.string().uuid().isURL).toEqual(false);
+  expect(z.string().uuid().isCUID).toEqual(false);
+  expect(z.string().uuid().isUUID).toEqual(true);
+});
+
+test("min max getters", () => {
+  expect(z.string().min(5).minLength).toEqual(5);
+  expect(z.string().min(5).min(10).minLength).toEqual(10);
+
+  expect(z.string().max(5).maxLength).toEqual(5);
+  expect(z.string().max(5).max(1).maxLength).toEqual(1);
 });

@@ -14,9 +14,32 @@ test("type inference", () => {
   f1;
 });
 
-test("doesn’t throw when a valid value is given", () => {
+test("valid parse", () => {
   const result = stringSet.safeParse(new Set(["first", "second"]));
   expect(result.success).toEqual(true);
+  if (result.success) {
+    expect(result.data.has("first")).toEqual(true);
+    expect(result.data.has("second")).toEqual(true);
+    expect(result.data.has("third")).toEqual(false);
+  }
+});
+
+test("valid parse async", async () => {
+  const result = await stringSet.spa(new Set(["first", "second"]));
+  expect(result.success).toEqual(true);
+  if (result.success) {
+    expect(result.data.has("first")).toEqual(true);
+    expect(result.data.has("second")).toEqual(true);
+    expect(result.data.has("third")).toEqual(false);
+  }
+
+  const asyncResult = await stringSet.safeParse(new Set(["first", "second"]));
+  expect(asyncResult.success).toEqual(true);
+  if (asyncResult.success) {
+    expect(asyncResult.data.has("first")).toEqual(true);
+    expect(asyncResult.data.has("second")).toEqual(true);
+    expect(asyncResult.data.has("third")).toEqual(false);
+  }
 });
 
 test("doesn’t throw when an empty set is given", () => {

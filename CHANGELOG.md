@@ -1,5 +1,9 @@
 # Changelog
 
+### 3.10
+
+- New parser that allows parsing to continue after non-fatal errors have occured. This allows Zod to surface more errors to the user at once.
+
 ### 3.9
 
 - Custom error messages in schemas
