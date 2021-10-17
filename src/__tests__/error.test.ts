@@ -386,6 +386,16 @@ test("invalid and required and errorMap", () => {
   }).toThrow();
 });
 
+test("strict error message", () => {
+  const errorMsg = "Invalid object";
+  const obj = z.object({ x: z.string() }).strict(errorMsg);
+  const result = obj.safeParse({ x: "a", y: "b" });
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual(errorMsg);
+  }
+});
+
 // test("dont short circuit on continuable errors", () => {
 //   const user = z
 //     .object({
