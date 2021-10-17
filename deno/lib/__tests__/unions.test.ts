@@ -27,7 +27,7 @@ test("return valid over invalid", () => {
     z.string(),
   ]);
   expect(schema.parse("asdf")).toEqual("asdf");
-  expect(schema.parse({ email: "asdlkjf@lkajsdf.com" })).toMatchObject({
+  expect(schema.parse({ email: "asdlkjf@lkajsdf.com" })).toEqual({
     email: "asdlkjf@lkajsdf.com",
   });
 });
@@ -38,7 +38,7 @@ test("return dirty result over aborted", () => {
     .safeParse("a");
   expect(result.success).toEqual(false);
   if (!result.success) {
-    expect(result.error.issues).toMatchObject([
+    expect(result.error.issues).toEqual([
       {
         code: "custom",
         message: "Invalid input",
