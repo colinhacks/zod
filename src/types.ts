@@ -1502,18 +1502,21 @@ export class ZodObject<
   }
 
   strict(message?: errorUtil.ErrMessage): ZodObject<T, "strict", Catchall> {
+    errorUtil.errToObj;
     return new ZodObject({
       ...this._def,
       unknownKeys: "strict",
       ...(message !== undefined
         ? {
-            errorMap: (issue, _ctx) => {
+            errorMap: (issue, ctx) => {
+              const defaultError =
+                this._def.errorMap?.(issue, ctx).message ?? ctx.defaultError;
               if (issue.code === "unrecognized_keys")
-                return { message: message.toString() };
+                return {
+                  message: errorUtil.errToObj(message).message ?? defaultError,
+                };
               return {
-                message:
-                  this._def.errorMap?.(issue, _ctx).message.toString() ??
-                  _ctx.defaultError,
+                message: defaultError,
               };
             },
           }
@@ -1756,28 +1759,21 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       results: { ctx: ParseContext; result: SyncParseReturnType<any> }[]
     ) {
       // return first issue-free validation if it exists
-      console.log(JSON.stringify(results, null, 2));
       for (const result of results) {
-        console.log(`######\nresult`);
-        console.log(result.result);
         if (result.result.status === "valid") {
-          console.log(`found clean option`);
           return result.result;
         }
       }
+
       for (const result of results) {
         if (result.result.status === "dirty") {
           // add issues from dirty option
-          console.log(`found dirty option`);
-          // console.log(result.result);
-          console.log(result);
-          console.log(result.ctx.issues);
+
           ctx.issues.push(...result.ctx.issues);
           return result.result;
         }
       }
 
-      console.log(`no clean options`);
       // return invalid
       const unionErrors = results.map(
         (result) => new ZodError(result.ctx.issues)
