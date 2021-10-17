@@ -1,3 +1,3 @@
-import * as z from "./external.ts";
+import * as mod from "./external.ts";
 export * from "./external.ts";
-export { z };
+export { mod as z };
