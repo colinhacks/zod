@@ -805,7 +805,7 @@ export interface ZodBigIntDef extends ZodTypeDef {
 
 export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
   _parse(input: ParseInput): ParseReturnType<bigint> {
-    const { status, ctx } = this._processInputParams(input);
+    const { ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.bigint) {
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
@@ -813,7 +813,6 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
         received: ctx.parsedType,
       });
       return INVALID;
-      return { status: status.value, value: ctx.data };
     }
     return OK(ctx.data);
   }
@@ -1034,14 +1033,13 @@ export interface ZodNeverDef extends ZodTypeDef {
 
 export class ZodNever extends ZodType<never, ZodNeverDef> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
-    const { status, ctx } = this._processInputParams(input);
+    const { ctx } = this._processInputParams(input);
     addIssueToContext(ctx, {
       code: ZodIssueCode.invalid_type,
       expected: ZodParsedType.never,
       received: ctx.parsedType,
     });
     return INVALID;
-    return { status: status.value, value: ctx.data };
   }
   static create = (params?: RawCreateParams): ZodNever => {
     return new ZodNever({
@@ -1271,47 +1269,7 @@ export namespace objectUtil {
       ...second, // second overwrites first
     };
   };
-
-  export const intersectShapes = <U extends ZodRawShape, T extends ZodRawShape>(
-    first: U,
-    second: T
-  ): T & U => {
-    const firstKeys = util.objectKeys(first);
-    const secondKeys = util.objectKeys(second);
-    const sharedKeys = firstKeys.filter((k) => secondKeys.indexOf(k) !== -1);
-
-    const sharedShape: any = {};
-    for (const k of sharedKeys) {
-      sharedShape[k] = ZodIntersection.create(first[k], second[k]);
-    }
-    return {
-      ...(first as object),
-      ...(second as object),
-      ...sharedShape,
-    };
-  };
 }
-export const mergeObjects = <First extends AnyZodObject>(first: First) => <
-  Second extends AnyZodObject
->(
-  second: Second
-): ZodObject<
-  First["_shape"] & Second["_shape"],
-  First["_unknownKeys"],
-  First["_catchall"]
-> => {
-  const mergedShape = objectUtil.mergeShapes(
-    first._def.shape(),
-    second._def.shape()
-  );
-  const merged: any = new ZodObject({
-    unknownKeys: first._def.unknownKeys,
-    catchall: first._def.catchall,
-    shape: () => mergedShape,
-    typeName: ZodFirstPartyTypeKind.ZodObject,
-  }) as any;
-  return merged;
-};
 
 export type extendShape<A, B> = {
   [k in Exclude<keyof A, keyof B>]: A[k];
@@ -2983,10 +2941,11 @@ export class ZodEffects<
           path: ctx.path,
           parent: ctx,
         });
-        if (base.status === "aborted") return INVALID;
-        if (base.status === "dirty") {
-          return { status: "dirty", value: ctx.data };
-        }
+        // if (base.status === "aborted") return INVALID;
+        // if (base.status === "dirty") {
+        //   return { status: "dirty", value: base.value };
+        // }
+        if (!isValid(base)) return base;
 
         const result = effect.transform(base.value);
         if (result instanceof Promise) {
@@ -2999,13 +2958,13 @@ export class ZodEffects<
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
           .then((base) => {
-            if (base.status === "aborted") return INVALID;
-            if (base.status === "dirty") {
-              return { status: "dirty", value: ctx.data };
-            }
-            return effect.transform(base.value);
-          })
-          .then((val) => OK(val));
+            if (!isValid(base)) return base;
+            // if (base.status === "aborted") return INVALID;
+            // if (base.status === "dirty") {
+            //   return { status: "dirty", value: base.value };
+            // }
+            return Promise.resolve(effect.transform(base.value)).then(OK);
+          });
       }
     }
 
@@ -3242,19 +3201,19 @@ export type ZodFirstPartySchemaTypes =
   | ZodUnknown
   | ZodNever
   | ZodVoid
-  | ZodArray<any>
-  | ZodObject<any>
+  | ZodArray<any, any>
+  | ZodObject<any, any, any, any, any>
   | ZodUnion<any>
   | ZodIntersection<any, any>
-  | ZodTuple
-  | ZodRecord
-  | ZodMap
-  | ZodSet
+  | ZodTuple<any, any>
+  | ZodRecord<any, any>
+  | ZodMap<any>
+  | ZodSet<any>
   | ZodFunction<any, any>
   | ZodLazy<any>
   | ZodLiteral<any>
   | ZodEnum<any>
-  | ZodEffects<any>
+  | ZodEffects<any, any, any>
   | ZodNativeEnum<any>
   | ZodOptional<any>
   | ZodNullable<any>

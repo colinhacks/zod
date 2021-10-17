@@ -145,3 +145,22 @@ test("required", () => {
   expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
   expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
 });
+
+test("with mask", async () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default("asdf"),
+  });
+
+  const masked = object
+    .partial({
+      name: true,
+      age: true,
+      field: true,
+    })
+    .strict();
+
+  masked.parse({});
+  await masked.parseAsync({});
+});

@@ -111,3 +111,11 @@ test("key schema", () => {
 // test("record element", () => {
 //   expect(booleanRecord.element).toBeInstanceOf(z.ZodBoolean);
 // });
+
+test("key and value getters", () => {
+  const rec = z.record(z.string(), z.number());
+
+  rec.keySchema.parse("asdf");
+  rec.valueSchema.parse(1234);
+  rec.element.parse(1234);
+});

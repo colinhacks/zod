@@ -35,3 +35,14 @@ test("failing validations", () => {
 test("parse NaN", () => {
   expect(() => z.number().parse(NaN)).toThrow();
 });
+
+test("min max getters", () => {
+  expect(z.number().int().isInt).toEqual(true);
+  expect(z.number().isInt).toEqual(false);
+
+  expect(z.number().min(5).minValue).toEqual(5);
+  expect(z.number().min(5).min(10).minValue).toEqual(10);
+
+  expect(z.number().max(5).maxValue).toEqual(5);
+  expect(z.number().max(5).max(1).maxValue).toEqual(1);
+});

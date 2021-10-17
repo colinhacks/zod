@@ -47,3 +47,11 @@ test("return dirty result over aborted", () => {
     ]);
   }
 });
+
+test("options getter", async () => {
+  const union = z.union([z.string(), z.number()]);
+  union.options[0].parse("asdf");
+  union.options[1].parse(1234);
+  await union.options[0].parseAsync("asdf");
+  await union.options[1].parseAsync(1234);
+});

@@ -205,3 +205,10 @@ test("allow extra parameters", () => {
   ].filter(maxLength5);
   expect(filteredList.length).toEqual(2);
 });
+
+test("params and returnType getters", () => {
+  const func = z.function().args(z.string()).returns(z.string());
+
+  func.parameters().items[0].parse("asdf");
+  func.returnType().parse("asdf");
+});

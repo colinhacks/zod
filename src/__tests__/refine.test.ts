@@ -120,3 +120,10 @@ test("superRefine", () => {
 
   Strings.parse(["asfd", "qwer"]);
 });
+
+test("get inner type", () => {
+  z.string()
+    .refine(() => true)
+    .innerType()
+    .parse("asdf");
+});

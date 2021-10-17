@@ -46,6 +46,9 @@ test("recursion with z.lazy", () => {
   Category.parse(testCategory);
 });
 
+test("schema getter", () => {
+  z.lazy(() => z.string()).schema.parse("asdf");
+});
 // interface A {
 //   val: number;
 //   b: B;
