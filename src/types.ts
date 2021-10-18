@@ -2918,12 +2918,12 @@ export class ZodEffects<
       checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
 
       const executeRefinement = (
-        acc: any,
-        effect: RefinementEffect<any>
+        acc: unknown
+        // effect: RefinementEffect<any>
       ): any => {
         const result = effect.refinement(acc, checkCtx);
         if (ctx.async) {
-          return Promise.resolve(result).then(() => acc);
+          return Promise.resolve(result);
         }
         if (result instanceof Promise) {
           throw new Error(
@@ -2940,17 +2940,19 @@ export class ZodEffects<
           parent: ctx,
         });
         if (base.status === "aborted") return INVALID;
+        if (base.status === "dirty") status.dirty();
 
         // return value is ignored
-        executeRefinement(base.value, effect);
+        executeRefinement(base.value);
         return { status: status.value, value: ctx.data };
       } else {
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
           .then((result) => {
             if (result.status === "aborted") return INVALID;
+            if (result.status === "dirty") status.dirty();
 
-            return executeRefinement(result.value, effect).then(() => {
+            return executeRefinement(result.value).then(() => {
               return { status: status.value, value: ctx.data };
             });
           });

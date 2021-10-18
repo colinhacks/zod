@@ -128,3 +128,32 @@ test("get inner type", () => {
     .innerType()
     .parse("asdf");
 });
+
+test("chained refinements", () => {
+  const objectSchema = z
+    .object({
+      length: z.number(),
+      size: z.number(),
+    })
+    .refine(({ length }) => length > 5, {
+      path: ["length"],
+      message: "length greater than 5",
+    })
+    .refine(({ size }) => size > 7, {
+      path: ["size"],
+      message: "size greater than 7",
+    });
+  const r1 = objectSchema.safeParse({
+    length: 4,
+    size: 9,
+  });
+  expect(r1.success).toEqual(false);
+  if (!r1.success) expect(r1.error.issues.length).toEqual(1);
+
+  const r2 = objectSchema.safeParse({
+    length: 4,
+    size: 3,
+  });
+  expect(r2.success).toEqual(false);
+  if (!r2.success) expect(r2.error.issues.length).toEqual(2);
+});
