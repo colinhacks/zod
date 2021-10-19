@@ -1488,7 +1488,6 @@ export class ZodObject<
               alwaysSet: pair.alwaysSet,
             });
           }
-
           return syncPairs;
         })
         .then((syncPairs) => {
@@ -2941,7 +2940,6 @@ export class ZodEffects<
           path: ctx.path,
           parent: ctx,
         });
-
         if (inner.status === "aborted") return INVALID;
         if (inner.status === "dirty") status.dirty();
 

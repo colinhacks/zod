@@ -57,9 +57,7 @@ test("url validations", () => {
     expect(() => url.parse("asdf")).toThrow();
     expect(() => url.parse("https:/")).toThrow();
     expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
-  } catch (err) {
-    // console.log(JSON.stringify(err, null, 2));
-  }
+  } catch (err) {}
 });
 
 test("url error overrides", () => {
