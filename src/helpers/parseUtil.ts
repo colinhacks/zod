@@ -207,7 +207,7 @@ export class ParseStatus {
   static async mergeObjectAsync(
     status: ParseStatus,
     pairs: { key: ParseReturnType<any>; value: ParseReturnType<any> }[]
-  ): AsyncParseReturnType<any> {
+  ): Promise<SyncParseReturnType<any>> {
     const syncPairs: ObjectPair[] = [];
     for (const pair of pairs) {
       syncPairs.push({

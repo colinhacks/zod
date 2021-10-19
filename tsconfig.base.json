@@ -7,7 +7,7 @@
       "esnext",
       "dom"
     ],
-    "target": "es2020",
+    "target": "es5",
     "removeComments": false,
     "esModuleInterop": true,
     "moduleResolution": "node",
