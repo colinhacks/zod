@@ -1475,6 +1475,8 @@ export class ZodObject<
         });
       }
     }
+
+    console.log(pairs);
     if (ctx.async) {
       return Promise.resolve()
         .then(async () => {
@@ -1487,9 +1489,13 @@ export class ZodObject<
               alwaysSet: pair.alwaysSet,
             });
           }
+          console.log(`syncparis`);
+          console.log(JSON.stringify(syncPairs, null, 2));
           return syncPairs;
         })
         .then((syncPairs) => {
+          console.log(`syncparis`);
+          console.log(JSON.stringify(syncPairs, null, 2));
           return ParseStatus.mergeObjectSync(status, syncPairs);
         });
     } else {
@@ -2934,26 +2940,28 @@ export class ZodEffects<
       };
 
       if (ctx.async === false) {
-        const base = this._def.schema._parseSync({
+        const inner = this._def.schema._parseSync({
           data: ctx.data,
           path: ctx.path,
           parent: ctx,
         });
-        if (base.status === "aborted") return INVALID;
-        if (base.status === "dirty") status.dirty();
+        console.log(`BASE`);
+        console.log(inner);
+        if (inner.status === "aborted") return INVALID;
+        if (inner.status === "dirty") status.dirty();
 
         // return value is ignored
-        executeRefinement(base.value);
-        return { status: status.value, value: ctx.data };
+        executeRefinement(inner.value);
+        return { status: status.value, value: inner.value };
       } else {
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
-          .then((result) => {
-            if (result.status === "aborted") return INVALID;
-            if (result.status === "dirty") status.dirty();
+          .then((inner) => {
+            if (inner.status === "aborted") return INVALID;
+            if (inner.status === "dirty") status.dirty();
 
-            return executeRefinement(result.value).then(() => {
-              return { status: status.value, value: ctx.data };
+            return executeRefinement(inner.value).then(() => {
+              return { status: status.value, value: inner.value };
             });
           });
       }
@@ -3145,6 +3153,7 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
     let data = ctx.data;
     if (ctx.parsedType === ZodParsedType.undefined) {
       data = this._def.defaultValue();
+      console.log(`settings default value: ${data}`);
     }
     return this._def.innerType._parse({
       data,

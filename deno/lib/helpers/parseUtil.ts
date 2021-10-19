@@ -235,6 +235,7 @@ export class ParseStatus {
       if (value.status === "dirty") status.dirty();
 
       if (typeof value.value !== "undefined" || pair.alwaysSet) {
+        console.log(`set ${key.value} to ${value.value}`);
         finalObject[key.value] = value.value;
       }
     }

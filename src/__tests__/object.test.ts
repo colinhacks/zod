@@ -256,3 +256,15 @@ test("strictcreate", async () => {
   const asyncResult = await strictObj.spa({ name: "asdf", unexpected: 13 });
   expect(asyncResult.success).toEqual(false);
 });
+
+test("object with refine", async () => {
+  const schema = z
+    .object({
+      a: z.string().default("foo"),
+      b: z.number(),
+    })
+    .refine(() => true);
+  expect(schema.parse({ b: 5 })).toEqual({ b: 5, a: "foo" });
+  const result = await schema.parseAsync({ b: 5 });
+  expect(result).toEqual({ b: 5, a: "foo" });
+});
