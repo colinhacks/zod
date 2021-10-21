@@ -634,7 +634,7 @@ const stringOrNumber = z.string().or(z.number());
 const schema = z.optional(z.string());
 
 schema.parse(undefined); // => returns undefined
-type A = z.infer<typeof A>; // string | undefined
+type A = z.infer<typeof schema>; // string | undefined
 ```
 
 你可以用`.optional()`方法使一个现有的模式成为可选的:
@@ -643,7 +643,7 @@ type A = z.infer<typeof A>; // string | undefined
 const user = z.object({
   username: z.string().optional(),
 });
-type C = z.infer<typeof C>; // { username?: string | undefined };
+type C = z.infer<typeof user>; // { username?: string | undefined };
 ```
 
 #### `.unwrap`

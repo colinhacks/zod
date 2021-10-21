@@ -525,7 +525,7 @@ You can make any schema optional with `z.optional()`:
 const schema = z.optional(z.string());
 
 schema.parse(undefined); // => returns undefined
-type A = z.infer<typeof A>; // string | undefined
+type A = z.infer<typeof schema>; // string | undefined
 ```
 
 You can make an existing schema optional with the `.optional()` method:
@@ -534,7 +534,7 @@ You can make an existing schema optional with the `.optional()` method:
 const user = z.object({
   username: z.string().optional(),
 });
-type C = z.infer<typeof C>; // { username?: string | undefined };
+type C = z.infer<typeof user>; // { username?: string | undefined };
 ```
 
 #### `.unwrap`
