@@ -257,6 +257,7 @@ type stripPath<T extends object> = T extends any
 
 export type IssueData = stripPath<ZodIssueOptionalMessage> & {
   path?: (string | number)[];
+  fatal?: boolean;
 };
 export type MakeErrorData = IssueData;
 

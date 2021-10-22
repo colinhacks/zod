@@ -154,3 +154,30 @@ test("chained refinements", () => {
   expect(r2.success).toEqual(false);
   if (!r2.success) expect(r2.error.issues.length).toEqual(2);
 });
+
+test("fatal superRefine", () => {
+  const Strings = z
+    .string()
+    .superRefine((val, ctx) => {
+      if (val === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "foo",
+          fatal: true,
+        });
+      }
+    })
+    .superRefine((val, ctx) => {
+      if (val !== " ") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "bar",
+        });
+      }
+    });
+
+  const result = Strings.safeParse("");
+
+  expect(result.success).toEqual(false);
+  if (!result.success) expect(result.error.issues.length).toEqual(1);
+});
