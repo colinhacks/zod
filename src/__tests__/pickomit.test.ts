@@ -63,8 +63,10 @@ test("omit parse - fail", () => {
 test("nonstrict inference", () => {
   const laxfish = fish.nonstrict().pick({ name: true });
   type laxfish = z.infer<typeof laxfish>;
-  const f1: util.AssertEqual<laxfish, { [k: string]: any; name: string }> =
-    true;
+  const f1: util.AssertEqual<
+    laxfish,
+    { [k: string]: any; name: string }
+  > = true;
   f1;
 });
 
