@@ -219,7 +219,7 @@ export abstract class ZodType<
   refine<Func extends (arg: Output) => any>(
     check: Func,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
-  ): ZodEffects<this> {
+  ): ZodEffects<this, Output, Input> {
     const getIssueProperties: any = (val: Output) => {
       if (typeof message === "string" || typeof message === "undefined") {
         return { message };
@@ -258,7 +258,7 @@ export abstract class ZodType<
   refinement(
     check: (arg: Output) => any,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
-  ): ZodEffects<this> {
+  ): ZodEffects<this, Output, Input> {
     return this._refinement((val, ctx) => {
       if (!check(val)) {
         ctx.addIssue(
@@ -275,7 +275,7 @@ export abstract class ZodType<
 
   _refinement(
     refinement: RefinementEffect<Output>["refinement"]
-  ): ZodEffects<this> {
+  ): ZodEffects<this, Output, Input> {
     return new ZodEffects({
       schema: this,
       typeName: ZodFirstPartyTypeKind.ZodEffects,
