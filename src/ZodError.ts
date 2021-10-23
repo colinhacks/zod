@@ -119,10 +119,13 @@ export const quotelessJson = (obj: any) => {
   return json.replace(/"([^"]+)":/g, "$1:");
 };
 
-export type ZodFormattedError<T> = { _errors: string[] } & (T extends [
-  any,
-  ...any
-]
+export type isAny<T> = 0 extends 1 & T ? true : false;
+
+export type ZodFormattedError<T> = {
+  _errors: string[];
+} & (isAny<T> extends true
+  ? any
+  : T extends [any, ...any]
   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
   : T extends any[]
   ? ZodFormattedError<T[number]>[]
