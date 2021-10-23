@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.11.1",
+  "version": "3.11.2",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -87,7 +87,7 @@
     "ts-jest": "^26.4.4",
     "ts-node": "^9.1.0",
     "tslib": "^2.3.1",
-    "typescript": "4.1"
+    "typescript": "^4.5.0-dev.20211023"
   },
   "husky": {
     "hooks": {

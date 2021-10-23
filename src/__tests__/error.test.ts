@@ -284,6 +284,7 @@ test("formatting", () => {
   expect(result2.success).toEqual(false);
   if (!result1.success) {
     const error = result1.error.format();
+
     expect(error._errors).toEqual([]);
     expect(error.inner?._errors).toEqual([]);
     // expect(error.inner?.name?._errors).toEqual(["Invalid input"]);
