@@ -54,6 +54,7 @@ export type { TypeOf as infer };
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
   errorMap?: ZodErrorMap;
+  description?: string;
 }
 
 const handleResult = <Input, Output>(
@@ -78,9 +79,10 @@ type RawCreateParams =
       errorMap?: ZodErrorMap;
       invalid_type_error?: string;
       required_error?: string;
+      description?: string;
     }
   | undefined;
-type ProcessedCreateParams = { errorMap?: ZodErrorMap };
+type ProcessedCreateParams = { errorMap?: ZodErrorMap; description?: string };
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
   if (params.errorMap && (params.invalid_type_error || params.required_error)) {
@@ -109,6 +111,10 @@ export abstract class ZodType<
   readonly _output!: Output;
   readonly _input!: Input;
   readonly _def!: Def;
+
+  get description() {
+    return this._def.description;
+  }
 
   abstract _parse(input: ParseInput): ParseReturnType<Output>;
 
@@ -334,6 +340,14 @@ export abstract class ZodType<
       defaultValue: defaultValueFunc,
       typeName: ZodFirstPartyTypeKind.ZodDefault,
     }) as any;
+  }
+
+  describe(description: string): this {
+    const This = (this as any).constructor;
+    return new This({
+      ...this._def,
+      description,
+    });
   }
 
   isOptional(): boolean {

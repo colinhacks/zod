@@ -11,10 +11,14 @@
 
 </p>
 <p align="center">
-⭐️ smash that star button ⭐️
+by [@colinhacks](https://twitter.com/colinhacks)
 </p>
 
-> Like typesafety? Check out [tRPC](https://trpc.io) — a better way to build end-to-end typesafe APIs without GraphQL or code generation — just TypeScript.
+> Hi! Colin here, creator of Zod. I hope you find it easy to use and powerful enough for all your use cases. If you have any issues or suggestions, please  [open an issue](https://github.com/colinhacks/zod/issues/new)! 
+>
+> If you like typesafety, check out my other library [tRPC](https://trpc.io). It works in concert with Zod to provide a seamless way to build end-to-end typesafe APIs without GraphQL or code generation — just TypeScript.
+>
+> Colin (AKA [@colinhacks](https://twitter.com/colinhacks))
 
 <br/>
 
