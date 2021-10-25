@@ -216,8 +216,16 @@ export abstract class ZodType<
   /** The .check method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
   check!: never;
 
-  refine<Func extends (arg: Output) => any>(
-    check: Func,
+  refine<RefinedOutput extends Output>(
+    check: (arg: Output) => arg is RefinedOutput,
+    message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
+  ): ZodEffects<this, RefinedOutput, RefinedOutput>;
+  refine(
+    check: (arg: Output) => unknown | Promise<unknown>,
+    message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
+  ): ZodEffects<this, Output, Input>;
+  refine(
+    check: (arg: Output) => unknown,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
   ): ZodEffects<this, Output, Input> {
     const getIssueProperties: any = (val: Output) => {
@@ -255,8 +263,16 @@ export abstract class ZodType<
     });
   }
 
+  refinement<RefinedOutput extends Output>(
+    check: (arg: Output) => arg is RefinedOutput,
+    refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
+  ): ZodEffects<this, RefinedOutput, RefinedOutput>;
   refinement(
-    check: (arg: Output) => any,
+    check: (arg: Output) => boolean,
+    refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
+  ): ZodEffects<this, Output, Input>;
+  refinement(
+    check: (arg: Output) => unknown,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
   ): ZodEffects<this, Output, Input> {
     return this._refinement((val, ctx) => {
@@ -280,7 +296,7 @@ export abstract class ZodType<
       schema: this,
       typeName: ZodFirstPartyTypeKind.ZodEffects,
       effect: { type: "refinement", refinement },
-    }) as any;
+    });
   }
   superRefine = this._refinement;
 
