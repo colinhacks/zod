@@ -102,6 +102,12 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   return { errorMap: customMap };
 }
 
+export type SafeParseSuccess<Output> = { success: true; data: Output }
+export type SafeParseError<Input> = { success: false; error: ZodError<Input> } 
+
+export type SafeParseReturnType<Input, Output> = SafeParseSuccess<Output>
+| SafeParseError<Input>
+
 export abstract class ZodType<
   Output,
   Def extends ZodTypeDef = ZodTypeDef,
@@ -160,9 +166,7 @@ export abstract class ZodType<
   safeParse(
     data: unknown,
     params?: Partial<ParseParams>
-  ):
-    | { success: true; data: Output }
-    | { success: false; error: ZodError<Input> } {
+  ): SafeParseReturnType<Input, Output> {
     const ctx: ParseContext = {
       path: params?.path || [],
       issues: [],
@@ -191,9 +195,7 @@ export abstract class ZodType<
   async safeParseAsync(
     data: unknown,
     params?: Partial<ParseParams>
-  ): Promise<
-    { success: true; data: Output } | { success: false; error: ZodError }
-  > {
+  ): Promise<SafeParseReturnType<Input, Output>> {
     const ctx: ParseContext = {
       path: params?.path || [],
       issues: [],
