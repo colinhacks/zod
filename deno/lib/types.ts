@@ -192,7 +192,7 @@ export abstract class ZodType<
     data: unknown,
     params?: Partial<ParseParams>
   ): Promise<
-    { success: true; data: Output } | { success: false; error: ZodError }
+    { success: true; data: Output } | { success: false; error: ZodError<Input> }
   > {
     const ctx: ParseContext = {
       path: params?.path || [],
