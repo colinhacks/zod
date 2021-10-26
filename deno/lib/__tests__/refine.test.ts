@@ -2,6 +2,7 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
+import { util } from "../helpers/util.ts";
 import * as z from "../index.ts";
 import { ZodIssueCode } from "../ZodError.ts";
 
@@ -47,6 +48,38 @@ test("refinement 2", () => {
       confirmPassword: "bbbbbbbb",
     })
   ).toThrow();
+});
+
+test("refinement type guard", () => {
+  const validationSchema = z.object({
+    a: z.string().refine((s): s is "a" => s === "a"),
+  });
+  type Schema = z.infer<typeof validationSchema>;
+
+  const f1: util.AssertEqual<"a", Schema["a"]> = true;
+  f1;
+  const f2: util.AssertEqual<"string", Schema["a"]> = false;
+  f2;
+});
+
+test("refinement Promise", async () => {
+  const validationSchema = z
+    .object({
+      email: z.string().email(),
+      password: z.string(),
+      confirmPassword: z.string(),
+    })
+    .refine(
+      (data) =>
+        Promise.resolve().then(() => data.password === data.confirmPassword),
+      "Both password and confirmation must match"
+    );
+
+  await validationSchema.parseAsync({
+    email: "aaaa@gmail.com",
+    password: "password",
+    confirmPassword: "password",
+  });
 });
 
 test("custom path", async () => {
