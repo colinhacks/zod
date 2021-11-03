@@ -53,6 +53,7 @@ This docs have been translated into [Chinese](./README_ZH.md).
     - [.strip](#strip)
     - [.catchall](#catchall)
   - [Arrays](#arrays)
+    - [.element](#element)
     - [.nonempty](#nonempty)
     - [.min/.max/.length](#minmaxlength)
   - [Tuples](#tuples)
@@ -812,6 +813,14 @@ Be careful with the `.array()` method. It returns a new `ZodArray` instance. Thi
 ```ts
 z.string().optional().array(); // (string | undefined)[]
 z.string().array().optional(); // string[] | undefined
+```
+
+### `.element`
+
+Use `.element` to access the schema for an element of the array.
+
+```ts
+stringArray.element; // => string schema
 ```
 
 ### `.nonempty`
