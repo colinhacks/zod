@@ -1936,6 +1936,12 @@ function mergeValues(
     }
 
     return { valid: true, data: newArray };
+  } else if (
+    aType === ZodParsedType.date &&
+    bType === ZodParsedType.date &&
+    +a === +b
+  ) {
+    return { valid: true, data: a };
   } else {
     return { valid: false };
   }
