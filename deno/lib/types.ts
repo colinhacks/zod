@@ -2659,8 +2659,8 @@ export class ZodLiteral<T extends any> extends ZodType<T, ZodLiteralDef<T>> {
     if (ctx.data !== this._def.value) {
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
-        expected: this._def.value as any,
-        received: ctx.data,
+        expected: getParsedType(this._def.value),
+        received: ctx.parsedType,
       });
       return INVALID;
     }

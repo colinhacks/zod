@@ -410,6 +410,16 @@ test("enum default error message", () => {
   }
 });
 
+test("literal default error message", () => {
+  try {
+    z.literal("Tuna").parse("Trout");
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual("Expected string, received string");
+  }
+});
+
 // test("dont short circuit on continuable errors", () => {
 //   const user = z
 //     .object({
