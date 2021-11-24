@@ -302,11 +302,11 @@ export const defaultErrorMap = (
       if (issue.type === "array")
         message = `Should have ${issue.inclusive ? `at least` : `more than`} ${
           issue.minimum
-        } items`;
+        } item${issue.minimum === 1 ? '' : 's'}`;
       else if (issue.type === "string")
         message = `Should be ${issue.inclusive ? `at least` : `over`} ${
           issue.minimum
-        } characters`;
+        } character${issue.minimum === 1 ? '' : 's'} long`;
       else if (issue.type === "number")
         message = `Value should be greater than ${
           issue.inclusive ? `or equal to ` : ``
@@ -317,11 +317,11 @@ export const defaultErrorMap = (
       if (issue.type === "array")
         message = `Should have ${issue.inclusive ? `at most` : `less than`} ${
           issue.maximum
-        } items`;
+        } item${issue.maximum === 1 ? '' : 's'}`;
       else if (issue.type === "string")
         message = `Should be ${issue.inclusive ? `at most` : `under`} ${
           issue.maximum
-        } characters long`;
+        } character${issue.minimum === 1 ? '' : 's'} long`;
       else if (issue.type === "number")
         message = `Value should be less than ${
           issue.inclusive ? `or equal to ` : ``
