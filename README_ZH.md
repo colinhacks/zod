@@ -759,7 +759,7 @@ type StringNumberMap = z.infer<typeof stringNumberMap>;
 ## Sets
 
 ```ts
-const numberSet = z.set(z.string());
+const numberSet = z.set(z.number());
 type numberSet = z.infer<typeof numberSet>;
 // Set<number>
 ```
