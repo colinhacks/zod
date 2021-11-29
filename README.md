@@ -106,7 +106,7 @@ Some other great aspects:
 - Zero dependencies
 - Works in Node.js and browsers (including IE 11)
 - Tiny: 8kb minified + zipped
-- Immutable: methods (i.e. `.optional()` return a new instance
+- Immutable: methods (i.e. `.optional()`) return a new instance
 - Concise, chainable interface
 - Functional approach: [parse, don't validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 - Works with plain JavaScript too! You don't need to use TypeScript.
