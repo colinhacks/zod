@@ -227,6 +227,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`json-schema-to-zod`](https://github.com/StefanTerdell/json-schema-to-zod): Convert your [JSON Schemas](https://json-schema.org/) into Zod schemas. Use it live [here](https://StefanTerdell.github.io/json-schema-to-zod-react/).
 - [`json-to-zod`](https://github.com/rsinohara/json-to-zod): Convert JSON objects into Zod schemas. Use it live [here](https://rsinohara.github.io/json-to-zod-react/).
 - [`zod-dto`](https://github.com/kbkk/abitia/tree/master/packages/zod-dto): Generate Nest.js DTOs from a Zod schema.
+- [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
 
 ### Form integrations
 
