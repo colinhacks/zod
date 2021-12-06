@@ -85,6 +85,7 @@ This docs have been translated into [Chinese](./README_ZH.md).
   - [.or](#or)
   - [.and](#and)
 - [Type inference](#type-inference)
+- [Utilities](#utilities)
 - [Errors](#errors)
 - [Comparison](#comparison)
   - [Joi](#joi)
@@ -1648,6 +1649,17 @@ type output = z.output<typeof stringToNumber>; // number
 // equivalent to z.output!
 type inferred = z.infer<typeof stringToNumber>; // number
 ```
+
+# Utilities
+
+### `assertInput`
+
+An [assertion function](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#assertion-functions) which asserts that the data that the data is the shape of the input data. In almost all cases, you'll want to use `safeParse` or `parse`, so consider if you are able to use that instead.
+
+There are a few important caveats to consider when using this function:
+
+1. If your schema has a `preprocess` step, `assertInput` will give you the **wrong** answer since it will run the preprocess before validation.
+2. If your schema has transformations, note that this asserts the _input_ type, not the output type. Luckily the compiler will helpfully provide guidance here since the type will indeed be narrowed to the input type, not the output type, but it could be confusing.
 
 # Errors
 
