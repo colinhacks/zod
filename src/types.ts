@@ -679,7 +679,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           status.dirty();
         }
       } else if (check.kind === "multipleOf") {
-        if (Math.round(ctx.data % check.value) !== 0) {
+        const division = ctx.data / check.value;
+        if (parseInt(division.toString(), 10) !== division) {
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
