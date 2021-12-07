@@ -679,7 +679,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           status.dirty();
         }
       } else if (check.kind === "multipleOf") {
-        if (ctx.data % check.value !== 0) {
+        if (Math.round(ctx.data % check.value) !== 0) {
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
