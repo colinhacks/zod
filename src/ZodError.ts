@@ -321,7 +321,7 @@ export const defaultErrorMap = (
       else if (issue.type === "string")
         message = `Should be ${issue.inclusive ? `at most` : `under`} ${
           issue.maximum
-        } character${issue.minimum === 1 ? '' : 's'} long`;
+        } character${issue.maximum === 1 ? '' : 's'} long`;
       else if (issue.type === "number")
         message = `Value should be less than ${
           issue.inclusive ? `or equal to ` : ``
