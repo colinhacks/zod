@@ -1,4 +1,4 @@
-// @ts-ignogre TS6133
+// @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers/util";

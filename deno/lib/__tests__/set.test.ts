@@ -1,4 +1,4 @@
-// @ts-ignogre TS6133
+// @ts-ignore TS6133
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
