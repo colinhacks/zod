@@ -95,7 +95,7 @@ test("failing when set is smaller than min() ", () => {
   }
 });
 
-test("failing when set is bigger than min() ", () => {
+test("failing when set is bigger than max() ", () => {
   const result = maxTwo.safeParse(new Set(["one", "two", "three"]));
   expect(result.success).toEqual(false);
 
