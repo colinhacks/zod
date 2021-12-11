@@ -71,14 +71,14 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number";
+  type: "array" | "string" | "number" | "set";
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number";
+  type: "array" | "string" | "number" | "set";
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
