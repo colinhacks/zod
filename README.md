@@ -14,7 +14,7 @@
 by [@colinhacks](https://twitter.com/colinhacks)
 </p>
 
-> Hi! Colin here, creator of Zod. I hope you find it easy to use and powerful enough for all your use cases. If you have any issues or suggestions, please  [open an issue](https://github.com/colinhacks/zod/issues/new)! 
+> Hi! Colin here, creator of Zod. I hope you find it easy to use and powerful enough for all your use cases. If you have any issues or suggestions, please  [open an issue](https://github.com/colinhacks/zod/issues/new)!
 >
 > If you like typesafety, check out my other library [tRPC](https://trpc.io). It works in concert with Zod to provide a seamless way to build end-to-end typesafe APIs without GraphQL or code generation — just TypeScript.
 >
@@ -148,7 +148,7 @@ Sponsorship at any level is appreciated and encouraged. Zod is maintained by a s
       <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
       <br />
     </td>
-    
+
   </tr>
   <tr>
     <td align="center">
@@ -447,12 +447,12 @@ To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 FishEnum.enum.Salmon; // => autocompletes
 
 FishEnum.enum;
-/* 
+/*
 => {
   Salmon: "Salmon",
   Tuna: "Tuna",
   Trout: "Trout",
-} 
+}
 */
 ```
 
@@ -687,11 +687,11 @@ You can also specify which properties to make optional:
 const optionalEmail = user.partial({
   email: true,
 });
-/* 
-{ 
-  email?: string | undefined; 
+/*
+{
+  email?: string | undefined;
   username: string
-} 
+}
 */
 ```
 
@@ -711,9 +711,9 @@ const user = z.object({
 
 const deepPartialUser = user.deepPartial();
 
-/* 
+/*
 {
-  username?: string | undefined, 
+  username?: string | undefined,
   location?: {
     latitude?: number | undefined;
     longitude?: number | undefined;
@@ -956,6 +956,15 @@ type StringNumberMap = z.infer<typeof stringNumberMap>;
 const numberSet = z.set(z.number());
 type numberSet = z.infer<typeof numberSet>;
 // Set<number>
+```
+
+### `.nonempty/.min/.max/.size`
+
+```ts
+z.set(z.string()).nonempty(); // must contain at least one item
+z.set(z.string()).min(5); // must contain 5 or more items
+z.set(z.string()).max(5); // must contain 5 or fewer items
+z.set(z.string()).size(5); // must contain 5 items exactly
 ```
 
 ## Intersections
