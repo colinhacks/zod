@@ -2372,8 +2372,6 @@ export interface ZodSetDef<Value extends ZodTypeAny = ZodTypeAny>
   maxSize: { value: number; message?: string } | null;
 }
 
-export type SetCardinality = "many" | "atleastone";
-
 export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
   Set<Value["_output"]>,
   ZodSetDef<Value>,
