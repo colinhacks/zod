@@ -11,7 +11,7 @@
 
 </p>
 <p align="center">
-by [@colinhacks](https://twitter.com/colinhacks)
+by <a href="https://twitter.com/colinhacks">@colinhacks</a>
 </p>
 
 > Hi! Colin here, creator of Zod. I hope you find it easy to use and powerful enough for all your use cases. If you have any issues or suggestions, please [open an issue](https://github.com/colinhacks/zod/issues/new)!
