@@ -1774,9 +1774,9 @@ export type AnyZodObject = ZodObject<any, any, any>;
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-type ZodUnionOptions = [ZodTypeAny, ...ZodTypeAny[]];
+type ZodUnionOptions = Readonly<[ZodTypeAny, ...ZodTypeAny[]]>;
 export interface ZodUnionDef<
-  T extends ZodUnionOptions = [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]
+  T extends ZodUnionOptions = Readonly<[ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]>
 > extends ZodTypeDef {
   options: T;
   typeName: ZodFirstPartyTypeKind.ZodUnion;
@@ -1864,7 +1864,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     return this._def.options;
   }
 
-  static create = <T extends [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]>(
+  static create = <T extends Readonly<[ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]>>(
     types: T,
     params?: RawCreateParams
   ): ZodUnion<T> => {
