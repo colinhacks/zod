@@ -18,7 +18,7 @@
 
 <br/>
 
-## May 17, 2021: Zod v3 已经进入稳定版!
+## 二零二一年五月十七日: Zod v3 已经进入稳定版!
 
 查看 [迁移指南](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) 进行升级.
 
@@ -27,7 +27,7 @@
 - [`Zod 1 docs`](https://github.com/colinhacks/zod/tree/v1)
 - [`Zod 2 docs`](https://github.com/colinhacks/zod/tree/v2)
 
-#### New features
+#### 新功能
 
 - **更容易的引入**: 你现在可以像`import { z } from 'zod';`那样导入 Zod，而不是使用`import * as`语法。
 - **结构化的错误消息**. 对 ZodError 使用`.format()`方法，将错误转换为强类型的嵌套对象: [format method](#error-formatting)
@@ -38,7 +38,7 @@
 - **可选的和可忽略的解包**. ZodOptional 和 ZodNullable 现在有一个`.unwrap()`方法来检索它们所包裹的模式。
 - **A new implementation of transformers**. 请参阅[迁移指南](https://github.com/colinhacks/zod/blob/master/MIGRATION.md)部分以了解语法的变化。
 
-# Table of contents
+# 內容
 
 - [什么是 Zod](#什么是Zod)
 - [安装](#安装)
@@ -125,7 +125,7 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
 
 我们感谢并鼓励任何级别的赞助。Zod 是由一个单独的开发者维护的 ([hi!](https://twitter.com/colinhacks)). 对于个人开发者来说，可以考虑[一杯咖啡级别](https://github.com/sponsors/colinhacks). 如果你使用 Zod 建立了一个付费产品，可以考虑[初创企业级别](https://github.com/sponsors/colinhacks). 你可以在以下网站上了解更多关于等级的信息 [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
 
-### Sponsors
+### 贊助者
 
 <table>
   <tr>
@@ -191,7 +191,7 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
   </tr>
 </table>
 
-_要在这里看到你的名字 + Twitter + website , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._
+_要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._
 
 # 安装
 
