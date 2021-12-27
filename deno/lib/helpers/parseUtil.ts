@@ -135,8 +135,10 @@ export type ParseParams = {
   path: (string | number)[];
   errorMap: ZodErrorMap;
   async: boolean;
+  unknownKeys: DefaultUnknownKeys;
 };
 
+type DefaultUnknownKeys = "passthrough" | "strict" | "strip";
 export type ParsePathComponent = string | number;
 export type ParsePath = ParsePathComponent[];
 export const EMPTY_PATH: ParsePath = [];
@@ -151,6 +153,7 @@ export interface ParseContext {
   readonly typeCache: Map<any, ZodParsedType>;
   readonly data: any;
   readonly parsedType: ZodParsedType;
+  readonly unknownKeys: DefaultUnknownKeys;
 }
 
 export type ParseInput = {

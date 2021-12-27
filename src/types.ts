@@ -178,6 +178,7 @@ export abstract class ZodType<
       parent: null,
       data,
       parsedType: getParsedType(data),
+      unknownKeys: params?.unknownKeys ?? "strip",
     };
     const result = this._parseSync({ data, path: ctx.path, parent: ctx });
 
@@ -207,6 +208,7 @@ export abstract class ZodType<
       parent: null,
       data,
       parsedType: getParsedType(data),
+      unknownKeys: params?.unknownKeys ?? "strip",
     };
 
     const maybeAsyncResult = this._parse({ data, path: [], parent: ctx });
@@ -1330,7 +1332,7 @@ const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
   }) as any;
 };
 
-type UnknownKeysParam = "passthrough" | "strict" | "strip";
+type UnknownKeysParam = "basedOnContext" | "passthrough" | "strict" | "strip";
 
 export type Primitive = string | number | bigint | boolean | null | undefined;
 export type Scalars = Primitive | Primitive[];
@@ -1422,7 +1424,7 @@ function deepPartialify(schema: ZodTypeAny): any {
 }
 export class ZodObject<
   T extends ZodRawShape,
-  UnknownKeys extends UnknownKeysParam = "strip",
+  UnknownKeys extends UnknownKeysParam = "basedOnContext",
   Catchall extends ZodTypeAny = ZodTypeAny,
   Output = objectOutputType<T, Catchall>,
   Input = objectInputType<T, Catchall>
@@ -1474,7 +1476,10 @@ export class ZodObject<
     }
 
     if (this._def.catchall instanceof ZodNever) {
-      const unknownKeys = this._def.unknownKeys;
+      const unknownKeys =
+        this._def.unknownKeys === "basedOnContext"
+          ? ctx.unknownKeys
+          : this._def.unknownKeys;
 
       if (unknownKeys === "passthrough") {
         for (const key of extraKeys) {
@@ -1731,7 +1736,7 @@ export class ZodObject<
   ): ZodObject<T> => {
     return new ZodObject({
       shape: () => shape,
-      unknownKeys: "strip",
+      unknownKeys: "basedOnContext",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
       ...processCreateParams(params),
@@ -1757,7 +1762,7 @@ export class ZodObject<
   ): ZodObject<T> => {
     return new ZodObject({
       shape,
-      unknownKeys: "strip",
+      unknownKeys: "basedOnContext",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
       ...processCreateParams(params),

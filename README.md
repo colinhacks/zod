@@ -728,17 +728,22 @@ const deepPartialUser = user.deepPartial();
 
 #### Unrecognized keys
 
-By default Zod objects schemas strip out unrecognized keys during parsing.
+By default Zod objects schemas strip out unrecognized keys during parsing. If necessary, there are other strategies that you can use during the parsing: (`passthrough`, `strict`, `strip`) and you can select it by the second argument in the parse method. It has an effect on all nested objects except those that have explicitly defined `unknownKeys` strategy.
 
 ```ts
 const person = z.object({
   name: z.string(),
 });
 
-person.parse({
-  name: "bob dylan",
-  extraKey: 61,
-});
+person.parse(
+  {
+    name: "bob dylan",
+    extraKey: 61,
+  },
+//  {
+//    unknownKeys: 'strip' // default strategy
+//  }
+);
 // => { name: "bob dylan" }
 // extraKey has been stripped
 ```

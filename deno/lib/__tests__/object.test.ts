@@ -92,6 +92,14 @@ test("passthrough unknown", () => {
   expect(val).toEqual(data);
 });
 
+test("passthrough thanks to parse param", () => {
+  const val = z
+    .object({ points: z.number() })
+    .parse(data, { unknownKeys: "passthrough" });
+
+  expect(val).toEqual(data);
+});
+
 test("strip unknown", () => {
   const val = z.object({ points: z.number() }).strip().parse(data);
 
@@ -100,6 +108,23 @@ test("strip unknown", () => {
 
 test("strict", () => {
   const val = z.object({ points: z.number() }).strict().safeParse(data);
+
+  expect(val.success).toEqual(false);
+});
+
+test("strict thanks to parse param", () => {
+  const val = z
+    .object({ points: z.number() })
+    .safeParse(data, { unknownKeys: "strict" });
+
+  expect(val.success).toEqual(false);
+});
+
+test("strict though parse param uses passthrough", () => {
+  const val = z
+    .object({ points: z.number() })
+    .strict()
+    .safeParse(data, { unknownKeys: "passthrough" });
 
   expect(val.success).toEqual(false);
 });
