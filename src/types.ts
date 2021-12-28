@@ -174,7 +174,7 @@ export abstract class ZodType<
       contextualErrorMap: params?.errorMap,
       schemaErrorMap: this._def.errorMap,
       async: params?.async ?? false,
-      typeCache: typeof Map !== 'undefined' ? new Map() : undefined,
+      typeCache: typeof Map !== "undefined" ? new Map() : undefined,
       parent: null,
       data,
       parsedType: getParsedType(data),
@@ -203,7 +203,7 @@ export abstract class ZodType<
       contextualErrorMap: params?.errorMap,
       schemaErrorMap: this._def.errorMap,
       async: true,
-      typeCache: typeof Map !== 'undefined' ? new Map() : undefined,
+      typeCache: typeof Map !== "undefined" ? new Map() : undefined,
       parent: null,
       data,
       parsedType: getParsedType(data),
@@ -253,7 +253,7 @@ export abstract class ZodType<
           code: ZodIssueCode.custom,
           ...getIssueProperties(val),
         });
-      if (typeof Promise !== 'undefined' && result instanceof Promise) {
+      if (typeof Promise !== "undefined" && result instanceof Promise) {
         return result.then((data) => {
           if (!data) {
             setError();

@@ -86,13 +86,13 @@ export const getParsedType = (
       ) {
         return cacheAndReturn(data, ZodParsedType.promise, cache);
       }
-      if (typeof Map !== 'undefined' && data instanceof Map) {
+      if (typeof Map !== "undefined" && data instanceof Map) {
         return cacheAndReturn(data, ZodParsedType.map, cache);
       }
-      if (typeof Set !== 'undefined' && data instanceof Set) {
+      if (typeof Set !== "undefined" && data instanceof Set) {
         return cacheAndReturn(data, ZodParsedType.set, cache);
       }
-      if (typeof Date !== 'undefined' && data instanceof Date) {
+      if (typeof Date !== "undefined" && data instanceof Date) {
         return cacheAndReturn(data, ZodParsedType.date, cache);
       }
       return cacheAndReturn(data, ZodParsedType.object, cache);
@@ -272,4 +272,5 @@ export const isValid = <T>(x: ParseReturnType<T>): x is OK<T> | DIRTY<T> =>
   (x as any).status === "valid";
 export const isAsync = <T>(
   x: ParseReturnType<T>
-): x is AsyncParseReturnType<T> => typeof Promise !== undefined && x instanceof Promise;
+): x is AsyncParseReturnType<T> =>
+  typeof Promise !== undefined && x instanceof Promise;
