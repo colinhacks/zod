@@ -1,64 +1,90 @@
-import * as z from '../index';
-import { util } from '../helpers/util';
-import { ZodError } from '../ZodError';
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
+
+import { util } from "../helpers/util";
+import * as z from "../index";
 
 const promSchema = z.promise(
   z.object({
     name: z.string(),
     age: z.number(),
-  }),
+  })
 );
 
-// Prevent asynchronous exceptions from reaching the async exception monitor by marking them as handled
-// See https://github.com/facebook/jest/issues/6028#issuecomment-567851031
-function defuse<T>(p: Promise<T>): Promise<T> {
-  p.catch(() => undefined);
-  return p;
-}
-
-test('promise inference', () => {
+test("promise inference", () => {
   type promSchemaType = z.infer<typeof promSchema>;
-  const t1: util.AssertEqual<promSchemaType, Promise<{ name: string; age: number }>> = true;
-  t1;
+  const t1: util.AssertEqual<
+    promSchemaType,
+    Promise<{ name: string; age: number }>
+  > = true;
+  expect(t1).toBeTruthy();
 });
 
-test('promise parsing success', () => {
-  defuse(promSchema.parse(Promise.resolve({ name: 'Bobby', age: 10 })));
+test("promise parsing success", async () => {
+  const pr = promSchema.parse(Promise.resolve({ name: "Bobby", age: 10 }));
+  expect(pr).toBeInstanceOf(Promise);
+  const result = await pr;
+  expect(typeof result).toBe("object");
+  expect(typeof result.age).toBe("number");
+  expect(typeof result.name).toBe("string");
 });
 
-test('promise parsing success 2', () => {
-  defuse(promSchema.parse({ then: () => {}, catch: () => {} }));
+test("promise parsing success 2", () => {
+  const fakePromise = {
+    then() {
+      return this;
+    },
+    catch() {
+      return this;
+    },
+  };
+  promSchema.parse(fakePromise);
 });
 
-test('promise parsing fail', () => {
-  const bad = defuse(promSchema.parse(Promise.resolve({ name: 'Bobby', age: '10' })));
-  expect(bad).rejects;
+test("promise parsing fail", async () => {
+  const bad = promSchema.parse(Promise.resolve({ name: "Bobby", age: "10" }));
+  // return await expect(bad).resolves.toBe({ name: 'Bobby', age: '10' });
+  return await expect(bad).rejects.toBeInstanceOf(z.ZodError);
+  // done();
 });
 
-test('promise parsing fail 2', () => {
-  const failPromise = defuse(promSchema.parse(Promise.resolve({ name: 'Bobby', age: '10' })));
-  failPromise.catch(err => {
-    expect(err instanceof ZodError).toEqual(true);
-  });
+test("promise parsing fail 2", async () => {
+  const failPromise = promSchema.parse(
+    Promise.resolve({ name: "Bobby", age: "10" })
+  );
+  await expect(failPromise).rejects.toBeInstanceOf(z.ZodError);
+  // done();/z
 });
 
-test('promise parsing fail', () => {
-  const bad = () => defuse(promSchema.parse({ then: () => {}, catch: {} }));
+test("promise parsing fail", () => {
+  const bad = () => promSchema.parse({ then: () => {}, catch: {} });
   expect(bad).toThrow();
 });
 
+// test('sync promise parsing', () => {
+//   expect(() => z.promise(z.string()).parse(Promise.resolve('asfd'))).toThrow();
+// });
+
 const asyncFunction = z.function(z.tuple([]), promSchema);
 
-test('async function pass', () => {
+test("async function pass", async () => {
   const validatedFunction = asyncFunction.implement(async () => {
-    return { name: 'jimmy', age: 14 };
+    return { name: "jimmy", age: 14 };
   });
-  expect(defuse(validatedFunction())).resolves;
+  await expect(validatedFunction()).resolves.toEqual({
+    name: "jimmy",
+    age: 14,
+  });
 });
 
-test('async function fail', () => {
+test("async function fail", async () => {
   const validatedFunction = asyncFunction.implement(() => {
-    return Promise.resolve('asdf' as any);
+    return Promise.resolve("asdf" as any);
   });
-  expect(defuse(validatedFunction())).rejects;
+  await expect(validatedFunction()).rejects.toBeInstanceOf(z.ZodError);
+});
+
+test("async promise parsing", () => {
+  const res = z.promise(z.number()).parseAsync(Promise.resolve(12));
+  expect(res).toBeInstanceOf(Promise);
 });

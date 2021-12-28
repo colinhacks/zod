@@ -1,0 +1,65 @@
+name: Test and Lint
+
+on:
+  push:
+  create:
+  pull_request:
+  schedule:
+    - cron: '44 4 * * SAT'
+  workflow_dispatch:
+
+jobs:
+  test-node:
+    runs-on: Ubuntu-20.04
+    strategy:
+      matrix:
+        node: [ '14' ]
+        typescript: [ '4.1', '4.2', '4.3', '4.4' ]
+    name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - run: yarn install
+      - run: yarn add typescript@${{ matrix.typescript }}
+      - run: yarn build
+      - run: yarn test
+
+  test-deno:
+    runs-on: Ubuntu-20.04
+    strategy:
+      matrix:
+        deno: [ "v1.x" ]
+    name: Test with Deno ${{ matrix.deno }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: denolib/setup-deno@v2
+        with:
+          deno-version: ${{ matrix.deno }}
+      - run: deno --version
+      - run: deno test
+        working-directory: ./deno/lib
+      - run: deno run ./index.ts
+        working-directory: ./deno/lib
+      - run: deno run ./mod.ts
+        working-directory: ./deno/lib
+      - run: |
+          deno bundle ./mod.ts ./bundle.js
+          deno run ./bundle.js
+        working-directory: ./deno/lib
+
+  lint:
+    runs-on: Ubuntu-20.04
+    strategy:
+      matrix:
+        node: [ '14' ]
+    name: Lint on Node ${{ matrix.node }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - run: yarn install
+      - run: yarn check:format
+      - run: yarn check:lint

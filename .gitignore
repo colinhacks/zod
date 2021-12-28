@@ -1,8 +1,9 @@
-.DS_Store
 **/.DS_Store
 node_modules
 /lib
-/coverage
-**/coverage
+coverage
 .vscode
-yarn-error.log
+.idea
+*.log
+src/playground.ts
+deno/lib/playground.ts

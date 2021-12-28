@@ -1,188 +1,236 @@
-import { ZodParsedType } from './parser';
-import { util } from './helpers/util';
+import { ZodParsedType } from "./helpers/parseUtil";
+import { util } from "./helpers/util";
 
-export const ZodErrorCode = util.arrayToEnum([
-  'invalid_type',
-  'nonempty_array_is_empty',
-  'custom_error',
-  'invalid_union',
-  'invalid_literal_value',
-  'invalid_enum_value',
-  'unrecognized_keys',
-  'invalid_arguments',
-  'invalid_return_type',
-  'invalid_date',
-  'invalid_string',
-  'too_small',
-  'too_big',
+export const ZodIssueCode = util.arrayToEnum([
+  "invalid_type",
+  "custom",
+  "invalid_union",
+  "invalid_enum_value",
+  "unrecognized_keys",
+  "invalid_arguments",
+  "invalid_return_type",
+  "invalid_date",
+  "invalid_string",
+  "too_small",
+  "too_big",
+  "invalid_intersection_types",
+  "not_multiple_of",
 ]);
 
-export type ZodErrorCode = keyof typeof ZodErrorCode;
+export type ZodIssueCode = keyof typeof ZodIssueCode;
 
-export type ZodSuberrorBase = {
+export type ZodIssueBase = {
   path: (string | number)[];
-  // code: ZodErrorCode;
+  // code: ZodIssueCode;
   message?: string;
 };
 
-export interface ZodInvalidTypeError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_type;
+export interface ZodInvalidTypeIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_type;
   expected: ZodParsedType;
   received: ZodParsedType;
 }
 
-export interface ZodNonEmptyArrayIsEmptyError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.nonempty_array_is_empty;
-}
-
-export interface ZodUnrecognizedKeysError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.unrecognized_keys;
+export interface ZodUnrecognizedKeysIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.unrecognized_keys;
   keys: string[];
 }
 
-export interface ZodInvalidUnionError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_union;
+export interface ZodInvalidUnionIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_union;
   unionErrors: ZodError[];
 }
 
-export interface ZodInvalidLiteralValueError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_literal_value;
-  expected: string | number | boolean;
-}
-
-export interface ZodInvalidEnumValueError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_enum_value;
+export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_enum_value;
   options: (string | number)[];
 }
 
-export interface ZodInvalidArgumentsError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_arguments;
+export interface ZodInvalidArgumentsIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_arguments;
   argumentsError: ZodError;
 }
 
-export interface ZodInvalidReturnTypeError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_return_type;
+export interface ZodInvalidReturnTypeIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_return_type;
   returnTypeError: ZodError;
 }
 
-export interface ZodInvalidDateError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_date;
+export interface ZodInvalidDateIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_date;
 }
 
-export type StringValidation = 'email' | 'url' | 'uuid' | 'regex';
+export type StringValidation = "email" | "url" | "uuid" | "regex" | "cuid";
 
-export interface ZodInvalidStringError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.invalid_string;
+export interface ZodInvalidStringIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_string;
   validation: StringValidation;
 }
 
-export interface ZodTooSmallError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.too_small;
+export interface ZodTooSmallIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
-  type: 'array' | 'string' | 'number';
+  type: "array" | "string" | "number";
 }
 
-export interface ZodTooBigError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.too_big;
+export interface ZodTooBigIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
-  type: 'array' | 'string' | 'number';
+  type: "array" | "string" | "number";
 }
 
-export interface ZodCustomError extends ZodSuberrorBase {
-  code: typeof ZodErrorCode.custom_error;
+export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_intersection_types;
+}
+
+export interface ZodNotMultipleOfIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.not_multiple_of;
+  multipleOf: number;
+}
+
+export interface ZodCustomIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.custom;
   params?: { [k: string]: any };
 }
 
-export type ZodSuberrorOptionalMessage =
-  | ZodInvalidTypeError
-  | ZodNonEmptyArrayIsEmptyError
-  | ZodUnrecognizedKeysError
-  | ZodInvalidUnionError
-  | ZodInvalidLiteralValueError
-  | ZodInvalidEnumValueError
-  | ZodInvalidArgumentsError
-  | ZodInvalidReturnTypeError
-  | ZodInvalidDateError
-  | ZodInvalidStringError
-  | ZodTooSmallError
-  | ZodTooBigError
-  | ZodCustomError;
+export type DenormalizedError = { [k: string]: DenormalizedError | string[] };
 
-export type ZodSuberror = ZodSuberrorOptionalMessage & { message: string };
+export type ZodIssueOptionalMessage =
+  | ZodInvalidTypeIssue
+  | ZodUnrecognizedKeysIssue
+  | ZodInvalidUnionIssue
+  | ZodInvalidEnumValueIssue
+  | ZodInvalidArgumentsIssue
+  | ZodInvalidReturnTypeIssue
+  | ZodInvalidDateIssue
+  | ZodInvalidStringIssue
+  | ZodTooSmallIssue
+  | ZodTooBigIssue
+  | ZodInvalidIntersectionTypesIssue
+  | ZodNotMultipleOfIssue
+  | ZodCustomIssue;
+
+export type ZodIssue = ZodIssueOptionalMessage & { message: string };
 
 export const quotelessJson = (obj: any) => {
-  const json = JSON.stringify(obj, null, 2); // {"name":"John Smith"}
-  return json.replace(/"([^"]+)":/g, '$1:');
+  const json = JSON.stringify(obj, null, 2);
+  return json.replace(/"([^"]+)":/g, "$1:");
 };
 
-export class ZodError extends Error {
-  errors: ZodSuberror[] = [];
+export type ZodFormattedError<T> = {
+  _errors: string[];
+} & (T extends [any, ...any[]]
+  ? { [K in keyof T]?: ZodFormattedError<T[K]> }
+  : T extends any[]
+  ? ZodFormattedError<T[number]>[]
+  : T extends object
+  ? { [K in keyof T]?: ZodFormattedError<T[K]> }
+  : unknown);
 
-  constructor(errors: ZodSuberror[]) {
+export class ZodError<T = any> extends Error {
+  issues: ZodIssue[] = [];
+
+  get errors() {
+    return this.issues;
+  }
+
+  constructor(issues: ZodIssue[]) {
     super();
-    // restore prototype chain
+
     const actualProto = new.target.prototype;
     if (Object.setPrototypeOf) {
+      // eslint-disable-next-line ban/ban
       Object.setPrototypeOf(this, actualProto);
     } else {
       (this as any).__proto__ = actualProto;
     }
-    this.errors = errors;
+    this.name = "ZodError";
+    this.issues = issues;
   }
 
-  static create = (errors: ZodSuberror[]) => {
-    const error = new ZodError(errors);
+  format = (): ZodFormattedError<T> => {
+    const fieldErrors: ZodFormattedError<T> = { _errors: [] } as any;
+    const processError = (error: ZodError) => {
+      for (const issue of error.issues) {
+        if (issue.code === "invalid_union") {
+          issue.unionErrors.map(processError);
+        } else if (issue.code === "invalid_return_type") {
+          processError(issue.returnTypeError);
+        } else if (issue.code === "invalid_arguments") {
+          processError(issue.argumentsError);
+        } else if (issue.path.length === 0) {
+          (fieldErrors as any)._errors.push(issue.message);
+        } else {
+          let curr: any = fieldErrors;
+          let i = 0;
+          while (i < issue.path.length) {
+            const el = issue.path[i];
+            const terminal = i === issue.path.length - 1;
+
+            if (!terminal) {
+              if (typeof el === "string") {
+                curr[el] = curr[el] || { _errors: [] };
+              } else if (typeof el === "number") {
+                const errorArray: any = [];
+                errorArray._errors = [];
+                curr[el] = curr[el] || errorArray;
+              }
+            } else {
+              curr[el] = curr[el] || { _errors: [] };
+              curr[el]._errors.push(issue.message);
+            }
+
+            curr = curr[el];
+            i++;
+          }
+        }
+      }
+    };
+
+    processError(this);
+    return fieldErrors;
+  };
+
+  static create = (issues: ZodIssue[]) => {
+    const error = new ZodError(issues);
     return error;
   };
 
+  toString() {
+    return this.message;
+  }
   get message() {
-    // return JSON.stringify(this.errors, null, 2);
-    const errorMessage: string[] = [
-      `${this.errors.length} validation issue(s)`,
-      '',
-    ];
-    for (const err of this.errors) {
-      const pathString = err.path.join('.') || '[[root]]';
-      errorMessage.push(
-        `  Issue #${this.errors.indexOf(err)}: ${err.code} at ${pathString}`,
-      );
-      errorMessage.push(`  ` + err.message);
-      errorMessage.push('');
-    }
-    return errorMessage.join('\n');
-    // return quotelessJson(this);
-    // .map(({ path, message }) => {
-    //   return path.length ? `${path.join('./index')}: ${message}` : `${message}`;
-    // })
-    // .join('\n');
+    return JSON.stringify(this.issues, null, 2);
   }
 
   get isEmpty(): boolean {
-    return this.errors.length === 0;
+    return this.issues.length === 0;
   }
 
-  addError = (sub: ZodSuberror) => {
-    this.errors = [...this.errors, sub];
+  addIssue = (sub: ZodIssue) => {
+    this.issues = [...this.issues, sub];
   };
 
-  addErrors = (subs: ZodSuberror[] = []) => {
-    this.errors = [...this.errors, ...subs];
+  addIssues = (subs: ZodIssue[] = []) => {
+    this.issues = [...this.issues, ...subs];
   };
 
-  flatten = (): {
-    formErrors: string[];
-    fieldErrors: { [k: string]: string[] };
+  flatten = <U = string>(
+    mapper: (issue: ZodIssue) => U = (issue: ZodIssue) => issue.message as any
+  ): {
+    formErrors: U[];
+    fieldErrors: { [k: string]: U[] };
   } => {
     const fieldErrors: any = {};
-    const formErrors: string[] = [];
-    for (const sub of this.errors) {
+    const formErrors: U[] = [];
+    for (const sub of this.issues) {
       if (sub.path.length > 0) {
         fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-        fieldErrors[sub.path[0]].push(sub.message);
+        fieldErrors[sub.path[0]].push(mapper(sub));
       } else {
-        formErrors.push(sub.message);
+        formErrors.push(mapper(sub));
       }
     }
     return { formErrors, fieldErrors };
@@ -192,3 +240,112 @@ export class ZodError extends Error {
     return this.flatten();
   }
 }
+
+type stripPath<T extends object> = T extends any
+  ? util.OmitKeys<T, "path">
+  : never;
+
+export type IssueData = stripPath<ZodIssueOptionalMessage> & {
+  path?: (string | number)[];
+  fatal?: boolean;
+};
+export type MakeErrorData = IssueData;
+
+type ErrorMapCtx = {
+  defaultError: string;
+  data: any;
+};
+
+export type ZodErrorMap = typeof defaultErrorMap;
+export const defaultErrorMap = (
+  issue: ZodIssueOptionalMessage,
+  _ctx: ErrorMapCtx
+): { message: string } => {
+  let message: string;
+  switch (issue.code) {
+    case ZodIssueCode.invalid_type:
+      if (issue.received === "undefined") {
+        message = "Required";
+      } else {
+        message = `Expected ${issue.expected}, received ${issue.received}`;
+      }
+      break;
+    case ZodIssueCode.unrecognized_keys:
+      message = `Unrecognized key(s) in object: ${issue.keys
+        .map((k) => `'${k}'`)
+        .join(", ")}`;
+      break;
+    case ZodIssueCode.invalid_union:
+      message = `Invalid input`;
+      break;
+    case ZodIssueCode.invalid_enum_value:
+      message = `Invalid enum value. Expected ${issue.options
+        .map((val) => (typeof val === "string" ? `'${val}'` : val))
+        .join(" | ")}, received ${
+        typeof _ctx.data === "string" ? `'${_ctx.data}'` : _ctx.data
+      }`;
+      break;
+    case ZodIssueCode.invalid_arguments:
+      message = `Invalid function arguments`;
+      break;
+    case ZodIssueCode.invalid_return_type:
+      message = `Invalid function return type`;
+      break;
+    case ZodIssueCode.invalid_date:
+      message = `Invalid date`;
+      break;
+    case ZodIssueCode.invalid_string:
+      if (issue.validation !== "regex") message = `Invalid ${issue.validation}`;
+      else message = "Invalid";
+      break;
+    case ZodIssueCode.too_small:
+      if (issue.type === "array")
+        message = `Should have ${issue.inclusive ? `at least` : `more than`} ${
+          issue.minimum
+        } items`;
+      else if (issue.type === "string")
+        message = `Should be ${issue.inclusive ? `at least` : `over`} ${
+          issue.minimum
+        } characters`;
+      else if (issue.type === "number")
+        message = `Value should be greater than ${
+          issue.inclusive ? `or equal to ` : ``
+        }${issue.minimum}`;
+      else message = "Invalid input";
+      break;
+    case ZodIssueCode.too_big:
+      if (issue.type === "array")
+        message = `Should have ${issue.inclusive ? `at most` : `less than`} ${
+          issue.maximum
+        } items`;
+      else if (issue.type === "string")
+        message = `Should be ${issue.inclusive ? `at most` : `under`} ${
+          issue.maximum
+        } characters long`;
+      else if (issue.type === "number")
+        message = `Value should be less than ${
+          issue.inclusive ? `or equal to ` : ``
+        }${issue.maximum}`;
+      else message = "Invalid input";
+      break;
+    case ZodIssueCode.custom:
+      message = `Invalid input`;
+      break;
+    case ZodIssueCode.invalid_intersection_types:
+      message = `Intersection results could not be merged`;
+      break;
+    case ZodIssueCode.not_multiple_of:
+      message = `Should be multiple of ${issue.multipleOf}`;
+      break;
+    default:
+      message = _ctx.defaultError;
+      util.assertNever(issue);
+  }
+  return { message };
+};
+
+export let overrideErrorMap = defaultErrorMap;
+
+export const setErrorMap = (map: ZodErrorMap) => {
+  overrideErrorMap = map;
+};

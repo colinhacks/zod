@@ -1,7 +1,10 @@
-import * as z from '../index';
-import { util } from '../helpers/util';
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
 
-test('instanceof', () => {
+import { util } from "../helpers/util";
+import * as z from "../index";
+
+test("instanceof", async () => {
   class Test {}
   class Subtest extends Test {}
 
@@ -12,16 +15,13 @@ test('instanceof', () => {
   TestSchema.parse(new Subtest());
   SubtestSchema.parse(new Subtest());
 
-  expect.assertions(4);
-  expect(() => SubtestSchema.parse(new Test())).toThrow();
-  expect(() => TestSchema.parse(12)).toThrow();
-  TestSchema.parseAsync(12).catch(err => {
-    expect(err.errors[0].message).toEqual('Input not instance of Test');
-  });
-  SubtestSchema.parseAsync(12).catch(err => {
-    expect(err.errors[0].message).toEqual('Input not instance of Subtest');
-  });
+  await expect(() => SubtestSchema.parse(new Test())).toThrow(
+    /Input not instance of Subtest/
+  );
+  await expect(() => TestSchema.parse(12)).toThrow(
+    /Input not instance of Test/
+  );
 
   const f1: util.AssertEqual<Test, z.infer<typeof TestSchema>> = true;
-  f1;
+  expect(f1).toBeTruthy();
 });

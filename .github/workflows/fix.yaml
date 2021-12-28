@@ -1,0 +1,60 @@
+name: Fix, Format, Regenerate
+
+on:
+  push:
+  create:
+  schedule:
+    - cron: '33 3 * * SAT'
+  workflow_dispatch:
+
+jobs:
+  fix:
+    runs-on: Ubuntu-20.04
+    name: Fix
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14
+      - run: yarn install
+      - run: yarn clean
+      - run: yarn fix:lint
+      - run: yarn build:deno
+      - run: yarn fix:format
+      - name: Check for Changes
+        id: check
+        run: |
+          git add .
+          git status
+          declare had_changes="$(
+            [[ -n "$(git status --porcelain)" ]] && echo true || echo false
+          )"
+          echo "::set-output name=had-changes::${had_changes}"
+      - name: Push All Changes
+        if: steps.check.outputs.had-changes == 'true'
+        run: |
+          declare br="
+          "
+          declare branch="$(echo ${GITHUB_REF#refs/heads/})"
+          declare date="$(git log -1 --pretty=format:'%ad')"
+          declare short_hash="$(git rev-parse --short=8 HEAD)"
+          declare short_subject="$(git log -1 --pretty=format:'%s')"
+          declare short_subject="$(git log -1 --pretty=format:'%s')"
+          if [[ ${#short_subject} -gt 17 ]]; then
+            short_subject="${short_subject:0:16}…"
+          fi
+          declare author_name="$(git log -1 --pretty=format:'%an')"
+          declare author_email="$(git log -1 --pretty=format:'%ae')"
+          declare current_action_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_id }}"
+          export GIT_AUTHOR_DATE="${date}"
+          export GIT_AUTHOR_NAME="${author_name}"
+          export GIT_AUTHOR_EMAIL="${author_email}"
+          export GIT_COMMITTER_DATE="${date}"
+          export GIT_COMMITTER_NAME="github-actions"
+          export GIT_COMMITTER_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
+          git remote rm origin
+          git remote add origin "https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
+          git checkout "${branch}"
+          git add .
+          git commit -m "chore: automatic fixes and code generation for ${short_hash} (${short_subject})${br}${br}${current_action_url}"
+          git push --set-upstream origin "${branch}"
