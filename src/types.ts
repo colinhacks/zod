@@ -2382,6 +2382,8 @@ export interface ZodSetDef<Value extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   valueType: Value;
   typeName: ZodFirstPartyTypeKind.ZodSet;
+  minSize: { value: number; message?: string } | null;
+  maxSize: { value: number; message?: string } | null;
 }
 
 export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
@@ -2398,6 +2400,34 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
         received: ctx.parsedType,
       });
       return INVALID;
+    }
+
+    const def = this._def;
+
+    if (def.minSize !== null) {
+      if (ctx.data.size < def.minSize.value) {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.too_small,
+          minimum: def.minSize.value,
+          type: "set",
+          inclusive: true,
+          message: def.minSize.message,
+        });
+        status.dirty();
+      }
+    }
+
+    if (def.maxSize !== null) {
+      if (ctx.data.size > def.maxSize.value) {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.too_big,
+          maximum: def.maxSize.value,
+          type: "set",
+          inclusive: true,
+          message: def.maxSize.message,
+        });
+        status.dirty();
+      }
     }
 
     const valueType = this._def.valueType;
@@ -2423,12 +2453,36 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     }
   }
 
+  min(minSize: number, message?: errorUtil.ErrMessage): this {
+    return new ZodSet({
+      ...this._def,
+      minSize: { value: minSize, message: errorUtil.toString(message) },
+    }) as any;
+  }
+
+  max(maxSize: number, message?: errorUtil.ErrMessage): this {
+    return new ZodSet({
+      ...this._def,
+      maxSize: { value: maxSize, message: errorUtil.toString(message) },
+    }) as any;
+  }
+
+  size(size: number, message?: errorUtil.ErrMessage): this {
+    return this.min(size, message).max(size, message) as any;
+  }
+
+  nonempty(message?: errorUtil.ErrMessage): ZodSet<Value> {
+    return this.min(1, message) as any;
+  }
+
   static create = <Value extends ZodTypeAny = ZodTypeAny>(
     valueType: Value,
     params?: RawCreateParams
   ): ZodSet<Value> => {
     return new ZodSet({
       valueType,
+      minSize: null,
+      maxSize: null,
       typeName: ZodFirstPartyTypeKind.ZodSet,
       ...processCreateParams(params),
     });
