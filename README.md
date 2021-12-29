@@ -36,9 +36,8 @@ This docs have been translated into [Chinese](./README_ZH.md).
   - [Strings](#strings)
   - [Numbers](#numbers)
   - [Booleans](#booleans)
-  - [Enums](#enums)
-    - [Zod enums](#zod-enums)
-    - [Native enums](#native-enums)
+  - [Zod enums](#zod-enums)
+  - [Native enums](#native-enums)
   - [Optionals](#optionals)
   - [Nullables](#nullables)
   - [Objects](#objects)
@@ -412,11 +411,7 @@ const isActive = z.boolean({
 });
 ```
 
-## Enums
-
-There are two ways to define enums in Zod.
-
-### Zod enums
+## Zod enums
 
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
@@ -424,21 +419,19 @@ type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
-You must pass the array of values directly into `z.enum()`. Alternatively, use `as const` to define your enum values as a tuple of strings. See the [const assertion docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions) for details.
+`z.enum` is a Zod-native way to declare a schema with a fixed set of allowable _string_ values. Pass the array of values directly into `z.enum()`. Alternatively, use `as const` to define your enum values as a tuple of strings. See the [const assertion docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions) for details.
 
 ```ts
 const VALUES = ["Salmon", "Tuna", "Trout"] as const;
 const FishEnum = z.enum(VALUES);
 ```
 
-This is not allowed:
+This is not allowed, since Zod isn't able to infer the exact values of each elements.
 
 ```ts
 const fish = ["Salmon", "Tuna", "Trout"];
 const FishEnum = z.enum(fish);
 ```
-
-In that case, the inferred type of `fish` is simply `string[]`, so Zod isn't able to infer the individual enum elements.
 
 **Autocompletion**
 
@@ -463,7 +456,7 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
 ```
 
-### Native enums
+## Native enums
 
 Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()` .
 
