@@ -11,10 +11,10 @@
 
 </p>
 <p align="center">
-by [@colinhacks](https://twitter.com/colinhacks)
+by <a href="https://twitter.com/colinhacks">@colinhacks</a>
 </p>
 
-> Hi! Colin here, creator of Zod. I hope you find it easy to use and powerful enough for all your use cases. If you have any issues or suggestions, please  [open an issue](https://github.com/colinhacks/zod/issues/new)!
+> Hi! Colin here, creator of Zod. I hope you find it easy to use and powerful enough for all your use cases. If you have any issues or suggestions, please [open an issue](https://github.com/colinhacks/zod/issues/new)!
 >
 > If you like typesafety, check out my other library [tRPC](https://trpc.io). It works in concert with Zod to provide a seamless way to build end-to-end typesafe APIs without GraphQL or code generation — just TypeScript.
 >
@@ -216,6 +216,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 - [`tRPC`](https://github.com/trpc/trpc): Build end-to-end typesafe APIs without GraphQL.
 - [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): Convert TypeScript definitions into Zod schemas.
+- [`zod-to-ts`](https://github.com/sachinraja/zod-to-ts): Generate TypeScript definitions from Zod schemas.
 - [`@anatine/zod-openapi`](https://github.com/anatine/zod-plugins/tree/main/libs/zod-openapi): Converts a Zod schema to an OpenAPI v3.x `SchemaObject`.
 - [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/libs/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/Marak/Faker.js).
 - [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/libs/zod-nestjs): Helper methods for using Zod in a NestJS project.
@@ -1091,7 +1092,7 @@ Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
 
 #### Cyclical objects
 
-Despite supporting recursive schemas, passing an cyclical data into Zod will cause an infinite loop.
+Despite supporting recursive schemas, passing cyclical data into Zod will cause an infinite loop.
 
 ## Promises
 
@@ -1627,7 +1628,7 @@ A convenience method for creating intersection types.
 z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: string } & { age: number }
 
 // equivalent to
-z.intersection(z.string(), z.number());
+z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 ```
 
 # Type inference

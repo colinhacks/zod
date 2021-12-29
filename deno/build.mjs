@@ -16,12 +16,15 @@ import { dirname } from "path";
 
 // Node's path.join() normalize explicitly-relative paths like "./index.ts" to
 // paths like "index.ts" which don't work as relative ES imports, so we do this.
-const join = (/** @type string[] */ ...parts) => parts.join("/");
+const join = (/** @type string[] */ ...parts) =>
+  parts.join("/").replace(/\/\//g, "/");
 
 const projectRoot = process.cwd();
 const nodeSrcRoot = join(projectRoot, "src");
 const denoLibRoot = join(projectRoot, "deno", "lib");
 
+const skipList = [join(nodeSrcRoot, "__tests__", "object-in-es5-env.test.ts")];
+console.log(skipList);
 const walkAndBuild = (/** @type string */ dir) => {
   for (const entry of readdirSync(join(nodeSrcRoot, dir), {
     withFileTypes: true,
@@ -32,6 +35,11 @@ const walkAndBuild = (/** @type string */ dir) => {
     } else if (entry.isFile() && entry.name.endsWith(".ts")) {
       const nodePath = join(nodeSrcRoot, dir, entry.name);
       const denoPath = join(denoLibRoot, dir, entry.name);
+
+      if (skipList.includes(nodePath)) {
+        console.log(`skipping ${nodePath}`);
+        continue;
+      }
 
       const nodeSource = readFileSync(nodePath, { encoding: "utf-8" });
 
