@@ -39,10 +39,10 @@ The following steps will get you setup to contribute changes to this repo:
 
 - runs all Jest tests and generates coverage badge
 
-**`yarn testone`**
+**`yarn test:one`**
 
 - runs a single test file
-- example: `yarn testone src/__tests__/testFileNameHere.ts`
+- example: `yarn test src/__tests__/testFileNameHere.ts`
 
 **`yarn play`**
 

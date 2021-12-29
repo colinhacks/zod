@@ -53,9 +53,8 @@
     "build:cjs": "tsc --p tsconfig.cjs.json",
     "build:types": "tsc --p tsconfig.types.json",
     "rollup": "rollup --config rollup.config.js",
-    "test": "node --trace-warnings node_modules/.bin/jest --coverage && yarn run badge",
+    "test": "jest --coverage",
     "test:deno": "cd deno && deno test",
-    "testone": "jest",
     "badge": "make-coverage-badge --output-path ./coverage.svg",
     "prepublishOnly": "npm run test && npm run build && npm run build:deno",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json --trace-warnings",
@@ -93,7 +92,7 @@
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged && yarn build:deno && git add .",
-      "pre-push": "lint-staged && yarn build && yarn test"
+      "pre-push": "lint-staged && yarn build && yarn test && yarn badge"
     }
   },
   "lint-staged": {

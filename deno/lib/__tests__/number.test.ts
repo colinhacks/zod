@@ -11,6 +11,7 @@ const lteFive = z.number().lte(5);
 const intNum = z.number().int();
 const multipleOfFive = z.number().multipleOf(5);
 const stepPointOne = z.number().step(0.1);
+const stepPointZeroZeroZeroOne = z.number().step(0.0001);
 const stepSixPointFour = z.number().step(6.4);
 
 test("passing validations", () => {
@@ -24,6 +25,7 @@ test("passing validations", () => {
   stepPointOne.parse(6.1);
   stepPointOne.parse(6.1);
   stepSixPointFour.parse(12.8);
+  stepPointZeroZeroZeroOne.parse(3.01);
 });
 
 test("failing validations", () => {
