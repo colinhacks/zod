@@ -1513,7 +1513,7 @@ z.union([z.string(), z.number()]);
 z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: string } & { age: number }
 
 // equivalent to
-z.intersection(z.string(), z.number());
+z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 ```
 
 # Type inference
