@@ -22,7 +22,7 @@ by <a href="https://twitter.com/colinhacks">@colinhacks</a>
 
 <br/>
 
-This docs have been translated into [Chinese](./README_ZH.md).
+These docs have been translated into [Chinese](./README_ZH.md).
 
 # Table of contents
 
