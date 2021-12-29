@@ -6,26 +6,23 @@ const RealSet = Set;
 const RealMap = Map;
 const RealDate = Date;
 
-afterEach(() => {
-  global.Set = RealSet;
-  global.Map = RealMap;
-  global.Date = RealDate;
-});
-
 test("doesn’t throw when Date is undefined", () => {
-  delete (global as any).Date;
+  delete (globalThis as any).Date;
   const result = z.object({}).safeParse({});
   expect(result.success).toEqual(true);
+  globalThis.Date = RealDate;
 });
 
 test("doesn’t throw when Set is undefined", () => {
-  delete (global as any).Set;
+  delete (globalThis as any).Set;
   const result = z.object({}).safeParse({});
   expect(result.success).toEqual(true);
+  globalThis.Set = RealSet;
 });
 
 test("doesn’t throw when Map is undefined", () => {
-  delete (global as any).Map;
+  delete (globalThis as any).Map;
   const result = z.object({}).safeParse({});
   expect(result.success).toEqual(true);
+  globalThis.Map = RealMap;
 });
