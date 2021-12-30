@@ -269,3 +269,27 @@ test("object with refine", async () => {
   const result = await schema.parseAsync({ b: 5 });
   expect(result).toEqual({ b: 5, a: "foo" });
 });
+
+test("intersection of object with date", async () => {
+  const schema = z.object({
+    a: z.date(),
+  });
+  expect(schema.and(schema).parse({ a: new Date(1637353595983) })).toEqual({
+    a: new Date(1637353595983),
+  });
+  const result = await schema.parseAsync({ a: new Date(1637353595983) });
+  expect(result).toEqual({ a: new Date(1637353595983) });
+});
+
+test("intersection of object with refine with date", async () => {
+  const schema = z
+    .object({
+      a: z.date(),
+    })
+    .refine(() => true);
+  expect(schema.and(schema).parse({ a: new Date(1637353595983) })).toEqual({
+    a: new Date(1637353595983),
+  });
+  const result = await schema.parseAsync({ a: new Date(1637353595983) });
+  expect(result).toEqual({ a: new Date(1637353595983) });
+});
