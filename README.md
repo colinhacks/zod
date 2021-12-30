@@ -313,15 +313,6 @@ tuna.value; // "tuna"
 
 ## Strings
 
-You can customize certain errors when creating a string schema.
-
-```ts
-const name = z.string({
-  required: "Name is required",
-  invalid: "Invalid name",
-});
-```
-
 Zod includes a handful of string-specific validations.
 
 ```ts
