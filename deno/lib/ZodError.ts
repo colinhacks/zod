@@ -71,14 +71,14 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number";
+  type: "array" | "string" | "number" | "set";
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number";
+  type: "array" | "string" | "number" | "set";
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -281,9 +281,7 @@ export const defaultErrorMap = (
     case ZodIssueCode.invalid_enum_value:
       message = `Invalid enum value. Expected ${issue.options
         .map((val) => (typeof val === "string" ? `'${val}'` : val))
-        .join(" | ")}, received ${
-        typeof _ctx.data === "string" ? `'${_ctx.data}'` : _ctx.data
-      }`;
+        .join(" | ")}`;
       break;
     case ZodIssueCode.invalid_arguments:
       message = `Invalid function arguments`;
@@ -300,30 +298,30 @@ export const defaultErrorMap = (
       break;
     case ZodIssueCode.too_small:
       if (issue.type === "array")
-        message = `Should have ${issue.inclusive ? `at least` : `more than`} ${
-          issue.minimum
-        } items`;
+        message = `Array must contain ${
+          issue.inclusive ? `at least` : `more than`
+        } ${issue.minimum} element(s)`;
       else if (issue.type === "string")
-        message = `Should be ${issue.inclusive ? `at least` : `over`} ${
-          issue.minimum
-        } characters`;
+        message = `String must contain ${
+          issue.inclusive ? `at least` : `over`
+        } ${issue.minimum} character(s)`;
       else if (issue.type === "number")
-        message = `Value should be greater than ${
+        message = `Number must be greater than ${
           issue.inclusive ? `or equal to ` : ``
         }${issue.minimum}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.too_big:
       if (issue.type === "array")
-        message = `Should have ${issue.inclusive ? `at most` : `less than`} ${
-          issue.maximum
-        } items`;
+        message = `Array must contain ${
+          issue.inclusive ? `at most` : `less than`
+        } ${issue.maximum} element(s)`;
       else if (issue.type === "string")
-        message = `Should be ${issue.inclusive ? `at most` : `under`} ${
-          issue.maximum
-        } characters long`;
+        message = `String must contain ${
+          issue.inclusive ? `at most` : `under`
+        } ${issue.maximum} character(s)`;
       else if (issue.type === "number")
-        message = `Value should be less than ${
+        message = `Number must be less than ${
           issue.inclusive ? `or equal to ` : ``
         }${issue.maximum}`;
       else message = "Invalid input";
@@ -335,7 +333,7 @@ export const defaultErrorMap = (
       message = `Intersection results could not be merged`;
       break;
     case ZodIssueCode.not_multiple_of:
-      message = `Should be multiple of ${issue.multipleOf}`;
+      message = `Number must be a multiple of ${issue.multipleOf}`;
       break;
     default:
       message = _ctx.defaultError;

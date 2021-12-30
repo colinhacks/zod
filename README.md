@@ -11,10 +11,10 @@
 
 </p>
 <p align="center">
-by [@colinhacks](https://twitter.com/colinhacks)
+by <a href="https://twitter.com/colinhacks">@colinhacks</a>
 </p>
 
-> Hi! Colin here, creator of Zod. I hope you find it easy to use and powerful enough for all your use cases. If you have any issues or suggestions, please  [open an issue](https://github.com/colinhacks/zod/issues/new)! 
+> Hi! Colin here, creator of Zod. I hope you find it easy to use and powerful enough for all your use cases. If you have any issues or suggestions, please [open an issue](https://github.com/colinhacks/zod/issues/new)!
 >
 > If you like typesafety, check out my other library [tRPC](https://trpc.io). It works in concert with Zod to provide a seamless way to build end-to-end typesafe APIs without GraphQL or code generation — just TypeScript.
 >
@@ -22,7 +22,7 @@ by [@colinhacks](https://twitter.com/colinhacks)
 
 <br/>
 
-This docs have been translated into [Chinese](./README_ZH.md).
+These docs have been translated into [Chinese](./README_ZH.md).
 
 # Table of contents
 
@@ -36,9 +36,8 @@ This docs have been translated into [Chinese](./README_ZH.md).
   - [Strings](#strings)
   - [Numbers](#numbers)
   - [Booleans](#booleans)
-  - [Enums](#enums)
-    - [Zod enums](#zod-enums)
-    - [Native enums](#native-enums)
+  - [Zod enums](#zod-enums)
+  - [Native enums](#native-enums)
   - [Optionals](#optionals)
   - [Nullables](#nullables)
   - [Objects](#objects)
@@ -106,7 +105,7 @@ Some other great aspects:
 - Zero dependencies
 - Works in Node.js and browsers (including IE 11)
 - Tiny: 8kb minified + zipped
-- Immutable: methods (i.e. `.optional()` return a new instance
+- Immutable: methods (i.e. `.optional()`) return a new instance
 - Concise, chainable interface
 - Functional approach: [parse, don't validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 - Works with plain JavaScript too! You don't need to use TypeScript.
@@ -148,7 +147,7 @@ Sponsorship at any level is appreciated and encouraged. Zod is maintained by a s
       <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
       <br />
     </td>
-    
+
   </tr>
   <tr>
     <td align="center">
@@ -216,6 +215,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 - [`tRPC`](https://github.com/trpc/trpc): Build end-to-end typesafe APIs without GraphQL.
 - [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): Convert TypeScript definitions into Zod schemas.
+- [`zod-to-ts`](https://github.com/sachinraja/zod-to-ts): Generate TypeScript definitions from Zod schemas.
 - [`@anatine/zod-openapi`](https://github.com/anatine/zod-plugins/tree/main/libs/zod-openapi): Converts a Zod schema to an OpenAPI v3.x `SchemaObject`.
 - [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/libs/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/Marak/Faker.js).
 - [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/libs/zod-nestjs): Helper methods for using Zod in a NestJS project.
@@ -227,6 +227,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`json-schema-to-zod`](https://github.com/StefanTerdell/json-schema-to-zod): Convert your [JSON Schemas](https://json-schema.org/) into Zod schemas. Use it live [here](https://StefanTerdell.github.io/json-schema-to-zod-react/).
 - [`json-to-zod`](https://github.com/rsinohara/json-to-zod): Convert JSON objects into Zod schemas. Use it live [here](https://rsinohara.github.io/json-to-zod-react/).
 - [`zod-dto`](https://github.com/kbkk/abitia/tree/master/packages/zod-dto): Generate Nest.js DTOs from a Zod schema.
+- [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
 
 ### Form integrations
 
@@ -410,11 +411,7 @@ const isActive = z.boolean({
 });
 ```
 
-## Enums
-
-There are two ways to define enums in Zod.
-
-### Zod enums
+## Zod enums
 
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
@@ -422,21 +419,19 @@ type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
-You must pass the array of values directly into `z.enum()`. Alternatively, use `as const` to define your enum values as a tuple of strings. See the [const assertion docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions) for details.
+`z.enum` is a Zod-native way to declare a schema with a fixed set of allowable _string_ values. Pass the array of values directly into `z.enum()`. Alternatively, use `as const` to define your enum values as a tuple of strings. See the [const assertion docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions) for details.
 
 ```ts
 const VALUES = ["Salmon", "Tuna", "Trout"] as const;
 const FishEnum = z.enum(VALUES);
 ```
 
-This is not allowed:
+This is not allowed, since Zod isn't able to infer the exact values of each elements.
 
 ```ts
 const fish = ["Salmon", "Tuna", "Trout"];
 const FishEnum = z.enum(fish);
 ```
-
-In that case, the inferred type of `fish` is simply `string[]`, so Zod isn't able to infer the individual enum elements.
 
 **Autocompletion**
 
@@ -446,12 +441,12 @@ To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 FishEnum.enum.Salmon; // => autocompletes
 
 FishEnum.enum;
-/* 
+/*
 => {
   Salmon: "Salmon",
   Tuna: "Tuna",
   Trout: "Trout",
-} 
+}
 */
 ```
 
@@ -461,7 +456,7 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
 ```
 
-### Native enums
+## Native enums
 
 Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()` .
 
@@ -686,11 +681,11 @@ You can also specify which properties to make optional:
 const optionalEmail = user.partial({
   email: true,
 });
-/* 
-{ 
-  email?: string | undefined; 
+/*
+{
+  email?: string | undefined;
   username: string
-} 
+}
 */
 ```
 
@@ -710,9 +705,9 @@ const user = z.object({
 
 const deepPartialUser = user.deepPartial();
 
-/* 
+/*
 {
-  username?: string | undefined, 
+  username?: string | undefined,
   location?: {
     latitude?: number | undefined;
     longitude?: number | undefined;
@@ -952,9 +947,18 @@ type StringNumberMap = z.infer<typeof stringNumberMap>;
 ## Sets
 
 ```ts
-const numberSet = z.set(z.string());
+const numberSet = z.set(z.number());
 type numberSet = z.infer<typeof numberSet>;
 // Set<number>
+```
+
+### `.nonempty/.min/.max/.size`
+
+```ts
+z.set(z.string()).nonempty(); // must contain at least one item
+z.set(z.string()).min(5); // must contain 5 or more items
+z.set(z.string()).max(5); // must contain 5 or fewer items
+z.set(z.string()).size(5); // must contain 5 items exactly
 ```
 
 ## Intersections
@@ -1081,7 +1085,7 @@ Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
 
 #### Cyclical objects
 
-Despite supporting recursive schemas, passing an cyclical data into Zod will cause an infinite loop.
+Despite supporting recursive schemas, passing cyclical data into Zod will cause an infinite loop.
 
 ## Promises
 
@@ -1617,7 +1621,7 @@ A convenience method for creating intersection types.
 z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: string } & { age: number }
 
 // equivalent to
-z.intersection(z.string(), z.number());
+z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 ```
 
 # Type inference

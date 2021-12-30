@@ -8,6 +8,12 @@ import { ZodIssueCode } from "../index";
 const stringSet = z.set(z.string());
 type stringSet = z.infer<typeof stringSet>;
 
+const minTwo = z.set(z.string()).min(2);
+const maxTwo = z.set(z.string()).max(2);
+const justTwo = z.set(z.string()).size(2);
+const nonEmpty = z.set(z.string()).nonempty();
+const nonEmptyMax = z.set(z.string()).nonempty().max(2);
+
 test("type inference", () => {
   const f1: util.AssertEqual<stringSet, Set<string>> = true;
   f1;
@@ -21,6 +27,16 @@ test("valid parse", () => {
     expect(result.data.has("second")).toEqual(true);
     expect(result.data.has("third")).toEqual(false);
   }
+
+  expect(() => {
+    minTwo.parse(new Set(["a", "b"]));
+    minTwo.parse(new Set(["a", "b", "c"]));
+    maxTwo.parse(new Set(["a", "b"]));
+    maxTwo.parse(new Set(["a"]));
+    justTwo.parse(new Set(["a", "b"]));
+    nonEmpty.parse(new Set(["a"]));
+    nonEmptyMax.parse(new Set(["a"]));
+  }).not.toThrow();
 });
 
 test("valid parse async", async () => {
@@ -38,6 +54,54 @@ test("valid parse async", async () => {
     expect(asyncResult.data.has("first")).toEqual(true);
     expect(asyncResult.data.has("second")).toEqual(true);
     expect(asyncResult.data.has("third")).toEqual(false);
+  }
+});
+
+test("valid parse: size-related methods", () => {
+  expect(() => {
+    minTwo.parse(new Set(["a", "b"]));
+    minTwo.parse(new Set(["a", "b", "c"]));
+    maxTwo.parse(new Set(["a", "b"]));
+    maxTwo.parse(new Set(["a"]));
+    justTwo.parse(new Set(["a", "b"]));
+    nonEmpty.parse(new Set(["a"]));
+    nonEmptyMax.parse(new Set(["a"]));
+  }).not.toThrow();
+
+  const sizeZeroResult = stringSet.parse(new Set());
+  expect(sizeZeroResult.size).toBe(0);
+
+  const sizeTwoResult = minTwo.parse(new Set(["a", "b"]));
+  expect(sizeTwoResult.size).toBe(2);
+});
+
+test("failing when parsing empty set in nonempty ", () => {
+  const result = nonEmpty.safeParse(new Set());
+  expect(result.success).toEqual(false);
+
+  if (result.success === false) {
+    expect(result.error.issues.length).toEqual(1);
+    expect(result.error.issues[0].code).toEqual(ZodIssueCode.too_small);
+  }
+});
+
+test("failing when set is smaller than min() ", () => {
+  const result = minTwo.safeParse(new Set(["just_one"]));
+  expect(result.success).toEqual(false);
+
+  if (result.success === false) {
+    expect(result.error.issues.length).toEqual(1);
+    expect(result.error.issues[0].code).toEqual(ZodIssueCode.too_small);
+  }
+});
+
+test("failing when set is bigger than max() ", () => {
+  const result = maxTwo.safeParse(new Set(["one", "two", "three"]));
+  expect(result.success).toEqual(false);
+
+  if (result.success === false) {
+    expect(result.error.issues.length).toEqual(1);
+    expect(result.error.issues[0].code).toEqual(ZodIssueCode.too_big);
   }
 });
 

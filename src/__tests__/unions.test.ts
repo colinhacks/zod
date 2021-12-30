@@ -54,3 +54,10 @@ test("options getter", async () => {
   await union.options[0].parseAsync("asdf");
   await union.options[1].parseAsync(1234);
 });
+
+test("readonly union", async () => {
+  const options = [z.string(), z.number()] as const;
+  const union = z.union(options);
+  union.parse("asdf");
+  union.parse(12);
+});

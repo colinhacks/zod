@@ -128,7 +128,9 @@ test("array minimum", () => {
   } catch (err) {
     const zerr: ZodError = err as any;
     expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
-    expect(zerr.issues[0].message).toEqual(`Should have at least 3 items`);
+    expect(zerr.issues[0].message).toEqual(
+      `Array must contain at least 3 element(s)`
+    );
   }
 });
 
@@ -395,6 +397,29 @@ test("strict error message", () => {
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual(errorMsg);
+  }
+});
+
+test("enum default error message", () => {
+  try {
+    z.enum(["Tuna", "Trout"]).parse("Salmon");
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual(
+      "Invalid enum value. Expected 'Tuna' | 'Trout'"
+    );
+    expect(zerr.issues[0].message).not.toContain("Salmon");
+  }
+});
+
+test("literal default error message", () => {
+  try {
+    z.literal("Tuna").parse("Trout");
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual("Expected string, received string");
   }
 });
 

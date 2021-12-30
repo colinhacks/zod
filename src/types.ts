@@ -174,7 +174,7 @@ export abstract class ZodType<
       contextualErrorMap: params?.errorMap,
       schemaErrorMap: this._def.errorMap,
       async: params?.async ?? false,
-      typeCache: new Map(),
+      typeCache: typeof Map !== "undefined" ? new Map() : undefined,
       parent: null,
       data,
       parsedType: getParsedType(data),
@@ -203,7 +203,7 @@ export abstract class ZodType<
       contextualErrorMap: params?.errorMap,
       schemaErrorMap: this._def.errorMap,
       async: true,
-      typeCache: new Map(),
+      typeCache: typeof Map !== "undefined" ? new Map() : undefined,
       parent: null,
       data,
       parsedType: getParsedType(data),
@@ -253,7 +253,7 @@ export abstract class ZodType<
           code: ZodIssueCode.custom,
           ...getIssueProperties(val),
         });
-      if (result instanceof Promise) {
+      if (typeof Promise !== "undefined" && result instanceof Promise) {
         return result.then((data) => {
           if (!data) {
             setError();
@@ -622,6 +622,16 @@ type ZodNumberCheck =
   | { kind: "int"; message?: string }
   | { kind: "multipleOf"; value: number; message?: string };
 
+// https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
+function floatSafeRemainder(val: number, step: number) {
+  const valDecCount = (val.toString().split(".")[1] || "").length;
+  const stepDecCount = (step.toString().split(".")[1] || "").length;
+  const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
+  const valInt = parseInt(val.toFixed(decCount).replace(".", ""));
+  const stepInt = parseInt(step.toFixed(decCount).replace(".", ""));
+  return (valInt % stepInt) / Math.pow(10, decCount);
+}
+
 export interface ZodNumberDef extends ZodTypeDef {
   checks: ZodNumberCheck[];
   typeName: ZodFirstPartyTypeKind.ZodNumber;
@@ -679,7 +689,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           status.dirty();
         }
       } else if (check.kind === "multipleOf") {
-        if (ctx.data % check.value !== 0) {
+        if (floatSafeRemainder(ctx.data, check.value) !== 0) {
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
@@ -1774,9 +1784,11 @@ export type AnyZodObject = ZodObject<any, any, any>;
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-type ZodUnionOptions = [ZodTypeAny, ...ZodTypeAny[]];
+type ZodUnionOptions = Readonly<[ZodTypeAny, ...ZodTypeAny[]]>;
 export interface ZodUnionDef<
-  T extends ZodUnionOptions = [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]
+  T extends ZodUnionOptions = Readonly<
+    [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]
+  >
 > extends ZodTypeDef {
   options: T;
   typeName: ZodFirstPartyTypeKind.ZodUnion;
@@ -1864,7 +1876,9 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     return this._def.options;
   }
 
-  static create = <T extends [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]>(
+  static create = <
+    T extends Readonly<[ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]>
+  >(
     types: T,
     params?: RawCreateParams
   ): ZodUnion<T> => {
@@ -2374,6 +2388,8 @@ export interface ZodSetDef<Value extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   valueType: Value;
   typeName: ZodFirstPartyTypeKind.ZodSet;
+  minSize: { value: number; message?: string } | null;
+  maxSize: { value: number; message?: string } | null;
 }
 
 export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
@@ -2390,6 +2406,34 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
         received: ctx.parsedType,
       });
       return INVALID;
+    }
+
+    const def = this._def;
+
+    if (def.minSize !== null) {
+      if (ctx.data.size < def.minSize.value) {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.too_small,
+          minimum: def.minSize.value,
+          type: "set",
+          inclusive: true,
+          message: def.minSize.message,
+        });
+        status.dirty();
+      }
+    }
+
+    if (def.maxSize !== null) {
+      if (ctx.data.size > def.maxSize.value) {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.too_big,
+          maximum: def.maxSize.value,
+          type: "set",
+          inclusive: true,
+          message: def.maxSize.message,
+        });
+        status.dirty();
+      }
     }
 
     const valueType = this._def.valueType;
@@ -2415,12 +2459,36 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     }
   }
 
+  min(minSize: number, message?: errorUtil.ErrMessage): this {
+    return new ZodSet({
+      ...this._def,
+      minSize: { value: minSize, message: errorUtil.toString(message) },
+    }) as any;
+  }
+
+  max(maxSize: number, message?: errorUtil.ErrMessage): this {
+    return new ZodSet({
+      ...this._def,
+      maxSize: { value: maxSize, message: errorUtil.toString(message) },
+    }) as any;
+  }
+
+  size(size: number, message?: errorUtil.ErrMessage): this {
+    return this.min(size, message).max(size, message) as any;
+  }
+
+  nonempty(message?: errorUtil.ErrMessage): ZodSet<Value> {
+    return this.min(1, message) as any;
+  }
+
   static create = <Value extends ZodTypeAny = ZodTypeAny>(
     valueType: Value,
     params?: RawCreateParams
   ): ZodSet<Value> => {
     return new ZodSet({
       valueType,
+      minSize: null,
+      maxSize: null,
       typeName: ZodFirstPartyTypeKind.ZodSet,
       ...processCreateParams(params),
     });
@@ -2665,8 +2733,8 @@ export class ZodLiteral<T extends any> extends ZodType<T, ZodLiteralDef<T>> {
     if (ctx.data !== this._def.value) {
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
-        expected: this._def.value as any,
-        received: ctx.data,
+        expected: getParsedType(this._def.value),
+        received: ctx.parsedType,
       });
       return INVALID;
     }

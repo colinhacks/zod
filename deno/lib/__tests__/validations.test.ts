@@ -9,7 +9,7 @@ test("array min", async () => {
     await z.array(z.string()).min(4).parseAsync([]);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Should have at least 4 items"
+      "Array must contain at least 4 element(s)"
     );
   }
 });
@@ -19,7 +19,7 @@ test("array max", async () => {
     await z.array(z.string()).max(2).parseAsync(["asdf", "asdf", "asdf"]);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Should have at most 2 items"
+      "Array must contain at most 2 element(s)"
     );
   }
 });
@@ -29,7 +29,7 @@ test("string min", async () => {
     await z.string().min(4).parseAsync("asd");
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Should be at least 4 characters"
+      "String must contain at least 4 character(s)"
     );
   }
 });
@@ -39,7 +39,7 @@ test("string max", async () => {
     await z.string().max(4).parseAsync("aasdfsdfsd");
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Should be at most 4 characters long"
+      "String must contain at most 4 character(s)"
     );
   }
 });
@@ -49,7 +49,7 @@ test("number min", async () => {
     await z.number().gte(3).parseAsync(2);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Value should be greater than or equal to 3"
+      "Number must be greater than or equal to 3"
     );
   }
 });
@@ -59,7 +59,7 @@ test("number max", async () => {
     await z.number().lte(3).parseAsync(4);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Value should be less than or equal to 3"
+      "Number must be less than or equal to 3"
     );
   }
 });
@@ -69,7 +69,7 @@ test("number nonnegative", async () => {
     await z.number().nonnegative().parseAsync(-1);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Value should be greater than or equal to 0"
+      "Number must be greater than or equal to 0"
     );
   }
 });
@@ -79,7 +79,7 @@ test("number nonpositive", async () => {
     await z.number().nonpositive().parseAsync(1);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Value should be less than or equal to 0"
+      "Number must be less than or equal to 0"
     );
   }
 });
@@ -89,7 +89,7 @@ test("number negative", async () => {
     await z.number().negative().parseAsync(1);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Value should be less than 0"
+      "Number must be less than 0"
     );
   }
 });
@@ -99,7 +99,7 @@ test("number positive", async () => {
     await z.number().positive().parseAsync(-1);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Value should be greater than 0"
+      "Number must be greater than 0"
     );
   }
 });
