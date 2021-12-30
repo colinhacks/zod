@@ -85,21 +85,22 @@ type RawCreateParams =
 type ProcessedCreateParams = { errorMap?: ZodErrorMap; description?: string };
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
-  if (params.errorMap && (params.invalid_type_error || params.required_error)) {
+  const { errorMap, invalid_type_error, required_error, description } = params;
+  if (errorMap && (invalid_type_error || required_error)) {
     throw new Error(
       `Can't use "invalid" or "required" in conjunction with custom error map.`
     );
   }
-  if (params.errorMap) return { errorMap: params.errorMap };
+  if (errorMap) return { errorMap: errorMap, description };
   const customMap: ZodErrorMap = (iss, ctx) => {
     if (iss.code !== "invalid_type") return { message: ctx.defaultError };
-    if (typeof ctx.data === "undefined" && params.required_error)
-      return { message: params.required_error };
+    if (typeof ctx.data === "undefined" && required_error)
+      return { message: required_error };
     if (params.invalid_type_error)
       return { message: params.invalid_type_error };
     return { message: ctx.defaultError };
   };
-  return { errorMap: customMap };
+  return { errorMap: customMap, description };
 }
 
 export type SafeParseSuccess<Output> = { success: true; data: Output };
