@@ -398,6 +398,29 @@ test("strict error message", () => {
   }
 });
 
+test("enum default error message", () => {
+  try {
+    z.enum(["Tuna", "Trout"]).parse("Salmon");
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual(
+      "Invalid enum value. Expected 'Tuna' | 'Trout'"
+    );
+    expect(zerr.issues[0].message).not.toContain("Salmon");
+  }
+});
+
+test("literal default error message", () => {
+  try {
+    z.literal("Tuna").parse("Trout");
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual("Expected string, received string");
+  }
+});
+
 // test("dont short circuit on continuable errors", () => {
 //   const user = z
 //     .object({
