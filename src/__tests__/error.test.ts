@@ -127,7 +127,9 @@ test("array minimum", () => {
   } catch (err) {
     const zerr: ZodError = err as any;
     expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
-    expect(zerr.issues[0].message).toEqual(`Should have at least 3 items`);
+    expect(zerr.issues[0].message).toEqual(
+      `Array must contain at least 3 element(s)`
+    );
   }
 });
 

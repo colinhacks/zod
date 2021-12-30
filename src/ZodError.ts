@@ -300,10 +300,10 @@ export const defaultErrorMap = (
       if (issue.type === "array")
         message = `Array must contain ${
           issue.inclusive ? `at least` : `more than`
-        } ${issue.minimum} item(s)`;
+        } ${issue.minimum} element(s)`;
       else if (issue.type === "string")
         message = `String must contain ${
-          issue.inclusive ? `at least ${issue.minimum}` : `over`
+          issue.inclusive ? `at least` : `over`
         } ${issue.minimum} character(s)`;
       else if (issue.type === "number")
         message = `Number must be greater than ${
@@ -315,7 +315,7 @@ export const defaultErrorMap = (
       if (issue.type === "array")
         message = `Array must contain ${
           issue.inclusive ? `at most` : `less than`
-        } ${issue.maximum} item(s)`;
+        } ${issue.maximum} element(s)`;
       else if (issue.type === "string")
         message = `String must contain ${
           issue.inclusive ? `at most` : `under`
