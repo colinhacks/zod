@@ -370,10 +370,10 @@ export abstract class ZodType<
     });
   }
 
-  isOptional(): boolean {
+  isOptional(): this is ZodOptional<this> {
     return this.safeParse(undefined).success;
   }
-  isNullable(): boolean {
+  isNullable(): this is ZodNullable<this> {
     return this.safeParse(null).success;
   }
 }
