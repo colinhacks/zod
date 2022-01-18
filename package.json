@@ -13,7 +13,8 @@
     "./package.json": "./package.json"
   },
   "files": [
-    "/lib"
+    "/lib",
+    "/src"
   ],
   "repository": {
     "type": "git",
