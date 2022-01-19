@@ -101,6 +101,74 @@ test("return all dirty results over aborted", () => {
   }
 });
 
+test("don't continue parsing on aborted result", () => {
+  const result = z
+    .union([z.number(), z.boolean()])
+    .refine(() => false)
+    .safeParse("a");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues).toEqual([
+      {
+        code: "invalid_union",
+        message: "Invalid input",
+        path: [],
+        unionErrors: [
+          new ZodError([
+            {
+              code: "invalid_type",
+              expected: "number",
+              received: "string",
+              path: [],
+              message: "Expected number, received string",
+            },
+          ]),
+          new ZodError([
+            {
+              code: "invalid_type",
+              expected: "boolean",
+              received: "string",
+              path: [],
+              message: "Expected boolean, received string",
+            },
+          ]),
+        ],
+      },
+    ]);
+  }
+});
+
+test("continue parsing on dirty result", () => {
+  const result = z
+    .union([z.number(), z.string().refine(() => false)])
+    .refine(() => false)
+    .safeParse("a");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues).toEqual([
+      {
+        code: "invalid_union",
+        message: "Invalid input",
+        path: [],
+        unionErrors: [
+          new ZodError([
+            {
+              code: "custom",
+              message: "Invalid input",
+              path: [],
+            },
+          ]),
+        ],
+      },
+      {
+        code: "custom",
+        message: "Invalid input",
+        path: [],
+      },
+    ]);
+  }
+});
+
 test("options getter", async () => {
   const union = z.union([z.string(), z.number()]);
   union.options[0].parse("asdf");

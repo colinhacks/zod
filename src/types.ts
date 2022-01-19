@@ -2,6 +2,7 @@ import { errorUtil } from "./helpers/errorUtil";
 import {
   addIssueToContext,
   AsyncParseReturnType,
+  DIRTY,
   getParsedType,
   INVALID,
   isAborted,
@@ -1842,6 +1843,9 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
         unionErrors,
       });
 
+      if (isAnyDirty) {
+        return DIRTY(ctx.data);
+      }
       return INVALID;
     }
 
