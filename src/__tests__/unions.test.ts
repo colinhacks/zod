@@ -1,6 +1,7 @@
 import { expect, test } from "@jest/globals";
 
 import * as z from "../index";
+import { ZodError } from "../ZodError";
 
 test("function parsing", () => {
   const schema = z.union([
@@ -31,17 +32,70 @@ test("return valid over invalid", () => {
   });
 });
 
-test("return dirty result over aborted", () => {
+test("return all results when there are no dirty", () => {
+  const result = z.union([z.number(), z.boolean()]).safeParse("a");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues).toEqual([
+      {
+        code: "invalid_union",
+        message: "Invalid input",
+        path: [],
+        unionErrors: [
+          new ZodError([
+            {
+              code: "invalid_type",
+              expected: "number",
+              received: "string",
+              path: [],
+              message: "Expected number, received string",
+            },
+          ]),
+          new ZodError([
+            {
+              code: "invalid_type",
+              expected: "boolean",
+              received: "string",
+              path: [],
+              message: "Expected boolean, received string",
+            },
+          ]),
+        ],
+      },
+    ]);
+  }
+});
+
+test("return all dirty results over aborted", () => {
   const result = z
-    .union([z.number(), z.string().refine(() => false)])
+    .union([z.number(), z.string().refine(() => false), z.string().max(0)])
     .safeParse("a");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues).toEqual([
       {
-        code: "custom",
+        code: "invalid_union",
         message: "Invalid input",
         path: [],
+        unionErrors: [
+          new ZodError([
+            {
+              code: "custom",
+              message: "Invalid input",
+              path: [],
+            },
+          ]),
+          new ZodError([
+            {
+              code: "too_big",
+              maximum: 0,
+              type: "string",
+              inclusive: true,
+              message: "String must contain at most 0 character(s)",
+              path: [],
+            },
+          ]),
+        ],
       },
     ]);
   }

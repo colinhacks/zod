@@ -1830,23 +1830,18 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
         }
       }
 
-      for (const result of results) {
-        if (result.result.status === "dirty") {
-          // add issues from dirty option
-
-          ctx.issues.push(...result.ctx.issues);
-          return result.result;
-        }
-      }
-
-      // return invalid
-      const unionErrors = results.map(
-        (result) => new ZodError(result.ctx.issues)
+      const isAnyDirty = results.some(
+        (result) => result.result.status === "dirty"
       );
+
+      const unionErrors = results
+        .filter((result) => !isAnyDirty || result.result.status === "dirty")
+        .map((result) => new ZodError(result.ctx.issues));
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union,
         unionErrors,
       });
+
       return INVALID;
     }
 
