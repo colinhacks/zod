@@ -2,7 +2,105 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
+import { util } from "../helpers/util.ts";
 import * as z from "../index.ts";
+
+const Test = z.object({
+  f1: z.number(),
+  f2: z.string().optional(),
+  f3: z.string().nullable(),
+  f4: z.array(z.object({ t: z.union([z.string(), z.boolean()]) })),
+});
+type TestFlattenedErrors = z.inferFlattenedErrors<
+  typeof Test,
+  { message: string; code: number }
+>;
+type TestFormErrors = z.inferFormErrors<typeof Test>;
+
+test("default flattened errors type inference", () => {
+  type TestTypeErrors = {
+    formErrors: string[];
+    fieldErrors: { [P in keyof z.TypeOf<typeof Test>]?: string[] | undefined };
+  };
+
+  const t1: util.AssertEqual<
+    z.TypeOfFlattenedError<typeof Test>,
+    TestTypeErrors
+  > = true;
+  const t2: util.AssertEqual<
+    z.TypeOfFlattenedError<typeof Test, { message: string }>,
+    TestTypeErrors
+  > = false;
+  [t1, t2];
+});
+
+test("custom flattened errors type inference", () => {
+  type ErrorType = { message: string; code: number };
+  type TestTypeErrors = {
+    formErrors: ErrorType[];
+    fieldErrors: {
+      [P in keyof z.TypeOf<typeof Test>]?: ErrorType[] | undefined;
+    };
+  };
+
+  const t1: util.AssertEqual<
+    z.TypeOfFlattenedError<typeof Test>,
+    TestTypeErrors
+  > = false;
+  const t2: util.AssertEqual<
+    z.TypeOfFlattenedError<typeof Test, { message: string; code: number }>,
+    TestTypeErrors
+  > = true;
+  const t3: util.AssertEqual<
+    z.TypeOfFlattenedError<typeof Test, { message: string }>,
+    TestTypeErrors
+  > = false;
+  [t1, t2, t3];
+});
+
+test("form errors type inference", () => {
+  type TestTypeErrors = {
+    formErrors: string[];
+    fieldErrors: { [P in keyof z.TypeOf<typeof Test>]?: string[] | undefined };
+  };
+
+  const t1: util.AssertEqual<
+    z.TypeOfFormErrors<typeof Test>,
+    TestTypeErrors
+  > = true;
+  [t1];
+});
+
+test(".flatten() type assertion", () => {
+  const parsed = Test.safeParse({}) as z.SafeParseError<void>;
+  const validFlattenedErrors: TestFlattenedErrors = parsed.error.flatten(
+    () => ({ message: "", code: 0 })
+  );
+  // @ts-expect-error should fail assertion between `TestFlattenedErrors` and unmapped `flatten()`.
+  const invalidFlattenedErrors: TestFlattenedErrors = parsed.error.flatten();
+  const validFormErrors: TestFormErrors = parsed.error.flatten();
+  // @ts-expect-error should fail assertion between `TestFormErrors` and mapped `flatten()`.
+  const invalidFormErrors: TestFormErrors = parsed.error.flatten(() => ({
+    message: "string",
+    code: 0,
+  }));
+
+  [
+    validFlattenedErrors,
+    invalidFlattenedErrors,
+    validFormErrors,
+    invalidFormErrors,
+  ];
+});
+
+test(".formErrors type assertion", () => {
+  const parsed = Test.safeParse({}) as z.SafeParseError<void>;
+  const validFormErrors: TestFormErrors = parsed.error.formErrors;
+  // @ts-expect-error should fail assertion between `TestFlattenedErrors` and `.formErrors`.
+  const invalidFlattenedErrors: TestFlattenedErrors = parsed.error.formErrors;
+
+  [validFormErrors, invalidFlattenedErrors];
+});
 
 test("all errors", () => {
   const propertySchema = z.string();
