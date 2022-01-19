@@ -49,7 +49,23 @@ export type ZodTypeAny = ZodType<any, any, any>;
 export type TypeOf<T extends ZodType<any, any, any>> = T["_output"];
 export type input<T extends ZodType<any, any, any>> = T["_input"];
 export type output<T extends ZodType<any, any, any>> = T["_output"];
-export type { TypeOf as infer };
+export type TypeOfFlattenedError<
+  T extends ZodType<any, any, any>,
+  U = string
+> = {
+  formErrors: U[];
+  fieldErrors: {
+    [P in keyof TypeOf<T>]?: U[];
+  };
+};
+export type TypeOfFormErrors<
+  T extends ZodType<any, any, any>
+> = TypeOfFlattenedError<T>;
+export type {
+  TypeOf as infer,
+  TypeOfFlattenedError as inferFlattenedErrors,
+  TypeOfFormErrors as inferFormErrors,
+};
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {

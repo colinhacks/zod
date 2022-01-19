@@ -217,12 +217,24 @@ export class ZodError<T = any> extends Error {
     this.issues = [...this.issues, ...subs];
   };
 
-  flatten = <U = string>(
+  flatten(
+    mapper?: (issue: ZodIssue) => string
+  ): {
+    formErrors: string[];
+    fieldErrors: { [k: string]: string[] };
+  };
+  flatten<U>(
+    mapper?: (issue: ZodIssue) => U
+  ): {
+    formErrors: U[];
+    fieldErrors: { [k: string]: U[] };
+  };
+  flatten<U = string>(
     mapper: (issue: ZodIssue) => U = (issue: ZodIssue) => issue.message as any
   ): {
     formErrors: U[];
     fieldErrors: { [k: string]: U[] };
-  } => {
+  } {
     const fieldErrors: any = {};
     const formErrors: U[] = [];
     for (const sub of this.issues) {
@@ -234,7 +246,7 @@ export class ZodError<T = any> extends Error {
       }
     }
     return { formErrors, fieldErrors };
-  };
+  }
 
   get formErrors() {
     return this.flatten();
