@@ -371,3 +371,57 @@ err.flatten( (i: ZodIssue) => {
   ```ts
   ["Invalid input: expected object, received null"];
   ```
+
+## Type-safety with `safeParse`.
+
+If you're using `safeParse`, and need more type-safety around error results, you can use `z.inferFlattenedErrors` to infer the result of error result called with `flatten()`, based on your schema.
+
+```ts
+type FormDataErrors = z.inferFlattenedErrors<typeof FormData>;
+
+/*
+  formErrors: string[],
+  fieldErrors: {
+    email?: string[],
+    password?: string[],
+    confirm?: string[]
+  } 
+*/
+```
+
+By default all error types are assumed to be `string`. If you're using a mapping function to transform `ZodIssue`s, you can provide the error type to `z.inferFlattenedErrors`.
+
+```ts
+type FormDataErrors = z.inferFlattenedErrors<typeof FormData, { message: string, errorCode: string }>;
+
+/*
+  formErrors: { message: string, errorCode: string }[],
+  fieldErrors: {
+    email?: { message: string, errorCode: string }[],
+    password?: { message: string, errorCode: string }[],
+    confirm?: { message: string, errorCode: string }[]
+  } 
+*/
+
+const result = FormData.safeParse({
+  email: "not email",
+  password: "tooshort",
+  confirm: "nomatch",
+})
+
+if (!result.success) {
+  let bad: FormDataErrors = err.flatten(); // Type error: Type 'string' is not assignable to type '{ message: string; }'.
+  let good: FormDataErrors = err.flatten(i => ({
+    message: i.message,
+    errorCode: i.code
+  }))
+}
+```
+
+Additionally, you can use `z.inferFormErrors` as a convienience for `z.inferFlattenedErrors<T, string>` in combination with `formErrors`.
+
+```ts
+type FormDataErrors = z.inferFormErrors<typeof FormData, { message: string, errorCode: string }>;
+
+let formErrors: FormDataErrors = result.error.formErrors;
+```
