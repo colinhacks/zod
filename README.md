@@ -932,15 +932,15 @@ Since Zod is trying to bridge the gap between static and runtime types, it doesn
 const stringNumberMap = z.map(z.string(), z.number());
 
 type StringNumberMap = z.infer<typeof stringNumberMap>;
-// type StringNumber = Map<string, number>
+// type StringNumberMap = Map<string, number>
 ```
 
 ## Sets
 
 ```ts
 const numberSet = z.set(z.number());
-type numberSet = z.infer<typeof numberSet>;
-// Set<number>
+type NumberSet = z.infer<typeof numberSet>;
+// type NumberSet = Set<number>
 ```
 
 ### `.nonempty/.min/.max/.size`
