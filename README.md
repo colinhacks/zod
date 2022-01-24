@@ -422,8 +422,8 @@ const dateSchema = z.preprocess(
 type DateSchema = z.infer<typeof dateSchema>
 // type DateSchema = Date
 
-dateSchema.safeParse( '2022-01-12T00:00:00.000Z' ) // success: true
 dateSchema.safeParse( new Date( '1/12/22' ) ) // success: true
+dateSchema.safeParse( '2022-01-12T00:00:00.000Z' ) // success: true
 ```
 
 ## Zod enums
