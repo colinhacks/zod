@@ -36,6 +36,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [Strings](#strings)
   - [Numbers](#numbers)
   - [Booleans](#booleans)
+  - [Dates](#dates)
   - [Zod enums](#zod-enums)
   - [Native enums](#native-enums)
   - [Optionals](#optionals)
@@ -400,6 +401,29 @@ const isActive = z.boolean({
   required_error: "isActive is required",
   invalid_type_error: "isActive must be a boolean",
 });
+```
+
+## Dates
+z.date() accepts a date, not a date string
+```ts
+z.date().safeParse( new Date() ) // success: true
+z.date().safeParse( '2022-01-12T00:00:00.000Z' ) // success: false
+```
+
+To allow for dates or date strings, you can use preprocess
+```ts
+const dateSchema = z.preprocess(
+    arg => {
+        if ( typeof arg == 'string' || arg instanceof Date )
+            return new Date( arg )
+    },
+    z.date()
+)
+type DateSchema = z.infer<typeof dateSchema>
+// type DateSchema = Date
+
+dateSchema.safeParse( '2022-01-12T00:00:00.000Z' ) // success: true
+dateSchema.safeParse( new Date( '1/12/22' ) ) // success: true
 ```
 
 ## Zod enums
