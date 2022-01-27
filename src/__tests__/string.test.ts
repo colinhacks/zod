@@ -98,6 +98,28 @@ test("bad uuid", () => {
   }
 });
 
+test("hex", () => {
+  const hex = z.string().hex("custom error");
+  const result = hex.safeParse("#abae5");
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("custom error");
+  }
+});
+
+test("bad hex", () => {
+  const hex = z.string().hex("custom error");
+  expect(() => hex.parse("567623")).toThrow();
+  expect(() => hex.parse("#ZZZZZF")).toThrow();
+  expect(() => hex.parse("#FFFF")).toThrow();
+  const result = hex.safeParse("invalid hex");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("custom error");
+  }
+});
+
 test("cuid", () => {
   const cuid = z.string().cuid();
   cuid.parse("ckopqwooh000001la8mbi2im9");
@@ -143,21 +165,31 @@ test("checks getters", () => {
   expect(z.string().email().isURL).toEqual(false);
   expect(z.string().email().isCUID).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
+  expect(z.string().email().isHex).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
   expect(z.string().url().isCUID).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
+  expect(z.string().url().isHex).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
   expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().cuid().isHex).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
   expect(z.string().uuid().isCUID).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
+  expect(z.string().uuid().isHex).toEqual(false);
+
+  expect(z.string().hex().isEmail).toEqual(false);
+  expect(z.string().hex().isURL).toEqual(false);
+  expect(z.string().hex().isCUID).toEqual(false);
+  expect(z.string().hex().isUUID).toEqual(false);
+  expect(z.string().hex().isHex).toEqual(true);
 });
 
 test("min max getters", () => {

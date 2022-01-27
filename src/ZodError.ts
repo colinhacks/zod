@@ -60,7 +60,13 @@ export interface ZodInvalidDateIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_date;
 }
 
-export type StringValidation = "email" | "url" | "uuid" | "regex" | "cuid";
+export type StringValidation =
+  | "email"
+  | "url"
+  | "uuid"
+  | "regex"
+  | "cuid"
+  | "hex";
 
 export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
@@ -217,15 +223,11 @@ export class ZodError<T = any> extends Error {
     this.issues = [...this.issues, ...subs];
   };
 
-  flatten(
-    mapper?: (issue: ZodIssue) => string
-  ): {
+  flatten(mapper?: (issue: ZodIssue) => string): {
     formErrors: string[];
     fieldErrors: { [k: string]: string[] };
   };
-  flatten<U>(
-    mapper?: (issue: ZodIssue) => U
-  ): {
+  flatten<U>(mapper?: (issue: ZodIssue) => U): {
     formErrors: U[];
     fieldErrors: { [k: string]: U[] };
   };
