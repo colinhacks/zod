@@ -323,6 +323,7 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().cuid();
+z.string().hex();
 z.string().regex(regex);
 
 // deprecated, equivalent to .min(1)
