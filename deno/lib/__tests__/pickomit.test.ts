@@ -82,3 +82,12 @@ test("nonstrict parsing - fail", () => {
   const bad = () => laxfish.parse({ whatever: "asdf" } as any);
   expect(bad).toThrow();
 });
+
+test("pick - non-defined key", () => {
+  const bad = () => fish.pick({ name: true, color: true });
+  expect(bad).toThrow(
+    new Error(
+      "color key does not exist in object schema. Available keys: name,age,nested"
+    )
+  );
+});

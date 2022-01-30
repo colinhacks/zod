@@ -1659,6 +1659,14 @@ export class ZodObject<
     util.objectKeys(mask).map((key) => {
       shape[key] = this.shape[key];
     });
+    util.objectKeys(shape).map((key) => {
+      if (!shape[key])
+        throw new Error(
+          `${key} key does not exist in object schema. Available keys: ${util.objectKeys(
+            this.shape
+          )}`
+        );
+    });
     return new ZodObject({
       ...this._def,
       shape: () => shape,
