@@ -35,6 +35,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [Literals](#literals)
   - [Strings](#strings)
   - [Numbers](#numbers)
+  - [NaNs][#nans]
   - [Booleans](#booleans)
   - [Zod enums](#zod-enums)
   - [Native enums](#native-enums)
@@ -389,6 +390,17 @@ Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
 z.number().lte(5, { message: "this👏is👏too👏big" });
+```
+
+## NaNs
+
+You can customize certain error messages when creating a boolean schema.
+
+```ts
+const isNaN = z.boolean({
+  required_error: "isNaN is required",
+  invalid_type_error: "isNaN must be not a number",
+});
 ```
 
 ## Booleans
