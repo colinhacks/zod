@@ -66,11 +66,11 @@ describe("discriminated union", () => {
     } catch (e: any) {
       expect(JSON.parse(e.message)).toEqual([
         {
-          code: "invalid_type",
-          expected: "string",
+          code: z.ZodIssueCode.invalid_type,
+          expected: z.ZodParsedType.string,
           message: "Required",
           path: ["a"],
-          received: "undefined",
+          received: z.ZodParsedType.undefined,
         },
       ]);
     }
@@ -82,7 +82,7 @@ describe("discriminated union", () => {
       z.discriminatedUnion("type", [
         z.object({ type: z.literal("a"), a: z.string() }),
         z.object({ b: z.string() }) as any,
-      ]).parse({ type: "x", a: "abc" });
+      ]);
     } catch (e) {
       expect(e).toHaveProperty(
         "message",
@@ -97,7 +97,7 @@ describe("discriminated union", () => {
       z.discriminatedUnion("type", [
         z.object({ type: z.literal("a"), a: z.string() }),
         z.object({ type: z.literal("a"), b: z.string() }),
-      ]).parse({ type: "x", a: "abc" });
+      ]);
     } catch (e) {
       expect(e).toHaveProperty(
         "message",
