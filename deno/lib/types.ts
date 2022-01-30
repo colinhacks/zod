@@ -1965,13 +1965,24 @@ export class ZodDiscriminatedUnion<
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
 
+    if (ctx.parsedType !== ZodParsedType.object) {
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.object,
+        received: ctx.parsedType,
+      });
+      return INVALID;
+    }
+
     const discriminator = this.discriminator;
-    const option = this.options[ctx.data[discriminator] as DiscriminatorValue];
+    const discriminatorValue: DiscriminatorValue = ctx.data[discriminator];
+    const option = this.options[discriminatorValue];
+
     if (!option) {
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union_discriminator,
         expectedOneOf: this.validDiscriminatorValues,
-        received: ctx.data[discriminator],
+        received: discriminatorValue,
         path: [discriminator],
       });
       return INVALID;

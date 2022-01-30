@@ -15,6 +15,26 @@ describe("discriminated union", () => {
     ).toEqual({ type: "a", a: "abc" });
   });
 
+  test("invalid - null", () => {
+    expect.assertions(1);
+    try {
+      z.discriminatedUnion("type", [
+        z.object({ type: z.literal("a"), a: z.string() }),
+        z.object({ type: z.literal("b"), b: z.string() }),
+      ]).parse(null);
+    } catch (e: any) {
+      expect(JSON.parse(e.message)).toEqual([
+        {
+          code: z.ZodIssueCode.invalid_type,
+          expected: z.ZodParsedType.object,
+          message: "Expected object, received null",
+          received: z.ZodParsedType.null,
+          path: [],
+        },
+      ]);
+    }
+  });
+
   test("invalid discriminator value", () => {
     expect.assertions(1);
     try {
