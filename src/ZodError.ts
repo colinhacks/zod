@@ -5,6 +5,7 @@ export const ZodIssueCode = util.arrayToEnum([
   "invalid_type",
   "custom",
   "invalid_union",
+  "invalid_union_discriminator",
   "invalid_enum_value",
   "unrecognized_keys",
   "invalid_arguments",
@@ -39,6 +40,12 @@ export interface ZodUnrecognizedKeysIssue extends ZodIssueBase {
 export interface ZodInvalidUnionIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_union;
   unionErrors: ZodError[];
+}
+
+export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_union_discriminator;
+  expectedOneOf: string[];
+  received: string;
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
@@ -101,6 +108,7 @@ export type ZodIssueOptionalMessage =
   | ZodInvalidTypeIssue
   | ZodUnrecognizedKeysIssue
   | ZodInvalidUnionIssue
+  | ZodInvalidUnionDiscriminatorIssue
   | ZodInvalidEnumValueIssue
   | ZodInvalidArgumentsIssue
   | ZodInvalidReturnTypeIssue
@@ -289,6 +297,11 @@ export const defaultErrorMap = (
       break;
     case ZodIssueCode.invalid_union:
       message = `Invalid input`;
+      break;
+    case ZodIssueCode.invalid_union_discriminator:
+      message = `Invalid discriminator value. Expected one of: ${issue.expectedOneOf.join(
+        ", "
+      )}. Received ${issue.received}.`;
       break;
     case ZodIssueCode.invalid_enum_value:
       message = `Invalid enum value. Expected ${issue.options

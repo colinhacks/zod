@@ -878,6 +878,37 @@ For convenience, you can also use the `.or` method:
 const stringOrNumber = z.string().or(z.number());
 ```
 
+### Discriminated unions
+
+If the union consists of object schemas all identifiable by a common property, it is possible to use
+the `z.discriminatedUnion` method.
+
+The advantage is in more efficient evaluation and more human friendly errors. With the basic union method the input is
+tested against each of the provided "options", and in the case of invalidity, issues for all the "options" are shown in
+the zod error. On the other hand, the discriminated union allows for selecting just one of the "options", testing
+against it, and showing only the issues related to this "option".
+
+```ts
+const item = z
+  .discriminatedUnion("type", [
+    z.object({ type: z.literal("a"), a: z.string() }),
+    z.object({ type: z.literal("b"), b: z.string() }),
+  ])
+  .parse({ type: "a", a: "abc" });
+```
+
+This method is also aliased by the `z.union` method, where the discriminator can optionally be passed as the first
+argument:
+
+```ts
+const item = z
+  .union("type", [
+    z.object({ type: z.literal("a"), a: z.string() }),
+    z.object({ type: z.literal("b"), b: z.string() }),
+  ])
+  .parse({ type: "a", a: "abc" });
+```
+
 ## Records
 
 Record schemas are used to validate types such as `{ [k: string]: number }`.
