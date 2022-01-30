@@ -60,6 +60,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [Maps](#maps)
   - [Sets](#sets)
   - [Unions](#unions)
+    - [Discriminated Unions](#discriminated-unions)
   - [Recursive types](#recursive-types)
     - [JSON type](#json-type)
     - [Cyclical data](#cyclical-objects)
