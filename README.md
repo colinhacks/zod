@@ -35,7 +35,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [Literals](#literals)
   - [Strings](#strings)
   - [Numbers](#numbers)
-  - [NaNs][#nans]
+  - [NaNs](#nans)
   - [Booleans](#booleans)
   - [Zod enums](#zod-enums)
   - [Native enums](#native-enums)
