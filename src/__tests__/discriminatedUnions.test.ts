@@ -14,6 +14,51 @@ describe("discriminated union", () => {
     ).toEqual({ type: "a", a: "abc" });
   });
 
+  test("valid - discriminator value of various primitive types", () => {
+    const schema = z.discriminatedUnion("type", [
+      z.object({ type: z.literal("1"), val: z.literal(1) }),
+      z.object({ type: z.literal(1), val: z.literal(2) }),
+      z.object({ type: z.literal(BigInt(1)), val: z.literal(3) }),
+      z.object({ type: z.literal("true"), val: z.literal(4) }),
+      z.object({ type: z.literal(true), val: z.literal(5) }),
+      z.object({ type: z.literal("null"), val: z.literal(6) }),
+      z.object({ type: z.literal(null), val: z.literal(7) }),
+      z.object({ type: z.literal("undefined"), val: z.literal(8) }),
+      z.object({ type: z.literal(undefined), val: z.literal(9) }),
+    ]);
+
+    expect(schema.parse({ type: "1", val: 1 })).toEqual({ type: "1", val: 1 });
+    expect(schema.parse({ type: 1, val: 2 })).toEqual({ type: 1, val: 2 });
+    expect(schema.parse({ type: BigInt(1), val: 3 })).toEqual({
+      type: BigInt(1),
+      val: 3,
+    });
+    expect(schema.parse({ type: "true", val: 4 })).toEqual({
+      type: "true",
+      val: 4,
+    });
+    expect(schema.parse({ type: true, val: 5 })).toEqual({
+      type: true,
+      val: 5,
+    });
+    expect(schema.parse({ type: "null", val: 6 })).toEqual({
+      type: "null",
+      val: 6,
+    });
+    expect(schema.parse({ type: null, val: 7 })).toEqual({
+      type: null,
+      val: 7,
+    });
+    expect(schema.parse({ type: "undefined", val: 8 })).toEqual({
+      type: "undefined",
+      val: 8,
+    });
+    expect(schema.parse({ type: undefined, val: 9 })).toEqual({
+      type: undefined,
+      val: 9,
+    });
+  });
+
   test("invalid - null", () => {
     expect.assertions(1);
     try {

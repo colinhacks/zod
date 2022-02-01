@@ -1,4 +1,5 @@
 import { ZodParsedType } from "./helpers/parseUtil.ts";
+import { Primitive } from "./helpers/typeAliases.ts";
 import { util } from "./helpers/util.ts";
 
 export const ZodIssueCode = util.arrayToEnum([
@@ -44,7 +45,7 @@ export interface ZodInvalidUnionIssue extends ZodIssueBase {
 
 export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_union_discriminator;
-  options: string[];
+  options: Primitive[];
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {

@@ -19,6 +19,7 @@ import {
   ZodParsedType,
 } from "./helpers/parseUtil";
 import { partialUtil } from "./helpers/partialUtil";
+import { Primitive } from "./helpers/typeAliases";
 import { util } from "./helpers/util";
 import {
   defaultErrorMap,
@@ -1359,9 +1360,6 @@ const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
 
 type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
-export type Primitive = string | number | bigint | boolean | null | undefined;
-export type Scalars = Primitive | Primitive[];
-
 export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
@@ -1917,7 +1915,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 
 type ZodDiscriminatedUnionOption<
   Discriminator extends string,
-  DiscriminatorValue extends string
+  DiscriminatorValue extends Primitive
 > = ZodObject<
   { [key in Discriminator]: ZodLiteral<DiscriminatorValue> } & ZodRawShape,
   any,
@@ -1926,17 +1924,17 @@ type ZodDiscriminatedUnionOption<
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  DiscriminatorValue extends string,
+  DiscriminatorValue extends Primitive,
   Option extends ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>
 > extends ZodTypeDef {
   discriminator: Discriminator;
-  options: Record<DiscriminatorValue, Option>;
+  options: Map<DiscriminatorValue, Option>;
   typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion;
 }
 
 export class ZodDiscriminatedUnion<
   Discriminator extends string,
-  DiscriminatorValue extends string,
+  DiscriminatorValue extends Primitive,
   Option extends ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>
 > extends ZodType<
   Option["_output"],
@@ -1957,7 +1955,7 @@ export class ZodDiscriminatedUnion<
 
     const discriminator = this.discriminator;
     const discriminatorValue: DiscriminatorValue = ctx.data[discriminator];
-    const option = this.options[discriminatorValue];
+    const option = this.options.get(discriminatorValue);
 
     if (!option) {
       addIssueToContext(ctx, {
@@ -1988,7 +1986,7 @@ export class ZodDiscriminatedUnion<
   }
 
   get validDiscriminatorValues() {
-    return util.objectKeys(this.options);
+    return Array.from(this.options.keys());
   }
 
   get options() {
@@ -2005,7 +2003,7 @@ export class ZodDiscriminatedUnion<
    */
   static create<
     Discriminator extends string,
-    DiscriminatorValue extends string,
+    DiscriminatorValue extends Primitive,
     Types extends [
       ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
       ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
@@ -2017,12 +2015,12 @@ export class ZodDiscriminatedUnion<
     params?: RawCreateParams
   ): ZodDiscriminatedUnion<Discriminator, DiscriminatorValue, Types[number]> {
     // Get all the valid discriminator values
-    const options: Record<DiscriminatorValue, Types[number]> = {} as any;
+    const options: Map<DiscriminatorValue, Types[number]> = new Map();
 
     try {
       types.forEach((type) => {
         const discriminatorValue = type.shape[discriminator].value;
-        options[discriminatorValue] = type;
+        options.set(discriminatorValue, type);
       });
     } catch (e) {
       throw new Error(
@@ -2031,7 +2029,7 @@ export class ZodDiscriminatedUnion<
     }
 
     // Assert that all the discriminator values are unique
-    if (new Set(util.objectKeys(options)).size !== types.length) {
+    if (options.size !== types.length) {
       throw new Error("Some of the discriminator values are not unique");
     }
 
