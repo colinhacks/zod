@@ -1893,37 +1893,18 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     return this._def.options;
   }
 
-  static create<
-    Discriminator extends string,
-    DiscriminatorValue extends string,
-    Types extends [
-      ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
-      ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
-      ...ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>[]
-    ]
+  static create = <
+    T extends Readonly<[ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]>
   >(
-    discriminator: Discriminator,
-    types: Types,
-    params?: RawCreateParams
-  ): ZodDiscriminatedUnion<Discriminator, DiscriminatorValue, Types[number]>;
-  static create<T extends Readonly<[ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]>>(
     types: T,
     params?: RawCreateParams
-  ): ZodUnion<T>;
-  static create(
-    first: any,
-    second?: any,
-    third?: any
-  ): ZodUnion<any> | ZodDiscriminatedUnion<any, any, any> {
-    if (typeof first === "string") {
-      return ZodDiscriminatedUnion.create(first, second, third);
-    }
+  ): ZodUnion<T> => {
     return new ZodUnion({
-      options: first,
+      options: types,
       typeName: ZodFirstPartyTypeKind.ZodUnion,
-      ...processCreateParams(second),
+      ...processCreateParams(params),
     });
-  }
+  };
 }
 
 /////////////////////////////////////////////////////

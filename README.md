@@ -898,18 +898,6 @@ const item = z
   .parse({ type: "a", a: "abc" });
 ```
 
-This method is also aliased by the `z.union` method, where the discriminator can optionally be passed as the first
-argument:
-
-```ts
-const item = z
-  .union("type", [
-    z.object({ type: z.literal("a"), a: z.string() }),
-    z.object({ type: z.literal("b"), b: z.string() }),
-  ])
-  .parse({ type: "a", a: "abc" });
-```
-
 ## Records
 
 Record schemas are used to validate types such as `{ [k: string]: number }`.
