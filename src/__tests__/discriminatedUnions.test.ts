@@ -46,9 +46,7 @@ describe("discriminated union", () => {
         {
           code: z.ZodIssueCode.invalid_union_discriminator,
           expectedOneOf: ["a", "b"],
-          received: "x",
-          message:
-            "Invalid discriminator value. Expected one of: a, b. Received x.",
+          message: "Invalid discriminator value. Expected one of: a, b",
           path: ["type"],
         },
       ]);

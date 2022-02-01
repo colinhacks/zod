@@ -45,7 +45,6 @@ export interface ZodInvalidUnionIssue extends ZodIssueBase {
 export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_union_discriminator;
   expectedOneOf: string[];
-  received: string;
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
@@ -301,7 +300,7 @@ export const defaultErrorMap = (
     case ZodIssueCode.invalid_union_discriminator:
       message = `Invalid discriminator value. Expected one of: ${issue.expectedOneOf.join(
         ", "
-      )}. Received ${issue.received}.`;
+      )}`;
       break;
     case ZodIssueCode.invalid_enum_value:
       message = `Invalid enum value. Expected ${issue.options
