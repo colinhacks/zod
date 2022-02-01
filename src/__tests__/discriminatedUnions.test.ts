@@ -45,8 +45,8 @@ describe("discriminated union", () => {
       expect(JSON.parse(e.message)).toEqual([
         {
           code: z.ZodIssueCode.invalid_union_discriminator,
-          expectedOneOf: ["a", "b"],
-          message: "Invalid discriminator value. Expected one of: a, b",
+          options: ["a", "b"],
+          message: "Invalid discriminator value. Expected 'a' | 'b'",
           path: ["type"],
         },
       ]);

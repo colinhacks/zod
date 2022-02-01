@@ -1981,7 +1981,7 @@ export class ZodDiscriminatedUnion<
     if (!option) {
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union_discriminator,
-        expectedOneOf: this.validDiscriminatorValues,
+        options: this.validDiscriminatorValues,
         path: [discriminator],
       });
       return INVALID;
