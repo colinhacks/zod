@@ -19,6 +19,7 @@ import {
   ZodParsedType,
 } from "./helpers/parseUtil.ts";
 import { partialUtil } from "./helpers/partialUtil.ts";
+import { Primitive } from "./helpers/typeAliases.ts";
 import { util } from "./helpers/util.ts";
 import {
   defaultErrorMap,
@@ -1359,9 +1360,6 @@ const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
 
 type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
-export type Primitive = string | number | bigint | boolean | null | undefined;
-export type Scalars = Primitive | Primitive[];
-
 export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
@@ -1905,6 +1903,147 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       ...processCreateParams(params),
     });
   };
+}
+
+/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+//////////                                 //////////
+//////////      ZodDiscriminatedUnion      //////////
+//////////                                 //////////
+/////////////////////////////////////////////////////
+/////////////////////////////////////////////////////
+
+type ZodDiscriminatedUnionOption<
+  Discriminator extends string,
+  DiscriminatorValue extends Primitive
+> = ZodObject<
+  { [key in Discriminator]: ZodLiteral<DiscriminatorValue> } & ZodRawShape,
+  any,
+  any
+>;
+
+export interface ZodDiscriminatedUnionDef<
+  Discriminator extends string,
+  DiscriminatorValue extends Primitive,
+  Option extends ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>
+> extends ZodTypeDef {
+  discriminator: Discriminator;
+  options: Map<DiscriminatorValue, Option>;
+  typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion;
+}
+
+export class ZodDiscriminatedUnion<
+  Discriminator extends string,
+  DiscriminatorValue extends Primitive,
+  Option extends ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>
+> extends ZodType<
+  Option["_output"],
+  ZodDiscriminatedUnionDef<Discriminator, DiscriminatorValue, Option>,
+  Option["_input"]
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const { ctx } = this._processInputParams(input);
+
+    if (ctx.parsedType !== ZodParsedType.object) {
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.object,
+        received: ctx.parsedType,
+      });
+      return INVALID;
+    }
+
+    const discriminator = this.discriminator;
+    const discriminatorValue: DiscriminatorValue = ctx.data[discriminator];
+    const option = this.options.get(discriminatorValue);
+
+    if (!option) {
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_union_discriminator,
+        options: this.validDiscriminatorValues,
+        path: [discriminator],
+      });
+      return INVALID;
+    }
+
+    if (ctx.async) {
+      return option._parseAsync({
+        data: ctx.data,
+        path: ctx.path,
+        parent: ctx,
+      });
+    } else {
+      return option._parseSync({
+        data: ctx.data,
+        path: ctx.path,
+        parent: ctx,
+      });
+    }
+  }
+
+  get discriminator() {
+    return this._def.discriminator;
+  }
+
+  get validDiscriminatorValues() {
+    return Array.from(this.options.keys());
+  }
+
+  get options() {
+    return this._def.options;
+  }
+
+  /**
+   * The constructor of the discriminated union schema. Its behaviour is very similar to that of the normal z.union() constructor.
+   * However, it only allows a union of objects, all of which need to share a discriminator property. This property must
+   * have a different value for each object in the union.
+   * @param discriminator the name of the discriminator property
+   * @param types an array of object schemas
+   * @param params
+   */
+  static create<
+    Discriminator extends string,
+    DiscriminatorValue extends Primitive,
+    Types extends [
+      ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
+      ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
+      ...ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>[]
+    ]
+  >(
+    discriminator: Discriminator,
+    types: Types,
+    params?: RawCreateParams
+  ): ZodDiscriminatedUnion<Discriminator, DiscriminatorValue, Types[number]> {
+    // Get all the valid discriminator values
+    const options: Map<DiscriminatorValue, Types[number]> = new Map();
+
+    try {
+      types.forEach((type) => {
+        const discriminatorValue = type.shape[discriminator].value;
+        options.set(discriminatorValue, type);
+      });
+    } catch (e) {
+      throw new Error(
+        "The discriminator value could not be extracted from all the provided schemas"
+      );
+    }
+
+    // Assert that all the discriminator values are unique
+    if (options.size !== types.length) {
+      throw new Error("Some of the discriminator values are not unique");
+    }
+
+    return new ZodDiscriminatedUnion<
+      Discriminator,
+      DiscriminatorValue,
+      Types[number]
+    >({
+      typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion,
+      discriminator,
+      options,
+      ...processCreateParams(params),
+    });
+  }
 }
 
 ///////////////////////////////////////////////
@@ -3325,6 +3464,7 @@ export enum ZodFirstPartyTypeKind {
   ZodArray = "ZodArray",
   ZodObject = "ZodObject",
   ZodUnion = "ZodUnion",
+  ZodDiscriminatedUnion = "ZodDiscriminatedUnion",
   ZodIntersection = "ZodIntersection",
   ZodTuple = "ZodTuple",
   ZodRecord = "ZodRecord",
@@ -3394,6 +3534,7 @@ const arrayType = ZodArray.create;
 const objectType = ZodObject.create;
 const strictObjectType = ZodObject.strictCreate;
 const unionType = ZodUnion.create;
+const discriminatedUnionType = ZodDiscriminatedUnion.create;
 const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
@@ -3419,6 +3560,7 @@ export {
   bigIntType as bigint,
   booleanType as boolean,
   dateType as date,
+  discriminatedUnionType as discriminatedUnion,
   effectsType as effect,
   enumType as enum,
   functionType as function,
