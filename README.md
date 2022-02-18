@@ -21,7 +21,7 @@ by <a href="https://twitter.com/colinhacks">@colinhacks</a>
 > Colin (AKA [@colinhacks](https://twitter.com/colinhacks))
 
 <h3 align="center">
-    <a href="https://discord.gg/yBunuETGJX">💬 Chat on Discord</a>
+    <a href="https://discord.gg/EuFJWgP2TG">💬 Chat on Discord</a>
     ·
     <a href="https://zod.js.org/">📝 Explore the Docs</a>
     ·
