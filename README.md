@@ -8,7 +8,7 @@
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
 <a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
-
+<a href="https://discord.gg/yBunuETGJX" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
 </p>
 <p align="center">
 by <a href="https://twitter.com/colinhacks">@colinhacks</a>
@@ -19,6 +19,14 @@ by <a href="https://twitter.com/colinhacks">@colinhacks</a>
 > If you like typesafety, check out my other library [tRPC](https://trpc.io). It works in concert with Zod to provide a seamless way to build end-to-end typesafe APIs without GraphQL or code generation — just TypeScript.
 >
 > Colin (AKA [@colinhacks](https://twitter.com/colinhacks))
+
+<h3 align="center">
+    <a href="https://discord.gg/yBunuETGJX">💬 Chat on Discord</a>
+    ·
+    <a href="https://zod.js.org/">📝 Explore the Docs</a>
+    ·
+    <a href="https://www.npmjs.com/package/zod">✨ Install Zod</a>
+</h3>
 
 <br/>
 
