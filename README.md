@@ -8,7 +8,7 @@
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
 <a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
-<a href="https://discord.gg/EuFJWgP2TG" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
+<a href="https://discord.gg/KaSRdyX2vc" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
 </p>
 <p align="center">
 by <a href="https://twitter.com/colinhacks">@colinhacks</a>
@@ -21,7 +21,7 @@ by <a href="https://twitter.com/colinhacks">@colinhacks</a>
 > Colin (AKA [@colinhacks](https://twitter.com/colinhacks))
 
 <h3 align="center">
-    <a href="https://discord.gg/EuFJWgP2TG">💬 Chat on Discord</a>
+    <a href="https://discord.gg/RcG33DQJdf">💬 Chat on Discord</a>
     ·
     <a href="https://zod.js.org/">📝 Explore the Docs</a>
     ·
