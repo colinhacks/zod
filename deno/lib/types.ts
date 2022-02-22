@@ -728,7 +728,6 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodNumber,
       ...processCreateParams(params),
-      ...processCreateParams(params),
     });
   };
 
