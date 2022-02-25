@@ -244,7 +244,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 ### Form integrations
 
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form
-- [`formik`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod
+- [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod
 
 # Basic usage
 
