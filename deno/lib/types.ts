@@ -1912,7 +1912,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-type ZodDiscriminatedUnionOption<
+export type ZodDiscriminatedUnionOption<
   Discriminator extends string,
   DiscriminatorValue extends Primitive
 > = ZodObject<
