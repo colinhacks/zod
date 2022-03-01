@@ -8,7 +8,7 @@
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
 <a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
-
+<a href="https://discord.gg/KaSRdyX2vc" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
 </p>
 <p align="center">
 by <a href="https://twitter.com/colinhacks">@colinhacks</a>
@@ -19,6 +19,14 @@ by <a href="https://twitter.com/colinhacks">@colinhacks</a>
 > If you like typesafety, check out my other library [tRPC](https://trpc.io). It works in concert with Zod to provide a seamless way to build end-to-end typesafe APIs without GraphQL or code generation — just TypeScript.
 >
 > Colin (AKA [@colinhacks](https://twitter.com/colinhacks))
+
+<h3 align="center">
+    <a href="https://discord.gg/RcG33DQJdf">💬 Chat on Discord</a>
+    ·
+    <a href="https://zod.js.org/">📝 Explore the Docs</a>
+    ·
+    <a href="https://www.npmjs.com/package/zod">✨ Install Zod</a>
+</h3>
 
 <br/>
 
@@ -37,6 +45,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [Numbers](#numbers)
   - [NaNs](#nans)
   - [Booleans](#booleans)
+  - [Dates](#dates)
   - [Zod enums](#zod-enums)
   - [Native enums](#native-enums)
   - [Optionals](#optionals)
@@ -61,6 +70,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [Maps](#maps)
   - [Sets](#sets)
   - [Unions](#unions)
+    - [Discriminated Unions](#discriminated-unions)
   - [Recursive types](#recursive-types)
     - [JSON type](#json-type)
     - [Cyclical data](#cyclical-objects)
@@ -229,11 +239,13 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`json-to-zod`](https://github.com/rsinohara/json-to-zod): Convert JSON objects into Zod schemas. Use it live [here](https://rsinohara.github.io/json-to-zod-react/).
 - [`zod-dto`](https://github.com/kbkk/abitia/tree/master/packages/zod-dto): Generate Nest.js DTOs from a Zod schema.
 - [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
+- [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema): GraphQL Code Generator plugin to generate form validation schema from your GraphQL schema
+- [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Generate Zod schemas from your Prisma schema.
 
 ### Form integrations
 
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form
-- [`formik`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod
+- [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod
 
 # Basic usage
 
@@ -412,6 +424,29 @@ const isActive = z.boolean({
   required_error: "isActive is required",
   invalid_type_error: "isActive must be a boolean",
 });
+```
+
+## Dates
+z.date() accepts a date, not a date string
+```ts
+z.date().safeParse( new Date() ) // success: true
+z.date().safeParse( '2022-01-12T00:00:00.000Z' ) // success: false
+```
+
+To allow for dates or date strings, you can use preprocess
+```ts
+const dateSchema = z.preprocess(
+    arg => {
+        if ( typeof arg == 'string' || arg instanceof Date )
+            return new Date( arg )
+    },
+    z.date()
+)
+type DateSchema = z.infer<typeof dateSchema>
+// type DateSchema = Date
+
+dateSchema.safeParse( new Date( '1/12/22' ) ) // success: true
+dateSchema.safeParse( '2022-01-12T00:00:00.000Z' ) // success: true
 ```
 
 ## Zod enums
@@ -890,6 +925,25 @@ For convenience, you can also use the `.or` method:
 const stringOrNumber = z.string().or(z.number());
 ```
 
+### Discriminated unions
+
+If the union consists of object schemas all identifiable by a common property, it is possible to use
+the `z.discriminatedUnion` method.
+
+The advantage is in more efficient evaluation and more human friendly errors. With the basic union method the input is
+tested against each of the provided "options", and in the case of invalidity, issues for all the "options" are shown in
+the zod error. On the other hand, the discriminated union allows for selecting just one of the "options", testing
+against it, and showing only the issues related to this "option".
+
+```ts
+const item = z
+  .discriminatedUnion("type", [
+    z.object({ type: z.literal("a"), a: z.string() }),
+    z.object({ type: z.literal("b"), b: z.string() }),
+  ])
+  .parse({ type: "a", a: "abc" });
+```
+
 ## Records
 
 Record schemas are used to validate types such as `{ [k: string]: number }`.
@@ -944,15 +998,15 @@ Since Zod is trying to bridge the gap between static and runtime types, it doesn
 const stringNumberMap = z.map(z.string(), z.number());
 
 type StringNumberMap = z.infer<typeof stringNumberMap>;
-// type StringNumber = Map<string, number>
+// type StringNumberMap = Map<string, number>
 ```
 
 ## Sets
 
 ```ts
 const numberSet = z.set(z.number());
-type numberSet = z.infer<typeof numberSet>;
-// Set<number>
+type NumberSet = z.infer<typeof numberSet>;
+// type NumberSet = Set<number>
 ```
 
 ### `.nonempty/.min/.max/.size`

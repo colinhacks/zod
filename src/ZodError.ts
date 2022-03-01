@@ -1,10 +1,12 @@
 import { ZodParsedType } from "./helpers/parseUtil";
+import { Primitive } from "./helpers/typeAliases";
 import { util } from "./helpers/util";
 
 export const ZodIssueCode = util.arrayToEnum([
   "invalid_type",
   "custom",
   "invalid_union",
+  "invalid_union_discriminator",
   "invalid_enum_value",
   "unrecognized_keys",
   "invalid_arguments",
@@ -39,6 +41,11 @@ export interface ZodUnrecognizedKeysIssue extends ZodIssueBase {
 export interface ZodInvalidUnionIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_union;
   unionErrors: ZodError[];
+}
+
+export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_union_discriminator;
+  options: Primitive[];
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
@@ -101,6 +108,7 @@ export type ZodIssueOptionalMessage =
   | ZodInvalidTypeIssue
   | ZodUnrecognizedKeysIssue
   | ZodInvalidUnionIssue
+  | ZodInvalidUnionDiscriminatorIssue
   | ZodInvalidEnumValueIssue
   | ZodInvalidArgumentsIssue
   | ZodInvalidReturnTypeIssue
@@ -289,6 +297,11 @@ export const defaultErrorMap = (
       break;
     case ZodIssueCode.invalid_union:
       message = `Invalid input`;
+      break;
+    case ZodIssueCode.invalid_union_discriminator:
+      message = `Invalid discriminator value. Expected ${issue.options
+        .map((val) => (typeof val === "string" ? `'${val}'` : val))
+        .join(" | ")}`;
       break;
     case ZodIssueCode.invalid_enum_value:
       message = `Invalid enum value. Expected ${issue.options
