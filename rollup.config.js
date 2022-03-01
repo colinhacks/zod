@@ -1,6 +1,5 @@
 // rollup.config.js
 import typescript from "@rollup/plugin-typescript";
-import { uglify } from "rollup-plugin-uglify";
 
 export default [
   {
@@ -17,7 +16,6 @@ export default [
         tsconfig: "tsconfig.esm.json",
         sourceMap: false,
       }),
-      uglify(),
     ],
   },
 ];
