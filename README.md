@@ -1078,8 +1078,8 @@ interface Category {
   subcategories: Category[];
 }
 
-// cast to z.ZodSchema<Category>
-const Category: z.ZodSchema<Category> = z.lazy(() =>
+// cast to z.ZodType<Category>
+const Category: z.ZodType<Category> = z.lazy(() =>
   z.object({
     name: z.string(),
     subcategories: z.array(Category),
@@ -1116,7 +1116,7 @@ interface Category extends z.infer<typeof BaseCategory> {
 
 // merge the base schema with
 // a new Zod schema containing relations
-const Category: z.ZodSchema<Category> = BaseCategory.merge(
+const Category: z.ZodType<Category> = BaseCategory.merge(
   z.object({
     subcategories: z.lazy(() => z.array(Category)),
   })
@@ -1131,7 +1131,7 @@ If you want to validate any JSON value, you can use the snippet below.
 type Literal = boolean | null | number | string;
 type Json = Literal | { [key: string]: Json } | Json[];
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
+const jsonSchema: z.ZodType<Json> = z.lazy(() =>
   z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)])
 );
 

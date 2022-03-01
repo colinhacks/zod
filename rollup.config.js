@@ -9,13 +9,13 @@ export default [
       {
         file: "lib/index.mjs",
         format: "es",
-        sourcemap: true,
+        sourcemap: false,
       },
     ],
     plugins: [
       typescript({
         tsconfig: "tsconfig.esm.json",
-        sourceMap: true,
+        sourceMap: false,
       }),
       uglify(),
     ],

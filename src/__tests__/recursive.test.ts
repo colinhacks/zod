@@ -29,7 +29,7 @@ const testCategory: Category = {
 };
 
 test("recursion with z.late.object", () => {
-  const Category: z.Schema<Category> = z.late.object(() => ({
+  const Category: z.ZodType<Category> = z.late.object(() => ({
     name: z.string(),
     subcategories: z.array(Category),
   }));
@@ -37,7 +37,7 @@ test("recursion with z.late.object", () => {
 });
 
 test("recursion with z.lazy", () => {
-  const Category: z.Schema<Category> = z.lazy(() =>
+  const Category: z.ZodType<Category> = z.lazy(() =>
     z.object({
       name: z.string(),
       subcategories: z.array(Category),
@@ -129,7 +129,7 @@ test("schema getter", () => {
 //     subcategories: Category[];
 //   }
 
-//   const Category: z.Schema<Category> = z.late.object(() => ({
+//   const Category: z.ZodType<Category> = z.late.object(() => ({
 //     name: z.string(),
 //     subcategories: z.array(Category),
 //   }));
@@ -150,7 +150,7 @@ test("schema getter", () => {
 
 //   type Category = BaseCategory & { subcategories: Category[] };
 
-//   const Category: z.Schema<Category> = z.late
+//   const Category: z.ZodType<Category> = z.late
 //     .object(() => ({
 //       subcategories: z.array(Category),
 //     }))

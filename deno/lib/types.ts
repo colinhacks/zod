@@ -1646,14 +1646,15 @@ export class ZodObject<
     merging: Incoming
   ): //ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = (merging) => {
   ZodObject<extendShape<T, Incoming["_shape"]>, UnknownKeys, Catchall> {
-    const mergedShape = objectUtil.mergeShapes(
-      this._def.shape(),
-      merging._def.shape()
-    );
+    // const mergedShape = objectUtil.mergeShapes(
+    //   this._def.shape(),
+    //   merging._def.shape()
+    // );
     const merged: any = new ZodObject({
       unknownKeys: merging._def.unknownKeys,
       catchall: merging._def.catchall,
-      shape: () => mergedShape,
+      shape: () =>
+        objectUtil.mergeShapes(this._def.shape(), merging._def.shape()),
       typeName: ZodFirstPartyTypeKind.ZodObject,
     }) as any;
     return merged;
