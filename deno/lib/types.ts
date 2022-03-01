@@ -3434,6 +3434,41 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
   };
 }
 
+/////////////////////////////////////////
+/////////////////////////////////////////
+//////////                     //////////
+//////////      ZodNaN         //////////
+//////////                     //////////
+/////////////////////////////////////////
+/////////////////////////////////////////
+
+export interface ZodNaNDef extends ZodTypeDef {
+  typeName: ZodFirstPartyTypeKind.ZodNaN;
+}
+
+export class ZodNaN extends ZodType<number, ZodNaNDef> {
+  _parse(input: ParseInput): ParseReturnType<any> {
+    const { status, ctx } = this._processInputParams(input);
+    if (ctx.parsedType !== ZodParsedType.nan) {
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.nan,
+        received: ctx.parsedType,
+      });
+      return INVALID;
+    }
+
+    return { status: status.value, value: ctx.data };
+  }
+
+  static create = (params?: RawCreateParams): ZodNaN => {
+    return new ZodNaN({
+      typeName: ZodFirstPartyTypeKind.ZodNaN,
+      ...processCreateParams(params),
+    });
+  };
+}
+
 export const custom = <T>(
   check?: (data: unknown) => any,
   params?: Parameters<ZodTypeAny["refine"]>[1]
@@ -3451,6 +3486,7 @@ export const late = {
 export enum ZodFirstPartyTypeKind {
   ZodString = "ZodString",
   ZodNumber = "ZodNumber",
+  ZodNaN = "ZodNaN",
   ZodBigInt = "ZodBigInt",
   ZodBoolean = "ZodBoolean",
   ZodDate = "ZodDate",
@@ -3483,6 +3519,7 @@ export enum ZodFirstPartyTypeKind {
 export type ZodFirstPartySchemaTypes =
   | ZodString
   | ZodNumber
+  | ZodNaN
   | ZodBigInt
   | ZodBoolean
   | ZodDate
@@ -3520,6 +3557,7 @@ const instanceOfType = <T extends new (...args: any[]) => any>(
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
+const nanType = ZodNaN.create;
 const bigIntType = ZodBigInt.create;
 const booleanType = ZodBoolean.create;
 const dateType = ZodDate.create;
@@ -3568,6 +3606,7 @@ export {
   lazyType as lazy,
   literalType as literal,
   mapType as map,
+  nanType as nan,
   nativeEnumType as nativeEnum,
   neverType as never,
   nullType as null,

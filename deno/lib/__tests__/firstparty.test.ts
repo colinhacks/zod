@@ -13,6 +13,8 @@ test("first party switch", () => {
       break;
     case z.ZodFirstPartyTypeKind.ZodNumber:
       break;
+    case z.ZodFirstPartyTypeKind.ZodNaN:
+      break;
     case z.ZodFirstPartyTypeKind.ZodBigInt:
       break;
     case z.ZodFirstPartyTypeKind.ZodBoolean:

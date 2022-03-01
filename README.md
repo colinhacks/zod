@@ -43,6 +43,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [Literals](#literals)
   - [Strings](#strings)
   - [Numbers](#numbers)
+  - [NaNs](#nans)
   - [Booleans](#booleans)
   - [Dates](#dates)
   - [Zod enums](#zod-enums)
@@ -401,6 +402,17 @@ Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
 z.number().lte(5, { message: "this👏is👏too👏big" });
+```
+
+## NaNs
+
+You can customize certain error messages when creating a nan schema.
+
+```ts
+const isNaN = z.nan({
+  required_error: "isNaN is required",
+  invalid_type_error: "isNaN must be not a number",
+});
 ```
 
 ## Booleans
