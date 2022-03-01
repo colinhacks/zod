@@ -329,8 +329,26 @@ export abstract class ZodType<
 
   constructor(def: Def) {
     this._def = def;
-    this.transform = this.transform.bind(this) as any;
+    this.parse = this.parse.bind(this);
+    this.safeParse = this.safeParse.bind(this);
+    this.parseAsync = this.parseAsync.bind(this);
+    this.safeParseAsync = this.safeParseAsync.bind(this);
+    this.spa = this.spa.bind(this);
+    this.refine = this.refine.bind(this);
+    this.refinement = this.refinement.bind(this);
+    this.superRefine = this.superRefine.bind(this);
+    this.optional = this.optional.bind(this);
+    this.nullable = this.nullable.bind(this);
+    this.nullish = this.nullish.bind(this);
+    this.array = this.array.bind(this);
+    this.promise = this.promise.bind(this);
+    this.or = this.or.bind(this);
+    this.and = this.and.bind(this);
+    this.transform = this.transform.bind(this);
     this.default = this.default.bind(this);
+    this.describe = this.describe.bind(this);
+    this.isOptional = this.isOptional.bind(this);
+    this.isNullable = this.isNullable.bind(this);
   }
 
   optional(): ZodOptional<this> {
