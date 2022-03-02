@@ -15,26 +15,23 @@ by <a href="https://twitter.com/colinhacks">@colinhacks</a>
 </p>
 
 <div align="center">
-  <a href="https://zod.js.org/">Documentation</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/colinhacks/zod/issues/new">Open an Issue</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://trpc.io">tRPC</a>
   <br />
-
 </div>
-
-> The Zod documentation just got a lot prettier!
->
-> 👉 [zod.js.org](https://zod.js.org/) 👈
 
 <br/>
 
 These docs have been translated into [Chinese](./README_ZH.md).
 
 # Table of contents
+
+The full documentation is available both on the [official documentation site](https://zod.js.org/) (recommended) and in `README.md`.
+
+## Go to [zod.js.org](https://zod.js.org) >>
 
 - [What is Zod](#what-is-zod)
 - [Installation](#installation)
