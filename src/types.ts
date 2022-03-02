@@ -2367,9 +2367,9 @@ export class ZodRecord<
   Key extends KeySchema = ZodString,
   Value extends ZodTypeAny = ZodTypeAny
 > extends ZodType<
-  Record<Key["_output"], Value["_output"]>,
+  Partial<Record<Key["_output"], Value["_output"]>>,
   ZodRecordDef<Key, Value>,
-  Record<Key["_input"], Value["_input"]>
+  Partial<Record<Key["_input"], Value["_input"]>>
 > {
   get keySchema() {
     return this._def.keyType;

@@ -17,17 +17,17 @@ const recordWithLiteralKeys = z.record(
 type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
 
 test("type inference", () => {
-  const f1: util.AssertEqual<booleanRecord, Record<string, boolean>> = true;
+  const f1: util.AssertEqual<booleanRecord, Partial<Record<string, boolean>>> = true;
   f1;
 
   const f2: util.AssertEqual<
     recordWithEnumKeys,
-    Record<"Tuna" | "Salmon", string>
+    Partial<Record<"Tuna" | "Salmon", string>>
   > = true;
   f2;
   const f3: util.AssertEqual<
     recordWithLiteralKeys,
-    Record<"Tuna" | "Salmon", string>
+    Partial<Record<"Tuna" | "Salmon", string>>
   > = true;
   f3;
 });
@@ -88,6 +88,22 @@ test("key schema", () => {
   expect(result2).toEqual({
     Tuna: "asdf",
     Salmon: "asdf",
+  });
+
+  // shouldn't require us to specify all props in record
+  const result3 = recordWithEnumKeys.parse({
+    Tuna: "abcd",
+  });
+  expect(result3).toEqual({
+    Tuna: "abcd",
+  });
+
+  // shouldn't require us to specify all props in record
+  const result4 = recordWithLiteralKeys.parse({
+    Salmon: "abcd",
+  });
+  expect(result4).toEqual({
+    Salmon: "abcd",
   });
 
   expect(() =>
