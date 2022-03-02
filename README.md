@@ -14,19 +14,21 @@
 by <a href="https://twitter.com/colinhacks">@colinhacks</a>
 </p>
 
-> Hi! Colin here, creator of Zod. I hope you find it easy to use and powerful enough for all your use cases. If you have any issues or suggestions, please [open an issue](https://github.com/colinhacks/zod/issues/new)!
->
-> If you like typesafety, check out my other library [tRPC](https://trpc.io). It works in concert with Zod to provide a seamless way to build end-to-end typesafe APIs without GraphQL or code generation — just TypeScript.
->
-> Colin (AKA [@colinhacks](https://twitter.com/colinhacks))
+<div align="center">
+  <a href="https://zod.js.org/">Documentation</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://discord.gg/RcG33DQJdf">Discord</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://github.com/colinhacks/zod/issues/new">Open an Issue</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://trpc.io">tRPC</a>
+  <br />
 
-<h3 align="center">
-    <a href="https://discord.gg/RcG33DQJdf">💬 Chat on Discord</a>
-    ·
-    <a href="https://zod.js.org/">📝 Explore the Docs</a>
-    ·
-    <a href="https://www.npmjs.com/package/zod">✨ Install Zod</a>
-</h3>
+</div>
+
+> The Zod documentation just got a lot prettier!
+>
+> 👉 [zod.js.org](https://zod.js.org/) 👈
 
 <br/>
 
@@ -427,26 +429,25 @@ const isActive = z.boolean({
 ```
 
 ## Dates
+
 z.date() accepts a date, not a date string
+
 ```ts
-z.date().safeParse( new Date() ) // success: true
-z.date().safeParse( '2022-01-12T00:00:00.000Z' ) // success: false
+z.date().safeParse(new Date()); // success: true
+z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
 ```
 
 To allow for dates or date strings, you can use preprocess
+
 ```ts
-const dateSchema = z.preprocess(
-    arg => {
-        if ( typeof arg == 'string' || arg instanceof Date )
-            return new Date( arg )
-    },
-    z.date()
-)
-type DateSchema = z.infer<typeof dateSchema>
+const dateSchema = z.preprocess((arg) => {
+  if (typeof arg == "string" || arg instanceof Date) return new Date(arg);
+}, z.date());
+type DateSchema = z.infer<typeof dateSchema>;
 // type DateSchema = Date
 
-dateSchema.safeParse( new Date( '1/12/22' ) ) // success: true
-dateSchema.safeParse( '2022-01-12T00:00:00.000Z' ) // success: true
+dateSchema.safeParse(new Date("1/12/22")); // success: true
+dateSchema.safeParse("2022-01-12T00:00:00.000Z"); // success: true
 ```
 
 ## Zod enums
