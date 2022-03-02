@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.13.0",
+  "version": "3.13.2",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
