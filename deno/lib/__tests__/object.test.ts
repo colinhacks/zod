@@ -293,3 +293,18 @@ test("intersection of object with refine with date", async () => {
   const result = await schema.parseAsync({ a: new Date(1637353595983) });
   expect(result).toEqual({ a: new Date(1637353595983) });
 });
+
+test("constructor key", () => {
+  const person = z
+    .object({
+      name: z.string(),
+    })
+    .strict();
+
+  expect(() =>
+    person.parse({
+      name: "bob dylan",
+      constructor: 61,
+    })
+  ).toThrow();
+});

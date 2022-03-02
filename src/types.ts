@@ -1499,7 +1499,7 @@ export class ZodObject<
 
     const { shape, keys: shapeKeys } = this._getCached();
     const dataKeys = util.objectKeys(ctx.data);
-    const extraKeys = dataKeys.filter((k) => !(k in shape));
+    const extraKeys = dataKeys.filter((k) => !shapeKeys.includes(k));
 
     const pairs: {
       key: ParseReturnType<any>;
