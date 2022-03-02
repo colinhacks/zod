@@ -2363,13 +2363,20 @@ export interface ZodRecordDef<
 }
 
 type KeySchema = ZodType<string | number | symbol, any, any>;
+type RecordType<K extends string | number | symbol, V> = [string] extends [K]
+  ? Record<K, V>
+  : [number] extends [K]
+  ? Record<K, V>
+  : [symbol] extends [K]
+  ? Record<K, V>
+  : Partial<Record<K, V>>;
 export class ZodRecord<
   Key extends KeySchema = ZodString,
   Value extends ZodTypeAny = ZodTypeAny
 > extends ZodType<
-  Partial<Record<Key["_output"], Value["_output"]>>,
+  RecordType<Key["_output"], Value["_output"]>,
   ZodRecordDef<Key, Value>,
-  Partial<Record<Key["_input"], Value["_input"]>>
+  RecordType<Key["_input"], Value["_input"]>
 > {
   get keySchema() {
     return this._def.keyType;
