@@ -85,4 +85,6 @@ test("from const", () => {
   expect(() => GreekEnum.parse("v")).toThrow();
   expect(() => GreekEnum.parse("Alpha")).toThrow();
   expect(() => GreekEnum.parse(2)).toThrow();
+
+  expect(GreekEnum.enum.Alpha).toEqual("a");
 });

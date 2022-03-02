@@ -225,15 +225,11 @@ export class ZodError<T = any> extends Error {
     this.issues = [...this.issues, ...subs];
   };
 
-  flatten(
-    mapper?: (issue: ZodIssue) => string
-  ): {
+  flatten(mapper?: (issue: ZodIssue) => string): {
     formErrors: string[];
     fieldErrors: { [k: string]: string[] };
   };
-  flatten<U>(
-    mapper?: (issue: ZodIssue) => U
-  ): {
+  flatten<U>(mapper?: (issue: ZodIssue) => U): {
     formErrors: U[];
     fieldErrors: { [k: string]: U[] };
   };

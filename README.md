@@ -555,6 +555,12 @@ FruitEnum.parse(3); // passes
 FruitEnum.parse("Cantaloupe"); // fails
 ```
 
+You can access the underlying object with the `.enum` property:
+
+```ts
+FruitEnum.enum.Apple; // "apple"
+```
+
 ## Optionals
 
 You can make any schema optional with `z.optional()`:
