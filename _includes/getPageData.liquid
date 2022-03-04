@@ -1,0 +1,25 @@
+<!-- <script>
+    const something = {{ page | json }}
+    console.log( something )
+    // console.log( JSON.parse( '{{ page | jsonify | escape }}' ) )
+</script> -->
+
+<!-- <hr> -->
+<!-- ###### Page Data: -->
+
+<!-- ```yaml
+{%
+for data in page
+%}{%
+unless data[0] == 'content'
+%}{{ data[0] }}: {{ data[1]}}{%
+endunless
+%}{%
+unless forloop.last == true
+%}
+{%
+endunless
+%}{%
+endfor
+%}
+``` -->

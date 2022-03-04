@@ -1,0 +1,20 @@
+---
+layout: default
+---
+
+<h1>{{ page.title }}</h1>
+{%- if page.release -%}
+Released in <a target="_blank" href="https://github.com/colinhacks/zod/releases/tag/{{ page.release }}">
+{{ page.release }}
+</a>
+{%- endif -%}
+
+{% assign headerCount = content | strip | split: '<h' | size %}
+{%- if headerCount > 1 -%}
+<h2 class='no_toc text-delta'>Table of contents</h2>
+{%- endif -%}
+
+{% include toc.liquid html=content %}
+<hr>
+
+{{ content }}

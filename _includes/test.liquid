@@ -1,0 +1,19 @@
+{% comment %} {%- for page in site.pages %}
+    {{ page.title }}: {{ page.url -}}
+{%- endfor %} {% endcomment %}
+
+{% comment %} {%- assign titled_pages = site.pages | where_exp: "x", "x.title != nil" -%} {% endcomment %}
+
+{% comment %} {%- for page in titled_pages %}
+    {{ page | jsonify -}}
+{%- endfor %} {% endcomment %}
+
+{% comment %} {%- assign nav-pages = site.data.nav-pages | where_exp: "x", "x.title != nil" -%} {% endcomment %}
+
+
+{% comment %} {%- assign nav-pages = site.data.nav-pages -%} {% endcomment %}
+
+{% comment %} {%- for page in nav-pages %}
+    {% assign page.slug = page.title | slugify -%}
+    {{ page | jsonify -}}
+{%- endfor %} {% endcomment %}

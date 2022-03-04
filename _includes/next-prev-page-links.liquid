@@ -1,0 +1,30 @@
+<div class='d-flex flex-justify-between'>
+    <div>
+        {% if include.previous %}
+        <a class='btn d-flex v-align-middle' style='gap: 5px;' href='{{ include.previous.path }}'>
+            <span class="material-icons">arrow_back</span>
+            {{ include.previous.title }}
+        </a>
+        {% endif %}
+    </div>
+    <div>
+        {% if include.next %}
+        <a class='btn d-flex v-align-middle' style='gap: 5px;' href='{{ include.next.path }}'>
+            {{ include.next.title }}
+            <span class="material-icons">arrow_forward</span>
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<script style='display: none;'>
+    class PageLink {
+        /** @type {string} */ path
+        /** @type {string} */ title
+    }
+
+    class IncludeParams {
+        /** @type {PageLink} */ previous
+        /** @type {PageLink} */ next
+    }
+</script>

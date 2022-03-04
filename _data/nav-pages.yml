@@ -1,0 +1,25 @@
+- title: What is Zod?
+  permalink: /
+
+- title: Installation
+
+- title: Basic usage
+
+- title: Defining schemas
+  children:
+      - title: Primitives
+      - title: Literals
+      - title: Strings
+      - title: Numbers
+      - title: Booleans
+      - title: Dates
+
+- title: Schema methods
+
+- title: Type inference
+
+- title: Errors
+
+- title: Ecosystem
+
+- title: Comparison
