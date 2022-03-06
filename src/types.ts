@@ -426,7 +426,7 @@ type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
-  | { kind: "urn"; value?: UrnParser; message?: string }
+  | { kind: "urn"; value: UrnParser; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
