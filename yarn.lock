@@ -5317,6 +5317,11 @@ url-parse-lax@^3.0.0:
   dependencies:
     prepend-http "^2.0.0"
 
+urn-lib@^2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/urn-lib/-/urn-lib-2.0.0.tgz#e4c71c05abfde631291b60ff213c7b857085faf4"
+  integrity sha512-A9w5yIZke2J13v7i01rumaW2w5qWEakQM7sWkDNcdDty/3LhZVMg/AZyM+JNVVmi+tKU4flbJJsUJ+/qGyWdFw==
+
 use@^3.1.0:
   version "3.1.1"
   resolved "https://registry.npmjs.org/use/-/use-3.1.1.tgz"

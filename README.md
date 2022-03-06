@@ -343,9 +343,40 @@ z.string().nonempty();
 
 // optional custom error message
 z.string().nonempty({ message: "Can't be empty" });
+
+// URN support integrates with urn-lib https://github.com/cmawhorter/urn-lib
+
+const parser = createUrnUtil('urn', {
+  components: [
+    "isbn",
+  ],
+  separator: ":",
+});
+
+const urn = z.string().urn(parser, "custom error message"); 
+urn.parse("urn:isbn:0451450523");
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
+
+URNs also support custom parsers that can be typed, thanks to [url-lib](https://github.com/cmawhorter/urn-lib).
+
+```ts
+  import { createUrnUtil } from 'urn-lib';
+  const arnParser = createUrnUtil('arn', {
+    components: [ // protocol is automatically added (protocol = urn or arn or whatever)
+      'partition',
+      'service',
+      'region',
+      'account-id',
+      'resource', // if more:separations:exist after this, they are handled properly
+    ],
+    separator: ':',
+    allowEmpty: true, // arn does stuff like arn:::s3 and stuff
+  });
+
+  z.string().urn("custom error", arnParser);
+```
 
 #### Custom error messages
 
@@ -367,6 +398,7 @@ z.string().length(5, { message: "Must be exactly 5 characters long" });
 z.string().email({ message: "Invalid email address" });
 z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().urn({ message: "Invalid URN" });
 ```
 
 ## Numbers

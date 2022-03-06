@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
+import { createUrnUtil } from "urn-lib";
 
 import * as z from "../index";
 
@@ -96,6 +97,45 @@ test("bad uuid", () => {
   const result = uuid.safeParse("invalid uuid");
   expect(result.success).toEqual(false);
   if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("custom error");
+  }
+});
+
+test("urn", () => {
+  const arnParser = createUrnUtil("arn", {
+    components: [
+      // protocol is automatically added (protocol = urn or arn or whatever)
+      "partition",
+      "service",
+      "region",
+      "account-id",
+      "resource", // if more:separations:exist after this, they are handled properly
+    ],
+    separator: ":",
+    allowEmpty: true, // arn does stuff like arn:::s3 and stuff
+  });
+
+  const urn = z.string().urn(arnParser);
+
+  const str =
+    "arn:aws:autoscaling:us-east-1:123456789012:scalingPolicy:c7a27f55-d35e-4153-b044-8ca9155fc467:autoScalingGroupName/my-test-asg1:policyName/my-scaleout-policy";
+
+  urn.parse(str);
+});
+
+test("bad urn", () => {
+  const isbnParser = createUrnUtil("urn", {
+    components: ["isbn"],
+    separator: ";",
+  });
+
+  const urn = z.string().urn(isbnParser, "custom error");
+  const result = urn.safeParse("urn:invalid");
+
+  expect(result.success).toBeFalsy();
+
+  if (!result.success) {
+    console.log(result.error.issues[0].message);
     expect(result.error.issues[0].message).toEqual("custom error");
   }
 });

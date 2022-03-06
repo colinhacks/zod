@@ -426,12 +426,23 @@ type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
+  | { kind: "urn"; value?: UrnParser; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
   typeName: ZodFirstPartyTypeKind.ZodString;
 }
+
+export declare type Item<K extends string, V> = Record<K, undefined | V>;
+export type UrnParser = {
+  validate: (parsed: Item<string, unknown>) => string[] | null;
+  format: (parsed: Item<string, string | null>) => string;
+  parse: (value: unknown) => Item<string, string | null> | null;
+  build: (
+    data?: Item<string, unknown> | undefined
+  ) => Item<string, string | null>;
+};
 
 const cuidRegex = /^c[^\s-]{8,}$/i;
 const uuidRegex =
@@ -501,6 +512,31 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "urn") {
+        const parser = check.value;
+
+        if (!parser) {
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.custom,
+            message: "You did not pass an URN parser",
+          });
+          status.dirty();
+        } else {
+          const parsedUrn = parser.parse(ctx.data) as Item<string, unknown>;
+
+          const validationErrors = !parsedUrn
+            ? "Invalid URN"
+            : parser.validate(parsedUrn);
+
+          if (validationErrors) {
+            addIssueToContext(ctx, {
+              validation: "urn",
+              code: ZodIssueCode.invalid_string,
+              message: check.message ?? validationErrors.toString(),
+            });
+            status.dirty();
+          }
+        }
       } else if (check.kind === "cuid") {
         if (!cuidRegex.test(ctx.data)) {
           addIssueToContext(ctx, {
@@ -565,6 +601,20 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
   }
+  /**
+   *
+   * @param parser Integrates with urn-lib https://github.com/cmawhorter/urn-lib
+   * @param message Custom error message if validation fails
+   * @returns ZodString
+   */
+  urn(parser: UrnParser, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "urn",
+      value: parser,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
@@ -611,6 +661,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
+  }
+  get isURN() {
+    return !!this._def.checks.find((ch) => ch.kind === "urn");
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
