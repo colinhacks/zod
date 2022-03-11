@@ -1,2 +1,0 @@
-* [Docs]("#/README")
-* [Screencasts]("#/screencasts")
