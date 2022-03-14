@@ -30,9 +30,9 @@ These docs have been translated into [Chinese](./README_ZH.md).
 
 # Table of contents
 
-The full documentation is available both on the [official documentation site](https://zod.js.org/) (recommended) and in `README.md`.
+<!-- The full documentation is available both on the [official documentation site](https://zod.js.org/) (recommended) and in `README.md`.
 
-### Go to [zod.js.org](https://zod.js.org) >>
+### Go to [zod.js.org](https://zod.js.org) >> -->
 
 - [What is Zod](#what-is-zod)
 - [Installation](#installation)
