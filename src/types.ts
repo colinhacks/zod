@@ -3569,6 +3569,175 @@ export class ZodNaN extends ZodType<number, ZodNaNDef> {
   };
 }
 
+/////////////////////////////////////////
+/////////////////////////////////////////
+//////////                     //////////
+//////////      ZodFile         //////////
+//////////                     //////////
+/////////////////////////////////////////
+/////////////////////////////////////////
+
+type ZodFileCheck =
+  | { kind: "max"; value: number; message?: string }
+  | { kind: "min"; value: number; message?: string }
+  | { kind: "type"; value: string | string[]; message?: string };
+
+export interface ZodFileDef extends ZodTypeDef {
+  typeName: ZodFirstPartyTypeKind.ZodFile;
+  checks: ZodFileCheck[];
+}
+
+export class ZodFile<FileConstructor extends Function> extends ZodType<
+  FileConstructor,
+  ZodFileDef
+> {
+  constructor(def: ZodFileDef, private readonly fileConstructor: Function) {
+    super(def);
+  }
+
+  _parse(input: ParseInput): ParseReturnType<FileConstructor> {
+    const { status, ctx } = this._processInputParams(input);
+
+    if (!(input.data instanceof this.fileConstructor)) {
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.file,
+        received: ctx.parsedType,
+      });
+
+      return INVALID;
+    }
+
+    for (const check of this._def.checks) {
+      if (check.kind === "max") {
+        if (ctx.data.size > check.value) {
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.too_big,
+            maximum: check.value,
+            type: "file",
+            inclusive: true,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "min") {
+        if (ctx.data.size < check.value) {
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.too_small,
+            minimum: check.value,
+            type: "file",
+            inclusive: true,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "type") {
+        const types = Array.isArray(check.value) ? check.value : [check.value];
+
+        if (!types.includes(ctx.data.type)) {
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_file_type,
+            expected: types,
+            received: ctx.data.type,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      }
+    }
+
+    return { status: status.value, value: ctx.data };
+  }
+
+  _addCheck(check: ZodFileCheck) {
+    return new ZodFile(
+      {
+        ...this._def,
+        checks: [...this._def.checks, check],
+      },
+      this.fileConstructor
+    );
+  }
+
+  max(maxSize: number, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "max",
+      value: maxSize,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  min(minSize: number, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: minSize,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  type(accept: string | string[], message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "type",
+      value: accept,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  static create = <T extends Function = typeof File>(
+    params?: RawCreateParams,
+    fileConstructor?: T
+  ): ZodFile<T> => {
+    if (typeof File === "undefined" && !fileConstructor) {
+      throw new Error(
+        "File not supported in current environment, you need to pass constructor to file()"
+      );
+    }
+
+    return new ZodFile(
+      {
+        typeName: ZodFirstPartyTypeKind.ZodFile,
+        checks: [],
+        ...processCreateParams(params),
+      },
+      fileConstructor || File
+    );
+  };
+
+  get minSize() {
+    let min: number | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "min") {
+        if (min === null || ch.value > min) min = ch.value;
+      }
+    }
+    return min;
+  }
+
+  get maxSize() {
+    let max: number | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "max") {
+        if (max === null || ch.value < max) max = ch.value;
+      }
+    }
+    return max;
+  }
+
+  get allowedTypes() {
+    const types: string[] = [];
+    for (const ch of this._def.checks) {
+      if (ch.kind === "type") {
+        const checkTypes = Array.isArray(ch.value) ? ch.value : [ch.value];
+
+        checkTypes.forEach(
+          (value) => !types.find((type) => type === value) && types.push(value)
+        );
+      }
+    }
+    return types;
+  }
+}
+
 export const custom = <T>(
   check?: (data: unknown) => any,
   params?: Parameters<ZodTypeAny["refine"]>[1]
@@ -3615,6 +3784,7 @@ export enum ZodFirstPartyTypeKind {
   ZodNullable = "ZodNullable",
   ZodDefault = "ZodDefault",
   ZodPromise = "ZodPromise",
+  ZodFile = "ZodFile",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -3647,7 +3817,8 @@ export type ZodFirstPartySchemaTypes =
   | ZodOptional<any>
   | ZodNullable<any>
   | ZodDefault<any>
-  | ZodPromise<any>;
+  | ZodPromise<any>
+  | ZodFile<any>;
 
 const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
@@ -3687,6 +3858,7 @@ const promiseType = ZodPromise.create;
 const effectsType = ZodEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
+const fileType = ZodFile.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
@@ -3701,6 +3873,7 @@ export {
   discriminatedUnionType as discriminatedUnion,
   effectsType as effect,
   enumType as enum,
+  fileType as file,
   functionType as function,
   instanceOfType as instanceof,
   intersectionType as intersection,

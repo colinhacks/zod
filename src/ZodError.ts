@@ -17,6 +17,7 @@ export const ZodIssueCode = util.arrayToEnum([
   "too_big",
   "invalid_intersection_types",
   "not_multiple_of",
+  "invalid_file_type",
 ]);
 
 export type ZodIssueCode = keyof typeof ZodIssueCode;
@@ -78,14 +79,14 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number" | "set";
+  type: "array" | "string" | "number" | "set" | "file";
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number" | "set";
+  type: "array" | "string" | "number" | "set" | "file";
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -95,6 +96,12 @@ export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
 export interface ZodNotMultipleOfIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.not_multiple_of;
   multipleOf: number;
+}
+
+export interface ZodInvalidFileType extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_file_type;
+  expected: string[];
+  received: string;
 }
 
 export interface ZodCustomIssue extends ZodIssueBase {
@@ -118,6 +125,7 @@ export type ZodIssueOptionalMessage =
   | ZodTooBigIssue
   | ZodInvalidIntersectionTypesIssue
   | ZodNotMultipleOfIssue
+  | ZodInvalidFileType
   | ZodCustomIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & { message: string };
@@ -355,6 +363,11 @@ export const defaultErrorMap = (
       break;
     case ZodIssueCode.not_multiple_of:
       message = `Number must be a multiple of ${issue.multipleOf}`;
+      break;
+    case ZodIssueCode.invalid_file_type:
+      message = `The file type should be ${issue.expected.join(
+        " or "
+      )}. Received: ${issue.received}`;
       break;
     default:
       message = _ctx.defaultError;
