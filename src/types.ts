@@ -2,6 +2,7 @@ import { errorUtil } from "./helpers/errorUtil";
 import {
   addIssueToContext,
   AsyncParseReturnType,
+  DIRTY,
   getParsedType,
   INVALID,
   isAborted,
@@ -1875,23 +1876,44 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
         })
       ).then(handleResults);
     } else {
-      const optionResults = options.map((option) => {
+      let dirty: undefined | { result: DIRTY<any>; ctx: ParseContext } =
+        undefined;
+      const issues: ZodIssue[][] = [];
+      for (const option of options) {
         const childCtx: ParseContext = {
           ...ctx,
           issues: [],
           parent: null,
         };
-        return {
-          result: option._parseSync({
-            data: ctx.data,
-            path: ctx.path,
-            parent: childCtx,
-          }),
-          ctx: childCtx,
-        };
+        const result = option._parseSync({
+          data: ctx.data,
+          path: ctx.path,
+          parent: childCtx,
+        });
+
+        if (result.status === "valid") {
+          return result;
+        } else if (result.status === "dirty" && !dirty) {
+          dirty = { result, ctx: childCtx };
+        }
+
+        if (childCtx.issues.length) {
+          issues.push(childCtx.issues);
+        }
+      }
+
+      if (dirty) {
+        ctx.issues.push(...dirty.ctx.issues);
+        return dirty.result;
+      }
+
+      const unionErrors = issues.map((issues) => new ZodError(issues));
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_union,
+        unionErrors,
       });
 
-      return handleResults(optionResults);
+      return INVALID;
     }
   }
 
