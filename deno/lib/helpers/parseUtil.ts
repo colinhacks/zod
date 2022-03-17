@@ -32,51 +32,34 @@ export const ZodParsedType = util.arrayToEnum([
 
 export type ZodParsedType = keyof typeof ZodParsedType;
 
-function cacheAndReturn(
-  data: any,
-  parsedType: ZodParsedType,
-  cache?: Map<any, ZodParsedType>
-) {
-  if (cache) cache.set(data, parsedType);
-  return parsedType;
-}
-
-export const getParsedType = (
-  data: any,
-  cache?: Map<any, ZodParsedType>
-): ZodParsedType => {
-  if (cache && cache.has(data)) return cache.get(data)!;
+export const getParsedType = (data: any): ZodParsedType => {
   const t = typeof data;
 
   switch (t) {
     case "undefined":
-      return cacheAndReturn(data, ZodParsedType.undefined, cache);
+      return ZodParsedType.undefined;
 
     case "string":
-      return cacheAndReturn(data, ZodParsedType.string, cache);
+      return ZodParsedType.string;
 
     case "number":
-      return cacheAndReturn(
-        data,
-        isNaN(data) ? ZodParsedType.nan : ZodParsedType.number,
-        cache
-      );
+      return isNaN(data) ? ZodParsedType.nan : ZodParsedType.number;
 
     case "boolean":
-      return cacheAndReturn(data, ZodParsedType.boolean, cache);
+      return ZodParsedType.boolean;
 
     case "function":
-      return cacheAndReturn(data, ZodParsedType.function, cache);
+      return ZodParsedType.function;
 
     case "bigint":
-      return cacheAndReturn(data, ZodParsedType.bigint, cache);
+      return ZodParsedType.bigint;
 
     case "object":
       if (Array.isArray(data)) {
-        return cacheAndReturn(data, ZodParsedType.array, cache);
+        return ZodParsedType.array;
       }
       if (data === null) {
-        return cacheAndReturn(data, ZodParsedType.null, cache);
+        return ZodParsedType.null;
       }
       if (
         data.then &&
@@ -84,21 +67,21 @@ export const getParsedType = (
         data.catch &&
         typeof data.catch === "function"
       ) {
-        return cacheAndReturn(data, ZodParsedType.promise, cache);
+        return ZodParsedType.promise;
       }
       if (typeof Map !== "undefined" && data instanceof Map) {
-        return cacheAndReturn(data, ZodParsedType.map, cache);
+        return ZodParsedType.map;
       }
       if (typeof Set !== "undefined" && data instanceof Set) {
-        return cacheAndReturn(data, ZodParsedType.set, cache);
+        return ZodParsedType.set;
       }
       if (typeof Date !== "undefined" && data instanceof Date) {
-        return cacheAndReturn(data, ZodParsedType.date, cache);
+        return ZodParsedType.date;
       }
-      return cacheAndReturn(data, ZodParsedType.object, cache);
+      return ZodParsedType.object;
 
     default:
-      return cacheAndReturn(data, ZodParsedType.unknown, cache);
+      return ZodParsedType.unknown;
   }
 };
 
@@ -148,7 +131,6 @@ export interface ParseContext {
   readonly contextualErrorMap?: ZodErrorMap;
   readonly async: boolean;
   readonly parent: ParseContext | null;
-  readonly typeCache: Map<any, ZodParsedType> | undefined;
   readonly data: any;
   readonly parsedType: ZodParsedType;
 }
