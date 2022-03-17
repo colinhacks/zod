@@ -151,7 +151,10 @@ export abstract class ZodType<
     return {
       status: new ParseStatus(),
       ctx: {
-        ...input.parent,
+        issues: input.parent.issues,
+        contextualErrorMap: input.parent.contextualErrorMap,
+        async: input.parent.async,
+        typeCache: input.parent.typeCache,
         data: input.data,
         parsedType: getParsedType(input.data, input.parent.typeCache),
         schemaErrorMap: this._def.errorMap,
@@ -220,7 +223,15 @@ export abstract class ZodType<
       contextualErrorMap: params?.errorMap,
       schemaErrorMap: this._def.errorMap,
       async: true,
-      typeCache: typeof Map !== "undefined" ? new Map() : undefined,
+      typeCache:
+        typeof Map !== "undefined"
+          ? new Map([
+              [true, ZodParsedType.boolean],
+              [false, ZodParsedType.boolean],
+              [null, ZodParsedType.null],
+              [undefined, ZodParsedType.undefined],
+            ])
+          : undefined,
       parent: null,
       data,
       parsedType: getParsedType(data),

@@ -50,7 +50,7 @@ export const getParsedType = (
 
   switch (t) {
     case "undefined":
-      return cacheAndReturn(data, ZodParsedType.undefined, cache);
+      return ZodParsedType.undefined;
 
     case "string":
       return cacheAndReturn(data, ZodParsedType.string, cache);
@@ -63,7 +63,7 @@ export const getParsedType = (
       );
 
     case "boolean":
-      return cacheAndReturn(data, ZodParsedType.boolean, cache);
+      return ZodParsedType.boolean;
 
     case "function":
       return cacheAndReturn(data, ZodParsedType.function, cache);
@@ -76,7 +76,7 @@ export const getParsedType = (
         return cacheAndReturn(data, ZodParsedType.array, cache);
       }
       if (data === null) {
-        return cacheAndReturn(data, ZodParsedType.null, cache);
+        return ZodParsedType.null;
       }
       if (
         data.then &&
