@@ -3551,6 +3551,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodArray<any, any>
   | ZodObject<any, any, any, any, any>
   | ZodUnion<any>
+  | ZodDiscriminatedUnion<any, any, any>
   | ZodIntersection<any, any>
   | ZodTuple<any, any>
   | ZodRecord<any, any>
