@@ -1,6 +1,6 @@
 # .github/release.yml
 
-name: Release
+name: release
 on:
   push:
     branches:

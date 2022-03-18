@@ -1,4 +1,4 @@
-name: Fix, Format, Regenerate
+name: fix
 
 on:
   push:
