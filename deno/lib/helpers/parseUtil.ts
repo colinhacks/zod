@@ -4,8 +4,8 @@ import {
   overrideErrorMap,
   ZodErrorMap,
   ZodIssue,
-} from "../ZodError";
-import { util } from "./util";
+} from "../ZodError.ts";
+import { util } from "./util.ts";
 
 export const ZodParsedType = util.arrayToEnum([
   "string",

@@ -1,4 +1,4 @@
-import { errorUtil } from "./helpers/errorUtil";
+import { errorUtil } from "./helpers/errorUtil.ts";
 import {
   addIssueToContext,
   AsyncParseReturnType,
@@ -17,10 +17,10 @@ import {
   ParseStatus,
   SyncParseReturnType,
   ZodParsedType,
-} from "./helpers/parseUtil";
-import { partialUtil } from "./helpers/partialUtil";
-import { Primitive } from "./helpers/typeAliases";
-import { util } from "./helpers/util";
+} from "./helpers/parseUtil.ts";
+import { partialUtil } from "./helpers/partialUtil.ts";
+import { Primitive } from "./helpers/typeAliases.ts";
+import { util } from "./helpers/util.ts";
 import {
   defaultErrorMap,
   IssueData,
@@ -31,7 +31,7 @@ import {
   ZodErrorMap,
   ZodIssue,
   ZodIssueCode,
-} from "./ZodError";
+} from "./ZodError.ts";
 
 ///////////////////////////////////////
 ///////////////////////////////////////
