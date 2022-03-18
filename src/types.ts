@@ -3421,12 +3421,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
     if (parsedType === ZodParsedType.undefined) {
       return OK(undefined);
     }
-    const { ctx } = this._processInputParams(input);
-    return this._def.innerType._parse({
-      data: ctx.data,
-      path: ctx.path,
-      parent: ctx,
-    });
+    return this._def.innerType._parse(input);
   }
 
   unwrap() {
@@ -3470,12 +3465,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     if (parsedType === ZodParsedType.null) {
       return OK(null);
     }
-    const { ctx } = this._processInputParams(input);
-    return this._def.innerType._parse({
-      data: ctx.data,
-      path: ctx.path,
-      parent: ctx,
-    });
+    return this._def.innerType._parse(input);
   }
 
   unwrap() {
