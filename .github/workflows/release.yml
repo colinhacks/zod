@@ -33,7 +33,7 @@ jobs:
         uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
-          dry-run: true
+          dry-run: false
 
       - name: If Publish
         if: steps.publish.outputs.type != 'none'
@@ -77,5 +77,5 @@ jobs:
           release_name: v${{ steps.publish.outputs.version }}
           commitish: ${{ github.ref }}
           body: ${{steps.github_release.outputs.changelog}}
-          draft: true
+          draft: false
           prerelease: false
