@@ -125,13 +125,6 @@ export type ParsePath = ParsePathComponent[];
 export const EMPTY_PATH: ParsePath = [];
 
 export interface ParseContext {
-<<<<<<< HEAD
-  readonly path: ParsePath;
-  readonly issues: ZodIssue[];
-  readonly schemaErrorMap?: ZodErrorMap;
-  readonly contextualErrorMap?: ZodErrorMap;
-  readonly async: boolean;
-=======
   readonly common: {
     readonly issues: ZodIssue[];
     readonly contextualErrorMap?: ZodErrorMap;
@@ -140,7 +133,6 @@ export interface ParseContext {
   };
   readonly path: ParsePath;
   readonly schemaErrorMap?: ZodErrorMap;
->>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
   readonly parent: ParseContext | null;
   readonly data: any;
   readonly parsedType: ZodParsedType;
@@ -161,21 +153,13 @@ export function addIssueToContext(
     data: ctx.data,
     path: ctx.path,
     errorMaps: [
-<<<<<<< HEAD
-      ctx.contextualErrorMap, // contextual error map is first priority
-=======
       ctx.common.contextualErrorMap, // contextual error map is first priority
->>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       ctx.schemaErrorMap, // then schema-bound map if available
       overrideErrorMap, // then global override map
       defaultErrorMap, // then global default map
     ].filter((x) => !!x) as ZodErrorMap[],
   });
-<<<<<<< HEAD
-  ctx.issues.push(issue);
-=======
   ctx.common.issues.push(issue);
->>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
 }
 
 export type ObjectPair = {
