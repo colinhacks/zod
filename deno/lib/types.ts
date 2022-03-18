@@ -2,7 +2,10 @@ import { errorUtil } from "./helpers/errorUtil.ts";
 import {
   addIssueToContext,
   AsyncParseReturnType,
+<<<<<<< HEAD
   DIRTY,
+=======
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
   getParsedType,
   INVALID,
   isAborted,
@@ -85,10 +88,17 @@ const handleResult = <Input, Output>(
   if (isValid(result)) {
     return { success: true, data: result.value };
   } else {
+<<<<<<< HEAD
     if (!ctx.issues.length) {
       throw new Error("Validation failed but no issues detected.");
     }
     const error = new ZodError(ctx.issues);
+=======
+    if (!ctx.common.issues.length) {
+      throw new Error("Validation failed but no issues detected.");
+    }
+    const error = new ZodError(ctx.common.issues);
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
     return { success: false, error };
   }
 };
@@ -155,9 +165,17 @@ export abstract class ZodType<
   ): ParseContext {
     return (
       ctx || {
+<<<<<<< HEAD
         ...input.parent,
         data: input.data,
         parsedType: getParsedType(input.data),
+=======
+        common: input.parent.common,
+        data: input.data,
+
+        parsedType: getParsedType(input.data),
+
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
         schemaErrorMap: this._def.errorMap,
         path: input.path,
         parent: input.parent,
@@ -172,9 +190,17 @@ export abstract class ZodType<
     return {
       status: new ParseStatus(),
       ctx: {
+<<<<<<< HEAD
         ...input.parent,
         data: input.data,
         parsedType: getParsedType(input.data),
+=======
+        common: input.parent.common,
+        data: input.data,
+
+        parsedType: getParsedType(input.data),
+
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
         schemaErrorMap: this._def.errorMap,
         path: input.path,
         parent: input.parent,
@@ -207,11 +233,22 @@ export abstract class ZodType<
     params?: Partial<ParseParams>
   ): SafeParseReturnType<Input, Output> {
     const ctx: ParseContext = {
+<<<<<<< HEAD
       path: params?.path || [],
       issues: [],
       contextualErrorMap: params?.errorMap,
       schemaErrorMap: this._def.errorMap,
       async: params?.async ?? false,
+=======
+      common: {
+        issues: [],
+        async: params?.async ?? false,
+        typeCache: typeof Map !== "undefined" ? new Map() : undefined,
+        contextualErrorMap: params?.errorMap,
+      },
+      path: params?.path || [],
+      schemaErrorMap: this._def.errorMap,
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       parent: null,
       data,
       parsedType: getParsedType(data),
@@ -235,11 +272,22 @@ export abstract class ZodType<
     params?: Partial<ParseParams>
   ): Promise<SafeParseReturnType<Input, Output>> {
     const ctx: ParseContext = {
+<<<<<<< HEAD
       path: params?.path || [],
       issues: [],
       contextualErrorMap: params?.errorMap,
       schemaErrorMap: this._def.errorMap,
       async: true,
+=======
+      common: {
+        issues: [],
+        contextualErrorMap: params?.errorMap,
+        async: true,
+        typeCache: typeof Map !== "undefined" ? new Map() : undefined,
+      },
+      path: params?.path || [],
+      schemaErrorMap: this._def.errorMap,
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       parent: null,
       data,
       parsedType: getParsedType(data),
@@ -1280,7 +1328,11 @@ export class ZodArray<
       }
     }
 
+<<<<<<< HEAD
     if (ctx.async) {
+=======
+    if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       return Promise.all(
         (ctx.data as any[]).map((item, i) => {
           return def.type._parseAsync({
@@ -1593,7 +1645,11 @@ export class ZodObject<
       }
     }
 
+<<<<<<< HEAD
     if (ctx.async) {
+=======
+    if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       return Promise.resolve()
         .then(async () => {
           const syncPairs: any[] = [];
@@ -1888,16 +1944,25 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
         if (result.result.status === "dirty") {
           // add issues from dirty option
 
+<<<<<<< HEAD
           ctx.issues.push(...result.ctx.issues);
+=======
+          ctx.common.issues.push(...result.ctx.common.issues);
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
           return result.result;
         }
       }
 
       // return invalid
       const unionErrors = results.map(
+<<<<<<< HEAD
         (result) => new ZodError(result.ctx.issues)
       );
 
+=======
+        (result) => new ZodError(result.ctx.common.issues)
+      );
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union,
         unionErrors,
@@ -1905,12 +1970,23 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       return INVALID;
     }
 
+<<<<<<< HEAD
     if (ctx.async) {
+=======
+    if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       return Promise.all(
         options.map(async (option) => {
           const childCtx: ParseContext = {
             ...ctx,
+<<<<<<< HEAD
             issues: [],
+=======
+            common: {
+              ...ctx.common,
+              issues: [],
+            },
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
             parent: null,
           };
           return {
@@ -1924,6 +2000,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
         })
       ).then(handleResults);
     } else {
+<<<<<<< HEAD
       let dirty: undefined | { result: DIRTY<any>; ctx: ParseContext } =
         undefined;
       const issues: ZodIssue[][] = [];
@@ -1962,6 +2039,28 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       });
 
       return INVALID;
+=======
+      const optionResults = options.map((option) => {
+        const childCtx: ParseContext = {
+          ...ctx,
+          common: {
+            ...ctx.common,
+            issues: [],
+          },
+          parent: null,
+        };
+        return {
+          result: option._parseSync({
+            data: ctx.data,
+            path: ctx.path,
+            parent: childCtx,
+          }),
+          ctx: childCtx,
+        };
+      });
+
+      return handleResults(optionResults);
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
     }
   }
 
@@ -2044,7 +2143,11 @@ export class ZodDiscriminatedUnion<
       return INVALID;
     }
 
+<<<<<<< HEAD
     if (ctx.async) {
+=======
+    if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       return option._parseAsync({
         data: ctx.data,
         path: ctx.path,
@@ -2229,7 +2332,11 @@ export class ZodIntersection<
       return { status: status.value, value: merged.data as any };
     };
 
+<<<<<<< HEAD
     if (ctx.async) {
+=======
+    if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       return Promise.all([
         this._def.left._parseAsync({
           data: ctx.data,
@@ -2364,7 +2471,11 @@ export class ZodTuple<
       })
       .filter((x) => !!x); // filter nulls
 
+<<<<<<< HEAD
     if (ctx.async) {
+=======
+    if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       return Promise.all(items).then((results) => {
         return ParseStatus.mergeArray(status, results);
       });
@@ -2469,7 +2580,11 @@ export class ZodRecord<
       });
     }
 
+<<<<<<< HEAD
     if (ctx.async) {
+=======
+    if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       return ParseStatus.mergeObjectAsync(status, pairs);
     } else {
       return ParseStatus.mergeObjectSync(status, pairs as any);
@@ -2563,7 +2678,11 @@ export class ZodMap<
       }
     );
 
+<<<<<<< HEAD
     if (ctx.async) {
+=======
+    if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       const finalMap = new Map();
       return Promise.resolve().then(async () => {
         for (const pair of pairs) {
@@ -2689,7 +2808,11 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
       valueType._parse({ data: item, path: [...ctx.path, i], parent: ctx })
     );
 
+<<<<<<< HEAD
     if (ctx.async) {
+=======
+    if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       return Promise.all(elements).then((elements) => finalizeSet(elements));
     } else {
       return finalizeSet(elements as SyncParseReturnType[]);
@@ -2786,7 +2909,11 @@ export class ZodFunction<
         data: args,
         path: ctx.path,
         errorMaps: [
+<<<<<<< HEAD
           ctx.contextualErrorMap,
+=======
+          ctx.common.contextualErrorMap,
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
           ctx.schemaErrorMap,
           overrideErrorMap,
           defaultErrorMap,
@@ -2803,7 +2930,11 @@ export class ZodFunction<
         data: returns,
         path: ctx.path,
         errorMaps: [
+<<<<<<< HEAD
           ctx.contextualErrorMap,
+=======
+          ctx.common.contextualErrorMap,
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
           ctx.schemaErrorMap,
           overrideErrorMap,
           defaultErrorMap,
@@ -2815,7 +2946,11 @@ export class ZodFunction<
       });
     }
 
+<<<<<<< HEAD
     const params = { errorMap: ctx.contextualErrorMap };
+=======
+    const params = { errorMap: ctx.common.contextualErrorMap };
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
     const fn = ctx.data;
 
     if (this._def.returns instanceof ZodPromise) {
@@ -3147,7 +3282,14 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
+<<<<<<< HEAD
     if (ctx.parsedType !== ZodParsedType.promise && ctx.async === false) {
+=======
+    if (
+      ctx.parsedType !== ZodParsedType.promise &&
+      ctx.common.async === false
+    ) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.promise,
@@ -3165,7 +3307,11 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
       promisified.then((data: any) => {
         return this._def.type.parseAsync(data, {
           path: ctx.path,
+<<<<<<< HEAD
           errorMap: ctx.contextualErrorMap,
+=======
+          errorMap: ctx.common.contextualErrorMap,
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
         });
       })
     );
@@ -3235,7 +3381,11 @@ export class ZodEffects<
     if (effect.type === "preprocess") {
       const processed = effect.transform(ctx.data);
 
+<<<<<<< HEAD
       if (ctx.async) {
+=======
+      if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
         return Promise.resolve(processed).then((processed) => {
           return this._def.schema._parseAsync({
             data: processed,
@@ -3274,7 +3424,11 @@ export class ZodEffects<
         // effect: RefinementEffect<any>
       ): any => {
         const result = effect.refinement(acc, checkCtx);
+<<<<<<< HEAD
         if (ctx.async) {
+=======
+        if (ctx.common.async) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
           return Promise.resolve(result);
         }
         if (result instanceof Promise) {
@@ -3285,7 +3439,11 @@ export class ZodEffects<
         return acc;
       };
 
+<<<<<<< HEAD
       if (ctx.async === false) {
+=======
+      if (ctx.common.async === false) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
         const inner = this._def.schema._parseSync({
           data: ctx.data,
           path: ctx.path,
@@ -3312,7 +3470,11 @@ export class ZodEffects<
     }
 
     if (effect.type === "transform") {
+<<<<<<< HEAD
       if (ctx.async === false) {
+=======
+      if (ctx.common.async === false) {
+>>>>>>> 4404b27 (Consolidate common elements of ctx. Remove spreads.)
         const base = this._def.schema._parseSync({
           data: ctx.data,
           path: ctx.path,
