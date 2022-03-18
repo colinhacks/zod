@@ -1850,6 +1850,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       const unionErrors = results.map(
         (result) => new ZodError(result.ctx.issues)
       );
+
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union,
         unionErrors,
