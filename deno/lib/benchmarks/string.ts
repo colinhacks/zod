@@ -16,6 +16,8 @@ const manual = (str: unknown) => {
   return str;
 };
 const stringSchema = z.string();
+const optionalStringSchema = z.string().optional();
+const optionalNullableStringSchema = z.string().optional().nullable();
 
 suite
   .add("empty string", () => {
@@ -26,6 +28,15 @@ suite
   })
   .add("long string", () => {
     stringSchema.parse(long);
+  })
+  .add("optional string", () => {
+    optionalStringSchema.parse(long);
+  })
+  .add("nullable string", () => {
+    optionalNullableStringSchema.parse(long);
+  })
+  .add("nullable (null) string", () => {
+    optionalNullableStringSchema.parse(null);
   })
   .add("invalid: null", () => {
     try {
