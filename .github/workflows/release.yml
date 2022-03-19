@@ -47,7 +47,7 @@ jobs:
         if: steps.publish.outputs.type == 'none'
         run: |
           echo "Version in package.json has not changed. Skipping."
-          exit 1
+          exit 0
 
       - name: Configure changelog
         if: steps.publish.outputs.type != 'none'
