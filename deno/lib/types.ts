@@ -375,6 +375,7 @@ export abstract class ZodType<
 
   optional(): ZodOptional<this> {
     ("");
+    ("asdf");
     return ZodOptional.create(this) as any;
   }
   nullable(): ZodNullable<this> {
