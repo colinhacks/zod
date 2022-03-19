@@ -51,7 +51,7 @@ _Every_ ZodIssue has these fields:
 | ZodIssueCode.invalid_date        | _no additional properties_                                                                                                                                                                                                                                                                                                                                           |
 | ZodIssueCode.invalid_string      | `validation: "url" \| "email" \| "uuid"`<br> Which built-in string validator failed                                                                                                                                                                                                                                                                                  |
 | ZodIssueCode.too_small           | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `minimum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the minimum is included in the range of acceptable values.<br>                                                                                                                   |
-| ZodIssueCode.too_big             | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `maximum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the maximum is included in the range of acceptable values.<br>                                                                                                                          |
+| ZodIssueCode.too_big             | `type: "string" \| "number" \| "array"` <br>The type of the data failing validation<br><br> `maximum: number` <br>The expected length/value.<br><br>`inclusive: boolean`<br>Whether the maximum is included in the range of acceptable values.<br>                                                                                                                   |
 | ZodIssueCode.not_multiple_of     | `multipleOf: number` <br>The value the number should be a multiple of.<br>                                                                                                                                                                                                                                                                                           |
 | ZodIssueCode.custom              | `params: { [k: string]: any }` <br> This is the error code throw by refinements (unless you are using `superRefine` in which case it's possible to throw issues of any `code`). You are able to pass in a `params` object here that is available in your custom error maps (see [ZodErrorMap](#Customizing-errors-with-ZodErrorMap) below for details on error maps) |
 
@@ -392,7 +392,10 @@ type FormDataErrors = z.inferFlattenedErrors<typeof FormData>;
 By default all error types are assumed to be `string`. If you're using a mapping function to transform `ZodIssue`s, you can provide the error type to `z.inferFlattenedErrors`.
 
 ```ts
-type FormDataErrors = z.inferFlattenedErrors<typeof FormData, { message: string, errorCode: string }>;
+type FormDataErrors = z.inferFlattenedErrors<
+  typeof FormData,
+  { message: string; errorCode: string }
+>;
 
 /*
   formErrors: { message: string, errorCode: string }[],
@@ -407,21 +410,24 @@ const result = FormData.safeParse({
   email: "not email",
   password: "tooshort",
   confirm: "nomatch",
-})
+});
 
 if (!result.success) {
   let bad: FormDataErrors = err.flatten(); // Type error: Type 'string' is not assignable to type '{ message: string; }'.
-  let good: FormDataErrors = err.flatten(i => ({
+  let good: FormDataErrors = err.flatten((i) => ({
     message: i.message,
-    errorCode: i.code
-  }))
+    errorCode: i.code,
+  }));
 }
 ```
 
 Additionally, you can use `z.inferFormErrors` as a convienience for `z.inferFlattenedErrors<T, string>` in combination with `formErrors`.
 
 ```ts
-type FormDataErrors = z.inferFormErrors<typeof FormData, { message: string, errorCode: string }>;
+type FormDataErrors = z.inferFormErrors<
+  typeof FormData,
+  { message: string; errorCode: string }
+>;
 
 let formErrors: FormDataErrors = result.error.formErrors;
 ```

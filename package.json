@@ -43,7 +43,7 @@
   ],
   "scripts": {
     "prettier:check": "prettier --check src/**/*.ts deno/lib/**/*.ts --no-error-on-unmatched-pattern",
-    "prettier:fix": "prettier --write src/**/*.ts deno/lib/**/*.ts --no-error-on-unmatched-pattern",
+    "prettier:fix": "prettier --write src/**/*.ts deno/lib/**/*.ts --ignore-unknown --no-error-on-unmatched-pattern",
     "lint:check": "eslint --ext .ts ./src",
     "lint:fix": "eslint --fix --ext .ts ./src",
     "check": "yarn lint:check && yarn prettier:check",
@@ -96,7 +96,7 @@
   "lint-staged": {
     "src/*.ts": [
       "eslint --cache --fix",
-      "prettier --ignore-unknown --write"
+      "prettier --ignore-unknown --debug --loglevel debug --write"
     ]
   }
 }

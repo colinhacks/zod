@@ -21,12 +21,12 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16
-      
+
       - name: Install dependencies
         run: |
           yarn install
-      
-      - name: Build 
+
+      - name: Build
         run: |
           yarn clean
           yarn build
