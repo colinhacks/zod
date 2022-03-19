@@ -6,8 +6,8 @@ on:
     branches:
       - "master"
       - "ci"
-    paths:
-      - package.json
+    # paths:
+    #   - package.json
 
 jobs:
   build_and_publish:
@@ -22,40 +22,51 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16
-
-      - name: Install deps and build
+      
+      - name: Install dependencies
         run: |
           yarn install
+      
+      - name: Build, lint, format
+        run: |
+          yarn clean
+          yarn lint:fix
+          yarn prettier:fix
           yarn build
 
-      - id: publish
+      - name: Commit and push
+        run: |
+          git add .
+          git config --global user.name 'ZodBot'
+          git config --global user.email 'bot@zodlabs.com'
+          git commit -am "chore: Format, lint, build Deno"
+          git push
+
+      - id: Publish to NPM
         name: Publish to NPM
         uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
-          dry-run: false
+          dry-run: true
 
-      - name: If Publish
+      - name: Post-publish
         if: steps.publish.outputs.type != 'none'
         run: |
           echo "Published ${{ steps.publish.outputs.type }} version: ${{ steps.publish.outputs.version }}"
 
-      - name: If Version Unchanged
+      - name: Publish skipped
         if: steps.publish.outputs.type == 'none'
         run: |
           echo "Version in package.json has not changed. Skipping."
 
-      - name: Write Changelog Config
+      - name: Configure changelog
         run: |
           echo '{"categories": [], "template": "## Commits:\n\n${{ '${{UNCATEGORIZED}}' }}", "pr_template": ${{ '"- ${{MERGE_SHA}} ${{TITLE}}"' }} }' > changelog_config.json
           cat changelog_config.json
-
-      - name: Changelog Vars
-        run: |
           echo "last_tag=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
           echo "curr_commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-      - name: Build Changelog
+      - name: Generate changelog
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v2.9.0
         env:
@@ -66,7 +77,7 @@ jobs:
           commitMode: true
           configuration: changelog_config.json
 
-      - name: Create Release
+      - name: Create release
         if: steps.publish.outputs.type != 'none'
         id: create_release
         uses: actions/create-release@latest
@@ -77,5 +88,5 @@ jobs:
           release_name: v${{ steps.publish.outputs.version }}
           commitish: ${{ github.ref }}
           body: ${{steps.github_release.outputs.changelog}}
-          draft: false
+          draft: true
           prerelease: false
