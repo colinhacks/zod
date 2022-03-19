@@ -62,5 +62,5 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: yarn install
-      - run: yarn check:format
-      - run: yarn check:lint
+      - run: yarn prettier:check
+      - run: yarn lint:check
