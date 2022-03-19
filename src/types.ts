@@ -265,12 +265,6 @@ export abstract class ZodType<
   /** Alias of safeParseAsync */
   spa = this.safeParseAsync;
 
-  /** The .is method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
-  is!: never;
-
-  /** The .check method has been removed in Zod 3. For details see https://github.com/colinhacks/zod/tree/v3. */
-  check!: never;
-
   refine<RefinedOutput extends Output>(
     check: (arg: Output) => arg is RefinedOutput,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
@@ -375,11 +369,13 @@ export abstract class ZodType<
     this.transform = this.transform.bind(this);
     this.default = this.default.bind(this);
     this.describe = this.describe.bind(this);
-    this.isOptional = this.isOptional.bind(this);
     this.isNullable = this.isNullable.bind(this);
+    this.isOptional = this.isOptional.bind(this);
   }
 
   optional(): ZodOptional<this> {
+    ("");
+    ("asdf");
     return ZodOptional.create(this) as any;
   }
   nullable(): ZodNullable<this> {

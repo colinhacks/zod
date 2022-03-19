@@ -5,7 +5,7 @@
     // "outDir": "./lib/esm",
     "declaration": false,
     "declarationMap": false,
-    "sourceMap": false,
+    "sourceMap": false
   },
   "exclude": [
     "./src/**/__tests__",

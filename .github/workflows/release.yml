@@ -5,9 +5,8 @@ on:
   push:
     branches:
       - "master"
-      # - "ci"
-    # paths:
-    #   - package.json
+    paths:
+      - package.json
 
 jobs:
   build_and_publish:
@@ -22,25 +21,15 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16
-      
+
       - name: Install dependencies
         run: |
           yarn install
-      
-      - name: Build, lint, format
+
+      - name: Build
         run: |
           yarn clean
-          yarn lint:fix
-          yarn prettier:fix
           yarn build
-
-      - name: Commit and push
-        run: |
-          git add .
-          git config --global user.name 'ZodBot'
-          git config --global user.email 'bot@zodlabs.com'
-          git commit -am "chore: Format, lint, build Deno"
-          git push
 
       - id: publish
         name: Publish to NPM

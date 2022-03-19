@@ -43,7 +43,7 @@
   ],
   "scripts": {
     "prettier:check": "prettier --check src/**/*.ts deno/lib/**/*.ts --no-error-on-unmatched-pattern",
-    "prettier:fix": "prettier --write src/**/*.ts deno/lib/**/*.ts --no-error-on-unmatched-pattern",
+    "prettier:fix": "prettier --write src/**/*.ts deno/lib/**/*.ts --ignore-unknown --no-error-on-unmatched-pattern",
     "lint:check": "eslint --ext .ts ./src",
     "lint:fix": "eslint --fix --ext .ts ./src",
     "check": "yarn lint:check && yarn prettier:check",
@@ -61,47 +61,41 @@
     "prepublishOnly": "npm run test && npm run build && npm run build:deno",
     "play": "nodemon -e ts -w . -x ts-node src/playground.ts --project tsconfig.json --trace-warnings",
     "depcruise": "depcruise -c .dependency-cruiser.js src",
-    "benchmark": "ts-node src/benchmarks/index.ts"
+    "benchmark": "ts-node src/benchmarks/index.ts",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.2.0",
     "@types/benchmark": "^2.1.0",
     "@types/jest": "^26.0.17",
-    "@types/node": "^14.14.10",
+    "@types/node": "14",
     "@typescript-eslint/eslint-plugin": "^5.15.0",
     "@typescript-eslint/parser": "^5.15.0",
     "benchmark": "^2.1.4",
     "dependency-cruiser": "^9.19.0",
-    "eslint": "^7.15.0",
-    "eslint-config-prettier": "^7.1.0",
-    "eslint-plugin-ban": "^1.5.2",
-    "eslint-plugin-import": "^2.22.1",
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-ban": "^1.6.0",
+    "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-simple-import-sort": "^7.0.0",
-    "eslint-plugin-unused-imports": "^1.1.0",
-    "husky": "^4.3.4",
-    "jest": "^26.6.3",
-    "lint-staged": "^10.5.3",
+    "eslint-plugin-unused-imports": "^2.0.0",
+    "husky": "^7.0.4",
+    "jest": "^27.5.1",
+    "lint-staged": "^12.3.7",
     "make-coverage-badge": "^1.2.0",
-    "nodemon": "^2.0.2",
-    "prettier": "^2.2.1",
-    "rollup": "^2.42.1",
-    "rollup-plugin-uglify": "^6.0.4",
-    "table": "^6.8.0",
-    "ts-jest": "^26.4.4",
-    "ts-node": "^9.1.0",
+    "nodemon": "^2.0.15",
+    "prettier": "^2.6.0",
+    "pretty-quick": "^3.1.3",
+    "rollup": "^2.70.1",
+    "ts-jest": "^27.1.3",
+    "ts-node": "^10.7.0",
     "tslib": "^2.3.1",
     "typescript": "^4.6.2"
   },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged",
-      "pre-push": "lint-staged"
-    }
-  },
   "lint-staged": {
-    "*.ts": [
-      "yarn lint:fix",
-      "yarn prettier:fix"
+    "src/*.ts": [
+      "eslint --cache --fix",
+      "prettier --ignore-unknown --write"
     ]
   }
 }
