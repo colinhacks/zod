@@ -7,5 +7,8 @@
     "declarationMap": false,
     "sourceMap": false
   },
-  "exclude": ["./src/**/__tests__", "./src/playground.ts"]
+  "exclude": [
+    "./src/**/__tests__",
+    "./src/playground.ts"
+  ]
 }
