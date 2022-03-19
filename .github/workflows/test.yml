@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - "master"
-      - "ci"
   pull_request:
+    branches:
+      - master
 
 jobs:
   test-node:
