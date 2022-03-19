@@ -1,10 +1,11 @@
 {
   "name": "zod",
-  "version": "3.14.1",
+  "version": "3.14.2",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "module": "./lib/index.mjs",
+  "dependencies": {},
   "exports": {
     ".": {
       "require": "./lib/index.js",
@@ -41,12 +42,12 @@
     "inference"
   ],
   "scripts": {
-    "check:format": "prettier --check \"src/**/*.ts\" \"deno/lib/**/*.ts\"",
-    "fix:format": "prettier --write \"src/**/*.ts\" \"deno/lib/**/*.ts\"",
-    "check:lint": "eslint --ext .ts ./src",
-    "fix:lint": "eslint --fix --ext .ts ./src",
-    "check": "yarn check:lint && yarn check:format",
-    "fix": "yarn fix:lint && yarn fix:format",
+    "prettier:check": "prettier --check src/**/*.ts deno/lib/**/*.ts --no-error-on-unmatched-pattern",
+    "prettier:fix": "prettier --write src/**/*.ts deno/lib/**/*.ts --no-error-on-unmatched-pattern",
+    "lint:check": "eslint --ext .ts ./src",
+    "lint:fix": "eslint --fix --ext .ts ./src",
+    "check": "yarn lint:check && yarn prettier:check",
+    "fix": "yarn lint:fix && yarn prettier:fix",
     "clean": "rm -rf lib/* deno/lib/*",
     "build": "yarn run clean && npm run build:cjs && npm run build:esm && npm run build:deno",
     "build:deno": "node ./deno/build.mjs",
@@ -67,8 +68,8 @@
     "@types/benchmark": "^2.1.0",
     "@types/jest": "^26.0.17",
     "@types/node": "^14.14.10",
-    "@typescript-eslint/eslint-plugin": "^4.11.1",
-    "@typescript-eslint/parser": "^4.11.1",
+    "@typescript-eslint/eslint-plugin": "^5.15.0",
+    "@typescript-eslint/parser": "^5.15.0",
     "benchmark": "^2.1.4",
     "dependency-cruiser": "^9.19.0",
     "eslint": "^7.15.0",
@@ -89,18 +90,18 @@
     "ts-jest": "^26.4.4",
     "ts-node": "^9.1.0",
     "tslib": "^2.3.1",
-    "typescript": "^4.5.2"
+    "typescript": "^4.6.2"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged && yarn build:deno && git add .",
-      "pre-push": "lint-staged && yarn build && yarn test && yarn badge"
+      "pre-commit": "lint-staged",
+      "pre-push": "lint-staged"
     }
   },
   "lint-staged": {
     "*.ts": [
-      "yarn fix:lint",
-      "yarn fix:format"
+      "yarn lint:fix",
+      "yarn prettier:fix"
     ]
   }
 }

@@ -24,7 +24,6 @@ const nodeSrcRoot = join(projectRoot, "src");
 const denoLibRoot = join(projectRoot, "deno", "lib");
 
 const skipList = [join(nodeSrcRoot, "__tests__", "object-in-es5-env.test.ts")];
-console.log(skipList);
 const walkAndBuild = (/** @type string */ dir) => {
   for (const entry of readdirSync(join(nodeSrcRoot, dir), {
     withFileTypes: true,
@@ -37,7 +36,7 @@ const walkAndBuild = (/** @type string */ dir) => {
       const denoPath = join(denoLibRoot, dir, entry.name);
 
       if (skipList.includes(nodePath)) {
-        console.log(`skipping ${nodePath}`);
+        // console.log(`Skipping ${nodePath}`);
         continue;
       }
 
@@ -74,7 +73,7 @@ const walkAndBuild = (/** @type string */ dir) => {
             }
           }
 
-          console.warn(`Skipping non-resolvable import:\n  ${line}`);
+          // console.warn(`Skipping non-resolvable import:\n  ${line}`);
           return line;
         }
       );
