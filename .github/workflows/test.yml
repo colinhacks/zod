@@ -25,10 +25,6 @@ jobs:
       - run: yarn add typescript@${{ matrix.typescript }}
       - run: yarn build
       - run: yarn test
-      - uses: codecov/codecov-action@v2
-        with:
-          flags: ${{github.event.push.ref}} # optional
-          name: ${{github.event.push.ref}} # optional
 
 
   test-deno:
