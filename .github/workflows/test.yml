@@ -30,9 +30,14 @@ jobs:
     name: Test with Deno ${{ matrix.deno }}
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16
       - uses: denolib/setup-deno@v2
         with:
           deno-version: ${{ matrix.deno }}
+      - run: yarn install
+      - run: yarn build:deno
       - run: deno --version
       - run: deno test
         working-directory: ./deno/lib
