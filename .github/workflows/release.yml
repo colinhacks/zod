@@ -58,8 +58,10 @@ jobs:
         if: steps.publish.outputs.type == 'none'
         run: |
           echo "Version in package.json has not changed. Skipping."
+          exit 1
 
       - name: Configure changelog
+        if: steps.publish.outputs.type != 'none'
         run: |
           echo '{"categories": [], "template": "## Commits:\n\n${{ '${{UNCATEGORIZED}}' }}", "pr_template": ${{ '"- ${{MERGE_SHA}} ${{TITLE}}"' }} }' > changelog_config.json
           cat changelog_config.json
@@ -67,6 +69,7 @@ jobs:
           echo "curr_commit=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
       - name: Generate changelog
+        if: steps.publish.outputs.type != 'none'
         id: github_release
         uses: mikepenz/release-changelog-builder-action@v2.9.0
         env:
