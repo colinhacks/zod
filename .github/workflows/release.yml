@@ -42,7 +42,7 @@ jobs:
           git commit -am "chore: Format, lint, build Deno"
           git push
 
-      - id: Publish to NPM
+      - id: publish
         name: Publish to NPM
         uses: JS-DevTools/npm-publish@v1
         with:
