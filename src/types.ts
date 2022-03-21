@@ -2570,16 +2570,12 @@ export class ZodMap<
     const pairs = [...(ctx.data as Map<unknown, unknown>).entries()].map(
       ([key, value], index) => {
         return {
-          key: keyType._parse({
-            data: key,
-            path: [...ctx.path, index, "key"],
-            parent: ctx,
-          }),
-          value: valueType._parse({
-            data: value,
-            path: [...ctx.path, index, "value"],
-            parent: ctx,
-          }),
+          key: keyType._parse(
+            new ParseInputLazyPath(ctx, key, ctx.path, [index, "key"])
+          ),
+          value: valueType._parse(
+            new ParseInputLazyPath(ctx, value, ctx.path, [index, "value"])
+          ),
         };
       }
     );
