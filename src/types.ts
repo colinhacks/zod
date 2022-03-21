@@ -81,12 +81,12 @@ class ParseInputLazyPath implements ParseInput {
   parent: ParseContext;
   data: any;
   _path: ParsePath;
-  _key: string | number;
+  _key: string | number | (string | number)[];
   constructor(
     parent: ParseContext,
     value: any,
     path: ParsePath,
-    key: string | number
+    key: string | number | (string | number)[]
   ) {
     this.parent = parent;
     this.data = value;
@@ -94,7 +94,7 @@ class ParseInputLazyPath implements ParseInput {
     this._key = key;
   }
   get path() {
-    return [...this._path, this._key];
+    return this._path.concat(this._key);
   }
 }
 
