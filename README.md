@@ -242,6 +242,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema): GraphQL Code Generator plugin to generate form validation schema from your GraphQL schema
 - [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Generate Zod schemas from your Prisma schema.
 - [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod): Create Fastify type providers from Zod schemas
+- [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs
 
 ### Form integrations
 
