@@ -14,9 +14,9 @@ import {
   ParseContext,
   ParseInput,
   ParseParams,
+  ParsePath,
   ParseReturnType,
   ParseStatus,
-  ParsePath,
   SyncParseReturnType,
   ZodParsedType,
 } from "./helpers/parseUtil";
@@ -2988,8 +2988,8 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
-        expected: getParsedType(this._def.value),
-        received: ctx.parsedType,
+        expected: JSON.stringify(this._def.value),
+        received: JSON.stringify(input.data),
       });
       return INVALID;
     }

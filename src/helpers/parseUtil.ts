@@ -30,7 +30,7 @@ export const ZodParsedType = util.arrayToEnum([
   "set",
 ]);
 
-export type ZodParsedType = keyof typeof ZodParsedType;
+export type ZodParsedType = keyof typeof ZodParsedType | string;
 
 export const getParsedType = (data: any): ZodParsedType => {
   const t = typeof data;
