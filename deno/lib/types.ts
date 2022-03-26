@@ -14,9 +14,9 @@ import {
   ParseContext,
   ParseInput,
   ParseParams,
+  ParsePath,
   ParseReturnType,
   ParseStatus,
-  ParsePath,
   SyncParseReturnType,
   ZodParsedType,
 } from "./helpers/parseUtil.ts";
@@ -152,7 +152,7 @@ export type SafeParseReturnType<Input, Output> =
   | SafeParseError<Input>;
 
 export abstract class ZodType<
-  Output,
+  Output = any,
   Def extends ZodTypeDef = ZodTypeDef,
   Input = Output
 > {
