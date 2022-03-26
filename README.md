@@ -97,7 +97,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
 - [Guides and concepts](#guides-and-concepts)
   - [Type inference](#type-inference)
   - [Writing generic functions](#writing-generic-functions)
-  - [Customizing errors](#customizing-errors)
+  - [Error handling](#error-handling)
 - [Comparison](#comparison)
   - [Joi](#joi)
   - [Yup](#yup)
@@ -1739,7 +1739,7 @@ const arg = makeSchemaOptional(z.string());
 arg.unwrap();
 ```
 
-A better approach is for the generate parameter to refer to _the schema as a whole_. Here `z.ZodType`
+A better approach is for the generate parameter to refer to _the schema as a whole_.
 
 ```ts
 function makeSchemaOptional<T extends z.ZodType>(schema: T) {
@@ -1768,7 +1768,7 @@ class ZodType<
 
 By contraining these in your generic input, you can limit what schemas are allowable in your schema:
 
-```
+```ts
 function makeSchemaOptional<T extends z.ZodType<string>>(schema: T) {
   return schema.optional();
 }
@@ -1780,7 +1780,7 @@ makeSchemaOptional(z.number());
 // Error: 'ZodNumber' is not assignable to parameter of type 'ZodType<string, ZodTypeDef, string>'
 ```
 
-## Customizing errors
+## Error handling
 
 Zod provides a subclass of Error called `ZodError`. ZodErrors contain an `issues` array containing detailed information about the validation problems.
 
