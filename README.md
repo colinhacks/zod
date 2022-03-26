@@ -1766,7 +1766,7 @@ class ZodType<
 > { ... }
 ```
 
-By contraining these in your generic input, you can limit what schemas are allowable in your schema:
+By contraining these in your generic input, you can limit what schemas are allowable as inputs to your function:
 
 ```ts
 function makeSchemaOptional<T extends z.ZodType<string>>(schema: T) {
