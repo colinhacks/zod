@@ -94,8 +94,10 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [.promise](#promise)
   - [.or](#or)
   - [.and](#and)
-- [Type inference](#type-inference)
-- [Errors](#errors)
+- [Guides and concepts](#guides-and-concepts)
+  - [Type inference](#type-inference)
+  - [Writing generic functions](#writing-generic-functions)
+  - [Error handling](#error-handling)
 - [Comparison](#comparison)
   - [Joi](#joi)
   - [Yup](#yup)
@@ -1689,7 +1691,9 @@ z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: st
 z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 ```
 
-# Type inference
+# Guides and concepts
+
+## Type inference
 
 You can extract the TypeScript type of any schema with `z.infer<typeof mySchema>` .
 
@@ -1718,16 +1722,72 @@ type output = z.output<typeof stringToNumber>; // number
 type inferred = z.infer<typeof stringToNumber>; // number
 ```
 
-# Errors
+## Writing generic functions
+
+When attempting to write a functions that accepts a Zod schemas as an input, it's common to try something like this:
+
+```ts
+function makeSchemaOptional<T>(schema: z.ZodType<T>) {
+  return schema.optional();
+}
+```
+
+This approach has some issues. The `schema` variable in this function is typed as an instance of `ZodType`, which is an abstract class that all Zod schemas inherit from. This approach loses type information, namely _which subclass_ the input actually is.
+
+```ts
+const arg = makeSchemaOptional(z.string());
+arg.unwrap();
+```
+
+A better approach is for the generate parameter to refer to _the schema as a whole_.
+
+```ts
+function makeSchemaOptional<T extends z.ZodTypeAny>(schema: T) {
+  return schema.optional();
+}
+```
+
+> `ZodTypeAny` is just a shorthand for `ZodType<any, any, any>`, a type that is broad enough to match any Zod schema.
+
+As you can see, `schema` is now fully and properly typed.
+
+```ts
+const arg = makeSchemaOptional(z.string());
+arg.unwrap(); // ZodString
+```
+
+### Restricting valid schemas
+
+The `ZodType` class has three generic parameters.
+
+```ts
+class ZodType<
+  Output,
+  Def extends ZodTypeDef = ZodTypeDef,
+  Input = Output
+> { ... }
+```
+
+By contraining these in your generic input, you can limit what schemas are allowable as inputs to your function:
+
+```ts
+function makeSchemaOptional<T extends z.ZodType<string>>(schema: T) {
+  return schema.optional();
+}
+
+makeSchemaOptional(z.string());
+// works fine
+
+makeSchemaOptional(z.number());
+// Error: 'ZodNumber' is not assignable to parameter of type 'ZodType<string, ZodTypeDef, string>'
+```
+
+## Error handling
 
 Zod provides a subclass of Error called `ZodError`. ZodErrors contain an `issues` array containing detailed information about the validation problems.
 
 ```ts
-const data = z
-  .object({
-    name: z.string(),
-  })
-  .safeParse({ name: 12 });
+const data = z.object({ name: z.string() }).safeParse({ name: 12 });
 
 if (!data.success) {
   data.error.issues;
