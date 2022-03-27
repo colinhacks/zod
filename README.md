@@ -28,7 +28,7 @@
 
 These docs have been translated into [Chinese](./README_ZH.md).
 
-# Table of contents
+## Table of contents
 
 <!-- The full documentation is available both on the [official documentation site](https://zod.js.org/) (recommended) and in `README.md`.
 
@@ -107,7 +107,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-# What is Zod
+## What is Zod
 
 Zod is a TypeScript-first schema declaration and validation library. I'm using the term "schema" to broadly refer to any data type, from a simple `string` to a complex nested object.
 
@@ -123,11 +123,9 @@ Some other great aspects:
 - Functional approach: [parse, don't validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 - Works with plain JavaScript too! You don't need to use TypeScript.
 
-# Sponsorship
+## Sponsorship
 
 Sponsorship at any level is appreciated and encouraged. Zod is maintained by a solo developer ([hi!](https://twitter.com/colinhacks)). For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider the [Startup tier](https://github.com/sponsors/colinhacks). You can learn more about the tiers at [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
-
-### Sponsors
 
 <table>
   <tr>
@@ -195,7 +193,7 @@ Sponsorship at any level is appreciated and encouraged. Zod is maintained by a s
 
 _To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/colinhacks) or [Consultancy](https://github.com/sponsors/colinhacks) tier._
 
-# Installation
+## Installation
 
 To install Zod v3:
 
@@ -216,13 +214,13 @@ npm install zod
 }
 ```
 
-#### TypeScript requirements
+**TypeScript requirements**
 
 - Zod 3.x requires TypeScript 4.1+
 - Zod 2.x requires TypeScript 3.7+
 - Zod 1.x requires TypeScript 3.3+
 
-# Ecosystem
+## Ecosystem
 
 There are a growing number of tools that are built atop or support Zod natively! If you've built a tool or library on top of Zod, tell me about it [on Twitter](https://twitter.com/colinhacks) or [start a Discussion](https://github.com/colinhacks/zod/discussions). I'll add it below and tweet it out.
 
@@ -246,15 +244,15 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod): Create Fastify type providers from Zod schemas
 - [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs
 
-### Form integrations
+**Form integrations**
 
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod
 
-# Basic usage
+## Basic usage
 
-Creating a simple string schema
+Create a string schema
 
 ```ts
 import { z } from "zod";
@@ -271,7 +269,7 @@ mySchema.safeParse("tuna"); // => { success: true; data: "tuna" }
 mySchema.safeParse(12); // => { success: false; error: ZodError }
 ```
 
-Creating an object schema
+Create an object schema
 
 ```ts
 import { z } from "zod";
@@ -279,15 +277,28 @@ import { z } from "zod";
 const User = z.object({
   username: z.string(),
 });
-
-User.parse({ username: "Ludwig" });
-
-// extract the inferred type
-type User = z.infer<typeof User>;
-// { username: string }
 ```
 
-# Defining schemas
+Parse a value
+
+```ts
+User.parse({ username: "Ludwig" });
+// => { username: "Ludwig" }
+
+User.parse({ usrnm: "Ludwig" });
+// error
+```
+
+Extract an inferred type
+
+```ts
+type User = z.infer<typeof User>;
+// { username: string }
+
+const bobby: User = { username: "bobby" };
+```
+
+## <hr />
 
 ## Primitives
 
@@ -352,7 +363,7 @@ z.string().nonempty({ message: "Can't be empty" });
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
 
-#### Custom error messages
+### Custom error messages
 
 You can customize certain errors when creating a string schema.
 
@@ -586,7 +597,7 @@ const user = z.object({
 type C = z.infer<typeof user>; // { username?: string | undefined };
 ```
 
-#### `.unwrap`
+### `.unwrap`
 
 ```ts
 const stringSchema = z.string();
@@ -611,7 +622,7 @@ const E = z.string().nullable(); // equivalent to D
 type E = z.infer<typeof E>; // string | null
 ```
 
-#### `.unwrap`
+### `.unwrap`
 
 ```ts
 const stringSchema = z.string();
@@ -767,7 +778,7 @@ const deepPartialUser = user.deepPartial();
 
 > Important limitation: deep partials only work as expected in hierarchies of objects, arrays, and tuples.
 
-#### Unrecognized keys
+### Unrecognized keys
 
 By default Zod objects schemas strip out unrecognized keys during parsing.
 
@@ -935,15 +946,9 @@ For convenience, you can also use the `.or` method:
 const stringOrNumber = z.string().or(z.number());
 ```
 
-### Discriminated unions
+## Discriminated unions
 
-If the union consists of object schemas all identifiable by a common property, it is possible to use
-the `z.discriminatedUnion` method.
-
-The advantage is in more efficient evaluation and more human friendly errors. With the basic union method the input is
-tested against each of the provided "options", and in the case of invalidity, issues for all the "options" are shown in
-the zod error. On the other hand, the discriminated union allows for selecting just one of the "options", testing
-against it, and showing only the issues related to this "option".
+If the union consists of object schemas all identifiable by a common property, it is possible to use the `z.discriminatedUnion` method.
 
 ```ts
 const item = z
@@ -953,6 +958,10 @@ const item = z
   ])
   .parse({ type: "a", a: "abc" });
 ```
+
+This provides more efficient evaluation and more human-friendly errors. Using simple unions, the input is tested against each of the provided "options" in order. If all options fail validation, the returned error contains the "suberrors" thrown by each option.
+
+By contrast, the discriminated union uses the discriminator key to determine which option to testing against.
 
 ## Records
 
@@ -981,7 +990,7 @@ userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
 }; // TypeError
 ```
 
-#### A note on numerical keys
+### A note on numerical keys
 
 You may have expected `z.record()` to accept two arguments, one for the keys and one for the values. After all, TypeScript's built-in Record type does: `Record<KeyType, ValueType>` . Otherwise, how do you represent the TypeScript type `Record<number, any>` in Zod?
 
@@ -1133,7 +1142,7 @@ const Category: z.ZodType<Category> = BaseCategory.merge(
 );
 ``` -->
 
-#### JSON type
+### JSON type
 
 If you want to validate any JSON value, you can use the snippet below.
 
@@ -1150,7 +1159,7 @@ jsonSchema.parse(data);
 
 Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
 
-#### Cyclical objects
+### Cyclical objects
 
 Despite supporting recursive schemas, passing cyclical data into Zod will cause an infinite loop.
 
@@ -1295,9 +1304,11 @@ const castToString = z.preprocess((val) => String(val), z.string());
 
 This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
 
-# ZodType: methods and properties
+## <hr />
 
-All Zod schemas contain certain methods.
+## Methods
+
+All Zod schemas extend the `ZodType` base class, which provides the following methods.
 
 ### `.parse`
 
@@ -1490,7 +1501,7 @@ ZodError {
 }
 ``` -->
 
-### `.superRefine`
+## `.superRefine`
 
 The `.refine` method is actually syntactic sugar atop a more versatile (and verbose) method called `superRefine`. Here's an example:
 
@@ -1519,7 +1530,7 @@ You can add as many issues as you like. If `ctx.addIssue` is NOT called during t
 
 Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` you can create any issue of any code. Each issue code is described in detail in the Error Handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md).
 
-#### Abort early
+### Abort early
 
 By default, parsing will continue even after a refinement check fails. For instance, if you chain together multiple refinements, they will all be executed. However, it may be desirable to _abort early_ to prevent later refinements from being executed. To achieve this, pass the `fatal` flag to `ctx.addIssue`:
 
@@ -1546,6 +1557,8 @@ const Strings = z
 ```
 
 ### `.transform`
+
+`.transform<Out>((val: T) => Out)`
 
 To transform data after parsing, use the `transform` method.
 
@@ -1691,9 +1704,9 @@ z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: st
 z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 ```
 
-# Guides and concepts
+## Guides and concepts
 
-## Type inference
+### Type inference
 
 You can extract the TypeScript type of any schema with `z.infer<typeof mySchema>` .
 
@@ -1705,7 +1718,7 @@ const u: A = 12; // TypeError
 const u: A = "asdf"; // compiles
 ```
 
-#### What about transforms?
+**What about transforms?**
 
 In reality each Zod schema internally tracks **two** types: an input and an output. For most schemas (e.g. `z.string()`) these two are the same. But once you add transforms into the mix, these two values can diverge. For instance `z.string().transform(val => val.length)` has an input of `string` and an output of `number`.
 
@@ -1722,7 +1735,7 @@ type output = z.output<typeof stringToNumber>; // number
 type inferred = z.infer<typeof stringToNumber>; // number
 ```
 
-## Writing generic functions
+### Writing generic functions
 
 When attempting to write a functions that accepts a Zod schemas as an input, it's common to try something like this:
 
@@ -1756,7 +1769,7 @@ const arg = makeSchemaOptional(z.string());
 arg.unwrap(); // ZodString
 ```
 
-### Restricting valid schemas
+**Restricting valid schemas**
 
 The `ZodType` class has three generic parameters.
 
@@ -1782,7 +1795,7 @@ makeSchemaOptional(z.number());
 // Error: 'ZodNumber' is not assignable to parameter of type 'ZodType<string, ZodTypeDef, string>'
 ```
 
-## Error handling
+### Error handling
 
 Zod provides a subclass of Error called `ZodError`. ZodErrors contain an `issues` array containing detailed information about the validation problems.
 
@@ -1803,7 +1816,7 @@ if (!data.success) {
 }
 ```
 
-#### Error formatting
+**Error formatting**
 
 You can use the `.format()` method to convert this error into a nested object.
 
@@ -1816,7 +1829,7 @@ data.error.format();
 
 For detailed information about the possible error codes and how to customize error messages, check out the dedicated error handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md)
 
-# Comparison
+## Comparison
 
 There are a handful of other widely-used validation libraries, but all of them have certain design limitations that make for a non-ideal developer experience.
 
@@ -1868,13 +1881,13 @@ Branded -->
 * Missing support for parsing cyclical data (maybe)
 * Missing error customization -->
 
-#### Joi
+**`Joi`**
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
 Doesn't support static type inference 😕
 
-#### Yup
+**`Yup`**
 
 [https://github.com/jquense/yup](https://github.com/jquense/yup)
 
@@ -1892,7 +1905,7 @@ Differences
 
 <!-- ¹Yup has a strange interpretation of the word `required`. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. Instead, Yup us Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom refinement. -->
 
-#### io-ts
+**`io-ts`**
 
 [https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
 
@@ -1943,7 +1956,7 @@ This more declarative API makes schema definitions vastly more concise.
 - Missing promise schemas
 - Missing function schemas
 
-#### Runtypes
+**`Runtypes`**
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
@@ -1956,7 +1969,7 @@ Good type inference support, but limited options for object type masking (no `.p
 - Missing promise schemas
 - Missing error customization
 
-#### Ow
+**`Ow`**
 
 [https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
 
@@ -1964,6 +1977,6 @@ Ow is focused on function input validation. It's a library that makes it easy to
 
 If you want to validate function inputs, use function schemas in Zod! It's a much simpler approach that lets you reuse a function type declaration without repeating yourself (namely, copy-pasting a bunch of ow assertions at the beginning of every function). Also Zod lets you validate your return types as well, so you can be sure there won't be any unexpected data passed downstream.
 
-# Changelog
+## Changelog
 
 View the changelog at [CHANGELOG.md](CHANGELOG.md)
