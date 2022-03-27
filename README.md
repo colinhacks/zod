@@ -298,7 +298,7 @@ type User = z.infer<typeof User>;
 const bobby: User = { username: "bobby" };
 ```
 
-## <hr />
+### <hr />
 
 ## Primitives
 
@@ -1304,7 +1304,7 @@ const castToString = z.preprocess((val) => String(val), z.string());
 
 This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
 
-## <hr />
+### <hr />
 
 ## Methods
 
