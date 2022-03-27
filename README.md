@@ -46,6 +46,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [NaNs](#nans)
   - [Booleans](#booleans)
   - [Dates](#dates)
+  - [Files](#files)
   - [Zod enums](#zod-enums)
   - [Native enums](#native-enums)
   - [Optionals](#optionals)
@@ -433,25 +434,52 @@ const isActive = z.boolean({
 
 ## Dates
 
-z.date() accepts a date, not a date string
+Declare a date schema with the `z.date()` function.
 
 ```ts
 z.date().safeParse(new Date()); // success: true
 z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
 ```
 
-To allow for dates or date strings, you can use preprocess
+> This schemas validate `Date` objects, not date strings. To allow for dates or
+> date strings, you can use preprocess:
+>
+> ```ts
+> const dateSchema = z.preprocess((arg) => {
+>   if (typeof arg == "string" || arg instanceof Date) return new Date(arg);
+> }, z.date());
+> type DateSchema = z.infer<typeof dateSchema>;
+> // type DateSchema = Date
+>
+> dateSchema.safeParse(new Date("1/12/22")); // success: true
+> dateSchema.safeParse("2022-01-12T00:00:00.000Z"); // success: true
+> ```
+
+## Files [browser only]
+
+Validate `File` instances with `z.file()`.
+
+_This is only supported in browser environments! Node.js does not have a built-in `File` class. Attempting to create this schema in a Node.js or Deno environment will throw an error._
 
 ```ts
-const dateSchema = z.preprocess((arg) => {
-  if (typeof arg == "string" || arg instanceof Date) return new Date(arg);
-}, z.date());
-type DateSchema = z.infer<typeof dateSchema>;
-// type DateSchema = Date
+const fileSchema = z.file();
 
-dateSchema.safeParse(new Date("1/12/22")); // success: true
-dateSchema.safeParse("2022-01-12T00:00:00.000Z"); // success: true
+const myFile = new File(["somedata"], "myfile.txt");
+fileSchema.parse(myFile); // success
 ```
+
+You can specify an allowable size range (in bytes) and set of filetypes (MIME types).
+
+```ts
+z.date().min(1); // no empty files
+z.date().max(10e6); // max 10MB
+z.date().types(["image/png", "image/jpeg"]);
+
+// this will allow
+z.date().types(["image/png"]).types(["image/jpeg"]);
+```
+
+You can retrieve these p
 
 ## Zod enums
 

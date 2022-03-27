@@ -5,8 +5,8 @@ import * as z from "../index";
 const file = z.file();
 const max = z.file().max(4);
 const min = z.file().min(2);
-const type = z.file().type("image/png");
-const multipleTypes = z.file().type(["image/png", "image/jpeg"]);
+const type = z.file().types(["image/png"]);
+const multipleTypes = z.file().types(["image/png", "image/jpeg"]);
 
 test("passing validations", () => {
   file.parse(
@@ -85,15 +85,16 @@ test("failing validations", () => {
 test("min max getters", () => {
   expect(z.file().min(5).minSize).toEqual(5);
   expect(z.file().min(5).min(10).minSize).toEqual(10);
-
   expect(z.file().max(5).maxSize).toEqual(5);
   expect(z.file().max(5).max(1).maxSize).toEqual(1);
 });
 
 test("type getter", () => {
-  expect(z.file().type("image/png").allowedTypes).toEqual(["image/png"]);
-  expect(z.file().type(["image/png"]).allowedTypes).toEqual(["image/png"]);
+  expect(z.file().types(["image/png"]).allowedTypes).toEqual(["image/png"]);
   expect(
-    z.file().type("image/png").type(["image/gif", "image/png"]).allowedTypes
-  ).toEqual(["image/png", "image/gif"]);
+    z.file().types(["image/jpeg"]).types(["image/png"]).allowedTypes
+  ).toEqual(["image/png"]);
+  expect(
+    z.file().types(["image/png"]).types(["image/gif", "image/png"]).allowedTypes
+  ).toEqual(["image/gif", "image/png"]);
 });
