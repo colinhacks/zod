@@ -1501,7 +1501,7 @@ ZodError {
 }
 ``` -->
 
-## `.superRefine`
+### `.superRefine`
 
 The `.refine` method is actually syntactic sugar atop a more versatile (and verbose) method called `superRefine`. Here's an example:
 
