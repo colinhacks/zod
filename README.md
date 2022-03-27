@@ -475,11 +475,18 @@ z.date().min(1); // no empty files
 z.date().max(10e6); // max 10MB
 z.date().types(["image/png", "image/jpeg"]);
 
-// this will allow
+// for .types(), later calls override previous ones
+// this will only allow image/jpeg
 z.date().types(["image/png"]).types(["image/jpeg"]);
 ```
 
-You can retrieve these p
+You can retrieve these constraints with the following properties:
+
+```ts
+fileSchema.minSize; // number
+fileSchema.maxSize; // number
+fileSchema.allowedTypes; // string[]
+```
 
 ## Zod enums
 
