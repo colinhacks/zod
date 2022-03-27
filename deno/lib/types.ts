@@ -3580,25 +3580,20 @@ export class ZodNaN extends ZodType<number, ZodNaNDef> {
 type ZodFileCheck =
   | { kind: "max"; value: number; message?: string }
   | { kind: "min"; value: number; message?: string }
-  | { kind: "type"; value: string | string[]; message?: string };
+  | { kind: "type"; value: string[]; message?: string };
 
 export interface ZodFileDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodFile;
   checks: ZodFileCheck[];
 }
 
-export class ZodFile<FileConstructor extends Function> extends ZodType<
-  FileConstructor,
-  ZodFileDef
-> {
-  constructor(def: ZodFileDef, private readonly fileConstructor: Function) {
-    super(def);
-  }
-
-  _parse(input: ParseInput): ParseReturnType<FileConstructor> {
+export class ZodFile extends ZodType<File, ZodFileDef, File> {
+  _parse(input: ParseInput): ParseReturnType<File> {
     const { status, ctx } = this._processInputParams(input);
-
-    if (!(input.data instanceof this.fileConstructor)) {
+    if (typeof File === "undefined") {
+      throw new Error("z.file() is only supported in a browser environment.");
+    }
+    if (!(input.data instanceof File)) {
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.file,
@@ -3650,13 +3645,10 @@ export class ZodFile<FileConstructor extends Function> extends ZodType<
   }
 
   _addCheck(check: ZodFileCheck) {
-    return new ZodFile(
-      {
-        ...this._def,
-        checks: [...this._def.checks, check],
-      },
-      this.fileConstructor
-    );
+    return new ZodFile({
+      ...this._def,
+      checks: [...this._def.checks, check],
+    });
   }
 
   max(maxSize: number, message?: errorUtil.ErrMessage) {
@@ -3675,32 +3667,29 @@ export class ZodFile<FileConstructor extends Function> extends ZodType<
     });
   }
 
-  type(accept: string | string[], message?: errorUtil.ErrMessage) {
-    return this._addCheck({
+  types(accept: string[], message?: errorUtil.ErrMessage) {
+    return new ZodFile({
+      ...this._def,
+      // filter out pre-existing `type` checks
+      checks: [...this._def.checks.filter(ch => ch.kind !== "type"), {
       kind: "type",
       value: accept,
       ...errorUtil.errToObj(message),
+    }],
     });
+   
   }
 
-  static create = <T extends Function = typeof File>(
-    params?: RawCreateParams,
-    fileConstructor?: T
-  ): ZodFile<T> => {
-    if (typeof File === "undefined" && !fileConstructor) {
-      throw new Error(
-        "File not supported in current environment, you need to pass constructor to file()"
-      );
+  static create = (params?: RawCreateParams): ZodFile => {
+    if (typeof File === "undefined") {
+      throw new Error("z.file() is only supported in a browser environment.");
     }
 
-    return new ZodFile(
-      {
-        typeName: ZodFirstPartyTypeKind.ZodFile,
-        checks: [],
-        ...processCreateParams(params),
-      },
-      fileConstructor || File
-    );
+    return new ZodFile({
+      typeName: ZodFirstPartyTypeKind.ZodFile,
+      checks: [],
+      ...processCreateParams(params),
+    });
   };
 
   get minSize() {
@@ -3724,17 +3713,12 @@ export class ZodFile<FileConstructor extends Function> extends ZodType<
   }
 
   get allowedTypes() {
-    const types: string[] = [];
-    for (const ch of this._def.checks) {
+    for (const ch of (this._def.checks)) {
       if (ch.kind === "type") {
-        const checkTypes = Array.isArray(ch.value) ? ch.value : [ch.value];
-
-        checkTypes.forEach(
-          (value) => !types.find((type) => type === value) && types.push(value)
-        );
+        return ch.value;
       }
     }
-    return types;
+    return null; 
   }
 }
 
@@ -3818,7 +3802,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodNullable<any>
   | ZodDefault<any>
   | ZodPromise<any>
-  | ZodFile<any>;
+  | ZodFile;
 
 const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
