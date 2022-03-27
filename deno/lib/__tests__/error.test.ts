@@ -419,7 +419,9 @@ test("literal default error message", () => {
   } catch (err) {
     const zerr: z.ZodError = err as any;
     expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual("Expected string, received string");
+    expect(zerr.issues[0].message).toEqual(
+      `Invalid literal value, expected "Tuna"`
+    );
   }
 });
 
