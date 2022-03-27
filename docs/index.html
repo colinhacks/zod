@@ -24,23 +24,39 @@
         justify-content: space-between;
       "
     >
-      <a href="https://twitter.com/colinhacks"
+      <!-- <a href="https://twitter.com/colinhacks"
         ><span style="color: #888888">created by @colinhacks</span></a
-      >
-      <a href="#/">Docs</a>
-      <a href="#/screencasts">Screencasts</a>
+      > -->
     </nav>
     <div id="app"></div>
     <script>
       window.$docsify = {
-        // repo: 'docsifyjs/docsify',
-        subMaxLevel: 1,
-        coverpage: true,
-        onlyCover: true,
+        repo: "colinhacks/zod",
+        name: "Zod",
+        nameLink: "https:zod.js.org",
+        // subMaxLevel: 2,
+        // logo: "logo.svg",
+        themeColor: "#2552A8",
       };
     </script>
     <script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/prismjs@1.21.0/components/prism-typescript.min.js"></script>
+
+    <style>
+      .markdown-section {
+        max-width: 700px;
+      }
+      h2 code,
+      h3 code,
+      h4 code {
+        font-size: 75%;
+      }
+      hr {
+        height: 1px;
+        border: 0px;
+        background: #dddddd;
+        margin-right: 10px;
+      }
+    </style>
   </body>
 </html>
