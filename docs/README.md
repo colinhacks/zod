@@ -78,7 +78,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [Instanceof](#instanceof)
   - [Function schemas](#function-schemas)
   - [Preprocess](#preprocess)
-- [Schema methods](#zodtype-methods-and-properties)
+- [Common methods](#common-methods)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
   - [.safeParse](#safeparse)
@@ -1306,7 +1306,7 @@ This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that conta
 
 ### <hr />
 
-## Methods
+## Common methods
 
 All Zod schemas extend the `ZodType` base class, which provides the following methods.
 
