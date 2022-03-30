@@ -30,7 +30,7 @@ test("transform ctx.addIssue", () => {
       return data.length
     })
     .parse("asdf");
-  }).toThrow();
+  }).toThrow('asdf is not one of our allowed strings');
 });
 
 test("basic transformations", () => {

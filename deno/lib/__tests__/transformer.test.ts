@@ -31,7 +31,15 @@ test("transform ctx.addIssue", () => {
       return data.length
     })
     .parse("asdf");
-  }).toThrow();
+  }).toThrow(
+    JSON.stringify(
+      [{
+        code: 'custom',
+        message: 'asdf is not one of our allowed strings',
+        path: [],
+      }], null, 2
+    )
+  );
 });
 
 test("basic transformations", () => {
