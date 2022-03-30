@@ -236,7 +236,6 @@ export abstract class ZodType<
       common: {
         issues: [],
         async: params?.async ?? false,
-        typeCache: typeof Map !== "undefined" ? new Map() : undefined,
         contextualErrorMap: params?.errorMap,
       },
       path: params?.path || [],
@@ -268,7 +267,6 @@ export abstract class ZodType<
         issues: [],
         contextualErrorMap: params?.errorMap,
         async: true,
-        typeCache: typeof Map !== "undefined" ? new Map() : undefined,
       },
       path: params?.path || [],
       schemaErrorMap: this._def.errorMap,
