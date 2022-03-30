@@ -129,7 +129,6 @@ export interface ParseContext {
     readonly issues: ZodIssue[];
     readonly contextualErrorMap?: ZodErrorMap;
     readonly async: boolean;
-    readonly typeCache: Map<any, ZodParsedType> | undefined;
   };
   readonly path: ParsePath;
   readonly schemaErrorMap?: ZodErrorMap;
