@@ -10,6 +10,12 @@ export default [
         format: "es",
         sourcemap: false,
       },
+      {
+        file: "lib/index.umd.js",
+        name: "Zod",
+        format: "umd",
+        sourcemap: false,
+      },
     ],
     plugins: [
       typescript({
