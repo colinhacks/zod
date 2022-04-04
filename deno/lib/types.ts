@@ -1556,8 +1556,12 @@ export class ZodObject<
     const { status, ctx } = this._processInputParams(input);
 
     const { shape, keys: shapeKeys } = this._getCached();
-    const dataKeys = util.objectKeys(ctx.data);
-    const extraKeys = dataKeys.filter((k) => !shapeKeys.includes(k));
+    const extraKeys: string[] = [];
+    for (const key in ctx.data) {
+      if (!shapeKeys.includes(key)) {
+        extraKeys.push(key);
+      }
+    }
 
     const pairs: {
       key: ParseReturnType<any>;
