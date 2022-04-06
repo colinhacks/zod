@@ -3,19 +3,20 @@
   "version": "3.14.4",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "types": "./index.d.ts",
   "module": "./lib/index.mjs",
   "dependencies": {},
   "exports": {
     ".": {
       "require": "./lib/index.js",
       "import": "./lib/index.mjs",
-      "types": "./lib/index.d.ts"
+      "types": "./index.d.ts"
     },
     "./package.json": "./package.json"
   },
   "files": [
-    "/lib"
+    "/lib",
+    "/index.d.ts"
   ],
   "repository": {
     "type": "git",
@@ -49,12 +50,11 @@
     "check": "yarn lint:check && yarn prettier:check",
     "fix": "yarn lint:fix && yarn prettier:fix",
     "clean": "rm -rf lib/* deno/lib/*",
-    "build": "yarn run clean && npm run build:cjs && npm run build:esm && npm run build:deno && yarn run build:tweak-dts",
+    "build": "yarn run clean && npm run build:cjs && npm run build:esm && npm run build:deno",
     "build:deno": "node ./deno/build.mjs",
     "build:esm": "rollup --config rollup.config.js",
     "build:cjs": "tsc --p tsconfig.cjs.json",
     "build:types": "tsc --p tsconfig.types.json",
-    "build:tweak-dts": "echo 'export as namespace Zod;' >> lib/index.d.ts",
     "rollup": "rollup --config rollup.config.js",
     "test": "jest --coverage",
     "test:deno": "cd deno && deno test",
