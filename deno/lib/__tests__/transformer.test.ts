@@ -12,32 +12,32 @@ const stringToNumber = z.string().transform((arg) => parseFloat(arg));
 const asyncNumberToString = z.number().transform(async (n) => String(n));
 
 test("transform ctx.addIssue", () => {
-  const strs = [
-    'foo',
-    'bar'
-  ]
+  const strs = ["foo", "bar"];
 
   expect(() => {
-    z
-    .string()
-    .transform((data, ctx) => {
-      const i = strs.indexOf(data)
-      if (i === -1) {
-        ctx.addIssue({
-          code: 'custom',
-          message: `${data} is not one of our allowed strings`,
-        })
-      }
-      return data.length
-    })
-    .parse("asdf");
+    z.string()
+      .transform((data, ctx) => {
+        const i = strs.indexOf(data);
+        if (i === -1) {
+          ctx.addIssue({
+            code: "custom",
+            message: `${data} is not one of our allowed strings`,
+          });
+        }
+        return data.length;
+      })
+      .parse("asdf");
   }).toThrow(
     JSON.stringify(
-      [{
-        code: 'custom',
-        message: 'asdf is not one of our allowed strings',
-        path: [],
-      }], null, 2
+      [
+        {
+          code: "custom",
+          message: "asdf is not one of our allowed strings",
+          path: [],
+        },
+      ],
+      null,
+      2
     )
   );
 });
