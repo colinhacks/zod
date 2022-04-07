@@ -3,19 +3,20 @@
   "version": "3.14.4",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "types": "./index.d.ts",
   "module": "./lib/index.mjs",
   "dependencies": {},
   "exports": {
     ".": {
       "require": "./lib/index.js",
       "import": "./lib/index.mjs",
-      "types": "./lib/index.d.ts"
+      "types": "./index.d.ts"
     },
     "./package.json": "./package.json"
   },
   "files": [
-    "/lib"
+    "/lib",
+    "/index.d.ts"
   ],
   "repository": {
     "type": "git",
