@@ -149,21 +149,20 @@ Bronze
     <td align="center">
       <a href="https://astro.build/">
         <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="100px;" alt="" />
-        </a>
         <br>
         <b>Astro</b>
         <br>
-        <span style="font-size:10px;">Astro is a new kind of static site builder for the modern web. Powerful developer experience meets lightweight output.</span>
-        </a>
-      </td>
-   <td align="center">
-      <a href="https://deletype.com/">
-        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="100px;" alt="" />
+        <a href="https://astro.build">astro.build</a>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://glow.app/">
+        <img src="/images/glow.jpg" width="100px;" alt="" />
       </a>
       <br>
-      <b>Deletype</b>
+      <b>Glow</b>
       <br>
-      <a href="https://deletype.com/">deletype.com/</a>
+      <a href="https://deletype.com/">glow.app</a>
     </td>
    <td align="center">
       <a href="https://deletype.com/">
