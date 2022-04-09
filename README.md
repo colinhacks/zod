@@ -133,7 +133,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
     <td align="center">
       <a href="https://astro.build/">
-        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="150px;" alt="" />
+        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="200px;" alt="" />
       </a>
       <br>
       <b>Astro</b>
@@ -142,28 +142,27 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
     <td align="center">
       <a href="https://glow.app/">
-        <img src="https://i.imgur.com/R0R43S2.jpg" width="150px;" alt="" />
+        <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="" />
       </a>
       <br>
-      <b>Glow</b>
+      <b>Glow Wallet</b>
       <br>
-      <a href="https://deletype.com">glow.app</a>
+      <a href="https://glow.app/">glow.app</a>
     </td>
    <td align="center">
       <a href="https://deletype.com/">
-        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="150px;" alt="" />
+        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="" />
       </a>
       <br>
       <b>Deletype</b>
       <br>
-      <a href="https://deletype.com/">deletype.com/</a>
+      <a href="https://deletype.com/">deletype.com</a>
     </td></tr>
 </table>
 
 ### Silver
 
 <table>
-  
   <tr>
     <td align="center">
       <a href="https://snaplet.dev">
@@ -189,19 +188,11 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       </a>
       <br>
       <b>Trip</b>
-      <br>
-      <a href="https://github.com/macandcheese-spaghetticode">@macandcheese-spaghetticode</a>
     </td>
   </tr>
 </table>
 
 ### Bronze
-
-Bronze
-
-- katt
-- brabeji
-- flybayer
 
 <table>
   <tr>
@@ -237,8 +228,6 @@ Bronze
     </td>
   </tr>
 </table>
-
-_To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/colinhacks) or [Consultancy](https://github.com/sponsors/colinhacks) tier._
 
 # Installation
 
