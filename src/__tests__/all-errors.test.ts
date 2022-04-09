@@ -14,7 +14,7 @@ type TestFlattenedErrors = z.inferFlattenedErrors<
   typeof Test,
   { message: string; code: number }
 >;
-type TestFormErrors = z.inferFormErrors<typeof Test>;
+type TestFormErrors = z.inferFlattenedErrors<typeof Test>;
 
 test("default flattened errors type inference", () => {
   type TestTypeErrors = {
@@ -23,11 +23,11 @@ test("default flattened errors type inference", () => {
   };
 
   const t1: util.AssertEqual<
-    z.TypeOfFlattenedError<typeof Test>,
+    z.inferFlattenedErrors<typeof Test>,
     TestTypeErrors
   > = true;
   const t2: util.AssertEqual<
-    z.TypeOfFlattenedError<typeof Test, { message: string }>,
+    z.inferFlattenedErrors<typeof Test, { message: string }>,
     TestTypeErrors
   > = false;
   [t1, t2];
@@ -43,15 +43,15 @@ test("custom flattened errors type inference", () => {
   };
 
   const t1: util.AssertEqual<
-    z.TypeOfFlattenedError<typeof Test>,
+    z.inferFlattenedErrors<typeof Test>,
     TestTypeErrors
   > = false;
   const t2: util.AssertEqual<
-    z.TypeOfFlattenedError<typeof Test, { message: string; code: number }>,
+    z.inferFlattenedErrors<typeof Test, { message: string; code: number }>,
     TestTypeErrors
   > = true;
   const t3: util.AssertEqual<
-    z.TypeOfFlattenedError<typeof Test, { message: string }>,
+    z.inferFlattenedErrors<typeof Test, { message: string }>,
     TestTypeErrors
   > = false;
   [t1, t2, t3];
@@ -64,7 +64,7 @@ test("form errors type inference", () => {
   };
 
   const t1: util.AssertEqual<
-    z.TypeOfFormErrors<typeof Test>,
+    z.inferFlattenedErrors<typeof Test>,
     TestTypeErrors
   > = true;
   [t1];

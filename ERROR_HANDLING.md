@@ -274,122 +274,202 @@ z.string().parse(12, { errorMap });
 
 ## Error handling for forms
 
-If you're using Zod to validate the inputs from a web form, there is a convenient way to "flatten" a ZodError to a format that can be easily displayed to the end user.
+If you're using Zod to validate the inputs from a web form, there is a convenient way to "flatten" a ZodError to a rich, structured format that can be easily rendered in your interface.
 
 Consider this example of a simple signup form:
 
 ```ts
-const FormData = z
-  .object({
+const FormData = z.object({
+  name: z.string(),
+  contactInfo: z.object({
     email: z.string().email(),
-    password: z.string().min(10),
-    confirm: z.string().min(10),
-  })
-  .refine(obj => obj.password === obj.confirm, {
-    message: 'Passwords do not match',
-    path: ['confirm'], // this value is concatenated to the end of the actual path of the error
-  });
-}
+    phone: z.string().optional(),
+  }),
+});
 ```
 
 Now lets pass in some invalid data:
 
 ```ts
-FormData.parse({
-  email: "not an email",
-  password: "tooshort",
-  confirm: "nomatch",
+const result = FormData.safeParse({
+  name: null,
+  contactInfo: {
+    email: "not an email",
+    phone: "867-5309",
+  },
 });
 ```
 
-This will throw a ZodError with four issues:
+This will throw a ZodError with two issues:
 
 ```ts
-console.log(err.issues);
+if (!result.success) {
+  console.log(result.error.issues);
+}
 /*
   [
-    { code: 'invalid_string', validation: 'email', path: ['email'], message: 'Invalid email' },
     {
-      code: 'too_small',
-      minimum: 10,
-      type: 'string',
-      inclusive: true,
-      path: ['password'],
-      message: 'Should be at least 10 characters',
+      "code": "invalid_type",
+      "expected": "string",
+      "received": "null",
+      "path": ["name"],
+      "message": "Expected string, received null"
     },
     {
-      code: 'too_small',
-      minimum: 10,
-      type: 'string',
-      inclusive: true,
-      path: ['confirm'],
-      message: 'Should be at least 10 characters',
-    },
-    { code: 'custom', message: 'Passwords do not match', path: ['confirm'] },
-  ]; 
-  */
-```
-
-But using the `flatten()` method, we can make those errors much easier to work with:
-
-```ts
-console.log(err.flatten());
-/*
-  {
-  formErrors: [],
-  fieldErrors: {
-    email: ['Invalid email'],
-    password: ['Should be at least 10 characters'],
-    confirm: ['Should be at least 10 characters', 'Passwords do not match'],
-  },
-}
+      "validation": "email",
+      "code": "invalid_string",
+      "message": "Invalid email",
+      "path": ["contactInfo","email"]
+    }
+  ]
 */
 ```
 
-Additionally, you can pass a mapping function of `(issue: ZodIssue) => U` to `flatten()`, which is applied to the during the transformation of `ZodIssue`s.
+### Formatting errors
+
+Using the `.format()` method on `ZodError`, we can make this error easier to work with.
+
+```ts
+if (!result.success) {
+  console.log(result.error.format());
+  /*
+    {
+      name: {
+        _errors: ['Expected string, received null']
+      },
+      contactInfo: {
+        email: {
+          _errors: ['Invalid email']
+        }
+      }
+    }
+  */
+}
+```
+
+As you can see, the result is an object that denormalizes the issues array into a nested object. This makes it easier to display error messages in your form interface.
+
+```tsx
+const FormData = z.object({ ... });
+
+function Errors(props: {errors?: string[] }){
+  if(!errors.length) return null;
+  return <div>{props.errors.map(err => <p>{err}</p>)}</div>
+}
+
+function MyForm(){
+  const {register, data} = useForm({ ... });
+
+  const result = FormData.safeParse(data);
+  const errors = result.success ? {} : result.error.format();
+
+  return <div>
+    <label>Name<label>
+    <input {...register('name')}>
+    <Errors errors={errors?.name?._errors} />
+  </div>
+}
+```
+
+### Flattening errors
+
+Because `.format` returns a deeply nested object, the errors are contained within the `_errors` property to avoid key collisions. However this isn't necessary if your object schema is only one level deep.
+
+In this scenarion, `.flatten()` may be more convenient.
+
+```ts
+if (!result.success) {
+  console.log(result.error.flatten());
+}
+/*
+  {
+    formErrors: [],
+    fieldErrors: {
+      name: ['Expected string, received null'],
+      contactInfo: ['Invalid email']
+    },
+  }
+*/
+```
+
+The `fieldErrors` key points to an object that groups all issues by key.
+
+The `formErrors` element is a list of issues that occurred on the "root" of the object schema. For instance: if you called `FormData.parse(null)`, `flatten()` would return:
+
+```ts
+const result = FormData.safeParse(null);
+if (!result.success) {
+  result.error.flatten();
+  /*  
+    {
+      formErrors: ["Invalid input: expected object, received null"],
+      fieldErrors: {}
+    }  
+  */
+}
+```
+
+### Post-processing issues
+
+Both `.flatten()` and `.format()` accept an optional mapping function of `(issue: ZodIssue) => U` to `flatten()`, which can customize how each `ZodIssue` is transformed in the final output.
+
 This can be particularly useful when integrating Zod with form validation, as it allows you to pass back whatever `ZodIssue` specific context you might need.
 
 ```ts
-err.flatten( (i: ZodIssue) => {
+result.error.flatten((iss: ZodIssue) => ({
   message: i.message,
-  errorCode: i.code
-});
+  errorCode: i.code,
+}));
 /*
   {
-  formErrors: [],
-  fieldErrors: {
-    email: [{ message: 'Invalid email', errorCode: 'invalid_string' }],
-    password: [{ message: 'Should be at least 10 characters', errorCode: 'too_small' }],
-    confirm: [{ message: 'Should be at least 10 characters', errorCode: 'too_small' }, { message: 'Passwords do not match', errorCode: 'custom' }],
-  },
-}
+    formErrors: [],
+    fieldErrors: {
+      name: [
+        {message: "Expected string, received null", errorCode: "invalid_type"}
+      ]
+      contactInfo: [
+        {message: "Invalid email", errorCode: "invalid_string"}
+      ]
+    },
+  }
 */
 ```
 
-- `fieldErrors` is an object. The keys are the field(s) that threw the error. The values are an array of error strings that can be easily presented in the interface.
-- `formErrors: string[]` is an array of errors that occurred on the "root" of the object schema. For instance if you called `FormData.parse(null)`, `formErrors` would be:
-  ```ts
-  ["Invalid input: expected object, received null"];
-  ```
+### Extract type signature
 
-## Type-safety with `safeParse`.
-
-If you're using `safeParse`, and need more type-safety around error results, you can use `z.inferFlattenedErrors` to infer the result of error result called with `flatten()`, based on your schema.
+You can infer the return type signature of `.format()` and `.flatten()` with the following utilities:
 
 ```ts
-type FormDataErrors = z.inferFlattenedErrors<typeof FormData>;
-
+type FormattedErros = z.inferFormattedErrors<typeof FormData>;
 /*
-  formErrors: string[],
-  fieldErrors: {
-    email?: string[],
-    password?: string[],
-    confirm?: string[]
+  {  
+    name?: {_errors?: string[]},
+    contactInfo?: {
+      _errors?: string[],
+      email?: {
+        _errors?: string[],
+      },
+      phone?: {
+        _errors?: string[],
+      },
+    },
   } 
+*/
+
+type FlattenedErrors = z.inferFlattenedErrors<typeof FormData>;
+/*
+  {  
+    formErrors: string[],
+    fieldErrors: {
+      email?: string[],
+      password?: string[],
+      confirm?: string[]
+    } 
+  }
 */
 ```
 
-By default all error types are assumed to be `string`. If you're using a mapping function to transform `ZodIssue`s, you can provide the error type to `z.inferFlattenedErrors`.
+These utilities also accept a second generic argument that corresponds to the result of any `ZodIssue` mapper function.
 
 ```ts
 type FormDataErrors = z.inferFlattenedErrors<
@@ -398,36 +478,13 @@ type FormDataErrors = z.inferFlattenedErrors<
 >;
 
 /*
-  formErrors: { message: string, errorCode: string }[],
-  fieldErrors: {
-    email?: { message: string, errorCode: string }[],
-    password?: { message: string, errorCode: string }[],
-    confirm?: { message: string, errorCode: string }[]
-  } 
+  { 
+    formErrors: { message: string, errorCode: string }[],
+    fieldErrors: {
+      email?: { message: string, errorCode: string }[],
+      password?: { message: string, errorCode: string }[],
+      confirm?: { message: string, errorCode: string }[]
+    }
+  }
 */
-
-const result = FormData.safeParse({
-  email: "not email",
-  password: "tooshort",
-  confirm: "nomatch",
-});
-
-if (!result.success) {
-  let bad: FormDataErrors = err.flatten(); // Type error: Type 'string' is not assignable to type '{ message: string; }'.
-  let good: FormDataErrors = err.flatten((i) => ({
-    message: i.message,
-    errorCode: i.code,
-  }));
-}
-```
-
-Additionally, you can use `z.inferFormErrors` as a convienience for `z.inferFlattenedErrors<T, string>` in combination with `formErrors`.
-
-```ts
-type FormDataErrors = z.inferFormErrors<
-  typeof FormData,
-  { message: string; errorCode: string }
->;
-
-let formErrors: FormDataErrors = result.error.formErrors;
 ```

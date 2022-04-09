@@ -1,6 +1,20 @@
+import type { TypeOf, ZodType } from "./index.ts";
 import { ZodParsedType } from "./helpers/parseUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { util } from "./helpers/util.ts";
+
+type allKeys<T> = T extends any ? keyof T : never;
+
+export type inferFlattenedErrors<
+  T extends ZodType<any, any, any>,
+  U = string
+> = typeToFlattenedError<TypeOf<T>, U>;
+export type typeToFlattenedError<T, U = string> = {
+  formErrors: U[];
+  fieldErrors: {
+    [P in allKeys<T>]?: U[];
+  };
+};
 
 export const ZodIssueCode = util.arrayToEnum([
   "invalid_type",
@@ -133,8 +147,8 @@ export const quotelessJson = (obj: any) => {
   return json.replace(/"([^"]+)":/g, "$1:");
 };
 
-export type ZodFormattedError<T> = {
-  _errors: string[];
+export type ZodFormattedError<T, U = string> = {
+  _errors: U[];
 } & (T extends [any, ...any[]]
   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
   : T extends any[]
@@ -142,6 +156,11 @@ export type ZodFormattedError<T> = {
   : T extends object
   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
   : unknown);
+
+export type inferFormattedError<
+  T extends ZodType<any, any, any>,
+  U = string
+> = ZodFormattedError<TypeOf<T>, U>;
 
 export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
@@ -164,7 +183,14 @@ export class ZodError<T = any> extends Error {
     this.issues = issues;
   }
 
-  format = (): ZodFormattedError<T> => {
+  format(): ZodFormattedError<T>;
+  format<U>(mapper: (issue: ZodIssue) => U): ZodFormattedError<T, U>;
+  format(_mapper?: any) {
+    const mapper: (issue: ZodIssue) => any =
+      _mapper ||
+      function (issue: ZodIssue) {
+        return issue.message;
+      };
     const fieldErrors: ZodFormattedError<T> = { _errors: [] } as any;
     const processError = (error: ZodError) => {
       for (const issue of error.issues) {
@@ -175,7 +201,7 @@ export class ZodError<T = any> extends Error {
         } else if (issue.code === "invalid_arguments") {
           processError(issue.argumentsError);
         } else if (issue.path.length === 0) {
-          (fieldErrors as any)._errors.push(issue.message);
+          (fieldErrors as any)._errors.push(mapper(issue));
         } else {
           let curr: any = fieldErrors;
           let i = 0;
@@ -193,7 +219,7 @@ export class ZodError<T = any> extends Error {
               }
             } else {
               curr[el] = curr[el] || { _errors: [] };
-              curr[el]._errors.push(issue.message);
+              curr[el]._errors.push(mapper(issue));
             }
 
             curr = curr[el];
@@ -205,7 +231,7 @@ export class ZodError<T = any> extends Error {
 
     processError(this);
     return fieldErrors;
-  };
+  }
 
   static create = (issues: ZodIssue[]) => {
     const error = new ZodError(issues);
@@ -231,20 +257,11 @@ export class ZodError<T = any> extends Error {
     this.issues = [...this.issues, ...subs];
   };
 
-  flatten(mapper?: (issue: ZodIssue) => string): {
-    formErrors: string[];
-    fieldErrors: { [k: string]: string[] };
-  };
-  flatten<U>(mapper?: (issue: ZodIssue) => U): {
-    formErrors: U[];
-    fieldErrors: { [k: string]: U[] };
-  };
+  flatten(): typeToFlattenedError<T>;
+  flatten<U>(mapper?: (issue: ZodIssue) => U): typeToFlattenedError<T, U>;
   flatten<U = string>(
     mapper: (issue: ZodIssue) => U = (issue: ZodIssue) => issue.message as any
-  ): {
-    formErrors: U[];
-    fieldErrors: { [k: string]: U[] };
-  } {
+  ): any {
     const fieldErrors: any = {};
     const formErrors: U[] = [];
     for (const sub of this.issues) {

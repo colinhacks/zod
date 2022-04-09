@@ -294,13 +294,23 @@ test("formatting", () => {
     expect(error.inner?.name?.[1]).toEqual(undefined);
   }
   if (!result2.success) {
-    const error = result2.error.format();
+    type FormattedError = z.inferFormattedError<typeof schema>;
+    const error: FormattedError = result2.error.format();
     expect(error._errors).toEqual([]);
     expect(error.inner?._errors).toEqual([]);
     expect(error.inner?.name?._errors).toEqual(["Invalid input"]);
     expect(error.inner?.name?.[0]).toEqual(undefined);
     expect(error.inner?.name?.[1]).toEqual(undefined);
     expect(error.inner?.name?.[2]).toEqual(undefined);
+  }
+
+  // test custom mapper
+  if (!result2.success) {
+    type FormattedError = z.inferFormattedError<typeof schema, number>;
+    const error: FormattedError = result2.error.format(() => 5);
+    expect(error._errors).toEqual([]);
+    expect(error.inner?._errors).toEqual([]);
+    expect(error.inner?.name?._errors).toEqual([5]);
   }
 });
 
