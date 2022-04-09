@@ -129,21 +129,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 ### Gold
 
-- astro
-- victor
-- deletype
-
-silver
-
-- snaplet
-- macandcheese
-- Marcato
-
-Bronze
-
-- katt
-- brabeji
-- flybayer
 <table>
   <tr>
     <td align="center">
@@ -157,12 +142,12 @@ Bronze
     </td>
     <td align="center">
       <a href="https://glow.app/">
-        <img src="/images/glow.jpg" width="100px;" alt="" />
+        <img src="https://i.imgur.com/R0R43S2.jpg" width="100px;" alt="" />
       </a>
       <br>
       <b>Glow</b>
       <br>
-      <a href="https://deletype.com/">glow.app</a>
+      <a href="https://deletype.com">glow.app</a>
     </td>
    <td align="center">
       <a href="https://deletype.com/">
@@ -176,6 +161,12 @@ Bronze
 </table>
 
 ### Silver
+
+silver
+
+- snaplet
+- macandcheese
+- Marcato
 
 <table>
   <tr>
@@ -242,6 +233,12 @@ Bronze
 </table>
 
 ### Bronze
+
+Bronze
+
+- katt
+- brabeji
+- flybayer
 
 <table>
   <tr>
