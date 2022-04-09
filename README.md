@@ -125,30 +125,77 @@ Some other great aspects:
 
 # Sponsorship
 
-Sponsorship at any level is appreciated and encouraged. Zod is maintained by a solo developer ([hi!](https://twitter.com/colinhacks)). For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider the [Startup tier](https://github.com/sponsors/colinhacks). You can learn more about the tiers at [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
+Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
 
-### Sponsors
+### Gold
 
 <table>
   <tr>
+    <td align="center">
+      <a href="https://astro.build/">
+        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="200px;" alt="" />
+      </a>
+      <br>
+      <b>Astro</b>
+      <br>
+      <a href="https://astro.build">astro.build</a>
+    </td>
+    <td align="center">
+      <a href="https://glow.app/">
+        <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="" />
+      </a>
+      <br>
+      <b>Glow Wallet</b>
+      <br>
+      <a href="https://glow.app/">glow.app</a>
+    </td>
    <td align="center">
       <a href="https://deletype.com/">
-        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="100px;" alt="" />
+        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="" />
       </a>
       <br>
       <b>Deletype</b>
       <br>
-      <a href="https://deletype.com/">deletype.com/</a>
-    </td>
-  <td align="center">
-      <a href="https://github.com/kevinsimper">
-        <img src="https://avatars1.githubusercontent.com/u/1126497?s=460&v=4" width="100px;" alt="" />
+      <a href="https://deletype.com/">deletype.com</a>
+    </td></tr>
+</table>
+
+### Silver
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://snaplet.dev">
+        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="" />
       </a>
       <br>
-      <b>Kevin Simper</b>
+      <b>Snaplet</b>
       <br>
-      <a href="https://github.com/kevinsimper">@kevinsimper</a>
+      <a href="https://snaplet.dev">snaplet.dev</a>
     </td>
+     <td align="center">
+      <a href="https://marcatopartners.com/">
+        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
+      </a>
+      <br>
+      <b>Marcato Partners</b>
+      <br>
+      <a href="https://marcatopartners.com/">marcatopartners.com</a>
+    </td>
+     <td align="center">
+      <a href="https://github.com/macandcheese-spaghetticode">
+        <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
+      </a>
+      <br>
+      <b>Trip</b>
+    </td>
+  </tr>
+</table>
+
+### Bronze
+
+<table>
+  <tr>
     <td align="center">
       <a href="https://twitter.com/flybayer">
         <img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/>
@@ -160,40 +207,27 @@ Sponsorship at any level is appreciated and encouraged. Zod is maintained by a s
       <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
       <br />
     </td>
-
-  </tr>
-  <tr>
     <td align="center">
-      <a href="https://www.bamboocreative.nz/">
-        <img src="https://avatars1.githubusercontent.com/u/41406870?s=460&v=4" width="100px;" alt="" />
+      <a href="https://github.com/brabeji">
+        <img src="https://avatars.githubusercontent.com/u/2237954?v=4" width="100px;" alt=""/>
       </a>
       <br>
-      <b>Bamboo Creative</b>
-      <br>
-      <a href="https://www.bamboocreative.nz/">bamboocreative.nz</a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/jeremyBanks">
-        <img src="https://avatars.githubusercontent.com/u/18020?s=400&u=dba6c1402ae1746a276a5d256e01d68e774a0e9d&v=4" width="100px;" alt="" />
-      </a>
-      <br>
-      <b>Jeremy Banks</b>
-      <br>
-      <a href="https://github.com/jeremyBanks">github.com/jeremyBanks</a>
+      <b>Jiří Brabec</b>
+      <br/>
+      <a href="https://github.com/brabeji">@brabeji</a>
+      <br />
     </td>
      <td align="center">
-      <a href="https://marcatopartners.com/">
-        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="100px;" alt="Marcato Partners" />
+      <a href="https://twitter.com/alexdotjs">
+        <img src="https://avatars.githubusercontent.com/u/459267?v=4" width="100px;" alt="" />
       </a>
       <br>
-      <b>Marcato Partners</b>
+      <b>Alex Johansson</b>
       <br>
-      <a href="https://marcatopartners.com/">marcatopartners.com</a>
+      <a href="https://twitter.com/alexdotjs">@alexdotjs</a>
     </td>
   </tr>
 </table>
-
-_To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/colinhacks) or [Consultancy](https://github.com/sponsors/colinhacks) tier._
 
 # Installation
 
