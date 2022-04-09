@@ -153,7 +153,7 @@ Bronze
         <br>
         <b>Astro</b>
         <br>
-        <span>Astro is a new kind of static site builder for the modern web. Powerful developer experience meets lightweight output.</span>
+        <span style="font-size:10px;">Astro is a new kind of static site builder for the modern web. Powerful developer experience meets lightweight output.</span>
         </a>
       </td>
    <td align="center">
@@ -165,8 +165,6 @@ Bronze
       <br>
       <a href="https://deletype.com/">deletype.com/</a>
     </td>
-  </tr>
-  <tr>
    <td align="center">
       <a href="https://deletype.com/">
         <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="100px;" alt="" />
