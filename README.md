@@ -166,7 +166,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
     <td align="center">
       <a href="https://snaplet.dev">
-        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="100px;" alt="" />
+        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="" />
       </a>
       <br>
       <b>Snaplet</b>
@@ -175,7 +175,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
      <td align="center">
       <a href="https://marcatopartners.com/">
-        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="100px;" alt="Marcato Partners" />
+        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
       </a>
       <br>
       <b>Marcato Partners</b>
@@ -184,7 +184,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
      <td align="center">
       <a href="https://github.com/macandcheese-spaghetticode">
-        <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="100px;" alt="Trip" />
+        <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
       </a>
       <br>
       <b>Trip</b>
