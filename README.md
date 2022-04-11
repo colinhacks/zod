@@ -135,12 +135,11 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://astro.build/">
         <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="150px;" alt="" />
       </a>
-    </td>
-    <td>
+      <br />
       <b>Astro</b>
-      <br>
+      <br />
       <a href="https://astro.build">astro.build</a>
-      <br>
+      <br />
       <p width="150px">Astro is a new kind of static site builder for the modern web. Powerful developer experience meets lightweight output.</p>
     </td>
   </tr>
@@ -149,12 +148,11 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://glow.app/">
         <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="" />
       </a>
-    </td>
-    <td>
+      <br />
       <b>Glow Wallet</b>
-      <br>
+      <br />
       <a href="https://glow.app/">glow.app</a>
-      <br>
+      <br />
       <p width="150px">Your new favorite Solana wallet.</p>
     </td>
   </tr>
@@ -163,10 +161,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://deletype.com/">
         <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="" />
       </a>
-    </td>
-    <td>    
+      <br />
       <b>Deletype</b>
-      <br>
+      <br />
       <a href="https://deletype.com">deletype.com</a>
     </td>
   </tr>
@@ -180,25 +177,25 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://snaplet.dev">
         <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="" />
       </a>
-      <br>
+      <br />
       <b>Snaplet</b>
-      <br>
+      <br />
       <a href="https://snaplet.dev">snaplet.dev</a>
     </td>
      <td align="center">
       <a href="https://marcatopartners.com/">
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
       </a>
-      <br>
+      <br />
       <b>Marcato Partners</b>
-      <br>
+      <br />
       <a href="https://marcatopartners.com/">marcatopartners.com</a>
     </td>
      <td align="center">
       <a href="https://github.com/macandcheese-spaghetticode">
         <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
       </a>
-      <br>
+      <br />
       <b>Trip</b>
     </td>
   </tr>
@@ -212,7 +209,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://twitter.com/flybayer">
         <img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/>
       </a>
-      <br>
+      <br />
       <b>Brandon Bayer</b>
       <br/>
       <a href="https://twitter.com/flybayer">@flybayer</a>,
@@ -223,7 +220,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://github.com/brabeji">
         <img src="https://avatars.githubusercontent.com/u/2237954?v=4" width="100px;" alt=""/>
       </a>
-      <br>
+      <br />
       <b>Jiří Brabec</b>
       <br/>
       <a href="https://github.com/brabeji">@brabeji</a>
@@ -233,9 +230,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://twitter.com/alexdotjs">
         <img src="https://avatars.githubusercontent.com/u/459267?v=4" width="100px;" alt="" />
       </a>
-      <br>
+      <br />
       <b>Alex Johansson</b>
-      <br>
+      <br />
       <a href="https://twitter.com/alexdotjs">@alexdotjs</a>
     </td>
   </tr>
