@@ -143,24 +143,33 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br>
       <p>Astro is a new kind of static site builder for the modern web. Powerful developer experience meets lightweight output.</p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://glow.app/">
         <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="" />
       </a>
-      <br>
+    </td>
+    <td>
       <b>Glow Wallet</b>
       <br>
       <a href="https://glow.app/">glow.app</a>
+      <br>
+      <p>Your new favorite Solana wallet.</p>
     </td>
-   <td align="center">
+  </tr>
+  <tr>
+    <td align="center">
       <a href="https://deletype.com/">
         <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="" />
       </a>
-      <br>
+    </td>
+    <td align="center">    
       <b>Deletype</b>
       <br>
-      <a href="https://deletype.com/">deletype.com</a>
-    </td></tr>
+      <a href="https://deletype.com">deletype.com</a>
+    </td>
+  </tr>
 </table>
 
 ### Silver
