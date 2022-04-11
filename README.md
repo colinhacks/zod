@@ -133,14 +133,14 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
     <td align="center">
       <a href="https://astro.build/">
-        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="150px;" alt="" />
+        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="200px;" alt="" />
       </a>
       <br />
       <b>Astro</b>
       <br />
       <a href="https://astro.build">astro.build</a>
       <br />
-      <p width="150px">Astro is a new kind of static site builder for the modern web. Powerful developer experience meets lightweight output.</p>
+      <p width="200px">Astro is a new kind of static site builder for the modern web. Powerful developer experience meets lightweight output.</p>
     </td>
     <td align="center">
       <a href="https://glow.app/">
@@ -151,7 +151,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://glow.app/">glow.app</a>
       <br />
-      <p width="150px">Your new favorite Solana wallet.</p>
+      <p width="200px">Your new favorite Solana wallet.</p>
     </td>
   </tr>
   <tr>
