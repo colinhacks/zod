@@ -142,8 +142,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="150px">Astro is a new kind of static site builder for the modern web. Powerful developer experience meets lightweight output.</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://glow.app/">
         <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="" />
