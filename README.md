@@ -137,7 +137,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       </a>
     </td>
     <td>
-      <h3 style="margin:0px">Astro</h3>
+      <b>Astro</b>
       <br>
       <a href="https://astro.build">astro.build</a>
       <br>
