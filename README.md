@@ -133,12 +133,15 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
     <td align="center">
       <a href="https://astro.build/">
-        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="200px;" alt="" />
+        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="150px;" alt="" />
       </a>
-      <br>
+    </td>
+    <td>
       <b>Astro</b>
       <br>
       <a href="https://astro.build">astro.build</a>
+      <br>
+      <p>Astro is a new kind of static site builder for the modern web. Powerful developer experience meets lightweight output.</p>
     </td>
     <td align="center">
       <a href="https://glow.app/">
