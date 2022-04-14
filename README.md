@@ -1185,9 +1185,9 @@ const Category: z.ZodType<Category> = BaseCategory.merge(
 If you want to validate any JSON value, you can use the snippet below.
 
 ```ts
-type Literal = boolean | null | number | string;
-type Json = Literal | { [key: string]: Json } | Json[];
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+type Literal = z.infer<typeof literalSchema>;
+type Json = Literal | { [key: string]: Json } | Json[];
 const jsonSchema: z.ZodType<Json> = z.lazy(() =>
   z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)])
 );
