@@ -1012,9 +1012,9 @@ const Category: z.ZodSchema<Category> = BaseCategory.merge(
 如果你想验证任何 JSON 值，你可以使用下面的片段。
 
 ```ts
-type Literal = boolean | null | number | string;
-type Json = Literal | { [key: string]: Json } | Json[];
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+type Literal = z.infer<typeof literalSchema>;
+type Json = Literal | { [key: string]: Json } | Json[];
 const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
   z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)])
 );
