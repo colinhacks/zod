@@ -155,7 +155,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://glow.app/">glow.app</a>
       <br />
-      <p width="200px">Your new favorite 
+      <p width="200px">Your new favorite
         <br/>
       Solana wallet.</p>
     </td>
@@ -292,6 +292,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Generate Zod schemas from your Prisma schema.
 - [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod): Create Fastify type providers from Zod schemas
 - [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs
+- [`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi): Generate full OpenAPI (Swagger) docs from Zod, including schemas, endpoints & parameters
 
 ### Form integrations
 
