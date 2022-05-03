@@ -211,6 +211,10 @@ export abstract class ZodType<
     throw result.error;
   }
 
+  is(data: unknown): data is Output {
+    return this.safeParse(data).success;
+  }
+
   safeParse(
     data: unknown,
     params?: Partial<ParseParams>
@@ -356,6 +360,7 @@ export abstract class ZodType<
     this._def = def;
     this.parse = this.parse.bind(this);
     this.safeParse = this.safeParse.bind(this);
+    this.is = this.is.bind(this);
     this.parseAsync = this.parseAsync.bind(this);
     this.safeParseAsync = this.safeParseAsync.bind(this);
     this.spa = this.spa.bind(this);
