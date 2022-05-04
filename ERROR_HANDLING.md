@@ -416,9 +416,9 @@ Both `.flatten()` and `.format()` accept an optional mapping function of `(issue
 This can be particularly useful when integrating Zod with form validation, as it allows you to pass back whatever `ZodIssue` specific context you might need.
 
 ```ts
-result.error.flatten((iss: ZodIssue) => ({
-  message: i.message,
-  errorCode: i.code,
+result.error.flatten((issue: ZodIssue) => ({
+  message: issue.message,
+  errorCode: issue.code,
 }));
 /*
   {
