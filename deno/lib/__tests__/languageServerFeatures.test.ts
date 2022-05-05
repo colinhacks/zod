@@ -164,6 +164,26 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     expect(definitionOfProperty?.getText()).toEqual("f1: z.number()");
     expect(parentOfProperty?.getName()).toEqual("Test");
   });
+
+  test("works for object properties inferred from z.object().omit()", () => {
+    // Find usage of TestOmit.f1 property
+    const instanceVariable =
+      sourceFile.getVariableDeclarationOrThrow("instanceOfTestOmit");
+    const propertyBeingAssigned = getPropertyBeingAssigned(
+      instanceVariable,
+      "f1"
+    );
+
+    // Find definition of TestOmit.f1 property
+    const definitionOfProperty = propertyBeingAssigned?.getDefinitionNodes()[0];
+    const parentOfProperty = definitionOfProperty?.getFirstAncestorByKind(
+      SyntaxKind.VariableDeclaration
+    );
+
+    // Assert that find definition returned the Zod definition of Test
+    expect(definitionOfProperty?.getText()).toEqual("f1: z.number()");
+    expect(parentOfProperty?.getName()).toEqual("Test");
+  });
 });
 
 const getPropertyBeingAssigned = (node: Node, name: string) => {

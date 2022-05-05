@@ -64,3 +64,13 @@ export type TestPick = z.infer<typeof TestPick>;
 export const instanceOfTestPick: TestPick = {
   f1: 1,
 };
+
+// z.object().omit()
+
+export const TestOmit = TestMerge.omit({ f2: true });
+
+export type TestOmit = z.infer<typeof TestOmit>;
+
+export const instanceOfTestOmit: TestOmit = {
+  f1: 1,
+};
