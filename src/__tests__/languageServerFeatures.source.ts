@@ -55,3 +55,12 @@ export const instanceOfTestPartial: TestPartial = {
   f1: 1,
 };
 
+// z.object().pick()
+
+export const TestPick = TestMerge.pick({ f1: true });
+
+export type TestPick = z.infer<typeof TestPick>;
+
+export const instanceOfTestPick: TestPick = {
+  f1: 1,
+};

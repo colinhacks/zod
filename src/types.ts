@@ -1705,11 +1705,7 @@ export class ZodObject<
 
   pick<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
-  ): ZodObject<
-    objectUtil.noNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>,
-    UnknownKeys,
-    Catchall
-  > {
+  ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
     const shape: any = {};
     util.objectKeys(mask).map((key) => {
       shape[key] = this.shape[key];

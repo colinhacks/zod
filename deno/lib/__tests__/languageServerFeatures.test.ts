@@ -144,6 +144,26 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     expect(definitionOfProperty?.getText()).toEqual("f1: z.number()");
     expect(parentOfProperty?.getName()).toEqual("Test");
   });
+
+  test("works for object properties inferred from z.object().pick()", () => {
+    // Find usage of TestPick.f1 property
+    const instanceVariable =
+      sourceFile.getVariableDeclarationOrThrow("instanceOfTestPick");
+    const propertyBeingAssigned = getPropertyBeingAssigned(
+      instanceVariable,
+      "f1"
+    );
+
+    // Find definition of TestPick.f1 property
+    const definitionOfProperty = propertyBeingAssigned?.getDefinitionNodes()[0];
+    const parentOfProperty = definitionOfProperty?.getFirstAncestorByKind(
+      SyntaxKind.VariableDeclaration
+    );
+
+    // Assert that find definition returned the Zod definition of Test
+    expect(definitionOfProperty?.getText()).toEqual("f1: z.number()");
+    expect(parentOfProperty?.getName()).toEqual("Test");
+  });
 });
 
 const getPropertyBeingAssigned = (node: Node, name: string) => {
