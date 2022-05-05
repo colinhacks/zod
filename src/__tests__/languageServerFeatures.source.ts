@@ -12,7 +12,7 @@ export const instanceOfTest: Test = {
 
 export const TestMerge = z
   .object({
-    f5: z.literal("literal").optional(),
+    f2: z.string().optional(),
   })
   .merge(Test);
 
@@ -20,11 +20,12 @@ export type TestMerge = z.infer<typeof TestMerge>;
 
 export const instanceOfTestMerge: TestMerge = {
   f1: 1,
+  f2: "string",
 };
 
 export const TestUnion = z.union([
   z.object({
-    f2: z.literal("literal").optional(),
+    f2: z.string().optional(),
   }),
   Test,
 ]);
@@ -33,6 +34,7 @@ export type TestUnion = z.infer<typeof TestUnion>;
 
 export const instanceOfTestUnion: TestUnion = {
   f1: 1,
+  f2: "string",
 };
 
 export const TestPartial = Test.partial();

@@ -16,7 +16,7 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
   });
   const sourceFile = project.addSourceFileAtPath(filePath);
 
-  test("works for objects", () => {
+  test("works for simple object properties", () => {
     // Find usage of Test.f1 property
     const instanceVariable =
       sourceFile.getVariableDeclarationOrThrow("instanceOfTest");
@@ -36,7 +36,7 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     expect(parentOfProperty?.getName()).toEqual("Test");
   });
 
-  test("works for merged objects", () => {
+  test("works for first merged object properties", () => {
     // Find usage of TestMerge.f1 property
     const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
       "instanceOfTestMerge"
@@ -57,7 +57,30 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     expect(parentOfProperty?.getName()).toEqual("Test");
   });
 
-  test("works for unioned objects", () => {
+  test("works for second merged object properties", () => {
+    // Find usage of TestMerge.f2 property
+    const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
+      "instanceOfTestMerge"
+    );
+    const propertyBeingAssigned = getPropertyBeingAssigned(
+      instanceVariable,
+      "f2"
+    );
+
+    // Find definition of TestMerge.f2 property
+    const definitionOfProperty = propertyBeingAssigned?.getDefinitionNodes()[0];
+    const parentOfProperty = definitionOfProperty?.getFirstAncestorByKind(
+      SyntaxKind.VariableDeclaration
+    );
+
+    // Assert that find definition returned the Zod definition of TestMerge
+    expect(definitionOfProperty?.getText()).toEqual(
+      "f2: z.string().optional()"
+    );
+    expect(parentOfProperty?.getName()).toEqual("TestMerge");
+  });
+
+  test("works for first unioned object properties", () => {
     // Find usage of TestUnion.f1 property
     const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
       "instanceOfTestUnion"
@@ -76,6 +99,29 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     // Assert that find definition returned the Zod definition of Test
     expect(definitionOfProperty?.getText()).toEqual("f1: z.number()");
     expect(parentOfProperty?.getName()).toEqual("Test");
+  });
+
+  test("works for second unioned object properties", () => {
+    // Find usage of TestUnion.f2 property
+    const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
+      "instanceOfTestUnion"
+    );
+    const propertyBeingAssigned = getPropertyBeingAssigned(
+      instanceVariable,
+      "f2"
+    );
+
+    // Find definition of TestUnion.f2 property
+    const definitionOfProperty = propertyBeingAssigned?.getDefinitionNodes()[0];
+    const parentOfProperty = definitionOfProperty?.getFirstAncestorByKind(
+      SyntaxKind.VariableDeclaration
+    );
+
+    // Assert that find definition returned the Zod definition of TestUnion
+    expect(definitionOfProperty?.getText()).toEqual(
+      "f2: z.string().optional()"
+    );
+    expect(parentOfProperty?.getName()).toEqual("TestUnion");
   });
 
   test("works for partial objects", () => {

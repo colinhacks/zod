@@ -1393,9 +1393,7 @@ export namespace objectUtil {
   };
 }
 
-export type extendShape<A, B> = {
-  [k in Exclude<keyof A, keyof B>]: A[k];
-} & { [k in keyof B]: B[k] };
+export type extendShape<A, B> = Omit<A, keyof B> & B;
 
 const AugmentFactory =
   <Def extends ZodObjectDef>(def: Def) =>
