@@ -16,7 +16,7 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
   });
   const sourceFile = project.addSourceFileAtPath(filePath);
 
-  test("works for simple object properties", () => {
+  test("works for object properties inferred from z.object()", () => {
     // Find usage of Test.f1 property
     const instanceVariable =
       sourceFile.getVariableDeclarationOrThrow("instanceOfTest");
@@ -36,7 +36,7 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     expect(parentOfProperty?.getName()).toEqual("Test");
   });
 
-  test("works for first merged object properties", () => {
+  test("works for first object properties inferred from z.object().merge()", () => {
     // Find usage of TestMerge.f1 property
     const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
       "instanceOfTestMerge"
@@ -57,7 +57,7 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     expect(parentOfProperty?.getName()).toEqual("Test");
   });
 
-  test("works for second merged object properties", () => {
+  test("works for second object properties inferred from z.object().merge()", () => {
     // Find usage of TestMerge.f2 property
     const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
       "instanceOfTestMerge"
@@ -80,7 +80,7 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     expect(parentOfProperty?.getName()).toEqual("TestMerge");
   });
 
-  test("works for first unioned object properties", () => {
+  test("works for first object properties inferred from z.union()", () => {
     // Find usage of TestUnion.f1 property
     const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
       "instanceOfTestUnion"
@@ -101,7 +101,7 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     expect(parentOfProperty?.getName()).toEqual("Test");
   });
 
-  test("works for second unioned object properties", () => {
+  test("works for second object properties inferred from z.union()", () => {
     // Find usage of TestUnion.f2 property
     const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
       "instanceOfTestUnion"
@@ -124,7 +124,7 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     expect(parentOfProperty?.getName()).toEqual("TestUnion");
   });
 
-  test("works for partial objects", () => {
+  test("works for object properties inferred from z.object().partial()", () => {
     // Find usage of TestPartial.f1 property
     const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
       "instanceOfTestPartial"
