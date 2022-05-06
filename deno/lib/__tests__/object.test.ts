@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
-import * as tc from "conditional-type-checks";
 
 import { util } from "../helpers/util.ts";
 import * as z from "../index.ts";
@@ -358,5 +357,6 @@ test("constructor key", () => {
   });
 
   type Example = z.infer<typeof Example>;
-  tc.assert<tc.IsExact<keyof Example, "prop" | "opt" | "arr">>(true);
+  const f1: util.AssertEqual<keyof Example, "prop" | "opt" | "arr"> = true;
+  f1;
 });
