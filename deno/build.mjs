@@ -23,7 +23,11 @@ const projectRoot = process.cwd();
 const nodeSrcRoot = join(projectRoot, "src");
 const denoLibRoot = join(projectRoot, "deno", "lib");
 
-const skipList = [join(nodeSrcRoot, "__tests__", "object-in-es5-env.test.ts")];
+const skipList = [
+  join(nodeSrcRoot, "__tests__", "object-in-es5-env.test.ts"),
+  join(nodeSrcRoot, "__tests__", "languageServerFeatures.test.ts"),
+  join(nodeSrcRoot, "__tests__", "languageServerFeatures.source.ts"),
+];
 const walkAndBuild = (/** @type string */ dir) => {
   for (const entry of readdirSync(join(nodeSrcRoot, dir), {
     withFileTypes: true,

@@ -1363,17 +1363,12 @@ export namespace objectUtil {
     [k in Exclude<keyof U, keyof V>]: U[k];
   } & V;
 
-  type optionalKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? k : never;
-  }[keyof T];
-
-  // type requiredKeys<T extends object> = Exclude<keyof T, optionalKeys<T>>;
-  type requiredKeys<T extends object> = {
+  export type requiredKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? never : k;
   }[keyof T];
 
   export type addQuestionMarks<T extends object> = {
-    [k in optionalKeys<T>]?: T[k];
+    [k in keyof T]?: T[k];
   } & { [k in requiredKeys<T>]: T[k] };
 
   export type identity<T> = T;
@@ -1398,9 +1393,7 @@ export namespace objectUtil {
   };
 }
 
-export type extendShape<A, B> = {
-  [k in Exclude<keyof A, keyof B>]: A[k];
-} & { [k in keyof B]: B[k] };
+export type extendShape<A, B> = Omit<A, keyof B> & B;
 
 const AugmentFactory =
   <Def extends ZodObjectDef>(def: Def) =>
@@ -1712,11 +1705,7 @@ export class ZodObject<
 
   pick<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
-  ): ZodObject<
-    objectUtil.noNever<{ [k in keyof Mask]: k extends keyof T ? T[k] : never }>,
-    UnknownKeys,
-    Catchall
-  > {
+  ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
     const shape: any = {};
     util.objectKeys(mask).map((key) => {
       shape[key] = this.shape[key];
@@ -1729,11 +1718,7 @@ export class ZodObject<
 
   omit<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
-  ): ZodObject<
-    objectUtil.noNever<{ [k in keyof T]: k extends keyof Mask ? never : T[k] }>,
-    UnknownKeys,
-    Catchall
-  > {
+  ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall> {
     const shape: any = {};
     util.objectKeys(this.shape).map((key) => {
       if (util.objectKeys(mask).indexOf(key) === -1) {
