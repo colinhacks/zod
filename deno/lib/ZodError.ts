@@ -152,7 +152,7 @@ export type ZodFormattedError<T, U = string> = {
 } & (T extends [any, ...any[]]
   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
   : T extends any[]
-  ? ZodFormattedError<T[number]>[]
+  ? { [k: number]: ZodFormattedError<T[number]> }
   : T extends object
   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
   : unknown);
@@ -210,13 +210,14 @@ export class ZodError<T = any> extends Error {
             const terminal = i === issue.path.length - 1;
 
             if (!terminal) {
-              if (typeof el === "string") {
-                curr[el] = curr[el] || { _errors: [] };
-              } else if (typeof el === "number") {
-                const errorArray: any = [];
-                errorArray._errors = [];
-                curr[el] = curr[el] || errorArray;
-              }
+              curr[el] = curr[el] || { _errors: [] };
+              // if (typeof el === "string") {
+              //   curr[el] = curr[el] || { _errors: [] };
+              // } else if (typeof el === "number") {
+              //   const errorArray: any = [];
+              //   errorArray._errors = [];
+              //   curr[el] = curr[el] || errorArray;
+              // }
             } else {
               curr[el] = curr[el] || { _errors: [] };
               curr[el]._errors.push(mapper(issue));
