@@ -1353,7 +1353,7 @@ All Zod schemas contain certain methods.
 
 Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
-> IMPORTANT: In Zod 2 and Zod 1.11+, the value returned by `.parse` is a _deep clone_ of the variable you passed in. This was also the case in zod@1.4 and earlier.
+> IMPORTANT: The value returned by `.parse` is a _deep clone_ of the variable you passed in.
 
 ```ts
 const stringSchema = z.string();
