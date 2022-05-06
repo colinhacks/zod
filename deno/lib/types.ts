@@ -401,7 +401,7 @@ export abstract class ZodType<
   }
 
   transform<NewOut>(
-    transform: (arg: Output) => NewOut | Promise<NewOut>
+    transform: (arg: Output, ctx: RefinementCtx) => NewOut | Promise<NewOut>
   ): ZodEffects<this, NewOut> {
     return new ZodEffects({
       schema: this,
@@ -3187,7 +3187,7 @@ export type RefinementEffect<T> = {
 };
 export type TransformEffect<T> = {
   type: "transform";
-  transform: (arg: T) => any;
+  transform: (arg: T, ctx: RefinementCtx) => any;
 };
 export type PreprocessEffect<T> = {
   type: "preprocess";
@@ -3239,23 +3239,22 @@ export class ZodEffects<
       }
     }
 
+    const checkCtx: RefinementCtx = {
+      addIssue: (arg: IssueData) => {
+        addIssueToContext(ctx, arg);
+        if (arg.fatal) {
+          status.abort();
+        } else {
+          status.dirty();
+        }
+      },
+      get path() {
+        return ctx.path;
+      },
+    };
+
+    checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
     if (effect.type === "refinement") {
-      const checkCtx: RefinementCtx = {
-        addIssue: (arg: IssueData) => {
-          addIssueToContext(ctx, arg);
-          if (arg.fatal) {
-            status.abort();
-          } else {
-            status.dirty();
-          }
-        },
-        get path() {
-          return ctx.path;
-        },
-      };
-
-      checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
-
       const executeRefinement = (
         acc: unknown
         // effect: RefinementEffect<any>
@@ -3311,13 +3310,14 @@ export class ZodEffects<
         // }
         if (!isValid(base)) return base;
 
-        const result = effect.transform(base.value);
+        const result = effect.transform(base.value, checkCtx);
         if (result instanceof Promise) {
           throw new Error(
             `Asynchronous transform encountered during synchronous parse operation. Use .parseAsync instead.`
           );
         }
-        return OK(result);
+
+        return { status: status.value, value: result };
       } else {
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
@@ -3327,7 +3327,9 @@ export class ZodEffects<
             // if (base.status === "dirty") {
             //   return { status: "dirty", value: base.value };
             // }
-            return Promise.resolve(effect.transform(base.value)).then(OK);
+            return Promise.resolve(effect.transform(base.value, checkCtx)).then(
+              OK
+            );
           });
       }
     }

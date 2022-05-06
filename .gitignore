@@ -8,3 +8,4 @@ coverage
 src/playground.ts
 deno/lib/playground.ts
 .eslintcache
+workspace.code-workspace
