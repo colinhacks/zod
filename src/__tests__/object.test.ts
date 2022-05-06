@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
+import * as tc from "conditional-type-checks";
 
 import { util } from "../helpers/util";
 import * as z from "../index";
@@ -346,4 +347,15 @@ test("constructor key", () => {
       constructor: 61,
     })
   ).toThrow();
+});
+
+test("constructor key", () => {
+  const Example = z.object({
+    prop: z.string(),
+    opt: z.number().optional(),
+    arr: z.string().array(),
+  });
+
+  type Example = z.infer<typeof Example>;
+  tc.assert<tc.IsExact<keyof Example, "prop" | "opt" | "arr">>(true);
 });
