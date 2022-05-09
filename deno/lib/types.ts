@@ -3023,9 +3023,13 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     if (this._def.values.indexOf(input.data) === -1) {
       const ctx = this._getOrReturnCtx(input);
+      const expectedValues = this._def.values;
+
       addIssueToContext(ctx, {
+        expected: util.joinValues(expectedValues) as "string",
+        received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
-        options: this._def.values,
+        options: expectedValues,
       });
       return INVALID;
     }
@@ -3086,9 +3090,13 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
     const nativeEnumValues = util.getValidEnumValues(this._def.values);
     if (nativeEnumValues.indexOf(input.data) === -1) {
       const ctx = this._getOrReturnCtx(input);
+      const expectedValues = util.objectValues(nativeEnumValues);
+
       addIssueToContext(ctx, {
+        expected: util.joinValues(expectedValues) as "string",
+        received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
-        options: util.objectValues(nativeEnumValues),
+        options: expectedValues,
       });
       return INVALID;
     }
