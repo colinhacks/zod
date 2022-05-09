@@ -1,8 +1,9 @@
 // @ts-ignore TS6133
 import { expect, fit } from "@jest/globals";
-import { filePath } from "./languageServerFeatures.source";
-import { Project, Node, SyntaxKind } from "ts-morph";
 import path from "path";
+import { Node, Project, SyntaxKind } from "ts-morph";
+
+import { filePath } from "./languageServerFeatures.source";
 
 // The following tool is helpful for understanding the TypeScript AST associated with these tests:
 // https://ts-ast-viewer.com/ (just copy the contents of languageServerFeatures.source into the viewer)
