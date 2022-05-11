@@ -3328,7 +3328,7 @@ export class ZodEffects<
             //   return { status: "dirty", value: base.value };
             // }
             return Promise.resolve(effect.transform(base.value, checkCtx)).then(
-              OK
+              (result) => ({ status: status.value, value: result })
             );
           });
       }
