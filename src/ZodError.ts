@@ -304,7 +304,7 @@ export const defaultErrorMap = (
   let message: string;
   switch (issue.code) {
     case ZodIssueCode.invalid_type:
-      if (issue.received === "undefined") {
+      if (issue.received === ZodParsedType.undefined) {
         message = "Required";
       } else {
         message = `Expected ${issue.expected}, received ${issue.received}`;
