@@ -13,6 +13,22 @@
       rel="stylesheet"
       href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css"
     />
+    <style>
+      .markdown-section {
+        max-width: 650px;
+      }
+      .markdown-section h2 {
+        padding: 40px 0px 10px 0px;
+      }
+
+      .markdown-section h3 {
+        padding: 0px 0px 10px 0px;
+      }
+      .markdown-section h4 {
+        font-size: 1rem;
+        padding: 40px 0px 5px 0px;
+      }
+    </style>
   </head>
 
   <body>
@@ -28,8 +44,9 @@
     <script>
       window.$docsify = {
         subMaxLevel: 1,
-        onlyCover: true,
-        // repo: 'docsifyjs/docsify',
+        maxLevel: 3,
+        // onlyCover: true,
+        repo: "colinhacks/zod",
         // coverpage: true,
       };
     </script>
