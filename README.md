@@ -37,8 +37,8 @@ These docs have been translated into [Chinese](./README_ZH.md).
 
 - [Introduction](#introduction)
   - [Sponsors](#sponsors)
-  - [Installation](#installation)
   - [Ecosystem](#ecosystem)
+- [Installation](#installation)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
 - [Literals](#literals)
