@@ -1,7 +1,7 @@
 <p align="center">
   <img src="logo.svg" width="200px" align="center" />
   <h1 align="center">Zod</h1>
-  <p align="center">TypeScript-first schema validation<br/>with static type inference</p>
+  <p align="center">TypeScript-first schema validation with static type inference</p>
 </p>
 <p align="center">
 <a href="https://github.com/colinhacks/zod/actions?query=branch%3Amaster"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=master" alt="Zod CI status" /></a>
