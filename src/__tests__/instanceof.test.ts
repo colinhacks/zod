@@ -25,3 +25,9 @@ test("instanceof", async () => {
   const f1: util.AssertEqual<Test, z.infer<typeof TestSchema>> = true;
   expect(f1).toBeTruthy();
 });
+
+test("instanceof fatal", () => {
+  const schema = z.instanceof(Date).refine((d) => d.toString());
+  const res = schema.safeParse(null);
+  expect(res.success).toBe(false);
+});
