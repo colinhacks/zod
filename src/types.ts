@@ -3021,12 +3021,22 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   ZodEnumDef<T>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (typeof input.data !== "string") {
+      const ctx = this._getOrReturnCtx(input);
+      const expectedValues = this._def.values;
+      addIssueToContext(ctx, {
+        expected: util.joinValues(expectedValues) as "string",
+        received: ctx.parsedType,
+        code: ZodIssueCode.invalid_type,
+      });
+      return INVALID;
+    }
+
     if (this._def.values.indexOf(input.data) === -1) {
       const ctx = this._getOrReturnCtx(input);
       const expectedValues = this._def.values;
 
       addIssueToContext(ctx, {
-        expected: util.joinValues(expectedValues) as "string",
         received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
         options: expectedValues,
@@ -3088,19 +3098,32 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
 > {
   _parse(input: ParseInput): ParseReturnType<T[keyof T]> {
     const nativeEnumValues = util.getValidEnumValues(this._def.values);
+
+    const ctx = this._getOrReturnCtx(input);
+    if (
+      ctx.parsedType !== ZodParsedType.string &&
+      ctx.parsedType !== ZodParsedType.number
+    ) {
+      const expectedValues = util.objectValues(nativeEnumValues);
+      addIssueToContext(ctx, {
+        expected: util.joinValues(expectedValues) as "string",
+        received: ctx.parsedType,
+        code: ZodIssueCode.invalid_type,
+      });
+      return INVALID;
+    }
+
     if (nativeEnumValues.indexOf(input.data) === -1) {
-      const ctx = this._getOrReturnCtx(input);
       const expectedValues = util.objectValues(nativeEnumValues);
 
       addIssueToContext(ctx, {
-        expected: util.joinValues(expectedValues) as "string",
         received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
         options: expectedValues,
       });
       return INVALID;
     }
-    return OK(input.data);
+    return OK(input.data as any);
   }
 
   get enum() {

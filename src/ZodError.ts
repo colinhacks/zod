@@ -68,8 +68,7 @@ export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
-  expected: ZodParsedType;
-  received: any;
+  received: string;
   code: typeof ZodIssueCode.invalid_enum_value;
   options: (string | number)[];
 }
@@ -334,7 +333,7 @@ export const defaultErrorMap = (
     case ZodIssueCode.invalid_enum_value:
       message = `Invalid enum value. Expected ${util.joinValues(
         issue.options
-      )} received '${issue.received}'`;
+      )}, received '${issue.received}'`;
       break;
     case ZodIssueCode.invalid_arguments:
       message = `Invalid function arguments`;

@@ -409,14 +409,26 @@ test("strict error message", () => {
   }
 });
 
-test("enum default error message", () => {
+test("enum error message, invalid enum elementstring", () => {
   try {
     z.enum(["Tuna", "Trout"]).parse("Salmon");
   } catch (err) {
     const zerr: z.ZodError = err as any;
     expect(zerr.issues.length).toEqual(1);
     expect(zerr.issues[0].message).toEqual(
-      "Invalid enum value. Expected 'Tuna' | 'Trout' received 'Salmon'"
+      "Invalid enum value. Expected 'Tuna' | 'Trout', received 'Salmon'"
+    );
+  }
+});
+
+test("enum error message, invalid type", () => {
+  try {
+    z.enum(["Tuna", "Trout"]).parse(12);
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual(
+      "Expected 'Tuna' | 'Trout', received number"
     );
   }
 });
@@ -432,7 +444,7 @@ test("nativeEnum default error message", () => {
     const zerr: z.ZodError = err as any;
     expect(zerr.issues.length).toEqual(1);
     expect(zerr.issues[0].message).toEqual(
-      "Invalid enum value. Expected 'Tuna' | 'Trout' received 'Salmon'"
+      "Invalid enum value. Expected 'Tuna' | 'Trout', received 'Salmon'"
     );
   }
 });
