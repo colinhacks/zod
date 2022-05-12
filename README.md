@@ -36,51 +36,51 @@ These docs have been translated into [Chinese](./README_ZH.md).
 #### Go to [zod.js.org](https://zod.js.org) >> -->
 
 - [Introduction](#introduction)
-  - [Sponsors](#sponsorship)
+  - [Sponsors](#sponsors)
   - [Installation](#installation)
   - [Ecosystem](#ecosystem)
 - [Basic usage](#basic-usage)
-- [Defining schemas](#defining-schemas)
-  - [Primitives](#primitives)
-  - [Literals](#literals)
-  - [Strings](#strings)
-  - [Numbers](#numbers)
-  - [NaNs](#nans)
-  - [Booleans](#booleans)
-  - [Dates](#dates)
-  - [Zod enums](#zod-enums)
-  - [Native enums](#native-enums)
-  - [Optionals](#optionals)
-  - [Nullables](#nullables)
-  - [Objects](#objects)
-    - [.shape](#shape)
-    - [.extend](#extend)
-    - [.merge](#merge)
-    - [.pick/.omit](#pickomit)
-    - [.partial](#partial)
-    - [.deepPartial](#deepPartial)
-    - [.passthrough](#passthrough)
-    - [.strict](#strict)
-    - [.strip](#strip)
-    - [.catchall](#catchall)
-  - [Arrays](#arrays)
-    - [.element](#element)
-    - [.nonempty](#nonempty)
-    - [.min/.max/.length](#minmaxlength)
-  - [Tuples](#tuples)
-  - [Records](#records)
-  - [Maps](#maps)
-  - [Sets](#sets)
-  - [Unions](#unions)
-  - [Discriminated Unions](#discriminated-unions)
-  - [Recursive types](#recursive-types)
-    - [JSON type](#json-type)
-    - [Cyclical data](#cyclical-objects)
-  - [Promises](#promises)
-  - [Instanceof](#instanceof)
-  - [Function schemas](#function-schemas)
-  - [Preprocess](#preprocess)
-- [Schema methods](#zodtype-methods-and-properties)
+
+- [Primitives](#primitives)
+- [Literals](#literals)
+- [Strings](#strings)
+- [Numbers](#numbers)
+- [NaNs](#nans)
+- [Booleans](#booleans)
+- [Dates](#dates)
+- [Zod enums](#zod-enums)
+- [Native enums](#native-enums)
+- [Optionals](#optionals)
+- [Nullables](#nullables)
+- [Objects](#objects)
+  - [.shape](#shape)
+  - [.extend](#extend)
+  - [.merge](#merge)
+  - [.pick/.omit](#pickomit)
+  - [.partial](#partial)
+  - [.deepPartial](#deepPartial)
+  - [.passthrough](#passthrough)
+  - [.strict](#strict)
+  - [.strip](#strip)
+  - [.catchall](#catchall)
+- [Arrays](#arrays)
+  - [.element](#element)
+  - [.nonempty](#nonempty)
+  - [.min/.max/.length](#minmaxlength)
+- [Tuples](#tuples)
+- [Unions](#unions)
+- [Discriminated Unions](#discriminated-unions)
+- [Records](#records)
+- [Maps](#maps)
+- [Sets](#sets)
+- [Recursive types](#recursive-types)
+  - [JSON type](#json-type)
+  - [Cyclical data](#cyclical-objects)
+- [Promises](#promises)
+- [Instanceof](#instanceof)
+- [Function schemas](#function-schemas)
+- [Preprocess](#preprocess)
+- [Schema methods](#schema-methods)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
   - [.safeParse](#safeparse)
@@ -100,6 +100,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [Type inference](#type-inference)
   - [Writing generic functions](#writing-generic-functions)
   - [Error handling](#error-handling)
+  - [Error formatting](#error-formatting)
 - [Comparison](#comparison)
   - [Joi](#joi)
   - [Yup](#yup)
@@ -549,7 +550,7 @@ FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
 
 ## Native enums
 
-Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()` .
+Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()`.
 
 **Numeric enums**
 
@@ -1176,7 +1177,7 @@ const Category: z.ZodType<Category> = BaseCategory.merge(
 );
 ``` -->
 
-### Validating JSON
+### JSON type
 
 If you want to validate any JSON value, you can use the snippet below.
 
@@ -1784,40 +1785,6 @@ type output = z.output<typeof stringToNumber>; // number
 type inferred = z.infer<typeof stringToNumber>; // number
 ```
 
-### Writing functions that accept Zod schemas
-
-You can use `z.ZodType` as a type that will accept any Zod schema.
-
-```ts
-function runParse(schema: z.ZodType, input: unknown) {
-  return schema.parse(input);
-}
-```
-
-The `ZodType` class has three generic parameters.
-
-```ts
-class ZodType<
-  Output = any,
-  Def extends ZodTypeDef = ZodTypeDef,
-  Input = Output
-> { ... }
-```
-
-By constraining these in your generic input, you can limit what schemas are allowable as inputs to your function:
-
-```ts
-function makeSchemaOptional<T extends z.ZodType<string>>(schema: T) {
-  return schema.optional();
-}
-
-makeSchemaOptional(z.string());
-// works fine
-
-makeSchemaOptional(z.number());
-// Error: 'ZodNumber' is not assignable to parameter of type 'ZodType<string, ZodTypeDef, string>'
-```
-
 ### Writing generic functions
 
 When attempting to write a functions that accepts a Zod schemas as an input, it's common to try something like this:
@@ -1852,12 +1819,42 @@ const arg = makeSchemaOptional(z.string());
 arg.unwrap(); // ZodString
 ```
 
+#### Constraining allowable inputs
+
+The `ZodType` class has three generic parameters.
+
+```ts
+class ZodType<
+  Output = any,
+  Def extends ZodTypeDef = ZodTypeDef,
+  Input = Output
+> { ... }
+```
+
+By constraining these in your generic input, you can limit what schemas are allowable as inputs to your function:
+
+```ts
+function makeSchemaOptional<T extends z.ZodType<string>>(schema: T) {
+  return schema.optional();
+}
+
+makeSchemaOptional(z.string());
+// works fine
+
+makeSchemaOptional(z.number());
+// Error: 'ZodNumber' is not assignable to parameter of type 'ZodType<string, ZodTypeDef, string>'
+```
+
 ### Error handling
 
 Zod provides a subclass of Error called `ZodError`. ZodErrors contain an `issues` array containing detailed information about the validation problems.
 
 ```ts
-const data = z.object({ name: z.string() }).safeParse({ name: 12 });
+const data = z
+  .object({
+    name: z.string(),
+  })
+  .safeParse({ name: 12 });
 
 if (!data.success) {
   data.error.issues;
@@ -1873,18 +1870,29 @@ if (!data.success) {
 }
 ```
 
+> For detailed information about the possible error codes and how to customize error messages, check out the dedicated error handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md)
+
 ### Error formatting
 
 You can use the `.format()` method to convert this error into a nested object.
 
 ```ts
-data.error.format();
-/* {
-  name: { _errors: [ 'Expected string, received number' ] }
-} */
-```
+const data = z
+  .object({
+    name: z.string(),
+  })
+  .safeParse({ name: 12 });
 
-For detailed information about the possible error codes and how to customize error messages, check out the dedicated error handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md)
+if (!data.success) {
+  const formatted = data.error.format();
+  /* {
+    name: { _errors: [ 'Expected string, received number' ] }
+  } */
+
+  formatted.name?._errors;
+  // => ["Expected string, received number"]
+}
+```
 
 ## Comparison
 
