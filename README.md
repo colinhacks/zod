@@ -1257,7 +1257,7 @@ type myFunction = z.infer<typeof myFunction>;
 // => ()=>unknown
 ```
 
-**Define inputs and output**
+Define inputs and outputs.
 
 ```ts
 const myFunction = z
@@ -1267,24 +1267,6 @@ const myFunction = z
 type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string, arg1: number)=>boolean
 ```
-
-**Extract the input and output schemas**
-You can extract the parameters and return type of a function schema.
-
-```ts
-myFunction.parameters();
-// => ZodTuple<[ZodString, ZodNumber]>
-
-myFunction.returnType();
-// => ZodBoolean
-```
-
-<!-- `z.function()` accepts two arguments:
-
-* `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
-* `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema. -->
-
-> You can use the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning functions actually return undefined.)
 
 <!--
 
@@ -1314,7 +1296,9 @@ trimmedLength("sandwich"); // => 8
 trimmedLength(" asdf "); // => 4
 ```
 
-If you only care about validating inputs, that's fine:
+If you only care about validating inputs, just don't call the `.returns()` method. The output type will be inferred from the implementation.
+
+> You can use the special `z.void()` option if your function doesn't return anything. This will let Zod properly infer the type of void-returning functions. (Void-returning functions actually return undefined.)
 
 ```ts
 const myFunction = z
@@ -1325,6 +1309,21 @@ const myFunction = z
   });
 myFunction; // (arg: string)=>number[]
 ```
+
+Extract the input and output schemas from a function schema.
+
+```ts
+myFunction.parameters();
+// => ZodTuple<[ZodString, ZodNumber]>
+
+myFunction.returnType();
+// => ZodBoolean
+```
+
+<!-- `z.function()` accepts two arguments:
+
+* `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
+* `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema. -->
 
 ## Preprocess
 
