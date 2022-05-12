@@ -40,7 +40,6 @@ These docs have been translated into [Chinese](./README_ZH.md).
   - [Installation](#installation)
   - [Ecosystem](#ecosystem)
 - [Basic usage](#basic-usage)
-
 - [Primitives](#primitives)
 - [Literals](#literals)
 - [Strings](#strings)
