@@ -35,9 +35,10 @@ These docs have been translated into [Chinese](./README_ZH.md).
 
 #### Go to [zod.js.org](https://zod.js.org) >> -->
 
-- [What is Zod](#what-is-zod)
-- [Installation](#installation)
-- [Ecosystem](#ecosystem)
+- [Introduction](#introduction)
+  - [Sponsors](#sponsorship)
+  - [Installation](#installation)
+  - [Ecosystem](#ecosystem)
 - [Basic usage](#basic-usage)
 - [Defining schemas](#defining-schemas)
   - [Primitives](#primitives)
@@ -108,7 +109,7 @@ These docs have been translated into [Chinese](./README_ZH.md).
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
-## What is Zod
+## Introduction
 
 Zod is a TypeScript-first schema declaration and validation library. I'm using the term "schema" to broadly refer to any data type, from a simple `string` to a complex nested object.
 
@@ -124,11 +125,11 @@ Some other great aspects:
 - Functional approach: [parse, don't validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 - Works with plain JavaScript too! You don't need to use TypeScript.
 
-## Sponsorship
+### Sponsors
 
 Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
 
-### Gold
+#### Gold
 
 <table>
   <tr>
@@ -174,7 +175,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table>
 
-### Silver
+#### Silver
 
 <table>
   <tr>
@@ -206,7 +207,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table>
 
-### Bronze
+#### Bronze
 
 <table>
   <tr>
@@ -243,34 +244,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table>
 
-## Installation
-
-To install Zod v3:
-
-```sh
-npm install zod
-```
-
-⚠️ IMPORTANT: You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
-
-```ts
-// tsconfig.json
-{
-  // ...
-  "compilerOptions": {
-    // ...
-    "strict": true
-  }
-}
-```
-
-### TypeScript requirements
-
-- Zod 3.x requires TypeScript 4.1+
-- Zod 2.x requires TypeScript 3.7+
-- Zod 1.x requires TypeScript 3.3+
-
-## Ecosystem
+### Ecosystem
 
 There are a growing number of tools that are built atop or support Zod natively! If you've built a tool or library on top of Zod, tell me about it [on Twitter](https://twitter.com/colinhacks) or [start a Discussion](https://github.com/colinhacks/zod/discussions). I'll add it below and tweet it out.
 
@@ -298,11 +272,38 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas dynamically and provides GraphQL method decorators working with Zod schemas.
 
-### Form integrations
+#### Form integrations
 
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod
+
+## Installation
+
+To install Zod v3:
+
+```sh
+npm install zod
+```
+
+⚠️ IMPORTANT: You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
+
+```ts
+// tsconfig.json
+{
+  // ...
+  "compilerOptions": {
+    // ...
+    "strict": true
+  }
+}
+```
+
+> **TypeScript requirements**
+>
+> - Zod 3.x requires TypeScript 4.1+
+> - Zod 2.x requires TypeScript 3.7+
+> - Zod 1.x requires TypeScript 3.3+
 
 ## Basic usage
 
@@ -339,9 +340,7 @@ type User = z.infer<typeof User>;
 // { username: string }
 ```
 
-## Defining schemas
-
-### Primitives
+## Primitives
 
 ```ts
 import { z } from "zod";
@@ -368,7 +367,7 @@ z.unknown();
 z.never();
 ```
 
-### Literals
+## Literals
 
 ```ts
 const tuna = z.literal("tuna");
@@ -381,7 +380,7 @@ tuna.value; // "tuna"
 
 > Currently there is no support for Date or bigint literals in Zod. If you have a use case for this feature, please file an issue.
 
-### Strings
+## Strings
 
 Zod includes a handful of string-specific validations.
 
@@ -424,7 +423,7 @@ z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
 ```
 
-### Numbers
+## Numbers
 
 You can customize certain error messages when creating a number schema.
 
@@ -459,7 +458,7 @@ Optionally, you can pass in a second argument to provide a custom error message.
 z.number().lte(5, { message: "this👏is👏too👏big" });
 ```
 
-### NaNs
+## NaNs
 
 You can customize certain error messages when creating a nan schema.
 
@@ -470,7 +469,7 @@ const isNaN = z.nan({
 });
 ```
 
-### Booleans
+## Booleans
 
 You can customize certain error messages when creating a boolean schema.
 
@@ -481,7 +480,7 @@ const isActive = z.boolean({
 });
 ```
 
-### Dates
+## Dates
 
 z.date() accepts a date, not a date string
 
@@ -503,7 +502,7 @@ dateSchema.safeParse(new Date("1/12/22")); // success: true
 dateSchema.safeParse("2022-01-12T00:00:00.000Z"); // success: true
 ```
 
-### Zod enums
+## Zod enums
 
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
@@ -548,7 +547,7 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
 ```
 
-### Native enums
+## Native enums
 
 Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()` .
 
@@ -616,7 +615,7 @@ You can access the underlying object with the `.enum` property:
 FruitEnum.enum.Apple; // "apple"
 ```
 
-### Optionals
+## Optionals
 
 You can make any schema optional with `z.optional()`. This wraps the schema in a `ZodOptional` instance and returns the result.
 
@@ -644,7 +643,7 @@ const optionalString = stringSchema.optional();
 optionalString.unwrap() === stringSchema; // true
 ```
 
-### Nullables
+## Nullables
 
 Similarly, you can create nullable types with `z.nullable()`.
 
@@ -669,7 +668,7 @@ const nullableString = stringSchema.nullable();
 nullableString.unwrap() === stringSchema; // true
 ```
 
-### Objects
+## Objects
 
 ```ts
 // all properties are required by default
@@ -688,7 +687,7 @@ type Dog = {
 };
 ```
 
-#### `.shape`
+### `.shape`
 
 Use `.shape` to access the schemas for a particular key.
 
@@ -697,7 +696,7 @@ Dog.shape.name; // => string schema
 Dog.shape.age; // => number schema
 ```
 
-#### `.extend`
+### `.extend`
 
 You can add additional fields an object schema with the `.extend` method.
 
@@ -709,7 +708,7 @@ const DogWithBreed = Dog.extend({
 
 You can use `.extend` to overwrite fields! Be careful with this power!
 
-#### `.merge`
+### `.merge`
 
 Equivalent to `A.extend(B.shape)`.
 
@@ -723,7 +722,7 @@ type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
 
 > If the two schemas share keys, the properties of B overrides the property of A. The returned schema also inherits the "unknownKeys" policy (strip/strict/passthrough) and the catchall schema of B.
 
-#### `.pick/.omit`
+### `.pick/.omit`
 
 Inspired by TypeScript's built-in `Pick` and `Omit` utility types, all Zod object schemas have `.pick` and `.omit` methods that return a modified version. Consider this Recipe schema:
 
@@ -752,7 +751,7 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 // => { name: string, ingredients: string[] }
 ```
 
-#### `.partial`
+### `.partial`
 
 Inspired by the built-in TypeScript utility type [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialt), the `.partial` method makes all properties optional.
 
@@ -787,7 +786,7 @@ const optionalEmail = user.partial({
 */
 ```
 
-#### `.deepPartial`
+### `.deepPartial`
 
 The `.partial` method is shallow — it only applies one level deep. There is also a "deep" version:
 
@@ -817,7 +816,7 @@ const deepPartialUser = user.deepPartial();
 
 > Important limitation: deep partials only work as expected in hierarchies of objects, arrays, and tuples.
 
-#### `.passthrough`
+### `.passthrough`
 
 By default Zod objects schemas strip out unrecognized keys during parsing.
 
@@ -844,7 +843,7 @@ person.passthrough().parse({
 // => { name: "bob dylan", extraKey: 61 }
 ```
 
-#### `.strict`
+### `.strict`
 
 By default Zod objects schemas strip out unrecognized keys during parsing. You can _disallow_ unknown keys with `.strict()` . If there are any unknown keys in the input, Zod will throw an error.
 
@@ -862,11 +861,11 @@ person.parse({
 // => throws ZodError
 ```
 
-#### `.strip`
+### `.strip`
 
 You can use the `.strip` method to reset an object schema to the default behavior (stripping unrecognized keys).
 
-#### `.catchall`
+### `.catchall`
 
 You can pass a "catchall" schema into an object schema. All unknown keys will be validated against it.
 
@@ -891,7 +890,7 @@ person.parse({
 
 Using `.catchall()` obviates `.passthrough()` , `.strip()` , or `.strict()`. All keys are now considered "known".
 
-### Arrays
+## Arrays
 
 ```ts
 const stringArray = z.array(z.string());
@@ -907,7 +906,7 @@ z.string().optional().array(); // (string | undefined)[]
 z.string().array().optional(); // string[] | undefined
 ```
 
-#### `.element`
+### `.element`
 
 Use `.element` to access the schema for an element of the array.
 
@@ -915,7 +914,7 @@ Use `.element` to access the schema for an element of the array.
 stringArray.element; // => string schema
 ```
 
-#### `.nonempty`
+### `.nonempty`
 
 If you want to ensure that an array contains at least one element, use `.nonempty()`.
 
@@ -937,7 +936,7 @@ const nonEmptyStrings = z.string().array().nonempty({
 });
 ```
 
-#### `.min/.max/.length`
+### `.min/.max/.length`
 
 ```ts
 z.string().array().min(5); // must contain 5 or more items
@@ -947,7 +946,7 @@ z.string().array().length(5); // must contain 5 items exactly
 
 Unlike `.nonempty()` these methods do not change the inferred type.
 
-### Tuples
+## Tuples
 
 Unlike arrays, tuples have a fixed number of elements and each element can have a different type.
 
@@ -964,7 +963,7 @@ type Athlete = z.infer<typeof athleteSchema>;
 // type Athlete = [string, number, { pointsScored: number }]
 ```
 
-### Unions
+## Unions
 
 Zod includes a built-in `z.union` method for composing "OR" types.
 
@@ -983,7 +982,7 @@ For convenience, you can also use the `.or` method:
 const stringOrNumber = z.string().or(z.number());
 ```
 
-### Discriminated unions
+## Discriminated unions
 
 If the union consists of object schemas all identifiable by a common property, it is possible to use
 the `z.discriminatedUnion` method.
@@ -1002,7 +1001,7 @@ const item = z
   .parse({ type: "a", a: "abc" });
 ```
 
-### Records
+## Records
 
 Record schemas are used to validate types such as `{ [k: string]: number }`.
 
@@ -1048,7 +1047,7 @@ for (const key in testMap) {
 
 As you can see, JavaScript automatically casts all object keys to strings under the hood. Since Zod is trying to bridge the gap between static and runtime types, it doesn't make sense to provide a way of creating a record schema with numerical keys, since there's no such thing as a numerical key in runtime JavaScript.
 
-### Maps
+## Maps
 
 ```ts
 const stringNumberMap = z.map(z.string(), z.number());
@@ -1057,7 +1056,7 @@ type StringNumberMap = z.infer<typeof stringNumberMap>;
 // type StringNumberMap = Map<string, number>
 ```
 
-### Sets
+## Sets
 
 ```ts
 const numberSet = z.set(z.number());
@@ -1074,7 +1073,7 @@ z.set(z.string()).max(5); // must contain 5 or fewer items
 z.set(z.string()).size(5); // must contain 5 items exactly
 ```
 
-### Intersections
+## Intersections
 
 Intersections are useful for creating "logical AND" types. This is useful for intersecting two object types.
 
@@ -1122,7 +1121,7 @@ type Teacher = z.infer<typeof Teacher>;
 // { id:string; name:string };
 ```  -->
 
-### Recursive types
+## Recursive types
 
 You can define a recursive schema in Zod, but because of a limitation of TypeScript, their type can't be statically inferred. Instead you'll need to define the type definition manually, and provide it to Zod as a "type hint".
 
@@ -1177,7 +1176,7 @@ const Category: z.ZodType<Category> = BaseCategory.merge(
 );
 ``` -->
 
-#### Validating JSON
+### Validating JSON
 
 If you want to validate any JSON value, you can use the snippet below.
 
@@ -1194,11 +1193,11 @@ jsonSchema.parse(data);
 
 Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
 
-#### Cyclical objects
+### Cyclical objects
 
 Despite supporting recursive schemas, passing cyclical data into Zod will cause an infinite loop.
 
-### Promises
+## Promises
 
 ```ts
 const numberPromise = z.promise(z.number());
@@ -1229,7 +1228,7 @@ const test = async () => {
 
 When "parsing" a promise, Zod checks that the passed value is an object with `.then` and `.catch` methods — that's it. So you should be able to pass non-native Promises (Bluebird, etc) into `z.promise(...).parse` with no trouble. One gotcha: the return type of the parse function will be a _native_ `Promise` , so if you have downstream logic that uses non-standard Promise methods, this won't work. -->
 
-### Instanceof
+## Instanceof
 
 You can use `z.instanceof` to check that the input is an instance of a class. This is useful to validate inputs against classes that are exported from third-party libraries.
 
@@ -1245,7 +1244,7 @@ TestSchema.parse(new Test()); // passes
 TestSchema.parse("blob"); // throws
 ```
 
-### Function schemas
+## Function schemas
 
 Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".
 
@@ -1327,7 +1326,7 @@ const myFunction = z
 myFunction; // (arg: string)=>number[]
 ```
 
-### Preprocess
+## Preprocess
 
 Typically Zod operates under a "parse then transform" paradigm. Zod validates the input first, then passes it through a chain of transformation functions. (For more information about transforms, read the [.transform docs](#transform).)
 
@@ -1339,7 +1338,7 @@ const castToString = z.preprocess((val) => String(val), z.string());
 
 This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
 
-## ZodType: methods and properties
+## Schema methods
 
 All Zod schemas contain certain methods.
 
