@@ -68,6 +68,7 @@ export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
+  received: string;
   code: typeof ZodIssueCode.invalid_enum_value;
   options: (string | number)[];
 }
@@ -316,22 +317,23 @@ export const defaultErrorMap = (
       )}`;
       break;
     case ZodIssueCode.unrecognized_keys:
-      message = `Unrecognized key(s) in object: ${issue.keys
-        .map((k) => `'${k}'`)
-        .join(", ")}`;
+      message = `Unrecognized key(s) in object: ${util.joinValues(
+        issue.keys,
+        ", "
+      )}`;
       break;
     case ZodIssueCode.invalid_union:
       message = `Invalid input`;
       break;
     case ZodIssueCode.invalid_union_discriminator:
-      message = `Invalid discriminator value. Expected ${issue.options
-        .map((val) => (typeof val === "string" ? `'${val}'` : val))
-        .join(" | ")}`;
+      message = `Invalid discriminator value. Expected ${util.joinValues(
+        issue.options
+      )}`;
       break;
     case ZodIssueCode.invalid_enum_value:
-      message = `Invalid enum value. Expected ${issue.options
-        .map((val) => (typeof val === "string" ? `'${val}'` : val))
-        .join(" | ")}`;
+      message = `Invalid enum value. Expected ${util.joinValues(
+        issue.options
+      )}, received '${issue.received}'`;
       break;
     case ZodIssueCode.invalid_arguments:
       message = `Invalid function arguments`;
