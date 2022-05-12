@@ -1605,7 +1605,28 @@ const stringToNumber = z.string().transform((val) => myString.length);
 stringToNumber.parse("string"); // => 6
 ```
 
-> ⚠️ Transform functions must not throw. Make sure to use refinements before the transform to make sure the input can be parsed by the transform.
+> ⚠️ Transform functions must not throw. Make sure to use refinements before the transform or addIssue within the transform to make sure the input can be parsed by the transform.
+
+#### Validating during transform
+
+Similar to `superRefine`, `transform` can optionally take a `ctx`. This allows you to simultaneously
+validate and transform the value, which can be simpler than chaining `refine` and `validate`. 
+When calling `ctx.addIssue` make sure to still return a value of the correct type otherwise the inferred type will include `undefined`.
+
+```ts
+const Strings = z
+  .string()
+  .transform((val, ctx) => {
+    const parsed = parseInt(val);
+    if (isNaN(parsed)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Not a number",
+      });
+    }
+    return parsed;
+  });
+```
 
 #### Chaining order
 

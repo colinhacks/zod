@@ -10,7 +10,7 @@ const stringToNumber = z.string().transform((arg) => parseFloat(arg));
 //   .transform((n) => String(n));
 const asyncNumberToString = z.number().transform(async (n) => String(n));
 
-test("transform ctx.addIssue", () => {
+test("transform ctx.addIssue with parse", () => {
   const strs = ["foo", "bar"];
 
   expect(() => {
@@ -39,6 +39,38 @@ test("transform ctx.addIssue", () => {
       2
     )
   );
+});
+
+test("transform ctx.addIssue with parseAsync", async () => {
+  const strs = ["foo", "bar"];
+
+  const result = await z
+    .string()
+    .transform((data, ctx) => {
+      const i = strs.indexOf(data);
+      if (i === -1) {
+        ctx.addIssue({
+          code: "custom",
+          message: `${data} is not one of our allowed strings`,
+        });
+      }
+      return data.length;
+    })
+    .safeParseAsync("asdf");
+
+  expect(JSON.parse(JSON.stringify(result))).toEqual({
+    success: false,
+    error: {
+      issues: [
+        {
+          code: "custom",
+          message: "asdf is not one of our allowed strings",
+          path: [],
+        },
+      ],
+      name: "ZodError",
+    },
+  });
 });
 
 test("basic transformations", () => {
