@@ -3,11 +3,11 @@
   <h1 align="center">Zod</h1>
 </p>
 <p align="center">
+<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amaster"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=master" alt="Zod CI status" /></a>
 <a href="https://twitter.com/colinhacks" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="License"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
-<a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
 <a href="https://discord.gg/KaSRdyX2vc" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
 </p>
 
@@ -30,9 +30,9 @@ These docs have been translated into [Chinese](./README_ZH.md).
 
 # Table of contents
 
-The full documentation is available both on the [official documentation site](https://zod.js.org/) (recommended) and in `README.md`.
+<!-- The full documentation is available both on the [official documentation site](https://zod.js.org/) (recommended) and in `README.md`.
 
-### Go to [zod.js.org](https://zod.js.org) >>
+### Go to [zod.js.org](https://zod.js.org) >> -->
 
 - [What is Zod](#what-is-zod)
 - [Installation](#installation)
@@ -94,8 +94,10 @@ The full documentation is available both on the [official documentation site](ht
   - [.promise](#promise)
   - [.or](#or)
   - [.and](#and)
-- [Type inference](#type-inference)
-- [Errors](#errors)
+- [Guides and concepts](#guides-and-concepts)
+  - [Type inference](#type-inference)
+  - [Writing generic functions](#writing-generic-functions)
+  - [Error handling](#error-handling)
 - [Comparison](#comparison)
   - [Joi](#joi)
   - [Yup](#yup)
@@ -114,7 +116,7 @@ Zod is designed to be as developer-friendly as possible. The goal is to eliminat
 Some other great aspects:
 
 - Zero dependencies
-- Works in Node.js and browsers (including IE 11)
+- Works in Node.js and all modern browsers
 - Tiny: 8kb minified + zipped
 - Immutable: methods (i.e. `.optional()`) return a new instance
 - Concise, chainable interface
@@ -123,75 +125,122 @@ Some other great aspects:
 
 # Sponsorship
 
-Sponsorship at any level is appreciated and encouraged. Zod is maintained by a solo developer ([hi!](https://twitter.com/colinhacks)). For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider the [Startup tier](https://github.com/sponsors/colinhacks). You can learn more about the tiers at [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
+Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
 
-### Sponsors
+### Gold
 
 <table>
   <tr>
-   <td align="center">
+    <td align="center">
+      <a href="https://astro.build/">
+        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="200px;" alt="" />
+      </a>
+      <br />
+      <b>Astro</b>
+      <br />
+      <a href="https://astro.build">astro.build</a>
+      <br />
+      <p width="200px">
+        Astro is a new kind of static <br/>
+        site builder for the modern web. <br/>
+        Powerful developer experience meets <br/>
+        lightweight output.</p>
+    </td>
+    <td align="center">
+      <a href="https://glow.app/">
+        <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="" />
+      </a>
+      <br />
+      <b>Glow Wallet</b>
+      <br />
+      <a href="https://glow.app/">glow.app</a>
+      <br />
+      <p width="200px">Your new favorite
+        <br/>
+      Solana wallet.</p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
       <a href="https://deletype.com/">
-        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="100px;" alt="" />
+        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="" />
       </a>
-      <br>
+      <br />
       <b>Deletype</b>
-      <br>
-      <a href="https://deletype.com/">deletype.com/</a>
+      <br />
+      <a href="https://deletype.com">deletype.com</a>
     </td>
-  <td align="center">
-      <a href="https://github.com/kevinsimper">
-        <img src="https://avatars1.githubusercontent.com/u/1126497?s=460&v=4" width="100px;" alt="" />
+  </tr>
+</table>
+
+### Silver
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://snaplet.dev">
+        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="" />
       </a>
-      <br>
-      <b>Kevin Simper</b>
-      <br>
-      <a href="https://github.com/kevinsimper">@kevinsimper</a>
+      <br />
+      <b>Snaplet</b>
+      <br />
+      <a href="https://snaplet.dev">snaplet.dev</a>
     </td>
+     <td align="center">
+      <a href="https://marcatopartners.com/">
+        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
+      </a>
+      <br />
+      <b>Marcato Partners</b>
+      <br />
+      <a href="https://marcatopartners.com/">marcatopartners.com</a>
+    </td>
+     <td align="center">
+      <a href="https://github.com/macandcheese-spaghetticode">
+        <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
+      </a>
+      <br />
+      <b>Trip</b>
+    </td>
+  </tr>
+</table>
+
+### Bronze
+
+<table>
+  <tr>
     <td align="center">
       <a href="https://twitter.com/flybayer">
         <img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/>
       </a>
-      <br>
+      <br />
       <b>Brandon Bayer</b>
       <br/>
       <a href="https://twitter.com/flybayer">@flybayer</a>,
       <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
       <br />
     </td>
-
-  </tr>
-  <tr>
     <td align="center">
-      <a href="https://www.bamboocreative.nz/">
-        <img src="https://avatars1.githubusercontent.com/u/41406870?s=460&v=4" width="100px;" alt="" />
+      <a href="https://github.com/brabeji">
+        <img src="https://avatars.githubusercontent.com/u/2237954?v=4" width="100px;" alt=""/>
       </a>
-      <br>
-      <b>Bamboo Creative</b>
-      <br>
-      <a href="https://www.bamboocreative.nz/">bamboocreative.nz</a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/jeremyBanks">
-        <img src="https://avatars.githubusercontent.com/u/18020?s=400&u=dba6c1402ae1746a276a5d256e01d68e774a0e9d&v=4" width="100px;" alt="" />
-      </a>
-      <br>
-      <b>Jeremy Banks</b>
-      <br>
-      <a href="https://github.com/jeremyBanks">github.com/jeremyBanks</a>
+      <br />
+      <b>Jiří Brabec</b>
+      <br/>
+      <a href="https://github.com/brabeji">@brabeji</a>
+      <br />
     </td>
      <td align="center">
-      <a href="https://marcatopartners.com/">
-        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="100px;" alt="Marcato Partners" />
+      <a href="https://twitter.com/alexdotjs">
+        <img src="https://avatars.githubusercontent.com/u/459267?v=4" width="100px;" alt="" />
       </a>
-      <br>
-      <b>Marcato Partners</b>
-      <br>
-      <a href="https://marcatopartners.com/">marcatopartners.com</a>
+      <br />
+      <b>Alex Johansson</b>
+      <br />
+      <a href="https://twitter.com/alexdotjs">@alexdotjs</a>
     </td>
   </tr>
 </table>
-
-_To get your name + Twitter + website here, sponsor Zod at the [Freelancer](https://github.com/sponsors/colinhacks) or [Consultancy](https://github.com/sponsors/colinhacks) tier._
 
 # Installation
 
@@ -241,11 +290,18 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
 - [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema): GraphQL Code Generator plugin to generate form validation schema from your GraphQL schema
 - [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Generate Zod schemas from your Prisma schema.
+- [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod): Create Fastify type providers from Zod schemas
+- [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs
+- [`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi): Generate full OpenAPI (Swagger) docs from Zod, including schemas, endpoints & parameters
+- [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
+- [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
+- [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas dynamically and provides GraphQL method decorators working with Zod schemas.
 
 ### Form integrations
 
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod
+- [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod
 
 # Basic usage
 
@@ -1133,9 +1189,9 @@ const Category: z.ZodType<Category> = BaseCategory.merge(
 If you want to validate any JSON value, you can use the snippet below.
 
 ```ts
-type Literal = boolean | null | number | string;
-type Json = Literal | { [key: string]: Json } | Json[];
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+type Literal = z.infer<typeof literalSchema>;
+type Json = Literal | { [key: string]: Json } | Json[];
 const jsonSchema: z.ZodType<Json> = z.lazy(() =>
   z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)])
 );
@@ -1300,7 +1356,7 @@ All Zod schemas contain certain methods.
 
 Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
-> IMPORTANT: In Zod 2 and Zod 1.11+, the value returned by `.parse` is a _deep clone_ of the variable you passed in. This was also the case in zod@1.4 and earlier.
+> IMPORTANT: The value returned by `.parse` is a _deep clone_ of the variable you passed in.
 
 ```ts
 const stringSchema = z.string();
@@ -1549,7 +1605,26 @@ const stringToNumber = z.string().transform((val) => myString.length);
 stringToNumber.parse("string"); // => 6
 ```
 
-> ⚠️ Transform functions must not throw. Make sure to use refinements before the transform to make sure the input can be parsed by the transform.
+> ⚠️ Transform functions must not throw. Make sure to use refinements before the transform or addIssue within the transform to make sure the input can be parsed by the transform.
+
+#### Validating during transform
+
+Similar to `superRefine`, `transform` can optionally take a `ctx`. This allows you to simultaneously
+validate and transform the value, which can be simpler than chaining `refine` and `validate`.
+When calling `ctx.addIssue` make sure to still return a value of the correct type otherwise the inferred type will include `undefined`.
+
+```ts
+const Strings = z.string().transform((val, ctx) => {
+  const parsed = parseInt(val);
+  if (isNaN(parsed)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Not a number",
+    });
+  }
+  return parsed;
+});
+```
 
 #### Chaining order
 
@@ -1686,7 +1761,9 @@ z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: st
 z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 ```
 
-# Type inference
+# Guides and concepts
+
+## Type inference
 
 You can extract the TypeScript type of any schema with `z.infer<typeof mySchema>` .
 
@@ -1715,16 +1792,72 @@ type output = z.output<typeof stringToNumber>; // number
 type inferred = z.infer<typeof stringToNumber>; // number
 ```
 
-# Errors
+## Writing generic functions
+
+When attempting to write a functions that accepts a Zod schemas as an input, it's common to try something like this:
+
+```ts
+function makeSchemaOptional<T>(schema: z.ZodType<T>) {
+  return schema.optional();
+}
+```
+
+This approach has some issues. The `schema` variable in this function is typed as an instance of `ZodType`, which is an abstract class that all Zod schemas inherit from. This approach loses type information, namely _which subclass_ the input actually is.
+
+```ts
+const arg = makeSchemaOptional(z.string());
+arg.unwrap();
+```
+
+A better approach is for the generate parameter to refer to _the schema as a whole_.
+
+```ts
+function makeSchemaOptional<T extends z.ZodTypeAny>(schema: T) {
+  return schema.optional();
+}
+```
+
+> `ZodTypeAny` is just a shorthand for `ZodType<any, any, any>`, a type that is broad enough to match any Zod schema.
+
+As you can see, `schema` is now fully and properly typed.
+
+```ts
+const arg = makeSchemaOptional(z.string());
+arg.unwrap(); // ZodString
+```
+
+### Restricting valid schemas
+
+The `ZodType` class has three generic parameters.
+
+```ts
+class ZodType<
+  Output,
+  Def extends ZodTypeDef = ZodTypeDef,
+  Input = Output
+> { ... }
+```
+
+By constraining these in your generic input, you can limit what schemas are allowable as inputs to your function:
+
+```ts
+function makeSchemaOptional<T extends z.ZodType<string>>(schema: T) {
+  return schema.optional();
+}
+
+makeSchemaOptional(z.string());
+// works fine
+
+makeSchemaOptional(z.number());
+// Error: 'ZodNumber' is not assignable to parameter of type 'ZodType<string, ZodTypeDef, string>'
+```
+
+## Error handling
 
 Zod provides a subclass of Error called `ZodError`. ZodErrors contain an `issues` array containing detailed information about the validation problems.
 
 ```ts
-const data = z
-  .object({
-    name: z.string(),
-  })
-  .safeParse({ name: 12 });
+const data = z.object({ name: z.string() }).safeParse({ name: 12 });
 
 if (!data.success) {
   data.error.issues;
