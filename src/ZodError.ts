@@ -68,7 +68,7 @@ export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
-  received: string;
+  received: string | number;
   code: typeof ZodIssueCode.invalid_enum_value;
   options: (string | number)[];
 }

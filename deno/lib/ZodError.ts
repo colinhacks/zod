@@ -68,7 +68,7 @@ export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
-  received: string;
+  received: string | number;
   code: typeof ZodIssueCode.invalid_enum_value;
   options: (string | number)[];
 }
@@ -305,7 +305,7 @@ export const defaultErrorMap = (
   let message: string;
   switch (issue.code) {
     case ZodIssueCode.invalid_type:
-      if (issue.received === "undefined") {
+      if (issue.received === ZodParsedType.undefined) {
         message = "Required";
       } else {
         message = `Expected ${issue.expected}, received ${issue.received}`;
