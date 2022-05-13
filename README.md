@@ -1,7 +1,9 @@
 <p align="center">
   <img src="logo.svg" width="200px" align="center" alt="Zod logo" />
   <h1 align="center">Zod</h1>
-  <p align="center">TypeScript-first schema validation with static type inference</p>
+  <p align="center">TypeScript-first schema validation with static type inference
+  <br/>
+  <a href="https://zod.dev">https://zod.dev</a></p>
 </p>
 <br/>
 <p align="center">
@@ -11,10 +13,11 @@
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
 <a href="https://discord.gg/KaSRdyX2vc" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
-<!-- <a href="https://app.netlify.com/sites/guileless-rolypoly-866f8a/deploys" rel="nofollow"><img src="https://api.netlify.com/api/v1/badges/0c13c2f2-86de-4115-895d-d0a4cb36af1a/deploy-status" alt="netlify deploy status"></a> -->
 </p>
 
 <div align="center">
+  <a href="https://zod.dev">Documentation</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://www.npmjs.com/package/zod">NPM</a>
@@ -30,7 +33,13 @@
 <br/>
 <br/>
 
-These docs have been translated into [Chinese](./README_ZH.md).
+<h3 class="weblink">
+  Documentation: <a href="https://zod.dev">https://zod.dev</a>
+</3>
+
+<br/>
+
+> These docs have been translated into [Chinese](./README_ZH.md).
 
 ## Table of contents
 
