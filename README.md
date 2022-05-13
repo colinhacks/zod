@@ -33,9 +33,9 @@
 <br/>
 <br/>
 
-<h3 class="weblink">
-  Documentation: <a href="https://zod.dev">https://zod.dev</a>
-</3>
+<p class="weblink">
+  Documentation is below and at <a href="https://zod.dev">https://zod.dev</a>.
+</p>
 
 <br/>
 
