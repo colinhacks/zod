@@ -1,9 +1,11 @@
 <p align="center">
   <img src="logo.svg" width="200px" align="center" alt="Zod logo" />
   <h1 align="center">Zod</h1>
-  <p align="center">TypeScript-first schema validation with static type inference
-  <br/>
-  <a href="https://zod.dev">https://zod.dev</a></p>
+  <p align="center">
+    <a href="https://zod.dev">✨ https://zod.dev ✨</a>
+    <br/>
+    TypeScript-first schema validation with static type inference
+  </p>
 </p>
 <br/>
 <p align="center">
@@ -31,12 +33,6 @@
 </div>
 
 <br/>
-<br/>
-
-<p class="weblink">
-  Documentation is below and at <a href="https://zod.dev">https://zod.dev</a>.
-</p>
-
 <br/>
 
 > These docs have been translated into [Chinese](./README_ZH.md).
