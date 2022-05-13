@@ -10,7 +10,7 @@
     />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
     />
     <meta
       name="twitter:title"
@@ -70,11 +70,11 @@
     <meta name="msapplication-TileColor" content="#da532c" />
     <meta name="msapplication-config" content="/static/browserconfig.xml" />
     <meta name="theme-color" content="#ffffff" />
+
     <script
       async
       src="https://www.googletagmanager.com/gtag/js?id=G-FG8DDV0GBR"
     ></script>
-
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() {
@@ -85,15 +85,19 @@
     </script>
 
     <link
-      href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css"
-      type="text/css"
       rel="preload"
+      href="//cdn.jsdelivr.net/npm/docsify@4.12.2/lib/themes/vue.css"
+      type="text/css"
       as="style"
       onload="this.onload=null;this.rel='stylesheet';"
     />
+
     <style>
       .markdown-section {
-        max-width: 700px;
+        max-width: 720px;
+      }
+      p > img {
+        height: 200px;
       }
       .markdown-section h2 {
         padding: 40px 0px 10px 0px;
@@ -119,6 +123,8 @@
       "
     ></nav>
     <div id="app"></div>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/docsify/4.12.2/docsify.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-typescript.min.js"></script>
     <script>
       window.$docsify = {
         subMaxLevel: 1,
@@ -128,7 +134,5 @@
         routerMode: "history",
       };
     </script>
-    <script src="//cdn.jsdelivr.net/npm/docsify@4.12.2/lib/docsify.min.js"></script>
-    <script src="//cdn.jsdelivr.net/npm/prismjs@1.28.0/prism.min.js"></script>
   </body>
 </html>
