@@ -2,7 +2,7 @@
   <img src="logo.svg" width="200px" align="center" alt="Zod logo" />
   <h1 align="center">Zod</h1>
   <p align="center">
-    <a href="https://zod.dev">✨ https://zod.dev ✨</a>
+    ✨ <a href="https://zod.dev">https://zod.dev</a> ✨
     <br/>
     TypeScript-first schema validation with static type inference
   </p>
