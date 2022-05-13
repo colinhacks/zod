@@ -1,42 +1,37 @@
 <p align="center">
-  <img src="logo.svg" width="200px" align="center" />
+  <img src="logo.svg" width="200px" align="center" alt="Zod logo" />
   <h1 align="center">Zod</h1>
+  <p align="center">TypeScript-first schema validation with static type inference
+  <br/>
+  <a href="https://zod.dev">https://zod.dev</a></p>
 </p>
+<br/>
 <p align="center">
+<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amaster"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=master" alt="Zod CI status" /></a>
 <a href="https://twitter.com/colinhacks" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="License"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
-<a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
-
-</p>
-<p align="center">
-⭐️ smash that star button ⭐️
+<a href="https://discord.gg/KaSRdyX2vc" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
 </p>
 
-> 如果你喜欢 Zod，你会喜欢我的新库 [tRPC](https://trpc.io). 这是一种建立端到端类型安全 API 的方法，无需 GraphQL 或代码生成 请在[trpc.io](https://trpc.io)上查看他.
+<div align="center">
+  <a href="https://zod.dev">Documentation</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://discord.gg/RcG33DQJdf">Discord</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://www.npmjs.com/package/zod">NPM</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://twitter.com/colinhacks">@colinhacks</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://trpc.io">tRPC</a>
+  <br />
+</div>
 
 <br/>
-
-## 二零二一年五月十七日: Zod v3 已经进入稳定版!
-
-查看 [迁移指南](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) 进行升级.
-
-以前的版本:
-
-- [`Zod 1 docs`](https://github.com/colinhacks/zod/tree/v1)
-- [`Zod 2 docs`](https://github.com/colinhacks/zod/tree/v2)
-
-#### 新功能
-
-- **更容易的引入**: 你现在可以像`import { z } from 'zod';`那样导入 Zod，而不是使用`import * as`语法。
-- **结构化的错误消息**. 对 ZodError 使用`.format()`方法，将错误转换为强类型的嵌套对象: [format method](#error-formatting)
-- **更容易的联合类型**. 使用 ZodType（所有 Zod 模式的基类）的`or`方法，可以轻松创建联合类型，如 `z.string().or(z.number())`
-- **更容易的交叉类型**. 对 ZodType（所有 Zod 模式的基类）使用`and`方法，可以轻松创建交叉类型
-- **全局错误定制**. 使用`z.setErrorMap(myErrorMap)`来全面定制 Zod 产生的错误信息: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
-- **Maps and sets**. Zod 现在支持 [`Map`](#maps) 和 [`Set`](#sets) 模式。
-- **可选的和可忽略的解包**. ZodOptional 和 ZodNullable 现在有一个`.unwrap()`方法来检索它们所包裹的模式。
-- **A new implementation of transformers**. 请参阅[迁移指南](https://github.com/colinhacks/zod/blob/master/MIGRATION.md)部分以了解语法的变化。
+<br/>
 
 # 內容
 
