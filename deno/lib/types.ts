@@ -364,6 +364,7 @@ export abstract class ZodType<
     this.superRefine = this.superRefine.bind(this);
     this.optional = this.optional.bind(this);
     this.nullable = this.nullable.bind(this);
+    this.nullableInput = this.nullableInput.bind(this);
     this.nullish = this.nullish.bind(this);
     this.array = this.array.bind(this);
     this.promise = this.promise.bind(this);
@@ -381,6 +382,11 @@ export abstract class ZodType<
   }
   nullable(): ZodNullable<this> {
     return ZodNullable.create(this) as any;
+  }
+  nullableInput(
+    message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
+  ): ZodType<this["_output"], ZodNullableDef<this>, this["_input"] | null> {
+    return this.refine((v) => v !== null, message) as any;
   }
   nullish(): ZodNullable<ZodOptional<this>> {
     return this.optional().nullable();
