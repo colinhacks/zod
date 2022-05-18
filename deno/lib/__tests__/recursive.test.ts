@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
-
 import { z } from "../index.ts";
 
 interface Category {
@@ -50,6 +49,36 @@ test("recursion with z.lazy", () => {
 test("schema getter", () => {
   z.lazy(() => z.string()).schema.parse("asdf");
 });
+
+type LinkedList = null | { value: number; next: LinkedList };
+
+const linkedListExample = {
+  value: 1,
+  next: {
+    value: 2,
+    next: {
+      value: 3,
+      next: {
+        value: 4,
+        next: null,
+      },
+    },
+  },
+};
+
+test("recursion involving union type", () => {
+  const LinkedListSchema: z.ZodType<LinkedList> = z.lazy(() =>
+    z.union([
+      z.null(),
+      z.object({
+        value: z.number(),
+        next: LinkedListSchema,
+      }),
+    ])
+  );
+  LinkedListSchema.parse(linkedListExample);
+});
+
 // interface A {
 //   val: number;
 //   b: B;
