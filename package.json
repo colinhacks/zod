@@ -51,7 +51,7 @@
     "fix": "yarn lint:fix && yarn prettier:fix",
     "clean": "rm -rf lib/* deno/lib/*",
     "build": "yarn run clean && npm run build:cjs && npm run build:esm && npm run build:deno",
-    "build:deno": "node ./deno/build.mjs",
+    "build:deno": "node ./deno/build.mjs && cp ./deno/README.md ./deno/lib",
     "build:esm": "rollup --config rollup.config.js",
     "build:cjs": "tsc --p tsconfig.cjs.json",
     "build:types": "tsc --p tsconfig.types.json",
