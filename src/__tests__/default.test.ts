@@ -105,3 +105,24 @@ test("chained defaults", () => {
 test("factory", () => {
   z.ZodDefault.create(z.string()).parse(undefined);
 });
+
+test("native enum", () => {
+  enum Fruits {
+    apple = "apple",
+    orange = "orange",
+  }
+
+  const schema = z.object({
+    fruit: z.nativeEnum(Fruits).default(Fruits.apple),
+  });
+
+  expect(schema.parse({})).toEqual({ fruit: Fruits.apple });
+});
+
+test("enum", () => {
+  const schema = z.object({
+    fruit: z.enum(["apple", "orange"]).default("apple"),
+  });
+
+  expect(schema.parse({})).toEqual({ fruit: "apple" });
+});
