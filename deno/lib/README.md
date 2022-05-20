@@ -46,6 +46,9 @@
 - [Introduction](#introduction)
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
+- [Installation](#installation)
+  - [Node](#node)
+  - [Deno](#deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
 - [Literals](#literals)
@@ -285,6 +288,28 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod
 
+## Installation
+
+### Node
+
+To install Zod v3:
+
+```sh
+npm install zod
+```
+
+⚠️ IMPORTANT: You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
+
+```ts
+// tsconfig.json
+{
+  // ...
+  "compilerOptions": {
+    // ...
+    "strict": true
+  }
+}
+```
 
 > **TypeScript requirements**
 >
@@ -292,12 +317,26 @@ There are a growing number of tools that are built atop or support Zod natively!
 > - Zod 2.x requires TypeScript 3.7+
 > - Zod 1.x requires TypeScript 3.3+
 
+### Deno
+
+Simply use this import statement, and deno will handling the downloading for you in the background:
+
+```ts
+import { z } from "https://deno.land/x/zod/mod.ts";
+```
+Note: Make sure to use this import inside your Deno projects, instead of the one shown in below examples.
+
+> **Using a specific zod version**
+>
+```ts
+import { z } from from "https://deno.land/x/zod@v3.16.1/mod.ts"
+```
 ## Basic usage
 
 Creating a simple string schema
 
 ```ts
-import { z } from "https://deno.land/x/zod/mod.ts";
+import { z } from "zod";
 
 // creating a schema for strings
 const mySchema = z.string();
@@ -314,7 +353,7 @@ mySchema.safeParse(12); // => { success: false; error: ZodError }
 Creating an object schema
 
 ```ts
-import { z } from "https://deno.land/x/zod/mod.ts";
+import { z } from "zod";
 
 const User = z.object({
   username: z.string(),
@@ -330,7 +369,7 @@ type User = z.infer<typeof User>;
 ## Primitives
 
 ```ts
-import { z } from "https://deno.land/x/zod/mod.ts";
+import { z } from "zod";
 
 // primitive values
 z.string();
@@ -1349,8 +1388,11 @@ stringSchema.parse(12); // throws Error('Non-string type: number');
 If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`
 
 ```ts
-const stringSchema = z.string().refine(async (val) => val.length > 20);
-const value = await stringSchema.parseAsync("hello"); // => hello
+const stringSchema1 = z.string().refine(async (val) => val.length < 20);
+const value1 = await stringSchema.parseAsync("hello"); // => hello
+
+const stringSchema2 = z.string().refine(async (val) => val.length > 20);
+const value2 = await stringSchema.parseAsync("hello"); // => throws
 ```
 
 ### `.safeParse`
