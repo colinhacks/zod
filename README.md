@@ -288,7 +288,9 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 ## Installation
 
-To install Zod v3:
+> Zod 3.x requires TypeScript 4.1+
+
+**Using NPM**
 
 ```sh
 npm install zod
@@ -307,11 +309,13 @@ npm install zod
 }
 ```
 
-> **TypeScript requirements**
->
-> - Zod 3.x requires TypeScript 4.1+
-> - Zod 2.x requires TypeScript 3.7+
-> - Zod 1.x requires TypeScript 3.3+
+**Using Deno**
+
+Zod is available on [deno.land/x](deno.land/x) and can be imported like so:
+
+```ts
+import { z } from "https://deno.land/x/zod/mod.ts";
+```
 
 ## Basic usage
 

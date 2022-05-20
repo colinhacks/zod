@@ -46,6 +46,7 @@
 - [Introduction](#introduction)
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
+- [Installation](#installation)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
 - [Literals](#literals)
@@ -285,19 +286,43 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod
 
+## Installation
 
-> **TypeScript requirements**
->
-> - Zod 3.x requires TypeScript 4.1+
-> - Zod 2.x requires TypeScript 3.7+
-> - Zod 1.x requires TypeScript 3.3+
+> Zod 3.x requires TypeScript 4.1+
+
+**Using NPM**
+
+```sh
+npm install zod
+```
+
+⚠️ IMPORTANT: You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
+
+```ts
+// tsconfig.json
+{
+  // ...
+  "compilerOptions": {
+    // ...
+    "strict": true
+  }
+}
+```
+
+**Using Deno**
+
+Zod is available on [deno.land/x](deno.land/x) and can be imported like so:
+
+```ts
+import { z } from "https://deno.land/x/zod/mod.ts";
+```
 
 ## Basic usage
 
 Creating a simple string schema
 
 ```ts
-import { z } from "https://deno.land/x/zod/mod.ts";
+import { z } from "zod";
 
 // creating a schema for strings
 const mySchema = z.string();
@@ -314,7 +339,7 @@ mySchema.safeParse(12); // => { success: false; error: ZodError }
 Creating an object schema
 
 ```ts
-import { z } from "https://deno.land/x/zod/mod.ts";
+import { z } from "zod";
 
 const User = z.object({
   username: z.string(),
@@ -330,7 +355,7 @@ type User = z.infer<typeof User>;
 ## Primitives
 
 ```ts
-import { z } from "https://deno.land/x/zod/mod.ts";
+import { z } from "zod";
 
 // primitive values
 z.string();
