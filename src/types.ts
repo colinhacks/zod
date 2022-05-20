@@ -634,8 +634,8 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
 
   /**
-   * Deprecated.
-   * Use z.string().min(1) instead.
+   * @deprecated Use z.string().min(1) instead.
+   * @see {@link ZodString.min}
    */
   nonempty = (message?: errorUtil.ErrMessage) =>
     this.min(1, errorUtil.errToObj(message));
