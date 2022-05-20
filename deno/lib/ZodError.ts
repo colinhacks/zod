@@ -141,7 +141,10 @@ export type ZodIssueOptionalMessage =
   | ZodNotMultipleOfIssue
   | ZodCustomIssue;
 
-export type ZodIssue = ZodIssueOptionalMessage & { message: string };
+export type ZodIssue = ZodIssueOptionalMessage & {
+  message: string;
+  inputData?: any;
+};
 
 export const quotelessJson = (obj: any) => {
   const json = JSON.stringify(obj, null, 2);
@@ -158,6 +161,10 @@ export type ZodFormattedError<T, U = string> = {
   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
   : unknown);
 
+export interface ZodErrorParams {
+  errorIncludesInputData?: boolean;
+}
+
 export type inferFormattedError<
   T extends ZodType<any, any, any>,
   U = string
@@ -165,12 +172,13 @@ export type inferFormattedError<
 
 export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
+  opts: ZodErrorParams;
 
   get errors() {
     return this.issues;
   }
 
-  constructor(issues: ZodIssue[]) {
+  constructor(issues: ZodIssue[], opts?: ZodErrorParams) {
     super();
 
     const actualProto = new.target.prototype;
@@ -182,6 +190,7 @@ export class ZodError<T = any> extends Error {
     }
     this.name = "ZodError";
     this.issues = issues;
+    this.opts = opts ?? {};
   }
 
   format(): ZodFormattedError<T>;
@@ -235,8 +244,8 @@ export class ZodError<T = any> extends Error {
     return fieldErrors;
   }
 
-  static create = (issues: ZodIssue[]) => {
-    const error = new ZodError(issues);
+  static create = (issues: ZodIssue[], opts?: ZodErrorParams) => {
+    const error = new ZodError(issues, opts);
     return error;
   };
 

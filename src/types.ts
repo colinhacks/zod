@@ -31,6 +31,7 @@ import {
   ZodCustomIssue,
   ZodError,
   ZodErrorMap,
+  ZodErrorParams,
   ZodIssue,
   ZodIssueCode,
 } from "./ZodError";
@@ -93,7 +94,7 @@ const handleResult = <Input, Output>(
     if (!ctx.common.issues.length) {
       throw new Error("Validation failed but no issues detected.");
     }
-    const error = new ZodError(ctx.common.issues);
+    const error = new ZodError(ctx.common.issues, ctx.errorParams);
     return { success: false, error };
   }
 };
@@ -168,6 +169,7 @@ export abstract class ZodType<
         schemaErrorMap: this._def.errorMap,
         path: input.path,
         parent: input.parent,
+        errorParams: input.parent.errorParams,
       }
     );
   }
@@ -187,6 +189,7 @@ export abstract class ZodType<
         schemaErrorMap: this._def.errorMap,
         path: input.path,
         parent: input.parent,
+        errorParams: input.parent.errorParams,
       },
     };
   }
@@ -215,6 +218,9 @@ export abstract class ZodType<
     data: unknown,
     params?: Partial<ParseParams>
   ): SafeParseReturnType<Input, Output> {
+    const { errorIncludesInputData } = params ?? {};
+    const errorParams: ZodErrorParams = { errorIncludesInputData };
+
     const ctx: ParseContext = {
       common: {
         issues: [],
@@ -226,6 +232,7 @@ export abstract class ZodType<
       parent: null,
       data,
       parsedType: getParsedType(data),
+      errorParams,
     };
     const result = this._parseSync({ data, path: ctx.path, parent: ctx });
 
@@ -245,6 +252,9 @@ export abstract class ZodType<
     data: unknown,
     params?: Partial<ParseParams>
   ): Promise<SafeParseReturnType<Input, Output>> {
+    const { errorIncludesInputData } = params ?? {};
+    const errorParams: ZodErrorParams = { errorIncludesInputData };
+
     const ctx: ParseContext = {
       common: {
         issues: [],
@@ -256,6 +266,7 @@ export abstract class ZodType<
       parent: null,
       data,
       parsedType: getParsedType(data),
+      errorParams,
     };
 
     const maybeAsyncResult = this._parse({ data, path: [], parent: ctx });
@@ -1891,7 +1902,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 
       // return invalid
       const unionErrors = results.map(
-        (result) => new ZodError(result.ctx.common.issues)
+        (result) => new ZodError(result.ctx.common.issues, result.ctx.errorParams)
       );
 
       addIssueToContext(ctx, {
@@ -2810,7 +2821,7 @@ export class ZodFunction<
 
     if (this._def.returns instanceof ZodPromise) {
       return OK(async (...args: any[]) => {
-        const error = new ZodError([]);
+        const error = new ZodError([], ctx.errorParams);
         const parsedArgs = await this._def.args
           .parseAsync(args, params)
           .catch((e) => {
@@ -2832,12 +2843,18 @@ export class ZodFunction<
       return OK((...args: any[]) => {
         const parsedArgs = this._def.args.safeParse(args, params);
         if (!parsedArgs.success) {
-          throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
+          throw new ZodError(
+            [makeArgsIssue(args, parsedArgs.error)],
+            ctx.errorParams
+          );
         }
         const result = fn(...(parsedArgs.data as any));
         const parsedReturns = this._def.returns.safeParse(result, params);
         if (!parsedReturns.success) {
-          throw new ZodError([makeReturnsIssue(result, parsedReturns.error)]);
+          throw new ZodError(
+            [makeReturnsIssue(result, parsedReturns.error)],
+            ctx.errorParams
+          );
         }
         return parsedReturns.data;
       }) as any;

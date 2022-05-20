@@ -462,6 +462,42 @@ test("literal default error message", () => {
   }
 });
 
+test("parse does not contain inputData", () => {
+  const notURL = "SHOULD_NOT_BE_SEEN";
+  const urlChecker = z.string().nonempty().url();
+  const result1 = urlChecker.safeParse(notURL);
+  expect(result1.success).toEqual(false);
+  if (!result1.success) {
+    const err = result1.error;
+    expect(err.issues.length).toBe(1);
+    expect(err.toString().includes("inputData")).toBe(false);
+    expect(err.toString().includes(notURL)).toBe(false);
+    const issuesWithInputData = err.issues.filter(
+      (issue) => issue.inputData !== undefined
+    );
+    expect(issuesWithInputData.length).toBe(0);
+  }
+});
+
+test("parse contains inputData when requested", () => {
+  const notURL = "SHOULD_BE_SEEN";
+  const urlChecker = z.string().nonempty().url();
+  const result1 = urlChecker.safeParse(notURL, {
+    errorIncludesInputData: true,
+  });
+  expect(result1.success).toEqual(false);
+  if (!result1.success) {
+    const err = result1.error;
+    expect(err.issues.length).toBe(1);
+    expect(err.toString().includes("inputData")).toBe(true);
+    expect(err.toString().includes(notURL)).toBe(true);
+    const issuesWithInputData = err.issues.filter(
+      (issue) => issue.inputData === notURL
+    );
+    expect(issuesWithInputData.length).toBe(1);
+  }
+});
+
 // test("dont short circuit on continuable errors", () => {
 //   const user = z
 //     .object({

@@ -3,6 +3,7 @@ import {
   IssueData,
   overrideErrorMap,
   ZodErrorMap,
+  ZodErrorParams,
   ZodIssue,
 } from "../ZodError.ts";
 import { util } from "./util.ts";
@@ -90,6 +91,7 @@ export const makeIssue = (params: {
   path: (string | number)[];
   errorMaps: ZodErrorMap[];
   issueData: IssueData;
+  errorParams?: ZodErrorParams;
 }): ZodIssue => {
   const { data, path, errorMaps, issueData } = params;
   const fullPath = [...path, ...(issueData.path || [])];
@@ -107,10 +109,15 @@ export const makeIssue = (params: {
     errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
   }
 
+  const extra = params.errorParams?.errorIncludesInputData
+    ? { inputData: data }
+    : {};
+
   return {
     ...issueData,
     path: fullPath,
     message: issueData.message || errorMessage,
+    ...extra,
   };
 };
 
@@ -118,7 +125,7 @@ export type ParseParams = {
   path: (string | number)[];
   errorMap: ZodErrorMap;
   async: boolean;
-};
+} & ZodErrorParams;
 
 export type ParsePathComponent = string | number;
 export type ParsePath = ParsePathComponent[];
@@ -135,6 +142,7 @@ export interface ParseContext {
   readonly parent: ParseContext | null;
   readonly data: any;
   readonly parsedType: ZodParsedType;
+  readonly errorParams: ZodErrorParams;
 }
 
 export type ParseInput = {
@@ -157,6 +165,7 @@ export function addIssueToContext(
       overrideErrorMap, // then global override map
       defaultErrorMap, // then global default map
     ].filter((x) => !!x) as ZodErrorMap[],
+    errorParams: ctx.errorParams,
   });
   ctx.common.issues.push(issue);
 }

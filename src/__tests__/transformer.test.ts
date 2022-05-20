@@ -69,6 +69,7 @@ test("transform ctx.addIssue with parseAsync", async () => {
         },
       ],
       name: "ZodError",
+      opts: {},
     },
   });
 });
