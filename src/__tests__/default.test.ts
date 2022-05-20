@@ -108,21 +108,21 @@ test("factory", () => {
 
 test.only("native enum", () => {
   enum Fruits {
-    apple = 'apple',
-    orange = 'orange'
+    apple = "apple",
+    orange = "orange",
   }
 
   const schema = z.object({
-    fruit: z.nativeEnum(Fruits).default(Fruits.apple)
+    fruit: z.nativeEnum(Fruits).default(Fruits.apple),
   });
 
-  expect(schema.parse({})).toEqual({ fruit: Fruits.apple })
+  expect(schema.parse({})).toEqual({ fruit: Fruits.apple });
 });
 
 test.only("enum", () => {
   const schema = z.object({
-    fruit: z.enum(['apple', 'orange']).default('apple')
+    fruit: z.enum(["apple", "orange"]).default("apple"),
   });
 
-  expect(schema.parse({})).toEqual({ fruit: 'apple' })
+  expect(schema.parse({})).toEqual({ fruit: "apple" });
 });
