@@ -106,7 +106,7 @@ test("factory", () => {
   z.ZodDefault.create(z.string()).parse(undefined);
 });
 
-test.only("native enum", () => {
+test("native enum", () => {
   enum Fruits {
     apple = "apple",
     orange = "orange",
@@ -119,7 +119,7 @@ test.only("native enum", () => {
   expect(schema.parse({})).toEqual({ fruit: Fruits.apple });
 });
 
-test.only("enum", () => {
+test("enum", () => {
   const schema = z.object({
     fruit: z.enum(["apple", "orange"]).default("apple"),
   });
