@@ -319,7 +319,7 @@ npm install zod
 
 ### Deno
 
-Simply use this import statement, and deno will handling the downloading for you in the background:
+Simply use this import statement, and deno will be handling the downloading for you in the background:
 
 ```ts
 import { z } from "https://deno.land/x/zod/mod.ts";
