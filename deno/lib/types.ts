@@ -3576,9 +3576,17 @@ export class ZodNaN extends ZodType<number, ZodNaNDef> {
 
 export const custom = <T>(
   check?: (data: unknown) => any,
-  params?: Parameters<ZodTypeAny["refine"]>[1]
+  params: Parameters<ZodTypeAny["refine"]>[1] = {},
+  fatal?: boolean
 ): ZodType<T> => {
-  if (check) return ZodAny.create().refine(check, params);
+  if (check)
+    return ZodAny.create().superRefine((data, ctx) => {
+      if (!check(data)) {
+        const p = typeof params === "function" ? params(data) : params;
+        const p2 = typeof p === "string" ? { message: p } : p;
+        ctx.addIssue({ code: "custom", ...p2, fatal });
+      }
+    });
   return ZodAny.create();
 };
 
@@ -3659,7 +3667,7 @@ const instanceOfType = <T extends new (...args: any[]) => any>(
   params: Parameters<ZodTypeAny["refine"]>[1] = {
     message: `Input not instance of ${cls.name}`,
   }
-) => custom<InstanceType<T>>((data) => data instanceof cls, params);
+) => custom<InstanceType<T>>((data) => data instanceof cls, params, true);
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
