@@ -47,6 +47,8 @@
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
 - [Installation](#installation)
+  - [Node](#node)
+  - [Deno](#deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
 - [Literals](#literals)
@@ -288,6 +290,8 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 ## Installation
 
+### Node
+
 To install Zod v3:
 
 ```sh
@@ -313,6 +317,20 @@ npm install zod
 > - Zod 2.x requires TypeScript 3.7+
 > - Zod 1.x requires TypeScript 3.3+
 
+### Deno
+
+Simply use this import statement, and deno will handling the downloading for you in the background:
+
+```ts
+import { z } from "https://deno.land/x/zod/mod.ts";
+```
+Note: Make sure to use this import inside your Deno projects, instead of the one shown in below examples.
+
+> **Using a specific zod version**
+>
+```ts
+import { z } from from "https://deno.land/x/zod@v3.16.1/mod.ts"
+```
 ## Basic usage
 
 Creating a simple string schema
