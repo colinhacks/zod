@@ -1370,8 +1370,11 @@ stringSchema.parse(12); // throws Error('Non-string type: number');
 If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`
 
 ```ts
-const stringSchema = z.string().refine(async (val) => val.length > 20);
-const value = await stringSchema.parseAsync("hello"); // => hello
+const stringSchema1 = z.string().refine(async (val) => val.length < 20);
+const value1 = await stringSchema.parseAsync("hello"); // => hello
+
+const stringSchema2 = z.string().refine(async (val) => val.length > 20);
+const value2 = await stringSchema.parseAsync("hello"); // => throws
 ```
 
 ### `.safeParse`
