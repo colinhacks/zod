@@ -23,12 +23,12 @@ test("type inference", () => {
 
   const f2: util.AssertEqual<
     recordWithEnumKeys,
-    Record<"Tuna" | "Salmon", string>
+    Partial<Record<"Tuna" | "Salmon", string>>
   > = true;
   f2;
   const f3: util.AssertEqual<
     recordWithLiteralKeys,
-    Record<"Tuna" | "Salmon", string>
+    Partial<Record<"Tuna" | "Salmon", string>>
   > = true;
   f3;
 });
@@ -91,6 +91,22 @@ test("key schema", () => {
     Salmon: "asdf",
   });
 
+  // shouldn't require us to specify all props in record
+  const result3 = recordWithEnumKeys.parse({
+    Tuna: "abcd",
+  });
+  expect(result3).toEqual({
+    Tuna: "abcd",
+  });
+
+  // shouldn't require us to specify all props in record
+  const result4 = recordWithLiteralKeys.parse({
+    Salmon: "abcd",
+  });
+  expect(result4).toEqual({
+    Salmon: "abcd",
+  });
+
   expect(() =>
     recordWithEnumKeys.parse({
       Tuna: "asdf",
@@ -112,3 +128,11 @@ test("key schema", () => {
 // test("record element", () => {
 //   expect(booleanRecord.element).toBeInstanceOf(z.ZodBoolean);
 // });
+
+test("key and value getters", () => {
+  const rec = z.record(z.string(), z.number());
+
+  rec.keySchema.parse("asdf");
+  rec.valueSchema.parse(1234);
+  rec.element.parse(1234);
+});

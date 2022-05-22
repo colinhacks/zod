@@ -412,3 +412,13 @@ test("primitive inference", () => {
     dateSchemaNullableTest,
   ];
 });
+
+test("get literal value", () => {
+  expect(literalStringSchema.value).toEqual("asdf");
+});
+
+test("optional convenience methd", () => {
+  z.ostring().parse(undefined);
+  z.onumber().parse(undefined);
+  z.oboolean().parse(undefined);
+});

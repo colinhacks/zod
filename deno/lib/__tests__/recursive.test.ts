@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
-
 import { z } from "../index.ts";
 
 interface Category {
@@ -30,7 +29,7 @@ const testCategory: Category = {
 };
 
 test("recursion with z.late.object", () => {
-  const Category: z.Schema<Category> = z.late.object(() => ({
+  const Category: z.ZodType<Category> = z.late.object(() => ({
     name: z.string(),
     subcategories: z.array(Category),
   }));
@@ -38,13 +37,46 @@ test("recursion with z.late.object", () => {
 });
 
 test("recursion with z.lazy", () => {
-  const Category: z.Schema<Category> = z.lazy(() =>
+  const Category: z.ZodType<Category> = z.lazy(() =>
     z.object({
       name: z.string(),
       subcategories: z.array(Category),
     })
   );
   Category.parse(testCategory);
+});
+
+test("schema getter", () => {
+  z.lazy(() => z.string()).schema.parse("asdf");
+});
+
+type LinkedList = null | { value: number; next: LinkedList };
+
+const linkedListExample = {
+  value: 1,
+  next: {
+    value: 2,
+    next: {
+      value: 3,
+      next: {
+        value: 4,
+        next: null,
+      },
+    },
+  },
+};
+
+test("recursion involving union type", () => {
+  const LinkedListSchema: z.ZodType<LinkedList> = z.lazy(() =>
+    z.union([
+      z.null(),
+      z.object({
+        value: z.number(),
+        next: LinkedListSchema,
+      }),
+    ])
+  );
+  LinkedListSchema.parse(linkedListExample);
 });
 
 // interface A {
@@ -127,7 +159,7 @@ test("recursion with z.lazy", () => {
 //     subcategories: Category[];
 //   }
 
-//   const Category: z.Schema<Category> = z.late.object(() => ({
+//   const Category: z.ZodType<Category> = z.late.object(() => ({
 //     name: z.string(),
 //     subcategories: z.array(Category),
 //   }));
@@ -148,7 +180,7 @@ test("recursion with z.lazy", () => {
 
 //   type Category = BaseCategory & { subcategories: Category[] };
 
-//   const Category: z.Schema<Category> = z.late
+//   const Category: z.ZodType<Category> = z.late
 //     .object(() => ({
 //       subcategories: z.array(Category),
 //     }))

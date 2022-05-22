@@ -12,6 +12,8 @@ test("first party switch", () => {
       break;
     case z.ZodFirstPartyTypeKind.ZodNumber:
       break;
+    case z.ZodFirstPartyTypeKind.ZodNaN:
+      break;
     case z.ZodFirstPartyTypeKind.ZodBigInt:
       break;
     case z.ZodFirstPartyTypeKind.ZodBoolean:
@@ -35,6 +37,8 @@ test("first party switch", () => {
     case z.ZodFirstPartyTypeKind.ZodObject:
       break;
     case z.ZodFirstPartyTypeKind.ZodUnion:
+      break;
+    case z.ZodFirstPartyTypeKind.ZodDiscriminatedUnion:
       break;
     case z.ZodFirstPartyTypeKind.ZodIntersection:
       break;

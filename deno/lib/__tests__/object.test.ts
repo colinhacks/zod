@@ -216,6 +216,46 @@ test("test inferred merged type", async () => {
   f1;
 });
 
+test("inferred merged object type with optional properties", async () => {
+  const Merged = z
+    .object({ a: z.string(), b: z.string().optional() })
+    .merge(z.object({ a: z.string().optional(), b: z.string() }));
+  type Merged = z.infer<typeof Merged>;
+  const f1: util.AssertEqual<Merged, { a?: string; b: string }> = true;
+  f1;
+});
+
+test("inferred unioned object type with optional properties", async () => {
+  const Unioned = z.union([
+    z.object({ a: z.string(), b: z.string().optional() }),
+    z.object({ a: z.string().optional(), b: z.string() }),
+  ]);
+  type Unioned = z.infer<typeof Unioned>;
+  const f1: util.AssertEqual<
+    Unioned,
+    { a: string; b?: string } | { a?: string; b: string }
+  > = true;
+  f1;
+});
+
+test("inferred partial object type with optional properties", async () => {
+  const Partial = z
+    .object({ a: z.string(), b: z.string().optional() })
+    .partial();
+  type Partial = z.infer<typeof Partial>;
+  const f1: util.AssertEqual<Partial, { a?: string; b?: string }> = true;
+  f1;
+});
+
+test("inferred picked object type with optional properties", async () => {
+  const Picked = z
+    .object({ a: z.string(), b: z.string().optional() })
+    .pick({ b: true });
+  type Picked = z.infer<typeof Picked>;
+  const f1: util.AssertEqual<Picked, { b?: string }> = true;
+  f1;
+});
+
 test("inferred type for unknown/any keys", () => {
   const myType = z.object({
     anyOptional: z.any().optional(),
@@ -234,4 +274,89 @@ test("inferred type for unknown/any keys", () => {
     }
   > = true;
   _f1;
+});
+
+test("setKey", () => {
+  const base = z.object({ name: z.string() });
+  const withNewKey = base.setKey("age", z.number());
+
+  type withNewKey = z.infer<typeof withNewKey>;
+  const _t1: util.AssertEqual<withNewKey, { name: string; age: number }> = true;
+  _t1;
+  withNewKey.parse({ name: "asdf", age: 1234 });
+});
+
+test("strictcreate", async () => {
+  const strictObj = z.strictObject({
+    name: z.string(),
+  });
+
+  const syncResult = strictObj.safeParse({ name: "asdf", unexpected: 13 });
+  expect(syncResult.success).toEqual(false);
+
+  const asyncResult = await strictObj.spa({ name: "asdf", unexpected: 13 });
+  expect(asyncResult.success).toEqual(false);
+});
+
+test("object with refine", async () => {
+  const schema = z
+    .object({
+      a: z.string().default("foo"),
+      b: z.number(),
+    })
+    .refine(() => true);
+  expect(schema.parse({ b: 5 })).toEqual({ b: 5, a: "foo" });
+  const result = await schema.parseAsync({ b: 5 });
+  expect(result).toEqual({ b: 5, a: "foo" });
+});
+
+test("intersection of object with date", async () => {
+  const schema = z.object({
+    a: z.date(),
+  });
+  expect(schema.and(schema).parse({ a: new Date(1637353595983) })).toEqual({
+    a: new Date(1637353595983),
+  });
+  const result = await schema.parseAsync({ a: new Date(1637353595983) });
+  expect(result).toEqual({ a: new Date(1637353595983) });
+});
+
+test("intersection of object with refine with date", async () => {
+  const schema = z
+    .object({
+      a: z.date(),
+    })
+    .refine(() => true);
+  expect(schema.and(schema).parse({ a: new Date(1637353595983) })).toEqual({
+    a: new Date(1637353595983),
+  });
+  const result = await schema.parseAsync({ a: new Date(1637353595983) });
+  expect(result).toEqual({ a: new Date(1637353595983) });
+});
+
+test("constructor key", () => {
+  const person = z
+    .object({
+      name: z.string(),
+    })
+    .strict();
+
+  expect(() =>
+    person.parse({
+      name: "bob dylan",
+      constructor: 61,
+    })
+  ).toThrow();
+});
+
+test("constructor key", () => {
+  const Example = z.object({
+    prop: z.string(),
+    opt: z.number().optional(),
+    arr: z.string().array(),
+  });
+
+  type Example = z.infer<typeof Example>;
+  const f1: util.AssertEqual<keyof Example, "prop" | "opt" | "arr"> = true;
+  f1;
 });

@@ -12,7 +12,7 @@ module.exports = {
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
-    "prettier/@typescript-eslint", // Uses eslint-config-prettier to disable ESLint rules from @typescript-eslint/eslint-plugin that would conflict with prettier
+    "prettier",
   ],
   rules: {
     "import/order": 0, // turn off in favor of eslint-plugin-simple-import-sort
@@ -48,10 +48,23 @@ module.exports = {
 
     "ban/ban": [
       2,
-      { "name": ["Object", "keys"], "message": "Object.keys() is not supported in legacy browsers, use objectKeys()" },
-      { "name": ["Object", "setPrototypeOf"], "message": "Object.setPrototypeOf() is not supported in legacy browsers" },
-      { "name": ["Number", "isNaN"], "message": "Number.isNaN() is not supported in legacy browsers" },
-      { "name": ["Number", "isInteger"], "message": "Number.isInteger() is not supported in legacy browsers" },
-    ]
+      {
+        name: ["Object", "keys"],
+        message:
+          "Object.keys() is not supported in legacy browsers, use objectKeys()",
+      },
+      {
+        name: ["Object", "setPrototypeOf"],
+        message: "Object.setPrototypeOf() is not supported in legacy browsers",
+      },
+      {
+        name: ["Number", "isNaN"],
+        message: "Number.isNaN() is not supported in legacy browsers",
+      },
+      {
+        name: ["Number", "isInteger"],
+        message: "Number.isInteger() is not supported in legacy browsers",
+      },
+    ],
   },
 };

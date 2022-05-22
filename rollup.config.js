@@ -1,6 +1,5 @@
 // rollup.config.js
 import typescript from "@rollup/plugin-typescript";
-import { uglify } from "rollup-plugin-uglify";
 
 export default [
   {
@@ -9,15 +8,20 @@ export default [
       {
         file: "lib/index.mjs",
         format: "es",
-        sourcemap: true,
+        sourcemap: false,
+      },
+      {
+        file: "lib/index.umd.js",
+        name: "Zod",
+        format: "umd",
+        sourcemap: false,
       },
     ],
     plugins: [
       typescript({
         tsconfig: "tsconfig.esm.json",
-        sourceMap: true,
+        sourceMap: false,
       }),
-      uglify(),
     ],
   },
 ];

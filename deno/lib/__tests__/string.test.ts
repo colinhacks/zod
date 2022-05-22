@@ -57,9 +57,7 @@ test("url validations", () => {
     expect(() => url.parse("asdf")).toThrow();
     expect(() => url.parse("https:/")).toThrow();
     expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
-  } catch (err) {
-    // console.log(JSON.stringify(err, null, 2));
-  }
+  } catch (err) {}
 });
 
 test("url error overrides", () => {
@@ -84,6 +82,8 @@ test("uuid", () => {
   const uuid = z.string().uuid("custom error");
   uuid.parse("9491d710-3185-4e06-bea0-6a2f275345e0");
   uuid.parse("00000000-0000-0000-0000-000000000000");
+  uuid.parse("b3ce60f8-e8b9-40f5-1150-172ede56ff74"); // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
+  uuid.parse("92e76bf9-28b3-4730-cd7f-cb6bc51f8c09"); // Variant 2 - RFC 4122: Reserved, Microsoft Corporation backward compatibility
   const result = uuid.safeParse("9491d710-3185-4e06-bea0-6a2f275345e0X");
   expect(result.success).toEqual(false);
   if (!result.success) {
@@ -142,14 +142,39 @@ test("regex lastIndex reset", () => {
 });
 
 test("checks getters", () => {
-  expect(z.string().uuid().isUUID).toEqual(true);
-  expect(z.string().uuid().isCUID).toEqual(false);
-  expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().email().isEmail).toEqual(true);
+  expect(z.string().email().isURL).toEqual(false);
+  expect(z.string().email().isCUID).toEqual(false);
+  expect(z.string().email().isUUID).toEqual(false);
+
+  expect(z.string().url().isEmail).toEqual(false);
+  expect(z.string().url().isURL).toEqual(true);
+  expect(z.string().url().isCUID).toEqual(false);
+  expect(z.string().url().isUUID).toEqual(false);
+
+  expect(z.string().cuid().isEmail).toEqual(false);
+  expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
+  expect(z.string().cuid().isUUID).toEqual(false);
+
+  expect(z.string().uuid().isEmail).toEqual(false);
+  expect(z.string().uuid().isURL).toEqual(false);
+  expect(z.string().uuid().isCUID).toEqual(false);
+  expect(z.string().uuid().isUUID).toEqual(true);
+});
+
+test("min max getters", () => {
+  expect(z.string().min(5).minLength).toEqual(5);
+  expect(z.string().min(5).min(10).minLength).toEqual(10);
+
+  expect(z.string().max(5).maxLength).toEqual(5);
+  expect(z.string().max(5).max(1).maxLength).toEqual(1);
 });
 
 test("trim", () => {
   expect(z.string().trim().min(2).parse(" 12 ")).toEqual("12");
 
+  // ordering of methods is respected
+  expect(z.string().min(2).trim().parse(" 1 ")).toEqual("1");
   expect(() => z.string().trim().min(2).parse(" 1 ")).toThrow();
 });

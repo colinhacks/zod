@@ -1,44 +1,39 @@
 <p align="center">
-  <img src="logo.svg" width="200px" align="center" />
+  <img src="logo.svg" width="200px" align="center" alt="Zod logo" />
   <h1 align="center">Zod</h1>
+  <p align="center">TypeScript-first schema validation with static type inference
+  <br/>
+  <a href="https://zod.dev">https://zod.dev</a></p>
 </p>
+<br/>
 <p align="center">
+<a href="https://github.com/colinhacks/zod/actions?query=branch%3Amaster"><img src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=master" alt="Zod CI status" /></a>
 <a href="https://twitter.com/colinhacks" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="License"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
-<a href="./src/__tests__" rel="nofollow"><img src="./coverage.svg" alt="coverage"></a>
-
-</p>
-<p align="center">
-⭐️ smash that star button ⭐️
+<a href="https://discord.gg/KaSRdyX2vc" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
 </p>
 
-> 如果你喜欢 Zod，你会喜欢我的新库 [tRPC](https://trpc.io). 这是一种建立端到端类型安全 API 的方法，无需 GraphQL 或代码生成 请在[trpc.io](https://trpc.io)上查看他.
+<div align="center">
+  <a href="https://zod.dev">Documentation</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://discord.gg/RcG33DQJdf">Discord</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://www.npmjs.com/package/zod">NPM</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://twitter.com/colinhacks">@colinhacks</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://trpc.io">tRPC</a>
+  <br />
+</div>
 
 <br/>
+<br/>
 
-## May 17, 2021: Zod v3 已经进入稳定版!
-
-查看 [迁移指南](https://github.com/colinhacks/zod/blob/master/MIGRATION.md) 进行升级.
-
-以前的版本:
-
-- [`Zod 1 docs`](https://github.com/colinhacks/zod/tree/v1)
-- [`Zod 2 docs`](https://github.com/colinhacks/zod/tree/v2)
-
-#### New features
-
-- **更容易的引入**: 你现在可以像`import { z } from 'zod';`那样导入 Zod，而不是使用`import * as`语法。
-- **结构化的错误消息**. 对 ZodError 使用`.format()`方法，将错误转换为强类型的嵌套对象: [format method](#error-formatting)
-- **更容易的联合类型**. 使用 ZodType（所有 Zod 模式的基类）的`or`方法，可以轻松创建联合类型，如 `z.string().or(z.number())`
-- **更容易的交叉类型**. 对 ZodType（所有 Zod 模式的基类）使用`and`方法，可以轻松创建交叉类型
-- **全局错误定制**. 使用`z.setErrorMap(myErrorMap)`来全面定制 Zod 产生的错误信息: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
-- **Maps and sets**. Zod 现在支持 [`Map`](#maps) 和 [`Set`](#sets) 模式。
-- **可选的和可忽略的解包**. ZodOptional 和 ZodNullable 现在有一个`.unwrap()`方法来检索它们所包裹的模式。
-- **A new implementation of transformers**. 请参阅[迁移指南](https://github.com/colinhacks/zod/blob/master/MIGRATION.md)部分以了解语法的变化。
-
-# Table of contents
+# 內容
 
 - [什么是 Zod](#什么是Zod)
 - [安装](#安装)
@@ -125,7 +120,7 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
 
 我们感谢并鼓励任何级别的赞助。Zod 是由一个单独的开发者维护的 ([hi!](https://twitter.com/colinhacks)). 对于个人开发者来说，可以考虑[一杯咖啡级别](https://github.com/sponsors/colinhacks). 如果你使用 Zod 建立了一个付费产品，可以考虑[初创企业级别](https://github.com/sponsors/colinhacks). 你可以在以下网站上了解更多关于等级的信息 [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
 
-### Sponsors
+### 贊助者
 
 <table>
   <tr>
@@ -191,7 +186,7 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
   </tr>
 </table>
 
-_要在这里看到你的名字 + Twitter + website , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._
+_要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._
 
 # 安装
 
@@ -634,7 +629,7 @@ const stringOrNumber = z.string().or(z.number());
 const schema = z.optional(z.string());
 
 schema.parse(undefined); // => returns undefined
-type A = z.infer<typeof A>; // string | undefined
+type A = z.infer<typeof schema>; // string | undefined
 ```
 
 你可以用`.optional()`方法使一个现有的模式成为可选的:
@@ -643,7 +638,7 @@ type A = z.infer<typeof A>; // string | undefined
 const user = z.object({
   username: z.string().optional(),
 });
-type C = z.infer<typeof C>; // { username?: string | undefined };
+type C = z.infer<typeof user>; // { username?: string | undefined };
 ```
 
 #### `.unwrap`
@@ -668,7 +663,7 @@ nullableString.parse(null); // => null
 
 ```ts
 const E = z.string().nullable(); // equivalent to D
-type E = z.infer<typeof D>; // string | null
+type E = z.infer<typeof E>; // string | null
 ```
 
 #### `.unwrap`
@@ -759,7 +754,7 @@ type StringNumberMap = z.infer<typeof stringNumberMap>;
 ## Sets
 
 ```ts
-const numberSet = z.set(z.string());
+const numberSet = z.set(z.number());
 type numberSet = z.infer<typeof numberSet>;
 // Set<number>
 ```
@@ -1012,9 +1007,9 @@ const Category: z.ZodSchema<Category> = BaseCategory.merge(
 如果你想验证任何 JSON 值，你可以使用下面的片段。
 
 ```ts
-type Literal = boolean | null | number | string;
-type Json = Literal | { [key: string]: Json } | Json[];
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+type Literal = z.infer<typeof literalSchema>;
+type Json = Literal | { [key: string]: Json } | Json[];
 const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
   z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)])
 );
@@ -1379,7 +1374,7 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
 
 你可以随心所欲地添加问题(issues)。如果`ctx.addIssue`在函数的执行过程中没有被调用，则验证通过。
 
-通常情况下，细化总是创建具有`ZodIssueCode.custom`错误代码的问题，但通过`superRefine`你可以创建任何代码的任何问题。每个问题代码在错误处理指南（ERROR_HANDLING.md）中都有详细描述。
+通常情况下，细化总是创建具有`ZodIssueCode.custom`错误代码的问题，但通过`superRefine`你可以创建任何代码的任何问题。每个问题代码在错误处理指南 [ERROR_HANDLING.md](ERROR_HANDLING.md) 中都有详细描述。
 
 ### `.transform`
 
@@ -1513,7 +1508,7 @@ z.union([z.string(), z.number()]);
 z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: string } & { age: number }
 
 // equivalent to
-z.intersection(z.string(), z.number());
+z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 ```
 
 # Type inference
