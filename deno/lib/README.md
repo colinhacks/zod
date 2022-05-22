@@ -421,6 +421,9 @@ z.string().uuid();
 z.string().cuid();
 z.string().regex(regex);
 
+// trim whitespace
+z.string().trim();
+
 // deprecated, equivalent to .min(1)
 z.string().nonempty();
 

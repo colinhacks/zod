@@ -3021,15 +3021,18 @@ export interface ZodEnumDef<T extends EnumValues = EnumValues>
 type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
 function createZodEnum<U extends string, T extends Readonly<[U, ...U[]]>>(
-  values: T
+  values: T,
+  params?: RawCreateParams
 ): ZodEnum<Writeable<T>>;
 function createZodEnum<U extends string, T extends [U, ...U[]]>(
-  values: T
+  values: T,
+  params?: RawCreateParams
 ): ZodEnum<T>;
-function createZodEnum(values: any) {
+function createZodEnum(values: any, params?: RawCreateParams) {
   return new ZodEnum({
     values: values as any,
     typeName: ZodFirstPartyTypeKind.ZodEnum,
+    ...processCreateParams(params),
   }) as any;
 }
 
