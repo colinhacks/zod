@@ -361,23 +361,23 @@ type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
-  | { kind: "regex"; regex: RegExp; message?: string };
-
-type ZodStringEffect = { kind: "trim" };
+  | { kind: "regex"; regex: RegExp; message?: string }
+  | { kind: "trim"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
-  effects: ZodStringEffect[];
   typeName: ZodFirstPartyTypeKind.ZodString;
 }
 
 const cuidRegex = /^c[^\s-]{8,}$/i;
-const uuidRegex = /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
+const uuidRegex =
+  /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 // from https://stackoverflow.com/a/46181/1550155
 // old version: too slow, didn't support unicode
 // const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i;
 // eslint-disable-next-line
-const emailRegex = /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+const emailRegex =
+  /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
 export class ZodString extends ZodType<string, ZodStringDef> {
   _parse(
@@ -398,12 +398,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       return INVALID;
     }
     let invalid = false;
-
-    for (const effect of this._def.effects) {
-      if (effect.kind === "trim") {
-        data = data.trim();
-      }
-    }
 
     for (const check of this._def.checks) {
       if (check.kind === "min") {
@@ -508,6 +502,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             { data }
           );
         }
+      } else if (check.kind === "trim") {
+        data = data.trim();
+      } else {
+        util.assertNever(check);
       }
     }
 
@@ -582,7 +580,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   trim = () =>
     new ZodString({
       ...this._def,
-      effects: [...this._def.effects, { kind: "trim" }],
+      checks: [...this._def.checks, { kind: "trim" }],
     });
 
   get isEmail() {
@@ -619,10 +617,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
     return max;
   }
+
   static create = (params?: RawCreateParams): ZodString => {
     return new ZodString({
       checks: [],
-      effects: [],
       typeName: ZodFirstPartyTypeKind.ZodString,
       ...processCreateParams(params),
     });
@@ -1399,8 +1397,7 @@ export type ZodNonEmptyArray<T extends ZodTypeAny> = ZodArray<T, "atleastone">;
 export namespace objectUtil {
   export type MergeShapes<U extends ZodRawShape, V extends ZodRawShape> = {
     [k in Exclude<keyof U, keyof V>]: U[k];
-  } &
-    V;
+  } & V;
 
   type optionalKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? k : never;
@@ -1410,8 +1407,7 @@ export namespace objectUtil {
 
   export type addQuestionMarks<T extends object> = {
     [k in optionalKeys<T>]?: T[k];
-  } &
-    { [k in requiredKeys<T>]: T[k] };
+  } & { [k in requiredKeys<T>]: T[k] };
 
   export type identity<T> = T;
   export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
@@ -1420,11 +1416,9 @@ export namespace objectUtil {
     [k in keyof T]: [T[k]] extends [never] ? never : k;
   }[keyof T];
 
-  export type noNever<T extends ZodRawShape> = identity<
-    {
-      [k in noNeverKeys<T>]: k extends keyof T ? T[k] : never;
-    }
-  >;
+  export type noNever<T extends ZodRawShape> = identity<{
+    [k in noNeverKeys<T>]: k extends keyof T ? T[k] : never;
+  }>;
 
   export const mergeShapes = <U extends ZodRawShape, T extends ZodRawShape>(
     first: U,
@@ -1455,58 +1449,57 @@ export namespace objectUtil {
     };
   };
 }
-export const mergeObjects = <First extends AnyZodObject>(first: First) => <
-  Second extends AnyZodObject
->(
-  second: Second
-): ZodObject<
-  First["_shape"] & Second["_shape"],
-  First["_unknownKeys"],
-  First["_catchall"]
-> => {
-  const mergedShape = objectUtil.mergeShapes(
-    first._def.shape(),
-    second._def.shape()
-  );
-  const merged: any = new ZodObject({
-    // effects: [...(first._def.effects || []), ...(second._def.effects || [])],
-    unknownKeys: first._def.unknownKeys,
-    catchall: first._def.catchall,
-    shape: () => mergedShape,
-    typeName: ZodFirstPartyTypeKind.ZodObject,
-  }) as any;
-  return merged;
-};
+export const mergeObjects =
+  <First extends AnyZodObject>(first: First) =>
+  <Second extends AnyZodObject>(
+    second: Second
+  ): ZodObject<
+    First["_shape"] & Second["_shape"],
+    First["_unknownKeys"],
+    First["_catchall"]
+  > => {
+    const mergedShape = objectUtil.mergeShapes(
+      first._def.shape(),
+      second._def.shape()
+    );
+    const merged: any = new ZodObject({
+      // effects: [...(first._def.effects || []), ...(second._def.effects || [])],
+      unknownKeys: first._def.unknownKeys,
+      catchall: first._def.catchall,
+      shape: () => mergedShape,
+      typeName: ZodFirstPartyTypeKind.ZodObject,
+    }) as any;
+    return merged;
+  };
 
 export type extendShape<A, B> = {
   [k in Exclude<keyof A, keyof B>]: A[k];
-} &
-  { [k in keyof B]: B[k] };
+} & { [k in keyof B]: B[k] };
 
-const AugmentFactory = <Def extends ZodObjectDef>(def: Def) => <
-  Augmentation extends ZodRawShape
->(
-  augmentation: Augmentation
-): ZodObject<
-  extendShape<ReturnType<Def["shape"]>, Augmentation>,
-  // {
-  //   [k in Exclude<
-  //     keyof ReturnType<Def["shape"]>,
-  //     keyof Augmentation
-  //   >]: ReturnType<Def["shape"]>[k];
-  // } &
-  //   { [k in keyof Augmentation]: Augmentation[k] },
-  Def["unknownKeys"],
-  Def["catchall"]
-> => {
-  return new ZodObject({
-    ...def,
-    shape: () => ({
-      ...def.shape(),
-      ...augmentation,
-    }),
-  }) as any;
-};
+const AugmentFactory =
+  <Def extends ZodObjectDef>(def: Def) =>
+  <Augmentation extends ZodRawShape>(
+    augmentation: Augmentation
+  ): ZodObject<
+    extendShape<ReturnType<Def["shape"]>, Augmentation>,
+    // {
+    //   [k in Exclude<
+    //     keyof ReturnType<Def["shape"]>,
+    //     keyof Augmentation
+    //   >]: ReturnType<Def["shape"]>[k];
+    // } &
+    //   { [k in keyof Augmentation]: Augmentation[k] },
+    Def["unknownKeys"],
+    Def["catchall"]
+  > => {
+    return new ZodObject({
+      ...def,
+      shape: () => ({
+        ...def.shape(),
+        ...augmentation,
+      }),
+    }) as any;
+  };
 
 type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
@@ -1524,15 +1517,12 @@ export interface ZodObjectDef<
   unknownKeys: UnknownKeys;
 }
 
-export type baseObjectOutputType<
-  Shape extends ZodRawShape
-> = objectUtil.flatten<
-  objectUtil.addQuestionMarks<
-    {
+export type baseObjectOutputType<Shape extends ZodRawShape> =
+  objectUtil.flatten<
+    objectUtil.addQuestionMarks<{
       [k in keyof Shape]: Shape[k]["_output"];
-    }
-  >
->;
+    }>
+  >;
 
 export type objectOutputType<
   Shape extends ZodRawShape,
@@ -1544,11 +1534,9 @@ export type objectOutputType<
     >;
 
 export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
-  objectUtil.addQuestionMarks<
-    {
-      [k in keyof Shape]: Shape[k]["_input"];
-    }
-  >
+  objectUtil.addQuestionMarks<{
+    [k in keyof Shape]: Shape[k]["_input"];
+  }>
 >;
 
 export type objectInputType<
@@ -1840,11 +1828,9 @@ export class ZodObject<
   partial<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
   ): ZodObject<
-    objectUtil.noNever<
-      {
-        [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
-      }
-    >,
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
+    }>,
     UnknownKeys,
     Catchall
   >;
@@ -2162,11 +2148,9 @@ export class ZodIntersection<
 ////////////////////////////////////////
 export type ZodTupleItems = [ZodTypeAny, ...ZodTypeAny[]];
 export type AssertArray<T extends any> = T extends any[] ? T : never;
-export type OutputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<
-  {
-    [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
-  }
->;
+export type OutputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<{
+  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
+}>;
 export type OutputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
   Rest extends ZodTypeAny | null = null
@@ -2174,11 +2158,9 @@ export type OutputTypeOfTupleWithRest<
   ? [...OutputTypeOfTuple<T>, ...Rest["_output"][]]
   : OutputTypeOfTuple<T>;
 
-export type InputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<
-  {
-    [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_input"] : never;
-  }
->;
+export type InputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<{
+  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_input"] : never;
+}>;
 export type InputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
   Rest extends ZodTypeAny | null = null
