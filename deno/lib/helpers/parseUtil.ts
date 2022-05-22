@@ -1,11 +1,6 @@
-import {
-  type IssueData,
-  type ZodErrorMap,
-  type ZodIssue,
-  defaultErrorMap,
-  overrideErrorMap,
-} from "../ZodError.ts";
-import { type ZodParsedType } from "./util.ts";
+import type { IssueData, ZodErrorMap, ZodIssue } from "../ZodError.ts";
+import { defaultErrorMap, overrideErrorMap } from "../ZodError.ts";
+import type { ZodParsedType } from "./util.ts";
 
 export const makeIssue = (params: {
   data: any;
