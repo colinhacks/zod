@@ -2,7 +2,7 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import { ZodParsedType } from "../helpers/parseUtil.ts";
+import { ZodParsedType } from "../helpers/util.ts";
 import * as z from "../index.ts";
 import { ZodError, ZodIssueCode } from "../ZodError.ts";
 

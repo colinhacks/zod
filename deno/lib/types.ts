@@ -1723,7 +1723,8 @@ export class ZodObject<
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
     const shape: any = {};
     util.objectKeys(mask).map((key) => {
-      shape[key] = this.shape[key];
+      // only add to shape if key corresponds to an element of the current shape
+      if (this.shape[key]) shape[key] = this.shape[key];
     });
     return new ZodObject({
       ...this._def,

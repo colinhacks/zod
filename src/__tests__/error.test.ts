@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import { ZodParsedType } from "../helpers/parseUtil";
+import { ZodParsedType } from "../helpers/util";
 import * as z from "../index";
 import { ZodError, ZodIssueCode } from "../ZodError";
 
