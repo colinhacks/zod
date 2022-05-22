@@ -452,7 +452,8 @@ type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
-  | { kind: "regex"; regex: RegExp; message?: string };
+  | { kind: "regex"; regex: RegExp; message?: string }
+  | { kind: "trim"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -569,6 +570,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "trim") {
+        input.data = input.data.trim();
+      } else {
+        util.assertNever(check);
       }
     }
 
@@ -640,6 +645,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   nonempty = (message?: errorUtil.ErrMessage) =>
     this.min(1, errorUtil.errToObj(message));
 
+  trim = () =>
+    new ZodString({
+      ...this._def,
+      checks: [...this._def.checks, { kind: "trim" }],
+    });
+
   get isEmail() {
     return !!this._def.checks.find((ch) => ch.kind === "email");
   }
@@ -674,6 +685,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
     return max;
   }
+
   static create = (params?: RawCreateParams): ZodString => {
     return new ZodString({
       checks: [],

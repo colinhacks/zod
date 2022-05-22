@@ -170,3 +170,11 @@ test("min max getters", () => {
   expect(z.string().max(5).maxLength).toEqual(5);
   expect(z.string().max(5).max(1).maxLength).toEqual(1);
 });
+
+test("trim", () => {
+  expect(z.string().trim().min(2).parse(" 12 ")).toEqual("12");
+
+  // ordering of methods is respected
+  expect(z.string().min(2).trim().parse(" 1 ")).toEqual("1");
+  expect(() => z.string().trim().min(2).parse(" 1 ")).toThrow();
+});
