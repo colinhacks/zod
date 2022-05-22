@@ -1,7 +1,6 @@
 import type { TypeOf, ZodType } from ".";
-import { ZodParsedType } from "./helpers/parseUtil";
 import { Primitive } from "./helpers/typeAliases";
-import { util } from "./helpers/util";
+import { util, ZodParsedType } from "./helpers/util";
 
 type allKeys<T> = T extends any ? keyof T : never;
 

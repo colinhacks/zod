@@ -3,7 +3,6 @@ import {
   addIssueToContext,
   AsyncParseReturnType,
   DIRTY,
-  getParsedType,
   INVALID,
   isAborted,
   isAsync,
@@ -18,11 +17,10 @@ import {
   ParseReturnType,
   ParseStatus,
   SyncParseReturnType,
-  ZodParsedType,
 } from "./helpers/parseUtil";
 import { partialUtil } from "./helpers/partialUtil";
 import { Primitive } from "./helpers/typeAliases";
-import { util } from "./helpers/util";
+import { getParsedType, util, ZodParsedType } from "./helpers/util";
 import {
   defaultErrorMap,
   IssueData,
