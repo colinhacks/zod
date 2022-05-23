@@ -327,7 +327,7 @@ import { z } from "https://deno.land/x/zod/mod.ts";
 You can also specify a particular version:
 
 ```ts
-import { z } from from "https://deno.land/x/zod@v3.16.1/mod.ts"
+import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts"
 ```
 
 > The rest of this README assumes you are using NPM and importing directly from the `"zod"` package.
