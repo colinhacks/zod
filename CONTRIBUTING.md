@@ -39,10 +39,9 @@ The following steps will get you setup to contribute changes to this repo:
 
 - runs all Jest tests and generates coverage badge
 
-**`yarn test:one`**
+**`yarn test enum`**
 
-- runs a single test file
-- example: `yarn test src/__tests__/testFileNameHere.ts`
+- runs a single test file (e.g. `enum.test.ts`)
 
 **`yarn play`**
 

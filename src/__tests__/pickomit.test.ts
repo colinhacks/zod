@@ -79,3 +79,19 @@ test("nonstrict parsing - fail", () => {
   const bad = () => laxfish.parse({ whatever: "asdf" } as any);
   expect(bad).toThrow();
 });
+
+test("pick a nonexistent key", () => {
+  const schema = z.object({
+    a: z.string(),
+    b: z.number(),
+  });
+
+  const pickedSchema = schema.pick({
+    a: true,
+    doesntExist: true,
+  });
+
+  pickedSchema.parse({
+    a: "value",
+  });
+});

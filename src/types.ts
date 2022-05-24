@@ -3,7 +3,6 @@ import {
   addIssueToContext,
   AsyncParseReturnType,
   DIRTY,
-  getParsedType,
   INVALID,
   isAborted,
   isAsync,
@@ -18,11 +17,10 @@ import {
   ParseReturnType,
   ParseStatus,
   SyncParseReturnType,
-  ZodParsedType,
 } from "./helpers/parseUtil";
 import { partialUtil } from "./helpers/partialUtil";
 import { Primitive } from "./helpers/typeAliases";
-import { util } from "./helpers/util";
+import { getParsedType, util, ZodParsedType } from "./helpers/util";
 import {
   defaultErrorMap,
   IssueData,
@@ -463,7 +461,8 @@ type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
-  | { kind: "regex"; regex: RegExp; message?: string };
+  | { kind: "regex"; regex: RegExp; message?: string }
+  | { kind: "trim"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -580,6 +579,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "trim") {
+        input.data = input.data.trim();
+      } else {
+        util.assertNever(check);
       }
     }
 
@@ -651,6 +654,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   nonempty = (message?: errorUtil.ErrMessage) =>
     this.min(1, errorUtil.errToObj(message));
 
+  trim = () =>
+    new ZodString({
+      ...this._def,
+      checks: [...this._def.checks, { kind: "trim" }],
+    });
+
   get isEmail() {
     return !!this._def.checks.find((ch) => ch.kind === "email");
   }
@@ -685,6 +694,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
     return max;
   }
+
   static create = (params?: RawCreateParams): ZodString => {
     return new ZodString({
       checks: [],
@@ -1724,7 +1734,8 @@ export class ZodObject<
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
     const shape: any = {};
     util.objectKeys(mask).map((key) => {
-      shape[key] = this.shape[key];
+      // only add to shape if key corresponds to an element of the current shape
+      if (this.shape[key]) shape[key] = this.shape[key];
     });
     return new ZodObject({
       ...this._def,
@@ -3026,15 +3037,18 @@ export interface ZodEnumDef<T extends EnumValues = EnumValues>
 type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
 function createZodEnum<U extends string, T extends Readonly<[U, ...U[]]>>(
-  values: T
+  values: T,
+  params?: RawCreateParams
 ): ZodEnum<Writeable<T>>;
 function createZodEnum<U extends string, T extends [U, ...U[]]>(
-  values: T
+  values: T,
+  params?: RawCreateParams
 ): ZodEnum<T>;
-function createZodEnum(values: any) {
+function createZodEnum(values: any, params?: RawCreateParams) {
   return new ZodEnum({
     values: values as any,
     typeName: ZodFirstPartyTypeKind.ZodEnum,
+    ...processCreateParams(params),
   }) as any;
 }
 

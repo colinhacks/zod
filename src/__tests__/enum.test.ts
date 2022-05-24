@@ -31,3 +31,13 @@ test("readonly enum", () => {
   arg.parse("201");
   expect(() => arg.parse("202")).toThrow();
 });
+
+test("error params", () => {
+  const result = z
+    .enum(["test"], { required_error: "REQUIRED" })
+    .safeParse(undefined);
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("REQUIRED");
+  }
+});

@@ -1925,43 +1925,6 @@ if (!data.success) {
 }
 ```
 
-
-> ⚠️ **_IMPORTANT:_**  If there's any chance your data includes sensitive information, be very careful using this flag or avoid using it entirely. You could end up logging personally-identifiable information, private keys, or passwords in plaintext. This is why this flag is not enabled by default.
-
-If you would like to include the input data which caused a validation error in the issues associated with the error, pass the flag `errorIncludesInputData` to your parse function:
-
-```ts
-const notUrl = "I AM NOT A URL BEEP BOOP";
-const myUrl = z.string().url();
-
-const noInput = myUrl.safeParse(notUrl);
-if (!noInput.success) {
-  noInput.error.issues;
-  /* [
-      {
-        "validation": "url",
-        "code": "invalid_string",
-        "message": "Invalid url",
-        "path": []
-      }
-  ] */
-}
-
-const withInput = myUrl.safeParse(notUrl, {errorIncludesInputData: true});
-if (!withInput.success) {
-  withInput.error.issues;
-  /* [
-      {
-        "validation": "url",
-        "code": "invalid_string",
-        "message": "Invalid url",
-        "path": [],
-        "inputData": "I AM NOT A URL BEEP BOOP"
-      }
-  ] */
-}
-```
-
 ## Comparison
 
 There are a handful of other widely-used validation libraries, but all of them have certain design limitations that make for a non-ideal developer experience.
