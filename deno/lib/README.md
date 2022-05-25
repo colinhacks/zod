@@ -215,6 +215,17 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <b>Trip</b>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://seasoned.cc">
+        <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="150px;" alt="" />
+      </a>
+      <br />
+      <b>Seasoned Software</b>
+      <br />
+      <a href="https://seasoned.cc">seasoned.cc</a>
+    </td>
+  </tr>
 </table>
 
 #### Bronze

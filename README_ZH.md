@@ -116,72 +116,132 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
 - 功能性方法: [解析，不验证](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 - 也可用于普通的 JavaScript! 你不需要使用 TypeScript。
 
-# 赞助
+## 赞助
 
 我们感谢并鼓励任何级别的赞助。Zod 是由一个单独的开发者维护的 ([hi!](https://twitter.com/colinhacks)). 对于个人开发者来说，可以考虑[一杯咖啡级别](https://github.com/sponsors/colinhacks). 如果你使用 Zod 建立了一个付费产品，可以考虑[初创企业级别](https://github.com/sponsors/colinhacks). 你可以在以下网站上了解更多关于等级的信息 [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
 
-### 贊助者
+### Gold
 
 <table>
   <tr>
-   <td align="center">
+    <td align="center">
+      <a href="https://astro.build/">
+        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="200px;" alt="Astro" />
+      </a>
+      <br />
+      <b>Astro</b>
+      <br />
+      <a href="https://astro.build">astro.build</a>
+      <br />
+      <p width="200px">
+        Astro is a new kind of static <br/>
+        site builder for the modern web. <br/>
+        Powerful developer experience meets <br/>
+        lightweight output.</p>
+    </td>
+    <td align="center">
+      <a href="https://glow.app/">
+        <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="" />
+      </a>
+      <br />
+      <b>Glow Wallet</b>
+      <br />
+      <a href="https://glow.app/">glow.app</a>
+      <br />
+      <p width="200px">Your new favorite
+        <br/>
+      Solana wallet.</p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
       <a href="https://deletype.com/">
-        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="100px;" alt="" />
+        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="" />
       </a>
-      <br>
+      <br />
       <b>Deletype</b>
-      <br>
-      <a href="https://deletype.com/">https://deletype.com/</a>
+      <br />
+      <a href="https://deletype.com">deletype.com</a>
     </td>
-  <td align="center">
-      <a href="https://github.com/kevinsimper">
-        <img src="https://avatars1.githubusercontent.com/u/1126497?s=460&v=4" width="100px;" alt="" />
+  </tr>
+</table>
+
+### Silver
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://snaplet.dev">
+        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="" />
       </a>
-      <br>
-      <b>Kevin Simper</b>
-      <br>
-      <a href="https://github.com/kevinsimper">@kevinsimper</a>
+      <br />
+      <b>Snaplet</b>
+      <br />
+      <a href="https://snaplet.dev">snaplet.dev</a>
     </td>
+     <td align="center">
+      <a href="https://marcatopartners.com/">
+        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
+      </a>
+      <br />
+      <b>Marcato Partners</b>
+      <br />
+      <a href="https://marcatopartners.com/">marcatopartners.com</a>
+    </td>
+     <td align="center">
+      <a href="https://github.com/macandcheese-spaghetticode">
+        <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
+      </a>
+      <br />
+      <b>Trip</b>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://seasoned.cc">
+        <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="150px;" alt="" />
+      </a>
+      <br />
+      <b>Seasoned Software</b>
+      <br />
+      <a href="https://seasoned.cc">seasoned.cc</a>
+    </td>
+  </tr>
+</table>
+
+### Bronze
+
+<table>
+  <tr>
     <td align="center">
       <a href="https://twitter.com/flybayer">
         <img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/>
       </a>
-      <br>
+      <br />
       <b>Brandon Bayer</b>
       <br/>
       <a href="https://twitter.com/flybayer">@flybayer</a>,
       <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
       <br />
     </td>
-    
-  </tr>
-  <tr>
     <td align="center">
-      <a href="https://www.bamboocreative.nz/">
-        <img src="https://avatars1.githubusercontent.com/u/41406870?s=460&v=4" width="100px;" alt="" />
+      <a href="https://github.com/brabeji">
+        <img src="https://avatars.githubusercontent.com/u/2237954?v=4" width="100px;" alt=""/>
       </a>
-      <br>
-      <b>Bamboo Creative</b>
-      <br>
-      <a href="https://www.bamboocreative.nz/">https://bamboocreative.nz</a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/jeremyBanks">
-        <img src="https://avatars.githubusercontent.com/u/18020?s=400&u=dba6c1402ae1746a276a5d256e01d68e774a0e9d&v=4" width="100px;" alt="" />
-      </a>
-      <br>
-      <b>Jeremy Banks</b>
-      <br>
-      <a href="https://github.com/jeremyBanks">github.com/jeremyBanks</a>
+      <br />
+      <b>Jiří Brabec</b>
+      <br/>
+      <a href="https://github.com/brabeji">@brabeji</a>
+      <br />
     </td>
      <td align="center">
-      <a href="https://marcatopartners.com/">
-        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="100px;" alt="Marcato Partners" />
+      <a href="https://twitter.com/alexdotjs">
+        <img src="https://avatars.githubusercontent.com/u/459267?v=4" width="100px;" alt="" />
       </a>
-      <br>
-      <b>Marcato Partners</b>
-      <br>
-      <a href="https://marcatopartners.com/">marcatopartners.com</a>
+      <br />
+      <b>Alex Johansson</b>
+      <br />
+      <a href="https://twitter.com/alexdotjs">@alexdotjs</a>
     </td>
   </tr>
 </table>
