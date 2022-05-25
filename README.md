@@ -1046,7 +1046,7 @@ const item = z
 
 Record schemas are used to validate types such as `{ [k: string]: number }`.
 
-If you want to validate the _values_ of an object against some schema but don't care about the keys, use `Record`.
+If you want to validate the _values_ of an object against some schema but don't care about the keys, use `z.record(valueType)`:
 
 ```ts
 const NumberCache = z.record(z.number());
@@ -1069,9 +1069,22 @@ userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
 }; // TypeError
 ```
 
+### Record key type
+
+If you want to validate both the keys and the values, use
+`z.record(keyType, valueType)`:
+
+```ts
+const NoEmptyKeysSchema = z.record(z.string().min(1), z.number());
+NoEmptyKeysSchema.parse({ 'count': 1 }) // => { 'count': 1 }
+NoEmptyKeysSchema.parse({ '': 1 }) // fails
+```
+
+_(Notice how when passing two arguments, `valueType` is the second argument)_
+
 **A note on numerical keys**
 
-You may have expected `z.record()` to accept two arguments, one for the keys and one for the values. After all, TypeScript's built-in Record type does: `Record<KeyType, ValueType>` . Otherwise, how do you represent the TypeScript type `Record<number, any>` in Zod?
+While `z.record(keyType, valueType)` is able to accept numerical key types and TypeScript's built-in Record type is `Record<KeyType, ValueType>`, it's hard to represent the TypeScript type `Record<number, any>` in Zod.
 
 As it turns out, TypeScript's behavior surrounding `[k: number]` is a little unintuitive:
 
