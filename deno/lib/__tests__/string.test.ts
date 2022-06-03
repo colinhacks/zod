@@ -80,6 +80,7 @@ test("url error overrides", () => {
 
 test("uuid", () => {
   const uuid = z.string().uuid("custom error");
+  uuid.parse("00000000-0000-0000-0000-000000000000"); // Nil UUID
   uuid.parse("9491d710-3185-4e06-bea0-6a2f275345e0");
   uuid.parse("00000000-0000-0000-0000-000000000000");
   uuid.parse("b3ce60f8-e8b9-40f5-1150-172ede56ff74"); // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
