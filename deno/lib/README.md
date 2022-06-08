@@ -225,6 +225,15 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://seasoned.cc">seasoned.cc</a>
     </td>
+    <td align="center">
+      <a href="https://seasoned.cc">
+        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
+      </a>
+      <br />
+      <b>Interval</b>
+      <br />
+      <a href="https://interval.com">interval.com</a>
+    </td>
   </tr>
 </table>
 
