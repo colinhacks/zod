@@ -1618,6 +1618,33 @@ You can add as many issues as you like. If `ctx.addIssue` is NOT called during t
 
 Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` you can create any issue of any code. Each issue code is described in detail in the Error Handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md).
 
+#### Customize error path
+
+If you are performaing a `.superRefine` on an object it is possible to target issues at a sub element using the `path` property of `ctx.addIssue`. Here's an example: 
+
+```ts
+const updateUserForm = z.object({
+  email: z.string(),
+  password: z.object({
+    value: z.string(),
+    valueConfirmed: z.string()
+    }).superRefine((val, ctx) => {
+      if (val.value !== val.valueConfirmed) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Passwords don't match`,
+          path: ["valueConfirmed"]
+      });
+    }
+  })
+})
+
+```
+
+Note that the `array` passed to `path` is added to the current path of the object being `.superrefined`... IE in the example above Notice we didn't need to pass the full path from the schema root `["password","valueConfirmed"]` but just `["valueConfirmed"]`. This also works the same for number indexed arrays, targeting the correct array element that the `.superRefine` is running for and adds an issue to.
+
+If no `path` is passed the issue is regestered against the zod property being `.superRefine`'d.
+
 #### Abort early
 
 By default, parsing will continue even after a refinement check fails. For instance, if you chain together multiple refinements, they will all be executed. However, it may be desirable to _abort early_ to prevent later refinements from being executed. To achieve this, pass the `fatal` flag to `ctx.addIssue`:
