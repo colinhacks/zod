@@ -1641,7 +1641,7 @@ const updateUserForm = z.object({
 
 ```
 
-Note that the `array` passed to `path` is added to the current path of the object being `.superrefined`... IE in the example above Notice we didn't need to pass the full path from the schema root `["password","valueConfirmed"]` but just `["valueConfirmed"]`. This also works the same for number indexed arrays, targeting the correct array element that the `.superRefine` is running for and adds an issue to.
+Note that the `array` passed to `path` is added to the current path of the object being `.superRefine`'d... IE in the example above notice we didn't need to pass the full path from the schema root `["password","valueConfirmed"]` but just `["valueConfirmed"]`. This also works the same for number indexed arrays, targeting the correct array element that the `.superRefine` is running for and adds an issue to.
 
 If no `path` is passed the issue is regestered against the zod property being `.superRefine`'d.
 
