@@ -12,6 +12,15 @@ test("valid", () => {
       ])
       .parse({ type: "a", a: "abc" })
   ).toEqual({ type: "a", a: "abc" });
+
+  expect(
+    z
+      .discriminatedUnion("type", [
+        z.object({ type: z.literal("a"), a: z.string() }),
+        z.object({ type: z.enum(["b", "c"]), b: z.string() }),
+      ])
+      .parse({ type: "b", b: "abc" })
+  ).toEqual({ type: "b", b: "abc" });
 });
 
 test("valid - discriminator value of various primitive types", () => {
@@ -96,6 +105,23 @@ test("invalid discriminator value", () => {
       },
     ]);
   }
+
+  try {
+    z.discriminatedUnion("type", [
+      z.object({ type: z.literal("a"), a: z.string() }),
+      z.object({ type: z.enum(["b", "c"]), b: z.string() }),
+    ]).parse({ type: "x", a: "abc" });
+    throw new Error();
+  } catch (e: any) {
+    expect(JSON.parse(e.message)).toEqual([
+      {
+        code: z.ZodIssueCode.invalid_union_discriminator,
+        options: ["a", "b", "c"],
+        message: "Invalid discriminator value. Expected 'a' | 'b' | 'c'",
+        path: ["type"],
+      },
+    ]);
+  }
 });
 
 test("valid discriminator value, invalid data", () => {
@@ -112,6 +138,24 @@ test("valid discriminator value, invalid data", () => {
         expected: z.ZodParsedType.string,
         message: "Required",
         path: ["a"],
+        received: z.ZodParsedType.undefined,
+      },
+    ]);
+  }
+
+  try {
+    z.discriminatedUnion("type", [
+      z.object({ type: z.literal("a"), a: z.string() }),
+      z.object({ type: z.enum(["b", "c"]), b: z.string() }),
+    ]).parse({ type: "b", a: "abc" });
+    throw new Error();
+  } catch (e: any) {
+    expect(JSON.parse(e.message)).toEqual([
+      {
+        code: z.ZodIssueCode.invalid_type,
+        expected: z.ZodParsedType.string,
+        message: "Required",
+        path: ["b"],
         received: z.ZodParsedType.undefined,
       },
     ]);
@@ -137,6 +181,30 @@ test("wrong schema - duplicate discriminator values", () => {
     z.discriminatedUnion("type", [
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ type: z.literal("a"), b: z.string() }),
+    ]);
+    throw new Error();
+  } catch (e: any) {
+    expect(e.message).toEqual(
+      "Some of the discriminator values are not unique"
+    );
+  }
+
+  try {
+    z.discriminatedUnion("type", [
+      z.object({ type: z.literal("a"), a: z.string() }),
+      z.object({ type: z.enum(["a", "b"]), b: z.string() }),
+    ]);
+    throw new Error();
+  } catch (e: any) {
+    expect(e.message).toEqual(
+      "Some of the discriminator values are not unique"
+    );
+  }
+
+  try {
+    z.discriminatedUnion("type", [
+      z.object({ type: z.enum(["a", "b"]), a: z.string() }),
+      z.object({ type: z.enum(["b", "c"]), b: z.string() }),
     ]);
     throw new Error();
   } catch (e: any) {

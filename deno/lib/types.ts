@@ -2133,7 +2133,13 @@ export type ZodDiscriminatedUnionOption<
   Discriminator extends string,
   DiscriminatorValue extends Primitive
 > = ZodObject<
-  { [key in Discriminator]: ZodLiteral<DiscriminatorValue> } & ZodRawShape,
+  {
+    [key in Discriminator]:
+      | ZodLiteral<DiscriminatorValue>
+      | ZodEnum<
+          [DiscriminatorValue & string, ...(DiscriminatorValue & string)[]]
+        >;
+  } & ZodRawShape,
   any,
   any
 >;
@@ -2232,11 +2238,22 @@ export class ZodDiscriminatedUnion<
   ): ZodDiscriminatedUnion<Discriminator, DiscriminatorValue, Types[number]> {
     // Get all the valid discriminator values
     const options: Map<DiscriminatorValue, Types[number]> = new Map();
+    let numDiscriminatorValues = 0;
 
     try {
       types.forEach((type) => {
-        const discriminatorValue = type.shape[discriminator].value;
-        options.set(discriminatorValue, type);
+        const schema = type.shape[discriminator];
+        if (schema instanceof ZodLiteral) {
+          options.set(schema.value, type);
+          numDiscriminatorValues += 1;
+        } else if (schema instanceof ZodEnum) {
+          schema.options.forEach((value: DiscriminatorValue & string) =>
+            options.set(value, type)
+          );
+          numDiscriminatorValues += schema.options.length;
+        } else {
+          throw new Error("Invalid types provided to ZodDiscriminatedUnion");
+        }
       });
     } catch (e) {
       throw new Error(
@@ -2245,7 +2262,7 @@ export class ZodDiscriminatedUnion<
     }
 
     // Assert that all the discriminator values are unique
-    if (options.size !== types.length) {
+    if (options.size !== numDiscriminatorValues) {
       throw new Error("Some of the discriminator values are not unique");
     }
 
