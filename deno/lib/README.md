@@ -1104,9 +1104,9 @@ against it, and showing only the issues related to this "option".
 const item = z
   .discriminatedUnion("type", [
     z.object({ type: z.literal("a"), a: z.string() }),
-    z.object({ type: z.literal("b"), b: z.string() }),
+    z.object({ type: z.enum(["b", "c"]), b: z.string() }),
   ])
-  .parse({ type: "a", a: "abc" });
+  .parse({ type: "b", b: "abc" });
 ```
 
 ## Records
