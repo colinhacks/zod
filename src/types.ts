@@ -18,6 +18,7 @@ import {
   ParseStatus,
   SyncParseReturnType,
 } from "./helpers/parseUtil";
+import { enumUtil } from './helpers/enumUtil';
 import { partialUtil } from "./helpers/partialUtil";
 import { Primitive } from "./helpers/typeAliases";
 import { getParsedType, util, ZodParsedType } from "./helpers/util";
@@ -1811,6 +1812,11 @@ export class ZodObject<
       ...this._def,
       shape: () => newShape,
     }) as any;
+  }
+
+  enum(): ZodEnum<enumUtil.UnionToTupleString<keyof T>> {
+    return createZodEnum(
+      util.objectKeys(this.shape) as [string,...string[]]) as any;
   }
 
   static create = <T extends ZodRawShape>(
