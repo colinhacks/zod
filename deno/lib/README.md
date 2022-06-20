@@ -43,11 +43,17 @@
 
 #### Go to [zod.js.org](https://zod.js.org) >> -->
 
+- [Table of contents](#table-of-contents)
 - [Introduction](#introduction)
   - [Sponsors](#sponsors)
+    - [Gold](#gold)
+    - [Silver](#silver)
+    - [Bronze](#bronze)
   - [Ecosystem](#ecosystem)
+    - [Form integrations](#form-integrations)
 - [Installation](#installation)
-  - [Node](#node)
+  - [Requirements](#requirements)
+  - [Node/NPM](#nodenpm)
   - [Deno](#deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
@@ -62,59 +68,42 @@
 - [Optionals](#optionals)
 - [Nullables](#nullables)
 - [Objects](#objects)
-  - [.shape](#shape)
-  - [.extend](#extend)
-  - [.merge](#merge)
-  - [.pick/.omit](#pickomit)
-  - [.partial](#partial)
-  - [.deepPartial](#deepPartial)
-  - [.passthrough](#passthrough)
-  - [.strict](#strict)
-  - [.strip](#strip)
-  - [.catchall](#catchall)
+  - [`.shape`](#shape)
+  - [`.enum`](#enum)
+  - [`.extend`](#extend)
+  - [`.merge`](#merge)
+  - [`.pick/.omit`](#pickomit)
+  - [`.partial`](#partial)
+  - [`.deepPartial`](#deeppartial)
+  - [`.passthrough`](#passthrough)
+  - [`.strict`](#strict)
+  - [`.strip`](#strip)
+  - [`.catchall`](#catchall)
 - [Arrays](#arrays)
-  - [.element](#element)
-  - [.nonempty](#nonempty)
-  - [.min/.max/.length](#minmaxlength)
+  - [`.element`](#element)
+  - [`.nonempty`](#nonempty)
+  - [`.min/.max/.length`](#minmaxlength)
 - [Tuples](#tuples)
 - [Unions](#unions)
-- [Discriminated Unions](#discriminated-unions)
+- [Discriminated unions](#discriminated-unions)
 - [Records](#records)
+  - [Record key type](#record-key-type)
 - [Maps](#maps)
 - [Sets](#sets)
-- [Recursive types](#recursive-types)
-  - [JSON type](#json-type)
-  - [Cyclical data](#cyclical-objects)
-- [Promises](#promises)
+- [Intersections](#intersections)
 - [Instanceof](#instanceof)
 - [Function schemas](#function-schemas)
 - [Preprocess](#preprocess)
 - [Schema methods](#schema-methods)
-  - [.parse](#parse)
-  - [.parseAsync](#parseasync)
-  - [.safeParse](#safeparse)
-  - [.safeParseAsync](#safeparseasync)
-  - [.refine](#refine)
-  - [.superRefine](#superRefine)
-  - [.transform](#transform)
-  - [.default](#default)
-  - [.optional](#optional)
-  - [.nullable](#nullable)
-  - [.nullish](#nullish)
-  - [.array](#array)
-  - [.promise](#promise)
-  - [.or](#or)
-  - [.and](#and)
-- [Guides and concepts](#guides-and-concepts)
-  - [Type inference](#type-inference)
-  - [Writing generic functions](#writing-generic-functions)
-  - [Error handling](#error-handling)
-  - [Error formatting](#error-formatting)
-- [Comparison](#comparison)
-  - [Joi](#joi)
-  - [Yup](#yup)
-  - [io-ts](#io-ts)
-  - [Runtypes](#runtypes)
+  - [`.parse`](#parse)
+  - [`.parseAsync`](#parseasync)
+  - [`.safeParse`](#safeparse)
+  - [`.safeParseAsync`](#safeparseasync)
+  - [`.refine`](#refine)
+    - [Arguments](#arguments)
+    - [Customize error path](#customize-error-path)
+    - [Asynchronous refinements](#asynchronous-refinements)
+    - [Relationship to transforms](#relationship-to-transforms)
 - [Changelog](#changelog)
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
@@ -756,6 +745,14 @@ Use `.shape` to access the schemas for a particular key.
 ```ts
 Dog.shape.name; // => string schema
 Dog.shape.age; // => number schema
+```
+
+### `.enum`
+
+Use `.enum` to create a zod enum schema from an object schema.
+
+```ts
+const keys: ZodEnum['name', 'age'] = Dog.enum();
 ```
 
 ### `.extend`
@@ -1976,10 +1973,10 @@ There are a handful of other widely-used validation libraries, but all of them h
 
 <!-- The table below summarizes the feature differences. Below the table there are more involved discussions of certain alternatives, where necessary. -->
 
-<!-- | Feature                                                                                                                | [Zod](https://github.com/colinhacks) | [Joi](https://github.com/hapijs/joi) | [Yup](https://github.com/jquense/yup) | [io-ts](https://github.com/gcanti/io-ts) | [Runtypes](https://github.com/pelotom/runtypes) | [ow](https://github.com/sindresorhus/ow) | [class-validator](https://github.com/typestack/class-validator) |
-| ---------------------------------------------------------------------------------------------------------------------- | :-----------------------------: | :----------------------------------: | :-----------------------------------: | :--------------------------------------: | :---------------------------------------------: | :--------------------------------------: | :-------------------------------------------------------------: |
-| <abbr title='Any ability to extract a TypeScript type from a validator instance counts.'>Type inference</abbr>         |               🟢                |                  🔴                  |                  🟢                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
-| <abbr title="Yup's inferred types are incorrect in certain cases, see discussion below.">Correct type inference</abbr> |               🟢                |                  🔴                  |                  🔴                   |                    🟢                    |                       🟢                        |                    🟢                    |                               🟢                                |
+| <!--                                                                                                                   | Feature | [Zod](https://github.com/colinhacks) | [Joi](https://github.com/hapijs/joi) | [Yup](https://github.com/jquense/yup) | [io-ts](https://github.com/gcanti/io-ts) | [Runtypes](https://github.com/pelotom/runtypes) | [ow](https://github.com/sindresorhus/ow) | [class-validator](https://github.com/typestack/class-validator) |
+| ---------------------------------------------------------------------------------------------------------------------- | :-----: | :----------------------------------: | :----------------------------------: | :-----------------------------------: | :--------------------------------------: | :---------------------------------------------: | :--------------------------------------: |
+| <abbr title='Any ability to extract a TypeScript type from a validator instance counts.'>Type inference</abbr>         |    🟢    |                  🔴                   |                  🟢                   |                   🟢                   |                    🟢                     |                        🟢                        |                    🟢                     |
+| <abbr title="Yup's inferred types are incorrect in certain cases, see discussion below.">Correct type inference</abbr> |    🟢    |                  🔴                   |                  🔴                   |                   🟢                   |                    🟢                     |                        🟢                        |                    🟢                     |
 
 <abbr title="number, string, boolean, null, undefined">Primitive Types</abbr>
 <abbr title="Includes any checks beyond 'Is this a string?', e.g. min/max length, isEmail, isURL, case checking, etc.">String Validation</abbr>
