@@ -272,6 +272,18 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://twitter.com/alexdotjs">@alexdotjs</a>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://adaptable.io/">
+        <img src="https://avatars.githubusercontent.com/u/60378268?s=200&v=4" width="100px;" alt=""/>
+      </a>
+      <br />
+      <b>Adaptable</b>
+      <br/>
+      <a href="https://adaptable.io/">adaptable.io</a>
+      <br />
+    </td>
+  </tr>
 </table>
 
 ### Ecosystem
@@ -1085,8 +1097,8 @@ If you want to validate both the keys and the values, use
 
 ```ts
 const NoEmptyKeysSchema = z.record(z.string().min(1), z.number());
-NoEmptyKeysSchema.parse({ 'count': 1 }) // => { 'count': 1 }
-NoEmptyKeysSchema.parse({ '': 1 }) // fails
+NoEmptyKeysSchema.parse({ count: 1 }); // => { 'count': 1 }
+NoEmptyKeysSchema.parse({ "": 1 }); // fails
 ```
 
 _(Notice how when passing two arguments, `valueType` is the second argument)_

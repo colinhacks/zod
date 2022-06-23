@@ -253,6 +253,18 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
       <a href="https://twitter.com/alexdotjs">@alexdotjs</a>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://adaptable.io/">
+        <img src="https://avatars.githubusercontent.com/u/60378268?s=200&v=4" width="100px;" alt=""/>
+      </a>
+      <br />
+      <b>Adaptable</b>
+      <br/>
+      <a href="https://adaptable.io/">adaptable.io</a>
+      <br />
+    </td>
+  </tr>
 </table>
 
 _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._

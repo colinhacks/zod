@@ -272,6 +272,18 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://twitter.com/alexdotjs">@alexdotjs</a>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://adaptable.io/">
+        <img src="https://avatars.githubusercontent.com/u/60378268?s=200&v=4" width="100px;" alt=""/>
+      </a>
+      <br />
+      <b>Adaptable</b>
+      <br/>
+      <a href="https://adaptable.io/">adaptable.io</a>
+      <br />
+    </td>
+  </tr>
 </table>
 
 ### Ecosystem
@@ -453,7 +465,7 @@ z.string().nonempty({ message: "Can't be empty" });
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
 
-You can customize some common errors messages when creating a string schema.
+You can customize some common error messages when creating a string schema.
 
 ```ts
 const name = z.string({
@@ -567,7 +579,7 @@ const VALUES = ["Salmon", "Tuna", "Trout"] as const;
 const FishEnum = z.enum(VALUES);
 ```
 
-This is not allowed, since Zod isn't able to infer the exact values of each elements.
+This is not allowed, since Zod isn't able to infer the exact values of each element.
 
 ```ts
 const fish = ["Salmon", "Tuna", "Trout"];
@@ -748,7 +760,7 @@ Dog.shape.age; // => number schema
 
 ### `.extend`
 
-You can add additional fields an object schema with the `.extend` method.
+You can add additional fields to an object schema with the `.extend` method.
 
 ```ts
 const DogWithBreed = Dog.extend({
@@ -868,7 +880,7 @@ const deepPartialUser = user.deepPartial();
 
 ### `.passthrough`
 
-By default Zod objects schemas strip out unrecognized keys during parsing.
+By default Zod object schemas strip out unrecognized keys during parsing.
 
 ```ts
 const person = z.object({
@@ -895,7 +907,7 @@ person.passthrough().parse({
 
 ### `.strict`
 
-By default Zod objects schemas strip out unrecognized keys during parsing. You can _disallow_ unknown keys with `.strict()` . If there are any unknown keys in the input, Zod will throw an error.
+By default Zod object schemas strip out unrecognized keys during parsing. You can _disallow_ unknown keys with `.strict()` . If there are any unknown keys in the input, Zod will throw an error.
 
 ```ts
 const person = z
@@ -1055,7 +1067,7 @@ const item = z
 
 Record schemas are used to validate types such as `{ [k: string]: number }`.
 
-If you want to validate the _values_ of an object against some schema but don't care about the keys, use `Record`.
+If you want to validate the _values_ of an object against some schema but don't care about the keys, use `z.record(valueType)`:
 
 ```ts
 const NumberCache = z.record(z.number());
@@ -1078,9 +1090,22 @@ userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
 }; // TypeError
 ```
 
+### Record key type
+
+If you want to validate both the keys and the values, use
+`z.record(keyType, valueType)`:
+
+```ts
+const NoEmptyKeysSchema = z.record(z.string().min(1), z.number());
+NoEmptyKeysSchema.parse({ count: 1 }); // => { 'count': 1 }
+NoEmptyKeysSchema.parse({ "": 1 }); // fails
+```
+
+_(Notice how when passing two arguments, `valueType` is the second argument)_
+
 **A note on numerical keys**
 
-You may have expected `z.record()` to accept two arguments, one for the keys and one for the values. After all, TypeScript's built-in Record type does: `Record<KeyType, ValueType>` . Otherwise, how do you represent the TypeScript type `Record<number, any>` in Zod?
+While `z.record(keyType, valueType)` is able to accept numerical key types and TypeScript's built-in Record type is `Record<KeyType, ValueType>`, it's hard to represent the TypeScript type `Record<number, any>` in Zod.
 
 As it turns out, TypeScript's behavior surrounding `[k: number]` is a little unintuitive:
 
@@ -1330,7 +1355,7 @@ type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string)=>number
 ``` -->
 
-Function schemas have an `.implement()` method which accepts a function and returns a new function that automatically validates it's inputs and outputs.
+Function schemas have an `.implement()` method which accepts a function and returns a new function that automatically validates its inputs and outputs.
 
 ```ts
 const trimmedLength = z
@@ -1548,7 +1573,7 @@ const userId = z.string().refine(async (id) => {
 });
 ```
 
-> ⚠️If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
+> ⚠️ If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
 
 #### Relationship to transforms
 
@@ -1604,7 +1629,7 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
   if (val.length !== new Set(val).size) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: `No duplicated allowed.`,
+      message: `No duplicates allowed.`,
     });
   }
 });
