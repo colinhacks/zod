@@ -1584,15 +1584,15 @@ Transforms and refinements can be interleaved:
 z.string()
   .transform((val) => val.length)
   .refine((val) => val > 25);
-	.convert((val) => {
-		if (val === 42) {
-			return z.success('Good')
-		}
-		return z.failure([{
-			code: 'custom',
-			message: 'Bad'
-		}])
-	})
+  .convert((val) => {
+    if (val === 42) {
+      return z.success('Good')
+    }
+    return z.failure([{
+      code: 'custom',
+      message: 'Bad'
+    }])
+  })
 ```
 
 <!-- Note that the `path` is set to `["confirm"]` , so you can easily display this error underneath the "Confirm password" textbox.
