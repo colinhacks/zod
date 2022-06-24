@@ -1768,7 +1768,7 @@ isoDateString.parse("2 June 08"); // => '2008-06-01T23:00:00.000Z'
 
 #### Chaining order
 
-Note that `isoDateString` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.macLength()`) you must apply those methods _before_ any conversions.
+Note that `isoDateString` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.maxLength()`) you must apply those methods _before_ any conversions.
 
 ```ts
 const url = z
