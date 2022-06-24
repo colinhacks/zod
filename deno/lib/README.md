@@ -97,6 +97,7 @@
   - [.refine](#refine)
   - [.superRefine](#superRefine)
   - [.transform](#transform)
+  - [.convert](#convert)
   - [.default](#default)
   - [.optional](#optional)
   - [.nullable](#nullable)
@@ -1410,7 +1411,7 @@ But sometimes you want to apply some transform to the input _before_ parsing hap
 const castToString = z.preprocess((val) => String(val), z.string());
 ```
 
-This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
+This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, transforms and conversions.
 
 ## Schema methods
 
@@ -1434,7 +1435,7 @@ stringSchema.parse(12); // throws Error('Non-string type: number');
 
 `.parseAsync(data:unknown): Promise<T>`
 
-If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`
+If you use asynchronous [refinements](#refine), [transforms](#transform) or [conversions](#convert) (more on those later), you'll need to use `.parseAsync`
 
 ```ts
 const stringSchema1 = z.string().refine(async (val) => val.length < 20);
@@ -1575,7 +1576,7 @@ const userId = z.string().refine(async (id) => {
 
 > ⚠️ If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
 
-#### Relationship to transforms
+#### Relationship to transforms and conversions
 
 Transforms and refinements can be interleaved:
 
@@ -1583,6 +1584,15 @@ Transforms and refinements can be interleaved:
 z.string()
   .transform((val) => val.length)
   .refine((val) => val > 25);
+	.convert((val) => {
+		if (val === 42) {
+			return z.success('Good')
+		}
+		return z.failure([{
+			code: 'custom',
+			message: 'Bad'
+		}])
+	})
 ```
 
 <!-- Note that the `path` is set to `["confirm"]` , so you can easily display this error underneath the "Confirm password" textbox.
@@ -1732,6 +1742,101 @@ const IdToUser = z
 ```
 
 > ⚠️ If your schema contains asynchronous transforms, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
+
+### `.convert`
+
+To attempt a conversion of data that may fail, use the `convert` method.
+
+```ts
+const isoDateString = z.string().convert((val) => {
+  try {
+    const isoString = new Date(val).toISOString();
+    return z.success(isoString);
+  } catch (e) {
+    return z.failure([
+      {
+        code: custom,
+        message: "Unable to parse date string",
+      },
+    ]);
+  }
+});
+isoDateString.parse("2 June 08"); // => '2008-06-01T23:00:00.000Z'
+```
+
+> ⚠️ Convert functions must not throw, and must always return a success or failure. These can be created with z.success or z.failure. z.success accepts the value after a successful conversion, z.failure accepts a list of conversions issues. Returning a failure value is considered fatal, subsequent ZodEffects will not be attempted.
+
+#### Chaining order
+
+Note that `isoDateString` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.macLength()`) you must apply those methods _before_ any conversions.
+
+```ts
+const url = z
+  .string()
+  .maxLength(1000)
+  .convert((val) => {
+    try {
+      return z.success(new URL(val));
+    } catch (e) {
+      return z.failure([
+        {
+          code: custom,
+          message: "Invalid url",
+        },
+      ]);
+    }
+  });
+
+url.parse("http://www.example.com"); // => URL(example.com)
+```
+
+#### Relationship to refinements
+
+Transforms, conversions and refinements can be interleaved. These will be executed in the order they are declared. If a conversion fails, subsequent effects will not be executed
+
+```ts
+z.string()
+  .transform((val) => val.toLowerCase())
+  .refine((val) => val.length > 1)
+  .convert((val) => {
+    try {
+      return z.success(new URL(val));
+    } catch (e) {
+      return z.failure([
+        {
+          code: custom,
+          message: "Invalid url",
+        },
+      ]);
+    }
+  })
+  .refine((val) => val.protocol === "https");
+```
+
+#### Async conversions
+
+Conversions can also be async.
+
+```ts
+const IdToUser = z
+  .string()
+  .uuid()
+  .convert(async (id) => {
+    try {
+      const user = await getUserById(id);
+      return z.success(user);
+    } catch (e) {
+      return z.failure([
+        {
+          code: "custom",
+          message: "Unable to fetch user",
+        },
+      ]);
+    }
+  });
+```
+
+> ⚠️ If your schema contains asynchronous conversions, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
 
 ### `.default`
 
