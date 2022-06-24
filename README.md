@@ -1787,7 +1787,7 @@ const url = z
     }
   });
 
-url.parse("http://www.example.com"); // => URL(example.com)
+url.parse("http://www.example.com"); // => URL(http://www.example.com)
 ```
 
 #### Relationship to refinements
