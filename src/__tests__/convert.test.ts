@@ -75,7 +75,7 @@ test("convert (failure) with parseAsync", async () => {
   });
 });
 
-test("basic convertations", () => {
+test("basic conversions", () => {
   const r1 = z
     .string()
     .convert((data) => z.success(data.length))
