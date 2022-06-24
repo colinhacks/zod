@@ -1015,9 +1015,9 @@ export interface ZodDateDef extends ZodTypeDef {
 export class ZodDate extends ZodType<Date, ZodDateDef> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
-    const ctx: undefined | ParseContext = this._getOrReturnCtx(input);
 
     if (parsedType !== ZodParsedType.date) {
+      const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.date,
@@ -1027,6 +1027,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     }
 
     if (isNaN(input.data.getTime())) {
+      const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_date,
       });
@@ -1034,10 +1035,12 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     }
 
     const status = new ParseStatus();
+    let ctx: undefined | ParseContext = undefined;
 
     for (const check of this._def.checks) {
       if (check.kind === "min") {
         if (input.data.getTime() < check.value) {
+          ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_small,
             message: check.message,
@@ -1049,6 +1052,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
         }
       } else if (check.kind === "max") {
         if (input.data.getTime() > check.value) {
+          ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_big,
             message: check.message,
