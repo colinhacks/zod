@@ -1764,7 +1764,9 @@ const isoDateString = z.string().convert((val) => {
 isoDateString.parse("2 June 08"); // => '2008-06-01T23:00:00.000Z'
 ```
 
-> ⚠️ Convert functions must not throw, and must always return a success or failure. These can be created with z.success or z.failure. z.success accepts the value after a successful conversion, z.failure accepts a list of conversions issues. Returning a failure value is considered fatal, subsequent ZodEffects will not be attempted.
+> ⚠️ Convert functions must not throw, and must always return a success or failure. These can be created with `z.success` or `z.failure`.
+
+> `z.success` accepts the value after a successful conversion, `z.failure` accepts a list of conversion issues. Returning a failure value is considered fatal, subsequent ZodEffects will not be attempted.
 
 #### Chaining order
 
