@@ -1039,16 +1039,22 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
       if (check.kind === "min") {
         if (input.data.getTime() < check.value) {
           addIssueToContext(ctx, {
-            code: ZodIssueCode.invalid_date,
+            code: ZodIssueCode.too_small,
             message: check.message,
+            inclusive: true,
+            minimum: check.value,
+            type: "date",
           });
           status.dirty();
         }
       } else if (check.kind === "max") {
         if (input.data.getTime() > check.value) {
           addIssueToContext(ctx, {
-            code: ZodIssueCode.invalid_date,
+            code: ZodIssueCode.too_big,
             message: check.message,
+            inclusive: true,
+            maximum: check.value,
+            type: "date",
           });
           status.dirty();
         }
