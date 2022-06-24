@@ -1004,15 +1004,20 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
 //////////                     ////////
 ///////////////////////////////////////
 ///////////////////////////////////////
+type ZodDateCheck =
+  | { kind: "min"; value: number; message?: string }
+  | { kind: "max"; value: number; message?: string };
 export interface ZodDateDef extends ZodTypeDef {
+  checks: ZodDateCheck[];
   typeName: ZodFirstPartyTypeKind.ZodDate;
 }
 
 export class ZodDate extends ZodType<Date, ZodDateDef> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
+    const ctx: undefined | ParseContext = this._getOrReturnCtx(input);
+
     if (parsedType !== ZodParsedType.date) {
-      const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.date,
@@ -1020,22 +1025,70 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
       });
       return INVALID;
     }
+
     if (isNaN(input.data.getTime())) {
-      const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_date,
       });
       return INVALID;
     }
 
+    const status = new ParseStatus();
+
+    for (const check of this._def.checks) {
+      if (check.kind === "min") {
+        if (input.data.getTime() < check.value) {
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_date,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "max") {
+        if (input.data.getTime() > check.value) {
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_date,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else {
+        util.assertNever(check);
+      }
+    }
+
     return {
-      status: "valid",
+      status: status.value,
       value: new Date((input.data as Date).getTime()),
     };
   }
 
+  _addCheck(check: ZodDateCheck) {
+    return new ZodDate({
+      ...this._def,
+      checks: [...this._def.checks, check],
+    });
+  }
+
+  min(minDate: Date, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: minDate.getTime(),
+      message: errorUtil.toString(message),
+    });
+  }
+
+  max(maxDate: Date, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "max",
+      value: maxDate.getTime(),
+      message: errorUtil.toString(message),
+    });
+  }
+
   static create = (params?: RawCreateParams): ZodDate => {
     return new ZodDate({
+      checks: [],
       typeName: ZodFirstPartyTypeKind.ZodDate,
       ...processCreateParams(params),
     });
