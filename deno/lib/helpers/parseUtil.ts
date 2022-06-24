@@ -1,3 +1,4 @@
+import { FatalIssueData } from "../external.ts";
 import type { IssueData, ZodErrorMap, ZodIssue } from "../ZodError.ts";
 import { defaultErrorMap, overrideErrorMap } from "../ZodError.ts";
 import type { ZodParsedType } from "./util.ts";
@@ -175,3 +176,28 @@ export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
   typeof Promise !== undefined && x instanceof Promise;
+
+export type SUCCESS<T> = { status: "success"; value: T };
+export type FAILURE = { status: "failure"; issues: ReadonlyArray<IssueData> };
+
+export function success<T>(value: T): SUCCESS<T> {
+  return {
+    status: "success",
+    value,
+  };
+}
+
+export function failure(issues: ReadonlyArray<FatalIssueData>): FAILURE {
+  return {
+    status: "failure",
+    issues: issues.map((iss): IssueData => {
+      return {
+        ...iss,
+        fatal: true,
+      };
+    }),
+  };
+}
+
+export type SyncConvertReturnType<T = any> = SUCCESS<T> | FAILURE;
+export type AsyncConvertReturnType<T = any> = Promise<SyncConvertReturnType<T>>;

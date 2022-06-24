@@ -1,6 +1,7 @@
 import { errorUtil } from "./helpers/errorUtil";
 import {
   addIssueToContext,
+  AsyncConvertReturnType,
   AsyncParseReturnType,
   DIRTY,
   INVALID,
@@ -16,6 +17,7 @@ import {
   ParsePath,
   ParseReturnType,
   ParseStatus,
+  SyncConvertReturnType,
   SyncParseReturnType,
 } from "./helpers/parseUtil";
 import { partialUtil } from "./helpers/partialUtil";
@@ -43,6 +45,9 @@ import {
 
 export type RefinementCtx = {
   addIssue: (arg: IssueData) => void;
+  path: (string | number)[];
+};
+export type ConvertCtx = {
   path: (string | number)[];
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
@@ -405,6 +410,19 @@ export abstract class ZodType<
       schema: this,
       typeName: ZodFirstPartyTypeKind.ZodEffects,
       effect: { type: "transform", transform },
+    }) as any;
+  }
+
+  convert<NewOut>(
+    convert: (
+      arg: Output,
+      ctx: ConvertCtx
+    ) => SyncConvertReturnType<NewOut> | AsyncConvertReturnType<NewOut>
+  ): ZodEffects<this, NewOut> {
+    return new ZodEffects({
+      schema: this,
+      typeName: ZodFirstPartyTypeKind.ZodEffects,
+      effect: { type: "convert", convert },
     }) as any;
   }
 
@@ -3239,6 +3257,13 @@ export type TransformEffect<T> = {
   type: "transform";
   transform: (arg: T, ctx: RefinementCtx) => any;
 };
+export type ConvertEffect<T> = {
+  type: "convert";
+  convert: (
+    arg: T,
+    ctx: ConvertCtx
+  ) => SyncConvertReturnType<any> | AsyncConvertReturnType<any>;
+};
 export type PreprocessEffect<T> = {
   type: "preprocess";
   transform: (arg: T) => any;
@@ -3246,6 +3271,7 @@ export type PreprocessEffect<T> = {
 export type Effect<T> =
   | RefinementEffect<T>
   | TransformEffect<T>
+  | ConvertEffect<T>
   | PreprocessEffect<T>;
 
 export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
@@ -3343,6 +3369,59 @@ export class ZodEffects<
             return executeRefinement(inner.value).then(() => {
               return { status: status.value, value: inner.value };
             });
+          });
+      }
+    }
+
+    if (effect.type === "convert") {
+      const convertCtx = {
+        get path() {
+          return ctx.path;
+        },
+      };
+      if (ctx.common.async === false) {
+        const base = this._def.schema._parseSync({
+          data: ctx.data,
+          path: ctx.path,
+          parent: ctx,
+        });
+
+        if (!isValid(base)) return base;
+
+        const result = effect.convert(base.value, convertCtx);
+        if (result instanceof Promise) {
+          throw new Error(
+            `Asynchronous convert encountered during synchronous parse operation. Use .parseAsync instead.`
+          );
+        }
+        if (result.status === "failure") {
+          status.abort();
+          result.issues.forEach((issue) => {
+            addIssueToContext(ctx, issue);
+          });
+          return { status: status.value, value: base.value };
+        }
+
+        return { status: status.value, value: result.value };
+      } else {
+        return this._def.schema
+          ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
+          .then((base) => {
+            if (!isValid(base)) return base;
+
+            return Promise.resolve(effect.convert(base.value, convertCtx)).then(
+              (result) => {
+                if (result.status === "failure") {
+                  status.abort();
+                  result.issues.forEach((issue) => {
+                    addIssueToContext(ctx, issue);
+                  });
+                  return { status: status.value, value: base.value };
+                }
+
+                return { status: status.value, value: result.value };
+              }
+            );
           });
       }
     }

@@ -289,6 +289,11 @@ export type IssueData = stripPath<ZodIssueOptionalMessage> & {
   path?: (string | number)[];
   fatal?: boolean;
 };
+
+export type FatalIssueData = stripPath<ZodIssueOptionalMessage> & {
+  path?: (string | number)[];
+};
+
 export type MakeErrorData = IssueData;
 
 type ErrorMapCtx = {
