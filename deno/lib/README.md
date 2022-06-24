@@ -1745,7 +1745,7 @@ const IdToUser = z
 
 ### `.convert`
 
-To attempt a conversion of data that may fail, use the `convert` method.
+To attempt a transform of data that may fail, use the `convert` method.
 
 ```ts
 const isoDateString = z.string().convert((val) => {
