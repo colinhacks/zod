@@ -616,6 +616,14 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
   }
 
+  startsWith(str: string, message?: errorUtil.ErrMessage) {
+    return this.regex(new RegExp(`^${str}`), message);
+  }
+
+  endsWith(str: string, message?: errorUtil.ErrMessage) {
+    return this.regex(new RegExp(`${str}$`), message);
+  }
+
   min(minLength: number, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "min",
