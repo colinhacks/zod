@@ -159,6 +159,7 @@ test("all errors", () => {
         a: [
           {
             code: "invalid_type",
+            type: z.ZodIssueType.string,
             expected: "string",
             message: "Expected string, received null",
             path: ["a"],
@@ -168,6 +169,7 @@ test("all errors", () => {
         b: [
           {
             code: "invalid_type",
+            type: z.ZodIssueType.string,
             expected: "string",
             message: "Expected string, received null",
             path: ["b"],

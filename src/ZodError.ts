@@ -35,8 +35,84 @@ export const ZodIssueCode = util.arrayToEnum([
 
 export type ZodIssueCode = keyof typeof ZodIssueCode;
 
+export const ZodIssueType = util.arrayToEnum([
+  "string",
+  "number",
+  "nan",
+  "bigint",
+  "boolean",
+  "date",
+  "undefined",
+  "null",
+  "any",
+  "unknown",
+  "never",
+  "void",
+  "array",
+  "object",
+  "union",
+  "discriminated_union",
+  "intersection",
+  "tuple",
+  "record",
+  "map",
+  "set",
+  "function",
+  "lazy",
+  "literal",
+  "enum",
+  "effects",
+  "native_enum",
+  "optional",
+  "nullable",
+  "default",
+  "promise",
+  "custom",
+]);
+
+export type ZodIssueType = keyof typeof ZodIssueType;
+
+/**
+ * Map ZodIssueCode into pretty ZodIssueType
+ */
+export enum ZodIssueTypeMap {
+  ZodString = "string",
+  ZodNumber = "number",
+  ZodNaN = "nan",
+  ZodBigInt = "bigint",
+  ZodBoolean = "boolean",
+  ZodDate = "date",
+  ZodUndefined = "undefined",
+  ZodNull = "null",
+  ZodAny = "any",
+  ZodUnknown = "unknown",
+  ZodNever = "never",
+  ZodVoid = "void",
+  ZodArray = "array",
+  ZodObject = "object",
+  ZodUnion = "union",
+  ZodDiscriminatedUnion = "discriminated_union",
+  ZodIntersection = "intersection",
+  ZodTuple = "tuple",
+  ZodRecord = "record",
+  ZodMap = "map",
+  ZodSet = "set",
+  ZodFunction = "function",
+  ZodLazy = "lazy",
+  ZodLiteral = "literal",
+  ZodEnum = "enum",
+  ZodEffects = "effects",
+  ZodNativeEnum = "native_enum",
+  ZodOptional = "optional",
+  ZodNullable = "nullable",
+  ZodDefault = "default",
+  ZodPromise = "promise",
+}
+
 export type ZodIssueBase = {
   path: (string | number)[];
+  type?: ZodIssueType;
+  description?: string;
   message?: string;
 };
 
@@ -97,14 +173,12 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number" | "set";
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number" | "set";
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -348,30 +422,30 @@ export const defaultErrorMap = (
       else message = "Invalid";
       break;
     case ZodIssueCode.too_small:
-      if (issue.type === "array")
+      if (issue.type === ZodIssueType.array)
         message = `Array must contain ${
           issue.inclusive ? `at least` : `more than`
         } ${issue.minimum} element(s)`;
-      else if (issue.type === "string")
+      else if (issue.type === ZodIssueType.string)
         message = `String must contain ${
           issue.inclusive ? `at least` : `over`
         } ${issue.minimum} character(s)`;
-      else if (issue.type === "number")
+      else if (issue.type === ZodIssueType.number)
         message = `Number must be greater than ${
           issue.inclusive ? `or equal to ` : ``
         }${issue.minimum}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.too_big:
-      if (issue.type === "array")
+      if (issue.type === ZodIssueType.array)
         message = `Array must contain ${
           issue.inclusive ? `at most` : `less than`
         } ${issue.maximum} element(s)`;
-      else if (issue.type === "string")
+      else if (issue.type === ZodIssueType.string)
         message = `String must contain ${
           issue.inclusive ? `at most` : `under`
         } ${issue.maximum} character(s)`;
-      else if (issue.type === "number")
+      else if (issue.type === ZodIssueType.number)
         message = `Number must be less than ${
           issue.inclusive ? `or equal to ` : ``
         }${issue.maximum}`;

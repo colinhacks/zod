@@ -31,6 +31,7 @@ import {
   ZodErrorMap,
   ZodIssue,
   ZodIssueCode,
+  ZodIssueTypeMap,
 } from "./ZodError";
 
 ///////////////////////////////////////
@@ -54,6 +55,7 @@ export type { TypeOf as infer };
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
+  typeName: unknown;
   errorMap?: ZodErrorMap;
   description?: string;
 }
@@ -150,6 +152,21 @@ export abstract class ZodType<
 
   _getType(input: ParseInput): string {
     return getParsedType(input.data);
+  }
+
+  _getCommonIssueParams(): Pick<IssueData, "description" | "type"> {
+    const issueData: Pick<IssueData, "description" | "type"> = {};
+
+    if (typeof this._def.typeName === "string") {
+      issueData.type =
+        ZodIssueTypeMap[this._def.typeName as keyof typeof ZodIssueTypeMap];
+    }
+
+    if (this.description) {
+      issueData.description = this.description;
+    }
+
+    return issueData;
   }
 
   _getOrReturnCtx(
@@ -477,6 +494,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       addIssueToContext(
         ctx,
         {
+          ...this._getCommonIssueParams(),
           code: ZodIssueCode.invalid_type,
           expected: ZodParsedType.string,
           received: ctx.parsedType,
@@ -494,9 +512,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         if (input.data.length < check.value) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             code: ZodIssueCode.too_small,
             minimum: check.value,
-            type: "string",
             inclusive: true,
             message: check.message,
           });
@@ -506,9 +524,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         if (input.data.length > check.value) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             code: ZodIssueCode.too_big,
             maximum: check.value,
-            type: "string",
             inclusive: true,
             message: check.message,
           });
@@ -518,6 +536,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         if (!emailRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             validation: "email",
             code: ZodIssueCode.invalid_string,
             message: check.message,
@@ -528,6 +547,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         if (!uuidRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             validation: "uuid",
             code: ZodIssueCode.invalid_string,
             message: check.message,
@@ -538,6 +558,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         if (!cuidRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             validation: "cuid",
             code: ZodIssueCode.invalid_string,
             message: check.message,
@@ -550,6 +571,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         } catch {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             validation: "url",
             code: ZodIssueCode.invalid_string,
             message: check.message,
@@ -562,6 +584,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         if (!testResult) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             validation: "regex",
             code: ZodIssueCode.invalid_string,
             message: check.message,
@@ -584,6 +607,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     message?: errorUtil.ErrMessage
   ) =>
     this.refinement((data) => regex.test(data), {
+      ...this._getCommonIssueParams(),
       validation,
       code: ZodIssueCode.invalid_string,
       ...errorUtil.errToObj(message),
@@ -727,6 +751,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     if (parsedType !== ZodParsedType.number) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.number,
         received: ctx.parsedType,
@@ -742,6 +767,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         if (!util.isInteger(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             code: ZodIssueCode.invalid_type,
             expected: "integer",
             received: "float",
@@ -756,9 +782,9 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         if (tooSmall) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             code: ZodIssueCode.too_small,
             minimum: check.value,
-            type: "number",
             inclusive: check.inclusive,
             message: check.message,
           });
@@ -771,9 +797,9 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         if (tooBig) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             code: ZodIssueCode.too_big,
             maximum: check.value,
-            type: "number",
             inclusive: check.inclusive,
             message: check.message,
           });
@@ -783,6 +809,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         if (floatSafeRemainder(input.data, check.value) !== 0) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
             message: check.message,
@@ -946,6 +973,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     if (parsedType !== ZodParsedType.bigint) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.bigint,
         received: ctx.parsedType,
@@ -980,6 +1008,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
     if (parsedType !== ZodParsedType.boolean) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.boolean,
         received: ctx.parsedType,
@@ -1014,6 +1043,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     if (parsedType !== ZodParsedType.date) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.date,
         received: ctx.parsedType,
@@ -1023,6 +1053,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     if (isNaN(input.data.getTime())) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_date,
       });
       return INVALID;
@@ -1059,6 +1090,7 @@ export class ZodUndefined extends ZodType<undefined, ZodUndefinedDef> {
     if (parsedType !== ZodParsedType.undefined) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.undefined,
         received: ctx.parsedType,
@@ -1094,6 +1126,7 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
     if (parsedType !== ZodParsedType.null) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.null,
         received: ctx.parsedType,
@@ -1124,6 +1157,7 @@ export interface ZodAnyDef extends ZodTypeDef {
 export class ZodAny extends ZodType<any, ZodAnyDef> {
   // to prevent instances of other classes from extending ZodAny. this causes issues with catchall in ZodObject.
   _any: true = true;
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     return OK(input.data);
   }
@@ -1176,6 +1210,7 @@ export class ZodNever extends ZodType<never, ZodNeverDef> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const ctx = this._getOrReturnCtx(input);
     addIssueToContext(ctx, {
+      ...this._getCommonIssueParams(),
       code: ZodIssueCode.invalid_type,
       expected: ZodParsedType.never,
       received: ctx.parsedType,
@@ -1207,6 +1242,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
     if (parsedType !== ZodParsedType.undefined) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.void,
         received: ctx.parsedType,
@@ -1264,6 +1300,7 @@ export class ZodArray<
 
     if (ctx.parsedType !== ZodParsedType.array) {
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.array,
         received: ctx.parsedType,
@@ -1274,9 +1311,9 @@ export class ZodArray<
     if (def.minLength !== null) {
       if (ctx.data.length < def.minLength.value) {
         addIssueToContext(ctx, {
+          ...this._getCommonIssueParams(),
           code: ZodIssueCode.too_small,
           minimum: def.minLength.value,
-          type: "array",
           inclusive: true,
           message: def.minLength.message,
         });
@@ -1287,9 +1324,9 @@ export class ZodArray<
     if (def.maxLength !== null) {
       if (ctx.data.length > def.maxLength.value) {
         addIssueToContext(ctx, {
+          ...this._getCommonIssueParams(),
           code: ZodIssueCode.too_big,
           maximum: def.maxLength.value,
-          type: "array",
           inclusive: true,
           message: def.maxLength.message,
         });
@@ -1535,6 +1572,7 @@ export class ZodObject<
     if (parsedType !== ZodParsedType.object) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.object,
         received: ctx.parsedType,
@@ -1582,6 +1620,7 @@ export class ZodObject<
       } else if (unknownKeys === "strict") {
         if (extraKeys.length > 0) {
           addIssueToContext(ctx, {
+            ...this._getCommonIssueParams(),
             code: ZodIssueCode.unrecognized_keys,
             keys: extraKeys,
           });
@@ -1881,6 +1920,8 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     const { ctx } = this._processInputParams(input);
     const options = this._def.options;
 
+    const issueCommon = this._getCommonIssueParams();
+
     function handleResults(
       results: { ctx: ParseContext; result: SyncParseReturnType<any> }[]
     ) {
@@ -1906,6 +1947,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       );
 
       addIssueToContext(ctx, {
+        ...issueCommon,
         code: ZodIssueCode.invalid_union,
         unionErrors,
       });
@@ -1970,6 +2012,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 
       const unionErrors = issues.map((issues) => new ZodError(issues));
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_union,
         unionErrors,
       });
@@ -2034,9 +2077,11 @@ export class ZodDiscriminatedUnion<
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
+    const issueCommon = this._getCommonIssueParams();
 
     if (ctx.parsedType !== ZodParsedType.object) {
       addIssueToContext(ctx, {
+        ...issueCommon,
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.object,
         received: ctx.parsedType,
@@ -2050,6 +2095,7 @@ export class ZodDiscriminatedUnion<
 
     if (!option) {
       addIssueToContext(ctx, {
+        ...issueCommon,
         code: ZodIssueCode.invalid_union_discriminator,
         options: this.validDiscriminatorValues,
         path: [discriminator],
@@ -2230,6 +2276,7 @@ export class ZodIntersection<
 
       if (!merged.valid) {
         addIssueToContext(ctx, {
+          ...this._getCommonIssueParams(),
           code: ZodIssueCode.invalid_intersection_types,
         });
         return INVALID;
@@ -2335,6 +2382,7 @@ export class ZodTuple<
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.array) {
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.array,
         received: ctx.parsedType,
@@ -2344,10 +2392,10 @@ export class ZodTuple<
 
     if (ctx.data.length < this._def.items.length) {
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.too_small,
         minimum: this._def.items.length,
         inclusive: true,
-        type: "array",
       });
 
       return INVALID;
@@ -2357,10 +2405,10 @@ export class ZodTuple<
 
     if (!rest && ctx.data.length > this._def.items.length) {
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.too_big,
         maximum: this._def.items.length,
         inclusive: true,
-        type: "array",
       });
       status.dirty();
     }
@@ -2446,10 +2494,12 @@ export class ZodRecord<
   get valueSchema() {
     return this._def.valueType;
   }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.object) {
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.object,
         received: ctx.parsedType,
@@ -2541,6 +2591,7 @@ export class ZodMap<
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.map) {
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.map,
         received: ctx.parsedType,
@@ -2639,6 +2690,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.set) {
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.set,
         received: ctx.parsedType,
@@ -2651,9 +2703,9 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     if (def.minSize !== null) {
       if (ctx.data.size < def.minSize.value) {
         addIssueToContext(ctx, {
+          ...this._getCommonIssueParams(),
           code: ZodIssueCode.too_small,
           minimum: def.minSize.value,
-          type: "set",
           inclusive: true,
           message: def.minSize.message,
         });
@@ -2664,9 +2716,9 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     if (def.maxSize !== null) {
       if (ctx.data.size > def.maxSize.value) {
         addIssueToContext(ctx, {
+          ...this._getCommonIssueParams(),
           code: ZodIssueCode.too_big,
           maximum: def.maxSize.value,
-          type: "set",
           inclusive: true,
           message: def.maxSize.message,
         });
@@ -2773,8 +2825,10 @@ export class ZodFunction<
 > {
   _parse(input: ParseInput): ParseReturnType<any> {
     const { ctx } = this._processInputParams(input);
+    const issueCommon = this._getCommonIssueParams();
     if (ctx.parsedType !== ZodParsedType.function) {
       addIssueToContext(ctx, {
+        ...issueCommon,
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.function,
         received: ctx.parsedType,
@@ -2793,6 +2847,7 @@ export class ZodFunction<
           defaultErrorMap,
         ].filter((x) => !!x) as ZodErrorMap[],
         issueData: {
+          ...issueCommon,
           code: ZodIssueCode.invalid_arguments,
           argumentsError: error,
         },
@@ -2811,6 +2866,7 @@ export class ZodFunction<
         ].filter((x) => !!x) as ZodErrorMap[],
         issueData: {
           code: ZodIssueCode.invalid_return_type,
+          ...issueCommon,
           returnTypeError: error,
         },
       });
@@ -2971,6 +3027,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
     if (input.data !== this._def.value) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_literal,
         expected: this._def.value,
       });
@@ -3044,6 +3101,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       const ctx = this._getOrReturnCtx(input);
       const expectedValues = this._def.values;
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         expected: util.joinValues(expectedValues) as "string",
         received: ctx.parsedType,
         code: ZodIssueCode.invalid_type,
@@ -3056,6 +3114,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       const expectedValues = this._def.values;
 
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
         options: expectedValues,
@@ -3125,6 +3184,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
     ) {
       const expectedValues = util.objectValues(nativeEnumValues);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         expected: util.joinValues(expectedValues) as "string",
         received: ctx.parsedType,
         code: ZodIssueCode.invalid_type,
@@ -3136,6 +3196,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       const expectedValues = util.objectValues(nativeEnumValues);
 
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
         options: expectedValues,
@@ -3186,6 +3247,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
       ctx.common.async === false
     ) {
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.promise,
         received: ctx.parsedType,
@@ -3570,6 +3632,7 @@ export class ZodNaN extends ZodType<number, ZodNaNDef> {
     if (parsedType !== ZodParsedType.nan) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        ...this._getCommonIssueParams(),
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.nan,
         received: ctx.parsedType,
@@ -3598,7 +3661,7 @@ export const custom = <T>(
       if (!check(data)) {
         const p = typeof params === "function" ? params(data) : params;
         const p2 = typeof p === "string" ? { message: p } : p;
-        ctx.addIssue({ code: "custom", ...p2, fatal });
+        ctx.addIssue({ code: "custom", type: "custom", ...p2, fatal });
       }
     });
   return ZodAny.create();
@@ -3643,6 +3706,7 @@ export enum ZodFirstPartyTypeKind {
   ZodDefault = "ZodDefault",
   ZodPromise = "ZodPromise",
 }
+
 export type ZodFirstPartySchemaTypes =
   | ZodString
   | ZodNumber
