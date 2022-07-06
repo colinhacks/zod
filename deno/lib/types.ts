@@ -662,26 +662,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
   get minLength() {
-    let min: number | null = -Infinity;
-    this._def.checks.map((ch) => {
-      if (ch.kind === "min") {
-        if (min === null || ch.value > min) {
-          min = ch.value;
-        }
-      }
-    });
-    return min;
+    return this._def.checks.reduce(
+      (min, ch) => (ch.kind === "min" && ch.value > min ? ch.value : min),
+      -Infinity
+    );
   }
   get maxLength() {
-    let max: number | null = null;
-    this._def.checks.map((ch) => {
-      if (ch.kind === "max") {
-        if (max === null || ch.value < max) {
-          max = ch.value;
-        }
-      }
-    });
-    return max;
+    return this._def.checks.reduce(
+      (max, ch) => (ch.kind === "max" && ch.value < max ? ch.value : max),
+      Infinity
+    );
   }
 
   static create = (params?: RawCreateParams): ZodString => {
