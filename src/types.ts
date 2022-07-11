@@ -1096,6 +1096,28 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     });
   }
 
+  get minDate() {
+    let min: number | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "min") {
+        if (min === null || ch.value > min) min = ch.value;
+      }
+    }
+
+    return min != null ? new Date(min) : null;
+  }
+
+  get maxDate() {
+    let max: number | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "max") {
+        if (max === null || ch.value < max) max = ch.value;
+      }
+    }
+
+    return max != null ? new Date(max) : null;
+  }
+
   static create = (params?: RawCreateParams): ZodDate => {
     return new ZodDate({
       checks: [],
