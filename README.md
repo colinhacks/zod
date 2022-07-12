@@ -47,7 +47,7 @@
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
 - [Installation](#installation)
-  - [Node](#node)
+  - [Node/NPM](#Node/npm)
   - [Deno](#deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
@@ -338,7 +338,7 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### Node/NPM
+### Node/npm
 
 To install Zod v3:
 
