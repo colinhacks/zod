@@ -2022,13 +2022,13 @@ Branded -->
 * Missing support for parsing cyclical data (maybe)
 * Missing error customization -->
 
-**Joi**
+### Joi
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
 Doesn't support static type inference 😕
 
-**Yup**
+### Yup
 
 [https://github.com/jquense/yup](https://github.com/jquense/yup)
 
@@ -2044,7 +2044,7 @@ Yup is a full-featured library that was implemented first in vanilla JS, and lat
 
 <!-- ¹Yup has a strange interpretation of the word `required`. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. Instead, Yup us Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom refinement. -->
 
-**io-ts**
+### io-ts
 
 [https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
 
@@ -2095,7 +2095,7 @@ This more declarative API makes schema definitions vastly more concise.
 - Missing promise schemas
 - Missing function schemas
 
-**Runtypes**
+### Runtypes
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
@@ -2108,7 +2108,7 @@ Good type inference support, but limited options for object type masking (no `.p
 - Missing promise schemas
 - Missing error customization
 
-**Ow**
+### Ow
 
 [https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
 
