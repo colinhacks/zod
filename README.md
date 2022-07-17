@@ -22,7 +22,7 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://www.npmjs.com/package/zod">NPM</a>
+  <a href="https://www.npmjs.com/package/zod">npm</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -47,7 +47,7 @@
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
 - [Installation](#installation)
-  - [Node](#node)
+  - [Node/npm](#Node/npm)
   - [Deno](#deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
@@ -338,7 +338,7 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### Node/NPM
+### Node/npm
 
 To install Zod v3:
 
@@ -350,7 +350,7 @@ pnpm add zod          # pnpm
 
 ### Deno
 
-Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](deno.land/x). The latest version can be imported like so:
+Unlike Node, Deno relies on direct URL imports instead of a package manager like npm. Zod is available on [deno.land/x](deno.land/x). The latest version can be imported like so:
 
 ```ts
 import { z } from "https://deno.land/x/zod/mod.ts";
@@ -362,7 +362,7 @@ You can also specify a particular version:
 import { z } from from "https://deno.land/x/zod@v3.16.1/mod.ts"
 ```
 
-> The rest of this README assumes you are using NPM and importing directly from the `"zod"` package.
+> The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
 
 ## Basic usage
 
