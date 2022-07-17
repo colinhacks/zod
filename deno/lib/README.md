@@ -22,7 +22,7 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://www.npmjs.com/package/zod">NPM</a>
+  <a href="https://www.npmjs.com/package/zod">npm</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -47,7 +47,7 @@
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
 - [Installation](#installation)
-  - [Node](#node)
+  - [Node/npm](#Node/npm)
   - [Deno](#deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
@@ -313,6 +313,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas dynamically and provides GraphQL method decorators working with Zod schemas.
+- [`remix-domains`](https://github.com/SeasonedSoftware/remix-domains/): Improves end-to-end type safety in [Remix](https://remix.run/) by leveraging Zod to parse the framework's inputs such as FormData, URLSearchParams, etc.
 
 #### Form integrations
 
@@ -338,7 +339,7 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### Node/NPM
+### Node/npm
 
 To install Zod v3:
 
@@ -350,7 +351,7 @@ pnpm add zod          # pnpm
 
 ### Deno
 
-Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](deno.land/x). The latest version can be imported like so:
+Unlike Node, Deno relies on direct URL imports instead of a package manager like npm. Zod is available on [deno.land/x](deno.land/x). The latest version can be imported like so:
 
 ```ts
 import { z } from "https://deno.land/x/zod/mod.ts";
@@ -362,7 +363,7 @@ You can also specify a particular version:
 import { z } from from "https://deno.land/x/zod@v3.16.1/mod.ts"
 ```
 
-> The rest of this README assumes you are using NPM and importing directly from the `"zod"` package.
+> The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
 
 ## Basic usage
 
@@ -2022,13 +2023,13 @@ Branded -->
 * Missing support for parsing cyclical data (maybe)
 * Missing error customization -->
 
-**Joi**
+### Joi
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
 Doesn't support static type inference 😕
 
-**Yup**
+### Yup
 
 [https://github.com/jquense/yup](https://github.com/jquense/yup)
 
@@ -2044,7 +2045,7 @@ Yup is a full-featured library that was implemented first in vanilla JS, and lat
 
 <!-- ¹Yup has a strange interpretation of the word `required`. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. Instead, Yup us Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom refinement. -->
 
-**io-ts**
+### io-ts
 
 [https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
 
@@ -2095,7 +2096,7 @@ This more declarative API makes schema definitions vastly more concise.
 - Missing promise schemas
 - Missing function schemas
 
-**Runtypes**
+### Runtypes
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
@@ -2108,7 +2109,7 @@ Good type inference support, but limited options for object type masking (no `.p
 - Missing promise schemas
 - Missing error customization
 
-**Ow**
+### Ow
 
 [https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
 
