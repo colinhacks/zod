@@ -166,9 +166,11 @@ test("checks getters", () => {
 test("min max getters", () => {
   expect(z.string().min(5).minLength).toEqual(5);
   expect(z.string().min(5).min(10).minLength).toEqual(10);
+  expect(z.string().minLength).toEqual(null);
 
   expect(z.string().max(5).maxLength).toEqual(5);
   expect(z.string().max(5).max(1).maxLength).toEqual(1);
+  expect(z.string().maxLength).toEqual(null);
 });
 
 test("trim", () => {

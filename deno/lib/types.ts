@@ -662,25 +662,21 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
   get minLength() {
-    let min: number | null = -Infinity;
-    this._def.checks.map((ch) => {
+    let min: number | null = null;
+    for (const ch of this._def.checks) {
       if (ch.kind === "min") {
-        if (min === null || ch.value > min) {
-          min = ch.value;
-        }
+        if (min === null || ch.value > min) min = ch.value;
       }
-    });
+    }
     return min;
   }
   get maxLength() {
     let max: number | null = null;
-    this._def.checks.map((ch) => {
+    for (const ch of this._def.checks) {
       if (ch.kind === "max") {
-        if (max === null || ch.value < max) {
-          max = ch.value;
-        }
+        if (max === null || ch.value < max) max = ch.value;
       }
-    });
+    }
     return max;
   }
 
