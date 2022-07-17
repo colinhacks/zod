@@ -1,0 +1,45 @@
+# .github/release.yml
+
+name: Release on npm
+on:
+  push:
+    branches:
+      - "master"
+      - "main"
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 16
+      
+      - name: Checkout zod-deno
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: colinhacks/zod-deno
+          path: deno/lib
+
+      - name: Install dependencies
+        run: |
+          yarn install
+
+      - name: Build
+        run: |
+          yarn clean
+          yarn build
+
+      - name: Push to deno
+        working-directory: deno/lib/
+        run: |
+          git add . -f
+          git commit -m "Build from zod $GITHUB_SHA"
+          git push

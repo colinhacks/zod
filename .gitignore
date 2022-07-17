@@ -1,0 +1,12 @@
+**/.DS_Store
+node_modules
+/lib
+coverage
+.vscode
+.idea
+*.log
+src/playground.ts
+deno/lib/playground.ts
+.eslintcache
+workspace.code-workspace
+.netlify
