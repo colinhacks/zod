@@ -1076,8 +1076,8 @@ If you want to validate both the keys and the values, use
 
 ```ts
 const NoEmptyKeysSchema = z.record(z.string().min(1), z.number());
-NoEmptyKeysSchema.parse({ 'count': 1 }) // => { 'count': 1 }
-NoEmptyKeysSchema.parse({ '': 1 }) // fails
+NoEmptyKeysSchema.parse({ count: 1 }); // => { 'count': 1 }
+NoEmptyKeysSchema.parse({ "": 1 }); // fails
 ```
 
 _(Notice how when passing two arguments, `valueType` is the second argument)_
