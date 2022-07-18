@@ -26,7 +26,7 @@ jobs:
       - name: Checkout zod-deno
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ZOD_BOT_TOKEN }}
           repository: colinhacks/zod-deno
           path: deno/lib
 
@@ -38,6 +38,8 @@ jobs:
         run: |
           yarn clean
           yarn build
+          cp logo.svg deno/lib
+          cp README.md deno/lib
 
       - id: publish
         name: Publish to NPM
@@ -57,10 +59,12 @@ jobs:
           echo "Version in package.json has not changed. Skipping."
           exit 0
 
-      - name: Push to deno
-        if: steps.publish.outputs.type != 'none'     
+      - name: Push to Deno
+        if: steps.publish.outputs.type != 'none'
         working-directory: deno/lib/
         run: |
+          git config --global user.email "zodbot@colinhacks.com"
+          git config --global user.name "Zod Bot"
           git add . -f
           git commit -m "Build from zod $GITHUB_SHA"
           git push
@@ -99,12 +103,12 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Create release
+      - name: Create Deno release
         if: steps.publish.outputs.type != 'none'
         id: create_release
         uses: actions/create-release@latest
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.ZOD_BOT_TOKEN }}
         with:
           tag_name: v${{ steps.publish.outputs.version }}
           release_name: v${{ steps.publish.outputs.version }}
