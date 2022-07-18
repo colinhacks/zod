@@ -450,6 +450,8 @@ type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
+  | { kind: "startsWith"; value: string; message?: string }
+  | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
   | { kind: "trim"; message?: string };
 
@@ -570,6 +572,26 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
+      } else if (check.kind === "startsWith") {
+        if (!(input.data as string).startsWith(check.value)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: { startsWith: check.value },
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "endsWith") {
+        if (!(input.data as string).endsWith(check.value)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: { endsWith: check.value },
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -612,6 +634,22 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return this._addCheck({
       kind: "regex",
       regex: regex,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  startsWith(value: string, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "startsWith",
+      value: value,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  endsWith(value: string, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "endsWith",
+      value: value,
       ...errorUtil.errToObj(message),
     });
   }
@@ -662,25 +700,21 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
   get minLength() {
-    let min: number | null = -Infinity;
-    this._def.checks.map((ch) => {
+    let min: number | null = null;
+    for (const ch of this._def.checks) {
       if (ch.kind === "min") {
-        if (min === null || ch.value > min) {
-          min = ch.value;
-        }
+        if (min === null || ch.value > min) min = ch.value;
       }
-    });
+    }
     return min;
   }
   get maxLength() {
     let max: number | null = null;
-    this._def.checks.map((ch) => {
+    for (const ch of this._def.checks) {
       if (ch.kind === "max") {
-        if (max === null || ch.value < max) {
-          max = ch.value;
-        }
+        if (max === null || ch.value < max) max = ch.value;
       }
-    });
+    }
     return max;
   }
 

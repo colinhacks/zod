@@ -8,6 +8,8 @@ const minFive = z.string().min(5, "min5");
 const maxFive = z.string().max(5, "max5");
 const justFive = z.string().length(5);
 const nonempty = z.string().nonempty("nonempty");
+const startsWith = z.string().startsWith("startsWith");
+const endsWith = z.string().endsWith("endsWith");
 
 test("passing validations", () => {
   minFive.parse("12345");
@@ -16,6 +18,8 @@ test("passing validations", () => {
   maxFive.parse("1234");
   nonempty.parse("1");
   justFive.parse("12345");
+  startsWith.parse("startsWithX");
+  endsWith.parse("XendsWith");
 });
 
 test("failing validations", () => {
@@ -24,6 +28,8 @@ test("failing validations", () => {
   expect(() => nonempty.parse("")).toThrow();
   expect(() => justFive.parse("1234")).toThrow();
   expect(() => justFive.parse("123456")).toThrow();
+  expect(() => startsWith.parse("x")).toThrow();
+  expect(() => endsWith.parse("x")).toThrow();
 });
 
 test("email validations", () => {
@@ -166,9 +172,11 @@ test("checks getters", () => {
 test("min max getters", () => {
   expect(z.string().min(5).minLength).toEqual(5);
   expect(z.string().min(5).min(10).minLength).toEqual(10);
+  expect(z.string().minLength).toEqual(null);
 
   expect(z.string().max(5).maxLength).toEqual(5);
   expect(z.string().max(5).max(1).maxLength).toEqual(1);
+  expect(z.string().maxLength).toEqual(null);
 });
 
 test("trim", () => {
