@@ -2915,7 +2915,11 @@ export class ZodFunction<
     });
   }
 
-  implement<F extends InnerTypeOfFunction<Args, Returns>>(func: F): F {
+  implement<F extends InnerTypeOfFunction<Args, Returns>>(
+    func: F
+  ): ReturnType<F> extends Returns["_output"]
+    ? (...args: Args["_input"]) => ReturnType<F>
+    : OuterTypeOfFunction<Args, Returns> {
     const validatedFunc = this.parse(func);
     return validatedFunc as any;
   }
