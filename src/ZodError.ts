@@ -86,7 +86,14 @@ export interface ZodInvalidDateIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_date;
 }
 
-export type StringValidation = "email" | "url" | "uuid" | "regex" | "cuid";
+export type StringValidation =
+  | "email"
+  | "url"
+  | "uuid"
+  | "regex"
+  | "cuid"
+  | { startsWith: string }
+  | { endsWith: string };
 
 export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
@@ -344,8 +351,19 @@ export const defaultErrorMap = (
       message = `Invalid date`;
       break;
     case ZodIssueCode.invalid_string:
-      if (issue.validation !== "regex") message = `Invalid ${issue.validation}`;
-      else message = "Invalid";
+      if (typeof issue.validation === "object") {
+        if ("startsWith" in issue.validation) {
+          message = `Invalid input: must start with "${issue.validation.startsWith}"`;
+        } else if ("endsWith" in issue.validation) {
+          message = `Invalid input: must start with "${issue.validation.endsWith}"`;
+        } else {
+          util.assertNever(issue.validation);
+        }
+      } else if (issue.validation !== "regex") {
+        message = `Invalid ${issue.validation}`;
+      } else {
+        message = "Invalid";
+      }
       break;
     case ZodIssueCode.too_small:
       if (issue.type === "array")

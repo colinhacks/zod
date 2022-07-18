@@ -391,6 +391,8 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().regex(regex);
+z.string().startsWith(string);
+z.string().endsWith(string);
 
 // 已废弃，等同于 .min(1)
 z.string().nonempty();
@@ -409,6 +411,8 @@ z.string().length(5, { message: "Must be exactly 5 characters long" });
 z.string().email({ message: "Invalid email address." });
 z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().startsWith("https://", { message: "Must provide secure URL" });
+z.string().endsWith(".com", { message: "Only .com domains allowed" });
 ```
 
 ## Numbers
@@ -555,9 +559,9 @@ const user = z.object({
 
 const deepPartialUser = user.deepPartial();
 
-/* 
+/*
 {
-  username?: string | undefined, 
+  username?: string | undefined,
   location?: {
     latitude?: number | undefined;
     longitude?: number | undefined;
@@ -884,12 +888,12 @@ const FishEnum = z.enum(fish);
 FishEnum.enum.Salmon; // => 自动补全
 
 FishEnum.enum;
-/* 
+/*
 => {
   Salmon: "Salmon",
   Tuna: "Tuna",
   Trout: "Trout",
-} 
+}
 */
 ```
 
