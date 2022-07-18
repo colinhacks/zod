@@ -105,14 +105,14 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number" | "set";
+  type: "array" | "string" | "number" | "set" | "date";
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number" | "set";
+  type: "array" | "string" | "number" | "set" | "date";
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -380,6 +380,10 @@ export const defaultErrorMap = (
         message = `Number must be greater than ${
           issue.inclusive ? `or equal to ` : ``
         }${issue.minimum}`;
+      else if (issue.type === "date")
+        message = `Date must be greater than ${
+          issue.inclusive ? `or equal to ` : ``
+        }${new Date(issue.minimum)}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.too_big:
@@ -395,6 +399,10 @@ export const defaultErrorMap = (
         message = `Number must be less than ${
           issue.inclusive ? `or equal to ` : ``
         }${issue.maximum}`;
+      else if (issue.type === "date")
+        message = `Date must be smaller than ${
+          issue.inclusive ? `or equal to ` : ``
+        }${new Date(issue.maximum)}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.custom:

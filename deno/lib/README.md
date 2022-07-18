@@ -550,14 +550,32 @@ const isActive = z.boolean({
 
 ## Dates
 
-z.date() accepts a date, not a date string
+Use z.date() to validate `Date` instances.
 
 ```ts
 z.date().safeParse(new Date()); // success: true
 z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
 ```
 
-To allow for dates or date strings, you can use preprocess
+You can customize certain error messages when creating a boolean schema.
+
+```ts
+const myDateSchema = z.date({
+  required_error: "Please select a date and time",
+  invalid_type_error: "That's not a date!",
+});
+```
+
+Zod provides a handful of date-specific validations.
+
+```ts
+z.date().min(new Date("1900-01-01"), { message: "Too old" });
+z.date().max(new Date(), { message: "Too young!" });
+```
+
+**Supporting date strings**
+
+To write a schema that accepts either a `Date` or a date string, use (`z.preprocess`)[#preprocess].
 
 ```ts
 const dateSchema = z.preprocess((arg) => {
