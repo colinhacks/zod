@@ -377,7 +377,7 @@ test("invalid and required", () => {
   }
 });
 
-test("Fallback to invalid_type_error without required_error", () => {
+test("Fallback to default required error", () => {
   const str = z.string({
     invalid_type_error: "Invalid name",
     // required_error: "Name is required",
@@ -386,7 +386,7 @@ test("Fallback to invalid_type_error without required_error", () => {
   const result2 = str.safeParse(undefined);
   expect(result2.success).toEqual(false);
   if (!result2.success) {
-    expect(result2.error.issues[0].message).toEqual("Invalid name");
+    expect(result2.error.issues[0].message).toEqual("Required");
   }
 });
 
