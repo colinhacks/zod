@@ -1,3 +1,4 @@
+import { enumUtil } from "./helpers/enumUtil.ts";
 import { errorUtil } from "./helpers/errorUtil.ts";
 import {
   addIssueToContext,
@@ -1930,6 +1931,12 @@ export class ZodObject<
       ...this._def,
       shape: () => newShape,
     }) as any;
+  }
+
+  keyof(): ZodEnum<enumUtil.UnionToTupleString<keyof T>> {
+    return createZodEnum(
+      util.objectKeys(this.shape) as [string, ...string[]]
+    ) as any;
   }
 
   static create = <T extends ZodRawShape>(
