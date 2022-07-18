@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - "master"
-      - "main"
     paths:
       - package.json
 
@@ -105,7 +104,7 @@ jobs:
 
       - name: Create Deno release
         if: steps.publish.outputs.type != 'none'
-        id: create_release
+        id: create_deno_release
         uses: actions/create-release@latest
         env:
           GITHUB_TOKEN: ${{ secrets.ZOD_BOT_TOKEN }}
