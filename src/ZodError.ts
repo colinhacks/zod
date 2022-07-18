@@ -1,4 +1,5 @@
 import type { TypeOf, ZodType } from ".";
+import { jsonStringifyReplacer } from "./helpers/parseUtil";
 import { Primitive } from "./helpers/typeAliases";
 import { util, ZodParsedType } from "./helpers/util";
 
@@ -250,7 +251,7 @@ export class ZodError<T = any> extends Error {
     return this.message;
   }
   get message() {
-    return JSON.stringify(this.issues, null, 2);
+    return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
   }
 
   get isEmpty(): boolean {
@@ -319,7 +320,8 @@ export const defaultErrorMap = (
       break;
     case ZodIssueCode.invalid_literal:
       message = `Invalid literal value, expected ${JSON.stringify(
-        issue.expected
+        issue.expected,
+        jsonStringifyReplacer
       )}`;
       break;
     case ZodIssueCode.unrecognized_keys:

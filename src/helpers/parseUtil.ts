@@ -175,3 +175,10 @@ export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
   typeof Promise !== undefined && x instanceof Promise;
+
+export const jsonStringifyReplacer = (_: string, value: any): any => {
+  if (typeof value === "bigint") {
+    return value.toString();
+  }
+  return value;
+};

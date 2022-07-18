@@ -439,7 +439,7 @@ const tru = z.literal(true);
 tuna.value; // "tuna"
 ```
 
-> Currently there is no support for Date or bigint literals in Zod. If you have a use case for this feature, please file an issue.
+> Currently there is no support for Date literals in Zod. If you have a use case for this feature, please file an issue.
 
 ## Strings
 

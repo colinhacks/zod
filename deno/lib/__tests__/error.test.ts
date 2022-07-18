@@ -462,6 +462,18 @@ test("literal default error message", () => {
   }
 });
 
+test("literal bigint default error message", () => {
+  try {
+    z.literal(BigInt(12)).parse(BigInt(13));
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual(
+      `Invalid literal value, expected "12"`
+    );
+  }
+});
+
 // test("dont short circuit on continuable errors", () => {
 //   const user = z
 //     .object({
