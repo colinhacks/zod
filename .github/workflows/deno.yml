@@ -24,7 +24,7 @@ jobs:
       - name: Checkout zod-deno
         uses: actions/checkout@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.ZOD_BOT_TOKEN }}
           repository: colinhacks/zod-deno
           path: deno/lib
 
