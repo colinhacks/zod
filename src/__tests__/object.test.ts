@@ -240,11 +240,11 @@ test("inferred unioned object type with optional properties", async () => {
 test("inferred enum type", async () => {
   const Enum = z.object({ a: z.string(), b: z.string().optional() }).keyof();
 
-  expect(Enum.Values).toMatchObject({
+  expect(Enum.Values).toEqual({
     a: "a",
     b: "b",
   });
-  expect(Enum.enum).toMatchObject({
+  expect(Enum.enum).toEqual({
     a: "a",
     b: "b",
   });
