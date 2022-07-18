@@ -1,0 +1,28 @@
+# .github/release.yml
+
+name: Test deno release
+on:
+  push:
+    branches:
+      - "master"
+      - "main"
+
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Test Deno release
+        id: create_deno_release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.ZOD_BOT_TOKEN }}
+        with:
+          tag_name: v3.17.7
+          release_name: v3.17.7
+          commitish: refs/heads/main
+          body: "Test changelog"
+          draft: false
+          prerelease: false
+          owner: colinhacks
+          repo: zod-deno
