@@ -253,6 +253,18 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
       <a href="https://twitter.com/alexdotjs">@alexdotjs</a>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://adaptable.io/">
+        <img src="https://avatars.githubusercontent.com/u/60378268?s=200&v=4" width="100px;" alt=""/>
+      </a>
+      <br />
+      <b>Adaptable</b>
+      <br/>
+      <a href="https://adaptable.io/">adaptable.io</a>
+      <br />
+    </td>
+  </tr>
 </table>
 
 _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._
@@ -379,6 +391,8 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().regex(regex);
+z.string().startsWith(string);
+z.string().endsWith(string);
 
 // 已废弃，等同于 .min(1)
 z.string().nonempty();
@@ -397,6 +411,8 @@ z.string().length(5, { message: "Must be exactly 5 characters long" });
 z.string().email({ message: "Invalid email address." });
 z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().startsWith("https://", { message: "Must provide secure URL" });
+z.string().endsWith(".com", { message: "Only .com domains allowed" });
 ```
 
 ## Numbers
@@ -543,9 +559,9 @@ const user = z.object({
 
 const deepPartialUser = user.deepPartial();
 
-/* 
+/*
 {
-  username?: string | undefined, 
+  username?: string | undefined,
   location?: {
     latitude?: number | undefined;
     longitude?: number | undefined;
@@ -872,12 +888,12 @@ const FishEnum = z.enum(fish);
 FishEnum.enum.Salmon; // => 自动补全
 
 FishEnum.enum;
-/* 
+/*
 => {
   Salmon: "Salmon",
   Tuna: "Tuna",
   Trout: "Trout",
-} 
+}
 */
 ```
 
