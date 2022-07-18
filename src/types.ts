@@ -1,3 +1,4 @@
+import { enumUtil } from "./helpers/enumUtil";
 import { errorUtil } from "./helpers/errorUtil";
 import {
   addIssueToContext,
@@ -23,8 +24,8 @@ import { Primitive } from "./helpers/typeAliases";
 import { getParsedType, util, ZodParsedType } from "./helpers/util";
 import {
   defaultErrorMap,
+  getErrorMap,
   IssueData,
-  overrideErrorMap,
   StringValidation,
   ZodCustomIssue,
   ZodError,
@@ -116,11 +117,10 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (errorMap) return { errorMap: errorMap, description };
   const customMap: ZodErrorMap = (iss, ctx) => {
     if (iss.code !== "invalid_type") return { message: ctx.defaultError };
-    if (typeof ctx.data === "undefined" && required_error)
-      return { message: required_error };
-    if (params.invalid_type_error)
-      return { message: params.invalid_type_error };
-    return { message: ctx.defaultError };
+    if (typeof ctx.data === "undefined") {
+      return { message: required_error ?? ctx.defaultError };
+    }
+    return { message: invalid_type_error ?? ctx.defaultError };
   };
   return { errorMap: customMap, description };
 }
@@ -450,6 +450,8 @@ type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
+  | { kind: "startsWith"; value: string; message?: string }
+  | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
   | { kind: "trim"; message?: string };
 
@@ -570,6 +572,26 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
+      } else if (check.kind === "startsWith") {
+        if (!(input.data as string).startsWith(check.value)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: { startsWith: check.value },
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "endsWith") {
+        if (!(input.data as string).endsWith(check.value)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: { endsWith: check.value },
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -612,6 +634,22 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return this._addCheck({
       kind: "regex",
       regex: regex,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  startsWith(value: string, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "startsWith",
+      value: value,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  endsWith(value: string, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "endsWith",
+      value: value,
       ...errorUtil.errToObj(message),
     });
   }
@@ -662,25 +700,21 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
   get minLength() {
-    let min: number | null = -Infinity;
-    this._def.checks.map((ch) => {
+    let min: number | null = null;
+    for (const ch of this._def.checks) {
       if (ch.kind === "min") {
-        if (min === null || ch.value > min) {
-          min = ch.value;
-        }
+        if (min === null || ch.value > min) min = ch.value;
       }
-    });
+    }
     return min;
   }
   get maxLength() {
     let max: number | null = null;
-    this._def.checks.map((ch) => {
+    for (const ch of this._def.checks) {
       if (ch.kind === "max") {
-        if (max === null || ch.value < max) {
-          max = ch.value;
-        }
+        if (max === null || ch.value < max) max = ch.value;
       }
-    });
+    }
     return max;
   }
 
@@ -1004,13 +1038,18 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
 //////////                     ////////
 ///////////////////////////////////////
 ///////////////////////////////////////
+type ZodDateCheck =
+  | { kind: "min"; value: number; message?: string }
+  | { kind: "max"; value: number; message?: string };
 export interface ZodDateDef extends ZodTypeDef {
+  checks: ZodDateCheck[];
   typeName: ZodFirstPartyTypeKind.ZodDate;
 }
 
 export class ZodDate extends ZodType<Date, ZodDateDef> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
+
     if (parsedType !== ZodParsedType.date) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
@@ -1020,6 +1059,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
       });
       return INVALID;
     }
+
     if (isNaN(input.data.getTime())) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
@@ -1028,14 +1068,93 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
       return INVALID;
     }
 
+    const status = new ParseStatus();
+    let ctx: undefined | ParseContext = undefined;
+
+    for (const check of this._def.checks) {
+      if (check.kind === "min") {
+        if (input.data.getTime() < check.value) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.too_small,
+            message: check.message,
+            inclusive: true,
+            minimum: check.value,
+            type: "date",
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "max") {
+        if (input.data.getTime() > check.value) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.too_big,
+            message: check.message,
+            inclusive: true,
+            maximum: check.value,
+            type: "date",
+          });
+          status.dirty();
+        }
+      } else {
+        util.assertNever(check);
+      }
+    }
+
     return {
-      status: "valid",
+      status: status.value,
       value: new Date((input.data as Date).getTime()),
     };
   }
 
+  _addCheck(check: ZodDateCheck) {
+    return new ZodDate({
+      ...this._def,
+      checks: [...this._def.checks, check],
+    });
+  }
+
+  min(minDate: Date, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: minDate.getTime(),
+      message: errorUtil.toString(message),
+    });
+  }
+
+  max(maxDate: Date, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "max",
+      value: maxDate.getTime(),
+      message: errorUtil.toString(message),
+    });
+  }
+
+  get minDate() {
+    let min: number | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "min") {
+        if (min === null || ch.value > min) min = ch.value;
+      }
+    }
+
+    return min != null ? new Date(min) : null;
+  }
+
+  get maxDate() {
+    let max: number | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "max") {
+        if (max === null || ch.value < max) max = ch.value;
+      }
+    }
+
+    return max != null ? new Date(max) : null;
+  }
+
   static create = (params?: RawCreateParams): ZodDate => {
     return new ZodDate({
+      checks: [],
       typeName: ZodFirstPartyTypeKind.ZodDate,
       ...processCreateParams(params),
     });
@@ -1811,6 +1930,12 @@ export class ZodObject<
       ...this._def,
       shape: () => newShape,
     }) as any;
+  }
+
+  keyof(): ZodEnum<enumUtil.UnionToTupleString<keyof T>> {
+    return createZodEnum(
+      util.objectKeys(this.shape) as [string, ...string[]]
+    ) as any;
   }
 
   static create = <T extends ZodRawShape>(
@@ -2789,7 +2914,7 @@ export class ZodFunction<
         errorMaps: [
           ctx.common.contextualErrorMap,
           ctx.schemaErrorMap,
-          overrideErrorMap,
+          getErrorMap(),
           defaultErrorMap,
         ].filter((x) => !!x) as ZodErrorMap[],
         issueData: {
@@ -2806,7 +2931,7 @@ export class ZodFunction<
         errorMaps: [
           ctx.common.contextualErrorMap,
           ctx.schemaErrorMap,
-          overrideErrorMap,
+          getErrorMap(),
           defaultErrorMap,
         ].filter((x) => !!x) as ZodErrorMap[],
         issueData: {
@@ -2881,7 +3006,11 @@ export class ZodFunction<
     });
   }
 
-  implement<F extends InnerTypeOfFunction<Args, Returns>>(func: F): F {
+  implement<F extends InnerTypeOfFunction<Args, Returns>>(
+    func: F
+  ): ReturnType<F> extends Returns["_output"]
+    ? (...args: Args["_input"]) => ReturnType<F>
+    : OuterTypeOfFunction<Args, Returns> {
     const validatedFunc = this.parse(func);
     return validatedFunc as any;
   }

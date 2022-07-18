@@ -1,4 +1,5 @@
 import type { TypeOf, ZodType } from "./index.ts";
+import { jsonStringifyReplacer } from "./helpers/parseUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { util, ZodParsedType } from "./helpers/util.ts";
 
@@ -86,7 +87,14 @@ export interface ZodInvalidDateIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_date;
 }
 
-export type StringValidation = "email" | "url" | "uuid" | "regex" | "cuid";
+export type StringValidation =
+  | "email"
+  | "url"
+  | "uuid"
+  | "regex"
+  | "cuid"
+  | { startsWith: string }
+  | { endsWith: string };
 
 export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
@@ -97,14 +105,14 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number" | "set";
+  type: "array" | "string" | "number" | "set" | "date";
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
-  type: "array" | "string" | "number" | "set";
+  type: "array" | "string" | "number" | "set" | "date";
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -243,7 +251,7 @@ export class ZodError<T = any> extends Error {
     return this.message;
   }
   get message() {
-    return JSON.stringify(this.issues, null, 2);
+    return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
   }
 
   get isEmpty(): boolean {
@@ -312,7 +320,8 @@ export const defaultErrorMap = (
       break;
     case ZodIssueCode.invalid_literal:
       message = `Invalid literal value, expected ${JSON.stringify(
-        issue.expected
+        issue.expected,
+        jsonStringifyReplacer
       )}`;
       break;
     case ZodIssueCode.unrecognized_keys:
@@ -344,8 +353,19 @@ export const defaultErrorMap = (
       message = `Invalid date`;
       break;
     case ZodIssueCode.invalid_string:
-      if (issue.validation !== "regex") message = `Invalid ${issue.validation}`;
-      else message = "Invalid";
+      if (typeof issue.validation === "object") {
+        if ("startsWith" in issue.validation) {
+          message = `Invalid input: must start with "${issue.validation.startsWith}"`;
+        } else if ("endsWith" in issue.validation) {
+          message = `Invalid input: must start with "${issue.validation.endsWith}"`;
+        } else {
+          util.assertNever(issue.validation);
+        }
+      } else if (issue.validation !== "regex") {
+        message = `Invalid ${issue.validation}`;
+      } else {
+        message = "Invalid";
+      }
       break;
     case ZodIssueCode.too_small:
       if (issue.type === "array")
@@ -360,6 +380,10 @@ export const defaultErrorMap = (
         message = `Number must be greater than ${
           issue.inclusive ? `or equal to ` : ``
         }${issue.minimum}`;
+      else if (issue.type === "date")
+        message = `Date must be greater than ${
+          issue.inclusive ? `or equal to ` : ``
+        }${new Date(issue.minimum)}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.too_big:
@@ -375,6 +399,10 @@ export const defaultErrorMap = (
         message = `Number must be less than ${
           issue.inclusive ? `or equal to ` : ``
         }${issue.maximum}`;
+      else if (issue.type === "date")
+        message = `Date must be smaller than ${
+          issue.inclusive ? `or equal to ` : ``
+        }${new Date(issue.maximum)}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.custom:
@@ -393,8 +421,12 @@ export const defaultErrorMap = (
   return { message };
 };
 
-export let overrideErrorMap = defaultErrorMap;
+let overrideErrorMap = defaultErrorMap;
 
-export const setErrorMap = (map: ZodErrorMap) => {
+export function setErrorMap(map: ZodErrorMap) {
   overrideErrorMap = map;
-};
+}
+
+export function getErrorMap() {
+  return overrideErrorMap;
+}

@@ -22,7 +22,7 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://www.npmjs.com/package/zod">NPM</a>
+  <a href="https://www.npmjs.com/package/zod">npm</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -47,7 +47,7 @@
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
 - [Installation](#installation)
-  - [Node](#node)
+  - [Node/npm](#Node/npm)
   - [Deno](#deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
@@ -63,6 +63,7 @@
 - [Nullables](#nullables)
 - [Objects](#objects)
   - [.shape](#shape)
+  - [.enum](#enum)
   - [.extend](#extend)
   - [.merge](#merge)
   - [.pick/.omit](#pickomit)
@@ -215,6 +216,26 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <b>Trip</b>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://seasoned.cc">
+        <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="150px;" alt="" />
+      </a>
+      <br />
+      <b>Seasoned Software</b>
+      <br />
+      <a href="https://seasoned.cc">seasoned.cc</a>
+    </td>
+    <td align="center">
+      <a href="https://seasoned.cc">
+        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
+      </a>
+      <br />
+      <b>Interval</b>
+      <br />
+      <a href="https://interval.com">interval.com</a>
+    </td>
+  </tr>
 </table>
 
 #### Bronze
@@ -252,6 +273,18 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://twitter.com/alexdotjs">@alexdotjs</a>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://adaptable.io/">
+        <img src="https://avatars.githubusercontent.com/u/60378268?s=200&v=4" width="100px;" alt=""/>
+      </a>
+      <br />
+      <b>Adaptable</b>
+      <br/>
+      <a href="https://adaptable.io/">adaptable.io</a>
+      <br />
+    </td>
+  </tr>
 </table>
 
 ### Ecosystem
@@ -281,6 +314,8 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas dynamically and provides GraphQL method decorators working with Zod schemas.
+- [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
+- [`remix-domains`](https://github.com/SeasonedSoftware/remix-domains/): Improves end-to-end type safety in [Remix](https://remix.run/) by leveraging Zod to parse the framework's inputs such as FormData, URLSearchParams, etc.
 
 #### Form integrations
 
@@ -306,7 +341,7 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### Node/NPM
+### Node/npm
 
 To install Zod v3:
 
@@ -318,7 +353,7 @@ pnpm add zod          # pnpm
 
 ### Deno
 
-Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](deno.land/x). The latest version can be imported like so:
+Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](https://deno.land/x). The latest version can be imported like so:
 
 ```ts
 import { z } from "https://deno.land/x/zod/mod.ts";
@@ -327,10 +362,10 @@ import { z } from "https://deno.land/x/zod/mod.ts";
 You can also specify a particular version:
 
 ```ts
-import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts"
+import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
 ```
 
-> The rest of this README assumes you are using NPM and importing directly from the `"zod"` package.
+> The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
 
 ## Basic usage
 
@@ -405,7 +440,7 @@ const tru = z.literal(true);
 tuna.value; // "tuna"
 ```
 
-> Currently there is no support for Date or bigint literals in Zod. If you have a use case for this feature, please file an issue.
+> Currently there is no support for Date literals in Zod. If you have a use case for this feature, please file an issue.
 
 ## Strings
 
@@ -420,6 +455,8 @@ z.string().url();
 z.string().uuid();
 z.string().cuid();
 z.string().regex(regex);
+z.string().startsWith(string);
+z.string().endsWith(string);
 
 // trim whitespace
 z.string().trim();
@@ -433,7 +470,7 @@ z.string().nonempty({ message: "Can't be empty" });
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
 
-You can customize some common errors messages when creating a string schema.
+You can customize some common error messages when creating a string schema.
 
 ```ts
 const name = z.string({
@@ -451,6 +488,8 @@ z.string().length(5, { message: "Must be exactly 5 characters long" });
 z.string().email({ message: "Invalid email address" });
 z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().startsWith("https://", { message: "Must provide secure URL" });
+z.string().endsWith(".com", { message: "Only .com domains allowed" });
 ```
 
 ## Numbers
@@ -512,14 +551,32 @@ const isActive = z.boolean({
 
 ## Dates
 
-z.date() accepts a date, not a date string
+Use z.date() to validate `Date` instances.
 
 ```ts
 z.date().safeParse(new Date()); // success: true
 z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
 ```
 
-To allow for dates or date strings, you can use preprocess
+You can customize certain error messages when creating a boolean schema.
+
+```ts
+const myDateSchema = z.date({
+  required_error: "Please select a date and time",
+  invalid_type_error: "That's not a date!",
+});
+```
+
+Zod provides a handful of date-specific validations.
+
+```ts
+z.date().min(new Date("1900-01-01"), { message: "Too old" });
+z.date().max(new Date(), { message: "Too young!" });
+```
+
+**Supporting date strings**
+
+To write a schema that accepts either a `Date` or a date string, use (`z.preprocess`)[#preprocess].
 
 ```ts
 const dateSchema = z.preprocess((arg) => {
@@ -547,7 +604,7 @@ const VALUES = ["Salmon", "Tuna", "Trout"] as const;
 const FishEnum = z.enum(VALUES);
 ```
 
-This is not allowed, since Zod isn't able to infer the exact values of each elements.
+This is not allowed, since Zod isn't able to infer the exact values of each element.
 
 ```ts
 const fish = ["Salmon", "Tuna", "Trout"];
@@ -726,9 +783,18 @@ Dog.shape.name; // => string schema
 Dog.shape.age; // => number schema
 ```
 
+### `.keyof`
+
+Use `.key` to create a `ZodEnum` schema from the keys of an object schema.
+
+```ts
+const keySchema = Dog.keyof();
+keySchema; // ZodEnum<["name", "age"]>
+```
+
 ### `.extend`
 
-You can add additional fields an object schema with the `.extend` method.
+You can add additional fields to an object schema with the `.extend` method.
 
 ```ts
 const DogWithBreed = Dog.extend({
@@ -848,7 +914,7 @@ const deepPartialUser = user.deepPartial();
 
 ### `.passthrough`
 
-By default Zod objects schemas strip out unrecognized keys during parsing.
+By default Zod object schemas strip out unrecognized keys during parsing.
 
 ```ts
 const person = z.object({
@@ -875,7 +941,7 @@ person.passthrough().parse({
 
 ### `.strict`
 
-By default Zod objects schemas strip out unrecognized keys during parsing. You can _disallow_ unknown keys with `.strict()` . If there are any unknown keys in the input, Zod will throw an error.
+By default Zod object schemas strip out unrecognized keys during parsing. You can _disallow_ unknown keys with `.strict()` . If there are any unknown keys in the input, Zod will throw an error.
 
 ```ts
 const person = z
@@ -1035,7 +1101,7 @@ const item = z
 
 Record schemas are used to validate types such as `{ [k: string]: number }`.
 
-If you want to validate the _values_ of an object against some schema but don't care about the keys, use `Record`.
+If you want to validate the _values_ of an object against some schema but don't care about the keys, use `z.record(valueType)`:
 
 ```ts
 const NumberCache = z.record(z.number());
@@ -1058,9 +1124,22 @@ userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
 }; // TypeError
 ```
 
+### Record key type
+
+If you want to validate both the keys and the values, use
+`z.record(keyType, valueType)`:
+
+```ts
+const NoEmptyKeysSchema = z.record(z.string().min(1), z.number());
+NoEmptyKeysSchema.parse({ count: 1 }); // => { 'count': 1 }
+NoEmptyKeysSchema.parse({ "": 1 }); // fails
+```
+
+_(Notice how when passing two arguments, `valueType` is the second argument)_
+
 **A note on numerical keys**
 
-You may have expected `z.record()` to accept two arguments, one for the keys and one for the values. After all, TypeScript's built-in Record type does: `Record<KeyType, ValueType>` . Otherwise, how do you represent the TypeScript type `Record<number, any>` in Zod?
+While `z.record(keyType, valueType)` is able to accept numerical key types and TypeScript's built-in Record type is `Record<KeyType, ValueType>`, it's hard to represent the TypeScript type `Record<number, any>` in Zod.
 
 As it turns out, TypeScript's behavior surrounding `[k: number]` is a little unintuitive:
 
@@ -1310,7 +1389,7 @@ type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string)=>number
 ``` -->
 
-Function schemas have an `.implement()` method which accepts a function and returns a new function that automatically validates it's inputs and outputs.
+Function schemas have an `.implement()` method which accepts a function and returns a new function that automatically validates its inputs and outputs.
 
 ```ts
 const trimmedLength = z
@@ -1528,7 +1607,7 @@ const userId = z.string().refine(async (id) => {
 });
 ```
 
-> ⚠️If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
+> ⚠️ If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
 
 #### Relationship to transforms
 
@@ -1584,7 +1663,7 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
   if (val.length !== new Set(val).size) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: `No duplicated allowed.`,
+      message: `No duplicates allowed.`,
     });
   }
 });
@@ -1977,13 +2056,13 @@ Branded -->
 * Missing support for parsing cyclical data (maybe)
 * Missing error customization -->
 
-**Joi**
+### Joi
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
 Doesn't support static type inference 😕
 
-**Yup**
+### Yup
 
 [https://github.com/jquense/yup](https://github.com/jquense/yup)
 
@@ -1999,7 +2078,7 @@ Yup is a full-featured library that was implemented first in vanilla JS, and lat
 
 <!-- ¹Yup has a strange interpretation of the word `required`. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. Instead, Yup us Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom refinement. -->
 
-**io-ts**
+### io-ts
 
 [https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
 
@@ -2050,7 +2129,7 @@ This more declarative API makes schema definitions vastly more concise.
 - Missing promise schemas
 - Missing function schemas
 
-**Runtypes**
+### Runtypes
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
@@ -2063,7 +2142,7 @@ Good type inference support, but limited options for object type masking (no `.p
 - Missing promise schemas
 - Missing error customization
 
-**Ow**
+### Ow
 
 [https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
 

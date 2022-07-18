@@ -1,5 +1,5 @@
 import type { IssueData, ZodErrorMap, ZodIssue } from "../ZodError";
-import { defaultErrorMap, overrideErrorMap } from "../ZodError";
+import { defaultErrorMap, getErrorMap } from "../ZodError";
 import type { ZodParsedType } from "./util";
 
 export const makeIssue = (params: {
@@ -71,7 +71,7 @@ export function addIssueToContext(
     errorMaps: [
       ctx.common.contextualErrorMap, // contextual error map is first priority
       ctx.schemaErrorMap, // then schema-bound map if available
-      overrideErrorMap, // then global override map
+      getErrorMap(), // then global override map
       defaultErrorMap, // then global default map
     ].filter((x) => !!x) as ZodErrorMap[],
   });
@@ -175,3 +175,10 @@ export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
   typeof Promise !== undefined && x instanceof Promise;
+
+export const jsonStringifyReplacer = (_: string, value: any): any => {
+  if (typeof value === "bigint") {
+    return value.toString();
+  }
+  return value;
+};

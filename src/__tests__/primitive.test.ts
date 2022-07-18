@@ -7,6 +7,7 @@ import { Mocker } from "./Mocker";
 const literalStringSchema = z.literal("asdf");
 const literalNumberSchema = z.literal(12);
 const literalBooleanSchema = z.literal(true);
+const literalBigIntSchema = z.literal(BigInt(42));
 const stringSchema = z.string();
 const numberSchema = z.number();
 const bigintSchema = z.bigint();
@@ -101,6 +102,30 @@ test("literal boolean boolean", () => {
 
 test("literal boolean object", () => {
   const f = () => literalBooleanSchema.parse({});
+  expect(f).toThrow();
+});
+
+test("literal bigint correct", () => {
+  expect(literalBigIntSchema.parse(BigInt(42))).toBe(BigInt(42));
+});
+
+test("literal bigint incorrect", () => {
+  const f = () => literalBigIntSchema.parse(BigInt(43));
+  expect(f).toThrow();
+});
+
+test("literal bigint number", () => {
+  const f = () => literalBigIntSchema.parse("asdf");
+  expect(f).toThrow();
+});
+
+test("literal bigint boolean", () => {
+  const f = () => literalBigIntSchema.parse(123);
+  expect(f).toThrow();
+});
+
+test("literal bigint object", () => {
+  const f = () => literalBigIntSchema.parse({});
   expect(f).toThrow();
 });
 
@@ -325,6 +350,10 @@ test("primitive inference", () => {
     z.TypeOf<typeof literalBooleanSchema>,
     true
   > = true;
+  const literalBigIntSchemaTest: AssertEqual<
+    z.TypeOf<typeof literalBigIntSchema>,
+    bigint
+  > = true;
   const stringSchemaTest: AssertEqual<
     z.TypeOf<typeof stringSchema>,
     string
@@ -392,6 +421,7 @@ test("primitive inference", () => {
     literalStringSchemaTest,
     literalNumberSchemaTest,
     literalBooleanSchemaTest,
+    literalBigIntSchemaTest,
     stringSchemaTest,
     numberSchemaTest,
     bigintSchemaTest,

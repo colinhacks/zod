@@ -4,6 +4,7 @@ export namespace util {
       ? true
       : false
     : false;
+  export function assertEqual<A, B>(_cond: AssertEqual<A, B>) {}
 
   export function assertNever(_x: never): never {
     throw new Error();
