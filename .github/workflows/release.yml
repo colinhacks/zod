@@ -115,4 +115,5 @@ jobs:
           body: ${{steps.github_release.outputs.changelog}}
           draft: false
           prerelease: false
-          repo: colinhacks/zod-deno
+          owner: colinhacks
+          repo: zod-deno
