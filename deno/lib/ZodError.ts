@@ -93,6 +93,7 @@ export type StringValidation =
   | "uuid"
   | "regex"
   | "cuid"
+  | "numeric"
   | { startsWith: string }
   | { endsWith: string };
 

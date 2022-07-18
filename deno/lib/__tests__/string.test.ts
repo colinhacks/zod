@@ -117,6 +117,16 @@ test("cuid", () => {
   }
 });
 
+test('numeric', () => {
+  const numericString = z.string().numeric();
+  numericString.parse("1234");
+  const result = numericString.safeParse("a1234");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("Invalid numeric");
+  }
+});
+
 test("regex", () => {
   z.string()
     .regex(/^moo+$/)
