@@ -23,8 +23,8 @@ import { Primitive } from "./helpers/typeAliases.ts";
 import { getParsedType, util, ZodParsedType } from "./helpers/util.ts";
 import {
   defaultErrorMap,
+  getErrorMap,
   IssueData,
-  overrideErrorMap,
   StringValidation,
   ZodCustomIssue,
   ZodError,
@@ -2823,7 +2823,7 @@ export class ZodFunction<
         errorMaps: [
           ctx.common.contextualErrorMap,
           ctx.schemaErrorMap,
-          overrideErrorMap,
+          getErrorMap(),
           defaultErrorMap,
         ].filter((x) => !!x) as ZodErrorMap[],
         issueData: {
@@ -2840,7 +2840,7 @@ export class ZodFunction<
         errorMaps: [
           ctx.common.contextualErrorMap,
           ctx.schemaErrorMap,
-          overrideErrorMap,
+          getErrorMap(),
           defaultErrorMap,
         ].filter((x) => !!x) as ZodErrorMap[],
         issueData: {

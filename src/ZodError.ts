@@ -413,8 +413,12 @@ export const defaultErrorMap = (
   return { message };
 };
 
-export let overrideErrorMap = defaultErrorMap;
+let overrideErrorMap = defaultErrorMap;
 
-export const setErrorMap = (map: ZodErrorMap) => {
+export function setErrorMap(map: ZodErrorMap) {
   overrideErrorMap = map;
-};
+}
+
+export function getErrorMap() {
+  return overrideErrorMap;
+}
