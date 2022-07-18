@@ -237,14 +237,22 @@ test("inferred unioned object type with optional properties", async () => {
   f1;
 });
 
-test("inferred enum type", async() => {
-  const Enum = z
-    .object({ a: z.string(), b: z.string().optional() })
-    .enum();
+test("inferred enum type", async () => {
+  const Enum = z.object({ a: z.string(), b: z.string().optional() }).keyof();
+
+  expect(Enum.Values).toMatchObject({
+    a: "a",
+    b: "b",
+  });
+  expect(Enum.enum).toMatchObject({
+    a: "a",
+    b: "b",
+  });
+  expect(Enum._def.values).toEqual(["a", "b"]);
   type Enum = z.infer<typeof Enum>;
   const f1: util.AssertEqual<Enum, "a" | "b"> = true;
   f1;
-})
+});
 
 test("inferred partial object type with optional properties", async () => {
   const Partial = z

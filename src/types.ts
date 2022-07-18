@@ -1,3 +1,4 @@
+import { enumUtil } from "./helpers/enumUtil";
 import { errorUtil } from "./helpers/errorUtil";
 import {
   addIssueToContext,
@@ -18,7 +19,6 @@ import {
   ParseStatus,
   SyncParseReturnType,
 } from "./helpers/parseUtil";
-import { enumUtil } from './helpers/enumUtil';
 import { partialUtil } from "./helpers/partialUtil";
 import { Primitive } from "./helpers/typeAliases";
 import { getParsedType, util, ZodParsedType } from "./helpers/util";
@@ -1814,9 +1814,10 @@ export class ZodObject<
     }) as any;
   }
 
-  enum(): ZodEnum<enumUtil.UnionToTupleString<keyof T>> {
+  keyof(): ZodEnum<enumUtil.UnionToTupleString<keyof T>> {
     return createZodEnum(
-      util.objectKeys(this.shape) as [string,...string[]]) as any;
+      util.objectKeys(this.shape) as [string, ...string[]]
+    ) as any;
   }
 
   static create = <T extends ZodRawShape>(

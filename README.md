@@ -759,12 +759,13 @@ Dog.shape.name; // => string schema
 Dog.shape.age; // => number schema
 ```
 
-### `.enum`
+### `.keyof`
 
-Use `.enum` to create a zod enum schema from an object schema.
+Use `.key` to create a `ZodEnum` schema from the keys of an object schema.
 
 ```ts
-const keys: ZodEnum['name', 'age'] = Dog.enum();
+const keySchema = Dog.keyof();
+keySchema; // ZodEnum<["name", "age"]>
 ```
 
 ### `.extend`
