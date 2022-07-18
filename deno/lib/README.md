@@ -313,6 +313,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas dynamically and provides GraphQL method decorators working with Zod schemas.
+- [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
 - [`remix-domains`](https://github.com/SeasonedSoftware/remix-domains/): Improves end-to-end type safety in [Remix](https://remix.run/) by leveraging Zod to parse the framework's inputs such as FormData, URLSearchParams, etc.
 
 #### Form integrations
@@ -351,7 +352,7 @@ pnpm add zod          # pnpm
 
 ### Deno
 
-Unlike Node, Deno relies on direct URL imports instead of a package manager like npm. Zod is available on [deno.land/x](deno.land/x). The latest version can be imported like so:
+Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](https://deno.land/x). The latest version can be imported like so:
 
 ```ts
 import { z } from "https://deno.land/x/zod/mod.ts";
@@ -360,7 +361,7 @@ import { z } from "https://deno.land/x/zod/mod.ts";
 You can also specify a particular version:
 
 ```ts
-import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts"
+import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
 ```
 
 > The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
