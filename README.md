@@ -1800,7 +1800,7 @@ z.optional(z.string());
 
 ### `.nullable`
 
-A convenience method that returns an nullable version of a schema.
+A convenience method that returns a nullable version of a schema.
 
 ```ts
 const nullableString = z.string().nullable(); // string | null
