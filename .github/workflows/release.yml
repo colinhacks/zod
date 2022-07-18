@@ -111,7 +111,7 @@ jobs:
         with:
           tag_name: v${{ steps.publish.outputs.version }}
           release_name: v${{ steps.publish.outputs.version }}
-          commitish: ${{ github.ref }}
+          commitish: ref/heads/main
           body: ${{steps.github_release.outputs.changelog}}
           draft: false
           prerelease: false
