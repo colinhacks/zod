@@ -411,6 +411,8 @@ z.string().length(5, { message: "Must be exactly 5 characters long" });
 z.string().email({ message: "Invalid email address." });
 z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().startsWith("https://", { message: "Must provide secure URL" });
+z.string().endsWith(".com", { message: "Only .com domains allowed" });
 ```
 
 ## Numbers
