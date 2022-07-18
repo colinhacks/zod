@@ -558,7 +558,7 @@ z.date().safeParse(new Date()); // success: true
 z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
 ```
 
-You can customize certain error messages when creating a boolean schema.
+You can customize certain error messages when creating a date schema.
 
 ```ts
 const myDateSchema = z.date({
