@@ -1603,7 +1603,9 @@ export type SomeZodObject = ZodObject<
   any
 >;
 
-function deepPartialify(schema: ZodTypeAny): any {
+export function deepPartialify<T extends ZodTypeAny>(
+  schema: T
+): partialUtil.DeepPartial<T> {
   if (schema instanceof ZodObject) {
     const newShape: any = {};
 
@@ -1616,17 +1618,17 @@ function deepPartialify(schema: ZodTypeAny): any {
       shape: () => newShape,
     }) as any;
   } else if (schema instanceof ZodArray) {
-    return ZodArray.create(deepPartialify(schema.element));
+    return ZodArray.create(deepPartialify(schema.element)) as any;
   } else if (schema instanceof ZodOptional) {
-    return ZodOptional.create(deepPartialify(schema.unwrap()));
+    return ZodOptional.create(deepPartialify(schema.unwrap())) as any;
   } else if (schema instanceof ZodNullable) {
-    return ZodNullable.create(deepPartialify(schema.unwrap()));
+    return ZodNullable.create(deepPartialify(schema.unwrap())) as any;
   } else if (schema instanceof ZodTuple) {
     return ZodTuple.create(
       schema.items.map((item: any) => deepPartialify(item))
-    );
+    ) as any;
   } else {
-    return schema;
+    return schema as any;
   }
 }
 
