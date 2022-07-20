@@ -1704,7 +1704,7 @@ const Strings = z
 To transform data after parsing, use the `transform` method.
 
 ```ts
-const stringToNumber = z.string().transform((val) => myString.length);
+const stringToNumber = z.string().transform((val) => val.length);
 stringToNumber.parse("string"); // => 6
 ```
 
