@@ -3887,7 +3887,6 @@ const effectsType = ZodEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
-// const brandedType = ZodBranded.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -3897,7 +3896,6 @@ export {
   arrayType as array,
   bigIntType as bigint,
   booleanType as boolean,
-  // brandedType as branded,
   dateType as date,
   discriminatedUnionType as discriminatedUnion,
   effectsType as effect,
