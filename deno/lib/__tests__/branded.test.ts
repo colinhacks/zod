@@ -46,10 +46,10 @@ test("branded types", () => {
   type MyBrand = typeof MyBrand;
   const symbolBrand = z.number().brand<"sup">().brand<typeof MyBrand>();
   type SymbolBrand = z.infer<typeof symbolBrand>;
-  // number & { [z.BRAND]: { [MyBrand]: true } }
+  // number & { [z.BRAND]: { sup: true, [MyBrand]: true } }
   const f4: util.AssertEqual<
     SymbolBrand,
-    number & { [z.BRAND]: { 42: true; [MyBrand]: true } }
+    number & { [z.BRAND]: { sup: true; [MyBrand]: true } }
   > = true;
   f4;
 
