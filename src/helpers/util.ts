@@ -66,7 +66,7 @@ export namespace util {
   };
 
   export type identity<T> = T;
-  export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
+  export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
   export type noUndefined<T> = T extends undefined ? never : T;
 
   export const isInteger: NumberConstructor["isInteger"] =

@@ -420,7 +420,7 @@ export abstract class ZodType<
     }) as any;
   }
 
-  brand<B extends string>(): ZodBranded<this, B> {
+  brand<B extends string | number | symbol>(): ZodBranded<this, B> {
     return new ZodBranded({
       typeName: ZodFirstPartyTypeKind.ZodBranded,
       type: this,
@@ -3739,8 +3739,14 @@ export interface ZodBrandedDef<T extends ZodTypeAny> extends ZodTypeDef {
 }
 
 export const BRAND: unique symbol = Symbol("zod_brand");
-type Brand<T> = { [BRAND]: T };
-export class ZodBranded<T extends ZodTypeAny, B extends string> extends ZodType<
+type Brand<T extends string | number | symbol> = {
+  [BRAND]: { [k in T]: true };
+};
+
+export class ZodBranded<
+  T extends ZodTypeAny,
+  B extends string | number | symbol
+> extends ZodType<
   T["_output"] & Brand<B>,
   ZodBrandedDef<T>,
   T["_input"] & Brand<B>
@@ -3748,13 +3754,11 @@ export class ZodBranded<T extends ZodTypeAny, B extends string> extends ZodType<
   _parse(input: ParseInput): ParseReturnType<any> {
     const { ctx } = this._processInputParams(input);
     const data = ctx.data;
-    const result = this._def.type._parse({
+    return this._def.type._parse({
       data,
       path: ctx.path,
       parent: ctx,
     });
-    // (result as any)[ZODBRAND] = this._def.brand;
-    return result;
   }
 }
 
