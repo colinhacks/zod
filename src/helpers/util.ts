@@ -1,10 +1,13 @@
+import * as tc from "conditional-type-checks";
+
 export namespace util {
+  export const assertEqual = <A, B>(val: tc.IsExact<A, B>) => val;
   export type AssertEqual<T, Expected> = [T] extends [Expected]
     ? [Expected] extends [T]
       ? true
       : false
     : false;
-  export function assertEqual<A, B>(_cond: AssertEqual<A, B>) {}
+  // export function assertEqual<A, B>(_cond: AssertEqual<A, B>) {}
 
   export function assertNever(_x: never): never {
     throw new Error();
