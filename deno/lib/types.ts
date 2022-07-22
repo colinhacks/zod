@@ -420,6 +420,14 @@ export abstract class ZodType<
     }) as any;
   }
 
+  brand<B extends string>(): ZodBranded<this, B> {
+    return new ZodBranded({
+      typeName: ZodFirstPartyTypeKind.ZodBranded,
+      type: this,
+      ...processCreateParams(undefined),
+    });
+  }
+
   describe(description: string): this {
     const This = (this as any).constructor;
     return new This({
@@ -3681,13 +3689,13 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
   };
 }
 
-/////////////////////////////////////////
-/////////////////////////////////////////
-//////////                     //////////
-//////////      ZodNaN         //////////
-//////////                     //////////
-/////////////////////////////////////////
-/////////////////////////////////////////
+//////////////////////////////////////
+//////////////////////////////////////
+//////////                  //////////
+//////////      ZodNaN      //////////
+//////////                  //////////
+//////////////////////////////////////
+//////////////////////////////////////
 
 export interface ZodNaNDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodNaN;
@@ -3715,6 +3723,39 @@ export class ZodNaN extends ZodType<number, ZodNaNDef> {
       ...processCreateParams(params),
     });
   };
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                      //////////
+//////////      ZodBranded      //////////
+//////////                      //////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+
+export interface ZodBrandedDef<T extends ZodTypeAny> extends ZodTypeDef {
+  type: T;
+  typeName: ZodFirstPartyTypeKind.ZodBranded;
+}
+
+export const BRAND: unique symbol = Symbol("zod_brand");
+type Brand<T> = { [BRAND]: T };
+export class ZodBranded<T extends ZodTypeAny, B extends string> extends ZodType<
+  T["_output"] & Brand<B>,
+  ZodBrandedDef<T>,
+  T["_input"] & Brand<B>
+> {
+  _parse(input: ParseInput): ParseReturnType<any> {
+    const { ctx } = this._processInputParams(input);
+    const data = ctx.data;
+    const result = this._def.type._parse({
+      data,
+      path: ctx.path,
+      parent: ctx,
+    });
+    // (result as any)[ZODBRAND] = this._def.brand;
+    return result;
+  }
 }
 
 export const custom = <T>(
@@ -3771,6 +3812,7 @@ export enum ZodFirstPartyTypeKind {
   ZodNullable = "ZodNullable",
   ZodDefault = "ZodDefault",
   ZodPromise = "ZodPromise",
+  ZodBranded = "ZodBranded",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -3803,7 +3845,8 @@ export type ZodFirstPartySchemaTypes =
   | ZodOptional<any>
   | ZodNullable<any>
   | ZodDefault<any>
-  | ZodPromise<any>;
+  | ZodPromise<any>
+  | ZodBranded<any, any>;
 
 const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
@@ -3844,6 +3887,7 @@ const effectsType = ZodEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
+// const brandedType = ZodBranded.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -3853,6 +3897,7 @@ export {
   arrayType as array,
   bigIntType as bigint,
   booleanType as boolean,
+  // brandedType as branded,
   dateType as date,
   discriminatedUnionType as discriminatedUnion,
   effectsType as effect,

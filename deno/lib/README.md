@@ -90,6 +90,7 @@
 - [Instanceof](#instanceof)
 - [Function schemas](#function-schemas)
 - [Preprocess](#preprocess)
+- [Branded types](#branded-types)
 - [Schema methods](#schema-methods)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
@@ -1452,7 +1453,7 @@ All Zod schemas contain certain methods.
 
 ### `.parse`
 
-`.parse(data:unknown): T`
+`.parse(data: unknown): T`
 
 Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
@@ -1863,6 +1864,47 @@ z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: st
 // equivalent to
 z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 ```
+
+### `.brand`
+
+`.brand<T>() => ZodBranded<this, B>`
+
+TypeScript's type system is structural, which means that any two types that are structurally equivalent are considered the same.
+
+```ts
+type Cat = { name: string };
+type Dog = { name: string };
+
+const petCat = (cat: Cat) => {};
+const fido: Dog = { name: "fido" };
+petCat(fido); // works fine
+```
+
+In some cases, its can be desirable to simulate _nominal typing_ inside TypeScript. For instance, you may wish to write a function that only accepts an input that has been validated by Zod. This can be achieved with a _branded type_. These are also known as _opaque types_.
+
+```ts
+const Cat = z.object({ name: z.string }).brand<"Cat">();
+type Cat = z.infer<typeof Cat>;
+
+const petCat = (cat: Cat) => {};
+
+// this works
+const simba = Cat.parse({ name: "simba" });
+petCat(simba);
+
+// this doesn't
+petCat({ name: "fido" });
+```
+
+Under the hood, this works by attaching a "brand" to the inferred type using an intersection type. This way, plain/unbranded data structures are no longer assignable to the inferred type of the schema.
+
+```ts
+const Cat = z.object({ name: z.string }).brand<"Cat">();
+type Cat = z.infer<typeof Cat>;
+// {name: string} & {[symbol]: "Cat"}
+```
+
+Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
 
 ## Guides and concepts
 
