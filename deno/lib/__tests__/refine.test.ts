@@ -56,10 +56,8 @@ test("refinement type guard", () => {
   });
   type Schema = z.infer<typeof validationSchema>;
 
-  const f1: util.AssertEqual<"a", Schema["a"]> = true;
-  f1;
-  const f2: util.AssertEqual<"string", Schema["a"]> = false;
-  f2;
+  util.assertEqual<"a", Schema["a"]>(true);
+  util.assertEqual<"string", Schema["a"]>(false);
 });
 
 test("refinement Promise", async () => {
