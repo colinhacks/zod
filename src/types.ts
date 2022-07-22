@@ -1810,7 +1810,11 @@ export class ZodObject<
   merge<Incoming extends AnyZodObject>(
     merging: Incoming
   ): //ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = (merging) => {
-  ZodObject<extendShape<T, Incoming["_def"]["shape"]>, UnknownKeys, Catchall> {
+  ZodObject<
+    extendShape<T, ReturnType<Incoming["_def"]["shape"]>>,
+    UnknownKeys,
+    Catchall
+  > {
     // const mergedShape = objectUtil.mergeShapes(
     //   this._def.shape(),
     //   merging._def.shape()
