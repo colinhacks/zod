@@ -357,7 +357,7 @@ export const defaultErrorMap = (
         if ("startsWith" in issue.validation) {
           message = `Invalid input: must start with "${issue.validation.startsWith}"`;
         } else if ("endsWith" in issue.validation) {
-          message = `Invalid input: must start with "${issue.validation.endsWith}"`;
+          message = `Invalid input: must end with "${issue.validation.endsWith}"`;
         } else {
           util.assertNever(issue.validation);
         }
