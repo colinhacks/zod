@@ -243,7 +243,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table>
   <tr>
     <td align="center">
-      <a href="https://twitter.com/flybayer">
+      <a href="https://www.avanawallet.com/">
         <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
       </a>
       <br />
