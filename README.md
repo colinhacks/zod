@@ -249,8 +249,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <b>Avana Wallet</b>
       <br/>
-      <a href="https://www.avanawallet.com/">avanawallet.com</a>,
-      <span>Solana non-custodial wallet (<a href="https://chrome.google.com/webstore/detail/avana-wallet/ajnodjmfajgabkmeididajpkoobeiofn">download</a>)</span>
+      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
+      <span>Solana non-custodial wallet</span>
       <br />
     </td>
     <td align="center">
