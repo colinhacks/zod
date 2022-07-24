@@ -3648,7 +3648,7 @@ export interface ZodDefaultDef<T extends ZodTypeAny = ZodTypeAny>
 }
 
 export class ZodDefault<T extends ZodTypeAny> extends ZodType<
-  util.noUndefined<T["_output"]>,
+  T["_output"] | undefined,
   ZodDefaultDef<T>,
   T["_input"] | undefined
 > {
