@@ -316,6 +316,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas dynamically and provides GraphQL method decorators working with Zod schemas.
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
 - [`remix-domains`](https://github.com/SeasonedSoftware/remix-domains/): Improves end-to-end type safety in [Remix](https://remix.run/) by leveraging Zod to parse the framework's inputs such as FormData, URLSearchParams, etc.
+- [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
 
 #### Form integrations
 
