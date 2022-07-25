@@ -1671,11 +1671,6 @@ concat-map@0.0.1:
   resolved "https://registry.npmjs.org/concat-map/-/concat-map-0.0.1.tgz"
   integrity sha1-2Klr13/Wjfd5OnMDajug1UBdR3s=
 
-conditional-type-checks@^1.0.6:
-  version "1.0.6"
-  resolved "https://registry.yarnpkg.com/conditional-type-checks/-/conditional-type-checks-1.0.6.tgz#8b857895d624cdb982bc970bd3b318093e44d213"
-  integrity sha512-3vyi+yNcmKq+xl1sTX7Ta+4pUvjusMYbC6FSbrS6YJV8TI51wiRn24u4bfdFVhDKKH5GtpKQzxW7bqXbPWllgQ==
-
 configstore@^5.0.1:
   version "5.0.1"
   resolved "https://registry.npmjs.org/configstore/-/configstore-5.0.1.tgz"
