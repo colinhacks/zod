@@ -30,7 +30,7 @@ test("nativeEnum test with real enum", () => {
   fruitEnum.parse("banana");
   fruitEnum.parse(Fruits.Apple);
   fruitEnum.parse(Fruits.Banana);
-  util.assertEqual<fruitEnum, Fruits>(true);
+  util.assertIs<fruitEnum extends Fruits ? true : false>(true);
 });
 
 test("nativeEnum test with const with numeric keys", () => {

@@ -6,6 +6,7 @@ export namespace util {
     : false;
 
   export const assertEqual = <A, B>(val: AssertEqual<A, B>) => val;
+  export function assertIs<T>(_arg: T): void {}
   export function assertNever(_x: never): never {
     throw new Error();
   }
