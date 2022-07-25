@@ -264,6 +264,17 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
       <a href="https://adaptable.io/">adaptable.io</a>
       <br />
     </td>
+    <td align="center">
+      <a href="https://www.avanawallet.com/">
+        <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
+      </a>
+      <br />
+      <b>Avana Wallet</b>
+      <br/>
+      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
+      <span>Solana non-custodial wallet</span>
+      <br />
+    </td>
   </tr>
 </table>
 
