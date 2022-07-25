@@ -45,6 +45,7 @@ import {
 export type RefinementCtx = {
   addIssue: (arg: IssueData) => void;
   path: (string | number)[];
+  params?: unknown;
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
@@ -62,6 +63,7 @@ export interface ZodTypeDef {
 class ParseInputLazyPath implements ParseInput {
   parent: ParseContext;
   data: any;
+  params?: unknown;
   _path: ParsePath;
   _key: string | number | (string | number)[];
   constructor(
@@ -74,6 +76,7 @@ class ParseInputLazyPath implements ParseInput {
     this.data = value;
     this._path = path;
     this._key = key;
+    this.params = parent.params;
   }
   get path() {
     return this._path.concat(this._key);
@@ -166,6 +169,8 @@ export abstract class ZodType<
         schemaErrorMap: this._def.errorMap,
         path: input.path,
         parent: input.parent,
+
+        params: input.params,
       }
     );
   }
@@ -185,6 +190,8 @@ export abstract class ZodType<
         schemaErrorMap: this._def.errorMap,
         path: input.path,
         parent: input.parent,
+
+        params: input.params,
       },
     };
   }
@@ -224,8 +231,14 @@ export abstract class ZodType<
       parent: null,
       data,
       parsedType: getParsedType(data),
+      params,
     };
-    const result = this._parseSync({ data, path: ctx.path, parent: ctx });
+    const result = this._parseSync({
+      data,
+      path: ctx.path,
+      parent: ctx,
+      params: params?.params,
+    });
 
     return handleResult(ctx, result);
   }
@@ -254,9 +267,15 @@ export abstract class ZodType<
       parent: null,
       data,
       parsedType: getParsedType(data),
+      params,
     };
 
-    const maybeAsyncResult = this._parse({ data, path: [], parent: ctx });
+    const maybeAsyncResult = this._parse({
+      data,
+      path: [],
+      parent: ctx,
+      params: params?.params,
+    });
     const result = await (isAsync(maybeAsyncResult)
       ? maybeAsyncResult
       : Promise.resolve(maybeAsyncResult));
@@ -267,15 +286,15 @@ export abstract class ZodType<
   spa = this.safeParseAsync;
 
   refine<RefinedOutput extends Output>(
-    check: (arg: Output) => arg is RefinedOutput,
+    check: (arg: Output, params?: unknown) => arg is RefinedOutput,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
   ): ZodEffects<this, RefinedOutput, RefinedOutput>;
   refine(
-    check: (arg: Output) => unknown | Promise<unknown>,
+    check: (arg: Output, params?: unknown) => unknown | Promise<unknown>,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
   ): ZodEffects<this, Output, Input>;
   refine(
-    check: (arg: Output) => unknown,
+    check: (arg: Output, params?: unknown) => unknown,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
   ): ZodEffects<this, Output, Input> {
     const getIssueProperties: any = (val: Output) => {
@@ -288,7 +307,7 @@ export abstract class ZodType<
       }
     };
     return this._refinement((val, ctx) => {
-      const result = check(val);
+      const result = check(val, ctx.params);
       const setError = () =>
         ctx.addIssue({
           code: ZodIssueCode.custom,
@@ -314,19 +333,19 @@ export abstract class ZodType<
   }
 
   refinement<RefinedOutput extends Output>(
-    check: (arg: Output) => arg is RefinedOutput,
+    check: (arg: Output, params?: unknown) => arg is RefinedOutput,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
   ): ZodEffects<this, RefinedOutput, RefinedOutput>;
   refinement(
-    check: (arg: Output) => boolean,
+    check: (arg: Output, params?: unknown) => boolean,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
   ): ZodEffects<this, Output, Input>;
   refinement(
-    check: (arg: Output) => unknown,
+    check: (arg: Output, params?: unknown) => unknown,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
   ): ZodEffects<this, Output, Input> {
     return this._refinement((val, ctx) => {
-      if (!check(val)) {
+      if (!check(val, ctx.params)) {
         ctx.addIssue(
           typeof refinementData === "function"
             ? refinementData(val, ctx)
@@ -3430,6 +3449,7 @@ export class ZodEffects<
       get path() {
         return ctx.path;
       },
+      params: ctx.params,
     };
 
     checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
@@ -3482,6 +3502,7 @@ export class ZodEffects<
           data: ctx.data,
           path: ctx.path,
           parent: ctx,
+          params: ctx.params,
         });
         // if (base.status === "aborted") return INVALID;
         // if (base.status === "dirty") {
@@ -3499,7 +3520,12 @@ export class ZodEffects<
         return { status: status.value, value: result };
       } else {
         return this._def.schema
-          ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
+          ._parseAsync({
+            data: ctx.data,
+            path: ctx.path,
+            parent: ctx,
+            params: ctx.params,
+          })
           .then((base) => {
             if (!isValid(base)) return base;
             // if (base.status === "aborted") return INVALID;

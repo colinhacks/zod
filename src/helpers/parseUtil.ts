@@ -35,6 +35,7 @@ export type ParseParams = {
   path: (string | number)[];
   errorMap: ZodErrorMap;
   async: boolean;
+  params: unknown;
 };
 
 export type ParsePathComponent = string | number;
@@ -52,12 +53,15 @@ export interface ParseContext {
   readonly parent: ParseContext | null;
   readonly data: any;
   readonly parsedType: ZodParsedType;
+
+  readonly params?: unknown;
 }
 
 export type ParseInput = {
   data: any;
   path: (string | number)[];
   parent: ParseContext;
+  params?: unknown;
 };
 
 export function addIssueToContext(
