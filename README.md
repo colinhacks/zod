@@ -1880,7 +1880,7 @@ const fido: Dog = { name: "fido" };
 petCat(fido); // works fine
 ```
 
-In some cases, its can be desirable to simulate _nominal typing_ inside TypeScript. For instance, you may wish to write a function that only accepts an input that has been validated by Zod. This can be achieved with a _branded type_. These are also known as _opaque types_.
+In some cases, its can be desirable to simulate _nominal typing_ inside TypeScript. For instance, you may wish to write a function that only accepts an input that has been validated by Zod. This can be achieved with _branded types_ (AKA _opaque types_).
 
 ```ts
 const Cat = z.object({ name: z.string }).brand<"Cat">();

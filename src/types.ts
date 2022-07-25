@@ -3760,6 +3760,10 @@ export class ZodBranded<
       parent: ctx,
     });
   }
+
+  unwrap() {
+    return this._def.type;
+  }
 }
 
 export const custom = <T>(
