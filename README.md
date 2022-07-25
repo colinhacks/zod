@@ -243,17 +243,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table>
   <tr>
     <td align="center">
-      <a href="https://www.avanawallet.com/">
-        <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
-      </a>
-      <br />
-      <b>Avana Wallet</b>
-      <br/>
-      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
-      <span>Solana non-custodial wallet</span>
-      <br />
-    </td>
-    <td align="center">
       <a href="https://twitter.com/flybayer">
         <img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/>
       </a>
@@ -293,6 +282,17 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <b>Adaptable</b>
       <br/>
       <a href="https://adaptable.io/">adaptable.io</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://www.avanawallet.com/">
+        <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
+      </a>
+      <br />
+      <b>Avana Wallet</b>
+      <br/>
+      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
+      <span>Solana non-custodial wallet</span>
       <br />
     </td>
   </tr>
