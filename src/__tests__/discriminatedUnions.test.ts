@@ -27,8 +27,11 @@ test("valid - discriminator value of various primitive types", () => {
     z
       .object({ type: z.literal("transform"), val: z.literal(10) })
       .transform((val) => ({
-        val,
+        val: val.val,
       })),
+    z
+      .object({ type: z.literal("refine"), val: z.literal(11) })
+      .refine(() => true),
   ]);
 
   expect(schema.parse({ type: "1", val: 1 })).toEqual({ type: "1", val: 1 });
@@ -61,10 +64,13 @@ test("valid - discriminator value of various primitive types", () => {
     type: undefined,
     val: 9,
   });
-  // console.log("test");
-  // expect(schema.parse({ type: "transform", val: 10 })).toEqual({
-  //   val: 10,
-  // });
+  expect(schema.parse({ type: "transform", val: 10 })).toEqual({
+    val: 10,
+  });
+  expect(schema.parse({ type: "refine", val: 11 })).toEqual({
+    type: "refine",
+    val: 11,
+  });
 });
 
 test("invalid - null", () => {
