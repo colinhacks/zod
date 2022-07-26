@@ -1658,7 +1658,7 @@ ZodError {
 
 #### Dynamic refine
 
-To make refine having a dynamic behavior depending on runtime parameters, the refine function can optionaly take a params additional argument that represent the .parse method second optional argument. Here is an exemple:
+To make refine having a dynamic behavior depending on runtime parameters, the refine function can optionaly take a params additional argument that represent the .parse method argument "params". Here is an exemple:
 
 ```ts
 const objectWithRef = z.object({
@@ -1669,10 +1669,10 @@ const objectWithRef = z.object({
 
 const idList = ["a", "b"];
 
-const obj1 = objectWithRef.parse({ ref: "a" }, { idList });
+const obj1 = objectWithRef.parse({ ref: "a" }, { params: { idList } });
 // => {ref: 'a'}
 
-const obj2 = objectWithRef.parse({ ref: "c" }, { idList });
+const obj2 = objectWithRef.parse({ ref: "c" }, { params: { idList } });
 // => throws
 ```
 
@@ -1749,10 +1749,10 @@ const objectWithRef = z.object({
 
 const idList = ["a", "b"];
 
-const obj1 = objectWithRef.parse({ ref: "a" }, { idList });
+const obj1 = objectWithRef.parse({ ref: "a" }, { params: { idList } });
 // => {ref: 'a'}
 
-const obj2 = objectWithRef.parse({ ref: "c" }, { idList });
+const obj2 = objectWithRef.parse({ ref: "c" }, { params: { idList } });
 // => throws
 ```
 
@@ -1848,10 +1848,10 @@ const objectWithRef = z
 
 const elements = { a: "a data", b: "b data" };
 
-const obj1 = objectWithRef.parse({ ref: "a" }, { elements });
+const obj1 = objectWithRef.parse({ ref: "a" }, { params: { elements } });
 // => 'a data'
 
-const obj2 = objectWithRef.parse({ ref: "c" }, { elements });
+const obj2 = objectWithRef.parse({ ref: "c" }, { params: { elements } });
 // => throws
 ```
 
