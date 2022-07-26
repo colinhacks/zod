@@ -1656,6 +1656,26 @@ ZodError {
 }
 ``` -->
 
+#### Dynamic refine
+
+To make refine having a dynamic behavior depending on runtime parameters, the refine function can optionaly take a params additional argument that represent the .parse method second optional argument. Here is an exemple:
+
+```ts
+const objectWithRef = z.object({
+  ref: z.string().refine((val, params) => {
+    return params.idList.includes(val);
+  }),
+});
+
+const idList = ["a", "b"];
+
+const obj1 = objectWithRef.parse({ ref: "a" }, { idList });
+// => {ref: 'a'}
+
+const obj2 = objectWithRef.parse({ ref: "c" }, { idList });
+// => throws
+```
+
 ### `.superRefine`
 
 The `.refine` method is actually syntactic sugar atop a more versatile (and verbose) method called `superRefine`. Here's an example:
@@ -1709,6 +1729,31 @@ const Strings = z
       });
     }
   });
+```
+
+#### Dynamic superRefine
+
+Similarly to refine superRefine can access to the dynamic params argument in its ctx. Here is an exemple:
+
+```ts
+const objectWithRef = z.object({
+  ref: z.string().superRefine((val, ctx) => {
+    if (!ctx.params.idList.includes(val)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "invalid id",
+      });
+    }
+  }),
+});
+
+const idList = ["a", "b"];
+
+const obj1 = objectWithRef.parse({ ref: "a" }, { idList });
+// => {ref: 'a'}
+
+const obj2 = objectWithRef.parse({ ref: "c" }, { idList });
+// => throws
 ```
 
 ### `.transform`
@@ -1778,6 +1823,37 @@ const IdToUser = z
 ```
 
 > ⚠️ If your schema contains asynchronous transforms, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
+
+#### Dynamic transform
+
+Similarly to superRefine transform can access to the dynamic params argument in its ctx. Here is an exemple:
+
+```ts
+const objectWithRef = z
+  .object({
+    ref: z.string(),
+  })
+  .transform((val, ctx) => {
+    const elem = ctx.params.elements[val.ref];
+
+    if (!elem) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "invalid id",
+      });
+    }
+
+    return elem;
+  });
+
+const elements = { a: "a data", b: "b data" };
+
+const obj1 = objectWithRef.parse({ ref: "a" }, { elements });
+// => 'a data'
+
+const obj2 = objectWithRef.parse({ ref: "c" }, { elements });
+// => throws
+```
 
 ### `.default`
 
