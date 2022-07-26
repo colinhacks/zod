@@ -217,24 +217,28 @@ test("fatal superRefine", () => {
 });
 
 test("use param in superRefine", () => {
-  const objWithReference = z.object({
-    refId: z.string().superRefine((val, ctx) => {
-      if (!(ctx.params as string[]).includes(val)) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `No matching Id`,
-        });
-      }
-    }),
-  });
+  const objWithReference = z.union([
+    z.array(
+      z.object({
+        refId: z.string().superRefine((val, ctx) => {
+          if (!(ctx.params as string[]).includes(val)) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `No matching Id`,
+            });
+          }
+        }),
+      })
+    ),
+    z.string(),
+  ]);
 
-  const result = objWithReference.safeParse(
-    { refId: "c" },
-    { params: ["a", "b"] }
-  );
+  const result = objWithReference.safeParse([{ refId: "c" }], {
+    params: ["a", "b"],
+  });
 
   expect(result.success).toEqual(false);
   if (!result.success) expect(result.error.issues.length).toEqual(1);
 
-  objWithReference.parse({ refId: "b" }, { params: ["a", "b"] });
+  objWithReference.parse([{ refId: "b" }], { params: ["a", "b"] });
 });

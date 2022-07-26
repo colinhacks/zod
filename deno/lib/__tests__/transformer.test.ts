@@ -231,33 +231,33 @@ test("async short circuit on dirty", async () => {
 });
 
 test("transform with params", () => {
-  const objWithReference = z.object({
-    refId: z.string().transform((val, ctx) => {
-      const elem = (ctx.params as Record<string, string>)[val];
+  const objWithReference = z.array(
+    z.object({
+      refId: z.string().transform((val, ctx) => {
+        const elem = (ctx.params as Record<string, string>)[val];
 
-      if (!elem) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `No matching Id`,
-        });
-      }
+        if (!elem) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `No matching Id`,
+          });
+        }
 
-      return elem;
-    }),
-  });
-
-  const result = objWithReference.safeParse(
-    { refId: "c" },
-    { params: { a: "a data", b: "b data" } }
+        return elem;
+      }),
+    })
   );
+
+  const result = objWithReference.safeParse([{ refId: "c" }], {
+    params: { a: "a data", b: "b data" },
+  });
 
   expect(result.success).toEqual(false);
   if (!result.success) expect(result.error.issues.length).toEqual(1);
 
-  const result2 = objWithReference.parse(
-    { refId: "b" },
-    { params: { a: "a data", b: "b data" } }
-  );
+  const result2 = objWithReference.parse([{ refId: "b" }], {
+    params: { a: "a data", b: "b data" },
+  });
 
-  expect(result2.refId).toEqual("b data");
+  expect(result2[0].refId).toEqual("b data");
 });

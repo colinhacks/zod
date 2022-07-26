@@ -2113,6 +2113,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
               data: ctx.data,
               path: ctx.path,
               parent: childCtx,
+              params: ctx.params,
             }),
             ctx: childCtx,
           };
@@ -2135,6 +2136,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
           data: ctx.data,
           path: ctx.path,
           parent: childCtx,
+          params: ctx.params,
         });
 
         if (result.status === "valid") {
@@ -2247,12 +2249,14 @@ export class ZodDiscriminatedUnion<
         data: ctx.data,
         path: ctx.path,
         parent: ctx,
+        params: ctx.params,
       });
     } else {
       return option._parseSync({
         data: ctx.data,
         path: ctx.path,
         parent: ctx,
+        params: ctx.params,
       });
     }
   }
@@ -2433,11 +2437,13 @@ export class ZodIntersection<
           data: ctx.data,
           path: ctx.path,
           parent: ctx,
+          params: ctx.params,
         }),
         this._def.right._parseAsync({
           data: ctx.data,
           path: ctx.path,
           parent: ctx,
+          params: ctx.params,
         }),
       ]).then(([left, right]: any) => handleParsed(left, right));
     } else {
@@ -2446,11 +2452,13 @@ export class ZodIntersection<
           data: ctx.data,
           path: ctx.path,
           parent: ctx,
+          params: ctx.params,
         }),
         this._def.right._parseSync({
           data: ctx.data,
           path: ctx.path,
           parent: ctx,
+          params: ctx.params,
         })
       );
     }
@@ -3467,6 +3475,7 @@ export class ZodEffects<
             data: processed,
             path: ctx.path,
             parent: ctx,
+            params: ctx.params,
           });
         });
       } else {
@@ -3474,6 +3483,7 @@ export class ZodEffects<
           data: processed,
           path: ctx.path,
           parent: ctx,
+          params: ctx.params,
         });
       }
     }
@@ -3516,6 +3526,7 @@ export class ZodEffects<
           data: ctx.data,
           path: ctx.path,
           parent: ctx,
+          params: ctx.params,
         });
         if (inner.status === "aborted") return INVALID;
         if (inner.status === "dirty") status.dirty();
@@ -3525,7 +3536,12 @@ export class ZodEffects<
         return { status: status.value, value: inner.value };
       } else {
         return this._def.schema
-          ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
+          ._parseAsync({
+            data: ctx.data,
+            path: ctx.path,
+            parent: ctx,
+            params: ctx.params,
+          })
           .then((inner) => {
             if (inner.status === "aborted") return INVALID;
             if (inner.status === "dirty") status.dirty();
