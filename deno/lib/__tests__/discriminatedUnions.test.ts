@@ -33,6 +33,9 @@ test("valid - discriminator value of various primitive types", () => {
     z
       .object({ type: z.literal("refine"), val: z.literal(11) })
       .refine(() => true),
+    z
+      .object({ type: z.literal("superRefine"), val: z.literal(12) })
+      .superRefine(() => {}),
   ]);
 
   expect(schema.parse({ type: "1", val: 1 })).toEqual({ type: "1", val: 1 });
@@ -71,6 +74,10 @@ test("valid - discriminator value of various primitive types", () => {
   expect(schema.parse({ type: "refine", val: 11 })).toEqual({
     type: "refine",
     val: 11,
+  });
+  expect(schema.parse({ type: "superRefine", val: 12 })).toEqual({
+    type: "superRefine",
+    val: 12,
   });
 });
 
