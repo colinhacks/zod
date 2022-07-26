@@ -45,7 +45,7 @@ import {
 export type RefinementCtx = {
   addIssue: (arg: IssueData) => void;
   path: (string | number)[];
-  params?: unknown;
+  params?: any;
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
@@ -53,6 +53,47 @@ export type TypeOf<T extends ZodType<any, any, any>> = T["_output"];
 export type input<T extends ZodType<any, any, any>> = T["_input"];
 export type output<T extends ZodType<any, any, any>> = T["_output"];
 export type { TypeOf as infer };
+export { ZodEffects as ZodTransformer };
+export { ZodType as Schema, ZodType as ZodSchema };
+export {
+  anyType as any,
+  arrayType as array,
+  bigIntType as bigint,
+  booleanType as boolean,
+  dateType as date,
+  discriminatedUnionType as discriminatedUnion,
+  effectsType as effect,
+  enumType as enum,
+  functionType as function,
+  instanceOfType as instanceof,
+  intersectionType as intersection,
+  lazyType as lazy,
+  literalType as literal,
+  mapType as map,
+  nanType as nan,
+  nativeEnumType as nativeEnum,
+  neverType as never,
+  nullType as null,
+  nullableType as nullable,
+  numberType as number,
+  objectType as object,
+  oboolean,
+  onumber,
+  optionalType as optional,
+  ostring,
+  preprocessType as preprocess,
+  promiseType as promise,
+  recordType as record,
+  setType as set,
+  strictObjectType as strictObject,
+  stringType as string,
+  effectsType as transformer,
+  tupleType as tuple,
+  undefinedType as undefined,
+  unionType as union,
+  unknownType as unknown,
+  voidType as void,
+};
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
@@ -63,7 +104,7 @@ export interface ZodTypeDef {
 class ParseInputLazyPath implements ParseInput {
   parent: ParseContext;
   data: any;
-  params?: unknown;
+  params?: any;
   _path: ParsePath;
   _key: string | number | (string | number)[];
   constructor(
@@ -286,15 +327,15 @@ export abstract class ZodType<
   spa = this.safeParseAsync;
 
   refine<RefinedOutput extends Output>(
-    check: (arg: Output, params?: unknown) => arg is RefinedOutput,
+    check: (arg: Output, params?: any) => arg is RefinedOutput,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
   ): ZodEffects<this, RefinedOutput, RefinedOutput>;
   refine(
-    check: (arg: Output, params?: unknown) => unknown | Promise<unknown>,
+    check: (arg: Output, params?: any) => unknown | Promise<unknown>,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
   ): ZodEffects<this, Output, Input>;
   refine(
-    check: (arg: Output, params?: unknown) => unknown,
+    check: (arg: Output, params?: any) => unknown,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
   ): ZodEffects<this, Output, Input> {
     const getIssueProperties: any = (val: Output) => {
@@ -333,15 +374,15 @@ export abstract class ZodType<
   }
 
   refinement<RefinedOutput extends Output>(
-    check: (arg: Output, params?: unknown) => arg is RefinedOutput,
+    check: (arg: Output, params?: any) => arg is RefinedOutput,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
   ): ZodEffects<this, RefinedOutput, RefinedOutput>;
   refinement(
-    check: (arg: Output, params?: unknown) => boolean,
+    check: (arg: Output, params?: any) => boolean,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
   ): ZodEffects<this, Output, Input>;
   refinement(
-    check: (arg: Output, params?: unknown) => unknown,
+    check: (arg: Output, params?: any) => unknown,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
   ): ZodEffects<this, Output, Input> {
     return this._refinement((val, ctx) => {
@@ -3569,8 +3610,6 @@ export class ZodEffects<
   };
 }
 
-export { ZodEffects as ZodTransformer };
-
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 //////////                       //////////
@@ -3759,8 +3798,6 @@ export const custom = <T>(
   return ZodAny.create();
 };
 
-export { ZodType as Schema, ZodType as ZodSchema };
-
 export const late = {
   object: ZodObject.lazycreate,
 };
@@ -3873,43 +3910,3 @@ const preprocessType = ZodEffects.createWithPreprocess;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
-
-export {
-  anyType as any,
-  arrayType as array,
-  bigIntType as bigint,
-  booleanType as boolean,
-  dateType as date,
-  discriminatedUnionType as discriminatedUnion,
-  effectsType as effect,
-  enumType as enum,
-  functionType as function,
-  instanceOfType as instanceof,
-  intersectionType as intersection,
-  lazyType as lazy,
-  literalType as literal,
-  mapType as map,
-  nanType as nan,
-  nativeEnumType as nativeEnum,
-  neverType as never,
-  nullType as null,
-  nullableType as nullable,
-  numberType as number,
-  objectType as object,
-  oboolean,
-  onumber,
-  optionalType as optional,
-  ostring,
-  preprocessType as preprocess,
-  promiseType as promise,
-  recordType as record,
-  setType as set,
-  strictObjectType as strictObject,
-  stringType as string,
-  effectsType as transformer,
-  tupleType as tuple,
-  undefinedType as undefined,
-  unionType as union,
-  unknownType as unknown,
-  voidType as void,
-};
