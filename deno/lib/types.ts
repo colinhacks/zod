@@ -2137,7 +2137,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-export type ZodDiscriminatedUnionOption<
+export type ZodDiscriminatedUnionOptionBase<
   Discriminator extends string,
   DiscriminatorValue extends Primitive
 > = ZodObject<
@@ -2145,6 +2145,15 @@ export type ZodDiscriminatedUnionOption<
   any,
   any
 >;
+
+export type ZodDiscriminatedUnionOption<
+  Discriminator extends string,
+  DiscriminatorValue extends Primitive
+> =
+  | ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
+  | ZodEffects<
+      ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
+    >;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
@@ -2243,8 +2252,22 @@ export class ZodDiscriminatedUnion<
 
     try {
       types.forEach((type) => {
-        const discriminatorValue = type.shape[discriminator].value;
-        options.set(discriminatorValue, type);
+        if (type._def.typeName === ZodFirstPartyTypeKind.ZodObject) {
+          const discriminatorValue = (
+            type as ZodDiscriminatedUnionOptionBase<
+              Discriminator,
+              DiscriminatorValue
+            >
+          ).shape[discriminator].value;
+          options.set(discriminatorValue, type);
+        } else if (type._def.typeName === ZodFirstPartyTypeKind.ZodEffects) {
+          const discriminatorValue = (
+            type as ZodEffects<
+              ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
+            >
+          ).sourceType().shape[discriminator].value;
+          options.set(discriminatorValue, type);
+        }
       });
     } catch (e) {
       throw new Error(
@@ -3415,6 +3438,12 @@ export class ZodEffects<
 > extends ZodType<Output, ZodEffectsDef<T>, Input> {
   innerType() {
     return this._def.schema;
+  }
+
+  sourceType(): T {
+    return this._def.schema._def.typeName === ZodFirstPartyTypeKind.ZodEffects
+      ? (this._def.schema as unknown as ZodEffects<T>).sourceType()
+      : (this._def.schema as T);
   }
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
