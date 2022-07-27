@@ -2169,7 +2169,7 @@ function getSourceType<T extends ZodTypeAny>(type: T): ZodSourceType<T> {
   }
 }
 
-export type ZodDiscriminatedUnionOptionBase<
+type ZodDiscriminatedUnionOptionBase<
   Discriminator extends string,
   DiscriminatorValue extends Primitive
 > = ZodObject<
@@ -2178,12 +2178,21 @@ export type ZodDiscriminatedUnionOptionBase<
   any
 >;
 
+type ZodDiscriminatedUnionType<Discriminator extends string> = Record<
+  any,
+  any
+> & {
+  [key in Discriminator]: Primitive;
+};
+
 export type ZodDiscriminatedUnionOption<
   Discriminator extends string,
   DiscriminatorValue extends Primitive
-> = ZodOriginType<
-  ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
->;
+> =
+  | ZodOriginType<
+      ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
+    >
+  | ZodType<ZodDiscriminatedUnionType<Discriminator>, any, any>;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
@@ -2282,8 +2291,11 @@ export class ZodDiscriminatedUnion<
 
     try {
       types.forEach((type) => {
-        const discriminatorValue =
-          getSourceType(type).shape[discriminator].value;
+        const discriminatorValue = getSourceType(
+          type as ZodOriginType<
+            ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
+          >
+        ).shape[discriminator].value;
         options.set(discriminatorValue, type);
       });
     } catch (e) {

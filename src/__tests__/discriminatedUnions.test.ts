@@ -14,6 +14,11 @@ test("valid", () => {
 });
 
 test("valid - discriminator value of various primitive types", () => {
+  interface lazy {
+    type: "lazy typed";
+    val: 17;
+  }
+
   const schema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("1"), val: z.literal(1) }),
     z.object({ type: z.literal(1), val: z.literal(2) }),
@@ -58,6 +63,9 @@ test("valid - discriminator value of various primitive types", () => {
         val: val.val,
       }))
       .refine(() => true),
+    z.lazy(() =>
+      z.object({ type: z.literal("lazy typed"), val: z.literal(17) })
+    ) as z.ZodType<lazy>,
   ]);
 
   expect(schema.parse({ type: "1", val: 1 })).toEqual({ type: "1", val: 1 });
@@ -113,6 +121,10 @@ test("valid - discriminator value of various primitive types", () => {
   });
   expect(schema.parse({ type: "chained 3", val: 16 })).toEqual({
     val: 16,
+  });
+  expect(schema.parse({ type: "lazy typed", val: 17 })).toEqual({
+    type: "lazy typed",
+    val: 17,
   });
 });
 
