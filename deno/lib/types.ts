@@ -2179,7 +2179,7 @@ type ZodDiscriminatedUnionOptionBase<
 >;
 
 type ZodDiscriminatedUnionType<Discriminator extends string> = Record<
-  any,
+  string,
   any
 > & {
   [key in Discriminator]: Primitive;
@@ -2192,7 +2192,7 @@ export type ZodDiscriminatedUnionOption<
   | ZodOriginType<
       ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
     >
-  | ZodType<ZodDiscriminatedUnionType<Discriminator>, any, any>;
+  | ZodType<any, any, ZodDiscriminatedUnionType<Discriminator>>;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
