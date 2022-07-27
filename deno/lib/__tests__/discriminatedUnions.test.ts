@@ -36,6 +36,21 @@ test("valid - discriminator value of various primitive types", () => {
     z
       .object({ type: z.literal("superRefine"), val: z.literal(12) })
       .superRefine(() => {}),
+    z.lazy(() => z.object({ type: z.literal("lazy"), val: z.literal(13) })),
+    z.lazy(() =>
+      z
+        .object({ type: z.literal("chained 1"), val: z.literal(14) })
+        .transform((val) => ({
+          val: val.val,
+        }))
+    ),
+    z
+      .lazy(() =>
+        z.object({ type: z.literal("chained 2"), val: z.literal(15) })
+      )
+      .transform((val) => ({
+        val: val.val,
+      })),
   ]);
 
   expect(schema.parse({ type: "1", val: 1 })).toEqual({ type: "1", val: 1 });
@@ -78,6 +93,16 @@ test("valid - discriminator value of various primitive types", () => {
   expect(schema.parse({ type: "superRefine", val: 12 })).toEqual({
     type: "superRefine",
     val: 12,
+  });
+  expect(schema.parse({ type: "lazy", val: 13 })).toEqual({
+    type: "lazy",
+    val: 13,
+  });
+  expect(schema.parse({ type: "chained 1", val: 14 })).toEqual({
+    val: 14,
+  });
+  expect(schema.parse({ type: "chained 2", val: 15 })).toEqual({
+    val: 15,
   });
 });
 

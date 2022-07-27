@@ -18,7 +18,7 @@ import {
   ParsePath,
   ParseReturnType,
   ParseStatus,
-  SyncParseReturnType,
+  SyncParseReturnType
 } from "./helpers/parseUtil";
 import { partialUtil } from "./helpers/partialUtil";
 import { Primitive } from "./helpers/typeAliases";
@@ -30,7 +30,7 @@ import {
   ZodError,
   ZodErrorMap,
   ZodIssue,
-  ZodIssueCode,
+  ZodIssueCode
 } from "./ZodError";
 
 ///////////////////////////////////////
@@ -2137,6 +2137,34 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
+type ZodSourceType<T extends ZodTypeAny> = T extends ZodLazy<infer U>
+  ? ZodSourceType<U>
+  : T extends ZodEffects<infer U>
+  ? ZodSourceType<U>
+  : T;
+
+type ZodOriginType<T extends ZodTypeAny> =
+  | T
+  | ZodLazy<T>
+  | ZodEffects<T>
+  | ZodLazy<ZodEffects<T>>
+  | ZodEffects<ZodLazy<T>>;
+
+function getSourceType<T extends ZodTypeAny>(type: T): ZodSourceType<T> {
+  if (type._def.typeName === ZodFirstPartyTypeKind.ZodLazy) {
+    console.log("lazy");
+    return getSourceType(
+      (type as unknown as ZodLazy<ZodTypeAny>).schema
+    ) as ZodSourceType<T>;
+  } else if (type._def.typeName === ZodFirstPartyTypeKind.ZodEffects) {
+    return getSourceType(
+      (type as unknown as ZodEffects<ZodTypeAny>).sourceType()
+    ) as ZodSourceType<T>;
+  } else {
+    return type as ZodSourceType<T>;
+  }
+}
+
 export type ZodDiscriminatedUnionOptionBase<
   Discriminator extends string,
   DiscriminatorValue extends Primitive
@@ -2149,11 +2177,9 @@ export type ZodDiscriminatedUnionOptionBase<
 export type ZodDiscriminatedUnionOption<
   Discriminator extends string,
   DiscriminatorValue extends Primitive
-> =
-  | ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
-  | ZodEffects<
-      ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
-    >;
+> = ZodOriginType<
+  ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
+>;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
@@ -2252,22 +2278,9 @@ export class ZodDiscriminatedUnion<
 
     try {
       types.forEach((type) => {
-        if (type._def.typeName === ZodFirstPartyTypeKind.ZodObject) {
-          const discriminatorValue = (
-            type as ZodDiscriminatedUnionOptionBase<
-              Discriminator,
-              DiscriminatorValue
-            >
-          ).shape[discriminator].value;
-          options.set(discriminatorValue, type);
-        } else if (type._def.typeName === ZodFirstPartyTypeKind.ZodEffects) {
-          const discriminatorValue = (
-            type as ZodEffects<
-              ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
-            >
-          ).sourceType().shape[discriminator].value;
-          options.set(discriminatorValue, type);
-        }
+        const discriminatorValue =
+          getSourceType(type).shape[discriminator].value;
+        options.set(discriminatorValue, type);
       });
     } catch (e) {
       throw new Error(
