@@ -50,6 +50,14 @@ test("valid - discriminator value of various primitive types", () => {
       .transform((val) => ({
         val: val.val,
       })),
+    z
+      .lazy(() =>
+        z.object({ type: z.literal("chained 3"), val: z.literal(16) })
+      )
+      .transform((val) => ({
+        val: val.val,
+      }))
+      .refine(() => true),
   ]);
 
   expect(schema.parse({ type: "1", val: 1 })).toEqual({ type: "1", val: 1 });
@@ -102,6 +110,9 @@ test("valid - discriminator value of various primitive types", () => {
   });
   expect(schema.parse({ type: "chained 2", val: 15 })).toEqual({
     val: 15,
+  });
+  expect(schema.parse({ type: "chained 3", val: 16 })).toEqual({
+    val: 16,
   });
 });
 

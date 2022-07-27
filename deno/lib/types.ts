@@ -2143,12 +2143,16 @@ type ZodSourceType<T extends ZodTypeAny> = T extends ZodLazy<infer U>
   ? ZodSourceType<U>
   : T;
 
-type ZodOriginType<T extends ZodTypeAny> =
-  | T
-  | ZodLazy<T>
-  | ZodEffects<T>
-  | ZodLazy<ZodEffects<T>>
-  | ZodEffects<ZodLazy<T>>;
+type Prev = [never, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+type ZodOriginType<T extends ZodTypeAny, D extends Prev[number] = 9> = [
+  D
+] extends [never]
+  ? never
+  :
+      | T
+      | ZodEffects<ZodOriginType<T, Prev[D]>>
+      | ZodLazy<ZodOriginType<T, Prev[D]>>;
 
 function getSourceType<T extends ZodTypeAny>(type: T): ZodSourceType<T> {
   if (type._def.typeName === ZodFirstPartyTypeKind.ZodLazy) {
@@ -2196,9 +2200,9 @@ export class ZodDiscriminatedUnion<
   DiscriminatorValue extends Primitive,
   Option extends ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>
 > extends ZodType<
-  Option["_output"],
+  output<Option>,
   ZodDiscriminatedUnionDef<Discriminator, DiscriminatorValue, Option>,
-  Option["_input"]
+  input<Option>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
@@ -3446,8 +3450,8 @@ export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
 
 export class ZodEffects<
   T extends ZodTypeAny,
-  Output = T["_output"],
-  Input = T["_input"]
+  Output = output<T>,
+  Input = input<T>
 > extends ZodType<Output, ZodEffectsDef<T>, Input> {
   innerType() {
     return this._def.schema;
