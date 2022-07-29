@@ -2156,7 +2156,6 @@ type ZodOriginType<T extends ZodTypeAny, D extends Prev[number] = 9> = [
 
 function getSourceType<T extends ZodTypeAny>(type: T): ZodSourceType<T> {
   if (type._def.typeName === ZodFirstPartyTypeKind.ZodLazy) {
-    console.log("lazy");
     return getSourceType(
       (type as unknown as ZodLazy<ZodTypeAny>).schema
     ) as ZodSourceType<T>;
