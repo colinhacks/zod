@@ -7,6 +7,7 @@ const assertSerializeEqual = (x: any, y: any) => {
     expect(JSON.stringify(x)).toStrictEqual(JSON.stringify(y))
 }
 
+// These tests are actually unreliable (will pass even with the `.optional()` removed)
 test('Deep Partial on primitives', () => {
     assertSerializeEqual(
         z.deepPartialify(z.object({
