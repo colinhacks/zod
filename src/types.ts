@@ -1617,6 +1617,12 @@ export function deepPartialify<T extends ZodTypeAny>(
       ...schema._def,
       shape: () => newShape,
     }) as any;
+  } else if (schema instanceof ZodUnion) {
+    type Options = [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]];
+    const options = schema._def.options as Options;
+    return ZodUnion.create(
+      options.map((option) => deepPartialify(option)) as Options
+    ) as any;
   } else if (schema instanceof ZodArray) {
     return ZodArray.create(deepPartialify(schema.element)) as any;
   } else if (schema instanceof ZodOptional) {
