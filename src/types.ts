@@ -1623,6 +1623,27 @@ export function deepPartialify<T extends ZodTypeAny>(
     return ZodUnion.create(
       options.map((option) => deepPartialify(option)) as Options
     ) as any;
+  } else if (schema instanceof ZodDiscriminatedUnion) {
+    const types = Object.values(schema.options) as (AnyZodObject &
+      ZodRawShape)[];
+    const discriminator = schema.discriminator;
+    const newTypes = types.map((type) => {
+      const newShape: any = {};
+
+      for (const key in type.shape) {
+        const fieldSchema = type.shape[key];
+        if (key === discriminator) {
+          newShape[key] = fieldSchema;
+        } else {
+          newShape[key] = ZodOptional.create(deepPartialify(fieldSchema));
+        }
+      }
+      return new ZodObject({
+        ...schema._def,
+        shape: () => newShape,
+      });
+    }) as any;
+    return ZodDiscriminatedUnion.create(discriminator, newTypes) as any;
   } else if (schema instanceof ZodArray) {
     return ZodArray.create(deepPartialify(schema.element)) as any;
   } else if (schema instanceof ZodOptional) {
