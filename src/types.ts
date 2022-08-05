@@ -2224,6 +2224,7 @@ export class ZodDiscriminatedUnion<
       ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
       ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
       ...ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>[]
+      // TODO do I need to add a Intersection Type here ?
     ]
   >(
     discriminator: Discriminator,
@@ -2235,8 +2236,30 @@ export class ZodDiscriminatedUnion<
 
     try {
       types.forEach((type) => {
-        const discriminatorValue = type.shape[discriminator].value;
-        options.set(discriminatorValue, type);
+        if (type instanceof ZodIntersection) {
+          // @ts-ignore
+          if (
+            type._def.left instanceof ZodObject &&
+            !(type._def.right instanceof ZodObject)
+          ) {
+            // @ts-ignore
+            const discriminatorValue =
+              type._def.left.shape[discriminator].value;
+            options.set(discriminatorValue, type);
+            // @ts-ignore
+          } else if (
+            !(type._def.left instanceof ZodObject) &&
+            type._def.right instanceof ZodObject
+          ) {
+            // @ts-ignore
+            const discriminatorValue =
+              type._def.right.shape[discriminator].value;
+            options.set(discriminatorValue, type);
+          }
+        } else {
+          const discriminatorValue = type.shape[discriminator].value;
+          options.set(discriminatorValue, type);
+        }
       });
     } catch (e) {
       throw new Error(

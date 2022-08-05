@@ -59,6 +59,55 @@ test("valid - discriminator value of various primitive types", () => {
   });
 });
 
+test("valid - discriminator value when at least one discriminated schema is ZodIntersection", () => {
+  const union = z.discriminatedUnion("hasPropA", [
+    z.object({ hasPropA: z.literal(null) }),
+    z.object({ hasPropA: z.literal(true), propA: z.string().min(1) }),
+  ]);
+
+  const schema = z.discriminatedUnion("type", [
+    // @ts-ignore
+    z.object({ type: z.literal("intersection") }).and(union),
+    z.object({ type: z.literal("other"), propB: z.string().min(2) }),
+    z.object({ type: z.literal("more"), propC: z.number() }),
+  ]);
+
+  expect(schema.parse({ type: "intersection", hasPropA: null }));
+  expect(
+    schema.parse({ type: "intersection", hasPropA: true, propA: "test" })
+  );
+  expect(schema.parse({ type: "other", propB: "st" }));
+  expect(schema.parse({ type: "more", propC: 1 }));
+});
+
+test("valid discriminator value, invalid data when at least discriminated schema is ZodIntersection", () => {
+  const union = z.discriminatedUnion("hasPropA", [
+    z.object({ hasPropA: z.literal(null) }),
+    z.object({ hasPropA: z.literal(true), propA: z.string().min(1) }),
+  ]);
+
+  const schema = z.discriminatedUnion("type", [
+    // @ts-ignore
+    z.object({ type: z.literal("intersection") }).and(union),
+    z.object({ type: z.literal("other"), propB: z.string().min(2) }),
+    z.object({ type: z.literal("more"), propC: z.number() }),
+  ]);
+
+  try {
+    schema.parse({ type: "intersection" });
+    throw new Error();
+  } catch (e: any) {
+    expect(JSON.parse(e.message)).toEqual([
+      {
+        code: z.ZodIssueCode.invalid_union_discriminator,
+        message: "Invalid discriminator value. Expected  | true",
+        path: ["hasPropA"],
+        options: [null, true]
+      },
+    ]);
+  }
+});
+
 test("invalid - null", () => {
   try {
     z.discriminatedUnion("type", [
