@@ -72,7 +72,7 @@ test("first party switch", () => {
     case z.ZodFirstPartyTypeKind.ZodPromise:
       break;
     case z.ZodFirstPartyTypeKind.ZodAsyncIterable:
-        break;
+      break;
     default:
       util.assertNever(def);
   }
