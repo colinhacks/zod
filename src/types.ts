@@ -3405,6 +3405,10 @@ export class ZodAsyncIterable<T extends ZodTypeAny> extends ZodType<
     });
   }
 
+  get item() {
+    return this._def.type;
+  }
+
   static create = <T extends ZodTypeAny>(
     schema: T,
     params?: RawCreateParams

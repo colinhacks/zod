@@ -3,6 +3,7 @@ const test = Deno.test;
 
 import { util } from "../helpers/util.ts";
 import * as z from "../index.ts";
+import { ZodNumber, ZodString } from "../types.ts";
 
 const aiSchema = z.asyncIterable(
   z.object({
@@ -84,14 +85,23 @@ test("async generator function pass", async () => {
 
 test("async generator function fail", async () => {
   const validatedFunction = asyncIterableFunction.implement(async function* () {
-    yield 'hello' as any;
+    yield "hello" as any;
   });
-  await expect(asyncIterableToArray(validatedFunction())).rejects.toBeInstanceOf(z.ZodError);
+  await expect(
+    asyncIterableToArray(validatedFunction())
+  ).rejects.toBeInstanceOf(z.ZodError);
 });
 
 test("async parsing", async () => {
-  const res = await z.asyncIterable(z.number()).parseAsync((async function* () {
-    yield 12;
-  })());
-  expect(typeof res[Symbol.asyncIterator]).toBe('function')
+  const res = await z.asyncIterable(z.number()).parseAsync(
+    (async function* () {
+      yield 12;
+    })()
+  );
+  expect(typeof res[Symbol.asyncIterator]).toBe("function");
+});
+
+test("asyncIterable item schema", () => {
+  expect(aiSchema.item.shape.name).toBeInstanceOf(ZodString);
+  expect(aiSchema.item.shape.age).toBeInstanceOf(ZodNumber);
 });
