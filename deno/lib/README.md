@@ -328,6 +328,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
 - [`remix-domains`](https://github.com/SeasonedSoftware/remix-domains/): Improves end-to-end type safety in [Remix](https://remix.run/) by leveraging Zod to parse the framework's inputs such as FormData, URLSearchParams, etc.
 - [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
+- [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/master/packages/zod): Generate zod from static types & JSON schema.
 
 #### Form integrations
 
@@ -923,6 +924,42 @@ const deepPartialUser = user.deepPartial();
 ```
 
 > Important limitation: deep partials only work as expected in hierarchies of objects, arrays, and tuples.
+
+
+### `.required`
+
+Contrary to the `.partial` method, the `.required` method makes all properties required.
+
+Starting from this object:
+
+```ts
+const user = z.object({
+  email: z.string()
+  username: z.string(),
+}).partial();
+// { email?: string | undefined; username?: string | undefined }
+```
+
+We can create a required version:
+
+```ts
+const requiredUser = user.required();
+// { email: string; username: string }
+```
+
+You can also specify which properties to make required:
+
+```ts
+const requiredEmail = user.required({
+  email: true,
+});
+/*
+{
+  email: string;
+  username?: string | undefined;
+}
+*/
+```
 
 ### `.passthrough`
 
