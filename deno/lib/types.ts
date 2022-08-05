@@ -2129,7 +2129,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-export type ZodDiscriminatedUnionOption<
+export type ZodDiscriminatedUnionOptionBase<
   Discriminator extends string,
   DiscriminatorValue extends Primitive
 > = ZodObject<
@@ -2137,6 +2137,21 @@ export type ZodDiscriminatedUnionOption<
   any,
   any
 >;
+
+// the left or right side should also allow for a union/discriminatedUnion as long as they are ZodObject, right ?
+export type ZodDiscriminatedUnionOption<
+  Discriminator extends string,
+  DiscriminatorValue extends Primitive
+> =
+  | ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
+  | ZodIntersection<
+      ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>,
+      AnyZodObject
+    >
+  | ZodIntersection<
+      AnyZodObject,
+      ZodDiscriminatedUnionOptionBase<Discriminator, DiscriminatorValue>
+    >;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
@@ -2224,7 +2239,6 @@ export class ZodDiscriminatedUnion<
       ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
       ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
       ...ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>[]
-      // TODO do I need to add a Intersection Type here ?
     ]
   >(
     discriminator: Discriminator,
@@ -2237,21 +2251,17 @@ export class ZodDiscriminatedUnion<
     try {
       types.forEach((type) => {
         if (type instanceof ZodIntersection) {
-          // @ts-ignore
           if (
             type._def.left instanceof ZodObject &&
             !(type._def.right instanceof ZodObject)
           ) {
-            // @ts-ignore
             const discriminatorValue =
               type._def.left.shape[discriminator].value;
             options.set(discriminatorValue, type);
-            // @ts-ignore
           } else if (
             !(type._def.left instanceof ZodObject) &&
             type._def.right instanceof ZodObject
           ) {
-            // @ts-ignore
             const discriminatorValue =
               type._def.right.shape[discriminator].value;
             options.set(discriminatorValue, type);
