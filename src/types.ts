@@ -389,6 +389,9 @@ export abstract class ZodType<
   promise(): ZodPromise<this> {
     return ZodPromise.create(this);
   }
+  asyncIterable(): ZodAsyncIterable<this> {
+    return ZodAsyncIterable.create(this);
+  }
 
   or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
     return ZodUnion.create([this, option]) as any;
@@ -3349,6 +3352,71 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   };
 }
 
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                      //////////
+//////////  ZodAsyncIterableDef //////////
+//////////                      //////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+export interface ZodAsyncIterableDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  type: T;
+  typeName: ZodFirstPartyTypeKind.ZodAsyncIterable;
+}
+
+export class ZodAsyncIterable<T extends ZodTypeAny> extends ZodType<
+  AsyncIterable<T["_output"]>,
+  ZodAsyncIterableDef<T>,
+  AsyncIterable<T["_input"]>
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const { ctx } = this._processInputParams(input);
+    if (ctx.parsedType !== ZodParsedType.asyncIterable) {
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.promise,
+        received: ctx.parsedType,
+      });
+      return INVALID;
+    }
+
+    const data = ctx.data as AsyncIterable<unknown>;
+    return OK({
+      [Symbol.asyncIterator]: (): AsyncIterator<T["_output"]> => {
+        const baseIterator = data[Symbol.asyncIterator]();
+        return {
+          next: async (): Promise<IteratorResult<T["_output"]>> => {
+            const iteratorResult = await baseIterator.next();
+            if (iteratorResult.done) {
+              return iteratorResult;
+            }
+            const value = await this._def.type.parseAsync(
+              iteratorResult.value,
+              {
+                path: ctx.path,
+                errorMap: ctx.common.contextualErrorMap,
+              }
+            );
+            return { value };
+          },
+        };
+      },
+    });
+  }
+
+  static create = <T extends ZodTypeAny>(
+    schema: T,
+    params?: RawCreateParams
+  ): ZodAsyncIterable<T> => {
+    return new ZodAsyncIterable({
+      type: schema,
+      typeName: ZodFirstPartyTypeKind.ZodAsyncIterable,
+      ...processCreateParams(params),
+    });
+  };
+}
+
 //////////////////////////////////////////////
 //////////////////////////////////////////////
 //////////                          //////////
@@ -3771,6 +3839,7 @@ export enum ZodFirstPartyTypeKind {
   ZodNullable = "ZodNullable",
   ZodDefault = "ZodDefault",
   ZodPromise = "ZodPromise",
+  ZodAsyncIterable = "ZodAsyncIterable",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -3803,7 +3872,8 @@ export type ZodFirstPartySchemaTypes =
   | ZodOptional<any>
   | ZodNullable<any>
   | ZodDefault<any>
-  | ZodPromise<any>;
+  | ZodPromise<any>
+  | ZodAsyncIterable<any>;
 
 const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
@@ -3840,6 +3910,7 @@ const literalType = ZodLiteral.create;
 const enumType = ZodEnum.create;
 const nativeEnumType = ZodNativeEnum.create;
 const promiseType = ZodPromise.create;
+const asyncIterableType = ZodAsyncIterable.create;
 const effectsType = ZodEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
@@ -3851,6 +3922,7 @@ const oboolean = () => booleanType().optional();
 export {
   anyType as any,
   arrayType as array,
+  asyncIterableType as asyncIterable,
   bigIntType as bigint,
   booleanType as boolean,
   dateType as date,

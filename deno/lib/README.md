@@ -1349,6 +1349,37 @@ const test = async () => {
 
 When "parsing" a promise, Zod checks that the passed value is an object with `.then` and `.catch` methods — that's it. So you should be able to pass non-native Promises (Bluebird, etc) into `z.promise(...).parse` with no trouble. One gotcha: the return type of the parse function will be a _native_ `Promise` , so if you have downstream logic that uses non-standard Promise methods, this won't work. -->
 
+## AsyncIterables
+
+```ts
+const numberAsyncIterable = z.asyncIterable(z.number())
+```
+
+AsyncIterables' parsing works similarly to promise schemas. Validation happens in two parts:
+
+1. Zod synchronously checks that the input is an instance of AsyncIterable (i.e. an object with a `[Symbol.asyncIterable]()` method).
+2. Zod uses `[Symbol.asyncIterable]` to attach an additional validation step onto the existing AsyncIterable. You'll have to use `.catch` on the iterator result promise to handle validation failures.
+
+```ts
+numberAsyncIterable.parse("tuna");
+// ZodError: Non-AsyncIterable type: string
+
+numberAsyncIterable.parse((async function*() { yield "tuna" })());
+// => AsyncIterable<number>
+
+const test = async () => {
+  const badIterable = numberAsyncIterable.parse((async function*() { yield "tuna" })());
+  for await (const val of badIterable) {
+    // ZodError: Non-number type: string
+  }
+
+  const goodIterable = numberPromise.parse((async function*() { yield 3.14 })());
+  for await (const val of goodIterable) {
+    // val === 3.14
+  }
+  
+};
+
 ## Instanceof
 
 You can use `z.instanceof` to check that the input is an instance of a class. This is useful to validate inputs against classes that are exported from third-party libraries.

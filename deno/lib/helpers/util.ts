@@ -106,6 +106,7 @@ export const ZodParsedType = util.arrayToEnum([
   "never",
   "map",
   "set",
+  "asyncIterable"
 ]);
 
 export type ZodParsedType = keyof typeof ZodParsedType;
@@ -152,6 +153,9 @@ export const getParsedType = (data: any): ZodParsedType => {
       }
       if (typeof Set !== "undefined" && data instanceof Set) {
         return ZodParsedType.set;
+      }
+      if (typeof data[Symbol.asyncIterator] === 'function') {
+        return ZodParsedType.asyncIterable;
       }
       if (typeof Date !== "undefined" && data instanceof Date) {
         return ZodParsedType.date;
