@@ -3851,7 +3851,8 @@ export type ZodFirstPartySchemaTypes =
   | ZodOptional<any>
   | ZodNullable<any>
   | ZodDefault<any>
-  | ZodPromise<any>;
+  | ZodPromise<any>
+  | ZodClassInstance<any>;
 
 const instanceOfType = ZodClassInstance.create;
 const stringType = ZodString.create;
