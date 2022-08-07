@@ -27,6 +27,12 @@ test("instanceof", async () => {
   expect(f1).toBeTruthy();
 });
 
+test("instanceof get class", async () => {
+  class Test {}
+  const TestSchema = z.instanceof(Test);
+  expect(TestSchema.class).toBe(Test);
+});
+
 test("instanceof fatal", () => {
   const schema = z.instanceof(Date).refine((d) => d.toString());
   const res = schema.safeParse(null);

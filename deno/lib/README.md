@@ -1365,6 +1365,11 @@ TestSchema.parse(new Test()); // passes
 TestSchema.parse("blob"); // throws
 ```
 
+Use `.class` to get the class constructor.
+```ts
+TestSchema.class // => Test
+```
+
 ## Function schemas
 
 Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".
