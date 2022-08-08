@@ -32,15 +32,15 @@ test("function inference 1", () => {
 test("args method", () => {
   const t1 = z.function();
   type t1 = z.infer<typeof t1>;
-  util.assertEqual<t1, () => void>(true);
+  util.assertEqual<t1, (...args_1: unknown[]) => unknown>(true);
 
   const t2 = t1.args(z.string());
   type t2 = z.infer<typeof t2>;
-  util.assertEqual<t2, (arg: string) => void>(true);
+  util.assertEqual<t2, (arg: string, ...args_1: unknown[]) => unknown>(true);
 
   const t3 = t2.returns(z.boolean());
   type t3 = z.infer<typeof t3>;
-  util.assertEqual<t3, (arg: string) => boolean>(true);
+  util.assertEqual<t3, (arg: string, ...args_1: unknown[]) => boolean>(true);
 });
 
 const args2 = z.tuple([
@@ -219,7 +219,7 @@ test("inference with transforms", () => {
 
   util.assertEqual<
     typeof myFunc,
-    (arg: string) => { val: number; extra: string }
+    (arg: string, ...args_1: unknown[]) => { val: number; extra: string }
   >(true);
 });
 
@@ -233,5 +233,8 @@ test("fallback to OuterTypeOfFunction", () => {
     return { arg: val, arg2: false };
   });
 
-  util.assertEqual<typeof myFunc, (arg: string) => number>(true);
+  util.assertEqual<
+    typeof myFunc,
+    (arg: string, ...args_1: unknown[]) => number
+  >(true);
 });

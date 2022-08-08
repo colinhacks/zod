@@ -12,6 +12,5 @@ test("void", () => {
   expect(() => v.parse("")).toThrow();
 
   type v = z.infer<typeof v>;
-  const t1: util.AssertEqual<v, void> = true;
-  t1;
+  util.assertEqual<v, void>(true);
 });

@@ -23,8 +23,7 @@ test("instanceof", async () => {
     /Input not instance of Test/
   );
 
-  const f1: util.AssertEqual<Test, z.infer<typeof TestSchema>> = true;
-  expect(f1).toBeTruthy();
+  util.assertEqual<Test, z.infer<typeof TestSchema>>(true);
 });
 
 test("instanceof fatal", () => {

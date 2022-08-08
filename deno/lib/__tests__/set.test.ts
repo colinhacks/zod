@@ -16,8 +16,7 @@ const nonEmpty = z.set(z.string()).nonempty();
 const nonEmptyMax = z.set(z.string()).nonempty().max(2);
 
 test("type inference", () => {
-  const f1: util.AssertEqual<stringSet, Set<string>> = true;
-  f1;
+  util.assertEqual<stringSet, Set<string>>(true);
 });
 
 test("valid parse", () => {
