@@ -3740,7 +3740,7 @@ export interface ZodBrandedDef<T extends ZodTypeAny> extends ZodTypeDef {
 }
 
 export const BRAND: unique symbol = Symbol("zod_brand");
-type Brand<T extends string | number | symbol> = {
+export type BRAND<T extends string | number | symbol> = {
   [BRAND]: { [k in T]: true };
 };
 
@@ -3748,9 +3748,9 @@ export class ZodBranded<
   T extends ZodTypeAny,
   B extends string | number | symbol
 > extends ZodType<
-  T["_output"] & Brand<B>,
+  T["_output"] & BRAND<B>,
   ZodBrandedDef<T>,
-  T["_input"] & Brand<B>
+  T["_input"] & BRAND<B>
 > {
   _parse(input: ParseInput): ParseReturnType<any> {
     const { ctx } = this._processInputParams(input);
