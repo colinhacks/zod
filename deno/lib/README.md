@@ -328,6 +328,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
 - [`remix-domains`](https://github.com/SeasonedSoftware/remix-domains/): Improves end-to-end type safety in [Remix](https://remix.run/) by leveraging Zod to parse the framework's inputs such as FormData, URLSearchParams, etc.
 - [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
+- [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/master/packages/zod): Generate zod from static types & JSON schema.
 
 #### Form integrations
 
@@ -588,7 +589,7 @@ z.date().max(new Date(), { message: "Too young!" });
 
 **Supporting date strings**
 
-To write a schema that accepts either a `Date` or a date string, use (`z.preprocess`)[#preprocess].
+To write a schema that accepts either a `Date` or a date string, use [`z.preprocess`](#preprocess).
 
 ```ts
 const dateSchema = z.preprocess((arg) => {

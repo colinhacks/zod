@@ -589,7 +589,7 @@ z.date().max(new Date(), { message: "Too young!" });
 
 **Supporting date strings**
 
-To write a schema that accepts either a `Date` or a date string, use (`z.preprocess`)[#preprocess].
+To write a schema that accepts either a `Date` or a date string, use [`z.preprocess`](#preprocess).
 
 ```ts
 const dateSchema = z.preprocess((arg) => {
