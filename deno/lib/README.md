@@ -47,7 +47,7 @@
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
 - [Installation](#installation)
-  - [Node/npm](#Node/npm)
+  - [Node/npm](#nodenpm)
   - [Deno](#deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
