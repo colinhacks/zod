@@ -13,32 +13,28 @@ test("branded types", () => {
 
   // simple branding
   type MySchema = z.infer<typeof mySchema>;
-  const f1: util.AssertEqual<
+  util.assertEqual<
     MySchema,
     { name: string } & { [z.BRAND]: { superschema: true } }
-  > = true;
-  f1;
+  >(true);
+
   const doStuff = (arg: MySchema) => arg;
   doStuff(mySchema.parse({ name: "hello there" }));
 
   // inheritance
   const extendedSchema = mySchema.brand<"subschema">();
   type ExtendedSchema = z.infer<typeof extendedSchema>;
-  const f2: util.AssertEqual<
+  util.assertEqual<
     ExtendedSchema,
-    { name: string } & { [z.BRAND]: { superschema: true; subschema: true } }
-  > = true;
-  f2;
+    { name: string } & z.BRAND<"superschema"> & z.BRAND<"subschema">
+  >(true);
+
   doStuff(extendedSchema.parse({ name: "hello again" }));
 
   // number branding
   const numberSchema = z.number().brand<42>();
   type NumberSchema = z.infer<typeof numberSchema>;
-  const f3: util.AssertEqual<
-    NumberSchema,
-    number & { [z.BRAND]: { 42: true } }
-  > = true;
-  f3;
+  util.assertEqual<NumberSchema, number & { [z.BRAND]: { 42: true } }>(true);
 
   // symbol branding
   const MyBrand: unique symbol = Symbol("hello");
@@ -46,11 +42,9 @@ test("branded types", () => {
   const symbolBrand = z.number().brand<"sup">().brand<typeof MyBrand>();
   type SymbolBrand = z.infer<typeof symbolBrand>;
   // number & { [z.BRAND]: { sup: true, [MyBrand]: true } }
-  const f4: util.AssertEqual<
-    SymbolBrand,
-    number & { [z.BRAND]: { sup: true; [MyBrand]: true } }
-  > = true;
-  f4;
+  util.assertEqual<SymbolBrand, number & z.BRAND<"sup"> & z.BRAND<MyBrand>>(
+    true
+  );
 
   // @ts-expect-error
   doStuff({ name: "hello there!" });
