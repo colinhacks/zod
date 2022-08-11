@@ -799,7 +799,7 @@ Dog.shape.age; // => number schema
 
 ### `.keyof`
 
-Use `.key` to create a `ZodEnum` schema from the keys of an object schema.
+Use `.keyof` to create a `ZodEnum` schema from the keys of an object schema.
 
 ```ts
 const keySchema = Dog.keyof();
