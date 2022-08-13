@@ -24,8 +24,7 @@ test("shallow inference", () => {
     outer?: { inner: string } | undefined;
     array?: { asdf: string }[];
   };
-  const t1: util.AssertEqual<shallow, correct> = true;
-  t1;
+  util.assertEqual<shallow, correct>(true);
 });
 
 test("shallow partial parse", () => {
@@ -49,8 +48,7 @@ test("deep partial inference", () => {
     outer?: { inner?: string | undefined } | undefined;
   };
 
-  const t1: util.AssertEqual<deep, correct> = true;
-  t1;
+  util.assertEqual<deep, correct>(true);
 });
 
 test("deep partial parse", () => {
@@ -130,8 +128,7 @@ test("deep partial inference", () => {
       | undefined;
     tuple?: [{ value?: string }] | undefined;
   };
-  const f1: util.AssertEqual<expected, partialed> = true;
-  f1;
+  util.assertEqual<expected, partialed>(true);
 });
 
 test("required", () => {

@@ -22,7 +22,7 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://www.npmjs.com/package/zod">NPM</a>
+  <a href="https://www.npmjs.com/package/zod">npm</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -47,7 +47,7 @@
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
 - [Installation](#installation)
-  - [Node](#node)
+  - [Node/npm](#nodenpm)
   - [Deno](#deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
@@ -63,6 +63,7 @@
 - [Nullables](#nullables)
 - [Objects](#objects)
   - [.shape](#shape)
+  - [.enum](#enum)
   - [.extend](#extend)
   - [.merge](#merge)
   - [.pick/.omit](#pickomit)
@@ -89,6 +90,7 @@
 - [Instanceof](#instanceof)
 - [Function schemas](#function-schemas)
 - [Preprocess](#preprocess)
+- [Branded types](#branded-types)
 - [Schema methods](#schema-methods)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
@@ -227,7 +229,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://seasoned.cc">seasoned.cc</a>
     </td>
     <td align="center">
-      <a href="https://seasoned.cc">
+      <a href="https://interval.com">
         <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
       </a>
       <br />
@@ -284,6 +286,17 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://adaptable.io/">adaptable.io</a>
       <br />
     </td>
+    <td align="center">
+      <a href="https://www.avanawallet.com/">
+        <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
+      </a>
+      <br />
+      <b>Avana Wallet</b>
+      <br/>
+      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
+      <span>Solana non-custodial wallet</span>
+      <br />
+    </td>
   </tr>
 </table>
 
@@ -314,6 +327,10 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas dynamically and provides GraphQL method decorators working with Zod schemas.
+- [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
+- [`remix-domains`](https://github.com/SeasonedSoftware/remix-domains/): Improves end-to-end type safety in [Remix](https://remix.run/) by leveraging Zod to parse the framework's inputs such as FormData, URLSearchParams, etc.
+- [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
+- [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/master/packages/zod): Generate zod from static types & JSON schema.
 
 #### Form integrations
 
@@ -339,7 +356,7 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### Node/NPM
+### Node/npm
 
 To install Zod v3:
 
@@ -351,7 +368,7 @@ pnpm add zod          # pnpm
 
 ### Deno
 
-Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](deno.land/x). The latest version can be imported like so:
+Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](https://deno.land/x). The latest version can be imported like so:
 
 ```ts
 import { z } from "https://deno.land/x/zod/mod.ts";
@@ -360,10 +377,10 @@ import { z } from "https://deno.land/x/zod/mod.ts";
 You can also specify a particular version:
 
 ```ts
-import { z } from from "https://deno.land/x/zod@v3.16.1/mod.ts"
+import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
 ```
 
-> The rest of this README assumes you are using NPM and importing directly from the `"zod"` package.
+> The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
 
 ## Basic usage
 
@@ -438,7 +455,7 @@ const tru = z.literal(true);
 tuna.value; // "tuna"
 ```
 
-> Currently there is no support for Date or bigint literals in Zod. If you have a use case for this feature, please file an issue.
+> Currently there is no support for Date literals in Zod. If you have a use case for this feature, please file an issue.
 
 ## Strings
 
@@ -453,6 +470,8 @@ z.string().url();
 z.string().uuid();
 z.string().cuid();
 z.string().regex(regex);
+z.string().startsWith(string);
+z.string().endsWith(string);
 
 // trim whitespace
 z.string().trim();
@@ -484,6 +503,8 @@ z.string().length(5, { message: "Must be exactly 5 characters long" });
 z.string().email({ message: "Invalid email address" });
 z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().startsWith("https://", { message: "Must provide secure URL" });
+z.string().endsWith(".com", { message: "Only .com domains allowed" });
 ```
 
 ## Numbers
@@ -545,14 +566,32 @@ const isActive = z.boolean({
 
 ## Dates
 
-z.date() accepts a date, not a date string
+Use z.date() to validate `Date` instances.
 
 ```ts
 z.date().safeParse(new Date()); // success: true
 z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
 ```
 
-To allow for dates or date strings, you can use preprocess
+You can customize certain error messages when creating a date schema.
+
+```ts
+const myDateSchema = z.date({
+  required_error: "Please select a date and time",
+  invalid_type_error: "That's not a date!",
+});
+```
+
+Zod provides a handful of date-specific validations.
+
+```ts
+z.date().min(new Date("1900-01-01"), { message: "Too old" });
+z.date().max(new Date(), { message: "Too young!" });
+```
+
+**Supporting date strings**
+
+To write a schema that accepts either a `Date` or a date string, use [`z.preprocess`](#preprocess).
 
 ```ts
 const dateSchema = z.preprocess((arg) => {
@@ -757,6 +796,15 @@ Use `.shape` to access the schemas for a particular key.
 ```ts
 Dog.shape.name; // => string schema
 Dog.shape.age; // => number schema
+```
+
+### `.keyof`
+
+Use `.key` to create a `ZodEnum` schema from the keys of an object schema.
+
+```ts
+const keySchema = Dog.keyof();
+keySchema; // ZodEnum<["name", "age"]>
 ```
 
 ### `.extend`
@@ -1419,7 +1467,7 @@ All Zod schemas contain certain methods.
 
 ### `.parse`
 
-`.parse(data:unknown): T`
+`.parse(data: unknown): T`
 
 Given any Zod schema, you can call its `.parse` method to check `data` is valid. If it is, a value is returned with full type information! Otherwise, an error is thrown.
 
@@ -1680,7 +1728,7 @@ const Strings = z
 To transform data after parsing, use the `transform` method.
 
 ```ts
-const stringToNumber = z.string().transform((val) => myString.length);
+const stringToNumber = z.string().transform((val) => val.length);
 stringToNumber.parse("string"); // => 6
 ```
 
@@ -1873,7 +1921,7 @@ z.optional(z.string());
 
 ### `.nullable`
 
-A convenience method that returns an nullable version of a schema.
+A convenience method that returns a nullable version of a schema.
 
 ```ts
 const nullableString = z.string().nullable(); // string | null
@@ -1936,6 +1984,47 @@ z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: st
 // equivalent to
 z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 ```
+
+### `.brand`
+
+`.brand<T>() => ZodBranded<this, B>`
+
+TypeScript's type system is structural, which means that any two types that are structurally equivalent are considered the same.
+
+```ts
+type Cat = { name: string };
+type Dog = { name: string };
+
+const petCat = (cat: Cat) => {};
+const fido: Dog = { name: "fido" };
+petCat(fido); // works fine
+```
+
+In some cases, its can be desirable to simulate _nominal typing_ inside TypeScript. For instance, you may wish to write a function that only accepts an input that has been validated by Zod. This can be achieved with _branded types_ (AKA _opaque types_).
+
+```ts
+const Cat = z.object({ name: z.string }).brand<"Cat">();
+type Cat = z.infer<typeof Cat>;
+
+const petCat = (cat: Cat) => {};
+
+// this works
+const simba = Cat.parse({ name: "simba" });
+petCat(simba);
+
+// this doesn't
+petCat({ name: "fido" });
+```
+
+Under the hood, this works by attaching a "brand" to the inferred type using an intersection type. This way, plain/unbranded data structures are no longer assignable to the inferred type of the schema.
+
+```ts
+const Cat = z.object({ name: z.string }).brand<"Cat">();
+type Cat = z.infer<typeof Cat>;
+// {name: string} & {[symbol]: "Cat"}
+```
+
+Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
 
 ## Guides and concepts
 
@@ -2129,13 +2218,13 @@ Branded -->
 * Missing support for parsing cyclical data (maybe)
 * Missing error customization -->
 
-**Joi**
+### Joi
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
 Doesn't support static type inference 😕
 
-**Yup**
+### Yup
 
 [https://github.com/jquense/yup](https://github.com/jquense/yup)
 
@@ -2151,7 +2240,7 @@ Yup is a full-featured library that was implemented first in vanilla JS, and lat
 
 <!-- ¹Yup has a strange interpretation of the word `required`. Instead of meaning "not undefined", Yup uses it to mean "not empty". So `yup.string().required()` will not accept an empty string, and `yup.array(yup.string()).required()` will not accept an empty array. Instead, Yup us Zod arrays there is a dedicated `.nonempty()` method to indicate this, or you can implement it with a custom refinement. -->
 
-**io-ts**
+### io-ts
 
 [https://github.com/gcanti/io-ts](https://github.com/gcanti/io-ts)
 
@@ -2202,7 +2291,7 @@ This more declarative API makes schema definitions vastly more concise.
 - Missing promise schemas
 - Missing function schemas
 
-**Runtypes**
+### Runtypes
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
@@ -2215,7 +2304,7 @@ Good type inference support, but limited options for object type masking (no `.p
 - Missing promise schemas
 - Missing error customization
 
-**Ow**
+### Ow
 
 [https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
 

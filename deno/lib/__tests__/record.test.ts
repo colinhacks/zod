@@ -18,19 +18,17 @@ const recordWithLiteralKeys = z.record(
 type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
 
 test("type inference", () => {
-  const f1: util.AssertEqual<booleanRecord, Record<string, boolean>> = true;
-  f1;
+  util.assertEqual<booleanRecord, Record<string, boolean>>(true);
 
-  const f2: util.AssertEqual<
+  util.assertEqual<
     recordWithEnumKeys,
     Partial<Record<"Tuna" | "Salmon", string>>
-  > = true;
-  f2;
-  const f3: util.AssertEqual<
+  >(true);
+
+  util.assertEqual<
     recordWithLiteralKeys,
     Partial<Record<"Tuna" | "Salmon", string>>
-  > = true;
-  f3;
+  >(true);
 });
 
 test("methods", () => {

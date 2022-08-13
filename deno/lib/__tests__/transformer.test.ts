@@ -159,10 +159,8 @@ test("object typing", () => {
   type t1 = z.input<typeof t1>;
   type t2 = z.output<typeof t1>;
 
-  const f1: util.AssertEqual<t1, { stringToNumber: string }> = true;
-  const f2: util.AssertEqual<t2, { stringToNumber: number }> = true;
-  f1;
-  f2;
+  util.assertEqual<t1, { stringToNumber: string }>(true);
+  util.assertEqual<t2, { stringToNumber: number }>(true);
 });
 
 test("transform method overloads", () => {

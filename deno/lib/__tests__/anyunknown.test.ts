@@ -10,8 +10,7 @@ test("check any inference", () => {
   t1.optional();
   t1.nullable();
   type t1 = z.infer<typeof t1>;
-  const f1: util.AssertEqual<t1, any> = true;
-  expect(f1).toBeTruthy();
+  util.assertEqual<t1, any>(true);
 });
 
 test("check unknown inference", () => {
@@ -19,8 +18,7 @@ test("check unknown inference", () => {
   t1.optional();
   t1.nullable();
   type t1 = z.infer<typeof t1>;
-  const f1: util.AssertEqual<t1, unknown> = true;
-  expect(f1).toBeTruthy();
+  util.assertEqual<t1, unknown>(true);
 });
 
 test("check never inference", () => {

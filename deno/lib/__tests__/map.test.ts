@@ -10,8 +10,7 @@ const stringMap = z.map(z.string(), z.string());
 type stringMap = z.infer<typeof stringMap>;
 
 test("type inference", () => {
-  const f1: util.AssertEqual<stringMap, Map<string, string>> = true;
-  f1;
+  util.assertEqual<stringMap, Map<string, string>>(true);
 });
 
 test("valid parse", () => {

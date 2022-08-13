@@ -264,6 +264,17 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
       <a href="https://adaptable.io/">adaptable.io</a>
       <br />
     </td>
+    <td align="center">
+      <a href="https://www.avanawallet.com/">
+        <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
+      </a>
+      <br />
+      <b>Avana Wallet</b>
+      <br/>
+      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
+      <span>Solana non-custodial wallet</span>
+      <br />
+    </td>
   </tr>
 </table>
 
@@ -391,6 +402,8 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().regex(regex);
+z.string().startsWith(string);
+z.string().endsWith(string);
 
 // 已废弃，等同于 .min(1)
 z.string().nonempty();
@@ -409,6 +422,8 @@ z.string().length(5, { message: "Must be exactly 5 characters long" });
 z.string().email({ message: "Invalid email address." });
 z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().startsWith("https://", { message: "Must provide secure URL" });
+z.string().endsWith(".com", { message: "Only .com domains allowed" });
 ```
 
 ## Numbers
@@ -435,6 +450,20 @@ z.number().multipleOf(5); // x % 5 === 0
 
 ```ts
 z.number().max(5, { message: "this👏is👏too👏big" });
+```
+
+## Dates
+
+```ts
+z.date().safeParse(new Date()); // success: true
+
+z.date({
+  required_error: "Please select a date and time",
+  invalid_type_error: "That's not a date!",
+});
+
+z.date().min(new Date("1900-01-01"), { message: "Too old" });
+z.date().max(new Date(), { message: "Too young!" });
 ```
 
 ## Objects
@@ -555,9 +584,9 @@ const user = z.object({
 
 const deepPartialUser = user.deepPartial();
 
-/* 
+/*
 {
-  username?: string | undefined, 
+  username?: string | undefined,
   location?: {
     latitude?: number | undefined;
     longitude?: number | undefined;
@@ -884,12 +913,12 @@ const FishEnum = z.enum(fish);
 FishEnum.enum.Salmon; // => 自动补全
 
 FishEnum.enum;
-/* 
+/*
 => {
   Salmon: "Salmon",
   Tuna: "Tuna",
   Trout: "Trout",
-} 
+}
 */
 ```
 

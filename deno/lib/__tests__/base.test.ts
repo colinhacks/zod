@@ -13,11 +13,10 @@ test("type guard", () => {
   });
   type t1 = z.input<typeof s1>;
 
-  const data: any = "asdf";
+  const data = { stringToNumber: "asdf" };
   const parsed = s1.safeParse(data);
   if (parsed.success) {
-    const f1: util.AssertEqual<typeof data, t1> = true;
-    f1;
+    util.assertEqual<typeof data, t1>(true);
   }
 });
 
