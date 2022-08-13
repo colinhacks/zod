@@ -3,20 +3,9 @@
   "transform": {
     "^.+\\.tsx?$": "ts-jest"
   },
-  "testRegex": "src/.*\\.test\\.ts$",
-  "moduleFileExtensions": [
-    "ts",
-    "tsx",
-    "js",
-    "jsx",
-    "json",
-    "node"
-  ],
-  "coverageReporters": [
-    "json-summary",
-    "text",
-    "lcov"
-  ],
+  "testRegex": "src/__tests__/.*\\.test\\.ts$",
+  "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"],
+  "coverageReporters": ["json-summary", "text", "lcov"],
   "globals": {
     "ts-jest": {
       "tsconfig": "tsconfig.json"
