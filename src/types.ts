@@ -1638,6 +1638,14 @@ function deepPartialify(schema: ZodTypeAny): any {
   }
 }
 
+export function keyof<T extends ZodRawShape>(
+  schema: ZodObject<T, any, any, any, any>
+): ZodEnum<enumUtil.UnionToTupleString<keyof T>> {
+  return createZodEnum(
+    util.objectKeys(schema.shape) as [string, ...string[]]
+  ) as any;
+}
+
 export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = "strip",
@@ -1939,12 +1947,6 @@ export class ZodObject<
       ...this._def,
       shape: () => newShape,
     }) as any;
-  }
-
-  keyof(): ZodEnum<enumUtil.UnionToTupleString<keyof T>> {
-    return createZodEnum(
-      util.objectKeys(this.shape) as [string, ...string[]]
-    ) as any;
   }
 
   static create = <T extends ZodRawShape>(
