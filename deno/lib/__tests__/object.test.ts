@@ -365,3 +365,19 @@ test("constructor key", () => {
   type Example = z.infer<typeof Example>;
   util.assertEqual<keyof Example, "prop" | "opt" | "arr">(true);
 });
+
+test("structural assignability", () => {
+  // See: https://github.com/colinhacks/zod/issues/1292
+
+  // The `{ foo: string }` intersection is necessary for this to fail for some reason.  The issue
+  // linked above explains.
+  type superset = { foo: string } & z.ZodObject<{
+    prop1: z.ZodString;
+    prop2: z.ZodNumber;
+  }>;
+
+  type subset = z.ZodObject<{ prop1: z.ZodString }>;
+
+  util.assertAssignable<superset, subset>(true);
+  util.assertAssignable<subset, superset>(false);
+});
