@@ -5,7 +5,11 @@ export namespace util {
     ? true
     : false;
 
+  // Checks that `T` is assignable to `U`.
+  type AssertAssignable<T, U> = T extends U ? true : false;
+
   export const assertEqual = <A, B>(val: AssertEqual<A, B>) => val;
+  export const assertAssignable = <A, B>(val: AssertAssignable<A, B>) => val;
   export function assertIs<T>(_arg: T): void {}
   export function assertNever(_x: never): never {
     throw new Error();
