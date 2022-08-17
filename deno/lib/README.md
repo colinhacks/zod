@@ -43,10 +43,16 @@
 
 #### Go to [zod.js.org](https://zod.js.org) >> -->
 
+- [Table of contents](#table-of-contents)
 - [Introduction](#introduction)
   - [Sponsors](#sponsors)
+    - [Gold](#gold)
+    - [Silver](#silver)
+    - [Bronze](#bronze)
   - [Ecosystem](#ecosystem)
+    - [Form integrations](#form-integrations)
 - [Installation](#installation)
+  - [Requirements](#requirements)
   - [Node/npm](#nodenpm)
   - [Deno](#deno)
 - [Basic usage](#basic-usage)
@@ -62,61 +68,51 @@
 - [Optionals](#optionals)
 - [Nullables](#nullables)
 - [Objects](#objects)
-  - [.shape](#shape)
-  - [.enum](#enum)
-  - [.extend](#extend)
-  - [.merge](#merge)
-  - [.pick/.omit](#pickomit)
-  - [.partial](#partial)
-  - [.deepPartial](#deepPartial)
-  - [.passthrough](#passthrough)
-  - [.strict](#strict)
-  - [.strip](#strip)
-  - [.catchall](#catchall)
+  - [`.shape`](#shape)
+  - [`.keyof`](#keyof)
+  - [`.extend`](#extend)
+  - [`.merge`](#merge)
+  - [`.pick/.omit`](#pickomit)
+  - [`.partial`](#partial)
+  - [`.deepPartial`](#deeppartial)
+  - [`.passthrough`](#passthrough)
+  - [`.strict`](#strict)
+  - [`.strip`](#strip)
+  - [`.catchall`](#catchall)
 - [Arrays](#arrays)
-  - [.element](#element)
-  - [.nonempty](#nonempty)
-  - [.min/.max/.length](#minmaxlength)
+  - [`.element`](#element)
+  - [`.nonempty`](#nonempty)
+  - [`.min/.max/.length`](#minmaxlength)
 - [Tuples](#tuples)
 - [Unions](#unions)
-- [Discriminated Unions](#discriminated-unions)
+- [Discriminated unions](#discriminated-unions)
 - [Records](#records)
+  - [Record key type](#record-key-type)
 - [Maps](#maps)
 - [Sets](#sets)
-- [Recursive types](#recursive-types)
-  - [JSON type](#json-type)
-  - [Cyclical data](#cyclical-objects)
-- [Promises](#promises)
+- [Intersections](#intersections)
 - [Instanceof](#instanceof)
 - [Function schemas](#function-schemas)
 - [Preprocess](#preprocess)
-- [Branded types](#branded-types)
 - [Schema methods](#schema-methods)
-  - [.parse](#parse)
-  - [.parseAsync](#parseasync)
-  - [.safeParse](#safeparse)
-  - [.safeParseAsync](#safeparseasync)
-  - [.refine](#refine)
-  - [.superRefine](#superRefine)
-  - [.transform](#transform)
-  - [.default](#default)
-  - [.optional](#optional)
-  - [.nullable](#nullable)
-  - [.nullish](#nullish)
-  - [.array](#array)
-  - [.promise](#promise)
-  - [.or](#or)
-  - [.and](#and)
-- [Guides and concepts](#guides-and-concepts)
-  - [Type inference](#type-inference)
-  - [Writing generic functions](#writing-generic-functions)
-  - [Error handling](#error-handling)
-  - [Error formatting](#error-formatting)
-- [Comparison](#comparison)
+  - [`.parse`](#parse)
+  - [`.parseAsync`](#parseasync)
+  - [`.safeParse`](#safeparse)
+  - [`.safeParseAsync`](#safeparseasync)
+  - [`.check`](#check)
+  - [`.checkAsync`](#checkasync)
+  - [`.safeCheck`](#safecheck)
+  - [`.safeCheckAsync`](#safecheckasync)
+  - [`.refine`](#refine)
+    - [Arguments](#arguments)
+    - [Customize error path](#customize-error-path)
+    - [Asynchronous refinements](#asynchronous-refinements)
+    - [Relationship to transforms](#relationship-to-transforms)
   - [Joi](#joi)
   - [Yup](#yup)
   - [io-ts](#io-ts)
   - [Runtypes](#runtypes)
+  - [Ow](#ow)
 - [Changelog](#changelog)
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
@@ -1533,6 +1529,65 @@ For convenience, this has been aliased to `.spa`:
 
 ```ts
 await stringSchema.spa("billie");
+```
+
+### `.check`
+
+`.check(data: Input): T`
+
+Given any Zod schema, you can call its `.check` method to check `data` is valid. The difference with `.parse` is that it expects your input type to match the schema's input type.
+
+```ts
+const stringSchema = z.string();
+stringSchema.check("fish"); // => returns "fish"
+stringSchema.check(12); // typescript error:  given number, expected string
+```
+
+### `.checkAsync`
+
+`.checkAsync(data:Input): Promise<T>`
+
+Same as `.parseAsync` but with `.check` specificities.
+
+```ts
+const stringSchema1 = z.string().refine(async (val) => val.length < 6);
+const value1 = await stringSchema.checkAsync("hello"); // => hello
+const value2 = await stringSchema.checkAsync(12); // => typescript error: given number, expected string
+const value3 = await stringSchema.parseAsync("long string"); // => throws
+```
+
+### `.safeCheck`
+
+`.safeCheck(data:Input): { success: true; data: T; } | { success: false; error: ZodError; }`
+
+A `.check` version of `.safeParse`.
+
+```ts
+stringSchema.safeCheck(12);
+// => typescript error
+
+stringSchema.safeCheck("billie");
+// => { success: true; data: 'billie' }
+```
+
+
+### `.safeCheckAsync`
+
+`.safeCheckAsync(data:Input): Promise<{ success: true; data: T; } | { success: false; error: ZodError; }>`
+
+
+> Alias: `.sca`
+
+A `.check` version of `.safeParseAsync`.
+
+```ts
+await stringSchema.safeCheckAsync("billie");
+```
+
+For convenience, this has been aliased to `.sca`:
+
+```ts
+await stringSchema.sca("billie");
 ```
 
 ### `.refine`
