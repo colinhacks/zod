@@ -6,7 +6,7 @@ const stringSchema = z.string();
 
 test("safecheck typeerror", () => {
   // @ts-expect-error should expect string but receives number
-  console.log(stringSchema.safeCheck(12));
+  stringSchema.safeCheck(12);
   // @ts-expect-error should expect "key" to be present
   z.object({ key: z.string() }).safeCheck({});
 });
