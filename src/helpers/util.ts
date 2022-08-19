@@ -88,6 +88,15 @@ export namespace util {
       .map((val) => (typeof val === "string" ? `'${val}'` : val))
       .join(separator);
   }
+
+  export function intersect<T>(...arrays: T[][]): T[] {
+    const [first, ...rest] = arrays;
+    if (!first) {
+      return [];
+    }
+    const sets = rest.map((array) => new Set(array));
+    return first.filter((e) => sets.every((set) => set.has(e)));
+  }
 }
 
 export const ZodParsedType = util.arrayToEnum([

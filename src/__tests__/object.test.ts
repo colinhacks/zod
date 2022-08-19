@@ -231,22 +231,6 @@ test("inferred unioned object type with optional properties", async () => {
   >(true);
 });
 
-test("inferred enum type", async () => {
-  const Enum = z.keyof(z.object({ a: z.string(), b: z.string().optional() }));
-
-  expect(Enum.Values).toEqual({
-    a: "a",
-    b: "b",
-  });
-  expect(Enum.enum).toEqual({
-    a: "a",
-    b: "b",
-  });
-  expect(Enum._def.values).toEqual(["a", "b"]);
-  type Enum = z.infer<typeof Enum>;
-  util.assertEqual<Enum, "a" | "b">(true);
-});
-
 test("inferred partial object type with optional properties", async () => {
   const Partial = z
     .object({ a: z.string(), b: z.string().optional() })

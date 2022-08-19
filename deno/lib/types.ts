@@ -1638,14 +1638,6 @@ function deepPartialify(schema: ZodTypeAny): any {
   }
 }
 
-export function keyof<T extends ZodRawShape>(
-  schema: ZodObject<T, any, any, any, any>
-): ZodEnum<enumUtil.UnionToTupleString<keyof T>> {
-  return createZodEnum(
-    util.objectKeys(schema.shape) as [string, ...string[]]
-  ) as any;
-}
-
 export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = "strip",
@@ -3784,6 +3776,36 @@ export const custom = <T>(
     });
   return ZodAny.create();
 };
+
+function keyofTuple(schema: ZodTypeAny): string[] {
+  if (schema instanceof ZodObject) {
+    return util.objectKeys(schema.shape);
+  } else if (schema instanceof ZodLazy) {
+    return keyofTuple(schema.schema);
+  } else if (schema instanceof ZodDefault) {
+    return keyofTuple(schema._def.innerType);
+  } else if (schema instanceof ZodIntersection) {
+    return [...keyofTuple(schema._def.left), ...keyofTuple(schema._def.right)];
+  } else if (schema instanceof ZodUnion) {
+    return util.intersect(...schema.options.map(keyofTuple));
+  } else if (schema instanceof ZodDiscriminatedUnion) {
+    return util.intersect(...[...schema.options.values()].map(keyofTuple));
+  } else {
+    // Generally, TypeScript will give a `never` type for `keyof T` for other types.  The exception
+    // is primitives and arrays, but returning a `ZodEnum<"length" | "map" | ...>` for
+    // `z.keyof(z.array())` doesn't seem particularly useful.
+    return [];
+  }
+}
+export function keyof<T>(schema: ZodType<T, any, any>): ZodEnum<
+  // This condition avoids "possibly infinite" type instantiation.  Wrap in a tuple to avoid
+  // distribution over unions.
+  [T] extends [Primitive | readonly any[]]
+    ? never
+    : enumUtil.UnionToTupleString<keyof T>
+> {
+  return createZodEnum(keyofTuple(schema) as [string, ...string[]]) as any;
+}
 
 export { ZodType as Schema, ZodType as ZodSchema };
 
