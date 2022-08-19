@@ -1561,7 +1561,7 @@ Same as `.parseAsync` but with `.decode` specificities.
 const stringSchema1 = z.string().refine(async (val) => val.length < 6);
 const value1 = await stringSchema.decodeAsync("hello"); // => hello
 const value2 = await stringSchema.decodeAsync(12); // => typescript error: given number, expected string
-const value3 = await stringSchema.parseAsync("long string"); // => throws
+const value3 = await stringSchema.decodeAsync("long string"); // => throws
 ```
 
 ### `.safeDecode`
