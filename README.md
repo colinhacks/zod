@@ -107,6 +107,7 @@
   - [.promise](#promise)
   - [.or](#or)
   - [.and](#and)
+- [Keyof](#zkeyof)
 - [Guides and concepts](#guides-and-concepts)
   - [Type inference](#type-inference)
   - [Writing generic functions](#writing-generic-functions)
@@ -795,15 +796,6 @@ Use `.shape` to access the schemas for a particular key.
 ```ts
 Dog.shape.name; // => string schema
 Dog.shape.age; // => number schema
-```
-
-### `.keyof`
-
-Use `.key` to create a `ZodEnum` schema from the keys of an object schema.
-
-```ts
-const keySchema = Dog.keyof();
-keySchema; // ZodEnum<["name", "age"]>
 ```
 
 ### `.extend`
@@ -1918,6 +1910,16 @@ type Cat = z.infer<typeof Cat>;
 ```
 
 Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
+
+## `z.keyof`
+
+Use `z.keyof()` to create a `ZodEnum` schema from the keys of an object schema.
+
+```ts
+const objectSchema = z.object({ foo: z.string(), bar: z.number() });
+const keySchema = z.keyof(objectSchema);
+keySchema; // ZodEnum<["foo", "bar"]>
+```
 
 ## Guides and concepts
 
