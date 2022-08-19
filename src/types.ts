@@ -3800,7 +3800,7 @@ function keyofTuple(schema: ZodTypeAny): string[] {
 export function keyof<T>(schema: ZodType<T, any, any>): ZodEnum<
   // This condition avoids "possibly infinite" type instantiation.  Wrap in a tuple to avoid
   // distribution over unions.
-  [T] extends [Primitive | readonly any[]]
+  [T] extends [Primitive | Date | Function | readonly any[]]
     ? never
     : enumUtil.UnionToTupleString<keyof T>
 > {
