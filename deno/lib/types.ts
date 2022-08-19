@@ -265,13 +265,13 @@ export abstract class ZodType<
     return handleResult(ctx, result);
   }
 
-  check(data: Input, params?: Partial<ParseParams>): Output {
-    const result = this.safeCheck(data, params);
+  decode(data: Input, params?: Partial<ParseParams>): Output {
+    const result = this.safeDecode(data, params);
     if (result.success) return result.data;
     throw result.error;
   }
 
-  safeCheck(
+  safeDecode(
     data: Input,
     params?: Partial<ParseParams>
   ): SafeParseReturnType<Input, Output> {
@@ -293,16 +293,16 @@ export abstract class ZodType<
     return handleResult(ctx, result);
   }
 
-  async checkAsync(
+  async decodeAsync(
     data: unknown,
     params?: Partial<ParseParams>
   ): Promise<Output> {
-    const result = await this.safeCheckAsync(data, params);
+    const result = await this.safeDecodeAsync(data, params);
     if (result.success) return result.data;
     throw result.error;
   }
 
-  async safeCheckAsync(
+  async safeDecodeAsync(
     data: unknown,
     params?: Partial<ParseParams>
   ): Promise<SafeParseReturnType<Input, Output>> {
@@ -329,8 +329,8 @@ export abstract class ZodType<
 
   /** Alias of safeParseAsync */
   spa = this.safeParseAsync;
-  /** Alias of safeCheckAsync */
-  sca = this.safeParseAsync;
+  /** Alias of safeDecodeAsync */
+  sda = this.safeDecodeAsync;
 
   refine<RefinedOutput extends Output>(
     check: (arg: Output) => arg is RefinedOutput,
@@ -422,10 +422,10 @@ export abstract class ZodType<
     this.safeParse = this.safeParse.bind(this);
     this.parseAsync = this.parseAsync.bind(this);
     this.safeParseAsync = this.safeParseAsync.bind(this);
-    this.check = this.check.bind(this);
-    this.safeCheck = this.safeCheck.bind(this);
-    this.checkAsync = this.checkAsync.bind(this);
-    this.safeCheckAsync = this.safeCheckAsync.bind(this);
+    this.decode = this.decode.bind(this);
+    this.safeDecode = this.safeDecode.bind(this);
+    this.decodeAsync = this.decodeAsync.bind(this);
+    this.safeDecodeAsync = this.safeDecodeAsync.bind(this);
     this.spa = this.spa.bind(this);
     this.refine = this.refine.bind(this);
     this.refinement = this.refinement.bind(this);

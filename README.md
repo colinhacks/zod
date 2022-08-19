@@ -96,10 +96,10 @@
   - [.parseAsync](#parseasync)
   - [.safeParse](#safeparse)
   - [.safeParseAsync](#safeparseasync)
-  - [.check](#check)
-  - [.checkAsync](#checkasync)
-  - [.safeCheck](#safecheck)
-  - [.safeCheckAsync](#safecheckasync)
+  - [.decode](#decode)
+  - [.decodeAsync](#decodeasync)
+  - [.safeDecode](#safedecode)
+  - [.safeDecodeAsync](#safedecodeasync)
   - [.refine](#refine)
   - [.superRefine](#superRefine)
   - [.transform](#transform)
@@ -1539,63 +1539,63 @@ For convenience, this has been aliased to `.spa`:
 await stringSchema.spa("billie");
 ```
 
-### `.check`
+### `.decode`
 
-`.check(data: Input): T`
+`.decode(data: Input): T`
 
-Given any Zod schema, you can call its `.check` method to check `data` is valid. The difference with `.parse` is that it expects your input type to match the schema's input type.
+Given any Zod schema, you can call its `.decode` method to check `data` is valid. The difference with `.parse` is that it expects your input type to match the schema's input type.
 
 ```ts
 const stringSchema = z.string();
-stringSchema.check("fish"); // => returns "fish"
-stringSchema.check(12); // typescript error:  given number, expected string
+stringSchema.decode("fish"); // => returns "fish"
+stringSchema.decode(12); // typescript error:  given number, expected string
 ```
 
-### `.checkAsync`
+### `.decodeAsync`
 
-`.checkAsync(data:Input): Promise<T>`
+`.decodeAsync(data:Input): Promise<T>`
 
-Same as `.parseAsync` but with `.check` specificities.
+Same as `.parseAsync` but with `.decode` specificities.
 
 ```ts
 const stringSchema1 = z.string().refine(async (val) => val.length < 6);
-const value1 = await stringSchema.checkAsync("hello"); // => hello
-const value2 = await stringSchema.checkAsync(12); // => typescript error: given number, expected string
+const value1 = await stringSchema.decodeAsync("hello"); // => hello
+const value2 = await stringSchema.decodeAsync(12); // => typescript error: given number, expected string
 const value3 = await stringSchema.parseAsync("long string"); // => throws
 ```
 
-### `.safeCheck`
+### `.safeDecode`
 
-`.safeCheck(data:Input): { success: true; data: T; } | { success: false; error: ZodError; }`
+`.safeDecode(data:Input): { success: true; data: T; } | { success: false; error: ZodError; }`
 
-A `.check` version of `.safeParse`.
+A `.decode` version of `.safeParse`.
 
 ```ts
-stringSchema.safeCheck(12);
+stringSchema.safeDecode(12);
 // => typescript error
 
-stringSchema.safeCheck("billie");
+stringSchema.safeDecode("billie");
 // => { success: true; data: 'billie' }
 ```
 
 
-### `.safeCheckAsync`
+### `.safeDecodeAsync`
 
-`.safeCheckAsync(data:Input): Promise<{ success: true; data: T; } | { success: false; error: ZodError; }>`
+`.safeDecodeAsync(data:Input): Promise<{ success: true; data: T; } | { success: false; error: ZodError; }>`
 
 
-> Alias: `.sca`
+> Alias: `.sda`
 
-A `.check` version of `.safeParseAsync`.
+A `.decode` version of `.safeParseAsync`.
 
 ```ts
-await stringSchema.safeCheckAsync("billie");
+await stringSchema.safeDecodeAsync("billie");
 ```
 
-For convenience, this has been aliased to `.sca`:
+For convenience, this has been aliased to `.sda`:
 
 ```ts
-await stringSchema.sca("billie");
+await stringSchema.sda("billie");
 ```
 
 ### `.refine`
