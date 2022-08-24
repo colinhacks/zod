@@ -342,7 +342,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 ### Requirements
 
 - TypeScript 4.1+!
-- You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
+- You must enable `strict` and `strictNullChecks` modes in your `tsconfig.json`. This is a best practice for all TypeScript projects.
 
   ```ts
   // tsconfig.json
@@ -350,7 +350,8 @@ There are a growing number of tools that are built atop or support Zod natively!
     // ...
     "compilerOptions": {
       // ...
-      "strict": true
+      "strict": true,
+      "strictNullChecks": true,
     }
   }
   ```
