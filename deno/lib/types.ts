@@ -3261,7 +3261,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       ctx.parsedType !== ZodParsedType.string &&
       ctx.parsedType !== ZodParsedType.number
     ) {
-      const expectedValues = util.objectValues(nativeEnumValues);
+      const expectedValues = util.objectValues(this._def.values);
       addIssueToContext(ctx, {
         expected: util.joinValues(expectedValues) as "string",
         received: ctx.parsedType,
@@ -3271,12 +3271,14 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
     }
 
     if (nativeEnumValues.indexOf(input.data) === -1) {
-      const expectedValues = util.objectValues(nativeEnumValues);
+      const expectedValues = util.objectValues(
+        Object.prototype.constructor({ ...nativeEnumValues })
+      );
 
       addIssueToContext(ctx, {
         received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
-        options: expectedValues,
+        options: expectedValues.map((val) => val),
       });
       return INVALID;
     }

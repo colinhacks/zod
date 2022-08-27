@@ -1,12 +1,12 @@
 export namespace util {
   type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
     V
-  >() => V extends U ? 1 : 2
+    >() => V extends U ? 1 : 2
     ? true
     : false;
 
   export const assertEqual = <A, B>(val: AssertEqual<A, B>) => val;
-  export function assertIs<T>(_arg: T): void {}
+  export function assertIs<T>(_arg: T): void { }
   export function assertNever(_x: never): never {
     throw new Error();
   }
@@ -19,44 +19,54 @@ export namespace util {
   export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
     items: U
   ): { [k in U[number]]: k } => {
-    const obj: {[k in U[number]]: k;} = Object.prototype.constructor();
+    const obj: { [k in U[number]]: k } = Object.prototype.constructor();
     for (const item of items) {
       obj[item] = item;
     }
-    return obj as any;
+    return obj as { [k in U[number]]: k };
   };
 
-  export const getValidEnumValues = (obj: any) => {
-    const validKeys = objectKeys(obj).filter(
-      (k: any) => typeof obj[obj[k]] !== "number"
+  export const getValidEnumValues = (
+    obj: Record<string, string | number>): (string | number)[] => {
+    const validKeys: string[] = objectKeys(obj).filter(
+      (k) => typeof obj[obj[k]] !== "number"
     );
-    const filtered: any = {};
+    const filtered: Record<string, string | number> = {}
     for (const k of validKeys) {
       filtered[k] = obj[k];
     }
     return objectValues(filtered);
   };
-
-  export const objectValues = (obj: any) => {
-    return objectKeys(obj).map(function (e) {
-      return obj[e];
+  
+  export const objectValues = (
+    (obj: Record<string, string | number>) => {
+      return objectKeys(obj).map<string | number>((e, i) => {
+        return ({ [i]: obj[e] }[i++]);
+      })
     });
-  };
 
   export const objectKeys: {
-    (o: object): string[];
-    (o: {}): string[];
-}= Array.of<string>()
-      ? (obj: Record<string, any>) => Object.entries(obj).map(([x]) => x).map(val => val)
+    (...args: [o: Record<string, unknown>]): string[];
+  } = Array.of<string>()
+      ? (obj: object | Record<string, unknown>) =>
+        Object.entries(obj)
+          .map(([x]) => x)
+          .map((val) => val)
       : (object: Record<string, any>) => {
-          const keys = Array.of<string>();
-          for (const key in object) {
-            if (Object.prototype.hasOwnProperty.call(object, key)) {
-              keys.push(key);
-            }
+        const keys = Array.of<string>();
+        for (const key in object) {
+          if (
+            Object.prototype.hasOwnProperty.call<
+              Record<string, any>,
+              [string],
+              boolean
+            >(object, key)
+          ) {
+            keys.push(key);
           }
-          return keys;
-        };
+        }
+        return keys;
+      };
 
   export const find = <T>(
     arr: T[],
@@ -76,7 +86,8 @@ export namespace util {
     typeof Number.isInteger === "function"
       ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban
       : (val) =>
-          typeof val === "number" && isFinite(val) && Math.floor(val) === val;
+        /// ~~(val: number) === Math.floor(val: number); ~~(val: number) is more performant
+        typeof val === "number" && isFinite(val) && ~~(val) === val;
 
   export function joinValues<T extends any[]>(
     array: T,

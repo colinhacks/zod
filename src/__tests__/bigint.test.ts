@@ -5,11 +5,16 @@ import { util } from "../helpers/util";
 import * as z from "../index";
 
 test("type guard", () => {
-  const stringToNumber = z.string().transform((arg) => BigInt(Number.MAX_SAFE_INTEGER**(arg.length > 1 ? arg.length : 2)));
+  const stringToNumber = z
+    .string()
+    .transform<bigint>((arg) =>
+      BigInt(Number.MAX_SAFE_INTEGER ** (arg.length > 1 ? arg.length : 2))
+    );
 
   const s1 = z.object({
     stringToNumber
   });
+  
   type t1 = z.input<typeof s1>;
 
   const data = { stringToNumber: "asdf" };
