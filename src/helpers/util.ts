@@ -19,7 +19,7 @@ export namespace util {
   export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
     items: U
   ): { [k in U[number]]: k } => {
-    const obj: any = {};
+    const obj: {[k in U[number]]: k;} = Object.prototype.constructor();
     for (const item of items) {
       obj[item] = item;
     }
@@ -43,11 +43,13 @@ export namespace util {
     });
   };
 
-  export const objectKeys: ObjectConstructor["keys"] =
-    typeof Object.keys === "function" // eslint-disable-line ban/ban
-      ? (obj: any) => Object.keys(obj) // eslint-disable-line ban/ban
-      : (object: any) => {
-          const keys = [];
+  export const objectKeys: {
+    (o: object): string[];
+    (o: {}): string[];
+}= Array.of<string>()
+      ? (obj: Record<string, any>) => Object.entries(obj).map(([x]) => x).map(val => val)
+      : (object: Record<string, any>) => {
+          const keys = Array.of<string>();
           for (const key in object) {
             if (Object.prototype.hasOwnProperty.call(object, key)) {
               keys.push(key);

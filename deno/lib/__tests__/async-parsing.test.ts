@@ -264,11 +264,10 @@ test("enum async parse", async () => {
 enum nativeEnumTest {
   asdf = "qwer",
 }
-// @ts-ignore
-const nativeEnumSchema = z.nativeEnum(nativeEnumTest);
+const nativeEnumSchema = z.nativeEnum<typeof nativeEnumTest>(nativeEnumTest);
 test("nativeEnum async parse", async () => {
   const goodData = nativeEnumTest.asdf;
-  const badData = "asdf";
+  const badData: keyof typeof nativeEnumTest = "asdf";
 
   const goodResult = await nativeEnumSchema.safeParseAsync(goodData);
   expect(goodResult.success).toBe(true);
