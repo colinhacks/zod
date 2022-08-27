@@ -48,16 +48,15 @@ export namespace util {
   export const objectKeys: {
     (...args: [o: Record<string, unknown>]): string[];
   } = Array.of<string>()
-      ? (obj: object | Record<string, unknown>) =>
+      ? (obj: Record<string, unknown>) =>
         Object.entries(obj)
-          .map(([x]) => x)
-          .map((val) => val)
-      : (object: Record<string, any>) => {
+          .map(([x, _vals]) => x)
+      : (object: Record<string, unknown>) => {
         const keys = Array.of<string>();
         for (const key in object) {
           if (
             Object.prototype.hasOwnProperty.call<
-              Record<string, any>,
+              Record<string, unknown>,
               [string],
               boolean
             >(object, key)
