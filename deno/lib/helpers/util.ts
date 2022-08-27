@@ -86,7 +86,7 @@ export namespace util {
     typeof Number.isInteger === "function"
       ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban
       : (val) =>
-        /// ~~(val: number) === Math.floor(val: number); ~~(val: number) is more performant
+        /// ~~(val: number) === Math.floor(val: number); ~~(val: number) is more performant 
         typeof val === "number" && isFinite(val) && ~~(val) === val;
 
   export function joinValues<T extends any[]>(
