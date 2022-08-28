@@ -3784,6 +3784,11 @@ function keyofTuple(schema: ZodTypeAny): string[] {
     return keyofTuple(schema.schema);
   } else if (schema instanceof ZodDefault) {
     return keyofTuple(schema._def.innerType);
+  } else if (schema instanceof ZodEffects) {
+    // NOTE: This is only correct for `ZodEffects` instances that *don't* change the output type
+    // (e.g., simple refinements).  Otherwise it's impossible for us to identify the output type of
+    // a transform (or type-guard refinement) at runtime.
+    return keyofTuple(schema.innerType());
   } else if (schema instanceof ZodIntersection) {
     return [...keyofTuple(schema._def.left), ...keyofTuple(schema._def.right)];
   } else if (schema instanceof ZodUnion) {

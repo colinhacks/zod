@@ -83,6 +83,16 @@ test("keyof enum for lazy object schema", async () => {
   util.assertEqual<Enum, keyof z.infer<typeof schema>>(true);
 });
 
+test("keyof enum for object schema wrapped in effect", async () => {
+  const schema = z
+    .object({ a: z.string(), b: z.string().optional() })
+    .refine((o) => o.a === o.b);
+  const Enum = z.keyof(schema);
+  expectEnumToHaveOptions(Enum, ["a", "b"]);
+  type Enum = z.infer<typeof Enum>;
+  util.assertEqual<Enum, keyof z.infer<typeof schema>>(true);
+});
+
 test("keyof enum for optional object schema", async () => {
   const schema = z
     .object({ a: z.string(), b: z.string().optional() })
