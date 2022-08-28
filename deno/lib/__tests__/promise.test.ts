@@ -27,14 +27,14 @@ test("promise parsing success", async () => {
   expect(typeof result.age).toBe("number");
   expect(typeof result.name).toBe("string");
 });
-
+// this reduced testing time substantially (adding .then and .catch to this returned in fakePromise)
 test("promise parsing success 2", () => {
   const fakePromise = {
     then() {
-      return this;
+      return this.then;
     },
     catch() {
-      return this;
+      return this.catch;
     },
   };
   promSchema.parse(fakePromise);

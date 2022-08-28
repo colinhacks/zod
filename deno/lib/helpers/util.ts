@@ -123,7 +123,7 @@ export const ZodParsedType = util.arrayToEnum([
 
 export type ZodParsedType = keyof typeof ZodParsedType;
 
-export const getParsedType = (data: any): ZodParsedType => {
+export const getParsedType = (data: unknown): ZodParsedType => {
   const t = typeof data;
 
   switch (t) {
@@ -134,7 +134,7 @@ export const getParsedType = (data: any): ZodParsedType => {
       return ZodParsedType.string;
 
     case "number":
-      return isNaN(data) ? ZodParsedType.nan : ZodParsedType.number;
+      return typeof data === "number" && isNaN(data) ? ZodParsedType.nan : ZodParsedType.number;
 
     case "boolean":
       return ZodParsedType.boolean;
@@ -153,10 +153,11 @@ export const getParsedType = (data: any): ZodParsedType => {
         return ZodParsedType.null;
       }
       if (
-        data.then &&
-        typeof data.then === "function" &&
-        data.catch &&
-        typeof data.catch === "function"
+        (data as ReturnType<typeof Promise["any"]>).then &&
+        typeof (data as ReturnType<typeof Promise["any"]>).then ===
+          "function" &&
+        (data as ReturnType<typeof Promise["any"]>).catch &&
+        typeof (data as ReturnType<typeof Promise["any"]>).catch === "function"
       ) {
         return ZodParsedType.promise;
       }
