@@ -63,7 +63,6 @@
 - [Nullables](#nullables)
 - [Objects](#objects)
   - [.shape](#shape)
-  - [.enum](#enum)
   - [.extend](#extend)
   - [.merge](#merge)
   - [.pick/.omit](#pickomit)
