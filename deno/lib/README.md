@@ -63,7 +63,7 @@
 - [Nullables](#nullables)
 - [Objects](#objects)
   - [.shape](#shape)
-  - [.enum](#enum)
+  - [.keyof](#keyof)
   - [.extend](#extend)
   - [.merge](#merge)
   - [.pick/.omit](#pickomit)
@@ -603,7 +603,7 @@ dateSchema.safeParse(new Date("1/12/22")); // success: true
 dateSchema.safeParse("2022-01-12T00:00:00.000Z"); // success: true
 ```
 
-## Zod enums
+## Zod enums-
 
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
