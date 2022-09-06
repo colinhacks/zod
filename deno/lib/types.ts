@@ -53,47 +53,6 @@ export type TypeOf<T extends ZodType<any, any, any>> = T["_output"];
 export type input<T extends ZodType<any, any, any>> = T["_input"];
 export type output<T extends ZodType<any, any, any>> = T["_output"];
 export type { TypeOf as infer };
-export { ZodEffects as ZodTransformer };
-export { ZodType as Schema, ZodType as ZodSchema };
-export {
-  anyType as any,
-  arrayType as array,
-  bigIntType as bigint,
-  booleanType as boolean,
-  dateType as date,
-  discriminatedUnionType as discriminatedUnion,
-  effectsType as effect,
-  enumType as enum,
-  functionType as function,
-  instanceOfType as instanceof,
-  intersectionType as intersection,
-  lazyType as lazy,
-  literalType as literal,
-  mapType as map,
-  nanType as nan,
-  nativeEnumType as nativeEnum,
-  neverType as never,
-  nullType as null,
-  nullableType as nullable,
-  numberType as number,
-  objectType as object,
-  oboolean,
-  onumber,
-  optionalType as optional,
-  ostring,
-  preprocessType as preprocess,
-  promiseType as promise,
-  recordType as record,
-  setType as set,
-  strictObjectType as strictObject,
-  stringType as string,
-  effectsType as transformer,
-  tupleType as tuple,
-  undefinedType as undefined,
-  unionType as union,
-  unknownType as unknown,
-  voidType as void,
-};
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
@@ -3626,6 +3585,8 @@ export class ZodEffects<
   };
 }
 
+export { ZodEffects as ZodTransformer };
+
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 //////////                       //////////
@@ -3814,6 +3775,8 @@ export const custom = <T>(
   return ZodAny.create();
 };
 
+export { ZodType as Schema, ZodType as ZodSchema };
+
 export const late = {
   object: ZodObject.lazycreate,
 };
@@ -3926,3 +3889,43 @@ const preprocessType = ZodEffects.createWithPreprocess;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
+
+export {
+  anyType as any,
+  arrayType as array,
+  bigIntType as bigint,
+  booleanType as boolean,
+  dateType as date,
+  discriminatedUnionType as discriminatedUnion,
+  effectsType as effect,
+  enumType as enum,
+  functionType as function,
+  instanceOfType as instanceof,
+  intersectionType as intersection,
+  lazyType as lazy,
+  literalType as literal,
+  mapType as map,
+  nanType as nan,
+  nativeEnumType as nativeEnum,
+  neverType as never,
+  nullType as null,
+  nullableType as nullable,
+  numberType as number,
+  objectType as object,
+  oboolean,
+  onumber,
+  optionalType as optional,
+  ostring,
+  preprocessType as preprocess,
+  promiseType as promise,
+  recordType as record,
+  setType as set,
+  strictObjectType as strictObject,
+  stringType as string,
+  effectsType as transformer,
+  tupleType as tuple,
+  undefinedType as undefined,
+  unionType as union,
+  unknownType as unknown,
+  voidType as void,
+};
