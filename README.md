@@ -1730,8 +1730,6 @@ const stringToNumber = z.string().transform((val) => val.length);
 stringToNumber.parse("string"); // => 6
 ```
 
-> ⚠️ Transform functions must not throw. Make sure to use refinements before the transform or addIssue within the transform to make sure the input can be parsed by the transform.
-
 #### Chaining order
 
 Note that `stringToNumber` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transforms.
@@ -1747,7 +1745,9 @@ emailToDomain.parse("colinhacks@example.com"); // => example.com
 
 #### Validating during transform
 
-Similar to `superRefine`, `transform` can optionally take a `ctx`. This allows you to simultaneously validate and transform the value, which can be simpler than chaining `refine` and `validate`. When calling `ctx.addIssue` make sure to still return a value of the correct type otherwise the inferred type will include `undefined`.
+The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `refine` and `validate`.
+
+As with `.superRefine`, the transform function receives a `ctx` object with a `addIssue` method that can be used to register validation issues.
 
 ```ts
 const Strings = z.string().transform((val, ctx) => {
