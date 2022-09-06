@@ -1363,6 +1363,7 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   typeName: ZodFirstPartyTypeKind.ZodArray;
   minLength: { value: number; message?: string } | null;
   maxLength: { value: number; message?: string } | null;
+  uniq: boolean;
 }
 
 export type ArrayCardinality = "many" | "atleastone";
@@ -1423,6 +1424,26 @@ export class ZodArray<
       }
     }
 
+    if (def.uniq) {
+      (() => {
+        for (let i = 0; i < ctx.data.length; i++) {
+          const a = ctx.data[i];
+
+          for (let j = i + 1; j < ctx.data.length; j++) {
+            const b = ctx.data[j];
+
+            if (a === b) {
+              addIssueToContext(ctx, {
+                code: ZodIssueCode.duplicate_element,
+              });
+              status.dirty();
+              return;
+            }
+          }
+        }
+      })();
+    }
+
     if (ctx.common.async) {
       return Promise.all(
         (ctx.data as any[]).map((item, i) => {
@@ -1470,6 +1491,13 @@ export class ZodArray<
     return this.min(1, message) as any;
   }
 
+  uniq(uniq = true): this {
+    return new ZodArray({
+      ...this._def,
+      uniq,
+    }) as any;
+  }
+
   static create = <T extends ZodTypeAny>(
     schema: T,
     params?: RawCreateParams
@@ -1479,6 +1507,7 @@ export class ZodArray<
       minLength: null,
       maxLength: null,
       typeName: ZodFirstPartyTypeKind.ZodArray,
+      uniq: false,
       ...processCreateParams(params),
     });
   };

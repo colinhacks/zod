@@ -1057,6 +1057,23 @@ z.string().array().length(5); // must contain 5 items exactly
 
 Unlike `.nonempty()` these methods do not change the inferred type.
 
+### `.uniq`
+
+If you want to ensure the array doesn't contains duplicate elements
+
+```ts
+const noDuplicates = z.string().array().uniq();
+
+noDuplicates.parse([]); // passes
+noDuplicates.parse(["apple", "orange", "lemon"]); // passes
+noDuplicates.parse(["apple", "orange", "lemon"]); // passes
+noDuplicates.parse(["apple", "orange", "apple", "lemon"]); // throws: "Array must not contain duplicated elements"
+
+// uniq can be canceled by passing false argument:
+
+noDuplicates.uniq(false).parse(["apple", "orange", "apple", "lemon"]); // passes
+```
+
 ## Tuples
 
 Unlike arrays, tuples have a fixed number of elements and each element can have a different type.

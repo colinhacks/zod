@@ -98,6 +98,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
         }${new Date(issue.maximum)}`;
       else message = "Invalid input";
       break;
+    case ZodIssueCode.duplicate_element:
+      message = `Array must not contains duplicated elements`;
+      break;
     case ZodIssueCode.custom:
       message = `Invalid input`;
       break;
