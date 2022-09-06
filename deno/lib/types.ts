@@ -2536,6 +2536,9 @@ export class ZodTuple<
     schemas: T,
     params?: RawCreateParams
   ): ZodTuple<T, null> => {
+    if (!Array.isArray(schemas)) {
+      throw new Error("You must pass an array of schemas to z.tuple([ ... ])");
+    }
     return new ZodTuple({
       items: schemas,
       typeName: ZodFirstPartyTypeKind.ZodTuple,
