@@ -1376,22 +1376,6 @@ TestSchema.parse(new Test()); // passes
 TestSchema.parse("blob"); // throws
 ```
 
-## Custom schemas
-
-You can use `z.custom` to
-
-```ts
-class Test {
-  name: string;
-}
-
-const TestSchema = z.instanceof(Test);
-
-const blob: any = "whatever";
-TestSchema.parse(new Test()); // passes
-TestSchema.parse("blob"); // throws
-```
-
 ## Function schemas
 
 Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".

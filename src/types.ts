@@ -3058,7 +3058,7 @@ export class ZodFunction<
   ) {
     return new ZodFunction({
       args: (args
-        ? args.rest(ZodUnknown.create())
+        ? args
         : ZodTuple.create([]).rest(ZodUnknown.create())) as any,
       returns: returns || ZodUnknown.create(),
       typeName: ZodFirstPartyTypeKind.ZodFunction,
