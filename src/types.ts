@@ -22,8 +22,8 @@ import {
 import { partialUtil } from "./helpers/partialUtil";
 import { Primitive } from "./helpers/typeAliases";
 import { getParsedType, util, ZodParsedType } from "./helpers/util";
+import defaultErrorMap from "./locales/en";
 import {
-  defaultErrorMap,
   getErrorMap,
   IssueData,
   StringValidation,
@@ -111,7 +111,7 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   const { errorMap, invalid_type_error, required_error, description } = params;
   if (errorMap && (invalid_type_error || required_error)) {
     throw new Error(
-      `Can't use "invalid" or "required" in conjunction with custom error map.`
+      `Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`
     );
   }
   if (errorMap) return { errorMap: errorMap, description };
@@ -2457,6 +2457,10 @@ export interface ZodTupleDef<
   typeName: ZodFirstPartyTypeKind.ZodTuple;
 }
 
+export type AnyZodTuple = ZodTuple<
+  [ZodTypeAny, ...ZodTypeAny[]] | [],
+  ZodTypeAny | null
+>;
 export class ZodTuple<
   T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]],
   Rest extends ZodTypeAny | null = null
@@ -3033,14 +3037,23 @@ export class ZodFunction<
 
   validate = this.implement;
 
-  static create = <
-    T extends ZodTuple<any, any> = ZodTuple<[], ZodUnknown>,
+  static create(): ZodFunction<ZodTuple<[], ZodUnknown>, ZodUnknown>;
+  static create<T extends AnyZodTuple = ZodTuple<[], ZodUnknown>>(
+    args: T
+  ): ZodFunction<T, ZodUnknown>;
+  static create<T extends AnyZodTuple, U extends ZodTypeAny>(
+    args: T,
+    returns: U
+  ): ZodFunction<T, U>;
+  static create<
+    T extends AnyZodTuple = ZodTuple<[], ZodUnknown>,
     U extends ZodTypeAny = ZodUnknown
-  >(
-    args?: T,
-    returns?: U,
+  >(args: T, returns: U, params?: RawCreateParams): ZodFunction<T, U>;
+  static create(
+    args?: AnyZodTuple,
+    returns?: ZodTypeAny,
     params?: RawCreateParams
-  ): ZodFunction<T, U> => {
+  ) {
     return new ZodFunction({
       args: (args
         ? args.rest(ZodUnknown.create())
@@ -3049,7 +3062,7 @@ export class ZodFunction<
       typeName: ZodFirstPartyTypeKind.ZodFunction,
       ...processCreateParams(params),
     }) as any;
-  };
+  }
 }
 
 ///////////////////////////////////////
@@ -3857,7 +3870,11 @@ export type ZodFirstPartySchemaTypes =
   | ZodPromise<any>
   | ZodBranded<any, any>;
 
-const instanceOfType = <T extends new (...args: any[]) => any>(
+abstract class Class {
+  constructor(..._: any[]) {}
+}
+
+const instanceOfType = <T extends typeof Class>(
   cls: T,
   params: Parameters<ZodTypeAny["refine"]>[1] = {
     message: `Input not instance of ${cls.name}`,

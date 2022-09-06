@@ -306,9 +306,9 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`tRPC`](https://github.com/trpc/trpc): Build end-to-end typesafe APIs without GraphQL.
 - [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): Convert TypeScript definitions into Zod schemas.
 - [`zod-to-ts`](https://github.com/sachinraja/zod-to-ts): Generate TypeScript definitions from Zod schemas.
-- [`@anatine/zod-openapi`](https://github.com/anatine/zod-plugins/tree/main/libs/zod-openapi): Converts a Zod schema to an OpenAPI v3.x `SchemaObject`.
-- [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/libs/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/Marak/Faker.js).
-- [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/libs/zod-nestjs): Helper methods for using Zod in a NestJS project.
+- [`@anatine/zod-openapi`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-openapi): Converts a Zod schema to an OpenAPI v3.x `SchemaObject`.
+- [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/Marak/Faker.js).
+- [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-nestjs): Helper methods for using Zod in a NestJS project.
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
 - [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): Generate `fast-check` arbitraries from Zod schemas.
 - [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): Contract-first strictly typed endpoints with Zod. OpenAPI compatible.
@@ -330,6 +330,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`remix-domains`](https://github.com/SeasonedSoftware/remix-domains/): Improves end-to-end type safety in [Remix](https://remix.run/) by leveraging Zod to parse the framework's inputs such as FormData, URLSearchParams, etc.
 - [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
 - [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/master/packages/zod): Generate zod from static types & JSON schema.
+- [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration
 
 #### Form integrations
 
@@ -799,7 +800,7 @@ Dog.shape.age; // => number schema
 
 ### `.keyof`
 
-Use `.key` to create a `ZodEnum` schema from the keys of an object schema.
+Use `.keyof` to create a `ZodEnum` schema from the keys of an object schema.
 
 ```ts
 const keySchema = Dog.keyof();
@@ -1354,6 +1355,22 @@ When "parsing" a promise, Zod checks that the passed value is an object with `.t
 ## Instanceof
 
 You can use `z.instanceof` to check that the input is an instance of a class. This is useful to validate inputs against classes that are exported from third-party libraries.
+
+```ts
+class Test {
+  name: string;
+}
+
+const TestSchema = z.instanceof(Test);
+
+const blob: any = "whatever";
+TestSchema.parse(new Test()); // passes
+TestSchema.parse("blob"); // throws
+```
+
+## Custom schemas
+
+You can use `z.custom` to
 
 ```ts
 class Test {

@@ -330,6 +330,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`remix-domains`](https://github.com/SeasonedSoftware/remix-domains/): Improves end-to-end type safety in [Remix](https://remix.run/) by leveraging Zod to parse the framework's inputs such as FormData, URLSearchParams, etc.
 - [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
 - [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/master/packages/zod): Generate zod from static types & JSON schema.
+- [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration
 
 #### Form integrations
 
@@ -1354,6 +1355,22 @@ When "parsing" a promise, Zod checks that the passed value is an object with `.t
 ## Instanceof
 
 You can use `z.instanceof` to check that the input is an instance of a class. This is useful to validate inputs against classes that are exported from third-party libraries.
+
+```ts
+class Test {
+  name: string;
+}
+
+const TestSchema = z.instanceof(Test);
+
+const blob: any = "whatever";
+TestSchema.parse(new Test()); // passes
+TestSchema.parse("blob"); // throws
+```
+
+## Custom schemas
+
+You can use `z.custom` to
 
 ```ts
 class Test {
