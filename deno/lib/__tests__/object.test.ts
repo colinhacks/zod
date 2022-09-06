@@ -365,3 +365,26 @@ test("constructor key", () => {
   type Example = z.infer<typeof Example>;
   util.assertEqual<keyof Example, "prop" | "opt" | "arr">(true);
 });
+
+test("unknownkeys merging", () => {
+  // This one is "strict"
+  const schemaA = z
+    .object({
+      a: z.string(),
+    })
+    .strict();
+
+  // This one is "strip"
+  const schemaB = z
+    .object({
+      b: z.string(),
+    })
+    .catchall(z.string());
+
+  const mergedSchema = schemaA.merge(schemaB);
+  type mergedSchema = typeof mergedSchema;
+  util.assertEqual<mergedSchema["_def"]["unknownKeys"], "strip">(true);
+  expect(mergedSchema._def.unknownKeys).toEqual("strip");
+  util.assertEqual<mergedSchema["_def"]["catchall"], z.ZodString>(true);
+  expect(mergedSchema._def.catchall instanceof z.ZodString).toEqual(true);
+});
