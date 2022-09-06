@@ -3956,3 +3956,5 @@ export {
   unknownType as unknown,
   voidType as void,
 };
+
+export const NEVER = INVALID as never;

@@ -74,6 +74,25 @@ test("transform ctx.addIssue with parseAsync", async () => {
   });
 });
 
+test("z.NEVER in transform", async () => {
+  const foo = z
+    .number()
+    .optional()
+    .transform((val, ctx) => {
+      if (!val) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "bad" });
+        return z.NEVER;
+      }
+      return val;
+    });
+  type foo = z.infer<typeof foo>;
+  util.assertEqual<foo, number>(true);
+  const arg = foo.safeParse(undefined);
+  if (!arg.success) {
+    expect(arg.error.issues[0].message).toEqual("bad");
+  }
+});
+
 test("basic transformations", () => {
   const r1 = z
     .string()
