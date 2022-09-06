@@ -84,6 +84,13 @@ export namespace util {
       .map((val) => (typeof val === "string" ? `'${val}'` : val))
       .join(separator);
   }
+
+  export const jsonStringifyReplacer = (_: string, value: any): any => {
+    if (typeof value === "bigint") {
+      return value.toString();
+    }
+    return value;
+  };
 }
 
 export const ZodParsedType = util.arrayToEnum([

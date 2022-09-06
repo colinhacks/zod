@@ -330,6 +330,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`remix-domains`](https://github.com/SeasonedSoftware/remix-domains/): Improves end-to-end type safety in [Remix](https://remix.run/) by leveraging Zod to parse the framework's inputs such as FormData, URLSearchParams, etc.
 - [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
 - [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/master/packages/zod): Generate zod from static types & JSON schema.
+- [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration
 
 #### Form integrations
 
@@ -1073,6 +1074,14 @@ type Athlete = z.infer<typeof athleteSchema>;
 // type Athlete = [string, number, { pointsScored: number }]
 ```
 
+A variadic ("rest") argument can be added with the `.rest` method.
+
+```ts
+const variadicTuple = z.tuple([z.string()]).rest(z.number());
+const result = variadicTuple.parse(["hello", 1, 2, 3]);
+// => [string, ...number[]];
+```
+
 ## Unions
 
 Zod includes a built-in `z.union` method for composing "OR" types.
@@ -1683,34 +1692,33 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
 });
 ```
 
-You can add as many issues as you like. If `ctx.addIssue` is NOT called during the execution of the function, validation passes.
+You can add as many issues as you like. If `ctx.addIssue` is _not_ called during the execution of the function, validation passes.
 
 Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` you can create any issue of any code. Each issue code is described in detail in the Error Handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md).
 
 #### Abort early
 
-By default, parsing will continue even after a refinement check fails. For instance, if you chain together multiple refinements, they will all be executed. However, it may be desirable to _abort early_ to prevent later refinements from being executed. To achieve this, pass the `fatal` flag to `ctx.addIssue`:
+By default, parsing will continue even after a refinement check fails. For instance, if you chain together multiple refinements, they will all be executed. However, it may be desirable to _abort early_ to prevent later refinements from being executed. To achieve this, pass the `fatal` flag to `ctx.addIssue` and return `z.NEVER`.
 
 ```ts
-const Strings = z
-  .number()
-  .superRefine((val, ctx) => {
-    if (val < 10) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "foo",
-        fatal: true,
-      });
-    }
-  })
-  .superRefine((val, ctx) => {
-    if (val !== " ") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "bar",
-      });
-    }
-  });
+const schema = z.number().superRefine((val, ctx) => {
+  if (val < 10) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "should be >= 10",
+      fatal: true,
+    });
+
+    return z.NEVER;
+  }
+
+  if (val !== 12) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "should be twelve",
+    });
+  }
+});
 ```
 
 ### `.transform`
@@ -1749,6 +1757,12 @@ const Strings = z.string().transform((val, ctx) => {
       code: z.ZodIssueCode.custom,
       message: "Not a number",
     });
+
+    // This is a special symbol you can use to
+    // return early from the transform function.
+    // It has type `never` so it does not affect the
+    // inferred return type.
+    return z.NEVER;
   }
   return parsed;
 });

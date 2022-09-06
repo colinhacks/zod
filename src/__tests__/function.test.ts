@@ -109,6 +109,8 @@ test("output validation error", () => {
   expect(checker).toThrow();
 });
 
+z.function(z.tuple([z.string()])).args()._def.args;
+
 test("special function error codes", () => {
   const checker = z
     .function(z.tuple([z.string()]), z.boolean())

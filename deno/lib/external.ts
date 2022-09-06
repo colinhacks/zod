@@ -1,3 +1,4 @@
+export * from "./errors.ts";
 export * from "./helpers/parseUtil.ts";
 export * from "./helpers/typeAliases.ts";
 export { getParsedType, ZodParsedType } from "./helpers/util.ts";

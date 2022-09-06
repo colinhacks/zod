@@ -1,3 +1,4 @@
+import { defaultErrorMap, getErrorMap } from "./errors.ts";
 import { enumUtil } from "./helpers/enumUtil.ts";
 import { errorUtil } from "./helpers/errorUtil.ts";
 import {
@@ -23,8 +24,6 @@ import { partialUtil } from "./helpers/partialUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { getParsedType, util, ZodParsedType } from "./helpers/util.ts";
 import {
-  defaultErrorMap,
-  getErrorMap,
   IssueData,
   StringValidation,
   ZodCustomIssue,
@@ -111,7 +110,7 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   const { errorMap, invalid_type_error, required_error, description } = params;
   if (errorMap && (invalid_type_error || required_error)) {
     throw new Error(
-      `Can't use "invalid" or "required" in conjunction with custom error map.`
+      `Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`
     );
   }
   if (errorMap) return { errorMap: errorMap, description };
@@ -278,7 +277,7 @@ export abstract class ZodType<
     check: (arg: Output) => unknown,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
   ): ZodEffects<this, Output, Input> {
-    const getIssueProperties: any = (val: Output) => {
+    const getIssueProperties = (val: Output) => {
       if (typeof message === "string" || typeof message === "undefined") {
         return { message };
       } else if (typeof message === "function") {
@@ -1820,8 +1819,8 @@ export class ZodObject<
   ): //ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = (merging) => {
   ZodObject<
     extendShape<T, ReturnType<Incoming["_def"]["shape"]>>,
-    UnknownKeys,
-    Catchall
+    Incoming["_def"]["unknownKeys"],
+    Incoming["_def"]["catchall"]
   > {
     // const mergedShape = objectUtil.mergeShapes(
     //   this._def.shape(),
@@ -2457,6 +2456,10 @@ export interface ZodTupleDef<
   typeName: ZodFirstPartyTypeKind.ZodTuple;
 }
 
+export type AnyZodTuple = ZodTuple<
+  [ZodTypeAny, ...ZodTypeAny[]] | [],
+  ZodTypeAny | null
+>;
 export class ZodTuple<
   T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]],
   Rest extends ZodTypeAny | null = null
@@ -2533,6 +2536,9 @@ export class ZodTuple<
     schemas: T,
     params?: RawCreateParams
   ): ZodTuple<T, null> => {
+    if (!Array.isArray(schemas)) {
+      throw new Error("You must pass an array of schemas to z.tuple([ ... ])");
+    }
     return new ZodTuple({
       items: schemas,
       typeName: ZodFirstPartyTypeKind.ZodTuple,
@@ -3033,23 +3039,32 @@ export class ZodFunction<
 
   validate = this.implement;
 
-  static create = <
-    T extends ZodTuple<any, any> = ZodTuple<[], ZodUnknown>,
+  static create(): ZodFunction<ZodTuple<[], ZodUnknown>, ZodUnknown>;
+  static create<T extends AnyZodTuple = ZodTuple<[], ZodUnknown>>(
+    args: T
+  ): ZodFunction<T, ZodUnknown>;
+  static create<T extends AnyZodTuple, U extends ZodTypeAny>(
+    args: T,
+    returns: U
+  ): ZodFunction<T, U>;
+  static create<
+    T extends AnyZodTuple = ZodTuple<[], ZodUnknown>,
     U extends ZodTypeAny = ZodUnknown
-  >(
-    args?: T,
-    returns?: U,
+  >(args: T, returns: U, params?: RawCreateParams): ZodFunction<T, U>;
+  static create(
+    args?: AnyZodTuple,
+    returns?: ZodTypeAny,
     params?: RawCreateParams
-  ): ZodFunction<T, U> => {
+  ) {
     return new ZodFunction({
       args: (args
-        ? args.rest(ZodUnknown.create())
+        ? args
         : ZodTuple.create([]).rest(ZodUnknown.create())) as any,
       returns: returns || ZodUnknown.create(),
       typeName: ZodFirstPartyTypeKind.ZodFunction,
       ...processCreateParams(params),
     }) as any;
-  };
+  }
 }
 
 ///////////////////////////////////////
@@ -3857,6 +3872,12 @@ export type ZodFirstPartySchemaTypes =
   | ZodPromise<any>
   | ZodBranded<any, any>;
 
+// new approach that works for abstract classes
+// but required TS 4.4+
+// abstract class Class {
+//   constructor(..._: any[]) {}
+// }
+// const instanceOfType = <T extends typeof Class>(
 const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
   params: Parameters<ZodTypeAny["refine"]>[1] = {
@@ -3939,3 +3960,5 @@ export {
   unknownType as unknown,
   voidType as void,
 };
+
+export const NEVER = INVALID as never;
