@@ -1706,28 +1706,27 @@ Normally refinements always create issues with a `ZodIssueCode.custom` error cod
 
 #### Abort early
 
-By default, parsing will continue even after a refinement check fails. For instance, if you chain together multiple refinements, they will all be executed. However, it may be desirable to _abort early_ to prevent later refinements from being executed. To achieve this, pass the `fatal` flag to `ctx.addIssue`:
+By default, parsing will continue even after a refinement check fails. For instance, if you chain together multiple refinements, they will all be executed. However, it may be desirable to _abort early_ to prevent later refinements from being executed. To achieve this, pass the `fatal` flag to `ctx.addIssue` and return `z.NEVER`.
 
 ```ts
-const Strings = z
-  .number()
-  .superRefine((val, ctx) => {
-    if (val < 10) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "foo",
-        fatal: true,
-      });
-    }
-  })
-  .superRefine((val, ctx) => {
-    if (val !== " ") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "bar",
-      });
-    }
-  });
+const Strings = z.number().superRefine((val, ctx) => {
+  if (val < 10) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "foo",
+      fatal: true,
+    });
+
+    return z.NEVER;
+  }
+
+  if (val !== 12) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "should be twelve",
+    });
+  }
+});
 ```
 
 ### `.transform`

@@ -1,7 +1,7 @@
 import type { TypeOf, ZodType } from "./index.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { util, ZodParsedType } from "./helpers/util.ts";
-import defaultErrorMap from "./locales/en.ts";
+
 type allKeys<T> = T extends any ? keyof T : never;
 
 export type inferFlattenedErrors<
@@ -307,14 +307,3 @@ export type ZodErrorMap = (
   issue: ZodIssueOptionalMessage,
   _ctx: ErrorMapCtx
 ) => { message: string };
-
-let overrideErrorMap = defaultErrorMap;
-export { defaultErrorMap };
-
-export function setErrorMap(map: ZodErrorMap) {
-  overrideErrorMap = map;
-}
-
-export function getErrorMap() {
-  return overrideErrorMap;
-}

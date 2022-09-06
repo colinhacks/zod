@@ -1,3 +1,4 @@
+import { defaultErrorMap, getErrorMap } from "./errors.ts";
 import { enumUtil } from "./helpers/enumUtil.ts";
 import { errorUtil } from "./helpers/errorUtil.ts";
 import {
@@ -22,9 +23,7 @@ import {
 import { partialUtil } from "./helpers/partialUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { getParsedType, util, ZodParsedType } from "./helpers/util.ts";
-import defaultErrorMap from "./locales/en.ts";
 import {
-  getErrorMap,
   IssueData,
   StringValidation,
   ZodCustomIssue,
@@ -278,7 +277,7 @@ export abstract class ZodType<
     check: (arg: Output) => unknown,
     message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
   ): ZodEffects<this, Output, Input> {
-    const getIssueProperties: any = (val: Output) => {
+    const getIssueProperties = (val: Output) => {
       if (typeof message === "string" || typeof message === "undefined") {
         return { message };
       } else if (typeof message === "function") {
