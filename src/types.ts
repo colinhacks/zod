@@ -1819,8 +1819,8 @@ export class ZodObject<
   ): //ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = (merging) => {
   ZodObject<
     extendShape<T, ReturnType<Incoming["_def"]["shape"]>>,
-    UnknownKeys,
-    Catchall
+    Incoming["_def"]["unknownKeys"],
+    Incoming["_def"]["catchall"]
   > {
     // const mergedShape = objectUtil.mergeShapes(
     //   this._def.shape(),
