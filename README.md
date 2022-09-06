@@ -1074,6 +1074,14 @@ type Athlete = z.infer<typeof athleteSchema>;
 // type Athlete = [string, number, { pointsScored: number }]
 ```
 
+A variadic ("rest") argument can be added with the `.rest` method.
+
+```ts
+const variadicTuple = z.tuple([z.string()]).rest(z.number());
+const result = variadicTuple.parse(["hello", 1, 2, 3]);
+// => [string, ...number[]];
+```
+
 ## Unions
 
 Zod includes a built-in `z.union` method for composing "OR" types.
