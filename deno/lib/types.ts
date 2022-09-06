@@ -2288,18 +2288,13 @@ export interface ZodIntersectionDef<
 
 function mergeValues(
   a: any,
-  b: any,
-  params: {
-    addIssue: (path: (string | number)[]) => void;
-    path: (string | number)[];
-  }
-): { data: any } {
+  b: any
+): { valid: true; data: any } | { valid: false } {
   const aType = getParsedType(a);
   const bType = getParsedType(b);
-  const { addIssue, path } = params;
 
   if (a === b) {
-    return { data: a };
+    return { valid: true, data: a };
   } else if (aType === ZodParsedType.object && bType === ZodParsedType.object) {
     const bKeys = util.objectKeys(b);
     const sharedKeys = util
@@ -2308,42 +2303,41 @@ function mergeValues(
 
     const newObj: any = { ...a, ...b };
     for (const key of sharedKeys) {
-      const sharedValue = mergeValues(a[key], b[key], {
-        addIssue,
-        path: [...path, key],
-      });
+      const sharedValue = mergeValues(a[key], b[key]);
+      if (!sharedValue.valid) {
+        return { valid: false };
+      }
       newObj[key] = sharedValue.data;
     }
 
-    return { data: newObj };
+    return { valid: true, data: newObj };
   } else if (aType === ZodParsedType.array && bType === ZodParsedType.array) {
     if (a.length !== b.length) {
-      addIssue(path);
-      return { data: INVALID };
+      return { valid: false };
     }
 
     const newArray = [];
     for (let index = 0; index < a.length; index++) {
       const itemA = a[index];
       const itemB = b[index];
-      const sharedValue = mergeValues(itemA, itemB, {
-        path: [...path, index],
-        addIssue,
-      });
+      const sharedValue = mergeValues(itemA, itemB);
+
+      if (!sharedValue.valid) {
+        return { valid: false };
+      }
 
       newArray.push(sharedValue.data);
     }
 
-    return { data: newArray };
+    return { valid: true, data: newArray };
   } else if (
     aType === ZodParsedType.date &&
     bType === ZodParsedType.date &&
     +a === +b
   ) {
-    return { data: a };
+    return { valid: true, data: a };
   } else {
-    addIssue(path);
-    return { data: INVALID };
+    return { valid: false };
   }
 }
 
@@ -2365,23 +2359,12 @@ export class ZodIntersection<
         return INVALID;
       }
 
-      let isValid = true;
-      const merged = mergeValues(parsedLeft.value, parsedRight.value, {
-        addIssue: (path) => {
-          isValid = false;
-          addIssueToContext(ctx, {
-            code: ZodIssueCode.invalid_intersection_types,
-            path: path,
-          });
-        },
-        path: [],
-      });
+      const merged = mergeValues(parsedLeft.value, parsedRight.value);
 
-      if (!isValid) {
-        // addIssueToContext(ctx, {
-        //   code: ZodIssueCode.invalid_intersection_types,
-        //   path: merged.path,
-        // });
+      if (!merged.valid) {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.invalid_intersection_types,
+        });
         return INVALID;
       }
 
