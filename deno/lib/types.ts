@@ -1,4 +1,5 @@
 import { defaultErrorMap, getErrorMap } from "./errors.ts";
+import { FatalIssueData } from "./external.ts";
 import { enumUtil } from "./helpers/enumUtil.ts";
 import { errorUtil } from "./helpers/errorUtil.ts";
 import {
@@ -3408,6 +3409,20 @@ export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
   effect: Effect<any>;
 }
 
+export class ZodTransformError extends Error {
+  issues: Array<IssueData> = [];
+  constructor(issues: Array<FatalIssueData>) {
+    super("ZodTransformError");
+    this.name = "ZodTransformError";
+    this.issues = issues.map((issue) => {
+      return {
+        ...issue,
+        fatal: true,
+      };
+    });
+  }
+}
+
 export class ZodEffects<
   T extends ZodTypeAny,
   Output = T["_output"],
@@ -3513,7 +3528,22 @@ export class ZodEffects<
         // }
         if (!isValid(base)) return base;
 
-        const result = effect.transform(base.value, checkCtx);
+        const execTransform = () => {
+          try {
+            return effect.transform(base.value, checkCtx);
+          } catch (err) {
+            if (err instanceof ZodTransformError) {
+              err.issues.forEach((issue) => {
+                checkCtx.addIssue(issue);
+              });
+              return base.value;
+            }
+            throw err;
+          }
+        };
+
+        const result = execTransform();
+
         if (result instanceof Promise) {
           throw new Error(
             `Asynchronous transform encountered during synchronous parse operation. Use .parseAsync instead.`
@@ -3530,9 +3560,17 @@ export class ZodEffects<
             // if (base.status === "dirty") {
             //   return { status: "dirty", value: base.value };
             // }
-            return Promise.resolve(effect.transform(base.value, checkCtx)).then(
-              (result) => ({ status: status.value, value: result })
-            );
+            return Promise.resolve(effect.transform(base.value, checkCtx))
+              .catch((err) => {
+                if (err instanceof ZodTransformError) {
+                  err.issues.forEach((issue) => {
+                    checkCtx.addIssue(issue);
+                  });
+                  return base.value;
+                }
+                throw err;
+              })
+              .then((result) => ({ status: status.value, value: result }));
           });
       }
     }

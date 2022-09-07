@@ -292,8 +292,11 @@ type stripPath<T extends object> = T extends any
   ? util.OmitKeys<T, "path">
   : never;
 
-export type IssueData = stripPath<ZodIssueOptionalMessage> & {
+export type FatalIssueData = stripPath<ZodIssueOptionalMessage> & {
   path?: (string | number)[];
+};
+
+export type IssueData = FatalIssueData & {
   fatal?: boolean;
 };
 export type MakeErrorData = IssueData;
