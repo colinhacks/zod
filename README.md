@@ -1768,6 +1768,23 @@ const Strings = z.string().transform((val, ctx) => {
 });
 ```
 
+When attempting a transform that fails, and there is no value to return, the transform may throw an error of type `ZodTransformError`.
+The `ZodTransformError` constructor accepts an array of issues, all of which are treated as fatal. When a transform throws a `ZodTransformError`, no subsequent transforms or refinments are attempted..
+
+```ts
+const user = z.string().transform(async (id) => {
+  try {
+    const user = await getUserById(id);
+    return user;
+  } catch (e) {
+    throw new ZodTransformError({
+      code: "custom",
+      message: "User not found",
+    });
+  }
+});
+```
+
 #### Relationship to refinements
 
 Transforms and refinements can be interleaved. These will be executed in the order they are declared.
