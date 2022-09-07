@@ -1772,15 +1772,19 @@ When attempting a transform that fails, and there is no value to return, the tra
 The `ZodTransformError` constructor accepts an array of issues, all of which are treated as fatal. When a transform throws a `ZodTransformError`, no subsequent transforms or refinments are attempted..
 
 ```ts
+import { ZodTransformError } from "zod";
+
 const user = z.string().transform(async (id) => {
   try {
     const user = await getUserById(id);
     return user;
   } catch (e) {
-    throw new ZodTransformError({
-      code: "custom",
-      message: "User not found",
-    });
+    throw new ZodTransformError([
+      {
+        code: "custom",
+        message: "User not found",
+      },
+    ]);
   }
 });
 ```
