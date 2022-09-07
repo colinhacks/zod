@@ -3538,6 +3538,7 @@ export class ZodEffects<
               });
               return base.value;
             }
+            /* istanbul ignore next */
             throw err;
           }
         };
@@ -3560,7 +3561,8 @@ export class ZodEffects<
             // if (base.status === "dirty") {
             //   return { status: "dirty", value: base.value };
             // }
-            return Promise.resolve(effect.transform(base.value, checkCtx))
+            return Promise.resolve()
+              .then(() => effect.transform(base.value, checkCtx))
               .catch((err) => {
                 if (err instanceof ZodTransformError) {
                   err.issues.forEach((issue) => {
@@ -3568,6 +3570,7 @@ export class ZodEffects<
                   });
                   return base.value;
                 }
+                /* istanbul ignore next */
                 throw err;
               })
               .then((result) => ({ status: status.value, value: result }));
