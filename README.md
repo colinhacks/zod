@@ -1769,7 +1769,7 @@ const Strings = z.string().transform((val, ctx) => {
 ```
 
 When attempting a transform that fails, and there is no value to return, the transform may throw an error of type `ZodTransformError`.
-The `ZodTransformError` constructor accepts an array of issues, all of which are treated as fatal. When a transform throws a `ZodTransformError`, no subsequent transforms or refinments are attempted..
+The `ZodTransformError` constructor accepts an array of issues, all of which are treated as fatal. When a transform throws a `ZodTransformError`, no subsequent transforms or refinments are attempted.
 
 ```ts
 import { ZodTransformError } from "zod";
