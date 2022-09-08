@@ -1669,9 +1669,17 @@ export class ZodObject<
 
     const { shape, keys: shapeKeys } = this._getCached();
     const extraKeys: string[] = [];
-    for (const key in ctx.data) {
-      if (!shapeKeys.includes(key)) {
-        extraKeys.push(key);
+
+    if (
+      !(
+        this._def.catchall instanceof ZodNever &&
+        this._def.unknownKeys === "strip"
+      )
+    ) {
+      for (const key in ctx.data) {
+        if (!shapeKeys.includes(key)) {
+          extraKeys.push(key);
+        }
       }
     }
 
