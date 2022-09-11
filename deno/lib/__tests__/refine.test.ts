@@ -54,10 +54,14 @@ test("refinement type guard", () => {
   const validationSchema = z.object({
     a: z.string().refine((s): s is "a" => s === "a"),
   });
+  type Input = z.input<typeof validationSchema>;
   type Schema = z.infer<typeof validationSchema>;
 
+  util.assertEqual<"a", Input["a"]>(false);
+  util.assertEqual<string, Input["a"]>(true);
+
   util.assertEqual<"a", Schema["a"]>(true);
-  util.assertEqual<"string", Schema["a"]>(false);
+  util.assertEqual<string, Schema["a"]>(false);
 });
 
 test("refinement Promise", async () => {
