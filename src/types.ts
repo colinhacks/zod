@@ -410,8 +410,8 @@ export abstract class ZodType<
   chain<
     ToDef extends ZodTypeDef,
     To extends ZodType<To["_output"], ToDef, Output>
-  >(to: To): ZodChain<Def, Output, this, Output, ToDef, To> {
-    return new ZodChain<Def, Output, this, Output, ToDef, To>({
+  >(to: To): ZodChain<Def, Output, this, ToDef, To> {
+    return new ZodChain<Def, Output, this, ToDef, To>({
       from: this,
       to: to,
     });
@@ -3595,11 +3595,10 @@ export interface ZodChainDef<From extends ZodTypeAny, To extends ZodTypeAny>
 
 export class ZodChain<
   FromDef extends ZodTypeDef,
-  FromOut extends ToIn,
+  FromOut extends To["_input"],
   From extends ZodType<FromOut, FromDef, From["_input"]>,
-  ToIn,
   ToDef extends ZodTypeDef,
-  To extends ZodType<To["_output"], ToDef, ToIn>
+  To extends ZodType<To["_output"], ToDef, To["_input"]>
 > extends ZodType<To["_output"], ZodChainDef<From, To>, From["_input"]> {
   innerType() {
     return this;
