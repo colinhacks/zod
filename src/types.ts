@@ -407,6 +407,16 @@ export abstract class ZodType<
     }) as any;
   }
 
+  chain<
+    ToDef extends ZodTypeDef,
+    To extends ZodType<To["_output"], ToDef, Output>
+  >(to: To): ZodChain<Def, Output, this, Output, ToDef, To> {
+    return new ZodChain<Def, Output, this, Output, ToDef, To>({
+      from: this,
+      to: to,
+    });
+  }
+
   default(def: util.noUndefined<Input>): ZodDefault<this>;
   default(def: () => util.noUndefined<Input>): ZodDefault<this>;
   default(def: any) {
@@ -3568,6 +3578,71 @@ export class ZodEffects<
 }
 
 export { ZodEffects as ZodTransformer };
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                      //////////
+//////////       ZodChain       //////////
+//////////                      //////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+
+export interface ZodChainDef<From extends ZodTypeAny, To extends ZodTypeAny>
+  extends ZodTypeDef {
+  from: From;
+  to: To;
+}
+
+export class ZodChain<
+  FromDef extends ZodTypeDef,
+  FromOut extends ToIn,
+  From extends ZodType<FromOut, FromDef, From["_input"]>,
+  ToIn,
+  ToDef extends ZodTypeDef,
+  To extends ZodType<To["_output"], ToDef, ToIn>
+> extends ZodType<To["_output"], ZodChainDef<From, To>, From["_input"]> {
+  innerType() {
+    return this;
+  }
+
+  _parse(input: ParseInput): ParseReturnType<To["_output"]> {
+    const { status, ctx } = this._processInputParams(input);
+
+    if (ctx.common.async) {
+      const processed = this._def.from._parseAsync({
+        data: ctx.data,
+        path: ctx.path,
+        parent: ctx,
+      });
+
+      return Promise.resolve(processed).then((processed) => {
+        if (processed.status === "aborted") return INVALID;
+        if (processed.status === "dirty") status.dirty();
+
+        return this._def.to._parseAsync({
+          data: processed.value,
+          path: ctx.path,
+          parent: ctx,
+        });
+      });
+    } else {
+      const processed = this._def.from._parseSync({
+        data: ctx.data,
+        path: ctx.path,
+        parent: ctx,
+      });
+
+      if (processed.status === "aborted") return INVALID;
+      if (processed.status === "dirty") status.dirty();
+
+      return this._def.to._parseSync({
+        data: processed.value,
+        path: ctx.path,
+        parent: ctx,
+      });
+    }
+  }
+}
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
