@@ -11,6 +11,11 @@ test("schema chaining", () => {
 
   const chain = from.chain(to);
 
+  type FromOutput = z.output<typeof from>;
+  type ToInput = z.input<typeof to>;
+
+  util.assertEqual<FromOutput, ToInput>(true);
+
   type ChainInput = z.input<typeof chain>;
   type ChainOutput = z.output<typeof chain>;
 
