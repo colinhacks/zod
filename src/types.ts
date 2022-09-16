@@ -12,6 +12,7 @@ import {
   isValid,
   makeIssue,
   OK,
+  overrideReturnType,
   ParseContext,
   ParseInput,
   ParseParams,
@@ -3600,40 +3601,44 @@ export class ZodChain<
   From["_input"]
 > {
   _parse(input: ParseInput): ParseReturnType<To["_output"]> {
-    const { status, ctx } = this._processInputParams(input);
+    const { ctx } = this._processInputParams(input);
 
     if (ctx.common.async) {
-      const processed = this._def.from._parseAsync({
-        data: ctx.data,
-        path: ctx.path,
-        parent: ctx,
-      });
-
-      return Promise.resolve(processed).then((processed) => {
-        if (processed.status === "aborted") return INVALID;
-        if (processed.status === "dirty") status.dirty();
-
-        return this._def.to._parseAsync({
-          data: processed.value,
+      return this._def.from
+        ._parseAsync({
+          data: ctx.data,
           path: ctx.path,
           parent: ctx,
+        })
+        .then((fromOut) => {
+          if (fromOut.status === "aborted") return INVALID;
+
+          return this._def.to
+            ._parseAsync({
+              data: fromOut.value,
+              path: ctx.path,
+              parent: ctx,
+            })
+            .then((toOut) => {
+              return overrideReturnType(toOut, fromOut.status);
+            });
         });
-      });
     } else {
-      const processed = this._def.from._parseSync({
+      const fromOut = this._def.from._parseSync({
         data: ctx.data,
         path: ctx.path,
         parent: ctx,
       });
 
-      if (processed.status === "aborted") return INVALID;
-      if (processed.status === "dirty") status.dirty();
+      if (fromOut.status === "aborted") return INVALID;
 
-      return this._def.to._parseSync({
-        data: processed.value,
+      const toOut = this._def.to._parseSync({
+        data: fromOut.value,
         path: ctx.path,
         parent: ctx,
       });
+
+      return overrideReturnType(toOut, fromOut.status);
     }
   }
 
@@ -3645,12 +3650,13 @@ export class ZodChain<
     To extends ZodType<To["_output"], ToDef, To["_input"]>
   >(
     from: From,
-    to: To
+    to: To,
+    params?: RawCreateParams
   ) => {
     return new ZodChain({
       from,
       to,
-      // ...processCreateParams(params),
+      ...processCreateParams(params),
     });
   };
 }

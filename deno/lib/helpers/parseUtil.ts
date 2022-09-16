@@ -83,8 +83,11 @@ export type ObjectPair = {
   key: SyncParseReturnType<any>;
   value: SyncParseReturnType<any>;
 };
+
+type ParseStatusValue = "aborted" | "dirty" | "valid";
+
 export class ParseStatus {
-  value: "aborted" | "dirty" | "valid" = "valid";
+  value: ParseStatusValue = "valid";
   dirty() {
     if (this.value === "valid") this.value = "dirty";
   }
@@ -176,3 +179,16 @@ export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
   typeof Promise !== undefined && x instanceof Promise;
+
+export const overrideReturnType = <T>(
+  rt: SyncParseReturnType<T>,
+  status: ParseStatusValue
+) => {
+  if (rt.status === "aborted" || status === "aborted") {
+    return INVALID;
+  }
+  if (rt.status === "dirty" || status === "dirty") {
+    return DIRTY(rt.value);
+  }
+  return rt;
+};
