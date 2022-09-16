@@ -407,18 +407,6 @@ export abstract class ZodType<
     }) as any;
   }
 
-  // chain<
-  //   FromOut extends ToIn & Output,
-  //   ToIn,
-  //   ToDef extends ZodTypeDef,
-  //   To extends ZodType<To["_output"], ToDef, ToIn>
-  // >(to: To): ZodChain<Def, FromOut, this, ToIn, ToDef, To> {
-  //   return new ZodChain<Def, FromOut, this, ToIn, ToDef, To>({
-  //     from: this,
-  //     to: to,
-  //   });
-  // }
-
   default(def: util.noUndefined<Input>): ZodDefault<this>;
   default(def: () => util.noUndefined<Input>): ZodDefault<this>;
   default(def: any) {
@@ -3589,8 +3577,13 @@ export { ZodEffects as ZodTransformer };
 //////////////////////////////////////////
 //////////////////////////////////////////
 
-export interface ZodChainDef<From extends ZodTypeAny, To extends ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodChainDef<
+  FromOut extends To["_input"],
+  FromDef extends ZodTypeDef,
+  From extends ZodType<FromOut, FromDef, From["_input"]>,
+  ToDef extends ZodTypeDef,
+  To extends ZodType<To["_output"], ToDef, To["_input"]>
+> extends ZodTypeDef {
   from: From;
   to: To;
 }
@@ -3601,7 +3594,11 @@ export class ZodChain<
   From extends ZodType<FromOut, FromDef, From["_input"]>,
   ToDef extends ZodTypeDef,
   To extends ZodType<To["_output"], ToDef, To["_input"]>
-> extends ZodType<To["_output"], ZodChainDef<From, To>, From["_input"]> {
+> extends ZodType<
+  To["_output"],
+  ZodChainDef<FromOut, FromDef, From, ToDef, To>,
+  From["_input"]
+> {
   _parse(input: ParseInput): ParseReturnType<To["_output"]> {
     const { status, ctx } = this._processInputParams(input);
 
