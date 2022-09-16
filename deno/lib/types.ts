@@ -407,15 +407,17 @@ export abstract class ZodType<
     }) as any;
   }
 
-  chain<
-    ToDef extends ZodTypeDef,
-    To extends ZodType<To["_output"], ToDef, Output>
-  >(to: To): ZodChain<Def, Output, this, ToDef, To> {
-    return new ZodChain<Def, Output, this, ToDef, To>({
-      from: this,
-      to: to,
-    });
-  }
+  // chain<
+  //   FromOut extends ToIn & Output,
+  //   ToIn,
+  //   ToDef extends ZodTypeDef,
+  //   To extends ZodType<To["_output"], ToDef, ToIn>
+  // >(to: To): ZodChain<Def, FromOut, this, ToIn, ToDef, To> {
+  //   return new ZodChain<Def, FromOut, this, ToIn, ToDef, To>({
+  //     from: this,
+  //     to: to,
+  //   });
+  // }
 
   default(def: util.noUndefined<Input>): ZodDefault<this>;
   default(def: () => util.noUndefined<Input>): ZodDefault<this>;
@@ -3594,16 +3596,12 @@ export interface ZodChainDef<From extends ZodTypeAny, To extends ZodTypeAny>
 }
 
 export class ZodChain<
-  FromDef extends ZodTypeDef,
   FromOut extends To["_input"],
+  FromDef extends ZodTypeDef,
   From extends ZodType<FromOut, FromDef, From["_input"]>,
   ToDef extends ZodTypeDef,
   To extends ZodType<To["_output"], ToDef, To["_input"]>
 > extends ZodType<To["_output"], ZodChainDef<From, To>, From["_input"]> {
-  innerType() {
-    return this;
-  }
-
   _parse(input: ParseInput): ParseReturnType<To["_output"]> {
     const { status, ctx } = this._processInputParams(input);
 
@@ -3641,6 +3639,23 @@ export class ZodChain<
       });
     }
   }
+
+  static create = <
+    FromOut extends To["_input"],
+    FromDef extends ZodTypeDef,
+    From extends ZodType<FromOut, FromDef, From["_input"]>,
+    ToDef extends ZodTypeDef,
+    To extends ZodType<To["_output"], ToDef, To["_input"]>
+  >(
+    from: From,
+    to: To
+  ) => {
+    return new ZodChain({
+      from,
+      to,
+      // ...processCreateParams(params),
+    });
+  };
 }
 
 ///////////////////////////////////////////
@@ -3988,6 +4003,7 @@ const enumType = ZodEnum.create;
 const nativeEnumType = ZodNativeEnum.create;
 const promiseType = ZodPromise.create;
 const effectsType = ZodEffects.create;
+const chainType = ZodChain.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
@@ -4000,6 +4016,7 @@ export {
   arrayType as array,
   bigIntType as bigint,
   booleanType as boolean,
+  chainType as chain,
   dateType as date,
   discriminatedUnionType as discriminatedUnion,
   effectsType as effect,

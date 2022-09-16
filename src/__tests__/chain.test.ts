@@ -5,10 +5,13 @@ import { util } from "../helpers/util";
 import * as z from "../index";
 
 test("schema chaining", () => {
-  const from = z.string().transform((val) => parseInt(val, 10));
-  const to = z.number().min(1).max(10);
+  const from = z
+    .string()
+    .transform((val) => parseInt(val, 10))
+    .nullable();
+  const to = z.number().min(1).max(10).nullable();
 
-  const chain = from.chain(to);
+  const chain = z.chain(from, to);
 
   type FromOutput = z.output<typeof from>;
   type ToInput = z.input<typeof to>;
@@ -18,6 +21,6 @@ test("schema chaining", () => {
   type ChainInput = z.input<typeof chain>;
   type ChainOutput = z.output<typeof chain>;
 
-  util.assertEqual<ChainInput, string>(true);
-  util.assertEqual<ChainOutput, number>(true);
+  util.assertEqual<ChainInput, string | null>(true);
+  util.assertEqual<ChainOutput, number | null>(true);
 });
