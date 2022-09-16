@@ -55,12 +55,12 @@ test.each([
           {
             code: "custom",
             message: "Cannot be 5",
-            path: [],
+            path: ["new_path"],
           },
           {
             code: "custom",
             message: "It really can not be 5",
-            path: [],
+            path: ["newer_path"],
           },
         ],
       }),
@@ -82,7 +82,7 @@ test.each([
       }),
     },
   },
-])("Schema chaining", ({ input, output }) => {
+])('Schema chaining "$input"', ({ input, output }) => {
   const from = z
     .string()
     .transform((val) => parseInt(val, 10))
@@ -92,6 +92,7 @@ test.each([
         ctx.addIssue({
           code: "custom",
           message: "Cannot be 5",
+          path: ["new_path"],
         });
       }
       if (val === 6) {
@@ -108,7 +109,15 @@ test.each([
     .max(10)
     .nullable()
     .optional()
-    .refine((val) => val !== 5, { message: "It really can not be 5" })
+    .superRefine((val, ctx) => {
+      if (val === 5) {
+        ctx.addIssue({
+          code: "custom",
+          message: "It really can not be 5",
+          path: ["newer_path"],
+        });
+      }
+    })
     .refine((val) => val !== 6, { message: "It really can not be 6" });
 
   type FromInput = z.input<typeof from>;
