@@ -82,7 +82,7 @@ test.each([
       }),
     },
   },
-])('Schema chaining "$input"', ({ input, output }) => {
+])('Schema chaining "$input"', async ({ input, output }) => {
   const from = z
     .string()
     .transform((val) => parseInt(val, 10))
@@ -136,6 +136,8 @@ test.each([
   util.assertEqual<ChainInput, FromInput>(true);
   util.assertEqual<ChainOutput, ToOutput>(true);
 
-  const res = chain.safeParse(input);
-  expect(res).toEqual(output);
+  const resSync = chain.safeParse(input);
+  expect(resSync).toEqual(output);
+  const resAsync = await chain.safeParseAsync(input);
+  expect(resAsync).toEqual(output);
 });
