@@ -1966,7 +1966,7 @@ type inferred = z.infer<typeof stringToNumber>; // number
 
 ### Writing generic functions
 
-When attempting to write a functions that accepts a Zod schemas as an input, it's common to try something like this:
+When attempting to write a function that accepts a Zod schema as an input, it's common to try something like this:
 
 ```ts
 function makeSchemaOptional<T>(schema: z.ZodType<T>) {
