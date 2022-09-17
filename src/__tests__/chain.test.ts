@@ -82,6 +82,24 @@ test.each([
       }),
     },
   },
+  {
+    input: "11",
+    output: {
+      success: false,
+      error: expect.objectContaining({
+        issues: [
+          {
+            code: "too_big",
+            maximum: 10,
+            type: "number",
+            inclusive: true,
+            message: "Number must be less than or equal to 10",
+            path: [],
+          },
+        ],
+      }),
+    },
+  },
 ])('Schema chaining "$input"', async ({ input, output }) => {
   const from = z
     .string()
