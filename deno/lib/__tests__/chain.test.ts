@@ -102,7 +102,7 @@ test.each([
     },
   },
 ])('Schema chaining "$input"', async ({ input, output }) => {
-  const from = z
+  const fromSchema = z
     .string()
     .transform((val) => parseInt(val, 10))
     .optional()
@@ -122,7 +122,7 @@ test.each([
         });
       }
     });
-  const to = z
+  const toSchema = z
     .number()
     .min(1)
     .max(10)
@@ -139,15 +139,15 @@ test.each([
     })
     .refine((val) => val !== 6, { message: "It really can not be 6" });
 
-  type FromInput = z.input<typeof from>;
-  type FromOutput = z.output<typeof from>;
+  type FromInput = z.input<typeof fromSchema>;
+  type FromOutput = z.output<typeof fromSchema>;
 
-  type ToInput = z.input<typeof to>;
-  type ToOutput = z.output<typeof to>;
+  type ToInput = z.input<typeof toSchema>;
+  type ToOutput = z.output<typeof toSchema>;
 
   util.assertAssignable<ToInput, FromOutput>(true);
 
-  const chain = z.chain(from, to);
+  const chain = z.chain(fromSchema, toSchema);
 
   type ChainInput = z.input<typeof chain>;
   type ChainOutput = z.output<typeof chain>;
