@@ -163,6 +163,19 @@ export const DIRTY = <T>(value: T): DIRTY<T> => ({ status: "dirty", value });
 export type OK<T> = { status: "valid"; value: T };
 export const OK = <T>(value: T): OK<T> => ({ status: "valid", value });
 
+export const overrideReturnType = <T>(
+  rt: SyncParseReturnType<T>,
+  status: ParseStatusValue
+) => {
+  if (rt.status === "aborted" || status === "aborted") {
+    return INVALID;
+  }
+  if (rt.status === "dirty" || status === "dirty") {
+    return DIRTY(rt.value);
+  }
+  return rt;
+};
+
 export type SyncParseReturnType<T = any> = OK<T> | DIRTY<T> | INVALID;
 export type AsyncParseReturnType<T> = Promise<SyncParseReturnType<T>>;
 export type ParseReturnType<T> =
@@ -179,16 +192,3 @@ export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
   typeof Promise !== undefined && x instanceof Promise;
-
-export const overrideReturnType = <T>(
-  rt: SyncParseReturnType<T>,
-  status: ParseStatusValue
-) => {
-  if (rt.status === "aborted" || status === "aborted") {
-    return INVALID;
-  }
-  if (rt.status === "dirty" || status === "dirty") {
-    return DIRTY(rt.value);
-  }
-  return rt;
-};

@@ -101,7 +101,7 @@ test.each([
       }),
     },
   },
-])('Scalar schema chaining "$input"', async ({ input, output }) => {
+])("Scalar schema chaining - $input", async ({ input, output }) => {
   const fromSchema = z
     .string()
     .transform((val) => parseInt(val, 10))
@@ -188,7 +188,7 @@ test.each([
         sumMinLength: { values: [12, 15, 16, 98, 24, 63, 89, 65] },
         intersection: { p2: 0 },
         enum: "one",
-        passthrough: { points: 1234, score: 999 },
+        passthrough: { points: 1234, score: 999, name: "General Zod" },
         numProm,
         lenfun: 42,
       },
@@ -360,7 +360,9 @@ test.each([
       z.object({ p3: z.number().optional() })
     ),
     enum: z.intersection(z.enum(["zero", "one"]), z.enum(["one", "two"])),
-    passthrough: z.object({ points: z.number(), score: z.number() }),
+    passthrough: z
+      .object({ points: z.number(), score: z.number() })
+      .passthrough(),
     numProm: z.promise(z.number()),
     lenfun: z.function(
       z.tuple([z.string(), z.number().optional()]),
