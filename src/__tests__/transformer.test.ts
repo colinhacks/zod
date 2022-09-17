@@ -272,6 +272,7 @@ test("preprocess", () => {
 
   const value = schema.parse("asdf");
   expect(value).toEqual(["asdf"]);
+  util.assertEqual<typeof schema["_input"], unknown>(true);
 });
 
 test("async preprocess", async () => {
