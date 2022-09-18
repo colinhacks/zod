@@ -408,10 +408,14 @@ export abstract class ZodType<
     }) as any;
   }
 
-  chain<To extends ZodType<To["_output"], any, Output>>(
-    to: To
-  ): ZodChain<Output, this, To> {
-    return new ZodChain<Output, this, To>({
+  chain<
+    To extends ZodType<
+      To["_output"],
+      any,
+      this["_output"] extends To["_input"] ? To["_input"] : never
+    >
+  >(to: To): ZodChain<this, To> {
+    return new ZodChain<this, To>({
       from: this,
       to,
     });
@@ -3596,23 +3600,25 @@ export { ZodEffects as ZodTransformer };
 //////////////////////////////////////////
 
 export interface ZodChainDef<
-  FromOut extends To["_input"],
-  From extends ZodType<FromOut, any, From["_input"]>,
-  To extends ZodType<To["_output"], any, To["_input"]>
+  From extends ZodType<From["_output"], any, From["_input"]>,
+  To extends ZodType<
+    To["_output"],
+    any,
+    From["_output"] extends To["_input"] ? To["_input"] : never
+  >
 > extends ZodTypeDef {
   from: From;
   to: To;
 }
 
 export class ZodChain<
-  FromOut extends To["_input"],
-  From extends ZodType<FromOut, any, From["_input"]>,
-  To extends ZodType<To["_output"], any, To["_input"]>
-> extends ZodType<
-  To["_output"],
-  ZodChainDef<FromOut, From, To>,
-  From["_input"]
-> {
+  From extends ZodType<From["_output"], any, From["_input"]>,
+  To extends ZodType<
+    To["_output"],
+    any,
+    From["_output"] extends To["_input"] ? To["_input"] : never
+  >
+> extends ZodType<To["_output"], ZodChainDef<From, To>, From["_input"]> {
   _parse(input: ParseInput): ParseReturnType<To["_output"]> {
     const { ctx } = this._processInputParams(input);
 
@@ -3656,11 +3662,12 @@ export class ZodChain<
   }
 
   static create = <
-    FromOut extends To["_input"],
-    FromDef extends ZodTypeDef,
-    From extends ZodType<FromOut, FromDef, From["_input"]>,
-    ToDef extends ZodTypeDef,
-    To extends ZodType<To["_output"], ToDef, To["_input"]>
+    From extends ZodType<From["_output"], any, From["_input"]>,
+    To extends ZodType<
+      To["_output"],
+      any,
+      From["_output"] extends To["_input"] ? To["_input"] : never
+    >
   >(
     from: From,
     to: To,
