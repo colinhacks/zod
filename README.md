@@ -1799,7 +1799,7 @@ const IdToUser = z
 ### `.chain`
 
 You can chain schemas, passing the output of one as the input to another.
-The output of the first schema is typechecked to ensure compatibility with the input of the second schema.
+The output of the first schema is type-checked to ensure compatibility with the input of the second schema.
 
 ```ts
 const createUserDTOSchema = z
