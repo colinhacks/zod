@@ -98,6 +98,7 @@
   - [.refine](#refine)
   - [.superRefine](#superRefine)
   - [.transform](#transform)
+  - [.chain](#chain)
   - [.default](#default)
   - [.optional](#optional)
   - [.nullable](#nullable)
@@ -1793,6 +1794,8 @@ const IdToUser = z
   });
 ```
 
+> ⚠️ If your schema contains asynchronous transforms, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
+
 ### `.chain`
 
 You can chain schemas, passing the output of one as the input to another.
@@ -1831,8 +1834,6 @@ const userSchema = z
 const createUserSchema = createUserDTOSchema.chain(userSchema);
 const updateUserSchema = updateUserDTOSchema.chain(userSchema);
 ```
-
-> ⚠️ If your schema contains asynchronous transforms, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
 
 ### `.default`
 
