@@ -3661,24 +3661,20 @@ export class ZodChain<
     }
   }
 
-  static create = <
+  static create<
     From extends ZodType<From["_output"], any, From["_input"]>,
     To extends ZodType<
       To["_output"],
       any,
       From["_output"] extends To["_input"] ? To["_input"] : never
     >
-  >(
-    from: From,
-    to: To,
-    params?: RawCreateParams
-  ) => {
+  >(from: From, to: To, params?: RawCreateParams) {
     return new ZodChain({
       from,
       to,
       ...processCreateParams(params),
     });
-  };
+  }
 }
 
 ///////////////////////////////////////////
