@@ -1793,6 +1793,45 @@ const IdToUser = z
   });
 ```
 
+### `.chain`
+
+You can chain schemas, passing the output of one as the input to another.
+The output of the first schema is typechecked to ensure compatibility with the input of the second schema.
+
+```ts
+const createUserDTOSchema = z
+  .object({
+    name: z.string(),
+    email: z.string(),
+    active: z.boolean(),
+  })
+  .transform((input) => {
+    return {
+      id: uuid(),
+      ...input,
+    };
+  });
+
+const updateUserDTOSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  active: z.boolean(),
+});
+
+const userSchema = z
+  .object({
+    id: z.string().trim().uuid(),
+    name: z.string().trim().min(1),
+    email: z.string().trim().email(),
+    active: z.boolean(),
+  })
+  .refine((val) => allowedDomains.includes(emailDomain(val.email)));
+
+const createUserSchema = createUserDTOSchema.chain(userSchema);
+const updateUserSchema = updateUserDTOSchema.chain(userSchema);
+```
+
 > ⚠️ If your schema contains asynchronous transforms, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
 
 ### `.default`
