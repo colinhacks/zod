@@ -9,6 +9,7 @@ export namespace util {
 
   type AssertAssignable<L, R> = [R] extends [L] ? true : false;
 
+  // Assert that a value of type `R` is assignable to a variable of type `L`
   export const assertAssignable = <L, R>(val: AssertAssignable<L, R>) => val;
 
   export function assertIs<T>(_arg: T): void {}

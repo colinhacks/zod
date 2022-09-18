@@ -148,6 +148,7 @@ test.each([
   util.assertAssignable<ToInput, FromOutput>(true);
   util.assertAssignable<FromOutput, ToInput>(false);
 
+  // Test chain factory
   const chain = z.chain(fromSchema, toSchema);
 
   type ChainInput = z.input<typeof chain>;
@@ -160,6 +161,21 @@ test.each([
   expect(resSync).toEqual(output);
   const resAsync = await chain.safeParseAsync(input);
   expect(resAsync).toEqual(output);
+
+  // Test chain method.
+  // const methChain = fromSchema.chain(toSchema);
+  // toSchema.chain(fromSchema); // TODO Should not compile, remore
+
+  // type MethChainInput = z.input<typeof methChain>;
+  // type MethChainOutput = z.output<typeof methChain>;
+
+  // util.assertEqual<MethChainInput, FromInput>(true);
+  // util.assertEqual<MethChainOutput, ToOutput>(true);
+
+  // const methResSync = methChain.safeParse(input);
+  // expect(methResSync).toEqual(output);
+  // const methResAsync = await methChain.safeParseAsync(input);
+  // expect(methResAsync).toEqual(output);
 });
 
 const numProm = Promise.resolve(12);
@@ -426,6 +442,7 @@ test.each([
   util.assertAssignable<ToInput, FromOutput>(true);
   util.assertAssignable<FromOutput, ToInput>(false);
 
+  // Test chain factory
   const chain = z.chain(fromSchema, toSchema);
 
   type ChainInput = z.input<typeof chain>;
@@ -438,4 +455,18 @@ test.each([
   expect(resSync).toEqual(output);
   const resAsync = await chain.safeParseAsync(input);
   expect(resAsync).toEqual(output);
+
+  // Test chain method
+  // const methChain = fromSchema.chain(toSchema);
+
+  // type MethChainInput = z.input<typeof methChain>;
+  // type MethChainOutput = z.output<typeof methChain>;
+
+  // util.assertEqual<MethChainInput, FromInput>(true);
+  // util.assertEqual<MethChainOutput, ToOutput>(true);
+
+  // const methResSync = methChain.safeParse(input);
+  // expect(methResSync).toEqual(output);
+  // const methResAsync = await methChain.safeParseAsync(input);
+  // expect(methResAsync).toEqual(output);
 });
