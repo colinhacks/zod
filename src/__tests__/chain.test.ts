@@ -147,6 +147,10 @@ test.each([
   util.assertAssignable<ToInput, FromOutput>(true);
   util.assertAssignable<FromOutput, ToInput>(false);
 
+  // Check invalid chains are not possible
+  // @ts-expect-error
+  z.chain(toSchema, fromSchema), toSchema.chain(fromSchema);
+
   // Test chain factory
   const chain = z.chain(fromSchema, toSchema);
 
@@ -439,6 +443,10 @@ test.each([
 
   util.assertAssignable<ToInput, FromOutput>(true);
   util.assertAssignable<FromOutput, ToInput>(false);
+
+  // Check invalid chains are not possible
+  // @ts-expect-error
+  z.chain(toSchema, fromSchema), toSchema.chain(fromSchema);
 
   // Test chain factory
   const chain = z.chain(fromSchema, toSchema);
