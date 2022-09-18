@@ -1793,6 +1793,15 @@ const IdToUser = z
   });
 ```
 
+### `.chain`
+
+You can chain schemas, passing the output of one as the input to another. This allows reuseable schemas to be sequenced.
+Typechecking ensures that the output of the first schema is compatible with the input of the second.
+
+```ts
+const schema = z.string().chain((s) => z.number().min(s.length));
+```
+
 > ⚠️ If your schema contains asynchronous transforms, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
 
 ### `.default`
