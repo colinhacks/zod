@@ -1822,14 +1822,16 @@ const updateUserDTOSchema = z.object({
   active: z.boolean(),
 });
 
-const userSchema = z
-  .object({
-    id: z.string().trim().uuid(),
-    name: z.string().trim().min(1),
-    email: z.string().trim().email(),
-    active: z.boolean(),
-  })
-  .refine((val) => allowedDomains.includes(emailDomain(val.email)));
+const userSchema = z.object({
+  id: z.string().trim().uuid(),
+  name: z.string().trim().min(1),
+  email: z
+    .string()
+    .trim()
+    .email()
+    .refine((val) => allowedDomains.includes(emailDomain(val))),
+  active: z.boolean(),
+});
 
 const createUserSchema = createUserDTOSchema.chain(userSchema);
 const updateUserSchema = updateUserDTOSchema.chain(userSchema);
