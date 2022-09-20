@@ -41,6 +41,33 @@ import {
 ///////////////////////////////////////
 ///////////////////////////////////////
 
+export const _hydrate = <TSchema extends ZodType<TValue>, TValue>(
+  schema: TSchema,
+  defaultValue: TValue | ((e: unknown) => TValue)
+) =>
+  anyType().transform((data) => {
+    try {
+      return schema.parse(data);
+    } catch (e) {
+      return defaultValue instanceof Function
+        ? defaultValue(data)
+        : defaultValue;
+    }
+  });
+export const hydrate = <
+  T,
+  TSchema extends ZodType<T>,
+  TValue extends TypeOf<TSchema>
+>(
+  schema: TSchema,
+  defaultValue: TValue | ((e: unknown) => TValue)
+) =>
+  _hydrate(
+    // @ts-expect-error
+    schema,
+    defaultValue
+  ) as unknown as TSchema;
+
 export type RefinementCtx = {
   addIssue: (arg: IssueData) => void;
   path: (string | number)[];
@@ -140,6 +167,10 @@ export abstract class ZodType<
   readonly _output!: Output;
   readonly _input!: Input;
   readonly _def!: Def;
+
+  abstract hydrate(
+    e?: Output | ((e: unknown) => Output)
+  ): ZodType<Output, Def, Input>;
 
   get description() {
     return this._def.description;
@@ -478,6 +509,12 @@ const emailRegex =
   /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
 export class ZodString extends ZodType<string, ZodStringDef> {
+  hydrate(
+    e?: string | ((e: unknown) => string)
+  ): ZodType<string, ZodStringDef, string> {
+    return hydrate(this, e ?? "");
+  }
+
   _parse(input: ParseInput): ParseReturnType<string> {
     const parsedType = this._getType(input);
 
@@ -763,6 +800,12 @@ export interface ZodNumberDef extends ZodTypeDef {
 }
 
 export class ZodNumber extends ZodType<number, ZodNumberDef> {
+  hydrate(
+    e?: number | ((e: unknown) => number)
+  ): ZodType<number, ZodNumberDef, number> {
+    return hydrate(this, e ?? 0);
+  }
+
   _parse(input: ParseInput): ParseReturnType<number> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.number) {
@@ -982,6 +1025,12 @@ export interface ZodBigIntDef extends ZodTypeDef {
 }
 
 export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
+  hydrate(
+    e?: bigint | ((e: unknown) => bigint)
+  ): ZodType<bigint, ZodBigIntDef, bigint> {
+    return hydrate(this, e ?? BigInt(0));
+  }
+
   _parse(input: ParseInput): ParseReturnType<bigint> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.bigint) {
@@ -1016,6 +1065,12 @@ export interface ZodBooleanDef extends ZodTypeDef {
 }
 
 export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
+  hydrate(
+    e?: boolean | ((e: unknown) => boolean)
+  ): ZodType<boolean, ZodBooleanDef, boolean> {
+    return hydrate(this, e ?? false);
+  }
+
   _parse(input: ParseInput): ParseReturnType<boolean> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.boolean) {
@@ -1054,6 +1109,10 @@ export interface ZodDateDef extends ZodTypeDef {
 }
 
 export class ZodDate extends ZodType<Date, ZodDateDef> {
+  hydrate(e?: Date | ((e: unknown) => Date)): ZodType<Date, ZodDateDef, Date> {
+    return hydrate(this, e ?? new Date());
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
 
@@ -1180,6 +1239,10 @@ export interface ZodUndefinedDef extends ZodTypeDef {
 }
 
 export class ZodUndefined extends ZodType<undefined, ZodUndefinedDef> {
+  hydrate(): ZodType<undefined, ZodUndefinedDef, undefined> {
+    return hydrate(this, void 0);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.undefined) {
@@ -1215,6 +1278,10 @@ export interface ZodNullDef extends ZodTypeDef {
 }
 
 export class ZodNull extends ZodType<null, ZodNullDef> {
+  hydrate(): ZodType<null, ZodNullDef, null> {
+    return hydrate(this, null);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.null) {
@@ -1248,6 +1315,10 @@ export interface ZodAnyDef extends ZodTypeDef {
 }
 
 export class ZodAny extends ZodType<any, ZodAnyDef> {
+  hydrate(e: any): ZodType<any, ZodAnyDef, any> {
+    return hydrate(this, e);
+  }
+
   // to prevent instances of other classes from extending ZodAny. this causes issues with catchall in ZodObject.
   _any: true = true;
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
@@ -1273,6 +1344,10 @@ export interface ZodUnknownDef extends ZodTypeDef {
 }
 
 export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
+  hydrate(e: unknown): ZodType<unknown, ZodUnknownDef, unknown> {
+    return hydrate(this, e);
+  }
+
   // required
   _unknown: true = true;
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
@@ -1299,6 +1374,10 @@ export interface ZodNeverDef extends ZodTypeDef {
 }
 
 export class ZodNever extends ZodType<never, ZodNeverDef> {
+  hydrate(e: (e: unknown) => never): ZodType<never, ZodNeverDef, never> {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const ctx = this._getOrReturnCtx(input);
     addIssueToContext(ctx, {
@@ -1328,6 +1407,10 @@ export interface ZodVoidDef extends ZodTypeDef {
 }
 
 export class ZodVoid extends ZodType<void, ZodVoidDef> {
+  hydrate(e: void | ((e: unknown) => void)): ZodType<void, ZodVoidDef, void> {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.undefined) {
@@ -1383,6 +1466,20 @@ export class ZodArray<
     ? [T["_input"], ...T["_input"][]]
     : T["_input"][]
 > {
+  hydrate(
+    e:
+      | arrayOutputType<T, Cardinality>
+      | ((e: unknown) => arrayOutputType<T, Cardinality>)
+  ): ZodType<
+    arrayOutputType<T, Cardinality>,
+    ZodArrayDef<T>,
+    Cardinality extends "atleastone"
+      ? [T["_input"], ...T["_input"][]]
+      : T["_input"][]
+  > {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx, status } = this._processInputParams(input);
 
@@ -1644,6 +1741,12 @@ export class ZodObject<
   Output = objectOutputType<T, Catchall>,
   Input = objectInputType<T, Catchall>
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
+  hydrate(
+    e: Output | ((e: unknown) => Output)
+  ): ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
+    return hydrate(this, e);
+  }
+
   private _cached: { shape: T; keys: string[] } | null = null;
 
   _getCached(): { shape: T; keys: string[] } {
@@ -2018,6 +2121,12 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
   ZodUnionDef<T>,
   T[number]["_input"]
 > {
+  hydrate(
+    e: T[number]["_output"] | ((e: unknown) => T[number]["_output"])
+  ): ZodType<T[number]["_output"], ZodUnionDef<T>, T[number]["_input"]> {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
     const options = this._def.options;
@@ -2173,6 +2282,16 @@ export class ZodDiscriminatedUnion<
   ZodDiscriminatedUnionDef<Discriminator, DiscriminatorValue, Option>,
   Option["_input"]
 > {
+  hydrate(
+    e: Option["_output"] | ((e: unknown) => Option["_output"])
+  ): ZodType<
+    Option["_output"],
+    ZodDiscriminatedUnionDef<Discriminator, DiscriminatorValue, Option>,
+    Option["_input"]
+  > {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
 
@@ -2357,6 +2476,18 @@ export class ZodIntersection<
   ZodIntersectionDef<T, U>,
   T["_input"] & U["_input"]
 > {
+  hydrate(
+    e:
+      | (T["_output"] & U["_output"])
+      | ((e: unknown) => T["_output"] & U["_output"])
+  ): ZodType<
+    T["_output"] & U["_output"],
+    ZodIntersectionDef<T, U>,
+    T["_input"] & U["_input"]
+  > {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
     const handleParsed = (
@@ -2476,6 +2607,18 @@ export class ZodTuple<
   ZodTupleDef<T, Rest>,
   InputTypeOfTupleWithRest<T, Rest>
 > {
+  hydrate(
+    e:
+      | OutputTypeOfTupleWithRest<T, Rest>
+      | ((e: unknown) => OutputTypeOfTupleWithRest<T, Rest>)
+  ): ZodType<
+    OutputTypeOfTupleWithRest<T, Rest>,
+    ZodTupleDef<T, Rest>,
+    InputTypeOfTupleWithRest<T, Rest>
+  > {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.array) {
@@ -2588,6 +2731,18 @@ export class ZodRecord<
   ZodRecordDef<Key, Value>,
   RecordType<Key["_input"], Value["_input"]>
 > {
+  hydrate(
+    e:
+      | RecordType<Key["_output"], Value["_output"]>
+      | ((e: unknown) => RecordType<Key["_output"], Value["_output"]>)
+  ): ZodType<
+    RecordType<Key["_output"], Value["_output"]>,
+    ZodRecordDef<Key, Value>,
+    RecordType<Key["_input"], Value["_input"]>
+  > {
+    return hydrate(this, e);
+  }
+
   get keySchema() {
     return this._def.keyType;
   }
@@ -2685,6 +2840,18 @@ export class ZodMap<
   ZodMapDef<Key, Value>,
   Map<Key["_input"], Value["_input"]>
 > {
+  hydrate(
+    e?:
+      | Map<Key["_output"], Value["_output"]>
+      | ((e: unknown) => Map<Key["_output"], Value["_output"]>)
+  ): ZodType<
+    Map<Key["_output"], Value["_output"]>,
+    ZodMapDef<Key, Value>,
+    Map<Key["_input"], Value["_input"]>
+  > {
+    return hydrate(this, e ?? new Map());
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.map) {
@@ -2783,6 +2950,12 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
   ZodSetDef<Value>,
   Set<Value["_input"]>
 > {
+  hydrate(
+    e?: Set<Value["_output"]> | ((e: unknown) => Set<Value["_output"]>)
+  ): ZodType<Set<Value["_output"]>, ZodSetDef<Value>, Set<Value["_input"]>> {
+    return hydrate(this, e ?? new Set());
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.set) {
@@ -2919,6 +3092,16 @@ export class ZodFunction<
   ZodFunctionDef<Args, Returns>,
   InnerTypeOfFunction<Args, Returns>
 > {
+  hydrate(
+    e: (e: unknown) => OuterTypeOfFunction<Args, Returns>
+  ): ZodType<
+    OuterTypeOfFunction<Args, Returns>,
+    ZodFunctionDef<Args, Returns>,
+    InnerTypeOfFunction<Args, Returns>
+  > {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<any> {
     const { ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.function) {
@@ -3093,6 +3276,12 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
   ZodLazyDef<T>,
   input<T>
 > {
+  hydrate(
+    e: output<T> | ((e: unknown) => output<T>)
+  ): ZodType<output<T>, ZodLazyDef<T>, input<T>> {
+    return hydrate(this, e);
+  }
+
   get schema(): T {
     return this._def.getter();
   }
@@ -3128,6 +3317,10 @@ export interface ZodLiteralDef<T = any> extends ZodTypeDef {
 }
 
 export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
+  hydrate(e: T | ((e: unknown) => T)): ZodType<T, ZodLiteralDef<T>, T> {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     if (input.data !== this._def.value) {
       const ctx = this._getOrReturnCtx(input);
@@ -3200,6 +3393,12 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   T[number],
   ZodEnumDef<T>
 > {
+  hydrate(
+    e: T[number] | ((e: unknown) => T[number])
+  ): ZodType<T[number], ZodEnumDef<T>, T[number]> {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     if (typeof input.data !== "string") {
       const ctx = this._getOrReturnCtx(input);
@@ -3276,6 +3475,12 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   T[keyof T],
   ZodNativeEnumDef<T>
 > {
+  hydrate(
+    e: T[keyof T] | ((e: unknown) => T[keyof T])
+  ): ZodType<T[keyof T], ZodNativeEnumDef<T>, T[keyof T]> {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<T[keyof T]> {
     const nativeEnumValues = util.getValidEnumValues(this._def.values);
 
@@ -3340,6 +3545,12 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   ZodPromiseDef<T>,
   Promise<T["_input"]>
 > {
+  hydrate(
+    e?: Promise<T["_output"]> | ((e: unknown) => Promise<T["_output"]>)
+  ): ZodType<Promise<T["_output"]>, ZodPromiseDef<T>, Promise<T["_input"]>> {
+    return hydrate(this, e ?? Promise.resolve());
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
     if (
@@ -3421,6 +3632,12 @@ export class ZodEffects<
   Output = T["_output"],
   Input = T["_input"]
 > extends ZodType<Output, ZodEffectsDef<T>, Input> {
+  hydrate(
+    e: Output | ((e: unknown) => Output)
+  ): ZodType<Output, ZodEffectsDef<T>, Input> {
+    return hydrate(this, e);
+  }
+
   innerType() {
     return this._def.schema;
   }
@@ -3597,6 +3814,16 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
   ZodOptionalDef<T>,
   T["_input"] | undefined
 > {
+  hydrate(
+    e: T["_output"] | ((e: unknown) => T["_output"] | undefined) | undefined
+  ): ZodType<
+    T["_output"] | undefined,
+    ZodOptionalDef<T>,
+    T["_input"] | undefined
+  > {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType === ZodParsedType.undefined) {
@@ -3641,6 +3868,12 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
   ZodNullableDef<T>,
   T["_input"] | null
 > {
+  hydrate(
+    e: T["_output"] | ((e: unknown) => T["_output"] | null) | null
+  ): ZodType<T["_output"] | null, ZodNullableDef<T>, T["_input"] | null> {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType === ZodParsedType.null) {
@@ -3684,6 +3917,18 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
   ZodDefaultDef<T>,
   T["_input"] | undefined
 > {
+  hydrate(
+    e:
+      | util.noUndefined<T["_output"]>
+      | ((e: unknown) => util.noUndefined<T["_output"]>)
+  ): ZodType<
+    util.noUndefined<T["_output"]>,
+    ZodDefaultDef<T>,
+    T["_input"] | undefined
+  > {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
     let data = ctx.data;
@@ -3726,6 +3971,10 @@ export interface ZodNaNDef extends ZodTypeDef {
 }
 
 export class ZodNaN extends ZodType<number, ZodNaNDef> {
+  hydrate(): ZodType<number, ZodNaNDef, number> {
+    return hydrate(this, NaN);
+  }
+
   _parse(input: ParseInput): ParseReturnType<any> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.nan) {
@@ -3775,6 +4024,16 @@ export class ZodBranded<
   ZodBrandedDef<T>,
   T["_input"] & BRAND<B>
 > {
+  hydrate(
+    e: (T["_output"] & BRAND<B>) | ((e: unknown) => T["_output"] & BRAND<B>)
+  ): ZodType<
+    T["_output"] & BRAND<B>,
+    ZodBrandedDef<T>,
+    T["_input"] & BRAND<B>
+  > {
+    return hydrate(this, e);
+  }
+
   _parse(input: ParseInput): ParseReturnType<any> {
     const { ctx } = this._processInputParams(input);
     const data = ctx.data;
