@@ -99,6 +99,7 @@
   - [.superRefine](#superRefine)
   - [.transform](#transform)
   - [.default](#default)
+  - [.hydrate](#hydrate)
   - [.optional](#optional)
   - [.nullable](#nullable)
   - [.nullish](#nullish)
@@ -1813,6 +1814,42 @@ const numberWithRandomDefault = z.number().default(Math.random);
 numberWithRandomDefault.parse(undefined); // => 0.4413456736055323
 numberWithRandomDefault.parse(undefined); // => 0.1871840107401901
 numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
+```
+
+### `.hydrate`
+
+You can use `.hydrate` method to implement the concept of "data hydration" in Zod. This method is similar to `.default` but it comes into play when passed data does not match the declared schema rather than just being `undefined`.
+
+```ts
+const schema = z.string().hydrate("asd");
+
+schema.parse({})); // => "asd"
+schema.parse(123)); // => "asd"
+schema.parse("aaa")); // => "aaa"
+```
+
+```ts
+const schema = z.strictObject({
+  s: z.string().hydrate(""),
+  n1: z.number().hydrate(1),
+  n2: z.number().hydrate((e) => (e === "asd" ? 2 : 3)),
+});
+
+schema.parse({}); // => { s: "", n1: 1, n2: 3 }
+schema.parse({ s: 123, n2: "asd" }); // => { s: "", n1: 1, n2: 2 }
+```
+
+If you need you can pass a function into `.hydrate` that will be executed every time a hydration value needs to be generated:
+
+```ts
+let n = 0;
+const getOrder = () => ++n;
+
+const schema = z.number().hydrate(getOrder);
+
+schema.parse([123, 'a']); // => 1
+schema.parse({}); // => 2
+schema.parse('0'); // => 3
 ```
 
 ### `.optional`
