@@ -61,3 +61,9 @@ test("readonly union", async () => {
   union.parse("asdf");
   union.parse(12);
 });
+
+test("pass data hydration", () => {
+  expect(
+    z.union([z.string(), z.number()]).hydrate("abc").parse([null])
+  ).toEqual("abc");
+});

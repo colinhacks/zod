@@ -118,3 +118,12 @@ test("invalid array merge", async () => {
     );
   }
 });
+
+test("pass data hydration", () => {
+  expect(
+    z
+      .intersection(z.object({ a: z.number() }), z.object({ b: z.string() }))
+      .hydrate({ a: 2, b: "3" })
+      .parse(123)
+  ).toEqual({ a: 2, b: "3" });
+});

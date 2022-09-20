@@ -64,3 +64,18 @@ test("continue parsing despite array size error", () => {
     expect(result.error.issues.length).toEqual(2);
   }
 });
+
+test("pass data hydration", () => {
+  expect(() => z.string().hydrate("whatever").array().parse(null)).toThrow();
+  expect(z.string().hydrate("abc").array().parse([null])).toEqual(["abc"]);
+  expect(z.string().hydrate("123").array().hydrate([]).parse(123)).toEqual([]);
+  expect(z.string().hydrate("str").array().hydrate([]).parse([true])).toEqual([
+    "str",
+  ]);
+  expect(
+    z.string().hydrate("123").array().hydrate([]).parse(["string"])
+  ).toEqual(["string"]);
+  expect(
+    z.array(z.string().hydrate("123")).min(2).hydrate([]).parse(["string"])
+  ).toEqual([]);
+});

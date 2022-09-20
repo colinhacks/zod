@@ -240,3 +240,20 @@ test("fallback to OuterTypeOfFunction", () => {
     (arg: string, ...args_1: unknown[]) => number
   >(true);
 });
+
+test("pass data hydration", () => {
+  expect(
+    z
+      .function()
+      .hydrate(() => () => {})
+      .parse([null])
+      .toString()
+  ).toEqual(String(() => {}));
+  expect(
+    z
+      .function(z.tuple([z.string()]), z.string())
+      .hydrate(() => () => "2")
+      .parse([null])
+      .toString()
+  ).toEqual(String(() => "2"));
+});

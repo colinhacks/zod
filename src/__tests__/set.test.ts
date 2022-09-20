@@ -140,3 +140,14 @@ test("throws when the given set has multiple invalid entries", () => {
     expect(result.error.issues[1].path).toEqual([1]);
   }
 });
+
+test("pass data hydration", () => {
+  expect(z.set(z.string()).hydrate().parse([null])).toEqual(new Set());
+  expect(z.set(z.string()).hydrate().parse(null)).toEqual(new Set());
+  expect(
+    z
+      .set(z.string())
+      .hydrate(new Set(["asd"]))
+      .parse(null)
+  ).toEqual(new Set(["asd"]));
+});

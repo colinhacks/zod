@@ -26,3 +26,10 @@ test("check never inference", () => {
   expect(() => t1.parse("asdf")).toThrow();
   expect(() => t1.parse(null)).toThrow();
 });
+
+test("pass data hydration", () => {
+  expect(z.any().hydrate(2).parse({})).toEqual({});
+  expect(z.any().hydrate(123).parse(null)).toEqual(null);
+  expect(z.unknown().hydrate("2").parse([2, 123])).toEqual([2, 123]);
+  expect(z.unknown().hydrate("asd").parse("undefined")).toEqual("undefined");
+});

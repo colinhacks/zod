@@ -14,3 +14,7 @@ test("void", () => {
   type v = z.infer<typeof v>;
   util.assertEqual<v, void>(true);
 });
+
+test("pass data hydration", () => {
+  expect(z.void().hydrate().parse({})).toEqual(undefined);
+});

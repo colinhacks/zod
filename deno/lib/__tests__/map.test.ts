@@ -109,3 +109,21 @@ test("dirty", async () => {
     expect(result.error.issues[1].message).toEqual("Keys must be uppercase");
   }
 });
+
+test("pass data hydration", () => {
+  expect(z.map(z.string(), z.number()).hydrate().parse([null])).toEqual(
+    new Map()
+  );
+  expect(
+    z
+      .map(z.string(), z.number())
+      .hydrate(new Map([["a", 2]]))
+      .parse([null])
+  ).toEqual(new Map([["a", 2]]));
+  expect(
+    z
+      .map(z.string().array(), z.number())
+      .hydrate(new Map([[["a"], 2]]))
+      .parse([null])
+  ).toEqual(new Map([[["a"], 2]]));
+});

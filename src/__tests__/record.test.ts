@@ -133,3 +133,10 @@ test("key and value getters", () => {
   rec.valueSchema.parse(1234);
   rec.element.parse(1234);
 });
+
+test("pass data hydration", () => {
+  expect(z.record(z.string()).hydrate({ a: "2" }).parse([null])).toEqual({
+    a: "2",
+  });
+  expect(z.record(z.string()).hydrate({}).parse([null])).toEqual({});
+});
