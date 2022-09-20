@@ -387,3 +387,10 @@ test("unknownkeys merging", () => {
   util.assertEqual<mergedSchema["_def"]["catchall"], z.ZodString>(true);
   expect(mergedSchema._def.catchall instanceof z.ZodString).toEqual(true);
 });
+
+test("pass data hydration", () => {
+  expect(z.object({}).hydrate("abc").parse([null])).toEqual("abc");
+  expect(
+    z.object({ a: z.string() }).hydrate({ a: "2" }).parse({ b: 3 })
+  ).toEqual({ a: "2" });
+});

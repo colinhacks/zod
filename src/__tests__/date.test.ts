@@ -32,3 +32,10 @@ test("min max getters", () => {
     beforeBenchmarkDate
   );
 });
+
+test("pass data hydration", () => {
+  expect(z.date().hydrate(new Date(123)).parse({})).toEqual(new Date(123));
+  expect(z.date().hydrate(new Date(123456)).parse(123)).toEqual(
+    new Date(123456)
+  );
+});

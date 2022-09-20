@@ -94,3 +94,9 @@ test("tuple with rest schema", () => {
 //     .safeParse(['asdf']);
 //   expect(result).toEqual(['asdf']);
 // });
+
+test("pass data hydration", () => {
+  expect(
+    z.tuple([z.string(), z.number()]).hydrate(["abc", 2]).parse([null])
+  ).toEqual(["abc", 2]);
+});

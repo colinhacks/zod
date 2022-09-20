@@ -185,3 +185,22 @@ test("trim", () => {
   expect(z.string().min(2).trim().parse(" 1 ")).toEqual("1");
   expect(() => z.string().trim().min(2).parse(" 1 ")).toThrow();
 });
+
+test("pass data hydration", () => {
+  expect(z.string().hydrate().parse({})).toEqual("");
+  expect(z.string().hydrate("123").parse(null)).toEqual("123");
+  expect(
+    z
+      .string()
+      .hydrate(() => "123")
+      .parse(null)
+  ).toEqual("123");
+  {
+    const schema = z.string().hydrate((e) => (e === 7 ? "1" : "2"));
+    expect(schema.parse(7)).toEqual("1");
+    expect(schema.parse(77)).toEqual("2");
+  }
+  expect(z.string().max(2).hydrate("default").parse("too_long")).toEqual(
+    "default"
+  );
+});

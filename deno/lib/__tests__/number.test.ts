@@ -55,3 +55,9 @@ test("min max getters", () => {
   expect(z.number().max(5).maxValue).toEqual(5);
   expect(z.number().max(5).max(1).maxValue).toEqual(1);
 });
+
+test("pass data hydration", () => {
+  expect(z.number().hydrate().parse({})).toEqual(0);
+  expect(z.number().hydrate(123).parse(null)).toEqual(123);
+  expect(z.number().max(22).hydrate(-2).parse(30)).toEqual(-2);
+});

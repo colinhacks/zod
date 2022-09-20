@@ -196,3 +196,15 @@ test("async - invalid", async () => {
     ]);
   }
 });
+
+test("pass data hydration", () => {
+  expect(
+    z
+      .discriminatedUnion("asd", [
+        z.object({ asd: z.literal("2"), a: z.number() }),
+        z.object({ asd: z.literal("3"), b: z.string() }),
+      ])
+      .hydrate({ asd: "3", b: "2" })
+      .parse([null])
+  ).toEqual({ asd: "3", b: "2" });
+});
