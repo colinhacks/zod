@@ -51,6 +51,47 @@ export type TypeOf<T extends ZodType<any, any, any>> = T["_output"];
 export type input<T extends ZodType<any, any, any>> = T["_input"];
 export type output<T extends ZodType<any, any, any>> = T["_output"];
 export type { TypeOf as infer };
+export { ZodEffects as ZodTransformer };
+export { ZodType as Schema, ZodType as ZodSchema };
+export {
+  anyType as any,
+  arrayType as array,
+  bigIntType as bigint,
+  booleanType as boolean,
+  dateType as date,
+  discriminatedUnionType as discriminatedUnion,
+  effectsType as effect,
+  enumType as enum,
+  functionType as function,
+  instanceOfType as instanceof,
+  intersectionType as intersection,
+  lazyType as lazy,
+  literalType as literal,
+  mapType as map,
+  nanType as nan,
+  nativeEnumType as nativeEnum,
+  neverType as never,
+  nullType as null,
+  nullableType as nullable,
+  numberType as number,
+  objectType as object,
+  oboolean,
+  onumber,
+  optionalType as optional,
+  ostring,
+  preprocessType as preprocess,
+  promiseType as promise,
+  recordType as record,
+  setType as set,
+  strictObjectType as strictObject,
+  stringType as string,
+  effectsType as transformer,
+  tupleType as tuple,
+  undefinedType as undefined,
+  unionType as union,
+  unknownType as unknown,
+  voidType as void,
+};
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
@@ -1364,6 +1405,7 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   minLength: { value: number; message?: string } | null;
   maxLength: { value: number; message?: string } | null;
   uniq: boolean;
+  uniqDeep: boolean;
 }
 
 export type ArrayCardinality = "many" | "atleastone";
@@ -1425,23 +1467,50 @@ export class ZodArray<
     }
 
     if (def.uniq) {
-      (() => {
-        for (let i = 0; i < ctx.data.length; i++) {
-          const a = ctx.data[i];
+      const testObj: Record<any, true> = {};
 
-          for (let j = i + 1; j < ctx.data.length; j++) {
-            const b = ctx.data[j];
-
-            if (a === b) {
-              addIssueToContext(ctx, {
-                code: ZodIssueCode.duplicate_element,
-              });
-              status.dirty();
-              return;
-            }
+      for (const elem of ctx.data as any[]) {
+        if (typeof elem !== "object") {
+          if (testObj[elem]) {
+            addIssueToContext(ctx, {
+              code: ZodIssueCode.duplicate_element,
+            });
+            status.dirty();
+            break;
+          } else {
+            testObj[elem] = true;
           }
         }
-      })();
+      }
+    }
+
+    if (def.uniqDeep) {
+      const testObj: Record<any, true> = {};
+      const objects: any[] = [];
+
+      for (const elem of ctx.data as any[]) {
+        if (typeof elem !== "object") {
+          if (testObj[elem]) {
+            addIssueToContext(ctx, {
+              code: ZodIssueCode.duplicate_element,
+            });
+            status.dirty();
+            break;
+          } else {
+            testObj[elem] = true;
+          }
+        } else {
+          if (objects.some((test) => util.isEqual(test, elem))) {
+            addIssueToContext(ctx, {
+              code: ZodIssueCode.duplicate_element,
+            });
+            status.dirty();
+            break;
+          } else {
+            objects.push(elem);
+          }
+        }
+      }
     }
 
     if (ctx.common.async) {
@@ -1498,6 +1567,13 @@ export class ZodArray<
     }) as any;
   }
 
+  uniqDeep(uniqDeep = true): this {
+    return new ZodArray({
+      ...this._def,
+      uniqDeep,
+    }) as any;
+  }
+
   static create = <T extends ZodTypeAny>(
     schema: T,
     params?: RawCreateParams
@@ -1508,6 +1584,7 @@ export class ZodArray<
       maxLength: null,
       typeName: ZodFirstPartyTypeKind.ZodArray,
       uniq: false,
+      uniqDeep: false,
       ...processCreateParams(params),
     });
   };
@@ -3596,8 +3673,6 @@ export class ZodEffects<
   };
 }
 
-export { ZodEffects as ZodTransformer };
-
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 //////////                       //////////
@@ -3827,8 +3902,6 @@ export const custom = <T>(
   return ZodAny.create();
 };
 
-export { ZodType as Schema, ZodType as ZodSchema };
-
 export const late = {
   object: ZodObject.lazycreate,
 };
@@ -3949,45 +4022,5 @@ const preprocessType = ZodEffects.createWithPreprocess;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
-
-export {
-  anyType as any,
-  arrayType as array,
-  bigIntType as bigint,
-  booleanType as boolean,
-  dateType as date,
-  discriminatedUnionType as discriminatedUnion,
-  effectsType as effect,
-  enumType as enum,
-  functionType as function,
-  instanceOfType as instanceof,
-  intersectionType as intersection,
-  lazyType as lazy,
-  literalType as literal,
-  mapType as map,
-  nanType as nan,
-  nativeEnumType as nativeEnum,
-  neverType as never,
-  nullType as null,
-  nullableType as nullable,
-  numberType as number,
-  objectType as object,
-  oboolean,
-  onumber,
-  optionalType as optional,
-  ostring,
-  preprocessType as preprocess,
-  promiseType as promise,
-  recordType as record,
-  setType as set,
-  strictObjectType as strictObject,
-  stringType as string,
-  effectsType as transformer,
-  tupleType as tuple,
-  undefinedType as undefined,
-  unionType as union,
-  unknownType as unknown,
-  voidType as void,
-};
 
 export const NEVER = INVALID as never;

@@ -1066,12 +1066,43 @@ const noDuplicates = z.string().array().uniq();
 
 noDuplicates.parse([]); // passes
 noDuplicates.parse(["apple", "orange", "lemon"]); // passes
-noDuplicates.parse(["apple", "orange", "lemon"]); // passes
 noDuplicates.parse(["apple", "orange", "apple", "lemon"]); // throws: "Array must not contain duplicated elements"
 
 // uniq can be canceled by passing false argument:
 
 noDuplicates.uniq(false).parse(["apple", "orange", "apple", "lemon"]); // passes
+```
+
+### `.uniqDeep`
+
+Same as uniq but deeply check objects equality
+
+```ts
+const noDuplicatesDeep = z.string().array().uniqDeep();
+const noDuplicates = z.string().array().uniq();
+
+noDuplicatesDeep.parse([]); // passes
+noDuplicatesDeep.parse([
+  { fruit: "apple" },
+  { fruit: "orange" },
+  { fruit: "lemon" },
+]); // passes
+noDuplicatesDeep.parse([
+  { fruit: "apple" },
+  { fruit: "orange" },
+  { fruit: "apple" },
+  { fruit: "lemon" },
+]); // throws: "Array must not contain duplicated elements"
+noDuplicates.parse([
+  { fruit: "apple" },
+  { fruit: "orange" },
+  { fruit: "apple" },
+  { fruit: "lemon" },
+]); // passes
+
+// uniq can be canceled by passing false argument:
+
+noDuplicatesDeep.uniq(false).parse(["apple", "orange", "apple", "lemon"]); // passes
 ```
 
 ## Tuples
