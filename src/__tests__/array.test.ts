@@ -9,7 +9,8 @@ const maxTwo = z.string().array().max(2);
 const justTwo = z.string().array().length(2);
 const intNum = z.string().array().nonempty();
 const nonEmptyMax = z.string().array().nonempty().max(2);
-const uniq = z.string().array().uniq();
+const uniq = z.any().array().uniq();
+const uniqDeep = z.any().array().uniqDeep();
 
 type t1 = z.infer<typeof nonEmptyMax>;
 util.assertEqual<[string, ...string[]], t1>(true);
@@ -27,6 +28,11 @@ test("passing validations", () => {
   nonEmptyMax.parse(["a"]);
   uniq.parse(["a", "b", "c"]);
   uniq.uniq(false).parse(["a", "b", "c", "a"]);
+  uniqDeep.parse([{ a: "a" }, { b: "b" }, { c: "c" }]);
+  uniqDeep
+    .uniqDeep(false)
+    .parse([{ a: "a" }, { b: "b" }, { c: "c" }, { a: "a" }]);
+  uniq.parse([{ a: "a" }, { b: "b" }, { c: "c" }, { a: "a" }]);
 });
 
 test("failing validations", () => {
@@ -38,6 +44,9 @@ test("failing validations", () => {
   expect(() => nonEmptyMax.parse([])).toThrow();
   expect(() => nonEmptyMax.parse(["a", "a", "a"])).toThrow();
   expect(() => uniq.parse(["a", "b", "c", "a"])).toThrow();
+  expect(() =>
+    uniqDeep.parse([{ a: "a" }, { b: "b" }, { c: "c" }, { a: "a" }])
+  ).toThrow();
 });
 
 test("parse empty array in nonempty", () => {
