@@ -55,6 +55,15 @@ test("more email validations", () => {
   }
 });
 
+test("email with IP address domain validations", () => {
+  const email = z.string().email();
+  email.parse("mojojojo@123.123.123.123");
+  email.parse("mojojojo@[123.123.123.123]");
+  expect(() => email.parse("mojojojo@[123.123.123]")).toThrow()
+  expect(() => email.parse("mojojojo@[123.123.123.1234]")).toThrow()
+  expect(() => email.parse("mojojojo@[123.123.123.]")).toThrow()
+})
+
 test("url validations", () => {
   const url = z.string().url();
   try {
