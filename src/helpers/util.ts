@@ -140,6 +140,9 @@ export const getParsedType = (data: any): ZodParsedType => {
     case "bigint":
       return ZodParsedType.bigint;
 
+    case "symbol":
+      return ZodParsedType.symbol;
+
     case "object":
       if (Array.isArray(data)) {
         return ZodParsedType.array;
