@@ -83,6 +83,7 @@
 - [Records](#records)
 - [Maps](#maps)
 - [Sets](#sets)
+- [Intersections](#intersections)
 - [Recursive types](#recursive-types)
   - [JSON type](#json-type)
   - [Cyclical data](#cyclical-objects)
