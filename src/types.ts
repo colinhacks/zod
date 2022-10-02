@@ -1208,23 +1208,28 @@ export class ZodSymbol<S extends symbol = symbol> extends ZodType<
   }
 
   static create: {
-    <S extends symbol>(symbol: S, params?: RawCreateParams): ZodSymbol<S>;
-    (params?: RawCreateParams): ZodSymbol;
-  } = <S extends symbol>(
-    symbolOrParams?: S | RawCreateParams,
+    <S extends symbol>(
+      symbol: S extends symbol ? (symbol extends S ? never : S) : never,
+      params?: RawCreateParams
+    ): S extends symbol ? (symbol extends S ? never : ZodSymbol<S>) : never;
+    <P extends RawCreateParams>(
+      params?: P extends symbol ? never : P
+    ): ZodSymbol;
+  } = <T extends symbol | RawCreateParams>(
+    symbolOrParams?: T,
     params?: RawCreateParams
-  ): ZodSymbol => {
+  ) => {
     if (typeof symbolOrParams === "symbol") {
-      return new ZodSymbol<S>({
+      return new ZodSymbol({
         typeName: ZodFirstPartyTypeKind.ZodSymbol,
         symbol: symbolOrParams,
         ...processCreateParams(params),
-      });
+      }) as never;
     }
-    return new ZodSymbol<symbol>({
+    return new ZodSymbol({
       typeName: ZodFirstPartyTypeKind.ZodSymbol,
       ...processCreateParams(params),
-    });
+    }) as never;
   };
 }
 

@@ -5,7 +5,7 @@ const test = Deno.test;
 import * as z from "../index.ts";
 import { Mocker } from "./Mocker.ts";
 
-const specificTestSymbol = Symbol("specific");
+const definedTestSymbol = Symbol("defined");
 
 const literalStringSchema = z.literal("asdf");
 const literalNumberSchema = z.literal(12);
@@ -17,7 +17,9 @@ const bigintSchema = z.bigint();
 const booleanSchema = z.boolean();
 const dateSchema = z.date();
 const symbolSchema = z.symbol();
-const specificSymbolSchema = z.symbol(specificTestSymbol);
+const definedSymbolSchema = z.symbol(definedTestSymbol);
+// The following should trigger a TS error in the first argument
+// const variableSymbolSchema = z.symbol(Symbol("variable"));
 const nullSchema = z.null();
 const undefinedSchema = z.undefined();
 const stringSchemaOptional = z.string().optional();
@@ -32,8 +34,8 @@ const dateSchemaOptional = z.date().optional();
 const dateSchemaNullable = z.date().nullable();
 const symbolSchemaOptional = z.symbol().optional();
 const symbolSchemaNullable = z.symbol().nullable();
-const specificSymbolSchemaOptional = z.symbol(specificTestSymbol).optional();
-const specificSymbolSchemaNullable = z.symbol(specificTestSymbol).nullable();
+const definedSymbolSchemaOptional = z.symbol(definedTestSymbol).optional();
+const definedSymbolSchemaNullable = z.symbol(definedTestSymbol).nullable();
 
 const val = new Mocker();
 
@@ -310,30 +312,30 @@ test("parse symbolSchema symbol", () => {
   symbolSchema.parse(val.symbol);
 });
 
-test("parse specificSymbolSchema symbol correct", () => {
-  specificSymbolSchema.parse(specificTestSymbol);
+test("parse definedSymbolSchema symbol correct", () => {
+  definedSymbolSchema.parse(definedTestSymbol);
 });
 
-test("parse specificSymbolSchema symbol incorrect", () => {
+test("parse definedSymbolSchema symbol incorrect", () => {
   try {
-    const f = () => specificSymbolSchema.parse(val.symbol);
+    const f = () => definedSymbolSchema.parse(val.symbol);
     expect(f).toThrow();
     f();
   } catch (error) {
     expect((error as any).issues[0].message).toEqual(
-      "Invalid symbol, expected Symbol(specific) but instead received Symbol(test)"
+      "Invalid symbol, expected Symbol(defined) but instead received Symbol(test)"
     );
   }
 });
 
-test("parse specificSymbolSchema runtime symbol incorrect", () => {
+test("parse definedSymbolSchema runtime symbol incorrect", () => {
   try {
-    const f = () => specificSymbolSchema.parse(Symbol());
+    const f = () => definedSymbolSchema.parse(Symbol());
     expect(f).toThrow();
     f();
   } catch (error) {
     expect((error as any).issues[0].message).toEqual(
-      "Invalid symbol, expected Symbol(specific) but instead received Symbol()"
+      "Invalid symbol, expected Symbol(defined) but instead received Symbol()"
     );
   }
 });
@@ -448,9 +450,9 @@ test("primitive inference", () => {
     z.TypeOf<typeof symbolSchema>,
     symbol
   > = true;
-  const specificSymbolSchemaTest: AssertEqual<
-    z.TypeOf<typeof specificSymbolSchema>,
-    typeof specificTestSymbol
+  const definedSymbolSchemaTest: AssertEqual<
+    z.TypeOf<typeof definedSymbolSchema>,
+    typeof definedTestSymbol
   > = true;
   const nullSchemaTest: AssertEqual<z.TypeOf<typeof nullSchema>, null> = true;
   const undefinedSchemaTest: AssertEqual<
@@ -505,13 +507,13 @@ test("primitive inference", () => {
     z.TypeOf<typeof symbolSchemaNullable>,
     symbol | null
   > = true;
-  const specificSymbolSchemaOptionalTest: AssertEqual<
-    z.TypeOf<typeof specificSymbolSchemaOptional>,
-    typeof specificTestSymbol | undefined
+  const definedSymbolSchemaOptionalTest: AssertEqual<
+    z.TypeOf<typeof definedSymbolSchemaOptional>,
+    typeof definedTestSymbol | undefined
   > = true;
-  const specificSymbolSchemaNullableTest: AssertEqual<
-    z.TypeOf<typeof specificSymbolSchemaNullable>,
-    typeof specificTestSymbol | null
+  const definedSymbolSchemaNullableTest: AssertEqual<
+    z.TypeOf<typeof definedSymbolSchemaNullable>,
+    typeof definedTestSymbol | null
   > = true;
 
   [
@@ -525,7 +527,7 @@ test("primitive inference", () => {
     booleanSchemaTest,
     dateSchemaTest,
     symbolSchemaTest,
-    specificSymbolSchemaTest,
+    definedSymbolSchemaTest,
     nullSchemaTest,
     undefinedSchemaTest,
     stringSchemaOptionalTest,
@@ -540,8 +542,8 @@ test("primitive inference", () => {
     dateSchemaNullableTest,
     symbolSchemaOptionalTest,
     symbolSchemaNullableTest,
-    specificSymbolSchemaOptionalTest,
-    specificSymbolSchemaNullableTest,
+    definedSymbolSchemaOptionalTest,
+    definedSymbolSchemaNullableTest,
   ];
 });
 
