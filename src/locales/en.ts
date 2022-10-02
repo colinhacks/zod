@@ -45,6 +45,11 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.invalid_date:
       message = `Invalid date`;
       break;
+    case ZodIssueCode.invalid_symbol:
+      message =
+        `Invalid symbol, expected ${issue.expected.toString()} ` +
+        `but instead received ${issue.received.toString()}`;
+      break;
     case ZodIssueCode.invalid_string:
       if (typeof issue.validation === "object") {
         if ("startsWith" in issue.validation) {

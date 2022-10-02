@@ -1175,11 +1175,15 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface ZodSymbolDef extends ZodTypeDef {
+export interface ZodSymbolDef<S extends symbol> extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodSymbol;
+  symbol?: S;
 }
 
-export class ZodSymbol extends ZodType<symbol, ZodSymbolDef> {
+export class ZodSymbol<S extends symbol = symbol> extends ZodType<
+  S,
+  ZodSymbolDef<S>
+> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.symbol) {
@@ -1191,11 +1195,33 @@ export class ZodSymbol extends ZodType<symbol, ZodSymbolDef> {
       });
       return INVALID;
     }
+    if (this._def.symbol && input.data !== this._def.symbol) {
+      const ctx = this._getOrReturnCtx(input);
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_symbol,
+        expected: this._def.symbol,
+        received: input.data,
+      });
+      return INVALID;
+    }
     return OK(input.data);
   }
 
-  static create = (params?: RawCreateParams): ZodSymbol => {
-    return new ZodSymbol({
+  static create: {
+    <S extends symbol>(symbol: S, params?: RawCreateParams): ZodSymbol<S>;
+    (params?: RawCreateParams): ZodSymbol;
+  } = <S extends symbol>(
+    symbolOrParams?: S | RawCreateParams,
+    params?: RawCreateParams
+  ): ZodSymbol => {
+    if (typeof symbolOrParams === "symbol") {
+      return new ZodSymbol<S>({
+        typeName: ZodFirstPartyTypeKind.ZodSymbol,
+        symbol: symbolOrParams,
+        ...processCreateParams(params),
+      });
+    }
+    return new ZodSymbol<symbol>({
       typeName: ZodFirstPartyTypeKind.ZodSymbol,
       ...processCreateParams(params),
     });

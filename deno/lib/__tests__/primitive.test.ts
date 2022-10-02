@@ -5,6 +5,8 @@ const test = Deno.test;
 import * as z from "../index.ts";
 import { Mocker } from "./Mocker.ts";
 
+const specificTestSymbol = Symbol("specific");
+
 const literalStringSchema = z.literal("asdf");
 const literalNumberSchema = z.literal(12);
 const literalBooleanSchema = z.literal(true);
@@ -15,6 +17,7 @@ const bigintSchema = z.bigint();
 const booleanSchema = z.boolean();
 const dateSchema = z.date();
 const symbolSchema = z.symbol();
+const specificSymbolSchema = z.symbol(specificTestSymbol);
 const nullSchema = z.null();
 const undefinedSchema = z.undefined();
 const stringSchemaOptional = z.string().optional();
@@ -29,6 +32,8 @@ const dateSchemaOptional = z.date().optional();
 const dateSchemaNullable = z.date().nullable();
 const symbolSchemaOptional = z.symbol().optional();
 const symbolSchemaNullable = z.symbol().nullable();
+const specificSymbolSchemaOptional = z.symbol(specificTestSymbol).optional();
+const specificSymbolSchemaNullable = z.symbol(specificTestSymbol).nullable();
 
 const val = new Mocker();
 
@@ -305,6 +310,34 @@ test("parse symbolSchema symbol", () => {
   symbolSchema.parse(val.symbol);
 });
 
+test("parse specificSymbolSchema symbol correct", () => {
+  specificSymbolSchema.parse(specificTestSymbol);
+});
+
+test("parse specificSymbolSchema symbol incorrect", () => {
+  try {
+    const f = () => specificSymbolSchema.parse(val.symbol);
+    expect(f).toThrow();
+    f();
+  } catch (error) {
+    expect((error as any).issues[0].message).toEqual(
+      "Invalid symbol, expected Symbol(specific) but instead received Symbol(test)"
+    );
+  }
+});
+
+test("parse specificSymbolSchema runtime symbol incorrect", () => {
+  try {
+    const f = () => specificSymbolSchema.parse(Symbol());
+    expect(f).toThrow();
+    f();
+  } catch (error) {
+    expect((error as any).issues[0].message).toEqual(
+      "Invalid symbol, expected Symbol(specific) but instead received Symbol()"
+    );
+  }
+});
+
 test("parse symbolSchema undefined", () => {
   const f = () => symbolSchema.parse(val.undefined);
   expect(f).toThrow();
@@ -415,6 +448,10 @@ test("primitive inference", () => {
     z.TypeOf<typeof symbolSchema>,
     symbol
   > = true;
+  const specificSymbolSchemaTest: AssertEqual<
+    z.TypeOf<typeof specificSymbolSchema>,
+    typeof specificTestSymbol
+  > = true;
   const nullSchemaTest: AssertEqual<z.TypeOf<typeof nullSchema>, null> = true;
   const undefinedSchemaTest: AssertEqual<
     z.TypeOf<typeof undefinedSchema>,
@@ -468,6 +505,14 @@ test("primitive inference", () => {
     z.TypeOf<typeof symbolSchemaNullable>,
     symbol | null
   > = true;
+  const specificSymbolSchemaOptionalTest: AssertEqual<
+    z.TypeOf<typeof specificSymbolSchemaOptional>,
+    typeof specificTestSymbol | undefined
+  > = true;
+  const specificSymbolSchemaNullableTest: AssertEqual<
+    z.TypeOf<typeof specificSymbolSchemaNullable>,
+    typeof specificTestSymbol | null
+  > = true;
 
   [
     literalStringSchemaTest,
@@ -480,6 +525,7 @@ test("primitive inference", () => {
     booleanSchemaTest,
     dateSchemaTest,
     symbolSchemaTest,
+    specificSymbolSchemaTest,
     nullSchemaTest,
     undefinedSchemaTest,
     stringSchemaOptionalTest,
@@ -494,6 +540,8 @@ test("primitive inference", () => {
     dateSchemaNullableTest,
     symbolSchemaOptionalTest,
     symbolSchemaNullableTest,
+    specificSymbolSchemaOptionalTest,
+    specificSymbolSchemaNullableTest,
   ];
 });
 
