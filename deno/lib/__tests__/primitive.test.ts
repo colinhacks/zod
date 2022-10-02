@@ -31,7 +31,6 @@ const symbolSchemaOptional = z.symbol().optional();
 const symbolSchemaNullable = z.symbol().nullable();
 
 const val = new Mocker();
-const testSymbol = Symbol("test");
 
 test("literal string correct", () => {
   expect(literalStringSchema.parse("asdf")).toBe("asdf");
@@ -298,7 +297,12 @@ test("parse symbolSchema boolean", () => {
 });
 
 test("parse symbolSchema date", () => {
-  symbolSchema.parse(val.date);
+  const f = () => symbolSchema.parse(val.date);
+  expect(f).toThrow();
+});
+
+test("parse symbolSchema symbol", () => {
+  symbolSchema.parse(val.symbol);
 });
 
 test("parse symbolSchema undefined", () => {

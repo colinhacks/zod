@@ -2,6 +2,8 @@ function getRandomInt(max: number) {
   return Math.floor(Math.random() * Math.floor(max));
 }
 
+const testSymbol = Symbol("test");
+
 export class Mocker {
   pick = (...args: any[]) => {
     return args[getRandomInt(args.length)];
@@ -21,6 +23,9 @@ export class Mocker {
   }
   get date() {
     return new Date(Math.floor(Date.now() * Math.random()));
+  }
+  get symbol() {
+    return testSymbol;
   }
   get null(): null {
     return null;

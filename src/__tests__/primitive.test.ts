@@ -13,6 +13,7 @@ const numberSchema = z.number();
 const bigintSchema = z.bigint();
 const booleanSchema = z.boolean();
 const dateSchema = z.date();
+const symbolSchema = z.symbol();
 const nullSchema = z.null();
 const undefinedSchema = z.undefined();
 const stringSchemaOptional = z.string().optional();
@@ -25,6 +26,8 @@ const booleanSchemaOptional = z.boolean().optional();
 const booleanSchemaNullable = z.boolean().nullable();
 const dateSchemaOptional = z.date().optional();
 const dateSchemaNullable = z.date().nullable();
+const symbolSchemaOptional = z.symbol().optional();
+const symbolSchemaNullable = z.symbol().nullable();
 
 const val = new Mocker();
 
@@ -277,6 +280,42 @@ test("parse dateSchema invalid date", async () => {
 });
 // ==============
 
+test("parse symbolSchema string", () => {
+  const f = () => symbolSchema.parse(val.string);
+  expect(f).toThrow();
+});
+
+test("parse symbolSchema number", () => {
+  const f = () => symbolSchema.parse(val.number);
+  expect(f).toThrow();
+});
+
+test("parse symbolSchema boolean", () => {
+  const f = () => symbolSchema.parse(val.boolean);
+  expect(f).toThrow();
+});
+
+test("parse symbolSchema date", () => {
+  const f = () => symbolSchema.parse(val.date);
+  expect(f).toThrow();
+});
+
+test("parse symbolSchema symbol", () => {
+  symbolSchema.parse(val.symbol);
+});
+
+test("parse symbolSchema undefined", () => {
+  const f = () => symbolSchema.parse(val.undefined);
+  expect(f).toThrow();
+});
+
+test("parse symbolSchema null", () => {
+  const f = () => symbolSchema.parse(val.null);
+  expect(f).toThrow();
+});
+
+// ==============
+
 test("parse undefinedSchema string", () => {
   const f = () => undefinedSchema.parse(val.string);
   expect(f).toThrow();
@@ -371,6 +410,10 @@ test("primitive inference", () => {
     boolean
   > = true;
   const dateSchemaTest: AssertEqual<z.TypeOf<typeof dateSchema>, Date> = true;
+  const symbolSchemaTest: AssertEqual<
+    z.TypeOf<typeof symbolSchema>,
+    symbol
+  > = true;
   const nullSchemaTest: AssertEqual<z.TypeOf<typeof nullSchema>, null> = true;
   const undefinedSchemaTest: AssertEqual<
     z.TypeOf<typeof undefinedSchema>,
@@ -416,6 +459,14 @@ test("primitive inference", () => {
     z.TypeOf<typeof dateSchemaNullable>,
     Date | null
   > = true;
+  const symbolSchemaOptionalTest: AssertEqual<
+    z.TypeOf<typeof symbolSchemaOptional>,
+    symbol | undefined
+  > = true;
+  const symbolSchemaNullableTest: AssertEqual<
+    z.TypeOf<typeof symbolSchemaNullable>,
+    symbol | null
+  > = true;
 
   [
     literalStringSchemaTest,
@@ -427,6 +478,7 @@ test("primitive inference", () => {
     bigintSchemaTest,
     booleanSchemaTest,
     dateSchemaTest,
+    symbolSchemaTest,
     nullSchemaTest,
     undefinedSchemaTest,
     stringSchemaOptionalTest,
@@ -439,6 +491,8 @@ test("primitive inference", () => {
     booleanSchemaNullableTest,
     dateSchemaOptionalTest,
     dateSchemaNullableTest,
+    symbolSchemaOptionalTest,
+    symbolSchemaNullableTest,
   ];
 });
 
