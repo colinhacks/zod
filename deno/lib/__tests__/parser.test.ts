@@ -46,3 +46,24 @@ test("invalid enum value", () => {
 test("parsing unknown", () => {
   z.string().parse("Red" as unknown);
 });
+
+test("parsing with deepStrict", () => {
+  const deepSchema = z.object({
+    nestedObject: z.object({
+      knownNestedKey: z.number(),
+    })
+  });
+
+  const deepObject = {
+    nestedObject: {
+      knownNestedKey: 1,
+      unknownNestedKey: 1,
+    }
+  }
+
+  deepSchema.parse(deepObject);
+
+  expect(() => deepSchema.parse(deepObject, {
+    deepStrict: true,
+  })).toThrow();
+});

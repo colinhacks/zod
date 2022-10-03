@@ -36,6 +36,7 @@ export type ParseParams = {
   path: (string | number)[];
   errorMap: ZodErrorMap;
   async: boolean;
+  deepStrict: boolean,
 };
 
 export type ParsePathComponent = string | number;
@@ -53,12 +54,14 @@ export interface ParseContext {
   readonly parent: ParseContext | null;
   readonly data: any;
   readonly parsedType: ZodParsedType;
+  readonly deepStrict: boolean;
 }
 
 export type ParseInput = {
   data: any;
   path: (string | number)[];
   parent: ParseContext;
+  deepStrict: boolean;
 };
 
 export function addIssueToContext(

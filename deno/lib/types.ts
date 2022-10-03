@@ -61,16 +61,19 @@ export interface ZodTypeDef {
 class ParseInputLazyPath implements ParseInput {
   parent: ParseContext;
   data: any;
+  deepStrict: boolean;
   _path: ParsePath;
   _key: string | number | (string | number)[];
   constructor(
     parent: ParseContext,
     value: any,
+    deepStrict: boolean,
     path: ParsePath,
     key: string | number | (string | number)[]
   ) {
     this.parent = parent;
     this.data = value;
+    this.deepStrict = deepStrict;
     this._path = path;
     this._key = key;
   }
@@ -165,6 +168,7 @@ export abstract class ZodType<
         schemaErrorMap: this._def.errorMap,
         path: input.path,
         parent: input.parent,
+        deepStrict: input.deepStrict,
       }
     );
   }
@@ -184,6 +188,7 @@ export abstract class ZodType<
         schemaErrorMap: this._def.errorMap,
         path: input.path,
         parent: input.parent,
+        deepStrict: input.deepStrict,
       },
     };
   }
@@ -223,8 +228,14 @@ export abstract class ZodType<
       parent: null,
       data,
       parsedType: getParsedType(data),
+      deepStrict: Boolean(params?.deepStrict),
     };
-    const result = this._parseSync({ data, path: ctx.path, parent: ctx });
+    const result = this._parseSync({
+      data,
+      path: ctx.path,
+      parent: ctx,
+      deepStrict: ctx.deepStrict,
+    });
 
     return handleResult(ctx, result);
   }
@@ -242,6 +253,7 @@ export abstract class ZodType<
     data: unknown,
     params?: Partial<ParseParams>
   ): Promise<SafeParseReturnType<Input, Output>> {
+    const deepStrict = Boolean(params?.deepStrict);
     const ctx: ParseContext = {
       common: {
         issues: [],
@@ -253,9 +265,15 @@ export abstract class ZodType<
       parent: null,
       data,
       parsedType: getParsedType(data),
+      deepStrict,
     };
 
-    const maybeAsyncResult = this._parse({ data, path: [], parent: ctx });
+    const maybeAsyncResult = this._parse({
+      data,
+      path: [],
+      parent: ctx,
+      deepStrict,
+    });
     const result = await (isAsync(maybeAsyncResult)
       ? maybeAsyncResult
       : Promise.resolve(maybeAsyncResult));
@@ -1427,7 +1445,7 @@ export class ZodArray<
       return Promise.all(
         (ctx.data as any[]).map((item, i) => {
           return def.type._parseAsync(
-            new ParseInputLazyPath(ctx, item, ctx.path, i)
+            new ParseInputLazyPath(ctx, item, ctx.deepStrict, ctx.path, i)
           );
         })
       ).then((result) => {
@@ -1437,7 +1455,7 @@ export class ZodArray<
 
     const result = (ctx.data as any[]).map((item, i) => {
       return def.type._parseSync(
-        new ParseInputLazyPath(ctx, item, ctx.path, i)
+        new ParseInputLazyPath(ctx, item, ctx.deepStrict, ctx.path, i)
       );
     });
 
@@ -1674,7 +1692,8 @@ export class ZodObject<
       !(
         this._def.catchall instanceof ZodNever &&
         this._def.unknownKeys === "strip"
-      )
+      ) ||
+      ctx.deepStrict
     ) {
       for (const key in ctx.data) {
         if (!shapeKeys.includes(key)) {
@@ -1694,7 +1713,7 @@ export class ZodObject<
       pairs.push({
         key: { status: "valid", value: key },
         value: keyValidator._parse(
-          new ParseInputLazyPath(ctx, value, ctx.path, key)
+          new ParseInputLazyPath(ctx, value, ctx.deepStrict, ctx.path, key)
         ),
         alwaysSet: key in ctx.data,
       });
@@ -1710,7 +1729,7 @@ export class ZodObject<
             value: { status: "valid", value: ctx.data[key] },
           });
         }
-      } else if (unknownKeys === "strict") {
+      } else if (unknownKeys === "strict" || ctx.deepStrict) {
         if (extraKeys.length > 0) {
           addIssueToContext(ctx, {
             code: ZodIssueCode.unrecognized_keys,
@@ -1731,7 +1750,7 @@ export class ZodObject<
         pairs.push({
           key: { status: "valid", value: key },
           value: catchall._parse(
-            new ParseInputLazyPath(ctx, value, ctx.path, key) //, ctx.child(key), value, getParsedType(value)
+            new ParseInputLazyPath(ctx, value, ctx.deepStrict, ctx.path, key) //, ctx.child(key), value, getParsedType(value)
           ),
           alwaysSet: key in ctx.data,
         });
@@ -2067,6 +2086,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
           return {
             result: await option._parseAsync({
               data: ctx.data,
+              deepStrict: ctx.deepStrict,
               path: ctx.path,
               parent: childCtx,
             }),
@@ -2089,6 +2109,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
         };
         const result = option._parseSync({
           data: ctx.data,
+          deepStrict: ctx.deepStrict,
           path: ctx.path,
           parent: childCtx,
         });
@@ -2201,12 +2222,14 @@ export class ZodDiscriminatedUnion<
     if (ctx.common.async) {
       return option._parseAsync({
         data: ctx.data,
+        deepStrict: ctx.deepStrict,
         path: ctx.path,
         parent: ctx,
       });
     } else {
       return option._parseSync({
         data: ctx.data,
+        deepStrict: ctx.deepStrict,
         path: ctx.path,
         parent: ctx,
       });
@@ -2387,11 +2410,13 @@ export class ZodIntersection<
       return Promise.all([
         this._def.left._parseAsync({
           data: ctx.data,
+          deepStrict: ctx.deepStrict,
           path: ctx.path,
           parent: ctx,
         }),
         this._def.right._parseAsync({
           data: ctx.data,
+          deepStrict: ctx.deepStrict,
           path: ctx.path,
           parent: ctx,
         }),
@@ -2400,11 +2425,13 @@ export class ZodIntersection<
       return handleParsed(
         this._def.left._parseSync({
           data: ctx.data,
+          deepStrict: ctx.deepStrict,
           path: ctx.path,
           parent: ctx,
         }),
         this._def.right._parseSync({
           data: ctx.data,
+          deepStrict: ctx.deepStrict,
           path: ctx.path,
           parent: ctx,
         })
@@ -2515,7 +2542,7 @@ export class ZodTuple<
         const schema = this._def.items[itemIndex] || this._def.rest;
         if (!schema) return null as any as SyncParseReturnType<any>;
         return schema._parse(
-          new ParseInputLazyPath(ctx, item, ctx.path, itemIndex)
+          new ParseInputLazyPath(ctx, item, ctx.deepStrict, ctx.path, itemIndex)
         );
       })
       .filter((x) => !!x); // filter nulls
@@ -2615,9 +2642,17 @@ export class ZodRecord<
 
     for (const key in ctx.data) {
       pairs.push({
-        key: keyType._parse(new ParseInputLazyPath(ctx, key, ctx.path, key)),
+        key: keyType._parse(
+          new ParseInputLazyPath(ctx, key, ctx.deepStrict, ctx.path, key)
+        ),
         value: valueType._parse(
-          new ParseInputLazyPath(ctx, ctx.data[key], ctx.path, key)
+          new ParseInputLazyPath(
+            ctx,
+            ctx.data[key],
+            ctx.deepStrict,
+            ctx.path,
+            key
+          )
         ),
       });
     }
@@ -2703,10 +2738,16 @@ export class ZodMap<
       ([key, value], index) => {
         return {
           key: keyType._parse(
-            new ParseInputLazyPath(ctx, key, ctx.path, [index, "key"])
+            new ParseInputLazyPath(ctx, key, ctx.deepStrict, ctx.path, [
+              index,
+              "key",
+            ])
           ),
           value: valueType._parse(
-            new ParseInputLazyPath(ctx, value, ctx.path, [index, "value"])
+            new ParseInputLazyPath(ctx, value, ctx.deepStrict, ctx.path, [
+              index,
+              "value",
+            ])
           ),
         };
       }
@@ -2835,7 +2876,9 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     }
 
     const elements = [...(ctx.data as Set<unknown>).values()].map((item, i) =>
-      valueType._parse(new ParseInputLazyPath(ctx, item, ctx.path, i))
+      valueType._parse(
+        new ParseInputLazyPath(ctx, item, ctx.deepStrict, ctx.path, i)
+      )
     );
 
     if (ctx.common.async) {
@@ -3100,7 +3143,12 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
     const lazySchema = this._def.getter();
-    return lazySchema._parse({ data: ctx.data, path: ctx.path, parent: ctx });
+    return lazySchema._parse({
+      data: ctx.data,
+      deepStrict: ctx.deepStrict,
+      path: ctx.path,
+      parent: ctx,
+    });
   }
 
   static create = <T extends ZodTypeAny>(
@@ -3437,6 +3485,7 @@ export class ZodEffects<
         return Promise.resolve(processed).then((processed) => {
           return this._def.schema._parseAsync({
             data: processed,
+            deepStrict: ctx.deepStrict,
             path: ctx.path,
             parent: ctx,
           });
@@ -3444,6 +3493,7 @@ export class ZodEffects<
       } else {
         return this._def.schema._parseSync({
           data: processed,
+          deepStrict: ctx.deepStrict,
           path: ctx.path,
           parent: ctx,
         });
@@ -3485,6 +3535,7 @@ export class ZodEffects<
       if (ctx.common.async === false) {
         const inner = this._def.schema._parseSync({
           data: ctx.data,
+          deepStrict: ctx.deepStrict,
           path: ctx.path,
           parent: ctx,
         });
@@ -3496,7 +3547,12 @@ export class ZodEffects<
         return { status: status.value, value: inner.value };
       } else {
         return this._def.schema
-          ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
+          ._parseAsync({
+            data: ctx.data,
+            deepStrict: ctx.deepStrict,
+            path: ctx.path,
+            parent: ctx,
+          })
           .then((inner) => {
             if (inner.status === "aborted") return INVALID;
             if (inner.status === "dirty") status.dirty();
@@ -3512,6 +3568,7 @@ export class ZodEffects<
       if (ctx.common.async === false) {
         const base = this._def.schema._parseSync({
           data: ctx.data,
+          deepStrict: ctx.deepStrict,
           path: ctx.path,
           parent: ctx,
         });
@@ -3531,7 +3588,12 @@ export class ZodEffects<
         return { status: status.value, value: result };
       } else {
         return this._def.schema
-          ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
+          ._parseAsync({
+            data: ctx.data,
+            deepStrict: ctx.deepStrict,
+            path: ctx.path,
+            parent: ctx,
+          })
           .then((base) => {
             if (!isValid(base)) return base;
             // if (base.status === "aborted") return INVALID;
@@ -3692,6 +3754,7 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
     }
     return this._def.innerType._parse({
       data,
+      deepStrict: ctx.deepStrict,
       path: ctx.path,
       parent: ctx,
     });
@@ -3780,6 +3843,7 @@ export class ZodBranded<
     const data = ctx.data;
     return this._def.type._parse({
       data,
+      deepStrict: ctx.deepStrict,
       path: ctx.path,
       parent: ctx,
     });
