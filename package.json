@@ -62,7 +62,7 @@
     "prepublishOnly": "npm run test && npm run build && npm run build:deno",
     "play": "nodemon -e ts -w . -x tsx src/playground.ts",
     "depcruise": "depcruise -c .dependency-cruiser.js src",
-    "benchmark": "esr src/benchmarks/index.ts",
+    "benchmark": "ts-node src/benchmarks/index.ts",
     "prepare": "husky install"
   },
   "devDependencies": {
@@ -89,6 +89,7 @@
     "rollup": "^2.70.1",
     "ts-jest": "^27.1.3",
     "ts-morph": "^14.0.0",
+    "ts-node": "^10.9.1",
     "tslib": "^2.3.1",
     "tsx": "^3.8.0",
     "typescript": "4.1"
