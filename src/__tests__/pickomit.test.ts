@@ -13,8 +13,7 @@ const fish = z.object({
 test("pick type inference", () => {
   const nameonlyFish = fish.pick({ name: true });
   type nameonlyFish = z.infer<typeof nameonlyFish>;
-  const f1: util.AssertEqual<nameonlyFish, { name: string }> = true;
-  f1;
+  util.assertEqual<nameonlyFish, { name: string }>(true);
 });
 
 test("pick parse - success", () => {
@@ -40,8 +39,7 @@ test("pick parse - fail", () => {
 test("omit type inference", () => {
   const nonameFish = fish.omit({ name: true });
   type nonameFish = z.infer<typeof nonameFish>;
-  const f1: util.AssertEqual<nonameFish, { age: number; nested: {} }> = true;
-  f1;
+  util.assertEqual<nonameFish, { age: number; nested: {} }>(true);
 });
 
 test("omit parse - success", () => {
@@ -61,11 +59,9 @@ test("omit parse - fail", () => {
 });
 
 test("nonstrict inference", () => {
-  const laxfish = fish.nonstrict().pick({ name: true });
+  const laxfish = fish.pick({ name: true }).catchall(z.any());
   type laxfish = z.infer<typeof laxfish>;
-  const f1: util.AssertEqual<laxfish, { [k: string]: any; name: string }> =
-    true;
-  f1;
+  util.assertEqual<laxfish, { [k: string]: any; name: string }>(true);
 });
 
 test("nonstrict parsing - pass", () => {

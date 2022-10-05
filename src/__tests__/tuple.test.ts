@@ -18,8 +18,7 @@ test("tuple inference", () => {
   const returns1 = z.number();
   const func1 = z.function(args1, returns1);
   type func1 = z.TypeOf<typeof func1>;
-  const t1: util.AssertEqual<func1, (k: string) => number> = true;
-  [t1];
+  util.assertEqual<func1, (k: string) => number>(true);
 });
 
 test("successful validation", () => {
@@ -65,12 +64,10 @@ test("tuple with transformers", () => {
   const val = z.tuple([stringToNumber]);
 
   type t1 = z.input<typeof val>;
-  const f1: util.AssertEqual<t1, [string]> = true;
+  util.assertEqual<t1, [string]>(true);
   type t2 = z.output<typeof val>;
-  const f2: util.AssertEqual<t2, [number]> = true;
+  util.assertEqual<t2, [number]>(true);
   expect(val.parse(["1234"])).toEqual([4]);
-  f1;
-  f2;
 });
 
 test("tuple with rest schema", () => {
@@ -88,8 +85,7 @@ test("tuple with rest schema", () => {
   expect(() => myTuple.parse(["asdf", 1234, "asdf"])).toThrow();
   type t1 = z.output<typeof myTuple>;
 
-  const f1: util.AssertEqual<t1, [string, number, ...boolean[]]> = true;
-  f1;
+  util.assertEqual<t1, [string, number, ...boolean[]]>(true);
 });
 
 // test('tuple with optional elements', () => {

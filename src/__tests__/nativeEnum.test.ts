@@ -15,8 +15,7 @@ test("nativeEnum test with consts", () => {
   fruitEnum.parse("banana");
   fruitEnum.parse(Fruits.Apple);
   fruitEnum.parse(Fruits.Banana);
-  const t1: util.AssertEqual<fruitEnum, "apple" | "banana"> = true;
-  [t1];
+  util.assertEqual<fruitEnum, "apple" | "banana">(true);
 });
 
 test("nativeEnum test with real enum", () => {
@@ -31,8 +30,7 @@ test("nativeEnum test with real enum", () => {
   fruitEnum.parse("banana");
   fruitEnum.parse(Fruits.Apple);
   fruitEnum.parse(Fruits.Banana);
-  const t1: util.AssertEqual<fruitEnum, Fruits> = true;
-  [t1];
+  util.assertIs<fruitEnum extends Fruits ? true : false>(true);
 });
 
 test("nativeEnum test with const with numeric keys", () => {
@@ -47,8 +45,7 @@ test("nativeEnum test with const with numeric keys", () => {
   fruitEnum.parse(20);
   fruitEnum.parse(FruitValues.Apple);
   fruitEnum.parse(FruitValues.Banana);
-  const t1: util.AssertEqual<fruitEnum, 10 | 20> = true;
-  [t1];
+  util.assertEqual<fruitEnum, 10 | 20>(true);
 });
 
 test("from enum", () => {

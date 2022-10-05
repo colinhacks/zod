@@ -1,11 +1,12 @@
 export namespace util {
-  export type AssertEqual<T, Expected> = [T] extends [Expected]
-    ? [Expected] extends [T]
-      ? true
-      : false
+  type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
+    V
+  >() => V extends U ? 1 : 2
+    ? true
     : false;
-  export function assertEqual<A, B>(_cond: AssertEqual<A, B>) {}
 
+  export const assertEqual = <A, B>(val: AssertEqual<A, B>) => val;
+  export function assertIs<T>(_arg: T): void {}
   export function assertNever(_x: never): never {
     throw new Error();
   }
@@ -66,7 +67,7 @@ export namespace util {
   };
 
   export type identity<T> = T;
-  export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
+  export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
   export type noUndefined<T> = T extends undefined ? never : T;
 
   export const isInteger: NumberConstructor["isInteger"] =
@@ -83,6 +84,13 @@ export namespace util {
       .map((val) => (typeof val === "string" ? `'${val}'` : val))
       .join(separator);
   }
+
+  export const jsonStringifyReplacer = (_: string, value: any): any => {
+    if (typeof value === "bigint") {
+      return value.toString();
+    }
+    return value;
+  };
 }
 
 export const ZodParsedType = util.arrayToEnum([

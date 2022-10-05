@@ -1,5 +1,6 @@
+import { getErrorMap } from "../errors.ts";
+import defaultErrorMap from "../locales/en.ts";
 import type { IssueData, ZodErrorMap, ZodIssue } from "../ZodError.ts";
-import { defaultErrorMap, getErrorMap } from "../ZodError.ts";
 import type { ZodParsedType } from "./util.ts";
 
 export const makeIssue = (params: {
@@ -175,10 +176,3 @@ export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
   typeof Promise !== undefined && x instanceof Promise;
-
-export const jsonStringifyReplacer = (_: string, value: any): any => {
-  if (typeof value === "bigint") {
-    return value.toString();
-  }
-  return value;
-};

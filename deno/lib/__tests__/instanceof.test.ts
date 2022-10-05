@@ -8,13 +8,20 @@ import * as z from "../index.ts";
 test("instanceof", async () => {
   class Test {}
   class Subtest extends Test {}
+  abstract class AbstractBar {
+    constructor(public val: string) {}
+  }
+  class Bar extends AbstractBar {}
 
   const TestSchema = z.instanceof(Test);
   const SubtestSchema = z.instanceof(Subtest);
+  const BarSchema = z.instanceof(Bar);
 
   TestSchema.parse(new Test());
   TestSchema.parse(new Subtest());
   SubtestSchema.parse(new Subtest());
+  const bar = BarSchema.parse(new Bar("asdf"));
+  expect(bar.val).toEqual("asdf");
 
   await expect(() => SubtestSchema.parse(new Test())).toThrow(
     /Input not instance of Subtest/
@@ -23,8 +30,7 @@ test("instanceof", async () => {
     /Input not instance of Test/
   );
 
-  const f1: util.AssertEqual<Test, z.infer<typeof TestSchema>> = true;
-  expect(f1).toBeTruthy();
+  util.assertEqual<Test, z.infer<typeof TestSchema>>(true);
 });
 
 test("instanceof fatal", () => {
