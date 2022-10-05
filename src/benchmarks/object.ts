@@ -5,6 +5,8 @@ import { z } from "../index";
 const emptySuite = new Benchmark.Suite("z.object: empty");
 const shortSuite = new Benchmark.Suite("z.object: short");
 const longSuite = new Benchmark.Suite("z.object: long");
+const partialSuite = new Benchmark.Suite("z.object: partial");
+const requiredSuite = new Benchmark.Suite("z.object: required");
 
 const empty = z.object({});
 const short = z.object({
@@ -15,6 +17,11 @@ const long = z.object({
   number: z.number(),
   boolean: z.boolean(),
 });
+const partial = long.partial({
+  string: true,
+  boolean: true,
+});
+const required = partial.required();
 
 emptySuite
   .add("valid", () => {
@@ -64,6 +71,41 @@ longSuite
     console.log(`${(longSuite as any).name}: ${e.target}`);
   });
 
+partialSuite
+  .add("valid: all defined", () => {
+    partial.parse({ string: "string", number: 42, boolean: true });
+  })
+  .add("valid: optionals undefined", () => {
+    partial.parse({ number: 42 });
+  })
+  .add("valid: extra keys", () => {
+    partial.parse({ string: "string", number: 42, boolean: true, list: [] });
+  })
+  .add("invalid: null", () => {
+    try {
+      partial.parse(null);
+    } catch (err) {}
+  })
+  .on("cycle", (e: Benchmark.Event) => {
+    console.log(`${(partialSuite as any).name}: ${e.target}`);
+  });
+
+requiredSuite
+  .add("valid", () => {
+    required.parse({ string: "string", number: 42, boolean: true });
+  })
+  .add("valid: extra keys", () => {
+    partial.parse({ string: "string", number: 42, boolean: true, list: [] });
+  })
+  .add("invalid: null", () => {
+    try {
+      required.parse(null);
+    } catch (err) {}
+  })
+  .on("cycle", (e: Benchmark.Event) => {
+    console.log(`${(requiredSuite as any).name}: ${e.target}`);
+  });
+
 export default {
-  suites: [emptySuite, shortSuite, longSuite],
+  suites: [emptySuite, shortSuite, longSuite, partialSuite, requiredSuite],
 };
