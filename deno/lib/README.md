@@ -946,6 +946,42 @@ const deepPartialUser = user.deepPartial();
 
 > Important limitation: deep partials only work as expected in hierarchies of objects, arrays, and tuples.
 
+
+### `.required`
+
+Contrary to the `.partial` method, the `.required` method makes all properties required.
+
+Starting from this object:
+
+```ts
+const user = z.object({
+  email: z.string()
+  username: z.string(),
+}).partial();
+// { email?: string | undefined; username?: string | undefined }
+```
+
+We can create a required version:
+
+```ts
+const requiredUser = user.required();
+// { email: string; username: string }
+```
+
+You can also specify which properties to make required:
+
+```ts
+const requiredEmail = user.required({
+  email: true,
+});
+/*
+{
+  email: string;
+  username?: string | undefined;
+}
+*/
+```
+
 ### `.passthrough`
 
 By default Zod object schemas strip out unrecognized keys during parsing.

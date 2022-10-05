@@ -1931,16 +1931,41 @@ export class ZodObject<
     { [k in keyof T]: deoptional<T[k]> },
     UnknownKeys,
     Catchall
-  > {
+  >;
+  required<Mask extends { [k in keyof T]?: true }>(
+    mask: Mask
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  required(mask?: any) {
     const newShape: any = {};
-    for (const key in this.shape) {
-      const fieldSchema = this.shape[key];
-      let newField = fieldSchema;
-      while (newField instanceof ZodOptional) {
-        newField = (newField as ZodOptional<any>)._def.innerType;
-      }
+    if (mask) {
+      util.objectKeys(this.shape).map((key) => {
+        if (util.objectKeys(mask).indexOf(key) === -1) {
+          newShape[key] = this.shape[key];
+        } else {
+          const fieldSchema = this.shape[key];
+          let newField = fieldSchema;
+          while (newField instanceof ZodOptional) {
+            newField = (newField as ZodOptional<any>)._def.innerType;
+          }
+          newShape[key] = newField;
+        }
+      });
+    } else {
+      for (const key in this.shape) {
+        const fieldSchema = this.shape[key];
+        let newField = fieldSchema;
+        while (newField instanceof ZodOptional) {
+          newField = (newField as ZodOptional<any>)._def.innerType;
+        }
 
-      newShape[key] = newField;
+        newShape[key] = newField;
+      }
     }
     return new ZodObject({
       ...this._def,
