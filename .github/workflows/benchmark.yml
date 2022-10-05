@@ -1,0 +1,41 @@
+name: benchmark
+
+on:
+  push:
+    branches:
+      - "master"
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test-node:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ["16"]
+        typescript: ["4.5", "4.6"]
+    name: Benchmark with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: ./head
+      - uses: actions/checkout@v3
+        with:
+          ref: master
+          path: ./master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+      - name: benchmark HEAD
+        run: |
+          yarn install
+          yarn add typescript@${{ matrix.typescript }}
+          yarn run benchmark
+        working-directory: ./head
+      - name: benchmark master
+        run: |
+          yarn install
+          yarn add typescript@${{ matrix.typescript }}
+          yarn run benchmark
+        working-directory: ./master
