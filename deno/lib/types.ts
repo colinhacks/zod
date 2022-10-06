@@ -1610,18 +1610,26 @@ export type SomeZodObject = ZodObject<
   any
 >;
 
+const getModifiedShape = (
+  deepModify: (schema: ZodTypeAny) => any,
+  schema: AnyZodObject
+) => {
+  const newShape: Record<string, ZodTypeAny> = {};
+
+  for (const key in schema.shape) {
+    const fieldSchema = schema.shape[key];
+    newShape[key] = ZodOptional.create(deepModify(fieldSchema));
+  }
+
+  return {
+    ...schema._def,
+    shape: () => newShape,
+  };
+};
+
 function deepPartialify(schema: ZodTypeAny): any {
   if (schema instanceof ZodObject) {
-    const newShape: any = {};
-
-    for (const key in schema.shape) {
-      const fieldSchema = schema.shape[key];
-      newShape[key] = ZodOptional.create(deepPartialify(fieldSchema));
-    }
-    return new ZodObject({
-      ...schema._def,
-      shape: () => newShape,
-    }) as any;
+    return new ZodObject(getModifiedShape(deepPartialify, schema));
   } else if (schema instanceof ZodArray) {
     return ZodArray.create(deepPartialify(schema.element));
   } else if (schema instanceof ZodOptional) {
@@ -1635,6 +1643,22 @@ function deepPartialify(schema: ZodTypeAny): any {
   } else {
     return schema;
   }
+}
+
+function deepStrictify(schema: ZodTypeAny): any {
+  if (schema instanceof ZodObject) {
+    return new ZodObject({
+      ...getModifiedShape(deepStrictify, schema),
+      unknownKeys: "strict",
+    });
+  } else if (schema instanceof ZodArray) {
+    return ZodArray.create(deepStrictify(schema.element));
+  } else if (schema instanceof ZodTuple) {
+    return ZodTuple.create(
+      schema.items.map((item: any) => deepStrictify(item))
+    );
+  }
+  return schema;
 }
 
 export class ZodObject<
@@ -1884,6 +1908,10 @@ export class ZodObject<
 
   deepPartial(): partialUtil.DeepPartial<this> {
     return deepPartialify(this) as any;
+  }
+
+  deepStrict(): AnyZodObject {
+    return deepStrictify(this);
   }
 
   partial(): ZodObject<
