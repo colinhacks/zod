@@ -3809,35 +3809,13 @@ export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
 
 export type ZodReadonlyType<T extends ZodTypeAny> = ZodReadonly<T>;
 
-type ReadonlyDate = Readonly<
-  Omit<
-    Date,
-    | "setTime"
-    | "setMilliseconds"
-    | "setUTCMilliseconds"
-    | "setSeconds"
-    | "setUTCSeconds"
-    | "setMinutes"
-    | "setUTCMinutes"
-    | "setHours"
-    | "setUTCHours"
-    | "setDate"
-    | "setUTCDate"
-    | "setMonth"
-    | "setUTCMonth"
-    | "setFullYear"
-    | "setUTCFullYear"
-  >
->;
-
-type ZodReadonlyInference<T> = T extends (...args: infer P) => infer R
-  ? (...args: P) => R
+type BuiltIn = Function | Error | Date | RegExp | Generator;
+type ZodReadonlyInference<T> = T extends BuiltIn
+  ? T
   : T extends Map<infer K, infer V>
   ? ReadonlyMap<K, V>
   : T extends Set<infer V>
   ? ReadonlySet<V>
-  : T extends Date
-  ? ReadonlyDate
   : Readonly<T>;
 
 const freezeSyncParseResult = (
