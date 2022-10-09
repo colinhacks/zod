@@ -362,6 +362,7 @@ export abstract class ZodType<
     this.optional = this.optional.bind(this);
     this.nullable = this.nullable.bind(this);
     this.nullish = this.nullish.bind(this);
+    this.readonly = this.readonly.bind(this);
     this.array = this.array.bind(this);
     this.promise = this.promise.bind(this);
     this.or = this.or.bind(this);
@@ -381,6 +382,9 @@ export abstract class ZodType<
   }
   nullish(): ZodNullable<ZodOptional<this>> {
     return this.optional().nullable();
+  }
+  readonly(): ZodReadonly<this> {
+    return ZodReadonly.create(this);
   }
   array(): ZodArray<this> {
     return ZodArray.create(this);
@@ -3790,6 +3794,69 @@ export class ZodBranded<
   }
 }
 
+///////////////////////////////////////////
+///////////////////////////////////////////
+//////////                       //////////
+//////////      ZodReadonly      //////////
+//////////                       //////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  innerType: T;
+  typeName: ZodFirstPartyTypeKind.ZodReadonly;
+}
+
+export type ZodReadonlyType<T extends ZodTypeAny> = ZodReadonly<T>;
+
+type BuiltIn = Function | Error | Date | RegExp | Generator;
+type ZodReadonlyInference<T> = T extends BuiltIn
+  ? T
+  : T extends Map<infer K, infer V>
+  ? ReadonlyMap<K, V>
+  : T extends Set<infer V>
+  ? ReadonlySet<V>
+  : Readonly<T>;
+
+const freezeSyncParseResult = (
+  result: SyncParseReturnType<any>
+): SyncParseReturnType<any> => {
+  if (result.status === "valid") {
+    return { status: "valid", value: Object.freeze(result.value) };
+  }
+  return result;
+};
+
+export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
+  ZodReadonlyInference<T["_output"]>,
+  ZodReadonlyDef<T>,
+  ZodReadonlyInference<T["_input"]>
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const result = this._def.innerType._parse(input);
+    if (isAsync(result)) {
+      return result.then((res) => freezeSyncParseResult(res));
+    }
+    return freezeSyncParseResult(result);
+  }
+
+  unwrap() {
+    return this._def.innerType;
+  }
+  writable = this.unwrap;
+
+  static create = <T extends ZodTypeAny>(
+    type: T,
+    params?: RawCreateParams
+  ): ZodReadonly<T> => {
+    return new ZodReadonly({
+      innerType: type,
+      typeName: ZodFirstPartyTypeKind.ZodReadonly,
+      ...processCreateParams(params),
+    });
+  };
+}
+
 export const custom = <T>(
   check?: (data: unknown) => any,
   params: Parameters<ZodTypeAny["refine"]>[1] = {},
@@ -3845,6 +3912,7 @@ export enum ZodFirstPartyTypeKind {
   ZodDefault = "ZodDefault",
   ZodPromise = "ZodPromise",
   ZodBranded = "ZodBranded",
+  ZodReadonly = "ZodReadonly",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -3878,7 +3946,8 @@ export type ZodFirstPartySchemaTypes =
   | ZodNullable<any>
   | ZodDefault<any>
   | ZodPromise<any>
-  | ZodBranded<any, any>;
+  | ZodBranded<any, any>
+  | ZodReadonly<any>;
 
 // new approach that works for abstract classes
 // but required TS 4.4+
@@ -3924,6 +3993,7 @@ const promiseType = ZodPromise.create;
 const effectsType = ZodEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
+const readonlyType = ZodReadonly.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
@@ -3957,6 +4027,7 @@ export {
   ostring,
   preprocessType as preprocess,
   promiseType as promise,
+  readonlyType as readonly,
   recordType as record,
   setType as set,
   strictObjectType as strictObject,
