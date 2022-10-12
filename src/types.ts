@@ -1764,11 +1764,11 @@ export class ZodObject<
     return this._def.shape();
   }
 
-  strict(message?: errorUtil.ErrMessage): ZodObject<T, "strict", Catchall> {
+  strict(message?: errorUtil.ErrMessage, enabled: boolean = true): ZodObject<T, "strict", Catchall> {
     errorUtil.errToObj;
     return new ZodObject({
       ...this._def,
-      unknownKeys: "strict",
+      unknownKeys: enabled ? "strict" : "strip",
       ...(message !== undefined
         ? {
             errorMap: (issue, ctx) => {
