@@ -2123,6 +2123,37 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     return this._def.options;
   }
 
+  match<
+    Name extends string,
+    Cases extends {
+      [K in keyof T]:
+        | ((v: T[K]["_output"]) => any)
+        | { name: Name; check: (v: T[K]["_output"]) => any };
+    }
+  >(
+    ...cases: Cases
+  ): (x: unknown) => {
+    [KK in keyof Cases]: Cases[KK] extends (...args: any) => any
+      ? { key: KK; value: ReturnType<Cases[KK]> }
+      : Cases[KK] extends { name: infer N; check: (...args: any) => any }
+      ? // @ts-expect-error Type '"check"' cannot be used to index type 'Cases[KK]'.
+        { key: N; value: ReturnType<Cases[KK]["check"]> }
+      : never;
+  }[number] {
+    return (x: unknown): any => {
+      for (const [key, opt] of this.options.entries()) {
+        const res = opt.safeParse(x);
+        if (res.success) {
+          const caseFn = cases[key];
+          if (typeof caseFn === "function")
+            return { key, value: caseFn(res.data) };
+          else return { key: caseFn.name, value: caseFn.check(res.data) };
+        }
+      }
+      throw new Error("No match found");
+    };
+  }
+
   static create = <
     T extends Readonly<[ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]>
   >(
