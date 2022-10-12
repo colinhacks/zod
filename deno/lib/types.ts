@@ -2127,17 +2127,21 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     Name extends string,
     Cases extends {
       [K in keyof T]:
-        | ((v: T[K]["_output"]) => any)
-        | { name: Name; check: (v: T[K]["_output"]) => any };
+        | ((v: T[K] extends ZodTypeAny ? T[K]["_output"] : never) => any)
+        | {
+            key: Name;
+            check: (
+              v: T[K] extends ZodTypeAny ? T[K]["_output"] : never
+            ) => any;
+          };
     }
   >(
     ...cases: Cases
   ): (x: unknown) => {
     [KK in keyof Cases]: Cases[KK] extends (...args: any) => any
       ? { key: KK; value: ReturnType<Cases[KK]> }
-      : Cases[KK] extends { name: infer N; check: (...args: any) => any }
-      ? // @ts-expect-error Type '"check"' cannot be used to index type 'Cases[KK]'.
-        { key: N; value: ReturnType<Cases[KK]["check"]> }
+      : Cases[KK] extends { key: infer N; check: (...args: any) => any }
+      ? { key: N; value: ReturnType<Cases[KK]["check"]> }
       : never;
   }[number] {
     return (x: unknown): any => {
@@ -2147,7 +2151,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
           const caseFn = cases[key];
           if (typeof caseFn === "function")
             return { key, value: caseFn(res.data) };
-          else return { key: caseFn.name, value: caseFn.check(res.data) };
+          else return { key: caseFn.key, value: caseFn.check(res.data) };
         }
       }
       throw new Error("No match found");
