@@ -102,6 +102,16 @@ test("strict", () => {
   expect(val.success).toEqual(false);
 });
 
+test("strict with enabled = true", () => {
+  const val = z.object({ points: z.number() }).strict(undefined, true).safeParse(data);
+  expect(val.success).toEqual(false);
+});
+
+test("strict with enabled = false", () => {
+  const val = z.object({ points: z.number() }).strict(undefined, false).parse(data);
+  expect(val).toEqual({ points: 2314 });
+});
+
 test("catchall inference", () => {
   const o1 = z
     .object({
