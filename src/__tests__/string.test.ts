@@ -151,21 +151,31 @@ test("checks getters", () => {
   expect(z.string().email().isURL).toEqual(false);
   expect(z.string().email().isCUID).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
+  expect(z.string().email().isDateISOString).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
   expect(z.string().url().isCUID).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
+  expect(z.string().url().isDateISOString).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
   expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().cuid().isDateISOString).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
   expect(z.string().uuid().isCUID).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
+  expect(z.string().uuid().isDateISOString).toEqual(false);
+
+  expect(z.string().dateISOString().isEmail).toEqual(false);
+  expect(z.string().dateISOString().isURL).toEqual(false);
+  expect(z.string().dateISOString().isCUID).toEqual(false);
+  expect(z.string().dateISOString().isUUID).toEqual(false);
+  expect(z.string().dateISOString().isDateISOString).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -184,4 +194,16 @@ test("trim", () => {
   // ordering of methods is respected
   expect(z.string().min(2).trim().parse(" 1 ")).toEqual("1");
   expect(() => z.string().trim().min(2).parse(" 1 ")).toThrow();
+});
+
+test("dateISOString", () => {
+  const dateISOString = z.string().dateISOString();
+  dateISOString.parse("1970-01-01T00:00:00.000Z");
+  dateISOString.parse("2022-10-13T09:52:31.816Z");
+  expect(() => dateISOString.parse("")).toThrow();
+  expect(() => dateISOString.parse("foo")).toThrow();
+  expect(() => dateISOString.parse("2020-10-14")).toThrow();
+  expect(() => dateISOString.parse("T18:45:12.123")).toThrow();
+  expect(() => dateISOString.parse("2020-10-14T17:42:29Z")).toThrow();
+  expect(() => dateISOString.parse("2020-10-14T17:42:29+00:00")).toThrow();
 });

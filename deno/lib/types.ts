@@ -460,7 +460,8 @@ type ZodStringCheck =
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
-  | { kind: "trim"; message?: string };
+  | { kind: "trim"; message?: string }
+  | { kind: "dateISOString"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -599,6 +600,17 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "dateISOString") {
+        const date = new Date(input.data);
+        if (isNaN(date.getTime()) || date.toISOString() !== input.data) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "dateISOString",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -636,6 +648,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
+  }
+  dateISOString(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "dateISOString",
+      ...errorUtil.errToObj(message),
+    });
   }
   regex(regex: RegExp, message?: errorUtil.ErrMessage) {
     return this._addCheck({
@@ -705,6 +723,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
+  }
+  get isDateISOString() {
+    return !!this._def.checks.find((ch) => ch.kind === "dateISOString");
   }
   get minLength() {
     let min: number | null = null;

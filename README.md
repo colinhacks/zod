@@ -489,6 +489,7 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().cuid();
+z.string().dateISOString(); // Date.prototype.toISOString() format
 z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
@@ -946,7 +947,6 @@ const deepPartialUser = user.deepPartial();
 ```
 
 > Important limitation: deep partials only work as expected in hierarchies of objects, arrays, and tuples.
-
 
 ### `.required`
 
