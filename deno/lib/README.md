@@ -489,6 +489,7 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().cuid();
+z.string().utc(); // Date.prototype.toISOString() format
 z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);

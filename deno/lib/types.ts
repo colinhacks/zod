@@ -460,7 +460,8 @@ type ZodStringCheck =
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
-  | { kind: "trim"; message?: string };
+  | { kind: "trim"; message?: string }
+  | { kind: "utc"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -599,6 +600,17 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "utc") {
+        const date = new Date(input.data);
+        if (isNaN(date.getTime()) || date.toISOString() !== input.data) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "utc",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -636,6 +648,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
+  }
+  utc(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "utc", ...errorUtil.errToObj(message) });
   }
   regex(regex: RegExp, message?: errorUtil.ErrMessage) {
     return this._addCheck({
@@ -705,6 +720,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
+  }
+  get isUTC() {
+    return !!this._def.checks.find((ch) => ch.kind === "utc");
   }
   get minLength() {
     let min: number | null = null;
