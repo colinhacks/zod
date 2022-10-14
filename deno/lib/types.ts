@@ -2174,7 +2174,12 @@ export type ZodDiscriminatedUnionOption<
   Discriminator extends string,
   DiscriminatorValue extends Primitive
 > = ZodObject<
-  { [key in Discriminator]: ZodLiteral<DiscriminatorValue> } & ZodRawShape,
+  {
+    [key in Discriminator]:
+      | ZodDefault<ZodLiteral<DiscriminatorValue>>
+      | ZodEffects<ZodLiteral<DiscriminatorValue>, DiscriminatorValue, unknown>
+      | ZodLiteral<DiscriminatorValue>;
+  } & ZodRawShape,
   any,
   any
 >;
@@ -2276,8 +2281,23 @@ export class ZodDiscriminatedUnion<
 
     try {
       types.forEach((type) => {
-        const discriminatorValue = type.shape[discriminator].value;
-        options.set(discriminatorValue, type);
+        const typeShape = type.shape[discriminator];
+        if (typeShape instanceof ZodDefault) {
+          const discriminatorValue = typeShape.removeDefault().value;
+          options.set(discriminatorValue, type);
+          return;
+        }
+        if (typeShape instanceof ZodEffects) {
+          const discriminatorValue = typeShape.innerType().value;
+          options.set(discriminatorValue, type);
+          return;
+        }
+        if (typeShape instanceof ZodLiteral) {
+          const discriminatorValue = typeShape.value;
+          options.set(discriminatorValue, type);
+          return;
+        }
+        throw new Error(`Wrong Zod Shape: ${typeShape}`);
       });
     } catch (e) {
       throw new Error(

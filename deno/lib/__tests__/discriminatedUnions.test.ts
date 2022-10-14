@@ -59,6 +59,27 @@ test("valid - discriminator value of various primitive types", () => {
   });
 });
 
+test("valid - literals with .default or .preprocess", () => {
+  const schema = z.discriminatedUnion("type", [
+    z.object({
+      type: z.literal("foo").default("foo"),
+      a: z.string(),
+    }),
+    z.object({
+      type: z.literal("custom"),
+      method: z.string(),
+    }),
+    z.object({
+      type: z.preprocess((val) => String(val), z.literal("bar")),
+      c: z.string(),
+    }),
+  ]);
+  expect(schema.parse({ type: "foo", a: "foo" })).toEqual({
+    type: "foo",
+    a: "foo",
+  });
+});
+
 test("invalid - null", () => {
   try {
     z.discriminatedUnion("type", [
@@ -117,7 +138,6 @@ test("valid discriminator value, invalid data", () => {
     ]);
   }
 });
-
 test("wrong schema - missing discriminator", () => {
   try {
     z.discriminatedUnion("type", [
