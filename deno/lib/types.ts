@@ -460,7 +460,8 @@ type ZodStringCheck =
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
-  | { kind: "trim"; message?: string };
+  | { kind: "trim"; message?: string }
+  | { kind: "utc"; options?: { milliseconds?: Boolean }; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -599,6 +600,28 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "utc") {
+        const parsedDate = new Date(input.data);
+
+        const isDate = !isNaN(parsedDate.getTime());
+        const isMsString = isDate && parsedDate.toISOString() === input.data;
+        const isNoMsString =
+          isDate && `${parsedDate.toISOString().split(".")[0]}Z` === input.data;
+
+        if (
+          !isDate ||
+          (!isMsString && !isNoMsString) ||
+          (check.options?.milliseconds === true && !isMsString) ||
+          (check.options?.milliseconds === false && !isNoMsString)
+        ) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "utc",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -636,6 +659,13 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
+  }
+  utc(options?: { milliseconds: boolean }, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "utc",
+      options: options,
+      ...errorUtil.errToObj(message),
+    });
   }
   regex(regex: RegExp, message?: errorUtil.ErrMessage) {
     return this._addCheck({
@@ -705,6 +735,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
+  }
+  get isUTC() {
+    return !!this._def.checks.find((ch) => ch.kind === "utc");
   }
   get minLength() {
     let min: number | null = null;

@@ -489,6 +489,9 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().cuid();
+z.string().utc(); // Accepts both milliseconds and no milliseconds
+z.string().utc({ milliseconds: true }); // Accepts only milliseconds
+z.string().utc({ milliseconds: false }); // Accepts only no milliseconds
 z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
@@ -946,7 +949,6 @@ const deepPartialUser = user.deepPartial();
 ```
 
 > Important limitation: deep partials only work as expected in hierarchies of objects, arrays, and tuples.
-
 
 ### `.required`
 

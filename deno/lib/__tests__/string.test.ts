@@ -152,21 +152,31 @@ test("checks getters", () => {
   expect(z.string().email().isURL).toEqual(false);
   expect(z.string().email().isCUID).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
+  expect(z.string().email().isUTC).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
   expect(z.string().url().isCUID).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
+  expect(z.string().url().isUTC).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
   expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().cuid().isUTC).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
   expect(z.string().uuid().isCUID).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
+  expect(z.string().uuid().isUTC).toEqual(false);
+
+  expect(z.string().utc().isEmail).toEqual(false);
+  expect(z.string().utc().isURL).toEqual(false);
+  expect(z.string().utc().isCUID).toEqual(false);
+  expect(z.string().utc().isUUID).toEqual(false);
+  expect(z.string().utc().isUTC).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -185,4 +195,29 @@ test("trim", () => {
   // ordering of methods is respected
   expect(z.string().min(2).trim().parse(" 1 ")).toEqual("1");
   expect(() => z.string().trim().min(2).parse(" 1 ")).toThrow();
+});
+
+test("utc", () => {
+  const utc = z.string().utc();
+  const utcMilliseconds = z.string().utc({ milliseconds: true });
+  const utcNoMilliseconds = z.string().utc({ milliseconds: false });
+
+  utc.parse("1970-01-01T00:00:00.000Z");
+  utc.parse("2022-10-13T09:52:31.816Z");
+  utc.parse("1970-01-01T00:00:00Z");
+  utc.parse("2022-10-13T09:52:31Z");
+  utcMilliseconds.parse("1970-01-01T00:00:00.000Z");
+  utcMilliseconds.parse("2022-10-13T09:52:31.816Z");
+  utcNoMilliseconds.parse("1970-01-01T00:00:00Z");
+  utcNoMilliseconds.parse("2022-10-13T09:52:31Z");
+
+  expect(() => utc.parse("")).toThrow();
+  expect(() => utc.parse("foo")).toThrow();
+  expect(() => utc.parse("2020-10-14")).toThrow();
+  expect(() => utc.parse("T18:45:12.123")).toThrow();
+  expect(() => utc.parse("2020-10-14T17:42:29+00:00")).toThrow();
+  expect(() => utcMilliseconds.parse("1970-01-01T00:00:00Z")).toThrow();
+  expect(() => utcMilliseconds.parse("2022-10-13T09:52:31:00Z")).toThrow();
+  expect(() => utcNoMilliseconds.parse("1970-01-01T00:00:00.000Z")).toThrow();
+  expect(() => utcNoMilliseconds.parse("2022-10-13T09:52:31.816Z")).toThrow();
 });
