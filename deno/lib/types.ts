@@ -419,6 +419,7 @@ export abstract class ZodType<
     }) as any;
   }
 
+  brand<B extends string | number | symbol>(brand: B): ZodBranded<this, B>;
   brand<B extends string | number | symbol>(): ZodBranded<this, B> {
     return new ZodBranded({
       typeName: ZodFirstPartyTypeKind.ZodBranded,
