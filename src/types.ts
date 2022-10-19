@@ -367,6 +367,7 @@ export abstract class ZodType<
     this.or = this.or.bind(this);
     this.and = this.and.bind(this);
     this.transform = this.transform.bind(this);
+    this.brand = this.brand.bind(this);
     this.default = this.default.bind(this);
     this.describe = this.describe.bind(this);
     this.isNullable = this.isNullable.bind(this);
