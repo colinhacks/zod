@@ -62,7 +62,7 @@
     "prepublishOnly": "npm run test && npm run build && npm run build:deno",
     "play": "nodemon -e ts -w . -x tsx src/playground.ts",
     "depcruise": "depcruise -c .dependency-cruiser.js src",
-    "benchmark": "ts-node src/benchmarks/index.ts",
+    "benchmark": "tsx src/benchmarks/index.ts",
     "prepare": "husky install"
   },
   "devDependencies": {
