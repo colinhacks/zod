@@ -1765,19 +1765,25 @@ export class ZodObject<
     return this._def.shape();
   }
 
-  strict(message?: errorUtil.ErrMessage, enabled: boolean = true): ZodObject<T, "strict", Catchall> {
+  strict<Options extends errorUtil.ErrMessage & { enabled?: boolean }>(
+    options?: Options
+  ): ZodObject<
+    T,
+    Options["enabled"] extends false ? "strip" : "strict",
+    Catchall
+  > {
     errorUtil.errToObj;
     return new ZodObject({
       ...this._def,
-      unknownKeys: enabled ? "strict" : "strip",
-      ...(message !== undefined
+      unknownKeys: options?.enabled === false ? "strip" : "strict",
+      ...(options !== undefined
         ? {
             errorMap: (issue, ctx) => {
               const defaultError =
                 this._def.errorMap?.(issue, ctx).message ?? ctx.defaultError;
               if (issue.code === "unrecognized_keys")
                 return {
-                  message: errorUtil.errToObj(message).message ?? defaultError,
+                  message: errorUtil.errToObj(options).message ?? defaultError,
                 };
               return {
                 message: defaultError,

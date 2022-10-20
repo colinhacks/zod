@@ -103,12 +103,12 @@ test("strict", () => {
 });
 
 test("strict with enabled = true", () => {
-  const val = z.object({ points: z.number() }).strict(undefined, true).safeParse(data);
+  const val = z.object({ points: z.number() }).strict({ enabled: true }).safeParse(data);
   expect(val.success).toEqual(false);
 });
 
 test("strict with enabled = false", () => {
-  const val = z.object({ points: z.number() }).strict(undefined, false).parse(data);
+  const val = z.object({ points: z.number() }).strict({ enabled: false }).parse(data);
   expect(val).toEqual({ points: 2314 });
 });
 
