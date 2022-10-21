@@ -151,43 +151,64 @@ test("checks getters", () => {
   expect(z.string().email().isURL).toEqual(false);
   expect(z.string().email().isCUID).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
-  expect(z.string().email().isUTC).toEqual(false);
-  expect(z.string().email().isISO8601).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
   expect(z.string().url().isCUID).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
-  expect(z.string().url().isUTC).toEqual(false);
-  expect(z.string().url().isISO8601).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
   expect(z.string().cuid().isUUID).toEqual(false);
-  expect(z.string().cuid().isUTC).toEqual(false);
-  expect(z.string().cuid().isISO8601).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
   expect(z.string().uuid().isCUID).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
-  expect(z.string().uuid().isUTC).toEqual(false);
-  expect(z.string().uuid().isISO8601).toEqual(false);
 
   expect(z.string().utc().isEmail).toEqual(false);
   expect(z.string().utc().isURL).toEqual(false);
   expect(z.string().utc().isCUID).toEqual(false);
   expect(z.string().utc().isUUID).toEqual(false);
-  expect(z.string().utc().isUTC).toEqual(true);
-  expect(z.string().utc().isISO8601).toEqual(false);
 
   expect(z.string().iso8601().isEmail).toEqual(false);
   expect(z.string().iso8601().isURL).toEqual(false);
   expect(z.string().iso8601().isCUID).toEqual(false);
   expect(z.string().iso8601().isUUID).toEqual(false);
-  expect(z.string().iso8601().isUTC).toEqual(false);
-  expect(z.string().iso8601().isISO8601).toEqual(true);
+});
+
+test("date getters", () => {
+  const utc = z.string().utc();
+  const utcMs = z.string().utc({ ms: true });
+  const utcNoMs = z.string().utc({ ms: false });
+  const iso8601 = z.string().iso8601();
+  const iso8601Ms = z.string().iso8601({ ms: true });
+  const iso8601NoMs = z.string().iso8601({ ms: false });
+
+  expect(utc.isUTC()).toEqual(true);
+  expect(utcMs.isUTC()).toEqual(false);
+  expect(utcNoMs.isUTC()).toEqual(false);
+
+  expect(iso8601.isISO8601()).toEqual(true);
+  expect(iso8601Ms.isISO8601()).toEqual(false);
+  expect(iso8601NoMs.isISO8601()).toEqual(false);
+
+  expect(utc.isUTC({ ms: true })).toEqual(false);
+  expect(utcMs.isUTC({ ms: true })).toEqual(true);
+  expect(utcNoMs.isUTC({ ms: true })).toEqual(false);
+
+  expect(iso8601.isISO8601({ ms: true })).toEqual(false);
+  expect(iso8601Ms.isISO8601({ ms: true })).toEqual(true);
+  expect(iso8601NoMs.isISO8601({ ms: true })).toEqual(false);
+
+  expect(utc.isUTC({ ms: false })).toEqual(false);
+  expect(utcMs.isUTC({ ms: false })).toEqual(false);
+  expect(utcNoMs.isUTC({ ms: false })).toEqual(true);
+
+  expect(iso8601.isISO8601({ ms: false })).toEqual(false);
+  expect(iso8601Ms.isISO8601({ ms: false })).toEqual(false);
+  expect(iso8601NoMs.isISO8601({ ms: false })).toEqual(true);
 });
 
 test("min max getters", () => {

@@ -783,6 +783,17 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [...this._def.checks, { kind: "trim" }],
     });
 
+  isUTC(options?: { ms: boolean }) {
+    return !!this._def.checks.find(
+      (ch) => ch.kind === "utc" && options?.ms === ch.options?.ms
+    );
+  }
+  isISO8601(options?: { ms: boolean }) {
+    return !!this._def.checks.find(
+      (ch) => ch.kind === "iso8601" && options?.ms === ch.options?.ms
+    );
+  }
+
   get isEmail() {
     return !!this._def.checks.find((ch) => ch.kind === "email");
   }
@@ -794,12 +805,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
-  }
-  get isUTC() {
-    return !!this._def.checks.find((ch) => ch.kind === "utc");
-  }
-  get isISO8601() {
-    return !!this._def.checks.find((ch) => ch.kind === "iso8601");
   }
 
   get minLength() {
