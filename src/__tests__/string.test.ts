@@ -166,16 +166,6 @@ test("checks getters", () => {
   expect(z.string().uuid().isURL).toEqual(false);
   expect(z.string().uuid().isCUID).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
-
-  expect(z.string().utc().isEmail).toEqual(false);
-  expect(z.string().utc().isURL).toEqual(false);
-  expect(z.string().utc().isCUID).toEqual(false);
-  expect(z.string().utc().isUUID).toEqual(false);
-
-  expect(z.string().iso8601().isEmail).toEqual(false);
-  expect(z.string().iso8601().isURL).toEqual(false);
-  expect(z.string().iso8601().isCUID).toEqual(false);
-  expect(z.string().iso8601().isUUID).toEqual(false);
 });
 
 test("date getters", () => {
