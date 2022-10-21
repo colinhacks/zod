@@ -152,30 +152,42 @@ test("checks getters", () => {
   expect(z.string().email().isCUID).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
   expect(z.string().email().isUTC).toEqual(false);
+  expect(z.string().email().isISO8601).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
   expect(z.string().url().isCUID).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
   expect(z.string().url().isUTC).toEqual(false);
+  expect(z.string().url().isISO8601).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
   expect(z.string().cuid().isUUID).toEqual(false);
   expect(z.string().cuid().isUTC).toEqual(false);
+  expect(z.string().cuid().isISO8601).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
   expect(z.string().uuid().isCUID).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
   expect(z.string().uuid().isUTC).toEqual(false);
+  expect(z.string().uuid().isISO8601).toEqual(false);
 
   expect(z.string().utc().isEmail).toEqual(false);
   expect(z.string().utc().isURL).toEqual(false);
   expect(z.string().utc().isCUID).toEqual(false);
   expect(z.string().utc().isUUID).toEqual(false);
   expect(z.string().utc().isUTC).toEqual(true);
+  expect(z.string().utc().isISO8601).toEqual(false);
+
+  expect(z.string().iso8601().isEmail).toEqual(false);
+  expect(z.string().iso8601().isURL).toEqual(false);
+  expect(z.string().iso8601().isCUID).toEqual(false);
+  expect(z.string().iso8601().isUUID).toEqual(false);
+  expect(z.string().iso8601().isUTC).toEqual(false);
+  expect(z.string().iso8601().isISO8601).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -198,25 +210,54 @@ test("trim", () => {
 
 test("utc", () => {
   const utc = z.string().utc();
-  const utcMilliseconds = z.string().utc({ milliseconds: true });
-  const utcNoMilliseconds = z.string().utc({ milliseconds: false });
+  const utcMs = z.string().utc({ ms: true });
+  const utcNoMs = z.string().utc({ ms: false });
 
   utc.parse("1970-01-01T00:00:00.000Z");
   utc.parse("2022-10-13T09:52:31.816Z");
   utc.parse("1970-01-01T00:00:00Z");
   utc.parse("2022-10-13T09:52:31Z");
-  utcMilliseconds.parse("1970-01-01T00:00:00.000Z");
-  utcMilliseconds.parse("2022-10-13T09:52:31.816Z");
-  utcNoMilliseconds.parse("1970-01-01T00:00:00Z");
-  utcNoMilliseconds.parse("2022-10-13T09:52:31Z");
+  utcMs.parse("1970-01-01T00:00:00.000Z");
+  utcMs.parse("2022-10-13T09:52:31.816Z");
+  utcNoMs.parse("1970-01-01T00:00:00Z");
+  utcNoMs.parse("2022-10-13T09:52:31Z");
 
   expect(() => utc.parse("")).toThrow();
   expect(() => utc.parse("foo")).toThrow();
   expect(() => utc.parse("2020-10-14")).toThrow();
   expect(() => utc.parse("T18:45:12.123")).toThrow();
   expect(() => utc.parse("2020-10-14T17:42:29+00:00")).toThrow();
-  expect(() => utcMilliseconds.parse("1970-01-01T00:00:00Z")).toThrow();
-  expect(() => utcMilliseconds.parse("2022-10-13T09:52:31:00Z")).toThrow();
-  expect(() => utcNoMilliseconds.parse("1970-01-01T00:00:00.000Z")).toThrow();
-  expect(() => utcNoMilliseconds.parse("2022-10-13T09:52:31.816Z")).toThrow();
+  expect(() => utcMs.parse("1970-01-01T00:00:00Z")).toThrow();
+  expect(() => utcMs.parse("2022-10-13T09:52:31:00Z")).toThrow();
+  expect(() => utcNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
+  expect(() => utcNoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
+});
+
+test("iso8601", () => {
+  const iso8601 = z.string().iso8601();
+  const iso8601Ms = z.string().iso8601({ ms: true });
+  const iso8601NoMs = z.string().iso8601({ ms: false });
+
+  iso8601.parse("1970-01-01T00:00:00.000Z");
+  iso8601.parse("2022-10-13T09:52:31.816Z");
+  iso8601.parse("1970-01-01T00:00:00Z");
+  iso8601.parse("2022-10-13T09:52:31Z");
+  iso8601.parse("2020-10-14T17:42:29+00:00");
+  iso8601Ms.parse("1970-01-01T00:00:00.000Z");
+  iso8601Ms.parse("2022-10-13T09:52:31.816Z");
+  iso8601Ms.parse("2020-10-14T17:42:29.999+00:00");
+  iso8601NoMs.parse("1970-01-01T00:00:00Z");
+  iso8601NoMs.parse("2022-10-13T09:52:31Z");
+  iso8601NoMs.parse("2020-10-14T17:42:29+00:00");
+
+  expect(() => iso8601.parse("")).toThrow();
+  expect(() => iso8601.parse("foo")).toThrow();
+  expect(() => iso8601.parse("2020-10-14")).toThrow();
+  expect(() => iso8601.parse("T18:45:12.123")).toThrow();
+  expect(() => iso8601Ms.parse("1970-01-01T00:00:00Z")).toThrow();
+  expect(() => iso8601Ms.parse("2022-10-13T09:52:31:00Z")).toThrow();
+  expect(() => iso8601Ms.parse("2020-10-14T17:42:29+00:00")).toThrow();
+  expect(() => iso8601NoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
+  expect(() => iso8601NoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
+  expect(() => iso8601NoMs.parse("2020-10-14T17:42:29.999+00:00")).toThrow();
 });

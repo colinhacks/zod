@@ -461,7 +461,8 @@ type ZodStringCheck =
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
   | { kind: "trim"; message?: string }
-  | { kind: "utc"; options?: { milliseconds?: Boolean }; message?: string };
+  | { kind: "utc"; options?: { ms?: Boolean }; message?: string }
+  | { kind: "iso8601"; options?: { ms?: Boolean }; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -477,6 +478,14 @@ const uuidRegex =
 // eslint-disable-next-line
 const emailRegex =
   /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+
+// Adapted from https://stackoverflow.com/a/3143231
+const utcMsRegex = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+Z/;
+const utcNoMsRegex = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\dZ/;
+const iso8601MsRegex =
+  /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/;
+const iso8601NoMsRegex =
+  /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z)/;
 
 export class ZodString extends ZodType<string, ZodStringDef> {
   _parse(input: ParseInput): ParseReturnType<string> {
@@ -601,23 +610,65 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "utc") {
-        const parsedDate = new Date(input.data);
-
-        const isDate = !isNaN(parsedDate.getTime());
-        const isMsString = isDate && parsedDate.toISOString() === input.data;
-        const isNoMsString =
-          isDate && `${parsedDate.toISOString().split(".")[0]}Z` === input.data;
-
-        if (
-          !isDate ||
-          (!isMsString && !isNoMsString) ||
-          (check.options?.milliseconds === true && !isMsString) ||
-          (check.options?.milliseconds === false && !isNoMsString)
+        if (check.options?.ms === true && !utcMsRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "utc",
+            message: check.message,
+          });
+          status.dirty();
+        } else if (
+          check.options?.ms === false &&
+          !utcNoMsRegex.test(input.data)
         ) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
-            validation: "utc",
             code: ZodIssueCode.invalid_string,
+            validation: "utc",
+            message: check.message,
+          });
+          status.dirty();
+        } else if (
+          !utcMsRegex.test(input.data) &&
+          !utcNoMsRegex.test(input.data)
+        ) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "utc",
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "iso8601") {
+        if (check.options?.ms === true && !iso8601MsRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "iso8601",
+            message: check.message,
+          });
+          status.dirty();
+        } else if (
+          check.options?.ms === false &&
+          !iso8601NoMsRegex.test(input.data)
+        ) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "iso8601",
+            message: check.message,
+          });
+          status.dirty();
+        } else if (
+          !iso8601MsRegex.test(input.data) &&
+          !iso8601NoMsRegex.test(input.data)
+        ) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "iso8601",
             message: check.message,
           });
           status.dirty();
@@ -660,13 +711,21 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
-  utc(options?: { milliseconds: boolean }, message?: errorUtil.ErrMessage) {
+  utc(options?: { ms: boolean }, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "utc",
       options: options,
       ...errorUtil.errToObj(message),
     });
   }
+  iso8601(options?: { ms: boolean }, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "iso8601",
+      options: options,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
   regex(regex: RegExp, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "regex",
@@ -739,6 +798,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   get isUTC() {
     return !!this._def.checks.find((ch) => ch.kind === "utc");
   }
+  get isISO8601() {
+    return !!this._def.checks.find((ch) => ch.kind === "iso8601");
+  }
+
   get minLength() {
     let min: number | null = null;
     for (const ch of this._def.checks) {

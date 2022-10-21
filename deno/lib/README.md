@@ -489,12 +489,17 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().cuid();
-z.string().utc(); // Accepts both milliseconds and no milliseconds
-z.string().utc({ milliseconds: true }); // Accepts only milliseconds
-z.string().utc({ milliseconds: false }); // Accepts only no milliseconds
 z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
+
+// date formats
+z.string().utc();
+z.string().utc({ ms: true }); // milliseconds only
+z.string().utc({ ms: false }); // no milliseconds only
+z.string().iso8601();
+z.string().iso8601({ ms: true }); // milliseconds only
+z.string().iso8601({ ms: false }); // no milliseconds only
 
 // trim whitespace
 z.string().trim();
