@@ -2640,12 +2640,16 @@ export class ZodRecord<
     const valueType = this._def.valueType;
 
     for (const key in ctx.data) {
-      pairs.push({
-        key: keyType._parse(new ParseInputLazyPath(ctx, key, ctx.path, key)),
-        value: valueType._parse(
-          new ParseInputLazyPath(ctx, ctx.data[key], ctx.path, key)
-        ),
-      });
+      const parsedKey = keyType._parse(
+        new ParseInputLazyPath(ctx, key, ctx.path, key)
+      );
+      if ("status" in parsedKey && parsedKey.status === "valid")
+        pairs.push({
+          key: parsedKey,
+          value: valueType._parse(
+            new ParseInputLazyPath(ctx, ctx.data[key], ctx.path, key)
+          ),
+        });
     }
 
     if (ctx.common.async) {

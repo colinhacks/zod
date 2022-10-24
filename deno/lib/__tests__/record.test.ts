@@ -105,22 +105,28 @@ test("key schema", () => {
     Salmon: "abcd",
   });
 
-  expect(() =>
+  expect(
     recordWithEnumKeys.parse({
       Tuna: "asdf",
       Salmon: "asdf",
       Trout: "asdf",
     })
-  ).toThrow();
+  ).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
 
-  expect(() =>
+  expect(
     recordWithLiteralKeys.parse({
       Tuna: "asdf",
       Salmon: "asdf",
 
       Trout: "asdf",
     })
-  ).toThrow();
+  ).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
 });
 
 // test("record element", () => {

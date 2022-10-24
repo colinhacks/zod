@@ -119,3 +119,57 @@ test("invalid array merge", async () => {
     );
   }
 });
+
+test("Record and object intersection", () => {
+  const type = z.intersection(
+    z.object({ a: z.string() }),
+    z.record(
+      z.string().refine((s): s is "b" => s === "b"),
+      z.number()
+    )
+  );
+
+  const correctType = type.safeParse({ a: "Intersected", b: 1 });
+  expect(correctType.success).toEqual(true);
+
+  const wrongAValues = type.safeParse({ a: 1, b: 2 });
+  expect(wrongAValues.success).toBe(false);
+  if (!wrongAValues.success) {
+    expect(wrongAValues.error.issues[0].code).toEqual(
+      z.ZodIssueCode.invalid_type
+    );
+  }
+
+  const wrongBValues = type.safeParse({ a: "Intersected", b: "1" });
+  expect(wrongBValues.success).toBe(false);
+  if (!wrongBValues.success) {
+    expect(wrongBValues.error.issues[1].code).toEqual(
+      z.ZodIssueCode.invalid_type
+    );
+  }
+
+  const wrongAKeys = type.safeParse({ c: "1", b: 2 });
+  expect(wrongAKeys.success).toBe(false);
+  if (!wrongAKeys.success) {
+    expect(wrongAKeys.error.issues[0].code).toEqual(
+      z.ZodIssueCode.invalid_type
+    );
+    expect(wrongAKeys.error.issues[0].message).toEqual("Required");
+  }
+
+  const wrongBKeys = type.safeParse({ a: "1", c: 2 });
+  expect(wrongBKeys.success).toBe(true);
+
+  const mergeType = z.intersection(
+    z.object({ a: z.string() }),
+    z.record(
+      z.string().refine((s): s is "a" => s === "a"),
+      z.number()
+    )
+  );
+
+  const firstMerge = mergeType.safeParse({ a: "Incorrect" });
+  expect(firstMerge.success).toBe(false);
+  const secondMerge = mergeType.safeParse({ a: 2 });
+  expect(secondMerge.success).toBe(false);
+});
