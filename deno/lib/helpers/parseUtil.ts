@@ -136,13 +136,7 @@ export class ParseStatus {
       if (key.status === "dirty") status.dirty();
       if (value.status === "dirty") status.dirty();
 
-      if (
-        typeof value.value !== "undefined" ||
-        pair.alwaysSet ||
-        (key.status === "valid" &&
-          value.status === "valid" &&
-          typeof value.value === "undefined")
-      ) {
+      if (typeof value.value !== "undefined" || pair.alwaysSet) {
         finalObject[key.value] = value.value;
       }
     }
