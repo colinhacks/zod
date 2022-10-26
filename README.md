@@ -779,7 +779,7 @@ nullableString.parse(null); // => null
 Or use the `.nullable()` method.
 
 ```ts
-const E = z.string().nullable(); // equivalent to D
+const E = z.string().nullable(); // equivalent to nullableString
 type E = z.infer<typeof E>; // string | null
 ```
 
