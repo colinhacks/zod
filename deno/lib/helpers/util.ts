@@ -83,7 +83,11 @@ export namespace util {
         return false;
       }
 
-      return aKeys.every((key) => isEqual(a[key], b[key]));
+      return aKeys.every(
+        (key) =>
+          isEqual(a[key], b[key]) &&
+          Object.prototype.hasOwnProperty.call(b, key)
+      );
     }
 
     return false;
