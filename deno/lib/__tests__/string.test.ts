@@ -242,7 +242,6 @@ test("utc", () => {
   const utc = z.string().utc();
   const utcMs = z.string().utc({ ms: true });
   const utcMs1Len = z.string().utc({ ms: true, msLength: 1 });
-  const utcMsInf = z.string().utc({ ms: true, msLength: 0 });
   const utcNoMs = z.string().utc({ ms: false });
 
   utc.parse("1970-01-01T00:00:00.000Z");
@@ -253,8 +252,6 @@ test("utc", () => {
   utcMs.parse("2022-10-13T09:52:31.816Z");
   utcMs1Len.parse("1970-01-01T00:00:00.0Z");
   utcMs1Len.parse("2022-10-13T09:52:31.8Z");
-  utcMsInf.parse("2022-10-13T09:52:31.9999999Z");
-  utcMsInf.parse("2022-10-13T09:52:31.1Z");
   utcNoMs.parse("1970-01-01T00:00:00Z");
   utcNoMs.parse("2022-10-13T09:52:31Z");
 
@@ -267,8 +264,6 @@ test("utc", () => {
   expect(() => utcMs.parse("2022-10-13T09:52:31:00Z")).toThrow();
   expect(() => utcMs1Len.parse("1970-01-01T00:00:00.000Z")).toThrow();
   expect(() => utcMs1Len.parse("2022-10-13T09:52:31:00.00Z")).toThrow();
-  expect(() => utcMsInf.parse("1970-01-01T00:00:00")).toThrow();
-  expect(() => utcMsInf.parse("2022-10-13T09:52:31:00")).toThrow();
   expect(() => utcNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
   expect(() => utcNoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
 });
@@ -277,7 +272,6 @@ test("iso8601", () => {
   const iso8601 = z.string().iso8601();
   const iso8601Ms = z.string().iso8601({ ms: true });
   const iso8601Ms5Len = z.string().iso8601({ ms: true, msLength: 5 });
-  const iso8601MsInf = z.string().iso8601({ ms: true, msLength: 0 });
   const iso8601NoMs = z.string().iso8601({ ms: false });
 
   iso8601.parse("1970-01-01T00:00:00.000Z");
@@ -291,9 +285,6 @@ test("iso8601", () => {
   iso8601Ms5Len.parse("1970-01-01T00:00:00.00000Z");
   iso8601Ms5Len.parse("2022-10-13T09:52:31.81600Z");
   iso8601Ms5Len.parse("2020-10-14T17:42:29.99900+00:00");
-  iso8601MsInf.parse("1970-01-01T00:00:00.0Z");
-  iso8601MsInf.parse("2022-10-13T09:52:31.81Z");
-  iso8601MsInf.parse("2020-10-14T17:42:29.99900+00:00");
   iso8601NoMs.parse("1970-01-01T00:00:00Z");
   iso8601NoMs.parse("2022-10-13T09:52:31Z");
   iso8601NoMs.parse("2020-10-14T17:42:29+00:00");
@@ -308,9 +299,6 @@ test("iso8601", () => {
   expect(() => iso8601Ms5Len.parse("1970-01-01T00:00:00.0Z")).toThrow();
   expect(() => iso8601Ms5Len.parse("2022-10-13T09:52:31:00.00Z")).toThrow();
   expect(() => iso8601Ms5Len.parse("2020-10-14T17:42:29.000+00:00")).toThrow();
-  expect(() => iso8601MsInf.parse("1970-01-01T00:00:00.Z")).toThrow();
-  expect(() => iso8601MsInf.parse("2022-10-13T09:52:31:00Z")).toThrow();
-  expect(() => iso8601MsInf.parse("2020-10-14T17:42:29+00:00")).toThrow();
   expect(() => iso8601NoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
   expect(() => iso8601NoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
   expect(() => iso8601NoMs.parse("2020-10-14T17:42:29.999+00:00")).toThrow();

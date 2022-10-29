@@ -495,14 +495,12 @@ z.string().endsWith(string);
 
 // date formats
 z.string().utc();
-z.string().utc({ ms: true }); // ms only, 3 digit precision
-z.string().utc({ ms: true, msLength: 0 }); // ms only, unspecified digit precision
-z.string().utc({ ms: true, msLength: 5 }); // ms only, 5 digit precision
+z.string().utc({ ms: true }); // ms only
+z.string().utc({ ms: true, msLength: 3 }); // ms only, 3 digit precision
 z.string().utc({ ms: false }); // no ms only
 
 z.string().iso8601();
-z.string().iso8601({ ms: true }); // ms only, 3 digit precision
-z.string().iso8601({ ms: true, msLength: 0 }); // ms only, unspecified digit precision
+z.string().iso8601({ ms: true }); // ms only
 z.string().iso8601({ ms: true, msLength: 5 }); // ms only, 5 digit precision
 z.string().iso8601({ ms: false }); // no ms only
 

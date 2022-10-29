@@ -463,12 +463,12 @@ type ZodStringCheck =
   | { kind: "trim"; message?: string }
   | {
       kind: "utc";
-      options?: DateStringOptions;
+      options?: StringDateOptions;
       message?: string;
     }
   | {
       kind: "iso8601";
-      options?: DateStringOptions;
+      options?: StringDateOptions;
       message?: string;
     };
 
@@ -487,7 +487,7 @@ const uuidRegex =
 const emailRegex =
   /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
-interface DateStringOptions {
+interface StringDateOptions {
   /**
    * `true` - only ms
    *
@@ -495,20 +495,20 @@ interface DateStringOptions {
    */
   ms?: boolean;
   /**
-   * ms digit precision. Defaults to `3`. Set to `0` for unspecified.
+   * ms digit precision
    */
   msLength?: number;
 }
 
 // Adapted from https://stackoverflow.com/a/3143231
-const utcMsRegex = (msLength = 3): RegExp =>
+const utcMsRegex = (msLength?: number): RegExp =>
   new RegExp(
     `\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d${
       msLength ? `{${msLength}}` : "+"
     }Z`
   );
 const utcNoMsRegex = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\dZ/;
-const iso8601MsRegex = (msLength = 3): RegExp =>
+const iso8601MsRegex = (msLength?: number): RegExp =>
   new RegExp(
     `\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d${
       msLength ? `{${msLength}}` : "+"
@@ -747,14 +747,14 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
-  utc(options?: DateStringOptions, message?: errorUtil.ErrMessage) {
+  utc(options?: StringDateOptions, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "utc",
       options: options,
       ...errorUtil.errToObj(message),
     });
   }
-  iso8601(options?: DateStringOptions, message?: errorUtil.ErrMessage) {
+  iso8601(options?: StringDateOptions, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "iso8601",
       options: options,
