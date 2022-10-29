@@ -174,6 +174,7 @@ test("date getters", () => {
   const utcMs = z.string().utc({ ms: true });
   const utcMsLen = z.string().utc({ ms: true, msLength: 3 });
   const utcNoMs = z.string().utc({ ms: false });
+
   const iso8601 = z.string().iso8601();
   const iso8601Ms = z.string().iso8601({ ms: true });
   const iso8601MsLen = z.string().iso8601({ ms: true, msLength: 5 });
@@ -218,6 +219,16 @@ test("date getters", () => {
   expect(iso8601Ms.isISO8601({ ms: false })).toEqual(false);
   expect(iso8601MsLen.isISO8601({ ms: false })).toEqual(false);
   expect(iso8601NoMs.isISO8601({ ms: false })).toEqual(true);
+
+  expect(utc.isUTC({ any: true })).toEqual(true);
+  expect(utcMs.isUTC({ any: true })).toEqual(true);
+  expect(utcMsLen.isUTC({ any: true })).toEqual(true);
+  expect(utcNoMs.isUTC({ any: true })).toEqual(true);
+
+  expect(iso8601.isISO8601({ any: true })).toEqual(true);
+  expect(iso8601Ms.isISO8601({ any: true })).toEqual(true);
+  expect(iso8601MsLen.isISO8601({ any: true })).toEqual(true);
+  expect(iso8601NoMs.isISO8601({ any: true })).toEqual(true);
 });
 
 test("min max getters", () => {

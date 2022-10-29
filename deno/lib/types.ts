@@ -500,6 +500,13 @@ interface StringDateOptions {
   msLength?: number;
 }
 
+interface IsDateStringOptions extends StringDateOptions {
+  /**
+   * Match any configuration
+   */
+  any?: boolean;
+}
+
 // Adapted from https://stackoverflow.com/a/3143231
 const utcMsRegex = (msLength?: number): RegExp =>
   new RegExp(
@@ -819,20 +826,22 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [...this._def.checks, { kind: "trim" }],
     });
 
-  isUTC(options?: { ms?: boolean; msLength?: number }) {
+  isUTC(options?: IsDateStringOptions) {
     return !!this._def.checks.find(
       (ch) =>
         ch.kind === "utc" &&
-        options?.ms === ch.options?.ms &&
-        options?.msLength === ch.options?.msLength
+        (options?.any ||
+          (options?.ms === ch.options?.ms &&
+            options?.msLength === ch.options?.msLength))
     );
   }
-  isISO8601(options?: { ms?: boolean; msLength?: number }) {
+  isISO8601(options?: IsDateStringOptions) {
     return !!this._def.checks.find(
       (ch) =>
         ch.kind === "iso8601" &&
-        options?.ms === ch.options?.ms &&
-        options?.msLength === ch.options?.msLength
+        (options?.any ||
+          (options?.ms === ch.options?.ms &&
+            options?.msLength === ch.options?.msLength))
     );
   }
 
