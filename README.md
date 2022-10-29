@@ -499,7 +499,7 @@ z.string().utc({ ms: true }); // ms only
 z.string().utc({ ms: true, msLength: 3 }); // ms only, 3 digit precision
 z.string().utc({ ms: false }); // no ms only
 
-z.string().iso8601();
+z.string().iso8601(); // allows offset
 z.string().iso8601({ ms: true }); // ms only
 z.string().iso8601({ ms: true, msLength: 5 }); // ms only, 5 digit precision
 z.string().iso8601({ ms: false }); // no ms only
