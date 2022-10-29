@@ -440,7 +440,7 @@ result.error.flatten((issue: ZodIssue) => ({
 You can infer the return type signature of `.format()` and `.flatten()` with the following utilities:
 
 ```ts
-type FormattedErros = z.inferFormattedErrors<typeof FormData>;
+type FormattedErrors = z.inferFormattedErrors<typeof FormData>;
 /*
   {  
     name?: {_errors?: string[]},
