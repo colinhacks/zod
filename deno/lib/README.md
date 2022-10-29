@@ -495,11 +495,16 @@ z.string().endsWith(string);
 
 // date formats
 z.string().utc();
-z.string().utc({ ms: true }); // milliseconds only
-z.string().utc({ ms: false }); // no milliseconds only
+z.string().utc({ ms: true }); // ms only, 3 digit precision
+z.string().utc({ ms: true, msLength: 0 }); // ms only, unspecified digit precision
+z.string().utc({ ms: true, msLength: 5 }); // ms only, 5 digit precision
+z.string().utc({ ms: false }); // no ms only
+
 z.string().iso8601();
-z.string().iso8601({ ms: true }); // milliseconds only
-z.string().iso8601({ ms: false }); // no milliseconds only
+z.string().iso8601({ ms: true }); // ms only, 3 digit precision
+z.string().iso8601({ ms: true, msLength: 0 }); // ms only, unspecified digit precision
+z.string().iso8601({ ms: true, msLength: 5 }); // ms only, 5 digit precision
+z.string().iso8601({ ms: false }); // no ms only
 
 // trim whitespace
 z.string().trim();

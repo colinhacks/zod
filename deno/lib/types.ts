@@ -461,8 +461,16 @@ type ZodStringCheck =
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
   | { kind: "trim"; message?: string }
-  | { kind: "utc"; options?: { ms?: Boolean }; message?: string }
-  | { kind: "iso8601"; options?: { ms?: Boolean }; message?: string };
+  | {
+      kind: "utc";
+      options?: DateStringOptions;
+      message?: string;
+    }
+  | {
+      kind: "iso8601";
+      options?: DateStringOptions;
+      message?: string;
+    };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -479,11 +487,33 @@ const uuidRegex =
 const emailRegex =
   /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
 
+interface DateStringOptions {
+  /**
+   * `true` - only ms
+   *
+   * `false` - only no ms
+   */
+  ms?: boolean;
+  /**
+   * ms digit precision. Defaults to `3`. Set to `0` for unspecified.
+   */
+  msLength?: number;
+}
+
 // Adapted from https://stackoverflow.com/a/3143231
-const utcMsRegex = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+Z/;
+const utcMsRegex = (msLength = 3): RegExp =>
+  new RegExp(
+    `\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d${
+      msLength ? `{${msLength}}` : "+"
+    }Z`
+  );
 const utcNoMsRegex = /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\dZ/;
-const iso8601MsRegex =
-  /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d\.\d+([+-][0-2]\d:[0-5]\d|Z)/;
+const iso8601MsRegex = (msLength = 3): RegExp =>
+  new RegExp(
+    `\\d{4}-[01]\\d-[0-3]\\dT[0-2]\\d:[0-5]\\d:[0-5]\\d\\.\\d${
+      msLength ? `{${msLength}}` : "+"
+    }([+-][0-2]\\d:[0-5]\\d|Z)`
+  );
 const iso8601NoMsRegex =
   /\d{4}-[01]\d-[0-3]\dT[0-2]\d:[0-5]\d:[0-5]\d([+-][0-2]\d:[0-5]\d|Z)/;
 
@@ -610,7 +640,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "utc") {
-        if (check.options?.ms === true && !utcMsRegex.test(input.data)) {
+        if (
+          check.options?.ms === true &&
+          !utcMsRegex(check.options.msLength).test(input.data)
+        ) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
@@ -630,7 +663,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         } else if (
-          !utcMsRegex.test(input.data) &&
+          !utcMsRegex(check.options?.msLength).test(input.data) &&
           !utcNoMsRegex.test(input.data)
         ) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -642,7 +675,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "iso8601") {
-        if (check.options?.ms === true && !iso8601MsRegex.test(input.data)) {
+        if (
+          check.options?.ms === true &&
+          !iso8601MsRegex(check.options.msLength).test(input.data)
+        ) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
@@ -662,7 +698,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         } else if (
-          !iso8601MsRegex.test(input.data) &&
+          !iso8601MsRegex(check.options?.msLength).test(input.data) &&
           !iso8601NoMsRegex.test(input.data)
         ) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -711,14 +747,14 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
-  utc(options?: { ms: boolean }, message?: errorUtil.ErrMessage) {
+  utc(options?: DateStringOptions, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "utc",
       options: options,
       ...errorUtil.errToObj(message),
     });
   }
-  iso8601(options?: { ms: boolean }, message?: errorUtil.ErrMessage) {
+  iso8601(options?: DateStringOptions, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "iso8601",
       options: options,
@@ -783,14 +819,20 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [...this._def.checks, { kind: "trim" }],
     });
 
-  isUTC(options?: { ms: boolean }) {
+  isUTC(options?: { ms?: boolean; msLength?: number }) {
     return !!this._def.checks.find(
-      (ch) => ch.kind === "utc" && options?.ms === ch.options?.ms
+      (ch) =>
+        ch.kind === "utc" &&
+        options?.ms === ch.options?.ms &&
+        options?.msLength === ch.options?.msLength
     );
   }
-  isISO8601(options?: { ms: boolean }) {
+  isISO8601(options?: { ms?: boolean; msLength?: number }) {
     return !!this._def.checks.find(
-      (ch) => ch.kind === "iso8601" && options?.ms === ch.options?.ms
+      (ch) =>
+        ch.kind === "iso8601" &&
+        options?.ms === ch.options?.ms &&
+        options?.msLength === ch.options?.msLength
     );
   }
 
