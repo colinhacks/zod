@@ -779,7 +779,7 @@ nullableString.parse(null); // => null
 Or use the `.nullable()` method.
 
 ```ts
-const E = z.string().nullable(); // equivalent to D
+const E = z.string().nullable(); // equivalent to nullableString
 type E = z.infer<typeof E>; // string | null
 ```
 
@@ -1967,7 +1967,7 @@ petCat(fido); // works fine
 In some cases, its can be desirable to simulate _nominal typing_ inside TypeScript. For instance, you may wish to write a function that only accepts an input that has been validated by Zod. This can be achieved with _branded types_ (AKA _opaque types_).
 
 ```ts
-const Cat = z.object({ name: z.string }).brand<"Cat">();
+const Cat = z.object({ name: z.string() }).brand<"Cat">();
 type Cat = z.infer<typeof Cat>;
 
 const petCat = (cat: Cat) => {};
@@ -1983,7 +1983,7 @@ petCat({ name: "fido" });
 Under the hood, this works by attaching a "brand" to the inferred type using an intersection type. This way, plain/unbranded data structures are no longer assignable to the inferred type of the schema.
 
 ```ts
-const Cat = z.object({ name: z.string }).brand<"Cat">();
+const Cat = z.object({ name: z.string() }).brand<"Cat">();
 type Cat = z.infer<typeof Cat>;
 // {name: string} & {[symbol]: "Cat"}
 ```
