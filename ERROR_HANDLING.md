@@ -375,7 +375,7 @@ function MyForm(){
 
 Because `.format` returns a deeply nested object, the errors are contained within the `_errors` property to avoid key collisions. However this isn't necessary if your object schema is only one level deep.
 
-In this scenarion, `.flatten()` may be more convenient.
+In this scenario, `.flatten()` may be more convenient.
 
 ```ts
 if (!result.success) {
@@ -440,7 +440,7 @@ result.error.flatten((issue: ZodIssue) => ({
 You can infer the return type signature of `.format()` and `.flatten()` with the following utilities:
 
 ```ts
-type FormattedErrors = z.inferFormattedErrors<typeof FormData>;
+type FormattedErrors = z.inferFormattedError<typeof FormData>;
 /*
   {  
     name?: {_errors?: string[]},
