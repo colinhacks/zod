@@ -953,6 +953,13 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     });
   }
 
+  finite(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "finite",
+      message: errorUtil.toString(message),
+    });
+  }
+
   step = this.multipleOf;
 
   get minValue() {
