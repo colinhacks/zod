@@ -147,7 +147,10 @@ export type ZodIssueOptionalMessage =
   | ZodNotMultipleOfIssue
   | ZodCustomIssue;
 
-export type ZodIssue = ZodIssueOptionalMessage & { message: string };
+export type ZodIssue = ZodIssueOptionalMessage & {
+  fatal?: boolean;
+  message: string;
+};
 
 export const quotelessJson = (obj: any) => {
   const json = JSON.stringify(obj, null, 2);
@@ -296,7 +299,6 @@ export type IssueData = stripPath<ZodIssueOptionalMessage> & {
   path?: (string | number)[];
   fatal?: boolean;
 };
-export type MakeErrorData = IssueData;
 
 export type ErrorMapCtx = {
   defaultError: string;
