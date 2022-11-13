@@ -3591,7 +3591,7 @@ export class ZodEffects<
     preprocess: (arg: unknown) => unknown,
     schema: I,
     params?: RawCreateParams
-  ): ZodEffects<I, I["_output"], unknown> => {
+  ): ZodEffects<I, I["_output"]> => {
     return new ZodEffects({
       schema,
       effect: { type: "preprocess", transform: preprocess },
