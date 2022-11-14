@@ -8,6 +8,11 @@ test("basic catch", () => {
   expect(z.string().catch("default").parse(undefined)).toBe("default");
 });
 
+test("basic catch async", async () => {
+  const result = await z.string().catch("default").parseAsync(1243);
+  expect(result).toBe("default");
+});
+
 test("catch replace wrong types", () => {
   expect(z.string().catch("default").parse(true)).toBe("default");
   expect(z.string().catch("default").parse(true)).toBe("default");
