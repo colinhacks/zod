@@ -3809,16 +3809,16 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
   static create = <T extends ZodTypeAny>(
     type: T,
     params: RawCreateParams & {
-      defaultValue: T["_input"] | (() => T["_input"]);
+      default: T["_input"] | (() => T["_input"]);
     }
   ): ZodCatch<T> => {
     return new ZodCatch({
       innerType: type,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
       defaultValue:
-        typeof params.defaultValue === "function"
-          ? params.defaultValue
-          : () => params.defaultValue,
+        typeof params.default === "function"
+          ? params.default
+          : () => params.default,
       ...processCreateParams(params),
     });
   };
