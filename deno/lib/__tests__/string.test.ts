@@ -169,68 +169,6 @@ test("checks getters", () => {
   expect(z.string().uuid().isUUID).toEqual(true);
 });
 
-test("date getters", () => {
-  const utc = z.string().utc();
-  const utcMs = z.string().utc({ ms: true });
-  const utcMsLen = z.string().utc({ ms: true, msLength: 3 });
-  const utcNoMs = z.string().utc({ ms: false });
-
-  const iso8601 = z.string().iso8601();
-  const iso8601Ms = z.string().iso8601({ ms: true });
-  const iso8601MsLen = z.string().iso8601({ ms: true, msLength: 5 });
-  const iso8601NoMs = z.string().iso8601({ ms: false });
-
-  expect(utc.isUTC()).toEqual(true);
-  expect(utcMs.isUTC()).toEqual(false);
-  expect(utcMsLen.isUTC()).toEqual(false);
-  expect(utcNoMs.isUTC()).toEqual(false);
-
-  expect(iso8601.isISO8601()).toEqual(true);
-  expect(iso8601Ms.isISO8601()).toEqual(false);
-  expect(iso8601MsLen.isISO8601()).toEqual(false);
-  expect(iso8601NoMs.isISO8601()).toEqual(false);
-
-  expect(utc.isUTC({ ms: true })).toEqual(false);
-  expect(utcMs.isUTC({ ms: true })).toEqual(true);
-  expect(utcMsLen.isUTC({ ms: true })).toEqual(false);
-  expect(utcNoMs.isUTC({ ms: true })).toEqual(false);
-
-  expect(iso8601.isISO8601({ ms: true })).toEqual(false);
-  expect(iso8601Ms.isISO8601({ ms: true })).toEqual(true);
-  expect(iso8601MsLen.isISO8601({ ms: true })).toEqual(false);
-  expect(iso8601NoMs.isISO8601({ ms: true })).toEqual(false);
-
-  expect(utc.isUTC({ ms: true, msLength: 3 })).toEqual(false);
-  expect(utcMs.isUTC({ ms: true, msLength: 3 })).toEqual(false);
-  expect(utcMsLen.isUTC({ ms: true, msLength: 3 })).toEqual(true);
-  expect(utcNoMs.isUTC({ ms: true, msLength: 3 })).toEqual(false);
-
-  expect(iso8601.isISO8601({ ms: true, msLength: 5 })).toEqual(false);
-  expect(iso8601Ms.isISO8601({ ms: true, msLength: 5 })).toEqual(false);
-  expect(iso8601MsLen.isISO8601({ ms: true, msLength: 5 })).toEqual(true);
-  expect(iso8601NoMs.isISO8601({ ms: true, msLength: 5 })).toEqual(false);
-
-  expect(utc.isUTC({ ms: false })).toEqual(false);
-  expect(utcMs.isUTC({ ms: false })).toEqual(false);
-  expect(utcMsLen.isUTC({ ms: false })).toEqual(false);
-  expect(utcNoMs.isUTC({ ms: false })).toEqual(true);
-
-  expect(iso8601.isISO8601({ ms: false })).toEqual(false);
-  expect(iso8601Ms.isISO8601({ ms: false })).toEqual(false);
-  expect(iso8601MsLen.isISO8601({ ms: false })).toEqual(false);
-  expect(iso8601NoMs.isISO8601({ ms: false })).toEqual(true);
-
-  expect(utc.isUTC({ any: true })).toEqual(true);
-  expect(utcMs.isUTC({ any: true })).toEqual(true);
-  expect(utcMsLen.isUTC({ any: true })).toEqual(true);
-  expect(utcNoMs.isUTC({ any: true })).toEqual(true);
-
-  expect(iso8601.isISO8601({ any: true })).toEqual(true);
-  expect(iso8601Ms.isISO8601({ any: true })).toEqual(true);
-  expect(iso8601MsLen.isISO8601({ any: true })).toEqual(true);
-  expect(iso8601NoMs.isISO8601({ any: true })).toEqual(true);
-});
-
 test("min max getters", () => {
   expect(z.string().min(5).minLength).toEqual(5);
   expect(z.string().min(5).min(10).minLength).toEqual(10);
@@ -249,68 +187,79 @@ test("trim", () => {
   expect(() => z.string().trim().min(2).parse(" 1 ")).toThrow();
 });
 
-test("utc", () => {
-  const utc = z.string().utc();
-  const utcMs = z.string().utc({ ms: true });
-  const utcMs1Len = z.string().utc({ ms: true, msLength: 1 });
-  const utcNoMs = z.string().utc({ ms: false });
+test("datetime", () => {
+  const a = z.string().datetime({});
+  expect(a.isDatetime()).toEqual(true);
 
-  utc.parse("1970-01-01T00:00:00.000Z");
-  utc.parse("2022-10-13T09:52:31.816Z");
-  utc.parse("1970-01-01T00:00:00Z");
-  utc.parse("2022-10-13T09:52:31Z");
-  utcMs.parse("1970-01-01T00:00:00.000Z");
-  utcMs.parse("2022-10-13T09:52:31.816Z");
-  utcMs1Len.parse("1970-01-01T00:00:00.0Z");
-  utcMs1Len.parse("2022-10-13T09:52:31.8Z");
-  utcNoMs.parse("1970-01-01T00:00:00Z");
-  utcNoMs.parse("2022-10-13T09:52:31Z");
+  const b = z.string().datetime({ offset: true });
+  expect(b.isDatetime()).toEqual(true);
 
-  expect(() => utc.parse("")).toThrow();
-  expect(() => utc.parse("foo")).toThrow();
-  expect(() => utc.parse("2020-10-14")).toThrow();
-  expect(() => utc.parse("T18:45:12.123")).toThrow();
-  expect(() => utc.parse("2020-10-14T17:42:29+00:00")).toThrow();
-  expect(() => utcMs.parse("1970-01-01T00:00:00Z")).toThrow();
-  expect(() => utcMs.parse("2022-10-13T09:52:31:00Z")).toThrow();
-  expect(() => utcMs1Len.parse("1970-01-01T00:00:00.000Z")).toThrow();
-  expect(() => utcMs1Len.parse("2022-10-13T09:52:31:00.00Z")).toThrow();
-  expect(() => utcNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
-  expect(() => utcNoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
+  const c = z.string().datetime({ precision: 3 });
+  expect(c.isDatetime()).toEqual(true);
+
+  const d = z.string().datetime({ offset: true, precision: 0 });
+  expect(d.isDatetime()).toEqual(true);
 });
 
-test("iso8601", () => {
-  const iso8601 = z.string().iso8601();
-  const iso8601Ms = z.string().iso8601({ ms: true });
-  const iso8601Ms5Len = z.string().iso8601({ ms: true, msLength: 5 });
-  const iso8601NoMs = z.string().iso8601({ ms: false });
+test("datetime parsing", () => {
+  const datetime = z.string().datetime();
+  datetime.parse("1970-01-01T00:00:00.000Z");
+  datetime.parse("2022-10-13T09:52:31.816Z");
+  datetime.parse("2022-10-13T09:52:31.8162314Z");
+  datetime.parse("1970-01-01T00:00:00Z");
+  datetime.parse("2022-10-13T09:52:31Z");
+  expect(() => datetime.parse("")).toThrow();
+  expect(() => datetime.parse("foo")).toThrow();
+  expect(() => datetime.parse("2020-10-14")).toThrow();
+  expect(() => datetime.parse("T18:45:12.123")).toThrow();
+  expect(() => datetime.parse("2020-10-14T17:42:29+00:00")).toThrow();
 
-  iso8601.parse("1970-01-01T00:00:00.000Z");
-  iso8601.parse("2022-10-13T09:52:31.816Z");
-  iso8601.parse("1970-01-01T00:00:00Z");
-  iso8601.parse("2022-10-13T09:52:31Z");
-  iso8601.parse("2020-10-14T17:42:29+00:00");
-  iso8601Ms.parse("1970-01-01T00:00:00.000Z");
-  iso8601Ms.parse("2022-10-13T09:52:31.816Z");
-  iso8601Ms.parse("2020-10-14T17:42:29.999+00:00");
-  iso8601Ms5Len.parse("1970-01-01T00:00:00.00000Z");
-  iso8601Ms5Len.parse("2022-10-13T09:52:31.81600Z");
-  iso8601Ms5Len.parse("2020-10-14T17:42:29.99900+00:00");
-  iso8601NoMs.parse("1970-01-01T00:00:00Z");
-  iso8601NoMs.parse("2022-10-13T09:52:31Z");
-  iso8601NoMs.parse("2020-10-14T17:42:29+00:00");
+  const datetimeNoMs = z.string().datetime({ precision: 0 });
+  datetimeNoMs.parse("1970-01-01T00:00:00Z");
+  datetimeNoMs.parse("2022-10-13T09:52:31Z");
+  expect(() => datetimeNoMs.parse("tuna")).toThrow();
+  expect(() => datetimeNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
+  expect(() => datetimeNoMs.parse("1970-01-01T00:00:00.Z")).toThrow();
+  expect(() => datetimeNoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
 
-  expect(() => iso8601.parse("")).toThrow();
-  expect(() => iso8601.parse("foo")).toThrow();
-  expect(() => iso8601.parse("2020-10-14")).toThrow();
-  expect(() => iso8601.parse("T18:45:12.123")).toThrow();
-  expect(() => iso8601Ms.parse("1970-01-01T00:00:00Z")).toThrow();
-  expect(() => iso8601Ms.parse("2022-10-13T09:52:31:00Z")).toThrow();
-  expect(() => iso8601Ms.parse("2020-10-14T17:42:29+00:00")).toThrow();
-  expect(() => iso8601Ms5Len.parse("1970-01-01T00:00:00.0Z")).toThrow();
-  expect(() => iso8601Ms5Len.parse("2022-10-13T09:52:31:00.00Z")).toThrow();
-  expect(() => iso8601Ms5Len.parse("2020-10-14T17:42:29.000+00:00")).toThrow();
-  expect(() => iso8601NoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
-  expect(() => iso8601NoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
-  expect(() => iso8601NoMs.parse("2020-10-14T17:42:29.999+00:00")).toThrow();
+  const datetime3Ms = z.string().datetime({ precision: 3 });
+  datetime3Ms.parse("1970-01-01T00:00:00.000Z");
+  datetime3Ms.parse("2022-10-13T09:52:31.123Z");
+  expect(() => datetime3Ms.parse("tuna")).toThrow();
+  expect(() => datetime3Ms.parse("1970-01-01T00:00:00.1Z")).toThrow();
+  expect(() => datetime3Ms.parse("1970-01-01T00:00:00.12Z")).toThrow();
+  expect(() => datetime3Ms.parse("2022-10-13T09:52:31Z")).toThrow();
+
+  const datetimeOffset = z.string().datetime({ offset: true });
+  datetimeOffset.parse("1970-01-01T00:00:00.000Z");
+  datetimeOffset.parse("2022-10-13T09:52:31.816234134Z");
+  datetimeOffset.parse("1970-01-01T00:00:00Z");
+  datetimeOffset.parse("2022-10-13T09:52:31.4Z");
+  datetimeOffset.parse("2020-10-14T17:42:29+00:00");
+  datetimeOffset.parse("2020-10-14T17:42:29+03:15");
+  expect(() => datetimeOffset.parse("tuna")).toThrow();
+  expect(() => datetimeOffset.parse("2022-10-13T09:52:31.Z")).toThrow();
+
+  const datetimeOffsetNoMs = z
+    .string()
+    .datetime({ offset: true, precision: 0 });
+  datetimeOffsetNoMs.parse("1970-01-01T00:00:00Z");
+  datetimeOffsetNoMs.parse("2022-10-13T09:52:31Z");
+  datetimeOffsetNoMs.parse("2020-10-14T17:42:29+00:00");
+  expect(() => datetimeOffsetNoMs.parse("tuna")).toThrow();
+  expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
+  expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.Z")).toThrow();
+  expect(() => datetimeOffsetNoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
+  expect(() =>
+    datetimeOffsetNoMs.parse("2020-10-14T17:42:29.124+00:00")
+  ).toThrow();
+
+  const datetimeOffset4Ms = z.string().datetime({ offset: true, precision: 4 });
+  datetimeOffset4Ms.parse("1970-01-01T00:00:00.1234Z");
+  datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00:00");
+  expect(() => datetimeOffset4Ms.parse("tuna")).toThrow();
+  expect(() => datetimeOffset4Ms.parse("1970-01-01T00:00:00.123Z")).toThrow();
+  expect(() =>
+    datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")
+  ).toThrow();
 });

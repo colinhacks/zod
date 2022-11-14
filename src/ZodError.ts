@@ -92,8 +92,7 @@ export type StringValidation =
   | "uuid"
   | "regex"
   | "cuid"
-  | "utc"
-  | "iso8601"
+  | "datetime"
   | { startsWith: string }
   | { endsWith: string };
 
