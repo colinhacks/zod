@@ -92,7 +92,9 @@ test("chained defaults", () => {
 });
 
 test("factory", () => {
-  z.ZodDefault.create(z.string()).parse(undefined);
+  expect(
+    z.ZodDefault.create(z.string(), { default: "asdf" }).parse(undefined)
+  ).toEqual("asdf");
 });
 
 test("native enum", () => {

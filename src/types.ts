@@ -369,6 +369,7 @@ export abstract class ZodType<
     this.transform = this.transform.bind(this);
     this.brand = this.brand.bind(this);
     this.default = this.default.bind(this);
+    this.catch = this.catch.bind(this);
     this.describe = this.describe.bind(this);
     this.isNullable = this.isNullable.bind(this);
     this.isOptional = this.isOptional.bind(this);
@@ -426,6 +427,17 @@ export abstract class ZodType<
       type: this,
       ...processCreateParams(undefined),
     });
+  }
+  catch(def: Input): ZodCatch<this>;
+  catch(def: () => Input): ZodCatch<this>;
+  catch(def: any) {
+    const defaultValueFunc = typeof def === "function" ? def : () => def;
+
+    return new ZodCatch({
+      innerType: this,
+      defaultValue: defaultValueFunc,
+      typeName: ZodFirstPartyTypeKind.ZodCatch,
+    }) as any;
   }
 
   describe(description: string): this {
@@ -3746,23 +3758,96 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
 
   static create = <T extends ZodTypeAny>(
     type: T,
-    params?: RawCreateParams
-  ): ZodOptional<T> => {
-    return new ZodOptional({
+    params: RawCreateParams & {
+      default: T["_input"] | (() => util.noUndefined<T["_input"]>);
+    }
+  ): ZodDefault<T> => {
+    return new ZodDefault({
       innerType: type,
-      typeName: ZodFirstPartyTypeKind.ZodOptional,
+      typeName: ZodFirstPartyTypeKind.ZodDefault,
+      defaultValue:
+        typeof params.default === "function"
+          ? params.default
+          : () => params.default as any,
       ...processCreateParams(params),
     }) as any;
   };
 }
 
-//////////////////////////////////////
-//////////////////////////////////////
-//////////                  //////////
-//////////      ZodNaN      //////////
-//////////                  //////////
-//////////////////////////////////////
-//////////////////////////////////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                      //////////
+//////////       ZodCatch       //////////
+//////////                      //////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+export interface ZodCatchDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  innerType: T;
+  defaultValue: () => T["_input"];
+  typeName: ZodFirstPartyTypeKind.ZodCatch;
+}
+
+export class ZodCatch<T extends ZodTypeAny> extends ZodType<
+  util.noUndefined<T["_output"]>,
+  ZodCatchDef<T>,
+  T["_input"] | undefined
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const { ctx } = this._processInputParams(input);
+
+    const result = this._def.innerType._parse({
+      data: ctx.data,
+      path: ctx.path,
+      parent: ctx,
+    });
+
+    if (isAsync(result)) {
+      return result.then((result) => {
+        const defaultValue = this._def.defaultValue();
+        return {
+          status: "valid",
+          value: result.status === "valid" ? result.value : defaultValue,
+        };
+      });
+    } else {
+      const defaultValue = this._def.defaultValue();
+      return {
+        status: "valid",
+        value: result.status === "valid" ? result.value : defaultValue,
+      };
+    }
+  }
+
+  removeDefault() {
+    return this._def.innerType;
+  }
+
+  static create = <T extends ZodTypeAny>(
+    type: T,
+    params: RawCreateParams & {
+      default: T["_input"] | (() => T["_input"]);
+    }
+  ): ZodCatch<T> => {
+    return new ZodCatch({
+      innerType: type,
+      typeName: ZodFirstPartyTypeKind.ZodCatch,
+      defaultValue:
+        typeof params.default === "function"
+          ? params.default
+          : () => params.default,
+      ...processCreateParams(params),
+    });
+  };
+}
+
+/////////////////////////////////////////
+/////////////////////////////////////////
+//////////                     //////////
+//////////      ZodNaN         //////////
+//////////                     //////////
+/////////////////////////////////////////
+/////////////////////////////////////////
 
 export interface ZodNaNDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodNaN;
@@ -3882,6 +3967,7 @@ export enum ZodFirstPartyTypeKind {
   ZodOptional = "ZodOptional",
   ZodNullable = "ZodNullable",
   ZodDefault = "ZodDefault",
+  ZodCatch = "ZodCatch",
   ZodPromise = "ZodPromise",
   ZodBranded = "ZodBranded",
 }
@@ -3916,6 +4002,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodOptional<any>
   | ZodNullable<any>
   | ZodDefault<any>
+  | ZodCatch<any>
   | ZodPromise<any>
   | ZodBranded<any, any>;
 

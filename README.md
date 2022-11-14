@@ -100,6 +100,7 @@
   - [.superRefine](#superRefine)
   - [.transform](#transform)
   - [.default](#default)
+  - [.catch](#catch)
   - [.optional](#optional)
   - [.nullable](#nullable)
   - [.nullish](#nullish)
@@ -1872,6 +1873,37 @@ numberWithRandomDefault.parse(undefined); // => 0.4413456736055323
 numberWithRandomDefault.parse(undefined); // => 0.1871840107401901
 numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
 ```
+
+Conceptually, this is how Zod processes default values:
+
+1. If the input is `undefined`, the default value is returned
+2. Otherwise, the data is parsed using the base schema
+
+### `.catch`
+
+Use `.catch()` to provide a "catch value" to be returned in the event of a parsing error.
+
+```ts
+const numberWithCatch = z.number().catch(42);
+
+numberWithCatch.parse(5); // => 5
+numberWithCatch.parse("tuna"); // => 42
+```
+
+Optionally, you can pass a function into `.catch` that will be re-executed whenever a default value needs to be generated:
+
+```ts
+const numberWithRandomCatch = z.number().catch(Math.random);
+
+numberWithRandomDefault.parse("sup"); // => 0.4413456736055323
+numberWithRandomDefault.parse("sup"); // => 0.1871840107401901
+numberWithRandomDefault.parse("sup"); // => 0.7223408162401552
+```
+
+Conceptually, this is how Zod processes "catch values":
+
+1. The data is parsed using the base schema
+2. If the parsing fails, the "catch value" is returned
 
 ### `.optional`
 
