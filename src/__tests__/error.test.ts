@@ -13,6 +13,7 @@ test("error creation", () => {
     received: ZodParsedType.string,
     path: [],
     message: "",
+    fatal: true,
   });
   err1.isEmpty;
 
