@@ -75,6 +75,8 @@ test("first party switch", () => {
       break;
     case z.ZodFirstPartyTypeKind.ZodBranded:
       break;
+    case z.ZodFirstPartyTypeKind.ZodPipeline:
+      break;
     default:
       util.assertNever(def);
   }
