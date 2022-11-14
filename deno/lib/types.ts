@@ -746,7 +746,8 @@ type ZodNumberCheck =
   | { kind: "min"; value: number; inclusive: boolean; message?: string }
   | { kind: "max"; value: number; inclusive: boolean; message?: string }
   | { kind: "int"; message?: string }
-  | { kind: "multipleOf"; value: number; message?: string };
+  | { kind: "multipleOf"; value: number; message?: string }
+  | { kind: "finite"; message?: string };
 
 // https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
 function floatSafeRemainder(val: number, step: number) {
@@ -827,6 +828,15 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "finite") {
+        if (!Number.isFinite(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.not_finite,
             message: check.message,
           });
           status.dirty();
@@ -939,6 +949,13 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     return this._addCheck({
       kind: "multipleOf",
       value: value,
+      message: errorUtil.toString(message),
+    });
+  }
+
+  finite(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "finite",
       message: errorUtil.toString(message),
     });
   }

@@ -555,6 +555,8 @@ z.number().negative(); //     < 0
 z.number().nonpositive(); //  <= 0
 
 z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
+
+z.number().finite(); // value must be finite, not Infinity or -Infinity
 ```
 
 Optionally, you can pass in a second argument to provide a custom error message.
@@ -947,7 +949,6 @@ const deepPartialUser = user.deepPartial();
 ```
 
 > Important limitation: deep partials only work as expected in hierarchies of objects, arrays, and tuples.
-
 
 ### `.required`
 
