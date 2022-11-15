@@ -354,7 +354,7 @@ test("formatting with nullable and optional fields", () => {
     expect(error.optionalTuple?.[0]?._errors).toEqual(["Invalid input"]);
     expect(error.optionalTuple?.[1]?._errors).toEqual(["Invalid input"]);
   }
-})
+});
 
 const stringWithCustomError = z.string({
   errorMap: (issue, ctx) => ({
