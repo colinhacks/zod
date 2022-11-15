@@ -140,7 +140,6 @@ export type ZodIssueOptionalMessage =
   | ZodInvalidArgumentsIssue
   | ZodInvalidReturnTypeIssue
   | ZodInvalidDateIssue
-  | ZodInvalidSymbolIssue
   | ZodInvalidStringIssue
   | ZodTooSmallIssue
   | ZodTooBigIssue
