@@ -667,7 +667,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       } else if (check.kind === "datetime") {
         const regex = datetimeRegex(check);
 
-        console.log(`Checking ${input.data} \nAgainst ${regex}`);
         if (!regex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
@@ -1301,15 +1300,11 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface ZodSymbolDef<S extends symbol> extends ZodTypeDef {
+export interface ZodSymbolDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodSymbol;
-  symbol?: S;
 }
 
-export class ZodSymbol<S extends symbol = symbol> extends ZodType<
-  S,
-  ZodSymbolDef<S>
-> {
+export class ZodSymbol extends ZodType<symbol, ZodSymbolDef, symbol> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.symbol) {
@@ -2468,7 +2463,9 @@ export class ZodDiscriminatedUnion<
       for (const value of discriminatorValues) {
         if (optionsMap.has(value)) {
           throw new Error(
-            `Discriminator property ${discriminator} has duplicate value ${value}`
+            `Discriminator property ${String(
+              discriminator
+            )} has duplicate value ${String(value)}`
           );
         }
         optionsMap.set(value, type);
