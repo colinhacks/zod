@@ -478,7 +478,13 @@ type ZodStringCheck =
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
-  | { kind: "trim"; message?: string };
+  | { kind: "trim"; message?: string }
+  | {
+      kind: "datetime";
+      offset: boolean;
+      precision: number | null;
+      message?: string;
+    };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -494,6 +500,46 @@ const uuidRegex =
 // eslint-disable-next-line
 const emailRegex =
   /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+
+// interface IsDateStringOptions extends StringDateOptions {
+/**
+ * Match any configuration
+ */
+// any?: boolean;
+// }
+
+// Adapted from https://stackoverflow.com/a/3143231
+const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
+  if (args.precision) {
+    if (args.offset) {
+      return new RegExp(
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}:\\d{2})|Z)$`
+      );
+    } else {
+      return new RegExp(
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}Z$`
+      );
+    }
+  } else if (args.precision === 0) {
+    if (args.offset) {
+      return new RegExp(
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}:\\d{2})|Z)$`
+      );
+    } else {
+      return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`);
+    }
+  } else {
+    if (args.offset) {
+      return new RegExp(
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}:\\d{2})|Z)$`
+      );
+    } else {
+      return new RegExp(
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$`
+      );
+    }
+  }
+};
 
 export class ZodString extends ZodType<string, ZodStringDef> {
   _parse(input: ParseInput): ParseReturnType<string> {
@@ -617,6 +663,19 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "datetime") {
+        const regex = datetimeRegex(check);
+
+        console.log(`Checking ${input.data} \nAgainst ${regex}`);
+        if (!regex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "datetime",
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -655,6 +714,32 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
+  datetime(
+    options?:
+      | string
+      | {
+          message?: string | undefined;
+          precision?: number | null;
+          offset?: boolean;
+        }
+  ) {
+    if (typeof options === "string") {
+      return this._addCheck({
+        kind: "datetime",
+        precision: null,
+        offset: false,
+        message: options,
+      });
+    }
+    return this._addCheck({
+      kind: "datetime",
+      precision:
+        typeof options?.precision === "undefined" ? null : options?.precision,
+      offset: options?.offset ?? false,
+      ...errorUtil.errToObj(options?.message),
+    });
+  }
+
   regex(regex: RegExp, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "regex",
@@ -712,6 +797,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [...this._def.checks, { kind: "trim" }],
     });
 
+  isDatetime() {
+    return !!this._def.checks.find((ch) => ch.kind === "datetime");
+  }
+
   get isEmail() {
     return !!this._def.checks.find((ch) => ch.kind === "email");
   }
@@ -724,6 +813,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
+
   get minLength() {
     let min: number | null = null;
     for (const ch of this._def.checks) {

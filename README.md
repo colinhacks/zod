@@ -494,18 +494,11 @@ z.string().cuid();
 z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
-
-// trim whitespace
-z.string().trim();
-
-// deprecated, equivalent to .min(1)
-z.string().nonempty();
-
-// optional custom error message
-z.string().nonempty({ message: "Can't be empty" });
+z.string().trim(); // trim whitespace
+z.string().datetime(); // defaults to UTC, see below for options
 ```
 
-> Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions.
+> Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
 
 You can customize some common error messages when creating a string schema.
 
@@ -527,6 +520,40 @@ z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
+z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+```
+
+### Datetime validation
+
+The `z.string().datetime()` method defaults to UTC validation: no timezone offsets with arbitrary sub-second decimal precision.
+
+```ts
+const datetime = z.string().datetime();
+
+datetime.parse("2020-01-01T00:00:00Z"); // pass
+datetime.parse("2020-01-01T00:00:00.123Z"); // pass
+datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (arbitrary precision)
+datetime.parse("2020-01-01T00:00:00+02:00"); // fail (no offsets allowed)
+```
+
+Timezone offsets can be allowed by setting the `offset` option to `true`.
+
+```ts
+const datetime = z.string().datetime({ offset: true });
+
+datetime.parse("2020-01-01T00:00:00+02:00"); // pass
+datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
+datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
+```
+
+You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
+
+```ts
+const datetime = z.string().datetime({ precision: 3 });
+
+datetime.parse("2020-01-01T00:00:00.123Z"); // pass
+datetime.parse("2020-01-01T00:00:00Z"); // fail
+datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```
 
 ## Numbers
