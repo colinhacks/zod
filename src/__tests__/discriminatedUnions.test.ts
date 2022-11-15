@@ -128,7 +128,7 @@ test("wrong schema - missing discriminator", () => {
     ]);
     throw new Error();
   } catch (e: any) {
-    expect(e.message).toContain("could not be extracted");
+    expect(e.message.includes("could not be extracted")).toBe(true);
   }
 });
 
@@ -140,7 +140,7 @@ test("wrong schema - duplicate discriminator values", () => {
     ]);
     throw new Error();
   } catch (e: any) {
-    expect(e.message).toContain("has duplicate value");
+    expect(e.message.includes("has duplicate value")).toEqual(true);
   }
 });
 
