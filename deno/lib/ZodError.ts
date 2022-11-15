@@ -26,7 +26,6 @@ export const ZodIssueCode = util.arrayToEnum([
   "invalid_arguments",
   "invalid_return_type",
   "invalid_date",
-  "invalid_symbol",
   "invalid_string",
   "too_small",
   "too_big",
@@ -85,12 +84,6 @@ export interface ZodInvalidReturnTypeIssue extends ZodIssueBase {
 
 export interface ZodInvalidDateIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_date;
-}
-
-export interface ZodInvalidSymbolIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.invalid_symbol;
-  received: symbol;
-  expected: symbol;
 }
 
 export type StringValidation =

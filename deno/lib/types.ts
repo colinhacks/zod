@@ -1195,37 +1195,11 @@ export class ZodSymbol<S extends symbol = symbol> extends ZodType<
       });
       return INVALID;
     }
-    if (this._def.symbol && input.data !== this._def.symbol) {
-      const ctx = this._getOrReturnCtx(input);
-      addIssueToContext(ctx, {
-        code: ZodIssueCode.invalid_symbol,
-        expected: this._def.symbol,
-        received: input.data,
-      });
-      return INVALID;
-    }
+
     return OK(input.data);
   }
 
-  static create: {
-    <S extends symbol>(
-      symbol: S extends symbol ? (symbol extends S ? never : S) : never,
-      params?: RawCreateParams
-    ): S extends symbol ? (symbol extends S ? never : ZodSymbol<S>) : never;
-    <P extends RawCreateParams>(
-      params?: P extends symbol ? never : P
-    ): ZodSymbol;
-  } = <T extends symbol | RawCreateParams>(
-    symbolOrParams?: T,
-    params?: RawCreateParams
-  ) => {
-    if (typeof symbolOrParams === "symbol") {
-      return new ZodSymbol({
-        typeName: ZodFirstPartyTypeKind.ZodSymbol,
-        symbol: symbolOrParams,
-        ...processCreateParams(params),
-      }) as never;
-    }
+  static create = (params?: RawCreateParams) => {
     return new ZodSymbol({
       typeName: ZodFirstPartyTypeKind.ZodSymbol,
       ...processCreateParams(params),

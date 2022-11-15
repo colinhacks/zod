@@ -2,24 +2,23 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
+import { util } from "../helpers/util.ts";
 import * as z from "../index.ts";
 import { Mocker } from "./Mocker.ts";
-
-const definedTestSymbol = Symbol("defined");
 
 const literalStringSchema = z.literal("asdf");
 const literalNumberSchema = z.literal(12);
 const literalBooleanSchema = z.literal(true);
 const literalBigIntSchema = z.literal(BigInt(42));
+const MySymbol = Symbol("stuff");
+const literalSymbolSchema = z.literal(MySymbol);
 const stringSchema = z.string();
 const numberSchema = z.number();
 const bigintSchema = z.bigint();
 const booleanSchema = z.boolean();
 const dateSchema = z.date();
 const symbolSchema = z.symbol();
-const definedSymbolSchema = z.symbol(definedTestSymbol);
-// The following should trigger a TS error in the first argument
-// const variableSymbolSchema = z.symbol(Symbol("variable"));
+
 const nullSchema = z.null();
 const undefinedSchema = z.undefined();
 const stringSchemaOptional = z.string().optional();
@@ -34,8 +33,6 @@ const dateSchemaOptional = z.date().optional();
 const dateSchemaNullable = z.date().nullable();
 const symbolSchemaOptional = z.symbol().optional();
 const symbolSchemaNullable = z.symbol().nullable();
-const definedSymbolSchemaOptional = z.symbol(definedTestSymbol).optional();
-const definedSymbolSchemaNullable = z.symbol(definedTestSymbol).nullable();
 
 const val = new Mocker();
 
@@ -138,6 +135,12 @@ test("literal bigint boolean", () => {
 test("literal bigint object", () => {
   const f = () => literalBigIntSchema.parse({});
   expect(f).toThrow();
+});
+
+test("literal symbol", () => {
+  util.assertEqual<z.infer<typeof literalSymbolSchema>, typeof MySymbol>(true);
+  literalSymbolSchema.parse(MySymbol);
+  expect(() => literalSymbolSchema.parse(Symbol("asdf"))).toThrow();
 });
 
 test("parse stringSchema string", () => {
@@ -312,34 +315,6 @@ test("parse symbolSchema symbol", () => {
   symbolSchema.parse(val.symbol);
 });
 
-test("parse definedSymbolSchema symbol correct", () => {
-  definedSymbolSchema.parse(definedTestSymbol);
-});
-
-test("parse definedSymbolSchema symbol incorrect", () => {
-  try {
-    const f = () => definedSymbolSchema.parse(val.symbol);
-    expect(f).toThrow();
-    f();
-  } catch (error) {
-    expect((error as any).issues[0].message).toEqual(
-      "Invalid symbol, expected Symbol(defined) but instead received Symbol(test)"
-    );
-  }
-});
-
-test("parse definedSymbolSchema runtime symbol incorrect", () => {
-  try {
-    const f = () => definedSymbolSchema.parse(Symbol());
-    expect(f).toThrow();
-    f();
-  } catch (error) {
-    expect((error as any).issues[0].message).toEqual(
-      "Invalid symbol, expected Symbol(defined) but instead received Symbol()"
-    );
-  }
-});
-
 test("parse symbolSchema undefined", () => {
   const f = () => symbolSchema.parse(val.undefined);
   expect(f).toThrow();
@@ -400,151 +375,73 @@ test("parse nullSchema null", () => {
   nullSchema.parse(val.null);
 });
 
-export type AssertEqualTest = boolean | undefined extends true
-  ? true extends boolean | undefined
-    ? true
-    : never
-  : never;
-
-type AssertEqual<X, Y> = (<T>() => T extends X ? 1 : 2) extends <
-  T
->() => T extends Y ? 1 : 2
-  ? true
-  : never;
-
 test("primitive inference", () => {
-  const literalStringSchemaTest: AssertEqual<
-    z.TypeOf<typeof literalStringSchema>,
-    "asdf"
-  > = true;
-  const literalNumberSchemaTest: AssertEqual<
-    z.TypeOf<typeof literalNumberSchema>,
-    12
-  > = true;
-  const literalBooleanSchemaTest: AssertEqual<
-    z.TypeOf<typeof literalBooleanSchema>,
-    true
-  > = true;
-  const literalBigIntSchemaTest: AssertEqual<
-    z.TypeOf<typeof literalBigIntSchema>,
-    bigint
-  > = true;
-  const stringSchemaTest: AssertEqual<
-    z.TypeOf<typeof stringSchema>,
-    string
-  > = true;
-  const numberSchemaTest: AssertEqual<
-    z.TypeOf<typeof numberSchema>,
-    number
-  > = true;
-  const bigintSchemaTest: AssertEqual<
-    z.TypeOf<typeof bigintSchema>,
-    bigint
-  > = true;
-  const booleanSchemaTest: AssertEqual<
-    z.TypeOf<typeof booleanSchema>,
-    boolean
-  > = true;
-  const dateSchemaTest: AssertEqual<z.TypeOf<typeof dateSchema>, Date> = true;
-  const symbolSchemaTest: AssertEqual<
-    z.TypeOf<typeof symbolSchema>,
-    symbol
-  > = true;
-  const definedSymbolSchemaTest: AssertEqual<
-    z.TypeOf<typeof definedSymbolSchema>,
-    typeof definedTestSymbol
-  > = true;
-  const nullSchemaTest: AssertEqual<z.TypeOf<typeof nullSchema>, null> = true;
-  const undefinedSchemaTest: AssertEqual<
-    z.TypeOf<typeof undefinedSchema>,
-    undefined
-  > = true;
-  const stringSchemaOptionalTest: AssertEqual<
-    z.TypeOf<typeof stringSchemaOptional>,
-    string | undefined
-  > = true;
-  const stringSchemaNullableTest: AssertEqual<
-    z.TypeOf<typeof stringSchemaNullable>,
-    string | null
-  > = true;
-  const numberSchemaOptionalTest: AssertEqual<
-    z.TypeOf<typeof numberSchemaOptional>,
-    number | undefined
-  > = true;
-  const numberSchemaNullableTest: AssertEqual<
-    z.TypeOf<typeof numberSchemaNullable>,
-    number | null
-  > = true;
-  const bigintSchemaOptionalTest: AssertEqual<
-    z.TypeOf<typeof bigintSchemaOptional>,
-    bigint | undefined
-  > = true;
-  const bigintSchemaNullableTest: AssertEqual<
-    z.TypeOf<typeof bigintSchemaNullable>,
-    bigint | null
-  > = true;
-  const booleanSchemaOptionalTest: AssertEqual<
-    z.TypeOf<typeof booleanSchemaOptional>,
-    boolean | undefined
-  > = true;
-  const booleanSchemaNullableTest: AssertEqual<
-    z.TypeOf<typeof booleanSchemaNullable>,
-    boolean | null
-  > = true;
-  const dateSchemaOptionalTest: AssertEqual<
-    z.TypeOf<typeof dateSchemaOptional>,
-    Date | undefined
-  > = true;
-  const dateSchemaNullableTest: AssertEqual<
-    z.TypeOf<typeof dateSchemaNullable>,
-    Date | null
-  > = true;
-  const symbolSchemaOptionalTest: AssertEqual<
-    z.TypeOf<typeof symbolSchemaOptional>,
-    symbol | undefined
-  > = true;
-  const symbolSchemaNullableTest: AssertEqual<
-    z.TypeOf<typeof symbolSchemaNullable>,
-    symbol | null
-  > = true;
-  const definedSymbolSchemaOptionalTest: AssertEqual<
-    z.TypeOf<typeof definedSymbolSchemaOptional>,
-    typeof definedTestSymbol | undefined
-  > = true;
-  const definedSymbolSchemaNullableTest: AssertEqual<
-    z.TypeOf<typeof definedSymbolSchemaNullable>,
-    typeof definedTestSymbol | null
-  > = true;
+  util.assertEqual<z.TypeOf<typeof literalStringSchema>, "asdf">(true);
+  util.assertEqual<z.TypeOf<typeof literalNumberSchema>, 12>(true);
+  util.assertEqual<z.TypeOf<typeof literalBooleanSchema>, true>(true);
+  util.assertEqual<z.TypeOf<typeof literalBigIntSchema>, bigint>(true);
+  util.assertEqual<z.TypeOf<typeof stringSchema>, string>(true);
+  util.assertEqual<z.TypeOf<typeof numberSchema>, number>(true);
+  util.assertEqual<z.TypeOf<typeof bigintSchema>, bigint>(true);
+  util.assertEqual<z.TypeOf<typeof booleanSchema>, boolean>(true);
+  util.assertEqual<z.TypeOf<typeof dateSchema>, Date>(true);
+  util.assertEqual<z.TypeOf<typeof symbolSchema>, symbol>(true);
 
-  [
-    literalStringSchemaTest,
-    literalNumberSchemaTest,
-    literalBooleanSchemaTest,
-    literalBigIntSchemaTest,
-    stringSchemaTest,
-    numberSchemaTest,
-    bigintSchemaTest,
-    booleanSchemaTest,
-    dateSchemaTest,
-    symbolSchemaTest,
-    definedSymbolSchemaTest,
-    nullSchemaTest,
-    undefinedSchemaTest,
-    stringSchemaOptionalTest,
-    stringSchemaNullableTest,
-    numberSchemaOptionalTest,
-    numberSchemaNullableTest,
-    bigintSchemaOptionalTest,
-    bigintSchemaNullableTest,
-    booleanSchemaOptionalTest,
-    booleanSchemaNullableTest,
-    dateSchemaOptionalTest,
-    dateSchemaNullableTest,
-    symbolSchemaOptionalTest,
-    symbolSchemaNullableTest,
-    definedSymbolSchemaOptionalTest,
-    definedSymbolSchemaNullableTest,
-  ];
+  util.assertEqual<z.TypeOf<typeof nullSchema>, null>(true);
+  util.assertEqual<z.TypeOf<typeof undefinedSchema>, undefined>(true);
+  util.assertEqual<z.TypeOf<typeof stringSchemaOptional>, string | undefined>(
+    true
+  );
+  util.assertEqual<z.TypeOf<typeof stringSchemaNullable>, string | null>(true);
+  util.assertEqual<z.TypeOf<typeof numberSchemaOptional>, number | undefined>(
+    true
+  );
+  util.assertEqual<z.TypeOf<typeof numberSchemaNullable>, number | null>(true);
+  util.assertEqual<z.TypeOf<typeof bigintSchemaOptional>, bigint | undefined>(
+    true
+  );
+  util.assertEqual<z.TypeOf<typeof bigintSchemaNullable>, bigint | null>(true);
+  util.assertEqual<z.TypeOf<typeof booleanSchemaOptional>, boolean | undefined>(
+    true
+  );
+  util.assertEqual<z.TypeOf<typeof booleanSchemaNullable>, boolean | null>(
+    true
+  );
+  util.assertEqual<z.TypeOf<typeof dateSchemaOptional>, Date | undefined>(true);
+  util.assertEqual<z.TypeOf<typeof dateSchemaNullable>, Date | null>(true);
+  util.assertEqual<z.TypeOf<typeof symbolSchemaOptional>, symbol | undefined>(
+    true
+  );
+  util.assertEqual<z.TypeOf<typeof symbolSchemaNullable>, symbol | null>(true);
+
+  // [
+  //   literalStringSchemaTest,
+  //   literalNumberSchemaTest,
+  //   literalBooleanSchemaTest,
+  //   literalBigIntSchemaTest,
+  //   stringSchemaTest,
+  //   numberSchemaTest,
+  //   bigintSchemaTest,
+  //   booleanSchemaTest,
+  //   dateSchemaTest,
+  //   symbolSchemaTest,
+
+  //   nullSchemaTest,
+  //   undefinedSchemaTest,
+  //   stringSchemaOptionalTest,
+  //   stringSchemaNullableTest,
+  //   numberSchemaOptionalTest,
+  //   numberSchemaNullableTest,
+  //   bigintSchemaOptionalTest,
+  //   bigintSchemaNullableTest,
+  //   booleanSchemaOptionalTest,
+  //   booleanSchemaNullableTest,
+  //   dateSchemaOptionalTest,
+  //   dateSchemaNullableTest,
+  //   symbolSchemaOptionalTest,
+  //   symbolSchemaNullableTest,
+
+  // ];
 });
 
 test("get literal value", () => {
