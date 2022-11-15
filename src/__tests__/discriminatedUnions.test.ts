@@ -24,6 +24,9 @@ test("valid - discriminator value of various primitive types", () => {
     z.object({ type: z.literal(null), val: z.literal(7) }),
     z.object({ type: z.literal("undefined"), val: z.literal(8) }),
     z.object({ type: z.literal(undefined), val: z.literal(9) }),
+    z.object({ type: z.literal("transform"), val: z.literal(10) }),
+    z.object({ type: z.literal("refine"), val: z.literal(11) }),
+    z.object({ type: z.literal("superRefine"), val: z.literal(12) }),
   ]);
 
   expect(schema.parse({ type: "1", val: 1 })).toEqual({ type: "1", val: 1 });
@@ -125,9 +128,7 @@ test("wrong schema - missing discriminator", () => {
     ]);
     throw new Error();
   } catch (e: any) {
-    expect(e.message).toEqual(
-      "The discriminator value could not be extracted from all the provided schemas"
-    );
+    expect(e.message.includes("could not be extracted")).toBe(true);
   }
 });
 
@@ -139,9 +140,7 @@ test("wrong schema - duplicate discriminator values", () => {
     ]);
     throw new Error();
   } catch (e: any) {
-    expect(e.message).toEqual(
-      "Some of the discriminator values are not unique"
-    );
+    expect(e.message.includes("has duplicate value")).toEqual(true);
   }
 });
 

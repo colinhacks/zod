@@ -2297,33 +2297,46 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-export type ZodDiscriminatedUnionOption<
-  Discriminator extends string,
-  DiscriminatorValue extends Primitive
-> = ZodObject<
-  { [key in Discriminator]: ZodLiteral<DiscriminatorValue> } & ZodRawShape,
-  any,
-  any
->;
+const getDiscriminator = <T extends ZodTypeAny>(
+  type: T
+): Primitive[] | null => {
+  if (type instanceof ZodLazy) {
+    return getDiscriminator(type.schema);
+  } else if (type instanceof ZodEffects) {
+    return getDiscriminator(type.innerType());
+  } else if (type instanceof ZodLiteral) {
+    return [type.value];
+  } else if (type instanceof ZodEnum) {
+    return type.options;
+  } else if (type instanceof ZodUndefined) {
+    return [undefined];
+  } else if (type instanceof ZodNull) {
+    return [null];
+  } else {
+    return null;
+  }
+};
+
+export type ZodDiscriminatedUnionOption<Discriminator extends string> =
+  ZodObject<{ [key in Discriminator]: ZodTypeAny } & ZodRawShape, any, any>;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  DiscriminatorValue extends Primitive,
-  Option extends ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>
+  Options extends ZodDiscriminatedUnionOption<any>[]
 > extends ZodTypeDef {
   discriminator: Discriminator;
-  options: Map<DiscriminatorValue, Option>;
+  options: Options;
+  optionsMap: Map<Primitive, ZodDiscriminatedUnionOption<any>>;
   typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion;
 }
 
 export class ZodDiscriminatedUnion<
   Discriminator extends string,
-  DiscriminatorValue extends Primitive,
-  Option extends ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>
+  Options extends ZodDiscriminatedUnionOption<Discriminator>[]
 > extends ZodType<
-  Option["_output"],
-  ZodDiscriminatedUnionDef<Discriminator, DiscriminatorValue, Option>,
-  Option["_input"]
+  output<Options[number]>,
+  ZodDiscriminatedUnionDef<Discriminator, Options>,
+  input<Options[number]>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
@@ -2338,13 +2351,13 @@ export class ZodDiscriminatedUnion<
     }
 
     const discriminator = this.discriminator;
-    const discriminatorValue: DiscriminatorValue = ctx.data[discriminator];
-    const option = this.options.get(discriminatorValue);
+    const discriminatorValue: string = ctx.data[discriminator];
+    const option = this.optionsMap.get(discriminatorValue);
 
     if (!option) {
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union_discriminator,
-        options: this.validDiscriminatorValues,
+        options: Array.from(this.optionsMap.keys()),
         path: [discriminator],
       });
       return INVALID;
@@ -2355,13 +2368,13 @@ export class ZodDiscriminatedUnion<
         data: ctx.data,
         path: ctx.path,
         parent: ctx,
-      });
+      }) as any;
     } else {
       return option._parseSync({
         data: ctx.data,
         path: ctx.path,
         parent: ctx,
-      });
+      }) as any;
     }
   }
 
@@ -2369,12 +2382,12 @@ export class ZodDiscriminatedUnion<
     return this._def.discriminator;
   }
 
-  get validDiscriminatorValues() {
-    return Array.from(this.options.keys());
-  }
-
   get options() {
     return this._def.options;
+  }
+
+  get optionsMap() {
+    return this._def.optionsMap;
   }
 
   /**
@@ -2387,44 +2400,45 @@ export class ZodDiscriminatedUnion<
    */
   static create<
     Discriminator extends string,
-    DiscriminatorValue extends Primitive,
     Types extends [
-      ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
-      ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>,
-      ...ZodDiscriminatedUnionOption<Discriminator, DiscriminatorValue>[]
+      ZodDiscriminatedUnionOption<Discriminator>,
+      ...ZodDiscriminatedUnionOption<Discriminator>[]
     ]
   >(
     discriminator: Discriminator,
-    types: Types,
+    options: Types,
     params?: RawCreateParams
-  ): ZodDiscriminatedUnion<Discriminator, DiscriminatorValue, Types[number]> {
+  ): ZodDiscriminatedUnion<Discriminator, Types> {
     // Get all the valid discriminator values
-    const options: Map<DiscriminatorValue, Types[number]> = new Map();
+    const optionsMap: Map<Primitive, Types[number]> = new Map();
 
-    try {
-      types.forEach((type) => {
-        const discriminatorValue = type.shape[discriminator].value;
-        options.set(discriminatorValue, type);
-      });
-    } catch (e) {
-      throw new Error(
-        "The discriminator value could not be extracted from all the provided schemas"
-      );
-    }
-
-    // Assert that all the discriminator values are unique
-    if (options.size !== types.length) {
-      throw new Error("Some of the discriminator values are not unique");
+    // try {
+    for (const type of options) {
+      const discriminatorValues = getDiscriminator(type.shape[discriminator]);
+      if (!discriminatorValues) {
+        throw new Error(
+          `A discriminator value for key \`${discriminator}\`could not be extracted from all schema options`
+        );
+      }
+      for (const value of discriminatorValues) {
+        if (optionsMap.has(value)) {
+          throw new Error(
+            `Discriminator property ${discriminator} has duplicate value ${value}`
+          );
+        }
+        optionsMap.set(value, type);
+      }
     }
 
     return new ZodDiscriminatedUnion<
       Discriminator,
-      DiscriminatorValue,
-      Types[number]
+      // DiscriminatorValue,
+      Types
     >({
       typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion,
       discriminator,
       options,
+      optionsMap,
       ...processCreateParams(params),
     });
   }
@@ -3570,11 +3584,17 @@ export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
 
 export class ZodEffects<
   T extends ZodTypeAny,
-  Output = T["_output"],
-  Input = T["_input"]
+  Output = output<T>,
+  Input = input<T>
 > extends ZodType<Output, ZodEffectsDef<T>, Input> {
   innerType() {
     return this._def.schema;
+  }
+
+  sourceType(): T {
+    return this._def.schema._def.typeName === ZodFirstPartyTypeKind.ZodEffects
+      ? (this._def.schema as unknown as ZodEffects<T>).sourceType()
+      : (this._def.schema as T);
   }
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
@@ -4161,7 +4181,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodArray<any, any>
   | ZodObject<any, any, any, any, any>
   | ZodUnion<any>
-  | ZodDiscriminatedUnion<any, any, any>
+  | ZodDiscriminatedUnion<any, any>
   | ZodIntersection<any, any>
   | ZodTuple<any, any>
   | ZodRecord<any, any>
