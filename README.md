@@ -1950,8 +1950,7 @@ z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 
 ### `.brand`
 
-`.brand<T>() => ZodBranded<this, B>`, or
-`.brand<T>(brand: T) => ZodBranded<this, B>`
+`.brand<T>() => ZodBranded<this, B>`
 
 TypeScript's type system is structural, which means that any two types that are structurally equivalent are considered the same.
 
