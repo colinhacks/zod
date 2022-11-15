@@ -544,7 +544,7 @@ datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
 ```
 
-You can additionally constrain the allowable `precision`.
+You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
 
 ```ts
 const datetime = z.string().datetime({ precision: 3 });
