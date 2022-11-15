@@ -194,3 +194,24 @@ test("async - invalid", async () => {
     ]);
   }
 });
+
+test("valid - literals with .default or .preprocess", () => {
+  const schema = z.discriminatedUnion("type", [
+    z.object({
+      type: z.literal("foo").default("foo"),
+      a: z.string(),
+    }),
+    z.object({
+      type: z.literal("custom"),
+      method: z.string(),
+    }),
+    z.object({
+      type: z.preprocess((val) => String(val), z.literal("bar")),
+      c: z.string(),
+    }),
+  ]);
+  expect(schema.parse({ type: "foo", a: "foo" })).toEqual({
+    type: "foo",
+    a: "foo",
+  });
+});

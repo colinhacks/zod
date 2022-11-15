@@ -2309,6 +2309,11 @@ const getDiscriminator = <T extends ZodTypeAny>(
     return [type.value];
   } else if (type instanceof ZodEnum) {
     return type.options;
+  } else if (type instanceof ZodNativeEnum) {
+    // eslint-disable-next-line ban/ban
+    return Object.keys(type.enum as any);
+  } else if (type instanceof ZodDefault) {
+    return getDiscriminator(type._def.innerType);
   } else if (type instanceof ZodUndefined) {
     return [undefined];
   } else if (type instanceof ZodNull) {
@@ -2418,7 +2423,7 @@ export class ZodDiscriminatedUnion<
       const discriminatorValues = getDiscriminator(type.shape[discriminator]);
       if (!discriminatorValues) {
         throw new Error(
-          `A discriminator value for key \`${discriminator}\`could not be extracted from all schema options`
+          `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
         );
       }
       for (const value of discriminatorValues) {
