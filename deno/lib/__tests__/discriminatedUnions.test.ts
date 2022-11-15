@@ -15,11 +15,6 @@ test("valid", () => {
 });
 
 test("valid - discriminator value of various primitive types", () => {
-  interface lazy {
-    type: "lazy typed";
-    val: 17;
-  }
-
   const schema = z.discriminatedUnion("type", [
     z.object({ type: z.literal("1"), val: z.literal(1) }),
     z.object({ type: z.literal(1), val: z.literal(2) }),
@@ -30,43 +25,9 @@ test("valid - discriminator value of various primitive types", () => {
     z.object({ type: z.literal(null), val: z.literal(7) }),
     z.object({ type: z.literal("undefined"), val: z.literal(8) }),
     z.object({ type: z.literal(undefined), val: z.literal(9) }),
-    z
-      .object({ type: z.literal("transform"), val: z.literal(10) })
-      .transform((val) => ({
-        val: val.val,
-      })),
-    z
-      .object({ type: z.literal("refine"), val: z.literal(11) })
-      .refine(() => true),
-    z
-      .object({ type: z.literal("superRefine"), val: z.literal(12) })
-      .superRefine(() => {}),
-    z.lazy(() => z.object({ type: z.literal("lazy"), val: z.literal(13) })),
-    z.lazy(() =>
-      z
-        .object({ type: z.literal("chained 1"), val: z.literal(14) })
-        .transform((val) => ({
-          val: val.val,
-        }))
-    ),
-    z
-      .lazy(() =>
-        z.object({ type: z.literal("chained 2"), val: z.literal(15) })
-      )
-      .transform((val) => ({
-        val: val.val,
-      })),
-    z
-      .lazy(() =>
-        z.object({ type: z.literal("chained 3"), val: z.literal(16) })
-      )
-      .transform((val) => ({
-        val: val.val,
-      }))
-      .refine(() => true),
-    z.lazy(() =>
-      z.object({ type: z.literal("lazy typed"), val: z.literal(17) })
-    ) as z.ZodType<lazy>,
+    z.object({ type: z.literal("transform"), val: z.literal(10) }),
+    z.object({ type: z.literal("refine"), val: z.literal(11) }),
+    z.object({ type: z.literal("superRefine"), val: z.literal(12) }),
   ]);
 
   expect(schema.parse({ type: "1", val: 1 })).toEqual({ type: "1", val: 1 });
@@ -98,34 +59,6 @@ test("valid - discriminator value of various primitive types", () => {
   expect(schema.parse({ type: undefined, val: 9 })).toEqual({
     type: undefined,
     val: 9,
-  });
-  expect(schema.parse({ type: "transform", val: 10 })).toEqual({
-    val: 10,
-  });
-  expect(schema.parse({ type: "refine", val: 11 })).toEqual({
-    type: "refine",
-    val: 11,
-  });
-  expect(schema.parse({ type: "superRefine", val: 12 })).toEqual({
-    type: "superRefine",
-    val: 12,
-  });
-  expect(schema.parse({ type: "lazy", val: 13 })).toEqual({
-    type: "lazy",
-    val: 13,
-  });
-  expect(schema.parse({ type: "chained 1", val: 14 })).toEqual({
-    val: 14,
-  });
-  expect(schema.parse({ type: "chained 2", val: 15 })).toEqual({
-    val: 15,
-  });
-  expect(schema.parse({ type: "chained 3", val: 16 })).toEqual({
-    val: 16,
-  });
-  expect(schema.parse({ type: "lazy typed", val: 17 })).toEqual({
-    type: "lazy typed",
-    val: 17,
   });
 });
 
@@ -196,9 +129,7 @@ test("wrong schema - missing discriminator", () => {
     ]);
     throw new Error();
   } catch (e: any) {
-    expect(e.message).toEqual(
-      "The discriminator value could not be extracted from all the provided schemas"
-    );
+    expect(e.message).toContain("could not be extracted");
   }
 });
 
@@ -210,9 +141,7 @@ test("wrong schema - duplicate discriminator values", () => {
     ]);
     throw new Error();
   } catch (e: any) {
-    expect(e.message).toEqual(
-      "Some of the discriminator values are not unique"
-    );
+    expect(e.message).toContain("has duplicate value");
   }
 });
 
