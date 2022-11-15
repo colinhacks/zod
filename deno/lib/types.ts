@@ -1297,6 +1297,45 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 //////////                        //////////
+//////////       ZodSymbol        //////////
+//////////                        //////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+export interface ZodSymbolDef<S extends symbol> extends ZodTypeDef {
+  typeName: ZodFirstPartyTypeKind.ZodSymbol;
+  symbol?: S;
+}
+
+export class ZodSymbol<S extends symbol = symbol> extends ZodType<
+  S,
+  ZodSymbolDef<S>
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const parsedType = this._getType(input);
+    if (parsedType !== ZodParsedType.symbol) {
+      const ctx = this._getOrReturnCtx(input);
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.symbol,
+        received: ctx.parsedType,
+      });
+      return INVALID;
+    }
+
+    return OK(input.data);
+  }
+
+  static create = (params?: RawCreateParams): ZodSymbol => {
+    return new ZodSymbol({
+      typeName: ZodFirstPartyTypeKind.ZodSymbol,
+      ...processCreateParams(params),
+    });
+  };
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+//////////                        //////////
 //////////      ZodUndefined      //////////
 //////////                        //////////
 ////////////////////////////////////////////
@@ -4142,6 +4181,7 @@ export enum ZodFirstPartyTypeKind {
   ZodBigInt = "ZodBigInt",
   ZodBoolean = "ZodBoolean",
   ZodDate = "ZodDate",
+  ZodSymbol = "ZodSymbol",
   ZodUndefined = "ZodUndefined",
   ZodNull = "ZodNull",
   ZodAny = "ZodAny",
@@ -4226,6 +4266,7 @@ const nanType = ZodNaN.create;
 const bigIntType = ZodBigInt.create;
 const booleanType = ZodBoolean.create;
 const dateType = ZodDate.create;
+const symbolType = ZodSymbol.create;
 const undefinedType = ZodUndefined.create;
 const nullType = ZodNull.create;
 const anyType = ZodAny.create;
@@ -4290,6 +4331,7 @@ export {
   setType as set,
   strictObjectType as strictObject,
   stringType as string,
+  symbolType as symbol,
   effectsType as transformer,
   tupleType as tuple,
   undefinedType as undefined,

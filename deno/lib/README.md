@@ -450,6 +450,7 @@ z.number();
 z.bigint();
 z.boolean();
 z.date();
+z.symbol();
 
 // empty types
 z.undefined();
@@ -471,7 +472,11 @@ z.never();
 ```ts
 const tuna = z.literal("tuna");
 const twelve = z.literal(12);
+const twobig = z.literal(2n); // bigint literal
 const tru = z.literal(true);
+
+const terrificSymbol = Symbol("terrific");
+const terrific = z.literal(terrificSymbol);
 
 // retrieve literal value
 tuna.value; // "tuna"
