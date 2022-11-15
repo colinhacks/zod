@@ -1199,11 +1199,11 @@ export class ZodSymbol<S extends symbol = symbol> extends ZodType<
     return OK(input.data);
   }
 
-  static create = (params?: RawCreateParams) => {
+  static create = (params?: RawCreateParams): ZodSymbol => {
     return new ZodSymbol({
       typeName: ZodFirstPartyTypeKind.ZodSymbol,
       ...processCreateParams(params),
-    }) as never;
+    });
   };
 }
 
