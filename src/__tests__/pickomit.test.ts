@@ -65,13 +65,13 @@ test("nonstrict inference", () => {
 });
 
 test("nonstrict parsing - pass", () => {
-  const laxfish = fish.nonstrict().pick({ name: true });
+  const laxfish = fish.passthrough().pick({ name: true });
   laxfish.parse({ name: "asdf", whatever: "asdf" });
   laxfish.parse({ name: "asdf", age: 12, nested: {} });
 });
 
 test("nonstrict parsing - fail", () => {
-  const laxfish = fish.nonstrict().pick({ name: true });
+  const laxfish = fish.passthrough().pick({ name: true });
   const bad = () => laxfish.parse({ whatever: "asdf" } as any);
   expect(bad).toThrow();
 });
@@ -84,6 +84,7 @@ test("pick a nonexistent key", () => {
 
   const pickedSchema = schema.pick({
     a: true,
+    // @ts-expect-error
     doesntExist: true,
   });
 
