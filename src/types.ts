@@ -2059,8 +2059,8 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  partial<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+  partial<Mask extends objectKeyMask<T>>(
+    mask: optionalPickWith<Mask, objectKeyMask<T>>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
@@ -2100,8 +2100,8 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  required<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+  required<Mask extends objectKeyMask<T>>(
+    mask: optionalPickWith<Mask, objectKeyMask<T>>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];
