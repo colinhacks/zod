@@ -194,6 +194,15 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table>
   <tr>
     <td align="center">
+      <a href="https://bamboocreative.nz/">
+        <img src="https://avatars1.githubusercontent.com/u/41406870?s=460&v=4" width="100px;" alt="" />
+      </a>
+      <br />
+      <b>Bamboo Creative</b>
+      <br />
+      <a href="https://bamboocreative.nz/">bamboocreative.nz</a>
+    </td>
+    <td align="center">
       <a href="https://snaplet.dev">
         <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="" />
       </a>
