@@ -9,7 +9,7 @@ const justFive = z.string().length(5);
 const nonempty = z.string().nonempty("nonempty");
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
-const numeric = z.string().numeric();
+const numeric = z.string().numericString();
 
 test("passing validations", () => {
   minFive.parse("12345");
@@ -266,22 +266,24 @@ test("datetime parsing", () => {
   ).toThrow();
 });
 
-test("numeric", () => {
-  const numeric = z.string().numeric();
+test("numericString", () => {
+  const numericString = z.string().numericString();
 
-  expect(() => numeric.parse(true)).toThrow();
-  expect(() => numeric.parse(1)).toThrow();
-  expect(() => numeric.parse(undefined)).toThrow();
-  expect(() => numeric.parse(null)).toThrow();
-  expect(() => numeric.parse("")).toThrow();
-  expect(() => numeric.parse("hello")).toThrow();
-  expect(() => numeric.parse("3,1234")).toThrow();
+  expect(() => numericString.parse(true)).toThrow();
+  expect(() => numericString.parse(1)).toThrow();
+  expect(() => numericString.parse(undefined)).toThrow();
+  expect(() => numericString.parse(null)).toThrow();
+  expect(() => numericString.parse("")).toThrow();
+  expect(() => numericString.parse("hello")).toThrow();
+  expect(() => numericString.parse("3,1234")).toThrow();
 
-  expect(() => numeric.parse("1")).not.toThrow();
+  expect(() => numericString.parse("1")).not.toThrow();
   expect(() =>
-    numeric.parse("99999000000000000000000000000000000000000000000000000000")
+    numericString.parse(
+      "99999000000000000000000000000000000000000000000000000000"
+    )
   ).not.toThrow();
-  expect(() => numeric.parse("3.141592")).not.toThrow();
-  expect(() => numeric.parse("-1")).not.toThrow();
-  expect(() => numeric.parse("-999.1231234134"));
+  expect(() => numericString.parse("3.141592")).not.toThrow();
+  expect(() => numericString.parse("-1")).not.toThrow();
+  expect(() => numericString.parse("-999.1231234134"));
 });
