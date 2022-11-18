@@ -740,6 +740,14 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
   }
 
+  numericString(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "regex",
+      regex: /^-?\d+\.?\d*$|^\d*\.?\d+$/,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
   regex(regex: RegExp, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "regex",

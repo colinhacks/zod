@@ -739,6 +739,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       ...errorUtil.errToObj(options?.message),
     });
   }
+  
   numericString(message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "regex",

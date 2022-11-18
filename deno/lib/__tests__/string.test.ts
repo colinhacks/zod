@@ -263,3 +263,25 @@ test("datetime parsing", () => {
     datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")
   ).toThrow();
 });
+
+test("numericString", () => {
+  const numericString = z.string().numericString();
+
+  expect(() => numericString.parse(true)).toThrow();
+  expect(() => numericString.parse(1)).toThrow();
+  expect(() => numericString.parse(undefined)).toThrow();
+  expect(() => numericString.parse(null)).toThrow();
+  expect(() => numericString.parse("")).toThrow();
+  expect(() => numericString.parse("hello")).toThrow();
+  expect(() => numericString.parse("3,1234")).toThrow();
+
+  expect(() => numericString.parse("1")).not.toThrow();
+  expect(() =>
+    numericString.parse(
+      "99999000000000000000000000000000000000000000000000000000"
+    )
+  ).not.toThrow();
+  expect(() => numericString.parse("3.141592")).not.toThrow();
+  expect(() => numericString.parse("-1")).not.toThrow();
+  expect(() => numericString.parse("-999.1231234134"));
+});
