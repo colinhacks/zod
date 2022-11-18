@@ -9,6 +9,7 @@ const justFive = z.string().length(5);
 const nonempty = z.string().nonempty("nonempty");
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
+const numeric = z.string().numeric();
 
 test("passing validations", () => {
   minFive.parse("12345");
@@ -19,6 +20,7 @@ test("passing validations", () => {
   justFive.parse("12345");
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
+  numeric.parse("12345");
 });
 
 test("failing validations", () => {
@@ -29,6 +31,7 @@ test("failing validations", () => {
   expect(() => justFive.parse("123456")).toThrow();
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
+  expect(() => numeric.parse("hello")).toThrow();
 });
 
 test("email validations", () => {
@@ -261,4 +264,24 @@ test("datetime parsing", () => {
   expect(() =>
     datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")
   ).toThrow();
+});
+
+test("numeric", () => {
+  const numeric = z.string().numeric();
+
+  expect(() => numeric.parse(true)).toThrow();
+  expect(() => numeric.parse(1)).toThrow();
+  expect(() => numeric.parse(undefined)).toThrow();
+  expect(() => numeric.parse(null)).toThrow();
+  expect(() => numeric.parse("")).toThrow();
+  expect(() => numeric.parse("hello")).toThrow();
+  expect(() => numeric.parse("3,1234")).toThrow();
+
+  expect(() => numeric.parse("1")).not.toThrow();
+  expect(() =>
+    numeric.parse("99999000000000000000000000000000000000000000000000000000")
+  ).not.toThrow();
+  expect(() => numeric.parse("3.141592")).not.toThrow();
+  expect(() => numeric.parse("-1")).not.toThrow();
+  expect(() => numeric.parse("-999.1231234134"));
 });
