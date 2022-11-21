@@ -101,6 +101,15 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.duplicate_element:
       message = `Array must not contains duplicated elements`;
       break;
+    case ZodIssueCode.duplicate_element_deep:
+      message = `Array must not contains duplicated elements based on deep object check`;
+      break;
+    case ZodIssueCode.duplicate_element_by:
+      message = `Array must not contains duplicated elements based on provided custom map`;
+      break;
+    case ZodIssueCode.duplicate_element_with:
+      message = `Array must not contains duplicated elements based on provided custom check`;
+      break;
     case ZodIssueCode.custom:
       message = `Invalid input`;
       break;

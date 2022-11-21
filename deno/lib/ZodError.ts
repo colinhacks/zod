@@ -30,6 +30,9 @@ export const ZodIssueCode = util.arrayToEnum([
   "too_small",
   "too_big",
   "duplicate_element",
+  "duplicate_element_deep",
+  "duplicate_element_by",
+  "duplicate_element_with",
   "invalid_intersection_types",
   "not_multiple_of",
 ]);
@@ -119,6 +122,18 @@ export interface ZodDuplicateElement extends ZodIssueBase {
   code: typeof ZodIssueCode.duplicate_element;
 }
 
+export interface ZodDuplicateElementDeep extends ZodIssueBase {
+  code: typeof ZodIssueCode.duplicate_element_deep;
+}
+
+export interface ZodDuplicateElementBy extends ZodIssueBase {
+  code: typeof ZodIssueCode.duplicate_element_by;
+}
+
+export interface ZodDuplicateElementWith extends ZodIssueBase {
+  code: typeof ZodIssueCode.duplicate_element_with;
+}
+
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_intersection_types;
 }
@@ -149,6 +164,9 @@ export type ZodIssueOptionalMessage =
   | ZodTooSmallIssue
   | ZodTooBigIssue
   | ZodDuplicateElement
+  | ZodDuplicateElementDeep
+  | ZodDuplicateElementBy
+  | ZodDuplicateElementWith
   | ZodInvalidIntersectionTypesIssue
   | ZodNotMultipleOfIssue
   | ZodCustomIssue;

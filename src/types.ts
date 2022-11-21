@@ -1406,6 +1406,8 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   maxLength: { value: number; message?: string } | null;
   uniq: boolean;
   uniqDeep: boolean;
+  uniqBy?: (elem: any) => any;
+  uniqWith?: (a: any, b: any) => boolean;
 }
 
 export type ArrayCardinality = "many" | "atleastone";
@@ -1468,24 +1470,6 @@ export class ZodArray<
 
     if (def.uniq) {
       const testObj: Record<any, true> = {};
-
-      for (const elem of ctx.data as any[]) {
-        if (typeof elem !== "object") {
-          if (testObj[elem]) {
-            addIssueToContext(ctx, {
-              code: ZodIssueCode.duplicate_element,
-            });
-            status.dirty();
-            break;
-          } else {
-            testObj[elem] = true;
-          }
-        }
-      }
-    }
-
-    if (def.uniqDeep) {
-      const testObj: Record<any, true> = {};
       const objects: any[] = [];
 
       for (const elem of ctx.data as any[]) {
@@ -1500,7 +1484,7 @@ export class ZodArray<
             testObj[elem] = true;
           }
         } else {
-          if (objects.some((test) => util.isEqual(test, elem))) {
+          if (objects.some((test) => test === elem)) {
             addIssueToContext(ctx, {
               code: ZodIssueCode.duplicate_element,
             });
@@ -1509,6 +1493,81 @@ export class ZodArray<
           } else {
             objects.push(elem);
           }
+        }
+      }
+    }
+
+    if (def.uniqDeep) {
+      const testObj: Record<any, true> = {};
+      const objects: any[] = [];
+
+      for (const elem of ctx.data as any[]) {
+        if (typeof elem !== "object") {
+          if (testObj[elem]) {
+            addIssueToContext(ctx, {
+              code: ZodIssueCode.duplicate_element_deep,
+            });
+            status.dirty();
+            break;
+          } else {
+            testObj[elem] = true;
+          }
+        } else {
+          if (objects.some((test) => util.isEqual(test, elem))) {
+            addIssueToContext(ctx, {
+              code: ZodIssueCode.duplicate_element_deep,
+            });
+            status.dirty();
+            break;
+          } else {
+            objects.push(elem);
+          }
+        }
+      }
+    }
+
+    if (def.uniqBy) {
+      const testObj: Record<any, true> = {};
+      const objects: any[] = [];
+
+      for (const elem of ctx.data as any[]) {
+        const val = def.uniqBy(elem);
+        if (typeof val !== "object") {
+          if (testObj[val]) {
+            addIssueToContext(ctx, {
+              code: ZodIssueCode.duplicate_element_by,
+            });
+            status.dirty();
+            break;
+          } else {
+            testObj[val] = true;
+          }
+        } else {
+          if (objects.some((test) => test === elem)) {
+            addIssueToContext(ctx, {
+              code: ZodIssueCode.duplicate_element_by,
+            });
+            status.dirty();
+            break;
+          } else {
+            objects.push(elem);
+          }
+        }
+      }
+    }
+
+    if (def.uniqWith) {
+      const objects: any[] = [];
+
+      for (const elem of ctx.data as any[]) {
+        if (objects.some((test) => def.uniqWith?.(test, elem))) {
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.duplicate_element_with,
+          });
+          status.dirty();
+          break;
+        } else {
+          objects.push(elem);
         }
       }
     }
@@ -1571,6 +1630,20 @@ export class ZodArray<
     return new ZodArray({
       ...this._def,
       uniqDeep,
+    }) as any;
+  }
+
+  uniqBy(uniqBy?: (elem: TypeOf<T>) => any): this {
+    return new ZodArray({
+      ...this._def,
+      uniqBy,
+    }) as any;
+  }
+
+  uniqWith(uniqWith?: (a: TypeOf<T>, b: TypeOf<T>) => boolean): this {
+    return new ZodArray({
+      ...this._def,
+      uniqWith,
     }) as any;
   }
 

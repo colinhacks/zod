@@ -12,6 +12,12 @@ const intNum = z.string().array().nonempty();
 const nonEmptyMax = z.string().array().nonempty().max(2);
 const uniq = z.any().array().uniq();
 const uniqDeep = z.any().array().uniqDeep();
+const uniqBy = z
+  .array(z.object({ id: z.string() }).partial())
+  .uniqBy((elem) => elem.id);
+const uniqWith = z
+  .array(z.object({ id: z.string() }).partial())
+  .uniqWith((a, b) => a.id === b.id);
 
 type t1 = z.infer<typeof nonEmptyMax>;
 util.assertEqual<[string, ...string[]], t1>(true);
@@ -34,6 +40,20 @@ test("passing validations", () => {
     .uniqDeep(false)
     .parse([{ a: "a" }, { b: "b" }, { c: "c" }, { a: "a" }]);
   uniq.parse([{ a: "a" }, { b: "b" }, { c: "c" }, { a: "a" }]);
+  expect(() =>
+    uniqBy.parse([
+      { id: "a", a: "a" },
+      { id: "b", b: "b" },
+      { id: "c", c: "c" },
+    ])
+  );
+  expect(() =>
+    uniqWith.parse([
+      { id: "a", a: "a" },
+      { id: "b", b: "b" },
+      { id: "c", c: "c" },
+    ])
+  );
 });
 
 test("failing validations", () => {
@@ -47,6 +67,22 @@ test("failing validations", () => {
   expect(() => uniq.parse(["a", "b", "c", "a"])).toThrow();
   expect(() =>
     uniqDeep.parse([{ a: "a" }, { b: "b" }, { c: "c" }, { a: "a" }])
+  ).toThrow();
+  expect(() =>
+    uniqBy.parse([
+      { id: "a", a: "a" },
+      { id: "b", b: "b" },
+      { id: "c", c: "c" },
+      { id: "a", d: "d" },
+    ])
+  ).toThrow();
+  expect(() =>
+    uniqWith.parse([
+      { id: "a", a: "a" },
+      { id: "b", b: "b" },
+      { id: "c", c: "c" },
+      { id: "a", d: "d" },
+    ])
   ).toThrow();
 });
 
