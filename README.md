@@ -1492,6 +1492,7 @@ const myFunction = z
   .function()
   .args(z.string(), z.number()) // accepts an arbitrary number of arguments
   .returns(z.boolean());
+
 type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string, arg1: number)=>boolean
 ```
@@ -1533,8 +1534,9 @@ const myFunction = z
   .function()
   .args(z.string())
   .implement((arg) => {
-    return [arg.length]; //
+    return [arg.length];
   });
+
 myFunction; // (arg: string)=>number[]
 ```
 
@@ -1579,6 +1581,7 @@ Given any Zod schema, you can call its `.parse` method to check `data` is valid.
 
 ```ts
 const stringSchema = z.string();
+
 stringSchema.parse("fish"); // => returns "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
@@ -1682,7 +1685,7 @@ type RefineParams = {
 For advanced cases, the second argument can also be a function that returns `RefineParams`/
 
 ```ts
-z.string().refine(
+const longString = z.string().refine(
   (val) => val.length > 10,
   (val) => ({ message: `${val} is not more than 10 characters` })
 );
@@ -1699,8 +1702,9 @@ const passwordForm = z
   .refine((data) => data.password === data.confirm, {
     message: "Passwords don't match",
     path: ["confirm"], // path of error
-  })
-  .parse({ password: "asdf", confirm: "qwer" });
+  });
+
+passwordForm.parse({ password: "asdf", confirm: "qwer" });
 ```
 
 Because you provided a `path` parameter, the resulting error will be:
@@ -1823,6 +1827,7 @@ To transform data after parsing, use the `transform` method.
 
 ```ts
 const stringToNumber = z.string().transform((val) => val.length);
+
 stringToNumber.parse("string"); // => 6
 ```
 
@@ -1869,7 +1874,7 @@ const Strings = z.string().transform((val, ctx) => {
 Transforms and refinements can be interleaved. These will be executed in the order they are declared.
 
 ```ts
-z.string()
+const nameToGreeting = z.string()
   .transform((val) => val.toUpperCase())
   .refine((val) => val.length > 15)
   .transform((val) => `Hello ${val}`)
@@ -1980,7 +1985,7 @@ z.string().optional().nullable();
 A convenience method that returns an array schema for the given type:
 
 ```ts
-const nullableString = z.string().array(); // string[]
+const stringArray = z.string().array(); // string[]
 
 // equivalent to
 z.array(z.string());
@@ -2002,7 +2007,7 @@ z.promise(z.string());
 A convenience method for union types.
 
 ```ts
-z.string().or(z.number()); // string | number
+const stringOrNumber = z.string().or(z.number()); // string | number
 
 // equivalent to
 z.union([z.string(), z.number()]);
@@ -2013,7 +2018,7 @@ z.union([z.string(), z.number()]);
 A convenience method for creating intersection types.
 
 ```ts
-z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: string } & { age: number }
+const nameAndAge = z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: string } & { age: number }
 
 // equivalent to
 z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
