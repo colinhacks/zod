@@ -4,6 +4,7 @@ import { z } from "../index.ts";
 
 const doubleSuite = new Benchmark.Suite("z.discriminatedUnion: double");
 const manySuite = new Benchmark.Suite("z.discriminatedUnion: many");
+const nestedSuite = new Benchmark.Suite("z.discriminatedUnion: nested");
 
 const aSchema = z.object({
   type: z.literal("a"),
@@ -32,6 +33,7 @@ const dSchema = z.object({
 
 const double = z.discriminatedUnion("type", [aSchema, bSchema]);
 const many = z.discriminatedUnion("type", [aSchema, bSchema, cSchema, dSchema]);
+const nested = z.discriminatedUnion("type", [double, cSchema, dSchema]);
 
 doubleSuite
   .add("valid: a", () => {
@@ -75,6 +77,30 @@ manySuite
     console.log(`${(manySuite as any).name}: ${e.target}`);
   });
 
+nestedSuite
+  .add("valid: a", () => {
+    nested.parse(objA);
+  })
+  .add("valid: b", () => {
+    nested.parse(objB);
+  })
+  .add("valid: c", () => {
+    nested.parse(objC);
+  })
+  .add("invalid: null", () => {
+    try {
+      nested.parse(null);
+    } catch (err) {}
+  })
+  .add("invalid: wrong shape", () => {
+    try {
+      nested.parse(objC);
+    } catch (err) {}
+  })
+  .on("cycle", (e: Benchmark.Event) => {
+    console.log(`${(nestedSuite as any).name}: ${e.target}`);
+  });
+
 export default {
-  suites: [doubleSuite, manySuite],
+  suites: [doubleSuite, manySuite, nestedSuite],
 };

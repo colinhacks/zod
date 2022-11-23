@@ -2332,9 +2332,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-const getDiscriminator = <T extends ZodTypeAny>(
-  type: T
-): Primitive[] | null => {
+const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
   if (type instanceof ZodLazy) {
     return getDiscriminator(type.schema);
   } else if (type instanceof ZodEffects) {
@@ -2346,33 +2344,42 @@ const getDiscriminator = <T extends ZodTypeAny>(
   } else if (type instanceof ZodNativeEnum) {
     // eslint-disable-next-line ban/ban
     return Object.keys(type.enum as any);
+  } else if (type instanceof ZodDiscriminatedUnion) {
+    return getDiscriminator(type._def.innerType);
   } else if (type instanceof ZodDefault) {
     return getDiscriminator(type._def.innerType);
+  } else if (type instanceof ZodOptional) {
+    return [undefined, ...getDiscriminator(type.unwrap())];
   } else if (type instanceof ZodUndefined) {
     return [undefined];
   } else if (type instanceof ZodNull) {
     return [null];
   } else {
-    return null;
+    return [];
   }
 };
 
-export type ZodDiscriminatedUnionOption<Discriminator extends string> =
+export type ZodDiscriminatedUnionObject<Discriminator extends string> =
   ZodObject<{ [key in Discriminator]: ZodTypeAny } & ZodRawShape, any, any>;
+
+export type ZodDiscriminatedUnionOption<Discriminator extends string> =
+  | ZodDiscriminatedUnionObject<Discriminator>
+  | ZodDiscriminatedUnion<string, Array<ZodDiscriminatedUnionOption<string>>>;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<any>[]
+  Options extends ZodDiscriminatedUnionOption<string>[]
 > extends ZodTypeDef {
   discriminator: Discriminator;
+  parentDiscriminators: Set<string>;
   options: Options;
-  optionsMap: Map<Primitive, ZodDiscriminatedUnionOption<any>>;
+  optionsMap: Map<Primitive, ZodDiscriminatedUnionOption<Discriminator>>;
   typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion;
 }
 
 export class ZodDiscriminatedUnion<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<Discriminator>[]
+  Options extends Array<ZodDiscriminatedUnionOption<string>>
 > extends ZodType<
   output<Options[number]>,
   ZodDiscriminatedUnionDef<Discriminator, Options>,
@@ -2422,12 +2429,48 @@ export class ZodDiscriminatedUnion<
     return this._def.discriminator;
   }
 
+  get parentDiscriminators() {
+    return Array.from(this._def.parentDiscriminators);
+  }
+
   get options() {
     return this._def.options;
   }
 
   get optionsMap() {
     return this._def.optionsMap;
+  }
+
+  _addParentDiscriminator(discriminator: string) {
+    const valueSet = new Set<Primitive>();
+    for (const type of this._def.options) {
+      if (type instanceof ZodObject) {
+        const discriminatorValues = getDiscriminator(type.shape[discriminator]);
+        if (!discriminatorValues.length) {
+          throw new Error(
+            `A discriminator value for key \`${discriminator}\` ` +
+              `could not be extracted from all schema options`
+          );
+        }
+        discriminatorValues.map((el) => valueSet.add(el));
+      } else if (type instanceof ZodDiscriminatedUnion) {
+        const values = type._addParentDiscriminator(discriminator);
+        if (values.length < 1) {
+          throw new Error(
+            `No value for key \`${discriminator}\` was found for DiscriminatedUnion with discriminator \`${type.discriminator}\``
+          );
+        }
+        values.map((el) => valueSet.add(el));
+      }
+    }
+    this._def.parentDiscriminators.add(discriminator);
+    const valueArray = Array.from(valueSet);
+    if (!valueArray.length) {
+      throw new Error(
+        `at least one value must be present for \`${discriminator}\` in DiscriminatedUnion for all children DUs`
+      );
+    }
+    return valueArray;
   }
 
   /**
@@ -2438,11 +2481,12 @@ export class ZodDiscriminatedUnion<
    * @param types an array of object schemas
    * @param params
    */
+
   static create<
     Discriminator extends string,
     Types extends [
       ZodDiscriminatedUnionOption<Discriminator>,
-      ...ZodDiscriminatedUnionOption<Discriminator>[]
+      ...Array<ZodDiscriminatedUnionOption<Discriminator>>
     ]
   >(
     discriminator: Discriminator,
@@ -2452,35 +2496,45 @@ export class ZodDiscriminatedUnion<
     // Get all the valid discriminator values
     const optionsMap: Map<Primitive, Types[number]> = new Map();
 
-    // try {
-    for (const type of options) {
-      const discriminatorValues = getDiscriminator(type.shape[discriminator]);
-      if (!discriminatorValues) {
-        throw new Error(
-          `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
-        );
-      }
-      for (const value of discriminatorValues) {
+    const addUniqueDiscriminatorValues = (
+      values: Array<Primitive>,
+      type: Types[number]
+    ) => {
+      for (const value of values) {
         if (optionsMap.has(value)) {
           throw new Error(
-            `Discriminator property ${String(
-              discriminator
-            )} has duplicate value ${String(value)}`
+            `Discriminator property \`${discriminator}\` has duplicate value \`${String(
+              value
+            )}\``
           );
         }
+
         optionsMap.set(value, type);
+      }
+    };
+
+    for (const type of options) {
+      if (type instanceof ZodDiscriminatedUnion) {
+        const values = type._addParentDiscriminator(discriminator);
+        addUniqueDiscriminatorValues(values, type);
+      } else {
+        const discriminatorValues = getDiscriminator(type.shape[discriminator]);
+        if (!discriminatorValues.length) {
+          throw new Error(
+            `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
+          );
+        }
+
+        addUniqueDiscriminatorValues(discriminatorValues, type);
       }
     }
 
-    return new ZodDiscriminatedUnion<
-      Discriminator,
-      // DiscriminatorValue,
-      Types
-    >({
+    return new ZodDiscriminatedUnion<Discriminator, Types>({
       typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion,
       discriminator,
       options,
       optionsMap,
+      parentDiscriminators: new Set(),
       ...processCreateParams(params),
     });
   }
