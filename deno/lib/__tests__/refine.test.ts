@@ -217,3 +217,25 @@ test("fatal superRefine", () => {
   expect(result.success).toEqual(false);
   if (!result.success) expect(result.error.issues.length).toEqual(1);
 });
+
+test("fatal refine", () => {
+  const Strings = z
+    .string()
+    .refine((val) => val === "", {
+      message: "foo",
+      fatal: true,
+    })
+    .superRefine((val, ctx) => {
+      if (val !== " ") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "bar",
+        });
+      }
+    });
+
+  const result = Strings.safeParse("");
+
+  expect(result.success).toEqual(false);
+  if (!result.success) expect(result.error.issues.length).toEqual(1);
+});

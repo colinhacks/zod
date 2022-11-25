@@ -52,7 +52,9 @@ export type input<T extends ZodType<any, any, any>> = T["_input"];
 export type output<T extends ZodType<any, any, any>> = T["_output"];
 export type { TypeOf as infer };
 
-export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
+export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">> & {
+  fatal?: boolean;
+};
 export interface ZodTypeDef {
   errorMap?: ZodErrorMap;
   description?: string;
