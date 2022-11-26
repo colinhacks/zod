@@ -238,3 +238,25 @@ test("fatal refine", () => {
   expect(result.success).toEqual(false);
   if (!result.success) expect(result.error.issues.length).toEqual(1);
 });
+
+test("chained refinements with type narrowing", () => {
+  const isNotNull = <T>(val: T | null): val is T => val !== null;
+  const schema = z
+    .object({ test: z.literal(true) })
+    .nullable()
+    .refine(isNotNull, {
+      message: "foo",
+      fatal: true,
+    })
+    .superRefine((val, ctx) => {
+      // Would throw exception here without fatal on the previous refine
+      if (val.test) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "bar" });
+      }
+    });
+
+  const result = schema.safeParse(null);
+
+  expect(result.success).toEqual(false);
+  if (!result.success) expect(result.error.issues.length).toEqual(1);
+});
