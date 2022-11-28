@@ -386,6 +386,7 @@ To install Zod v3:
 ```sh
 npm install zod       # npm
 yarn add zod          # yarn
+bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
