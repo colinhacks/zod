@@ -379,9 +379,7 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### Node/npm
-
-To install Zod v3:
+### From `npm` (Node/Bun)
 
 ```sh
 npm install zod       # npm
@@ -390,7 +388,7 @@ bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
-### Deno
+### From `deno.land/x` (Deno)
 
 Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](https://deno.land/x). The latest version can be imported like so:
 
