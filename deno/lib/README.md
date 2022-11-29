@@ -193,6 +193,15 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <table>
   <tr>
+   <td align="center">
+      <a href="https://www.numeric.io">
+        <img src="static/numeric.png" width="150px;" alt="Numeric logo" />
+      </a>
+      <br />
+      <b>Numeric</b>
+      <br />
+      <a href="https://www.numeric.io">numeric.io</a>
+    </td>
     <td align="center">
       <a href="https://snaplet.dev">
         <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="" />
@@ -211,15 +220,15 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://marcatopartners.com/">marcatopartners.com</a>
     </td>
-     <td align="center">
+  </tr>
+  <tr>
+    <td align="center">
       <a href="https://github.com/macandcheese-spaghetticode">
         <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
       </a>
       <br />
       <b>Trip</b>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://seasoned.cc">
         <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="150px;" alt="" />
