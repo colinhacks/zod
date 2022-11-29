@@ -179,12 +179,21 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
     <td align="center">
       <a href="https://deletype.com/">
-        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="" />
+        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="Deletype logo" />
       </a>
       <br />
       <b>Deletype</b>
       <br />
       <a href="https://deletype.com">deletype.com</a>
+    </td>
+    <td align="center">
+      <a href="https://proxy.com/">
+        <img src="https://avatars.githubusercontent.com/u/14321439?s=200&v=4" width="200px;" alt="Proxy logo" />
+      </a>
+      <br />
+      <b>Proxy</b>
+      <br />
+      <a href="https://proxy.com">proxy.com</a>
     </td>
   </tr>
 </table>
@@ -195,7 +204,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
    <td align="center" colspan="2">
       <a href="https://www.numeric.io">
-        <img src="static/numeric.png" width="150px;" alt="Numeric logo" />
+        <img src="https://i.imgur.com/kTiLtZt.png" width="150px;" alt="Numeric logo" />
       </a>
       <br />
       <b>Numeric</b>
@@ -204,7 +213,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
     <td align="center">
       <a href="https://snaplet.dev">
-        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="" />
+        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="Snaplet logo" />
       </a>
       <br />
       <b>Snaplet</b>
@@ -242,12 +251,14 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
    <tr>
-<td align="center">
-      <a href="https://github.com/macandcheese-spaghetticode">
-        <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
+    <td align="center">
+      <a href="https://www.bamboocreative.nz/">
+        <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="150px;" alt="Bamboo Creative logo" />
       </a>
       <br />
-      <b>Trip</b>
+      <b>Bamboo Creative</b>
+      <br />
+      <a href="https://www.bamboocreative.nz">bamboocreative.nz</a>
     </td>
   </tr>
 </table>
@@ -288,6 +299,16 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
   <tr>
+  <td align="center">
+      <a href="https://fungible.systems/">
+        <img src="https://avatars.githubusercontent.com/u/80220121?s=200&v=4" width="100px;" alt="Fungible Systems logo"/>
+      </a>
+      <br />
+      <b>Fungible Systems</b>
+      <br/>
+      <a href="https://fungible.systems/">fungible.systems</a>
+      <br />
+    </td>
     <td align="center">
       <a href="https://adaptable.io/">
         <img src="https://avatars.githubusercontent.com/u/60378268?s=200&v=4" width="100px;" alt=""/>
