@@ -193,7 +193,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <table>
   <tr>
-   <td align="center">
+   <td align="center" colspan="2">
       <a href="https://www.numeric.io">
         <img src="static/numeric.png" width="150px;" alt="Numeric logo" />
       </a>
@@ -211,7 +211,10 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://snaplet.dev">snaplet.dev</a>
     </td>
-     <td align="center">
+    
+  </tr>
+  <tr>
+   <td align="center">
       <a href="https://marcatopartners.com/">
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
       </a>
@@ -220,14 +223,15 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://marcatopartners.com/">marcatopartners.com</a>
     </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/macandcheese-spaghetticode">
-        <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
+    
+     <td align="center">
+      <a href="https://interval.com">
+        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
       </a>
       <br />
-      <b>Trip</b>
+      <b>Interval</b>
+      <br />
+      <a href="https://interval.com">interval.com</a>
     </td>
     <td align="center">
       <a href="https://seasoned.cc">
@@ -238,14 +242,14 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://seasoned.cc">seasoned.cc</a>
     </td>
-    <td align="center">
-      <a href="https://interval.com">
-        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
+  </tr>
+   <tr>
+<td align="center">
+      <a href="https://github.com/macandcheese-spaghetticode">
+        <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
       </a>
       <br />
-      <b>Interval</b>
-      <br />
-      <a href="https://interval.com">interval.com</a>
+      <b>Trip</b>
     </td>
   </tr>
 </table>
