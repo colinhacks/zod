@@ -24,6 +24,24 @@ test("array max", async () => {
   }
 });
 
+test("array length", async () => {
+  try {
+    await z.array(z.string()).length(2).parseAsync(["asdf", "asdf", "asdf"]);
+  } catch (err) {
+    expect((err as z.ZodError).issues[0].message).toEqual(
+      "Array must contain exactly 2 element(s)"
+    );
+  }
+
+  try {
+    await z.array(z.string()).length(2).parseAsync(["asdf"]);
+  } catch (err) {
+    expect((err as z.ZodError).issues[0].message).toEqual(
+      "Array must contain exactly 2 element(s)"
+    );
+  }
+});
+
 test("string min", async () => {
   try {
     await z.string().min(4).parseAsync("asd");

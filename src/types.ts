@@ -1623,7 +1623,10 @@ export class ZodArray<
   }
 
   length(len: number, message?: errorUtil.ErrMessage): this {
-    return this.min(len, message).max(len, message) as any;
+    const defaultMessage = `Array must contain exactly ${len} element(s)`;
+    const actualMessage = message ?? defaultMessage;
+
+    return this.min(len, actualMessage).max(len, actualMessage) as any;
   }
 
   nonempty(message?: errorUtil.ErrMessage): ZodArray<T, "atleastone"> {
