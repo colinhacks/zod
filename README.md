@@ -211,7 +211,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://snaplet.dev">snaplet.dev</a>
     </td>
-    
   </tr>
   <tr>
    <td align="center">
@@ -223,7 +222,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://marcatopartners.com/">marcatopartners.com</a>
     </td>
-    
      <td align="center">
       <a href="https://interval.com">
         <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
