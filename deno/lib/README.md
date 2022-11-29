@@ -204,7 +204,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
    <td align="center" colspan="2">
       <a href="https://www.numeric.io">
-        <img src="https://i.imgur.com/kTiLtZt.png" width="150px;" alt="Numeric logo" />
+        <img src="https://i.imgur.com/kTiLtZt.png" width="250px;" alt="Numeric logo" />
       </a>
       <br />
       <b>Numeric</b>
