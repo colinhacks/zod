@@ -96,7 +96,7 @@ const handleResult = <Input, Output>(
   }
 };
 
-type RawCreateParams =
+export type RawCreateParams =
   | {
       errorMap?: ZodErrorMap;
       invalid_type_error?: string;
@@ -104,7 +104,10 @@ type RawCreateParams =
       description?: string;
     }
   | undefined;
-type ProcessedCreateParams = { errorMap?: ZodErrorMap; description?: string };
+export type ProcessedCreateParams = {
+  errorMap?: ZodErrorMap;
+  description?: string;
+};
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
   const { errorMap, invalid_type_error, required_error, description } = params;
@@ -469,7 +472,7 @@ export abstract class ZodType<
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
-type ZodStringCheck =
+export type ZodStringCheck =
   | { kind: "min"; value: number; message?: string }
   | { kind: "max"; value: number; message?: string }
   | { kind: "email"; message?: string }
@@ -849,7 +852,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
-type ZodNumberCheck =
+export type ZodNumberCheck =
   | { kind: "min"; value: number; inclusive: boolean; message?: string }
   | { kind: "max"; value: number; inclusive: boolean; message?: string }
   | { kind: "int"; message?: string }
@@ -1170,7 +1173,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
 //////////                     ////////
 ///////////////////////////////////////
 ///////////////////////////////////////
-type ZodDateCheck =
+export type ZodDateCheck =
   | { kind: "min"; value: number; message?: string }
   | { kind: "max"; value: number; message?: string };
 export interface ZodDateDef extends ZodTypeDef {
@@ -1526,7 +1529,7 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
 }
 
 export type ArrayCardinality = "many" | "atleastone";
-type arrayOutputType<
+export type arrayOutputType<
   T extends ZodTypeAny,
   Cardinality extends ArrayCardinality = "many"
 > = Cardinality extends "atleastone"
@@ -1714,7 +1717,7 @@ const AugmentFactory =
     }) as any;
   };
 
-type UnknownKeysParam = "passthrough" | "strict" | "strip";
+export type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
 export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,
@@ -1758,7 +1761,7 @@ export type objectInputType<
       baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
     >;
 
-type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
+export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
   ? deoptional<U>
   : T extends ZodNullable<infer U>
   ? ZodNullable<deoptional<U>>
@@ -2190,7 +2193,7 @@ export type AnyZodObject = ZodObject<any, any, any>;
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-type ZodUnionOptions = Readonly<[ZodTypeAny, ...ZodTypeAny[]]>;
+export type ZodUnionOptions = Readonly<[ZodTypeAny, ...ZodTypeAny[]]>;
 export interface ZodUnionDef<
   T extends ZodUnionOptions = Readonly<
     [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]
@@ -2780,8 +2783,10 @@ export interface ZodRecordDef<
   typeName: ZodFirstPartyTypeKind.ZodRecord;
 }
 
-type KeySchema = ZodType<string | number | symbol, any, any>;
-type RecordType<K extends string | number | symbol, V> = [string] extends [K]
+export type KeySchema = ZodType<string | number | symbol, any, any>;
+export type RecordType<K extends string | number | symbol, V> = [
+  string
+] extends [K]
   ? Record<K, V>
   : [number] extends [K]
   ? Record<K, V>
@@ -3374,9 +3379,9 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
 export type ArrayKeys = keyof any[];
 export type Indices<T> = Exclude<keyof T, ArrayKeys>;
 
-type EnumValues = [string, ...string[]];
+export type EnumValues = [string, ...string[]];
 
-type Values<T extends EnumValues> = {
+export type Values<T extends EnumValues> = {
   [k in T[number]]: k;
 };
 
@@ -3386,7 +3391,7 @@ export interface ZodEnumDef<T extends EnumValues = EnumValues>
   typeName: ZodFirstPartyTypeKind.ZodEnum;
 }
 
-type Writeable<T> = { -readonly [P in keyof T]: T[P] };
+export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
 function createZodEnum<U extends string, T extends Readonly<[U, ...U[]]>>(
   values: T,
@@ -3478,7 +3483,7 @@ export interface ZodNativeEnumDef<T extends EnumLike = EnumLike>
   typeName: ZodFirstPartyTypeKind.ZodNativeEnum;
 }
 
-type EnumLike = { [k: string]: string | number; [nu: number]: string };
+export type EnumLike = { [k: string]: string | number; [nu: number]: string };
 
 export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   T[keyof T],
