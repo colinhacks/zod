@@ -781,7 +781,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
 
   length(len: number, message?: errorUtil.ErrMessage) {
-    return this.min(len, message).max(len, message);
+    const defaultMessage = `String must contain exactly ${len} character(s)`;
+    const actualMessage = message ?? defaultMessage;
+
+    return this.min(len, actualMessage).max(len, actualMessage);
   }
 
   /**
