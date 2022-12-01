@@ -1663,15 +1663,13 @@ export namespace objectUtil {
     [k in keyof T]: undefined extends T[k] ? k : never;
   }[keyof T];
 
-  type filterRequiredOnly<T extends object> = {
+  type requiredKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? never : k;
-  };
+  }[keyof T];
 
-  export type addQuestionMarks<T extends object> = Pick<
-    T,
-    keyof filterRequiredOnly<T>
-  > &
-    Partial<Pick<T, optionalKeys<T>>>;
+  export type addQuestionMarks<T extends object> = Pick<T, requiredKeys<T>> &
+    Partial<Pick<T, optionalKeys<T>>> &
+    Omit<T, optionalKeys<T> | requiredKeys<T>>;
 
   export type identity<T> = T;
   export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
