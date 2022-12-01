@@ -10,8 +10,8 @@ export type inferFlattenedErrors<
 > = typeToFlattenedError<TypeOf<T>, U>;
 export type typeToFlattenedError<T, U = string> = {
   formErrors: U[];
-  fieldErrors: {
-    [P in allKeys<T>]?: U[];
+  fieldErrors:{
+    [P in allKeys<T>]?: string | U[];
   };
 };
 
@@ -181,12 +181,13 @@ export type inferFormattedError<
 
 export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
+  fatalOnError: boolean = false;
 
   get errors() {
     return this.issues;
   }
 
-  constructor(issues: ZodIssue[]) {
+  constructor(issues: ZodIssue[], fatalOnError?: boolean) {
     super();
 
     const actualProto = new.target.prototype;
@@ -198,6 +199,7 @@ export class ZodError<T = any> extends Error {
     }
     this.name = "ZodError";
     this.issues = issues;
+    this.fatalOnError = fatalOnError || false;
   }
 
   format(): ZodFormattedError<T>;
@@ -283,11 +285,17 @@ export class ZodError<T = any> extends Error {
     const fieldErrors: any = {};
     const formErrors: U[] = [];
     for (const sub of this.issues) {
-      if (sub.path.length > 0) {
-        fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-        fieldErrors[sub.path[0]].push(mapper(sub));
+      if(this.fatalOnError){
+        if(sub.path.length > 0){
+          fieldErrors[sub.path[0]] = sub.message;
+        }
       } else {
-        formErrors.push(mapper(sub));
+        if (sub.path.length > 0) {
+          fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
+          fieldErrors[sub.path[0]].push(mapper(sub));
+        } else {
+          formErrors.push(mapper(sub));
+        }
       }
     }
     return { formErrors, fieldErrors };

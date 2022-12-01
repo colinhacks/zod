@@ -91,7 +91,7 @@ const handleResult = <Input, Output>(
     if (!ctx.common.issues.length) {
       throw new Error("Validation failed but no issues detected.");
     }
-    const error = new ZodError(ctx.common.issues);
+    const error = new ZodError(ctx.common.issues, ctx.common.fatalOnError);
     return { success: false, error };
   }
 };
@@ -167,7 +167,7 @@ export abstract class ZodType<
 
         schemaErrorMap: this._def.errorMap,
         path: input.path,
-        parent: input.parent,
+        parent: input.parent
       }
     );
   }
@@ -220,6 +220,7 @@ export abstract class ZodType<
         issues: [],
         async: params?.async ?? false,
         contextualErrorMap: params?.errorMap,
+        fatalOnError: params?.fatalOnError ?? false,
       },
       path: params?.path || [],
       schemaErrorMap: this._def.errorMap,
@@ -250,6 +251,7 @@ export abstract class ZodType<
         issues: [],
         contextualErrorMap: params?.errorMap,
         async: true,
+        fatalOnError: params?.fatalOnError ?? false,
       },
       path: params?.path || [],
       schemaErrorMap: this._def.errorMap,
@@ -577,7 +579,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             inclusive: true,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "max") {
         if (input.data.length > check.value) {
@@ -589,7 +596,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             inclusive: true,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "email") {
         if (!emailRegex.test(input.data)) {
@@ -599,7 +611,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "uuid") {
         if (!uuidRegex.test(input.data)) {
@@ -609,7 +626,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "cuid") {
         if (!cuidRegex.test(input.data)) {
@@ -619,7 +641,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "url") {
         try {
@@ -631,7 +658,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "regex") {
         check.regex.lastIndex = 0;
@@ -643,7 +675,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
@@ -655,7 +692,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             validation: { startsWith: check.value },
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "endsWith") {
         if (!(input.data as string).endsWith(check.value)) {
@@ -665,7 +707,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             validation: { endsWith: check.value },
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "datetime") {
         const regex = datetimeRegex(check);
@@ -677,7 +724,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             validation: "datetime",
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else {
         util.assertNever(check);
@@ -900,7 +952,12 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             received: "float",
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "min") {
         const tooSmall = check.inclusive
@@ -915,7 +972,12 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             inclusive: check.inclusive,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "max") {
         const tooBig = check.inclusive
@@ -930,7 +992,12 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             inclusive: check.inclusive,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "multipleOf") {
         if (floatSafeRemainder(input.data, check.value) !== 0) {
@@ -940,7 +1007,12 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             multipleOf: check.value,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "finite") {
         if (!Number.isFinite(input.data)) {
@@ -949,7 +1021,12 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             code: ZodIssueCode.not_finite,
             message: check.message,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else {
         util.assertNever(check);
@@ -1217,7 +1294,12 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
             minimum: check.value,
             type: "date",
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (check.kind === "max") {
         if (input.data.getTime() > check.value) {
@@ -1229,7 +1311,12 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
             maximum: check.value,
             type: "date",
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else {
         util.assertNever(check);
@@ -1569,7 +1656,12 @@ export class ZodArray<
           inclusive: true,
           message: def.minLength.message,
         });
-        status.dirty();
+        if(ctx.common.fatalOnError){
+          status.abort();
+          return INVALID;
+        } else {
+          status.dirty();
+        }
       }
     }
 
@@ -1582,7 +1674,12 @@ export class ZodArray<
           inclusive: true,
           message: def.maxLength.message,
         });
-        status.dirty();
+        if(ctx.common.fatalOnError){
+          status.abort();
+          return INVALID;
+        } else {
+          status.dirty();
+        }
       }
     }
 
@@ -1881,7 +1978,12 @@ export class ZodObject<
             code: ZodIssueCode.unrecognized_keys,
             keys: extraKeys,
           });
-          status.dirty();
+          if(ctx.common.fatalOnError){
+            status.abort();
+            return INVALID;
+          } else {
+            status.dirty();
+          }
         }
       } else if (unknownKeys === "strip") {
       } else {
