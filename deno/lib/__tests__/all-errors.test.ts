@@ -1,8 +1,9 @@
 // @ts-ignore TS6133
-import { expect, test } from "@jest/globals";
+import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
+const test = Deno.test;
 
-import { util } from "../helpers/util";
-import * as z from "../index";
+import { util } from "../helpers/util.ts";
+import * as z from "../index.ts";
 
 const Test = z.object({
   f1: z.number(),

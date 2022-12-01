@@ -1,7 +1,7 @@
 {
-  "name": "zod",
+  "name": "zod-abort-failed",
   "version": "3.19.1",
-  "description": "TypeScript-first schema declaration and validation library with static type inference",
+  "description": "Zod with option to abort early on validation error.",
   "main": "./lib/index.js",
   "types": "./index.d.ts",
   "module": "./lib/index.mjs",
