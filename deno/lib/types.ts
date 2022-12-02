@@ -44,6 +44,7 @@ import {
 export type RefinementCtx = {
   addIssue: (arg: IssueData) => void;
   path: (string | number)[];
+  label: any;
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
@@ -55,7 +56,7 @@ export type { TypeOf as infer };
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
   errorMap?: ZodErrorMap;
-  description?: string;
+  label?: string;
 }
 
 class ParseInputLazyPath implements ParseInput {
@@ -101,22 +102,22 @@ export type RawCreateParams =
       errorMap?: ZodErrorMap;
       invalid_type_error?: string;
       required_error?: string;
-      description?: string;
+      label?: string;
     }
   | undefined;
 export type ProcessedCreateParams = {
   errorMap?: ZodErrorMap;
-  description?: string;
+  label?: string;
 };
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
-  const { errorMap, invalid_type_error, required_error, description } = params;
+  const { errorMap, invalid_type_error, required_error, label } = params;
   if (errorMap && (invalid_type_error || required_error)) {
     throw new Error(
       `Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`
     );
   }
-  if (errorMap) return { errorMap: errorMap, description };
+  if (errorMap) return { errorMap: errorMap, label };
   const customMap: ZodErrorMap = (iss, ctx) => {
     if (iss.code !== "invalid_type") return { message: ctx.defaultError };
     if (typeof ctx.data === "undefined") {
@@ -124,7 +125,7 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
     }
     return { message: invalid_type_error ?? ctx.defaultError };
   };
-  return { errorMap: customMap, description };
+  return { errorMap: customMap, label };
 }
 
 export type SafeParseSuccess<Output> = { success: true; data: Output };
@@ -144,8 +145,8 @@ export abstract class ZodType<
   readonly _input!: Input;
   readonly _def!: Def;
 
-  get description() {
-    return this._def.description;
+  get label() {
+    return this._def.label;
   }
 
   abstract _parse(input: ParseInput): ParseReturnType<Output>;
@@ -167,7 +168,7 @@ export abstract class ZodType<
 
         schemaErrorMap: this._def.errorMap,
         path: input.path,
-        parent: input.parent
+        parent: input.parent,
       }
     );
   }
@@ -375,7 +376,6 @@ export abstract class ZodType<
     this.brand = this.brand.bind(this);
     this.default = this.default.bind(this);
     this.catch = this.catch.bind(this);
-    this.describe = this.describe.bind(this);
     this.pipe = this.pipe.bind(this);
     this.isNullable = this.isNullable.bind(this);
     this.isOptional = this.isOptional.bind(this);
@@ -445,14 +445,6 @@ export abstract class ZodType<
       defaultValue: defaultValueFunc,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
     }) as any;
-  }
-
-  describe(description: string): this {
-    const This = (this as any).constructor;
-    return new This({
-      ...this._def,
-      description,
-    });
   }
 
   pipe<T extends ZodTypeAny>(target: T): ZodPipeline<this, T> {
@@ -559,6 +551,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           code: ZodIssueCode.invalid_type,
           expected: ZodParsedType.string,
           received: ctx.parsedType,
+          label: this.label,
         }
         //
       );
@@ -578,8 +571,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             type: "string",
             inclusive: true,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -595,8 +589,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             type: "string",
             inclusive: true,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -610,8 +605,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             validation: "email",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -625,8 +621,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             validation: "uuid",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -640,8 +637,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             validation: "cuid",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -657,8 +655,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             validation: "url",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -674,8 +673,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             validation: "regex",
             code: ZodIssueCode.invalid_string,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -691,8 +691,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             code: ZodIssueCode.invalid_string,
             validation: { startsWith: check.value },
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -706,8 +707,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             code: ZodIssueCode.invalid_string,
             validation: { endsWith: check.value },
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -723,8 +725,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             code: ZodIssueCode.invalid_string,
             validation: "datetime",
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -935,6 +938,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.number,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -951,8 +955,9 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             expected: "integer",
             received: "float",
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -971,8 +976,9 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             type: "number",
             inclusive: check.inclusive,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -991,8 +997,9 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             type: "number",
             inclusive: check.inclusive,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -1006,8 +1013,9 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
             code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -1020,8 +1028,9 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_finite,
             message: check.message,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -1195,6 +1204,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.bigint,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -1229,6 +1239,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.boolean,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -1268,6 +1279,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.date,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -1276,6 +1288,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_date,
+        label: this.label,
       });
       return INVALID;
     }
@@ -1293,8 +1306,9 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
             inclusive: true,
             minimum: check.value,
             type: "date",
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -1310,8 +1324,9 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
             inclusive: true,
             maximum: check.value,
             type: "date",
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -1403,6 +1418,7 @@ export class ZodSymbol extends ZodType<symbol, ZodSymbolDef, symbol> {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.symbol,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -1438,6 +1454,7 @@ export class ZodUndefined extends ZodType<undefined, ZodUndefinedDef> {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.undefined,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -1473,6 +1490,7 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.null,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -1555,6 +1573,7 @@ export class ZodNever extends ZodType<never, ZodNeverDef> {
       code: ZodIssueCode.invalid_type,
       expected: ZodParsedType.never,
       received: ctx.parsedType,
+      label: this.label,
     });
     return INVALID;
   }
@@ -1586,6 +1605,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.void,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -1643,6 +1663,7 @@ export class ZodArray<
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.array,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -1655,8 +1676,9 @@ export class ZodArray<
           type: "array",
           inclusive: true,
           message: def.minLength.message,
+          label: this.label,
         });
-        if(ctx.common.fatalOnError){
+        if (ctx.common.fatalOnError) {
           status.abort();
           return INVALID;
         } else {
@@ -1673,8 +1695,9 @@ export class ZodArray<
           type: "array",
           inclusive: true,
           message: def.maxLength.message,
+          label: this.label,
         });
-        if(ctx.common.fatalOnError){
+        if (ctx.common.fatalOnError) {
           status.abort();
           return INVALID;
         } else {
@@ -1923,6 +1946,7 @@ export class ZodObject<
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.object,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -1977,8 +2001,9 @@ export class ZodObject<
           addIssueToContext(ctx, {
             code: ZodIssueCode.unrecognized_keys,
             keys: extraKeys,
+            label: this.label,
           });
-          if(ctx.common.fatalOnError){
+          if (ctx.common.fatalOnError) {
             status.abort();
             return INVALID;
           } else {
@@ -2313,6 +2338,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
     const options = this._def.options;
+    const label = this._def.label;
 
     function handleResults(
       results: { ctx: ParseContext; result: SyncParseReturnType<any> }[]
@@ -2341,6 +2367,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union,
         unionErrors,
+        label,
       });
       return INVALID;
     }
@@ -2405,6 +2432,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union,
         unionErrors,
+        label: this.label,
       });
 
       return INVALID;
@@ -2491,6 +2519,7 @@ export class ZodDiscriminatedUnion<
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.object,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -2504,6 +2533,7 @@ export class ZodDiscriminatedUnion<
         code: ZodIssueCode.invalid_union_discriminator,
         options: Array.from(this.optionsMap.keys()),
         path: [discriminator],
+        label: this.label,
       });
       return INVALID;
     }
@@ -2685,6 +2715,7 @@ export class ZodIntersection<
       if (!merged.valid) {
         addIssueToContext(ctx, {
           code: ZodIssueCode.invalid_intersection_types,
+          label: this.label,
         });
         return INVALID;
       }
@@ -2796,6 +2827,7 @@ export class ZodTuple<
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.array,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -2806,6 +2838,7 @@ export class ZodTuple<
         minimum: this._def.items.length,
         inclusive: true,
         type: "array",
+        label: this.label,
       });
 
       return INVALID;
@@ -2819,6 +2852,7 @@ export class ZodTuple<
         maximum: this._def.items.length,
         inclusive: true,
         type: "array",
+        label: this.label,
       });
       status.dirty();
     }
@@ -2916,6 +2950,7 @@ export class ZodRecord<
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.object,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -3007,6 +3042,7 @@ export class ZodMap<
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.map,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -3105,6 +3141,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.set,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -3119,6 +3156,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
           type: "set",
           inclusive: true,
           message: def.minSize.message,
+          label: this.label,
         });
         status.dirty();
       }
@@ -3132,6 +3170,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
           type: "set",
           inclusive: true,
           message: def.maxSize.message,
+          label: this.label,
         });
         status.dirty();
       }
@@ -3241,6 +3280,7 @@ export class ZodFunction<
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.function,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -3449,6 +3489,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_literal,
         expected: this._def.value,
+        received: this._def.label,
       });
       return INVALID;
     }
@@ -3523,6 +3564,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
         expected: util.joinValues(expectedValues) as "string",
         received: ctx.parsedType,
         code: ZodIssueCode.invalid_type,
+        label: this.label,
       });
       return INVALID;
     }
@@ -3604,6 +3646,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
         expected: util.joinValues(expectedValues) as "string",
         received: ctx.parsedType,
         code: ZodIssueCode.invalid_type,
+        label: this.label,
       });
       return INVALID;
     }
@@ -3665,6 +3708,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.promise,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
@@ -3771,6 +3815,7 @@ export class ZodEffects<
       }
     }
 
+    const label = this._def.schema.label;
     const checkCtx: RefinementCtx = {
       addIssue: (arg: IssueData) => {
         addIssueToContext(ctx, arg);
@@ -3782,6 +3827,9 @@ export class ZodEffects<
       },
       get path() {
         return ctx.path;
+      },
+      get label() {
+        return label;
       },
     };
 
@@ -4128,6 +4176,7 @@ export class ZodNaN extends ZodType<number, ZodNaNDef> {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.nan,
         received: ctx.parsedType,
+        label: this.label,
       });
       return INVALID;
     }
