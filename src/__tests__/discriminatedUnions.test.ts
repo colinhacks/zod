@@ -112,7 +112,7 @@ test("valid discriminator value, invalid data", () => {
       {
         code: z.ZodIssueCode.invalid_type,
         expected: z.ZodParsedType.string,
-        message: "Required",
+        message: "a is required",
         path: ["a"],
         received: z.ZodParsedType.undefined,
       },

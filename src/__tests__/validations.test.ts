@@ -25,10 +25,12 @@ test("array max", async () => {
 
 test("string min", async () => {
   try {
-    await z.string().min(4).parseAsync("asd");
+    await z.string({
+      label: "a"
+    }).min(4).parseAsync("asd");
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "String must contain at least 4 character(s)"
+      "a must contain at least 4 character(s)"
     );
   }
 });
