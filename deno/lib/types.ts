@@ -145,6 +145,8 @@ export abstract class ZodType<
   readonly _input!: Input;
   readonly _def!: Def;
 
+  isImportant = false;
+
   get label() {
     return this._def.label;
   }
@@ -892,6 +894,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
 
   static create = (params?: RawCreateParams): ZodString => {
+    const p = processCreateParams(params);
     return new ZodString({
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodString,
@@ -1790,10 +1793,19 @@ export namespace objectUtil {
     [k in keyof T]: undefined extends T[k] ? never : k;
   }[keyof T];
 
+  // type importantKeys<T extends object> = {
+  //   [k in keyof T]: undefined extends T[k] ? never : k;
+  // }[keyof T];
+
   export type addQuestionMarks<T extends object> = Partial<
     Pick<T, optionalKeys<T>>
   > &
-    Pick<T, requiredKeys<T>>;
+    Pick<
+      T,
+      requiredKeys<T>
+      // > &
+      //   Pick<T, importantKeys<T>>;
+    >;
 
   export type identity<T> = T;
   export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
@@ -1938,7 +1950,9 @@ export class ZodObject<
     return (this._cached = { shape, keys });
   }
 
-  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+  async _parse(
+    input: ParseInput
+  ): Promise<SyncParseReturnType<this["_output"]>> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.object) {
       const ctx = this._getOrReturnCtx(input);
@@ -1974,18 +1988,46 @@ export class ZodObject<
       value: ParseReturnType<any>;
       alwaysSet?: boolean;
     }[] = [];
+
     for (const key of shapeKeys) {
       const keyValidator = shape[key];
       const value = ctx.data[key];
-      pairs.push({
-        key: { status: "valid", value: key },
-        value: keyValidator._parse(
+
+      let pairKey: ParseReturnType<any>;
+      let pairValue: ParseReturnType<any>;
+      if (ctx.common.async) {
+        pairKey = { status: "valid", value: key };
+        pairValue = await keyValidator._parse(
           new ParseInputLazyPath(ctx, value, ctx.path, key)
-        ),
-        alwaysSet: key in ctx.data,
-      });
+        );
+
+        pairs.push({
+          key: pairKey,
+          value: pairValue,
+          alwaysSet: key in ctx.data,
+        });
+      } else {
+        pairKey = { status: "valid", value: key };
+        pairValue = keyValidator._parse(
+          new ParseInputLazyPath(ctx, value, ctx.path, key)
+        );
+
+        pairs.push({
+          key: pairKey,
+          value: pairValue,
+          alwaysSet: key in ctx.data,
+        });
+      }
+
+      if (
+        keyValidator.isImportant &&
+        "status" in pairValue &&
+        pairValue.status !== "valid"
+      )
+        break;
     }
 
+    // extrakeys
     if (this._def.catchall instanceof ZodNever) {
       const unknownKeys = this._def.unknownKeys;
 
@@ -2030,26 +2072,7 @@ export class ZodObject<
       }
     }
 
-    if (ctx.common.async) {
-      return Promise.resolve()
-        .then(async () => {
-          const syncPairs: any[] = [];
-          for (const pair of pairs) {
-            const key = await pair.key;
-            syncPairs.push({
-              key,
-              value: await pair.value,
-              alwaysSet: pair.alwaysSet,
-            });
-          }
-          return syncPairs;
-        })
-        .then((syncPairs) => {
-          return ParseStatus.mergeObjectSync(status, syncPairs);
-        });
-    } else {
-      return ParseStatus.mergeObjectSync(status, pairs as any);
-    }
+    return ParseStatus.mergeObjectSync(status, pairs as any);
   }
 
   get shape() {
@@ -2255,6 +2278,44 @@ export class ZodObject<
         while (newField instanceof ZodOptional) {
           newField = (newField as ZodOptional<any>)._def.innerType;
         }
+
+        newShape[key] = newField;
+      }
+    }
+    return new ZodObject({
+      ...this._def,
+      shape: () => newShape,
+    }) as any;
+  }
+
+  important<Mask extends { [k in keyof T]?: true }>(
+    mask: Mask
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask ? T[k] : never;
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  important(mask: any) {
+    const newShape: any = {};
+    if (mask) {
+      util.objectKeys(this.shape).map((key) => {
+        if (util.objectKeys(mask).indexOf(key) === -1) {
+          newShape[key] = this.shape[key];
+        } else {
+          const fieldSchema = this.shape[key];
+          const newField = fieldSchema;
+          newField.isImportant = true;
+
+          newShape[key] = newField;
+        }
+      });
+    } else {
+      for (const key in this.shape) {
+        const fieldSchema = this.shape[key];
+        const newField = fieldSchema;
+        newField.isImportant = true;
 
         newShape[key] = newField;
       }
