@@ -894,7 +894,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
 
   static create = (params?: RawCreateParams): ZodString => {
-    const p = processCreateParams(params);
     return new ZodString({
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodString,
@@ -1950,9 +1949,7 @@ export class ZodObject<
     return (this._cached = { shape, keys });
   }
 
-  async _parse(
-    input: ParseInput
-  ): Promise<SyncParseReturnType<this["_output"]>> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.object) {
       const ctx = this._getOrReturnCtx(input);
@@ -1989,90 +1986,109 @@ export class ZodObject<
       alwaysSet?: boolean;
     }[] = [];
 
-    for (const key of shapeKeys) {
-      const keyValidator = shape[key];
-      const value = ctx.data[key];
-
-      let pairKey: ParseReturnType<any>;
-      let pairValue: ParseReturnType<any>;
-      if (ctx.common.async) {
-        pairKey = { status: "valid", value: key };
-        pairValue = await keyValidator._parse(
-          new ParseInputLazyPath(ctx, value, ctx.path, key)
-        );
-
-        pairs.push({
-          key: pairKey,
-          value: pairValue,
-          alwaysSet: key in ctx.data,
-        });
-      } else {
-        pairKey = { status: "valid", value: key };
-        pairValue = keyValidator._parse(
-          new ParseInputLazyPath(ctx, value, ctx.path, key)
-        );
-
-        pairs.push({
-          key: pairKey,
-          value: pairValue,
-          alwaysSet: key in ctx.data,
-        });
-      }
-
-      if (
-        keyValidator.isImportant &&
-        "status" in pairValue &&
-        pairValue.status !== "valid"
-      )
-        break;
-    }
-
     // extrakeys
-    if (this._def.catchall instanceof ZodNever) {
-      const unknownKeys = this._def.unknownKeys;
+    const pushExtraKeys = (): void => {
+      if (this._def.catchall instanceof ZodNever) {
+        const unknownKeys = this._def.unknownKeys;
 
-      if (unknownKeys === "passthrough") {
+        if (unknownKeys === "passthrough") {
+          for (const key of extraKeys) {
+            pairs.push({
+              key: { status: "valid", value: key },
+              value: { status: "valid", value: ctx.data[key] },
+            });
+          }
+        } else if (unknownKeys === "strict") {
+          if (extraKeys.length > 0) {
+            addIssueToContext(ctx, {
+              code: ZodIssueCode.unrecognized_keys,
+              keys: extraKeys,
+              label: this.label,
+            });
+            if (ctx.common.fatalOnError) {
+              status.abort();
+            } else {
+              status.dirty();
+            }
+          }
+        } else if (unknownKeys === "strip") {
+        } else {
+          throw new Error(
+            `Internal ZodObject error: invalid unknownKeys value.`
+          );
+        }
+      } else {
+        // run catchall validation
+        const catchall = this._def.catchall;
+
         for (const key of extraKeys) {
+          const value = ctx.data[key];
           pairs.push({
             key: { status: "valid", value: key },
-            value: { status: "valid", value: ctx.data[key] },
+            value: catchall._parse(
+              new ParseInputLazyPath(ctx, value, ctx.path, key) //, ctx.child(key), value, getParsedType(value)
+            ),
+            alwaysSet: key in ctx.data,
           });
         }
-      } else if (unknownKeys === "strict") {
-        if (extraKeys.length > 0) {
-          addIssueToContext(ctx, {
-            code: ZodIssueCode.unrecognized_keys,
-            keys: extraKeys,
-            label: this.label,
-          });
-          if (ctx.common.fatalOnError) {
-            status.abort();
-            return INVALID;
-          } else {
-            status.dirty();
-          }
-        }
-      } else if (unknownKeys === "strip") {
-      } else {
-        throw new Error(`Internal ZodObject error: invalid unknownKeys value.`);
       }
-    } else {
-      // run catchall validation
-      const catchall = this._def.catchall;
+    };
 
-      for (const key of extraKeys) {
+    if (ctx.common.async) {
+      return Promise.resolve().then(async () => {
+        for (const key of shapeKeys) {
+          const keyValidator = shape[key];
+          const value = ctx.data[key];
+
+          const pairKey: SyncParseReturnType = await {
+            status: "valid",
+            value: key,
+          };
+          const pairValue = await keyValidator._parse(
+            new ParseInputLazyPath(ctx, value, ctx.path, key)
+          );
+          pairs.push({
+            key: pairKey,
+            value: pairValue,
+            alwaysSet: key in ctx.data,
+          });
+
+          if (
+            keyValidator.isImportant &&
+            "status" in pairValue &&
+            pairValue.status !== "valid"
+          )
+            break;
+        }
+        pushExtraKeys();
+
+        return ParseStatus.mergeObjectSync(status, pairs as any);
+      });
+    } else {
+      for (const key of shapeKeys) {
+        const keyValidator = shape[key];
         const value = ctx.data[key];
+
+        const pairValue = keyValidator._parse(
+          new ParseInputLazyPath(ctx, value, ctx.path, key)
+        );
         pairs.push({
           key: { status: "valid", value: key },
-          value: catchall._parse(
-            new ParseInputLazyPath(ctx, value, ctx.path, key) //, ctx.child(key), value, getParsedType(value)
-          ),
+          value: pairValue,
           alwaysSet: key in ctx.data,
         });
-      }
-    }
 
-    return ParseStatus.mergeObjectSync(status, pairs as any);
+        if (
+          keyValidator.isImportant &&
+          "status" in pairValue &&
+          pairValue.status !== "valid"
+        )
+          break;
+      }
+      pushExtraKeys();
+
+      return ParseStatus.mergeObjectSync(status, pairs as any);
+    }
   }
 
   get shape() {
