@@ -4358,12 +4358,12 @@ export type ZodFirstPartySchemaTypes =
   | ZodPipeline<any, any>;
 
 // new approach that works for abstract classes
-// but required TS 4.4+
-// abstract class Class {
-//   constructor(..._: any[]) {}
-// }
-// const instanceOfType = <T extends typeof Class>(
-const instanceOfType = <T extends new (...args: any[]) => any>(
+// but requires TS 4.4+
+abstract class Class {
+  constructor(..._: any[]) {}
+}
+const instanceOfType = <T extends typeof Class>(
+  // const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
   params: Parameters<ZodTypeAny["refine"]>[1] = {
     message: `Input not instance of ${cls.name}`,
