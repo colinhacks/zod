@@ -397,7 +397,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 ### Requirements
 
-- TypeScript 4.1+!
+- TypeScript 4.5+!
 - You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
 
   ```ts
@@ -558,6 +558,33 @@ z.string().uuid({ message: "Invalid UUID" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+```
+
+## Coercion for primitives
+
+Zod now provides a more convenient way to coerce primitive values.
+
+```ts
+const schema = z.coerce.string();
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // => "12"
+schema.parse(true); // => "true"
+```
+
+During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
+
+```ts
+z.coerce.string().email().min(5);
+```
+
+All primitive types support coercion.
+
+```ts
+z.coerce.string(); // String(input)
+z.coerce.number(); // Number(input)
+z.coerce.boolean(); // Boolean(input)
+z.coerce.bigint(); // BigInt(input)
+z.coerce.date(); // new Date(input)
 ```
 
 ### Datetime validation
