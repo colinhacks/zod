@@ -210,7 +210,7 @@ describe("inference", () => {
               readonly d: {
                 readonly e: {
                   readonly f: {
-                    readonly g?: unknown;
+                    readonly g?: {};
                   };
                 };
               };

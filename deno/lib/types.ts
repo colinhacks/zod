@@ -4176,11 +4176,7 @@ type ZodDeepReadonlyInference<T> = T extends []
   ? ReadonlyArray<ZodDeepReadonlyInference<V>>
   : T extends BuiltIn
   ? T
-  : {
-      readonly [K in keyof T]: unknown extends T[K]
-        ? T[K]
-        : ZodDeepReadonlyInference<T[K]>;
-    };
+  : { readonly [K in keyof T]: ZodDeepReadonlyInference<T[K]> };
 
 export type ZodReadonlyInference<T, Depth extends ZodReadonlyDepth> = {
   flat: ZodFlatReadonlyInference<T>;
