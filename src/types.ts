@@ -3809,13 +3809,23 @@ export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
 
 export type ZodReadonlyType<T extends ZodTypeAny> = ZodReadonly<T>;
 
-type BuiltIn = Function | Error | Date | RegExp | Generator;
+type BuiltIn =
+  | (((...args: any[]) => any) | (new (...args: any[]) => any))
+  | { readonly [Symbol.toStringTag]: string }
+  | Date
+  | Error
+  | Generator
+  | Promise<unknown>
+  | RegExp;
+
 type ZodReadonlyInference<T> = T extends BuiltIn
   ? T
   : T extends Map<infer K, infer V>
   ? ReadonlyMap<K, V>
   : T extends Set<infer V>
   ? ReadonlySet<V>
+  : T extends Array<infer V>
+  ? ReadonlyArray<V>
   : Readonly<T>;
 
 const freezeSyncParseResult = (
