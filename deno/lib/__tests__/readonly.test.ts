@@ -35,6 +35,16 @@ const schemas = [
   z.promise(z.string()).readonly(),
 ] as const;
 
+type MapToReadonlyDeep<T> = T extends []
+  ? []
+  : T extends readonly [z.ZodReadonly<infer V>, ...infer Tail]
+  ? [z.ZodReadonly<V, "deep">, ...MapToReadonlyDeep<Tail>]
+  : never;
+
+const deepReadonlySchemas_0 = schemas.map((s) => s.deep()) as MapToReadonlyDeep<
+  typeof schemas
+>;
+
 const crazySchema = z
   .object({
     a: z
@@ -54,60 +64,163 @@ const crazySchema = z
   })
   .readonly();
 
-test("inference", () => {
-  util.assertEqual<z.infer<typeof schemas[0]>, string>(true);
-  util.assertEqual<z.infer<typeof schemas[1]>, number>(true);
-  util.assertEqual<z.infer<typeof schemas[2]>, number>(true);
-  util.assertEqual<z.infer<typeof schemas[3]>, bigint>(true);
-  util.assertEqual<z.infer<typeof schemas[4]>, boolean>(true);
-  util.assertEqual<z.infer<typeof schemas[5]>, Date>(true);
-  util.assertEqual<z.infer<typeof schemas[6]>, undefined>(true);
-  util.assertEqual<z.infer<typeof schemas[7]>, null>(true);
-  util.assertEqual<z.infer<typeof schemas[8]>, any>(true);
-  util.assertEqual<z.infer<typeof schemas[9]>, Readonly<unknown>>(true);
-  util.assertEqual<z.infer<typeof schemas[10]>, void>(true);
-  util.assertEqual<
-    z.infer<typeof schemas[11]>,
-    (args_0: string, args_1: number, ...args_2: unknown[]) => unknown
-  >(true);
-  util.assertEqual<z.infer<typeof schemas[12]>, readonly string[]>(true);
-  util.assertEqual<z.infer<typeof schemas[13]>, readonly [string, number]>(
-    true
-  );
-  util.assertEqual<z.infer<typeof schemas[14]>, ReadonlyMap<string, Date>>(
-    true
-  );
-  util.assertEqual<z.infer<typeof schemas[15]>, ReadonlySet<Promise<string>>>(
-    true
-  );
-  util.assertEqual<
-    z.infer<typeof schemas[16]>,
-    Readonly<Record<string, string>>
-  >(true);
-  util.assertEqual<
-    z.infer<typeof schemas[17]>,
-    Readonly<Record<string, number>>
-  >(true);
-  util.assertEqual<
-    z.infer<typeof schemas[18]>,
-    { readonly a: string; readonly 1: number }
-  >(true);
-  util.assertEqual<z.infer<typeof schemas[19]>, Readonly<testEnum>>(true);
-  util.assertEqual<z.infer<typeof schemas[20]>, Promise<string>>(true);
+const crazyDeepReadonlySchema = z
+  .map(
+    z.set(z.tuple([z.string(), z.number()])),
+    z.object({
+      a: z.record(z.string(), z.array(z.any())),
+      b: z.object({
+        c: z.object({
+          d: z.object({
+            e: z.object({
+              f: z.object({
+                g: z.unknown(),
+              }),
+            }),
+          }),
+        }),
+      }),
+    })
+  )
+  .readonly()
+  .deep();
 
-  util.assertEqual<
-    z.infer<typeof crazySchema>,
-    {
-      readonly a: ReadonlySet<
-        Promise<
-          ReadonlyMap<
-            Readonly<Record<string, readonly any[]>>,
-            readonly [string]
+describe("inference", () => {
+  test("flat", () => {
+    util.assertEqual<z.infer<typeof schemas[0]>, string>(true);
+    util.assertEqual<z.infer<typeof schemas[1]>, number>(true);
+    util.assertEqual<z.infer<typeof schemas[2]>, number>(true);
+    util.assertEqual<z.infer<typeof schemas[3]>, bigint>(true);
+    util.assertEqual<z.infer<typeof schemas[4]>, boolean>(true);
+    util.assertEqual<z.infer<typeof schemas[5]>, Date>(true);
+    util.assertEqual<z.infer<typeof schemas[6]>, undefined>(true);
+    util.assertEqual<z.infer<typeof schemas[7]>, null>(true);
+    util.assertEqual<z.infer<typeof schemas[8]>, any>(true);
+    util.assertEqual<z.infer<typeof schemas[9]>, Readonly<unknown>>(true);
+    util.assertEqual<z.infer<typeof schemas[10]>, void>(true);
+    util.assertEqual<
+      z.infer<typeof schemas[11]>,
+      (args_0: string, args_1: number, ...args_2: unknown[]) => unknown
+    >(true);
+    util.assertEqual<z.infer<typeof schemas[12]>, readonly string[]>(true);
+    util.assertEqual<z.infer<typeof schemas[13]>, readonly [string, number]>(
+      true
+    );
+    util.assertEqual<z.infer<typeof schemas[14]>, ReadonlyMap<string, Date>>(
+      true
+    );
+    util.assertEqual<z.infer<typeof schemas[15]>, ReadonlySet<Promise<string>>>(
+      true
+    );
+    util.assertEqual<
+      z.infer<typeof schemas[16]>,
+      Readonly<Record<string, string>>
+    >(true);
+    util.assertEqual<
+      z.infer<typeof schemas[17]>,
+      Readonly<Record<string, number>>
+    >(true);
+    util.assertEqual<
+      z.infer<typeof schemas[18]>,
+      { readonly a: string; readonly 1: number }
+    >(true);
+    util.assertEqual<z.infer<typeof schemas[19]>, Readonly<testEnum>>(true);
+    util.assertEqual<z.infer<typeof schemas[20]>, Promise<string>>(true);
+
+    util.assertEqual<
+      z.infer<typeof crazySchema>,
+      {
+        readonly a: ReadonlySet<
+          Promise<
+            ReadonlyMap<
+              Readonly<Record<string, readonly any[]>>,
+              readonly [string]
+            >
           >
-        >
-      >;
-    }
-  >(true);
+        >;
+      }
+    >(true);
+  });
+
+  test("deep", () => {
+    util.assertEqual<z.infer<typeof deepReadonlySchemas_0[0]>, string>(true);
+    util.assertEqual<z.infer<typeof deepReadonlySchemas_0[1]>, number>(true);
+    util.assertEqual<z.infer<typeof deepReadonlySchemas_0[2]>, number>(true);
+    util.assertEqual<z.infer<typeof deepReadonlySchemas_0[3]>, bigint>(true);
+    util.assertEqual<z.infer<typeof deepReadonlySchemas_0[4]>, boolean>(true);
+    util.assertEqual<z.infer<typeof deepReadonlySchemas_0[5]>, Date>(true);
+    util.assertEqual<z.infer<typeof deepReadonlySchemas_0[6]>, undefined>(true);
+    util.assertEqual<z.infer<typeof deepReadonlySchemas_0[7]>, null>(true);
+    util.assertEqual<z.infer<typeof deepReadonlySchemas_0[8]>, any>(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[9]>,
+      Readonly<unknown>
+    >(true);
+    util.assertEqual<z.infer<typeof deepReadonlySchemas_0[10]>, void>(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[11]>,
+      (args_0: string, args_1: number, ...args_2: unknown[]) => unknown
+    >(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[12]>,
+      readonly string[]
+    >(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[13]>,
+      readonly [string, number]
+    >(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[14]>,
+      ReadonlyMap<string, Date>
+    >(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[15]>,
+      ReadonlySet<Promise<string>>
+    >(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[16]>,
+      Readonly<Record<string, string>>
+    >(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[17]>,
+      Readonly<Record<string, number>>
+    >(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[18]>,
+      { readonly a: string; readonly 1: number }
+    >(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[19]>,
+      Readonly<testEnum>
+    >(true);
+    util.assertEqual<
+      z.infer<typeof deepReadonlySchemas_0[20]>,
+      Promise<string>
+    >(true);
+
+    util.assertEqual<
+      z.infer<typeof crazyDeepReadonlySchema>,
+      ReadonlyMap<
+        ReadonlySet<readonly [string, number]>,
+        {
+          readonly a: {
+            readonly [x: string]: readonly any[];
+          };
+          readonly b: {
+            readonly c: {
+              readonly d: {
+                readonly e: {
+                  readonly f: {
+                    readonly g?: unknown;
+                  };
+                };
+              };
+            };
+          };
+        }
+      >
+    >(true);
+  });
 });
 
 test("object freezing", () => {

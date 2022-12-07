@@ -388,8 +388,8 @@ export abstract class ZodType<
   nullish(): ZodNullable<ZodOptional<this>> {
     return this.optional().nullable();
   }
-  readonly(): ZodReadonly<this> {
-    return ZodReadonly.create(this);
+  readonly(options?: ZodReadonlyCreateOpts): ZodReadonly<this> {
+    return ZodReadonly.create(this, options);
   }
   array(): ZodArray<this> {
     return ZodArray.create(this);
@@ -4122,11 +4122,24 @@ export class ZodBranded<
 //////////                       //////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
-export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
-  innerType: T;
+
+export type ZodReadonlyDepth = "flat" | "deep";
+
+export interface ZodReadonlyDef<
+  T extends ZodTypeAny = ZodTypeAny,
+  Depth extends ZodReadonlyDepth = ZodReadonlyDepth
+> extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodReadonly;
+  innerType: T;
+  depth: Depth;
+  enableFreezing: boolean;
 }
+
+export type ZodReadonlyCreateOpts = {
+  enableFreezing?: boolean;
+};
+
+export type ZodReadonlyCreateParams = RawCreateParams & ZodReadonlyCreateOpts;
 
 export type ZodReadonlyType<T extends ZodTypeAny> = ZodReadonly<T>;
 
@@ -4139,7 +4152,7 @@ type BuiltIn =
   | Promise<unknown>
   | RegExp;
 
-type ZodReadonlyInference<T> = T extends Map<infer K, infer V>
+type ZodFlatReadonlyInference<T> = T extends Map<infer K, infer V>
   ? ReadonlyMap<K, V>
   : T extends Set<infer V>
   ? ReadonlySet<V>
@@ -4151,21 +4164,72 @@ type ZodReadonlyInference<T> = T extends Map<infer K, infer V>
   ? T
   : Readonly<T>;
 
-const freezeSyncParseResult = (
-  result: SyncParseReturnType<any>
-): SyncParseReturnType<any> => {
-  if (result.status === "valid") {
-    return { status: "valid", value: Object.freeze(result.value) };
+type ZodDeepReadonlyInference<T> = T extends []
+  ? readonly []
+  : T extends Map<infer K, infer V>
+  ? ReadonlyMap<ZodDeepReadonlyInference<K>, ZodDeepReadonlyInference<V>>
+  : T extends Set<infer V>
+  ? ReadonlySet<ZodDeepReadonlyInference<V>>
+  : T extends [infer Head, ...infer Tail]
+  ? readonly [ZodDeepReadonlyInference<Head>, ...ZodDeepReadonlyInference<Tail>]
+  : T extends Array<infer V>
+  ? ReadonlyArray<ZodDeepReadonlyInference<V>>
+  : T extends BuiltIn
+  ? T
+  : {
+      readonly [K in keyof T]: unknown extends T[K]
+        ? T[K]
+        : ZodDeepReadonlyInference<T[K]>;
+    };
+
+export type ZodReadonlyInference<T, Depth extends ZodReadonlyDepth> = {
+  flat: ZodFlatReadonlyInference<T>;
+  deep: ZodDeepReadonlyInference<T>;
+}[Depth];
+
+// Source: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze#examples
+const deepFreeze = (object: object) => {
+  // Retrieve the property names defined on object
+  const propNames = Reflect.ownKeys(object);
+
+  // Freeze properties before freezing self
+  for (const name of propNames) {
+    const value = object[name as keyof typeof object];
+
+    if ((value && typeof value === "object") || typeof value === "function") {
+      deepFreeze(value);
+    }
   }
-  return result;
+
+  return Object.freeze(object);
 };
 
-export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
-  ZodReadonlyInference<T["_output"]>,
+export class ZodReadonly<
+  T extends ZodTypeAny,
+  Depth extends ZodReadonlyDepth = "flat"
+> extends ZodType<
+  ZodReadonlyInference<T["_output"], Depth>,
   ZodReadonlyDef<T>,
-  ZodReadonlyInference<T["_input"]>
+  ZodReadonlyInference<T["_input"], Depth>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const freezeSyncParseResult = (
+      result: SyncParseReturnType<any>
+    ): SyncParseReturnType<any> => {
+      if (!this._def.enableFreezing) {
+        return result;
+      }
+      if (result.status === "valid") {
+        return {
+          status: "valid",
+          value:
+            this._def.depth === "flat"
+              ? Object.freeze(result.value)
+              : deepFreeze(result.value),
+        };
+      }
+      return result;
+    };
     const result = this._def.innerType._parse(input);
     if (isAsync(result)) {
       return result.then((res) => freezeSyncParseResult(res));
@@ -4178,13 +4242,19 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
   }
   writable = this.unwrap;
 
+  deep(): ZodReadonly<T, "deep"> {
+    return new ZodReadonly({ ...this._def, depth: "deep" });
+  }
+
   static create = <T extends ZodTypeAny>(
     type: T,
-    params?: RawCreateParams
+    params?: ZodReadonlyCreateParams
   ): ZodReadonly<T> => {
     return new ZodReadonly({
-      innerType: type,
       typeName: ZodFirstPartyTypeKind.ZodReadonly,
+      innerType: type,
+      depth: "flat",
+      enableFreezing: params?.enableFreezing ?? false,
       ...processCreateParams(params),
     });
   };
