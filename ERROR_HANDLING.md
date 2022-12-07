@@ -42,7 +42,7 @@ _Every_ ZodIssue has these fields:
 
 | code                             | additional fields                                                                                                                                                                                                                                                                                                                                                    |
 | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ZodIssueCode.invalid_type        | `expected: ZodParsedType` <br> `received: ZodParsedType` <br><br>Jump to [this section](#zodparsedtype) for a breakdown of the possible values of ZodParsedType.                                                                                                                                                                                                        |
+| ZodIssueCode.invalid_type        | `expected: ZodParsedType` <br> `received: ZodParsedType` <br><br>Jump to [this section](#zodparsedtype) for a breakdown of the possible values of ZodParsedType.                                                                                                                                                                                                     |
 | ZodIssueCode.unrecognized_keys   | `keys: string[]`<br>The list of unrecognized keys<br>                                                                                                                                                                                                                                                                                                                |
 | ZodIssueCode.invalid_union       | `unionErrors: ZodError[]` <br> The errors thrown by each element of the union.                                                                                                                                                                                                                                                                                       |
 | ZodIssueCode.invalid_enum_value  | `options: string[]` <br> The set of acceptable string values for this enum.                                                                                                                                                                                                                                                                                          |
@@ -375,7 +375,7 @@ function MyForm(){
 
 Because `.format` returns a deeply nested object, the errors are contained within the `_errors` property to avoid key collisions. However this isn't necessary if your object schema is only one level deep.
 
-In this scenarion, `.flatten()` may be more convenient.
+In this scenario, `.flatten()` may be more convenient.
 
 ```ts
 if (!result.success) {
@@ -440,7 +440,7 @@ result.error.flatten((issue: ZodIssue) => ({
 You can infer the return type signature of `.format()` and `.flatten()` with the following utilities:
 
 ```ts
-type FormattedErros = z.inferFormattedErrors<typeof FormData>;
+type FormattedErrors = z.inferFormattedError<typeof FormData>;
 /*
   {  
     name?: {_errors?: string[]},

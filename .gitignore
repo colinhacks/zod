@@ -5,7 +5,7 @@ coverage
 .vscode
 .idea
 *.log
-src/playground.ts
+playground.ts
 deno/lib/playground.ts
 .eslintcache
 workspace.code-workspace

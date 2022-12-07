@@ -14,6 +14,7 @@ test("error creation", () => {
     received: ZodParsedType.string,
     path: [],
     message: "",
+    fatal: true,
   });
   err1.isEmpty;
 
@@ -312,6 +313,47 @@ test("formatting", () => {
     expect(error._errors).toEqual([]);
     expect(error.inner?._errors).toEqual([]);
     expect(error.inner?.name?._errors).toEqual([5]);
+  }
+});
+
+test("formatting with nullable and optional fields", () => {
+  const nameSchema = z.string().refine((val) => val.length > 5);
+  const schema = z.object({
+    nullableObject: z.object({ name: nameSchema }).nullable(),
+    nullableArray: z.array(nameSchema).nullable(),
+    nullableTuple: z.tuple([nameSchema, nameSchema, z.number()]).nullable(),
+    optionalObject: z.object({ name: nameSchema }).optional(),
+    optionalArray: z.array(nameSchema).optional(),
+    optionalTuple: z.tuple([nameSchema, nameSchema, z.number()]).optional(),
+  });
+  const invalidItem = {
+    nullableObject: { name: "abcd" },
+    nullableArray: ["abcd"],
+    nullableTuple: ["abcd", "abcd", 1],
+    optionalObject: { name: "abcd" },
+    optionalArray: ["abcd"],
+    optionalTuple: ["abcd", "abcd", 1],
+  };
+  const result = schema.safeParse(invalidItem);
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    type FormattedError = z.inferFormattedError<typeof schema>;
+    const error: FormattedError = result.error.format();
+    expect(error._errors).toEqual([]);
+    expect(error.nullableObject?._errors).toEqual([]);
+    expect(error.nullableObject?.name?._errors).toEqual(["Invalid input"]);
+    expect(error.nullableArray?._errors).toEqual([]);
+    expect(error.nullableArray?.[0]?._errors).toEqual(["Invalid input"]);
+    expect(error.nullableTuple?._errors).toEqual([]);
+    expect(error.nullableTuple?.[0]?._errors).toEqual(["Invalid input"]);
+    expect(error.nullableTuple?.[1]?._errors).toEqual(["Invalid input"]);
+    expect(error.optionalObject?._errors).toEqual([]);
+    expect(error.optionalObject?.name?._errors).toEqual(["Invalid input"]);
+    expect(error.optionalArray?._errors).toEqual([]);
+    expect(error.optionalArray?.[0]?._errors).toEqual(["Invalid input"]);
+    expect(error.optionalTuple?._errors).toEqual([]);
+    expect(error.optionalTuple?.[0]?._errors).toEqual(["Invalid input"]);
+    expect(error.optionalTuple?.[1]?._errors).toEqual(["Invalid input"]);
   }
 });
 

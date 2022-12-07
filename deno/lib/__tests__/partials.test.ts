@@ -136,15 +136,56 @@ test("required", () => {
     name: z.string(),
     age: z.number().optional(),
     field: z.string().optional().default("asdf"),
+    nullableField: z.number().nullable(),
+    nullishField: z.string().nullish(),
   });
 
   const requiredObject = object.required();
   expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
   expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
   expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
+  expect(requiredObject.shape.nullableField).toBeInstanceOf(z.ZodNullable);
+  expect(requiredObject.shape.nullishField).toBeInstanceOf(z.ZodNullable);
 });
 
-test("with mask", async () => {
+test("required inference", () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default("asdf"),
+    nullableField: z.number().nullable(),
+    nullishField: z.string().nullish(),
+  });
+
+  const requiredObject = object.required();
+
+  type required = z.infer<typeof requiredObject>;
+  type expected = {
+    name: string;
+    age: number;
+    field: string;
+    nullableField: number | null;
+    nullishField: string | null;
+  };
+  util.assertEqual<expected, required>(true);
+});
+
+test("required with mask", () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default("asdf"),
+    country: z.string().optional(),
+  });
+
+  const requiredObject = object.required({ age: true });
+  expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
+  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
+  expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
+  expect(requiredObject.shape.country).toBeInstanceOf(z.ZodOptional);
+});
+
+test("partial with mask", async () => {
   const object = z.object({
     name: z.string(),
     age: z.number().optional(),

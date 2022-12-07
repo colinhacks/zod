@@ -107,6 +107,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.not_multiple_of:
       message = `Number must be a multiple of ${issue.multipleOf}`;
       break;
+    case ZodIssueCode.not_finite:
+      message = "Number must be finite";
+      break;
     default:
       message = _ctx.defaultError;
       util.assertNever(issue);
