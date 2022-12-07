@@ -4139,14 +4139,16 @@ type BuiltIn =
   | Promise<unknown>
   | RegExp;
 
-type ZodReadonlyInference<T> = T extends BuiltIn
-  ? T
-  : T extends Map<infer K, infer V>
+type ZodReadonlyInference<T> = T extends Map<infer K, infer V>
   ? ReadonlyMap<K, V>
   : T extends Set<infer V>
   ? ReadonlySet<V>
+  : T extends [infer Head, ...infer Tail]
+  ? readonly [Head, ...Tail]
   : T extends Array<infer V>
   ? ReadonlyArray<V>
+  : T extends BuiltIn
+  ? T
   : Readonly<T>;
 
 const freezeSyncParseResult = (

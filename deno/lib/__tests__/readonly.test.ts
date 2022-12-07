@@ -93,17 +93,16 @@ test("inference", () => {
     { readonly a: string; readonly 1: number }
   >(true);
   util.assertEqual<z.infer<typeof schemas[19]>, Readonly<testEnum>>(true);
-  util.assertEqual<z.infer<typeof schemas[20]>, Readonly<Promise<string>>>(
-    true
-  );
+  util.assertEqual<z.infer<typeof schemas[20]>, Promise<string>>(true);
 
   util.assertEqual<
     z.infer<typeof crazySchema>,
     {
       readonly a: ReadonlySet<
-        Readonly<
-          Promise<
-            ReadonlyMap<Readonly<Record<string, readonly any[]>>, readonly [string]>
+        Promise<
+          ReadonlyMap<
+            Readonly<Record<string, readonly any[]>>,
+            readonly [string]
           >
         >
       >;
