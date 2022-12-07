@@ -38,6 +38,8 @@ test("email validations", () => {
   expect(() => email.parse("asdf")).toThrow();
   expect(() => email.parse("@lkjasdf.com")).toThrow();
   expect(() => email.parse("asdf@sdf.")).toThrow();
+  expect(() => email.parse("asdf@asdf.com-")).toThrow();
+  expect(() => email.parse("asdf@-asdf.com")).toThrow();
 });
 
 test("more email validations", () => {
@@ -48,6 +50,7 @@ test("more email validations", () => {
     `"🍺🕺🎉"@domain.com`,
     `poop@💩.la`,
     `"🌮"@i❤️tacos.ws`,
+    "sss--asd@i❤️tacos.ws"
   ];
   const email = z.string().email();
   for (const datum of data) {
