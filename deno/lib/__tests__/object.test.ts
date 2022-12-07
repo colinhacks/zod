@@ -385,6 +385,7 @@ test("unknownkeys merging", () => {
   type mergedSchema = typeof mergedSchema;
   util.assertEqual<mergedSchema["_def"]["unknownKeys"], "strip">(true);
   expect(mergedSchema._def.unknownKeys).toEqual("strip");
+
   util.assertEqual<mergedSchema["_def"]["catchall"], z.ZodString>(true);
   expect(mergedSchema._def.catchall instanceof z.ZodString).toEqual(true);
 });

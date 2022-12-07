@@ -179,12 +179,21 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
     <td align="center">
       <a href="https://deletype.com/">
-        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="" />
+        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="Deletype logo" />
       </a>
       <br />
       <b>Deletype</b>
       <br />
       <a href="https://deletype.com">deletype.com</a>
+    </td>
+    <td align="center">
+      <a href="https://proxy.com/">
+        <img src="https://avatars.githubusercontent.com/u/14321439?s=200&v=4" width="200px;" alt="Proxy logo" />
+      </a>
+      <br />
+      <b>Proxy</b>
+      <br />
+      <a href="https://proxy.com">proxy.com</a>
     </td>
   </tr>
 </table>
@@ -193,16 +202,27 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <table>
   <tr>
+   <td align="center" colspan="2">
+      <a href="https://www.numeric.io">
+        <img src="https://i.imgur.com/kTiLtZt.png" width="250px;" alt="Numeric logo" />
+      </a>
+      <br />
+      <b>Numeric</b>
+      <br />
+      <a href="https://www.numeric.io">numeric.io</a>
+    </td>
     <td align="center">
       <a href="https://snaplet.dev">
-        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="" />
+        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="Snaplet logo" />
       </a>
       <br />
       <b>Snaplet</b>
       <br />
       <a href="https://snaplet.dev">snaplet.dev</a>
     </td>
-     <td align="center">
+  </tr>
+  <tr>
+   <td align="center">
       <a href="https://marcatopartners.com/">
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
       </a>
@@ -212,14 +232,14 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://marcatopartners.com/">marcatopartners.com</a>
     </td>
      <td align="center">
-      <a href="https://github.com/macandcheese-spaghetticode">
-        <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
+      <a href="https://interval.com">
+        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
       </a>
       <br />
-      <b>Trip</b>
+      <b>Interval</b>
+      <br />
+      <a href="https://interval.com">interval.com</a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://seasoned.cc">
         <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="150px;" alt="" />
@@ -229,14 +249,16 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://seasoned.cc">seasoned.cc</a>
     </td>
+  </tr>
+   <tr>
     <td align="center">
-      <a href="https://interval.com">
-        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
+      <a href="https://www.bamboocreative.nz/">
+        <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="150px;" alt="Bamboo Creative logo" />
       </a>
       <br />
-      <b>Interval</b>
+      <b>Bamboo Creative</b>
       <br />
-      <a href="https://interval.com">interval.com</a>
+      <a href="https://www.bamboocreative.nz">bamboocreative.nz</a>
     </td>
   </tr>
 </table>
@@ -277,6 +299,16 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
   <tr>
+  <td align="center">
+      <a href="https://fungible.systems/">
+        <img src="https://avatars.githubusercontent.com/u/80220121?s=200&v=4" width="100px;" alt="Fungible Systems logo"/>
+      </a>
+      <br />
+      <b>Fungible Systems</b>
+      <br/>
+      <a href="https://fungible.systems/">fungible.systems</a>
+      <br />
+    </td>
     <td align="center">
       <a href="https://adaptable.io/">
         <img src="https://avatars.githubusercontent.com/u/60378268?s=200&v=4" width="100px;" alt=""/>
@@ -365,7 +397,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 ### Requirements
 
-- TypeScript 4.1+!
+- TypeScript 4.5+!
 - You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
 
   ```ts
@@ -379,17 +411,16 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### Node/npm
-
-To install Zod v3:
+### From `npm` (Node/Bun)
 
 ```sh
 npm install zod       # npm
 yarn add zod          # yarn
+bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
-### Deno
+### From `deno.land/x` (Deno)
 
 Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](https://deno.land/x). The latest version can be imported like so:
 
@@ -527,6 +558,33 @@ z.string().uuid({ message: "Invalid UUID" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+```
+
+## Coercion for primitives
+
+Zod now provides a more convenient way to coerce primitive values.
+
+```ts
+const schema = z.coerce.string();
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // => "12"
+schema.parse(true); // => "true"
+```
+
+During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
+
+```ts
+z.coerce.string().email().min(5);
+```
+
+All primitive types support coercion.
+
+```ts
+z.coerce.string(); // String(input)
+z.coerce.number(); // Number(input)
+z.coerce.boolean(); // Boolean(input)
+z.coerce.bigint(); // BigInt(input)
+z.coerce.date(); // new Date(input)
 ```
 
 ### Datetime validation
