@@ -223,19 +223,24 @@ describe("inference", () => {
 });
 
 test("object freezing", () => {
-  expect(Object.isFrozen(z.array(z.string()).readonly().parse(["a"]))).toBe(
-    true
-  );
   expect(
     Object.isFrozen(
-      z.tuple([z.string(), z.number()]).readonly().parse(["a", 1])
+      z.array(z.string()).readonly({ enableFreezing: true }).parse(["a"])
+    )
+  ).toBe(true);
+  expect(
+    Object.isFrozen(
+      z
+        .tuple([z.string(), z.number()])
+        .readonly({ enableFreezing: true })
+        .parse(["a", 1])
     )
   ).toBe(true);
   expect(
     Object.isFrozen(
       z
         .map(z.string(), z.date())
-        .readonly()
+        .readonly({ enableFreezing: true })
         .parse(new Map([["a", new Date()]]))
     )
   ).toBe(true);
@@ -243,27 +248,37 @@ test("object freezing", () => {
     Object.isFrozen(
       z
         .set(z.promise(z.string()))
-        .readonly()
+        .readonly({ enableFreezing: true })
         .parse(new Set([Promise.resolve("a")]))
     )
   ).toBe(true);
   expect(
-    Object.isFrozen(z.record(z.string()).readonly().parse({ a: "b" }))
+    Object.isFrozen(
+      z.record(z.string()).readonly({ enableFreezing: true }).parse({ a: "b" })
+    )
   ).toBe(true);
   expect(
-    Object.isFrozen(z.record(z.string(), z.number()).readonly().parse({ a: 1 }))
+    Object.isFrozen(
+      z
+        .record(z.string(), z.number())
+        .readonly({ enableFreezing: true })
+        .parse({ a: 1 })
+    )
   ).toBe(true);
   expect(
     Object.isFrozen(
       z
         .object({ a: z.string(), 1: z.number() })
-        .readonly()
+        .readonly({ enableFreezing: true })
         .parse({ a: "b", 1: 2 })
     )
   ).toBe(true);
   expect(
     Object.isFrozen(
-      z.promise(z.string()).readonly().parse(Promise.resolve("a"))
+      z
+        .promise(z.string())
+        .readonly({ enableFreezing: true })
+        .parse(Promise.resolve("a"))
     )
   ).toBe(true);
 });
