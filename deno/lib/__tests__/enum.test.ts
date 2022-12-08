@@ -41,3 +41,15 @@ test("error params", () => {
     expect(result.error.issues[0].message).toEqual("REQUIRED");
   }
 });
+
+test("extract/exclude", () => {
+  const FoodEnum = z.enum(["Pasta", "Pizza", "Tacos", "Burgers", "Salad"]);
+  const ItalianEnum = FoodEnum.extract(["Pasta", "Pizza"]);
+  const UnhealthyEnum = FoodEnum.exclude(["Salad"]);
+
+  util.assertEqual<z.infer<typeof ItalianEnum>, "Pasta" | "Pizza">(true);
+  util.assertEqual<
+    z.infer<typeof UnhealthyEnum>,
+    "Pasta" | "Pizza" | "Tacos" | "Burgers"
+  >(true);
+});

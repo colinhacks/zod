@@ -3500,6 +3500,18 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     return enumValues as any;
   }
 
+  extract<U extends T[number], _U extends readonly [U, ...U[]]>(values: _U) {
+    return ZodEnum.create(values);
+  }
+
+  exclude<U extends T[number]>(values: readonly [U, ...U[]]) {
+    return ZodEnum.create(
+      this.options.filter(
+        (opt) => !values.includes(opt as U)
+      ) as enumUtil.UnionToTupleString<Exclude<T[number], U>>
+    );
+  }
+
   static create = createZodEnum;
 }
 
