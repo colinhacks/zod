@@ -1752,6 +1752,41 @@ const AugmentFactory =
 
 export type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
+export type ZodObjectCreateArg = ZodRawShape | EnumLike | ZodNativeEnum<any>;
+
+export type mapToZodLiteral<T extends EnumLike> = {
+  [K in T[keyof T]]: ZodLiteral<K>;
+};
+
+export type deriveZodObjectCreateGeneric<T extends ZodObjectCreateArg> =
+  T extends ZodRawShape
+    ? T
+    : T extends EnumLike
+    ? mapToZodLiteral<T>
+    : T extends ZodNativeEnum<infer E>
+    ? mapToZodLiteral<E>
+    : never;
+
+const mapToZodShape = <E extends EnumLike>(e: E) =>
+  util.objectKeys(e).reduce(
+    (acc, key) => ({
+      ...acc,
+      [e[key]]: ZodLiteral.create(e[key]),
+    }),
+    {} as mapToZodLiteral<E>
+  );
+
+const mapCreateArg = <T extends ZodObjectCreateArg>(
+  arg: ZodObjectCreateArg
+): deriveZodObjectCreateGeneric<T> =>
+  (util
+    .objectKeys(arg)
+    .every((k) => arg[k as keyof typeof arg] instanceof ZodType)
+    ? arg
+    : mapToZodShape(
+        arg instanceof ZodNativeEnum ? arg.enum : arg
+      )) as deriveZodObjectCreateGeneric<T>;
+
 export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
@@ -2177,12 +2212,12 @@ export class ZodObject<
     ) as any;
   }
 
-  static create = <T extends ZodRawShape>(
+  static create = <T extends ZodObjectCreateArg>(
     shape: T,
     params?: RawCreateParams
-  ): ZodObject<T> => {
+  ): ZodObject<deriveZodObjectCreateGeneric<T>> => {
     return new ZodObject({
-      shape: () => shape,
+      shape: () => mapCreateArg(shape),
       unknownKeys: "strip",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
@@ -2190,12 +2225,12 @@ export class ZodObject<
     }) as any;
   };
 
-  static strictCreate = <T extends ZodRawShape>(
+  static strictCreate = <T extends ZodObjectCreateArg>(
     shape: T,
     params?: RawCreateParams
-  ): ZodObject<T, "strict"> => {
+  ): ZodObject<deriveZodObjectCreateGeneric<T>, "strict"> => {
     return new ZodObject({
-      shape: () => shape,
+      shape: () => mapCreateArg(shape),
       unknownKeys: "strict",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
@@ -2203,12 +2238,12 @@ export class ZodObject<
     }) as any;
   };
 
-  static lazycreate = <T extends ZodRawShape>(
+  static lazycreate = <T extends ZodObjectCreateArg>(
     shape: () => T,
     params?: RawCreateParams
-  ): ZodObject<T> => {
+  ): ZodObject<deriveZodObjectCreateGeneric<T>> => {
     return new ZodObject({
-      shape,
+      shape: () => mapCreateArg(shape()),
       unknownKeys: "strip",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
@@ -2817,22 +2852,26 @@ export interface ZodRecordDef<
 }
 
 export type KeySchema = ZodType<string | number | symbol, any, any>;
-export type RecordType<K extends string | number | symbol, V> = [
-  string
-] extends [K]
-  ? Record<K, V>
-  : [number] extends [K]
-  ? Record<K, V>
-  : [symbol] extends [K]
-  ? Record<K, V>
-  : Partial<Record<K, V>>;
+export type RecordType<
+  K extends KeySchema,
+  V extends ZodTypeAny,
+  IO extends "_output" | "_input"
+> = K extends ZodNativeEnum<any>
+  ? Record<K[IO], V[IO]>
+  : [string] extends [K[IO]]
+  ? Record<K[IO], V[IO]>
+  : [number] extends [K[IO]]
+  ? Record<K[IO], V[IO]>
+  : [symbol] extends [K[IO]]
+  ? Record<K[IO], V[IO]>
+  : Partial<Record<K[IO], V[IO]>>;
 export class ZodRecord<
   Key extends KeySchema = ZodString,
   Value extends ZodTypeAny = ZodTypeAny
 > extends ZodType<
-  RecordType<Key["_output"], Value["_output"]>,
+  RecordType<Key, Value, "_output">,
   ZodRecordDef<Key, Value>,
-  RecordType<Key["_input"], Value["_input"]>
+  RecordType<Key, Value, "_input">
 > {
   get keySchema() {
     return this._def.keyType;
