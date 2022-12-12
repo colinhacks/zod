@@ -4,6 +4,7 @@ const test = Deno.test;
 
 import { util } from "../helpers/util.ts";
 import * as z from "../index.ts";
+import { SafeParseSuccess } from "../index.ts";
 
 const Test = z.object({
   f1: z.number(),
@@ -302,6 +303,66 @@ test("strictcreate", async () => {
 
   const asyncResult = await strictObj.spa({ name: "asdf", unexpected: 13 });
   expect(asyncResult.success).toEqual(false);
+});
+
+test("any object type", async () => {
+  const anyObject = z.anyObject();
+
+  const syncResult = anyObject.safeParse({ name: "asdf", unexpected: 13 });
+  expect(syncResult.success).toEqual(true);
+
+  expect((syncResult as SafeParseSuccess<any>).data).toEqual({
+    name: "asdf",
+    unexpected: 13,
+  });
+
+  const syncResultTwo = anyObject.safeParse({});
+  expect(syncResultTwo.success).toEqual(true);
+  expect((syncResultTwo as SafeParseSuccess<any>).data).toEqual({});
+
+  const arrayResult = anyObject.safeParse([]);
+  expect(arrayResult.success).toEqual(false);
+
+  const numberResult = anyObject.safeParse(5);
+  expect(numberResult.success).toEqual(false);
+
+  const asyncResult = await anyObject.spa({ name: "asdf", unexpected: 13 });
+  expect(asyncResult.success).toEqual(true);
+
+  type anyObjectType = z.infer<typeof anyObject>;
+  util.assertEqual<anyObjectType, object>(true);
+
+  const objectWithAnyObject = z.object({
+    unsure: z.anyObject(),
+    sure: z.boolean(),
+  });
+
+  type objectWithAnyType = z.infer<typeof objectWithAnyObject>;
+  util.assertEqual<objectWithAnyType, { unsure: object; sure: boolean }>(true);
+
+  const parseObjectWithAnyPropResult = objectWithAnyObject.safeParse({
+    sure: true,
+  });
+  expect(parseObjectWithAnyPropResult.success).toEqual(false);
+
+  const parseObjectWithAnyPropResultTwo = objectWithAnyObject.safeParse({
+    sure: true,
+    unsure: {
+      amount: 5,
+      hi: "there",
+    },
+  });
+
+  expect(parseObjectWithAnyPropResultTwo.success).toEqual(true);
+  expect(
+    (parseObjectWithAnyPropResultTwo as SafeParseSuccess<any>).data
+  ).toEqual({
+    sure: true,
+    unsure: {
+      amount: 5,
+      hi: "there",
+    },
+  });
 });
 
 test("object with refine", async () => {

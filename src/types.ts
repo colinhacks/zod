@@ -53,6 +53,7 @@ export type output<T extends ZodType<any, any, any>> = T["_output"];
 export type { TypeOf as infer };
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
+
 export interface ZodTypeDef {
   errorMap?: ZodErrorMap;
   description?: string;
@@ -63,6 +64,7 @@ class ParseInputLazyPath implements ParseInput {
   data: any;
   _path: ParsePath;
   _key: string | number | (string | number)[];
+
   constructor(
     parent: ParseContext,
     value: any,
@@ -74,6 +76,7 @@ class ParseInputLazyPath implements ParseInput {
     this._path = path;
     this._key = key;
   }
+
   get path() {
     return this._path.concat(this._key);
   }
@@ -108,6 +111,7 @@ export type ProcessedCreateParams = {
   errorMap?: ZodErrorMap;
   description?: string;
 };
+
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
   const { errorMap, invalid_type_error, required_error, description } = params;
@@ -392,15 +396,19 @@ export abstract class ZodType<
   optional(): ZodOptional<this> {
     return ZodOptional.create(this) as any;
   }
+
   nullable(): ZodNullable<this> {
     return ZodNullable.create(this) as any;
   }
+
   nullish(): ZodNullable<ZodOptional<this>> {
     return this.optional().nullable();
   }
+
   array(): ZodArray<this> {
     return ZodArray.create(this);
   }
+
   promise(): ZodPromise<this> {
     return ZodPromise.create(this);
   }
@@ -443,6 +451,7 @@ export abstract class ZodType<
       ...processCreateParams(undefined),
     });
   }
+
   catch(def: Input): ZodCatch<this>;
   catch(def: () => Input): ZodCatch<this>;
   catch(def: any) {
@@ -470,6 +479,7 @@ export abstract class ZodType<
   isOptional(): boolean {
     return this.safeParse(undefined).success;
   }
+
   isNullable(): boolean {
     return this.safeParse(null).success;
   }
@@ -751,15 +761,19 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   email(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "email", ...errorUtil.errToObj(message) });
   }
+
   url(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
+
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
   }
+
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
+
   datetime(
     options?:
       | string
@@ -854,12 +868,15 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   get isEmail() {
     return !!this._def.checks.find((ch) => ch.kind === "email");
   }
+
   get isURL() {
     return !!this._def.checks.find((ch) => ch.kind === "url");
   }
+
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
   }
+
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
@@ -873,6 +890,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     }
     return min;
   }
+
   get maxLength() {
     let max: number | null = null;
     for (const ch of this._def.checks) {
@@ -1027,6 +1045,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
   gte(value: number, message?: errorUtil.ErrMessage) {
     return this.setLimit("min", value, true, errorUtil.toString(message));
   }
+
   min = this.gte;
 
   gt(value: number, message?: errorUtil.ErrMessage) {
@@ -1036,6 +1055,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
   lte(value: number, message?: errorUtil.ErrMessage) {
     return this.setLimit("max", value, true, errorUtil.toString(message));
   }
+
   max = this.lte;
 
   lt(value: number, message?: errorUtil.ErrMessage) {
@@ -1248,6 +1268,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
 export type ZodDateCheck =
   | { kind: "min"; value: number; message?: string }
   | { kind: "max"; value: number; message?: string };
+
 export interface ZodDateDef extends ZodTypeDef {
   checks: ZodDateCheck[];
   coerce: boolean;
@@ -1437,6 +1458,7 @@ export class ZodUndefined extends ZodType<undefined, ZodUndefinedDef> {
     }
     return OK(input.data);
   }
+
   params?: RawCreateParams;
 
   static create = (params?: RawCreateParams): ZodUndefined => {
@@ -1472,6 +1494,7 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
     }
     return OK(input.data);
   }
+
   static create = (params?: RawCreateParams): ZodNull => {
     return new ZodNull({
       typeName: ZodFirstPartyTypeKind.ZodNull,
@@ -1494,9 +1517,11 @@ export interface ZodAnyDef extends ZodTypeDef {
 export class ZodAny extends ZodType<any, ZodAnyDef> {
   // to prevent instances of other classes from extending ZodAny. this causes issues with catchall in ZodObject.
   _any = true as const;
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     return OK(input.data);
   }
+
   static create = (params?: RawCreateParams): ZodAny => {
     return new ZodAny({
       typeName: ZodFirstPartyTypeKind.ZodAny,
@@ -1519,6 +1544,7 @@ export interface ZodUnknownDef extends ZodTypeDef {
 export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
   // required
   _unknown = true as const;
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     return OK(input.data);
   }
@@ -1552,6 +1578,7 @@ export class ZodNever extends ZodType<never, ZodNeverDef> {
     });
     return INVALID;
   }
+
   static create = (params?: RawCreateParams): ZodNever => {
     return new ZodNever({
       typeName: ZodFirstPartyTypeKind.ZodNever,
@@ -2286,6 +2313,18 @@ export class ZodObject<
       ...processCreateParams(params),
     }) as any;
   };
+
+  static anyCreate = (
+    params?: RawCreateParams
+  ): ZodObject<ZodRawShape, "passthrough", ZodTypeAny, object, object> => {
+    return new ZodObject({
+      shape: () => ({}),
+      unknownKeys: "passthrough",
+      catchall: ZodNever.create(),
+      typeName: ZodFirstPartyTypeKind.ZodObject,
+      ...processCreateParams(params),
+    });
+  };
 }
 
 export type AnyZodObject = ZodObject<any, any, any>;
@@ -2298,6 +2337,7 @@ export type AnyZodObject = ZodObject<any, any, any>;
 ////////////////////////////////////////
 ////////////////////////////////////////
 export type ZodUnionOptions = Readonly<[ZodTypeAny, ...ZodTypeAny[]]>;
+
 export interface ZodUnionDef<
   T extends ZodUnionOptions = Readonly<
     [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]
@@ -2783,6 +2823,7 @@ export type AnyZodTuple = ZodTuple<
   [ZodTypeAny, ...ZodTypeAny[]] | [],
   ZodTypeAny | null
 >;
+
 export class ZodTuple<
   T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]],
   Rest extends ZodTypeAny | null = null
@@ -2899,6 +2940,7 @@ export type RecordType<K extends string | number | symbol, V> = [
   : [symbol] extends [K]
   ? Record<K, V>
   : Partial<Record<K, V>>;
+
 export class ZodRecord<
   Key extends KeySchema = ZodString,
   Value extends ZodTypeAny = ZodTypeAny
@@ -2910,9 +2952,11 @@ export class ZodRecord<
   get keySchema() {
     return this._def.keyType;
   }
+
   get valueSchema() {
     return this._def.valueType;
   }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.object) {
@@ -3065,6 +3109,7 @@ export class ZodMap<
       return { status: status.value, value: finalMap };
     }
   }
+
   static create = <
     Key extends ZodTypeAny = ZodTypeAny,
     Value extends ZodTypeAny = ZodTypeAny
@@ -4321,6 +4366,7 @@ export enum ZodFirstPartyTypeKind {
   ZodBranded = "ZodBranded",
   ZodPipeline = "ZodPipeline",
 }
+
 export type ZodFirstPartySchemaTypes =
   | ZodString
   | ZodNumber
@@ -4362,6 +4408,7 @@ export type ZodFirstPartySchemaTypes =
 abstract class Class {
   constructor(..._: any[]) {}
 }
+
 const instanceOfType = <T extends typeof Class>(
   // const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
@@ -4386,6 +4433,7 @@ const voidType = ZodVoid.create;
 const arrayType = ZodArray.create;
 const objectType = ZodObject.create;
 const strictObjectType = ZodObject.strictCreate;
+const anyObjectType = ZodObject.anyCreate;
 const unionType = ZodUnion.create;
 const discriminatedUnionType = ZodDiscriminatedUnion.create;
 const intersectionType = ZodIntersection.create;
@@ -4423,6 +4471,7 @@ export const coerce = {
 
 export {
   anyType as any,
+  anyObjectType as anyObject,
   arrayType as array,
   bigIntType as bigint,
   booleanType as boolean,
