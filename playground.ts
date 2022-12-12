@@ -1,3 +1,7 @@
 import { z } from "./src";
 
-z.string();
+const schema = z.object({
+  birth_date: z.date().optional(),
+});
+
+schema.parse({});
