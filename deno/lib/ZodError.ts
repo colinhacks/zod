@@ -106,6 +106,7 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
+  exact: boolean;
   type: "array" | "string" | "number" | "set" | "date";
 }
 
@@ -113,6 +114,7 @@ export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
+  exact: boolean;
   type: "array" | "string" | "number" | "set" | "date";
 }
 
