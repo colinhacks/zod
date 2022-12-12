@@ -192,16 +192,19 @@ test("trim", () => {
 
 test("datetime", () => {
   const a = z.string().datetime({});
-  expect(a.isDatetime()).toEqual(true);
+  expect(a.isDatetime).toEqual(true);
 
   const b = z.string().datetime({ offset: true });
-  expect(b.isDatetime()).toEqual(true);
+  expect(b.isDatetime).toEqual(true);
 
   const c = z.string().datetime({ precision: 3 });
-  expect(c.isDatetime()).toEqual(true);
+  expect(c.isDatetime).toEqual(true);
 
   const d = z.string().datetime({ offset: true, precision: 0 });
-  expect(d.isDatetime()).toEqual(true);
+  expect(d.isDatetime).toEqual(true);
+
+  const { isDatetime } = z.string().datetime();
+  expect(isDatetime).toEqual(true);
 });
 
 test("datetime parsing", () => {
