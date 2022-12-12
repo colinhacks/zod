@@ -134,6 +134,7 @@ test("superRefine", () => {
         maximum: 3,
         type: "array",
         inclusive: true,
+        exact: true,
         message: "Too many items 😡",
       });
     }
