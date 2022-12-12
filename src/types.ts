@@ -349,7 +349,18 @@ export abstract class ZodType<
       effect: { type: "refinement", refinement },
     });
   }
-  superRefine = this._refinement;
+
+  superRefine<RefinedOutput extends Output>(
+    refinement: (arg: Output, ctx: RefinementCtx) => arg is RefinedOutput
+  ): ZodEffects<this, RefinedOutput, Input>;
+  superRefine(
+    refinement: (arg: Output, ctx: RefinementCtx) => void
+  ): ZodEffects<this, Output, Input>;
+  superRefine(
+    refinement: (arg: Output, ctx: RefinementCtx) => unknown
+  ): ZodEffects<this, Output, Input> {
+    return this._refinement(refinement);
+  }
 
   constructor(def: Def) {
     this._def = def;

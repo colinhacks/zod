@@ -1799,7 +1799,6 @@ z.string()
 
 <!-- Note that the `path` is set to `["confirm"]` , so you can easily display this error underneath the "Confirm password" textbox.
 
-
 ```ts
 const allForms = z.object({ passwordForm }).parse({
   passwordForm: {
@@ -1875,6 +1874,35 @@ const schema = z.number().superRefine((val, ctx) => {
   }
 });
 ```
+
+#### Type refinements
+
+If you provide a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) to `.refine()` or `superRefine()`, the resulting type will be narrowed down to your predicate's type. This is useful if you are mixing multiple chained refinements and transformations:
+
+```ts
+const schema = z
+  .object({
+    first: z.string(),
+    second: z.number(),
+  })
+  .nullable()
+  .superRefine((arg, ctx): arg is {first: string, second: number} => {
+    if (!arg) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom, // customize your issue
+        message: "object should exist",
+      });
+      return false;
+    }
+    return true;
+  })
+  // here, TS knows that arg is not null
+  .refine((arg) => arg.first === "bob", "`first` is not `bob`!");
+
+
+```
+
+> ⚠️ You must **still** call `ctx.addIssue()` if using `superRefine()` with a type predicate function. Otherwise the refinement won't be validated.
 
 ### `.transform`
 
