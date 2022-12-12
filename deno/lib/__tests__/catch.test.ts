@@ -9,6 +9,12 @@ test("basic catch", () => {
   expect(z.string().catch("default").parse(undefined)).toBe("default");
 });
 
+test("catch fn does not run when parsing succeeds", () => {
+  const cb = jest.fn().mockReturnValue("x") as () => string;
+  expect(z.string().catch(cb).parse("test")).toBe("test");
+  expect(cb).not.toBeCalled();
+});
+
 test("basic catch async", async () => {
   const result = await z.string().catch("default").parseAsync(1243);
   expect(result).toBe("default");
