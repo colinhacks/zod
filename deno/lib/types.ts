@@ -847,7 +847,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [...this._def.checks, { kind: "trim" }],
     });
 
-  isDatetime() {
+  get isDatetime() {
     return !!this._def.checks.find((ch) => ch.kind === "datetime");
   }
 
