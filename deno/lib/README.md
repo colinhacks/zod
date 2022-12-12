@@ -605,6 +605,7 @@ z.coerce.boolean().parse([]); // => true
 z.coerce.boolean().parse(0); // => false
 z.coerce.boolean().parse(undefined); // => false
 z.coerce.boolean().parse(null); // => false
+```
 
 ### Datetime validation
 
