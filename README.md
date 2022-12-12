@@ -2180,7 +2180,7 @@ type inferred = z.infer<typeof stringToNumber>; // number
 
 ### Writing generic functions
 
-When attempting to write a functions that accepts a Zod schemas as an input, it's common to try something like this:
+When attempting to write a function that accepts a Zod schema as an input, it's common to try something like this:
 
 ```ts
 function makeSchemaOptional<T>(schema: z.ZodType<T>) {
@@ -2195,7 +2195,7 @@ const arg = makeSchemaOptional(z.string());
 arg.unwrap();
 ```
 
-A better approach is for the generate parameter to refer to _the schema as a whole_.
+A better approach is for the generic parameter to refer to _the schema as a whole_.
 
 ```ts
 function makeSchemaOptional<T extends z.ZodTypeAny>(schema: T) {
