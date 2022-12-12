@@ -89,9 +89,9 @@
   - [Cyclical data](#cyclical-objects)
 - [Promises](#promises)
 - [Instanceof](#instanceof)
-- [Functions](#function-schemas)
+- [Functions](#functions)
 - [Preprocess](#preprocess)
-- [Custom](#custom)
+- [Custom](#custom-schemas)
 - [Schema methods](#schema-methods)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
@@ -1534,7 +1534,7 @@ TestSchema.parse(new Test()); // passes
 TestSchema.parse("blob"); // throws
 ```
 
-## Function schemas
+## Functions
 
 Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".
 
@@ -1980,7 +1980,8 @@ const Strings = z.string().transform((val, ctx) => {
 Transforms and refinements can be interleaved. These will be executed in the order they are declared.
 
 ```ts
-const nameToGreeting = z.string()
+const nameToGreeting = z
+  .string()
   .transform((val) => val.toUpperCase())
   .refine((val) => val.length > 15)
   .transform((val) => `Hello ${val}`)
@@ -2124,7 +2125,9 @@ z.union([z.string(), z.number()]);
 A convenience method for creating intersection types.
 
 ```ts
-const nameAndAge = z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: string } & { age: number }
+const nameAndAge = z
+  .object({ name: z.string() })
+  .and(z.object({ age: z.number() })); // { name: string } & { age: number }
 
 // equivalent to
 z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
