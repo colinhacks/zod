@@ -10,9 +10,13 @@ test("basic catch", () => {
 });
 
 test("catch fn does not run when parsing succeeds", () => {
-  const cb = jest.fn().mockReturnValue("x") as () => string;
+  let isCalled = false;
+  const cb = () => {
+    isCalled = true;
+    return "asdf";
+  };
   expect(z.string().catch(cb).parse("test")).toBe("test");
-  expect(cb).not.toBeCalled();
+  expect(isCalled).toEqual(false);
 });
 
 test("basic catch async", async () => {

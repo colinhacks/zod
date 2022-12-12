@@ -1,5 +1,5 @@
 // @ts-ignore TS6133
-import { expect, jest, test } from "@jest/globals";
+import { expect, test } from "@jest/globals";
 
 import { z } from "..";
 import { util } from "../helpers/util";
@@ -9,9 +9,13 @@ test("basic catch", () => {
 });
 
 test("catch fn does not run when parsing succeeds", () => {
-  const cb = jest.fn().mockReturnValue("x") as () => string;
+  let isCalled = false;
+  const cb = () => {
+    isCalled = true;
+    return "asdf";
+  };
   expect(z.string().catch(cb).parse("test")).toBe("test");
-  expect(cb).not.toBeCalled();
+  expect(isCalled).toEqual(false);
 });
 
 test("basic catch async", async () => {
