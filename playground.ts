@@ -1,8 +1,13 @@
-import { z } from "./src";
+import { Schema, z } from "./src";
 
 async function main() {
-  const schema = z.array(z.string()).min(5);
-  console.log(schema.safeParse("1234".split("")));
-  console.log(schema.safeParse("12341234".split("")));
+  const schema = z.custom<`${number}px`>(
+    (val) => typeof val === "string" && /^\d+px$/.test(val),
+    {
+      message: "Not a valid px string",
+    }
+  );
+  console.log(schema.parse("100px")); // pass
+  console.log(schema.parse("100vw")); // fail
 }
 main();

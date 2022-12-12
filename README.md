@@ -89,8 +89,9 @@
   - [Cyclical data](#cyclical-objects)
 - [Promises](#promises)
 - [Instanceof](#instanceof)
-- [Function schemas](#function-schemas)
+- [Functions](#function-schemas)
 - [Preprocess](#preprocess)
+- [Custom](#custom)
 - [Schema methods](#schema-methods)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
@@ -1618,6 +1619,8 @@ myFunction.returnType();
 
 ## Preprocess
 
+> Zod now supports primitive coercion without the need for `.preprocess()`. See the [coercion docs](#coercion-for-primitives) for more information.
+
 Typically Zod operates under a "parse then transform" paradigm. Zod validates the input first, then passes it through a chain of transformation functions. (For more information about transforms, read the [.transform docs](#transform).)
 
 But sometimes you want to apply some transform to the input _before_ parsing happens. A common use case: type coercion. Zod enables this with the `z.preprocess()`.
@@ -1627,6 +1630,22 @@ const castToString = z.preprocess((val) => String(val), z.string());
 ```
 
 This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
+
+## Custom schemas
+
+You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
+
+```ts
+const px = z.custom<`${number}px`>((val) => /^\d+px$/.test(val));
+px.parse("100px"); // pass
+px.parse("100vw"); // fail
+```
+
+If you don't provide a validation function, Zod will allow any value. This can be dangerous!
+
+```ts
+z.custom<{ arg: string }>(); // performs no validation
+```
 
 ## Schema methods
 
@@ -1892,7 +1911,7 @@ const schema = z
     second: z.number(),
   })
   .nullable()
-  .superRefine((arg, ctx): arg is {first: string, second: number} => {
+  .superRefine((arg, ctx): arg is { first: string; second: number } => {
     if (!arg) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom, // customize your issue
@@ -1904,8 +1923,6 @@ const schema = z
   })
   // here, TS knows that arg is not null
   .refine((arg) => arg.first === "bob", "`first` is not `bob`!");
-
-
 ```
 
 > ⚠️ You must **still** call `ctx.addIssue()` if using `superRefine()` with a type predicate function. Otherwise the refinement won't be validated.
