@@ -50,7 +50,7 @@ test("more email validations", () => {
     `"🍺🕺🎉"@domain.com`,
     `poop@💩.la`,
     `"🌮"@i❤️tacos.ws`,
-    "sss--asd@i❤️tacos.ws"
+    "sss--asd@i❤️tacos.ws",
   ];
   const email = z.string().email();
   for (const datum of data) {
