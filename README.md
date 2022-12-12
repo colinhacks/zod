@@ -591,6 +591,21 @@ z.coerce.bigint(); // BigInt(input)
 z.coerce.date(); // new Date(input)
 ```
 
+**Boolean coercion**
+
+Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
+
+```ts
+z.coerce.boolean().parse("tuna"); // => true
+z.coerce.boolean().parse("true"); // => true
+z.coerce.boolean().parse("false"); // => true
+z.coerce.boolean().parse(1); // => true
+z.coerce.boolean().parse([]); // => true
+
+z.coerce.boolean().parse(0); // => false
+z.coerce.boolean().parse(undefined); // => false
+z.coerce.boolean().parse(null); // => false
+
 ### Datetime validation
 
 The `z.string().datetime()` method defaults to UTC validation: no timezone offsets with arbitrary sub-second decimal precision.
