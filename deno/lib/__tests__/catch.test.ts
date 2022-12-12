@@ -9,6 +9,16 @@ test("basic catch", () => {
   expect(z.string().catch("default").parse(undefined)).toBe("default");
 });
 
+test("catch fn does not run when parsing succeeds", () => {
+  let isCalled = false;
+  const cb = () => {
+    isCalled = true;
+    return "asdf";
+  };
+  expect(z.string().catch(cb).parse("test")).toBe("test");
+  expect(isCalled).toEqual(false);
+});
+
 test("basic catch async", async () => {
   const result = await z.string().catch("default").parseAsync(1243);
   expect(result).toBe("default");
