@@ -2131,10 +2131,9 @@ export class ZodObject<
   pick<Mask extends { [k in keyof T]?: true }>(
     maskOrKeys: Mask
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
-    let mask = maskOrKeys;
-    if (Array.isArray(maskOrKeys)) {
-      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
-    }
+    const mask: Mask = Array.isArray(maskOrKeys)
+      ? maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {})
+      : maskOrKeys;
     const shape: any = {};
     util.objectKeys(mask).map((key) => {
       // only add to shape if key corresponds to an element of the current shape
@@ -2155,10 +2154,9 @@ export class ZodObject<
   omit<Mask extends { [k in keyof T]?: true }>(
     maskOrKeys: Mask
   ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall> {
-    let mask = maskOrKeys;
-    if (Array.isArray(maskOrKeys)) {
-      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
-    }
+    const mask: Mask = Array.isArray(maskOrKeys)
+      ? maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {})
+      : maskOrKeys;
     const shape: any = {};
     util.objectKeys(this.shape).map((key) => {
       if (util.objectKeys(mask).indexOf(key) === -1) {
@@ -2199,10 +2197,9 @@ export class ZodObject<
     Catchall
   >;
   partial(maskOrKeys?: any) {
-    let mask = maskOrKeys;
-    if (Array.isArray(maskOrKeys)) {
-      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
-    }
+    const mask: { [k in keyof T]?: true } = Array.isArray(maskOrKeys)
+      ? maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {})
+      : maskOrKeys;
     const newShape: any = {};
     if (mask) {
       util.objectKeys(this.shape).map((key) => {
@@ -2253,10 +2250,9 @@ export class ZodObject<
     Catchall
   >;
   required(maskOrKeys?: any) {
-    let mask = maskOrKeys;
-    if (Array.isArray(maskOrKeys)) {
-      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
-    }
+    const mask: { [k in keyof T]?: true } = Array.isArray(maskOrKeys)
+      ? maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {})
+      : maskOrKeys;
     const newShape: any = {};
     if (mask) {
       util.objectKeys(this.shape).map((key) => {
