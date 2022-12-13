@@ -2219,20 +2219,7 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  required<K extends keyof T>(
-    keys: readonly [K, ...K[]]
-  ): ZodObject<
-    objectUtil.noNever<{
-      [k in keyof T]: k extends K ? deoptional<T[k]> : T[k];
-    }>,
-    UnknownKeys,
-    Catchall
-  >;
-  required(maskOrKeys?: any) {
-    let mask = maskOrKeys;
-    if (Array.isArray(maskOrKeys)) {
-      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
-    }
+  required(mask?: any) {
     const newShape: any = {};
     if (mask) {
       util.objectKeys(this.shape).map((key) => {
