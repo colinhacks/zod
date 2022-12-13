@@ -1834,35 +1834,44 @@ export interface ZodObjectDef<
   unknownKeys: UnknownKeys;
 }
 
-export type baseObjectOutputType<Shape extends ZodRawShape> =
-  objectUtil.flatten<
-    objectUtil.addQuestionMarks<{
-      [k in keyof Shape]: Shape[k]["_output"];
-    }>
-  >;
+export type baseObjectOutputType<
+  Shape extends ZodRawShape,
+  UnknownKeys extends UnknownKeysParam
+> = objectUtil.flatten<
+  objectUtil.addQuestionMarks<{
+    [k in keyof Shape]: Shape[k]["_output"];
+  }> &
+    ("passthrough" extends UnknownKeys ? { [k: string]: any } : unknown)
+>;
 
 export type objectOutputType<
   Shape extends ZodRawShape,
+  UnknownKeys extends UnknownKeysParam,
   Catchall extends ZodTypeAny
 > = ZodTypeAny extends Catchall
-  ? baseObjectOutputType<Shape>
+  ? baseObjectOutputType<Shape, UnknownKeys>
   : objectUtil.flatten<
-      baseObjectOutputType<Shape> & { [k: string]: Catchall["_output"] }
+      baseObjectOutputType<Shape, never> & { [k: string]: Catchall["_output"] }
     >;
 
-export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
+export type baseObjectInputType<
+  Shape extends ZodRawShape,
+  UnknownKeys extends UnknownKeysParam
+> = objectUtil.flatten<
   objectUtil.addQuestionMarks<{
     [k in keyof Shape]: Shape[k]["_input"];
-  }>
+  }> &
+    ("passthrough" extends UnknownKeys ? { [k: string]: any } : unknown)
 >;
 
 export type objectInputType<
   Shape extends ZodRawShape,
+  UnknownKeys extends UnknownKeysParam,
   Catchall extends ZodTypeAny
 > = ZodTypeAny extends Catchall
-  ? baseObjectInputType<Shape>
+  ? baseObjectInputType<Shape, UnknownKeys>
   : objectUtil.flatten<
-      baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
+      baseObjectInputType<Shape, never> & { [k: string]: Catchall["_input"] }
     >;
 
 export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
@@ -1910,7 +1919,7 @@ export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = "strip",
   Catchall extends ZodTypeAny = ZodTypeAny,
-  Output = objectOutputType<T, Catchall>,
+  Output = objectOutputType<T, UnknownKeys, Catchall>,
   Input = objectInputType<T, Catchall>
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
   private _cached: { shape: T; keys: string[] } | null = null;
