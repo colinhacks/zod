@@ -2124,7 +2124,17 @@ export class ZodObject<
 
   pick<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
+  ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall>;
+  pick<K extends keyof T>(
+    keys: readonly [K, ...K[]]
+  ): ZodObject<Pick<T, K>, UnknownKeys, Catchall>;
+  pick<Mask extends { [k in keyof T]?: true }>(
+    maskOrKeys: Mask
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
+    let mask = maskOrKeys;
+    if (Array.isArray(maskOrKeys)) {
+      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
+    }
     const shape: any = {};
     util.objectKeys(mask).map((key) => {
       // only add to shape if key corresponds to an element of the current shape
@@ -2138,7 +2148,17 @@ export class ZodObject<
 
   omit<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
+  ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall>;
+  omit<K extends keyof T>(
+    keys: readonly [K, ...K[]]
+  ): ZodObject<Omit<T, K>, UnknownKeys, Catchall>;
+  omit<Mask extends { [k in keyof T]?: true }>(
+    maskOrKeys: Mask
   ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall> {
+    let mask = maskOrKeys;
+    if (Array.isArray(maskOrKeys)) {
+      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
+    }
     const shape: any = {};
     util.objectKeys(this.shape).map((key) => {
       if (util.objectKeys(mask).indexOf(key) === -1) {
@@ -2169,7 +2189,20 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  partial(mask?: any) {
+  partial<K extends keyof T>(
+    keys: readonly [K, ...K[]]
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends K ? ZodOptional<T[k]> : T[k];
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  partial(maskOrKeys?: any) {
+    let mask = maskOrKeys;
+    if (Array.isArray(maskOrKeys)) {
+      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
+    }
     const newShape: any = {};
     if (mask) {
       util.objectKeys(this.shape).map((key) => {
@@ -2210,7 +2243,20 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  required(mask?: any) {
+  required<K extends keyof T>(
+    keys: readonly [K, ...K[]]
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends K ? deoptional<T[k]> : T[k];
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  required(maskOrKeys?: any) {
+    let mask = maskOrKeys;
+    if (Array.isArray(maskOrKeys)) {
+      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
+    }
     const newShape: any = {};
     if (mask) {
       util.objectKeys(this.shape).map((key) => {
