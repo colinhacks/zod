@@ -1920,7 +1920,7 @@ export class ZodObject<
   UnknownKeys extends UnknownKeysParam = "strip",
   Catchall extends ZodTypeAny = ZodTypeAny,
   Output = objectOutputType<T, UnknownKeys, Catchall>,
-  Input = objectInputType<T, Catchall>
+  Input = objectInputType<T, UnknownKeys, Catchall>
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
   private _cached: { shape: T; keys: string[] } | null = null;
 
