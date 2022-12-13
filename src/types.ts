@@ -2133,17 +2133,7 @@ export class ZodObject<
 
   pick<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
-  ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall>;
-  pick<K extends keyof T>(
-    keys: readonly [K, ...K[]]
-  ): ZodObject<Pick<T, K>, UnknownKeys, Catchall>;
-  pick<Mask extends { [k in keyof T]?: true }>(
-    maskOrKeys: Mask
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
-    let mask = maskOrKeys;
-    if (Array.isArray(maskOrKeys)) {
-      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
-    }
     const shape: any = {};
     util.objectKeys(mask).map((key) => {
       // only add to shape if key corresponds to an element of the current shape
