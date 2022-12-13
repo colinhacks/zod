@@ -2178,20 +2178,7 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  partial<K extends keyof T>(
-    keys: readonly [K, ...K[]]
-  ): ZodObject<
-    objectUtil.noNever<{
-      [k in keyof T]: k extends K ? ZodOptional<T[k]> : T[k];
-    }>,
-    UnknownKeys,
-    Catchall
-  >;
-  partial(maskOrKeys?: any) {
-    let mask = maskOrKeys;
-    if (Array.isArray(maskOrKeys)) {
-      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
-    }
+  partial(mask?: any) {
     const newShape: any = {};
     if (mask) {
       util.objectKeys(this.shape).map((key) => {
