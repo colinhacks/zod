@@ -2148,7 +2148,17 @@ export class ZodObject<
 
   omit<Mask extends { [k in keyof T]?: true }>(
     mask: Mask
+  ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall>;
+  omit<K extends keyof T>(
+    keys: readonly [K, ...K[]]
+  ): ZodObject<Omit<T, K>, UnknownKeys, Catchall>;
+  omit<Mask extends { [k in keyof T]?: true }>(
+    maskOrKeys: Mask
   ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall> {
+    let mask = maskOrKeys;
+    if (Array.isArray(maskOrKeys)) {
+      mask = maskOrKeys.reduce((acc, key) => ({ ...acc, [key]: true }), {});
+    }
     const shape: any = {};
     util.objectKeys(this.shape).map((key) => {
       if (util.objectKeys(mask).indexOf(key) === -1) {
