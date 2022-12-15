@@ -1778,7 +1778,7 @@ type RefineParams = {
 };
 ```
 
-For advanced cases, the second argument can also be a function that returns `RefineParams`/
+For advanced cases, the second argument can also be a function that returns `RefineParams`.
 
 ```ts
 const longString = z.string().refine(
