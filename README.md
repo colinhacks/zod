@@ -1691,10 +1691,10 @@ If you use asynchronous [refinements](#refine) or [transforms](#transform) (more
 
 ```ts
 const stringSchema1 = z.string().refine(async (val) => val.length < 20);
-const value1 = await stringSchema.parseAsync("hello"); // => hello
+const value1 = await stringSchema1.parseAsync("hello"); // => hello
 
 const stringSchema2 = z.string().refine(async (val) => val.length > 20);
-const value2 = await stringSchema.parseAsync("hello"); // => throws
+const value2 = await stringSchema2.parseAsync("hello"); // => throws
 ```
 
 ### `.safeParse`
