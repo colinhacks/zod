@@ -1680,7 +1680,7 @@ Given any Zod schema, you can call its `.parse` method to check `data` is valid.
 const stringSchema = z.string();
 
 stringSchema.parse("fish"); // => returns "fish"
-stringSchema.parse(12); // throws Error('Non-string type: number');
+stringSchema.parse(12); // throws error
 ```
 
 ### `.parseAsync`
@@ -1692,8 +1692,8 @@ If you use asynchronous [refinements](#refine) or [transforms](#transform) (more
 ```ts
 const stringSchema = z.string().refine(async (val) => val.length < 8);
 
-await stringSchema.parseAsync("hello"); // => hello
-await stringSchema.parseAsync("hello world"); // => throws
+await stringSchema.parseAsync("hello"); // => returns "hello"
+await stringSchema.parseAsync("hello world"); // => throws error
 ```
 
 ### `.safeParse`
