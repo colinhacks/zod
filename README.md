@@ -1968,7 +1968,7 @@ emailToDomain.parse("colinhacks@example.com"); // => example.com
 
 #### Validating during transform
 
-The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `refine` and `validate`.
+The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `transform` and `refine`.
 
 As with `.superRefine`, the transform function receives a `ctx` object with a `addIssue` method that can be used to register validation issues.
 
