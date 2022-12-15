@@ -1690,7 +1690,7 @@ stringSchema.parse(12); // throws error
 If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`
 
 ```ts
-const stringSchema = z.string().refine(async (val) => val.length < 8);
+const stringSchema = z.string().refine(async (val) => val.length <= 8);
 
 await stringSchema.parseAsync("hello"); // => returns "hello"
 await stringSchema.parseAsync("hello world"); // => throws error
