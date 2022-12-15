@@ -1973,7 +1973,7 @@ The `.transform` method can simultaneously validate and transform the value. Thi
 As with `.superRefine`, the transform function receives a `ctx` object with a `addIssue` method that can be used to register validation issues.
 
 ```ts
-const Strings = z.string().transform((val, ctx) => {
+const numberInString = z.string().transform((val, ctx) => {
   const parsed = parseInt(val);
   if (isNaN(parsed)) {
     ctx.addIssue({
