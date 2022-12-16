@@ -126,6 +126,19 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.not_finite:
       message = "Number must be finite";
       break;
+    case ZodIssueCode.bigint_too_small:
+      message = `BigInt must be ${
+        issue.inclusive ? "greater than or equal to" : "greater than"
+      } ${issue.minimum.toString()}n`;
+      break;
+    case ZodIssueCode.bigint_too_big:
+      message = `BigInt must be ${
+        issue.inclusive ? "less than or equal to" : "less than"
+      } ${issue.maximum.toString()}n`;
+      break;
+    case ZodIssueCode.bigint_not_multiple_of:
+      message = `BigInt must be a multiple of ${issue.multipleOf.toString()}n`;
+      break;
     default:
       message = _ctx.defaultError;
       util.assertNever(issue);

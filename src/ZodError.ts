@@ -117,7 +117,6 @@ export interface ZodBigIntTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.bigint_too_small;
   minimum: bigint;
   inclusive: boolean;
-  exact?: boolean;
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
@@ -132,7 +131,6 @@ export interface ZodBigIntTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.bigint_too_big;
   maximum: bigint;
   inclusive: boolean;
-  exact?: boolean;
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {

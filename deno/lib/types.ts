@@ -1202,7 +1202,6 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
             code: ZodIssueCode.bigint_too_small,
             minimum: check.value,
             inclusive: check.inclusive,
-            exact: false,
             message: check.message,
           });
           status.dirty();
@@ -1217,7 +1216,6 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
             code: ZodIssueCode.bigint_too_big,
             maximum: check.value,
             inclusive: check.inclusive,
-            exact: false,
             message: check.message,
           });
           status.dirty();
