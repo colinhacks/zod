@@ -3976,6 +3976,12 @@ export interface ZodNullableDef<T extends ZodTypeAny = ZodTypeAny>
 
 export type ZodNullableType<T extends ZodTypeAny> = ZodNullable<T>;
 
+export type UnwrapZodNullableDeep<T extends ZodTypeAny> = T extends ZodNullable<
+  infer U
+>
+  ? UnwrapZodNullableDeep<U>
+  : T;
+
 export class ZodNullable<T extends ZodTypeAny> extends ZodType<
   T["_output"] | null,
   ZodNullableDef<T>,
@@ -3991,6 +3997,13 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
 
   unwrap() {
     return this._def.innerType;
+  }
+
+  unwrapDeep(): UnwrapZodNullableDeep<T> {
+    const { innerType } = this._def;
+    return innerType instanceof ZodNullable
+      ? innerType.unwrapDeep()
+      : innerType;
   }
 
   static create = <T extends ZodTypeAny>(
