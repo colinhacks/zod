@@ -10,6 +10,7 @@ const justFive = z.string().length(5);
 const nonempty = z.string().nonempty("nonempty");
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
+const numeric = z.string().numeric();
 
 test("passing validations", () => {
   minFive.parse("12345");
@@ -20,6 +21,7 @@ test("passing validations", () => {
   justFive.parse("12345");
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
+  numeric.parse("12345");
 });
 
 test("failing validations", () => {
@@ -30,6 +32,7 @@ test("failing validations", () => {
   expect(() => justFive.parse("123456")).toThrow();
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
+  expect(() => numeric.parse("hello")).toThrow();
 });
 
 test("email validations", () => {

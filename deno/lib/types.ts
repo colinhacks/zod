@@ -646,7 +646,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       } else if (check.kind === "numeric") {
         const numericRegex = /^-?\d+\.?\d*$|^\d*\.?\d+$/;
         const testResult = numericRegex.test(input.data);
-        if(!testResult) {
+        if (!testResult) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "regex",
@@ -832,6 +832,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
+  }
+  get isNumeric() {
+    return !!this._def.checks.find((ch) => ch.kind === "numeric");
   }
 
   get minLength() {
