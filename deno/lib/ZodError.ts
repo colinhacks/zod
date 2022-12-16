@@ -32,6 +32,9 @@ export const ZodIssueCode = util.arrayToEnum([
   "invalid_intersection_types",
   "not_multiple_of",
   "not_finite",
+  "bigint_too_small",
+  "bigint_too_big",
+  "bigint_not_multiple_of",
 ]);
 
 export type ZodIssueCode = keyof typeof ZodIssueCode;
@@ -110,12 +113,26 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   type: "array" | "string" | "number" | "set" | "date";
 }
 
+export interface ZodBigIntTooSmallIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.bigint_too_small;
+  minimum: bigint;
+  inclusive: boolean;
+  exact?: boolean;
+}
+
 export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
   exact?: boolean;
   type: "array" | "string" | "number" | "set" | "date";
+}
+
+export interface ZodBigIntTooBigIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.bigint_too_big;
+  maximum: bigint;
+  inclusive: boolean;
+  exact?: boolean;
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -125,6 +142,11 @@ export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
 export interface ZodNotMultipleOfIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.not_multiple_of;
   multipleOf: number;
+}
+
+export interface ZodBigIntNotMultipleOfIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.bigint_not_multiple_of;
+  multipleOf: bigint;
 }
 
 export interface ZodNotFiniteIssue extends ZodIssueBase {
@@ -154,7 +176,10 @@ export type ZodIssueOptionalMessage =
   | ZodInvalidIntersectionTypesIssue
   | ZodNotMultipleOfIssue
   | ZodNotFiniteIssue
-  | ZodCustomIssue;
+  | ZodCustomIssue
+  | ZodBigIntTooSmallIssue
+  | ZodBigIntTooBigIssue
+  | ZodBigIntNotMultipleOfIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & {
   fatal?: boolean;
