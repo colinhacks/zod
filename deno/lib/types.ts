@@ -4299,6 +4299,8 @@ export const custom = <T>(
   return ZodAny.create();
 };
 
+export { ZodType as Schema, ZodType as ZodSchema };
+
 export const late = {
   object: ZodObject.lazycreate,
 };
