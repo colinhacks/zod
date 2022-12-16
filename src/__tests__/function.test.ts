@@ -269,7 +269,7 @@ test("decorate", () => {
       .function(z.tuple([z.boolean()]))
       .returns(z.instanceof(MyClass))
       .decorate()
-    myMethodD(arg: boolean): MyClass {
+    myMethodD(_arg: boolean): MyClass {
       return this;
     }
   }
