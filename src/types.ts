@@ -479,6 +479,7 @@ type ZodStringCheck =
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
+  | { kind: "numeric"; message?: string }
   | { kind: "trim"; message?: string }
   | {
       kind: "datetime";
@@ -642,6 +643,18 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "numeric") {
+        const numericRegex = /^-?\d+\.?\d*$|^\d*\.?\d+$/;
+        const testResult = numericRegex.test(input.data);
+        if(!testResult) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "regex",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
       } else if (check.kind === "startsWith") {
@@ -742,8 +755,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   
   numeric(message?: errorUtil.ErrMessage) {
     return this._addCheck({
-      kind: "regex",
-      regex: /^-?\d+\.?\d*$|^\d*\.?\d+$/,
+      kind: "numeric",
       ...errorUtil.errToObj(message),
     });
   }
