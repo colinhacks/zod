@@ -2,6 +2,7 @@
 import { expect, test } from "@jest/globals";
 
 import * as z from "../index";
+import { util } from "../index";
 
 function checkErrors(a: z.ZodTypeAny, bad: any) {
   let expected;
@@ -39,4 +40,10 @@ test("Should have error messages appropriate for the underlying type", () => {
 test("unwrap", () => {
   const unwrapped = z.string().nullable().unwrap();
   expect(unwrapped).toBeInstanceOf(z.ZodString);
+});
+
+test("unwrapDeep", () => {
+  const unwrapped = z.string().nullable().nullable().nullable().unwrapDeep();
+  expect(unwrapped).toBeInstanceOf(z.ZodString);
+  util.assertEqual<z.infer<typeof unwrapped>, string>(true);
 });
