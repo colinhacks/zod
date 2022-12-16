@@ -239,3 +239,46 @@ test("fallback to OuterTypeOfFunction", () => {
     (arg: string, ...args_1: unknown[]) => number
   >(true);
 });
+
+test("decorate", () => {
+  class MyClass {
+    @z.decorate(z.function(z.tuple([z.string()])).returns(z.string()))
+    myMethodA(arg: string) {
+      return arg;
+    }
+
+    @z.decorate(
+      z
+        .function(z.tuple([]).rest(z.string().or(z.number()).or(z.boolean())))
+        .returns(z.string().or(z.number()).or(z.boolean()).array())
+    )
+    myMethodB(...args: (string | number | boolean)[]) {
+      return args;
+    }
+
+    // @ts-expect-error All parameters and return type schemas passed to `z.decorate`
+    // must match implementation
+    @z.decorate(z.function(z.tuple([z.number()])).returns(z.string()))
+    //                              ^ should be string as in the implementation, TS errors out
+    myMethodC(arg: string) {
+      return arg;
+    }
+
+    // Alternative syntax (function => decorator)
+    @z
+      .function(z.tuple([z.boolean()]))
+      .returns(z.instanceof(MyClass))
+      .decorate()
+    myMethodD(arg: boolean): MyClass {
+      return this;
+    }
+  }
+
+  const myClass = new MyClass();
+
+  myClass.myMethodA("asdf");
+  myClass.myMethodB("asdf", 123, true, false);
+  myClass.myMethodD(true);
+  expect(() => myClass.myMethodA(123 as any)).toThrow();
+  expect(() => myClass.myMethodB({ a: "asdf" } as any)).toThrow();
+});
