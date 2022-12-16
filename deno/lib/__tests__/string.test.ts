@@ -155,21 +155,31 @@ test("checks getters", () => {
   expect(z.string().email().isURL).toEqual(false);
   expect(z.string().email().isCUID).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
+  expect(z.string().uuid().isNumeric).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
   expect(z.string().url().isCUID).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
+  expect(z.string().uuid().isNumeric).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
   expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().uuid().isNumeric).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
   expect(z.string().uuid().isCUID).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
+  expect(z.string().uuid().isNumeric).toEqual(false);
+
+  expect(z.string().numeric().isEmail).toEqual(false);
+  expect(z.string().numeric().isURL).toEqual(false);
+  expect(z.string().numeric().isCUID).toEqual(false);
+  expect(z.string().numeric().isUUID).toEqual(false);
+  expect(z.string().numeric().isNumeric).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -270,6 +280,7 @@ test("datetime parsing", () => {
 test("numeric", () => {
   const numeric = z.string().numeric();
 
+  expect(numeric.isNumeric).toEqual(true);
   expect(() => numeric.parse(true)).toThrow();
   expect(() => numeric.parse(1)).toThrow();
   expect(() => numeric.parse(undefined)).toThrow();
