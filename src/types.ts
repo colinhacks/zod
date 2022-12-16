@@ -3368,6 +3368,10 @@ export class ZodFunction<
 
   validate = this.implement;
 
+  decorate() {
+    return ZodDecorator.create(this);
+  }
+
   static create(): ZodFunction<ZodTuple<[], ZodUnknown>, ZodUnknown>;
   static create<T extends AnyZodTuple = ZodTuple<[], ZodUnknown>>(
     args: T
@@ -3395,6 +3399,23 @@ export class ZodFunction<
     }) as any;
   }
 }
+
+export const ZodDecorator = {
+  create: <Fn extends ZodFunction<ZodTuple<any, any>, ZodTypeAny>>(fn: Fn) => {
+    return (
+      target: Object,
+      _propertyKey: string | symbol,
+      descriptor: TypedPropertyDescriptor<output<Fn>>
+    ) => {
+      const originalMethod = descriptor.value!;
+      descriptor.value = (...args) => {
+        const validatedFunc = fn.parse(originalMethod);
+        return validatedFunc.bind(target)(...args);
+      };
+      return descriptor;
+    };
+  },
+};
 
 ///////////////////////////////////////
 ///////////////////////////////////////
@@ -3902,8 +3923,6 @@ export class ZodEffects<
   };
 }
 
-export { ZodEffects as ZodTransformer };
-
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 //////////                       //////////
@@ -4278,8 +4297,6 @@ export const custom = <T>(
   return ZodAny.create();
 };
 
-export { ZodType as Schema, ZodType as ZodSchema };
-
 export const late = {
   object: ZodObject.lazycreate,
 };
@@ -4404,6 +4421,7 @@ const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const pipelineType = ZodPipeline.create;
+const decoratorType = ZodDecorator.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -4427,6 +4445,7 @@ export {
   bigIntType as bigint,
   booleanType as boolean,
   dateType as date,
+  decoratorType as decorate,
   discriminatedUnionType as discriminatedUnion,
   effectsType as effect,
   enumType as enum,

@@ -240,3 +240,28 @@ test("fallback to OuterTypeOfFunction", () => {
     (arg: string, ...args_1: unknown[]) => number
   >(true);
 });
+
+test("decorate", () => {
+  class MyClass {
+    @z.decorate(z.function(z.tuple([z.string()])).returns(z.string()))
+    myMethodA(arg: string) {
+      return arg;
+    }
+
+    @z.decorate(
+      z
+        .function(z.tuple([]).rest(z.string().or(z.number()).or(z.boolean())))
+        .returns(z.string().or(z.number()).or(z.boolean()).array())
+    )
+    myMethodB(...args: (string | number | boolean)[]) {
+      return args;
+    }
+  }
+
+  const myClass = new MyClass();
+
+  myClass.myMethodA("asdf");
+  myClass.myMethodB("asdf", 123, true, false);
+  expect(() => myClass.myMethodA(123 as any)).toThrow();
+  expect(() => myClass.myMethodB({ a: "asdf" } as any)).toThrow();
+});
