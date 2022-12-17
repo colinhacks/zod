@@ -88,11 +88,8 @@ test("tuple with rest schema", () => {
   util.assertEqual<t1, [string, number, ...boolean[]]>(true);
 });
 
-test("tuple with empty items", () => {
-  const inputTuple: any[] = [];
-  inputTuple[2] = ["blue"]; // create an array of length 3 with two first items being empty - typeof undefined
-
-  expect(() => testTuple.parse(inputTuple)).toThrow();
+test("parse should fail given sparse array as tuple", () => {
+  expect(() => testTuple.parse(new Array(3))).toThrow();
 });
 
 // test('tuple with optional elements', () => {
