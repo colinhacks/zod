@@ -1164,7 +1164,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 export type ZodBigIntCheck =
   | { kind: "min"; value: bigint; inclusive: boolean; message?: string }
   | { kind: "max"; value: bigint; inclusive: boolean; message?: string }
-  | { kind: "multipleOf"; value: bigint; message?: string };
+  | { kind: "multipleOf"; value: bigint; message?: string }
+  | { kind: "gigantic"; message?: string };
 
 export interface ZodBigIntDef extends ZodTypeDef {
   checks: ZodBigIntCheck[];
@@ -1226,6 +1227,18 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.bigint_not_multiple_of,
             multipleOf: check.value,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "gigantic") {
+        if (
+          Number.MIN_SAFE_INTEGER <= input.data &&
+          input.data <= Number.MAX_SAFE_INTEGER
+        ) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.bigint_not_gigantic,
             message: check.message,
           });
           status.dirty();
@@ -1327,6 +1340,37 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
       value: BigInt(0),
       inclusive: true,
       message: errorUtil.toString(message),
+    });
+  }
+
+  gigantic(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "gigantic",
+      message: errorUtil.toString(message),
+    });
+  }
+  unsafe = this.gigantic;
+
+  safe(message?: errorUtil.ErrMessage) {
+    message = errorUtil.toString(message);
+
+    return new ZodBigInt({
+      ...this._def,
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "min",
+          inclusive: true,
+          value: BigInt(Number.MIN_SAFE_INTEGER),
+          message,
+        },
+        {
+          kind: "max",
+          inclusive: true,
+          value: BigInt(Number.MAX_SAFE_INTEGER),
+          message,
+        },
+      ],
     });
   }
 

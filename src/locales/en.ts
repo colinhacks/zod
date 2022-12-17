@@ -139,6 +139,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.bigint_not_multiple_of:
       message = `BigInt must be a multiple of ${issue.multipleOf.toString()}n`;
       break;
+    case ZodIssueCode.bigint_not_gigantic:
+      message = "BigInt must exceed safe integer range";
+      break;
     default:
       message = _ctx.defaultError;
       util.assertNever(issue);

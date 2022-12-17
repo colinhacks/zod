@@ -13,6 +13,8 @@ const negative = z.bigint().negative();
 const nonnegative = z.bigint().nonnegative();
 const nonpositive = z.bigint().nonpositive();
 const multipleOfFive = z.bigint().multipleOf(BigInt(5));
+const gigantic = z.bigint().gigantic();
+const safe = z.bigint().safe();
 
 test("passing validations", () => {
   z.bigint().parse(BigInt(1));
@@ -31,6 +33,11 @@ test("passing validations", () => {
   nonpositive.parse(BigInt(0));
   nonpositive.parse(BigInt(-12));
   multipleOfFive.parse(BigInt(15));
+  gigantic.parse(BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1));
+  gigantic.parse(BigInt(Number.MIN_SAFE_INTEGER) - BigInt(1));
+  safe.parse(BigInt(Number.MAX_SAFE_INTEGER));
+  safe.parse(BigInt(0));
+  safe.parse(BigInt(Number.MIN_SAFE_INTEGER));
 });
 
 test("failing validations", () => {
@@ -45,6 +52,14 @@ test("failing validations", () => {
   expect(() => nonnegative.parse(BigInt(-1))).toThrow();
   expect(() => nonpositive.parse(BigInt(1))).toThrow();
   expect(() => multipleOfFive.parse(BigInt(13))).toThrow();
+  expect(() => gigantic.parse(BigInt(Number.MAX_SAFE_INTEGER))).toThrow();
+  expect(() => gigantic.parse(BigInt(Number.MIN_SAFE_INTEGER))).toThrow();
+  expect(() =>
+    safe.parse(BigInt(Number.MAX_SAFE_INTEGER) + BigInt(1))
+  ).toThrow();
+  expect(() =>
+    safe.parse(BigInt(Number.MIN_SAFE_INTEGER) - BigInt(1))
+  ).toThrow();
 });
 
 test("min max getters", () => {
