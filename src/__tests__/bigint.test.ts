@@ -66,7 +66,25 @@ test("min max getters", () => {
   expect(z.bigint().min(BigInt(5)).min(BigInt(10)).minValue).toEqual(
     BigInt(10)
   );
+  expect(z.bigint().safe().minValue).toEqual(BigInt(Number.MIN_SAFE_INTEGER));
+  expect(z.bigint().safe().min(BigInt(5)).minValue).toEqual(BigInt(5));
 
   expect(z.bigint().max(BigInt(5)).maxValue).toEqual(BigInt(5));
   expect(z.bigint().max(BigInt(5)).max(BigInt(1)).maxValue).toEqual(BigInt(1));
+  expect(z.bigint().safe().maxValue).toEqual(BigInt(Number.MAX_SAFE_INTEGER));
+  expect(z.bigint().safe().max(BigInt(5)).maxValue).toEqual(BigInt(5));
+});
+
+test("safe unsafe getters", () => {
+  expect(z.bigint().unsafe().isUnsafe).toEqual(true);
+  expect(z.bigint().unsafe().isSafe).toEqual(false);
+  expect(z.bigint().min(BigInt(5)).isUnsafe).toEqual(true);
+  expect(z.bigint().min(BigInt(5)).isSafe).toEqual(false);
+  expect(z.bigint().max(BigInt(5)).isUnsafe).toEqual(true);
+  expect(z.bigint().max(BigInt(5)).isSafe).toEqual(false);
+
+  expect(z.bigint().safe().isSafe).toEqual(true);
+  expect(z.bigint().safe().isUnsafe).toEqual(false);
+  expect(z.bigint().min(BigInt(5)).max(BigInt(10)).isSafe).toEqual(true);
+  expect(z.bigint().min(BigInt(5)).max(BigInt(10)).isUnsafe).toEqual(false);
 });

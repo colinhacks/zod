@@ -1401,6 +1401,30 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     }
     return max;
   }
+
+  get isSafe() {
+    let max: bigint | null = null,
+      min: bigint | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "gigantic") {
+        return false;
+      } else if (ch.kind === "max") {
+        if (max === null || ch.value < max) max = ch.value;
+      } else if (ch.kind === "min") {
+        if (min === null || ch.value > min) min = ch.value;
+      }
+    }
+    return (
+      max !== null &&
+      max <= Number.MAX_SAFE_INTEGER &&
+      min !== null &&
+      min >= Number.MIN_SAFE_INTEGER
+    );
+  }
+
+  get isUnsafe() {
+    return !this.isSafe;
+  }
 }
 
 //////////////////////////////////////////
