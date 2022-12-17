@@ -1292,7 +1292,7 @@ const myUnion = z.discriminatedUnion("status", [
   z.object({ status: z.literal("failed"), error: z.instanceof(Error) }),
 ]);
 
-myUnion.parse({ type: "success", data: "yippie ki yay" });
+myUnion.parse({ status: "success", data: "yippie ki yay" });
 ```
 
 ## Records
