@@ -54,6 +54,7 @@
 - [Literals](#literals)
 - [Strings](#strings)
 - [Numbers](#numbers)
+- [BigInts](#bigints)
 - [NaNs](#nans)
 - [Booleans](#booleans)
 - [Dates](#dates)
@@ -676,6 +677,27 @@ Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
 z.number().lte(5, { message: "this👏is👏too👏big" });
+```
+
+## BigInts
+
+Zod includes a handful of bigint-specific validations.
+
+```ts
+z.bigint().gt(5n);
+z.bigint().gte(5n); // alias `.min(5n)`
+z.bigint().lt(5n);
+z.bigint().lte(5n); // alias `.max(5n)`
+
+z.bigint().positive(); // > 0n
+z.bigint().nonnegative(); // >= 0n
+z.bigint().negative(); // < 0n
+z.bigint().nonpositive(); // <= 0n
+
+z.bigint().multipleOf(5n); // Evenly divisible by 5n.
+
+z.bigint().safe(); // Safe integer. Number.MIN_SAFE_INTEGER <= x <= Number.MAX_SAFE_INTEGER
+z.bigint().unsafe(); // "Unsafe" integer. x > Number.MAX_SAFE_INTEGER or x < Number.MIN_SAFE_INTEGER. Alias `.gigantic()`
 ```
 
 ## NaNs
