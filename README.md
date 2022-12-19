@@ -1305,6 +1305,56 @@ const AorB = z.discriminatedUnion("type", [A, B]);
 const schema = z.discriminatedUnion("type", [AorB, C]);
 ```
 
+Additionally, "disjointed" discriminated unions can be created, where the child discriminated unions use a different discriminator than the parent:
+
+```ts
+  const subtype = z.discriminatedUnion("subtype", [
+    z.object({
+      type: z.literal("baz"),
+      subtype: z.literal("able"),
+    }),
+    z.object({
+      type: z.literal("bauble"),
+      subtype: z.literal("beehive"),
+      undertype: z.literal("alpha"),
+    }),
+    z.object({
+      type: z.literal("baz"),
+      subtype: z.literal("baker"),
+    }),
+  ]);
+
+  const schema = z.discriminatedUnion("type", [
+    z.object({
+      type: z.literal("foo"),
+    }),
+    z.object({
+      type: z.literal("bar"),
+    }),
+    subtype,
+  ]);
+
+/**
+type schema = {
+    type: "baz";
+    subtype: "able";
+} | {
+    type: "bauble";
+    subtype: "beehive";
+    undertype: "alpha";
+} | {
+    type: "baz";
+    subtype: "baker";
+} | {
+    type: "foo";
+} | {
+    type: "bar";
+}
+*/
+```
+
+> ⚠️ You cannot create disjointed discriminated unions where a child member does not have the discriminator of a parent. If you find yourself in this scenario, a normal [union](#unions) might be better suited for your use case.
+
 ## Records
 
 Record schemas are used to validate types such as `{ [k: string]: number }`.
