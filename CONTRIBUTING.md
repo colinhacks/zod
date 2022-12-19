@@ -1,3 +1,5 @@
+# Contributing
+
 When it comes to open source, there are different ways you can contribute, all
 of which are valuable. Here's few guidelines that should help you as you prepare
 your contribution.
@@ -27,7 +29,7 @@ The following steps will get you setup to contribute changes to this repo:
 
 3. Run `yarn` to install dependencies.
 
-4. Start playing with the code! You can do some simple experimentation in `src/playground.ts` (see `yarn play` below) or start implementing a feature right away.
+4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `yarn play` below) or start implementing a feature right away.
 
 ### Commands
 
@@ -45,7 +47,7 @@ The following steps will get you setup to contribute changes to this repo:
 
 **`yarn play`**
 
-- executes `src/playground.ts`, watches for changes. useful for experimentation
+- executes [`playground.ts`](playground.ts), watches for changes. useful for experimentation
 
 ### Tests
 

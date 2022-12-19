@@ -318,6 +318,7 @@ npm install zod
 - [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): 从 Zod 模式中生成 `fast-check` 的任意数据。
 - [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): 约定优先的严格类型的端点与 Zod。兼容 OpenAPI。
 - [`express-zod-api`](https://github.com/RobinTail/express-zod-api): 用 I/O 模式验证和自定义中间件构建基于 Express 的 API 服务
+- [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): 有助于翻译zod错误信息。
 
 # 基本用法
 
