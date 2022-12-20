@@ -492,6 +492,7 @@ export type ZodStringCheck =
   | { kind: "cuid"; message?: string }
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
+  | { kind: "includes"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
   | { kind: "trim"; message?: string }
   | {
@@ -557,8 +558,20 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   }
 };
 
-export class ZodString extends ZodType<string, ZodStringDef> {
-  _parse(input: ParseInput): ParseReturnType<string> {
+type StartMidEndParts<
+  TStart extends string,
+  TMid extends string,
+  TEnd extends string
+> = `${TStart}${string}` & `${string}${TMid}${string}` & `${string}${TEnd}`;
+
+export class ZodString<
+  TStart extends string = "",
+  TMid extends string = "",
+  TEnd extends string = ""
+> extends ZodType<StartMidEndParts<TStart, TMid, TEnd>, ZodStringDef, string> {
+  _parse(
+    input: ParseInput
+  ): ParseReturnType<StartMidEndParts<TStart, TMid, TEnd>> {
     if (this._def.coerce) {
       input.data = String(input.data);
     }
@@ -710,6 +723,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "includes") {
+        if (!(input.data as string).includes(check.value)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: { endsWith: check.value },
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "datetime") {
         const regex = datetimeRegex(check);
 
@@ -741,8 +764,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       ...errorUtil.errToObj(message),
     });
 
-  _addCheck(check: ZodStringCheck) {
-    return new ZodString({
+  _addCheck<TStart extends string, TMid extends string, TEnd extends string>(
+    check: ZodStringCheck
+  ) {
+    return new ZodString<TStart, TEnd, TMid>({
       ...this._def,
       checks: [...this._def.checks, check],
     });
@@ -794,7 +819,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
   }
 
-  startsWith(value: string, message?: errorUtil.ErrMessage) {
+  startsWith<T extends string>(
+    value: T,
+    message?: errorUtil.ErrMessage
+  ): ZodString<T, TMid, TEnd> {
     return this._addCheck({
       kind: "startsWith",
       value: value,
@@ -802,9 +830,23 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
   }
 
-  endsWith(value: string, message?: errorUtil.ErrMessage) {
+  endsWith<T extends string>(
+    value: T,
+    message?: errorUtil.ErrMessage
+  ): ZodString<TStart, TMid, T> {
     return this._addCheck({
       kind: "endsWith",
+      value: value,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  includes<T extends string>(
+    value: T,
+    message?: errorUtil.ErrMessage
+  ): ZodString<TStart, T, TEnd> {
+    return this._addCheck({
+      kind: "includes",
       value: value,
       ...errorUtil.errToObj(message),
     });

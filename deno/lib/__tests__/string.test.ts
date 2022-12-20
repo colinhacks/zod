@@ -10,6 +10,7 @@ const justFive = z.string().length(5);
 const nonempty = z.string().nonempty("nonempty");
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
+const includes = z.string().includes("includes");
 
 test("passing validations", () => {
   minFive.parse("12345");
@@ -20,6 +21,7 @@ test("passing validations", () => {
   justFive.parse("12345");
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
+  includes.parse("aincludesb");
 });
 
 test("failing validations", () => {

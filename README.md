@@ -536,6 +536,7 @@ z.string().cuid();
 z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
+z.string().includes(string);
 z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
 ```
@@ -562,6 +563,7 @@ z.string().url({ message: "Invalid url" });
 z.string().uuid({ message: "Invalid UUID" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
+z.string().includes("token=", { message: "query parameter 'token' must be provided!" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 ```
 
