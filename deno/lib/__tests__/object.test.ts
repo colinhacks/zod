@@ -29,6 +29,18 @@ test("unknown throw", () => {
   expect(() => Test.parse(asdf)).toThrow();
 });
 
+test("shape() should return schema of particular key", () => {
+  const f1Schema = Test.shape.f1
+  const f2Schema = Test.shape.f2
+  const f3Schema = Test.shape.f3
+  const f4Schema = Test.shape.f4
+  
+  expect(f1Schema).toBeInstanceOf(z.ZodNumber)
+  expect(f2Schema).toBeInstanceOf(z.ZodOptional)
+  expect(f3Schema).toBeInstanceOf(z.ZodNullable)
+  expect(f4Schema).toBeInstanceOf(z.ZodArray)
+})
+
 test("correct parsing", () => {
   Test.parse({
     f1: 12,
