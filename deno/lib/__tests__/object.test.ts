@@ -389,3 +389,31 @@ test("unknownkeys merging", () => {
   util.assertEqual<mergedSchema["_def"]["catchall"], z.ZodString>(true);
   expect(mergedSchema._def.catchall instanceof z.ZodString).toEqual(true);
 });
+
+const personToExtend = z.object({
+    firstName: z.string(),
+    lastName: z.string()
+})
+
+test("extend() should return schema with new key", () => {
+  const PersonWithNickname = personToExtend.extend({nickName: z.string()})
+  type PersonWithNickname = z.infer<typeof PersonWithNickname>;
+  
+  const expected = {firstName: "f", nickName: "n", lastName: "l"}
+  const actual = PersonWithNickname.parse(expected)
+  
+  expect(actual).toEqual(expected)
+  util.assertEqual<keyof PersonWithNickname, "firstName" | "lastName" | "nickName">(true);
+  util.assertEqual<PersonWithNickname, { firstName: string; lastName: string, nickName: string }>(true);
+})
+
+test("extend() should have power to override existing key", () => {
+  const PersonWithNumberAsLastName = personToExtend.extend({lastName: z.number()})
+  type PersonWithNumberAsLastName = z.infer<typeof PersonWithNumberAsLastName>;
+
+  const expected = {firstName: "f", lastName: 42}
+  const actual = PersonWithNumberAsLastName.parse(expected)
+  
+  expect(actual).toEqual(expected)
+  util.assertEqual<PersonWithNumberAsLastName, { firstName: string; lastName: number}>(true);
+})
