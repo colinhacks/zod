@@ -443,16 +443,11 @@ export abstract class ZodType<
       ...processCreateParams(undefined),
     });
   }
-  catch(def: Input): ZodCatch<this>;
-  catch(def: () => Input): ZodCatch<this>;
-  catch(def: any) {
-    const defaultValueFunc = typeof def === "function" ? def : () => def;
 
-    return new ZodCatch({
-      innerType: this,
-      defaultValue: defaultValueFunc,
-      typeName: ZodFirstPartyTypeKind.ZodCatch,
-    }) as any;
+  catch<C extends Input>(catchValue: C): ZodCatch<this, C>;
+  catch<C extends Input>(getCatchValue: () => C): ZodCatch<this, C>;
+  catch<C extends Input>(catchValueOrGetter: C | (() => C)) {
+    return ZodCatch.create(this, { catch: catchValueOrGetter });
   }
 
   describe(description: string): this {
@@ -4053,18 +4048,19 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
 //////////                      //////////
 //////////////////////////////////////////
 //////////////////////////////////////////
-export interface ZodCatchDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodCatchDef<
+  T extends ZodTypeAny = ZodTypeAny,
+  C extends T["_input"] = T["_input"]
+> extends ZodTypeDef {
   innerType: T;
-  defaultValue: () => T["_input"];
+  catchValue: () => C;
   typeName: ZodFirstPartyTypeKind.ZodCatch;
 }
 
-export class ZodCatch<T extends ZodTypeAny> extends ZodType<
-  util.noUndefined<T["_output"]>,
-  ZodCatchDef<T>,
-  T["_input"] | undefined
-> {
+export class ZodCatch<
+  T extends ZodTypeAny,
+  C extends T["_input"]
+> extends ZodType<T["_output"] | C, ZodCatchDef<T, C>, T["_input"]> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
 
@@ -4079,35 +4075,34 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
         return {
           status: "valid",
           value:
-            result.status === "valid" ? result.value : this._def.defaultValue(),
+            result.status === "valid" ? result.value : this._def.catchValue(),
         };
       });
     } else {
       return {
         status: "valid",
         value:
-          result.status === "valid" ? result.value : this._def.defaultValue(),
+          result.status === "valid" ? result.value : this._def.catchValue(),
       };
     }
   }
 
-  removeDefault() {
+  removeCatch() {
     return this._def.innerType;
   }
 
-  static create = <T extends ZodTypeAny>(
+  static create = <T extends ZodTypeAny, C extends T["_input"]>(
     type: T,
     params: RawCreateParams & {
-      default: T["_input"] | (() => T["_input"]);
+      catch: C | (() => C);
     }
-  ): ZodCatch<T> => {
+  ): ZodCatch<T, C> => {
     return new ZodCatch({
       innerType: type,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
-      defaultValue:
-        typeof params.default === "function"
-          ? params.default
-          : () => params.default,
+      catchValue: (typeof params.catch === "function"
+        ? params.catch
+        : () => params.catch) as () => C,
       ...processCreateParams(params),
     });
   };
@@ -4352,7 +4347,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodOptional<any>
   | ZodNullable<any>
   | ZodDefault<any>
-  | ZodCatch<any>
+  | ZodCatch<any, any>
   | ZodPromise<any>
   | ZodBranded<any, any>
   | ZodPipeline<any, any>;

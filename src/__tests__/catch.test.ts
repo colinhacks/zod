@@ -124,7 +124,7 @@ test("chained catch", () => {
 
 test("factory", () => {
   z.ZodCatch.create(z.string(), {
-    default: "asdf",
+    catch: "asdf",
   }).parse(undefined);
 });
 
