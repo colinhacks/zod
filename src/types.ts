@@ -2783,6 +2783,7 @@ export interface ZodTupleDef<
   items: T;
   rest: Rest;
   typeName: ZodFirstPartyTypeKind.ZodTuple;
+  coerce: boolean;
 }
 
 export type AnyZodTuple = ZodTuple<
@@ -2798,6 +2799,10 @@ export class ZodTuple<
   InputTypeOfTupleWithRest<T, Rest>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (this._def.coerce && input.data instanceof Set) {
+      input.data = Array.from(input.data);
+    }
+
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.array) {
       addIssueToContext(ctx, {
@@ -2865,7 +2870,7 @@ export class ZodTuple<
 
   static create = <T extends [ZodTypeAny, ...ZodTypeAny[]] | []>(
     schemas: T,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodTuple<T, null> => {
     if (!Array.isArray(schemas)) {
       throw new Error("You must pass an array of schemas to z.tuple([ ... ])");
@@ -2874,6 +2879,7 @@ export class ZodTuple<
       items: schemas,
       typeName: ZodFirstPartyTypeKind.ZodTuple,
       rest: null,
+      coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     });
   };
