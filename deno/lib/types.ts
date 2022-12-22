@@ -1608,6 +1608,7 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   exactLength: { value: number; message?: string } | null;
   minLength: { value: number; message?: string } | null;
   maxLength: { value: number; message?: string } | null;
+  coerce: boolean;
 }
 
 export type ArrayCardinality = "many" | "atleastone";
@@ -1629,6 +1630,10 @@ export class ZodArray<
     : T["_input"][]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (this._def.coerce && input.data instanceof Set) {
+      input.data = Array.from(input.data);
+    }
+
     const { ctx, status } = this._processInputParams(input);
 
     const def = this._def;
@@ -1739,7 +1744,7 @@ export class ZodArray<
 
   static create = <T extends ZodTypeAny>(
     schema: T,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodArray<T> => {
     return new ZodArray({
       type: schema,
@@ -1747,6 +1752,7 @@ export class ZodArray<
       maxLength: null,
       exactLength: null,
       typeName: ZodFirstPartyTypeKind.ZodArray,
+      coerce: params?.coerce || false,
       ...processCreateParams(params),
     });
   };
@@ -2777,6 +2783,7 @@ export interface ZodTupleDef<
   items: T;
   rest: Rest;
   typeName: ZodFirstPartyTypeKind.ZodTuple;
+  coerce: boolean;
 }
 
 export type AnyZodTuple = ZodTuple<
@@ -2792,6 +2799,10 @@ export class ZodTuple<
   InputTypeOfTupleWithRest<T, Rest>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (this._def.coerce && input.data instanceof Set) {
+      input.data = Array.from(input.data);
+    }
+
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.array) {
       addIssueToContext(ctx, {
@@ -2859,7 +2870,7 @@ export class ZodTuple<
 
   static create = <T extends [ZodTypeAny, ...ZodTypeAny[]] | []>(
     schemas: T,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodTuple<T, null> => {
     if (!Array.isArray(schemas)) {
       throw new Error("You must pass an array of schemas to z.tuple([ ... ])");
@@ -2868,6 +2879,7 @@ export class ZodTuple<
       items: schemas,
       typeName: ZodFirstPartyTypeKind.ZodTuple,
       rest: null,
+      coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     });
   };
@@ -2994,6 +3006,7 @@ export interface ZodMapDef<
   valueType: Value;
   keyType: Key;
   typeName: ZodFirstPartyTypeKind.ZodMap;
+  coerce: boolean;
 }
 
 export class ZodMap<
@@ -3005,6 +3018,10 @@ export class ZodMap<
   Map<Key["_input"], Value["_input"]>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (this._def.coerce && this._getType(input) === "object") {
+      input.data = new Map(Object.entries(input.data as object));
+    }
+
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.map) {
       addIssueToContext(ctx, {
@@ -3071,12 +3088,13 @@ export class ZodMap<
   >(
     keyType: Key,
     valueType: Value,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce: boolean }
   ): ZodMap<Key, Value> => {
     return new ZodMap({
       valueType,
       keyType,
       typeName: ZodFirstPartyTypeKind.ZodMap,
+      coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     });
   };
@@ -3095,6 +3113,7 @@ export interface ZodSetDef<Value extends ZodTypeAny = ZodTypeAny>
   typeName: ZodFirstPartyTypeKind.ZodSet;
   minSize: { value: number; message?: string } | null;
   maxSize: { value: number; message?: string } | null;
+  coerce: boolean;
 }
 
 export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
@@ -3103,6 +3122,10 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
   Set<Value["_input"]>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (this._def.coerce && Array.isArray(input.data)) {
+      input.data = new Set(input.data);
+    }
+
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.set) {
       addIssueToContext(ctx, {
@@ -3190,13 +3213,14 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
 
   static create = <Value extends ZodTypeAny = ZodTypeAny>(
     valueType: Value,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodSet<Value> => {
     return new ZodSet({
       valueType,
       minSize: null,
       maxSize: null,
       typeName: ZodFirstPartyTypeKind.ZodSet,
+      coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     });
   };
@@ -4419,6 +4443,16 @@ export const coerce = {
     ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
   date: ((arg) =>
     ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
+  array: ((arg) =>
+    ZodArray.create({ ...arg, coerce: true })) as typeof ZodArray["create"],
+  set: ((arg) =>
+    ZodSet.create({ ...arg, coerce: true })) as typeof ZodSet["create"],
+  map: ((arg) =>
+    ZodMap.create({ ...arg, coerce: true })) as typeof ZodMap["create"],
+  object: ((arg) =>
+    ZodObject.create({ ...arg, coerce: true })) as typeof ZodObject["create"],
+  tuple: ((arg) =>
+    ZodTuple.create({ ...arg, coerce: true })) as typeof ZodTuple["create"],
 };
 
 export {

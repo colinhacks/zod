@@ -1608,6 +1608,7 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   exactLength: { value: number; message?: string } | null;
   minLength: { value: number; message?: string } | null;
   maxLength: { value: number; message?: string } | null;
+  coerce: boolean;
 }
 
 export type ArrayCardinality = "many" | "atleastone";
@@ -1629,6 +1630,10 @@ export class ZodArray<
     : T["_input"][]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (this._def.coerce && input.data instanceof Set) {
+      input.data = Array.from(input.data);
+    }
+
     const { ctx, status } = this._processInputParams(input);
 
     const def = this._def;
@@ -1739,7 +1744,7 @@ export class ZodArray<
 
   static create = <T extends ZodTypeAny>(
     schema: T,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodArray<T> => {
     return new ZodArray({
       type: schema,
@@ -1747,6 +1752,7 @@ export class ZodArray<
       maxLength: null,
       exactLength: null,
       typeName: ZodFirstPartyTypeKind.ZodArray,
+      coerce: params?.coerce || false,
       ...processCreateParams(params),
     });
   };
