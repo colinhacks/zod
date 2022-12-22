@@ -1838,6 +1838,7 @@ export interface ZodObjectDef<
   shape: () => T;
   catchall: Catchall;
   unknownKeys: UnknownKeys;
+  coerce: boolean;
 }
 
 export type baseObjectOutputType<Shape extends ZodRawShape> =
@@ -1929,6 +1930,10 @@ export class ZodObject<
   }
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (this._def.coerce && input.data instanceof Map) {
+      input.data = Object.fromEntries(input.data);
+    }
+
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.object) {
       const ctx = this._getOrReturnCtx(input);
@@ -2115,6 +2120,7 @@ export class ZodObject<
       shape: () =>
         objectUtil.mergeShapes(this._def.shape(), merging._def.shape()),
       typeName: ZodFirstPartyTypeKind.ZodObject,
+      coerce: merging._def.coerce,
     }) as any;
     return merged;
   }
@@ -2256,39 +2262,42 @@ export class ZodObject<
 
   static create = <T extends ZodRawShape>(
     shape: T,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodObject<T> => {
     return new ZodObject({
       shape: () => shape,
       unknownKeys: "strip",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
+      coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     }) as any;
   };
 
   static strictCreate = <T extends ZodRawShape>(
     shape: T,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodObject<T, "strict"> => {
     return new ZodObject({
       shape: () => shape,
       unknownKeys: "strict",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
+      coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     }) as any;
   };
 
   static lazycreate = <T extends ZodRawShape>(
     shape: () => T,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodObject<T> => {
     return new ZodObject({
       shape,
       unknownKeys: "strip",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
+      coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     }) as any;
   };
