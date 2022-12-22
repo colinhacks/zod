@@ -22,7 +22,7 @@ test("check unknown inference", () => {
 });
 
 test("check never inference", () => {
-  const t1 = z.never().nullish();
+  const t1 = z.never();
   expect(() => t1.parse(undefined)).toThrow();
   expect(() => t1.parse("asdf")).toThrow();
   expect(() => t1.parse(null)).toThrow();
