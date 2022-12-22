@@ -16,6 +16,7 @@ export type typeToFlattenedError<T, U = string> = {
 };
 
 export const ZodIssueCode = util.arrayToEnum([
+  "required",
   "invalid_type",
   "invalid_literal",
   "custom",
@@ -40,6 +41,10 @@ export type ZodIssueBase = {
   path: (string | number)[];
   message?: string;
 };
+
+export interface ZodRequiredIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.required;
+}
 
 export interface ZodInvalidTypeIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_type;
@@ -139,6 +144,7 @@ export interface ZodCustomIssue extends ZodIssueBase {
 export type DenormalizedError = { [k: string]: DenormalizedError | string[] };
 
 export type ZodIssueOptionalMessage =
+  | ZodRequiredIssue
   | ZodInvalidTypeIssue
   | ZodInvalidLiteralIssue
   | ZodUnrecognizedKeysIssue
