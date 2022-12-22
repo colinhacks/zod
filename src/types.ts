@@ -399,6 +399,13 @@ export abstract class ZodType<
   nullish(): ZodNullable<ZodOptional<this>> {
     return this.optional().nullable();
   }
+
+  required(this: AnyZodObject): any;
+  required(this: ZodTypeAny): ZodRequired<this>;
+  required() {
+    return ZodRequired.create(this);
+  }
+
   array(): ZodArray<this> {
     return ZodArray.create(this);
   }
@@ -2197,12 +2204,11 @@ export class ZodObject<
     }) as any;
   }
 
-  required(): ZodObject<
-    { [k in keyof T]: deoptional<T[k]> },
-    UnknownKeys,
-    Catchall
-  >;
+  required(
+    this: AnyZodObject
+  ): ZodObject<{ [k in keyof T]: deoptional<T[k]> }, UnknownKeys, Catchall>;
   required<Mask extends { [k in keyof T]?: true }>(
+    this: AnyZodObject,
     mask: Mask
   ): ZodObject<
     objectUtil.noNever<{
@@ -2211,7 +2217,8 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  required(mask?: any) {
+  required(this: ZodTypeAny): ZodRequired<this>;
+  required(this: AnyZodObject, mask?: any) {
     const newShape: any = {};
     if (mask) {
       util.objectKeys(this.shape).map((key) => {
