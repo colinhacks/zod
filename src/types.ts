@@ -4452,6 +4452,31 @@ export const coerce = {
     ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
   date: ((arg) =>
     ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
+  array: ((element, arg) =>
+    ZodArray.create(element, {
+      ...arg,
+      coerce: true,
+    })) as typeof ZodArray["create"],
+  set: ((valueType, arg) =>
+    ZodSet.create(valueType, {
+      ...arg,
+      coerce: true,
+    })) as typeof ZodSet["create"],
+  map: ((keyType, valueType, arg) =>
+    ZodMap.create(keyType, valueType, {
+      ...arg,
+      coerce: true,
+    })) as typeof ZodMap["create"],
+  object: ((shape, arg) =>
+    ZodObject.create(shape, {
+      ...arg,
+      coerce: true,
+    })) as typeof ZodObject["create"],
+  tuple: ((schemas, arg) =>
+    ZodTuple.create(schemas, {
+      ...arg,
+      coerce: true,
+    })) as typeof ZodTuple["create"],
 };
 
 export {
