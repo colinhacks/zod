@@ -3995,6 +3995,52 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 //////////                        //////////
+//////////       ZodRequired      //////////
+//////////                        //////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+export interface ZodRequiredDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  innerType: T;
+  typeName: ZodFirstPartyTypeKind.ZodRequired;
+}
+
+export type ZodRequiredType<T extends ZodTypeAny> = ZodRequired<T>;
+
+export class ZodRequired<T extends ZodTypeAny> extends ZodType<
+  util.noUndefined<T["_output"]>,
+  ZodRequiredDef<T>,
+  util.noUndefined<T["_input"]>
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const parsedType = this._getType(input);
+    if (parsedType === ZodParsedType.undefined) {
+      const ctx = this._getOrReturnCtx(input);
+      addIssueToContext(ctx, { code: ZodIssueCode.required });
+      return INVALID;
+    }
+    return this._def.innerType._parse(input);
+  }
+
+  unwrap() {
+    return this._def.innerType;
+  }
+
+  static create = <T extends ZodTypeAny>(
+    type: T,
+    params?: RawCreateParams
+  ): ZodRequired<T> => {
+    return new ZodRequired({
+      innerType: type,
+      typeName: ZodFirstPartyTypeKind.ZodRequired,
+      ...processCreateParams(params),
+    });
+  };
+}
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+//////////                        //////////
 //////////       ZodDefault       //////////
 //////////                        //////////
 ////////////////////////////////////////////
@@ -4320,6 +4366,7 @@ export enum ZodFirstPartyTypeKind {
   ZodPromise = "ZodPromise",
   ZodBranded = "ZodBranded",
   ZodPipeline = "ZodPipeline",
+  ZodRequired = "ZodRequired",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -4404,6 +4451,7 @@ const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const pipelineType = ZodPipeline.create;
+const requiredTyoe = ZodRequired.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -4451,6 +4499,7 @@ export {
   preprocessType as preprocess,
   promiseType as promise,
   recordType as record,
+  requiredTyoe as required,
   setType as set,
   strictObjectType as strictObject,
   stringType as string,
