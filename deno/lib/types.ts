@@ -4451,7 +4451,7 @@ const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const pipelineType = ZodPipeline.create;
-const requiredTyoe = ZodRequired.create;
+const requiredType = ZodRequired.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -4499,7 +4499,7 @@ export {
   preprocessType as preprocess,
   promiseType as promise,
   recordType as record,
-  requiredTyoe as required,
+  requiredType as required,
   setType as set,
   strictObjectType as strictObject,
   stringType as string,
