@@ -3088,7 +3088,7 @@ export class ZodMap<
   >(
     keyType: Key,
     valueType: Value,
-    params?: RawCreateParams & { coerce: boolean }
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodMap<Key, Value> => {
     return new ZodMap({
       valueType,
