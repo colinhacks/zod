@@ -140,11 +140,11 @@ test("required", () => {
   });
 
   const requiredObject = object.required();
-  expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
-  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
-  expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
-  expect(requiredObject.shape.nullableField).toBeInstanceOf(z.ZodNullable);
-  expect(requiredObject.shape.nullishField).toBeInstanceOf(z.ZodNullable);
+  expect(requiredObject.shape.name).toBeInstanceOf(z.ZodRequired);
+  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodRequired);
+  expect(requiredObject.shape.field).toBeInstanceOf(z.ZodRequired);
+  expect(requiredObject.shape.nullableField).toBeInstanceOf(z.ZodRequired);
+  expect(requiredObject.shape.nullishField).toBeInstanceOf(z.ZodRequired);
 });
 
 test("required inference", () => {
@@ -179,7 +179,7 @@ test("required with mask", () => {
 
   const requiredObject = object.required({ age: true });
   expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
-  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
+  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodRequired);
   expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
   expect(requiredObject.shape.country).toBeInstanceOf(z.ZodOptional);
 });
