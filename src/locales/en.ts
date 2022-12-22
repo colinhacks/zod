@@ -4,6 +4,9 @@ import { ZodErrorMap, ZodIssueCode } from "../ZodError";
 const errorMap: ZodErrorMap = (issue, _ctx) => {
   let message: string;
   switch (issue.code) {
+    case ZodIssueCode.required:
+      message = "Required";
+      break;
     case ZodIssueCode.invalid_type:
       if (issue.received === ZodParsedType.undefined) {
         message = "Required";
