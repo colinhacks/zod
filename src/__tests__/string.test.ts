@@ -296,6 +296,6 @@ test("numeric", () => {
   ).not.toThrow();
   expect(() => numeric.parse("3.141592")).not.toThrow();
   expect(() => numeric.parse("-1")).not.toThrow();
-  expect(() => numeric.parse("-999.1231234134"));
+  expect(() => numeric.parse("-999.1231234134")).not.toThrow();
   expect(() => numeric.parse("0287730000000")).not.toThrow();
 });
