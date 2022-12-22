@@ -2218,23 +2218,12 @@ export class ZodObject<
         if (util.objectKeys(mask).indexOf(key) === -1) {
           newShape[key] = this.shape[key];
         } else {
-          const fieldSchema = this.shape[key];
-          let newField = fieldSchema;
-          while (newField instanceof ZodOptional) {
-            newField = (newField as ZodOptional<any>)._def.innerType;
-          }
-          newShape[key] = newField;
+          newShape[key] = ZodRequired.create(this.shape[key]);
         }
       });
     } else {
       for (const key in this.shape) {
-        const fieldSchema = this.shape[key];
-        let newField = fieldSchema;
-        while (newField instanceof ZodOptional) {
-          newField = (newField as ZodOptional<any>)._def.innerType;
-        }
-
-        newShape[key] = newField;
+        newShape[key] = ZodRequired.create(this.shape[key]);
       }
     }
     return new ZodObject({
