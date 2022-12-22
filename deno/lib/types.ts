@@ -118,8 +118,9 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   }
   if (errorMap) return { errorMap: errorMap, description };
   const customMap: ZodErrorMap = (iss, ctx) => {
-    if (iss.code !== "invalid_type") return { message: ctx.defaultError };
-    if (typeof ctx.data === "undefined") {
+    if (iss.code !== "invalid_type" && iss.code !== "required")
+      return { message: ctx.defaultError };
+    if (iss.code === "required" || typeof ctx.data === "undefined") {
       return { message: required_error ?? ctx.defaultError };
     }
     return { message: invalid_type_error ?? ctx.defaultError };
