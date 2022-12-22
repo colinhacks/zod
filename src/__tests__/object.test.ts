@@ -388,3 +388,73 @@ test("unknownkeys merging", () => {
   util.assertEqual<mergedSchema["_def"]["catchall"], z.ZodString>(true);
   expect(mergedSchema._def.catchall instanceof z.ZodString).toEqual(true);
 });
+
+const A = z.object({
+  a: z.string(),
+  b: z.object({
+    c: z.string(),
+    d: z.string(),
+    e: z.object({
+      f: z.string(),
+      g: z.string(),
+      h: z.string(),
+    }),
+  }),
+});
+
+const B = z.object({
+  b: z.object({
+    i: z.string(),
+    j: z.string(),
+    e: z.object({
+      k: z.string(),
+      l: z.string(),
+      // Overwrite from string to bigint
+      h: z.bigint(),
+    }),
+  }),
+});
+
+const mergedDeep = A.mergeDeep(B);
+type mergedDeep = z.infer<typeof mergedDeep>;
+
+test("mergeDeep inference", () => {
+  util.assertEqual<
+    mergedDeep,
+    {
+      a: string;
+      b: {
+        c: string;
+        d: string;
+        e: {
+          // From A
+          f: string;
+          g: string;
+          // From B
+          k: string;
+          l: string;
+          h: bigint;
+        };
+        // From B
+        i: string;
+        j: string;
+      };
+    }
+  >(true);
+});
+
+test("mergeDeep shape", () => {
+  expect(mergedDeep.shape.a).toBeInstanceOf(z.ZodString);
+  expect(mergedDeep.shape.b).toBeInstanceOf(z.ZodObject);
+  expect(mergedDeep.shape.b.shape.c).toBeInstanceOf(z.ZodString);
+  expect(mergedDeep.shape.b.shape.d).toBeInstanceOf(z.ZodString);
+  expect(mergedDeep.shape.b.shape.e).toBeInstanceOf(z.ZodObject);
+  expect(mergedDeep.shape.b.shape.e.shape.f).toBeInstanceOf(z.ZodString);
+  expect(mergedDeep.shape.b.shape.e.shape.g).toBeInstanceOf(z.ZodString);
+  expect(mergedDeep.shape.b.shape.e.shape.k).toBeInstanceOf(z.ZodString);
+  expect(mergedDeep.shape.b.shape.e.shape.l).toBeInstanceOf(z.ZodString);
+  expect(mergedDeep.shape.b.shape.e.shape.h).toBeInstanceOf(z.ZodBigInt);
+  expect(mergedDeep.shape.b.shape.i).toBeInstanceOf(z.ZodString);
+  expect(mergedDeep.shape.b.shape.j).toBeInstanceOf(z.ZodString);
+  expect(mergedDeep.shape.b.shape.e.shape.h).toBeInstanceOf(z.ZodBigInt);
+});
