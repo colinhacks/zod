@@ -2217,7 +2217,7 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  required(this: never): ZodRequired<this>;
+  required(this: never): never;
   required(mask?: any) {
     const newShape: any = {};
     if (mask) {
