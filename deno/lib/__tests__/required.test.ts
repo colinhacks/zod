@@ -5,14 +5,29 @@ const test = Deno.test;
 import { util } from "../helpers/util.ts";
 import * as z from "../index.ts";
 
-const requiredUndefined = z.required(z.undefined());
-const requiredVoid = z.required(z.void());
-const requiredOptional = z.required(z.string().optional());
-const requiredOptionalOptional = z.required(z.string().optional().optional());
-const requiredNullable = z.required(z.string().nullable());
-const requiredNullish = z.required(z.string().nullish());
-const requiredStringWithDefault = z.required(z.string().default("asdf"));
-const requiredStringWithCatch = z.required(z.string().catch("asdf"));
+const requiredUndefined = z.undefined().required();
+const requiredVoid = z.void().required();
+const requiredOptional = z.string().optional().required();
+const requiredOptionalOptional = z.string().optional().optional().required();
+const requiredNullable = z.string().nullable().required();
+const requiredNullish = z.string().nullish().required();
+const requiredStringWithDefault = z.string().default("asdf").required();
+const requiredStringWithCatch = z.string().catch("asdf").required();
+
+const requiredObj = z
+  .object({
+    a: z.string().optional(),
+    b: z.number().nullable(),
+    c: z.bigint().nullish(),
+  })
+  .required();
+const requiredObjWithMask = z
+  .object({
+    a: z.string().optional(),
+    b: z.number().nullable(),
+    c: z.bigint().nullish(),
+  })
+  .required({ a: true, b: true });
 
 test("inference", () => {
   // Input
@@ -33,6 +48,15 @@ test("inference", () => {
   util.assertEqual<z.output<typeof requiredNullish>, string | null>(true);
   util.assertEqual<z.output<typeof requiredStringWithDefault>, string>(true);
   util.assertEqual<z.output<typeof requiredStringWithCatch>, string>(true);
+  // Obj
+  util.assertEqual<
+    z.infer<typeof requiredObj>,
+    { a: string; b: number | null; c: bigint | null }
+  >(true);
+  util.assertEqual<
+    z.infer<typeof requiredObjWithMask>,
+    { a: string; b: number | null; c?: bigint | null | undefined }
+  >(true);
 });
 
 test("fails", () => {
@@ -44,6 +68,20 @@ test("fails", () => {
   expect(() => requiredNullish.parse(undefined)).toThrow();
   expect(() => requiredStringWithDefault.parse(undefined)).toThrow();
   expect(() => requiredStringWithCatch.parse(undefined)).toThrow();
+  expect(() =>
+    requiredObj.parse({
+      a: undefined,
+      b: null,
+      c: undefined,
+    })
+  ).toThrow();
+  expect(() =>
+    requiredObjWithMask.parse({
+      a: undefined,
+      b: null,
+      c: undefined,
+    })
+  ).toThrow();
 });
 
 test("passes", () => {
@@ -51,4 +89,9 @@ test("passes", () => {
   const requiredWithDefault = z.required(z.string()).default("asdf");
   optionalRequired.parse(undefined);
   requiredWithDefault.parse(undefined);
+  requiredObjWithMask.parse({
+    a: "asdf",
+    b: null,
+    c: undefined,
+  });
 });
