@@ -1873,12 +1873,6 @@ export type objectInputType<
       baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
     >;
 
-export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
-  ? deoptional<U>
-  : T extends ZodNullable<infer U>
-  ? ZodNullable<deoptional<U>>
-  : T;
-
 export type SomeZodObject = ZodObject<
   ZodRawShape,
   UnknownKeysParam,
