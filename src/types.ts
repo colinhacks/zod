@@ -2206,13 +2206,13 @@ export class ZodObject<
 
   required(
     this: this
-  ): ZodObject<{ [k in keyof T]: deoptional<T[k]> }, UnknownKeys, Catchall>;
+  ): ZodObject<{ [k in keyof T]: ZodRequired<T[k]> }, UnknownKeys, Catchall>;
   required<Mask extends { [k in keyof T]?: true }>(
     this: this,
     mask: Mask
   ): ZodObject<
     objectUtil.noNever<{
-      [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];
+      [k in keyof T]: k extends keyof Mask ? ZodRequired<T[k]> : T[k];
     }>,
     UnknownKeys,
     Catchall
