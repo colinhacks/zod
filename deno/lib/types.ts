@@ -1120,6 +1120,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       message: errorUtil.toString(message),
     });
   }
+  step = this.multipleOf;
 
   finite(message?: errorUtil.ErrMessage) {
     return this._addCheck({
@@ -1128,7 +1129,19 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     });
   }
 
-  step = this.multipleOf;
+  safe(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      inclusive: true,
+      value: Number.MIN_SAFE_INTEGER,
+      message: errorUtil.toString(message),
+    })._addCheck({
+      kind: "max",
+      inclusive: true,
+      value: Number.MAX_SAFE_INTEGER,
+      message: errorUtil.toString(message),
+    });
+  }
 
   get minValue() {
     let min: number | null = null;
@@ -1713,7 +1726,7 @@ export class ZodArray<
 
     if (ctx.common.async) {
       return Promise.all(
-        (ctx.data as any[]).map((item, i) => {
+        ([...ctx.data] as any[]).map((item, i) => {
           return def.type._parseAsync(
             new ParseInputLazyPath(ctx, item, ctx.path, i)
           );
@@ -1723,7 +1736,7 @@ export class ZodArray<
       });
     }
 
-    const result = (ctx.data as any[]).map((item, i) => {
+    const result = ([...ctx.data] as any[]).map((item, i) => {
       return def.type._parseSync(
         new ParseInputLazyPath(ctx, item, ctx.path, i)
       );

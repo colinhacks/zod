@@ -47,8 +47,9 @@
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
 - [Installation](#installation)
-  - [Node/npm](#nodenpm)
-  - [Deno](#deno)
+  - [Requirements](#requirements)
+  - [Node/npm](#from-npm-nodebun)
+  - [Deno](#from-denolandx-deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
 - [Literals](#literals)
@@ -1294,7 +1295,7 @@ const myUnion = z.discriminatedUnion("status", [
   z.object({ status: z.literal("failed"), error: z.instanceof(Error) }),
 ]);
 
-myUnion.parse({ type: "success", data: "yippie ki yay" });
+myUnion.parse({ status: "success", data: "yippie ki yay" });
 ```
 
 ## Records
@@ -1682,7 +1683,7 @@ Given any Zod schema, you can call its `.parse` method to check `data` is valid.
 const stringSchema = z.string();
 
 stringSchema.parse("fish"); // => returns "fish"
-stringSchema.parse(12); // throws Error('Non-string type: number');
+stringSchema.parse(12); // throws error
 ```
 
 ### `.parseAsync`
@@ -1692,11 +1693,10 @@ stringSchema.parse(12); // throws Error('Non-string type: number');
 If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`
 
 ```ts
-const stringSchema1 = z.string().refine(async (val) => val.length < 20);
-const value1 = await stringSchema.parseAsync("hello"); // => hello
+const stringSchema = z.string().refine(async (val) => val.length <= 8);
 
-const stringSchema2 = z.string().refine(async (val) => val.length > 20);
-const value2 = await stringSchema.parseAsync("hello"); // => throws
+await stringSchema.parseAsync("hello"); // => returns "hello"
+await stringSchema.parseAsync("hello world"); // => throws error
 ```
 
 ### `.safeParse`
@@ -1781,7 +1781,7 @@ type RefineParams = {
 };
 ```
 
-For advanced cases, the second argument can also be a function that returns `RefineParams`/
+For advanced cases, the second argument can also be a function that returns `RefineParams`.
 
 ```ts
 const longString = z.string().refine(
@@ -1921,7 +1921,7 @@ const schema = z.number().superRefine((val, ctx) => {
 
 #### Type refinements
 
-If you provide a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) to `.refine()` or `superRefine()`, the resulting type will be narrowed down to your predicate's type. This is useful if you are mixing multiple chained refinements and transformations:
+If you provide a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) to `.refine()` or `.superRefine()`, the resulting type will be narrowed down to your predicate's type. This is useful if you are mixing multiple chained refinements and transformations:
 
 ```ts
 const schema = z
@@ -1936,15 +1936,15 @@ const schema = z
         code: z.ZodIssueCode.custom, // customize your issue
         message: "object should exist",
       });
-      return false;
     }
-    return true;
+
+    return z.NEVER; // The return value is not used, but we need to return something to satisfy the typing
   })
   // here, TS knows that arg is not null
   .refine((arg) => arg.first === "bob", "`first` is not `bob`!");
 ```
 
-> ⚠️ You must **still** call `ctx.addIssue()` if using `superRefine()` with a type predicate function. Otherwise the refinement won't be validated.
+> ⚠️ You **must** use `ctx.addIssue()` instead of returning a boolean value to indicate whether the validation passes. If `ctx.addIssue` is _not_ called during the execution of the function, validation passes.
 
 ### `.transform`
 
@@ -1971,12 +1971,12 @@ emailToDomain.parse("colinhacks@example.com"); // => example.com
 
 #### Validating during transform
 
-The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `refine` and `validate`.
+The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `transform` and `refine`.
 
 As with `.superRefine`, the transform function receives a `ctx` object with a `addIssue` method that can be used to register validation issues.
 
 ```ts
-const Strings = z.string().transform((val, ctx) => {
+const numberInString = z.string().transform((val, ctx) => {
   const parsed = parseInt(val);
   if (isNaN(parsed)) {
     ctx.addIssue({
