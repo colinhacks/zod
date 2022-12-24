@@ -1682,7 +1682,7 @@ Given any Zod schema, you can call its `.parse` method to check `data` is valid.
 const stringSchema = z.string();
 
 stringSchema.parse("fish"); // => returns "fish"
-stringSchema.parse(12); // throws Error('Non-string type: number');
+stringSchema.parse(12); // throws error
 ```
 
 ### `.parseAsync`
@@ -1692,11 +1692,10 @@ stringSchema.parse(12); // throws Error('Non-string type: number');
 If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`
 
 ```ts
-const stringSchema1 = z.string().refine(async (val) => val.length < 20);
-const value1 = await stringSchema.parseAsync("hello"); // => hello
+const stringSchema = z.string().refine(async (val) => val.length <= 8);
 
-const stringSchema2 = z.string().refine(async (val) => val.length > 20);
-const value2 = await stringSchema.parseAsync("hello"); // => throws
+await stringSchema.parseAsync("hello"); // => returns "hello"
+await stringSchema.parseAsync("hello world"); // => throws error
 ```
 
 ### `.safeParse`
@@ -1781,7 +1780,7 @@ type RefineParams = {
 };
 ```
 
-For advanced cases, the second argument can also be a function that returns `RefineParams`/
+For advanced cases, the second argument can also be a function that returns `RefineParams`.
 
 ```ts
 const longString = z.string().refine(
@@ -1971,12 +1970,12 @@ emailToDomain.parse("colinhacks@example.com"); // => example.com
 
 #### Validating during transform
 
-The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `refine` and `validate`.
+The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `transform` and `refine`.
 
 As with `.superRefine`, the transform function receives a `ctx` object with a `addIssue` method that can be used to register validation issues.
 
 ```ts
-const Strings = z.string().transform((val, ctx) => {
+const numberInString = z.string().transform((val, ctx) => {
   const parsed = parseInt(val);
   if (isNaN(parsed)) {
     ctx.addIssue({
