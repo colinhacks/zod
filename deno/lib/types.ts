@@ -3888,11 +3888,11 @@ export class ZodEffects<
     });
   };
 
-  static createWithPreprocess = <I extends ZodTypeAny>(
-    preprocess: (arg: unknown) => unknown,
-    schema: I,
+  static createWithPreprocess = <I, S extends ZodType<any, ZodTypeDef, I>>(
+    preprocess: (arg: unknown) => I,
+    schema: S,
     params?: RawCreateParams
-  ): ZodEffects<I, I["_output"], unknown> => {
+  ): ZodEffects<S, S["_output"], I> => {
     return new ZodEffects({
       schema,
       effect: { type: "preprocess", transform: preprocess },
