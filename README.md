@@ -695,9 +695,6 @@ z.bigint().negative(); // < 0n
 z.bigint().nonpositive(); // <= 0n
 
 z.bigint().multipleOf(5n); // Evenly divisible by 5n.
-
-z.bigint().safe(); // Safe integer. Number.MIN_SAFE_INTEGER <= x <= Number.MAX_SAFE_INTEGER
-z.bigint().unsafe(); // "Unsafe" integer. x > Number.MAX_SAFE_INTEGER or x < Number.MIN_SAFE_INTEGER. Alias `.gigantic()`
 ```
 
 ## NaNs

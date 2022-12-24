@@ -84,7 +84,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
             : issue.inclusive
             ? `greater than or equal to `
             : `greater than `
-        }${new Date(issue.minimum)}`;
+        }${new Date(Number(issue.minimum))}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.too_big:
@@ -104,6 +104,14 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
             ? `less than or equal to`
             : `less than`
         } ${issue.maximum}`;
+      else if (issue.type === "bigint")
+        message = `BigInt must be ${
+          issue.exact
+            ? `exactly`
+            : issue.inclusive
+            ? `less than or equal to`
+            : `less than`
+        } ${issue.maximum}`;
       else if (issue.type === "date")
         message = `Date must be ${
           issue.exact
@@ -111,7 +119,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
             : issue.inclusive
             ? `smaller than or equal to`
             : `smaller than`
-        } ${new Date(issue.maximum)}`;
+        } ${new Date(Number(issue.maximum))}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.custom:
@@ -125,22 +133,6 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       break;
     case ZodIssueCode.not_finite:
       message = "Number must be finite";
-      break;
-    case ZodIssueCode.bigint_too_small:
-      message = `BigInt must be ${
-        issue.inclusive ? "greater than or equal to" : "greater than"
-      } ${issue.minimum.toString()}n`;
-      break;
-    case ZodIssueCode.bigint_too_big:
-      message = `BigInt must be ${
-        issue.inclusive ? "less than or equal to" : "less than"
-      } ${issue.maximum.toString()}n`;
-      break;
-    case ZodIssueCode.bigint_not_multiple_of:
-      message = `BigInt must be a multiple of ${issue.multipleOf.toString()}n`;
-      break;
-    case ZodIssueCode.bigint_not_unsafe:
-      message = "BigInt must exceed safe integer range";
       break;
     default:
       message = _ctx.defaultError;

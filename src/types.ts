@@ -1164,8 +1164,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 export type ZodBigIntCheck =
   | { kind: "min"; value: bigint; inclusive: boolean; message?: string }
   | { kind: "max"; value: bigint; inclusive: boolean; message?: string }
-  | { kind: "multipleOf"; value: bigint; message?: string }
-  | { kind: "unsafe"; message?: string };
+  | { kind: "multipleOf"; value: bigint; message?: string };
 
 export interface ZodBigIntDef extends ZodTypeDef {
   checks: ZodBigIntCheck[];
@@ -1200,7 +1199,8 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
         if (tooSmall) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
-            code: ZodIssueCode.bigint_too_small,
+            code: ZodIssueCode.too_small,
+            type: "bigint",
             minimum: check.value,
             inclusive: check.inclusive,
             message: check.message,
@@ -1214,7 +1214,8 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
         if (tooBig) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
-            code: ZodIssueCode.bigint_too_big,
+            code: ZodIssueCode.too_big,
+            type: "bigint",
             maximum: check.value,
             inclusive: check.inclusive,
             message: check.message,
@@ -1225,20 +1226,8 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
         if (input.data % check.value !== BigInt(0)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
-            code: ZodIssueCode.bigint_not_multiple_of,
+            code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
-            message: check.message,
-          });
-          status.dirty();
-        }
-      } else if (check.kind === "unsafe") {
-        if (
-          Number.MIN_SAFE_INTEGER <= input.data &&
-          input.data <= Number.MAX_SAFE_INTEGER
-        ) {
-          ctx = this._getOrReturnCtx(input, ctx);
-          addIssueToContext(ctx, {
-            code: ZodIssueCode.bigint_not_unsafe,
             message: check.message,
           });
           status.dirty();
@@ -1343,37 +1332,6 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     });
   }
 
-  gigantic(message?: errorUtil.ErrMessage) {
-    return this._addCheck({
-      kind: "unsafe",
-      message: errorUtil.toString(message),
-    });
-  }
-  unsafe = this.gigantic;
-
-  safe(message?: errorUtil.ErrMessage) {
-    message = errorUtil.toString(message);
-
-    return new ZodBigInt({
-      ...this._def,
-      checks: [
-        ...this._def.checks,
-        {
-          kind: "min",
-          inclusive: true,
-          value: BigInt(Number.MIN_SAFE_INTEGER),
-          message,
-        },
-        {
-          kind: "max",
-          inclusive: true,
-          value: BigInt(Number.MAX_SAFE_INTEGER),
-          message,
-        },
-      ],
-    });
-  }
-
   multipleOf(value: bigint, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "multipleOf",
@@ -1400,30 +1358,6 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
       }
     }
     return max;
-  }
-
-  get isSafe() {
-    let max: bigint | null = null,
-      min: bigint | null = null;
-    for (const ch of this._def.checks) {
-      if (ch.kind === "unsafe") {
-        return false;
-      } else if (ch.kind === "max") {
-        if (max === null || ch.value < max) max = ch.value;
-      } else if (ch.kind === "min") {
-        if (min === null || ch.value > min) min = ch.value;
-      }
-    }
-    return (
-      max !== null &&
-      max <= Number.MAX_SAFE_INTEGER &&
-      min !== null &&
-      min >= Number.MIN_SAFE_INTEGER
-    );
-  }
-
-  get isUnsafe() {
-    return !this.isSafe;
   }
 }
 

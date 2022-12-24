@@ -18,20 +18,6 @@ z.object({
   full: `${val.first} ${val.last}`,
 }));
 
-// z.number().catch(() => (Array.isArray(e) ? e.length : -1));
-
-// type keyType = keyof any;
-// // string | number | symbol
-
-// const anyObject = z.record(
-//   z.string().or(z.number()).or(z.symbol()),
-//   z.unknown()
-// );
-
-// const stringifiable = z.record(z.literal(Symbol.toStringTag), z.function());
-// const arg = stringifiable.parse("");
-// arg.toString();
-
 console.log(
   z
     .object({
@@ -40,3 +26,15 @@ console.log(
     })
     .parse(undefined)
 );
+
+z.bigint().gt(5n);
+z.bigint().gte(5n); // alias `.min(5n)`
+z.bigint().lt(5n);
+z.bigint().lte(5n); // alias `.max(5n)`
+
+z.bigint().positive(); // > 0n
+z.bigint().nonnegative(); // >= 0n
+z.bigint().negative(); // < 0n
+z.bigint().nonpositive(); // <= 0n
+
+z.bigint().multipleOf(5n); // Evenly divisible by 5n.
