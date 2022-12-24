@@ -175,3 +175,23 @@ test("finite getter", () => {
   expect(z.number().min(5).max(10).isFinite).toEqual(true);
   expect(safe.isFinite).toEqual(true);
 });
+
+test("safe getter", () => {
+  expect(z.number().isSafe).toEqual(false);
+  expect(gtFive.isSafe).toEqual(false);
+  expect(gteFive.isSafe).toEqual(false);
+  expect(minFive.isSafe).toEqual(false);
+  expect(positive.isSafe).toEqual(false);
+  expect(nonnegative.isSafe).toEqual(false);
+  expect(ltFive.isSafe).toEqual(false);
+  expect(lteFive.isSafe).toEqual(false);
+  expect(maxFive.isSafe).toEqual(false);
+  expect(negative.isSafe).toEqual(false);
+  expect(nonpositive.isSafe).toEqual(false);
+  expect(finite.isSafe).toEqual(false);
+  expect(intNum.isSafe).toEqual(false);
+  expect(multipleOfFive.isSafe).toEqual(false);
+
+  expect(z.number().min(5).max(10).isSafe).toEqual(true);
+  expect(safe.isSafe).toEqual(true);
+});
