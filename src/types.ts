@@ -557,8 +557,11 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   }
 };
 
-export class ZodString extends ZodType<string, ZodStringDef> {
-  _parse(input: ParseInput): ParseReturnType<string> {
+export class ZodString<
+  Start extends string = string,
+  End extends string = string
+> extends ZodType<`${Start}${string}${End}`, ZodStringDef> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     if (this._def.coerce) {
       input.data = String(input.data);
     }
@@ -794,20 +797,26 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
   }
 
-  startsWith(value: string, message?: errorUtil.ErrMessage) {
+  startsWith<V extends string>(
+    value: V,
+    message?: errorUtil.ErrMessage
+  ): ZodString<V, End> {
     return this._addCheck({
       kind: "startsWith",
       value: value,
       ...errorUtil.errToObj(message),
-    });
+    }) as ZodString<V, End>;
   }
 
-  endsWith(value: string, message?: errorUtil.ErrMessage) {
+  endsWith<V extends string>(
+    value: V,
+    message?: errorUtil.ErrMessage
+  ): ZodString<Start, V> {
     return this._addCheck({
       kind: "endsWith",
       value: value,
       ...errorUtil.errToObj(message),
-    });
+    }) as ZodString<Start, V>;
   }
 
   min(minLength: number, message?: errorUtil.ErrMessage) {
