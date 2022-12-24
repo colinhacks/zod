@@ -1774,8 +1774,8 @@ export type SomeZodObject = ZodObject<
 
 export type objectKeyMask<Obj> = { [k in keyof Obj]?: true };
 
-export type optionalPickWith<Obj, Shape> = {
-  [k in keyof Obj]?: k extends keyof Shape ? Obj[k] : never;
+export type noUnrecognized<Obj extends object, Shape extends object> = {
+  [k in keyof Obj]: k extends keyof Shape ? Obj[k] : never;
 };
 
 function deepPartialify(schema: ZodTypeAny): any {
@@ -2022,7 +2022,7 @@ export class ZodObject<
   }
 
   pick<Mask extends objectKeyMask<T>>(
-    mask: optionalPickWith<Mask, objectKeyMask<T>>
+    mask: noUnrecognized<Mask, T>
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
     const shape: any = {};
     util.objectKeys(mask).map((key) => {
@@ -2036,7 +2036,7 @@ export class ZodObject<
   }
 
   omit<Mask extends objectKeyMask<T>>(
-    mask: optionalPickWith<Mask, objectKeyMask<T>>
+    mask: noUnrecognized<Mask, objectKeyMask<T>>
   ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall> {
     const shape: any = {};
     util.objectKeys(this.shape).map((key) => {
@@ -2060,7 +2060,7 @@ export class ZodObject<
     Catchall
   >;
   partial<Mask extends objectKeyMask<T>>(
-    mask: optionalPickWith<Mask, objectKeyMask<T>>
+    mask: noUnrecognized<Mask, objectKeyMask<T>>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
@@ -2101,7 +2101,7 @@ export class ZodObject<
     Catchall
   >;
   required<Mask extends objectKeyMask<T>>(
-    mask: optionalPickWith<Mask, objectKeyMask<T>>
+    mask: noUnrecognized<Mask, objectKeyMask<T>>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];
