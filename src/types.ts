@@ -443,14 +443,15 @@ export abstract class ZodType<
       ...processCreateParams(undefined),
     });
   }
-  catch(def: Input): ZodCatch<this>;
-  catch(def: () => Input): ZodCatch<this>;
+
+  catch(def: Output): ZodCatch<this>;
+  catch(def: () => Output): ZodCatch<this>;
   catch(def: any) {
-    const defaultValueFunc = typeof def === "function" ? def : () => def;
+    const catchValueFunc = typeof def === "function" ? def : () => def;
 
     return new ZodCatch({
       innerType: this,
-      defaultValue: defaultValueFunc,
+      catchValue: catchValueFunc,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
     }) as any;
   }
@@ -4053,17 +4054,19 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
 //////////                      //////////
 //////////////////////////////////////////
 //////////////////////////////////////////
-export interface ZodCatchDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodCatchDef<
+  T extends ZodTypeAny = ZodTypeAny,
+  C extends T["_input"] = T["_input"]
+> extends ZodTypeDef {
   innerType: T;
-  defaultValue: () => T["_input"];
+  catchValue: () => C;
   typeName: ZodFirstPartyTypeKind.ZodCatch;
 }
 
 export class ZodCatch<T extends ZodTypeAny> extends ZodType<
-  util.noUndefined<T["_output"]>,
+  T["_output"],
   ZodCatchDef<T>,
-  T["_input"] | undefined
+  T["_input"]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
@@ -4079,35 +4082,33 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
         return {
           status: "valid",
           value:
-            result.status === "valid" ? result.value : this._def.defaultValue(),
+            result.status === "valid" ? result.value : this._def.catchValue(),
         };
       });
     } else {
       return {
         status: "valid",
         value:
-          result.status === "valid" ? result.value : this._def.defaultValue(),
+          result.status === "valid" ? result.value : this._def.catchValue(),
       };
     }
   }
 
-  removeDefault() {
+  removeCatch() {
     return this._def.innerType;
   }
 
   static create = <T extends ZodTypeAny>(
     type: T,
     params: RawCreateParams & {
-      default: T["_input"] | (() => T["_input"]);
+      catch: T["_output"] | (() => T["_output"]);
     }
   ): ZodCatch<T> => {
     return new ZodCatch({
       innerType: type,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
-      defaultValue:
-        typeof params.default === "function"
-          ? params.default
-          : () => params.default,
+      catchValue:
+        typeof params.catch === "function" ? params.catch : () => params.catch,
       ...processCreateParams(params),
     });
   };
