@@ -1951,11 +1951,23 @@ function deepPartialify(schema: ZodTypeAny): any {
 
 export class ZodObject<
   T extends ZodRawShape,
+<<<<<<< HEAD
   UnknownKeys extends UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny,
   Output = objectOutputType<T, Catchall>,
   Input = objectInputType<T, Catchall>
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
+=======
+  UnknownKeys extends UnknownKeysParam = "strip",
+  Catchall extends ZodTypeAny = ZodTypeAny
+  // Output = objectOutputType<T, Catchall>,
+  // Input = objectInputType<T, Catchall>
+> extends ZodType<
+  objectOutputType<T, Catchall>,
+  ZodObjectDef<T, UnknownKeys, Catchall>,
+  objectInputType<T, Catchall>
+> {
+>>>>>>> ad34119 (Simplify ZodObject generic)
   private _cached: { shape: T; keys: string[] } | null = null;
 
   _getCached(): { shape: T; keys: string[] } {
