@@ -38,6 +38,10 @@ test("email validations", () => {
   expect(() => email.parse("asdf")).toThrow();
   expect(() => email.parse("@lkjasdf.com")).toThrow();
   expect(() => email.parse("asdf@sdf.")).toThrow();
+  expect(() => email.parse("asdf@asdf.com-")).toThrow();
+  expect(() => email.parse("asdf@-asdf.com")).toThrow();
+  expect(() => email.parse("asdf@-a(sdf.com")).toThrow();
+  expect(() => email.parse("asdf@-asdf.com(")).toThrow();
 });
 
 test("more email validations", () => {
@@ -48,6 +52,7 @@ test("more email validations", () => {
     `"🍺🕺🎉"@domain.com`,
     `poop@💩.la`,
     `"🌮"@i❤️tacos.ws`,
+    "sss--asd@i❤️tacos.ws",
   ];
   const email = z.string().email();
   for (const datum of data) {
@@ -189,16 +194,19 @@ test("trim", () => {
 
 test("datetime", () => {
   const a = z.string().datetime({});
-  expect(a.isDatetime()).toEqual(true);
+  expect(a.isDatetime).toEqual(true);
 
   const b = z.string().datetime({ offset: true });
-  expect(b.isDatetime()).toEqual(true);
+  expect(b.isDatetime).toEqual(true);
 
   const c = z.string().datetime({ precision: 3 });
-  expect(c.isDatetime()).toEqual(true);
+  expect(c.isDatetime).toEqual(true);
 
   const d = z.string().datetime({ offset: true, precision: 0 });
-  expect(d.isDatetime()).toEqual(true);
+  expect(d.isDatetime).toEqual(true);
+
+  const { isDatetime } = z.string().datetime();
+  expect(isDatetime).toEqual(true);
 });
 
 test("datetime parsing", () => {
@@ -237,6 +245,7 @@ test("datetime parsing", () => {
   datetimeOffset.parse("2022-10-13T09:52:31.4Z");
   datetimeOffset.parse("2020-10-14T17:42:29+00:00");
   datetimeOffset.parse("2020-10-14T17:42:29+03:15");
+  datetimeOffset.parse("2020-10-14T17:42:29+0315");
   expect(() => datetimeOffset.parse("tuna")).toThrow();
   expect(() => datetimeOffset.parse("2022-10-13T09:52:31.Z")).toThrow();
 
@@ -246,6 +255,7 @@ test("datetime parsing", () => {
   datetimeOffsetNoMs.parse("1970-01-01T00:00:00Z");
   datetimeOffsetNoMs.parse("2022-10-13T09:52:31Z");
   datetimeOffsetNoMs.parse("2020-10-14T17:42:29+00:00");
+  datetimeOffsetNoMs.parse("2020-10-14T17:42:29+0000");
   expect(() => datetimeOffsetNoMs.parse("tuna")).toThrow();
   expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
   expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.Z")).toThrow();
@@ -257,6 +267,7 @@ test("datetime parsing", () => {
   const datetimeOffset4Ms = z.string().datetime({ offset: true, precision: 4 });
   datetimeOffset4Ms.parse("1970-01-01T00:00:00.1234Z");
   datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00:00");
+  datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+0000");
   expect(() => datetimeOffset4Ms.parse("tuna")).toThrow();
   expect(() => datetimeOffset4Ms.parse("1970-01-01T00:00:00.123Z")).toThrow();
   expect(() =>

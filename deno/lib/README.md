@@ -89,8 +89,9 @@
   - [Cyclical data](#cyclical-objects)
 - [Promises](#promises)
 - [Instanceof](#instanceof)
-- [Function schemas](#function-schemas)
+- [Functions](#functions)
 - [Preprocess](#preprocess)
+- [Custom](#custom-schemas)
 - [Schema methods](#schema-methods)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
@@ -134,7 +135,7 @@ Some other great aspects:
 - Zero dependencies
 - Works in Node.js and all modern browsers
 - Tiny: 8kb minified + zipped
-- Immutable: methods (i.e. `.optional()`) return a new instance
+- Immutable: methods (e.g. `.optional()`) return a new instance
 - Concise, chainable interface
 - Functional approach: [parse, don't validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 - Works with plain JavaScript too! You don't need to use TypeScript.
@@ -179,12 +180,21 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
     <td align="center">
       <a href="https://deletype.com/">
-        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="" />
+        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="Deletype logo" />
       </a>
       <br />
       <b>Deletype</b>
       <br />
       <a href="https://deletype.com">deletype.com</a>
+    </td>
+    <td align="center">
+      <a href="https://proxy.com/">
+        <img src="https://avatars.githubusercontent.com/u/14321439?s=200&v=4" width="200px;" alt="Proxy logo" />
+      </a>
+      <br />
+      <b>Proxy</b>
+      <br />
+      <a href="https://proxy.com">proxy.com</a>
     </td>
   </tr>
 </table>
@@ -193,16 +203,27 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <table>
   <tr>
+   <td align="center" colspan="2">
+      <a href="https://www.numeric.io">
+        <img src="https://i.imgur.com/kTiLtZt.png" width="250px;" alt="Numeric logo" />
+      </a>
+      <br />
+      <b>Numeric</b>
+      <br />
+      <a href="https://www.numeric.io">numeric.io</a>
+    </td>
     <td align="center">
       <a href="https://snaplet.dev">
-        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="" />
+        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="Snaplet logo" />
       </a>
       <br />
       <b>Snaplet</b>
       <br />
       <a href="https://snaplet.dev">snaplet.dev</a>
     </td>
-     <td align="center">
+  </tr>
+  <tr>
+   <td align="center">
       <a href="https://marcatopartners.com/">
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
       </a>
@@ -212,14 +233,14 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://marcatopartners.com/">marcatopartners.com</a>
     </td>
      <td align="center">
-      <a href="https://github.com/macandcheese-spaghetticode">
-        <img src="https://avatars.githubusercontent.com/u/76997592?v=4" width="150px;" alt="Trip" />
+      <a href="https://interval.com">
+        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
       </a>
       <br />
-      <b>Trip</b>
+      <b>Interval</b>
+      <br />
+      <a href="https://interval.com">interval.com</a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://seasoned.cc">
         <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="150px;" alt="" />
@@ -229,14 +250,16 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://seasoned.cc">seasoned.cc</a>
     </td>
+  </tr>
+   <tr>
     <td align="center">
-      <a href="https://interval.com">
-        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
+      <a href="https://www.bamboocreative.nz/">
+        <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="150px;" alt="Bamboo Creative logo" />
       </a>
       <br />
-      <b>Interval</b>
+      <b>Bamboo Creative</b>
       <br />
-      <a href="https://interval.com">interval.com</a>
+      <a href="https://www.bamboocreative.nz">bamboocreative.nz</a>
     </td>
   </tr>
 </table>
@@ -277,6 +300,16 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
   <tr>
+  <td align="center">
+      <a href="https://fungible.systems/">
+        <img src="https://avatars.githubusercontent.com/u/80220121?s=200&v=4" width="100px;" alt="Fungible Systems logo"/>
+      </a>
+      <br />
+      <b>Fungible Systems</b>
+      <br/>
+      <a href="https://fungible.systems/">fungible.systems</a>
+      <br />
+    </td>
     <td align="center">
       <a href="https://adaptable.io/">
         <img src="https://avatars.githubusercontent.com/u/60378268?s=200&v=4" width="100px;" alt=""/>
@@ -326,6 +359,9 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod.
 - [`zodix`](https://github.com/rileytomasek/zodix): Zod utilities for FormData and URLSearchParams in Remix loaders and actions.
+- [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod): Formik-compliant validator library that simplifies using Zod with Formik.
+- [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): Useful for translating Zod error messages.
+- [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
 
 #### Zod to X
 
@@ -349,6 +385,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs.
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
+- [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) Create Zod types from your Prisma models
 
 #### Mocking
 
@@ -360,12 +397,13 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration.
 - [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
+- [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas
 
 ## Installation
 
 ### Requirements
 
-- TypeScript 4.1+!
+- TypeScript 4.5+!
 - You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
 
   ```ts
@@ -379,17 +417,16 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### Node/npm
-
-To install Zod v3:
+### From `npm` (Node/Bun)
 
 ```sh
 npm install zod       # npm
 yarn add zod          # yarn
+bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
-### Deno
+### From `deno.land/x` (Deno)
 
 Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](https://deno.land/x). The latest version can be imported like so:
 
@@ -529,6 +566,49 @@ z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 ```
 
+## Coercion for primitives
+
+Zod now provides a more convenient way to coerce primitive values.
+
+```ts
+const schema = z.coerce.string();
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // => "12"
+schema.parse(true); // => "true"
+```
+
+During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
+
+```ts
+z.coerce.string().email().min(5);
+```
+
+All primitive types support coercion.
+
+```ts
+z.coerce.string(); // String(input)
+z.coerce.number(); // Number(input)
+z.coerce.boolean(); // Boolean(input)
+z.coerce.bigint(); // BigInt(input)
+z.coerce.date(); // new Date(input)
+```
+
+**Boolean coercion**
+
+Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
+
+```ts
+z.coerce.boolean().parse("tuna"); // => true
+z.coerce.boolean().parse("true"); // => true
+z.coerce.boolean().parse("false"); // => true
+z.coerce.boolean().parse(1); // => true
+z.coerce.boolean().parse([]); // => true
+
+z.coerce.boolean().parse(0); // => false
+z.coerce.boolean().parse(undefined); // => false
+z.coerce.boolean().parse(null); // => false
+```
+
 ### Datetime validation
 
 The `z.string().datetime()` method defaults to UTC validation: no timezone offsets with arbitrary sub-second decimal precision.
@@ -549,6 +629,7 @@ const datetime = z.string().datetime({ offset: true });
 
 datetime.parse("2020-01-01T00:00:00+02:00"); // pass
 datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
+datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
 ```
 
@@ -1203,7 +1284,7 @@ type MyUnion =
   | { status: "failed"; error: Error };
 ```
 
-Such unions can be represented with the `z.discriminatedUnion` method. This enables faster evaluation, because Zod can check the _discriminator key_ (`status` in the example above) ot determine which schema should be used to parse the input. This makes parsing more efficient and lets Zod provide report friendlier errors.
+Such unions can be represented with the `z.discriminatedUnion` method. This enables faster evaluation, because Zod can check the _discriminator key_ (`status` in the example above) to determine which schema should be used to parse the input. This makes parsing more efficient and lets Zod report friendlier errors.
 
 With the basic union method the input is tested against each of the provided "options", and in the case of invalidity, issues for all the "options" are shown in the zod error. On the other hand, the discriminated union allows for selecting just one of the "options", testing against it, and showing only the issues related to this "option".
 
@@ -1472,7 +1553,7 @@ TestSchema.parse(new Test()); // passes
 TestSchema.parse("blob"); // throws
 ```
 
-## Function schemas
+## Functions
 
 Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".
 
@@ -1492,6 +1573,7 @@ const myFunction = z
   .function()
   .args(z.string(), z.number()) // accepts an arbitrary number of arguments
   .returns(z.boolean());
+
 type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string, arg1: number)=>boolean
 ```
@@ -1533,8 +1615,9 @@ const myFunction = z
   .function()
   .args(z.string())
   .implement((arg) => {
-    return [arg.length]; //
+    return [arg.length];
   });
+
 myFunction; // (arg: string)=>number[]
 ```
 
@@ -1555,6 +1638,8 @@ myFunction.returnType();
 
 ## Preprocess
 
+> Zod now supports primitive coercion without the need for `.preprocess()`. See the [coercion docs](#coercion-for-primitives) for more information.
+
 Typically Zod operates under a "parse then transform" paradigm. Zod validates the input first, then passes it through a chain of transformation functions. (For more information about transforms, read the [.transform docs](#transform).)
 
 But sometimes you want to apply some transform to the input _before_ parsing happens. A common use case: type coercion. Zod enables this with the `z.preprocess()`.
@@ -1564,6 +1649,22 @@ const castToString = z.preprocess((val) => String(val), z.string());
 ```
 
 This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
+
+## Custom schemas
+
+You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
+
+```ts
+const px = z.custom<`${number}px`>((val) => /^\d+px$/.test(val));
+px.parse("100px"); // pass
+px.parse("100vw"); // fail
+```
+
+If you don't provide a validation function, Zod will allow any value. This can be dangerous!
+
+```ts
+z.custom<{ arg: string }>(); // performs no validation
+```
 
 ## Schema methods
 
@@ -1579,6 +1680,7 @@ Given any Zod schema, you can call its `.parse` method to check `data` is valid.
 
 ```ts
 const stringSchema = z.string();
+
 stringSchema.parse("fish"); // => returns "fish"
 stringSchema.parse(12); // throws Error('Non-string type: number');
 ```
@@ -1682,7 +1784,7 @@ type RefineParams = {
 For advanced cases, the second argument can also be a function that returns `RefineParams`/
 
 ```ts
-z.string().refine(
+const longString = z.string().refine(
   (val) => val.length > 10,
   (val) => ({ message: `${val} is not more than 10 characters` })
 );
@@ -1699,8 +1801,9 @@ const passwordForm = z
   .refine((data) => data.password === data.confirm, {
     message: "Passwords don't match",
     path: ["confirm"], // path of error
-  })
-  .parse({ password: "asdf", confirm: "qwer" });
+  });
+
+passwordForm.parse({ password: "asdf", confirm: "qwer" });
 ```
 
 Because you provided a `path` parameter, the resulting error will be:
@@ -1739,7 +1842,6 @@ z.string()
 ```
 
 <!-- Note that the `path` is set to `["confirm"]` , so you can easily display this error underneath the "Confirm password" textbox.
-
 
 ```ts
 const allForms = z.object({ passwordForm }).parse({
@@ -1817,12 +1919,40 @@ const schema = z.number().superRefine((val, ctx) => {
 });
 ```
 
+#### Type refinements
+
+If you provide a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) to `.refine()` or `superRefine()`, the resulting type will be narrowed down to your predicate's type. This is useful if you are mixing multiple chained refinements and transformations:
+
+```ts
+const schema = z
+  .object({
+    first: z.string(),
+    second: z.number(),
+  })
+  .nullable()
+  .superRefine((arg, ctx): arg is { first: string; second: number } => {
+    if (!arg) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom, // customize your issue
+        message: "object should exist",
+      });
+      return false;
+    }
+    return true;
+  })
+  // here, TS knows that arg is not null
+  .refine((arg) => arg.first === "bob", "`first` is not `bob`!");
+```
+
+> ⚠️ You must **still** call `ctx.addIssue()` if using `superRefine()` with a type predicate function. Otherwise the refinement won't be validated.
+
 ### `.transform`
 
 To transform data after parsing, use the `transform` method.
 
 ```ts
 const stringToNumber = z.string().transform((val) => val.length);
+
 stringToNumber.parse("string"); // => 6
 ```
 
@@ -1869,7 +1999,8 @@ const Strings = z.string().transform((val, ctx) => {
 Transforms and refinements can be interleaved. These will be executed in the order they are declared.
 
 ```ts
-z.string()
+const nameToGreeting = z
+  .string()
   .transform((val) => val.toUpperCase())
   .refine((val) => val.length > 15)
   .transform((val) => `Hello ${val}`)
@@ -1980,7 +2111,7 @@ z.string().optional().nullable();
 A convenience method that returns an array schema for the given type:
 
 ```ts
-const nullableString = z.string().array(); // string[]
+const stringArray = z.string().array(); // string[]
 
 // equivalent to
 z.array(z.string());
@@ -2002,7 +2133,7 @@ z.promise(z.string());
 A convenience method for union types.
 
 ```ts
-z.string().or(z.number()); // string | number
+const stringOrNumber = z.string().or(z.number()); // string | number
 
 // equivalent to
 z.union([z.string(), z.number()]);
@@ -2013,7 +2144,9 @@ z.union([z.string(), z.number()]);
 A convenience method for creating intersection types.
 
 ```ts
-z.object({ name: z.string() }).and(z.object({ age: z.number() })); // { name: string } & { age: number }
+const nameAndAge = z
+  .object({ name: z.string() })
+  .and(z.object({ age: z.number() })); // { name: string } & { age: number }
 
 // equivalent to
 z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
@@ -2093,7 +2226,7 @@ type inferred = z.infer<typeof stringToNumber>; // number
 
 ### Writing generic functions
 
-When attempting to write a functions that accepts a Zod schemas as an input, it's common to try something like this:
+When attempting to write a function that accepts a Zod schema as an input, it's common to try something like this:
 
 ```ts
 function makeSchemaOptional<T>(schema: z.ZodType<T>) {
@@ -2108,7 +2241,7 @@ const arg = makeSchemaOptional(z.string());
 arg.unwrap();
 ```
 
-A better approach is for the generate parameter to refer to _the schema as a whole_.
+A better approach is for the generic parameter to refer to _the schema as a whole_.
 
 ```ts
 function makeSchemaOptional<T extends z.ZodTypeAny>(schema: T) {

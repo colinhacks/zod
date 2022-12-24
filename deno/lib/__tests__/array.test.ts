@@ -64,3 +64,9 @@ test("continue parsing despite array size error", () => {
     expect(result.error.issues.length).toEqual(2);
   }
 });
+
+test("parse should fail given sparse array", () => {
+  const schema = z.array(z.string()).nonempty().min(1).max(3);
+
+  expect(() => schema.parse(new Array(3))).toThrow();
+});
