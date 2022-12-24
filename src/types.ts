@@ -444,10 +444,16 @@ export abstract class ZodType<
     });
   }
 
-  catch<C extends Input>(catchValue: C): ZodCatch<this, C>;
-  catch<C extends Input>(getCatchValue: () => C): ZodCatch<this, C>;
-  catch<C extends Input>(catchValueOrGetter: C | (() => C)) {
-    return ZodCatch.create(this, { catch: catchValueOrGetter });
+  catch(def: Output): ZodCatch<this>;
+  catch(def: () => Output): ZodCatch<this>;
+  catch(def: any) {
+    const catchValueFunc = typeof def === "function" ? def : () => def;
+
+    return new ZodCatch({
+      innerType: this,
+      catchValue: catchValueFunc,
+      typeName: ZodFirstPartyTypeKind.ZodCatch,
+    }) as any;
   }
 
   describe(description: string): this {
@@ -4057,10 +4063,11 @@ export interface ZodCatchDef<
   typeName: ZodFirstPartyTypeKind.ZodCatch;
 }
 
-export class ZodCatch<
-  T extends ZodTypeAny,
-  C extends T["_input"]
-> extends ZodType<T["_output"] | C, ZodCatchDef<T, C>, T["_input"]> {
+export class ZodCatch<T extends ZodTypeAny> extends ZodType<
+  T["_output"],
+  ZodCatchDef<T>,
+  T["_input"]
+> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
 
@@ -4091,18 +4098,17 @@ export class ZodCatch<
     return this._def.innerType;
   }
 
-  static create = <T extends ZodTypeAny, C extends T["_input"]>(
+  static create = <T extends ZodTypeAny>(
     type: T,
     params: RawCreateParams & {
-      catch: C | (() => C);
+      catch: T["_output"] | (() => T["_output"]);
     }
-  ): ZodCatch<T, C> => {
+  ): ZodCatch<T> => {
     return new ZodCatch({
       innerType: type,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
-      catchValue: (typeof params.catch === "function"
-        ? params.catch
-        : () => params.catch) as () => C,
+      catchValue:
+        typeof params.catch === "function" ? params.catch : () => params.catch,
       ...processCreateParams(params),
     });
   };
@@ -4347,7 +4353,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodOptional<any>
   | ZodNullable<any>
   | ZodDefault<any>
-  | ZodCatch<any, any>
+  | ZodCatch<any>
   | ZodPromise<any>
   | ZodBranded<any, any>
   | ZodPipeline<any, any>;
