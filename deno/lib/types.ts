@@ -390,33 +390,34 @@ export abstract class ZodType<
   }
 
   optional(): ZodOptional<this> {
-    return ZodOptional.create(this) as any;
+    return ZodOptional.create(this, this._def) as any;
   }
   nullable(): ZodNullable<this> {
-    return ZodNullable.create(this) as any;
+    return ZodNullable.create(this, this._def) as any;
   }
   nullish(): ZodNullable<ZodOptional<this>> {
     return this.optional().nullable();
   }
   array(): ZodArray<this> {
-    return ZodArray.create(this);
+    return ZodArray.create(this, this._def);
   }
   promise(): ZodPromise<this> {
-    return ZodPromise.create(this);
+    return ZodPromise.create(this, this._def);
   }
 
   or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
-    return ZodUnion.create([this, option]) as any;
+    return ZodUnion.create([this, option], this._def) as any;
   }
 
   and<T extends ZodTypeAny>(incoming: T): ZodIntersection<this, T> {
-    return ZodIntersection.create(this, incoming);
+    return ZodIntersection.create(this, incoming, this._def);
   }
 
   transform<NewOut>(
     transform: (arg: Output, ctx: RefinementCtx) => NewOut | Promise<NewOut>
   ): ZodEffects<this, NewOut> {
     return new ZodEffects({
+      ...processCreateParams(this._def),
       schema: this,
       typeName: ZodFirstPartyTypeKind.ZodEffects,
       effect: { type: "transform", transform },
@@ -429,6 +430,7 @@ export abstract class ZodType<
     const defaultValueFunc = typeof def === "function" ? def : () => def;
 
     return new ZodDefault({
+      ...processCreateParams(this._def),
       innerType: this,
       defaultValue: defaultValueFunc,
       typeName: ZodFirstPartyTypeKind.ZodDefault,
@@ -440,7 +442,7 @@ export abstract class ZodType<
     return new ZodBranded({
       typeName: ZodFirstPartyTypeKind.ZodBranded,
       type: this,
-      ...processCreateParams(undefined),
+      ...processCreateParams(this._def),
     });
   }
 
@@ -450,6 +452,7 @@ export abstract class ZodType<
     const catchValueFunc = typeof def === "function" ? def : () => def;
 
     return new ZodCatch({
+      ...processCreateParams(this._def),
       innerType: this,
       catchValue: catchValueFunc,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
@@ -1713,7 +1716,7 @@ export class ZodArray<
 
     if (ctx.common.async) {
       return Promise.all(
-        (ctx.data as any[]).map((item, i) => {
+        ([...ctx.data] as any[]).map((item, i) => {
           return def.type._parseAsync(
             new ParseInputLazyPath(ctx, item, ctx.path, i)
           );
@@ -1723,7 +1726,7 @@ export class ZodArray<
       });
     }
 
-    const result = (ctx.data as any[]).map((item, i) => {
+    const result = ([...ctx.data] as any[]).map((item, i) => {
       return def.type._parseSync(
         new ParseInputLazyPath(ctx, item, ctx.path, i)
       );
