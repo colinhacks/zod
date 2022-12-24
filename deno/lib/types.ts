@@ -1189,6 +1189,24 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     }
     return Number.isFinite(min) && Number.isFinite(max);
   }
+
+  get isSafe() {
+    let min: number | null = null,
+      max: number | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "min") {
+        if (min === null || ch.value > min) min = ch.value;
+      } else if (ch.kind === "max") {
+        if (max === null || ch.value < max) max = ch.value;
+      }
+    }
+    return (
+      min !== null &&
+      min >= Number.MIN_SAFE_INTEGER &&
+      max !== null &&
+      max <= Number.MAX_SAFE_INTEGER
+    );
+  }
 }
 
 /////////////////////////////////////////
