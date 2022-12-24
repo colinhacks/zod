@@ -200,7 +200,7 @@ This message is then passed as `ctx.defaultError` into `overrideErrorMap`. This 
 
 ```ts
 const myErrorMap: z.ZodErrorMap = /* ... */;
-z.setErrorMap(errorMap);
+z.setErrorMap(myErrorMap);
 ```
 
 ### Schema-bound error map
