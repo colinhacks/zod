@@ -240,3 +240,80 @@ test("fallback to OuterTypeOfFunction", () => {
     (arg: string, ...args_1: unknown[]) => number
   >(true);
 });
+
+test("Function with this parameter", () => {
+  const funcSchema = z
+    .function()
+    .args(z.string())
+    .returns(z.string())
+    .this(z.object({ val: z.number() }));
+
+  const myFunc = funcSchema.implement(function (this: { val: number }, val) {
+    return val + this.val;
+  });
+
+  expect(myFunc.call({ val: 5 }, "asdf")).toBe("asdf5");
+
+  util.assertEqual<
+    typeof myFunc,
+    (this: { val: number }, arg: string, ...args_1: unknown[]) => string
+  >(true);
+});
+
+test("Function with this parameter and no args", () => {
+  const funcSchema = z
+    .function()
+    .returns(z.string())
+    .this(z.object({ val: z.number() }));
+
+  const myFunc = funcSchema.implement(function (this: { val: number }) {
+    return this.val.toString();
+  });
+
+  expect(myFunc.call({ val: 5 })).toBe("5");
+
+  util.assertEqual<
+    typeof myFunc,
+    (this: { val: number }, ...args_1: unknown[]) => string
+  >(true);
+});
+
+test("Function with this parameters that changes and returns This", () => {
+  const funcSchema = z
+    .function()
+    .args(z.string())
+    .this(z.object({ val: z.number() }));
+
+  const myFunc = funcSchema.implement(function (this: { val: number }, val) {
+    this.val = val.length;
+    return this;
+  });
+
+  expect(myFunc.call({ val: 5 }, "asdf")).toEqual({ val: 4 });
+
+  util.assertEqual<
+    typeof myFunc,
+    (
+      this: { val: number },
+      arg: string,
+      ...args_1: unknown[]
+    ) => { val: number }
+  >(true);
+});
+
+test("Function without this parameter does not get bound", () => {
+  const funcSchema = z.function().args(z.string());
+
+  // @ts-expect-error `this` parameter type should be `void` since it was not specified in the schema
+  const myFunc = funcSchema.implement(function (this: { val: number }, val) {
+    return val + this.val;
+  });
+
+  // @ts-expect-error can't bind to a function that should have had a `this` parameters typed as `void`
+  expect(() => myFunc.bind({ val: 5 })("asdf")).toThrow();
+
+  util.assertEqual<
+    typeof myFunc,
+    (arg: string, ...args_1: unknown[]) => unknown // we couldn't infer the return type since the function was implemented incorrectly
+  >(true);
+});

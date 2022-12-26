@@ -23,6 +23,7 @@ export const ZodIssueCode = util.arrayToEnum([
   "invalid_union_discriminator",
   "invalid_enum_value",
   "unrecognized_keys",
+  "invalid_this_type",
   "invalid_arguments",
   "invalid_return_type",
   "invalid_date",
@@ -71,6 +72,11 @@ export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
   received: string | number;
   code: typeof ZodIssueCode.invalid_enum_value;
   options: (string | number)[];
+}
+
+export interface ZodInvalidThisTypeIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_this_type;
+  thisTypeError: ZodError;
 }
 
 export interface ZodInvalidArgumentsIssue extends ZodIssueBase {
@@ -145,6 +151,7 @@ export type ZodIssueOptionalMessage =
   | ZodInvalidUnionIssue
   | ZodInvalidUnionDiscriminatorIssue
   | ZodInvalidEnumValueIssue
+  | ZodInvalidThisTypeIssue
   | ZodInvalidArgumentsIssue
   | ZodInvalidReturnTypeIssue
   | ZodInvalidDateIssue
