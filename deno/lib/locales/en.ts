@@ -36,6 +36,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
         issue.options
       )}, received '${issue.received}'`;
       break;
+    case ZodIssueCode.invalid_this_type:
+      message = "Invalid `this` type provided to function";
+      break;
     case ZodIssueCode.invalid_arguments:
       message = `Invalid function arguments`;
       break;
