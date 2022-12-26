@@ -3234,35 +3234,40 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 export interface ZodFunctionDef<
+  ThisType extends ZodTypeAny = ZodVoid,
   Args extends ZodTuple<any, any> = ZodTuple<any, any>,
   Returns extends ZodTypeAny = ZodTypeAny
 > extends ZodTypeDef {
+  thisType: ThisType;
   args: Args;
   returns: Returns;
   typeName: ZodFirstPartyTypeKind.ZodFunction;
 }
 
 export type OuterTypeOfFunction<
+  ThisType extends ZodTypeAny,
   Args extends ZodTuple<any, any>,
   Returns extends ZodTypeAny
 > = Args["_input"] extends Array<any>
-  ? (...args: Args["_input"]) => Returns["_output"]
+  ? (this: ThisType["_input"], ...args: Args["_input"]) => Returns["_output"]
   : never;
 
 export type InnerTypeOfFunction<
+  ThisType extends ZodTypeAny,
   Args extends ZodTuple<any, any>,
   Returns extends ZodTypeAny
 > = Args["_output"] extends Array<any>
-  ? (...args: Args["_output"]) => Returns["_input"]
+  ? (this: ThisType["_output"], ...args: Args["_output"]) => Returns["_input"]
   : never;
 
 export class ZodFunction<
+  ThisType extends ZodTypeAny,
   Args extends ZodTuple<any, any>,
   Returns extends ZodTypeAny
 > extends ZodType<
-  OuterTypeOfFunction<Args, Returns>,
-  ZodFunctionDef<Args, Returns>,
-  InnerTypeOfFunction<Args, Returns>
+  OuterTypeOfFunction<ThisType, Args, Returns>,
+  ZodFunctionDef<ThisType, Args, Returns>,
+  InnerTypeOfFunction<ThisType, Args, Returns>
 > {
   _parse(input: ParseInput): ParseReturnType<any> {
     const { ctx } = this._processInputParams(input);
@@ -3273,6 +3278,26 @@ export class ZodFunction<
         received: ctx.parsedType,
       });
       return INVALID;
+    }
+
+    function makeInvalidThisTypeIssue(
+      thisType: any,
+      error: ZodError
+    ): ZodIssue {
+      return makeIssue({
+        data: thisType,
+        path: ctx.path,
+        errorMaps: [
+          ctx.common.contextualErrorMap,
+          ctx.schemaErrorMap,
+          getErrorMap(),
+          defaultErrorMap,
+        ].filter((x) => !!x) as ZodErrorMap[],
+        issueData: {
+          code: ZodIssueCode.invalid_this_type,
+          thisTypeError: error,
+        },
+      });
     }
 
     function makeArgsIssue(args: any, error: ZodError): ZodIssue {
@@ -3312,18 +3337,31 @@ export class ZodFunction<
     const params = { errorMap: ctx.common.contextualErrorMap };
     const fn = ctx.data;
 
+    const {
+      thisType: thisTypeSchema,
+      args: argsSchema,
+      returns: returnsSchema,
+    } = this._def;
+
     if (this._def.returns instanceof ZodPromise) {
-      return OK(async (...args: any[]) => {
+      return OK(async function (this: any, ...args: any[]) {
         const error = new ZodError([]);
-        const parsedArgs = await this._def.args
+        const parsedThis = await thisTypeSchema
+          .parseAsync(this, params)
+          .catch((e) => {
+            error.addIssue(makeInvalidThisTypeIssue(this, e));
+            throw error;
+          });
+        const parsedArgs = await argsSchema
           .parseAsync(args, params)
           .catch((e) => {
             error.addIssue(makeArgsIssue(args, e));
             throw error;
           });
-        const result = await fn(...(parsedArgs as any));
+        const boundFn = fn.bind(parsedThis);
+        const result = await boundFn(...(parsedArgs as any));
         const parsedReturns = await (
-          this._def.returns as ZodPromise<ZodTypeAny>
+          returnsSchema as ZodPromise<ZodTypeAny>
         )._def.type
           .parseAsync(result, params)
           .catch((e) => {
@@ -3333,13 +3371,20 @@ export class ZodFunction<
         return parsedReturns;
       });
     } else {
-      return OK((...args: any[]) => {
-        const parsedArgs = this._def.args.safeParse(args, params);
+      return OK(function (this: any, ...args: any[]) {
+        const parsedThis = thisTypeSchema.safeParse(this, params);
+        if (!parsedThis.success) {
+          throw new ZodError([
+            makeInvalidThisTypeIssue(this, parsedThis.error),
+          ]);
+        }
+        const parsedArgs = argsSchema.safeParse(args, params);
         if (!parsedArgs.success) {
           throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
         }
-        const result = fn(...(parsedArgs.data as any));
-        const parsedReturns = this._def.returns.safeParse(result, params);
+        const boundFn = fn.bind(parsedThis.data);
+        const result = boundFn(...(parsedArgs.data as any));
+        const parsedReturns = returnsSchema.safeParse(result, params);
         if (!parsedReturns.success) {
           throw new ZodError([makeReturnsIssue(result, parsedReturns.error)]);
         }
@@ -3356,9 +3401,20 @@ export class ZodFunction<
     return this._def.returns;
   }
 
+  thisParameterType() {
+    return this._def.thisType;
+  }
+
+  omitThisParameter() {
+    return new ZodFunction({
+      ...this._def,
+      thisType: ZodVoid.create(),
+    });
+  }
+
   args<Items extends Parameters<typeof ZodTuple["create"]>[0]>(
     ...items: Items
-  ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> {
+  ): ZodFunction<ThisType, ZodTuple<Items, ZodUnknown>, Returns> {
     return new ZodFunction({
       ...this._def,
       args: ZodTuple.create(items).rest(ZodUnknown.create()) as any,
@@ -3367,49 +3423,57 @@ export class ZodFunction<
 
   returns<NewReturnType extends ZodType<any, any>>(
     returnType: NewReturnType
-  ): ZodFunction<Args, NewReturnType> {
+  ): ZodFunction<ThisType, Args, NewReturnType> {
     return new ZodFunction({
       ...this._def,
       returns: returnType,
     });
   }
 
-  implement<F extends InnerTypeOfFunction<Args, Returns>>(
+  this<T extends ZodTypeAny>(schema: T): ZodFunction<T, Args, Returns> {
+    return new ZodFunction({
+      ...this._def,
+      thisType: schema,
+    });
+  }
+
+  implement<F extends InnerTypeOfFunction<ThisType, Args, Returns>>(
     func: F
   ): ReturnType<F> extends Returns["_output"]
-    ? (...args: Args["_input"]) => ReturnType<F>
-    : OuterTypeOfFunction<Args, Returns> {
+    ? (this: ThisType["_input"], ...args: Args["_input"]) => ReturnType<F>
+    : OuterTypeOfFunction<ThisType, Args, Returns> {
     const validatedFunc = this.parse(func);
     return validatedFunc as any;
   }
 
   strictImplement(
-    func: InnerTypeOfFunction<Args, Returns>
-  ): InnerTypeOfFunction<Args, Returns> {
+    func: InnerTypeOfFunction<ThisType, Args, Returns>
+  ): InnerTypeOfFunction<ThisType, Args, Returns> {
     const validatedFunc = this.parse(func);
     return validatedFunc as any;
   }
 
   validate = this.implement;
 
-  static create(): ZodFunction<ZodTuple<[], ZodUnknown>, ZodUnknown>;
+  static create(): ZodFunction<ZodVoid, ZodTuple<[], ZodUnknown>, ZodUnknown>;
   static create<T extends AnyZodTuple = ZodTuple<[], ZodUnknown>>(
     args: T
-  ): ZodFunction<T, ZodUnknown>;
+  ): ZodFunction<ZodVoid, T, ZodUnknown>;
   static create<T extends AnyZodTuple, U extends ZodTypeAny>(
     args: T,
     returns: U
-  ): ZodFunction<T, U>;
+  ): ZodFunction<ZodVoid, T, U>;
   static create<
     T extends AnyZodTuple = ZodTuple<[], ZodUnknown>,
     U extends ZodTypeAny = ZodUnknown
-  >(args: T, returns: U, params?: RawCreateParams): ZodFunction<T, U>;
+  >(args: T, returns: U, params?: RawCreateParams): ZodFunction<ZodVoid, T, U>;
   static create(
     args?: AnyZodTuple,
     returns?: ZodTypeAny,
     params?: RawCreateParams
   ) {
     return new ZodFunction({
+      thisType: ZodVoid.create(),
       args: (args
         ? args
         : ZodTuple.create([]).rest(ZodUnknown.create())) as any,
@@ -4367,7 +4431,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodRecord<any, any>
   | ZodMap<any>
   | ZodSet<any>
-  | ZodFunction<any, any>
+  | ZodFunction<any, any, any>
   | ZodLazy<any>
   | ZodLiteral<any>
   | ZodEnum<any>
