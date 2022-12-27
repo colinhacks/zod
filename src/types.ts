@@ -542,7 +542,7 @@ const datetimeRegex = (args: {
   withDate?: boolean;
   withTime?: boolean;
 }) => {
-  let regex = `^`;
+  let regex = "^";
 
   if (args.withDate) {
     regex = `${regex}\\d{4}-\\d{2}-\\d{2}`;
@@ -560,23 +560,9 @@ const datetimeRegex = (args: {
 
   if (args.precision) {
     regex = `${regex}\\.\\d{${args.precision}}`;
-
-    if (args.offset) {
-      return new RegExp(`${regex}(([+-]\\d{2}:?\\d{2})|Z)$`);
-    }
-
-    return new RegExp(`${regex}Z$`);
+  } else if (args.precision == null) {
+    regex = `${regex}(\\.\\d+)?`;
   }
-
-  if (args.precision === 0) {
-    if (args.offset) {
-      return new RegExp(`${regex}(([+-]\\d{2}:?\\d{2})|Z)$`);
-    }
-
-    return new RegExp(`${regex}Z$`);
-  }
-
-  regex = `${regex}(\\.\\d+)?`;
 
   if (args.offset) {
     return new RegExp(`${regex}(([+-]\\d{2}:?\\d{2})|Z)$`);
