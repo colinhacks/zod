@@ -2464,7 +2464,7 @@ This more declarative API makes schema definitions vastly more concise.
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
-Good type inference support, but limited options for object type masking (no `.pick` , `.omit` , `.extend` , etc.). No support for `Record` s (their `Record` is equivalent to Zod's `object` ). They DO support branded and readonly types, which Zod does not.
+Good type inference support, but limited options for object type masking (no `.pick` , `.omit` , `.extend` , etc.). No support for `Record` s (their `Record` is equivalent to Zod's `object` ). They DO support readonly types, which Zod does not.
 
 - Supports "pattern matching": computed properties that distribute over unions
 - Supports readonly types
