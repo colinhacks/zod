@@ -94,6 +94,8 @@ export type StringValidation =
   | "regex"
   | "cuid"
   | "datetime"
+  | "date"
+  | "time"
   | { startsWith: string }
   | { endsWith: string };
 

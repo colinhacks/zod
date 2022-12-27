@@ -499,6 +499,16 @@ export type ZodStringCheck =
       kind: "datetime";
       offset: boolean;
       precision: number | null;
+      withDate: true;
+      withTime: true;
+      message?: string;
+    }
+  | { kind: "date"; withDate: true; message?: string }
+  | {
+      kind: "time";
+      offset: boolean;
+      precision: number | null;
+      withTime: true;
       message?: string;
     };
 
@@ -526,36 +536,53 @@ const emailRegex =
 // }
 
 // Adapted from https://stackoverflow.com/a/3143231
-const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
-  if (args.precision) {
-    if (args.offset) {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}:?\\d{2})|Z)$`
-      );
-    } else {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}Z$`
-      );
-    }
-  } else if (args.precision === 0) {
-    if (args.offset) {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}:?\\d{2})|Z)$`
-      );
-    } else {
-      return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`);
-    }
-  } else {
-    if (args.offset) {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}:?\\d{2})|Z)$`
-      );
-    } else {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$`
-      );
+const datetimeRegex = (args: {
+  precision?: number | null;
+  offset?: boolean;
+  withDate?: boolean;
+  withTime?: boolean;
+}) => {
+  let regex = `^`;
+
+  if (args.withDate) {
+    regex = `${regex}\\d{4}-\\d{2}-\\d{2}`;
+
+    if (args.withTime) {
+      regex = `${regex}T`;
     }
   }
+
+  if (!args.withTime) {
+    return new RegExp(`${regex}$`);
+  }
+
+  regex = `${regex}\\d{2}:\\d{2}:\\d{2}`;
+
+  if (args.precision) {
+    regex = `${regex}\\.\\d{${args.precision}}`;
+
+    if (args.offset) {
+      return new RegExp(`${regex}(([+-]\\d{2}:?\\d{2})|Z)$`);
+    }
+
+    return new RegExp(`${regex}Z$`);
+  }
+
+  if (args.precision === 0) {
+    if (args.offset) {
+      return new RegExp(`${regex}(([+-]\\d{2}:?\\d{2})|Z)$`);
+    }
+
+    return new RegExp(`${regex}Z$`);
+  }
+
+  regex = `${regex}(\\.\\d+)?`;
+
+  if (args.offset) {
+    return new RegExp(`${regex}(([+-]\\d{2}:?\\d{2})|Z)$`);
+  }
+
+  return new RegExp(`${regex}Z$`);
 };
 
 export class ZodString extends ZodType<string, ZodStringDef> {
@@ -567,15 +594,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
     if (parsedType !== ZodParsedType.string) {
       const ctx = this._getOrReturnCtx(input);
-      addIssueToContext(
-        ctx,
-        {
-          code: ZodIssueCode.invalid_type,
-          expected: ZodParsedType.string,
-          received: ctx.parsedType,
-        }
-        //
-      );
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.string,
+        received: ctx.parsedType,
+      });
       return INVALID;
     }
 
@@ -723,6 +746,30 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "date") {
+        const regex = datetimeRegex(check);
+
+        if (!regex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "date",
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "time") {
+        const regex = datetimeRegex(check);
+
+        if (!regex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "date",
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -752,15 +799,19 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   email(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "email", ...errorUtil.errToObj(message) });
   }
+
   url(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
+
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
   }
+
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
+
   datetime(
     options?:
       | string
@@ -775,6 +826,8 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         kind: "datetime",
         precision: null,
         offset: false,
+        withDate: true,
+        withTime: true,
         message: options,
       });
     }
@@ -783,6 +836,40 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       precision:
         typeof options?.precision === "undefined" ? null : options?.precision,
       offset: options?.offset ?? false,
+      withDate: true,
+      withTime: true,
+      ...errorUtil.errToObj(options?.message),
+    });
+  }
+
+  date(message?: string) {
+    return this._addCheck({ kind: "date", withDate: true, message });
+  }
+
+  time(
+    options?:
+      | string
+      | {
+          message?: string | undefined;
+          precision?: number | null;
+          offset?: boolean;
+        }
+  ) {
+    if (typeof options === "string") {
+      return this._addCheck({
+        kind: "time",
+        precision: null,
+        offset: false,
+        withTime: true,
+        message: options,
+      });
+    }
+    return this._addCheck({
+      kind: "time",
+      precision:
+        typeof options?.precision === "undefined" ? null : options?.precision,
+      offset: options?.offset ?? false,
+      withTime: true,
       ...errorUtil.errToObj(options?.message),
     });
   }
@@ -852,15 +939,26 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return !!this._def.checks.find((ch) => ch.kind === "datetime");
   }
 
+  get isDate() {
+    return !!this._def.checks.find((ch) => ch.kind === "date");
+  }
+
+  get isTime() {
+    return !!this._def.checks.find((ch) => ch.kind === "time");
+  }
+
   get isEmail() {
     return !!this._def.checks.find((ch) => ch.kind === "email");
   }
+
   get isURL() {
     return !!this._def.checks.find((ch) => ch.kind === "url");
   }
+
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
   }
+
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
@@ -874,6 +972,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     }
     return min;
   }
+
   get maxLength() {
     let max: number | null = null;
     for (const ch of this._def.checks) {
