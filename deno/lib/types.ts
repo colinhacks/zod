@@ -1713,7 +1713,7 @@ export class ZodArray<
 
     if (ctx.common.async) {
       return Promise.all(
-        (ctx.data as any[]).map((item, i) => {
+        ([...ctx.data] as any[]).map((item, i) => {
           return def.type._parseAsync(
             new ParseInputLazyPath(ctx, item, ctx.path, i)
           );
@@ -1723,7 +1723,7 @@ export class ZodArray<
       });
     }
 
-    const result = (ctx.data as any[]).map((item, i) => {
+    const result = ([...ctx.data] as any[]).map((item, i) => {
       return def.type._parseSync(
         new ParseInputLazyPath(ctx, item, ctx.path, i)
       );
@@ -2794,6 +2794,65 @@ export type InputTypeOfTupleWithRest<
   ? [...InputTypeOfTuple<T>, ...Rest["_input"][]]
   : InputTypeOfTuple<T>;
 
+export type TupleHead<T extends ZodTupleItems | []> = T extends [
+  infer H,
+  ...any[]
+]
+  ? H
+  : undefined;
+
+export type TupleTail<T extends ZodTupleItems | []> = T extends [
+  any,
+  ...infer R
+]
+  ? R extends ZodTupleItems | []
+    ? R
+    : never
+  : [];
+
+export type TupleConcat<
+  T extends ZodTupleItems | [],
+  U extends ZodTupleItems
+> = T extends [] ? U : T extends ZodTupleItems ? [...T, ...U] : never;
+
+export type TupleUnshift<
+  T extends ZodTupleItems | [],
+  U extends ZodTupleItems
+> = T extends []
+  ? U
+  : T extends ZodTupleItems
+  ? [TupleHead<U>, ...TupleTail<U>, ...T]
+  : never;
+
+type PartialTupleItems<T extends ZodTupleItems | []> = T extends []
+  ? T
+  : T extends [infer H, ...infer R]
+  ? H extends ZodTypeAny
+    ? [
+        H extends ZodOptional<ZodTypeAny>
+          ? H
+          : H extends ZodNullable<infer U>
+          ? ZodNullable<ZodOptional<U>>
+          : ZodOptional<H>,
+        ...(R extends ZodTupleItems ? PartialTupleItems<R> : [])
+      ]
+    : never
+  : never;
+
+export type PartialTuple<
+  T extends ZodTupleItems | [],
+  Rest extends ZodTypeAny | null
+> = ZodTuple<
+  PartialTupleItems<T>,
+  Rest extends ZodTypeAny
+    ? Rest extends ZodOptional<ZodTypeAny>
+      ? Rest
+      : Rest extends ZodNullable<infer U>
+      ? ZodNullable<ZodOptional<U>>
+      : ZodOptional<Rest>
+    : null
+>;
+
 export interface ZodTupleDef<
   T extends ZodTupleItems | [] = ZodTupleItems,
   Rest extends ZodTypeAny | null = null
@@ -2879,6 +2938,68 @@ export class ZodTuple<
       ...this._def,
       rest,
     });
+  }
+
+  head(): TupleHead<T> {
+    return this._def.items[0] as TupleHead<T>;
+  }
+
+  tail(): ZodTuple<TupleTail<T>, Rest> {
+    return new ZodTuple({
+      ...this._def,
+      items: this._def.items.slice(1) as TupleTail<T>,
+    });
+  }
+
+  push<Item extends ZodTypeAny>(
+    item: Item
+  ): ZodTuple<TupleConcat<T, [Item]>, Rest>;
+  push<Items extends ZodTupleItems>(
+    ...items: Items
+  ): ZodTuple<TupleConcat<T, Items>, Rest>;
+  push(...items: ZodTupleItems) {
+    return new ZodTuple({
+      ...this._def,
+      items: [...this._def.items, ...items] as TupleConcat<T, ZodTupleItems>,
+    });
+  }
+
+  unshift<Item extends ZodTypeAny>(
+    item: Item
+  ): ZodTuple<TupleUnshift<T, [Item]>, Rest>;
+  unshift<Items extends ZodTupleItems>(
+    ...items: Items
+  ): ZodTuple<TupleUnshift<T, Items>, Rest>;
+  unshift(...items: ZodTupleItems) {
+    return new ZodTuple({
+      ...this._def,
+      items: [...items, ...this._def.items] as TupleUnshift<T, ZodTupleItems>,
+    });
+  }
+
+  partial(): PartialTuple<T, Rest> {
+    return new ZodTuple({
+      ...this._def,
+      items: this._def.items.map((item) =>
+        item instanceof ZodOptional
+          ? item
+          : item instanceof ZodNullable
+          ? ZodNullable.create(item.unwrap().optional(), {
+              ...item._def,
+            })
+          : item.optional()
+      ) as PartialTupleItems<T>,
+      rest:
+        this._def.rest instanceof ZodType
+          ? this._def.rest instanceof ZodOptional
+            ? this._def.rest
+            : this._def.rest instanceof ZodNullable
+            ? ZodNullable.create(this._def.rest.unwrap().optional(), {
+                ...this._def.rest._def,
+              })
+            : this._def.rest.optional()
+          : null,
+    }) as PartialTuple<T, Rest>;
   }
 
   static create = <T extends [ZodTypeAny, ...ZodTypeAny[]] | []>(
@@ -3965,9 +4086,9 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
     params?: RawCreateParams
   ): ZodOptional<T> => {
     return new ZodOptional({
+      ...processCreateParams(params),
       innerType: type,
       typeName: ZodFirstPartyTypeKind.ZodOptional,
-      ...processCreateParams(params),
     }) as any;
   };
 }
@@ -4009,9 +4130,9 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     params?: RawCreateParams
   ): ZodNullable<T> => {
     return new ZodNullable({
+      ...processCreateParams(params),
       innerType: type,
       typeName: ZodFirstPartyTypeKind.ZodNullable,
-      ...processCreateParams(params),
     }) as any;
   };
 }
