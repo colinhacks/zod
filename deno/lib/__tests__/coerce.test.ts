@@ -28,6 +28,12 @@ test("string coercion", () => {
   );
 });
 
+test("string coercion with min length validation", () => {
+  const schema = z.coerce.string().min(1);
+  expect(() => schema.parse("")).toThrow();
+  expect(() => schema.parse(undefined)).toThrow();
+});
+
 test("number coercion", () => {
   const schema = z.coerce.number();
   expect(schema.parse("12")).toEqual(12);
