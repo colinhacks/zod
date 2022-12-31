@@ -5567,7 +5567,8 @@ type appendToTemplateLiteral<
   : never;
 
 export interface ZodTemplateLiteralDef extends ZodTypeDef {
-  parts: readonly (string | number | bigint | ZodType)[];
+  parts: readonly (TemplateLiteralPrimitivePart | TemplateLiteralZodTypePart)[];
+  regexString: string;
   typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral;
 }
 
@@ -5578,9 +5579,12 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   addPart<Z extends TemplateLiteralZodTypePart>(
     part: Z
   ): ZodTemplateLiteral<appendToTemplateLiteral<Template, Z>> {
+    const parts = [...this._def.parts, part];
+
     return new ZodTemplateLiteral({
       ...this._def,
-      parts: [...this._def.parts, part],
+      parts,
+      regexString: this._buildRegexString(parts),
     });
   }
 
@@ -5597,15 +5601,114 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       return INVALID;
     }
 
-    // TODO: validate!!!
+    if (!new RegExp(this._def.regexString).test(input.data)) {
+      const ctx = this._getOrReturnCtx(input);
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_string,
+        message: `does not match template literal with pattern /${this._def.regexString}/`,
+        path: ctx.path,
+        validation: "regex",
+      });
+      return INVALID;
+    }
 
-    throw new Error("unimplemented!");
+    return { status: "valid", value: input.data };
+  }
+
+  protected _buildRegexString(
+    parts: readonly (
+      | TemplateLiteralPrimitivePart
+      | TemplateLiteralZodTypePart
+    )[]
+  ): string {
+    return (
+      parts.reduce<string>((acc, part) => {
+        if (typeof part !== "object") {
+          return `${acc}${this._escapeForRegex(part)}`;
+        }
+
+        if (part instanceof ZodLiteral) {
+          return `${acc}${this._escapeForRegex(part._def.value)}`;
+        }
+
+        if (part instanceof ZodString) {
+          // FIXME: should we care for string's validations? e.g. regex, uuid, etc.
+          return `${acc}.{${part.minLength || 0},${part.maxLength ?? ""}}`;
+        }
+
+        if (part instanceof ZodEnum || part instanceof ZodNativeEnum) {
+          const values =
+            part instanceof ZodEnum
+              ? part._def.values
+              : util.getValidEnumValues(part._def.values);
+
+          return `${acc}(${values.map(this._escapeForRegex).join("|")})`;
+        }
+
+        if (part instanceof ZodNumber) {
+          const max = part.maxValue || Infinity;
+          const min = part.minValue || -Infinity;
+          const isFinite = part.isFinite;
+
+          if (min < 0 || max < 0) {
+            acc = `${acc}\\-`;
+
+            if (max >= 0) {
+              acc = `${acc}?`;
+            }
+          }
+
+          if (!isFinite) {
+            acc = `${acc}(Infinity|(`;
+          }
+
+          acc = `${acc}\\d+`;
+
+          if (!part.isInt) {
+            acc = `${acc}(\\.\\d+)?`;
+          }
+
+          return !isFinite ? `${acc}))` : acc;
+        }
+
+        if (part instanceof ZodBigInt) {
+          // FIXME: include/exclude '-' based on min/max values after https://github.com/colinhacks/zod/pull/1711 is merged.
+          return `${acc}\\-?\\d+`;
+        }
+
+        if (part instanceof ZodBoolean) {
+          return `${acc}(true|false)`;
+        }
+
+        if (part instanceof ZodNull) {
+          return `${acc}null`;
+        }
+
+        if (part instanceof ZodUndefined) {
+          return `${acc}undefined`;
+        }
+
+        return acc;
+      }, "^") + "$"
+    );
+  }
+
+  protected _escapeForRegex(str: unknown): string {
+    if (typeof str !== "string") {
+      return `${str}`;
+    }
+
+    return str.replace(
+      /(\(|\)|\[|\]|\{|\}|\.|\\|\^|\-|\$|\?|\:|\=|\!|\*|\+|\,|\|)/,
+      "\\$1"
+    );
   }
 
   static create = (params?: RawCreateParams): ZodTemplateLiteral => {
     return new ZodTemplateLiteral({
       ...processCreateParams(params),
       parts: [],
+      regexString: "^$",
       typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral,
     });
   };
