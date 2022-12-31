@@ -77,6 +77,8 @@ test("first party switch", () => {
       break;
     case z.ZodFirstPartyTypeKind.ZodPipeline:
       break;
+    case z.ZodFirstPartyTypeKind.ZodTemplateLiteral:
+      break;
     default:
       util.assertNever(def);
   }
