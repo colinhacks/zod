@@ -395,7 +395,7 @@ export abstract class ZodType<
   nullable(): ZodNullable<this> {
     return ZodNullable.create(this) as any;
   }
-  nullish(): ZodNullable<ZodOptional<this>> {
+  nullish(): ZodOptional<ZodNullable<this>> {
     return this.nullable().optional();
   }
   array(): ZodArray<this> {
