@@ -4286,6 +4286,80 @@ export class ZodPipeline<
   }
 }
 
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                      //////////
+//////////  ZodTemplateLiteral  //////////
+//////////                      //////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+
+type TemplateLiteralPrimitivePart =
+  | string
+  | number
+  | bigint
+  | boolean
+  | null
+  | undefined;
+
+type TemplateLiteralZodTypePart = ZodType<TemplateLiteralPrimitivePart>;
+
+type appendToTemplateLiteral<
+  Template extends string,
+  Suffix extends TemplateLiteralPrimitivePart | ZodType
+> = Suffix extends TemplateLiteralPrimitivePart
+  ? `${Template}${Suffix}`
+  : Suffix extends ZodType<infer Output, any, any>
+  ? Output extends TemplateLiteralPrimitivePart
+    ? `${Template}${Output}`
+    : never
+  : never;
+
+export interface ZodTemplateLiteralDef extends ZodTypeDef {
+  parts: readonly (string | number | bigint | ZodType)[];
+  typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral;
+}
+
+export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
+  Template,
+  ZodTemplateLiteralDef
+> {
+  addPart<Z extends TemplateLiteralZodTypePart>(
+    part: Z
+  ): ZodTemplateLiteral<appendToTemplateLiteral<Template, Z>> {
+    return new ZodTemplateLiteral({
+      ...this._def,
+      parts: [...this._def.parts, part],
+    });
+  }
+
+  _parse(input: ParseInput): ParseReturnType<Template> {
+    const parsedType = this._getType(input);
+
+    if (parsedType !== ZodParsedType.string) {
+      const ctx = this._getOrReturnCtx(input);
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.string,
+        received: ctx.parsedType,
+      });
+      return INVALID;
+    }
+
+    // TODO: validate!!!
+
+    throw new Error("unimplemented!");
+  }
+
+  static create = (params?: RawCreateParams): ZodTemplateLiteral => {
+    return new ZodTemplateLiteral({
+      ...processCreateParams(params),
+      parts: [],
+      typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral,
+    });
+  };
+}
+
 export const custom = <T>(
   check?: (data: unknown) => any,
   params: Parameters<ZodTypeAny["refine"]>[1] = {},
@@ -4344,6 +4418,7 @@ export enum ZodFirstPartyTypeKind {
   ZodPromise = "ZodPromise",
   ZodBranded = "ZodBranded",
   ZodPipeline = "ZodPipeline",
+  ZodTemplateLiteral = "ZodTemplateLiteral",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -4379,7 +4454,8 @@ export type ZodFirstPartySchemaTypes =
   | ZodCatch<any>
   | ZodPromise<any>
   | ZodBranded<any, any>
-  | ZodPipeline<any, any>;
+  | ZodPipeline<any, any>
+  | ZodTemplateLiteral<any>;
 
 // new approach that works for abstract classes
 // but requires TS 4.4+
@@ -4428,6 +4504,7 @@ const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const pipelineType = ZodPipeline.create;
+const templateLiteralType = ZodTemplateLiteral.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -4479,6 +4556,7 @@ export {
   strictObjectType as strictObject,
   stringType as string,
   symbolType as symbol,
+  templateLiteralType as templateLiteral,
   effectsType as transformer,
   tupleType as tuple,
   undefinedType as undefined,
