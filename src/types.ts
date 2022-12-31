@@ -3479,6 +3479,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_literal,
         expected: this._def.value,
+        received: input.data,
       });
       return INVALID;
     }
