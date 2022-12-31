@@ -5537,6 +5537,80 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
   }
 }
 
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                      //////////
+//////////  ZodTemplateLiteral  //////////
+//////////                      //////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+
+type TemplateLiteralPrimitivePart =
+  | string
+  | number
+  | bigint
+  | boolean
+  | null
+  | undefined;
+
+type TemplateLiteralZodTypePart = ZodType<TemplateLiteralPrimitivePart>;
+
+type appendToTemplateLiteral<
+  Template extends string,
+  Suffix extends TemplateLiteralPrimitivePart | ZodType
+> = Suffix extends TemplateLiteralPrimitivePart
+  ? `${Template}${Suffix}`
+  : Suffix extends ZodType<infer Output, any, any>
+  ? Output extends TemplateLiteralPrimitivePart
+    ? `${Template}${Output}`
+    : never
+  : never;
+
+export interface ZodTemplateLiteralDef extends ZodTypeDef {
+  parts: readonly (string | number | bigint | ZodType)[];
+  typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral;
+}
+
+export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
+  Template,
+  ZodTemplateLiteralDef
+> {
+  addPart<Z extends TemplateLiteralZodTypePart>(
+    part: Z
+  ): ZodTemplateLiteral<appendToTemplateLiteral<Template, Z>> {
+    return new ZodTemplateLiteral({
+      ...this._def,
+      parts: [...this._def.parts, part],
+    });
+  }
+
+  _parse(input: ParseInput): ParseReturnType<Template> {
+    const parsedType = this._getType(input);
+
+    if (parsedType !== ZodParsedType.string) {
+      const ctx = this._getOrReturnCtx(input);
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.string,
+        received: ctx.parsedType,
+      });
+      return INVALID;
+    }
+
+    // TODO: validate!!!
+
+    throw new Error("unimplemented!");
+  }
+
+  static create = (params?: RawCreateParams): ZodTemplateLiteral => {
+    return new ZodTemplateLiteral({
+      ...processCreateParams(params),
+      parts: [],
+      typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral,
+    });
+  };
+}
+
 ////////////////////////////////////////
 ////////////////////////////////////////
 //////////                    //////////
@@ -5558,6 +5632,7 @@ export function custom<T>(
    * ```
    *
    */
+
   fatal?: boolean
 ): ZodType<T, ZodTypeDef, T> {
   if (check)
@@ -5623,6 +5698,7 @@ export enum ZodFirstPartyTypeKind {
   ZodBranded = "ZodBranded",
   ZodPipeline = "ZodPipeline",
   ZodReadonly = "ZodReadonly",
+  ZodTemplateLiteral = "ZodTemplateLiteral",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -5661,7 +5737,8 @@ export type ZodFirstPartySchemaTypes =
   | ZodBranded<any, any>
   | ZodPipeline<any, any>
   | ZodReadonly<any>
-  | ZodSymbol;
+  | ZodSymbol
+  | ZodTemplateLiteral<any>;
 
 // requires TS 4.4+
 abstract class Class {
@@ -5736,6 +5813,8 @@ const preprocessType: typeof ZodEffects.createWithPreprocess = (...args) =>
   ZodEffects.createWithPreprocess(...args);
 const pipelineType: typeof ZodPipeline.create = (...args) =>
   ZodPipeline.create(...args);
+const templateLiteralType: typeof ZodTemplateLiteral.create = (...args) =>
+  ZodTemplateLiteral.create(...args);
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -5777,6 +5856,7 @@ export {
   strictObjectType as strictObject,
   stringType as string,
   symbolType as symbol,
+  templateLiteralType as templateLiteral,
   effectsType as transformer,
   tupleType as tuple,
   undefinedType as undefined,
