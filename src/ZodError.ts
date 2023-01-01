@@ -50,6 +50,7 @@ export interface ZodInvalidTypeIssue extends ZodIssueBase {
 export interface ZodInvalidLiteralIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_literal;
   expected: unknown;
+  received: unknown;
 }
 
 export interface ZodUnrecognizedKeysIssue extends ZodIssueBase {

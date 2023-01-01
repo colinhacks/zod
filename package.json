@@ -57,6 +57,7 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:types": "tsc -p tsconfig.types.json",
     "rollup": "rollup --config rollup.config.js",
+    "test:watch": "jest --watch",
     "test": "jest --coverage",
     "test:deno": "cd deno && deno test",
     "prepublishOnly": "npm run test && npm run build && npm run build:deno",
