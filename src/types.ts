@@ -5560,6 +5560,8 @@ type appendToTemplateLiteral<
   Suffix extends TemplateLiteralPrimitivePart | ZodType
 > = Suffix extends TemplateLiteralPrimitivePart
   ? `${Template}${Suffix}`
+  : Suffix extends ZodOptional<infer UnderlyingType>
+  ? Template | appendToTemplateLiteral<Template, UnderlyingType>
   : Suffix extends ZodType<infer Output, any, any>
   ? Output extends TemplateLiteralPrimitivePart
     ? `${Template}${Output}`
