@@ -3,7 +3,7 @@ import Benchmark from "benchmark";
 import { Mocker } from "../__tests__/Mocker.ts";
 import { z } from "../index.ts";
 
-const val = new Mocker
+const val = new Mocker();
 
 const enumSuite = new Benchmark.Suite("z.enum");
 const enumSchema = z.enum(["a", "b", "c"]);
