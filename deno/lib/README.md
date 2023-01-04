@@ -535,6 +535,7 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().cuid();
+z.string().cuid2();
 z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
@@ -785,7 +786,7 @@ FishEnum.enum;
 You can also retrieve the list of options as a tuple with the `.options` property:
 
 ```ts
-FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
+FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 ```
 
 ## Native enums
