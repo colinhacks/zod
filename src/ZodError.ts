@@ -170,11 +170,11 @@ export const quotelessJson = (obj: any) => {
 export type ZodFormattedError<T, U = string> = {
   _errors: U[];
 } & (NonNullable<T> extends [any, ...any[]]
-  ? { [K in keyof NonNullable<T>]?: ZodFormattedError<NonNullable<T>[K]> }
+  ? { [K in keyof NonNullable<T>]?: ZodFormattedError<NonNullable<T>[K], U> }
   : NonNullable<T> extends any[]
-  ? { [k: number]: ZodFormattedError<NonNullable<T>[number]> }
+  ? { [k: number]: ZodFormattedError<NonNullable<T>[number], U> }
   : NonNullable<T> extends object
-  ? { [K in keyof NonNullable<T>]?: ZodFormattedError<NonNullable<T>[K]> }
+  ? { [K in keyof NonNullable<T>]?: ZodFormattedError<NonNullable<T>[K], U> }
   : unknown);
 
 export type inferFormattedError<
