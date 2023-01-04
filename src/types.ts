@@ -5586,7 +5586,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     return new ZodTemplateLiteral({
       ...this._def,
       parts,
-      regexString: this._buildRegexString(parts),
+      regexString: this._appendToRegexString(this._def.regexString, part),
     });
   }
 
@@ -5617,91 +5617,126 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     return { status: "valid", value: input.data };
   }
 
-  protected _buildRegexString(
-    parts: readonly (
-      | TemplateLiteralPrimitivePart
-      | TemplateLiteralZodTypePart
-    )[]
+  protected _appendToRegexString(
+    regexString: string,
+    part: TemplateLiteralPrimitivePart | TemplateLiteralZodTypePart
   ): string {
-    return (
-      parts.reduce<string>((acc, part) => {
-        if (typeof part !== "object") {
-          return `${acc}${this._escapeForRegex(part)}`;
-        }
-
-        if (part instanceof ZodLiteral) {
-          return `${acc}${this._escapeForRegex(part._def.value)}`;
-        }
-
-        if (part instanceof ZodString) {
-          // FIXME: should we care for string's validations? e.g. regex, uuid, etc.
-          return `${acc}.{${part.minLength || 0},${part.maxLength ?? ""}}`;
-        }
-
-        if (part instanceof ZodEnum || part instanceof ZodNativeEnum) {
-          const values =
-            part instanceof ZodEnum
-              ? part._def.values
-              : util.getValidEnumValues(part._def.values);
-
-          return `${acc}(${values.map(this._escapeForRegex).join("|")})`;
-        }
-
-        if (part instanceof ZodNumber) {
-          const max = part.maxValue || Infinity;
-          const min = part.minValue || -Infinity;
-          const isFinite = part.isFinite;
-
-          if (min < 0 || max < 0) {
-            acc = `${acc}\\-`;
-
-            if (max >= 0) {
-              acc = `${acc}?`;
-            }
-          }
-
-          if (!isFinite) {
-            acc = `${acc}(Infinity|(`;
-          }
-
-          acc = `${acc}\\d+`;
-
-          if (!part.isInt) {
-            acc = `${acc}(\\.\\d+)?`;
-          }
-
-          return !isFinite ? `${acc}))` : acc;
-        }
-
-        if (part instanceof ZodBigInt) {
-          // FIXME: include/exclude '-' based on min/max values after https://github.com/colinhacks/zod/pull/1711 is merged.
-          return `${acc}\\-?\\d+`;
-        }
-
-        if (part instanceof ZodBoolean) {
-          return `${acc}(true|false)`;
-        }
-
-        if (part instanceof ZodNull) {
-          return `${acc}null`;
-        }
-
-        if (part instanceof ZodUndefined) {
-          return `${acc}undefined`;
-        }
-
-        return acc;
-      }, "^") + "$"
-    );
+    return `^${this._unwrapRegexString(
+      regexString
+    )}${this._transformPartToRegexString(part)}$`;
   }
 
-  protected _escapeForRegex(str: unknown): string {
+  protected _transformPartToRegexString(
+    part: TemplateLiteralPrimitivePart | TemplateLiteralZodTypePart
+  ): string {
+    if (typeof part !== "object") {
+      return this._escapeStringForRegex(part);
+    }
+
+    if (part instanceof ZodLiteral) {
+      return this._escapeStringForRegex(part._def.value);
+    }
+
+    if (part instanceof ZodString) {
+      const regexCheck = part._def.checks.find(
+        (check) => check.kind === "regex"
+      );
+
+      if (regexCheck) {
+        return this._unwrapRegexString(
+          ((regexCheck as any).regex as RegExp).source
+        );
+      }
+
+      // FIXME: should we care for string's validations? e.g. uuid, etc.
+      return `.{${part.minLength || 0},${part.maxLength ?? ""}}`;
+    }
+
+    if (part instanceof ZodEnum || part instanceof ZodNativeEnum) {
+      const values =
+        part instanceof ZodEnum
+          ? part._def.values
+          : util.getValidEnumValues(part._def.values);
+
+      return `(${values.map(this._escapeStringForRegex).join("|")})`;
+    }
+
+    if (part instanceof ZodNumber) {
+      const max = part.maxValue || Infinity;
+      const min = part.minValue || -Infinity;
+      const isFinite = part.isFinite;
+      let acc = "";
+
+      if ((min < 0 && min > -Infinity) || max < 0) {
+        acc = `${acc}\\-`;
+
+        if (max >= 0) {
+          acc = `${acc}?`;
+        }
+      }
+
+      if (!isFinite) {
+        acc = `${acc}(Infinity|(`;
+      }
+
+      acc = `${acc}\\d+`;
+
+      if (!part.isInt) {
+        acc = `${acc}(\\.\\d+)?`;
+      }
+
+      return !isFinite ? `${acc}))` : acc;
+    }
+
+    if (part instanceof ZodOptional) {
+      return `(${this._transformPartToRegexString(part.unwrap())})?`;
+    }
+
+    if (part instanceof ZodTemplateLiteral) {
+      return this._unwrapRegexString(part._def.regexString);
+    }
+
+    if (part instanceof ZodBigInt) {
+      // FIXME: include/exclude '-' based on min/max values after https://github.com/colinhacks/zod/pull/1711 is merged.
+      return "\\-?\\d+";
+    }
+
+    if (part instanceof ZodBoolean) {
+      return "(true|false)";
+    }
+
+    if (part instanceof ZodNullable) {
+      do {
+        part = part.unwrap();
+      } while (part instanceof ZodNullable);
+
+      return `(${this._transformPartToRegexString(part)}|null)${
+        part instanceof ZodOptional ? "?" : ""
+      }`;
+    }
+
+    if (part instanceof ZodNull) {
+      return "null";
+    }
+
+    if (part instanceof ZodUndefined) {
+      return "undefined";
+    }
+
+    return "<<UNSUPPORTED_TEMPLATE_LITERAL_PART>>";
+  }
+
+  protected _unwrapRegexString(regexString: string): string {
+    return regexString.replace(/(^\^)|(\$$)/g, "");
+  }
+
+  protected _escapeStringForRegex(str: unknown): string {
     if (typeof str !== "string") {
       return `${str}`;
     }
 
     return str.replace(
-      /(\(|\)|\[|\]|\{|\}|\.|\\|\^|\-|\$|\?|\:|\=|\!|\*|\+|\,|\|)/,
+      /(\(|\)|\[|\]|\{|\}|\.|\\|\/|\^|\-|\$|\?|\:|\=|\!|\*|\+|\,|\|)/g,
       "\\$1"
     );
   }
