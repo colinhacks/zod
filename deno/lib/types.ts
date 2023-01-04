@@ -394,37 +394,38 @@ export abstract class ZodType<
   }
 
   optional(): ZodOptional<this> {
-    return ZodOptional.create(this) as any;
+    return ZodOptional.create(this, this._def) as any;
   }
 
   nullable(): ZodNullable<this> {
-    return ZodNullable.create(this) as any;
+    return ZodNullable.create(this, this._def) as any;
   }
 
-  nullish(): ZodNullable<ZodOptional<this>> {
-    return this.optional().nullable();
+  nullish(): ZodOptional<ZodNullable<this>> {
+    return this.nullable().optional();
   }
 
   array(): ZodArray<this> {
-    return ZodArray.create(this);
+    return ZodArray.create(this, this._def);
   }
 
   promise(): ZodPromise<this> {
-    return ZodPromise.create(this);
+    return ZodPromise.create(this, this._def);
   }
 
   or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
-    return ZodUnion.create([this, option]) as any;
+    return ZodUnion.create([this, option], this._def) as any;
   }
 
   and<T extends ZodTypeAny>(incoming: T): ZodIntersection<this, T> {
-    return ZodIntersection.create(this, incoming);
+    return ZodIntersection.create(this, incoming, this._def);
   }
 
   transform<NewOut>(
     transform: (arg: Output, ctx: RefinementCtx) => NewOut | Promise<NewOut>
   ): ZodEffects<this, NewOut> {
     return new ZodEffects({
+      ...processCreateParams(this._def),
       schema: this,
       typeName: ZodFirstPartyTypeKind.ZodEffects,
       effect: { type: "transform", transform },
@@ -437,6 +438,7 @@ export abstract class ZodType<
     const defaultValueFunc = typeof def === "function" ? def : () => def;
 
     return new ZodDefault({
+      ...processCreateParams(this._def),
       innerType: this,
       defaultValue: defaultValueFunc,
       typeName: ZodFirstPartyTypeKind.ZodDefault,
@@ -448,18 +450,19 @@ export abstract class ZodType<
     return new ZodBranded({
       typeName: ZodFirstPartyTypeKind.ZodBranded,
       type: this,
-      ...processCreateParams(undefined),
+      ...processCreateParams(this._def),
     });
   }
 
-  catch(def: Input): ZodCatch<this>;
-  catch(def: () => Input): ZodCatch<this>;
+  catch(def: Output): ZodCatch<this>;
+  catch(def: () => Output): ZodCatch<this>;
   catch(def: any) {
-    const defaultValueFunc = typeof def === "function" ? def : () => def;
+    const catchValueFunc = typeof def === "function" ? def : () => def;
 
     return new ZodCatch({
+      ...processCreateParams(this._def),
       innerType: this,
-      defaultValue: defaultValueFunc,
+      catchValue: catchValueFunc,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
     }) as any;
   }
@@ -525,7 +528,7 @@ const uuidRegex =
 // const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i;
 // eslint-disable-next-line
 const emailRegex =
-  /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@((?!-)([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{2,})(?<!-)$/i;
+  /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@((?!-)([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{1,})[^-<>()[\].,;:\s@"]$/i;
 
 // interface IsDateStringOptions extends StringDateOptions {
 /**
@@ -539,7 +542,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   if (args.precision) {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}:\\d{2})|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}:?\\d{2})|Z)$`
       );
     } else {
       return new RegExp(
@@ -549,7 +552,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   } else if (args.precision === 0) {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}:\\d{2})|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}:?\\d{2})|Z)$`
       );
     } else {
       return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`);
@@ -557,7 +560,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   } else {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}:\\d{2})|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}:?\\d{2})|Z)$`
       );
     } else {
       return new RegExp(
@@ -861,7 +864,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [...this._def.checks, { kind: "trim" }],
     });
 
-  isDatetime() {
+  get isDatetime() {
     return !!this._def.checks.find((ch) => ch.kind === "datetime");
   }
 
@@ -1170,7 +1173,30 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
   }
 
   get isInt() {
-    return !!this._def.checks.find((ch) => ch.kind === "int");
+    return !!this._def.checks.find(
+      (ch) =>
+        ch.kind === "int" ||
+        (ch.kind === "multipleOf" && util.isInteger(ch.value))
+    );
+  }
+
+  get isFinite() {
+    let max: number | null = null,
+      min: number | null = null;
+    for (const ch of this._def.checks) {
+      if (
+        ch.kind === "finite" ||
+        ch.kind === "int" ||
+        ch.kind === "multipleOf"
+      ) {
+        return true;
+      } else if (ch.kind === "min") {
+        if (min === null || ch.value > min) min = ch.value;
+      } else if (ch.kind === "max") {
+        if (max === null || ch.value < max) max = ch.value;
+      }
+    }
+    return Number.isFinite(min) && Number.isFinite(max);
   }
 }
 
@@ -1716,7 +1742,7 @@ export class ZodArray<
 
     if (ctx.common.async) {
       return Promise.all(
-        (ctx.data as any[]).map((item, i) => {
+        ([...ctx.data] as any[]).map((item, i) => {
           return def.type._parseAsync(
             new ParseInputLazyPath(ctx, item, ctx.path, i)
           );
@@ -1726,7 +1752,7 @@ export class ZodArray<
       });
     }
 
-    const result = (ctx.data as any[]).map((item, i) => {
+    const result = ([...ctx.data] as any[]).map((item, i) => {
       return def.type._parseSync(
         new ParseInputLazyPath(ctx, item, ctx.path, i)
       );
@@ -2509,7 +2535,7 @@ export type ZodDiscriminatedUnionOption<Discriminator extends string> =
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<any>[]
+  Options extends ZodDiscriminatedUnionOption<any>[] = ZodDiscriminatedUnionOption<any>[]
 > extends ZodTypeDef {
   discriminator: Discriminator;
   options: Options;
@@ -2868,7 +2894,7 @@ export class ZodTuple<
       status.dirty();
     }
 
-    const items = (ctx.data as any[])
+    const items = ([...ctx.data] as any[])
       .map((item, itemIndex) => {
         const schema = this._def.items[itemIndex] || this._def.rest;
         if (!schema) return null as any as SyncParseReturnType<any>;
@@ -3498,6 +3524,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
     if (input.data !== this._def.value) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        received: ctx.data,
         code: ZodIssueCode.invalid_literal,
         expected: this._def.value,
       });
@@ -4098,17 +4125,19 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
 //////////                      //////////
 //////////////////////////////////////////
 //////////////////////////////////////////
-export interface ZodCatchDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodCatchDef<
+  T extends ZodTypeAny = ZodTypeAny,
+  C extends T["_input"] = T["_input"]
+> extends ZodTypeDef {
   innerType: T;
-  defaultValue: () => T["_input"];
+  catchValue: () => C;
   typeName: ZodFirstPartyTypeKind.ZodCatch;
 }
 
 export class ZodCatch<T extends ZodTypeAny> extends ZodType<
-  util.noUndefined<T["_output"]>,
+  T["_output"],
   ZodCatchDef<T>,
-  T["_input"] | undefined
+  T["_input"]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
@@ -4121,38 +4150,36 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
 
     if (isAsync(result)) {
       return result.then((result) => {
-        const defaultValue = this._def.defaultValue();
         return {
           status: "valid",
-          value: result.status === "valid" ? result.value : defaultValue,
+          value:
+            result.status === "valid" ? result.value : this._def.catchValue(),
         };
       });
     } else {
-      const defaultValue = this._def.defaultValue();
       return {
         status: "valid",
-        value: result.status === "valid" ? result.value : defaultValue,
+        value:
+          result.status === "valid" ? result.value : this._def.catchValue(),
       };
     }
   }
 
-  removeDefault() {
+  removeCatch() {
     return this._def.innerType;
   }
 
   static create = <T extends ZodTypeAny>(
     type: T,
     params: RawCreateParams & {
-      default: T["_input"] | (() => T["_input"]);
+      catch: T["_output"] | (() => T["_output"]);
     }
   ): ZodCatch<T> => {
     return new ZodCatch({
       innerType: type,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
-      defaultValue:
-        typeof params.default === "function"
-          ? params.default
-          : () => params.default,
+      catchValue:
+        typeof params.catch === "function" ? params.catch : () => params.catch,
       ...processCreateParams(params),
     });
   };

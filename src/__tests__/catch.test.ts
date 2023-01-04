@@ -8,6 +8,16 @@ test("basic catch", () => {
   expect(z.string().catch("default").parse(undefined)).toBe("default");
 });
 
+test("catch fn does not run when parsing succeeds", () => {
+  let isCalled = false;
+  const cb = () => {
+    isCalled = true;
+    return "asdf";
+  };
+  expect(z.string().catch(cb).parse("test")).toBe("test");
+  expect(isCalled).toEqual(false);
+});
+
 test("basic catch async", async () => {
   const result = await z.string().catch("default").parseAsync(1243);
   expect(result).toBe("default");
@@ -37,7 +47,7 @@ test("catch with transform", () => {
   );
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string | undefined>(true);
+  util.assertEqual<inp, string>(true);
   type out = z.output<typeof stringWithDefault>;
   util.assertEqual<out, string>(true);
 });
@@ -55,7 +65,7 @@ test("catch on existing optional", () => {
   type inp = z.input<typeof stringWithDefault>;
   util.assertEqual<inp, string | undefined>(true);
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string>(true);
+  util.assertEqual<out, string | undefined>(true);
 });
 
 test("optional on catch", () => {
@@ -74,7 +84,7 @@ test("complex chain example", () => {
     .transform((val) => val + "!")
     .transform((val) => val.toUpperCase())
     .catch("qwer")
-    .removeDefault()
+    .removeCatch()
     .optional()
     .catch("asdfasdf");
 
@@ -83,8 +93,8 @@ test("complex chain example", () => {
   expect(complex.parse(true)).toBe("ASDF!");
 });
 
-test("removeDefault", () => {
-  const stringWithRemovedDefault = z.string().catch("asdf").removeDefault();
+test("removeCatch", () => {
+  const stringWithRemovedDefault = z.string().catch("asdf").removeCatch();
 
   type out = z.output<typeof stringWithRemovedDefault>;
   util.assertEqual<out, string>(true);
@@ -96,7 +106,7 @@ test("nested", () => {
     inner: "asdf",
   });
   type input = z.input<typeof outer>;
-  util.assertEqual<input, { inner?: string | undefined } | undefined>(true);
+  util.assertEqual<input, { inner: string }>(true);
   type out = z.output<typeof outer>;
   util.assertEqual<out, { inner: string }>(true);
   expect(outer.parse(undefined)).toEqual({ inner: "asdf" });
@@ -114,7 +124,7 @@ test("chained catch", () => {
 
 test("factory", () => {
   z.ZodCatch.create(z.string(), {
-    default: "asdf",
+    catch: "asdf",
   }).parse(undefined);
 });
 
