@@ -353,7 +353,7 @@ As you can see, the result is an object that denormalizes the issues array into 
 const FormData = z.object({ ... });
 
 function Errors(props: {errors?: string[] }){
-  if(!errors.length) return null;
+  if(!props.errors?.length) return null;
   return <div>{props.errors.map(err => <p>{err}</p>)}</div>
 }
 
