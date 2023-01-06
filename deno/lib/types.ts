@@ -2507,6 +2507,81 @@ const getDiscriminator = <T extends ZodTypeAny>(
   }
 };
 
+const toOptionsMap = <
+  Discriminator extends string,
+  Types extends ZodDiscriminatedUnionOption<Discriminator>[]
+>(
+  discriminator: Discriminator,
+  options: Types
+): Map<Primitive, ZodDiscriminatedUnionOption<Discriminator>> => {
+  // Get all the valid discriminator values
+  const optionsMap: Map<
+    Primitive,
+    ZodDiscriminatedUnionOption<Discriminator>
+  > = new Map();
+
+  for (const type of options) {
+    const discriminatorValues = getDiscriminator(type.shape[discriminator]);
+    if (!discriminatorValues) {
+      throw new Error(
+        `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
+      );
+    }
+    for (const value of discriminatorValues) {
+      if (optionsMap.has(value)) {
+        throw new Error(
+          `Discriminator property ${String(
+            discriminator
+          )} has duplicate value ${String(value)}`
+        );
+      }
+      optionsMap.set(value, type);
+    }
+  }
+
+  return optionsMap;
+};
+
+type ExtractKeys<T> = T extends T ? keyof T : never;
+type KeyofObjectUnion<Options extends ZodDiscriminatedUnionOption<any>[]> =
+  ExtractKeys<
+    Options[number] extends ZodObject<infer Shape, any, any, any, any>
+      ? Shape
+      : never
+  >;
+
+type PickFromObjectUnion<
+  Discriminator extends string,
+  Options extends ZodDiscriminatedUnionOption<Discriminator>[],
+  K extends string | number | symbol
+> = {
+  [I in keyof Options]: Options[I] extends ZodObject<
+    infer T,
+    infer UnknownKeys,
+    infer Catchall,
+    any,
+    any
+  >
+    ? ZodObject<
+        Pick<T, Extract<keyof T, K> | Discriminator>,
+        UnknownKeys,
+        Catchall
+      >
+    : never;
+};
+
+type ZodPickedDiscriminatedUnionOptions<
+  Discriminator extends string,
+  Options extends ZodDiscriminatedUnionOption<Discriminator>[],
+  K extends string | number | symbol
+> = PickFromObjectUnion<
+  Discriminator,
+  Options,
+  K
+> extends ZodDiscriminatedUnionOption<Discriminator>[]
+  ? PickFromObjectUnion<Discriminator, Options, K>
+  : never;
+
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
   ZodObject<
     { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
@@ -2520,7 +2595,7 @@ export interface ZodDiscriminatedUnionDef<
 > extends ZodTypeDef {
   discriminator: Discriminator;
   options: Options;
-  optionsMap: Map<Primitive, ZodDiscriminatedUnionOption<any>>;
+  optionsMap: Map<Primitive, ZodDiscriminatedUnionOption<Discriminator>>;
   typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion;
 }
 
@@ -2586,6 +2661,74 @@ export class ZodDiscriminatedUnion<
     return this._def.optionsMap;
   }
 
+  pick<Mask extends { [k in KeyofObjectUnion<Options>]?: true }>(
+    mask: Mask
+  ): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodPickedDiscriminatedUnionOptions<Discriminator, Options, keyof Mask>
+  > {
+    const maskWithDiscriminator = { ...mask, [this.discriminator]: true };
+
+    const options = this.options.map((option) =>
+      option.pick(maskWithDiscriminator)
+    ) as ZodPickedDiscriminatedUnionOptions<Discriminator, Options, keyof Mask>;
+    const optionsMap = toOptionsMap(this.discriminator, options);
+
+    return new ZodDiscriminatedUnion({
+      ...this._def,
+      options,
+      optionsMap,
+    });
+  }
+
+  // omit<Mask extends { [k in keyof Exclude<KeyofObjectUnion<Options>, Discriminator>]?: true }>(
+  //   mask: Mask
+  // ): ZodDiscriminatedUnion<Discriminator, PickFromObjectUnion<Discriminator, Options, Exclude<KeyofObjectUnion<Options>, keyof Mask>>> {
+  //   const { [this.discriminator]: disc, ...maskWithoutDiscriminator } = mask
+  //   throw new Error('not implemented')
+  // }
+
+  // deepPartial(): partialUtil.DeepPartial<this> {
+  //   throw new Error('not implemented')
+  //   //    return deepPartialify(this) as any;
+  // }
+
+  // partial(): ZodObject<
+  //   { [k in keyof T]: ZodOptional<T[k]> },
+  //   UnknownKeys,
+  //   Catchall
+  // >;
+  // partial<Mask extends { [k in keyof T]?: true }>(
+  //   mask: Mask
+  // ): ZodObject<
+  //   objectUtil.noNever<{
+  //     [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
+  //   }>,
+  //   UnknownKeys,
+  //   Catchall
+  // >;
+  // partial(mask?: any) {
+  //   throw new Error('not implemented')
+  // }
+
+  // required(): ZodObject<
+  //   { [k in keyof T]: deoptional<T[k]> },
+  //   UnknownKeys,
+  //   Catchall
+  // >;
+  // required<Mask extends { [k in keyof T]?: true }>(
+  //   mask: Mask
+  // ): ZodObject<
+  //   objectUtil.noNever<{
+  //     [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];
+  //   }>,
+  //   UnknownKeys,
+  //   Catchall
+  // >;
+  // required(mask?: any) {
+  //   throw new Error('not implemented')
+  // }
+
   /**
    * The constructor of the discriminated union schema. Its behaviour is very similar to that of the normal z.union() constructor.
    * However, it only allows a union of objects, all of which need to share a discriminator property. This property must
@@ -2605,30 +2748,6 @@ export class ZodDiscriminatedUnion<
     options: Types,
     params?: RawCreateParams
   ): ZodDiscriminatedUnion<Discriminator, Types> {
-    // Get all the valid discriminator values
-    const optionsMap: Map<Primitive, Types[number]> = new Map();
-
-    // try {
-    for (const type of options) {
-      const discriminatorValues = getDiscriminator(type.shape[discriminator]);
-      if (!discriminatorValues) {
-        throw new Error(
-          `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
-        );
-      }
-      for (const value of discriminatorValues) {
-        if (optionsMap.has(value)) {
-          throw new Error(
-            `Discriminator property ${String(
-              discriminator
-            )} has duplicate value ${String(value)}`
-          );
-        }
-
-        optionsMap.set(value, type);
-      }
-    }
-
     return new ZodDiscriminatedUnion<
       Discriminator,
       // DiscriminatorValue,
@@ -2637,7 +2756,7 @@ export class ZodDiscriminatedUnion<
       typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion,
       discriminator,
       options,
-      optionsMap,
+      optionsMap: toOptionsMap(discriminator, options),
       ...processCreateParams(params),
     });
   }

@@ -215,3 +215,16 @@ test("valid - literals with .default or .preprocess", () => {
     a: "foo",
   });
 });
+
+test("valid - pick", () => {
+  const obj1 = z.object({ a: z.number(), b: z.string(), c: z.literal(1) });
+  const obj2 = z.object({ b: z.string(), c: z.literal(2), d: z.string() });
+  const obj3 = z.object({ a: z.number(), b: z.string(), c: z.literal(3) }).strict();
+
+  const unionSchema = z.discriminatedUnion('c', [obj1, obj2, obj3]);
+  const pickFromSchema = unionSchema.pick({ d: true });
+
+  expect(pickFromSchema.parse({ c: 1, b: 'bla', d: 'hi' })).toEqual({ c: 1 });
+  expect(pickFromSchema.parse({ c: 2, b: 'bla', d: 'hi' })).toEqual({ c: 2, d: 'hi' })
+  expect(pickFromSchema.safeParse({ c: 3 })).toEqual({ c: 1 });
+})
