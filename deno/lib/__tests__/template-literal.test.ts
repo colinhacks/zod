@@ -7,36 +7,38 @@ import * as z from "../index.ts";
 
 const url = z
   .templateLiteral()
-  .addPart(z.literal("https://"))
-  .addPart(z.string().min(1))
-  .addPart(z.literal("."))
-  .addPart(z.enum(["com", "net"]));
+  .addLiteral("https://")
+  .addInterpolatedPosition(z.string().min(1))
+  .addLiteral(".")
+  .addInterpolatedPosition(z.enum(["com", "net"]));
 
 const connectionString = z
   .templateLiteral()
-  .addPart(z.literal("mongodb://"))
-  .addPart(
+  .addLiteral("mongodb://")
+  .addInterpolatedPosition(
     z
       .templateLiteral()
-      .addPart(z.string().min(1).describe("username"))
-      .addPart(z.literal(":"))
-      .addPart(z.string().min(1).describe("password"))
-      .addPart(z.literal("@"))
+      .addInterpolatedPosition(z.string().min(1).describe("username"))
+      .addLiteral(":")
+      .addInterpolatedPosition(z.string().min(1).describe("password"))
+      .addLiteral("@")
       .optional()
   )
-  .addPart(z.string().min(1).describe("host"))
-  .addPart(z.literal(":"))
-  .addPart(z.number().int().positive().describe("port"))
-  .addPart(
+  .addInterpolatedPosition(z.string().min(1).describe("host"))
+  .addLiteral(":")
+  .addInterpolatedPosition(z.number().int().positive().describe("port"))
+  .addInterpolatedPosition(
     z
       .templateLiteral()
-      .addPart(z.literal("/"))
-      .addPart(z.string().min(1).optional().describe("defaultauthdb"))
-      .addPart(
+      .addLiteral("/")
+      .addInterpolatedPosition(
+        z.string().min(1).optional().describe("defaultauthdb")
+      )
+      .addInterpolatedPosition(
         z
           .templateLiteral()
-          .addPart(z.literal("?"))
-          .addPart(z.string().regex(/^\w+=\w+(&\w+=\w+)*$/))
+          .addLiteral("?")
+          .addInterpolatedPosition(z.string().regex(/^\w+=\w+(&\w+=\w+)*$/))
           .optional()
           .describe("options")
       )
@@ -64,7 +66,11 @@ test("template literal parsing", () => {
   url.parse("https://example.com");
   url.parse("https://speedtest.net");
 
-  // TODO: url throw checks.
+  expect(() => url.parse("http://example.com")).toThrow();
+  expect(() => url.parse("https://.com")).toThrow();
+  expect(() => url.parse("https://examplecom")).toThrow();
+  expect(() => url.parse("https://example.org")).toThrow();
+  expect(() => url.parse("https://example.net.il")).toThrow();
 
   connectionString.parse("mongodb://host:1234");
   connectionString.parse("mongodb://host:1234/");
@@ -97,7 +103,24 @@ test("template literal parsing", () => {
   expect(() => connectionString.parse("mongodb://:1234")).toThrow();
   expect(() => connectionString.parse("mongodb://host1234")).toThrow();
   expect(() => connectionString.parse("mongodb://host:d234")).toThrow();
+  expect(() => connectionString.parse("mongodb://host:12.34")).toThrow();
+  expect(() => connectionString.parse("mongodb://host:-1234")).toThrow();
+  expect(() => connectionString.parse("mongodb://host:-12.34")).toThrow();
   expect(() => connectionString.parse("mongodb://host:")).toThrow();
-
-  // TODO: more connectionString throw checks.
+  expect(() => connectionString.parse("mongodb://:password@host:1234"));
+  expect(() => connectionString.parse("mongodb://usernamepassword@host:1234"));
+  expect(() => connectionString.parse("mongodb://username:@host:1234"));
+  expect(() => connectionString.parse("mongodb://@host:1234"));
+  expect(() =>
+    connectionString.parse("mongodb://host:1234/defaultauthdb?authSourceadmin")
+  );
+  expect(() => connectionString.parse("mongodb://host:1234/?authSourceadmin"));
+  expect(() =>
+    connectionString.parse(
+      "mongodb://host:1234/defaultauthdb?&authSource=admin"
+    )
+  );
+  expect(() =>
+    connectionString.parse("mongodb://host:1234/?&authSource=admin")
+  );
 });
