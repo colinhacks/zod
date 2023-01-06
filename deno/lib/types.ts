@@ -5545,7 +5545,7 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////
 //////////////////////////////////////////
 
-type TemplateLiteralPrimitivePart =
+type TemplateLiteralPrimitive =
   | string
   | number
   | bigint
@@ -5553,23 +5553,26 @@ type TemplateLiteralPrimitivePart =
   | null
   | undefined;
 
-type TemplateLiteralZodTypePart = ZodType<TemplateLiteralPrimitivePart>;
+type TemplateLiteralInterpolatedPosition = ZodType<TemplateLiteralPrimitive>;
 
 type appendToTemplateLiteral<
   Template extends string,
-  Suffix extends TemplateLiteralPrimitivePart | ZodType
-> = Suffix extends TemplateLiteralPrimitivePart
+  Suffix extends TemplateLiteralPrimitive | ZodType
+> = Suffix extends TemplateLiteralPrimitive
   ? `${Template}${Suffix}`
   : Suffix extends ZodOptional<infer UnderlyingType>
   ? Template | appendToTemplateLiteral<Template, UnderlyingType>
   : Suffix extends ZodType<infer Output, any, any>
-  ? Output extends TemplateLiteralPrimitivePart
+  ? Output extends TemplateLiteralPrimitive
     ? `${Template}${Output}`
     : never
   : never;
 
 export interface ZodTemplateLiteralDef extends ZodTypeDef {
-  parts: readonly (TemplateLiteralPrimitivePart | TemplateLiteralZodTypePart)[];
+  parts: readonly (
+    | TemplateLiteralPrimitive
+    | TemplateLiteralInterpolatedPosition
+  )[];
   regexString: string;
   typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral;
 }
@@ -5578,16 +5581,16 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   Template,
   ZodTemplateLiteralDef
 > {
-  addPart<Z extends TemplateLiteralZodTypePart>(
-    part: Z
-  ): ZodTemplateLiteral<appendToTemplateLiteral<Template, Z>> {
-    const parts = [...this._def.parts, part];
+  addInterpolatedPosition<I extends TemplateLiteralInterpolatedPosition>(
+    type: I
+  ): ZodTemplateLiteral<appendToTemplateLiteral<Template, I>> {
+    return this._addPart(type) as any;
+  }
 
-    return new ZodTemplateLiteral({
-      ...this._def,
-      parts,
-      regexString: this._appendToRegexString(this._def.regexString, part),
-    });
+  addLiteral<L extends TemplateLiteralPrimitive>(
+    literal: L
+  ): ZodTemplateLiteral<appendToTemplateLiteral<Template, L>> {
+    return this._addPart(literal) as any;
   }
 
   _parse(input: ParseInput): ParseReturnType<Template> {
@@ -5617,9 +5620,21 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     return { status: "valid", value: input.data };
   }
 
+  protected _addPart(
+    part: TemplateLiteralPrimitive | TemplateLiteralInterpolatedPosition
+  ): ZodTemplateLiteral {
+    const parts = [...this._def.parts, part];
+
+    return new ZodTemplateLiteral({
+      ...this._def,
+      parts,
+      regexString: this._appendToRegexString(this._def.regexString, part),
+    });
+  }
+
   protected _appendToRegexString(
     regexString: string,
-    part: TemplateLiteralPrimitivePart | TemplateLiteralZodTypePart
+    part: TemplateLiteralPrimitive | TemplateLiteralInterpolatedPosition
   ): string {
     return `^${this._unwrapRegexString(
       regexString
@@ -5627,7 +5642,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   }
 
   protected _transformPartToRegexString(
-    part: TemplateLiteralPrimitivePart | TemplateLiteralZodTypePart
+    part: TemplateLiteralPrimitive | TemplateLiteralInterpolatedPosition
   ): string {
     if (typeof part !== "object") {
       return this._escapeStringForRegex(part);
