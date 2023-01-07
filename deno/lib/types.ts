@@ -5545,15 +5545,11 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////
 //////////////////////////////////////////
 
-type TemplateLiteralPrimitive =
-  | string
-  | number
-  | bigint
-  | boolean
-  | null
-  | undefined;
+type TemplateLiteralPrimitive = string | number | boolean | null | undefined;
 
-type TemplateLiteralInterpolatedPosition = ZodType<TemplateLiteralPrimitive>;
+type TemplateLiteralInterpolatedPosition = ZodType<
+  TemplateLiteralPrimitive | bigint
+>;
 
 type appendToTemplateLiteral<
   Template extends string,
@@ -5563,7 +5559,7 @@ type appendToTemplateLiteral<
   : Suffix extends ZodOptional<infer UnderlyingType>
   ? Template | appendToTemplateLiteral<Template, UnderlyingType>
   : Suffix extends ZodType<infer Output, any, any>
-  ? Output extends TemplateLiteralPrimitive
+  ? Output extends TemplateLiteralPrimitive | bigint
     ? `${Template}${Output}`
     : never
   : never;
@@ -5644,7 +5640,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   protected _transformPartToRegexString(
     part: TemplateLiteralPrimitive | TemplateLiteralInterpolatedPosition
   ): string {
-    if (typeof part !== "object") {
+    if (typeof part !== "object" || part === null) {
       return this._escapeStringForRegex(part);
     }
 
@@ -5677,12 +5673,12 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     }
 
     if (part instanceof ZodNumber) {
-      const max = part.maxValue || Infinity;
-      const min = part.minValue || -Infinity;
+      const max = part.maxValue ?? Infinity;
+      const min = part.minValue ?? -Infinity;
       const isFinite = part.isFinite;
       let acc = "";
 
-      if ((min < 0 && min > -Infinity) || max < 0) {
+      if (min < 0) {
         acc = `${acc}\\-`;
 
         if (max >= 0) {
@@ -5700,7 +5696,11 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
         acc = `${acc}(\\.\\d+)?`;
       }
 
-      return !isFinite ? `${acc}))` : acc;
+      if (!isFinite) {
+        acc = `${acc}))`;
+      }
+
+      return acc;
     }
 
     if (part instanceof ZodOptional) {
@@ -5747,10 +5747,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
 
   protected _escapeStringForRegex(str: unknown): string {
     if (typeof str !== "string") {
-      return `${str}`;
+      str = `${str}`;
     }
 
-    return str.replace(
+    return (str as string).replace(
       /(\(|\)|\[|\]|\{|\}|\.|\\|\/|\^|\-|\$|\?|\:|\=|\!|\*|\+|\,|\|)/g,
       "\\$1"
     );

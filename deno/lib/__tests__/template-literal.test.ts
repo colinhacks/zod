@@ -5,6 +5,43 @@ const test = Deno.test;
 import { util } from "../helpers/util.ts";
 import * as z from "../index.ts";
 
+const empty = z.templateLiteral();
+const hello = z.templateLiteral().addLiteral("hello");
+const world = z.templateLiteral().addInterpolatedPosition(z.literal("world"));
+const one = z.templateLiteral().addLiteral(1);
+const two = z.templateLiteral().addInterpolatedPosition(z.literal(2));
+const truee = z.templateLiteral().addLiteral(true);
+const anotherTrue = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.literal(true));
+const falsee = z.templateLiteral().addLiteral(false);
+const anotherFalse = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.literal(false));
+const nulll = z.templateLiteral().addLiteral(null);
+const anotherNull = z.templateLiteral().addInterpolatedPosition(z.null());
+const undefinedd = z.templateLiteral().addLiteral(undefined);
+const anotherUndefined = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.undefined());
+const anyString = z.templateLiteral().addInterpolatedPosition(z.string());
+const anyNumber = z.templateLiteral().addInterpolatedPosition(z.number());
+const anyFiniteNumber = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.number().finite());
+const anyInt = z.templateLiteral().addInterpolatedPosition(z.number().int());
+const anyNegativeNumber = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.number().negative());
+const anyPositiveNumber = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.number().positive());
+const bool = z.templateLiteral().addInterpolatedPosition(z.boolean());
+const bigone = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.literal(BigInt(1)));
+const anyBigint = z.templateLiteral().addInterpolatedPosition(z.bigint());
+
 const url = z
   .templateLiteral()
   .addLiteral("https://")
@@ -26,7 +63,9 @@ const connectionString = z
   )
   .addInterpolatedPosition(z.string().min(1).describe("host"))
   .addLiteral(":")
-  .addInterpolatedPosition(z.number().int().positive().describe("port"))
+  .addInterpolatedPosition(
+    z.number().finite().int().positive().describe("port")
+  )
   .addInterpolatedPosition(
     z
       .templateLiteral()
@@ -46,6 +85,29 @@ const connectionString = z
   );
 
 test("template literal type inference", () => {
+  util.assertEqual<z.infer<typeof empty>, ``>(true);
+  util.assertEqual<z.infer<typeof hello>, `hello`>(true);
+  util.assertEqual<z.infer<typeof world>, `world`>(true);
+  util.assertEqual<z.infer<typeof one>, `1`>(true);
+  util.assertEqual<z.infer<typeof two>, `2`>(true);
+  util.assertEqual<z.infer<typeof truee>, `true`>(true);
+  util.assertEqual<z.infer<typeof anotherTrue>, `true`>(true);
+  util.assertEqual<z.infer<typeof falsee>, `false`>(true);
+  util.assertEqual<z.infer<typeof anotherFalse>, `false`>(true);
+  util.assertEqual<z.infer<typeof nulll>, `null`>(true);
+  util.assertEqual<z.infer<typeof anotherNull>, `null`>(true);
+  util.assertEqual<z.infer<typeof undefinedd>, `undefined`>(true);
+  util.assertEqual<z.infer<typeof anotherUndefined>, `undefined`>(true);
+  util.assertEqual<z.infer<typeof anyString>, `${string}`>(true);
+  util.assertEqual<z.infer<typeof anyNumber>, `${number}`>(true);
+  util.assertEqual<z.infer<typeof anyFiniteNumber>, `${number}`>(true);
+  util.assertEqual<z.infer<typeof anyInt>, `${number}`>(true);
+  util.assertEqual<z.infer<typeof anyNegativeNumber>, `${number}`>(true);
+  util.assertEqual<z.infer<typeof anyPositiveNumber>, `${number}`>(true);
+  util.assertEqual<z.infer<typeof bool>, `true` | `false`>(true);
+  util.assertEqual<z.infer<typeof bigone>, `${bigint}`>(true);
+  util.assertEqual<z.infer<typeof anyBigint>, `${bigint}`>(true);
+
   util.assertEqual<
     z.infer<typeof url>,
     `https://${string}.com` | `https://${string}.net`
@@ -63,6 +125,66 @@ test("template literal type inference", () => {
 });
 
 test("template literal parsing", () => {
+  empty.parse("");
+  hello.parse("hello");
+  world.parse("world");
+  one.parse("1");
+  two.parse("2");
+  truee.parse("true");
+  anotherTrue.parse("true");
+  falsee.parse("false");
+  anotherFalse.parse("false");
+  nulll.parse("null");
+  anotherNull.parse("null");
+  undefinedd.parse("undefined");
+  anotherUndefined.parse("undefined");
+  anyString.parse("blahblahblah");
+  anyString.parse("");
+  anyNumber.parse("123");
+  anyNumber.parse("1.23");
+  anyNumber.parse("0");
+  anyNumber.parse("-1.23");
+  anyNumber.parse("-123");
+  anyNumber.parse("Infinity");
+  anyNumber.parse("-Infinity");
+  anyFiniteNumber.parse("123");
+  anyFiniteNumber.parse("1.23");
+  anyFiniteNumber.parse("0");
+  anyFiniteNumber.parse("-1.23");
+  anyFiniteNumber.parse("-123");
+  anyInt.parse("123");
+  anyInt.parse("-123");
+  anyNegativeNumber.parse("-123");
+  anyNegativeNumber.parse("-1.23");
+  anyNegativeNumber.parse("-Infinity");
+  anyPositiveNumber.parse("123");
+  anyPositiveNumber.parse("1.23");
+  anyPositiveNumber.parse("Infinity");
+
+  expect(() => empty.parse("a")).toThrow();
+  expect(() => hello.parse("world"));
+  expect(() => world.parse("hello"));
+  expect(() => one.parse("2"));
+  expect(() => two.parse("1"));
+  expect(() => truee.parse("false"));
+  expect(() => anotherTrue.parse("false"));
+  expect(() => falsee.parse("true"));
+  expect(() => anotherFalse.parse("true"));
+  expect(() => nulll.parse("123"));
+  expect(() => anotherNull.parse("123"));
+  expect(() => undefinedd.parse("123"));
+  expect(() => anotherUndefined.parse("123"));
+  expect(() => anyFiniteNumber.parse("Infinity"));
+  expect(() => anyFiniteNumber.parse("-Infinity"));
+  expect(() => anyInt.parse("1.23"));
+  expect(() => anyInt.parse("-1.23"));
+  expect(() => anyNegativeNumber.parse("0"));
+  expect(() => anyNegativeNumber.parse("1"));
+  expect(() => anyNegativeNumber.parse("Infinity"));
+  expect(() => anyPositiveNumber.parse("0"));
+  expect(() => anyPositiveNumber.parse("-1"));
+  expect(() => anyPositiveNumber.parse("-Infinity"));
+
   url.parse("https://example.com");
   url.parse("https://speedtest.net");
 
