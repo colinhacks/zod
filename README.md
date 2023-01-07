@@ -102,6 +102,7 @@
   - [.superRefine](#superRefine)
   - [.transform](#transform)
   - [.default](#default)
+  - [.describe](#describe)
   - [.catch](#catch)
   - [.optional](#optional)
   - [.nullable](#nullable)
@@ -2046,6 +2047,17 @@ Conceptually, this is how Zod processes default values:
 
 1. If the input is `undefined`, the default value is returned
 2. Otherwise, the data is parsed using the base schema
+
+### `.describe`
+
+Use `.describe()` to add a `description` property to the resulting schema.
+
+```ts
+const documentedString = z.string().describe("A useful bit of text, if you know what to do with it.");
+documentedString.description // A useful bit of text…
+```
+
+This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
 
 ### `.catch`
 
