@@ -102,6 +102,7 @@
   - [.superRefine](#superRefine)
   - [.transform](#transform)
   - [.default](#default)
+  - [.describe](#describe)
   - [.catch](#catch)
   - [.optional](#optional)
   - [.nullable](#nullable)
@@ -2056,7 +2057,7 @@ const documentedString = z.string().describe("A useful bit of text, if you know 
 documentedString.description // A useful bit of text…
 ```
 
-This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)). 
+This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
 
 ### `.catch`
 
