@@ -227,5 +227,5 @@ test("valid - pick", () => {
 
   expect(pickFromSchema.parse({ c: 1, b: 'bla', d: 'hi' })).toEqual({ c: 1 });
   expect(pickFromSchema.parse({ c: 2, b: 'bla', d: 'hi' })).toEqual({ c: 2, d: 'hi' })
-  expect(pickFromSchema.safeParse({ c: 3 })).toEqual({ c: 1 });
+  expect(pickFromSchema.parse({ c: 3 })).toEqual({ c: 3 });
 })

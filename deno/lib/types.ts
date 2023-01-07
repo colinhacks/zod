@@ -1825,6 +1825,7 @@ export namespace objectUtil {
     Pick<T, requiredKeys<T>>;
 
   export type identity<T> = T;
+  export type keys<T> = T extends T ? keyof T : never;
   export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
 
   export type noNeverKeys<T extends ZodRawShape> = {
@@ -2194,7 +2195,11 @@ export class ZodObject<
     }) as any;
   }
 
-  deepPartial(): partialUtil.DeepPartial<this> {
+  deepPartial(): ZodObject<
+    { [k in keyof T]: ZodOptional<partialUtil.DeepPartial<T[k]>> },
+    UnknownKeys,
+    Catchall
+  > {
     return deepPartialify(this) as any;
   }
 
@@ -2542,9 +2547,8 @@ const toOptionsMap = <
   return optionsMap;
 };
 
-type ExtractKeys<T> = T extends T ? keyof T : never;
 type KeyofObjectUnion<Options extends ZodDiscriminatedUnionOption<any>[]> =
-  ExtractKeys<
+  objectUtil.keys<
     Options[number] extends ZodObject<infer Shape, any, any, any, any>
       ? Shape
       : never
