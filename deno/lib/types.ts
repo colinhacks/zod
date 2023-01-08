@@ -5578,7 +5578,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   ZodTemplateLiteralDef
 > {
   addInterpolatedPosition<I extends TemplateLiteralInterpolatedPosition>(
-    type: I
+    type: Exclude<I, ZodNever | ZodAny | ZodNaN | ZodPipeline<any, any>>
   ): ZodTemplateLiteral<appendToTemplateLiteral<Template, I>> {
     return this._addPart(type) as any;
   }
@@ -5640,27 +5640,16 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   protected _transformPartToRegexString(
     part: TemplateLiteralPrimitive | TemplateLiteralInterpolatedPosition
   ): string {
-    if (typeof part !== "object" || part === null) {
-      return this._escapeStringForRegex(part);
+    if (!(part instanceof ZodType)) {
+      return this._getEscapedStringForRegex(part);
     }
 
     if (part instanceof ZodLiteral) {
-      return this._escapeStringForRegex(part._def.value);
+      return this._getEscapedStringForRegex(part._def.value);
     }
 
     if (part instanceof ZodString) {
-      const regexCheck = part._def.checks.find(
-        (check) => check.kind === "regex"
-      );
-
-      if (regexCheck) {
-        return this._unwrapRegexString(
-          ((regexCheck as any).regex as RegExp).source
-        );
-      }
-
-      // FIXME: should we care for string's validations? e.g. uuid, etc.
-      return `.{${part.minLength || 0},${part.maxLength ?? ""}}`;
+      return this._transformZodStringPartToRegexString(part);
     }
 
     if (part instanceof ZodEnum || part instanceof ZodNativeEnum) {
@@ -5669,38 +5658,17 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
           ? part._def.values
           : util.getValidEnumValues(part._def.values);
 
-      return `(${values.map(this._escapeStringForRegex).join("|")})`;
+      return `(${values.map(this._getEscapedStringForRegex).join("|")})`;
+    }
+
+    if (part instanceof ZodUnion) {
+      return `(${(part._def.options as any[])
+        .map((option) => this._transformPartToRegexString(option))
+        .join("|")})`;
     }
 
     if (part instanceof ZodNumber) {
-      const max = part.maxValue ?? Infinity;
-      const min = part.minValue ?? -Infinity;
-      const isFinite = part.isFinite;
-      let acc = "";
-
-      if (min < 0) {
-        acc = `${acc}\\-`;
-
-        if (max >= 0) {
-          acc = `${acc}?`;
-        }
-      }
-
-      if (!isFinite) {
-        acc = `${acc}(Infinity|(`;
-      }
-
-      acc = `${acc}\\d+`;
-
-      if (!part.isInt) {
-        acc = `${acc}(\\.\\d+)?`;
-      }
-
-      if (!isFinite) {
-        acc = `${acc}))`;
-      }
-
-      return acc;
+      return this._transformZodNumberPartToRegexString(part);
     }
 
     if (part instanceof ZodOptional) {
@@ -5738,14 +5706,163 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       return "undefined";
     }
 
-    return "<<UNSUPPORTED_TEMPLATE_LITERAL_PART>>";
+    throw new Error(
+      "Zod error: Unsupported ZodTemplateLiteral argument! Please submit an issue at https://github.com/colinhacks/zod/issues"
+    );
+  }
+
+  protected _transformZodStringPartToRegexString(part: ZodString): string {
+    let maxLength = Infinity,
+      minLength = 0,
+      endsWith = "",
+      startsWith = "";
+
+    for (const ch of part._def.checks) {
+      if (ch.kind === "cuid") {
+        return this._unwrapRegexString(cuidRegex.source);
+      }
+
+      if (ch.kind === "datetime") {
+        return this._unwrapRegexString(datetimeRegex(ch).source);
+      }
+
+      if (ch.kind === "email") {
+        return this._unwrapRegexString(emailRegex.source);
+      }
+
+      if (ch.kind === "regex") {
+        return this._unwrapRegexString(ch.regex.source);
+      }
+
+      if (ch.kind === "url") {
+        // FIXME: we use native URL for validation, so cannot regex test in such cases.
+        throw new Error(
+          "Zod error: ZodTemplateLiteral does not support use of ZodString with url check!"
+        );
+      }
+
+      if (ch.kind === "uuid") {
+        return this._unwrapRegexString(uuidRegex.source);
+      }
+
+      if (ch.kind === "endsWith") {
+        endsWith = ch.value;
+      } else if (ch.kind === "length") {
+        minLength = maxLength = ch.value;
+      } else if (ch.kind === "max") {
+        maxLength = Math.max(0, Math.min(maxLength, ch.value));
+      } else if (ch.kind === "min") {
+        minLength = Math.max(minLength, ch.value);
+      } else if (ch.kind === "startsWith") {
+        startsWith = ch.value;
+      }
+    }
+
+    const constrainedMinLength = Math.max(
+      0,
+      minLength - startsWith.length - endsWith.length
+    );
+    const constrainedMaxLength = Number.isFinite(maxLength)
+      ? Math.max(0, maxLength - startsWith.length - endsWith.length)
+      : Infinity;
+
+    if (
+      constrainedMinLength > constrainedMaxLength ||
+      constrainedMaxLength === 0
+    ) {
+      return `${startsWith}${endsWith}`;
+    }
+
+    const wildcardLength =
+      constrainedMinLength === constrainedMaxLength
+        ? constrainedMinLength === 1
+          ? ""
+          : `{${constrainedMinLength}}`
+        : !Number.isFinite(constrainedMaxLength)
+        ? constrainedMinLength === 0
+          ? "*"
+          : constrainedMinLength === 1
+          ? "+"
+          : `{${constrainedMinLength},}`
+        : `{${constrainedMinLength},${constrainedMinLength}}`;
+
+    return `${startsWith}.${wildcardLength}${endsWith}`;
+  }
+
+  protected _transformZodNumberPartToRegexString(part: ZodNumber): string {
+    let isNegative = true,
+      isPositive = true,
+      isZero = true,
+      isFinite = false,
+      isInt = false,
+      acc = "";
+
+    for (const ch of part._def.checks) {
+      if (ch.kind === "finite") {
+        isFinite = true;
+      } else if (ch.kind === "int") {
+        isInt = true;
+      } else if (ch.kind === "max") {
+        if (ch.value < 0 || (ch.value === 0 && !ch.inclusive)) {
+          isPositive = false;
+
+          if (ch.value === 0) {
+            isZero = false;
+          }
+        }
+      } else if (ch.kind === "min") {
+        if (ch.value > 0 || (ch.value === 0 && !ch.inclusive)) {
+          isNegative = false;
+
+          if (ch.value === 0) {
+            isZero = false;
+          }
+        }
+      } else if (ch.kind === "multipleOf") {
+        if (util.isInteger(ch.value)) {
+          isInt = true;
+        }
+      }
+    }
+
+    if (isNegative) {
+      acc = `${acc}\\-`;
+
+      if (isPositive) {
+        acc = `${acc}?`;
+      }
+    } else if (!isPositive) {
+      return "0+";
+    }
+
+    if (!isFinite) {
+      acc = `${acc}(Infinity|(`;
+    }
+
+    if (!isZero) {
+      if (!isInt) {
+        acc = `${acc}((\\d*[1-9]\\d*(\\.\\d+)?)|(\\d+\\.\\d*[1-9]\\d*))`;
+      } else {
+        acc = `${acc}\\d*[1-9]\\d*`;
+      }
+    } else if (isInt) {
+      acc = `${acc}\\d+`;
+    } else {
+      acc = `${acc}\\d+(\\.\\d+)?`;
+    }
+
+    if (!isFinite) {
+      acc = `${acc}))`;
+    }
+
+    return acc;
   }
 
   protected _unwrapRegexString(regexString: string): string {
     return regexString.replace(/(^\^)|(\$$)/g, "");
   }
 
-  protected _escapeStringForRegex(str: unknown): string {
+  protected _getEscapedStringForRegex(str: unknown): string {
     if (typeof str !== "string") {
       str = `${str}`;
     }
