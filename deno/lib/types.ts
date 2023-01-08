@@ -2597,6 +2597,25 @@ type ZodUnknownKeysDiscriminatedUnionOptions<
     : never;
 };
 
+type ZodCatchAllDiscriminatedUnionOptions<
+  Discriminator extends string,
+  Options extends ZodDiscriminatedUnionOption<Discriminator>[],
+  Catchall extends ZodTypeAny
+> = AsDiscriminatorUnionOptions<
+  {
+    [I in keyof Options]: Options[I] extends ZodObject<
+      infer T,
+      infer UnknownKeys,
+      any,
+      any,
+      any
+    >
+      ? ZodObject<T, UnknownKeys, Catchall>
+      : never;
+  },
+  Discriminator
+>;
+
 type ZodPartialDiscriminatedUnionOptions<
   Discriminator extends string,
   Options extends ZodDiscriminatedUnionOption<Discriminator>[],
@@ -2805,6 +2824,18 @@ export class ZodDiscriminatedUnion<
     >
   > {
     return this._map((option) => option.passthrough());
+  }
+
+  catchall<Index extends ZodTypeAny>(
+    index: Index
+  ): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodCatchAllDiscriminatedUnionOptions<Discriminator, Options, Index>
+  > {
+    return this._map(
+      (option) =>
+        option.catchall(index) as ZodDiscriminatedUnionOption<Discriminator>
+    );
   }
 
   pick<Mask extends { [k in KeyofObjectUnion<Options>]?: true }>(
