@@ -40,6 +40,24 @@ const bigone = z
   .templateLiteral()
   .addInterpolatedPosition(z.literal(BigInt(1)));
 const anyBigint = z.templateLiteral().addInterpolatedPosition(z.bigint());
+const nullableYo = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.nullable(z.literal("yo")));
+const nullableString = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.nullable(z.string()));
+const optionalYeah = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.literal("yeah").optional());
+const optionalString = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().optional());
+const nullishBruh = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.literal("bruh").nullish());
+const nullishString = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().nullish());
 
 const url = z
   .templateLiteral()
@@ -97,7 +115,7 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof anotherNull>, `null`>(true);
   util.assertEqual<z.infer<typeof undefinedd>, `undefined`>(true);
   util.assertEqual<z.infer<typeof anotherUndefined>, `undefined`>(true);
-  util.assertEqual<z.infer<typeof anyString>, `${string}`>(true);
+  util.assertEqual<z.infer<typeof anyString>, string>(true);
   util.assertEqual<z.infer<typeof anyNumber>, `${number}`>(true);
   util.assertEqual<z.infer<typeof anyFiniteNumber>, `${number}`>(true);
   util.assertEqual<z.infer<typeof anyInt>, `${number}`>(true);
@@ -106,6 +124,12 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof bool>, `true` | `false`>(true);
   util.assertEqual<z.infer<typeof bigone>, `${bigint}`>(true);
   util.assertEqual<z.infer<typeof anyBigint>, `${bigint}`>(true);
+  util.assertEqual<z.infer<typeof nullableYo>, `yo` | `null`>(true);
+  util.assertEqual<z.infer<typeof nullableString>, string>(true);
+  util.assertEqual<z.infer<typeof optionalYeah>, `yeah` | ``>(true);
+  util.assertEqual<z.infer<typeof optionalString>, string>(true);
+  util.assertEqual<z.infer<typeof nullishBruh>, `bruh` | `null` | ``>(true);
+  util.assertEqual<z.infer<typeof nullishString>, string>(true);
 
   util.assertEqual<
     z.infer<typeof url>,
@@ -123,7 +147,68 @@ test("template literal type inference", () => {
   >(true);
 });
 
+test("template literal unsupported args", () => {
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.object({}));
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.array(z.object({})));
+  z.templateLiteral().addInterpolatedPosition(
+    // @ts-expect-error
+    z.union([z.object({}), z.string()])
+  );
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.any());
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.never());
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.date());
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.custom<object>((data) => true));
+  z.templateLiteral().addInterpolatedPosition(
+    // @ts-expect-error
+    z.discriminatedUnion("discriminator", [z.object({}), z.object({})])
+  );
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.function());
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.instanceof(class MyClass {}));
+  z.templateLiteral().addInterpolatedPosition(
+    // @ts-expect-error
+    z.intersection(z.object({}), z.object({}))
+  );
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.map(z.string(), z.string()));
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.nullable(z.object({})));
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.optional(z.object({})));
+  z.templateLiteral().addInterpolatedPosition(
+    // @ts-expect-error
+    z.preprocess(() => true, z.boolean())
+  );
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.promise());
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.nan());
+  z.templateLiteral().addInterpolatedPosition(
+    // @ts-expect-error
+    z.pipeline(z.string(), z.string())
+  );
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.record(z.unknown()));
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.set(z.string()));
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.symbol());
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.tuple([z.string()]));
+  // @ts-expect-error
+  z.templateLiteral().addInterpolatedPosition(z.unknown());
+});
+
 test("template literal parsing", () => {
+  expect(() => z.templateLiteral().parse(7)).toThrow();
+
   empty.parse("");
   hello.parse("hello");
   world.parse("world");
@@ -159,30 +244,68 @@ test("template literal parsing", () => {
   anyPositiveNumber.parse("123");
   anyPositiveNumber.parse("1.23");
   anyPositiveNumber.parse("Infinity");
+  bool.parse("true");
+  bool.parse("false");
+  bigone.parse("1");
+  anyBigint.parse("123456");
+  anyBigint.parse("0");
+  anyBigint.parse("-123456");
 
   expect(() => empty.parse("a")).toThrow();
-  expect(() => hello.parse("world"));
-  expect(() => world.parse("hello"));
-  expect(() => one.parse("2"));
-  expect(() => two.parse("1"));
-  expect(() => truee.parse("false"));
-  expect(() => anotherTrue.parse("false"));
-  expect(() => falsee.parse("true"));
-  expect(() => anotherFalse.parse("true"));
-  expect(() => nulll.parse("123"));
-  expect(() => anotherNull.parse("123"));
-  expect(() => undefinedd.parse("123"));
-  expect(() => anotherUndefined.parse("123"));
-  expect(() => anyFiniteNumber.parse("Infinity"));
-  expect(() => anyFiniteNumber.parse("-Infinity"));
-  expect(() => anyInt.parse("1.23"));
-  expect(() => anyInt.parse("-1.23"));
-  expect(() => anyNegativeNumber.parse("0"));
-  expect(() => anyNegativeNumber.parse("1"));
-  expect(() => anyNegativeNumber.parse("Infinity"));
-  expect(() => anyPositiveNumber.parse("0"));
-  expect(() => anyPositiveNumber.parse("-1"));
-  expect(() => anyPositiveNumber.parse("-Infinity"));
+  expect(() => hello.parse("hello!")).toThrow();
+  expect(() => hello.parse("!hello")).toThrow();
+  expect(() => world.parse("world!")).toThrow();
+  expect(() => world.parse("!world")).toThrow();
+  expect(() => one.parse("2")).toThrow();
+  expect(() => one.parse("12")).toThrow();
+  expect(() => one.parse("21")).toThrow();
+  expect(() => two.parse("1")).toThrow();
+  expect(() => two.parse("21")).toThrow();
+  expect(() => two.parse("12")).toThrow();
+  expect(() => truee.parse("false")).toThrow();
+  expect(() => truee.parse("1true")).toThrow();
+  expect(() => truee.parse("true1")).toThrow();
+  expect(() => anotherTrue.parse("false")).toThrow();
+  expect(() => anotherTrue.parse("1true")).toThrow();
+  expect(() => anotherTrue.parse("true1")).toThrow();
+  expect(() => falsee.parse("true")).toThrow();
+  expect(() => falsee.parse("1false")).toThrow();
+  expect(() => falsee.parse("false1")).toThrow();
+  expect(() => anotherFalse.parse("true")).toThrow();
+  expect(() => anotherFalse.parse("1false")).toThrow();
+  expect(() => anotherFalse.parse("false1")).toThrow();
+  expect(() => nulll.parse("123")).toThrow();
+  expect(() => nulll.parse("null1")).toThrow();
+  expect(() => nulll.parse("1null")).toThrow();
+  expect(() => anotherNull.parse("123")).toThrow();
+  expect(() => anotherNull.parse("null1")).toThrow();
+  expect(() => anotherNull.parse("1null")).toThrow();
+  expect(() => undefinedd.parse("123")).toThrow();
+  expect(() => undefinedd.parse("undefined1")).toThrow();
+  expect(() => undefinedd.parse("1undefined")).toThrow();
+  expect(() => anotherUndefined.parse("123")).toThrow();
+  expect(() => anotherUndefined.parse("undefined1")).toThrow();
+  expect(() => anotherUndefined.parse("1undefined")).toThrow();
+  expect(() => anyFiniteNumber.parse("Infinity")).toThrow();
+  expect(() => anyFiniteNumber.parse("-Infinity")).toThrow();
+  expect(() => anyFiniteNumber.parse("123a")).toThrow();
+  expect(() => anyFiniteNumber.parse("a123")).toThrow();
+  expect(() => anyInt.parse("1.23")).toThrow();
+  expect(() => anyInt.parse("-1.23")).toThrow();
+  expect(() => anyInt.parse("d1")).toThrow();
+  expect(() => anyInt.parse("1d")).toThrow();
+  expect(() => anyNegativeNumber.parse("0")).toThrow();
+  expect(() => anyNegativeNumber.parse("1")).toThrow();
+  expect(() => anyNegativeNumber.parse("Infinity")).toThrow();
+  expect(() => anyPositiveNumber.parse("0")).toThrow();
+  expect(() => anyPositiveNumber.parse("-1")).toThrow();
+  expect(() => anyPositiveNumber.parse("-Infinity")).toThrow();
+  expect(() => bool.parse("123")).toThrow();
+  expect(() => bigone.parse("2")).toThrow();
+  expect(() => bigone.parse("c1")).toThrow();
+  expect(() => anyBigint.parse("1.23")).toThrow();
+  expect(() => anyBigint.parse("-1.23")).toThrow();
+  expect(() => anyBigint.parse("c123")).toThrow();
 
   url.parse("https://example.com");
   url.parse("https://speedtest.net");
