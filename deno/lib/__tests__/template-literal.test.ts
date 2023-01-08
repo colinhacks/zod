@@ -149,62 +149,104 @@ test("template literal type inference", () => {
 });
 
 test("template literal unsupported args", () => {
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.object({}));
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.array(z.object({})));
-  z.templateLiteral().addInterpolatedPosition(
+  expect(() =>
     // @ts-expect-error
-    z.union([z.object({}), z.string()])
-  );
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.any());
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.never());
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.date());
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.custom<object>((data) => true));
-  z.templateLiteral().addInterpolatedPosition(
+    z.templateLiteral().addInterpolatedPosition(z.object({}))
+  ).toThrow();
+  expect(() =>
     // @ts-expect-error
-    z.discriminatedUnion("discriminator", [z.object({}), z.object({})])
-  );
+    z.templateLiteral().addInterpolatedPosition(z.array(z.object({})))
+  ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(
+      // @ts-expect-error
+      z.union([z.object({}), z.string()])
+    )
+  ).toThrow();
   // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.function());
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.instanceof(class MyClass {}));
-  z.templateLiteral().addInterpolatedPosition(
+  expect(() => z.templateLiteral().addInterpolatedPosition(z.any())).toThrow();
+  expect(() =>
     // @ts-expect-error
-    z.intersection(z.object({}), z.object({}))
-  );
+    z.templateLiteral().addInterpolatedPosition(z.never())
+  ).toThrow();
   // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.map(z.string(), z.string()));
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.nullable(z.object({})));
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.optional(z.object({})));
-  z.templateLiteral().addInterpolatedPosition(
+  expect(() => z.templateLiteral().addInterpolatedPosition(z.date())).toThrow();
+  expect(() =>
+    z
+      .templateLiteral()
+      // @ts-expect-error
+      .addInterpolatedPosition(z.custom<object>((data) => true))
+  ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(
+      // @ts-expect-error
+      z.discriminatedUnion("discriminator", [z.object({}), z.object({})])
+    )
+  ).toThrow();
+  expect(() =>
     // @ts-expect-error
-    z.preprocess(() => true, z.boolean())
-  );
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.promise());
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.nan());
-  z.templateLiteral().addInterpolatedPosition(
+    z.templateLiteral().addInterpolatedPosition(z.function())
+  ).toThrow();
+  expect(() =>
     // @ts-expect-error
-    z.pipeline(z.string(), z.string())
-  );
+    z.templateLiteral().addInterpolatedPosition(z.instanceof(class MyClass {}))
+  ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(
+      // @ts-expect-error
+      z.intersection(z.object({}), z.object({}))
+    )
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.map(z.string(), z.string()))
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.nullable(z.object({})))
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.optional(z.object({})))
+  ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(
+      // @ts-expect-error
+      z.preprocess(() => true, z.boolean())
+    )
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.promise())
+  ).toThrow();
   // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.record(z.unknown()));
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.set(z.string()));
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.symbol());
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.tuple([z.string()]));
-  // @ts-expect-error
-  z.templateLiteral().addInterpolatedPosition(z.unknown());
+  expect(() => z.templateLiteral().addInterpolatedPosition(z.nan())).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(
+      // @ts-expect-error
+      z.pipeline(z.string(), z.string())
+    )
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.record(z.unknown()))
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.set(z.string()))
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.symbol())
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.tuple([z.string()]))
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.unknown())
+  ).toThrow();
 });
 
 test("template literal parsing", () => {
