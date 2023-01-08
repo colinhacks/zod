@@ -2078,7 +2078,6 @@ export class ZodObject<
   }
 
   strict(message?: errorUtil.ErrMessage): ZodObject<T, "strict", Catchall> {
-    errorUtil.errToObj;
     return new ZodObject({
       ...this._def,
       unknownKeys: "strict",
@@ -2554,37 +2553,127 @@ type KeyofObjectUnion<Options extends ZodDiscriminatedUnionOption<any>[]> =
       : never
   >;
 
-type PickFromObjectUnion<
-  Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<Discriminator>[],
-  K extends string | number | symbol
-> = {
-  [I in keyof Options]: Options[I] extends ZodObject<
-    infer T,
-    infer UnknownKeys,
-    infer Catchall,
-    any,
-    any
-  >
-    ? ZodObject<
-        Pick<T, Extract<keyof T, K> | Discriminator>,
-        UnknownKeys,
-        Catchall
-      >
-    : never;
-};
+type AsDiscriminatorUnionOptions<
+  T,
+  Discriminator extends string
+> = T extends ZodDiscriminatedUnionOption<Discriminator>[] ? T : never;
 
 type ZodPickedDiscriminatedUnionOptions<
   Discriminator extends string,
   Options extends ZodDiscriminatedUnionOption<Discriminator>[],
   K extends string | number | symbol
-> = PickFromObjectUnion<
-  Discriminator,
-  Options,
-  K
-> extends ZodDiscriminatedUnionOption<Discriminator>[]
-  ? PickFromObjectUnion<Discriminator, Options, K>
-  : never;
+> = AsDiscriminatorUnionOptions<
+  {
+    [I in keyof Options]: Options[I] extends ZodObject<
+      infer T,
+      infer UnknownKeys,
+      infer Catchall,
+      any,
+      any
+    >
+      ? ZodObject<
+          Pick<T, Extract<keyof T, K> | Discriminator>,
+          UnknownKeys,
+          Catchall
+        >
+      : never;
+  },
+  Discriminator
+>;
+
+type ZodUnknownKeysDiscriminatedUnionOptions<
+  Discriminator extends string,
+  Options extends ZodDiscriminatedUnionOption<Discriminator>[],
+  UnknownKeys extends UnknownKeysParam
+> = {
+  [I in keyof Options]: Options[I] extends ZodObject<
+    infer T,
+    any,
+    infer Catchall,
+    any,
+    any
+  >
+    ? ZodObject<T, UnknownKeys, Catchall>
+    : never;
+};
+
+type ZodPartialDiscriminatedUnionOptions<
+  Discriminator extends string,
+  Options extends ZodDiscriminatedUnionOption<Discriminator>[],
+  Keys extends string | number | symbol
+> = AsDiscriminatorUnionOptions<
+  {
+    [I in keyof Options]: Options[I] extends ZodObject<
+      infer T,
+      infer UnknownKeys,
+      infer Catchall,
+      any,
+      any
+    >
+      ? ZodObject<
+          objectUtil.noNever<{
+            [k in keyof T]: k extends Exclude<Keys, Discriminator>
+              ? ZodOptional<T[k]>
+              : T[k];
+          }>,
+          UnknownKeys,
+          Catchall
+        >
+      : never;
+  },
+  Discriminator
+>;
+
+type ZodRequiredDiscriminatedUnionOptions<
+  Discriminator extends string,
+  Options extends ZodDiscriminatedUnionOption<Discriminator>[],
+  Keys extends string | number | symbol
+> = AsDiscriminatorUnionOptions<
+  {
+    [I in keyof Options]: Options[I] extends ZodObject<
+      infer T,
+      infer UnknownKeys,
+      infer Catchall,
+      any,
+      any
+    >
+      ? ZodObject<
+          objectUtil.noNever<{
+            [k in keyof T]: k extends Keys ? deoptional<T[k]> : T[k];
+          }>,
+          UnknownKeys,
+          Catchall
+        >
+      : never;
+  },
+  Discriminator
+>;
+
+type ZodDeepPartialDiscriminatedUnionOptions<
+  Discriminator extends string,
+  Options extends ZodDiscriminatedUnionOption<Discriminator>[]
+> = AsDiscriminatorUnionOptions<
+  {
+    [I in keyof Options]: Options[I] extends ZodObject<
+      infer Shape,
+      infer UnknownKeys,
+      infer Catchall,
+      any,
+      any
+    >
+      ? ZodObject<
+          {
+            [k in keyof Shape]: k extends Discriminator
+              ? Shape[k]
+              : partialUtil.DeepPartial<Shape[k]>;
+          },
+          UnknownKeys,
+          Catchall
+        >
+      : never;
+  },
+  Discriminator
+>;
 
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
   ZodObject<
@@ -2665,17 +2754,23 @@ export class ZodDiscriminatedUnion<
     return this._def.optionsMap;
   }
 
-  pick<Mask extends { [k in KeyofObjectUnion<Options>]?: true }>(
-    mask: Mask
-  ): ZodDiscriminatedUnion<
-    Discriminator,
-    ZodPickedDiscriminatedUnionOptions<Discriminator, Options, keyof Mask>
-  > {
-    const maskWithDiscriminator = { ...mask, [this.discriminator]: true };
+  private get _fullMask(): Record<KeyofObjectUnion<Options>, true> {
+    return this.options
+      .flatMap((option) => util.objectKeys(option.shape))
+      .reduce(
+        (prev, next) => ({ ...prev, [next]: true }),
+        {} as Record<KeyofObjectUnion<Options>, true>
+      );
+  }
 
-    const options = this.options.map((option) =>
-      option.pick(maskWithDiscriminator)
-    ) as ZodPickedDiscriminatedUnionOptions<Discriminator, Options, keyof Mask>;
+  private _map<
+    MappedOptions extends ZodDiscriminatedUnionOption<Discriminator>[]
+  >(
+    mapper: (
+      option: ZodDiscriminatedUnionOption<Discriminator>
+    ) => ZodDiscriminatedUnionOption<Discriminator>
+  ): ZodDiscriminatedUnion<Discriminator, MappedOptions> {
+    const options = this.options.map(mapper) as MappedOptions;
     const optionsMap = toOptionsMap(this.discriminator, options);
 
     return new ZodDiscriminatedUnion({
@@ -2685,53 +2780,140 @@ export class ZodDiscriminatedUnion<
     });
   }
 
-  // omit<Mask extends { [k in keyof Exclude<KeyofObjectUnion<Options>, Discriminator>]?: true }>(
-  //   mask: Mask
-  // ): ZodDiscriminatedUnion<Discriminator, PickFromObjectUnion<Discriminator, Options, Exclude<KeyofObjectUnion<Options>, keyof Mask>>> {
-  //   const { [this.discriminator]: disc, ...maskWithoutDiscriminator } = mask
-  //   throw new Error('not implemented')
-  // }
+  strict(
+    message?: errorUtil.ErrMessage
+  ): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodUnknownKeysDiscriminatedUnionOptions<Discriminator, Options, "strict">
+  > {
+    return this._map((option) => option.strict(message));
+  }
 
-  // deepPartial(): partialUtil.DeepPartial<this> {
-  //   throw new Error('not implemented')
-  //   //    return deepPartialify(this) as any;
-  // }
+  strip(): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodUnknownKeysDiscriminatedUnionOptions<Discriminator, Options, "strip">
+  > {
+    return this._map((option) => option.strip());
+  }
 
-  // partial(): ZodObject<
-  //   { [k in keyof T]: ZodOptional<T[k]> },
-  //   UnknownKeys,
-  //   Catchall
-  // >;
-  // partial<Mask extends { [k in keyof T]?: true }>(
-  //   mask: Mask
-  // ): ZodObject<
-  //   objectUtil.noNever<{
-  //     [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
-  //   }>,
-  //   UnknownKeys,
-  //   Catchall
-  // >;
-  // partial(mask?: any) {
-  //   throw new Error('not implemented')
-  // }
+  passthrough(): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodUnknownKeysDiscriminatedUnionOptions<
+      Discriminator,
+      Options,
+      "passthrough"
+    >
+  > {
+    return this._map((option) => option.passthrough());
+  }
 
-  // required(): ZodObject<
-  //   { [k in keyof T]: deoptional<T[k]> },
-  //   UnknownKeys,
-  //   Catchall
-  // >;
-  // required<Mask extends { [k in keyof T]?: true }>(
-  //   mask: Mask
-  // ): ZodObject<
-  //   objectUtil.noNever<{
-  //     [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];
-  //   }>,
-  //   UnknownKeys,
-  //   Catchall
-  // >;
-  // required(mask?: any) {
-  //   throw new Error('not implemented')
-  // }
+  pick<Mask extends { [k in KeyofObjectUnion<Options>]?: true }>(
+    mask: Mask
+  ): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodPickedDiscriminatedUnionOptions<Discriminator, Options, keyof Mask>
+  > {
+    const maskWithDiscriminator = { ...mask, [this.discriminator]: true };
+    return this._map(
+      (option) =>
+        option.pick(
+          maskWithDiscriminator
+        ) as ZodDiscriminatedUnionOption<Discriminator>
+    );
+  }
+
+  omit<
+    Mask extends {
+      [k in keyof Exclude<KeyofObjectUnion<Options>, Discriminator>]?: true;
+    }
+  >(
+    mask: Mask
+  ): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodPickedDiscriminatedUnionOptions<
+      Discriminator,
+      Options,
+      Exclude<KeyofObjectUnion<Options>, keyof Mask>
+    >
+  > {
+    const { [this.discriminator]: discriminator, ...maskWithoutDiscriminator } =
+      mask;
+    return this._map(
+      (option) =>
+        option.omit(
+          maskWithoutDiscriminator as any
+        ) as unknown as ZodDiscriminatedUnionOption<Discriminator>
+    );
+  }
+
+  deepPartial(): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodDeepPartialDiscriminatedUnionOptions<Discriminator, Options>
+  > {
+    return this._map(
+      (option) =>
+        option.deepPartial().required({
+          [this.discriminator]: true,
+        } as any) as unknown as ZodDiscriminatedUnionOption<Discriminator>
+    );
+  }
+
+  partial(): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodPartialDiscriminatedUnionOptions<
+      Discriminator,
+      Options,
+      KeyofObjectUnion<Options>
+    >
+  >;
+  partial<
+    Mask extends {
+      [k in keyof Exclude<KeyofObjectUnion<Options>, Discriminator>]?: true;
+    }
+  >(
+    mask: Mask
+  ): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodPartialDiscriminatedUnionOptions<Discriminator, Options, keyof Mask>
+  >;
+  partial(mask?: any) {
+    const unsafeMask = mask || this._fullMask;
+    const { [this.discriminator]: discriminator, ...safeMask } = unsafeMask;
+
+    return this._map(
+      (option) =>
+        option.partial(
+          safeMask
+        ) as unknown as ZodDiscriminatedUnionOption<Discriminator>
+    );
+  }
+
+  required(): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodRequiredDiscriminatedUnionOptions<
+      Discriminator,
+      Options,
+      KeyofObjectUnion<Options>
+    >
+  >;
+  required<
+    Mask extends {
+      [k in keyof Exclude<KeyofObjectUnion<Options>, Discriminator>]?: true;
+    }
+  >(
+    mask: Mask
+  ): ZodDiscriminatedUnion<
+    Discriminator,
+    ZodRequiredDiscriminatedUnionOptions<Discriminator, Options, keyof Mask>
+  >;
+  required(mask?: any) {
+    return this._map(
+      (option) =>
+        option.required(
+          mask
+        ) as unknown as ZodDiscriminatedUnionOption<Discriminator>
+    );
+  }
 
   /**
    * The constructor of the discriminated union schema. Its behaviour is very similar to that of the normal z.union() constructor.
