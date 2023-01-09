@@ -311,7 +311,7 @@ test("pick including discriminator", () => {
   expect(pickSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b" });
 });
 
-test("pick without discriminator", () => {
+test("pick without discriminator adds discriminator", () => {
   const schema = z.discriminatedUnion('type', [
     z.object({ type: z.literal("a"), foo: z.string() }).strip(),
     z.object({ type: z.literal("b"), baz: z.string() }).strip(),
@@ -321,4 +321,46 @@ test("pick without discriminator", () => {
 
   expect(pickSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a", foo: "bar" });
   expect(pickSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b" });
+});
+
+test("omit without discriminator", () => {
+  const schema = z.discriminatedUnion('type', [
+    z.object({ type: z.literal("a"), foo: z.string() }).strip(),
+    z.object({ type: z.literal("b"), baz: z.string() }).strip(),
+  ])
+
+  const pickSchema = schema.omit({ foo: true });
+
+  expect(pickSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a" });
+  expect(pickSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b", baz: "bar" });
+});
+
+test("try to omit discriminator", () => {
+  const schema = z.discriminatedUnion('type', [
+    z.object({ type: z.literal("a"), foo: z.string() }).strip(),
+    z.object({ type: z.literal("b"), baz: z.string() }).strip(),
+  ])
+
+  const pickSchema = schema.omit({ type: true } as any);
+
+  expect(pickSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a", foo: "bar" });
+  expect(pickSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b", baz: "bar" });
+});
+
+test('deepPartial, keeps discriminator required', () => {
+  const schema = z.discriminatedUnion('type', [
+    z.object({ type: z.literal("a"), foo: z.string() }).strip(),
+    z.object({ type: z.literal("b"), baz: z.string() }).strip(),
+  ]);
+
+  const deepPartialSchema = schema.deepPartial();
+
+  expect(deepPartialSchema.parse({ type: "a" })).toEqual({ type: "a" });
+  expect(deepPartialSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b", baz: "bar" });
+  expect(deepPartialSchema.safeParse({})).toEqual({
+    success: false,
+    error: expect.objectContaining({
+      issues: [expect.objectContaining({ code: 'invalid_union_discriminator', options: ["a", "b"] })]
+    }),
+  });
 });

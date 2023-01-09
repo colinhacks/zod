@@ -2852,7 +2852,7 @@ export class ZodDiscriminatedUnion<
 
   omit<
     Mask extends {
-      [k in keyof Exclude<KeyofObjectUnion<Options>, Discriminator>]?: true;
+      [k in Exclude<KeyofObjectUnion<Options>, Discriminator>]?: true;
     }
   >(
     mask: Mask
