@@ -2498,8 +2498,7 @@ const getDiscriminator = <T extends ZodTypeAny>(
   } else if (type instanceof ZodEnum) {
     return type.options;
   } else if (type instanceof ZodNativeEnum) {
-    // eslint-disable-next-line ban/ban
-    return Object.keys(type.enum as any);
+    return util.objectKeys(type.enum as any);
   } else if (type instanceof ZodDefault) {
     return getDiscriminator(type._def.innerType);
   } else if (type instanceof ZodUndefined) {
@@ -2546,6 +2545,23 @@ const toOptionsMap = <
   return optionsMap;
 };
 
+export type ZodDiscriminatedUnionOption<Discriminator extends string> =
+  ZodObject<
+    { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
+    UnknownKeysParam,
+    ZodTypeAny
+  >;
+
+export interface ZodDiscriminatedUnionDef<
+  Discriminator extends string,
+  Options extends ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
+> extends ZodTypeDef {
+  discriminator: Discriminator;
+  options: Options;
+  optionsMap: Map<Primitive, ZodDiscriminatedUnionOption<Discriminator>>;
+  typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion;
+}
+
 type KeyofObjectUnion<Options extends ZodDiscriminatedUnionOption<any>[]> =
   objectUtil.keys<
     Options[number] extends ZodObject<infer Shape, any, any, any, any>
@@ -2565,14 +2581,14 @@ type ZodPickedDiscriminatedUnionOptions<
 > = AsDiscriminatorUnionOptions<
   {
     [I in keyof Options]: Options[I] extends ZodObject<
-      infer T,
+      infer Shape,
       infer UnknownKeys,
       infer Catchall,
       any,
       any
     >
       ? ZodObject<
-          Pick<T, Extract<keyof T, K> | Discriminator>,
+          Pick<Shape, Extract<keyof Shape, K> | Discriminator>,
           UnknownKeys,
           Catchall
         >
@@ -2587,13 +2603,13 @@ type ZodUnknownKeysDiscriminatedUnionOptions<
   UnknownKeys extends UnknownKeysParam
 > = {
   [I in keyof Options]: Options[I] extends ZodObject<
-    infer T,
+    infer Shape,
     any,
     infer Catchall,
     any,
     any
   >
-    ? ZodObject<T, UnknownKeys, Catchall>
+    ? ZodObject<Shape, UnknownKeys, Catchall>
     : never;
 };
 
@@ -2604,13 +2620,13 @@ type ZodCatchAllDiscriminatedUnionOptions<
 > = AsDiscriminatorUnionOptions<
   {
     [I in keyof Options]: Options[I] extends ZodObject<
-      infer T,
+      infer Shape,
       infer UnknownKeys,
       any,
       any,
       any
     >
-      ? ZodObject<T, UnknownKeys, Catchall>
+      ? ZodObject<Shape, UnknownKeys, Catchall>
       : never;
   },
   Discriminator
@@ -2623,7 +2639,7 @@ type ZodPartialDiscriminatedUnionOptions<
 > = AsDiscriminatorUnionOptions<
   {
     [I in keyof Options]: Options[I] extends ZodObject<
-      infer T,
+      infer Shape,
       infer UnknownKeys,
       infer Catchall,
       any,
@@ -2631,9 +2647,9 @@ type ZodPartialDiscriminatedUnionOptions<
     >
       ? ZodObject<
           objectUtil.noNever<{
-            [k in keyof T]: k extends Exclude<Keys, Discriminator>
-              ? ZodOptional<T[k]>
-              : T[k];
+            [k in keyof Shape]: k extends Exclude<Keys, Discriminator>
+              ? ZodOptional<Shape[k]>
+              : Shape[k];
           }>,
           UnknownKeys,
           Catchall
@@ -2650,7 +2666,7 @@ type ZodRequiredDiscriminatedUnionOptions<
 > = AsDiscriminatorUnionOptions<
   {
     [I in keyof Options]: Options[I] extends ZodObject<
-      infer T,
+      infer Shape,
       infer UnknownKeys,
       infer Catchall,
       any,
@@ -2658,7 +2674,9 @@ type ZodRequiredDiscriminatedUnionOptions<
     >
       ? ZodObject<
           objectUtil.noNever<{
-            [k in keyof T]: k extends Keys ? deoptional<T[k]> : T[k];
+            [k in keyof Shape]: k extends Keys
+              ? deoptional<Shape[k]>
+              : Shape[k];
           }>,
           UnknownKeys,
           Catchall
@@ -2693,23 +2711,6 @@ type ZodDeepPartialDiscriminatedUnionOptions<
   },
   Discriminator
 >;
-
-export type ZodDiscriminatedUnionOption<Discriminator extends string> =
-  ZodObject<
-    { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
-    UnknownKeysParam,
-    ZodTypeAny
-  >;
-
-export interface ZodDiscriminatedUnionDef<
-  Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
-> extends ZodTypeDef {
-  discriminator: Discriminator;
-  options: Options;
-  optionsMap: Map<Primitive, ZodDiscriminatedUnionOption<Discriminator>>;
-  typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion;
-}
 
 export class ZodDiscriminatedUnion<
   Discriminator extends string,
@@ -2883,9 +2884,11 @@ export class ZodDiscriminatedUnion<
   > {
     return this._map(
       (option) =>
-        option.deepPartial().required({
-          [this.discriminator]: true,
-        } as any) as unknown as ZodDiscriminatedUnionOption<Discriminator>
+        option
+          .deepPartial()
+          .required({
+            [this.discriminator]: true,
+          } as any) as unknown as ZodDiscriminatedUnionOption<Discriminator>
     );
   }
 
@@ -2965,11 +2968,7 @@ export class ZodDiscriminatedUnion<
     options: Types,
     params?: RawCreateParams
   ): ZodDiscriminatedUnion<Discriminator, Types> {
-    return new ZodDiscriminatedUnion<
-      Discriminator,
-      // DiscriminatorValue,
-      Types
-    >({
+    return new ZodDiscriminatedUnion<Discriminator, Types>({
       typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion,
       discriminator,
       options,

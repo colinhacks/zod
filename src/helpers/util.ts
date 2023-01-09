@@ -45,7 +45,7 @@ export namespace util {
 
   export const objectKeys: ObjectConstructor["keys"] =
     typeof Object.keys === "function" // eslint-disable-line ban/ban
-      ? (obj: any) => Object.keys(obj) // eslint-disable-line ban/ban
+      ? Object.keys // eslint-disable-line ban/ban
       : (object: any) => {
           const keys = [];
           for (const key in object) {
