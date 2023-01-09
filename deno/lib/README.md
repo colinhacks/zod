@@ -786,7 +786,7 @@ FishEnum.enum;
 You can also retrieve the list of options as a tuple with the `.options` property:
 
 ```ts
-FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
+FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 ```
 
 ## Native enums
