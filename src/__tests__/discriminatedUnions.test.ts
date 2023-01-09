@@ -298,16 +298,26 @@ test('catchall', () => {
   });
 });
 
+test("pick including discriminator", () => {
+  const schema = z.discriminatedUnion('type', [
+    z.object({ type: z.literal("a"), foo: z.string() }).strip(),
+    z.object({ type: z.literal("b"), baz: z.string() }).strip(),
+  ])
 
-test("valid - pick", () => {
-  const obj1 = z.object({ a: z.number(), b: z.string(), c: z.literal(1) });
-  const obj2 = z.object({ b: z.string(), c: z.literal(2), d: z.string() });
-  const obj3 = z.object({ a: z.number(), b: z.string(), c: z.literal(3) }).strict();
+  const pickSchema = schema.pick({ type: true, foo: true });
 
-  const unionSchema = z.discriminatedUnion('c', [obj1, obj2, obj3]);
-  const pickFromSchema = unionSchema.pick({ d: true });
+  expect(pickSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a", foo: "bar" });
+  expect(pickSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b" });
+});
 
-  expect(pickFromSchema.parse({ c: 1, b: 'bla', d: 'hi' })).toEqual({ c: 1 });
-  expect(pickFromSchema.parse({ c: 2, b: 'bla', d: 'hi' })).toEqual({ c: 2, d: 'hi' })
-  expect(pickFromSchema.parse({ c: 3 })).toEqual({ c: 3 });
-})
+test("pick without discriminator", () => {
+  const schema = z.discriminatedUnion('type', [
+    z.object({ type: z.literal("a"), foo: z.string() }).strip(),
+    z.object({ type: z.literal("b"), baz: z.string() }).strip(),
+  ])
+
+  const pickSchema = schema.pick({ foo: true });
+
+  expect(pickSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a", foo: "bar" });
+  expect(pickSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b" });
+});
