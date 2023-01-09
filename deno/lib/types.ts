@@ -2613,7 +2613,7 @@ type ZodUnknownKeysDiscriminatedUnionOptions<
     : never;
 };
 
-type ZodCatchAllDiscriminatedUnionOptions<
+type ZodCatchallDiscriminatedUnionOptions<
   Discriminator extends string,
   Options extends ZodDiscriminatedUnionOption<Discriminator>[],
   Catchall extends ZodTypeAny
@@ -2831,7 +2831,7 @@ export class ZodDiscriminatedUnion<
     index: Index
   ): ZodDiscriminatedUnion<
     Discriminator,
-    ZodCatchAllDiscriminatedUnionOptions<Discriminator, Options, Index>
+    ZodCatchallDiscriminatedUnionOptions<Discriminator, Options, Index>
   > {
     return this._map(
       (option) =>
@@ -2884,11 +2884,9 @@ export class ZodDiscriminatedUnion<
   > {
     return this._map(
       (option) =>
-        option
-          .deepPartial()
-          .required({
-            [this.discriminator]: true,
-          } as any) as unknown as ZodDiscriminatedUnionOption<Discriminator>
+        option.deepPartial().required({
+          [this.discriminator]: true,
+        } as any) as unknown as ZodDiscriminatedUnionOption<Discriminator>
     );
   }
 

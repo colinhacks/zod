@@ -217,6 +217,89 @@ test("valid - literals with .default or .preprocess", () => {
   });
 });
 
+test('strict', () => {
+  const schema = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a"), foo: z.string() }).passthrough(),
+    z.object({ type: z.literal("b"), baz: z.string() }).passthrough(),
+  ]);
+
+  const input = { type: "a", foo: "bar", test: 123 };
+
+  const strictSchema = schema.strict();
+  const output = strictSchema.safeParse(input);
+
+  expect(output).toEqual({
+    success: false,
+    error: expect.objectContaining({ issues: [expect.objectContaining({ code: 'unrecognized_keys' })] })
+  });
+
+  expect(strictSchema.options).toHaveLength(2);
+  strictSchema.options.forEach(option => {
+    expect(option._def.unknownKeys).toEqual('strict');
+  })
+});
+
+test('strip', () => {
+  const schema = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a"), foo: z.string() }).strict(),
+    z.object({ type: z.literal("b"), baz: z.string() }).strict(),
+  ]);
+
+  const input = { type: "a", foo: "bar", test: 123 };
+
+  const stripSchema = schema.strip();
+  const output = stripSchema.parse(input);
+
+  expect(output).toEqual({ type: "a", foo: "bar" });
+
+  expect(stripSchema.options).toHaveLength(2);
+  stripSchema.options.forEach(option => {
+    expect(option._def.unknownKeys).toEqual('strip');
+  })
+});
+
+test('passthrough', () => {
+  const schema = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a"), foo: z.string() }).strict(),
+    z.object({ type: z.literal("b"), baz: z.string() }).strict(),
+  ]);
+
+  const input = { type: "a", foo: "bar", test: 123 };
+
+  const passthroughSchema = schema.passthrough();
+  const output = passthroughSchema.parse(input);
+
+  expect(output).toEqual({ type: "a", foo: "bar", test: 123 });
+
+  expect(passthroughSchema.options).toHaveLength(2);
+  passthroughSchema.options.forEach(option => {
+    expect(option._def.unknownKeys).toEqual('passthrough');
+  })
+});
+
+test('catchall', () => {
+  const schema = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a"), foo: z.string() }).strict(),
+    z.object({ type: z.literal("b"), baz: z.string() }).strict(),
+  ]);
+
+  const catchallSchema = schema.catchall(z.number());
+
+  const validInput = { type: "a", foo: "bar", test: 123 };
+  const invalidInput = { type: "a", foo: "bar", test: 'this is a string' };
+
+  expect(catchallSchema.parse(validInput)).toEqual({ type: "a", foo: "bar", test: 123 });
+  expect(catchallSchema.safeParse(invalidInput)).toEqual({
+    success: false,
+    error: expect.objectContaining({
+      issues: [expect.objectContaining({
+        code: 'invalid_type', expected: 'number', received: 'string', path: ['test']
+      })]
+    })
+  });
+});
+
+
 test("valid - pick", () => {
   const obj1 = z.object({ a: z.number(), b: z.string(), c: z.literal(1) });
   const obj2 = z.object({ b: z.string(), c: z.literal(2), d: z.string() });
