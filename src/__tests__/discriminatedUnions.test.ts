@@ -328,10 +328,10 @@ test("omit without discriminator", () => {
     z.object({ type: z.literal("b"), baz: z.string() }).strip(),
   ])
 
-  const pickSchema = schema.omit({ foo: true });
+  const omitSchema = schema.omit({ foo: true });
 
-  expect(pickSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a" });
-  expect(pickSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b", baz: "bar" });
+  expect(omitSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a" });
+  expect(omitSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b", baz: "bar" });
 });
 
 test("try to omit discriminator", () => {
@@ -340,10 +340,10 @@ test("try to omit discriminator", () => {
     z.object({ type: z.literal("b"), baz: z.string() }).strip(),
   ])
 
-  const pickSchema = schema.omit({ type: true } as any);
+  const omitSchema = schema.omit({ type: true } as any);
 
-  expect(pickSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a", foo: "bar" });
-  expect(pickSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b", baz: "bar" });
+  expect(omitSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a", foo: "bar" });
+  expect(omitSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b", baz: "bar" });
 });
 
 test('deepPartial, keeps discriminator required', () => {
@@ -362,4 +362,7 @@ test('deepPartial, keeps discriminator required', () => {
       issues: [expect.objectContaining({ code: 'invalid_union_discriminator', options: ["a", "b"] })]
     }),
   });
+
+  // TODO: type is not correct
+  type x = z.infer<typeof deepPartialSchema>
 });
