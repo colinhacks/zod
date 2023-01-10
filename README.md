@@ -729,14 +729,12 @@ z.date().min(new Date("1900-01-01"), { message: "Too old" });
 z.date().max(new Date(), { message: "Too young!" });
 ```
 
-**Supporting date strings**
+**Coercion to Date**
 
-To write a schema that accepts either a `Date` or a `date string`, use [`.transform`](#transform) and `.pipe`.
+Since [zod 3.20](https://github.com/colinhacks/zod/releases/tag/v3.20), use [`z.coerce.date()`](#coercion-for-primitives) to pass the input through `new Date(input)`.
 
 ```ts
-const dateSchema = z.date().or( z.string() )
-    .transform( input => new Date( input ) )
-    .pipe( z.date() )
+const dateSchema = z.coerce.date()
 type DateSchema = z.infer<typeof dateSchema>
 // type DateSchema = Date
 
@@ -750,6 +748,8 @@ console.log( dateSchema.safeParse( new Date( '1/10/23' ) ).success ) // true
 console.log( dateSchema.safeParse( '2023-13-10' ).success ) // false
 console.log( dateSchema.safeParse( '0000-00-00' ).success ) // false
 ```
+
+For older zod versions, use [`z.preprocess`](#preprocess) like [described in this thread](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276).
 
 ## Zod enums
 
