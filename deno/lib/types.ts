@@ -2900,7 +2900,7 @@ export class ZodDiscriminatedUnion<
   >;
   partial<
     Mask extends {
-      [k in keyof Exclude<KeyofObjectUnion<Options>, Discriminator>]?: true;
+      [k in Exclude<KeyofObjectUnion<Options>, Discriminator>]?: true;
     }
   >(
     mask: Mask
@@ -2930,7 +2930,7 @@ export class ZodDiscriminatedUnion<
   >;
   required<
     Mask extends {
-      [k in keyof Exclude<KeyofObjectUnion<Options>, Discriminator>]?: true;
+      [k in KeyofObjectUnion<Options>]?: true;
     }
   >(
     mask: Mask
