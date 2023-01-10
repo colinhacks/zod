@@ -2142,7 +2142,7 @@ z.promise(z.string());
 
 ### `.or`
 
-A convenience method for [union types](#union).
+A convenience method for [union types](#unions).
 
 ```ts
 const stringOrNumber = z.string().or(z.number()); // string | number
