@@ -1284,6 +1284,21 @@ For convenience, you can also use the [`.or` method](#or):
 const stringOrNumber = z.string().or(z.number());
 ```
 
+**Optional string validation:**
+
+To validate an optional form input, you can union the nullish [primitives](#primitives) and empty string [literal](#literals) with the desired string validation.
+
+This example validates an input that is optional but need to contain a [valid URL](#strings):
+
+```ts
+z.union([
+  z.undefined(),
+  z.null(),
+  z.literal(""),
+  z.string().url(),
+]),
+```
+
 ## Discriminated unions
 
 A discriminated union is a union of object schemas that all share a particular key.
