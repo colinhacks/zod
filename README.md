@@ -1335,9 +1335,32 @@ const myUnion = z.discriminatedUnion("status", [
 myUnion.parse({ status: "success", data: "yippie ki yay" });
 ```
 
-### `.strict`, `.strip`, `.passthrough`, `.catchall`, `.pick`, `.omit`, `.deepPartial`, `.partial`, `.required`
+### `.strict/.strip/.passthrough/.catchall/.pick/.omit/.deepPartial/.partial/.required`
 
 These methods apply schema alterations to all the "options", similar to the methods on the [Objects](#objects) schema, but they do not effect the _discriminator_.
+
+```ts
+const myUnion = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("success"), data: z.string() }),
+  z.object({ status: z.literal("failed"), error: z.instanceof(Error) }),
+]);
+
+const strictSchema = myUnion.strict();
+const stripSchema = myUnion.strip();
+const pasthroughSchema = myUnion.pasthrough();
+const catchallSchema = myUnion.catchall(z.number());
+
+const pickSchema = myUnion.pick({ data: true }); // discriminator is allways picked
+const omitSchema = myUnion.omit({ error: true }); // discriminator cannot be omitted
+
+const deepPartialSchema = myUnion.deepPartial(); // discriminator is still required
+
+const partialSchema = myUnion.partial();  // discriminator is still required
+const partialWithMaskSchema = myUnion.partial({ error: true }); // discriminator cannot be made optional
+
+const requiredSchema = myUnion.required();
+const requiredWithMaskSchema = myUnion.required({ data: true });
+```
 
 ## Records
 
@@ -2100,8 +2123,10 @@ Conceptually, this is how Zod processes default values:
 Use `.describe()` to add a `description` property to the resulting schema.
 
 ```ts
-const documentedString = z.string().describe("A useful bit of text, if you know what to do with it.");
-documentedString.description // A useful bit of text…
+const documentedString = z
+  .string()
+  .describe("A useful bit of text, if you know what to do with it.");
+documentedString.description; // A useful bit of text…
 ```
 
 This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
