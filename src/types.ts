@@ -2698,7 +2698,7 @@ type ZodDeepPartialDiscriminatedUnionOptions<
           {
             [k in keyof Shape]: k extends Discriminator
               ? Shape[k]
-              : partialUtil.DeepPartial<Shape[k]>;
+              : ZodOptional<partialUtil.DeepPartial<Shape[k]>>;
           },
           UnknownKeys,
           Catchall

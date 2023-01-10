@@ -223,9 +223,10 @@ test('strict', () => {
     z.object({ type: z.literal("b"), baz: z.string() }).passthrough(),
   ]);
 
-  const input = { type: "a", foo: "bar", test: 123 };
-
   const strictSchema = schema.strict();
+  type SchemaType = z.infer<typeof strictSchema>;
+
+  const input = { type: "a", foo: "bar", test: 123 } as SchemaType;
   const output = strictSchema.safeParse(input);
 
   expect(output).toEqual({
@@ -245,9 +246,10 @@ test('strip', () => {
     z.object({ type: z.literal("b"), baz: z.string() }).strict(),
   ]);
 
-  const input = { type: "a", foo: "bar", test: 123 };
-
   const stripSchema = schema.strip();
+  type SchemaType = z.infer<typeof stripSchema>;
+
+  const input = { type: "a", foo: "bar", test: 123 } as SchemaType;
   const output = stripSchema.parse(input);
 
   expect(output).toEqual({ type: "a", foo: "bar" });
@@ -264,9 +266,10 @@ test('passthrough', () => {
     z.object({ type: z.literal("b"), baz: z.string() }).strict(),
   ]);
 
-  const input = { type: "a", foo: "bar", test: 123 };
-
   const passthroughSchema = schema.passthrough();
+  type SchemaType = z.infer<typeof passthroughSchema>;
+
+  const input = { type: "a", foo: "bar", test: 123 } as SchemaType;
   const output = passthroughSchema.parse(input);
 
   expect(output).toEqual({ type: "a", foo: "bar", test: 123 });
@@ -306,9 +309,13 @@ test("pick including discriminator", () => {
   ])
 
   const pickSchema = schema.pick({ type: true, foo: true });
+  type SchemaType = z.infer<typeof pickSchema>;
 
-  expect(pickSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a", foo: "bar" });
-  expect(pickSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b" });
+  const inputA: SchemaType = { type: "a", foo: "bar" };
+  const inputB = { type: "b", baz: "bar" } as SchemaType;
+
+  expect(pickSchema.parse(inputA)).toEqual({ type: "a", foo: "bar" });
+  expect(pickSchema.parse(inputB)).toEqual({ type: "b" });
 });
 
 test("pick without discriminator adds discriminator", () => {
@@ -318,9 +325,13 @@ test("pick without discriminator adds discriminator", () => {
   ])
 
   const pickSchema = schema.pick({ foo: true });
+  type SchemaType = z.infer<typeof pickSchema>;
 
-  expect(pickSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a", foo: "bar" });
-  expect(pickSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b" });
+  const inputA: SchemaType = { type: "a", foo: "bar" };
+  const inputB = { type: "b", baz: "bar" } as SchemaType;
+
+  expect(pickSchema.parse(inputA)).toEqual({ type: "a", foo: "bar" });
+  expect(pickSchema.parse(inputB)).toEqual({ type: "b" });
 });
 
 test("omit without discriminator", () => {
@@ -330,9 +341,13 @@ test("omit without discriminator", () => {
   ])
 
   const omitSchema = schema.omit({ foo: true });
+  type SchemaType = z.infer<typeof omitSchema>;
 
-  expect(omitSchema.parse({ type: "a", foo: "bar" })).toEqual({ type: "a" });
-  expect(omitSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b", baz: "bar" });
+  const inputA = { type: "a", foo: "bar" } as SchemaType;
+  const inputB: SchemaType = { type: "b", baz: "bar" };
+
+  expect(omitSchema.parse(inputA)).toEqual({ type: "a" });
+  expect(omitSchema.parse(inputB)).toEqual({ type: "b", baz: "bar" });
 });
 
 test("try to omit discriminator", () => {
@@ -349,14 +364,22 @@ test("try to omit discriminator", () => {
 
 test('deepPartial, keeps discriminator required', () => {
   const schema = z.discriminatedUnion('type', [
-    z.object({ type: z.literal("a"), foo: z.string() }).strip(),
+    z.object({ type: z.literal("a"), foo: z.object({ bar: z.string(), baz: z.number() }) }).strip(),
     z.object({ type: z.literal("b"), baz: z.string() }).strip(),
   ]);
 
   const deepPartialSchema = schema.deepPartial();
+  type SchemaType = z.infer<typeof deepPartialSchema>
 
-  expect(deepPartialSchema.parse({ type: "a" })).toEqual({ type: "a" });
+  const fullA: SchemaType = { type: "a", foo: { bar: 'test', baz: 123 } };
+  const fullApartialFoo: SchemaType = { type: "a", foo: { bar: 'test' } };
+  const partialA: SchemaType = { type: "a" };
+
+  expect(deepPartialSchema.parse(fullA)).toEqual({ type: "a", foo: { bar: 'test', baz: 123 } });
+  expect(deepPartialSchema.parse(fullApartialFoo)).toEqual({ type: "a", foo: { bar: 'test' } });
+  expect(deepPartialSchema.parse(partialA)).toEqual({ type: "a" });
   expect(deepPartialSchema.parse({ type: "b", baz: "bar" })).toEqual({ type: "b", baz: "bar" });
+
   expect(deepPartialSchema.safeParse({})).toEqual({
     success: false,
     error: expect.objectContaining({
@@ -364,6 +387,4 @@ test('deepPartial, keeps discriminator required', () => {
     }),
   });
 
-  // TODO: type is not correct
-  type x = z.infer<typeof deepPartialSchema>
 });
