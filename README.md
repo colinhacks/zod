@@ -731,17 +731,24 @@ z.date().max(new Date(), { message: "Too young!" });
 
 **Supporting date strings**
 
-To write a schema that accepts either a `Date` or a date string, use [`z.preprocess`](#preprocess).
+To write a schema that accepts either a `Date` or a `date string`, use [`.transform`](#transform) and `.pipe`.
 
 ```ts
-const dateSchema = z.preprocess((arg) => {
-  if (typeof arg == "string" || arg instanceof Date) return new Date(arg);
-}, z.date());
-type DateSchema = z.infer<typeof dateSchema>;
+const dateSchema = z.date().or( z.string() )
+    .transform( input => new Date( input ) )
+    .pipe( z.date() )
+type DateSchema = z.infer<typeof dateSchema>
 // type DateSchema = Date
 
-dateSchema.safeParse(new Date("1/12/22")); // success: true
-dateSchema.safeParse("2022-01-12T00:00:00.000Z"); // success: true
+/* valid dates */
+console.log( dateSchema.safeParse( '2023-01-10T00:00:00.000Z' ).success ) // true
+console.log( dateSchema.safeParse( '2023-01-10' ).success ) // true
+console.log( dateSchema.safeParse( '1/10/23' ).success ) // true
+console.log( dateSchema.safeParse( new Date( '1/10/23' ) ).success ) // true
+
+/* invalid dates */
+console.log( dateSchema.safeParse( '2023-13-10' ).success ) // false
+console.log( dateSchema.safeParse( '0000-00-00' ).success ) // false
 ```
 
 ## Zod enums
