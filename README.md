@@ -52,6 +52,7 @@
   - [Deno](#from-denolandx-deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
+- [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
 - [Numbers](#numbers)
