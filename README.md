@@ -1335,6 +1335,10 @@ const myUnion = z.discriminatedUnion("status", [
 myUnion.parse({ status: "success", data: "yippie ki yay" });
 ```
 
+### `.strict`, `.strip`, `.passthrough`, `.catchall`, `.pick`, `.omit`, `.deepPartial`, `.partial`, `.required`
+
+These methods apply schema alterations to all the "options", similar to the methods on the [Objects](#objects) schema, but they do not effect the _discriminator_.
+
 ## Records
 
 Record schemas are used to validate types such as `{ [k: string]: number }`.
