@@ -1278,7 +1278,7 @@ stringOrNumber.parse(14); // passes
 
 Zod will test the input against each of the "options" in order and return the first value that validates successfully.
 
-For convenience, you can also use the `.or` method:
+For convenience, you can also use the [`.or` method](#or):
 
 ```ts
 const stringOrNumber = z.string().or(z.number());
@@ -2150,7 +2150,7 @@ z.promise(z.string());
 
 ### `.or`
 
-A convenience method for union types.
+A convenience method for [union types](#unions).
 
 ```ts
 const stringOrNumber = z.string().or(z.number()); // string | number
