@@ -5731,6 +5731,8 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       }
 
       if (ch.kind === "regex") {
+        // FIXME: maybe allow combinations of endsWith, startsWith, min/max length with a regex,
+        // if it doesn't lock both ends with `^` & `$` ?
         return this._unwrapRegexString(ch.regex.source);
       }
 

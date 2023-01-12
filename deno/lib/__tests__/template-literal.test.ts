@@ -59,6 +59,16 @@ const nullishBruh = z
 const nullishString = z
   .templateLiteral()
   .addInterpolatedPosition(z.string().nullish());
+const cuid = z.templateLiteral().addInterpolatedPosition(z.string().cuid());
+const cuidZZZ = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().cuid())
+  .addLiteral("ZZZ");
+const datetime = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().datetime());
+const email = z.templateLiteral().addInterpolatedPosition(z.string().email());
+const uuid = z.templateLiteral().addInterpolatedPosition(z.string().uuid());
 
 const url = z
   .templateLiteral()
@@ -131,6 +141,11 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof optionalString>, string>(true);
   util.assertEqual<z.infer<typeof nullishBruh>, `bruh` | `null` | ``>(true);
   util.assertEqual<z.infer<typeof nullishString>, string>(true);
+  util.assertEqual<z.infer<typeof cuid>, string>(true);
+  util.assertEqual<z.infer<typeof cuidZZZ>, `${string}ZZZ`>(true);
+  util.assertEqual<z.infer<typeof datetime>, string>(true);
+  util.assertEqual<z.infer<typeof email>, string>(true);
+  util.assertEqual<z.infer<typeof uuid>, string>(true);
 
   util.assertEqual<
     z.infer<typeof url>,
@@ -293,6 +308,20 @@ test("template literal parsing", () => {
   anyBigint.parse("123456");
   anyBigint.parse("0");
   anyBigint.parse("-123456");
+  nullableYo.parse("yo");
+  nullableYo.parse("null");
+  nullableString.parse("abc");
+  nullableString.parse("null");
+  optionalYeah.parse("yeah");
+  optionalYeah.parse("");
+  nullishBruh.parse("bruh");
+  nullishBruh.parse("null");
+  nullishBruh.parse("");
+  cuid.parse("cjld2cyuq0000t3rmniod1foy");
+  cuidZZZ.parse("cjld2cyuq0000t3rmniod1foyZZZ");
+  datetime.parse(new Date().toISOString());
+  email.parse("info@example.com");
+  uuid.parse("808989fd-3a6e-4af2-b607-737323a176f6");
 
   expect(() => empty.parse("a")).toThrow();
   expect(() => hello.parse("hello!")).toThrow();
@@ -349,6 +378,31 @@ test("template literal parsing", () => {
   expect(() => anyBigint.parse("1.23")).toThrow();
   expect(() => anyBigint.parse("-1.23")).toThrow();
   expect(() => anyBigint.parse("c123")).toThrow();
+  expect(() => nullableYo.parse("yo1")).toThrow();
+  expect(() => nullableYo.parse("1yo")).toThrow();
+  expect(() => nullableYo.parse("null1")).toThrow();
+  expect(() => nullableYo.parse("1null")).toThrow();
+  expect(() => optionalYeah.parse("yeah1")).toThrow();
+  expect(() => optionalYeah.parse("1yeah")).toThrow();
+  expect(() => optionalYeah.parse("undefined")).toThrow();
+  expect(() => nullishBruh.parse("bruh1")).toThrow();
+  expect(() => nullishBruh.parse("1bruh")).toThrow();
+  expect(() => nullishBruh.parse("null1")).toThrow();
+  expect(() => nullishBruh.parse("1null")).toThrow();
+  expect(() => nullishBruh.parse("undefined")).toThrow();
+  expect(() => cuid.parse("cjld2cyuq0000t3rmniod1foy1"));
+  expect(() => cuid.parse("1cjld2cyuq0000t3rmniod1foy"));
+  expect(() => cuidZZZ.parse("cjld2cyuq0000t3rmniod1foy"));
+  expect(() => cuidZZZ.parse("cjld2cyuq0000t3rmniod1foyZZY"));
+  expect(() => cuidZZZ.parse("cjld2cyuq0000t3rmniod1foyZZZ1"));
+  expect(() => cuidZZZ.parse("1cjld2cyuq0000t3rmniod1foyZZZ"));
+  expect(() => datetime.parse("2022-01-01 00:00:00"));
+  expect(() => email.parse("info@example.com@"));
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(z.string().url())
+  ).toThrow();
+  expect(() => uuid.parse("808989fd-3a6e-4af2-b607-737323a176f6Z"));
+  expect(() => uuid.parse("Z808989fd-3a6e-4af2-b607-737323a176f6"));
 
   url.parse("https://example.com");
   url.parse("https://speedtest.net");
