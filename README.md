@@ -1675,7 +1675,7 @@ const templateLiteral = z.templateLiteral(); // infers to ``.
   undefined or bigint can be used as an interpolated position (template literals 
   included!). You can use additional built-in runtime validations (refinements 
   excluded) in each of these types and the template literal builder will do its 
-  best to support them when parsing.
+  best (within the limitations of regular expressions) to support them when parsing.
 
 ### Examples
 
