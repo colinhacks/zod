@@ -1,5 +1,6 @@
 import type {
   ZodArray,
+  ZodEffects,
   ZodNullable,
   ZodObject,
   ZodOptional,
@@ -60,6 +61,8 @@ export namespace partialUtil {
         ? ZodTuple<PI>
         : never
       : never
+    : T extends ZodEffects<infer Type>
+    ? ZodEffects<DeepPartial<Type>>
     : T;
   //  {
   //     // optional: T extends ZodOptional<ZodTypeAny> ? T : ZodOptional<T>;

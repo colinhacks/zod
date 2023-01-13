@@ -48,6 +48,27 @@ test("deep partial inference", () => {
   };
 
   util.assertEqual<deep, correct>(true);
+
+  const deepRefined = z
+    .object({
+      innerWithRefine: z
+        .object({
+          data: z.string(),
+        })
+        .refine(() => true),
+    })
+    .deepPartial();
+
+  type deepRefined = z.infer<typeof deepRefined>;
+  type correctRefined = {
+    innerWithRefine?:
+      | {
+          data?: string | undefined;
+        }
+      | undefined;
+  };
+
+  util.assertEqual<deepRefined, correctRefined>(true);
 });
 
 test("deep partial parse", () => {
