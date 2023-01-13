@@ -215,3 +215,106 @@ test("valid - literals with .default or .preprocess", () => {
     a: "foo",
   });
 });
+
+test("valid - union of union", () => {
+  const A = z.object({
+    discriminator1: z.literal(true),
+    msg: z.string(),
+  });
+  
+  const BA = z.object({
+    param1: z.number(),
+    discriminator2: z.literal(false),
+    discriminator1: z.literal(false),
+  });
+  
+  const BB = z.object({
+    param2: z.number(),
+    discriminator2: z.literal(true),
+    discriminator1: z.literal(false),
+  });
+  
+  const B = z.discriminatedUnion("discriminator2", [BA, BB]);
+  const schema = z.discriminatedUnion("discriminator1", [A, B]);
+
+  expect(schema.parse({ discriminator1: false, discriminator2: true, param2: 1 })).toEqual({
+    discriminator1: false,
+    discriminator2: true,
+    param2: 1,
+  });
+
+  expect(schema.parse({ discriminator1: false, discriminator2: false, param1: 1 })).toEqual({
+    discriminator1: false,
+    discriminator2: false,
+    param1: 1,
+  });
+
+  expect(schema.parse({ discriminator1: true, msg: "Foo" })).toEqual({
+    discriminator1: true,
+    msg: "Foo",
+  });
+})
+
+test("invalid - union of union", () => {
+  const A = z.object({
+    discriminator1: z.literal(true),
+    msg: z.string(),
+  });
+  
+  const BA = z.object({
+    param1: z.number(),
+    discriminator2: z.literal(false),
+    discriminator1: z.literal(false),
+  });
+  
+  const BB = z.object({
+    param2: z.number(),
+    discriminator2: z.literal(true),
+    discriminator1: z.literal(false),
+  });
+  
+  const B = z.discriminatedUnion("discriminator2", [BA, BB]);
+  const schema = z.discriminatedUnion("discriminator1", [A, B]);
+
+  try {
+    schema.parse({ discriminator1: false, discriminator2: true })
+  } catch(e: any) {
+    expect(JSON.parse(e.message)).toEqual([
+      {
+        code: "invalid_type",
+        expected: "number",
+        received: "undefined",
+        path: [ "param2" ],
+        message: "Required"
+      },
+    ]);
+  }
+
+  try {
+    schema.parse({ discriminator1: false, discriminator2: false })
+  } catch(e: any) {
+    expect(JSON.parse(e.message)).toEqual([
+      {
+        code: "invalid_type",
+        expected: "number",
+        received: "undefined",
+        path: [ "param1" ],
+        message: "Required"
+      },
+    ]);
+  }
+
+  try {
+    schema.parse({ discriminator1: true })
+  } catch(e: any) {
+    expect(JSON.parse(e.message)).toEqual([
+      {
+        code: "invalid_type",
+        expected: "string",
+        received: "undefined",
+        path: [ "msg" ],
+        message: "Required"
+      },
+    ]);
+  }
+})

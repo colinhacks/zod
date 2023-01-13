@@ -2492,7 +2492,8 @@ const getDiscriminator = <T extends ZodTypeAny>(
 };
 
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
-  ZodObject<{ [key in Discriminator]: ZodTypeAny } & ZodRawShape, any, any>;
+  | ZodObject<{ [key in Discriminator]: ZodTypeAny } & ZodRawShape, any, any> 
+  | ZodDiscriminatedUnion<string, ZodDiscriminatedUnionOption<string>[]>;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
@@ -2502,6 +2503,33 @@ export interface ZodDiscriminatedUnionDef<
   options: Options;
   optionsMap: Map<Primitive, ZodDiscriminatedUnionOption<any>>;
   typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion;
+}
+
+const getConstDiscriminator = <Discriminator extends string, Options extends ZodDiscriminatedUnionOption<string>[]>(discriminator: Discriminator, options: Options): Primitive[] | null => {
+  let val: symbol | Primitive[] | null = Symbol()
+  for (const type of options) {
+    let nextVal
+    if (type instanceof ZodDiscriminatedUnion) {
+      nextVal = getConstDiscriminator(discriminator, type._def.options);
+    } else {
+      nextVal = getDiscriminator(type.shape[discriminator]);
+    }
+
+    if (typeof val === 'symbol') {
+      val = nextVal
+      continue
+    }
+
+    if (JSON.stringify(val) !== JSON.stringify(nextVal)) {
+      throw new Error(`Unions need to have same value for discriminator \`${discriminator}\``);
+    }
+  }
+
+  if (typeof val === 'symbol') {
+    throw new Error(`A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`);
+  }
+
+  return val
 }
 
 export class ZodDiscriminatedUnion<
@@ -2586,9 +2614,14 @@ export class ZodDiscriminatedUnion<
     // Get all the valid discriminator values
     const optionsMap: Map<Primitive, Types[number]> = new Map();
 
-    // try {
     for (const type of options) {
-      const discriminatorValues = getDiscriminator(type.shape[discriminator]);
+      let discriminatorValues
+      if (type instanceof ZodDiscriminatedUnion) {
+        // If its a union, we need to check that all the options have the same discriminator value
+        discriminatorValues = getConstDiscriminator(discriminator, type._def.options);
+      } else {
+        discriminatorValues = getDiscriminator(type.shape[discriminator]);
+      }
       if (!discriminatorValues) {
         throw new Error(
           `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
