@@ -5769,31 +5769,46 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       : Infinity;
 
     if (
-      constrainedMinLength > constrainedMaxLength ||
-      constrainedMaxLength === 0
+      constrainedMaxLength === 0 ||
+      constrainedMinLength > constrainedMaxLength
     ) {
       return `${startsWith}${endsWith}`;
     }
 
-    const wildcardLength =
-      constrainedMinLength === constrainedMaxLength
-        ? constrainedMinLength === 1
-          ? ""
-          : `{${constrainedMinLength}}`
-        : !Number.isFinite(constrainedMaxLength)
-        ? constrainedMinLength === 0
-          ? "*"
-          : constrainedMinLength === 1
-          ? "+"
-          : `{${constrainedMinLength},}`
-        : `{${constrainedMinLength},${constrainedMinLength}}`;
+    return `${startsWith}.${this._resolveRegexWildcardLength(
+      constrainedMinLength,
+      constrainedMaxLength
+    )}${endsWith}`;
+  }
 
-    return `${startsWith}.${wildcardLength}${endsWith}`;
+  protected _resolveRegexWildcardLength(
+    minLength: number,
+    maxLength: number
+  ): string {
+    if (minLength === maxLength) {
+      return minLength === 1 ? "" : `{${minLength}}`;
+    }
+
+    if (maxLength !== Infinity) {
+      return `{${minLength},${maxLength}}`;
+    }
+
+    if (minLength === 0) {
+      return "*";
+    }
+
+    if (minLength === 1) {
+      return "+";
+    }
+
+    return `{${minLength},}`;
   }
 
   protected _transformZodNumberPartToRegexString(part: ZodNumber): string {
     let isNegative = true,
       isPositive = true,
+      min = -Infinity,
+      max = Infinity,
       isZero = true,
       isFinite = false,
       isInt = false,
@@ -5805,18 +5820,22 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       } else if (ch.kind === "int") {
         isInt = true;
       } else if (ch.kind === "max") {
-        if (ch.value < 0 || (ch.value === 0 && !ch.inclusive)) {
+        max = Math.min(max, ch.value);
+
+        if (ch.value <= 0) {
           isPositive = false;
 
-          if (ch.value === 0) {
+          if (ch.value === 0 && !ch.inclusive) {
             isZero = false;
           }
         }
       } else if (ch.kind === "min") {
-        if (ch.value > 0 || (ch.value === 0 && !ch.inclusive)) {
+        min = Math.max(min, ch.value);
+
+        if (ch.value >= 0) {
           isNegative = false;
 
-          if (ch.value === 0) {
+          if (ch.value === 0 && !ch.inclusive) {
             isZero = false;
           }
         }
@@ -5825,6 +5844,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
           isInt = true;
         }
       }
+    }
+
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      isFinite = true;
     }
 
     if (isNegative) {
