@@ -1671,10 +1671,33 @@ const templateLiteral = z.templateLiteral(); // infers to ``.
   templateLiteral.addInterpolatedPosition(z.bigint()); // infers to `${bigint}`.
   ```
 
-  Any Zod type (or union) with an underlying type of string, number, boolean, null, undefined or bigint can be used as an interpolated position (template literals included!). You can use additional built-in runtime validations (refinements excluded) in each of these types and the template literal builder will do its best to
-  support them when parsing.
+  Any Zod type (or union) with an underlying type of string, number, boolean, null, 
+  undefined or bigint can be used as an interpolated position (template literals 
+  included!). You can use additional built-in runtime validations (refinements 
+  excluded) in each of these types and the template literal builder will do its 
+  best to support them when parsing.
 
 ### Examples
+
+URL:
+
+```ts
+const url = z
+  .templateLiteral()
+  .addLiteral("https://")
+  .addInterpolatedPosition(z.string().min(1))
+  .addLiteral(".")
+  .addInterpolatedPosition(z.enum(["com", "net"]));
+// infers to `https://${string}.com` | `https://${string}.net`.
+
+url.parse("https://google.com"); // passes
+url.parse("https://google.net"); // passes
+url.parse('http://google.com'); // throws
+url.parse('https://.com'); // throws
+url.parse('https://google'); // throws
+url.parse('https://google.'); // throws
+url.parse('https://google.gov'); // throws
+```
 
 MongoDB connection string:
 
