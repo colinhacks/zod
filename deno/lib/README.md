@@ -1950,7 +1950,87 @@ myFunction.returnType();
 
 ## Template Literals
 
-Building on the knowledge above, Zod supports building typescript template literal types with runtime validation.
+Building on the knowledge above, Zod supports creating typescript [template literal types](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html) with runtime validation. These types allow for stricter type checking of string inputs, as an alternative to `z.string()` which infers to a string.
+
+A template literal type consists of [string literal types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types) and interpolated positions (typescript types inside `${}` slots, e.g. `${number}`).
+
+To create a template literal builder:
+
+```ts
+const templateLiteral = z.templateLiteral(); // infers to ``.
+```
+
+- To add string literal types to an existing template literal:
+
+  ```ts
+  templateLiteral.addLiteral('Hello'); // infers to `Hello`.
+  templateLiteral.addLiteral(3.14); // infers to `3.14`.
+  ```
+
+  This method accepts strings, numbers, booleans, nulls and undefined.
+
+- To add interpolated positions to an existing template literal:
+
+  ```ts
+  templateLiteral.addInterpolatedPosition(z.string()); // infers to string.
+  templateLiteral.addInterpolatedPosition(z.number()); // infers to `${number}`.
+  templateLiteral.addInterpolatedPosition(z.boolean()); // infers to `true` | `false`.
+  templateLiteral.addInterpolatedPosition(z.literal('foo')); // infers to `foo`.
+  templateLiteral.addInterpolatedPosition(z.null()); // infers to `null`.
+  templateLiteral.addInterpolatedPosition(z.undefined()); // infers to `undefined`.
+  templateLiteral.addInterpolatedPosition(z.bigint()); // infers to `${bigint}`.
+  ```
+
+  Any Zod type (or union) with an underlying type of string, number, boolean, null, undefined or bigint can be used as an interpolated position (template literals included!). You can use additional built-in runtime validations (refinements excluded) in each of these types and the template literal builder will do its best to
+  support them when parsing.
+
+### Examples
+
+MongoDB connection string:
+
+```ts
+const connectionString = z
+  .templateLiteral()
+  .addLiteral("mongodb://")
+  .addInterpolatedPosition(
+    z
+      .templateLiteral()
+      .addInterpolatedPosition(z.string().min(1).describe("username"))
+      .addLiteral(":")
+      .addInterpolatedPosition(z.string().min(1).describe("password"))
+      .addLiteral("@")
+      .optional()
+  )
+  .addInterpolatedPosition(z.string().min(1).describe("host"))
+  .addLiteral(":")
+  .addInterpolatedPosition(
+    z.number().finite().int().positive().describe("port")
+  )
+  .addInterpolatedPosition(
+    z
+      .templateLiteral()
+      .addLiteral("/")
+      .addInterpolatedPosition(
+        z.string().min(1).optional().describe("defaultauthdb")
+      )
+      .addInterpolatedPosition(
+        z
+          .templateLiteral()
+          .addLiteral("?")
+          .addInterpolatedPosition(z.string().regex(/^\w+=\w+(&\w+=\w+)*$/))
+          .optional()
+          .describe("options")
+      )
+      .optional()
+  );
+  // infers to:
+  // | `mongodb://${string}:${number}`
+  // | `mongodb://${string}:${number}/${string}`
+  // | `mongodb://${string}:${number}/${string}?${string}`
+  // | `mongodb://${string}:${string}@${string}:${number}`
+  // | `mongodb://${string}:${string}@${string}:${number}/${string}`
+  // | `mongodb://${string}:${string}@${string}:${number}/${string}?${string}`
+```
 
 ## Preprocess
 
