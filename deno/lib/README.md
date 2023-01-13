@@ -91,6 +91,7 @@
 - [Promises](#promises)
 - [Instanceof](#instanceof)
 - [Functions](#functions)
+- [Template Literals](#template-literals)
 - [Preprocess](#preprocess)
 - [Custom](#custom-schemas)
 - [Schema methods](#schema-methods)
@@ -1636,6 +1637,10 @@ myFunction.returnType();
 
 * `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
 * `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema. -->
+
+## Template Literals
+
+Building on the knowledge above, Zod supports building typescript template literal types with runtime validation.
 
 ## Preprocess
 

@@ -35,6 +35,18 @@ const anyNegativeNumber = z
 const anyPositiveNumber = z
   .templateLiteral()
   .addInterpolatedPosition(z.number().positive());
+const multipleOfTwo = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.number().multipleOf(2));
+const multipleOfPi = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.number().multipleOf(Math.PI));
+const zeroButInADumbWay = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.number().nonnegative().nonpositive());
+const finiteButInADumbWay = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.number().min(5).max(10));
 const bool = z.templateLiteral().addInterpolatedPosition(z.boolean());
 const bigone = z
   .templateLiteral()
@@ -52,6 +64,9 @@ const optionalYeah = z
 const optionalString = z
   .templateLiteral()
   .addInterpolatedPosition(z.string().optional());
+const optionalNumber = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.number().optional());
 const nullishBruh = z
   .templateLiteral()
   .addInterpolatedPosition(z.literal("bruh").nullish());
@@ -68,6 +83,30 @@ const datetime = z
   .addInterpolatedPosition(z.string().datetime());
 const email = z.templateLiteral().addInterpolatedPosition(z.string().email());
 const uuid = z.templateLiteral().addInterpolatedPosition(z.string().uuid());
+const stringAToZ = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().regex(/^[a-z]+$/));
+const stringStartsWith = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().startsWith("hello"));
+const stringEndsWith = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().endsWith("world"));
+const stringMax5 = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().max(5));
+const stringMin5 = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().min(5));
+const stringLen5 = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().length(5));
+const stringMin5Max10 = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().min(5).max(10));
+const stringStartsWithMax5 = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().startsWith("hello").max(5));
 
 const url = z
   .templateLiteral()
@@ -131,6 +170,10 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof anyInt>, `${number}`>(true);
   util.assertEqual<z.infer<typeof anyNegativeNumber>, `${number}`>(true);
   util.assertEqual<z.infer<typeof anyPositiveNumber>, `${number}`>(true);
+  util.assertEqual<z.infer<typeof multipleOfTwo>, `${number}`>(true);
+  util.assertEqual<z.infer<typeof multipleOfPi>, `${number}`>(true);
+  util.assertEqual<z.infer<typeof zeroButInADumbWay>, `${number}`>(true);
+  util.assertEqual<z.infer<typeof finiteButInADumbWay>, `${number}`>(true);
   util.assertEqual<z.infer<typeof bool>, `true` | `false`>(true);
   util.assertEqual<z.infer<typeof bigone>, `${bigint}`>(true);
   util.assertEqual<z.infer<typeof anyBigint>, `${bigint}`>(true);
@@ -138,6 +181,7 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof nullableString>, string>(true);
   util.assertEqual<z.infer<typeof optionalYeah>, `yeah` | ``>(true);
   util.assertEqual<z.infer<typeof optionalString>, string>(true);
+  util.assertEqual<z.infer<typeof optionalNumber>, `${number}` | ``>(true);
   util.assertEqual<z.infer<typeof nullishBruh>, `bruh` | `null` | ``>(true);
   util.assertEqual<z.infer<typeof nullishString>, string>(true);
   util.assertEqual<z.infer<typeof cuid>, string>(true);
@@ -145,6 +189,14 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof datetime>, string>(true);
   util.assertEqual<z.infer<typeof email>, string>(true);
   util.assertEqual<z.infer<typeof uuid>, string>(true);
+  util.assertEqual<z.infer<typeof stringAToZ>, string>(true);
+  util.assertEqual<z.infer<typeof stringStartsWith>, string>(true);
+  util.assertEqual<z.infer<typeof stringEndsWith>, string>(true);
+  util.assertEqual<z.infer<typeof stringMax5>, string>(true);
+  util.assertEqual<z.infer<typeof stringMin5>, string>(true);
+  util.assertEqual<z.infer<typeof stringLen5>, string>(true);
+  util.assertEqual<z.infer<typeof stringMin5Max10>, string>(true);
+  util.assertEqual<z.infer<typeof stringStartsWithMax5>, string>(true);
 
   util.assertEqual<
     z.infer<typeof url>,
@@ -263,7 +315,7 @@ test("template literal unsupported args", () => {
   ).toThrow();
 });
 
-test("template literal parsing", () => {
+test("template literal parsing - success - basic cases", () => {
   expect(() => z.templateLiteral().parse(7)).toThrow();
 
   empty.parse("");
@@ -301,6 +353,14 @@ test("template literal parsing", () => {
   anyPositiveNumber.parse("123");
   anyPositiveNumber.parse("1.23");
   anyPositiveNumber.parse("Infinity");
+  multipleOfTwo.parse("2");
+  multipleOfPi.parse("2");
+  multipleOfPi.parse("3.14");
+  zeroButInADumbWay.parse("0");
+  zeroButInADumbWay.parse("00000");
+  finiteButInADumbWay.parse("5");
+  finiteButInADumbWay.parse("10");
+  finiteButInADumbWay.parse("6.66");
   bool.parse("true");
   bool.parse("false");
   bigone.parse("1");
@@ -313,6 +373,15 @@ test("template literal parsing", () => {
   nullableString.parse("null");
   optionalYeah.parse("yeah");
   optionalYeah.parse("");
+  optionalString.parse("abc");
+  optionalString.parse("");
+  optionalNumber.parse("123");
+  optionalNumber.parse("1.23");
+  optionalNumber.parse("0");
+  optionalNumber.parse("-1.23");
+  optionalNumber.parse("-123");
+  optionalNumber.parse("Infinity");
+  optionalNumber.parse("-Infinity");
   nullishBruh.parse("bruh");
   nullishBruh.parse("null");
   nullishBruh.parse("");
@@ -321,7 +390,17 @@ test("template literal parsing", () => {
   datetime.parse(new Date().toISOString());
   email.parse("info@example.com");
   uuid.parse("808989fd-3a6e-4af2-b607-737323a176f6");
+  stringAToZ.parse("asudgaskhdgashd");
+  stringStartsWith.parse("hello world");
+  stringEndsWith.parse("hello world");
+  stringMax5.parse("hello");
+  stringMin5.parse("hello");
+  stringLen5.parse("hello");
+  stringMin5Max10.parse("hello worl");
+  stringStartsWithMax5.parse("hello");
+});
 
+test("template literal parsing - failure - basic cases", () => {
   expect(() => empty.parse("a")).toThrow();
   expect(() => hello.parse("hello!")).toThrow();
   expect(() => hello.parse("!hello")).toThrow();
@@ -371,6 +450,14 @@ test("template literal parsing", () => {
   expect(() => anyPositiveNumber.parse("0")).toThrow();
   expect(() => anyPositiveNumber.parse("-1")).toThrow();
   expect(() => anyPositiveNumber.parse("-Infinity")).toThrow();
+  expect(() => multipleOfTwo.parse("3.14")).toThrow();
+  expect(() => zeroButInADumbWay.parse("1")).toThrow();
+  expect(() => zeroButInADumbWay.parse("-1")).toThrow();
+  expect(() => finiteButInADumbWay.parse("Infinity")).toThrow();
+  expect(() => finiteButInADumbWay.parse("-Infinity")).toThrow();
+  expect(() => finiteButInADumbWay.parse("-5")).toThrow();
+  expect(() => finiteButInADumbWay.parse("10a")).toThrow();
+  expect(() => finiteButInADumbWay.parse("a10")).toThrow();
   expect(() => bool.parse("123")).toThrow();
   expect(() => bigone.parse("2")).toThrow();
   expect(() => bigone.parse("c1")).toThrow();
@@ -384,6 +471,10 @@ test("template literal parsing", () => {
   expect(() => optionalYeah.parse("yeah1")).toThrow();
   expect(() => optionalYeah.parse("1yeah")).toThrow();
   expect(() => optionalYeah.parse("undefined")).toThrow();
+  expect(() => optionalNumber.parse("123a")).toThrow();
+  expect(() => optionalNumber.parse("a123")).toThrow();
+  expect(() => optionalNumber.parse("Infinitya")).toThrow();
+  expect(() => optionalNumber.parse("aInfinity")).toThrow();
   expect(() => nullishBruh.parse("bruh1")).toThrow();
   expect(() => nullishBruh.parse("1bruh")).toThrow();
   expect(() => nullishBruh.parse("null1")).toThrow();
@@ -402,15 +493,23 @@ test("template literal parsing", () => {
   ).toThrow();
   expect(() => uuid.parse("808989fd-3a6e-4af2-b607-737323a176f6Z"));
   expect(() => uuid.parse("Z808989fd-3a6e-4af2-b607-737323a176f6"));
+  expect(() => stringAToZ.parse("asdasdasd1")).toThrow();
+  expect(() => stringAToZ.parse("1asdasdasd")).toThrow();
+  expect(() => stringStartsWith.parse("ahello")).toThrow();
+  expect(() => stringEndsWith.parse("worlda")).toThrow();
+  expect(() => stringMax5.parse("123456")).toThrow();
+  expect(() => stringMin5.parse("1234")).toThrow();
+  expect(() => stringLen5.parse("123456")).toThrow();
+  expect(() => stringLen5.parse("1234")).toThrow();
+  expect(() => stringMin5Max10.parse("1234")).toThrow();
+  expect(() => stringMin5Max10.parse("12345678901")).toThrow();
+  expect(() => stringStartsWithMax5.parse("hello1")).toThrow();
+  expect(() => stringStartsWithMax5.parse("1hell")).toThrow();
+});
 
+test("template literal parsing - success - complex cases", () => {
   url.parse("https://example.com");
   url.parse("https://speedtest.net");
-
-  expect(() => url.parse("http://example.com")).toThrow();
-  expect(() => url.parse("https://.com")).toThrow();
-  expect(() => url.parse("https://examplecom")).toThrow();
-  expect(() => url.parse("https://example.org")).toThrow();
-  expect(() => url.parse("https://example.net.il")).toThrow();
 
   connectionString.parse("mongodb://host:1234");
   connectionString.parse("mongodb://host:1234/");
@@ -438,6 +537,14 @@ test("template literal parsing", () => {
   connectionString.parse(
     "mongodb://username:password@host:1234/?authSource=admin&connectTimeoutMS=300000"
   );
+});
+
+test("template literal parsing - failure - complex cases", () => {
+  expect(() => url.parse("http://example.com")).toThrow();
+  expect(() => url.parse("https://.com")).toThrow();
+  expect(() => url.parse("https://examplecom")).toThrow();
+  expect(() => url.parse("https://example.org")).toThrow();
+  expect(() => url.parse("https://example.net.il")).toThrow();
 
   expect(() => connectionString.parse("mongod://host:1234")).toThrow();
   expect(() => connectionString.parse("mongodb://:1234")).toThrow();
