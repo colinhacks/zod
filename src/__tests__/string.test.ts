@@ -6,7 +6,9 @@ import * as z from "../index";
 const minFive = z.string().min(5, "min5");
 const maxFive = z.string().max(5, "max5");
 const justFive = z.string().length(5);
-const nonempty = z.string().nonempty("nonempty");
+const nonempty = z.string().min(1, "nonempty");
+const includes = z.string().includes("includes");
+const includesFromIndex2 = z.string().includes("includes", { position: 2 });
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
 
@@ -17,6 +19,8 @@ test("passing validations", () => {
   maxFive.parse("1234");
   nonempty.parse("1");
   justFive.parse("12345");
+  includes.parse("XincludesXX");
+  includesFromIndex2.parse("XXXincludesXX");
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
 });
@@ -27,6 +31,8 @@ test("failing validations", () => {
   expect(() => nonempty.parse("")).toThrow();
   expect(() => justFive.parse("1234")).toThrow();
   expect(() => justFive.parse("123456")).toThrow();
+  expect(() => includes.parse("XincludeXX")).toThrow();
+  expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
 });
