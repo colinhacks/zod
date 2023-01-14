@@ -107,6 +107,9 @@ const stringMin5Max10 = z
 const stringStartsWithMax5 = z
   .templateLiteral()
   .addInterpolatedPosition(z.string().startsWith("hello").max(5));
+const brandedString = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().min(1).brand("myBrand"));
 
 const url = z
   .templateLiteral()
@@ -197,6 +200,7 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof stringLen5>, string>(true);
   util.assertEqual<z.infer<typeof stringMin5Max10>, string>(true);
   util.assertEqual<z.infer<typeof stringStartsWithMax5>, string>(true);
+  util.assertEqual<z.infer<typeof brandedString>, string>(true);
 
   util.assertEqual<
     z.infer<typeof url>,
@@ -313,6 +317,12 @@ test("template literal unsupported args", () => {
     // @ts-expect-error
     z.templateLiteral().addInterpolatedPosition(z.unknown())
   ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(
+      // @ts-expect-error
+      z.object({}).brand("brand")
+    )
+  ).toThrow();
 });
 
 test("template literal parsing - success - basic cases", () => {
@@ -398,6 +408,7 @@ test("template literal parsing - success - basic cases", () => {
   stringLen5.parse("hello");
   stringMin5Max10.parse("hello worl");
   stringStartsWithMax5.parse("hello");
+  brandedString.parse("branded string");
 });
 
 test("template literal parsing - failure - basic cases", () => {
@@ -505,6 +516,7 @@ test("template literal parsing - failure - basic cases", () => {
   expect(() => stringMin5Max10.parse("12345678901")).toThrow();
   expect(() => stringStartsWithMax5.parse("hello1")).toThrow();
   expect(() => stringStartsWithMax5.parse("1hell")).toThrow();
+  expect(() => brandedString.parse("")).toThrow();
 });
 
 test("template literal parsing - success - complex cases", () => {
