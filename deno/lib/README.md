@@ -584,6 +584,7 @@ z.string().url();
 z.string().uuid();
 z.string().cuid();
 z.string().regex(regex);
+z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().trim(); // trim whitespace
