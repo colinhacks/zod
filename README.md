@@ -2010,6 +2010,18 @@ url.parse('https://google.'); // throws
 url.parse('https://google.gov'); // throws
 ```
 
+Measurement:
+
+```ts
+const schema = z.coerce
+    .templateLiteral()
+    .addInterpolatedPosition(z.number().finite())
+    .addInterpolatedPosition(
+      z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
+    );
+// infers to `${number}` | `${number}px` | `${number}em` | `${number}rem` | `${number}vh` | `${number}vw` | `${number}vmin` | `${number}vmax
+```
+
 MongoDB connection string:
 
 ```ts
