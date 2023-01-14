@@ -4318,6 +4318,7 @@ type appendToTemplateLiteral<
   : never;
 
 export interface ZodTemplateLiteralDef extends ZodTypeDef {
+  coerce: boolean;
   parts: readonly (
     | TemplateLiteralPrimitive
     | TemplateLiteralInterpolatedPosition
@@ -4343,6 +4344,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   }
 
   _parse(input: ParseInput): ParseReturnType<Template> {
+    if (this._def.coerce) {
+      input.data = String(input.data);
+    }
+
     const parsedType = this._getType(input);
 
     if (parsedType !== ZodParsedType.string) {
@@ -4558,38 +4563,35 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   }
 
   protected _transformZodNumberPartToRegexString(part: ZodNumber): string {
-    let isNegative = true,
-      isPositive = true,
+    let canBeNegative = true,
+      canBePositive = true,
       min = -Infinity,
       max = Infinity,
-      isZero = true,
-      isFinite = false,
+      canBeZero = true,
       isInt = false,
       acc = "";
 
     for (const ch of part._def.checks) {
-      if (ch.kind === "finite") {
-        isFinite = true;
-      } else if (ch.kind === "int") {
+      if (ch.kind === "int") {
         isInt = true;
       } else if (ch.kind === "max") {
         max = Math.min(max, ch.value);
 
         if (ch.value <= 0) {
-          isPositive = false;
+          canBePositive = false;
 
           if (ch.value === 0 && !ch.inclusive) {
-            isZero = false;
+            canBeZero = false;
           }
         }
       } else if (ch.kind === "min") {
         min = Math.max(min, ch.value);
 
         if (ch.value >= 0) {
-          isNegative = false;
+          canBeNegative = false;
 
           if (ch.value === 0 && !ch.inclusive) {
-            isZero = false;
+            canBeZero = false;
           }
         }
       } else if (ch.kind === "multipleOf") {
@@ -4599,25 +4601,17 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       }
     }
 
-    if (Number.isFinite(min) && Number.isFinite(max)) {
-      isFinite = true;
-    }
-
-    if (isNegative) {
+    if (canBeNegative) {
       acc = `${acc}\\-`;
 
-      if (isPositive) {
+      if (canBePositive) {
         acc = `${acc}?`;
       }
-    } else if (!isPositive) {
+    } else if (!canBePositive) {
       return "0+";
     }
 
-    if (!isFinite) {
-      acc = `${acc}(Infinity|(`;
-    }
-
-    if (!isZero) {
+    if (!canBeZero) {
       if (!isInt) {
         acc = `${acc}((\\d*[1-9]\\d*(\\.\\d+)?)|(\\d+\\.\\d*[1-9]\\d*))`;
       } else {
@@ -4627,10 +4621,6 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       acc = `${acc}\\d+`;
     } else {
       acc = `${acc}\\d+(\\.\\d+)?`;
-    }
-
-    if (!isFinite) {
-      acc = `${acc}))`;
     }
 
     return acc;
@@ -4651,9 +4641,12 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     );
   }
 
-  static create = (params?: RawCreateParams): ZodTemplateLiteral => {
+  static create = (
+    params?: RawCreateParams & { coerce?: true }
+  ): ZodTemplateLiteral => {
     return new ZodTemplateLiteral({
       ...processCreateParams(params),
+      coerce: params?.coerce ?? false,
       parts: [],
       regexString: "^$",
       typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral,
@@ -4821,6 +4814,11 @@ export const coerce = {
     ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
   date: ((arg) =>
     ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
+  templateLiteral: ((arg) =>
+    ZodTemplateLiteral.create({
+      ...arg,
+      coerce: true,
+    })) as typeof ZodTemplateLiteral["create"],
 };
 
 export {

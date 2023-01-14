@@ -4318,6 +4318,7 @@ type appendToTemplateLiteral<
   : never;
 
 export interface ZodTemplateLiteralDef extends ZodTypeDef {
+  coerce: boolean;
   parts: readonly (
     | TemplateLiteralPrimitive
     | TemplateLiteralInterpolatedPosition
@@ -4343,6 +4344,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   }
 
   _parse(input: ParseInput): ParseReturnType<Template> {
+    if (this._def.coerce) {
+      input.data = String(input.data);
+    }
+
     const parsedType = this._getType(input);
 
     if (parsedType !== ZodParsedType.string) {
@@ -4651,9 +4656,12 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     );
   }
 
-  static create = (params?: RawCreateParams): ZodTemplateLiteral => {
+  static create = (
+    params?: RawCreateParams & { coerce?: true }
+  ): ZodTemplateLiteral => {
     return new ZodTemplateLiteral({
       ...processCreateParams(params),
+      coerce: params?.coerce ?? false,
       parts: [],
       regexString: "^$",
       typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral,
@@ -4821,6 +4829,11 @@ export const coerce = {
     ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
   date: ((arg) =>
     ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
+  templateLiteral: ((arg) =>
+    ZodTemplateLiteral.create({
+      ...arg,
+      coerce: true,
+    })) as typeof ZodTemplateLiteral["create"],
 };
 
 export {
