@@ -417,6 +417,7 @@ test("template literal parsing - success - basic cases", () => {
   stringLen5.parse("hello");
   stringMin5Max10.parse("hello worl");
   stringStartsWithMax5.parse("hello");
+  brandedString.parse("branded string");
   anything.parse("");
   anything.parse("everything");
 });
@@ -526,6 +527,7 @@ test("template literal parsing - failure - basic cases", () => {
   expect(() => stringMin5Max10.parse("12345678901")).toThrow();
   expect(() => stringStartsWithMax5.parse("hello1")).toThrow();
   expect(() => stringStartsWithMax5.parse("1hell")).toThrow();
+  expect(() => brandedString.parse("")).toThrow();
 });
 
 test("template literal parsing - success - complex cases", () => {

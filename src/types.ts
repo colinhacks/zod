@@ -4311,6 +4311,8 @@ type appendToTemplateLiteral<
   ? `${Template}${Suffix}`
   : Suffix extends ZodOptional<infer UnderlyingType>
   ? Template | appendToTemplateLiteral<Template, UnderlyingType>
+  : Suffix extends ZodBranded<infer UnderlyingType, any>
+  ? appendToTemplateLiteral<Template, UnderlyingType>
   : Suffix extends ZodType<infer Output, any, any>
   ? Output extends TemplateLiteralPrimitive | bigint
     ? `${Template}${Output}`
@@ -4454,6 +4456,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       return `(${this._transformPartToRegexString(part)}|null)${
         part instanceof ZodOptional ? "?" : ""
       }`;
+    }
+
+    if (part instanceof ZodBranded) {
+      return this._transformPartToRegexString(part.unwrap());
     }
 
     if (part instanceof ZodNull) {
