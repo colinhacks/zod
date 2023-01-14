@@ -108,6 +108,10 @@ const stringMin5Max10 = z
 const stringStartsWithMax5 = z
   .templateLiteral()
   .addInterpolatedPosition(z.string().startsWith("hello").max(5));
+const brandedString = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().min(1).brand("myBrand"));
+const anything = z.templateLiteral().addInterpolatedPosition(z.any());
 
 const url = z
   .templateLiteral()
@@ -198,6 +202,8 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof stringLen5>, string>(true);
   util.assertEqual<z.infer<typeof stringMin5Max10>, string>(true);
   util.assertEqual<z.infer<typeof stringStartsWithMax5>, string>(true);
+  util.assertEqual<z.infer<typeof brandedString>, string>(true);
+  util.assertEqual<z.infer<typeof anything>, `${any}`>(true);
 
   util.assertEqual<
     z.infer<typeof url>,
@@ -230,8 +236,6 @@ test("template literal unsupported args", () => {
       z.union([z.object({}), z.string()])
     )
   ).toThrow();
-  // @ts-expect-error
-  expect(() => z.templateLiteral().addInterpolatedPosition(z.any())).toThrow();
   expect(() =>
     // @ts-expect-error
     z.templateLiteral().addInterpolatedPosition(z.never())
@@ -313,6 +317,20 @@ test("template literal unsupported args", () => {
   expect(() =>
     // @ts-expect-error
     z.templateLiteral().addInterpolatedPosition(z.unknown())
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.void())
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.templateLiteral().addInterpolatedPosition(z.lazy(() => z.string()))
+  ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(
+      // @ts-expect-error
+      z.object({}).brand("brand")
+    )
   ).toThrow();
 });
 
@@ -399,6 +417,8 @@ test("template literal parsing - success - basic cases", () => {
   stringLen5.parse("hello");
   stringMin5Max10.parse("hello worl");
   stringStartsWithMax5.parse("hello");
+  anything.parse("");
+  anything.parse("everything");
 });
 
 test("template literal parsing - failure - basic cases", () => {

@@ -4311,6 +4311,8 @@ type appendToTemplateLiteral<
   ? `${Template}${Suffix}`
   : Suffix extends ZodOptional<infer UnderlyingType>
   ? Template | appendToTemplateLiteral<Template, UnderlyingType>
+  : Suffix extends ZodBranded<infer UnderlyingType, any>
+  ? appendToTemplateLiteral<Template, UnderlyingType>
   : Suffix extends ZodType<infer Output, any, any>
   ? Output extends TemplateLiteralPrimitive | bigint
     ? `${Template}${Output}`
@@ -4332,7 +4334,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   ZodTemplateLiteralDef
 > {
   addInterpolatedPosition<I extends TemplateLiteralInterpolatedPosition>(
-    type: Exclude<I, ZodNever | ZodAny | ZodNaN | ZodPipeline<any, any>>
+    type: Exclude<I, ZodNever | ZodNaN | ZodPipeline<any, any> | ZodLazy<any>>
   ): ZodTemplateLiteral<appendToTemplateLiteral<Template, I>> {
     return this._addPart(type) as any;
   }
@@ -4456,6 +4458,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       }`;
     }
 
+    if (part instanceof ZodBranded) {
+      return this._transformPartToRegexString(part.unwrap());
+    }
+
     if (part instanceof ZodNull) {
       return "null";
     }
@@ -4568,11 +4574,14 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       min = -Infinity,
       max = Infinity,
       canBeZero = true,
+      isFinite = false,
       isInt = false,
       acc = "";
 
     for (const ch of part._def.checks) {
-      if (ch.kind === "int") {
+      if (ch.kind === "finite") {
+        isFinite = true;
+      } else if (ch.kind === "int") {
         isInt = true;
       } else if (ch.kind === "max") {
         max = Math.min(max, ch.value);
@@ -4601,6 +4610,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       }
     }
 
+    if (Number.isFinite(min) && Number.isFinite(max)) {
+      isFinite = true;
+    }
+
     if (canBeNegative) {
       acc = `${acc}\\-`;
 
@@ -4609,6 +4622,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       }
     } else if (!canBePositive) {
       return "0+";
+    }
+
+    if (!isFinite) {
+      acc = `${acc}(Infinity|(`;
     }
 
     if (!canBeZero) {
@@ -4621,6 +4638,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       acc = `${acc}\\d+`;
     } else {
       acc = `${acc}\\d+(\\.\\d+)?`;
+    }
+
+    if (!isFinite) {
+      acc = `${acc}))`;
     }
 
     return acc;

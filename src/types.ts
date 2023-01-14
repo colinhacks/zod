@@ -4563,11 +4563,11 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   }
 
   protected _transformZodNumberPartToRegexString(part: ZodNumber): string {
-    let isNegative = true,
-      isPositive = true,
+    let canBeNegative = true,
+      canBePositive = true,
       min = -Infinity,
       max = Infinity,
-      isZero = true,
+      canBeZero = true,
       isFinite = false,
       isInt = false,
       acc = "";
@@ -4581,20 +4581,20 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
         max = Math.min(max, ch.value);
 
         if (ch.value <= 0) {
-          isPositive = false;
+          canBePositive = false;
 
           if (ch.value === 0 && !ch.inclusive) {
-            isZero = false;
+            canBeZero = false;
           }
         }
       } else if (ch.kind === "min") {
         min = Math.max(min, ch.value);
 
         if (ch.value >= 0) {
-          isNegative = false;
+          canBeNegative = false;
 
           if (ch.value === 0 && !ch.inclusive) {
-            isZero = false;
+            canBeZero = false;
           }
         }
       } else if (ch.kind === "multipleOf") {
@@ -4608,13 +4608,13 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       isFinite = true;
     }
 
-    if (isNegative) {
+    if (canBeNegative) {
       acc = `${acc}\\-`;
 
-      if (isPositive) {
+      if (canBePositive) {
         acc = `${acc}?`;
       }
-    } else if (!isPositive) {
+    } else if (!canBePositive) {
       return "0+";
     }
 
@@ -4622,7 +4622,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       acc = `${acc}(Infinity|(`;
     }
 
-    if (!isZero) {
+    if (!canBeZero) {
       if (!isInt) {
         acc = `${acc}((\\d*[1-9]\\d*(\\.\\d+)?)|(\\d+\\.\\d*[1-9]\\d*))`;
       } else {
