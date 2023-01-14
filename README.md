@@ -1972,13 +1972,14 @@ const templateLiteral = z.templateLiteral(); // infers to ``.
 - To add interpolated positions to an existing template literal:
 
   ```ts
-  templateLiteral.addInterpolatedPosition(z.string()); // infers to string.
+  templateLiteral.addInterpolatedPosition(z.string()); // infers to `${string}`.
   templateLiteral.addInterpolatedPosition(z.number()); // infers to `${number}`.
   templateLiteral.addInterpolatedPosition(z.boolean()); // infers to `true` | `false`.
   templateLiteral.addInterpolatedPosition(z.literal('foo')); // infers to `foo`.
   templateLiteral.addInterpolatedPosition(z.null()); // infers to `null`.
   templateLiteral.addInterpolatedPosition(z.undefined()); // infers to `undefined`.
   templateLiteral.addInterpolatedPosition(z.bigint()); // infers to `${bigint}`.
+  templateLiteral.addInterpolatedPosition(z.any()); // infers to `${any}`.
   ```
 
   Any Zod type (or union) with an underlying type of string, number, boolean, null, 
