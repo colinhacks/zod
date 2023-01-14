@@ -4462,6 +4462,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       return this._transformPartToRegexString(part.unwrap());
     }
 
+    if (part instanceof ZodAny) {
+      return ".*";
+    }
+
     if (part instanceof ZodNull) {
       return "null";
     }
