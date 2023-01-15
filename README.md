@@ -588,6 +588,8 @@ z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
+z.string().date(); // ISO short date format.
+z.string().time(); // time of day in 24-hour format. same options as datetime.
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
@@ -613,6 +615,8 @@ z.string().uuid({ message: "Invalid UUID" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+z.string().date({ message: "Invalid date string!" });
+z.string().time({ message: "Invalid time string!" });
 ```
 
 ### Datetime validation
