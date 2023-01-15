@@ -571,7 +571,11 @@ const datetimeRegex = (args: {
     return new RegExp(`${regex}(([+-]\\d{2}:?\\d{2})|Z)$`);
   }
 
-  return new RegExp(`${regex}Z$`);
+  if (args.withDate) {
+    return new RegExp(`${regex}Z$`);
+  }
+
+  return new RegExp(`${regex}$`);
 };
 
 export class ZodString extends ZodType<string, ZodStringDef> {
@@ -754,7 +758,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
-            validation: "date",
+            validation: "time",
             message: check.message,
           });
           status.dirty();

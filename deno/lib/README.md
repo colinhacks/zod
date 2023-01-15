@@ -52,6 +52,7 @@
   - [Deno](#from-denolandx-deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
+- [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
 - [Numbers](#numbers)
@@ -361,6 +362,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod.
 - [`zodix`](https://github.com/rileytomasek/zodix): Zod utilities for FormData and URLSearchParams in Remix loaders and actions.
+- [`remix-params-helper`](https://github.com/kiliman/remix-params-helper): Simplify integration of Zod with standard URLSearchParams and FormData for Remix apps.
 - [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod): Formik-compliant validator library that simplifies using Zod with Formik.
 - [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): Useful for translating Zod error messages.
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
@@ -507,7 +509,52 @@ z.unknown();
 z.never();
 ```
 
+## Coercion for primitives
+
+Zod now provides a more convenient way to coerce primitive values.
+
+```ts
+const schema = z.coerce.string();
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // => "12"
+schema.parse(true); // => "true"
+```
+
+During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
+
+```ts
+z.coerce.string().email().min(5);
+```
+
+All primitive types support coercion.
+
+```ts
+z.coerce.string(); // String(input)
+z.coerce.number(); // Number(input)
+z.coerce.boolean(); // Boolean(input)
+z.coerce.bigint(); // BigInt(input)
+z.coerce.date(); // new Date(input)
+```
+
+**Boolean coercion**
+
+Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
+
+```ts
+z.coerce.boolean().parse("tuna"); // => true
+z.coerce.boolean().parse("true"); // => true
+z.coerce.boolean().parse("false"); // => true
+z.coerce.boolean().parse(1); // => true
+z.coerce.boolean().parse([]); // => true
+
+z.coerce.boolean().parse(0); // => false
+z.coerce.boolean().parse(undefined); // => false
+z.coerce.boolean().parse(null); // => false
+```
+
 ## Literals
+
+Literals are zod's equivilant to [TypeScript's Literal Types](https://www.typescriptlang.org/docs/handbook/literal-types.html) which alow only the exact given type and value.
 
 ```ts
 const tuna = z.literal("tuna");
@@ -566,49 +613,6 @@ z.string().uuid({ message: "Invalid UUID" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
-```
-
-## Coercion for primitives
-
-Zod now provides a more convenient way to coerce primitive values.
-
-```ts
-const schema = z.coerce.string();
-schema.parse("tuna"); // => "tuna"
-schema.parse(12); // => "12"
-schema.parse(true); // => "true"
-```
-
-During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
-
-```ts
-z.coerce.string().email().min(5);
-```
-
-All primitive types support coercion.
-
-```ts
-z.coerce.string(); // String(input)
-z.coerce.number(); // Number(input)
-z.coerce.boolean(); // Boolean(input)
-z.coerce.bigint(); // BigInt(input)
-z.coerce.date(); // new Date(input)
-```
-
-**Boolean coercion**
-
-Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
-
-```ts
-z.coerce.boolean().parse("tuna"); // => true
-z.coerce.boolean().parse("true"); // => true
-z.coerce.boolean().parse("false"); // => true
-z.coerce.boolean().parse(1); // => true
-z.coerce.boolean().parse([]); // => true
-
-z.coerce.boolean().parse(0); // => false
-z.coerce.boolean().parse(undefined); // => false
-z.coerce.boolean().parse(null); // => false
 ```
 
 ### Datetime validation
@@ -729,20 +733,27 @@ z.date().min(new Date("1900-01-01"), { message: "Too old" });
 z.date().max(new Date(), { message: "Too young!" });
 ```
 
-**Supporting date strings**
+**Coercion to Date**
 
-To write a schema that accepts either a `Date` or a date string, use [`z.preprocess`](#preprocess).
+Since [zod 3.20](https://github.com/colinhacks/zod/releases/tag/v3.20), use [`z.coerce.date()`](#coercion-for-primitives) to pass the input through `new Date(input)`.
 
 ```ts
-const dateSchema = z.preprocess((arg) => {
-  if (typeof arg == "string" || arg instanceof Date) return new Date(arg);
-}, z.date());
-type DateSchema = z.infer<typeof dateSchema>;
+const dateSchema = z.coerce.date()
+type DateSchema = z.infer<typeof dateSchema>
 // type DateSchema = Date
 
-dateSchema.safeParse(new Date("1/12/22")); // success: true
-dateSchema.safeParse("2022-01-12T00:00:00.000Z"); // success: true
+/* valid dates */
+console.log( dateSchema.safeParse( '2023-01-10T00:00:00.000Z' ).success ) // true
+console.log( dateSchema.safeParse( '2023-01-10' ).success ) // true
+console.log( dateSchema.safeParse( '1/10/23' ).success ) // true
+console.log( dateSchema.safeParse( new Date( '1/10/23' ) ).success ) // true
+
+/* invalid dates */
+console.log( dateSchema.safeParse( '2023-13-10' ).success ) // false
+console.log( dateSchema.safeParse( '0000-00-00' ).success ) // false
 ```
+
+For older zod versions, use [`z.preprocess`](#preprocess) like [described in this thread](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276).
 
 ## Zod enums
 
@@ -786,7 +797,7 @@ FishEnum.enum;
 You can also retrieve the list of options as a tuple with the `.options` property:
 
 ```ts
-FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
+FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 ```
 
 ## Native enums
@@ -1270,10 +1281,29 @@ stringOrNumber.parse(14); // passes
 
 Zod will test the input against each of the "options" in order and return the first value that validates successfully.
 
-For convenience, you can also use the `.or` method:
+For convenience, you can also use the [`.or` method](#or):
 
 ```ts
 const stringOrNumber = z.string().or(z.number());
+```
+
+**Optional string validation:**
+
+To validate an optional form input, you can union the desired string validation with an empty string [literal](#literals).
+
+This example validates an input that is optional but needs to contain a [valid URL](#strings):
+
+```ts
+const optionalUrl = z.union( [
+    z.string().url().nullish(),
+    z.literal( '' ),
+] )
+
+console.log( optionalUrl.safeParse( undefined ).success ) // true
+console.log( optionalUrl.safeParse( null ).success ) // true
+console.log( optionalUrl.safeParse( '' ).success ) // true
+console.log( optionalUrl.safeParse( 'https://zod.dev' ).success ) // true
+console.log( optionalUrl.safeParse( 'not a valid url' ).success ) // false
 ```
 
 ## Discriminated unions
@@ -2142,7 +2172,7 @@ z.promise(z.string());
 
 ### `.or`
 
-A convenience method for union types.
+A convenience method for [union types](#unions).
 
 ```ts
 const stringOrNumber = z.string().or(z.number()); // string | number
