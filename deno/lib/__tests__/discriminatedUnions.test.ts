@@ -230,6 +230,19 @@ test("valid expected types from inference with another DiscriminatedUnion elemen
   >(true);
 });
 
+test("DU flattens children DiscriminatedUnion elements with same discriminator key", () => {
+  const A = z.object({ type: z.literal("a"), a: z.literal(1) });
+  const B = z.object({ type: z.literal("b"), b: z.literal(2) });
+  const C = z.object({ type: z.literal("c").optional(), c: z.literal(true) });
+  const D = z.object({ type: z.literal("d"), d: z.literal("d") });
+
+  const AorB = z.discriminatedUnion("type", [A, B]);
+  const child = z.discriminatedUnion("type", [AorB, C]);
+  const parent = z.discriminatedUnion("type", [child, D]);
+
+  expect(parent.options.length).toEqual(4);
+});
+
 test("valid - nested disjointed DiscriminatedUnions", () => {
   const subtype = z.discriminatedUnion("subtype", [
     z.object({

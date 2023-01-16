@@ -2596,7 +2596,24 @@ export class ZodDiscriminatedUnion<
     options: Types,
     params?: RawCreateParams
   ): ZodDiscriminatedUnion<Discriminator, Types> {
-    // Get all the valid discriminator values
+    // compact DU tree by "flattening" child DUs with same discriminator
+    const homologueAssertion = (option: Types[number]) =>
+      option instanceof ZodDiscriminatedUnion &&
+      option.discriminator === discriminator;
+
+    const duHomologues = options.filter(homologueAssertion) as Array<
+      ZodDiscriminatedUnion<Discriminator, Types>
+    >;
+
+    const nonDuHomologues = options.filter(
+      (option) => !homologueAssertion(option)
+    );
+
+    const availableOptions = [
+      ...duHomologues.flatMap((du) => du.options),
+      ...nonDuHomologues,
+    ] as Types;
+
     const optionsMap: Map<Primitive, Types[number]> = new Map();
 
     const addUniqueDiscriminatorValues = (
@@ -2616,7 +2633,7 @@ export class ZodDiscriminatedUnion<
       }
     };
 
-    for (const type of options) {
+    for (const type of availableOptions) {
       if (type instanceof ZodDiscriminatedUnion) {
         const values = type._enforceParentDiscriminator(discriminator);
         addUniqueDiscriminatorValues(values, type);
@@ -2635,7 +2652,7 @@ export class ZodDiscriminatedUnion<
     return new ZodDiscriminatedUnion<Discriminator, Types>({
       typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion,
       discriminator,
-      options,
+      options: availableOptions,
       optionsMap,
       ...processCreateParams(params),
     });
