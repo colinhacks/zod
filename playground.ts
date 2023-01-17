@@ -1,22 +1,22 @@
 import { z } from "./src";
 
-console.log(z.coerce.boolean().parse("tuna")); // => true
-console.log(z.coerce.boolean().parse("true")); // => true
-console.log(z.coerce.boolean().parse("false")); // => true
-console.log(z.coerce.boolean().parse(1)); // => true
-console.log(z.coerce.boolean().parse([])); // => true
+// console.log(z.coerce.boolean().parse("tuna")); // => true
+// console.log(z.coerce.boolean().parse("true")); // => true
+// console.log(z.coerce.boolean().parse("false")); // => true
+// console.log(z.coerce.boolean().parse(1)); // => true
+// console.log(z.coerce.boolean().parse([])); // => true
 
-console.log(z.coerce.boolean().parse(0)); // => false
-console.log(z.coerce.boolean().parse(undefined)); // => false
-console.log(z.coerce.boolean().parse(null)); // => false
+// console.log(z.coerce.boolean().parse(0)); // => false
+// console.log(z.coerce.boolean().parse(undefined)); // => false
+// console.log(z.coerce.boolean().parse(null)); // => false
 
-z.object({
-  first: z.string(),
-  last: z.string(),
-}).transform((val) => ({
-  ...val,
-  full: `${val.first} ${val.last}`,
-}));
+const p = z.object({
+  first: z.string({ label: "First Name", }).min(3, {}),
+  last: z.number({})
+})
+
+const d = p.parse({ first: "12", last: 12 })
+console.log(d);
 
 // z.number().catch(() => (Array.isArray(e) ? e.length : -1));
 
@@ -32,11 +32,11 @@ z.object({
 // const arg = stringifiable.parse("");
 // arg.toString();
 
-console.log(
-  z
-    .object({
-      first: z.string().catch("first"),
-      second: z.string().catch("second"),
-    })
-    .parse(undefined)
-);
+// console.log(
+//   z
+//     .object({
+//       first: z.string().catch("first"),
+//       second: z.string().catch("second"),
+//     })
+//     .parse(undefined)
+// );

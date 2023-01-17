@@ -3,6 +3,8 @@ import { ZodErrorMap, ZodIssueCode } from "../ZodError";
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {
   let message: string;
+  // label is available here
+  // issue.label
   switch (issue.code) {
     case ZodIssueCode.invalid_type:
       if (issue.received === ZodParsedType.undefined) {

@@ -39,6 +39,7 @@ export type ZodIssueCode = keyof typeof ZodIssueCode;
 export type ZodIssueBase = {
   path: (string | number)[];
   message?: string;
+  label?: string;
 };
 
 export interface ZodInvalidTypeIssue extends ZodIssueBase {

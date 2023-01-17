@@ -56,6 +56,7 @@ export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
   errorMap?: ZodErrorMap;
   description?: string;
+  label?: string;
 }
 
 class ParseInputLazyPath implements ParseInput {
@@ -102,6 +103,7 @@ export type RawCreateParams =
       invalid_type_error?: string;
       required_error?: string;
       description?: string;
+      label?: string;
     }
   | undefined;
 export type ProcessedCreateParams = {
@@ -364,6 +366,7 @@ export abstract class ZodType<
 
   constructor(def: Def) {
     this._def = def;
+
     this.parse = this.parse.bind(this);
     this.safeParse = this.safeParse.bind(this);
     this.parseAsync = this.parseAsync.bind(this);
@@ -388,7 +391,6 @@ export abstract class ZodType<
     this.isNullable = this.isNullable.bind(this);
     this.isOptional = this.isOptional.bind(this);
   }
-
   optional(): ZodOptional<this> {
     return ZodOptional.create(this, this._def) as any;
   }
@@ -589,6 +591,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       if (check.kind === "min") {
         if (input.data.length < check.value) {
           ctx = this._getOrReturnCtx(input, ctx);
+
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_small,
             minimum: check.value,
@@ -596,7 +599,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             inclusive: true,
             exact: false,
             message: check.message,
+            label: this._def.label,
           });
+
           status.dirty();
         }
       } else if (check.kind === "max") {
@@ -892,6 +897,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodString,
       coerce: params?.coerce ?? false,
+      label: params?.label,
       ...processCreateParams(params),
     });
   };
