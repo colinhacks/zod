@@ -614,6 +614,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             inclusive: true,
             exact: false,
             message: check.message,
+            label: this._def.label,
           });
           status.dirty();
         }

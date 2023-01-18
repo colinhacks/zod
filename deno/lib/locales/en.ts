@@ -9,8 +9,11 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.invalid_type:
       if (issue.received === ZodParsedType.undefined) {
         message = "Required";
+        if (issue.label) message = `${issue.label} is Required`;
       } else {
         message = `Expected ${issue.expected}, received ${issue.received}`;
+        if (issue.label)
+          message = `${issue.label} is Expected to be ${issue.expected}, received ${issue.received}`;
       }
       break;
     case ZodIssueCode.invalid_literal:
@@ -18,61 +21,86 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
         issue.expected,
         util.jsonStringifyReplacer
       )}`;
+      if (issue.label)
+        message = `Invalid value for ${issue.label} is Expected to be ${issue.expected}`;
+
       break;
     case ZodIssueCode.unrecognized_keys:
       message = `Unrecognized key(s) in object: ${util.joinValues(
         issue.keys,
         ", "
       )}`;
+
+      if (issue.label) message = `Extra property is passed in ${issue.label}`;
       break;
     case ZodIssueCode.invalid_union:
       message = `Invalid input`;
+      if (issue.label) message = `Input is invalid for ${issue.label}`;
       break;
     case ZodIssueCode.invalid_union_discriminator:
       message = `Invalid discriminator value. Expected ${util.joinValues(
         issue.options
       )}`;
+      if (issue.label)
+        message = `Invalid discriminator value in ${
+          issue.label
+        }. Expected ${util.joinValues(issue.options)}`;
       break;
     case ZodIssueCode.invalid_enum_value:
       message = `Invalid enum value. Expected ${util.joinValues(
         issue.options
       )}, received '${issue.received}'`;
+      if (issue.label) message = `Invalid value in ${issue.label}`;
       break;
     case ZodIssueCode.invalid_arguments:
       message = `Invalid function arguments`;
+      if (issue.label) message = `Invalid Function arguments in ${issue.label}`;
       break;
     case ZodIssueCode.invalid_return_type:
       message = `Invalid function return type`;
+      if (issue.label)
+        message = `Invalid Function return type for ${issue.label}`;
       break;
     case ZodIssueCode.invalid_date:
       message = `Invalid date`;
+      if (issue.label) message = `${issue.label} is a invalid date`;
       break;
     case ZodIssueCode.invalid_string:
       if (typeof issue.validation === "object") {
         if ("startsWith" in issue.validation) {
           message = `Invalid input: must start with "${issue.validation.startsWith}"`;
+          if (issue.label)
+            message = `${issue.label} must start with "${issue.validation.startsWith}"`;
         } else if ("endsWith" in issue.validation) {
           message = `Invalid input: must end with "${issue.validation.endsWith}"`;
+          if (issue.label)
+            message = `${issue.label} must end with "${issue.validation.endsWith}"`;
         } else {
           util.assertNever(issue.validation);
         }
       } else if (issue.validation !== "regex") {
         message = `Invalid ${issue.validation}`;
+        if (issue.label) message = `${issue.label} is invalid`;
       } else {
         message = "Invalid";
       }
       break;
     case ZodIssueCode.too_small:
       if (issue.type === "array")
-        message = `Array must contain ${
+        message = `${issue.label ?? "Array"} must contain ${
           issue.exact ? "exactly" : issue.inclusive ? `at least` : `more than`
         } ${issue.minimum} element(s)`;
       else if (issue.type === "string")
         message = `String must contain ${
           issue.exact ? "exactly" : issue.inclusive ? `at least` : `over`
         } ${issue.minimum} character(s)`;
+
+      if (issue.label)
+        message = `${issue.label} must be ${
+          issue.exact ? "exactly" : issue.inclusive ? `at least` : `over`
+        } ${issue.minimum} character(s)`;
       else if (issue.type === "number")
-        message = `Number must be ${
+        message = `${issue.label ?? "Number"} must be ${
           issue.exact
             ? `exactly equal to `
             : issue.inclusive
@@ -80,7 +108,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
             : `greater than `
         }${issue.minimum}`;
       else if (issue.type === "date")
-        message = `Date must be ${
+        message = `${issue.label ?? "Date"} must be ${
           issue.exact
             ? `exactly equal to `
             : issue.inclusive
@@ -91,15 +119,15 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       break;
     case ZodIssueCode.too_big:
       if (issue.type === "array")
-        message = `Array must contain ${
+        message = `${issue.label ?? "Array"} must contain ${
           issue.exact ? `exactly` : issue.inclusive ? `at most` : `less than`
         } ${issue.maximum} element(s)`;
       else if (issue.type === "string")
-        message = `String must contain ${
+        message = `${issue.label ?? "String"} must contain ${
           issue.exact ? `exactly` : issue.inclusive ? `at most` : `under`
         } ${issue.maximum} character(s)`;
       else if (issue.type === "number")
-        message = `Number must be ${
+        message = `${issue.label ?? "Number"} must be ${
           issue.exact
             ? `exactly`
             : issue.inclusive
@@ -107,26 +135,28 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
             : `less than`
         } ${issue.maximum}`;
       else if (issue.type === "date")
-        message = `Date must be ${
+        message = `${issue.label ?? "Date"} must be ${
           issue.exact
             ? `exactly`
             : issue.inclusive
             ? `smaller than or equal to`
             : `smaller than`
         } ${new Date(issue.maximum)}`;
-      else message = "Invalid input";
+      else message = `Invalid input${issue.label ? ` for ${issue.label}` : ""}`;
       break;
     case ZodIssueCode.custom:
-      message = `Invalid input`;
+      message = `Invalid input${issue.label ? ` for ${issue.label}` : ""}`;
       break;
     case ZodIssueCode.invalid_intersection_types:
       message = `Intersection results could not be merged`;
       break;
     case ZodIssueCode.not_multiple_of:
-      message = `Number must be a multiple of ${issue.multipleOf}`;
+      message = `${issue.label ?? "Number"} must be a multiple of ${
+        issue.multipleOf
+      }`;
       break;
     case ZodIssueCode.not_finite:
-      message = "Number must be finite";
+      message = `${issue.label ?? "Number"} must be finite`;
       break;
     default:
       message = _ctx.defaultError;

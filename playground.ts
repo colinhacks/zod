@@ -11,12 +11,13 @@ import { z } from "./src";
 // console.log(z.coerce.boolean().parse(null)); // => false
 
 const p = z.object({
-  first: z.string({ label: "First Name", }).min(3, {}),
-  last: z.number({})
+  first: z.string({ label: "First Name", }).min(3),
 })
 
-const d = p.parse({ first: "12", last: 12 })
-console.log(d);
+const d = p.safeParse({ first: "12", last: 12 })
+if (d.success) console.log(d.data);
+else console.log(d.error.message);
+
 
 // z.number().catch(() => (Array.isArray(e) ? e.length : -1));
 
