@@ -1902,7 +1902,6 @@ export type SomeZodObject = ZodObject<
   ZodRawShape,
   UnknownKeysParam,
   ZodTypeAny,
-  any,
   any
 >;
 
@@ -1937,9 +1936,8 @@ export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = "strip",
   Catchall extends ZodTypeAny = ZodTypeAny,
-  Output = objectOutputType<T, Catchall>,
-  Input = objectInputType<T, Catchall>
-> extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
+  Output = objectOutputType<T, Catchall>
+> extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Output> {
   private _cached: { shape: T; keys: string[] } | null = null;
 
   _getCached(): { shape: T; keys: string[] } {
@@ -4363,7 +4361,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodNever
   | ZodVoid
   | ZodArray<any, any>
-  | ZodObject<any, any, any, any, any>
+  | ZodObject<any, any, any, any>
   | ZodUnion<any>
   | ZodDiscriminatedUnion<any, any>
   | ZodIntersection<any, any>
