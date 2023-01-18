@@ -1467,55 +1467,29 @@ type Teacher = z.infer<typeof Teacher>;
 You can define a recursive schema in Zod, but because of a limitation of TypeScript, their type can't be statically inferred. Instead you'll need to define the type definition manually, and provide it to Zod as a "type hint".
 
 ```ts
-interface Category {
-  name: string;
-  subcategories: Category[];
-}
-
-// cast to z.ZodType<Category>
-const Category: z.ZodType<Category> = z.lazy(() =>
-  z.object({
+const baseCategorySchema = z.object( {
     name: z.string(),
-    subcategories: z.array(Category),
-  })
-);
+} )
 
-Category.parse({
-  name: "People",
-  subcategories: [
-    {
-      name: "Politicians",
-      subcategories: [{ name: "Presidents", subcategories: [] }],
-    },
-  ],
-}); // passes
-```
-
-Unfortunately this code is a bit duplicative, since you're declaring the types twice: once in the interface and again in the Zod definition.
-
-<!-- If your schema has lots of primitive fields, there's a way of reducing the amount of duplication:
-
-```ts
-// define all the non-recursive stuff here
-const BaseCategory = z.object({
-  name: z.string(),
-  tags: z.array(z.string()),
-  itemCount: z.number(),
-});
-
-// create an interface that extends the base schema
-interface Category extends z.infer<typeof BaseCategory> {
-  subcategories: Category[];
+type Category = z.infer<typeof baseCategorySchema> & {
+    subcategories: Category[]
 }
 
-// merge the base schema with
-// a new Zod schema containing relations
-const Category: z.ZodType<Category> = BaseCategory.merge(
-  z.object({
-    subcategories: z.lazy(() => z.array(Category)),
-  })
-);
-``` -->
+const categorySchema: z.ZodType<Category> = baseCategorySchema.extend( {
+    subcategories: z.lazy( () => categorySchema.array() ),
+} )
+
+categorySchema.parse( {
+    name: 'People',
+    subcategories: [ {
+        name: 'Politicians',
+        subcategories: [ {
+            name: 'Presidents',
+            subcategories: []
+        } ],
+    } ],
+} ) // passes
+```
 
 ### JSON type
 
