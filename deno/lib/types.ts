@@ -1652,8 +1652,8 @@ export class ZodArray<
   arrayOutputType<T, Cardinality>,
   ZodArrayDef<T>,
   Cardinality extends "atleastone"
-    ? [T["_input"], ...T["_input"][]]
-    : T["_input"][]
+    ? [T["_output"], ...T["_output"][]]
+    : T["_output"][]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx, status } = this._processInputParams(input);
@@ -3439,7 +3439,7 @@ export interface ZodLazyDef<T extends ZodTypeAny = ZodTypeAny>
 export class ZodLazy<T extends ZodTypeAny> extends ZodType<
   output<T>,
   ZodLazyDef<T>,
-  input<T>
+  output<T>
 > {
   get schema(): T {
     return this._def.getter();

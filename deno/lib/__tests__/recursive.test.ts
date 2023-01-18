@@ -80,6 +80,27 @@ test("recursion involving union type", () => {
   LinkedListSchema.parse(linkedListExample);
 });
 
+test("refine", () => {
+  type Path = `${string}/${string}`;
+
+  const isPath = (value: string): value is Path =>
+    value.split("/").length === 2;
+
+  const refineSchema = z.string().refine(isPath);
+
+  type A = {
+    path: Path;
+    children: A[];
+  };
+
+  const aSchema: z.ZodType<A> = z.lazy(() =>
+    z.object({
+      path: refineSchema,
+      children: z.array(aSchema),
+    })
+  );
+});
+
 // interface A {
 //   val: number;
 //   b: B;

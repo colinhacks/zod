@@ -276,3 +276,24 @@ test("fatal superRefine", () => {
   expect(result.success).toEqual(false);
   if (!result.success) expect(result.error.issues.length).toEqual(1);
 });
+
+test("compatibility with ZodType", () => {
+  const stringIsValid = (value: string): value is "a" | "b" =>
+    ["a", "b"].includes(value);
+
+  const fooSchema = z.object({
+    type: z.string().refine(stringIsValid),
+  });
+
+  type Foo = z.infer<typeof fooSchema>;
+
+  type Bar = {
+    children: Foo[];
+  };
+
+  const barSchema = z.object({
+    children: fooSchema.array(),
+  });
+
+  util.assertIs<z.ZodType<Bar>>(barSchema);
+});
