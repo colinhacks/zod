@@ -4509,6 +4509,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     throw new ZodTemplateLiteralUnsupportedTypeError();
   }
 
+  // FIXME: we don't support transformations, so `.trim()` is not supported.
   protected _transformZodStringPartToRegexString(part: ZodString): string {
     let maxLength = Infinity,
       minLength = 0,
