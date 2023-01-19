@@ -5680,11 +5680,11 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     part: TemplateLiteralPrimitive | TemplateLiteralInterpolatedPosition
   ): string {
     if (!(part instanceof ZodType)) {
-      return this._getEscapedStringForRegex(part);
+      return this._escapeRegExp(part);
     }
 
     if (part instanceof ZodLiteral) {
-      return this._getEscapedStringForRegex(part._def.value);
+      return this._escapeRegExp(part._def.value);
     }
 
     if (part instanceof ZodString) {
@@ -5697,7 +5697,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
           ? part._def.values
           : util.getValidEnumValues(part._def.values);
 
-      return `(${values.map(this._getEscapedStringForRegex).join("|")})`;
+      return `(${values.map(this._escapeRegExp).join("|")})`;
     }
 
     if (part instanceof ZodUnion) {
@@ -5931,15 +5931,12 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     return regexString.replace(/(^\^)|(\$$)/g, "");
   }
 
-  protected _getEscapedStringForRegex(str: unknown): string {
+  protected _escapeRegExp(str: unknown): string {
     if (typeof str !== "string") {
       str = `${str}`;
     }
 
-    return (str as string).replace(
-      /(\(|\)|\[|\]|\{|\}|\.|\\|\/|\^|\-|\$|\?|\:|\=|\!|\*|\+|\,|\|)/g,
-      "\\$1"
-    );
+    return (str as string).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
   static create = (
