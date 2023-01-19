@@ -5576,6 +5576,38 @@ export interface ZodTemplateLiteralDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral;
 }
 
+export class ZodTemplateLiteralUnsupportedTypeError extends Error {
+  constructor() {
+    super("Unsupported zod type!");
+
+    const actualProto = new.target.prototype;
+    if (Object.setPrototypeOf) {
+      // eslint-disable-next-line ban/ban
+      Object.setPrototypeOf(this, actualProto);
+    } else {
+      (this as any).__proto__ = actualProto;
+    }
+    this.name = "ZodTemplateLiteralUnsupportedTypeError";
+  }
+}
+
+export class ZodTemplateLiteralUnsupportedCheckError extends Error {
+  constructor(typeKind: ZodFirstPartyTypeKind, check: string) {
+    super(
+      `${typeKind}'s ${check} check is not supported in template literals!`
+    );
+
+    const actualProto = new.target.prototype;
+    if (Object.setPrototypeOf) {
+      // eslint-disable-next-line ban/ban
+      Object.setPrototypeOf(this, actualProto);
+    } else {
+      (this as any).__proto__ = actualProto;
+    }
+    this.name = "ZodTemplateLiteralUnsupportedCheckError";
+  }
+}
+
 export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   Template,
   ZodTemplateLiteralDef
@@ -5721,9 +5753,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       return "undefined";
     }
 
-    throw new Error(
-      "Zod error: Unsupported ZodTemplateLiteral argument! Please submit an issue at https://github.com/colinhacks/zod/issues"
-    );
+    throw new ZodTemplateLiteralUnsupportedTypeError();
   }
 
   protected _transformZodStringPartToRegexString(part: ZodString): string {
@@ -5751,13 +5781,6 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
         return this._unwrapRegexString(ch.regex.source);
       }
 
-      if (ch.kind === "url") {
-        // FIXME: we use native URL for validation, so cannot regex test in such cases.
-        throw new Error(
-          "Zod error: ZodTemplateLiteral does not support use of ZodString with url check!"
-        );
-      }
-
       if (ch.kind === "uuid") {
         return this._unwrapRegexString(uuidRegex.source);
       }
@@ -5772,6 +5795,11 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
         minLength = Math.max(minLength, ch.value);
       } else if (ch.kind === "startsWith") {
         startsWith = ch.value;
+      } else {
+        throw new ZodTemplateLiteralUnsupportedCheckError(
+          ZodFirstPartyTypeKind.ZodString,
+          ch.kind
+        );
       }
     }
 
@@ -5854,10 +5882,11 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
             canBeZero = false;
           }
         }
-      } else if (ch.kind === "multipleOf") {
-        if (util.isInteger(ch.value)) {
-          isInt = true;
-        }
+      } else {
+        throw new ZodTemplateLiteralUnsupportedCheckError(
+          ZodFirstPartyTypeKind.ZodNumber,
+          ch.kind
+        );
       }
     }
 
