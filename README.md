@@ -1520,6 +1520,8 @@ const schema: z.ZodType<Output, z.ZodTypeDef, Input> = baseSchema.extend( {
 } )
 ```
 
+Thanks to [marcus13371337](https://github.com/marcus13371337) and [JoelBeeldi](https://github.com/JoelBeeldi) for this example.
+
 ### JSON type
 
 If you want to validate any JSON value, you can use the snippet below.
