@@ -1491,6 +1491,8 @@ categorySchema.parse( {
 } ) // passes
 ```
 
+Thanks to [crasite](https://github.com/crasite) for this example.
+
 ### ZodType with ZodEffects
 When using `z.ZodType` with `z.ZodEffects` (
     [`.refine`](https://github.com/colinhacks/zod#refine),
