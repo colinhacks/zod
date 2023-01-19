@@ -4506,9 +4506,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       return "undefined";
     }
 
-    throw new Error(
-      "Zod error: Unsupported ZodTemplateLiteral argument! Please submit an issue at https://github.com/colinhacks/zod/issues"
-    );
+    throw new ZodTemplateLiteralUnsupportedTypeError();
   }
 
   protected _transformZodStringPartToRegexString(part: ZodString): string {
@@ -4536,13 +4534,6 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
         return this._unwrapRegexString(ch.regex.source);
       }
 
-      if (ch.kind === "url") {
-        // FIXME: we use native URL for validation, so cannot regex test in such cases.
-        throw new Error(
-          "Zod error: ZodTemplateLiteral does not support use of ZodString with url check!"
-        );
-      }
-
       if (ch.kind === "uuid") {
         return this._unwrapRegexString(uuidRegex.source);
       }
@@ -4557,6 +4548,11 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
         minLength = Math.max(minLength, ch.value);
       } else if (ch.kind === "startsWith") {
         startsWith = ch.value;
+      } else {
+        throw new ZodTemplateLiteralUnsupportedCheckError(
+          ZodFirstPartyTypeKind.ZodString,
+          ch.kind
+        );
       }
     }
 
