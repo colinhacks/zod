@@ -5847,6 +5847,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     return `{${minLength},}`;
   }
 
+  // FIXME: we do not support exponent notation (e.g. 2e5) since it conflicts with `.int()`.
   protected _transformZodNumberPartToRegexString(part: ZodNumber): string {
     let canBeNegative = true,
       canBePositive = true,
