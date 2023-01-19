@@ -319,6 +319,9 @@ test("template literal unsupported args", () => {
   expect(() =>
     z.templateLiteral().addInterpolatedPosition(z.number().multipleOf(2))
   ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(z.string().trim())
+  ).toThrow();
 });
 
 test("template literal parsing - success - basic cases", () => {
