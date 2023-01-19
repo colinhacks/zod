@@ -1491,6 +1491,35 @@ categorySchema.parse( {
 } ) // passes
 ```
 
+### ZodType with ZodEffects
+When using `z.ZodType` with `z.ZodEffects` (
+    [`.refine`](https://github.com/colinhacks/zod#refine),
+    [`.transform`](https://github.com/colinhacks/zod#transform),
+    [`preprocess`](https://github.com/colinhacks/zod#preprocess),
+    etc...
+), you will need to define the input and output types of the schema. `z.ZodType<Output, z.ZodTypeDef, Input>`
+
+```ts
+const isValidId = ( id: string ): id is `${ string }/${ string }` =>
+    id.split( '/' ).length === 2
+
+const baseSchema = z.object( {
+    id: z.string().refine( isValidId )
+} )
+
+type Input = z.input<typeof baseSchema> & {
+    children: Input[]
+}
+
+type Output = z.output<typeof baseSchema> & {
+    children: Output[]
+}
+
+const schema: z.ZodType<Output, z.ZodTypeDef, Input> = baseSchema.extend( {
+    children: z.lazy( () => schema.array() ),
+} )
+```
+
 ### JSON type
 
 If you want to validate any JSON value, you can use the snippet below.
