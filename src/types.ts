@@ -5882,10 +5882,11 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
             canBeZero = false;
           }
         }
-      } else if (ch.kind === "multipleOf") {
-        if (util.isInteger(ch.value)) {
-          isInt = true;
-        }
+      } else {
+        throw new ZodTemplateLiteralUnsupportedCheckError(
+          ZodFirstPartyTypeKind.ZodNumber,
+          ch.kind
+        );
       }
     }
 

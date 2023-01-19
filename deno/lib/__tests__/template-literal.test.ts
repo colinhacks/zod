@@ -36,12 +36,6 @@ const anyNegativeNumber = z
 const anyPositiveNumber = z
   .templateLiteral()
   .addInterpolatedPosition(z.number().positive());
-const multipleOfTwo = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.number().multipleOf(2));
-const multipleOfPi = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.number().multipleOf(Math.PI));
 const zeroButInADumbWay = z
   .templateLiteral()
   .addInterpolatedPosition(z.number().nonnegative().nonpositive());
@@ -174,8 +168,6 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof anyInt>, `${number}`>(true);
   util.assertEqual<z.infer<typeof anyNegativeNumber>, `${number}`>(true);
   util.assertEqual<z.infer<typeof anyPositiveNumber>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof multipleOfTwo>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof multipleOfPi>, `${number}`>(true);
   util.assertEqual<z.infer<typeof zeroButInADumbWay>, `${number}`>(true);
   util.assertEqual<z.infer<typeof finiteButInADumbWay>, `${number}`>(true);
   util.assertEqual<z.infer<typeof bool>, `true` | `false`>(true);
@@ -324,6 +316,9 @@ test("template literal unsupported args", () => {
       z.object({}).brand("brand")
     )
   ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(z.number().multipleOf(2))
+  ).toThrow();
 });
 
 test("template literal parsing - success - basic cases", () => {
@@ -364,9 +359,6 @@ test("template literal parsing - success - basic cases", () => {
   anyPositiveNumber.parse("123");
   anyPositiveNumber.parse("1.23");
   anyPositiveNumber.parse("Infinity");
-  multipleOfTwo.parse("2");
-  multipleOfPi.parse("2");
-  multipleOfPi.parse("3.14");
   zeroButInADumbWay.parse("0");
   zeroButInADumbWay.parse("00000");
   finiteButInADumbWay.parse("5");
@@ -462,7 +454,6 @@ test("template literal parsing - failure - basic cases", () => {
   expect(() => anyPositiveNumber.parse("0")).toThrow();
   expect(() => anyPositiveNumber.parse("-1")).toThrow();
   expect(() => anyPositiveNumber.parse("-Infinity")).toThrow();
-  expect(() => multipleOfTwo.parse("3.14")).toThrow();
   expect(() => zeroButInADumbWay.parse("1")).toThrow();
   expect(() => zeroButInADumbWay.parse("-1")).toThrow();
   expect(() => finiteButInADumbWay.parse("Infinity")).toThrow();
