@@ -589,7 +589,7 @@ z.string().endsWith(string);
 z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().date(); // ISO short date format.
-z.string().time(); // time of day in 24-hour format. same options as datetime.
+z.string().time(); // time of day in 24-hour format, see below for options.
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
