@@ -25,11 +25,12 @@ const templateLiteral = ((arg) =>
     ...arg,
     coerce: true,
   })) as (typeof ZodTemplateLiteral)["create"];
+
 export {
   coerceBigint as bigint,
   coerceBoolean as boolean,
   coerceDate as date,
   coerceNumber as number,
   coerceString as string,
-  templateLiteral as template,
+  templateLiteral as templateLiteral,
 };

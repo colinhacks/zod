@@ -29,6 +29,8 @@ import {
   ZodErrorMap,
   ZodIssue,
   ZodIssueCode,
+  ZodTemplateLiteralUnsupportedCheckError,
+  ZodTemplateLiteralUnsupportedTypeError,
 } from "./ZodError";
 
 export { ZodParsedType } from "./helpers/util";
@@ -5574,38 +5576,6 @@ export interface ZodTemplateLiteralDef extends ZodTypeDef {
   )[];
   regexString: string;
   typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral;
-}
-
-export class ZodTemplateLiteralUnsupportedTypeError extends Error {
-  constructor() {
-    super("Unsupported zod type!");
-
-    const actualProto = new.target.prototype;
-    if (Object.setPrototypeOf) {
-      // eslint-disable-next-line ban/ban
-      Object.setPrototypeOf(this, actualProto);
-    } else {
-      (this as any).__proto__ = actualProto;
-    }
-    this.name = "ZodTemplateLiteralUnsupportedTypeError";
-  }
-}
-
-export class ZodTemplateLiteralUnsupportedCheckError extends Error {
-  constructor(typeKind: ZodFirstPartyTypeKind, check: string) {
-    super(
-      `${typeKind}'s ${check} check is not supported in template literals!`
-    );
-
-    const actualProto = new.target.prototype;
-    if (Object.setPrototypeOf) {
-      // eslint-disable-next-line ban/ban
-      Object.setPrototypeOf(this, actualProto);
-    } else {
-      (this as any).__proto__ = actualProto;
-    }
-    this.name = "ZodTemplateLiteralUnsupportedCheckError";
-  }
 }
 
 export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
