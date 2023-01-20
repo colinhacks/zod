@@ -1721,13 +1721,13 @@ const connectionString = z
   .addInterpolatedPosition(
     z
       .templateLiteral()
-      .addInterpolatedPosition(z.string().min(1).describe("username"))
+      .addInterpolatedPosition(z.string().regex(/\w+/).describe("username"))
       .addLiteral(":")
-      .addInterpolatedPosition(z.string().min(1).describe("password"))
+      .addInterpolatedPosition(z.string().regex(/\w+/).describe("password"))
       .addLiteral("@")
       .optional()
   )
-  .addInterpolatedPosition(z.string().min(1).describe("host"))
+  .addInterpolatedPosition(z.string().regex(/\w+/).describe("host"))
   .addLiteral(":")
   .addInterpolatedPosition(
     z.number().finite().int().positive().describe("port")
@@ -1737,7 +1737,7 @@ const connectionString = z
       .templateLiteral()
       .addLiteral("/")
       .addInterpolatedPosition(
-        z.string().min(1).optional().describe("defaultauthdb")
+        z.string().regex(/\w+/).optional().describe("defaultauthdb")
       )
       .addInterpolatedPosition(
         z
