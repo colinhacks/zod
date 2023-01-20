@@ -109,7 +109,7 @@ const brandedString = z
 const url = z
   .templateLiteral()
   .addLiteral("https://")
-  .addInterpolatedPosition(z.string().min(1))
+  .addInterpolatedPosition(z.string().regex(/\w+/))
   .addLiteral(".")
   .addInterpolatedPosition(z.enum(["com", "net"]));
 
@@ -119,13 +119,13 @@ const connectionString = z
   .addInterpolatedPosition(
     z
       .templateLiteral()
-      .addInterpolatedPosition(z.string().min(1).describe("username"))
+      .addInterpolatedPosition(z.string().regex(/\w+/).describe("username"))
       .addLiteral(":")
-      .addInterpolatedPosition(z.string().min(1).describe("password"))
+      .addInterpolatedPosition(z.string().regex(/\w+/).describe("password"))
       .addLiteral("@")
       .optional()
   )
-  .addInterpolatedPosition(z.string().min(1).describe("host"))
+  .addInterpolatedPosition(z.string().regex(/\w+/).describe("host"))
   .addLiteral(":")
   .addInterpolatedPosition(
     z.number().finite().int().positive().describe("port")
@@ -135,7 +135,7 @@ const connectionString = z
       .templateLiteral()
       .addLiteral("/")
       .addInterpolatedPosition(
-        z.string().min(1).optional().describe("defaultauthdb")
+        z.string().regex(/\w+/).optional().describe("defaultauthdb")
       )
       .addInterpolatedPosition(
         z
@@ -586,20 +586,28 @@ test("template literal parsing - failure - complex cases", () => {
   expect(() => connectionString.parse("mongodb://host:-1234")).toThrow();
   expect(() => connectionString.parse("mongodb://host:-12.34")).toThrow();
   expect(() => connectionString.parse("mongodb://host:")).toThrow();
-  expect(() => connectionString.parse("mongodb://:password@host:1234"));
-  expect(() => connectionString.parse("mongodb://usernamepassword@host:1234"));
-  expect(() => connectionString.parse("mongodb://username:@host:1234"));
-  expect(() => connectionString.parse("mongodb://@host:1234"));
+  expect(() =>
+    connectionString.parse("mongodb://:password@host:1234")
+  ).toThrow();
+  expect(() =>
+    connectionString.parse("mongodb://usernamepassword@host:1234")
+  ).toThrow();
+  expect(() =>
+    connectionString.parse("mongodb://username:@host:1234")
+  ).toThrow();
+  expect(() => connectionString.parse("mongodb://@host:1234")).toThrow();
   expect(() =>
     connectionString.parse("mongodb://host:1234/defaultauthdb?authSourceadmin")
-  );
-  expect(() => connectionString.parse("mongodb://host:1234/?authSourceadmin"));
+  ).toThrow();
+  expect(() =>
+    connectionString.parse("mongodb://host:1234/?authSourceadmin")
+  ).toThrow();
   expect(() =>
     connectionString.parse(
       "mongodb://host:1234/defaultauthdb?&authSource=admin"
     )
-  );
+  ).toThrow();
   expect(() =>
     connectionString.parse("mongodb://host:1234/?&authSource=admin")
-  );
+  ).toThrow();
 });
