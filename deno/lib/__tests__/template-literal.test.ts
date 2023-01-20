@@ -114,6 +114,13 @@ const url = z
   .addLiteral(".")
   .addInterpolatedPosition(z.enum(["com", "net"]));
 
+const measurement = z.coerce
+  .templateLiteral()
+  .addInterpolatedPosition(z.number().finite())
+  .addInterpolatedPosition(
+    z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
+  );
+
 const connectionString = z
   .templateLiteral()
   .addLiteral("mongodb://")
@@ -200,6 +207,18 @@ test("template literal type inference", () => {
   util.assertEqual<
     z.infer<typeof url>,
     `https://${string}.com` | `https://${string}.net`
+  >(true);
+
+  util.assertEqual<
+    z.infer<typeof measurement>,
+    | `${number}`
+    | `${number}px`
+    | `${number}em`
+    | `${number}rem`
+    | `${number}vh`
+    | `${number}vw`
+    | `${number}vmin`
+    | `${number}vmax`
   >(true);
 
   util.assertEqual<
@@ -553,6 +572,52 @@ test("template literal parsing - success - complex cases", () => {
   url.parse("https://example.com");
   url.parse("https://speedtest.net");
 
+  measurement.parse(1);
+  measurement.parse(1.1);
+  measurement.parse(0);
+  measurement.parse(-1.1);
+  measurement.parse(-1);
+  measurement.parse("1");
+  measurement.parse("1.1");
+  measurement.parse("0");
+  measurement.parse("-1");
+  measurement.parse("-1.1");
+  measurement.parse("1px");
+  measurement.parse("1.1px");
+  measurement.parse("0px");
+  measurement.parse("-1px");
+  measurement.parse("-1.1px");
+  measurement.parse("1em");
+  measurement.parse("1.1em");
+  measurement.parse("0em");
+  measurement.parse("-1em");
+  measurement.parse("-1.1em");
+  measurement.parse("1rem");
+  measurement.parse("1.1rem");
+  measurement.parse("0rem");
+  measurement.parse("-1rem");
+  measurement.parse("-1.1rem");
+  measurement.parse("1vh");
+  measurement.parse("1.1vh");
+  measurement.parse("0vh");
+  measurement.parse("-1vh");
+  measurement.parse("-1.1vh");
+  measurement.parse("1vw");
+  measurement.parse("1.1vw");
+  measurement.parse("0vw");
+  measurement.parse("-1vw");
+  measurement.parse("-1.1vw");
+  measurement.parse("1vmin");
+  measurement.parse("1.1vmin");
+  measurement.parse("0vmin");
+  measurement.parse("-1vmin");
+  measurement.parse("-1.1vmin");
+  measurement.parse("1vmax");
+  measurement.parse("1.1vmax");
+  measurement.parse("0vmax");
+  measurement.parse("-1vmax");
+  measurement.parse("-1.1vmax");
+
   connectionString.parse("mongodb://host:1234");
   connectionString.parse("mongodb://host:1234/");
   connectionString.parse("mongodb://host:1234/defaultauthdb");
@@ -587,6 +652,12 @@ test("template literal parsing - failure - complex cases", () => {
   expect(() => url.parse("https://examplecom")).toThrow();
   expect(() => url.parse("https://example.org")).toThrow();
   expect(() => url.parse("https://example.net.il")).toThrow();
+
+  expect(() => measurement.parse("1.1.1")).toThrow();
+  expect(() => measurement.parse("Infinity")).toThrow();
+  expect(() => measurement.parse("-Infinity")).toThrow();
+  expect(() => measurement.parse("NaN")).toThrow();
+  expect(() => measurement.parse("1%")).toThrow();
 
   expect(() => connectionString.parse("mongod://host:1234")).toThrow();
   expect(() => connectionString.parse("mongodb://:1234")).toThrow();
