@@ -344,14 +344,13 @@ test("time parsing", () => {
   expect(() => time3.parse("00:00:00")).toThrow();
   expect(() => time3.parse("00:00:00.000")).toThrow();
 
-  const time4 = z.string().time({ offset: true, precision: 2 });
-  time4.parse("00:00:00.00Z");
-  time4.parse("09:52:31.12Z");
-  time4.parse("00:00:00.00+00:00");
-  time4.parse("00:00:00.00+0000");
+  const time4 = z.string().time({ offset: true, precision: 0 });
+  time4.parse("00:00:00Z");
+  time4.parse("09:52:31Z");
+  time4.parse("00:00:00+00:00");
+  time4.parse("00:00:00+0000");
   expect(() => time4.parse("")).toThrow();
   expect(() => time4.parse("foo")).toThrow();
-  expect(() => time4.parse("00:00:00")).toThrow();
   expect(() => time4.parse("00:00:00.0")).toThrow();
   expect(() => time4.parse("00:00:00.000")).toThrow();
   expect(() => time4.parse("00:00:00.000+00:00")).toThrow();

@@ -566,6 +566,7 @@ const datetimeRegex = (args: {
   } else if (args.precision == null) {
     regex = `${regex}(\\.\\d+)?`;
   }
+  // in case of `precision = 0`, don't add the decimal part.
 
   if (args.offset) {
     return new RegExp(`${regex}(([+-]\\d{2}:?\\d{2})|Z)$`);
