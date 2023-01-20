@@ -2013,7 +2013,7 @@ url.parse('https://google.gov'); // throws
 Measurement:
 
 ```ts
-const schema = z.coerce
+const measurement = z.coerce
     .templateLiteral()
     .addInterpolatedPosition(z.number().finite())
     .addInterpolatedPosition(
