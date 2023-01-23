@@ -4104,20 +4104,27 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
       parent: ctx,
     });
 
-    if (isAsync(result)) {
-      return result.then((result) => {
+    const handleResult = (
+      result: SyncParseReturnType<any>
+    ): ParseReturnType<this["_output"]> => {
+      if (result.status !== "valid") {
+        // this issue is caught; remove from array
+        ctx.common.issues.pop();
         return {
           status: "valid",
-          value:
-            result.status === "valid" ? result.value : this._def.catchValue(),
+          value: this._def.catchValue(),
         };
-      });
-    } else {
+      }
       return {
         status: "valid",
-        value:
-          result.status === "valid" ? result.value : this._def.catchValue(),
+        value: result.value,
       };
+    };
+
+    if (isAsync(result)) {
+      return result.then(handleResult);
+    } else {
+      return handleResult(result);
     }
   }
 
