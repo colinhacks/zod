@@ -755,6 +755,9 @@ console.log( dateSchema.safeParse( new Date( '1/10/23' ) ).success ) // true
 /* invalid dates */
 console.log( dateSchema.safeParse( '2023-13-10' ).success ) // false
 console.log( dateSchema.safeParse( '0000-00-00' ).success ) // false
+
+/* one gotcha - null is a valid Date */
+console.log( dateSchema.safeParse( null ).success ) // true
 ```
 
 For older zod versions, use [`z.preprocess`](#preprocess) like [described in this thread](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276).
