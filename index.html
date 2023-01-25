@@ -71,7 +71,7 @@
     <meta name="msapplication-config" content="/static/browserconfig.xml" />
     <meta name="theme-color" content="#ffffff" />
 
-    <script
+    <!-- <script
       async
       src="https://www.googletagmanager.com/gtag/js?id=G-FG8DDV0GBR"
     ></script>
@@ -82,7 +82,7 @@
       }
       gtag("js", new Date());
       gtag("config", "G-FG8DDV0GBR");
-    </script>
+    </script> -->
 
     <link
       rel="preload"
@@ -92,10 +92,14 @@
       onload="this.onload=null;this.rel='stylesheet';"
     />
 
+    <!-- Theme: Simple Dark -->
+
     <style>
+
       .markdown-section {
         max-width: 720px;
       }
+
       p > img {
         height: 200px;
       }
@@ -109,6 +113,73 @@
       }
       .markdown-section h3 code {
         font-size: 80%;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+    </style>
+    <!-- For dark style -->
+    <style>
+      .dark,
+      .dark .sidebar,
+      .dark .sidebar a {
+        background-color: #283339;
+        color: #d3d3d3;
+      }
+
+      .dark .sidebar::-webkit-scrollbar-thumb {
+        background: hsla(0, 0%, 88%, 0.4);
+      }
+
+      .dark .sidebar::-webkit-scrollbar-track {
+        background: hsla(0, 0%, 53%, 0.1);
+      }
+
+      .dark .sidebar-toggle {
+        background-color: hsl(201deg 18% 19% / 80%) !important;
+      }
+
+      .dark .markdown-section h1,
+      .dark .markdown-section h2,
+      .dark .markdown-section h3,
+      .dark .markdown-section h4,
+      .dark .markdown-section strong,
+      .dark .anchor span {
+        color: #fff;
+      }
+
+      .dark .markdown-section tr:nth-child(2n) {
+        background-color: #1f282d;
+      }
+
+      .dark .markdown-section td, .dark .markdown-section th {
+        border-color: #495e69;
+      }
+
+      .dark .markdown-section pre,
+      .dark .markdown-section code {
+        background-color: #34434b;
+      }
+
+      .dark .markdown-section code,
+      .dark .token.keyword,
+      .dark .token.function {
+        color: #f07178;
+      }
+
+      .dark .markdown-section pre > code,
+      .dark .token.punctuation {
+        color: #f3f3f3;
+      }
+
+      .dark .token.number,
+      .dark .token.boolean {
+        color: #ffcb6b;
+      }
+
+      .dark .github-corner svg {
+        color: #283339;
       }
     </style>
   </head>
@@ -125,6 +196,15 @@
     <div id="app"></div>
     <script src="//cdnjs.cloudflare.com/ajax/libs/docsify/4.12.2/docsify.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-typescript.min.js"></script>
+    <script>
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+        Docsify.dom.toggleClass(
+          Docsify.dom.body,
+          e.matches ? "add" : "remove",
+          "dark"
+        );
+      });
+    </script>
     <script>
       window.$docsify = {
         subMaxLevel: 1,
