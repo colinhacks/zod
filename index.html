@@ -92,8 +92,6 @@
       onload="this.onload=null;this.rel='stylesheet';"
     />
 
-    <!-- Theme: Simple Dark -->
-
     <style>
 
       .markdown-section {
@@ -118,9 +116,24 @@
       .sidebar::-webkit-scrollbar {
         width: 6px;
       }
+
+      .theme-btn {
+        position: fixed;
+        top: 5px;
+        left: 15px;
+        width: 24px;
+        height: 24px;
+        background-image: url("./static/moon.svg");
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center; 
+        cursor: pointer;
+        z-index: 100;
+      }
     </style>
-    <!-- For dark style -->
+    <!-- Theme: dark -->
     <style>
+
       .dark,
       .dark .sidebar,
       .dark .sidebar a {
@@ -153,7 +166,8 @@
         background-color: #1f282d;
       }
 
-      .dark .markdown-section td, .dark .markdown-section th {
+      .dark .markdown-section td,
+      .dark .markdown-section th {
         border-color: #495e69;
       }
 
@@ -181,28 +195,27 @@
       .dark .github-corner svg {
         color: #283339;
       }
+
+      .dark .theme-btn {
+        background-image: url("./static/sun.svg");
+      }
     </style>
   </head>
 
   <body>
-    <nav
-      style="
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-      "
-    ></nav>
+    <div class="theme-btn"></div>
     <div id="app"></div>
     <script src="//cdnjs.cloudflare.com/ajax/libs/docsify/4.12.2/docsify.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-typescript.min.js"></script>
     <script>
       window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
-        Docsify.dom.toggleClass(
-          Docsify.dom.body,
-          e.matches ? "add" : "remove",
-          "dark"
-        );
+        document.body.classList.toggle("dark", e.matches);
+      });
+
+      const themeBtn = document.querySelector(".theme-btn");
+
+      themeBtn.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
       });
     </script>
     <script>
