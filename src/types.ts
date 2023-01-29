@@ -2545,11 +2545,9 @@ export class ZodDiscriminatedUnion<
     }
 
     const discriminator = this.discriminator;
-    console.log("ctx.data", ctx.data);
-    console.log("discriminator", discriminator);
+
     const discriminatorValue: string = ctx.data[discriminator];
-    console.log(this.optionsMap);
-    console.log(discriminatorValue);
+
     const option = this.optionsMap.get(discriminatorValue);
 
     if (!option) {
@@ -2626,7 +2624,7 @@ export class ZodDiscriminatedUnion<
             )} has duplicate value ${String(value)}`
           );
         }
-        console.log(`setting ${String(value)}`);
+
         optionsMap.set(value, type);
       }
     }
