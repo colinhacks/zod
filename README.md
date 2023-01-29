@@ -47,10 +47,12 @@
   - [Sponsors](#sponsors)
   - [Ecosystem](#ecosystem)
 - [Installation](#installation)
-  - [Node/npm](#nodenpm)
-  - [Deno](#deno)
+  - [Requirements](#requirements)
+  - [Node/npm](#from-npm-nodebun)
+  - [Deno](#from-denolandx-deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
+- [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
 - [Numbers](#numbers)
@@ -102,6 +104,7 @@
   - [.superRefine](#superRefine)
   - [.transform](#transform)
   - [.default](#default)
+  - [.describe](#describe)
   - [.catch](#catch)
   - [.optional](#optional)
   - [.nullable](#nullable)
@@ -356,10 +359,11 @@ There are a growing number of tools that are built atop or support Zod natively!
 #### Form integrations
 
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form.
-- [`zod-validation-error`](https://github.com/causaly/zod-validation-error): Generate user-friendly error messages from `ZodError`s
+- [`zod-validation-error`](https://github.com/causaly/zod-validation-error): Generate user-friendly error messages from `ZodError`s.
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod.
 - [`zodix`](https://github.com/rileytomasek/zodix): Zod utilities for FormData and URLSearchParams in Remix loaders and actions.
+- [`remix-params-helper`](https://github.com/kiliman/remix-params-helper): Simplify integration of Zod with standard URLSearchParams and FormData for Remix apps.
 - [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod): Formik-compliant validator library that simplifies using Zod with Formik.
 - [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): Useful for translating Zod error messages.
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
@@ -381,15 +385,16 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/master/packages/zod): Generate Zod from static types & JSON schema.
 - [`json-schema-to-zod`](https://github.com/StefanTerdell/json-schema-to-zod): Convert your [JSON Schemas](https://json-schema.org/) into Zod schemas. [Live demo](https://StefanTerdell.github.io/json-schema-to-zod-react/).
 - [`json-to-zod`](https://github.com/rsinohara/json-to-zod): Convert JSON objects into Zod schemas. [Live demo](https://rsinohara.github.io/json-to-zod-react/).
-- [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema): GraphQL Code Generator plugin to generate form validation schema from your GraphQL schema
+- [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema): GraphQL Code Generator plugin to generate form validation schema from your GraphQL schema.
 - [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Generate Zod schemas from your Prisma schema.
 - [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs.
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
+- [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) Create Zod types from your Prisma models.
 
 #### Mocking
 
-- [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/Marak/Faker.js).
+- [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/faker-js/faker).
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
 
 #### Powered by Zod
@@ -397,7 +402,11 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration.
 - [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
-- [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas
+- [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas.
+
+#### Utilities for Zod
+
+- [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): Framework agnostic utilities for Zod.
 
 ## Installation
 
@@ -505,7 +514,52 @@ z.unknown();
 z.never();
 ```
 
+## Coercion for primitives
+
+Zod now provides a more convenient way to coerce primitive values.
+
+```ts
+const schema = z.coerce.string();
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // => "12"
+schema.parse(true); // => "true"
+```
+
+During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
+
+```ts
+z.coerce.string().email().min(5);
+```
+
+All primitive types support coercion.
+
+```ts
+z.coerce.string(); // String(input)
+z.coerce.number(); // Number(input)
+z.coerce.boolean(); // Boolean(input)
+z.coerce.bigint(); // BigInt(input)
+z.coerce.date(); // new Date(input)
+```
+
+**Boolean coercion**
+
+Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
+
+```ts
+z.coerce.boolean().parse("tuna"); // => true
+z.coerce.boolean().parse("true"); // => true
+z.coerce.boolean().parse("false"); // => true
+z.coerce.boolean().parse(1); // => true
+z.coerce.boolean().parse([]); // => true
+
+z.coerce.boolean().parse(0); // => false
+z.coerce.boolean().parse(undefined); // => false
+z.coerce.boolean().parse(null); // => false
+```
+
 ## Literals
+
+Literals are zod's equivilant to [TypeScript's Literal Types](https://www.typescriptlang.org/docs/handbook/literal-types.html) which allow only the exact given type and value.
 
 ```ts
 const tuna = z.literal("tuna");
@@ -566,49 +620,6 @@ z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 ```
 
-## Coercion for primitives
-
-Zod now provides a more convenient way to coerce primitive values.
-
-```ts
-const schema = z.coerce.string();
-schema.parse("tuna"); // => "tuna"
-schema.parse(12); // => "12"
-schema.parse(true); // => "true"
-```
-
-During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
-
-```ts
-z.coerce.string().email().min(5);
-```
-
-All primitive types support coercion.
-
-```ts
-z.coerce.string(); // String(input)
-z.coerce.number(); // Number(input)
-z.coerce.boolean(); // Boolean(input)
-z.coerce.bigint(); // BigInt(input)
-z.coerce.date(); // new Date(input)
-```
-
-**Boolean coercion**
-
-Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
-
-```ts
-z.coerce.boolean().parse("tuna"); // => true
-z.coerce.boolean().parse("true"); // => true
-z.coerce.boolean().parse("false"); // => true
-z.coerce.boolean().parse(1); // => true
-z.coerce.boolean().parse([]); // => true
-
-z.coerce.boolean().parse(0); // => false
-z.coerce.boolean().parse(undefined); // => false
-z.coerce.boolean().parse(null); // => false
-```
-
 ### Datetime validation
 
 The `z.string().datetime()` method defaults to UTC validation: no timezone offsets with arbitrary sub-second decimal precision.
@@ -629,6 +640,7 @@ const datetime = z.string().datetime({ offset: true });
 
 datetime.parse("2020-01-01T00:00:00+02:00"); // pass
 datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
+datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
 ```
 
@@ -744,20 +756,27 @@ z.date().min(new Date("1900-01-01"), { message: "Too old" });
 z.date().max(new Date(), { message: "Too young!" });
 ```
 
-**Supporting date strings**
+**Coercion to Date**
 
-To write a schema that accepts either a `Date` or a date string, use [`z.preprocess`](#preprocess).
+Since [zod 3.20](https://github.com/colinhacks/zod/releases/tag/v3.20), use [`z.coerce.date()`](#coercion-for-primitives) to pass the input through `new Date(input)`.
 
 ```ts
-const dateSchema = z.preprocess((arg) => {
-  if (typeof arg == "string" || arg instanceof Date) return new Date(arg);
-}, z.date());
-type DateSchema = z.infer<typeof dateSchema>;
+const dateSchema = z.coerce.date()
+type DateSchema = z.infer<typeof dateSchema>
 // type DateSchema = Date
 
-dateSchema.safeParse(new Date("1/12/22")); // success: true
-dateSchema.safeParse("2022-01-12T00:00:00.000Z"); // success: true
+/* valid dates */
+console.log( dateSchema.safeParse( '2023-01-10T00:00:00.000Z' ).success ) // true
+console.log( dateSchema.safeParse( '2023-01-10' ).success ) // true
+console.log( dateSchema.safeParse( '1/10/23' ).success ) // true
+console.log( dateSchema.safeParse( new Date( '1/10/23' ) ).success ) // true
+
+/* invalid dates */
+console.log( dateSchema.safeParse( '2023-13-10' ).success ) // false
+console.log( dateSchema.safeParse( '0000-00-00' ).success ) // false
 ```
+
+For older zod versions, use [`z.preprocess`](#preprocess) like [described in this thread](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276).
 
 ## Zod enums
 
@@ -801,7 +820,7 @@ FishEnum.enum;
 You can also retrieve the list of options as a tuple with the `.options` property:
 
 ```ts
-FishEnum.options; // ["Salmon", "Tuna", "Trout"]);
+FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 ```
 
 ## Native enums
@@ -1285,10 +1304,29 @@ stringOrNumber.parse(14); // passes
 
 Zod will test the input against each of the "options" in order and return the first value that validates successfully.
 
-For convenience, you can also use the `.or` method:
+For convenience, you can also use the [`.or` method](#or):
 
 ```ts
 const stringOrNumber = z.string().or(z.number());
+```
+
+**Optional string validation:**
+
+To validate an optional form input, you can union the desired string validation with an empty string [literal](#literals).
+
+This example validates an input that is optional but needs to contain a [valid URL](#strings):
+
+```ts
+const optionalUrl = z.union( [
+    z.string().url().nullish(),
+    z.literal( '' ),
+] )
+
+console.log( optionalUrl.safeParse( undefined ).success ) // true
+console.log( optionalUrl.safeParse( null ).success ) // true
+console.log( optionalUrl.safeParse( '' ).success ) // true
+console.log( optionalUrl.safeParse( 'https://zod.dev' ).success ) // true
+console.log( optionalUrl.safeParse( 'not a valid url' ).success ) // false
 ```
 
 ## Discriminated unions
@@ -1311,7 +1349,7 @@ const myUnion = z.discriminatedUnion("status", [
   z.object({ status: z.literal("failed"), error: z.instanceof(Error) }),
 ]);
 
-myUnion.parse({ type: "success", data: "yippie ki yay" });
+myUnion.parse({ status: "success", data: "yippie ki yay" });
 ```
 
 ## Records
@@ -1452,55 +1490,62 @@ type Teacher = z.infer<typeof Teacher>;
 You can define a recursive schema in Zod, but because of a limitation of TypeScript, their type can't be statically inferred. Instead you'll need to define the type definition manually, and provide it to Zod as a "type hint".
 
 ```ts
-interface Category {
-  name: string;
-  subcategories: Category[];
+const baseCategorySchema = z.object( {
+    name: z.string(),
+} )
+
+type Category = z.infer<typeof baseCategorySchema> & {
+    subcategories: Category[]
 }
 
-// cast to z.ZodType<Category>
-const Category: z.ZodType<Category> = z.lazy(() =>
-  z.object({
-    name: z.string(),
-    subcategories: z.array(Category),
-  })
-);
+const categorySchema: z.ZodType<Category> = baseCategorySchema.extend( {
+    subcategories: z.lazy( () => categorySchema.array() ),
+} )
 
-Category.parse({
-  name: "People",
-  subcategories: [
-    {
-      name: "Politicians",
-      subcategories: [{ name: "Presidents", subcategories: [] }],
-    },
-  ],
-}); // passes
+categorySchema.parse( {
+    name: 'People',
+    subcategories: [ {
+        name: 'Politicians',
+        subcategories: [ {
+            name: 'Presidents',
+            subcategories: []
+        } ],
+    } ],
+} ) // passes
 ```
 
-Unfortunately this code is a bit duplicative, since you're declaring the types twice: once in the interface and again in the Zod definition.
+Thanks to [crasite](https://github.com/crasite) for this example.
 
-<!-- If your schema has lots of primitive fields, there's a way of reducing the amount of duplication:
+### ZodType with ZodEffects
+When using `z.ZodType` with `z.ZodEffects` (
+    [`.refine`](https://github.com/colinhacks/zod#refine),
+    [`.transform`](https://github.com/colinhacks/zod#transform),
+    [`preprocess`](https://github.com/colinhacks/zod#preprocess),
+    etc...
+), you will need to define the input and output types of the schema. `z.ZodType<Output, z.ZodTypeDef, Input>`
 
 ```ts
-// define all the non-recursive stuff here
-const BaseCategory = z.object({
-  name: z.string(),
-  tags: z.array(z.string()),
-  itemCount: z.number(),
-});
+const isValidId = ( id: string ): id is `${ string }/${ string }` =>
+    id.split( '/' ).length === 2
 
-// create an interface that extends the base schema
-interface Category extends z.infer<typeof BaseCategory> {
-  subcategories: Category[];
+const baseSchema = z.object( {
+    id: z.string().refine( isValidId )
+} )
+
+type Input = z.input<typeof baseSchema> & {
+    children: Input[]
 }
 
-// merge the base schema with
-// a new Zod schema containing relations
-const Category: z.ZodType<Category> = BaseCategory.merge(
-  z.object({
-    subcategories: z.lazy(() => z.array(Category)),
-  })
-);
-``` -->
+type Output = z.output<typeof baseSchema> & {
+    children: Output[]
+}
+
+const schema: z.ZodType<Output, z.ZodTypeDef, Input> = baseSchema.extend( {
+    children: z.lazy( () => schema.array() ),
+} )
+```
+
+Thanks to [marcus13371337](https://github.com/marcus13371337) and [JoelBeeldi](https://github.com/JoelBeeldi) for this example.
 
 ### JSON type
 
@@ -1699,7 +1744,7 @@ Given any Zod schema, you can call its `.parse` method to check `data` is valid.
 const stringSchema = z.string();
 
 stringSchema.parse("fish"); // => returns "fish"
-stringSchema.parse(12); // throws Error('Non-string type: number');
+stringSchema.parse(12); // throws error
 ```
 
 ### `.parseAsync`
@@ -1709,11 +1754,10 @@ stringSchema.parse(12); // throws Error('Non-string type: number');
 If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`
 
 ```ts
-const stringSchema1 = z.string().refine(async (val) => val.length < 20);
-const value1 = await stringSchema.parseAsync("hello"); // => hello
+const stringSchema = z.string().refine(async (val) => val.length <= 8);
 
-const stringSchema2 = z.string().refine(async (val) => val.length > 20);
-const value2 = await stringSchema.parseAsync("hello"); // => throws
+await stringSchema.parseAsync("hello"); // => returns "hello"
+await stringSchema.parseAsync("hello world"); // => throws error
 ```
 
 ### `.safeParse`
@@ -1798,7 +1842,7 @@ type RefineParams = {
 };
 ```
 
-For advanced cases, the second argument can also be a function that returns `RefineParams`/
+For advanced cases, the second argument can also be a function that returns `RefineParams`.
 
 ```ts
 const longString = z.string().refine(
@@ -1909,7 +1953,7 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
 
 You can add as many issues as you like. If `ctx.addIssue` is _not_ called during the execution of the function, validation passes.
 
-Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` you can create any issue of any code. Each issue code is described in detail in the Error Handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md).
+Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` it's possible to throw issues of any `ZodIssueCode`. Each issue code is described in detail in the Error Handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md).
 
 #### Abort early
 
@@ -1938,7 +1982,7 @@ const schema = z.number().superRefine((val, ctx) => {
 
 #### Type refinements
 
-If you provide a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) to `.refine()` or `superRefine()`, the resulting type will be narrowed down to your predicate's type. This is useful if you are mixing multiple chained refinements and transformations:
+If you provide a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) to `.refine()` or `.superRefine()`, the resulting type will be narrowed down to your predicate's type. This is useful if you are mixing multiple chained refinements and transformations:
 
 ```ts
 const schema = z
@@ -1953,15 +1997,15 @@ const schema = z
         code: z.ZodIssueCode.custom, // customize your issue
         message: "object should exist",
       });
-      return false;
     }
-    return true;
+
+    return z.NEVER; // The return value is not used, but we need to return something to satisfy the typing
   })
   // here, TS knows that arg is not null
   .refine((arg) => arg.first === "bob", "`first` is not `bob`!");
 ```
 
-> ⚠️ You must **still** call `ctx.addIssue()` if using `superRefine()` with a type predicate function. Otherwise the refinement won't be validated.
+> ⚠️ You **must** use `ctx.addIssue()` instead of returning a boolean value to indicate whether the validation passes. If `ctx.addIssue` is _not_ called during the execution of the function, validation passes.
 
 ### `.transform`
 
@@ -1988,12 +2032,12 @@ emailToDomain.parse("colinhacks@example.com"); // => example.com
 
 #### Validating during transform
 
-The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `refine` and `validate`.
+The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `transform` and `refine`.
 
 As with `.superRefine`, the transform function receives a `ctx` object with a `addIssue` method that can be used to register validation issues.
 
 ```ts
-const Strings = z.string().transform((val, ctx) => {
+const numberInString = z.string().transform((val, ctx) => {
   const parsed = parseInt(val);
   if (isNaN(parsed)) {
     ctx.addIssue({
@@ -2063,6 +2107,17 @@ Conceptually, this is how Zod processes default values:
 
 1. If the input is `undefined`, the default value is returned
 2. Otherwise, the data is parsed using the base schema
+
+### `.describe`
+
+Use `.describe()` to add a `description` property to the resulting schema.
+
+```ts
+const documentedString = z.string().describe("A useful bit of text, if you know what to do with it.");
+documentedString.description // A useful bit of text…
+```
+
+This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
 
 ### `.catch`
 
@@ -2147,7 +2202,7 @@ z.promise(z.string());
 
 ### `.or`
 
-A convenience method for union types.
+A convenience method for [union types](#unions).
 
 ```ts
 const stringOrNumber = z.string().or(z.number()); // string | number
@@ -2481,7 +2536,7 @@ This more declarative API makes schema definitions vastly more concise.
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
-Good type inference support, but limited options for object type masking (no `.pick` , `.omit` , `.extend` , etc.). No support for `Record` s (their `Record` is equivalent to Zod's `object` ). They DO support branded and readonly types, which Zod does not.
+Good type inference support, but limited options for object type masking (no `.pick` , `.omit` , `.extend` , etc.). No support for `Record` s (their `Record` is equivalent to Zod's `object` ). They DO support readonly types, which Zod does not.
 
 - Supports "pattern matching": computed properties that distribute over unions
 - Supports readonly types
