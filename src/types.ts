@@ -569,7 +569,7 @@ const datetimeRegex = (args: {
   // in case of `precision = 0`, don't add the decimal part.
 
   if (args.offset) {
-    return new RegExp(`${regex}(([+-]\\d{2}:?\\d{2})|Z)$`);
+    return new RegExp(`${regex}(([+-]\\d{2}(:?\\d{2})?)|Z)$`);
   }
 
   if (args.withDate) {
