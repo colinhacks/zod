@@ -86,3 +86,9 @@ test("async promise parsing", () => {
   const res = z.promise(z.number()).parseAsync(Promise.resolve(12));
   expect(res).toBeInstanceOf(Promise);
 });
+
+test("resolves", () => {
+  const foo = z.literal('foo');
+  const res = z.promise(foo)
+  expect(res.resolves()).toEqual(foo)
+})

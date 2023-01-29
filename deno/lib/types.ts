@@ -3333,7 +3333,7 @@ export class ZodFunction<
           });
         const result = await fn(...(parsedArgs as any));
         const parsedReturns = await (
-          this._def.returns as ZodPromise<ZodTypeAny>
+          this._def.returns as unknown as ZodPromise<ZodTypeAny>
         )._def.type
           .parseAsync(result, params)
           .catch((e) => {
@@ -3696,6 +3696,10 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   ZodPromiseDef<T>,
   Promise<T["_input"]>
 > {
+  unwrap() {
+    return this._def.type;
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
     if (
