@@ -88,7 +88,7 @@ test("async promise parsing", () => {
 });
 
 test("resolves", () => {
-  const foo = z.literal('foo');
-  const res = z.promise(foo)
-  expect(res.resolves()).toEqual(foo)
-})
+  const foo = z.literal("foo");
+  const res = z.promise(foo);
+  expect(res.unwrap()).toEqual(foo);
+});
