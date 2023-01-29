@@ -1901,9 +1901,7 @@ export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
 export type SomeZodObject = ZodObject<
   ZodRawShape,
   UnknownKeysParam,
-  ZodTypeAny,
-  any,
-  any
+  ZodTypeAny
 >;
 
 function deepPartialify(schema: ZodTypeAny): any {
@@ -1935,7 +1933,7 @@ function deepPartialify(schema: ZodTypeAny): any {
 
 export class ZodObject<
   T extends ZodRawShape,
-  UnknownKeys extends UnknownKeysParam = "strip",
+  UnknownKeys extends UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny,
   Output = objectOutputType<T, Catchall>,
   Input = objectInputType<T, Catchall>
@@ -2278,7 +2276,7 @@ export class ZodObject<
   static create = <T extends ZodRawShape>(
     shape: T,
     params?: RawCreateParams
-  ): ZodObject<T> => {
+  ): ZodObject<T, "strip"> => {
     return new ZodObject({
       shape: () => shape,
       unknownKeys: "strip",
@@ -2304,7 +2302,7 @@ export class ZodObject<
   static lazycreate = <T extends ZodRawShape>(
     shape: () => T,
     params?: RawCreateParams
-  ): ZodObject<T> => {
+  ): ZodObject<T, "strip"> => {
     return new ZodObject({
       shape,
       unknownKeys: "strip",
@@ -2492,11 +2490,15 @@ const getDiscriminator = <T extends ZodTypeAny>(
 };
 
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
-  ZodObject<{ [key in Discriminator]: ZodTypeAny } & ZodRawShape, any, any>;
+  ZodObject<
+    { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
+    UnknownKeysParam,
+    ZodTypeAny
+  >;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<any>[] = ZodDiscriminatedUnionOption<any>[]
+  Options extends ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
 > extends ZodTypeDef {
   discriminator: Discriminator;
   options: Options;
@@ -2525,7 +2527,11 @@ export class ZodDiscriminatedUnion<
     }
 
     const discriminator = this.discriminator;
+    console.log("ctx.data", ctx.data);
+    console.log("discriminator", discriminator);
     const discriminatorValue: string = ctx.data[discriminator];
+    console.log(this.optionsMap);
+    console.log(discriminatorValue);
     const option = this.optionsMap.get(discriminatorValue);
 
     if (!option) {
@@ -2602,6 +2608,7 @@ export class ZodDiscriminatedUnion<
             )} has duplicate value ${String(value)}`
           );
         }
+        console.log(`setting ${String(value)}`);
         optionsMap.set(value, type);
       }
     }
@@ -4101,7 +4108,13 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
     const result = this._def.innerType._parse({
       data: ctx.data,
       path: ctx.path,
-      parent: ctx,
+      parent: {
+        ...ctx,
+        common: {
+          ...ctx.common,
+          issues: [], // don't collect issues from inner type
+        },
+      },
     });
 
     if (isAsync(result)) {
@@ -4363,7 +4376,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodNever
   | ZodVoid
   | ZodArray<any, any>
-  | ZodObject<any, any, any, any, any>
+  | ZodObject<any, any, any>
   | ZodUnion<any>
   | ZodDiscriminatedUnion<any, any>
   | ZodIntersection<any, any>
