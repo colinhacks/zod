@@ -3689,7 +3689,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   ZodPromiseDef<T>,
   Promise<T["_input"]>
 > {
-  resolves() {
+  unwrap() {
     return this._def.type;
   }
 
