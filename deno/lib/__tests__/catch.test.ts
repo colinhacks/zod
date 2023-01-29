@@ -152,3 +152,40 @@ test("enum", () => {
   expect(schema.parse({ fruit: true })).toEqual({ fruit: "apple" });
   expect(schema.parse({ fruit: 15 })).toEqual({ fruit: "apple" });
 });
+
+test("reported issues with nested usage", () => {
+  const schema = z.object({
+    string: z.string(),
+    obj: z.object({
+      sub: z.object({
+        lit: z.literal("a"),
+        subCatch: z.number().catch(23),
+      }),
+      midCatch: z.number().catch(42),
+    }),
+    number: z.number().catch(0),
+    bool: z.boolean(),
+  });
+
+  try {
+    schema.parse({
+      string: {},
+      obj: {
+        sub: {
+          lit: "b",
+          subCatch: "24",
+        },
+        midCatch: 444,
+      },
+      number: "",
+      bool: "yes",
+    });
+  } catch (error) {
+    const issues = (error as z.ZodError).issues;
+
+    expect(issues.length).toEqual(3);
+    expect(issues[0].message).toMatch("string");
+    expect(issues[1].message).toMatch("literal");
+    expect(issues[2].message).toMatch("boolean");
+  }
+});

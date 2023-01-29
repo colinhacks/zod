@@ -1,5 +1,9 @@
 # Changelog
 
+## Release notes are now stored in Github Releases: https://github.com/colinhacks/zod/releases
+
+## Previous Releases
+
 ### 3.10
 
 - New parser that allows parsing to continue after non-fatal errors have occurred. This allows Zod to surface more errors to the user at once.
