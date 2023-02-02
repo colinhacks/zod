@@ -4,7 +4,7 @@
   <p align="center">
     ✨ <a href="https://zod.dev">https://zod.dev</a> ✨
     <br/>
-    TypeScript-first schema validation with static type inference
+    TypeScript-first schema validation with static-type inference
   </p>
 </p>
 <br/>
@@ -595,7 +595,7 @@ z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
 ```
 
-> Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
+> Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string-validation functions that can be used in conjunction with [Refinements](#refine).
 
 You can customize some common error messages when creating a string schema.
 
@@ -1324,7 +1324,7 @@ type MyUnion =
 
 Such unions can be represented with the `z.discriminatedUnion` method. This enables faster evaluation, because Zod can check the _discriminator key_ (`status` in the example above) to determine which schema should be used to parse the input. This makes parsing more efficient and lets Zod report friendlier errors.
 
-With the basic union method the input is tested against each of the provided "options", and in the case of invalidity, issues for all the "options" are shown in the zod error. On the other hand, the discriminated union allows for selecting just one of the "options", testing against it, and showing only the issues related to this "option".
+With the basic union method, the input is tested against each of the provided "options", and in the case of invalidity, issues for all the "options" are shown in the zod error. On the other hand, the discriminated union allows for selecting just one of the "options", testing against it, and showing only the issues related to this "option".
 
 ```ts
 const myUnion = z.discriminatedUnion("status", [
@@ -1734,7 +1734,7 @@ stringSchema.parse(12); // throws error
 
 `.parseAsync(data:unknown): Promise<T>`
 
-If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`
+If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`.
 
 ```ts
 const stringSchema = z.string().refine(async (val) => val.length <= 8);
@@ -1757,7 +1757,7 @@ stringSchema.safeParse("billie");
 // => { success: true; data: 'billie' }
 ```
 
-The result is a _discriminated union_ so you can handle errors very conveniently:
+The result is a _discriminated union_, so you can handle errors very conveniently:
 
 ```ts
 const result = stringSchema.safeParse("billie");
@@ -2017,7 +2017,7 @@ emailToDomain.parse("colinhacks@example.com"); // => example.com
 
 The `.transform` method can simultaneously validate and transform the value. This is often simpler and less duplicative than chaining `transform` and `refine`.
 
-As with `.superRefine`, the transform function receives a `ctx` object with a `addIssue` method that can be used to register validation issues.
+As with `.superRefine`, the transform function receives a `ctx` object with an `addIssue` method that can be used to register validation issues.
 
 ```ts
 const numberInString = z.string().transform((val, ctx) => {
@@ -2366,7 +2366,7 @@ if (!data.success) {
 
 > For detailed information about the possible error codes and how to customize error messages, check out the dedicated error handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md)
 
-Zod's error reporting emphasizes _completeness_ and _correctness_. If you are looking to present a useful error message to the end user, you should either override Zod's error messages using an error map (described in detail in the Error Handling guide) or use a third party library like [`zod-validation-error`](https://github.com/causaly/zod-validation-error)
+Zod's error reporting emphasizes _completeness_ and _correctness_. If you are looking to present a useful error message to the end user, you should either override Zod's error messages using an error map (described in detail in the Error Handling guide) or use a third-party library like [`zod-validation-error`](https://github.com/causaly/zod-validation-error)
 
 ### Error formatting
 
@@ -2446,7 +2446,7 @@ Branded -->
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
-Doesn't support static type inference 😕
+Doesn't support static-type inference 😕
 
 ### Yup
 
