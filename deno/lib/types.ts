@@ -519,10 +519,11 @@ const uuidRegex =
 // from https://stackoverflow.com/a/46181/1550155
 // old version: too slow, didn't support unicode
 // const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i;
+//old email regex
+// const emailRegex = /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@((?!-)([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{1,})[^-<>()[\].,;:\s@"]$/i;
 // eslint-disable-next-line
 const emailRegex =
-  /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@((?!-)([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{1,})[^-<>()[\].,;:\s@"]$/i;
-
+  /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|([^-]([a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}))$/;
 // interface IsDateStringOptions extends StringDateOptions {
 /**
  * Match any configuration
@@ -3382,7 +3383,7 @@ export class ZodFunction<
     return this._def.returns;
   }
 
-  args<Items extends Parameters<typeof ZodTuple["create"]>[0]>(
+  args<Items extends Parameters<(typeof ZodTuple)["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> {
     return new ZodFunction({
@@ -4471,15 +4472,18 @@ const oboolean = () => booleanType().optional();
 
 export const coerce = {
   string: ((arg) =>
-    ZodString.create({ ...arg, coerce: true })) as typeof ZodString["create"],
+    ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
   number: ((arg) =>
-    ZodNumber.create({ ...arg, coerce: true })) as typeof ZodNumber["create"],
+    ZodNumber.create({ ...arg, coerce: true })) as (typeof ZodNumber)["create"],
   boolean: ((arg) =>
-    ZodBoolean.create({ ...arg, coerce: true })) as typeof ZodBoolean["create"],
+    ZodBoolean.create({
+      ...arg,
+      coerce: true,
+    })) as (typeof ZodBoolean)["create"],
   bigint: ((arg) =>
-    ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
+    ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
   date: ((arg) =>
-    ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
+    ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
 };
 
 export {
