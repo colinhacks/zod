@@ -66,6 +66,10 @@ test("more email validations", () => {
     `postmaster@[123.123.123.123]`,
     `user@my-example.com`,
     `a@b.cd`,
+    `work+user@mail.com`,
+    `user@[68.185.127.196]`,
+    `ipv4@[85.129.96.247]`,
+    `valid@[79.208.229.53]`,
   ];
   const invalidEmails = [
     `Abc.example.com`,
@@ -79,6 +83,8 @@ test("more email validations", () => {
     `invalid@-start.com`,
     `invalid@end.com-`,
     `a.b@c.d`,
+    `invalid@[1.1.1.-1]`,
+    `invalid@[68.185.127.196.55]`,
   ];
   const emailSchema = z.string().email();
   expect(
