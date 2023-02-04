@@ -110,8 +110,8 @@ test("catchall inference", () => {
     .catchall(z.number());
 
   const d1 = o1.parse({ first: "asdf", num: 1243 });
-  util.assertEqual<number, typeof d1["asdf"]>(true);
-  util.assertEqual<string, typeof d1["first"]>(true);
+  util.assertEqual<number, (typeof d1)["asdf"]>(true);
+  util.assertEqual<string, (typeof d1)["first"]>(true);
 });
 
 test("catchall overrides strict", () => {
