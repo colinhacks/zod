@@ -96,6 +96,7 @@
       .markdown-section {
         max-width: 720px;
       }
+
       p > img {
         height: 200px;
       }
@@ -110,21 +111,119 @@
       .markdown-section h3 code {
         font-size: 80%;
       }
+      .sidebar {
+        padding-top: 24px;
+      }
+
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .theme-btn {
+        position: relative;
+        left: 15px;
+        width: 24px;
+        height: 24px;
+        margin-bottom: 14px;
+        background-image: url("./static/moon.svg");
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center;
+        cursor: pointer;
+        z-index: 100;
+      }
+    </style>
+    <!-- Theme: dark -->
+    <style>
+      .dark,
+      .dark .sidebar,
+      .dark blockquote,
+      .dark .sidebar a {
+        background-color: #283339;
+        color: #d3d3d3;
+      }
+
+      .dark .sidebar::-webkit-scrollbar-thumb {
+        background: hsla(0, 0%, 88%, 0.4);
+      }
+
+      .dark .sidebar::-webkit-scrollbar-track {
+        background: hsla(0, 0%, 53%, 0.1);
+      }
+
+      .dark .sidebar-toggle {
+        background-color: hsl(201deg 18% 19% / 80%) !important;
+      }
+
+      .dark .markdown-section h1,
+      .dark .markdown-section h2,
+      .dark .markdown-section h3,
+      .dark .markdown-section h4,
+      .dark .markdown-section strong,
+      .dark .anchor span {
+        color: #fff;
+      }
+
+      .dark .markdown-section tr:nth-child(2n) {
+        background-color: #1f282d;
+      }
+
+      .dark .markdown-section td,
+      .dark .markdown-section th {
+        border-color: #495e69;
+      }
+
+      .dark .markdown-section pre,
+      .dark .markdown-section code {
+        background-color: #34434b;
+      }
+
+      .dark .markdown-section code,
+      .dark .token.keyword,
+      .dark .token.function {
+        color: #f07178;
+      }
+
+      .dark .markdown-section pre > code,
+      .dark .token.punctuation {
+        color: #f3f3f3;
+      }
+
+      .dark .token.number,
+      .dark .token.boolean {
+        color: #ffcb6b;
+      }
+
+      .dark .github-corner svg {
+        color: #283339;
+      }
+
+      .dark .theme-btn {
+        background-image: url("./static/sun.svg");
+      }
     </style>
   </head>
 
   <body>
-    <nav
-      style="
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-      "
-    ></nav>
+    <div class="theme-btn"></div>
+
     <div id="app"></div>
     <script src="//cdnjs.cloudflare.com/ajax/libs/docsify/4.12.2/docsify.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-typescript.min.js"></script>
+    <script>
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", (e) => {
+          document.body.classList.toggle("dark", e.matches);
+        });
+
+      const themeBtn = document.querySelector(".theme-btn");
+
+      themeBtn.addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+      });
+    </script>
+
     <script>
       window.$docsify = {
         subMaxLevel: 1,
@@ -144,6 +243,13 @@
           "https://zod.dev/",
         ],
       };
+    </script>
+    <script>
+      window.addEventListener("DOMContentLoaded", () => {
+        document
+          .querySelector("aside")
+          .prepend(document.querySelector(".theme-btn"));
+      });
     </script>
   </body>
 </html>

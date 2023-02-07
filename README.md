@@ -358,13 +358,15 @@ There are a growing number of tools that are built atop or support Zod natively!
 #### Form integrations
 
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form.
-- [`zod-validation-error`](https://github.com/causaly/zod-validation-error): Generate user-friendly error messages from `ZodError`s
+- [`zod-validation-error`](https://github.com/causaly/zod-validation-error): Generate user-friendly error messages from `ZodError`s.
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod.
 - [`zodix`](https://github.com/rileytomasek/zodix): Zod utilities for FormData and URLSearchParams in Remix loaders and actions.
+- [`remix-params-helper`](https://github.com/kiliman/remix-params-helper): Simplify integration of Zod with standard URLSearchParams and FormData for Remix apps.
 - [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod): Formik-compliant validator library that simplifies using Zod with Formik.
 - [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): Useful for translating Zod error messages.
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
+- [`houseform`](https://github.com/crutchcorn/houseform/): A React form library that uses Zod for validation.
 
 #### Zod to X
 
@@ -383,16 +385,16 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/master/packages/zod): Generate Zod from static types & JSON schema.
 - [`json-schema-to-zod`](https://github.com/StefanTerdell/json-schema-to-zod): Convert your [JSON Schemas](https://json-schema.org/) into Zod schemas. [Live demo](https://StefanTerdell.github.io/json-schema-to-zod-react/).
 - [`json-to-zod`](https://github.com/rsinohara/json-to-zod): Convert JSON objects into Zod schemas. [Live demo](https://rsinohara.github.io/json-to-zod-react/).
-- [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema): GraphQL Code Generator plugin to generate form validation schema from your GraphQL schema
+- [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema): GraphQL Code Generator plugin to generate form validation schema from your GraphQL schema.
 - [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Generate Zod schemas from your Prisma schema.
 - [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs.
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
-- [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) Create Zod types from your Prisma models
+- [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) Create Zod types from your Prisma models.
 
 #### Mocking
 
-- [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/Marak/Faker.js).
+- [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/faker-js/faker).
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
 
 #### Powered by Zod
@@ -400,7 +402,11 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration.
 - [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
-- [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas
+- [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas.
+
+#### Utilities for Zod
+
+- [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): Framework agnostic utilities for Zod.
 
 ## Installation
 
@@ -553,6 +559,8 @@ z.coerce.boolean().parse(null); // => false
 
 ## Literals
 
+Literals are zod's equivilant to [TypeScript's Literal Types](https://www.typescriptlang.org/docs/handbook/literal-types.html) which allow only the exact given type and value.
+
 ```ts
 const tuna = z.literal("tuna");
 const twelve = z.literal(12);
@@ -580,6 +588,7 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().cuid();
+z.string().cuid2();
 z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
@@ -633,6 +642,7 @@ const datetime = z.string().datetime({ offset: true });
 datetime.parse("2020-01-01T00:00:00+02:00"); // pass
 datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
+datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
 datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
 ```
 
@@ -1464,55 +1474,62 @@ type Teacher = z.infer<typeof Teacher>;
 You can define a recursive schema in Zod, but because of a limitation of TypeScript, their type can't be statically inferred. Instead you'll need to define the type definition manually, and provide it to Zod as a "type hint".
 
 ```ts
-interface Category {
-  name: string;
-  subcategories: Category[];
+const baseCategorySchema = z.object( {
+    name: z.string(),
+} )
+
+type Category = z.infer<typeof baseCategorySchema> & {
+    subcategories: Category[]
 }
 
-// cast to z.ZodType<Category>
-const Category: z.ZodType<Category> = z.lazy(() =>
-  z.object({
-    name: z.string(),
-    subcategories: z.array(Category),
-  })
-);
+const categorySchema: z.ZodType<Category> = baseCategorySchema.extend( {
+    subcategories: z.lazy( () => categorySchema.array() ),
+} )
 
-Category.parse({
-  name: "People",
-  subcategories: [
-    {
-      name: "Politicians",
-      subcategories: [{ name: "Presidents", subcategories: [] }],
-    },
-  ],
-}); // passes
+categorySchema.parse( {
+    name: 'People',
+    subcategories: [ {
+        name: 'Politicians',
+        subcategories: [ {
+            name: 'Presidents',
+            subcategories: []
+        } ],
+    } ],
+} ) // passes
 ```
 
-Unfortunately this code is a bit duplicative, since you're declaring the types twice: once in the interface and again in the Zod definition.
+Thanks to [crasite](https://github.com/crasite) for this example.
 
-<!-- If your schema has lots of primitive fields, there's a way of reducing the amount of duplication:
+### ZodType with ZodEffects
+When using `z.ZodType` with `z.ZodEffects` (
+    [`.refine`](https://github.com/colinhacks/zod#refine),
+    [`.transform`](https://github.com/colinhacks/zod#transform),
+    [`preprocess`](https://github.com/colinhacks/zod#preprocess),
+    etc...
+), you will need to define the input and output types of the schema. `z.ZodType<Output, z.ZodTypeDef, Input>`
 
 ```ts
-// define all the non-recursive stuff here
-const BaseCategory = z.object({
-  name: z.string(),
-  tags: z.array(z.string()),
-  itemCount: z.number(),
-});
+const isValidId = ( id: string ): id is `${ string }/${ string }` =>
+    id.split( '/' ).length === 2
 
-// create an interface that extends the base schema
-interface Category extends z.infer<typeof BaseCategory> {
-  subcategories: Category[];
+const baseSchema = z.object( {
+    id: z.string().refine( isValidId )
+} )
+
+type Input = z.input<typeof baseSchema> & {
+    children: Input[]
 }
 
-// merge the base schema with
-// a new Zod schema containing relations
-const Category: z.ZodType<Category> = BaseCategory.merge(
-  z.object({
-    subcategories: z.lazy(() => z.array(Category)),
-  })
-);
-``` -->
+type Output = z.output<typeof baseSchema> & {
+    children: Output[]
+}
+
+const schema: z.ZodType<Output, z.ZodTypeDef, Input> = baseSchema.extend( {
+    children: z.lazy( () => schema.array() ),
+} )
+```
+
+Thanks to [marcus13371337](https://github.com/marcus13371337) and [JoelBeeldi](https://github.com/JoelBeeldi) for this example.
 
 ### JSON type
 
