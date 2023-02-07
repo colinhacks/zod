@@ -1,16 +1,13 @@
-import { z, ZodFormattedError } from "./src";
+import { z } from "./src";
 
-enum Color {
-  RED,
-  GREEN,
-  BLUE,
-}
+const schema = z.object({
+  a: z.string(),
+  b: z.string().catch("b"),
+});
 
-console.log(Color[1]);
-async function main() {
-  const schema = z.string().catch("1234");
-  const result = await schema.parse(1234);
+const result = schema.safeParse({
+  a: {},
+  b: 3,
+});
 
-  console.log(Object.keys(Color));
-}
-main();
+console.log(result);

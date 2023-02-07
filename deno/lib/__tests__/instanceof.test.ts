@@ -15,11 +15,13 @@ test("instanceof", async () => {
 
   const TestSchema = z.instanceof(Test);
   const SubtestSchema = z.instanceof(Subtest);
+  const AbstractSchema = z.instanceof(AbstractBar);
   const BarSchema = z.instanceof(Bar);
 
   TestSchema.parse(new Test());
   TestSchema.parse(new Subtest());
   SubtestSchema.parse(new Subtest());
+  AbstractSchema.parse(new Bar("asdf"));
   const bar = BarSchema.parse(new Bar("asdf"));
   expect(bar.val).toEqual("asdf");
 

@@ -175,4 +175,4 @@ export const isValid = <T>(x: ParseReturnType<T>): x is OK<T> | DIRTY<T> =>
 export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
-  typeof Promise !== undefined && x instanceof Promise;
+  typeof Promise !== "undefined" && x instanceof Promise;

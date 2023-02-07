@@ -89,6 +89,10 @@ test("tuple with rest schema", () => {
   util.assertEqual<t1, [string, number, ...boolean[]]>(true);
 });
 
+test("parse should fail given sparse array as tuple", () => {
+  expect(() => testTuple.parse(new Array(3))).toThrow();
+});
+
 // test('tuple with optional elements', () => {
 //   const result = z
 //     .tuple([z.string(), z.number().optional()])

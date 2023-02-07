@@ -63,39 +63,55 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.too_small:
       if (issue.type === "array")
         message = `Array must contain ${
-          issue.inclusive ? `at least` : `more than`
+          issue.exact ? "exactly" : issue.inclusive ? `at least` : `more than`
         } ${issue.minimum} element(s)`;
       else if (issue.type === "string")
         message = `String must contain ${
-          issue.inclusive ? `at least` : `over`
+          issue.exact ? "exactly" : issue.inclusive ? `at least` : `over`
         } ${issue.minimum} character(s)`;
       else if (issue.type === "number")
-        message = `Number must be greater than ${
-          issue.inclusive ? `or equal to ` : ``
+        message = `Number must be ${
+          issue.exact
+            ? `exactly equal to `
+            : issue.inclusive
+            ? `greater than or equal to `
+            : `greater than `
         }${issue.minimum}`;
       else if (issue.type === "date")
-        message = `Date must be greater than ${
-          issue.inclusive ? `or equal to ` : ``
+        message = `Date must be ${
+          issue.exact
+            ? `exactly equal to `
+            : issue.inclusive
+            ? `greater than or equal to `
+            : `greater than `
         }${new Date(issue.minimum)}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.too_big:
       if (issue.type === "array")
         message = `Array must contain ${
-          issue.inclusive ? `at most` : `less than`
+          issue.exact ? `exactly` : issue.inclusive ? `at most` : `less than`
         } ${issue.maximum} element(s)`;
       else if (issue.type === "string")
         message = `String must contain ${
-          issue.inclusive ? `at most` : `under`
+          issue.exact ? `exactly` : issue.inclusive ? `at most` : `under`
         } ${issue.maximum} character(s)`;
       else if (issue.type === "number")
-        message = `Number must be less than ${
-          issue.inclusive ? `or equal to ` : ``
-        }${issue.maximum}`;
+        message = `Number must be ${
+          issue.exact
+            ? `exactly`
+            : issue.inclusive
+            ? `less than or equal to`
+            : `less than`
+        } ${issue.maximum}`;
       else if (issue.type === "date")
-        message = `Date must be smaller than ${
-          issue.inclusive ? `or equal to ` : ``
-        }${new Date(issue.maximum)}`;
+        message = `Date must be ${
+          issue.exact
+            ? `exactly`
+            : issue.inclusive
+            ? `smaller than or equal to`
+            : `smaller than`
+        } ${new Date(issue.maximum)}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.custom:

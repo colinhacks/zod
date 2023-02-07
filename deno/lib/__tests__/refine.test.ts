@@ -135,6 +135,7 @@ test("superRefine", () => {
         maximum: 3,
         type: "array",
         inclusive: true,
+        exact: true,
         message: "Too many items 😡",
       });
     }
@@ -153,6 +154,64 @@ test("superRefine", () => {
   if (!result.success) expect(result.error.issues.length).toEqual(2);
 
   Strings.parse(["asfd", "qwer"]);
+});
+
+test("superRefine - type narrowing", () => {
+  type NarrowType = { type: string; age: number };
+  const schema = z
+    .object({
+      type: z.string(),
+      age: z.number(),
+    })
+    .nullable()
+    .superRefine((arg, ctx): arg is NarrowType => {
+      if (!arg) {
+        // still need to make a call to ctx.addIssue
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "cannot be null",
+          fatal: true,
+        });
+        return false;
+      }
+      return true;
+    });
+
+  util.assertEqual<z.infer<typeof schema>, NarrowType>(true);
+
+  expect(schema.safeParse({ type: "test", age: 0 }).success).toEqual(true);
+  expect(schema.safeParse(null).success).toEqual(false);
+});
+
+test("chained mixed refining types", () => {
+  type firstRefinement = { first: string; second: number; third: true };
+  type secondRefinement = { first: "bob"; second: number; third: true };
+  type thirdRefinement = { first: "bob"; second: 33; third: true };
+  const schema = z
+    .object({
+      first: z.string(),
+      second: z.number(),
+      third: z.boolean(),
+    })
+    .nullable()
+    .refine((arg): arg is firstRefinement => !!arg?.third)
+    .superRefine((arg, ctx): arg is secondRefinement => {
+      util.assertEqual<typeof arg, firstRefinement>(true);
+      if (arg.first !== "bob") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "`first` property must be `bob`",
+        });
+        return false;
+      }
+      return true;
+    })
+    .refine((arg): arg is thirdRefinement => {
+      util.assertEqual<typeof arg, secondRefinement>(true);
+      return arg.second === 33;
+    });
+
+  util.assertEqual<z.infer<typeof schema>, thirdRefinement>(true);
 });
 
 test("get inner type", () => {

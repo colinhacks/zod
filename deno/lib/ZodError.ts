@@ -50,6 +50,7 @@ export interface ZodInvalidTypeIssue extends ZodIssueBase {
 export interface ZodInvalidLiteralIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_literal;
   expected: unknown;
+  received: unknown;
 }
 
 export interface ZodUnrecognizedKeysIssue extends ZodIssueBase {
@@ -93,6 +94,7 @@ export type StringValidation =
   | "uuid"
   | "regex"
   | "cuid"
+  | "cuid2"
   | "datetime"
   | { startsWith: string }
   | { endsWith: string };
@@ -106,6 +108,7 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
   minimum: number;
   inclusive: boolean;
+  exact?: boolean;
   type: "array" | "string" | "number" | "set" | "date";
 }
 
@@ -113,6 +116,7 @@ export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number;
   inclusive: boolean;
+  exact?: boolean;
   type: "array" | "string" | "number" | "set" | "date";
 }
 
@@ -167,11 +171,11 @@ export const quotelessJson = (obj: any) => {
 export type ZodFormattedError<T, U = string> = {
   _errors: U[];
 } & (NonNullable<T> extends [any, ...any[]]
-  ? { [K in keyof NonNullable<T>]?: ZodFormattedError<NonNullable<T>[K]> }
+  ? { [K in keyof NonNullable<T>]?: ZodFormattedError<NonNullable<T>[K], U> }
   : NonNullable<T> extends any[]
-  ? { [k: number]: ZodFormattedError<NonNullable<T>[number]> }
+  ? { [k: number]: ZodFormattedError<NonNullable<T>[number], U> }
   : NonNullable<T> extends object
-  ? { [K in keyof NonNullable<T>]?: ZodFormattedError<NonNullable<T>[K]> }
+  ? { [K in keyof NonNullable<T>]?: ZodFormattedError<NonNullable<T>[K], U> }
   : unknown);
 
 export type inferFormattedError<
