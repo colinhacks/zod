@@ -72,6 +72,7 @@ const cuidZZZ = z
   .templateLiteral()
   .addInterpolatedPosition(z.string().cuid())
   .addLiteral("ZZZ");
+const cuid2 = z.templateLiteral().addInterpolatedPosition(z.string().cuid2());
 const datetime = z
   .templateLiteral()
   .addInterpolatedPosition(z.string().datetime());
@@ -189,6 +190,7 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof nullishString>, string>(true);
   util.assertEqual<z.infer<typeof cuid>, string>(true);
   util.assertEqual<z.infer<typeof cuidZZZ>, `${string}ZZZ`>(true);
+  util.assertEqual<z.infer<typeof cuid2>, string>(true);
   util.assertEqual<z.infer<typeof datetime>, string>(true);
   util.assertEqual<z.infer<typeof email>, string>(true);
   util.assertEqual<z.infer<typeof uuid>, string>(true);
@@ -419,6 +421,7 @@ test("template literal parsing - success - basic cases", () => {
   nullishBruh.parse("");
   cuid.parse("cjld2cyuq0000t3rmniod1foy");
   cuidZZZ.parse("cjld2cyuq0000t3rmniod1foyZZZ");
+  cuid2.parse("tz4a98xxat96iws9zmbrgj3a");
   datetime.parse(new Date().toISOString());
   email.parse("info@example.com");
   uuid.parse("808989fd-3a6e-4af2-b607-737323a176f6");
@@ -545,6 +548,8 @@ test("template literal parsing - failure - basic cases", () => {
   expect(() => cuidZZZ.parse("cjld2cyuq0000t3rmniod1foyZZY")).toThrow();
   expect(() => cuidZZZ.parse("cjld2cyuq0000t3rmniod1foyZZZ1")).toThrow();
   expect(() => cuidZZZ.parse("1cjld2cyuq0000t3rmniod1foyZZZ")).toThrow();
+  expect(() => cuid2.parse("9z4a98xxat96iws9zmbrgj3a")).toThrow();
+  expect(() => cuid2.parse("tz4a98xxat96iws9zmbrgj3!")).toThrow();
   expect(() => datetime.parse("2022-01-01 00:00:00")).toThrow();
   expect(() => email.parse("info@example.com@")).toThrow();
   expect(() =>

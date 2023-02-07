@@ -5738,6 +5738,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
         return this._unwrapRegexString(cuidRegex.source);
       }
 
+      if (ch.kind === "cuid2") {
+        return this._unwrapRegexString(cuid2Regex.source);
+      }
+
       if (ch.kind === "datetime") {
         return this._unwrapRegexString(datetimeRegex(ch).source);
       }
