@@ -496,6 +496,7 @@ export type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
+  | { kind: "cuid2"; message?: string }
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
@@ -514,13 +515,14 @@ export interface ZodStringDef extends ZodTypeDef {
 }
 
 const cuidRegex = /^c[^\s-]{8,}$/i;
+const cuid2Regex = /^[a-z][a-z0-9]*$/;
 const uuidRegex =
   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 // from https://stackoverflow.com/a/46181/1550155
 // old version: too slow, didn't support unicode
 // const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i;
 // eslint-disable-next-line
-const emailRegex =
+export const emailRegex =
   /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@((?!-)([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{1,})[^-<>()[\].,;:\s@"]$/i;
 
 // interface IsDateStringOptions extends StringDateOptions {
@@ -535,7 +537,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   if (args.precision) {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}:?\\d{2})|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
       );
     } else {
       return new RegExp(
@@ -545,7 +547,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   } else if (args.precision === 0) {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}:?\\d{2})|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
       );
     } else {
       return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`);
@@ -553,7 +555,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   } else {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}:?\\d{2})|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}(:?\\d{2})?)|Z)$`
       );
     } else {
       return new RegExp(
@@ -670,6 +672,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "cuid2") {
+        if (!cuid2Regex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "cuid2",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "url") {
         try {
           new URL(input.data);
@@ -765,6 +777,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
+  }
+  cuid2(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message) });
   }
   datetime(
     options?:
@@ -868,6 +883,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
+  }
+  get isCUID2() {
+    return !!this._def.checks.find((ch) => ch.kind === "cuid2");
   }
 
   get minLength() {
@@ -1903,9 +1921,7 @@ export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
 export type SomeZodObject = ZodObject<
   ZodRawShape,
   UnknownKeysParam,
-  ZodTypeAny,
-  any,
-  any
+  ZodTypeAny
 >;
 
 function deepPartialify(schema: ZodTypeAny): any {
@@ -1937,7 +1953,7 @@ function deepPartialify(schema: ZodTypeAny): any {
 
 export class ZodObject<
   T extends ZodRawShape,
-  UnknownKeys extends UnknownKeysParam = "strip",
+  UnknownKeys extends UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny,
   Output = objectOutputType<T, Catchall>,
   Input = objectInputType<T, Catchall>
@@ -2280,7 +2296,7 @@ export class ZodObject<
   static create = <T extends ZodRawShape>(
     shape: T,
     params?: RawCreateParams
-  ): ZodObject<T> => {
+  ): ZodObject<T, "strip"> => {
     return new ZodObject({
       shape: () => shape,
       unknownKeys: "strip",
@@ -2306,7 +2322,7 @@ export class ZodObject<
   static lazycreate = <T extends ZodRawShape>(
     shape: () => T,
     params?: RawCreateParams
-  ): ZodObject<T> => {
+  ): ZodObject<T, "strip"> => {
     return new ZodObject({
       shape,
       unknownKeys: "strip",
@@ -2494,11 +2510,15 @@ const getDiscriminator = <T extends ZodTypeAny>(
 };
 
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
-  ZodObject<{ [key in Discriminator]: ZodTypeAny } & ZodRawShape, any, any>;
+  ZodObject<
+    { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
+    UnknownKeysParam,
+    ZodTypeAny
+  >;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<any>[] = ZodDiscriminatedUnionOption<any>[]
+  Options extends ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
 > extends ZodTypeDef {
   discriminator: Discriminator;
   options: Options;
@@ -2527,7 +2547,9 @@ export class ZodDiscriminatedUnion<
     }
 
     const discriminator = this.discriminator;
+
     const discriminatorValue: string = ctx.data[discriminator];
+
     const option = this.optionsMap.get(discriminatorValue);
 
     if (!option) {
@@ -2604,6 +2626,7 @@ export class ZodDiscriminatedUnion<
             )} has duplicate value ${String(value)}`
           );
         }
+
         optionsMap.set(value, type);
       }
     }
@@ -3328,7 +3351,7 @@ export class ZodFunction<
           });
         const result = await fn(...(parsedArgs as any));
         const parsedReturns = await (
-          this._def.returns as ZodPromise<ZodTypeAny>
+          this._def.returns as unknown as ZodPromise<ZodTypeAny>
         )._def.type
           .parseAsync(result, params)
           .catch((e) => {
@@ -3691,6 +3714,10 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   ZodPromiseDef<T>,
   Promise<T["_input"]>
 > {
+  unwrap() {
+    return this._def.type;
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
     if (
@@ -4103,7 +4130,13 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
     const result = this._def.innerType._parse({
       data: ctx.data,
       path: ctx.path,
-      parent: ctx,
+      parent: {
+        ...ctx,
+        common: {
+          ...ctx.common,
+          issues: [], // don't collect issues from inner type
+        },
+      },
     });
 
     if (isAsync(result)) {
@@ -4751,7 +4784,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodNever
   | ZodVoid
   | ZodArray<any, any>
-  | ZodObject<any, any, any, any, any>
+  | ZodObject<any, any, any>
   | ZodUnion<any>
   | ZodDiscriminatedUnion<any, any>
   | ZodIntersection<any, any>
