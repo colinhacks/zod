@@ -559,7 +559,7 @@ z.coerce.boolean().parse(null); // => false
 
 ## Literals
 
-Literals are zod's equivilant to [TypeScript's Literal Types](https://www.typescriptlang.org/docs/handbook/literal-types.html) which allow only the exact given type and value.
+Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/literal-types.html), like `"hello world"` or `5`.
 
 ```ts
 const tuna = z.literal("tuna");
