@@ -2123,7 +2123,7 @@ export class ZodObject<
   // extend = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
   extend<
     Augmentation extends ZodRawShape,
-    NewShape extends extendShape<T, Augmentation>,
+    // NewShape extends extendShape<T, Augmentation>,
     // OldOutput = util.flatten<Omit<Output, keyof Augmentation>>,
     // AugOutput = baseObjectOutputType<Augmentation>,
     // NewOutput = OldOutput & AugOutput,
@@ -2149,7 +2149,13 @@ export class ZodObject<
     // AKeys extends string | number | symbol = keyof Augmentation
   >(
     augmentation: Augmentation
-  ): ZodObject<NewShape, UnknownKeys, Catchall, NewOutput, NewInput> {
+  ): ZodObject<
+    extendShape<T, Augmentation>,
+    UnknownKeys,
+    Catchall,
+    NewOutput,
+    NewInput
+  > {
     return new ZodObject({
       ...this._def,
       shape: () => ({
@@ -2174,7 +2180,7 @@ export class ZodObject<
   merge<
     Incoming extends AnyZodObject,
     Augmentation extends Incoming["shape"],
-    NewShape extends extendShape<T, Augmentation>,
+    // NewShape extends extendShape<T, Augmentation>,
     // OldOutput = util.flatten<Omit<Output, keyof Augmentation>>,
     // AugOutput = baseObjectOutputType<Augmentation>,
     // NewOutput = OldOutput & AugOutput,
@@ -2201,7 +2207,7 @@ export class ZodObject<
   >(
     merging: Incoming
   ): ZodObject<
-    NewShape,
+    extendShape<T, ReturnType<Incoming["_def"]["shape"]>>,
     Incoming["_def"]["unknownKeys"],
     Incoming["_def"]["catchall"],
     NewOutput,
