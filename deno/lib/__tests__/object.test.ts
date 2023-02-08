@@ -29,6 +29,18 @@ test("unknown throw", () => {
   expect(() => Test.parse(asdf)).toThrow();
 });
 
+test("shape() should return schema of particular key", () => {
+  const f1Schema = Test.shape.f1;
+  const f2Schema = Test.shape.f2;
+  const f3Schema = Test.shape.f3;
+  const f4Schema = Test.shape.f4;
+
+  expect(f1Schema).toBeInstanceOf(z.ZodNumber);
+  expect(f2Schema).toBeInstanceOf(z.ZodOptional);
+  expect(f3Schema).toBeInstanceOf(z.ZodNullable);
+  expect(f4Schema).toBeInstanceOf(z.ZodArray);
+});
+
 test("correct parsing", () => {
   Test.parse({
     f1: 12,
@@ -388,4 +400,43 @@ test("unknownkeys merging", () => {
 
   util.assertEqual<mergedSchema["_def"]["catchall"], z.ZodString>(true);
   expect(mergedSchema._def.catchall instanceof z.ZodString).toEqual(true);
+});
+
+const personToExtend = z.object({
+  firstName: z.string(),
+  lastName: z.string(),
+});
+
+test("extend() should return schema with new key", () => {
+  const PersonWithNickname = personToExtend.extend({ nickName: z.string() });
+  type PersonWithNickname = z.infer<typeof PersonWithNickname>;
+
+  const expected = { firstName: "f", nickName: "n", lastName: "l" };
+  const actual = PersonWithNickname.parse(expected);
+
+  expect(actual).toEqual(expected);
+  util.assertEqual<
+    keyof PersonWithNickname,
+    "firstName" | "lastName" | "nickName"
+  >(true);
+  util.assertEqual<
+    PersonWithNickname,
+    { firstName: string; lastName: string; nickName: string }
+  >(true);
+});
+
+test("extend() should have power to override existing key", () => {
+  const PersonWithNumberAsLastName = personToExtend.extend({
+    lastName: z.number(),
+  });
+  type PersonWithNumberAsLastName = z.infer<typeof PersonWithNumberAsLastName>;
+
+  const expected = { firstName: "f", lastName: 42 };
+  const actual = PersonWithNumberAsLastName.parse(expected);
+
+  expect(actual).toEqual(expected);
+  util.assertEqual<
+    PersonWithNumberAsLastName,
+    { firstName: string; lastName: number }
+  >(true);
 });
