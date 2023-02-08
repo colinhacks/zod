@@ -3547,6 +3547,14 @@ export interface ZodEnumDef<T extends EnumValues = EnumValues>
 
 export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 
+export type FilterEnum<Values, ToExclude> = Values extends []
+  ? []
+  : Values extends [infer Head, ...infer Rest]
+  ? Head extends ToExclude
+    ? FilterEnum<Rest, ToExclude>
+    : [Head, ...FilterEnum<Rest, ToExclude>]
+  : never;
+
 function createZodEnum<U extends string, T extends Readonly<[U, ...U[]]>>(
   values: T,
   params?: RawCreateParams
@@ -3619,6 +3627,23 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       enumValues[val] = val;
     }
     return enumValues as any;
+  }
+
+  extract<ToExtract extends readonly [T[number], ...T[number][]]>(
+    values: ToExtract
+  ) {
+    return ZodEnum.create(values);
+  }
+
+  exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
+    values: ToExclude
+  ) {
+    return ZodEnum.create(
+      this.options.filter((opt) => !values.includes(opt)) as FilterEnum<
+        T,
+        ToExclude[number]
+      >
+    );
   }
 
   static create = createZodEnum;
