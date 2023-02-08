@@ -4143,7 +4143,7 @@ export interface ZodCatchDef<
 export class ZodCatch<T extends ZodTypeAny> extends ZodType<
   T["_output"],
   ZodCatchDef<T>,
-  T["_input"]
+  unknown // any input will pass validation // T["_input"]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
