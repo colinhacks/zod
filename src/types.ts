@@ -3648,6 +3648,8 @@ export type FilterEnum<Values, ToExclude> = Values extends []
     : [Head, ...FilterEnum<Rest, ToExclude>]
   : never;
 
+export type typecast<A, T> = A extends T ? A : never;
+
 function createZodEnum<U extends string, T extends Readonly<[U, ...U[]]>>(
   values: T,
   params?: RawCreateParams
@@ -3724,19 +3726,21 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
 
   extract<ToExtract extends readonly [T[number], ...T[number][]]>(
     values: ToExtract
-  ) {
-    return ZodEnum.create(values);
+  ): ZodEnum<Writeable<ToExtract>> {
+    return ZodEnum.create(values) as any;
   }
 
   exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
     values: ToExclude
-  ) {
+  ): ZodEnum<
+    typecast<Writeable<FilterEnum<T, ToExclude[number]>>, [string, ...string[]]>
+  > {
     return ZodEnum.create(
       this.options.filter((opt) => !values.includes(opt)) as FilterEnum<
         T,
         ToExclude[number]
       >
-    );
+    ) as any;
   }
 
   static create = createZodEnum;
