@@ -1849,7 +1849,7 @@ export namespace objectUtil {
   };
 }
 
-export type extendShape<A, B> = Omit<A, keyof B> & B;
+export type extendShape<A, B> = util.flatten<Omit<A, keyof B> & B>;
 
 const AugmentFactory =
   <Def extends ZodObjectDef>(def: Def) =>
@@ -2128,8 +2128,29 @@ export class ZodObject<
    */
   nonstrict = this.passthrough;
 
-  augment = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
-  extend = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
+  // augment = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
+  // extend = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
+  extend<
+    Augmentation extends ZodRawShape,
+    NewShape extends ZodRawShape = extendShape<T, Augmentation>
+  >(
+    augmentation: Augmentation
+  ): ZodObject<
+    NewShape,
+    UnknownKeys,
+    Catchall,
+    util.flatten<Output & objectOutputType<Augmentation, Catchall>>,
+    util.flatten<Input & objectInputType<Augmentation, Catchall>>
+  > {
+    return new ZodObject({
+      ...this._def,
+      shape: () => ({
+        ...this._def.shape(),
+        ...augmentation,
+      }),
+    }) as any;
+  }
+  augment = this.extend;
 
   setKey<Key extends string, Schema extends ZodTypeAny>(
     key: Key,
