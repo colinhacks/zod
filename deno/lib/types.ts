@@ -1864,18 +1864,23 @@ export interface ZodObjectDef<
   unknownKeys: UnknownKeys;
 }
 
+export type mergeTypes<A, B> = {
+  [k in keyof A | keyof B]: k extends keyof B
+    ? B[k]
+    : k extends keyof A
+    ? A[k]
+    : never;
+};
 export type baseObjectOutputType<Shape extends ZodRawShape> =
-  objectUtil.flatten<
-    objectUtil.addQuestionMarks<{
-      [k in keyof Shape]: Shape[k]["_output"];
-    }>
-  >;
+  objectUtil.addQuestionMarks<{
+    [k in keyof Shape]: Shape[k]["_output"];
+  }>;
 
 export type objectOutputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny
 > = ZodTypeAny extends Catchall
-  ? baseObjectOutputType<Shape>
+  ? objectUtil.flatten<baseObjectOutputType<Shape>>
   : objectUtil.flatten<
       baseObjectOutputType<Shape> & { [k: string]: Catchall["_output"] }
     >;
@@ -2114,21 +2119,33 @@ export class ZodObject<
   // extend = AugmentFactory<ZodObjectDef<T, UnknownKeys, Catchall>>(this._def);
   extend<
     Augmentation extends ZodRawShape,
-    NewShape extends ZodRawShape = extendShape<T, Augmentation>
+    NewShape extends extendShape<T, Augmentation>,
+    // OldOutput = util.flatten<Omit<Output, keyof Augmentation>>,
+    // AugOutput = baseObjectOutputType<Augmentation>,
+    // NewOutput = OldOutput & AugOutput,
+    NewOutput extends {
+      [k in keyof Augmentation | keyof Output]: k extends keyof Augmentation
+        ? Augmentation[k]["_output"]
+        : k extends keyof Output
+        ? Output[k]
+        : never;
+    },
+    // OldInput = util.flatten<Omit<Input, keyof Augmentation>>,
+    // AugInput = baseObjectInputType<Augmentation>,
+    // NewInput = OldInput & AugInput
+    NewInput extends {
+      [k in keyof Augmentation | keyof Input]: k extends keyof Augmentation
+        ? Augmentation[k]["_input"]
+        : k extends keyof Input
+        ? Input[k]
+        : never;
+    }
+    // AKeys extends string | number | symbol = keyof Augmentation,
+
+    // AKeys extends string | number | symbol = keyof Augmentation
   >(
     augmentation: Augmentation
-  ): ZodObject<
-    NewShape,
-    UnknownKeys,
-    Catchall,
-    util.flatten<
-      Omit<Output, keyof Augmentation> &
-        objectOutputType<Augmentation, Catchall>
-    >,
-    util.flatten<
-      Omit<Input, keyof Augmentation> & objectInputType<Augmentation, Catchall>
-    >
-  > {
+  ): ZodObject<NewShape, UnknownKeys, Catchall, NewOutput, NewInput> {
     return new ZodObject({
       ...this._def,
       shape: () => ({

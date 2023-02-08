@@ -48,7 +48,7 @@ test("catch with transform", () => {
   );
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string>(true);
+  util.assertEqual<inp, unknown>(true);
   type out = z.output<typeof stringWithDefault>;
   util.assertEqual<out, string>(true);
 });
@@ -64,7 +64,7 @@ test("catch on existing optional", () => {
   );
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string | undefined>(true);
+  util.assertEqual<inp, unknown>(true);
   type out = z.output<typeof stringWithDefault>;
   util.assertEqual<out, string | undefined>(true);
 });
@@ -73,7 +73,7 @@ test("optional on catch", () => {
   const stringWithDefault = z.string().catch("asdf").optional();
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string | undefined>(true);
+  util.assertEqual<inp, unknown>(true);
   type out = z.output<typeof stringWithDefault>;
   util.assertEqual<out, string | undefined>(true);
 });
@@ -107,7 +107,7 @@ test("nested", () => {
     inner: "asdf",
   });
   type input = z.input<typeof outer>;
-  util.assertEqual<input, { inner: string }>(true);
+  util.assertEqual<input, unknown>(true);
   type out = z.output<typeof outer>;
   util.assertEqual<out, { inner: string }>(true);
   expect(outer.parse(undefined)).toEqual({ inner: "asdf" });
