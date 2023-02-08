@@ -11,3 +11,7 @@ const result = schema.safeParse({
 });
 
 console.log(result);
+
+const r = z.any().transform((val) => String(val));
+type In = z.input<typeof r>;
+type Out = z.output<typeof r>;
