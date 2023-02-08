@@ -4,7 +4,7 @@
   <p align="center">
     ✨ <a href="https://zod.dev">https://zod.dev</a> ✨
     <br/>
-    TypeScript-first schema validation with static-type inference
+    TypeScript-first schema validation with static type inference
   </p>
 </p>
 <br/>
@@ -595,7 +595,7 @@ z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
 ```
 
-> Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string-validation functions that can be used in conjunction with [Refinements](#refine).
+> Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
 
 You can customize some common error messages when creating a string schema.
 
@@ -744,19 +744,19 @@ z.date().max(new Date(), { message: "Too young!" });
 Since [zod 3.20](https://github.com/colinhacks/zod/releases/tag/v3.20), use [`z.coerce.date()`](#coercion-for-primitives) to pass the input through `new Date(input)`.
 
 ```ts
-const dateSchema = z.coerce.date()
-type DateSchema = z.infer<typeof dateSchema>
+const dateSchema = z.coerce.date();
+type DateSchema = z.infer<typeof dateSchema>;
 // type DateSchema = Date
 
 /* valid dates */
-console.log( dateSchema.safeParse( '2023-01-10T00:00:00.000Z' ).success ) // true
-console.log( dateSchema.safeParse( '2023-01-10' ).success ) // true
-console.log( dateSchema.safeParse( '1/10/23' ).success ) // true
-console.log( dateSchema.safeParse( new Date( '1/10/23' ) ).success ) // true
+console.log(dateSchema.safeParse("2023-01-10T00:00:00.000Z").success); // true
+console.log(dateSchema.safeParse("2023-01-10").success); // true
+console.log(dateSchema.safeParse("1/10/23").success); // true
+console.log(dateSchema.safeParse(new Date("1/10/23")).success); // true
 
 /* invalid dates */
-console.log( dateSchema.safeParse( '2023-13-10' ).success ) // false
-console.log( dateSchema.safeParse( '0000-00-00' ).success ) // false
+console.log(dateSchema.safeParse("2023-13-10").success); // false
+console.log(dateSchema.safeParse("0000-00-00").success); // false
 ```
 
 For older zod versions, use [`z.preprocess`](#preprocess) like [described in this thread](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276).
@@ -1300,16 +1300,13 @@ To validate an optional form input, you can union the desired string validation 
 This example validates an input that is optional but needs to contain a [valid URL](#strings):
 
 ```ts
-const optionalUrl = z.union( [
-    z.string().url().nullish(),
-    z.literal( '' ),
-] )
+const optionalUrl = z.union([z.string().url().nullish(), z.literal("")]);
 
-console.log( optionalUrl.safeParse( undefined ).success ) // true
-console.log( optionalUrl.safeParse( null ).success ) // true
-console.log( optionalUrl.safeParse( '' ).success ) // true
-console.log( optionalUrl.safeParse( 'https://zod.dev' ).success ) // true
-console.log( optionalUrl.safeParse( 'not a valid url' ).success ) // false
+console.log(optionalUrl.safeParse(undefined).success); // true
+console.log(optionalUrl.safeParse(null).success); // true
+console.log(optionalUrl.safeParse("").success); // true
+console.log(optionalUrl.safeParse("https://zod.dev").success); // true
+console.log(optionalUrl.safeParse("not a valid url").success); // false
 ```
 
 ## Discriminated unions
@@ -1473,59 +1470,64 @@ type Teacher = z.infer<typeof Teacher>;
 You can define a recursive schema in Zod, but because of a limitation of TypeScript, their type can't be statically inferred. Instead you'll need to define the type definition manually, and provide it to Zod as a "type hint".
 
 ```ts
-const baseCategorySchema = z.object( {
-    name: z.string(),
-} )
+const baseCategorySchema = z.object({
+  name: z.string(),
+});
 
 type Category = z.infer<typeof baseCategorySchema> & {
-    subcategories: Category[]
-}
+  subcategories: Category[];
+};
 
-const categorySchema: z.ZodType<Category> = baseCategorySchema.extend( {
-    subcategories: z.lazy( () => categorySchema.array() ),
-} )
+const categorySchema: z.ZodType<Category> = baseCategorySchema.extend({
+  subcategories: z.lazy(() => categorySchema.array()),
+});
 
-categorySchema.parse( {
-    name: 'People',
-    subcategories: [ {
-        name: 'Politicians',
-        subcategories: [ {
-            name: 'Presidents',
-            subcategories: []
-        } ],
-    } ],
-} ) // passes
+categorySchema.parse({
+  name: "People",
+  subcategories: [
+    {
+      name: "Politicians",
+      subcategories: [
+        {
+          name: "Presidents",
+          subcategories: [],
+        },
+      ],
+    },
+  ],
+}); // passes
 ```
 
 Thanks to [crasite](https://github.com/crasite) for this example.
 
 ### ZodType with ZodEffects
+
 When using `z.ZodType` with `z.ZodEffects` (
-    [`.refine`](https://github.com/colinhacks/zod#refine),
-    [`.transform`](https://github.com/colinhacks/zod#transform),
-    [`preprocess`](https://github.com/colinhacks/zod#preprocess),
-    etc...
+[`.refine`](https://github.com/colinhacks/zod#refine),
+[`.transform`](https://github.com/colinhacks/zod#transform),
+[`preprocess`](https://github.com/colinhacks/zod#preprocess),
+etc...
 ), you will need to define the input and output types of the schema. `z.ZodType<Output, z.ZodTypeDef, Input>`
 
 ```ts
-const isValidId = ( id: string ): id is `${ string }/${ string }` =>
-    id.split( '/' ).length === 2
+const isValidId = (id: string): id is `${string}/${string}` =>
+  id.split("/").length === 2;
 
-const baseSchema = z.object( {
-    id: z.string().refine( isValidId )
-} )
+const baseSchema = z.object({
+  id: z.string().refine(isValidId),
+});
 
 type Input = z.input<typeof baseSchema> & {
-    children: Input[]
-}
+  children: Input[];
+};
 
 type Output = z.output<typeof baseSchema> & {
-    children: Output[]
-}
+  children: Output[];
+};
 
-const schema: z.ZodType<Output, z.ZodTypeDef, Input> = baseSchema.extend( {
-    children: z.lazy( () => schema.array() ),
-} )
+const schema: z.ZodType<Output, z.ZodTypeDef, Input> = baseSchema.extend({
+  children: z.lazy(() => schema.array()),
+});
 ```
 
 Thanks to [marcus13371337](https://github.com/marcus13371337) and [JoelBeeldi](https://github.com/JoelBeeldi) for this example.
@@ -2096,8 +2098,10 @@ Conceptually, this is how Zod processes default values:
 Use `.describe()` to add a `description` property to the resulting schema.
 
 ```ts
-const documentedString = z.string().describe("A useful bit of text, if you know what to do with it.");
-documentedString.description // A useful bit of text…
+const documentedString = z
+  .string()
+  .describe("A useful bit of text, if you know what to do with it.");
+documentedString.description; // A useful bit of text…
 ```
 
 This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
@@ -2446,7 +2450,7 @@ Branded -->
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
-Doesn't support static-type inference 😕
+Doesn't support static type inference 😕
 
 ### Yup
 
