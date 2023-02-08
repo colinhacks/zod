@@ -102,10 +102,24 @@ test("pick a nonexistent key", () => {
 
   const pickedSchema = schema.pick({
     a: true,
+    // @ts-expect-error should not accept unexpected keys.
     doesntExist: true,
   });
 
   pickedSchema.parse({
     a: "value",
+  });
+});
+
+test("omit a nonexistent key", () => {
+  const schema = z.object({
+    a: z.string(),
+    b: z.number(),
+  });
+
+  schema.omit({
+    a: true,
+    // @ts-expect-error should not accept unexpected keys.
+    doesntExist: true,
   });
 });
