@@ -1871,6 +1871,10 @@ export type mergeTypes<A, B> = {
     ? A[k]
     : never;
 };
+
+export type processType<T extends object> = util.flatten<
+  objectUtil.addQuestionMarks<T>
+>;
 export type baseObjectOutputType<Shape extends ZodRawShape> =
   objectUtil.addQuestionMarks<{
     [k in keyof Shape]: Shape[k]["_output"];
@@ -2123,6 +2127,57 @@ export class ZodObject<
     // OldOutput = util.flatten<Omit<Output, keyof Augmentation>>,
     // AugOutput = baseObjectOutputType<Augmentation>,
     // NewOutput = OldOutput & AugOutput,
+    NewOutput extends util.flatten<{
+      [k in keyof Augmentation | keyof Output]: k extends keyof Augmentation
+        ? Augmentation[k]["_output"]
+        : k extends keyof Output
+        ? Output[k]
+        : never;
+    }>,
+    // OldInput = util.flatten<Omit<Input, keyof Augmentation>>,
+    // AugInput = baseObjectInputType<Augmentation>,
+    // NewInput = OldInput & AugInput
+    NewInput extends util.flatten<{
+      [k in keyof Augmentation | keyof Input]: k extends keyof Augmentation
+        ? Augmentation[k]["_input"]
+        : k extends keyof Input
+        ? Input[k]
+        : never;
+    }>
+    // AKeys extends string | number | symbol = keyof Augmentation,
+
+    // AKeys extends string | number | symbol = keyof Augmentation
+  >(
+    augmentation: Augmentation
+  ): ZodObject<NewShape, UnknownKeys, Catchall, NewOutput, NewInput> {
+    return new ZodObject({
+      ...this._def,
+      shape: () => ({
+        ...this._def.shape(),
+        ...augmentation,
+      }),
+    }) as any;
+  }
+  /**
+   * @deprecated Use `.extend` instead
+   *  */
+  augment = this.extend;
+
+  /**
+   * Prior to zod@1.0.12 there was a bug in the
+   * inferred type of merged objects. Please
+   * upgrade if you are experiencing issues.
+   */
+  // merge<Incoming extends AnyZodObject>(merging: Incoming) {
+  //   return this.extend(merging.shape as Incoming["shape"]);
+  // }
+  merge<
+    Incoming extends AnyZodObject,
+    Augmentation extends Incoming["shape"],
+    NewShape extends extendShape<T, Augmentation>,
+    // OldOutput = util.flatten<Omit<Output, keyof Augmentation>>,
+    // AugOutput = baseObjectOutputType<Augmentation>,
+    // NewOutput = OldOutput & AugOutput,
     NewOutput extends {
       [k in keyof Augmentation | keyof Output]: k extends keyof Augmentation
         ? Augmentation[k]["_output"]
@@ -2144,37 +2199,13 @@ export class ZodObject<
 
     // AKeys extends string | number | symbol = keyof Augmentation
   >(
-    augmentation: Augmentation
-  ): ZodObject<NewShape, UnknownKeys, Catchall, NewOutput, NewInput> {
-    return new ZodObject({
-      ...this._def,
-      shape: () => ({
-        ...this._def.shape(),
-        ...augmentation,
-      }),
-    }) as any;
-  }
-  augment = this.extend;
-
-  setKey<Key extends string, Schema extends ZodTypeAny>(
-    key: Key,
-    schema: Schema
-  ): ZodObject<T & { [k in Key]: Schema }, UnknownKeys, Catchall> {
-    return this.augment({ [key]: schema }) as any;
-  }
-
-  /**
-   * Prior to zod@1.0.12 there was a bug in the
-   * inferred type of merged objects. Please
-   * upgrade if you are experiencing issues.
-   */
-  merge<Incoming extends AnyZodObject>(
     merging: Incoming
-  ): //ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = (merging) => {
-  ZodObject<
-    extendShape<T, ReturnType<Incoming["_def"]["shape"]>>,
+  ): ZodObject<
+    NewShape,
     Incoming["_def"]["unknownKeys"],
-    Incoming["_def"]["catchall"]
+    Incoming["_def"]["catchall"],
+    NewOutput,
+    NewInput
   > {
     // const mergedShape = objectUtil.mergeShapes(
     //   this._def.shape(),
@@ -2189,6 +2220,34 @@ export class ZodObject<
     }) as any;
     return merged;
   }
+
+  setKey<Key extends string, Schema extends ZodTypeAny>(
+    key: Key,
+    schema: Schema
+  ): ZodObject<T & { [k in Key]: Schema }, UnknownKeys, Catchall> {
+    return this.augment({ [key]: schema }) as any;
+  }
+  // merge<Incoming extends AnyZodObject>(
+  //   merging: Incoming
+  // ): //ZodObject<T & Incoming["_shape"], UnknownKeys, Catchall> = (merging) => {
+  // ZodObject<
+  //   extendShape<T, ReturnType<Incoming["_def"]["shape"]>>,
+  //   Incoming["_def"]["unknownKeys"],
+  //   Incoming["_def"]["catchall"]
+  // > {
+  //   // const mergedShape = objectUtil.mergeShapes(
+  //   //   this._def.shape(),
+  //   //   merging._def.shape()
+  //   // );
+  //   const merged: any = new ZodObject({
+  //     unknownKeys: merging._def.unknownKeys,
+  //     catchall: merging._def.catchall,
+  //     shape: () =>
+  //       objectUtil.mergeShapes(this._def.shape(), merging._def.shape()),
+  //     typeName: ZodFirstPartyTypeKind.ZodObject,
+  //   }) as any;
+  //   return merged;
+  // }
 
   catchall<Index extends ZodTypeAny>(
     index: Index
