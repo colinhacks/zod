@@ -1851,24 +1851,6 @@ export namespace objectUtil {
 
 export type extendShape<A, B> = util.flatten<Omit<A, keyof B> & B>;
 
-const AugmentFactory =
-  <Def extends ZodObjectDef>(def: Def) =>
-  <Augmentation extends ZodRawShape>(
-    augmentation: Augmentation
-  ): ZodObject<
-    extendShape<ReturnType<Def["shape"]>, Augmentation>,
-    Def["unknownKeys"],
-    Def["catchall"]
-  > => {
-    return new ZodObject({
-      ...def,
-      shape: () => ({
-        ...def.shape(),
-        ...augmentation,
-      }),
-    }) as any;
-  };
-
 export type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
 export interface ZodObjectDef<
@@ -2139,8 +2121,13 @@ export class ZodObject<
     NewShape,
     UnknownKeys,
     Catchall,
-    util.flatten<Output & objectOutputType<Augmentation, Catchall>>,
-    util.flatten<Input & objectInputType<Augmentation, Catchall>>
+    util.flatten<
+      Omit<Output, keyof Augmentation> &
+        objectOutputType<Augmentation, Catchall>
+    >,
+    util.flatten<
+      Omit<Input, keyof Augmentation> & objectInputType<Augmentation, Catchall>
+    >
   > {
     return new ZodObject({
       ...this._def,
