@@ -1,3 +1,4 @@
+// @ts-ignore TS6133
 import { test } from "@jest/globals";
 
 import { util } from "../helpers/util";

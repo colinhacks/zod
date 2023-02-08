@@ -390,33 +390,34 @@ export abstract class ZodType<
   }
 
   optional(): ZodOptional<this> {
-    return ZodOptional.create(this) as any;
+    return ZodOptional.create(this, this._def) as any;
   }
   nullable(): ZodNullable<this> {
-    return ZodNullable.create(this) as any;
+    return ZodNullable.create(this, this._def) as any;
   }
-  nullish(): ZodNullable<ZodOptional<this>> {
-    return this.optional().nullable();
+  nullish(): ZodOptional<ZodNullable<this>> {
+    return this.nullable().optional();
   }
   array(): ZodArray<this> {
-    return ZodArray.create(this);
+    return ZodArray.create(this, this._def);
   }
   promise(): ZodPromise<this> {
-    return ZodPromise.create(this);
+    return ZodPromise.create(this, this._def);
   }
 
   or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
-    return ZodUnion.create([this, option]) as any;
+    return ZodUnion.create([this, option], this._def) as any;
   }
 
   and<T extends ZodTypeAny>(incoming: T): ZodIntersection<this, T> {
-    return ZodIntersection.create(this, incoming);
+    return ZodIntersection.create(this, incoming, this._def);
   }
 
   transform<NewOut>(
     transform: (arg: Output, ctx: RefinementCtx) => NewOut | Promise<NewOut>
   ): ZodEffects<this, NewOut> {
     return new ZodEffects({
+      ...processCreateParams(this._def),
       schema: this,
       typeName: ZodFirstPartyTypeKind.ZodEffects,
       effect: { type: "transform", transform },
@@ -429,6 +430,7 @@ export abstract class ZodType<
     const defaultValueFunc = typeof def === "function" ? def : () => def;
 
     return new ZodDefault({
+      ...processCreateParams(this._def),
       innerType: this,
       defaultValue: defaultValueFunc,
       typeName: ZodFirstPartyTypeKind.ZodDefault,
@@ -440,17 +442,19 @@ export abstract class ZodType<
     return new ZodBranded({
       typeName: ZodFirstPartyTypeKind.ZodBranded,
       type: this,
-      ...processCreateParams(undefined),
+      ...processCreateParams(this._def),
     });
   }
-  catch(def: Input): ZodCatch<this>;
-  catch(def: () => Input): ZodCatch<this>;
+
+  catch(def: Output): ZodCatch<this>;
+  catch(def: () => Output): ZodCatch<this>;
   catch(def: any) {
-    const defaultValueFunc = typeof def === "function" ? def : () => def;
+    const catchValueFunc = typeof def === "function" ? def : () => def;
 
     return new ZodCatch({
+      ...processCreateParams(this._def),
       innerType: this,
-      defaultValue: defaultValueFunc,
+      catchValue: catchValueFunc,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
     }) as any;
   }
@@ -490,6 +494,7 @@ export type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
+  | { kind: "cuid2"; message?: string }
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
@@ -508,14 +513,18 @@ export interface ZodStringDef extends ZodTypeDef {
 }
 
 const cuidRegex = /^c[^\s-]{8,}$/i;
+const cuid2Regex = /^[a-z][a-z0-9]*$/;
 const uuidRegex =
   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 // from https://stackoverflow.com/a/46181/1550155
 // old version: too slow, didn't support unicode
 // const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i;
+//old email regex
+// const emailRegex = /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@((?!-)([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{1,})[^-<>()[\].,;:\s@"]$/i;
 // eslint-disable-next-line
+
 const emailRegex =
-  /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+  /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|([^-]([a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}))$/;
 
 // interface IsDateStringOptions extends StringDateOptions {
 /**
@@ -529,7 +538,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   if (args.precision) {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}:\\d{2})|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
       );
     } else {
       return new RegExp(
@@ -539,7 +548,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   } else if (args.precision === 0) {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}:\\d{2})|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
       );
     } else {
       return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`);
@@ -547,7 +556,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   } else {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}:\\d{2})|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}(:?\\d{2})?)|Z)$`
       );
     } else {
       return new RegExp(
@@ -664,6 +673,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "cuid2") {
+        if (!cuid2Regex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "cuid2",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "url") {
         try {
           new URL(input.data);
@@ -759,6 +778,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
+  }
+  cuid2(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message) });
   }
   datetime(
     options?:
@@ -862,6 +884,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
+  }
+  get isCUID2() {
+    return !!this._def.checks.find((ch) => ch.kind === "cuid2");
   }
 
   get minLength() {
@@ -1150,7 +1175,30 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
   }
 
   get isInt() {
-    return !!this._def.checks.find((ch) => ch.kind === "int");
+    return !!this._def.checks.find(
+      (ch) =>
+        ch.kind === "int" ||
+        (ch.kind === "multipleOf" && util.isInteger(ch.value))
+    );
+  }
+
+  get isFinite() {
+    let max: number | null = null,
+      min: number | null = null;
+    for (const ch of this._def.checks) {
+      if (
+        ch.kind === "finite" ||
+        ch.kind === "int" ||
+        ch.kind === "multipleOf"
+      ) {
+        return true;
+      } else if (ch.kind === "min") {
+        if (min === null || ch.value > min) min = ch.value;
+      } else if (ch.kind === "max") {
+        if (max === null || ch.value < max) max = ch.value;
+      }
+    }
+    return Number.isFinite(min) && Number.isFinite(max);
   }
 }
 
@@ -1689,7 +1737,7 @@ export class ZodArray<
 
     if (ctx.common.async) {
       return Promise.all(
-        (ctx.data as any[]).map((item, i) => {
+        ([...ctx.data] as any[]).map((item, i) => {
           return def.type._parseAsync(
             new ParseInputLazyPath(ctx, item, ctx.path, i)
           );
@@ -1699,7 +1747,7 @@ export class ZodArray<
       });
     }
 
-    const result = (ctx.data as any[]).map((item, i) => {
+    const result = ([...ctx.data] as any[]).map((item, i) => {
       return def.type._parseSync(
         new ParseInputLazyPath(ctx, item, ctx.path, i)
       );
@@ -1874,10 +1922,14 @@ export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
 export type SomeZodObject = ZodObject<
   ZodRawShape,
   UnknownKeysParam,
-  ZodTypeAny,
-  any,
-  any
+  ZodTypeAny
 >;
+
+export type objectKeyMask<Obj> = { [k in keyof Obj]?: true };
+
+export type noUnrecognized<Obj extends object, Shape extends object> = {
+  [k in keyof Obj]: k extends keyof Shape ? Obj[k] : never;
+};
 
 function deepPartialify(schema: ZodTypeAny): any {
   if (schema instanceof ZodObject) {
@@ -1908,7 +1960,7 @@ function deepPartialify(schema: ZodTypeAny): any {
 
 export class ZodObject<
   T extends ZodRawShape,
-  UnknownKeys extends UnknownKeysParam = "strip",
+  UnknownKeys extends UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny,
   Output = objectOutputType<T, Catchall>,
   Input = objectInputType<T, Catchall>
@@ -2122,29 +2174,34 @@ export class ZodObject<
     }) as any;
   }
 
-  pick<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+  pick<Mask extends objectKeyMask<T>>(
+    mask: noUnrecognized<Mask, T>
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
     const shape: any = {};
-    util.objectKeys(mask).map((key) => {
-      // only add to shape if key corresponds to an element of the current shape
-      if (this.shape[key]) shape[key] = this.shape[key];
+
+    util.objectKeys(mask).forEach((key) => {
+      if (mask[key] && this.shape[key]) {
+        shape[key] = this.shape[key];
+      }
     });
+
     return new ZodObject({
       ...this._def,
       shape: () => shape,
     }) as any;
   }
 
-  omit<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+  omit<Mask extends objectKeyMask<T>>(
+    mask: noUnrecognized<Mask, objectKeyMask<T>>
   ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall> {
     const shape: any = {};
-    util.objectKeys(this.shape).map((key) => {
-      if (util.objectKeys(mask).indexOf(key) === -1) {
+
+    util.objectKeys(this.shape).forEach((key) => {
+      if (!mask[key]) {
         shape[key] = this.shape[key];
       }
     });
+
     return new ZodObject({
       ...this._def,
       shape: () => shape,
@@ -2160,8 +2217,8 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  partial<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+  partial<Mask extends objectKeyMask<T>>(
+    mask: noUnrecognized<Mask, objectKeyMask<T>>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
@@ -2171,24 +2228,16 @@ export class ZodObject<
   >;
   partial(mask?: any) {
     const newShape: any = {};
-    if (mask) {
-      util.objectKeys(this.shape).map((key) => {
-        if (util.objectKeys(mask).indexOf(key) === -1) {
-          newShape[key] = this.shape[key];
-        } else {
-          newShape[key] = this.shape[key].optional();
-        }
-      });
-      return new ZodObject({
-        ...this._def,
-        shape: () => newShape,
-      }) as any;
-    } else {
-      for (const key in this.shape) {
-        const fieldSchema = this.shape[key];
+
+    util.objectKeys(this.shape).forEach((key) => {
+      const fieldSchema = this.shape[key];
+
+      if (mask && !mask[key]) {
+        newShape[key] = fieldSchema;
+      } else {
         newShape[key] = fieldSchema.optional();
       }
-    }
+    });
 
     return new ZodObject({
       ...this._def,
@@ -2201,8 +2250,8 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  required<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+  required<Mask extends objectKeyMask<T>>(
+    mask: noUnrecognized<Mask, objectKeyMask<T>>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];
@@ -2212,30 +2261,22 @@ export class ZodObject<
   >;
   required(mask?: any) {
     const newShape: any = {};
-    if (mask) {
-      util.objectKeys(this.shape).map((key) => {
-        if (util.objectKeys(mask).indexOf(key) === -1) {
-          newShape[key] = this.shape[key];
-        } else {
-          const fieldSchema = this.shape[key];
-          let newField = fieldSchema;
-          while (newField instanceof ZodOptional) {
-            newField = (newField as ZodOptional<any>)._def.innerType;
-          }
-          newShape[key] = newField;
-        }
-      });
-    } else {
-      for (const key in this.shape) {
+
+    util.objectKeys(this.shape).forEach((key) => {
+      if (mask && !mask[key]) {
+        newShape[key] = this.shape[key];
+      } else {
         const fieldSchema = this.shape[key];
         let newField = fieldSchema;
+
         while (newField instanceof ZodOptional) {
           newField = (newField as ZodOptional<any>)._def.innerType;
         }
 
         newShape[key] = newField;
       }
-    }
+    });
+
     return new ZodObject({
       ...this._def,
       shape: () => newShape,
@@ -2251,7 +2292,7 @@ export class ZodObject<
   static create = <T extends ZodRawShape>(
     shape: T,
     params?: RawCreateParams
-  ): ZodObject<T> => {
+  ): ZodObject<T, "strip"> => {
     return new ZodObject({
       shape: () => shape,
       unknownKeys: "strip",
@@ -2277,7 +2318,7 @@ export class ZodObject<
   static lazycreate = <T extends ZodRawShape>(
     shape: () => T,
     params?: RawCreateParams
-  ): ZodObject<T> => {
+  ): ZodObject<T, "strip"> => {
     return new ZodObject({
       shape,
       unknownKeys: "strip",
@@ -2465,11 +2506,15 @@ const getDiscriminator = <T extends ZodTypeAny>(
 };
 
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
-  ZodObject<{ [key in Discriminator]: ZodTypeAny } & ZodRawShape, any, any>;
+  ZodObject<
+    { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
+    UnknownKeysParam,
+    ZodTypeAny
+  >;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<any>[] = ZodDiscriminatedUnionOption<any>[]
+  Options extends ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
 > extends ZodTypeDef {
   discriminator: Discriminator;
   options: Options;
@@ -2498,7 +2543,9 @@ export class ZodDiscriminatedUnion<
     }
 
     const discriminator = this.discriminator;
+
     const discriminatorValue: string = ctx.data[discriminator];
+
     const option = this.optionsMap.get(discriminatorValue);
 
     if (!option) {
@@ -2575,6 +2622,7 @@ export class ZodDiscriminatedUnion<
             )} has duplicate value ${String(value)}`
           );
         }
+
         optionsMap.set(value, type);
       }
     }
@@ -2827,7 +2875,7 @@ export class ZodTuple<
       status.dirty();
     }
 
-    const items = (ctx.data as any[])
+    const items = ([...ctx.data] as any[])
       .map((item, itemIndex) => {
         const schema = this._def.items[itemIndex] || this._def.rest;
         if (!schema) return null as any as SyncParseReturnType<any>;
@@ -3299,7 +3347,7 @@ export class ZodFunction<
           });
         const result = await fn(...(parsedArgs as any));
         const parsedReturns = await (
-          this._def.returns as ZodPromise<ZodTypeAny>
+          this._def.returns as unknown as ZodPromise<ZodTypeAny>
         )._def.type
           .parseAsync(result, params)
           .catch((e) => {
@@ -3453,6 +3501,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
     if (input.data !== this._def.value) {
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
+        received: ctx.data,
         code: ZodIssueCode.invalid_literal,
         expected: this._def.value,
       });
@@ -3500,6 +3549,14 @@ export interface ZodEnumDef<T extends EnumValues = EnumValues>
 }
 
 export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
+
+export type FilterEnum<Values, ToExclude> = Values extends []
+  ? []
+  : Values extends [infer Head, ...infer Rest]
+  ? Head extends ToExclude
+    ? FilterEnum<Rest, ToExclude>
+    : [Head, ...FilterEnum<Rest, ToExclude>]
+  : never;
 
 function createZodEnum<U extends string, T extends Readonly<[U, ...U[]]>>(
   values: T,
@@ -3573,6 +3630,23 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       enumValues[val] = val;
     }
     return enumValues as any;
+  }
+
+  extract<ToExtract extends readonly [T[number], ...T[number][]]>(
+    values: ToExtract
+  ) {
+    return ZodEnum.create(values);
+  }
+
+  exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
+    values: ToExclude
+  ) {
+    return ZodEnum.create(
+      this.options.filter((opt) => !values.includes(opt)) as FilterEnum<
+        T,
+        ToExclude[number]
+      >
+    );
   }
 
   static create = createZodEnum;
@@ -3661,6 +3735,10 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   ZodPromiseDef<T>,
   Promise<T["_input"]>
 > {
+  unwrap() {
+    return this._def.type;
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
     if (
@@ -4053,17 +4131,19 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
 //////////                      //////////
 //////////////////////////////////////////
 //////////////////////////////////////////
-export interface ZodCatchDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodCatchDef<
+  T extends ZodTypeAny = ZodTypeAny,
+  C extends T["_input"] = T["_input"]
+> extends ZodTypeDef {
   innerType: T;
-  defaultValue: () => T["_input"];
+  catchValue: () => C;
   typeName: ZodFirstPartyTypeKind.ZodCatch;
 }
 
 export class ZodCatch<T extends ZodTypeAny> extends ZodType<
-  util.noUndefined<T["_output"]>,
+  T["_output"],
   ZodCatchDef<T>,
-  T["_input"] | undefined
+  T["_input"]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
@@ -4071,7 +4151,13 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
     const result = this._def.innerType._parse({
       data: ctx.data,
       path: ctx.path,
-      parent: ctx,
+      parent: {
+        ...ctx,
+        common: {
+          ...ctx.common,
+          issues: [], // don't collect issues from inner type
+        },
+      },
     });
 
     if (isAsync(result)) {
@@ -4079,35 +4165,33 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
         return {
           status: "valid",
           value:
-            result.status === "valid" ? result.value : this._def.defaultValue(),
+            result.status === "valid" ? result.value : this._def.catchValue(),
         };
       });
     } else {
       return {
         status: "valid",
         value:
-          result.status === "valid" ? result.value : this._def.defaultValue(),
+          result.status === "valid" ? result.value : this._def.catchValue(),
       };
     }
   }
 
-  removeDefault() {
+  removeCatch() {
     return this._def.innerType;
   }
 
   static create = <T extends ZodTypeAny>(
     type: T,
     params: RawCreateParams & {
-      default: T["_input"] | (() => T["_input"]);
+      catch: T["_output"] | (() => T["_output"]);
     }
   ): ZodCatch<T> => {
     return new ZodCatch({
       innerType: type,
       typeName: ZodFirstPartyTypeKind.ZodCatch,
-      defaultValue:
-        typeof params.default === "function"
-          ? params.default
-          : () => params.default,
+      catchValue:
+        typeof params.catch === "function" ? params.catch : () => params.catch,
       ...processCreateParams(params),
     });
   };
@@ -4335,7 +4419,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodNever
   | ZodVoid
   | ZodArray<any, any>
-  | ZodObject<any, any, any, any, any>
+  | ZodObject<any, any, any>
   | ZodUnion<any>
   | ZodDiscriminatedUnion<any, any>
   | ZodIntersection<any, any>
@@ -4414,7 +4498,10 @@ export const coerce = {
   number: ((arg) =>
     ZodNumber.create({ ...arg, coerce: true })) as typeof ZodNumber["create"],
   boolean: ((arg) =>
-    ZodBoolean.create({ ...arg, coerce: true })) as typeof ZodBoolean["create"],
+    ZodBoolean.create({
+      ...arg,
+      coerce: true,
+    })) as typeof ZodBoolean["create"],
   bigint: ((arg) =>
     ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
   date: ((arg) =>

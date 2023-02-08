@@ -48,7 +48,7 @@ test("catch with transform", () => {
   );
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string | undefined>(true);
+  util.assertEqual<inp, string>(true);
   type out = z.output<typeof stringWithDefault>;
   util.assertEqual<out, string>(true);
 });
@@ -66,7 +66,7 @@ test("catch on existing optional", () => {
   type inp = z.input<typeof stringWithDefault>;
   util.assertEqual<inp, string | undefined>(true);
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string>(true);
+  util.assertEqual<out, string | undefined>(true);
 });
 
 test("optional on catch", () => {
@@ -85,7 +85,7 @@ test("complex chain example", () => {
     .transform((val) => val + "!")
     .transform((val) => val.toUpperCase())
     .catch("qwer")
-    .removeDefault()
+    .removeCatch()
     .optional()
     .catch("asdfasdf");
 
@@ -94,8 +94,8 @@ test("complex chain example", () => {
   expect(complex.parse(true)).toBe("ASDF!");
 });
 
-test("removeDefault", () => {
-  const stringWithRemovedDefault = z.string().catch("asdf").removeDefault();
+test("removeCatch", () => {
+  const stringWithRemovedDefault = z.string().catch("asdf").removeCatch();
 
   type out = z.output<typeof stringWithRemovedDefault>;
   util.assertEqual<out, string>(true);
@@ -107,7 +107,7 @@ test("nested", () => {
     inner: "asdf",
   });
   type input = z.input<typeof outer>;
-  util.assertEqual<input, { inner?: string | undefined } | undefined>(true);
+  util.assertEqual<input, { inner: string }>(true);
   type out = z.output<typeof outer>;
   util.assertEqual<out, { inner: string }>(true);
   expect(outer.parse(undefined)).toEqual({ inner: "asdf" });
@@ -125,7 +125,7 @@ test("chained catch", () => {
 
 test("factory", () => {
   z.ZodCatch.create(z.string(), {
-    default: "asdf",
+    catch: "asdf",
   }).parse(undefined);
 });
 
@@ -151,4 +151,41 @@ test("enum", () => {
   expect(schema.parse({})).toEqual({ fruit: "apple" });
   expect(schema.parse({ fruit: true })).toEqual({ fruit: "apple" });
   expect(schema.parse({ fruit: 15 })).toEqual({ fruit: "apple" });
+});
+
+test("reported issues with nested usage", () => {
+  const schema = z.object({
+    string: z.string(),
+    obj: z.object({
+      sub: z.object({
+        lit: z.literal("a"),
+        subCatch: z.number().catch(23),
+      }),
+      midCatch: z.number().catch(42),
+    }),
+    number: z.number().catch(0),
+    bool: z.boolean(),
+  });
+
+  try {
+    schema.parse({
+      string: {},
+      obj: {
+        sub: {
+          lit: "b",
+          subCatch: "24",
+        },
+        midCatch: 444,
+      },
+      number: "",
+      bool: "yes",
+    });
+  } catch (error) {
+    const issues = (error as z.ZodError).issues;
+
+    expect(issues.length).toEqual(3);
+    expect(issues[0].message).toMatch("string");
+    expect(issues[1].message).toMatch("literal");
+    expect(issues[2].message).toMatch("boolean");
+  }
 });

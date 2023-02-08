@@ -38,24 +38,66 @@ test("email validations", () => {
   expect(() => email.parse("asdf")).toThrow();
   expect(() => email.parse("@lkjasdf.com")).toThrow();
   expect(() => email.parse("asdf@sdf.")).toThrow();
-  // expect(() => email.parse("asdf@asdf.com-")).toThrow();
-  // expect(() => email.parse("asdf@-asdf.com")).toThrow();
+  expect(() => email.parse("asdf@asdf.com-")).toThrow();
+  expect(() => email.parse("asdf@-asdf.com")).toThrow();
+  expect(() => email.parse("asdf@-a(sdf.com")).toThrow();
+  expect(() => email.parse("asdf@-asdf.com(")).toThrow();
+  expect(() =>
+    email.parse("pawan.anand@%9y83&#$%R&#$%R&%#$R%%^^%5rw3ewe.d.d.aaaa.wef.co")
+  ).toThrow();
 });
 
 test("more email validations", () => {
-  const data = [
-    `"josé.arrañoça"@domain.com`,
-    `"сайт"@domain.com`,
-    `"💩"@domain.com`,
-    `"🍺🕺🎉"@domain.com`,
-    `poop@💩.la`,
-    `"🌮"@i❤️tacos.ws`,
-    "sss--asd@i❤️tacos.ws",
+  const validEmails = [
+    `very.common@example.com`,
+    `disposable.style.email.with+symbol@example.com`,
+    `other.email-with-hyphen@example.com`,
+    `fully-qualified-domain@example.com`,
+    `user.name+tag+sorting@example.com`,
+    `x@example.com`,
+    `example-indeed@strange-example.com`,
+    `test/test@test.com`,
+    `example@s.example`,
+    `" "@example.org`,
+    `"john..doe"@example.org`,
+    `mailhost!username@example.org`,
+    `"very.(),:;<>[]\".VERY.\"very@\\ \"very\".unusual"@strange.example.com`,
+    `user%example.com@example.org`,
+    `user-@example.org`,
+    `postmaster@[123.123.123.123]`,
+    `user@my-example.com`,
+    `a@b.cd`,
+    `work+user@mail.com`,
+    `user@[68.185.127.196]`,
+    `ipv4@[85.129.96.247]`,
+    `valid@[79.208.229.53]`,
   ];
-  const email = z.string().email();
-  for (const datum of data) {
-    email.parse(datum);
-  }
+  const invalidEmails = [
+    `Abc.example.com`,
+    `A@b@c@example.com`,
+    `a"b(c)d,e:f;g<h>i[j\k]l@example.com`,
+    `just"not"right@example.com`,
+    `this is"not\allowed@example.com`,
+    `this\ still\"not\\allowed@example.com`,
+    `i_like_underscore@but_its_not_allowed_in_this_part.example.com`,
+    `QA[icon]CHOCOLATE[icon]@test.com`,
+    `invalid@-start.com`,
+    `invalid@end.com-`,
+    `a.b@c.d`,
+    `invalid@[1.1.1.-1]`,
+    `invalid@[68.185.127.196.55]`,
+    `temp@[192.168.1]`,
+    `temp@[9.18.122.]`,
+  ];
+  const emailSchema = z.string().email();
+  expect(
+    validEmails.every((email) => emailSchema.safeParse(email).success)
+  ).toBe(true);
+  expect(
+    invalidEmails.every(
+      (email) => emailSchema.safeParse(email).success === false
+    )
+  ).toBe(true);
 });
 
 test("url validations", () => {
@@ -120,6 +162,27 @@ test("cuid", () => {
   }
 });
 
+test("cuid2", () => {
+  const cuid2 = z.string().cuid2();
+  const validStrings = [
+    "a", // short string
+    "tz4a98xxat96iws9zmbrgj3a", // normal string
+    "kf5vz6ssxe4zjcb409rjgo747tc5qjazgptvotk6", // longer than require("@paralleldrive/cuid2").bigLength
+  ];
+  validStrings.forEach((s) => cuid2.parse(s));
+  const invalidStrings = [
+    "", // empty string
+    "1z4a98xxat96iws9zmbrgj3a", // starts with a number
+    "tz4a98xxat96iws9zMbrgj3a", // include uppercase
+    "tz4a98xxat96iws-zmbrgj3a", // involve symbols
+  ];
+  const results = invalidStrings.map((s) => cuid2.safeParse(s));
+  expect(results.every((r) => !r.success)).toEqual(true);
+  if (!results[0].success) {
+    expect(results[0].error.issues[0].message).toEqual("Invalid cuid2");
+  }
+});
+
 test("regex", () => {
   z.string()
     .regex(/^moo+$/)
@@ -154,21 +217,31 @@ test("checks getters", () => {
   expect(z.string().email().isEmail).toEqual(true);
   expect(z.string().email().isURL).toEqual(false);
   expect(z.string().email().isCUID).toEqual(false);
+  expect(z.string().email().isCUID2).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
   expect(z.string().url().isCUID).toEqual(false);
+  expect(z.string().url().isCUID2).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
+  expect(z.string().cuid().isCUID2).toEqual(false);
   expect(z.string().cuid().isUUID).toEqual(false);
+
+  expect(z.string().cuid2().isEmail).toEqual(false);
+  expect(z.string().cuid2().isURL).toEqual(false);
+  expect(z.string().cuid2().isCUID).toEqual(false);
+  expect(z.string().cuid2().isCUID2).toEqual(true);
+  expect(z.string().cuid2().isUUID).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
   expect(z.string().uuid().isCUID).toEqual(false);
+  expect(z.string().uuid().isCUID2).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
 });
 
@@ -243,6 +316,8 @@ test("datetime parsing", () => {
   datetimeOffset.parse("2022-10-13T09:52:31.4Z");
   datetimeOffset.parse("2020-10-14T17:42:29+00:00");
   datetimeOffset.parse("2020-10-14T17:42:29+03:15");
+  datetimeOffset.parse("2020-10-14T17:42:29+0315");
+  datetimeOffset.parse("2020-10-14T17:42:29+03");
   expect(() => datetimeOffset.parse("tuna")).toThrow();
   expect(() => datetimeOffset.parse("2022-10-13T09:52:31.Z")).toThrow();
 
@@ -252,6 +327,8 @@ test("datetime parsing", () => {
   datetimeOffsetNoMs.parse("1970-01-01T00:00:00Z");
   datetimeOffsetNoMs.parse("2022-10-13T09:52:31Z");
   datetimeOffsetNoMs.parse("2020-10-14T17:42:29+00:00");
+  datetimeOffsetNoMs.parse("2020-10-14T17:42:29+0000");
+  datetimeOffsetNoMs.parse("2020-10-14T17:42:29+00");
   expect(() => datetimeOffsetNoMs.parse("tuna")).toThrow();
   expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
   expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.Z")).toThrow();
@@ -263,6 +340,8 @@ test("datetime parsing", () => {
   const datetimeOffset4Ms = z.string().datetime({ offset: true, precision: 4 });
   datetimeOffset4Ms.parse("1970-01-01T00:00:00.1234Z");
   datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00:00");
+  datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+0000");
+  datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00");
   expect(() => datetimeOffset4Ms.parse("tuna")).toThrow();
   expect(() => datetimeOffset4Ms.parse("1970-01-01T00:00:00.123Z")).toThrow();
   expect(() =>
