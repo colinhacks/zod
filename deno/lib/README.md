@@ -366,6 +366,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod): Formik-compliant validator library that simplifies using Zod with Formik.
 - [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): Useful for translating Zod error messages.
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
+- [`houseform`](https://github.com/crutchcorn/houseform/): A React form library that uses Zod for validation.
 
 #### Zod to X
 
@@ -558,7 +559,7 @@ z.coerce.boolean().parse(null); // => false
 
 ## Literals
 
-Literals are zod's equivilant to [TypeScript's Literal Types](https://www.typescriptlang.org/docs/handbook/literal-types.html) which alow only the exact given type and value.
+Literals are zod's equivilant to [TypeScript's Literal Types](https://www.typescriptlang.org/docs/handbook/literal-types.html) which allow only the exact given type and value.
 
 ```ts
 const tuna = z.literal("tuna");
@@ -587,6 +588,7 @@ z.string().email();
 z.string().url();
 z.string().uuid();
 z.string().cuid();
+z.string().cuid2();
 z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
@@ -640,6 +642,7 @@ const datetime = z.string().datetime({ offset: true });
 datetime.parse("2020-01-01T00:00:00+02:00"); // pass
 datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
+datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
 datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
 ```
 
