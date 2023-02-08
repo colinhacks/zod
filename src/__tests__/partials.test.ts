@@ -185,6 +185,12 @@ test("required with mask", () => {
 });
 
 test("required with mask containing a nonexistent key", () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default("asdf"),
+    country: z.string().optional(),
+  });
   object.required({
     age: true,
     // @ts-expect-error should not accept unexpected keys.
@@ -193,14 +199,12 @@ test("required with mask containing a nonexistent key", () => {
 });
 
 test("required with mask -- ignore falsy values", () => {
-
   const object = z.object({
     name: z.string(),
     age: z.number().optional(),
     field: z.string().optional().default("asdf"),
     country: z.string().optional(),
   });
-
 
   // @ts-expect-error
   const requiredObject = object.required({ age: true, country: false });

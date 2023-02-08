@@ -185,8 +185,13 @@ test("required with mask", () => {
   expect(requiredObject.shape.country).toBeInstanceOf(z.ZodOptional);
 });
 
-
 test("required with mask containing a nonexistent key", () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default("asdf"),
+    country: z.string().optional(),
+  });
   object.required({
     age: true,
     // @ts-expect-error should not accept unexpected keys.
@@ -201,16 +206,14 @@ test("required with mask -- ignore falsy values", () => {
     field: z.string().optional().default("asdf"),
     country: z.string().optional(),
   });
-  
+
   // @ts-expect-error
   const requiredObject = object.required({ age: true, country: false });
   expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
   expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
   expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
   expect(requiredObject.shape.country).toBeInstanceOf(z.ZodOptional);
-  
 });
-
 
 test("partial with mask", async () => {
   const object = z.object({
