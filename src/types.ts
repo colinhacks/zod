@@ -522,8 +522,10 @@ const uuidRegex =
 //old email regex
 // const emailRegex = /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@((?!-)([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{1,})[^-<>()[\].,;:\s@"]$/i;
 // eslint-disable-next-line
+
 const emailRegex =
   /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|([^-]([a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}))$/;
+
 // interface IsDateStringOptions extends StringDateOptions {
 /**
  * Match any configuration
@@ -1923,6 +1925,12 @@ export type SomeZodObject = ZodObject<
   ZodTypeAny
 >;
 
+export type objectKeyMask<Obj> = { [k in keyof Obj]?: true };
+
+export type noUnrecognized<Obj extends object, Shape extends object> = {
+  [k in keyof Obj]: k extends keyof Shape ? Obj[k] : never;
+};
+
 function deepPartialify(schema: ZodTypeAny): any {
   if (schema instanceof ZodObject) {
     const newShape: any = {};
@@ -2166,29 +2174,34 @@ export class ZodObject<
     }) as any;
   }
 
-  pick<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+  pick<Mask extends objectKeyMask<T>>(
+    mask: noUnrecognized<Mask, T>
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
     const shape: any = {};
-    util.objectKeys(mask).map((key) => {
-      // only add to shape if key corresponds to an element of the current shape
-      if (this.shape[key]) shape[key] = this.shape[key];
+
+    util.objectKeys(mask).forEach((key) => {
+      if (mask[key] && this.shape[key]) {
+        shape[key] = this.shape[key];
+      }
     });
+
     return new ZodObject({
       ...this._def,
       shape: () => shape,
     }) as any;
   }
 
-  omit<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+  omit<Mask extends objectKeyMask<T>>(
+    mask: noUnrecognized<Mask, objectKeyMask<T>>
   ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall> {
     const shape: any = {};
-    util.objectKeys(this.shape).map((key) => {
-      if (util.objectKeys(mask).indexOf(key) === -1) {
+
+    util.objectKeys(this.shape).forEach((key) => {
+      if (!mask[key]) {
         shape[key] = this.shape[key];
       }
     });
+
     return new ZodObject({
       ...this._def,
       shape: () => shape,
@@ -2204,8 +2217,8 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  partial<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+  partial<Mask extends objectKeyMask<T>>(
+    mask: noUnrecognized<Mask, objectKeyMask<T>>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
@@ -2215,24 +2228,16 @@ export class ZodObject<
   >;
   partial(mask?: any) {
     const newShape: any = {};
-    if (mask) {
-      util.objectKeys(this.shape).map((key) => {
-        if (util.objectKeys(mask).indexOf(key) === -1) {
-          newShape[key] = this.shape[key];
-        } else {
-          newShape[key] = this.shape[key].optional();
-        }
-      });
-      return new ZodObject({
-        ...this._def,
-        shape: () => newShape,
-      }) as any;
-    } else {
-      for (const key in this.shape) {
-        const fieldSchema = this.shape[key];
+
+    util.objectKeys(this.shape).forEach((key) => {
+      const fieldSchema = this.shape[key];
+
+      if (mask && !mask[key]) {
+        newShape[key] = fieldSchema;
+      } else {
         newShape[key] = fieldSchema.optional();
       }
-    }
+    });
 
     return new ZodObject({
       ...this._def,
@@ -2245,8 +2250,8 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  required<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+  required<Mask extends objectKeyMask<T>>(
+    mask: noUnrecognized<Mask, objectKeyMask<T>>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];
@@ -2256,30 +2261,22 @@ export class ZodObject<
   >;
   required(mask?: any) {
     const newShape: any = {};
-    if (mask) {
-      util.objectKeys(this.shape).map((key) => {
-        if (util.objectKeys(mask).indexOf(key) === -1) {
-          newShape[key] = this.shape[key];
-        } else {
-          const fieldSchema = this.shape[key];
-          let newField = fieldSchema;
-          while (newField instanceof ZodOptional) {
-            newField = (newField as ZodOptional<any>)._def.innerType;
-          }
-          newShape[key] = newField;
-        }
-      });
-    } else {
-      for (const key in this.shape) {
+
+    util.objectKeys(this.shape).forEach((key) => {
+      if (mask && !mask[key]) {
+        newShape[key] = this.shape[key];
+      } else {
         const fieldSchema = this.shape[key];
         let newField = fieldSchema;
+
         while (newField instanceof ZodOptional) {
           newField = (newField as ZodOptional<any>)._def.innerType;
         }
 
         newShape[key] = newField;
       }
-    }
+    });
+
     return new ZodObject({
       ...this._def,
       shape: () => newShape,
