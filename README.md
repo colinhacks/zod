@@ -1409,7 +1409,7 @@ type NumberSet = z.infer<typeof numberSet>;
 // type NumberSet = Set<number>
 ```
 
-Set schemas can be further contrainted with the following utility methods.
+Set schemas can be further constrained with the following utility methods.
 
 ```ts
 z.set(z.string()).nonempty(); // must contain at least one item
