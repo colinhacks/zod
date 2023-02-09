@@ -2591,7 +2591,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     }
   }
   innerTypes() {
-    return this._def.options.map(o => ({path: '', schema: o}))
+    return this._def.options.flatMap(o => o.innerTypes())
   }
 
   get options() {
@@ -2712,7 +2712,7 @@ export class ZodDiscriminatedUnion<
     }
   }
   innerTypes() {
-    return this._def.options.map(o => ({path: '', schema: o}))
+    return this._def.options.flatMap(o => o.innerTypes())
   }
 
   get discriminator() {
@@ -2918,7 +2918,7 @@ export class ZodIntersection<
     }
   }
   innerTypes() {
-    return [{path: '', schema: this._def.left}, {path: '', schema: this._def.right}]
+    return [...this._def.left.innerTypes(), ...this._def.right.innerTypes()]
   }
 
   static create = <T extends ZodTypeAny, U extends ZodTypeAny>(
