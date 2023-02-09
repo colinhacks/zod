@@ -1,4 +1,6 @@
-// import { z } from "./src";
+import { z } from "./src";
+
+z.number().int();
 
 // const arg = z.enum(["a", "b"] as const);
 // const arb = arg.exclude(["b"]);

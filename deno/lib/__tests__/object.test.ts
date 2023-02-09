@@ -229,7 +229,7 @@ test("inferred merged object type with optional properties", async () => {
     .object({ a: z.string(), b: z.string().optional() })
     .merge(z.object({ a: z.string().optional(), b: z.string() }));
   type Merged = z.infer<typeof Merged>;
-  util.assertEqual<Merged, { a: string | undefined; b: string }>(true);
+  util.assertEqual<Merged, { a?: string; b: string }>(true);
   // todo
   // util.assertEqual<Merged, { a?: string; b: string }>(true);
 });
