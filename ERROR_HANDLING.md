@@ -232,7 +232,7 @@ Let's look at a practical example of of customized error map:
 ```ts
 import * as z from "zod";
 
-const errorMap: z.ZodErrorMap = (error, ctx) => {
+const customErrorMap: z.ZodErrorMap = (error, ctx) => {
   /*
   This is where you override the various error codes
   */
@@ -257,7 +257,7 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
   return { message: ctx.defaultError };
 };
 
-z.string().parse(12, { errorMap });
+z.string().parse(12, { errorMap: customErrorMap });
 
 /* throws: 
   ZodError {
