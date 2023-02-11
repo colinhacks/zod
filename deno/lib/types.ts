@@ -491,7 +491,7 @@ export type ZodStringCheck =
   | { kind: "max"; value: number; message?: string }
   | { kind: "length"; value: number; message?: string }
   | { kind: "email"; message?: string }
-  | { kind: "url"; message?: string }
+  | { kind: "url"; message?: string; relative?: boolean }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
   | { kind: "cuid2"; message?: string }
@@ -512,6 +512,10 @@ export interface ZodStringDef extends ZodTypeDef {
   coerce: boolean;
 }
 
+const urlRegex =
+  /^((https?|ftp|smtp):\/\/)?(www.)?[a-z0-9]+\.[a-z]+(\/[a-zA-Z0-9#]+\/?)*$/;
+//^(\/|\.\/|\.\.\/)
+const relativeUrlRegex = /^(\/|\.\/|\.\.\/)/;
 const cuidRegex = /^c[^\s-]{8,}$/i;
 const cuid2Regex = /^[a-z][a-z0-9]*$/;
 const uuidRegex =
@@ -684,16 +688,29 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "url") {
-        try {
-          new URL(input.data);
-        } catch {
-          ctx = this._getOrReturnCtx(input, ctx);
-          addIssueToContext(ctx, {
-            validation: "url",
-            code: ZodIssueCode.invalid_string,
-            message: check.message,
-          });
-          status.dirty();
+        if (check.relative) {
+          if (
+            !relativeUrlRegex.test(input.data) &&
+            !urlRegex.test(input.data)
+          ) {
+            ctx = this._getOrReturnCtx(input, ctx);
+            addIssueToContext(ctx, {
+              validation: "url",
+              code: ZodIssueCode.invalid_string,
+              message: check.message,
+            });
+            status.dirty();
+          }
+        } else {
+          if (!urlRegex.test(input.data)) {
+            ctx = this._getOrReturnCtx(input, ctx);
+            addIssueToContext(ctx, {
+              validation: "url",
+              code: ZodIssueCode.invalid_string,
+              message: check.message,
+            });
+            status.dirty();
+          }
         }
       } else if (check.kind === "regex") {
         check.regex.lastIndex = 0;
@@ -770,8 +787,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   email(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "email", ...errorUtil.errToObj(message) });
   }
-  url(message?: errorUtil.ErrMessage) {
-    return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
+  url(relative = false, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "url",
+      relative: relative,
+      ...errorUtil.errToObj(message),
+    });
   }
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
