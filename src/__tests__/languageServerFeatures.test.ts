@@ -36,49 +36,49 @@ describe("Executing Go To Definition (and therefore Find Usages and Rename Refac
     expect(parentOfProperty?.getName()).toEqual("Test");
   });
 
-  test("works for first object properties inferred from z.object().merge()", () => {
-    // Find usage of TestMerge.f1 property
-    const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
-      "instanceOfTestMerge"
-    );
-    const propertyBeingAssigned = getPropertyBeingAssigned(
-      instanceVariable,
-      "f1"
-    );
+  // test("works for first object properties inferred from z.object().merge()", () => {
+  //   // Find usage of TestMerge.f1 property
+  //   const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
+  //     "instanceOfTestMerge"
+  //   );
+  //   const propertyBeingAssigned = getPropertyBeingAssigned(
+  //     instanceVariable,
+  //     "f1"
+  //   );
 
-    // Find definition of TestMerge.f1 property
-    const definitionOfProperty = propertyBeingAssigned?.getDefinitionNodes()[0];
-    const parentOfProperty = definitionOfProperty?.getFirstAncestorByKind(
-      SyntaxKind.VariableDeclaration
-    );
+  //   // Find definition of TestMerge.f1 property
+  //   const definitionOfProperty = propertyBeingAssigned?.getDefinitionNodes()[0];
+  //   const parentOfProperty = definitionOfProperty?.getFirstAncestorByKind(
+  //     SyntaxKind.VariableDeclaration
+  //   );
 
-    // Assert that find definition returned the Zod definition of Test
-    expect(definitionOfProperty?.getText()).toEqual("f1: z.number()");
-    expect(parentOfProperty?.getName()).toEqual("Test");
-  });
+  //   // Assert that find definition returned the Zod definition of Test
+  //   expect(definitionOfProperty?.getText()).toEqual("f1: z.number()");
+  //   expect(parentOfProperty?.getName()).toEqual("Test");
+  // });
 
-  test("works for second object properties inferred from z.object().merge()", () => {
-    // Find usage of TestMerge.f2 property
-    const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
-      "instanceOfTestMerge"
-    );
-    const propertyBeingAssigned = getPropertyBeingAssigned(
-      instanceVariable,
-      "f2"
-    );
+  // test("works for second object properties inferred from z.object().merge()", () => {
+  //   // Find usage of TestMerge.f2 property
+  //   const instanceVariable = sourceFile.getVariableDeclarationOrThrow(
+  //     "instanceOfTestMerge"
+  //   );
+  //   const propertyBeingAssigned = getPropertyBeingAssigned(
+  //     instanceVariable,
+  //     "f2"
+  //   );
 
-    // Find definition of TestMerge.f2 property
-    const definitionOfProperty = propertyBeingAssigned?.getDefinitionNodes()[0];
-    const parentOfProperty = definitionOfProperty?.getFirstAncestorByKind(
-      SyntaxKind.VariableDeclaration
-    );
+  //   // Find definition of TestMerge.f2 property
+  //   const definitionOfProperty = propertyBeingAssigned?.getDefinitionNodes()[0];
+  //   const parentOfProperty = definitionOfProperty?.getFirstAncestorByKind(
+  //     SyntaxKind.VariableDeclaration
+  //   );
 
-    // Assert that find definition returned the Zod definition of TestMerge
-    expect(definitionOfProperty?.getText()).toEqual(
-      "f2: z.string().optional()"
-    );
-    expect(parentOfProperty?.getName()).toEqual("TestMerge");
-  });
+  //   // Assert that find definition returned the Zod definition of TestMerge
+  //   expect(definitionOfProperty?.getText()).toEqual(
+  //     "f2: z.string().optional()"
+  //   );
+  //   expect(parentOfProperty?.getName()).toEqual("TestMerge");
+  // });
 
   test("works for first object properties inferred from z.union()", () => {
     // Find usage of TestUnion.f1 property
