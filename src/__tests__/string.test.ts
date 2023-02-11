@@ -41,22 +41,62 @@ test("email validations", () => {
   expect(() => email.parse("asdf@-asdf.com")).toThrow();
   expect(() => email.parse("asdf@-a(sdf.com")).toThrow();
   expect(() => email.parse("asdf@-asdf.com(")).toThrow();
+  expect(() =>
+    email.parse("pawan.anand@%9y83&#$%R&#$%R&%#$R%%^^%5rw3ewe.d.d.aaaa.wef.co")
+  ).toThrow();
 });
 
 test("more email validations", () => {
-  const data = [
-    `"josé.arrañoça"@domain.com`,
-    `"сайт"@domain.com`,
-    `"💩"@domain.com`,
-    `"🍺🕺🎉"@domain.com`,
-    `poop@💩.la`,
-    `"🌮"@i❤️tacos.ws`,
-    "sss--asd@i❤️tacos.ws",
+  const validEmails = [
+    `very.common@example.com`,
+    `disposable.style.email.with+symbol@example.com`,
+    `other.email-with-hyphen@example.com`,
+    `fully-qualified-domain@example.com`,
+    `user.name+tag+sorting@example.com`,
+    `x@example.com`,
+    `example-indeed@strange-example.com`,
+    `test/test@test.com`,
+    `example@s.example`,
+    `" "@example.org`,
+    `"john..doe"@example.org`,
+    `mailhost!username@example.org`,
+    `"very.(),:;<>[]\".VERY.\"very@\\ \"very\".unusual"@strange.example.com`,
+    `user%example.com@example.org`,
+    `user-@example.org`,
+    `postmaster@[123.123.123.123]`,
+    `user@my-example.com`,
+    `a@b.cd`,
+    `work+user@mail.com`,
+    `user@[68.185.127.196]`,
+    `ipv4@[85.129.96.247]`,
+    `valid@[79.208.229.53]`,
   ];
-  const email = z.string().email();
-  for (const datum of data) {
-    email.parse(datum);
-  }
+  const invalidEmails = [
+    `Abc.example.com`,
+    `A@b@c@example.com`,
+    `a"b(c)d,e:f;g<h>i[j\k]l@example.com`,
+    `just"not"right@example.com`,
+    `this is"not\allowed@example.com`,
+    `this\ still\"not\\allowed@example.com`,
+    `i_like_underscore@but_its_not_allowed_in_this_part.example.com`,
+    `QA[icon]CHOCOLATE[icon]@test.com`,
+    `invalid@-start.com`,
+    `invalid@end.com-`,
+    `a.b@c.d`,
+    `invalid@[1.1.1.-1]`,
+    `invalid@[68.185.127.196.55]`,
+    `temp@[192.168.1]`,
+    `temp@[9.18.122.]`,
+  ];
+  const emailSchema = z.string().email();
+  expect(
+    validEmails.every((email) => emailSchema.safeParse(email).success)
+  ).toBe(true);
+  expect(
+    invalidEmails.every(
+      (email) => emailSchema.safeParse(email).success === false
+    )
+  ).toBe(true);
 });
 
 test("url validations", () => {

@@ -24,6 +24,7 @@
   },
   "include": [
     "./src/**/*",
+    "playground.ts",
     "./.eslintrc.js"
   ]
 }

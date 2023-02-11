@@ -20,6 +20,10 @@ test("pick type inference", () => {
 test("pick parse - success", () => {
   const nameonlyFish = fish.pick({ name: true });
   nameonlyFish.parse({ name: "bob" });
+
+  // @ts-expect-error checking runtime picks `name` only.
+  const anotherNameonlyFish = fish.pick({ name: true, age: false });
+  anotherNameonlyFish.parse({ name: "bob" });
 });
 
 test("pick parse - fail", () => {
@@ -32,9 +36,14 @@ test("pick parse - fail", () => {
   const bad2 = () => nameonlyFish.parse({ name: "bob", age: 12 } as any);
   const bad3 = () => nameonlyFish.parse({ age: 12 } as any);
 
+  // @ts-expect-error checking runtime picks `name` only.
+  const anotherNameonlyFish = fish.pick({ name: true, age: false }).strict();
+  const bad4 = () => anotherNameonlyFish.parse({ name: "bob", age: 12 } as any);
+
   expect(bad1).toThrow();
   expect(bad2).toThrow();
   expect(bad3).toThrow();
+  expect(bad4).toThrow();
 });
 
 test("omit type inference", () => {
@@ -46,6 +55,10 @@ test("omit type inference", () => {
 test("omit parse - success", () => {
   const nonameFish = fish.omit({ name: true });
   nonameFish.parse({ age: 12, nested: {} });
+
+  // @ts-expect-error checking runtime omits `name` only.
+  const anotherNonameFish = fish.omit({ name: true, age: false });
+  anotherNonameFish.parse({ age: 12, nested: {} });
 });
 
 test("omit parse - fail", () => {
@@ -54,9 +67,14 @@ test("omit parse - fail", () => {
   const bad2 = () => nonameFish.parse({ age: 12 } as any);
   const bad3 = () => nonameFish.parse({} as any);
 
+  // @ts-expect-error checking runtime omits `name` only.
+  const anotherNonameFish = fish.omit({ name: true, age: false });
+  const bad4 = () => anotherNonameFish.parse({ nested: {} } as any);
+
   expect(bad1).toThrow();
   expect(bad2).toThrow();
   expect(bad3).toThrow();
+  expect(bad4).toThrow();
 });
 
 test("nonstrict inference", () => {
@@ -66,13 +84,13 @@ test("nonstrict inference", () => {
 });
 
 test("nonstrict parsing - pass", () => {
-  const laxfish = fish.nonstrict().pick({ name: true });
+  const laxfish = fish.passthrough().pick({ name: true });
   laxfish.parse({ name: "asdf", whatever: "asdf" });
   laxfish.parse({ name: "asdf", age: 12, nested: {} });
 });
 
 test("nonstrict parsing - fail", () => {
-  const laxfish = fish.nonstrict().pick({ name: true });
+  const laxfish = fish.passthrough().pick({ name: true });
   const bad = () => laxfish.parse({ whatever: "asdf" } as any);
   expect(bad).toThrow();
 });
@@ -85,10 +103,24 @@ test("pick a nonexistent key", () => {
 
   const pickedSchema = schema.pick({
     a: true,
+    // @ts-expect-error should not accept unexpected keys.
     doesntExist: true,
   });
 
   pickedSchema.parse({
     a: "value",
+  });
+});
+
+test("omit a nonexistent key", () => {
+  const schema = z.object({
+    a: z.string(),
+    b: z.number(),
+  });
+
+  schema.omit({
+    a: true,
+    // @ts-expect-error should not accept unexpected keys.
+    doesntExist: true,
   });
 });
