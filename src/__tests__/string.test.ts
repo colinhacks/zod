@@ -102,11 +102,24 @@ test("more email validations", () => {
 test("url validations", () => {
   const url = z.string().url();
   try {
+    url.parse("google.com");
     url.parse("http://google.com");
     url.parse("https://google.com/asdf?asdf=ljk3lk4&asdf=234#asdf");
     expect(() => url.parse("asdf")).toThrow();
     expect(() => url.parse("https:/")).toThrow();
     expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
+  } catch (err) {}
+
+  const relativeUrl = z.string().url(true);
+  try {
+    relativeUrl.parse("google.com");
+    relativeUrl.parse("http://google.com");
+    relativeUrl.parse("https://google.com/asdf?asdf=ljk3lk4&asdf=234#asdf");
+    relativeUrl.parse("/asdasd");
+    relativeUrl.parse("../oqweausd");
+    expect(() => relativeUrl.parse("asdf")).toThrow();
+    expect(() => relativeUrl.parse("https:/")).toThrow();
+    expect(() => relativeUrl.parse("asdfj@lkjsdf.com")).toThrow();
   } catch (err) {}
 });
 
@@ -117,12 +130,12 @@ test("url error overrides", () => {
     expect((err as z.ZodError).issues[0].message).toEqual("Invalid url");
   }
   try {
-    z.string().url("badurl").parse("https");
+    z.string().url(false, "badurl").parse("https");
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual("badurl");
   }
   try {
-    z.string().url({ message: "badurl" }).parse("https");
+    z.string().url(false, { message: "badurl" }).parse("https");
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual("badurl");
   }
