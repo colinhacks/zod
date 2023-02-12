@@ -205,7 +205,12 @@ export abstract class ZodType<
   }
 
   parse(data: unknown, params?: Partial<ParseParams>): Output {
+    const start = performance.now();
     const result = this.safeParse(data, params);
+    const end = performance.now();
+    if (end - start > 500) {
+      console.warn("performance issue detected while parsing");
+    }
     if (result.success) return result.data;
     throw result.error;
   }
