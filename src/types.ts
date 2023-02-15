@@ -499,6 +499,7 @@ export type ZodStringCheck =
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
   | { kind: "trim"; message?: string }
+  | { kind: "lowerCase"; message?: string }
   | {
       kind: "datetime";
       offset: boolean;
@@ -709,7 +710,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
-      } else if (check.kind === "startsWith") {
+      } else if (check.kind === "lowerCase") {
+        input.data = input.data.toLowerCase()
+      }  else if (check.kind === "startsWith") {
         if (!(input.data as string).startsWith(check.value)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
@@ -868,6 +871,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       ...this._def,
       checks: [...this._def.checks, { kind: "trim" }],
     });
+    
+    lowerCase = () =>
+    new ZodString({
+      ...this._def,
+      checks: [...this._def.checks, { kind: "lowerCase" }],
+    }); 
 
   get isDatetime() {
     return !!this._def.checks.find((ch) => ch.kind === "datetime");

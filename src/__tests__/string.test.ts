@@ -262,6 +262,10 @@ test("trim", () => {
   expect(() => z.string().trim().min(2).parse(" 1 ")).toThrow();
 });
 
+test("lowerCase", () => {
+  expect(z.string().lowerCase().parse("LOWERCASE")).toEqual("lowercase");
+});
+
 test("datetime", () => {
   const a = z.string().datetime({});
   expect(a.isDatetime).toEqual(true);

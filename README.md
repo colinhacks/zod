@@ -593,6 +593,7 @@ z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().trim(); // trim whitespace
+z.string().lowerCase(); // toLowerCase
 z.string().datetime(); // defaults to UTC, see below for options
 ```
 
