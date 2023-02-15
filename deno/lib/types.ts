@@ -52,10 +52,13 @@ export type input<T extends ZodType<any, any, any>> = T["_input"];
 export type output<T extends ZodType<any, any, any>> = T["_output"];
 export type { TypeOf as infer };
 
+export type ZodAnnotations = { [k: symbol]: any };
+
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
   errorMap?: ZodErrorMap;
   description?: string;
+  annotations?: ZodAnnotations;
 }
 
 class ParseInputLazyPath implements ParseInput {
@@ -102,21 +105,29 @@ export type RawCreateParams =
       invalid_type_error?: string;
       required_error?: string;
       description?: string;
+      annotations?: ZodAnnotations;
     }
   | undefined;
 export type ProcessedCreateParams = {
   errorMap?: ZodErrorMap;
   description?: string;
+  annotations?: ZodAnnotations;
 };
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
-  const { errorMap, invalid_type_error, required_error, description } = params;
+  const {
+    errorMap,
+    invalid_type_error,
+    required_error,
+    description,
+    annotations,
+  } = params;
   if (errorMap && (invalid_type_error || required_error)) {
     throw new Error(
       `Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`
     );
   }
-  if (errorMap) return { errorMap: errorMap, description };
+  if (errorMap) return { errorMap: errorMap, description, annotations };
   const customMap: ZodErrorMap = (iss, ctx) => {
     if (iss.code !== "invalid_type") return { message: ctx.defaultError };
     if (typeof ctx.data === "undefined") {
@@ -124,7 +135,7 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
     }
     return { message: invalid_type_error ?? ctx.defaultError };
   };
-  return { errorMap: customMap, description };
+  return { errorMap: customMap, description, annotations };
 }
 
 export type SafeParseSuccess<Output> = { success: true; data: Output };
@@ -146,6 +157,10 @@ export abstract class ZodType<
 
   get description() {
     return this._def.description;
+  }
+
+  get annotations() {
+    return this._def.annotations;
   }
 
   abstract _parse(input: ParseInput): ParseReturnType<Output>;
@@ -464,6 +479,17 @@ export abstract class ZodType<
     return new This({
       ...this._def,
       description,
+    });
+  }
+
+  annotate(annotationKey: symbol, value: any): this {
+    const This = (this as any).constructor;
+    return new This({
+      ...this._def,
+      annotations: {
+        ...this._def.annotations,
+        [annotationKey]: value,
+      },
     });
   }
 

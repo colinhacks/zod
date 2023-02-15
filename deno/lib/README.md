@@ -2107,6 +2107,22 @@ documentedString.description; // A useful bit of text…
 
 This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
 
+### `.annotate`
+
+Use `.annotate()` to add a `meta` property to the resulting schema.
+
+```ts
+const isPii = Symbol("isPii");
+const annotatedString = z
+  .string()
+  .annotate(isPii, true);
+annotatedString.meta[isPii]; // true
+```
+
+This can be useful for describing additional data about a field, for
+example annotating it for processing or potentially for generation of
+an external schema or editor.
+
 ### `.catch`
 
 Use `.catch()` to provide a "catch value" to be returned in the event of a parsing error.
