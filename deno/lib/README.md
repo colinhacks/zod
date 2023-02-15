@@ -2109,7 +2109,7 @@ This can be useful for documenting a field, for example in a JSON Schema using a
 
 ### `.annotate`
 
-Use `.annotate()` to add a `meta` property to the resulting schema.
+Use `.annotate()` to add an annotation to the resulting schema.
 
 ```ts
 const isPii = Symbol("isPii");
