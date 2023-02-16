@@ -133,9 +133,11 @@ test("emoji validations", () => {
   const emoji = z.string().emoji();
 
   emoji.parse("🍺👩‍🚀🫡");
-  emoji.parse("💚 💙 💜 💛 ❤️");
+  emoji.parse("💚💙💜💛❤️");
   expect(() => emoji.parse(":-)")).toThrow();
   expect(() => emoji.parse("😀 is an emoji")).toThrow();
+  expect(() => emoji.parse("😀stuff")).toThrow();
+  expect(() => emoji.parse("stuff😀")).toThrow();
 });
 
 test("uuid", () => {
