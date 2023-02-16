@@ -130,12 +130,11 @@ test("url error overrides", () => {
 
 test("emoji validations", () => {
   const emoji = z.string().emoji();
-  try {
-    emoji.parse("🍺👩‍🚀🫡");
-    emoji.parse("💚 💙 💜 💛 ❤️");
-    expect(() => emoji.parse(":-)")).toThrow();
-    expect(() => emoji.parse("😀 is an emoji")).toThrow()
-  } catch (err) {}
+
+  emoji.parse("🍺👩‍🚀🫡");
+  emoji.parse("💚 💙 💜 💛 ❤️");
+  expect(() => emoji.parse(":-)")).toThrow();
+  expect(() => emoji.parse("😀 is an emoji")).toThrow();
 });
 
 test("uuid", () => {
