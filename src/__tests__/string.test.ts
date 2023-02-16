@@ -134,6 +134,7 @@ test("emoji validations", () => {
     emoji.parse("🍺👩‍🚀🫡");
     emoji.parse("💚 💙 💜 💛 ❤️");
     expect(() => emoji.parse(":-)")).toThrow();
+    expect(() => emoji.parse("😀 is an emoji")).toThrow()
   } catch (err) {}
 });
 
