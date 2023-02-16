@@ -128,6 +128,16 @@ test("url error overrides", () => {
   }
 });
 
+test("emoji validations", () => {
+  const emoji = z.string().emoji();
+  try {
+    emoji.parse("🍺👩‍🚀🫡");
+    emoji.parse("💚 💙 💜 💛 ❤️");
+    expect(() => emoji.parse(":-)")).toThrow();
+    expect(() => emoji.parse("😀 is an emoji")).toThrow()
+  } catch (err) {}
+});
+
 test("uuid", () => {
   const uuid = z.string().uuid("custom error");
   uuid.parse("9491d710-3185-4e06-bea0-6a2f275345e0");
