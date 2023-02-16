@@ -2349,14 +2349,14 @@ makeSchemaOptional(z.number());
 Zod provides a subclass of Error called `ZodError`. ZodErrors contain an `issues` array containing detailed information about the validation problems.
 
 ```ts
-const data = z
+const result = z
   .object({
     name: z.string(),
   })
   .safeParse({ name: 12 });
 
-if (!data.success) {
-  data.error.issues;
+if (!result.success) {
+  result.error.issues;
   /* [
       {
         "code": "invalid_type",
@@ -2378,14 +2378,14 @@ Zod's error reporting emphasizes _completeness_ and _correctness_. If you are lo
 You can use the `.format()` method to convert this error into a nested object.
 
 ```ts
-const data = z
+const result = z
   .object({
     name: z.string(),
   })
   .safeParse({ name: 12 });
 
-if (!data.success) {
-  const formatted = data.error.format();
+if (!result.success) {
+  const formatted = result.error.format();
   /* {
     name: { _errors: [ 'Expected string, received number' ] }
   } */
