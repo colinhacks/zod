@@ -492,6 +492,7 @@ export type ZodStringCheck =
   | { kind: "length"; value: number; message?: string }
   | { kind: "email"; message?: string }
   | { kind: "url"; message?: string }
+  | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
   | { kind: "cuid2"; message?: string }
@@ -525,6 +526,11 @@ const uuidRegex =
 
 const emailRegex =
   /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|([^-]([a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}))$/;
+
+// from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
+
+const emojiRegex =
+  /(?:[\u2700-\u27bf]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff])[\ufe0e\ufe0f]?(?:[\u0300-\u036f\ufe20-\ufe23\u20d0-\u20f0]|\ud83c[\udffb-\udfff])?(?:\u200d(?:[^\ud800-\udfff]|(?:\ud83c[\udde6-\uddff]){2}|[\ud800-\udbff][\udc00-\udfff])[\ufe0e\ufe0f]?(?:[\u0300-\u036f\ufe20-\ufe23\u20d0-\u20f0]|\ud83c[\udffb-\udfff])?)*/;
 
 // interface IsDateStringOptions extends StringDateOptions {
 /**
@@ -653,6 +659,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "emoji") {
+        if (!emojiRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "emoji",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "uuid") {
         if (!uuidRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -773,6 +789,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   url(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
+  emoji(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message) });
+  }
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
   }
@@ -878,6 +897,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isURL() {
     return !!this._def.checks.find((ch) => ch.kind === "url");
+  }
+  get isEmoji() {
+    return !!this._def.checks.find((ch) => ch.kind === "emoji");
   }
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
