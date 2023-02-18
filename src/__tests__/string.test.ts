@@ -87,6 +87,10 @@ test("more email validations", () => {
     `invalid@[68.185.127.196.55]`,
     `temp@[192.168.1]`,
     `temp@[9.18.122.]`,
+    `double..point@test.com`,
+    `asdad@test..com`,
+    `asdad@hghg...sd...au`,
+    `asdad@hghg........au`,
   ];
   const emailSchema = z.string().email();
   expect(
