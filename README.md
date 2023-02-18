@@ -1714,6 +1714,12 @@ If you don't provide a validation function, Zod will allow any value. This can b
 z.custom<{ arg: string }>(); // performs no validation
 ```
 
+You can customize the error message and other options by passing a second argument. This parameter works the same way as the params parameter of [`.refine`](#refine).
+
+```ts
+z.custom<...>((val) => ..., "custom error message");
+```
+
 ## Schema methods
 
 All Zod schemas contain certain methods.
