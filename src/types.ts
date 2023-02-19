@@ -919,7 +919,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return !!this._def.checks.find((ch) => ch.kind === "cuid2");
   }
   get isULID() {
-    return !!this._def.checks.find((ch) => ch.kind === "cuid2");
+    return !!this._def.checks.find((ch) => ch.kind === "ulid");
   }
 
   get minLength() {
