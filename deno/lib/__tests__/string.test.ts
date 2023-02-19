@@ -230,30 +230,42 @@ test("checks getters", () => {
   expect(z.string().email().isCUID).toEqual(false);
   expect(z.string().email().isCUID2).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
+  expect(z.string().email().isIP).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
   expect(z.string().url().isCUID).toEqual(false);
   expect(z.string().url().isCUID2).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
+  expect(z.string().url().isIP).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
   expect(z.string().cuid().isCUID2).toEqual(false);
   expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().cuid().isIP).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
   expect(z.string().cuid2().isURL).toEqual(false);
   expect(z.string().cuid2().isCUID).toEqual(false);
   expect(z.string().cuid2().isCUID2).toEqual(true);
   expect(z.string().cuid2().isUUID).toEqual(false);
+  expect(z.string().cuid2().isIP).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
   expect(z.string().uuid().isCUID).toEqual(false);
   expect(z.string().uuid().isCUID2).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
+  expect(z.string().uuid().isIP).toEqual(false);
+
+  expect(z.string().ip().isEmail).toEqual(false);
+  expect(z.string().ip().isURL).toEqual(false);
+  expect(z.string().ip().isCUID).toEqual(false);
+  expect(z.string().ip().isCUID2).toEqual(false);
+  expect(z.string().ip().isUUID).toEqual(false);
+  expect(z.string().ip().isIP).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -359,3 +371,17 @@ test("datetime parsing", () => {
     datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")
   ).toThrow();
 });
+
+test("IP validation", () => {
+  const ip = z.string().ip();
+
+  expect(ip.safeParse("192.168.1.1").success).toBe(true);
+  expect(ip.safeParse("255.255.255.255").success).toBe(true);
+  expect(ip.safeParse("0.0.0.0").success).toBe(true);
+
+  expect(ip.safeParse("256.0.1.1").success).toBe(false);
+  expect(ip.safeParse("-1.53.78.1").success).toBe(false);
+  expect(ip.safeParse("0.0.0").success).toBe(false);
+  expect(ip.safeParse("128.44.1.0.5").success).toBe(false);
+  expect(ip.safeParse("1.1..1").success).toBe(false);
+})

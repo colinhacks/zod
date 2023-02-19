@@ -505,7 +505,8 @@ export type ZodStringCheck =
       offset: boolean;
       precision: number | null;
       message?: string;
-    };
+    }
+  | { kind: "ip"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -531,6 +532,9 @@ const emailRegex =
 
 const emojiRegex =
   /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]|\uFE0E|\uFE0F)/;
+
+const ipv4Regex =
+  /^(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))$/;
 
 // Adapted from https://stackoverflow.com/a/3143231
 const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
@@ -750,6 +754,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "ip") {
+        if (!ipv4Regex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "ip",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -794,6 +808,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   cuid2(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message) });
   }
+
+  ip(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "ip", ...errorUtil.errToObj(message) });
+  }
+
   datetime(
     options?:
       | string
@@ -902,6 +921,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isCUID2() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid2");
+  }
+  get isIP() {
+    return !!this._def.checks.find((ch) => ch.kind === "ip");
   }
 
   get minLength() {
@@ -3500,7 +3522,7 @@ export class ZodFunction<
     return this._def.returns;
   }
 
-  args<Items extends Parameters<typeof ZodTuple["create"]>[0]>(
+  args<Items extends Parameters<(typeof ZodTuple)["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> {
     return new ZodFunction({
@@ -4618,18 +4640,18 @@ const oboolean = () => booleanType().optional();
 
 export const coerce = {
   string: ((arg) =>
-    ZodString.create({ ...arg, coerce: true })) as typeof ZodString["create"],
+    ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
   number: ((arg) =>
-    ZodNumber.create({ ...arg, coerce: true })) as typeof ZodNumber["create"],
+    ZodNumber.create({ ...arg, coerce: true })) as (typeof ZodNumber)["create"],
   boolean: ((arg) =>
     ZodBoolean.create({
       ...arg,
       coerce: true,
-    })) as typeof ZodBoolean["create"],
+    })) as (typeof ZodBoolean)["create"],
   bigint: ((arg) =>
-    ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
+    ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
   date: ((arg) =>
-    ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
+    ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
 };
 
 export {
