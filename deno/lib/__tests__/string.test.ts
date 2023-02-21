@@ -10,6 +10,7 @@ const justFive = z.string().length(5);
 const nonempty = z.string().nonempty("nonempty");
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
+const numeric = z.string().numeric();
 
 test("passing validations", () => {
   minFive.parse("12345");
@@ -20,6 +21,7 @@ test("passing validations", () => {
   justFive.parse("12345");
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
+  numeric.parse("12345");
 });
 
 test("failing validations", () => {
@@ -30,6 +32,7 @@ test("failing validations", () => {
   expect(() => justFive.parse("123456")).toThrow();
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
+  expect(() => numeric.parse("hello")).toThrow();
 });
 
 test("email validations", () => {
@@ -230,18 +233,21 @@ test("checks getters", () => {
   expect(z.string().email().isCUID).toEqual(false);
   expect(z.string().email().isCUID2).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
+  expect(z.string().uuid().isNumeric).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
   expect(z.string().url().isCUID).toEqual(false);
   expect(z.string().url().isCUID2).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
+  expect(z.string().uuid().isNumeric).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
   expect(z.string().cuid().isCUID2).toEqual(false);
   expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().uuid().isNumeric).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
   expect(z.string().cuid2().isURL).toEqual(false);
@@ -254,6 +260,13 @@ test("checks getters", () => {
   expect(z.string().uuid().isCUID).toEqual(false);
   expect(z.string().uuid().isCUID2).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
+  expect(z.string().uuid().isNumeric).toEqual(false);
+
+  expect(z.string().numeric().isEmail).toEqual(false);
+  expect(z.string().numeric().isURL).toEqual(false);
+  expect(z.string().numeric().isCUID).toEqual(false);
+  expect(z.string().numeric().isUUID).toEqual(false);
+  expect(z.string().numeric().isNumeric).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -358,4 +371,28 @@ test("datetime parsing", () => {
   expect(() =>
     datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")
   ).toThrow();
+});
+
+test("numeric", () => {
+  const numeric = z.string().numeric();
+
+  expect(numeric.isNumeric).toEqual(true);
+  expect(() => numeric.parse(true)).toThrow();
+  expect(() => numeric.parse(1)).toThrow();
+  expect(() => numeric.parse(undefined)).toThrow();
+  expect(() => numeric.parse(null)).toThrow();
+  expect(() => numeric.parse("")).toThrow();
+  expect(() => numeric.parse("hello")).toThrow();
+  expect(() => numeric.parse("3,1234")).toThrow();
+
+  expect(() => numeric.parse("1")).not.toThrow();
+  expect(() =>
+    numeric.parse(
+      "99999000000000000000000000000000000000000000000000000000"
+    )
+  ).not.toThrow();
+  expect(() => numeric.parse("3.141592")).not.toThrow();
+  expect(() => numeric.parse("-1")).not.toThrow();
+  expect(() => numeric.parse("-999.1231234134"));
+  expect(() => numeric.parse("0287730000000")).not.toThrow();
 });
