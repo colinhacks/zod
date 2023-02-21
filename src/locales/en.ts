@@ -32,7 +32,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       )}`;
       break;
     case ZodIssueCode.invalid_enum_value:
-      message = `Invalid enum value. Expected ${util.joinValues(
+      message = `Invalid enum value ${issue.label || issue.path[0]}. Expected ${util.joinValues(
         issue.options
       )}, received '${issue.received}'`;
       break;

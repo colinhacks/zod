@@ -3654,6 +3654,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
         received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
         options: expectedValues,
+        label: this.label,
       });
       return INVALID;
     }
@@ -3735,6 +3736,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
         received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
         options: expectedValues,
+        label: this.label,
       });
       return INVALID;
     }

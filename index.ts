@@ -16,15 +16,19 @@ const schema = z.object({
   lastName: z.string({
     label: 'Last Name Label',
   }),
-  email: z.string().max(5).email(),
+  email: z.string().email(),
   age: z.number().min(18).max(19),
-  address: z.string()
+  address: z.string(),
+  option: z.array(z.enum(['a'], { label: 'Option label' }))
 }).important({
   email: true
 });
 
 try {
-  const result = await schema.parseAsync({ name: "John", email: 'test', age: 20 }, {
+  const result = await schema.parseAsync(
+    { name: "John", email: 'test@test.te', age: 20, option: ['b'] }
+    // { name: "John", email: 'test', age: 20, option: ['a'] }
+  , {
     fatalOnError: true,
   });
   console.log('res', result)
