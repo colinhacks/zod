@@ -2129,9 +2129,9 @@ Optionally, you can pass a function into `.catch` that will be re-executed whene
 ```ts
 const numberWithRandomCatch = z.number().catch(Math.random);
 
-numberWithRandomDefault.parse("sup"); // => 0.4413456736055323
-numberWithRandomDefault.parse("sup"); // => 0.1871840107401901
-numberWithRandomDefault.parse("sup"); // => 0.7223408162401552
+numberWithRandomCatch.parse("sup"); // => 0.4413456736055323
+numberWithRandomCatch.parse("sup"); // => 0.1871840107401901
+numberWithRandomCatch.parse("sup"); // => 0.7223408162401552
 ```
 
 Optionally, you can collect a `ZodError` whenever a default value is generated when passing a function into `.catch`:
@@ -2143,10 +2143,10 @@ const numberWithErrorCatch = z.number().catch((e) => {
 });
 
 // No error shown in console.
-numberWithCatch.parse(5); // => 5
+numberWithErrorCatch.parse(5); // => 5
 
 // Default value is returned, an error will be shown in console.
-numberWithCatch.parse("tuna"); // => 42
+numberWithErrorCatch.parse("tuna"); // => 42
 ```
 
 Conceptually, this is how Zod processes "catch values":
