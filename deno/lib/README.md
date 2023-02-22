@@ -1409,7 +1409,7 @@ type NumberSet = z.infer<typeof numberSet>;
 // type NumberSet = Set<number>
 ```
 
-Set schemas can be further contrainted with the following utility methods.
+Set schemas can be further constrained with the following utility methods.
 
 ```ts
 z.set(z.string()).nonempty(); // must contain at least one item
@@ -1712,6 +1712,12 @@ If you don't provide a validation function, Zod will allow any value. This can b
 
 ```ts
 z.custom<{ arg: string }>(); // performs no validation
+```
+
+You can customize the error message and other options by passing a second argument. This parameter works the same way as the params parameter of [`.refine`](#refine).
+
+```ts
+z.custom<...>((val) => ..., "custom error message");
 ```
 
 ## Schema methods
@@ -2128,6 +2134,21 @@ numberWithRandomDefault.parse("sup"); // => 0.1871840107401901
 numberWithRandomDefault.parse("sup"); // => 0.7223408162401552
 ```
 
+Optionally, you can collect a `ZodError` whenever a default value is generated when passing a function into `.catch`:
+```ts
+const numberWithErrorCatch = z.number().catch((e) => {
+  console.error(e);
+
+  return 42;
+});
+
+// No error shown in console.
+numberWithCatch.parse(5); // => 5
+
+// Default value is returned, an error will be shown in console.
+numberWithCatch.parse("tuna"); // => 42
+```
+
 Conceptually, this is how Zod processes "catch values":
 
 1. The data is parsed using the base schema
@@ -2349,14 +2370,14 @@ makeSchemaOptional(z.number());
 Zod provides a subclass of Error called `ZodError`. ZodErrors contain an `issues` array containing detailed information about the validation problems.
 
 ```ts
-const data = z
+const result = z
   .object({
     name: z.string(),
   })
   .safeParse({ name: 12 });
 
-if (!data.success) {
-  data.error.issues;
+if (!result.success) {
+  result.error.issues;
   /* [
       {
         "code": "invalid_type",
@@ -2378,14 +2399,14 @@ Zod's error reporting emphasizes _completeness_ and _correctness_. If you are lo
 You can use the `.format()` method to convert this error into a nested object.
 
 ```ts
-const data = z
+const result = z
   .object({
     name: z.string(),
   })
   .safeParse({ name: 12 });
 
-if (!data.success) {
-  const formatted = data.error.format();
+if (!result.success) {
+  const formatted = result.error.format();
   /* {
     name: { _errors: [ 'Expected string, received number' ] }
   } */

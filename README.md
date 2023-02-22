@@ -2134,6 +2134,21 @@ numberWithRandomDefault.parse("sup"); // => 0.1871840107401901
 numberWithRandomDefault.parse("sup"); // => 0.7223408162401552
 ```
 
+Optionally, you can collect a `ZodError` whenever a default value is generated when passing a function into `.catch`:
+```ts
+const numberWithErrorCatch = z.number().catch((e) => {
+  console.error(e);
+
+  return 42;
+});
+
+// No error shown in console.
+numberWithCatch.parse(5); // => 5
+
+// Default value is returned, an error will be shown in console.
+numberWithCatch.parse("tuna"); // => 42
+```
+
 Conceptually, this is how Zod processes "catch values":
 
 1. The data is parsed using the base schema
