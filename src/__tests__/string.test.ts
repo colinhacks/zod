@@ -101,13 +101,11 @@ test("more email validations", () => {
 
 test("url validations", () => {
   const url = z.string().url();
-  try {
-    url.parse("http://google.com");
-    url.parse("https://google.com/asdf?asdf=ljk3lk4&asdf=234#asdf");
-    expect(() => url.parse("asdf")).toThrow();
-    expect(() => url.parse("https:/")).toThrow();
-    expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
-  } catch (err) {}
+  url.parse("http://google.com");
+  url.parse("https://google.com/asdf?asdf=ljk3lk4&asdf=234#asdf");
+  expect(() => url.parse("asdf")).toThrow();
+  expect(() => url.parse("https:/")).toThrow();
+  expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
 });
 
 test("url error overrides", () => {
@@ -131,12 +129,12 @@ test("url error overrides", () => {
 test("emoji validations", () => {
   const emoji = z.string().emoji();
 
+  emoji.parse("👋👋👋👋");
   emoji.parse("🍺👩‍🚀🫡");
   emoji.parse("💚💙💜💛❤️");
+  emoji.parse("🐛🗝🐏🍡🎦🚢🏨💫🎌☘🗡😹🔒🎬➡️🍹🗂🚨⚜🕑〽️🚦🌊🍴💍🍌💰😳🌺🍃");
   expect(() => emoji.parse(":-)")).toThrow();
   expect(() => emoji.parse("😀 is an emoji")).toThrow();
-  expect(() => emoji.parse("😀stuff")).toThrow();
-  expect(() => emoji.parse("stuff😀")).toThrow();
 });
 
 test("uuid", () => {

@@ -527,10 +527,7 @@ const uuidRegex =
 const emailRegex =
   /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|([^-]([a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}))$/;
 
-// from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
-
-const emojiRegex =
-  /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]|\uFE0E|\uFE0F)/;
+const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Component})+$/u;
 
 // Adapted from https://stackoverflow.com/a/3143231
 const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
