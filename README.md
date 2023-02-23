@@ -2081,8 +2081,10 @@ You can use transforms to implement the concept of "default values" in Zod.
 
 ```ts
 const stringWithDefault = z.string().default("tuna");
+const objectWithDefault = z.object({ fish: z.string() }).default({ fish: "tuna" })
 
 stringWithDefault.parse(undefined); // => "tuna"
+objectWithDefault.parse({}); // => { fish: "tuna" }
 ```
 
 Optionally, you can pass a function into `.default` that will be re-executed whenever a default value needs to be generated:
@@ -2097,8 +2099,8 @@ numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
 
 Conceptually, this is how Zod processes default values:
 
-1. If the input is `undefined`, the default value is returned
-2. Otherwise, the data is parsed using the base schema
+1. If the input is `{}` for an object type or `undefined` for other types, the default value is returned.
+2. Otherwise, the data is parsed using the base schema.
 
 ### `.describe`
 
