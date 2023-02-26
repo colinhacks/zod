@@ -55,6 +55,8 @@
 - [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
+  - [Datetime](#datetime-validation)
+  - [IP](#ip-address-validation)
 - [Numbers](#numbers)
 - [NaNs](#nans)
 - [Booleans](#booleans)
@@ -595,6 +597,7 @@ z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
+z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
@@ -621,6 +624,7 @@ z.string().uuid({ message: "Invalid UUID" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+z.string().ip({ message: "Invalid IP address" });
 ```
 
 ### Datetime validation
@@ -656,6 +660,31 @@ const datetime = z.string().datetime({ precision: 3 });
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
+```
+
+### IP address validation
+
+The `z.string().ip()` method by default validate IPv4 and IPv6.
+
+```ts
+const ip = z.string().ip();
+
+ip.parse("192.168.1.1"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // pass
+
+ip.parse("256.1.1.1"); // fail
+ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // fail
+```
+
+You can additionally set the IP `version`.
+
+```ts
+const ipv4 = z.string().ip({ version: "v4" });
+ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+
+const ipv6 = z.string().ip({ version: "v6" });
+ipv6.parse("192.168.1.1"); // fail
 ```
 
 ## Numbers
@@ -2126,14 +2155,17 @@ numberWithCatch.parse(5); // => 5
 numberWithCatch.parse("tuna"); // => 42
 ```
 
-Optionally, you can pass a function into `.catch` that will be re-executed whenever a default value needs to be generated:
+Optionally, you can pass a function into `.catch` that will be re-executed whenever a default value needs to be generated. A `ctx` object containing the caught error will be passed into this function.
 
 ```ts
-const numberWithRandomCatch = z.number().catch(Math.random);
+const numberWithRandomCatch = z.number().catch((ctx) => {
+  ctx.error; // the caught ZodError
+  return Math.random();
+});
 
-numberWithRandomDefault.parse("sup"); // => 0.4413456736055323
-numberWithRandomDefault.parse("sup"); // => 0.1871840107401901
-numberWithRandomDefault.parse("sup"); // => 0.7223408162401552
+numberWithRandomCatch.parse("sup"); // => 0.4413456736055323
+numberWithRandomCatch.parse("sup"); // => 0.1871840107401901
+numberWithRandomCatch.parse("sup"); // => 0.7223408162401552
 ```
 
 Conceptually, this is how Zod processes "catch values":

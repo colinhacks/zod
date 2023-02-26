@@ -71,6 +71,14 @@ test("more email validations", () => {
     `user@[68.185.127.196]`,
     `ipv4@[85.129.96.247]`,
     `valid@[79.208.229.53]`,
+    `valid@[255.255.255.255]`,
+    `valid@[255.0.55.2]`,
+    `valid@[255.0.55.2]`,
+    `hgrebert0@[IPv6:4dc8:ac7:ce79:8878:1290:6098:5c50:1f25]`,
+    `bshapiro4@[IPv6:3669:c709:e981:4884:59a3:75d1:166b:9ae]`,
+    `jsmith@[IPv6:2001:db8::1]`,
+    `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:7334]`,
+    `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:192.168.1.1]`,
   ];
   const invalidEmails = [
     `Abc.example.com`,
@@ -88,6 +96,17 @@ test("more email validations", () => {
     `invalid@[68.185.127.196.55]`,
     `temp@[192.168.1]`,
     `temp@[9.18.122.]`,
+    `double..point@test.com`,
+    `asdad@test..com`,
+    `asdad@hghg...sd...au`,
+    `asdad@hghg........au`,
+    `invalid@[256.2.2.48]`,
+    `invalid@[256.2.2.48]`,
+    `invalid@[999.465.265.1]`,
+    `jkibbey4@[IPv6:82c4:19a8::70a9:2aac:557::ea69:d985:28d]`,
+    `mlivesay3@[9952:143f:b4df:2179:49a1:5e82:b92e:6b6]`,
+    `gbacher0@[IPv6:bc37:4d3f:5048:2e26:37cc:248e:df8e:2f7f:af]`,
+    `invalid@[IPv6:5348:4ed3:5d38:67fb:e9b:acd2:c13:192.168.256.1]`,
   ];
   const emailSchema = z.string().email();
   expect(
@@ -234,30 +253,42 @@ test("checks getters", () => {
   expect(z.string().email().isCUID).toEqual(false);
   expect(z.string().email().isCUID2).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
+  expect(z.string().email().isIP).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
   expect(z.string().url().isCUID).toEqual(false);
   expect(z.string().url().isCUID2).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
+  expect(z.string().url().isIP).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
   expect(z.string().cuid().isCUID).toEqual(true);
   expect(z.string().cuid().isCUID2).toEqual(false);
   expect(z.string().cuid().isUUID).toEqual(false);
+  expect(z.string().cuid().isIP).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
   expect(z.string().cuid2().isURL).toEqual(false);
   expect(z.string().cuid2().isCUID).toEqual(false);
   expect(z.string().cuid2().isCUID2).toEqual(true);
   expect(z.string().cuid2().isUUID).toEqual(false);
+  expect(z.string().cuid2().isIP).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
   expect(z.string().uuid().isCUID).toEqual(false);
   expect(z.string().uuid().isCUID2).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
+  expect(z.string().uuid().isIP).toEqual(false);
+
+  expect(z.string().ip().isEmail).toEqual(false);
+  expect(z.string().ip().isURL).toEqual(false);
+  expect(z.string().ip().isCUID).toEqual(false);
+  expect(z.string().ip().isCUID2).toEqual(false);
+  expect(z.string().ip().isUUID).toEqual(false);
+  expect(z.string().ip().isIP).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -362,4 +393,45 @@ test("datetime parsing", () => {
   expect(() =>
     datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")
   ).toThrow();
+});
+
+test("IP validation", () => {
+  const ip = z.string().ip();
+  expect(ip.safeParse("122.122.122.122").success).toBe(true);
+
+  const ipv4 = z.string().ip({ version: "v4" });
+  expect(() => ipv4.parse("6097:adfa:6f0b:220d:db08:5021:6191:7990")).toThrow();
+
+  const ipv6 = z.string().ip({ version: "v6" });
+  expect(() => ipv6.parse("254.164.77.1")).toThrow();
+
+  const validIPs = [
+    "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c",
+    "9d4:c956:420f:5788:4339:9b3b:2418:75c3",
+    "a6ea::2454:a5ce:94.105.123.75",
+    "474f:4c83::4e40:a47:ff95:0cda",
+    "d329:0:25b4:db47:a9d1:0:4926:0000",
+    "e48:10fb:1499:3e28:e4b6:dea5:4692:912c",
+    "114.71.82.94",
+    "0.0.0.0",
+    "37.85.236.115",
+  ];
+
+  const invalidIPs = [
+    "d329:1be4:25b4:db47:a9d1:dc71:4926:992c:14af",
+    "d5e7:7214:2b78::3906:85e6:53cc:709:32ba",
+    "8f69::c757:395e:976e::3441",
+    "54cb::473f:d516:0.255.256.22",
+    "54cb::473f:d516:192.168.1",
+    "256.0.4.4",
+    "-1.0.555.4",
+    "0.0.0.0.0",
+    "1.1.1",
+  ];
+  // no parameters check IPv4 or IPv6
+  const ipSchema = z.string().ip();
+  expect(validIPs.every((ip) => ipSchema.safeParse(ip).success)).toBe(true);
+  expect(
+    invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
+  ).toBe(true);
 });

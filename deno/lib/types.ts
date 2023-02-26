@@ -447,7 +447,7 @@ export abstract class ZodType<
   }
 
   catch(def: Output): ZodCatch<this>;
-  catch(def: () => Output): ZodCatch<this>;
+  catch(def: (ctx: { error: ZodError }) => Output): ZodCatch<this>;
   catch(def: any) {
     const catchValueFunc = typeof def === "function" ? def : () => def;
 
@@ -486,6 +486,7 @@ export abstract class ZodType<
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
+export type IpVersion = "v4" | "v6";
 export type ZodStringCheck =
   | { kind: "min"; value: number; message?: string }
   | { kind: "max"; value: number; message?: string }
@@ -505,7 +506,8 @@ export type ZodStringCheck =
       offset: boolean;
       precision: number | null;
       message?: string;
-    };
+    }
+  | { kind: "ip"; version?: IpVersion; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -525,7 +527,14 @@ const uuidRegex =
 // eslint-disable-next-line
 
 const emailRegex =
-  /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|([^-]([a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}))$/;
+  /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\])|(\[IPv6:(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))\])|([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])*(\.[A-Za-z]{2,})+))$/;
+// from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
+
+const ipv4Regex =
+  /^(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))$/;
+
+const ipv6Regex =
+  /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
 const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Component})+$/u;
 
@@ -561,6 +570,17 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
     }
   }
 };
+
+function isValidIP(ip: string, version?: IpVersion) {
+  if ((version === "v4" || !version) && ipv4Regex.test(ip)) {
+    return true;
+  }
+  if ((version === "v6" || !version) && ipv6Regex.test(ip)) {
+    return true;
+  }
+
+  return false;
+}
 
 export class ZodString extends ZodType<string, ZodStringDef> {
   _parse(input: ParseInput): ParseReturnType<string> {
@@ -747,6 +767,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "ip") {
+        if (!isValidIP(input.data, check.version)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "ip",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -791,6 +821,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   cuid2(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message) });
   }
+
+  ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
+    return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
+  }
+
   datetime(
     options?:
       | string
@@ -899,6 +934,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isCUID2() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid2");
+  }
+  get isIP() {
+    return !!this._def.checks.find((ch) => ch.kind === "ip");
   }
 
   get minLength() {
@@ -3063,6 +3101,8 @@ export type RecordType<K extends string | number | symbol, V> = [
   ? Record<K, V>
   : [symbol] extends [K]
   ? Record<K, V>
+  : [BRAND<string | number | symbol>] extends [K]
+  ? Record<K, V>
   : Partial<Record<K, V>>;
 export class ZodRecord<
   Key extends KeySchema = ZodString,
@@ -4257,7 +4297,7 @@ export interface ZodCatchDef<
   C extends T["_input"] = T["_input"]
 > extends ZodTypeDef {
   innerType: T;
-  catchValue: () => C;
+  catchValue: (ctx: { error: ZodError }) => C;
   typeName: ZodFirstPartyTypeKind.ZodCatch;
 }
 
@@ -4269,15 +4309,20 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
 
+    // newCtx is used to not collect issues from inner types in ctx
+    const newCtx: ParseContext = {
+      ...ctx,
+      common: {
+        ...ctx.common,
+        issues: [],
+      },
+    };
+
     const result = this._def.innerType._parse({
-      data: ctx.data,
-      path: ctx.path,
+      data: newCtx.data,
+      path: newCtx.path,
       parent: {
-        ...ctx,
-        common: {
-          ...ctx.common,
-          issues: [], // don't collect issues from inner type
-        },
+        ...newCtx,
       },
     });
 
@@ -4286,14 +4331,26 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
         return {
           status: "valid",
           value:
-            result.status === "valid" ? result.value : this._def.catchValue(),
+            result.status === "valid"
+              ? result.value
+              : this._def.catchValue({
+                  get error() {
+                    return new ZodError(newCtx.common.issues);
+                  },
+                }),
         };
       });
     } else {
       return {
         status: "valid",
         value:
-          result.status === "valid" ? result.value : this._def.catchValue(),
+          result.status === "valid"
+            ? result.value
+            : this._def.catchValue({
+                get error() {
+                  return new ZodError(newCtx.common.issues);
+                },
+              }),
       };
     }
   }
