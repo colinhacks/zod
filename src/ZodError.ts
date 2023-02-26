@@ -97,6 +97,7 @@ export type StringValidation =
   | "cuid"
   | "cuid2"
   | "datetime"
+  | "ip"
   | { startsWith: string }
   | { endsWith: string };
 
