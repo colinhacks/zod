@@ -91,11 +91,13 @@ export interface ZodInvalidDateIssue extends ZodIssueBase {
 export type StringValidation =
   | "email"
   | "url"
+  | "emoji"
   | "uuid"
   | "regex"
   | "cuid"
   | "cuid2"
   | "datetime"
+  | "ip"
   | { startsWith: string }
   | { endsWith: string };
 
