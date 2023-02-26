@@ -194,16 +194,16 @@ test("catch error", () => {
 
   const schema = z.object({
     age: z.number(),
-    name: z.string().catch((error) => {
-      catchError = error;
+    name: z.string().catch((ctx) => {
+      catchError = ctx.error;
 
-      return "John Doe"
-    })
+      return "John Doe";
+    }),
   });
 
   const result = schema.safeParse({
     age: null,
-    name: null
+    name: null,
   });
 
   expect(result.success).toEqual(false);
@@ -211,6 +211,10 @@ test("catch error", () => {
   expect(!result.success && result.error.issues[0].message).toMatch("number");
 
   expect(catchError).toBeInstanceOf(z.ZodError);
-  expect(catchError !== undefined && (catchError as z.ZodError).issues.length).toEqual(1);
-  expect(catchError !== undefined && (catchError as z.ZodError).issues[0].message).toMatch("string");
-})
+  expect(
+    catchError !== undefined && (catchError as z.ZodError).issues.length
+  ).toEqual(1);
+  expect(
+    catchError !== undefined && (catchError as z.ZodError).issues[0].message
+  ).toMatch("string");
+});

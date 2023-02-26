@@ -447,7 +447,7 @@ export abstract class ZodType<
   }
 
   catch(def: Output): ZodCatch<this>;
-  catch(def: (error: ZodError) => Output): ZodCatch<this>;
+  catch(def: (ctx: { error: ZodError }) => Output): ZodCatch<this>;
   catch(def: any) {
     const catchValueFunc = typeof def === "function" ? def : () => def;
 
@@ -4260,7 +4260,7 @@ export interface ZodCatchDef<
   C extends T["_input"] = T["_input"]
 > extends ZodTypeDef {
   innerType: T;
-  catchValue: (error: ZodError) => C;
+  catchValue: (ctx: { error: ZodError }) => C;
   typeName: ZodFirstPartyTypeKind.ZodCatch;
 }
 
@@ -4296,7 +4296,11 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
           value:
             result.status === "valid"
               ? result.value
-              : this._def.catchValue(new ZodError(newCtx.common.issues)),
+              : this._def.catchValue({
+                  get error() {
+                    return new ZodError(newCtx.common.issues);
+                  },
+                }),
         };
       });
     } else {
@@ -4305,7 +4309,11 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
         value:
           result.status === "valid"
             ? result.value
-            : this._def.catchValue(new ZodError(newCtx.common.issues)),
+            : this._def.catchValue({
+                get error() {
+                  return new ZodError(newCtx.common.issues);
+                },
+              }),
       };
     }
   }
