@@ -309,7 +309,8 @@ test("trim", () => {
 });
 
 test("lowerCase", () => {
-  expect(z.string().lowerCase().parse("LOWERCASE")).toEqual("lowercase");
+  expect(z.string().toLowerCase().parse("ASDF")).toEqual("asdf");
+  expect(z.string().toUpperCase().parse("asdf")).toEqual("ASDF");
 });
 
 test("datetime", () => {
