@@ -308,6 +308,11 @@ test("trim", () => {
   expect(() => z.string().trim().min(2).parse(" 1 ")).toThrow();
 });
 
+test("lowerCase", () => {
+  expect(z.string().toLowerCase().parse("ASDF")).toEqual("asdf");
+  expect(z.string().toUpperCase().parse("asdf")).toEqual("ASDF");
+});
+
 test("datetime", () => {
   const a = z.string().datetime({});
   expect(a.isDatetime).toEqual(true);

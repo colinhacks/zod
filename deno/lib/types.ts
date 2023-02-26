@@ -501,6 +501,8 @@ export type ZodStringCheck =
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
   | { kind: "trim"; message?: string }
+  | { kind: "toLowerCase"; message?: string }
+  | { kind: "toUpperCase"; message?: string }
   | {
       kind: "datetime";
       offset: boolean;
@@ -529,14 +531,13 @@ const uuidRegex =
 const emailRegex =
   /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\])|(\[IPv6:(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))\])|([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])*(\.[A-Za-z]{2,})+))$/;
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
+const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Component})+$/u;
 
 const ipv4Regex =
   /^(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))$/;
 
 const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
-
-const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Component})+$/u;
 
 // Adapted from https://stackoverflow.com/a/3143231
 const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
@@ -735,6 +736,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
+      } else if (check.kind === "toLowerCase") {
+        input.data = input.data.toLowerCase();
+      } else if (check.kind === "toUpperCase") {
+        input.data = input.data.toUpperCase();
       } else if (check.kind === "startsWith") {
         if (!(input.data as string).startsWith(check.value)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -911,6 +916,18 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "trim" }],
+    });
+
+  toLowerCase = () =>
+    new ZodString({
+      ...this._def,
+      checks: [...this._def.checks, { kind: "toLowerCase" }],
+    });
+
+  toUpperCase = () =>
+    new ZodString({
+      ...this._def,
+      checks: [...this._def.checks, { kind: "toUpperCase" }],
     });
 
   get isDatetime() {
