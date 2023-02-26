@@ -55,6 +55,8 @@
 - [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
+  - [Datetime](#datetime-validation)
+  - [IP](#ip-address-validation)
 - [Numbers](#numbers)
 - [NaNs](#nans)
 - [Booleans](#booleans)
@@ -677,7 +679,7 @@ You can additionally set the IP `version`.
 
 ```ts
 const ipv4 = z.string().ip({ version: "v4" });
-ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003") // fail
+ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
 
 const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
