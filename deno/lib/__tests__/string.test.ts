@@ -71,6 +71,14 @@ test("more email validations", () => {
     `user@[68.185.127.196]`,
     `ipv4@[85.129.96.247]`,
     `valid@[79.208.229.53]`,
+    `valid@[255.255.255.255]`,
+    `valid@[255.0.55.2]`,
+    `valid@[255.0.55.2]`,
+    `hgrebert0@[IPv6:4dc8:ac7:ce79:8878:1290:6098:5c50:1f25]`,
+    `bshapiro4@[IPv6:3669:c709:e981:4884:59a3:75d1:166b:9ae]`,
+    `jsmith@[IPv6:2001:db8::1]`,
+    `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:7334]`,
+    `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:192.168.1.1]`,
   ];
   const invalidEmails = [
     `Abc.example.com`,
@@ -88,6 +96,17 @@ test("more email validations", () => {
     `invalid@[68.185.127.196.55]`,
     `temp@[192.168.1]`,
     `temp@[9.18.122.]`,
+    `double..point@test.com`,
+    `asdad@test..com`,
+    `asdad@hghg...sd...au`,
+    `asdad@hghg........au`,
+    `invalid@[256.2.2.48]`,
+    `invalid@[256.2.2.48]`,
+    `invalid@[999.465.265.1]`,
+    `jkibbey4@[IPv6:82c4:19a8::70a9:2aac:557::ea69:d985:28d]`,
+    `mlivesay3@[9952:143f:b4df:2179:49a1:5e82:b92e:6b6]`,
+    `gbacher0@[IPv6:bc37:4d3f:5048:2e26:37cc:248e:df8e:2f7f:af]`,
+    `invalid@[IPv6:5348:4ed3:5d38:67fb:e9b:acd2:c13:192.168.256.1]`,
   ];
   const emailSchema = z.string().email();
   expect(

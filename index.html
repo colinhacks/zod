@@ -206,22 +206,27 @@
 
   <body>
     <div class="theme-btn"></div>
-
     <div id="app"></div>
     <script src="//cdnjs.cloudflare.com/ajax/libs/docsify/4.12.2/docsify.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-typescript.min.js"></script>
     <script>
+      toggleDarkTheme(localStorage.getItem("dark-theme") === "true" || false);
+
       window
         .matchMedia("(prefers-color-scheme: dark)")
-        .addEventListener("change", (e) => {
-          document.body.classList.toggle("dark", e.matches);
-        });
+        .addEventListener("change", (e) => toggleDarkTheme(e.matches));
 
-      const themeBtn = document.querySelector(".theme-btn");
+      document
+        .querySelector(".theme-btn")
+        .addEventListener("click", () => toggleDarkTheme());
 
-      themeBtn.addEventListener("click", () => {
-        document.body.classList.toggle("dark");
-      });
+      function toggleDarkTheme(force) {
+        document.body.classList.toggle("dark", force);
+        localStorage.setItem(
+          "dark-theme",
+          document.body.classList.contains("dark")
+        );
+      }
     </script>
 
     <script>
