@@ -3102,7 +3102,7 @@ export type RecordType<K extends string | number | symbol, V> = [
   ? Record<K, V>
   : [symbol] extends [K]
   ? Record<K, V>
-  : K extends BRAND<string | number | symbol>
+  : [BRAND<string | number | symbol>] extends [K]
   ? Record<K, V>
   : Partial<Record<K, V>>;
 export class ZodRecord<
@@ -3538,7 +3538,7 @@ export class ZodFunction<
     return this._def.returns;
   }
 
-  args<Items extends Parameters<(typeof ZodTuple)["create"]>[0]>(
+  args<Items extends Parameters<typeof ZodTuple["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> {
     return new ZodFunction({
@@ -4673,18 +4673,18 @@ const oboolean = () => booleanType().optional();
 
 export const coerce = {
   string: ((arg) =>
-    ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
+    ZodString.create({ ...arg, coerce: true })) as typeof ZodString["create"],
   number: ((arg) =>
-    ZodNumber.create({ ...arg, coerce: true })) as (typeof ZodNumber)["create"],
+    ZodNumber.create({ ...arg, coerce: true })) as typeof ZodNumber["create"],
   boolean: ((arg) =>
     ZodBoolean.create({
       ...arg,
       coerce: true,
-    })) as (typeof ZodBoolean)["create"],
+    })) as typeof ZodBoolean["create"],
   bigint: ((arg) =>
-    ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
+    ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
   date: ((arg) =>
-    ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
+    ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
 };
 
 export {
