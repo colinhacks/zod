@@ -447,7 +447,7 @@ export abstract class ZodType<
   }
 
   catch(def: Output): ZodCatch<this>;
-  catch(def: () => Output): ZodCatch<this>;
+  catch(def: (ctx: { error: ZodError }) => Output): ZodCatch<this>;
   catch(def: any) {
     const catchValueFunc = typeof def === "function" ? def : () => def;
 
@@ -4298,7 +4298,7 @@ export interface ZodCatchDef<
   C extends T["_input"] = T["_input"]
 > extends ZodTypeDef {
   innerType: T;
-  catchValue: () => C;
+  catchValue: (ctx: { error: ZodError }) => C;
   typeName: ZodFirstPartyTypeKind.ZodCatch;
 }
 
@@ -4310,15 +4310,20 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
 
+    // newCtx is used to not collect issues from inner types in ctx
+    const newCtx: ParseContext = {
+      ...ctx,
+      common: {
+        ...ctx.common,
+        issues: [],
+      },
+    };
+
     const result = this._def.innerType._parse({
-      data: ctx.data,
-      path: ctx.path,
+      data: newCtx.data,
+      path: newCtx.path,
       parent: {
-        ...ctx,
-        common: {
-          ...ctx.common,
-          issues: [], // don't collect issues from inner type
-        },
+        ...newCtx,
       },
     });
 
@@ -4327,14 +4332,26 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
         return {
           status: "valid",
           value:
-            result.status === "valid" ? result.value : this._def.catchValue(),
+            result.status === "valid"
+              ? result.value
+              : this._def.catchValue({
+                  get error() {
+                    return new ZodError(newCtx.common.issues);
+                  },
+                }),
         };
       });
     } else {
       return {
         status: "valid",
         value:
-          result.status === "valid" ? result.value : this._def.catchValue(),
+          result.status === "valid"
+            ? result.value
+            : this._def.catchValue({
+                get error() {
+                  return new ZodError(newCtx.common.issues);
+                },
+              }),
       };
     }
   }

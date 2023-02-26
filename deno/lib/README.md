@@ -2153,14 +2153,17 @@ numberWithCatch.parse(5); // => 5
 numberWithCatch.parse("tuna"); // => 42
 ```
 
-Optionally, you can pass a function into `.catch` that will be re-executed whenever a default value needs to be generated:
+Optionally, you can pass a function into `.catch` that will be re-executed whenever a default value needs to be generated. A `ctx` object containing the caught error will be passed into this function.
 
 ```ts
-const numberWithRandomCatch = z.number().catch(Math.random);
+const numberWithRandomCatch = z.number().catch((ctx) => {
+  ctx.error; // the caught ZodError
+  return Math.random();
+});
 
-numberWithRandomDefault.parse("sup"); // => 0.4413456736055323
-numberWithRandomDefault.parse("sup"); // => 0.1871840107401901
-numberWithRandomDefault.parse("sup"); // => 0.7223408162401552
+numberWithRandomCatch.parse("sup"); // => 0.4413456736055323
+numberWithRandomCatch.parse("sup"); // => 0.1871840107401901
+numberWithRandomCatch.parse("sup"); // => 0.7223408162401552
 ```
 
 Conceptually, this is how Zod processes "catch values":
