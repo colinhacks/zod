@@ -170,15 +170,17 @@ export const quotelessJson = (obj: any) => {
   return json.replace(/"([^"]+)":/g, "$1:");
 };
 
+type recursiveZodFormattedError<T> = T extends [any, ...any[]]
+  ? { [K in keyof T]?: ZodFormattedError<T[K]> }
+  : T extends any[]
+  ? { [k: number]: ZodFormattedError<T[number]> }
+  : T extends object
+  ? { [K in keyof T]?: ZodFormattedError<T[K]> }
+  : unknown;
+
 export type ZodFormattedError<T, U = string> = {
   _errors: U[];
-} & (NonNullable<T> extends [any, ...any[]]
-  ? { [K in keyof NonNullable<T>]?: ZodFormattedError<NonNullable<T>[K], U> }
-  : NonNullable<T> extends any[]
-  ? { [k: number]: ZodFormattedError<NonNullable<T>[number], U> }
-  : NonNullable<T> extends object
-  ? { [K in keyof NonNullable<T>]?: ZodFormattedError<NonNullable<T>[K], U> }
-  : unknown);
+} & recursiveZodFormattedError<NonNullable<T>>;
 
 export type inferFormattedError<
   T extends ZodType<any, any, any>,
