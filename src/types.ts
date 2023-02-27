@@ -2545,6 +2545,9 @@ export class ZodObject<
     }) as any;
   }
 
+  /**
+   * @deprecated
+   */
   deepPartial(): partialUtil.DeepPartial<this> {
     return deepPartialify(this) as any;
   }
