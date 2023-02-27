@@ -481,7 +481,7 @@ test("time parsing", () => {
   expect(() => time4.parse("00:00:00.000")).toThrow();
   expect(() => time4.parse("00:00:00.000+00:00")).toThrow();
 });
-  
+
 test("IP validation", () => {
   const ip = z.string().ip();
   expect(ip.safeParse("122.122.122.122").success).toBe(true);
