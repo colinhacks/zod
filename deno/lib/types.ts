@@ -806,6 +806,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
             validation: "time",
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "ip") {
         if (!isValidIP(input.data, check.version)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -853,7 +857,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   emoji(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message) });
   }
-  
+
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
   }
@@ -861,11 +865,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
-  
+
   cuid2(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message) });
   }
-  
+
   ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
   }
@@ -1028,7 +1032,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   get isEmoji() {
     return !!this._def.checks.find((ch) => ch.kind === "emoji");
   }
-  
+
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
   }
@@ -1036,7 +1040,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
-  
+
   get isCUID2() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid2");
   }
