@@ -108,18 +108,18 @@ export interface ZodInvalidStringIssue extends ZodIssueBase {
 
 export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
-  minimum: number;
+  minimum: number | bigint;
   inclusive: boolean;
   exact?: boolean;
-  type: "array" | "string" | "number" | "set" | "date";
+  type: "array" | "string" | "number" | "set" | "date" | "bigint";
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
-  maximum: number;
+  maximum: number | bigint;
   inclusive: boolean;
   exact?: boolean;
-  type: "array" | "string" | "number" | "set" | "date";
+  type: "array" | "string" | "number" | "set" | "date" | "bigint";
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -128,7 +128,7 @@ export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
 
 export interface ZodNotMultipleOfIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.not_multiple_of;
-  multipleOf: number;
+  multipleOf: number | bigint;
 }
 
 export interface ZodNotFiniteIssue extends ZodIssueBase {

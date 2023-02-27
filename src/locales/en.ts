@@ -84,7 +84,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
             : issue.inclusive
             ? `greater than or equal to `
             : `greater than `
-        }${new Date(issue.minimum)}`;
+        }${new Date(Number(issue.minimum))}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.too_big:
@@ -104,6 +104,14 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
             ? `less than or equal to`
             : `less than`
         } ${issue.maximum}`;
+      else if (issue.type === "bigint")
+        message = `BigInt must be ${
+          issue.exact
+            ? `exactly`
+            : issue.inclusive
+            ? `less than or equal to`
+            : `less than`
+        } ${issue.maximum}`;
       else if (issue.type === "date")
         message = `Date must be ${
           issue.exact
@@ -111,7 +119,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
             : issue.inclusive
             ? `smaller than or equal to`
             : `smaller than`
-        } ${new Date(issue.maximum)}`;
+        } ${new Date(Number(issue.maximum))}`;
       else message = "Invalid input";
       break;
     case ZodIssueCode.custom:
