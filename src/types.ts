@@ -3627,7 +3627,7 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
   }
 
   innerTypes() {
-    return this._def.getter().innerTypes()
+    return []
   }
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
