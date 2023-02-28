@@ -24,6 +24,8 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://www.npmjs.com/package/zod">npm</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://deno.land/x/zod">deno</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://twitter.com/colinhacks">@colinhacks</a>
@@ -55,7 +57,10 @@
 - [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
+  - [Datetime](#datetime-validation)
+  - [IP](#ip-address-validation)
 - [Numbers](#numbers)
+- [BigInts](#bigints)
 - [NaNs](#nans)
 - [Booleans](#booleans)
 - [Dates](#dates)
@@ -586,6 +591,7 @@ z.string().min(5);
 z.string().length(5);
 z.string().email();
 z.string().url();
+z.string().emoji();
 z.string().uuid();
 z.string().cuid();
 z.string().cuid2();
@@ -594,7 +600,10 @@ z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().trim(); // trim whitespace
+z.string().toLowerCase(); // toLowerCase
+z.string().toUpperCase(); // toLowerCase
 z.string().datetime(); // defaults to UTC, see below for options
+z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
@@ -616,10 +625,12 @@ z.string().max(5, { message: "Must be 5 or fewer characters long" });
 z.string().length(5, { message: "Must be exactly 5 characters long" });
 z.string().email({ message: "Invalid email address" });
 z.string().url({ message: "Invalid url" });
+z.string().emoji({ message: "Contains non-emoji characters" });
 z.string().uuid({ message: "Invalid UUID" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+z.string().ip({ message: "Invalid IP address" });
 ```
 
 ### Datetime validation
@@ -657,6 +668,31 @@ datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```
 
+### IP address validation
+
+The `z.string().ip()` method by default validate IPv4 and IPv6.
+
+```ts
+const ip = z.string().ip();
+
+ip.parse("192.168.1.1"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // pass
+
+ip.parse("256.1.1.1"); // fail
+ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // fail
+```
+
+You can additionally set the IP `version`.
+
+```ts
+const ipv4 = z.string().ip({ version: "v4" });
+ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+
+const ipv6 = z.string().ip({ version: "v6" });
+ipv6.parse("192.168.1.1"); // fail
+```
+
 ## Numbers
 
 You can customize certain error messages when creating a number schema.
@@ -692,6 +728,24 @@ Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
 z.number().lte(5, { message: "this👏is👏too👏big" });
+```
+
+## BigInts
+
+Zod includes a handful of bigint-specific validations.
+
+```ts
+z.bigint().gt(5n);
+z.bigint().gte(5n); // alias `.min(5n)`
+z.bigint().lt(5n);
+z.bigint().lte(5n); // alias `.max(5n)`
+
+z.bigint().positive(); // > 0n
+z.bigint().nonnegative(); // >= 0n
+z.bigint().negative(); // < 0n
+z.bigint().nonpositive(); // <= 0n
+
+z.bigint().multipleOf(5n); // Evenly divisible by 5n.
 ```
 
 ## NaNs
@@ -1410,7 +1464,7 @@ type NumberSet = z.infer<typeof numberSet>;
 // type NumberSet = Set<number>
 ```
 
-Set schemas can be further contrainted with the following utility methods.
+Set schemas can be further constrained with the following utility methods.
 
 ```ts
 z.set(z.string()).nonempty(); // must contain at least one item
@@ -1713,6 +1767,12 @@ If you don't provide a validation function, Zod will allow any value. This can b
 
 ```ts
 z.custom<{ arg: string }>(); // performs no validation
+```
+
+You can customize the error message and other options by passing a second argument. This parameter works the same way as the params parameter of [`.refine`](#refine).
+
+```ts
+z.custom<...>((val) => ..., "custom error message");
 ```
 
 ## Schema methods
@@ -2119,14 +2179,17 @@ numberWithCatch.parse(5); // => 5
 numberWithCatch.parse("tuna"); // => 42
 ```
 
-Optionally, you can pass a function into `.catch` that will be re-executed whenever a default value needs to be generated:
+Optionally, you can pass a function into `.catch` that will be re-executed whenever a default value needs to be generated. A `ctx` object containing the caught error will be passed into this function.
 
 ```ts
-const numberWithRandomCatch = z.number().catch(Math.random);
+const numberWithRandomCatch = z.number().catch((ctx) => {
+  ctx.error; // the caught ZodError
+  return Math.random();
+});
 
-numberWithRandomDefault.parse("sup"); // => 0.4413456736055323
-numberWithRandomDefault.parse("sup"); // => 0.1871840107401901
-numberWithRandomDefault.parse("sup"); // => 0.7223408162401552
+numberWithRandomCatch.parse("sup"); // => 0.4413456736055323
+numberWithRandomCatch.parse("sup"); // => 0.1871840107401901
+numberWithRandomCatch.parse("sup"); // => 0.7223408162401552
 ```
 
 Conceptually, this is how Zod processes "catch values":
