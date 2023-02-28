@@ -3722,7 +3722,7 @@ export class ZodFunction<
     return this._def.returns;
   }
 
-  args<Items extends Parameters<typeof ZodTuple["create"]>[0]>(
+  args<Items extends Parameters<(typeof ZodTuple)["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> {
     return new ZodFunction({
@@ -4709,17 +4709,21 @@ export class ZodPipeline<
   }
 }
 
+type CustomParams = CustomErrorParams & { fatal?: boolean };
 export const custom = <T>(
   check?: (data: unknown) => any,
-  params: Parameters<ZodTypeAny["refine"]>[1] = {},
+  params: CustomParams | ((input: any) => CustomParams) = {},
+  /* @deprecated */
   fatal?: boolean
 ): ZodType<T> => {
   if (check)
     return ZodAny.create().superRefine((data, ctx) => {
       if (!check(data)) {
         const p = typeof params === "function" ? params(data) : params;
+        const _fatal = p.fatal ?? fatal ?? true;
         const p2 = typeof p === "string" ? { message: p } : p;
-        ctx.addIssue({ code: "custom", ...p2, fatal });
+        console.log(`adding issue`);
+        ctx.addIssue({ code: "custom", ...p2, fatal: _fatal });
       }
     });
   return ZodAny.create();
@@ -4812,10 +4816,10 @@ abstract class Class {
 const instanceOfType = <T extends typeof Class>(
   // const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
-  params: Parameters<ZodTypeAny["refine"]>[1] = {
+  params: CustomParams = {
     message: `Input not instance of ${cls.name}`,
   }
-) => custom<InstanceType<T>>((data) => data instanceof cls, params, true);
+) => custom<InstanceType<T>>((data) => data instanceof cls, params);
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -4857,18 +4861,18 @@ const oboolean = () => booleanType().optional();
 
 export const coerce = {
   string: ((arg) =>
-    ZodString.create({ ...arg, coerce: true })) as typeof ZodString["create"],
+    ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
   number: ((arg) =>
-    ZodNumber.create({ ...arg, coerce: true })) as typeof ZodNumber["create"],
+    ZodNumber.create({ ...arg, coerce: true })) as (typeof ZodNumber)["create"],
   boolean: ((arg) =>
     ZodBoolean.create({
       ...arg,
       coerce: true,
-    })) as typeof ZodBoolean["create"],
+    })) as (typeof ZodBoolean)["create"],
   bigint: ((arg) =>
-    ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
+    ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
   date: ((arg) =>
-    ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
+    ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
 };
 
 export {
