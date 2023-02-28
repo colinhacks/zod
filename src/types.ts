@@ -2686,6 +2686,7 @@ export interface ZodUnionDef<
 > extends ZodTypeDef {
   options: T;
   typeName: ZodFirstPartyTypeKind.ZodUnion;
+  discriminator: string | null;
 }
 
 export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
@@ -2753,6 +2754,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       let dirty: undefined | { result: DIRTY<any>; ctx: ParseContext } =
         undefined;
       const issues: ZodIssue[][] = [];
+
       for (const option of options) {
         const childCtx: ParseContext = {
           ...ctx,
@@ -2802,12 +2804,30 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     T extends Readonly<[ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]>
   >(
     types: T,
-    params?: RawCreateParams
+    params?: RawCreateParams & { discriminator?: string }
   ): ZodUnion<T> => {
+    if (params?.discriminator) {
+      for (const option of types) {
+        if (!(option instanceof ZodObject)) {
+          throw new Error(
+            "Discriminator can only be used with unions of ZodObjects"
+          );
+        }
+        const discriminatorSchema = (option.shape as ZodRawShape)[
+          params.discriminator
+        ];
+        if (!discriminatorSchema) {
+          throw new Error(
+            `Discriminator key "${params.discriminator}" not found in ZodObject`
+          );
+        }
+      }
+    }
     return new ZodUnion({
       options: types,
       typeName: ZodFirstPartyTypeKind.ZodUnion,
       ...processCreateParams(params),
+      discriminator: params?.discriminator ?? null,
     });
   };
 }
@@ -2845,33 +2865,60 @@ const getDiscriminator = <T extends ZodTypeAny>(
   }
 };
 
-export type ZodDiscriminatedUnionOption<Discriminator extends string> =
-  ZodObject<
-    { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
-    UnknownKeysParam,
-    ZodTypeAny
-  >;
+export type ZodDiscriminatedUnionOption =
+  | ZodObject<ZodRawShape>
+  | ZodDiscriminatedUnion<string, ZodDiscriminatedUnionOption[]>;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
+  Options extends ZodDiscriminatedUnionOption[] = ZodDiscriminatedUnionOption[]
 > extends ZodTypeDef {
   discriminator: Discriminator;
   options: Options;
-  optionsMap: Map<Primitive, ZodDiscriminatedUnionOption<any>>;
   typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion;
 }
 
+function flattenOptions(
+  options: ZodDiscriminatedUnionOption[],
+  parent: ZodDiscriminatedUnion | null
+) {
+  const flattened: {
+    parent: ZodDiscriminatedUnion | null;
+    object: ZodObject<ZodRawShape>;
+  }[] = [];
+  for (const option of options) {
+    if (option instanceof ZodDiscriminatedUnion) {
+      // parent should only go one level deep
+      flattened.push(...flattenOptions(option._def.options, parent ?? option));
+    } else {
+      flattened.push({ object: option, parent });
+    }
+  }
+  return flattened;
+}
 export class ZodDiscriminatedUnion<
-  Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<Discriminator>[]
+  Discriminator extends string = string,
+  Options extends ZodDiscriminatedUnionOption[] = ZodDiscriminatedUnionOption[]
 > extends ZodType<
   output<Options[number]>,
   ZodDiscriminatedUnionDef<Discriminator, Options>,
   input<Options[number]>
 > {
+  #flattenedOptions: ReturnType<typeof flattenOptions> | null = null;
+
+  get _flattenedOptions() {
+    const options = this.#flattenedOptions
+      ? this.#flattenedOptions
+      : flattenOptions(this._def.options, null);
+    // cache
+    this.#flattenedOptions = options;
+    return options;
+  }
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
+
+    const options = this._flattenedOptions;
 
     if (ctx.parsedType !== ZodParsedType.object) {
       addIssueToContext(ctx, {
@@ -2882,33 +2929,62 @@ export class ZodDiscriminatedUnion<
       return INVALID;
     }
 
+    // loop over options
+    // pull out the discriminator schema from schema
+    // validate input[discriminator] against schema
+    // if valid, use that schema to parse input
     const discriminator = this.discriminator;
-
     const discriminatorValue: string = ctx.data[discriminator];
 
-    const option = this.optionsMap.get(discriminatorValue);
+    if (ctx.common.async) {
+      // eslint-disable-next-line no-inner-declarations
+      async function asyncParseUnion() {
+        for (const option of options) {
+          const discriminatorSchema = option.object.shape[discriminator!];
+          if (discriminatorSchema) {
+            const result = await discriminatorSchema.safeParseAsync(
+              discriminatorValue
+            );
+            if (result.success) {
+              if (option.parent) {
+                return option.parent._parse(input);
+              } else {
+                return option.object._parse(input);
+              }
+            }
+          }
+        }
 
-    if (!option) {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.invalid_union_discriminator,
+          discriminator,
+          path: [discriminator],
+        });
+        return INVALID;
+      }
+      return asyncParseUnion() as any;
+    } else {
+      for (const option of options) {
+        const discriminatorValue = ctx.data[discriminator];
+        const discriminatorSchema = option.object.shape[discriminator];
+        if (discriminatorSchema) {
+          const result = discriminatorSchema.safeParse(discriminatorValue);
+          if (result.success) {
+            if (option.parent) {
+              return option.parent._parse(input) as any;
+            } else {
+              return option.object._parse(input) as any;
+            }
+          }
+        }
+      }
+
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_union_discriminator,
-        options: Array.from(this.optionsMap.keys()),
+        discriminator,
         path: [discriminator],
       });
       return INVALID;
-    }
-
-    if (ctx.common.async) {
-      return option._parseAsync({
-        data: ctx.data,
-        path: ctx.path,
-        parent: ctx,
-      }) as any;
-    } else {
-      return option._parseSync({
-        data: ctx.data,
-        path: ctx.path,
-        parent: ctx,
-      }) as any;
     }
   }
 
@@ -2920,13 +2996,10 @@ export class ZodDiscriminatedUnion<
     return this._def.options;
   }
 
-  get optionsMap() {
-    return this._def.optionsMap;
-  }
-
   /**
    * The constructor of the discriminated union schema. Its behaviour is very similar to that of the normal z.union() constructor.
-   * However, it only allows a union of objects, all of which need to share a discriminator property. This property must
+   * However, it only allows ZodObjects or other ZodDiscriminatedUnion instance. All objects must have a property corresponding
+   * to the provided `discriminator` key.
    * have a different value for each object in the union.
    * @param discriminator the name of the discriminator property
    * @param types an array of object schemas
@@ -2935,49 +3008,29 @@ export class ZodDiscriminatedUnion<
   static create<
     Discriminator extends string,
     Types extends [
-      ZodDiscriminatedUnionOption<Discriminator>,
-      ...ZodDiscriminatedUnionOption<Discriminator>[]
+      ZodDiscriminatedUnionOption,
+      ...ZodDiscriminatedUnionOption[]
     ]
   >(
     discriminator: Discriminator,
     options: Types,
     params?: RawCreateParams
   ): ZodDiscriminatedUnion<Discriminator, Types> {
-    // Get all the valid discriminator values
-    const optionsMap: Map<Primitive, Types[number]> = new Map();
-
-    // try {
-    for (const type of options) {
-      const discriminatorValues = getDiscriminator(type.shape[discriminator]);
-      if (!discriminatorValues) {
-        throw new Error(
-          `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
-        );
-      }
-      for (const value of discriminatorValues) {
-        if (optionsMap.has(value)) {
-          throw new Error(
-            `Discriminator property ${String(
-              discriminator
-            )} has duplicate value ${String(value)}`
-          );
-        }
-
-        optionsMap.set(value, type);
-      }
-    }
-
-    return new ZodDiscriminatedUnion<
-      Discriminator,
-      // DiscriminatorValue,
-      Types
-    >({
+    const u = new ZodDiscriminatedUnion<Discriminator, Types>({
       typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion,
       discriminator,
       options,
-      optionsMap,
       ...processCreateParams(params),
     });
+    for (const el of u._flattenedOptions) {
+      // check that all options have the discriminator
+      if (!el.object.shape[discriminator]) {
+        throw new Error(
+          `Discriminator key "${discriminator}" not found in all union elements`
+        );
+      }
+    }
+    return u;
   }
 }
 

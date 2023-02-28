@@ -1,5 +1,4 @@
 import type { TypeOf, ZodType } from "./index.ts";
-import { Primitive } from "./helpers/typeAliases.ts";
 import { util, ZodParsedType } from "./helpers/util.ts";
 
 type allKeys<T> = T extends any ? keyof T : never;
@@ -65,7 +64,7 @@ export interface ZodInvalidUnionIssue extends ZodIssueBase {
 
 export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_union_discriminator;
-  options: Primitive[];
+  discriminator: string;
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
