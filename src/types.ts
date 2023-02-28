@@ -4722,7 +4722,6 @@ export const custom = <T>(
         const p = typeof params === "function" ? params(data) : params;
         const _fatal = p.fatal ?? fatal ?? true;
         const p2 = typeof p === "string" ? { message: p } : p;
-        console.log(`adding issue`);
         ctx.addIssue({ code: "custom", ...p2, fatal: _fatal });
       }
     });
