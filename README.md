@@ -600,7 +600,7 @@ z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().trim(); // trim whitespace
 z.string().toLowerCase(); // toLowerCase
-z.string().toUpperCase(); // toLowerCase
+z.string().toUpperCase(); // toUpperCase
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 ```
