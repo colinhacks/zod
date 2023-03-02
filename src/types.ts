@@ -1536,12 +1536,14 @@ export interface ZodDateDef extends ZodTypeDef {
 
 export class ZodDate extends ZodType<Date, ZodDateDef> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const original_data = input.data;
     if (this._def.coerce) {
       input.data = new Date(input.data);
     }
     const parsedType = this._getType(input);
 
     if (parsedType !== ZodParsedType.date) {
+      input.data = original_data;
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
@@ -1552,6 +1554,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     }
 
     if (isNaN(input.data.getTime())) {
+      input.data = original_data;
       const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_date,
