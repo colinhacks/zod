@@ -449,7 +449,7 @@ export abstract class ZodType<
   }
 
   catch(def: Output): ZodCatch<this>;
-  catch(def: () => Output): ZodCatch<this>;
+  catch(def: (ctx: { error: ZodError }) => Output): ZodCatch<this>;
   catch(def: any) {
     const catchValueFunc = typeof def === "function" ? def : () => def;
 
@@ -488,12 +488,14 @@ export abstract class ZodType<
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
+export type IpVersion = "v4" | "v6";
 export type ZodStringCheck =
   | { kind: "min"; value: number; message?: string }
   | { kind: "max"; value: number; message?: string }
   | { kind: "length"; value: number; message?: string }
   | { kind: "email"; message?: string }
   | { kind: "url"; message?: string }
+  | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
   | { kind: "cuid2"; message?: string }
@@ -501,12 +503,15 @@ export type ZodStringCheck =
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
   | { kind: "trim"; message?: string }
+  | { kind: "toLowerCase"; message?: string }
+  | { kind: "toUpperCase"; message?: string }
   | {
       kind: "datetime";
       offset: boolean;
       precision: number | null;
       message?: string;
-    };
+    }
+  | { kind: "ip"; version?: IpVersion; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -526,14 +531,15 @@ const uuidRegex =
 // eslint-disable-next-line
 
 const emailRegex =
-  /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|([^-]([a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}))$/;
+  /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\])|(\[IPv6:(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))\])|([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])*(\.[A-Za-z]{2,})+))$/;
+// from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
+const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Component})+$/u;
 
-// interface IsDateStringOptions extends StringDateOptions {
-/**
- * Match any configuration
- */
-// any?: boolean;
-// }
+const ipv4Regex =
+  /^(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))$/;
+
+const ipv6Regex =
+  /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
 // Adapted from https://stackoverflow.com/a/3143231
 const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
@@ -567,6 +573,17 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
     }
   }
 };
+
+function isValidIP(ip: string, version?: IpVersion) {
+  if ((version === "v4" || !version) && ipv4Regex.test(ip)) {
+    return true;
+  }
+  if ((version === "v6" || !version) && ipv6Regex.test(ip)) {
+    return true;
+  }
+
+  return false;
+}
 
 export class ZodString extends ZodType<string, ZodStringDef> {
   _parse(input: ParseInput): ParseReturnType<string> {
@@ -655,6 +672,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "emoji") {
+        if (!emojiRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "emoji",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "uuid") {
         if (!uuidRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -711,6 +738,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
+      } else if (check.kind === "toLowerCase") {
+        input.data = input.data.toLowerCase();
+      } else if (check.kind === "toUpperCase") {
+        input.data = input.data.toUpperCase();
       } else if (check.kind === "startsWith") {
         if (!(input.data as string).startsWith(check.value)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -739,6 +770,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
             validation: "datetime",
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "ip") {
+        if (!isValidIP(input.data, check.version)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "ip",
+            code: ZodIssueCode.invalid_string,
             message: check.message,
           });
           status.dirty();
@@ -775,6 +816,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   url(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
+  emoji(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message) });
+  }
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
   }
@@ -784,6 +828,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   cuid2(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message) });
   }
+
+  ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
+    return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
+  }
+
   datetime(
     options?:
       | string
@@ -871,6 +920,18 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [...this._def.checks, { kind: "trim" }],
     });
 
+  toLowerCase = () =>
+    new ZodString({
+      ...this._def,
+      checks: [...this._def.checks, { kind: "toLowerCase" }],
+    });
+
+  toUpperCase = () =>
+    new ZodString({
+      ...this._def,
+      checks: [...this._def.checks, { kind: "toUpperCase" }],
+    });
+
   get isDatetime() {
     return !!this._def.checks.find((ch) => ch.kind === "datetime");
   }
@@ -881,6 +942,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   get isURL() {
     return !!this._def.checks.find((ch) => ch.kind === "url");
   }
+  get isEmoji() {
+    return !!this._def.checks.find((ch) => ch.kind === "emoji");
+  }
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
   }
@@ -889,6 +953,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isCUID2() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid2");
+  }
+  get isIP() {
+    return !!this._def.checks.find((ch) => ch.kind === "ip");
   }
 
   get minLength() {
@@ -1211,8 +1278,13 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
+export type ZodBigIntCheck =
+  | { kind: "min"; value: bigint; inclusive: boolean; message?: string }
+  | { kind: "max"; value: bigint; inclusive: boolean; message?: string }
+  | { kind: "multipleOf"; value: bigint; message?: string };
 
 export interface ZodBigIntDef extends ZodTypeDef {
+  checks: ZodBigIntCheck[];
   typeName: ZodFirstPartyTypeKind.ZodBigInt;
   coerce: boolean;
 }
@@ -1232,18 +1304,178 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
       });
       return INVALID;
     }
-    return OK(input.data);
+
+    let ctx: undefined | ParseContext = undefined;
+    const status = new ParseStatus();
+
+    for (const check of this._def.checks) {
+      if (check.kind === "min") {
+        const tooSmall = check.inclusive
+          ? input.data < check.value
+          : input.data <= check.value;
+        if (tooSmall) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.too_small,
+            type: "bigint",
+            minimum: check.value,
+            inclusive: check.inclusive,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "max") {
+        const tooBig = check.inclusive
+          ? input.data > check.value
+          : input.data >= check.value;
+        if (tooBig) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.too_big,
+            type: "bigint",
+            maximum: check.value,
+            inclusive: check.inclusive,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "multipleOf") {
+        if (input.data % check.value !== BigInt(0)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.not_multiple_of,
+            multipleOf: check.value,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else {
+        util.assertNever(check);
+      }
+    }
+
+    return { status: status.value, value: input.data };
   }
 
   static create = (
     params?: RawCreateParams & { coerce?: boolean }
   ): ZodBigInt => {
     return new ZodBigInt({
+      checks: [],
       typeName: ZodFirstPartyTypeKind.ZodBigInt,
       coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     });
   };
+
+  gte(value: bigint, message?: errorUtil.ErrMessage) {
+    return this.setLimit("min", value, true, errorUtil.toString(message));
+  }
+  min = this.gte;
+
+  gt(value: bigint, message?: errorUtil.ErrMessage) {
+    return this.setLimit("min", value, false, errorUtil.toString(message));
+  }
+
+  lte(value: bigint, message?: errorUtil.ErrMessage) {
+    return this.setLimit("max", value, true, errorUtil.toString(message));
+  }
+  max = this.lte;
+
+  lt(value: bigint, message?: errorUtil.ErrMessage) {
+    return this.setLimit("max", value, false, errorUtil.toString(message));
+  }
+
+  protected setLimit(
+    kind: "min" | "max",
+    value: bigint,
+    inclusive: boolean,
+    message?: string
+  ) {
+    return new ZodBigInt({
+      ...this._def,
+      checks: [
+        ...this._def.checks,
+        {
+          kind,
+          value,
+          inclusive,
+          message: errorUtil.toString(message),
+        },
+      ],
+    });
+  }
+
+  _addCheck(check: ZodBigIntCheck) {
+    return new ZodBigInt({
+      ...this._def,
+      checks: [...this._def.checks, check],
+    });
+  }
+
+  positive(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: BigInt(0),
+      inclusive: false,
+      message: errorUtil.toString(message),
+    });
+  }
+
+  negative(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "max",
+      value: BigInt(0),
+      inclusive: false,
+      message: errorUtil.toString(message),
+    });
+  }
+
+  nonpositive(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "max",
+      value: BigInt(0),
+      inclusive: true,
+      message: errorUtil.toString(message),
+    });
+  }
+
+  nonnegative(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: BigInt(0),
+      inclusive: true,
+      message: errorUtil.toString(message),
+    });
+  }
+
+  multipleOf(value: bigint, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "multipleOf",
+      value,
+      message: errorUtil.toString(message),
+    });
+  }
+
+  get minValue() {
+    let min: bigint | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "min") {
+        if (min === null || ch.value > min) min = ch.value;
+      }
+    }
+    return min;
+  }
+
+  get maxValue() {
+    let max: bigint | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "max") {
+        if (max === null || ch.value < max) max = ch.value;
+      }
+    }
+    return max;
+  }
 }
 
 //////////////////////////////////////////
@@ -2315,6 +2547,9 @@ export class ZodObject<
     }) as any;
   }
 
+  /**
+   * @deprecated
+   */
   deepPartial(): partialUtil.DeepPartial<this> {
     return deepPartialify(this) as any;
   }
@@ -3053,6 +3288,8 @@ export type RecordType<K extends string | number | symbol, V> = [
   ? Record<K, V>
   : [symbol] extends [K]
   ? Record<K, V>
+  : [BRAND<string | number | symbol>] extends [K]
+  ? Record<K, V>
   : Partial<Record<K, V>>;
 export class ZodRecord<
   Key extends KeySchema = ZodString,
@@ -3487,7 +3724,7 @@ export class ZodFunction<
     return this._def.returns;
   }
 
-  args<Items extends Parameters<typeof ZodTuple["create"]>[0]>(
+  args<Items extends Parameters<(typeof ZodTuple)["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> {
     return new ZodFunction({
@@ -4247,7 +4484,7 @@ export interface ZodCatchDef<
   C extends T["_input"] = T["_input"]
 > extends ZodTypeDef {
   innerType: T;
-  catchValue: () => C;
+  catchValue: (ctx: { error: ZodError }) => C;
   typeName: ZodFirstPartyTypeKind.ZodCatch;
 }
 
@@ -4259,15 +4496,20 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
 
+    // newCtx is used to not collect issues from inner types in ctx
+    const newCtx: ParseContext = {
+      ...ctx,
+      common: {
+        ...ctx.common,
+        issues: [],
+      },
+    };
+
     const result = this._def.innerType._parse({
-      data: ctx.data,
-      path: ctx.path,
+      data: newCtx.data,
+      path: newCtx.path,
       parent: {
-        ...ctx,
-        common: {
-          ...ctx.common,
-          issues: [], // don't collect issues from inner type
-        },
+        ...newCtx,
       },
     });
 
@@ -4276,14 +4518,26 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
         return {
           status: "valid",
           value:
-            result.status === "valid" ? result.value : this._def.catchValue(),
+            result.status === "valid"
+              ? result.value
+              : this._def.catchValue({
+                  get error() {
+                    return new ZodError(newCtx.common.issues);
+                  },
+                }),
         };
       });
     } else {
       return {
         status: "valid",
         value:
-          result.status === "valid" ? result.value : this._def.catchValue(),
+          result.status === "valid"
+            ? result.value
+            : this._def.catchValue({
+                get error() {
+                  return new ZodError(newCtx.common.issues);
+                },
+              }),
       };
     }
   }
@@ -4846,17 +5100,20 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   };
 }
 
+type CustomParams = CustomErrorParams & { fatal?: boolean };
 export const custom = <T>(
   check?: (data: unknown) => any,
-  params: Parameters<ZodTypeAny["refine"]>[1] = {},
+  params: CustomParams | ((input: any) => CustomParams) = {},
+  /* @deprecated */
   fatal?: boolean
 ): ZodType<T> => {
   if (check)
     return ZodAny.create().superRefine((data, ctx) => {
       if (!check(data)) {
         const p = typeof params === "function" ? params(data) : params;
+        const _fatal = p.fatal ?? fatal ?? true;
         const p2 = typeof p === "string" ? { message: p } : p;
-        ctx.addIssue({ code: "custom", ...p2, fatal });
+        ctx.addIssue({ code: "custom", ...p2, fatal: _fatal });
       }
     });
   return ZodAny.create();
@@ -4951,10 +5208,10 @@ abstract class Class {
 const instanceOfType = <T extends typeof Class>(
   // const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,
-  params: Parameters<ZodTypeAny["refine"]>[1] = {
+  params: CustomParams = {
     message: `Input not instance of ${cls.name}`,
   }
-) => custom<InstanceType<T>>((data) => data instanceof cls, params, true);
+) => custom<InstanceType<T>>((data) => data instanceof cls, params);
 
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
@@ -4997,23 +5254,23 @@ const oboolean = () => booleanType().optional();
 
 export const coerce = {
   string: ((arg) =>
-    ZodString.create({ ...arg, coerce: true })) as typeof ZodString["create"],
+    ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
   number: ((arg) =>
-    ZodNumber.create({ ...arg, coerce: true })) as typeof ZodNumber["create"],
+    ZodNumber.create({ ...arg, coerce: true })) as (typeof ZodNumber)["create"],
   boolean: ((arg) =>
     ZodBoolean.create({
       ...arg,
       coerce: true,
-    })) as typeof ZodBoolean["create"],
+    })) as (typeof ZodBoolean)["create"],
   bigint: ((arg) =>
-    ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
+    ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
   date: ((arg) =>
-    ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
+    ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
   templateLiteral: ((arg) =>
     ZodTemplateLiteral.create({
       ...arg,
       coerce: true,
-    })) as typeof ZodTemplateLiteral["create"],
+    })) as (typeof ZodTemplateLiteral)["create"],
 };
 
 export {
