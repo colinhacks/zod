@@ -132,3 +132,38 @@ test("date coercion", () => {
   expect(() => schema.parse([])).toThrow; // z.ZodError
   expect(schema.parse(new Date())).toBeInstanceOf(Date);
 });
+
+
+test("date coercion with invalid date", () => {
+  const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
+    if (issue.code === z.ZodIssueCode.invalid_date) {
+      return { message: ctx.data };
+    }
+    return { message: ctx.defaultError };
+  };
+  const schema = z.coerce.date();
+  try {
+    schema.parse("very invalid date", { errorMap: customErrorMap });
+  } catch (error) {
+    expect(error).toBeInstanceOf(z.ZodError);
+    if (error instanceof z.ZodError) {
+      expect(error.flatten()).toEqual({
+        formErrors: ["very invalid date"],
+        fieldErrors: {},
+      });
+    }
+  }
+  // a date in the format dd.mm.yyyy hh:mm is not parsable by
+  // new Date()
+  try {
+    schema.parse("31.12.2023 23:59", { errorMap: customErrorMap });
+  } catch (error) {
+    expect(error).toBeInstanceOf(z.ZodError);
+    if (error instanceof z.ZodError) {
+      expect(error.flatten()).toEqual({
+        formErrors: ["31.12.2023 23:59"],
+        fieldErrors: {},
+      });
+    }
+  }
+})
