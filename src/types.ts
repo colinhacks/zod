@@ -1279,6 +1279,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 export type ZodBigIntCheck =
   | { kind: "min"; value: bigint; inclusive: boolean; message?: string }
   | { kind: "max"; value: bigint; inclusive: boolean; message?: string }
+  | { kind: "unsafe"; message?: string }
   | { kind: "multipleOf"; value: bigint; message?: string };
 
 export interface ZodBigIntDef extends ZodTypeDef {
@@ -1343,6 +1344,18 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_multiple_of,
             multipleOf: check.value,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "unsafe") {
+        if (
+          Number.MIN_SAFE_INTEGER <= input.data &&
+          input.data <= Number.MAX_SAFE_INTEGER
+        ) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.not_unsafe,
             message: check.message,
           });
           status.dirty();
@@ -1447,6 +1460,37 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     });
   }
 
+  unsafe(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "unsafe",
+      message: errorUtil.toString(message),
+    });
+  }
+  gigantic = this.unsafe;
+
+  safe(message?: errorUtil.ErrMessage) {
+    message = errorUtil.toString(message);
+
+    return new ZodBigInt({
+      ...this._def,
+      checks: [
+        ...this._def.checks,
+        {
+          kind: "min",
+          inclusive: true,
+          value: BigInt(Number.MIN_SAFE_INTEGER),
+          message,
+        },
+        {
+          kind: "max",
+          inclusive: true,
+          value: BigInt(Number.MAX_SAFE_INTEGER),
+          message,
+        },
+      ],
+    });
+  }
+
   multipleOf(value: bigint, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "multipleOf",
@@ -1473,6 +1517,30 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
       }
     }
     return max;
+  }
+
+  get isSafe() {
+    let max: bigint | null = null,
+      min: bigint | null = null;
+    for (const ch of this._def.checks) {
+      if (ch.kind === "unsafe") {
+        return false;
+      } else if (ch.kind === "max") {
+        if (max === null || ch.value < max) max = ch.value;
+      } else if (ch.kind === "min") {
+        if (min === null || ch.value > min) min = ch.value;
+      }
+    }
+    return (
+      max !== null &&
+      max <= Number.MAX_SAFE_INTEGER &&
+      min !== null &&
+      min >= Number.MIN_SAFE_INTEGER
+    );
+  }
+
+  get isUnsafe() {
+    return !this.isSafe;
   }
 }
 
@@ -3722,7 +3790,7 @@ export class ZodFunction<
     return this._def.returns;
   }
 
-  args<Items extends Parameters<(typeof ZodTuple)["create"]>[0]>(
+  args<Items extends Parameters<typeof ZodTuple["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> {
     return new ZodFunction({
@@ -4860,18 +4928,18 @@ const oboolean = () => booleanType().optional();
 
 export const coerce = {
   string: ((arg) =>
-    ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
+    ZodString.create({ ...arg, coerce: true })) as typeof ZodString["create"],
   number: ((arg) =>
-    ZodNumber.create({ ...arg, coerce: true })) as (typeof ZodNumber)["create"],
+    ZodNumber.create({ ...arg, coerce: true })) as typeof ZodNumber["create"],
   boolean: ((arg) =>
     ZodBoolean.create({
       ...arg,
       coerce: true,
-    })) as (typeof ZodBoolean)["create"],
+    })) as typeof ZodBoolean["create"],
   bigint: ((arg) =>
-    ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
+    ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
   date: ((arg) =>
-    ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
+    ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
 };
 
 export {

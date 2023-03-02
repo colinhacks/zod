@@ -134,6 +134,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.not_finite:
       message = "Number must be finite";
       break;
+    case ZodIssueCode.not_unsafe:
+      message = "Input must be unsafe";
+      break;
     default:
       message = _ctx.defaultError;
       util.assertNever(issue);

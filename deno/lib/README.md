@@ -599,11 +599,11 @@ z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().trim(); // trim whitespace
-z.string().toLowerCase(); // toLowerCase
-z.string().toUpperCase(); // toLowerCase
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 ```
+<!-- z.string().toLowerCase(); // toLowerCase -->
+<!-- z.string().toUpperCase(); // toUpperCase -->
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
 
@@ -745,6 +745,11 @@ z.bigint().negative(); // < 0n
 z.bigint().nonpositive(); // <= 0n
 
 z.bigint().multipleOf(5n); // Evenly divisible by 5n.
+
+z.bigint().safe(); // Safe integer. Number.MIN_SAFE_INTEGER <= x <= Number.MAX_SAFE_INTEGER
+z.bigint().safe().transform(Number); // When you know you're safe, you can transform to a number and still sleep at night.
+
+z.bigint().unsafe(); // "Unsafe" integer. x > Number.MAX_SAFE_INTEGER or x < Number.MIN_SAFE_INTEGER. Alias `.gigantic()`
 ```
 
 ## NaNs
