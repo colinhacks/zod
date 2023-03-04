@@ -5,7 +5,6 @@
   "main": "./lib/index.js",
   "types": "./index.d.ts",
   "module": "./lib/index.mjs",
-  "dependencies": {},
   "exports": {
     ".": {
       "require": "./lib/index.js",
@@ -43,6 +42,7 @@
     "type",
     "inference"
   ],
+  "dependencies": {},
   "scripts": {
     "prettier:check": "prettier --check src/**/*.ts deno/lib/**/*.ts --no-error-on-unmatched-pattern",
     "prettier:fix": "prettier --write src/**/*.ts deno/lib/**/*.ts --ignore-unknown --no-error-on-unmatched-pattern",
