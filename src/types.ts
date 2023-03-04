@@ -1211,6 +1211,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       message: errorUtil.toString(message),
     });
   }
+  step = this.multipleOf;
 
   finite(message?: errorUtil.ErrMessage) {
     return this._addCheck({
@@ -1219,7 +1220,19 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     });
   }
 
-  step = this.multipleOf;
+  safe(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      inclusive: true,
+      value: Number.MIN_SAFE_INTEGER,
+      message: errorUtil.toString(message),
+    })._addCheck({
+      kind: "max",
+      inclusive: true,
+      value: Number.MAX_SAFE_INTEGER,
+      message: errorUtil.toString(message),
+    });
+  }
 
   get minValue() {
     let min: number | null = null;
