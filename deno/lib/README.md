@@ -602,6 +602,7 @@ z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 ```
+
 <!-- z.string().toLowerCase(); // toLowerCase -->
 <!-- z.string().toUpperCase(); // toUpperCase -->
 
@@ -1758,7 +1759,7 @@ This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that conta
 You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
 
 ```ts
-const px = z.custom<`${number}px`>((val) => /^\d+px$/.test(val));
+const px = z.custom<`${number}px`>((val) => /^\d+px$/.test(val as string));
 px.parse("100px"); // pass
 px.parse("100vw"); // fail
 ```
