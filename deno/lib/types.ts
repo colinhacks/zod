@@ -2127,11 +2127,14 @@ export type baseObjectOutputType<Shape extends ZodRawShape> =
 
 export type objectOutputType<
   Shape extends ZodRawShape,
-  Catchall extends ZodTypeAny
+  Catchall extends ZodTypeAny,
+  UnknownKeys extends UnknownKeysParam
 > = ZodTypeAny extends Catchall
-  ? objectUtil.flatten<baseObjectOutputType<Shape>>
+  ? objectUtil.flatten<baseObjectOutputType<Shape>> & Passthrough<UnknownKeys>
   : objectUtil.flatten<
-      baseObjectOutputType<Shape> & { [k: string]: Catchall["_output"] }
+      baseObjectOutputType<Shape> & {
+        [k: string]: Catchall["_output"];
+      } & Passthrough<UnknownKeys>
     >;
 
 export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
@@ -2140,13 +2143,19 @@ export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
   }>
 >;
 
+export type Passthrough<UnknownKeys extends UnknownKeysParam> =
+  UnknownKeys extends "passthrough" ? { [k: string]: unknown } : unknown;
+
 export type objectInputType<
   Shape extends ZodRawShape,
-  Catchall extends ZodTypeAny
+  Catchall extends ZodTypeAny,
+  UnknownKeys extends UnknownKeysParam
 > = ZodTypeAny extends Catchall
-  ? baseObjectInputType<Shape>
+  ? baseObjectInputType<Shape> & Passthrough<UnknownKeys>
   : objectUtil.flatten<
-      baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
+      baseObjectInputType<Shape> & {
+        [k: string]: Catchall["_input"];
+      } & Passthrough<UnknownKeys>
     >;
 
 export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
@@ -2198,8 +2207,8 @@ export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny,
-  Output = objectOutputType<T, Catchall>,
-  Input = objectInputType<T, Catchall>
+  Output = objectOutputType<T, Catchall, UnknownKeys>,
+  Input = objectInputType<T, Catchall, UnknownKeys>
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
   private _cached: { shape: T; keys: string[] } | null = null;
 
