@@ -111,7 +111,7 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
 - 零依赖
 - 可以工作在浏览器和 Node.js
 - 小巧: 8kb minified + zipped
-- 不可变: 方法(即 `.optional()` 返回一个新的实例
+- 不可变: 方法(即 `.optional()` )返回一个新的实例
 - 简洁的、可连锁的接口
 - 功能性方法: [解析，不验证](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 - 也可用于普通的 JavaScript! 你不需要使用 TypeScript。
