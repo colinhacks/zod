@@ -1189,24 +1189,6 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     }
     return Number.isFinite(min) && Number.isFinite(max);
   }
-
-  get isSafe() {
-    let min: number | null = null,
-      max: number | null = null;
-    for (const ch of this._def.checks) {
-      if (ch.kind === "min") {
-        if (min === null || ch.value > min) min = ch.value;
-      } else if (ch.kind === "max") {
-        if (max === null || ch.value < max) max = ch.value;
-      }
-    }
-    return (
-      min !== null &&
-      min >= Number.MIN_SAFE_INTEGER &&
-      max !== null &&
-      max <= Number.MAX_SAFE_INTEGER
-    );
-  }
 }
 
 /////////////////////////////////////////
@@ -3387,7 +3369,7 @@ export class ZodFunction<
     return this._def.returns;
   }
 
-  args<Items extends Parameters<typeof ZodTuple["create"]>[0]>(
+  args<Items extends Parameters<(typeof ZodTuple)["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> {
     return new ZodFunction({
@@ -4465,15 +4447,18 @@ const oboolean = () => booleanType().optional();
 
 export const coerce = {
   string: ((arg) =>
-    ZodString.create({ ...arg, coerce: true })) as typeof ZodString["create"],
+    ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
   number: ((arg) =>
-    ZodNumber.create({ ...arg, coerce: true })) as typeof ZodNumber["create"],
+    ZodNumber.create({ ...arg, coerce: true })) as (typeof ZodNumber)["create"],
   boolean: ((arg) =>
-    ZodBoolean.create({ ...arg, coerce: true })) as typeof ZodBoolean["create"],
+    ZodBoolean.create({
+      ...arg,
+      coerce: true,
+    })) as (typeof ZodBoolean)["create"],
   bigint: ((arg) =>
-    ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
+    ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
   date: ((arg) =>
-    ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
+    ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
 };
 
 export {
