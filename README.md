@@ -598,13 +598,14 @@ z.string().cuid2();
 z.string().regex(regex);
 z.string().startsWith(string);
 z.string().endsWith(string);
-z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
-```
 
-<!-- z.string().toLowerCase(); // toLowerCase -->
-<!-- z.string().toUpperCase(); // toUpperCase -->
+// transformers
+z.string().trim(); // trim whitespace
+z.string().toLowerCase(); // toLowerCase
+z.string().toUpperCase(); // toUpperCase
+```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
 
