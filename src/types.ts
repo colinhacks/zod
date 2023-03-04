@@ -2128,7 +2128,7 @@ export type baseObjectOutputType<Shape extends ZodRawShape> =
 export type objectOutputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
-  UnknownKeys extends UnknownKeysParam
+  UnknownKeys extends UnknownKeysParam = UnknownKeysParam
 > = ZodTypeAny extends Catchall
   ? objectUtil.flatten<baseObjectOutputType<Shape>> & Passthrough<UnknownKeys>
   : objectUtil.flatten<
@@ -2149,7 +2149,7 @@ export type Passthrough<UnknownKeys extends UnknownKeysParam> =
 export type objectInputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
-  UnknownKeys extends UnknownKeysParam
+  UnknownKeys extends UnknownKeysParam = UnknownKeysParam
 > = ZodTypeAny extends Catchall
   ? baseObjectInputType<Shape> & Passthrough<UnknownKeys>
   : objectUtil.flatten<
