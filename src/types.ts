@@ -4639,11 +4639,7 @@ export type BRAND<T extends string | number | symbol> = {
 export class ZodBranded<
   T extends ZodTypeAny,
   B extends string | number | symbol
-> extends ZodType<
-  T["_output"] & BRAND<B>,
-  ZodBrandedDef<T>,
-  T["_input"] & BRAND<B>
-> {
+> extends ZodType<T["_output"] & BRAND<B>, ZodBrandedDef<T>, T["_input"]> {
   _parse(input: ParseInput): ParseReturnType<any> {
     const { ctx } = this._processInputParams(input);
     const data = ctx.data;
