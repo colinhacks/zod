@@ -608,6 +608,8 @@ z.string().trim(); // trim whitespace
 z.string().toLowerCase(); // toLowerCase
 z.string().toUpperCase(); // toUpperCase
 ```
+<!-- z.string().toLowerCase(); // toLowerCase -->
+<!-- z.string().toUpperCase(); // toUpperCase -->
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
 
