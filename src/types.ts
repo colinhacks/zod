@@ -149,7 +149,7 @@ export abstract class ZodType<
   }
 
   abstract _parse(input: ParseInput): ParseReturnType<Output>;
-  abstract innerTypes(): { path: string, schema: ZodTypeAny }[]
+  abstract innerTypes(): { path: string; schema: ZodTypeAny }[];
 
   _getType(input: ParseInput): string {
     return getParsedType(input.data);
@@ -751,7 +751,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
 
   innerTypes() {
-    return []
+    return [];
   }
 
   protected _regex = (
@@ -1044,7 +1044,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
   }
 
   innerTypes() {
-    return []
+    return [];
   }
 
   static create = (
@@ -1242,7 +1242,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     return OK(input.data);
   }
   innerTypes() {
-    return []
+    return [];
   }
 
   static create = (
@@ -1287,7 +1287,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
     return OK(input.data);
   }
   innerTypes() {
-    return []
+    return [];
   }
 
   static create = (
@@ -1383,7 +1383,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     };
   }
   innerTypes() {
-    return []
+    return [];
   }
 
   _addCheck(check: ZodDateCheck) {
@@ -1470,7 +1470,7 @@ export class ZodSymbol extends ZodType<symbol, ZodSymbolDef, symbol> {
     return OK(input.data);
   }
   innerTypes() {
-    return []
+    return [];
   }
 
   static create = (params?: RawCreateParams): ZodSymbol => {
@@ -1507,7 +1507,7 @@ export class ZodUndefined extends ZodType<undefined, ZodUndefinedDef> {
     return OK(input.data);
   }
   innerTypes() {
-    return []
+    return [];
   }
   params?: RawCreateParams;
 
@@ -1545,7 +1545,7 @@ export class ZodNull extends ZodType<null, ZodNullDef> {
     return OK(input.data);
   }
   innerTypes() {
-    return []
+    return [];
   }
   static create = (params?: RawCreateParams): ZodNull => {
     return new ZodNull({
@@ -1573,7 +1573,7 @@ export class ZodAny extends ZodType<any, ZodAnyDef> {
     return OK(input.data);
   }
   innerTypes() {
-    return []
+    return [];
   }
   static create = (params?: RawCreateParams): ZodAny => {
     return new ZodAny({
@@ -1601,7 +1601,7 @@ export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
     return OK(input.data);
   }
   innerTypes() {
-    return []
+    return [];
   }
 
   static create = (params?: RawCreateParams): ZodUnknown => {
@@ -1634,7 +1634,7 @@ export class ZodNever extends ZodType<never, ZodNeverDef> {
     return INVALID;
   }
   innerTypes() {
-    return []
+    return [];
   }
   static create = (params?: RawCreateParams): ZodNever => {
     return new ZodNever({
@@ -1670,7 +1670,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
     return OK(input.data);
   }
   innerTypes() {
-    return []
+    return [];
   }
 
   static create = (params?: RawCreateParams): ZodVoid => {
@@ -1796,7 +1796,7 @@ export class ZodArray<
   }
 
   innerTypes() {
-    return [{path: '*', schema: this._def.type}]
+    return [{ path: "*", schema: this._def.type }];
   }
 
   get element() {
@@ -2116,7 +2116,10 @@ export class ZodObject<
   }
 
   innerTypes() {
-    return Object.entries(this._def.shape()).map(([path, schema]) => ({path, schema}))
+    return Object.entries(this._def.shape()).map(([path, schema]) => ({
+      path,
+      schema,
+    }));
   }
 
   get shape() {
@@ -2591,7 +2594,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     }
   }
   innerTypes() {
-    return this._def.options.flatMap(o => o.innerTypes())
+    return this._def.options.map((o) => ({ path: "", schema: o }));
   }
 
   get options() {
@@ -2712,7 +2715,7 @@ export class ZodDiscriminatedUnion<
     }
   }
   innerTypes() {
-    return this._def.options.flatMap(o => o.innerTypes())
+    return this._def.options.map((o) => ({ path: "", schema: o }));
   }
 
   get discriminator() {
@@ -2918,7 +2921,10 @@ export class ZodIntersection<
     }
   }
   innerTypes() {
-    return [...this._def.left.innerTypes(), ...this._def.right.innerTypes()]
+    return [
+      { path: "", schema: this._def.left },
+      { path: "", schema: this._def.right },
+    ];
   }
 
   static create = <T extends ZodTypeAny, U extends ZodTypeAny>(
@@ -3040,7 +3046,10 @@ export class ZodTuple<
     }
   }
   innerTypes() {
-    return this._def.items.map((schema, index) => ({path: `${index}`, schema})) 
+    return this._def.items.map((schema, index) => ({
+      path: `${index}`,
+      schema,
+    }));
   }
 
   get items() {
@@ -3145,7 +3154,7 @@ export class ZodRecord<
     }
   }
   innerTypes() {
-    return [{path: '*', schema: this._def.valueType}]
+    return [{ path: "*", schema: this._def.valueType }];
   }
 
   get element() {
@@ -3266,7 +3275,7 @@ export class ZodMap<
     }
   }
   innerTypes() {
-    return []
+    return [];
   }
   static create = <
     Key extends ZodTypeAny = ZodTypeAny,
@@ -3369,7 +3378,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     }
   }
   innerTypes() {
-    return []
+    return [];
   }
   min(minSize: number, message?: errorUtil.ErrMessage): this {
     return new ZodSet({
@@ -3529,7 +3538,7 @@ export class ZodFunction<
     }
   }
   innerTypes() {
-    return []
+    return [];
   }
 
   parameters() {
@@ -3627,7 +3636,7 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
   }
 
   innerTypes() {
-    return []
+    return [];
   }
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
@@ -3675,7 +3684,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
   }
 
   innerTypes() {
-    return []
+    return [];
   }
 
   get value() {
@@ -3775,7 +3784,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   }
 
   innerTypes() {
-    return []
+    return [];
   }
 
   get options() {
@@ -3878,7 +3887,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   }
 
   innerTypes() {
-    return []
+    return [];
   }
 
   get enum() {
@@ -3948,7 +3957,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
     );
   }
   innerTypes() {
-    return []
+    return [];
   }
 
   static create = <T extends ZodTypeAny>(
@@ -4137,7 +4146,7 @@ export class ZodEffects<
   }
 
   innerTypes() {
-    return this._def.schema.innerTypes()
+    return [{ path: "", schema: this._def.schema }];
   }
 
   static create = <I extends ZodTypeAny>(
@@ -4197,7 +4206,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType._parse(input);
   }
   innerTypes() {
-    return this._def.innerType.innerTypes()
+    return [{ path: "", schema: this._def.innerType }];
   }
 
   unwrap() {
@@ -4244,7 +4253,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType._parse(input);
   }
   innerTypes() {
-    return this._def.innerType.innerTypes()
+    return [{ path: "", schema: this._def.innerType }];
   }
 
   unwrap() {
@@ -4295,7 +4304,7 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
     });
   }
   innerTypes() {
-    return this._def.innerType.innerTypes()
+    return [{ path: "", schema: this._def.innerType }];
   }
 
   removeDefault() {
@@ -4373,7 +4382,7 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
     }
   }
   innerTypes() {
-    return this._def.innerType.innerTypes()
+    return [{ path: "", schema: this._def.innerType }];
   }
 
   removeCatch() {
@@ -4424,7 +4433,7 @@ export class ZodNaN extends ZodType<number, ZodNaNDef> {
     return { status: "valid", value: input.data };
   }
   innerTypes() {
-    return []
+    return [];
   }
 
   static create = (params?: RawCreateParams): ZodNaN => {
@@ -4468,7 +4477,7 @@ export class ZodBranded<
   }
 
   innerTypes() {
-    return this._def.type.innerTypes()
+    return [{ path: "", schema: this._def.type }];
   }
 
   unwrap() {
@@ -4541,7 +4550,7 @@ export class ZodPipeline<
   }
 
   innerTypes() {
-    return this._def.out.innerTypes()
+    return [{ path: "", schema: this._def.out }];
   }
 
   static create<A extends ZodTypeAny, B extends ZodTypeAny>(
