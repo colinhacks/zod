@@ -206,6 +206,26 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://proxy.com">proxy.com</a>
     </td>
   </tr>
+    <tr>
+    <td align="center">
+      <a href="https://trigger.dev/">
+        <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" width="200px;" alt="Trigger.dev logo" />
+      </a>
+      <br />
+      <b>Trigger.dev</b>
+      <br />
+      <a href="https://trigger.dev">trigger.dev</a>
+    </td>
+    <!-- <td align="center">
+      <a href="https://proxy.com/">
+        <img src="https://avatars.githubusercontent.com/u/14321439?s=200&v=4" width="200px;" alt="Proxy logo" />
+      </a>
+      <br />
+      <b>Proxy</b>
+      <br />
+      <a href="https://proxy.com">proxy.com</a>
+    </td> -->
+  </tr>
 </table>
 
 #### Silver
@@ -309,7 +329,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
   <tr>
-  <td align="center">
+    <td align="center">
       <a href="https://fungible.systems/">
         <img src="https://avatars.githubusercontent.com/u/80220121?s=200&v=4" width="100px;" alt="Fungible Systems logo"/>
       </a>
@@ -340,6 +360,39 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <span>Solana non-custodial wallet</span>
       <br />
     </td>
+  </tr>
+  <tr>
+  <td align="center">
+      <a href="https://learnwithjason.dev">
+        <img src="https://avatars.githubusercontent.com/u/66575486?s=200&v=4" width="100px;" alt="Learn with Jason logo"/>
+      </a>
+      <br />
+      <b>Jason Lengstorf</b>
+      <br/>
+      <a href="https://learnwithjason.dev/">learnwithjason.dev</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://ill.inc/">
+        <img src="https://avatars.githubusercontent.com/u/89107581?s=200&v=4" width="100px;" alt="Global Illumination"/>
+      </a>
+      <br />
+      <b>Global Illumination, Inc.</b>
+      <br/>
+      <a href="https://ill.inc/">ill.inc</a>
+      <br />
+    </td>
+    <!-- <td align="center">
+      <a href="https://www.avanawallet.com/">
+        <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
+      </a>
+      <br />
+      <b>Avana Wallet</b>
+      <br/>
+      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
+      <span>Solana non-custodial wallet</span>
+      <br />
+    </td> -->
   </tr>
 </table>
 
