@@ -77,7 +77,10 @@ export const instanceOfTestOmit: TestOmit = {
 
 // z.object().omitIfExists()
 
-export const TestOmitIfExists = TestMerge.omitIfExists({ f2: true, nonExistent: true });
+export const TestOmitIfExists = TestMerge.omitIfExists({
+  f2: true,
+  nonExistent: true,
+});
 
 export type TestOmitIfExists = z.infer<typeof TestOmitIfExists>;
 
