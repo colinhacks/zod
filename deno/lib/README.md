@@ -587,6 +587,7 @@ tuna.value; // "tuna"
 Zod includes a handful of string-specific validations.
 
 ```ts
+// validations
 z.string().max(5);
 z.string().min(5);
 z.string().length(5);
@@ -603,13 +604,11 @@ z.string().endsWith(string);
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 
-// transformers
+// transformations
 z.string().trim(); // trim whitespace
 z.string().toLowerCase(); // toLowerCase
 z.string().toUpperCase(); // toUpperCase
 ```
-<!-- z.string().toLowerCase(); // toLowerCase -->
-<!-- z.string().toUpperCase(); // toUpperCase -->
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
 
