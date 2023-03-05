@@ -118,6 +118,7 @@
   - [.or](#or)
   - [.and](#and)
   - [.brand](#brand)
+  - [.pipe](#pipe)
 - [Guides and concepts](#guides-and-concepts)
   - [Type inference](#type-inference)
   - [Writing generic functions](#writing-generic-functions)
@@ -596,14 +597,17 @@ z.string().uuid();
 z.string().cuid();
 z.string().cuid2();
 z.string().regex(regex);
+z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
-z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
+
+// transformers
+z.string().trim(); // trim whitespace
+z.string().toLowerCase(); // toLowerCase
+z.string().toUpperCase(); // toUpperCase
 ```
-<!-- z.string().toLowerCase(); // toLowerCase -->
-<!-- z.string().toUpperCase(); // toUpperCase -->
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
 
@@ -626,13 +630,14 @@ z.string().email({ message: "Invalid email address" });
 z.string().url({ message: "Invalid url" });
 z.string().emoji({ message: "Contains non-emoji characters" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().includes("tuna", { message: "Must include tuna" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 z.string().ip({ message: "Invalid IP address" });
 ```
 
-### Datetime validation
+### ISO datetimes
 
 The `z.string().datetime()` method defaults to UTC validation: no timezone offsets with arbitrary sub-second decimal precision.
 
@@ -667,7 +672,7 @@ datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```
 
-### IP address validation
+### IP addresses
 
 The `z.string().ip()` method by default validate IPv4 and IPv6.
 
@@ -721,6 +726,7 @@ z.number().nonpositive(); //  <= 0
 z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
 
 z.number().finite(); // value must be finite, not Infinity or -Infinity
+z.number().safe(); // value must be between Number.MIN_SAFE_INTEGER and Number.MAX_SAFE_INTEGER
 ```
 
 Optionally, you can pass in a second argument to provide a custom error message.
@@ -1757,9 +1763,21 @@ This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that conta
 You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
 
 ```ts
-const px = z.custom<`${number}px`>((val) => /^\d+px$/.test(val));
-px.parse("100px"); // pass
-px.parse("100vw"); // fail
+const px = z.custom<`${number}px`>(
+  (x) =>
+    z
+      .string()
+      .regex(/^\d+px$/)
+      .safeParse(x).success
+);
+type Px = z.infer<typeof px>;
+// type Px = `${number}px`
+
+console.log(px.safeParse("42px").success); // true
+console.log(px.safeParse("42vw").success); // false
+console.log(px.safeParse(42).success); // false
+console.log(px.safeParse(42n).success); // false
+console.log(px.safeParse(null).success); // false
 ```
 
 If you don't provide a validation function, Zod will allow any value. This can be dangerous!
@@ -2315,6 +2333,18 @@ type Cat = z.infer<typeof Cat>;
 ```
 
 Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
+
+### `.pipe()`
+
+Schemas can be chained into validation "pipelines". It's useful for easily validating the result after a `.transform()`:
+
+```ts
+z.string()
+  .transform((val) => val.length)
+  .pipe(z.number().min(5));
+```
+
+The `.pipe()` method returns a `ZodPipeline` instance.
 
 ## Guides and concepts
 

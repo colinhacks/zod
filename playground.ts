@@ -1,28 +1,14 @@
 import { z } from "./src";
-const example1 = z.custom<number>((x) => typeof x === "number");
-example1.parse("asdf");
-// const example1 = z
-//   .custom<number>(
-//     (x) => {
-//       console.log(`custom`);
-//       console.log(x);
-//       return typeof x === "number";
-//     },
-//     {},
-//     true
-//   )
-//   .transform((x) => {
-//     console.log(`transform`);
-//     console.log(x);
-//     return String(x);
-//   })
-//   .refine((x) => {
-//     console.log(`refine`);
-//     console.log(x);
-//     console.log(typeof x); // prints 'Object'
-//     console.log("I get called even though I shouldn't!!!");
-//     return true;
-//   })
-//   .safeParse({}); //will fail because it is not a number
 
-// console.log(example1.success); // false (like it should be)
+const a = z.object({ a: z.string() });
+const b = z.object({ a, b: z.string() });
+const c = z.object({ a, b, c: z.string() });
+const d = z.object({ a, b, c, d: z.string() });
+const e = z.object({ a, b, c, d, e: z.string() });
+const f = z.object({ a, b, c, d, e, f: z.string() });
+const g = z.object({ a, b, c, d, e, f, g: z.string() });
+const h = z.object({ a, b, c, d, e, f, g, h: z.string() });
+const i = z.object({ a, b, c, d, e, f, g, h, i: z.string() });
+const j = z.object({ a, b, c, d, e, f, g, h, i, j: z.string() });
+
+export const arg = j.parse({});

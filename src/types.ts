@@ -100,8 +100,16 @@ const handleResult = <Input, Output>(
     if (!ctx.common.issues.length) {
       throw new Error("Validation failed but no issues detected.");
     }
-    const error = new ZodError(ctx.common.issues);
-    return { success: false, error };
+
+    return {
+      success: false,
+      get error() {
+        if ((this as any)._error) return (this as any)._error as Error;
+        const error = new ZodError(ctx.common.issues);
+        (this as any)._error = error;
+        return (this as any)._error;
+      },
+    };
   }
 };
 
@@ -505,6 +513,7 @@ export type ZodStringCheck =
   | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
+  | { kind: "includes"; value: string; position?: number; message?: string }
   | { kind: "cuid2"; message?: string }
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
@@ -745,6 +754,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
+      } else if (check.kind === "includes") {
+        if (!(input.data as string).includes(check.value, check.position)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: { includes: check.value, position: check.position },
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "toLowerCase") {
         input.data = input.data.toLowerCase();
       } else if (check.kind === "toUpperCase") {
@@ -871,6 +890,15 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       kind: "regex",
       regex: regex,
       ...errorUtil.errToObj(message),
+    });
+  }
+
+  includes(value: string, options?: { message?: string; position?: number }) {
+    return this._addCheck({
+      kind: "includes",
+      value: value,
+      position: options?.position,
+      ...errorUtil.errToObj(options?.message),
     });
   }
 
@@ -1220,6 +1248,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       message: errorUtil.toString(message),
     });
   }
+  step = this.multipleOf;
 
   finite(message?: errorUtil.ErrMessage) {
     return this._addCheck({
@@ -1228,7 +1257,19 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     });
   }
 
-  step = this.multipleOf;
+  safe(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      inclusive: true,
+      value: Number.MIN_SAFE_INTEGER,
+      message: errorUtil.toString(message),
+    })._addCheck({
+      kind: "max",
+      inclusive: true,
+      value: Number.MAX_SAFE_INTEGER,
+      message: errorUtil.toString(message),
+    });
+  }
 
   get minValue() {
     let min: number | null = null;
@@ -2123,11 +2164,14 @@ export type baseObjectOutputType<Shape extends ZodRawShape> =
 
 export type objectOutputType<
   Shape extends ZodRawShape,
-  Catchall extends ZodTypeAny
+  Catchall extends ZodTypeAny,
+  UnknownKeys extends UnknownKeysParam = UnknownKeysParam
 > = ZodTypeAny extends Catchall
-  ? objectUtil.flatten<baseObjectOutputType<Shape>>
+  ? objectUtil.flatten<baseObjectOutputType<Shape>> & Passthrough<UnknownKeys>
   : objectUtil.flatten<
-      baseObjectOutputType<Shape> & { [k: string]: Catchall["_output"] }
+      baseObjectOutputType<Shape> & {
+        [k: string]: Catchall["_output"];
+      } & Passthrough<UnknownKeys>
     >;
 
 export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
@@ -2136,13 +2180,19 @@ export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
   }>
 >;
 
+export type Passthrough<UnknownKeys extends UnknownKeysParam> =
+  UnknownKeys extends "passthrough" ? { [k: string]: unknown } : unknown;
+
 export type objectInputType<
   Shape extends ZodRawShape,
-  Catchall extends ZodTypeAny
+  Catchall extends ZodTypeAny,
+  UnknownKeys extends UnknownKeysParam = UnknownKeysParam
 > = ZodTypeAny extends Catchall
-  ? baseObjectInputType<Shape>
+  ? baseObjectInputType<Shape> & Passthrough<UnknownKeys>
   : objectUtil.flatten<
-      baseObjectInputType<Shape> & { [k: string]: Catchall["_input"] }
+      baseObjectInputType<Shape> & {
+        [k: string]: Catchall["_input"];
+      } & Passthrough<UnknownKeys>
     >;
 
 export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
@@ -2194,8 +2244,8 @@ export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny,
-  Output = objectOutputType<T, Catchall>,
-  Input = objectInputType<T, Catchall>
+  Output = objectOutputType<T, Catchall, UnknownKeys>,
+  Input = objectInputType<T, Catchall, UnknownKeys>
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
   private _cached: { shape: T; keys: string[] } | null = null;
 

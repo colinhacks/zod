@@ -9,12 +9,14 @@ export default [
         file: "lib/index.mjs",
         format: "es",
         sourcemap: false,
+        exports: "named",
       },
       {
         file: "lib/index.umd.js",
         name: "Zod",
         format: "umd",
         sourcemap: false,
+        exports: "named",
       },
     ],
     plugins: [

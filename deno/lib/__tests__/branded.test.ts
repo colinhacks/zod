@@ -54,7 +54,6 @@ test("branded types", () => {
   type AgeInput = z.input<typeof age>;
 
   util.assertEqual<AgeInput, Age>(false);
-
   util.assertEqual<number, AgeInput>(true);
   util.assertEqual<number & z.BRAND<"age">, Age>(true);
 
