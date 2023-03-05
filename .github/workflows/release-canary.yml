@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - "master"
+    paths:
+      - "src"
+      - ".github/workflows/release-canary.yml"
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
