@@ -1,6 +1,6 @@
 import { z } from "./src";
-// const example1 = z.custom<number>((x) => typeof x === "number");
-// example1.parse("asdf");
+const example1 = z.custom<number>((x) => typeof x === "number");
+example1.parse("asdf");
 // const example1 = z
 //   .custom<number>(
 //     (x) => {
