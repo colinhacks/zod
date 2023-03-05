@@ -101,7 +101,5 @@
     }
   },
   "types": "./index.d.ts",
-  "dependencies": {
-    "zod": "canary"
-  }
+  "dependencies": {}
 }
