@@ -270,3 +270,13 @@ test("partial with mask containing a nonexistent key", () => {
     doesntExist: true,
   });
 });
+
+test("deeppartial array", () => {
+  const schema = z.object({ array: z.string().array().min(42) }).deepPartial();
+
+  // works as expected
+  schema.parse({});
+
+  // should be false, but is true
+  expect(schema.safeParse({ array: [] }).success).toBe(false);
+});
