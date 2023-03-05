@@ -496,6 +496,7 @@ export type ZodStringCheck =
   | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
+  | { kind: "includes"; value: string; position?: number; message?: string }
   | { kind: "cuid2"; message?: string }
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
@@ -736,6 +737,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
+      } else if (check.kind === "includes") {
+        if (!(input.data as string).includes(check.value, check.position)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: { includes: check.value, position: check.position },
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "toLowerCase") {
         input.data = input.data.toLowerCase();
       } else if (check.kind === "toUpperCase") {
@@ -862,6 +873,15 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       kind: "regex",
       regex: regex,
       ...errorUtil.errToObj(message),
+    });
+  }
+
+  includes(value: string, options?: { message?: string; position?: number }) {
+    return this._addCheck({
+      kind: "includes",
+      value: value,
+      position: options?.position,
+      ...errorUtil.errToObj(options?.message),
     });
   }
 

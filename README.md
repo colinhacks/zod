@@ -596,6 +596,7 @@ z.string().uuid();
 z.string().cuid();
 z.string().cuid2();
 z.string().regex(regex);
+z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // defaults to UTC, see below for options
@@ -628,6 +629,7 @@ z.string().email({ message: "Invalid email address" });
 z.string().url({ message: "Invalid url" });
 z.string().emoji({ message: "Contains non-emoji characters" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().includes("tuna", { message: "Must include tuna" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
