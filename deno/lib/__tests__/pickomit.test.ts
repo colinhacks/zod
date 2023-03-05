@@ -77,6 +77,28 @@ test("omit parse - fail", () => {
   expect(bad4).toThrow();
 });
 
+test("omitIfExists type inference", () => {
+  const nonameFish = fish.omitIfExists({ name: true, nonExistent: true });
+  type nonameFish = z.infer<typeof nonameFish>;
+  util.assertEqual<nonameFish, { age: number; nested: {} }>(true);
+});
+
+test("omitIfExists parse - success", () => {
+  const nonameFish = fish.omitIfExists({ name: true, nonExistent: true });
+  nonameFish.parse({ age: 12, nested: {} });
+});
+
+test("omitIfExists parse - fail", () => {
+  const nonameFish = fish.omitIfExists({ name: true, nonExistent: true });
+  const bad1 = () => nonameFish.parse({ name: 12 } as any);
+  const bad2 = () => nonameFish.parse({ age: 12 } as any);
+  const bad3 = () => nonameFish.parse({} as any);
+
+  expect(bad1).toThrow();
+  expect(bad2).toThrow();
+  expect(bad3).toThrow();
+});
+
 test("nonstrict inference", () => {
   const laxfish = fish.pick({ name: true }).catchall(z.any());
   type laxfish = z.infer<typeof laxfish>;
