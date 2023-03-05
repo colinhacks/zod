@@ -637,7 +637,7 @@ z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 z.string().ip({ message: "Invalid IP address" });
 ```
 
-### Datetime validation
+### ISO datetimes
 
 The `z.string().datetime()` method defaults to UTC validation: no timezone offsets with arbitrary sub-second decimal precision.
 
@@ -672,7 +672,7 @@ datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```
 
-### IP address validation
+### IP addresses
 
 The `z.string().ip()` method by default validate IPv4 and IPv6.
 
