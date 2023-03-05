@@ -5,8 +5,7 @@ on:
   push:
     branches:
       - "master"
-    paths:
-      - package.json
+
 
 jobs:
   build_and_publish:

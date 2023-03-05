@@ -599,13 +599,14 @@ z.string().regex(regex);
 z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
-z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
-```
 
-<!-- z.string().toLowerCase(); // toLowerCase -->
-<!-- z.string().toUpperCase(); // toUpperCase -->
+// transformers
+z.string().trim(); // trim whitespace
+z.string().toLowerCase(); // toLowerCase
+z.string().toUpperCase(); // toUpperCase
+```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
 
@@ -1761,9 +1762,17 @@ This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that conta
 You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
 
 ```ts
-const px = z.custom<`${number}px`>((val) => /^\d+px$/.test(val as string));
-px.parse("100px"); // pass
-px.parse("100vw"); // fail
+const px = z.custom<`${ number }px`>( x =>
+    z.string().regex( /^\d+px$/ ).safeParse( x ).success
+)
+type Px = z.infer<typeof px>
+// type Px = `${number}px`
+
+console.log( px.safeParse( '42px' ).success ) // true
+console.log( px.safeParse( '42vw' ).success ) // false
+console.log( px.safeParse( 42 ).success ) // false
+console.log( px.safeParse( 42n ).success ) // false
+console.log( px.safeParse( null ).success ) // false
 ```
 
 If you don't provide a validation function, Zod will allow any value. This can be dangerous!
