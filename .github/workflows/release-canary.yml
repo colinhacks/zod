@@ -30,7 +30,7 @@ jobs:
 
       - name: Set version
         run: |
-          npm minor
+          npm version minor
           npm version $(npm pkg get version | sed 's/"//g')-canary.$(date +'%Y%m%dT%H%M%S')
 
       - id: publish
