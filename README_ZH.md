@@ -36,8 +36,8 @@
 # 內容
 
 - [什么是 Zod](#什么是Zod)
-- [安装](#安装)
 - [生态体系](#生态系统)
+- [安装](#安装)
 - [基本用法](#基本用法)
 - [定义模式](#定义模式)
   - [基本原理](#基本原理)
@@ -112,7 +112,7 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
 - 可以工作在浏览器和 Node.js
 - 小巧: 8kb minified + zipped
 - 不可变: 方法(即 `.optional()` )返回一个新的实例
-- 简洁的、可连锁的接口
+- 简洁的、可链式调用的接口
 - 功能性方法: [解析，不验证](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 - 也可用于普通的 JavaScript! 你不需要使用 TypeScript。
 
@@ -280,32 +280,6 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
 
 _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._
 
-# 安装
-
-安装 Zod v3:
-
-```sh
-npm install zod
-```
-
-⚠️ 重要提示：你必须在你的`tsconfig.json`中启用`strict`模式。这是所有 TypeScript 项目的最佳实践。
-
-```ts
-// tsconfig.json
-{
-  // ...
-  "compilerOptions": {
-    // ...
-    "strict": true
-  }
-}
-```
-
-#### TypeScript 的要求
-
-- Zod 3.x requires TypeScript 4.1+
-- Zod 2.x requires TypeScript 3.7+
-- Zod 1.x requires TypeScript 3.3+
 
 # 生态系统
 
@@ -320,6 +294,49 @@ npm install zod
 - [`express-zod-api`](https://github.com/RobinTail/express-zod-api): 用 I/O 模式验证和自定义中间件构建基于 Express 的 API 服务
 - [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): 有助于翻译zod错误信息。
 
+
+# 安装
+
+### 必要条件
+
+- TypeScript 4.5+!
+- 你必须在你的`tsconfig.json`中启用`strict`模式。这是所有 TypeScript 项目的最佳实践。
+
+```ts
+// tsconfig.json
+{
+  // ...
+  "compilerOptions": {
+    // ...
+    "strict": true
+  }
+}
+```
+
+### 从`npm`(Node/Bun)安装
+```sh
+npm install zod
+yarn add zod          # yarn
+bun add zod           # bun
+pnpm add zod          # pnpm
+```
+
+### 从`deno.land/x` (Deno)安装
+
+和Node不同，Demo依靠一个直接的URL导入而非像npm这样的包管理器。可以这样导入最新版本的Zod:
+```ts
+import { z } from "https://deno.land/x/zod/mod.ts";
+```
+
+你也可以指定一个具体的版本：
+
+```ts
+import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
+```
+
+> README的剩余部分假定你是直接通过npm安装的`zod`包。
+
+
 # 基本用法
 
 创建一个简单的字符串模式
@@ -329,8 +346,14 @@ import { z } from "zod";
 
 // 创建一个字符串的模式
 const mySchema = z.string();
+
+// 解析
 mySchema.parse("tuna"); // => "tuna"
 mySchema.parse(12); // => throws ZodError
+
+// "安全"解析(如果验证失败不抛出错误)
+mySchema.safeParse("tuna"); // => { success: true; data: "tuna" }
+mySchema.safeParse(12); // => { success: false; error: ZodError }
 ```
 
 创建一个 Object 模式
@@ -342,9 +365,9 @@ const User = z.object({
   username: z.string(),
 });
 
-User.parse({ username: string });
+User.parse({ username: "Ludwig" });
 
-// 抽出推断的类型
+// 提取出推断的类型
 type User = z.infer<typeof User>;
 // { username: string }
 ```
