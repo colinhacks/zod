@@ -516,6 +516,52 @@ test("literal bigint default error message", () => {
   }
 });
 
+const customErrorMap: z.ZodErrorMap = (_issue, ctx) => {
+  return { message: ctx.data };
+};
+
+test("original value is in customZodErrorMap context", () => {
+  const schema = z.date().or( z.string().datetime());
+  try {
+    schema.parse("very invalid date", { errorMap: customErrorMap });
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    expect(zerr.issues[0].message).toEqual(
+      'very invalid date'
+    );
+  }
+});
+
+test("original value is not custom ZodErrorMap context for coerced date", () => {
+  const stringDate = z.coerce.date();
+  try {
+    stringDate.parse('very invalid date', 
+      { errorMap: customErrorMap }
+    );
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].code).toEqual("invalid_date");
+    // @ts-ignore
+    expect(isNaN(zerr.issues[0].message)).toEqual(true);
+  }
+});
+
+test("original value is in customZodErrorMap context after pipe and coerced date", () => {
+  const stringDate = z.date().or( z.string().datetime() ).pipe( z.coerce.date() );
+  try {
+    stringDate.parse("very invalid date", 
+      { errorMap: customErrorMap }
+    );
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    expect(zerr.issues.length).toEqual(1);
+    expect(zerr.issues[0].message).toEqual(
+      "very invalid date"
+    );
+  }
+});
+
 // test("dont short circuit on continuable errors", () => {
 //   const user = z
 //     .object({
