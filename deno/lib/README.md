@@ -118,6 +118,7 @@
   - [.or](#or)
   - [.and](#and)
   - [.brand](#brand)
+  - [.pipe](#pipe)
 - [Guides and concepts](#guides-and-concepts)
   - [Type inference](#type-inference)
   - [Writing generic functions](#writing-generic-functions)
@@ -1762,17 +1763,21 @@ This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that conta
 You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
 
 ```ts
-const px = z.custom<`${ number }px`>( x =>
-    z.string().regex( /^\d+px$/ ).safeParse( x ).success
-)
-type Px = z.infer<typeof px>
+const px = z.custom<`${number}px`>(
+  (x) =>
+    z
+      .string()
+      .regex(/^\d+px$/)
+      .safeParse(x).success
+);
+type Px = z.infer<typeof px>;
 // type Px = `${number}px`
 
-console.log( px.safeParse( '42px' ).success ) // true
-console.log( px.safeParse( '42vw' ).success ) // false
-console.log( px.safeParse( 42 ).success ) // false
-console.log( px.safeParse( 42n ).success ) // false
-console.log( px.safeParse( null ).success ) // false
+console.log(px.safeParse("42px").success); // true
+console.log(px.safeParse("42vw").success); // false
+console.log(px.safeParse(42).success); // false
+console.log(px.safeParse(42n).success); // false
+console.log(px.safeParse(null).success); // false
 ```
 
 If you don't provide a validation function, Zod will allow any value. This can be dangerous!
@@ -2328,6 +2333,18 @@ type Cat = z.infer<typeof Cat>;
 ```
 
 Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
+
+### `.pipe()`
+
+Schemas can be chained into validation "pipelines". It's useful for easily validating the result after a `.transform()`:
+
+```ts
+z.string()
+  .transform((val) => val.length)
+  .pipe(z.number().min(5));
+```
+
+The `.pipe()` method returns a `ZodPipeline` instance.
 
 ## Guides and concepts
 
