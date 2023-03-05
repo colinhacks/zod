@@ -1817,21 +1817,14 @@ This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that conta
 You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
 
 ```ts
-const px = z.custom<`${number}px`>(
-  (x) =>
-    z
-      .string()
-      .regex(/^\d+px$/)
-      .safeParse(x).success
-);
-type Px = z.infer<typeof px>;
-// type Px = `${number}px`
+const px = z.custom<`${number}px`>((val) => {
+  return /^\d+px$/.test(val as string);
+});
 
-console.log(px.safeParse("42px").success); // true
-console.log(px.safeParse("42vw").success); // false
-console.log(px.safeParse(42).success); // false
-console.log(px.safeParse(42n).success); // false
-console.log(px.safeParse(null).success); // false
+type px = z.infer<typeof px>; // `${number}px`
+
+px.parse("42px"); // "42px"
+px.parse("42vw"); // throws;
 ```
 
 If you don't provide a validation function, Zod will allow any value. This can be dangerous!
