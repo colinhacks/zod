@@ -223,6 +223,16 @@ test("cuid2", () => {
   }
 });
 
+test("ulid", () => {
+  const cuid = z.string().cuid();
+  cuid.parse("01ARZ3NDEKTSV4RRFFQ69G5FAV");
+  const result = cuid.safeParse("invalidulid");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("Invalid ulid");
+  }
+});
+
 test("regex", () => {
   z.string()
     .regex(/^moo+$/)
