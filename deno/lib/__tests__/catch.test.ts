@@ -222,8 +222,6 @@ test("catch error", () => {
 
 test("ctx.input", () => {
   const schema = z.string().catch((ctx) => {
-    console.log(ctx.input);
-    console.log(ctx.error);
     return String(ctx.input);
   });
 

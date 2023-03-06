@@ -4305,10 +4305,7 @@ export class ZodEffects<
           path: ctx.path,
           parent: ctx,
         });
-        // if (base.status === "aborted") return INVALID;
-        // if (base.status === "dirty") {
-        //   return { status: "dirty", value: base.value };
-        // }
+
         if (!isValid(base)) return base;
 
         const result = effect.transform(base.value, checkCtx);
@@ -4324,10 +4321,7 @@ export class ZodEffects<
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
           .then((base) => {
             if (!isValid(base)) return base;
-            // if (base.status === "aborted") return INVALID;
-            // if (base.status === "dirty") {
-            //   return { status: "dirty", value: base.value };
-            // }
+
             return Promise.resolve(effect.transform(base.value, checkCtx)).then(
               (result) => ({ status: status.value, value: result })
             );
