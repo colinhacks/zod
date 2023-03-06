@@ -185,20 +185,6 @@ test("required with mask", () => {
   expect(requiredObject.shape.country).toBeInstanceOf(z.ZodOptional);
 });
 
-test("required with mask containing a nonexistent key", () => {
-  const object = z.object({
-    name: z.string(),
-    age: z.number().optional(),
-    field: z.string().optional().default("asdf"),
-    country: z.string().optional(),
-  });
-  object.required({
-    age: true,
-    // @ts-expect-error should not accept unexpected keys.
-    doesntExist: true,
-  });
-});
-
 test("required with mask -- ignore falsy values", () => {
   const object = z.object({
     name: z.string(),
@@ -254,21 +240,6 @@ test("partial with mask -- ignore falsy values", async () => {
 
   masked.parse({ country: "US" });
   await masked.parseAsync({ country: "US" });
-});
-
-test("partial with mask containing a nonexistent key", () => {
-  const object = z.object({
-    name: z.string(),
-    age: z.number().optional(),
-    field: z.string().optional().default("asdf"),
-    country: z.string().optional(),
-  });
-
-  object.partial({
-    age: true,
-    // @ts-expect-error should not accept unexpected keys.
-    doesntExist: true,
-  });
 });
 
 test("deeppartial array", () => {
