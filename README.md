@@ -2394,6 +2394,58 @@ z.string()
 
 The `.pipe()` method returns a `ZodPipeline` instance.
 
+#### You can use `.pipe()` to fix common issues with `z.coerce`.
+
+You can constrain the input to types that work well with your chosen coercion. Then use `.pipe()` to apply the coercion.
+
+without constrained input:
+```ts
+const toDate = z.coerce.date()
+
+// works intuitively
+console.log(toDate.safeParse('2023-01-01').success) // true
+
+// might not be what you want
+console.log(toDate.safeParse(null).success) // true
+```
+
+with constrained input:
+```ts
+const datelike = z.union([z.number(), z.string(), z.date()])
+const datelikeToDate = datelike.pipe(z.coerce.date())
+
+// still works intuitively
+console.log(datelikeToDate.safeParse('2023-01-01').success) // true
+
+// more likely what you want
+console.log(datelikeToDate.safeParse(null).success) // false
+```
+
+You can also use this technique to avoid coercions that throw uncaught errors.
+
+without constrained input:
+```ts
+const toBigInt = z.coerce.bigint()
+
+// works intuitively
+console.log( toBigInt.safeParse( '42' ) ) // true
+
+// probably not what you want
+console.log( toBigInt.safeParse( null ) ) // throws uncaught error
+```
+
+with constrained input:
+```ts
+const toNumber = z.number().or( z.string() ).pipe( z.coerce.number() )
+const toBigInt = z.bigint().or( toNumber ).pipe( z.coerce.bigint() )
+
+// still works intuitively
+console.log( toBigInt.safeParse( '42' ).success ) // true
+
+// error handled by zod, more likely what you want
+console.log( toBigInt.safeParse( null ).success ) // false
+```
+
 ## Guides and concepts
 
 ### Type inference
