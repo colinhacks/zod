@@ -6,7 +6,7 @@ on:
     branches:
       - "master"
     paths:
-      - "src"
+      - "src/**"
       - ".github/workflows/release-canary.yml"
 jobs:
   build_and_publish:
