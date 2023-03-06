@@ -2131,44 +2131,41 @@ export type mergeTypes<A, B> = {
     : never;
 };
 
-export type baseObjectOutputType<Shape extends ZodRawShape> =
-  objectUtil.flatten<
-    objectUtil.addQuestionMarks<{
-      [k in keyof Shape]: Shape[k]["_output"];
-    }>
-  >;
-
 export type objectOutputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
-> = (ZodTypeAny extends Catchall
-  ? baseObjectOutputType<Shape> & Passthrough<UnknownKeys>
-  : baseObjectOutputType<Shape> & {
-      [k: string]: Catchall["_output"];
-    }) &
-  Passthrough<UnknownKeys>;
+> = objectUtil.flatten<baseObjectOutputType<Shape>> &
+  CatchallOutput<Catchall> &
+  PassthroughType<UnknownKeys>;
 
-export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
+export type baseObjectOutputType<Shape extends ZodRawShape> =
   objectUtil.addQuestionMarks<{
-    [k in keyof Shape]: Shape[k]["_input"];
-  }>
->;
-
-export type Passthrough<UnknownKeys extends UnknownKeysParam> =
-  UnknownKeys extends "passthrough" ? { [k: string]: unknown } : unknown;
+    [k in keyof Shape]: Shape[k]["_output"];
+  }>;
 
 export type objectInputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
-> = ZodTypeAny extends Catchall
-  ? baseObjectInputType<Shape> & Passthrough<UnknownKeys>
-  : objectUtil.flatten<
-      baseObjectInputType<Shape> & {
-        [k: string]: Catchall["_input"];
-      } & Passthrough<UnknownKeys>
-    >;
+> = objectUtil.flatten<baseObjectInputType<Shape>> &
+  CatchallInput<Catchall> &
+  PassthroughType<UnknownKeys>;
+export type baseObjectInputType<Shape extends ZodRawShape> =
+  objectUtil.addQuestionMarks<{
+    [k in keyof Shape]: Shape[k]["_input"];
+  }>;
+
+export type CatchallOutput<T extends ZodTypeAny> = ZodTypeAny extends T
+  ? unknown
+  : { [k: string]: T["_output"] };
+
+export type CatchallInput<T extends ZodTypeAny> = ZodTypeAny extends T
+  ? unknown
+  : { [k: string]: T["_input"] };
+
+export type PassthroughType<T extends UnknownKeysParam> =
+  T extends "passthrough" ? { [k: string]: unknown } : unknown;
 
 export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
   ? deoptional<U>
