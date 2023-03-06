@@ -66,10 +66,8 @@ export namespace util {
     return undefined;
   };
 
-  export type identity<T> = T;
-  export type flatten<T> = identity<{
-    [k in keyof T]: T[k];
-  }>;
+  export type identity<T> = objectUtil.identity<T>;
+  export type flatten<T> = objectUtil.flatten<T>;
 
   export type noUndefined<T> = T extends undefined ? never : T;
 
@@ -94,6 +92,45 @@ export namespace util {
     }
     return value;
   };
+}
+
+export namespace objectUtil {
+  export type MergeShapes<U, V> = {
+    [k in Exclude<keyof U, keyof V>]: U[k];
+  } & V;
+
+  type optionalKeys<T extends object> = {
+    [k in keyof T]: undefined extends T[k] ? k : never;
+  }[keyof T];
+
+  type requiredKeys<T extends object> = {
+    [k in keyof T]: undefined extends T[k] ? never : k;
+  }[keyof T];
+
+  export type addQuestionMarks<T extends object> = Partial<
+    Pick<T, optionalKeys<T>>
+  > &
+    Pick<T, requiredKeys<T>>;
+
+  export type identity<T> = T;
+  export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
+
+  export type noNeverKeys<T> = {
+    [k in keyof T]: [T[k]] extends [never] ? never : k;
+  }[keyof T];
+
+  export type noNever<T> = identity<{
+    [k in noNeverKeys<T>]: k extends keyof T ? T[k] : never;
+  }>;
+
+  export const mergeShapes = <U, T>(first: U, second: T): T & U => {
+    return {
+      ...first,
+      ...second, // second overwrites first
+    };
+  };
+
+  export type extendShape<A, B> = flatten<Omit<A, keyof B> & B>;
 }
 
 export const ZodParsedType = util.arrayToEnum([

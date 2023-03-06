@@ -22,7 +22,7 @@ import {
 } from "./helpers/parseUtil.ts";
 import { partialUtil } from "./helpers/partialUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
-import { getParsedType, util, ZodParsedType } from "./helpers/util.ts";
+import { getParsedType, objectUtil, util, ZodParsedType } from "./helpers/util.ts";
 import {
   IssueData,
   StringValidation,
@@ -2110,47 +2110,6 @@ export type ZodNonEmptyArray<T extends ZodTypeAny> = ZodArray<T, "atleastone">;
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
-export namespace objectUtil {
-  export type MergeShapes<U extends ZodRawShape, V extends ZodRawShape> = {
-    [k in Exclude<keyof U, keyof V>]: U[k];
-  } & V;
-
-  type optionalKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? k : never;
-  }[keyof T];
-
-  type requiredKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? never : k;
-  }[keyof T];
-
-  export type addQuestionMarks<T extends object> = Partial<
-    Pick<T, optionalKeys<T>>
-  > &
-    Pick<T, requiredKeys<T>>;
-
-  export type identity<T> = T;
-  export type flatten<T extends object> = identity<{ [k in keyof T]: T[k] }>;
-
-  export type noNeverKeys<T extends ZodRawShape> = {
-    [k in keyof T]: [T[k]] extends [never] ? never : k;
-  }[keyof T];
-
-  export type noNever<T extends ZodRawShape> = identity<{
-    [k in noNeverKeys<T>]: k extends keyof T ? T[k] : never;
-  }>;
-
-  export const mergeShapes = <U extends ZodRawShape, T extends ZodRawShape>(
-    first: U,
-    second: T
-  ): T & U => {
-    return {
-      ...first,
-      ...second, // second overwrites first
-    };
-  };
-}
-
-export type extendShape<A, B> = util.flatten<Omit<A, keyof B> & B>;
 
 export type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
@@ -2173,25 +2132,23 @@ export type mergeTypes<A, B> = {
     : never;
 };
 
-export type processType<T extends object> = util.flatten<
-  objectUtil.addQuestionMarks<T>
->;
 export type baseObjectOutputType<Shape extends ZodRawShape> =
-  objectUtil.addQuestionMarks<{
-    [k in keyof Shape]: Shape[k]["_output"];
-  }>;
+  objectUtil.flatten<
+    objectUtil.addQuestionMarks<{
+      [k in keyof Shape]: Shape[k]["_output"];
+    }>
+  >;
 
 export type objectOutputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
-> = ZodTypeAny extends Catchall
-  ? objectUtil.flatten<baseObjectOutputType<Shape>> & Passthrough<UnknownKeys>
-  : objectUtil.flatten<
-      baseObjectOutputType<Shape> & {
-        [k: string]: Catchall["_output"];
-      } & Passthrough<UnknownKeys>
-    >;
+> = (ZodTypeAny extends Catchall
+  ? baseObjectOutputType<Shape> & Passthrough<UnknownKeys>
+  : baseObjectOutputType<Shape> & {
+      [k: string]: Catchall["_output"];
+    }) &
+  Passthrough<UnknownKeys>;
 
 export type baseObjectInputType<Shape extends ZodRawShape> = objectUtil.flatten<
   objectUtil.addQuestionMarks<{
@@ -2451,7 +2408,7 @@ export class ZodObject<
   //   };
   extend<Augmentation extends ZodRawShape>(
     augmentation: Augmentation
-  ): ZodObject<extendShape<T, Augmentation>, UnknownKeys, Catchall> {
+  ): ZodObject<objectUtil.extendShape<T, Augmentation>, UnknownKeys, Catchall> {
     return new ZodObject({
       ...this._def,
       shape: () => ({
@@ -2506,15 +2463,17 @@ export class ZodObject<
   merge<Incoming extends AnyZodObject, Augmentation extends Incoming["shape"]>(
     merging: Incoming
   ): ZodObject<
-    extendShape<T, Augmentation>,
+    objectUtil.extendShape<T, Augmentation>,
     Incoming["_def"]["unknownKeys"],
     Incoming["_def"]["catchall"]
   > {
     const merged: any = new ZodObject({
       unknownKeys: merging._def.unknownKeys,
       catchall: merging._def.catchall,
-      shape: () =>
-        objectUtil.mergeShapes(this._def.shape(), merging._def.shape()),
+      shape: () => ({
+        ...this._def.shape(),
+        ...merging._def.shape(),
+      }),
       typeName: ZodFirstPartyTypeKind.ZodObject,
     }) as any;
     return merged;

@@ -80,7 +80,7 @@ test("omit parse - fail", () => {
 test("nonstrict inference", () => {
   const laxfish = fish.pick({ name: true }).catchall(z.any());
   type laxfish = z.infer<typeof laxfish>;
-  util.assertEqual<laxfish, { [k: string]: any; name: string }>(true);
+  util.assertEqual<laxfish, { name: string } & { [k: string]: any }>(true);
 });
 
 test("nonstrict parsing - pass", () => {
