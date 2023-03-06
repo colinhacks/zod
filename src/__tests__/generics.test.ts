@@ -7,21 +7,18 @@ import * as z from "../index";
 test("generics", () => {
   async function stripOuter<TData extends z.ZodTypeAny>(
     schema: TData,
-    url: string
-  ): Promise<TData["_output"]> {
-    const zStrippedResponse = z
+    data: unknown
+  ) {
+    return z
       .object({
-        topLevelKey: schema,
+        nested: schema, // as z.ZodTypeAny,
       })
       .transform((data) => {
-        return data.topLevelKey;
-      });
-
-    return fetch(url)
-      .then((response) => response.json())
-      .then((data) => zStrippedResponse.parse(data));
+        return data.nested!;
+      })
+      .parse({ nested: data });
   }
 
-  const result = stripOuter(z.number(), "");
-  util.assertEqual<typeof result, Promise<number>>(true);
+  const result = stripOuter(z.object({ a: z.string() }), { a: "asdf" });
+  util.assertEqual<typeof result, Promise<{ a: string }>>(true);
 });
