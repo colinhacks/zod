@@ -866,7 +866,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   cuid2(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message) });
   }
-
   ulid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "ulid", ...errorUtil.errToObj(message) });
   }
@@ -874,7 +873,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
   }
-  
+
   datetime(
     options?:
       | string
