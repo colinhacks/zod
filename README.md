@@ -1198,7 +1198,7 @@ const deepPartialUser = user.deepPartial();
 */
 ```
 
-> Important limitation: deep partials only work as expected in hierarchies of objects, arrays, tuples and unions.
+> Important limitation: deep partials only work as expected in hierarchies of objects, arrays, tuples, and unions.
 
 ### `.required`
 
