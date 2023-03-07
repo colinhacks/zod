@@ -39,22 +39,6 @@ test("failing validations", () => {
 });
 
 test("email validations", () => {
-  const email = z.string().email();
-  email.parse("mojojojo@example.com");
-  email.parse("mojojojo@asdf.example.com");
-  expect(() => email.parse("asdf")).toThrow();
-  expect(() => email.parse("@lkjasdf.com")).toThrow();
-  expect(() => email.parse("asdf@sdf.")).toThrow();
-  expect(() => email.parse("asdf@asdf.com-")).toThrow();
-  expect(() => email.parse("asdf@-asdf.com")).toThrow();
-  expect(() => email.parse("asdf@-a(sdf.com")).toThrow();
-  expect(() => email.parse("asdf@-asdf.com(")).toThrow();
-  expect(() =>
-    email.parse("pawan.anand@%9y83&#$%R&#$%R&%#$R%%^^%5rw3ewe.d.d.aaaa.wef.co")
-  ).toThrow();
-});
-
-test("more email validations", () => {
   const validEmails = [
     `email@domain.com`,
     `firstname.lastname@domain.com`,
@@ -79,14 +63,37 @@ test("more email validations", () => {
     `user@my-example.com`,
     `a@b.cd`,
     `work+user@mail.com`,
+  ];
+  const invalidEmails = [
+    // no "printable characters"
     `user%example.com@example.org`,
     `mailhost!username@example.org`,
     `test/test@test.com`,
-  ];
-  const invalidEmails = [
-    // no quotes
+
+    // do not support quotes
     `"email"@domain.com`,
     `"e asdf sadf ?<>ail"@domain.com`,
+    `" "@example.org`,
+    `"john..doe"@example.org`,
+    `"very.(),:;<>[]\".VERY.\"very@\\ \"very\".unusual"@strange.example.com`,
+
+    // do not support IPv4
+    `email@123.123.123.123`,
+    `email@[123.123.123.123]`,
+    `postmaster@123.123.123.123`,
+    `user@[68.185.127.196]`,
+    `ipv4@[85.129.96.247]`,
+    `valid@[79.208.229.53]`,
+    `valid@[255.255.255.255]`,
+    `valid@[255.0.55.2]`,
+    `valid@[255.0.55.2]`,
+
+    // do not support ipv6
+    `hgrebert0@[IPv6:4dc8:ac7:ce79:8878:1290:6098:5c50:1f25]`,
+    `bshapiro4@[IPv6:3669:c709:e981:4884:59a3:75d1:166b:9ae]`,
+    `jsmith@[IPv6:2001:db8::1]`,
+    `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:7334]`,
+    `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:192.168.1.1]`,
 
     // microsoft test cases
     `plainaddress`,
@@ -112,28 +119,7 @@ test("more email validations", () => {
     `this is"not\allowed@example.com`,
     `this\ still\"not\\allowed@example.com`,
 
-    // do not support quotes
-    `" "@example.org`,
-    `"john..doe"@example.org`,
-    `"very.(),:;<>[]\".VERY.\"very@\\ \"very\".unusual"@strange.example.com`,
-
-    // do not support IPv4
-    `email@123.123.123.123`,
-    `email@[123.123.123.123]`,
-    `postmaster@123.123.123.123`,
-    `user@[68.185.127.196]`,
-    `ipv4@[85.129.96.247]`,
-    `valid@[79.208.229.53]`,
-    `valid@[255.255.255.255]`,
-    `valid@[255.0.55.2]`,
-    `valid@[255.0.55.2]`,
-
-    // do not support ipv6
-    `hgrebert0@[IPv6:4dc8:ac7:ce79:8878:1290:6098:5c50:1f25]`,
-    `bshapiro4@[IPv6:3669:c709:e981:4884:59a3:75d1:166b:9ae]`,
-    `jsmith@[IPv6:2001:db8::1]`,
-    `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:7334]`,
-    `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:192.168.1.1]`,
+    // random
     `i_like_underscore@but_its_not_allowed_in_this_part.example.com`,
     `QA[icon]CHOCOLATE[icon]@test.com`,
     `invalid@-start.com`,
