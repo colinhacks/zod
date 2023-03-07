@@ -15,5 +15,5 @@ test("string params", () => {
   const result = example1.safeParse(1234);
   expect(result.success).toEqual(false);
   // @ts-ignore
-  expect(JSON.stringify(result.error)).toContain("customerr");
+  expect(JSON.stringify(result.error).includes("customerr")).toEqual(true);
 });
