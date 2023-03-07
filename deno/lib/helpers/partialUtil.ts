@@ -7,6 +7,8 @@ import type {
   ZodTuple,
   ZodTupleItems,
   ZodTypeAny,
+  ZodUnion,
+  ZodUnionOptions,
 } from "../index.ts";
 
 export namespace partialUtil {
@@ -56,6 +58,16 @@ export namespace partialUtil {
         } extends infer PI
         ? PI extends ZodTupleItems
           ? ZodTuple<PI>
+          : never
+        : never
+      : T extends ZodUnion<infer Options>
+      ? {
+          [k in keyof Options]: Options[k] extends ZodTypeAny
+            ? DeepPartial<Options[k]>
+            : never;
+        } extends infer PO
+        ? PO extends ZodUnionOptions
+          ? ZodUnion<PO>
           : never
         : never
       : T;

@@ -250,3 +250,20 @@ test("deeppartial array", () => {
   // should be false, but is true
   expect(schema.safeParse({ array: [] }).success).toBe(false);
 });
+
+test("deeppartial union", () => {
+  const schema = z
+    .object({
+      union: z.union([
+        z.object({
+          a: z.string(),
+        }),
+        z.object({
+          b: z.string(),
+        }),
+      ]),
+    })
+    .deepPartial();
+
+  expect(schema.safeParse({ union: {} }).success).toBe(true);
+});
