@@ -123,6 +123,7 @@ test("email validations", () => {
     `QA[icon]CHOCOLATE[icon]@test.com`,
     `invalid@-start.com`,
     `invalid@end.com-`,
+    `a.b@c.d`,
     `invalid@[1.1.1.-1]`,
     `invalid@[68.185.127.196.55]`,
     `temp@[192.168.1]`,
