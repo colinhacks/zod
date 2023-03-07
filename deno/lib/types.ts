@@ -2049,13 +2049,20 @@ export class ZodArray<
       });
     }
 
-    const result = ([...ctx.data] as any[]).map((item, i) => {
-      return def.type._parseSync(
+    const arrayValue: any[] = new Array(ctx.data.length);
+    const len = ctx.data.length;
+
+    for (let i = 0; i < len; i++) {
+      const item = ctx.data[i];
+      const s = def.type._parseSync(
         new ParseInputLazyPath(ctx, item, ctx.path, i)
       );
-    });
+      if (s.status === "aborted") return INVALID;
+      if (s.status === "dirty") status.dirty();
+      arrayValue[i] = s.value;
+    }
 
-    return ParseStatus.mergeArray(status, result);
+    return { status: status.value, value: arrayValue } as SyncParseReturnType;
   }
 
   get element() {
