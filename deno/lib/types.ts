@@ -4852,8 +4852,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodBranded<any, any>
   | ZodPipeline<any, any>;
 
-// new approach that works for abstract classes
-// but requires TS 4.4+
+// requires TS 4.4+
 abstract class Class {
   constructor(..._: any[]) {}
 }
