@@ -57,3 +57,14 @@ test("extract/exclude", () => {
   util.assertEqual<typeof EmptyFoodEnum, z.ZodEnum<[]>>(true);
   util.assertEqual<z.infer<typeof EmptyFoodEnum>, never>(true);
 });
+
+test("variadic extract/exclude", () => {
+  const NumbersEnum = z.enum(["One", "Two", "Three"]);
+
+  expect(NumbersEnum.extract("One", "Two").options).toEqual(
+    z.enum(["One", "Two"]).options
+  );
+  expect(NumbersEnum.exclude("One", "Two").options).toEqual(
+    z.enum(["Three"]).options
+  );
+});

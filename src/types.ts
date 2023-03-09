@@ -4015,17 +4015,38 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
 
   extract<ToExtract extends readonly [T[number], ...T[number][]]>(
     values: ToExtract
+  ): ZodEnum<Writeable<ToExtract>>;
+  extract<ToExtract extends readonly [T[number], ...T[number][]]>(
+    ...values: ToExtract
+  ): ZodEnum<Writeable<ToExtract>>;
+  extract<ToExtract extends readonly [T[number], ...T[number][]]>(
+    ...values: ToExtract
   ): ZodEnum<Writeable<ToExtract>> {
-    return ZodEnum.create(values) as any;
+    const valuesArray =
+      (values[0] as any) instanceof Array ? (values[0] as any) : values;
+    return ZodEnum.create(valuesArray);
   }
 
   exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
     values: ToExclude
   ): ZodEnum<
     typecast<Writeable<FilterEnum<T, ToExclude[number]>>, [string, ...string[]]>
+  >;
+  exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
+    ...values: ToExclude
+  ): ZodEnum<
+    typecast<Writeable<FilterEnum<T, ToExclude[number]>>, [string, ...string[]]>
+  >;
+  exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
+    ...values: ToExclude
+  ): ZodEnum<
+    typecast<Writeable<FilterEnum<T, ToExclude[number]>>, [string, ...string[]]>
   > {
+    const valuesArray =
+      (values[0] as any) instanceof Array ? values[0] : values;
+
     return ZodEnum.create(
-      this.options.filter((opt) => !values.includes(opt)) as FilterEnum<
+      this.options.filter((opt) => !valuesArray.includes(opt)) as FilterEnum<
         T,
         ToExclude[number]
       >
