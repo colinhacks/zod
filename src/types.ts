@@ -3527,6 +3527,7 @@ export class ZodMap<
 export interface ZodSetDef<Value extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   valueType: Value;
+  coerce: boolean;
   typeName: ZodFirstPartyTypeKind.ZodSet;
   minSize: { value: number; message?: string } | null;
   maxSize: { value: number; message?: string } | null;
@@ -3538,6 +3539,10 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
   Set<Value["_input"]>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (this._def.coerce) {
+      input.data = new Set(input.data);
+    }
+
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.set) {
       addIssueToContext(ctx, {
@@ -3625,12 +3630,13 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
 
   static create = <Value extends ZodTypeAny = ZodTypeAny>(
     valueType: Value,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodSet<Value> => {
     return new ZodSet({
       valueType,
       minSize: null,
       maxSize: null,
+      coerce: params?.coerce || false,
       typeName: ZodFirstPartyTypeKind.ZodSet,
       ...processCreateParams(params),
     });
@@ -4929,6 +4935,11 @@ export const coerce = {
       ...arg,
       coerce: true,
     })) as (typeof ZodMap)["create"],
+  set: ((valueType, arg) =>
+    ZodSet.create(valueType, {
+      ...arg,
+      coerce: true,
+    })) as (typeof ZodSet)["create"],
 };
 
 export {
