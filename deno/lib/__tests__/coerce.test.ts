@@ -133,3 +133,30 @@ test("date coercion", () => {
   expect(() => schema.parse([])).toThrow; // z.ZodError
   expect(schema.parse(new Date())).toBeInstanceOf(Date);
 });
+
+test("map coercion", () => {
+  const schema = z.coerce.map(z.string(), z.string());
+  const obj = { first: "foo", second: "bar" };
+  expect(schema.parse(obj)).toBeInstanceOf(Map);
+  expect(schema.parse(obj).has("first")).toEqual(true);
+  expect(schema.parse(obj).has("second")).toEqual(true);
+  expect(schema.parse(obj).get("first")).toEqual("foo");
+  expect(schema.parse(obj).get("second")).toEqual("bar");
+  expect(() => schema.parse("")).toThrow; // z.ZodError
+  expect(() => schema.parse("NOT_A_MAP")).toThrow; // z.ZodError
+  expect(() => schema.parse(5)).toThrow; // z.ZodError
+  expect(() => schema.parse(0)).toThrow; // z.ZodError
+  expect(() => schema.parse(-5)).toThrow; // z.ZodError
+  expect(() => schema.parse(3.14)).toThrow; // z.ZodError
+  expect(() => schema.parse(BigInt(5))).toThrow; // z.ZodError
+  expect(() => schema.parse(NaN)).toThrow; // z.ZodError
+  expect(() => schema.parse(Infinity)).toThrow; // z.ZodError
+  expect(() => schema.parse(-Infinity)).toThrow; // z.ZodError
+  expect(() => schema.parse(true)).toThrow; // z.ZodError
+  expect(() => schema.parse(false)).toThrow; // z.ZodError
+  expect(() => schema.parse(null)).toThrow; // z.ZodError
+  expect(() => schema.parse(undefined)).toThrow; // z.ZodError
+  expect(() => schema.parse(["item", "another_item"])).toThrow; // z.ZodError
+  expect(() => schema.parse([])).toThrow; // z.ZodError
+  expect(schema.parse(new Map())).toBeInstanceOf(Map);
+});

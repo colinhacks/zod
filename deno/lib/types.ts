@@ -3420,6 +3420,7 @@ export interface ZodMapDef<
 > extends ZodTypeDef {
   valueType: Value;
   keyType: Key;
+  coerce: boolean;
   typeName: ZodFirstPartyTypeKind.ZodMap;
 }
 
@@ -3432,6 +3433,12 @@ export class ZodMap<
   Map<Key["_input"], Value["_input"]>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (this._def.coerce) {
+      if (!(input.data instanceof Map) && typeof input.data === "object") {
+        input.data = new Map(Object.entries(input.data));
+      }
+    }
+
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.map) {
       addIssueToContext(ctx, {
@@ -3498,11 +3505,12 @@ export class ZodMap<
   >(
     keyType: Key,
     valueType: Value,
-    params?: RawCreateParams
+    params?: RawCreateParams & { coerce?: boolean }
   ): ZodMap<Key, Value> => {
     return new ZodMap({
       valueType,
       keyType,
+      coerce: params?.coerce || false,
       typeName: ZodFirstPartyTypeKind.ZodMap,
       ...processCreateParams(params),
     });
@@ -4916,6 +4924,11 @@ export const coerce = {
     ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
   date: ((arg) =>
     ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
+  map: ((keyType, valueType, arg) =>
+    ZodMap.create(keyType, valueType, {
+      ...arg,
+      coerce: true,
+    })) as (typeof ZodMap)["create"],
 };
 
 export {
