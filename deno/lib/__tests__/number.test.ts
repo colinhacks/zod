@@ -18,6 +18,7 @@ const nonnegative = z.number().nonnegative();
 const multipleOfFive = z.number().multipleOf(5);
 const multipleOfNegativeFive = z.number().multipleOf(-5);
 const finite = z.number().finite();
+const safe = z.number().safe();
 const stepPointOne = z.number().step(0.1);
 const stepPointZeroZeroZeroOne = z.number().step(0.0001);
 const stepSixPointFour = z.number().step(6.4);
@@ -58,6 +59,8 @@ test("passing validations", () => {
   multipleOfNegativeFive.parse(-15);
   multipleOfNegativeFive.parse(15);
   finite.parse(123);
+  safe.parse(Number.MIN_SAFE_INTEGER);
+  safe.parse(Number.MAX_SAFE_INTEGER);
   stepPointOne.parse(6);
   stepPointOne.parse(6.1);
   stepPointOne.parse(6.1);
@@ -85,6 +88,8 @@ test("failing validations", () => {
   expect(() => multipleOfNegativeFive.parse(7.5)).toThrow();
   expect(() => finite.parse(Infinity)).toThrow();
   expect(() => finite.parse(-Infinity)).toThrow();
+  expect(() => safe.parse(Number.MIN_SAFE_INTEGER - 1)).toThrow();
+  expect(() => safe.parse(Number.MAX_SAFE_INTEGER + 1)).toThrow();
 
   expect(() => stepPointOne.parse(6.11)).toThrow();
   expect(() => stepPointOne.parse(6.1000000001)).toThrow();
@@ -111,6 +116,7 @@ test("min max getters", () => {
   expect(minFive.min(10).minValue).toEqual(10);
   expect(positive.minValue).toEqual(0);
   expect(nonnegative.minValue).toEqual(0);
+  expect(safe.minValue).toEqual(Number.MIN_SAFE_INTEGER);
 
   expect(z.number().maxValue).toBeNull;
   expect(gtFive.maxValue).toBeNull;
@@ -127,6 +133,7 @@ test("min max getters", () => {
   expect(maxFive.max(1).maxValue).toEqual(1);
   expect(negative.maxValue).toEqual(0);
   expect(nonpositive.maxValue).toEqual(0);
+  expect(safe.maxValue).toEqual(Number.MAX_SAFE_INTEGER);
 });
 
 test("int getter", () => {
@@ -143,6 +150,7 @@ test("int getter", () => {
   expect(maxFive.isInt).toEqual(false);
   expect(negative.isInt).toEqual(false);
   expect(nonpositive.isInt).toEqual(false);
+  expect(safe.isInt).toEqual(false);
 
   expect(intNum.isInt).toEqual(true);
   expect(multipleOfFive.isInt).toEqual(true);
@@ -165,4 +173,5 @@ test("finite getter", () => {
   expect(intNum.isFinite).toEqual(true);
   expect(multipleOfFive.isFinite).toEqual(true);
   expect(z.number().min(5).max(10).isFinite).toEqual(true);
+  expect(safe.isFinite).toEqual(true);
 });

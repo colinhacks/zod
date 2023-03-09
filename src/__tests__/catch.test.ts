@@ -218,3 +218,11 @@ test("catch error", () => {
     catchError !== undefined && (catchError as z.ZodError).issues[0].message
   ).toMatch("string");
 });
+
+test("ctx.input", () => {
+  const schema = z.string().catch((ctx) => {
+    return String(ctx.input);
+  });
+
+  expect(schema.parse(123)).toEqual("123");
+});

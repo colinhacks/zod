@@ -123,8 +123,8 @@ test("catchall inference", () => {
     .catchall(z.number());
 
   const d1 = o1.parse({ first: "asdf", num: 1243 });
-  util.assertEqual<number, typeof d1["asdf"]>(true);
-  util.assertEqual<string, typeof d1["first"]>(true);
+  util.assertEqual<number, (typeof d1)["asdf"]>(true);
+  util.assertEqual<string, (typeof d1)["first"]>(true);
 });
 
 test("catchall overrides strict", () => {
@@ -441,4 +441,13 @@ test("extend() should have power to override existing key", () => {
     PersonWithNumberAsLastName,
     { firstName: string; lastName: number }
   >(true);
+});
+
+test("passthrough index signature", () => {
+  const a = z.object({ a: z.string() });
+  type a = z.infer<typeof a>;
+  util.assertEqual<{ a: string }, a>(true);
+  const b = a.passthrough();
+  type b = z.infer<typeof b>;
+  util.assertEqual<{ a: string } & { [k: string]: unknown }, b>(true);
 });
