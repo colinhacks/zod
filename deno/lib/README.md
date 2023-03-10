@@ -215,16 +215,20 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <b>Trigger.dev</b>
       <br />
       <a href="https://trigger.dev">trigger.dev</a>
+      <br/>
+      <p>Effortless automation for developers.</p>
     </td>
-    <!-- <td align="center">
-      <a href="https://proxy.com/">
-        <img src="https://avatars.githubusercontent.com/u/14321439?s=200&v=4" width="200px;" alt="Proxy logo" />
+    <td align="center">
+      <a href="https://transloadit.com/">
+        <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" width="200px;" alt="Transloadit logo" />
       </a>
       <br />
-      <b>Proxy</b>
+      <b>Transloadit</b>
       <br />
-      <a href="https://proxy.com">proxy.com</a>
-    </td> -->
+      <a href="https://transloadit.com">transloadit.com</a>
+      <br/>
+      <p>Simple file processing for developers.</p>
+    </td>
   </tr>
 </table>
 
