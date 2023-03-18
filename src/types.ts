@@ -4218,7 +4218,7 @@ export class ZodEffects<
 
     const effect = this._def.effect || null;
 
-    if (effect.type === "preprocess") {
+    if (effect && effect.type === "preprocess") {
       const processed = effect.transform(ctx.data);
 
       if (ctx.common.async) {
@@ -4253,7 +4253,7 @@ export class ZodEffects<
     };
 
     checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
-    if (effect.type === "refinement") {
+    if (effect && effect.type === "refinement") {
       const executeRefinement = (
         acc: unknown
         // effect: RefinementEffect<any>
@@ -4296,7 +4296,7 @@ export class ZodEffects<
       }
     }
 
-    if (effect.type === "transform") {
+    if (effect && effect.type === "transform") {
       if (ctx.common.async === false) {
         const base = this._def.schema._parseSync({
           data: ctx.data,
