@@ -4277,7 +4277,6 @@ export class ZodEffects<
           parent: ctx,
         });
         if (inner.status === "aborted") return INVALID;
-        console.log(ctx.common.issues.length);
         if (inner.status === "dirty" && ctx.common.issues.length > 0) {
           status.dirty();
           return inner;
