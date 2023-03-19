@@ -4277,7 +4277,11 @@ export class ZodEffects<
           parent: ctx,
         });
         if (inner.status === "aborted") return INVALID;
-        if (inner.status === "dirty") status.dirty();
+        console.log(ctx.common.issues.length);
+        if (inner.status === "dirty" && ctx.common.issues.length > 0) {
+          status.dirty();
+          return inner;
+        }
 
         // return value is ignored
         executeRefinement(inner.value);
@@ -4287,7 +4291,10 @@ export class ZodEffects<
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
           .then((inner) => {
             if (inner.status === "aborted") return INVALID;
-            if (inner.status === "dirty") status.dirty();
+            if (inner.status === "dirty" && ctx.common.issues.length > 0) {
+              status.dirty();
+              return inner;
+            }
 
             return executeRefinement(inner.value).then(() => {
               return { status: status.value, value: inner.value };

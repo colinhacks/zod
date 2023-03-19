@@ -246,7 +246,7 @@ test("chained refinements", () => {
     size: 3,
   });
   expect(r2.success).toEqual(false);
-  if (!r2.success) expect(r2.error.issues.length).toEqual(2);
+  if (!r2.success) expect(r2.error.issues.length).toEqual(1);
 });
 
 test("fatal superRefine", () => {

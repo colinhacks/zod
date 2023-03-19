@@ -242,13 +242,13 @@ test("custom path", () => {
     .refine((val) => val.confirm === val.password);
 
   const result = schema.safeParse({
-    password: "qwer",
-    confirm: "asdf",
+    password: "qwert1",
+    confirm: "asdfgh",
   });
 
   expect(result.success).toEqual(false);
   if (!result.success) {
-    expect(result.error.issues.length).toEqual(3);
+    expect(result.error.issues.length).toEqual(1);
   }
 });
 
@@ -262,7 +262,7 @@ const schema = z.object({
   }),
 });
 
-test("no abort early on refinements", () => {
+test("unreachable second refinement if the first one fails", () => {
   const invalidItem = {
     inner: { name: ["aasd", "asdfasdfasfd"] },
   };
@@ -270,7 +270,7 @@ test("no abort early on refinements", () => {
   const result1 = schema.safeParse(invalidItem);
   expect(result1.success).toEqual(false);
   if (!result1.success) {
-    expect(result1.error.issues.length).toEqual(2);
+    expect(result1.error.issues.length).toEqual(1);
   }
 });
 test("formatting", () => {
