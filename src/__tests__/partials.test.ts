@@ -4,6 +4,7 @@ import { expect, test } from "@jest/globals";
 import { util } from "../helpers/util";
 import * as z from "../index";
 import { ZodNullable, ZodOptional } from "../index";
+import { MaskErrorType } from "../types";
 
 const nested = z.object({
   name: z.string(),
@@ -169,7 +170,22 @@ test("required inference", () => {
   util.assertEqual<expected, required>(true);
 });
 
-test("required with mask", () => {
+test("required with emtpy mask -- throws", () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default("asdf"),
+    nullableField: z.number().nullable(),
+    nullishField: z.string().nullish(),
+  });
+
+  expect(
+    // @ts-expect-error
+    () => object.required({})
+  ).toThrow(MaskErrorType.EMPTY);
+});
+
+test("required with truthy mask", () => {
   const object = z.object({
     name: z.string(),
     age: z.number().optional(),
@@ -184,7 +200,7 @@ test("required with mask", () => {
   expect(requiredObject.shape.country).toBeInstanceOf(z.ZodOptional);
 });
 
-test("required with mask -- ignore falsy values", () => {
+test("required with falsy mask", () => {
   const object = z.object({
     name: z.string(),
     age: z.number().optional(),
@@ -192,20 +208,70 @@ test("required with mask -- ignore falsy values", () => {
     country: z.string().optional(),
   });
 
-  // @ts-expect-error
-  const requiredObject = object.required({ age: true, country: false });
+  const requiredObject = object.required({ age: false });
   expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
-  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
+  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodOptional);
   expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
-  expect(requiredObject.shape.country).toBeInstanceOf(z.ZodOptional);
+  expect(requiredObject.shape.country).toBeInstanceOf(z.ZodString);
 });
 
-test("partial with mask", async () => {
+test("required with mask -- throw when mixing truthy and falsy values", () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default("asdf"),
+    country: z.string().optional(),
+  });
+
+  expect(
+    // @ts-expect-error
+    () => object.required({ age: true, country: false })
+  ).toThrow(MaskErrorType.MIXED);
+});
+
+test("partial without mask", async () => {
   const object = z.object({
     name: z.string(),
     age: z.number().optional(),
     field: z.string().optional().default("asdf"),
     country: z.string(),
+    region: z.string(),
+  });
+
+  const masked = object.partial().strict();
+
+  expect(masked.shape.name).toBeInstanceOf(z.ZodOptional);
+  expect(masked.shape.age).toBeInstanceOf(z.ZodOptional);
+  expect(masked.shape.field).toBeInstanceOf(z.ZodOptional);
+  expect(masked.shape.country).toBeInstanceOf(z.ZodOptional);
+  expect(masked.shape.region).toBeInstanceOf(z.ZodOptional);
+
+  masked.parse({});
+  await masked.parseAsync({});
+});
+
+test("partial with emtpy mask -- throws", async () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default("asdf"),
+    country: z.string(),
+    region: z.string(),
+  });
+
+  expect(
+    // @ts-expect-error
+    () => object.partial({}).strict()
+  ).toThrow(MaskErrorType.EMPTY);
+});
+
+test("partial with truthy mask", async () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default("asdf"),
+    country: z.string(),
+    region: z.string(),
   });
 
   const masked = object
@@ -216,29 +282,48 @@ test("partial with mask", async () => {
   expect(masked.shape.age).toBeInstanceOf(z.ZodOptional);
   expect(masked.shape.field).toBeInstanceOf(z.ZodOptional);
   expect(masked.shape.country).toBeInstanceOf(z.ZodString);
+  expect(masked.shape.region).toBeInstanceOf(z.ZodString);
 
-  masked.parse({ country: "US" });
-  await masked.parseAsync({ country: "US" });
+  masked.parse({ country: "US", region: "Pacific Coast" });
+  await masked.parseAsync({ country: "US", region: "Pacific Coast" });
 });
 
-test("partial with mask -- ignore falsy values", async () => {
+test("partial with falsy mask", async () => {
   const object = z.object({
     name: z.string(),
     age: z.number().optional(),
     field: z.string().optional().default("asdf"),
     country: z.string(),
+    region: z.string(),
   });
 
-  // @ts-expect-error
-  const masked = object.partial({ name: true, country: false }).strict();
+  const masked = object
+    .partial({ age: false, field: false, name: false })
+    .strict();
 
-  expect(masked.shape.name).toBeInstanceOf(z.ZodOptional);
+  expect(masked.shape.name).toBeInstanceOf(z.ZodString);
   expect(masked.shape.age).toBeInstanceOf(z.ZodOptional);
   expect(masked.shape.field).toBeInstanceOf(z.ZodDefault);
-  expect(masked.shape.country).toBeInstanceOf(z.ZodString);
+  expect(masked.shape.country).toBeInstanceOf(z.ZodOptional);
+  expect(masked.shape.region).toBeInstanceOf(z.ZodOptional);
 
-  masked.parse({ country: "US" });
-  await masked.parseAsync({ country: "US" });
+  masked.parse({ name: "Abc" });
+  await masked.parseAsync({ name: "Abc" });
+});
+
+test("partial with mask -- throw when mixing truthy and falsy values", async () => {
+  const object = z.object({
+    name: z.string(),
+    age: z.number().optional(),
+    field: z.string().optional().default("asdf"),
+    country: z.string(),
+    region: z.string(),
+  });
+
+  expect(
+    // @ts-expect-error
+    () => object.partial({ name: true, country: false }).strict()
+  ).toThrow(MaskErrorType.MIXED);
 });
 
 test("deeppartial array", () => {

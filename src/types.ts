@@ -2186,6 +2186,48 @@ export type noUnrecognized<Obj extends object, Shape extends object> = {
   [k in keyof Obj]: k extends keyof Shape ? Obj[k] : never;
 };
 
+export enum MaskErrorType {
+  EMPTY = "Empty mask is not a valid mask",
+  MIXED = "You cannot mix truthy and falsy values in the same mask",
+}
+
+function assertMaskIsNotMixed<
+  T extends object,
+  Mask extends { [k in keyof T]?: boolean }
+>(
+  mask: Mask | undefined
+): asserts mask is
+  | { [k in keyof Mask]: Exclude<Mask[k], true> }
+  | { [k in keyof Mask]: Exclude<Mask[k], false> }
+  | undefined {
+  if (mask !== undefined) {
+    const values = Object.values(mask);
+    if (values.length === 0) {
+      throw new Error(MaskErrorType.EMPTY);
+    } else {
+      let lastValue = values[0];
+      for (let i = 1; i < values.length; i++) {
+        if (lastValue !== values[i]) {
+          throw new Error(MaskErrorType.MIXED);
+        }
+        lastValue = values[i];
+      }
+    }
+  }
+}
+
+function isNotEmpty<T extends object>(
+  mask: { [k in keyof T]?: true } | { [k in keyof T]?: false } | undefined
+): mask is { [k in keyof T]?: true } | { [k in keyof T]?: false } {
+  return mask !== undefined && Object.values(mask)?.length > 0;
+}
+
+function isFalsy<T extends object>(
+  mask: { [k in keyof T]?: true } | { [k in keyof T]?: false } | undefined
+): mask is { [k in keyof T]?: true } {
+  return mask !== undefined && Object.values(mask)?.[0] === false;
+}
+
 function deepPartialify(schema: ZodTypeAny): any {
   if (schema instanceof ZodObject) {
     const newShape: any = {};
@@ -2595,7 +2637,7 @@ export class ZodObject<
     Catchall
   >;
   partial<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+    mask: Required<Mask>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
@@ -2603,13 +2645,25 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  partial(mask?: any) {
+  partial<Mask extends { [k in keyof T]?: false }>(
+    mask: Required<Mask>
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask ? T[k] : ZodOptional<T[k]>;
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  partial<Mask extends { [k in keyof T]?: boolean }>(mask?: Required<Mask>) {
+    assertMaskIsNotMixed(mask);
+    const maskIsNotEmpty = isNotEmpty(mask);
+    const value = isFalsy(mask) ? false : undefined;
     const newShape: any = {};
 
     util.objectKeys(this.shape).forEach((key) => {
       const fieldSchema = this.shape[key];
 
-      if (mask && !mask[key]) {
+      if (maskIsNotEmpty && mask[key] === value) {
         newShape[key] = fieldSchema;
       } else {
         newShape[key] = fieldSchema.optional();
@@ -2628,7 +2682,7 @@ export class ZodObject<
     Catchall
   >;
   required<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+    mask: Required<Mask>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];
@@ -2636,13 +2690,23 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  required(mask?: any) {
+  required<Mask extends { [k in keyof T]?: false }>(
+    mask: Required<Mask>
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask ? T[k] : deoptional<T[k]>;
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  required<Mask extends { [k in keyof T]?: boolean }>(mask?: Required<Mask>) {
+    assertMaskIsNotMixed(mask);
+    const maskIsNotEmpty = isNotEmpty(mask);
+    const value = isFalsy(mask) ? undefined : true;
     const newShape: any = {};
 
     util.objectKeys(this.shape).forEach((key) => {
-      if (mask && !mask[key]) {
-        newShape[key] = this.shape[key];
-      } else {
+      if (!maskIsNotEmpty || mask[key] === value) {
         const fieldSchema = this.shape[key];
         let newField = fieldSchema;
 
@@ -2651,6 +2715,8 @@ export class ZodObject<
         }
 
         newShape[key] = newField;
+      } else {
+        newShape[key] = this.shape[key];
       }
     });
 
