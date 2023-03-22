@@ -1963,8 +1963,8 @@ const templateLiteral = z.templateLiteral(); // infers to ``.
 - To add string literal types to an existing template literal:
 
   ```ts
-  templateLiteral.addLiteral('Hello'); // infers to `Hello`.
-  templateLiteral.addLiteral(3.14); // infers to `3.14`.
+  templateLiteral.literal('Hello'); // infers to `Hello`.
+  templateLiteral.literal(3.14); // infers to `3.14`.
   ```
 
   This method accepts strings, numbers, booleans, nulls and undefined.
@@ -1972,14 +1972,14 @@ const templateLiteral = z.templateLiteral(); // infers to ``.
 - To add interpolated positions to an existing template literal:
 
   ```ts
-  templateLiteral.addInterpolatedPosition(z.string()); // infers to `${string}`.
-  templateLiteral.addInterpolatedPosition(z.number()); // infers to `${number}`.
-  templateLiteral.addInterpolatedPosition(z.boolean()); // infers to `true` | `false`.
-  templateLiteral.addInterpolatedPosition(z.literal('foo')); // infers to `foo`.
-  templateLiteral.addInterpolatedPosition(z.null()); // infers to `null`.
-  templateLiteral.addInterpolatedPosition(z.undefined()); // infers to `undefined`.
-  templateLiteral.addInterpolatedPosition(z.bigint()); // infers to `${bigint}`.
-  templateLiteral.addInterpolatedPosition(z.any()); // infers to `${any}`.
+  templateLiteral.interpolated(z.string()); // infers to `${string}`.
+  templateLiteral.interpolated(z.number()); // infers to `${number}`.
+  templateLiteral.interpolated(z.boolean()); // infers to `true` | `false`.
+  templateLiteral.interpolated(z.literal('foo')); // infers to `foo`.
+  templateLiteral.interpolated(z.null()); // infers to `null`.
+  templateLiteral.interpolated(z.undefined()); // infers to `undefined`.
+  templateLiteral.interpolated(z.bigint()); // infers to `${bigint}`.
+  templateLiteral.interpolated(z.any()); // infers to `${any}`.
   ```
 
   Any Zod type (or union) with an underlying type of string, number, boolean, null, 
@@ -1995,10 +1995,10 @@ URL:
 ```ts
 const url = z
   .templateLiteral()
-  .addLiteral("https://")
-  .addInterpolatedPosition(z.string().min(1))
-  .addLiteral(".")
-  .addInterpolatedPosition(z.enum(["com", "net"]));
+  .literal("https://")
+  .interpolated(z.string().min(1))
+  .literal(".")
+  .interpolated(z.enum(["com", "net"]));
 // infers to `https://${string}.com` | `https://${string}.net`.
 
 url.parse("https://google.com"); // passes
@@ -2015,8 +2015,8 @@ Measurement:
 ```ts
 const measurement = z.coerce
     .templateLiteral()
-    .addInterpolatedPosition(z.number().finite())
-    .addInterpolatedPosition(
+    .interpolated(z.number().finite())
+    .interpolated(
       z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
     );
 // infers to `${number}` | `${number}px` | `${number}em` | `${number}rem` | `${number}vh` | `${number}vw` | `${number}vmin` | `${number}vmax
@@ -2027,33 +2027,33 @@ MongoDB connection string:
 ```ts
 const connectionString = z
   .templateLiteral()
-  .addLiteral("mongodb://")
-  .addInterpolatedPosition(
+  .literal("mongodb://")
+  .interpolated(
     z
       .templateLiteral()
-      .addInterpolatedPosition(z.string().regex(/\w+/).describe("username"))
-      .addLiteral(":")
-      .addInterpolatedPosition(z.string().regex(/\w+/).describe("password"))
-      .addLiteral("@")
+      .interpolated(z.string().regex(/\w+/).describe("username"))
+      .literal(":")
+      .interpolated(z.string().regex(/\w+/).describe("password"))
+      .literal("@")
       .optional()
   )
-  .addInterpolatedPosition(z.string().regex(/\w+/).describe("host"))
-  .addLiteral(":")
-  .addInterpolatedPosition(
+  .interpolated(z.string().regex(/\w+/).describe("host"))
+  .literal(":")
+  .interpolated(
     z.number().finite().int().positive().describe("port")
   )
-  .addInterpolatedPosition(
+  .interpolated(
     z
       .templateLiteral()
-      .addLiteral("/")
-      .addInterpolatedPosition(
+      .literal("/")
+      .interpolated(
         z.string().regex(/\w+/).optional().describe("defaultauthdb")
       )
-      .addInterpolatedPosition(
+      .interpolated(
         z
           .templateLiteral()
-          .addLiteral("?")
-          .addInterpolatedPosition(z.string().regex(/^\w+=\w+(&\w+=\w+)*$/))
+          .literal("?")
+          .interpolated(z.string().regex(/^\w+=\w+(&\w+=\w+)*$/))
           .optional()
           .describe("options")
       )

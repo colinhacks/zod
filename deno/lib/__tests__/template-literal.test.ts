@@ -6,159 +6,127 @@ import { util } from "../helpers/index.ts";
 import * as z from "../index.ts";
 
 const empty = z.templateLiteral();
-const hello = z.templateLiteral().addLiteral("hello");
-const world = z.templateLiteral().addInterpolatedPosition(z.literal("world"));
-const one = z.templateLiteral().addLiteral(1);
-const two = z.templateLiteral().addInterpolatedPosition(z.literal(2));
-const truee = z.templateLiteral().addLiteral(true);
-const anotherTrue = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.literal(true));
-const falsee = z.templateLiteral().addLiteral(false);
-const anotherFalse = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.literal(false));
-const nulll = z.templateLiteral().addLiteral(null);
-const anotherNull = z.templateLiteral().addInterpolatedPosition(z.null());
-const undefinedd = z.templateLiteral().addLiteral(undefined);
-const anotherUndefined = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.undefined());
-const anyString = z.templateLiteral().addInterpolatedPosition(z.string());
-const anyNumber = z.templateLiteral().addInterpolatedPosition(z.number());
-const anyFiniteNumber = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.number().finite());
-const anyInt = z.templateLiteral().addInterpolatedPosition(z.number().int());
+const hello = z.templateLiteral().literal("hello");
+const world = z.templateLiteral().interpolated(z.literal("world"));
+const one = z.templateLiteral().literal(1);
+const two = z.templateLiteral().interpolated(z.literal(2));
+const truee = z.templateLiteral().literal(true);
+const anotherTrue = z.templateLiteral().interpolated(z.literal(true));
+const falsee = z.templateLiteral().literal(false);
+const anotherFalse = z.templateLiteral().interpolated(z.literal(false));
+const nulll = z.templateLiteral().literal(null);
+const anotherNull = z.templateLiteral().interpolated(z.null());
+const undefinedd = z.templateLiteral().literal(undefined);
+const anotherUndefined = z.templateLiteral().interpolated(z.undefined());
+const anyString = z.templateLiteral().interpolated(z.string());
+const anyNumber = z.templateLiteral().interpolated(z.number());
+const anyFiniteNumber = z.templateLiteral().interpolated(z.number().finite());
+const anyInt = z.templateLiteral().interpolated(z.number().int());
 const anyNegativeNumber = z
   .templateLiteral()
-  .addInterpolatedPosition(z.number().negative());
+  .interpolated(z.number().negative());
 const anyPositiveNumber = z
   .templateLiteral()
-  .addInterpolatedPosition(z.number().positive());
+  .interpolated(z.number().positive());
 const zeroButInADumbWay = z
   .templateLiteral()
-  .addInterpolatedPosition(z.number().nonnegative().nonpositive());
+  .interpolated(z.number().nonnegative().nonpositive());
 const finiteButInADumbWay = z
   .templateLiteral()
-  .addInterpolatedPosition(z.number().min(5).max(10));
-const bool = z.templateLiteral().addInterpolatedPosition(z.boolean());
-const bigone = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.literal(BigInt(1)));
-const anyBigint = z.templateLiteral().addInterpolatedPosition(z.bigint());
+  .interpolated(z.number().min(5).max(10));
+const bool = z.templateLiteral().interpolated(z.boolean());
+const bigone = z.templateLiteral().interpolated(z.literal(BigInt(1)));
+const anyBigint = z.templateLiteral().interpolated(z.bigint());
 const nullableYo = z
   .templateLiteral()
-  .addInterpolatedPosition(z.nullable(z.literal("yo")));
-const nullableString = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.nullable(z.string()));
+  .interpolated(z.nullable(z.literal("yo")));
+const nullableString = z.templateLiteral().interpolated(z.nullable(z.string()));
 const optionalYeah = z
   .templateLiteral()
-  .addInterpolatedPosition(z.literal("yeah").optional());
-const optionalString = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.string().optional());
-const optionalNumber = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.number().optional());
+  .interpolated(z.literal("yeah").optional());
+const optionalString = z.templateLiteral().interpolated(z.string().optional());
+const optionalNumber = z.templateLiteral().interpolated(z.number().optional());
 const nullishBruh = z
   .templateLiteral()
-  .addInterpolatedPosition(z.literal("bruh").nullish());
-const nullishString = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.string().nullish());
-const cuid = z.templateLiteral().addInterpolatedPosition(z.string().cuid());
+  .interpolated(z.literal("bruh").nullish());
+const nullishString = z.templateLiteral().interpolated(z.string().nullish());
+const cuid = z.templateLiteral().interpolated(z.string().cuid());
 const cuidZZZ = z
   .templateLiteral()
-  .addInterpolatedPosition(z.string().cuid())
-  .addLiteral("ZZZ");
-const cuid2 = z.templateLiteral().addInterpolatedPosition(z.string().cuid2());
-const datetime = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.string().datetime());
-const email = z.templateLiteral().addInterpolatedPosition(z.string().email());
-const ip = z.templateLiteral().addInterpolatedPosition(z.string().ip());
-const ipv4 = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.string().ip({ version: "v4" }));
-const ipv6 = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.string().ip({ version: "v6" }));
-const ulid = z.templateLiteral().addInterpolatedPosition(z.string().ulid());
-const uuid = z.templateLiteral().addInterpolatedPosition(z.string().uuid());
+  .interpolated(z.string().cuid())
+  .literal("ZZZ");
+const cuid2 = z.templateLiteral().interpolated(z.string().cuid2());
+const datetime = z.templateLiteral().interpolated(z.string().datetime());
+const email = z.templateLiteral().interpolated(z.string().email());
+const ip = z.templateLiteral().interpolated(z.string().ip());
+const ipv4 = z.templateLiteral().interpolated(z.string().ip({ version: "v4" }));
+const ipv6 = z.templateLiteral().interpolated(z.string().ip({ version: "v6" }));
+const ulid = z.templateLiteral().interpolated(z.string().ulid());
+const uuid = z.templateLiteral().interpolated(z.string().uuid());
 const stringAToZ = z
   .templateLiteral()
-  .addInterpolatedPosition(z.string().regex(/^[a-z]+$/));
+  .interpolated(z.string().regex(/^[a-z]+$/));
 const stringStartsWith = z
   .templateLiteral()
-  .addInterpolatedPosition(z.string().startsWith("hello"));
+  .interpolated(z.string().startsWith("hello"));
 const stringEndsWith = z
   .templateLiteral()
-  .addInterpolatedPosition(z.string().endsWith("world"));
-const stringMax5 = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.string().max(5));
-const stringMin5 = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.string().min(5));
-const stringLen5 = z
-  .templateLiteral()
-  .addInterpolatedPosition(z.string().length(5));
+  .interpolated(z.string().endsWith("world"));
+const stringMax5 = z.templateLiteral().interpolated(z.string().max(5));
+const stringMin5 = z.templateLiteral().interpolated(z.string().min(5));
+const stringLen5 = z.templateLiteral().interpolated(z.string().length(5));
 const stringMin5Max10 = z
   .templateLiteral()
-  .addInterpolatedPosition(z.string().min(5).max(10));
+  .interpolated(z.string().min(5).max(10));
 const stringStartsWithMax5 = z
   .templateLiteral()
-  .addInterpolatedPosition(z.string().startsWith("hello").max(5));
+  .interpolated(z.string().startsWith("hello").max(5));
 const brandedString = z
   .templateLiteral()
-  .addInterpolatedPosition(z.string().min(1).brand("myBrand"));
-const anything = z.templateLiteral().addInterpolatedPosition(z.any());
+  .interpolated(z.string().min(1).brand("myBrand"));
+const anything = z.templateLiteral().interpolated(z.any());
 
 const url = z
   .templateLiteral()
-  .addLiteral("https://")
-  .addInterpolatedPosition(z.string().regex(/\w+/))
-  .addLiteral(".")
-  .addInterpolatedPosition(z.enum(["com", "net"]));
+  .literal("https://")
+  .interpolated(z.string().regex(/\w+/))
+  .literal(".")
+  .interpolated(z.enum(["com", "net"]));
 
 const measurement = z.coerce
   .templateLiteral()
-  .addInterpolatedPosition(z.number().finite())
-  .addInterpolatedPosition(
+  .interpolated(z.number().finite())
+  .interpolated(
     z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
   );
 
 const connectionString = z
   .templateLiteral()
-  .addLiteral("mongodb://")
-  .addInterpolatedPosition(
+  .literal("mongodb://")
+  .interpolated(
     z
       .templateLiteral()
-      .addInterpolatedPosition(z.string().regex(/\w+/).describe("username"))
-      .addLiteral(":")
-      .addInterpolatedPosition(z.string().regex(/\w+/).describe("password"))
-      .addLiteral("@")
+      .interpolated(z.string().regex(/\w+/).describe("username"))
+      .literal(":")
+      .interpolated(z.string().regex(/\w+/).describe("password"))
+      .literal("@")
       .optional()
   )
-  .addInterpolatedPosition(z.string().regex(/\w+/).describe("host"))
-  .addLiteral(":")
-  .addInterpolatedPosition(
-    z.number().finite().int().positive().describe("port")
-  )
-  .addInterpolatedPosition(
+  .interpolated(z.string().regex(/\w+/).describe("host"))
+  .literal(":")
+  .interpolated(z.number().finite().int().positive().describe("port"))
+  .interpolated(
     z
       .templateLiteral()
-      .addLiteral("/")
-      .addInterpolatedPosition(
+      .literal("/")
+      .interpolated(
         z.string().regex(/\w+/).optional().describe("defaultauthdb")
       )
-      .addInterpolatedPosition(
+      .interpolated(
         z
           .templateLiteral()
-          .addLiteral("?")
-          .addInterpolatedPosition(z.string().regex(/^\w+=\w+(&\w+=\w+)*$/))
+          .literal("?")
+          .interpolated(z.string().regex(/^\w+=\w+(&\w+=\w+)*$/))
           .optional()
           .describe("options")
       )
@@ -249,134 +217,128 @@ test("template literal type inference", () => {
 test("template literal unsupported args", () => {
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.object({}))
+    z.templateLiteral().interpolated(z.object({}))
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.array(z.object({})))
+    z.templateLiteral().interpolated(z.array(z.object({})))
   ).toThrow();
   expect(() =>
-    z.templateLiteral().addInterpolatedPosition(
+    z.templateLiteral().interpolated(
       // @ts-expect-error
       z.union([z.object({}), z.string()])
     )
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.never())
+    z.templateLiteral().interpolated(z.never())
   ).toThrow();
   // @ts-expect-error
-  expect(() => z.templateLiteral().addInterpolatedPosition(z.date())).toThrow();
+  expect(() => z.templateLiteral().interpolated(z.date())).toThrow();
   expect(() =>
     z
       .templateLiteral()
       // @ts-expect-error
-      .addInterpolatedPosition(z.custom<object>((data) => true))
+      .interpolated(z.custom<object>((data) => true))
   ).toThrow();
   expect(() =>
-    z.templateLiteral().addInterpolatedPosition(
+    z.templateLiteral().interpolated(
       // @ts-expect-error
       z.discriminatedUnion("discriminator", [z.object({}), z.object({})])
     )
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.function())
+    z.templateLiteral().interpolated(z.function())
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.instanceof(class MyClass {}))
+    z.templateLiteral().interpolated(z.instanceof(class MyClass {}))
   ).toThrow();
   expect(() =>
-    z.templateLiteral().addInterpolatedPosition(
+    z.templateLiteral().interpolated(
       // @ts-expect-error
       z.intersection(z.object({}), z.object({}))
     )
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.map(z.string(), z.string()))
+    z.templateLiteral().interpolated(z.map(z.string(), z.string()))
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.nullable(z.object({})))
+    z.templateLiteral().interpolated(z.nullable(z.object({})))
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.optional(z.object({})))
+    z.templateLiteral().interpolated(z.optional(z.object({})))
   ).toThrow();
   expect(() =>
-    z.templateLiteral().addInterpolatedPosition(
+    z.templateLiteral().interpolated(
       // @ts-expect-error
       z.preprocess(() => true, z.boolean())
     )
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.promise())
+    z.templateLiteral().interpolated(z.promise())
   ).toThrow();
   // @ts-expect-error
-  expect(() => z.templateLiteral().addInterpolatedPosition(z.nan())).toThrow();
+  expect(() => z.templateLiteral().interpolated(z.nan())).toThrow();
   expect(() =>
-    z.templateLiteral().addInterpolatedPosition(
+    z.templateLiteral().interpolated(
       // @ts-expect-error
       z.pipeline(z.string(), z.string())
     )
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.record(z.unknown()))
+    z.templateLiteral().interpolated(z.record(z.unknown()))
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.set(z.string()))
+    z.templateLiteral().interpolated(z.set(z.string()))
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.symbol())
+    z.templateLiteral().interpolated(z.symbol())
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.tuple([z.string()]))
+    z.templateLiteral().interpolated(z.tuple([z.string()]))
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.unknown())
+    z.templateLiteral().interpolated(z.unknown())
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.void())
+    z.templateLiteral().interpolated(z.void())
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().addInterpolatedPosition(z.lazy(() => z.string()))
+    z.templateLiteral().interpolated(z.lazy(() => z.string()))
   ).toThrow();
   expect(() =>
-    z.templateLiteral().addInterpolatedPosition(
+    z.templateLiteral().interpolated(
       // @ts-expect-error
       z.object({}).brand("brand")
     )
   ).toThrow();
   expect(() =>
-    z.templateLiteral().addInterpolatedPosition(z.number().multipleOf(2))
+    z.templateLiteral().interpolated(z.number().multipleOf(2))
+  ).toThrow();
+  expect(() => z.templateLiteral().interpolated(z.string().emoji())).toThrow();
+  expect(() => z.templateLiteral().interpolated(z.string().url())).toThrow();
+  expect(() => z.templateLiteral().interpolated(z.string().trim())).toThrow();
+  expect(() =>
+    z.templateLiteral().interpolated(z.string().includes("train"))
   ).toThrow();
   expect(() =>
-    z.templateLiteral().addInterpolatedPosition(z.string().emoji())
+    z.templateLiteral().interpolated(z.string().toLowerCase())
   ).toThrow();
   expect(() =>
-    z.templateLiteral().addInterpolatedPosition(z.string().url())
-  ).toThrow();
-  expect(() =>
-    z.templateLiteral().addInterpolatedPosition(z.string().trim())
-  ).toThrow();
-  expect(() =>
-    z.templateLiteral().addInterpolatedPosition(z.string().includes("train"))
-  ).toThrow();
-  expect(() =>
-    z.templateLiteral().addInterpolatedPosition(z.string().toLowerCase())
-  ).toThrow();
-  expect(() =>
-    z.templateLiteral().addInterpolatedPosition(z.string().toUpperCase())
+    z.templateLiteral().interpolated(z.string().toUpperCase())
   ).toThrow();
 });
 

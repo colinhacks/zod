@@ -5582,13 +5582,13 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   Template,
   ZodTemplateLiteralDef
 > {
-  addInterpolatedPosition<I extends TemplateLiteralInterpolatedPosition>(
+  interpolated<I extends TemplateLiteralInterpolatedPosition>(
     type: Exclude<I, ZodNever | ZodNaN | ZodPipeline<any, any> | ZodLazy<any>>
   ): ZodTemplateLiteral<appendToTemplateLiteral<Template, I>> {
     return this._addPart(type) as any;
   }
 
-  addLiteral<L extends TemplateLiteralPrimitive>(
+  literal<L extends TemplateLiteralPrimitive>(
     literal: L
   ): ZodTemplateLiteral<appendToTemplateLiteral<Template, L>> {
     return this._addPart(literal) as any;
