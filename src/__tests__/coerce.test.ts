@@ -136,8 +136,8 @@ test("date coercion", () => {
 test("template literal coercion", () => {
   const schema = z.coerce
     .templateLiteral()
-    .addInterpolatedPosition(z.number().finite())
-    .addInterpolatedPosition(
+    .interpolated(z.number().finite())
+    .interpolated(
       z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
     );
   expect(schema.parse(300)).toEqual("300");
