@@ -3761,7 +3761,7 @@ export class ZodFunction<
     return this._def.returns;
   }
 
-  args<Items extends Parameters<typeof ZodTuple["create"]>[0]>(
+  args<Items extends Parameters<(typeof ZodTuple)["create"]>[0]>(
     ...items: Items
   ): ZodFunction<ZodTuple<Items, ZodUnknown>, Returns> {
     return new ZodFunction({
@@ -4785,13 +4785,13 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   Template,
   ZodTemplateLiteralDef
 > {
-  addInterpolatedPosition<I extends TemplateLiteralInterpolatedPosition>(
+  interpolated<I extends TemplateLiteralInterpolatedPosition>(
     type: Exclude<I, ZodNever | ZodNaN | ZodPipeline<any, any> | ZodLazy<any>>
   ): ZodTemplateLiteral<appendToTemplateLiteral<Template, I>> {
     return this._addPart(type) as any;
   }
 
-  addLiteral<L extends TemplateLiteralPrimitive>(
+  literal<L extends TemplateLiteralPrimitive>(
     literal: L
   ): ZodTemplateLiteral<appendToTemplateLiteral<Template, L>> {
     return this._addPart(literal) as any;
@@ -5303,23 +5303,23 @@ const oboolean = () => booleanType().optional();
 
 export const coerce = {
   string: ((arg) =>
-    ZodString.create({ ...arg, coerce: true })) as typeof ZodString["create"],
+    ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
   number: ((arg) =>
-    ZodNumber.create({ ...arg, coerce: true })) as typeof ZodNumber["create"],
+    ZodNumber.create({ ...arg, coerce: true })) as (typeof ZodNumber)["create"],
   boolean: ((arg) =>
     ZodBoolean.create({
       ...arg,
       coerce: true,
-    })) as typeof ZodBoolean["create"],
+    })) as (typeof ZodBoolean)["create"],
   bigint: ((arg) =>
-    ZodBigInt.create({ ...arg, coerce: true })) as typeof ZodBigInt["create"],
+    ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
   date: ((arg) =>
-    ZodDate.create({ ...arg, coerce: true })) as typeof ZodDate["create"],
+    ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
   templateLiteral: ((arg) =>
     ZodTemplateLiteral.create({
       ...arg,
       coerce: true,
-    })) as typeof ZodTemplateLiteral["create"],
+    })) as (typeof ZodTemplateLiteral)["create"],
 };
 
 export {
