@@ -6,7 +6,9 @@ import * as z from "../index";
 const minFive = z.string().min(5, "min5");
 const maxFive = z.string().max(5, "max5");
 const justFive = z.string().length(5);
-const nonempty = z.string().nonempty("nonempty");
+const nonempty = z.string().min(1, "nonempty");
+const includes = z.string().includes("includes");
+const includesFromIndex2 = z.string().includes("includes", { position: 2 });
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
 
@@ -17,6 +19,8 @@ test("passing validations", () => {
   maxFive.parse("1234");
   nonempty.parse("1");
   justFive.parse("12345");
+  includes.parse("XincludesXX");
+  includesFromIndex2.parse("XXXincludesXX");
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
 });
@@ -27,6 +31,8 @@ test("failing validations", () => {
   expect(() => nonempty.parse("")).toThrow();
   expect(() => justFive.parse("1234")).toThrow();
   expect(() => justFive.parse("123456")).toThrow();
+  expect(() => includes.parse("XincludeXX")).toThrow();
+  expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
 });
@@ -216,6 +222,16 @@ test("cuid2", () => {
   }
 });
 
+test("ulid", () => {
+  const ulid = z.string().ulid();
+  ulid.parse("01ARZ3NDEKTSV4RRFFQ69G5FAV");
+  const result = ulid.safeParse("invalidulid");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("Invalid ulid");
+  }
+});
+
 test("regex", () => {
   z.string()
     .regex(/^moo+$/)
@@ -253,6 +269,7 @@ test("checks getters", () => {
   expect(z.string().email().isCUID2).toEqual(false);
   expect(z.string().email().isUUID).toEqual(false);
   expect(z.string().email().isIP).toEqual(false);
+  expect(z.string().email().isULID).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
@@ -260,6 +277,7 @@ test("checks getters", () => {
   expect(z.string().url().isCUID2).toEqual(false);
   expect(z.string().url().isUUID).toEqual(false);
   expect(z.string().url().isIP).toEqual(false);
+  expect(z.string().url().isULID).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
@@ -267,6 +285,7 @@ test("checks getters", () => {
   expect(z.string().cuid().isCUID2).toEqual(false);
   expect(z.string().cuid().isUUID).toEqual(false);
   expect(z.string().cuid().isIP).toEqual(false);
+  expect(z.string().cuid().isULID).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
   expect(z.string().cuid2().isURL).toEqual(false);
@@ -274,6 +293,7 @@ test("checks getters", () => {
   expect(z.string().cuid2().isCUID2).toEqual(true);
   expect(z.string().cuid2().isUUID).toEqual(false);
   expect(z.string().cuid2().isIP).toEqual(false);
+  expect(z.string().cuid2().isULID).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
@@ -281,6 +301,7 @@ test("checks getters", () => {
   expect(z.string().uuid().isCUID2).toEqual(false);
   expect(z.string().uuid().isUUID).toEqual(true);
   expect(z.string().uuid().isIP).toEqual(false);
+  expect(z.string().uuid().isULID).toEqual(false);
 
   expect(z.string().ip().isEmail).toEqual(false);
   expect(z.string().ip().isURL).toEqual(false);
@@ -288,6 +309,15 @@ test("checks getters", () => {
   expect(z.string().ip().isCUID2).toEqual(false);
   expect(z.string().ip().isUUID).toEqual(false);
   expect(z.string().ip().isIP).toEqual(true);
+  expect(z.string().ip().isULID).toEqual(false);
+
+  expect(z.string().ulid().isEmail).toEqual(false);
+  expect(z.string().ulid().isURL).toEqual(false);
+  expect(z.string().ulid().isCUID).toEqual(false);
+  expect(z.string().ulid().isCUID2).toEqual(false);
+  expect(z.string().ulid().isUUID).toEqual(false);
+  expect(z.string().ulid().isIP).toEqual(false);
+  expect(z.string().ulid().isULID).toEqual(true);
 });
 
 test("min max getters", () => {

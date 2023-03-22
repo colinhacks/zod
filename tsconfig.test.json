@@ -2,14 +2,11 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
-    "outDir": "lib",
+    "outDir": "__buildtest__",
+    "target": "es5",
     "declaration": true,
     "declarationMap": false,
-    "sourceMap": false,
-    "removeComments": true
+    "sourceMap": false
   },
-  "exclude": [
-    "./src/**/__tests__",
-    "playground.ts"
-  ]
+  "exclude": []
 }

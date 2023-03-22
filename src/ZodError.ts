@@ -96,8 +96,10 @@ export type StringValidation =
   | "regex"
   | "cuid"
   | "cuid2"
+  | "ulid"
   | "datetime"
   | "ip"
+  | { includes: string; position?: number }
   | { startsWith: string }
   | { endsWith: string };
 

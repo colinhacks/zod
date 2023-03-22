@@ -47,7 +47,13 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       break;
     case ZodIssueCode.invalid_string:
       if (typeof issue.validation === "object") {
-        if ("startsWith" in issue.validation) {
+        if ("includes" in issue.validation) {
+          message = `Invalid input: must include "${issue.validation.includes}"`;
+
+          if (typeof issue.validation.position === "number") {
+            message = `${message} at one or more positions greater than or equal to ${issue.validation.position}`;
+          }
+        } else if ("startsWith" in issue.validation) {
           message = `Invalid input: must start with "${issue.validation.startsWith}"`;
         } else if ("endsWith" in issue.validation) {
           message = `Invalid input: must end with "${issue.validation.endsWith}"`;

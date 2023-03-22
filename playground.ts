@@ -1,28 +1,39 @@
 import { z } from "./src";
-const example1 = z.custom<number>((x) => typeof x === "number");
-example1.parse("asdf");
-// const example1 = z
-//   .custom<number>(
-//     (x) => {
-//       console.log(`custom`);
-//       console.log(x);
-//       return typeof x === "number";
-//     },
-//     {},
-//     true
-//   )
-//   .transform((x) => {
-//     console.log(`transform`);
-//     console.log(x);
-//     return String(x);
-//   })
-//   .refine((x) => {
-//     console.log(`refine`);
-//     console.log(x);
-//     console.log(typeof x); // prints 'Object'
-//     console.log("I get called even though I shouldn't!!!");
-//     return true;
-//   })
-//   .safeParse({}); //will fail because it is not a number
+z;
 
-// console.log(example1.success); // false (like it should be)
+function recursive<T extends z.ZodTypeAny>(
+  callback: <G extends z.ZodTypeAny>(schema: G) => T
+): T {
+  return "asdf" as any;
+}
+
+const cat = recursive((type) => {
+  return z.object({
+    name: z.string(),
+    subcategories: type,
+  });
+});
+type cat = z.infer<typeof cat>; //["subcategories"];
+declare let fido: cat;
+fido;
+fido.subcategories![0];
+
+declare const __nominal__type: unique symbol;
+declare const __nominal__type2: unique symbol;
+
+const arg = {
+  a: "asdf",
+  b: "asdf",
+  c: "asdf",
+  ["$type"]: () => {},
+  ["@@type"]: () => {},
+  ["{type}"]: 1324,
+};
+
+arg;
+
+const kwarg = {
+  [__nominal__type2]: "asdf",
+};
+
+type aklmdf = typeof arg extends typeof kwarg ? true : false;
