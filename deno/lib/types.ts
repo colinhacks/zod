@@ -5734,30 +5734,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       startsWith = "";
 
     for (const ch of part._def.checks) {
-      if (ch.kind === "cuid") {
-        return this._unwrapRegexString(cuidRegex.source);
-      }
+      const regex = this._resolveRegexForStringCheck(ch);
 
-      if (ch.kind === "cuid2") {
-        return this._unwrapRegexString(cuid2Regex.source);
-      }
-
-      if (ch.kind === "datetime") {
-        return this._unwrapRegexString(datetimeRegex(ch).source);
-      }
-
-      if (ch.kind === "email") {
-        return this._unwrapRegexString(emailRegex.source);
-      }
-
-      if (ch.kind === "regex") {
-        // FIXME: maybe allow combinations of endsWith, startsWith, min/max length with a regex,
-        // if it doesn't lock both ends with `^` & `$` ?
-        return this._unwrapRegexString(ch.regex.source);
-      }
-
-      if (ch.kind === "uuid") {
-        return this._unwrapRegexString(uuidRegex.source);
+      if (regex) {
+        return this._unwrapRegexString(regex.source);
       }
 
       if (ch.kind === "endsWith") {
@@ -5797,6 +5777,31 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       constrainedMinLength,
       constrainedMaxLength
     )}${endsWith}`;
+  }
+
+  protected _resolveRegexForStringCheck(check: ZodStringCheck): RegExp | null {
+    return {
+      [check.kind]: null,
+      cuid: cuidRegex,
+      cuid2: cuid2Regex,
+      datetime: check.kind === "datetime" ? datetimeRegex(check) : null,
+      email: emailRegex,
+      ip:
+        check.kind === "ip"
+          ? {
+              any: new RegExp(
+                `^(${this._unwrapRegexString(
+                  ipv4Regex.source
+                )})|(${this._unwrapRegexString(ipv6Regex.source)})$`
+              ),
+              v4: ipv4Regex,
+              v6: ipv6Regex,
+            }[check.version || "any"]
+          : null,
+      regex: check.kind === "regex" ? check.regex : null,
+      ulid: ulidRegex,
+      uuid: uuidRegex,
+    }[check.kind];
   }
 
   protected _resolveRegexWildcardLength(
