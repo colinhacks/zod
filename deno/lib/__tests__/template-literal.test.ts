@@ -78,6 +78,14 @@ const datetime = z
   .templateLiteral()
   .addInterpolatedPosition(z.string().datetime());
 const email = z.templateLiteral().addInterpolatedPosition(z.string().email());
+const ip = z.templateLiteral().addInterpolatedPosition(z.string().ip());
+const ipv4 = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().ip({ version: "v4" }));
+const ipv6 = z
+  .templateLiteral()
+  .addInterpolatedPosition(z.string().ip({ version: "v6" }));
+const ulid = z.templateLiteral().addInterpolatedPosition(z.string().ulid());
 const uuid = z.templateLiteral().addInterpolatedPosition(z.string().uuid());
 const stringAToZ = z
   .templateLiteral()
@@ -194,6 +202,10 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof cuid2>, string>(true);
   util.assertEqual<z.infer<typeof datetime>, string>(true);
   util.assertEqual<z.infer<typeof email>, string>(true);
+  util.assertEqual<z.infer<typeof ip>, string>(true);
+  util.assertEqual<z.infer<typeof ipv4>, string>(true);
+  util.assertEqual<z.infer<typeof ipv6>, string>(true);
+  util.assertEqual<z.infer<typeof ulid>, string>(true);
   util.assertEqual<z.infer<typeof uuid>, string>(true);
   util.assertEqual<z.infer<typeof stringAToZ>, string>(true);
   util.assertEqual<z.infer<typeof stringStartsWith>, string>(true);
@@ -349,7 +361,22 @@ test("template literal unsupported args", () => {
     z.templateLiteral().addInterpolatedPosition(z.number().multipleOf(2))
   ).toThrow();
   expect(() =>
+    z.templateLiteral().addInterpolatedPosition(z.string().emoji())
+  ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(z.string().url())
+  ).toThrow();
+  expect(() =>
     z.templateLiteral().addInterpolatedPosition(z.string().trim())
+  ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(z.string().includes("train"))
+  ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(z.string().toLowerCase())
+  ).toThrow();
+  expect(() =>
+    z.templateLiteral().addInterpolatedPosition(z.string().toUpperCase())
   ).toThrow();
 });
 
@@ -425,6 +452,11 @@ test("template literal parsing - success - basic cases", () => {
   cuid2.parse("tz4a98xxat96iws9zmbrgj3a");
   datetime.parse(new Date().toISOString());
   email.parse("info@example.com");
+  ip.parse("213.174.246.205");
+  ip.parse("c359:f57c:21e5:39eb:1187:e501:f936:b452");
+  ipv4.parse("213.174.246.205");
+  ipv6.parse("c359:f57c:21e5:39eb:1187:e501:f936:b452");
+  ulid.parse("01GW3D2QZJBYB6P1Z1AE997VPW");
   uuid.parse("808989fd-3a6e-4af2-b607-737323a176f6");
   stringAToZ.parse("asudgaskhdgashd");
   stringStartsWith.parse("hello world");
@@ -553,9 +585,15 @@ test("template literal parsing - failure - basic cases", () => {
   expect(() => cuid2.parse("tz4a98xxat96iws9zmbrgj3!")).toThrow();
   expect(() => datetime.parse("2022-01-01 00:00:00")).toThrow();
   expect(() => email.parse("info@example.com@")).toThrow();
+  expect(() => ip.parse("213.174.246:205")).toThrow();
+  expect(() => ip.parse("c359.f57c:21e5:39eb:1187:e501:f936:b452")).toThrow();
+  expect(() => ipv4.parse("1213.174.246.205")).toThrow();
+  expect(() => ipv4.parse("c359:f57c:21e5:39eb:1187:e501:f936:b452")).toThrow();
   expect(() =>
-    z.templateLiteral().addInterpolatedPosition(z.string().url())
+    ipv6.parse("c359:f57c:21e5:39eb:1187:e501:f936:b4521")
   ).toThrow();
+  expect(() => ipv6.parse("213.174.246.205")).toThrow();
+  expect(() => ulid.parse("01GW3D2QZJBYB6P1Z1AE997VPW!")).toThrow();
   expect(() => uuid.parse("808989fd-3a6e-4af2-b607-737323a176f6Z")).toThrow();
   expect(() => uuid.parse("Z808989fd-3a6e-4af2-b607-737323a176f6")).toThrow();
   expect(() => stringAToZ.parse("asdasdasd1")).toThrow();
