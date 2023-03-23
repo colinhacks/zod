@@ -2176,6 +2176,12 @@ export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
   ? ZodNullable<deoptional<U>>
   : T;
 
+export type denullable<T extends ZodTypeAny> = T extends ZodNullable<infer U>
+  ? denullable<U>
+  : T extends ZodOptional<infer U>
+  ? ZodOptional<denullable<U>>
+  : T;
+
 export type SomeZodObject = ZodObject<
   ZodRawShape,
   UnknownKeysParam,
@@ -2186,9 +2192,35 @@ export type noUnrecognized<Obj extends object, Shape extends object> = {
   [k in keyof Obj]: k extends keyof Shape ? Obj[k] : never;
 };
 
+export enum PartialType {
+  OPTIONAL = "optional",
+  NULLABLE = "nullable",
+  NULLISH = "nullish",
+}
+
 export enum MaskErrorType {
   EMPTY = "Empty mask is not a valid mask",
   MIXED = "You cannot mix truthy and falsy values in the same mask",
+}
+
+function isMask<T extends object, Mask extends { [k in keyof T]?: boolean }>(
+  maskOrType: PartialType | Mask | undefined
+): maskOrType is Mask {
+  if (maskOrType === undefined) {
+    return false;
+  }
+  for (const type of Object.values(PartialType)) {
+    if (maskOrType === type) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isType<T extends object, Mask extends { [k in keyof T]?: boolean }>(
+  maskOrType: PartialType | Mask | undefined
+): maskOrType is PartialType {
+  return maskOrType !== undefined && !isMask(maskOrType);
 }
 
 function assertMaskIsNotMixed<
@@ -2631,13 +2663,54 @@ export class ZodObject<
     return deepPartialify(this) as any;
   }
 
-  partial(): ZodObject<
-    { [k in keyof T]: ZodOptional<T[k]> },
+  partial(
+    type?: PartialType.OPTIONAL
+  ): ZodObject<{ [k in keyof T]: ZodOptional<T[k]> }, UnknownKeys, Catchall>;
+  partial(
+    type: PartialType.NULLABLE
+  ): ZodObject<{ [k in keyof T]: ZodNullable<T[k]> }, UnknownKeys, Catchall>;
+  partial(
+    type: PartialType.NULLISH
+  ): ZodObject<
+    { [k in keyof T]: ZodOptional<ZodNullable<T[k]>> },
     UnknownKeys,
     Catchall
   >;
   partial<Mask extends { [k in keyof T]?: true }>(
-    mask: Required<Mask>
+    mask: Required<Mask>,
+    type?: PartialType.OPTIONAL
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  partial<Mask extends { [k in keyof T]?: true }>(
+    mask: Required<Mask>,
+    type: PartialType.NULLABLE
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask ? ZodNullable<T[k]> : T[k];
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  partial<Mask extends { [k in keyof T]?: true }>(
+    mask: Required<Mask>,
+    type: PartialType.NULLISH
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask
+        ? ZodOptional<ZodNullable<T[k]>>
+        : T[k];
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  partial<Mask extends { [k in keyof T]?: false }>(
+    mask: Required<Mask>,
+    type?: PartialType.OPTIONAL
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? T[k] : ZodOptional<T[k]>;
@@ -2646,15 +2719,33 @@ export class ZodObject<
     Catchall
   >;
   partial<Mask extends { [k in keyof T]?: false }>(
-    mask: Required<Mask>
+    mask: Required<Mask>,
+    type: PartialType.NULLABLE
   ): ZodObject<
     objectUtil.noNever<{
-      [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
+      [k in keyof T]: k extends keyof Mask ? T[k] : ZodNullable<T[k]>;
     }>,
     UnknownKeys,
     Catchall
   >;
-  partial<Mask extends { [k in keyof T]?: boolean }>(mask?: Required<Mask>) {
+  partial<Mask extends { [k in keyof T]?: false }>(
+    mask: Required<Mask>,
+    type: PartialType.NULLISH
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask
+        ? T[k]
+        : ZodOptional<ZodNullable<T[k]>>;
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  partial<Mask extends { [k in keyof T]?: boolean }>(
+    maskOrType?: Required<Mask> | PartialType,
+    type = PartialType.OPTIONAL
+  ) {
+    const mask = isMask(maskOrType) ? maskOrType : undefined;
+    type = isType(maskOrType) ? maskOrType : type;
     assertMaskIsNotMixed(mask);
     const maskIsNotEmpty = isNotEmpty(mask);
     const value = isFalsy(mask) ? false : undefined;
@@ -2666,7 +2757,7 @@ export class ZodObject<
       if (maskIsNotEmpty && mask[key] === value) {
         newShape[key] = fieldSchema;
       } else {
-        newShape[key] = fieldSchema.optional();
+        newShape[key] = fieldSchema[type]();
       }
     });
 
@@ -2676,13 +2767,22 @@ export class ZodObject<
     }) as any;
   }
 
-  required(): ZodObject<
-    { [k in keyof T]: deoptional<T[k]> },
+  required(
+    type?: PartialType.OPTIONAL
+  ): ZodObject<{ [k in keyof T]: deoptional<T[k]> }, UnknownKeys, Catchall>;
+  required(
+    type: PartialType.NULLABLE
+  ): ZodObject<{ [k in keyof T]: denullable<T[k]> }, UnknownKeys, Catchall>;
+  required(
+    type: PartialType.NULLISH
+  ): ZodObject<
+    { [k in keyof T]: deoptional<denullable<T[k]>> },
     UnknownKeys,
     Catchall
   >;
   required<Mask extends { [k in keyof T]?: true }>(
-    mask: Required<Mask>
+    mask: Required<Mask>,
+    type?: PartialType.OPTIONAL
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];
@@ -2690,8 +2790,31 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
+  required<Mask extends { [k in keyof T]?: true }>(
+    mask: Required<Mask>,
+    type: PartialType.NULLABLE
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask ? denullable<T[k]> : T[k];
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  required<Mask extends { [k in keyof T]?: true }>(
+    mask: Required<Mask>,
+    type: PartialType.NULLISH
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask
+        ? deoptional<denullable<T[k]>>
+        : T[k];
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
   required<Mask extends { [k in keyof T]?: false }>(
-    mask: Required<Mask>
+    mask: Required<Mask>,
+    type?: PartialType.OPTIONAL
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? T[k] : deoptional<T[k]>;
@@ -2699,7 +2822,34 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  required<Mask extends { [k in keyof T]?: boolean }>(mask?: Required<Mask>) {
+  required<Mask extends { [k in keyof T]?: false }>(
+    mask: Required<Mask>,
+    type: PartialType.NULLABLE
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask ? T[k] : denullable<T[k]>;
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  required<Mask extends { [k in keyof T]?: false }>(
+    mask: Required<Mask>,
+    type: PartialType.NULLISH
+  ): ZodObject<
+    objectUtil.noNever<{
+      [k in keyof T]: k extends keyof Mask
+        ? T[k]
+        : deoptional<denullable<T[k]>>;
+    }>,
+    UnknownKeys,
+    Catchall
+  >;
+  required<Mask extends { [k in keyof T]?: boolean }>(
+    maskOrType?: Required<Mask> | PartialType,
+    type = PartialType.OPTIONAL
+  ) {
+    const mask = isMask(maskOrType) ? maskOrType : undefined;
+    type = isType(maskOrType) ? maskOrType : type;
     assertMaskIsNotMixed(mask);
     const maskIsNotEmpty = isNotEmpty(mask);
     const value = isFalsy(mask) ? undefined : true;
@@ -2710,8 +2860,15 @@ export class ZodObject<
         const fieldSchema = this.shape[key];
         let newField = fieldSchema;
 
-        while (newField instanceof ZodOptional) {
-          newField = (newField as ZodOptional<any>)._def.innerType;
+        while (
+          type === PartialType.OPTIONAL
+            ? newField instanceof ZodOptional
+            : type === PartialType.NULLABLE
+            ? newField instanceof ZodNullable
+            : newField instanceof ZodOptional || newField instanceof ZodNullable
+        ) {
+          newField = (newField as ZodOptional<any> | ZodNullable<any>)._def
+            .innerType;
         }
 
         newShape[key] = newField;
