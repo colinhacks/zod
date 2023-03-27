@@ -202,6 +202,12 @@
         background-image: url("./static/sun.svg");
       }
     </style>
+
+    <script type="module">
+      import { z } from 'https://cdn.jsdelivr.net/npm/zod/lib/index.mjs';
+      window.z = z;
+      console.log('The Zod object is accessible in the console in the variable `z`. Try it out!')
+    </script>
   </head>
 
   <body>
