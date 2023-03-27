@@ -191,6 +191,7 @@ export type inferFormattedError<
 
 export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
+  messageOverride?: string;
 
   get errors() {
     return this.issues;
@@ -270,7 +271,13 @@ export class ZodError<T = any> extends Error {
     return this.message;
   }
   get message() {
-    return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
+    return (
+      this.messageOverride ??
+      JSON.stringify(this.issues, util.jsonStringifyReplacer, 2)
+    );
+  }
+  set message(message: string) {
+    this.messageOverride = message;
   }
 
   get isEmpty(): boolean {

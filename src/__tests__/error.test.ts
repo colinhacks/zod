@@ -89,6 +89,16 @@ test("default error message", () => {
   }
 });
 
+test("error message override", () => {
+  try {
+    z.string().parse(2);
+  } catch (err) {
+    const zerr: z.ZodError = err as any;
+    zerr.message = "Override";
+    expect(zerr.message).toEqual("Override");
+  }
+});
+
 test("override error in refine", () => {
   try {
     z.number()
