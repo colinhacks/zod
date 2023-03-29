@@ -84,6 +84,12 @@ test("more email validations", () => {
     `jsmith@[IPv6:2001:db8::1]`,
     `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:7334]`,
     `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:192.168.1.1]`,
+    `test@any.th1ng.com`,
+    `me@y.z.com`,
+    `me@y.z.co.jp`,
+    `example@subdomain.hyphenated-domain.com`,
+    `example@atlanta.k12.ga.us`,
+    `a.b@c.d`,
   ];
   const invalidEmails = [
     `Abc.example.com`,
@@ -96,7 +102,6 @@ test("more email validations", () => {
     `QA[icon]CHOCOLATE[icon]@test.com`,
     `invalid@-start.com`,
     `invalid@end.com-`,
-    `a.b@c.d`,
     `invalid@[1.1.1.-1]`,
     `invalid@[68.185.127.196.55]`,
     `temp@[192.168.1]`,
@@ -112,6 +117,7 @@ test("more email validations", () => {
     `mlivesay3@[9952:143f:b4df:2179:49a1:5e82:b92e:6b6]`,
     `gbacher0@[IPv6:bc37:4d3f:5048:2e26:37cc:248e:df8e:2f7f:af]`,
     `invalid@[IPv6:5348:4ed3:5d38:67fb:e9b:acd2:c13:192.168.256.1]`,
+    `test@.com`,
   ];
   const emailSchema = z.string().email();
   expect(
