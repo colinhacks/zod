@@ -227,6 +227,10 @@ export abstract class ZodType<
     throw result.error;
   }
 
+  check(data: unknown): data is Output {
+    return this.safeParse(data).success;
+  }
+
   safeParse(
     data: unknown,
     params?: Partial<ParseParams>
