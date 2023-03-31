@@ -662,6 +662,7 @@ z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
+z.string().ethereumAddress();
 
 // transformations
 z.string().trim(); // trim whitespace
@@ -695,6 +696,7 @@ z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 z.string().ip({ message: "Invalid IP address" });
+z.string().ethereumAddress({ message: "Invalid Ethereum Address" });
 ```
 
 ### ISO datetimes
@@ -755,6 +757,23 @@ ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
 
 const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
+```
+
+### Ethereum Addresses
+
+The `z.string().ethereumAddress()` method validates etherum compatible addresses.
+
+```ts
+const ethereumAddress = z.string().ethereumAddress();
+
+ethereumAddress.parse("0xF6c9eBd49C948888B921F150b03cF63a7Ab58a3A"); // pass
+ethereumAddress.parse("0x7AC056DE40c77223e3FbddbE4D11F1D62EEE01D1"); // pass
+ethereumAddress.parse("0x7E8D3aC442fa5b9655E6A71465b5734faAb4eF56"); // pass
+
+
+ethereumAddress.parse("bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh"); // fail (bitcoin address)
+ethereumAddress.parse("0x97e4b16e4707d58bc6fe14143bc73ad87703e0617175b0627bc6e3aa1860422d"); // fail (block hash, too long)
+ethereumAddress.parse("0x46c41f51373A6762fD0F6398B433C6492B989a3G"); // fail (non hex character)
 ```
 
 ## Numbers
