@@ -12,6 +12,7 @@ const includes = z.string().includes("includes");
 const includesFromIndex2 = z.string().includes("includes", { position: 2 });
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
+const validEthereumAddress = z.string().ethereumAddress("ethereumAddress");
 
 test("passing validations", () => {
   minFive.parse("12345");
@@ -24,6 +25,7 @@ test("passing validations", () => {
   includesFromIndex2.parse("XXXincludesXX");
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
+  validEthereumAddress.parse("0x5AEDA56215b167893e80B4fE645BA6d5Bab767DE");
 });
 
 test("failing validations", () => {
@@ -36,6 +38,7 @@ test("failing validations", () => {
   expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
+  expect(() => validEthereumAddress.parse("thisIsNotValid")).toThrow();
 });
 
 test("email validations", () => {
@@ -468,5 +471,37 @@ test("IP validation", () => {
   expect(validIPs.every((ip) => ipSchema.safeParse(ip).success)).toBe(true);
   expect(
     invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
+  ).toBe(true);
+});
+
+// Write different tests to validate an ethereum address
+test("Ethereum address validation", () => {
+  const ethAddress = z.string().ethereumAddress();
+  expect(
+    ethAddress.safeParse("0xF6c9eBd49C948888B921F150b03cF63a7Ab58a3A").success
+  ).toBe(true);
+
+  const validAddresses = [
+    "0xF6c9eBd49C948888B921F150b03cF63a7Ab58a3A",
+    "0x7AC056DE40c77223e3FbddbE4D11F1D62EEE01D1",
+    "0x7E8D3aC442fa5b9655E6A71465b5734faAb4eF56",
+    "0x46c41f51373A6762fD0F6398B433C6492B989a3b",
+  ];
+
+  const invalidAddresses = [
+    "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+    "0x97e4b16e4707d58bc6fe14143bc73ad87703e0617175b0627bc6e3aa1860422d",
+    "0xc492dcd0949b9703f81c2f7b63e79f69e7fe88c73009ae7d5e5a5aaa9e0941a7",
+    "0x46c41f51373A6762fD0F6398B433C6492B989a3G",
+    "0x46c41f51373A6762fD0F6398B433C6492B989ab",
+  ];
+
+  expect(
+    validAddresses.every((address) => ethAddress.safeParse(address).success)
+  ).toBe(true);
+  expect(
+    invalidAddresses.every(
+      (address) => ethAddress.safeParse(address).success === false
+    )
   ).toBe(true);
 });

@@ -530,7 +530,8 @@ export type ZodStringCheck =
       precision: number | null;
       message?: string;
     }
-  | { kind: "ip"; version?: IpVersion; message?: string };
+  | { kind: "ip"; version?: IpVersion; message?: string }
+  | { kind: "ethereumAddress"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -561,6 +562,7 @@ const ipv4Regex =
 const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
+const ethereumAddressRegex = /^0x[a-fA-F0-9]{40}$/;
 // Adapted from https://stackoverflow.com/a/3143231
 const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   if (args.precision) {
@@ -603,6 +605,10 @@ function isValidIP(ip: string, version?: IpVersion) {
   }
 
   return false;
+}
+
+function isValidEthereumAddress(address: string) {
+  return ethereumAddressRegex.test(address);
 }
 
 export class ZodString extends ZodType<string, ZodStringDef> {
@@ -824,6 +830,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "ethereumAddress") {
+        if (!isValidEthereumAddress(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "ethereumAddress",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -849,7 +865,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       checks: [...this._def.checks, check],
     });
   }
-
+  ethereumAddress(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "ethereumAddress",
+      ...errorUtil.errToObj(message),
+    });
+  }
   email(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "email", ...errorUtil.errToObj(message) });
   }
