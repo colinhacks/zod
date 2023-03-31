@@ -59,6 +59,7 @@
 - [Strings](#strings)
   - [Datetime](#datetime-validation)
   - [IP](#ip-address-validation)
+  - [Ethereum Address](#ethereum-addresses)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
