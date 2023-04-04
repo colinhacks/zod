@@ -32,3 +32,11 @@ test("min max getters", () => {
     beforeBenchmarkDate
   );
 });
+
+test("UTC parser", () => {
+  const schemaUTCDate = z.date().utc();
+
+  const date = new Date("2023-04-04");
+
+  expect(schemaUTCDate.parse(date).toString()).toEqual('Mon Apr 04 2023 00:00:00 GMT+0000 (Coordinated Universal Time)');
+});

@@ -1693,6 +1693,38 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     });
   }
 
+  utc() {
+    const convertDateToUTC = (date: Date) => {
+      const utc = new Date(
+        Date.UTC(
+          date.getUTCFullYear(),
+          date.getUTCMonth(),
+          date.getUTCDate(),
+          date.getUTCHours(),
+          date.getUTCMinutes(),
+          date.getUTCSeconds(),
+          date.getUTCMilliseconds()
+        )
+      );
+
+      utc.toString = function () {
+        const weekDay = utc.toLocaleString("default", { weekday: "short" });
+        const monthName = utc.toLocaleString("default", { month: "short" });
+        const day = this.getUTCDate().toString().padStart(2, "0");
+        const year = this.getUTCFullYear().toString().padStart(4, "0");
+        const hour = this.getUTCHours().toString().padStart(2, "0");
+        const minute = this.getUTCMinutes().toString().padStart(2, "0");
+        const second = this.getUTCSeconds().toString().padStart(2, "0");
+
+        return `${weekDay} ${monthName} ${day} ${year} ${hour}:${minute}:${second} GMT+0000 (Coordinated Universal Time)`;
+      };
+
+      return utc;
+    };
+
+    return this.transform(convertDateToUTC);
+  }
+
   get minDate() {
     let min: number | null = null;
     for (const ch of this._def.checks) {
