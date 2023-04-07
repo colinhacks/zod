@@ -607,11 +607,8 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
-export class ZodString<T extends string = string> extends ZodType<
-  T,
-  ZodStringDef
-> {
-  _parse(input: ParseInput): ParseReturnType<T> {
+export class ZodString extends ZodType<string, ZodStringDef> {
+  _parse(input: ParseInput): ParseReturnType<string> {
     if (this._def.coerce) {
       input.data = String(input.data);
     }
@@ -868,8 +865,8 @@ export class ZodString<T extends string = string> extends ZodType<
       ...errorUtil.errToObj(message),
     });
 
-  _addCheck<R extends string = T>(check: ZodStringCheck) {
-    return new ZodString<R>({
+  _addCheck(check: ZodStringCheck) {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, check],
     });
@@ -1012,13 +1009,13 @@ export class ZodString<T extends string = string> extends ZodType<
     });
 
   toLowerCase = () =>
-    new ZodString<Lowercase<string>>({
+    new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toLowerCase" }],
     });
 
   toUpperCase = () =>
-    new ZodString<Uppercase<string>>({
+    new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toUpperCase" }],
     });
@@ -1050,6 +1047,30 @@ export class ZodString<T extends string = string> extends ZodType<
   }
   get isIP() {
     return !!this._def.checks.find((ch) => ch.kind === "ip");
+  }
+
+  get isUpperCase() {
+    for (let i = this._def.checks.length - 1; i >= 0; i--) {
+      const { kind } = this._def.checks[i];
+
+      if (kind === "uppercase" || kind === "toUpperCase") {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  get isLowerCase() {
+    for (let i = this._def.checks.length - 1; i >= 0; i--) {
+      const { kind } = this._def.checks[i];
+
+      if (kind === "lowercase" || kind === "toLowerCase") {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   get minLength() {

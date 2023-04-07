@@ -11,6 +11,8 @@ const includes = z.string().includes("includes");
 const includesFromIndex2 = z.string().includes("includes", { position: 2 });
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
+const uppercase = z.string().uppercase();
+const lowercase = z.string().lowercase();
 
 test("passing validations", () => {
   minFive.parse("12345");
@@ -23,6 +25,8 @@ test("passing validations", () => {
   includesFromIndex2.parse("XXXincludesXX");
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
+  uppercase.parse("ABC");
+  lowercase.parse("abc");
 });
 
 test("failing validations", () => {
@@ -35,6 +39,8 @@ test("failing validations", () => {
   expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
+  expect(() => uppercase.parse("aBC")).toThrow();
+  expect(() => lowercase.parse("Abc")).toThrow();
 });
 
 test("email validations", () => {
