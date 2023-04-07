@@ -518,6 +518,8 @@ export type ZodStringCheck =
   | { kind: "includes"; value: string; position?: number; message?: string }
   | { kind: "cuid2"; message?: string }
   | { kind: "ulid"; message?: string }
+  | { kind: "lowercase"; message?: string }
+  | { kind: "uppercase"; message?: string }
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
@@ -560,6 +562,9 @@ const ipv4Regex =
 
 const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
+
+const lowercaseRegex = /^[^A-Z]*$/;
+const uppercaseRegex = /^[^a-z]*$/;
 
 // Adapted from https://stackoverflow.com/a/3143231
 const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
@@ -605,8 +610,11 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
-export class ZodString extends ZodType<string, ZodStringDef> {
-  _parse(input: ParseInput): ParseReturnType<string> {
+export class ZodString<UtilType extends string = string> extends ZodType<
+  UtilType,
+  ZodStringDef
+> {
+  _parse(input: ParseInput): ParseReturnType<UtilType> {
     if (this._def.coerce) {
       input.data = String(input.data);
     }
@@ -754,6 +762,26 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "lowercase") {
+        if (!lowercaseRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "lowercase",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "uppercase") {
+        if (!uppercaseRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "uppercase",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "regex") {
         check.regex.lastIndex = 0;
         const testResult = check.regex.test(input.data);
@@ -843,8 +871,8 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       ...errorUtil.errToObj(message),
     });
 
-  _addCheck(check: ZodStringCheck) {
-    return new ZodString({
+  _addCheck<T extends string = UtilType>(check: ZodStringCheck) {
+    return new ZodString<T>({
       ...this._def,
       checks: [...this._def.checks, check],
     });
@@ -906,6 +934,19 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return this._addCheck({
       kind: "regex",
       regex: regex,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  lowercase(message?: errorUtil.ErrMessage) {
+    return this._addCheck<Lowercase<string>>({
+      kind: "lowercase",
+      ...errorUtil.errToObj(message),
+    });
+  }
+  uppercase(message?: errorUtil.ErrMessage) {
+    return this._addCheck<Uppercase<string>>({
+      kind: "uppercase",
       ...errorUtil.errToObj(message),
     });
   }
@@ -1011,6 +1052,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isIP() {
     return !!this._def.checks.find((ch) => ch.kind === "ip");
+  }
+  get isLowercase() {
+    return !!this._def.checks.find((ch) => ch.kind === "lowercase");
+  }
+  get isUppercase() {
+    return !!this._def.checks.find((ch) => ch.kind === "uppercase");
   }
 
   get minLength() {

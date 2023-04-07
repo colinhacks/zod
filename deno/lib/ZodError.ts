@@ -99,6 +99,8 @@ export type StringValidation =
   | "ulid"
   | "datetime"
   | "ip"
+  | "lowercase"
+  | "uppercase"
   | { includes: string; position?: number }
   | { startsWith: string }
   | { endsWith: string };

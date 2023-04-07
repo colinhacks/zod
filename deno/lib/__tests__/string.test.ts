@@ -233,6 +233,24 @@ test("ulid", () => {
   }
 });
 
+test("lowercase / uppercase", () => {
+  const lc = z.string().lowercase();
+  lc.parse("123456qwertyiop[]kl;'");
+  const lcResult = lc.safeParse("iNvAlId LoWeRcAsE");
+  expect(lcResult.success).toEqual(false);
+  if (!lcResult.success) {
+    expect(lcResult.error.issues[0].message).toEqual("Invalid lowercase");
+  }
+
+  const uc = z.string().uppercase();
+  uc.parse("123456QWEIOP[]KL;'");
+  const ucResult = uc.safeParse("iNvAlId UpPeRcAsE");
+  expect(ucResult.success).toEqual(false);
+  if (!ucResult.success) {
+    expect(ucResult.error.issues[0].message).toEqual("Invalid uppercase");
+  }
+});
+
 test("regex", () => {
   z.string()
     .regex(/^moo+$/)
@@ -339,7 +357,7 @@ test("trim", () => {
   expect(() => z.string().trim().min(2).parse(" 1 ")).toThrow();
 });
 
-test("lowerCase", () => {
+test("toLowerCase / toUpperCase", () => {
   expect(z.string().toLowerCase().parse("ASDF")).toEqual("asdf");
   expect(z.string().toUpperCase().parse("asdf")).toEqual("ASDF");
 });
