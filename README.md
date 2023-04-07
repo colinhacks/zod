@@ -656,6 +656,8 @@ z.string().uuid();
 z.string().cuid();
 z.string().cuid2();
 z.string().ulid();
+z.string().lowercase();
+z.string().uppercase();
 z.string().regex(regex);
 z.string().includes(string);
 z.string().startsWith(string);
@@ -665,8 +667,8 @@ z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 
 // transformations
 z.string().trim(); // trim whitespace
-z.string().toLowerCase(); // toLowerCase
-z.string().toUpperCase(); // toUpperCase
+z.string().toLowerCase(); // toLowerCase - to validate input, use `lowercase`
+z.string().toUpperCase(); // toUpperCase - to validate input, use `uppercase`
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
