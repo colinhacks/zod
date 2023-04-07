@@ -662,6 +662,8 @@ z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
+z.string().lowercase();
+z.string().uppercase();
 
 // transformations
 z.string().trim(); // trim whitespace
