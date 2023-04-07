@@ -623,7 +623,7 @@ z.coerce.boolean().parse(null); // => false
 
 ## Literals
 
-Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/literal-types.html), like `"hello world"` or `5`.
+Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types), like `"hello world"` or `5`.
 
 ```ts
 const tuna = z.literal("tuna");
@@ -662,6 +662,8 @@ z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // defaults to UTC, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
+z.string().lowercase();
+z.string().uppercase();
 
 // transformations
 z.string().trim(); // trim whitespace

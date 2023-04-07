@@ -521,9 +521,11 @@ export type ZodStringCheck =
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
-  | { kind: "trim"; message?: string }
-  | { kind: "toLowerCase"; message?: string }
-  | { kind: "toUpperCase"; message?: string }
+  | { kind: "lowercase"; message?: string }
+  | { kind: "uppercase"; message?: string }
+  | { kind: "trim" }
+  | { kind: "toLowerCase" }
+  | { kind: "toUpperCase" }
   | {
       kind: "datetime";
       offset: boolean;
@@ -605,8 +607,11 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
-export class ZodString extends ZodType<string, ZodStringDef> {
-  _parse(input: ParseInput): ParseReturnType<string> {
+export class ZodString<T extends string = string> extends ZodType<
+  T,
+  ZodStringDef
+> {
+  _parse(input: ParseInput): ParseReturnType<T> {
     if (this._def.coerce) {
       input.data = String(input.data);
     }
@@ -778,6 +783,26 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "lowercase") {
+        if (input.data !== input.data.toLowerCase()) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "lowercase",
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "uppercase") {
+        if (input.data !== input.data.toUpperCase()) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "uppercase",
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "toLowerCase") {
         input.data = input.data.toLowerCase();
       } else if (check.kind === "toUpperCase") {
@@ -843,8 +868,8 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       ...errorUtil.errToObj(message),
     });
 
-  _addCheck(check: ZodStringCheck) {
-    return new ZodString({
+  _addCheck<R extends string = T>(check: ZodStringCheck) {
+    return new ZodString<R>({
       ...this._def,
       checks: [...this._def.checks, check],
     });
@@ -966,6 +991,20 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   nonempty = (message?: errorUtil.ErrMessage) =>
     this.min(1, errorUtil.errToObj(message));
 
+  uppercase(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "uppercase",
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  lowercase(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "lowercase",
+      ...errorUtil.errToObj(message),
+    });
+  }
+
   trim = () =>
     new ZodString({
       ...this._def,
@@ -973,13 +1012,13 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
 
   toLowerCase = () =>
-    new ZodString({
+    new ZodString<Lowercase<string>>({
       ...this._def,
       checks: [...this._def.checks, { kind: "toLowerCase" }],
     });
 
   toUpperCase = () =>
-    new ZodString({
+    new ZodString<Uppercase<string>>({
       ...this._def,
       checks: [...this._def.checks, { kind: "toUpperCase" }],
     });
