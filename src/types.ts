@@ -563,9 +563,6 @@ const ipv4Regex =
 const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
-const lowercaseRegex = /^[^A-Z]*$/;
-const uppercaseRegex = /^[^a-z]*$/;
-
 // Adapted from https://stackoverflow.com/a/3143231
 const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   if (args.precision) {
@@ -763,7 +760,7 @@ export class ZodString<UtilType extends string = string> extends ZodType<
           status.dirty();
         }
       } else if (check.kind === "lowercase") {
-        if (!lowercaseRegex.test(input.data)) {
+        if (input.data !== input.data.toLowerCase()) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "lowercase",
@@ -773,7 +770,7 @@ export class ZodString<UtilType extends string = string> extends ZodType<
           status.dirty();
         }
       } else if (check.kind === "uppercase") {
-        if (!uppercaseRegex.test(input.data)) {
+        if (input.data !== input.data.toUpperCase()) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "uppercase",
