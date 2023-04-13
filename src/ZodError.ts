@@ -99,6 +99,7 @@ export type StringValidation =
   | "ulid"
   | "datetime"
   | "ip"
+  | "equalsTo"
   | { includes: string; position?: number }
   | { startsWith: string }
   | { endsWith: string };

@@ -530,7 +530,8 @@ export type ZodStringCheck =
       precision: number | null;
       message?: string;
     }
-  | { kind: "ip"; version?: IpVersion; message?: string };
+  | { kind: "ip"; version?: IpVersion; message?: string }
+  | { kind: "equalsTo"; field: string; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -824,6 +825,23 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "equalsTo") {
+        ctx = this._getOrReturnCtx(input, ctx);
+        const parentData = ctx.parent?.data;
+
+        if (!(check.field in parentData)) {
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.custom,
+            message: check.message,
+          });
+          status.dirty();
+        } else if (parentData[check.field] !== input.data) {
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.custom,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -965,6 +983,14 @@ export class ZodString extends ZodType<string, ZodStringDef> {
    */
   nonempty = (message?: errorUtil.ErrMessage) =>
     this.min(1, errorUtil.errToObj(message));
+
+  equalsTo = (field: string, message?: errorUtil.ErrMessage) => {
+    return this._addCheck({
+      kind: "equalsTo",
+      field,
+      ...errorUtil.errToObj(message),
+    });
+  };
 
   trim = () =>
     new ZodString({

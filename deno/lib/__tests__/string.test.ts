@@ -470,3 +470,46 @@ test("IP validation", () => {
     invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
   ).toBe(true);
 });
+
+test("equalsTo success", () => {
+  const registrationSchema = z.object({
+    password: z.string(),
+    passwordConfirmation: z.string().equalsTo("password"),
+  });
+
+  expect(() =>
+    registrationSchema.parse({
+      password: "123",
+      passwordConfirmation: "123",
+    })
+  ).not.toThrow();
+});
+
+test("equalsTo unsuccess without message", () => {
+  const registrationSchema = z.object({
+    password: z.string(),
+    passwordConfirmation: z.string().equalsTo("password"),
+  });
+
+  expect(() =>
+    registrationSchema.parse({
+      password: "123",
+      passwordConfirmation: "1234",
+    })
+  ).toThrow(/Invalid input/);
+});
+
+test("equalsTo unsuccess with message", () => {
+  const registrationSchema = z.object({
+    password: z.string(),
+    passwordConfirmation: z.string().equalsTo("password", 'Invalid passwords'),
+  });
+
+  expect(() =>
+    registrationSchema.parse({
+      password: "123",
+      passwordConfirmation: "1234",
+    })
+  ).toThrow(/Invalid passwords/);
+});
+
