@@ -66,6 +66,7 @@
 - [Dates](#dates)
 - [Zod enums](#zod-enums)
 - [Native enums](#native-enums)
+- [Selects](#selects)
 - [Optionals](#optionals)
 - [Nullables](#nullables)
 - [Objects](#objects)
@@ -993,6 +994,35 @@ You can access the underlying object with the `.enum` property:
 
 ```ts
 FruitEnum.enum.Apple; // "apple"
+```
+
+## Selects
+
+```ts
+const fishes: string[] = await getFishes();
+const FishSelect = z.select(fishes);
+type FishSelect = z.infer<typeof FishSelect>; // string
+```
+
+`z.select` allows to declare a schema with an arbitrary set of allowable values (not necessarily string), possibly populated in runtime.
+
+**Const options**
+
+Use `as const` to define specific options:
+
+```ts
+const KeyLengthSelect = z.select([512, 1024, 2048] as const);
+type KeyLengthSelect = z.infer<typeof KeyLengthSelect>; // 512 | 1024 | 2048
+```
+
+For fixed sets of strings, consider using `z.enum()` instead as it provides better autocomplete options.
+
+**Retrieving original options**
+
+You can retrieve the list of options with the `.options` property:
+
+```ts
+FishSelect.options; // ["Salmon", "Tuna", "Trout"] - if that was coming from the database
 ```
 
 ## Optionals
