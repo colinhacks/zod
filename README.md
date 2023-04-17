@@ -1143,7 +1143,7 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 
 ### `.partial`
 
-Inspired by the built-in TypeScript utility type [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialt), the `.partial` method makes all properties optional.
+Inspired by the built-in TypeScript utility type [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype), the `.partial` method makes all properties optional.
 
 Starting from this object:
 
