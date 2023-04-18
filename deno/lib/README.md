@@ -927,6 +927,19 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 ```
 
+**Validating values**
+
+If enum values are coming from an already existing type, you can validate them with `satisfies EnumValues<...>`:
+
+```ts
+type Fish = "Salmon" | "Tuna" | "Trout" | "Tilapia" | "Shark";
+
+const FishEnum = z.enum(["Salmon", "Tune", "Trout"] satisfies EnumValues<Fish>);
+// Type '"Tune"' is not assignable to type 'Fish'. Did you mean '"Tuna"'?
+type FishEnum = z.infer<typeof FishEnum>;
+// 'Salmon' | 'Tune' | 'Trout'
+```
+
 ## Native enums
 
 Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()`.
