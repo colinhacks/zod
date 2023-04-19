@@ -24,6 +24,8 @@
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://www.npmjs.com/package/zod">npm</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+  <a href="https://deno.land/x/zod">deno</a>
+  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://twitter.com/colinhacks">@colinhacks</a>
@@ -55,7 +57,10 @@
 - [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
+  - [Datetime](#datetime-validation)
+  - [IP](#ip-address-validation)
 - [Numbers](#numbers)
+- [BigInts](#bigints)
 - [NaNs](#nans)
 - [Booleans](#booleans)
 - [Dates](#dates)
@@ -113,6 +118,7 @@
   - [.or](#or)
   - [.and](#and)
   - [.brand](#brand)
+  - [.pipe](#pipe)
 - [Guides and concepts](#guides-and-concepts)
   - [Type inference](#type-inference)
   - [Writing generic functions](#writing-generic-functions)
@@ -198,6 +204,30 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <b>Proxy</b>
       <br />
       <a href="https://proxy.com">proxy.com</a>
+    </td>
+  </tr>
+    <tr>
+    <td align="center">
+      <a href="https://trigger.dev/">
+        <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" width="200px;" alt="Trigger.dev logo" />
+      </a>
+      <br />
+      <b>Trigger.dev</b>
+      <br />
+      <a href="https://trigger.dev">trigger.dev</a>
+      <br/>
+      <p>Effortless automation for developers.</p>
+    </td>
+    <td align="center">
+      <a href="https://transloadit.com/">
+        <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" width="200px;" alt="Transloadit logo" />
+      </a>
+      <br />
+      <b>Transloadit</b>
+      <br />
+      <a href="https://transloadit.com">transloadit.com</a>
+      <br/>
+      <p>Simple file processing for developers.</p>
     </td>
   </tr>
 </table>
@@ -303,7 +333,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
   <tr>
-  <td align="center">
+    <td align="center">
       <a href="https://fungible.systems/">
         <img src="https://avatars.githubusercontent.com/u/80220121?s=200&v=4" width="100px;" alt="Fungible Systems logo"/>
       </a>
@@ -334,6 +364,39 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <span>Solana non-custodial wallet</span>
       <br />
     </td>
+  </tr>
+  <tr>
+  <td align="center">
+      <a href="https://learnwithjason.dev">
+        <img src="https://avatars.githubusercontent.com/u/66575486?s=200&v=4" width="100px;" alt="Learn with Jason logo"/>
+      </a>
+      <br />
+      <b>Jason Lengstorf</b>
+      <br/>
+      <a href="https://learnwithjason.dev/">learnwithjason.dev</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://ill.inc/">
+        <img src="https://avatars.githubusercontent.com/u/89107581?s=200&v=4" width="100px;" alt="Global Illumination"/>
+      </a>
+      <br />
+      <b>Global Illumination, Inc.</b>
+      <br/>
+      <a href="https://ill.inc/">ill.inc</a>
+      <br />
+    </td>
+    <!-- <td align="center">
+      <a href="https://www.avanawallet.com/">
+        <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
+      </a>
+      <br />
+      <b>Avana Wallet</b>
+      <br/>
+      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
+      <span>Solana non-custodial wallet</span>
+      <br />
+    </td> -->
   </tr>
 </table>
 
@@ -367,6 +430,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): Useful for translating Zod error messages.
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
 - [`houseform`](https://github.com/crutchcorn/houseform/): A React form library that uses Zod for validation.
+- [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms): Supercharged form library for SvelteKit with Zod validation.
 
 #### Zod to X
 
@@ -581,19 +645,28 @@ tuna.value; // "tuna"
 Zod includes a handful of string-specific validations.
 
 ```ts
+// validations
 z.string().max(5);
 z.string().min(5);
 z.string().length(5);
 z.string().email();
 z.string().url();
+z.string().emoji();
 z.string().uuid();
 z.string().cuid();
 z.string().cuid2();
+z.string().ulid();
 z.string().regex(regex);
+z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
-z.string().trim(); // trim whitespace
 z.string().datetime(); // defaults to UTC, see below for options
+z.string().ip(); // defaults to IPv4 and IPv6, see below for options
+
+// transformations
+z.string().trim(); // trim whitespace
+z.string().toLowerCase(); // toLowerCase
+z.string().toUpperCase(); // toUpperCase
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
@@ -615,13 +688,16 @@ z.string().max(5, { message: "Must be 5 or fewer characters long" });
 z.string().length(5, { message: "Must be exactly 5 characters long" });
 z.string().email({ message: "Invalid email address" });
 z.string().url({ message: "Invalid url" });
+z.string().emoji({ message: "Contains non-emoji characters" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().includes("tuna", { message: "Must include tuna" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+z.string().ip({ message: "Invalid IP address" });
 ```
 
-### Datetime validation
+### ISO datetimes
 
 The `z.string().datetime()` method defaults to UTC validation: no timezone offsets with arbitrary sub-second decimal precision.
 
@@ -656,6 +732,31 @@ datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```
 
+### IP addresses
+
+The `z.string().ip()` method by default validate IPv4 and IPv6.
+
+```ts
+const ip = z.string().ip();
+
+ip.parse("192.168.1.1"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // pass
+
+ip.parse("256.1.1.1"); // fail
+ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // fail
+```
+
+You can additionally set the IP `version`.
+
+```ts
+const ipv4 = z.string().ip({ version: "v4" });
+ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+
+const ipv6 = z.string().ip({ version: "v6" });
+ipv6.parse("192.168.1.1"); // fail
+```
+
 ## Numbers
 
 You can customize certain error messages when creating a number schema.
@@ -685,12 +786,31 @@ z.number().nonpositive(); //  <= 0
 z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
 
 z.number().finite(); // value must be finite, not Infinity or -Infinity
+z.number().safe(); // value must be between Number.MIN_SAFE_INTEGER and Number.MAX_SAFE_INTEGER
 ```
 
 Optionally, you can pass in a second argument to provide a custom error message.
 
 ```ts
 z.number().lte(5, { message: "this👏is👏too👏big" });
+```
+
+## BigInts
+
+Zod includes a handful of bigint-specific validations.
+
+```ts
+z.bigint().gt(5n);
+z.bigint().gte(5n); // alias `.min(5n)`
+z.bigint().lt(5n);
+z.bigint().lte(5n); // alias `.max(5n)`
+
+z.bigint().positive(); // > 0n
+z.bigint().nonnegative(); // >= 0n
+z.bigint().negative(); // < 0n
+z.bigint().nonpositive(); // <= 0n
+
+z.bigint().multipleOf(5n); // Evenly divisible by 5n.
 ```
 
 ## NaNs
@@ -1409,7 +1529,7 @@ type NumberSet = z.infer<typeof numberSet>;
 // type NumberSet = Set<number>
 ```
 
-Set schemas can be further contrainted with the following utility methods.
+Set schemas can be further constrained with the following utility methods.
 
 ```ts
 z.set(z.string()).nonempty(); // must contain at least one item
@@ -1703,15 +1823,26 @@ This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that conta
 You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
 
 ```ts
-const px = z.custom<`${number}px`>((val) => /^\d+px$/.test(val));
-px.parse("100px"); // pass
-px.parse("100vw"); // fail
+const px = z.custom<`${number}px`>((val) => {
+  return /^\d+px$/.test(val as string);
+});
+
+type px = z.infer<typeof px>; // `${number}px`
+
+px.parse("42px"); // "42px"
+px.parse("42vw"); // throws;
 ```
 
 If you don't provide a validation function, Zod will allow any value. This can be dangerous!
 
 ```ts
 z.custom<{ arg: string }>(); // performs no validation
+```
+
+You can customize the error message and other options by passing a second argument. This parameter works the same way as the params parameter of [`.refine`](#refine).
+
+```ts
+z.custom<...>((val) => ..., "custom error message");
 ```
 
 ## Schema methods
@@ -2134,14 +2265,17 @@ numberWithCatch.parse(5); // => 5
 numberWithCatch.parse("tuna"); // => 42
 ```
 
-Optionally, you can pass a function into `.catch` that will be re-executed whenever a default value needs to be generated:
+Optionally, you can pass a function into `.catch` that will be re-executed whenever a default value needs to be generated. A `ctx` object containing the caught error will be passed into this function.
 
 ```ts
-const numberWithRandomCatch = z.number().catch(Math.random);
+const numberWithRandomCatch = z.number().catch((ctx) => {
+  ctx.error; // the caught ZodError
+  return Math.random();
+});
 
-numberWithRandomDefault.parse("sup"); // => 0.4413456736055323
-numberWithRandomDefault.parse("sup"); // => 0.1871840107401901
-numberWithRandomDefault.parse("sup"); // => 0.7223408162401552
+numberWithRandomCatch.parse("sup"); // => 0.4413456736055323
+numberWithRandomCatch.parse("sup"); // => 0.1871840107401901
+numberWithRandomCatch.parse("sup"); // => 0.7223408162401552
 ```
 
 Conceptually, this is how Zod processes "catch values":
@@ -2269,6 +2403,74 @@ type Cat = z.infer<typeof Cat>;
 
 Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
 
+### `.pipe()`
+
+Schemas can be chained into validation "pipelines". It's useful for easily validating the result after a `.transform()`:
+
+```ts
+z.string()
+  .transform((val) => val.length)
+  .pipe(z.number().min(5));
+```
+
+The `.pipe()` method returns a `ZodPipeline` instance.
+
+#### You can use `.pipe()` to fix common issues with `z.coerce`.
+
+You can constrain the input to types that work well with your chosen coercion. Then use `.pipe()` to apply the coercion.
+
+without constrained input:
+
+```ts
+const toDate = z.coerce.date();
+
+// works intuitively
+console.log(toDate.safeParse("2023-01-01").success); // true
+
+// might not be what you want
+console.log(toDate.safeParse(null).success); // true
+```
+
+with constrained input:
+
+```ts
+const datelike = z.union([z.number(), z.string(), z.date()]);
+const datelikeToDate = datelike.pipe(z.coerce.date());
+
+// still works intuitively
+console.log(datelikeToDate.safeParse("2023-01-01").success); // true
+
+// more likely what you want
+console.log(datelikeToDate.safeParse(null).success); // false
+```
+
+You can also use this technique to avoid coercions that throw uncaught errors.
+
+without constrained input:
+
+```ts
+const toBigInt = z.coerce.bigint();
+
+// works intuitively
+console.log(toBigInt.safeParse("42")); // true
+
+// probably not what you want
+console.log(toBigInt.safeParse(null)); // throws uncaught error
+```
+
+with constrained input:
+
+```ts
+const toNumber = z.number().or(z.string()).pipe(z.coerce.number());
+const toBigInt = z.bigint().or(toNumber).pipe(z.coerce.bigint());
+
+// still works intuitively
+console.log(toBigInt.safeParse("42").success); // true
+
+// error handled by zod, more likely what you want
+console.log(toBigInt.safeParse(null).success); // false
+```
+
 ## Guides and concepts
 
 ### Type inference
@@ -2365,14 +2567,14 @@ makeSchemaOptional(z.number());
 Zod provides a subclass of Error called `ZodError`. ZodErrors contain an `issues` array containing detailed information about the validation problems.
 
 ```ts
-const data = z
+const result = z
   .object({
     name: z.string(),
   })
   .safeParse({ name: 12 });
 
-if (!data.success) {
-  data.error.issues;
+if (!result.success) {
+  result.error.issues;
   /* [
       {
         "code": "invalid_type",
@@ -2394,14 +2596,14 @@ Zod's error reporting emphasizes _completeness_ and _correctness_. If you are lo
 You can use the `.format()` method to convert this error into a nested object.
 
 ```ts
-const data = z
+const result = z
   .object({
     name: z.string(),
   })
   .safeParse({ name: 12 });
 
-if (!data.success) {
-  const formatted = data.error.format();
+if (!result.success) {
+  const formatted = result.error.format();
   /* {
     name: { _errors: [ 'Expected string, received number' ] }
   } */

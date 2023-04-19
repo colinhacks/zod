@@ -1,71 +1,13 @@
 {
   "name": "zod",
-  "version": "3.20.6",
-  "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "main": "./lib/index.js",
-  "types": "./index.d.ts",
-  "module": "./lib/index.mjs",
-  "dependencies": {},
-  "exports": {
-    ".": {
-      "require": "./lib/index.js",
-      "import": "./lib/index.mjs",
-      "types": "./index.d.ts"
-    },
-    "./package.json": "./package.json",
-    "./locales/*": "./lib/locales/*"
-  },
-  "files": [
-    "/lib",
-    "/index.d.ts"
-  ],
+  "version": "3.21.4",
+  "author": "Colin McDonnell <colin@colinhacks.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/colinhacks/zod"
   },
-  "author": "Colin McDonnell <colin@colinhacks.com>",
-  "license": "MIT",
-  "sideEffects": false,
-  "bugs": {
-    "url": "https://github.com/colinhacks/zod/issues"
-  },
-  "homepage": "https://zod.dev",
-  "funding": "https://github.com/sponsors/colinhacks",
-  "support": {
-    "backing": {
-      "npm-funding": true
-    }
-  },
-  "keywords": [
-    "typescript",
-    "schema",
-    "validation",
-    "type",
-    "inference"
-  ],
-  "scripts": {
-    "prettier:check": "prettier --check src/**/*.ts deno/lib/**/*.ts --no-error-on-unmatched-pattern",
-    "prettier:fix": "prettier --write src/**/*.ts deno/lib/**/*.ts --ignore-unknown --no-error-on-unmatched-pattern",
-    "lint:check": "eslint --cache --ext .ts ./src",
-    "lint:fix": "eslint --cache --fix --ext .ts ./src",
-    "check": "yarn lint:check && yarn prettier:check",
-    "fix": "yarn lint:fix && yarn prettier:fix",
-    "clean": "rm -rf lib/* deno/lib/*",
-    "build": "yarn run clean && npm run build:cjs && npm run build:esm && npm run build:deno",
-    "build:deno": "node ./deno/build.mjs && cp ./README.md ./deno/lib",
-    "build:esm": "rollup --config rollup.config.js",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
-    "build:types": "tsc -p tsconfig.types.json",
-    "rollup": "rollup --config rollup.config.js",
-    "test:watch": "jest --watch",
-    "test": "jest --coverage",
-    "test:deno": "cd deno && deno test",
-    "prepublishOnly": "npm run test && npm run build && npm run build:deno",
-    "play": "nodemon -e ts -w . -x tsx playground.ts",
-    "depcruise": "depcruise -c .dependency-cruiser.js src",
-    "benchmark": "tsx src/benchmarks/index.ts",
-    "prepare": "husky install"
-  },
+  "main": "./lib/index.js",
+  "module": "./lib/index.mjs",
   "devDependencies": {
     "@rollup/plugin-typescript": "^8.2.0",
     "@types/benchmark": "^2.1.0",
@@ -93,12 +35,71 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.3.1",
     "tsx": "^3.8.0",
-    "typescript": "4.5"
+    "typescript": "~4.5.0"
   },
+  "exports": {
+    ".": {
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs",
+      "types": "./index.d.ts"
+    },
+    "./package.json": "./package.json",
+    "./locales/*": "./lib/locales/*"
+  },
+  "bugs": {
+    "url": "https://github.com/colinhacks/zod/issues"
+  },
+  "description": "TypeScript-first schema declaration and validation library with static type inference",
+  "files": [
+    "/lib",
+    "/index.d.ts"
+  ],
+  "funding": "https://github.com/sponsors/colinhacks",
+  "homepage": "https://zod.dev",
+  "keywords": [
+    "typescript",
+    "schema",
+    "validation",
+    "type",
+    "inference"
+  ],
+  "license": "MIT",
   "lint-staged": {
     "src/*.ts": [
       "eslint --cache --fix",
       "prettier --ignore-unknown --write"
     ]
-  }
+  },
+  "scripts": {
+    "prettier:check": "prettier --check src/**/*.ts deno/lib/**/*.ts --no-error-on-unmatched-pattern",
+    "prettier:fix": "prettier --write src/**/*.ts deno/lib/**/*.ts --ignore-unknown --no-error-on-unmatched-pattern",
+    "lint:check": "eslint --cache --ext .ts ./src",
+    "lint:fix": "eslint --cache --fix --ext .ts ./src",
+    "check": "yarn lint:check && yarn prettier:check",
+    "fix": "yarn lint:fix && yarn prettier:fix",
+    "clean": "rm -rf lib/* deno/lib/*",
+    "build": "yarn run clean && npm run build:cjs && npm run build:esm && npm run build:deno",
+    "build:deno": "node ./deno/build.mjs && cp ./README.md ./deno/lib",
+    "build:esm": "rollup --config rollup.config.js",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:types": "tsc -p tsconfig.types.json",
+    "build:test": "tsc -p tsconfig.test.json",
+    "rollup": "rollup --config rollup.config.js",
+    "test:watch": "jest --watch",
+    "test": "jest --coverage",
+    "test:deno": "cd deno && deno test",
+    "prepublishOnly": "npm run test && npm run build && npm run build:deno",
+    "play": "nodemon -e ts -w . -x tsx playground.ts",
+    "depcruise": "depcruise -c .dependency-cruiser.js src",
+    "benchmark": "tsx src/benchmarks/index.ts",
+    "prepare": "husky install"
+  },
+  "sideEffects": false,
+  "support": {
+    "backing": {
+      "npm-funding": true
+    }
+  },
+  "types": "./index.d.ts",
+  "dependencies": {}
 }

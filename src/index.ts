@@ -1,4 +1,4 @@
-import * as mod from "./external";
+import * as z from "./external";
 export * from "./external";
-export { mod as z };
-export default mod;
+export { z };
+export default z;
