@@ -52,7 +52,7 @@ export type input<T extends ZodType<any, any, any>> = T["_input"];
 export type output<T extends ZodType<any, any, any>> = T["_output"];
 export type { TypeOf as infer };
 
-export type ZodAnnotations = { [k: symbol]: any };
+export type ZodAnnotations = object;
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
@@ -501,13 +501,13 @@ export abstract class ZodType<
     });
   }
 
-  annotate(annotationKey: symbol, value: any): this {
+  annotate(annotations: object): this {
     const This = (this as any).constructor;
     return new This({
       ...this._def,
       annotations: {
         ...this._def.annotations,
-        [annotationKey]: value,
+        ...annotations,
       },
     });
   }

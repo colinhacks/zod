@@ -2241,14 +2241,13 @@ This can be useful for documenting a field, for example in a JSON Schema using a
 
 ### `.annotate`
 
-Use `.annotate()` to add an annotation to the resulting schema.
+Use `.annotate()` to add annotations to the resulting schema.
 
 ```ts
-const isPii = Symbol("isPii");
 const annotatedString = z
   .string()
-  .annotate(isPii, true);
-annotatedString.meta[isPii]; // true
+  .annotate({ isPii: true });
+annotatedString.annotations.isPii; // true
 ```
 
 This can be useful for describing additional data about a field, for
