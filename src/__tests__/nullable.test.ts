@@ -40,3 +40,9 @@ test("unwrap", () => {
   const unwrapped = z.string().nullable().unwrap();
   expect(unwrapped).toBeInstanceOf(z.ZodString);
 });
+
+test("optionul", () =>
+{
+  const optionul = z.string().optionul();
+  expect(optionul.parse(null)).toBe(undefined);
+})

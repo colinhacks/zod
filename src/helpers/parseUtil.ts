@@ -176,3 +176,5 @@ export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
   typeof Promise !== "undefined" && x instanceof Promise;
+
+export const nullToUndefined = <T>(x: T | null | undefined): T | undefined => x ?? undefined;

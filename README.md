@@ -2301,6 +2301,17 @@ const nullishString = z.string().nullish(); // string | null | undefined
 z.string().optional().nullable();
 ```
 
+### `.optionul`
+
+A convenience method that is sort of like a mash between `.optional` and `.nullish`. Optionul schemas will accept both `undefined` and `null`, while comverting `null` to `undefined`.
+
+```ts
+const optionul = z.string().optionul(); // string | null | undefined -> string | undefined
+
+// equivalent to
+z.string().nullish().transform(x => x ?? undefined);
+```
+
 ### `.array`
 
 A convenience method that returns an array schema for the given type:

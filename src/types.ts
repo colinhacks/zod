@@ -11,6 +11,7 @@ import {
   isDirty,
   isValid,
   makeIssue,
+  nullToUndefined,
   OK,
   ParseContext,
   ParseInput,
@@ -414,6 +415,13 @@ export abstract class ZodType<
   }
   nullish(): ZodOptional<ZodNullable<this>> {
     return this.nullable().optional();
+  }
+  optionul(): ZodEffects<
+    ZodOptional<ZodNullable<this>>,
+    this["_output"] | undefined,
+    this["_input"] | null | undefined
+  > {
+    return this.nullish().transform(nullToUndefined);
   }
   array(): ZodArray<this> {
     return ZodArray.create(this, this._def);
