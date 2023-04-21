@@ -68,29 +68,13 @@ test("partial refinement", () => {
   });
 
   expect(result.success).toBe(false);
-
-  // Check just for Typescript type inference
   if (result.success === false) {
-    expect(result.error.errors).toHaveLength(2);
-
-    expect(result.error).toMatchInlineSnapshot(`
-      [ZodError: [
-        {
-          "code": "invalid_type",
-          "expected": "string",
-          "received": "undefined",
-          "path": [
-            "email"
-          ],
-          "message": "Required"
-        },
-        {
-          "code": "custom",
-          "message": "Both password and confirmation must match",
-          "path": []
-        }
-      ]]
-    `);
+    expect(result.error.issues.length).toEqual(2);
+    expect(result.error.issues[0].code).toEqual(ZodIssueCode.invalid_type);
+    expect(result.error.issues[0].path).toEqual(["email"]);
+    expect(result.error.issues[1].code).toEqual(ZodIssueCode.custom);
+    expect(result.error.issues[1].path).toEqual([])
+    expect(result.error.issues[1].message).toEqual("Both password and confirmation must match");
   }
 });
 
@@ -116,31 +100,13 @@ test("partial refinement options", () => {
   });
 
   expect(result.success).toBe(false);
-
-  // Check just for Typescript type inference
   if (result.success === false) {
-    expect(result.error.errors).toHaveLength(2);
-
-    expect(result.error).toMatchInlineSnapshot(`
-      [ZodError: [
-        {
-          "code": "invalid_type",
-          "expected": "string",
-          "received": "undefined",
-          "path": [
-            "email"
-          ],
-          "message": "Required"
-        },
-        {
-          "code": "custom",
-          "path": [
-            "confirmPassword"
-          ],
-          "message": "Both password and confirmation must match"
-        }
-      ]]
-    `);
+    expect(result.error.issues.length).toEqual(2);
+    expect(result.error.issues[0].code).toEqual(ZodIssueCode.invalid_type);
+    expect(result.error.issues[0].path).toEqual(["email"]);
+    expect(result.error.issues[1].code).toEqual(ZodIssueCode.custom);
+    expect(result.error.issues[1].path).toEqual(["confirmPassword"]);
+    expect(result.error.issues[1].message).toEqual("Both password and confirmation must match");
   }
 });
 
