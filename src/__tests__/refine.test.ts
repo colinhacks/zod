@@ -49,6 +49,101 @@ test("refinement 2", () => {
   ).toThrow();
 });
 
+test("partial refinement", () => {
+  const validationSchema = z
+    .object({
+      email: z.string().email(),
+      password: z.string(),
+      confirmPassword: z.string(),
+    })
+    .partialRefine(
+      ["password", "confirmPassword"],
+      data => data.password === data.confirmPassword,
+      "Both password and confirmation must match"
+    );
+
+  const result = validationSchema.safeParse({
+    password: "aaaaaaaa",
+    confirmPassword: "bbbbbbbb",
+  });
+
+  expect(result.success).toBe(false);
+
+  // Check just for Typescript type inference
+  if (result.success === false) {
+    expect(result.error.errors).toHaveLength(2);
+
+    expect(result.error).toMatchInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "received": "undefined",
+          "path": [
+            "email"
+          ],
+          "message": "Required"
+        },
+        {
+          "code": "custom",
+          "message": "Both password and confirmation must match",
+          "path": []
+        }
+      ]]
+    `);
+  }
+});
+
+test("partial refinement options", () => {
+  const validationSchema = z
+    .object({
+      email: z.string().email(),
+      password: z.string(),
+      confirmPassword: z.string(),
+    })
+    .partialRefine(
+      ["password", "confirmPassword"],
+      data => data.password === data.confirmPassword,
+      {
+        path: ["confirmPassword"],
+        message: "Both password and confirmation must match",
+      }
+    );
+
+  const result = validationSchema.safeParse({
+    password: "aaaaaaaa",
+    confirmPassword: "bbbbbbbb",
+  });
+
+  expect(result.success).toBe(false);
+
+  // Check just for Typescript type inference
+  if (result.success === false) {
+    expect(result.error.errors).toHaveLength(2);
+
+    expect(result.error).toMatchInlineSnapshot(`
+      [ZodError: [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "received": "undefined",
+          "path": [
+            "email"
+          ],
+          "message": "Required"
+        },
+        {
+          "code": "custom",
+          "path": [
+            "confirmPassword"
+          ],
+          "message": "Both password and confirmation must match"
+        }
+      ]]
+    `);
+  }
+});
+
 test("refinement type guard", () => {
   const validationSchema = z.object({
     a: z.string().refine((s): s is "a" => s === "a"),
