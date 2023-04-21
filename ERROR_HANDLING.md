@@ -130,12 +130,6 @@ Here are the errors that will be printed:
     message: "Invalid input: expected string, received number",
   },
   {
-    code: "unrecognized_keys",
-    keys: ["extra"],
-    path: ["address"],
-    message: "Unrecognized key(s) in object: 'extra'",
-  },
-  {
     code: "too_small",
     minimum: 10000,
     type: "number",
