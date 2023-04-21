@@ -865,7 +865,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
 
   _addCheck(check: ZodStringCheck) {
@@ -876,29 +876,29 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
 
   email(options?: errorUtil.ErrMessageOrOptions) {
-    return this._addCheck({ kind: "email", ...errorUtil.errToObj(options) });
+    return this._addCheck({ kind: "email", ...errorUtil.normalize(options) });
   }
   url(options?: errorUtil.ErrMessageOrOptions) {
-    return this._addCheck({ kind: "url", ...errorUtil.errToObj(options) });
+    return this._addCheck({ kind: "url", ...errorUtil.normalize(options) });
   }
   emoji(options?: errorUtil.ErrMessageOrOptions) {
-    return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(options) });
+    return this._addCheck({ kind: "emoji", ...errorUtil.normalize(options) });
   }
   uuid(options?: errorUtil.ErrMessageOrOptions) {
-    return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(options) });
+    return this._addCheck({ kind: "uuid", ...errorUtil.normalize(options) });
   }
   cuid(options?: errorUtil.ErrMessageOrOptions) {
-    return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(options) });
+    return this._addCheck({ kind: "cuid", ...errorUtil.normalize(options) });
   }
   cuid2(options?: errorUtil.ErrMessageOrOptions) {
-    return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(options) });
+    return this._addCheck({ kind: "cuid2", ...errorUtil.normalize(options) });
   }
   ulid(options?: errorUtil.ErrMessageOrOptions) {
-    return this._addCheck({ kind: "ulid", ...errorUtil.errToObj(options) });
+    return this._addCheck({ kind: "ulid", ...errorUtil.normalize(options) });
   }
 
   ip(options?: errorUtil.ErrMessageOrOptions<{ version?: "v4" | "v6" }>) {
-    return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
+    return this._addCheck({ kind: "ip", ...errorUtil.normalize(options) });
   }
 
   datetime(
@@ -920,7 +920,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       precision:
         typeof options?.precision === "undefined" ? null : options?.precision,
       offset: options?.offset ?? false,
-      ...errorUtil.errToObj(options?.message),
+      ...errorUtil.normalize(options?.message),
     });
   }
 
@@ -928,7 +928,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return this._addCheck({
       kind: "regex",
       regex: regex,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -940,7 +940,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       kind: "includes",
       value: value,
       position: options?.position,
-      ...errorUtil.errToObj(options?.message),
+      ...errorUtil.normalize(options?.message),
     });
   }
 
@@ -948,7 +948,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return this._addCheck({
       kind: "startsWith",
       value: value,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -956,7 +956,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return this._addCheck({
       kind: "endsWith",
       value: value,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -964,7 +964,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return this._addCheck({
       kind: "min",
       value: minLength,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -972,7 +972,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return this._addCheck({
       kind: "max",
       value: maxLength,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -980,7 +980,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return this._addCheck({
       kind: "length",
       value: len,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -989,7 +989,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
    * @see {@link ZodString.min}
    */
   nonempty = (options?: errorUtil.ErrMessageOrOptions) =>
-    this.min(1, errorUtil.errToObj(options));
+    this.min(1, errorUtil.normalize(options));
 
   trim = () =>
     new ZodString({
@@ -1247,7 +1247,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           kind,
           value,
           inclusive,
-          ...errorUtil.errToObj(options),
+          ...errorUtil.normalize(options),
         },
       ],
     });
@@ -1263,7 +1263,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
   int(options?: errorUtil.ErrMessageOrOptions) {
     return this._addCheck({
       kind: "int",
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1272,7 +1272,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       kind: "min",
       value: 0,
       inclusive: false,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1281,7 +1281,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       kind: "max",
       value: 0,
       inclusive: false,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1290,7 +1290,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       kind: "max",
       value: 0,
       inclusive: true,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1299,7 +1299,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       kind: "min",
       value: 0,
       inclusive: true,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1307,7 +1307,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     return this._addCheck({
       kind: "multipleOf",
       value: value,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
   step = this.multipleOf;
@@ -1315,7 +1315,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
   finite(options?: errorUtil.ErrMessageOrOptions) {
     return this._addCheck({
       kind: "finite",
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1324,12 +1324,12 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       kind: "min",
       inclusive: true,
       value: Number.MIN_SAFE_INTEGER,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     })._addCheck({
       kind: "max",
       inclusive: true,
       value: Number.MAX_SAFE_INTEGER,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1525,7 +1525,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
           kind,
           value,
           inclusive,
-          ...errorUtil.errToObj(options),
+          ...errorUtil.normalize(options),
         },
       ],
     });
@@ -1543,7 +1543,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
       kind: "min",
       value: BigInt(0),
       inclusive: false,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1552,7 +1552,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
       kind: "max",
       value: BigInt(0),
       inclusive: false,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1561,7 +1561,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
       kind: "max",
       value: BigInt(0),
       inclusive: true,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1570,7 +1570,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
       kind: "min",
       value: BigInt(0),
       inclusive: true,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1578,7 +1578,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     return this._addCheck({
       kind: "multipleOf",
       value,
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1740,7 +1740,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     return this._addCheck({
       kind: "min",
       value: minDate.getTime(),
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -1748,7 +1748,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     return this._addCheck({
       kind: "max",
       value: maxDate.getTime(),
-      ...errorUtil.errToObj(options),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -2127,21 +2127,21 @@ export class ZodArray<
   min(minLength: number, options?: errorUtil.ErrMessageOrOptions): this {
     return new ZodArray({
       ...this._def,
-      minLength: { value: minLength, ...errorUtil.errToObj(options) },
+      minLength: { value: minLength, ...errorUtil.normalize(options) },
     }) as any;
   }
 
   max(maxLength: number, options?: errorUtil.ErrMessageOrOptions): this {
     return new ZodArray({
       ...this._def,
-      maxLength: { value: maxLength, ...errorUtil.errToObj(options) },
+      maxLength: { value: maxLength, ...errorUtil.normalize(options) },
     }) as any;
   }
 
   length(len: number, options?: errorUtil.ErrMessageOrOptions): this {
     return new ZodArray({
       ...this._def,
-      exactLength: { value: len, ...errorUtil.errToObj(options) },
+      exactLength: { value: len, ...errorUtil.normalize(options) },
     }) as any;
   }
 
@@ -2408,7 +2408,7 @@ export class ZodObject<
   strict(
     options?: errorUtil.ErrMessageOrOptions
   ): ZodObject<T, "strict", Catchall> {
-    errorUtil.errToObj;
+    errorUtil.normalize;
     return new ZodObject({
       ...this._def,
       unknownKeys: "strict",
@@ -2419,7 +2419,7 @@ export class ZodObject<
                 this._def.errorMap?.(issue, ctx).message ?? ctx.defaultError;
               if (issue.code === "unrecognized_keys")
                 return {
-                  message: errorUtil.errToObj(options).message ?? defaultError,
+                  message: errorUtil.normalize(options).message ?? defaultError,
                 };
               return {
                 message: defaultError,
@@ -3662,14 +3662,14 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
   min(minSize: number, options?: errorUtil.ErrMessageOrOptions): this {
     return new ZodSet({
       ...this._def,
-      minSize: { value: minSize, ...errorUtil.errToObj(options) },
+      minSize: { value: minSize, ...errorUtil.normalize(options) },
     }) as any;
   }
 
   max(maxSize: number, options?: errorUtil.ErrMessageOrOptions): this {
     return new ZodSet({
       ...this._def,
-      maxSize: { value: maxSize, ...errorUtil.errToObj(options) },
+      maxSize: { value: maxSize, ...errorUtil.normalize(options) },
     }) as any;
   }
 

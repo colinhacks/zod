@@ -5,6 +5,6 @@ export namespace errorUtil {
   export type ErrMessageOrOptions<T extends Object | void = void> =
     | string
     | ErrOptions<T>;
-  export const errToObj = (options?: ErrMessageOrOptions): ErrOptions =>
+  export const normalize = (options?: ErrMessageOrOptions): ErrOptions =>
     typeof options === "string" ? { message: options } : options ?? {};
 }
