@@ -2098,6 +2098,46 @@ const schema = z.number().superRefine((val, ctx) => {
 });
 ```
 
+You may also want to abort early to prevent a slow server round trip if a previous builtin validation has failed. You can either introspect the `issues` field of `ctx`:
+
+```ts
+z.string()
+  .min(4, { message: "Min 4 chars" })
+  .superRefine(async (val, ctx) => {
+    // If string length < 4, ctx.issues = [{ code: "too_small", minimum: 4, message: "Min 4 chars" }]
+    
+    // Early exit
+    if (ctx.issues.length > 0) return z.NEVER
+
+    const valid = await slowServerTrip(val)
+
+    if (!valid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "should be >= 10",
+        fatal: true,
+      });
+
+    return z.NEVER;
+  }
+})
+```
+
+Or add an optional `fatal` flag to the previous builtin validation which will abort early as above:
+
+```ts
+z.string()
+  .min(4, { fatal: true })
+  .superRefine(async (val, ctx) => {
+    // If string length < 4 this superRefine will not be called at all
+    const valid = await expensiveServerTrip(val)
+
+    if (!valid) {
+      ...
+    }
+  })
+```
+
 #### Type refinements
 
 If you provide a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) to `.refine()` or `.superRefine()`, the resulting type will be narrowed down to your predicate's type. This is useful if you are mixing multiple chained refinements and transformations:
@@ -2195,6 +2235,18 @@ const IdToUser = z
   .string()
   .uuid()
   .transform(async (id) => {
+    return await getUserById(id);
+  });
+```
+
+You may also want to abort early before the transform fires:
+
+```ts
+const IdToUser = z
+  .string()
+  .uuid({ fatal: true })
+  .transform(async (id) => {
+    // Will not be called if string is not a valid uuid
     return await getUserById(id);
   });
 ```
