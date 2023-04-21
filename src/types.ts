@@ -42,6 +42,7 @@ import {
 ///////////////////////////////////////
 
 export type RefinementCtx = {
+  issues: ZodIssue[];
   addIssue: (arg: IssueData) => void;
   path: (string | number)[];
 };
@@ -4239,6 +4240,9 @@ export class ZodEffects<
     }
 
     const checkCtx: RefinementCtx = {
+      get issues() {
+        return ctx.common.issues;
+      },
       addIssue: (arg: IssueData) => {
         addIssueToContext(ctx, arg);
         if (arg.fatal) {

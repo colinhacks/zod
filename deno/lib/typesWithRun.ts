@@ -45,6 +45,7 @@ export type RefinementCtx = {
   issues: ZodIssue[];
   addIssue: (arg: IssueData) => void;
   path: (string | number)[];
+  parseRun: number;
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
@@ -161,6 +162,7 @@ export abstract class ZodType<
   readonly _output!: Output;
   readonly _input!: Input;
   readonly _def!: Def;
+  _run!: number;
 
   get description() {
     return this._def.description;
@@ -179,6 +181,7 @@ export abstract class ZodType<
     return (
       ctx || {
         common: input.parent.common,
+        currentRun: this._run,
         data: input.data,
 
         parsedType: getParsedType(input.data),
@@ -198,6 +201,7 @@ export abstract class ZodType<
       status: new ParseStatus(),
       ctx: {
         common: input.parent.common,
+        currentRun: this._run,
         data: input.data,
 
         parsedType: getParsedType(input.data),
@@ -232,12 +236,14 @@ export abstract class ZodType<
     data: unknown,
     params?: Partial<ParseParams>
   ): SafeParseReturnType<Input, Output> {
+    this._run += 1;
     const ctx: ParseContext = {
       common: {
         issues: [],
         async: params?.async ?? false,
         contextualErrorMap: params?.errorMap,
       },
+      currentRun: this._run,
       path: params?.path || [],
       schemaErrorMap: this._def.errorMap,
       parent: null,
@@ -262,12 +268,14 @@ export abstract class ZodType<
     data: unknown,
     params?: Partial<ParseParams>
   ): Promise<SafeParseReturnType<Input, Output>> {
+    this._run += 1;
     const ctx: ParseContext = {
       common: {
         issues: [],
         contextualErrorMap: params?.errorMap,
         async: true,
       },
+      currentRun: this._run,
       path: params?.path || [],
       schemaErrorMap: this._def.errorMap,
       parent: null,
@@ -382,6 +390,7 @@ export abstract class ZodType<
 
   constructor(def: Def) {
     this._def = def;
+    this._run = 0;
     this.parse = this.parse.bind(this);
     this.safeParse = this.safeParse.bind(this);
     this.parseAsync = this.parseAsync.bind(this);
@@ -608,6 +617,7 @@ function isValidIP(ip: string, version?: IpVersion) {
 
 export class ZodString extends ZodType<string, ZodStringDef> {
   _parse(input: ParseInput): ParseReturnType<string> {
+    console.log('ZodString._parse()')
     if (this._def.coerce) {
       input.data = String(input.data);
     }
@@ -641,8 +651,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             inclusive: true,
             exact: false,
             message: check.message,
+            fatal: true,
           });
-          status.dirty();
+          status.abort();
+          // status.dirty();
         }
       } else if (check.kind === "max") {
         if (input.data.length > check.value) {
@@ -4216,6 +4228,8 @@ export class ZodEffects<
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
+    const run = input.parent.currentRun
+    console.log('Parse Zod Effect', run)
 
     const effect = this._def.effect || null;
 
@@ -4254,6 +4268,9 @@ export class ZodEffects<
       get path() {
         return ctx.path;
       },
+      get parseRun() {
+        return run;
+      },
     };
 
     checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
@@ -4290,10 +4307,12 @@ export class ZodEffects<
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
           .then((inner) => {
+            console.log("Async refinement inner", inner)
             if (inner.status === "aborted") return INVALID;
             if (inner.status === "dirty") status.dirty();
 
             return executeRefinement(inner.value).then(() => {
+              console.log('Async refinement resolved', ctx.currentRun, run, this._run)
               return { status: status.value, value: inner.value };
             });
           });
