@@ -508,30 +508,37 @@ export abstract class ZodType<
 /////////////////////////////////////////
 export type IpVersion = "v4" | "v6";
 export type ZodStringCheck =
-  | { kind: "min"; value: number; message?: string, fatal?: boolean }
-  | { kind: "max"; value: number; message?: string, fatal?: boolean }
-  | { kind: "length"; value: number; message?: string, fatal?: boolean }
-  | { kind: "email"; message?: string, fatal?: boolean }
-  | { kind: "url"; message?: string, fatal?: boolean }
-  | { kind: "emoji"; message?: string, fatal?: boolean }
-  | { kind: "uuid"; message?: string, fatal?: boolean }
-  | { kind: "cuid"; message?: string, fatal?: boolean }
-  | { kind: "includes"; value: string; position?: number; message?: string, fatal?: boolean }
-  | { kind: "cuid2"; message?: string, fatal?: boolean }
-  | { kind: "ulid"; message?: string, fatal?: boolean }
-  | { kind: "startsWith"; value: string; message?: string, fatal?: boolean }
-  | { kind: "endsWith"; value: string; message?: string, fatal?: boolean }
-  | { kind: "regex"; regex: RegExp; message?: string, fatal?: boolean }
-  | { kind: "trim"; message?: string, fatal?: boolean }
-  | { kind: "toLowerCase"; message?: string, fatal?: boolean }
-  | { kind: "toUpperCase"; message?: string, fatal?: boolean }
+  | { kind: "min"; value: number; message?: string; fatal?: boolean }
+  | { kind: "max"; value: number; message?: string; fatal?: boolean }
+  | { kind: "length"; value: number; message?: string; fatal?: boolean }
+  | { kind: "email"; message?: string; fatal?: boolean }
+  | { kind: "url"; message?: string; fatal?: boolean }
+  | { kind: "emoji"; message?: string; fatal?: boolean }
+  | { kind: "uuid"; message?: string; fatal?: boolean }
+  | { kind: "cuid"; message?: string; fatal?: boolean }
+  | {
+      kind: "includes";
+      value: string;
+      position?: number;
+      message?: string;
+      fatal?: boolean;
+    }
+  | { kind: "cuid2"; message?: string; fatal?: boolean }
+  | { kind: "ulid"; message?: string; fatal?: boolean }
+  | { kind: "startsWith"; value: string; message?: string; fatal?: boolean }
+  | { kind: "endsWith"; value: string; message?: string; fatal?: boolean }
+  | { kind: "regex"; regex: RegExp; message?: string; fatal?: boolean }
+  | { kind: "trim"; message?: string; fatal?: boolean }
+  | { kind: "toLowerCase"; message?: string; fatal?: boolean }
+  | { kind: "toUpperCase"; message?: string; fatal?: boolean }
   | {
       kind: "datetime";
       offset: boolean;
       precision: number | null;
-      message?: string, fatal?: boolean;
+      message?: string;
+      fatal?: boolean;
     }
-  | { kind: "ip"; version?: IpVersion; message?: string, fatal?: boolean };
+  | { kind: "ip"; version?: IpVersion; message?: string; fatal?: boolean };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -890,7 +897,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return this._addCheck({ kind: "ulid", ...errorUtil.normalize(options) });
   }
 
-  ip(options?: errorUtil.ErrMessageOrOptions<{ version?: "v4" | "v6"}>) {
+  ip(options?: errorUtil.ErrMessageOrOptions<{ version?: "v4" | "v6" }>) {
     return this._addCheck({ kind: "ip", ...errorUtil.normalize(options) });
   }
 
@@ -925,7 +932,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
   }
 
-  includes(value: string, options?: errorUtil.ErrOptions<{ position?: number }>) {
+  includes(
+    value: string,
+    options?: errorUtil.ErrOptions<{ position?: number }>
+  ) {
     return this._addCheck({
       kind: "includes",
       value: value,
@@ -1065,8 +1075,20 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type ZodNumberCheck =
-  | { kind: "min"; value: number; inclusive: boolean; message?: string; fatal?: boolean }
-  | { kind: "max"; value: number; inclusive: boolean; message?: string; fatal?: boolean }
+  | {
+      kind: "min";
+      value: number;
+      inclusive: boolean;
+      message?: string;
+      fatal?: boolean;
+    }
+  | {
+      kind: "max";
+      value: number;
+      inclusive: boolean;
+      message?: string;
+      fatal?: boolean;
+    }
   | { kind: "int"; message?: string; fatal?: boolean }
   | { kind: "multipleOf"; value: number; message?: string; fatal?: boolean }
   | { kind: "finite"; message?: string; fatal?: boolean };
@@ -1225,7 +1247,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           kind,
           value,
           inclusive,
-          ...errorUtil.normalize(options)
+          ...errorUtil.normalize(options),
         },
       ],
     });
@@ -1367,8 +1389,20 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type ZodBigIntCheck =
-  | { kind: "min"; value: bigint; inclusive: boolean; message?: string; fatal?: boolean }
-  | { kind: "max"; value: bigint; inclusive: boolean; message?: string; fatal?: boolean }
+  | {
+      kind: "min";
+      value: bigint;
+      inclusive: boolean;
+      message?: string;
+      fatal?: boolean;
+    }
+  | {
+      kind: "max";
+      value: bigint;
+      inclusive: boolean;
+      message?: string;
+      fatal?: boolean;
+    }
   | { kind: "multipleOf"; value: bigint; message?: string; fatal?: boolean };
 
 export interface ZodBigIntDef extends ZodTypeDef {
@@ -2371,7 +2405,9 @@ export class ZodObject<
     return this._def.shape();
   }
 
-  strict(options?: errorUtil.ErrMessageOrOptions): ZodObject<T, "strict", Catchall> {
+  strict(
+    options?: errorUtil.ErrMessageOrOptions
+  ): ZodObject<T, "strict", Catchall> {
     errorUtil.normalize;
     return new ZodObject({
       ...this._def,
@@ -4274,7 +4310,7 @@ export class ZodEffects<
       },
       addIssue: (arg: IssueData) => {
         addIssueToContext(ctx, arg);
-        status.dirtyOrAbort(arg.fatal)
+        status.dirtyOrAbort(arg.fatal);
       },
       get path() {
         return ctx.path;
