@@ -108,7 +108,7 @@ try {
     address: {
       line1: "123 Maple Ave",
       zipCode: 123, // zip code isn't 5 digits
-      extra: "other stuff", // unrecognized key
+      extra: "other stuff",
     },
   });
 } catch (err) {
@@ -146,7 +146,7 @@ Here are the errors that will be printed:
 ];
 ```
 
-As you can see three different issues were identified. Every ZodIssue has a `code` property and additional metadata about the validation failure. For instance the `unrecognized_keys` error provides a list of the unrecognized keys detected in the input.
+As you can see three different issues were identified. Every ZodIssue has a `code` property and additional metadata about the validation failure. For instance the `invalid_type` error provides information about the expected and received types.
 
 ## Customizing errors with ZodErrorMap
 
