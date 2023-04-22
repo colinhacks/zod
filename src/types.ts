@@ -396,8 +396,8 @@ export abstract class ZodType<
   asyncDebounce(ms: number): ZodAsyncEffects<this, Output, Input> {
     return this._asyncEffect({ type: "debounce", ms });
   }
-  asyncSingleCache(): ZodAsyncEffects<this, Output, Input> {
-    return this._asyncEffect({ type: "singleCache" });
+  asyncCache(): ZodAsyncEffects<this, Output, Input> {
+    return this._asyncEffect({ type: "cache" });
   }
 
   constructor(def: Def) {
@@ -412,7 +412,7 @@ export abstract class ZodType<
     this.superRefine = this.superRefine.bind(this);
     this.asyncSupersede = this.asyncSupersede.bind(this);
     this.asyncDebounce = this.asyncDebounce.bind(this);
-    this.asyncSingleCache = this.asyncSingleCache.bind(this);
+    this.asyncCache = this.asyncCache.bind(this);
     this.optional = this.optional.bind(this);
     this.nullable = this.nullable.bind(this);
     this.nullish = this.nullish.bind(this);
@@ -4462,13 +4462,13 @@ export type AsyncDebounceEffect = {
   type: "debounce";
   ms: number;
 };
-export type AsyncSingleCacheEffect = {
-  type: "singleCache";
+export type AsyncCacheEffect = {
+  type: "cache";
 };
 export type AsyncEffect =
   | AsyncSupersedeEffect
   | AsyncDebounceEffect
-  | AsyncSingleCacheEffect;
+  | AsyncCacheEffect;
 
 export interface ZodAsyncEffectsDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
@@ -4489,6 +4489,7 @@ export class ZodAsyncEffects<
 > extends ZodType<Output, ZodAsyncEffectsDef<T>, Input> {
   _passes = 0;
   _resultCache: AsyncEffectsCache<Output> | null = null;
+  _inputCache: any;
 
   innerType() {
     return this._def.schema;
@@ -4575,6 +4576,9 @@ export class ZodAsyncEffects<
     if (asyncEffect.type === "debounce") {
       // Allows rapidly changing inputs to be validated at a slower rate
       // Debounced passes that resolve in a superseded state return the cached result
+      // INFO: This is a naive implementation of debounce. It does not support cancelling a debounce.
+      // INFO: .asyncDebounce(ms) placement creates a debounce boundary
+      //          everything "below" it in the validation order is debounced
 
       return this._def.schema
         ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
@@ -4605,9 +4609,39 @@ export class ZodAsyncEffects<
         });
     }
 
-    // TODO Create singleCache
-    if (asyncEffect.type === "singleCache") {
-      return {} as any;
+    if (asyncEffect.type === "cache") {
+      // Allows skipping validation calls if the input is the same as the previous input
+      // Useful for preventing async validation on field of Array or Object if another field changes
+      // INFO: Only caches the most recent result, not the result of every input
+
+      const dataMatchesCache = this._inputCache === ctx.data;
+
+      // Skip parsing inner schema if the data matches and the resultCache isn't null
+      if (dataMatchesCache && this._resultCache != null) {
+        // Insert the issues of the most recent pass into the ctx of the current pass
+        replaceContextIssues(ctx, this._resultCache.issues);
+
+        // Early exit with the result of the cached pass
+        return this._resultCache.parseResult;
+      }
+
+      // Parse inner schema if data changed or first pass (resultCache is null)
+      return this._def.schema
+        ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
+        .then(async (inner) => {
+          // Don't cache if this pass has been superseded
+          const superseded = this._passes > pass;
+          console.log("Async cache superseded", superseded, this._passes, pass);
+          if (superseded) return inner;
+
+          // Cache the issues and result of the inner parse
+          this._inputCache = ctx.data;
+          this._resultCache = {
+            issues: [...ctx.common.issues], // (requires cloning to prevent reference mutations)
+            parseResult: inner,
+          };
+          return inner;
+        });
     }
 
     util.assertNever(asyncEffect);
