@@ -18,6 +18,7 @@ import {
   ParsePath,
   ParseReturnType,
   ParseStatus,
+  replaceContextIssues,
   SyncParseReturnType,
 } from "./helpers/parseUtil.ts";
 import { partialUtil } from "./helpers/partialUtil.ts";
@@ -380,6 +381,24 @@ export abstract class ZodType<
     return this._refinement(refinement);
   }
 
+  _asyncEffect(asyncEffect: AsyncEffect): ZodAsyncEffects<this, Output, Input> {
+    return new ZodAsyncEffects({
+      schema: this,
+      typeName: ZodFirstPartyTypeKind.ZodAsyncEffects,
+      asyncEffect,
+    });
+  }
+
+  asyncSupersede(): ZodAsyncEffects<this, Output, Input> {
+    return this._asyncEffect({ type: "supersede" });
+  }
+  asyncDebounce(): ZodAsyncEffects<this, Output, Input> {
+    return this._asyncEffect({ type: "debounce" });
+  }
+  asyncSingleCache(): ZodAsyncEffects<this, Output, Input> {
+    return this._asyncEffect({ type: "singleCache" });
+  }
+
   constructor(def: Def) {
     this._def = def;
     this.parse = this.parse.bind(this);
@@ -390,6 +409,9 @@ export abstract class ZodType<
     this.refine = this.refine.bind(this);
     this.refinement = this.refinement.bind(this);
     this.superRefine = this.superRefine.bind(this);
+    this.asyncSupersede = this.asyncSupersede.bind(this);
+    this.asyncDebounce = this.asyncDebounce.bind(this);
+    this.asyncSingleCache = this.asyncSingleCache.bind(this);
     this.optional = this.optional.bind(this);
     this.nullable = this.nullable.bind(this);
     this.nullish = this.nullish.bind(this);
@@ -4424,6 +4446,143 @@ export class ZodEffects<
 
 export { ZodEffects as ZodTransformer };
 
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+//////////                          //////////
+//////////     ZodAsyncEffects      //////////
+//////////                          //////////
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+
+export type AsyncSupersedeEffect = {
+  type: "supersede";
+};
+export type AsyncDebounceEffect = {
+  type: "debounce";
+};
+export type AsyncSingleCacheEffect = {
+  type: "singleCache";
+};
+export type AsyncEffect =
+  | AsyncSupersedeEffect
+  | AsyncDebounceEffect
+  | AsyncSingleCacheEffect;
+
+export interface ZodAsyncEffectsDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  schema: T;
+  typeName: ZodFirstPartyTypeKind.ZodAsyncEffects;
+  asyncEffect: AsyncEffect;
+}
+
+type AsyncEffectsCache<T> = {
+  parseResult: SyncParseReturnType<T>;
+  issues: ZodIssue[];
+};
+
+export class ZodAsyncEffects<
+  T extends ZodTypeAny,
+  Output = output<T>,
+  Input = input<T>
+> extends ZodType<Output, ZodAsyncEffectsDef<T>, Input> {
+  _passes = 0;
+  _cache: AsyncEffectsCache<Output> = { parseResult: INVALID, issues: [] };
+
+  innerType() {
+    return this._def.schema;
+  }
+
+  sourceType(): T {
+    return this._def.schema._def.typeName ===
+      ZodFirstPartyTypeKind.ZodAsyncEffects
+      ? (this._def.schema as unknown as ZodAsyncEffects<T>).sourceType()
+      : (this._def.schema as T);
+  }
+
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const { status, ctx } = this._processInputParams(input);
+    this._passes += 1;
+    const pass = this._passes;
+
+    if (ctx.common.async === false) {
+      throw new Error(
+        "AsyncSupersede encountered during async parse operation. Use .parse instead."
+      );
+    }
+
+    const effect = this._def.asyncEffect || null;
+
+    const checkCtx: RefinementCtx = {
+      get issues() {
+        return ctx.common.issues;
+      },
+      addIssue: (arg: IssueData) => {
+        addIssueToContext(ctx, arg);
+        status.dirtyOrAbort(arg.fatal);
+      },
+      get path() {
+        return ctx.path;
+      },
+    };
+
+    checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
+
+    if (effect.type === "supersede") {
+      // Prevents quickly resolving validation pass from being overwritten by a slower resolving validation pass which resolves later
+
+      // Prevents case:
+      // Value A Parsed, Pass A Begins
+      // Value B Parsed, Pass B Begins (B is most recent input)
+      // Pass B Resolves, result is returned
+      // Pass A Resolves, result overwrite Pass B result
+
+      return this._def.schema
+        ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
+        .then((inner) => {
+          const superseded = this._passes > pass;
+
+          if (superseded) {
+            // Insert the issues of the most recent pass into the ctx of the current pass
+            replaceContextIssues(ctx, this._cache.issues);
+          } else {
+            // Cache the issues of the inner parse (requires cloning to prevent reference mutations)
+            this._cache.issues = [...ctx.common.issues];
+            // Cache the parseResult of the inner parse
+            this._cache.parseResult = inner;
+          }
+
+          // The cache will always contain the parseResult of the most recent run
+          return this._cache.parseResult;
+        });
+    }
+
+    // TODO Create debounce
+    if (effect.type === "debounce") {
+      return {} as any;
+    }
+
+    // TODO Create singleCache
+    if (effect.type === "singleCache") {
+      return {} as any;
+    }
+
+    util.assertNever(effect);
+  }
+
+  static create = <I extends ZodTypeAny>(
+    schema: I,
+    asyncEffect: AsyncEffect,
+    params?: RawCreateParams
+  ): ZodAsyncEffects<I, I["_output"]> => {
+    return new ZodAsyncEffects({
+      schema,
+      typeName: ZodFirstPartyTypeKind.ZodAsyncEffects,
+      asyncEffect,
+      ...processCreateParams(params),
+    });
+  };
+}
+
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 //////////                       //////////
@@ -4872,6 +5031,7 @@ export enum ZodFirstPartyTypeKind {
   ZodLiteral = "ZodLiteral",
   ZodEnum = "ZodEnum",
   ZodEffects = "ZodEffects",
+  ZodAsyncEffects = "ZodAsyncEffects",
   ZodNativeEnum = "ZodNativeEnum",
   ZodOptional = "ZodOptional",
   ZodNullable = "ZodNullable",
@@ -4959,6 +5119,7 @@ const enumType = ZodEnum.create;
 const nativeEnumType = ZodNativeEnum.create;
 const promiseType = ZodPromise.create;
 const effectsType = ZodEffects.create;
+const asyncEffectsType = ZodAsyncEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
@@ -4986,6 +5147,7 @@ export const coerce = {
 export {
   anyType as any,
   arrayType as array,
+  asyncEffectsType as asyncEffect,
   bigIntType as bigint,
   booleanType as boolean,
   dateType as date,

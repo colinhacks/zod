@@ -54,6 +54,11 @@ export interface ParseContext {
   readonly data: any;
   readonly parsedType: ZodParsedType;
 }
+export type MutParseContext = ParseContext & {
+  readonly common: {
+    issues: ZodIssue[];
+  }
+}
 
 export type ParseInput = {
   data: any;
@@ -77,6 +82,13 @@ export function addIssueToContext(
     ].filter((x) => !!x) as ZodErrorMap[],
   });
   ctx.common.issues.push(issue);
+}
+export function replaceContextIssues(
+  ctx: MutParseContext,
+  issues: ZodIssue[]
+): void {
+  // Requires cloning to prevent reference mutations
+  ctx.common.issues = [...issues];
 }
 
 export type ObjectPair = {
