@@ -11,6 +11,7 @@ import {
   isDirty,
   isValid,
   makeIssue,
+  makeIssueWithContext,
   OK,
   ParseContext,
   ParseInput,
@@ -392,8 +393,8 @@ export abstract class ZodType<
   asyncSupersede(): ZodAsyncEffects<this, Output, Input> {
     return this._asyncEffect({ type: "supersede" });
   }
-  asyncDebounce(): ZodAsyncEffects<this, Output, Input> {
-    return this._asyncEffect({ type: "debounce" });
+  asyncDebounce(ms: number): ZodAsyncEffects<this, Output, Input> {
+    return this._asyncEffect({ type: "debounce", ms });
   }
   asyncSingleCache(): ZodAsyncEffects<this, Output, Input> {
     return this._asyncEffect({ type: "singleCache" });
@@ -4459,6 +4460,7 @@ export type AsyncSupersedeEffect = {
 };
 export type AsyncDebounceEffect = {
   type: "debounce";
+  ms: number;
 };
 export type AsyncSingleCacheEffect = {
   type: "singleCache";
@@ -4486,7 +4488,7 @@ export class ZodAsyncEffects<
   Input = input<T>
 > extends ZodType<Output, ZodAsyncEffectsDef<T>, Input> {
   _passes = 0;
-  _cache: AsyncEffectsCache<Output> = { parseResult: INVALID, issues: [] };
+  _resultCache: AsyncEffectsCache<Output> | null = null
 
   innerType() {
     return this._def.schema;
@@ -4510,7 +4512,18 @@ export class ZodAsyncEffects<
       );
     }
 
-    const effect = this._def.asyncEffect || null;
+    // Get a populated cache to replace a nullish cache
+    const getPopulatedCache = (): AsyncEffectsCache<Output> => ({
+      parseResult: INVALID,
+      issues: [
+        makeIssueWithContext(ctx,{
+            code: ZodIssueCode.custom,
+            message: "No parse result available.",
+        })
+      ],
+    })
+
+    const asyncEffect = this._def.asyncEffect || null;
 
     const checkCtx: RefinementCtx = {
       get issues() {
@@ -4527,7 +4540,7 @@ export class ZodAsyncEffects<
 
     checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
 
-    if (effect.type === "supersede") {
+    if (asyncEffect.type === "supersede") {
       // Prevents quickly resolving validation pass from being overwritten by a slower resolving validation pass which resolves later
 
       // Prevents case:
@@ -4539,34 +4552,63 @@ export class ZodAsyncEffects<
       return this._def.schema
         ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
         .then((inner) => {
+          if (this._resultCache == null) this._resultCache = getPopulatedCache();
+
           const superseded = this._passes > pass;
 
           if (superseded) {
             // Insert the issues of the most recent pass into the ctx of the current pass
-            replaceContextIssues(ctx, this._cache.issues);
+            replaceContextIssues(ctx, this._resultCache.issues);
           } else {
             // Cache the issues of the inner parse (requires cloning to prevent reference mutations)
-            this._cache.issues = [...ctx.common.issues];
+            this._resultCache.issues = [...ctx.common.issues];
             // Cache the parseResult of the inner parse
-            this._cache.parseResult = inner;
+            this._resultCache.parseResult = inner;
           }
 
           // The cache will always contain the parseResult of the most recent run
-          return this._cache.parseResult;
+          return this._resultCache.parseResult;
         });
     }
 
-    // TODO Create debounce
-    if (effect.type === "debounce") {
-      return {} as any;
+    if (asyncEffect.type === "debounce") {
+      // Allows rapidly changing inputs to be validated at a slower rate
+      // Debounced passes that resolve in a superseded state return the cached result
+
+      return this._def.schema
+        ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
+        .then(async (inner) => {
+          // Skip delay if inner parse was fatal
+          if (inner.status !== "aborted") {
+            await new Promise((resolve) => setTimeout(resolve, asyncEffect.ms));
+          }
+
+          if (this._resultCache == null) this._resultCache = getPopulatedCache();
+
+          // If the pass was superseded during the debounce delay
+          const superseded = this._passes > pass;
+
+          if (superseded) {
+            // Insert the issues of the most recent pass into the ctx of the current pass
+            replaceContextIssues(ctx, this._resultCache.issues);
+          } else {
+            // Cache the issues of the inner parse (requires cloning to prevent reference mutations)
+            this._resultCache.issues = [...ctx.common.issues];
+            // Cache the parseResult of the inner parse
+            this._resultCache.parseResult = inner;
+          }
+
+          // The cache will always contain the parseResult of the most recent run
+          return this._resultCache.parseResult;
+        });
     }
 
     // TODO Create singleCache
-    if (effect.type === "singleCache") {
+    if (asyncEffect.type === "singleCache") {
       return {} as any;
     }
 
-    util.assertNever(effect);
+    util.assertNever(asyncEffect);
   }
 
   static create = <I extends ZodTypeAny>(

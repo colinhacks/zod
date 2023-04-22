@@ -66,11 +66,11 @@ export type ParseInput = {
   parent: ParseContext;
 };
 
-export function addIssueToContext(
+export function makeIssueWithContext(
   ctx: ParseContext,
   issueData: IssueData
-): void {
-  const issue = makeIssue({
+): ZodIssue {
+  return makeIssue({
     issueData: issueData,
     data: ctx.data,
     path: ctx.path,
@@ -80,8 +80,14 @@ export function addIssueToContext(
       getErrorMap(), // then global override map
       defaultErrorMap, // then global default map
     ].filter((x) => !!x) as ZodErrorMap[],
-  });
-  ctx.common.issues.push(issue);
+  })
+}
+
+export function addIssueToContext(
+  ctx: ParseContext,
+  issueData: IssueData
+): void {
+  ctx.common.issues.push(makeIssueWithContext(ctx, issueData));
 }
 export function replaceContextIssues(
   ctx: MutParseContext,
