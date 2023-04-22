@@ -4488,7 +4488,7 @@ export class ZodAsyncEffects<
   Input = input<T>
 > extends ZodType<Output, ZodAsyncEffectsDef<T>, Input> {
   _passes = 0;
-  _resultCache: AsyncEffectsCache<Output> | null = null
+  _resultCache: AsyncEffectsCache<Output> | null = null;
 
   innerType() {
     return this._def.schema;
@@ -4516,12 +4516,12 @@ export class ZodAsyncEffects<
     const getPopulatedCache = (): AsyncEffectsCache<Output> => ({
       parseResult: INVALID,
       issues: [
-        makeIssueWithContext(ctx,{
-            code: ZodIssueCode.custom,
-            message: "No parse result available.",
-        })
+        makeIssueWithContext(ctx, {
+          code: ZodIssueCode.custom,
+          message: "No parse result available.",
+        }),
       ],
-    })
+    });
 
     const asyncEffect = this._def.asyncEffect || null;
 
@@ -4552,7 +4552,8 @@ export class ZodAsyncEffects<
       return this._def.schema
         ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
         .then((inner) => {
-          if (this._resultCache == null) this._resultCache = getPopulatedCache();
+          if (this._resultCache == null)
+            this._resultCache = getPopulatedCache();
 
           const superseded = this._passes > pass;
 
@@ -4583,7 +4584,8 @@ export class ZodAsyncEffects<
             await new Promise((resolve) => setTimeout(resolve, asyncEffect.ms));
           }
 
-          if (this._resultCache == null) this._resultCache = getPopulatedCache();
+          if (this._resultCache == null)
+            this._resultCache = getPopulatedCache();
 
           // If the pass was superseded during the debounce delay
           const superseded = this._passes > pass;
