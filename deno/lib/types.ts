@@ -437,13 +437,14 @@ export abstract class ZodType<
   }
 
   transform<NewOut>(
-    transform: (arg: Output, ctx: RefinementCtx) => NewOut | Promise<NewOut>
+    transform: (arg: Output, ctx: RefinementCtx) => NewOut | Promise<NewOut>,
+    asyncOptions?: AsyncRefinementOptions
   ): ZodEffects<this, NewOut> {
     return new ZodEffects({
       ...processCreateParams(this._def),
       schema: this,
       typeName: ZodFirstPartyTypeKind.ZodEffects,
-      effect: { type: "transform", transform },
+      effect: { type: "transform", transform, asyncOptions },
     }) as any;
   }
 
@@ -4426,6 +4427,7 @@ export class ZodEffects<
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
           .then(async (inner) => {
+            // Check superseded during inner parse
             if (checkSuperseded && getPassSuperseded())
               return handlePassSupersededOrCached();
 
@@ -4443,8 +4445,10 @@ export class ZodEffects<
             }
 
             return executeRefinement(inner.value).then(() => {
+              // Check superseded during transform
               if (checkSuperseded && getPassSuperseded())
                 return handlePassSupersededOrCached();
+
               return handlePassResolved(ctx, {
                 status: status.value,
                 value: inner.value,
@@ -4473,13 +4477,38 @@ export class ZodEffects<
 
         return { status: status.value, value: result };
       } else {
+        if (cache && getCacheMatches()) return handlePassSupersededOrCached();
+
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
-          .then((base) => {
-            if (!isValid(base)) return base;
+          .then(async (base) => {
+            // Check superseded during inner parse
+            if (checkSuperseded && getPassSuperseded())
+              return handlePassSupersededOrCached();
+
+            if (!isValid(base)) {
+              return handlePassResolved(ctx, base);
+            }
+
+            // If debounce is set in asyncOptions, wait for debounce time before executing refinement
+            if (debounce) {
+              await new Promise((resolve) =>
+                setTimeout(() => resolve(true), debounceMs)
+              );
+              if (getPassDebounced()) return handlePassSupersededOrCached();
+            }
 
             return Promise.resolve(effect.transform(base.value, checkCtx)).then(
-              (result) => ({ status: status.value, value: result })
+              (result) => {
+                // Check superseded during transform
+                if (checkSuperseded && getPassSuperseded())
+                  return handlePassSupersededOrCached();
+
+                return handlePassResolved(ctx, {
+                  status: status.value,
+                  value: result,
+                });
+              }
             );
           });
       }

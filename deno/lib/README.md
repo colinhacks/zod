@@ -2127,7 +2127,7 @@ Or add an optional `fatal` flag to the previous builtin validation which will ab
 
 ```ts
 z.string()
-  .min(4, { fatal: true })
+  .min(4, { message: "Min 4 chars", fatal: true })
   .superRefine(async (val, ctx) => {
     // If string length < 4 this superRefine will not be called at all
     const valid = await expensiveServerTrip(val)
