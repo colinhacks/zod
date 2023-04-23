@@ -15,13 +15,13 @@ test("will AsyncRefinementOptions fail if not called async", () => {
     expect(zerr.message).toEqual("Async refinement options (cache) encountered during synchronous parse operation. Use .parseAsync instead.");
   }
 
-  const transformSchema = z.string().transform(async (val) => val, { cache: true, debounce: { ms: 10 }, supersede: true })
+  const transformSchema = z.string().transform(async (val) => val, { cache: true, debounce: { ms: 10 }, freshest: true })
   try {
     transformSchema.safeParse("asdf");
   } catch (err) {
     const zerr: z.ZodError = err as any;
 
-    expect(zerr.message).toEqual("Async transform options (cache, debounce, supersede) encountered during synchronous parse operation. Use .parseAsync instead.");
+    expect(zerr.message).toEqual("Async transform options (cache, debounce, freshest) encountered during synchronous parse operation. Use .parseAsync instead.");
   }
 })
 
@@ -43,17 +43,17 @@ test("SuperRefine AsyncRefinementOptions cache", async () => {
   expect(superRefineCallCount).toEqual(0)
 })
 
-test("SuperRefine AsyncRefinementOptions supersede", async () => {
-  const schema = (supersede: boolean) => z.string().superRefine(async (val, ctx) => {
+test("SuperRefine AsyncRefinementOptions freshest", async () => {
+  const schema = (freshest: boolean) => z.string().superRefine(async (val, ctx) => {
     await delay(parseInt(val))
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: `Resolved after ${val}ms`
     })
-  }, { supersede })
+  }, { freshest: freshest })
 
   const defaultSchema = schema(false)
-  const supersedeSchema = schema(true)
+  const freshestSchema = schema(true)
 
   const defaultPass1 = defaultSchema.safeParseAsync('50')
   const defaultPass2 = defaultSchema.safeParseAsync('0')
@@ -64,14 +64,14 @@ test("SuperRefine AsyncRefinementOptions supersede", async () => {
   if (!defaultPass1Response.success) expect(defaultPass1Response.error.issues[0].message).toEqual('Resolved after 50ms')
   if (!defaultPass2Response.success) expect(defaultPass2Response.error.issues[0].message).toEqual('Resolved after 0ms')
 
-  const supersedePass1 = supersedeSchema.safeParseAsync('50')
-  const supersedePass2 = supersedeSchema.safeParseAsync('0')
-  const [supersedePass1Response, supersedePass2Response] = await Promise.all([supersedePass1, supersedePass2])
+  const freshestPass1 = freshestSchema.safeParseAsync('50')
+  const freshestPass2 = freshestSchema.safeParseAsync('0')
+  const [freshestPass1Response, freshestPass2Response] = await Promise.all([freshestPass1, freshestPass2])
 
-  expect(supersedePass1Response.success).toEqual(false)
-  expect(supersedePass2Response.success).toEqual(false)
-  if (!supersedePass1Response.success) expect(supersedePass1Response.error.issues[0].message).toEqual('Resolved after 0ms')
-  if (!supersedePass2Response.success) expect(supersedePass2Response.error.issues[0].message).toEqual('Resolved after 0ms')
+  expect(freshestPass1Response.success).toEqual(false)
+  expect(freshestPass2Response.success).toEqual(false)
+  if (!freshestPass1Response.success) expect(freshestPass1Response.error.issues[0].message).toEqual('Resolved after 0ms')
+  if (!freshestPass2Response.success) expect(freshestPass2Response.error.issues[0].message).toEqual('Resolved after 0ms')
 })
 
 test("SuperRefine AsyncRefinementOptions debounce", async () => {
@@ -146,7 +146,7 @@ test("SuperRefine AsyncRefinementOptions cache and debounce", async () => {
   expect(asyncCallCount).toEqual(1)
 })
 
-test("SuperRefine AsyncRefinementOptions cache and supersede", async () => {
+test("SuperRefine AsyncRefinementOptions cache and freshest", async () => {
   let asyncCallCount = 0
   const schema = z.string()
     .superRefine(async (val, ctx) => {
@@ -156,23 +156,23 @@ test("SuperRefine AsyncRefinementOptions cache and supersede", async () => {
         code: z.ZodIssueCode.custom,
         message: `Resolved after ${val}ms`
       })
-    }, { cache: true, supersede: true })
+    }, { cache: true, freshest: true })
 
-  // Supersede
-  const supersedePass1 = schema.safeParseAsync('50')
-  const supersedePass2 = schema.safeParseAsync('0')
-  const [supersedePass1Response, supersedePass2Response] = await Promise.all([supersedePass1, supersedePass2])
+  // Freshest
+  const freshestPass1 = schema.safeParseAsync('50')
+  const freshestPass2 = schema.safeParseAsync('0')
+  const [freshestPass1Response, freshestPass2Response] = await Promise.all([freshestPass1, freshestPass2])
 
-  expect(supersedePass1Response.success).toEqual(false)
-  expect(supersedePass2Response.success).toEqual(false)
-  if (!supersedePass1Response.success) expect(supersedePass1Response.error.issues[0].message).toEqual('Resolved after 0ms')
-  if (!supersedePass2Response.success) expect(supersedePass2Response.error.issues[0].message).toEqual('Resolved after 0ms')
+  expect(freshestPass1Response.success).toEqual(false)
+  expect(freshestPass2Response.success).toEqual(false)
+  if (!freshestPass1Response.success) expect(freshestPass1Response.error.issues[0].message).toEqual('Resolved after 0ms')
+  if (!freshestPass2Response.success) expect(freshestPass2Response.error.issues[0].message).toEqual('Resolved after 0ms')
   expect(asyncCallCount).toEqual(2)
 
   // Cache
-  const supersedePass3Response = await schema.safeParseAsync('0')
-  expect(supersedePass3Response.success).toEqual(false)
-  if (!supersedePass3Response.success) expect(supersedePass3Response.error.issues[0].message).toEqual('Resolved after 0ms')
+  const freshestPass3Response = await schema.safeParseAsync('0')
+  expect(freshestPass3Response.success).toEqual(false)
+  if (!freshestPass3Response.success) expect(freshestPass3Response.error.issues[0].message).toEqual('Resolved after 0ms')
   expect(asyncCallCount).toEqual(2)
 })
 
@@ -195,14 +195,14 @@ test("Transform AsyncRefinementOptions cache", async () => {
   expect(transformCallCount).toEqual(0)
 })
 
-test("Transform AsyncRefinementOptions supersede", async () => {
-  const schema = (supersede: boolean) => z.string().transform(async (val) => {
+test("Transform AsyncRefinementOptions freshest", async () => {
+  const schema = (freshest: boolean) => z.string().transform(async (val) => {
     await delay(parseInt(val))
     return `Resolved after ${val}ms`
-  }, { supersede })
+  }, { freshest: freshest })
 
   const defaultSchema = schema(false)
-  const supersedeSchema = schema(true)
+  const freshestSchema = schema(true)
 
   const defaultPass1 = defaultSchema.safeParseAsync('50')
   const defaultPass2 = defaultSchema.safeParseAsync('0')
@@ -213,14 +213,14 @@ test("Transform AsyncRefinementOptions supersede", async () => {
   if (defaultPass1Response.success) expect(defaultPass1Response.data).toEqual('Resolved after 50ms')
   if (defaultPass2Response.success) expect(defaultPass2Response.data).toEqual('Resolved after 0ms')
 
-  const supersedePass1 = supersedeSchema.safeParseAsync('50')
-  const supersedePass2 = supersedeSchema.safeParseAsync('0')
-  const [supersedePass1Response, supersedePass2Response] = await Promise.all([supersedePass1, supersedePass2])
+  const freshestPass1 = freshestSchema.safeParseAsync('50')
+  const freshestPass2 = freshestSchema.safeParseAsync('0')
+  const [freshestPass1Response, freshestPass2Response] = await Promise.all([freshestPass1, freshestPass2])
 
-  expect(supersedePass1Response.success).toEqual(true)
-  expect(supersedePass2Response.success).toEqual(true)
-  if (supersedePass1Response.success) expect(supersedePass1Response.data).toEqual('Resolved after 0ms')
-  if (supersedePass2Response.success) expect(supersedePass2Response.data).toEqual('Resolved after 0ms')
+  expect(freshestPass1Response.success).toEqual(true)
+  expect(freshestPass2Response.success).toEqual(true)
+  if (freshestPass1Response.success) expect(freshestPass1Response.data).toEqual('Resolved after 0ms')
+  if (freshestPass2Response.success) expect(freshestPass2Response.data).toEqual('Resolved after 0ms')
 })
 
 test("Transform AsyncRefinementOptions debounce", async () => {
@@ -301,29 +301,29 @@ test("Transform AsyncRefinementOptions cache and debounce", async () => {
   if (res5.success) expect(res5.data).toEqual('transformed 4')
 })
 
-test("Transform AsyncRefinementOptions cache and supersede", async () => {
+test("Transform AsyncRefinementOptions cache and freshest", async () => {
   let asyncCallCount = 0
   const schema = z.string()
     .transform(async (val) => {
       asyncCallCount++
       await delay(parseInt(val))
       return `Resolved after ${val}ms`
-    }, { cache: true, supersede: true })
+    }, { cache: true, freshest: true })
 
-  // Supersede
-  const supersedePass1 = schema.safeParseAsync('50')
-  const supersedePass2 = schema.safeParseAsync('0')
-  const [supersedePass1Response, supersedePass2Response] = await Promise.all([supersedePass1, supersedePass2])
+  // Freshest
+  const freshestPass1 = schema.safeParseAsync('50')
+  const freshestPass2 = schema.safeParseAsync('0')
+  const [freshestPass1Response, freshestPass2Response] = await Promise.all([freshestPass1, freshestPass2])
 
-  expect(supersedePass1Response.success).toEqual(true)
-  expect(supersedePass2Response.success).toEqual(true)
-  if (supersedePass1Response.success) expect(supersedePass1Response.data).toEqual('Resolved after 0ms')
-  if (supersedePass2Response.success) expect(supersedePass2Response.data).toEqual('Resolved after 0ms')
+  expect(freshestPass1Response.success).toEqual(true)
+  expect(freshestPass2Response.success).toEqual(true)
+  if (freshestPass1Response.success) expect(freshestPass1Response.data).toEqual('Resolved after 0ms')
+  if (freshestPass2Response.success) expect(freshestPass2Response.data).toEqual('Resolved after 0ms')
   expect(asyncCallCount).toEqual(2)
 
   // Cache
-  const supersedePass3Response = await schema.safeParseAsync('0')
-  expect(supersedePass3Response.success).toEqual(true)
-  if (supersedePass3Response.success) expect(supersedePass3Response.data).toEqual('Resolved after 0ms')
+  const freshestPass3Response = await schema.safeParseAsync('0')
+  expect(freshestPass3Response.success).toEqual(true)
+  if (freshestPass3Response.success) expect(freshestPass3Response.data).toEqual('Resolved after 0ms')
   expect(asyncCallCount).toEqual(2)
 })

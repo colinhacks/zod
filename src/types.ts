@@ -4248,7 +4248,7 @@ export type SuperRefinement<T> = (arg: T, ctx: RefinementCtx) => void;
 export type AsyncRefinementOptions = {
   cache?: boolean;
   debounce?: { ms: number };
-  supersede?: boolean;
+  freshest?: boolean;
 };
 
 export type RefinementEffect<T> = {
@@ -4345,15 +4345,15 @@ export class ZodEffects<
     const cache = effect.asyncOptions?.cache;
     const debounceMs = effect.asyncOptions?.debounce?.ms ?? 0;
     const debounce = debounceMs > 0;
-    const supersede = effect.asyncOptions?.supersede;
-    const checkSuperseded = debounce || supersede;
+    const freshest = effect.asyncOptions?.freshest;
+    const checkStale = debounce || freshest;
 
-    if (!ctx.common.async && (cache || debounce || supersede)) {
+    if (!ctx.common.async && (cache || debounce || freshest)) {
       throw new Error(
         `Async ${effect.type} options (${[
           cache && "cache",
           debounce && "debounce",
-          supersede && "supersede",
+          freshest && "freshest",
         ]
           .filter(Boolean)
           .join(
@@ -4363,7 +4363,7 @@ export class ZodEffects<
     }
 
     const getCacheMatches = () => ctx.data === this._dataCache; // TODO may want this to handle non-primitives
-    const getPassSuperseded = () => this._resolvedPass > pass;
+    const getPassStale = () => this._resolvedPass > pass;
     const getPassDebounced = () => this._passes > pass;
 
     const getResultCacheOrDefault = () =>
@@ -4374,7 +4374,7 @@ export class ZodEffects<
 
     // Resolve handlers
     // INFO: Should be used at every point the refinement or transform is resolved
-    const handlePassSupersededOrCached = () => {
+    const handlePassStaleOrCached = () => {
       replaceContextIssues(ctx, getResultCacheOrDefault().issues);
       return getResultCacheOrDefault().parseResult;
     };
@@ -4422,14 +4422,13 @@ export class ZodEffects<
         executeRefinement(inner.value);
         return { status: status.value, value: inner.value };
       } else {
-        if (cache && getCacheMatches()) return handlePassSupersededOrCached();
+        if (cache && getCacheMatches()) return handlePassStaleOrCached();
 
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
           .then(async (inner) => {
-            // Check superseded during inner parse
-            if (checkSuperseded && getPassSuperseded())
-              return handlePassSupersededOrCached();
+            // Check stale during inner parse
+            if (checkStale && getPassStale()) return handlePassStaleOrCached();
 
             if (inner.status === "aborted") {
               return handlePassResolved(ctx, INVALID);
@@ -4441,13 +4440,13 @@ export class ZodEffects<
               await new Promise((resolve) =>
                 setTimeout(() => resolve(true), debounceMs)
               );
-              if (getPassDebounced()) return handlePassSupersededOrCached();
+              if (getPassDebounced()) return handlePassStaleOrCached();
             }
 
             return executeRefinement(inner.value).then(() => {
-              // Check superseded during transform
-              if (checkSuperseded && getPassSuperseded())
-                return handlePassSupersededOrCached();
+              // Check stale during transform
+              if (checkStale && getPassStale())
+                return handlePassStaleOrCached();
 
               return handlePassResolved(ctx, {
                 status: status.value,
@@ -4477,14 +4476,13 @@ export class ZodEffects<
 
         return { status: status.value, value: result };
       } else {
-        if (cache && getCacheMatches()) return handlePassSupersededOrCached();
+        if (cache && getCacheMatches()) return handlePassStaleOrCached();
 
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
           .then(async (base) => {
-            // Check superseded during inner parse
-            if (checkSuperseded && getPassSuperseded())
-              return handlePassSupersededOrCached();
+            // Check stale during inner parse
+            if (checkStale && getPassStale()) return handlePassStaleOrCached();
 
             if (!isValid(base)) {
               return handlePassResolved(ctx, base);
@@ -4495,14 +4493,14 @@ export class ZodEffects<
               await new Promise((resolve) =>
                 setTimeout(() => resolve(true), debounceMs)
               );
-              if (getPassDebounced()) return handlePassSupersededOrCached();
+              if (getPassDebounced()) return handlePassStaleOrCached();
             }
 
             return Promise.resolve(effect.transform(base.value, checkCtx)).then(
               (result) => {
-                // Check superseded during transform
-                if (checkSuperseded && getPassSuperseded())
-                  return handlePassSupersededOrCached();
+                // Check stale during transform
+                if (checkStale && getPassStale())
+                  return handlePassStaleOrCached();
 
                 return handlePassResolved(ctx, {
                   status: status.value,

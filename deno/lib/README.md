@@ -2138,6 +2138,92 @@ z.string()
   })
 ```
 
+### Async Refinement Options
+
+`superRefine` takes an optional second argument of type `AsyncRefinementOptions`. These options are `cache`, `debounce`, and `freshest`. AsyncRefinementOptions are most useful in rapidly changing data where only the most recent result is needed (think forms).
+
+**`cache`** will store the most recent result of the `superRefine`, and any subsequent parses will return that result if the input data has not changed. The cache check and return happens before the async operations within the `superRefine` are executed, and before any async operations up the validation chain are executed:
+
+```ts
+const cacheSchema = z
+  .string()
+  .email()
+  .superRefine(async (val) => {
+    await serverTrip1();
+  })
+  .superRefine(async (val) => {
+    await serverTrip2();
+  }, { cache: true });
+
+// Executes both serverTrip1 and serverTrip2
+await cacheSchema.parseAsync('test@gmail.com');
+
+// Cache hit, neither serverTrip executes
+await cacheSchema.parseAsync('test@gmail.com');
+```
+
+> ⚠️ `cache` is a naive caching implementation, only storing a single cached result.
+
+**`freshest`** ensures that only the most recent result is returned from rapidly changing inputs. A validation pass is marked as stale by a fresher pass resolving, this ensures that the result of a slower pass won't ever replace the fresher one when it finally resolves:
+
+```ts
+const freshestSchema = z
+  .string()
+  .email({ fatal: true })
+  .superRefine(async (val) => {
+    // Only called if email is valid (see fatal flag)
+    await serverEmailValidation(val)
+  }, { freshest: true })
+
+
+// Chronological events:
+
+  // User form entry 1
+  // Passes email validation, starts server validation
+  freshestSchema.parseAsync('test@gmail.com')
+
+  // User form entry 2 (while server validation still running)
+  // Fails email validation immediately, exits
+  freshestSchema.parseAsync('test@gmail')
+
+  // Entry 2 resolves first and exits with error: "Invalid email"
+  // Entry 2 resolving marks Entry 1 as stale
+
+  // Entry 1 resolves with valid, but is superseded by the fresher error "Invalid email"
+```
+
+**`debounce`** extends the functionality of `freshest`, and takes a duration param: `ms`. This option allows superRefinements to be debounced by that duration. Validation passes will become stale if they are replaced by a fresher pass within the debounce duration, and will return the most recent resolved result instead:
+
+```ts
+const debounceSchema = z
+  .string()
+  .email({ fatal: true })
+  .superRefine(async (val) => {
+    await serverEmailValidation(val)
+  }, { debounce: { ms: 250 } })
+
+// Chronological events:
+
+  // User form entry 1 (has resolved as valid)
+  debounceSchema.parseAsync("test@gmail.org")
+
+  // Changing entries 2-4 in quick succession
+  debounceSchema.parseAsync("test@gmail.c") // Does not call `serverEmailValidation`
+  debounceSchema.parseAsync("test@gmail.co") // Does not call `serverEmailValidation`
+  debounceSchema.parseAsync("test@gmail.com") // Passes debounce, calls `serverEmailValidation`
+
+  // Result of "test@gmail.com" async validation is returned
+```
+
+AsyncRefinementOptions can be combined:
+
+`{ debounce: { ms: 250 }, cache: true }`
+
+`{ freshest: true, cache: true }`
+
+> ⚠️ Technically `debounce` and `freshest` can be combined, but because debounce is a superset of freshest, it is the same as just `debounce`.
+
+
 #### Type refinements
 
 If you provide a [type predicate](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#using-type-predicates) to `.refine()` or `.superRefine()`, the resulting type will be narrowed down to your predicate's type. This is useful if you are mixing multiple chained refinements and transformations:
@@ -2252,6 +2338,24 @@ const IdToUser = z
 ```
 
 > ⚠️ If your schema contains asynchronous transforms, you must use .parseAsync() or .safeParseAsync() to parse data. Otherwise Zod will throw an error.
+
+#### Async Transform Options
+
+`transform` takes an optional second argument of type `AsyncRefinementOptions`. These options are `cache`, `debounce`, and `freshest`. AsyncRefinementOptions are most useful in rapidly changing data where only the most recent result is needed (think forms).
+
+`AsyncRefinementOptions` work the same way on `transform`s as they do on `superRefine`ments, and can be read about more in the `superRefine` section above. As an overview:
+
+- **`cache`** stores the result of the freshest `transform` call, and will return that value if the input hasn't changed, without calling any async operations before or within the `transform`.
+
+- **`freshest`** will always return the freshest resolved result. A slow validation pass will be marked stale if a newer pass resolves first, either through a faster async operation, or through a fatal issue that resolves the pass instantly. It prevents a slow validation pass from overwriting the result of a fresher pass when it finally resolves.
+
+- **`debounce`** is a superset of `freshest`, but takes a duration param `ms`. It will wait for that duration before calling the async `transform` function. If a new validation pass is started before the debounce duration is finished, the old pass is marked as stale, and will return the most recent resolved result.
+
+- `transform`s with these options set can still be layered and interleaved with other `transform`s, `superRefine`ments, or basic validations.
+
+- `freshest` or `debounce` can be combined with `cache`. (debounce is a superset of freshest, so the freshest flag does nothing when combined with debounce)
+
+
 
 ### `.default`
 
