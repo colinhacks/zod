@@ -11,7 +11,6 @@ import {
   isDirty,
   isValid,
   makeIssue,
-  makeIssueWithContext,
   OK,
   ParseContext,
   ParseInput,
@@ -534,9 +533,9 @@ export type ZodStringCheck =
   | { kind: "startsWith"; value: string; message?: string; fatal?: boolean }
   | { kind: "endsWith"; value: string; message?: string; fatal?: boolean }
   | { kind: "regex"; regex: RegExp; message?: string; fatal?: boolean }
-  | { kind: "trim"; message?: string; fatal?: boolean }
-  | { kind: "toLowerCase"; message?: string; fatal?: boolean }
-  | { kind: "toUpperCase"; message?: string; fatal?: boolean }
+  | { kind: "trim"; message?: string }
+  | { kind: "toLowerCase"; message?: string }
+  | { kind: "toUpperCase"; message?: string }
   | {
       kind: "datetime";
       offset: boolean;
@@ -916,17 +915,17 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     if (typeof options === "string") {
       return this._addCheck({
         kind: "datetime",
+        ...errorUtil.normalize(options),
         precision: null,
         offset: false,
-        message: options,
       });
     }
     return this._addCheck({
       kind: "datetime",
+      ...errorUtil.normalize(options),
       precision:
         typeof options?.precision === "undefined" ? null : options?.precision,
       offset: options?.offset ?? false,
-      ...errorUtil.normalize(options?.message),
     });
   }
 
@@ -946,7 +945,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       kind: "includes",
       value: value,
       position: options?.position,
-      ...errorUtil.normalize(options?.message),
+      ...errorUtil.normalize(options),
     });
   }
 
@@ -2412,20 +2411,19 @@ export class ZodObject<
   }
 
   strict(
-    options?: errorUtil.ErrMessageOrOptions
+    message?: string | { message?: string }
   ): ZodObject<T, "strict", Catchall> {
-    errorUtil.normalize;
     return new ZodObject({
       ...this._def,
       unknownKeys: "strict",
-      ...(options !== undefined
+      ...(message !== undefined
         ? {
             errorMap: (issue, ctx) => {
               const defaultError =
                 this._def.errorMap?.(issue, ctx).message ?? ctx.defaultError;
               if (issue.code === "unrecognized_keys")
                 return {
-                  message: errorUtil.normalize(options).message ?? defaultError,
+                  message: errorUtil.normalize(message).message ?? defaultError,
                 };
               return {
                 message: defaultError,
@@ -3683,8 +3681,8 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     return this.min(size, options).max(size, options) as any;
   }
 
-  nonempty(message?: errorUtil.ErrMessageOrOptions): ZodSet<Value> {
-    return this.min(1, message) as any;
+  nonempty(options?: errorUtil.ErrMessageOrOptions): ZodSet<Value> {
+    return this.min(1, options) as any;
   }
 
   static create = <Value extends ZodTypeAny = ZodTypeAny>(
@@ -4365,16 +4363,12 @@ export class ZodEffects<
 
     const getCacheMatches = () => ctx.data === this._dataCache; // TODO may want this to handle non-primitives
     const getPassSuperseded = () => this._resolvedPass > pass;
+    const getPassDebounced = () => this._passes > pass;
 
     const getResultCacheOrDefault = () =>
       this._resultCache ?? {
-        parseResult: INVALID,
-        issues: [
-          makeIssueWithContext(ctx, {
-            code: ZodIssueCode.custom,
-            message: "No parse result available.",
-          }),
-        ],
+        parseResult: { status: "valid", value: ctx.data },
+        issues: [],
       };
 
     // Resolve handlers
@@ -4445,8 +4439,7 @@ export class ZodEffects<
               await new Promise((resolve) =>
                 setTimeout(() => resolve(true), debounceMs)
               );
-              if (checkSuperseded && getPassSuperseded())
-                return handlePassSupersededOrCached();
+              if (getPassDebounced()) return handlePassSupersededOrCached();
             }
 
             return executeRefinement(inner.value).then(() => {

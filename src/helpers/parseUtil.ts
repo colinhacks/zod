@@ -57,8 +57,8 @@ export interface ParseContext {
 export type MutParseContext = ParseContext & {
   readonly common: {
     issues: ZodIssue[];
-  }
-}
+  };
+};
 
 export type ParseInput = {
   data: any;
@@ -80,7 +80,7 @@ export function makeIssueWithContext(
       getErrorMap(), // then global override map
       defaultErrorMap, // then global default map
     ].filter((x) => !!x) as ZodErrorMap[],
-  })
+  });
 }
 
 export function addIssueToContext(

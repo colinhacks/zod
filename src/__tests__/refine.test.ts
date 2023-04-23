@@ -155,6 +155,31 @@ test("superRefine", () => {
   Strings.parse(["asfd", "qwer"]);
 });
 
+
+test("superRefine - ctx.issues", () => {
+  z.string().min(4).superRefine((_val, ctx) => {
+    expect(ctx.issues.length).toEqual(1);
+  })
+})
+
+test("superRefine - not called if previous refinement fatally failed", () => {
+  const schema = (fatal: boolean) => z.string().min(4, { fatal }).superRefine((_val, ctx) => {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+    })
+    return z.NEVER
+  })
+
+  const resultNonFatal = schema(false).safeParse("asd")
+  const resultFatal = schema(true).safeParse("asd")
+
+  expect(resultNonFatal.success).toEqual(false)
+  if (!resultNonFatal.success) expect(resultNonFatal.error.issues.length).toEqual(2)
+
+  expect(resultFatal.success).toEqual(false)
+  if (!resultFatal.success) expect(resultFatal.error.issues.length).toEqual(1)
+})
+
 test("superRefine - type narrowing", () => {
   type NarrowType = { type: string; age: number };
   const schema = z
