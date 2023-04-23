@@ -4377,15 +4377,9 @@ export class ZodEffects<
         ],
       };
 
-    const markPassResolved = () => {
-      this._resolvedPass = pass;
-      this._dataCache = ctx.data;
-    };
-
     // Resolve handlers
     // INFO: Should be used at every point the refinement or transform is resolved
     const handlePassSupersededOrCached = () => {
-      markPassResolved();
       replaceContextIssues(ctx, getResultCacheOrDefault().issues);
       return getResultCacheOrDefault().parseResult;
     };
@@ -4393,7 +4387,8 @@ export class ZodEffects<
       ctx: ParseContext,
       parseResult: SyncParseReturnType<Output>
     ) => {
-      markPassResolved();
+      this._resolvedPass = pass;
+      this._dataCache = ctx.data;
       this._resultCache = {
         parseResult,
         issues: ctx.common.issues,
@@ -4447,7 +4442,9 @@ export class ZodEffects<
 
             // If debounce is set in asyncOptions, wait for debounce time before executing refinement
             if (debounce) {
-              await new Promise((resolve) => setTimeout(resolve, debounceMs));
+              await new Promise((resolve) =>
+                setTimeout(() => resolve(true), debounceMs)
+              );
               if (checkSuperseded && getPassSuperseded())
                 return handlePassSupersededOrCached();
             }
