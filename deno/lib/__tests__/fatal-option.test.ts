@@ -1,3 +1,7 @@
+// @ts-ignore TS6133
+import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
+const test = Deno.test;
+
 import * as z from "../index.ts";
 
 
@@ -18,7 +22,6 @@ test("check options allow both fatal and messages", () => {
 
   const resultNonFatal = schema.superRefine(compoundIssuesRefinement).safeParse('asd')
   expect(resultNonFatal.success).toEqual(false)
-  console.log(JSON.stringify(resultNonFatal, null, 2))
   if (!resultNonFatal.success) expect(resultNonFatal.error.issues.length).toEqual(1)
   if (!resultNonFatal.success) expect(resultNonFatal.error.issues[0].message).toEqual("Too short")
 })

@@ -1,3 +1,6 @@
+// @ts-ignore TS6133
+import { expect, test } from "@jest/globals";
+
 import * as z from "../index";
 
 
@@ -18,7 +21,6 @@ test("check options allow both fatal and messages", () => {
 
   const resultNonFatal = schema.superRefine(compoundIssuesRefinement).safeParse('asd')
   expect(resultNonFatal.success).toEqual(false)
-  console.log(JSON.stringify(resultNonFatal, null, 2))
   if (!resultNonFatal.success) expect(resultNonFatal.error.issues.length).toEqual(1)
   if (!resultNonFatal.success) expect(resultNonFatal.error.issues[0].message).toEqual("Too short")
 })
