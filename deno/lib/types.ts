@@ -361,43 +361,29 @@ export abstract class ZodType<
   }
 
   _refinement(
-    refinement: RefinementEffect<Output>["refinement"]
+    refinement: RefinementEffect<Output>["refinement"],
+    asyncOptions?: AsyncRefinementOptions
   ): ZodEffects<this, Output, Input> {
     return new ZodEffects({
       schema: this,
       typeName: ZodFirstPartyTypeKind.ZodEffects,
-      effect: { type: "refinement", refinement },
+      effect: { type: "refinement", refinement, asyncOptions },
     });
   }
 
   superRefine<RefinedOutput extends Output>(
-    refinement: (arg: Output, ctx: RefinementCtx) => arg is RefinedOutput
+    refinement: (arg: Output, ctx: RefinementCtx) => arg is RefinedOutput,
+    asyncOptions?: AsyncRefinementOptions
   ): ZodEffects<this, RefinedOutput, Input>;
   superRefine(
-    refinement: (arg: Output, ctx: RefinementCtx) => void
+    refinement: (arg: Output, ctx: RefinementCtx) => void,
+    asyncOptions?: AsyncRefinementOptions
   ): ZodEffects<this, Output, Input>;
   superRefine(
-    refinement: (arg: Output, ctx: RefinementCtx) => unknown
+    refinement: (arg: Output, ctx: RefinementCtx) => unknown,
+    asyncOptions?: AsyncRefinementOptions
   ): ZodEffects<this, Output, Input> {
-    return this._refinement(refinement);
-  }
-
-  _asyncEffect(asyncEffect: AsyncEffect): ZodAsyncEffects<this, Output, Input> {
-    return new ZodAsyncEffects({
-      schema: this,
-      typeName: ZodFirstPartyTypeKind.ZodAsyncEffects,
-      asyncEffect,
-    });
-  }
-
-  asyncSupersede(): ZodAsyncEffects<this, Output, Input> {
-    return this._asyncEffect({ type: "supersede" });
-  }
-  asyncDebounce(ms: number): ZodAsyncEffects<this, Output, Input> {
-    return this._asyncEffect({ type: "debounce", ms });
-  }
-  asyncCache(): ZodAsyncEffects<this, Output, Input> {
-    return this._asyncEffect({ type: "cache" });
+    return this._refinement(refinement, asyncOptions);
   }
 
   constructor(def: Def) {
@@ -410,9 +396,6 @@ export abstract class ZodType<
     this.refine = this.refine.bind(this);
     this.refinement = this.refinement.bind(this);
     this.superRefine = this.superRefine.bind(this);
-    this.asyncSupersede = this.asyncSupersede.bind(this);
-    this.asyncDebounce = this.asyncDebounce.bind(this);
-    this.asyncCache = this.asyncCache.bind(this);
     this.optional = this.optional.bind(this);
     this.nullable = this.nullable.bind(this);
     this.nullish = this.nullish.bind(this);
@@ -4263,13 +4246,21 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 export type Refinement<T> = (arg: T, ctx: RefinementCtx) => any;
 export type SuperRefinement<T> = (arg: T, ctx: RefinementCtx) => void;
 
+export type AsyncRefinementOptions = {
+  cache?: boolean;
+  debounce?: { ms: number };
+  supersede?: boolean;
+};
+
 export type RefinementEffect<T> = {
   type: "refinement";
   refinement: (arg: T, ctx: RefinementCtx) => any;
+  asyncOptions?: AsyncRefinementOptions;
 };
 export type TransformEffect<T> = {
   type: "transform";
   transform: (arg: T, ctx: RefinementCtx) => any;
+  asyncOptions?: AsyncRefinementOptions;
 };
 export type PreprocessEffect<T> = {
   type: "preprocess";
@@ -4279,6 +4270,11 @@ export type Effect<T> =
   | RefinementEffect<T>
   | TransformEffect<T>
   | PreprocessEffect<T>;
+
+type AsyncEffectsCache<T> = {
+  parseResult: SyncParseReturnType<T>;
+  issues: ZodIssue[];
+};
 
 export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
@@ -4292,6 +4288,11 @@ export class ZodEffects<
   Output = output<T>,
   Input = input<T>
 > extends ZodType<Output, ZodEffectsDef<T>, Input> {
+  _passes = 0;
+  _resolvedPass = 0;
+  _resultCache: AsyncEffectsCache<Output> | null = null;
+  _dataCache: any;
+
   innerType() {
     return this._def.schema;
   }
@@ -4304,6 +4305,8 @@ export class ZodEffects<
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
+    this._passes += 1;
+    const pass = this._passes;
 
     const effect = this._def.effect || null;
 
@@ -4340,6 +4343,64 @@ export class ZodEffects<
       },
     };
 
+    const cache = effect.asyncOptions?.cache;
+    const debounceMs = effect.asyncOptions?.debounce?.ms ?? 0;
+    const debounce = debounceMs > 0;
+    const supersede = effect.asyncOptions?.supersede;
+    const checkSuperseded = debounce || supersede;
+
+    if (!ctx.common.async && (cache || debounce || supersede)) {
+      throw new Error(
+        `Async ${effect.type} options (${[
+          cache && "cache",
+          debounce && "debounce",
+          supersede && "supersede",
+        ]
+          .filter(Boolean)
+          .join(
+            ", "
+          )}) encountered during synchronous parse operation. Use .parseAsync instead.`
+      );
+    }
+
+    const getCacheMatches = () => ctx.data === this._dataCache; // TODO may want this to handle non-primitives
+    const getPassSuperseded = () => this._resolvedPass > pass;
+
+    const getResultCacheOrDefault = () =>
+      this._resultCache ?? {
+        parseResult: INVALID,
+        issues: [
+          makeIssueWithContext(ctx, {
+            code: ZodIssueCode.custom,
+            message: "No parse result available.",
+          }),
+        ],
+      };
+
+    const markPassResolved = () => {
+      this._resolvedPass = pass;
+      this._dataCache = ctx.data;
+    };
+
+    // Resolve handlers
+    // INFO: Should be used at every point the refinement or transform is resolved
+    const handlePassSupersededOrCached = () => {
+      markPassResolved();
+      replaceContextIssues(ctx, getResultCacheOrDefault().issues);
+      return getResultCacheOrDefault().parseResult;
+    };
+    const handlePassResolved = (
+      ctx: ParseContext,
+      parseResult: SyncParseReturnType<Output>
+    ) => {
+      markPassResolved();
+      this._resultCache = {
+        parseResult,
+        issues: ctx.common.issues,
+      };
+      return parseResult;
+    };
+
     checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
     if (effect.type === "refinement") {
       const executeRefinement = (
@@ -4371,14 +4432,33 @@ export class ZodEffects<
         executeRefinement(inner.value);
         return { status: status.value, value: inner.value };
       } else {
+        if (cache && getCacheMatches()) return handlePassSupersededOrCached();
+
         return this._def.schema
           ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
-          .then((inner) => {
-            if (inner.status === "aborted") return INVALID;
+          .then(async (inner) => {
+            if (checkSuperseded && getPassSuperseded())
+              return handlePassSupersededOrCached();
+
+            if (inner.status === "aborted") {
+              return handlePassResolved(ctx, INVALID);
+            }
             if (inner.status === "dirty") status.dirty();
 
+            // If debounce is set in asyncOptions, wait for debounce time before executing refinement
+            if (debounce) {
+              await new Promise((resolve) => setTimeout(resolve, debounceMs));
+              if (checkSuperseded && getPassSuperseded())
+                return handlePassSupersededOrCached();
+            }
+
             return executeRefinement(inner.value).then(() => {
-              return { status: status.value, value: inner.value };
+              if (checkSuperseded && getPassSuperseded())
+                return handlePassSupersededOrCached();
+              return handlePassResolved(ctx, {
+                status: status.value,
+                value: inner.value,
+              });
             });
           });
       }
@@ -4446,220 +4526,6 @@ export class ZodEffects<
 }
 
 export { ZodEffects as ZodTransformer };
-
-//////////////////////////////////////////////
-//////////////////////////////////////////////
-//////////                          //////////
-//////////     ZodAsyncEffects      //////////
-//////////                          //////////
-//////////////////////////////////////////////
-//////////////////////////////////////////////
-
-export type AsyncSupersedeEffect = {
-  type: "supersede";
-};
-export type AsyncDebounceEffect = {
-  type: "debounce";
-  ms: number;
-};
-export type AsyncCacheEffect = {
-  type: "cache";
-};
-export type AsyncEffect =
-  | AsyncSupersedeEffect
-  | AsyncDebounceEffect
-  | AsyncCacheEffect;
-
-export interface ZodAsyncEffectsDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
-  schema: T;
-  typeName: ZodFirstPartyTypeKind.ZodAsyncEffects;
-  asyncEffect: AsyncEffect;
-}
-
-type AsyncEffectsCache<T> = {
-  parseResult: SyncParseReturnType<T>;
-  issues: ZodIssue[];
-};
-
-export class ZodAsyncEffects<
-  T extends ZodTypeAny,
-  Output = output<T>,
-  Input = input<T>
-> extends ZodType<Output, ZodAsyncEffectsDef<T>, Input> {
-  _passes = 0;
-  _resultCache: AsyncEffectsCache<Output> | null = null;
-  _inputCache: any;
-
-  innerType() {
-    return this._def.schema;
-  }
-
-  sourceType(): T {
-    return this._def.schema._def.typeName ===
-      ZodFirstPartyTypeKind.ZodAsyncEffects
-      ? (this._def.schema as unknown as ZodAsyncEffects<T>).sourceType()
-      : (this._def.schema as T);
-  }
-
-  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
-    const { status, ctx } = this._processInputParams(input);
-    this._passes += 1;
-    const pass = this._passes;
-
-    if (ctx.common.async === false) {
-      throw new Error(
-        "AsyncSupersede encountered during async parse operation. Use .parse instead."
-      );
-    }
-
-    // Get a populated cache to replace a nullish cache
-    const getPopulatedCache = (): AsyncEffectsCache<Output> => ({
-      parseResult: INVALID,
-      issues: [
-        makeIssueWithContext(ctx, {
-          code: ZodIssueCode.custom,
-          message: "No parse result available.",
-        }),
-      ],
-    });
-
-    const asyncEffect = this._def.asyncEffect || null;
-
-    const checkCtx: RefinementCtx = {
-      get issues() {
-        return ctx.common.issues;
-      },
-      addIssue: (arg: IssueData) => {
-        addIssueToContext(ctx, arg);
-        status.dirtyOrAbort(arg.fatal);
-      },
-      get path() {
-        return ctx.path;
-      },
-    };
-
-    checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
-
-    if (asyncEffect.type === "supersede") {
-      // Prevents quickly resolving validation pass from being overwritten by a slower resolving validation pass which resolves later
-
-      // Prevents case:
-      // Value A Parsed, Pass A Begins
-      // Value B Parsed, Pass B Begins (B is most recent input)
-      // Pass B Resolves, result is returned
-      // Pass A Resolves, result overwrite Pass B result
-
-      return this._def.schema
-        ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
-        .then((inner) => {
-          if (this._resultCache == null)
-            this._resultCache = getPopulatedCache();
-
-          const superseded = this._passes > pass;
-
-          if (superseded) {
-            // Insert the issues of the most recent pass into the ctx of the current pass
-            replaceContextIssues(ctx, this._resultCache.issues);
-          } else {
-            // Cache the issues of the inner parse (requires cloning to prevent reference mutations)
-            this._resultCache.issues = [...ctx.common.issues];
-            // Cache the parseResult of the inner parse
-            this._resultCache.parseResult = inner;
-          }
-
-          // The cache will always contain the parseResult of the most recent run
-          return this._resultCache.parseResult;
-        });
-    }
-
-    if (asyncEffect.type === "debounce") {
-      // Allows rapidly changing inputs to be validated at a slower rate
-      // Debounced passes that resolve in a superseded state return the cached result
-      // INFO: This is a naive implementation of debounce. It does not support cancelling a debounce.
-      // INFO: .asyncDebounce(ms) placement creates a debounce boundary
-      //          everything "below" it in the validation order is debounced
-
-      return this._def.schema
-        ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
-        .then(async (inner) => {
-          // Skip delay if inner parse was fatal
-          if (inner.status !== "aborted") {
-            await new Promise((resolve) => setTimeout(resolve, asyncEffect.ms));
-          }
-
-          if (this._resultCache == null)
-            this._resultCache = getPopulatedCache();
-
-          // If the pass was superseded during the debounce delay
-          const superseded = this._passes > pass;
-
-          if (superseded) {
-            // Insert the issues of the most recent pass into the ctx of the current pass
-            replaceContextIssues(ctx, this._resultCache.issues);
-          } else {
-            // Cache the issues of the inner parse (requires cloning to prevent reference mutations)
-            this._resultCache.issues = [...ctx.common.issues];
-            // Cache the parseResult of the inner parse
-            this._resultCache.parseResult = inner;
-          }
-
-          // The cache will always contain the parseResult of the most recent run
-          return this._resultCache.parseResult;
-        });
-    }
-
-    if (asyncEffect.type === "cache") {
-      // Allows skipping validation calls if the input is the same as the previous input
-      // Useful for preventing async validation on field of Array or Object if another field changes
-      // INFO: Only caches the most recent result, not the result of every input
-
-      const dataMatchesCache = this._inputCache === ctx.data;
-
-      // Skip parsing inner schema if the data matches and the resultCache isn't null
-      if (dataMatchesCache && this._resultCache != null) {
-        // Insert the issues of the most recent pass into the ctx of the current pass
-        replaceContextIssues(ctx, this._resultCache.issues);
-
-        // Early exit with the result of the cached pass
-        return this._resultCache.parseResult;
-      }
-
-      // Parse inner schema if data changed or first pass (resultCache is null)
-      return this._def.schema
-        ._parseAsync({ data: ctx.data, path: ctx.path, parent: ctx })
-        .then(async (inner) => {
-          // Don't cache if this pass has been superseded
-          const superseded = this._passes > pass;
-          console.log("Async cache superseded", superseded, this._passes, pass);
-          if (superseded) return inner;
-
-          // Cache the issues and result of the inner parse
-          this._inputCache = ctx.data;
-          this._resultCache = {
-            issues: [...ctx.common.issues], // (requires cloning to prevent reference mutations)
-            parseResult: inner,
-          };
-          return inner;
-        });
-    }
-
-    util.assertNever(asyncEffect);
-  }
-
-  static create = <I extends ZodTypeAny>(
-    schema: I,
-    asyncEffect: AsyncEffect,
-    params?: RawCreateParams
-  ): ZodAsyncEffects<I, I["_output"]> => {
-    return new ZodAsyncEffects({
-      schema,
-      typeName: ZodFirstPartyTypeKind.ZodAsyncEffects,
-      asyncEffect,
-      ...processCreateParams(params),
-    });
-  };
-}
 
 ///////////////////////////////////////////
 ///////////////////////////////////////////
@@ -5109,7 +4975,6 @@ export enum ZodFirstPartyTypeKind {
   ZodLiteral = "ZodLiteral",
   ZodEnum = "ZodEnum",
   ZodEffects = "ZodEffects",
-  ZodAsyncEffects = "ZodAsyncEffects",
   ZodNativeEnum = "ZodNativeEnum",
   ZodOptional = "ZodOptional",
   ZodNullable = "ZodNullable",
@@ -5197,7 +5062,6 @@ const enumType = ZodEnum.create;
 const nativeEnumType = ZodNativeEnum.create;
 const promiseType = ZodPromise.create;
 const effectsType = ZodEffects.create;
-const asyncEffectsType = ZodAsyncEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
@@ -5225,7 +5089,6 @@ export const coerce = {
 export {
   anyType as any,
   arrayType as array,
-  asyncEffectsType as asyncEffect,
   bigIntType as bigint,
   booleanType as boolean,
   dateType as date,
