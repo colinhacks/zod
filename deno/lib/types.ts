@@ -18,7 +18,7 @@ import {
   ParsePath,
   ParseReturnType,
   ParseStatus,
-  replaceContextIssues,
+  replacePathContextIssues,
   SyncParseReturnType,
 } from "./helpers/parseUtil.ts";
 import { partialUtil } from "./helpers/partialUtil.ts";
@@ -4375,7 +4375,7 @@ export class ZodEffects<
     // Resolve handlers
     // INFO: Should be used at every point the refinement or transform is resolved
     const handlePassStaleOrCached = () => {
-      replaceContextIssues(ctx, getResultCacheOrDefault().issues);
+      replacePathContextIssues(ctx, getResultCacheOrDefault().issues);
       return getResultCacheOrDefault().parseResult;
     };
     const handlePassResolved = (
@@ -4386,7 +4386,7 @@ export class ZodEffects<
       this._dataCache = ctx.data;
       this._resultCache = {
         parseResult,
-        issues: ctx.common.issues,
+        issues: [...ctx.common.issues],
       };
       return parseResult;
     };
@@ -4452,6 +4452,8 @@ export class ZodEffects<
                 status: status.value,
                 value: inner.value,
               });
+
+              return null;
             });
           });
       }

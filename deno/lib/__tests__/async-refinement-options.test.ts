@@ -51,7 +51,7 @@ test("SuperRefine AsyncRefinementOptions freshest", async () => {
       code: z.ZodIssueCode.custom,
       message: `Resolved after ${val}ms`
     })
-  }, { freshest: freshest })
+  }, { freshest })
 
   const defaultSchema = schema(false)
   const freshestSchema = schema(true)

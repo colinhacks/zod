@@ -89,12 +89,15 @@ export function addIssueToContext(
 ): void {
   ctx.common.issues.push(makeIssueWithContext(ctx, issueData));
 }
-export function replaceContextIssues(
+export function replacePathContextIssues(
   ctx: MutParseContext,
   issues: ZodIssue[]
 ): void {
-  // Requires cloning to prevent reference mutations
-  ctx.common.issues = [...issues];
+  // Select issues not relating to current path and add new issues
+  ctx.common.issues = [
+    ...ctx.common.issues.filter((issue) => issue.path.join('.') !== ctx.path.join('.')),
+    ...issues.filter((issue) => issue.path.join('.') === ctx.path.join('.'))
+  ];
 }
 
 export type ObjectPair = {
