@@ -138,6 +138,7 @@ Here are the errors that will be printed:
   {
     code: "too_small",
     minimum: 10000,
+    had: 123,
     type: "number",
     inclusive: true,
     path: ["address", "zipCode"],

@@ -111,6 +111,7 @@ export interface ZodInvalidStringIssue extends ZodIssueBase {
 export interface ZodTooSmallIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_small;
   minimum: number | bigint;
+  had: number | bigint;
   inclusive: boolean;
   exact?: boolean;
   type: "array" | "string" | "number" | "set" | "date" | "bigint";
@@ -119,6 +120,7 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
 export interface ZodTooBigIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.too_big;
   maximum: number | bigint;
+  had: number | bigint;
   inclusive: boolean;
   exact?: boolean;
   type: "array" | "string" | "number" | "set" | "date" | "bigint";

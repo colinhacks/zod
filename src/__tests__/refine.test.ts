@@ -132,6 +132,7 @@ test("superRefine", () => {
       ctx.addIssue({
         code: z.ZodIssueCode.too_big,
         maximum: 3,
+        had: val.length,
         type: "array",
         inclusive: true,
         exact: true,

@@ -636,6 +636,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_small,
             minimum: check.value,
+            had: input.data.length,
             type: "string",
             inclusive: true,
             exact: false,
@@ -649,6 +650,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_big,
             maximum: check.value,
+            had: input.data.length,
             type: "string",
             inclusive: true,
             exact: false,
@@ -665,6 +667,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             addIssueToContext(ctx, {
               code: ZodIssueCode.too_big,
               maximum: check.value,
+              had: input.data.length,
               type: "string",
               inclusive: true,
               exact: true,
@@ -674,6 +677,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             addIssueToContext(ctx, {
               code: ZodIssueCode.too_small,
               minimum: check.value,
+              had: input.data.length,
               type: "string",
               inclusive: true,
               exact: true,
@@ -1112,6 +1116,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_small,
             minimum: check.value,
+            had: input.data,
             type: "number",
             inclusive: check.inclusive,
             exact: false,
@@ -1128,6 +1133,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_big,
             maximum: check.value,
+            had: input.data,
             type: "number",
             inclusive: check.inclusive,
             exact: false,
@@ -1387,6 +1393,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
             code: ZodIssueCode.too_small,
             type: "bigint",
             minimum: check.value,
+            had: input.data,
             inclusive: check.inclusive,
             message: check.message,
           });
@@ -1402,6 +1409,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
             code: ZodIssueCode.too_big,
             type: "bigint",
             maximum: check.value,
+            had: input.data,
             inclusive: check.inclusive,
             message: check.message,
           });
@@ -1642,6 +1650,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
             inclusive: true,
             exact: false,
             minimum: check.value,
+            had: input.data.getTime(),
             type: "date",
           });
           status.dirty();
@@ -1655,6 +1664,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
             inclusive: true,
             exact: false,
             maximum: check.value,
+            had: input.data.getTime(),
             type: "date",
           });
           status.dirty();
@@ -2000,6 +2010,7 @@ export class ZodArray<
           code: tooBig ? ZodIssueCode.too_big : ZodIssueCode.too_small,
           minimum: (tooSmall ? def.exactLength.value : undefined) as number,
           maximum: (tooBig ? def.exactLength.value : undefined) as number,
+          had: input.data.length,
           type: "array",
           inclusive: true,
           exact: true,
@@ -2014,6 +2025,7 @@ export class ZodArray<
         addIssueToContext(ctx, {
           code: ZodIssueCode.too_small,
           minimum: def.minLength.value,
+          had: input.data.length,
           type: "array",
           inclusive: true,
           exact: false,
@@ -2028,6 +2040,7 @@ export class ZodArray<
         addIssueToContext(ctx, {
           code: ZodIssueCode.too_big,
           maximum: def.maxLength.value,
+          had: input.data.length,
           type: "array",
           inclusive: true,
           exact: false,
@@ -3231,6 +3244,7 @@ export class ZodTuple<
       addIssueToContext(ctx, {
         code: ZodIssueCode.too_small,
         minimum: this._def.items.length,
+        had: input.data.length,
         inclusive: true,
         exact: false,
         type: "array",
@@ -3245,6 +3259,7 @@ export class ZodTuple<
       addIssueToContext(ctx, {
         code: ZodIssueCode.too_big,
         maximum: this._def.items.length,
+        had: input.data.length,
         inclusive: true,
         exact: false,
         type: "array",
@@ -3547,6 +3562,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
         addIssueToContext(ctx, {
           code: ZodIssueCode.too_small,
           minimum: def.minSize.value,
+          had: input.data.size,
           type: "set",
           inclusive: true,
           exact: false,
@@ -3561,6 +3577,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
         addIssueToContext(ctx, {
           code: ZodIssueCode.too_big,
           maximum: def.maxSize.value,
+          had: input.data.size,
           type: "set",
           inclusive: true,
           exact: false,
