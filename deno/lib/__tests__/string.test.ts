@@ -56,6 +56,8 @@ test("email validations", () => {
 test("more email validations", () => {
   const validEmails = [
     `very.common@example.com`,
+    `very.common@subdomain.example.com`,
+    `very.common@nested.subdomain.example.com`,
     `disposable.style.email.with+symbol@example.com`,
     `other.email-with-hyphen@example.com`,
     `fully-qualified-domain@example.com`,
