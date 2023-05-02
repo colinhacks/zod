@@ -461,6 +461,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 - [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/faker-js/faker).
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
+- [`zodock`](https://github.com/ItMaga/zodock) Generate mock data based on Zod schemas.
 
 #### Powered by Zod
 
