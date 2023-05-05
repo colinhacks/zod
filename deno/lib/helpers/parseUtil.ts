@@ -6,14 +6,16 @@ import type { ZodParsedType } from "./util.ts";
 export const makeIssue = (params: {
   data: any;
   path: (string | number)[];
+  label: undefined | string,
   errorMaps: ZodErrorMap[];
   issueData: IssueData;
 }): ZodIssue => {
-  const { data, path, errorMaps, issueData } = params;
+  const { data, path, label, errorMaps, issueData } = params;
   const fullPath = [...path, ...(issueData.path || [])];
   const fullIssue = {
     ...issueData,
     path: fullPath,
+    label
   };
 
   let errorMessage = "";
@@ -28,6 +30,7 @@ export const makeIssue = (params: {
   return {
     ...issueData,
     path: fullPath,
+    label,
     message: issueData.message || errorMessage,
   };
 };
@@ -51,6 +54,7 @@ export interface ParseContext {
     readonly fatalOnError: boolean;
   };
   readonly path: ParsePath;
+  readonly label: undefined | string
   readonly schemaErrorMap?: ZodErrorMap;
   readonly parent: ParseContext | null;
   readonly data: any;
@@ -60,6 +64,7 @@ export interface ParseContext {
 export type ParseInput = {
   data: any;
   path: (string | number)[];
+  label: undefined | string
   parent: ParseContext;
 };
 
@@ -71,6 +76,7 @@ export function addIssueToContext(
     issueData: issueData,
     data: ctx.data,
     path: ctx.path,
+    label: ctx.label,
     errorMaps: [
       ctx.common.contextualErrorMap, // contextual error map is first priority
       ctx.schemaErrorMap, // then schema-bound map if available

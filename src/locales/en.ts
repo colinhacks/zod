@@ -2,6 +2,7 @@ import { util, ZodParsedType } from "../helpers/util";
 import { ZodErrorMap, ZodIssueCode } from "../ZodError";
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {
+  console.log('mp', issue.label, issue.path)
   let message: string;
   switch (issue.code) {
     case ZodIssueCode.invalid_type:
@@ -32,7 +33,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       )}`;
       break;
     case ZodIssueCode.invalid_enum_value:
-      message = `Invalid enum value ${issue.label || issue.path[0]}. Expected ${util.joinValues(
+      message = `Invalid enum value. Expected ${util.joinValues(
         issue.options
       )}, received '${issue.received}'`;
       break;
