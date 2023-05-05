@@ -1,6 +1,6 @@
 {
   "name": "zod-abort-failed",
-  "version": "3.19.4",
+  "version": "3.20.0",
   "description": "Zod with option to abort early on validation error.",
   "main": "./lib/index.js",
   "types": "./index.d.ts",
