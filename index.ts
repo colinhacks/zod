@@ -1,17 +1,21 @@
 import * as z from "./src/index";
 
 // try {
-//   z.string().superRefine((val, ctx) => {
-//     ctx.addIssue({
-//       code: 'invalid_type',
-//       received: 'undefined',
-//       expected: 'string',
+//   const r = await z.object({
+//     val: z.string({ label: 'label val' }).nullable().superRefine(async (val, ctx) => {
+//       ctx.addIssue({
+//         code: 'invalid_type',
+//         received: 'undefined',
+//         expected: 'string',
+//       })
+//       return z.NEVER;
 //     })
-//     return z.NEVER;
-//   }).parse('a22222')
-//   // S
+//   }).parseAsync({ val: '1' }, {
+//     fatalOnError: true
+//   })
+//   console.log(r)
 // } catch (err) {
-//   console.log('err', err.formErrors.fieldErrors, err.formErrors);
+//   console.log('err', err.formErrors.fieldErrors);
 // }
 
 // process.exit()
@@ -36,7 +40,7 @@ const schema = z.object({
   age: z.number().min(18).max(19),
   address: z.string(),
   option: z.array(z.enum(['a'], { label: 'Option label' })),
-  optional: z.string({ label: 'optional label (inherit)' }).optional().superRefine((val, ctx) => {
+  optional: z.string({ label: 'optional label (inherit)' }).nullable().superRefine(async (val, ctx) => {
     if(val){
       ctx.addIssue({
         code: 'invalid_type',

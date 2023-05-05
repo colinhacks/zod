@@ -2,7 +2,6 @@ import { util, ZodParsedType } from "../helpers/util.ts";
 import { ZodErrorMap, ZodIssueCode } from "../ZodError.ts";
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {
-  console.log('mp', issue.label, issue.path)
   let message: string;
   switch (issue.code) {
     case ZodIssueCode.invalid_type:

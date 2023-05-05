@@ -4177,6 +4177,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     return new ZodNullable({
       innerType: type,
       typeName: ZodFirstPartyTypeKind.ZodNullable,
+      label: type.label,
       ...processCreateParams(params),
     }) as any;
   };
@@ -4232,6 +4233,7 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
         typeof params.default === "function"
           ? params.default
           : () => params.default as any,
+      label: type.label,
       ...processCreateParams(params),
     }) as any;
   };
@@ -4300,6 +4302,7 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
         typeof params.default === "function"
           ? params.default
           : () => params.default,
+      label: type.label,
       ...processCreateParams(params),
     });
   };
