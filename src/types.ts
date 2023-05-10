@@ -2114,6 +2114,11 @@ export type ZodNonEmptyArray<T extends ZodTypeAny> = ZodArray<T, "atleastone">;
 
 export type UnknownKeysParam = "passthrough" | "strict" | "strip";
 
+export type PartialRefine = {
+  keys: (string | number | symbol)[];
+  refine: (val: any, ctx: ParseContext) => boolean | Promise<boolean>;
+};
+
 export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
@@ -2123,6 +2128,7 @@ export interface ZodObjectDef<
   shape: () => T;
   catchall: Catchall;
   unknownKeys: UnknownKeys;
+  partialRefines: PartialRefine[];
 }
 
 export type mergeTypes<A, B> = {
@@ -2332,10 +2338,33 @@ export class ZodObject<
           return syncPairs;
         })
         .then((syncPairs) => {
+          this._runPartialRefines(ctx, syncPairs);
+
           return ParseStatus.mergeObjectSync(status, syncPairs);
         });
     } else {
+      this._runPartialRefines(ctx, pairs as any);
+
       return ParseStatus.mergeObjectSync(status, pairs as any);
+    }
+  }
+
+  _runPartialRefines(
+    ctx: ParseContext,
+    pairs: {
+      key: SyncParseReturnType<any>;
+      value: SyncParseReturnType<any>;
+    }[]
+  ) {
+    for (const { keys, refine } of this._def.partialRefines) {
+      const canRunRefine = keys.every((key) => {
+        const pair = pairs.find(
+          (pair) => pair.key.status === "valid" && pair.key.value === key
+        );
+        return pair != null && pair.value.status === "valid";
+      });
+
+      if (canRunRefine) refine(ctx.data, ctx);
     }
   }
 
@@ -2472,6 +2501,10 @@ export class ZodObject<
         ...merging._def.shape(),
       }),
       typeName: ZodFirstPartyTypeKind.ZodObject,
+      partialRefines: [
+        ...this._def.partialRefines,
+        ...merging._def.partialRefines,
+      ],
     }) as any;
     return merged;
   }
@@ -2660,6 +2693,73 @@ export class ZodObject<
     }) as any;
   }
 
+  partialRefine<Keys extends keyof T>(
+    keys: Keys[],
+    check: (arg: Pick<T, Keys>) => any,
+    message?: string | CustomErrorParams | ((arg: T) => CustomErrorParams)
+  ): ZodObject<T, UnknownKeys, ZodTypeAny>;
+  partialRefine<Keys extends keyof T>(
+    keys: Keys[],
+    check: (arg: Pick<T, Keys>) => unknown | Promise<unknown>,
+    message?: string | CustomErrorParams | ((arg: T) => CustomErrorParams)
+  ): ZodObject<T, UnknownKeys, ZodTypeAny>;
+  partialRefine<Keys extends keyof T>(
+    keys: Keys[],
+    check: (arg: Pick<T, Keys>) => unknown,
+    message?: string | CustomErrorParams | ((arg: T) => CustomErrorParams)
+  ): ZodObject<T, UnknownKeys, ZodTypeAny> {
+    const getIssueProperties = (val: T) => {
+      if (typeof message === "string" || typeof message === "undefined") {
+        return { message };
+      } else if (typeof message === "function") {
+        return message(val);
+      } else {
+        return message;
+      }
+    };
+    return this._partialRefinement(keys, (val, ctx) => {
+      const result = check(val);
+      const setError = () => {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.custom,
+          ...getIssueProperties(val),
+        });
+      };
+      if (typeof Promise !== "undefined" && result instanceof Promise) {
+        return result.then((data) => {
+          if (!data) {
+            setError();
+            return false;
+          } else {
+            return true;
+          }
+        });
+      }
+      if (!result) {
+        setError();
+        return false;
+      } else {
+        return true;
+      }
+    });
+  }
+
+  _partialRefinement(
+    keys: (string | number | symbol)[],
+    refine: (val: T, ctx: ParseContext) => boolean | Promise<boolean>
+  ) {
+    return new ZodObject({
+      ...this._def,
+      partialRefines: [
+        ...this._def.partialRefines,
+        {
+          keys,
+          refine,
+        },
+      ],
+    });
+  }
+
   keyof(): ZodEnum<enumUtil.UnionToTupleString<keyof T>> {
     return createZodEnum(
       util.objectKeys(this.shape) as [string, ...string[]]
@@ -2675,6 +2775,7 @@ export class ZodObject<
       unknownKeys: "strip",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
+      partialRefines: [],
       ...processCreateParams(params),
     }) as any;
   };
@@ -2688,6 +2789,7 @@ export class ZodObject<
       unknownKeys: "strict",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
+      partialRefines: [],
       ...processCreateParams(params),
     }) as any;
   };
@@ -2701,6 +2803,7 @@ export class ZodObject<
       unknownKeys: "strip",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
+      partialRefines: [],
       ...processCreateParams(params),
     }) as any;
   };
