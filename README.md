@@ -1922,6 +1922,18 @@ For convenience, this has been aliased to `.spa`:
 await stringSchema.spa("billie");
 ```
 
+### `.assert`
+
+Uses safeParse under the hood to assert the input type of the schema. Useful for inlining quick checks on unknown data that does not need to be transformed.
+
+```ts
+const data = JSON.parse('"billie"') as unknown
+
+if (z.string().assert(data)) {
+  // data is now recognized as a string by TS
+  data.toUpperCase().startsWith("B")
+}
+```
 ### `.refine`
 
 `.refine(validator: (data:T)=>any, params?: RefineParams)`

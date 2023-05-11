@@ -248,6 +248,10 @@ export abstract class ZodType<
     return handleResult(ctx, result);
   }
 
+  assert(data: unknown): data is Input {
+    return this.safeParse(data).success;
+  }
+
   async parseAsync(
     data: unknown,
     params?: Partial<ParseParams>
