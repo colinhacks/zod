@@ -10,7 +10,7 @@ console.log(
 );
 
 function recursive<T extends z.ZodTypeAny>(
-  callback: <G extends z.ZodTypeAny>(schema: G) => T
+  _callback: <G extends z.ZodTypeAny>(schema: G) => T
 ): T {
   return "asdf" as any;
 }
@@ -45,5 +45,3 @@ arg;
 const kwarg = {
   [__nominal__type2]: "asdf",
 };
-
-type aklmdf = typeof arg extends typeof kwarg ? true : false;
