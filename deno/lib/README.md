@@ -57,8 +57,8 @@
 - [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
-  - [Datetime](#datetime-validation)
-  - [IP](#ip-address-validation)
+  - [Datetime](#iso-datetimes)
+  - [IP](#ip-addresses)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -431,6 +431,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
 - [`houseform`](https://github.com/crutchcorn/houseform/): A React form library that uses Zod for validation.
 - [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms): Supercharged form library for SvelteKit with Zod validation.
+- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod
 
 #### Zod to X
 
@@ -460,6 +461,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 - [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/faker-js/faker).
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
+- [`zocker`](https://zocker.sigrist.dev): Generate plausible mock-data from your schemas. 
 
 #### Powered by Zod
 
@@ -623,7 +625,7 @@ z.coerce.boolean().parse(null); // => false
 
 ## Literals
 
-Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/literal-types.html), like `"hello world"` or `5`.
+Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types), like `"hello world"` or `5`.
 
 ```ts
 const tuna = z.literal("tuna");
