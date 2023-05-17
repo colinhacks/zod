@@ -63,6 +63,19 @@ test("valid - discriminator value of various primitive types", () => {
   });
 });
 
+test("valid - discrimination over refinement/ZodEffect types", () => {
+  const superRefinedSchemaA = z
+    .object({ key: z.literal("value") })
+    .superRefine(() => {});
+  const superRefinedUnionA = z.discriminatedUnion("key", [superRefinedSchemaA]);
+  expect(superRefinedUnionA.parse({ key: "value" })).toEqual({ key: "value" });
+  const refinedSchemaA = z
+    .object({ key: z.literal("value") })
+    .refine((x) => x.key === "value");
+  const refinedUnionA = z.discriminatedUnion("key", [refinedSchemaA]);
+  expect(refinedUnionA.parse({ key: "value" })).toEqual({ key: "value" });
+});
+
 test("invalid - null", () => {
   try {
     z.discriminatedUnion("type", [
