@@ -41,7 +41,7 @@
     ".": {
       "types": "./index.d.ts",
       "require": "./lib/index.js",
-      "import": "./lib/index.mjs",
+      "import": "./lib/index.mjs"
     },
     "./package.json": "./package.json",
     "./locales/*": "./lib/locales/*"
