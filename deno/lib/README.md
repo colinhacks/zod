@@ -57,8 +57,8 @@
 - [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
-  - [Datetime](#datetime-validation)
-  - [IP](#ip-address-validation)
+  - [Datetime](#iso-datetimes)
+  - [IP](#ip-addresses)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -431,6 +431,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
 - [`houseform`](https://github.com/crutchcorn/houseform/): A React form library that uses Zod for validation.
 - [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms): Supercharged form library for SvelteKit with Zod validation.
+- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod
 
 #### Zod to X
 

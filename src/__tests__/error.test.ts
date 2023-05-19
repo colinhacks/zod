@@ -356,6 +356,22 @@ test("formatting with nullable and optional fields", () => {
   }
 });
 
+test("inferFlattenedErrors", () => {
+  const schemaWithTransform = z
+    .object({ foo: z.string() })
+    .transform((o) => ({ bar: o.foo }));
+
+  const result = schemaWithTransform.safeParse({});
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    type ValidationErrors = z.inferFlattenedErrors<typeof schemaWithTransform>;
+    const error: ValidationErrors = result.error.flatten();
+    expect(error.formErrors).toEqual([]);
+    expect(error.fieldErrors).toEqual({ foo: ["Required"] });
+  }
+});
+
 const stringWithCustomError = z.string({
   errorMap: (issue, ctx) => ({
     message:
