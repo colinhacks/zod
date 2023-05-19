@@ -1,11 +1,21 @@
 import { z } from "./src";
 z;
 
+console.log(
+  z
+    .string()
+    .toUpperCase()
+    .pipe(z.enum(["DE", "EN"]))
+    .parse("de")
+);
+
 function recursive<T extends z.ZodTypeAny>(
   callback: <G extends z.ZodTypeAny>(schema: G) => T
 ): T {
   return "asdf" as any;
 }
+
+z.string();
 
 const cat = recursive((type) => {
   return z.object({
