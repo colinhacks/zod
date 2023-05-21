@@ -4186,7 +4186,7 @@ export type TransformEffect<T> = {
 };
 export type PreprocessEffect<T> = {
   type: "preprocess";
-  transform: (arg: T) => any;
+  transform: (arg: T, ctx: RefinementCtx) => any;
 };
 export type Effect<T> =
   | RefinementEffect<T>
@@ -4220,8 +4220,30 @@ export class ZodEffects<
 
     const effect = this._def.effect || null;
 
+    const checkCtx: RefinementCtx = {
+      addIssue: (arg: IssueData) => {
+        addIssueToContext(ctx, arg);
+        if (arg.fatal) {
+          status.abort();
+        } else {
+          status.dirty();
+        }
+      },
+      get path() {
+        return ctx.path;
+      },
+    };
+
+    checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
+
     if (effect.type === "preprocess") {
-      const processed = effect.transform(ctx.data);
+      const processed = effect.transform(ctx.data, checkCtx);
+      if (ctx.common.issues.length) {
+        return {
+          status: "dirty",
+          value: ctx.data,
+        };
+      }
 
       if (ctx.common.async) {
         return Promise.resolve(processed).then((processed) => {
@@ -4239,22 +4261,6 @@ export class ZodEffects<
         });
       }
     }
-
-    const checkCtx: RefinementCtx = {
-      addIssue: (arg: IssueData) => {
-        addIssueToContext(ctx, arg);
-        if (arg.fatal) {
-          status.abort();
-        } else {
-          status.dirty();
-        }
-      },
-      get path() {
-        return ctx.path;
-      },
-    };
-
-    checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
     if (effect.type === "refinement") {
       const executeRefinement = (
         acc: unknown
@@ -4346,7 +4352,7 @@ export class ZodEffects<
   };
 
   static createWithPreprocess = <I extends ZodTypeAny>(
-    preprocess: (arg: unknown) => unknown,
+    preprocess: (arg: unknown, ctx: RefinementCtx) => unknown,
     schema: I,
     params?: RawCreateParams
   ): ZodEffects<I, I["_output"], unknown> => {
