@@ -458,6 +458,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
 - [`houseform`](https://github.com/crutchcorn/houseform/): A React form library that uses Zod for validation.
 - [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms): Supercharged form library for SvelteKit with Zod validation.
+- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod
 
 #### Zod to X
 
@@ -469,6 +470,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod): Create Fastify type providers from Zod schemas.
 - [`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi): Generate full OpenAPI (Swagger) docs from Zod, including schemas, endpoints & parameters.
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas. Provides GraphQL method decorators working with Zod schemas.
+- [`zod-openapi`](https://github.com/samchungy/zod-openapi): Create full OpenAPI v3.x documentation from Zod Schemas.
 
 #### X to Zod
 
@@ -487,6 +489,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 - [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/faker-js/faker).
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
+- [`zocker`](https://zocker.sigrist.dev): Generate plausible mock-data from your schemas.
 
 #### Powered by Zod
 
@@ -998,7 +1001,7 @@ FruitEnum.parse("Cantaloupe"); // fails
 
 **Const enums**
 
-The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` required TypeScript 3.4+!
+The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` requires TypeScript 3.4+!
 
 ```ts
 const Fruits = {
