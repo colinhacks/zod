@@ -39,70 +39,97 @@ test("failing validations", () => {
 });
 
 test("email validations", () => {
-  const email = z.string().email();
-  email.parse("mojojojo@example.com");
-  expect(() => email.parse("asdf")).toThrow();
-  expect(() => email.parse("@lkjasdf.com")).toThrow();
-  expect(() => email.parse("asdf@sdf.")).toThrow();
-  expect(() => email.parse("asdf@asdf.com-")).toThrow();
-  expect(() => email.parse("asdf@-asdf.com")).toThrow();
-  expect(() => email.parse("asdf@-a(sdf.com")).toThrow();
-  expect(() => email.parse("asdf@-asdf.com(")).toThrow();
-  expect(() =>
-    email.parse("pawan.anand@%9y83&#$%R&#$%R&%#$R%%^^%5rw3ewe.d.d.aaaa.wef.co")
-  ).toThrow();
-});
-
-test("more email validations", () => {
   const validEmails = [
+    `email@domain.com`,
+    `firstname.lastname@domain.com`,
+    `email@subdomain.domain.com`,
+    `firstname+lastname@domain.com`,
+    `1234567890@domain.com`,
+    `email@domain-one.com`,
+    `_______@domain.com`,
+    `email@domain.name`,
+    `email@domain.co.jp`,
+    `firstname-lastname@domain.com`,
     `very.common@example.com`,
     `disposable.style.email.with+symbol@example.com`,
     `other.email-with-hyphen@example.com`,
     `fully-qualified-domain@example.com`,
     `user.name+tag+sorting@example.com`,
     `x@example.com`,
+    `mojojojo@asdf.example.com`,
     `example-indeed@strange-example.com`,
-    `test/test@test.com`,
     `example@s.example`,
-    `" "@example.org`,
-    `"john..doe"@example.org`,
-    `mailhost!username@example.org`,
-    `"very.(),:;<>[]\".VERY.\"very@\\ \"very\".unusual"@strange.example.com`,
-    `user%example.com@example.org`,
     `user-@example.org`,
-    `postmaster@[123.123.123.123]`,
     `user@my-example.com`,
     `a@b.cd`,
     `work+user@mail.com`,
+    `tom@test.te-st.com`,
+    `something@subdomain.domain-with-hyphens.tld`,
+    `francois@etu.inp-n7.fr`,
+  ];
+  const invalidEmails = [
+    // no "printable characters"
+    // `user%example.com@example.org`,
+    // `mailhost!username@example.org`,
+    // `test/test@test.com`,
+
+    // double @
+    `francois@@etu.inp-n7.fr`,
+    // do not support quotes
+    `"email"@domain.com`,
+    `"e asdf sadf ?<>ail"@domain.com`,
+    `" "@example.org`,
+    `"john..doe"@example.org`,
+    `"very.(),:;<>[]\".VERY.\"very@\\ \"very\".unusual"@strange.example.com`,
+
+    // do not support IPv4
+    `email@123.123.123.123`,
+    `email@[123.123.123.123]`,
+    `postmaster@123.123.123.123`,
     `user@[68.185.127.196]`,
     `ipv4@[85.129.96.247]`,
     `valid@[79.208.229.53]`,
     `valid@[255.255.255.255]`,
     `valid@[255.0.55.2]`,
     `valid@[255.0.55.2]`,
+
+    // do not support ipv6
     `hgrebert0@[IPv6:4dc8:ac7:ce79:8878:1290:6098:5c50:1f25]`,
     `bshapiro4@[IPv6:3669:c709:e981:4884:59a3:75d1:166b:9ae]`,
     `jsmith@[IPv6:2001:db8::1]`,
     `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:7334]`,
     `postmaster@[IPv6:2001:0db8:85a3:0000:0000:8a2e:0370:192.168.1.1]`,
-    `test@any.th1ng.com`,
-    `me@y.z.com`,
-    `me@y.z.co.jp`,
-    `example@subdomain.hyphenated-domain.com`,
-    `example@atlanta.k12.ga.us`,
-    `a.b@c.d`,
-  ];
-  const invalidEmails = [
+
+    // microsoft test cases
+    `plainaddress`,
+    `#@%^%#$@#$@#.com`,
+    `@domain.com`,
+    `Joe Smith &lt;email@domain.com&gt;`,
+    `email.domain.com`,
+    `email@domain@domain.com`,
+    `.email@domain.com`,
+    `email.@domain.com`,
+    `email..email@domain.com`,
+    `あいうえお@domain.com`,
+    `email@domain.com (Joe Smith)`,
+    `email@domain`,
+    `email@-domain.com`,
+    `email@111.222.333.44444`,
+    `email@domain..com`,
     `Abc.example.com`,
     `A@b@c@example.com`,
+    `colin..hacks@domain.com`,
     `a"b(c)d,e:f;g<h>i[j\k]l@example.com`,
     `just"not"right@example.com`,
     `this is"not\allowed@example.com`,
     `this\ still\"not\\allowed@example.com`,
+
+    // random
     `i_like_underscore@but_its_not_allowed_in_this_part.example.com`,
     `QA[icon]CHOCOLATE[icon]@test.com`,
     `invalid@-start.com`,
     `invalid@end.com-`,
+    `a.b@c.d`,
     `invalid@[1.1.1.-1]`,
     `invalid@[68.185.127.196.55]`,
     `temp@[192.168.1]`,
@@ -121,13 +148,16 @@ test("more email validations", () => {
     `test@.com`,
   ];
   const emailSchema = z.string().email();
+
   expect(
-    validEmails.every((email) => emailSchema.safeParse(email).success)
+    validEmails.every((email) => {
+      return emailSchema.safeParse(email).success;
+    })
   ).toBe(true);
   expect(
-    invalidEmails.every(
-      (email) => emailSchema.safeParse(email).success === false
-    )
+    invalidEmails.every((email) => {
+      return emailSchema.safeParse(email).success === false;
+    })
   ).toBe(true);
 });
 
