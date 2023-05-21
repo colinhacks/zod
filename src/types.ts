@@ -371,10 +371,10 @@ export abstract class ZodType<
     refinement: (arg: Output, ctx: RefinementCtx) => arg is RefinedOutput
   ): ZodEffects<this, RefinedOutput, Input>;
   superRefine(
-    refinement: (arg: Output, ctx: RefinementCtx) => void
+    refinement: (arg: Output, ctx: RefinementCtx) => void | Promise<void>
   ): ZodEffects<this, Output, Input>;
   superRefine(
-    refinement: (arg: Output, ctx: RefinementCtx) => unknown
+    refinement: (arg: Output, ctx: RefinementCtx) => unknown | Promise<unknown>
   ): ZodEffects<this, Output, Input> {
     return this._refinement(refinement);
   }
@@ -4174,7 +4174,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////////
 
 export type Refinement<T> = (arg: T, ctx: RefinementCtx) => any;
-export type SuperRefinement<T> = (arg: T, ctx: RefinementCtx) => void;
+export type SuperRefinement<T> = (arg: T, ctx: RefinementCtx) => void | Promise<void>;
 
 export type RefinementEffect<T> = {
   type: "refinement";
