@@ -18,7 +18,7 @@ test("transform ctx.addIssue with parse", () => {
     z.string()
       .transform((data, ctx) => {
         const i = strs.indexOf(data);
-        if (i === -1 && ctx) {
+        if (i === -1) {
           ctx.addIssue({
             code: "custom",
             message: `${data} is not one of our allowed strings`,
@@ -50,7 +50,7 @@ test("transform ctx.addIssue with parseAsync", async () => {
     .transform((data, ctx) => {
       const i = strs.indexOf(data);
       if (i === -1) {
-        ctx?.addIssue({
+        ctx.addIssue({
           code: "custom",
           message: `${data} is not one of our allowed strings`,
         });
@@ -80,7 +80,7 @@ test("z.NEVER in transform", async () => {
     .optional()
     .transform((val, ctx) => {
       if (!val) {
-        ctx?.addIssue({ code: z.ZodIssueCode.custom, message: "bad" });
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "bad" });
         return z.NEVER;
       }
       return val;
@@ -215,13 +215,12 @@ test("async preprocess", async () => {
 test("preprocess ctx.addIssue with parse", () => {
   expect(() => {
     z.preprocess((data, ctx) => {
-        ctx?.addIssue({
-          code: "custom",
-          message: `${data} is not one of our allowed strings`,
-        });
-        return data;
-      }, z.string())
-      .parse("asdf");
+      ctx?.addIssue({
+        code: "custom",
+        message: `${data} is not one of our allowed strings`,
+      });
+      return data;
+    }, z.string()).parse("asdf");
   }).toThrow(
     JSON.stringify(
       [
@@ -264,15 +263,14 @@ test("preprocess ctx.addIssue with parseAsync", async () => {
 });
 
 test("z.NEVER in preprocess", async () => {
-  const foo = z
-    .preprocess((val, ctx) => {
-      if (!val) {
-        ctx?.addIssue({ code: z.ZodIssueCode.custom, message: "bad" });
-        return z.NEVER;
-      }
-      return val;
-    }, z.number())
-    
+  const foo = z.preprocess((val, ctx) => {
+    if (!val) {
+      ctx?.addIssue({ code: z.ZodIssueCode.custom, message: "bad" });
+      return z.NEVER;
+    }
+    return val;
+  }, z.number());
+
   type foo = z.infer<typeof foo>;
   util.assertEqual<foo, number>(true);
   const arg = foo.safeParse(undefined);

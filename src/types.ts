@@ -431,7 +431,7 @@ export abstract class ZodType<
   }
 
   transform<NewOut>(
-    transform: (arg: Output, ctx?: RefinementCtx) => NewOut | Promise<NewOut>
+    transform: (arg: Output, ctx: RefinementCtx) => NewOut | Promise<NewOut>
   ): ZodEffects<this, NewOut> {
     return new ZodEffects({
       ...processCreateParams(this._def),
@@ -4182,11 +4182,11 @@ export type RefinementEffect<T> = {
 };
 export type TransformEffect<T> = {
   type: "transform";
-  transform: (arg: T, ctx?: RefinementCtx) => any;
+  transform: (arg: T, ctx: RefinementCtx) => any;
 };
 export type PreprocessEffect<T> = {
   type: "preprocess";
-  transform: (arg: T, ctx?: RefinementCtx) => any;
+  transform: (arg: T, ctx: RefinementCtx) => any;
 };
 export type Effect<T> =
   | RefinementEffect<T>
@@ -4352,7 +4352,7 @@ export class ZodEffects<
   };
 
   static createWithPreprocess = <I extends ZodTypeAny>(
-    preprocess: (arg: unknown, ctx?: RefinementCtx) => unknown,
+    preprocess: (arg: unknown, ctx: RefinementCtx) => unknown,
     schema: I,
     params?: RawCreateParams
   ): ZodEffects<I, I["_output"], unknown> => {
