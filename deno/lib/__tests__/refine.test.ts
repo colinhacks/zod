@@ -156,6 +156,35 @@ test("superRefine", () => {
   Strings.parse(["asfd", "qwer"]);
 });
 
+test("superRefine async", async () => {
+  const Strings = z.array(z.string()).superRefine(async (val, ctx) => {
+    if (val.length > 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_big,
+        maximum: 3,
+        type: "array",
+        inclusive: true,
+        exact: true,
+        message: "Too many items 😡",
+      });
+    }
+
+    if (val.length !== new Set(val).size) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `No duplicates allowed.`,
+      });
+    }
+  });
+
+  const result = await Strings.safeParseAsync(["asfd", "asfd", "asfd", "asfd"]);
+
+  expect(result.success).toEqual(false);
+  if (!result.success) expect(result.error.issues.length).toEqual(2);
+
+  Strings.parseAsync(["asfd", "qwer"]);
+});
+
 test("superRefine - type narrowing", () => {
   type NarrowType = { type: string; age: number };
   const schema = z
