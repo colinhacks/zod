@@ -25,7 +25,6 @@ const validEmails = [
   `user@my-example.com`,
   `a@b.cd`,
   `work+user@mail.com`,
-
   `tom@test.te-st.com`,
   `something@subdomain.domain-with-hyphens.tld`,
   `francois@etu.inp-n7.fr`,
@@ -35,6 +34,9 @@ const invalidEmails = [
   // `user%example.com@example.org`,
   // `mailhost!username@example.org`,
   // `test/test@test.com`,
+
+  // double @
+  `francois@@etu.inp-n7.fr`,
 
   // do not support quotes
   `"email"@domain.com`,
@@ -107,11 +109,19 @@ const invalidEmails = [
   `gbacher0@[IPv6:bc37:4d3f:5048:2e26:37cc:248e:df8e:2f7f:af]`,
   `invalid@[IPv6:5348:4ed3:5d38:67fb:e9b:acd2:c13:192.168.256.1]`,
 ];
+
 const emailSchema = z.string().email();
-for (const email of validEmails) {
-  console.log("good", email);
-  emailSchema.parse(email);
-}
+console.log(
+  validEmails.every((email) => {
+    const val = emailSchema.safeParse(email).success;
+    if (!val) console.log(`fail`, email);
+    return val;
+  })
+);
+// for (const email of validEmails) {
+//   console.log("good", email);
+//   emailSchema.parse(email);
+// }
 for (const email of invalidEmails) {
   try {
     emailSchema.parse(email);
