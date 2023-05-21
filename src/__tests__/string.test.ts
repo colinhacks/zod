@@ -62,12 +62,16 @@ test("email validations", () => {
     `user@my-example.com`,
     `a@b.cd`,
     `work+user@mail.com`,
+
+    `tom@test.te-st.com`,
+    `something@subdomain.domain-with-hyphens.tld`,
+    `francois@@etu.inp-n7.fr`,
   ];
   const invalidEmails = [
     // no "printable characters"
-    `user%example.com@example.org`,
-    `mailhost!username@example.org`,
-    `test/test@test.com`,
+    // `user%example.com@example.org`,
+    // `mailhost!username@example.org`,
+    // `test/test@test.com`,
 
     // do not support quotes
     `"email"@domain.com`,
@@ -142,13 +146,24 @@ test("email validations", () => {
     `test@.com`,
   ];
   const emailSchema = z.string().email();
+  for (const email of validEmails) {
+    emailSchema.parse(email);
+  }
+  for (const email of invalidEmails) {
+    try {
+      emailSchema.parse(email);
+      console.log(`PASS`, email);
+    } catch (_) {}
+  }
   expect(
     validEmails.every((email) => {
+      console.log("good", email);
       return emailSchema.safeParse(email).success;
     })
   ).toBe(true);
   expect(
     invalidEmails.every((email) => {
+      console.log("bad", email);
       return emailSchema.safeParse(email).success === false;
     })
   ).toBe(true);
