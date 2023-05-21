@@ -3957,12 +3957,15 @@ function createZodEnum<U extends string, T extends [U, ...U[]]>(
   values: T,
   params?: RawCreateParams
 ): ZodEnum<T>;
-function createZodEnum(values: any, params?: RawCreateParams) {
+function createZodEnum(
+  values: [string, ...string[]],
+  params?: RawCreateParams
+) {
   return new ZodEnum({
-    values: values as any,
+    values,
     typeName: ZodFirstPartyTypeKind.ZodEnum,
     ...processCreateParams(params),
-  }) as any;
+  });
 }
 
 export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
