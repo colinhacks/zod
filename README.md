@@ -159,8 +159,6 @@
   - [Ow](#ow)
 - [Changelog](#changelog)
 
-<!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
-
 ## Introduction
 
 Zod is a TypeScript-first schema declaration and validation library. I'm using the term "schema" to broadly refer to any data type, from a simple `string` to a complex nested object.
@@ -527,6 +525,15 @@ npm install zod       # npm
 yarn add zod          # yarn
 bun add zod           # bun
 pnpm add zod          # pnpm
+```
+
+Zod also publishes a canary version on every commit. To install the canary:
+
+```sh
+npm install zod@canary       # npm
+yarn add zod@canary          # yarn
+bun add zod@canary           # bun
+pnpm add zod@canary          # pnpm
 ```
 
 ### From `deno.land/x` (Deno)
