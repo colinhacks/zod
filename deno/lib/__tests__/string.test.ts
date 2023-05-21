@@ -65,7 +65,7 @@ test("email validations", () => {
     `work+user@mail.com`,
     `tom@test.te-st.com`,
     `something@subdomain.domain-with-hyphens.tld`,
-    `francois@@etu.inp-n7.fr`,
+    `francois@etu.inp-n7.fr`,
   ];
   const invalidEmails = [
     // no "printable characters"
@@ -73,6 +73,8 @@ test("email validations", () => {
     // `mailhost!username@example.org`,
     // `test/test@test.com`,
 
+    // double @
+    `francois@@etu.inp-n7.fr`,
     // do not support quotes
     `"email"@domain.com`,
     `"e asdf sadf ?<>ail"@domain.com`,
