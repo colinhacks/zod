@@ -45,20 +45,32 @@
 
 #### Go to [zod.js.org](https://zod.js.org) >> -->
 
+- [Table of contents](#table-of-contents)
 - [Introduction](#introduction)
   - [Sponsors](#sponsors)
+    - [Gold](#gold)
+    - [Silver](#silver)
+    - [Bronze](#bronze)
   - [Ecosystem](#ecosystem)
+    - [Resources](#resources)
+    - [API libraries](#api-libraries)
+    - [Form integrations](#form-integrations)
+    - [Zod to X](#zod-to-x)
+    - [X to Zod](#x-to-zod)
+    - [Mocking](#mocking)
+    - [Powered by Zod](#powered-by-zod)
+    - [Utilities for Zod](#utilities-for-zod)
 - [Installation](#installation)
   - [Requirements](#requirements)
-  - [Node/npm](#from-npm-nodebun)
-  - [Deno](#from-denolandx-deno)
+  - [From `npm` (Node/Bun)](#from-npm-nodebun)
+  - [From `deno.land/x` (Deno)](#from-denolandx-deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
 - [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
-  - [Datetime](#datetime-validation)
-  - [IP](#ip-address-validation)
+  - [ISO datetimes](#iso-datetimes)
+  - [IP addresses](#ip-addresses)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -69,59 +81,74 @@
 - [Optionals](#optionals)
 - [Nullables](#nullables)
 - [Objects](#objects)
-  - [.shape](#shape)
-  - [.keyof](#keyof)
-  - [.extend](#extend)
-  - [.merge](#merge)
-  - [.pick/.omit](#pickomit)
-  - [.partial](#partial)
-  - [.deepPartial](#deepPartial)
-  - [.passthrough](#passthrough)
-  - [.strict](#strict)
-  - [.strip](#strip)
-  - [.catchall](#catchall)
+  - [`.shape`](#shape)
+  - [`.keyof`](#keyof)
+  - [`.extend`](#extend)
+  - [`.merge`](#merge)
+  - [`.pick/.omit`](#pickomit)
+  - [`.partial`](#partial)
+  - [`.deepPartial`](#deeppartial)
+  - [`.required`](#required)
+  - [`.passthrough`](#passthrough)
+  - [`.strict`](#strict)
+  - [`.strip`](#strip)
+  - [`.catchall`](#catchall)
 - [Arrays](#arrays)
-  - [.element](#element)
-  - [.nonempty](#nonempty)
-  - [.min/.max/.length](#minmaxlength)
+  - [`.element`](#element)
+  - [`.nonempty`](#nonempty)
+  - [`.min/.max/.length`](#minmaxlength)
 - [Tuples](#tuples)
 - [Unions](#unions)
-- [Discriminated Unions](#discriminated-unions)
+- [Discriminated unions](#discriminated-unions)
 - [Records](#records)
+  - [Record key type](#record-key-type)
 - [Maps](#maps)
 - [Sets](#sets)
 - [Intersections](#intersections)
 - [Recursive types](#recursive-types)
+  - [ZodType with ZodEffects](#zodtype-with-zodeffects)
   - [JSON type](#json-type)
-  - [Cyclical data](#cyclical-objects)
+  - [Cyclical objects](#cyclical-objects)
 - [Promises](#promises)
 - [Instanceof](#instanceof)
 - [Functions](#functions)
 - [Preprocess](#preprocess)
-- [Custom](#custom-schemas)
+- [Custom schemas](#custom-schemas)
 - [Schema methods](#schema-methods)
-  - [.parse](#parse)
-  - [.parseAsync](#parseasync)
-  - [.safeParse](#safeparse)
-  - [.safeParseAsync](#safeparseasync)
-  - [.refine](#refine)
-  - [.superRefine](#superRefine)
-  - [.transform](#transform)
-  - [.default](#default)
-  - [.describe](#describe)
-  - [.catch](#catch)
-  - [.optional](#optional)
-  - [.nullable](#nullable)
-  - [.nullish](#nullish)
-  - [.array](#array)
-  - [.promise](#promise)
-  - [.or](#or)
-  - [.and](#and)
-  - [.brand](#brand)
-  - [.pipe](#pipe)
+  - [`.parse`](#parse)
+  - [`.parseAsync`](#parseasync)
+  - [`.safeParse`](#safeparse)
+  - [`.safeParseAsync`](#safeparseasync)
+  - [`.refine`](#refine)
+    - [Arguments](#arguments)
+    - [Customize error path](#customize-error-path)
+    - [Asynchronous refinements](#asynchronous-refinements)
+    - [Relationship to transforms](#relationship-to-transforms)
+  - [`.superRefine`](#superrefine)
+    - [Abort early](#abort-early)
+    - [Type refinements](#type-refinements)
+  - [`.transform`](#transform)
+    - [Chaining order](#chaining-order)
+    - [Validating during transform](#validating-during-transform)
+    - [Relationship to refinements](#relationship-to-refinements)
+    - [Async transforms](#async-transforms)
+  - [`.default`](#default)
+  - [`.describe`](#describe)
+  - [`.catch`](#catch)
+  - [`.optional`](#optional)
+  - [`.nullable`](#nullable)
+  - [`.nullish`](#nullish)
+  - [`.array`](#array)
+  - [`.promise`](#promise)
+  - [`.or`](#or)
+  - [`.and`](#and)
+  - [`.brand`](#brand)
+  - [`.pipe()`](#pipe)
+    - [You can use `.pipe()` to fix common issues with `z.coerce`.](#you-can-use-pipe-to-fix-common-issues-with-zcoerce)
 - [Guides and concepts](#guides-and-concepts)
   - [Type inference](#type-inference)
   - [Writing generic functions](#writing-generic-functions)
+    - [Constraining allowable inputs](#constraining-allowable-inputs)
   - [Error handling](#error-handling)
   - [Error formatting](#error-formatting)
 - [Comparison](#comparison)
@@ -129,6 +156,7 @@
   - [Yup](#yup)
   - [io-ts](#io-ts)
   - [Runtypes](#runtypes)
+  - [Ow](#ow)
 - [Changelog](#changelog)
 
 <!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
@@ -386,17 +414,16 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://ill.inc/">ill.inc</a>
       <br />
     </td>
-    <!-- <td align="center">
-      <a href="https://www.avanawallet.com/">
-        <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
+     <td align="center">
+      <a href="https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring">
+        <img src="https://avatars.githubusercontent.com/u/48984031?s=200&v=4" width="100px;" alt="MasterBorn logo"/>
       </a>
       <br />
-      <b>Avana Wallet</b>
+      <b>MasterBorn</b>
       <br/>
-      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
-      <span>Solana non-custodial wallet</span>
+      <a href="https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring">masterborn.com</a>
       <br />
-    </td> -->
+    </td>
   </tr>
 </table>
 
@@ -431,6 +458,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
 - [`houseform`](https://github.com/crutchcorn/houseform/): A React form library that uses Zod for validation.
 - [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms): Supercharged form library for SvelteKit with Zod validation.
+- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod
 
 #### Zod to X
 
@@ -442,6 +470,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod): Create Fastify type providers from Zod schemas.
 - [`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi): Generate full OpenAPI (Swagger) docs from Zod, including schemas, endpoints & parameters.
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas. Provides GraphQL method decorators working with Zod schemas.
+- [`zod-openapi`](https://github.com/samchungy/zod-openapi): Create full OpenAPI v3.x documentation from Zod Schemas.
 
 #### X to Zod
 
@@ -460,6 +489,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 - [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/faker-js/faker).
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
+- [`zocker`](https://zocker.sigrist.dev): Generate plausible mock-data from your schemas.
 
 #### Powered by Zod
 
@@ -623,7 +653,7 @@ z.coerce.boolean().parse(null); // => false
 
 ## Literals
 
-Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/literal-types.html), like `"hello world"` or `5`.
+Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types), like `"hello world"` or `5`.
 
 ```ts
 const tuna = z.literal("tuna");
@@ -971,7 +1001,7 @@ FruitEnum.parse("Cantaloupe"); // fails
 
 **Const enums**
 
-The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` required TypeScript 3.4+!
+The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` requires TypeScript 3.4+!
 
 ```ts
 const Fruits = {
