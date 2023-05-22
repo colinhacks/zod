@@ -39,9 +39,9 @@
   },
   "exports": {
     ".": {
+      "types": "./index.d.ts",
       "require": "./lib/index.js",
-      "import": "./lib/index.mjs",
-      "types": "./index.d.ts"
+      "import": "./lib/index.mjs"
     },
     "./package.json": "./package.json",
     "./locales/*": "./lib/locales/*"
