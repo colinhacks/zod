@@ -576,7 +576,7 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 
 ### `.partial`
 
-受 TypeScript 内置的实用类型[Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialt)的启发, `.partial` 方法使所有属性都是可选的。
+受 TypeScript 内置的实用类型[Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)的启发, `.partial` 方法使所有属性都是可选的。
 
 从这个对象开始:
 
