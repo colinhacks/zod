@@ -442,6 +442,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`domain-functions`](https://github.com/SeasonedSoftware/domain-functions/): Decouple your business logic from your framework using composable functions. With first-class type inference from end to end powered by Zod schemas.
 - [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
 - [`express-zod-api`](https://github.com/RobinTail/express-zod-api): Build Express-based APIs with I/O schema validation and custom middlewares.
+- [`tapiduck`](https://github.com/sumukhbarve/monoduck/blob/main/src/tapiduck/README.md): End-to-end typesafe JSON APIs with Zod and Express; a bit like tRPC, but simpler.
 
 #### Form integrations
 
@@ -487,7 +488,9 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 - [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/faker-js/faker).
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
+- [`zod-fixture`](https://github.com/timdeschryver/zod-fixture): Use your zod schemas to automate the generation of non-relevant test fixtures in a deterministic way.
 - [`zocker`](https://zocker.sigrist.dev): Generate plausible mock-data from your schemas.
+- [`zodock`](https://github.com/ItMaga/zodock) Generate mock data based on Zod schemas.
 
 #### Powered by Zod
 
