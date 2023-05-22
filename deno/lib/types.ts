@@ -4872,7 +4872,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     regexString: string,
     part: TemplateLiteralPrimitive | TemplateLiteralInterpolatedPosition
   ): string {
-    return `^${this._unwrapRegexString(
+    return `^${this._unwrapRegExp(
       regexString
     )}${this._transformPartToRegexString(part)}$`;
   }
@@ -4916,7 +4916,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     }
 
     if (part instanceof ZodTemplateLiteral) {
-      return this._unwrapRegexString(part._def.regexString);
+      return this._unwrapRegExp(part._def.regexString);
     }
 
     if (part instanceof ZodBigInt) {
@@ -4968,7 +4968,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       const regex = this._resolveRegexForStringCheck(ch);
 
       if (regex) {
-        return this._unwrapRegexString(regex.source);
+        return this._unwrapRegExp(regex);
       }
 
       if (ch.kind === "endsWith") {
@@ -5021,9 +5021,9 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
         check.kind === "ip"
           ? {
               any: new RegExp(
-                `^(${this._unwrapRegexString(
+                `^(${this._unwrapRegExp(
                   ipv4Regex.source
-                )})|(${this._unwrapRegexString(ipv6Regex.source)})$`
+                )})|(${this._unwrapRegExp(ipv6Regex.source)})$`
               ),
               v4: ipv4Regex,
               v6: ipv6Regex,
@@ -5139,8 +5139,60 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     return acc;
   }
 
-  protected _unwrapRegexString(regexString: string): string {
-    return regexString.replace(/(^\^)|(\$$)/g, "");
+  protected _unwrapRegExp(regex: RegExp | string): string {
+    const flags = typeof regex === "string" ? "" : regex.flags;
+    const source = typeof regex === "string" ? regex : regex.source;
+
+    if (flags.includes("i")) {
+      return this._unwrapRegExp(this._makeRegexStringCaseInsensitive(source));
+    }
+
+    return source.replace(/(^\^)|(\$$)/g, "");
+  }
+
+  protected _makeRegexStringCaseInsensitive(regexString: string): string {
+    const isAlphabetic = (char: string) => char.match(/[a-z]/i) != null;
+
+    let caseInsensitive = "";
+    let inCharacterSet = false;
+    for (let i = 0; i < regexString.length; i++) {
+      const char = regexString.charAt(i);
+      const nextChar = regexString.charAt(i + 1);
+
+      if (char === "\\") {
+        caseInsensitive += `${char}${nextChar}`;
+        i++;
+        continue;
+      }
+
+      if (char === "[") {
+        inCharacterSet = true;
+      } else if (inCharacterSet && char === "]") {
+        inCharacterSet = false;
+      }
+
+      if (!isAlphabetic(char)) {
+        caseInsensitive += char;
+        continue;
+      }
+
+      if (!inCharacterSet) {
+        caseInsensitive += `[${char.toLowerCase()}${char.toUpperCase()}]`;
+        continue;
+      }
+
+      const charAfterNext = regexString.charAt(i + 2);
+
+      if (nextChar !== "-" || !isAlphabetic(charAfterNext)) {
+        caseInsensitive += `${char.toLowerCase()}${char.toUpperCase()}`;
+        continue;
+      }
+
+      caseInsensitive += `${char.toLowerCase()}-${charAfterNext.toLowerCase()}${char.toUpperCase()}-${charAfterNext.toUpperCase()}`;
+      i += 2;
+    }
+
+    return caseInsensitive;
   }
 
   protected _escapeRegExp(str: unknown): string {
