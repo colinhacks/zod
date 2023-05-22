@@ -216,3 +216,31 @@ test("valid - literals with .default or .preprocess", () => {
     a: "foo",
   });
 });
+
+test("valid - object with .preprocess can be passed as a discriminatedUnion option", () => {
+  const baseObjectSchema = z.object({ a: z.string(), type: z.literal('foo') })
+  const preprocessedObjectSchema = z.preprocess((data: any) => {
+    if (data && typeof data === 'object' && 'a' in data && data.a  === "foo") {
+      return { ...data, a: "bar" }
+    }
+    return data
+  }, baseObjectSchema)
+
+  const schema = z.discriminatedUnion("type", [
+    preprocessedObjectSchema,
+    z.object({
+      type: z.literal("bar"),
+    }),
+  ]);
+  expect(schema.parse({ type: "foo", a: "foo" })).toEqual({
+    type: "foo",
+    a: "bar",
+  });
+  expect(schema.parse({ type: "foo", a: "notfoo" })).toEqual({
+    type: "foo",
+    a: "notfoo",
+  });
+  expect(schema.parse({ type: "bar" })).toEqual({
+    type: "bar",
+  });
+})

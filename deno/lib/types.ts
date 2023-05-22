@@ -2893,11 +2893,24 @@ const getDiscriminator = <T extends ZodTypeAny>(
 };
 
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
-  ZodObject<
-    { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
-    UnknownKeysParam,
-    ZodTypeAny
-  >;
+  | ZodObject<
+      { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
+      UnknownKeysParam,
+      ZodTypeAny
+    >
+  | ZodEffects<
+      ZodObject<
+        { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
+        UnknownKeysParam,
+        ZodTypeAny
+      >,
+      ZodObject<
+        { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
+        UnknownKeysParam,
+        ZodTypeAny
+      >["_output"],
+      unknown
+    >;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
@@ -2995,7 +3008,9 @@ export class ZodDiscriminatedUnion<
 
     // try {
     for (const type of options) {
-      const discriminatorValues = getDiscriminator(type.shape[discriminator]);
+      const shape =
+        type instanceof ZodEffects ? type.innerType().shape : type.shape;
+      const discriminatorValues = getDiscriminator(shape[discriminator]);
       if (!discriminatorValues) {
         throw new Error(
           `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
