@@ -212,6 +212,73 @@ test("async preprocess", async () => {
   expect(value).toEqual(["asdf"]);
 });
 
+test("preprocess ctx.addIssue with parse", () => {
+  expect(() => {
+    z.preprocess((data, ctx) => {
+      ctx?.addIssue({
+        code: "custom",
+        message: `${data} is not one of our allowed strings`,
+      });
+      return data;
+    }, z.string()).parse("asdf");
+  }).toThrow(
+    JSON.stringify(
+      [
+        {
+          code: "custom",
+          message: "asdf is not one of our allowed strings",
+          path: [],
+        },
+      ],
+      null,
+      2
+    )
+  );
+});
+
+test("preprocess ctx.addIssue with parseAsync", async () => {
+  const result = await z
+    .preprocess((data, ctx) => {
+      ctx?.addIssue({
+        code: "custom",
+        message: `${data} is not one of our allowed strings`,
+      });
+      return data;
+    }, z.string())
+    .safeParseAsync("asdf");
+
+  expect(JSON.parse(JSON.stringify(result))).toEqual({
+    success: false,
+    error: {
+      issues: [
+        {
+          code: "custom",
+          message: "asdf is not one of our allowed strings",
+          path: [],
+        },
+      ],
+      name: "ZodError",
+    },
+  });
+});
+
+test("z.NEVER in preprocess", async () => {
+  const foo = z.preprocess((val, ctx) => {
+    if (!val) {
+      ctx?.addIssue({ code: z.ZodIssueCode.custom, message: "bad" });
+      return z.NEVER;
+    }
+    return val;
+  }, z.number());
+
+  type foo = z.infer<typeof foo>;
+  util.assertEqual<foo, number>(true);
+  const arg = foo.safeParse(undefined);
+  if (!arg.success) {
+    expect(arg.error.issues[0].message).toEqual("bad");
+  }
+});
+
 test("short circuit on dirty", () => {
   const schema = z
     .string()

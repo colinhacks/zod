@@ -95,7 +95,7 @@ const person = z.object({
   address: z.object({
     line1: z.string(),
     zipCode: z.number().min(10000), // American 5-digit code
-  }),
+  }).strict(); // do not allow unrecognized keys
 });
 ```
 

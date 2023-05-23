@@ -280,7 +280,6 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
 
 _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._
 
-
 # 生态系统
 
 有越来越多的工具是建立在 Zod 之上或原生支持 Zod 的! 如果你在 Zod 的基础上建立了一个工具或库，请在[Twitter](https://twitter.com/colinhacks) 或者 [Discussion](https://github.com/colinhacks/zod/discussions)上告诉我。我会在下面添加，并在推特上发布。
@@ -292,8 +291,9 @@ _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://
 - [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): 从 Zod 模式中生成 `fast-check` 的任意数据。
 - [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): 约定优先的严格类型的端点与 Zod。兼容 OpenAPI。
 - [`express-zod-api`](https://github.com/RobinTail/express-zod-api): 用 I/O 模式验证和自定义中间件构建基于 Express 的 API 服务
-- [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): 有助于翻译zod错误信息。
+- [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): 有助于翻译 zod 错误信息。
 - [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): 以数据为中心的表格构建工具，基于 MobX 和 Zod。
+- [`zodock`](https://github.com/ItMaga/zodock): 基於 Zod 模式生成模擬數據。
 
 # 安装
 
@@ -314,6 +314,7 @@ _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://
 ```
 
 ### 从`npm`(Node/Bun)安装
+
 ```sh
 npm install zod
 yarn add zod          # yarn
@@ -323,7 +324,8 @@ pnpm add zod          # pnpm
 
 ### 从`deno.land/x` (Deno)安装
 
-和Node不同，Demo依靠一个直接的URL导入而非像npm这样的包管理器。可以这样导入最新版本的Zod:
+和 Node 不同，Demo 依靠一个直接的 URL 导入而非像 npm 这样的包管理器。可以这样导入最新版本的 Zod:
+
 ```ts
 import { z } from "https://deno.land/x/zod/mod.ts";
 ```
@@ -334,8 +336,7 @@ import { z } from "https://deno.land/x/zod/mod.ts";
 import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
 ```
 
-> README的剩余部分假定你是直接通过npm安装的`zod`包。
-
+> README 的剩余部分假定你是直接通过 npm 安装的`zod`包。
 
 # 基本用法
 
@@ -575,7 +576,7 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 
 ### `.partial`
 
-受 TypeScript 内置的实用类型[Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialt)的启发, `.partial` 方法使所有属性都是可选的。
+受 TypeScript 内置的实用类型[Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)的启发, `.partial` 方法使所有属性都是可选的。
 
 从这个对象开始:
 
@@ -928,6 +929,13 @@ const FishEnum = z.enum(fish);
 ```
 
 在这种情况下，Zod 无法推断出各个枚举元素；相反，推断出的类型将是 `string` 而不是`'Salmon'|'Tuna'|'Trout'`。
+
+另一种可行的方式是使用`as const`，这样 Zod 就可以推断出正确的类型。
+
+```ts
+const VALUES = ["Salmon", "Tuna", "Trout"] as const;
+const FishEnum = z.enum(VALUES);
+```
 
 **自动补全**
 
