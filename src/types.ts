@@ -54,7 +54,7 @@ export type { TypeOf as infer };
 
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
-  typeName: string;
+  typeName: ZodFirstPartyTypeKind;
   errorMap?: ZodErrorMap;
   description?: string;
 }
