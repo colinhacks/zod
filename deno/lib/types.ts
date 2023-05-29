@@ -2771,6 +2771,19 @@ export type mergeTypes<A, B> = {
     : never;
 };
 
+export type shapifyOutput<T> = {
+  [k in keyof T]: T[k] extends ZodTypeAny ? T[k]["_output"] : never;
+};
+
+export type shapifyInput<T> = {
+  [k in keyof T]: T[k] extends ZodTypeAny ? T[k]["_output"] : never;
+};
+export type simpleObjectOutputType<T> = objectUtil.addQuestionMarks<
+  shapifyOutput<T>
+>;
+export type simpleObjectInputType<T> = objectUtil.flatten<
+  objectUtil.addQuestionMarks<baseObjectInputType<shapifyInput<T>>>
+>;
 export type objectOutputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
@@ -3379,18 +3392,48 @@ export class ZodObject<
     ) as any;
   }
 
-  static create = <T extends ZodRawShape>(
+  // static create = <T extends ZodRawShape>(
+  //   shape: T,
+  //   params?: RawCreateParams
+  // ): ZodObject<T, "strip"> => {
+  //   return new ZodObject({
+  //     shape: () => shape,
+  //     unknownKeys: "strip",
+  //     catchall: ZodNever.create(),
+  //     typeName: ZodFirstPartyTypeKind.ZodObject,
+  //     ...processCreateParams(params),
+  //   }) as any;
+  // };
+
+  static create<T extends { [k: string]: any }>(
     shape: T,
     params?: RawCreateParams
-  ): ZodObject<T, "strip"> => {
+  ): ZodObject<
+    {
+      [k in keyof T]: T[k] extends ZodTypeAny ? T[k] : never;
+    },
+    "strip",
+    ZodTypeAny,
+    // simpleObjectOutputType<T>,
+    objectUtil.addQuestionMarks<shapifyOutput<T>>,
+    // objectUtil.flatten<objectUtil.addQuestionMarks<shapifyOutput<T>>>,
+    // shapifyOutput<T>,
+    {}
+  > {
+    const cleanShape: ZodRawShape = {};
+    for (const key in shape) {
+      if ((shape[key] as any) instanceof ZodType) {
+        cleanShape[key] = shape[key];
+      }
+    }
     return new ZodObject({
-      shape: () => shape,
+      shape: () => cleanShape,
       unknownKeys: "strip",
       catchall: ZodNever.create(),
       typeName: ZodFirstPartyTypeKind.ZodObject,
       ...processCreateParams(params),
     }) as any;
-  };
+  }
 
   static strictCreate = <T extends ZodRawShape>(
     shape: T,
