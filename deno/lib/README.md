@@ -266,7 +266,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://infisical.com">infisical.com</a>
       <br/>
-      <p>Open-source platform for secret management: sync secrets across your team/infrastructure and prevent secret leaks.</p>
+      <p>Open-source platform for secret<br/>management: sync secrets across your<br/>team/infrastructure and prevent secret leaks.</p>
     </td>
   </tr>
 </table>
@@ -433,18 +433,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <b>MasterBorn</b>
       <br/>
       <a href="https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring">masterborn.com</a>
-      <br />
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://twitter.com/alexdotjs">
-        <img src="https://avatars.githubusercontent.com/u/459267?v=4" width="100px;" alt="Katt profile picture"/>
-      </a>
-      <br />
-      <b>Alex / KATT</b>
-      <br/>
-      <a href="https://twitter.com/alexdotjs">Creator of tRPC</a>
       <br />
     </td>
   </tr>
