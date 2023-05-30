@@ -259,7 +259,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
     <td align="center">
       <a href="https://infisical.com">
-        <img src="https://github.com/Infisical/infisical/assets/3084745/1b056b77-414b-48a3-9d07-f8f7f8dabf05" width="200px;" alt="Infisical logo" />
+        <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" width="200px;" alt="Infisical logo" />
       </a>
       <br />
       <b>Infisical</b>
