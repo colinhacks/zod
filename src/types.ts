@@ -1,4 +1,5 @@
 // import { defaultErrorMap, getErrorMap } from "./errors";
+import { getErrorMap } from "./errors";
 import { enumUtil } from "./helpers/enumUtil";
 import { errorUtil } from "./helpers/errorUtil";
 // import {
@@ -24,8 +25,17 @@ import { errorUtil } from "./helpers/errorUtil";
 //   // SyncParseReturnType,
 // } from "./helpers/parseUtil";
 import { partialUtil } from "./helpers/partialUtil";
-import { Primitive } from "./helpers/util";
-import { getParsedType, objectUtil, util, ZodParsedType } from "./helpers/util";
+import {
+  getParsedType,
+  objectUtil,
+  Primitive,
+  util,
+  ZodParsedType,
+} from "./helpers/util";
+import defaultErrorMap from "./locales/en";
+// import type { IssueData, ZodErrorMap, ZodIssue } from "../ZodError";
+// import type { ZodParsedType } from "./util";
+import type { ZodIssueOptionalMessage } from "./ZodError";
 import {
   IssueData,
   StringValidation,
@@ -35,11 +45,6 @@ import {
   ZodIssue,
   ZodIssueCode,
 } from "./ZodError";
-import { getErrorMap } from "./errors";
-import defaultErrorMap from "./locales/en";
-// import type { IssueData, ZodErrorMap, ZodIssue } from "../ZodError";
-// import type { ZodParsedType } from "./util";
-import type { ZodIssueOptionalMessage } from "./ZodError";
 
 export const NEVER = Symbol.for("INVALID") as never;
 
@@ -2771,28 +2776,17 @@ export type mergeTypes<A, B> = {
     : never;
 };
 
-export type shapifyOutput<T> = {
-  [k in keyof T]: T[k] extends ZodTypeAny ? T[k]["_output"] : never;
-};
-
-export type shapifyInput<T> = {
-  [k in keyof T]: T[k] extends ZodTypeAny ? T[k]["_output"] : never;
-};
-export type simpleObjectOutputType<T> = objectUtil.addQuestionMarks<
-  shapifyOutput<T>
->;
-export type simpleObjectInputType<T> = objectUtil.flatten<
-  objectUtil.addQuestionMarks<baseObjectInputType<shapifyInput<T>>>
->;
 export type objectOutputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
-> = objectUtil.flatten<
-  objectUtil.addQuestionMarks<baseObjectOutputType<Shape>>
-> &
-  CatchallOutput<Catchall> &
-  PassthroughType<UnknownKeys>;
+> = ZodRawShape extends Shape
+  ? object
+  : objectUtil.flatten<
+      objectUtil.addQuestionMarks<baseObjectOutputType<Shape>>
+    > &
+      CatchallOutput<Catchall> &
+      PassthroughType<UnknownKeys>;
 
 export type baseObjectOutputType<Shape extends ZodRawShape> = {
   [k in keyof Shape]: Shape[k]["_output"];
@@ -2802,9 +2796,11 @@ export type objectInputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
-> = objectUtil.flatten<baseObjectInputType<Shape>> &
-  CatchallInput<Catchall> &
-  PassthroughType<UnknownKeys>;
+> = ZodRawShape extends Shape
+  ? object
+  : objectUtil.flatten<baseObjectInputType<Shape>> &
+      CatchallInput<Catchall> &
+      PassthroughType<UnknownKeys>;
 export type baseObjectInputType<Shape extends ZodRawShape> =
   objectUtil.addQuestionMarks<{
     [k in keyof Shape]: Shape[k]["_input"];
@@ -2871,9 +2867,16 @@ export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny,
-  Output = objectOutputType<T, Catchall, UnknownKeys>,
-  Input = objectInputType<T, Catchall, UnknownKeys>
-> extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
+  Output = simpleObjectOutputType<T>,
+  Input = simpleObjectInputType<T>
+> extends ZodType<
+  // objectOutputType<T, Catchall, UnknownKeys>,
+  Output,
+  ZodObjectDef<T, UnknownKeys, Catchall>,
+  // Input
+  // objectInputType<T, Catchall, UnknownKeys>
+  Input
+> {
   private _cached: {
     shape: T;
     keys: string[];
@@ -2920,7 +2923,7 @@ export class ZodObject<
 
     const shape = this._cached || this["~getShape"]();
 
-    let finalObject: any = {};
+    const finalObject: any = {};
     let err!: ZodInternalError;
 
     for (const key of shape.keys) {
@@ -3004,7 +3007,7 @@ export class ZodObject<
 
     const shape = this._cached || this["~getShape"]();
 
-    let finalObject: any = {};
+    const finalObject: any = {};
     let err!: ZodInternalError;
 
     for (const key of shape.keys) {
@@ -3413,12 +3416,12 @@ export class ZodObject<
       [k in keyof T]: T[k] extends ZodTypeAny ? T[k] : never;
     },
     "strip",
-    ZodTypeAny,
+    ZodTypeAny
     // simpleObjectOutputType<T>,
-    objectUtil.addQuestionMarks<shapifyOutput<T>>,
+    // objectUtil.addQuestionMarks<shapifyOutput<T>>,
     // objectUtil.flatten<objectUtil.addQuestionMarks<shapifyOutput<T>>>,
     // shapifyOutput<T>,
-    {}
+    // {}
   > {
     const cleanShape: ZodRawShape = {};
     for (const key in shape) {
@@ -4160,7 +4163,7 @@ export class ZodRecord<
     const valueType = this._def.valueType;
 
     let err!: ZodInternalError;
-    let finalResult: any = {};
+    const finalResult: any = {};
     if (ctx?.async) {
       return Promise.all(
         Object.keys(data).map(async (key) => {
@@ -6238,3 +6241,97 @@ export {
   unknownType as unknown,
   voidType as void,
 };
+
+// export const NEVER = INVALID as never;
+
+type shapeToOutput<T extends { [k: string]: any }> = {
+  [k in keyof T]: T[k]["_type"];
+};
+type shapeToInput<T extends { [k: string]: any }> = {
+  [k in keyof T]: T[k]["_type"];
+};
+type addQs<T extends { [k: string]: any }> = {
+  [k in keyof T as undefined extends T[k] ? k : never]?: T[k];
+} & {
+  [k in keyof T as undefined extends T[k] ? never : k]: T[k];
+};
+// type partialifyOutput<T extends { [k: string]: any }> = {
+//   [k in keyof T as undefined extends T[k]["_output"]
+//     ? k
+//     : never]?: T[k]["_output"];
+// } & {
+//   [k in keyof T as undefined extends T[k]["_output"]
+//     ? never
+//     : k]: T[k]["_output"];
+// };
+// type partialifyInput<T extends { [k: string]: any }> = {
+//   [k in keyof T as undefined extends T[k]["_input"]
+//     ? k
+//     : never]?: T[k]["_input"];
+// } & {
+//   [k in keyof T as undefined extends T[k]["_input"]
+//     ? never
+//     : k]: T[k]["_input"];
+// };
+
+export type flattenFunctions<T> = {
+  [k in keyof T]: T[k] extends ZodTypeAny
+    ? T[k]
+    : T[k] extends (...args: any[]) => infer U
+    ? U extends ZodTypeAny
+      ? U
+      : never
+    : never;
+};
+export type shapifyOutput<T> = {
+  [k in keyof T]: T[k] extends ZodTypeAny ? T[k]["_output"] : never;
+};
+export type shapifyInput<T> = {
+  [k in keyof T]: T[k] extends ZodTypeAny ? T[k]["_output"] : never;
+};
+export type simpleObjectOutputType<T extends { [k: string]: any }> =
+  ZodRawShape extends T ? object : addQs<shapeToOutput<T>>;
+
+export type simpleObjectInputType<T extends { [k: string]: any }> =
+  ZodRawShape extends T ? object : addQs<shapeToInput<T>>;
+
+declare function makeObject<T extends { [k: string]: any }>(
+  _shape: T,
+  _params?: RawCreateParams
+): ZodObject<
+  flattenFunctions<T>,
+  "strip",
+  ZodTypeAny,
+  simpleObjectOutputType<T>
+>;
+
+export type identity<T> = T;
+export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
+
+const Node = makeObject({
+  label: ZodString.create().optional(),
+  get children() {
+    return Node.array();
+  }, //.array();
+});
+const node = Node.parse("asdf");
+node.children[0].children[0].children[0].label;
+
+const User = makeObject({
+  name: ZodString.create().optional(),
+  get posts() {
+    return Post.array(); //.array();
+  },
+});
+
+const Post = makeObject({
+  title: ZodString.create().optional(),
+  get author() {
+    return User; //.array();
+  },
+});
+
+// type User = TypeOf<typeof User>;
+const user = User.parse("adsf");
+const post = Post.parse("adsf");
+user.posts[0].author.name;

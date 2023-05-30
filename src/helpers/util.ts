@@ -124,6 +124,7 @@ export namespace objectUtil {
   > = Pick<Required<T>, R> & Partial<T>;
 
   export type identity<T> = T;
+  export type map<T> = { [k in keyof T]: T[k] };
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
 
   export type noNeverKeys<T> = {
