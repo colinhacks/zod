@@ -232,7 +232,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://proxy.com">proxy.com</a>
     </td>
   </tr>
-    <tr>
+  <tr>
     <td align="center">
       <a href="https://trigger.dev/">
         <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" width="200px;" alt="Trigger.dev logo" />
@@ -254,6 +254,19 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://transloadit.com">transloadit.com</a>
       <br/>
       <p>Simple file processing for developers.</p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://infisical.com">
+        <img src="https://github.com/Infisical/infisical/assets/3084745/1b056b77-414b-48a3-9d07-f8f7f8dabf05" width="200px;" alt="Infisical logo" />
+      </a>
+      <br />
+      <b>Infisical</b>
+      <br />
+      <a href="https://infisical.com">infisical.com</a>
+      <br/>
+      <p>Open-source platform for secret management: sync secrets across your team/infrastructure and prevent secret leaks.</p>
     </td>
   </tr>
 </table>
@@ -392,7 +405,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
   <tr>
-  <td align="center">
+    <td align="center">
       <a href="https://learnwithjason.dev">
         <img src="https://avatars.githubusercontent.com/u/66575486?s=200&v=4" width="100px;" alt="Learn with Jason logo"/>
       </a>
@@ -420,6 +433,18 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <b>MasterBorn</b>
       <br/>
       <a href="https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring">masterborn.com</a>
+      <br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://twitter.com/alexdotjs">
+        <img src="https://avatars.githubusercontent.com/u/459267?v=4" width="100px;" alt="Katt profile picture"/>
+      </a>
+      <br />
+      <b>Alex / KATT</b>
+      <br/>
+      <a href="https://twitter.com/alexdotjs">Creator of tRPC</a>
       <br />
     </td>
   </tr>
