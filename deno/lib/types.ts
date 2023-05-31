@@ -426,15 +426,17 @@ export abstract class ZodType<
     this.isOptional = this.isOptional.bind(this);
   }
 
-  getMetadata(): Metadata | undefined {
+  getMetadata(): Def["metadata"] {
     if (this._def.metadata) return this._def.metadata;
     return undefined;
   }
-
-  // metadata<M extends CustomMetadata>(metadata: M): this & {_def: Def & M} {
-  //   const ThisType = this.constructor
-  //   return new ThisType({...this._def, metadata: {...this._def.metadata, ...metadata}})
-  // }
+  metadata<M extends Metadata>(metadata: M): WithMetadata<this, M> {
+    const ThisType: any = this.constructor;
+    return new ThisType({
+      ...this._def,
+      metadata: { ...this._def.metadata, ...metadata },
+    });
+  }
 
   optional(): ZodOptional<this> {
     return ZodOptional.create(this, this._def) as any;
@@ -526,13 +528,7 @@ export abstract class ZodType<
   isNullable(): boolean {
     return this.safeParse(null).success;
   }
-  metadata<M extends Metadata>(metadata: M): WithMetadata<this, M> {
-    const Class: any = this.constructor;
-    return new Class({
-      ...this._def,
-      metadata: { ...this._def.metadata, ...metadata },
-    });
-  }
+
   from<F extends string>(name: F): WithMetadata<this, { from: F }> {
     return this.metadata({ from: name });
   }
@@ -2370,11 +2366,11 @@ function deepPartialify(schema: ZodTypeAny): any {
   }
 }
 
-function objectInputKeys<T extends ZodRawShape>(shape: T): Set<string> {
-  const keys: Set<string> = new Set();
+function objectInputKeys<T extends ZodRawShape>(shape: T): string[] {
+  const keys: string[] = [];
   for (const key in shape) {
     if (Object.prototype.hasOwnProperty.call(shape, key)) {
-      keys.add(extractFrom(shape[key]) || key);
+      keys.push(extractFrom(shape[key]) || key);
     }
   }
   return keys;
@@ -2390,11 +2386,11 @@ export class ZodObject<
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall, M>, Input> {
   private _cached: {
     shape: T;
-    inputKeys: Set<string>;
+    inputKeys: string[];
     outputKeys: string[];
   } | null = null;
 
-  _getCached(): { shape: T; inputKeys: Set<string>; outputKeys: string[] } {
+  _getCached(): { shape: T; inputKeys: string[]; outputKeys: string[] } {
     if (this._cached !== null) return this._cached;
     const shape = this._def.shape();
     const inputKeys = objectInputKeys(shape);
@@ -2426,7 +2422,7 @@ export class ZodObject<
       )
     ) {
       for (const key in ctx.data) {
-        if (!inputKeys.has(key)) {
+        if (!inputKeys.includes(key)) {
           extraKeys.push(key);
         }
       }

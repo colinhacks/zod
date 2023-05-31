@@ -426,15 +426,17 @@ export abstract class ZodType<
     this.isOptional = this.isOptional.bind(this);
   }
 
-  getMetadata(): Metadata | undefined {
+  getMetadata(): this["_def"]["metadata"] {
     if (this._def.metadata) return this._def.metadata;
     return undefined;
   }
-
-  // metadata<M extends CustomMetadata>(metadata: M): this & {_def: Def & M} {
-  //   const ThisType = this.constructor
-  //   return new ThisType({...this._def, metadata: {...this._def.metadata, ...metadata}})
-  // }
+  metadata<M extends Metadata>(metadata: M): WithMetadata<this, M> {
+    const ThisType: any = this.constructor;
+    return new ThisType({
+      ...this._def,
+      metadata: { ...this._def.metadata, ...metadata },
+    });
+  }
 
   optional(): ZodOptional<this> {
     return ZodOptional.create(this, this._def) as any;
@@ -526,13 +528,7 @@ export abstract class ZodType<
   isNullable(): boolean {
     return this.safeParse(null).success;
   }
-  metadata<M extends Metadata>(metadata: M): WithMetadata<this, M> {
-    const Class: any = this.constructor;
-    return new Class({
-      ...this._def,
-      metadata: { ...this._def.metadata, ...metadata },
-    });
-  }
+
   from<F extends string>(name: F): WithMetadata<this, { from: F }> {
     return this.metadata({ from: name });
   }
