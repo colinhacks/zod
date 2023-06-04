@@ -51,7 +51,7 @@ The following steps will get you setup to contribute changes to this repo:
 
 ### Tests
 
-Zod uses Jest for testing. After implementing your contribution, write tests for it. Just create a new file under `src/__tests__` or add additional tests to the appropriate existing file.
+Zod uses Jest for testing. After implementing your contribution, write tests for it. Just create a new file under `__tests__` or add additional tests to the appropriate existing file.
 
 Before submitting your PR, run `yarn test` to make sure there are no (unintended) breaking changes.
 

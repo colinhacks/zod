@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "3.21.4",
+  "version": "3.21.5-alpha.0",
   "author": "Colin McDonnell <colin@colinhacks.com>",
   "repository": {
     "type": "git",
@@ -42,7 +42,12 @@
     "tslib": "^2.3.1",
     "tsx": "^3.8.0",
     "typescript": "~4.5.0",
+<<<<<<< HEAD
     "vitest": "^0.32.2"
+=======
+    "vitest": "^0.31.4",
+    "zod": "latest"
+>>>>>>> e482bad (Move tests and benchmarks)
   },
   "exports": {
     ".": {
@@ -81,10 +86,17 @@
     ]
   },
   "scripts": {
+<<<<<<< HEAD
     "prettier:check": "prettier --check src/**/*.ts deno/lib/**/*.ts *.md --no-error-on-unmatched-pattern",
     "prettier:fix": "prettier --write src/**/*.ts deno/lib/**/*.ts *.md --ignore-unknown --no-error-on-unmatched-pattern",
     "lint:check": "eslint --cache --ext .ts ./src",
     "lint:fix": "eslint --cache --fix --ext .ts ./src",
+=======
+    "prettier:check": "prettier --check src/**/*.ts __tests__/**/*.ts deno/lib/**/*.ts --no-error-on-unmatched-pattern",
+    "prettier:fix": "prettier --write src/**/*.ts __tests__/**/*.ts deno/lib/**/*.ts --ignore-unknown --no-error-on-unmatched-pattern",
+    "lint:check": "eslint --cache --ext .ts ./src ./__tests__",
+    "lint:fix": "eslint --cache --fix --ext .ts ./src ./__tests__",
+>>>>>>> e482bad (Move tests and benchmarks)
     "check": "yarn lint:check && yarn prettier:check",
     "fix": "yarn lint:fix && yarn prettier:fix",
     "clean": "rm -rf lib/* deno/lib/*",
@@ -105,7 +117,7 @@
     "prepublishOnly": "npm run test && npm run build && npm run build:deno",
     "play": "nodemon -e ts -w . -x tsx playground.ts",
     "depcruise": "depcruise -c .dependency-cruiser.js src",
-    "benchmark": "tsx src/benchmarks/index.ts",
+    "benchmark": "tsx benchmarks/index.ts",
     "prepare": "husky install"
   },
   "sideEffects": false,
@@ -114,6 +126,5 @@
       "npm-funding": true
     }
   },
-  "types": "./index.d.ts",
-  "dependencies": {}
+  "types": "./index.d.ts"
 }
