@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import { z } from "..";
+import { z } from "../src/index";
 import { util } from "../src/helpers/util";
 
 test("basic catch", () => {
