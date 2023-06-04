@@ -82,6 +82,7 @@
 - [Nullables](#nullables)
 - [Objects](#objects)
   - [`.shape`](#shape)
+  - [`.from`](#from)
   - [`.keyof`](#keyof)
   - [`.extend`](#extend)
   - [`.merge`](#merge)
@@ -1129,6 +1130,32 @@ Use `.shape` to access the schemas for a particular key.
 ```ts
 Dog.shape.name; // => string schema
 Dog.shape.age; // => number schema
+```
+
+### `.from`
+
+Use `.from` to rename an input property to a different name in the output.
+
+```ts
+const Response = z.object({
+  userId: z.string().from("user_id"),
+});
+const response = Response.parse({
+  user_id: "foo",
+});
+// => { userId: 'foo' }
+
+type ResponseOutput = z.output<typeof Response>;
+// equivalent to:
+type ResponseOutput = {
+  userId: string;
+};
+
+type ResponseInput = z.input<typeof Response>;
+// equivalent to:
+type ResponseInput = {
+  user_id: string;
+};
 ```
 
 ### `.keyof`

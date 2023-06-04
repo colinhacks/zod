@@ -10,8 +10,24 @@ const Test = z.object({
   f2: z.string().optional(),
   f3: z.string().nullable(),
   f4: z.array(z.object({ t: z.union([z.string(), z.boolean()]) })),
+  f5: z.number().from("f1").optional(),
+  f7: z.string().from("f6"),
+  f9: z.number().from("f8").optional(),
 });
 type Test = z.infer<typeof Test>;
+
+test("input type inference", () => {
+  type TestType = {
+    f1: number;
+    f2?: string | undefined;
+    f3: string | null;
+    f4: { t: string | boolean }[];
+    f6: string;
+    f8?: number | undefined;
+  };
+
+  util.assertEqual<z.input<typeof Test>, TestType>(true);
+});
 
 test("object type inference", () => {
   type TestType = {
@@ -19,6 +35,9 @@ test("object type inference", () => {
     f2?: string | undefined;
     f3: string | null;
     f4: { t: string | boolean }[];
+    f5?: number | undefined;
+    f7: string;
+    f9?: number | undefined;
   };
 
   util.assertEqual<z.TypeOf<typeof Test>, TestType>(true);
@@ -34,15 +53,33 @@ test("shape() should return schema of particular key", () => {
   const f2Schema = Test.shape.f2;
   const f3Schema = Test.shape.f3;
   const f4Schema = Test.shape.f4;
+  const f5Schema = Test.shape.f5;
+  const f7Schema = Test.shape.f7;
+  const f9Schema = Test.shape.f9;
 
   expect(f1Schema).toBeInstanceOf(z.ZodNumber);
   expect(f2Schema).toBeInstanceOf(z.ZodOptional);
   expect(f3Schema).toBeInstanceOf(z.ZodNullable);
   expect(f4Schema).toBeInstanceOf(z.ZodArray);
+  expect(f5Schema).toBeInstanceOf(z.ZodOptional);
+  expect(f7Schema).toBeInstanceOf(z.ZodString);
+  expect(f9Schema).toBeInstanceOf(z.ZodOptional);
 });
 
 test("correct parsing", () => {
-  Test.parse({
+  expect(
+    Test.parse({
+      f1: 12,
+      f2: "string",
+      f3: "string",
+      f4: [
+        {
+          t: "string",
+        },
+      ],
+      f6: "string",
+    })
+  ).toEqual({
     f1: 12,
     f2: "string",
     f3: "string",
@@ -51,6 +88,34 @@ test("correct parsing", () => {
         t: "string",
       },
     ],
+    f5: 12,
+    f7: "string",
+  });
+  expect(
+    Test.parse({
+      f1: 12,
+      f2: "string",
+      f3: "string",
+      f4: [
+        {
+          t: "string",
+        },
+      ],
+      f6: "string",
+      f8: 3,
+    })
+  ).toEqual({
+    f1: 12,
+    f2: "string",
+    f3: "string",
+    f4: [
+      {
+        t: "string",
+      },
+    ],
+    f5: 12,
+    f7: "string",
+    f9: 3,
   });
 
   Test.parse({
@@ -61,11 +126,27 @@ test("correct parsing", () => {
         t: false,
       },
     ],
+    f6: "string",
   });
 });
 
 test("incorrect #1", () => {
   expect(() => Test.parse({} as any)).toThrow();
+});
+
+test("missing renamed property", () => {
+  expect(() =>
+    Test.parse({
+      f1: 12,
+      f2: "string",
+      f3: "string",
+      f4: [
+        {
+          t: "string",
+        },
+      ],
+    })
+  ).toThrow();
 });
 
 test("nonstrict by default", () => {
