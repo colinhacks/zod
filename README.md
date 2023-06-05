@@ -2639,10 +2639,11 @@ if (!result.success) {
   // => ["Expected string, received number"]
 }
 ```
+
 ### Using Zod with forms
 
-Zod and HTML forms share some common terms, but they do not mean the same thing, which can lead to some confusion.
-One common misstep is that the schema `z.string()` will allow empty strings for a required HTML form field, which matches the typescript type system, but might not be what you expect.
+TypeScript and HTML forms share some common terms, but they do not mean the same thing, which can lead to some confusion when using Zod which uses terms consistent with TypeScript's usage.
+One common misstep is that the schema `z.string()` will allow empty strings for a required HTML form field, which matches the TypeScript type system, but might not be what you expect when you consider the `z.string()` is "required" be default. However, "required" in this context means "a value of this type is present" and the empty string is a value of type `string`.
 ```
 const str:string = "" // This is okay
 z.string().parse("") // Which means this shouldn't throw an error
