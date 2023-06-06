@@ -1571,7 +1571,9 @@ export interface ZodBooleanDef extends ZodTypeDef {
 export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
   _parse(input: ParseInput): ParseReturnType<boolean> {
     if (this._def.coerce) {
-      input.data = input.data.toLowerCase() === 'true';
+      const possibleValues = ['true', 'false'];
+      const actualValue = input.data.toLowerCase();
+      input.data = possibleValues.includes(actualValue) ? actualValue === 'true' : NaN;
     }
     const parsedType = this._getType(input);
 
