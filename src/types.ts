@@ -406,6 +406,12 @@ export abstract class ZodType<
     this.isOptional = this.isOptional.bind(this);
   }
 
+  withMetadata<M extends object>(metadata: M): ZodMetadata<this, M> {
+    return ZodMetadata.create(this, metadata, this._def) as any;
+  }
+  from<F extends string>(from: F): ZodMetadata<this, { from: F }> {
+    return this.withMetadata({ from });
+  }
   optional(): ZodOptional<this> {
     return ZodOptional.create(this, this._def) as any;
   }
@@ -496,6 +502,51 @@ export abstract class ZodType<
   isNullable(): boolean {
     return this.safeParse(null).success;
   }
+}
+
+/////////////////////////////////////////
+/////////////////////////////////////////
+//////////                     //////////
+//////////     ZodMetadata     //////////
+//////////                     //////////
+/////////////////////////////////////////
+/////////////////////////////////////////
+
+export interface ZodMetadataDef<T extends ZodTypeAny, M extends object>
+  extends ZodTypeDef {
+  typeName: ZodFirstPartyTypeKind.ZodMetadata;
+  innerType: T;
+  metadata: M;
+}
+
+export class ZodMetadata<
+  T extends ZodTypeAny,
+  M extends object
+> extends ZodType<output<T>, ZodMetadataDef<T, M>, input<T>> {
+  unwrap() {
+    return this._def.innerType;
+  }
+
+  get metadata(): M {
+    return this._def.metadata;
+  }
+
+  _parse(input: ParseInput): ParseReturnType<output<T>> {
+    return this._def.innerType._parse(input);
+  }
+
+  static create = <T extends ZodTypeAny, M extends object>(
+    innerType: T,
+    metadata: M,
+    params?: RawCreateParams
+  ): ZodMetadata<T, M> => {
+    return new ZodMetadata({
+      innerType,
+      metadata,
+      typeName: ZodFirstPartyTypeKind.ZodMetadata,
+      ...processCreateParams(params),
+    });
+  };
 }
 
 /////////////////////////////////////////
@@ -4808,6 +4859,7 @@ export const late = {
 };
 
 export enum ZodFirstPartyTypeKind {
+  ZodMetadata = "ZodMetadata",
   ZodString = "ZodString",
   ZodNumber = "ZodNumber",
   ZodNaN = "ZodNaN",
@@ -4892,6 +4944,7 @@ const instanceOfType = <T extends typeof Class>(
   }
 ) => custom<InstanceType<T>>((data) => data instanceof cls, params);
 
+const metadataType = ZodMetadata.create;
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
 const nanType = ZodNaN.create;
@@ -4961,6 +5014,7 @@ export {
   lazyType as lazy,
   literalType as literal,
   mapType as map,
+  metadataType as metadata,
   nanType as nan,
   nativeEnumType as nativeEnum,
   neverType as never,
