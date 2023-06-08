@@ -2217,8 +2217,55 @@ export type objectInputType<
   PassthroughType<UnknownKeys>;
 export type baseObjectInputType<Shape extends ZodRawShape> =
   objectUtil.addQuestionMarks<{
-    [k in keyof Shape]: Shape[k]["_input"];
+    [k in objectInputKeys<Shape>]: objectInputProperty<Shape, k>;
   }>;
+
+type objectInputKeys<Shape extends ZodRawShape> = {
+  [k in keyof Shape]: ExtractFrom<
+    NonNullable<Shape[k]>
+  > extends infer S extends string
+    ? S
+    : k;
+}[keyof Shape];
+
+type objectInputProperty<
+  Shape extends ZodRawShape,
+  Name
+> = Name extends keyof Shape
+  ? Shape[Name]["_input"]
+  : {
+      [k in keyof Shape]: ExtractFrom<NonNullable<Shape[k]>> extends Name
+        ? Shape[k]["_input"]
+        : never;
+    }[keyof Shape];
+
+type ExtractFrom<T extends ZodTypeAny> = ZodType<any, ZodTypeDef, any> extends T
+  ? undefined
+  : T extends ZodMetadata<infer U, infer M>
+  ? M extends { from: infer F extends string }
+    ? F
+    : ExtractFrom<U>
+  : T extends ZodOptional<infer U>
+  ? ExtractFrom<U>
+  : T extends ZodNullable<infer U>
+  ? ExtractFrom<U>
+  : T extends ZodDefault<infer U>
+  ? ExtractFrom<U>
+  : undefined;
+
+function extractFrom(schema: ZodTypeAny): string | undefined {
+  if (schema instanceof ZodMetadata) {
+    const from = schema._def.metadata?.from;
+    return from ?? extractFrom(schema.unwrap());
+  }
+  if (schema instanceof ZodOptional || schema instanceof ZodNullable) {
+    return extractFrom(schema.unwrap());
+  }
+  if (schema instanceof ZodDefault) {
+    return extractFrom(schema.removeDefault());
+  }
+  return undefined;
+}
 
 export type CatchallOutput<T extends ZodTypeAny> = ZodTypeAny extends T
   ? unknown
@@ -2277,6 +2324,16 @@ function deepPartialify(schema: ZodTypeAny): any {
   }
 }
 
+function objectInputKeys<T extends ZodRawShape>(shape: T): string[] {
+  const keys: string[] = [];
+  for (const key in shape) {
+    if (Object.prototype.hasOwnProperty.call(shape, key)) {
+      keys.push(extractFrom(shape[key]) || key);
+    }
+  }
+  return keys;
+}
+
 export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
@@ -2284,13 +2341,18 @@ export class ZodObject<
   Output = objectOutputType<T, Catchall, UnknownKeys>,
   Input = objectInputType<T, Catchall, UnknownKeys>
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
-  private _cached: { shape: T; keys: string[] } | null = null;
+  private _cached: {
+    shape: T;
+    inputKeys: string[];
+    outputKeys: string[];
+  } | null = null;
 
-  _getCached(): { shape: T; keys: string[] } {
+  _getCached(): { shape: T; inputKeys: string[]; outputKeys: string[] } {
     if (this._cached !== null) return this._cached;
     const shape = this._def.shape();
-    const keys = util.objectKeys(shape);
-    return (this._cached = { shape, keys });
+    const inputKeys = objectInputKeys(shape);
+    const outputKeys = util.objectKeys(shape);
+    return (this._cached = { shape, inputKeys, outputKeys });
   }
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
@@ -2307,7 +2369,7 @@ export class ZodObject<
 
     const { status, ctx } = this._processInputParams(input);
 
-    const { shape, keys: shapeKeys } = this._getCached();
+    const { shape, inputKeys, outputKeys } = this._getCached();
     const extraKeys: string[] = [];
 
     if (
@@ -2317,7 +2379,7 @@ export class ZodObject<
       )
     ) {
       for (const key in ctx.data) {
-        if (!shapeKeys.includes(key)) {
+        if (!inputKeys.includes(key)) {
           extraKeys.push(key);
         }
       }
@@ -2328,15 +2390,16 @@ export class ZodObject<
       value: ParseReturnType<any>;
       alwaysSet?: boolean;
     }[] = [];
-    for (const key of shapeKeys) {
+    for (const key of outputKeys) {
       const keyValidator = shape[key];
-      const value = ctx.data[key];
+      const inputKey = extractFrom(keyValidator) || key;
+      const value = ctx.data[inputKey];
       pairs.push({
         key: { status: "valid", value: key },
         value: keyValidator._parse(
           new ParseInputLazyPath(ctx, value, ctx.path, key)
         ),
-        alwaysSet: key in ctx.data,
+        alwaysSet: inputKey in ctx.data,
       });
     }
 
