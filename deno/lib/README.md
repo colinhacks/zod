@@ -80,6 +80,7 @@
 - [Native enums](#native-enums)
 - [Optionals](#optionals)
 - [Nullables](#nullables)
+- [Metadata](#metadata)
 - [Objects](#objects)
   - [`.shape`](#shape)
   - [`.keyof`](#keyof)
@@ -1101,6 +1102,88 @@ Extract the inner schema with `.unwrap()`.
 const stringSchema = z.string();
 const nullableString = stringSchema.nullable();
 nullableString.unwrap() === stringSchema; // true
+```
+
+## Metadata
+
+You can associate metadata with a schema with `z.withMetadata()`.
+
+```ts
+const user = z.withMetadata(
+  z.object({
+    id: z.string(),
+    name: z.string().optional(),
+  }),
+  {
+    openapi: {
+      refId: "user",
+    },
+  }
+);
+```
+
+Or use the `.withMetadata()` method.
+
+```ts
+const user = z
+  .object({
+    id: z.string(),
+    name: z.string().optional(),
+  })
+  .withMetadata({
+    openapi: {
+      refId: "user",
+    },
+  });
+```
+
+Extract the inner schema with `.unwrap()`.
+
+```ts
+const user = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+});
+const userWithMetadata = user.withMetadata({
+  openapi: { refId: "user" },
+});
+userWithMetadata.unwrap() === user; // true
+```
+
+You can extract metadata nested inside `.optional()`,
+`.nullable()`, `.default()`, `z.lazy()`, `.transform()`,
+`.catch()`, `.brand()`, `.pipeline()` output, or `.promise()`
+with `z.extractMetadata`:
+
+```ts
+const user = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+});
+const metadata = {
+  openapi: { refId: "user" },
+};
+const userWithMetadata = user.withMetadata(metadata);
+const maybeUserPromise = userWithMetadata.nullable().promise();
+z.extractMetadata(maybeUserPromise) === metadata; // true
+type M = z.extractMetadata<typeof maybeUserPromise>; // typeof metadata
+```
+
+You can extract metadata nested inside the above schemas or
+also `.array()` or `z.set()` with `z.extractDeepMetadata`:
+
+```ts
+const user = z.object({
+  id: z.string(),
+  name: z.string().optional(),
+});
+const metadata = {
+  openapi: { refId: "user" },
+};
+const userWithMetadata = user.withMetadata(metadata);
+const maybeUserArray = userWithMetadata.array().nullable();
+z.extractDeepMetadata(maybeUserArray) === metadata; // true
+type M = z.extractDeepMetadata<typeof maybeUserArray>; // typeof metadata
 ```
 
 ## Objects
