@@ -1340,6 +1340,8 @@ person.parse({
 // => throws ZodError
 ```
 
+For convenience, you can use `z.strictObject({})`, which is the equivalent of `z.object({}).strict()`.
+
 ### `.strip`
 
 You can use the `.strip` method to reset an object schema to the default behavior (stripping unrecognized keys).
