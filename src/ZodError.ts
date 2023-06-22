@@ -1,7 +1,7 @@
-import type { TypeOf, ZodType } from ".";
+import type { TypeOf, ZodType } from "./index";
 import { Primitive } from "./helpers/typeAliases";
 import { util, ZodParsedType } from "./helpers/util";
-
+import type { Path } from ".";
 type allKeys<T> = T extends any ? keyof T : never;
 
 export type inferFlattenedErrors<
@@ -37,8 +37,9 @@ export const ZodIssueCode = util.arrayToEnum([
 export type ZodIssueCode = keyof typeof ZodIssueCode;
 
 export type ZodIssueBase = {
-  path: (string | number)[];
+  path: Path;
   message?: string;
+  fatal: boolean;
 };
 
 export interface ZodInvalidTypeIssue extends ZodIssueBase {
@@ -71,7 +72,7 @@ export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
   received: string | number;
   code: typeof ZodIssueCode.invalid_enum_value;
-  options: (string | number)[];
+  options: Path;
 }
 
 export interface ZodInvalidArgumentsIssue extends ZodIssueBase {
@@ -163,7 +164,7 @@ export type ZodIssueOptionalMessage =
   | ZodCustomIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & {
-  fatal?: boolean;
+  fatal: boolean;
   message: string;
 };
 
@@ -309,11 +310,11 @@ export class ZodError<T = any> extends Error {
 }
 
 type stripPath<T extends object> = T extends any
-  ? util.OmitKeys<T, "path">
+  ? util.OmitKeys<T, "path" | "fatal">
   : never;
 
 export type IssueData = stripPath<ZodIssueOptionalMessage> & {
-  path?: (string | number)[];
+  path?: Path;
   fatal?: boolean;
 };
 

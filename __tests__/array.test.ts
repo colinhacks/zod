@@ -69,3 +69,7 @@ test("parse should fail given sparse array", () => {
 
   expect(() => schema.parse(new Array(3))).toThrow();
 });
+test("parse should fail given sparse array - async", () => {
+  const schema = z.array(z.string()).nonempty().min(1).max(3);
+  expect(() => schema.parseAsync(new Array(3))).rejects.toThrow();
+});

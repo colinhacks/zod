@@ -3,7 +3,6 @@ import { expect, test } from "@jest/globals";
 
 import { util } from "../src/helpers/util";
 import * as z from "../src/index";
-import { ZodIssueCode } from "../src/ZodError";
 
 test("refinement", () => {
   const obj1 = z.object({
@@ -97,34 +96,34 @@ test("custom path", async () => {
   }
 });
 
-test("use path in refinement context", async () => {
-  const noNested = z.string()._refinement((_val, ctx) => {
-    if (ctx.path.length > 0) {
-      ctx.addIssue({
-        code: ZodIssueCode.custom,
-        message: `schema cannot be nested. path: ${ctx.path.join(".")}`,
-      });
-      return false;
-    } else {
-      return true;
-    }
-  });
+// test("use path in refinement context", async () => {
+//   const noNested = z.string()._refinement((_val, ctx) => {
+//     if (ctx.path.length > 0) {
+//       ctx.addIssue({
+//         code: ZodIssueCode.custom,
+//         message: `schema cannot be nested. path: ${ctx.path.join(".")}`,
+//       });
+//       return false;
+//     } else {
+//       return true;
+//     }
+//   });
 
-  const data = z.object({
-    foo: noNested,
-  });
+//   const data = z.object({
+//     foo: noNested,
+//   });
 
-  const t1 = await noNested.spa("asdf");
-  const t2 = await data.spa({ foo: "asdf" });
+//   const t1 = await noNested.spa("asdf");
+//   const t2 = await data.spa({ foo: "asdf" });
 
-  expect(t1.success).toBe(true);
-  expect(t2.success).toBe(false);
-  if (t2.success === false) {
-    expect(t2.error.issues[0].message).toEqual(
-      "schema cannot be nested. path: foo"
-    );
-  }
-});
+//   expect(t1.success).toBe(true);
+//   expect(t2.success).toBe(false);
+//   if (t2.success === false) {
+//     expect(t2.error.issues[0].message).toEqual(
+//       "schema cannot be nested. path: foo"
+//     );
+//   }
+// });
 
 test("superRefine", () => {
   const Strings = z.array(z.string()).superRefine((val, ctx) => {

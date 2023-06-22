@@ -189,12 +189,16 @@ export const getParsedType = (data: any): ZodParsedType => {
       return ZodParsedType.symbol;
 
     case "object":
-      if (Array.isArray(data)) {
-        return ZodParsedType.array;
-      }
       if (data === null) {
         return ZodParsedType.null;
       }
+      if (Object.getPrototypeOf(data) === Object.prototype) {
+        return ZodParsedType.object; // optimization
+      }
+      if (Array.isArray(data)) {
+        return ZodParsedType.array;
+      }
+
       if (
         data.then &&
         typeof data.then === "function" &&

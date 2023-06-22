@@ -48,14 +48,15 @@ const newSchema = zNew.object({
 
 const suite = new Benchmark.Suite("moltar - strict");
 suite
-  .add("oldschema", () => {
-    oldSchema.parse(DATA);
-  })
   .add("newschema", () => {
     newSchema.parse(DATA);
   })
-
+  .add("oldschema", () => {
+    oldSchema.parse(DATA);
+  })
   .on("cycle", (e: Benchmark.Event) => {
     console.log(`${suite.name}: ${e.target}`);
   })
-  .run();
+  .run({
+    minSamples: 200,
+  });

@@ -151,6 +151,7 @@ test("all errors", () => {
             message: "Expected string, received null",
             path: ["a"],
             received: "null",
+            fatal: true,
           },
         ],
         b: [
@@ -160,6 +161,7 @@ test("all errors", () => {
             message: "Expected string, received null",
             path: ["b"],
             received: "null",
+            fatal: true,
           },
         ],
       },

@@ -1,8 +1,2 @@
-import { z } from "./src";
+import {z} from "."
 z;
-
-const schema = z.coerce.date();
-// console.log(schema.parse("3.14"));
-test("asdf", () => {
-  expect(schema.parse("3.14")).toBeInstanceOf(Date);
-});
