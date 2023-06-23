@@ -5,7 +5,7 @@ export default defineConfig({
     alias: {
       "@jest/globals": "vitest",
     },
-    include: ["**/*.test.ts"],
+    include: ["src/**/*.test.ts"],
     isolate: false,
     watch: false,
   },

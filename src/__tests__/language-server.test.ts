@@ -1,5 +1,5 @@
 // @ts-ignore TS6133
-import { expect, test, describe } from "@jest/globals";
+import { describe, expect, test } from "@jest/globals";
 // import path from "path";
 // import { Node, Project, SyntaxKind } from "ts-morph";
 

@@ -21,7 +21,7 @@ export default [
     ],
     plugins: [
       typescript({
-        tsconfig: "tsconfig.esm.json",
+        tsconfig: "./configs/tsconfig.esm.json",
         sourceMap: false,
       }),
     ],
