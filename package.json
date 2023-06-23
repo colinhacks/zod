@@ -96,7 +96,7 @@
     "build:test": "tsc -p tsconfig.test.json",
     "rollup": "rollup --config rollup.config.js",
     "test:watch": "jest --watch",
-    "test": "yarn test:tsc",
+    "test": "yarn test:ts-jest",
     "test:babel": "jest --coverage",
     "test:bun": "bun test",
     "test:vitest": "npx vitest --no-isolate",
