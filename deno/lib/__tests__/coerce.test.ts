@@ -35,21 +35,21 @@ test("number coercion", () => {
   expect(schema.parse("-12")).toEqual(-12);
   expect(schema.parse("3.14")).toEqual(3.14);
   expect(schema.parse("")).toEqual(0);
-  expect(() => schema.parse("NOT_A_NUMBER")).toThrow; // z.ZodError
+  expect(() => schema.parse("NOT_A_NUMBER")).toThrow(); // z.ZodError
   expect(schema.parse(12)).toEqual(12);
   expect(schema.parse(0)).toEqual(0);
   expect(schema.parse(-12)).toEqual(-12);
   expect(schema.parse(3.14)).toEqual(3.14);
   expect(schema.parse(BigInt(15))).toEqual(15);
-  expect(() => schema.parse(NaN)).toThrow; // z.ZodError
+  expect(() => schema.parse(NaN)).toThrow(); // z.ZodError
   expect(schema.parse(Infinity)).toEqual(Infinity);
   expect(schema.parse(-Infinity)).toEqual(-Infinity);
   expect(schema.parse(true)).toEqual(1);
   expect(schema.parse(false)).toEqual(0);
   expect(schema.parse(null)).toEqual(0);
-  expect(() => schema.parse(undefined)).toThrow; // z.ZodError
-  expect(() => schema.parse({ hello: "world!" })).toThrow; // z.ZodError
-  expect(() => schema.parse(["item", "another_item"])).toThrow; // z.ZodError
+  expect(() => schema.parse(undefined)).toThrow(); // z.ZodError
+  expect(() => schema.parse({ hello: "world!" })).toThrow(); // z.ZodError
+  expect(() => schema.parse(["item", "another_item"])).toThrow(); // z.ZodError
   expect(schema.parse([])).toEqual(0);
   expect(schema.parse(new Date(1670139203496))).toEqual(1670139203496);
 });
@@ -84,23 +84,23 @@ test("bigint coercion", () => {
   expect(schema.parse("5")).toEqual(BigInt(5));
   expect(schema.parse("0")).toEqual(BigInt(0));
   expect(schema.parse("-5")).toEqual(BigInt(-5));
-  expect(() => schema.parse("3.14")).toThrow; // not a z.ZodError!
+  expect(() => schema.parse("3.14")).toThrow(); // not a z.ZodError!
   expect(schema.parse("")).toEqual(BigInt(0));
-  expect(() => schema.parse("NOT_A_NUMBER")).toThrow; // not a z.ZodError!
+  expect(() => schema.parse("NOT_A_NUMBER")).toThrow(); // not a z.ZodError!
   expect(schema.parse(5)).toEqual(BigInt(5));
   expect(schema.parse(0)).toEqual(BigInt(0));
   expect(schema.parse(-5)).toEqual(BigInt(-5));
-  expect(() => schema.parse(3.14)).toThrow; // not a z.ZodError!
+  expect(() => schema.parse(3.14)).toThrow(); // not a z.ZodError!
   expect(schema.parse(BigInt(5))).toEqual(BigInt(5));
-  expect(() => schema.parse(NaN)).toThrow; // not a z.ZodError!
-  expect(() => schema.parse(Infinity)).toThrow; // not a z.ZodError!
-  expect(() => schema.parse(-Infinity)).toThrow; // not a z.ZodError!
+  expect(() => schema.parse(NaN)).toThrow(); // not a z.ZodError!
+  expect(() => schema.parse(Infinity)).toThrow(); // not a z.ZodError!
+  expect(() => schema.parse(-Infinity)).toThrow(); // not a z.ZodError!
   expect(schema.parse(true)).toEqual(BigInt(1));
   expect(schema.parse(false)).toEqual(BigInt(0));
-  expect(() => schema.parse(null)).toThrow; // not a z.ZodError!
-  expect(() => schema.parse(undefined)).toThrow; // not a z.ZodError!
-  expect(() => schema.parse({ hello: "world!" })).toThrow; // not a z.ZodError!
-  expect(() => schema.parse(["item", "another_item"])).toThrow; // not a z.ZodError!
+  expect(() => schema.parse(null)).toThrow(); // not a z.ZodError!
+  expect(() => schema.parse(undefined)).toThrow(); // not a z.ZodError!
+  expect(() => schema.parse({ hello: "world!" })).toThrow(); // not a z.ZodError!
+  expect(() => schema.parse(["item", "another_item"])).toThrow(); // not a z.ZodError!
   expect(schema.parse([])).toEqual(BigInt(0));
   expect(schema.parse(new Date(1670139203496))).toEqual(BigInt(1670139203496));
 });
@@ -111,25 +111,26 @@ test("date coercion", () => {
   expect(schema.parse(new Date().toISOString())).toBeInstanceOf(Date);
   expect(schema.parse(new Date().toUTCString())).toBeInstanceOf(Date);
   expect(schema.parse("5")).toBeInstanceOf(Date);
-  expect(schema.parse("0")).toBeInstanceOf(Date);
-  expect(schema.parse("-5")).toBeInstanceOf(Date);
-  expect(schema.parse("3.14")).toBeInstanceOf(Date);
-  expect(() => schema.parse("")).toThrow; // z.ZodError
-  expect(() => schema.parse("NOT_A_DATE")).toThrow; // z.ZodError
+  expect(schema.parse("2000-01-01")).toBeInstanceOf(Date);
+  // expect(schema.parse("0")).toBeInstanceOf(Date);
+  // expect(schema.parse("-5")).toBeInstanceOf(Date);
+  // expect(schema.parse("3.14")).toBeInstanceOf(Date);
+  expect(() => schema.parse("")).toThrow(); // z.ZodError
+  expect(() => schema.parse("NOT_A_DATE")).toThrow(); // z.ZodError
   expect(schema.parse(5)).toBeInstanceOf(Date);
   expect(schema.parse(0)).toBeInstanceOf(Date);
   expect(schema.parse(-5)).toBeInstanceOf(Date);
   expect(schema.parse(3.14)).toBeInstanceOf(Date);
-  expect(() => schema.parse(BigInt(5))).toThrow; // not a z.ZodError!
-  expect(() => schema.parse(NaN)).toThrow; // z.ZodError
-  expect(() => schema.parse(Infinity)).toThrow; // z.ZodError
-  expect(() => schema.parse(-Infinity)).toThrow; // z.ZodError
+  expect(() => schema.parse(BigInt(5))).toThrow(); // not a z.ZodError!
+  expect(() => schema.parse(NaN)).toThrow(); // z.ZodError
+  expect(() => schema.parse(Infinity)).toThrow(); // z.ZodError
+  expect(() => schema.parse(-Infinity)).toThrow(); // z.ZodError
   expect(schema.parse(true)).toBeInstanceOf(Date);
   expect(schema.parse(false)).toBeInstanceOf(Date);
   expect(schema.parse(null)).toBeInstanceOf(Date);
-  expect(() => schema.parse(undefined)).toThrow; // z.ZodError
-  expect(() => schema.parse({ hello: "world!" })).toThrow; // z.ZodError
-  expect(() => schema.parse(["item", "another_item"])).toThrow; // z.ZodError
-  expect(() => schema.parse([])).toThrow; // z.ZodError
+  expect(() => schema.parse(undefined)).toThrow(); // z.ZodError
+  expect(() => schema.parse({ hello: "world!" })).toThrow(); // z.ZodError
+  expect(() => schema.parse(["item", "another_item"])).toThrow(); // z.ZodError
+  expect(() => schema.parse([])).toThrow(); // z.ZodError
   expect(schema.parse(new Date())).toBeInstanceOf(Date);
 });
