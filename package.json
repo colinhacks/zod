@@ -41,7 +41,8 @@
     "ts-node": "^10.9.1",
     "tslib": "^2.3.1",
     "tsx": "^3.8.0",
-    "typescript": "~4.5.0"
+    "typescript": "~4.5.0",
+    "vitest": "^0.32.2"
   },
   "exports": {
     ".": {
@@ -98,8 +99,9 @@
     "test": "yarn test:tsc",
     "test:babel": "jest --coverage",
     "test:bun": "bun test",
-    "test:tsc": "jest --config ./ts-jest.config.json",
-    "test:swc": "jest --config ./swc-jest.config.json",
+    "test:vitest": "npx vitest --no-isolate",
+    "test:ts-jest": "npx jest --config ./ts-jest.config.json",
+    "test:swc": "npx jest --config ./swc-jest.config.json",
     "test:deno": "cd deno && deno test",
     "prepublishOnly": "npm run test && npm run build && npm run build:deno",
     "play": "nodemon -e ts -w . -x tsx playground.ts",
