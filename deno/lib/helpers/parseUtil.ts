@@ -16,19 +16,31 @@ export const makeIssue = (params: {
     path: fullPath,
   };
 
-  let errorMessage = "";
-  const maps = errorMaps
-    .filter((m) => !!m)
-    .slice()
-    .reverse() as ZodErrorMap[];
-  for (const map of maps) {
-    errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+  let errorMessage = issueData.message || "";
+  if (!errorMessage) {
+    const maps: ZodErrorMap[] = [];
+    for (let i = errorMaps.length - 1; i >= 0; i--) {
+      const map = errorMaps[i];
+      if (!map || maps.includes(map)) {
+        continue;
+      }
+      maps.push(map);
+
+      errorMessage = map(fullIssue, {
+        data,
+        defaultError: errorMessage,
+      }).message;
+    }
   }
 
   return {
     ...issueData,
     path: fullPath,
+<<<<<<< HEAD
     message: issueData.message ?? errorMessage,
+=======
+    message: errorMessage,
+>>>>>>> e5b2228 (perf: avoid unnecessary error maps)
   };
 };
 
