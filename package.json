@@ -115,5 +115,6 @@
     }
   },
   "types": "./index.d.ts",
-  "dependencies": {}
+  "dependencies": {},
+  "packageManager": "yarn@1.22.19"
 }
