@@ -1,6 +1,7 @@
 # .github/release.yml
 
 name: Release on npm (canary)
+
 on:
   push:
     branches:
@@ -8,6 +9,7 @@ on:
     paths:
       - "src/**"
       - ".github/workflows/release-canary.yml"
+
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
@@ -23,8 +25,9 @@ jobs:
           node-version: 16
 
       - name: Install dependencies
-        run: |
-          yarn install
+        run: yarn install
+        env:
+          HUSKY: 0
 
       - name: Build
         run: |

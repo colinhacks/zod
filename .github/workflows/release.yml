@@ -1,6 +1,7 @@
 # .github/release.yml
 
 name: Release on npm
+
 on:
   push:
     branches:
@@ -21,7 +22,7 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 16
-      
+
       - name: Checkout zod-deno
         uses: actions/checkout@v2
         with:
@@ -30,8 +31,9 @@ jobs:
           path: deno/lib
 
       - name: Install dependencies
-        run: |
-          yarn install
+        run: yarn install
+        env:
+          HUSKY: 0
 
       - name: Build
         run: |
