@@ -56,6 +56,7 @@ export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
   errorMap?: ZodErrorMap;
   description?: string;
+  typeName?: ZodFirstPartyTypeKind
 }
 
 class ParseInputLazyPath implements ParseInput {
