@@ -134,6 +134,7 @@
     - [Async transforms](#async-transforms)
   - [`.default`](#default)
   - [`.describe`](#describe)
+  - [`.exemplify`](#exemplify)
   - [`.catch`](#catch)
   - [`.optional`](#optional)
   - [`.nullable`](#nullable)
@@ -2289,6 +2290,17 @@ const documentedString = z
   .string()
   .describe("A useful bit of text, if you know what to do with it.");
 documentedString.description; // A useful bit of text…
+```
+
+This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
+
+### `.exemplify`
+
+Use `.exemplify()` to add to the `examples` property to the resulting schema.
+
+```ts
+const exemplifiedString = z.string().example("Lorem ipsum dolor sit amet.");
+documentedString.examples; // ['Lorem ipsum dolor…
 ```
 
 This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
