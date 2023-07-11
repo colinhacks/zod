@@ -1203,7 +1203,7 @@ Starting from this object:
 
 ```ts
 const user = z.object({
-  email: z.string()
+  email: z.string(),
   username: z.string(),
 });
 // { email: string; username: string }
@@ -1268,7 +1268,7 @@ Starting from this object:
 
 ```ts
 const user = z.object({
-  email: z.string()
+  email: z.string(),
   username: z.string(),
 }).partial();
 // { email?: string | undefined; username?: string | undefined }
