@@ -1064,7 +1064,9 @@ export type ZodNumberCheck =
   | { kind: "max"; value: number; inclusive: boolean; message?: string }
   | { kind: "int"; message?: string }
   | { kind: "multipleOf"; value: number; message?: string }
-  | { kind: "finite"; message?: string };
+  | { kind: "finite"; message?: string }
+  | { kind: "latitude"; message?: string }
+  | { kind: "longitude"; message?: string };
 
 // https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
 function floatSafeRemainder(val: number, step: number) {
@@ -1160,6 +1162,24 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_finite,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "latitude") {
+        if (Math.abs(input.data) > 90) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.not_latitude,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "longitude") {
+        if (Math.abs(input.data) > 180) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.not_longitude,
             message: check.message,
           });
           status.dirty();
@@ -1287,6 +1307,20 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     });
   }
 
+  latitude(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "latitude",
+      message: errorUtil.toString(message),
+    });
+  }
+
+  longitude(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "longitude",
+      message: errorUtil.toString(message),
+    });
+  }
+
   safe(message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "min",
@@ -1306,6 +1340,10 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     for (const ch of this._def.checks) {
       if (ch.kind === "min") {
         if (min === null || ch.value > min) min = ch.value;
+      } else if (ch.kind === "latitude") {
+        min = -90;
+      } else if (ch.kind === "longitude") {
+        min = -180;
       }
     }
     return min;
@@ -1316,6 +1354,10 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     for (const ch of this._def.checks) {
       if (ch.kind === "max") {
         if (max === null || ch.value < max) max = ch.value;
+      } else if (ch.kind === "latitude") {
+        max = 90;
+      } else if (ch.kind === "longitude") {
+        max = 180;
       }
     }
     return max;
@@ -1336,7 +1378,9 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       if (
         ch.kind === "finite" ||
         ch.kind === "int" ||
-        ch.kind === "multipleOf"
+        ch.kind === "multipleOf" ||
+        ch.kind === "latitude" ||
+        ch.kind === "longitude"
       ) {
         return true;
       } else if (ch.kind === "min") {

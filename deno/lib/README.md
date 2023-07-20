@@ -842,6 +842,9 @@ z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
 
 z.number().finite(); // value must be finite, not Infinity or -Infinity
 z.number().safe(); // value must be between Number.MIN_SAFE_INTEGER and Number.MAX_SAFE_INTEGER
+
+z.number().latitude(); // value must be a valid latitude, between -90 and 90
+z.number().longitude(); // value must be a valid longitude, between -180 and 180
 ```
 
 Optionally, you can pass in a second argument to provide a custom error message.
@@ -1238,8 +1241,8 @@ The `.partial` method is shallow — it only applies one level deep. There is al
 const user = z.object({
   username: z.string(),
   location: z.object({
-    latitude: z.number(),
-    longitude: z.number(),
+    latitude: z.number().latitude(),
+    longitude: z.number().longitude(),
   }),
   strings: z.array(z.object({ value: z.string() })),
 });

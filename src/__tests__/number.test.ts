@@ -17,6 +17,8 @@ const nonnegative = z.number().nonnegative();
 const multipleOfFive = z.number().multipleOf(5);
 const multipleOfNegativeFive = z.number().multipleOf(-5);
 const finite = z.number().finite();
+const latitude = z.number().latitude();
+const longitude = z.number().longitude();
 const safe = z.number().safe();
 const stepPointOne = z.number().step(0.1);
 const stepPointZeroZeroZeroOne = z.number().step(0.0001);
@@ -58,6 +60,8 @@ test("passing validations", () => {
   multipleOfNegativeFive.parse(-15);
   multipleOfNegativeFive.parse(15);
   finite.parse(123);
+  latitude.parse(0);
+  longitude.parse(0);
   safe.parse(Number.MIN_SAFE_INTEGER);
   safe.parse(Number.MAX_SAFE_INTEGER);
   stepPointOne.parse(6);
@@ -87,6 +91,8 @@ test("failing validations", () => {
   expect(() => multipleOfNegativeFive.parse(7.5)).toThrow();
   expect(() => finite.parse(Infinity)).toThrow();
   expect(() => finite.parse(-Infinity)).toThrow();
+  expect(() => latitude.parse(91)).toThrow();
+  expect(() => longitude.parse(181)).toThrow();
   expect(() => safe.parse(Number.MIN_SAFE_INTEGER - 1)).toThrow();
   expect(() => safe.parse(Number.MAX_SAFE_INTEGER + 1)).toThrow();
 
@@ -109,6 +115,8 @@ test("min max getters", () => {
   expect(intNum.minValue).toBeNull;
   expect(multipleOfFive.minValue).toBeNull;
   expect(finite.minValue).toBeNull;
+  expect(latitude.minValue).toEqual(-90);
+  expect(longitude.minValue).toEqual(-180);
   expect(gtFive.minValue).toEqual(5);
   expect(gteFive.minValue).toEqual(5);
   expect(minFive.minValue).toEqual(5);
@@ -126,6 +134,8 @@ test("min max getters", () => {
   expect(intNum.minValue).toBeNull;
   expect(multipleOfFive.minValue).toBeNull;
   expect(finite.minValue).toBeNull;
+  expect(latitude.maxValue).toEqual(90);
+  expect(longitude.maxValue).toEqual(180);
   expect(ltFive.maxValue).toEqual(5);
   expect(lteFive.maxValue).toEqual(5);
   expect(maxFive.maxValue).toEqual(5);
@@ -150,6 +160,8 @@ test("int getter", () => {
   expect(negative.isInt).toEqual(false);
   expect(nonpositive.isInt).toEqual(false);
   expect(safe.isInt).toEqual(false);
+  expect(latitude.isInt).toEqual(false);
+  expect(longitude.isInt).toEqual(false);
 
   expect(intNum.isInt).toEqual(true);
   expect(multipleOfFive.isInt).toEqual(true);
@@ -169,6 +181,8 @@ test("finite getter", () => {
   expect(nonpositive.isFinite).toEqual(false);
 
   expect(finite.isFinite).toEqual(true);
+  expect(latitude.isFinite).toEqual(true);
+  expect(longitude.isFinite).toEqual(true);
   expect(intNum.isFinite).toEqual(true);
   expect(multipleOfFive.isFinite).toEqual(true);
   expect(z.number().min(5).max(10).isFinite).toEqual(true);

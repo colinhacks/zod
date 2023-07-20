@@ -140,6 +140,12 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.not_finite:
       message = "Number must be finite";
       break;
+    case ZodIssueCode.not_latitude:
+      message = "Number must be a valid latitude";
+      break;
+    case ZodIssueCode.not_longitude:
+      message = "Number must be a valid longitude";
+      break;
     default:
       message = _ctx.defaultError;
       util.assertNever(issue);
