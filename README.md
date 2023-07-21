@@ -2718,7 +2718,6 @@ Yup is a full-featured library that was implemented first in vanilla JS, and lat
 
 - Supports casting and transforms
 - All object fields are optional by default
-- Missing object methods: (partial, deepPartial)
 <!-- - Missing nonempty arrays with proper typing (`[T, ...T[]]`) -->
 - Missing promise schemas
 - Missing function schemas
