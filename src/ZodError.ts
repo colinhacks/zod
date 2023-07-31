@@ -164,7 +164,11 @@ export type ZodIssueOptionalMessage =
   | ZodCustomIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & {
+<<<<<<< HEAD
   fatal: boolean;
+=======
+  fatal?: boolean | undefined;
+>>>>>>> c8c8cb9 (WIP)
   message: string;
 };
 
@@ -310,8 +314,13 @@ type stripPath<T extends object> = T extends any
   : never;
 
 export type IssueData = stripPath<ZodIssueOptionalMessage> & {
+<<<<<<< HEAD
   path?: Path;
   fatal?: boolean;
+=======
+  path?: (string | number)[] | undefined;
+  fatal?: boolean | undefined;
+>>>>>>> c8c8cb9 (WIP)
 };
 
 export type ErrorMapCtx = {

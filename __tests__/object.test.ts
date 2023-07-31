@@ -20,8 +20,7 @@ test("object type inference", () => {
     f4: { t: string | boolean }[];
   };
 
-  type InfType = z.TypeOf<typeof Test>;
-  util.assertEqual<z.TypeOf<typeof Test>, TestType>(true);
+  util.assertEqual<TestType, Test>(true);
 });
 
 test("unknown throw", () => {
@@ -235,7 +234,6 @@ test("inferred merged object type with optional properties", async () => {
 });
 
 test("inferred unioned object type with optional properties", async () => {
-  const arg = z.object({ a: z.string(), b: z.string().optional() });
   const Unioned = z.union([
     z.object({ a: z.string(), b: z.string().optional() }),
     z.object({ a: z.string().optional(), b: z.string() }),

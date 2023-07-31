@@ -9,7 +9,7 @@ export type Primitive =
 export type Scalars = Primitive | Primitive[];
 
 export namespace util {
-  type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
+  export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
     V
   >() => V extends U ? 1 : 2
     ? true
@@ -21,6 +21,21 @@ export namespace util {
   export function assertNever(_x: never): never {
     throw new Error();
   }
+
+  export type exactOptionalPropertyTypes = {
+    b?: string | undefined;
+  } extends { b?: string }
+    ? false
+    : true;
+
+  export type objectContainsReadonly<T> = util.AssertEqual<
+    T,
+    {
+      -readonly [k in keyof T]: T[k];
+    }
+  > extends true
+    ? false
+    : true;
 
   export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
   export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;

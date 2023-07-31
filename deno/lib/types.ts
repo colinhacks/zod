@@ -230,15 +230,15 @@ export interface ZodTypeDef {
 
 export type RawCreateParams =
   | {
-      errorMap?: ZodErrorMap;
-      invalid_type_error?: string;
-      required_error?: string;
-      description?: string;
+      errorMap?: ZodErrorMap | undefined;
+      invalid_type_error?: string | undefined;
+      required_error?: string | undefined;
+      description?: string | undefined;
     }
   | undefined;
 export type ProcessedCreateParams = {
-  errorMap?: ZodErrorMap;
-  description?: string;
+  errorMap?: ZodErrorMap | undefined;
+  description?: string | undefined;
 };
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
@@ -2777,6 +2777,8 @@ export type objectOutputType<
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
 > = ZodRawShape extends Shape
   ? object
+  : util.exactOptionalPropertyTypes extends true
+  ? baseObjectOutputType<Shape>
   : objectUtil.flatten<
       objectUtil.addQuestionMarks<baseObjectOutputType<Shape>>
     > &
@@ -2863,6 +2865,7 @@ export class ZodObject<
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny,
 <<<<<<< HEAD
+<<<<<<< HEAD
   Output = objectOutputType<T, Catchall, UnknownKeys>,
   Input = objectInputType<T, Catchall, UnknownKeys>
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
@@ -2874,6 +2877,12 @@ export class ZodObject<
 =======
   Output = simpleObjectOutputType<T>,
   Input = simpleObjectInputType<T>
+=======
+  // Output = simpleObjectOutputType<T>,
+  // Input = simpleObjectInputType<T>
+  Output = objectOutputType<T, Catchall, UnknownKeys>,
+  Input = objectInputType<T, Catchall, UnknownKeys>
+>>>>>>> c8c8cb9 (WIP)
 > extends ZodType<
   // objectOutputType<T, Catchall, UnknownKeys>,
   Output,
@@ -3438,6 +3447,19 @@ export class ZodObject<
       typeName: ZodFirstPartyTypeKind.ZodObject,
       ...processCreateParams(params),
     }) as any;
+  }
+
+  static recursive<T extends { [k: string]: any }>(
+    _shape: T,
+    _params?: RawCreateParams
+  ): ZodObject<
+    shapifyOutput<T>,
+    "strip",
+    ZodTypeAny,
+    simpleObjectOutputType<T>,
+    simpleObjectInputType<T>
+  > {
+    return "asdf" as any;
   }
 
   static strictCreate = <T extends ZodRawShape>(
@@ -6303,11 +6325,13 @@ declare function makeObject<T extends { [k: string]: any }>(
   _shape: T,
   _params?: RawCreateParams
 ): ZodObject<
-  flattenFunctions<T>,
+  shapifyOutput<T>,
   "strip",
   ZodTypeAny,
-  simpleObjectOutputType<T>
+  simpleObjectOutputType<T>,
+  simpleObjectInputType<T>
 >;
+ZodObject.create;
 
 export type identity<T> = T;
 export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
@@ -6320,6 +6344,34 @@ const Node = makeObject({
 });
 const node = Node.parse("asdf");
 node.children[0].children[0].children[0].label;
+
+// declare function makeObject<T extends { [k: string]: any }>(
+declare function lazyObject<T extends { [k: string]: any }>(
+  _shape: () => T,
+  _params?: RawCreateParams
+): ZodObject<
+  // flattenFunctions<T>,
+  T,
+  "strip",
+  ZodTypeAny,
+  simpleObjectOutputType<T>,
+  simpleObjectInputType<T>
+>;
+
+const Node2 = ZodObject.recursive({
+  label: ZodString.create().optional(),
+  // get children() {
+  //   return Node2.array();
+  // },
+  get children() {
+    return Node2.array();
+  },
+});
+type Node2 = TypeOf<typeof Node2>;
+const node2 = Node2.parse("asdf");
+node2.children[0].children[0].children[0].label;
+
+type asdf = typeof import("../tsconfig.json");
 
 const User = makeObject({
   name: ZodString.create().optional(),
@@ -6335,8 +6387,8 @@ const Post = makeObject({
   },
 });
 
-// type User = TypeOf<typeof User>;
+type User = TypeOf<typeof User>;
 const user = User.parse("adsf");
-const post = Post.parse("adsf");
+// const post = Post.parse("adsf");
 user.posts[0].author.name;
 >>>>>>> 5884584 (WIP)
