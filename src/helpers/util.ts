@@ -101,20 +101,21 @@ export namespace objectUtil {
     [k in Exclude<keyof U, keyof V>]: U[k];
   } & V;
 
-  type optionalKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? k : never;
-  }[keyof T];
-  type requiredKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? never : k;
-  }[keyof T];
-  type pickRequired<T extends object, R extends keyof T = requiredKeys<T>> = {
-    [k in R]: T[k];
+  // type optionalKeys<T extends object> = {
+  //   [k in keyof T]: undefined extends T[k] ? k : never;
+  // }[keyof T];
+
+  type keepRequiredKeys<T extends object> = {
+    [k in keyof T as undefined extends T[k] ? never : k]-?: T[k];
   };
-  type pickOptional<T extends object, O extends keyof T = optionalKeys<T>> = {
-    [k in O]?: T[k];
-  };
-  export type addQuestionMarks<T extends object> = pickRequired<T> &
-    pickOptional<T> & { [k in keyof T]?: unknown };
+
+  // type alkjsdf = addQuestionMarks<{ a: any }>;
+
+  export type addQuestionMarks<
+    T extends object
+    // O extends keyof T = optionalKeys<T>
+  > = keepRequiredKeys<T> & Partial<T>;
+  //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
 
   export type identity<T> = T;
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
