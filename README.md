@@ -1525,6 +1525,12 @@ type NumberCache = z.infer<typeof NumberCache>;
 This is particularly useful for storing or caching items by ID.
 
 ```ts
+const userSchema = z.object({ name: z.string() });
+const userStoreSchema = z.record(userSchema);
+
+type UserStore = z.infer<typeof userStoreSchema>;
+// => type UserStore = { [ x: string ]: { name: string } }
+
 const userStore: UserStore = {};
 
 userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
