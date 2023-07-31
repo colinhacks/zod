@@ -2358,7 +2358,7 @@ A convenience method that returns a "nullish" version of a schema. Nullish schem
 const nullishString = z.string().nullish(); // string | null | undefined
 
 // equivalent to
-z.string().optional().nullable();
+z.string().nullable().optional();
 ```
 
 ### `.array`

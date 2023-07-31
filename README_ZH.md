@@ -1623,7 +1623,7 @@ z.nullable(z.string());
 const nullishString = z.string().nullish(); // string | null | undefined
 
 // equivalent to
-z.string().optional().nullable();
+z.string().nullable().optional();
 ```
 
 ### `.array`
