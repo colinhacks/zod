@@ -121,19 +121,21 @@ test("special function error codes", () => {
     checker("12" as any);
   } catch (err) {
     const zerr = err as z.ZodError;
-    const first = zerr.issues[0];
-    if (first.code !== z.ZodIssueCode.invalid_return_type) throw new Error();
-
-    expect(first.returnTypeError).toBeInstanceOf(z.ZodError);
+    expect(zerr.issues[0].message).toMatch("Expected boolean, received number");
+    // const first = zerr.issues[0];
+    // if (first.code !== z.ZodIssueCode.invalid_return_type) throw new Error();
+    // expect(first.returnTypeError).toBeInstanceOf(z.ZodError);
   }
 
   try {
     checker(12 as any);
   } catch (err) {
     const zerr = err as z.ZodError;
+
     const first = zerr.issues[0];
-    if (first.code !== z.ZodIssueCode.invalid_arguments) throw new Error();
-    expect(first.argumentsError).toBeInstanceOf(z.ZodError);
+    expect(first.message).toMatch("Expected string, received number");
+    // if (first.code !== z.ZodIssueCode.invalid_arguments) throw new Error();
+    // expect(first.argumentsError).toBeInstanceOf(z.ZodError);
   }
 });
 

@@ -3,8 +3,8 @@
   "transform": {
     "^.+\\.tsx?$": "ts-jest"
   },
-  "testRegex": "__tests__/.*\\.test\\.ts$",
-  "modulePathIgnorePatterns": ["language-server", "__vitest__"],
+  "testRegex": "./__tests__/.*\\.test\\.ts$",
+  "modulePathIgnorePatterns": ["language-server", "__vitest__", "deno"],
   "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"],
   "coverageReporters": ["json-summary", "text", "lcov"]
 }

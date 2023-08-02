@@ -13,14 +13,15 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+    "exactOptionalPropertyTypes": false,
     "downlevelIteration": true,
     "isolatedModules": true
   },
   "include": [
-    "./src/**/*",
-    "./__tests__/**/*",
-    "./benchmarks/**/*",
-    "playground.ts",
-    "./.eslintrc.js"
+    "../src/**/*",
+    "../__tests__/**/*",
+    "../benchmarks/**/*",
+    "../playground.ts",
+    "../.eslintrc.js"
   ]
 }

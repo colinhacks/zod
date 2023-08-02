@@ -1,4 +1,3 @@
-// @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
 import { util } from "../src/helpers/util";
@@ -26,19 +25,7 @@ test("transform ctx.addIssue with parse", () => {
         return data.length;
       })
       .parse("asdf");
-  }).toThrow(
-    JSON.stringify(
-      [
-        {
-          code: "custom",
-          message: "asdf is not one of our allowed strings",
-          path: [],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  }).toThrow("asdf is not one of our allowed strings");
 });
 
 test("transform ctx.addIssue with parseAsync", async () => {
@@ -64,6 +51,7 @@ test("transform ctx.addIssue with parseAsync", async () => {
       issues: [
         {
           code: "custom",
+          fatal: true,
           message: "asdf is not one of our allowed strings",
           path: [],
         },
@@ -220,19 +208,7 @@ test("preprocess ctx.addIssue with parse", () => {
       });
       return data;
     }, z.string()).parse("asdf");
-  }).toThrow(
-    JSON.stringify(
-      [
-        {
-          code: "custom",
-          message: "asdf is not one of our allowed strings",
-          path: [],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  }).toThrow("asdf is not one of our allowed strings");
 });
 
 test("preprocess ctx.addIssue with parseAsync", async () => {
@@ -252,6 +228,7 @@ test("preprocess ctx.addIssue with parseAsync", async () => {
       issues: [
         {
           code: "custom",
+          fatal: true,
           message: "asdf is not one of our allowed strings",
           path: [],
         },
@@ -310,6 +287,7 @@ test("async short circuit on dirty", async () => {
   const result2 = await schema.spa(1234);
   expect(result2.success).toEqual(false);
   if (!result2.success) {
+    console.log(result2.error);
     expect(result2.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
   }
 });

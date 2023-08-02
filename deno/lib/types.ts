@@ -24,7 +24,7 @@ import { errorUtil } from "./helpers/errorUtil.ts";
 //   // SyncParseReturnType,
 // } from "./helpers/parseUtil";
 import { partialUtil } from "./helpers/partialUtil.ts";
-import { Primitive } from "./helpers/typeAliases.ts";
+import { Primitive } from "./helpers/util.ts";
 import { getParsedType, objectUtil, util, ZodParsedType } from "./helpers/util.ts";
 import {
   IssueData,
@@ -95,11 +95,11 @@ export class ZodInternalError {
     return this;
   }
   addIssues(issues: ZodIssue[]) {
-    this.issues.unshift(...issues);
+    this.issues.push(...issues);
     return this;
   }
   merge(err: ZodInternalError, path?: PathSegment) {
-    this.issues.unshift(
+    this.issues.push(
       ...(path !== undefined ? err.prefix(path).issues : err.issues)
     );
     // if (err.aborted) this.aborted = true;
@@ -495,6 +495,7 @@ export abstract class ZodType<
       const setError = () =>
         ctx.addIssue({
           code: ZodIssueCode.custom,
+          fatal: false,
           ...getIssueProperties(val),
         });
       if (typeof Promise !== "undefined" && result instanceof Promise) {
@@ -872,6 +873,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               inclusive: true,
               exact: false,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -889,6 +891,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               inclusive: true,
               exact: false,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -911,6 +914,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
                 inclusive: true,
                 exact: true,
                 message: check.message,
+                fatal: false,
               },
               ctx?.errorMap,
               this._def.errorMap
@@ -927,6 +931,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
                 inclusive: true,
                 exact: true,
                 message: check.message,
+                fatal: false,
               },
               ctx?.errorMap,
               this._def.errorMap
@@ -939,11 +944,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           err = err || new ZodInternalError([]);
           err.addIssue(
             data,
-
             {
               validation: "email",
               code: ZodIssueCode.invalid_string,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -959,6 +964,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               validation: "emoji",
               code: ZodIssueCode.invalid_string,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -975,6 +981,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               validation: "uuid",
               code: ZodIssueCode.invalid_string,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -991,6 +998,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               validation: "cuid",
               code: ZodIssueCode.invalid_string,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -1007,6 +1015,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               validation: "cuid2",
               code: ZodIssueCode.invalid_string,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -1023,6 +1032,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               validation: "ulid",
               code: ZodIssueCode.invalid_string,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -1041,6 +1051,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               validation: "url",
               code: ZodIssueCode.invalid_string,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -1059,6 +1070,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               validation: "regex",
               code: ZodIssueCode.invalid_string,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -1077,6 +1089,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               code: ZodIssueCode.invalid_string,
               validation: { includes: check.value, position: check.position },
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -1097,6 +1110,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               code: ZodIssueCode.invalid_string,
               validation: { startsWith: check.value },
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -1113,6 +1127,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               code: ZodIssueCode.invalid_string,
               validation: { endsWith: check.value },
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -1131,6 +1146,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               code: ZodIssueCode.invalid_string,
               validation: "datetime",
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -1147,6 +1163,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
               validation: "ip",
               code: ZodIssueCode.invalid_string,
               message: check.message,
+              fatal: false,
             },
             ctx?.errorMap,
             this._def.errorMap
@@ -1371,11 +1388,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     const instance = Object.assign(Object.create(base), {
       parse(data: unknown) {
         if (typeof data === "string") return data;
-        return super.parse(data);
+        return base.parse(data);
       },
       async parseAsync(data: unknown) {
         if (typeof data === "string") return data;
-        return super.parseAsync(data);
+        return base.parseAsync(data);
       },
     });
     return instance;
@@ -1428,9 +1445,9 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     return this._parse(data, ctx);
   }
   _parse(data: any, ctx?: ParseContext): unknown {
-    // if (this._def.coerce) {
-    //   data = Number(data);
-    // }
+    if (this._def.coerce) {
+      data = Number(data);
+    }
     // const parsedType = this._getType(input);
     if (typeof data !== ZodParsedType.number) {
       // const ctx = this["~getOrReturnCtx"](input);
@@ -1583,7 +1600,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     return new ZodNumber({
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodNumber,
-      coerce: params?.coerce || false,
+      coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     });
   };
@@ -2847,20 +2864,25 @@ export class ZodObject<
   private _cached: {
     shape: T;
     keys: string[];
-    keyset: Set<string>;
+    keyset: { [k: string]: boolean };
   } | null = null;
 
   "~getShape"(): {
     shape: T;
     keys: string[];
-    keyset: Set<string>;
+    keyset: { [k: string]: boolean };
   } {
     // if (this._cached) {
     //   return this._cached;
     // }
     const shape = this._def.shape();
     const keys = util.objectKeys(shape);
-    const keyset = new Set(keys);
+    const keyset: { [k: string]: boolean } = {};
+    for (const key in shape) {
+      if (Object.prototype.hasOwnProperty.call(shape, key)) {
+        keyset[key] = true;
+      }
+    }
     this._cached = { shape, keys, keyset };
     return this._cached;
   }
@@ -2901,9 +2923,7 @@ export class ZodObject<
       const unknownKeys = this._def.unknownKeys;
       if (unknownKeys === "strip") {
       } else {
-        const extraKeys = util
-          .objectKeys(data)
-          .filter((k) => !shape.keyset.has(k));
+        const extraKeys = util.objectKeys(data).filter((k) => !shape.keyset[k]);
         if (unknownKeys === "passthrough") {
           for (const key of extraKeys || []) {
             finalObject[key] = data[key];
@@ -2930,9 +2950,7 @@ export class ZodObject<
     } else {
       // run catchall validation
       const catchall = this._def.catchall;
-      const extraKeys = util
-        .objectKeys(data)
-        .filter((k) => !shape.keyset.has(k));
+      const extraKeys = util.objectKeys(data).filter((k) => !shape.keyset[k]);
 
       for (const key of extraKeys || []) {
         const result = catchall._parse(data[key], ctx);
@@ -2950,7 +2968,7 @@ export class ZodObject<
   }
 
   "~checkType"(data: any, ctx?: ParseContext) {
-    if (Object.getPrototypeOf(data) !== Object.prototype) {
+    if (!data || Object.getPrototypeOf(data) !== Object.prototype) {
       return new ZodInternalError([
         makeIssue(
           data,
@@ -2990,9 +3008,7 @@ export class ZodObject<
       const unknownKeys = this._def.unknownKeys;
       if (unknownKeys === "strip") {
       } else {
-        const extraKeys = util
-          .objectKeys(data)
-          .filter((k) => !shape.keyset.has(k));
+        const extraKeys = util.objectKeys(data).filter((k) => !shape.keyset[k]);
         if (unknownKeys === "passthrough") {
           for (const key of extraKeys || []) {
             finalObject[key] = data[key];
@@ -3019,9 +3035,7 @@ export class ZodObject<
     } else {
       // run catchall validation
       const catchall = this._def.catchall;
-      const extraKeys = util
-        .objectKeys(data)
-        .filter((k) => !shape.keyset.has(k));
+      const extraKeys = util.objectKeys(data).filter((k) => !shape.keyset[k]);
 
       await Promise.all(
         extraKeys.map(async (key) => {
@@ -3469,7 +3483,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     let validResult;
     const results = options.map((option) => {
       const result = option._parse(data, ctx);
-      if (!(result instanceof ZodError)) {
+      if (!(result instanceof ZodInternalError)) {
         // isValid = true;
         if (!isValid) {
           isValid = true;
@@ -3573,7 +3587,7 @@ export class ZodDiscriminatedUnion<
   input<Options[number]>
 > {
   "~preparse"(data: any, ctx?: ParseContext) {
-    if (Object.getPrototypeOf(data) !== Object.prototype) {
+    if (!data || Object.getPrototypeOf(data) !== Object.prototype) {
       return new ZodInternalError([
         makeIssue(
           data,
@@ -4073,7 +4087,7 @@ export class ZodRecord<
   _parse(data: any, ctx?: ParseContext): unknown {
     // const { status, ctx } = this._processInputParams(input);
     // if (ctx.parsedType !== ZodParsedType.object) {
-    if (Object.getPrototypeOf(data) !== Object.prototype) {
+    if (!data || Object.getPrototypeOf(data) !== Object.prototype) {
       return new ZodInternalError([
         makeIssue(
           data,
@@ -4245,7 +4259,7 @@ export class ZodMap<
   }
 
   "~preparse"(data: any, ctx?: ParseContext) {
-    if (data instanceof Map) {
+    if (!(data instanceof Map)) {
       return new ZodInternalError([
         makeIssue(
           data,
@@ -4277,15 +4291,18 @@ export class ZodMap<
 
     const finalMap = new Map();
     let err!: ZodInternalError;
-    for (const key in data as Map<unknown, unknown>) {
+    let counter = 0;
+    for (const [key, value] of data as Map<unknown, unknown>) {
       const k = keyType._parse(key, ctx);
-      const v = valueType._parse(data[key], ctx);
+      const v = valueType._parse(value, ctx);
       if (k instanceof ZodInternalError || v instanceof ZodInternalError) {
         err = err ?? new ZodInternalError([]);
-        if (k instanceof ZodInternalError) err.merge(k, key);
-        if (v instanceof ZodInternalError) err.merge(v, key);
+        if (k instanceof ZodInternalError) err.merge(k.prefix("key"), counter);
+        if (v instanceof ZodInternalError)
+          err.merge(v.prefix("value"), counter);
       }
       finalMap.set(k, v);
+      counter++;
     }
 
     return err ?? finalMap;
@@ -4351,18 +4368,22 @@ export class ZodMap<
 
     const finalMap = new Map();
     let err!: ZodInternalError;
-    for (const key in data as Map<unknown, unknown>) {
+
+    let counter = 0;
+    for (const [key, value] of data as Map<string, unknown>) {
       const [k, v] = await Promise.all([
         keyType._parse(key, ctx),
-        valueType._parse(data[key], ctx),
+        valueType._parse(value, ctx),
       ]);
 
       if (k instanceof ZodInternalError || v instanceof ZodInternalError) {
         err = err ?? new ZodInternalError([]);
-        if (k instanceof ZodInternalError) err.merge(k, key);
-        if (v instanceof ZodInternalError) err.merge(v, key);
+        if (k instanceof ZodInternalError) err.merge(k.prefix("key"), counter);
+        if (v instanceof ZodInternalError)
+          err.merge(v.prefix("value"), counter);
       }
       finalMap.set(k, v);
+      counter++;
     }
 
     return err ?? finalMap;
@@ -5351,24 +5372,17 @@ export class ZodEffects<
     const effect = this._def.effect; // || null;
 
     let err!: ZodInternalError;
-    const checkCtx: RefinementCtx = {
-      addIssue: (arg: IssueData) => {
-        err = err ?? new ZodInternalError([]);
-        err.addIssue(data, arg, this._def.errorMap, ctx?.errorMap);
-        // if (arg.fatal) {
-        //   status.abort();
-        // } else {
-        //   status.dirty();
-        // }
-      },
-      // get path() {
-      //   return ctx.path;
-      // },
-    };
-
-    checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
 
     if (effect.type === "preprocess") {
+      const checkCtx: RefinementCtx = {
+        addIssue: (arg: IssueData) => {
+          err = err ?? new ZodInternalError([]);
+          arg.fatal = arg.fatal ?? true;
+          err.addIssue(data, arg, this._def.errorMap, ctx?.errorMap);
+        },
+      };
+
+      checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
       const processed = effect.transform(data, checkCtx);
       if (err) return err;
 
@@ -5381,6 +5395,15 @@ export class ZodEffects<
       }
     }
     if (effect.type === "refinement") {
+      const checkCtx: RefinementCtx = {
+        addIssue: (arg: IssueData) => {
+          err = err ?? new ZodInternalError([]);
+          arg.fatal = arg.fatal ?? false;
+          err.addIssue(data, arg, this._def.errorMap, ctx?.errorMap);
+        },
+      };
+
+      checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
       // const executeRefinement = (
       //   acc: unknown
       //   // effect: RefinementEffect<any>
@@ -5401,7 +5424,9 @@ export class ZodEffects<
         const inner = this._def.schema._parse(data, ctx);
         // if (inner.status === "aborted") return INVALID;
         // if (inner.status === "dirty") status.dirty();
-        if (inner instanceof ZodInternalError) return inner;
+        if (inner instanceof ZodInternalError && inner.aborted) {
+          return inner;
+        }
 
         // return value is ignored]
         const result = effect.refinement(inner, checkCtx);
@@ -5424,6 +5449,7 @@ export class ZodEffects<
         // return { status: status.value, value: inner.value };
       } else {
         return this._def.schema._parseAsync(data, ctx).then(async (inner) => {
+          if (inner instanceof ZodInternalError) return inner;
           await effect.refinement(inner, checkCtx);
           return err ?? inner;
           // if (inner.status === "aborted") return INVALID;
@@ -5437,6 +5463,15 @@ export class ZodEffects<
     }
 
     if (effect.type === "transform") {
+      const checkCtx: RefinementCtx = {
+        addIssue: (arg: IssueData) => {
+          err = err ?? new ZodInternalError([]);
+          arg.fatal = arg.fatal ?? true;
+          err.addIssue(data, arg, this._def.errorMap, ctx?.errorMap);
+        },
+      };
+
+      checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
       if (!ctx?.async) {
         const base = this._def.schema._parse(data, ctx);
         if (base instanceof ZodInternalError) return base;
@@ -5449,6 +5484,7 @@ export class ZodEffects<
           );
         }
 
+        if (err && err.aborted) return err;
         return result;
       } else {
         return this._def.schema._parseAsync(data, ctx).then(async (base) => {
@@ -5772,7 +5808,7 @@ export class ZodNaN extends ZodType<number, ZodNaNDef> {
   }
   _parse(data: any, ctx?: ParseContext): unknown {
     // const parsedType = this._getType(input);
-    if (!isNaN(data)) {
+    if (typeof data !== "number" || !isNaN(data)) {
       // const ctx = this["~getOrReturnCtx"](input);
       return new ZodInternalError([
         makeIssue(

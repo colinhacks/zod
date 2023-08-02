@@ -233,7 +233,7 @@ test("custom path", () => {
   }
 });
 
-test("custom path", () => {
+test("object-level refinement", () => {
   const schema = z
     .object({
       password: z.string().min(6),

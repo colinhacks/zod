@@ -1,5 +1,5 @@
 import type { TypeOf, ZodType } from "./index.ts";
-import { Primitive } from "./helpers/typeAliases.ts";
+import { Primitive } from "./helpers/util.ts";
 import { util, ZodParsedType } from "./helpers/util.ts";
 import type { Path } from "./index.ts";
 type allKeys<T> = T extends any ? keyof T : never;
@@ -192,10 +192,6 @@ export type inferFormattedError<
 
 export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
-
-  get errors() {
-    return this.issues;
-  }
 
   constructor(issues: ZodIssue[]) {
     super();

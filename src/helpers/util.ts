@@ -1,3 +1,13 @@
+export type Primitive =
+  | string
+  | number
+  | symbol
+  | bigint
+  | boolean
+  | null
+  | undefined;
+export type Scalars = Primitive | Primitive[];
+
 export namespace util {
   type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
     V
@@ -108,14 +118,10 @@ export namespace objectUtil {
     [k in keyof T]: undefined extends T[k] ? never : k;
   }[keyof T];
 
-  // type alkjsdf = addQuestionMarks<{ a: any }>;
-
   export type addQuestionMarks<
     T extends object,
     R extends keyof T = requiredKeys<T>
-    // O extends keyof T = optionalKeys<T>
   > = Pick<Required<T>, R> & Partial<T>;
-  //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
 
   export type identity<T> = T;
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
