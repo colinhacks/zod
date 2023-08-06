@@ -506,31 +506,37 @@ export abstract class ZodType<
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type IpVersion = "v4" | "v6";
-export type ZodStringCheck =
-  | { kind: "min"; value: number; message?: string }
-  | { kind: "max"; value: number; message?: string }
-  | { kind: "length"; value: number; message?: string }
-  | { kind: "email"; message?: string }
-  | { kind: "url"; message?: string }
-  | { kind: "emoji"; message?: string }
-  | { kind: "uuid"; message?: string }
-  | { kind: "cuid"; message?: string }
-  | { kind: "includes"; value: string; position?: number; message?: string }
-  | { kind: "cuid2"; message?: string }
-  | { kind: "ulid"; message?: string }
-  | { kind: "startsWith"; value: string; message?: string }
-  | { kind: "endsWith"; value: string; message?: string }
-  | { kind: "regex"; regex: RegExp; message?: string }
-  | { kind: "trim"; message?: string }
-  | { kind: "toLowerCase"; message?: string }
-  | { kind: "toUpperCase"; message?: string }
-  | {
-      kind: "datetime";
-      offset: boolean;
-      precision: number | null;
-      message?: string;
-    }
-  | { kind: "ip"; version?: IpVersion; message?: string };
+type ZodStringKinds =
+  | "min"
+  | "max"
+  | "length"
+  | "email"
+  | "url"
+  | "emoji"
+  | "uuid"
+  | "cuid"
+  | "includes"
+  | "cuid2"
+  | "ulid"
+  | "startsWith"
+  | "endsWith"
+  | "regex"
+  | "trim"
+  | "toLowerCase"
+  | "toUpperCase"
+  | "datetime"
+  | "ip";
+
+export type ZodStringCheck = {
+  kind: ZodStringKinds;
+  value?: string | number;
+  position?: number;
+  message?: string;
+  regex?: RegExp;
+  offset?: boolean;
+  precision?: number | null;
+  version?: IpVersion;
+};
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -641,11 +647,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
     for (const check of this._def.checks) {
       if (check.kind === "min") {
-        if (input.data.length < check.value) {
+        if (input.data.length < check.value!) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_small,
-            minimum: check.value,
+            minimum: check.value as number,
             type: "string",
             inclusive: true,
             exact: false,
@@ -654,11 +660,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "max") {
-        if (input.data.length > check.value) {
+        if (input.data.length > check.value!) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_big,
-            maximum: check.value,
+            maximum: check.value as number,
             type: "string",
             inclusive: true,
             exact: false,
@@ -667,14 +673,14 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "length") {
-        const tooBig = input.data.length > check.value;
-        const tooSmall = input.data.length < check.value;
+        const tooBig = input.data.length > check.value!;
+        const tooSmall = input.data.length < check.value!;
         if (tooBig || tooSmall) {
           ctx = this._getOrReturnCtx(input, ctx);
           if (tooBig) {
             addIssueToContext(ctx, {
               code: ZodIssueCode.too_big,
-              maximum: check.value,
+              maximum: check.value as number,
               type: "string",
               inclusive: true,
               exact: true,
@@ -683,7 +689,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           } else if (tooSmall) {
             addIssueToContext(ctx, {
               code: ZodIssueCode.too_small,
-              minimum: check.value,
+              minimum: check.value as number,
               type: "string",
               inclusive: true,
               exact: true,
@@ -765,8 +771,8 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "regex") {
-        check.regex.lastIndex = 0;
-        const testResult = check.regex.test(input.data);
+        check.regex!.lastIndex = 0;
+        const testResult = check.regex!.test(input.data);
         if (!testResult) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
@@ -779,11 +785,19 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
       } else if (check.kind === "includes") {
-        if (!(input.data as string).includes(check.value, check.position)) {
+        if (
+          !(input.data as string).includes(
+            check.value as string,
+            check.position
+          )
+        ) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
-            validation: { includes: check.value, position: check.position },
+            validation: {
+              includes: check.value as string,
+              position: check.position,
+            },
             message: check.message,
           });
           status.dirty();
@@ -793,27 +807,29 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       } else if (check.kind === "toUpperCase") {
         input.data = input.data.toUpperCase();
       } else if (check.kind === "startsWith") {
-        if (!(input.data as string).startsWith(check.value)) {
+        if (!(input.data as string).startsWith(check.value! as string)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
-            validation: { startsWith: check.value },
+            validation: { startsWith: check.value as string },
             message: check.message,
           });
           status.dirty();
         }
       } else if (check.kind === "endsWith") {
-        if (!(input.data as string).endsWith(check.value)) {
+        if (!(input.data as string).endsWith(check.value! as string)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
-            validation: { endsWith: check.value },
+            validation: { endsWith: check.value as string },
             message: check.message,
           });
           status.dirty();
         }
       } else if (check.kind === "datetime") {
-        const regex = datetimeRegex(check);
+        const regex = datetimeRegex(
+          check as typeof check & { precision: number | null; offset: boolean }
+        );
 
         if (!regex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -835,7 +851,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else {
-        util.assertNever(check);
+        util.assertNever(check as unknown as never);
       }
     }
 
@@ -1027,7 +1043,8 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     let min: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "min") {
-        if (min === null || ch.value > min) min = ch.value;
+        if (min === null || (ch.value as number) > min)
+          min = ch.value as number | null;
       }
     }
     return min;
@@ -1036,7 +1053,8 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     let max: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "max") {
-        if (max === null || ch.value < max) max = ch.value;
+        if (max === null || (ch.value as number) < max)
+          max = ch.value as number | null;
       }
     }
     return max;
@@ -1059,12 +1077,13 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
-export type ZodNumberCheck =
-  | { kind: "min"; value: number; inclusive: boolean; message?: string }
-  | { kind: "max"; value: number; inclusive: boolean; message?: string }
-  | { kind: "int"; message?: string }
-  | { kind: "multipleOf"; value: number; message?: string }
-  | { kind: "finite"; message?: string };
+type ZodNumberKinds = "min" | "max" | "int" | "multipleOf" | "finite";
+export type ZodNumberCheck = {
+  kind: ZodNumberKinds;
+  value?: number;
+  inclusive?: boolean;
+  message?: string;
+};
 
 // https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
 function floatSafeRemainder(val: number, step: number) {
@@ -1115,15 +1134,15 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         }
       } else if (check.kind === "min") {
         const tooSmall = check.inclusive
-          ? input.data < check.value
-          : input.data <= check.value;
+          ? input.data < check.value!
+          : input.data <= check.value!;
         if (tooSmall) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_small,
-            minimum: check.value,
+            minimum: check.value!,
             type: "number",
-            inclusive: check.inclusive,
+            inclusive: check.inclusive!,
             exact: false,
             message: check.message,
           });
@@ -1131,26 +1150,26 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
         }
       } else if (check.kind === "max") {
         const tooBig = check.inclusive
-          ? input.data > check.value
-          : input.data >= check.value;
+          ? input.data > check.value!
+          : input.data >= check.value!;
         if (tooBig) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_big,
-            maximum: check.value,
+            maximum: check.value!,
             type: "number",
-            inclusive: check.inclusive,
+            inclusive: check.inclusive!,
             exact: false,
             message: check.message,
           });
           status.dirty();
         }
       } else if (check.kind === "multipleOf") {
-        if (floatSafeRemainder(input.data, check.value) !== 0) {
+        if (floatSafeRemainder(input.data, check.value!) !== 0) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_multiple_of,
-            multipleOf: check.value,
+            multipleOf: check.value!,
             message: check.message,
           });
           status.dirty();
@@ -1165,7 +1184,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
           status.dirty();
         }
       } else {
-        util.assertNever(check);
+        util.assertNever(check as unknown as never);
       }
     }
 
@@ -1305,7 +1324,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     let min: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "min") {
-        if (min === null || ch.value > min) min = ch.value;
+        if (min === null || ch.value! > min) min = ch.value!;
       }
     }
     return min;
@@ -1315,7 +1334,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     let max: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "max") {
-        if (max === null || ch.value < max) max = ch.value;
+        if (max === null || ch.value! < max) max = ch.value!;
       }
     }
     return max;
@@ -1340,9 +1359,9 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
       ) {
         return true;
       } else if (ch.kind === "min") {
-        if (min === null || ch.value > min) min = ch.value;
+        if (min === null || ch.value! > min) min = ch.value!;
       } else if (ch.kind === "max") {
-        if (max === null || ch.value < max) max = ch.value;
+        if (max === null || ch.value! < max) max = ch.value!;
       }
     }
     return Number.isFinite(min) && Number.isFinite(max);
@@ -1356,10 +1375,13 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
-export type ZodBigIntCheck =
-  | { kind: "min"; value: bigint; inclusive: boolean; message?: string }
-  | { kind: "max"; value: bigint; inclusive: boolean; message?: string }
-  | { kind: "multipleOf"; value: bigint; message?: string };
+type ZodBigIntkinds = "min" | "max" | "multipleOf";
+export type ZodBigIntCheck = {
+  kind: ZodBigIntkinds;
+  value?: bigint;
+  inclusive?: boolean;
+  message?: string;
+};
 
 export interface ZodBigIntDef extends ZodTypeDef {
   checks: ZodBigIntCheck[];
@@ -1389,46 +1411,46 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     for (const check of this._def.checks) {
       if (check.kind === "min") {
         const tooSmall = check.inclusive
-          ? input.data < check.value
-          : input.data <= check.value;
+          ? input.data < check.value!
+          : input.data <= check.value!;
         if (tooSmall) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_small,
             type: "bigint",
-            minimum: check.value,
-            inclusive: check.inclusive,
+            minimum: check.value!,
+            inclusive: check.inclusive!,
             message: check.message,
           });
           status.dirty();
         }
       } else if (check.kind === "max") {
         const tooBig = check.inclusive
-          ? input.data > check.value
-          : input.data >= check.value;
+          ? input.data > check.value!
+          : input.data >= check.value!;
         if (tooBig) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_big,
             type: "bigint",
-            maximum: check.value,
-            inclusive: check.inclusive,
+            maximum: check.value!,
+            inclusive: check.inclusive!,
             message: check.message,
           });
           status.dirty();
         }
       } else if (check.kind === "multipleOf") {
-        if (input.data % check.value !== BigInt(0)) {
+        if (input.data % check.value! !== BigInt(0)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.not_multiple_of,
-            multipleOf: check.value,
+            multipleOf: check.value!,
             message: check.message,
           });
           status.dirty();
         }
       } else {
-        util.assertNever(check);
+        util.assertNever(check as unknown as never);
       }
     }
 
@@ -1539,7 +1561,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     let min: bigint | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "min") {
-        if (min === null || ch.value > min) min = ch.value;
+        if (min === null || ch.value! > min) min = ch.value as bigint;
       }
     }
     return min;
@@ -1549,7 +1571,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     let max: bigint | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "max") {
-        if (max === null || ch.value < max) max = ch.value;
+        if (max === null || ch.value! < max) max = ch.value as bigint;
       }
     }
     return max;
@@ -1605,9 +1627,12 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
 //////////                     ////////
 ///////////////////////////////////////
 ///////////////////////////////////////
-export type ZodDateCheck =
-  | { kind: "min"; value: number; message?: string }
-  | { kind: "max"; value: number; message?: string };
+type ZodDateKinds = "min" | "max";
+export type ZodDateCheck = {
+  kind: ZodDateKinds;
+  value?: number;
+  message?: string;
+};
 export interface ZodDateDef extends ZodTypeDef {
   checks: ZodDateCheck[];
   coerce: boolean;
@@ -1644,33 +1669,33 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
 
     for (const check of this._def.checks) {
       if (check.kind === "min") {
-        if (input.data.getTime() < check.value) {
+        if (input.data.getTime() < check.value!) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_small,
             message: check.message,
             inclusive: true,
             exact: false,
-            minimum: check.value,
+            minimum: check.value!,
             type: "date",
           });
           status.dirty();
         }
       } else if (check.kind === "max") {
-        if (input.data.getTime() > check.value) {
+        if (input.data.getTime() > check.value!) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.too_big,
             message: check.message,
             inclusive: true,
             exact: false,
-            maximum: check.value,
+            maximum: check.value!,
             type: "date",
           });
           status.dirty();
         }
       } else {
-        util.assertNever(check);
+        util.assertNever(check as unknown as never);
       }
     }
 
@@ -1707,7 +1732,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     let min: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "min") {
-        if (min === null || ch.value > min) min = ch.value;
+        if (min === null || ch.value! > min) min = ch.value as number;
       }
     }
 
@@ -1718,7 +1743,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
     let max: number | null = null;
     for (const ch of this._def.checks) {
       if (ch.kind === "max") {
-        if (max === null || ch.value < max) max = ch.value;
+        if (max === null || ch.value! < max) max = ch.value as number;
       }
     }
 
