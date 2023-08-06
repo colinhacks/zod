@@ -21,7 +21,7 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
-      - uses: actions/setup-bun@v1
+      - uses: oven-sh/setup-bun@v1
       - run: bun install
       - run: bun add typescript@${{ matrix.typescript }}
       - run: bun run build
