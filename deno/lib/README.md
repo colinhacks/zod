@@ -460,6 +460,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 #### Form integrations
 
+- [`conform`](https://conform.guide/api/zod): A progressive enhancement first form validation library for Remix and React Router
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form.
 - [`zod-validation-error`](https://github.com/causaly/zod-validation-error): Generate user-friendly error messages from `ZodError`s.
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
@@ -471,7 +472,8 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
 - [`houseform`](https://github.com/crutchcorn/houseform/): A React form library that uses Zod for validation.
 - [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms): Supercharged form library for SvelteKit with Zod validation.
-- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod
+- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod.
+- [`@vee-validate/zod`](https://github.com/logaretm/vee-validate/tree/main/packages/zod): Form library for Vue.js with Zod schema validation.
 
 #### Zod to X
 
@@ -483,7 +485,8 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod): Create Fastify type providers from Zod schemas.
 - [`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi): Generate full OpenAPI (Swagger) docs from Zod, including schemas, endpoints & parameters.
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas. Provides GraphQL method decorators working with Zod schemas.
-- [`zod-openapi`](https://github.com/samchungy/zod-openapi): Create full OpenAPI v3.x documentation from Zod Schemas.
+- [`zod-openapi`](https://github.com/samchungy/zod-openapi): Create full OpenAPI v3.x documentation from Zod schemas.
+- [`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi): Fastify type provider, validation, serialization and @fastify/swagger support for Zod schemas.
 
 #### X to Zod
 
@@ -1203,7 +1206,7 @@ Starting from this object:
 
 ```ts
 const user = z.object({
-  email: z.string()
+  email: z.string(),
   username: z.string(),
 });
 // { email: string; username: string }
@@ -1267,10 +1270,12 @@ Contrary to the `.partial` method, the `.required` method makes all properties r
 Starting from this object:
 
 ```ts
-const user = z.object({
-  email: z.string()
-  username: z.string(),
-}).partial();
+const user = z
+  .object({
+    email: z.string(),
+    username: z.string(),
+  })
+  .partial();
 // { email?: string | undefined; username?: string | undefined }
 ```
 
@@ -2724,7 +2729,6 @@ Yup is a full-featured library that was implemented first in vanilla JS, and lat
 
 - Supports casting and transforms
 - All object fields are optional by default
-- Missing object methods: (partial, deepPartial)
 <!-- - Missing nonempty arrays with proper typing (`[T, ...T[]]`) -->
 - Missing promise schemas
 - Missing function schemas
@@ -2787,7 +2791,7 @@ This more declarative API makes schema definitions vastly more concise.
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
-Good type inference support, but limited options for object type masking (no `.pick` , `.omit` , `.extend` , etc.). No support for `Record` s (their `Record` is equivalent to Zod's `object` ). They DO support readonly types, which Zod does not.
+Good type inference support. They DO support readonly types, which Zod does not.
 
 - Supports "pattern matching": computed properties that distribute over unions
 - Supports readonly types
