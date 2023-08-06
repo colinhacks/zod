@@ -21,11 +21,10 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
-      - uses: oven-sh/setup-bun@v1
-      - run: bun install
-      - run: bun add typescript@${{ matrix.typescript }}
-      - run: bun run build
-      - run: bun run test
+      - run: yarn install
+      - run: yarn add typescript@${{ matrix.typescript }}
+      - run: yarn build
+      - run: yarn test
 
   test-deno:
     runs-on: ubuntu-latest
