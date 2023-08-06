@@ -1270,10 +1270,12 @@ Contrary to the `.partial` method, the `.required` method makes all properties r
 Starting from this object:
 
 ```ts
-const user = z.object({
-  email: z.string(),
-  username: z.string(),
-}).partial();
+const user = z
+  .object({
+    email: z.string(),
+    username: z.string(),
+  })
+  .partial();
 // { email?: string | undefined; username?: string | undefined }
 ```
 

@@ -1274,6 +1274,7 @@ const user = z.object({
   email: z.string(),
   username: z.string(),
 }).partial();
+
 // { email?: string | undefined; username?: string | undefined }
 ```
 
