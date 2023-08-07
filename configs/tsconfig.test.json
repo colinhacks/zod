@@ -6,7 +6,8 @@
     "target": "es5",
     "declaration": true,
     "declarationMap": false,
-    "sourceMap": false
+    "sourceMap": false,
+    "noEmit": true
   },
   "exclude": []
 }
