@@ -1,7 +1,7 @@
 {
-  "rootDir": ".",
+  "rootDir": "..",
   "transform": {
-    "^.+\\.tsx?$": "ts-jest"
+    "^.+\\.(t|j)sx?$": "@swc/jest"
   },
   "testRegex": "src/.*\\.test\\.ts$",
   "modulePathIgnorePatterns": ["language-server", "__vitest__"],

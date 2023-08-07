@@ -2,14 +2,11 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "module": "commonjs",
-    "outDir": "lib",
+    "outDir": "../lib",
     "declaration": true,
     "declarationMap": false,
     "sourceMap": false,
     "removeComments": true
   },
-  "exclude": [
-    "./src/**/__tests__",
-    "playground.ts"
-  ]
+  "exclude": ["../src/**/__tests__", "../playground.ts"]
 }

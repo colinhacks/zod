@@ -845,6 +845,12 @@ type NumberCache = z.infer<typeof NumberCache>;
 这对于按 ID 存储或缓存项目特别有用。
 
 ```ts
+const userSchema = z.object({ name: z.string() });
+const userStoreSchema = z.record(userSchema);
+
+type UserStore = z.infer<typeof userStoreSchema>;
+// => type UserStore = { [ x: string ]: { name: string } }
+
 const userStore: UserStore = {};
 
 userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
@@ -1617,7 +1623,7 @@ z.nullable(z.string());
 const nullishString = z.string().nullish(); // string | null | undefined
 
 // equivalent to
-z.string().optional().nullable();
+z.string().nullable().optional();
 ```
 
 ### `.array`

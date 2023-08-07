@@ -1,12 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "es5",
-      "es6",
-      "es7",
-      "esnext",
-      "dom"
-    ],
+    "lib": ["es5", "es6", "es7", "esnext", "dom"],
     "target": "es2018",
     "removeComments": false,
     "esModuleInterop": true,
@@ -22,9 +16,5 @@
     "downlevelIteration": true,
     "isolatedModules": true
   },
-  "include": [
-    "./src/**/*",
-    "playground.ts",
-    "./.eslintrc.js"
-  ]
+  "include": ["../src/**/*", "../playground.ts", "../.eslintrc.js"]
 }
