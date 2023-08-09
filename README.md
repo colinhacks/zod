@@ -714,6 +714,7 @@ z.string().uuid();
 z.string().cuid();
 z.string().cuid2();
 z.string().ulid();
+z.string().xid();
 z.string().regex(regex);
 z.string().includes(string);
 z.string().startsWith(string);
