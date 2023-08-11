@@ -962,6 +962,13 @@ const fish = ["Salmon", "Tuna", "Trout"];
 const FishEnum = z.enum(fish);
 ```
 
+But you may assert with `[string]` to let `z.enum` accept dynamic values.
+
+```ts
+const fish = ["Salmon", "Tuna", "Trout"];
+const FishEnum = z.enum(fish as [string]);
+```
+
 **Autocompletion**
 
 To get autocompletion with a Zod enum, use the `.enum` property of your schema:
