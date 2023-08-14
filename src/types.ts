@@ -3752,13 +3752,17 @@ export class ZodFunction<
         return parsedReturns;
       });
     } else {
-      return OK((...args: any[]) => {
-        const parsedArgs = this._def.args.safeParse(args, params);
+      // Would love a way to avoid disabling this rule, but we need
+      // an alias (using an arrow function was what caused 2651).
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const me = this;
+      return OK(function (this: any, ...args: any[]) {
+        const parsedArgs = me._def.args.safeParse(args, params);
         if (!parsedArgs.success) {
           throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
         }
-        const result = fn(...(parsedArgs.data as any));
-        const parsedReturns = this._def.returns.safeParse(result, params);
+        const result = Reflect.apply(fn, this, parsedArgs.data);
+        const parsedReturns = me._def.returns.safeParse(result, params);
         if (!parsedReturns.success) {
           throw new ZodError([makeReturnsIssue(result, parsedReturns.error)]);
         }
