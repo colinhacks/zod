@@ -143,7 +143,8 @@
   - [`.or`](#or)
   - [`.and`](#and)
   - [`.brand`](#brand)
-  - [`.pipe()`](#pipe)
+  - [`.readonly`](#readonly)
+  - [`.pipe`](#pipe)
     - [You can use `.pipe()` to fix common issues with `z.coerce`.](#you-can-use-pipe-to-fix-common-issues-with-zcoerce)
 - [Guides and concepts](#guides-and-concepts)
   - [Type inference](#type-inference)
@@ -2453,7 +2454,38 @@ type Cat = z.infer<typeof Cat>;
 
 Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
 
-### `.pipe()`
+### `.readonly`
+
+`.readonly() => ZodReadonly<this>`
+
+This method returns a `ZodReadonly` schema instance that parses the input using the base schema, then calls `Object.freeze()` on the result. The inferred type is also marked as `readonly`.
+
+```ts
+const schema = z.object({ name: string }).readonly();
+type schema = z.infer<typeof schema>;
+// Readonly<{name: string}>
+
+const result = schema.parse({ name: "fido" });
+result.name = "simba"; // error
+```
+
+The inferred type uses TypeScript's built-in readonly types when relevant.
+
+```ts
+z.array(z.string()).readonly();
+// readonly string[]
+
+z.tuple([z.string(), z.number()]).readonly();
+// readonly [string, number]
+
+z.map(z.string(), z.date()).readonly();
+// ReadonlyMap<string, Date>
+
+z.set(z.string()).readonly();
+// ReadonlySet<Promise<string>>
+```
+
+### `.pipe`
 
 Schemas can be chained into validation "pipelines". It's useful for easily validating the result after a `.transform()`:
 
