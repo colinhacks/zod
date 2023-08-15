@@ -21,6 +21,40 @@ enumSuite
     console.log(`z.enum: ${e.target}`);
   });
 
+const longEnumSuite = new Benchmark.Suite("long z.enum");
+const longEnumSchema = z.enum([
+  "one",
+  "two",
+  "three",
+  "four",
+  "five",
+  "six",
+  "seven",
+  "eight",
+  "nine",
+  "ten",
+  "eleven",
+  "twelve",
+  "thirteen",
+  "fourteen",
+  "fifteen",
+  "sixteen",
+  "seventeen",
+]);
+
+longEnumSuite
+  .add("valid", () => {
+    longEnumSchema.parse("five");
+  })
+  .add("invalid", () => {
+    try {
+      longEnumSchema.parse("invalid");
+    } catch (e) {}
+  })
+  .on("cycle", (e: Benchmark.Event) => {
+    console.log(`long z.enum: ${e.target}`);
+  });
+
 const undefinedSuite = new Benchmark.Suite("z.undefined");
 const undefinedSchema = z.undefined();
 
@@ -129,6 +163,7 @@ symbolSuite
 export default {
   suites: [
     enumSuite,
+    longEnumSuite,
     undefinedSuite,
     literalSuite,
     numberSuite,
