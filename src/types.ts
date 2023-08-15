@@ -3732,17 +3732,21 @@ export class ZodFunction<
     const fn = ctx.data;
 
     if (this._def.returns instanceof ZodPromise) {
-      return OK(async (...args: any[]) => {
+      // Would love a way to avoid disabling this rule, but we need
+      // an alias (using an arrow function was what caused 2651).
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const me = this;
+      return OK(async function (this: any, ...args: any[]) {
         const error = new ZodError([]);
-        const parsedArgs = await this._def.args
+        const parsedArgs = await me._def.args
           .parseAsync(args, params)
           .catch((e) => {
             error.addIssue(makeArgsIssue(args, e));
             throw error;
           });
-        const result = await fn(...(parsedArgs as any));
+        const result = await Reflect.apply(fn, this, parsedArgs as any);
         const parsedReturns = await (
-          this._def.returns as unknown as ZodPromise<ZodTypeAny>
+          me._def.returns as unknown as ZodPromise<ZodTypeAny>
         )._def.type
           .parseAsync(result, params)
           .catch((e) => {
