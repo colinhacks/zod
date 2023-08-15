@@ -1425,11 +1425,15 @@ const nonEmptyStrings = z.string().array().nonempty({
 
 ```ts
 z.string().array().min(5); // must contain 5 or more items
-z.string().array().max(5); // must contain 5 or fewer items
-z.string().array().length(5); // must contain 5 items exactly
-```
+// the inferred type is now
+// [string, string, string, string, string, ...string[]]
 
-Unlike `.nonempty()` these methods do not change the inferred type.
+z.string().array().max(5); // must contain 5 or fewer items
+
+z.string().array().length(5); // must contain 5 items exactly
+// the inferred type is now
+// [string, string, string, string, string]
+```
 
 ## Tuples
 
