@@ -32,27 +32,31 @@ test("function inference 1", () => {
 test("method parsing", () => {
   const methodObject = z.object({
     property: z.number(),
-    method: z.function().args(z.string()).returns(z.number())
+    method: z.function().args(z.string()).returns(z.number()),
   });
   const methodInstance = {
     property: 3,
-    method: function(s: string) { return s.length + this.property; }
+    method: function (s: string) {
+      return s.length + this.property;
+    },
   };
   const parsed = methodObject.parse(methodInstance);
-  expect(parsed.method('length=8')).toBe(11); // 8 length + 3 property
+  expect(parsed.method("length=8")).toBe(11); // 8 length + 3 property
 });
 
 test("async method parsing", async () => {
   const methodObject = z.object({
     property: z.number(),
-    method: z.function().args(z.string()).returns(z.promise(z.number()))
+    method: z.function().args(z.string()).returns(z.promise(z.number())),
   });
   const methodInstance = {
     property: 3,
-    method: async function(s: string) { return s.length + this.property; }
+    method: async function (s: string) {
+      return s.length + this.property;
+    },
   };
   const parsed = methodObject.parse(methodInstance);
-  expect(await parsed.method('length=8')).toBe(11); // 8 length + 3 property
+  expect(await parsed.method("length=8")).toBe(11); // 8 length + 3 property
 });
 
 test("args method", () => {
