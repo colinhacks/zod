@@ -1981,23 +1981,6 @@ type Tuple<T, N extends number, R extends T[] = []> = R["length"] extends N
   : Tuple<T, N, [T, ...R]>;
 
 type MinArray<T, N extends number> = [...Tuple<T, N>, ...T[]];
-type MaxArray<
-  T,
-  N extends number,
-  R extends T[] = Tuple<T, N>
-> = R["length"] extends 0
-  ? never
-  : R extends [infer U, ...infer V]
-  ? U extends undefined
-    ? never
-    : V extends T[]
-    ? R | MaxArray<T, N, V>
-    : never
-  : never;
-
-type B = Tuple<string, 1>;
-
-type A = MaxArray<string, 5>;
 
 export type arrayOutputType<
   T extends ZodTypeAny,
@@ -2116,7 +2099,7 @@ export class ZodArray<
     }) as any;
   }
 
-  max<N extends number>(maxLength: N, message?: errorUtil.ErrMessage): this {
+  max(maxLength: number, message?: errorUtil.ErrMessage): this {
     return new ZodArray({
       ...this._def,
       maxLength: { value: maxLength, message: errorUtil.toString(message) },

@@ -2099,7 +2099,7 @@ export class ZodArray<
     }) as any;
   }
 
-  max<N extends number>(maxLength: N, message?: errorUtil.ErrMessage): this {
+  max(maxLength: number, message?: errorUtil.ErrMessage): this {
     return new ZodArray({
       ...this._def,
       maxLength: { value: maxLength, message: errorUtil.toString(message) },
