@@ -4083,6 +4083,7 @@ export interface ZodEnumDef<T extends EnumValues = EnumValues>
   extends ZodTypeDef {
   values: T;
   typeName: ZodFirstPartyTypeKind.ZodEnum;
+  valueSet: Set<T[number]>;
 }
 
 export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
@@ -4111,6 +4112,7 @@ function createZodEnum(
 ) {
   return new ZodEnum({
     values,
+    valueSet: new Set(values),
     typeName: ZodFirstPartyTypeKind.ZodEnum,
     ...processCreateParams(params),
   });
@@ -4132,8 +4134,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       return INVALID;
     }
 
-    const set = new Set(this._def.values);
-    if (!set.has(input.data)) {
+    if (!this._def.valueSet.has(input.data)) {
       const ctx = this._getOrReturnCtx(input);
       const expectedValues = this._def.values;
 
@@ -4216,6 +4217,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
 export interface ZodNativeEnumDef<T extends EnumLike = EnumLike>
   extends ZodTypeDef {
   values: T;
+  valueSet: Set<T[keyof T]>;
   typeName: ZodFirstPartyTypeKind.ZodNativeEnum;
 }
 
@@ -4242,8 +4244,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       return INVALID;
     }
 
-    const set = new Set(nativeEnumValues);
-    if (!set.has(input.data)) {
+    if (!this._def.valueSet.has(input.data)) {
       const expectedValues = util.objectValues(nativeEnumValues);
 
       addIssueToContext(ctx, {
@@ -4266,6 +4267,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   ): ZodNativeEnum<T> => {
     return new ZodNativeEnum({
       values: values,
+      valueSet: new Set(util.getValidEnumValues(values)),
       typeName: ZodFirstPartyTypeKind.ZodNativeEnum,
       ...processCreateParams(params),
     });
