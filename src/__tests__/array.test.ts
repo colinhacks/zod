@@ -14,7 +14,7 @@ type t1 = z.infer<typeof nonEmptyMax>;
 util.assertEqual<[string, ...string[]], t1>(true);
 
 type t2 = z.infer<typeof minTwo>;
-util.assertEqual<string[], t2>(true);
+util.assertEqual<[string, string, ...string[]], t2>(true);
 
 test("passing validations", () => {
   minTwo.parse(["a", "a"]);
