@@ -4132,7 +4132,8 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       return INVALID;
     }
 
-    if (this._def.values.indexOf(input.data) === -1) {
+    const set = new Set(this._def.values);
+    if (!set.has(input.data)) {
       const ctx = this._getOrReturnCtx(input);
       const expectedValues = this._def.values;
 
@@ -4241,7 +4242,8 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       return INVALID;
     }
 
-    if (nativeEnumValues.indexOf(input.data) === -1) {
+    const set = new Set(nativeEnumValues);
+    if (!set.has(input.data)) {
       const expectedValues = util.objectValues(nativeEnumValues);
 
       addIssueToContext(ctx, {
