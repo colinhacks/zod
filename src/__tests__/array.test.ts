@@ -16,6 +16,9 @@ util.assertEqual<[string, ...string[]], t1>(true);
 type t2 = z.infer<typeof minTwo>;
 util.assertEqual<[string, string, ...string[]], t2>(true);
 
+type t3 = z.infer<typeof justTwo>;
+util.assertEqual<[string, string], t3>(true);
+
 test("passing validations", () => {
   minTwo.parse(["a", "a"]);
   minTwo.parse(["a", "a", "a"]);
