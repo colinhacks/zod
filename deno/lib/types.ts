@@ -1976,11 +1976,11 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
 
 export type ArrayCardinality = "many" | "atleast" | "exactly";
 
-type Tuple<T, N extends number, R extends T[] = []> = R["length"] extends N
+type FixedArray<T, N extends number, R extends T[] = []> = R["length"] extends N
   ? R
-  : Tuple<T, N, [T, ...R]>;
+  : FixedArray<T, N, [T, ...R]>;
 
-type MinArray<T, N extends number> = [...Tuple<T, N>, ...T[]];
+type MinArray<T, N extends number> = [...FixedArray<T, N>, ...T[]];
 
 export type arrayOutputType<
   T extends ZodTypeAny,
@@ -1989,7 +1989,7 @@ export type arrayOutputType<
 > = Cardinality extends "atleast"
   ? MinArray<T["_output"], CardinalityAmount>
   : Cardinality extends "exactly"
-  ? Tuple<T["_output"], CardinalityAmount>
+  ? FixedArray<T["_output"], CardinalityAmount>
   : T["_output"][];
 
 export class ZodArray<
@@ -2002,7 +2002,7 @@ export class ZodArray<
   Cardinality extends "atleast"
     ? MinArray<T["_input"], CardinalityAmount>
     : Cardinality extends "exactly"
-    ? Tuple<T["_input"], CardinalityAmount>
+    ? FixedArray<T["_input"], CardinalityAmount>
     : T["_input"][]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
