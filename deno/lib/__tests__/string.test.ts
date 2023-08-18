@@ -200,6 +200,39 @@ test("base64 validations", () => {
   }
 });
 
+test("jwt token", () => {
+  const jwtSchema = z.string().jwt();
+
+  // Can't split in 3 parts
+  expect(() =>
+    jwtSchema.parse("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9")
+  ).toThrow();
+  // Header not Base64
+  expect(() =>
+    jwtSchema.parse(
+      "headerIsNotBase64Encoded.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.RRi1X2IlXd5rZa9Mf_0VUOf-RxOzAhbB4tgViUGamWE"
+    )
+  ).toThrow();
+  // Has no type in header
+  expect(() =>
+    jwtSchema.parse(
+      "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.GuoUe6tw79bJlbU1HU0ADX0pr0u2kf3r_4OdrDufSfQ"
+    )
+  ).toBeTruthy();
+  // Type is not JWT
+  expect(() =>
+    jwtSchema.parse(
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpUVyJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.RRi1X2IlXd5rZa9Mf_0VUOf-RxOzAhbB4tgViUGamWE"
+    )
+  ).toBeTruthy();
+  //Success
+  expect(() =>
+    jwtSchema.parse(
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+    )
+  ).toBeTruthy();
+});
+
 test("url validations", () => {
   const url = z.string().url();
   url.parse("http://google.com");
