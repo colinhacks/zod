@@ -712,6 +712,7 @@ z.string().length(5);
 z.string().email();
 z.string().url();
 z.string().emoji();
+z.string().jwt(); // validates format, NOT signature
 z.string().uuid();
 z.string().cuid();
 z.string().cuid2();
