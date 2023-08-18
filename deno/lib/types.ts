@@ -105,6 +105,7 @@ const handleResult = <Input, Output>(
       success: false,
       get error() {
         if ((this as any)._error) return (this as any)._error as Error;
+        console.log(ctx);
         const error = new ZodError(ctx.common.issues);
         (this as any)._error = error;
         return (this as any)._error;
@@ -533,6 +534,7 @@ export type ZodStringCheck =
   | { kind: "length"; value: number; message?: string }
   | { kind: "email"; message?: string }
   | { kind: "url"; message?: string }
+  | { kind: "jwt"; message?: string }
   | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "nanoid"; message?: string }
@@ -671,6 +673,27 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
+function isValidJwt(token: string) {
+  console.log(token);
+  try {
+    const tokensParts = token.split(".");
+    if (tokensParts.length !== 3) {
+      return false;
+    }
+
+    const [header] = tokensParts;
+    const parsedHeader = JSON.parse(Buffer.from(header, "base64").toString());
+
+    if (!("type" in parsedHeader) || parsedHeader.type !== "JWT") {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export class ZodString extends ZodType<string, ZodStringDef, string> {
   _parse(input: ParseInput): ParseReturnType<string> {
     if (this._def.coerce) {
@@ -749,6 +772,17 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "email",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "jwt") {
+        console.log("aquiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
+        if (!isValidJwt(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "jwt",
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
@@ -987,7 +1021,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   url(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
-
+  jwt(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "jwt", ...errorUtil.errToObj(message) });
+  }
   emoji(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message) });
   }
@@ -1188,7 +1224,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   get isURL() {
     return !!this._def.checks.find((ch) => ch.kind === "url");
   }
-
+  get isJwt() {
+    return !!this._def.checks.find((ch) => ch.kind === "jwt");
+  }
   get isEmoji() {
     return !!this._def.checks.find((ch) => ch.kind === "emoji");
   }
