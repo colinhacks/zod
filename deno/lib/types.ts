@@ -371,7 +371,10 @@ export abstract class ZodType<
     refinement: (arg: Output, ctx: RefinementCtx) => arg is RefinedOutput
   ): ZodEffects<this, RefinedOutput, Input>;
   superRefine(
-    refinement: (arg: Output, ctx: RefinementCtx) => void | Promise<void>
+    refinement: (arg: Output, ctx: RefinementCtx) => void
+  ): ZodEffects<this, Output, Input>;
+  superRefine(
+    refinement: (arg: Output, ctx: RefinementCtx) => Promise<void>
   ): ZodEffects<this, Output, Input>;
   superRefine(
     refinement: (arg: Output, ctx: RefinementCtx) => unknown | Promise<unknown>
