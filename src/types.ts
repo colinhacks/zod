@@ -2151,6 +2151,7 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   exactLength: { value: number; message?: string } | null;
   minLength: { value: number; message?: string } | null;
   maxLength: { value: number; message?: string } | null;
+  uniqueness: { field?: string; message?: string } | null;
 }
 
 export type ArrayCardinality = "many" | "atleastone";
@@ -2230,6 +2231,22 @@ export class ZodArray<
       }
     }
 
+    if (def.uniqueness !== null) {
+      const { field } = def.uniqueness;
+
+      if (field) {
+        // TODO: implement
+      }
+
+      if (new Set(ctx.data).size !== ctx.data.length) {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.uniqueness,
+          message: def.uniqueness.message,
+        });
+        status.dirty();
+      }
+    }
+
     if (ctx.common.async) {
       return Promise.all(
         ([...ctx.data] as any[]).map((item, i) => {
@@ -2280,6 +2297,13 @@ export class ZodArray<
     return this.min(1, message) as any;
   }
 
+  unique(field?: string, message?: errorUtil.ErrMessage): this {
+    return new ZodArray({
+      ...this._def,
+      uniqueness: { field, message: errorUtil.toString(message) },
+    }) as any;
+  }
+
   static create = <T extends ZodTypeAny>(
     schema: T,
     params?: RawCreateParams
@@ -2289,6 +2313,7 @@ export class ZodArray<
       minLength: null,
       maxLength: null,
       exactLength: null,
+      uniqueness: null,
       typeName: ZodFirstPartyTypeKind.ZodArray,
       ...processCreateParams(params),
     });
