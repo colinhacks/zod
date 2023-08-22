@@ -2151,7 +2151,7 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   exactLength: { value: number; message?: string } | null;
   minLength: { value: number; message?: string } | null;
   maxLength: { value: number; message?: string } | null;
-  uniqueness: { field?: string; message?: string } | null;
+  uniqueness: { identifier?: ArrayUniqueIdentifier; message?: string } | null;
 }
 
 export type ArrayCardinality = "many" | "atleastone";
@@ -2161,6 +2161,7 @@ export type arrayOutputType<
 > = Cardinality extends "atleastone"
   ? [T["_output"], ...T["_output"][]]
   : T["_output"][];
+type ArrayUniqueIdentifier<T = any> = (o: T) => any;
 
 export class ZodArray<
   T extends ZodTypeAny,
@@ -2232,13 +2233,9 @@ export class ZodArray<
     }
 
     if (def.uniqueness !== null) {
-      const { field } = def.uniqueness;
+      const { identifier } = def.uniqueness;
 
-      if (field) {
-        // TODO: implement
-      }
-
-      if (new Set(ctx.data).size !== ctx.data.length) {
+      if (!this._arrayUnique(ctx.data, identifier)) {
         addIssueToContext(ctx, {
           code: ZodIssueCode.uniqueness,
           message: def.uniqueness.message,
@@ -2272,6 +2269,20 @@ export class ZodArray<
     return this._def.type;
   }
 
+  _arrayUnique(array: unknown[], identifier?: ArrayUniqueIdentifier): boolean {
+    if (!Array.isArray(array)) return false;
+
+    if (identifier) {
+      array = array.map((o) => (o != null ? identifier(o) : o));
+    }
+
+    const uniqueItems = array.filter(
+      (item, index, self) => self.indexOf(item) === index
+    );
+
+    return array.length === uniqueItems.length;
+  }
+
   min(minLength: number, message?: errorUtil.ErrMessage): this {
     return new ZodArray({
       ...this._def,
@@ -2297,10 +2308,13 @@ export class ZodArray<
     return this.min(1, message) as any;
   }
 
-  unique(field?: string, message?: errorUtil.ErrMessage): this {
+  unique(
+    identifier?: ArrayUniqueIdentifier,
+    message?: errorUtil.ErrMessage
+  ): this {
     return new ZodArray({
       ...this._def,
-      uniqueness: { field, message: errorUtil.toString(message) },
+      uniqueness: { identifier, message: errorUtil.toString(message) },
     }) as any;
   }
 
