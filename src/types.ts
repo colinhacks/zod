@@ -2276,11 +2276,7 @@ export class ZodArray<
       array = array.map((o) => (o != null ? identifier(o) : o));
     }
 
-    const uniqueItems = array.filter(
-      (item, index, self) => self.indexOf(item) === index
-    );
-
-    return array.length === uniqueItems.length;
+    return array.length === new Set(array).size;
   }
 
   min(minLength: number, message?: errorUtil.ErrMessage): this {
