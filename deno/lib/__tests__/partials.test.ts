@@ -7,7 +7,7 @@ import * as z from "../index.ts";
 import { ZodNullable, ZodOptional } from "../index.ts";
 
 const nested = z.object({
-  name: z.string(),
+  name: z.string().optional(),
   age: z.number(),
   outer: z.object({
     inner: z.string(),
@@ -19,9 +19,9 @@ test("shallow inference", () => {
   const shallow = nested.partial();
   type shallow = z.infer<typeof shallow>;
   type correct = {
-    name?: string | undefined;
-    age?: number | undefined;
-    outer?: { inner: string } | undefined;
+    name?: string;
+    age?: number;
+    outer?: { inner: string };
     array?: { asdf: string }[];
   };
   util.assertEqual<shallow, correct>(true);

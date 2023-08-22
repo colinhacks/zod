@@ -45,6 +45,7 @@ export type RefinementCtx = {
   addIssue: (arg: IssueData) => void;
   path: (string | number)[];
 };
+
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
 export type TypeOf<T extends ZodType<any, any, any>> = T["_output"];
@@ -55,7 +56,7 @@ export type { TypeOf as infer };
 export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
   errorMap?: ZodErrorMap;
-  description?: string;
+  description?: string | undefined;
 }
 
 class ParseInputLazyPath implements ParseInput {
@@ -116,14 +117,14 @@ const handleResult = <Input, Output>(
 export type RawCreateParams =
   | {
       errorMap?: ZodErrorMap;
-      invalid_type_error?: string;
-      required_error?: string;
-      description?: string;
+      invalid_type_error?: string | undefined;
+      required_error?: string | undefined;
+      description?: string | undefined;
     }
   | undefined;
 export type ProcessedCreateParams = {
   errorMap?: ZodErrorMap;
-  description?: string;
+  description?: string | undefined;
 };
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
@@ -286,15 +287,27 @@ export abstract class ZodType<
 
   refine<RefinedOutput extends Output>(
     check: (arg: Output) => arg is RefinedOutput,
-    message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
+    message?:
+      | string
+      | CustomErrorParams
+      | ((arg: Output) => CustomErrorParams)
+      | undefined
   ): ZodEffects<this, RefinedOutput, Input>;
   refine(
     check: (arg: Output) => unknown | Promise<unknown>,
-    message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
+    message?:
+      | string
+      | CustomErrorParams
+      | ((arg: Output) => CustomErrorParams)
+      | undefined
   ): ZodEffects<this, Output, Input>;
   refine(
     check: (arg: Output) => unknown,
-    message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
+    message?:
+      | string
+      | CustomErrorParams
+      | ((arg: Output) => CustomErrorParams)
+      | undefined
   ): ZodEffects<this, Output, Input> {
     const getIssueProperties = (val: Output) => {
       if (typeof message === "string" || typeof message === "undefined") {
@@ -522,7 +535,12 @@ export type ZodStringCheck =
   | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
-  | { kind: "includes"; value: string; position?: number; message?: string }
+  | {
+      kind: "includes";
+      value: string;
+      position?: number | undefined;
+      message?: string;
+    }
   | { kind: "cuid2"; message?: string }
   | { kind: "ulid"; message?: string }
   | { kind: "startsWith"; value: string; message?: string }
@@ -1067,11 +1085,21 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type ZodNumberCheck =
-  | { kind: "min"; value: number; inclusive: boolean; message?: string }
-  | { kind: "max"; value: number; inclusive: boolean; message?: string }
-  | { kind: "int"; message?: string }
-  | { kind: "multipleOf"; value: number; message?: string }
-  | { kind: "finite"; message?: string };
+  | {
+      kind: "min";
+      value: number;
+      inclusive: boolean;
+      message?: string | undefined;
+    }
+  | {
+      kind: "max";
+      value: number;
+      inclusive: boolean;
+      message?: string | undefined;
+    }
+  | { kind: "int"; message?: string | undefined }
+  | { kind: "multipleOf"; value: number; message?: string | undefined }
+  | { kind: "finite"; message?: string | undefined };
 
 // https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
 function floatSafeRemainder(val: number, step: number) {
@@ -1364,9 +1392,19 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type ZodBigIntCheck =
-  | { kind: "min"; value: bigint; inclusive: boolean; message?: string }
-  | { kind: "max"; value: bigint; inclusive: boolean; message?: string }
-  | { kind: "multipleOf"; value: bigint; message?: string };
+  | {
+      kind: "min";
+      value: bigint;
+      inclusive: boolean;
+      message?: string | undefined;
+    }
+  | {
+      kind: "max";
+      value: bigint;
+      inclusive: boolean;
+      message?: string | undefined;
+    }
+  | { kind: "multipleOf"; value: bigint; message?: string | undefined };
 
 export interface ZodBigIntDef extends ZodTypeDef {
   checks: ZodBigIntCheck[];
@@ -1613,8 +1651,8 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
 ///////////////////////////////////////
 ///////////////////////////////////////
 export type ZodDateCheck =
-  | { kind: "min"; value: number; message?: string }
-  | { kind: "max"; value: number; message?: string };
+  | { kind: "min"; value: number; message?: string | undefined }
+  | { kind: "max"; value: number; message?: string | undefined };
 export interface ZodDateDef extends ZodTypeDef {
   checks: ZodDateCheck[];
   coerce: boolean;
@@ -1972,9 +2010,9 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   type: T;
   typeName: ZodFirstPartyTypeKind.ZodArray;
-  exactLength: { value: number; message?: string } | null;
-  minLength: { value: number; message?: string } | null;
-  maxLength: { value: number; message?: string } | null;
+  exactLength: { value: number; message?: string | undefined } | null;
+  minLength: { value: number; message?: string | undefined } | null;
+  maxLength: { value: number; message?: string | undefined } | null;
 }
 
 export type ArrayCardinality = "many" | "atleastone";
@@ -2155,7 +2193,7 @@ export type objectOutputType<
   Catchall extends ZodTypeAny,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
 > = objectUtil.flatten<
-  objectUtil.addQuestionMarks<baseObjectOutputType<Shape>>
+  objectUtil.addQuestionMarksWithoutUndefined<baseObjectOutputType<Shape>>
 > &
   CatchallOutput<Catchall> &
   PassthroughType<UnknownKeys>;
@@ -3543,8 +3581,8 @@ export interface ZodSetDef<Value extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
   valueType: Value;
   typeName: ZodFirstPartyTypeKind.ZodSet;
-  minSize: { value: number; message?: string } | null;
-  maxSize: { value: number; message?: string } | null;
+  minSize: { value: number; message?: string | undefined } | null;
+  maxSize: { value: number; message?: string | undefined } | null;
 }
 
 export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<

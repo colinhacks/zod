@@ -133,7 +133,7 @@ test("all errors", () => {
       },
     });
 
-    expect(error.flatten((iss) => iss.message.toUpperCase())).toEqual({
+    expect(error.flatten((iss) => iss.message?.toUpperCase())).toEqual({
       formErrors: [],
       fieldErrors: {
         a: ["EXPECTED STRING, RECEIVED NULL"],
@@ -166,7 +166,7 @@ test("all errors", () => {
       },
     });
     // Test mapping
-    expect(error.flatten((i: z.ZodIssue) => i.message.length)).toEqual({
+    expect(error.flatten((i: z.ZodIssue) => i.message?.length)).toEqual({
       formErrors: [],
       fieldErrors: {
         a: ["Expected string, received null".length],

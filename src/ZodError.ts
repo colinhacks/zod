@@ -38,7 +38,7 @@ export type ZodIssueCode = keyof typeof ZodIssueCode;
 
 export type ZodIssueBase = {
   path: (string | number)[];
-  message?: string;
+  message?: string | undefined;
 };
 
 export interface ZodInvalidTypeIssue extends ZodIssueBase {
@@ -99,7 +99,7 @@ export type StringValidation =
   | "ulid"
   | "datetime"
   | "ip"
-  | { includes: string; position?: number }
+  | { includes: string; position?: number | undefined }
   | { startsWith: string }
   | { endsWith: string };
 
@@ -164,7 +164,7 @@ export type ZodIssueOptionalMessage =
 
 export type ZodIssue = ZodIssueOptionalMessage & {
   fatal?: boolean;
-  message: string;
+  message: string | undefined;
 };
 
 export const quotelessJson = (obj: any) => {

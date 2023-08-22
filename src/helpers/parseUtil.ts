@@ -33,9 +33,9 @@ export const makeIssue = (params: {
 };
 
 export type ParseParams = {
-  path: (string | number)[];
-  errorMap: ZodErrorMap;
-  async: boolean;
+  path?: (string | number)[];
+  errorMap: ZodErrorMap | undefined;
+  async: boolean | undefined;
 };
 
 export type ParsePathComponent = string | number;
@@ -45,11 +45,11 @@ export const EMPTY_PATH: ParsePath = [];
 export interface ParseContext {
   readonly common: {
     readonly issues: ZodIssue[];
-    readonly contextualErrorMap?: ZodErrorMap;
+    readonly contextualErrorMap?: ZodErrorMap | undefined;
     readonly async: boolean;
   };
   readonly path: ParsePath;
-  readonly schemaErrorMap?: ZodErrorMap;
+  readonly schemaErrorMap?: ZodErrorMap | undefined;
   readonly parent: ParseContext | null;
   readonly data: any;
   readonly parsedType: ZodParsedType;
