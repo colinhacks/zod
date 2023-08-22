@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - sonar
+      - sonar-test
 
 
 jobs:
