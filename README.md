@@ -2825,10 +2825,9 @@ This more declarative API makes schema definitions vastly more concise.
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
-Good type inference support. They DO support readonly types, which Zod does not.
+Good type inference support.
 
 - Supports "pattern matching": computed properties that distribute over unions
-- Supports readonly types
 - Missing object methods: (deepPartial, merge)
 - Missing nonempty arrays with proper typing (`[T, ...T[]]`)
 - Missing promise schemas
