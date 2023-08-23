@@ -6,7 +6,9 @@ on:
       - main
       - sonar
       - sonar-test
-
+      pull_request:
+        branches:
+          - master
 
 jobs:
   build:
