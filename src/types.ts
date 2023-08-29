@@ -105,7 +105,6 @@ const handleResult = <Input, Output>(
       success: false,
       get error() {
         if ((this as any)._error) return (this as any)._error as Error;
-        console.log(ctx);
         const error = new ZodError(ctx.common.issues);
         (this as any)._error = error;
         return (this as any)._error;
@@ -622,7 +621,6 @@ function isValidIP(ip: string, version?: IpVersion) {
 }
 
 function isValidJwt(token: string) {
-  console.log(token);
   try {
     const tokensParts = token.split(".");
     if (tokensParts.length !== 3) {
@@ -730,7 +728,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "jwt") {
-        console.log("aquiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii");
         if (!isValidJwt(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
@@ -741,7 +738,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "emoji") {
-        console.log("emojiiiiiiiiiiiiiiiiiiiiiii");
         if (!emojiRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
