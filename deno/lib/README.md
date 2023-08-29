@@ -721,7 +721,7 @@ z.string().regex(regex);
 z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
-z.string().datetime(); // defaults to UTC, see below for options
+z.string().datetime(); // ISO 8601; default is without UTC offset, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 
 // transformations
@@ -760,7 +760,7 @@ z.string().ip({ message: "Invalid IP address" });
 
 ### ISO datetimes
 
-The `z.string().datetime()` method defaults to UTC validation: no timezone offsets with arbitrary sub-second decimal precision.
+The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
 
 ```ts
 const datetime = z.string().datetime();
@@ -2825,10 +2825,9 @@ This more declarative API makes schema definitions vastly more concise.
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
-Good type inference support. They DO support readonly types, which Zod does not.
+Good type inference support.
 
 - Supports "pattern matching": computed properties that distribute over unions
-- Supports readonly types
 - Missing object methods: (deepPartial, merge)
 - Missing nonempty arrays with proper typing (`[T, ...T[]]`)
 - Missing promise schemas
