@@ -3408,6 +3408,7 @@ export interface ZodTupleDef<
   Rest extends ZodTypeAny | null = null
 > extends ZodTypeDef {
   items: T;
+  minItems: number;
   rest: Rest;
   typeName: ZodFirstPartyTypeKind.ZodTuple;
 }
@@ -3435,7 +3436,7 @@ export class ZodTuple<
       return INVALID;
     }
 
-    if (ctx.data.length < this._def.items.length) {
+    if (ctx.data.length < this._def.minItems) {
       addIssueToContext(ctx, {
         code: ZodIssueCode.too_small,
         minimum: this._def.items.length,
@@ -3499,6 +3500,9 @@ export class ZodTuple<
     }
     return new ZodTuple({
       items: schemas,
+      minItems: schemas.filter(
+        (item) => !(item._def.typeName === ZodFirstPartyTypeKind.ZodOptional)
+      ).length,
       typeName: ZodFirstPartyTypeKind.ZodTuple,
       rest: null,
       ...processCreateParams(params),
