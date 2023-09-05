@@ -3513,14 +3513,27 @@ export class ZodTuple<
     }
     return new ZodTuple({
       items: schemas,
-      minItems: schemas.findLastIndex(
-        (item) => !(item._def.typeName === ZodFirstPartyTypeKind.ZodOptional)
+      minItems: findMinItems(
+        schemas,
+        (item) => item._def.typeName === ZodFirstPartyTypeKind.ZodOptional
       ),
       typeName: ZodFirstPartyTypeKind.ZodTuple,
       rest: null,
       ...processCreateParams(params),
     });
   };
+}
+
+function findMinItems<T>(
+  array: Array<T>,
+  predicate: (value: T, index: number) => boolean
+): number {
+  for (let i = array.length; i > 0; i--) {
+    if (!predicate(array[i - 1], i)) {
+      return i;
+    }
+  }
+  return 0;
 }
 
 /////////////////////////////////////////
