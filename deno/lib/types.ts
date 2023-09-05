@@ -3517,9 +3517,9 @@ export class ZodTuple<
     }
     return new ZodTuple({
       items: schemas,
-      minItems: schemas.filter(
+      minItems: schemas.findLastIndex(
         (item) => !(item._def.typeName === ZodFirstPartyTypeKind.ZodOptional)
-      ).length,
+      ),
       typeName: ZodFirstPartyTypeKind.ZodTuple,
       rest: null,
       ...processCreateParams(params),
