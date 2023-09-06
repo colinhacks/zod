@@ -2228,6 +2228,10 @@ function deepPartialify(schema: ZodTypeAny): any {
     return ZodTuple.create(
       schema.items.map((item: any) => deepPartialify(item))
     );
+  } else if (schema instanceof ZodUnion) {
+    return ZodUnion.create(
+      schema.options.map((option: any) => deepPartialify(option))
+    );
   } else {
     return schema;
   }

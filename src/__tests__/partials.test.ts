@@ -12,6 +12,10 @@ const nested = z.object({
     inner: z.string(),
   }),
   array: z.array(z.object({ asdf: z.string() })),
+  union: z.union([
+    z.object({ qwer: z.string() }),
+    z.object({ zxcv: z.string() }),
+  ]),
 });
 
 test("shallow inference", () => {
@@ -22,6 +26,7 @@ test("shallow inference", () => {
     age?: number | undefined;
     outer?: { inner: string } | undefined;
     array?: { asdf: string }[];
+    union?: { qwer: string } | { zxcv: string };
   };
   util.assertEqual<shallow, correct>(true);
 });
@@ -39,12 +44,20 @@ test("deep partial inference", () => {
   const deep = nested.deepPartial();
   const asdf = deep.shape.array.unwrap().element.shape.asdf.unwrap();
   asdf.parse("asdf");
+  const qwer = deep.shape.union.unwrap().options[0].shape.qwer.unwrap();
+  qwer.parse("qwer");
+  const zxcv = deep.shape.union.unwrap().options[1].shape.zxcv.unwrap();
+  zxcv.parse("zxcv");
   type deep = z.infer<typeof deep>;
   type correct = {
     array?: { asdf?: string }[];
     name?: string | undefined;
     age?: number | undefined;
     outer?: { inner?: string | undefined } | undefined;
+    union?:
+      | { qwer?: string | undefined }
+      | { zxcv?: string | undefined }
+      | undefined;
   };
 
   util.assertEqual<deep, correct>(true);
@@ -114,6 +127,10 @@ test("deep partial inference", () => {
     name: z.string(),
     array: z.array(z.object({ asdf: z.string() })),
     tuple: z.tuple([z.object({ value: z.string() })]),
+    union: z.union([
+      z.object({ qwer: z.string() }),
+      z.object({ zxcv: z.string() }),
+    ]),
   });
 
   const partialed = mySchema.deepPartial();
@@ -126,6 +143,10 @@ test("deep partial inference", () => {
         }[]
       | undefined;
     tuple?: [{ value?: string }] | undefined;
+    union?:
+      | { qwer?: string | undefined }
+      | { zxcv?: string | undefined }
+      | undefined;
   };
   util.assertEqual<expected, partialed>(true);
 });
