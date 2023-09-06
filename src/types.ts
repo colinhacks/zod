@@ -682,7 +682,7 @@ function isValidJwt(token: string) {
     const [header] = tokensParts;
     const parsedHeader = JSON.parse(atob(header));
 
-    if (!("type" in parsedHeader) || parsedHeader.type !== "JWT") {
+    if (!("typ" in parsedHeader) || parsedHeader.typ !== "JWT") {
       return false;
     }
 
