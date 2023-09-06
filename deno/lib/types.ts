@@ -680,7 +680,7 @@ function isValidJwt(token: string) {
     }
 
     const [header] = tokensParts;
-    const parsedHeader = JSON.parse(Buffer.from(header, "base64").toString());
+    const parsedHeader = JSON.parse(atob(header));
 
     if (!("type" in parsedHeader) || parsedHeader.type !== "JWT") {
       return false;
@@ -786,12 +786,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           status.dirty();
         }
       } else if (check.kind === "emoji") {
-<<<<<<< HEAD
         if (!emojiRegex) {
           emojiRegex = new RegExp(_emojiRegex, "u");
         }
-=======
->>>>>>> 3a0c1f7 (fix(types): remove forgotten console.log)
         if (!emojiRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
