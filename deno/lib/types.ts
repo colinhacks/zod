@@ -4858,7 +4858,7 @@ type CustomParams = CustomErrorParams & { fatal?: boolean };
 export const custom = <T>(
   check?: (data: unknown) => any,
   params: string | CustomParams | ((input: any) => CustomParams) = {},
-  /*
+  /**
    * @deprecated
    *
    * Pass `fatal` into the params object instead:
