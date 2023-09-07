@@ -279,7 +279,7 @@ test("z.NEVER in preprocess", async () => {
   }
 });
 
-test.only("preprocess validates with sibling errors", () => {
+test("preprocess validates with sibling errors", () => {
   expect(() => {
     z.object({
       // Must be first
