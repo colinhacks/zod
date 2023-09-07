@@ -2566,7 +2566,7 @@ export class ZodObject<
   }
 
   pick<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+    mask: util.StrictKnownKeys<T, Mask>
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
     const shape: any = {};
 
@@ -2583,7 +2583,7 @@ export class ZodObject<
   }
 
   omit<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+    mask: util.StrictKnownKeys<T, Mask>
   ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall> {
     const shape: any = {};
 
@@ -2612,7 +2612,7 @@ export class ZodObject<
     Catchall
   >;
   partial<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+    mask: util.StrictKnownKeys<T, Mask>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? ZodOptional<T[k]> : T[k];
@@ -2645,7 +2645,7 @@ export class ZodObject<
     Catchall
   >;
   required<Mask extends { [k in keyof T]?: true }>(
-    mask: Mask
+    mask: util.StrictKnownKeys<T, Mask>
   ): ZodObject<
     objectUtil.noNever<{
       [k in keyof T]: k extends keyof Mask ? deoptional<T[k]> : T[k];

@@ -12,6 +12,10 @@ export namespace util {
     throw new Error();
   }
 
+  export type StrictKnownKeys<TObj, TKeysObj> = {
+    [k in keyof TKeysObj]: k extends keyof TObj ? TKeysObj[k] : never;
+  };
+
   export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
   export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
   export type MakePartial<T, K extends keyof T> = Omit<T, K> &
