@@ -278,6 +278,40 @@ test("z.NEVER in preprocess", async () => {
   }
 });
 
+test.only("preprocess validates with sibling errors", () => {
+  expect(() => {
+    z.object({
+      // Must be first
+      missing: z.string().refine(() => false),
+      preprocess: z.preprocess((data: any) => data?.trim(), z.string().regex(/ asdf/)),
+    }).parse({ preprocess: " asdf" });
+  }).toThrow(
+    JSON.stringify(
+      [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "received": "undefined",
+          "path": [
+            "missing"
+          ],
+          "message": "Required"
+        },
+        {
+          "validation": "regex",
+          "code": "invalid_string",
+          "message": "Invalid",
+          "path": [
+            "preprocess"
+          ]
+        },
+      ],
+      null,
+      2
+    )
+  );
+});
+
 test("short circuit on dirty", () => {
   const schema = z
     .string()

@@ -4273,7 +4273,8 @@ export class ZodEffects<
 
     if (effect.type === "preprocess") {
       const processed = effect.transform(ctx.data, checkCtx);
-      if (ctx.common.issues.length) {
+      const path = ctx.path.join(".");
+      if (ctx.common.issues.find((i) => i.path.join(".") === path)) {
         return {
           status: "dirty",
           value: ctx.data,
