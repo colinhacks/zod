@@ -185,23 +185,19 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table>
   <tr>
     <td align="center">
-      <a href="https://astro.build/">
-        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="200px;" alt="Astro" />
+      <a href="https://speakeasyapi.dev/">
+        <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" width="200px;" alt="Speakeasy API" />
       </a>
       <br />
-      <b>Astro</b>
+      <b>Speakeasy</b>
       <br />
-      <a href="https://astro.build">astro.build</a>
+      <a href="https://speakeasyapi.dev/">speakeasyapi.dev</a>
       <br />
-      <p width="200px">
-        Astro is a new kind of static <br/>
-        site builder for the modern web. <br/>
-        Powerful developer experience meets <br/>
-        lightweight output.</p>
+      <p width="200px">SDKs, Terraform, Docs. Your API made enterprise-ready.</p>
     </td>
     <td align="center">
       <a href="https://glow.app/">
-        <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="" />
+        <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="Glow Wallet" />
       </a>
       <br />
       <b>Glow Wallet</b>
@@ -224,17 +220,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://deletype.com">deletype.com</a>
     </td>
     <td align="center">
-      <a href="https://proxy.com/">
-        <img src="https://avatars.githubusercontent.com/u/14321439?s=200&v=4" width="200px;" alt="Proxy logo" />
-      </a>
-      <br />
-      <b>Proxy</b>
-      <br />
-      <a href="https://proxy.com">proxy.com</a>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
       <a href="https://trigger.dev/">
         <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" width="200px;" alt="Trigger.dev logo" />
       </a>
@@ -245,6 +230,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br/>
       <p>Effortless automation for developers.</p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://transloadit.com/">
         <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" width="200px;" alt="Transloadit logo" />
@@ -256,8 +243,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br/>
       <p>Simple file processing for developers.</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://infisical.com">
         <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" width="200px;" alt="Infisical logo" />
@@ -270,13 +255,25 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <p>Open-source platform for secret<br/>management: sync secrets across your<br/>team/infrastructure and prevent secret leaks.</p>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://whop.com/">
+        <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" width="200px;" alt="Whop logo" />
+      </a>
+      <br />
+      <b>Whop</b>
+      <br />
+      <a href="https://whop.com/">whop.com</a>
+      <br />
+      <p width="200px">A marketplace for really cool internet products.</p>
+    </td>
 </table>
 
 #### Silver
 
 <table>
   <tr>
-   <td align="center" colspan="2">
+    <td align="center" colspan="2">
       <a href="https://www.numeric.io">
         <img src="https://i.imgur.com/kTiLtZt.png" width="250px;" alt="Numeric logo" />
       </a>
@@ -286,17 +283,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://www.numeric.io">numeric.io</a>
     </td>
     <td align="center">
-      <a href="https://snaplet.dev">
-        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="Snaplet logo" />
-      </a>
-      <br />
-      <b>Snaplet</b>
-      <br />
-      <a href="https://snaplet.dev">snaplet.dev</a>
-    </td>
-  </tr>
-  <tr>
-   <td align="center">
       <a href="https://marcatopartners.com/">
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
       </a>
@@ -305,7 +291,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://marcatopartners.com/">marcatopartners.com</a>
     </td>
-     <td align="center">
+  </tr>
+  <tr>
+    <td align="center">
       <a href="https://interval.com">
         <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
       </a>
@@ -324,7 +312,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://seasoned.cc">seasoned.cc</a>
     </td>
   </tr>
-   <tr>
+  <tr>
     <td align="center">
       <a href="https://www.bamboocreative.nz/">
         <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="150px;" alt="Bamboo Creative logo" />
