@@ -193,7 +193,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://speakeasyapi.dev/">speakeasyapi.dev</a>
       <br />
-      <p width="200px">SDKs, Terraform, Docs. Your API made enterprise-ready.</p>
+      <p width="200px">SDKs, Terraform, Docs.<br/>Your API made enterprise-ready.</p>
     </td>
     <td align="center">
       <a href="https://glow.app/">
@@ -311,8 +311,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://seasoned.cc">seasoned.cc</a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://www.bamboocreative.nz/">
         <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="150px;" alt="Bamboo Creative logo" />
