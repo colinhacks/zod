@@ -562,6 +562,8 @@ pnpm add zod@canary          # pnpm
 
 ### From `deno.land/x` (Deno)
 
+The repository [zod-deno](https://github.com/colinhacks/zod-deno) is built on each update to the `master` branch ([see](.github/workflows/release.yml)).
+
 Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](https://deno.land/x). The latest version can be imported like so:
 
 ```ts

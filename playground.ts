@@ -10,3 +10,5 @@ const schema = z.object({
 const schemaRefine = schema.superRefine(async (val, _ctx) => {
   return val.value !== "INVALID";
 });
+
+schemaRefine;

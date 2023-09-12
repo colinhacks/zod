@@ -1,14 +1,15 @@
 **/.DS_Store
 node_modules
 /lib
+/deno
 /__buildtest__
 coverage
 .vscode
 .idea
 *.log
 playground.ts
-deno/lib/playground.ts
 .eslintcache
 workspace.code-workspace
 .netlify
 bun.lockb
+*.swp
