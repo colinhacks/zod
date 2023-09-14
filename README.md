@@ -233,13 +233,13 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
   <tr>
     <td align="center">
-      <a href="https://transloadit.com/">
+      <a href="https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github">
         <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" width="200px;" alt="Transloadit logo" />
       </a>
       <br />
       <b>Transloadit</b>
       <br />
-      <a href="https://transloadit.com">transloadit.com</a>
+      <a href="https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github">transloadit.com</a>
       <br/>
       <p>Simple file processing for developers.</p>
     </td>
