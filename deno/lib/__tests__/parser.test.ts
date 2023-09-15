@@ -46,3 +46,24 @@ test("invalid enum value", () => {
 test("parsing unknown", () => {
   z.string().parse("Red" as unknown);
 });
+
+test("type checks still run", () => {
+  expect(() => z.string().parse(0, { validate: false })).toThrow();
+});
+
+test("validation checks are skipped", () => {
+  // String checks
+  expect(() => z.string().min(10).parse("", { validate: false })).not.toThrow();
+
+  // Nested object checks
+  expect(() =>
+    z
+      .object({ message: z.string().min(1) })
+      .parse({ message: "" }, { validate: false })
+  ).not.toThrow();
+
+  // Number checks
+  expect(() =>
+    z.number().max(10).parse(100, { validate: false })
+  ).not.toThrow();
+});
