@@ -141,7 +141,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       message = "Number must be finite";
       break;
     case ZodIssueCode.uniqueness:
-      message = `Values must be unique`;
+      message = `Element(s): '${issue.duplicateElements}' is not unique`;
       break;
     default:
       message = _ctx.defaultError;

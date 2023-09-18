@@ -12,7 +12,7 @@ const nonEmptyMax = z.string().array().nonempty().max(2);
 const unique = z.string().array().unique();
 const uniqueArrayOfObjects = z
   .array(z.object({ name: z.string() }))
-  .unique((item) => item.name);
+  .unique({ predicate: (item) => item.name });
 
 type t1 = z.infer<typeof nonEmptyMax>;
 util.assertEqual<[string, ...string[]], t1>(true);
@@ -80,4 +80,37 @@ test("parse should fail given sparse array", () => {
   const schema = z.array(z.string()).nonempty().min(1).max(3);
 
   expect(() => schema.parse(new Array(3))).toThrow();
+});
+
+test("continue parsing despite array of primitives uniqueness error", () => {
+  const schema = z.number().array().unique();
+
+  const result = schema.safeParse([1, 1, 2, 2, 3]);
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    const issue = result.error.issues.find(({ code }) => code === "uniqueness");
+    expect(issue?.message).toEqual("Element(s): '1,2' is not unique");
+  }
+});
+
+test("continue parsing despite array of objects uniqueness error", () => {
+  const schema = z
+    .array(z.object({ name: z.string() }))
+    .unique({
+      predicate: (item) => item.name,
+      message: (duplicateElements) => `Custom message: '${duplicateElements}' is not unique`,
+    });
+
+  const result = schema.safeParse([
+    { name: "Leo" },
+    { name: "Joe" },
+    { name: "Leo" },
+  ]);
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    const issue = result.error.issues.find(({ code }) => code === "uniqueness");
+    expect(issue?.message).toEqual("Custom message: 'Leo' is not unique");
+  }
 });
