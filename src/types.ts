@@ -2151,7 +2151,11 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   exactLength: { value: number; message?: string } | null;
   minLength: { value: number; message?: string } | null;
   maxLength: { value: number; message?: string } | null;
-  uniqueness: { identifier?: ArrayUniqueIdentifier; message?: string } | null;
+  uniqueness: {
+    identifier?: ArrayUniqueIdentifier;
+    message?: string | ((duplicateElements: any) => string);
+    showDuplicates?: boolean;
+  } | null;
 }
 
 export type ArrayCardinality = "many" | "atleastone";
@@ -2161,10 +2165,7 @@ export type arrayOutputType<
 > = Cardinality extends "atleastone"
   ? [T["_output"], ...T["_output"][]]
   : T["_output"][];
-type ArrayUniqueIdentifier = {
-  predicate: (item: any) => any;
-  message?: (duplicateElements: any) => string;
-};
+type ArrayUniqueIdentifier<T = any> = (o: T) => any;
 
 export class ZodArray<
   T extends ZodTypeAny,
@@ -2236,20 +2237,19 @@ export class ZodArray<
     }
 
     if (def.uniqueness !== null) {
-      const { identifier } = def.uniqueness;
+      const { identifier, message, showDuplicates } = def.uniqueness;
 
-      const { unique, duplicateElements } = this._arrayUnique(
-        ctx.data,
-        identifier
-      );
+      const result = this._arrayUnique(ctx.data, identifier, showDuplicates);
+      const { unique, duplicateElements } = result;
 
       if (!unique) {
         addIssueToContext(ctx, {
           code: ZodIssueCode.uniqueness,
-          message: identifier?.message
-            ? identifier.message(duplicateElements)
-            : def.uniqueness.message,
           duplicateElements,
+          message:
+            typeof message === "function"
+              ? message(duplicateElements)
+              : message,
         });
         status.dirty();
       }
@@ -2280,19 +2280,20 @@ export class ZodArray<
     return this._def.type;
   }
 
-  _arrayUnique(array: unknown[], identifier?: ArrayUniqueIdentifier) {
+  _arrayUnique(
+    array: unknown[],
+    identifier?: ArrayUniqueIdentifier,
+    showDuplicates = false
+  ) {
     if (identifier) {
-      const { predicate } = identifier;
-      array = array.map((o) => (o != null ? predicate(o) : o));
+      array = array.map((o) => (o != null ? identifier(o) : o));
     }
-
-    const duplicateElements = array.filter((item, index) => {
-      return array.indexOf(item) !== index;
-    });
 
     return {
       unique: array.length === new Set(array).size,
-      duplicateElements,
+      duplicateElements: showDuplicates
+        ? array.filter((item, index) => array.indexOf(item) !== index)
+        : [],
     };
   }
 
@@ -2321,13 +2322,20 @@ export class ZodArray<
     return this.min(1, message) as any;
   }
 
-  unique(
-    identifier?: ArrayUniqueIdentifier,
-    message?: errorUtil.ErrMessage
-  ): this {
+  unique(params?: {
+    identifier?: ArrayUniqueIdentifier;
+    message?: errorUtil.ErrMessage | ((duplicateElements: any) => string);
+    showDuplicates?: boolean;
+  }): this {
     return new ZodArray({
       ...this._def,
-      uniqueness: { identifier, message: errorUtil.toString(message) },
+      uniqueness: {
+        ...params,
+        message:
+          typeof params?.message === "function"
+            ? params?.message
+            : errorUtil.toString(params?.message),
+      },
     }) as any;
   }
 
