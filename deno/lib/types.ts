@@ -611,6 +611,11 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   }
 };
 
+const isValidDate = (str: string) => {
+  const date = new Date(str);
+  return !isNaN(date.getTime());
+};
+
 function isValidIP(ip: string, version?: IpVersion) {
   if ((version === "v4" || !version) && ipv4Regex.test(ip)) {
     return true;
@@ -822,7 +827,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       } else if (check.kind === "datetime") {
         const regex = datetimeRegex(check);
 
-        if (!regex.test(input.data)) {
+        if (!regex.test(input.data) || !isValidDate(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
