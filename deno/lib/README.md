@@ -1879,7 +1879,7 @@ You can create a Zod schema for any TypeScript type by using `z.custom()`. This 
 
 ```ts
 const px = z.custom<`${number}px`>((val) => {
-  return /^\d+px$/.test(val as string);
+  return typeof val === "string" ? /^\d+px$/.test(val) : false;
 });
 
 type px = z.infer<typeof px>; // `${number}px`
