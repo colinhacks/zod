@@ -105,11 +105,8 @@ export type StringValidation =
   | "cuid"
   | "cuid2"
   | "ulid"
-<<<<<<< HEAD
   | "xid"
-=======
   | "ksuid"
->>>>>>> eca2545 (feat: add support for KSUIDs)
   | "datetime"
   | "date"
   | "time"

@@ -412,7 +412,6 @@ test("ulid", () => {
   }
 });
 
-<<<<<<< HEAD
 test("xid", () => {
   const xid = z.string().xid();
   xid.parse("9m4e2mr0ui3e8a215n4g");
@@ -420,7 +419,9 @@ test("xid", () => {
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("Invalid xid");
-=======
+  }
+});
+
 test("ksuid", () => {
   const ksuid = z.string().ksuid();
   ksuid.parse("0o0t9hkGxgFLtd3lmJ4TSTeY0Vb");
@@ -430,7 +431,6 @@ test("ksuid", () => {
   expect(ksuid.safeParse(tooLong).success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("Invalid ksuid");
->>>>>>> eca2545 (feat: add support for KSUIDs)
   }
 });
 
@@ -473,11 +473,8 @@ test("checks getters", () => {
   expect(z.string().email().isNANOID).toEqual(false);
   expect(z.string().email().isIP).toEqual(false);
   expect(z.string().email().isULID).toEqual(false);
-<<<<<<< HEAD
   expect(z.string().email().isXID).toEqual(false);
-=======
   expect(z.string().email().isKSUID).toEqual(false);
->>>>>>> eca2545 (feat: add support for KSUIDs)
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
@@ -487,11 +484,8 @@ test("checks getters", () => {
   expect(z.string().url().isNANOID).toEqual(false);
   expect(z.string().url().isIP).toEqual(false);
   expect(z.string().url().isULID).toEqual(false);
-<<<<<<< HEAD
   expect(z.string().url().isXID).toEqual(false);
-=======
   expect(z.string().url().isKSUID).toEqual(false);
->>>>>>> eca2545 (feat: add support for KSUIDs)
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
@@ -501,11 +495,8 @@ test("checks getters", () => {
   expect(z.string().cuid().isNANOID).toEqual(false);
   expect(z.string().cuid().isIP).toEqual(false);
   expect(z.string().cuid().isULID).toEqual(false);
-<<<<<<< HEAD
   expect(z.string().cuid().isXID).toEqual(false);
-=======
   expect(z.string().cuid().isKSUID).toEqual(false);
->>>>>>> eca2545 (feat: add support for KSUIDs)
 
   expect(z.string().cuid2().isEmail).toEqual(false);
   expect(z.string().cuid2().isURL).toEqual(false);
@@ -515,11 +506,8 @@ test("checks getters", () => {
   expect(z.string().cuid2().isNANOID).toEqual(false);
   expect(z.string().cuid2().isIP).toEqual(false);
   expect(z.string().cuid2().isULID).toEqual(false);
-<<<<<<< HEAD
   expect(z.string().cuid2().isXID).toEqual(false);
-=======
   expect(z.string().cuid2().isKSUID).toEqual(false);
->>>>>>> eca2545 (feat: add support for KSUIDs)
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
@@ -529,7 +517,6 @@ test("checks getters", () => {
   expect(z.string().uuid().isNANOID).toEqual(false);
   expect(z.string().uuid().isIP).toEqual(false);
   expect(z.string().uuid().isULID).toEqual(false);
-<<<<<<< HEAD
   expect(z.string().uuid().isXID).toEqual(false);
 
   expect(z.string().nanoid().isEmail).toEqual(false);
@@ -540,9 +527,7 @@ test("checks getters", () => {
   expect(z.string().nanoid().isNANOID).toEqual(true);
   expect(z.string().nanoid().isIP).toEqual(false);
   expect(z.string().nanoid().isULID).toEqual(false);
-=======
   expect(z.string().uuid().isKSUID).toEqual(false);
->>>>>>> eca2545 (feat: add support for KSUIDs)
 
   expect(z.string().ip().isEmail).toEqual(false);
   expect(z.string().ip().isURL).toEqual(false);
@@ -552,11 +537,8 @@ test("checks getters", () => {
   expect(z.string().ip().isNANOID).toEqual(false);
   expect(z.string().ip().isIP).toEqual(true);
   expect(z.string().ip().isULID).toEqual(false);
-<<<<<<< HEAD
   expect(z.string().ip().isXID).toEqual(false);
-=======
   expect(z.string().ip().isKSUID).toEqual(false);
->>>>>>> eca2545 (feat: add support for KSUIDs)
 
   expect(z.string().ulid().isEmail).toEqual(false);
   expect(z.string().ulid().isURL).toEqual(false);
@@ -566,7 +548,6 @@ test("checks getters", () => {
   expect(z.string().ulid().isNANOID).toEqual(false);
   expect(z.string().ulid().isIP).toEqual(false);
   expect(z.string().ulid().isULID).toEqual(true);
-<<<<<<< HEAD
   expect(z.string().ulid().isXID).toEqual(false);
 
   expect(z.string().xid().isEmail).toEqual(false);
@@ -577,7 +558,6 @@ test("checks getters", () => {
   expect(z.string().xid().isIP).toEqual(false);
   expect(z.string().xid().isULID).toEqual(false);
   expect(z.string().xid().isXID).toEqual(true);
-=======
   expect(z.string().ulid().isKSUID).toEqual(false);
 
   expect(z.string().ksuid().isEmail).toEqual(false);
@@ -588,7 +568,6 @@ test("checks getters", () => {
   expect(z.string().ksuid().isIP).toEqual(false);
   expect(z.string().ksuid().isULID).toEqual(false);
   expect(z.string().ksuid().isKSUID).toEqual(true);
->>>>>>> eca2545 (feat: add support for KSUIDs)
 });
 
 test("min max getters", () => {

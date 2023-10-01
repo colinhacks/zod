@@ -179,3 +179,14 @@ test("dont parse undefined values", () => {
     foo: undefined,
   });
 });
+
+test("allow undefined values", () => {
+  const schema = z.record(z.string(), z.undefined());
+  expect(
+    util.objectKeys(
+      schema.parse({
+        _test: undefined,
+      })
+    )
+  ).toEqual(["_test"]);
+});

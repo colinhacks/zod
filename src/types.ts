@@ -3753,7 +3753,7 @@ export class ZodRecord<
     const pairs: {
       key: ParseReturnType<any>;
       value: ParseReturnType<any>;
-      alwaysSet: boolean;
+      alwaysSet?: boolean;
     }[] = [];
 
     const keyType = this._def.keyType;
