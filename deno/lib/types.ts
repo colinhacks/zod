@@ -525,6 +525,7 @@ export type ZodStringCheck =
   | { kind: "includes"; value: string; position?: number; message?: string }
   | { kind: "cuid2"; message?: string }
   | { kind: "ulid"; message?: string }
+  | { kind: "xid"; message?: string }
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
@@ -548,6 +549,7 @@ export interface ZodStringDef extends ZodTypeDef {
 const cuidRegex = /^c[^\s-]{8,}$/i;
 const cuid2Regex = /^[a-z][a-z0-9]*$/;
 const ulidRegex = /[0-9A-HJKMNP-TV-Z]{26}/;
+const xidRegex = /^[0-9a-v]{20}$/i;
 // const uuidRegex =
 //   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 const uuidRegex =
@@ -759,6 +761,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "xid") {
+        if (!xidRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "xid",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "url") {
         try {
           new URL(input.data);
@@ -887,6 +899,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   ulid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "ulid", ...errorUtil.errToObj(message) });
+  }
+  xid(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "xid", ...errorUtil.errToObj(message) });
   }
 
   ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
@@ -1025,6 +1040,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isULID() {
     return !!this._def.checks.find((ch) => ch.kind === "ulid");
+  }
+  get isXID() {
+    return !!this._def.checks.find((ch) => ch.kind === "xid");
   }
   get isIP() {
     return !!this._def.checks.find((ch) => ch.kind === "ip");
