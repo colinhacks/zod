@@ -849,16 +849,17 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return { status: status.value, value: input.data };
   }
 
-  protected _regex = (
+  protected _regex(
     regex: RegExp,
     validation: StringValidation,
     message?: errorUtil.ErrMessage
-  ) =>
-    this.refinement((data) => regex.test(data), {
+  ) {
+    return this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
       ...errorUtil.errToObj(message),
     });
+  }
 
   _addCheck(check: ZodStringCheck) {
     return new ZodString({
@@ -980,26 +981,30 @@ export class ZodString extends ZodType<string, ZodStringDef> {
    * @deprecated Use z.string().min(1) instead.
    * @see {@link ZodString.min}
    */
-  nonempty = (message?: errorUtil.ErrMessage) =>
-    this.min(1, errorUtil.errToObj(message));
+  nonempty(message?: errorUtil.ErrMessage) {
+    return this.min(1, errorUtil.errToObj(message));
+  }
 
-  trim = () =>
-    new ZodString({
+  trim() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "trim" }],
     });
+  }
 
-  toLowerCase = () =>
-    new ZodString({
+  toLowerCase() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toLowerCase" }],
     });
+  }
 
-  toUpperCase = () =>
-    new ZodString({
+  toUpperCase() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toUpperCase" }],
     });
+  }
 
   get isDatetime() {
     return !!this._def.checks.find((ch) => ch.kind === "datetime");
@@ -4853,7 +4858,7 @@ type CustomParams = CustomErrorParams & { fatal?: boolean };
 export const custom = <T>(
   check?: (data: unknown) => any,
   params: string | CustomParams | ((input: any) => CustomParams) = {},
-  /*
+  /**
    * @deprecated
    *
    * Pass `fatal` into the params object instead:
