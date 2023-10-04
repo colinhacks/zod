@@ -135,7 +135,17 @@ export namespace objectUtil {
     };
   };
 
-  export type extendShape<A, B> = flatten<Omit<A, keyof B> & B>;
+  export type extendShape<A, B> = A extends any
+    ? B extends any
+      ? {
+          [K in keyof A | keyof B]: K extends keyof B
+            ? B[K]
+            : K extends keyof A
+            ? A[K]
+            : never;
+        }
+      : never
+    : never;
 }
 
 export const ZodParsedType = util.arrayToEnum([
