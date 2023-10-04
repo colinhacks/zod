@@ -266,6 +266,8 @@ test("ulid", () => {
   ulid.parse("01ARZ3NDEKTSV4RRFFQ69G5FAV");
   const result = ulid.safeParse("invalidulid");
   expect(result.success).toEqual(false);
+  const tooLong = "01ARZ3NDEKTSV4RRFFQ69G5FAVA"
+  expect(ulid.safeParse(tooLong).success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("Invalid ulid");
   }
