@@ -124,11 +124,9 @@ export namespace objectUtil {
     T extends object,
     R extends keyof T = requiredKeys<T>
     // O extends keyof T = optionalKeys<T>
-  > = Required<T> extends infer Strict
-    ? { [K in R]: K extends keyof Strict ? Strict[K] : never } & {
-        [K in keyof T]?: T[K];
-      }
-    : never;
+  > = { [K in R]: Required<T>[K] } & {
+    [K in keyof T]?: T[K];
+  };
   //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
 >>>>>>> 2ff8a1e (TS compilation perf: faster objectUtil.addQuestionMarks)
 
