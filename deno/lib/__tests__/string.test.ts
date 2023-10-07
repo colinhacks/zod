@@ -479,34 +479,48 @@ test("IP validation", () => {
 
   const ipv6 = z.string().ip({ version: "v6" });
   expect(() => ipv6.parse("254.164.77.1")).toThrow();
+});
 
-  const validIPs = [
-    "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c",
-    "9d4:c956:420f:5788:4339:9b3b:2418:75c3",
-    "a6ea::2454:a5ce:94.105.123.75",
-    "474f:4c83::4e40:a47:ff95:0cda",
-    "d329:0:25b4:db47:a9d1:0:4926:0000",
-    "e48:10fb:1499:3e28:e4b6:dea5:4692:912c",
-    "114.71.82.94",
-    "0.0.0.0",
-    "37.85.236.115",
-  ];
+[
+  "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c",
+  "9d4:c956:420f:5788:4339:9b3b:2418:75c3",
+  "9d4:c956:420f:5788:4339:9b3b:2418:75C3",
+  "a6ea::2454:a5ce:94.105.123.75",
+  "a6ea:2454:a5ce::94.105.123.75",
+  "474f:4c83::4e40:a47:ff95:0cda",
+  "d329:0:25b4:db47:a9d1:0:4926:0000",
+  "e48:10fb:1499:3e28:e4b6:dea5:4692:912c",
+  "1e5e:e6c8:daac:514b:114b::e360:682c",
+  "114.71.82.94",
+  "0.0.0.0",
+  "37.85.236.115",
+  "::",
+  "::1",
+].forEach((ip) => {
+  test(`IP validation with valid ip: ${ip}`, () => {
+    // no parameters check IPv4 or IPv6
+    const ipSchema = z.string().ip();
+    expect(ipSchema.safeParse(ip).success).toBe(true);
+  });
+});
 
-  const invalidIPs = [
-    "d329:1be4:25b4:db47:a9d1:dc71:4926:992c:14af",
-    "d5e7:7214:2b78::3906:85e6:53cc:709:32ba",
-    "8f69::c757:395e:976e::3441",
-    "54cb::473f:d516:0.255.256.22",
-    "54cb::473f:d516:192.168.1",
-    "256.0.4.4",
-    "-1.0.555.4",
-    "0.0.0.0.0",
-    "1.1.1",
-  ];
-  // no parameters check IPv4 or IPv6
-  const ipSchema = z.string().ip();
-  expect(validIPs.every((ip) => ipSchema.safeParse(ip).success)).toBe(true);
-  expect(
-    invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
-  ).toBe(true);
+[
+  "d329:1be4:25b4:db47:a9d1:dc71:4926:992c:14af",
+  "d5e7:7214:2b78::3906:85e6:53cc:709:32ba",
+  "1e5e:e6c8:daac:514b:114b:e360:d8c0::682c",
+  "1e5e:e6c8:daac:514b:114b::e360::682c",
+  "8f69::c757:395e:976e::3441",
+  "54cb::473f:d516:0.255.256.22",
+  "54cb::473f:d516:192.168.1",
+  "a6ea::2454:a5ce:94.105.123.75:a",
+  "256.0.4.4",
+  "-1.0.555.4",
+  "0.0.0.0.0",
+  "1.1.1",
+].forEach((ip) => {
+  test(`IP validation with invalid ip: ${ip}`, () => {
+    // no parameters check IPv4 or IPv6
+    const ipSchema = z.string().ip();
+    expect(ipSchema.safeParse(ip).success).toBe(false);
+  });
 });

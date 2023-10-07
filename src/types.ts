@@ -569,15 +569,21 @@ const emailRegex =
 // const emailRegex =
 //   /^[a-z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9\-]+)*$/i;
 
-// from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
-const _emojiRegex = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
-let emojiRegex: RegExp;
+let emojiRegex: RegExp | undefined;
 
 const ipv4Regex =
-  /^(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))$/;
+  /^(?:(?:(?=(25[0-5]))\1|(?=(2[0-4][0-9]))\2|(?=(1[0-9]{2}))\3|(?=([0-9]{1,2}))\4)\.){3}(?:(?=(25[0-5]))\5|(?=(2[0-4][0-9]))\6|(?=(1[0-9]{2}))\7|(?=([0-9]{1,2}))\8)$/;
 
-const ipv6Regex =
-  /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
+const ipv6PartRegex = /^[a-f0-9]{1,4}$/i;
+
+const dateTimeRegexPrecision0Offset =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(([+-]\d{2}(:?\d{2})?)|Z)$/;
+const dateTimeRegexPrecision0NoOffset =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
+const dateTimeNoPrecisionOffset =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(([+-]\d{2}(:?\d{2})?)|Z)$/;
+const dateTimeNoPrecisionNoOffset =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
 
 // Adapted from https://stackoverflow.com/a/3143231
 const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
@@ -593,30 +599,70 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
     }
   } else if (args.precision === 0) {
     if (args.offset) {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
-      );
+      return dateTimeRegexPrecision0Offset;
     } else {
-      return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`);
+      return dateTimeRegexPrecision0NoOffset;
     }
   } else {
     if (args.offset) {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}(:?\\d{2})?)|Z)$`
-      );
+      return dateTimeNoPrecisionOffset;
     } else {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$`
-      );
+      return dateTimeNoPrecisionNoOffset;
     }
   }
 };
+
+function isValidIpv6(ip: string): boolean {
+  const parts = ip.split(":");
+  if (parts.length > 8) {
+    return false;
+  }
+
+  const ipv4Mapped = ipv4Regex.test(parts[parts.length - 1]);
+
+  let remainingParts = 8;
+  if (ipv4Mapped) {
+    // IPv4-mapped address takes up last 32 bits
+    parts.pop();
+    remainingParts -= 2;
+  }
+
+  if (!ipv4Mapped && parts[parts.length - 1] === "") {
+    parts.pop();
+  }
+
+  if (parts.length > 0 && parts[0] === "") {
+    parts.shift();
+  }
+
+  const noneEmptyParts = parts.filter((part) => part !== "");
+
+  if (
+    noneEmptyParts.length === remainingParts &&
+    parts.length !== noneEmptyParts.length
+  ) {
+    return false;
+  }
+
+  if (
+    parts.length < remainingParts &&
+    parts.length - noneEmptyParts.length !== 1
+  ) {
+    return false;
+  }
+
+  if (!noneEmptyParts.every((part) => ipv6PartRegex.test(part))) {
+    return false;
+  }
+
+  return true;
+}
 
 function isValidIP(ip: string, version?: IpVersion) {
   if ((version === "v4" || !version) && ipv4Regex.test(ip)) {
     return true;
   }
-  if ((version === "v6" || !version) && ipv6Regex.test(ip)) {
+  if ((version === "v6" || !version) && isValidIpv6(ip)) {
     return true;
   }
 
@@ -712,7 +758,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "emoji") {
         if (!emojiRegex) {
-          emojiRegex = new RegExp(_emojiRegex, "u");
+          // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
+          emojiRegex =
+            /^(?:(?=(\p{Extended_Pictographic}))\1|(?=(\p{Emoji_Component}))\2)+$/u;
         }
         if (!emojiRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
