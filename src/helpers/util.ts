@@ -107,7 +107,6 @@ export namespace objectUtil {
   type requiredKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? never : k;
   }[keyof T];
-<<<<<<< HEAD
   type pickRequired<T extends object, R extends keyof T = requiredKeys<T>> = {
     [k in R]: T[k];
   };
@@ -116,19 +115,6 @@ export namespace objectUtil {
   };
   export type addQuestionMarks<T extends object> = pickRequired<T> &
     pickOptional<T> & { [k in keyof T]?: unknown };
-=======
-
-  // type alkjsdf = addQuestionMarks<{ a: any }>;
-
-  export type addQuestionMarks<
-    T extends object,
-    R extends keyof T = requiredKeys<T>
-    // O extends keyof T = optionalKeys<T>
-  > = { [K in R]: Required<T>[K] } & {
-    [K in keyof T]?: T[K];
-  };
-  //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
->>>>>>> 2ff8a1e (TS compilation perf: faster objectUtil.addQuestionMarks)
 
   export type identity<T> = T;
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;

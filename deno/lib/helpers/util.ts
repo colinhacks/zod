@@ -101,6 +101,7 @@ export namespace objectUtil {
     [k in Exclude<keyof U, keyof V>]: U[k];
   } & V;
 
+<<<<<<< HEAD
   type optionalKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? k : never;
   }[keyof T];
@@ -117,14 +118,17 @@ export namespace objectUtil {
   export type addQuestionMarks<T extends object> = pickRequired<T> &
     pickOptional<T> & { [k in keyof T]?: unknown };
 =======
+=======
+  // type optionalKeys<T extends object> = {
+  //   [k in keyof T]: undefined extends T[k] ? k : never;
+  // }[keyof T];
+>>>>>>> 29e0bc8 (Simplify objectUtil.addQuestionMarks again)
 
   // type alkjsdf = addQuestionMarks<{ a: any }>;
 
-  export type addQuestionMarks<
-    T extends object,
-    R extends keyof T = requiredKeys<T>
-    // O extends keyof T = optionalKeys<T>
-  > = { [K in R]: Required<T>[K] } & {
+  export type addQuestionMarks<T extends object> = {
+    [K in keyof T as undefined extends T[K] ? never : K]: T[K];
+  } & {
     [K in keyof T]?: T[K];
   };
   //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
