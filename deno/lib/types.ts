@@ -5396,21 +5396,7 @@ const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
 
-export const coerce = {
-  string: ((arg) =>
-    ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
-  number: ((arg) =>
-    ZodNumber.create({ ...arg, coerce: true })) as (typeof ZodNumber)["create"],
-  boolean: ((arg) =>
-    ZodBoolean.create({
-      ...arg,
-      coerce: true,
-    })) as (typeof ZodBoolean)["create"],
-  bigint: ((arg) =>
-    ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
-  date: ((arg) =>
-    ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
-};
+export * as coerce from "./coerce.ts";
 
 export {
   anyType as any,
