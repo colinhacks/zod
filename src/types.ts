@@ -5332,6 +5332,10 @@ const instanceOfType = <T extends typeof Class>(
   }
 ) => custom<InstanceType<T>>((data) => data instanceof cls, params);
 
+//////////////////////////////////////////////////////
+// MUST be aliased using wrapper functions.         //
+// See: https://github.com/colinhacks/zod/pull/2850 //
+//////////////////////////////////////////////////////
 const stringType: typeof ZodString.create = (...args) =>
   ZodString.create(...args);
 const numberType: typeof ZodNumber.create = (...args) =>
