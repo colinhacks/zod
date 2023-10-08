@@ -276,10 +276,10 @@ export class ZodError<T = any> extends Error {
     return fieldErrors;
   }
 
-  static create = (issues: ZodIssue[]) => {
+  static create(issues: ZodIssue[]) {
     const error = new ZodError(issues);
     return error;
-  };
+  }
 
   static assert(value: unknown): asserts value is ZodError {
     if (!(value instanceof ZodError)) {
