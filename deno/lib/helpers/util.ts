@@ -1,106 +1,106 @@
-export namespace util {
-  type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
-    V
-  >() => V extends U ? 1 : 2
-    ? true
-    : false;
+import { objectUtil } from "./index.ts";
 
-  export type isAny<T> = 0 extends 1 & T ? true : false;
-  export const assertEqual = <A, B>(val: AssertEqual<A, B>) => val;
-  export function assertIs<T>(_arg: T): void {}
-  export function assertNever(_x: never): never {
-    throw new Error();
+type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
+  V
+>() => V extends U ? 1 : 2
+  ? true
+  : false;
+
+export type isAny<T> = 0 extends 1 & T ? true : false;
+export const assertEqual = <A, B>(val: AssertEqual<A, B>) => val;
+export function assertIs<T>(_arg: T): void {}
+export function assertNever(_x: never): never {
+  throw new Error();
+}
+
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
+export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
+export type MakePartial<T, K extends keyof T> = Omit<T, K> &
+  Partial<Pick<T, K>>;
+
+export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
+  items: U
+): { [k in U[number]]: k } => {
+  const obj: any = {};
+  for (const item of items) {
+    obj[item] = item;
   }
+  return obj as any;
+};
 
+<<<<<<< HEAD
   export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
   export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
   export type MakePartial<T, K extends keyof T> = Omit<T, K> &
     Partial<Pick<T, K>>;
   export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
-
-  export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
-    items: U
-  ): { [k in U[number]]: k } => {
-    const obj: any = {};
-    for (const item of items) {
-      obj[item] = item;
-    }
-    return obj as any;
-  };
-
-  export const getValidEnumValues = (obj: any) => {
-    const validKeys = objectKeys(obj).filter(
-      (k: any) => typeof obj[obj[k]] !== "number"
-    );
-    const filtered: any = {};
-    for (const k of validKeys) {
-      filtered[k] = obj[k];
-    }
-    return objectValues(filtered);
-  };
-
-  export const objectValues = (obj: any) => {
-    return objectKeys(obj).map(function (e) {
-      return obj[e];
-    });
-  };
-
-  export const objectKeys: ObjectConstructor["keys"] =
-    typeof Object.keys === "function" // eslint-disable-line ban/ban
-      ? (obj: any) => Object.keys(obj) // eslint-disable-line ban/ban
-      : (object: any) => {
-          const keys = [];
-          for (const key in object) {
-            if (Object.prototype.hasOwnProperty.call(object, key)) {
-              keys.push(key);
-            }
-          }
-          return keys;
-        };
-
-  export const find = <T>(
-    arr: T[],
-    checker: (arg: T) => any
-  ): T | undefined => {
-    for (const item of arr) {
-      if (checker(item)) return item;
-    }
-    return undefined;
-  };
-
-  export type identity<T> = objectUtil.identity<T>;
-  export type flatten<T> = objectUtil.flatten<T>;
-
-  export type noUndefined<T> = T extends undefined ? never : T;
-
-  export const isInteger: NumberConstructor["isInteger"] =
-    typeof Number.isInteger === "function"
-      ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban
-      : (val) =>
-          typeof val === "number" && isFinite(val) && Math.floor(val) === val;
-
-  export function joinValues<T extends any[]>(
-    array: T,
-    separator = " | "
-  ): string {
-    return array
-      .map((val) => (typeof val === "string" ? `'${val}'` : val))
-      .join(separator);
+=======
+export const getValidEnumValues = (obj: any) => {
+  const validKeys = objectKeys(obj).filter(
+    (k: any) => typeof obj[obj[k]] !== "number"
+  );
+  const filtered: any = {};
+  for (const k of validKeys) {
+    filtered[k] = obj[k];
   }
+  return objectValues(filtered);
+};
+>>>>>>> 19fbb9a (fix: make util tree shakeable)
 
-  export const jsonStringifyReplacer = (_: string, value: any): any => {
-    if (typeof value === "bigint") {
-      return value.toString();
-    }
-    return value;
-  };
+export const objectValues = (obj: any) => {
+  return objectKeys(obj).map(function (e) {
+    return obj[e];
+  });
+};
+
+export const objectKeys: ObjectConstructor["keys"] =
+  typeof Object.keys === "function" // eslint-disable-line ban/ban
+    ? (obj: any) => Object.keys(obj) // eslint-disable-line ban/ban
+    : (object: any) => {
+        const keys = [];
+        for (const key in object) {
+          if (Object.prototype.hasOwnProperty.call(object, key)) {
+            keys.push(key);
+          }
+        }
+        return keys;
+      };
+
+export const find = <T>(arr: T[], checker: (arg: T) => any): T | undefined => {
+  for (const item of arr) {
+    if (checker(item)) return item;
+  }
+  return undefined;
+};
+
+export type identity<T> = objectUtil.identity<T>;
+export type flatten<T> = objectUtil.flatten<T>;
+
+export type noUndefined<T> = T extends undefined ? never : T;
+
+export const isInteger: NumberConstructor["isInteger"] =
+  typeof Number.isInteger === "function"
+    ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban
+    : (val) =>
+        typeof val === "number" && isFinite(val) && Math.floor(val) === val;
+
+export function joinValues<T extends any[]>(
+  array: T,
+  separator = " | "
+): string {
+  return array
+    .map((val) => (typeof val === "string" ? `'${val}'` : val))
+    .join(separator);
 }
 
-export namespace objectUtil {
-  export type MergeShapes<U, V> = {
-    [k in Exclude<keyof U, keyof V>]: U[k];
-  } & V;
+export const jsonStringifyReplacer = (_: string, value: any): any => {
+  if (typeof value === "bigint") {
+    return value.toString();
+  }
+  return value;
+};
 
+<<<<<<< HEAD
   type optionalKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? k : never;
   }[keyof T];
@@ -141,6 +141,9 @@ export namespace objectUtil {
 }
 
 export const ZodParsedType = util.arrayToEnum([
+=======
+export const ZodParsedType = arrayToEnum([
+>>>>>>> 19fbb9a (fix: make util tree shakeable)
   "string",
   "nan",
   "number",

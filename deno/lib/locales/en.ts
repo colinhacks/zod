@@ -1,4 +1,5 @@
-import { util, ZodParsedType } from "../helpers/util.ts";
+import { util } from "../helpers/index.ts";
+import { ZodParsedType } from "../helpers/util.ts";
 import { ZodErrorMap, ZodIssueCode } from "../ZodError.ts";
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {

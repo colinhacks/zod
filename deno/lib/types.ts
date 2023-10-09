@@ -1,6 +1,5 @@
 import { defaultErrorMap, getErrorMap } from "./errors.ts";
-import { enumUtil } from "./helpers/enumUtil.ts";
-import { errorUtil } from "./helpers/errorUtil.ts";
+import { enumUtil, errorUtil, objectUtil, partialUtil, util } from "./helpers/index.ts";
 import {
   addIssueToContext,
   AsyncParseReturnType,
@@ -20,9 +19,8 @@ import {
   ParseStatus,
   SyncParseReturnType,
 } from "./helpers/parseUtil.ts";
-import { partialUtil } from "./helpers/partialUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
-import { getParsedType, objectUtil, util, ZodParsedType } from "./helpers/util.ts";
+import { getParsedType, ZodParsedType } from "./helpers/util.ts";
 import {
   IssueData,
   StringValidation,

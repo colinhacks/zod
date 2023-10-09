@@ -1,6 +1,5 @@
 import { defaultErrorMap, getErrorMap } from "./errors";
-import { enumUtil } from "./helpers/enumUtil";
-import { errorUtil } from "./helpers/errorUtil";
+import { enumUtil, errorUtil, objectUtil, partialUtil, util } from "./helpers";
 import {
   addIssueToContext,
   AsyncParseReturnType,
@@ -20,9 +19,8 @@ import {
   ParseStatus,
   SyncParseReturnType,
 } from "./helpers/parseUtil";
-import { partialUtil } from "./helpers/partialUtil";
 import { Primitive } from "./helpers/typeAliases";
-import { getParsedType, objectUtil, util, ZodParsedType } from "./helpers/util";
+import { getParsedType, ZodParsedType } from "./helpers/util";
 import {
   IssueData,
   StringValidation,
