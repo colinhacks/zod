@@ -59,4 +59,17 @@ test("branded types", () => {
 
   // @ts-expect-error
   doStuff({ name: "hello there!" });
+
+  // runtime brand
+  const runtimeBranded = z.number().brand("runtime");
+  expect(runtimeBranded.parse(3000)).toEqual(3000);
+  expect(runtimeBranded._def.brand).toEqual("runtime");
+
+  const runtimeBrandedWithSymbol = z.string().brand(MyBrand);
+  expect(runtimeBrandedWithSymbol.parse("hi")).toEqual("hi");
+  expect(runtimeBrandedWithSymbol._def.brand).toEqual(MyBrand);
+
+  const typeBranded = z.string().brand<'myType'>();
+  expect(typeBranded.parse("hi")).toEqual("hi");
+  expect(typeBranded._def.brand).toEqual(undefined);
 });

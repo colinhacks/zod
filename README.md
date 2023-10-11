@@ -2442,6 +2442,17 @@ type Cat = z.infer<typeof Cat>;
 
 Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
 
+However when using the brand as a parameter the type will include it in the typing at runtime (but not the parse!)
+
+```ts
+const Cat = z.object({ name: z.string() }).brand("Cat"); // Notice brand being a parameter
+type Cat = z.infer<typeof Cat>;
+// {name: string} & {[symbol]: "Cat"}
+
+const isCatType = Cat._def.brand === "Cat"; // true
+const isCat = Cat.parse({ name: "Whiskers" })._def.brand; // Invalid. This is undefined
+```
+
 ### `.readonly`
 
 `.readonly() => ZodReadonly<this>`
