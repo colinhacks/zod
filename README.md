@@ -37,7 +37,7 @@
 <br/>
 <br/>
 
-> These docs have been translated into [Chinese](./README_ZH.md).
+> These docs have been translated into [Chinese](https://github.com/colinhacks/zod/blob/master/README_ZH.md).
 
 ## Table of contents
 
