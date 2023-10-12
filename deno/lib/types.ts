@@ -759,8 +759,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       } else if (check.kind === "emoji") {
         if (!emojiRegex) {
           // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
-          emojiRegex =
-            /^(?:(?=(\p{Extended_Pictographic}))\1|(?=(\p{Emoji_Component}))\2)+$/u;
+          emojiRegex = /^[\p{Extended_Pictographic}\p{Emoji_Component}]+$/u;
         }
         if (!emojiRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
