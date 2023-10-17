@@ -549,8 +549,6 @@ export interface ZodStringDef extends ZodTypeDef {
 const cuidRegex = /^c[^\s-]{8,}$/i;
 const cuid2Regex = /^[a-z][a-z0-9]*$/;
 const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/;
-// const uuidRegex =
-//   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 const uuidRegex =
   /^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-5][0-9a-f]{3}\b-[089ab][0-9a-f]{3}\b-[0-9a-f]{12}$/i;
 const guidRegex =
@@ -1041,6 +1039,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
+  }
+  get isGUID() {
+    return !!this._def.checks.find((ch) => ch.kind === "guid");
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
