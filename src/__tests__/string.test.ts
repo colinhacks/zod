@@ -282,6 +282,29 @@ test("emoji validations", () => {
   expect(() => emoji.parse("stuff😀")).toThrow();
 });
 
+test("nanoid", () => {
+  const nanoid = z.string().nanoid("custom error");
+  nanoid.parse("lfNZluvAxMkf7Q8C5H-QS");
+  nanoid.parse("mIU_4PJWikaU8fMbmkouz");
+  nanoid.parse("Hb9ZUtUa2JDm_dD-47EGv");
+  nanoid.parse("5Noocgv_8vQ9oPijj4ioQ");
+  const result = nanoid.safeParse("Xq90uDyhddC53KsoASYJGX");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("custom error");
+  }
+});
+
+test("bad nanoid", () => {
+  const nanoid = z.string().nanoid("custom error");
+  nanoid.parse("ySh_984wpDUu7IQRrLXAp");
+  const result = nanoid.safeParse("invalid nanoid");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("custom error");
+  }
+});
+
 test.each([
   "9491d710-3185-0e06-bea0-6a2f275345e0",
   "9491d710-3185-1e06-bea0-6a2f275345e0",
@@ -316,28 +339,30 @@ test.each([
   }
 });
 
-test("nanoid", () => {
-  const nanoid = z.string().nanoid("custom error");
-  nanoid.parse("lfNZluvAxMkf7Q8C5H-QS");
-  nanoid.parse("mIU_4PJWikaU8fMbmkouz");
-  nanoid.parse("Hb9ZUtUa2JDm_dD-47EGv");
-  nanoid.parse("5Noocgv_8vQ9oPijj4ioQ");
-  const result = nanoid.safeParse("Xq90uDyhddC53KsoASYJGX");
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("custom error");
-  }
+test.each([
+  "9491d710-3185-4e06-bea0-6a2f275345e0",
+  "d89e7b01-7598-ed11-9d7a-0022489382fd", // new sequential id
+  "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
+  "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 4122: Reserved, Microsoft Corporation backward compatibility
+  "00000000-0000-0000-0000-000000000000",
+  "ffffffff-ffff-ffff-ffff-ffffffffffff",
+])("guid: %s", (goodGuid: unknown) => {
+  const guid = z.string().guid("custom error");
+  const result = guid.safeParse(goodGuid);
+  expect(result.success).toEqual(true);
 });
 
-test("bad nanoid", () => {
-  const nanoid = z.string().nanoid("custom error");
-  nanoid.parse("ySh_984wpDUu7IQRrLXAp");
-  const result = nanoid.safeParse("invalid nanoid");
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("custom error");
+test.each(["9491d710-3185-4e06-bea0-6a2f275345e0X"])(
+  "bad guid: %s",
+  (badGuid: unknown) => {
+    const guid = z.string().guid("custom error");
+    const result = guid.safeParse(badGuid);
+    expect(result.success).toEqual(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toEqual("custom error");
+    }
   }
-});
+);
 
 test("cuid", () => {
   const cuid = z.string().cuid();
