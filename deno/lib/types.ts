@@ -521,6 +521,7 @@ export type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
+  | { kind: "guid"; message?: string }
   | { kind: "cuid"; message?: string }
   | { kind: "includes"; value: string; position?: number; message?: string }
   | { kind: "cuid2"; message?: string }
@@ -551,6 +552,8 @@ const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 // const uuidRegex =
 //   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 const uuidRegex =
+  /^[0-9a-f]{8}\b-[0-9a-f]{4}\b-[0-5][0-9a-f]{3}\b-[089ab][0-9a-f]{3}\b-[0-9a-f]{12}$/i;
+const guidRegex =
   /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i;
 // from https://stackoverflow.com/a/46181/1550155
 // old version: too slow, didn't support unicode
@@ -733,6 +736,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "guid") {
+        if (!guidRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "guid",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "cuid") {
         if (!cuidRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -883,6 +896,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
+  }
+  guid(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "guid", ...errorUtil.errToObj(message) });
   }
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
