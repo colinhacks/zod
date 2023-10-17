@@ -1274,8 +1274,13 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
   }
+<<<<<<< HEAD
   get isNANOID() {
     return !!this._def.checks.find((ch) => ch.kind === "nanoid");
+=======
+  get isGUID() {
+    return !!this._def.checks.find((ch) => ch.kind === "guid");
+>>>>>>> 162be85 (Add isGUID method)
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
