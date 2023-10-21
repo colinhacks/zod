@@ -3274,10 +3274,10 @@ eslint-plugin-import@^2.25.4:
     semver "^6.3.0"
     tsconfig-paths "^3.14.1"
 
-eslint-plugin-redos-detector@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-redos-detector/-/eslint-plugin-redos-detector-2.1.0.tgz#ef303586795828add0d70b4f621b46ddfb61f8e8"
-  integrity sha512-OzEunmwiB3Ecg8I9LH1ehBzRXe8eTqWe2pYNkM2iQQxnl5AKuHIWxMKY7ZKeqpnX+bKQhcJcoWQ3GZ3YvSIuzw==
+eslint-plugin-redos-detector@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-redos-detector/-/eslint-plugin-redos-detector-2.2.0.tgz#58c128ad24d62d389df904b84627decc1c4ddcbe"
+  integrity sha512-gMftZKvgRGLzljIGRN7yP421QegMRW+K4Dt3yiyZocycgUvmOGeo5A4ytQEx5BgdCEZyC5/CJNZQZ8Rj1+N7+A==
 
 eslint-plugin-simple-import-sort@^7.0.0:
   version "7.0.0"

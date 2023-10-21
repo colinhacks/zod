@@ -27,7 +27,7 @@
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-ban": "^1.6.0",
     "eslint-plugin-import": "^2.25.4",
-    "eslint-plugin-redos-detector": "^2.1.0",
+    "eslint-plugin-redos-detector": "^2.2.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "eslint-plugin-unused-imports": "^2.0.0",
     "husky": "^7.0.4",
