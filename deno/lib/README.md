@@ -1336,6 +1336,10 @@ person.parse({
 // => throws ZodError
 ```
 
+### `.nonstrict`
+
+You can use the `.nonstrict` method to _preserve_ unrecognized keys.
+
 ### `.strip`
 
 You can use the `.strip` method to reset an object schema to the default behavior (stripping unrecognized keys).
