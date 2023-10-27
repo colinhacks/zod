@@ -588,7 +588,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
       );
     } else {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}Z$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}Z?$`
       );
     }
   } else if (args.precision === 0) {
@@ -597,7 +597,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
         `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
       );
     } else {
-      return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`);
+      return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z?$`);
     }
   } else {
     if (args.offset) {
@@ -606,7 +606,7 @@ const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
       );
     } else {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z?$`
       );
     }
   }

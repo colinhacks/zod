@@ -742,7 +742,7 @@ z.string().uuid({ message: "Invalid UUID" });
 z.string().includes("tuna", { message: "Must include tuna" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
-z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+z.string().datetime({ message: "Invalid datetime string!" });
 z.string().ip({ message: "Invalid IP address" });
 ```
 
@@ -754,6 +754,7 @@ The `z.string().datetime()` method enforces ISO 8601; default is no timezone off
 const datetime = z.string().datetime();
 
 datetime.parse("2020-01-01T00:00:00Z"); // pass
+datetime.parse("2020-01-01T00:00:00"); // pass (unqualified)
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (arbitrary precision)
 datetime.parse("2020-01-01T00:00:00+02:00"); // fail (no offsets allowed)
@@ -777,6 +778,7 @@ You can additionally constrain the allowable `precision`. By default, arbitrary 
 const datetime = z.string().datetime({ precision: 3 });
 
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
+datetime.parse("2020-01-01T00:00:00.123"); // pass (unqualified still supported)
 datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```

@@ -403,10 +403,15 @@ test("datetime", () => {
 test("datetime parsing", () => {
   const datetime = z.string().datetime();
   datetime.parse("1970-01-01T00:00:00.000Z");
+  datetime.parse("1970-01-01T00:00:00.000");
   datetime.parse("2022-10-13T09:52:31.816Z");
+  datetime.parse("2022-10-13T09:52:31.816");
   datetime.parse("2022-10-13T09:52:31.8162314Z");
+  datetime.parse("2022-10-13T09:52:31.8162314");
   datetime.parse("1970-01-01T00:00:00Z");
+  datetime.parse("1970-01-01T00:00:00");
   datetime.parse("2022-10-13T09:52:31Z");
+  datetime.parse("2022-10-13T09:52:31");
   expect(() => datetime.parse("")).toThrow();
   expect(() => datetime.parse("foo")).toThrow();
   expect(() => datetime.parse("2020-10-14")).toThrow();
@@ -415,7 +420,9 @@ test("datetime parsing", () => {
 
   const datetimeNoMs = z.string().datetime({ precision: 0 });
   datetimeNoMs.parse("1970-01-01T00:00:00Z");
+  datetimeNoMs.parse("1970-01-01T00:00:00");
   datetimeNoMs.parse("2022-10-13T09:52:31Z");
+  datetimeNoMs.parse("2022-10-13T09:52:31");
   expect(() => datetimeNoMs.parse("tuna")).toThrow();
   expect(() => datetimeNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
   expect(() => datetimeNoMs.parse("1970-01-01T00:00:00.Z")).toThrow();
@@ -423,7 +430,9 @@ test("datetime parsing", () => {
 
   const datetime3Ms = z.string().datetime({ precision: 3 });
   datetime3Ms.parse("1970-01-01T00:00:00.000Z");
+  datetime3Ms.parse("1970-01-01T00:00:00.000");
   datetime3Ms.parse("2022-10-13T09:52:31.123Z");
+  datetime3Ms.parse("2022-10-13T09:52:31.123");
   expect(() => datetime3Ms.parse("tuna")).toThrow();
   expect(() => datetime3Ms.parse("1970-01-01T00:00:00.1Z")).toThrow();
   expect(() => datetime3Ms.parse("1970-01-01T00:00:00.12Z")).toThrow();
