@@ -4291,7 +4291,7 @@ export class ZodEffects<
 
     if (effect.type === "preprocess") {
       const processed = effect.transform(ctx.data, checkCtx);
-      if (ctx.common.issues.length) {
+      if (status.value === "dirty") {
         return {
           status: "dirty",
           value: ctx.data,

@@ -297,6 +297,23 @@ test("short circuit on dirty", () => {
   }
 });
 
+test("preprocess as the second property of object", () => {
+  const schema = z.object({
+    nonEmptyStr: z.string().min(1),
+    positiveNum: z.preprocess((v) => Number(v), z.number().positive()),
+  });
+  const result = schema.safeParse({
+    nonEmptyStr: "",
+    positiveNum: "",
+  });
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues.length).toEqual(2);
+    expect(result.error.issues[0].code).toEqual(z.ZodIssueCode.too_small);
+    expect(result.error.issues[1].code).toEqual(z.ZodIssueCode.too_small);
+  }
+});
+
 test("async short circuit on dirty", async () => {
   const schema = z
     .string()
