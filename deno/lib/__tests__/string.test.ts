@@ -404,15 +404,10 @@ test("datetime", () => {
 test("datetime parsing", () => {
   const datetime = z.string().datetime();
   datetime.parse("1970-01-01T00:00:00.000Z");
-  datetime.parse("1970-01-01T00:00:00.000");
   datetime.parse("2022-10-13T09:52:31.816Z");
-  datetime.parse("2022-10-13T09:52:31.816");
   datetime.parse("2022-10-13T09:52:31.8162314Z");
-  datetime.parse("2022-10-13T09:52:31.8162314");
   datetime.parse("1970-01-01T00:00:00Z");
-  datetime.parse("1970-01-01T00:00:00");
   datetime.parse("2022-10-13T09:52:31Z");
-  datetime.parse("2022-10-13T09:52:31");
   expect(() => datetime.parse("")).toThrow();
   expect(() => datetime.parse("foo")).toThrow();
   expect(() => datetime.parse("2020-10-14")).toThrow();
@@ -421,9 +416,7 @@ test("datetime parsing", () => {
 
   const datetimeNoMs = z.string().datetime({ precision: 0 });
   datetimeNoMs.parse("1970-01-01T00:00:00Z");
-  datetimeNoMs.parse("1970-01-01T00:00:00");
   datetimeNoMs.parse("2022-10-13T09:52:31Z");
-  datetimeNoMs.parse("2022-10-13T09:52:31");
   expect(() => datetimeNoMs.parse("tuna")).toThrow();
   expect(() => datetimeNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
   expect(() => datetimeNoMs.parse("1970-01-01T00:00:00.Z")).toThrow();
@@ -431,9 +424,7 @@ test("datetime parsing", () => {
 
   const datetime3Ms = z.string().datetime({ precision: 3 });
   datetime3Ms.parse("1970-01-01T00:00:00.000Z");
-  datetime3Ms.parse("1970-01-01T00:00:00.000");
   datetime3Ms.parse("2022-10-13T09:52:31.123Z");
-  datetime3Ms.parse("2022-10-13T09:52:31.123");
   expect(() => datetime3Ms.parse("tuna")).toThrow();
   expect(() => datetime3Ms.parse("1970-01-01T00:00:00.1Z")).toThrow();
   expect(() => datetime3Ms.parse("1970-01-01T00:00:00.12Z")).toThrow();
@@ -476,6 +467,117 @@ test("datetime parsing", () => {
   expect(() => datetimeOffset4Ms.parse("1970-01-01T00:00:00.123Z")).toThrow();
   expect(() =>
     datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")
+  ).toThrow();
+
+  const datetimeUnqualified = z.string().datetime({ unqualified: true });
+  datetimeUnqualified.parse("1970-01-01T00:00:00.000Z");
+  datetimeUnqualified.parse("1970-01-01T00:00:00.000");
+  datetimeUnqualified.parse("2022-10-13T09:52:31.816Z");
+  datetimeUnqualified.parse("2022-10-13T09:52:31.816");
+  datetimeUnqualified.parse("2022-10-13T09:52:31.8162314Z");
+  datetimeUnqualified.parse("2022-10-13T09:52:31.8162314");
+  datetimeUnqualified.parse("1970-01-01T00:00:00Z");
+  datetimeUnqualified.parse("1970-01-01T00:00:00");
+  datetimeUnqualified.parse("2022-10-13T09:52:31Z");
+  datetimeUnqualified.parse("2022-10-13T09:52:31");
+  expect(() => datetimeOffset.parse("tuna")).toThrow();
+  expect(() => datetimeOffset.parse("2022-10-13T09:52:31.Z")).toThrow();
+
+  const datetimeUnqualifiedNoMs = z
+    .string()
+    .datetime({ unqualified: true, precision: 0 });
+  datetimeUnqualifiedNoMs.parse("1970-01-01T00:00:00Z");
+  datetimeUnqualifiedNoMs.parse("1970-01-01T00:00:00");
+  datetimeUnqualifiedNoMs.parse("2022-10-13T09:52:31Z");
+  datetimeUnqualifiedNoMs.parse("2022-10-13T09:52:31");
+  expect(() => datetimeUnqualifiedNoMs.parse("tuna")).toThrow();
+  expect(() =>
+    datetimeUnqualifiedNoMs.parse("1970-01-01T00:00:00.000Z")
+  ).toThrow();
+  expect(() =>
+    datetimeUnqualifiedNoMs.parse("1970-01-01T00:00:00.Z")
+  ).toThrow();
+  expect(() =>
+    datetimeUnqualifiedNoMs.parse("2022-10-13T09:52:31.816Z")
+  ).toThrow();
+
+  const datetimeUnqualified3Ms = z
+    .string()
+    .datetime({ unqualified: true, precision: 3 });
+  datetimeUnqualified3Ms.parse("1970-01-01T00:00:00.000Z");
+  datetimeUnqualified3Ms.parse("1970-01-01T00:00:00.000");
+  datetimeUnqualified3Ms.parse("2022-10-13T09:52:31.123Z");
+  datetimeUnqualified3Ms.parse("2022-10-13T09:52:31.123");
+  expect(() => datetimeUnqualified3Ms.parse("tuna")).toThrow();
+  expect(() =>
+    datetimeUnqualified3Ms.parse("1970-01-01T00:00:00.1Z")
+  ).toThrow();
+  expect(() =>
+    datetimeUnqualified3Ms.parse("1970-01-01T00:00:00.12Z")
+  ).toThrow();
+  expect(() => datetimeUnqualified3Ms.parse("2022-10-13T09:52:31Z")).toThrow();
+
+  const datetimeOffsetUnqualified = z
+    .string()
+    .datetime({ offset: true, unqualified: true });
+  datetimeOffsetUnqualified.parse("1970-01-01T00:00:00.000Z");
+  datetimeOffsetUnqualified.parse("1970-01-01T00:00:00.000");
+  datetimeOffsetUnqualified.parse("2022-10-13T09:52:31.816234134Z");
+  datetimeOffsetUnqualified.parse("2022-10-13T09:52:31.816234134");
+  datetimeOffsetUnqualified.parse("1970-01-01T00:00:00Z");
+  datetimeOffsetUnqualified.parse("1970-01-01T00:00:00");
+  datetimeOffsetUnqualified.parse("2022-10-13T09:52:31.4Z");
+  datetimeOffsetUnqualified.parse("2022-10-13T09:52:31.4");
+  datetimeOffsetUnqualified.parse("2020-10-14T17:42:29+00:00");
+  datetimeOffsetUnqualified.parse("2020-10-14T17:42:29+03:15");
+  datetimeOffsetUnqualified.parse("2020-10-14T17:42:29+0315");
+  datetimeOffsetUnqualified.parse("2020-10-14T17:42:29+03");
+  datetimeOffsetUnqualified.parse("2020-10-14T17:42:29");
+  expect(() => datetimeOffsetUnqualified.parse("tuna")).toThrow();
+  expect(() =>
+    datetimeOffsetUnqualified.parse("2022-10-13T09:52:31.Z")
+  ).toThrow();
+
+  const datetimeOffsetUnqualifiedNoMs = z
+    .string()
+    .datetime({ offset: true, unqualified: true, precision: 0 });
+  datetimeOffsetUnqualifiedNoMs.parse("1970-01-01T00:00:00Z");
+  datetimeOffsetUnqualifiedNoMs.parse("1970-01-01T00:00:00");
+  datetimeOffsetUnqualifiedNoMs.parse("2022-10-13T09:52:31Z");
+  datetimeOffsetUnqualifiedNoMs.parse("2022-10-13T09:52:31");
+  datetimeOffsetUnqualifiedNoMs.parse("2020-10-14T17:42:29+00:00");
+  datetimeOffsetUnqualifiedNoMs.parse("2020-10-14T17:42:29+0000");
+  datetimeOffsetUnqualifiedNoMs.parse("2020-10-14T17:42:29+00");
+  datetimeOffsetUnqualifiedNoMs.parse("2020-10-14T17:42:29");
+  expect(() => datetimeOffsetUnqualifiedNoMs.parse("tuna")).toThrow();
+  expect(() =>
+    datetimeOffsetUnqualifiedNoMs.parse("1970-01-01T00:00:00.000Z")
+  ).toThrow();
+  expect(() =>
+    datetimeOffsetUnqualifiedNoMs.parse("1970-01-01T00:00:00.Z")
+  ).toThrow();
+  expect(() =>
+    datetimeOffsetUnqualifiedNoMs.parse("2022-10-13T09:52:31.816Z")
+  ).toThrow();
+  expect(() =>
+    datetimeOffsetUnqualifiedNoMs.parse("2020-10-14T17:42:29.124+00:00")
+  ).toThrow();
+
+  const datetimeOffsetUnqualified4Ms = z
+    .string()
+    .datetime({ offset: true, unqualified: true, precision: 4 });
+  datetimeOffsetUnqualified4Ms.parse("1970-01-01T00:00:00.1234Z");
+  datetimeOffsetUnqualified4Ms.parse("1970-01-01T00:00:00.1234");
+  datetimeOffsetUnqualified4Ms.parse("2020-10-14T17:42:29.1234+00:00");
+  datetimeOffsetUnqualified4Ms.parse("2020-10-14T17:42:29.1234+0000");
+  datetimeOffsetUnqualified4Ms.parse("2020-10-14T17:42:29.1234+00");
+  datetimeOffsetUnqualified4Ms.parse("2020-10-14T17:42:29.1234");
+  expect(() => datetimeOffsetUnqualified4Ms.parse("tuna")).toThrow();
+  expect(() =>
+    datetimeOffsetUnqualified4Ms.parse("1970-01-01T00:00:00.123Z")
+  ).toThrow();
+  expect(() =>
+    datetimeOffsetUnqualified4Ms.parse("2020-10-14T17:42:29.124+00:00")
   ).toThrow();
 });
 
