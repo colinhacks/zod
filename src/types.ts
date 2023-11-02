@@ -3765,7 +3765,7 @@ export class ZodRecord<
         value: valueType._parse(
           new ParseInputLazyPath(ctx, ctx.data[key], ctx.path, key)
         ),
-        alwaysSet: key in ctx.data,
+        alwaysSet: true,
       });
     }
 
