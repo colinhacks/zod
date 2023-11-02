@@ -174,9 +174,22 @@ test("is not vulnerable to prototype pollution", async () => {
 
 test("allow undefined values", () => {
   const schema = z.record(z.string(), z.undefined());
+
   expect(
     Object.keys(
       schema.parse({
+        _test: undefined,
+      })
+    )
+  ).toEqual(["_test"]);
+});
+
+test("allow undefined values async", async () => {
+  const schemaAsync = z.record(z.string().optional()).refine(async () => true);
+
+  expect(
+    Object.keys(
+      await schemaAsync.parseAsync({
         _test: undefined,
       })
     )
