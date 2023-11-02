@@ -144,11 +144,7 @@ export class ParseStatus {
 
   static mergeObjectSync(
     status: ParseStatus,
-    pairs: {
-      key: SyncParseReturnType<any>;
-      value: SyncParseReturnType<any>;
-      alwaysSet?: boolean;
-    }[]
+    pairs: ObjectPair[]
   ): SyncParseReturnType {
     const finalObject: any = {};
     for (const pair of pairs) {
