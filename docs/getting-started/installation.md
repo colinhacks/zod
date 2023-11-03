@@ -5,34 +5,63 @@
 - TypeScript 4.5+!
 - You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
 
-  ```ts
-  // tsconfig.json
-  {
+:::code-group
+
+```json [tsconfig.json]
+{
+  // ...
+  "compilerOptions": {
     // ...
-    "compilerOptions": {
-      // ...
-      "strict": true
-    }
+    "strict": true
   }
-  ```
+}
+```
+
+:::
 
 ## From `npm` (Node/Bun)
 
-```sh
-npm install zod       # npm
-yarn add zod          # yarn
-bun add zod           # bun
-pnpm add zod          # pnpm
+:::code-group
+
+```sh [npm]
+npm install zod
 ```
+
+```sh [yarn]
+yarn add zod
+```
+
+```sh [bun]
+bun add zod
+```
+
+```sh [pnpm]
+pnpm add zod
+```
+
+:::
 
 Zod also publishes a canary version on every commit. To install the canary:
 
-```sh
-npm install zod@canary       # npm
-yarn add zod@canary          # yarn
-bun add zod@canary           # bun
-pnpm add zod@canary          # pnpm
+:::code-group
+
+```sh [npm]
+npm install zod@canary
 ```
+
+```sh [yarn]
+yarn add zod@canary
+```
+
+```sh [bun]
+bun add zod@canary
+```
+
+```sh [pnpm]
+pnpm add zod@canary
+```
+
+:::
 
 ## From `deno.land/x` (Deno)
 
