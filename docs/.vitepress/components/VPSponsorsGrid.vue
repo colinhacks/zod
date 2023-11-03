@@ -35,9 +35,12 @@ useSponsorsGrid({ el, size: props.size })
 </template>
 
 <style>
+.dark .vp-sponsor-grid-item:hover {
+  background-color: var(--vp-c-gray-3);
+}
 .vp-sponsor-grid-image {
   margin-bottom: 8px;
-  filter: none;
+  filter: none !important;
 }
 
 .vp-sponsor-grid-box {
