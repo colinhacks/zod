@@ -12,7 +12,7 @@ hero:
   actions:
     - theme: brand
       text: Getting Started
-      link: /getting-started/installation
+      link: /guide/installation
     - theme: alt
       text: GitHub
       link: https://github.com/colinhacks/zod

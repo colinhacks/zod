@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
@@ -7,21 +7,53 @@ export default defineConfig({
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
     nav: [
-      { text: 'Getting Started', link: '/getting-started/installation' }
-    ],
-
-    sidebar: [
+      { text: "Guide", link: "/guide/installation", activeMatch: "/guide" },
       {
-        text: 'Getting Started',
-        items: [
-          { text: 'Introduction', link: '/getting-started/introduction' },
-          { text: 'Installation', link: '/getting-started/installation' },
-        ]
-      }
+        text: "Reference",
+        link: "/reference/primitives",
+        activeMatch: "/reference",
+      },
+      {
+        text: "Ecosystem",
+        link: "/ecosystem",
+        activeMatch: "/ecosystem",
+      },
     ],
 
+    sidebar: {
+      "/guide": {
+        base: "/guide",
+        items: [
+          {
+            text: "Getting Started",
+            items: [
+              { text: "Introduction", link: "/introduction" },
+              { text: "installation", link: "/installation" },
+            ],
+          },
+        ],
+      },
+      "/ecosystem": {
+        base: "/ecosystem",
+        items: [
+          {
+            text: "Ecosystem",
+            items: [
+              { text: "Resources", link: "/resources" },
+              { text: "API libraries", link: "/api-libraries" },
+              { text: "Form integrations", link: "/form-integrations" },
+              { text: "Zod to X", link: "/zod-to-x" },
+              { text: "X to Zod", link: "/x-to-zod" },
+              { text: "Mocking", link: "/mocking" },
+              { text: "Powered by Zod", link: "/powered-by-zod" },
+              { text: "Utilities for Zod", link: "/utilities-for-zod" },
+            ],
+          },
+        ],
+      },
+    },
     socialLinks: [
-      { icon: 'github', link: 'https://github.com/colinhacks/zod' }
-    ]
-  }
-})
+      { icon: "github", link: "https://github.com/colinhacks/zod" },
+    ],
+  },
+});
