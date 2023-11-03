@@ -4,8 +4,11 @@ layout: home
 
 hero:
   name: "Zod"
-  text: ""
-  tagline: TypeScript-first schema validation with static type inference
+  text: "Schema Validator"
+  tagline: TypeScript-first schema validation with static type inference.
+  image:
+    src: /logo.svg
+    alt: Zod
   actions:
     - theme: brand
       text: Getting Started
