@@ -1,11 +1,10 @@
-
 /**
  * Colors
  * -------------------------------------------------------------------------- */
 :root {
-  --vp-c-brand-1: #274d82;
-  --vp-c-brand-2: #3068b5;
-  --vp-c-brand-3: #336294;
+  --vp-c-brand-1: hsl(215, 54%, 60%);
+  --vp-c-brand-2: hsl(215, 54%, 33%);
+  --vp-c-brand-3: hsl(215, 58%, 45%);
   --vp-c-brand-soft: rgba(98, 133, 208, 0.16);
 }
 
@@ -13,18 +12,32 @@
  * Component: Home
  * -------------------------------------------------------------------------- */
 
- :root {
+:root {
   --vp-home-hero-name-color: transparent;
   --vp-home-hero-name-background: -webkit-linear-gradient(
     120deg,
-    #274d82 30%,
-    #c7cbef
+    hsl(215, 54%, 33%) 30%,
+    hsl(216, 100%, 60%)
+  );
+  --vp-home-hero-image-background-image: linear-gradient(
+    120deg,
+    hsl(215, 58%, 45%),
+    hsl(230, 100%, 60%) 35%,
+    hsl(238, 96%, 62%) 45%,
+    hsl(216, 100%, 60%) 65%,
+    hsl(215, 54%, 33%)
   );
 
-  --vp-home-hero-image-background-image: linear-gradient(
-    -45deg,
-    #6285d0 50%,
-    #c7cbef 50%
-  );
-  --vp-home-hero-image-filter: blur(44px);
+  --vp-home-hero-image-filter: blur(40px);
+}
+@media (min-width: 640px) {
+  :root {
+      --vp-home-hero-image-filter: blur(56px)
+  }
+}
+
+@media (min-width: 960px) {
+  :root {
+      --vp-home-hero-image-filter: blur(72px)
+  }
 }
