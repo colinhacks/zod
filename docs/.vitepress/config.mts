@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
@@ -55,5 +56,17 @@ export default defineConfig({
     socialLinks: [
       { icon: "github", link: "https://github.com/colinhacks/zod" },
     ],
+  },
+  vite: {
+    resolve: {
+      alias: [
+        {
+          find: /^.*\/VPSponsorsGrid\.vue$/,
+          replacement: fileURLToPath(
+            new URL("./components/VPSponsorsGrid.vue", import.meta.url)
+          ),
+        },
+      ],
+    },
   },
 });
