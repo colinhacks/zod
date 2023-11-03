@@ -10,14 +10,13 @@ export default defineConfig({
     nav: [
       { text: "Guide", link: "/guide/installation", activeMatch: "/guide" },
       {
-        text: "Reference",
-        link: "/reference/primitives",
-        activeMatch: "/reference",
-      },
-      {
         text: "Ecosystem",
         link: "/ecosystem",
         activeMatch: "/ecosystem",
+      },
+      {
+        text: "Changelog",
+        link: "https://github.com/colinhacks/zod/blob/master/CHANGELOG.md",
       },
     ],
 
