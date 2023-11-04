@@ -106,21 +106,25 @@ export default defineConfig({
     ["meta", { name: "msapplication-config", content: "/browserconfig.xml" }],
     ["meta", { name: "theme-color", content: "#ffffff" }],
     [
-      'script',
-      { async: '', src: 'https://www.googletagmanager.com/gtag/js?id=G-FG8DDV0GBR' }
+      "script",
+      {
+        async: "",
+        src: "https://www.googletagmanager.com/gtag/js?id=G-FG8DDV0GBR",
+      },
     ],
     [
-      'script',
+      "script",
       {},
       `window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-FG8DDV0GBR');`
-    ]
+      gtag('config', 'G-FG8DDV0GBR');`,
+    ],
   ],
 
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
+    logo: { src: "/logo.svg", width: 24, height: 24 },
     search: {
       provider: "local",
     },
@@ -185,9 +189,17 @@ export default defineConfig({
         ],
       },
     },
+    editLink: {
+      pattern: "https://github.com/colinhacks/zod/edit/main/docs/:path",
+      text: "Edit this page on GitHub",
+    },
     socialLinks: [
       { icon: "github", link: "https://github.com/colinhacks/zod" },
     ],
+    footer: {
+      message: "Released under the MIT License.",
+      copyright: "Copyright © 2020-present Colin McDonnell",
+    },
   },
   vite: {
     resolve: {
