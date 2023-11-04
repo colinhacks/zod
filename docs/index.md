@@ -2,6 +2,9 @@
 # https://vitepress.dev/reference/default-theme-home-page
 layout: home
 
+title: Zod
+titleTemplate: TypeScript-first schema validation with static type inference
+
 hero:
   name: "Zod"
   text: "Schema Validator"
