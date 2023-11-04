@@ -144,9 +144,10 @@ export default defineConfig({
             items: [
               { text: "Introduction", link: "/introduction" },
               { text: "Installation", link: "/installation" },
-              { text: "Basic usage", link: "/basic-usage" },
+              { text: "Basic sage", link: "/basic-usage" },
               { text: "Comparison", link: "/comparison" },
               { text: "Ecosystem", link: "/ecosystem" },
+              { text: "Error handling", link: "/error-handling" },
               { text: "Migration guide", link: "/migration-guide" },
             ],
           },

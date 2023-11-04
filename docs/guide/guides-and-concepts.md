@@ -114,7 +114,7 @@ if (!result.success) {
 }
 ```
 
-> For detailed information about the possible error codes and how to customize error messages, check out the dedicated error handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md)
+> For detailed information about the possible error codes and how to customize error messages, check out the dedicated error handling guide: [Error handling](Error handling)
 
 Zod's error reporting emphasizes _completeness_ and _correctness_. If you are looking to present a useful error message to the end user, you should either override Zod's error messages using an error map (described in detail in the Error Handling guide) or use a third-party library like [`zod-validation-error`](https://github.com/causaly/zod-validation-error)
 

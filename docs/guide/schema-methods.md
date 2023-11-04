@@ -223,7 +223,7 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
 
 You can add as many issues as you like. If `ctx.addIssue` is _not_ called during the execution of the function, validation passes.
 
-Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` it's possible to throw issues of any `ZodIssueCode`. Each issue code is described in detail in the Error Handling guide: [ERROR_HANDLING.md](ERROR_HANDLING.md).
+Normally refinements always create issues with a `ZodIssueCode.custom` error code, but with `superRefine` it's possible to throw issues of any `ZodIssueCode`. Each issue code is described in detail in the Error Handling guide: [Error handling](/guide/error-handling).
 
 ### Abort early
 

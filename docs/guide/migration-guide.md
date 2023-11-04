@@ -31,7 +31,7 @@ Zod 2 is being retired and will not leave beta. This is due to some unintuitive 
 - **Structured error messages**. Use the `.format()` method to ZodError to convert the error into a strongly-typed, nested object: [format method](#error-formatting)
 - **Easier unions**. Use the `or` method to ZodType (the base class for all Zod schemas) to easily create union types like `z.string().or(z.number())`
 - **Easier intersections**. Use the `and` method to ZodType (the base class for all Zod schemas) to easily create intersection types
-- **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [setErrorMap](ERROR_HANDLING.md#customizing-errors-with-zoderrormap)
+- **Global error customization**. Use `z.setErrorMap(myErrorMap)` to _globally_ customize the error messages produced by Zod: [setErrorMap](/guide/error-handling#customizing-errors-with-zoderrormap)
 - **Maps and sets**. Zod now supports [`Map`](#maps) and [`Set`](#set) schemas.
 - **Optional and nullable unwrapping**. ZodOptional and ZodNullable now have a `.unwrap()` method for retrieving the schema they wrap.
 - **A new implementation of transformers**. Details below.
@@ -74,4 +74,4 @@ Zod 2 is being retired and will not leave beta. This is due to some unintuitive 
 
 - **Default values**: default value logic is now implemented inside a `ZodDefault` class, instead of using transformers. (In a previous alpha version of Zod 3, default values were implemented inside the ZodOptional class.)
 
-- There have been small internal changes to the ZodIssue subtypes. See the new subtypes in the [Error Handling guide](ERROR_HANDLING.md). This may impact user who have written a custom error maps. Most users will not be affected.
+- There have been small internal changes to the ZodIssue subtypes. See the new subtypes in the [Error Handling guide](/guide/error-handling). This may impact user who have written a custom error maps. Most users will not be affected.
