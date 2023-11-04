@@ -147,6 +147,7 @@ export default defineConfig({
               { text: "Basic usage", link: "/basic-usage" },
               { text: "Comparison", link: "/comparison" },
               { text: "Ecosystem", link: "/ecosystem" },
+              { text: "Migration guide", link: "/migration-guide" },
             ],
           },
           {
