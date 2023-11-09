@@ -17,18 +17,24 @@ export const makeIssue = (params: {
   };
 
   let errorMessage = "";
+  // track intention of using error map result even when there is an error message defined at schema level
+  let force = false; 
+  
   const maps = errorMaps
     .filter((m) => !!m)
     .slice()
     .reverse() as ZodErrorMap[];
   for (const map of maps) {
-    errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
+    const result = map(fullIssue, { data, defaultError: errorMessage });
+    errorMessage = result.message;
+    force = !force ? !!result.force : force; // only update it once if found
   }
 
+  // if force is enabled, give priority to errorMessage returned from error map
   return {
     ...issueData,
     path: fullPath,
-    message: issueData.message || errorMessage,
+    message: force ? errorMessage || issueData.message :  issueData.message || errorMessage,
   };
 };
 
