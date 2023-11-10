@@ -276,7 +276,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://cryptojobslist.com/">cryptojobslist.com</a>
       <br />
-      <p width="200px">A marketplace for really cool internet products.</p>
+      <p width="200px">The biggest list of crypto, blockchain and Web3 jobs</p>
     </td>
 </table>
 
