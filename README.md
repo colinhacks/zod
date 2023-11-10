@@ -267,6 +267,17 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">A marketplace for really cool internet products.</p>
     </td>
+    <td align="center">
+      <a href="https://cryptojobslist.com/">
+        <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" width="200px;" alt="CryptoJobsList logo" />
+      </a>
+      <br />
+      <b>CryptoJobsList</b>
+      <br />
+      <a href="https://cryptojobslist.com/">cryptojobslist.com</a>
+      <br />
+      <p width="200px">A marketplace for really cool internet products.</p>
+    </td>
 </table>
 
 #### Silver
