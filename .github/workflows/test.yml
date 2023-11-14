@@ -21,7 +21,10 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
-      - run: yarn install
+      - name: Install dependencies
+        run: 'yarn install'
+        env:
+          HUSKY: 0
       - run: yarn add typescript@${{ matrix.typescript }}
       - run: yarn build
       - run: yarn test
@@ -40,7 +43,10 @@ jobs:
       - uses: denolib/setup-deno@v2
         with:
           deno-version: ${{ matrix.deno }}
-      - run: yarn install
+      - name: Install dependencies
+        run: yarn install
+        env:
+          HUSKY: 0
       - run: yarn build:deno
       - run: deno --version
       - run: deno test
