@@ -3955,7 +3955,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
 export type ArrayKeys = keyof any[];
 export type Indices<T> = Exclude<keyof T, ArrayKeys>;
 
-export type EnumValues = [string, ...string[]];
+export type EnumValues = [string | number, ...(string | number)[]];
 
 export type Values<T extends EnumValues> = {
   [k in T[number]]: k;
@@ -3979,11 +3979,11 @@ export type FilterEnum<Values, ToExclude> = Values extends []
 
 export type typecast<A, T> = A extends T ? A : never;
 
-function createZodEnum<U extends string, T extends Readonly<[U, ...U[]]>>(
-  values: T,
-  params?: RawCreateParams
-): ZodEnum<Writeable<T>>;
-function createZodEnum<U extends string, T extends [U, ...U[]]>(
+function createZodEnum<
+  U extends string | number,
+  T extends Readonly<[U, ...U[]]>
+>(values: T, params?: RawCreateParams): ZodEnum<Writeable<T>>;
+function createZodEnum<U extends string | number, T extends [U, ...U[]]>(
   values: T,
   params?: RawCreateParams
 ): ZodEnum<T>;
@@ -3998,10 +3998,9 @@ function createZodEnum(
   });
 }
 
-export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
-  T[number],
-  ZodEnumDef<T>
-> {
+export class ZodEnum<
+  T extends [string | number, ...(string | number)[]]
+> extends ZodType<T[number], ZodEnumDef<T>> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     if (typeof input.data !== "string") {
       const ctx = this._getOrReturnCtx(input);

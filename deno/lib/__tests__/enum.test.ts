@@ -58,3 +58,10 @@ test("extract/exclude", () => {
   util.assertEqual<typeof EmptyFoodEnum, z.ZodEnum<[]>>(true);
   util.assertEqual<z.infer<typeof EmptyFoodEnum>, never>(true);
 });
+
+test("numeric enum", () => {
+  const HTTP_SUCCESS = [200, 201] as const;
+  const arg = z.enum(HTTP_SUCCESS);
+  type arg = z.infer<typeof arg>;
+  util.assertEqual<arg, 200 | 201>(true);
+});
