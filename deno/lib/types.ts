@@ -4235,6 +4235,7 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
 export interface ZodLiteralDef<T = any> extends ZodTypeDef {
   value: T;
   typeName: ZodFirstPartyTypeKind.ZodLiteral;
+  message?: string;
 }
 
 export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
@@ -4245,6 +4246,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
         received: ctx.data,
         code: ZodIssueCode.invalid_literal,
         expected: this._def.value,
+        message: this._def.message,
       });
       return INVALID;
     }
@@ -4257,11 +4259,17 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
 
   static create<T extends Primitive>(
     value: T,
+<<<<<<< HEAD
     params?: RawCreateParams
   ): ZodLiteral<T> {
+=======
+    params?: RawCreateParams & Exclude<errorUtil.ErrMessage, string>
+  ): ZodLiteral<T> => {
+>>>>>>> 41ce771 (feat: Allow passing custom message to literal)
     return new ZodLiteral({
       value: value,
       typeName: ZodFirstPartyTypeKind.ZodLiteral,
+      message: params?.message,
       ...processCreateParams(params),
     });
   }
