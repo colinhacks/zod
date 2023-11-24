@@ -71,6 +71,7 @@
 - [Strings](#strings)
   - [ISO datetimes](#iso-datetimes)
   - [IP addresses](#ip-addresses)
+  - [Logical Boolean Parsing](#logical-boolean-parsing)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -695,6 +696,8 @@ z.coerce.boolean().parse(undefined); // => false
 z.coerce.boolean().parse(null); // => false
 ```
 
+> If you want to parse a string value to a boolean logically, use [`Logical Boolean Parsing`](#logical-boolean-parsing) instead.
+
 ## Literals
 
 Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types), like `"hello world"` or `5`.
@@ -741,6 +744,7 @@ z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 z.string().trim(); // trim whitespace
 z.string().toLowerCase(); // toLowerCase
 z.string().toUpperCase(); // toUpperCase
+z.string().boolean(); // parse a string value representing a boolean logically.
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
@@ -829,6 +833,51 @@ ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
 
 const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
+```
+
+### Logical Boolean Parsing
+
+The `z.string().boolean()` method transform a string value representing a boolean logically.
+
+It accepts `"1"`, `"t"`, `"T"`, `"TRUE"`, `"true"`, `"True"` for `true`, `"0"`, `"f"`, `"F"`, `"FALSE"`, `"false"`, `"False"` for `false`.
+
+> This function's behavior does not along with Typescript standard `Boolean()` function.
+>
+> If you expect the behavior, use [`z.coerce.boolean()`](#coercion-for-primitives) instead.
+
+```ts
+const b = z.string().boolean();
+
+b.parse("1"); // true
+b.parse("0"); // false
+b.parse("true"); // true
+b.parse("false"); // false
+b.parse("True"); // true
+b.parse("False"); // false
+
+b.parse("other"); // fail
+b.parse(undefined); // fail
+b.parse(null); // fail
+```
+
+You can additionally use the `catch` function, which handle a parsing error as `true` or `false`.
+
+```ts
+const b = z.string().boolean().catch(false);
+
+b.parse("other"); // false
+b.parse(undefined); // false
+b.parse(null); // false
+```
+
+Also you can use `default()` to handle only `undefined` value.
+
+```ts
+const b = z.string().boolean().default("0");
+
+b.parse("other"); // fail
+b.parse(undefined); // false
+b.parse(null); // fail
 ```
 
 ## Numbers

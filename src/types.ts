@@ -623,6 +623,19 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
+const trueStrings = ["1", "t", "T", "TRUE", "true", "True"];
+const falseStrings = ["0", "f", "F", "FALSE", "false", "False"];
+
+function parseStringToBoolean(value: string) {
+  if (trueStrings.includes(value)) {
+    return true;
+  } else if (falseStrings.includes(value)) {
+    return false;
+  } else {
+    return value;
+  }
+}
+
 export class ZodString extends ZodType<string, ZodStringDef> {
   _parse(input: ParseInput): ParseReturnType<string> {
     if (this._def.coerce) {
@@ -1007,6 +1020,30 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toUpperCase" }],
+    });
+  }
+
+  boolean(options?: { message?: string }) {
+    const transform = (v: string, ctx: RefinementCtx) => {
+      const parsed = parseStringToBoolean(v);
+
+      if (getParsedType(parsed) !== ZodParsedType.boolean) {
+        ctx.addIssue({
+          code: ZodIssueCode.invalid_literal,
+          received: v,
+          expected: [...trueStrings, ...falseStrings],
+          message: options?.message,
+        });
+        return INVALID;
+      }
+      return parsed;
+    };
+
+    return new ZodEffects<this, boolean>({
+      ...processCreateParams(this._def),
+      schema: this,
+      typeName: ZodFirstPartyTypeKind.ZodEffects,
+      effect: { type: "transform", transform },
     });
   }
 
