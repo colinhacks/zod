@@ -380,7 +380,7 @@ type User = z.infer<typeof User>;
 ```ts
 import { z } from "zod";
 
-// 基础类型（primitive）
+// 基础类型
 z.string();
 z.number();
 z.bigint();
