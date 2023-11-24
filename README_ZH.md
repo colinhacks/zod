@@ -40,7 +40,7 @@
 - [安装](#安装)
 - [基本用法](#基本用法)
 - [定义模式](#定义模式)
-  - [基础类型（primitive）](#基础类型（primitive）)
+  - [原始值类型（primitive）](#原始值类型（primitive）)
   - [字面量（literal）](#字面量（literal）)
   - [字符串](#字符串)
   - [Numbers](#numbers)
@@ -375,12 +375,12 @@ type User = z.infer<typeof User>;
 
 # 定义模式
 
-## 基础类型（primitive）
+## 原始值类型（primitive）
 
 ```ts
 import { z } from "zod";
 
-// 基础类型
+// 原始值类型
 z.string();
 z.number();
 z.bigint();
