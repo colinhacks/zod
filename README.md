@@ -2601,7 +2601,7 @@ type inferred = z.infer<typeof stringToNumber>; // number
 
 ### Use with `@typescript-eslint/no-unsafe-*`
 
-Note that the type returned by `z.object(...)` is a `z.ZodObject` with its `Catchall` generic parameter set by default to `z.ZodTypeAny`, which is an alias for `z.ZodType<any, any, any>`. This naturally triggers ESLint rules like `@typescript-eslint/no-unsafe-argument`, which attempt to keep any use of `any` out of your codebase.
+Note that the type returned by `z.object(...)` is a `z.ZodObject` with its `Catchall` generic parameter set by default to `z.ZodTypeAny`, which is an alias for `z.ZodType<any, any, any>`. This naturally triggers ESLint rules like [`@typescript-eslint/no-unsafe-argument`](https://typescript-eslint.io/rules/no-unsafe-argument), which attempt to keep any use of `any` out of your codebase.
 
 A simple workaround to ensure compliance with this rules is to set `.catchall(z.never())`. For example:
 
