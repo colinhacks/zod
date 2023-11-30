@@ -783,9 +783,9 @@ date/time library. However, they are very convenient for validating user input.
 
 The `z.string().date()` method validates strings in the format `YYYY-MM-DD`.
 
-The `z.string().time()` method validates strings in the format `HH:mm:ss[.SSSSSS][Z|(+|-)hh[:]mm]` 
-(the time portion of [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)). It defaults 
-to `HH:mm:ss[.SSSSSS]` validation: no timezone offsets or `Z`, with arbitrary sub-second 
+The `z.string().time()` method validates strings in the format `HH:mm:ss[.SSSSSS][Z|(+|-)hh[:]mm]`
+(the time portion of [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)). It defaults
+to `HH:mm:ss[.SSSSSS]` validation: no timezone offsets or `Z`, with arbitrary sub-second
 decimal.
 
 The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
