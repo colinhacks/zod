@@ -371,7 +371,10 @@ export abstract class ZodType<
     refinement: (arg: Output, ctx: RefinementCtx) => arg is RefinedOutput
   ): ZodEffects<this, RefinedOutput, Input>;
   superRefine(
-    refinement: (arg: Output, ctx: RefinementCtx) => void | Promise<void>
+    refinement: (arg: Output, ctx: RefinementCtx) => void
+  ): ZodEffects<this, Output, Input>;
+  superRefine(
+    refinement: (arg: Output, ctx: RefinementCtx) => Promise<void>
   ): ZodEffects<this, Output, Input>;
   superRefine(
     refinement: (arg: Output, ctx: RefinementCtx) => unknown | Promise<unknown>
@@ -402,6 +405,7 @@ export abstract class ZodType<
     this.catch = this.catch.bind(this);
     this.describe = this.describe.bind(this);
     this.pipe = this.pipe.bind(this);
+    this.readonly = this.readonly.bind(this);
     this.isNullable = this.isNullable.bind(this);
     this.isOptional = this.isOptional.bind(this);
   }
@@ -489,6 +493,9 @@ export abstract class ZodType<
   pipe<T extends ZodTypeAny>(target: T): ZodPipeline<this, T> {
     return ZodPipeline.create(this, target);
   }
+  readonly(): ZodReadonly<this> {
+    return ZodReadonly.create(this);
+  }
 
   isOptional(): boolean {
     return this.safeParse(undefined).success;
@@ -550,7 +557,7 @@ export interface ZodStringDef extends ZodTypeDef {
 
 const cuidRegex = /^c[^\s-]{8,}$/i;
 const cuid2Regex = /^[a-z][a-z0-9]*$/;
-const ulidRegex = /[0-9A-HJKMNP-TV-Z]{26}/;
+const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 // const uuidRegex =
 //   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 const uuidRegex =
@@ -568,12 +575,13 @@ const uuidRegex =
 // const emailRegex =
 //   /^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/i;
 const emailRegex =
-  /^([A-Z0-9_+-]+\.?)*[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
+  /^(?!\.)(?!.*\.\.)([A-Z0-9_+-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
 // const emailRegex =
 //   /^[a-z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9\-]+)*$/i;
 
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
-const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Component})+$/u;
+const _emojiRegex = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
+let emojiRegex: RegExp;
 
 const ipv4Regex =
   /^(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))$/;
@@ -717,6 +725,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "emoji") {
+        if (!emojiRegex) {
+          emojiRegex = new RegExp(_emojiRegex, "u");
+        }
         if (!emojiRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
@@ -880,16 +891,17 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return { status: status.value, value: input.data };
   }
 
-  protected _regex = (
+  protected _regex(
     regex: RegExp,
     validation: StringValidation,
     message?: errorUtil.ErrMessage
-  ) =>
-    this.refinement((data) => regex.test(data), {
+  ) {
+    return this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
       ...errorUtil.errToObj(message),
     });
+  }
 
   _addCheck(check: ZodStringCheck) {
     return new ZodString({
@@ -1052,26 +1064,30 @@ export class ZodString extends ZodType<string, ZodStringDef> {
    * @deprecated Use z.string().min(1) instead.
    * @see {@link ZodString.min}
    */
-  nonempty = (message?: errorUtil.ErrMessage) =>
-    this.min(1, errorUtil.errToObj(message));
+  nonempty(message?: errorUtil.ErrMessage) {
+    return this.min(1, errorUtil.errToObj(message));
+  }
 
-  trim = () =>
-    new ZodString({
+  trim() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "trim" }],
     });
+  }
 
-  toLowerCase = () =>
-    new ZodString({
+  toLowerCase() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toLowerCase" }],
     });
+  }
 
-  toUpperCase = () =>
-    new ZodString({
+  toUpperCase() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toUpperCase" }],
     });
+  }
 
   get isDatetime() {
     return !!this._def.checks.find((ch) => ch.kind === "datetime");
@@ -3825,17 +3841,21 @@ export class ZodFunction<
     const fn = ctx.data;
 
     if (this._def.returns instanceof ZodPromise) {
-      return OK(async (...args: any[]) => {
+      // Would love a way to avoid disabling this rule, but we need
+      // an alias (using an arrow function was what caused 2651).
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const me = this;
+      return OK(async function (this: any, ...args: any[]) {
         const error = new ZodError([]);
-        const parsedArgs = await this._def.args
+        const parsedArgs = await me._def.args
           .parseAsync(args, params)
           .catch((e) => {
             error.addIssue(makeArgsIssue(args, e));
             throw error;
           });
-        const result = await fn(...(parsedArgs as any));
+        const result = await Reflect.apply(fn, this, parsedArgs as any);
         const parsedReturns = await (
-          this._def.returns as unknown as ZodPromise<ZodTypeAny>
+          me._def.returns as unknown as ZodPromise<ZodTypeAny>
         )._def.type
           .parseAsync(result, params)
           .catch((e) => {
@@ -3845,13 +3865,17 @@ export class ZodFunction<
         return parsedReturns;
       });
     } else {
-      return OK((...args: any[]) => {
-        const parsedArgs = this._def.args.safeParse(args, params);
+      // Would love a way to avoid disabling this rule, but we need
+      // an alias (using an arrow function was what caused 2651).
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const me = this;
+      return OK(function (this: any, ...args: any[]) {
+        const parsedArgs = me._def.args.safeParse(args, params);
         if (!parsedArgs.success) {
           throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
         }
-        const result = fn(...(parsedArgs.data as any));
-        const parsedReturns = this._def.returns.safeParse(result, params);
+        const result = Reflect.apply(fn, this, parsedArgs.data);
+        const parsedReturns = me._def.returns.safeParse(result, params);
         if (!parsedReturns.success) {
           throw new ZodError([makeReturnsIssue(result, parsedReturns.error)]);
         }
@@ -4861,11 +4885,77 @@ export class ZodPipeline<
   }
 }
 
+///////////////////////////////////////////
+///////////////////////////////////////////
+//////////                       //////////
+//////////      ZodReadonly      //////////
+//////////                       //////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+type BuiltIn =
+  | (((...args: any[]) => any) | (new (...args: any[]) => any))
+  | { readonly [Symbol.toStringTag]: string }
+  | Date
+  | Error
+  | Generator
+  | Promise<unknown>
+  | RegExp;
+
+type MakeReadonly<T> = T extends Map<infer K, infer V>
+  ? ReadonlyMap<K, V>
+  : T extends Set<infer V>
+  ? ReadonlySet<V>
+  : T extends [infer Head, ...infer Tail]
+  ? readonly [Head, ...Tail]
+  : T extends Array<infer V>
+  ? ReadonlyArray<V>
+  : T extends BuiltIn
+  ? T
+  : Readonly<T>;
+
+export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  innerType: T;
+  typeName: ZodFirstPartyTypeKind.ZodReadonly;
+}
+
+export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
+  MakeReadonly<T["_output"]>,
+  ZodReadonlyDef<T>,
+  T["_input"]
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const result = this._def.innerType._parse(input);
+    if (isValid(result)) {
+      result.value = Object.freeze(result.value);
+    }
+    return result;
+  }
+
+  static create = <T extends ZodTypeAny>(
+    type: T,
+    params?: RawCreateParams
+  ): ZodReadonly<T> => {
+    return new ZodReadonly({
+      innerType: type,
+      typeName: ZodFirstPartyTypeKind.ZodReadonly,
+      ...processCreateParams(params),
+    }) as any;
+  };
+}
+
+////////////////////////////////////////
+////////////////////////////////////////
+//////////                    //////////
+//////////      z.custom      //////////
+//////////                    //////////
+////////////////////////////////////////
+////////////////////////////////////////
 type CustomParams = CustomErrorParams & { fatal?: boolean };
 export const custom = <T>(
   check?: (data: unknown) => any,
   params: string | CustomParams | ((input: any) => CustomParams) = {},
-  /*
+  /**
    * @deprecated
    *
    * Pass `fatal` into the params object instead:
@@ -4936,6 +5026,7 @@ export enum ZodFirstPartyTypeKind {
   ZodPromise = "ZodPromise",
   ZodBranded = "ZodBranded",
   ZodPipeline = "ZodPipeline",
+  ZodReadonly = "ZodReadonly",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
