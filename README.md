@@ -291,6 +291,17 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">How developers support their users.</p>
     </td>
+    <td align="center">
+      <a href="https://inngest.com/">
+        <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" width="200px;" alt="Inngest logo" />
+      </a>
+      <br />
+      <b>Inngest</b>
+      <br />
+      <a href="https://inngest.com/">inngest.com</a>
+      <br />
+      <p width="200px">Effortless serverless queues, background jobs, and workflows</p>
+    </td>
   </tr>
 </table>
 
