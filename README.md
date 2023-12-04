@@ -300,7 +300,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://inngest.com/">inngest.com</a>
       <br />
-      <p width="200px">Effortless serverless queues, background jobs, and workflows</p>
+      <p width="200px">Serverless queues + durable workflows for TypeScript</p>
     </td>
   </tr>
 </table>
