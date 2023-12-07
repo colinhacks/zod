@@ -2,22 +2,34 @@ import { z } from "./src";
 
 declare module './src' {
   interface ZodMeta {
-    title: string
+    foo: string
   }
 }
 
-const schema = z
+const basicSchema = z.string().transform((val, ctx) => {
+  console.log(ctx.meta.foo)
+  return val.toUpperCase()
+})
+
+const res1 = basicSchema.parse('zce', { meta: { foo: 'bar' } })
+console.log(res1)
+
+const objSchema = z
   .object({
     name: z.string().transform((val, ctx) => {
-      console.log(ctx.meta.title)
+      console.log(ctx.meta.foo)
       console.log(ctx.path)
       return val.toUpperCase()
     }),
-    age: z.number()
+    age: z.number().superRefine((val, ctx) => {
+      console.log(ctx.meta.foo)
+      console.log(ctx.path)
+      return val > 0
+    })
   })
 
-const res = schema.parse({ name: 'John', age: 30 }, { meta: { title: 'User' } })
-console.log(res)
+const res2 = objSchema.parse({ name: 'John', age: 30 }, { meta: { foo: 'bar' } })
+console.log(res2)
 
 // import { z } from "./src";
 // import * as mod from "node:module";
