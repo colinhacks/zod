@@ -4300,7 +4300,6 @@ export class ZodEffects<
     const { status, ctx } = this._processInputParams(input);
 
     const effect = this._def.effect || null;
-    console.log(input);
 
     const checkCtx: RefinementCtx = {
       addIssue: (arg: IssueData) => {
