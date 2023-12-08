@@ -309,17 +309,15 @@ test("fatal superRefine", () => {
 test("meta", async () => {
   const expectedMeta = { abc: 123 };
   let actualMeta;
-  z.string().superRefine((val, ctx) => {
+  z.string().superRefine((_, ctx) => {
     actualMeta = ctx.meta;
-    return true;
   }).parse("asdf", { meta: expectedMeta });
   expect(actualMeta).toEqual(expectedMeta);
 
   const expectedMeta2 = { abc: 456 };
   let actualMeta2;
-  await z.string().superRefine(async (val, ctx) => {
+  await z.string().superRefine(async (_, ctx) => {
     actualMeta2 = ctx.meta;
-    return true;
   }).parseAsync("asdf", { meta: expectedMeta2 });
   expect(actualMeta2).toEqual(expectedMeta2);
 });
