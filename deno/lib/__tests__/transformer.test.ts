@@ -314,3 +314,21 @@ test("async short circuit on dirty", async () => {
     expect(result2.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
   }
 });
+
+test("meta", async () => {
+  const expectedMeta = { abc: 123 };
+  let actualMeta;
+  z.string().transform((val, ctx) => {
+    actualMeta = ctx.meta;
+    return val;
+  }).parse("asdf", { meta: expectedMeta });
+  expect(actualMeta).toEqual(expectedMeta);
+
+  const expectedMeta2 = { abc: 123 };
+  let actualMeta2;
+  await z.string().transform(async (val, ctx) => {
+    actualMeta2 = ctx.meta;
+    return val;
+  }).parseAsync("asdf", { meta: expectedMeta2 });
+  expect(actualMeta2).toEqual(expectedMeta2);
+});
