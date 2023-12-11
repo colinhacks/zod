@@ -4056,10 +4056,14 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     return enumValues as any;
   }
 
-  extract<ToExtract extends readonly [T[number], ...T[number][]]>(
-    values: ToExtract
-  ): ZodEnum<Writeable<ToExtract>> {
-    return ZodEnum.create(values) as any;
+  extract<ToExtract extends string>(values: ToExtract): ZodEnum<[ToExtract]>;
+  extract<ToExtract extends readonly [T[number], ...T[number][]]>(values: ToExtract): ZodEnum<Writeable<ToExtract>>;
+  extract(values: string | readonly [T[number], ...T[number][]]): ZodEnum<any> {
+    if (typeof values === 'string') {
+      return ZodEnum.create([values as T[number]]) as any;
+    } else {
+      return ZodEnum.create(values as [T[number], ...T[number][]]) as any;
+    }
   }
 
   exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
