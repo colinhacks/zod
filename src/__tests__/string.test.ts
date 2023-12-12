@@ -164,6 +164,41 @@ test("email validations", () => {
   ).toBe(true);
 });
 
+test("base64 validations", () => {
+  const validBase64Strings = [
+    "SGVsbG8gV29ybGQ=", // "Hello World"
+    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string"
+    "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work"
+    "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
+    "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun"
+    "MTIzNDU2Nzg5MA==", // "1234567890"
+    "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz"
+    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "ISIkJSMmJyonKCk=", // "!\"#$%&'()*"
+    "", // Empty string is technically a valid base64
+  ];
+
+  for (const str of validBase64Strings) {
+    expect(str + z.string().base64().safeParse(str).success).toBe(str + "true");
+  }
+
+  const invalidBase64Strings = [
+    "12345", // Not padded correctly, not a multiple of 4 characters
+    "SGVsbG8gV29ybGQ", // Missing padding
+    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // Missing padding
+    "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
+    "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
+    ".MTIzND2Nzg5MC4=", // Invalid character '.'
+    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
+  ];
+
+  for (const str of invalidBase64Strings) {
+    expect(str + z.string().base64().safeParse(str).success).toBe(
+      str + "false"
+    );
+  }
+});
+
 test("url validations", () => {
   const url = z.string().url();
   url.parse("http://google.com");
