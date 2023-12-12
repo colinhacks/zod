@@ -1012,6 +1012,16 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 ```
 
+**Exclude/Extract**
+
+You can create subsets of a Zod enum with the `.exclude` and `.extract` methods.
+
+```ts
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+const SalmonAndTrout = FishEnum.extract(["Salmon", "Trout"]);
+const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
+```
+
 ## Native enums
 
 Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()`.
