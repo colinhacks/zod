@@ -421,6 +421,18 @@ test("xid", () => {
   }
 });
 
+test("ksuid", () => {
+  const ksuid = z.string().ksuid();
+  ksuid.parse("0o0t9hkGxgFLtd3lmJ4TSTeY0Vb");
+  const result = ksuid.safeParse("invalidksuid");
+  expect(result.success).toEqual(false);
+  const tooLong = "0o0t9hkGxgFLtd3lmJ4TSTeY0VbA";
+  expect(ksuid.safeParse(tooLong).success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("Invalid ksuid");
+  }
+});
+
 test("regex", () => {
   z.string()
     .regex(/^moo+$/)
@@ -461,6 +473,7 @@ test("checks getters", () => {
   expect(z.string().email().isIP).toEqual(false);
   expect(z.string().email().isULID).toEqual(false);
   expect(z.string().email().isXID).toEqual(false);
+  expect(z.string().email().isKSUID).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
@@ -471,6 +484,7 @@ test("checks getters", () => {
   expect(z.string().url().isIP).toEqual(false);
   expect(z.string().url().isULID).toEqual(false);
   expect(z.string().url().isXID).toEqual(false);
+  expect(z.string().url().isKSUID).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
@@ -481,6 +495,7 @@ test("checks getters", () => {
   expect(z.string().cuid().isIP).toEqual(false);
   expect(z.string().cuid().isULID).toEqual(false);
   expect(z.string().cuid().isXID).toEqual(false);
+  expect(z.string().cuid().isKSUID).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
   expect(z.string().cuid2().isURL).toEqual(false);
@@ -491,6 +506,7 @@ test("checks getters", () => {
   expect(z.string().cuid2().isIP).toEqual(false);
   expect(z.string().cuid2().isULID).toEqual(false);
   expect(z.string().cuid2().isXID).toEqual(false);
+  expect(z.string().cuid2().isKSUID).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
@@ -510,6 +526,7 @@ test("checks getters", () => {
   expect(z.string().nanoid().isNANOID).toEqual(true);
   expect(z.string().nanoid().isIP).toEqual(false);
   expect(z.string().nanoid().isULID).toEqual(false);
+  expect(z.string().uuid().isKSUID).toEqual(false);
 
   expect(z.string().ip().isEmail).toEqual(false);
   expect(z.string().ip().isURL).toEqual(false);
@@ -520,6 +537,7 @@ test("checks getters", () => {
   expect(z.string().ip().isIP).toEqual(true);
   expect(z.string().ip().isULID).toEqual(false);
   expect(z.string().ip().isXID).toEqual(false);
+  expect(z.string().ip().isKSUID).toEqual(false);
 
   expect(z.string().ulid().isEmail).toEqual(false);
   expect(z.string().ulid().isURL).toEqual(false);
@@ -539,6 +557,16 @@ test("checks getters", () => {
   expect(z.string().xid().isIP).toEqual(false);
   expect(z.string().xid().isULID).toEqual(false);
   expect(z.string().xid().isXID).toEqual(true);
+  expect(z.string().ulid().isKSUID).toEqual(false);
+
+  expect(z.string().ksuid().isEmail).toEqual(false);
+  expect(z.string().ksuid().isURL).toEqual(false);
+  expect(z.string().ksuid().isCUID).toEqual(false);
+  expect(z.string().ksuid().isCUID2).toEqual(false);
+  expect(z.string().ksuid().isUUID).toEqual(false);
+  expect(z.string().ksuid().isIP).toEqual(false);
+  expect(z.string().ksuid().isULID).toEqual(false);
+  expect(z.string().ksuid().isKSUID).toEqual(true);
 });
 
 test("min max getters", () => {
