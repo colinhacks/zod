@@ -650,6 +650,10 @@ const ipv6Regex =
 const base64Regex =
   /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
 
+// based on https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
+const hostnameRegex =
+  /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
+
 // simple
 // const dateRegexSource = `\\d{4}-\\d{2}-\\d{2}`;
 // no leap year validation
@@ -918,7 +922,11 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "url") {
         try {
-          new URL(input.data);
+          const url = new URL(input.data);
+
+          if (!hostnameRegex.test(url.hostname)) {
+            throw new Error("hostname is invalid");
+          }
         } catch {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
