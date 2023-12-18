@@ -690,6 +690,20 @@ z.coerce.bigint(); // BigInt(input)
 z.coerce.date(); // new Date(input)
 ```
 
+**Coercing nullish values**
+
+Some types allow coercing nullish values. The results may be unexpected.
+You can [use `.pipe()` to handle these cases](#you-can-use-pipe-to-fix-common-issues-with-zcoerce).
+
+```ts
+z.coerce.string().parse(null); // => null
+z.coerce.string().parse(undefined); // => undefined
+z.coerce.number().parse(null); // => 0
+z.coerce.boolean().parse(null); // => false
+z.coerce.boolean().parse(undefined); // => false
+z.coerce.date().parse(null); // => 1970-01-01T00:00:00.000Z
+```
+
 **Boolean coercion**
 
 Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
