@@ -272,6 +272,18 @@ test("ulid", () => {
   }
 });
 
+test("jwt", () => {
+  const jwt = z.string().jwt();
+  jwt.parse(
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6ImFuZHJvaWQiLCJhdWQiOiJhbmRyb2lkIiwiaXNzIjoiYXBpLnNvY2lhbGRlYWwubmwiLCJtZW1iZXIiOnsibmFtZSI6ImVyaWsifSwiZXhwIjoxNDUyMDgzMjA3LCJpYXQiOjE0NTE5OTY4MDd9.u7ZBa9RB8U4QL8eBk4hmsjg8oFW19AHuen12c8CvLMj0IQUsNqeC-vwNQvAINpgBM0bzDf5cotyrUzf55eXch6mzfKMa-OJXguO-lARp4fc40HaBWbfnEvGe7yEgSESkt6gJNuprG51A6f4AJyNlXG_3u7O4bAMwiPZJc3AAU84_JXC7Vlq1X3FMaLVGmZdxzA4TvYZEiTt_KHoA49UgzeZtNXo3YiDq-GgL1eV8Li01fwy-M-xzbp4cPcY89jkPyYxUIJEoITOULr3zXQwRfYVe6i0P28oyu5ZzAwYCajBb2T98zN7sFJarNmtcxSKNfhCPnMVn3wrpxx4_Kd2a"
+  );
+  const result = jwt.safeParse("some invalid jwt");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("Invalid jwt");
+  }
+});
+
 test("regex", () => {
   z.string()
     .regex(/^moo+$/)
@@ -310,6 +322,7 @@ test("checks getters", () => {
   expect(z.string().email().isUUID).toEqual(false);
   expect(z.string().email().isIP).toEqual(false);
   expect(z.string().email().isULID).toEqual(false);
+  expect(z.string().email().isJWT).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
@@ -318,6 +331,7 @@ test("checks getters", () => {
   expect(z.string().url().isUUID).toEqual(false);
   expect(z.string().url().isIP).toEqual(false);
   expect(z.string().url().isULID).toEqual(false);
+  expect(z.string().url().isJWT).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
@@ -326,6 +340,7 @@ test("checks getters", () => {
   expect(z.string().cuid().isUUID).toEqual(false);
   expect(z.string().cuid().isIP).toEqual(false);
   expect(z.string().cuid().isULID).toEqual(false);
+  expect(z.string().cuid().isJWT).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
   expect(z.string().cuid2().isURL).toEqual(false);
@@ -334,6 +349,7 @@ test("checks getters", () => {
   expect(z.string().cuid2().isUUID).toEqual(false);
   expect(z.string().cuid2().isIP).toEqual(false);
   expect(z.string().cuid2().isULID).toEqual(false);
+  expect(z.string().cuid2().isJWT).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
@@ -342,6 +358,7 @@ test("checks getters", () => {
   expect(z.string().uuid().isUUID).toEqual(true);
   expect(z.string().uuid().isIP).toEqual(false);
   expect(z.string().uuid().isULID).toEqual(false);
+  expect(z.string().uuid().isJWT).toEqual(false);
 
   expect(z.string().ip().isEmail).toEqual(false);
   expect(z.string().ip().isURL).toEqual(false);
@@ -350,6 +367,7 @@ test("checks getters", () => {
   expect(z.string().ip().isUUID).toEqual(false);
   expect(z.string().ip().isIP).toEqual(true);
   expect(z.string().ip().isULID).toEqual(false);
+  expect(z.string().ip().isJWT).toEqual(false);
 
   expect(z.string().ulid().isEmail).toEqual(false);
   expect(z.string().ulid().isURL).toEqual(false);
@@ -358,6 +376,16 @@ test("checks getters", () => {
   expect(z.string().ulid().isUUID).toEqual(false);
   expect(z.string().ulid().isIP).toEqual(false);
   expect(z.string().ulid().isULID).toEqual(true);
+  expect(z.string().ulid().isJWT).toEqual(false);
+
+  expect(z.string().jwt().isEmail).toEqual(false);
+  expect(z.string().jwt().isURL).toEqual(false);
+  expect(z.string().jwt().isCUID).toEqual(false);
+  expect(z.string().jwt().isCUID2).toEqual(false);
+  expect(z.string().jwt().isUUID).toEqual(false);
+  expect(z.string().jwt().isIP).toEqual(false);
+  expect(z.string().jwt().isULID).toEqual(false);
+  expect(z.string().jwt().isJWT).toEqual(true);
 });
 
 test("min max getters", () => {
