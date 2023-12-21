@@ -4056,23 +4056,28 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     return enumValues as any;
   }
 
-  extract<ToExtract extends readonly [T[number], ...T[number][]]>(
-    values: ToExtract
-  ): ZodEnum<Writeable<ToExtract>> {
-    return ZodEnum.create(values) as any;
+  extract<ToExtract extends string>(values: ToExtract): ZodEnum<[ToExtract]>;
+  extract<ToExtract extends readonly [T[number], ...T[number][]]>(values: ToExtract): ZodEnum<Writeable<ToExtract>>;
+  extract(values: string | readonly [T[number], ...T[number][]]): ZodEnum<any> {
+    if (typeof values === 'string') {
+      return ZodEnum.create([values as T[number]]) as any;
+    } else {
+      return ZodEnum.create(values as [T[number], ...T[number][]]) as any;
+    }
   }
 
-  exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
-    values: ToExclude
-  ): ZodEnum<
-    typecast<Writeable<FilterEnum<T, ToExclude[number]>>, [string, ...string[]]>
-  > {
-    return ZodEnum.create(
-      this.options.filter((opt) => !values.includes(opt)) as FilterEnum<
-        T,
-        ToExclude[number]
-      >
-    ) as any;
+  exclude<ToExclude extends string>(values: ToExclude): ZodEnum<FilterEnum<T, ToExclude>>;
+  exclude<ToExclude extends readonly [T[number], ...T[number][]]>(values: ToExclude): ZodEnum<FilterEnum<T, ToExclude[number]>>;
+  exclude(values: string | readonly [T[number], ...T[number][]]): ZodEnum<any> {
+    if (typeof values === 'string') {
+      return ZodEnum.create(
+        this.options.filter((opt) => opt !== values) as FilterEnum<T, T[number]>
+      ) as any;
+    } else {
+      return ZodEnum.create(
+        this.options.filter((opt) => !values.includes(opt)) as FilterEnum<T, T[number]>
+      ) as any;
+    }
   }
 
   static create = createZodEnum;

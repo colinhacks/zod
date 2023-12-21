@@ -46,9 +46,13 @@ test("extract/exclude", () => {
   const FoodEnum = z.enum(foods);
   const ItalianEnum = FoodEnum.extract(["Pasta", "Pizza"]);
   const UnhealthyEnum = FoodEnum.exclude(["Salad"]);
+  const PastaEnum = FoodEnum.extract("Pasta");
+  const notPastaEnum = FoodEnum.exclude("Pasta");
   const EmptyFoodEnum = FoodEnum.exclude(foods);
 
   util.assertEqual<z.infer<typeof ItalianEnum>, "Pasta" | "Pizza">(true);
+  util.assertEqual<z.infer<typeof PastaEnum>, "Pasta">(true);
+  util.assertEqual<z.infer<typeof notPastaEnum>, "Pizza" | "Tacos" | "Burgers" | "Salad">(true);
   util.assertEqual<
     z.infer<typeof UnhealthyEnum>,
     "Pasta" | "Pizza" | "Tacos" | "Burgers"
