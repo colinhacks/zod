@@ -4859,8 +4859,8 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
 ////////////////////////////////////////
 ////////////////////////////////////////
 type CustomParams = CustomErrorParams & { fatal?: boolean };
-export const custom = <T>(
-  check?: (data: unknown) => any,
+export const custom = <T, D>(
+  check?: (data: D) => any,
   params: string | CustomParams | ((input: any) => CustomParams) = {},
   /**
    * @deprecated
