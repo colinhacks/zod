@@ -303,6 +303,19 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <p width="200px">Serverless queues + durable workflows for TypeScript</p>
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://storyblok.com/">
+        <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" width="200px;" alt="Storyblok CMS" />
+      </a>
+      <br />
+      <b>Storyblok</b>
+      <br />
+      <a href="https://storyblok.com/">storyblok.com</a>
+      <br />
+      <p width="200px">The only headless CMS with a visual editor.</p>
+    </td>
+    </tr>
 </table>
 
 #### Silver
@@ -448,7 +461,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://ill.inc/">ill.inc</a>
       <br />
     </td>
-     <td align="center">
+    <td align="center">
       <a href="https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring">
         <img src="https://avatars.githubusercontent.com/u/48984031?s=200&v=4" width="100px;" alt="MasterBorn logo"/>
       </a>
@@ -456,6 +469,28 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <b>MasterBorn</b>
       <br/>
       <a href="https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring">masterborn.com</a>
+      <br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/kronodeus">
+        <img src="https://avatars.githubusercontent.com/u/18314366?v=4" width="100px;" alt="Ryan Palmer"/>
+      </a>
+      <br />
+      <b>Ryan Palmer</b>
+      <br/>
+      <a href="https://github.com/kronodeus">@kronodeus</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://github.com/overthemike">
+        <img src="https://avatars.githubusercontent.com/u/223509?v=4" width="100px;" alt="Michael Sweeney"/>
+      </a>
+      <br />
+      <b>Michael Sweeney</b>
+      <br/>
+      <a href="https://github.com/overthemike">@overthemike</a>
       <br />
     </td>
   </tr>
