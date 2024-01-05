@@ -1199,6 +1199,21 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
+  json<T extends ZodTypeAny>(shape: T) {
+    return this.transform((val, ctx) => {
+      try {
+        return JSON.parse(val);
+      } catch (error: unknown) {
+        ctx.addIssue({
+          code: ZodIssueCode.invalid_string,
+          validation: "json",
+          message: (error as Error).message,
+        });
+        return NEVER;
+      }
+    }).pipe(shape);
+  }
+
   min(minLength: number, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "min",
