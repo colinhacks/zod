@@ -145,6 +145,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
         ? `Element(s): '${issue.duplicateElements}' not unique`
         : "Values must be unique";
       break;
+    case ZodIssueCode.invalid_file:
+      message = "Invalid file";
+      break;
     default:
       message = _ctx.defaultError;
       util.assertNever(issue);

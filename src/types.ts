@@ -4523,6 +4523,226 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
 //////////////////////////////////////////
 //////////////////////////////////////////
 //////////                      //////////
+//////////      ZodFile         //////////
+//////////                      //////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+export type ZodFileCheck =
+  | { kind: "min"; value: number; message?: string }
+  | { kind: "max"; value: number; message?: string }
+  | { kind: "accept"; value: Array<string>; message?: string }
+  | { kind: "filename"; value: ZodTypeAny; message?: string };
+
+export interface ZodFileDef extends ZodTypeDef {
+  checks: ZodFileCheck[];
+  typeName: ZodFirstPartyTypeKind.ZodFile;
+}
+
+export class ZodFile extends ZodType<File, ZodFileDef> {
+  _parse(input: ParseInput): ParseReturnType<File> {
+    const parsedType = this._getType(input);
+
+    if (parsedType !== ZodParsedType.file) {
+      const ctx = this._getOrReturnCtx(input);
+      addIssueToContext(
+        ctx,
+        {
+          code: ZodIssueCode.invalid_type,
+          expected: ZodParsedType.file,
+          received: ctx.parsedType,
+        }
+        //
+      );
+      return INVALID;
+    }
+
+    const file = instanceOfType(File).parse(input.data);
+
+    const status = new ParseStatus();
+    let ctx: undefined | ParseContext = undefined;
+
+    for (const check of this._def.checks) {
+      if (check.kind === "min") {
+        if (file.size < check.value) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.too_small,
+            minimum: check.value,
+            type: "file",
+            inclusive: true,
+            exact: false,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "max") {
+        if (file.size > check.value) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.too_big,
+            maximum: check.value,
+            type: "file",
+            inclusive: true,
+            exact: false,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "accept") {
+        // @todo improve?
+        const extension =
+          file.name.indexOf(".") >= 0
+            ? file.name.slice(file.name.indexOf("."))
+            : undefined;
+        const checkSpecifier = (fileTypeSpecifier: string): boolean => {
+          if (fileTypeSpecifier.startsWith(".")) {
+            return fileTypeSpecifier === extension;
+          }
+          return fileTypeSpecifier === file.type;
+        };
+        if (!check.value.some(checkSpecifier)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_file,
+            expected: check.value,
+            received: file.type,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "filename") {
+        const parsedFilename = check.value.safeParse(file.name);
+        if (!parsedFilename.success) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(
+            ctx,
+            check.message
+              ? {
+                  code: ZodIssueCode.custom,
+                  message: check.message,
+                }
+              : parsedFilename.error.errors[0]
+          );
+          status.dirty();
+        }
+      } else {
+        util.assertNever(check);
+      }
+    }
+
+    return { status: status.value, value: file };
+  }
+
+  _addCheck(check: ZodFileCheck) {
+    return new ZodFile({
+      ...this._def,
+      checks: [...this._def.checks, check],
+    });
+  }
+
+  /**
+   * Restricts file size to the specified min.
+   */
+  min(minSize: number, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "min",
+      value: minSize,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  /**
+   * Restricts file size to the specified max.
+   */
+  max(maxSize: number, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "max",
+      value: maxSize,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  /**
+   * Restrict accepted file types.
+   * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#unique_file_type_specifiers
+   */
+  accept(fileTypes: Array<string>, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "accept",
+      value: fileTypes,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  /**
+   * Validates file name against the provided schema.
+   */
+  filename(schema: ZodTypeAny, message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "filename",
+      value: schema,
+      ...errorUtil.errToObj(message),
+    });
+  }
+
+  get minSize() {
+    let min: number | null = null;
+    for (const check of this._def.checks) {
+      if (check.kind === "min") {
+        if (min === null || check.value > min) {
+          min = check.value;
+        }
+      }
+    }
+    return min;
+  }
+
+  get maxSize() {
+    let max: number | null = null;
+    for (const check of this._def.checks) {
+      if (check.kind === "max") {
+        if (max === null || check.value < max) {
+          max = check.value;
+        }
+      }
+    }
+    return max;
+  }
+
+  /**
+   * Returns accepted file types or undefined if any file type is acceptable.
+   */
+  get accepts() {
+    let result: Array<string> | undefined;
+    for (const check of this._def.checks) {
+      if (check.kind === "accept") {
+        if (check.value) {
+          if (result) {
+            // reduce to intersection
+            result = result.filter((fileType) =>
+              check.value.includes(fileType)
+            );
+          } else {
+            result = check.value;
+          }
+        }
+      }
+    }
+    return result;
+  }
+
+  static create = (params?: RawCreateParams): ZodFile => {
+    return new ZodFile({
+      checks: [],
+      typeName: ZodFirstPartyTypeKind.ZodFile,
+      ...processCreateParams(params),
+    });
+  };
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                      //////////
 //////////      ZodPromise      //////////
 //////////                      //////////
 //////////////////////////////////////////
@@ -5289,6 +5509,7 @@ export enum ZodFirstPartyTypeKind {
   ZodBigInt = "ZodBigInt",
   ZodBoolean = "ZodBoolean",
   ZodDate = "ZodDate",
+  ZodFile = "ZodFile",
   ZodSymbol = "ZodSymbol",
   ZodUndefined = "ZodUndefined",
   ZodNull = "ZodNull",
@@ -5327,6 +5548,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodBigInt
   | ZodBoolean
   | ZodDate
+  | ZodFile
   | ZodUndefined
   | ZodNull
   | ZodAny
@@ -5384,6 +5606,7 @@ const bigIntType: typeof ZodBigInt.create = (...args) =>
 const booleanType: typeof ZodBoolean.create = (...args) =>
   ZodBoolean.create(...args);
 const dateType: typeof ZodDate.create = (...args) => ZodDate.create(...args);
+const fileType: typeof ZodFile.create = (...args) => ZodFile.create(...args);
 const symbolType: typeof ZodSymbol.create = (...args) =>
   ZodSymbol.create(...args);
 const undefinedType: typeof ZodUndefined.create = (...args) =>
@@ -5445,6 +5668,7 @@ export {
   discriminatedUnionType as discriminatedUnion,
   effectsType as effect,
   enumType as enum,
+  fileType as file,
   functionType as function,
   instanceOfType as instanceof,
   intersectionType as intersection,

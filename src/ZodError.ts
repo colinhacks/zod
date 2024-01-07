@@ -34,6 +34,7 @@ export const ZodIssueCode = util.arrayToEnum([
   "not_multiple_of",
   "not_finite",
   "uniqueness",
+  "invalid_file",
 ]);
 
 export type ZodIssueCode = keyof typeof ZodIssueCode;
@@ -124,7 +125,7 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   minimum: number | bigint;
   inclusive: boolean;
   exact?: boolean;
-  type: "array" | "string" | "number" | "set" | "date" | "bigint";
+  type: "array" | "string" | "number" | "set" | "date" | "bigint" | "file";
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
@@ -132,7 +133,7 @@ export interface ZodTooBigIssue extends ZodIssueBase {
   maximum: number | bigint;
   inclusive: boolean;
   exact?: boolean;
-  type: "array" | "string" | "number" | "set" | "date" | "bigint";
+  type: "array" | "string" | "number" | "set" | "date" | "bigint" | "file";
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -151,6 +152,11 @@ export interface ZodNotFiniteIssue extends ZodIssueBase {
 export interface ZodUniquenessIssue<T = unknown> extends ZodIssueBase {
   code: typeof ZodIssueCode.uniqueness;
   duplicateElements?: Array<T>;
+}
+export interface ZodInvalidFileIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_file;
+  expected: string[];
+  received: string;
 }
 
 export interface ZodCustomIssue extends ZodIssueBase {
@@ -177,6 +183,7 @@ export type ZodIssueOptionalMessage =
   | ZodNotMultipleOfIssue
   | ZodNotFiniteIssue
   | ZodUniquenessIssue
+  | ZodInvalidFileIssue
   | ZodCustomIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & {
