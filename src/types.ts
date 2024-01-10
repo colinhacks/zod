@@ -2692,6 +2692,12 @@ export class ZodObject<
     ) as any;
   }
 
+  isKeyRequired(key: string) {
+    const { shape, keys: shapeKeys } = this._getCached();
+    if (!shapeKeys.find((shapeKey) => shapeKey === key)) return false;
+    return !shape[key].isOptional();
+  }
+
   static create = <T extends ZodRawShape>(
     shape: T,
     params?: RawCreateParams
