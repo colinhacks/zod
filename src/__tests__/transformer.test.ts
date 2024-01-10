@@ -278,6 +278,27 @@ test("z.NEVER in preprocess", async () => {
   }
 });
 
+// Fix for #3123
+test("preprocess only short circuit on its own issues", () => {
+  const schema1 = z.object({
+    first: z.string(),
+    second: z.preprocess(() => undefined, z.string()),
+  });
+  const schema2 = z.object({
+    second: z.preprocess(() => undefined, z.string()),
+    first: z.string(),
+  });
+
+  const result1 = schema1.safeParse({});
+  const result2 = schema2.safeParse({});
+
+  expect(result1.success).toEqual(false);
+  expect(result2.success).toEqual(false);
+  if (!result1.success && !result2.success) {
+    expect(result1.error.issues).toEqual(result2.error.issues.reverse());
+  }
+});
+
 test("short circuit on dirty", () => {
   const schema = z
     .string()
