@@ -4264,8 +4264,10 @@ export class ZodEffects<
 
     const effect = this._def.effect || null;
 
+    let hasIssue = false;
     const checkCtx: RefinementCtx = {
       addIssue: (arg: IssueData) => {
+        hasIssue = true;
         addIssueToContext(ctx, arg);
         if (arg.fatal) {
           status.abort();
@@ -4282,7 +4284,7 @@ export class ZodEffects<
 
     if (effect.type === "preprocess") {
       const processed = effect.transform(ctx.data, checkCtx);
-      if (ctx.common.issues.length) {
+      if (hasIssue) {
         return {
           status: "dirty",
           value: ctx.data,
