@@ -193,7 +193,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://speakeasyapi.dev/">speakeasyapi.dev</a>
       <br />
-      <p width="200px">SDKs, Terraform, Docs.<br/>Your API made enterprise-ready.</p>
+      <p width="200px">SDKs, Terraform, Docs.<br/>Your API made enterprise-ready</p>
     </td>
     <td align="center">
       <a href="https://glow.app/">
@@ -206,7 +206,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">Your new favorite
         <br/>
-      Solana wallet.</p>
+      Solana wallet</p>
     </td>
   </tr>
   <tr>
@@ -228,7 +228,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://trigger.dev">trigger.dev</a>
       <br/>
-      <p>Effortless automation for developers.</p>
+      <p>Effortless automation for developers</p>
     </td>
   </tr>
   <tr>
@@ -241,7 +241,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github">transloadit.com</a>
       <br/>
-      <p>Simple file processing for developers.</p>
+      <p>Simple file processing for developers</p>
     </td>
     <td align="center">
       <a href="https://infisical.com">
@@ -252,7 +252,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://infisical.com">infisical.com</a>
       <br/>
-      <p>Open-source platform for secret<br/>management: sync secrets across your<br/>team/infrastructure and prevent secret leaks.</p>
+      <p>Open-source platform for secret<br/>management: sync secrets across your<br/>team/infrastructure and prevent secret leaks</p>
     </td>
   </tr>
   <tr>
@@ -265,7 +265,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://whop.com/">whop.com</a>
       <br />
-      <p width="200px">A marketplace for really cool internet products.</p>
+      <p width="200px">A marketplace for really cool internet products</p>
     </td>
     <td align="center">
       <a href="https://cryptojobslist.com/">
@@ -289,7 +289,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://plain.com/">plain.com</a>
       <br />
-      <p width="200px">How developers support their users.</p>
+      <p width="200px">How developers support their users</p>
     </td>
     <td align="center">
       <a href="https://inngest.com/">
@@ -313,9 +313,20 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://storyblok.com/">storyblok.com</a>
       <br />
-      <p width="200px">The only headless CMS with a visual editor.</p>
+      <p width="200px">The only headless CMS with a visual editor</p>
     </td>
-    </tr>
+    <td align="center">
+      <a href="https://mux.com/">
+        <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" width="200px;" alt="Mux logo" />
+      </a>
+      <br />
+      <b>Mux</b>
+      <br />
+      <a href="https://mux.com/">mux.com</a>
+      <br />
+      <p width="200px">The internet's video infrastructure</p>
+    </td>
+  </tr>
 </table>
 
 #### Silver

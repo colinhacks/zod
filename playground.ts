@@ -27,6 +27,3 @@ export default class extends Hyper({ name: 1234 }) {
     return `asdf ${this.children} asdf`;
   }
 }
-
-const a = new Arg();
-a.name;
