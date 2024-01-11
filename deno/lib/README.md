@@ -316,13 +316,13 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <p width="200px">The only headless CMS with a visual editor</p>
     </td>
     <td align="center">
-      <a href="https://mux.com/">
+      <a href="https://mux.link/zod">
         <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" width="200px;" alt="Mux logo" />
       </a>
       <br />
       <b>Mux</b>
       <br />
-      <a href="https://mux.com/">mux.com</a>
+      <a href="https://mux.link/zod">mux.com</a>
       <br />
       <p width="200px">The internet's video infrastructure</p>
     </td>
