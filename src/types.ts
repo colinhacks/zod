@@ -4516,7 +4516,7 @@ export interface ZodDefaultDef<T extends ZodTypeAny = ZodTypeAny>
 export class ZodDefault<T extends ZodTypeAny> extends ZodType<
   util.noUndefined<T["_output"]>,
   ZodDefaultDef<T>,
-  T["_input"] | undefined
+  T["_input"]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
