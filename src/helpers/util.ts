@@ -100,9 +100,9 @@ export namespace objectUtil {
     [k in Exclude<keyof U, keyof V>]: U[k];
   } & V;
 
-  // type optionalKeys<T extends object> = {
-  //   [k in keyof T]: undefined extends T[k] ? k : never;
-  // }[keyof T];
+  type optionalKeys<T extends object> = {
+    [k in keyof T]: undefined extends T[k] ? k : never;
+  }[keyof T];
 
   type requiredKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? never : k;
@@ -110,11 +110,13 @@ export namespace objectUtil {
 
   // type alkjsdf = addQuestionMarks<{ a: any }>;
 
+  // only add question marks if there are optional keys
+  // need to check explicitly for this to work
   export type addQuestionMarks<
     T extends object,
     R extends keyof T = requiredKeys<T>
     // O extends keyof T = optionalKeys<T>
-  > = Pick<Required<T>, R> & Partial<T>;
+  > = Pick<Required<T>, R> & (optionalKeys<T> extends never ? T : Partial<T>);
   //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
 
   export type identity<T> = T;
