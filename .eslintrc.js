@@ -8,6 +8,7 @@ module.exports = {
     "simple-import-sort",
     "unused-imports",
     "ban",
+    "redos-detector",
   ],
   extends: [
     "eslint:recommended",
@@ -66,5 +67,7 @@ module.exports = {
         message: "Number.isInteger() is not supported in legacy browsers",
       },
     ],
+
+    "redos-detector/no-unsafe-regex": "error",
   },
 };
