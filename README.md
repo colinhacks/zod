@@ -1179,6 +1179,31 @@ const nullableString = stringSchema.nullable();
 nullableString.unwrap() === stringSchema; // true
 ```
 
+## NonNullables
+
+You can also make something NonNullable, using `z.nonNullable()`.
+
+```ts
+const nullableString = z.nonNullable(z.any());
+nullableString.parse("asdf"); // => "asdf"
+nullableString.parse(null); // fails
+```
+
+Or use the `.nonNullable()` method.
+
+```ts
+const E = z.any().nonNullable();
+type E = z.infer<typeof E>; // NonNullable<any>
+```
+
+Extract the inner schema with `.unwrap()`.
+
+```ts
+const stringSchema = z.any();
+const nullableString = stringSchema.nonNullable();
+nullableString.unwrap() === stringSchema; // true
+```
+
 ## Objects
 
 ```ts

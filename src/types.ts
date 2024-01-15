@@ -410,6 +410,9 @@ export abstract class ZodType<
     this.isOptional = this.isOptional.bind(this);
   }
 
+  nonNullable(): ZodNonNullable<this> {
+    return ZodNonNullable.create(this, this._def) as any;
+  }
   optional(): ZodOptional<this> {
     return ZodOptional.create(this, this._def) as any;
   }
@@ -4455,6 +4458,56 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
   };
 }
 
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                     ///////////
+//////////   ZodNonNullable    ///////////
+//////////                     ///////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+export interface ZodNonNullableDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  innerType: T;
+  typeName: ZodFirstPartyTypeKind.ZodNonNullable;
+}
+
+export type ZodNonNullableType<T extends ZodTypeAny> = ZodNonNullable<T>;
+
+export class ZodNonNullable<T extends ZodTypeAny> extends ZodType<
+  NonNullable<T["_output"]>,
+  ZodNonNullableDef<T>,
+  T["_input"]
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const parsedType = this._getType(input);
+    if (parsedType === ZodParsedType.null) {
+      const { ctx } = this._processInputParams(input);
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.nonNullable,
+        received: ctx.parsedType,
+      });
+      return INVALID;
+    }
+    return this._def.innerType._parse(input);
+  }
+
+  unwrap() {
+    return this._def.innerType;
+  }
+
+  static create = <T extends ZodTypeAny>(
+    type: T,
+    params?: RawCreateParams
+  ): ZodNonNullable<T> => {
+    return new ZodNonNullable({
+      innerType: type,
+      typeName: ZodFirstPartyTypeKind.ZodNonNullable,
+      ...processCreateParams(params),
+    }) as any;
+  };
+}
+
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 //////////                       //////////
@@ -4927,6 +4980,7 @@ export enum ZodFirstPartyTypeKind {
   ZodEffects = "ZodEffects",
   ZodNativeEnum = "ZodNativeEnum",
   ZodOptional = "ZodOptional",
+  ZodNonNullable = "ZodNonNullable",
   ZodNullable = "ZodNullable",
   ZodDefault = "ZodDefault",
   ZodCatch = "ZodCatch",
@@ -4965,6 +5019,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodNativeEnum<any>
   | ZodOptional<any>
   | ZodNullable<any>
+  | ZodNonNullable<any>
   | ZodDefault<any>
   | ZodCatch<any>
   | ZodPromise<any>
@@ -5015,6 +5070,7 @@ const promiseType = ZodPromise.create;
 const effectsType = ZodEffects.create;
 const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
+const nonNullableType = ZodNonNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const pipelineType = ZodPipeline.create;
 const ostring = () => stringType().optional();
@@ -5055,6 +5111,7 @@ export {
   nanType as nan,
   nativeEnumType as nativeEnum,
   neverType as never,
+  nonNullableType as nonNullable,
   nullType as null,
   nullableType as nullable,
   numberType as number,
