@@ -516,31 +516,116 @@ test("literal bigint default error message", () => {
   }
 });
 
-test("custom error message based on input value", () => {
-  const schema = z
-    .string({
-      invalid_type_error: (value) => `Expected a string, received: ${value}`,
-    })
-    .min(2, {
-      message: (value) =>
-        `Expected a string with at least 2 characters, received: ${value}`,
-    });
+test("string custom error message for invalid types", () => {
+  const schema = z.string({
+    invalid_type_error: (value) =>
+      `I was actually expecting a string, but received a ${value}`,
+  });
 
-  const result = schema.safeParse(3);
+  const result1 = schema.safeParse(3);
 
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].message).toEqual(
-      `Expected a string, received: number`
+  expect(result1.success).toEqual(false);
+  if (!result1.success) {
+    expect(result1.error.issues[0].message).toEqual(
+      `I was actually expecting a string, but received a Number`
     );
   }
 
-  const result2 = schema.safeParse("f");
+  const result2 = schema.safeParse(true);
 
   expect(result2.success).toEqual(false);
   if (!result2.success) {
     expect(result2.error.issues[0].message).toEqual(
-      `Expected a string with at least 2 characters, received: 1`
+      `I was actually expecting a string, but received a Boolean`
+    );
+  }
+});
+
+test("string static custom error message for invalid type", () => {
+  const schema = z.string({
+    invalid_type_error: `I was actually expecting a string`,
+  });
+
+  const result1 = schema.safeParse(3);
+
+  expect(result1.success).toEqual(false);
+  if (!result1.success) {
+    expect(result1.error.issues[0].message).toEqual(
+      `I was actually expecting a string`
+    );
+  }
+});
+
+test("string custom error message for invalid min length", () => {
+  const minLength = 10;
+  const stringTested = "tiny text"; // length 9
+
+  const schema = z.string().min(minLength, {
+    message: (value) =>
+      `Expected a string with at least ${minLength} characters, received: ${value}`,
+  });
+
+  const result = schema.safeParse(stringTested);
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual(
+      `Expected a string with at least 10 characters, received: 9`
+    );
+  }
+});
+
+test("string static custom error message for invalid min length", () => {
+  const minLength = 1;
+  const stringTested = "";
+
+  const schema = z.string().min(minLength, {
+    message: `Expected a string with at least 1 character`,
+  });
+
+  const result = schema.safeParse(stringTested);
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual(
+      `Expected a string with at least 1 character`
+    );
+  }
+});
+
+test("string custom error message for invalid max length", () => {
+  const maxLength = 7;
+  const stringTested = "big text"; // length 8
+
+  const schema = z.string().max(maxLength, {
+    message: (value) =>
+      `Expected a string with at least ${maxLength} characters, received: ${value}`,
+  });
+
+  const result = schema.safeParse(stringTested);
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual(
+      `Expected a string with at least 7 characters, received: 8`
+    );
+  }
+});
+
+test("string static custom error message for invalid max length", () => {
+  const maxLength = 2;
+  const stringTested = "foo";
+
+  const schema = z.string().max(maxLength, {
+    message: `Expected a string with maximum of 2 characters`,
+  });
+
+  const result = schema.safeParse(stringTested);
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual(
+      `Expected a string with maximum of 2 characters`
     );
   }
 });

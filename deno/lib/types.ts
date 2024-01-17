@@ -116,9 +116,9 @@ const handleResult = <Input, Output>(
 export type RawCreateParams =
   | {
       errorMap?: ZodErrorMap;
-      invalid_type_error?: string | ((value: string) => string);
+      invalid_type_error?: string | errorUtil.ErrMessageCallback;
       required_error?: string;
-      message?: (value: string) => string;
+      message?: string | errorUtil.ErrMessageCallback;
       description?: string;
     }
   | undefined;
@@ -126,10 +126,7 @@ export type ProcessedCreateParams = {
   errorMap?: ZodErrorMap;
   description?: string;
 };
-function getTypeName(data: any) {
-  if (typeof data === "object") return data.constructor.name;
-  return typeof data;
-}
+
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
   const { errorMap, invalid_type_error, required_error, description } = params;
@@ -145,7 +142,7 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
       return { message: required_error ?? ctx.defaultError };
     }
     if (typeof invalid_type_error === "function") {
-      return { message: invalid_type_error(getTypeName(ctx.data)) };
+      return { message: invalid_type_error(ctx.data.constructor.name) };
     }
     return { message: invalid_type_error ?? ctx.defaultError };
   };
@@ -525,9 +522,13 @@ export type ZodStringCheck =
   | {
       kind: "min";
       value: number;
-      message?: string | ((currentLength: number) => string);
+      message?: string | errorUtil.ErrMessageCallback;
     }
-  | { kind: "max"; value: number; message?: string }
+  | {
+      kind: "max";
+      value: number;
+      message?: string | errorUtil.ErrMessageCallback;
+    }
   | { kind: "length"; value: number; message?: string }
   | { kind: "email"; message?: string }
   | { kind: "url"; message?: string }
@@ -685,7 +686,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             type: "string",
             inclusive: true,
             exact: false,
-            message: check.message,
+            message:
+              typeof check.message === "function"
+                ? check.message(input.data.length)
+                : check.message,
           });
           status.dirty();
         }
@@ -974,9 +978,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
   min(
     minLength: number,
-    message?:
-      | errorUtil.ErrMessage
-      | { message?: (currentLength: number) => string }
+    message?: errorUtil.ErrMessage | { message?: errorUtil.ErrMessageCallback }
   ) {
     const getMessage = () => {
       if (typeof message === "object" && typeof message.message == "function") {
@@ -993,11 +995,22 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
   }
 
-  max(maxLength: number, message?: errorUtil.ErrMessage) {
+  max(
+    maxLength: number,
+    message?: errorUtil.ErrMessage | { message?: errorUtil.ErrMessageCallback }
+  ) {
+    const getMessage = () => {
+      if (typeof message === "object" && typeof message.message == "function") {
+        return message;
+      }
+
+      return errorUtil.errToObj(message as errorUtil.ErrMessage);
+    };
+
     return this._addCheck({
       kind: "max",
       value: maxLength,
-      ...errorUtil.errToObj(message),
+      ...getMessage(),
     });
   }
 
