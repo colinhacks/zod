@@ -515,6 +515,26 @@ test("literal bigint default error message", () => {
   }
 });
 
+test("custom error message based on input value", () => {
+  const schema = z
+    .string({ invalid_type_error: value => `Expected a string, received: ${value}` })
+    .min(2, { message: value => `Expected a string, received: number ${value}` });
+
+  const result = schema.safeParse(3);
+
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual(`Expected a string, received: number`);
+  }
+
+  const result2 = schema.safeParse('f');
+  
+  expect(result2.success).toEqual(false);
+  if (!result2.success) {
+    expect(result2.error.issues[0].message).toEqual(`Expected a string, received: number 1`);
+  }
+});
+
 // test("dont short circuit on continuable errors", () => {
 //   const user = z
 //     .object({

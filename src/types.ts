@@ -116,8 +116,9 @@ const handleResult = <Input, Output>(
 export type RawCreateParams =
   | {
       errorMap?: ZodErrorMap;
-      invalid_type_error?: string;
+      invalid_type_error?: string | ((value: string) => string);
       required_error?: string;
+      message?: (value: string) => string;
       description?: string;
     }
   | undefined;
@@ -125,6 +126,10 @@ export type ProcessedCreateParams = {
   errorMap?: ZodErrorMap;
   description?: string;
 };
+function getTypeName(data: any) {
+  if (typeof data === "object") return data.constructor.name;
+  return typeof data;
+}
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
   const { errorMap, invalid_type_error, required_error, description } = params;
@@ -138,6 +143,9 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
     if (iss.code !== "invalid_type") return { message: ctx.defaultError };
     if (typeof ctx.data === "undefined") {
       return { message: required_error ?? ctx.defaultError };
+    }
+    if (typeof invalid_type_error === "function") {
+      return { message: invalid_type_error(getTypeName(ctx.data)) };
     }
     return { message: invalid_type_error ?? ctx.defaultError };
   };
@@ -514,7 +522,11 @@ export abstract class ZodType<
 /////////////////////////////////////////
 export type IpVersion = "v4" | "v6";
 export type ZodStringCheck =
-  | { kind: "min"; value: number; message?: string }
+  | {
+      kind: "min";
+      value: number;
+      message?: string | ((currentLength: number) => string);
+    }
   | { kind: "max"; value: number; message?: string }
   | { kind: "length"; value: number; message?: string }
   | { kind: "email"; message?: string }
@@ -657,7 +669,10 @@ export class ZodString extends ZodType<string, ZodStringDef> {
             type: "string",
             inclusive: true,
             exact: false,
-            message: check.message,
+            message:
+              typeof check.message === "function"
+                ? check.message(input.data.length)
+                : check.message,
           });
           status.dirty();
         }
@@ -957,11 +972,24 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     });
   }
 
-  min(minLength: number, message?: errorUtil.ErrMessage) {
+  min(
+    minLength: number,
+    message?:
+      | errorUtil.ErrMessage
+      | { message?: (currentLength: number) => string }
+  ) {
+    const getMessage = () => {
+      if (typeof message === "object" && typeof message.message == "function") {
+        return message;
+      }
+
+      return errorUtil.errToObj(message as errorUtil.ErrMessage);
+    };
+
     return this._addCheck({
       kind: "min",
       value: minLength,
-      ...errorUtil.errToObj(message),
+      ...getMessage(),
     });
   }
 
