@@ -117,7 +117,6 @@ export type RawCreateParams =
   | {
       errorMap?: ZodErrorMap;
       invalid_type_error?: string;
-      invalid_enum_value?: string;
       required_error?: string;
       description?: string;
     }
@@ -128,13 +127,7 @@ export type ProcessedCreateParams = {
 };
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
-  const {
-    errorMap,
-    invalid_type_error,
-    invalid_enum_value,
-    required_error,
-    description,
-  } = params;
+  const { errorMap, invalid_type_error, required_error, description } = params;
   if (errorMap && (invalid_type_error || required_error)) {
     throw new Error(
       `Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`
@@ -143,7 +136,7 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (errorMap) return { errorMap: errorMap, description };
   const customMap: ZodErrorMap = (iss, ctx) => {
     if (iss.code === "invalid_enum_value") {
-      return { message: invalid_enum_value ?? ctx.defaultError };
+      return { message: invalid_type_error ?? ctx.defaultError };
     }
     if (iss.code !== "invalid_type") return { message: ctx.defaultError };
     if (typeof ctx.data === "undefined") {
@@ -4120,11 +4113,13 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       ctx.parsedType !== ZodParsedType.number
     ) {
       const expectedValues = util.objectValues(nativeEnumValues);
+      const message = this._def.message;
 
       addIssueToContext(ctx, {
         expected: util.joinValues(expectedValues) as "string",
         received: ctx.parsedType,
         code: ZodIssueCode.invalid_type,
+        message: message,
       });
       return INVALID;
     }
