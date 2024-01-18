@@ -635,15 +635,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
     if (parsedType !== ZodParsedType.string) {
       const ctx = this._getOrReturnCtx(input);
-      addIssueToContext(
-        ctx,
-        {
-          code: ZodIssueCode.invalid_type,
-          expected: ZodParsedType.string,
-          received: ctx.parsedType,
-        }
-        //
-      );
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.string,
+        received: ctx.parsedType,
+      });
       return INVALID;
     }
 
@@ -4095,7 +4091,6 @@ export interface ZodNativeEnumDef<T extends EnumLike = EnumLike>
   extends ZodTypeDef {
   values: T;
   typeName: ZodFirstPartyTypeKind.ZodNativeEnum;
-  message?: string | undefined;
 }
 
 export type EnumLike = { [k: string]: string | number; [nu: number]: string };
@@ -4113,26 +4108,22 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       ctx.parsedType !== ZodParsedType.number
     ) {
       const expectedValues = util.objectValues(nativeEnumValues);
-      const message = this._def.message;
 
       addIssueToContext(ctx, {
         expected: util.joinValues(expectedValues) as "string",
         received: ctx.parsedType,
         code: ZodIssueCode.invalid_type,
-        message: message,
       });
       return INVALID;
     }
 
     if (nativeEnumValues.indexOf(input.data) === -1) {
       const expectedValues = util.objectValues(nativeEnumValues);
-      const message = this._def.message;
 
       addIssueToContext(ctx, {
         received: ctx.data,
         code: ZodIssueCode.invalid_enum_value,
         options: expectedValues,
-        message: message,
       });
       return INVALID;
     }
