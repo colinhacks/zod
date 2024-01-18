@@ -635,11 +635,15 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
     if (parsedType !== ZodParsedType.string) {
       const ctx = this._getOrReturnCtx(input);
-      addIssueToContext(ctx, {
-        code: ZodIssueCode.invalid_type,
-        expected: ZodParsedType.string,
-        received: ctx.parsedType,
-      });
+      addIssueToContext(
+        ctx,
+        {
+          code: ZodIssueCode.invalid_type,
+          expected: ZodParsedType.string,
+          received: ctx.parsedType,
+        }
+        //
+      );
       return INVALID;
     }
 
@@ -4108,7 +4112,6 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       ctx.parsedType !== ZodParsedType.number
     ) {
       const expectedValues = util.objectValues(nativeEnumValues);
-
       addIssueToContext(ctx, {
         expected: util.joinValues(expectedValues) as "string",
         received: ctx.parsedType,
