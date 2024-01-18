@@ -524,6 +524,37 @@ test("when the message is falsy, it is used as is provided", () => {
   }
 });
 
+test("nativeEnum with invalid_type_error returns custom error message", () => {
+  enum OrderStatusEnum {
+    NEW = "NEW",
+    PROCESSED = "PROCESSED",
+  }
+
+  const OrderStatusValidatorViaNativeEnum = z.nativeEnum(OrderStatusEnum, {
+    invalid_enum_value: "the enum provided is invalid",
+    required_error: "status is required",
+  });
+
+  const result1 = OrderStatusValidatorViaNativeEnum.safeParse("UNPROCESSEED");
+  expect(result1.success).toEqual(false);
+  if (!result1.success) {
+    expect(result1.error.issues[0].message).toEqual(
+      "the enum provided is invalid"
+    );
+  }
+
+  const result2 = OrderStatusValidatorViaNativeEnum.safeParse(undefined);
+  expect(result2.success).toEqual(false);
+  if (!result2.success) {
+    expect(result2.error.issues[0].message).toEqual("status is required");
+  }
+
+  const result3 = OrderStatusValidatorViaNativeEnum.safeParse(
+    OrderStatusEnum.NEW
+  );
+  expect(result3.success).toEqual(true);
+});
+
 // test("dont short circuit on continuable errors", () => {
 //   const user = z
 //     .object({
