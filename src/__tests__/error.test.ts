@@ -531,7 +531,7 @@ test("nativeEnum with invalid_type_error returns custom error message", () => {
   }
 
   const schema = z.nativeEnum(OrderStatusEnum, {
-    invalid_type_error: "the enum provided is invalid",
+    invalid_type_error: "the value provided is invalid",
     required_error: "status is required",
   });
 
@@ -539,7 +539,7 @@ test("nativeEnum with invalid_type_error returns custom error message", () => {
   expect(result1.success).toEqual(false);
   if (!result1.success) {
     expect(result1.error.issues[0].message).toEqual(
-      "the enum provided is invalid"
+      "the value provided is invalid"
     );
   }
 
@@ -551,6 +551,14 @@ test("nativeEnum with invalid_type_error returns custom error message", () => {
 
   const result3 = schema.safeParse(OrderStatusEnum.NEW);
   expect(result3.success).toEqual(true);
+
+  const result4 = schema.safeParse(null);
+  expect(result4.success).toEqual(false);
+  if (!result4.success) {
+    expect(result4.error.issues[0].message).toEqual(
+      "the value provided is invalid"
+    );
+  }
 });
 
 // test("dont short circuit on continuable errors", () => {
