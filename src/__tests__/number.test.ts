@@ -174,3 +174,16 @@ test("finite getter", () => {
   expect(z.number().min(5).max(10).isFinite).toEqual(true);
   expect(safe.isFinite).toEqual(true);
 });
+
+test("multipleOf getter", () => {
+  expect(z.number().multipleOfValue).toEqual(null);
+  expect(z.number().multipleOf(2).multipleOfValue).toEqual(2);
+  expect(z.number().multipleOf(-2).multipleOfValue).toEqual(-2);
+
+  // Only the first value is used. In the future it can be extended to calculate
+  // Least Common Multiple of them.
+  expect(z.number().multipleOf(2).multipleOf(3).multipleOfValue).toEqual(2);
+  expect(z.number().multipleOf(-2).multipleOf(3).multipleOfValue).toEqual(-2);
+  expect(z.number().multipleOf(2).multipleOf(-3).multipleOfValue).toEqual(2);
+  expect(z.number().multipleOf(-2).multipleOf(-3).multipleOfValue).toEqual(-2);
+});

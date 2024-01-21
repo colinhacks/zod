@@ -1337,6 +1337,16 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     return max;
   }
 
+  get multipleOfValue() {
+    for (const ch of this._def.checks) {
+      if (ch.kind === "multipleOf") {
+        return ch.value;
+      }
+    }
+
+    return null;
+  }
+
   get isInt() {
     return !!this._def.checks.find(
       (ch) =>
