@@ -42,6 +42,7 @@
     "tslib": "^2.3.1",
     "tsx": "^3.8.0",
     "typescript": "~4.5.0",
+    "vitepress": "^1.0.0-rc.24",
     "vitest": "^0.32.2"
   },
   "exports": {
@@ -106,7 +107,10 @@
     "play": "nodemon -e ts -w . -x tsx playground.ts",
     "depcruise": "depcruise -c .dependency-cruiser.js src",
     "benchmark": "tsx src/benchmarks/index.ts",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "sideEffects": false,
   "support": {
