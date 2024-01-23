@@ -3044,6 +3044,86 @@ export class ZodDiscriminatedUnion<
   }
 }
 
+/////////////////////////////////////////
+/////////////////////////////////////////
+//////////                     //////////
+//////////      ZodSwitch      //////////
+//////////                     //////////
+/////////////////////////////////////////
+/////////////////////////////////////////
+
+export type ZodSwitchCase = [ZodTypeAny, ZodTypeAny];
+
+export interface ZodSwitchDef<Schema extends ZodTypeAny> extends ZodTypeDef {
+  switchFn:
+    | ((input: any) => Schema | undefined | void)
+    | ((input: any) => Promise<Schema | undefined | void>);
+  typeName: ZodFirstPartyTypeKind.ZodSwitch;
+}
+
+export class ZodSwitch<Schema extends ZodTypeAny> extends ZodType<
+  output<Schema>,
+  ZodSwitchDef<Schema>
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const { ctx } = this._processInputParams(input);
+    const switchFn = this._def.switchFn;
+
+    if (ctx.common.async) {
+      return Promise.resolve()
+        .then(async () => {
+          return await switchFn(ctx.data);
+        })
+        .then(async (schema) => {
+          if (schema !== undefined) {
+            return await schema._parseAsync({
+              data: ctx.data,
+              path: ctx.path,
+              parent: ctx,
+            });
+          }
+          return await ZodNever.create()._parseAsync({
+            data: ctx.data,
+            path: ctx.path,
+            parent: ctx,
+          });
+        });
+    } else {
+      const schema = switchFn(ctx.data);
+      if (schema instanceof Promise) {
+        throw new Error(
+          "Async refinement encountered during synchronous parse operation. Use .parseAsync instead."
+        );
+      }
+      if (schema !== undefined) {
+        return schema._parseSync({
+          data: ctx.data,
+          path: ctx.path,
+          parent: ctx,
+        });
+      }
+      return ZodNever.create()._parseSync({
+        data: ctx.data,
+        path: ctx.path,
+        parent: ctx,
+      });
+    }
+  }
+
+  static create<Schema extends ZodTypeAny>(
+    switchFn:
+      | ((input: any) => Schema | undefined | void)
+      | ((input: any) => Promise<Schema | undefined | void>),
+    params?: RawCreateParams
+  ): ZodSwitch<Schema> {
+    return new ZodSwitch({
+      switchFn,
+      typeName: ZodFirstPartyTypeKind.ZodSwitch,
+      ...processCreateParams(params),
+    });
+  }
+}
+
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 //////////                           //////////
@@ -4915,6 +4995,7 @@ export enum ZodFirstPartyTypeKind {
   ZodObject = "ZodObject",
   ZodUnion = "ZodUnion",
   ZodDiscriminatedUnion = "ZodDiscriminatedUnion",
+  ZodSwitch = "ZodSwitch",
   ZodIntersection = "ZodIntersection",
   ZodTuple = "ZodTuple",
   ZodRecord = "ZodRecord",
@@ -4952,6 +5033,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodObject<any, any, any>
   | ZodUnion<any>
   | ZodDiscriminatedUnion<any, any>
+  | ZodSwitch<any>
   | ZodIntersection<any, any>
   | ZodTuple<any, any>
   | ZodRecord<any, any>
@@ -5001,6 +5083,7 @@ const objectType = ZodObject.create;
 const strictObjectType = ZodObject.strictCreate;
 const unionType = ZodUnion.create;
 const discriminatedUnionType = ZodDiscriminatedUnion.create;
+const switchType = ZodSwitch.create;
 const intersectionType = ZodIntersection.create;
 const tupleType = ZodTuple.create;
 const recordType = ZodRecord.create;
@@ -5070,6 +5153,7 @@ export {
   setType as set,
   strictObjectType as strictObject,
   stringType as string,
+  switchType as switch,
   symbolType as symbol,
   effectsType as transformer,
   tupleType as tuple,

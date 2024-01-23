@@ -31,6 +31,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
         issue.options
       )}`;
       break;
+    case ZodIssueCode.no_switch_case_match:
+      message = `No switch case matched the value and no default was provided`;
+      break;
     case ZodIssueCode.invalid_enum_value:
       message = `Invalid enum value. Expected ${util.joinValues(
         issue.options

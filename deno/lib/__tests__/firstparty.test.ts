@@ -42,6 +42,8 @@ test("first party switch", () => {
       break;
     case z.ZodFirstPartyTypeKind.ZodDiscriminatedUnion:
       break;
+    case z.ZodFirstPartyTypeKind.ZodSwitch:
+      break;
     case z.ZodFirstPartyTypeKind.ZodIntersection:
       break;
     case z.ZodFirstPartyTypeKind.ZodTuple:

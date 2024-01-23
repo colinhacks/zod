@@ -1,6 +1,7 @@
 import Benchmark from "benchmark";
 
 import discriminatedUnionBenchmarks from "./discriminatedUnion";
+import switchBenchmarks from "./switch";
 import objectBenchmarks from "./object";
 import primitiveBenchmarks from "./primitives";
 import realworld from "./realworld";
@@ -18,6 +19,7 @@ if (!argv.length) {
     ...objectBenchmarks.suites,
     ...unionBenchmarks.suites,
     ...discriminatedUnionBenchmarks.suites,
+    ...switchBenchmarks.suites
   ];
 } else {
   if (argv.includes("--realworld")) {
@@ -37,6 +39,9 @@ if (!argv.length) {
   }
   if (argv.includes("--discriminatedUnion")) {
     suites.push(...discriminatedUnionBenchmarks.suites);
+  }
+  if (argv.includes("--switch")) {
+    suites.push(...switchBenchmarks.suites);
   }
 }
 

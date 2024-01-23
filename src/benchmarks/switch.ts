@@ -1,6 +1,6 @@
 import Benchmark from "benchmark";
 
-import { z } from "../index.ts";
+import { z } from "../index";
 
 function getlargeNestedSchema(type: string, numKeys: number) {
   const shape: z.ZodObject<any>["shape"] = {};
@@ -28,10 +28,10 @@ function getlargeNestedObj(type: string, schema: z.ZodObject<any>) {
   return obj;
 }
 
-const doubleSuite = new Benchmark.Suite("z.union: double");
-const manySuite = new Benchmark.Suite("z.union: many");
-const doubleLargeNestedSuite = new Benchmark.Suite("z.union: double large nested");
-const manyLargeNestedSuite = new Benchmark.Suite("z.union: many large nested");
+const doubleSuite = new Benchmark.Suite("z.switch: double");
+const manySuite = new Benchmark.Suite("z.switch: many");
+const doubleLargeNestedSuite = new Benchmark.Suite("z.switch: double large nested");
+const manyLargeNestedSuite = new Benchmark.Suite("z.switch: many large nested");
 
 const aSchema = z.object({
   type: z.literal("a"),
@@ -65,10 +65,50 @@ const dSchema = z.object({
 });
 const dLargeNestedSchema = getlargeNestedSchema("d", 20);
 
-const double = z.union([aSchema, bSchema]);
-const doubleLargeNested = z.union([aLargeNestedSchema, bLargeNestedSchema]);
-const many = z.union([aSchema, bSchema, cSchema, dSchema]);
-const manyLargeNested = z.union([aLargeNestedSchema, bLargeNestedSchema, cLargeNestedSchema, dLargeNestedSchema]);
+//@ts-expect-error
+const double = z.switch(val => {
+  switch (val.type) {
+    case "a":
+      return aSchema;
+    case "b":
+      return bSchema;
+  }
+})
+//@ts-expect-error
+const doubleLargeNested = z.switch(val => {
+  switch (val.type) {
+    case "a":
+      return aLargeNestedSchema;
+    case "b":
+      return bLargeNestedSchema;
+  }
+})
+//@ts-expect-error
+const many = z.switch(val => {
+  switch (val.type) {
+    case "a":
+      return aSchema;
+    case "b":
+      return bSchema;
+    case "c":
+      return cSchema;
+    case "d":
+      return dSchema;
+  }
+})
+//@ts-expect-error
+const manyLargeNested = z.switch(val => {
+  switch (val.type) {
+    case "a":
+      return aLargeNestedSchema;
+    case "b":
+      return bLargeNestedSchema;
+    case "c":
+      return cLargeNestedSchema;
+    case "d":
+      return dLargeNestedSchema;
+  }
+})
 
 doubleSuite
   .add("valid: a", () => {
