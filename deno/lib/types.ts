@@ -3746,15 +3746,14 @@ export class ZodFunction<
 
     const params = { errorMap: ctx.common.contextualErrorMap };
     const fn = ctx.data;
+    const fnDef = this._def;
 
-    if (this._def.returns instanceof ZodPromise) {
-      // Would love a way to avoid disabling this rule, but we need
-      // an alias (using an arrow function was what caused 2651).
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
-      const me = this;
+    // Would love a way to avoid disabling this rule, but we need
+    // an alias (using an arrow function was what caused 2651).
+    if (fnDef.returns instanceof ZodPromise) {
       return OK(async function (this: any, ...args: any[]) {
         const error = new ZodError([]);
-        const parsedArgs = await me._def.args
+        const parsedArgs = await fnDef.args
           .parseAsync(args, params)
           .catch((e) => {
             error.addIssue(makeArgsIssue(args, e));
@@ -3762,7 +3761,7 @@ export class ZodFunction<
           });
         const result = await Reflect.apply(fn, this, parsedArgs as any);
         const parsedReturns = await (
-          me._def.returns as unknown as ZodPromise<ZodTypeAny>
+          fnDef.returns as unknown as ZodPromise<ZodTypeAny>
         )._def.type
           .parseAsync(result, params)
           .catch((e) => {
@@ -3772,17 +3771,13 @@ export class ZodFunction<
         return parsedReturns;
       });
     } else {
-      // Would love a way to avoid disabling this rule, but we need
-      // an alias (using an arrow function was what caused 2651).
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
-      const me = this;
       return OK(function (this: any, ...args: any[]) {
-        const parsedArgs = me._def.args.safeParse(args, params);
+        const parsedArgs = fnDef.args.safeParse(args, params);
         if (!parsedArgs.success) {
           throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
         }
         const result = Reflect.apply(fn, this, parsedArgs.data);
-        const parsedReturns = me._def.returns.safeParse(result, params);
+        const parsedReturns = fnDef.returns.safeParse(result, params);
         if (!parsedReturns.success) {
           throw new ZodError([makeReturnsIssue(result, parsedReturns.error)]);
         }
