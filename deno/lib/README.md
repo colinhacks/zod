@@ -196,21 +196,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <p width="200px">SDKs, Terraform, Docs.<br/>Your API made enterprise-ready</p>
     </td>
     <td align="center">
-      <a href="https://glow.app/" target="_blank">
-        <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="Glow Wallet" />
-      </a>
-      <br />
-      <b>Glow Wallet</b>
-      <br />
-      <a href="https://glow.app/" target="_blank">glow.app</a>
-      <br />
-      <p width="200px">Your new favorite
-        <br/>
-      Solana wallet</p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
       <a href="https://deletype.com/" target="_blank">
         <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="Deletype logo" />
       </a>
@@ -219,6 +204,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://deletype.com" target="_blank">deletype.com</a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://trigger.dev/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" width="200px;" alt="Trigger.dev logo" />
@@ -230,8 +217,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br/>
       <p>Effortless automation for developers</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" width="200px;" alt="Transloadit logo" />
@@ -243,6 +228,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br/>
       <p>Simple file processing for developers</p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://infisical.com" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" width="200px;" alt="Infisical logo" />
@@ -254,8 +241,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br/>
       <p>Open-source platform for secret<br/>management: sync secrets across your<br/>team/infrastructure and prevent secret leaks</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://whop.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" width="200px;" alt="Whop logo" />
@@ -267,6 +252,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">A marketplace for really cool internet products</p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://cryptojobslist.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" width="200px;" alt="CryptoJobsList logo" />
@@ -278,8 +265,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">The biggest list of crypto, blockchain and Web3 jobs</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://plain.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" width="200px;" alt="Plain logo" />
@@ -291,6 +276,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">How developers support their users</p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://inngest.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" width="200px;" alt="Inngest logo" />
@@ -302,8 +289,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">Serverless queues + durable workflows for TypeScript</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://storyblok.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" width="200px;" alt="Storyblok CMS" />
@@ -315,6 +300,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">The only headless CMS with a visual editor</p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://mux.link/zod" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" width="200px;" alt="Mux logo" />
@@ -502,6 +489,16 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <b>Michael Sweeney</b>
       <br/>
       <a href="https://github.com/overthemike" target="_blank">@overthemike</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://usenextbase.com/" target="_blank">
+        <img src="https://pbs.twimg.com/profile_images/1692236063409070080/28yXFtop_400x400.jpg" width="100px;" alt="Nextbase logo"/>
+      </a>
+      <br />
+      <b>Nextbase</b>
+      <br/>
+      <a href="https://usenextbase.com/" target="_blank">usenextbase.com</a>
       <br />
     </td>
   </tr>
