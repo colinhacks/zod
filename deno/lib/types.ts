@@ -4056,25 +4056,25 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     return enumValues as any;
   }
 
-  extract<ToExtract extends readonly [T[number], ...T[number][]]>(
-    values: ToExtract
+  extract<ToExtract extends [T[number], ...T[number][]]>(
+    values: ToExtract | ToExtract[number]
   ): ZodEnum<Writeable<ToExtract>> {
-    return ZodEnum.create(values) as any;
+    return ZodEnum.create(Array.isArray(values) ? values : [values]) as any;
   }
 
-  exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
-    values: ToExclude
+  exclude<ToExclude extends [T[number], ...T[number][]]>(
+    values: ToExclude | ToExclude[number]
   ): ZodEnum<
     typecast<Writeable<FilterEnum<T, ToExclude[number]>>, [string, ...string[]]>
   > {
+    const excludeValues = Array.isArray(values) ? values : [values];
     return ZodEnum.create(
-      this.options.filter((opt) => !values.includes(opt)) as FilterEnum<
+      this.options.filter((opt) => !excludeValues.includes(opt)) as FilterEnum<
         T,
         ToExclude[number]
       >
     ) as any;
   }
-
   static create = createZodEnum;
 }
 
