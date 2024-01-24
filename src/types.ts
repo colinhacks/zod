@@ -578,42 +578,41 @@ const ipv4Regex =
 const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
+const baseDateTimeRegex = "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2})";
+
 // Adapted from https://stackoverflow.com/a/3143231
 const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
   if (args.precision) {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
+        `${baseDateTimeRegex}\\.\\d{${args.precision}}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
       );
     } else {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}Z$`
-      );
+      return new RegExp(`${baseDateTimeRegex}\\.\\d{${args.precision}}Z$`);
     }
   } else if (args.precision === 0) {
     if (args.offset) {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
-      );
+      return new RegExp(`${baseDateTimeRegex}(([+-]\\d{2}(:?\\d{2})?)|Z)$`);
     } else {
-      return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`);
+      return new RegExp(`${baseDateTimeRegex}Z$`);
     }
   } else {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}(:?\\d{2})?)|Z)$`
+        `${baseDateTimeRegex}(\\.\\d+)?(([+-]\\d{2}(:?\\d{2})?)|Z)$`
       );
     } else {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$`
-      );
+      return new RegExp(`${baseDateTimeRegex}(\\.\\d+)?Z$`);
     }
   }
 };
 
-const isValidDate = (str: string) => {
-  const date = new Date(str);
-  return !isNaN(date.getTime());
+const isValidDate = (input: string, regexResult: RegExpExecArray) => {
+  const date = new Date(input);
+  return (
+    !isNaN(date.getTime()) &&
+    new Date(`${regexResult[1]}Z`).toISOString().startsWith(regexResult[1])
+  );
 };
 
 function isValidIP(ip: string, version?: IpVersion) {
@@ -826,8 +825,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         }
       } else if (check.kind === "datetime") {
         const regex = datetimeRegex(check);
+        const regexResult = regex.exec(input.data);
 
-        if (!regex.test(input.data) || !isValidDate(input.data)) {
+        if (!regexResult || !isValidDate(input.data, regexResult)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
