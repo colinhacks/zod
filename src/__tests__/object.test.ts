@@ -450,3 +450,12 @@ test("passthrough index signature", () => {
   type b = z.infer<typeof b>;
   util.assertEqual<{ a: string } & { [k: string]: unknown }, b>(true);
 });
+
+test("isRequired() returns true for required fields and false for optional fields", () => {
+  const schema = z.object({
+    a: z.string(),
+    b: z.string().optional(),
+  });
+  expect(schema.shape.a.isRequired()).toEqual(true);
+  expect(schema.shape.b.isRequired()).toEqual(false);
+});
