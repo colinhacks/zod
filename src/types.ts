@@ -408,6 +408,7 @@ export abstract class ZodType<
     this.readonly = this.readonly.bind(this);
     this.isNullable = this.isNullable.bind(this);
     this.isOptional = this.isOptional.bind(this);
+    this.isRequired = this.isRequired.bind(this);
   }
 
   optional(): ZodOptional<this> {
@@ -499,6 +500,9 @@ export abstract class ZodType<
 
   isOptional(): boolean {
     return this.safeParse(undefined).success;
+  }
+  isRequired(): boolean {
+    return !this.isOptional();
   }
   isNullable(): boolean {
     return this.safeParse(null).success;
