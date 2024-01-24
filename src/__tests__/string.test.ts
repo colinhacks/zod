@@ -145,6 +145,7 @@ test("email validations", () => {
     `gbacher0@[IPv6:bc37:4d3f:5048:2e26:37cc:248e:df8e:2f7f:af]`,
     `invalid@[IPv6:5348:4ed3:5d38:67fb:e9b:acd2:c13:192.168.256.1]`,
     `test@.com`,
+    `aaaaaaaaaaaaaaalongemailthatcausesregexDoSvulnerability@test.c`,
   ];
   const emailSchema = z.string().email();
 
@@ -264,6 +265,8 @@ test("ulid", () => {
   ulid.parse("01ARZ3NDEKTSV4RRFFQ69G5FAV");
   const result = ulid.safeParse("invalidulid");
   expect(result.success).toEqual(false);
+  const tooLong = "01ARZ3NDEKTSV4RRFFQ69G5FAVA";
+  expect(ulid.safeParse(tooLong).success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("Invalid ulid");
   }
