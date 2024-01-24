@@ -486,8 +486,6 @@ test("datetime parsing", () => {
   ).toThrow();
 });
 
-new Date().toUTCString();
-
 test("IP validation", () => {
   const ip = z.string().ip();
   expect(ip.safeParse("122.122.122.122").success).toBe(true);
