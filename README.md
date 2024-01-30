@@ -585,6 +585,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
 - [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas.
+- [`zod-config`](https://github.com/alexmarqs/zod-config): Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.
 
 #### Utilities for Zod
 
