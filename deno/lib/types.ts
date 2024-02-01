@@ -547,7 +547,7 @@ export interface ZodStringDef extends ZodTypeDef {
 
 const cuidRegex = /^c[^\s-]{8,}$/i;
 const cuid2Regex = /^[a-z][a-z0-9]*$/;
-const ulidRegex = /[0-9A-HJKMNP-TV-Z]{26}/;
+const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 // const uuidRegex =
 //   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 const uuidRegex =
@@ -565,12 +565,13 @@ const uuidRegex =
 // const emailRegex =
 //   /^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/i;
 const emailRegex =
-  /^([A-Z0-9_+-]+\.?)*[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
+  /^(?!\.)(?!.*\.\.)([A-Z0-9_+-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
 // const emailRegex =
 //   /^[a-z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9\-]+)*$/i;
 
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
-const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Component})+$/u;
+const _emojiRegex = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
+let emojiRegex: RegExp;
 
 const ipv4Regex =
   /^(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))$/;
@@ -710,6 +711,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "emoji") {
+        if (!emojiRegex) {
+          emojiRegex = new RegExp(_emojiRegex, "u");
+        }
         if (!emojiRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
@@ -849,16 +853,17 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return { status: status.value, value: input.data };
   }
 
-  protected _regex = (
+  protected _regex(
     regex: RegExp,
     validation: StringValidation,
     message?: errorUtil.ErrMessage
-  ) =>
-    this.refinement((data) => regex.test(data), {
+  ) {
+    return this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
       ...errorUtil.errToObj(message),
     });
+  }
 
   _addCheck(check: ZodStringCheck) {
     return new ZodString({
@@ -980,26 +985,30 @@ export class ZodString extends ZodType<string, ZodStringDef> {
    * @deprecated Use z.string().min(1) instead.
    * @see {@link ZodString.min}
    */
-  nonempty = (message?: errorUtil.ErrMessage) =>
-    this.min(1, errorUtil.errToObj(message));
+  nonempty(message?: errorUtil.ErrMessage) {
+    return this.min(1, errorUtil.errToObj(message));
+  }
 
-  trim = () =>
-    new ZodString({
+  trim() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "trim" }],
     });
+  }
 
-  toLowerCase = () =>
-    new ZodString({
+  toLowerCase() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toLowerCase" }],
     });
+  }
 
-  toUpperCase = () =>
-    new ZodString({
+  toUpperCase() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toUpperCase" }],
     });
+  }
 
   get isDatetime() {
     return !!this._def.checks.find((ch) => ch.kind === "datetime");
@@ -4853,7 +4862,7 @@ type CustomParams = CustomErrorParams & { fatal?: boolean };
 export const custom = <T>(
   check?: (data: unknown) => any,
   params: string | CustomParams | ((input: any) => CustomParams) = {},
-  /*
+  /**
    * @deprecated
    *
    * Pass `fatal` into the params object instead:
