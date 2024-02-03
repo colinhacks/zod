@@ -1854,7 +1854,7 @@ const TestSchema = z.instanceof(Test);
 
 const blob: any = "whatever";
 TestSchema.parse(new Test()); // passes
-TestSchema.parse("blob"); // throws
+TestSchema.parse(blob); // throws
 ```
 
 ## Functions
