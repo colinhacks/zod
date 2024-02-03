@@ -714,16 +714,19 @@ Zod now provides a more convenient way to coerce primitive values.
 const schema = z.coerce.string();
 schema.parse("tuna"); // => "tuna"
 schema.parse(12); // => "12"
-schema.parse(true); // => "true"
 ```
 
-During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
+During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings.
+
+The returned schema is a normal `ZodString` instance so you can use all string methods.
 
 ```ts
 z.coerce.string().email().min(5);
 ```
 
-All primitive types support coercion.
+**How coercion works**
+
+All primitive types support coercion. Zod coerces all inputs using the built-in constructors: `String(input)`, `Number(input)`, `new Date(input)`, etc.
 
 ```ts
 z.coerce.string(); // String(input)
@@ -733,9 +736,19 @@ z.coerce.bigint(); // BigInt(input)
 z.coerce.date(); // new Date(input)
 ```
 
+Note that some behavior may not be what you expect.
+
+```ts
+schema.parse(true); // => "true"
+schema.parse(undefined); // => "undefined"
+schema.parse(null); // => "null"
+```
+
+For more control over coercion logic, consider using [`z.preprocess`](#preprocess) or [`z.pipe()`](#pipe).
+
 **Boolean coercion**
 
-Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
+Zod's approach to coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
 
 ```ts
 z.coerce.boolean().parse("tuna"); // => true
