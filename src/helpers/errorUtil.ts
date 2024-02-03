@@ -4,4 +4,6 @@ export namespace errorUtil {
     typeof message === "string" ? { message } : message || {};
   export const toString = (message?: ErrMessage): string | undefined =>
     typeof message === "string" ? message : message?.message;
+
+  export type ErrMessageCallback = (value: string) => string;
 }
