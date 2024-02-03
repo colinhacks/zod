@@ -580,9 +580,9 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 #### Utilities for Zod
 
-- [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod run-time parsing in production.
 - [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): Framework agnostic utilities for Zod.
 - [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Controlled environment for testing zod schemas. [Live demo](https://zod-sandbox.vercel.app/).
+- [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod runtime parsing in production.
 
 ## Installation
 
