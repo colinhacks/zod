@@ -705,7 +705,7 @@ For more control over coercion logic, consider using [`z.preprocess`](#preproces
 
 **Boolean coercion**
 
-Zod's coerces values coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
+Zod's approach to coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
 
 ```ts
 z.coerce.boolean().parse("tuna"); // => true
