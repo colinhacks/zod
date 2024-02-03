@@ -989,7 +989,7 @@ const fish = ["Salmon", "Tuna", "Trout"];
 const FishEnum = z.enum(fish);
 ```
 
-**Autocompletion**
+**`.enum`**
 
 To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 
@@ -1012,7 +1012,7 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 ```
 
-**Exclude/Extract**
+**`.exclude/.extract()`**
 
 You can create subsets of a Zod enum with the `.exclude` and `.extract` methods.
 
