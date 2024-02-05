@@ -502,6 +502,18 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
     </td>
   </tr>
+  <tr>
+    <td align="center">
+      <a href="https://remotion.dev" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/85344006" width="100px;" alt="Remotion logo"/>
+      </a>
+      <br />
+      <b>Remotion</b>
+      <br/>
+      <a href="https://remotion.dev" target="_blank">remotion.dev</a>
+      <br />
+    </td>
+  </tr>
 </table>
 
 ### Ecosystem
