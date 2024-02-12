@@ -518,6 +518,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`tRPC`](https://github.com/trpc/trpc): Build end-to-end typesafe APIs without GraphQL.
 - [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-nestjs): Helper methods for using Zod in a NestJS project.
 - [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): Contract-first strictly typed endpoints with Zod. OpenAPI compatible.
+- [`zhttp`](https://github.com/evertdespiegeleer/zhttp): An OpenAPI compatible, strictly typed http library with Zod input and response validation.
 - [`domain-functions`](https://github.com/SeasonedSoftware/domain-functions/): Decouple your business logic from your framework using composable functions. With first-class type inference from end to end powered by Zod schemas.
 - [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
 - [`express-zod-api`](https://github.com/RobinTail/express-zod-api): Build Express-based APIs with I/O schema validation and custom middlewares.
@@ -583,13 +584,16 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`freerstore`](https://github.com/JacobWeisenburger/freerstore): Firestore cost optimizer.
 - [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration.
 - [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
+- [`pastel`](https://github.com/vadimdemedes/pastel): Create CLI applications with react, zod, and ink.
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
 - [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas.
+- [`zod-config`](https://github.com/alexmarqs/zod-config): Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.
 
 #### Utilities for Zod
 
 - [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): Framework agnostic utilities for Zod.
 - [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Controlled environment for testing zod schemas. [Live demo](https://zod-sandbox.vercel.app/).
+- [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod runtime parsing in production.
 
 ## Installation
 
@@ -714,16 +718,19 @@ Zod now provides a more convenient way to coerce primitive values.
 const schema = z.coerce.string();
 schema.parse("tuna"); // => "tuna"
 schema.parse(12); // => "12"
-schema.parse(true); // => "true"
 ```
 
-During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
+During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings.
+
+The returned schema is a normal `ZodString` instance so you can use all string methods.
 
 ```ts
 z.coerce.string().email().min(5);
 ```
 
-All primitive types support coercion.
+**How coercion works**
+
+All primitive types support coercion. Zod coerces all inputs using the built-in constructors: `String(input)`, `Number(input)`, `new Date(input)`, etc.
 
 ```ts
 z.coerce.string(); // String(input)
@@ -733,9 +740,19 @@ z.coerce.bigint(); // BigInt(input)
 z.coerce.date(); // new Date(input)
 ```
 
+Note that some behavior may not be what you expect.
+
+```ts
+schema.parse(true); // => "true"
+schema.parse(undefined); // => "undefined"
+schema.parse(null); // => "null"
+```
+
+For more control over coercion logic, consider using [`z.preprocess`](#preprocess) or [`z.pipe()`](#pipe).
+
 **Boolean coercion**
 
-Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
+Zod's approach to coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
 
 ```ts
 z.coerce.boolean().parse("tuna"); // => true
@@ -948,7 +965,7 @@ You can customize certain error messages when creating a nan schema.
 ```ts
 const isNaN = z.nan({
   required_error: "isNaN is required",
-  invalid_type_error: "isNaN must be not a number",
+  invalid_type_error: "isNaN must be 'not a number'",
 });
 ```
 
@@ -1032,7 +1049,7 @@ const fish = ["Salmon", "Tuna", "Trout"];
 const FishEnum = z.enum(fish);
 ```
 
-**Autocompletion**
+**`.enum`**
 
 To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 
@@ -1053,6 +1070,16 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 
 ```ts
 FishEnum.options; // ["Salmon", "Tuna", "Trout"];
+```
+
+**`.exclude/.extract()`**
+
+You can create subsets of a Zod enum with the `.exclude` and `.extract` methods.
+
+```ts
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+const SalmonAndTrout = FishEnum.extract(["Salmon", "Trout"]);
+const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
 
 ## Native enums
@@ -1854,7 +1881,7 @@ const TestSchema = z.instanceof(Test);
 
 const blob: any = "whatever";
 TestSchema.parse(new Test()); // passes
-TestSchema.parse("blob"); // throws
+TestSchema.parse(blob); // throws
 ```
 
 ## Functions
