@@ -145,7 +145,7 @@ export interface ZodNotFiniteIssue extends ZodIssueBase {
 
 export interface ZodUniquenessIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.uniqueness;
-  duplicateElements?: unknown[];
+  duplicateElements?: Array<unknown>;
 }
 
 export interface ZodCustomIssue extends ZodIssueBase {
