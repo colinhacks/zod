@@ -526,8 +526,8 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`koa-zod-router`](https://github.com/JakeFenley/koa-zod-router): Create typesafe routes in Koa with I/O validation using Zod.
 
 #### Form integrations
-
-- [`conform`](https://conform.guide/api/zod): A progressive enhancement first form validation library for Remix and React Router
+  
+- [`conform`](https://conform.guide/api/zod/parseWithZod): A type-safe form validation library utilizing web fundamentals to progressively enhance HTML Forms with full support for server frameworks like Remix and Next.js.
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form.
 - [`zod-validation-error`](https://github.com/causaly/zod-validation-error): Generate user-friendly error messages from `ZodError`s.
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
