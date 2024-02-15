@@ -515,7 +515,7 @@ test("literal bigint default error message", () => {
   }
 });
 
-test.only("when the message is falsy, it is used as is provided", () => {
+test("when the message is falsy, it is used as is provided", () => {
   const schema = z.string().max(1, { message: "" });
   const result = schema.safeParse("asdf");
   expect(result.success).toEqual(false);
