@@ -281,6 +281,22 @@ export abstract class ZodType<
     return handleResult(ctx, result);
   }
 
+  safeParseOptional(
+    data: unknown,
+    params?: Partial<ParseParams>
+  ): Output | undefined {
+    const result = this.safeParse(data, params);
+    return result.success ? result.data : undefined;
+  }
+
+  async safeParseOptionalAsync(
+    data: unknown,
+    params?: Partial<ParseParams>
+  ): Promise<Output | undefined> {
+    const result = await this.safeParseAsync(data, params);
+    return result.success ? result.data : undefined;
+  }
+
   /** Alias of safeParseAsync */
   spa = this.safeParseAsync;
 
