@@ -4057,13 +4057,15 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   }
 
   extract<ToExtract extends readonly [T[number], ...T[number][]]>(
-    values: ToExtract
+    values: ToExtract,
+    newDef: RawCreateParams = this._def
   ): ZodEnum<Writeable<ToExtract>> {
-    return ZodEnum.create(values) as any;
+    return ZodEnum.create(values, newDef) as any;
   }
 
   exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
-    values: ToExclude
+    values: ToExclude,
+    newDef: RawCreateParams = this._def
   ): ZodEnum<
     typecast<Writeable<FilterEnum<T, ToExclude[number]>>, [string, ...string[]]>
   > {
@@ -4071,7 +4073,8 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       this.options.filter((opt) => !values.includes(opt)) as FilterEnum<
         T,
         ToExclude[number]
-      >
+      >,
+      newDef
     ) as any;
   }
 
