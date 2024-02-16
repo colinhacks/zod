@@ -4972,7 +4972,9 @@ export type ZodFirstPartySchemaTypes =
   | ZodCatch<any>
   | ZodPromise<any>
   | ZodBranded<any, any>
-  | ZodPipeline<any, any>;
+  | ZodPipeline<any, any>
+  | ZodReadonly<any>
+  | ZodSymbol;
 
 // requires TS 4.4+
 abstract class Class {
