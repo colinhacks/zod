@@ -90,6 +90,10 @@ const walkAndBuild = (/** @type string */ dir) => {
 
 walkAndBuild("");
 
-writeFileSync(join(denoLibRoot, "mod.ts"), `export * from "./index.ts";\n`, {
-  encoding: "utf-8",
-});
+writeFileSync(
+  join(denoLibRoot, "mod.ts"),
+  `export * from "./index.ts";\nexport { default as default } from "./index.ts";\n`,
+  {
+    encoding: "utf-8",
+  }
+);
