@@ -1985,8 +1985,10 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   minLength: { value: number; message?: string } | null;
   maxLength: { value: number; message?: string } | null;
   uniqueness: {
-    identifier?: ArrayUniqueIdentifier;
-    message?: string | ArrayMessageFunction;
+    identifier?: <U extends T["_output"]>(item: U) => unknown;
+    message?:
+      | string
+      | (<U extends T["_output"]>(duplicateItems: U[]) => string);
     showDuplicates?: boolean;
   } | null;
 }
@@ -1998,10 +2000,6 @@ export type arrayOutputType<
 > = Cardinality extends "atleastone"
   ? [T["_output"], ...T["_output"][]]
   : T["_output"][];
-type ArrayMessageFunction<T extends ZodTypeAny = ZodTypeAny> = (
-  duplicateElements: Array<T["_output"]>
-) => string;
-type ArrayUniqueIdentifier<T = any> = (o: T) => unknown;
 
 export class ZodArray<
   T extends ZodTypeAny,
@@ -2074,18 +2072,17 @@ export class ZodArray<
 
     if (def.uniqueness !== null) {
       const { identifier, message, showDuplicates } = def.uniqueness;
-
-      const result = this._arrayUnique(ctx.data, identifier, showDuplicates);
-      const { unique, duplicateElements } = result;
-
-      if (!unique) {
+      const duplicates = (
+        identifier
+          ? (ctx.data as this["_output"][]).map(identifier)
+          : (ctx.data as this["_output"][])
+      ).filter((item, idx, arr) => arr.indexOf(item) !== idx);
+      if (duplicates.length) {
         addIssueToContext(ctx, {
           code: ZodIssueCode.uniqueness,
-          duplicateElements,
+          duplicateElements: showDuplicates ? duplicates : undefined,
           message:
-            typeof message === "function"
-              ? message(duplicateElements)
-              : message,
+            typeof message === "function" ? message(duplicates) : message,
         });
         status.dirty();
       }
@@ -2114,23 +2111,6 @@ export class ZodArray<
 
   get element() {
     return this._def.type;
-  }
-
-  _arrayUnique(
-    array: Array<T["_output"]>,
-    identifier?: ArrayUniqueIdentifier<T["_output"]>,
-    showDuplicates = false
-  ) {
-    if (identifier) {
-      array = array.map((o) => (o != null ? identifier(o) : o));
-    }
-
-    return {
-      unique: array.length === new Set(array).size,
-      duplicateElements: showDuplicates
-        ? array.filter((item, index) => array.indexOf(item) !== index)
-        : [],
-    };
   }
 
   min(minLength: number, message?: errorUtil.ErrMessage): this {
