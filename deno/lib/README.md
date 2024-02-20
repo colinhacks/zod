@@ -196,21 +196,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <p width="200px">SDKs, Terraform, Docs.<br/>Your API made enterprise-ready</p>
     </td>
     <td align="center">
-      <a href="https://glow.app/" target="_blank">
-        <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="Glow Wallet" />
-      </a>
-      <br />
-      <b>Glow Wallet</b>
-      <br />
-      <a href="https://glow.app/" target="_blank">glow.app</a>
-      <br />
-      <p width="200px">Your new favorite
-        <br/>
-      Solana wallet</p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
       <a href="https://deletype.com/" target="_blank">
         <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="Deletype logo" />
       </a>
@@ -219,6 +204,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://deletype.com" target="_blank">deletype.com</a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://trigger.dev/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" width="200px;" alt="Trigger.dev logo" />
@@ -230,8 +217,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br/>
       <p>Effortless automation for developers</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" width="200px;" alt="Transloadit logo" />
@@ -243,6 +228,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br/>
       <p>Simple file processing for developers</p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://infisical.com" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" width="200px;" alt="Infisical logo" />
@@ -254,8 +241,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br/>
       <p>Open-source platform for secret<br/>management: sync secrets across your<br/>team/infrastructure and prevent secret leaks</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://whop.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" width="200px;" alt="Whop logo" />
@@ -267,6 +252,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">A marketplace for really cool internet products</p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://cryptojobslist.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" width="200px;" alt="CryptoJobsList logo" />
@@ -278,8 +265,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">The biggest list of crypto, blockchain and Web3 jobs</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://plain.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" width="200px;" alt="Plain logo" />
@@ -291,6 +276,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">How developers support their users</p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://inngest.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" width="200px;" alt="Inngest logo" />
@@ -302,8 +289,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">Serverless queues + durable workflows for TypeScript</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://storyblok.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" width="200px;" alt="Storyblok CMS" />
@@ -315,6 +300,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">The only headless CMS with a visual editor</p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://mux.link/zod" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" width="200px;" alt="Mux logo" />
@@ -504,6 +491,28 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://github.com/overthemike" target="_blank">@overthemike</a>
       <br />
     </td>
+    <td align="center">
+      <a href="https://usenextbase.com/" target="_blank">
+        <img src="https://pbs.twimg.com/profile_images/1692236063409070080/28yXFtop_400x400.jpg" width="100px;" alt="Nextbase logo"/>
+      </a>
+      <br />
+      <b>Nextbase</b>
+      <br/>
+      <a href="https://usenextbase.com/" target="_blank">usenextbase.com</a>
+      <br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://remotion.dev" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/85344006" width="100px;" alt="Remotion logo"/>
+      </a>
+      <br />
+      <b>Remotion</b>
+      <br/>
+      <a href="https://remotion.dev" target="_blank">remotion.dev</a>
+      <br />
+    </td>
   </tr>
 </table>
 
@@ -521,6 +530,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`tRPC`](https://github.com/trpc/trpc): Build end-to-end typesafe APIs without GraphQL.
 - [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-nestjs): Helper methods for using Zod in a NestJS project.
 - [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): Contract-first strictly typed endpoints with Zod. OpenAPI compatible.
+- [`zhttp`](https://github.com/evertdespiegeleer/zhttp): An OpenAPI compatible, strictly typed http library with Zod input and response validation.
 - [`domain-functions`](https://github.com/SeasonedSoftware/domain-functions/): Decouple your business logic from your framework using composable functions. With first-class type inference from end to end powered by Zod schemas.
 - [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
 - [`express-zod-api`](https://github.com/RobinTail/express-zod-api): Build Express-based APIs with I/O schema validation and custom middlewares.
@@ -529,12 +539,12 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 #### Form integrations
 
-- [`conform`](https://conform.guide/api/zod): A progressive enhancement first form validation library for Remix and React Router
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form.
 - [`zod-validation-error`](https://github.com/causaly/zod-validation-error): Generate user-friendly error messages from `ZodError`s.
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod.
 - [`zodix`](https://github.com/rileytomasek/zodix): Zod utilities for FormData and URLSearchParams in Remix loaders and actions.
+- [`conform`](https://conform.guide/api/zod/parseWithZod): A typesafe form validation library for progressive enhancement of HTML forms. Works with Remix and Next.js.
 - [`remix-params-helper`](https://github.com/kiliman/remix-params-helper): Simplify integration of Zod with standard URLSearchParams and FormData for Remix apps.
 - [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod): Formik-compliant validator library that simplifies using Zod with Formik.
 - [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): Useful for translating Zod error messages.
@@ -586,13 +596,16 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`freerstore`](https://github.com/JacobWeisenburger/freerstore): Firestore cost optimizer.
 - [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration.
 - [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
+- [`pastel`](https://github.com/vadimdemedes/pastel): Create CLI applications with react, zod, and ink.
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
 - [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas.
+- [`zod-config`](https://github.com/alexmarqs/zod-config): Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.
 
 #### Utilities for Zod
 
 - [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): Framework agnostic utilities for Zod.
 - [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Controlled environment for testing zod schemas. [Live demo](https://zod-sandbox.vercel.app/).
+- [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod runtime parsing in production.
 
 ## Installation
 
@@ -717,16 +730,19 @@ Zod now provides a more convenient way to coerce primitive values.
 const schema = z.coerce.string();
 schema.parse("tuna"); // => "tuna"
 schema.parse(12); // => "12"
-schema.parse(true); // => "true"
 ```
 
-During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
+During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings.
+
+The returned schema is a normal `ZodString` instance so you can use all string methods.
 
 ```ts
 z.coerce.string().email().min(5);
 ```
 
-All primitive types support coercion.
+**How coercion works**
+
+All primitive types support coercion. Zod coerces all inputs using the built-in constructors: `String(input)`, `Number(input)`, `new Date(input)`, etc.
 
 ```ts
 z.coerce.string(); // String(input)
@@ -736,9 +752,19 @@ z.coerce.bigint(); // BigInt(input)
 z.coerce.date(); // new Date(input)
 ```
 
+Note that some behavior may not be what you expect.
+
+```ts
+schema.parse(true); // => "true"
+schema.parse(undefined); // => "undefined"
+schema.parse(null); // => "null"
+```
+
+For more control over coercion logic, consider using [`z.preprocess`](#preprocess) or [`z.pipe()`](#pipe).
+
 **Boolean coercion**
 
-Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
+Zod's approach to coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
 
 ```ts
 z.coerce.boolean().parse("tuna"); // => true
@@ -951,7 +977,7 @@ You can customize certain error messages when creating a nan schema.
 ```ts
 const isNaN = z.nan({
   required_error: "isNaN is required",
-  invalid_type_error: "isNaN must be not a number",
+  invalid_type_error: "isNaN must be 'not a number'",
 });
 ```
 
@@ -1035,7 +1061,7 @@ const fish = ["Salmon", "Tuna", "Trout"];
 const FishEnum = z.enum(fish);
 ```
 
-**Autocompletion**
+**`.enum`**
 
 To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 
@@ -1056,6 +1082,16 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 
 ```ts
 FishEnum.options; // ["Salmon", "Tuna", "Trout"];
+```
+
+**`.exclude/.extract()`**
+
+You can create subsets of a Zod enum with the `.exclude` and `.extract` methods.
+
+```ts
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+const SalmonAndTrout = FishEnum.extract(["Salmon", "Trout"]);
+const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
 
 ## Native enums
@@ -1857,7 +1893,7 @@ const TestSchema = z.instanceof(Test);
 
 const blob: any = "whatever";
 TestSchema.parse(new Test()); // passes
-TestSchema.parse("blob"); // throws
+TestSchema.parse(blob); // throws
 ```
 
 ## Functions

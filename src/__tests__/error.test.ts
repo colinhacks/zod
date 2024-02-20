@@ -548,6 +548,15 @@ test("enum with message returns the custom error message", () => {
   }
 });
 
+test("when the message is falsy, it is used as is provided", () => {
+  const schema = z.string().max(1, { message: "" });
+  const result = schema.safeParse("asdf");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("");
+  }
+});
+
 // test("dont short circuit on continuable errors", () => {
 //   const user = z
 //     .object({
