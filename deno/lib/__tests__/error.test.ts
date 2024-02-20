@@ -548,7 +548,7 @@ test("enum with message returns the custom error message", () => {
     );
   }
 });
-  
+
 test("when the message is falsy, it is used as is provided", () => {
   const schema = z.string().max(1, { message: "" });
   const result = schema.safeParse("asdf");
