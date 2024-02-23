@@ -99,8 +99,12 @@ export type StringValidation =
   | "cuid2"
   | "ulid"
   | "datetime"
+<<<<<<< HEAD
   | "date"
   | "time"
+=======
+  | "duration"
+>>>>>>> 29773e8 (feat: Add support for ISO-8601 Durations)
   | "ip"
   | "base64"
   | { includes: string; position?: number }

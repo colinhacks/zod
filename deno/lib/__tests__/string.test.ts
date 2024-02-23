@@ -548,6 +548,7 @@ test("datetime parsing", () => {
   ).toThrow();
 });
 
+<<<<<<< HEAD
 test("date", () => {
   const a = z.string().date();
   expect(a.isDate).toEqual(true);
@@ -669,6 +670,19 @@ test("time parsing", () => {
   // expect(() => time4.parse("00:00:00.0")).toThrow();
   // expect(() => time4.parse("00:00:00.000")).toThrow();
   // expect(() => time4.parse("00:00:00.000+00:00")).toThrow();
+=======
+test("duration", () => {
+  const duration = z.string().duration();
+  expect(duration.isDuration).toEqual(true);
+
+  duration.parse("P3Y6M4DT12H30M5S");
+
+  const result = duration.safeParse("invalidDuration");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("Invalid duration");
+  }
+>>>>>>> 29773e8 (feat: Add support for ISO-8601 Durations)
 });
 
 test("IP validation", () => {
