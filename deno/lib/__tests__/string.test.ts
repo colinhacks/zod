@@ -470,6 +470,19 @@ test("datetime parsing", () => {
   ).toThrow();
 });
 
+test("duration", () => {
+  const duration = z.string().duration();
+  expect(duration.isDuration).toEqual(true);
+
+  duration.parse("P3Y6M4DT12H30M5S");
+
+  const result = duration.safeParse("invalidDuration");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("Invalid duration");
+  }
+});
+
 test("IP validation", () => {
   const ip = z.string().ip();
   expect(ip.safeParse("122.122.122.122").success).toBe(true);
