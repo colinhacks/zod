@@ -97,7 +97,7 @@
     "test:watch": "yarn test:ts-jest --watch",
     "test": "yarn test:ts-jest",
     "test:babel": "jest --coverage --config ./configs/babel-jest.config.json",
-    "test:bun": "bun test",
+    "test:bun": "bun test src/",
     "test:vitest": "npx vitest --config ./configs/vitest.config.ts",
     "test:ts-jest": "npx jest --config ./configs/ts-jest.config.json",
     "test:swc": "npx jest --config ./configs/swc-jest.config.json",
