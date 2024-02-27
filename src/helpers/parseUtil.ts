@@ -112,9 +112,11 @@ export class ParseStatus {
   ): Promise<SyncParseReturnType<any>> {
     const syncPairs: ObjectPair[] = [];
     for (const pair of pairs) {
+      const key = await pair.key;
+      const value = await pair.value;
       syncPairs.push({
-        key: await pair.key,
-        value: await pair.value,
+        key,
+        value,
       });
     }
     return ParseStatus.mergeObjectSync(status, syncPairs);
