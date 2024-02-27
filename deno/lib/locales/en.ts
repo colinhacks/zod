@@ -70,11 +70,11 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       if (issue.type === "array")
         message = `Array must contain ${
           issue.exact ? "exactly" : issue.inclusive ? `at least` : `more than`
-        } ${issue.minimum} element(s)`;
+        } ${issue.minimum} ${issue.minimum <= 1 ? "element" : "elements"}`;
       else if (issue.type === "string")
         message = `String must contain ${
           issue.exact ? "exactly" : issue.inclusive ? `at least` : `over`
-        } ${issue.minimum} character(s)`;
+        } ${issue.minimum} ${issue.minimum <= 1 ? "character" : "characters"}`;
       else if (issue.type === "number")
         message = `Number must be ${
           issue.exact
@@ -97,11 +97,11 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       if (issue.type === "array")
         message = `Array must contain ${
           issue.exact ? `exactly` : issue.inclusive ? `at most` : `less than`
-        } ${issue.maximum} element(s)`;
+        } ${issue.maximum} ${issue.maximum <= 1 ? "element" : "elements"}`;
       else if (issue.type === "string")
         message = `String must contain ${
           issue.exact ? `exactly` : issue.inclusive ? `at most` : `under`
-        } ${issue.maximum} character(s)`;
+        } ${issue.maximum} ${issue.maximum <= 1 ? "character" : "characters"}`;
       else if (issue.type === "number")
         message = `Number must be ${
           issue.exact

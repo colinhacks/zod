@@ -9,7 +9,17 @@ test("array min", async () => {
     await z.array(z.string()).min(4).parseAsync([]);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Array must contain at least 4 element(s)"
+      "Array must contain at least 4 elements"
+    );
+  }
+});
+
+test("array min", async () => {
+  try {
+    await z.array(z.string()).min(1).parseAsync([]);
+  } catch (err) {
+    expect((err as z.ZodError).issues[0].message).toEqual(
+      "Array must contain at least 1 element"
     );
   }
 });
@@ -19,7 +29,7 @@ test("array max", async () => {
     await z.array(z.string()).max(2).parseAsync(["asdf", "asdf", "asdf"]);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Array must contain at most 2 element(s)"
+      "Array must contain at most 2 elements"
     );
   }
 });
@@ -29,7 +39,7 @@ test("array length", async () => {
     await z.array(z.string()).length(2).parseAsync(["asdf", "asdf", "asdf"]);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Array must contain exactly 2 element(s)"
+      "Array must contain exactly 2 elements"
     );
   }
 
@@ -37,7 +47,7 @@ test("array length", async () => {
     await z.array(z.string()).length(2).parseAsync(["asdf"]);
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "Array must contain exactly 2 element(s)"
+      "Array must contain exactly 2 elements"
     );
   }
 });
@@ -47,7 +57,7 @@ test("string length", async () => {
     await z.string().length(4).parseAsync("asd");
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "String must contain exactly 4 character(s)"
+      "String must contain exactly 4 characters"
     );
   }
 
@@ -55,7 +65,7 @@ test("string length", async () => {
     await z.string().length(4).parseAsync("asdaa");
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "String must contain exactly 4 character(s)"
+      "String must contain exactly 4 characters"
     );
   }
 });
@@ -65,7 +75,7 @@ test("string min", async () => {
     await z.string().min(4).parseAsync("asd");
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "String must contain at least 4 character(s)"
+      "String must contain at least 4 characters"
     );
   }
 });
@@ -75,7 +85,7 @@ test("string max", async () => {
     await z.string().max(4).parseAsync("aasdfsdfsd");
   } catch (err) {
     expect((err as z.ZodError).issues[0].message).toEqual(
-      "String must contain at most 4 character(s)"
+      "String must contain at most 4 characters"
     );
   }
 });
