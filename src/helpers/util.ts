@@ -1,3 +1,5 @@
+import { isArray, isDate, isMap, isNull, isNumber, isPromise, isSet } from "./type-checking.util";
+
 export namespace util {
   type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
     V
@@ -164,57 +166,41 @@ export const ZodParsedType = util.arrayToEnum([
 export type ZodParsedType = keyof typeof ZodParsedType;
 
 export const getParsedType = (data: any): ZodParsedType => {
-  const t = typeof data;
-
-  switch (t) {
-    case "undefined":
-      return ZodParsedType.undefined;
-
-    case "string":
-      return ZodParsedType.string;
-
-    case "number":
-      return isNaN(data) ? ZodParsedType.nan : ZodParsedType.number;
-
-    case "boolean":
-      return ZodParsedType.boolean;
-
-    case "function":
-      return ZodParsedType.function;
-
-    case "bigint":
-      return ZodParsedType.bigint;
-
-    case "symbol":
-      return ZodParsedType.symbol;
-
-    case "object":
-      if (Array.isArray(data)) {
-        return ZodParsedType.array;
+  const parsedTypeMap: Record<string, ((data: unknown)=> ZodParsedType) > = {
+    "undefined": (_: unknown)=> ZodParsedType.undefined,
+    "string": (_: unknown)=> ZodParsedType.string,
+    "function": (_: unknown)=> ZodParsedType.function,
+    "boolean": (_: unknown)=> ZodParsedType.boolean,
+    "bigint": (_: unknown)=> ZodParsedType.bigint,
+    "symbol":  (_: unknown)=> ZodParsedType.symbol,
+    "number": (input: unknown)=> {
+      return isNumber(input) && isNaN(input) ? ZodParsedType.nan : ZodParsedType.number;
+    },
+    "object": (input: unknown)=> {
+      if (isArray(input)){
+        return ZodParsedType.array
       }
-      if (data === null) {
-        return ZodParsedType.null;
+      if (isNull(input)){
+        return ZodParsedType.null
       }
-      if (
-        data.then &&
-        typeof data.then === "function" &&
-        data.catch &&
-        typeof data.catch === "function"
-      ) {
-        return ZodParsedType.promise;
+  
+      if (isPromise(input)){
+        return ZodParsedType.promise
       }
-      if (typeof Map !== "undefined" && data instanceof Map) {
-        return ZodParsedType.map;
+  
+      if (isMap(input)){
+        return ZodParsedType.map
       }
-      if (typeof Set !== "undefined" && data instanceof Set) {
-        return ZodParsedType.set;
+  
+      if (isSet(input)){
+        return ZodParsedType.set
       }
-      if (typeof Date !== "undefined" && data instanceof Date) {
-        return ZodParsedType.date;
+  
+      if (isDate(input)){
+        return ZodParsedType.date
       }
-      return ZodParsedType.object;
-
-    default:
-      return ZodParsedType.unknown;
+      return ZodParsedType.object
+    }
   }
+  return parsedTypeMap[typeof data](data) || ZodParsedType.unknown
 };
