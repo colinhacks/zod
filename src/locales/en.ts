@@ -74,7 +74,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       else if (issue.type === "string"){
         message = `String must contain ${
           issue.exact ? "exactly" : issue.inclusive ? `at least` : `over`
-        } ${issue.minimum} character${issue.minimum} > 1 ? "(s)" : ""`;
+          } ${issue.minimum} character${issue.minimum>1 ? "(s)" : ""}`;  
       }
       else if (issue.type === "number")
         message = `Number must be ${
