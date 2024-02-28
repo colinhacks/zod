@@ -12,5 +12,3 @@ deno/lib/playground.ts
 workspace.code-workspace
 .netlify
 bun.lockb
-yarn.lock
-package-lock.json
