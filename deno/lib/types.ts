@@ -410,6 +410,9 @@ export abstract class ZodType<
     this.isOptional = this.isOptional.bind(this);
   }
 
+  withMetadata<M extends object>(metadata: M): ZodMetadata<this, M> {
+    return ZodMetadata.create(this, metadata, this._def);
+  }
   optional(): ZodOptional<this> {
     return ZodOptional.create(this, this._def) as any;
   }
@@ -503,6 +506,137 @@ export abstract class ZodType<
   isNullable(): boolean {
     return this.safeParse(null).success;
   }
+}
+
+/////////////////////////////////////////
+/////////////////////////////////////////
+//////////                     //////////
+//////////     ZodMetadata     //////////
+//////////                     //////////
+/////////////////////////////////////////
+/////////////////////////////////////////
+
+export interface ZodMetadataDef<T extends ZodTypeAny, M extends object>
+  extends ZodTypeDef {
+  typeName: ZodFirstPartyTypeKind.ZodMetadata;
+  innerType: T;
+  metadata: M;
+}
+
+export class ZodMetadata<
+  T extends ZodTypeAny,
+  M extends object
+> extends ZodType<output<T>, ZodMetadataDef<T, M>, input<T>> {
+  unwrap() {
+    return this._def.innerType;
+  }
+
+  get metadata(): M {
+    return this._def.metadata;
+  }
+
+  _parse(input: ParseInput): ParseReturnType<output<T>> {
+    return this._def.innerType._parse(input);
+  }
+
+  static create = <T extends ZodTypeAny, M extends object>(
+    innerType: T,
+    metadata: M,
+    params?: RawCreateParams
+  ): ZodMetadata<T, M> => {
+    return new ZodMetadata({
+      innerType,
+      metadata,
+      typeName: ZodFirstPartyTypeKind.ZodMetadata,
+      ...processCreateParams(params),
+    });
+  };
+}
+
+export type extractMetadata<T extends ZodTypeAny> = ZodType<
+  any,
+  ZodTypeDef,
+  any
+> extends T
+  ? never // bail if T is too generic, to prevent combinatorial explosion
+  : T extends ZodMetadata<any, infer M>
+  ? M
+  : T extends ZodOptional<infer U>
+  ? extractMetadata<U>
+  : T extends ZodNullable<infer U>
+  ? extractMetadata<U>
+  : T extends ZodDefault<infer U>
+  ? extractMetadata<U>
+  : T extends ZodLazy<infer U>
+  ? extractMetadata<U>
+  : T extends ZodEffects<infer U, any, any>
+  ? extractMetadata<U>
+  : T extends ZodCatch<infer U>
+  ? extractMetadata<U>
+  : T extends ZodBranded<infer U, any>
+  ? extractMetadata<U>
+  : T extends ZodPipeline<any, infer U>
+  ? extractMetadata<U>
+  : T extends ZodPromise<infer U>
+  ? extractDeepMetadata<U>
+  : never;
+
+export function extractMetadata<T extends ZodTypeAny>(
+  schema: T
+): extractMetadata<T> {
+  if (schema instanceof ZodMetadata) return schema.metadata;
+  if (schema instanceof ZodOptional) return extractMetadata(schema.unwrap());
+  if (schema instanceof ZodNullable) return extractMetadata(schema.unwrap());
+  if (schema instanceof ZodDefault)
+    return extractMetadata(schema.removeDefault());
+  if (schema instanceof ZodLazy) return extractMetadata(schema.schema);
+  if (schema instanceof ZodEffects) return extractMetadata(schema._def.schema);
+  if (schema instanceof ZodCatch) return extractMetadata(schema.removeCatch());
+  if (schema instanceof ZodBranded) return extractMetadata(schema.unwrap());
+  if (schema instanceof ZodPipeline) return extractMetadata(schema._def.out);
+  if (schema instanceof ZodPromise) return extractDeepMetadata(schema.unwrap());
+  return undefined as never;
+}
+
+export type extractDeepMetadata<T extends ZodTypeAny> = ZodType<
+  any,
+  ZodTypeDef,
+  any
+> extends T
+  ? never // bail if T is too generic, to prevent combinatorial explosion
+  : T extends ZodMetadata<any, infer M>
+  ? M
+  : T extends ZodOptional<infer U>
+  ? extractDeepMetadata<U>
+  : T extends ZodNullable<infer U>
+  ? extractDeepMetadata<U>
+  : T extends ZodDefault<infer U>
+  ? extractDeepMetadata<U>
+  : T extends ZodLazy<infer U>
+  ? extractDeepMetadata<U>
+  : T extends ZodEffects<infer U, any, any>
+  ? extractDeepMetadata<U>
+  : T extends ZodCatch<infer U>
+  ? extractDeepMetadata<U>
+  : T extends ZodBranded<infer U, any>
+  ? extractDeepMetadata<U>
+  : T extends ZodPipeline<any, infer U>
+  ? extractDeepMetadata<U>
+  : T extends ZodPromise<infer U>
+  ? extractDeepMetadata<U>
+  : T extends ZodArray<infer U>
+  ? extractDeepMetadata<U>
+  : T extends ZodSet<infer U>
+  ? extractDeepMetadata<U>
+  : never;
+
+export function extractDeepMetadata<T extends ZodTypeAny>(
+  schema: T
+): extractDeepMetadata<T> {
+  if (schema instanceof ZodArray) return extractDeepMetadata(schema.element);
+  if (schema instanceof ZodSet)
+    return extractDeepMetadata(schema._def.valueType);
+  return extractMetadata(schema) as extractDeepMetadata<T>;
 }
 
 /////////////////////////////////////////
@@ -4901,6 +5035,7 @@ export const late = {
 };
 
 export enum ZodFirstPartyTypeKind {
+  ZodMetadata = "ZodMetadata",
   ZodString = "ZodString",
   ZodNumber = "ZodNumber",
   ZodNaN = "ZodNaN",
@@ -4986,6 +5121,7 @@ const instanceOfType = <T extends typeof Class>(
   }
 ) => custom<InstanceType<T>>((data) => data instanceof cls, params);
 
+const metadataType = ZodMetadata.create;
 const stringType = ZodString.create;
 const numberType = ZodNumber.create;
 const nanType = ZodNaN.create;
@@ -5080,6 +5216,7 @@ export {
   unionType as union,
   unknownType as unknown,
   voidType as void,
+  metadataType as withMetadata,
 };
 
 export const NEVER = INVALID as never;
