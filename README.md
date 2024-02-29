@@ -683,14 +683,14 @@ Creating an object schema
 ```ts
 import { z } from "zod";
 
-const User = z.object({
+const user = z.object({
   username: z.string(),
 });
 
-User.parse({ username: "Ludwig" });
+user.parse({ username: "Ludwig" });
 
 // extract the inferred type
-type User = z.infer<typeof User>;
+type User = z.infer<typeof user>;
 // { username: string }
 ```
 
@@ -1042,8 +1042,8 @@ For older zod versions, use [`z.preprocess`](#preprocess) like [described in thi
 ## Zod enums
 
 ```ts
-const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
-type FishEnum = z.infer<typeof FishEnum>;
+const fishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+type FishEnum = z.infer<typeof fishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
@@ -1051,14 +1051,14 @@ type FishEnum = z.infer<typeof FishEnum>;
 
 ```ts
 const VALUES = ["Salmon", "Tuna", "Trout"] as const;
-const FishEnum = z.enum(VALUES);
+const fishEnum = z.enum(VALUES);
 ```
 
 This is not allowed, since Zod isn't able to infer the exact values of each element.
 
 ```ts
 const fish = ["Salmon", "Tuna", "Trout"];
-const FishEnum = z.enum(fish);
+const fishEnum = z.enum(fish);
 ```
 
 **`.enum`**
@@ -1066,9 +1066,9 @@ const FishEnum = z.enum(fish);
 To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 
 ```ts
-FishEnum.enum.Salmon; // => autocompletes
+fishEnum.enum.Salmon; // => autocompletes
 
-FishEnum.enum;
+fishEnum.enum;
 /*
 => {
   Salmon: "Salmon",
@@ -1081,7 +1081,7 @@ FishEnum.enum;
 You can also retrieve the list of options as a tuple with the `.options` property:
 
 ```ts
-FishEnum.options; // ["Salmon", "Tuna", "Trout"];
+fishEnum.options; // ["Salmon", "Tuna", "Trout"];
 ```
 
 **`.exclude/.extract()`**
@@ -1089,9 +1089,9 @@ FishEnum.options; // ["Salmon", "Tuna", "Trout"];
 You can create subsets of a Zod enum with the `.exclude` and `.extract` methods.
 
 ```ts
-const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
-const SalmonAndTrout = FishEnum.extract(["Salmon", "Trout"]);
-const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
+const fishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+const salmonAndTrout = fishEnum.extract(["Salmon", "Trout"]);
+const tunaOnly = fishEnum.exclude(["Salmon", "Trout"]);
 ```
 
 ## Native enums
@@ -1106,14 +1106,14 @@ enum Fruits {
   Banana,
 }
 
-const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
+const fruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof fruitEnum>; // Fruits
 
-FruitEnum.parse(Fruits.Apple); // passes
-FruitEnum.parse(Fruits.Banana); // passes
-FruitEnum.parse(0); // passes
-FruitEnum.parse(1); // passes
-FruitEnum.parse(3); // fails
+fruitEnum.parse(Fruits.Apple); // passes
+fruitEnum.parse(Fruits.Banana); // passes
+fruitEnum.parse(0); // passes
+fruitEnum.parse(1); // passes
+fruitEnum.parse(3); // fails
 ```
 
 **String enums**
@@ -1125,15 +1125,15 @@ enum Fruits {
   Cantaloupe, // you can mix numerical and string enums
 }
 
-const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
+const fruitEnum = z.nativeEnum(Fruits);
+type FruitEnum = z.infer<typeof fruitEnum>; // Fruits
 
-FruitEnum.parse(Fruits.Apple); // passes
-FruitEnum.parse(Fruits.Cantaloupe); // passes
-FruitEnum.parse("apple"); // passes
-FruitEnum.parse("banana"); // passes
-FruitEnum.parse(0); // passes
-FruitEnum.parse("Cantaloupe"); // fails
+fruitEnum.parse(Fruits.Apple); // passes
+fruitEnum.parse(Fruits.Cantaloupe); // passes
+fruitEnum.parse("apple"); // passes
+fruitEnum.parse("banana"); // passes
+fruitEnum.parse(0); // passes
+fruitEnum.parse("Cantaloupe"); // fails
 ```
 
 **Const enums**
@@ -1141,25 +1141,25 @@ FruitEnum.parse("Cantaloupe"); // fails
 The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` requires TypeScript 3.4+!
 
 ```ts
-const Fruits = {
+const fruits = {
   Apple: "apple",
   Banana: "banana",
   Cantaloupe: 3,
 } as const;
 
-const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer<typeof FruitEnum>; // "apple" | "banana" | 3
+const fruitEnum = z.nativeEnum(fruits);
+type FruitEnum = z.infer<typeof fruitEnum>; // "apple" | "banana" | 3
 
-FruitEnum.parse("apple"); // passes
-FruitEnum.parse("banana"); // passes
-FruitEnum.parse(3); // passes
-FruitEnum.parse("Cantaloupe"); // fails
+fruitEnum.parse("apple"); // passes
+fruitEnum.parse("banana"); // passes
+fruitEnum.parse(3); // passes
+fruitEnum.parse("Cantaloupe"); // fails
 ```
 
 You can access the underlying object with the `.enum` property:
 
 ```ts
-FruitEnum.enum.Apple; // "apple"
+fruitEnum.enum.Apple; // "apple"
 ```
 
 ## Optionals
@@ -1203,8 +1203,8 @@ nullableString.parse(null); // => null
 Or use the `.nullable()` method.
 
 ```ts
-const E = z.string().nullable(); // equivalent to nullableString
-type E = z.infer<typeof E>; // string | null
+const e = z.string().nullable(); // equivalent to nullableString
+type E = z.infer<typeof e>; // string | null
 ```
 
 Extract the inner schema with `.unwrap()`.
@@ -1219,13 +1219,13 @@ nullableString.unwrap() === stringSchema; // true
 
 ```ts
 // all properties are required by default
-const Dog = z.object({
+const dog = z.object({
   name: z.string(),
   age: z.number(),
 });
 
 // extract the inferred type like this
-type Dog = z.infer<typeof Dog>;
+type Dog = z.infer<typeof dog>;
 
 // equivalent to:
 type Dog = {
@@ -1239,8 +1239,8 @@ type Dog = {
 Use `.shape` to access the schemas for a particular key.
 
 ```ts
-Dog.shape.name; // => string schema
-Dog.shape.age; // => number schema
+dog.shape.name; // => string schema
+dog.shape.age; // => number schema
 ```
 
 ### `.keyof`
@@ -1248,7 +1248,7 @@ Dog.shape.age; // => number schema
 Use `.keyof` to create a `ZodEnum` schema from the keys of an object schema.
 
 ```ts
-const keySchema = Dog.keyof();
+const keySchema = dog.keyof();
 keySchema; // ZodEnum<["name", "age"]>
 ```
 
@@ -1257,7 +1257,7 @@ keySchema; // ZodEnum<["name", "age"]>
 You can add additional fields to an object schema with the `.extend` method.
 
 ```ts
-const DogWithBreed = Dog.extend({
+const dogWithBreed = dog.extend({
   breed: z.string(),
 });
 ```
@@ -1266,14 +1266,14 @@ You can use `.extend` to overwrite fields! Be careful with this power!
 
 ### `.merge`
 
-Equivalent to `A.extend(B.shape)`.
+Equivalent to `a.extend(b.shape)`.
 
 ```ts
-const BaseTeacher = z.object({ students: z.array(z.string()) });
-const HasID = z.object({ id: z.string() });
+const baseTeacher = z.object({ students: z.array(z.string()) });
+const hasID = z.object({ id: z.string() });
 
-const Teacher = BaseTeacher.merge(HasID);
-type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
+const teacher = baseTeacher.merge(hasID);
+type Teacher = z.infer<typeof teacher>; // => { students: string[], id: string }
 ```
 
 > If the two schemas share keys, the properties of B overrides the property of A. The returned schema also inherits the "unknownKeys" policy (strip/strict/passthrough) and the catchall schema of B.
@@ -1283,7 +1283,7 @@ type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
 Inspired by TypeScript's built-in `Pick` and `Omit` utility types, all Zod object schemas have `.pick` and `.omit` methods that return a modified version. Consider this Recipe schema:
 
 ```ts
-const Recipe = z.object({
+const recipe = z.object({
   id: z.string(),
   name: z.string(),
   ingredients: z.array(z.string()),
@@ -1293,17 +1293,17 @@ const Recipe = z.object({
 To only keep certain keys, use `.pick` .
 
 ```ts
-const JustTheName = Recipe.pick({ name: true });
-type JustTheName = z.infer<typeof JustTheName>;
+const justTheName = recipe.pick({ name: true });
+type JustTheName = z.infer<typeof justTheName>;
 // => { name: string }
 ```
 
 To remove certain keys, use `.omit` .
 
 ```ts
-const NoIDRecipe = Recipe.omit({ id: true });
+const noIDRecipe = recipe.omit({ id: true });
 
-type NoIDRecipe = z.infer<typeof NoIDRecipe>;
+type NoIDRecipe = z.infer<typeof noIDRecipe>;
 // => { name: string, ingredients: string[] }
 ```
 
@@ -1629,9 +1629,9 @@ Record schemas are used to validate types such as `{ [k: string]: number }`.
 If you want to validate the _values_ of an object against some schema but don't care about the keys, use `z.record(valueType)`:
 
 ```ts
-const NumberCache = z.record(z.number());
+const numberCache = z.record(z.number());
 
-type NumberCache = z.infer<typeof NumberCache>;
+type NumberCache = z.infer<typeof numberCache>;
 // => { [k: string]: number }
 ```
 
@@ -1661,9 +1661,9 @@ If you want to validate both the keys and the values, use
 `z.record(keyType, valueType)`:
 
 ```ts
-const NoEmptyKeysSchema = z.record(z.string().min(1), z.number());
-NoEmptyKeysSchema.parse({ count: 1 }); // => { 'count': 1 }
-NoEmptyKeysSchema.parse({ "": 1 }); // fails
+const noEmptyKeysSchema = z.record(z.string().min(1), z.number());
+noEmptyKeysSchema.parse({ count: 1 }); // => { 'count': 1 }
+noEmptyKeysSchema.parse({ "": 1 }); // fails
 ```
 
 _(Notice how when passing two arguments, `valueType` is the second argument)_
@@ -1718,18 +1718,18 @@ z.set(z.string()).size(5); // must contain 5 items exactly
 Intersections are useful for creating "logical AND" types. This is useful for intersecting two object types.
 
 ```ts
-const Person = z.object({
+const person = z.object({
   name: z.string(),
 });
 
-const Employee = z.object({
+const employee = z.object({
   role: z.string(),
 });
 
-const EmployedPerson = z.intersection(Person, Employee);
+const employedPerson = z.intersection(person, employee);
 
 // equivalent to:
-const EmployedPerson = Person.and(Employee);
+const employedPerson = person.and(employee);
 ```
 
 Though in many cases, it is recommended to use `A.merge(B)` to merge two objects. The `.merge` method returns a new `ZodObject` instance, whereas `A.and(B)` returns a less useful `ZodIntersection` instance that lacks common object methods like `pick` and `omit`.
@@ -1747,17 +1747,17 @@ type c = z.infer<typeof c>; // => number
 <!--
 
 ``` ts
-const A = z.object({
+const a = z.object({
   a: z.string(),
 });
 
-const B = z.object({
+const b = z.object({
   b: z.string(),
 });
 
-const AB = z.intersection(A, B);
+const ab = z.intersection(a, b);
 
-type Teacher = z.infer<typeof Teacher>;
+type Teacher = z.infer<typeof teacher>;
 // { id:string; name:string };
 ```  -->
 
@@ -1889,11 +1889,11 @@ class Test {
   name: string;
 }
 
-const TestSchema = z.instanceof(Test);
+const testSchema = z.instanceof(Test);
 
 const blob: any = "whatever";
-TestSchema.parse(new Test()); // passes
-TestSchema.parse(blob); // throws
+testSchema.parse(new Test()); // passes
+testSchema.parse(blob); // throws
 ```
 
 ## Functions
@@ -1929,7 +1929,7 @@ const args = z.tuple([z.string()]);
 const returnType = z.number();
 
 const myFunction = z.function(args, returnType);
-type myFunction = z.infer<typeof myFunction>;
+type MyFunction = z.infer<typeof myFunction>;
 // => (arg0: string)=>number
 ``` -->
 
@@ -2223,7 +2223,7 @@ ZodError {
 The `.refine` method is actually syntactic sugar atop a more versatile (and verbose) method called `superRefine`. Here's an example:
 
 ```ts
-const Strings = z.array(z.string()).superRefine((val, ctx) => {
+const strings = z.array(z.string()).superRefine((val, ctx) => {
   if (val.length > 3) {
     ctx.addIssue({
       code: z.ZodIssueCode.too_big,
@@ -2365,7 +2365,7 @@ const nameToGreeting = z
 Transforms can also be async.
 
 ```ts
-const IdToUser = z
+const idToUser = z
   .string()
   .uuid()
   .transform(async (id) => {
@@ -2539,13 +2539,13 @@ petCat(fido); // works fine
 In some cases, its can be desirable to simulate _nominal typing_ inside TypeScript. For instance, you may wish to write a function that only accepts an input that has been validated by Zod. This can be achieved with _branded types_ (AKA _opaque types_).
 
 ```ts
-const Cat = z.object({ name: z.string() }).brand<"Cat">();
-type Cat = z.infer<typeof Cat>;
+const cat = z.object({ name: z.string() }).brand<"cat">();
+type Cat = z.infer<typeof cat>;
 
 const petCat = (cat: Cat) => {};
 
 // this works
-const simba = Cat.parse({ name: "simba" });
+const simba = cat.parse({ name: "simba" });
 petCat(simba);
 
 // this doesn't
@@ -2555,9 +2555,9 @@ petCat({ name: "fido" });
 Under the hood, this works by attaching a "brand" to the inferred type using an intersection type. This way, plain/unbranded data structures are no longer assignable to the inferred type of the schema.
 
 ```ts
-const Cat = z.object({ name: z.string() }).brand<"Cat">();
-type Cat = z.infer<typeof Cat>;
-// {name: string} & {[symbol]: "Cat"}
+const cat = z.object({ name: z.string() }).brand<"cat">();
+type Cat = z.infer<typeof cat>;
+// {name: string} & {[symbol]: "cat"}
 ```
 
 Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
@@ -2668,8 +2668,8 @@ console.log(toBigInt.safeParse(null).success); // false
 You can extract the TypeScript type of any schema with `z.infer<typeof mySchema>` .
 
 ```ts
-const A = z.string();
-type A = z.infer<typeof A>; // string
+const a = z.string();
+type A = z.infer<typeof a>; // string
 
 const u: A = 12; // TypeError
 const u: A = "asdf"; // compiles
@@ -2685,11 +2685,11 @@ You can separately extract the input and output types like so:
 const stringToNumber = z.string().transform((val) => val.length);
 
 // ⚠️ Important: z.infer returns the OUTPUT type!
-type input = z.input<typeof stringToNumber>; // string
-type output = z.output<typeof stringToNumber>; // number
+type Input = z.input<typeof stringToNumber>; // string
+type Output = z.output<typeof stringToNumber>; // number
 
 // equivalent to z.output!
-type inferred = z.infer<typeof stringToNumber>; // number
+type Inferred = z.infer<typeof stringToNumber>; // number
 ```
 
 ### Writing generic functions
@@ -2887,17 +2887,17 @@ In our experience, io-ts prioritizes functional programming purity over develope
 ```ts
 import * as t from "io-ts";
 
-const A = t.type({
+const a = t.type({
   foo: t.string,
 });
 
-const B = t.partial({
+const b = t.partial({
   bar: t.number,
 });
 
-const C = t.intersection([A, B]);
+const c = t.intersection([a, b]);
 
-type C = t.TypeOf<typeof C>;
+type C = t.TypeOf<typeof c>;
 // returns { foo: string; bar?: number | undefined }
 ```
 
@@ -2906,12 +2906,12 @@ You must define the required and optional props in separate object validators, p
 Consider the equivalent in Zod:
 
 ```ts
-const C = z.object({
+const c = z.object({
   foo: z.string(),
   bar: z.number().optional(),
 });
 
-type C = z.infer<typeof C>;
+type C = z.infer<typeof c>;
 // returns { foo: string; bar?: number | undefined }
 ```
 
