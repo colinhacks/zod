@@ -81,6 +81,8 @@ test("email validations", () => {
     `" "@example.org`,
     `"john..doe"@example.org`,
     `"very.(),:;<>[]\".VERY.\"very@\\ \"very\".unusual"@strange.example.com`,
+    // do not support comma
+    `a,b@domain.com`,
 
     // do not support IPv4
     `email@123.123.123.123`,
