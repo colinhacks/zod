@@ -109,12 +109,21 @@ export namespace objectUtil {
   }[keyof T];
 
   // type alkjsdf = addQuestionMarks<{ a: any }>;
+  type ExcludeUndefined<T extends object> = {
+    [k in keyof T]: Exclude<T[k], undefined>
+  }
 
   export type addQuestionMarks<
     T extends object,
     R extends keyof T = requiredKeys<T>
     // O extends keyof T = optionalKeys<T>
   > = Pick<Required<T>, R> & Partial<T>;
+
+  export type addQuestionMarksWithoutUndefined<
+    T extends object,
+    R extends keyof T = requiredKeys<T>
+    // O extends keyof T = optionalKeys<T>
+  > = ExcludeUndefined<addQuestionMarks<T,R>>;
   //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
 
   export type identity<T> = T;
