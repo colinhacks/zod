@@ -37,6 +37,7 @@ export const ZodIssueCode = util.arrayToEnum([
 export type ZodIssueCode = keyof typeof ZodIssueCode;
 
 export type ZodIssueBase = {
+  code: ZodIssueCode;
   path: (string | number)[];
   message?: string;
 };
