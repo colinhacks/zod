@@ -458,9 +458,13 @@ export abstract class ZodType<
     }) as any;
   }
 
-  brand<B extends string | number | symbol>(brand?: B): ZodBranded<this, B>;
-  brand<B extends string | number | symbol>(): ZodBranded<this, B> {
+  brand<B extends string | number | symbol>(): ZodBranded<this, B, undefined>;
+  brand<B extends string | number | symbol>(brand: B): ZodBranded<this, B, B>;
+  brand<B extends string | number | symbol>(
+    brand?: B
+  ): ZodBranded<this, B, B | undefined> {
     return new ZodBranded({
+      brand,
       typeName: ZodFirstPartyTypeKind.ZodBranded,
       type: this,
       ...processCreateParams(this._def),
@@ -4690,9 +4694,13 @@ export class ZodNaN extends ZodType<number, ZodNaNDef> {
 //////////////////////////////////////////
 //////////////////////////////////////////
 
-export interface ZodBrandedDef<T extends ZodTypeAny> extends ZodTypeDef {
+export interface ZodBrandedDef<
+  T extends ZodTypeAny,
+  B extends string | number | symbol | undefined
+> extends ZodTypeDef {
   type: T;
   typeName: ZodFirstPartyTypeKind.ZodBranded;
+  brand: B;
 }
 
 export const BRAND: unique symbol = Symbol("zod_brand");
@@ -4702,8 +4710,13 @@ export type BRAND<T extends string | number | symbol> = {
 
 export class ZodBranded<
   T extends ZodTypeAny,
-  B extends string | number | symbol
-> extends ZodType<T["_output"] & BRAND<B>, ZodBrandedDef<T>, T["_input"]> {
+  B extends string | number | symbol,
+  BRuntime extends B | undefined = undefined
+> extends ZodType<
+  T["_output"] & BRAND<B>,
+  ZodBrandedDef<T, BRuntime>,
+  T["_input"]
+> {
   _parse(input: ParseInput): ParseReturnType<any> {
     const { ctx } = this._processInputParams(input);
     const data = ctx.data;
@@ -4971,7 +4984,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodDefault<any>
   | ZodCatch<any>
   | ZodPromise<any>
-  | ZodBranded<any, any>
+  | ZodBranded<any, any, any>
   | ZodPipeline<any, any>;
 
 // requires TS 4.4+
