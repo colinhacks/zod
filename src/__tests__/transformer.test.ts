@@ -204,6 +204,31 @@ test("preprocess", () => {
   util.assertEqual<(typeof schema)["_input"], unknown>(true);
 });
 
+test('preprocess with unexpected error', () => {
+  const schema = z.object({
+    user: z.object({
+      name: z.preprocess((data) => {
+        throw new Error('unexpected error: ' + data);
+      }, z.string())
+    })
+  });
+  expect(() => schema.parse({ user: { name: "asdf"}})).toThrow(
+    JSON.stringify(
+      [
+        {
+          code: "preprocess_error",
+          originalError: { },
+          path: ['user', 'name'],
+          message: "Preprocess error: unexpected error: asdf",
+        },
+      ],
+      null,
+      2
+    )
+
+  );
+});
+
 test("async preprocess", async () => {
   const schema = z.preprocess(async (data) => [data], z.string().array());
 

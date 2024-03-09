@@ -140,6 +140,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.not_finite:
       message = "Number must be finite";
       break;
+    case ZodIssueCode.preprocess_error:
+      message = "Preprocess error: " + issue.originalError.message;
+      break;
     default:
       message = _ctx.defaultError;
       util.assertNever(issue);

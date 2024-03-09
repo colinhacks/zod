@@ -4284,7 +4284,7 @@ export class ZodEffects<
     checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
 
     if (effect.type === "preprocess") {
-      const processed = effect.transform(ctx.data, checkCtx);
+      const processed = this._safeTransform(effect, ctx, checkCtx);
       if (ctx.common.issues.length) {
         return {
           status: "dirty",
@@ -4383,6 +4383,28 @@ export class ZodEffects<
     }
 
     util.assertNever(effect);
+  }
+
+  _safeTransform(
+    effect: PreprocessEffect<any>,
+    parseContext: ParseContext,
+    checkCtx: RefinementCtx
+  ) {
+    try {
+      return effect.transform(parseContext.data, checkCtx);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        for (const issue of err.issues) {
+          addIssueToContext(parseContext, issue);
+        }
+        return parseContext.data;
+      }
+      addIssueToContext(parseContext, {
+        code: ZodIssueCode.preprocess_error,
+        originalError: err,
+      });
+      return parseContext.data;
+    }
   }
 
   static create = <I extends ZodTypeAny>(
