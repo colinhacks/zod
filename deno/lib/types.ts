@@ -4160,7 +4160,7 @@ export interface ZodPromiseDef<T extends ZodTypeAny = ZodTypeAny>
 }
 
 export class ZodPromise<T extends ZodTypeAny> extends ZodType<
-  Promise<T["_output"]>,
+  PromiseLike<T["_output"]>,
   ZodPromiseDef<T>,
   Promise<T["_input"]>
 > {
