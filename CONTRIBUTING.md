@@ -31,6 +31,17 @@ The following steps will get you setup to contribute changes to this repo:
 
 4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `yarn play` below) or start implementing a feature right away.
 
+## Alternative: VSCode Dev Container setup
+
+For an officially supported isolated dev environment that automatically installs dependencies for you:
+
+1. `F1` in VSCode and start typing `Dev Containers: Clone Repository in Named Container Volume` to run the command.
+2. For the repo, paste `git@github.com:{your_username}/zod.git` if you're using ssh.
+3. Click `Create a new volume...` and name it `zod` and the folder name as `zod`.
+
+Note: if you can't see `Dev Containers` in the `F1` menu, follow [this guide](https://code.visualstudio.com/docs/devcontainers/tutorial) to install the needed extension.
+In the OSS version of VSCode the extension may be not available.
+
 ### Commands
 
 **`yarn build`**
