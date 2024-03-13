@@ -2,7 +2,7 @@
 import { expect, test } from "@jest/globals";
 
 import { z } from "..";
-import { util } from "../helpers/util";
+import { util } from "../helpers";
 
 test("basic defaults", () => {
   expect(z.string().default("default").parse(undefined)).toBe("default");

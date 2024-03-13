@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { test } from "@jest/globals";
 
-import { util } from "../helpers/util";
+import { util } from "../helpers";
 import * as z from "../index";
 
 test("first party switch", () => {
