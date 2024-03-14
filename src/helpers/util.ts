@@ -104,17 +104,13 @@ export namespace objectUtil {
   //   [k in keyof T]: undefined extends T[k] ? k : never;
   // }[keyof T];
 
-  type requiredKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? never : k;
-  }[keyof T];
-
   // type alkjsdf = addQuestionMarks<{ a: any }>;
 
-  export type addQuestionMarks<
-    T extends object,
-    R extends keyof T = requiredKeys<T>
-    // O extends keyof T = optionalKeys<T>
-  > = Pick<Required<T>, R> & Partial<T>;
+  export type addQuestionMarks<T extends object> = {
+    [K in keyof T as undefined extends T[K] ? never : K]: T[K];
+  } & {
+    [K in keyof T]?: T[K];
+  };
   //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
 
   export type identity<T> = T;
