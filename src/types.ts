@@ -4060,7 +4060,10 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     values: ToExtract,
     newDef: RawCreateParams = this._def
   ): ZodEnum<Writeable<ToExtract>> {
-    return ZodEnum.create(values, newDef) as any;
+    return ZodEnum.create(values, {
+      ...this._def,
+      ...newDef,
+    }) as any;
   }
 
   exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
@@ -4074,7 +4077,10 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
         T,
         ToExclude[number]
       >,
-      newDef
+      {
+        ...this._def,
+        ...newDef,
+      }
     ) as any;
   }
 
