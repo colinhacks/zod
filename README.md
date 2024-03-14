@@ -2695,36 +2695,63 @@ type inferred = z.infer<typeof stringToNumber>; // number
 
 ### Writing generic functions
 
-When attempting to write a function that accepts a Zod schema as an input, it's common to try something like this:
+With TypeScript generics, you can write reusable functions that accept Zod schemas as parameters. This enables you to create custom validation logic, schema transformations, and more, while maintaining type safety and inference.
+
+When attempting to write a function that accepts a Zod schema as an input, it's tempting to try something like this:
 
 ```ts
-function makeSchemaOptional<T>(schema: z.ZodType<T>) {
-  return schema.optional();
+function inferSchema<T>(schema: z.ZodType<T>) {
+  return schema;
 }
 ```
 
-This approach has some issues. The `schema` variable in this function is typed as an instance of `ZodType`, which is an abstract class that all Zod schemas inherit from. This approach loses type information, namely _which subclass_ the input actually is.
+This approach is incorrect, and limits TypeScript's ability to properly infer the argument. No matter what you pass in, the type of `schema` will be an instance of `ZodType`.
 
 ```ts
-const arg = makeSchemaOptional(z.string());
-arg.unwrap();
+inferSchema(z.string());
+// => ZodType<string>
 ```
 
-A better approach is for the generic parameter to refer to _the schema as a whole_.
+This approach loses type information, namely _which subclass_ the input actually is (in this case, `ZodString`). That means you can't call any string-specific methods like `.min()` on the result of `inferSchema`.
+
+A better approach is to infer _the schema as a whole_ instead of merely it's inferred type. You can do this with a utility type called `z.ZodTypeAny`.
 
 ```ts
-function makeSchemaOptional<T extends z.ZodTypeAny>(schema: T) {
-  return schema.optional();
+function inferSchema<T extends z.ZodTypeAny>(schema: T) {
+  return schema;
 }
+
+inferSchema(z.string());
+// => ZodString
 ```
 
 > `ZodTypeAny` is just a shorthand for `ZodType<any, any, any>`, a type that is broad enough to match any Zod schema.
 
-As you can see, `schema` is now fully and properly typed.
+The Result is now fully and properly typed, and the type system can infer the specific subclass of the schema.
+
+#### Inferring the inferred type
+
+If you follow the best practice of using `z.ZodTypeAny` as the generic parameter for your schema, you may encounter issues with the parsed data being typed as `any` instead of the inferred type of the schema.
 
 ```ts
-const arg = makeSchemaOptional(z.string());
-arg.unwrap(); // ZodString
+function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
+  return schema.parse(data);
+}
+
+parseData("sup", z.string());
+// => any
+```
+
+Due to how TypeScript inference works, it is treating `schema` like a `ZodTypeAny` instead of the inferred type. You can fix this with a type cast using `z.infer`.
+
+```ts
+function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
+  return schema.parse(data) as z.infer<T>;
+  // ^^^^^^^^^^^^^^ <- add this
+}
+
+parseData("sup", z.string());
+// => string
 ```
 
 #### Constraining allowable inputs
