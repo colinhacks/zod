@@ -1,11 +1,12 @@
 // @ts-ignore TS6133
-import { test } from "@jest/globals";
+import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
+const test = Deno.test;
 
 import { 
   ZodFirstPartySchemaTypes,
   ZodFirstPartyTypeKind,
-} from "..";
-import { util } from "../helpers/util";
+} from "../index.ts";
+import { util } from "../helpers/util.ts";
 
 test("Identify missing [ZodFirstPartySchemaTypes]", () => {
   type ZodFirstPartySchemaForType<T extends ZodFirstPartyTypeKind> = ZodFirstPartySchemaTypes extends infer Schema
