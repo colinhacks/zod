@@ -4060,7 +4060,10 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
     values: ToExtract,
     newDef: RawCreateParams = this._def
   ): ZodEnum<Writeable<ToExtract>> {
-    return ZodEnum.create(values, newDef) as any;
+    return ZodEnum.create(values, {
+      ...this._def,
+      ...newDef,
+    }) as any;
   }
 
   exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
@@ -4074,7 +4077,10 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
         T,
         ToExclude[number]
       >,
-      newDef
+      {
+        ...this._def,
+        ...newDef,
+      }
     ) as any;
   }
 
@@ -4832,7 +4838,7 @@ export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
 export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
   MakeReadonly<T["_output"]>,
   ZodReadonlyDef<T>,
-  T["_input"]
+  MakeReadonly<T["_input"]>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const result = this._def.innerType._parse(input);
@@ -4972,7 +4978,9 @@ export type ZodFirstPartySchemaTypes =
   | ZodCatch<any>
   | ZodPromise<any>
   | ZodBranded<any, any>
-  | ZodPipeline<any, any>;
+  | ZodPipeline<any, any>
+  | ZodReadonly<any>
+  | ZodSymbol;
 
 // requires TS 4.4+
 abstract class Class {
