@@ -4838,7 +4838,7 @@ export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
 export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
   MakeReadonly<T["_output"]>,
   ZodReadonlyDef<T>,
-  T["_input"]
+  MakeReadonly<T["_input"]>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const result = this._def.innerType._parse(input);
