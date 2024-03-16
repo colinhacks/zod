@@ -513,12 +513,26 @@ export abstract class ZodType<
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type IpVersion = "v4" | "v6";
+export type JwtAlgorithm =
+  | "HS256"
+  | "HS384"
+  | "HS512"
+  | "RS256"
+  | "RS384"
+  | "RS512"
+  | "ES256"
+  | "ES384"
+  | "ES512"
+  | "PS256"
+  | "PS384"
+  | "PS512";
 export type ZodStringCheck =
   | { kind: "min"; value: number; message?: string }
   | { kind: "max"; value: number; message?: string }
   | { kind: "length"; value: number; message?: string }
   | { kind: "email"; message?: string }
   | { kind: "url"; message?: string }
+  | { kind: "jwt"; algorithm?: JwtAlgorithm; message?: string }
   | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "cuid"; message?: string }
@@ -623,6 +637,33 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
+function isValidJwt(token: string, algorithm?: JwtAlgorithm) {
+  try {
+    const tokensParts = token.split(".");
+    if (tokensParts.length !== 3) {
+      return false;
+    }
+
+    const [header] = tokensParts;
+    const parsedHeader = JSON.parse(atob(header));
+
+    if (!("typ" in parsedHeader) || parsedHeader.typ !== "JWT") {
+      return false;
+    }
+
+    if (
+      algorithm &&
+      (!("alg" in parsedHeader) || parsedHeader.alg !== algorithm)
+    ) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export class ZodString extends ZodType<string, ZodStringDef> {
   _parse(input: ParseInput): ParseReturnType<string> {
     if (this._def.coerce) {
@@ -705,6 +746,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "email",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "jwt") {
+        if (!isValidJwt(input.data, check.algorithm)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "jwt",
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
@@ -878,6 +929,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   url(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
+  jwt(options?: string | { algorithm?: JwtAlgorithm; message?: string }) {
+    return this._addCheck({ kind: "jwt", ...errorUtil.errToObj(options) });
+  }
   emoji(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message) });
   }
@@ -1019,6 +1073,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isURL() {
     return !!this._def.checks.find((ch) => ch.kind === "url");
+  }
+  get isJwt() {
+    return !!this._def.checks.find((ch) => ch.kind === "jwt");
   }
   get isEmoji() {
     return !!this._def.checks.find((ch) => ch.kind === "emoji");
