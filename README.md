@@ -2714,7 +2714,7 @@ inferSchema(z.string());
 
 This approach loses type information, namely _which subclass_ the input actually is (in this case, `ZodString`). That means you can't call any string-specific methods like `.min()` on the result of `inferSchema`.
 
-A better approach is to infer _the schema as a whole_ instead of merely it's inferred type. You can do this with a utility type called `z.ZodTypeAny`.
+A better approach is to infer _the schema as a whole_ instead of merely its inferred type. You can do this with a utility type called `z.ZodTypeAny`.
 
 ```ts
 function inferSchema<T extends z.ZodTypeAny>(schema: T) {
@@ -2747,7 +2747,7 @@ Due to how TypeScript inference works, it is treating `schema` like a `ZodTypeAn
 ```ts
 function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
   return schema.parse(data) as z.infer<T>;
-  // ^^^^^^^^^^^^^^ <- add this
+  //                        ^^^^^^^^^^^^^^ <- add this
 }
 
 parseData("sup", z.string());
