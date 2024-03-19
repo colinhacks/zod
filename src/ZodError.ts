@@ -18,6 +18,7 @@ export type typeToFlattenedError<T, U = string> = {
 export const ZodIssueCode = util.arrayToEnum([
   "invalid_type",
   "invalid_literal",
+  "preprocess_error",
   "custom",
   "invalid_union",
   "invalid_union_discriminator",
@@ -86,6 +87,11 @@ export interface ZodInvalidReturnTypeIssue extends ZodIssueBase {
 
 export interface ZodInvalidDateIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_date;
+}
+
+export interface ZodPreprocessIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.preprocess_error;
+  originalError: any;
 }
 
 export type StringValidation =
@@ -160,6 +166,7 @@ export type ZodIssueOptionalMessage =
   | ZodInvalidIntersectionTypesIssue
   | ZodNotMultipleOfIssue
   | ZodNotFiniteIssue
+  | ZodPreprocessIssue
   | ZodCustomIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & {
