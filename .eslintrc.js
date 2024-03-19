@@ -12,6 +12,7 @@ module.exports = {
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
+    "plugin:redos/recommended",
     "prettier",
   ],
   rules: {
@@ -67,4 +68,12 @@ module.exports = {
       },
     ],
   },
+  overrides: [
+    {
+      files: ["**/*.test.ts"],
+      rules: {
+        "redos/no-vulnerable": "off",
+      },
+    },
+  ],
 };
