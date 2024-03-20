@@ -451,3 +451,21 @@ test("passthrough index signature", () => {
   type b = z.infer<typeof b>;
   util.assertEqual<{ a: string } & { [k: string]: unknown }, b>(true);
 });
+
+test("error when pick/omit/required/partial with unknown keys", () => {
+  const example = z.object({
+    name: z.string(),
+    age: z.number(),
+    isAdmin: z.boolean(),
+  });
+
+  type BadExample = util.StrictKnownKeys<
+    z.infer<typeof example>,
+    { name: true; asd: true; zxc: false; xcv: "asd" }
+  >;
+
+  util.assertEqual<
+    BadExample,
+    { name: true; asd: never; zxc: never; xcv: never }
+  >(true);
+});
