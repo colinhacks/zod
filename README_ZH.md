@@ -3,7 +3,7 @@
   <h1 align="center">Zod</h1>
   <p align="center">TypeScript-first schema validation with static type inference
   <br/>
-  <a href="https://zod.dev">https://zod.dev</a></p>
+  <a href="https://zod.dev">https://zod.dev</a>
 </p>
 <br/>
 <p align="center">
@@ -35,7 +35,7 @@
 
 # 內容
 
-- [什么是 Zod](#什么是Zod)
+- [什么是 Zod](#什么是 Zod)
 - [生态体系](#生态系统)
 - [安装](#安装)
 - [基本用法](#基本用法)
@@ -378,25 +378,26 @@ type User = z.infer<typeof User>;
 ```ts
 import { z } from "zod";
 
-// 原始值
+// 原始值类型
 z.string();
 z.number();
 z.bigint();
 z.boolean();
 z.date();
+z.symbol();
 
 // 空类型
 z.undefined();
 z.null();
-z.void(); // 接受undefined
+z.void(); // 接受 undefined
 
-// 全能类型
-// 允许 any value
+// 任意类型
+// 允许任意类型的值
 z.any();
 z.unknown();
 
 // never 类型
-// 允许没有 values
+// 不允许值类型存在
 z.never();
 ```
 
@@ -443,7 +444,7 @@ z.coerce.boolean().parse(undefined); // => false
 z.coerce.boolean().parse(null); // => false
 ```
 
-## 字面量
+## 字面量（literal）
 
 ```ts
 const tuna = z.literal("tuna");
@@ -460,7 +461,7 @@ tuna.value; // "tuna"
 
 > 目前在 Zod 中不支持 Date 字面量。如果你有这个功能的用例，请提交一个 Issue。
 
-## Strings
+## 字符串
 
 Zod 包括一些针对字符串的验证。
 
@@ -1353,7 +1354,7 @@ const TestSchema = z.instanceof(Test);
 
 const blob: any = "whatever";
 TestSchema.parse(new Test()); // passes
-TestSchema.parse("blob"); // throws
+TestSchema.parse(blob); // throws
 ```
 
 ## Function schemas

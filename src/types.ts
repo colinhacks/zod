@@ -144,8 +144,16 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   return { errorMap: customMap, description };
 }
 
-export type SafeParseSuccess<Output> = { success: true; data: Output };
-export type SafeParseError<Input> = { success: false; error: ZodError<Input> };
+export type SafeParseSuccess<Output> = {
+  success: true;
+  data: Output;
+  error?: never;
+};
+export type SafeParseError<Input> = {
+  success: false;
+  error: ZodError<Input>;
+  data?: never;
+};
 
 export type SafeParseReturnType<Input, Output> =
   | SafeParseSuccess<Output>
@@ -4057,13 +4065,18 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   }
 
   extract<ToExtract extends readonly [T[number], ...T[number][]]>(
-    values: ToExtract
+    values: ToExtract,
+    newDef: RawCreateParams = this._def
   ): ZodEnum<Writeable<ToExtract>> {
-    return ZodEnum.create(values) as any;
+    return ZodEnum.create(values, {
+      ...this._def,
+      ...newDef,
+    }) as any;
   }
 
   exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
-    values: ToExclude
+    values: ToExclude,
+    newDef: RawCreateParams = this._def
   ): ZodEnum<
     typecast<Writeable<FilterEnum<T, ToExclude[number]>>, [string, ...string[]]>
   > {
@@ -4071,7 +4084,11 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       this.options.filter((opt) => !values.includes(opt)) as FilterEnum<
         T,
         ToExclude[number]
-      >
+      >,
+      {
+        ...this._def,
+        ...newDef,
+      }
     ) as any;
   }
 
@@ -4829,7 +4846,7 @@ export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
 export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
   MakeReadonly<T["_output"]>,
   ZodReadonlyDef<T>,
-  T["_input"]
+  MakeReadonly<T["_input"]>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const result = this._def.innerType._parse(input);
@@ -4969,7 +4986,9 @@ export type ZodFirstPartySchemaTypes =
   | ZodCatch<any>
   | ZodPromise<any>
   | ZodBranded<any, any>
-  | ZodPipeline<any, any>;
+  | ZodPipeline<any, any>
+  | ZodReadonly<any>
+  | ZodSymbol;
 
 // requires TS 4.4+
 abstract class Class {
