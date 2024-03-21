@@ -4299,34 +4299,36 @@ export class ZodEffects<
 
     if (effect.type === "preprocess") {
       const processed = effect.transform(ctx.data, checkCtx);
-      if (ctx.common.issues.length) {
-        return {
-          status: "dirty",
-          value: ctx.data,
-        };
-      }
 
       if (ctx.common.async) {
-        return Promise.resolve(processed).then((processed) => {
-          return this._def.schema._parseAsync({
+        return Promise.resolve(processed).then(async (processed) => {
+          if (status.value === "aborted") return INVALID;
+
+          const result = await this._def.schema._parseAsync({
             data: processed,
             path: ctx.path,
             parent: ctx,
           });
+          if (result.status === "aborted") return INVALID;
+          if (result.status === "dirty") return DIRTY(result.value);
+          if (status.value === "dirty") return DIRTY(result.value);
+          return result;
         });
       } else {
-        return this._def.schema._parseSync({
+        if (status.value === "aborted") return INVALID;
+        const result = this._def.schema._parseSync({
           data: processed,
           path: ctx.path,
           parent: ctx,
         });
+        if (result.status === "aborted") return INVALID;
+        if (result.status === "dirty") return DIRTY(result.value);
+        if (status.value === "dirty") return DIRTY(result.value);
+        return result;
       }
     }
     if (effect.type === "refinement") {
-      const executeRefinement = (
-        acc: unknown
-        // effect: RefinementEffect<any>
-      ): any => {
+      const executeRefinement = (acc: unknown): any => {
         const result = effect.refinement(acc, checkCtx);
         if (ctx.common.async) {
           return Promise.resolve(result);
