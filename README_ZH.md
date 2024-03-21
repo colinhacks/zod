@@ -39,41 +39,41 @@
 - [生态体系](#生态系统)
 - [安装](#安装)
 - [基本用法](#基本用法)
-- [定义模式](#定义模式)
-  - [原始值类型（primitive）](#原始值类型（primitive）)
-  - [字面量（literal）](#字面量（literal）)
-  - [字符串](#字符串)
-  - [Numbers](#numbers)
-  - [Objects](#objects)
-    - [.shape](#shape)
-    - [.extend](#extend)
-    - [.merge](#merge)
-    - [.pick/.omit](#pickomit)
-    - [.partial](#partial)
-    - [.deepPartial](#deepPartial)
-    - [.passthrough](#passthrough)
-    - [.strict](#strict)
-    - [.strip](#strip)
-    - [.catchall](#catchall)
-  - [Records](#records)
-  - [Maps](#maps)
-  - [Sets](#sets)
-  - [Arrays](#arrays)
-    - [.nonempty](#nonempty)
-    - [.min/.max/.length](#minmaxlength)
-  - [Unions](#unions)
-  - [Optionals](#optionals)
-  - [Nullables](#nullables)
-  - [Enums](#enums)
-    - [Zod enums](#zod-enums)
-    - [Native enums](#native-enums)
-  - [Tuples](#tuples)
-  - [Recursive types](#recursive-types)
-    - [JSON type](#json-type)
-    - [Cyclical data](#cyclical-objects)
-  - [Promises](#promises)
-  - [Instanceof](#instanceof)
-  - [Function schemas](#function-schemas)
+- [原始类型](#原始类型)
+- [原始类型的强制转换](#原始类型的强制转换)
+- [字面量](#字面量)
+- [Strings](#strings)
+- [Numbers](#numbers)
+- [Objects](#objects)
+  - [.shape](#shape)
+  - [.extend](#extend)
+  - [.merge](#merge)
+  - [.pick/.omit](#pickomit)
+  - [.partial](#partial)
+  - [.deepPartial](#deepPartial)
+  - [.passthrough](#passthrough)
+  - [.strict](#strict)
+  - [.strip](#strip)
+  - [.catchall](#catchall)
+- [Records](#records)
+- [Maps](#maps)
+- [Sets](#sets)
+- [Arrays](#arrays)
+  - [.nonempty](#nonempty)
+  - [.min/.max/.length](#minmaxlength)
+- [Unions](#unions)
+- [Optionals](#optionals)
+- [Nullables](#nullables)
+- [Enums](#enums)
+  - [Zod enums](#zod-enums)
+  - [Native enums](#native-enums)
+- [Tuples](#tuples)
+- [Recursive types](#recursive-types)
+  - [JSON type](#json-type)
+  - [Cyclical data](#cyclical-objects)
+- [Promises](#promises)
+- [Instanceof](#instanceof)
+- [Function schemas](#function-schemas)
 - [基础类方法 (ZodType)](#zodtype-methods-and-properties)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
@@ -373,9 +373,7 @@ type User = z.infer<typeof User>;
 // { username: string }
 ```
 
-# 定义模式
-
-## 原始值类型（primitive）
+## 原始类型
 
 ```ts
 import { z } from "zod";
@@ -403,56 +401,193 @@ z.unknown();
 z.never();
 ```
 
+## 原始类型的强制转换
+
+Zod 现在提供了一种更方便的方法来强制转换原始类型
+
+```ts
+const schema = z.coerce.string();
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // => "12"
+schema.parse(true); // => "true"
+```
+
+在解析步骤中，输入将通过 `String()` 函数传递，该函数是 JavaScript 的内置函数，用于将数据强制转换为字符串。请注意，返回的模式是一个 `ZodString` 实例，因此可以使用所有字符串方法
+
+```ts
+z.coerce.string().email().min(5);
+```
+
+所有的原始类型都支持强制转换
+
+```ts
+z.coerce.string(); // String(input)
+z.coerce.number(); // Number(input)
+z.coerce.boolean(); // Boolean(input)
+z.coerce.bigint(); // BigInt(input)
+z.coerce.date(); // new Date(input)
+```
+
+**布尔类型的强制转换**
+
+Zod 的布尔强制非常简单！它将值传入 `Boolean(value)` 函数，仅此而已。任何真值都将解析为 `true`，任何假值都将解析为 `false`
+
+```ts
+z.coerce.boolean().parse("tuna"); // => true
+z.coerce.boolean().parse("true"); // => true
+z.coerce.boolean().parse("false"); // => true
+z.coerce.boolean().parse(1); // => true
+z.coerce.boolean().parse([]); // => true
+
+z.coerce.boolean().parse(0); // => false
+z.coerce.boolean().parse(undefined); // => false
+z.coerce.boolean().parse(null); // => false
+```
+
 ## 字面量（literal）
 
 ```ts
 const tuna = z.literal("tuna");
 const twelve = z.literal(12);
+const twobig = z.literal(2n); // bigint literal
 const tru = z.literal(true);
+
+const terrificSymbol = Symbol("terrific");
+const terrific = z.literal(terrificSymbol);
 
 // 检索字面量的值
 tuna.value; // "tuna"
 ```
 
-> 目前在 Zod 中不支持 Date 或 bigint 字面。如果你有这个功能的用例，请提交一个 Issue。
+> 目前在 Zod 中不支持 Date 字面量。如果你有这个功能的用例，请提交一个 Issue。
 
 ## 字符串
 
 Zod 包括一些针对字符串的验证。
 
 ```ts
+// 验证
 z.string().max(5);
 z.string().min(5);
 z.string().length(5);
 z.string().email();
 z.string().url();
+z.string().emoji();
 z.string().uuid();
+z.string().cuid();
+z.string().cuid2();
+z.string().ulid();
 z.string().regex(regex);
+z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
+z.string().datetime(); // ISO 8601；默认值为无 UTC 偏移，选项见下文
+z.string().ip(); // 默认为 IPv4 和 IPv6，选项见下文
 
-// 已废弃，等同于 .min(1)
-z.string().nonempty();
+// 转变
+z.string().trim(); // 减除空白
+z.string().toLowerCase(); // 小写化
+z.string().toUpperCase(); // 大写化
 ```
 
-> 查看 [validator.js](https://github.com/validatorjs/validator.js)，了解其他一些有用的字符串验证函数
+> 请查看 [validator.js](https://github.com/validatorjs/validator.js)，了解可与 [Refinements](#refine) 结合使用的大量其他有用字符串验证函数。
 
-#### 自定义错误信息
+创建字符串模式时，你可以自定义一些常见的错误信息
 
-你可以选择传入第二个参数来提供一个自定义的错误信息。
+```ts
+const name = z.string({
+  required_error: "Name is required",
+  invalid_type_error: "Name must be a string",
+});
+```
+
+使用验证方法时，你可以传递一个附加参数，以提供自定义错误信息
 
 ```ts
 z.string().min(5, { message: "Must be 5 or more characters long" });
 z.string().max(5, { message: "Must be 5 or fewer characters long" });
 z.string().length(5, { message: "Must be exactly 5 characters long" });
-z.string().email({ message: "Invalid email address." });
+z.string().email({ message: "Invalid email address" });
 z.string().url({ message: "Invalid url" });
+z.string().emoji({ message: "Contains non-emoji characters" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().includes("tuna", { message: "Must include tuna" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
+z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+z.string().ip({ message: "Invalid IP address" });
+```
+
+### ISO 日期
+
+`z.string().datetime()` 方法执行 ISO 8601；默认为无时区偏移和任意的小数点后几秒精度
+
+```ts
+const datetime = z.string().datetime();
+
+datetime.parse("2020-01-01T00:00:00Z"); // pass
+datetime.parse("2020-01-01T00:00:00.123Z"); // pass
+datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (任意精度)
+datetime.parse("2020-01-01T00:00:00+02:00"); // fail (不允许偏移)
+```
+
+将 `offset` 选项设置为 `true`，可允许时区偏移
+
+```ts
+const datetime = z.string().datetime({ offset: true });
+
+datetime.parse("2020-01-01T00:00:00+02:00"); // pass
+datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (毫秒数可选)
+datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (毫秒数可选)
+datetime.parse("2020-01-01T00:00:00.123+02"); // pass (只偏移小时)
+datetime.parse("2020-01-01T00:00:00Z"); // pass (仍支持 Z)
+```
+
+你还可以限制允许的 "精度"。默认情况下，支持任意亚秒精度（但可选）
+
+```ts
+const datetime = z.string().datetime({ precision: 3 });
+
+datetime.parse("2020-01-01T00:00:00.123Z"); // pass
+datetime.parse("2020-01-01T00:00:00Z"); // fail
+datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
+```
+
+### IP addresses
+
+默认情况下，`z.string().ip()` 方法会验证 IPv4 和 IPv6
+
+```ts
+const ip = z.string().ip();
+
+ip.parse("192.168.1.1"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // pass
+
+ip.parse("256.1.1.1"); // fail
+ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // fail
+```
+
+你还可以设置 IP `版本`
+
+```ts
+const ipv4 = z.string().ip({ version: "v4" });
+ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+
+const ipv6 = z.string().ip({ version: "v6" });
+ipv6.parse("192.168.1.1"); // fail
 ```
 
 ## Numbers
+
+在创建数字模式时，你可以自定义某些错误信息
+
+```ts
+const age = z.number({
+  required_error: "Age is required",
+  invalid_type_error: "Age must be a number",
+});
+```
 
 Zod 包括一些特定的数字验证。
 
@@ -462,14 +597,17 @@ z.number().gte(5); // alias .min(5)
 z.number().lt(5);
 z.number().lte(5); // alias .max(5)
 
-z.number().int(); // 值必须是一个整数
+z.number().int(); // value must be an integer
 
 z.number().positive(); //     > 0
 z.number().nonnegative(); //  >= 0
 z.number().negative(); //     < 0
 z.number().nonpositive(); //  <= 0
 
-z.number().multipleOf(5); // x % 5 === 0
+z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
+
+z.number().finite(); // value must be finite, not Infinity or -Infinity
+z.number().safe(); // value must be between Number.MIN_SAFE_INTEGER and Number.MAX_SAFE_INTEGER
 ```
 
 你可以选择传入第二个参数来提供一个自定义的错误信息。
