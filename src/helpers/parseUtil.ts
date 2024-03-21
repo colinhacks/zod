@@ -173,7 +173,7 @@ export const isAborted = (x: ParseReturnType<any>): x is INVALID =>
   (x as any).status === "aborted";
 export const isDirty = <T>(x: ParseReturnType<T>): x is OK<T> | DIRTY<T> =>
   (x as any).status === "dirty";
-export const isValid = <T>(x: ParseReturnType<T>): x is OK<T>  =>
+export const isValid = <T>(x: ParseReturnType<T>): x is OK<T> =>
   (x as any).status === "valid";
 export const isAsync = <T>(
   x: ParseReturnType<T>

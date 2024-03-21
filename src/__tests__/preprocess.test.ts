@@ -44,32 +44,31 @@ test("preprocess ctx.addIssue with parse", () => {
 });
 
 test("preprocess ctx.addIssue non-fatal by default", () => {
-
-  try{
-     z.preprocess((data, ctx) => {
+  try {
+    z.preprocess((data, ctx) => {
       ctx.addIssue({
         code: "custom",
         message: `custom error`,
       });
       return data;
     }, z.string()).parse(1234);
-  }catch(err){
+  } catch (err) {
     z.ZodError.assert(err);
     expect(err.issues.length).toEqual(2);
   }
-})
+});
 
 test("preprocess ctx.addIssue fatal true", () => {
- try{
-     z.preprocess((data, ctx) => {
+  try {
+    z.preprocess((data, ctx) => {
       ctx.addIssue({
         code: "custom",
         message: `custom error`,
-        fatal: true
+        fatal: true,
       });
       return data;
     }, z.string()).parse(1234);
-  }catch(err){
+  } catch (err) {
     z.ZodError.assert(err);
     expect(err.issues.length).toEqual(1);
   }

@@ -196,8 +196,6 @@ test("multiple transformers", () => {
   expect(doubler.parse("5")).toEqual(10);
 });
 
-
-
 test("short circuit on dirty", () => {
   const schema = z
     .string()
@@ -215,7 +213,6 @@ test("short circuit on dirty", () => {
     expect(result2.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
   }
 });
-
 
 test("async short circuit on dirty", async () => {
   const schema = z
