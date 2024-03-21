@@ -47,7 +47,7 @@ test("transform ctx.addIssue with parseAsync", async () => {
 
   const result = await z
     .string()
-    .transform((data, ctx) => {
+    .transform(async (data, ctx) => {
       const i = strs.indexOf(data);
       if (i === -1) {
         ctx.addIssue({
@@ -74,7 +74,7 @@ test("transform ctx.addIssue with parseAsync", async () => {
   });
 });
 
-test("z.NEVER in transform", async () => {
+test("z.NEVER in transform", () => {
   const foo = z
     .number()
     .optional()
@@ -215,7 +215,7 @@ test("async preprocess", async () => {
 test("preprocess ctx.addIssue with parse", () => {
   expect(() => {
     z.preprocess((data, ctx) => {
-      ctx?.addIssue({
+      ctx.addIssue({
         code: "custom",
         message: `${data} is not one of our allowed strings`,
       });
@@ -236,10 +236,66 @@ test("preprocess ctx.addIssue with parse", () => {
   );
 });
 
+test("preprocess ctx.addIssue non-fatal by default", () => {
+
+  try{
+     z.preprocess((data, ctx) => {
+      ctx.addIssue({
+        code: "custom",
+        message: `custom error`,
+      });
+      return data;
+    }, z.string()).parse(1234);
+  }catch(err){
+    z.ZodError.assert(err);
+    expect(err.issues.length).toEqual(2);
+  }
+})
+
+test("preprocess ctx.addIssue fatal true", () => {
+ try{
+     z.preprocess((data, ctx) => {
+      ctx.addIssue({
+        code: "custom",
+        message: `custom error`,
+        fatal: true
+      });
+      return data;
+    }, z.string()).parse(1234);
+  }catch(err){
+    z.ZodError.assert(err);
+    expect(err.issues.length).toEqual(1);
+  }
+});
+
+test("async preprocess ctx.addIssue with parse", async () => {
+  const schema = z.preprocess(async (data, ctx) => {
+    ctx.addIssue({
+      code: "custom",
+      message: `custom error`,
+    });
+    return data;
+  }, z.string());
+
+  expect(schema.parseAsync("asdf")).rejects.toThrow(
+    JSON.stringify(
+      [
+        {
+          code: "custom",
+          message: "custom error",
+          path: [],
+        },
+      ],
+      null,
+      2
+    )
+  );
+});
+
 test("preprocess ctx.addIssue with parseAsync", async () => {
   const result = await z
-    .preprocess((data, ctx) => {
-      ctx?.addIssue({
+    .preprocess(async (data, ctx) => {
+      ctx.addIssue({
         code: "custom",
         message: `${data} is not one of our allowed strings`,
       });
@@ -262,10 +318,10 @@ test("preprocess ctx.addIssue with parseAsync", async () => {
   });
 });
 
-test("z.NEVER in preprocess", async () => {
+test("z.NEVER in preprocess", () => {
   const foo = z.preprocess((val, ctx) => {
     if (!val) {
-      ctx?.addIssue({ code: z.ZodIssueCode.custom, message: "bad" });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "bad" });
       return z.NEVER;
     }
     return val;

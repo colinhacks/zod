@@ -266,6 +266,12 @@ export class ZodError<T = any> extends Error {
     return error;
   };
 
+  static assert(value: unknown): asserts value is ZodError {
+    if (!(value instanceof ZodError)) {
+      throw new Error(`Not a ZodError: ${value}`);
+    }
+  }
+
   toString() {
     return this.message;
   }

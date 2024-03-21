@@ -4291,27 +4291,47 @@ export class ZodEffects<
 
     if (effect.type === "preprocess") {
       const processed = effect.transform(ctx.data, checkCtx);
-      if (status.value === "dirty") {
-        return {
-          status: "dirty",
-          value: ctx.data,
-        };
-      }
 
       if (ctx.common.async) {
-        return Promise.resolve(processed).then((processed) => {
-          return this._def.schema._parseAsync({
+        return Promise.resolve(processed).then(async (processed) => {
+          // if (status.value === "dirty") {
+          //   return {
+          //     status: "dirty",
+          //     value: ctx.data,
+          //   };
+          // }
+          // if (status.value === "aborted") {
+          //   return INVALID;
+          // }
+          if (status.value === "aborted") return INVALID;
+          // if (status.value === "dirty") {
+          //   return { status: "dirty", value: processed };
+          // };
+          // return { status: status.value, value: inner.value };
+          const result = await this._def.schema._parseAsync({
             data: processed,
             path: ctx.path,
             parent: ctx,
           });
+          if (result.status === "aborted") return INVALID;
+          if (result.status === "dirty") return DIRTY(result.value);
+          if (status.value === "dirty") return DIRTY(result.value);
+          return result;
+
+          // if(result.status=== "dirty") return DIRTY(result.value)
+          // return { status: status.value, value: result };
         });
       } else {
-        return this._def.schema._parseSync({
+        if (status.value === "aborted") return INVALID;
+        const result = this._def.schema._parseSync({
           data: processed,
           path: ctx.path,
           parent: ctx,
         });
+        if (result.status === "aborted") return INVALID;
+        if (result.status === "dirty") return DIRTY(result.value);
+        if (status.value === "dirty") return DIRTY(result.value);
+        return result;
       }
     }
     if (effect.type === "refinement") {
