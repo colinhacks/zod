@@ -1,3 +1,3 @@
-import { z } from "./src";
+import { z, ZodNativeEnum } from "./src";
 
 z;

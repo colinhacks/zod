@@ -2891,9 +2891,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-const getDiscriminator = <T extends ZodTypeAny>(
-  type: T
-): Primitive[] | null => {
+const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
   if (type instanceof ZodLazy) {
     return getDiscriminator(type.schema);
   } else if (type instanceof ZodEffects) {
@@ -2904,15 +2902,21 @@ const getDiscriminator = <T extends ZodTypeAny>(
     return type.options;
   } else if (type instanceof ZodNativeEnum) {
     // eslint-disable-next-line ban/ban
-    return Object.keys(type.enum as any);
+    return util.objectValues(type.enum as any);
   } else if (type instanceof ZodDefault) {
     return getDiscriminator(type._def.innerType);
   } else if (type instanceof ZodUndefined) {
     return [undefined];
   } else if (type instanceof ZodNull) {
     return [null];
+  } else if (type instanceof ZodOptional) {
+    return [undefined, ...getDiscriminator(type.unwrap())];
+  } else if (type instanceof ZodNullable) {
+    return [null, ...getDiscriminator(type.unwrap())];
+  } else if (type instanceof ZodReadonly) {
+    return getDiscriminator(type.unwrap());
   } else {
-    return null;
+    return [];
   }
 };
 
@@ -3020,7 +3024,7 @@ export class ZodDiscriminatedUnion<
     // try {
     for (const type of options) {
       const discriminatorValues = getDiscriminator(type.shape[discriminator]);
-      if (!discriminatorValues) {
+      if (!discriminatorValues.length) {
         throw new Error(
           `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
         );
@@ -3098,7 +3102,7 @@ function mergeValues(
       return { valid: false };
     }
 
-    const newArray = [];
+    const newArray: unknown[] = [];
     for (let index = 0; index < a.length; index++) {
       const itemA = a[index];
       const itemB = b[index];
@@ -4868,6 +4872,10 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
       ...processCreateParams(params),
     }) as any;
   };
+
+  unwrap() {
+    return this._def.innerType;
+  }
 }
 
 ////////////////////////////////////////
