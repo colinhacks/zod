@@ -2193,11 +2193,11 @@ export type baseObjectInputType<Shape extends ZodRawShape> =
     [k in keyof Shape]: Shape[k]["_input"];
   }>;
 
-export type CatchallOutput<T extends ZodTypeAny> = ZodTypeAny extends T
+export type CatchallOutput<T extends ZodType> = ZodType extends T
   ? unknown
   : { [k: string]: T["_output"] };
 
-export type CatchallInput<T extends ZodTypeAny> = ZodTypeAny extends T
+export type CatchallInput<T extends ZodType> = ZodType extends T
   ? unknown
   : { [k: string]: T["_input"] };
 
