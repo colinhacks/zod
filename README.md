@@ -2722,10 +2722,10 @@ inferSchema(z.string());
 
 This approach loses type information, namely _which subclass_ the input actually is (in this case, `ZodString`). That means you can't call any string-specific methods like `.min()` on the result of `inferSchema`.
 
-A better approach is to infer _the schema as a whole_ instead of merely its inferred type. You can do this with a utility type called `z.ZodTypeAny`.
+A better approach is to infer _the schema as a whole_ instead of merely its inferred type. Use the base class `z.ZodType` to infer the schema:
 
 ```ts
-function inferSchema<T extends z.ZodTypeAny>(schema: T) {
+function inferSchema<T extends z.ZodType>(schema: T) {
   return schema;
 }
 
@@ -2733,16 +2733,14 @@ inferSchema(z.string());
 // => ZodString
 ```
 
-> `ZodTypeAny` is just a shorthand for `ZodType<any, any, any>`, a type that is broad enough to match any Zod schema.
-
-The Result is now fully and properly typed, and the type system can infer the specific subclass of the schema.
+The result is now fully and properly typed, and the type system can infer the specific subclass of the schema.
 
 #### Inferring the inferred type
 
-If you follow the best practice of using `z.ZodTypeAny` as the generic parameter for your schema, you may encounter issues with the parsed data being typed as `any` instead of the inferred type of the schema.
+If you follow the best practice of using `z.ZodType` as the generic parameter for your schema, you may encounter issues with the parsed data being typed as `any` instead of the inferred type of the schema.
 
 ```ts
-function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
+function parseData<T extends z.ZodType>(data: unknown, schema: T) {
   return schema.parse(data);
 }
 
@@ -2750,10 +2748,10 @@ parseData("sup", z.string());
 // => any
 ```
 
-Due to how TypeScript inference works, it is treating `schema` like a `ZodTypeAny` instead of the inferred type. You can fix this with a type cast using `z.infer`.
+You can fix this with a type cast using `z.infer`.
 
 ```ts
-function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
+function parseData<T extends z.ZodType>(data: unknown, schema: T) {
   return schema.parse(data) as z.infer<T>;
   //                        ^^^^^^^^^^^^^^ <- add this
 }

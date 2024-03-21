@@ -4,7 +4,7 @@ const test = Deno.test;
 
 import * as z from "../index.ts";
 
-function checkErrors(a: z.ZodTypeAny, bad: any) {
+function checkErrors(a: z.ZodType, bad: any) {
   let expected;
   try {
     a.parse(bad);

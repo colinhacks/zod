@@ -6,7 +6,7 @@ import type {
   ZodRawShape,
   ZodTuple,
   ZodTupleItems,
-  ZodTypeAny,
+  ZodType,
 } from "../index.ts";
 
 export namespace partialUtil {
@@ -21,7 +21,7 @@ export namespace partialUtil {
   //   : ZodOptional<T>;
 
   // {
-  //   // optional: T extends ZodOptional<ZodTypeAny> ? T : ZodOptional<T>;
+  //   // optional: T extends ZodOptional<ZodType> ? T : ZodOptional<T>;
   //   // array: T extends ZodArray<infer Type> ? ZodArray<DeepPartial<Type>> : never;
   //   object: T extends AnyZodObject
   //     ? ZodObject<
@@ -35,30 +35,29 @@ export namespace partialUtil {
   //   ? "object" // T extends ZodOptional<any> // ? 'optional' // :
   //   : "rest"];
 
-  export type DeepPartial<T extends ZodTypeAny> =
-    T extends ZodObject<ZodRawShape>
-      ? ZodObject<
-          { [k in keyof T["shape"]]: ZodOptional<DeepPartial<T["shape"][k]>> },
-          T["_def"]["unknownKeys"],
-          T["_def"]["catchall"]
-        >
-      : T extends ZodArray<infer Type, infer Card>
-      ? ZodArray<DeepPartial<Type>, Card>
-      : T extends ZodOptional<infer Type>
-      ? ZodOptional<DeepPartial<Type>>
-      : T extends ZodNullable<infer Type>
-      ? ZodNullable<DeepPartial<Type>>
-      : T extends ZodTuple<infer Items>
-      ? {
-          [k in keyof Items]: Items[k] extends ZodTypeAny
-            ? DeepPartial<Items[k]>
-            : never;
-        } extends infer PI
-        ? PI extends ZodTupleItems
-          ? ZodTuple<PI>
-          : never
+  export type DeepPartial<T extends ZodType> = T extends ZodObject<ZodRawShape>
+    ? ZodObject<
+        { [k in keyof T["shape"]]: ZodOptional<DeepPartial<T["shape"][k]>> },
+        T["_def"]["unknownKeys"],
+        T["_def"]["catchall"]
+      >
+    : T extends ZodArray<infer Type, infer Card>
+    ? ZodArray<DeepPartial<Type>, Card>
+    : T extends ZodOptional<infer Type>
+    ? ZodOptional<DeepPartial<Type>>
+    : T extends ZodNullable<infer Type>
+    ? ZodNullable<DeepPartial<Type>>
+    : T extends ZodTuple<infer Items>
+    ? {
+        [k in keyof Items]: Items[k] extends ZodType
+          ? DeepPartial<Items[k]>
+          : never;
+      } extends infer PI
+      ? PI extends ZodTupleItems
+        ? ZodTuple<PI>
         : never
-      : T;
+      : never
+    : T;
   //  {
   //     // optional: T extends ZodOptional<ZodTypeAny> ? T : ZodOptional<T>;
   //     // array: T extends ZodArray<infer Type> ? ZodArray<DeepPartial<Type>> : never;

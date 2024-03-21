@@ -45,7 +45,7 @@ export type RefinementCtx = {
   addIssue: (arg: IssueData) => void;
   path: (string | number)[];
 };
-export type ZodRawShape = { [k: string]: ZodTypeAny };
+export type ZodRawShape = { [k: string]: ZodType };
 export type ZodTypeAny = ZodType<any, any, any>;
 export type TypeOf<T extends ZodType<any, any, any>> = T["_output"];
 export type input<T extends ZodType<any, any, any>> = T["_input"];
@@ -56,6 +56,7 @@ export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
   errorMap?: ZodErrorMap;
   description?: string;
+  // typeName: string;
 }
 
 class ParseInputLazyPath implements ParseInput {
@@ -434,11 +435,11 @@ export abstract class ZodType<
     return ZodPromise.create(this, this._def);
   }
 
-  or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]> {
+  or<T extends ZodType>(option: T): ZodUnion<[this, T]> {
     return ZodUnion.create([this, option], this._def) as any;
   }
 
-  and<T extends ZodTypeAny>(incoming: T): ZodIntersection<this, T> {
+  and<T extends ZodType>(incoming: T): ZodIntersection<this, T> {
     return ZodIntersection.create(this, incoming, this._def);
   }
 
@@ -498,7 +499,7 @@ export abstract class ZodType<
     });
   }
 
-  pipe<T extends ZodTypeAny>(target: T): ZodPipeline<this, T> {
+  pipe<T extends ZodType>(target: T): ZodPipeline<this, T> {
     return ZodPipeline.create(this, target);
   }
   readonly(): ZodReadonly<this> {
@@ -1985,8 +1986,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef> {
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodArrayDef<T extends ZodType = ZodType> extends ZodTypeDef {
   type: T;
   typeName: ZodFirstPartyTypeKind.ZodArray;
   exactLength: { value: number; message?: string } | null;
@@ -1996,14 +1996,14 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
 
 export type ArrayCardinality = "many" | "atleastone";
 export type arrayOutputType<
-  T extends ZodTypeAny,
+  T extends ZodType,
   Cardinality extends ArrayCardinality = "many"
 > = Cardinality extends "atleastone"
   ? [T["_output"], ...T["_output"][]]
   : T["_output"][];
 
 export class ZodArray<
-  T extends ZodTypeAny,
+  T extends ZodType,
   Cardinality extends ArrayCardinality = "many"
 > extends ZodType<
   arrayOutputType<T, Cardinality>,
@@ -2121,7 +2121,7 @@ export class ZodArray<
     return this.min(1, message) as any;
   }
 
-  static create = <T extends ZodTypeAny>(
+  static create = <T extends ZodType>(
     schema: T,
     params?: RawCreateParams
   ): ZodArray<T> => {
@@ -2136,7 +2136,7 @@ export class ZodArray<
   };
 }
 
-export type ZodNonEmptyArray<T extends ZodTypeAny> = ZodArray<T, "atleastone">;
+export type ZodNonEmptyArray<T extends ZodType> = ZodArray<T, "atleastone">;
 
 /////////////////////////////////////////
 /////////////////////////////////////////
@@ -2151,7 +2151,7 @@ export type UnknownKeysParam = "passthrough" | "strict" | "strip";
 export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
-  Catchall extends ZodTypeAny = ZodTypeAny
+  Catchall extends ZodType = ZodType
 > extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodObject;
   shape: () => T;
@@ -2169,7 +2169,7 @@ export type mergeTypes<A, B> = {
 
 export type objectOutputType<
   Shape extends ZodRawShape,
-  Catchall extends ZodTypeAny,
+  Catchall extends ZodType,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
 > = objectUtil.flatten<
   objectUtil.addQuestionMarks<baseObjectOutputType<Shape>>
@@ -2183,7 +2183,7 @@ export type baseObjectOutputType<Shape extends ZodRawShape> = {
 
 export type objectInputType<
   Shape extends ZodRawShape,
-  Catchall extends ZodTypeAny,
+  Catchall extends ZodType,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
 > = objectUtil.flatten<baseObjectInputType<Shape>> &
   CatchallInput<Catchall> &
@@ -2193,34 +2193,30 @@ export type baseObjectInputType<Shape extends ZodRawShape> =
     [k in keyof Shape]: Shape[k]["_input"];
   }>;
 
-export type CatchallOutput<T extends ZodTypeAny> = ZodTypeAny extends T
+export type CatchallOutput<T extends ZodType> = ZodType extends T
   ? unknown
   : { [k: string]: T["_output"] };
 
-export type CatchallInput<T extends ZodTypeAny> = ZodTypeAny extends T
+export type CatchallInput<T extends ZodType> = ZodType extends T
   ? unknown
   : { [k: string]: T["_input"] };
 
 export type PassthroughType<T extends UnknownKeysParam> =
   T extends "passthrough" ? { [k: string]: unknown } : unknown;
 
-export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
+export type deoptional<T extends ZodType> = T extends ZodOptional<infer U>
   ? deoptional<U>
   : T extends ZodNullable<infer U>
   ? ZodNullable<deoptional<U>>
   : T;
 
-export type SomeZodObject = ZodObject<
-  ZodRawShape,
-  UnknownKeysParam,
-  ZodTypeAny
->;
+export type SomeZodObject = ZodObject<ZodRawShape, UnknownKeysParam, ZodType>;
 
 export type noUnrecognized<Obj extends object, Shape extends object> = {
   [k in keyof Obj]: k extends keyof Shape ? Obj[k] : never;
 };
 
-function deepPartialify(schema: ZodTypeAny): any {
+function deepPartialify(schema: ZodType): any {
   if (schema instanceof ZodObject) {
     const newShape: any = {};
 
@@ -2253,7 +2249,7 @@ function deepPartialify(schema: ZodTypeAny): any {
 export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
-  Catchall extends ZodTypeAny = ZodTypeAny,
+  Catchall extends ZodType = ZodType,
   Output = objectOutputType<T, Catchall, UnknownKeys>,
   Input = objectInputType<T, Catchall, UnknownKeys>
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
@@ -2545,7 +2541,7 @@ export class ZodObject<
   //   return merged;
   // }
 
-  setKey<Key extends string, Schema extends ZodTypeAny>(
+  setKey<Key extends string, Schema extends ZodType>(
     key: Key,
     schema: Schema
   ): ZodObject<T & { [k in Key]: Schema }, UnknownKeys, Catchall> {
@@ -2573,7 +2569,7 @@ export class ZodObject<
   //   return merged;
   // }
 
-  catchall<Index extends ZodTypeAny>(
+  catchall<Index extends ZodType>(
     index: Index
   ): ZodObject<T, UnknownKeys, Index> {
     return new ZodObject({
@@ -2749,11 +2745,9 @@ export type AnyZodObject = ZodObject<any, any, any>;
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-export type ZodUnionOptions = Readonly<[ZodTypeAny, ...ZodTypeAny[]]>;
+export type ZodUnionOptions = Readonly<[ZodType, ...ZodType[]]>;
 export interface ZodUnionDef<
-  T extends ZodUnionOptions = Readonly<
-    [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]
-  >
+  T extends ZodUnionOptions = Readonly<[ZodType, ZodType, ...ZodType[]]>
 > extends ZodTypeDef {
   options: T;
   typeName: ZodFirstPartyTypeKind.ZodUnion;
@@ -2869,9 +2863,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
     return this._def.options;
   }
 
-  static create = <
-    T extends Readonly<[ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]>
-  >(
+  static create = <T extends Readonly<[ZodType, ZodType, ...ZodType[]]>>(
     types: T,
     params?: RawCreateParams
   ): ZodUnion<T> => {
@@ -2891,7 +2883,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
+const getDiscriminator = <T extends ZodType>(type: T): Primitive[] => {
   if (type instanceof ZodLazy) {
     return getDiscriminator(type.schema);
   } else if (type instanceof ZodEffects) {
@@ -2926,9 +2918,9 @@ const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
 
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
   ZodObject<
-    { [key in Discriminator]: ZodTypeAny } & ZodRawShape,
+    { [key in Discriminator]: ZodType } & ZodRawShape,
     UnknownKeysParam,
-    ZodTypeAny
+    ZodType
   >;
 
 export interface ZodDiscriminatedUnionDef<
@@ -3068,8 +3060,8 @@ export class ZodDiscriminatedUnion<
 ///////////////////////////////////////////////
 ///////////////////////////////////////////////
 export interface ZodIntersectionDef<
-  T extends ZodTypeAny = ZodTypeAny,
-  U extends ZodTypeAny = ZodTypeAny
+  T extends ZodType = ZodType,
+  U extends ZodType = ZodType
 > extends ZodTypeDef {
   left: T;
   right: U;
@@ -3132,8 +3124,8 @@ function mergeValues(
 }
 
 export class ZodIntersection<
-  T extends ZodTypeAny,
-  U extends ZodTypeAny
+  T extends ZodType,
+  U extends ZodType
 > extends ZodType<
   T["_output"] & U["_output"],
   ZodIntersectionDef<T, U>,
@@ -3194,7 +3186,7 @@ export class ZodIntersection<
     }
   }
 
-  static create = <T extends ZodTypeAny, U extends ZodTypeAny>(
+  static create = <T extends ZodType, U extends ZodType>(
     left: T,
     right: U,
     params?: RawCreateParams
@@ -3215,15 +3207,15 @@ export class ZodIntersection<
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-export type ZodTupleItems = [ZodTypeAny, ...ZodTypeAny[]];
+export type ZodTupleItems = [ZodType, ...ZodType[]];
 export type AssertArray<T> = T extends any[] ? T : never;
 export type OutputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<{
   [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
 }>;
 export type OutputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
-  Rest extends ZodTypeAny | null = null
-> = Rest extends ZodTypeAny
+  Rest extends ZodType | null = null
+> = Rest extends ZodType
   ? [...OutputTypeOfTuple<T>, ...Rest["_output"][]]
   : OutputTypeOfTuple<T>;
 
@@ -3232,14 +3224,14 @@ export type InputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<{
 }>;
 export type InputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
-  Rest extends ZodTypeAny | null = null
-> = Rest extends ZodTypeAny
+  Rest extends ZodType | null = null
+> = Rest extends ZodType
   ? [...InputTypeOfTuple<T>, ...Rest["_input"][]]
   : InputTypeOfTuple<T>;
 
 export interface ZodTupleDef<
   T extends ZodTupleItems | [] = ZodTupleItems,
-  Rest extends ZodTypeAny | null = null
+  Rest extends ZodType | null = null
 > extends ZodTypeDef {
   items: T;
   rest: Rest;
@@ -3247,12 +3239,12 @@ export interface ZodTupleDef<
 }
 
 export type AnyZodTuple = ZodTuple<
-  [ZodTypeAny, ...ZodTypeAny[]] | [],
-  ZodTypeAny | null
+  [ZodType, ...ZodType[]] | [],
+  ZodType | null
 >;
 export class ZodTuple<
-  T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]],
-  Rest extends ZodTypeAny | null = null
+  T extends [ZodType, ...ZodType[]] | [] = [ZodType, ...ZodType[]],
+  Rest extends ZodType | null = null
 > extends ZodType<
   OutputTypeOfTupleWithRest<T, Rest>,
   ZodTupleDef<T, Rest>,
@@ -3317,14 +3309,14 @@ export class ZodTuple<
     return this._def.items;
   }
 
-  rest<Rest extends ZodTypeAny>(rest: Rest): ZodTuple<T, Rest> {
+  rest<Rest extends ZodType>(rest: Rest): ZodTuple<T, Rest> {
     return new ZodTuple({
       ...this._def,
       rest,
     });
   }
 
-  static create = <T extends [ZodTypeAny, ...ZodTypeAny[]] | []>(
+  static create = <T extends [ZodType, ...ZodType[]] | []>(
     schemas: T,
     params?: RawCreateParams
   ): ZodTuple<T, null> => {
@@ -3349,7 +3341,7 @@ export class ZodTuple<
 /////////////////////////////////////////
 export interface ZodRecordDef<
   Key extends KeySchema = ZodString,
-  Value extends ZodTypeAny = ZodTypeAny
+  Value extends ZodType = ZodType
 > extends ZodTypeDef {
   valueType: Value;
   keyType: Key;
@@ -3370,7 +3362,7 @@ export type RecordType<K extends string | number | symbol, V> = [
   : Partial<Record<K, V>>;
 export class ZodRecord<
   Key extends KeySchema = ZodString,
-  Value extends ZodTypeAny = ZodTypeAny
+  Value extends ZodType = ZodType
 > extends ZodType<
   RecordType<Key["_output"], Value["_output"]>,
   ZodRecordDef<Key, Value>,
@@ -3421,11 +3413,11 @@ export class ZodRecord<
     return this._def.valueType;
   }
 
-  static create<Value extends ZodTypeAny>(
+  static create<Value extends ZodType>(
     valueType: Value,
     params?: RawCreateParams
   ): ZodRecord<ZodString, Value>;
-  static create<Keys extends KeySchema, Value extends ZodTypeAny>(
+  static create<Keys extends KeySchema, Value extends ZodType>(
     keySchema: Keys,
     valueType: Value,
     params?: RawCreateParams
@@ -3457,8 +3449,8 @@ export class ZodRecord<
 //////////////////////////////////////
 //////////////////////////////////////
 export interface ZodMapDef<
-  Key extends ZodTypeAny = ZodTypeAny,
-  Value extends ZodTypeAny = ZodTypeAny
+  Key extends ZodType = ZodType,
+  Value extends ZodType = ZodType
 > extends ZodTypeDef {
   valueType: Value;
   keyType: Key;
@@ -3466,8 +3458,8 @@ export interface ZodMapDef<
 }
 
 export class ZodMap<
-  Key extends ZodTypeAny = ZodTypeAny,
-  Value extends ZodTypeAny = ZodTypeAny
+  Key extends ZodType = ZodType,
+  Value extends ZodType = ZodType
 > extends ZodType<
   Map<Key["_output"], Value["_output"]>,
   ZodMapDef<Key, Value>,
@@ -3541,8 +3533,8 @@ export class ZodMap<
     }
   }
   static create = <
-    Key extends ZodTypeAny = ZodTypeAny,
-    Value extends ZodTypeAny = ZodTypeAny
+    Key extends ZodType = ZodType,
+    Value extends ZodType = ZodType
   >(
     keyType: Key,
     valueType: Value,
@@ -3564,15 +3556,14 @@ export class ZodMap<
 //////////                  //////////
 //////////////////////////////////////
 //////////////////////////////////////
-export interface ZodSetDef<Value extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodSetDef<Value extends ZodType = ZodType> extends ZodTypeDef {
   valueType: Value;
   typeName: ZodFirstPartyTypeKind.ZodSet;
   minSize: { value: number; message?: string } | null;
   maxSize: { value: number; message?: string } | null;
 }
 
-export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
+export class ZodSet<Value extends ZodType = ZodType> extends ZodType<
   Set<Value["_output"]>,
   ZodSetDef<Value>,
   Set<Value["_input"]>
@@ -3663,7 +3654,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
     return this.min(1, message) as any;
   }
 
-  static create = <Value extends ZodTypeAny = ZodTypeAny>(
+  static create = <Value extends ZodType = ZodType>(
     valueType: Value,
     params?: RawCreateParams
   ): ZodSet<Value> => {
@@ -3686,7 +3677,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
 ///////////////////////////////////////////
 export interface ZodFunctionDef<
   Args extends ZodTuple<any, any> = ZodTuple<any, any>,
-  Returns extends ZodTypeAny = ZodTypeAny
+  Returns extends ZodType = ZodType
 > extends ZodTypeDef {
   args: Args;
   returns: Returns;
@@ -3695,21 +3686,21 @@ export interface ZodFunctionDef<
 
 export type OuterTypeOfFunction<
   Args extends ZodTuple<any, any>,
-  Returns extends ZodTypeAny
+  Returns extends ZodType
 > = Args["_input"] extends Array<any>
   ? (...args: Args["_input"]) => Returns["_output"]
   : never;
 
 export type InnerTypeOfFunction<
   Args extends ZodTuple<any, any>,
-  Returns extends ZodTypeAny
+  Returns extends ZodType
 > = Args["_output"] extends Array<any>
   ? (...args: Args["_output"]) => Returns["_input"]
   : never;
 
 export class ZodFunction<
   Args extends ZodTuple<any, any>,
-  Returns extends ZodTypeAny
+  Returns extends ZodType
 > extends ZodType<
   OuterTypeOfFunction<Args, Returns>,
   ZodFunctionDef<Args, Returns>,
@@ -3778,7 +3769,7 @@ export class ZodFunction<
           });
         const result = await Reflect.apply(fn, this, parsedArgs as any);
         const parsedReturns = await (
-          me._def.returns as unknown as ZodPromise<ZodTypeAny>
+          me._def.returns as unknown as ZodPromise<ZodType>
         )._def.type
           .parseAsync(result, params)
           .catch((e) => {
@@ -3855,17 +3846,17 @@ export class ZodFunction<
   static create<T extends AnyZodTuple = ZodTuple<[], ZodUnknown>>(
     args: T
   ): ZodFunction<T, ZodUnknown>;
-  static create<T extends AnyZodTuple, U extends ZodTypeAny>(
+  static create<T extends AnyZodTuple, U extends ZodType>(
     args: T,
     returns: U
   ): ZodFunction<T, U>;
   static create<
     T extends AnyZodTuple = ZodTuple<[], ZodUnknown>,
-    U extends ZodTypeAny = ZodUnknown
+    U extends ZodType = ZodUnknown
   >(args: T, returns: U, params?: RawCreateParams): ZodFunction<T, U>;
   static create(
     args?: AnyZodTuple,
-    returns?: ZodTypeAny,
+    returns?: ZodType,
     params?: RawCreateParams
   ) {
     return new ZodFunction({
@@ -3886,13 +3877,12 @@ export class ZodFunction<
 //////////                   //////////
 ///////////////////////////////////////
 ///////////////////////////////////////
-export interface ZodLazyDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodLazyDef<T extends ZodType = ZodType> extends ZodTypeDef {
   getter: () => T;
   typeName: ZodFirstPartyTypeKind.ZodLazy;
 }
 
-export class ZodLazy<T extends ZodTypeAny> extends ZodType<
+export class ZodLazy<T extends ZodType> extends ZodType<
   output<T>,
   ZodLazyDef<T>,
   input<T>
@@ -3907,7 +3897,7 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
     return lazySchema._parse({ data: ctx.data, path: ctx.path, parent: ctx });
   }
 
-  static create = <T extends ZodTypeAny>(
+  static create = <T extends ZodType>(
     getter: () => T,
     params?: RawCreateParams
   ): ZodLazy<T> => {
@@ -4175,13 +4165,12 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
 //////////                      //////////
 //////////////////////////////////////////
 //////////////////////////////////////////
-export interface ZodPromiseDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodPromiseDef<T extends ZodType = ZodType> extends ZodTypeDef {
   type: T;
   typeName: ZodFirstPartyTypeKind.ZodPromise;
 }
 
-export class ZodPromise<T extends ZodTypeAny> extends ZodType<
+export class ZodPromise<T extends ZodType> extends ZodType<
   Promise<T["_output"]>,
   ZodPromiseDef<T>,
   Promise<T["_input"]>
@@ -4219,7 +4208,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
     );
   }
 
-  static create = <T extends ZodTypeAny>(
+  static create = <T extends ZodType>(
     schema: T,
     params?: RawCreateParams
   ): ZodPromise<T> => {
@@ -4262,15 +4251,14 @@ export type Effect<T> =
   | TransformEffect<T>
   | PreprocessEffect<T>;
 
-export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodEffectsDef<T extends ZodType = ZodType> extends ZodTypeDef {
   schema: T;
   typeName: ZodFirstPartyTypeKind.ZodEffects;
   effect: Effect<any>;
 }
 
 export class ZodEffects<
-  T extends ZodTypeAny,
+  T extends ZodType,
   Output = output<T>,
   Input = input<T>
 > extends ZodType<Output, ZodEffectsDef<T>, Input> {
@@ -4279,7 +4267,7 @@ export class ZodEffects<
   }
 
   sourceType(): T {
-    return this._def.schema._def.typeName === ZodFirstPartyTypeKind.ZodEffects
+    return this._def.schema instanceof ZodEffects
       ? (this._def.schema as unknown as ZodEffects<T>).sourceType()
       : (this._def.schema as T);
   }
@@ -4409,7 +4397,7 @@ export class ZodEffects<
     util.assertNever(effect);
   }
 
-  static create = <I extends ZodTypeAny>(
+  static create = <I extends ZodType>(
     schema: I,
     effect: Effect<I["_output"]>,
     params?: RawCreateParams
@@ -4422,7 +4410,7 @@ export class ZodEffects<
     });
   };
 
-  static createWithPreprocess = <I extends ZodTypeAny>(
+  static createWithPreprocess = <I extends ZodType>(
     preprocess: (arg: unknown, ctx: RefinementCtx) => unknown,
     schema: I,
     params?: RawCreateParams
@@ -4445,15 +4433,15 @@ export { ZodEffects as ZodTransformer };
 //////////                       //////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
-export interface ZodOptionalDef<T extends ZodTypeAny = ZodTypeAny>
+export interface ZodOptionalDef<T extends ZodType = ZodType>
   extends ZodTypeDef {
   innerType: T;
   typeName: ZodFirstPartyTypeKind.ZodOptional;
 }
 
-export type ZodOptionalType<T extends ZodTypeAny> = ZodOptional<T>;
+export type ZodOptionalType<T extends ZodType> = ZodOptional<T>;
 
-export class ZodOptional<T extends ZodTypeAny> extends ZodType<
+export class ZodOptional<T extends ZodType> extends ZodType<
   T["_output"] | undefined,
   ZodOptionalDef<T>,
   T["_input"] | undefined
@@ -4470,7 +4458,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType;
   }
 
-  static create = <T extends ZodTypeAny>(
+  static create = <T extends ZodType>(
     type: T,
     params?: RawCreateParams
   ): ZodOptional<T> => {
@@ -4489,15 +4477,15 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
 //////////                       //////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
-export interface ZodNullableDef<T extends ZodTypeAny = ZodTypeAny>
+export interface ZodNullableDef<T extends ZodType = ZodType>
   extends ZodTypeDef {
   innerType: T;
   typeName: ZodFirstPartyTypeKind.ZodNullable;
 }
 
-export type ZodNullableType<T extends ZodTypeAny> = ZodNullable<T>;
+export type ZodNullableType<T extends ZodType> = ZodNullable<T>;
 
-export class ZodNullable<T extends ZodTypeAny> extends ZodType<
+export class ZodNullable<T extends ZodType> extends ZodType<
   T["_output"] | null,
   ZodNullableDef<T>,
   T["_input"] | null
@@ -4514,7 +4502,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType;
   }
 
-  static create = <T extends ZodTypeAny>(
+  static create = <T extends ZodType>(
     type: T,
     params?: RawCreateParams
   ): ZodNullable<T> => {
@@ -4533,14 +4521,13 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface ZodDefaultDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodDefaultDef<T extends ZodType = ZodType> extends ZodTypeDef {
   innerType: T;
   defaultValue: () => util.noUndefined<T["_input"]>;
   typeName: ZodFirstPartyTypeKind.ZodDefault;
 }
 
-export class ZodDefault<T extends ZodTypeAny> extends ZodType<
+export class ZodDefault<T extends ZodType> extends ZodType<
   util.noUndefined<T["_output"]>,
   ZodDefaultDef<T>,
   T["_input"] | undefined
@@ -4562,7 +4549,7 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType;
   }
 
-  static create = <T extends ZodTypeAny>(
+  static create = <T extends ZodType>(
     type: T,
     params: RawCreateParams & {
       default: T["_input"] | (() => util.noUndefined<T["_input"]>);
@@ -4587,14 +4574,13 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
 //////////                      //////////
 //////////////////////////////////////////
 //////////////////////////////////////////
-export interface ZodCatchDef<T extends ZodTypeAny = ZodTypeAny>
-  extends ZodTypeDef {
+export interface ZodCatchDef<T extends ZodType = ZodType> extends ZodTypeDef {
   innerType: T;
   catchValue: (ctx: { error: ZodError; input: unknown }) => T["_input"];
   typeName: ZodFirstPartyTypeKind.ZodCatch;
 }
 
-export class ZodCatch<T extends ZodTypeAny> extends ZodType<
+export class ZodCatch<T extends ZodType> extends ZodType<
   T["_output"],
   ZodCatchDef<T>,
   unknown // any input will pass validation // T["_input"]
@@ -4654,7 +4640,7 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType;
   }
 
-  static create = <T extends ZodTypeAny>(
+  static create = <T extends ZodType>(
     type: T,
     params: RawCreateParams & {
       catch: T["_output"] | (() => T["_output"]);
@@ -4714,7 +4700,7 @@ export class ZodNaN extends ZodType<number, ZodNaNDef> {
 //////////////////////////////////////////
 //////////////////////////////////////////
 
-export interface ZodBrandedDef<T extends ZodTypeAny> extends ZodTypeDef {
+export interface ZodBrandedDef<T extends ZodType> extends ZodTypeDef {
   type: T;
   typeName: ZodFirstPartyTypeKind.ZodBranded;
 }
@@ -4725,7 +4711,7 @@ export type BRAND<T extends string | number | symbol> = {
 };
 
 export class ZodBranded<
-  T extends ZodTypeAny,
+  T extends ZodType,
   B extends string | number | symbol
 > extends ZodType<T["_output"] & BRAND<B>, ZodBrandedDef<T>, T["_input"]> {
   _parse(input: ParseInput): ParseReturnType<any> {
@@ -4751,17 +4737,18 @@ export class ZodBranded<
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 
-export interface ZodPipelineDef<A extends ZodTypeAny, B extends ZodTypeAny>
+export interface ZodPipelineDef<A extends ZodType, B extends ZodType>
   extends ZodTypeDef {
   in: A;
   out: B;
   typeName: ZodFirstPartyTypeKind.ZodPipeline;
 }
 
-export class ZodPipeline<
-  A extends ZodTypeAny,
-  B extends ZodTypeAny
-> extends ZodType<B["_output"], ZodPipelineDef<A, B>, A["_input"]> {
+export class ZodPipeline<A extends ZodType, B extends ZodType> extends ZodType<
+  B["_output"],
+  ZodPipelineDef<A, B>,
+  A["_input"]
+> {
   _parse(input: ParseInput): ParseReturnType<any> {
     const { status, ctx } = this._processInputParams(input);
     if (ctx.common.async) {
@@ -4807,7 +4794,7 @@ export class ZodPipeline<
     }
   }
 
-  static create<A extends ZodTypeAny, B extends ZodTypeAny>(
+  static create<A extends ZodType, B extends ZodType>(
     a: A,
     b: B
   ): ZodPipeline<A, B> {
@@ -4847,13 +4834,13 @@ type MakeReadonly<T> = T extends Map<infer K, infer V>
   ? T
   : Readonly<T>;
 
-export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
+export interface ZodReadonlyDef<T extends ZodType = ZodType>
   extends ZodTypeDef {
   innerType: T;
   typeName: ZodFirstPartyTypeKind.ZodReadonly;
 }
 
-export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
+export class ZodReadonly<T extends ZodType> extends ZodType<
   MakeReadonly<T["_output"]>,
   ZodReadonlyDef<T>,
   MakeReadonly<T["_input"]>
@@ -4866,7 +4853,7 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
     return result;
   }
 
-  static create = <T extends ZodTypeAny>(
+  static create = <T extends ZodType>(
     type: T,
     params?: RawCreateParams
   ): ZodReadonly<T> => {
