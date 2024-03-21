@@ -4294,20 +4294,8 @@ export class ZodEffects<
 
       if (ctx.common.async) {
         return Promise.resolve(processed).then(async (processed) => {
-          // if (status.value === "dirty") {
-          //   return {
-          //     status: "dirty",
-          //     value: ctx.data,
-          //   };
-          // }
-          // if (status.value === "aborted") {
-          //   return INVALID;
-          // }
           if (status.value === "aborted") return INVALID;
-          // if (status.value === "dirty") {
-          //   return { status: "dirty", value: processed };
-          // };
-          // return { status: status.value, value: inner.value };
+
           const result = await this._def.schema._parseAsync({
             data: processed,
             path: ctx.path,
@@ -4317,9 +4305,6 @@ export class ZodEffects<
           if (result.status === "dirty") return DIRTY(result.value);
           if (status.value === "dirty") return DIRTY(result.value);
           return result;
-
-          // if(result.status=== "dirty") return DIRTY(result.value)
-          // return { status: status.value, value: result };
         });
       } else {
         if (status.value === "aborted") return INVALID;
@@ -4335,10 +4320,7 @@ export class ZodEffects<
       }
     }
     if (effect.type === "refinement") {
-      const executeRefinement = (
-        acc: unknown
-        // effect: RefinementEffect<any>
-      ): any => {
+      const executeRefinement = (acc: unknown): any => {
         const result = effect.refinement(acc, checkCtx);
         if (ctx.common.async) {
           return Promise.resolve(result);
