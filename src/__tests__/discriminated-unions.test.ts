@@ -248,6 +248,27 @@ test("enum and nativeEnum", () => {
   schema.parse({ key: "e" });
 });
 
+test("branded", () => {
+  const schema = z.discriminatedUnion("key", [
+    z.object({
+      key: z.literal("a"),
+      // Add other properties specific to this option
+    }),
+    z.object({
+      key: z.literal("b").brand("asdfaf"),
+      // Add other properties specific to this option
+    }),
+  ]);
+
+  type schema = z.infer<typeof schema>;
+
+  schema.parse({ key: "a" });
+  schema.parse({ key: "b" });
+  expect(() => {
+    schema.parse({ key: "c" });
+  }).toThrow();
+});
+
 test("optional and nullable", () => {
   const schema = z.discriminatedUnion("key", [
     z.object({

@@ -2913,8 +2913,12 @@ const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
     return [undefined, ...getDiscriminator(type.unwrap())];
   } else if (type instanceof ZodNullable) {
     return [null, ...getDiscriminator(type.unwrap())];
+  } else if (type instanceof ZodBranded) {
+    return getDiscriminator(type.unwrap());
   } else if (type instanceof ZodReadonly) {
     return getDiscriminator(type.unwrap());
+  } else if (type instanceof ZodCatch) {
+    return getDiscriminator(type._def.innerType);
   } else {
     return [];
   }
