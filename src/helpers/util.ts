@@ -108,6 +108,10 @@ export namespace objectUtil {
     [k in keyof T]: undefined extends T[k] ? never : k;
   }[keyof T];
 
+  // export type addQuestionMarks<
+  //   T extends object,
+  //   R extends keyof T = requiredKeys<T>
+  // > = Pick<Required<T>, R> & Partial<T>;
   export type addQuestionMarks<
     T extends object,
     R extends keyof T = requiredKeys<T>,
