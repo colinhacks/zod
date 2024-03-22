@@ -34,9 +34,7 @@ test("assignability", () => {
       [key]: valueSchema,
     });
     const parsed = schema.parse(data);
-    type aldsjkf = z.infer<z.ZodObject<{ [k in K]: VS }>>;
     const inferred: z.infer<z.ZodObject<{ [k in K]: VS }>> = parsed;
-    // this line errors in 3.21.2
     return inferred;
   };
   createSchemaAndParse("foo", z.string(), { foo: "" });
