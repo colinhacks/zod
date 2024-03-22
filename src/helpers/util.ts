@@ -111,7 +111,7 @@ export namespace objectUtil {
   export type addQuestionMarks<
     T extends object,
     R extends keyof T = requiredKeys<T>
-  > = Pick<Required<T>, R> & Partial<T>;
+  > = Pick<Required<T>, R> & Omit<Partial<T>, R> & { [k in keyof T]?: unknown };
 
   export type identity<T> = T;
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
