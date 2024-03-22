@@ -22,3 +22,19 @@ test("generics", () => {
   const result = stripOuter(z.object({ a: z.string() }), { a: "asdf" });
   util.assertEqual<typeof result, Promise<{ a: string }>>(true);
 });
+
+test("assignability", () => {
+  const createSchemaAndParse = <K extends string, VS extends z.ZodString>(
+    key: K,
+    valueSchema: VS,
+    data: unknown
+  ) => {
+    const schema = z.object({
+      [key]: valueSchema,
+    });
+    const parsed = schema.parse(data);
+    const inferred: z.infer<z.ZodObject<{ [k in K]: VS }>> = parsed;
+    return inferred;
+  };
+  createSchemaAndParse("foo", z.string(), { foo: "" });
+});
