@@ -84,6 +84,10 @@ test("invalid intersection types", async () => {
     expect(syncResult.error.issues[0].code).toEqual(
       z.ZodIssueCode.invalid_intersection_types
     );
+    expect(
+      (syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
+        .mergeErrorPath
+    ).toEqual([]);
   }
 
   const asyncResult = await numberIntersection.spa(1234);
@@ -92,10 +96,14 @@ test("invalid intersection types", async () => {
     expect(asyncResult.error.issues[0].code).toEqual(
       z.ZodIssueCode.invalid_intersection_types
     );
+    expect(
+      (asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
+        .mergeErrorPath
+    ).toEqual([]);
   }
 });
 
-test("invalid array merge", async () => {
+test("invalid array merge (incompatible lengths)", async () => {
   const stringArrInt = z.intersection(
     z.string().array(),
     z
@@ -103,12 +111,17 @@ test("invalid array merge", async () => {
       .array()
       .transform((val) => [...val, "asdf"])
   );
+
   const syncResult = stringArrInt.safeParse(["asdf", "qwer"]);
   expect(syncResult.success).toEqual(false);
   if (!syncResult.success) {
     expect(syncResult.error.issues[0].code).toEqual(
       z.ZodIssueCode.invalid_intersection_types
     );
+    expect(
+      (syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
+        .mergeErrorPath
+    ).toEqual([]);
   }
 
   const asyncResult = await stringArrInt.spa(["asdf", "qwer"]);
@@ -117,5 +130,123 @@ test("invalid array merge", async () => {
     expect(asyncResult.error.issues[0].code).toEqual(
       z.ZodIssueCode.invalid_intersection_types
     );
+    expect(
+      (asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
+        .mergeErrorPath
+    ).toEqual([]);
+  }
+});
+
+test("invalid array merge (incompatible elements)", async () => {
+  const stringArrInt = z.intersection(
+    z.string().array(),
+    z
+      .string()
+      .array()
+      .transform((val) => [...val.slice(0, -1), "asdf"])
+  );
+
+  const syncResult = stringArrInt.safeParse(["asdf", "qwer"]);
+  expect(syncResult.success).toEqual(false);
+  if (!syncResult.success) {
+    expect(syncResult.error.issues[0].code).toEqual(
+      z.ZodIssueCode.invalid_intersection_types
+    );
+    expect(
+      (syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
+        .mergeErrorPath
+    ).toEqual([1]);
+  }
+
+  const asyncResult = await stringArrInt.spa(["asdf", "qwer"]);
+  expect(asyncResult.success).toEqual(false);
+  if (!asyncResult.success) {
+    expect(asyncResult.error.issues[0].code).toEqual(
+      z.ZodIssueCode.invalid_intersection_types
+    );
+    expect(
+      (asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
+        .mergeErrorPath
+    ).toEqual([1]);
+  }
+});
+
+test("invalid object merge", async () => {
+  const Cat = z.object({
+    phrase: z.string().transform((val) => `${val} Meow`),
+  });
+  const Dog = z.object({
+    phrase: z.string().transform((val) => `${val} Woof`),
+  });
+  const CatDog = z.intersection(Cat, Dog);
+
+  const syncResult = CatDog.safeParse({ phrase: "Hello, my name is CatDog." });
+  expect(syncResult.success).toEqual(false);
+  if (!syncResult.success) {
+    expect(syncResult.error.issues[0].code).toEqual(
+      z.ZodIssueCode.invalid_intersection_types
+    );
+    expect(
+      (syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
+        .mergeErrorPath
+    ).toEqual(["phrase"]);
+  }
+
+  const asyncResult = await CatDog.spa({ phrase: "Hello, my name is CatDog" });
+  expect(asyncResult.success).toEqual(false);
+  if (!asyncResult.success) {
+    expect(asyncResult.error.issues[0].code).toEqual(
+      z.ZodIssueCode.invalid_intersection_types
+    );
+    expect(
+      (asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
+        .mergeErrorPath
+    ).toEqual(["phrase"]);
+  }
+});
+
+test("invalid deep merge of object and array combination", async () => {
+  const University = z.object({
+    students: z.array(
+      z.object({
+        name: z.string().transform((val) => `Student name: ${val}`),
+      })
+    ),
+  });
+  const Registry = z
+    .object({
+      students: z.array(
+        z.object({
+          name: z.string(),
+          surname: z.string(),
+        })
+      ),
+    })
+    .and(University);
+
+  const students = [{ name: "John", surname: "Doe" }];
+
+  const syncResult = Registry.safeParse({ students });
+  expect(syncResult.success).toEqual(false);
+  if (!syncResult.success) {
+    expect(syncResult.error.issues[0].code).toEqual(
+      z.ZodIssueCode.invalid_intersection_types
+    );
+    expect(
+      (syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
+        .mergeErrorPath
+    ).toEqual(["students", 0, "name"]);
+  }
+
+  const asyncResult = await Registry.spa({ students });
+  expect(asyncResult.success).toEqual(false);
+  if (!asyncResult.success) {
+    expect(asyncResult.error.issues[0].code).toEqual(
+      z.ZodIssueCode.invalid_intersection_types
+    );
+    expect(
+      (asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
+        .mergeErrorPath
+    ).toEqual(["students", 0, "name"]);
   }
 });
