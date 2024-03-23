@@ -543,6 +543,7 @@ export type ZodStringCheck =
       kind: "datetime";
       offset: boolean;
       precision: number | null;
+      unqualified: boolean;
       message?: string;
     }
   | { kind: "ip"; version?: IpVersion; message?: string };
@@ -588,33 +589,41 @@ const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
 // Adapted from https://stackoverflow.com/a/3143231
-const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
+const datetimeRegex = (args: {
+  precision: number | null;
+  offset: boolean;
+  unqualified: boolean;
+}) => {
+  const optionalOffsetQuantifier = args.unqualified ? "?" : "";
+
   if (args.precision) {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}(:?\\d{2})?)|Z)${optionalOffsetQuantifier}$`
       );
     } else {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}Z$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}Z${optionalOffsetQuantifier}$`
       );
     }
   } else if (args.precision === 0) {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}(:?\\d{2})?)|Z)${optionalOffsetQuantifier}$`
       );
     } else {
-      return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`);
+      return new RegExp(
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z${optionalOffsetQuantifier}$`
+      );
     }
   } else {
     if (args.offset) {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}(:?\\d{2})?)|Z)$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}(:?\\d{2})?)|Z)${optionalOffsetQuantifier}$`
       );
     } else {
       return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$`
+        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z${optionalOffsetQuantifier}$`
       );
     }
   }
@@ -913,6 +922,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           message?: string | undefined;
           precision?: number | null;
           offset?: boolean;
+          unqualified?: boolean;
         }
   ) {
     if (typeof options === "string") {
@@ -920,6 +930,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         kind: "datetime",
         precision: null,
         offset: false,
+        unqualified: false,
         message: options,
       });
     }
@@ -928,6 +939,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       precision:
         typeof options?.precision === "undefined" ? null : options?.precision,
       offset: options?.offset ?? false,
+      unqualified: options?.unqualified ?? false,
       ...errorUtil.errToObj(options?.message),
     });
   }

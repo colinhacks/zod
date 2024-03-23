@@ -818,7 +818,7 @@ z.string().regex(regex);
 z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
-z.string().datetime(); // ISO 8601; default is without UTC offset, see below for options
+z.string().datetime(); // ISO 8601; default is UTC with zero offset, see below for options
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 
 // transformations
@@ -857,7 +857,7 @@ z.string().ip({ message: "Invalid IP address" });
 
 ### ISO datetimes
 
-The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
+The `z.string().datetime()` method enforces ISO 8601; default is UTC with zero timezone offset and arbitrary sub-second decimal precision.
 
 ```ts
 const datetime = z.string().datetime();
@@ -866,6 +866,7 @@ datetime.parse("2020-01-01T00:00:00Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (arbitrary precision)
 datetime.parse("2020-01-01T00:00:00+02:00"); // fail (no offsets allowed)
+datetime.parse("2020-01-01T00:00:00"); // fail (UTC relation required)
 ```
 
 Timezone offsets can be allowed by setting the `offset` option to `true`.
@@ -888,6 +889,16 @@ const datetime = z.string().datetime({ precision: 3 });
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
+```
+
+Unqualified (no UTC relation) datetimes can be allowed by setting the `unqualified` option to `true`.
+
+```ts
+const datetime = z.string().datetime({ unqualified: true });
+
+datetime.parse("2020-01-01T00:00:00"); // pass
+datetime.parse("2020-01-01T00:00:00.123"); // pass (millis optional)
+datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
 ```
 
 ### IP addresses
