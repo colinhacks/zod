@@ -11,6 +11,7 @@ const includes = z.string().includes("includes");
 const includesFromIndex2 = z.string().includes("includes", { position: 2 });
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
+const boolean = z.string().boolean();
 
 test("passing validations", () => {
   minFive.parse("12345");
@@ -23,6 +24,7 @@ test("passing validations", () => {
   includesFromIndex2.parse("XXXincludesXX");
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
+  boolean.parse("False");
 });
 
 test("failing validations", () => {
@@ -35,6 +37,7 @@ test("failing validations", () => {
   expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
+  expect(() => boolean.parse("")).toThrow();
 });
 
 test("email validations", () => {
@@ -508,4 +511,69 @@ test("IP validation", () => {
   expect(
     invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
   ).toBe(true);
+});
+
+test("boolean validation", () => {
+  const b = z.string().boolean();
+
+  expect(b.parse("1")).toEqual(true);
+  expect(b.parse("t")).toEqual(true);
+  expect(b.parse("T")).toEqual(true);
+  expect(b.parse("TRUE")).toEqual(true);
+  expect(b.parse("true")).toEqual(true);
+  expect(b.parse("True")).toEqual(true);
+
+  expect(b.parse("0")).toEqual(false);
+  expect(b.parse("f")).toEqual(false);
+  expect(b.parse("F")).toEqual(false);
+  expect(b.parse("FALSE")).toEqual(false);
+  expect(b.parse("false")).toEqual(false);
+  expect(b.parse("False")).toEqual(false);
+
+  expect(() => b.parse("tRue")).toThrow();
+  expect(() => b.parse("faLse")).toThrow();
+  expect(() => b.parse("other")).toThrow();
+  expect(() => b.parse("")).toThrow();
+  expect(() => b.parse(undefined)).toThrow();
+  expect(() => b.parse(null)).toThrow();
+
+  const catchFalse = z.string().boolean().catch(false);
+
+  expect(catchFalse.parse("tRue")).toEqual(false);
+  expect(catchFalse.parse("faLse")).toEqual(false);
+  expect(catchFalse.parse("other")).toEqual(false);
+  expect(catchFalse.parse("")).toEqual(false);
+  expect(catchFalse.parse(undefined)).toEqual(false);
+  expect(catchFalse.parse(null)).toEqual(false);
+
+  const catchTrue = z.string().boolean().catch(true);
+
+  expect(catchTrue.parse("tRue")).toEqual(true);
+  expect(catchTrue.parse("faLse")).toEqual(true);
+  expect(catchTrue.parse("other")).toEqual(true);
+  expect(catchTrue.parse("")).toEqual(true);
+  expect(catchTrue.parse(undefined)).toEqual(true);
+  expect(catchTrue.parse(null)).toEqual(true);
+
+  const defaultFalse = z.string().boolean().default("0");
+
+  expect(() => defaultFalse.parse("tRue")).toThrow();
+  expect(() => defaultFalse.parse("faLse")).toThrow();
+  expect(() => defaultFalse.parse("other")).toThrow();
+  expect(() => defaultFalse.parse("")).toThrow();
+  expect(defaultFalse.parse(undefined)).toEqual(false); // default
+  expect(() => defaultFalse.parse(null)).toThrow();
+
+  const defaultFalseCatchTrue = z.string().boolean().default("0").catch(true);
+
+  expect(defaultFalseCatchTrue.parse("tRue")).toEqual(true);
+  expect(defaultFalseCatchTrue.parse("faLse")).toEqual(true);
+  expect(defaultFalseCatchTrue.parse("other")).toEqual(true);
+  expect(defaultFalseCatchTrue.parse("")).toEqual(true);
+  expect(defaultFalseCatchTrue.parse(undefined)).toEqual(false); // default
+  expect(defaultFalseCatchTrue.parse(null)).toEqual(true);
+
+  const nullable = z.string().boolean().nullable();
+
+  expect(nullable.parse(null)).toEqual(null);
 });
