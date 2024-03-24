@@ -152,6 +152,7 @@
     - [Constraining allowable inputs](#constraining-allowable-inputs)
   - [Error handling](#error-handling)
   - [Error formatting](#error-formatting)
+  - [Using zod with forms](#using-zod-with-forms)
 - [Comparison](#comparison)
   - [Joi](#joi)
   - [Yup](#yup)
@@ -2838,6 +2839,31 @@ if (!result.success) {
   // => ["Expected string, received number"]
 }
 ```
+
+### Using Zod with forms
+
+TypeScript and HTML forms share some common terms, but they do not mean the same thing, which can lead to some confusion when using Zod which uses terms consistent with TypeScript's usage.
+One common misstep is that the schema `z.string()` will allow empty strings for a required HTML form field, which matches the TypeScript type system, but might not be what you expect when you consider the `z.string()` is "required" be default. However, "required" in this context means "a value of this type is present" and the empty string is a value of type `string`.
+```ts
+const str: string = ""; // This is okay
+z.string().parse(""); // Which means this shouldn't throw an error
+```
+This means if you intend to use Zod with forms, you need to prepare your form data first, or write the correct zod schema for what you actually want the data to be.
+
+Option 1, Make empty required fields null when collecting the data
+
+```ts
+const requiredFieldValue =
+  isFieldRequired && fieldValue === "" ? null : fieldValue;
+```
+
+Option 2, Update the zod schema to fail if field is empty
+
+```ts
+z.string().trim().min(1, { message: "Required" }).parse(""); // Throws "Required" error.
+```
+
+If you plan to use Zod with forms, you may find the [form integrations](#form-integrations) list helpful.
 
 ## Comparison
 
