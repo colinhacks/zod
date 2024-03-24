@@ -811,6 +811,7 @@ z.string().email();
 z.string().url();
 z.string().emoji();
 z.string().uuid();
+z.string().nanoid();
 z.string().cuid();
 z.string().cuid2();
 z.string().ulid();
