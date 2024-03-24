@@ -819,6 +819,7 @@ z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // ISO 8601; default is without UTC offset, see below for options
+z.string().duration(); // ISO 8601 Duration
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 
 // transformations

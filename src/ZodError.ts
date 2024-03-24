@@ -98,6 +98,7 @@ export type StringValidation =
   | "cuid2"
   | "ulid"
   | "datetime"
+  | "duration"
   | "ip"
   | { includes: string; position?: number }
   | { startsWith: string }
