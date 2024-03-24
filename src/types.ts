@@ -135,6 +135,9 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   }
   if (errorMap) return { errorMap: errorMap, description };
   const customMap: ZodErrorMap = (iss, ctx) => {
+    if (iss.code === "invalid_enum_value") {
+      return { message: invalid_type_error ?? ctx.defaultError };
+    }
     if (iss.code !== "invalid_type") return { message: ctx.defaultError };
     if (typeof ctx.data === "undefined") {
       return { message: required_error ?? ctx.defaultError };
