@@ -32,8 +32,13 @@ export const makeIssue = (params: {
   };
 };
 
+export interface ZodMeta {
+  [key: string | number | symbol]: unknown;
+}
+
 export type ParseParams = {
   path: (string | number)[];
+  meta: ZodMeta;
   errorMap: ZodErrorMap;
   async: boolean;
 };
@@ -49,6 +54,7 @@ export interface ParseContext {
     readonly async: boolean;
   };
   readonly path: ParsePath;
+  readonly meta: ZodMeta;
   readonly schemaErrorMap?: ZodErrorMap;
   readonly parent: ParseContext | null;
   readonly data: any;
@@ -58,6 +64,7 @@ export interface ParseContext {
 export type ParseInput = {
   data: any;
   path: (string | number)[];
+  meta: ZodMeta;
   parent: ParseContext;
 };
 
