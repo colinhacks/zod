@@ -244,6 +244,7 @@ export abstract class ZodType<
         issues: [],
         async: params?.async ?? false,
         contextualErrorMap: params?.errorMap,
+        validate: params?.validate ?? true,
       },
       path: params?.path || [],
       schemaErrorMap: this._def.errorMap,
@@ -274,6 +275,7 @@ export abstract class ZodType<
         issues: [],
         contextualErrorMap: params?.errorMap,
         async: true,
+        validate: params?.validate ?? true,
       },
       path: params?.path || [],
       schemaErrorMap: this._def.errorMap,
@@ -654,6 +656,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
     const status = new ParseStatus();
     let ctx: undefined | ParseContext = undefined;
+
+    ctx = this._getOrReturnCtx(input, ctx);
+    if (!ctx.common.validate) {
+      return { status: status.value, value: input.data };
+    }
 
     for (const check of this._def.checks) {
       if (check.kind === "min") {
@@ -1125,6 +1132,11 @@ export class ZodNumber extends ZodType<number, ZodNumberDef> {
     let ctx: undefined | ParseContext = undefined;
     const status = new ParseStatus();
 
+    ctx = this._getOrReturnCtx(input, ctx);
+    if (!ctx.common.validate) {
+      return { status: status.value, value: input.data };
+    }
+
     for (const check of this._def.checks) {
       if (check.kind === "int") {
         if (!util.isInteger(input.data)) {
@@ -1410,6 +1422,11 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
     let ctx: undefined | ParseContext = undefined;
     const status = new ParseStatus();
 
+    ctx = this._getOrReturnCtx(input, ctx);
+    if (!ctx.common.validate) {
+      return { status: status.value, value: input.data };
+    }
+
     for (const check of this._def.checks) {
       if (check.kind === "min") {
         const tooSmall = check.inclusive
@@ -1665,6 +1682,11 @@ export class ZodDate extends ZodType<Date, ZodDateDef> {
 
     const status = new ParseStatus();
     let ctx: undefined | ParseContext = undefined;
+
+    ctx = this._getOrReturnCtx(input, ctx);
+    if (!ctx.common.validate) {
+      return { status: status.value, value: input.data };
+    }
 
     for (const check of this._def.checks) {
       if (check.kind === "min") {
