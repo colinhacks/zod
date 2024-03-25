@@ -470,6 +470,88 @@ test("datetime parsing", () => {
   ).toThrow();
 });
 
+test("date", () => {
+  const a = z.string().date();
+  expect(a.isDate).toEqual(true);
+});
+
+test("date parsing", () => {
+  const date = z.string().date();
+  date.parse("1970-01-01");
+  date.parse("2022-10-13");
+  expect(() => date.parse("")).toThrow();
+  expect(() => date.parse("foo")).toThrow();
+  expect(() => date.parse("200-01-01")).toThrow();
+  expect(() => date.parse("20000-01-01")).toThrow();
+  expect(() => date.parse("2000-0-01")).toThrow();
+  expect(() => date.parse("2000-011-01")).toThrow();
+  expect(() => date.parse("2000-01-0")).toThrow();
+  expect(() => date.parse("2000-01-011")).toThrow();
+  expect(() => date.parse("2000/01/01")).toThrow();
+  expect(() => date.parse("01-01-2022")).toThrow();
+  expect(() => date.parse("01/01/2022")).toThrow();
+  expect(() => date.parse("2000-01-01 00:00:00Z")).toThrow();
+  expect(() => date.parse("2020-10-14T17:42:29+00:00")).toThrow();
+  expect(() => date.parse("2020-10-14T17:42:29Z")).toThrow();
+  expect(() => date.parse("2020-10-14T17:42:29")).toThrow();
+  expect(() => date.parse("2020-10-14T17:42:29.123Z")).toThrow();
+});
+
+test("time", () => {
+  const a = z.string().time();
+  expect(a.isTime).toEqual(true);
+});
+
+test("time parsing", () => {
+  const time = z.string().time();
+  time.parse("00:00:00");
+  time.parse("09:52:31");
+  time.parse("23:59:59.9999999");
+  expect(() => time.parse("")).toThrow();
+  expect(() => time.parse("foo")).toThrow();
+  expect(() => time.parse("00:00:00Z")).toThrow();
+  expect(() => time.parse("0:00:00")).toThrow();
+  expect(() => time.parse("00:0:00")).toThrow();
+  expect(() => time.parse("00:00:0")).toThrow();
+  expect(() => time.parse("00:00:00.000+00:00")).toThrow();
+
+  const time2 = z.string().time({ precision: 2 });
+  time2.parse("00:00:00.00");
+  time2.parse("09:52:31.12");
+  time2.parse("23:59:59.99");
+  expect(() => time2.parse("")).toThrow();
+  expect(() => time2.parse("foo")).toThrow();
+  expect(() => time2.parse("00:00:00")).toThrow();
+  expect(() => time2.parse("00:00:00.00Z")).toThrow();
+  expect(() => time2.parse("00:00:00.0")).toThrow();
+  expect(() => time2.parse("00:00:00.000")).toThrow();
+  expect(() => time2.parse("00:00:00.00+00:00")).toThrow();
+
+  const time3 = z.string().time({ offset: true });
+  time3.parse("00:00:00Z");
+  time3.parse("09:52:31Z");
+  time3.parse("00:00:00+00:00");
+  time3.parse("00:00:00+0000");
+  time3.parse("00:00:00.000Z");
+  time3.parse("00:00:00.000+00:00");
+  time3.parse("00:00:00.000+0000");
+  expect(() => time3.parse("")).toThrow();
+  expect(() => time3.parse("foo")).toThrow();
+  expect(() => time3.parse("00:00:00")).toThrow();
+  expect(() => time3.parse("00:00:00.000")).toThrow();
+
+  const time4 = z.string().time({ offset: true, precision: 0 });
+  time4.parse("00:00:00Z");
+  time4.parse("09:52:31Z");
+  time4.parse("00:00:00+00:00");
+  time4.parse("00:00:00+0000");
+  expect(() => time4.parse("")).toThrow();
+  expect(() => time4.parse("foo")).toThrow();
+  expect(() => time4.parse("00:00:00.0")).toThrow();
+  expect(() => time4.parse("00:00:00.000")).toThrow();
+  expect(() => time4.parse("00:00:00.000+00:00")).toThrow();
+});
+
 test("IP validation", () => {
   const ip = z.string().ip();
   expect(ip.safeParse("122.122.122.122").success).toBe(true);
