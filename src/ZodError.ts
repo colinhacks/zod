@@ -32,6 +32,7 @@ export const ZodIssueCode = util.arrayToEnum([
   "invalid_intersection_types",
   "not_multiple_of",
   "not_finite",
+  "uniqueness",
 ]);
 
 export type ZodIssueCode = keyof typeof ZodIssueCode;
@@ -137,6 +138,11 @@ export interface ZodNotFiniteIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.not_finite;
 }
 
+export interface ZodUniquenessIssue<T = unknown> extends ZodIssueBase {
+  code: typeof ZodIssueCode.uniqueness;
+  duplicateElements?: Array<T>;
+}
+
 export interface ZodCustomIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.custom;
   params?: { [k: string]: any };
@@ -160,6 +166,7 @@ export type ZodIssueOptionalMessage =
   | ZodInvalidIntersectionTypesIssue
   | ZodNotMultipleOfIssue
   | ZodNotFiniteIssue
+  | ZodUniquenessIssue
   | ZodCustomIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & {
