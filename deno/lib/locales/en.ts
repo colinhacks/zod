@@ -140,6 +140,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.not_finite:
       message = "Number must be finite";
       break;
+    case ZodIssueCode.not_unique:
+      message = "Array must contain only unique elements";
+      break;
     default:
       message = _ctx.defaultError;
       util.assertNever(issue);

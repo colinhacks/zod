@@ -10,6 +10,7 @@ const maxTwo = z.string().array().max(2);
 const justTwo = z.string().array().length(2);
 const intNum = z.string().array().nonempty();
 const nonEmptyMax = z.string().array().nonempty().max(2);
+const unique = z.string().array().unique();
 
 type t1 = z.infer<typeof nonEmptyMax>;
 util.assertEqual<[string, ...string[]], t1>(true);
@@ -25,6 +26,7 @@ test("passing validations", () => {
   justTwo.parse(["a", "a"]);
   intNum.parse(["a"]);
   nonEmptyMax.parse(["a"]);
+  unique.parse(["a", "b"]);
 });
 
 test("failing validations", () => {
@@ -35,6 +37,7 @@ test("failing validations", () => {
   expect(() => intNum.parse([])).toThrow();
   expect(() => nonEmptyMax.parse([])).toThrow();
   expect(() => nonEmptyMax.parse(["a", "a", "a"])).toThrow();
+  expect(() => unique.parse(["a", "a"])).toThrow();
 });
 
 test("parse empty array in nonempty", () => {
