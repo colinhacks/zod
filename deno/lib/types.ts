@@ -3396,6 +3396,7 @@ export class ZodRecord<
     const pairs: {
       key: ParseReturnType<any>;
       value: ParseReturnType<any>;
+      alwaysSet?: boolean;
     }[] = [];
 
     const keyType = this._def.keyType;
@@ -3407,6 +3408,7 @@ export class ZodRecord<
         value: valueType._parse(
           new ParseInputLazyPath(ctx, ctx.data[key], ctx.path, key)
         ),
+        alwaysSet: true,
       });
     }
 

@@ -82,6 +82,7 @@ export function addIssueToContext(
 export type ObjectPair = {
   key: SyncParseReturnType<any>;
   value: SyncParseReturnType<any>;
+  alwaysSet?: boolean;
 };
 export class ParseStatus {
   value: "aborted" | "dirty" | "valid" = "valid";
@@ -108,13 +109,18 @@ export class ParseStatus {
 
   static async mergeObjectAsync(
     status: ParseStatus,
-    pairs: { key: ParseReturnType<any>; value: ParseReturnType<any> }[]
+    pairs: {
+      key: ParseReturnType<any>;
+      value: ParseReturnType<any>;
+      alwaysSet?: boolean;
+    }[]
   ): Promise<SyncParseReturnType<any>> {
     const syncPairs: ObjectPair[] = [];
     for (const pair of pairs) {
       syncPairs.push({
         key: await pair.key,
         value: await pair.value,
+        alwaysSet: pair.alwaysSet
       });
     }
     return ParseStatus.mergeObjectSync(status, syncPairs);
@@ -122,11 +128,7 @@ export class ParseStatus {
 
   static mergeObjectSync(
     status: ParseStatus,
-    pairs: {
-      key: SyncParseReturnType<any>;
-      value: SyncParseReturnType<any>;
-      alwaysSet?: boolean;
-    }[]
+    pairs: ObjectPair[]
   ): SyncParseReturnType {
     const finalObject: any = {};
     for (const pair of pairs) {
