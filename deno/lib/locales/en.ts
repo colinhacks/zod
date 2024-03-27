@@ -31,6 +31,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
         issue.options
       )}`;
       break;
+    case ZodIssueCode.invalid_select_value:
+      message = `Invalid value. Expected one of ${issue.options.length} options, received '${issue.received}'`;
+      break;
     case ZodIssueCode.invalid_enum_value:
       message = `Invalid enum value. Expected ${util.joinValues(
         issue.options

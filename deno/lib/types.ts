@@ -4168,6 +4168,57 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   };
 }
 
+/////////////////////////////////////////
+/////////////////////////////////////////
+//////////                     //////////
+//////////      ZodSelect      //////////
+//////////                     //////////
+/////////////////////////////////////////
+/////////////////////////////////////////
+export interface ZodSelectDef<T> extends ZodTypeDef {
+  values: readonly T[];
+  typeName: ZodFirstPartyTypeKind.ZodSelect;
+}
+
+function createZodSelect<T>(values: readonly T[], params?: RawCreateParams) {
+  return new ZodSelect<T>({
+    values,
+    typeName: ZodFirstPartyTypeKind.ZodSelect,
+    ...processCreateParams(params),
+  });
+}
+
+export class ZodSelect<T> extends ZodType<T, ZodSelectDef<T>> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    if (this._def.values.indexOf(input.data) === -1) {
+      const ctx = this._getOrReturnCtx(input);
+
+      if (input.data === undefined || input.data === null) {
+        addIssueToContext(ctx, {
+          expected: "unknown",
+          received: ctx.parsedType,
+          code: ZodIssueCode.invalid_type,
+        });
+      } else {
+        addIssueToContext(ctx, {
+          received: ctx.data,
+          code: ZodIssueCode.invalid_select_value,
+          options: this._def.values,
+        });
+      }
+
+      return INVALID;
+    }
+    return OK(input.data);
+  }
+
+  get options() {
+    return this._def.values;
+  }
+
+  static create = createZodSelect;
+}
+
 //////////////////////////////////////////
 //////////////////////////////////////////
 //////////                      //////////
@@ -4954,6 +5005,7 @@ export enum ZodFirstPartyTypeKind {
   ZodFunction = "ZodFunction",
   ZodLazy = "ZodLazy",
   ZodLiteral = "ZodLiteral",
+  ZodSelect = "ZodSelect",
   ZodEnum = "ZodEnum",
   ZodEffects = "ZodEffects",
   ZodNativeEnum = "ZodNativeEnum",
@@ -5042,6 +5094,7 @@ const setType = ZodSet.create;
 const functionType = ZodFunction.create;
 const lazyType = ZodLazy.create;
 const literalType = ZodLiteral.create;
+const selectType = ZodSelect.create;
 const enumType = ZodEnum.create;
 const nativeEnumType = ZodNativeEnum.create;
 const promiseType = ZodPromise.create;
@@ -5100,6 +5153,7 @@ export {
   preprocessType as preprocess,
   promiseType as promise,
   recordType as record,
+  selectType as select,
   setType as set,
   strictObjectType as strictObject,
   stringType as string,
