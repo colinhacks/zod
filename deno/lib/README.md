@@ -513,6 +513,38 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://remotion.dev" target="_blank">remotion.dev</a>
       <br />
     </td>
+    <td align="center">
+      <a href="https://github.com/ConnorSinnott" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/12754711?v=4" width="100px;" alt="Connor Sinnott profile"/>
+      </a>
+      <br />
+      <b>Connor Sinnott</b>
+      <br/>
+      <a href="https://github.com/ConnorSinnott" target="_blank">@ConnorSinnott</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://aerabi.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/44623032?v=4" width="100px;" alt="aerabi"/>
+      </a>
+      <br />
+      <b>Mohammad-Ali A'râbi</b>
+      <br/>
+      <a href="https://aerabi.com/" target="_blank">aerabi.com</a>
+      <br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://supatool.io/" target="_blank">
+        <img src="https://github.com/colinhacks/zod/assets/3084745/d0ec96c9-bf79-494f-9caa-9233da251f55" width="100px;" alt="Supatool logo"/>
+      </a>
+      <br />
+      <b>Supatool</b>
+      <br/>
+      <a href="https://supatool.io/" target="_blank">supatool.io</a>
+      <br />
+    </td>
   </tr>
 </table>
 
