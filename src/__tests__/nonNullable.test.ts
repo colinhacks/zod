@@ -18,10 +18,18 @@ test("parses a number correctly using z.nonNullable(...)", () => {
 });
 
 test("fails is passed null", () => {
-  const a = z.nullable(z.number()).nonNullable();
+  const a = z.nullable(z.any()).nonNullable();
 
   expect(() => {
     a.parse(null);
+  }).toThrow(z.ZodError)
+});
+
+test("fails is passed undefined", () => {
+  const a = z.nullable(z.any()).nonNullable();
+
+  expect(() => {
+    a.parse(undefined);
   }).toThrow(z.ZodError)
 });
 

@@ -4480,7 +4480,10 @@ export class ZodNonNullable<T extends ZodTypeAny> extends ZodType<
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
-    if (parsedType === ZodParsedType.null) {
+    if (
+      parsedType === ZodParsedType.null ||
+      parsedType === ZodParsedType.undefined
+    ) {
       const { ctx } = this._processInputParams(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
