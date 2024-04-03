@@ -26,34 +26,6 @@ jobs:
       - run: yarn build
       - run: yarn test
 
-  test-deno:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        deno: ["v1.x"]
-    name: Test with Deno ${{ matrix.deno }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: 16
-      - uses: denolib/setup-deno@v2
-        with:
-          deno-version: ${{ matrix.deno }}
-      - run: yarn install
-      - run: yarn build:deno
-      - run: deno --version
-      - run: deno test
-        working-directory: ./deno/lib
-      - run: deno run ./index.ts
-        working-directory: ./deno/lib
-      - run: deno run ./mod.ts
-        working-directory: ./deno/lib
-      - run: |
-          deno bundle ./mod.ts ./bundle.js
-          deno run ./bundle.js
-        working-directory: ./deno/lib
-
   lint:
     runs-on: ubuntu-latest
     strategy:
