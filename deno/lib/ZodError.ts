@@ -1,4 +1,4 @@
-import type { TypeOf, ZodType } from "./index.ts";
+import type { TypeOf, ZodFirstPartyTypeKind, ZodType } from "./index.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { util, ZodParsedType } from "./helpers/util.ts";
 
@@ -332,3 +332,35 @@ export type ZodErrorMap = (
   issue: ZodIssueOptionalMessage,
   _ctx: ErrorMapCtx
 ) => { message: string };
+
+export class ZodTemplateLiteralUnsupportedTypeError extends Error {
+  constructor() {
+    super("Unsupported zod type!");
+
+    const actualProto = new.target.prototype;
+    if (Object.setPrototypeOf) {
+      // eslint-disable-next-line ban/ban
+      Object.setPrototypeOf(this, actualProto);
+    } else {
+      (this as any).__proto__ = actualProto;
+    }
+    this.name = "ZodTemplateLiteralUnsupportedTypeError";
+  }
+}
+
+export class ZodTemplateLiteralUnsupportedCheckError extends Error {
+  constructor(typeKind: ZodFirstPartyTypeKind, check: string) {
+    super(
+      `${typeKind}'s "${check}" check is not supported in template literals!`
+    );
+
+    const actualProto = new.target.prototype;
+    if (Object.setPrototypeOf) {
+      // eslint-disable-next-line ban/ban
+      Object.setPrototypeOf(this, actualProto);
+    } else {
+      (this as any).__proto__ = actualProto;
+    }
+    this.name = "ZodTemplateLiteralUnsupportedCheckError";
+  }
+}
