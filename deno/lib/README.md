@@ -2036,7 +2036,7 @@ const templateLiteral = z.templateLiteral(); // infers to ``.
 - To add string literal types to an existing template literal:
 
   ```ts
-  templateLiteral.literal('Hello'); // infers to `Hello`.
+  templateLiteral.literal("Hello"); // infers to `Hello`.
   templateLiteral.literal(3.14); // infers to `3.14`.
   ```
 
@@ -2048,17 +2048,17 @@ const templateLiteral = z.templateLiteral(); // infers to ``.
   templateLiteral.interpolated(z.string()); // infers to `${string}`.
   templateLiteral.interpolated(z.number()); // infers to `${number}`.
   templateLiteral.interpolated(z.boolean()); // infers to `true` | `false`.
-  templateLiteral.interpolated(z.literal('foo')); // infers to `foo`.
+  templateLiteral.interpolated(z.literal("foo")); // infers to `foo`.
   templateLiteral.interpolated(z.null()); // infers to `null`.
   templateLiteral.interpolated(z.undefined()); // infers to `undefined`.
   templateLiteral.interpolated(z.bigint()); // infers to `${bigint}`.
   templateLiteral.interpolated(z.any()); // infers to `${any}`.
   ```
 
-  Any Zod type (or union) with an underlying type of string, number, boolean, null, 
-  undefined or bigint can be used as an interpolated position (template literals 
-  included!). You can use additional built-in runtime validations (refinements 
-  excluded) in each of these types and the template literal builder will do its 
+  Any Zod type (or union) with an underlying type of string, number, boolean, null,
+  undefined or bigint can be used as an interpolated position (template literals
+  included!). You can use additional built-in runtime validations (refinements
+  excluded) in each of these types and the template literal builder will do its
   best (within the limitations of regular expressions) to support them when parsing.
 
 ### Examples
@@ -2076,22 +2076,22 @@ const url = z
 
 url.parse("https://google.com"); // passes
 url.parse("https://google.net"); // passes
-url.parse('http://google.com'); // throws
-url.parse('https://.com'); // throws
-url.parse('https://google'); // throws
-url.parse('https://google.'); // throws
-url.parse('https://google.gov'); // throws
+url.parse("http://google.com"); // throws
+url.parse("https://.com"); // throws
+url.parse("https://google"); // throws
+url.parse("https://google."); // throws
+url.parse("https://google.gov"); // throws
 ```
 
 Measurement:
 
 ```ts
 const measurement = z.coerce
-    .templateLiteral()
-    .interpolated(z.number().finite())
-    .interpolated(
-      z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
-    );
+  .templateLiteral()
+  .interpolated(z.number().finite())
+  .interpolated(
+    z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
+  );
 // infers to `${number}` | `${number}px` | `${number}em` | `${number}rem` | `${number}vh` | `${number}vw` | `${number}vmin` | `${number}vmax
 ```
 
@@ -2112,9 +2112,7 @@ const connectionString = z
   )
   .interpolated(z.string().regex(/\w+/).describe("host"))
   .literal(":")
-  .interpolated(
-    z.number().finite().int().positive().describe("port")
-  )
+  .interpolated(z.number().finite().int().positive().describe("port"))
   .interpolated(
     z
       .templateLiteral()
@@ -2132,13 +2130,13 @@ const connectionString = z
       )
       .optional()
   );
-  // infers to:
-  // | `mongodb://${string}:${number}`
-  // | `mongodb://${string}:${number}/${string}`
-  // | `mongodb://${string}:${number}/${string}?${string}`
-  // | `mongodb://${string}:${string}@${string}:${number}`
-  // | `mongodb://${string}:${string}@${string}:${number}/${string}`
-  // | `mongodb://${string}:${string}@${string}:${number}/${string}?${string}`
+// infers to:
+// | `mongodb://${string}:${number}`
+// | `mongodb://${string}:${number}/${string}`
+// | `mongodb://${string}:${number}/${string}?${string}`
+// | `mongodb://${string}:${string}@${string}:${number}`
+// | `mongodb://${string}:${string}@${string}:${number}/${string}`
+// | `mongodb://${string}:${string}@${string}:${number}/${string}?${string}`
 ```
 
 ## Preprocess
