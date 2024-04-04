@@ -2357,9 +2357,10 @@ export class ZodObject<
           const syncPairs: any[] = [];
           for (const pair of pairs) {
             const key = await pair.key;
+            const value = await pair.value;
             syncPairs.push({
               key,
-              value: await pair.value,
+              value,
               alwaysSet: pair.alwaysSet,
             });
           }
