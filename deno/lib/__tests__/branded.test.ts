@@ -47,8 +47,8 @@ test("branded types", () => {
     true
   );
 
-  // keeping brands out of input types
-  const age = z.number().brand<"age">();
+  // keeping brands out of input types in non-strict mode
+  const age = z.number().brand<"age", false>();
 
   type Age = z.infer<typeof age>;
   type AgeInput = z.input<typeof age>;
@@ -59,4 +59,10 @@ test("branded types", () => {
 
   // @ts-expect-error
   doStuff({ name: "hello there!" });
+
+  // (default) strict mode - should be branded
+  const height = z.number().brand("metricHeight");
+
+  type Height = z.input<typeof height>;
+  util.assertEqual<number & z.BRAND<"metricHeight">, Height>(true);
 });

@@ -466,8 +466,16 @@ export abstract class ZodType<
     }) as any;
   }
 
-  brand<B extends string | number | symbol>(brand?: B): ZodBranded<this, B>;
-  brand<B extends string | number | symbol>(): ZodBranded<this, B> {
+  brand<B extends string | number | symbol, S extends boolean = true>(
+    brand?: B,
+    opts?: {
+      strict: S;
+    }
+  ): ZodBranded<this, B, S>;
+  brand<
+    B extends string | number | symbol,
+    S extends boolean = true
+  >(): ZodBranded<this, B, S> {
     return new ZodBranded({
       typeName: ZodFirstPartyTypeKind.ZodBranded,
       type: this,
@@ -4727,8 +4735,13 @@ export type BRAND<T extends string | number | symbol> = {
 
 export class ZodBranded<
   T extends ZodTypeAny,
-  B extends string | number | symbol
-> extends ZodType<T["_output"] & BRAND<B>, ZodBrandedDef<T>, T["_input"]> {
+  B extends string | number | symbol,
+  S extends boolean
+> extends ZodType<
+  T["_output"] & BRAND<B>,
+  ZodBrandedDef<T>,
+  S extends true ? T["_input"] & BRAND<B> : T["_input"]
+> {
   _parse(input: ParseInput): ParseReturnType<any> {
     const { ctx } = this._processInputParams(input);
     const data = ctx.data;
@@ -5000,7 +5013,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodDefault<any>
   | ZodCatch<any>
   | ZodPromise<any>
-  | ZodBranded<any, any>
+  | ZodBranded<any, any, any>
   | ZodPipeline<any, any>
   | ZodReadonly<any>
   | ZodSymbol;
