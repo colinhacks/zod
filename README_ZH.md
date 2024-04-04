@@ -1,7 +1,7 @@
 <p align="center">
   <img src="logo.svg" width="200px" align="center" alt="Zod logo" />
   <h1 align="center">Zod</h1>
-  <p align="center">TypeScript-first schema validation with static type inference
+  <p align="center">利用静态类型推断进行 TypeScript 优先模式验证
   <br/>
   <a href="https://zod.dev">https://zod.dev</a>
 </p>
@@ -16,13 +16,13 @@
 </p>
 
 <div align="center">
-  <a href="https://zod.dev">Documentation</a>
+  <a href="https://zod.dev">文档</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://www.npmjs.com/package/zod">NPM</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
+  <a href="https://github.com/colinhacks/zod/issues/new">讨论</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://twitter.com/colinhacks">@colinhacks</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -35,14 +35,16 @@
 
 # 內容
 
-- [什么是 Zod](#什么是 Zod)
-- [生态体系](#生态系统)
+- [什么是 Zod](#什么是-zod)
+- [生态体系](#生态体系)
 - [安装](#安装)
 - [基本用法](#基本用法)
 - [原始类型](#原始类型)
 - [原始类型的强制转换](#原始类型的强制转换)
 - [字面量](#字面量)
-- [Strings](#strings)
+- [字符串](#字符串)
+  - [ISO 日期](#iso-日期)
+  - [IP 地址](#ip-地址)
 - [Numbers](#numbers)
 - [Objects](#objects)
   - [.shape](#shape)
@@ -102,25 +104,25 @@
 
 # 什么是 Zod
 
-Zod 是一个以 TypeScript 为首的模式声明和验证库。我使用术语 "模式 "来广义地指任何数据类型，从简单的 `字符串` 到复杂的嵌套对象。
+Zod 是一个 TypeScript 优先的模式声明和验证库。我使用术语 "模式" 来广义地指任何数据类型，从简单的 `字符串` 到复杂的嵌套对象。
 
-Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型声明。使用 Zod，你只需声明 _一次_ 验证器，Zod 就会自动推断出静态 TypeScript 类型。它很容易将较简单的类型组成复杂的数据结构。
+Zod 围绕尽可能友好的开发体验而设计。其目的是消除重复的类型声明。使用 Zod，你只需声明 _一次_ 验证器，Zod 就会自动推断出静态 TypeScript 类型。将简单类型组合成复杂的数据结构非常容易。
 
 其他一些重要方面:
 
 - 零依赖
-- 可以工作在浏览器和 Node.js
-- 小巧: 8kb minified + zipped
-- 不可变: 方法(即 `.optional()` )返回一个新的实例
+- 适用于 Node.js 和所有现代浏览器
+- 小巧: 压缩后仅 8kb
+- 不可变: 方法 (如 `.optional()` ) 返回一个新的实例
 - 简洁的、可链式调用的接口
-- 功能性方法: [解析，不验证](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
-- 也可用于普通的 JavaScript! 你不需要使用 TypeScript。
+- 函数式方法: [解析，不验证](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
+- 也可用于纯 JavaScript! 你不需要使用 TypeScript。
 
 ## 赞助
 
-我们感谢并鼓励任何级别的赞助。Zod 是由一个单独的开发者维护的 ([hi!](https://twitter.com/colinhacks)). 对于个人开发者来说，可以考虑[一杯咖啡级别](https://github.com/sponsors/colinhacks). 如果你使用 Zod 建立了一个付费产品，可以考虑[初创企业级别](https://github.com/sponsors/colinhacks). 你可以在以下网站上了解更多关于等级的信息 [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
+我们感谢并鼓励任何级别的赞助。Zod 是由一个单独的开发者维护的 ([hi!](https://twitter.com/colinhacks))。对于个人开发者，可以考虑[一杯咖啡级别](https://github.com/sponsors/colinhacks)。如果你使用 Zod 建立了一个付费产品，可以考虑[领奖台级别](https://github.com/sponsors/colinhacks)。
 
-### Gold
+### 黄金
 
 <table>
   <tr>
@@ -166,7 +168,7 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
   </tr>
 </table>
 
-### Silver
+### 白银
 
 <table>
   <tr>
@@ -218,7 +220,7 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
   </tr>
 </table>
 
-### Bronze
+### 青铜
 
 <table>
   <tr>
@@ -280,9 +282,9 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
 
 _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._
 
-# 生态系统
+# 生态体系
 
-有越来越多的工具是建立在 Zod 之上或原生支持 Zod 的! 如果你在 Zod 的基础上建立了一个工具或库，请在[Twitter](https://twitter.com/colinhacks) 或者 [Discussion](https://github.com/colinhacks/zod/discussions)上告诉我。我会在下面添加，并在推特上发布。
+有越来越多的工具是建立在 Zod 之上或原生支持 Zod 的! 如果你在 Zod 的基础上建立了一个工具或库，请在[Twitter](https://twitter.com/colinhacks) 或者 [Discussion](https://github.com/colinhacks/zod/discussions)上告诉我。我会把它添加到下面，并在推特上发布。
 
 - [`tRPC`](https://github.com/trpc/trpc): 在没有 GraphQL 的情况下建立端到端的类型安全 API
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers): 使用 React Hook Form 和 Zod 解析器轻松构建类型安全的表单。
@@ -357,7 +359,7 @@ mySchema.safeParse("tuna"); // => { success: true; data: "tuna" }
 mySchema.safeParse(12); // => { success: false; error: ZodError }
 ```
 
-创建一个 Object 模式
+创建一个对象模式
 
 ```ts
 import { z } from "zod";
@@ -553,7 +555,7 @@ datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```
 
-### IP addresses
+### IP 地址
 
 默认情况下，`z.string().ip()` 方法会验证 IPv4 和 IPv6
 
