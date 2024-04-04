@@ -1,3 +1,6 @@
+import type { ZodErrorMap } from "../error";
+import type { ProcessedCreateParams, RawCreateParams } from "../index";
+
 export namespace util {
   type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
     V
@@ -108,10 +111,6 @@ export namespace objectUtil {
     [k in keyof T]: undefined extends T[k] ? never : k;
   }[keyof T];
 
-  // export type addQuestionMarks<
-  //   T extends object,
-  //   R extends keyof T = requiredKeys<T>
-  // > = Pick<Required<T>, R> & Partial<T>;
   export type addQuestionMarks<
     T extends object,
     R extends keyof T = requiredKeys<T>,
@@ -219,3 +218,23 @@ export const getParsedType = (data: any): ZodParsedType => {
       return ZodParsedType.unknown;
   }
 };
+export function processCreateParams(
+  params: RawCreateParams
+): ProcessedCreateParams {
+  if (!params) return {};
+  const { errorMap, invalid_type_error, required_error, description } = params;
+  if (errorMap && (invalid_type_error || required_error)) {
+    throw new Error(
+      `Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`
+    );
+  }
+  if (errorMap) return { errorMap: errorMap, description };
+  const customMap: ZodErrorMap = (iss, ctx) => {
+    if (iss.code !== "invalid_type") return { message: ctx.defaultError };
+    if (typeof ctx.data === "undefined") {
+      return { message: required_error ?? ctx.defaultError };
+    }
+    return { message: invalid_type_error ?? ctx.defaultError };
+  };
+  return { errorMap: customMap, description };
+}

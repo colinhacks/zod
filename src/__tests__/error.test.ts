@@ -3,7 +3,7 @@ import { expect, test } from "@jest/globals";
 
 import { ZodParsedType } from "../helpers/util";
 import * as z from "../index";
-import { ZodError, ZodIssueCode } from "../ZodError";
+import { ZodError, ZodIssueCode } from "../types/error";
 
 test("error creation", () => {
   const err1 = ZodError.create([]);

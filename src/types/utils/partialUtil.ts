@@ -1,13 +1,9 @@
-import type {
-  ZodArray,
-  ZodNullable,
-  ZodObject,
-  ZodOptional,
-  ZodRawShape,
-  ZodTuple,
-  ZodTupleItems,
-  ZodTypeAny,
-} from "../index";
+import { ZodArray } from "../array";
+import { ZodRawShape, ZodTypeAny } from "../index";
+import { ZodNullable } from "../nullable";
+import { ZodObject } from "../object";
+import { ZodOptional } from "../optional";
+import { ZodTuple, ZodTupleItems } from "../tuple";
 
 export namespace partialUtil {
   // export type DeepPartial<T extends AnyZodObject> = T extends AnyZodObject

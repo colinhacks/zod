@@ -1,6 +1,12 @@
-import type { TypeOf, ZodFirstPartyTypeKind, ZodType } from ".";
-import { Primitive } from "./helpers/typeAliases";
-import { util, ZodParsedType } from "./helpers/util";
+import {
+  defaultErrorMap,
+  Primitive,
+  TypeOf,
+  util,
+  ZodFirstPartyTypeKind,
+  ZodParsedType,
+  ZodType,
+} from "../index";
 
 type allKeys<T> = T extends any ? keyof T : never;
 
@@ -363,4 +369,14 @@ export class ZodTemplateLiteralUnsupportedCheckError extends Error {
     }
     this.name = "ZodTemplateLiteralUnsupportedCheckError";
   }
+}
+let overrideErrorMap = defaultErrorMap;
+export { defaultErrorMap };
+
+export function setErrorMap(map: ZodErrorMap) {
+  overrideErrorMap = map;
+}
+
+export function getErrorMap() {
+  return overrideErrorMap;
 }

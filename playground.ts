@@ -1,3 +1,12 @@
 import { z } from "./src";
 
-z;
+z.string();
+
+z.array(
+  z.object({
+    name: z.string(),
+    age: z.number(),
+  })
+);
+
+z.coerce.bigint();

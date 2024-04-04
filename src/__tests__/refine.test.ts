@@ -3,7 +3,7 @@ import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers/util";
 import * as z from "../index";
-import { ZodIssueCode } from "../ZodError";
+import { ZodIssueCode } from "../types/error";
 
 test("refinement", () => {
   const obj1 = z.object({

@@ -3,7 +3,7 @@ import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers/util";
 import * as z from "../index";
-import { ZodError } from "../ZodError";
+import { ZodError } from "../types/error";
 
 const testTuple = z.tuple([
   z.string(),
