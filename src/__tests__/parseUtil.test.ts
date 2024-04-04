@@ -6,7 +6,7 @@ import {
   isDirty,
   isValid,
   SyncParseReturnType,
-} from "../helpers/parseUtil";
+} from "../types/utils/parseUtil";
 
 test("parseUtil isInvalid should use structural typing", () => {
   // Test for issue #556: https://github.com/colinhacks/zod/issues/556

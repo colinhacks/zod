@@ -10,3 +10,11 @@ z.array(
 );
 
 z.coerce.bigint();
+
+z.union([z.string(), z.number()]);
+z.union([z.string(), z.number()]);
+const lit = z
+  .templateLiteral()
+  .literal("https://")
+  .interpolated(z.string())
+  .literal(".com");

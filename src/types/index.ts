@@ -11,7 +11,7 @@ export * from "./utils/parseUtil";
 export * from "./utils/partialUtil";
 export * from "./utils/typeAliases";
 export * from "./basetype";
-export * from "../defs";
+export * from "./defs";
 export * from "./any";
 export * from "./array";
 export * from "./bigint";

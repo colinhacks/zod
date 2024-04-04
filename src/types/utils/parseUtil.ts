@@ -1,4 +1,4 @@
-import { defaultErrorMap, getErrorMap } from "../../external";
+import { defaultErrorMap, getErrorMap } from "../";
 import { IssueData, ZodErrorMap, ZodIssue } from "../error";
 import type { ZodParsedType } from ".";
 
