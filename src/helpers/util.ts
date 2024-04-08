@@ -16,6 +16,7 @@ export namespace util {
   export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
   export type MakePartial<T, K extends keyof T> = Omit<T, K> &
     Partial<Pick<T, K>>;
+  export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 
   export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
     items: U
