@@ -93,6 +93,7 @@ export type StringValidation =
   | "url"
   | "emoji"
   | "uuid"
+  | "nanoid"
   | "regex"
   | "cuid"
   | "cuid2"
