@@ -570,7 +570,7 @@ const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 // const uuidRegex =
 //   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 const uuidRegex =
-  /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i;
+  /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 const nanoidRegex = /^[a-z0-9_-]{21}$/i;
 // from https://stackoverflow.com/a/46181/1550155
 // old version: too slow, didn't support unicode
@@ -945,13 +945,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
   }
-<<<<<<< HEAD
-
-=======
   nanoid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "nanoid", ...errorUtil.errToObj(message) });
   }
->>>>>>> f2615c0 (Added support for nanoid)
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
@@ -1142,13 +1138,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
   }
-<<<<<<< HEAD
-
-=======
   get isNANOID() {
     return !!this._def.checks.find((ch) => ch.kind === "nanoid");
   }
->>>>>>> f2615c0 (Added support for nanoid)
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
@@ -2474,9 +2466,10 @@ export class ZodObject<
           const syncPairs: any[] = [];
           for (const pair of pairs) {
             const key = await pair.key;
+            const value = await pair.value;
             syncPairs.push({
               key,
-              value: await pair.value,
+              value,
               alwaysSet: pair.alwaysSet,
             });
           }
