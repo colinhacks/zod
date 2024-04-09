@@ -547,6 +547,8 @@ test("date parsing", () => {
   expect(() => date.parse("2020-10-14T17:42:29")).toThrow();
   expect(() => date.parse("2020-10-14T17:42:29.123Z")).toThrow();
   
+  expect(() => date.parse("2000-00-12")).toThrow();
+  expect(() => date.parse("2000-12-00")).toThrow();
   expect(() => date.parse("2000-01-32")).toThrow();
   expect(() => date.parse("2000-13-01")).toThrow();
   expect(() => date.parse("2000-21-01")).toThrow();
