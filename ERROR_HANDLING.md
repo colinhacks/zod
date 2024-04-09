@@ -24,9 +24,9 @@ Each ZodError has an `issues` property that is an array of `ZodIssues`. Each iss
 
 ## ZodIssue
 
-`ZodIssue` is _not_ a class. It is a [discriminated union](https://www.typescriptlang.org/docs/handbook/advanced-types.html#discriminated-unions).
+`ZodIssue` is _not_ a class. It is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions).
 
-The link above is the best way to learn about the concept. Discriminated unions are an ideal way to represent a data structures that may be one of many possible variants. You can see all the possible variants defined [here](./src/ZodError.ts). They are also described in the table below if you prefer.
+The link above is the best way to learn about the concept. Discriminated unions are an ideal way to represent a data structures that may be one of many possible variants. You can see all the possible variants defined [here](https://github.com/colinhacks/zod/blob/master/src/ZodError.ts). They are also described in the table below if you prefer.
 
 _Every_ ZodIssue has these fields:
 
@@ -95,7 +95,7 @@ const person = z.object({
   address: z.object({
     line1: z.string(),
     zipCode: z.number().min(10000), // American 5-digit code
-  }),
+  }).strict(); // do not allow unrecognized keys
 });
 ```
 

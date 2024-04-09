@@ -11,3 +11,4 @@ deno/lib/playground.ts
 .eslintcache
 workspace.code-workspace
 .netlify
+bun.lockb

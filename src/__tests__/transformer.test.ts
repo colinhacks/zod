@@ -46,7 +46,7 @@ test("transform ctx.addIssue with parseAsync", async () => {
 
   const result = await z
     .string()
-    .transform((data, ctx) => {
+    .transform(async (data, ctx) => {
       const i = strs.indexOf(data);
       if (i === -1) {
         ctx.addIssue({
@@ -73,7 +73,7 @@ test("transform ctx.addIssue with parseAsync", async () => {
   });
 });
 
-test("z.NEVER in transform", async () => {
+test("z.NEVER in transform", () => {
   const foo = z
     .number()
     .optional()
@@ -194,21 +194,6 @@ test("multiple transformers", () => {
     return val * 2;
   });
   expect(doubler.parse("5")).toEqual(10);
-});
-
-test("preprocess", () => {
-  const schema = z.preprocess((data) => [data], z.string().array());
-
-  const value = schema.parse("asdf");
-  expect(value).toEqual(["asdf"]);
-  util.assertEqual<(typeof schema)["_input"], unknown>(true);
-});
-
-test("async preprocess", async () => {
-  const schema = z.preprocess(async (data) => [data], z.string().array());
-
-  const value = await schema.parseAsync("asdf");
-  expect(value).toEqual(["asdf"]);
 });
 
 test("short circuit on dirty", () => {

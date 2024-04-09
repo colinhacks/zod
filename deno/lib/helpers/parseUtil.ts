@@ -28,7 +28,7 @@ export const makeIssue = (params: {
   return {
     ...issueData,
     path: fullPath,
-    message: issueData.message || errorMessage,
+    message: issueData.message ?? errorMessage,
   };
 };
 
@@ -112,9 +112,11 @@ export class ParseStatus {
   ): Promise<SyncParseReturnType<any>> {
     const syncPairs: ObjectPair[] = [];
     for (const pair of pairs) {
+      const key = await pair.key;
+      const value = await pair.value;
       syncPairs.push({
-        key: await pair.key,
-        value: await pair.value,
+        key,
+        value,
       });
     }
     return ParseStatus.mergeObjectSync(status, syncPairs);
@@ -136,7 +138,10 @@ export class ParseStatus {
       if (key.status === "dirty") status.dirty();
       if (value.status === "dirty") status.dirty();
 
-      if (typeof value.value !== "undefined" || pair.alwaysSet) {
+      if (
+        key.value !== "__proto__" &&
+        (typeof value.value !== "undefined" || pair.alwaysSet)
+      ) {
         finalObject[key.value] = value.value;
       }
     }
@@ -170,7 +175,7 @@ export const isAborted = (x: ParseReturnType<any>): x is INVALID =>
   (x as any).status === "aborted";
 export const isDirty = <T>(x: ParseReturnType<T>): x is OK<T> | DIRTY<T> =>
   (x as any).status === "dirty";
-export const isValid = <T>(x: ParseReturnType<T>): x is OK<T> | DIRTY<T> =>
+export const isValid = <T>(x: ParseReturnType<T>): x is OK<T> =>
   (x as any).status === "valid";
 export const isAsync = <T>(
   x: ParseReturnType<T>

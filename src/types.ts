@@ -144,8 +144,16 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   return { errorMap: customMap, description };
 }
 
-export type SafeParseSuccess<Output> = { success: true; data: Output };
-export type SafeParseError<Input> = { success: false; error: ZodError<Input> };
+export type SafeParseSuccess<Output> = {
+  success: true;
+  data: Output;
+  error?: never;
+};
+export type SafeParseError<Input> = {
+  success: false;
+  error: ZodError<Input>;
+  data?: never;
+};
 
 export type SafeParseReturnType<Input, Output> =
   | SafeParseSuccess<Output>
@@ -374,7 +382,10 @@ export abstract class ZodType<
     refinement: (arg: Output, ctx: RefinementCtx) => void
   ): ZodEffects<this, Output, Input>;
   superRefine(
-    refinement: (arg: Output, ctx: RefinementCtx) => unknown
+    refinement: (arg: Output, ctx: RefinementCtx) => Promise<void>
+  ): ZodEffects<this, Output, Input>;
+  superRefine(
+    refinement: (arg: Output, ctx: RefinementCtx) => unknown | Promise<unknown>
   ): ZodEffects<this, Output, Input> {
     return this._refinement(refinement);
   }
@@ -402,6 +413,7 @@ export abstract class ZodType<
     this.catch = this.catch.bind(this);
     this.describe = this.describe.bind(this);
     this.pipe = this.pipe.bind(this);
+    this.readonly = this.readonly.bind(this);
     this.isNullable = this.isNullable.bind(this);
     this.isOptional = this.isOptional.bind(this);
   }
@@ -489,6 +501,9 @@ export abstract class ZodType<
   pipe<T extends ZodTypeAny>(target: T): ZodPipeline<this, T> {
     return ZodPipeline.create(this, target);
   }
+  readonly(): ZodReadonly<this> {
+    return ZodReadonly.create(this);
+  }
 
   isOptional(): boolean {
     return this.safeParse(undefined).success;
@@ -514,6 +529,7 @@ export type ZodStringCheck =
   | { kind: "url"; message?: string }
   | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
+  | { kind: "nanoid"; message?: string }
   | { kind: "cuid"; message?: string }
   | { kind: "includes"; value: string; position?: number; message?: string }
   | { kind: "cuid2"; message?: string }
@@ -528,6 +544,16 @@ export type ZodStringCheck =
       kind: "datetime";
       offset: boolean;
       precision: number | null;
+      withDate: true;
+      withTime: true;
+      message?: string;
+    }
+  | { kind: "date"; withDate: true; message?: string }
+  | {
+      kind: "time";
+      offset: boolean;
+      precision: number | null;
+      withTime: true;
       message?: string;
     }
   | { kind: "ip"; version?: IpVersion; message?: string };
@@ -540,20 +566,32 @@ export interface ZodStringDef extends ZodTypeDef {
 
 const cuidRegex = /^c[^\s-]{8,}$/i;
 const cuid2Regex = /^[a-z][a-z0-9]*$/;
-const ulidRegex = /[0-9A-HJKMNP-TV-Z]{26}/;
+const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/;
+// const uuidRegex =
+//   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 const uuidRegex =
-  /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
+  /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i;
+const nanoidRegex = /^[a-z0-9_-]{21}$/i;
 // from https://stackoverflow.com/a/46181/1550155
 // old version: too slow, didn't support unicode
 // const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i;
 //old email regex
 // const emailRegex = /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@((?!-)([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{1,})[^-<>()[\].,;:\s@"]$/i;
 // eslint-disable-next-line
-
+// const emailRegex =
+//   /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\])|(\[IPv6:(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))\])|([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])*(\.[A-Za-z]{2,})+))$/;
+// const emailRegex =
+//   /^[a-zA-Z0-9\.\!\#\$\%\&\'\*\+\/\=\?\^\_\`\{\|\}\~\-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+// const emailRegex =
+//   /^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/i;
 const emailRegex =
-  /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\])|(\[IPv6:(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))\])|([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])*(\.[A-Za-z]{2,})+))$/;
+  /^(?!\.)(?!.*\.\.)([A-Z0-9_+-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
+// const emailRegex =
+//   /^[a-z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9\-]+)*$/i;
+
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
-const emojiRegex = /^(\p{Extended_Pictographic}|\p{Emoji_Component})+$/u;
+const _emojiRegex = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
+let emojiRegex: RegExp;
 
 const ipv4Regex =
   /^(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))$/;
@@ -562,36 +600,44 @@ const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
 // Adapted from https://stackoverflow.com/a/3143231
-const datetimeRegex = (args: { precision: number | null; offset: boolean }) => {
-  if (args.precision) {
-    if (args.offset) {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
-      );
-    } else {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{${args.precision}}Z$`
-      );
-    }
-  } else if (args.precision === 0) {
-    if (args.offset) {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(([+-]\\d{2}(:?\\d{2})?)|Z)$`
-      );
-    } else {
-      return new RegExp(`^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$`);
-    }
-  } else {
-    if (args.offset) {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(([+-]\\d{2}(:?\\d{2})?)|Z)$`
-      );
-    } else {
-      return new RegExp(
-        `^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z$`
-      );
+const datetimeRegex = (args: {
+  precision?: number | null;
+  offset?: boolean;
+  withDate?: boolean;
+  withTime?: boolean;
+}) => {
+  let regex = "^";
+
+  if (args.withDate) {
+    regex = `${regex}\\d{4}-\\d{2}-\\d{2}`;
+
+    if (args.withTime) {
+      regex = `${regex}T`;
     }
   }
+
+  if (!args.withTime) {
+    return new RegExp(`${regex}$`);
+  }
+
+  regex = `${regex}\\d{2}:\\d{2}:\\d{2}`;
+
+  if (args.precision) {
+    regex = `${regex}\\.\\d{${args.precision}}`;
+  } else if (args.precision == null) {
+    regex = `${regex}(\\.\\d+)?`;
+  }
+  // in case of `precision = 0`, don't add the decimal part.
+
+  if (args.offset) {
+    return new RegExp(`${regex}(([+-]\\d{2}(:?\\d{2})?)|Z)$`);
+  }
+
+  if (args.withDate) {
+    return new RegExp(`${regex}Z$`);
+  }
+
+  return new RegExp(`${regex}$`);
 };
 
 function isValidIP(ip: string, version?: IpVersion) {
@@ -614,15 +660,11 @@ export class ZodString extends ZodType<string, ZodStringDef> {
 
     if (parsedType !== ZodParsedType.string) {
       const ctx = this._getOrReturnCtx(input);
-      addIssueToContext(
-        ctx,
-        {
-          code: ZodIssueCode.invalid_type,
-          expected: ZodParsedType.string,
-          received: ctx.parsedType,
-        }
-        //
-      );
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.string,
+        received: ctx.parsedType,
+      });
       return INVALID;
     }
 
@@ -693,6 +735,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "emoji") {
+        if (!emojiRegex) {
+          emojiRegex = new RegExp(_emojiRegex, "u");
+        }
         if (!emojiRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
@@ -707,6 +752,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "uuid",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "nanoid") {
+        if (!nanoidRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "nanoid",
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
@@ -814,6 +869,30 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "date") {
+        const regex = datetimeRegex(check);
+
+        if (!regex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "date",
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "time") {
+        const regex = datetimeRegex(check);
+
+        if (!regex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "time",
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "ip") {
         if (!isValidIP(input.data, check.version)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -832,16 +911,17 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     return { status: status.value, value: input.data };
   }
 
-  protected _regex = (
+  protected _regex(
     regex: RegExp,
     validation: StringValidation,
     message?: errorUtil.ErrMessage
-  ) =>
-    this.refinement((data) => regex.test(data), {
+  ) {
+    return this.refinement((data) => regex.test(data), {
       validation,
       code: ZodIssueCode.invalid_string,
       ...errorUtil.errToObj(message),
     });
+  }
 
   _addCheck(check: ZodStringCheck) {
     return new ZodString({
@@ -853,18 +933,25 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   email(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "email", ...errorUtil.errToObj(message) });
   }
+
   url(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
+
   emoji(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message) });
   }
+
   uuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "uuid", ...errorUtil.errToObj(message) });
+  }
+  nanoid(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "nanoid", ...errorUtil.errToObj(message) });
   }
   cuid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid", ...errorUtil.errToObj(message) });
   }
+
   cuid2(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "cuid2", ...errorUtil.errToObj(message) });
   }
@@ -890,6 +977,8 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         kind: "datetime",
         precision: null,
         offset: false,
+        withDate: true,
+        withTime: true,
         message: options,
       });
     }
@@ -898,6 +987,40 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       precision:
         typeof options?.precision === "undefined" ? null : options?.precision,
       offset: options?.offset ?? false,
+      withDate: true,
+      withTime: true,
+      ...errorUtil.errToObj(options?.message),
+    });
+  }
+
+  date(message?: string) {
+    return this._addCheck({ kind: "date", withDate: true, message });
+  }
+
+  time(
+    options?:
+      | string
+      | {
+          message?: string | undefined;
+          precision?: number | null;
+          offset?: boolean;
+        }
+  ) {
+    if (typeof options === "string") {
+      return this._addCheck({
+        kind: "time",
+        precision: null,
+        offset: false,
+        withTime: true,
+        message: options,
+      });
+    }
+    return this._addCheck({
+      kind: "time",
+      precision:
+        typeof options?.precision === "undefined" ? null : options?.precision,
+      offset: options?.offset ?? false,
+      withTime: true,
       ...errorUtil.errToObj(options?.message),
     });
   }
@@ -963,46 +1086,65 @@ export class ZodString extends ZodType<string, ZodStringDef> {
    * @deprecated Use z.string().min(1) instead.
    * @see {@link ZodString.min}
    */
-  nonempty = (message?: errorUtil.ErrMessage) =>
-    this.min(1, errorUtil.errToObj(message));
+  nonempty(message?: errorUtil.ErrMessage) {
+    return this.min(1, errorUtil.errToObj(message));
+  }
 
-  trim = () =>
-    new ZodString({
+  trim() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "trim" }],
     });
+  }
 
-  toLowerCase = () =>
-    new ZodString({
+  toLowerCase() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toLowerCase" }],
     });
+  }
 
-  toUpperCase = () =>
-    new ZodString({
+  toUpperCase() {
+    return new ZodString({
       ...this._def,
       checks: [...this._def.checks, { kind: "toUpperCase" }],
     });
+  }
 
   get isDatetime() {
     return !!this._def.checks.find((ch) => ch.kind === "datetime");
   }
 
+  get isDate() {
+    return !!this._def.checks.find((ch) => ch.kind === "date");
+  }
+
+  get isTime() {
+    return !!this._def.checks.find((ch) => ch.kind === "time");
+  }
+
   get isEmail() {
     return !!this._def.checks.find((ch) => ch.kind === "email");
   }
+
   get isURL() {
     return !!this._def.checks.find((ch) => ch.kind === "url");
   }
+
   get isEmoji() {
     return !!this._def.checks.find((ch) => ch.kind === "emoji");
   }
+
   get isUUID() {
     return !!this._def.checks.find((ch) => ch.kind === "uuid");
+  }
+  get isNANOID() {
+    return !!this._def.checks.find((ch) => ch.kind === "nanoid");
   }
   get isCUID() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid");
   }
+
   get isCUID2() {
     return !!this._def.checks.find((ch) => ch.kind === "cuid2");
   }
@@ -1022,6 +1164,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
     }
     return min;
   }
+
   get maxLength() {
     let max: number | null = null;
     for (const ch of this._def.checks) {
@@ -2159,11 +2302,11 @@ export type baseObjectInputType<Shape extends ZodRawShape> =
     [k in keyof Shape]: Shape[k]["_input"];
   }>;
 
-export type CatchallOutput<T extends ZodTypeAny> = ZodTypeAny extends T
+export type CatchallOutput<T extends ZodType> = ZodType extends T
   ? unknown
   : { [k: string]: T["_output"] };
 
-export type CatchallInput<T extends ZodTypeAny> = ZodTypeAny extends T
+export type CatchallInput<T extends ZodType> = ZodType extends T
   ? unknown
   : { [k: string]: T["_input"] };
 
@@ -2323,9 +2466,10 @@ export class ZodObject<
           const syncPairs: any[] = [];
           for (const pair of pairs) {
             const key = await pair.key;
+            const value = await pair.value;
             syncPairs.push({
               key,
-              value: await pair.value,
+              value,
               alwaysSet: pair.alwaysSet,
             });
           }
@@ -2548,7 +2692,7 @@ export class ZodObject<
     }) as any;
   }
 
-  pick<Mask extends { [k in keyof T]?: true }>(
+  pick<Mask extends util.Exactly<{ [k in keyof T]?: true }, Mask>>(
     mask: Mask
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
     const shape: any = {};
@@ -2565,7 +2709,7 @@ export class ZodObject<
     }) as any;
   }
 
-  omit<Mask extends { [k in keyof T]?: true }>(
+  omit<Mask extends util.Exactly<{ [k in keyof T]?: true }, Mask>>(
     mask: Mask
   ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall> {
     const shape: any = {};
@@ -2857,9 +3001,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 
-const getDiscriminator = <T extends ZodTypeAny>(
-  type: T
-): Primitive[] | null => {
+const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
   if (type instanceof ZodLazy) {
     return getDiscriminator(type.schema);
   } else if (type instanceof ZodEffects) {
@@ -2870,15 +3012,25 @@ const getDiscriminator = <T extends ZodTypeAny>(
     return type.options;
   } else if (type instanceof ZodNativeEnum) {
     // eslint-disable-next-line ban/ban
-    return Object.keys(type.enum as any);
+    return util.objectValues(type.enum as any);
   } else if (type instanceof ZodDefault) {
     return getDiscriminator(type._def.innerType);
   } else if (type instanceof ZodUndefined) {
     return [undefined];
   } else if (type instanceof ZodNull) {
     return [null];
+  } else if (type instanceof ZodOptional) {
+    return [undefined, ...getDiscriminator(type.unwrap())];
+  } else if (type instanceof ZodNullable) {
+    return [null, ...getDiscriminator(type.unwrap())];
+  } else if (type instanceof ZodBranded) {
+    return getDiscriminator(type.unwrap());
+  } else if (type instanceof ZodReadonly) {
+    return getDiscriminator(type.unwrap());
+  } else if (type instanceof ZodCatch) {
+    return getDiscriminator(type._def.innerType);
   } else {
-    return null;
+    return [];
   }
 };
 
@@ -2986,7 +3138,7 @@ export class ZodDiscriminatedUnion<
     // try {
     for (const type of options) {
       const discriminatorValues = getDiscriminator(type.shape[discriminator]);
-      if (!discriminatorValues) {
+      if (!discriminatorValues.length) {
         throw new Error(
           `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
         );
@@ -3064,7 +3216,7 @@ function mergeValues(
       return { valid: false };
     }
 
-    const newArray = [];
+    const newArray: unknown[] = [];
     for (let index = 0; index < a.length; index++) {
       const itemA = a[index];
       const itemB = b[index];
@@ -3431,6 +3583,12 @@ export class ZodMap<
   ZodMapDef<Key, Value>,
   Map<Key["_input"], Value["_input"]>
 > {
+  get keySchema() {
+    return this._def.keyType;
+  }
+  get valueSchema() {
+    return this._def.valueType;
+  }
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
     if (ctx.parsedType !== ZodParsedType.map) {
@@ -3716,17 +3874,21 @@ export class ZodFunction<
     const fn = ctx.data;
 
     if (this._def.returns instanceof ZodPromise) {
-      return OK(async (...args: any[]) => {
+      // Would love a way to avoid disabling this rule, but we need
+      // an alias (using an arrow function was what caused 2651).
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const me = this;
+      return OK(async function (this: any, ...args: any[]) {
         const error = new ZodError([]);
-        const parsedArgs = await this._def.args
+        const parsedArgs = await me._def.args
           .parseAsync(args, params)
           .catch((e) => {
             error.addIssue(makeArgsIssue(args, e));
             throw error;
           });
-        const result = await fn(...(parsedArgs as any));
+        const result = await Reflect.apply(fn, this, parsedArgs as any);
         const parsedReturns = await (
-          this._def.returns as unknown as ZodPromise<ZodTypeAny>
+          me._def.returns as unknown as ZodPromise<ZodTypeAny>
         )._def.type
           .parseAsync(result, params)
           .catch((e) => {
@@ -3736,13 +3898,17 @@ export class ZodFunction<
         return parsedReturns;
       });
     } else {
-      return OK((...args: any[]) => {
-        const parsedArgs = this._def.args.safeParse(args, params);
+      // Would love a way to avoid disabling this rule, but we need
+      // an alias (using an arrow function was what caused 2651).
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const me = this;
+      return OK(function (this: any, ...args: any[]) {
+        const parsedArgs = me._def.args.safeParse(args, params);
         if (!parsedArgs.success) {
           throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
         }
-        const result = fn(...(parsedArgs.data as any));
-        const parsedReturns = this._def.returns.safeParse(result, params);
+        const result = Reflect.apply(fn, this, parsedArgs.data);
+        const parsedReturns = me._def.returns.safeParse(result, params);
         if (!parsedReturns.success) {
           throw new ZodError([makeReturnsIssue(result, parsedReturns.error)]);
         }
@@ -3947,12 +4113,15 @@ function createZodEnum<U extends string, T extends [U, ...U[]]>(
   values: T,
   params?: RawCreateParams
 ): ZodEnum<T>;
-function createZodEnum(values: any, params?: RawCreateParams) {
+function createZodEnum(
+  values: [string, ...string[]],
+  params?: RawCreateParams
+) {
   return new ZodEnum({
-    values: values as any,
+    values,
     typeName: ZodFirstPartyTypeKind.ZodEnum,
     ...processCreateParams(params),
-  }) as any;
+  });
 }
 
 export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
@@ -4014,13 +4183,18 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   }
 
   extract<ToExtract extends readonly [T[number], ...T[number][]]>(
-    values: ToExtract
+    values: ToExtract,
+    newDef: RawCreateParams = this._def
   ): ZodEnum<Writeable<ToExtract>> {
-    return ZodEnum.create(values) as any;
+    return ZodEnum.create(values, {
+      ...this._def,
+      ...newDef,
+    }) as any;
   }
 
   exclude<ToExclude extends readonly [T[number], ...T[number][]]>(
-    values: ToExclude
+    values: ToExclude,
+    newDef: RawCreateParams = this._def
   ): ZodEnum<
     typecast<Writeable<FilterEnum<T, ToExclude[number]>>, [string, ...string[]]>
   > {
@@ -4028,7 +4202,11 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       this.options.filter((opt) => !values.includes(opt)) as FilterEnum<
         T,
         ToExclude[number]
-      >
+      >,
+      {
+        ...this._def,
+        ...newDef,
+      }
     ) as any;
   }
 
@@ -4172,7 +4350,10 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
 //////////////////////////////////////////////
 
 export type Refinement<T> = (arg: T, ctx: RefinementCtx) => any;
-export type SuperRefinement<T> = (arg: T, ctx: RefinementCtx) => void;
+export type SuperRefinement<T> = (
+  arg: T,
+  ctx: RefinementCtx
+) => void | Promise<void>;
 
 export type RefinementEffect<T> = {
   type: "refinement";
@@ -4184,7 +4365,7 @@ export type TransformEffect<T> = {
 };
 export type PreprocessEffect<T> = {
   type: "preprocess";
-  transform: (arg: T) => any;
+  transform: (arg: T, ctx: RefinementCtx) => any;
 };
 export type Effect<T> =
   | RefinementEffect<T>
@@ -4218,26 +4399,6 @@ export class ZodEffects<
 
     const effect = this._def.effect || null;
 
-    if (effect.type === "preprocess") {
-      const processed = effect.transform(ctx.data);
-
-      if (ctx.common.async) {
-        return Promise.resolve(processed).then((processed) => {
-          return this._def.schema._parseAsync({
-            data: processed,
-            path: ctx.path,
-            parent: ctx,
-          });
-        });
-      } else {
-        return this._def.schema._parseSync({
-          data: processed,
-          path: ctx.path,
-          parent: ctx,
-        });
-      }
-    }
-
     const checkCtx: RefinementCtx = {
       addIssue: (arg: IssueData) => {
         addIssueToContext(ctx, arg);
@@ -4253,11 +4414,39 @@ export class ZodEffects<
     };
 
     checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
+
+    if (effect.type === "preprocess") {
+      const processed = effect.transform(ctx.data, checkCtx);
+
+      if (ctx.common.async) {
+        return Promise.resolve(processed).then(async (processed) => {
+          if (status.value === "aborted") return INVALID;
+
+          const result = await this._def.schema._parseAsync({
+            data: processed,
+            path: ctx.path,
+            parent: ctx,
+          });
+          if (result.status === "aborted") return INVALID;
+          if (result.status === "dirty") return DIRTY(result.value);
+          if (status.value === "dirty") return DIRTY(result.value);
+          return result;
+        });
+      } else {
+        if (status.value === "aborted") return INVALID;
+        const result = this._def.schema._parseSync({
+          data: processed,
+          path: ctx.path,
+          parent: ctx,
+        });
+        if (result.status === "aborted") return INVALID;
+        if (result.status === "dirty") return DIRTY(result.value);
+        if (status.value === "dirty") return DIRTY(result.value);
+        return result;
+      }
+    }
     if (effect.type === "refinement") {
-      const executeRefinement = (
-        acc: unknown
-        // effect: RefinementEffect<any>
-      ): any => {
+      const executeRefinement = (acc: unknown): any => {
         const result = effect.refinement(acc, checkCtx);
         if (ctx.common.async) {
           return Promise.resolve(result);
@@ -4344,7 +4533,7 @@ export class ZodEffects<
   };
 
   static createWithPreprocess = <I extends ZodTypeAny>(
-    preprocess: (arg: unknown) => unknown,
+    preprocess: (arg: unknown, ctx: RefinementCtx) => unknown,
     schema: I,
     params?: RawCreateParams
   ): ZodEffects<I, I["_output"], unknown> => {
@@ -4740,11 +4929,81 @@ export class ZodPipeline<
   }
 }
 
+///////////////////////////////////////////
+///////////////////////////////////////////
+//////////                       //////////
+//////////      ZodReadonly      //////////
+//////////                       //////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+type BuiltIn =
+  | (((...args: any[]) => any) | (new (...args: any[]) => any))
+  | { readonly [Symbol.toStringTag]: string }
+  | Date
+  | Error
+  | Generator
+  | Promise<unknown>
+  | RegExp;
+
+type MakeReadonly<T> = T extends Map<infer K, infer V>
+  ? ReadonlyMap<K, V>
+  : T extends Set<infer V>
+  ? ReadonlySet<V>
+  : T extends [infer Head, ...infer Tail]
+  ? readonly [Head, ...Tail]
+  : T extends Array<infer V>
+  ? ReadonlyArray<V>
+  : T extends BuiltIn
+  ? T
+  : Readonly<T>;
+
+export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  innerType: T;
+  typeName: ZodFirstPartyTypeKind.ZodReadonly;
+}
+
+export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
+  MakeReadonly<T["_output"]>,
+  ZodReadonlyDef<T>,
+  MakeReadonly<T["_input"]>
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const result = this._def.innerType._parse(input);
+    if (isValid(result)) {
+      result.value = Object.freeze(result.value);
+    }
+    return result;
+  }
+
+  static create = <T extends ZodTypeAny>(
+    type: T,
+    params?: RawCreateParams
+  ): ZodReadonly<T> => {
+    return new ZodReadonly({
+      innerType: type,
+      typeName: ZodFirstPartyTypeKind.ZodReadonly,
+      ...processCreateParams(params),
+    }) as any;
+  };
+
+  unwrap() {
+    return this._def.innerType;
+  }
+}
+
+////////////////////////////////////////
+////////////////////////////////////////
+//////////                    //////////
+//////////      z.custom      //////////
+//////////                    //////////
+////////////////////////////////////////
+////////////////////////////////////////
 type CustomParams = CustomErrorParams & { fatal?: boolean };
 export const custom = <T>(
   check?: (data: unknown) => any,
   params: string | CustomParams | ((input: any) => CustomParams) = {},
-  /*
+  /**
    * @deprecated
    *
    * Pass `fatal` into the params object instead:
@@ -4815,6 +5074,7 @@ export enum ZodFirstPartyTypeKind {
   ZodPromise = "ZodPromise",
   ZodBranded = "ZodBranded",
   ZodPipeline = "ZodPipeline",
+  ZodReadonly = "ZodReadonly",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -4850,7 +5110,9 @@ export type ZodFirstPartySchemaTypes =
   | ZodCatch<any>
   | ZodPromise<any>
   | ZodBranded<any, any>
-  | ZodPipeline<any, any>;
+  | ZodPipeline<any, any>
+  | ZodReadonly<any>
+  | ZodSymbol;
 
 // requires TS 4.4+
 abstract class Class {

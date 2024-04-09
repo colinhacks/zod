@@ -134,3 +134,40 @@ test("key and value getters", () => {
   rec.valueSchema.parse(1234);
   rec.element.parse(1234);
 });
+
+test("is not vulnerable to prototype pollution", async () => {
+  const rec = z.record(
+    z.object({
+      a: z.string(),
+    })
+  );
+
+  const data = JSON.parse(`
+    {
+      "__proto__": {
+        "a": "evil"
+      },
+      "b": {
+        "a": "good"
+      }
+    }
+  `);
+
+  const obj1 = rec.parse(data);
+  expect(obj1.a).toBeUndefined();
+
+  const obj2 = rec.safeParse(data);
+  expect(obj2.success).toBe(true);
+  if (obj2.success) {
+    expect(obj2.data.a).toBeUndefined();
+  }
+
+  const obj3 = await rec.parseAsync(data);
+  expect(obj3.a).toBeUndefined();
+
+  const obj4 = await rec.safeParseAsync(data);
+  expect(obj4.success).toBe(true);
+  if (obj4.success) {
+    expect(obj4.data.a).toBeUndefined();
+  }
+});

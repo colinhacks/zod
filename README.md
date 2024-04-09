@@ -45,20 +45,32 @@
 
 #### Go to [zod.js.org](https://zod.js.org) >> -->
 
+- [Table of contents](#table-of-contents)
 - [Introduction](#introduction)
   - [Sponsors](#sponsors)
+    - [Gold](#gold)
+    - [Silver](#silver)
+    - [Bronze](#bronze)
   - [Ecosystem](#ecosystem)
+    - [Resources](#resources)
+    - [API libraries](#api-libraries)
+    - [Form integrations](#form-integrations)
+    - [Zod to X](#zod-to-x)
+    - [X to Zod](#x-to-zod)
+    - [Mocking](#mocking)
+    - [Powered by Zod](#powered-by-zod)
+    - [Utilities for Zod](#utilities-for-zod)
 - [Installation](#installation)
   - [Requirements](#requirements)
-  - [Node/npm](#from-npm-nodebun)
-  - [Deno](#from-denolandx-deno)
+  - [From `npm` (Node/Bun)](#from-npm-nodebun)
+  - [From `deno.land/x` (Deno)](#from-denolandx-deno)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
 - [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
-  - [Datetime](#iso-datetimes)
-  - [IP](#ip-addresses)
+  - [ISO datetimes](#iso-datetimes)
+  - [IP addresses](#ip-addresses)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -69,59 +81,75 @@
 - [Optionals](#optionals)
 - [Nullables](#nullables)
 - [Objects](#objects)
-  - [.shape](#shape)
-  - [.keyof](#keyof)
-  - [.extend](#extend)
-  - [.merge](#merge)
-  - [.pick/.omit](#pickomit)
-  - [.partial](#partial)
-  - [.deepPartial](#deepPartial)
-  - [.passthrough](#passthrough)
-  - [.strict](#strict)
-  - [.strip](#strip)
-  - [.catchall](#catchall)
+  - [`.shape`](#shape)
+  - [`.keyof`](#keyof)
+  - [`.extend`](#extend)
+  - [`.merge`](#merge)
+  - [`.pick/.omit`](#pickomit)
+  - [`.partial`](#partial)
+  - [`.deepPartial`](#deeppartial)
+  - [`.required`](#required)
+  - [`.passthrough`](#passthrough)
+  - [`.strict`](#strict)
+  - [`.strip`](#strip)
+  - [`.catchall`](#catchall)
 - [Arrays](#arrays)
-  - [.element](#element)
-  - [.nonempty](#nonempty)
-  - [.min/.max/.length](#minmaxlength)
+  - [`.element`](#element)
+  - [`.nonempty`](#nonempty)
+  - [`.min/.max/.length`](#minmaxlength)
 - [Tuples](#tuples)
 - [Unions](#unions)
-- [Discriminated Unions](#discriminated-unions)
+- [Discriminated unions](#discriminated-unions)
 - [Records](#records)
+  - [Record key type](#record-key-type)
 - [Maps](#maps)
 - [Sets](#sets)
 - [Intersections](#intersections)
 - [Recursive types](#recursive-types)
+  - [ZodType with ZodEffects](#zodtype-with-zodeffects)
   - [JSON type](#json-type)
-  - [Cyclical data](#cyclical-objects)
+  - [Cyclical objects](#cyclical-objects)
 - [Promises](#promises)
 - [Instanceof](#instanceof)
 - [Functions](#functions)
 - [Preprocess](#preprocess)
-- [Custom](#custom-schemas)
+- [Custom schemas](#custom-schemas)
 - [Schema methods](#schema-methods)
-  - [.parse](#parse)
-  - [.parseAsync](#parseasync)
-  - [.safeParse](#safeparse)
-  - [.safeParseAsync](#safeparseasync)
-  - [.refine](#refine)
-  - [.superRefine](#superRefine)
-  - [.transform](#transform)
-  - [.default](#default)
-  - [.describe](#describe)
-  - [.catch](#catch)
-  - [.optional](#optional)
-  - [.nullable](#nullable)
-  - [.nullish](#nullish)
-  - [.array](#array)
-  - [.promise](#promise)
-  - [.or](#or)
-  - [.and](#and)
-  - [.brand](#brand)
-  - [.pipe](#pipe)
+  - [`.parse`](#parse)
+  - [`.parseAsync`](#parseasync)
+  - [`.safeParse`](#safeparse)
+  - [`.safeParseAsync`](#safeparseasync)
+  - [`.refine`](#refine)
+    - [Arguments](#arguments)
+    - [Customize error path](#customize-error-path)
+    - [Asynchronous refinements](#asynchronous-refinements)
+    - [Relationship to transforms](#relationship-to-transforms)
+  - [`.superRefine`](#superrefine)
+    - [Abort early](#abort-early)
+    - [Type refinements](#type-refinements)
+  - [`.transform`](#transform)
+    - [Chaining order](#chaining-order)
+    - [Validating during transform](#validating-during-transform)
+    - [Relationship to refinements](#relationship-to-refinements)
+    - [Async transforms](#async-transforms)
+  - [`.default`](#default)
+  - [`.describe`](#describe)
+  - [`.catch`](#catch)
+  - [`.optional`](#optional)
+  - [`.nullable`](#nullable)
+  - [`.nullish`](#nullish)
+  - [`.array`](#array)
+  - [`.promise`](#promise)
+  - [`.or`](#or)
+  - [`.and`](#and)
+  - [`.brand`](#brand)
+  - [`.readonly`](#readonly)
+  - [`.pipe`](#pipe)
+    - [You can use `.pipe()` to fix common issues with `z.coerce`.](#you-can-use-pipe-to-fix-common-issues-with-zcoerce)
 - [Guides and concepts](#guides-and-concepts)
   - [Type inference](#type-inference)
   - [Writing generic functions](#writing-generic-functions)
+    - [Constraining allowable inputs](#constraining-allowable-inputs)
   - [Error handling](#error-handling)
   - [Error formatting](#error-formatting)
 - [Comparison](#comparison)
@@ -129,9 +157,8 @@
   - [Yup](#yup)
   - [io-ts](#io-ts)
   - [Runtypes](#runtypes)
+  - [Ow](#ow)
 - [Changelog](#changelog)
-
-<!-- **Zod 2 is coming! Follow [@colinhacks](https://twitter.com/colinhacks) to stay updated and discuss the future of Zod.** -->
 
 ## Introduction
 
@@ -158,76 +185,133 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table>
   <tr>
     <td align="center">
-      <a href="https://astro.build/">
-        <img src="https://avatars.githubusercontent.com/u/44914786?s=200&v=4" width="200px;" alt="Astro" />
+      <a href="https://speakeasyapi.dev/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" width="200px;" alt="Speakeasy API" />
       </a>
       <br />
-      <b>Astro</b>
+      <b>Speakeasy</b>
       <br />
-      <a href="https://astro.build">astro.build</a>
+      <a href="https://speakeasyapi.dev/" target="_blank">speakeasyapi.dev</a>
       <br />
-      <p width="200px">
-        Astro is a new kind of static <br/>
-        site builder for the modern web. <br/>
-        Powerful developer experience meets <br/>
-        lightweight output.</p>
+      <p width="200px">SDKs, Terraform, Docs.<br/>Your API made enterprise-ready</p>
     </td>
     <td align="center">
-      <a href="https://glow.app/">
-        <img src="https://i.imgur.com/R0R43S2.jpg" width="200px;" alt="" />
-      </a>
-      <br />
-      <b>Glow Wallet</b>
-      <br />
-      <a href="https://glow.app/">glow.app</a>
-      <br />
-      <p width="200px">Your new favorite
-        <br/>
-      Solana wallet.</p>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://deletype.com/">
+      <a href="https://deletype.com/" target="_blank">
         <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="Deletype logo" />
       </a>
       <br />
       <b>Deletype</b>
       <br />
-      <a href="https://deletype.com">deletype.com</a>
-    </td>
-    <td align="center">
-      <a href="https://proxy.com/">
-        <img src="https://avatars.githubusercontent.com/u/14321439?s=200&v=4" width="200px;" alt="Proxy logo" />
-      </a>
-      <br />
-      <b>Proxy</b>
-      <br />
-      <a href="https://proxy.com">proxy.com</a>
+      <a href="https://deletype.com" target="_blank">deletype.com</a>
     </td>
   </tr>
-    <tr>
+  <tr>
     <td align="center">
-      <a href="https://trigger.dev/">
+      <a href="https://trigger.dev/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" width="200px;" alt="Trigger.dev logo" />
       </a>
       <br />
       <b>Trigger.dev</b>
       <br />
-      <a href="https://trigger.dev">trigger.dev</a>
+      <a href="https://trigger.dev" target="_blank">trigger.dev</a>
       <br/>
-      <p>Effortless automation for developers.</p>
+      <p>Effortless automation for developers</p>
     </td>
     <td align="center">
-      <a href="https://transloadit.com/">
+      <a href="https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" width="200px;" alt="Transloadit logo" />
       </a>
       <br />
       <b>Transloadit</b>
       <br />
-      <a href="https://transloadit.com">transloadit.com</a>
+      <a href="https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github" target="_blank">transloadit.com</a>
       <br/>
-      <p>Simple file processing for developers.</p>
+      <p>Simple file processing for developers</p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://infisical.com" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" width="200px;" alt="Infisical logo" />
+      </a>
+      <br />
+      <b>Infisical</b>
+      <br />
+      <a href="https://infisical.com" target="_blank">infisical.com</a>
+      <br/>
+      <p>Open-source platform for secret<br/>management: sync secrets across your<br/>team/infrastructure and prevent secret leaks</p>
+    </td>
+    <td align="center">
+      <a href="https://whop.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" width="200px;" alt="Whop logo" />
+      </a>
+      <br />
+      <b>Whop</b>
+      <br />
+      <a href="https://whop.com/" target="_blank">whop.com</a>
+      <br />
+      <p width="200px">A marketplace for really cool internet products</p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://cryptojobslist.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" width="200px;" alt="CryptoJobsList logo" />
+      </a>
+      <br />
+      <b>CryptoJobsList</b>
+      <br />
+      <a href="https://cryptojobslist.com/" target="_blank">cryptojobslist.com</a>
+      <br />
+      <p width="200px">The biggest list of crypto, blockchain and Web3 jobs</p>
+    </td>
+    <td align="center">
+      <a href="https://plain.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" width="200px;" alt="Plain logo" />
+      </a>
+      <br />
+      <b>Plain.</b>
+      <br />
+      <a href="https://plain.com/" target="_blank">plain.com</a>
+      <br />
+      <p width="200px">How developers support their users</p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://inngest.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" width="200px;" alt="Inngest logo" />
+      </a>
+      <br />
+      <b>Inngest</b>
+      <br />
+      <a href="https://inngest.com/" target="_blank">inngest.com</a>
+      <br />
+      <p width="200px">Serverless queues + durable workflows for TypeScript</p>
+    </td>
+    <td align="center">
+      <a href="https://storyblok.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" width="200px;" alt="Storyblok CMS" />
+      </a>
+      <br />
+      <b>Storyblok</b>
+      <br />
+      <a href="https://storyblok.com/" target="_blank">storyblok.com</a>
+      <br />
+      <p width="200px">The only headless CMS with a visual editor</p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://mux.link/zod" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" width="200px;" alt="Mux logo" />
+      </a>
+      <br />
+      <b>Mux</b>
+      <br />
+      <a href="https://mux.link/zod" target="_blank">mux.com</a>
+      <br />
+      <p width="200px">The internet's video infrastructure</p>
     </td>
   </tr>
 </table>
@@ -236,63 +320,52 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <table>
   <tr>
-   <td align="center" colspan="2">
-      <a href="https://www.numeric.io">
+    <td align="center" colspan="2">
+      <a href="https://www.numeric.io" target="_blank">
         <img src="https://i.imgur.com/kTiLtZt.png" width="250px;" alt="Numeric logo" />
       </a>
       <br />
       <b>Numeric</b>
       <br />
-      <a href="https://www.numeric.io">numeric.io</a>
+      <a href="https://www.numeric.io" target="_blank">numeric.io</a>
     </td>
     <td align="center">
-      <a href="https://snaplet.dev">
-        <img src="https://avatars.githubusercontent.com/u/69029941?s=200&v=4" width="150px;" alt="Snaplet logo" />
-      </a>
-      <br />
-      <b>Snaplet</b>
-      <br />
-      <a href="https://snaplet.dev">snaplet.dev</a>
-    </td>
-  </tr>
-  <tr>
-   <td align="center">
-      <a href="https://marcatopartners.com/">
+      <a href="https://marcatopartners.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
       </a>
       <br />
       <b>Marcato Partners</b>
       <br />
-      <a href="https://marcatopartners.com/">marcatopartners.com</a>
+      <a href="https://marcatopartners.com/" target="_blank">marcatopartners.com</a>
     </td>
-     <td align="center">
-      <a href="https://interval.com">
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://interval.com" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
       </a>
       <br />
       <b>Interval</b>
       <br />
-      <a href="https://interval.com">interval.com</a>
+      <a href="https://interval.com" target="_blank">interval.com</a>
     </td>
     <td align="center">
-      <a href="https://seasoned.cc">
+      <a href="https://seasoned.cc" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="150px;" alt="" />
       </a>
       <br />
       <b>Seasoned Software</b>
       <br />
-      <a href="https://seasoned.cc">seasoned.cc</a>
+      <a href="https://seasoned.cc" target="_blank">seasoned.cc</a>
     </td>
-  </tr>
-   <tr>
     <td align="center">
-      <a href="https://www.bamboocreative.nz/">
+      <a href="https://www.bamboocreative.nz/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="150px;" alt="Bamboo Creative logo" />
       </a>
       <br />
       <b>Bamboo Creative</b>
       <br />
-      <a href="https://www.bamboocreative.nz">bamboocreative.nz</a>
+      <a href="https://www.bamboocreative.nz" target="_blank">bamboocreative.nz</a>
     </td>
   </tr>
 </table>
@@ -302,101 +375,176 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table>
   <tr>
     <td align="center">
-      <a href="https://twitter.com/flybayer">
+      <a href="https://twitter.com/flybayer" target="_blank">
         <img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/>
       </a>
       <br />
       <b>Brandon Bayer</b>
       <br/>
-      <a href="https://twitter.com/flybayer">@flybayer</a>,
+      <a href="https://twitter.com/flybayer" target="_blank">@flybayer</a>,
       <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
       <br />
     </td>
     <td align="center">
-      <a href="https://github.com/brabeji">
+      <a href="https://github.com/brabeji" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/2237954?v=4" width="100px;" alt=""/>
       </a>
       <br />
       <b>Jiří Brabec</b>
       <br/>
-      <a href="https://github.com/brabeji">@brabeji</a>
+      <a href="https://github.com/brabeji" target="_blank">@brabeji</a>
       <br />
     </td>
      <td align="center">
-      <a href="https://twitter.com/alexdotjs">
+      <a href="https://twitter.com/alexdotjs" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/459267?v=4" width="100px;" alt="" />
       </a>
       <br />
       <b>Alex Johansson</b>
       <br />
-      <a href="https://twitter.com/alexdotjs">@alexdotjs</a>
+      <a href="https://twitter.com/alexdotjs" target="_blank">@alexdotjs</a>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <a href="https://fungible.systems/">
+      <a href="https://fungible.systems/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/80220121?s=200&v=4" width="100px;" alt="Fungible Systems logo"/>
       </a>
       <br />
       <b>Fungible Systems</b>
       <br/>
-      <a href="https://fungible.systems/">fungible.systems</a>
+      <a href="https://fungible.systems/" target="_blank">fungible.systems</a>
       <br />
     </td>
     <td align="center">
-      <a href="https://adaptable.io/">
+      <a href="https://adaptable.io/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/60378268?s=200&v=4" width="100px;" alt=""/>
       </a>
       <br />
       <b>Adaptable</b>
       <br/>
-      <a href="https://adaptable.io/">adaptable.io</a>
+      <a href="https://adaptable.io/" target="_blank">adaptable.io</a>
       <br />
     </td>
     <td align="center">
-      <a href="https://www.avanawallet.com/">
+      <a href="https://www.avanawallet.com/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
       </a>
       <br />
       <b>Avana Wallet</b>
       <br/>
-      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
+      <a href="https://www.avanawallet.com/" target="_blank">avanawallet.com</a><br/>
       <span>Solana non-custodial wallet</span>
       <br />
     </td>
   </tr>
   <tr>
-  <td align="center">
-      <a href="https://learnwithjason.dev">
+    <td align="center">
+      <a href="https://learnwithjason.dev" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/66575486?s=200&v=4" width="100px;" alt="Learn with Jason logo"/>
       </a>
       <br />
       <b>Jason Lengstorf</b>
       <br/>
-      <a href="https://learnwithjason.dev/">learnwithjason.dev</a>
+      <a href="https://learnwithjason.dev/" target="_blank">learnwithjason.dev</a>
       <br />
     </td>
     <td align="center">
-      <a href="https://ill.inc/">
+      <a href="https://ill.inc/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/89107581?s=200&v=4" width="100px;" alt="Global Illumination"/>
       </a>
       <br />
       <b>Global Illumination, Inc.</b>
       <br/>
-      <a href="https://ill.inc/">ill.inc</a>
+      <a href="https://ill.inc/" target="_blank">ill.inc</a>
       <br />
     </td>
-    <!-- <td align="center">
-      <a href="https://www.avanawallet.com/">
-        <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
+    <td align="center">
+      <a href="https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/48984031?s=200&v=4" width="100px;" alt="MasterBorn logo"/>
       </a>
       <br />
-      <b>Avana Wallet</b>
+      <b>MasterBorn</b>
       <br/>
-      <a href="https://www.avanawallet.com/">avanawallet.com</a><br/>
-      <span>Solana non-custodial wallet</span>
+      <a href="https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring" target="_blank">masterborn.com</a>
       <br />
-    </td> -->
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/kronodeus" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/18314366?v=4" width="100px;" alt="Ryan Palmer"/>
+      </a>
+      <br />
+      <b>Ryan Palmer</b>
+      <br/>
+      <a href="https://github.com/kronodeus" target="_blank">@kronodeus</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://github.com/overthemike" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/223509?v=4" width="100px;" alt="Michael Sweeney"/>
+      </a>
+      <br />
+      <b>Michael Sweeney</b>
+      <br/>
+      <a href="https://github.com/overthemike" target="_blank">@overthemike</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://usenextbase.com/" target="_blank">
+        <img src="https://pbs.twimg.com/profile_images/1692236063409070080/28yXFtop_400x400.jpg" width="100px;" alt="Nextbase logo"/>
+      </a>
+      <br />
+      <b>Nextbase</b>
+      <br/>
+      <a href="https://usenextbase.com/" target="_blank">usenextbase.com</a>
+      <br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://remotion.dev" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/85344006" width="100px;" alt="Remotion logo"/>
+      </a>
+      <br />
+      <b>Remotion</b>
+      <br/>
+      <a href="https://remotion.dev" target="_blank">remotion.dev</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://github.com/ConnorSinnott" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/12754711?v=4" width="100px;" alt="Connor Sinnott profile"/>
+      </a>
+      <br />
+      <b>Connor Sinnott</b>
+      <br/>
+      <a href="https://github.com/ConnorSinnott" target="_blank">@ConnorSinnott</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://aerabi.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/44623032?v=4" width="100px;" alt="aerabi"/>
+      </a>
+      <br />
+      <b>Mohammad-Ali A'râbi</b>
+      <br/>
+      <a href="https://aerabi.com/" target="_blank">aerabi.com</a>
+      <br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://supatool.io/" target="_blank">
+        <img src="https://github.com/colinhacks/zod/assets/3084745/d0ec96c9-bf79-494f-9caa-9233da251f55" width="100px;" alt="Supatool logo"/>
+      </a>
+      <br />
+      <b>Supatool</b>
+      <br/>
+      <a href="https://supatool.io/" target="_blank">supatool.io</a>
+      <br />
+    </td>
   </tr>
 </table>
 
@@ -414,9 +562,12 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`tRPC`](https://github.com/trpc/trpc): Build end-to-end typesafe APIs without GraphQL.
 - [`@anatine/zod-nestjs`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-nestjs): Helper methods for using Zod in a NestJS project.
 - [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): Contract-first strictly typed endpoints with Zod. OpenAPI compatible.
+- [`zhttp`](https://github.com/evertdespiegeleer/zhttp): An OpenAPI compatible, strictly typed http library with Zod input and response validation.
 - [`domain-functions`](https://github.com/SeasonedSoftware/domain-functions/): Decouple your business logic from your framework using composable functions. With first-class type inference from end to end powered by Zod schemas.
 - [`@zodios/core`](https://github.com/ecyrbe/zodios): A typescript API client with runtime and compile time validation backed by axios and zod.
 - [`express-zod-api`](https://github.com/RobinTail/express-zod-api): Build Express-based APIs with I/O schema validation and custom middlewares.
+- [`tapiduck`](https://github.com/sumukhbarve/monoduck/blob/main/src/tapiduck/README.md): End-to-end typesafe JSON APIs with Zod and Express; a bit like tRPC, but simpler.
+- [`koa-zod-router`](https://github.com/JakeFenley/koa-zod-router): Create typesafe routes in Koa with I/O validation using Zod.
 
 #### Form integrations
 
@@ -425,13 +576,15 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod.
 - [`zodix`](https://github.com/rileytomasek/zodix): Zod utilities for FormData and URLSearchParams in Remix loaders and actions.
+- [`conform`](https://conform.guide/api/zod/parseWithZod): A typesafe form validation library for progressive enhancement of HTML forms. Works with Remix and Next.js.
 - [`remix-params-helper`](https://github.com/kiliman/remix-params-helper): Simplify integration of Zod with standard URLSearchParams and FormData for Remix apps.
 - [`formik-validator-zod`](https://github.com/glazy/formik-validator-zod): Formik-compliant validator library that simplifies using Zod with Formik.
 - [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): Useful for translating Zod error messages.
 - [`@modular-forms/solid`](https://github.com/fabian-hiller/modular-forms): Modular form library for SolidJS that supports Zod for validation.
 - [`houseform`](https://github.com/crutchcorn/houseform/): A React form library that uses Zod for validation.
 - [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms): Supercharged form library for SvelteKit with Zod validation.
-- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod
+- [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod.
+- [`@vee-validate/zod`](https://github.com/logaretm/vee-validate/tree/main/packages/zod): Form library for Vue.js with Zod schema validation.
 
 #### Zod to X
 
@@ -443,6 +596,9 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod): Create Fastify type providers from Zod schemas.
 - [`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi): Generate full OpenAPI (Swagger) docs from Zod, including schemas, endpoints & parameters.
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas. Provides GraphQL method decorators working with Zod schemas.
+- [`zod-openapi`](https://github.com/samchungy/zod-openapi): Create full OpenAPI v3.x documentation from Zod schemas.
+- [`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi): Fastify type provider, validation, serialization and @fastify/swagger support for Zod schemas.
+- [`typeschema`](https://typeschema.com/): Universal adapter for schema validation.
 
 #### X to Zod
 
@@ -456,22 +612,32 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
 - [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) Create Zod types from your Prisma models.
+- [`quicktype`](https://app.quicktype.io/): Convert JSON objects and JSON schemas into Zod schemas.
+- [`@sanity-typed/zod`](https://github.com/saiichihashimoto/sanity-typed/tree/main/packages/zod): Generate Zod Schemas from [Sanity Schemas](https://www.sanity.io/docs/schema-types).
 
 #### Mocking
 
 - [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Generate mock data from a Zod schema. Powered by [faker.js](https://github.com/faker-js/faker).
 - [`zod-mocking`](https://github.com/dipasqualew/zod-mocking): Generate mock data from your Zod schemas.
+- [`zod-fixture`](https://github.com/timdeschryver/zod-fixture): Use your zod schemas to automate the generation of non-relevant test fixtures in a deterministic way.
+- [`zocker`](https://zocker.sigrist.dev): Generate plausible mock-data from your schemas.
+- [`zodock`](https://github.com/ItMaga/zodock) Generate mock data based on Zod schemas.
 
 #### Powered by Zod
 
+- [`freerstore`](https://github.com/JacobWeisenburger/freerstore): Firestore cost optimizer.
 - [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration.
 - [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
+- [`pastel`](https://github.com/vadimdemedes/pastel): Create CLI applications with react, zod, and ink.
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
 - [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas.
+- [`zod-config`](https://github.com/alexmarqs/zod-config): Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.
 
 #### Utilities for Zod
 
 - [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): Framework agnostic utilities for Zod.
+- [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Controlled environment for testing zod schemas. [Live demo](https://zod-sandbox.vercel.app/).
+- [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod runtime parsing in production.
 
 ## Installation
 
@@ -498,6 +664,15 @@ npm install zod       # npm
 yarn add zod          # yarn
 bun add zod           # bun
 pnpm add zod          # pnpm
+```
+
+Zod also publishes a canary version on every commit. To install the canary:
+
+```sh
+npm install zod@canary       # npm
+yarn add zod@canary          # yarn
+bun add zod@canary           # bun
+pnpm add zod@canary          # pnpm
 ```
 
 ### From `deno.land/x` (Deno)
@@ -587,16 +762,19 @@ Zod now provides a more convenient way to coerce primitive values.
 const schema = z.coerce.string();
 schema.parse("tuna"); // => "tuna"
 schema.parse(12); // => "12"
-schema.parse(true); // => "true"
 ```
 
-During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings. Note that the returned schema is a `ZodString` instance so you can use all string methods.
+During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings.
+
+The returned schema is a normal `ZodString` instance so you can use all string methods.
 
 ```ts
 z.coerce.string().email().min(5);
 ```
 
-All primitive types support coercion.
+**How coercion works**
+
+All primitive types support coercion. Zod coerces all inputs using the built-in constructors: `String(input)`, `Number(input)`, `new Date(input)`, etc.
 
 ```ts
 z.coerce.string(); // String(input)
@@ -606,9 +784,19 @@ z.coerce.bigint(); // BigInt(input)
 z.coerce.date(); // new Date(input)
 ```
 
+Note that some behavior may not be what you expect.
+
+```ts
+schema.parse(true); // => "true"
+schema.parse(undefined); // => "undefined"
+schema.parse(null); // => "null"
+```
+
+For more control over coercion logic, consider using [`z.preprocess`](#preprocess) or [`z.pipe()`](#pipe).
+
 **Boolean coercion**
 
-Zod's boolean coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
+Zod's approach to coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
 
 ```ts
 z.coerce.boolean().parse("tuna"); // => true
@@ -618,6 +806,7 @@ z.coerce.boolean().parse(1); // => true
 z.coerce.boolean().parse([]); // => true
 
 z.coerce.boolean().parse(0); // => false
+z.coerce.boolean().parse(""); // => false
 z.coerce.boolean().parse(undefined); // => false
 z.coerce.boolean().parse(null); // => false
 ```
@@ -654,6 +843,7 @@ z.string().email();
 z.string().url();
 z.string().emoji();
 z.string().uuid();
+z.string().nanoid();
 z.string().cuid();
 z.string().cuid2();
 z.string().ulid();
@@ -661,7 +851,9 @@ z.string().regex(regex);
 z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
-z.string().datetime(); // defaults to UTC, see below for options
+z.string().datetime(); // ISO 8601; default is without UTC offset, see below for options
+z.string().date(); // ISO short date format.
+z.string().time(); // time of day in 24-hour format, see below for options.
 z.string().ip(); // defaults to IPv4 and IPv6, see below for options
 
 // transformations
@@ -695,12 +887,25 @@ z.string().includes("tuna", { message: "Must include tuna" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+z.string().date({ message: "Invalid date string!" });
+z.string().time({ message: "Invalid time string!" });
 z.string().ip({ message: "Invalid IP address" });
 ```
 
-### ISO datetimes
+### ISO Date, Time & Datetime validation
 
-The `z.string().datetime()` method defaults to UTC validation: no timezone offsets with arbitrary sub-second decimal precision.
+As you may have noticed, Zod string includes a few date/time related validations.
+These validations are regular expression based, so they are not as strict as a full
+date/time library. However, they are very convenient for validating user input.
+
+The `z.string().date()` method validates strings in the format `YYYY-MM-DD`.
+
+The `z.string().time()` method validates strings in the format `HH:mm:ss[.SSSSSS][Z|(+|-)hh[:]mm]`
+(the time portion of [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)). It defaults
+to `HH:mm:ss[.SSSSSS]` validation: no timezone offsets or `Z`, with arbitrary sub-second
+decimal.
+
+The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
 
 ```ts
 const datetime = z.string().datetime();
@@ -709,6 +914,18 @@ datetime.parse("2020-01-01T00:00:00Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (arbitrary precision)
 datetime.parse("2020-01-01T00:00:00+02:00"); // fail (no offsets allowed)
+
+const date = z.string().date();
+
+date.parse("2020-01-01"); // pass
+
+const time = z.string().time();
+
+time.parse("00:00:00"); // pass
+time.parse("09:52:31"); // pass
+time.parse("23:59:59.9999999"); // pass (arbitrary precision)
+time.parse("00:00:00.123Z"); // fail (no `Z` allowed)
+time.parse("00:00:00.123+02:00"); // fail (no offsets allowed)
 ```
 
 Timezone offsets can be allowed by setting the `offset` option to `true`.
@@ -721,6 +938,13 @@ datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
 datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
+
+const time = z.string().time({ offset: true });
+
+time.parse("00:00:00+02:00"); // pass
+time.parse("00:00:00.123+02:00"); // pass (millis optional)
+time.parse("00:00:00.123+0200"); // pass (millis optional)
+time.parse("00:00:00Z"); // pass (`Z` now supported)
 ```
 
 You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
@@ -731,6 +955,12 @@ const datetime = z.string().datetime({ precision: 3 });
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
+
+const time = z.string().time({ precision: 3 });
+
+time.parse("00:00:00.123"); // pass
+time.parse("00:00:00"); // fail
+time.parse("00:00:00.123456"); // fail
 ```
 
 ### IP addresses
@@ -821,7 +1051,7 @@ You can customize certain error messages when creating a nan schema.
 ```ts
 const isNaN = z.nan({
   required_error: "isNaN is required",
-  invalid_type_error: "isNaN must be not a number",
+  invalid_type_error: "isNaN must be 'not a number'",
 });
 ```
 
@@ -905,7 +1135,7 @@ const fish = ["Salmon", "Tuna", "Trout"];
 const FishEnum = z.enum(fish);
 ```
 
-**Autocompletion**
+**`.enum`**
 
 To get autocompletion with a Zod enum, use the `.enum` property of your schema:
 
@@ -926,6 +1156,16 @@ You can also retrieve the list of options as a tuple with the `.options` propert
 
 ```ts
 FishEnum.options; // ["Salmon", "Tuna", "Trout"];
+```
+
+**`.exclude/.extract()`**
+
+You can create subsets of a Zod enum with the `.exclude` and `.extract` methods.
+
+```ts
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+const SalmonAndTrout = FishEnum.extract(["Salmon", "Trout"]);
+const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
 
 ## Native enums
@@ -972,7 +1212,7 @@ FruitEnum.parse("Cantaloupe"); // fails
 
 **Const enums**
 
-The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` required TypeScript 3.4+!
+The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` requires TypeScript 3.4+!
 
 ```ts
 const Fruits = {
@@ -1143,13 +1383,13 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 
 ### `.partial`
 
-Inspired by the built-in TypeScript utility type [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialt), the `.partial` method makes all properties optional.
+Inspired by the built-in TypeScript utility type [Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype), the `.partial` method makes all properties optional.
 
 Starting from this object:
 
 ```ts
 const user = z.object({
-  email: z.string()
+  email: z.string(),
   username: z.string(),
 });
 // { email: string; username: string }
@@ -1213,10 +1453,12 @@ Contrary to the `.partial` method, the `.required` method makes all properties r
 Starting from this object:
 
 ```ts
-const user = z.object({
-  email: z.string()
-  username: z.string(),
-}).partial();
+const user = z
+  .object({
+    email: z.string(),
+    username: z.string(),
+  })
+  .partial();
 // { email?: string | undefined; username?: string | undefined }
 ```
 
@@ -1454,20 +1696,47 @@ const myUnion = z.discriminatedUnion("status", [
 myUnion.parse({ status: "success", data: "yippie ki yay" });
 ```
 
+You can extract a reference to the array of schemas with the `.options` property.
+
+```ts
+myUnion.options; // [ZodObject<...>, ZodObject<...>]
+```
+
+To merge two or more discriminated unions, use `.options` with destructuring.
+
+```ts
+const A = z.discriminatedUnion("status", [
+  /* options */
+]);
+const B = z.discriminatedUnion("status", [
+  /* options */
+]);
+
+const AB = z.discriminatedUnion("status", [...A.options, ...B.options]);
+```
+
 ## Records
 
-Record schemas are used to validate types such as `{ [k: string]: number }`.
+Record schemas are used to validate types such as `Record<string, number>`. This is particularly useful for storing or caching items by ID.
 
-If you want to validate the _values_ of an object against some schema but don't care about the keys, use `z.record(valueType)`:
+<!-- If you want to validate the _values_ of an object against some schema but don't care about the keys, use `z.record(valueType)`:
 
 ```ts
 const NumberCache = z.record(z.number());
 
 type NumberCache = z.infer<typeof NumberCache>;
 // => { [k: string]: number }
+``` -->
+
+```ts
+const User = z.object({ name: z.string() });
+
+const UserStore = z.record(z.string(), User);
+type UserStore = z.infer<typeof UserStore>;
+// => Record<string, { name: string }>
 ```
 
-This is particularly useful for storing or caching items by ID.
+The schema and inferred type can be used like so:
 
 ```ts
 const userStore: UserStore = {};
@@ -1480,19 +1749,6 @@ userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
   whatever: "Ice cream sundae",
 }; // TypeError
 ```
-
-### Record key type
-
-If you want to validate both the keys and the values, use
-`z.record(keyType, valueType)`:
-
-```ts
-const NoEmptyKeysSchema = z.record(z.string().min(1), z.number());
-NoEmptyKeysSchema.parse({ count: 1 }); // => { 'count': 1 }
-NoEmptyKeysSchema.parse({ "": 1 }); // fails
-```
-
-_(Notice how when passing two arguments, `valueType` is the second argument)_
 
 **A note on numerical keys**
 
@@ -1719,7 +1975,7 @@ const TestSchema = z.instanceof(Test);
 
 const blob: any = "whatever";
 TestSchema.parse(new Test()); // passes
-TestSchema.parse("blob"); // throws
+TestSchema.parse(blob); // throws
 ```
 
 ## Functions
@@ -1825,7 +2081,7 @@ You can create a Zod schema for any TypeScript type by using `z.custom()`. This 
 
 ```ts
 const px = z.custom<`${number}px`>((val) => {
-  return /^\d+px$/.test(val as string);
+  return typeof val === "string" ? /^\d+px$/.test(val) : false;
 });
 
 type px = z.infer<typeof px>; // `${number}px`
@@ -2298,7 +2554,7 @@ A convenience method that returns a "nullish" version of a schema. Nullish schem
 const nullishString = z.string().nullish(); // string | null | undefined
 
 // equivalent to
-z.string().optional().nullable();
+z.string().nullable().optional();
 ```
 
 ### `.array`
@@ -2388,7 +2644,38 @@ type Cat = z.infer<typeof Cat>;
 
 Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
 
-### `.pipe()`
+### `.readonly`
+
+`.readonly() => ZodReadonly<this>`
+
+This method returns a `ZodReadonly` schema instance that parses the input using the base schema, then calls `Object.freeze()` on the result. The inferred type is also marked as `readonly`.
+
+```ts
+const schema = z.object({ name: string }).readonly();
+type schema = z.infer<typeof schema>;
+// Readonly<{name: string}>
+
+const result = schema.parse({ name: "fido" });
+result.name = "simba"; // error
+```
+
+The inferred type uses TypeScript's built-in readonly types when relevant.
+
+```ts
+z.array(z.string()).readonly();
+// readonly string[]
+
+z.tuple([z.string(), z.number()]).readonly();
+// readonly [string, number]
+
+z.map(z.string(), z.date()).readonly();
+// ReadonlyMap<string, Date>
+
+z.set(z.string()).readonly();
+// ReadonlySet<Promise<string>>
+```
+
+### `.pipe`
 
 Schemas can be chained into validation "pipelines". It's useful for easily validating the result after a `.transform()`:
 
@@ -2489,36 +2776,63 @@ type inferred = z.infer<typeof stringToNumber>; // number
 
 ### Writing generic functions
 
-When attempting to write a function that accepts a Zod schema as an input, it's common to try something like this:
+With TypeScript generics, you can write reusable functions that accept Zod schemas as parameters. This enables you to create custom validation logic, schema transformations, and more, while maintaining type safety and inference.
+
+When attempting to write a function that accepts a Zod schema as an input, it's tempting to try something like this:
 
 ```ts
-function makeSchemaOptional<T>(schema: z.ZodType<T>) {
-  return schema.optional();
+function inferSchema<T>(schema: z.ZodType<T>) {
+  return schema;
 }
 ```
 
-This approach has some issues. The `schema` variable in this function is typed as an instance of `ZodType`, which is an abstract class that all Zod schemas inherit from. This approach loses type information, namely _which subclass_ the input actually is.
+This approach is incorrect, and limits TypeScript's ability to properly infer the argument. No matter what you pass in, the type of `schema` will be an instance of `ZodType`.
 
 ```ts
-const arg = makeSchemaOptional(z.string());
-arg.unwrap();
+inferSchema(z.string());
+// => ZodType<string>
 ```
 
-A better approach is for the generic parameter to refer to _the schema as a whole_.
+This approach loses type information, namely _which subclass_ the input actually is (in this case, `ZodString`). That means you can't call any string-specific methods like `.min()` on the result of `inferSchema`.
+
+A better approach is to infer _the schema as a whole_ instead of merely its inferred type. You can do this with a utility type called `z.ZodTypeAny`.
 
 ```ts
-function makeSchemaOptional<T extends z.ZodTypeAny>(schema: T) {
-  return schema.optional();
+function inferSchema<T extends z.ZodTypeAny>(schema: T) {
+  return schema;
 }
+
+inferSchema(z.string());
+// => ZodString
 ```
 
 > `ZodTypeAny` is just a shorthand for `ZodType<any, any, any>`, a type that is broad enough to match any Zod schema.
 
-As you can see, `schema` is now fully and properly typed.
+The Result is now fully and properly typed, and the type system can infer the specific subclass of the schema.
+
+#### Inferring the inferred type
+
+If you follow the best practice of using `z.ZodTypeAny` as the generic parameter for your schema, you may encounter issues with the parsed data being typed as `any` instead of the inferred type of the schema.
 
 ```ts
-const arg = makeSchemaOptional(z.string());
-arg.unwrap(); // ZodString
+function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
+  return schema.parse(data);
+}
+
+parseData("sup", z.string());
+// => any
+```
+
+Due to how TypeScript inference works, it is treating `schema` like a `ZodTypeAny` instead of the inferred type. You can fix this with a type cast using `z.infer`.
+
+```ts
+function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
+  return schema.parse(data) as z.infer<T>;
+  //                        ^^^^^^^^^^^^^^ <- add this
+}
+
+parseData("sup", z.string());
+// => string
 ```
 
 #### Constraining allowable inputs
@@ -2664,7 +2978,6 @@ Yup is a full-featured library that was implemented first in vanilla JS, and lat
 
 - Supports casting and transforms
 - All object fields are optional by default
-- Missing object methods: (partial, deepPartial)
 <!-- - Missing nonempty arrays with proper typing (`[T, ...T[]]`) -->
 - Missing promise schemas
 - Missing function schemas
@@ -2727,10 +3040,9 @@ This more declarative API makes schema definitions vastly more concise.
 
 [https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
 
-Good type inference support, but limited options for object type masking (no `.pick` , `.omit` , `.extend` , etc.). No support for `Record` s (their `Record` is equivalent to Zod's `object` ). They DO support readonly types, which Zod does not.
+Good type inference support.
 
 - Supports "pattern matching": computed properties that distribute over unions
-- Supports readonly types
 - Missing object methods: (deepPartial, merge)
 - Missing nonempty arrays with proper typing (`[T, ...T[]]`)
 - Missing promise schemas

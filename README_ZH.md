@@ -1,9 +1,9 @@
 <p align="center">
   <img src="logo.svg" width="200px" align="center" alt="Zod logo" />
   <h1 align="center">Zod</h1>
-  <p align="center">TypeScript-first schema validation with static type inference
+  <p align="center">利用静态类型推断进行 TypeScript 优先模式验证
   <br/>
-  <a href="https://zod.dev">https://zod.dev</a></p>
+  <a href="https://zod.dev">https://zod.dev</a>
 </p>
 <br/>
 <p align="center">
@@ -16,13 +16,13 @@
 </p>
 
 <div align="center">
-  <a href="https://zod.dev">Documentation</a>
+  <a href="https://zod.dev">文档</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://www.npmjs.com/package/zod">NPM</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
+  <a href="https://github.com/colinhacks/zod/issues/new">讨论</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://twitter.com/colinhacks">@colinhacks</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
@@ -35,45 +35,47 @@
 
 # 內容
 
-- [什么是 Zod](#什么是Zod)
-- [生态体系](#生态系统)
+- [什么是 Zod](#什么是-zod)
+- [生态体系](#生态体系)
 - [安装](#安装)
 - [基本用法](#基本用法)
-- [定义模式](#定义模式)
-  - [基本原理](#基本原理)
-  - [字面意义](#字面意义)
-  - [Strings](#strings)
-  - [Numbers](#numbers)
-  - [Objects](#objects)
-    - [.shape](#shape)
-    - [.extend](#extend)
-    - [.merge](#merge)
-    - [.pick/.omit](#pickomit)
-    - [.partial](#partial)
-    - [.deepPartial](#deepPartial)
-    - [.passthrough](#passthrough)
-    - [.strict](#strict)
-    - [.strip](#strip)
-    - [.catchall](#catchall)
-  - [Records](#records)
-  - [Maps](#maps)
-  - [Sets](#sets)
-  - [Arrays](#arrays)
-    - [.nonempty](#nonempty)
-    - [.min/.max/.length](#minmaxlength)
-  - [Unions](#unions)
-  - [Optionals](#optionals)
-  - [Nullables](#nullables)
-  - [Enums](#enums)
-    - [Zod enums](#zod-enums)
-    - [Native enums](#native-enums)
-  - [Tuples](#tuples)
-  - [Recursive types](#recursive-types)
-    - [JSON type](#json-type)
-    - [Cyclical data](#cyclical-objects)
-  - [Promises](#promises)
-  - [Instanceof](#instanceof)
-  - [Function schemas](#function-schemas)
+- [原始类型](#原始类型)
+- [原始类型的强制转换](#原始类型的强制转换)
+- [字面量](#字面量)
+- [字符串](#字符串)
+  - [ISO 日期](#iso-日期)
+  - [IP 地址](#ip-地址)
+- [Numbers](#numbers)
+- [Objects](#objects)
+  - [.shape](#shape)
+  - [.extend](#extend)
+  - [.merge](#merge)
+  - [.pick/.omit](#pickomit)
+  - [.partial](#partial)
+  - [.deepPartial](#deepPartial)
+  - [.passthrough](#passthrough)
+  - [.strict](#strict)
+  - [.strip](#strip)
+  - [.catchall](#catchall)
+- [Records](#records)
+- [Maps](#maps)
+- [Sets](#sets)
+- [Arrays](#arrays)
+  - [.nonempty](#nonempty)
+  - [.min/.max/.length](#minmaxlength)
+- [Unions](#unions)
+- [Optionals](#optionals)
+- [Nullables](#nullables)
+- [Enums](#enums)
+  - [Zod enums](#zod-enums)
+  - [Native enums](#native-enums)
+- [Tuples](#tuples)
+- [Recursive types](#recursive-types)
+  - [JSON type](#json-type)
+  - [Cyclical data](#cyclical-objects)
+- [Promises](#promises)
+- [Instanceof](#instanceof)
+- [Function schemas](#function-schemas)
 - [基础类方法 (ZodType)](#zodtype-methods-and-properties)
   - [.parse](#parse)
   - [.parseAsync](#parseasync)
@@ -102,25 +104,25 @@
 
 # 什么是 Zod
 
-Zod 是一个以 TypeScript 为首的模式声明和验证库。我使用术语 "模式 "来广义地指任何数据类型，从简单的 `字符串` 到复杂的嵌套对象。
+Zod 是一个 TypeScript 优先的模式声明和验证库。我使用术语 "模式" 来广义地指任何数据类型，从简单的 `字符串` 到复杂的嵌套对象。
 
-Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型声明。使用 Zod，你只需声明 _一次_ 验证器，Zod 就会自动推断出静态 TypeScript 类型。它很容易将较简单的类型组成复杂的数据结构。
+Zod 围绕尽可能友好的开发体验而设计。其目的是消除重复的类型声明。使用 Zod，你只需声明 _一次_ 验证器，Zod 就会自动推断出静态 TypeScript 类型。将简单类型组合成复杂的数据结构非常容易。
 
 其他一些重要方面:
 
 - 零依赖
-- 可以工作在浏览器和 Node.js
-- 小巧: 8kb minified + zipped
-- 不可变: 方法(即 `.optional()` )返回一个新的实例
+- 适用于 Node.js 和所有现代浏览器
+- 小巧: 压缩后仅 8kb
+- 不可变: 方法 (如 `.optional()` ) 返回一个新的实例
 - 简洁的、可链式调用的接口
-- 功能性方法: [解析，不验证](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
-- 也可用于普通的 JavaScript! 你不需要使用 TypeScript。
+- 函数式方法: [解析，不验证](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
+- 也可用于纯 JavaScript! 你不需要使用 TypeScript。
 
 ## 赞助
 
-我们感谢并鼓励任何级别的赞助。Zod 是由一个单独的开发者维护的 ([hi!](https://twitter.com/colinhacks)). 对于个人开发者来说，可以考虑[一杯咖啡级别](https://github.com/sponsors/colinhacks). 如果你使用 Zod 建立了一个付费产品，可以考虑[初创企业级别](https://github.com/sponsors/colinhacks). 你可以在以下网站上了解更多关于等级的信息 [github.com/sponsors/colinhacks](https://github.com/sponsors/colinhacks).
+我们感谢并鼓励任何级别的赞助。Zod 是由一个单独的开发者维护的 ([hi!](https://twitter.com/colinhacks))。对于个人开发者，可以考虑[一杯咖啡级别](https://github.com/sponsors/colinhacks)。如果你使用 Zod 建立了一个付费产品，可以考虑[领奖台级别](https://github.com/sponsors/colinhacks)。
 
-### Gold
+### 黄金
 
 <table>
   <tr>
@@ -166,7 +168,7 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
   </tr>
 </table>
 
-### Silver
+### 白银
 
 <table>
   <tr>
@@ -218,7 +220,7 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
   </tr>
 </table>
 
-### Bronze
+### 青铜
 
 <table>
   <tr>
@@ -280,10 +282,9 @@ Zod 被设计成对开发者尽可能友好。其目的是消除重复的类型�
 
 _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://github.com/sponsors/colinhacks) 或 [Consultancy](https://github.com/sponsors/colinhacks)赞助 Zod ._
 
+# 生态体系
 
-# 生态系统
-
-有越来越多的工具是建立在 Zod 之上或原生支持 Zod 的! 如果你在 Zod 的基础上建立了一个工具或库，请在[Twitter](https://twitter.com/colinhacks) 或者 [Discussion](https://github.com/colinhacks/zod/discussions)上告诉我。我会在下面添加，并在推特上发布。
+有越来越多的工具是建立在 Zod 之上或原生支持 Zod 的! 如果你在 Zod 的基础上建立了一个工具或库，请在[Twitter](https://twitter.com/colinhacks) 或者 [Discussion](https://github.com/colinhacks/zod/discussions)上告诉我。我会把它添加到下面，并在推特上发布。
 
 - [`tRPC`](https://github.com/trpc/trpc): 在没有 GraphQL 的情况下建立端到端的类型安全 API
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers): 使用 React Hook Form 和 Zod 解析器轻松构建类型安全的表单。
@@ -292,8 +293,9 @@ _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://
 - [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): 从 Zod 模式中生成 `fast-check` 的任意数据。
 - [`zod-endpoints`](https://github.com/flock-community/zod-endpoints): 约定优先的严格类型的端点与 Zod。兼容 OpenAPI。
 - [`express-zod-api`](https://github.com/RobinTail/express-zod-api): 用 I/O 模式验证和自定义中间件构建基于 Express 的 API 服务
-- [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): 有助于翻译zod错误信息。
+- [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): 有助于翻译 zod 错误信息。
 - [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): 以数据为中心的表格构建工具，基于 MobX 和 Zod。
+- [`zodock`](https://github.com/ItMaga/zodock): 基於 Zod 模式生成模擬數據。
 
 # 安装
 
@@ -314,6 +316,7 @@ _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://
 ```
 
 ### 从`npm`(Node/Bun)安装
+
 ```sh
 npm install zod
 yarn add zod          # yarn
@@ -323,7 +326,8 @@ pnpm add zod          # pnpm
 
 ### 从`deno.land/x` (Deno)安装
 
-和Node不同，Demo依靠一个直接的URL导入而非像npm这样的包管理器。可以这样导入最新版本的Zod:
+和 Node 不同，Demo 依靠一个直接的 URL 导入而非像 npm 这样的包管理器。可以这样导入最新版本的 Zod:
+
 ```ts
 import { z } from "https://deno.land/x/zod/mod.ts";
 ```
@@ -334,8 +338,7 @@ import { z } from "https://deno.land/x/zod/mod.ts";
 import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
 ```
 
-> README的剩余部分假定你是直接通过npm安装的`zod`包。
-
+> README 的剩余部分假定你是直接通过 npm 安装的`zod`包。
 
 # 基本用法
 
@@ -356,7 +359,7 @@ mySchema.safeParse("tuna"); // => { success: true; data: "tuna" }
 mySchema.safeParse(12); // => { success: false; error: ZodError }
 ```
 
-创建一个 Object 模式
+创建一个对象模式
 
 ```ts
 import { z } from "zod";
@@ -372,85 +375,221 @@ type User = z.infer<typeof User>;
 // { username: string }
 ```
 
-# 定义模式
-
-## 基本原理
+## 原始类型
 
 ```ts
 import { z } from "zod";
 
-// 原始值
+// 原始值类型
 z.string();
 z.number();
 z.bigint();
 z.boolean();
 z.date();
+z.symbol();
 
 // 空类型
 z.undefined();
 z.null();
-z.void(); // 接受null或undefined
+z.void(); // 接受 undefined
 
-// 全能类型
-// 允许 any value
+// 任意类型
+// 允许任意类型的值
 z.any();
 z.unknown();
 
 // never 类型
-// 允许没有 values
+// 不允许值类型存在
 z.never();
 ```
 
-## 字面意义
+## 原始类型的强制转换
+
+Zod 现在提供了一种更方便的方法来强制转换原始类型
+
+```ts
+const schema = z.coerce.string();
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // => "12"
+schema.parse(true); // => "true"
+```
+
+在解析步骤中，输入将通过 `String()` 函数传递，该函数是 JavaScript 的内置函数，用于将数据强制转换为字符串。请注意，返回的模式是一个 `ZodString` 实例，因此可以使用所有字符串方法
+
+```ts
+z.coerce.string().email().min(5);
+```
+
+所有的原始类型都支持强制转换
+
+```ts
+z.coerce.string(); // String(input)
+z.coerce.number(); // Number(input)
+z.coerce.boolean(); // Boolean(input)
+z.coerce.bigint(); // BigInt(input)
+z.coerce.date(); // new Date(input)
+```
+
+**布尔类型的强制转换**
+
+Zod 的布尔强制非常简单！它将值传入 `Boolean(value)` 函数，仅此而已。任何真值都将解析为 `true`，任何假值都将解析为 `false`
+
+```ts
+z.coerce.boolean().parse("tuna"); // => true
+z.coerce.boolean().parse("true"); // => true
+z.coerce.boolean().parse("false"); // => true
+z.coerce.boolean().parse(1); // => true
+z.coerce.boolean().parse([]); // => true
+
+z.coerce.boolean().parse(0); // => false
+z.coerce.boolean().parse(undefined); // => false
+z.coerce.boolean().parse(null); // => false
+```
+
+## 字面量（literal）
 
 ```ts
 const tuna = z.literal("tuna");
 const twelve = z.literal(12);
+const twobig = z.literal(2n); // bigint literal
 const tru = z.literal(true);
 
-// 检索字面意义的值
+const terrificSymbol = Symbol("terrific");
+const terrific = z.literal(terrificSymbol);
+
+// 检索字面量的值
 tuna.value; // "tuna"
 ```
 
-> 目前在 Zod 中不支持 Date 或 bigint 字面。如果你有这个功能的用例，请提交一个 Issue。
+> 目前在 Zod 中不支持 Date 字面量。如果你有这个功能的用例，请提交一个 Issue。
 
-## Strings
+## 字符串
 
 Zod 包括一些针对字符串的验证。
 
 ```ts
+// 验证
 z.string().max(5);
 z.string().min(5);
 z.string().length(5);
 z.string().email();
 z.string().url();
+z.string().emoji();
 z.string().uuid();
+z.string().cuid();
+z.string().cuid2();
+z.string().ulid();
 z.string().regex(regex);
+z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
+z.string().datetime(); // ISO 8601；默认值为无 UTC 偏移，选项见下文
+z.string().ip(); // 默认为 IPv4 和 IPv6，选项见下文
 
-// 已废弃，等同于 .min(1)
-z.string().nonempty();
+// 转变
+z.string().trim(); // 减除空白
+z.string().toLowerCase(); // 小写化
+z.string().toUpperCase(); // 大写化
 ```
 
-> 查看 [validator.js](https://github.com/validatorjs/validator.js)，了解其他一些有用的字符串验证函数
+> 请查看 [validator.js](https://github.com/validatorjs/validator.js)，了解可与 [Refinements](#refine) 结合使用的大量其他有用字符串验证函数。
 
-#### 自定义错误信息
+创建字符串模式时，你可以自定义一些常见的错误信息
 
-你可以选择传入第二个参数来提供一个自定义的错误信息。
+```ts
+const name = z.string({
+  required_error: "Name is required",
+  invalid_type_error: "Name must be a string",
+});
+```
+
+使用验证方法时，你可以传递一个附加参数，以提供自定义错误信息
 
 ```ts
 z.string().min(5, { message: "Must be 5 or more characters long" });
 z.string().max(5, { message: "Must be 5 or fewer characters long" });
 z.string().length(5, { message: "Must be exactly 5 characters long" });
-z.string().email({ message: "Invalid email address." });
+z.string().email({ message: "Invalid email address" });
 z.string().url({ message: "Invalid url" });
+z.string().emoji({ message: "Contains non-emoji characters" });
 z.string().uuid({ message: "Invalid UUID" });
+z.string().includes("tuna", { message: "Must include tuna" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
+z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
+z.string().ip({ message: "Invalid IP address" });
+```
+
+### ISO 日期
+
+`z.string().datetime()` 方法执行 ISO 8601；默认为无时区偏移和任意的小数点后几秒精度
+
+```ts
+const datetime = z.string().datetime();
+
+datetime.parse("2020-01-01T00:00:00Z"); // pass
+datetime.parse("2020-01-01T00:00:00.123Z"); // pass
+datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (任意精度)
+datetime.parse("2020-01-01T00:00:00+02:00"); // fail (不允许偏移)
+```
+
+将 `offset` 选项设置为 `true`，可允许时区偏移
+
+```ts
+const datetime = z.string().datetime({ offset: true });
+
+datetime.parse("2020-01-01T00:00:00+02:00"); // pass
+datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (毫秒数可选)
+datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (毫秒数可选)
+datetime.parse("2020-01-01T00:00:00.123+02"); // pass (只偏移小时)
+datetime.parse("2020-01-01T00:00:00Z"); // pass (仍支持 Z)
+```
+
+你还可以限制允许的 "精度"。默认情况下，支持任意亚秒精度（但可选）
+
+```ts
+const datetime = z.string().datetime({ precision: 3 });
+
+datetime.parse("2020-01-01T00:00:00.123Z"); // pass
+datetime.parse("2020-01-01T00:00:00Z"); // fail
+datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
+```
+
+### IP 地址
+
+默认情况下，`z.string().ip()` 方法会验证 IPv4 和 IPv6
+
+```ts
+const ip = z.string().ip();
+
+ip.parse("192.168.1.1"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // pass
+
+ip.parse("256.1.1.1"); // fail
+ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // fail
+```
+
+你还可以设置 IP `版本`
+
+```ts
+const ipv4 = z.string().ip({ version: "v4" });
+ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+
+const ipv6 = z.string().ip({ version: "v6" });
+ipv6.parse("192.168.1.1"); // fail
 ```
 
 ## Numbers
+
+在创建数字模式时，你可以自定义某些错误信息
+
+```ts
+const age = z.number({
+  required_error: "Age is required",
+  invalid_type_error: "Age must be a number",
+});
+```
 
 Zod 包括一些特定的数字验证。
 
@@ -460,14 +599,17 @@ z.number().gte(5); // alias .min(5)
 z.number().lt(5);
 z.number().lte(5); // alias .max(5)
 
-z.number().int(); // 值必须是一个整数
+z.number().int(); // value must be an integer
 
 z.number().positive(); //     > 0
 z.number().nonnegative(); //  >= 0
 z.number().negative(); //     < 0
 z.number().nonpositive(); //  <= 0
 
-z.number().multipleOf(5); // x % 5 === 0
+z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
+
+z.number().finite(); // value must be finite, not Infinity or -Infinity
+z.number().safe(); // value must be between Number.MIN_SAFE_INTEGER and Number.MAX_SAFE_INTEGER
 ```
 
 你可以选择传入第二个参数来提供一个自定义的错误信息。
@@ -575,7 +717,7 @@ type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 
 ### `.partial`
 
-受 TypeScript 内置的实用类型[Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialt)的启发, `.partial` 方法使所有属性都是可选的。
+受 TypeScript 内置的实用类型[Partial](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype)的启发, `.partial` 方法使所有属性都是可选的。
 
 从这个对象开始:
 
@@ -844,6 +986,12 @@ type NumberCache = z.infer<typeof NumberCache>;
 这对于按 ID 存储或缓存项目特别有用。
 
 ```ts
+const userSchema = z.object({ name: z.string() });
+const userStoreSchema = z.record(userSchema);
+
+type UserStore = z.infer<typeof userStoreSchema>;
+// => type UserStore = { [ x: string ]: { name: string } }
+
 const userStore: UserStore = {};
 
 userStore["77d2586b-9e8e-4ecf-8b21-ea7e0530eadd"] = {
@@ -928,6 +1076,13 @@ const FishEnum = z.enum(fish);
 ```
 
 在这种情况下，Zod 无法推断出各个枚举元素；相反，推断出的类型将是 `string` 而不是`'Salmon'|'Tuna'|'Trout'`。
+
+另一种可行的方式是使用`as const`，这样 Zod 就可以推断出正确的类型。
+
+```ts
+const VALUES = ["Salmon", "Tuna", "Trout"] as const;
+const FishEnum = z.enum(VALUES);
+```
 
 **自动补全**
 
@@ -1201,7 +1356,7 @@ const TestSchema = z.instanceof(Test);
 
 const blob: any = "whatever";
 TestSchema.parse(new Test()); // passes
-TestSchema.parse("blob"); // throws
+TestSchema.parse(blob); // throws
 ```
 
 ## Function schemas
@@ -1609,7 +1764,7 @@ z.nullable(z.string());
 const nullishString = z.string().nullish(); // string | null | undefined
 
 // equivalent to
-z.string().optional().nullable();
+z.string().nullable().optional();
 ```
 
 ### `.array`
