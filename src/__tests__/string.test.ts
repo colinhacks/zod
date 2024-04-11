@@ -568,6 +568,10 @@ test("time", () => {
 test("time parsing", () => {
   const time = z.string().time();
   time.parse("00:00:00");
+  time.parse("23:00:00");
+  time.parse("00:59:00");
+  time.parse("00:00:59");
+  time.parse("23:59:59");
   time.parse("09:52:31");
   time.parse("23:59:59.9999999");
   expect(() => time.parse("")).toThrow();
@@ -577,6 +581,11 @@ test("time parsing", () => {
   expect(() => time.parse("00:0:00")).toThrow();
   expect(() => time.parse("00:00:0")).toThrow();
   expect(() => time.parse("00:00:00.000+00:00")).toThrow();
+
+  expect(() => time.parse("24:00:00")).toThrow();
+  expect(() => time.parse("00:60:00")).toThrow();
+  expect(() => time.parse("00:00:60")).toThrow();
+  expect(() => time.parse("24:60:60")).toThrow();
 
   const time2 = z.string().time({ precision: 2 });
   time2.parse("00:00:00.00");
