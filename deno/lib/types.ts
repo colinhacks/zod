@@ -605,7 +605,8 @@ const dateRegexSource = `\\d{4}-((0[13578]|10|12)-31|(0[13-9]|1[0-2])-30|(0[1-9]
 const dateRegex = new RegExp(`^${dateRegexSource}$`);
 
 function timeRegexSource(args: { precision?: number | null }) {
-  let regex = `\\d{2}:\\d{2}:\\d{2}`;
+  // let regex = `\\d{2}:\\d{2}:\\d{2}`;
+  let regex = `([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d`;
   if (args.precision) {
     regex = `${regex}\\.\\d{${args.precision}}`;
   } else if (args.precision == null) {
