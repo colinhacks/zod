@@ -543,17 +543,18 @@ export type ZodStringCheck =
   | {
       kind: "datetime";
       offset: boolean;
+      local: boolean;
       precision: number | null;
-      withDate: true;
-      withTime: true;
       message?: string;
     }
-  | { kind: "date"; withDate: true; message?: string }
+  | {
+      kind: "date";
+      // withDate: true;
+      message?: string;
+    }
   | {
       kind: "time";
-      offset: boolean;
       precision: number | null;
-      withTime: true;
       message?: string;
     }
   | { kind: "ip"; version?: IpVersion; message?: string };
@@ -599,46 +600,40 @@ const ipv4Regex =
 const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
-// Adapted from https://stackoverflow.com/a/3143231
-const datetimeRegex = (args: {
-  precision?: number | null;
-  offset?: boolean;
-  withDate?: boolean;
-  withTime?: boolean;
-}) => {
-  let regex = "^";
+const dateRegexSource = `\\d{4}-\\d{2}-\\d{2}`;
+const dateRegex = new RegExp(`^${dateRegexSource}$`);
 
-  if (args.withDate) {
-    regex = `${regex}\\d{4}-\\d{2}-\\d{2}`;
-
-    if (args.withTime) {
-      regex = `${regex}T`;
-    }
-  }
-
-  if (!args.withTime) {
-    return new RegExp(`${regex}$`);
-  }
-
-  regex = `${regex}\\d{2}:\\d{2}:\\d{2}`;
-
+function timeRegexSource(args: { precision?: number | null }) {
+  let regex = `\\d{2}:\\d{2}:\\d{2}`;
   if (args.precision) {
     regex = `${regex}\\.\\d{${args.precision}}`;
   } else if (args.precision == null) {
     regex = `${regex}(\\.\\d+)?`;
   }
-  // in case of `precision = 0`, don't add the decimal part.
+  return regex;
+}
+function timeRegex(args: {
+  offset?: boolean;
+  local?: boolean;
+  precision?: number | null;
+}) {
+  return new RegExp(`^${timeRegexSource(args)}$`);
+}
 
-  if (args.offset) {
-    return new RegExp(`${regex}(([+-]\\d{2}(:?\\d{2})?)|Z)$`);
-  }
+// Adapted from https://stackoverflow.com/a/3143231
+function datetimeRegex(args: {
+  precision?: number | null;
+  offset?: boolean;
+  local?: boolean;
+}) {
+  let regex = `${dateRegexSource}T${timeRegexSource(args)}`;
 
-  if (args.withDate) {
-    return new RegExp(`${regex}Z$`);
-  }
-
-  return new RegExp(`${regex}$`);
-};
+  const opts: string[] = [];
+  opts.push(args.local ? `Z?` : `Z`);
+  if (args.offset) opts.push(`([+-]\\d{2}(:?\\d{2})?)`);
+  regex = `${regex}(${opts.join("|")})`;
+  return new RegExp(`^${regex}$`);
+}
 
 function isValidIP(ip: string, version?: IpVersion) {
   if ((version === "v4" || !version) && ipv4Regex.test(ip)) {
@@ -870,7 +865,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "date") {
-        const regex = datetimeRegex(check);
+        const regex = dateRegex;
 
         if (!regex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -882,7 +877,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           status.dirty();
         }
       } else if (check.kind === "time") {
-        const regex = datetimeRegex(check);
+        const regex = timeRegex(check);
 
         if (!regex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -970,6 +965,7 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           message?: string | undefined;
           precision?: number | null;
           offset?: boolean;
+          local?: boolean;
         }
   ) {
     if (typeof options === "string") {
@@ -977,24 +973,23 @@ export class ZodString extends ZodType<string, ZodStringDef> {
         kind: "datetime",
         precision: null,
         offset: false,
-        withDate: true,
-        withTime: true,
+        local: false,
         message: options,
       });
     }
     return this._addCheck({
       kind: "datetime",
+
       precision:
         typeof options?.precision === "undefined" ? null : options?.precision,
       offset: options?.offset ?? false,
-      withDate: true,
-      withTime: true,
+      local: options?.local ?? false,
       ...errorUtil.errToObj(options?.message),
     });
   }
 
   date(message?: string) {
-    return this._addCheck({ kind: "date", withDate: true, message });
+    return this._addCheck({ kind: "date", message });
   }
 
   time(
@@ -1003,15 +998,12 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       | {
           message?: string | undefined;
           precision?: number | null;
-          offset?: boolean;
         }
   ) {
     if (typeof options === "string") {
       return this._addCheck({
         kind: "time",
         precision: null,
-        offset: false,
-        withTime: true,
         message: options,
       });
     }
@@ -1019,8 +1011,6 @@ export class ZodString extends ZodType<string, ZodStringDef> {
       kind: "time",
       precision:
         typeof options?.precision === "undefined" ? null : options?.precision,
-      offset: options?.offset ?? false,
-      withTime: true,
       ...errorUtil.errToObj(options?.message),
     });
   }

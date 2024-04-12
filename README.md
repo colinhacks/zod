@@ -69,7 +69,9 @@
 - [Coercion for primitives](#coercion-for-primitives)
 - [Literals](#literals)
 - [Strings](#strings)
-  - [ISO datetimes](#iso-datetimes)
+  - [Datetimes](#datetimes)
+  - [Dates](#dates)
+  - [Times](#times)
   - [IP addresses](#ip-addresses)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
@@ -893,18 +895,13 @@ z.string().time({ message: "Invalid time string!" });
 z.string().ip({ message: "Invalid IP address" });
 ```
 
-### ISO Date, Time & Datetime validation
+### Datetimes
 
-As you may have noticed, Zod string includes a few date/time related validations.
-These validations are regular expression based, so they are not as strict as a full
-date/time library. However, they are very convenient for validating user input.
+As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
 
 The `z.string().date()` method validates strings in the format `YYYY-MM-DD`.
 
-The `z.string().time()` method validates strings in the format `HH:mm:ss[.SSSSSS][Z|(+|-)hh[:]mm]`
-(the time portion of [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)). It defaults
-to `HH:mm:ss[.SSSSSS]` validation: no timezone offsets or `Z`, with arbitrary sub-second
-decimal.
+The `z.string().time()` method validates strings in the format `HH:mm:ss[.SSSSSS][Z|(+|-)hh[:]mm]` (the time portion of [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)). It defaults to `HH:mm:ss[.SSSSSS]` validation: no timezone offsets or `Z`, with arbitrary sub-second decimal.
 
 The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
 
@@ -915,18 +912,6 @@ datetime.parse("2020-01-01T00:00:00Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (arbitrary precision)
 datetime.parse("2020-01-01T00:00:00+02:00"); // fail (no offsets allowed)
-
-const date = z.string().date();
-
-date.parse("2020-01-01"); // pass
-
-const time = z.string().time();
-
-time.parse("00:00:00"); // pass
-time.parse("09:52:31"); // pass
-time.parse("23:59:59.9999999"); // pass (arbitrary precision)
-time.parse("00:00:00.123Z"); // fail (no `Z` allowed)
-time.parse("00:00:00.123+02:00"); // fail (no offsets allowed)
 ```
 
 Timezone offsets can be allowed by setting the `offset` option to `true`.
@@ -939,13 +924,6 @@ datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
 datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
-
-const time = z.string().time({ offset: true });
-
-time.parse("00:00:00+02:00"); // pass
-time.parse("00:00:00.123+02:00"); // pass (millis optional)
-time.parse("00:00:00.123+0200"); // pass (millis optional)
-time.parse("00:00:00Z"); // pass (`Z` now supported)
 ```
 
 You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
@@ -962,6 +940,43 @@ const time = z.string().time({ precision: 3 });
 time.parse("00:00:00.123"); // pass
 time.parse("00:00:00"); // fail
 time.parse("00:00:00.123456"); // fail
+```
+
+### Dates
+
+The `z.string().date()` method validates strings in the format `YYYY-MM-DD`.
+
+```ts
+const date = z.string().date();
+
+date.parse("2020-01-01"); // pass
+date.parse("2020-1-1"); // fail
+date.parse("2020-01-32"); // fail
+```
+
+### Times
+
+The `z.string().time()` method validates strings in the format `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
+
+```ts
+const time = z.string().time();
+
+time.parse("00:00:00"); // pass
+time.parse("09:52:31"); // pass
+time.parse("23:59:59.9999999"); // pass (arbitrary precision)
+
+time.parse("00:00:00.123Z"); // fail (no `Z` allowed)
+time.parse("00:00:00.123+02:00"); // fail (no offsets allowed)
+```
+
+You can set the `precision` option to constrain the allowable decimal precision.
+
+```ts
+const time = z.string().time({ precision: 3 });
+
+time.parse("00:00:00.123"); // pass
+time.parse("00:00:00.123456"); // fail
+time.parse("00:00:00"); // fail
 ```
 
 ### IP addresses
