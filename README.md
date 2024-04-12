@@ -616,6 +616,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) Create Zod types from your Prisma models.
 - [`quicktype`](https://app.quicktype.io/): Convert JSON objects and JSON schemas into Zod schemas.
 - [`@sanity-typed/zod`](https://github.com/saiichihashimoto/sanity-typed/tree/main/packages/zod): Generate Zod Schemas from [Sanity Schemas](https://www.sanity.io/docs/schema-types).
+- [`java-to-zod`](https://github.com/ivangreene/java-to-zod): Convert POJOs to Zod schemas
 
 #### Mocking
 
