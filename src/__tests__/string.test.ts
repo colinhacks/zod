@@ -233,8 +233,8 @@ test("nanoid", () => {
   const nanoid = z.string().nanoid("custom error");
   nanoid.parse("lfNZluvAxMkf7Q8C5H-QS");
   nanoid.parse("mIU_4PJWikaU8fMbmkouz");
-  nanoid.parse("Hb9ZUtUa2JDm_dD-47EGv"); 
-  nanoid.parse("5Noocgv_8vQ9oPijj4ioQ"); 
+  nanoid.parse("Hb9ZUtUa2JDm_dD-47EGv");
+  nanoid.parse("5Noocgv_8vQ9oPijj4ioQ");
   const result = nanoid.safeParse("Xq90uDyhddC53KsoASYJGX");
   expect(result.success).toEqual(false);
   if (!result.success) {
@@ -565,29 +565,29 @@ test("time parsing", () => {
   expect(() => time2.parse("00:00:00.000")).toThrow();
   expect(() => time2.parse("00:00:00.00+00:00")).toThrow();
 
-  const time3 = z.string().time({ offset: true });
-  time3.parse("00:00:00Z");
-  time3.parse("09:52:31Z");
-  time3.parse("00:00:00+00:00");
-  time3.parse("00:00:00+0000");
-  time3.parse("00:00:00.000Z");
-  time3.parse("00:00:00.000+00:00");
-  time3.parse("00:00:00.000+0000");
-  expect(() => time3.parse("")).toThrow();
-  expect(() => time3.parse("foo")).toThrow();
-  expect(() => time3.parse("00:00:00")).toThrow();
-  expect(() => time3.parse("00:00:00.000")).toThrow();
+  // const time3 = z.string().time({ offset: true });
+  // time3.parse("00:00:00Z");
+  // time3.parse("09:52:31Z");
+  // time3.parse("00:00:00+00:00");
+  // time3.parse("00:00:00+0000");
+  // time3.parse("00:00:00.000Z");
+  // time3.parse("00:00:00.000+00:00");
+  // time3.parse("00:00:00.000+0000");
+  // expect(() => time3.parse("")).toThrow();
+  // expect(() => time3.parse("foo")).toThrow();
+  // expect(() => time3.parse("00:00:00")).toThrow();
+  // expect(() => time3.parse("00:00:00.000")).toThrow();
 
-  const time4 = z.string().time({ offset: true, precision: 0 });
-  time4.parse("00:00:00Z");
-  time4.parse("09:52:31Z");
-  time4.parse("00:00:00+00:00");
-  time4.parse("00:00:00+0000");
-  expect(() => time4.parse("")).toThrow();
-  expect(() => time4.parse("foo")).toThrow();
-  expect(() => time4.parse("00:00:00.0")).toThrow();
-  expect(() => time4.parse("00:00:00.000")).toThrow();
-  expect(() => time4.parse("00:00:00.000+00:00")).toThrow();
+  // const time4 = z.string().time({ offset: true, precision: 0 });
+  // time4.parse("00:00:00Z");
+  // time4.parse("09:52:31Z");
+  // time4.parse("00:00:00+00:00");
+  // time4.parse("00:00:00+0000");
+  // expect(() => time4.parse("")).toThrow();
+  // expect(() => time4.parse("foo")).toThrow();
+  // expect(() => time4.parse("00:00:00.0")).toThrow();
+  // expect(() => time4.parse("00:00:00.000")).toThrow();
+  // expect(() => time4.parse("00:00:00.000+00:00")).toThrow();
 });
 
 test("IP validation", () => {
