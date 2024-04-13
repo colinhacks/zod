@@ -855,10 +855,10 @@ z.string().regex(regex);
 z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
-z.string().datetime(); // ISO 8601; default is without UTC offset, see below for options
-z.string().date(); // ISO short date format.
-z.string().time(); // time of day in 24-hour format, see below for options.
-z.string().ip(); // defaults to IPv4 and IPv6, see below for options
+z.string().datetime(); // ISO 8601; by default only `Z` timezone allowed
+z.string().date(); // ISO date format (YYYY-MM-DD)
+z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
+z.string().ip(); // defaults to allow both IPv4 and IPv6
 
 // transformations
 z.string().trim(); // trim whitespace
