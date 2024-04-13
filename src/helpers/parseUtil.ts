@@ -16,6 +16,14 @@ export const makeIssue = (params: {
     path: fullPath,
   };
 
+  if (issueData.message !== undefined) {
+    return {
+      ...issueData,
+      path: fullPath,
+      message: issueData.message,
+    };
+  }
+
   let errorMessage = "";
   const maps = errorMaps
     .filter((m) => !!m)
@@ -28,7 +36,7 @@ export const makeIssue = (params: {
   return {
     ...issueData,
     path: fullPath,
-    message: issueData.message ?? errorMessage,
+    message: errorMessage,
   };
 };
 
@@ -65,6 +73,7 @@ export function addIssueToContext(
   ctx: ParseContext,
   issueData: IssueData
 ): void {
+  const overrideMap = getErrorMap();
   const issue = makeIssue({
     issueData: issueData,
     data: ctx.data,
@@ -72,8 +81,8 @@ export function addIssueToContext(
     errorMaps: [
       ctx.common.contextualErrorMap, // contextual error map is first priority
       ctx.schemaErrorMap, // then schema-bound map if available
-      getErrorMap(), // then global override map
-      defaultErrorMap, // then global default map
+      overrideMap, // then global override map
+      overrideMap === defaultErrorMap ? undefined : defaultErrorMap, // then global default map
     ].filter((x) => !!x) as ZodErrorMap[],
   });
   ctx.common.issues.push(issue);
