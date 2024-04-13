@@ -16,7 +16,7 @@ export const makeIssue = (params: {
     path: fullPath,
   };
 
-  if (issueData.message) {
+  if (issueData.message !== undefined) {
     return {
       ...issueData,
       path: fullPath,
@@ -36,11 +36,7 @@ export const makeIssue = (params: {
   return {
     ...issueData,
     path: fullPath,
-<<<<<<< HEAD
-    message: issueData.message ?? errorMessage,
-=======
     message: errorMessage,
->>>>>>> e5b2228 (perf: avoid unnecessary error maps)
   };
 };
 

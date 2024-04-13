@@ -16,7 +16,7 @@ export const makeIssue = (params: {
     path: fullPath,
   };
 
-  if (issueData.message) {
+  if (issueData.message !== undefined) {
     return {
       ...issueData,
       path: fullPath,
