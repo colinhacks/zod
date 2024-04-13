@@ -16,21 +16,21 @@ export const makeIssue = (params: {
     path: fullPath,
   };
 
-  let errorMessage = issueData.message || "";
-  if (!errorMessage) {
-    const maps: ZodErrorMap[] = [];
-    for (let i = errorMaps.length - 1; i >= 0; i--) {
-      const map = errorMaps[i];
-      if (!map || maps.includes(map)) {
-        continue;
-      }
-      maps.push(map);
+  if (issueData.message) {
+    return {
+      ...issueData,
+      path: fullPath,
+      message: issueData.message,
+    };
+  }
 
-      errorMessage = map(fullIssue, {
-        data,
-        defaultError: errorMessage,
-      }).message;
-    }
+  let errorMessage = "";
+  const maps = errorMaps
+    .filter((m) => !!m)
+    .slice()
+    .reverse() as ZodErrorMap[];
+  for (const map of maps) {
+    errorMessage = map(fullIssue, { data, defaultError: errorMessage }).message;
   }
 
   return {
@@ -77,6 +77,7 @@ export function addIssueToContext(
   ctx: ParseContext,
   issueData: IssueData
 ): void {
+  const overrideMap = getErrorMap();
   const issue = makeIssue({
     issueData: issueData,
     data: ctx.data,
@@ -84,8 +85,8 @@ export function addIssueToContext(
     errorMaps: [
       ctx.common.contextualErrorMap, // contextual error map is first priority
       ctx.schemaErrorMap, // then schema-bound map if available
-      getErrorMap(), // then global override map
-      defaultErrorMap, // then global default map
+      overrideMap, // then global override map
+      overrideMap === defaultErrorMap ? undefined : defaultErrorMap, // then global default map
     ].filter((x) => !!x) as ZodErrorMap[],
   });
   ctx.common.issues.push(issue);
