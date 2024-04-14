@@ -63,3 +63,16 @@ test("readonly union", async () => {
   union.parse("asdf");
   union.parse(12);
 });
+
+test("return valid over spread array of literals", () => {
+  const cells = ["a1", "a2", "a3", "b1", "b2", "b3"] as const;
+  const union = z.union([...cells.map((cell) => z.literal(cell))]);
+  union.parse("a1");
+});
+
+test("fails parse over spread array of literals for non-existent item", () => {
+  const cells = ["a1", "a2", "a3", "b1", "b2", "b3"] as const;
+  const union = z.union([...cells.map((cell) => z.literal(cell))]);
+  const result = union.safeParse("c1");
+  expect(result.success).toBe(false);
+});
