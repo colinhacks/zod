@@ -39,3 +39,11 @@ test("assignability", () => {
   };
   createSchemaAndParse("foo", z.string(), { foo: "" });
 });
+
+test("nested no undefined", () => {
+  const inner = z.string().or(z.array(z.string()));
+  const outer = z.object({ inner });
+  type outerSchema = z.infer<typeof outer>;
+  z.util.assertEqual<outerSchema, { inner: string | string[] }>(true);
+  expect(outer.safeParse({ inner: undefined }).success).toEqual(false);
+});
