@@ -1869,7 +1869,7 @@ const baseCategorySchema = z.object({
   name: z.string(),
 });
 
-type Category = z.infer<typeof baseCategorySchema> & {
+type Category = z.input<typeof baseCategorySchema> & {
   subcategories: Category[];
 };
 
