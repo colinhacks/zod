@@ -107,9 +107,6 @@ export namespace objectUtil {
   type requiredKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? never : k;
   }[keyof T];
-  type optionalUnknown<K extends string | number | symbol> = {
-    [k in K]?: unknown;
-  };
   type pickRequired<T extends object, R extends keyof T = requiredKeys<T>> = {
     [k in R]: T[k];
   };
@@ -117,8 +114,7 @@ export namespace objectUtil {
     [k in O]?: T[k];
   };
   export type addQuestionMarks<T extends object> = pickRequired<T> &
-    pickOptional<T> &
-    optionalUnknown<keyof T>;
+    pickOptional<T> & { [k in keyof T]?: unknown };
 
   export type identity<T> = T;
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
