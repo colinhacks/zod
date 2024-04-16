@@ -2736,7 +2736,7 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  partial<Mask extends { [k in keyof T]?: true }>(
+  partial<Mask extends util.Exactly<{ [k in keyof T]?: true }, Mask>>(
     mask: Mask
   ): ZodObject<
     objectUtil.noNever<{
@@ -2769,7 +2769,7 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
-  required<Mask extends { [k in keyof T]?: true }>(
+  required<Mask extends util.Exactly<{ [k in keyof T]?: true }, Mask>>(
     mask: Mask
   ): ZodObject<
     objectUtil.noNever<{
