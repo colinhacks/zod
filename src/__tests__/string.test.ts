@@ -275,7 +275,6 @@ test("cuid2", () => {
   validStrings.forEach((s) => cuid2.parse(s));
   const invalidStrings = [
     "", // empty string
-    "1z4a98xxat96iws9zmbrgj3a", // starts with a number
     "tz4a98xxat96iws9zMbrgj3a", // include uppercase
     "tz4a98xxat96iws-zmbrgj3a", // involve symbols
   ];
