@@ -4128,6 +4128,8 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   T[number],
   ZodEnumDef<T>
 > {
+  #cache: Set<T[number]> | undefined;
+
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     if (typeof input.data !== "string") {
       const ctx = this._getOrReturnCtx(input);
@@ -4140,7 +4142,11 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       return INVALID;
     }
 
-    if (this._def.values.indexOf(input.data) === -1) {
+    if (!this.#cache) {
+      this.#cache = new Set(this._def.values);
+    }
+
+    if (!this.#cache.has(input.data)) {
       const ctx = this._getOrReturnCtx(input);
       const expectedValues = this._def.values;
 
@@ -4232,6 +4238,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   T[keyof T],
   ZodNativeEnumDef<T>
 > {
+  #cache: Set<T[keyof T]> | undefined;
   _parse(input: ParseInput): ParseReturnType<T[keyof T]> {
     const nativeEnumValues = util.getValidEnumValues(this._def.values);
 
@@ -4249,7 +4256,11 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       return INVALID;
     }
 
-    if (nativeEnumValues.indexOf(input.data) === -1) {
+    if (!this.#cache) {
+      this.#cache = new Set(util.getValidEnumValues(this._def.values));
+    }
+
+    if (!this.#cache.has(input.data)) {
       const expectedValues = util.objectValues(nativeEnumValues);
 
       addIssueToContext(ctx, {

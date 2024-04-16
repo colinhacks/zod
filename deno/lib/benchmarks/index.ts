@@ -43,3 +43,9 @@ if (!argv.length) {
 for (const suite of suites) {
   suite.run();
 }
+
+// exit on Ctrl-C
+process.on("SIGINT", function () {
+  console.log("Exiting...");
+  process.exit();
+});
