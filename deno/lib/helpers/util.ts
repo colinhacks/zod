@@ -101,22 +101,6 @@ export namespace objectUtil {
     [k in Exclude<keyof U, keyof V>]: U[k];
   } & V;
 
-<<<<<<< HEAD
-  type optionalKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? k : never;
-  }[keyof T];
-  type requiredKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? never : k;
-  }[keyof T];
-  type pickRequired<T extends object, R extends keyof T = requiredKeys<T>> = {
-    [k in R]: T[k];
-  };
-  type pickOptional<T extends object, O extends keyof T = optionalKeys<T>> = {
-    [k in O]?: T[k];
-  };
-  export type addQuestionMarks<T extends object> = pickRequired<T> &
-    pickOptional<T> & { [k in keyof T]?: unknown };
-=======
   // type optionalKeys<T extends object> = {
   //   [k in keyof T]: undefined extends T[k] ? k : never;
   // }[keyof T];
@@ -132,7 +116,6 @@ export namespace objectUtil {
     // O extends keyof T = optionalKeys<T>
   > = keepRequiredKeys<T> & Partial<T>;
   //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
->>>>>>> 0483a8e (perf: speed up `addQuestionMarks`)
 
   export type identity<T> = T;
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
