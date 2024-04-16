@@ -5011,8 +5011,8 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
 ////////////////////////////////////////
 ////////////////////////////////////////
 type CustomParams = CustomErrorParams & { fatal?: boolean };
-export const custom = <T>(
-  check?: (data: unknown) => any,
+export function custom<T>(
+  check?: (data: any) => any,
   params: string | CustomParams | ((input: any) => CustomParams) = {},
   /**
    * @deprecated
@@ -5025,7 +5025,7 @@ export const custom = <T>(
    *
    */
   fatal?: boolean
-): ZodType<T> => {
+): ZodType<T> {
   if (check)
     return ZodAny.create().superRefine((data, ctx) => {
       if (!check(data)) {
@@ -5041,7 +5041,7 @@ export const custom = <T>(
       }
     });
   return ZodAny.create();
-};
+}
 
 export { ZodType as Schema, ZodType as ZodSchema };
 

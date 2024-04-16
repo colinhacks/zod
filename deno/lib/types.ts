@@ -592,11 +592,7 @@ const nanoidRegex = /^[a-z0-9_-]{21}$/i;
 // const emailRegex =
 //   /^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/i;
 const emailRegex =
-<<<<<<< HEAD
-  /^(?!\.)(?!.*\.\.)([A-Z0-9_'+-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
-=======
-  /^(?!\.)(?!.*\.\.)([A-Z0-9_+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
->>>>>>> f5b65ff (fix: escape hyphen in regex)
+  /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
 // const emailRegex =
 //   /^[a-z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9\-]+)*$/i;
 
@@ -5015,8 +5011,8 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
 ////////////////////////////////////////
 ////////////////////////////////////////
 type CustomParams = CustomErrorParams & { fatal?: boolean };
-export const custom = <T>(
-  check?: (data: unknown) => any,
+export function custom<T>(
+  check?: (data: any) => any,
   params: string | CustomParams | ((input: any) => CustomParams) = {},
   /**
    * @deprecated
@@ -5029,7 +5025,7 @@ export const custom = <T>(
    *
    */
   fatal?: boolean
-): ZodType<T> => {
+): ZodType<T> {
   if (check)
     return ZodAny.create().superRefine((data, ctx) => {
       if (!check(data)) {
@@ -5045,7 +5041,7 @@ export const custom = <T>(
       }
     });
   return ZodAny.create();
-};
+}
 
 export { ZodType as Schema, ZodType as ZodSchema };
 
