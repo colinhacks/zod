@@ -6,15 +6,6 @@ const DATA = "2021-01-01";
 const MONTHS_31 = new Set([1, 3, 5, 7, 8, 10, 12]);
 const MONTHS_30 = new Set([4, 6, 9, 11]);
 
-function generateRandomDatetime(): string {
-  const year = Math.floor(Math.random() * 3000);
-  const month = Math.floor(Math.random() * 12) + 1;
-  const day = Math.floor(Math.random() * 31) + 1;
-  return `${year}-${month.toString().padStart(2, "0")}-${day
-    .toString()
-    .padStart(2, "0")}`;
-}
-
 const simpleDatetimeRegex = /^(\d{4})-(\d{2})-(\d{2})$/;
 const datetimeRegexNoLeapYearValidation =
   /^\d{4}-((0[13578]|10|12)-31|(0[13-9]|1[0-2])-30|(0[1-9]|1[0-2])-(0[1-9]|1\d|2\d))$/;

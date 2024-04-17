@@ -101,6 +101,7 @@ export type StringValidation =
   | "datetime"
   | "date"
   | "time"
+  | "duration"
   | "ip"
   | "base64"
   | { includes: string; position?: number }

@@ -858,10 +858,11 @@ z.string().endsWith(string);
 z.string().datetime(); // ISO 8601; by default only `Z` timezone allowed
 z.string().date(); // ISO date format (YYYY-MM-DD)
 z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
+z.string().duration(); // ISO 8601 duration
 z.string().ip(); // defaults to allow both IPv4 and IPv6
 z.string().base64();
 
-// transformations
+// transforms
 z.string().trim(); // trim whitespace
 z.string().toLowerCase(); // toLowerCase
 z.string().toUpperCase(); // toUpperCase

@@ -671,6 +671,60 @@ test("time parsing", () => {
   // expect(() => time4.parse("00:00:00.000+00:00")).toThrow();
 });
 
+test("duration", () => {
+  const duration = z.string().duration();
+  expect(duration.isDuration).toEqual(true);
+
+  const validDurations = [
+    "P3Y6M4DT12H30M5S",
+    "P2Y9M3DT12H31M8.001S",
+    "+P3Y6M4DT12H30M5S",
+    "-PT0.001S",
+    "+PT0.001S",
+    "PT0,001S",
+    "PT12H30M5S",
+    "-P2M1D",
+    "P-2M-1D",
+    "-P5DT10H",
+    "P-5DT-10H",
+    "P1Y",
+    "P2MT30M",
+    "PT6H",
+    "P5W",
+    "P0.5Y",
+    "P0,5Y",
+    "P42YT7.004M",
+  ];
+
+  const invalidDurations = [
+    "foo bar",
+    "",
+    " ",
+    "P",
+    "T1H",
+    "P0.5Y1D",
+    "P0,5Y6M",
+    "P1YT",
+  ];
+
+  for (const val of validDurations) {
+    const result = duration.safeParse(val);
+    if (!result.success) {
+      throw Error(`Valid duration could not be parsed: ${val}`);
+    }
+  }
+
+  for (const val of invalidDurations) {
+    const result = duration.safeParse(val);
+
+    if (result.success) {
+      throw Error(`Invalid duration was successful parsed: ${val}`);
+    }
+
+    expect(result.error.issues[0].message).toEqual("Invalid duration");
+  }
+});
+
 test("IP validation", () => {
   const ip = z.string().ip();
   expect(ip.safeParse("122.122.122.122").success).toBe(true);
