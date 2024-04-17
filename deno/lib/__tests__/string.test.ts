@@ -557,7 +557,6 @@ test("date parsing", () => {
   const date = z.string().date();
   date.parse("1970-01-01");
   date.parse("2022-01-31");
-  date.parse("2022-02-29");
   date.parse("2022-03-31");
   date.parse("2022-04-30");
   date.parse("2022-05-31");
@@ -568,6 +567,14 @@ test("date parsing", () => {
   date.parse("2022-10-31");
   date.parse("2022-11-30");
   date.parse("2022-12-31");
+
+  date.parse("2000-02-29");
+  date.parse("2400-02-29");
+  expect(() => date.parse("2022-02-29")).toThrow();
+  expect(() => date.parse("2100-02-29")).toThrow();
+  expect(() => date.parse("2200-02-29")).toThrow();
+  expect(() => date.parse("2300-02-29")).toThrow();
+  expect(() => date.parse("2500-02-29")).toThrow();
 
   expect(() => date.parse("")).toThrow();
   expect(() => date.parse("foo")).toThrow();
