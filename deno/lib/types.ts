@@ -635,7 +635,7 @@ function timeRegex(args: {
 }
 
 // Adapted from https://stackoverflow.com/a/3143231
-function datetimeRegex(args: {
+export function datetimeRegex(args: {
   precision?: number | null;
   offset?: boolean;
   local?: boolean;
@@ -644,7 +644,7 @@ function datetimeRegex(args: {
 
   const opts: string[] = [];
   opts.push(args.local ? `Z?` : `Z`);
-  if (args.offset) opts.push(`([+-]\\d{2}(:?\\d{2})?)`);
+  if (args.offset) opts.push(`([+-]\\d{2}:?\\d{2})`);
   regex = `${regex}(${opts.join("|")})`;
   return new RegExp(`^${regex}$`);
 }

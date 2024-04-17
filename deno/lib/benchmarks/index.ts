@@ -1,5 +1,6 @@
 import Benchmark from "benchmark";
 
+import datetimeBenchmarks from "./datetime.ts";
 import discriminatedUnionBenchmarks from "./discriminatedUnion.ts";
 import objectBenchmarks from "./object.ts";
 import primitiveBenchmarks from "./primitives.ts";
@@ -36,12 +37,15 @@ if (!argv.length) {
     suites.push(...unionBenchmarks.suites);
   }
   if (argv.includes("--discriminatedUnion")) {
-    suites.push(...discriminatedUnionBenchmarks.suites);
+    suites.push(...datetimeBenchmarks.suites);
+  }
+  if (argv.includes("--datetime")) {
+    suites.push(...datetimeBenchmarks.suites);
   }
 }
 
 for (const suite of suites) {
-  suite.run();
+  suite.run({});
 }
 
 // exit on Ctrl-C
