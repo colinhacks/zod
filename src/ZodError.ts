@@ -102,6 +102,7 @@ export type StringValidation =
   | "date"
   | "time"
   | "ip"
+  | "base64"
   | { includes: string; position?: number }
   | { startsWith: string }
   | { endsWith: string };

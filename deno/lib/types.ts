@@ -563,7 +563,8 @@ export type ZodStringCheck =
       precision: number | null;
       message?: string;
     }
-  | { kind: "ip"; version?: IpVersion; message?: string };
+  | { kind: "ip"; version?: IpVersion; message?: string }
+  | { kind: "base64"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -572,7 +573,7 @@ export interface ZodStringDef extends ZodTypeDef {
 }
 
 const cuidRegex = /^c[^\s-]{8,}$/i;
-const cuid2Regex = /^[a-z][a-z0-9]*$/;
+const cuid2Regex = /^[0-9a-z]+$/;
 const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 // const uuidRegex =
 //   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
@@ -606,6 +607,10 @@ const ipv4Regex =
 const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
+// https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
+const base64Regex =
+  /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+
 // const dateRegexSource = `\\d{4}-\\d{2}-\\d{2}`;
 const dateRegexSource = `\\d{4}-((0[13578]|10|12)-31|(0[13-9]|1[0-2])-30|(0[1-9]|1[0-2])-(0[1-9]|1\\d|2\\d))`;
 const dateRegex = new RegExp(`^${dateRegexSource}$`);
@@ -613,6 +618,7 @@ const dateRegex = new RegExp(`^${dateRegexSource}$`);
 function timeRegexSource(args: { precision?: number | null }) {
   // let regex = `\\d{2}:\\d{2}:\\d{2}`;
   let regex = `([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d`;
+
   if (args.precision) {
     regex = `${regex}\\.\\d{${args.precision}}`;
   } else if (args.precision == null) {
@@ -906,6 +912,16 @@ export class ZodString extends ZodType<string, ZodStringDef> {
           });
           status.dirty();
         }
+      } else if (check.kind === "base64") {
+        if (!base64Regex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "base64",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -960,6 +976,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   ulid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "ulid", ...errorUtil.errToObj(message) });
+  }
+  base64(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
   }
 
   ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
@@ -1151,6 +1170,9 @@ export class ZodString extends ZodType<string, ZodStringDef> {
   }
   get isIP() {
     return !!this._def.checks.find((ch) => ch.kind === "ip");
+  }
+  get isBase64() {
+    return !!this._def.checks.find((ch) => ch.kind === "base64");
   }
 
   get minLength() {
