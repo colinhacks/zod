@@ -5079,7 +5079,7 @@ export function custom<T>(
    *
    */
   fatal?: boolean
-): ZodType<T, ZodTypeDef, unknown> {
+): ZodType<T, ZodTypeDef, T> {
   if (check)
     return ZodAny.create().superRefine((data, ctx) => {
       if (!check(data)) {
