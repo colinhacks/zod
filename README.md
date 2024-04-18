@@ -771,6 +771,13 @@ schema.parse(12); // => "12"
 
 During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings.
 
+```ts
+schema.parse(12); // => "12"
+schema.parse(true); // => "true"
+schema.parse(undefined); // => "undefined"
+schema.parse(null); // => "null"
+```
+
 The returned schema is a normal `ZodString` instance so you can use all string methods.
 
 ```ts
@@ -789,32 +796,24 @@ z.coerce.bigint(); // BigInt(input)
 z.coerce.date(); // new Date(input)
 ```
 
-Note that some behavior may not be what you expect.
+**Note** — Boolean coercion with `z.coerce.boolean()` may not work how you expect. Any [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) value is coerced to `true`, and any [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) value is coerced to `false`.
 
 ```ts
-schema.parse(true); // => "true"
-schema.parse(undefined); // => "undefined"
-schema.parse(null); // => "null"
+const schema = z.coerce.boolean(); // Boolean(input)
+
+schema.parse("tuna"); // => true
+schema.parse("true"); // => true
+schema.parse("false"); // => true
+schema.parse(1); // => true
+schema.parse([]); // => true
+
+schema.parse(0); // => false
+schema.parse(""); // => false
+schema.parse(undefined); // => false
+schema.parse(null); // => false
 ```
 
 For more control over coercion logic, consider using [`z.preprocess`](#preprocess) or [`z.pipe()`](#pipe).
-
-**Boolean coercion**
-
-Zod's approach to coercion is very simple! It passes the value into the `Boolean(value)` function, that's it. Any truthy value will resolve to `true`, any falsy value will resolve to `false`.
-
-```ts
-z.coerce.boolean().parse("tuna"); // => true
-z.coerce.boolean().parse("true"); // => true
-z.coerce.boolean().parse("false"); // => true
-z.coerce.boolean().parse(1); // => true
-z.coerce.boolean().parse([]); // => true
-
-z.coerce.boolean().parse(0); // => false
-z.coerce.boolean().parse(""); // => false
-z.coerce.boolean().parse(undefined); // => false
-z.coerce.boolean().parse(null); // => false
-```
 
 ## Literals
 
