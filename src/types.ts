@@ -2742,10 +2742,6 @@ export class ZodObject<
   extend<Augmentation extends ZodRawShape>(
     arg: Augmentation
   ): ZodObject<objectUtil.extendShape<T, Augmentation>, UnknownKeys, Catchall>;
-
-  // extend<Augmentation extends ZodExtendShape<T>>(
-  //   arg: Augmentation
-  // ): ZodObject<objectUtil.extendShape<T, Augmentation>, UnknownKeys, Catchall>;
   extend(arg: ZodRawShape | ((shape: T) => ZodRawShape)) {
     const augmentation = typeof arg === "function" ? arg(this.shape) : arg;
     return new ZodObject({
