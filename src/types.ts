@@ -2762,9 +2762,6 @@ export class ZodObject<
     const augmentation = typeof arg === "function" ? arg(this.shape) : arg;
     return this.extend(augmentation as any) as any;
   }
-  // edit(arg: any) {
-  //   return this.extend(arg);
-  // }
 
   // extend<
   //   Augmentation extends ZodRawShape,
