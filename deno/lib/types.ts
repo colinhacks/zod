@@ -166,9 +166,9 @@ export type SafeParseReturnType<Input, Output> =
   | SafeParseError<Input>;
 
 export abstract class ZodType<
-  Output = any,
+  Output = unknown,
   Def extends ZodTypeDef = ZodTypeDef,
-  Input = Output
+  Input = unknown
 > {
   readonly _type!: Output;
   readonly _output!: Output;
@@ -669,7 +669,7 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
-export class ZodString extends ZodType<string, ZodStringDef> {
+export class ZodString extends ZodType<string, ZodStringDef, string> {
   _parse(input: ParseInput): ParseReturnType<string> {
     if (this._def.coerce) {
       input.data = String(input.data);
@@ -1261,7 +1261,7 @@ export interface ZodNumberDef extends ZodTypeDef {
   coerce: boolean;
 }
 
-export class ZodNumber extends ZodType<number, ZodNumberDef> {
+export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
   _parse(input: ParseInput): ParseReturnType<number> {
     if (this._def.coerce) {
       input.data = Number(input.data);
@@ -1546,7 +1546,7 @@ export interface ZodBigIntDef extends ZodTypeDef {
   coerce: boolean;
 }
 
-export class ZodBigInt extends ZodType<bigint, ZodBigIntDef> {
+export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
   _parse(input: ParseInput): ParseReturnType<bigint> {
     if (this._def.coerce) {
       input.data = BigInt(input.data);
@@ -1747,7 +1747,7 @@ export interface ZodBooleanDef extends ZodTypeDef {
   coerce: boolean;
 }
 
-export class ZodBoolean extends ZodType<boolean, ZodBooleanDef> {
+export class ZodBoolean extends ZodType<boolean, ZodBooleanDef, boolean> {
   _parse(input: ParseInput): ParseReturnType<boolean> {
     if (this._def.coerce) {
       input.data = Boolean(input.data);
@@ -1793,7 +1793,7 @@ export interface ZodDateDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodDate;
 }
 
-export class ZodDate extends ZodType<Date, ZodDateDef> {
+export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     if (this._def.coerce) {
       input.data = new Date(input.data);
@@ -1962,7 +1962,11 @@ export interface ZodUndefinedDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodUndefined;
 }
 
-export class ZodUndefined extends ZodType<undefined, ZodUndefinedDef> {
+export class ZodUndefined extends ZodType<
+  undefined,
+  ZodUndefinedDef,
+  undefined
+> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.undefined) {
@@ -1997,7 +2001,7 @@ export interface ZodNullDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodNull;
 }
 
-export class ZodNull extends ZodType<null, ZodNullDef> {
+export class ZodNull extends ZodType<null, ZodNullDef, null> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.null) {
@@ -2030,7 +2034,7 @@ export interface ZodAnyDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodAny;
 }
 
-export class ZodAny extends ZodType<any, ZodAnyDef> {
+export class ZodAny extends ZodType<any, ZodAnyDef, any> {
   // to prevent instances of other classes from extending ZodAny. this causes issues with catchall in ZodObject.
   _any = true as const;
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
@@ -2055,7 +2059,7 @@ export interface ZodUnknownDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodUnknown;
 }
 
-export class ZodUnknown extends ZodType<unknown, ZodUnknownDef> {
+export class ZodUnknown extends ZodType<unknown, ZodUnknownDef, unknown> {
   // required
   _unknown = true as const;
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
@@ -2081,7 +2085,7 @@ export interface ZodNeverDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodNever;
 }
 
-export class ZodNever extends ZodType<never, ZodNeverDef> {
+export class ZodNever extends ZodType<never, ZodNeverDef, never> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const ctx = this._getOrReturnCtx(input);
     addIssueToContext(ctx, {
@@ -2110,7 +2114,7 @@ export interface ZodVoidDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodVoid;
 }
 
-export class ZodVoid extends ZodType<void, ZodVoidDef> {
+export class ZodVoid extends ZodType<void, ZodVoidDef, void> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.undefined) {
@@ -3374,7 +3378,7 @@ export class ZodIntersection<
 export type ZodTupleItems = [ZodTypeAny, ...ZodTypeAny[]];
 export type AssertArray<T> = T extends any[] ? T : never;
 export type OutputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<{
-  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
+  [k in keyof T]: T[k] extends ZodType<any, any, any> ? T[k]["_output"] : never;
 }>;
 export type OutputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
@@ -3384,7 +3388,7 @@ export type OutputTypeOfTupleWithRest<
   : OutputTypeOfTuple<T>;
 
 export type InputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<{
-  [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_input"] : never;
+  [k in keyof T]: T[k] extends ZodType<any, any, any> ? T[k]["_input"] : never;
 }>;
 export type InputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
@@ -3982,7 +3986,7 @@ export class ZodFunction<
     });
   }
 
-  returns<NewReturnType extends ZodType<any, any>>(
+  returns<NewReturnType extends ZodType<any, any, any>>(
     returnType: NewReturnType
   ): ZodFunction<Args, NewReturnType> {
     return new ZodFunction({
@@ -4089,7 +4093,7 @@ export interface ZodLiteralDef<T = any> extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodLiteral;
 }
 
-export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>> {
+export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     if (input.data !== this._def.value) {
       const ctx = this._getOrReturnCtx(input);
@@ -4174,7 +4178,8 @@ function createZodEnum(
 
 export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
   T[number],
-  ZodEnumDef<T>
+  ZodEnumDef<T>,
+  T[number]
 > {
   #cache: Set<T[number]> | undefined;
 
@@ -4284,7 +4289,8 @@ export type EnumLike = { [k: string]: string | number; [nu: number]: string };
 
 export class ZodNativeEnum<T extends EnumLike> extends ZodType<
   T[keyof T],
-  ZodNativeEnumDef<T>
+  ZodNativeEnumDef<T>,
+  T[keyof T]
 > {
   #cache: Set<T[keyof T]> | undefined;
   _parse(input: ParseInput): ParseReturnType<T[keyof T]> {
@@ -4851,7 +4857,7 @@ export interface ZodNaNDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodNaN;
 }
 
-export class ZodNaN extends ZodType<number, ZodNaNDef> {
+export class ZodNaN extends ZodType<number, ZodNaNDef, number> {
   _parse(input: ParseInput): ParseReturnType<any> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.nan) {
@@ -5073,7 +5079,7 @@ export function custom<T>(
    *
    */
   fatal?: boolean
-): ZodType<T> {
+): ZodType<T, ZodTypeDef, unknown> {
   if (check)
     return ZodAny.create().superRefine((data, ctx) => {
       if (!check(data)) {
