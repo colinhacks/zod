@@ -2760,7 +2760,19 @@ export class ZodObject<
     arg: ((shape: T) => Augmentation) | Augmentation
   ): ZodObject<objectUtil.remap<T, Augmentation>, UnknownKeys, Catchall> {
     const augmentation = typeof arg === "function" ? arg(this.shape) : arg;
-    return this.extend(augmentation as any) as any;
+    const newShape: any = { ...this.shape };
+    for (const k in augmentation) {
+      if (typeof augmentation[k] === "string") {
+        newShape[augmentation[k]] = newShape[k];
+        delete newShape[k];
+      } else {
+        newShape[k] = augmentation[k];
+      }
+    }
+    return new ZodObject({
+      ...this._def,
+      shape: () => newShape,
+    }) as any;
   }
 
   // extend<

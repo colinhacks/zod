@@ -501,4 +501,9 @@ test("remap - object", () => {
 
   type ModUser = z.infer<typeof ModUser>;
   util.assertEqual<ModUser, { fullname: string; age?: number }>(true);
+
+  ModUser.parse({
+    fullname: "Bob",
+    age: undefined,
+  });
 });
