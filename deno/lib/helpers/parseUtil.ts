@@ -16,6 +16,14 @@ export const makeIssue = (params: {
     path: fullPath,
   };
 
+  if (issueData.message !== undefined) {
+    return {
+      ...issueData,
+      path: fullPath,
+      message: issueData.message,
+    };
+  }
+
   let errorMessage = "";
   const maps = errorMaps
     .filter((m) => !!m)
@@ -28,7 +36,7 @@ export const makeIssue = (params: {
   return {
     ...issueData,
     path: fullPath,
-    message: issueData.message || errorMessage,
+    message: errorMessage,
   };
 };
 
@@ -65,6 +73,7 @@ export function addIssueToContext(
   ctx: ParseContext,
   issueData: IssueData
 ): void {
+  const overrideMap = getErrorMap();
   const issue = makeIssue({
     issueData: issueData,
     data: ctx.data,
@@ -72,8 +81,8 @@ export function addIssueToContext(
     errorMaps: [
       ctx.common.contextualErrorMap, // contextual error map is first priority
       ctx.schemaErrorMap, // then schema-bound map if available
-      getErrorMap(), // then global override map
-      defaultErrorMap, // then global default map
+      overrideMap, // then global override map
+      overrideMap === defaultErrorMap ? undefined : defaultErrorMap, // then global default map
     ].filter((x) => !!x) as ZodErrorMap[],
   });
   ctx.common.issues.push(issue);
@@ -112,9 +121,11 @@ export class ParseStatus {
   ): Promise<SyncParseReturnType<any>> {
     const syncPairs: ObjectPair[] = [];
     for (const pair of pairs) {
+      const key = await pair.key;
+      const value = await pair.value;
       syncPairs.push({
-        key: await pair.key,
-        value: await pair.value,
+        key,
+        value,
       });
     }
     return ParseStatus.mergeObjectSync(status, syncPairs);
@@ -173,7 +184,7 @@ export const isAborted = (x: ParseReturnType<any>): x is INVALID =>
   (x as any).status === "aborted";
 export const isDirty = <T>(x: ParseReturnType<T>): x is OK<T> | DIRTY<T> =>
   (x as any).status === "dirty";
-export const isValid = <T>(x: ParseReturnType<T>): x is OK<T> | DIRTY<T> =>
+export const isValid = <T>(x: ParseReturnType<T>): x is OK<T> =>
   (x as any).status === "valid";
 export const isAsync = <T>(
   x: ParseReturnType<T>

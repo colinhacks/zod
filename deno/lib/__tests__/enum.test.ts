@@ -58,3 +58,28 @@ test("extract/exclude", () => {
   util.assertEqual<typeof EmptyFoodEnum, z.ZodEnum<[]>>(true);
   util.assertEqual<z.infer<typeof EmptyFoodEnum>, never>(true);
 });
+
+test("error map in extract/exclude", () => {
+  const foods = ["Pasta", "Pizza", "Tacos", "Burgers", "Salad"] as const;
+  const FoodEnum = z.enum(foods, {
+    errorMap: () => ({ message: "This is not food!" }),
+  });
+  const ItalianEnum = FoodEnum.extract(["Pasta", "Pizza"]);
+  const foodsError = FoodEnum.safeParse("Cucumbers");
+  const italianError = ItalianEnum.safeParse("Tacos");
+  if (!foodsError.success && !italianError.success) {
+    expect(foodsError.error.issues[0].message).toEqual(
+      italianError.error.issues[0].message
+    );
+  }
+
+  const UnhealthyEnum = FoodEnum.exclude(["Salad"], {
+    errorMap: () => ({ message: "This is not healthy food!" }),
+  });
+  const unhealthyError = UnhealthyEnum.safeParse("Salad");
+  if (!unhealthyError.success) {
+    expect(unhealthyError.error.issues[0].message).toEqual(
+      "This is not healthy food!"
+    );
+  }
+});

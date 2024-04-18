@@ -516,6 +516,48 @@ test("literal bigint default error message", () => {
   }
 });
 
+test("enum with message returns the custom error message", () => {
+  const schema = z.enum(["apple", "banana"], {
+    message: "the value provided is invalid",
+  });
+
+  const result1 = schema.safeParse("berries");
+  expect(result1.success).toEqual(false);
+  if (!result1.success) {
+    expect(result1.error.issues[0].message).toEqual(
+      "the value provided is invalid"
+    );
+  }
+
+  const result2 = schema.safeParse(undefined);
+  expect(result2.success).toEqual(false);
+  if (!result2.success) {
+    expect(result2.error.issues[0].message).toEqual(
+      "the value provided is invalid"
+    );
+  }
+
+  const result3 = schema.safeParse("banana");
+  expect(result3.success).toEqual(true);
+
+  const result4 = schema.safeParse(null);
+  expect(result4.success).toEqual(false);
+  if (!result4.success) {
+    expect(result4.error.issues[0].message).toEqual(
+      "the value provided is invalid"
+    );
+  }
+});
+
+test("when the message is falsy, it is used as is provided", () => {
+  const schema = z.string().max(1, { message: "" });
+  const result = schema.safeParse("asdf");
+  expect(result.success).toEqual(false);
+  if (!result.success) {
+    expect(result.error.issues[0].message).toEqual("");
+  }
+});
+
 // test("dont short circuit on continuable errors", () => {
 //   const user = z
 //     .object({

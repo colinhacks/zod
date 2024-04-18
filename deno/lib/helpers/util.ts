@@ -16,6 +16,7 @@ export namespace util {
   export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
   export type MakePartial<T, K extends keyof T> = Omit<T, K> &
     Partial<Pick<T, K>>;
+  export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 
   export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
     items: U
@@ -100,22 +101,20 @@ export namespace objectUtil {
     [k in Exclude<keyof U, keyof V>]: U[k];
   } & V;
 
-  // type optionalKeys<T extends object> = {
-  //   [k in keyof T]: undefined extends T[k] ? k : never;
-  // }[keyof T];
-
+  type optionalKeys<T extends object> = {
+    [k in keyof T]: undefined extends T[k] ? k : never;
+  }[keyof T];
   type requiredKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? never : k;
   }[keyof T];
-
-  // type alkjsdf = addQuestionMarks<{ a: any }>;
-
-  export type addQuestionMarks<
-    T extends object,
-    R extends keyof T = requiredKeys<T>
-    // O extends keyof T = optionalKeys<T>
-  > = Pick<Required<T>, R> & Partial<T>;
-  //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
+  type pickRequired<T extends object, R extends keyof T = requiredKeys<T>> = {
+    [k in R]: T[k];
+  };
+  type pickOptional<T extends object, O extends keyof T = optionalKeys<T>> = {
+    [k in O]?: T[k];
+  };
+  export type addQuestionMarks<T extends object> = pickRequired<T> &
+    pickOptional<T> & { [k in keyof T]?: unknown };
 
   export type identity<T> = T;
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;

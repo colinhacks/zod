@@ -171,3 +171,11 @@ test("is not vulnerable to prototype pollution", async () => {
     expect(obj4.data.a).toBeUndefined();
   }
 });
+
+test("dont parse undefined values", () => {
+  const result1 = z.record(z.any()).parse({ foo: undefined });
+
+  expect(result1).toEqual({
+    foo: undefined,
+  });
+});

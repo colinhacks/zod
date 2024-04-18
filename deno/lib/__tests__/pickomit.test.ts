@@ -94,3 +94,19 @@ test("nonstrict parsing - fail", () => {
   const bad = () => laxfish.parse({ whatever: "asdf" } as any);
   expect(bad).toThrow();
 });
+
+test("pick/omit/required/partial - do not allow unknown keys", () => {
+  const schema = z.object({
+    name: z.string(),
+    age: z.number(),
+  });
+
+  // @ts-expect-error
+  schema.pick({ $unknown: true });
+  // @ts-expect-error
+  schema.omit({ $unknown: true });
+  // @ts-expect-error
+  schema.required({ $unknown: true });
+  // @ts-expect-error
+  schema.partial({ $unknown: true });
+});
