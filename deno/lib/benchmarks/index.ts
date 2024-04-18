@@ -2,6 +2,7 @@ import Benchmark from "benchmark";
 
 import datetimeBenchmarks from "./datetime.ts";
 import discriminatedUnionBenchmarks from "./discriminatedUnion.ts";
+import ipv4Benchmarks from "./ipv4.ts";
 import objectBenchmarks from "./object.ts";
 import primitiveBenchmarks from "./primitives.ts";
 import realworld from "./realworld.ts";
@@ -41,6 +42,9 @@ if (!argv.length) {
   }
   if (argv.includes("--datetime")) {
     suites.push(...datetimeBenchmarks.suites);
+  }
+  if (argv.includes("--ipv4")) {
+    suites.push(...ipv4Benchmarks.suites);
   }
 }
 

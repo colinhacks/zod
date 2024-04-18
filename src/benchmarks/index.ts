@@ -2,6 +2,7 @@ import Benchmark from "benchmark";
 
 import datetimeBenchmarks from "./datetime";
 import discriminatedUnionBenchmarks from "./discriminatedUnion";
+import ipv4Benchmarks from "./ipv4";
 import objectBenchmarks from "./object";
 import primitiveBenchmarks from "./primitives";
 import realworld from "./realworld";
@@ -41,6 +42,9 @@ if (!argv.length) {
   }
   if (argv.includes("--datetime")) {
     suites.push(...datetimeBenchmarks.suites);
+  }
+  if (argv.includes("--ipv4")) {
+    suites.push(...ipv4Benchmarks.suites);
   }
 }
 
