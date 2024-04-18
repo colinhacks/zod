@@ -2,15 +2,41 @@ import { z } from "./src/index";
 
 z;
 
-const User = z.object({ name: z.string(), age: z.number() });
+// const User = z
+//   .object({
+//     name: z.string(),
+//     age: z.number(),
+//   })
+//   .remap((shape) => ({
+//     name: shape.name.optional(),
+//     age: shape.age.nullable(),
+//   }));
 
-const UpdatedUser = User.remap((shape) => ({
-  name: "fullName",
-  age: shape.age.nullable(),
-}));
-type UpdatedUser = z.infer<typeof UpdatedUser>;
+// type User = z.infer<typeof User>;
+// // { name?: string | null; age?: number | null; }
 
-const user: UpdatedUser = {
-  fullName: "Betty Brant",
-  age: null,
-};
+// const User = z
+//   .object({
+//     name: z.string(),
+//     age: z.number(),
+//   })
+//   .remap(() => ({
+//     name: "fullname",
+//     age: "newage",
+//   }));
+
+// type User = z.infer<typeof User>;
+// // { fullname: string; newage: number; }
+
+const User = z.object({
+  name: z.string(),
+  age: z.number(),
+});
+
+const ModUser = User.remap({
+  name: "fullname",
+  age: User.shape.age.optional(),
+});
+
+type ModUser = z.infer<typeof ModUser>;
+// { fullname: string; age?: number; }

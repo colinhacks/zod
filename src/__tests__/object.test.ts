@@ -470,3 +470,35 @@ test("xor", () => {
     ]),
   });
 });
+
+test("remap - closure", () => {
+  const User = z.object({ name: z.string(), age: z.number() });
+
+  const UpdatedUser = User.remap((shape) => ({
+    name: "fullName",
+    age: shape.age.nullable(),
+  }));
+  type UpdatedUser = z.infer<typeof UpdatedUser>;
+  util.assertEqual<
+    UpdatedUser,
+    {
+      fullName: string;
+      age: number | null;
+    }
+  >(true);
+});
+
+test("remap - object", () => {
+  const User = z.object({
+    name: z.string(),
+    age: z.number(),
+  });
+
+  const ModUser = User.remap({
+    name: "fullname",
+    age: User.shape.age.optional(),
+  });
+
+  type ModUser = z.infer<typeof ModUser>;
+  util.assertEqual<ModUser, { fullname: string; age?: number }>(true);
+});

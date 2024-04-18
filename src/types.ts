@@ -2761,9 +2761,9 @@ export class ZodObject<
     K extends string,
     Augmentation extends { [k in keyof T]?: ZodTypeAny | K }
   >(
-    arg: (shape: T) => Augmentation
+    arg: ((shape: T) => Augmentation) | Augmentation
   ): ZodObject<objectUtil.remap<T, Augmentation>, UnknownKeys, Catchall> {
-    const augmentation = arg(this.shape);
+    const augmentation = typeof arg === "function" ? arg(this.shape) : arg;
     return this.extend(augmentation as any) as any;
   }
   // edit(arg: any) {
