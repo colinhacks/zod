@@ -1,4 +1,14 @@
+<<<<<<< HEAD
 // import { objectUtil } from ".";
+=======
+import type { ZodTypeAny } from "../index.ts";
+export namespace util {
+  type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
+    V
+  >() => V extends U ? 1 : 2
+    ? true
+    : false;
+>>>>>>> 6bcfedf (Implement remap)
 
 export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
   V
@@ -93,7 +103,59 @@ export const jsonStringifyReplacer = (_: string, value: any): any => {
   return value;
 };
 
+<<<<<<< HEAD
 export const ZodParsedType = arrayToEnum([
+=======
+  type optionalKeys<T extends object> = {
+    [k in keyof T]: undefined extends T[k] ? k : never;
+  }[keyof T];
+  type requiredKeys<T extends object> = {
+    [k in keyof T]: undefined extends T[k] ? never : k;
+  }[keyof T];
+  type pickRequired<T extends object, R extends keyof T = requiredKeys<T>> = {
+    [k in R]: T[k];
+  };
+  type pickOptional<T extends object, O extends keyof T = optionalKeys<T>> = {
+    [k in O]?: T[k];
+  };
+  export type addQuestionMarks<T extends object> = pickRequired<T> &
+    pickOptional<T> & { [k in keyof T]?: unknown };
+
+  export type identity<T> = T;
+  export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
+
+  export type noNeverKeys<T> = {
+    [k in keyof T]: [T[k]] extends [never] ? never : k;
+  }[keyof T];
+
+  export type noNever<T> = identity<{
+    [k in noNeverKeys<T>]: k extends keyof T ? T[k] : never;
+  }>;
+
+  export const mergeShapes = <U, T>(first: U, second: T): T & U => {
+    return {
+      ...first,
+      ...second, // second overwrites first
+    };
+  };
+
+  export type extendShape<A, B> = flatten<Omit<A, keyof B> & B>;
+
+  // if Augmentation[k] is a string, rename the key in T to that string
+  // otherwise overwrite the key in T with the value in Augmentation
+  export type remap<T, Augmentation extends { [k in keyof T]?: unknown }> = {
+    [k in keyof T as Augmentation[k] extends string
+      ? Augmentation[k]
+      : k]: Augmentation[k] extends string
+      ? T[k]
+      : Augmentation[k] extends ZodTypeAny
+      ? Augmentation[k]
+      : T[k];
+  };
+}
+
+export const ZodParsedType = util.arrayToEnum([
+>>>>>>> 6bcfedf (Implement remap)
   "string",
   "nan",
   "number",

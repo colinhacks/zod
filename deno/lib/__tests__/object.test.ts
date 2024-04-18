@@ -471,3 +471,20 @@ test("xor", () => {
     ]),
   });
 });
+
+test("remap", () => {
+  const User = z.object({ name: z.string(), age: z.number() });
+
+  const UpdatedUser = User.remap((shape) => ({
+    name: "fullName",
+    age: shape.age.nullable(),
+  }));
+  type UpdatedUser = z.infer<typeof UpdatedUser>;
+  util.assertEqual<
+    UpdatedUser,
+    {
+      fullName: string;
+      age: number | null;
+    }
+  >(true);
+});

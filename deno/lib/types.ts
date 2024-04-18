@@ -46,6 +46,9 @@ export type RefinementCtx = {
   path: (string | number)[];
 };
 export type ZodRawShape = { [k: string]: ZodTypeAny };
+export type ZodExtendShape<T extends ZodRawShape> = {
+  [k in keyof T]?: ZodTypeAny | ((curr: T[k]) => ZodTypeAny);
+};
 export type ZodTypeAny = ZodType<any, any, any>;
 export type TypeOf<T extends ZodType<any, any, any>> = T["_output"];
 export type input<T extends ZodType<any, any, any>> = T["_input"];
@@ -2737,8 +2740,14 @@ export class ZodObject<
   //     }) as any;
   //   };
   extend<Augmentation extends ZodRawShape>(
-    augmentation: Augmentation
-  ): ZodObject<objectUtil.extendShape<T, Augmentation>, UnknownKeys, Catchall> {
+    arg: Augmentation
+  ): ZodObject<objectUtil.extendShape<T, Augmentation>, UnknownKeys, Catchall>;
+
+  // extend<Augmentation extends ZodExtendShape<T>>(
+  //   arg: Augmentation
+  // ): ZodObject<objectUtil.extendShape<T, Augmentation>, UnknownKeys, Catchall>;
+  extend(arg: ZodRawShape | ((shape: T) => ZodRawShape)) {
+    const augmentation = typeof arg === "function" ? arg(this.shape) : arg;
     return new ZodObject({
       ...this._def,
       shape: () => ({
@@ -2747,6 +2756,20 @@ export class ZodObject<
       }),
     }) as any;
   }
+
+  remap<
+    K extends string,
+    Augmentation extends { [k in keyof T]?: ZodTypeAny | K }
+  >(
+    arg: (shape: T) => Augmentation
+  ): ZodObject<objectUtil.remap<T, Augmentation>, UnknownKeys, Catchall> {
+    const augmentation = arg(this.shape);
+    return this.extend(augmentation as any) as any;
+  }
+  // edit(arg: any) {
+  //   return this.extend(arg);
+  // }
+
   // extend<
   //   Augmentation extends ZodRawShape,
   //   NewOutput extends util.flatten<{
