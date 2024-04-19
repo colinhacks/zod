@@ -315,6 +315,17 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <p width="200px">The internet's video infrastructure</p>
     </td>
+    <td align="center">
+      <a href="https://scalar.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" width="200px;" alt="Scalar.com logo" />
+      </a>
+      <br />
+      <b>Scalar</b>
+      <br />
+      <a href="https://scalar.com/" target="_blank">scalar.com</a>
+      <br />
+      <p width="200px">Document, discover & test APIs with Scalar</p>
+    </td>
   </tr>
 </table>
 
