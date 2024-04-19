@@ -1,4 +1,5 @@
 // import { defaultErrorMap, getErrorMap } from "./errors";
+import { getErrorMap } from "./errors.ts";
 import { enumUtil } from "./helpers/enumUtil.ts";
 import { errorUtil } from "./helpers/errorUtil.ts";
 // import {
@@ -24,8 +25,17 @@ import { errorUtil } from "./helpers/errorUtil.ts";
 //   // SyncParseReturnType,
 // } from "./helpers/parseUtil";
 import { partialUtil } from "./helpers/partialUtil.ts";
-import { Primitive } from "./helpers/util.ts";
-import { getParsedType, objectUtil, util, ZodParsedType } from "./helpers/util.ts";
+import {
+  getParsedType,
+  objectUtil,
+  Primitive,
+  util,
+  ZodParsedType,
+} from "./helpers/util.ts";
+import defaultErrorMap from "./locales/en.ts";
+// import type { IssueData, ZodErrorMap, ZodIssue } from "../ZodError";
+// import type { ZodParsedType } from "./util";
+import type { ZodIssueOptionalMessage } from "./ZodError.ts";
 import {
   IssueData,
   StringValidation,
@@ -35,11 +45,6 @@ import {
   ZodIssue,
   ZodIssueCode,
 } from "./ZodError.ts";
-import { getErrorMap } from "./errors.ts";
-import defaultErrorMap from "./locales/en.ts";
-// import type { IssueData, ZodErrorMap, ZodIssue } from "../ZodError";
-// import type { ZodParsedType } from "./util";
-import type { ZodIssueOptionalMessage } from "./ZodError.ts";
 
 export const NEVER = Symbol.for("INVALID") as never;
 
@@ -2864,25 +2869,10 @@ export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny,
-<<<<<<< HEAD
-<<<<<<< HEAD
-  Output = objectOutputType<T, Catchall, UnknownKeys>,
-  Input = objectInputType<T, Catchall, UnknownKeys>
-> extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
-  private _cached: {
-    shape: T;
-    keys: string[];
-    keyset: { [k: string]: boolean };
-  } | null = null;
-=======
-  Output = simpleObjectOutputType<T>,
-  Input = simpleObjectInputType<T>
-=======
   // Output = simpleObjectOutputType<T>,
   // Input = simpleObjectInputType<T>
   Output = objectOutputType<T, Catchall, UnknownKeys>,
   Input = objectInputType<T, Catchall, UnknownKeys>
->>>>>>> c8c8cb9 (WIP)
 > extends ZodType<
   // objectOutputType<T, Catchall, UnknownKeys>,
   Output,
@@ -2891,8 +2881,11 @@ export class ZodObject<
   // objectInputType<T, Catchall, UnknownKeys>
   Input
 > {
-  private _cached: { shape: T; keys: string[] } | null = null;
->>>>>>> 5884584 (WIP)
+  private _cached: {
+    shape: T;
+    keys: string[];
+    keyset: { [k: string]: boolean };
+  } | null = null;
 
   "~getShape"(): {
     shape: T;
@@ -2934,7 +2927,7 @@ export class ZodObject<
 
     const shape = this._cached || this["~getShape"]();
 
-    let finalObject: any = {};
+    const finalObject: any = {};
     let err!: ZodInternalError;
 
     for (const key of shape.keys) {
@@ -3018,7 +3011,7 @@ export class ZodObject<
 
     const shape = this._cached || this["~getShape"]();
 
-    let finalObject: any = {};
+    const finalObject: any = {};
     let err!: ZodInternalError;
 
     for (const key of shape.keys) {
@@ -4187,7 +4180,7 @@ export class ZodRecord<
     const valueType = this._def.valueType;
 
     let err!: ZodInternalError;
-    let finalResult: any = {};
+    const finalResult: any = {};
     if (ctx?.async) {
       return Promise.all(
         Object.keys(data).map(async (key) => {
@@ -6265,10 +6258,8 @@ export {
   unknownType as unknown,
   voidType as void,
 };
-<<<<<<< HEAD
-=======
 
-export const NEVER = INVALID as never;
+// export const NEVER = INVALID as never;
 
 type shapeToOutput<T extends { [k: string]: any }> = {
   [k in keyof T]: T[k]["_type"];
@@ -6373,14 +6364,14 @@ node2.children[0].children[0].children[0].label;
 
 type asdf = typeof import("../tsconfig.json");
 
-const User = makeObject({
+export const User = makeObject({
   name: ZodString.create().optional(),
   get posts() {
     return Post.array(); //.array();
   },
 });
 
-const Post = makeObject({
+export const Post = makeObject({
   title: ZodString.create().optional(),
   get author() {
     return User; //.array();
@@ -6391,4 +6382,3 @@ type User = TypeOf<typeof User>;
 const user = User.parse("adsf");
 // const post = Post.parse("adsf");
 user.posts[0].author.name;
->>>>>>> 5884584 (WIP)

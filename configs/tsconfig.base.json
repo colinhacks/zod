@@ -13,11 +13,7 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-<<<<<<< HEAD
-    "exactOptionalPropertyTypes": false,
-=======
-    "exactOptionalPropertyTypes": true,
->>>>>>> c8c8cb9 (WIP)
+    // "exactOptionalPropertyTypes": true,
     "downlevelIteration": true,
     "isolatedModules": true
   },

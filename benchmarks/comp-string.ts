@@ -1,7 +1,9 @@
 // import Benchmark from "benchmark";
 
-import { z as zNew } from "../src/index";
+import * as mitata from "mitata";
 import { z as zOld } from "zod";
+
+import { z as zNew } from "../src/index";
 
 const DATA = `${Math.random()}`;
 
@@ -39,8 +41,6 @@ const newSchema = zNew.string();
 // await bench.run();
 
 // console.table(bench.table());
-
-import * as mitata from "mitata";
 
 // deno
 // import { ... } from 'https://esm.sh/mitata';

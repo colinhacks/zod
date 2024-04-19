@@ -55,26 +55,11 @@
 // export type ParsePath = ParsePathComponent[];
 // export const EMPTY_PATH: ParsePath = [];
 
-<<<<<<< HEAD
 // export interface GlobalParseContext {
 //   readonly issues: ZodIssue[];
 //   readonly contextualErrorMap?: ZodErrorMap;
 //   readonly async: boolean;
 // }
-=======
-export interface ParseContext {
-  readonly common: {
-    readonly issues: ZodIssue[];
-    readonly contextualErrorMap?: ZodErrorMap;
-    readonly async: boolean;
-  };
-  readonly path: ParsePath;
-  readonly schemaErrorMap?: ZodErrorMap | undefined;
-  readonly parent: ParseContext | null;
-  readonly data: any;
-  readonly parsedType: ZodParsedType;
-}
->>>>>>> c8c8cb9 (WIP)
 
 // export interface LocalParseContext {
 //   readonly path: ParsePath;

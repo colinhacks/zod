@@ -6364,14 +6364,14 @@ node2.children[0].children[0].children[0].label;
 
 type asdf = typeof import("../tsconfig.json");
 
-const User = makeObject({
+export const User = makeObject({
   name: ZodString.create().optional(),
   get posts() {
     return Post.array(); //.array();
   },
 });
 
-const Post = makeObject({
+export const Post = makeObject({
   title: ZodString.create().optional(),
   get author() {
     return User; //.array();

@@ -1,5 +1,5 @@
+import { util } from "./src/helpers/util";
 import { z } from "./src/index";
-
 z;
 
 function test<T extends Readonly<object>>(args: T): "readonly";
@@ -7,6 +7,13 @@ function test<T extends object>(args: T): "regular";
 function test(...args: any[]) {
   return args as any;
 }
+
+declare let err: z.ZodError;
+const errorKeyMap = new Set<string | number | symbol>();
+for (const iss of err.issues) {
+  if (iss.path) errorKeyMap.add(iss.path[0]);
+}
+const errorKeys = Array.from(errorKeyMap);
 
 const v1 = test({ arg: "asdf" });
 
