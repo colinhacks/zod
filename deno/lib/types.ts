@@ -2922,6 +2922,7 @@ export class ZodObject<
     //     ),
     //   ]);
     // }
+
     const checkType = this["~checkType"](data, ctx);
     if (checkType) return checkType;
 
