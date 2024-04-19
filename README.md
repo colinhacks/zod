@@ -867,16 +867,18 @@ z.string().includes(string);
 z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // ISO 8601; by default only `Z` timezone allowed
-z.string().date(); // ISO date format (YYYY-MM-DD)
-z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
-z.string().duration(); // ISO 8601 duration
 z.string().ip(); // defaults to allow both IPv4 and IPv6
-z.string().base64();
 
 // transforms
 z.string().trim(); // trim whitespace
 z.string().toLowerCase(); // toLowerCase
 z.string().toUpperCase(); // toUpperCase
+
+// added in Zod 3.23
+z.string().date(); // ISO date format (YYYY-MM-DD)
+z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
+z.string().duration(); // ISO 8601 duration
+z.string().base64();
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
@@ -913,10 +915,6 @@ z.string().ip({ message: "Invalid IP address" });
 
 As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
 
-The `z.string().date()` method validates strings in the format `YYYY-MM-DD`.
-
-The `z.string().time()` method validates strings in the format `HH:mm:ss[.SSSSSS][Z|(+|-)hh[:]mm]` (the time portion of [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)). It defaults to `HH:mm:ss[.SSSSSS]` validation: no timezone offsets or `Z`, with arbitrary sub-second decimal.
-
 The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
 
 ```ts
@@ -948,15 +946,11 @@ const datetime = z.string().datetime({ precision: 3 });
 datetime.parse("2020-01-01T00:00:00.123Z"); // pass
 datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
-
-const time = z.string().time({ precision: 3 });
-
-time.parse("00:00:00.123"); // pass
-time.parse("00:00:00"); // fail
-time.parse("00:00:00.123456"); // fail
 ```
 
 ### Dates
+
+> Added in Zod 3.23
 
 The `z.string().date()` method validates strings in the format `YYYY-MM-DD`.
 
@@ -969,6 +963,8 @@ date.parse("2020-01-32"); // fail
 ```
 
 ### Times
+
+> Added in Zod 3.23
 
 The `z.string().time()` method validates strings in the format `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
 
