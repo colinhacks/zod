@@ -101,38 +101,17 @@ export namespace objectUtil {
     [k in Exclude<keyof U, keyof V>]: U[k];
   } & V;
 
-<<<<<<< HEAD
   type optionalKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? k : never;
   }[keyof T];
   type requiredKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? never : k;
   }[keyof T];
-<<<<<<< HEAD
-  type pickRequired<T extends object, R extends keyof T = requiredKeys<T>> = {
-    [k in R]: T[k];
-  };
-  type pickOptional<T extends object, O extends keyof T = optionalKeys<T>> = {
-    [k in O]?: T[k];
-  };
-  export type addQuestionMarks<T extends object> = pickRequired<T> &
-    pickOptional<T> & { [k in keyof T]?: unknown };
-=======
-=======
-  // type optionalKeys<T extends object> = {
-  //   [k in keyof T]: undefined extends T[k] ? k : never;
-  // }[keyof T];
->>>>>>> 29e0bc8 (Simplify objectUtil.addQuestionMarks again)
-
-  // type alkjsdf = addQuestionMarks<{ a: any }>;
-
   export type addQuestionMarks<T extends object> = {
-    [K in keyof T as undefined extends T[K] ? never : K]: T[K];
+    [K in requiredKeys<T>]: T[K];
   } & {
-    [K in keyof T]?: T[K];
-  };
-  //  = { [k in O]?: T[k] } & { [k in R]: T[k] };
->>>>>>> 2ff8a1e (TS compilation perf: faster objectUtil.addQuestionMarks)
+    [K in optionalKeys<T>]?: T[K];
+  } & { [k in keyof T]?: unknown };
 
   export type identity<T> = T;
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
@@ -152,7 +131,13 @@ export namespace objectUtil {
     };
   };
 
-  export type extendShape<A, B> = flatten<Omit<A, keyof B> & B>;
+  export type extendShape<A extends object, B extends object> = {
+    [K in keyof A | keyof B]: K extends keyof B
+      ? B[K]
+      : K extends keyof A
+      ? A[K]
+      : never;
+  };
 }
 
 export const ZodParsedType = util.arrayToEnum([

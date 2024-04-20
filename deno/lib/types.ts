@@ -2863,7 +2863,13 @@ export class ZodObject<
   static create = <T extends ZodRawShape>(
     shape: T,
     params?: RawCreateParams
-  ): ZodObject<T, "strip"> => {
+  ): ZodObject<
+    T,
+    "strip",
+    ZodTypeAny,
+    objectOutputType<T, ZodTypeAny, "strip">,
+    objectInputType<T, ZodTypeAny, "strip">
+  > => {
     return new ZodObject({
       shape: () => shape,
       unknownKeys: "strip",
