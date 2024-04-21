@@ -11,6 +11,10 @@ on:
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+      id-token: write
     steps:
       - uses: actions/checkout@v2
         with:
@@ -43,3 +47,4 @@ jobs:
           token: ${{ secrets.NPM_TOKEN }}
           dry-run: false
           tag: canary
+          provenance: true
