@@ -66,6 +66,7 @@ test("email validations", () => {
     `tom@test.te-st.com`,
     `something@subdomain.domain-with-hyphens.tld`,
     `common'name@domain.com`,
+    `a!test@domain.com`,
     `francois@etu.inp-n7.fr`,
   ];
   const invalidEmails = [
