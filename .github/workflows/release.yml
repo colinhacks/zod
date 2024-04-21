@@ -11,6 +11,10 @@ on:
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+      id-token: write
     steps:
       - uses: actions/checkout@v2
         with:
@@ -46,6 +50,7 @@ jobs:
         with:
           token: ${{ secrets.NPM_TOKEN }}
           dry-run: false
+          provenance: true
 
       - name: Post-publish
         if: steps.publish.outputs.type != 'none'
