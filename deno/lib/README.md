@@ -2698,7 +2698,7 @@ z.map(z.string(), z.date()).readonly();
 // ReadonlyMap<string, Date>
 
 z.set(z.string()).readonly();
-// ReadonlySet<Promise<string>>
+// ReadonlySet<string>
 ```
 
 ### `.pipe`
