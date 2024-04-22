@@ -166,9 +166,9 @@ export type SafeParseReturnType<Input, Output> =
   | SafeParseError<Input>;
 
 export abstract class ZodType<
-  Output = unknown,
+  Output = any,
   Def extends ZodTypeDef = ZodTypeDef,
-  Input = unknown
+  Input = any
 > {
   readonly _type!: Output;
   readonly _output!: Output;
