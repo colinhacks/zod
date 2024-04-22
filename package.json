@@ -4,7 +4,7 @@
   "author": "Colin McDonnell <colin@colinhacks.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/colinhacks/zod"
+    "url": "git+https://github.com/colinhacks/zod.git"
   },
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
