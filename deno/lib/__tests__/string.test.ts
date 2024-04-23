@@ -223,19 +223,19 @@ test("jwt token", () => {
   expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
   expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
   expect(() =>
-    z.string().jwt({ algorithm: "ES256" }).parse(GOOD_JWT_HS256)
+    z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_HS256)
   ).toThrow();
   expect(() =>
-    z.string().jwt({ algorithm: "HS256" }).parse(GOOD_JWT_ES256)
+    z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_ES256)
   ).toThrow();
   //Success
   expect(() => jwtSchema.parse(GOOD_JWT_HS256)).not.toThrow();
   expect(() => jwtSchema.parse(GOOD_JWT_ES256)).not.toThrow();
   expect(() =>
-    z.string().jwt({ algorithm: "HS256" }).parse(GOOD_JWT_HS256)
+    z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_HS256)
   ).not.toThrow();
   expect(() =>
-    z.string().jwt({ algorithm: "ES256" }).parse(GOOD_JWT_ES256)
+    z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_ES256)
   ).not.toThrow();
 });
 

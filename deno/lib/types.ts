@@ -685,7 +685,7 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
-function isValidJwt(token: string, algorithm?: JwtAlgorithm) {
+function isValidJwt(token: string, algorithm: JwtAlgorithm | null = null) {
   try {
     const tokensParts = token.split(".");
     if (tokensParts.length !== 3) {
@@ -796,7 +796,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           status.dirty();
         }
       } else if (check.kind === "jwt") {
-        if (!isValidJwt(input.data, check.algorithm)) {
+        if (!isValidJwt(input.data, check.alg)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "jwt",
