@@ -101,6 +101,7 @@
   - [`.element`](#element)
   - [`.nonempty`](#nonempty)
   - [`.min/.max/.length`](#minmaxlength)
+  - [`.unique`](#unique)
 - [Tuples](#tuples)
 - [Unions](#unions)
 - [Discriminated unions](#discriminated-unions)
@@ -1403,6 +1404,18 @@ z.string().array().length(5); // must contain 5 items exactly
 ```
 
 Unlike `.nonempty()` these methods do not change the inferred type.
+
+### `.unique`
+
+```ts
+// All elements must be unique
+z.object({ id: z.string() }).array().unique();
+
+// All elements must be unique based on the id property
+z.object({ id: z.string(), name: z.string() })
+  .array()
+  .unique({ identifier: (elt) => elt.id });
+```
 
 ## Tuples
 
