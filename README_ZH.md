@@ -326,7 +326,7 @@ pnpm add zod          # pnpm
 
 ### 从`deno.land/x` (Deno)安装
 
-和 Node 不同，Demo 依靠一个直接的 URL 导入而非像 npm 这样的包管理器。可以这样导入最新版本的 Zod:
+和 Node 不同，Deno 依靠一个直接的 URL 导入而非像 npm 这样的包管理器。可以这样导入最新版本的 Zod:
 
 ```ts
 import { z } from "https://deno.land/x/zod/mod.ts";
