@@ -93,9 +93,20 @@ test("parse should fail given sparse array as tuple", () => {
   expect(() => testTuple.parse(new Array(3))).toThrow();
 });
 
-// test('tuple with optional elements', () => {
-//   const result = z
-//     .tuple([z.string(), z.number().optional()])
-//     .safeParse(['asdf']);
-//   expect(result).toEqual(['asdf']);
-// });
+test("tuple with optional elements", () => {
+  const myTuple = z.tuple([z.string().optional(), z.number()]);
+  expect(myTuple.parse(["asdf", 1])).toEqual(["asdf", 1]);
+  type t1 = z.output<typeof myTuple>;
+  util.assertEqual<t1, [string | undefined, number]>(true);
+  expect(myTuple._def.minItems).toEqual(2);
+
+  const maybeEmptyTuple = z.tuple([
+    z.string().optional(),
+    z.number().optional(),
+  ]);
+  expect(maybeEmptyTuple.parse([])).toEqual([]);
+  expect(maybeEmptyTuple._def.minItems).toEqual(0);
+  type t2 = z.output<typeof maybeEmptyTuple>;
+  util.assertEqual<t2, [string | undefined, number | undefined]>(false);
+  util.assertEqual<t2, [string?, number?]>(true);
+});
