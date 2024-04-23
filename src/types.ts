@@ -168,7 +168,7 @@ export type SafeParseReturnType<Input, Output> =
 export abstract class ZodType<
   Output = any,
   Def extends ZodTypeDef = ZodTypeDef,
-  Input = any
+  Input = Output
 > {
   readonly _type!: Output;
   readonly _output!: Output;
