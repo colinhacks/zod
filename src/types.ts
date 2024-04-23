@@ -3383,22 +3383,9 @@ export class ZodIntersection<
 ////////////////////////////////////////
 export type ZodTupleItems = [ZodTypeAny, ...ZodTypeAny[]];
 export type AssertArray<T> = T extends any[] ? T : never;
-export type IHandleOptionalParams<T extends any[], U extends any[] = []> = {
-  [P in keyof T]: T[P] | undefined;
-} extends T
-  ? [...U, ...Partial<T>]
-  : T extends [infer F, ...infer R]
-  ? IHandleOptionalParams<R, [...U, F]>
-  : U;
-export type OutputTypeOfTuple<T extends ZodTupleItems | []> =
-  IHandleOptionalParams<
-    AssertArray<{
-      [k in keyof T]: T[k] extends ZodType<any, any, any>
-        ? T[k]["_output"]
-        : never;
-    }>
-  >;
-
+export type OutputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<{
+  [k in keyof T]: T[k] extends ZodType<any, any, any> ? T[k]["_output"] : never;
+}>;
 export type OutputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
   Rest extends ZodTypeAny | null = null
@@ -3421,7 +3408,6 @@ export interface ZodTupleDef<
   Rest extends ZodTypeAny | null = null
 > extends ZodTypeDef {
   items: T;
-  minItems: number;
   rest: Rest;
   typeName: ZodFirstPartyTypeKind.ZodTuple;
 }
@@ -3449,7 +3435,7 @@ export class ZodTuple<
       return INVALID;
     }
 
-    if (ctx.data.length < this._def.minItems) {
+    if (ctx.data.length < this._def.items.length) {
       addIssueToContext(ctx, {
         code: ZodIssueCode.too_small,
         minimum: this._def.items.length,
@@ -3513,27 +3499,11 @@ export class ZodTuple<
     }
     return new ZodTuple({
       items: schemas,
-      minItems: findMinItems(
-        schemas,
-        (item) => item._def.typeName === ZodFirstPartyTypeKind.ZodOptional
-      ),
       typeName: ZodFirstPartyTypeKind.ZodTuple,
       rest: null,
       ...processCreateParams(params),
     });
   };
-}
-
-function findMinItems<T>(
-  array: Array<T>,
-  predicate: (value: T, index: number) => boolean
-): number {
-  for (let i = array.length; i > 0; i--) {
-    if (!predicate(array[i - 1], i)) {
-      return i;
-    }
-  }
-  return 0;
 }
 
 /////////////////////////////////////////
