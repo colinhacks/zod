@@ -1651,7 +1651,7 @@ z.object({ id: z.string() }).array().unique();
 // All elements must be unique based on the id property
 z.object({ id: z.string(), name: z.string() })
   .array()
-  .unique((elt) => elt.id);
+  .unique({ identifier: (elt) => elt.id });
 ```
 
 ## Tuples
