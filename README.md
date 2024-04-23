@@ -37,6 +37,8 @@
 <br/>
 <br/>
 
+> Zod 3.23 is out! View the [release notes](https://github.com/colinhacks/zod/releases/tag/v3.23.0).
+
 > These docs have been translated into [Chinese](./README_ZH.md).
 
 ## Table of contents
