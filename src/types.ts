@@ -2151,6 +2151,13 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   exactLength: { value: number; message?: string } | null;
   minLength: { value: number; message?: string } | null;
   maxLength: { value: number; message?: string } | null;
+  uniqueness: {
+    identifier?: <U extends T["_output"]>(item: U) => unknown;
+    message?:
+      | string
+      | (<U extends T["_output"]>(duplicateItems: U[]) => string);
+    showDuplicates?: boolean;
+  } | null;
 }
 
 export type ArrayCardinality = "many" | "atleastone";
@@ -2230,6 +2237,24 @@ export class ZodArray<
       }
     }
 
+    if (def.uniqueness !== null) {
+      const { identifier, message, showDuplicates } = def.uniqueness;
+      const duplicates = (
+        identifier
+          ? (ctx.data as this["_output"][]).map(identifier)
+          : (ctx.data as this["_output"][])
+      ).filter((item, idx, arr) => arr.indexOf(item) !== idx);
+      if (duplicates.length) {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.uniqueness,
+          duplicateElements: showDuplicates ? duplicates : undefined,
+          message:
+            typeof message === "function" ? message(duplicates) : message,
+        });
+        status.dirty();
+      }
+    }
+
     if (ctx.common.async) {
       return Promise.all(
         ([...ctx.data] as any[]).map((item, i) => {
@@ -2280,6 +2305,18 @@ export class ZodArray<
     return this.min(1, message) as any;
   }
 
+  unique(params: ZodArrayDef<T>["uniqueness"] = {}): this {
+    const message =
+      typeof params?.message === "function"
+        ? params.message
+        : errorUtil.toString(params?.message);
+
+    return new ZodArray({
+      ...this._def,
+      uniqueness: { ...params, message },
+    }) as any;
+  }
+
   static create = <T extends ZodTypeAny>(
     schema: T,
     params?: RawCreateParams
@@ -2289,6 +2326,7 @@ export class ZodArray<
       minLength: null,
       maxLength: null,
       exactLength: null,
+      uniqueness: null,
       typeName: ZodFirstPartyTypeKind.ZodArray,
       ...processCreateParams(params),
     });
