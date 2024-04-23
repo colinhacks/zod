@@ -1,23 +1,14 @@
-export type MergeShapes<U, V> = {
-  [k in Exclude<keyof U, keyof V>]: U[k];
-} & V;
-
-// type optionalKeys<T extends object> = {
-//   [k in keyof T]: undefined extends T[k] ? k : never;
-// }[keyof T];
-
-type requiredKeys<T extends object> = {
+export type optionalKeys<T extends object> = {
+  [k in keyof T]: undefined extends T[k] ? k : never;
+}[keyof T];
+export type requiredKeys<T extends object> = {
   [k in keyof T]: undefined extends T[k] ? never : k;
 }[keyof T];
-
-// type alkjsdf = addQuestionMarks<{ a: any }>;
-
-export type addQuestionMarks<
-  T extends object,
-  R extends keyof T = requiredKeys<T>
-  // O extends keyof T = optionalKeys<T>
-> = Pick<Required<T>, R> & Partial<T>;
-//  = { [k in O]?: T[k] } & { [k in R]: T[k] };
+export type addQuestionMarks<T extends object, _O = any> = {
+  [K in requiredKeys<T>]: T[K];
+} & {
+  [K in optionalKeys<T>]?: T[K];
+} & { [k in keyof T]?: unknown };
 
 export type identity<T> = T;
 export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
@@ -37,4 +28,10 @@ export const mergeShapes = <U, T>(first: U, second: T): T & U => {
   };
 };
 
-export type extendShape<A, B> = flatten<Omit<A, keyof B> & B>;
+export type extendShape<A extends object, B extends object> = {
+  [K in keyof A | keyof B]: K extends keyof B
+    ? B[K]
+    : K extends keyof A
+    ? A[K]
+    : never;
+};

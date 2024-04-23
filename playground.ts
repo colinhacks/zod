@@ -1,3 +1,3 @@
-import { z } from "./src";
+import { z } from "./src/index";
 
-z;
+z.string().parse("asdf");

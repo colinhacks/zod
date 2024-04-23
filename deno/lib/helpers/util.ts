@@ -1,6 +1,6 @@
-import { objectUtil } from "./index.ts";
+// import { objectUtil } from ".";
 
-type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
+export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
   V
 >() => V extends U ? 1 : 2
   ? true
@@ -17,6 +17,7 @@ export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
 export type MakePartial<T, K extends keyof T> = Omit<T, K> &
   Partial<Pick<T, K>>;
+export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 
 export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
   items: U
@@ -28,13 +29,6 @@ export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
   return obj as any;
 };
 
-<<<<<<< HEAD
-  export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
-  export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
-  export type MakePartial<T, K extends keyof T> = Omit<T, K> &
-    Partial<Pick<T, K>>;
-  export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
-=======
 export const getValidEnumValues = (obj: any) => {
   const validKeys = objectKeys(obj).filter(
     (k: any) => typeof obj[obj[k]] !== "number"
@@ -45,7 +39,6 @@ export const getValidEnumValues = (obj: any) => {
   }
   return objectValues(filtered);
 };
->>>>>>> 19fbb9a (fix: make util tree shakeable)
 
 export const objectValues = (obj: any) => {
   return objectKeys(obj).map(function (e) {
@@ -73,8 +66,8 @@ export const find = <T>(arr: T[], checker: (arg: T) => any): T | undefined => {
   return undefined;
 };
 
-export type identity<T> = objectUtil.identity<T>;
-export type flatten<T> = objectUtil.flatten<T>;
+// export type identity<T> = objectUtil.identity<T>;
+// export type flatten<T> = objectUtil.flatten<T>;
 
 export type noUndefined<T> = T extends undefined ? never : T;
 
@@ -100,50 +93,7 @@ export const jsonStringifyReplacer = (_: string, value: any): any => {
   return value;
 };
 
-<<<<<<< HEAD
-  type optionalKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? k : never;
-  }[keyof T];
-  type requiredKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? never : k;
-  }[keyof T];
-  export type addQuestionMarks<T extends object, _O = any> = {
-    [K in requiredKeys<T>]: T[K];
-  } & {
-    [K in optionalKeys<T>]?: T[K];
-  } & { [k in keyof T]?: unknown };
-
-  export type identity<T> = T;
-  export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
-
-  export type noNeverKeys<T> = {
-    [k in keyof T]: [T[k]] extends [never] ? never : k;
-  }[keyof T];
-
-  export type noNever<T> = identity<{
-    [k in noNeverKeys<T>]: k extends keyof T ? T[k] : never;
-  }>;
-
-  export const mergeShapes = <U, T>(first: U, second: T): T & U => {
-    return {
-      ...first,
-      ...second, // second overwrites first
-    };
-  };
-
-  export type extendShape<A extends object, B extends object> = {
-    [K in keyof A | keyof B]: K extends keyof B
-      ? B[K]
-      : K extends keyof A
-      ? A[K]
-      : never;
-  };
-}
-
-export const ZodParsedType = util.arrayToEnum([
-=======
 export const ZodParsedType = arrayToEnum([
->>>>>>> 19fbb9a (fix: make util tree shakeable)
   "string",
   "nan",
   "number",

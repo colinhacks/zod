@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import { ZodParsedType } from "../helpers/util";
 import * as z from "../index";
 import { ZodError, ZodIssueCode } from "../ZodError";
 
@@ -9,8 +8,8 @@ test("error creation", () => {
   const err1 = ZodError.create([]);
   err1.addIssue({
     code: ZodIssueCode.invalid_type,
-    expected: ZodParsedType.object,
-    received: ZodParsedType.string,
+    expected: z.ZodParsedType.object,
+    received: z.ZodParsedType.string,
     path: [],
     message: "",
     fatal: true,

@@ -2,7 +2,7 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import { util } from "../helpers/util.ts";
+import { util } from "../helpers/index.ts";
 import * as z from "../index.ts";
 
 test("preprocess", () => {

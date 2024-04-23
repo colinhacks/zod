@@ -31,6 +31,8 @@ import {
   ZodIssueCode,
 } from "./ZodError.ts";
 
+export { ZodParsedType } from "./helpers/util.ts";
+
 ///////////////////////////////////////
 ///////////////////////////////////////
 //////////                   //////////
@@ -3007,7 +3009,7 @@ export class ZodObject<
     ZodTypeAny,
     objectOutputType<T, ZodTypeAny, "strip">,
     objectInputType<T, ZodTypeAny, "strip">
-  > => {
+  > {
     return new ZodObject({
       shape: () => shape,
       unknownKeys: "strip",
@@ -5187,7 +5189,7 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
       typeName: ZodFirstPartyTypeKind.ZodReadonly,
       ...processCreateParams(params),
     }) as any;
-  };
+  }
 
   unwrap() {
     return this._def.innerType;

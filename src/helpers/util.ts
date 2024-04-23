@@ -1,6 +1,6 @@
-import { objectUtil } from ".";
+// import { objectUtil } from ".";
 
-type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
+export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
   V
 >() => V extends U ? 1 : 2
   ? true
@@ -66,8 +66,8 @@ export const find = <T>(arr: T[], checker: (arg: T) => any): T | undefined => {
   return undefined;
 };
 
-export type identity<T> = objectUtil.identity<T>;
-export type flatten<T> = objectUtil.flatten<T>;
+// export type identity<T> = objectUtil.identity<T>;
+// export type flatten<T> = objectUtil.flatten<T>;
 
 export type noUndefined<T> = T extends undefined ? never : T;
 
