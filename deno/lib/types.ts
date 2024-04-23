@@ -3383,11 +3383,6 @@ export class ZodIntersection<
 ////////////////////////////////////////
 export type ZodTupleItems = [ZodTypeAny, ...ZodTypeAny[]];
 export type AssertArray<T> = T extends any[] ? T : never;
-<<<<<<< HEAD
-export type OutputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<{
-  [k in keyof T]: T[k] extends ZodType<any, any, any> ? T[k]["_output"] : never;
-}>;
-=======
 export type IHandleOptionalParams<T extends any[], U extends any[] = []> = {
   [P in keyof T]: T[P] | undefined;
 } extends T
@@ -3398,11 +3393,12 @@ export type IHandleOptionalParams<T extends any[], U extends any[] = []> = {
 export type OutputTypeOfTuple<T extends ZodTupleItems | []> =
   IHandleOptionalParams<
     AssertArray<{
-      [k in keyof T]: T[k] extends ZodType<any, any> ? T[k]["_output"] : never;
+      [k in keyof T]: T[k] extends ZodType<any, any, any>
+        ? T[k]["_output"]
+        : never;
     }>
   >;
 
->>>>>>> f35d858 (fix: adds type assertions for optional elements in tuple)
 export type OutputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
   Rest extends ZodTypeAny | null = null
