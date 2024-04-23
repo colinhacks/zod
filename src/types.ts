@@ -546,7 +546,7 @@ export type ZodStringCheck =
   | { kind: "length"; value: number; message?: string }
   | { kind: "email"; message?: string }
   | { kind: "url"; message?: string }
-  | { kind: "jwt"; algorithm?: JwtAlgorithm; message?: string }
+  | { kind: "jwt"; alg: JwtAlgorithm | null; message?: string }
   | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
   | { kind: "nanoid"; message?: string }
@@ -1038,8 +1038,13 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   url(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
-  jwt(options?: string | { algorithm?: JwtAlgorithm; message?: string }) {
-    return this._addCheck({ kind: "jwt", ...errorUtil.errToObj(options) });
+
+  jwt(options?: string | { alg?: JwtAlgorithm; message?: string }) {
+    return this._addCheck({
+      kind: "jwt",
+      alg: typeof options === "object" ? options.alg ?? null : null,
+      ...errorUtil.errToObj(options),
+    });
   }
   emoji(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "emoji", ...errorUtil.errToObj(message) });

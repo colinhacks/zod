@@ -860,7 +860,8 @@ z.string().length(5);
 z.string().email();
 z.string().url();
 z.string().emoji();
-z.string().jwt(); // validates format, NOT signature. Accepts algorithm as optional options
+z.string().jwt(); // validates format, NOT signature
+z.string().jwt({ alg: "HS256" }); // specify algorithm
 z.string().uuid();
 z.string().nanoid();
 z.string().cuid();
