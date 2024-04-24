@@ -2,7 +2,6 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import { ZodParsedType } from "../helpers/util.ts";
 import * as z from "../index.ts";
 import { ZodError, ZodIssueCode } from "../ZodError.ts";
 
@@ -10,8 +9,8 @@ test("error creation", () => {
   const err1 = ZodError.create([]);
   err1.addIssue({
     code: ZodIssueCode.invalid_type,
-    expected: ZodParsedType.object,
-    received: ZodParsedType.string,
+    expected: z.ZodParsedType.object,
+    received: z.ZodParsedType.string,
     path: [],
     message: "",
     fatal: true,
