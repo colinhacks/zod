@@ -2,7 +2,7 @@
 import { test } from "@jest/globals";
 
 import { ZodFirstPartySchemaTypes, ZodFirstPartyTypeKind } from "..";
-import { util } from "../helpers/util";
+import { util } from "../helpers";
 
 test("Identify missing [ZodFirstPartySchemaTypes]", () => {
   type ZodFirstPartySchemaForType<T extends ZodFirstPartyTypeKind> =

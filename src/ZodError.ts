@@ -1,6 +1,7 @@
 import type { TypeOf, ZodType } from ".";
+import { util } from "./helpers";
 import { Primitive } from "./helpers/typeAliases";
-import { util, ZodParsedType } from "./helpers/util";
+import { ZodParsedType } from "./helpers/util";
 
 type allKeys<T> = T extends any ? keyof T : never;
 
@@ -276,10 +277,10 @@ export class ZodError<T = any> extends Error {
     return fieldErrors;
   }
 
-  static create = (issues: ZodIssue[]) => {
+  static create(issues: ZodIssue[]) {
     const error = new ZodError(issues);
     return error;
-  };
+  }
 
   static assert(value: unknown): asserts value is ZodError {
     if (!(value instanceof ZodError)) {

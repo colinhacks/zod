@@ -1,11 +1,12 @@
-import { util, ZodParsedType } from "../helpers/util.ts";
+import { util } from "../helpers/index.ts";
+
 import { ZodErrorMap, ZodIssueCode } from "../ZodError.ts";
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {
   let message: string;
   switch (issue.code) {
     case ZodIssueCode.invalid_type:
-      if (issue.received === ZodParsedType.undefined) {
+      if (issue.received === util.ZodParsedType.undefined) {
         message = "Required";
       } else {
         message = `Expected ${issue.expected}, received ${issue.received}`;
