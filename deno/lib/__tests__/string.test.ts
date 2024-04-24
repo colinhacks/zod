@@ -283,30 +283,6 @@ test("emoji validations", () => {
   expect(() => emoji.parse("stuff😀")).toThrow();
 });
 
-test("uuid", () => {
-  const uuid = z.string().uuid("custom error");
-  uuid.parse("9491d710-3185-4e06-bea0-6a2f275345e0");
-  uuid.parse("d89e7b01-7598-ed11-9d7a-0022489382fd"); // new sequential id
-  uuid.parse("00000000-0000-0000-0000-000000000000");
-  uuid.parse("b3ce60f8-e8b9-40f5-1150-172ede56ff74"); // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
-  uuid.parse("92e76bf9-28b3-4730-cd7f-cb6bc51f8c09"); // Variant 2 - RFC 4122: Reserved, Microsoft Corporation backward compatibility
-  const result = uuid.safeParse("9491d710-3185-4e06-bea0-6a2f275345e0X");
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("custom error");
-  }
-});
-
-test("bad uuid", () => {
-  const uuid = z.string().uuid("custom error");
-  uuid.parse("9491d710-3185-4e06-bea0-6a2f275345e0");
-  const result = uuid.safeParse("invalid uuid");
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("custom error");
-  }
-});
-
 test("nanoid", () => {
   const nanoid = z.string().nanoid("custom error");
   nanoid.parse("lfNZluvAxMkf7Q8C5H-QS");
@@ -329,6 +305,70 @@ test("bad nanoid", () => {
     expect(result.error.issues[0].message).toEqual("custom error");
   }
 });
+
+[
+  "9491d710-3185-1e06-bea0-6a2f275345e0",
+  "9491d710-3185-2e06-bea0-6a2f275345e0",
+  "9491d710-3185-3e06-bea0-6a2f275345e0",
+  "9491d710-3185-4e06-bea0-6a2f275345e0",
+  "9491d710-3185-5e06-bea0-6a2f275345e0",
+  "9491d710-3185-5e06-aea0-6a2f275345e0",
+  "9491d710-3185-5e06-8ea0-6a2f275345e0",
+  "9491d710-3185-5e06-9ea0-6a2f275345e0",
+  "00000000-0000-0000-0000-000000000000",
+].forEach((goodUuid) =>
+  test(`uuid: ${goodUuid}`, () => {
+    const uuid = z.string().uuid("custom error");
+    const result = uuid.safeParse(goodUuid);
+    expect(result.success).toEqual(true);
+  })
+);
+
+[
+  "9491d710-3185-0e06-bea0-6a2f275345e0",
+  "9491d710-3185-5e06-0ea0-6a2f275345e0",
+  "d89e7b01-7598-ed11-9d7a-0022489382fd", // new sequential id
+  "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
+  "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 4122: Reserved, Microsoft Corporation backward compatibility
+  "invalid uuid",
+  "9491d710-3185-4e06-bea0-6a2f275345e0X",
+  "ffffffff-ffff-ffff-ffff-ffffffffffff",
+].forEach((badUuid) =>
+  test(`bad uuid: ${badUuid}`, () => {
+    const uuid = z.string().uuid("custom error");
+    const result = uuid.safeParse(badUuid);
+    expect(result.success).toEqual(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toEqual("custom error");
+    }
+  })
+);
+
+[
+  "9491d710-3185-4e06-bea0-6a2f275345e0",
+  "d89e7b01-7598-ed11-9d7a-0022489382fd", // new sequential id
+  "b3ce60f8-e8b9-40f5-1150-172ede56ff74", // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
+  "92e76bf9-28b3-4730-cd7f-cb6bc51f8c09", // Variant 2 - RFC 4122: Reserved, Microsoft Corporation backward compatibility
+  "00000000-0000-0000-0000-000000000000",
+  "ffffffff-ffff-ffff-ffff-ffffffffffff",
+].forEach((goodGuid) =>
+  test(`guid: ${goodGuid}`, () => {
+    const guid = z.string().guid("custom error");
+    const result = guid.safeParse(goodGuid);
+    expect(result.success).toEqual(true);
+  })
+);
+
+["9491d710-3185-4e06-bea0-6a2f275345e0X"].forEach((badGuid) =>
+  test(`bad guid: ${badGuid}`, () => {
+    const guid = z.string().guid("custom error");
+    const result = guid.safeParse(badGuid);
+    expect(result.success).toEqual(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toEqual("custom error");
+    }
+  })
+);
 
 test("cuid", () => {
   const cuid = z.string().cuid();
