@@ -17,6 +17,16 @@ test("infer enum", () => {
   util.assertEqual<MyEnum, "Red" | "Green" | "Blue">(true);
 });
 
+test("typed enum input", () => {
+  type MyEnumInputs = "Red" | "Green";
+  const MyEnum = z.enum<MyEnumInputs>(["Red", "Green"]);
+  type MyEnum = z.infer<typeof MyEnum>;
+  util.assertEqual<MyEnum, "Red" | "Green">(true);
+
+  // @ts-expect-error TS2345
+  z.enum<MyEnumInputs>(["Red", "Green", "Blue"]);
+});
+
 test("get options", () => {
   expect(z.enum(["tuna", "trout"]).options).toEqual(["tuna", "trout"]);
 });

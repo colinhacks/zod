@@ -4163,11 +4163,11 @@ export type FilterEnum<Values, ToExclude> = Values extends []
 
 export type typecast<A, T> = A extends T ? A : never;
 
-function createZodEnum<U extends string, T extends Readonly<[U, ...U[]]>>(
-  values: T,
-  params?: RawCreateParams
-): ZodEnum<Writeable<T>>;
-function createZodEnum<U extends string, T extends [U, ...U[]]>(
+function createZodEnum<
+  U extends string,
+  T extends Readonly<[U, ...U[]]> = Readonly<[U, ...U[]]>
+>(values: T, params?: RawCreateParams): ZodEnum<Writeable<T>>;
+function createZodEnum<U extends string, T extends [U, ...U[]] = [U, ...U[]]>(
   values: T,
   params?: RawCreateParams
 ): ZodEnum<T>;
