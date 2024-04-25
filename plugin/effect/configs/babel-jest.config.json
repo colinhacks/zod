@@ -1,0 +1,10 @@
+{
+  "rootDir": "..",
+  "testRegex": "src/.*\\.test\\.ts$",
+  "transform": {
+    "^.+\\.tsx?$": ["babel-jest", { "configFile": "./configs/babel.config.js" }]
+  },
+  "modulePathIgnorePatterns": ["language-server", "__vitest__"],
+  "moduleFileExtensions": ["ts", "tsx", "js", "jsx", "json", "node"],
+  "coverageReporters": ["json-summary", "text", "lcov"]
+}
