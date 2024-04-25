@@ -3,13 +3,39 @@
 	"version": "0.0.1",
 	"type": "module",
 	"author": "Colin McDonnell <colin@colinhacks.com>",
+	"description": "TypeScript-first schema declaration and validation library with static type inference",
+	"files": [
+		"/lib"
+	],
+	"keywords": [
+		"typescript",
+		"schema",
+		"validation",
+		"type",
+		"inference"
+	],
+	"license": "MIT",
+	"main": "./lib/index.js",
+	"module": "./lib/index.mjs",
+	"sideEffects": true,
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/colinhacks/zod.git"
 	},
-	"main": "./lib/index.js",
-	"module": "./lib/index.mjs",
+	"scripts": {
+		"clean": "rm -rf lib/*",
+		"build": "yarn run clean && npm run build:cjs && npm run build:esm",
+		"build:esm": "rollup --config ./configs/rollup.config.js",
+		"build:cjs": "tsc -p ./configs/tsconfig.cjs.json",
+		"build:types": "tsc -p ./configs/tsconfig.types.json",
+		"build:test": "tsc -p ./configs/tsconfig.test.json",
+		"test:watch": "yarn test:ts-jest --watch",
+		"test": "yarn tsx tests/*.ts",
+		"prepublishOnly": "npm run test && npm run build"
+	},
 	"devDependencies": {
+		"@rollup/plugin-commonjs": "^25.0.7",
+		"@rollup/plugin-node-resolve": "^15.2.3",
 		"@rollup/plugin-typescript": "^8.2.0",
 		"@types/node": "14",
 		"effect": "^3.0.0",
@@ -37,27 +63,5 @@
 	},
 	"bugs": {
 		"url": "https://github.com/colinhacks/zod/issues"
-	},
-	"description": "TypeScript-first schema declaration and validation library with static type inference",
-	"files": ["/lib", "/index.d.ts"],
-	"funding": "https://github.com/sponsors/colinhacks",
-	"homepage": "https://zod.dev",
-	"keywords": ["typescript", "schema", "validation", "type", "inference"],
-	"license": "MIT",
-	"lint-staged": {
-		"src/*.ts": ["eslint --cache --fix", "prettier --ignore-unknown --write"],
-		"*.md": ["prettier --ignore-unknown --write"]
-	},
-	"scripts": {
-		"clean": "rm -rf lib/*",
-		"build": "yarn run clean && npm run build:cjs && npm run build:esm",
-		"build:esm": "rollup --config ./configs/rollup.config.js",
-		"build:cjs": "tsc -p ./configs/tsconfig.cjs.json",
-		"build:types": "tsc -p ./configs/tsconfig.types.json",
-		"build:test": "tsc -p ./configs/tsconfig.test.json",
-		"test:watch": "yarn test:ts-jest --watch",
-		"test": "yarn tsx tests/*.ts",
-		"prepublishOnly": "npm run test && npm run build"
-	},
-	"sideEffects": true
+	}
 }
