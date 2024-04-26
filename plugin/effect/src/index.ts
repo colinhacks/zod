@@ -19,9 +19,9 @@ function zodEffectSync(this: z.ZodType, data: unknown) {
   });
 }
 
-let executed = false;
-if (!executed) {
-  executed = true;
+const sym = Symbol.for("zod_effect_executed");
+if (!(globalThis as { [k: symbol]: unknown })[sym]) {
+  (globalThis as { [k: symbol]: unknown })[sym] = true;
   z.ZodType.prototype.effect = zodEffect;
   z.ZodType.prototype.effectSync = zodEffectSync;
 }
