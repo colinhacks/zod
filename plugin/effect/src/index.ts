@@ -5,7 +5,7 @@ function zodEffect(this: z.ZodType, data: unknown) {
   return Effect.tryPromise({
     try: async () => this.parseAsync(data),
     catch(error) {
-      return error as z.ZodError; // only kinda a lie...
+      return error as z.ZodError;
     },
   });
 }
@@ -14,7 +14,7 @@ function zodEffectSync(this: z.ZodType, data: unknown) {
   return Effect.try({
     try: () => this.parse(data),
     catch(error) {
-      return error as z.ZodError; // only kinda a lie...
+      return error as z.ZodError;
     },
   });
 }
