@@ -30,7 +30,7 @@
 		"@rollup/plugin-commonjs": "^25.0.7",
 		"@rollup/plugin-node-resolve": "^15.2.3",
 		"@rollup/plugin-typescript": "^8.2.0",
-		"@types/node": "14",
+		"@types/node": "^20.0.0",
 		"effect": "^3.0.0",
 		"jest": "^29.3.1",
 		"lint-staged": "^12.3.7",

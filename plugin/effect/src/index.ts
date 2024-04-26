@@ -1,18 +1,18 @@
 import { Effect } from "effect";
 import * as z from "zod";
 
-function zodEffect(this: z.ZodType, data: unknown) {
+function zodEffect(this: z.ZodType, data: unknown, params?: any) {
   return Effect.tryPromise({
-    try: async () => this.parseAsync(data),
+    try: async () => this.parseAsync(data, params),
     catch(error) {
       return error as z.ZodError;
     },
   });
 }
 
-function zodEffectSync(this: z.ZodType, data: unknown) {
+function zodEffectSync(this: z.ZodType, data: unknown, params?: any) {
   return Effect.try({
-    try: () => this.parse(data),
+    try: () => this.parse(data, params),
     catch(error) {
       return error as z.ZodError;
     },
@@ -30,10 +30,10 @@ if (!(globalThis as { [k: symbol]: unknown })[sym]) {
 declare module "zod" {
   interface ZodType {
     effect(
-      data: unknown
+      ...args: Parameters<z.ZodType["parseAsync"]>
     ): Effect.Effect<this["_output"], z.ZodError<this["_output"]>, never>;
     effectSync(
-      data: unknown
+      ...args: Parameters<z.ZodType["parse"]>
     ): Effect.Effect<this["_output"], z.ZodError<this["_output"]>, never>;
   }
 
