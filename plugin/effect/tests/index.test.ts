@@ -15,6 +15,9 @@ async function run() {
   await Effect.runPromise(asyncSchema.effect("hello")).then((result) => {
     assert.strict.equal(result, "hello");
   });
+
+  const err = new z.ZodError([]);
+  assert.strict.equal(err._tag, "ZodError");
 }
 
 run();

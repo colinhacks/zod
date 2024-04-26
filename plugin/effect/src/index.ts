@@ -24,6 +24,7 @@ if (!(globalThis as { [k: symbol]: unknown })[sym]) {
   (globalThis as { [k: symbol]: unknown })[sym] = true;
   z.ZodType.prototype.effect = zodEffect;
   z.ZodType.prototype.effectSync = zodEffectSync;
+  z.ZodError.prototype._tag = "ZodError";
 }
 
 declare module "zod" {
@@ -34,5 +35,9 @@ declare module "zod" {
     effectSync(
       data: unknown
     ): Effect.Effect<this["_output"], z.ZodError<this["_output"]>, never>;
+  }
+
+  interface ZodError {
+    _tag: "ZodError";
   }
 }
