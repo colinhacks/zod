@@ -3,17 +3,10 @@
 	"version": "0.0.1",
 	"type": "module",
 	"author": "Colin McDonnell <colin@colinhacks.com>",
+	"types": "./lib/index.d.ts",
 	"description": "TypeScript-first schema declaration and validation library with static type inference",
-	"files": [
-		"/lib"
-	],
-	"keywords": [
-		"typescript",
-		"schema",
-		"validation",
-		"type",
-		"inference"
-	],
+	"files": ["/lib"],
+	"keywords": ["typescript", "schema", "validation", "type", "inference"],
 	"license": "MIT",
 	"main": "./lib/index.js",
 	"module": "./lib/index.mjs",
