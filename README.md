@@ -1957,7 +1957,50 @@ Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
 
 ### Cyclical objects
 
-Despite supporting recursive schemas, passing cyclical data into Zod will cause an infinite loop.
+Despite supporting recursive schemas, passing cyclical data into Zod will cause an infinite loop in some cases.
+
+You can protect against cyclical objects starting an infinite loop (at a performance cost) with the following approach
+(using the above `jsonSchema` as an example):
+
+```ts
+function isCircular(v: unknown, visited?: Set<unknown>): boolean {
+  if (v === null || typeof v !== 'object') {
+    return false;
+  }
+
+  if (visited?.has(v)) {
+    return true;
+  }
+
+  const actualVisited = visited ?? new Set<unknown>();
+  actualVisited.add(v);
+
+  if (Array.isArray(v)) {
+    return v.some(av => isCircular(av, actualVisited));
+  }
+
+  return Object.values(v).some(ov => isCircular(ov, actualVisited));
+}
+
+const NotCircular = z.unknown().superRefine((val, ctx) => {
+  if (isCircular(val)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'values cannot be circular data structures',
+      fatal: true
+    });
+
+    return z.NEVER;
+  }
+})
+
+const acircularJSONSchema = NotCircular.pipe(jsonSchema);
+
+acircularJSONSchema.parse(data);
+```
+
+When `NotCircular` fails, `pipe` will not pass the value into the next schema for evaluation, preventing the infinite
+loop.
 
 ## Promises
 
