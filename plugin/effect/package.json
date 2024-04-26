@@ -1,6 +1,6 @@
 {
 	"name": "@zod-plugin/effect",
-	"version": "0.0.1",
+	"version": "0.0.3",
 	"type": "module",
 	"author": "Colin McDonnell <colin@colinhacks.com>",
 	"types": "./lib/index.d.ts",
@@ -48,7 +48,7 @@
 	},
 	"exports": {
 		".": {
-			"types": "./index.d.ts",
+			"types": "./lib/index.d.ts",
 			"require": "./lib/index.js",
 			"import": "./lib/index.mjs"
 		},
