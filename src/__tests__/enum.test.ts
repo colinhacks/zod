@@ -57,3 +57,25 @@ test("extract/exclude", () => {
   util.assertEqual<typeof EmptyFoodEnum, z.ZodEnum<[]>>(true);
   util.assertEqual<z.infer<typeof EmptyFoodEnum>, never>(true);
 });
+
+test("extract/exclude with single value", () => {
+  const _enum = z.enum(["Red", "Green", "Blue"]);
+
+  const a1 = _enum.exclude("Red");
+  util.assertEqual<typeof a1, z.ZodEnum<["Green", "Blue"]>>(true);
+  const a2 = _enum.exclude(["Red"]);
+  util.assertEqual<typeof a2, z.ZodEnum<["Green", "Blue"]>>(true);
+  const a3 = _enum.extract("Red");
+  util.assertEqual<typeof a3, z.ZodEnum<["Red"]>>(true);
+  const a4 = _enum.extract(["Red"]);
+  util.assertEqual<typeof a4, z.ZodEnum<["Red"]>>(true);
+
+  expect(a1.parse("Green")).toEqual("Green");
+  expect(() => a1.parse("Red")).toThrow();
+  expect(a2.parse("Green")).toEqual("Green");
+  expect(() => a2.parse("Red")).toThrow();
+  expect(a3.parse("Red")).toEqual("Red");
+  expect(() => a3.parse("Green")).toThrow();
+  expect(a4.parse("Red")).toEqual("Red");
+  expect(() => a4.parse("Green")).toThrow();
+});
