@@ -76,11 +76,11 @@ const schema = z.object({
   name: z.string(),
 });
 
-const effect = schema.effect({ name: "Michael Arnauldi" });
+const effect = schema.effect({ name: "Michael Arnaldi" });
 //=>  Effect<{ name: string }, ZodError, never>;
 
 await Effect.runPromise(effect);
-// => { name: "Michael Arnauldi" }
+// => { name: "Michael Arnaldi" }
 ```
 
 ### `.effectSync(data): Effect<T, ZodError, never>`
@@ -97,9 +97,9 @@ const schema = z.object({
   name: z.string(),
 });
 
-const effect = schema.effectSync({ name: "Michael Arnauldi" });
+const effect = schema.effectSync({ name: "Michael Arnaldi" });
 //=>  Effect<{ name: string }, ZodError, never>;
 
 await Effect.runSync(effect);
-// => { name: "Michael Arnauldi" }
+// => { name: "Michael Arnaldi" }
 ```
