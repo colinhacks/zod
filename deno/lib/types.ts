@@ -2418,7 +2418,6 @@ export class ZodArray<
     }) as any;
   }
 
-  
   static create<T extends ZodTypeAny>(
     schema: T,
     params?: RawCreateParams
@@ -4259,13 +4258,8 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
 
   static create<T extends Primitive>(
     value: T,
-<<<<<<< HEAD
-    params?: RawCreateParams
-  ): ZodLiteral<T> {
-=======
     params?: RawCreateParams & Exclude<errorUtil.ErrMessage, string>
-  ): ZodLiteral<T> => {
->>>>>>> 41ce771 (feat: Allow passing custom message to literal)
+  ): ZodLiteral<T> {
     return new ZodLiteral({
       value: value,
       typeName: ZodFirstPartyTypeKind.ZodLiteral,
