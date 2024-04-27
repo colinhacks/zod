@@ -5,6 +5,9 @@ const test = Deno.test;
 import * as z from "../index.ts";
 
 const literalTuna = z.literal("tuna");
+const literalTunaCustomMessage = z.literal("tuna", {
+  message: "That's not a tuna",
+});
 const literalFortyTwo = z.literal(42);
 const literalTrue = z.literal(true);
 
@@ -33,5 +36,23 @@ test("invalid_literal should have `received` field with data", () => {
     if (issue.code === "invalid_literal") {
       expect(issue.received).toBe(data);
     }
+  }
+});
+
+test("invalid_literal should return default message", () => {
+  const data = "shark";
+  const result = literalTuna.safeParse(data);
+  if (!result.success) {
+    const issue = result.error.issues[0];
+    expect(issue.message).toEqual(`Invalid literal value, expected \"tuna\"`);
+  }
+});
+
+test("invalid_literal should return custom message", () => {
+  const data = "shark";
+  const result = literalTunaCustomMessage.safeParse(data);
+  if (!result.success) {
+    const issue = result.error.issues[0];
+    expect(issue.message).toEqual(`That's not a tuna`);
   }
 });
