@@ -837,7 +837,7 @@ ipv6.parse("192.168.1.1"); // fail
 
 ### Logical Boolean Parsing
 
-The `z.string().boolean()` method transform a string value representing a boolean logically.
+The `z.string().boolean()` method transforms a string value representing a boolean logically.
 
 It accepts `"1"`, `"t"`, `"T"`, `"TRUE"`, `"true"`, `"True"` for `true`, `"0"`, `"f"`, `"F"`, `"FALSE"`, `"false"`, `"False"` for `false`.
 
