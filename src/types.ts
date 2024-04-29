@@ -4538,6 +4538,27 @@ export interface ZodFileDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodFile;
 }
 
+interface _ZodBlob {
+  readonly size: number;
+  readonly type: string;
+  arrayBuffer(): Promise<ArrayBuffer>;
+  slice(start?: number, end?: number, contentType?: string): Blob;
+  stream(): ReadableStream;
+  text(): Promise<string>;
+}
+
+interface _ZodFile extends _ZodBlob {
+  readonly lastModified: number;
+  readonly name: string;
+}
+
+type File = typeof globalThis extends {
+  File: {
+    prototype: infer X;
+  };
+}
+  ? X
+  : _ZodFile;
 export class ZodFile extends ZodType<File, ZodFileDef> {
   _parse(input: ParseInput): ParseReturnType<File> {
     const parsedType = this._getType(input);
@@ -4556,7 +4577,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
       return INVALID;
     }
 
-    const file = instanceOfType(File).parse(input.data);
+    const file: File = input.data;
 
     const status = new ParseStatus();
     let ctx: undefined | ParseContext = undefined;
@@ -4732,6 +4753,9 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
   }
 
   static create = (params?: RawCreateParams): ZodFile => {
+    if (typeof File === "undefined") {
+      throw new Error("File is not supported in this environment");
+    }
     return new ZodFile({
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodFile,

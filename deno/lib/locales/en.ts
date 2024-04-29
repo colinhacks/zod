@@ -1,5 +1,4 @@
 import { util } from "../helpers/index.ts";
-
 import { ZodErrorMap, ZodIssueCode } from "../ZodError.ts";
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {
@@ -145,6 +144,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       message = issue.duplicateElements?.length
         ? `Element(s): '${issue.duplicateElements}' not unique`
         : "Values must be unique";
+      break;
+    case ZodIssueCode.invalid_file:
+      message = "Invalid file";
       break;
     default:
       message = _ctx.defaultError;

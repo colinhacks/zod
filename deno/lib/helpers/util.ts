@@ -114,6 +114,7 @@ export const ZodParsedType = arrayToEnum([
   "never",
   "map",
   "set",
+  "file",
 ]);
 
 export type ZodParsedType = keyof typeof ZodParsedType;
@@ -166,6 +167,9 @@ export const getParsedType = (data: any): ZodParsedType => {
       }
       if (typeof Date !== "undefined" && data instanceof Date) {
         return ZodParsedType.date;
+      }
+      if (typeof File !== "undefined" && data instanceof File) {
+        return ZodParsedType.file;
       }
       return ZodParsedType.object;
 
