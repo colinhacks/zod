@@ -870,7 +870,7 @@ b.parse(undefined); // false
 b.parse(null); // false
 ```
 
-Also you can use `default()` to handle only `undefined` value.
+You can also use `default()` to fallback to a value on the absence of an input.
 
 ```ts
 const b = z.string().boolean().default("0");
