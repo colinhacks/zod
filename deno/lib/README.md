@@ -75,6 +75,7 @@
   - [Dates](#dates)
   - [Times](#times)
   - [IP addresses](#ip-addresses)
+  - [JSON](#json)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -782,6 +783,44 @@ ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
 const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
 ```
+
+### JSON
+
+The `z.string().json(...)` method parses strings as JSON, then [pipes](#pipe) the result to another specified schema.
+
+```ts
+const Env = z.object({
+  API_CONFIG: z.string().json(
+    z.object({
+      host: z.string(),
+      port: z.number().min(1000).max(2000),
+    })
+  ),
+  SOME_OTHER_VALUE: z.string(),
+});
+
+const env = Env.parse({
+  API_CONFIG: '{ "host": "example.com", "port": 1234 }',
+  SOME_OTHER_VALUE: "abc123",
+});
+
+env.API_CONFIG.host; // returns parsed value
+```
+
+If invalid JSON is encountered, the syntax error will be wrapped and put into a parse error:
+
+```ts
+const env = Env.safeParse({
+  API_CONFIG: "not valid json!",
+  SOME_OTHER_VALUE: "abc123",
+});
+
+if (!env.success) {
+  console.log(env.error); // ... Unexpected token n in JSON at position 0 ...
+}
+```
+
+This is recommended over using `z.string().transform(s => JSON.parse(s))`, since that will not catch parse errors, even when using `.safeParse`.
 
 ## Numbers
 

@@ -581,7 +581,8 @@ export type ZodStringCheck =
     }
   | { kind: "duration"; message?: string }
   | { kind: "ip"; version?: IpVersion; message?: string }
-  | { kind: "base64"; message?: string };
+  | { kind: "base64"; message?: string }
+  | { kind: "json"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -1029,6 +1030,18 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "json") {
+        try {
+          JSON.parse(input.data);
+        } catch (err) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "json",
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -1197,6 +1210,29 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       value: value,
       ...errorUtil.errToObj(message),
     });
+  }
+
+  json(message?: errorUtil.ErrMessage): this;
+  json<T extends ZodTypeAny>(
+    pipeTo: T
+  ): ZodPipeline<ZodEffects<this, any, input<this>>, T>;
+  json(input?: errorUtil.ErrMessage | ZodTypeAny) {
+    if (!(input instanceof ZodType)) {
+      return this._addCheck({ kind: "json", ...errorUtil.errToObj(input) });
+    }
+    const schema = this.transform((val, ctx) => {
+      try {
+        return JSON.parse(val);
+      } catch (error: unknown) {
+        ctx.addIssue({
+          code: ZodIssueCode.invalid_string,
+          validation: "json",
+          // message: (error as Error).message,
+        });
+        return NEVER;
+      }
+    });
+    return input ? schema.pipe(input) : schema;
   }
 
   min(minLength: number, message?: errorUtil.ErrMessage) {
