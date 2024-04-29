@@ -841,9 +841,9 @@ The `z.string().boolean()` method transforms a string value representing a boole
 
 It accepts `"1"`, `"t"`, `"T"`, `"TRUE"`, `"true"`, `"True"` for `true`, `"0"`, `"f"`, `"F"`, `"FALSE"`, `"false"`, `"False"` for `false`.
 
-> This function's behavior does not along with Typescript standard `Boolean()` function.
+> This method does not reproduce [`Boolean()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)'s behavior.
 >
-> If you expect the behavior, use [`z.coerce.boolean()`](#coercion-for-primitives) instead.
+> If you expect [`Boolean()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean)'s behavior, use [`z.coerce.boolean()`](#coercion-for-primitives) instead.
 
 ```ts
 const b = z.string().boolean();
