@@ -58,7 +58,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["18"]
+        node: ["latest"]
     name: Lint on Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v4
