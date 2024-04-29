@@ -83,3 +83,8 @@ test("error map in extract/exclude", () => {
     );
   }
 });
+
+test("readonly in ZodEnumDef", () => {
+  let _t!: z.ZodEnumDef<readonly ["a", "b"]>;
+  _t;
+});

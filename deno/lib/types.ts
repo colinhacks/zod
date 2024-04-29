@@ -4139,7 +4139,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
 export type ArrayKeys = keyof any[];
 export type Indices<T> = Exclude<keyof T, ArrayKeys>;
 
-export type EnumValues<T extends string = string> = [T, ...T[]];
+export type EnumValues<T extends string = string> = readonly [T, ...T[]];
 
 export type Values<T extends EnumValues> = {
   [k in T[number]]: k;
