@@ -34,7 +34,8 @@ export const ZodIssueCode = util.arrayToEnum([
   "not_multiple_of",
   "not_finite",
   "uniqueness",
-  "invalid_file",
+  "invalid_file_type",
+  "invalid_file_name",
 ]);
 
 export type ZodIssueCode = keyof typeof ZodIssueCode;
@@ -153,10 +154,15 @@ export interface ZodUniquenessIssue<T = unknown> extends ZodIssueBase {
   code: typeof ZodIssueCode.uniqueness;
   duplicateElements?: Array<T>;
 }
-export interface ZodInvalidFileIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.invalid_file;
+
+export interface ZodInvalidFileTypeIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_file_type;
   expected: string[];
   received: string;
+}
+
+export interface ZodInvalidFileNameIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_file_name;
 }
 
 export interface ZodCustomIssue extends ZodIssueBase {
@@ -183,7 +189,8 @@ export type ZodIssueOptionalMessage =
   | ZodNotMultipleOfIssue
   | ZodNotFiniteIssue
   | ZodUniquenessIssue
-  | ZodInvalidFileIssue
+  | ZodInvalidFileTypeIssue
+  | ZodInvalidFileNameIssue
   | ZodCustomIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & {

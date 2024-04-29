@@ -6,7 +6,11 @@ import * as z from "../index";
 
 const minCheck = z.file().min(5);
 const maxCheck = z.file().max(8);
-const acceptCheck = z.file().accept([".txt", "text/plain"]);
+const acceptCheck = z.file().accept([
+  // ".txt",
+  "text/plain",
+  "application/json",
+]);
 const filenameCheck = z.file().filename(z.string().regex(/^[xy]+$/));
 
 const originalFile = global.File;
@@ -22,10 +26,11 @@ afterEach(() => {
 test("passing validations", () => {
   minCheck.parse(new File(["12345"], "test.txt"));
   maxCheck.parse(new File(["12345678"], "test.txt"));
-
-  acceptCheck.parse(new File([""], "test.txt"));
   acceptCheck.parse(new File([""], "test.csv", { type: "text/plain" }));
-  acceptCheck.parse(new File([""], "test.txt", { type: "text/csv" }));
+  expect(() => acceptCheck.parse(new File([""], "test.txt"))).toThrow();
+  expect(() =>
+    acceptCheck.parse(new File([""], "test.txt", { type: "text/csv" }))
+  ).toThrow();
 
   filenameCheck.parse(new File([""], "xxy"));
 });
@@ -51,6 +56,12 @@ test("min max getters", () => {
 });
 
 test("accept getter", () => {
-  expect(acceptCheck.accepts).toEqual([".txt", "text/plain"]);
-  expect(acceptCheck.accept([".txt", ".csv"]).accepts).toEqual([".txt"]);
+  expect(acceptCheck.accepts).toEqual(["text/plain", "application/json"]);
+  expect(acceptCheck.accept(["text/plain", "application/xml"]).accepts).toEqual(
+    ["text/plain"]
+  );
+});
+
+test("invalid mime types", () => {
+  expect(() => z.file().accept([".txt"])).toThrow();
 });

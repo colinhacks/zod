@@ -4610,21 +4610,23 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
           status.dirty();
         }
       } else if (check.kind === "accept") {
-        // @todo improve?
-        const extension =
-          file.name.indexOf(".") >= 0
-            ? file.name.slice(file.name.indexOf("."))
-            : undefined;
-        const checkSpecifier = (fileTypeSpecifier: string): boolean => {
-          if (fileTypeSpecifier.startsWith(".")) {
-            return fileTypeSpecifier === extension;
-          }
-          return fileTypeSpecifier === file.type;
-        };
-        if (!check.value.some(checkSpecifier)) {
+        const _check: any = check;
+        const cache: Set<string> = _check.cache ?? new Set(check.value);
+        // @todo support extensions?
+        // const extension =
+        //   file.name.indexOf(".") >= 0
+        //     ? file.name.slice(file.name.indexOf("."))
+        //     : undefined;
+        // const checkSpecifier = (fileTypeSpecifier: string): boolean => {
+        //   if (fileTypeSpecifier.startsWith(".")) {
+        //     return fileTypeSpecifier === extension;
+        //   }
+        //   return fileTypeSpecifier === file.type;
+        // };
+        if (!cache.has(file.type)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
-            code: ZodIssueCode.invalid_file,
+            code: ZodIssueCode.invalid_file_type,
             expected: check.value,
             received: file.type,
             message: check.message,
@@ -4635,15 +4637,19 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
         const parsedFilename = check.value.safeParse(file.name);
         if (!parsedFilename.success) {
           ctx = this._getOrReturnCtx(input, ctx);
-          addIssueToContext(
-            ctx,
-            check.message
-              ? {
-                  code: ZodIssueCode.custom,
-                  message: check.message,
-                }
-              : parsedFilename.error.errors[0]
-          );
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_file_name,
+            message: check.message,
+          });
+          // addIssueToContext(
+          //   ctx,
+          //   check.message
+          //     ? {
+          //         code: ZodIssueCode.custom,
+          //         message: check.message,
+          //       }
+          //     : parsedFilename.error.errors[0]
+          // );
           status.dirty();
         }
       } else {
@@ -4688,6 +4694,15 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#unique_file_type_specifiers
    */
   accept(fileTypes: Array<string>, message?: errorUtil.ErrMessage) {
+    const invalidTypes = [];
+    for (const t of fileTypes) {
+      if (!t.includes("/")) {
+        invalidTypes.push(t);
+      }
+    }
+    if (invalidTypes.length > 0) {
+      throw new Error(`Invalid file type(s): ${invalidTypes.join(", ")}`);
+    }
     return this._addCheck({
       kind: "accept",
       value: fileTypes,
