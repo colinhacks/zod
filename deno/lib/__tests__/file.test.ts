@@ -12,10 +12,12 @@ const filenameCheck = z.file().filename(z.string().regex(/^[xy]+$/));
 
 const originalFile = global.File;
 beforeEach(async () => {
-  global.File = WebFile;
+  if (!globalThis.File) globalThis.File = WebFile;
 });
 afterEach(() => {
-  global.File = originalFile;
+  if (globalThis.File !== originalFile) {
+    globalThis.File = originalFile;
+  }
 });
 
 test("passing validations", () => {
