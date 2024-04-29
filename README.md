@@ -947,6 +947,42 @@ console.log(dateSchema.safeParse("0000-00-00").success); // false
 
 For older zod versions, use [`z.preprocess`](#preprocess) like [described in this thread](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276).
 
+## Files (Browser only)
+
+Use z.file() to validate `File` instances.
+
+```ts
+z.file().safeParse(new File(["foobar"], "foobar.txt", { type: "text/plain" })); // success: true
+z.file().safeParse("foobar"); // success: false
+```
+
+You can customize certain error messages when creating a file schema.
+
+```ts
+const myFileSchema = z.file({
+  required_error: "Please select a file",
+  invalid_type_error: "That's not a file!",
+});
+```
+
+Zod provides a handful of file-specific validations.
+
+```ts
+z.file().min(100, { message: "Too small" });
+z.file().max(10_000, { message: "Too large!" });
+
+z.file().accept([".txt", ".csv"], {
+  message: "Accepted file types: .txt, .csv",
+});
+z.file().accept(["text/plain"], {
+  message: "Accepted file type: text/plain",
+});
+
+z.file().filename(z.string().min(3), {
+  message: "Filename must be at least 3 characters long",
+});
+```
+
 ## Zod enums
 
 ```ts

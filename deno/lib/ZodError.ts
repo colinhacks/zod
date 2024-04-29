@@ -34,6 +34,8 @@ export const ZodIssueCode = util.arrayToEnum([
   "not_multiple_of",
   "not_finite",
   "uniqueness",
+  "invalid_file_type",
+  "invalid_file_name",
 ]);
 
 export type ZodIssueCode = keyof typeof ZodIssueCode;
@@ -93,11 +95,8 @@ export interface ZodInvalidDateIssue extends ZodIssueBase {
 export type StringValidation =
   | "email"
   | "url"
-<<<<<<< HEAD
   | "jwt"
-=======
   | "json"
->>>>>>> c5a2690 (Add z.string().json(...) helper)
   | "emoji"
   | "uuid"
   | "nanoid"
@@ -127,7 +126,7 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   minimum: number | bigint;
   inclusive: boolean;
   exact?: boolean;
-  type: "array" | "string" | "number" | "set" | "date" | "bigint";
+  type: "array" | "string" | "number" | "set" | "date" | "bigint" | "file";
 }
 
 export interface ZodTooBigIssue extends ZodIssueBase {
@@ -135,7 +134,7 @@ export interface ZodTooBigIssue extends ZodIssueBase {
   maximum: number | bigint;
   inclusive: boolean;
   exact?: boolean;
-  type: "array" | "string" | "number" | "set" | "date" | "bigint";
+  type: "array" | "string" | "number" | "set" | "date" | "bigint" | "file";
 }
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
@@ -154,6 +153,16 @@ export interface ZodNotFiniteIssue extends ZodIssueBase {
 export interface ZodUniquenessIssue<T = unknown> extends ZodIssueBase {
   code: typeof ZodIssueCode.uniqueness;
   duplicateElements?: Array<T>;
+}
+
+export interface ZodInvalidFileTypeIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_file_type;
+  expected: string[];
+  received: string;
+}
+
+export interface ZodInvalidFileNameIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_file_name;
 }
 
 export interface ZodCustomIssue extends ZodIssueBase {
@@ -180,6 +189,8 @@ export type ZodIssueOptionalMessage =
   | ZodNotMultipleOfIssue
   | ZodNotFiniteIssue
   | ZodUniquenessIssue
+  | ZodInvalidFileTypeIssue
+  | ZodInvalidFileNameIssue
   | ZodCustomIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & {

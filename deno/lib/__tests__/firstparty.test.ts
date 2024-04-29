@@ -22,6 +22,8 @@ test("first party switch", () => {
       break;
     case z.ZodFirstPartyTypeKind.ZodDate:
       break;
+    case z.ZodFirstPartyTypeKind.ZodFile:
+      break;
     case z.ZodFirstPartyTypeKind.ZodUndefined:
       break;
     case z.ZodFirstPartyTypeKind.ZodNull:
