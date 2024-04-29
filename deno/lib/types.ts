@@ -4530,7 +4530,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
 export type ZodFileCheck =
   | { kind: "min"; value: number; message?: string }
   | { kind: "max"; value: number; message?: string }
-  | { kind: "accept"; value: Array<string>; message?: string }
+  | { kind: "type"; value: Array<string>; message?: string }
   | { kind: "filename"; value: ZodTypeAny; message?: string };
 
 export interface ZodFileDef extends ZodTypeDef {
@@ -4609,7 +4609,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
           });
           status.dirty();
         }
-      } else if (check.kind === "accept") {
+      } else if (check.kind === "type") {
         const _check: any = check;
         const cache: Set<string> = _check.cache ?? new Set(check.value);
         // @todo support extensions?
@@ -4693,7 +4693,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
    * Restrict accepted file types.
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#unique_file_type_specifiers
    */
-  accept(fileTypes: Array<string>, message?: errorUtil.ErrMessage) {
+  type(fileTypes: Array<string>, message?: errorUtil.ErrMessage) {
     const invalidTypes = [];
     for (const t of fileTypes) {
       if (!t.includes("/")) {
@@ -4704,7 +4704,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
       throw new Error(`Invalid file type(s): ${invalidTypes.join(", ")}`);
     }
     return this._addCheck({
-      kind: "accept",
+      kind: "type",
       value: fileTypes,
       ...errorUtil.errToObj(message),
     });
@@ -4748,10 +4748,10 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
   /**
    * Returns accepted file types or undefined if any file type is acceptable.
    */
-  get accepts() {
+  get acceptedTypes() {
     let result: Array<string> | undefined;
     for (const check of this._def.checks) {
-      if (check.kind === "accept") {
+      if (check.kind === "type") {
         if (check.value) {
           if (result) {
             // reduce to intersection

@@ -7,7 +7,7 @@ import * as z from "../index.ts";
 
 const minCheck = z.file().min(5);
 const maxCheck = z.file().max(8);
-const acceptCheck = z.file().accept([
+const acceptCheck = z.file().type([
   // ".txt",
   "text/plain",
   "application/json",
@@ -57,12 +57,12 @@ test("min max getters", () => {
 });
 
 test("accept getter", () => {
-  expect(acceptCheck.accepts).toEqual(["text/plain", "application/json"]);
-  expect(acceptCheck.accept(["text/plain", "application/xml"]).accepts).toEqual(
-    ["text/plain"]
-  );
+  expect(acceptCheck.acceptedTypes).toEqual(["text/plain", "application/json"]);
+  expect(
+    acceptCheck.type(["text/plain", "application/xml"]).acceptedTypes
+  ).toEqual(["text/plain"]);
 });
 
 test("invalid mime types", () => {
-  expect(() => z.file().accept([".txt"])).toThrow();
+  expect(() => z.file().type([".txt"])).toThrow();
 });
