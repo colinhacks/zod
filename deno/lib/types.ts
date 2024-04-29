@@ -569,6 +569,7 @@ export type ZodStringCheck =
       precision: number | null;
       message?: string;
     }
+<<<<<<< HEAD
   | {
       kind: "date";
       // withDate: true;
@@ -582,6 +583,10 @@ export type ZodStringCheck =
   | { kind: "duration"; message?: string }
   | { kind: "ip"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string };
+=======
+  | { kind: "ip"; version?: IpVersion; message?: string }
+  | { kind: "json"; message?: string };
+>>>>>>> ca9c3e1 (Add overload)
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -1019,12 +1024,23 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+<<<<<<< HEAD
       } else if (check.kind === "base64") {
         if (!base64Regex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "base64",
             code: ZodIssueCode.invalid_string,
+=======
+      } else if (check.kind === "json") {
+        try {
+          JSON.parse(input.data);
+        } catch (err) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: "json",
+>>>>>>> ca9c3e1 (Add overload)
             message: check.message,
           });
           status.dirty();
@@ -1197,6 +1213,29 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       value: value,
       ...errorUtil.errToObj(message),
     });
+  }
+
+  json(message?: errorUtil.ErrMessage): this;
+  json<T extends ZodTypeAny>(
+    pipeTo: T
+  ): ZodPipeline<ZodEffects<this, any, input<this>>, T>;
+  json(input?: errorUtil.ErrMessage | ZodTypeAny) {
+    if (!(input instanceof ZodType)) {
+      return this._addCheck({ kind: "json", ...errorUtil.errToObj(input) });
+    }
+    const schema = this.transform((val, ctx) => {
+      try {
+        return JSON.parse(val);
+      } catch (error: unknown) {
+        ctx.addIssue({
+          code: ZodIssueCode.invalid_string,
+          validation: "json",
+          // message: (error as Error).message,
+        });
+        return NEVER;
+      }
+    });
+    return input ? schema.pipe(input) : schema;
   }
 
   min(minLength: number, message?: errorUtil.ErrMessage) {

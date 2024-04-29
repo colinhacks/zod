@@ -94,6 +94,7 @@ export type StringValidation =
   | "email"
   | "url"
   | "jwt"
+  | "json"
   | "emoji"
   | "uuid"
   | "nanoid"

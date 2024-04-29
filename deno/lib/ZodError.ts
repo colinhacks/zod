@@ -93,7 +93,11 @@ export interface ZodInvalidDateIssue extends ZodIssueBase {
 export type StringValidation =
   | "email"
   | "url"
+<<<<<<< HEAD
   | "jwt"
+=======
+  | "json"
+>>>>>>> c5a2690 (Add z.string().json(...) helper)
   | "emoji"
   | "uuid"
   | "nanoid"
