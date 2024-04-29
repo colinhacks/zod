@@ -7,6 +7,17 @@ import * as z from "../index.ts";
 // @ts-ignore TS2304
 const isDeno = typeof Deno === "object";
 
+test("overload types", () => {
+  const schema = z.string().json();
+  z.util.assertEqual<typeof schema, z.ZodString>(true);
+  const schema2 = z.string().json(z.number());
+  z.util.assertEqual<
+    typeof schema2,
+    z.ZodPipeline<z.ZodEffects<z.ZodString, any, string>, z.ZodNumber>
+  >(true);
+  const r2 = schema2.parse("12");
+  z.util.assertEqual<number, typeof r2>(true);
+});
 test("parse string to json", async () => {
   const Env = z.object({
     myJsonConfig: z.string().json(z.object({ foo: z.number() })),
@@ -62,9 +73,7 @@ test("parse string to json", async () => {
         {
           code: "invalid_string",
           validation: "json",
-          message: isDeno
-            ? `Unexpected token 'T', "This is no"... is not valid JSON`
-            : "Unexpected token T in JSON at position 0",
+          message: "Invalid json",
           path: ["myJsonConfig"],
         },
         {
@@ -77,4 +86,17 @@ test("parse string to json", async () => {
       ],
     },
   });
+});
+
+test("no argument", () => {
+  const schema = z.string().json();
+  z.util.assertEqual<typeof schema, z.ZodString>(true);
+  z.string().json().parse(`{}`);
+  z.string().json().parse(`null`);
+  z.string().json().parse(`12`);
+  z.string().json().parse(`{ "test": "test"}`);
+  expect(() => z.string().json().parse(`asdf`)).toThrow();
+  expect(() => z.string().json().parse(`{ "test": undefined }`)).toThrow();
+  expect(() => z.string().json().parse(`{ "test": 12n }`)).toThrow();
+  expect(() => z.string().json().parse(`{ test: "test" }`)).toThrow();
 });
