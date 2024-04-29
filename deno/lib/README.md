@@ -860,7 +860,7 @@ b.parse(undefined); // fail
 b.parse(null); // fail
 ```
 
-You can additionally use the `catch` function, which handle a parsing error as `true` or `false`.
+You can additionally use the `catch` function, which will return `true` or `false` whenever a parsing error occurs.
 
 ```ts
 const b = z.string().boolean().catch(false);
