@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["18", "20"]
+        node: ["latest"]
         typescript: ["4.5", "4.6", "4.7", "4.8", "4.9", "5.0", "5.3"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
     steps:
@@ -36,8 +36,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - uses: denolib/setup-deno@v2
+          node-version: latest
+      - uses: denoland/setup-deno@v1
         with:
           deno-version: ${{ matrix.deno }}
       - run: yarn install
