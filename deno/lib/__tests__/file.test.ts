@@ -12,7 +12,7 @@ const acceptCheck = z.file().type([
   "text/plain",
   "application/json",
 ]);
-const filenameCheck = z.file().filename(z.string().regex(/^[xy]+$/));
+const filenameCheck = z.file().name(z.string().regex(/^[xy]+$/));
 
 const originalFile = global.File;
 beforeEach(async () => {

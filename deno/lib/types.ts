@@ -4713,7 +4713,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
   /**
    * Validates file name against the provided schema.
    */
-  filename(schema: ZodTypeAny, message?: errorUtil.ErrMessage) {
+  name(schema: ZodTypeAny, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "filename",
       value: schema,
