@@ -1957,7 +1957,9 @@ Thanks to [ggoodman](https://github.com/ggoodman) for suggesting this.
 
 ### Cyclical objects
 
-Despite supporting recursive schemas, passing cyclical data into Zod will cause an infinite loop.
+Despite supporting recursive schemas, passing cyclical data into Zod will cause an infinite loop in some cases.
+
+> To detect cyclical objects before they cause problems, consider [this approach](https://gist.github.com/colinhacks/d35825e505e635df27cc950776c5500b).
 
 ## Promises
 
