@@ -140,6 +140,7 @@ export interface ZodTooBigIssue extends ZodIssueBase {
 
 export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_intersection_types;
+  mergeErrorPath: (string | number)[];
 }
 
 export interface ZodNotMultipleOfIssue extends ZodIssueBase {
