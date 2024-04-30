@@ -555,7 +555,11 @@ export type ZodStringCheck =
   | { kind: "includes"; value: string; position?: number; message?: string }
   | { kind: "cuid2"; message?: string }
   | { kind: "ulid"; message?: string }
+<<<<<<< HEAD
   | { kind: "xid"; message?: string }
+=======
+  | { kind: "ksuid"; message?: string }
+>>>>>>> eca2545 (feat: add support for KSUIDs)
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
@@ -593,7 +597,11 @@ export interface ZodStringDef extends ZodTypeDef {
 const cuidRegex = /^c[^\s-]{8,}$/i;
 const cuid2Regex = /^[0-9a-z]+$/;
 const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/;
+<<<<<<< HEAD
 const xidRegex = /^[0-9a-v]{20}$/i;
+=======
+const ksuidRegex = /^[A-Za-z0-9]{27}$/;
+>>>>>>> eca2545 (feat: add support for KSUIDs)
 // const uuidRegex =
 //   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 // const uuidRegex =
@@ -894,11 +902,19 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+<<<<<<< HEAD
       } else if (check.kind === "xid") {
         if (!xidRegex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "xid",
+=======
+      } else if (check.kind === "ksuid") {
+        if (!ksuidRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "ksuid",
+>>>>>>> eca2545 (feat: add support for KSUIDs)
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
@@ -1107,11 +1123,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   ulid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "ulid", ...errorUtil.errToObj(message) });
   }
+<<<<<<< HEAD
   base64(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
   }
   xid(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "xid", ...errorUtil.errToObj(message) });
+=======
+  ksuid(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "ksuid", ...errorUtil.errToObj(message) });
+>>>>>>> eca2545 (feat: add support for KSUIDs)
   }
 
   ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
@@ -1336,8 +1357,13 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   get isULID() {
     return !!this._def.checks.find((ch) => ch.kind === "ulid");
   }
+<<<<<<< HEAD
   get isXID() {
     return !!this._def.checks.find((ch) => ch.kind === "xid");
+=======
+  get isKSUID() {
+    return !!this._def.checks.find((ch) => ch.kind === "ksuid");
+>>>>>>> eca2545 (feat: add support for KSUIDs)
   }
   get isIP() {
     return !!this._def.checks.find((ch) => ch.kind === "ip");
