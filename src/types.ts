@@ -3436,7 +3436,9 @@ export interface ZodIntersectionDef<
 function mergeValues(
   a: any,
   b: any
-): { valid: true; data: any } | { valid: false } {
+):
+  | { valid: true; data: any }
+  | { valid: false; mergeErrorPath: (string | number)[] } {
   const aType = getParsedType(a);
   const bType = getParsedType(b);
 
@@ -3452,7 +3454,10 @@ function mergeValues(
     for (const key of sharedKeys) {
       const sharedValue = mergeValues(a[key], b[key]);
       if (!sharedValue.valid) {
-        return { valid: false };
+        return {
+          valid: false,
+          mergeErrorPath: [key, ...sharedValue.mergeErrorPath],
+        };
       }
       newObj[key] = sharedValue.data;
     }
@@ -3460,7 +3465,7 @@ function mergeValues(
     return { valid: true, data: newObj };
   } else if (aType === ZodParsedType.array && bType === ZodParsedType.array) {
     if (a.length !== b.length) {
-      return { valid: false };
+      return { valid: false, mergeErrorPath: [] };
     }
 
     const newArray: unknown[] = [];
@@ -3470,7 +3475,10 @@ function mergeValues(
       const sharedValue = mergeValues(itemA, itemB);
 
       if (!sharedValue.valid) {
-        return { valid: false };
+        return {
+          valid: false,
+          mergeErrorPath: [index, ...sharedValue.mergeErrorPath],
+        };
       }
 
       newArray.push(sharedValue.data);
@@ -3484,7 +3492,7 @@ function mergeValues(
   ) {
     return { valid: true, data: a };
   } else {
-    return { valid: false };
+    return { valid: false, mergeErrorPath: [] };
   }
 }
 
@@ -3511,6 +3519,7 @@ export class ZodIntersection<
       if (!merged.valid) {
         addIssueToContext(ctx, {
           code: ZodIssueCode.invalid_intersection_types,
+          mergeErrorPath: merged.mergeErrorPath,
         });
         return INVALID;
       }
