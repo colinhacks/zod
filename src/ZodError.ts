@@ -106,6 +106,7 @@ export type StringValidation =
   | "cuid2"
   | "ulid"
   | "xid"
+  | "ksuid"
   | "datetime"
   | "date"
   | "time"
