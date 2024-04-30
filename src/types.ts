@@ -2791,8 +2791,12 @@ export class ZodObject<
   //     }) as any;
   //   };
   extend<Augmentation extends ZodRawShape>(
+    augmentation: Augmentation & Partial<{ [k in keyof T]: unknown }>
+  ): ZodObject<objectUtil.extendShape<T, Augmentation>, UnknownKeys, Catchall>;
+  extend<Augmentation extends ZodRawShape>(
     augmentation: Augmentation
-  ): ZodObject<objectUtil.extendShape<T, Augmentation>, UnknownKeys, Catchall> {
+  ): ZodObject<objectUtil.extendShape<T, Augmentation>, UnknownKeys, Catchall>;
+  extend(augmentation: ZodRawShape) {
     return new ZodObject({
       ...this._def,
       shape: () => ({
