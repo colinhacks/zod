@@ -129,14 +129,9 @@ export class ParseStatus {
       const key = await pair.key;
       const value = await pair.value;
       syncPairs.push({
-<<<<<<< HEAD
         key,
         value,
-=======
-        key: await pair.key,
-        value: await pair.value,
-        alwaysSet: pair.alwaysSet
->>>>>>> 497e77d (Update `mergeObjectAsync` to support `alwaysSet` like `mergeObjectSync`)
+        alwaysSet: pair.alwaysSet,
       });
     }
     return ParseStatus.mergeObjectSync(status, syncPairs);
