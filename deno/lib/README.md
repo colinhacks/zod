@@ -631,11 +631,8 @@ z.string().nanoid();
 z.string().cuid();
 z.string().cuid2();
 z.string().ulid();
-<<<<<<< HEAD
 z.string().xid();
-=======
 z.string().ksuid();
->>>>>>> eca2545 (feat: add support for KSUIDs)
 z.string().regex(regex);
 z.string().includes(string);
 z.string().startsWith(string);

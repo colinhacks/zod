@@ -171,10 +171,34 @@ test("is not vulnerable to prototype pollution", async () => {
   }
 });
 
-test("dont parse undefined values", () => {
+test("dont remove undefined values", () => {
   const result1 = z.record(z.any()).parse({ foo: undefined });
 
   expect(result1).toEqual({
     foo: undefined,
   });
+});
+
+test("allow undefined values", () => {
+  const schema = z.record(z.string(), z.undefined());
+
+  expect(
+    util.objectKeys(
+      schema.parse({
+        _test: undefined,
+      })
+    )
+  ).toEqual(["_test"]);
+});
+
+test("allow undefined values async", async () => {
+  const schemaAsync = z.record(z.string().optional()).refine(async () => true);
+
+  expect(
+    util.objectKeys(
+      await schemaAsync.parseAsync({
+        _test: undefined,
+      })
+    )
+  ).toEqual(["_test"]);
 });
