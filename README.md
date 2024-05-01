@@ -349,9 +349,14 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <table>
   <tr>
+    <td align="center"><a href="https://www.numeric.io" target="_blank"><img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric logo" /></a></td>
+    <td>Numeric</td>
+    <td><a href="https://www.numeric.io" target="_blank">numeric.io</a></td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://www.numeric.io" target="_blank">
-        <img src="https://i.imgur.com/kTiLtZt.png" width="120px;" alt="Numeric logo" />
+        <img src="https://i.imgur.com/kTiLtZt.png" height="140px;" alt="Numeric logo" />
       </a>
       <br />
       <b>Numeric</b>
