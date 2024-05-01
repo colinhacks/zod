@@ -193,6 +193,174 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table>
   <tr>
     <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/80861386?s=200&v=4" height="40px;" alt="Cerbos" />
+    </td>
+    <td><a href="https://cerbos.dev/" target="_blank">Cerbos</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/180984?v=4" height="40px;" alt="@emreb" />
+    </td>
+    <td><a href="https://github.com/emreb" target="_blank">@emreb</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="40px;" alt="Speakeasy API" />
+    </td>
+    <td><a href="https://speakeasyapi.dev/" target="_blank">Speakeasy</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" height="40px;" alt="Deletype logo" />
+    </td>
+    <td><a href="https://deletype.com" target="_blank">Deletype</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" height="40px;" alt="Trigger.dev logo" />
+    </td>
+    <td><a href="https://trigger.dev" target="_blank">Trigger.dev</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" height="40px;" alt="Transloadit logo" />
+    </td>
+    <td><a href="https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github" target="_blank">Transloadit</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" height="40px;" alt="Infisical logo" />
+    </td>
+    <td><a href="https://infisical.com" target="_blank">Infisical</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" height="40px;" alt="Whop logo" />
+    </td>
+    <td><a href="https://whop.com/" target="_blank">Whop</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" height="40px;" alt="CryptoJobsList logo" />
+    </td>
+    <td><a href="https://cryptojobslist.com/" target="_blank">CryptoJobsList</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" height="40px;" alt="Plain logo" />
+    </td>
+    <td><a href="https://plain.com/" target="_blank">Plain.</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" height="40px;" alt="Inngest logo" />
+    </td>
+    <td><a href="https://inngest.com/" target="_blank">Inngest</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" height="40px;" alt="Storyblok CMS" />
+    </td>
+    <td><a href="https://storyblok.com/" target="_blank">Storyblok</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" height="40px;" alt="Mux logo" />
+    </td>
+    <td><a href="https://mux.link/zod" target="_blank">Mux</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="40px;" alt="Scalar.com logo" />
+    </td>
+    <td><a href="https://scalar.com/" target="_blank">Scalar</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://numeric.io/logo.png" height="40px;" alt="Numeric logo" />
+    </td>
+    <td><a href="https://www.numeric.io">Numeric</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://marcatopartners.com/logo.png" height="40px;" alt="Marcato Partners logo" />
+    </td>
+    <td><a href="https://marcatopartners.com/">Marcato Partners</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://interval.com/logo.png" height="40px;" alt="Interval logo" />
+    </td>
+    <td><a href="https://interval.com">Interval</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://seasoned.cc/logo.png" height="40px;" alt="Seasoned Software logo" />
+    </td>
+    <td><a href="https://seasoned.cc">Seasoned Software</a></td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://www.bamboocreative.nz/logo.png" height="40px;" alt="Bamboo Creative logo" />
+    </td>
+    <td><a href="https://www.bamboocreative.nz/">Bamboo Creative</a></td>
+  </tr>
+</table>
+
+<!-- <table>
+  <tr>
+    <td align="center">
+      <a href="https://www.numeric.io" target="_blank">
+        <img src="https://i.imgur.com/kTiLtZt.png" height="140px;" alt="Numeric logo" />
+      </a>
+      <br />
+      <b>Numeric</b>
+      <br />
+      <a href="https://www.numeric.io" target="_blank">numeric.io</a>
+    </td>
+    <td align="center">
+      <a href="https://marcatopartners.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="100px;" alt="Marcato Partners" />
+      </a>
+      <br />
+      <b>Marcato Partners</b>
+      <br />
+      <a href="https://marcatopartners.com/" target="_blank">marcatopartners.com</a>
+    </td>
+     <td align="center">
+      <a href="https://interval.com" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="100px;" alt="" />
+      </a>
+      <br />
+      <b>Interval</b>
+      <br />
+      <a href="https://interval.com" target="_blank">interval.com</a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://seasoned.cc" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="100px;" alt="" />
+      </a>
+      <br />
+      <b>Seasoned Software</b>
+      <br />
+      <a href="https://seasoned.cc" target="_blank">seasoned.cc</a>
+    </td>
+    <td align="center">
+      <a href="https://www.bamboocreative.nz/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="100px;" alt="Bamboo Creative logo" />
+      </a>
+      <br />
+      <b>Bamboo Creative</b>
+      <br />
+      <a href="https://www.bamboocreative.nz" target="_blank">bamboocreative.nz</a>
+    </td>
+  </tr>
+</table> -->
+<!-- <table>
+  <tr>
+    <td align="center">
       <a href="https://cerbos.dev/" target="_blank">
         <img src="https://avatars.githubusercontent.com/u/80861386?s=200&v=4" width="150px;" alt="Cerbos" />
       </a>
@@ -343,16 +511,43 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <p width="150px">Document, discover & test APIs with Scalar</p>
     </td>
   </tr>
-</table>
+</table> -->
 
 #### Bronze
 
+- [Numeric](https://www.numeric.io)
+- [Marcato Partners](https://marcatopartners.com/)
+- [Interval](https://interval.com)
+- [Seasoned Software](https://seasoned.cc)
+- [Bamboo Creative](https://www.bamboocreative.nz/)
+- [Brandon Bayer](https://twitter.com/flybayer)
+- [Jiří Brabec](https://github.com/brabeji)
+- [Alex Johansson](https://twitter.com/alexdotjs)
+- [Learn with Jason](https://learnwithjason.dev)
+- [Ryan Palmer](https://github.com/kronodeus)
+- [Michael Sweeney](https://github.com/overthemike)
+- [Connor Sinnott](https://github.com/ConnorSinnott)
+- [Mohammad-Ali A'râbi](https://aerabi.com/)
+
+<!--
+- [Brandon Bayer](https://twitter.com/flybayer)
+- [Jiří Brabec](https://github.com/brabeji)
+- [Alex Johansson](https://twitter.com/alexdotjs)
+- [Fungible Systems](https://fungible.systems/)
+- [Adaptable](https://adaptable.io/)
+- [Avana Wallet](https://www.avanawallet.com/)
+- [Learn with Jason](https://learnwithjason.dev)
+- [Global Illumination, Inc.](https://ill.inc/)
+- [MasterBorn](https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring)
+- [Ryan Palmer](https://github.com/kronodeus)
+- [Michael Sweeney](https://github.com/overthemike)
+- [Nextbase](https://usenextbase.com/)
+- [Remotion](https://remotion.dev)
+- [Connor Sinnott](https://github.com/ConnorSinnott)
+- [Mohammad-Ali A'râbi](https://aerabi.com/)
+- [Supatool](https://supatool.io/) -->
+
 <table>
-  <tr>
-    <td align="center"><a href="https://www.numeric.io" target="_blank"><img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric logo" /></a></td>
-    <td>Numeric</td>
-    <td><a href="https://www.numeric.io" target="_blank">numeric.io</a></td>
-  </tr>
   <tr>
     <td align="center">
       <a href="https://www.numeric.io" target="_blank">
