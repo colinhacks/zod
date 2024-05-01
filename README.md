@@ -188,57 +188,19 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 > This tier was just added. [Be the first Gold Sponsor!](https://github.com/sponsors/colinhacks/sponsorships?sponsor=colinhacks&tier_id=399648&preview=false)
 
-<table>
+<!-- <table>
   <tr>
     <td align="center">
-      <a href="https://www.numeric.io" target="_blank">
-        <img src="https://i.imgur.com/kTiLtZt.png" height="140px;" alt="Numeric logo" />
+      <a href="https://www.example.com" target="_blank">
+        <img src="https://example.com/image.png" height="100px;" alt="XXX" />
       </a>
       <br />
-      <b>Numeric</b>
+      <b>XXX</b>
       <br />
-      <a href="https://www.numeric.io" target="_blank">numeric.io</a>
-    </td>
-    <td align="center">
-      <a href="https://marcatopartners.com/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="100px;" alt="Marcato Partners" />
-      </a>
-      <br />
-      <b>Marcato Partners</b>
-      <br />
-      <a href="https://marcatopartners.com/" target="_blank">marcatopartners.com</a>
-    </td>
-     <td align="center">
-      <a href="https://interval.com" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="100px;" alt="" />
-      </a>
-      <br />
-      <b>Interval</b>
-      <br />
-      <a href="https://interval.com" target="_blank">interval.com</a>
+      <a href="https://www.example.com" target="_blank">example.com</a>
     </td>
   </tr>
-  <tr>
-    <td align="center">
-      <a href="https://seasoned.cc" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="100px;" alt="" />
-      </a>
-      <br />
-      <b>Seasoned Software</b>
-      <br />
-      <a href="https://seasoned.cc" target="_blank">seasoned.cc</a>
-    </td>
-    <td align="center">
-      <a href="https://www.bamboocreative.nz/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="100px;" alt="Bamboo Creative logo" />
-      </a>
-      <br />
-      <b>Bamboo Creative</b>
-      <br />
-      <a href="https://www.bamboocreative.nz" target="_blank">bamboocreative.nz</a>
-    </td>
-  </tr>
-</table>
+</table> -->
 
 #### Silver
 
