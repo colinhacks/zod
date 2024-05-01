@@ -653,6 +653,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 #### Utilities for Zod
 
 - [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): Framework agnostic utilities for Zod.
+- [`zod-playground`](https://github.com/marilari88/zod-playground): A tool for learning and testing Zod schema validation functionalities. [Link](https://zod-playground.vercel.app/).
 - [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Controlled environment for testing zod schemas. [Live demo](https://zod-sandbox.vercel.app/).
 - [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod runtime parsing in production.
 - [`zod-accelerator`](https://github.com/duplojs/duplojs-zod-accelerator): Accelerates Zod's throughput up to ~100x.
