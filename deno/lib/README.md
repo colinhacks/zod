@@ -261,7 +261,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://infisical.com" target="_blank">infisical.com</a>
       <br/>
-      <p>Open-source platform for secret<br/>management: sync secrets across your<br/>team/infrastructure and prevent secret leaks</p>
+      <p>Open-source platform for secret management: sync secrets across your<br/>team/infrastructure and prevent secret leaks</p>
     </td>
     <td align="center">
       <a href="https://whop.com/" target="_blank">
@@ -349,9 +349,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <table>
   <tr>
-    <td align="center" colspan="2">
+    <td align="center">
       <a href="https://www.numeric.io" target="_blank">
-        <img src="https://i.imgur.com/kTiLtZt.png" width="170px;" alt="Numeric logo" />
+        <img src="https://i.imgur.com/kTiLtZt.png" width="120px;" alt="Numeric logo" />
       </a>
       <br />
       <b>Numeric</b>
