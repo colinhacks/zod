@@ -186,33 +186,52 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 #### Gold
 
+> This tier was just added. [Be the first Gold Sponsor!](https://github.com/sponsors/colinhacks/sponsorships?sponsor=colinhacks&tier_id=399648&preview=false)
+
+#### Silver
+
 <table>
   <tr>
     <td align="center">
+      <a href="https://cerbos.dev/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/80861386?s=200&v=4" width="150px;" alt="Cerbos" />
+      </a>
+      <br />
+      <a href="https://cerbos.dev/" target="_blank">Cerbos</a>
+      <br />
+      <p width="150px">Painless access management for cloud native applications</p>
+    </td>
+    <td align="center">
+      <a href="https://github.com/emreb" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/180984?v=4" width="150px;" alt="@emreb" />
+      </a>
+      <br />
+      <a href="https://github.com/emreb" target="_blank">@emreb</a>
+    </td>
+    <td align="center">
       <a href="https://speakeasyapi.dev/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" width="200px;" alt="Speakeasy API" />
+        <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" width="150px;" alt="Speakeasy API" />
       </a>
       <br />
       <b>Speakeasy</b>
       <br />
       <a href="https://speakeasyapi.dev/" target="_blank">speakeasyapi.dev</a>
       <br />
-      <p width="200px">SDKs, Terraform, Docs.<br/>Your API made enterprise-ready</p>
+      <p width="150px">SDKs, Terraform, Docs.<br/>Your API made enterprise-ready</p>
     </td>
+    </tr><tr>
     <td align="center">
       <a href="https://deletype.com/" target="_blank">
-        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="200px;" alt="Deletype logo" />
+        <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" width="150px;" alt="Deletype logo" />
       </a>
       <br />
       <b>Deletype</b>
       <br />
       <a href="https://deletype.com" target="_blank">deletype.com</a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://trigger.dev/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" width="200px;" alt="Trigger.dev logo" />
+        <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" width="150px;" alt="Trigger.dev logo" />
       </a>
       <br />
       <b>Trigger.dev</b>
@@ -223,7 +242,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
     <td align="center">
       <a href="https://transloadit.com/?utm_source=zod&utm_medium=referral&utm_campaign=sponsorship&utm_content=github" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" width="200px;" alt="Transloadit logo" />
+        <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" width="150px;" alt="Transloadit logo" />
       </a>
       <br />
       <b>Transloadit</b>
@@ -232,11 +251,10 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br/>
       <p>Simple file processing for developers</p>
     </td>
-  </tr>
-  <tr>
+    </tr><tr>
     <td align="center">
       <a href="https://infisical.com" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" width="200px;" alt="Infisical logo" />
+        <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" width="150px;" alt="Infisical logo" />
       </a>
       <br />
       <b>Infisical</b>
@@ -247,97 +265,93 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
     <td align="center">
       <a href="https://whop.com/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" width="200px;" alt="Whop logo" />
+        <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" width="150px;" alt="Whop logo" />
       </a>
       <br />
       <b>Whop</b>
       <br />
       <a href="https://whop.com/" target="_blank">whop.com</a>
       <br />
-      <p width="200px">A marketplace for really cool internet products</p>
+      <p width="150px">A marketplace for really cool internet products</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://cryptojobslist.com/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" width="200px;" alt="CryptoJobsList logo" />
+        <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" width="150px;" alt="CryptoJobsList logo" />
       </a>
       <br />
       <b>CryptoJobsList</b>
       <br />
       <a href="https://cryptojobslist.com/" target="_blank">cryptojobslist.com</a>
       <br />
-      <p width="200px">The biggest list of crypto, blockchain and Web3 jobs</p>
+      <p width="150px">The biggest list of crypto, blockchain and Web3 jobs</p>
     </td>
+    </tr><tr>
     <td align="center">
       <a href="https://plain.com/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" width="200px;" alt="Plain logo" />
+        <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" width="150px;" alt="Plain logo" />
       </a>
       <br />
       <b>Plain.</b>
       <br />
       <a href="https://plain.com/" target="_blank">plain.com</a>
       <br />
-      <p width="200px">How developers support their users</p>
+      <p width="150px">How developers support their users</p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://inngest.com/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" width="200px;" alt="Inngest logo" />
+        <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" width="150px;" alt="Inngest logo" />
       </a>
       <br />
       <b>Inngest</b>
       <br />
       <a href="https://inngest.com/" target="_blank">inngest.com</a>
       <br />
-      <p width="200px">Serverless queues + durable workflows for TypeScript</p>
+      <p width="150px">Serverless queues + durable workflows for TypeScript</p>
     </td>
     <td align="center">
       <a href="https://storyblok.com/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" width="200px;" alt="Storyblok CMS" />
+        <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" width="150px;" alt="Storyblok CMS" />
       </a>
       <br />
       <b>Storyblok</b>
       <br />
       <a href="https://storyblok.com/" target="_blank">storyblok.com</a>
       <br />
-      <p width="200px">The only headless CMS with a visual editor</p>
+      <p width="150px">The only headless CMS with a visual editor</p>
     </td>
-  </tr>
-  <tr>
+    </tr><tr>
     <td align="center">
       <a href="https://mux.link/zod" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" width="200px;" alt="Mux logo" />
+        <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" width="150px;" alt="Mux logo" />
       </a>
       <br />
       <b>Mux</b>
       <br />
       <a href="https://mux.link/zod" target="_blank">mux.com</a>
       <br />
-      <p width="200px">The internet's video infrastructure</p>
+      <p width="150px">The internet's video infrastructure</p>
     </td>
     <td align="center">
       <a href="https://scalar.com/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" width="200px;" alt="Scalar.com logo" />
+        <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" width="150px;" alt="Scalar.com logo" />
       </a>
       <br />
       <b>Scalar</b>
       <br />
       <a href="https://scalar.com/" target="_blank">scalar.com</a>
       <br />
-      <p width="200px">Document, discover & test APIs with Scalar</p>
+      <p width="150px">Document, discover & test APIs with Scalar</p>
     </td>
   </tr>
 </table>
 
-#### Silver
+#### Bronze
 
 <table>
   <tr>
     <td align="center" colspan="2">
       <a href="https://www.numeric.io" target="_blank">
-        <img src="https://i.imgur.com/kTiLtZt.png" width="250px;" alt="Numeric logo" />
+        <img src="https://i.imgur.com/kTiLtZt.png" width="170px;" alt="Numeric logo" />
       </a>
       <br />
       <b>Numeric</b>
@@ -346,27 +360,27 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
     <td align="center">
       <a href="https://marcatopartners.com/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
+        <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="100px;" alt="Marcato Partners" />
       </a>
       <br />
       <b>Marcato Partners</b>
       <br />
       <a href="https://marcatopartners.com/" target="_blank">marcatopartners.com</a>
     </td>
-  </tr>
-  <tr>
-    <td align="center">
+     <td align="center">
       <a href="https://interval.com" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
+        <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="100px;" alt="" />
       </a>
       <br />
       <b>Interval</b>
       <br />
       <a href="https://interval.com" target="_blank">interval.com</a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://seasoned.cc" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="150px;" alt="" />
+        <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="100px;" alt="" />
       </a>
       <br />
       <b>Seasoned Software</b>
@@ -375,7 +389,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
     <td align="center">
       <a href="https://www.bamboocreative.nz/" target="_blank">
-        <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="150px;" alt="Bamboo Creative logo" />
+        <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="100px;" alt="Bamboo Creative logo" />
       </a>
       <br />
       <b>Bamboo Creative</b>
@@ -385,7 +399,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table>
 
-#### Bronze
+<!-- #### Bronze
 
 <table>
   <tr>
@@ -561,7 +575,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
     </td>
   </tr>
-</table>
+</table> -->
 
 ### Ecosystem
 
