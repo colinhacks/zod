@@ -291,25 +291,25 @@ each td should contain a ul
 
 <table>
   <tr>
-    <td><li><a href="https://www.numeric.io">Numeric</a></li></td>
-    <td><li><a href="https://marcatopartners.com/">Marcato Partners</a></li></td>
-    <td><li><a href="https://interval.com">Interval</a></li></td>
-    <td><li><a href="https://seasoned.cc">Seasoned Software</a></li></td>
+    <td><a href="https://www.numeric.io">Numeric</a></td>
+    <td><a href="https://marcatopartners.com/">Marcato Partners</a></td>
+    <td><a href="https://interval.com">Interval</a></td>
+    <td><a href="https://seasoned.cc">Seasoned Software</a></td>
   </tr>
   <tr>
-    <td><li><a href="https://www.bamboocreative.nz/">Bamboo Creative</a></li></td>
-    <td><li><a href="https://twitter.com/flybayer">Brandon Bayer</a></li></td>
-    <td><li><a href="https://github.com/brabeji">Jiří Brabec</a></li></td>
-    <td><li><a href="https://twitter.com/alexdotjs">Alex Johansson</a></li></td>
+    <td><a href="https://www.bamboocreative.nz/">Bamboo Creative</a></td>
+    <td><a href="https://twitter.com/flybayer">Brandon Bayer</a></td>
+    <td><a href="https://github.com/brabeji">Jiří Brabec</a></td>
+    <td><a href="https://twitter.com/alexdotjs">Alex Johansson</a></td>
   </tr>
   <tr>
-    <td><li><a href="https://learnwithjason.dev">Learn with Jason</a></li></td>
-    <td><li><a href="https://github.com/kronodeus">Ryan Palmer</a></li></td>
-    <td><li><a href="https://github.com/overthemike">Michael Sweeney</a></li></td>
-    <td><li><a href="https://github.com/ConnorSinnott">Connor Sinnott</a></li></td>
+    <td><a href="https://learnwithjason.dev">Learn with Jason</a></td>
+    <td><a href="https://github.com/kronodeus">Ryan Palmer</a></td>
+    <td><a href="https://github.com/overthemike">Michael Sweeney</a></td>
+    <td><a href="https://github.com/ConnorSinnott">Connor Sinnott</a></td>
   </tr>
   <tr>
-    <td><li><a href="https://aerabi.com/">Mohammad-Ali A'râbi</a></li></td>
+    <td><a href="https://aerabi.com/">Mohammad-Ali A'râbi</a></td>
   </tr>
 </table>
 <!-- 
