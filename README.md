@@ -2682,7 +2682,7 @@ Note that branded types do not affect the runtime result of `.parse`. It is a st
 This method returns a `ZodReadonly` schema instance that parses the input using the base schema, then calls `Object.freeze()` on the result. The inferred type is also marked as `readonly`.
 
 ```ts
-const schema = z.object({ name: string }).readonly();
+const schema = z.object({ name: z.string() }).readonly();
 type schema = z.infer<typeof schema>;
 // Readonly<{name: string}>
 
