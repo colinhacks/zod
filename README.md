@@ -291,31 +291,25 @@ each td should contain a ul
 
 <table>
   <tr>
-    <td>
-      <ul>
-        <li><a href="https://www.numeric.io">Numeric</a></li>
-        <li><a href="https://marcatopartners.com/">Marcato Partners</a></li>
-        <li><a href="https://interval.com">Interval</a></li>
-        <li><a href="https://seasoned.cc">Seasoned Software</a></li>
-        <li><a href="https://www.bamboocreative.nz/">Bamboo Creative</a></li>
-      </ul>
-    </td>
-    <td>
-      <ul>
-        <li><a href="https://twitter.com/flybayer">Brandon Bayer</a></li>
-        <li><a href="https://github.com/brabeji">Jiří Brabec</a></li>
-        <li><a href="https://twitter.com/alexdotjs">Alex Johansson</a></li>
-        <li><a href="https://learnwithjason.dev">Learn with Jason</a></li>
-        <li><a href="https://github.com/kronodeus">Ryan Palmer</a></li>
-      </ul>
-    </td>
-    <td>
-      <ul>
-        <li><a href="https://github.com/overthemike">Michael Sweeney</a></li>
-        <li><a href="https://github.com/ConnorSinnott">Connor Sinnott</a></li>
-        <li><a href="https://aerabi.com/">Mohammad-Ali A'râbi</a></li>
-      </ul>
-    </td>
+    <td><li><a href="https://www.numeric.io">Numeric</a></li></td>
+    <td><li><a href="https://marcatopartners.com/">Marcato Partners</a></li></td>
+    <td><li><a href="https://interval.com">Interval</a></li></td>
+    <td><li><a href="https://seasoned.cc">Seasoned Software</a></li></td>
+  </tr>
+  <tr>
+    <td><li><a href="https://www.bamboocreative.nz/">Bamboo Creative</a></li></td>
+    <td><li><a href="https://twitter.com/flybayer">Brandon Bayer</a></li></td>
+    <td><li><a href="https://github.com/brabeji">Jiří Brabec</a></li></td>
+    <td><li><a href="https://twitter.com/alexdotjs">Alex Johansson</a></li></td>
+  </tr>
+  <tr>
+    <td><li><a href="https://learnwithjason.dev">Learn with Jason</a></li></td>
+    <td><li><a href="https://github.com/kronodeus">Ryan Palmer</a></li></td>
+    <td><li><a href="https://github.com/overthemike">Michael Sweeney</a></li></td>
+    <td><li><a href="https://github.com/ConnorSinnott">Connor Sinnott</a></li></td>
+  </tr>
+  <tr>
+    <td><li><a href="https://aerabi.com/">Mohammad-Ali A'râbi</a></li></td>
   </tr>
 </table>
 <!-- 
