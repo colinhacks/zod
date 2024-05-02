@@ -207,75 +207,75 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table>
   <tr>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/80861386?s=200&v=4" height="40px;" alt="Cerbos" />
+      <img src="https://avatars.githubusercontent.com/u/80861386?s=200&v=4" height="45px;" alt="Cerbos" />
       <br />
       <a href="https://cerbos.dev/" target="_blank">Cerbos</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/180984?v=4" height="40px;" alt="@emreb" />
+      <img src="https://avatars.githubusercontent.com/u/180984?v=4" height="45px;" alt="@emreb" />
       <br />
       <a href="https://github.com/emreb" target="_blank">@emreb</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="40px;" alt="Speakeasy API" />
+      <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="45px;" alt="Speakeasy API" />
       <br />
       <a href="https://speakeasyapi.dev/" target="_blank">Speakeasy</a>
     </td>
     <td align="center">
-      <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" height="40px;" alt="Deletype logo" />
+      <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" height="45px;" alt="Deletype logo" />
       <br />
       <a href="https://deletype.com" target="_blank">Deletype</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" height="40px;" alt="Trigger.dev logo" />
+      <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" height="45px;" alt="Trigger.dev logo" />
       <br />
       <a href="https://trigger.dev" target="_blank">Trigger.dev</a>
     </td>
   </tr><tr>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" height="40px;" alt="Transloadit logo" />
+      <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" height="45px;" alt="Transloadit logo" />
       <br />
       <a href="https://transloadit.com/?utm_source=zod&utm_medium=refe
     rral&utm_campaign=sponsorship&utm_content=github" target="_blank">Transloadit</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" height="40px;" alt="Infisical logo" />
+      <img src="https://avatars.githubusercontent.com/u/107880645?s=200&v=4" height="45px;" alt="Infisical logo" />
       <br />
       <a href="https://infisical.com" target="_blank">Infisical</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" height="40px;" alt="Whop logo" />
+      <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" height="45px;" alt="Whop logo" />
       <br />
       <a href="https://whop.com/" target="_blank">Whop</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" height="40px;" alt="CryptoJobsList logo" />
+      <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" height="45px;" alt="CryptoJobsList logo" />
       <br />
       <a href="https://cryptojobslist.com/" target="_blank">CryptoJobsList</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" height="40px;" alt="Plain logo" />
+      <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" height="45px;" alt="Plain logo" />
       <br />
       <a href="https://plain.com/" target="_blank">Plain.</a>
     </td>
   </tr><tr>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" height="40px;" alt="Inngest logo" />
+      <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" height="45px;" alt="Inngest logo" />
       <br />
       <a href="https://inngest.com/" target="_blank">Inngest</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" height="40px;" alt="Storyblok CMS" />
+      <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" height="45px;" alt="Storyblok CMS" />
       <br />
       <a href="https://storyblok.com/" target="_blank">Storyblok</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" height="40px;" alt="Mux logo" />
+      <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" height="45px;" alt="Mux logo" />
       <br />
       <a href="https://mux.link/zod" target="_blank">Mux</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="40px;" alt="Scalar.com logo" />
+      <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="45px;" alt="Scalar.com logo" />
       <br />
       <a href="https://scalar.com/" target="_blank">Scalar</a>
     </td>
