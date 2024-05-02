@@ -284,6 +284,41 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 #### Bronze
 
+<!--
+two column table layout
+each td should contain a ul
+ -->
+
+<table>
+  <tr>
+    <td>
+      <ul>
+        <li><a href="https://www.numeric.io">Numeric</a></li>
+        <li><a href="https://marcatopartners.com/">Marcato Partners</a></li>
+        <li><a href="https://interval.com">Interval</a></li>
+        <li><a href="https://seasoned.cc">Seasoned Software</a></li>
+        <li><a href="https://www.bamboocreative.nz/">Bamboo Creative</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://twitter.com/flybayer">Brandon Bayer</a></li>
+        <li><a href="https://github.com/brabeji">Jiří Brabec</a></li>
+        <li><a href="https://twitter.com/alexdotjs">Alex Johansson</a></li>
+        <li><a href="https://learnwithjason.dev">Learn with Jason</a></li>
+        <li><a href="https://github.com/kronodeus">Ryan Palmer</a></li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li><a href="https://github.com/overthemike">Michael Sweeney</a></li>
+        <li><a href="https://github.com/ConnorSinnott">Connor Sinnott</a></li>
+        <li><a href="https://aerabi.com/">Mohammad-Ali A'râbi</a></li>
+      </ul>
+    </td>
+  </tr>
+</table>
+<!-- 
 - [Numeric](https://www.numeric.io)
 - [Marcato Partners](https://marcatopartners.com/)
 - [Interval](https://interval.com)
@@ -296,7 +331,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 - [Ryan Palmer](https://github.com/kronodeus)
 - [Michael Sweeney](https://github.com/overthemike)
 - [Connor Sinnott](https://github.com/ConnorSinnott)
-- [Mohammad-Ali A'râbi](https://aerabi.com/)
+- [Mohammad-Ali A'râbi](https://aerabi.com/) -->
 
 ### Ecosystem
 
