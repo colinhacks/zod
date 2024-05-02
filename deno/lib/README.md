@@ -284,11 +284,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 #### Bronze
 
-<!--
-two column table layout
-each td should contain a ul
- -->
-
 <table>
   <tr>
     <td><a href="https://www.numeric.io">Numeric</a></td>
@@ -298,18 +293,211 @@ each td should contain a ul
   </tr>
   <tr>
     <td><a href="https://www.bamboocreative.nz/">Bamboo Creative</a></td>
-    <td><a href="https://twitter.com/flybayer">Brandon Bayer</a></td>
-    <td><a href="https://github.com/brabeji">Jiří Brabec</a></td>
-    <td><a href="https://twitter.com/alexdotjs">Alex Johansson</a></td>
+  </tr>
+</table>
+
+#### Copper
+
+<table>
+  <tr>
+    <td>Brandon Bayer</td>
+    <td>Jiří Brabec</td>
+    <td>Alex Johansson</td>
+    <td>Fungible Systems</td>
   </tr>
   <tr>
-    <td><a href="https://learnwithjason.dev">Learn with Jason</a></td>
-    <td><a href="https://github.com/kronodeus">Ryan Palmer</a></td>
-    <td><a href="https://github.com/overthemike">Michael Sweeney</a></td>
-    <td><a href="https://github.com/ConnorSinnott">Connor Sinnott</a></td>
+    <td>Adaptable</td>
+    <td>Avana Wallet</td>
+    <td>Jason Lengstorf</td>
+    <td>Global Illumination, Inc.</td>
   </tr>
   <tr>
-    <td><a href="https://aerabi.com/">Mohammad-Ali A'râbi</a></td>
+    <td>MasterBorn</td>
+    <td>Ryan Palmer</td>
+    <td>Michael Sweeney</td>
+    <td>Nextbase</td>
+  </tr>
+  <tr>
+    <td>Remotion</td>
+    <td>Connor Sinnott</td>
+    <td>Mohammad-Ali A'râbi</td>
+    <td>Supatool</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://twitter.com/flybayer" target="_blank">
+        <img src="https://avatars2.githubusercontent.com/u/8813276?s=460&u=4ff8beb9a67b173015c4b426a92d89cab960af1b&v=4" width="100px;" alt=""/>
+      </a>
+      <br />
+      <b>Brandon Bayer</b>
+      <br/>
+      <a href="https://twitter.com/flybayer" target="_blank">@flybayer</a>,
+      <span>creator of <a href="https://blitzjs.com">Blitz.js</a></span>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://github.com/brabeji" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/2237954?v=4" width="100px;" alt=""/>
+      </a>
+      <br />
+      <b>Jiří Brabec</b>
+      <br/>
+      <a href="https://github.com/brabeji" target="_blank">@brabeji</a>
+      <br />
+    </td>
+     <td align="center">
+      <a href="https://twitter.com/alexdotjs" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/459267?v=4" width="100px;" alt="" />
+      </a>
+      <br />
+      <b>Alex Johansson</b>
+      <br />
+      <a href="https://twitter.com/alexdotjs" target="_blank">@alexdotjs</a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://fungible.systems/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/80220121?s=200&v=4" width="100px;" alt="Fungible Systems logo"/>
+      </a>
+      <br />
+      <b>Fungible Systems</b>
+      <br/>
+      <a href="https://fungible.systems/" target="_blank">fungible.systems</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://adaptable.io/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/60378268?s=200&v=4" width="100px;" alt=""/>
+      </a>
+      <br />
+      <b>Adaptable</b>
+      <br/>
+      <a href="https://adaptable.io/" target="_blank">adaptable.io</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://www.avanawallet.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/105452197?s=200&v=4" width="100px;" alt="Avana Wallet logo"/>
+      </a>
+      <br />
+      <b>Avana Wallet</b>
+      <br/>
+      <a href="https://www.avanawallet.com/" target="_blank">avanawallet.com</a><br/>
+      <span>Solana non-custodial wallet</span>
+      <br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://learnwithjason.dev" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/66575486?s=200&v=4" width="100px;" alt="Learn with Jason logo"/>
+      </a>
+      <br />
+      <b>Jason Lengstorf</b>
+      <br/>
+      <a href="https://learnwithjason.dev/" target="_blank">learnwithjason.dev</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://ill.inc/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/89107581?s=200&v=4" width="100px;" alt="Global Illumination"/>
+      </a>
+      <br />
+      <b>Global Illumination, Inc.</b>
+      <br/>
+      <a href="https://ill.inc/" target="_blank">ill.inc</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/48984031?s=200&v=4" width="100px;" alt="MasterBorn logo"/>
+      </a>
+      <br />
+      <b>MasterBorn</b>
+      <br/>
+      <a href="https://www.masterborn.com/career?utm_source=github&utm_medium=referral&utm_campaign=zodsponsoring" target="_blank">masterborn.com</a>
+      <br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/kronodeus" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/18314366?v=4" width="100px;" alt="Ryan Palmer"/>
+      </a>
+      <br />
+      <b>Ryan Palmer</b>
+      <br/>
+      <a href="https://github.com/kronodeus" target="_blank">@kronodeus</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://github.com/overthemike" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/223509?v=4" width="100px;" alt="Michael Sweeney"/>
+      </a>
+      <br />
+      <b>Michael Sweeney</b>
+      <br/>
+      <a href="https://github.com/overthemike" target="_blank">@overthemike</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://usenextbase.com/" target="_blank">
+        <img src="https://pbs.twimg.com/profile_images/1692236063409070080/28yXFtop_400x400.jpg" width="100px;" alt="Nextbase logo"/>
+      </a>
+      <br />
+      <b>Nextbase</b>
+      <br/>
+      <a href="https://usenextbase.com/" target="_blank">usenextbase.com</a>
+      <br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://remotion.dev" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/85344006" width="100px;" alt="Remotion logo"/>
+      </a>
+      <br />
+      <b>Remotion</b>
+      <br/>
+      <a href="https://remotion.dev" target="_blank">remotion.dev</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://github.com/ConnorSinnott" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/12754711?v=4" width="100px;" alt="Connor Sinnott profile"/>
+      </a>
+      <br />
+      <b>Connor Sinnott</b>
+      <br/>
+      <a href="https://github.com/ConnorSinnott" target="_blank">@ConnorSinnott</a>
+      <br />
+    </td>
+    <td align="center">
+      <a href="https://aerabi.com/" target="_blank">
+        <img src="https://avatars.githubusercontent.com/u/44623032?v=4" width="100px;" alt="aerabi"/>
+      </a>
+      <br />
+      <b>Mohammad-Ali A'râbi</b>
+      <br/>
+      <a href="https://aerabi.com/" target="_blank">aerabi.com</a>
+      <br />
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://supatool.io/" target="_blank">
+        <img src="https://github.com/colinhacks/zod/assets/3084745/d0ec96c9-bf79-494f-9caa-9233da251f55" width="100px;" alt="Supatool logo"/>
+      </a>
+      <br />
+      <b>Supatool</b>
+      <br/>
+      <a href="https://supatool.io/" target="_blank">supatool.io</a>
+      <br />
+    </td>
   </tr>
 </table>
 <!-- 
@@ -417,6 +605,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 #### Utilities for Zod
 
 - [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): Framework agnostic utilities for Zod.
+- [`zod-playground`](https://github.com/marilari88/zod-playground): A tool for learning and testing Zod schema validation functionalities. [Link](https://zod-playground.vercel.app/).
 - [`zod-sandbox`](https://github.com/nereumelo/zod-sandbox): Controlled environment for testing zod schemas. [Live demo](https://zod-sandbox.vercel.app/).
 - [`zod-dev`](https://github.com/schalkventer/zod-dev): Conditionally disables Zod runtime parsing in production.
 - [`zod-accelerator`](https://github.com/duplojs/duplojs-zod-accelerator): Accelerates Zod's throughput up to ~100x.
@@ -2445,7 +2634,7 @@ Note that branded types do not affect the runtime result of `.parse`. It is a st
 This method returns a `ZodReadonly` schema instance that parses the input using the base schema, then calls `Object.freeze()` on the result. The inferred type is also marked as `readonly`.
 
 ```ts
-const schema = z.object({ name: string }).readonly();
+const schema = z.object({ name: z.string() }).readonly();
 type schema = z.infer<typeof schema>;
 // Readonly<{name: string}>
 

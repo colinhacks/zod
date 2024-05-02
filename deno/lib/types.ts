@@ -5041,10 +5041,15 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const result = this._def.innerType._parse(input);
-    if (isValid(result)) {
-      result.value = Object.freeze(result.value);
-    }
-    return result;
+    const freeze = (data: ParseReturnType<this["_output"]>) => {
+      if (isValid(data)) {
+        data.value = Object.freeze(data.value);
+      }
+      return data;
+    };
+    return isAsync(result)
+      ? result.then((data) => freeze(data))
+      : freeze(result);
   }
 
   static create = <T extends ZodTypeAny>(
