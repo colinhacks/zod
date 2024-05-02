@@ -212,9 +212,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://cerbos.dev/" target="_blank">Cerbos</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/180984?v=4" height="45px;" alt="@emreb" />
+      <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="45px;" alt="Scalar.com logo" />
       <br />
-      <a href="https://github.com/emreb" target="_blank">@emreb</a>
+      <a href="https://scalar.com/" target="_blank">Scalar</a>
     </td>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="45px;" alt="Speakeasy API" />
@@ -275,9 +275,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <a href="https://mux.link/zod" target="_blank">Mux</a>
     </td>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="45px;" alt="Scalar.com logo" />
+      <img src="https://avatars.githubusercontent.com/u/180984?v=4" height="45px;" alt="@emreb" />
       <br />
-      <a href="https://scalar.com/" target="_blank">Scalar</a>
+      <a href="https://github.com/emreb" target="_blank"><code>@emreb</code></a>
     </td>
   </tr>
 </table>
