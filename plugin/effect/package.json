@@ -1,0 +1,60 @@
+{
+	"name": "@zod-plugin/effect",
+	"version": "0.1.0",
+	"type": "module",
+	"author": "Colin McDonnell <colin@colinhacks.com>",
+	"types": "./lib/index.d.ts",
+	"description": "TypeScript-first schema declaration and validation library with static type inference",
+	"files": ["/lib"],
+	"keywords": ["typescript", "schema", "validation", "type", "inference"],
+	"license": "MIT",
+	"main": "./lib/index.js",
+	"module": "./lib/index.mjs",
+	"sideEffects": true,
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/colinhacks/zod.git"
+	},
+	"scripts": {
+		"clean": "rm -rf lib/*",
+		"build": "yarn run clean && npm run build:cjs && npm run build:esm",
+		"build:esm": "rollup --config ./configs/rollup.config.js",
+		"build:cjs": "tsc -p ./configs/tsconfig.cjs.json",
+		"build:types": "tsc -p ./configs/tsconfig.types.json",
+		"build:test": "tsc -p ./configs/tsconfig.test.json",
+		"test:watch": "yarn test:ts-jest --watch",
+		"test": "yarn tsx tests/*.ts",
+		"prepublishOnly": "npm run test && npm run build"
+	},
+	"devDependencies": {
+		"@rollup/plugin-commonjs": "^25.0.7",
+		"@rollup/plugin-node-resolve": "^15.2.3",
+		"@rollup/plugin-typescript": "^8.2.0",
+		"@types/node": "^20.0.0",
+		"effect": "^3.0.0",
+		"jest": "^29.3.1",
+		"lint-staged": "^12.3.7",
+		"prettier": "^2.6.0",
+		"pretty-quick": "^3.1.3",
+		"rollup": "^2.70.1",
+		"ts-jest": "^29.1.0",
+		"tsx": "^3.8.0",
+		"typescript": "^5.0.0",
+		"zod": "^3.0.0"
+	},
+	"peerDependencies": {
+		"effect": "^3.0.0",
+		"zod": "^3.0.0"
+	},
+	"exports": {
+		".": {
+			"types": "./lib/index.d.ts",
+			"require": "./lib/index.js",
+			"import": "./lib/index.mjs"
+		},
+		"./package.json": "./package.json"
+	},
+	"bugs": {
+		"url": "https://github.com/colinhacks/zod/issues"
+	}
+}

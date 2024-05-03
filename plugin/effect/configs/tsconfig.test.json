@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "__buildtest__",
+    "target": "es5",
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "noEmit": true
+  },
+  "exclude": []
+}
