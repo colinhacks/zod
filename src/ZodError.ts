@@ -1,4 +1,4 @@
-import type { TypeOf, ZodType } from ".";
+import type { input, TypeOf, ZodType } from ".";
 import { util } from "./helpers";
 import { Primitive } from "./helpers/typeAliases";
 import { ZodParsedType } from "./helpers/util";
@@ -8,7 +8,7 @@ type allKeys<T> = T extends any ? keyof T : never;
 export type inferFlattenedErrors<
   T extends ZodType<any, any, any>,
   U = string
-> = typeToFlattenedError<TypeOf<T>, U>;
+> = typeToFlattenedError<input<T>, U>;
 export type typeToFlattenedError<T, U = string> = {
   formErrors: U[];
   fieldErrors: {
