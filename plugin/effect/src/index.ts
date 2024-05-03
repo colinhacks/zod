@@ -29,11 +29,6 @@ if (!(globalThis as { [k: symbol]: unknown })[sym]) {
       };
     },
   });
-  // = z.ZodType.prototype.effect ?? {};
-  // z.ZodType.prototype.effect.parse = zodEffect.bind(z.ZodType.prototype);
-  // z.ZodType.prototype.effect.parseSync = zodEffectSync.bind(
-  //   z.ZodType.prototype
-  // );
   z.ZodError.prototype._tag = "ZodError";
 }
 
