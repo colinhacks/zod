@@ -284,11 +284,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 #### Bronze
 
-<!--
-two column table layout
-each td should contain a ul
- -->
-
 <table>
   <tr>
     <td><a href="https://www.numeric.io">Numeric</a></td>
@@ -298,34 +293,37 @@ each td should contain a ul
   </tr>
   <tr>
     <td><a href="https://www.bamboocreative.nz/">Bamboo Creative</a></td>
-    <td><a href="https://twitter.com/flybayer">Brandon Bayer</a></td>
-    <td><a href="https://github.com/brabeji">Jiří Brabec</a></td>
-    <td><a href="https://twitter.com/alexdotjs">Alex Johansson</a></td>
-  </tr>
-  <tr>
-    <td><a href="https://learnwithjason.dev">Learn with Jason</a></td>
-    <td><a href="https://github.com/kronodeus">Ryan Palmer</a></td>
-    <td><a href="https://github.com/overthemike">Michael Sweeney</a></td>
-    <td><a href="https://github.com/ConnorSinnott">Connor Sinnott</a></td>
-  </tr>
-  <tr>
-    <td><a href="https://aerabi.com/">Mohammad-Ali A'râbi</a></td>
   </tr>
 </table>
-<!-- 
-- [Numeric](https://www.numeric.io)
-- [Marcato Partners](https://marcatopartners.com/)
-- [Interval](https://interval.com)
-- [Seasoned Software](https://seasoned.cc)
-- [Bamboo Creative](https://www.bamboocreative.nz/)
-- [Brandon Bayer](https://twitter.com/flybayer)
-- [Jiří Brabec](https://github.com/brabeji)
-- [Alex Johansson](https://twitter.com/alexdotjs)
-- [Learn with Jason](https://learnwithjason.dev)
-- [Ryan Palmer](https://github.com/kronodeus)
-- [Michael Sweeney](https://github.com/overthemike)
-- [Connor Sinnott](https://github.com/ConnorSinnott)
-- [Mohammad-Ali A'râbi](https://aerabi.com/) -->
+
+#### Copper
+
+<table>
+  <tr>
+    <td>Brandon Bayer</td>
+    <td>Jiří Brabec</td>
+    <td>Alex Johansson</td>
+    <td>Fungible Systems</td>
+  </tr>
+  <tr>
+    <td>Adaptable</td>
+    <td>Avana Wallet</td>
+    <td>Jason Lengstorf</td>
+    <td>Global Illumination, Inc.</td>
+  </tr>
+  <tr>
+    <td>MasterBorn</td>
+    <td>Ryan Palmer</td>
+    <td>Michael Sweeney</td>
+    <td>Nextbase</td>
+  </tr>
+  <tr>
+    <td>Remotion</td>
+    <td>Connor Sinnott</td>
+    <td>Mohammad-Ali A'râbi</td>
+    <td>Supatool</td>
+  </tr>
+</table>
 
 ### Ecosystem
 
