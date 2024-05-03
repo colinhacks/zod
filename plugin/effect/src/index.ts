@@ -21,9 +21,19 @@ function zodEffectSync(this: z.ZodType, data: unknown, params?: any) {
 const sym = Symbol.for("zod_effect_executed");
 if (!(globalThis as { [k: symbol]: unknown })[sym]) {
   (globalThis as { [k: symbol]: unknown })[sym] = true;
-  z.ZodType.prototype.effect = z.ZodType.prototype.effect ?? {};
-  z.ZodType.prototype.effect.parse = zodEffect;
-  z.ZodType.prototype.effect.parseSync = zodEffectSync;
+  Object.defineProperty(z.ZodType.prototype, "effect", {
+    get() {
+      return {
+        parse: zodEffect.bind(this),
+        parseSync: zodEffectSync.bind(this),
+      };
+    },
+  });
+  // = z.ZodType.prototype.effect ?? {};
+  // z.ZodType.prototype.effect.parse = zodEffect.bind(z.ZodType.prototype);
+  // z.ZodType.prototype.effect.parseSync = zodEffectSync.bind(
+  //   z.ZodType.prototype
+  // );
   z.ZodError.prototype._tag = "ZodError";
 }
 
