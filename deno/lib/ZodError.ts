@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-import type { TypeOf, ZodType } from "./index.ts";
-import { util } from "./helpers/index.ts";
-=======
 import type { input, TypeOf, ZodType } from "./index.ts";
->>>>>>> e39caf6 (Fix inferFlattenedErrors type)
+import { util } from "./helpers/index.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { ZodParsedType } from "./helpers/util.ts";
 
