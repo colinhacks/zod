@@ -62,7 +62,7 @@ import "@zod-plugin/effect";
 
 This adds two new methods to the `ZodType` base class. These methods are now available on all schemas throughout your application.
 
-### `.effect(data): Effect<T, ZodError, never>`
+### `.effect.parse(data): Effect<T, ZodError, never>`
 
 This method accepts some input data and parses it _asynchronously_.
 
@@ -76,16 +76,16 @@ const schema = z.object({
   name: z.string(),
 });
 
-const effect = schema.effect({ name: "Michael Arnaldi" });
+const effect = schema.effect.parse({ name: "Michael Arnaldi" });
 //=>  Effect<{ name: string }, ZodError, never>;
 
 await Effect.runPromise(effect);
 // => { name: "Michael Arnaldi" }
 ```
 
-### `.effectSync(data): Effect<T, ZodError, never>`
+### `.effect.parseSync(data): Effect<T, ZodError, never>`
 
-This method accepts some input data and parses it _synchronously_.
+This method accepts some input data and parses it _synchronously_. If any asynchronous refinements or transforms are encountered, Effect will throw an error.
 
 ```ts
 import * as z from "zod";
@@ -97,7 +97,7 @@ const schema = z.object({
   name: z.string(),
 });
 
-const effect = schema.effectSync({ name: "Michael Arnaldi" });
+const effect = schema.effect.parseSync({ name: "Michael Arnaldi" });
 //=>  Effect<{ name: string }, ZodError, never>;
 
 await Effect.runSync(effect);

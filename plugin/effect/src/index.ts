@@ -21,19 +21,23 @@ function zodEffectSync(this: z.ZodType, data: unknown, params?: any) {
 const sym = Symbol.for("zod_effect_executed");
 if (!(globalThis as { [k: symbol]: unknown })[sym]) {
   (globalThis as { [k: symbol]: unknown })[sym] = true;
-  z.ZodType.prototype.effect = zodEffect;
-  z.ZodType.prototype.effectSync = zodEffectSync;
+  z.ZodType.prototype.effect = z.ZodType.prototype.effect ?? {};
+  z.ZodType.prototype.effect.parse = zodEffect;
+  z.ZodType.prototype.effect.parseSync = zodEffectSync;
   z.ZodError.prototype._tag = "ZodError";
 }
 
+interface EffectMethods<T> {
+  parse(
+    ...args: Parameters<z.ZodType["parseAsync"]>
+  ): Effect.Effect<T, z.ZodError<T>>;
+  parseSync(
+    ...args: Parameters<z.ZodType["parse"]>
+  ): Effect.Effect<T, z.ZodError<T>>;
+}
 declare module "zod" {
   interface ZodType {
-    effect(
-      ...args: Parameters<z.ZodType["parseAsync"]>
-    ): Effect.Effect<this["_output"], z.ZodError<this["_output"]>>;
-    effectSync(
-      ...args: Parameters<z.ZodType["parse"]>
-    ): Effect.Effect<this["_output"], z.ZodError<this["_output"]>>;
+    effect: EffectMethods<this["_output"]>;
   }
 
   interface ZodError {
