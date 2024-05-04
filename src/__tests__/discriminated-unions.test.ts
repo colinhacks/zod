@@ -74,6 +74,7 @@ test("invalid - null", () => {
       {
         code: z.ZodIssueCode.invalid_type,
         expected: z.ZodParsedType.object,
+        input: null,
         message: "Expected object, received null",
         received: z.ZodParsedType.null,
         path: [],
@@ -93,6 +94,7 @@ test("invalid discriminator value", () => {
     expect(JSON.parse(e.message)).toEqual([
       {
         code: z.ZodIssueCode.invalid_union_discriminator,
+        input: { type: "x", a: "abc" },
         options: ["a", "b"],
         message: "Invalid discriminator value. Expected 'a' | 'b'",
         path: ["type"],
@@ -188,6 +190,7 @@ test("async - invalid", async () => {
       {
         code: "invalid_type",
         expected: "string",
+        input: 1,
         received: "number",
         path: ["a"],
         message: "Expected string, received number",

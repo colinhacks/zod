@@ -148,6 +148,7 @@ test("all errors", () => {
           {
             code: "invalid_type",
             expected: "string",
+            input: null,
             message: "Expected string, received null",
             path: ["a"],
             received: "null",
@@ -157,6 +158,7 @@ test("all errors", () => {
           {
             code: "invalid_type",
             expected: "string",
+            input: null,
             message: "Expected string, received null",
             path: ["b"],
             received: "null",

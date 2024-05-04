@@ -45,6 +45,7 @@ test("parse string to json", async () => {
         {
           code: "invalid_type",
           expected: "number",
+          input: "not a number!",
           received: "string",
           path: ["myJsonConfig", "foo"],
           message: "Expected number, received string",
@@ -52,6 +53,7 @@ test("parse string to json", async () => {
         {
           code: "invalid_type",
           expected: "string",
+          input: null,
           received: "null",
           path: ["someOtherValue"],
           message: "Expected string, received null",
@@ -71,6 +73,29 @@ test("parse string to json", async () => {
       issues: [
         {
           code: "invalid_string",
+          input: {
+            _cached: {
+              keys: ["foo"],
+              shape: {
+                foo: {
+                  _def: {
+                    checks: [],
+                    coerce: false,
+                    typeName: "ZodNumber",
+                  },
+                },
+              },
+            },
+            _def: {
+              catchall: {
+                _def: {
+                  typeName: "ZodNever",
+                },
+              },
+              typeName: "ZodObject",
+              unknownKeys: "strip",
+            },
+          },
           validation: "json",
           message: "Invalid json",
           path: ["myJsonConfig"],
@@ -78,6 +103,7 @@ test("parse string to json", async () => {
         {
           code: "invalid_type",
           expected: "string",
+          input: null,
           received: "null",
           path: ["someOtherValue"],
           message: "Expected string, received null",

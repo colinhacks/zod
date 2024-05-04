@@ -20,6 +20,7 @@ test("transform ctx.addIssue with parse", () => {
         const i = strs.indexOf(data);
         if (i === -1) {
           ctx.addIssue({
+            input: data,
             code: "custom",
             message: `${data} is not one of our allowed strings`,
           });
@@ -31,6 +32,7 @@ test("transform ctx.addIssue with parse", () => {
     JSON.stringify(
       [
         {
+          input: "asdf",
           code: "custom",
           message: "asdf is not one of our allowed strings",
           path: [],
@@ -51,6 +53,7 @@ test("transform ctx.addIssue with parseAsync", async () => {
       const i = strs.indexOf(data);
       if (i === -1) {
         ctx.addIssue({
+          input: data,
           code: "custom",
           message: `${data} is not one of our allowed strings`,
         });
@@ -65,6 +68,7 @@ test("transform ctx.addIssue with parseAsync", async () => {
       issues: [
         {
           code: "custom",
+          input: "asdf",
           message: "asdf is not one of our allowed strings",
           path: [],
         },
@@ -80,7 +84,11 @@ test("z.NEVER in transform", () => {
     .optional()
     .transform((val, ctx) => {
       if (!val) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "bad" });
+        ctx.addIssue({
+          input: val,
+          code: z.ZodIssueCode.custom,
+          message: "bad",
+        });
         return z.NEVER;
       }
       return val;

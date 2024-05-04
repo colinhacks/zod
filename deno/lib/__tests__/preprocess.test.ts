@@ -24,6 +24,7 @@ test("preprocess ctx.addIssue with parse", () => {
   expect(() => {
     z.preprocess((data, ctx) => {
       ctx.addIssue({
+        input: data,
         code: "custom",
         message: `${data} is not one of our allowed strings`,
       });
@@ -33,6 +34,7 @@ test("preprocess ctx.addIssue with parse", () => {
     JSON.stringify(
       [
         {
+          input: "asdf",
           code: "custom",
           message: "asdf is not one of our allowed strings",
           path: [],
@@ -48,6 +50,7 @@ test("preprocess ctx.addIssue non-fatal by default", () => {
   try {
     z.preprocess((data, ctx) => {
       ctx.addIssue({
+        input: data,
         code: "custom",
         message: `custom error`,
       });
@@ -63,6 +66,7 @@ test("preprocess ctx.addIssue fatal true", () => {
   try {
     z.preprocess((data, ctx) => {
       ctx.addIssue({
+        input: data,
         code: "custom",
         message: `custom error`,
         fatal: true,
@@ -78,6 +82,7 @@ test("preprocess ctx.addIssue fatal true", () => {
 test("async preprocess ctx.addIssue with parse", async () => {
   const schema = z.preprocess(async (data, ctx) => {
     ctx.addIssue({
+      input: data,
       code: "custom",
       message: `custom error`,
     });
@@ -88,6 +93,7 @@ test("async preprocess ctx.addIssue with parse", async () => {
     JSON.stringify(
       [
         {
+          input: "asdf",
           code: "custom",
           message: "custom error",
           path: [],
@@ -103,6 +109,7 @@ test("preprocess ctx.addIssue with parseAsync", async () => {
   const result = await z
     .preprocess(async (data, ctx) => {
       ctx.addIssue({
+        input: data,
         code: "custom",
         message: `${data} is not one of our allowed strings`,
       });
@@ -116,6 +123,7 @@ test("preprocess ctx.addIssue with parseAsync", async () => {
       issues: [
         {
           code: "custom",
+          input: "asdf",
           message: "asdf is not one of our allowed strings",
           path: [],
         },
@@ -128,7 +136,7 @@ test("preprocess ctx.addIssue with parseAsync", async () => {
 test("z.NEVER in preprocess", () => {
   const foo = z.preprocess((val, ctx) => {
     if (!val) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "bad" });
+      ctx.addIssue({ input: val, code: z.ZodIssueCode.custom, message: "bad" });
       return z.NEVER;
     }
     return val;
@@ -173,12 +181,19 @@ test("preprocess validates with sibling errors", () => {
       [
         {
           code: "invalid_type",
+          input: undefined,
           expected: "string",
           received: "undefined",
           path: ["missing"],
           message: "Required",
         },
         {
+          code: "custom",
+          message: "Invalid input",
+          path: ["missing"],
+        },
+        {
+          input: "asdf",
           validation: "regex",
           code: "invalid_string",
           message: "Invalid",

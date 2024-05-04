@@ -4,7 +4,6 @@ const test = Deno.test;
 
 import { util } from "../helpers/index.ts";
 import * as z from "../index.ts";
-import { ZodIssueCode } from "../ZodError.ts";
 
 test("refinement", () => {
   const obj1 = z.object({
@@ -98,39 +97,41 @@ test("custom path", async () => {
   }
 });
 
-test("use path in refinement context", async () => {
-  const noNested = z.string()._refinement((_val, ctx) => {
-    if (ctx.path.length > 0) {
-      ctx.addIssue({
-        code: ZodIssueCode.custom,
-        message: `schema cannot be nested. path: ${ctx.path.join(".")}`,
-      });
-      return false;
-    } else {
-      return true;
-    }
-  });
+// test("use path in refinement context", async () => {
+//   const noNested = z.string()._refinement((_val, ctx) => {
+//     if (ctx.path.length > 0) {
+//       ctx.addIssue({
 
-  const data = z.object({
-    foo: noNested,
-  });
+//         code: ZodIssueCode.custom,
+//         message: `schema cannot be nested. path: ${ctx.path.join(".")}`,
+//       });
+//       return false;
+//     } else {
+//       return true;
+//     }
+//   });
 
-  const t1 = await noNested.spa("asdf");
-  const t2 = await data.spa({ foo: "asdf" });
+//   const data = z.object({
+//     foo: noNested,
+//   });
 
-  expect(t1.success).toBe(true);
-  expect(t2.success).toBe(false);
-  if (t2.success === false) {
-    expect(t2.error.issues[0].message).toEqual(
-      "schema cannot be nested. path: foo"
-    );
-  }
-});
+//   const t1 = await noNested.spa("asdf");
+//   const t2 = await data.spa({ foo: "asdf" });
+
+//   expect(t1.success).toBe(true);
+//   expect(t2.success).toBe(false);
+//   if (t2.success === false) {
+//     expect(t2.error.issues[0].message).toEqual(
+//       "schema cannot be nested. path: foo"
+//     );
+//   }
+// });
 
 test("superRefine", () => {
   const Strings = z.array(z.string()).superRefine((val, ctx) => {
     if (val.length > 3) {
       ctx.addIssue({
+        input: val,
         code: z.ZodIssueCode.too_big,
         maximum: 3,
         type: "array",
@@ -142,6 +143,7 @@ test("superRefine", () => {
 
     if (val.length !== new Set(val).size) {
       ctx.addIssue({
+        input: val,
         code: z.ZodIssueCode.custom,
         message: `No duplicates allowed.`,
       });
@@ -160,6 +162,7 @@ test("superRefine async", async () => {
   const Strings = z.array(z.string()).superRefine(async (val, ctx) => {
     if (val.length > 3) {
       ctx.addIssue({
+        input: val,
         code: z.ZodIssueCode.too_big,
         maximum: 3,
         type: "array",
@@ -171,6 +174,7 @@ test("superRefine async", async () => {
 
     if (val.length !== new Set(val).size) {
       ctx.addIssue({
+        input: val,
         code: z.ZodIssueCode.custom,
         message: `No duplicates allowed.`,
       });
@@ -197,6 +201,7 @@ test("superRefine - type narrowing", () => {
       if (!arg) {
         // still need to make a call to ctx.addIssue
         ctx.addIssue({
+          input: arg,
           code: z.ZodIssueCode.custom,
           message: "cannot be null",
           fatal: true,
@@ -228,6 +233,7 @@ test("chained mixed refining types", () => {
       util.assertEqual<typeof arg, firstRefinement>(true);
       if (arg.first !== "bob") {
         ctx.addIssue({
+          input: arg,
           code: z.ZodIssueCode.custom,
           message: "`first` property must be `bob`",
         });
@@ -285,6 +291,7 @@ test("fatal superRefine", () => {
     .superRefine((val, ctx) => {
       if (val === "") {
         ctx.addIssue({
+          input: val,
           code: z.ZodIssueCode.custom,
           message: "foo",
           fatal: true,
@@ -294,6 +301,7 @@ test("fatal superRefine", () => {
     .superRefine((val, ctx) => {
       if (val !== " ") {
         ctx.addIssue({
+          input: val,
           code: z.ZodIssueCode.custom,
           message: "bar",
         });

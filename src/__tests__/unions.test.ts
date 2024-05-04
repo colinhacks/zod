@@ -32,7 +32,7 @@ test("return valid over invalid", () => {
   });
 });
 
-test("return dirty result over aborted", () => {
+test("return errors from both union arms", () => {
   const result = z
     .union([z.number(), z.string().refine(() => false)])
     .safeParse("a");
@@ -40,9 +40,29 @@ test("return dirty result over aborted", () => {
   if (!result.success) {
     expect(result.error.issues).toEqual([
       {
+        code: "invalid_union",
+        input: "a",
+        message: "Invalid input",
+        path: [],
+        unionErrors: [expect.any(z.ZodError), expect.any(z.ZodError)],
+      },
+    ]);
+    expect((result.error.issues[0] as any).unionErrors[0].issues).toEqual([
+      {
+        code: "invalid_type",
+        expected: "number",
+        received: "string",
+        path: [],
+        message: "Expected number, received string",
+        input: "a",
+      },
+    ]);
+    expect((result.error.issues[0] as any).unionErrors[1].issues).toEqual([
+      {
         code: "custom",
         message: "Invalid input",
         path: [],
+        input: "a",
       },
     ]);
   }
