@@ -552,6 +552,7 @@ export type ZodStringCheck =
   | { kind: "ip"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string }
   | { kind: "json"; message?: string };
+  | { kind: "e164"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -621,6 +622,8 @@ const base64Regex =
 // based on https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
 const hostnameRegex =
   /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
+// https://blog.stevenlevithan.com/archives/validate-phone-number#r4-3 (regex from there allows spaces)
+const e164Regex = /^\+(?:[0-9]){6,14}[0-9]$/;
 
 // simple
 // const dateRegexSource = `\\d{4}-\\d{2}-\\d{2}`;
@@ -1035,6 +1038,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             message: check.message,
           });
         }
+      } else if (check.kind === "e164") {
+        if (!e164Regex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "e164",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -1120,6 +1133,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 
   ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
+  }
+
+  e164(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "e164", ...errorUtil.errToObj(message) });
   }
 
   datetime(
@@ -1352,6 +1369,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   get isBase64() {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
+  }
+  get isE164() {
+    return !!this._def.checks.find((ch) => ch.kind === "e164");
   }
 
   get minLength() {

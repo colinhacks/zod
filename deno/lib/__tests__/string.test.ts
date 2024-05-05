@@ -906,3 +906,40 @@ test("IP validation", () => {
     invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
   ).toBe(true);
 });
+
+test("E.164 validation", () => {
+  const e164Number = z.string().e164();
+  expect(e164Number.safeParse("+1555555").success).toBe(true);
+
+  const validE164Numbers = [
+    "+1555555", // min-length (7 + 1)
+    "+15555555",
+    "+155555555",
+    "+1555555555",
+    "+15555555555",
+    "+155555555555",
+    "+1555555555555",
+    "+15555555555555",
+    "+155555555555555",
+    "+105555555555555",
+    "+100555555555555", // max-length (15 + 1)
+  ];
+
+  const invalidE164Numbers = [
+    "", // empty
+    "+", // only plus sign
+    "-", // wrong sign
+    "555555555", // missing plus sign
+    "+1 555 555 555", // space after plus sign
+    "+1555 555 555", // space after plus sign
+    "+1555 555 555", // space between numbers
+    "+1555+555", // multiple plus signs
+    "+1555555555555555", // too long
+    "+115abc55", // non numeric characters in number part
+  ];
+
+  expect(validE164Numbers.every((number) => e164Number.safeParse(number).success)).toBe(true);
+  expect(
+    invalidE164Numbers.every((number) => e164Number.safeParse(number).success === false)
+  ).toBe(true);
+});
