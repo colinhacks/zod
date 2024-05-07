@@ -185,6 +185,17 @@ z.setErrorMap(customErrorMap);
 
 As in the example, you can modify certain error messages and simply fall back to `ctx.defaultError` otherwise.
 
+## Locales
+
+There are locale-specific error maps built into Zod for various languages. To set the deafult error map based on your locale, you can import the error map from the `zod/locales` directory.
+
+```ts
+import { z } from "zod";
+import errorMap from "zod/locales/fa.js";
+
+z.setErrorMap(errorMap);
+```
+
 ## Error map priority
 
 A custom error maps doesn't need to produce an error message for every kind of issue in Zod. Instead, your error map can override certain errors and return `ctx.defaultError` for everything else.
