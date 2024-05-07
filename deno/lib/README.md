@@ -307,8 +307,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
         <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" height="40px;" alt="" />
       </a>
     </td>
-  </tr>
-  <tr>
     <td>
       <a href="https://www.bamboocreative.nz/">
         <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative logo" />
@@ -316,67 +314,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
 </table>
-
-<!-- <td align="center" colspan="2">
-  <a href="https://www.numeric.io" target="_blank">
-    <img src="https://i.imgur.com/kTiLtZt.png" width="250px;" alt="Numeric logo" />
-  </a>
-  <br />
-  <b>Numeric</b>
-  <br />
-  <a href="https://www.numeric.io" target="_blank">numeric.io</a>
-</td>
-<td align="center">
-  <a href="https://marcatopartners.com/" target="_blank">
-    <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" width="150px;" alt="Marcato Partners" />
-  </a>
-  <br />
-  <b>Marcato Partners</b>
-  <br />
-  <a href="https://marcatopartners.com/" target="_blank">marcatopartners.com</a>
-</td>
-</tr>
-<tr>
-<td align="center">
-  <a href="https://interval.com" target="_blank">
-    <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" width="150px;" alt="" />
-  </a>
-  <br />
-  <b>Interval</b>
-  <br />
-  <a href="https://interval.com" target="_blank">interval.com</a>
-</td>
-<td align="center">
-  <a href="https://seasoned.cc" target="_blank">
-    <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" width="150px;" alt="" />
-  </a>
-  <br />
-  <b>Seasoned Software</b>
-  <br />
-  <a href="https://seasoned.cc" target="_blank">seasoned.cc</a>
-</td>
-<td align="center">
-  <a href="https://www.bamboocreative.nz/" target="_blank">
-    <img src="https://avatars.githubusercontent.com/u/41406870?v=4" width="150px;" alt="Bamboo Creative logo" />
-  </a>
-  <br />
-  <b>Bamboo Creative</b>
-  <br />
-  <a href="https://www.bamboocreative.nz" target="_blank">bamboocreative.nz</a>
-</td>
-</tr> -->
-<!--
-<table>
-  <tr>
-    <td><a href="https://www.numeric.io">Numeric</a></td>
-    <td><a href="https://marcatopartners.com/">Marcato Partners</a></td>
-    <td><a href="https://interval.com">Interval</a></td>
-    <td><a href="https://seasoned.cc">Seasoned Software</a></td>
-  </tr>
-  <tr>
-    <td><a href="https://www.bamboocreative.nz/">Bamboo Creative</a></td>
-  </tr>
-</table> -->
 
 #### Copper
 
