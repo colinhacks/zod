@@ -185,9 +185,9 @@ Some other great aspects:
 
 Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
 
-#### Gold
+#### Platinum
 
-> This tier was just added. [Be the first Gold Sponsor!](https://github.com/sponsors/colinhacks/sponsorships?sponsor=colinhacks&tier_id=399648&preview=false)
+> [Email me](mailto:colin@colinhacks.com) to discuss sponsoring Zod at this level.
 
 <!-- <table>
   <tr>
@@ -203,7 +203,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table> -->
 
-#### Silver
+#### Gold
 
 <table>
   <tr>
@@ -283,7 +283,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table>
 
-#### Bronze
+#### Silver
 
 <table>
   <tr>
@@ -315,7 +315,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table>
 
-#### Copper
+#### Bronze
 
 <table>
   <tr>
