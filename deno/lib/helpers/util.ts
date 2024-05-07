@@ -132,11 +132,9 @@ export namespace objectUtil {
   };
 
   export type extendShape<A extends object, B extends object> = {
-    [K in keyof A | keyof B]: K extends keyof B
-      ? B[K]
-      : K extends keyof A
-      ? A[K]
-      : never;
+    [K in keyof A as K extends keyof B ? never : K]: A[K];
+  } & {
+    [K in keyof B]: B[K];
   };
 }
 
