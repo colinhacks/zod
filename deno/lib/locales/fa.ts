@@ -1,4 +1,4 @@
-import { util, ZodErrorMap, ZodIssueCode, ZodParsedType } from "..";
+import { util, ZodErrorMap, ZodIssueCode, ZodParsedType } from "../index.ts";
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {
   let message: string;
