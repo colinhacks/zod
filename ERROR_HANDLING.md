@@ -185,9 +185,9 @@ z.setErrorMap(customErrorMap);
 
 As in the example, you can modify certain error messages and simply fall back to `ctx.defaultError` otherwise.
 
-## use default locale errorMap
+## Locales
 
-You can use errorMap inside the zod package, which is implemented separately for each language., like so:
+There are locale-specific error maps built into Zod for various languages. To set the deafult error map based on your locale, you can import the error map from the `zod/locales` directory.
 
 ```ts
 import { z } from "zod";
