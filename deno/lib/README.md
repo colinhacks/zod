@@ -324,6 +324,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     <td>Mohammad-Ali A'râbi</td>
     <td>Supatool</td>
   </tr>
+  <tr>
+    <td>Social Crow</td>
+  </tr>
 </table>
 
 ### Ecosystem
