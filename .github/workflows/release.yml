@@ -11,19 +11,22 @@ on:
 jobs:
   build_and_publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+      id-token: write
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: true
 
       - name: Set up Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
-      
+          node-version: 20
+
       - name: Checkout zod-deno
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           token: ${{ secrets.ZOD_BOT_TOKEN }}
           repository: colinhacks/zod-deno
@@ -42,10 +45,11 @@ jobs:
 
       - id: publish
         name: Publish to NPM
-        uses: JS-DevTools/npm-publish@v1
+        uses: JS-DevTools/npm-publish@v3
         with:
           token: ${{ secrets.NPM_TOKEN }}
           dry-run: false
+          provenance: true
 
       - name: Post-publish
         if: steps.publish.outputs.type != 'none'
@@ -91,7 +95,7 @@ jobs:
       - name: Create release
         if: steps.publish.outputs.type != 'none'
         id: create_release
-        uses: actions/create-release@latest
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -105,7 +109,7 @@ jobs:
       - name: Create Deno release
         if: steps.publish.outputs.type != 'none'
         id: create_deno_release
-        uses: actions/create-release@latest
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.ZOD_BOT_TOKEN }}
         with:

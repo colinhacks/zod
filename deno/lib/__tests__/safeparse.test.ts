@@ -8,13 +8,13 @@ const stringSchema = z.string();
 test("safeparse fail", () => {
   const safe = stringSchema.safeParse(12);
   expect(safe.success).toEqual(false);
-  expect((safe as any).error).toBeInstanceOf(z.ZodError);
+  expect(safe.error).toBeInstanceOf(z.ZodError);
 });
 
 test("safeparse pass", () => {
   const safe = stringSchema.safeParse("12");
   expect(safe.success).toEqual(true);
-  expect((safe as any).data).toEqual("12");
+  expect(safe.data).toEqual("12");
 });
 
 test("safeparse unexpected error", () => {

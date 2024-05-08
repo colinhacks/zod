@@ -217,3 +217,94 @@ test("valid - literals with .default or .preprocess", () => {
     a: "foo",
   });
 });
+
+test("enum and nativeEnum", () => {
+  enum MyEnum {
+    d,
+    e = "e",
+  }
+
+  const schema = z.discriminatedUnion("key", [
+    z.object({
+      key: z.literal("a"),
+      // Add other properties specific to this option
+    }),
+    z.object({
+      key: z.enum(["b", "c"]),
+      // Add other properties specific to this option
+    }),
+    z.object({
+      key: z.nativeEnum(MyEnum),
+      // Add other properties specific to this option
+    }),
+  ]);
+
+  type schema = z.infer<typeof schema>;
+
+  schema.parse({ key: "a" });
+  schema.parse({ key: "b" });
+  schema.parse({ key: "c" });
+  schema.parse({ key: MyEnum.d });
+  schema.parse({ key: MyEnum.e });
+  schema.parse({ key: "e" });
+});
+
+test("branded", () => {
+  const schema = z.discriminatedUnion("key", [
+    z.object({
+      key: z.literal("a"),
+      // Add other properties specific to this option
+    }),
+    z.object({
+      key: z.literal("b").brand("asdfaf"),
+      // Add other properties specific to this option
+    }),
+  ]);
+
+  type schema = z.infer<typeof schema>;
+
+  schema.parse({ key: "a" });
+  schema.parse({ key: "b" });
+  expect(() => {
+    schema.parse({ key: "c" });
+  }).toThrow();
+});
+
+test("optional and nullable", () => {
+  const schema = z.discriminatedUnion("key", [
+    z.object({
+      key: z.literal("a").optional(),
+      a: z.literal(true),
+    }),
+    z.object({
+      key: z.literal("b").nullable(),
+      b: z.literal(true),
+      // Add other properties specific to this option
+    }),
+  ]);
+
+  type schema = z.infer<typeof schema>;
+  z.util.assertEqual<
+    schema,
+    { key?: "a" | undefined; a: true } | { key: "b" | null; b: true }
+  >(true);
+
+  schema.parse({ key: "a", a: true });
+  schema.parse({ key: undefined, a: true });
+  schema.parse({ key: "b", b: true });
+  schema.parse({ key: null, b: true });
+  expect(() => {
+    schema.parse({ key: null, a: true });
+  }).toThrow();
+  expect(() => {
+    schema.parse({ key: "b", a: true });
+  }).toThrow();
+
+  const value = schema.parse({ key: null, b: true });
+
+  if (!("key" in value)) value.a;
+  if (value.key === undefined) value.a;
+  if (value.key === "a") value.a;
+  if (value.key === "b") value.b;
+  if (value.key === null) value.b;
+});

@@ -451,3 +451,23 @@ test("passthrough index signature", () => {
   type b = z.infer<typeof b>;
   util.assertEqual<{ a: string } & { [k: string]: unknown }, b>(true);
 });
+
+test("xor", () => {
+  type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
+  type XOR<T, U> = T extends object
+    ? U extends object
+      ? (Without<T, U> & U) | (Without<U, T> & T)
+      : U
+    : T;
+
+  type A = { name: string; a: number };
+  type B = { name: string; b: number };
+  type C = XOR<A, B>;
+  type Outer = { data: C };
+  const Outer: z.ZodType<Outer> = z.object({
+    data: z.union([
+      z.object({ name: z.string(), a: z.number() }),
+      z.object({ name: z.string(), b: z.number() }),
+    ]),
+  });
+});

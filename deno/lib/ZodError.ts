@@ -93,12 +93,17 @@ export type StringValidation =
   | "url"
   | "emoji"
   | "uuid"
+  | "nanoid"
   | "regex"
   | "cuid"
   | "cuid2"
   | "ulid"
   | "datetime"
+  | "date"
+  | "time"
+  | "duration"
   | "ip"
+  | "base64"
   | { includes: string; position?: number }
   | { startsWith: string }
   | { endsWith: string };
@@ -265,6 +270,12 @@ export class ZodError<T = any> extends Error {
     const error = new ZodError(issues);
     return error;
   };
+
+  static assert(value: unknown): asserts value is ZodError {
+    if (!(value instanceof ZodError)) {
+      throw new Error(`Not a ZodError: ${value}`);
+    }
+  }
 
   toString() {
     return this.message;

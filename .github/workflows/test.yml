@@ -13,12 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["18"]
-        typescript: ["4.5", "4.6", "4.7", "4.8", "4.9", "5.0"]
+        node: ["latest"]
+        typescript: ["4.5", "4.6", "4.7", "4.8", "4.9", "5.0", "5.3"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
       - run: yarn install
@@ -33,11 +33,11 @@ jobs:
         deno: ["v1.x"]
     name: Test with Deno ${{ matrix.deno }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 16
-      - uses: denolib/setup-deno@v2
+          node-version: latest
+      - uses: denoland/setup-deno@v1
         with:
           deno-version: ${{ matrix.deno }}
       - run: yarn install
@@ -58,11 +58,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["18"]
+        node: ["latest"]
     name: Lint on Node ${{ matrix.node }}
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
       - run: yarn install
