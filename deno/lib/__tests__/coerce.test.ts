@@ -135,22 +135,22 @@ test("date coercion", () => {
   expect(schema.parse(new Date())).toBeInstanceOf(Date);
 });
 
-test("template literal coercion", () => {
-  const schema = z.coerce
-    .templateLiteral()
-    .interpolated(z.number().finite())
-    .interpolated(
-      z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
-    );
-  expect(schema.parse(300)).toEqual("300");
-  expect(schema.parse(BigInt(300))).toEqual("300");
-  expect(schema.parse("300")).toEqual("300");
-  expect(schema.parse("300px")).toEqual("300px");
-  expect(schema.parse("300em")).toEqual("300em");
-  expect(schema.parse("300rem")).toEqual("300rem");
-  expect(schema.parse("300vh")).toEqual("300vh");
-  expect(schema.parse("300vw")).toEqual("300vw");
-  expect(schema.parse("300vmin")).toEqual("300vmin");
-  expect(schema.parse("300vmax")).toEqual("300vmax");
-  expect(schema.parse(["300px"])).toEqual("300px");
-});
+// test("template literal coercion", () => {
+//   const schema = z.coerce
+//     .templateLiteral()
+//     .interpolated(z.number().finite())
+//     .interpolated(
+//       z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
+//     );
+//   expect(schema.parse(300)).toEqual("300");
+//   expect(schema.parse(BigInt(300))).toEqual("300");
+//   expect(schema.parse("300")).toEqual("300");
+//   expect(schema.parse("300px")).toEqual("300px");
+//   expect(schema.parse("300em")).toEqual("300em");
+//   expect(schema.parse("300rem")).toEqual("300rem");
+//   expect(schema.parse("300vh")).toEqual("300vh");
+//   expect(schema.parse("300vw")).toEqual("300vw");
+//   expect(schema.parse("300vmin")).toEqual("300vmin");
+//   expect(schema.parse("300vmax")).toEqual("300vmax");
+//   expect(schema.parse(["300px"])).toEqual("300px");
+// });

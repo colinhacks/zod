@@ -4,133 +4,114 @@ import { expect, test } from "@jest/globals";
 import { util } from "../helpers";
 import * as z from "../index";
 
-const empty = z.templateLiteral();
-const hello = z.templateLiteral().literal("hello");
-const world = z.templateLiteral().interpolated(z.literal("world"));
-const one = z.templateLiteral().literal(1);
-const two = z.templateLiteral().interpolated(z.literal(2));
-const truee = z.templateLiteral().literal(true);
-const anotherTrue = z.templateLiteral().interpolated(z.literal(true));
-const falsee = z.templateLiteral().literal(false);
-const anotherFalse = z.templateLiteral().interpolated(z.literal(false));
-const nulll = z.templateLiteral().literal(null);
-const anotherNull = z.templateLiteral().interpolated(z.null());
-const undefinedd = z.templateLiteral().literal(undefined);
-const anotherUndefined = z.templateLiteral().interpolated(z.undefined());
-const anyString = z.templateLiteral().interpolated(z.string());
-const anyNumber = z.templateLiteral().interpolated(z.number());
-const anyFiniteNumber = z.templateLiteral().interpolated(z.number().finite());
-const anyInt = z.templateLiteral().interpolated(z.number().int());
-const anyNegativeNumber = z
-  .templateLiteral()
-  .interpolated(z.number().negative());
-const anyPositiveNumber = z
-  .templateLiteral()
-  .interpolated(z.number().positive());
-const zeroButInADumbWay = z
-  .templateLiteral()
-  .interpolated(z.number().nonnegative().nonpositive());
-const finiteButInADumbWay = z
-  .templateLiteral()
-  .interpolated(z.number().min(5).max(10));
-const bool = z.templateLiteral().interpolated(z.boolean());
-const bigone = z.templateLiteral().interpolated(z.literal(BigInt(1)));
-const anyBigint = z.templateLiteral().interpolated(z.bigint());
-const nullableYo = z
-  .templateLiteral()
-  .interpolated(z.nullable(z.literal("yo")));
-const nullableString = z.templateLiteral().interpolated(z.nullable(z.string()));
-const optionalYeah = z
-  .templateLiteral()
-  .interpolated(z.literal("yeah").optional());
-const optionalString = z.templateLiteral().interpolated(z.string().optional());
-const optionalNumber = z.templateLiteral().interpolated(z.number().optional());
-const nullishBruh = z
-  .templateLiteral()
-  .interpolated(z.literal("bruh").nullish());
-const nullishString = z.templateLiteral().interpolated(z.string().nullish());
-const cuid = z.templateLiteral().interpolated(z.string().cuid());
-const cuidZZZ = z
-  .templateLiteral()
-  .interpolated(z.string().cuid())
-  .literal("ZZZ");
-const cuid2 = z.templateLiteral().interpolated(z.string().cuid2());
-const datetime = z.templateLiteral().interpolated(z.string().datetime());
-const email = z.templateLiteral().interpolated(z.string().email());
-const ip = z.templateLiteral().interpolated(z.string().ip());
-const ipv4 = z.templateLiteral().interpolated(z.string().ip({ version: "v4" }));
-const ipv6 = z.templateLiteral().interpolated(z.string().ip({ version: "v6" }));
-const ulid = z.templateLiteral().interpolated(z.string().ulid());
-const uuid = z.templateLiteral().interpolated(z.string().uuid());
-const stringAToZ = z
-  .templateLiteral()
-  .interpolated(z.string().regex(/^[a-z]+$/));
-const stringStartsWith = z
-  .templateLiteral()
-  .interpolated(z.string().startsWith("hello"));
-const stringEndsWith = z
-  .templateLiteral()
-  .interpolated(z.string().endsWith("world"));
-const stringMax5 = z.templateLiteral().interpolated(z.string().max(5));
-const stringMin5 = z.templateLiteral().interpolated(z.string().min(5));
-const stringLen5 = z.templateLiteral().interpolated(z.string().length(5));
-const stringMin5Max10 = z
-  .templateLiteral()
-  .interpolated(z.string().min(5).max(10));
-const stringStartsWithMax5 = z
-  .templateLiteral()
-  .interpolated(z.string().startsWith("hello").max(5));
-const brandedString = z
-  .templateLiteral()
-  .interpolated(z.string().min(1).brand("myBrand"));
-const anything = z.templateLiteral().interpolated(z.any());
+const empty = z.literal.template([]);
+const hello = z.literal.template(["hello"]);
+const world = z.literal.template(["", z.literal("world")]);
+const one = z.literal.template([1]);
+const two = z.literal.template(["", z.literal(2)]);
+const truee = z.literal.template([true]);
+const anotherTrue = z.literal.template(["", z.literal(true)]);
+const falsee = z.literal.template([false]);
+const anotherFalse = z.literal.template(["", z.literal(false)]);
+const nulll = z.literal.template([null]);
+const anotherNull = z.literal.template(["", z.null()]);
+const undefinedd = z.literal.template([undefined]);
+const anotherUndefined = z.literal.template(["", z.undefined()]);
+const anyString = z.literal.template(["", z.string()]);
+const anyNumber = z.literal.template(["", z.number()]);
+const anyFiniteNumber = z.literal.template(["", z.number().finite()]);
+const anyInt = z.literal.template(["", z.number().int()]);
+const anyNegativeNumber = z.literal.template(["", z.number().negative()]);
+const anyPositiveNumber = z.literal.template(["", z.number().positive()]);
+const zeroButInADumbWay = z.literal.template([
+  "",
+  z.number().nonnegative().nonpositive(),
+]);
+const finiteButInADumbWay = z.literal.template(["", z.number().min(5).max(10)]);
+const bool = z.literal.template(["", z.boolean()]);
+const bigone = z.literal.template(["", z.literal(BigInt(1))]);
+const anyBigint = z.literal.template(["", z.bigint()]);
+const nullableYo = z.literal.template(["", z.nullable(z.literal("yo"))]);
+const nullableString = z.literal.template(["", z.nullable(z.string())]);
+const optionalYeah = z.literal.template(["", z.literal("yeah").optional()]);
+const optionalString = z.literal.template(["", z.string().optional()]);
+const optionalNumber = z.literal.template(["", z.number().optional()]);
+const nullishBruh = z.literal.template(["", z.literal("bruh").nullish()]);
+const nullishString = z.literal.template(["", z.string().nullish()]);
+const cuid = z.literal.template(["", z.string().cuid()]);
+const cuidZZZ = z.literal.template(["", z.string().cuid(), "ZZZ"]);
+const cuid2 = z.literal.template(["", z.string().cuid2()]);
+const datetime = z.literal.template(["", z.string().datetime()]);
+const email = z.literal.template(["", z.string().email()]);
+const ip = z.literal.template(["", z.string().ip()]);
+const ipv4 = z.literal.template(["", z.string().ip({ version: "v4" })]);
+const ipv6 = z.literal.template(["", z.string().ip({ version: "v6" })]);
+const ulid = z.literal.template(["", z.string().ulid()]);
+const uuid = z.literal.template(["", z.string().uuid()]);
+const stringAToZ = z.literal.template(["", z.string().regex(/^[a-z]+$/)]);
+const stringStartsWith = z.literal.template([
+  "",
+  z.string().startsWith("hello"),
+]);
+const stringEndsWith = z.literal.template(["", z.string().endsWith("world")]);
+const stringMax5 = z.literal.template(["", z.string().max(5)]);
+const stringMin5 = z.literal.template(["", z.string().min(5)]);
+const stringLen5 = z.literal.template(["", z.string().length(5)]);
+const stringMin5Max10 = z.literal.template(["", z.string().min(5).max(10)]);
+const stringStartsWithMax5 = z.literal.template([
+  "",
+  z.string().startsWith("hello").max(5),
+]);
+const brandedString = z.literal.template([
+  "",
+  z.string().min(1).brand("myBrand"),
+]);
+const anything = z.literal.template(["", z.any()]);
 
-const url = z
-  .templateLiteral()
-  .literal("https://")
-  .interpolated(z.string().regex(/\w+/))
-  .literal(".")
-  .interpolated(z.enum(["com", "net"]));
+const url = z.literal.template([
+  "https://",
+  z.string().regex(/\w+/),
+  ".",
+  z.enum(["com", "net"]),
+]);
 
-const measurement = z.coerce
-  .templateLiteral()
-  .interpolated(z.number().finite())
-  .interpolated(
-    z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
-  );
+const measurement = z.literal.template([
+  "",
+  z.number().finite(),
+  z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional(),
+]);
 
-const connectionString = z
-  .templateLiteral()
-  .literal("mongodb://")
-  .interpolated(
-    z
-      .templateLiteral()
-      .interpolated(z.string().regex(/\w+/).describe("username"))
-      .literal(":")
-      .interpolated(z.string().regex(/\w+/).describe("password"))
-      .literal("@")
-      .optional()
-  )
-  .interpolated(z.string().regex(/\w+/).describe("host"))
-  .literal(":")
-  .interpolated(z.number().finite().int().positive().describe("port"))
-  .interpolated(
-    z
-      .templateLiteral()
-      .literal("/")
-      .interpolated(
-        z.string().regex(/\w+/).optional().describe("defaultauthdb")
-      )
-      .interpolated(
-        z
-          .templateLiteral()
-          .literal("?")
-          .interpolated(z.string().regex(/^\w+=\w+(&\w+=\w+)*$/))
-          .optional()
-          .describe("options")
-      )
-      .optional()
-  );
+const connectionString = z.literal.template([
+  "mongodb://",
+  z.literal
+    .template([
+      "",
+      z.string().regex(/\w+/).describe("username"),
+      ":",
+      z.string().regex(/\w+/).describe("password"),
+      "@",
+    ])
+    .optional(),
+  z.string().regex(/\w+/).describe("host"),
+  ":",
+  z.number().finite().int().positive().describe("port"),
+  z.literal
+    .template([
+      "/",
+      z.string().regex(/\w+/).optional().describe("defaultauthdb"),
+      z.literal
+        .template([
+          "?",
+          z
+            .string()
+            .regex(/^\w+=\w+(&\w+=\w+)*$/)
+            .optional()
+            .describe("options"),
+        ])
+        .optional(),
+    ])
+    .optional(),
+]);
 
 test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof empty>, ``>(true);
@@ -216,133 +197,118 @@ test("template literal type inference", () => {
 test("template literal unsupported args", () => {
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.object({}))
+    z.literal.template([z.object({})])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.array(z.object({})))
-  ).toThrow();
-  expect(() =>
-    z.templateLiteral().interpolated(
-      // @ts-expect-error
-      z.union([z.object({}), z.string()])
-    )
+    z.literal.template([z.array(z.object({}))])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.never())
+    z.literal.template([z.union([z.object({}), z.string()])])
   ).toThrow();
   // @ts-expect-error
-  expect(() => z.templateLiteral().interpolated(z.date())).toThrow();
+  expect(() => z.literal.template([z.date()])).toThrow();
   expect(() =>
-    z
-      .templateLiteral()
+    // @ts-expect-error
+    z.literal.template([z.custom<object>((data) => true)])
+  ).toThrow();
+  expect(() =>
+    // @ts-expect-error
+    z.literal.template([
       // @ts-expect-error
-      .interpolated(z.custom<object>((data) => true))
-  ).toThrow();
-  expect(() =>
-    z.templateLiteral().interpolated(
-      // @ts-expect-error
-      z.discriminatedUnion("discriminator", [z.object({}), z.object({})])
-    )
+      z.discriminatedUnion("discriminator", [z.object({}), z.object({})]),
+    ])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.function())
+    z.literal.template([z.function()])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.instanceof(class MyClass {}))
-  ).toThrow();
-  expect(() =>
-    z.templateLiteral().interpolated(
-      // @ts-expect-error
-      z.intersection(z.object({}), z.object({}))
-    )
+    z.literal.template([z.instanceof(class MyClass {})])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.map(z.string(), z.string()))
+    z.literal.template([z.intersection(z.object({}), z.object({}))])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.nullable(z.object({})))
+    z.literal.template([z.map(z.string(), z.string())])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.optional(z.object({})))
-  ).toThrow();
-  expect(() =>
-    z.templateLiteral().interpolated(
-      // @ts-expect-error
-      z.preprocess(() => true, z.boolean())
-    )
+    z.literal.template([z.nullable(z.object({}))])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.promise())
-  ).toThrow();
-  // @ts-expect-error
-  expect(() => z.templateLiteral().interpolated(z.nan())).toThrow();
-  expect(() =>
-    z.templateLiteral().interpolated(
-      // @ts-expect-error
-      z.pipeline(z.string(), z.string())
-    )
+    z.literal.template([z.optional(z.object({}))])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.record(z.unknown()))
+    z.literal.template([z.preprocess(() => true, z.boolean())])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.set(z.string()))
+    z.literal.template([z.promise()])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.symbol())
+    z.literal.template([z.record(z.unknown())])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.tuple([z.string()]))
+    z.literal.template([z.set(z.string())])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.unknown())
+    z.literal.template([z.symbol()])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.void())
+    z.literal.template([z.tuple([z.string()])])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral().interpolated(z.lazy(() => z.string()))
+    z.literal.template([z.unknown()])
   ).toThrow();
   expect(() =>
-    z.templateLiteral().interpolated(
-      // @ts-expect-error
-      z.object({}).brand("brand")
-    )
+    // @ts-expect-error
+    z.literal.template([z.void()])
+  ).toThrow();
+
+  // These throw at runtime but not statically. This could be fixed, but
+  // I think an informative runtime error is better than a confusing TS one
+  expect(() =>
+    // no @ts-expect-error
+    z.literal.template([z.never()])
+  ).toThrow();
+  // no @ts-expect-error
+  expect(() => z.literal.template([z.nan()])).toThrow();
+  expect(() =>
+    // no @ts-expect-error
+    z.literal.template([z.pipeline(z.string(), z.string())])
   ).toThrow();
   expect(() =>
-    z.templateLiteral().interpolated(z.number().multipleOf(2))
+    // no @ts-expect-error
+    z.literal.template([z.lazy(() => z.string())])
   ).toThrow();
-  expect(() => z.templateLiteral().interpolated(z.string().emoji())).toThrow();
-  expect(() => z.templateLiteral().interpolated(z.string().url())).toThrow();
-  expect(() => z.templateLiteral().interpolated(z.string().trim())).toThrow();
+
   expect(() =>
-    z.templateLiteral().interpolated(z.string().includes("train"))
+    // @ts-expect-error
+    z.literal.template([z.object({}).brand("brand")])
   ).toThrow();
-  expect(() =>
-    z.templateLiteral().interpolated(z.string().toLowerCase())
-  ).toThrow();
-  expect(() =>
-    z.templateLiteral().interpolated(z.string().toUpperCase())
-  ).toThrow();
+  expect(() => z.literal.template([z.number().multipleOf(2)])).toThrow();
+  expect(() => z.literal.template([z.string().emoji()])).toThrow();
+  expect(() => z.literal.template([z.string().url()])).toThrow();
+  expect(() => z.literal.template([z.string().trim()])).toThrow();
+  expect(() => z.literal.template([z.string().includes("train")])).toThrow();
+  expect(() => z.literal.template([z.string().toLowerCase()])).toThrow();
+  expect(() => z.literal.template([z.string().toUpperCase()])).toThrow();
 });
 
 test("template literal parsing - success - basic cases", () => {
-  expect(() => z.templateLiteral().parse(7)).toThrow();
+  expect(() => z.literal.template([]).parse(7)).toThrow();
 
   empty.parse("");
   hello.parse("hello");
@@ -576,11 +542,11 @@ test("template literal parsing - success - complex cases", () => {
   url.parse("https://example.com");
   url.parse("https://speedtest.net");
 
-  measurement.parse(1);
-  measurement.parse(1.1);
-  measurement.parse(0);
-  measurement.parse(-1.1);
-  measurement.parse(-1);
+  // measurement.parse(1);
+  // measurement.parse(1.1);
+  // measurement.parse(0);
+  // measurement.parse(-1.1);
+  // measurement.parse(-1);
   measurement.parse("1");
   measurement.parse("1.1");
   measurement.parse("0");

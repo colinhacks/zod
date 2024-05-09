@@ -5552,6 +5552,9 @@ type TemplateLiteralPrimitive = string | number | boolean | null | undefined;
 type TemplateLiteralInterpolatedPosition = ZodType<
   TemplateLiteralPrimitive | bigint
 >;
+type TemplateLiteralPart =
+  | TemplateLiteralPrimitive
+  | TemplateLiteralInterpolatedPosition;
 
 type appendToTemplateLiteral<
   Template extends string,
@@ -5568,12 +5571,19 @@ type appendToTemplateLiteral<
     : never
   : never;
 
+type partsToTemplateLiteral<Parts extends TemplateLiteralPart[]> =
+  [] extends Parts
+    ? ``
+    : Parts extends [
+        ...infer Rest extends TemplateLiteralPart[],
+        infer Last extends TemplateLiteralPart
+      ]
+    ? appendToTemplateLiteral<partsToTemplateLiteral<Rest>, Last>
+    : never;
+
 export interface ZodTemplateLiteralDef extends ZodTypeDef {
   coerce: boolean;
-  parts: readonly (
-    | TemplateLiteralPrimitive
-    | TemplateLiteralInterpolatedPosition
-  )[];
+  parts: readonly TemplateLiteralPart[];
   regexString: string;
   typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral;
 }
@@ -5585,6 +5595,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   interpolated<I extends TemplateLiteralInterpolatedPosition>(
     type: Exclude<I, ZodNever | ZodNaN | ZodPipeline<any, any> | ZodLazy<any>>
   ): ZodTemplateLiteral<appendToTemplateLiteral<Template, I>> {
+    // TODO: check for invalid types at runtime
     return this._addPart(type) as any;
   }
 
@@ -5625,6 +5636,17 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     return { status: "valid", value: input.data };
   }
 
+  protected _addParts(parts: TemplateLiteralPart[]): ZodTemplateLiteral {
+    let r = this._def.regexString;
+    for (const part of parts) {
+      r = this._appendToRegexString(r, part);
+    }
+    return new ZodTemplateLiteral({
+      ...this._def,
+      parts: [...this._def.parts, ...parts],
+      regexString: r,
+    });
+  }
   protected _addPart(
     part: TemplateLiteralPrimitive | TemplateLiteralInterpolatedPosition
   ): ZodTemplateLiteral {
@@ -5972,7 +5994,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     return (str as string).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  static create = (
+  static empty = (
     params?: RawCreateParams & { coerce?: true }
   ): ZodTemplateLiteral => {
     return new ZodTemplateLiteral({
@@ -5983,6 +6005,13 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       typeName: ZodFirstPartyTypeKind.ZodTemplateLiteral,
     });
   };
+
+  static create<const Parts extends TemplateLiteralPart[]>(
+    parts: Parts,
+    params?: RawCreateParams & { coerce?: true }
+  ): ZodTemplateLiteral<partsToTemplateLiteral<Parts>> {
+    return ZodTemplateLiteral.empty(params)._addParts(parts) as any;
+  }
 }
 
 ////////////////////////////////////////
@@ -6169,8 +6198,6 @@ const setType: typeof ZodSet.create = (...args) => ZodSet.create(...args);
 const functionType: typeof ZodFunction.create = (...args: [any?]) =>
   ZodFunction.create(...args);
 const lazyType: typeof ZodLazy.create = (...args) => ZodLazy.create(...args);
-const literalType: typeof ZodLiteral.create = (...args) =>
-  ZodLiteral.create(...args);
 const enumType: typeof ZodEnum.create = (...args: [any]) =>
   ZodEnum.create(...args);
 const nativeEnumType: typeof ZodNativeEnum.create = (...args) =>
@@ -6187,8 +6214,27 @@ const preprocessType: typeof ZodEffects.createWithPreprocess = (...args) =>
   ZodEffects.createWithPreprocess(...args);
 const pipelineType: typeof ZodPipeline.create = (...args) =>
   ZodPipeline.create(...args);
-const templateLiteralType: typeof ZodTemplateLiteral.create = (...args) =>
-  ZodTemplateLiteral.create(...args);
+
+interface Literal {
+  <T extends Primitive>(
+    value: T,
+    params?: RawCreateParams & Exclude<errorUtil.ErrMessage, string>
+  ): ZodLiteral<T>;
+  template(
+    parts: [],
+    params?: RawCreateParams & { coerce?: true }
+  ): ZodTemplateLiteral;
+  template<Part extends TemplateLiteralPart, Parts extends [Part, ...Part[]]>(
+    parts: Parts,
+    params?: RawCreateParams & { coerce?: true }
+  ): ZodTemplateLiteral<partsToTemplateLiteral<Parts>>;
+}
+const _literalType: typeof ZodLiteral.create = (...args) =>
+  ZodLiteral.create(...args);
+Object.defineProperty(_literalType, "template", {
+  value: ZodTemplateLiteral.create,
+});
+const literalType = _literalType as Literal;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -6230,7 +6276,7 @@ export {
   strictObjectType as strictObject,
   stringType as string,
   symbolType as symbol,
-  templateLiteralType as templateLiteral,
+  // templateLiteralType as templateLiteral,
   effectsType as transformer,
   tupleType as tuple,
   undefinedType as undefined,
