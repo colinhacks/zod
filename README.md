@@ -1948,7 +1948,7 @@ myFunction.returnType();
 * `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
 * `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema. -->
 
-## Template Literals
+## Template literals
 
 Building on the knowledge above, Zod supports creating typescript [template literal types](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html) with runtime validation. These types allow for stricter type checking of string inputs, as an alternative to `z.string()` which infers to a string.
 
@@ -1957,38 +1957,55 @@ A template literal type consists of [string literal types](https://www.typescrip
 To create a template literal builder:
 
 ```ts
-const templateLiteral = z.templateLiteral(); // infers to ``.
+const templateLiteral = z.literal.template(); // infers to ``.
 ```
 
-- To add string literal types to an existing template literal:
+Template literals consist of interleaved _literals_ and _schemas_.
 
-  ```ts
-  templateLiteral.literal("Hello"); // infers to `Hello`.
-  templateLiteral.literal(3.14); // infers to `3.14`.
-  ```
+```ts
+z.literal.template(["Hello ", z.string()]); // infers to `Hello ${string}`
+```
 
-  This method accepts strings, numbers, booleans, nulls and undefined.
+The literal components can be any string, number, boolean, null, or undefined.
 
-- To add interpolated positions to an existing template literal:
+```ts
+z.literal.template(["Hello", 3.14, true, null, undefined]);
+// infers to `Hello3.14truenullundefined`
+```
 
-  ```ts
-  templateLiteral.interpolated(z.string()); // infers to `${string}`.
-  templateLiteral.interpolated(z.number()); // infers to `${number}`.
-  templateLiteral.interpolated(z.boolean()); // infers to `true` | `false`.
-  templateLiteral.interpolated(z.literal("foo")); // infers to `foo`.
-  templateLiteral.interpolated(z.null()); // infers to `null`.
-  templateLiteral.interpolated(z.undefined()); // infers to `undefined`.
-  templateLiteral.interpolated(z.bigint()); // infers to `${bigint}`.
-  templateLiteral.interpolated(z.any()); // infers to `${any}`.
-  ```
+The schema components can be any literal, primitive, or enum schema.
 
-  Any Zod type (or union) with an underlying type of string, number, boolean, null,
-  undefined or bigint can be used as an interpolated position (template literals
-  included!). You can use additional built-in runtime validations (refinements
-  excluded) in each of these types and the template literal builder will do its
-  best (within the limitations of regular expressions) to support them when parsing.
+> **Note** — Refinements, transforms, and pipelines are not supported.
+
+```ts
+z.template.literal([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.bigint(),
+  z.any(),
+  z.literal("foo"),
+  z.null(),
+  z.undefined(),
+  z.enum(["bar"]),
+]);
+```
+
+For "union" types like `z.boolean()` or `z.enum()`, the inferred static type will be a union of the possible values.
+
+```ts
+z.literal.template([z.boolean(), z.number()]);
+// `true${number}` | `false${number}`
+
+z.literal.template(["is_", z.enum(["red", "green", "blue"])]);
+// `is_red` | `is_green` | `is_blue`
+```
 
 ### Examples
+
+<!details>
+
+</details>
 
 URL:
 
@@ -2010,7 +2027,7 @@ url.parse("https://google."); // throws
 url.parse("https://google.gov"); // throws
 ```
 
-Measurement:
+CSS Measurement:
 
 ```ts
 const measurement = z.coerce
