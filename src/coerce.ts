@@ -20,9 +20,9 @@ const coerceBigint = ((arg) =>
   ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"];
 const coerceDate = ((arg) =>
   ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"];
-const templateLiteral = ((arg) =>
-  ZodTemplateLiteral.create({
-    ...arg,
+const templateLiteral = ((parts, params) =>
+  ZodTemplateLiteral.create(parts, {
+    ...params,
     coerce: true,
   })) as (typeof ZodTemplateLiteral)["create"];
 

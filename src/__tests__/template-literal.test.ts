@@ -214,7 +214,6 @@ test("template literal unsupported args", () => {
     z.literal.template([z.custom<object>((data) => true)])
   ).toThrow();
   expect(() =>
-    // @ts-expect-error
     z.literal.template([
       // @ts-expect-error
       z.discriminatedUnion("discriminator", [z.object({}), z.object({})]),

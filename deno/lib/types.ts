@@ -6006,10 +6006,17 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     });
   };
 
-  static create<const Parts extends TemplateLiteralPart[]>(
+  static create<
+    Part extends TemplateLiteralPart,
+    Parts extends [] | [Part, ...Part[]]
+  >(
     parts: Parts,
     params?: RawCreateParams & { coerce?: true }
-  ): ZodTemplateLiteral<partsToTemplateLiteral<Parts>> {
+  ): ZodTemplateLiteral<partsToTemplateLiteral<Parts>>;
+  static create(
+    parts: TemplateLiteralPart[],
+    params?: RawCreateParams & { coerce?: true }
+  ) {
     return ZodTemplateLiteral.empty(params)._addParts(parts) as any;
   }
 }
@@ -6220,14 +6227,8 @@ interface Literal {
     value: T,
     params?: RawCreateParams & Exclude<errorUtil.ErrMessage, string>
   ): ZodLiteral<T>;
-  template(
-    parts: [],
-    params?: RawCreateParams & { coerce?: true }
-  ): ZodTemplateLiteral;
-  template<Part extends TemplateLiteralPart, Parts extends [Part, ...Part[]]>(
-    parts: Parts,
-    params?: RawCreateParams & { coerce?: true }
-  ): ZodTemplateLiteral<partsToTemplateLiteral<Parts>>;
+
+  template: typeof ZodTemplateLiteral.create;
 }
 const _literalType: typeof ZodLiteral.create = (...args) =>
   ZodLiteral.create(...args);
