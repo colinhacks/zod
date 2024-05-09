@@ -1950,20 +1950,18 @@ myFunction.returnType();
 
 ## Template literals
 
-Building on the knowledge above, Zod supports creating typescript [template literal types](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html) with runtime validation. These types allow for stricter type checking of string inputs, as an alternative to `z.string()` which infers to a string.
-
-A template literal type consists of [string literal types](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types) and interpolated positions (typescript types inside `${}` slots, e.g. `${number}`).
-
-To create a template literal builder:
+TypeScript supports [template literal types](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html), which are strings that conform to a statically known structure.
 
 ```ts
-const templateLiteral = z.literal.template(); // infers to ``.
+type simpleTemplate = `Hello, ${string}!`;
+type urlTemplate = `${"http" | "https"}://${string}.${`com` | `net`}`;
+type pxTemplate = `${number}px`;
 ```
 
-Template literals consist of interleaved _literals_ and _schemas_.
+These types can be represented in Zod with `z.literal.template()`. Template literals consist of interleaved _literals_ and _schemas_.
 
 ```ts
-z.literal.template(["Hello ", z.string()]); // infers to `Hello ${string}`
+z.literal.template(["Hello, ", z.string()]); // infers to `Hello ${string}`
 ```
 
 The literal components can be any string, number, boolean, null, or undefined.
@@ -2003,19 +2001,15 @@ z.literal.template(["is_", z.enum(["red", "green", "blue"])]);
 
 ### Examples
 
-<!details>
-
-</details>
-
 URL:
 
 ```ts
-const url = z
-  .templateLiteral()
-  .literal("https://")
-  .interpolated(z.string().min(1))
-  .literal(".")
-  .interpolated(z.enum(["com", "net"]));
+const url = z.literal.template([
+  "https://",
+  z.string(),
+  ".",
+  z.enum(["com", "net"]),
+]);
 // infers to `https://${string}.com` | `https://${string}.net`.
 
 url.parse("https://google.com"); // passes
@@ -2030,57 +2024,47 @@ url.parse("https://google.gov"); // throws
 CSS Measurement:
 
 ```ts
-const measurement = z.coerce
-  .templateLiteral()
-  .interpolated(z.number().finite())
-  .interpolated(
-    z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()
-  );
+const measurement = z.literal.template([
+  z.number().finite(),
+  z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]),
+]);
 // infers to `${number}` | `${number}px` | `${number}em` | `${number}rem` | `${number}vh` | `${number}vw` | `${number}vmin` | `${number}vmax
 ```
 
 MongoDB connection string:
 
 ```ts
-const connectionString = z
-  .templateLiteral()
-  .literal("mongodb://")
-  .interpolated(
-    z
-      .templateLiteral()
-      .interpolated(z.string().regex(/\w+/).describe("username"))
-      .literal(":")
-      .interpolated(z.string().regex(/\w+/).describe("password"))
-      .literal("@")
-      .optional()
-  )
-  .interpolated(z.string().regex(/\w+/).describe("host"))
-  .literal(":")
-  .interpolated(z.number().finite().int().positive().describe("port"))
-  .interpolated(
-    z
-      .templateLiteral()
-      .literal("/")
-      .interpolated(
-        z.string().regex(/\w+/).optional().describe("defaultauthdb")
-      )
-      .interpolated(
-        z
-          .templateLiteral()
-          .literal("?")
-          .interpolated(z.string().regex(/^\w+=\w+(&\w+=\w+)*$/))
-          .optional()
-          .describe("options")
-      )
-      .optional()
-  );
-// infers to:
+const connectionString = z.literal.template([
+  "mongodb://",
+  z.literal
+    .template([
+      z.string().regex(/\w+/).describe("username"),
+      ":",
+      z.string().regex(/\w+/).describe("password"),
+      "@",
+    ])
+    .optional(),
+  z.string().regex(/\w+/).describe("host"),
+  ":",
+  z.number().finite().int().positive().describe("port"),
+  z.literal
+    .template([
+      "/",
+      z.string().regex(/\w+/).optional().describe("defaultauthdb"),
+      z.literal
+        .template(["?", z.string().regex(/^\w+=\w+(&\w+=\w+)*$/)])
+        .optional()
+        .describe("options"),
+    ])
+    .optional(),
+]);
+// inferred type:
 // | `mongodb://${string}:${number}`
-// | `mongodb://${string}:${number}/${string}`
-// | `mongodb://${string}:${number}/${string}?${string}`
 // | `mongodb://${string}:${string}@${string}:${number}`
+// | `mongodb://${string}:${number}/${string}`
 // | `mongodb://${string}:${string}@${string}:${number}/${string}`
-// | `mongodb://${string}:${string}@${string}:${number}/${string}?${string}`
+// | `mongodb://${string}:${number}/${string}?${string}`
+// | `mongodb://${string}:${string}@${string}:${number}/${string}?${string}`;
 ```
 
 ## Preprocess
