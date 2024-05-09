@@ -119,6 +119,7 @@
 - [Promises](#promises)
 - [Instanceof](#instanceof)
 - [Functions](#functions)
+- [Template Literals](#template-literals)
 - [Preprocess](#preprocess)
 - [Custom schemas](#custom-schemas)
 - [Schema methods](#schema-methods)
@@ -1946,6 +1947,125 @@ myFunction.returnType();
 
 * `args: ZodTuple` The first argument is a tuple (created with `z.tuple([...])` and defines the schema of the arguments to your function. If the function doesn't accept arguments, you can pass an empty tuple (`z.tuple([])`).
 * `returnType: any Zod schema` The second argument is the function's return type. This can be any Zod schema. -->
+
+## Template literals
+
+TypeScript supports [template literal types](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html), which are strings that conform to a statically known structure.
+
+```ts
+type simpleTemplate = `Hello, ${string}!`;
+type urlTemplate = `${"http" | "https"}://${string}.${`com` | `net`}`;
+type pxTemplate = `${number}px`;
+```
+
+These types can be represented in Zod with `z.literal.template()`. Template literals consist of interleaved _literals_ and _schemas_.
+
+```ts
+z.literal.template(["Hello, ", z.string()]); // infers to `Hello ${string}`
+```
+
+The literal components can be any string, number, boolean, null, or undefined.
+
+```ts
+z.literal.template(["Hello", 3.14, true, null, undefined]);
+// infers to `Hello3.14truenullundefined`
+```
+
+The schema components can be any literal, primitive, or enum schema.
+
+> **Note** — Refinements, transforms, and pipelines are not supported.
+
+```ts
+z.template.literal([
+  z.string(),
+  z.number(),
+  z.boolean(),
+  z.bigint(),
+  z.any(),
+  z.literal("foo"),
+  z.null(),
+  z.undefined(),
+  z.enum(["bar"]),
+]);
+```
+
+For "union" types like `z.boolean()` or `z.enum()`, the inferred static type will be a union of the possible values.
+
+```ts
+z.literal.template([z.boolean(), z.number()]);
+// `true${number}` | `false${number}`
+
+z.literal.template(["is_", z.enum(["red", "green", "blue"])]);
+// `is_red` | `is_green` | `is_blue`
+```
+
+### Examples
+
+URL:
+
+```ts
+const url = z.literal.template([
+  "https://",
+  z.string(),
+  ".",
+  z.enum(["com", "net"]),
+]);
+// infers to `https://${string}.com` | `https://${string}.net`.
+
+url.parse("https://google.com"); // passes
+url.parse("https://google.net"); // passes
+url.parse("http://google.com"); // throws
+url.parse("https://.com"); // throws
+url.parse("https://google"); // throws
+url.parse("https://google."); // throws
+url.parse("https://google.gov"); // throws
+```
+
+CSS Measurement:
+
+```ts
+const measurement = z.literal.template([
+  z.number().finite(),
+  z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]),
+]);
+// infers to `${number}` | `${number}px` | `${number}em` | `${number}rem` | `${number}vh` | `${number}vw` | `${number}vmin` | `${number}vmax
+```
+
+MongoDB connection string:
+
+```ts
+const connectionString = z.literal.template([
+  "mongodb://",
+  z.literal
+    .template([
+      z.string().regex(/\w+/).describe("username"),
+      ":",
+      z.string().regex(/\w+/).describe("password"),
+      "@",
+    ])
+    .optional(),
+  z.string().regex(/\w+/).describe("host"),
+  ":",
+  z.number().finite().int().positive().describe("port"),
+  z.literal
+    .template([
+      "/",
+      z.string().regex(/\w+/).optional().describe("defaultauthdb"),
+      z.literal
+        .template(["?", z.string().regex(/^\w+=\w+(&\w+=\w+)*$/)])
+        .optional()
+        .describe("options"),
+    ])
+    .optional(),
+]);
+// inferred type:
+// | `mongodb://${string}:${number}`
+// | `mongodb://${string}:${string}@${string}:${number}`
+// | `mongodb://${string}:${number}/${string}`
+// | `mongodb://${string}:${string}@${string}:${number}/${string}`
+// | `mongodb://${string}:${number}/${string}?${string}`
+// | `mongodb://${string}:${string}@${string}:${number}/${string}?${string}`;
+```
 
 ## Preprocess
 
