@@ -16,5 +16,10 @@
     "downlevelIteration": true,
     "isolatedModules": true
   },
-  "include": ["../src/**/*", "../playground.mts", "../.eslintrc.js"]
+  "include": [
+    "../src/**/*",
+    "../experiments/**/*",
+    "../playground.mts",
+    "../.eslintrc.js"
+  ]
 }
