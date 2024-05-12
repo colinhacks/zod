@@ -50,7 +50,6 @@ export const makeIssue = (
 export type ParseParams = {
   path: (string | number)[];
   errorMap: ZodErrorMap;
-  async: boolean;
 };
 
 export type ParsePathComponent = string | number;
@@ -59,7 +58,6 @@ export type ParsePath = ParsePathComponent[];
 export interface ParseContext {
   readonly contextualErrorMap?: ZodErrorMap;
   readonly basePath: ParsePath;
-  readonly async: boolean;
   readonly schemaErrorMap?: ZodErrorMap;
 }
 

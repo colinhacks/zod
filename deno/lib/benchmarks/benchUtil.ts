@@ -1,7 +1,6 @@
 import { Bench } from "tinybench";
 // @ts-ignore
 import "console.table";
-import { Table, printTable } from "console-table-printer";
 
 function formatNumber(val: number) {
   if (val >= 1e12) {
@@ -40,31 +39,25 @@ export function log(name: string, bench: Bench) {
   // }
 
   const sorted = bench.tasks.sort((a, b) => a.result!.mean - b.result!.mean);
+  const data: any[] = [];
 
   const fastest = sorted[0];
-  // console.log(`benchmarking ${name}...`);
-  const table = new Table({
-    columns: [
-      { name: "name" },
-      { name: "comp", alignment: "left" },
-      { name: "ops/sec", color: "yellow" },
-      { name: "mean", color: "yellow" },
-    ],
-  });
+  console.log(`benchmarking ${name}...`);
   for (const task of sorted) {
-    table.addRow({
+    data.push({
+      // winner: task === sorted[0] ? "⚡️" : "",
+      place: "#" + (sorted.indexOf(task) + 1),
       name: task.name,
       comp:
         task === sorted[0]
-          ? "🥇"
+          ? "winner"
           : (task.result!.mean / fastest.result!.mean).toFixed(2) +
             `x slower than ${fastest.name}`,
       "ops/sec": formatNumber(1 / (task.result!.mean / 1000)) + " ops/sec",
-      mean: formatNumber(task.result!.mean / 1000) + "sec",
       // margin: "±" + (task.result!.moe * 1000000).toFixed(2) + "μs",
+
+      mean: formatNumber(task.result!.mean / 1000) + "sec",
     });
   }
-  table.printTable();
-  // printTable(table);
-  // console.table(data);
+  console.table(data);
 }

@@ -157,39 +157,21 @@ export abstract class ZodType<
     return getParsedType(input);
   }
 
-  _parseSync(
-    input: ParseInput,
-    ctx?: ParseContext
-  ): SyncParseReturnType<Output> {
-    const result = this._parse(input, ctx);
-    if (isAsync(result)) {
-      throw new Error("Synchronous parse encountered promise.");
-    }
-    return result;
-  }
-
-  _parseAsync(
-    input: ParseInput,
-    ctx?: ParseContext
-  ): AsyncParseReturnType<Output> {
-    const result = this._parse(input, ctx);
-    return isAsync(result) ? result : Promise.resolve(result);
-  }
-
   parse(data: unknown, params?: Partial<ParseParams>): Output {
     if (!params) {
-      const result = this._parseSync(data, this.defaultSyncContext);
+      const result = this._parse(data, this.defaultSyncContext);
+      if (result instanceof Promise) throw Error("Synchronous parse encountered promise.");
       if (isAborted(result))
         throw issuesToZodError(this.defaultSyncContext, result.issues);
       return result as any;
     }
     const ctx: ParseContext = {
       contextualErrorMap: params?.errorMap,
-      async: params?.async ?? false,
       basePath: params?.path || [],
       schemaErrorMap: this._def.errorMap,
     };
-    const result = this._parseSync(data, ctx);
+    const result = this._parse(data, ctx);
+    if (result instanceof Promise) throw Error("Synchronous parse encountered promise.");
     if (isAborted(result)) throw issuesToZodError(ctx, result.issues);
     return result as any;
   }
@@ -199,16 +181,17 @@ export abstract class ZodType<
     params?: Partial<ParseParams>
   ): SafeParseReturnType<Input, Output> {
     if (!params) {
-      const result = this._parseSync(data, this.defaultSyncContext);
+      const result = this._parse(data, this.defaultSyncContext);
+      if (result instanceof Promise) throw Error("Synchronous parse encountered promise.");
       return safeResult(this.defaultSyncContext, result) as any;
     }
     const ctx: ParseContext = {
       contextualErrorMap: params?.errorMap,
-      async: params?.async ?? false,
       basePath: params?.path || [],
       schemaErrorMap: this._def.errorMap,
     };
-    const result = this._parseSync(data, ctx);
+    const result = this._parse(data, ctx);
+    if (result instanceof Promise) throw Error("Synchronous parse encountered promise.");
     return safeResult(ctx, result) as any;
   }
 
@@ -217,18 +200,17 @@ export abstract class ZodType<
     params?: Partial<ParseParams>
   ): Promise<Output> {
     if (!params) {
-      const result = await this._parseAsync(data, this.defaultAsyncContext);
+      const result = await this._parse(data, this.defaultAsyncContext);
       if (isAborted(result))
         throw issuesToZodError(this.defaultAsyncContext, result.issues);
       return result;
     }
     const ctx: ParseContext = {
       contextualErrorMap: params?.errorMap,
-      async: true,
       basePath: params?.path || [],
       schemaErrorMap: this._def.errorMap,
     };
-    const result = await this._parseAsync(data, ctx);
+    const result = await this._parse(data, ctx);
     if (isAborted(result)) throw issuesToZodError(ctx, result.issues);
     return result;
   }
@@ -238,17 +220,16 @@ export abstract class ZodType<
     params?: Partial<ParseParams>
   ): Promise<SafeParseReturnType<Input, Output>> {
     if (!params) {
-      const result = await this._parseAsync(data, this.defaultAsyncContext);
+      const result = await this._parse(data, this.defaultAsyncContext);
       return safeResult(this.defaultAsyncContext, result);
     }
     const ctx: ParseContext = {
       contextualErrorMap: params?.errorMap,
-      async: true,
       basePath: params?.path || [],
       schemaErrorMap: this._def.errorMap,
     };
 
-    const result = await this._parseAsync(data, ctx);
+    const result = await this._parse(data, ctx);
     return safeResult(ctx, result);
   }
 
@@ -2469,12 +2450,18 @@ export class ZodArray<
       }
     }
 
-    if (ctx.async) {
-      return Promise.all(
-        (input as any[]).map((item) => {
-          return def.type._parseAsync(item, ctx);
-        })
-      ).then((result) => {
+    let hasPromises = false;
+
+    const parseResults = [...(input as any[])].map((item) => {
+      const result = def.type._parse(item, ctx);
+      if (result instanceof Promise) {
+        hasPromises = true;
+      }
+      return result;
+    });
+
+    if (hasPromises) {
+      return Promise.all(parseResults).then((result) => {
         issues.push(
           ...result.flatMap((r, i) =>
             isAborted(r)
@@ -2494,18 +2481,16 @@ export class ZodArray<
       });
     }
 
-    const result = ([...input] as any[]).map((item) => {
-      return def.type._parseSync(item, ctx);
-    });
+    const results = parseResults as SyncParseReturnType<any>[]; // we know it's sync because hasPromises is false
 
     issues.push(
-      ...result.flatMap((r, i) =>
-        isAborted(r)
-          ? r.issues.map((issue) => ({
+      ...results.flatMap((r, i) =>
+        !isAborted(r)
+          ? []
+          : r.issues.map((issue) => ({
               ...issue,
               path: [i, ...(issue.path || [])],
             }))
-          : []
       )
     );
 
@@ -2513,7 +2498,7 @@ export class ZodArray<
       return new ZodFailure(issues);
     }
 
-    return OK(result.map((x) => x as any) as any);
+    return OK(results.map((x) => x as any) as any);
   }
 
   get element() {
@@ -2840,7 +2825,7 @@ export class ZodObject<
       return new ZodFailure(issues);
     }
 
-    return ctx.async ? Promise.resolve(OK(final)) : OK(final);
+    return OK(final);
   }
 
   get shape() {
@@ -3277,19 +3262,21 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
       ]);
     }
 
-    if (ctx.async) {
-      return Promise.all(
-        options.map(async (option) => {
-          const result = await option._parseAsync(input, ctx);
+    let hasPromises = false;
+    const parseResults = options.map((option) => {
+      const result = option._parse(input, ctx);
+      if (result instanceof Promise) {
+        hasPromises = true;
+      }
+      return result;
+    });
 
-          return result;
-        })
-      ).then(handleResults);
+    if (hasPromises) {
+      return Promise.all(parseResults).then(handleResults);
     } else {
       const issues: ZodIssue[][] = [];
-      for (const option of options) {
-        const result = option._parseSync(input, ctx);
-
+      for (const result of parseResults as SyncParseReturnType<any>[]) {
+        // we know it's sync because hasPromises is false
         if (!isAborted(result)) {
           return result;
         }
@@ -3425,11 +3412,7 @@ export class ZodDiscriminatedUnion<
       ]);
     }
 
-    if (ctx.async) {
-      return option._parseAsync(input, ctx) as any;
-    } else {
-      return option._parseSync(input, ctx) as any;
-    }
+    return option._parse(input, ctx) as any;
   }
 
   get discriminator() {
@@ -3617,15 +3600,23 @@ export class ZodIntersection<
       return OK(merged.data);
     };
 
-    if (ctx.async) {
-      return Promise.all([
-        this._def.left._parseAsync(input, ctx),
-        this._def.right._parseAsync(input, ctx),
-      ]).then(([left, right]) => handleParsed(left, right));
+    const parseResults = [
+      this._def.left._parse(input, ctx),
+      this._def.right._parse(input, ctx),
+    ];
+
+    const hasPromises = parseResults.some(
+      (result) => result instanceof Promise
+    );
+
+    if (hasPromises) {
+      return Promise.all(parseResults).then(([left, right]) =>
+        handleParsed(left, right)
+      );
     } else {
       return handleParsed(
-        this._def.left._parseSync(input, ctx),
-        this._def.right._parseSync(input, ctx)
+        parseResults[0] as SyncParseReturnType,
+        parseResults[1] as SyncParseReturnType
       );
     }
   }
@@ -3738,15 +3729,22 @@ export class ZodTuple<
       });
     }
 
+    let hasPromises = false;
+
     const items = ([...input] as any[])
       .map((item, itemIndex) => {
         const schema = this._def.items[itemIndex] || this._def.rest;
         if (!schema) return NOT_SET as any as SyncParseReturnType<any>;
-        return schema._parse(item, ctx);
+        const result = schema._parse(item, ctx);
+        if (result instanceof Promise) {
+          hasPromises = true;
+        }
+
+        return result;
       })
       .filter((x) => x !== NOT_SET); // filter nulls
 
-    if (ctx.async) {
+    if (hasPromises) {
       return Promise.all(items).then((results) => {
         issues.push(
           ...results.flatMap((r, i) =>
@@ -3948,13 +3946,9 @@ export class ZodRecord<
       });
     } else {
       if (issues.length) {
-        return ctx.async
-          ? Promise.resolve(new ZodFailure(issues))
-          : new ZodFailure(issues);
+        return new ZodFailure(issues);
       }
-      return ctx.async
-        ? Promise.resolve(OK(final as this["_output"]))
-        : OK(final as this["_output"]);
+      return OK(final as this["_output"]);
     }
   }
 
@@ -4117,12 +4111,10 @@ export class ZodMap<
       });
     } else {
       if (issues.length) {
-        return ctx.async
-          ? Promise.resolve(new ZodFailure(issues))
-          : new ZodFailure(issues);
+        return new ZodFailure(issues);
       }
 
-      return ctx.async ? Promise.resolve(OK(final)) : OK(final);
+      return OK(final);
     }
   }
   static create<
@@ -4235,11 +4227,17 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
       return OK(parsedSet);
     }
 
-    const elements = [...(input as Set<unknown>).values()].map((item) =>
-      valueType._parse(item, ctx)
-    );
+    let hasPromises = false;
 
-    if (ctx.async) {
+    const elements = [...(input as Set<unknown>).values()].map((item) => {
+      const result = valueType._parse(item, ctx);
+      if (result instanceof Promise) {
+        hasPromises = true;
+      }
+      return result;
+    });
+
+    if (hasPromises) {
       return Promise.all(elements).then(finalizeSet);
     } else {
       return finalizeSet(elements as SyncParseReturnType[]);
@@ -5086,11 +5084,8 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
       ]);
     }
 
-    const promisified =
-      parsedType === ZodParsedType.promise ? input : Promise.resolve(input);
-
-    return promisified.then((data: any) => {
-      return this._def.type._parse(data, ctx);
+    return input.then((inner: any) => {
+      return this._def.type._parse(inner, ctx);
     });
   }
 
@@ -5178,12 +5173,22 @@ export class ZodEffects<
     if (effect.type === "preprocess") {
       const processed = effect.transform(input, checkCtx);
 
-      if (ctx.async) {
-        return Promise.resolve(processed).then(async (processed) => {
+      if (processed instanceof Promise) {
+        return processed.then((processed) => {
           if (issues.some((i) => i.fatal)) {
             return new ZodFailure(issues);
           }
-          const result = await this._def.schema._parseAsync(processed, ctx);
+          const result = this._def.schema._parse(processed, ctx);
+          if (result instanceof Promise) {
+            return result.then((r) => {
+              if (isAborted(r)) {
+                issues.push(...r.issues);
+              }
+              if (issues.length) return new ZodFailure(issues);
+              return r;
+            });
+          }
+
           if (isAborted(result)) {
             issues.push(...result.issues);
             return new ZodFailure(issues);
@@ -5195,7 +5200,18 @@ export class ZodEffects<
         if (issues.some((i) => i.fatal)) {
           return new ZodFailure(issues);
         }
-        const result = this._def.schema._parseSync(processed, ctx);
+        const result = this._def.schema._parse(processed, ctx);
+
+        if (result instanceof Promise) {
+          return result.then((r) => {
+            if (isAborted(r)) {
+              issues.push(...r.issues);
+            }
+            if (issues.length) return new ZodFailure(issues);
+            return r;
+          });
+        }
+
         if (isAborted(result)) {
           issues.push(...result.issues);
           return new ZodFailure(issues);
@@ -5207,19 +5223,15 @@ export class ZodEffects<
     if (effect.type === "refinement") {
       const executeRefinement = (acc: unknown): any => {
         const result = effect.refinement(acc, checkCtx);
-        if (ctx.async) {
-          return Promise.resolve(result);
-        }
         if (result instanceof Promise) {
-          throw new Error(
-            "Async refinement encountered during synchronous parse operation. Use .parseAsync instead."
-          );
+          return Promise.resolve(result);
         }
         return acc;
       };
 
-      if (ctx.async === false) {
-        const inner = this._def.schema._parseSync(input, ctx);
+      const inner = this._def.schema._parse(input, ctx);
+
+      if (!(inner instanceof Promise)) {
         if (isAborted(inner)) {
           issues.push(...inner.issues);
         }
@@ -5236,13 +5248,19 @@ export class ZodEffects<
         }
 
         // return value is ignored
-        executeRefinement(value);
+        const executed = executeRefinement(value);
 
-        if (issues.length) return new ZodFailure(issues, value);
+        if (executed instanceof Promise) {
+          return executed.then(() => {
+            if (issues.length) return new ZodFailure(issues);
+            return inner;
+          }) as any;
+        }
 
+        if (issues.length) return new ZodFailure(issues);
         return inner as any;
       } else {
-        return this._def.schema._parseAsync(input, ctx).then((inner) => {
+        return inner.then((inner) => {
           if (isAborted(inner)) {
             issues.push(...inner.issues);
           }
@@ -5259,18 +5277,24 @@ export class ZodEffects<
               : input // if valid, use parsed value
             : inner;
 
-          return executeRefinement(value).then(() => {
-            if (issues.length) return new ZodFailure(issues, value);
-            return inner;
-          });
+          const executed = executeRefinement(value);
+
+          if (executed instanceof Promise) {
+            return executed.then(() => {
+              if (issues.length) return new ZodFailure(issues);
+              return inner;
+            });
+          }
+
+          if (issues.length) return new ZodFailure(issues);
+          return inner;
         });
       }
     }
 
     if (effect.type === "transform") {
-      if (!ctx.async) {
-        const base = this._def.schema._parseSync(input, ctx);
-
+      const base = this._def.schema._parse(input, ctx);
+      if (!(base instanceof Promise)) {
         if (isAborted(base)) {
           issues.push(...base.issues);
         }
@@ -5278,37 +5302,39 @@ export class ZodEffects<
         // do not execute transform if any issues exist
         if (issues.length) return new ZodFailure(issues);
 
-        const baseValid = base as OK<any>;
+        const value = isAborted(base) ? base.value === NOT_SET ? input : base.value : base;
 
-        const result = effect.transform(baseValid, checkCtx);
+        const result = effect.transform(value, checkCtx);
         if (result instanceof Promise) {
-          throw new Error(
-            `Asynchronous transform encountered during synchronous parse operation. Use .parseAsync instead.`
-          );
+          return result.then((result) => {
+            if (issues.length) return new ZodFailure(issues);
+            return OK(result);
+          });
         }
 
-        if (issues.length) {
-          return new ZodFailure(issues, result);
-        }
-
+        if (issues.length) return new ZodFailure(issues);
         return OK(result);
       } else {
-        return this._def.schema._parseAsync(input, ctx).then((base) => {
+        return base.then((base) => {
           if (isAborted(base)) {
             issues.push(...base.issues);
           }
 
           if (issues.length) return new ZodFailure(issues, base);
 
-          const baseValid = base as OK<any>;
+          const value = isAborted(base) ? base.value === NOT_SET ? input : base.value : base;
 
-          return Promise.resolve(effect.transform(baseValid, checkCtx)).then(
-            (result) => {
-              if (issues.length) return new ZodFailure(issues, result);
+          const result = effect.transform(value, checkCtx);
 
+          if (result instanceof Promise) {
+            return result.then((result) => {
+              if (issues.length) return new ZodFailure(issues);
               return OK(result);
-            }
-          );
+            });
+          }
+
+          if (issues.length) return new ZodFailure(issues);
+          return OK(result);
         });
       }
     }
@@ -5656,19 +5682,17 @@ export class ZodPipeline<
   B extends ZodTypeAny
 > extends ZodType<B["_output"], ZodPipelineDef<A, B>, A["_input"]> {
   _parse(input: ParseInput, ctx: ParseContext): ParseReturnType<any> {
-    if (ctx.async) {
-      const handleAsync = async () => {
-        const inResult = await this._def.in._parseAsync(input, ctx);
+    const result = this._def.in._parse(input, ctx);
+    if (result instanceof Promise) {
+      return result.then((inResult) => {
         if (isAborted(inResult)) return inResult;
 
-        return this._def.out._parseAsync(inResult, ctx);
-      };
-      return handleAsync();
+        return this._def.out._parse(inResult.value, ctx);
+      });
     } else {
-      const inResult = this._def.in._parseSync(input, ctx);
-      if (isAborted(inResult)) return inResult;
+      if (isAborted(result)) return result;
 
-      return this._def.out._parseSync(inResult, ctx);
+      return this._def.out._parse(result, ctx);
     }
   }
 

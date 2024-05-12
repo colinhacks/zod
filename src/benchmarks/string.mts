@@ -7,19 +7,19 @@ import zNew from "../../src";
 // import z from "..";
 
 const SUITE_NAME = "z.string";
-const suite = new Benchmark.Suite(SUITE_NAME);
+new Benchmark.Suite(SUITE_NAME);
 
 const empty = "";
 const short = "short";
 const long = "long".repeat(256);
 
-const baseline = (str: unknown) => {
-  if (typeof str !== "string") {
-    throw new Error("Not a string");
-  }
+// const baseline = (str: unknown) => {
+//   if (typeof str !== "string") {
+//     throw new Error("Not a string");
+//   }
 
-  return str;
-};
+//   return str;
+// };
 
 const olds = {
   string: zOld.string(),
