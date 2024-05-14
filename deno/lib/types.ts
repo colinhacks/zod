@@ -1306,11 +1306,21 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
 
   static create(params?: RawCreateParams & { coerce?: true }): ZodString {
-    return new ZodString({
+    const base = new ZodString({
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodString,
       coerce: params?.coerce ?? false,
       ...processCreateParams(params),
+    });
+    return Object.assign(Object.create(base), {
+      parse(data: unknown) {
+        if (typeof data === "string") return data;
+        return base.parse(data);
+      },
+      async parseAsync(data: unknown) {
+        if (typeof data === "string") return data;
+        return base.parseAsync(data);
+      },
     });
   }
 }

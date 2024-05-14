@@ -44,7 +44,8 @@
     "tslib": "^2.3.1",
     "tsx": "^3.8.0",
     "typescript": "~5.0.0",
-    "vitest": "^0.32.2"
+    "vitest": "^0.32.2",
+    "zod": "^3.23.8"
   },
   "exports": {
     ".": {
@@ -116,5 +117,9 @@
       "npm-funding": true
     }
   },
-  "types": "./index.d.ts"
+  "types": "./index.d.ts",
+  "dependencies": {
+    "mitata": "^0.1.11",
+    "tinybench": "^2.8.0"
+  }
 }
