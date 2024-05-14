@@ -64,26 +64,39 @@ export interface ParseContext {
 }
 
 export type ParseInput = any;
-export type INVALID = {
-  status: "aborted";
-  issues: IssueData[];
-};
-export const INVALID = (issues: IssueData[]): INVALID => ({
-  status: "aborted" as const,
-  issues,
-});
+
+export const NOT_SET = Symbol.for("NOT_SET");
+export class ZodFailure {
+  constructor(
+    public issues: IssueData[],
+    protected _value: unknown = NOT_SET
+  ) {}
+  status: "aborted" = "aborted";
+
+  get value() {
+    return this._value;
+  }
+  set value(v: unknown) {
+    if (this._value !== NOT_SET) {
+      console.log(`curr`, this._value);
+      console.log(`v`, v);
+      throw new Error("value already set");
+    }
+    this._value = v;
+  }
+}
 
 export type OK<T> = { status: "valid"; value: T };
 export const OK = <T>(value: T): OK<T> => ({ status: "valid", value });
 
-export type SyncParseReturnType<T = any> = OK<T> | INVALID;
+export type SyncParseReturnType<T = any> = OK<T> | ZodFailure;
 export type AsyncParseReturnType<T> = Promise<SyncParseReturnType<T>>;
 export type ParseReturnType<T> =
   | SyncParseReturnType<T>
   | AsyncParseReturnType<T>;
 
-export const isAborted = (x: ParseReturnType<any>): x is INVALID =>
-  (x as any).status === "aborted";
+export const isAborted = (x: ParseReturnType<any>): x is ZodFailure =>
+  x instanceof ZodFailure;
 export const isValid = <T>(x: ParseReturnType<T>): x is OK<T> =>
   (x as any).status === "valid";
 export const isAsync = <T>(
