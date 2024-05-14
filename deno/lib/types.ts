@@ -5518,10 +5518,11 @@ export class ZodEffects<
         // if (inner.status === "dirty") status.dirty();
         if (inner instanceof ZodInternalError) {
           err = inner;
-          console.log(`inner`, inner);
           if (inner.aborted) {
             console.log(`inner.aborted`, inner.aborted);
             return inner;
+          } else {
+            data = err.value;
           }
         } else {
           data = inner;
@@ -5558,6 +5559,13 @@ export class ZodEffects<
         // executeRefinement(inner.value);
         // return { status: status.value, value: inner.value };
       } else {
+        const checkCtx: RefinementCtx = {
+          addIssue: (arg: IssueData) => {
+            err = err ?? new ZodInternalError([]);
+            arg.fatal = arg.fatal ?? false;
+            err.addIssue(data, arg, this._def.errorMap, ctx?.errorMap);
+          },
+        };
         return this._def.schema._parseAsync(data, ctx).then(async (inner) => {
           if (inner instanceof ZodInternalError) return inner;
           await effect.refinement(inner, checkCtx);
@@ -5594,7 +5602,10 @@ export class ZodEffects<
           );
         }
 
-        if (err && err.aborted) return err;
+        if (err) {
+          err.value = result;
+          if (err.aborted) return err;
+        }
         return result;
       } else {
         return this._def.schema._parseAsync(data, ctx).then(async (base) => {
