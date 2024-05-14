@@ -3,7 +3,7 @@
 import * as mitata from "mitata";
 import { z as zOld } from "zod";
 
-import { z as zNew } from "../src/index";
+import zNew from "../src";
 
 const DATA = `${Math.random()}`;
 

@@ -48,7 +48,7 @@ test("pick parse - fail", () => {
 test("omit type inference", () => {
   const nonameFish = fish.omit({ name: true });
   type nonameFish = z.infer<typeof nonameFish>;
-  util.assertEqual<nonameFish, { age: number; nested: {} }>(true);
+  util.assertEqual<nonameFish, { age: number; nested: object }>(true);
 });
 
 test("omit parse - success", () => {

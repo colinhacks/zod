@@ -89,8 +89,22 @@ export const makeIssue = (
   // };
 };
 
+const NO_VALUE = Symbol.for("NO_VALUE");
 export class ZodInternalError {
   constructor(public issues: ZodIssue[]) {}
+
+  protected _value: unknown = NO_VALUE;
+  get value() {
+    if (this.aborted) throw new Error(`Cannot access value on aborted error.`);
+    if (this._value === NO_VALUE)
+      throw new Error(`Value accessed before it was set.`);
+    return this._value;
+  }
+  set value(val: unknown) {
+    if (this.aborted) throw new Error(`Cannot access value on aborted error.`);
+    if (this._value !== NO_VALUE) throw new Error(`Value set twice.`);
+    this._value = val;
+  }
   // aborted: boolean = false;
   get aborted() {
     return this.issues.some((iss) => iss.fatal === true);
@@ -2865,6 +2879,29 @@ function deepPartialify(schema: ZodTypeAny): any {
   }
 }
 
+type shapeToOutput<T extends { [k: string]: any }> = {
+  [k in keyof T]: T[k]["_type"];
+};
+type shapeToInput<T extends { [k: string]: any }> = {
+  [k in keyof T]: T[k]["_type"];
+};
+type addQs<T extends { [k: string]: any }> = {
+  [k in keyof T as undefined extends T[k] ? k : never]?: T[k];
+} & {
+  [k in keyof T as undefined extends T[k] ? never : k]: T[k];
+};
+export type shapifyOutput<T> = {
+  [k in keyof T]: T[k] extends ZodTypeAny ? T[k] : never;
+};
+export type shapifyInput<T> = {
+  [k in keyof T]: T[k] extends ZodTypeAny ? T[k]["_output"] : never;
+};
+export type simpleObjectOutputType<T extends { [k: string]: any }> =
+  ZodRawShape extends T ? object : addQs<shapeToOutput<T>>;
+
+export type simpleObjectInputType<T extends { [k: string]: any }> =
+  ZodRawShape extends T ? object : addQs<shapeToInput<T>>;
+
 export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
@@ -5450,7 +5487,7 @@ export class ZodEffects<
       const processed = effect.transform(data, checkCtx);
       if (err) return err;
 
-      if (ctx?.async) {
+      if (ctx?.async || processed instanceof Promise) {
         return Promise.resolve(processed).then((processed) => {
           return this._def.schema._parse(processed, ctx);
         });
@@ -5459,15 +5496,6 @@ export class ZodEffects<
       }
     }
     if (effect.type === "refinement") {
-      const checkCtx: RefinementCtx = {
-        addIssue: (arg: IssueData) => {
-          err = err ?? new ZodInternalError([]);
-          arg.fatal = arg.fatal ?? false;
-          err.addIssue(data, arg, this._def.errorMap, ctx?.errorMap);
-        },
-      };
-
-      checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
       // const executeRefinement = (
       //   acc: unknown
       //   // effect: RefinementEffect<any>
@@ -5488,12 +5516,30 @@ export class ZodEffects<
         const inner = this._def.schema._parse(data, ctx);
         // if (inner.status === "aborted") return INVALID;
         // if (inner.status === "dirty") status.dirty();
-        if (inner instanceof ZodInternalError && inner.aborted) {
-          return inner;
+        if (inner instanceof ZodInternalError) {
+          err = inner;
+          console.log(`inner`, inner);
+          if (inner.aborted) {
+            console.log(`inner.aborted`, inner.aborted);
+            return inner;
+          }
+        } else {
+          data = inner;
         }
 
-        // return value is ignored]
-        const result = effect.refinement(inner, checkCtx);
+        const checkCtx: RefinementCtx = {
+          addIssue: (arg: IssueData) => {
+            err = err ?? new ZodInternalError([]);
+            arg.fatal = arg.fatal ?? false;
+            err.addIssue(data, arg, this._def.errorMap, ctx?.errorMap);
+          },
+        };
+
+        checkCtx.addIssue = checkCtx.addIssue.bind(checkCtx);
+
+        // return value is ignored
+        console.log("pre-check", data);
+        const result = effect.refinement(data, checkCtx);
         if (result instanceof Promise) {
           throw new Error(
             "Async refinement encountered during synchronous parse operation. Use .parseAsync instead."
@@ -6260,19 +6306,17 @@ export {
   voidType as void,
 };
 
-// export const NEVER = INVALID as never;
-
-type shapeToOutput<T extends { [k: string]: any }> = {
-  [k in keyof T]: T[k]["_type"];
-};
-type shapeToInput<T extends { [k: string]: any }> = {
-  [k in keyof T]: T[k]["_type"];
-};
-type addQs<T extends { [k: string]: any }> = {
-  [k in keyof T as undefined extends T[k] ? k : never]?: T[k];
-} & {
-  [k in keyof T as undefined extends T[k] ? never : k]: T[k];
-};
+// type shapeToOutput<T extends { [k: string]: any }> = {
+//   [k in keyof T]: T[k]["_type"];
+// };
+// type shapeToInput<T extends { [k: string]: any }> = {
+//   [k in keyof T]: T[k]["_type"];
+// };
+// type addQs<T extends { [k: string]: any }> = {
+//   [k in keyof T as undefined extends T[k] ? k : never]?: T[k];
+// } & {
+//   [k in keyof T as undefined extends T[k] ? never : k]: T[k];
+// };
 // type partialifyOutput<T extends { [k: string]: any }> = {
 //   [k in keyof T as undefined extends T[k]["_output"]
 //     ? k
@@ -6292,94 +6336,93 @@ type addQs<T extends { [k: string]: any }> = {
 //     : k]: T[k]["_input"];
 // };
 
-export type flattenFunctions<T> = {
-  [k in keyof T]: T[k] extends ZodTypeAny
-    ? T[k]
-    : T[k] extends (...args: any[]) => infer U
-    ? U extends ZodTypeAny
-      ? U
-      : never
-    : never;
-};
-export type shapifyOutput<T> = {
-  [k in keyof T]: T[k] extends ZodTypeAny ? T[k]["_output"] : never;
-};
-export type shapifyInput<T> = {
-  [k in keyof T]: T[k] extends ZodTypeAny ? T[k]["_output"] : never;
-};
-export type simpleObjectOutputType<T extends { [k: string]: any }> =
-  ZodRawShape extends T ? object : addQs<shapeToOutput<T>>;
+// export type flattenFunctions<T> = {
+//   [k in keyof T]: T[k] extends z.ZodTypeAny
+//     ? T[k]
+//     : T[k] extends (...args: any[]) => infer U
+//     ? U extends z.ZodTypeAny
+//       ? U
+//       : never
+//     : never;
+// };
+// export type shapifyOutput<T> = {
+//   [k in keyof T]: T[k] extends z.ZodTypeAny ? T[k] : never;
+// };
+// export type shapifyInput<T> = {
+//   [k in keyof T]: T[k] extends z.ZodTypeAny ? T[k]["_output"] : never;
+// };
+// export type simpleObjectOutputType<T extends { [k: string]: any }> =
+//   z.ZodRawShape extends T ? object : addQs<shapeToOutput<T>>;
 
-export type simpleObjectInputType<T extends { [k: string]: any }> =
-  ZodRawShape extends T ? object : addQs<shapeToInput<T>>;
-
-declare function makeObject<T extends { [k: string]: any }>(
-  _shape: T,
-  _params?: RawCreateParams
-): ZodObject<
-  shapifyOutput<T>,
-  "strip",
-  ZodTypeAny,
-  simpleObjectOutputType<T>,
-  simpleObjectInputType<T>
->;
-ZodObject.create;
-
-export type identity<T> = T;
-export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
-
-const Node = makeObject({
-  label: ZodString.create().optional(),
-  get children() {
-    return Node.array();
-  }, //.array();
-});
-const node = Node.parse("asdf");
-node.children[0].children[0].children[0].label;
+// export type simpleObjectInputType<T extends { [k: string]: any }> =
+//   z.ZodRawShape extends T ? object : addQs<shapeToInput<T>>;
 
 // declare function makeObject<T extends { [k: string]: any }>(
-declare function lazyObject<T extends { [k: string]: any }>(
-  _shape: () => T,
-  _params?: RawCreateParams
-): ZodObject<
-  // flattenFunctions<T>,
-  T,
-  "strip",
-  ZodTypeAny,
-  simpleObjectOutputType<T>,
-  simpleObjectInputType<T>
->;
+//   _shape: T,
+//   _params?: z.RawCreateParams
+// ): z.ZodObject<
+//   shapifyOutput<T>,
+//   "strip",
+//   z.ZodTypeAny,
+//   simpleObjectOutputType<T>,
+//   simpleObjectInputType<T>
+// >;
+// z.ZodObject.create;
 
-const Node2 = ZodObject.recursive({
-  label: ZodString.create().optional(),
-  // get children() {
-  //   return Node2.array();
-  // },
-  get children() {
-    return Node2.array();
-  },
-});
-type Node2 = TypeOf<typeof Node2>;
-const node2 = Node2.parse("asdf");
-node2.children[0].children[0].children[0].label;
+// export type identity<T> = T;
+// export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
 
-type asdf = typeof import("../tsconfig.json");
+// const Node = makeObject({
+//   label: z.ZodString.create().optional(),
+//   get children() {
+//     return Node.array();
+//   }, //.array();
+// });
+// const node = Node.parse("asdf");
+// node.children[0].children[0].children[0].label;
 
-export const User = makeObject({
-  name: ZodString.create().optional(),
-  get posts() {
-    return Post.array(); //.array();
-  },
-});
+// // declare function makeObject<T extends { [k: string]: any }>(
+// declare function lazyObject<T extends { [k: string]: any }>(
+//   _shape: () => T,
+//   _params?: z.RawCreateParams
+// ): z.ZodObject<
+//   // flattenFunctions<T>,
+//   T,
+//   "strip",
+//   z.ZodTypeAny,
+//   simpleObjectOutputType<T>,
+//   simpleObjectInputType<T>
+// >;
 
-export const Post = makeObject({
-  title: ZodString.create().optional(),
-  get author() {
-    return User; //.array();
-  },
-});
+// const Node2 = z.ZodObject.recursive({
+//   label: z.ZodString.create().optional(),
+//   // get children() {
+//   //   return Node2.array();
+//   // },
+//   get children() {
+//     return Node2.array();
+//   },
+// });
+// type Node2 = z.TypeOf<typeof Node2>;
+// const node2 = Node2.parse("asdf");
+// Node2.shape.children;
+// node2.children[0].children[0].children[0].label;
 
-type User = TypeOf<typeof User>;
-const user = User.parse("adsf");
-// const post = Post.parse("adsf");
-user.posts[0].author.name;
+// export const User = makeObject({
+//   name: z.ZodString.create().optional(),
+//   get posts() {
+//     return Post.array(); //.array();
+//   },
+// });
+
+// export const Post = makeObject({
+//   title: z.ZodString.create().optional(),
+//   get author() {
+//     return User; //.array();
+//   },
+// });
+
+// type User = z.TypeOf<typeof User>;
+// const user = User.parse("adsf");
+// // const post = Post.parse("adsf");
+// user.posts[0].author.name;

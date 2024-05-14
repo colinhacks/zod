@@ -1,79 +1,57 @@
-import { util } from "./src/helpers/util";
 import { z } from "./src/index";
+
 z;
 
-function test<T extends Readonly<object>>(args: T): "readonly";
-function test<T extends object>(args: T): "regular";
-function test(...args: any[]) {
-  return args as any;
-}
-
-declare let err: z.ZodError;
-const errorKeyMap = new Set<string | number | symbol>();
-for (const iss of err.issues) {
-  if (iss.path) errorKeyMap.add(iss.path[0]);
-}
-const errorKeys = Array.from(errorKeyMap);
-
-const v1 = test({ arg: "asdf" });
-
-type asdf = {
-  readonly arg: string;
-};
-
-type removeReadonly<T> = {
-  -readonly [K in keyof T]: T[K];
-};
-type allReadonly<T> = Readonly<T>;
-
-type hasReadonly<T> = allReadonly<T> extends infer U
-  ? U extends T
-    ? true
-    : false
-  : never;
-
-type f1 = objectContainsReadonly<{ a: string; readonly b: string }>;
-type f2 = objectContainsReadonly<{ a: string; b: string }>;
-// type f2 = hasReadonlyKeys<{ a: string, b: string }>;
-
-declare function test2<T>(arg: T): "noreadonly";
-declare function test2<T>(arg: Readonly<T>): "readonly";
-const asdf = test2({ arg: 3 });
-const asd2 = test2({
-  get arg() {
-    return 3;
-  },
+const schema = z.object({
+  inner: z.object({
+    name: z
+      .string()
+      .refine((val) => val.length > 5, {
+        message: "name should be greater than 5",
+      })
+      .array()
+      // .transform((val) => val.length)
+      .refine(
+        (val) => {
+          console.log(`val`, val);
+          return val.length <= 1;
+        },
+        {
+          message: "name list should be less <=1 item long",
+        }
+      ),
+  }),
 });
-const sldkjf = {
-  get arg() {
-    return 3;
-  },
+const invalidItem = {
+  inner: { name: ["aasd", "asdfasdfasfd"] },
 };
 
-const arg: { arg: string } = { arg: "asdf" } as const;
+console.log(
+  z
+    .string()
+    .transform((val) => val.length)
+    .refine(() => false, { message: "always fails" })
+    .refine(
+      (val) => {
+        console.log(`val`, val, typeof val);
+        return (val ^ 2) > 10;
+      } // should be number but it's a string
+    )
+    .parse("hello")
+);
 
-// check if a type contains any readonly properties
-type objectContainsReadonly<T> = util.AssertEqual<
-  T,
-  {
-    -readonly [k in keyof T]: T[k];
-  }
-> extends true
-  ? false
-  : true;
+// const result1 = schema.safeParse(invalidItem);
 
-// type exactOptionalPropertyTypes = {
-//   b?: string | undefined;
-// } extends { b?: string }
-//   ? false
-//   : true;
-// extends true
-//   ? false
-//   : true;
-// type asdf = exactOptionalPropertyTypesIsEnabled;
+// console.log(result1);
 
-const p1 = z.object({
-  arg: z.string().optional(),
-  "arg2?": z.string().optional(),
-});
-type p1 = z.infer<typeof p1>;
+// class Arg<T = any> {
+//   protected _protected: T;
+//   _public: number;
+//   parse(): T {
+//     return {} as T;
+//   }
+// }
+
+// declare const arg: Arg;
+
+// type infer<T extends Arg> = ReturnType<T["parse"]>;
