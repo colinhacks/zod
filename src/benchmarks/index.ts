@@ -6,7 +6,7 @@ import ipv4Benchmarks from "./ipv4";
 import objectBenchmarks from "./object";
 import primitiveBenchmarks from "./primitives";
 import realworld from "./realworld";
-import stringBenchmarks from "./string";
+import stringBenchmarks from "./string.mjs";
 import unionBenchmarks from "./union";
 
 const argv = process.argv.slice(2);
@@ -16,7 +16,7 @@ if (!argv.length) {
   suites = [
     ...realworld.suites,
     ...primitiveBenchmarks.suites,
-    ...stringBenchmarks.suites,
+    // ...stringBenchmarks.suites,
     ...objectBenchmarks.suites,
     ...unionBenchmarks.suites,
     ...discriminatedUnionBenchmarks.suites,
@@ -29,7 +29,8 @@ if (!argv.length) {
     suites.push(...primitiveBenchmarks.suites);
   }
   if (argv.includes("--string")) {
-    suites.push(...stringBenchmarks.suites);
+    stringBenchmarks();
+    // suites.push(...stringBenchmarks.suites);
   }
   if (argv.includes("--object")) {
     suites.push(...objectBenchmarks.suites);

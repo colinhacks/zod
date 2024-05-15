@@ -1391,30 +1391,12 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
 
   static create(params?: RawCreateParams & { coerce?: true }): ZodString {
-    const base = new ZodString({
+    return new ZodString({
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodString,
       coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     });
-    return base;
-    // return Object.assign(Object.create(base), {
-    //   parse(data: unknown, params?: ParseParams) {
-    //     if (params) return base.parse(data, params);
-    //     if (typeof data === "string") return data;
-    //     return base.parse(data, params);
-    //   },
-    //   // _parse(data: unknown, ctx?: ParseContext) {
-    //   //   if (ctx) return base.parse(data, params);
-    //   //   if (typeof data === "string") return data;
-    //   //   return base.parse(data, params);
-    //   // },
-    //   async parseAsync(data: unknown, params?: ParseParams) {
-    //     if (params) return base.parseAsync(data, params);
-    //     if (typeof data === "string") return data;
-    //     return base.parseAsync(data, params);
-    //   },
-    // });
   }
 }
 

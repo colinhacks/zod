@@ -24,6 +24,7 @@
     "@web-std/file": "^3.0.3",
     "babel-jest": "^29.5.0",
     "benchmark": "^2.1.4",
+    "console.table": "^0.10.0",
     "dependency-cruiser": "^9.19.0",
     "eslint": "^9.2.0",
     "eslint-config-prettier": "^8.5.0",
@@ -42,7 +43,7 @@
     "ts-morph": "^14.0.0",
     "ts-node": "^10.9.1",
     "tslib": "^2.3.1",
-    "tsx": "^3.8.0",
+    "tsx": "^4.10.2",
     "typescript": "~5.0.0",
     "vitest": "^0.32.2",
     "zod": "^3.23.8"
