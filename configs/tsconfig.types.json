@@ -6,5 +6,5 @@
     "declarationMap": true,
     "emitDeclarationOnly": true
   },
-  "exclude": ["../src/**/__tests__", "../src/playground.ts"]
+  "exclude": ["../src/**/__tests__", "../src/playground.mts"]
 }
