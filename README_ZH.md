@@ -64,6 +64,7 @@
   - [.nonempty](#nonempty)
   - [.min/.max/.length](#minmaxlength)
 - [Unions](#unions)
+- [Discriminated unions](#discriminated-unions)
 - [Optionals](#optionals)
 - [Nullables](#nullables)
 - [Enums](#enums)
@@ -896,6 +897,48 @@ Zod 将按照每个 "选项" 的顺序测试输入，并返回第一个成功验
 
 ```ts
 const stringOrNumber = z.string().or(z.number());
+```
+
+## Discriminated unions
+
+判别联合模式是指联合类型有一个特定键，根据该键值命中对应的对象模式。
+
+```ts
+type MyUnion =
+  | { status: "success"; data: string }
+  | { status: "failed"; error: Error };
+```
+
+这种特殊的联合类型可以用 `z.discriminatedUnion` 方法来表示。Zod 可以检查判别键（上例中的 `status` ），以确定应使用哪种模式来解析输入。这不仅提高了解析效率，还让 Zod 可以更友好地报告错误。
+
+如果使用基础的联合模式，输入会根据所提供的每个 "选项 "进行测试，如果无效，所有 "选项 "的问题都会显示在 zod 错误中。对于判别联合模式，只会对特定键值对应的 "选项" 进行测试，并只显示与该 "选项 "相关的问题。
+
+```ts
+const myUnion = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("success"), data: z.string() }),
+  z.object({ status: z.literal("failed"), error: z.instanceof(Error) }),
+]);
+
+myUnion.parse({ status: "success", data: "yippie ki yay" });
+```
+
+可以使用 `.options` 属性获取选项列表。
+
+```ts
+myUnion.options; // [ZodObject<...>, ZodObject<...>]
+```
+
+要合并两个或更多判别联合模式，请展开所有模式中的 `.options`。
+
+```ts
+const A = z.discriminatedUnion("status", [
+  /* options */
+]);
+const B = z.discriminatedUnion("status", [
+  /* options */
+]);
+
+const AB = z.discriminatedUnion("status", [...A.options, ...B.options]);
 ```
 
 ## Optionals
