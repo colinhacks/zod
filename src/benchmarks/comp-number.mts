@@ -10,11 +10,11 @@ const newSchema = zNew.number();
 
 // rewrite in mitata
 mitata.group("z.number parsing", () => {
-  mitata.bench("zod4", () => {
-    newSchema.parse(DATA);
-  });
   mitata.bench("zod3", () => {
     oldSchema.parse(DATA);
+  });
+  mitata.bench("zod4", () => {
+    newSchema.parse(DATA);
   });
 });
 

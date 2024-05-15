@@ -106,7 +106,7 @@
     "test:swc": "npx jest --config ./configs/swc-jest.config.json",
     "test:deno": "cd deno && deno test",
     "prepublishOnly": "npm run test && npm run build && npm run build:deno",
-    "play": "nodemon -e ts -w . -x tsx playground.ts",
+    "play": "nodemon -e ts,mts -w . -x tsx playground.mts",
     "depcruise": "depcruise -c .dependency-cruiser.js src",
     "benchmark": "tsx src/benchmarks/index.ts",
     "prepare": "husky install"

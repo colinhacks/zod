@@ -245,10 +245,6 @@ test("template literal unsupported args", () => {
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.preprocess(() => true, z.boolean())])
-  ).toThrow();
-  expect(() =>
-    // @ts-expect-error
     z.literal.template([z.promise()])
   ).toThrow();
   expect(() =>
@@ -292,7 +288,10 @@ test("template literal unsupported args", () => {
     // no @ts-expect-error
     z.literal.template([z.lazy(() => z.string())])
   ).toThrow();
-
+  expect(() =>
+    // no @ts-expect-error
+    z.literal.template([z.preprocess(() => true, z.boolean())])
+  ).toThrow();
   expect(() =>
     // @ts-expect-error
     z.literal.template([z.object({}).brand("brand")])
