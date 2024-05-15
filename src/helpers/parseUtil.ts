@@ -84,10 +84,10 @@ export class ZodFailure {
   }
 }
 
-export type OK<T> = T;
-export const OK = <T>(value: T): OK<T> => value as OK<T>;
+// export type OK<T> = T;
+// export const OK = <T>(value: T): OK<T> => value as OK<T>;
 
-export type SyncParseReturnType<T = unknown> = OK<T> | ZodFailure;
+export type SyncParseReturnType<T = unknown> = T | ZodFailure;
 export type AsyncParseReturnType<T> = Promise<SyncParseReturnType<T>>;
 export type ParseReturnType<T> =
   | SyncParseReturnType<T>
@@ -95,7 +95,7 @@ export type ParseReturnType<T> =
 
 export const isAborted = (x: ParseReturnType<unknown>): x is ZodFailure =>
   x instanceof ZodFailure;
-export const isValid = <T>(x: ParseReturnType<T>): x is OK<T> =>
+export const isValid = <T>(x: ParseReturnType<T>): x is T =>
   !(x instanceof ZodFailure);
 export const isAsync = <T>(
   x: ParseReturnType<T>

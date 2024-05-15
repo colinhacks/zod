@@ -6,7 +6,6 @@ import {
   isAsync,
   isValid,
   makeIssue,
-  OK,
   ParseContext,
   ParseInput,
   ParseParams,
@@ -1777,7 +1776,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
       return new ZodFailure(issues);
     }
 
-    return OK(input);
+    return input;
   }
 
   static create(params?: RawCreateParams & { coerce?: boolean }): ZodBigInt {
@@ -1929,7 +1928,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef, boolean> {
       ]);
     }
 
-    return OK(input);
+    return input;
   }
 
   static create(params?: RawCreateParams & { coerce?: boolean }): ZodBoolean {
@@ -2023,7 +2022,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
       return new ZodFailure(issues);
     }
 
-    return OK(new Date(input.getTime()));
+    return new Date(input.getTime());
   }
 
   _addCheck(check: ZodDateCheck) {
@@ -2109,7 +2108,7 @@ export class ZodSymbol extends ZodType<symbol, ZodSymbolDef, symbol> {
       ]);
     }
 
-    return OK(input);
+    return input;
   }
 
   static create(params?: RawCreateParams): ZodSymbol {
@@ -2151,7 +2150,7 @@ export class ZodUndefined extends ZodType<
         },
       ]);
     }
-    return OK(input);
+    return input;
   }
   params?: RawCreateParams;
 
@@ -2190,7 +2189,7 @@ export class ZodNull extends ZodType<null, ZodNullDef, null> {
         },
       ]);
     }
-    return OK(input);
+    return input;
   }
   static create(params?: RawCreateParams): ZodNull {
     return new ZodNull({
@@ -2218,7 +2217,7 @@ export class ZodAny extends ZodType<any, ZodAnyDef, any> {
     input: ParseInput,
     _ctx: ParseContext
   ): ParseReturnType<this["_output"]> {
-    return OK(input);
+    return input;
   }
   static create(params?: RawCreateParams): ZodAny {
     return new ZodAny({
@@ -2246,7 +2245,7 @@ export class ZodUnknown extends ZodType<unknown, ZodUnknownDef, unknown> {
     input: ParseInput,
     _ctx: ParseContext
   ): ParseReturnType<this["_output"]> {
-    return OK(input);
+    return input;
   }
 
   static create(params?: RawCreateParams): ZodUnknown {
@@ -2318,7 +2317,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef, void> {
         },
       ]);
     }
-    return OK(input);
+    return input;
   }
 
   static create(params?: RawCreateParams): ZodVoid {
@@ -2481,7 +2480,7 @@ export class ZodArray<
           return new ZodFailure(issues);
         }
 
-        return OK(result.map((x) => x as any) as any);
+        return result.map((x) => x as any) as any;
       });
     }
 
@@ -2502,7 +2501,7 @@ export class ZodArray<
       return new ZodFailure(issues);
     }
 
-    return OK(results.map((x) => x as any) as any);
+    return results.map((x) => x as any) as any;
   }
 
   get element() {
@@ -2821,7 +2820,7 @@ export class ZodObject<
             return new ZodFailure(issues);
           }
 
-          return OK(final);
+          return final;
         });
     }
 
@@ -2829,7 +2828,7 @@ export class ZodObject<
       return new ZodFailure(issues);
     }
 
-    return OK(final);
+    return final;
   }
 
   get shape() {
@@ -3601,7 +3600,7 @@ export class ZodIntersection<
         ]);
       }
 
-      return OK(merged.data);
+      return merged.data;
     };
 
     const parseResults = [
@@ -3764,7 +3763,7 @@ export class ZodTuple<
         if (issues.length) {
           return new ZodFailure(issues);
         }
-        return OK(results.map((x) => x as any) as any);
+        return results.map((x) => x as any) as any;
       });
     } else {
       issues.push(
@@ -3781,7 +3780,7 @@ export class ZodTuple<
       if (issues.length) {
         return new ZodFailure(issues);
       }
-      return OK(items.map((x) => x as any) as any);
+      return items.map((x) => x as any) as any;
     }
   }
 
@@ -3946,13 +3945,13 @@ export class ZodRecord<
         if (issues.length) {
           return new ZodFailure(issues);
         }
-        return OK(final as this["_output"]);
+        return final as this["_output"];
       });
     } else {
       if (issues.length) {
         return new ZodFailure(issues);
       }
-      return OK(final as this["_output"]);
+      return final as this["_output"];
     }
   }
 
@@ -4111,14 +4110,14 @@ export class ZodMap<
           return new ZodFailure(issues);
         }
 
-        return OK(final);
+        return final;
       });
     } else {
       if (issues.length) {
         return new ZodFailure(issues);
       }
 
-      return OK(final);
+      return final;
     }
   }
   static create<
@@ -4228,7 +4227,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
         return new ZodFailure(issues);
       }
 
-      return OK(parsedSet);
+      return parsedSet;
     }
 
     let hasPromises = false;
@@ -4365,7 +4364,7 @@ export class ZodFunction<
       // an alias (using an arrow function was what caused 2651).
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const me = this;
-      return OK(async function (this: any, ...args: any[]) {
+      return async function (this: any, ...args: any[]) {
         const error = new ZodError([]);
         const parsedArgs = await me._def.args
           .parseAsync(args, params)
@@ -4383,13 +4382,13 @@ export class ZodFunction<
             throw error;
           });
         return parsedReturns;
-      });
+      };
     } else {
       // Would love a way to avoid disabling this rule, but we need
       // an alias (using an arrow function was what caused 2651).
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const me = this;
-      return OK(function (this: any, ...args: any[]) {
+      return function (this: any, ...args: any[]) {
         const parsedArgs = me._def.args.safeParse(args, params);
         if (!parsedArgs.success) {
           throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
@@ -4400,7 +4399,7 @@ export class ZodFunction<
           throw new ZodError([makeReturnsIssue(result, parsedReturns.error)]);
         }
         return parsedReturns.data;
-      }) as any;
+      } as any;
     }
   }
 
@@ -4547,7 +4546,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
         },
       ]);
     }
-    return OK(input);
+    return input;
   }
 
   get value() {
@@ -4642,7 +4641,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       ]);
     }
 
-    return OK(input);
+    return input;
   }
 
   get options() {
@@ -4775,7 +4774,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       ]);
     }
 
-    return OK(input as any);
+    return input as any;
   }
 
   get enum() {
@@ -4927,7 +4926,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
       return new ZodFailure(issues);
     }
 
-    return OK(file);
+    return file;
   }
 
   _addCheck(check: ZodFileCheck) {
@@ -5315,12 +5314,12 @@ export class ZodEffects<
         if (result instanceof Promise) {
           return result.then((result) => {
             if (issues.length) return new ZodFailure(issues, result);
-            return OK(result);
+            return result;
           });
         }
 
         if (issues.length) return new ZodFailure(issues, result);
-        return OK(result);
+        return result;
       } else {
         return inner.then((inner) => {
           if (isAborted(inner)) {
@@ -5340,12 +5339,12 @@ export class ZodEffects<
           if (result instanceof Promise) {
             return result.then((result) => {
               if (issues.length) return new ZodFailure(issues, result);
-              return OK(result);
+              return result;
             });
           }
 
           if (issues.length) return new ZodFailure(issues, result);
-          return OK(result);
+          return result;
         });
       }
     }
@@ -5408,7 +5407,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
   ): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType === ZodParsedType.undefined) {
-      return OK(undefined);
+      return undefined;
     }
     return this._def.innerType._parse(input, ctx);
   }
@@ -5455,7 +5454,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
   ): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType === ZodParsedType.null) {
-      return OK(null);
+      return null;
     }
     return this._def.innerType._parse(input, ctx);
   }
@@ -5631,7 +5630,7 @@ export class ZodNaN extends ZodType<number, ZodNaNDef, number> {
       ]);
     }
 
-    return OK(input);
+    return input;
   }
 
   static create(params?: RawCreateParams): ZodNaN {
@@ -5884,7 +5883,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       ]);
     }
 
-    return OK(input);
+    return input;
   }
 
   protected _addParts(parts: TemplateLiteralPart[]): ZodTemplateLiteral {

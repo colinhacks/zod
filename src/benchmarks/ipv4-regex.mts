@@ -1,6 +1,5 @@
-import Benchmark from "benchmark";
-
-const suite = new Benchmark.Suite("ipv4");
+import { Bench } from "tinybench";
+import { runBench } from "./benchUtil.mjs";
 
 const DATA = "127.0.0.1";
 const ipv4RegexA =
@@ -19,7 +18,7 @@ const ipv4RegexH = /^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$/;
 const ipv4RegexI =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
 
-suite
+const bench = new Bench()
   .add("A", () => {
     return ipv4RegexA.test(DATA);
   })
@@ -46,15 +45,12 @@ suite
   })
   .add("I", () => {
     return ipv4RegexI.test(DATA);
-  })
-  .on("cycle", (e: Benchmark.Event) => {
-    console.log(`${suite.name!}: ${e.target}`);
   });
 
-export default {
-  suites: [suite],
-};
+export default async function run() {
+  await runBench("ipv4 regex", bench);
+}
 
-if (require.main === module) {
-  suite.run();
+if (import.meta.filename === process.argv[1]) {
+  run();
 }

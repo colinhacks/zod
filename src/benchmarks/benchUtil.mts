@@ -1,8 +1,8 @@
 import { Bench } from "tinybench";
-// @ts-ignore
-import "console.table";
 import { Table } from "console-table-printer";
 import chalk from "chalk";
+import zNew from "..";
+import zOld from "zod";
 
 function formatNumber(val: number) {
   if (val >= 1e12) {
@@ -33,17 +33,9 @@ function toFixed(val: number) {
 }
 
 export function log(name: string, bench: Bench) {
-  // let fastest: number = Number.POSITIVE_INFINITY;
-  // for (const task of bench.tasks) {
-  //   if (task.result!.mean < fastest) {
-  //     fastest = task.result!.mean;
-  //   }
-  // }
-
   const sorted = bench.tasks.sort((a, b) => a.result!.mean - b.result!.mean);
-
   const fastest = sorted[0];
-  // console.log(`benchmarking ${name}...`);
+
   const table = new Table({
     columns: [
       { name: "name", color: "white" },
@@ -54,12 +46,13 @@ export function log(name: string, bench: Bench) {
       { name: "samples", color: "magenta" },
     ],
   });
+
   for (const task of sorted) {
     table.addRow({
       name: task.name,
       summary:
         task === sorted[0]
-          ? "🥇"
+          ? "fastest"
           : (task.result!.mean / fastest.result!.mean).toFixed(3) +
             `x slower than ${fastest.name}`,
       "ops/sec": formatNumber(task.result!.hz) + " ops/sec",
@@ -68,11 +61,23 @@ export function log(name: string, bench: Bench) {
       samples: task.result!.samples.length,
     });
   }
-  const rendered = "  " + table.render().split("\n").join("\n  ");
-  console.log();
-  console.log(`   ${chalk.bold(chalk.white(name))} benchmark results`);
+
+  const rendered = "   " + table.render().split("\n").join("\n   ");
+  console.log("\n");
+  console.log(`   ${chalk.bold(chalk.white(name))} — benchmark results`);
   console.log(rendered);
-  console.log();
-  // printTable(table);
-  // console.table(data);
+  console.log("\n");
+}
+
+export function makeSchema<T>(factory: (z: typeof zNew) => T) {
+  return {
+    zod4: factory(zNew),
+    zod3: factory(zOld as any),
+  };
+}
+
+export async function runBench(name: string, bench: Bench) {
+  await bench.warmup();
+  await bench.run();
+  log(name, bench);
 }

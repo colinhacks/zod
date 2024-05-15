@@ -1,7 +1,21 @@
-import * as mitata from "mitata";
+import { Bench } from "tinybench";
+import { makeSchema, runBench } from "./benchUtil.mjs";
 
-import zOld from "zod";
-import zNew from "..";
+const { zod3, zod4 } = makeSchema((z) =>
+  z.object({
+    number: z.number(),
+    negNumber: z.number(),
+    maxNumber: z.number(),
+    string: z.string(),
+    longString: z.string(),
+    boolean: z.boolean(),
+    deeplyNested: z.object({
+      foo: z.string(),
+      num: z.number(),
+      bool: z.boolean(),
+    }),
+  })
+);
 
 const DATA = Object.freeze({
   number: 1,
@@ -18,42 +32,13 @@ const DATA = Object.freeze({
   },
 });
 
-const oldSchema = zOld.object({
-  number: zOld.number(),
-  negNumber: zOld.number(),
-  maxNumber: zOld.number(),
-  string: zOld.string(),
-  longString: zOld.string(),
-  boolean: zOld.boolean(),
-  deeplyNested: zOld.object({
-    foo: zOld.string(),
-    num: zOld.number(),
-    bool: zOld.boolean(),
-  }),
-});
+const bench = new Bench();
 
-const newSchema = zNew.object({
-  number: zNew.number(),
-  negNumber: zNew.number(),
-  maxNumber: zNew.number(),
-  string: zNew.string(),
-  longString: zNew.string(),
-  boolean: zNew.boolean(),
-  deeplyNested: zNew.object({
-    foo: zNew.string(),
-    num: zNew.number(),
-    bool: zNew.boolean(),
-  }),
-});
+bench.add("zod3", () => zod3.parse(DATA));
+bench.add("zod4", () => zod4.parse(DATA));
 
-// rewrite in mitata
-mitata.group("moltar object benchmark", () => {
-  mitata.bench("zod4", () => {
-    newSchema.parse(DATA);
-  });
-  mitata.bench("zod3", () => {
-    oldSchema.parse(DATA);
-  });
-});
+export default async function run() {
+  await runBench("moltar: z.object().parse", bench);
+}
 
-mitata.run();
+run();
