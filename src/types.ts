@@ -64,9 +64,7 @@ function safeResult<Input, Output>(
 ):
   | { success: true; data: Output }
   | { success: false; error: ZodError<Input> } {
-  if (isValid(result)) {
-    return { success: true, data: result as any };
-  } else {
+  if (isAborted(result)) {
     if (!result.issues.length) {
       throw new Error("Validation failed but no issues detected.");
     }
@@ -81,6 +79,7 @@ function safeResult<Input, Output>(
       },
     };
   }
+  return { success: true, data: result as any };
 }
 
 export type RawCreateParams =
@@ -151,7 +150,7 @@ export abstract class ZodType<
 
   abstract _parse(
     input: ParseInput,
-    ctx: ParseContext
+    ctx?: ParseContext
   ): ParseReturnType<Output>;
 
   _getType(input: ParseInput): ReturnType<typeof getParsedType> {
@@ -160,7 +159,7 @@ export abstract class ZodType<
 
   _parseSync(
     input: ParseInput,
-    ctx: ParseContext
+    ctx?: ParseContext
   ): SyncParseReturnType<Output> {
     const result = this._parse(input, ctx);
     if (isAsync(result)) {
@@ -171,13 +170,19 @@ export abstract class ZodType<
 
   _parseAsync(
     input: ParseInput,
-    ctx: ParseContext
+    ctx?: ParseContext
   ): AsyncParseReturnType<Output> {
     const result = this._parse(input, ctx);
     return isAsync(result) ? result : Promise.resolve(result);
   }
 
   parse(data: unknown, params?: Partial<ParseParams>): Output {
+    if (!params) {
+      const result = this._parseSync(data, this.defaultSyncContext);
+      if (isAborted(result))
+        throw issuesToZodError(this.defaultSyncContext, result.issues);
+      return result as any;
+    }
     const ctx: ParseContext = {
       contextualErrorMap: params?.errorMap,
       async: params?.async ?? false,
@@ -193,6 +198,10 @@ export abstract class ZodType<
     data: unknown,
     params?: Partial<ParseParams>
   ): SafeParseReturnType<Input, Output> {
+    if (!params) {
+      const result = this._parseSync(data, this.defaultSyncContext);
+      return safeResult(this.defaultSyncContext, result) as any;
+    }
     const ctx: ParseContext = {
       contextualErrorMap: params?.errorMap,
       async: params?.async ?? false,
@@ -207,15 +216,31 @@ export abstract class ZodType<
     data: unknown,
     params?: Partial<ParseParams>
   ): Promise<Output> {
-    const result = await this.safeParseAsync(data, params);
-    if (result.success) return result.data;
-    throw result.error;
+    if (!params) {
+      const result = await this._parseAsync(data, this.defaultAsyncContext);
+      if (isAborted(result))
+        throw issuesToZodError(this.defaultAsyncContext, result.issues);
+      return result;
+    }
+    const ctx: ParseContext = {
+      contextualErrorMap: params?.errorMap,
+      async: true,
+      basePath: params?.path || [],
+      schemaErrorMap: this._def.errorMap,
+    };
+    const result = await this._parseAsync(data, ctx);
+    if (isAborted(result)) throw issuesToZodError(ctx, result.issues);
+    return result;
   }
 
   async safeParseAsync(
     data: unknown,
     params?: Partial<ParseParams>
   ): Promise<SafeParseReturnType<Input, Output>> {
+    if (!params) {
+      const result = await this._parseAsync(data, this.defaultAsyncContext);
+      return safeResult(this.defaultAsyncContext, result);
+    }
     const ctx: ParseContext = {
       contextualErrorMap: params?.errorMap,
       async: true,
@@ -225,6 +250,32 @@ export abstract class ZodType<
 
     const result = await this._parseAsync(data, ctx);
     return safeResult(ctx, result);
+  }
+
+  private _defaultSyncContext: ParseContext;
+  private get defaultSyncContext(): ParseContext {
+    if (this._defaultSyncContext) {
+      return this._defaultSyncContext;
+    }
+    const ctx = {
+      basePath: [],
+      async: false,
+      schemaErrorMap: this._def.errorMap,
+    };
+    this._defaultSyncContext = ctx;
+    return ctx;
+  }
+
+  private _defaultAsyncContext: ParseContext;
+  private get defaultAsyncContext(): ParseContext {
+    if (this._defaultAsyncContext) return this._defaultAsyncContext;
+    const ctx = {
+      basePath: [],
+      async: true,
+      schemaErrorMap: this._def.errorMap,
+    };
+    this._defaultAsyncContext = ctx;
+    return ctx;
   }
 
   /** Alias of safeParseAsync */
@@ -668,28 +719,32 @@ function isValidJwt(token: string, algorithm: JwtAlgorithm | null = null) {
 }
 
 export class ZodString extends ZodType<string, ZodStringDef, string> {
-  _parse(input: ParseInput, _ctx: ParseContext): ParseReturnType<string> {
+  _parse(input: ParseInput, _ctx?: ParseContext): ParseReturnType<string> {
     if (this._def.coerce) {
       input = String(input) as string;
     }
-    const parsedType = this._getType(input);
 
-    if (parsedType !== ZodParsedType.string) {
+    if (typeof input !== "string") {
       return new ZodFailure([
         {
           input,
           code: ZodIssueCode.invalid_type,
           expected: ZodParsedType.string,
-          received: parsedType,
+          received: getParsedType(input),
         },
       ]);
     }
 
-    const issues: IssueData[] = [];
+    if (this._def.checks.length === 0) {
+      return input;
+    }
+
+    let issues: IssueData[] | undefined;
 
     for (const check of this._def.checks) {
       if (check.kind === "min") {
         if (input.length < check.value) {
+          issues = issues || [];
           issues.push({
             input,
             code: ZodIssueCode.too_small,
@@ -702,6 +757,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "max") {
         if (input.length > check.value) {
+          issues = issues || [];
           issues.push({
             input,
             code: ZodIssueCode.too_big,
@@ -717,6 +773,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         const tooSmall = input.length < check.value;
         if (tooBig || tooSmall) {
           if (tooBig) {
+            issues = issues || [];
             issues.push({
               input,
               code: ZodIssueCode.too_big,
@@ -727,6 +784,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
               message: check.message,
             });
           } else if (tooSmall) {
+            issues = issues || [];
             issues.push({
               input,
               code: ZodIssueCode.too_small,
@@ -740,6 +798,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "email") {
         if (!emailRegex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "email",
@@ -749,6 +808,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "jwt") {
         if (!isValidJwt(input, check.alg)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "jwt",
@@ -761,6 +821,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           emojiRegex = new RegExp(_emojiRegex, "u");
         }
         if (!emojiRegex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "emoji",
@@ -770,6 +831,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "uuid") {
         if (!uuidRegex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "uuid",
@@ -779,6 +841,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "nanoid") {
         if (!nanoidRegex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "nanoid",
@@ -788,6 +851,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "guid") {
         if (!guidRegex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "guid",
@@ -797,6 +861,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "cuid") {
         if (!cuidRegex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "cuid",
@@ -806,6 +871,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "cuid2") {
         if (!cuid2Regex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "cuid2",
@@ -815,6 +881,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "ulid") {
         if (!ulidRegex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "ulid",
@@ -824,6 +891,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "xid") {
         if (!xidRegex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "xid",
@@ -833,6 +901,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "ksuid") {
         if (!ksuidRegex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "ksuid",
@@ -848,6 +917,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             throw new Error("hostname is invalid");
           }
         } catch {
+          issues = issues || [];
           issues.push({
             input,
             validation: "url",
@@ -859,6 +929,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         check.regex.lastIndex = 0;
         const testResult = check.regex.test(input);
         if (!testResult) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "regex",
@@ -870,6 +941,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         input = input.trim();
       } else if (check.kind === "includes") {
         if (!(input as string).includes(check.value, check.position)) {
+          issues = issues || [];
           issues.push({
             input,
             code: ZodIssueCode.invalid_string,
@@ -883,6 +955,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         input = input.toUpperCase();
       } else if (check.kind === "startsWith") {
         if (!(input as string).startsWith(check.value)) {
+          issues = issues || [];
           issues.push({
             input,
             code: ZodIssueCode.invalid_string,
@@ -892,6 +965,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "endsWith") {
         if (!(input as string).endsWith(check.value)) {
+          issues = issues || [];
           issues.push({
             input,
             code: ZodIssueCode.invalid_string,
@@ -903,6 +977,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         const regex = datetimeRegex(check);
 
         if (!regex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             code: ZodIssueCode.invalid_string,
@@ -914,6 +989,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         const regex = dateRegex;
 
         if (!regex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             code: ZodIssueCode.invalid_string,
@@ -925,6 +1001,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         const regex = timeRegex(check);
 
         if (!regex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             code: ZodIssueCode.invalid_string,
@@ -934,6 +1011,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "duration") {
         if (!durationRegex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "duration",
@@ -943,6 +1021,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "ip") {
         if (!isValidIP(input, check.version)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "ip",
@@ -952,6 +1031,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "base64") {
         if (!base64Regex.test(input)) {
+          issues = issues || [];
           issues.push({
             input,
             validation: "base64",
@@ -963,6 +1043,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         try {
           JSON.parse(input);
         } catch (err) {
+          issues = issues || [];
           issues.push({
             input,
             code: ZodIssueCode.invalid_string,
@@ -975,11 +1056,11 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       }
     }
 
-    if (issues.length) {
+    if (issues && issues.length) {
       return new ZodFailure(issues);
     }
 
-    return OK(input);
+    return input;
   }
 
   protected _regex(
@@ -1316,18 +1397,24 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     });
-    return Object.assign(Object.create(base), {
-      parse(data: unknown, params?: ParseParams) {
-        if (params) return base.parse(data, params);
-        if (typeof data === "string") return data;
-        return base.parse(data, params);
-      },
-      async parseAsync(data: unknown, params?: ParseParams) {
-        if (params) return base.parseAsync(data, params);
-        if (typeof data === "string") return data;
-        return base.parseAsync(data, params);
-      },
-    });
+    return base;
+    // return Object.assign(Object.create(base), {
+    //   parse(data: unknown, params?: ParseParams) {
+    //     if (params) return base.parse(data, params);
+    //     if (typeof data === "string") return data;
+    //     return base.parse(data, params);
+    //   },
+    //   // _parse(data: unknown, ctx?: ParseContext) {
+    //   //   if (ctx) return base.parse(data, params);
+    //   //   if (typeof data === "string") return data;
+    //   //   return base.parse(data, params);
+    //   // },
+    //   async parseAsync(data: unknown, params?: ParseParams) {
+    //     if (params) return base.parseAsync(data, params);
+    //     if (typeof data === "string") return data;
+    //     return base.parseAsync(data, params);
+    //   },
+    // });
   }
 }
 

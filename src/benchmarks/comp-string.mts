@@ -8,7 +8,7 @@ const DATA = `${Math.random()}`;
 const oldSchema = zOld.string();
 const newSchema = zNew.string();
 
-mitata.group("z.string parsing", () => {
+mitata.group("z.string().parse()", () => {
   mitata.bench("zod4", () => {
     newSchema.parse(DATA);
   });
@@ -16,5 +16,14 @@ mitata.group("z.string parsing", () => {
     oldSchema.parse(DATA);
   });
 });
+
+// mitata.group("z.string().safeParse()", () => {
+//   mitata.bench("zod4", () => {
+//     newSchema.safeParse(DATA);
+//   });
+//   mitata.bench("zod3", () => {
+//     oldSchema.safeParse(DATA);
+//   });
+// });
 
 mitata.run();
