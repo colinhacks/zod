@@ -1,6 +1,8 @@
 import { Bench } from "tinybench";
 // @ts-ignore
 import "console.table";
+import { Table } from "console-table-printer";
+import chalk from "chalk";
 
 function formatNumber(val: number) {
   if (val >= 1e12) {
@@ -27,7 +29,7 @@ function formatNumber(val: number) {
 }
 
 function toFixed(val: number) {
-  return val.toFixed(2).replace(/\.00$/, "");
+  return val.toPrecision(3);
 }
 
 export function log(name: string, bench: Bench) {
@@ -39,25 +41,38 @@ export function log(name: string, bench: Bench) {
   // }
 
   const sorted = bench.tasks.sort((a, b) => a.result!.mean - b.result!.mean);
-  const data: any[] = [];
 
   const fastest = sorted[0];
-  console.log(`benchmarking ${name}...`);
+  // console.log(`benchmarking ${name}...`);
+  const table = new Table({
+    columns: [
+      { name: "name", color: "white" },
+      { name: "summary", alignment: "left" },
+      { name: "ops/sec", color: "cyan" },
+      { name: "time/op", color: "magenta" },
+      { name: "margin", color: "magenta" },
+      { name: "samples", color: "magenta" },
+    ],
+  });
   for (const task of sorted) {
-    data.push({
-      // winner: task === sorted[0] ? "⚡️" : "",
-      place: "#" + (sorted.indexOf(task) + 1),
+    table.addRow({
       name: task.name,
-      comp:
+      summary:
         task === sorted[0]
-          ? "winner"
-          : (task.result!.mean / fastest.result!.mean).toFixed(2) +
+          ? "🥇"
+          : (task.result!.mean / fastest.result!.mean).toFixed(3) +
             `x slower than ${fastest.name}`,
-      "ops/sec": formatNumber(1 / (task.result!.mean / 1000)) + " ops/sec",
-      // margin: "±" + (task.result!.moe * 1000000).toFixed(2) + "μs",
-
-      mean: formatNumber(task.result!.mean / 1000) + "sec",
+      "ops/sec": formatNumber(task.result!.hz) + " ops/sec",
+      "time/op": formatNumber(task.result!.mean / 1000) + "s",
+      margin: "±" + task.result!.rme.toFixed(2) + "%",
+      samples: task.result!.samples.length,
     });
   }
-  console.table(data);
+  const rendered = "  " + table.render().split("\n").join("\n  ");
+  console.log();
+  console.log(`   ${chalk.bold(chalk.white(name))} benchmark results`);
+  console.log(rendered);
+  console.log();
+  // printTable(table);
+  // console.table(data);
 }

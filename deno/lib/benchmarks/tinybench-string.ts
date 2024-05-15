@@ -25,6 +25,7 @@ bench.add("zod4", () => news.string.parse(DATA));
 export default async function run() {
   await bench.warmup();
   await bench.run();
+
   log("z.string()", bench);
 }
 

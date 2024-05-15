@@ -160,7 +160,8 @@ export abstract class ZodType<
   parse(data: unknown, params?: Partial<ParseParams>): Output {
     if (!params) {
       const result = this._parse(data, this.defaultSyncContext);
-      if (result instanceof Promise) throw Error("Synchronous parse encountered promise.");
+      if (result instanceof Promise)
+        throw Error("Synchronous parse encountered promise.");
       if (isAborted(result))
         throw issuesToZodError(this.defaultSyncContext, result.issues);
       return result as any;
@@ -171,7 +172,8 @@ export abstract class ZodType<
       schemaErrorMap: this._def.errorMap,
     };
     const result = this._parse(data, ctx);
-    if (result instanceof Promise) throw Error("Synchronous parse encountered promise.");
+    if (result instanceof Promise)
+      throw Error("Synchronous parse encountered promise.");
     if (isAborted(result)) throw issuesToZodError(ctx, result.issues);
     return result as any;
   }
@@ -182,7 +184,8 @@ export abstract class ZodType<
   ): SafeParseReturnType<Input, Output> {
     if (!params) {
       const result = this._parse(data, this.defaultSyncContext);
-      if (result instanceof Promise) throw Error("Synchronous parse encountered promise.");
+      if (result instanceof Promise)
+        throw Error("Synchronous parse encountered promise.");
       return safeResult(this.defaultSyncContext, result) as any;
     }
     const ctx: ParseContext = {
@@ -191,7 +194,8 @@ export abstract class ZodType<
       schemaErrorMap: this._def.errorMap,
     };
     const result = this._parse(data, ctx);
-    if (result instanceof Promise) throw Error("Synchronous parse encountered promise.");
+    if (result instanceof Promise)
+      throw Error("Synchronous parse encountered promise.");
     return safeResult(ctx, result) as any;
   }
 
@@ -5220,6 +5224,7 @@ export class ZodEffects<
         return issues.length ? new ZodFailure(issues) : (result as any);
       }
     }
+
     if (effect.type === "refinement") {
       const executeRefinement = (acc: unknown): any => {
         const result = effect.refinement(acc, checkCtx);
@@ -5252,12 +5257,12 @@ export class ZodEffects<
 
         if (executed instanceof Promise) {
           return executed.then(() => {
-            if (issues.length) return new ZodFailure(issues);
+            if (issues.length) return new ZodFailure(issues, inner);
             return inner;
           }) as any;
         }
 
-        if (issues.length) return new ZodFailure(issues);
+        if (issues.length) return new ZodFailure(issues, inner);
         return inner as any;
       } else {
         return inner.then((inner) => {
@@ -5266,11 +5271,9 @@ export class ZodEffects<
           }
 
           if (issues.some((i) => i.fatal)) {
-            return new ZodFailure(issues);
+            return new ZodFailure(issues, inner);
           }
 
-          // const value =
-          //   inner.status === "valid" ? inner.value : inner.value ?? input;
           const value = isAborted(inner)
             ? inner.value !== NOT_SET
               ? inner.value
@@ -5281,59 +5284,67 @@ export class ZodEffects<
 
           if (executed instanceof Promise) {
             return executed.then(() => {
-              if (issues.length) return new ZodFailure(issues);
+              if (issues.length) return new ZodFailure(issues, inner);
               return inner;
             });
           }
 
-          if (issues.length) return new ZodFailure(issues);
+          if (issues.length) return new ZodFailure(issues), inner;
           return inner;
         });
       }
     }
 
     if (effect.type === "transform") {
-      const base = this._def.schema._parse(input, ctx);
-      if (!(base instanceof Promise)) {
-        if (isAborted(base)) {
-          issues.push(...base.issues);
+      const inner = this._def.schema._parse(input, ctx);
+      if (!(inner instanceof Promise)) {
+        if (isAborted(inner)) {
+          issues.push(...inner.issues);
         }
 
         // do not execute transform if any issues exist
         if (issues.length) return new ZodFailure(issues);
 
-        const baseValid = base as OK<any>;
+        const value = isAborted(inner)
+          ? inner.value === NOT_SET
+            ? input
+            : inner.value
+          : inner;
 
-        const result = effect.transform(baseValid, checkCtx);
+        const result = effect.transform(value, checkCtx);
         if (result instanceof Promise) {
           return result.then((result) => {
-            if (issues.length) return new ZodFailure(issues);
+            if (issues.length) return new ZodFailure(issues, result);
             return OK(result);
           });
         }
 
-        if (issues.length) return new ZodFailure(issues);
+        if (issues.length) return new ZodFailure(issues, result);
         return OK(result);
       } else {
-        return base.then((base) => {
-          if (isAborted(base)) {
-            issues.push(...base.issues);
+        return inner.then((inner) => {
+          if (isAborted(inner)) {
+            issues.push(...inner.issues);
           }
 
-          if (issues.length) return new ZodFailure(issues, base);
+          if (issues.length) return new ZodFailure(issues, inner);
 
-          const baseValid = base as OK<any>;
+          const value = isAborted(inner)
+            ? inner.value === NOT_SET
+              ? input
+              : inner.value
+            : inner;
 
-          const result = effect.transform(baseValid.value, checkCtx);
+          const result = effect.transform(value, checkCtx);
 
           if (result instanceof Promise) {
             return result.then((result) => {
-              if (issues.length) return new ZodFailure(issues);
+              if (issues.length) return new ZodFailure(issues, result);
               return OK(result);
             });
           }
 
-          if (issues.length) return new ZodFailure(issues);
+          if (issues.length) return new ZodFailure(issues, result);
           return OK(result);
         });
       }
@@ -5687,7 +5698,7 @@ export class ZodPipeline<
       return result.then((inResult) => {
         if (isAborted(inResult)) return inResult;
 
-        return this._def.out._parse(inResult.value, ctx);
+        return this._def.out._parse(inResult, ctx);
       });
     } else {
       if (isAborted(result)) return result;
