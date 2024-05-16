@@ -157,7 +157,7 @@ test("flat inference", () => {
 //   >(true);
 // });
 
-test("object freezing", () => {
+test("object freezing", async () => {
   expect(Object.isFrozen(z.array(z.string()).readonly().parse(["a"]))).toBe(
     true
   );
@@ -174,14 +174,7 @@ test("object freezing", () => {
         .parse(new Map([["a", new Date()]]))
     )
   ).toBe(true);
-  expect(
-    Object.isFrozen(
-      z
-        .set(z.promise(z.string()))
-        .readonly()
-        .parse(new Set([Promise.resolve("a")]))
-    )
-  ).toBe(true);
+
   expect(
     Object.isFrozen(z.record(z.string()).readonly().parse({ a: "b" }))
   ).toBe(true);
@@ -198,7 +191,15 @@ test("object freezing", () => {
   ).toBe(true);
   expect(
     Object.isFrozen(
-      z.promise(z.string()).readonly().parse(Promise.resolve("a"))
+      await z
+        .set(z.promise(z.string()))
+        .readonly()
+        .parseAsync(new Set([Promise.resolve("a")]))
+    )
+  ).toBe(true);
+  expect(
+    Object.isFrozen(
+      await z.promise(z.string()).readonly().parseAsync(Promise.resolve("a"))
     )
   ).toBe(true);
 });

@@ -39,14 +39,10 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
 };
 
 test("type error with custom error map", () => {
-  try {
-    z.string().parse(234, { errorMap });
-  } catch (err) {
-    const zerr: z.ZodError = err as any;
+  const result = z.string().safeParse(234, { errorMap });
 
-    expect(zerr.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
-    expect(zerr.issues[0].message).toEqual(`bad type!`);
-  }
+  expect(result.error!.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
+  expect(result.error!.issues[0].message).toEqual(`bad type!`);
 });
 
 test("refinement fail with params", () => {
@@ -273,6 +269,21 @@ test("no abort early on refinements", () => {
     expect(result1.error.issues.length).toEqual(2);
   }
 });
+
+test("detect issue with input fallback", () => {
+  const schema = z
+    .string()
+    .transform((val) => val.length)
+    .refine(() => false, { message: "always fails" })
+    .refine(
+      (val) => {
+        if (typeof val !== "number") throw new Error();
+        return (val ^ 2) > 10;
+      } // should be number but it's a string
+    );
+  expect(() => schema.parse("hello")).toThrow(ZodError);
+});
+
 test("formatting", () => {
   const invalidItem = {
     inner: { name: ["aasd", "asdfasdfasfd"] },

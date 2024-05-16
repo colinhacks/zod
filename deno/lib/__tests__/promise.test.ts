@@ -20,12 +20,14 @@ test("promise inference", () => {
 });
 
 test("promise parsing success", async () => {
-  const pr = promSchema.parse(Promise.resolve({ name: "Bobby", age: 10 }));
-  expect(pr).toBeInstanceOf(Promise);
-  const result = await pr;
-  expect(typeof result).toBe("object");
-  expect(typeof result.age).toBe("number");
-  expect(typeof result.name).toBe("string");
+  expect(() =>
+    promSchema.parse(Promise.resolve({ name: "Bobby", age: 10 }))
+  ).toThrow();
+  // expect(pr).toBeInstanceOf(Promise);
+  // const result = await pr;
+  // expect(typeof result).toBe("object");
+  // expect(typeof result.age).toBe("number");
+  // expect(typeof result.name).toBe("string");
 });
 
 test("promise parsing success 2", () => {
@@ -41,18 +43,20 @@ test("promise parsing success 2", () => {
 });
 
 test("promise parsing fail", async () => {
-  const bad = promSchema.parse(Promise.resolve({ name: "Bobby", age: "10" }));
+  expect(() =>
+    promSchema.parse(Promise.resolve({ name: "Bobby", age: "10" }))
+  ).toThrow();
   // return await expect(bad).resolves.toBe({ name: 'Bobby', age: '10' });
-  return await expect(bad).rejects.toBeInstanceOf(z.ZodError);
+  // return await expect(bad).rejects.toBeInstanceOf(z.ZodError);
   // done();
 });
 
 test("promise parsing fail 2", async () => {
-  const failPromise = promSchema.parse(
-    Promise.resolve({ name: "Bobby", age: "10" })
-  );
-  await expect(failPromise).rejects.toBeInstanceOf(z.ZodError);
-  // done();/z
+  expect(() =>
+    promSchema.parse(Promise.resolve({ name: "Bobby", age: "10" }))
+  ).toThrow();
+  // await expect(failPromise).rejects.toBeInstanceOf(z.ZodError);
+  // done();
 });
 
 test("promise parsing fail", () => {

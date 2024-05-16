@@ -6,9 +6,10 @@ coverage
 .vscode
 .idea
 *.log
-playground.ts
-deno/lib/playground.ts
+playground.mts
+deno/lib/playground.mts
 .eslintcache
 workspace.code-workspace
 .netlify
 bun.lockb
+out.png

@@ -352,6 +352,7 @@ type stripPath<T extends object> = T extends any
   : never;
 
 export type IssueData = stripPath<ZodIssueOptionalMessage> & {
+  input: any;
   path?: (string | number)[];
   fatal?: boolean;
 };
