@@ -652,6 +652,7 @@ z.string().date(); // ISO date format (YYYY-MM-DD)
 z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
 z.string().duration(); // ISO 8601 duration
 z.string().base64();
+z.string().e164(); // E.164 number format
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
@@ -824,6 +825,20 @@ if (!env.success) {
 ```
 
 This is recommended over using `z.string().transform(s => JSON.parse(s))`, since that will not catch parse errors, even when using `.safeParse`.
+
+### E.164 telephone numbers
+
+The z.string().e164() method can be used to validate international telephone numbers.
+
+```ts
+const e164Number = z.string().e164();
+
+e164Number.parse("+1555555"); // pass
+e164Number.parse("+155555555555555"); // pass
+
+e164Number.parse("555555555"); // fail
+e164Number.parse("+1 1555555"); // fail
+```
 
 ## Numbers
 

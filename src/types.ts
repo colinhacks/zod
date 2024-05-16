@@ -552,6 +552,7 @@ export type ZodStringCheck =
   | { kind: "ip"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string }
   | { kind: "json"; message?: string };
+  | { kind: "e164"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -610,17 +611,19 @@ let emojiRegex: RegExp;
 // faster, simpler, safer
 const ipv4Regex =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
-
 const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
 const base64Regex =
   /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
-
 // based on https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
+
 const hostnameRegex =
   /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
+
+// https://blog.stevenlevithan.com/archives/validate-phone-number#r4-3 (regex sans spaces)
+const e164Regex = /^\+(?:[0-9]){6,14}[0-9]$/;
 
 // simple
 // const dateRegexSource = `\\d{4}-\\d{2}-\\d{2}`;
@@ -1035,6 +1038,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             message: check.message,
           });
         }
+      } else if (check.kind === "e164") {
+        if (!e164Regex.test(input)) {
+          issues = issues || [];
+          issues.push({
+            input,
+            validation: "e164",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+        }
       } else {
         util.assertNever(check);
       }
@@ -1120,6 +1133,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 
   ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
+  }
+
+  e164(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "e164", ...errorUtil.errToObj(message) });
   }
 
   datetime(
@@ -1352,6 +1369,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   get isBase64() {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
+  }
+  get isE164() {
+    return !!this._def.checks.find((ch) => ch.kind === "e164");
   }
 
   get minLength() {
