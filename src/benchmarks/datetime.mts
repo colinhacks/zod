@@ -9,7 +9,7 @@ bench.add("zod3", () => zod3.parse(DATA));
 bench.add("zod4", () => zod4.parse(DATA));
 
 export default async function run() {
-  await runBench("z.string().parse", bench);
+  await runBench("z.string().datetime().parse", bench);
 }
 
 if (import.meta.filename === process.argv[1]) {

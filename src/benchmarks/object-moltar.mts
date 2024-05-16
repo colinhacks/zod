@@ -41,4 +41,6 @@ export default async function run() {
   await runBench("moltar: z.object().parse", bench);
 }
 
-run();
+if (import.meta.filename === process.argv[1]) {
+  run();
+}

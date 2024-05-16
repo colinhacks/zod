@@ -32,7 +32,7 @@ function toFixed(val: number) {
   return val.toPrecision(3);
 }
 
-export function log(name: string, bench: Bench) {
+export function toTable(bench: Bench) {
   const sorted = bench.tasks.sort((a, b) => a.result!.mean - b.result!.mean);
   const fastest = sorted[0];
 
@@ -62,11 +62,7 @@ export function log(name: string, bench: Bench) {
     });
   }
 
-  const rendered = "   " + table.render().split("\n").join("\n   ");
-  console.log("\n");
-  console.log(`   ${chalk.bold(chalk.white(name))} — benchmark results`);
-  console.log(rendered);
-  console.log("\n");
+  return table.render();
 }
 
 export function makeSchema<T>(factory: (z: typeof zNew) => T) {
@@ -77,7 +73,28 @@ export function makeSchema<T>(factory: (z: typeof zNew) => T) {
 }
 
 export async function runBench(name: string, bench: Bench) {
+  console.log();
+  console.log(`   ${chalk.bold.white(name)}`);
+
+  bench.addEventListener("cycle", (e) => {
+    const task = e.task!.result!;
+
+    console.log(
+      chalk.dim("   ") +
+        chalk.white.dim(`→ `) +
+        chalk.white.dim(e.task.name) +
+        chalk.white.dim(" ") +
+        chalk.cyan(formatNumber(task.hz)) +
+        chalk.cyan(` ops/sec`) +
+        chalk.dim(" (" + e.task.result!.totalTime.toFixed(2) + "ms" + ")")
+    );
+  });
+
   await bench.warmup();
   await bench.run();
-  log(name, bench);
+
+  const rendered = "   " + toTable(bench).split("\n").join("\n   ");
+  console.log();
+  console.log(rendered);
+  console.log();
 }

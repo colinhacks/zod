@@ -10,18 +10,22 @@ const { zod3, zod4 } = makeSchema((z) =>
 );
 
 const DATA = Object.freeze({
-  number: Math.random(),
-  string: `${Math.random()}`,
-  boolean: Math.random() > 0.5,
+  nest: {
+    number: "asdf",
+    string: 12,
+    // boolean: undefined,
+  },
 });
 
 const bench = new Bench();
 
-bench.add("zod3", () => zod3.parse(DATA));
-bench.add("zod4", () => zod4.parse(DATA));
+bench.add("zod3", () => zod3.safeParse(DATA));
+bench.add("zod4", () => zod4.safeParse(DATA));
 
 export default async function run() {
-  await runBench("z.object().parse", bench);
+  await runBench("fail: z.object().parse", bench);
 }
 
-run();
+if (import.meta.filename === process.argv[1]) {
+  run();
+}
