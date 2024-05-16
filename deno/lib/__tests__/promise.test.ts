@@ -97,5 +97,3 @@ test("resolves", () => {
   const res = z.promise(foo);
   expect(res.unwrap()).toEqual(foo);
 });
-
-test("yay", () => {});

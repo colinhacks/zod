@@ -17,13 +17,20 @@ const DATA = Object.freeze({
   },
 });
 
-const bench = new Bench();
-
-bench.add("zod3", () => zod3.safeParse(DATA));
-bench.add("zod4", () => zod4.safeParse(DATA));
+const failBench = new Bench();
+failBench.add("zod3", () => {
+  try {
+    zod3.parse(DATA);
+  } catch (e) {}
+});
+failBench.add("zod4", () => {
+  try {
+    zod4.parse(DATA);
+  } catch (e) {}
+});
 
 export default async function run() {
-  await runBench("fail: z.object().parse", bench);
+  await runBench("fail: z.object().parse", failBench);
 }
 
 if (import.meta.filename === process.argv[1]) {

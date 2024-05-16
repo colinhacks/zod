@@ -7,7 +7,6 @@ coverage
 .idea
 *.log
 playground.mts
-playground.mts
 deno/lib/playground.mts
 .eslintcache
 workspace.code-workspace
