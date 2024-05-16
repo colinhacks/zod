@@ -181,13 +181,15 @@ Some other great aspects:
 - Functional approach: [parse, don't validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 - Works with plain JavaScript too! You don't need to use TypeScript.
 
-### Sponsors
+## Sponsors
 
 Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
 
-#### Platinum
+<h3 align="center">Platinum</h3>
 
-> [Email me](mailto:colin@colinhacks.com) to discuss sponsoring Zod at this level.
+<blockquote align="center" width="400px">
+  <a href="mailto:colin@colinhacks.com" target="_blank">Email me</a> to discuss becoming a Platinum sponsor of Zod.
+</blockquote>
 
 <!-- <table>
   <tr>
@@ -203,10 +205,15 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table> -->
 
-#### Gold
+<h3 align="center">Gold</h3>
 
-<table>
+<table align="center">
   <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/89474619?s=200&v=4" height="45px;" alt="PropelAuth" />
+      <br />
+      <a href="https://www.propelauth.com/" target="_blank">PropelAuth</a>
+    </td>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/80861386?s=200&v=4" height="45px;" alt="Cerbos" />
       <br />
@@ -222,6 +229,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://speakeasyapi.dev/" target="_blank">Speakeasy</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" height="45px;" alt="Deletype logo" />
       <br />
@@ -232,7 +240,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://trigger.dev" target="_blank">Trigger.dev</a>
     </td>
-  </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" height="45px;" alt="Transloadit logo" />
       <br />
@@ -244,6 +251,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://infisical.com" target="_blank">Infisical</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" height="45px;" alt="Whop logo" />
       <br />
@@ -259,12 +267,12 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://plain.com/" target="_blank">Plain.</a>
     </td>
-  </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/78935958?s=200&v=4" height="45px;" alt="Inngest logo" />
       <br />
       <a href="https://inngest.com/" target="_blank">Inngest</a>
     </td>
+  </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" height="45px;" alt="Storyblok CMS" />
       <br />
@@ -283,9 +291,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table>
 
-#### Silver
+<h3 align="center">Silver</h3>
 
-<table>
+<table align="center">
   <tr>
     <td align="center">
       <a href="https://www.numeric.io">
@@ -315,9 +323,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table>
 
-#### Bronze
+<h3 align="center">Bronze</h3>
 
-<table>
+<table align="center">
   <tr>
     <td>Brandon Bayer</td>
     <td>Jiří Brabec</td>
