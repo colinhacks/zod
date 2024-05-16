@@ -29,7 +29,7 @@ The following steps will get you setup to contribute changes to this repo:
 
 3. Run `yarn` to install dependencies.
 
-4. Start playing with the code! You can do some simple experimentation in [`playground.mts`](playground.mts) (see `yarn play` below) or start implementing a feature right away.
+4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `yarn play` below) or start implementing a feature right away.
 
 ## Alternative: VSCode Dev Container setup
 
@@ -58,7 +58,7 @@ In the OSS version of VSCode the extension may be not available.
 
 **`yarn play`**
 
-- executes [`playground.mts`](playground.mts), watches for changes. useful for experimentation
+- executes [`playground.ts`](playground.ts), watches for changes. useful for experimentation
 
 ### Tests
 

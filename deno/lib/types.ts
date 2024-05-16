@@ -12,7 +12,6 @@ import {
   ParseReturnType,
   SyncParseReturnType,
   NOT_SET,
-  ZOD_FAILURE,
 } from "./helpers/parseUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { getParsedType, objectKeys, ZodParsedType } from "./helpers/util.ts";

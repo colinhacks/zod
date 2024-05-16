@@ -8,5 +8,5 @@
     "sourceMap": false,
     "skipLibCheck": true
   },
-  "exclude": ["../tests", "../playground.mts", "node_modules"]
+  "exclude": ["../tests", "../playground.ts", "node_modules"]
 }

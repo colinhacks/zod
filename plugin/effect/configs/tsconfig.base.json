@@ -17,5 +17,5 @@
     "downlevelIteration": true,
     "isolatedModules": true
   },
-  "include": ["../src/**/*", "../playground.mts"]
+  "include": ["../src/**/*", "../playground.ts"]
 }

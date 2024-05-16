@@ -19,7 +19,7 @@
   "include": [
     "../src/**/*",
     "../experiments/**/*",
-    "../playground.mts",
+    "../playground.ts",
     "../.eslintrc.js"
   ]
 }

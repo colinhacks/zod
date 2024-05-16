@@ -6,8 +6,8 @@ coverage
 .vscode
 .idea
 *.log
-playground.mts
-deno/lib/playground.mts
+playground.ts
+deno/lib/playground.ts
 .eslintcache
 workspace.code-workspace
 .netlify

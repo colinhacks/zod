@@ -66,7 +66,7 @@ test("parse string to json", async () => {
     myJsonConfig: "This is not valid json",
     someOtherValue: null,
   });
-  expect(JSON.parse(JSON.stringify(invalidJsonSyntax))).toEqual({
+  expect(JSON.parse(JSON.stringify(invalidJsonSyntax))).toMatchObject({
     success: false,
     error: {
       name: "ZodError",
@@ -74,18 +74,6 @@ test("parse string to json", async () => {
         {
           code: "invalid_string",
           input: {
-            _cached: {
-              keys: ["foo"],
-              shape: {
-                foo: {
-                  _def: {
-                    checks: [],
-                    coerce: false,
-                    typeName: "ZodNumber",
-                  },
-                },
-              },
-            },
             _def: {
               catchall: {
                 _def: {

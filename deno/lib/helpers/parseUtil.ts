@@ -64,9 +64,9 @@ export interface ParseContext {
 export type ParseInput = any;
 
 export const NOT_SET = Symbol.for("NOT_SET");
-export const ZOD_FAILURE = "ZOD_FAILURE";
+export const ZOD_FAILURE = Symbol.for("~~zodfail~~");
 export class ZodFailure {
-  [ZOD_FAILURE]: true;
+  [ZOD_FAILURE]: true = true;
   constructor(
     public issues: IssueData[],
     protected _value: unknown = NOT_SET
@@ -86,9 +86,6 @@ export class ZodFailure {
   }
 }
 
-// export type OK<T> = T;
-// export const OK = <T>(value: T): OK<T> => value as OK<T>;
-
 export type SyncParseReturnType<T = unknown> = T | ZodFailure;
 export type AsyncParseReturnType<T> = Promise<SyncParseReturnType<T>>;
 export type ParseReturnType<T> =
@@ -96,16 +93,14 @@ export type ParseReturnType<T> =
   | AsyncParseReturnType<T>;
 
 export function isAborted(x: ParseReturnType<unknown>): x is ZodFailure {
-  return (x as any)[ZOD_FAILURE];
+  //   return typeof x === "object" && ZOD_FAILURE in (x as any);
+  //   return x instanceof ZodFailure;
+  return (
+    (typeof x === "object" && x !== null && (x as any)[ZOD_FAILURE]) ?? false
+  ); // (x as any)[ZOD_FAILURE];
 }
-// export function isAborted(x: ParseReturnType<unknown>): x is ZodFailure {
-//   return typeof x === "object" && ZOD_FAILURE in (x as any);
-// }
-// export function isAborted(x: ParseReturnType<unknown>): x is ZodFailure {
-//   return x instanceof ZodFailure;
-// }
-export const isValid = <T>(x: ParseReturnType<T>): x is T =>
-  !(x instanceof ZodFailure);
+
+export const isValid = <T>(x: ParseReturnType<T>): x is T => !isAborted(x);
 export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
