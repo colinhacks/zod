@@ -12,6 +12,7 @@ import {
   ParseReturnType,
   SyncParseReturnType,
   NOT_SET,
+  ZOD_FAILURE,
 } from "./helpers/parseUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { getParsedType, objectKeys, ZodParsedType } from "./helpers/util.ts";
@@ -133,6 +134,27 @@ export type SafeParseReturnType<Input, Output> =
   | SafeParseSuccess<Awaited<Output>>
   | SafeParseError<Awaited<Input>>;
 
+export function makeCache<This, T extends { [k: string]: () => unknown }>(
+  th: This,
+  elements: T & ThisType<This>
+): { [k in keyof T]: ReturnType<T[k]> } {
+  const cache: { [k: string]: unknown } = {};
+  for (const key in elements) {
+    const getter = elements[key].bind(th);
+    Object.defineProperty(cache, key, {
+      get() {
+        const value = getter();
+        Object.defineProperty(cache, key, {
+          value,
+          configurable: true,
+        });
+        return value;
+      },
+      configurable: true,
+    });
+  }
+  return cache as any;
+}
 export abstract class ZodType<
   Output = unknown,
   Def extends ZodTypeDef = ZodTypeDef,
@@ -158,11 +180,16 @@ export abstract class ZodType<
 
   parse(data: unknown, params?: Partial<ParseParams>): Output {
     if (!params) {
-      const result = this._parse(data, this.defaultSyncContext);
+      const result = this._parse(data, this.cache.defaultSyncContext);
       if (result instanceof Promise)
         throw Error("Synchronous parse encountered promise.");
+      // if ((result as any)[ZOD_FAILURE])
       if (isAborted(result))
-        throw issuesToZodError(this.defaultSyncContext, result.issues);
+        throw issuesToZodError(
+          this.cache.defaultSyncContext,
+          (result as ZodFailure).issues
+        );
+
       return result as any;
     }
     const ctx: ParseContext = {
@@ -182,10 +209,10 @@ export abstract class ZodType<
     params?: Partial<ParseParams>
   ): SafeParseReturnType<Input, Output> {
     if (!params) {
-      const result = this._parse(data, this.defaultSyncContext);
+      const result = this._parse(data, this.cache.defaultSyncContext);
       if (result instanceof Promise)
         throw Error("Synchronous parse encountered promise.");
-      return safeResult(this.defaultSyncContext, result) as any;
+      return safeResult(this.cache.defaultSyncContext, result) as any;
     }
     const ctx: ParseContext = {
       contextualErrorMap: params?.errorMap,
@@ -203,9 +230,9 @@ export abstract class ZodType<
     params?: Partial<ParseParams>
   ): Promise<Output> {
     if (!params) {
-      const result = await this._parse(data, this.defaultAsyncContext);
+      const result = await this._parse(data, this.cache.defaultAsyncContext);
       if (isAborted(result))
-        throw issuesToZodError(this.defaultAsyncContext, result.issues);
+        throw issuesToZodError(this.cache.defaultAsyncContext, result.issues);
       return result;
     }
     const ctx: ParseContext = {
@@ -223,8 +250,8 @@ export abstract class ZodType<
     params?: Partial<ParseParams>
   ): Promise<SafeParseReturnType<Input, Output>> {
     if (!params) {
-      const result = await this._parse(data, this.defaultAsyncContext);
-      return safeResult(this.defaultAsyncContext, result);
+      const result = await this._parse(data, this.cache.defaultAsyncContext);
+      return safeResult(this.cache.defaultAsyncContext, result);
     }
     const ctx: ParseContext = {
       contextualErrorMap: params?.errorMap,
@@ -236,31 +263,22 @@ export abstract class ZodType<
     return safeResult(ctx, result);
   }
 
-  private _defaultSyncContext: ParseContext;
-  private get defaultSyncContext(): ParseContext {
-    if (this._defaultSyncContext) {
-      return this._defaultSyncContext;
-    }
-    const ctx = {
-      basePath: [],
-      async: false,
-      schemaErrorMap: this._def.errorMap,
-    };
-    this._defaultSyncContext = ctx;
-    return ctx;
-  }
-
-  private _defaultAsyncContext: ParseContext;
-  private get defaultAsyncContext(): ParseContext {
-    if (this._defaultAsyncContext) return this._defaultAsyncContext;
-    const ctx = {
-      basePath: [],
-      async: true,
-      schemaErrorMap: this._def.errorMap,
-    };
-    this._defaultAsyncContext = ctx;
-    return ctx;
-  }
+  protected cache = makeCache(this, {
+    defaultSyncContext() {
+      return {
+        basePath: [],
+        async: false,
+        schemaErrorMap: this._def.errorMap,
+      } as ParseContext;
+    },
+    defaultAsyncContext() {
+      return {
+        basePath: [],
+        async: true,
+        schemaErrorMap: this._def.errorMap,
+      } as ParseContext;
+    },
+  });
 
   /** Alias of safeParseAsync */
   spa = this.safeParseAsync;
@@ -1395,12 +1413,25 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
 
   static create(params?: RawCreateParams & { coerce?: true }): ZodString {
-    return new ZodString({
+    const base = new ZodString({
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodString,
       coerce: params?.coerce ?? false,
       ...processCreateParams(params),
     });
+    return base;
+    // const instance = Object.assign(Object.create(base), {
+    //   parse(input: unknown, params?: Partial<ParseParams>) {
+    //     if (params) return base.parse(input, params);
+    //     if (typeof input === "string") return input;
+    //     return base.parse(input, params);
+    //   },
+    //   async parseAsync(data: unknown) {
+    //     if (typeof data === "string") return data;
+    //     return base.parseAsync(data);
+    //   },
+    // });
+    // return instance;
   }
 }
 
@@ -2702,14 +2733,17 @@ export class ZodObject<
   Output = objectOutputType<T, Catchall, UnknownKeys>,
   Input = objectInputType<T, Catchall, UnknownKeys>
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
-  private _cached: { shape: T; keys: string[] } | null = null;
-
-  _getCached(): { shape: T; keys: string[] } {
-    if (this._cached !== null) return this._cached;
-    const shape = this._def.shape();
-    const keys = util.objectKeys(shape);
-    return (this._cached = { shape, keys });
-  }
+  private _cached = makeCache(this, {
+    shape() {
+      return this._def.shape();
+    },
+    keys() {
+      return Object.keys(this._def.shape());
+    },
+    keyset() {
+      return new Set(Object.keys(this._def.shape()));
+    },
+  });
 
   _parse(
     input: ParseInput,
@@ -2728,8 +2762,6 @@ export class ZodObject<
     }
 
     const issues: IssueData[] = [];
-
-    const { shape, keys: shapeKeys } = this._getCached();
     const extraKeys: string[] = [];
 
     if (
@@ -2739,7 +2771,7 @@ export class ZodObject<
       )
     ) {
       for (const key in input) {
-        if (!shapeKeys.includes(key)) {
+        if (!this._cached.keys.includes(key)) {
           extraKeys.push(key);
         }
       }
@@ -2752,8 +2784,8 @@ export class ZodObject<
       promise: AsyncParseReturnType<unknown>;
     }> = [];
 
-    for (const key of shapeKeys) {
-      const keyValidator = shape[key];
+    for (const key of this._cached.keys) {
+      const keyValidator = this._cached.shape[key];
       const value = input[key];
       const parseResult = keyValidator._parse(value, ctx);
       if (parseResult instanceof Promise) {

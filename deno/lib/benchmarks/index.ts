@@ -1,56 +1,55 @@
-import Benchmark from "benchmark";
+import string from "./string.ts";
+import number from "./number.ts";
+import boolean from "./boolean.ts";
+import datetime from "./datetime.ts";
+import objectSmall from "./object.ts";
+import objectSmallFail from "./object-fail.ts";
+import objectMoltar from "./object-moltar.ts";
+import union from "./union.ts";
+import discriminatedUnion from "./discriminated-union.ts";
+import ipv4Regex from "./ipv4-regex.ts";
+import datetimeRegex from "./datetime-regex.ts";
 
-import datetimeBenchmarks from "./datetime.ts";
-import discriminatedUnionBenchmarks from "./discriminatedUnion.ts";
-import ipv4Benchmarks from "./ipv4.ts";
-import objectBenchmarks from "./object.ts";
-import primitiveBenchmarks from "./primitives.ts";
-import realworld from "./realworld.ts";
-import stringBenchmarks from "./string.mjs";
-import unionBenchmarks from "./union.ts";
+const argv = new Set(process.argv.slice(2));
 
-const argv = process.argv.slice(2);
-let suites: Benchmark.Suite[] = [];
-
-if (!argv.length) {
-  suites = [
-    ...realworld.suites,
-    ...primitiveBenchmarks.suites,
-    // ...stringBenchmarks.suites,
-    ...objectBenchmarks.suites,
-    ...unionBenchmarks.suites,
-    ...discriminatedUnionBenchmarks.suites,
-  ];
-} else {
-  if (argv.includes("--realworld")) {
-    suites.push(...realworld.suites);
-  }
-  if (argv.includes("--primitives")) {
-    suites.push(...primitiveBenchmarks.suites);
-  }
-  if (argv.includes("--string")) {
-    stringBenchmarks();
-    // suites.push(...stringBenchmarks.suites);
-  }
-  if (argv.includes("--object")) {
-    suites.push(...objectBenchmarks.suites);
-  }
-  if (argv.includes("--union")) {
-    suites.push(...unionBenchmarks.suites);
-  }
-  if (argv.includes("--discriminatedUnion")) {
-    suites.push(...datetimeBenchmarks.suites);
-  }
-  if (argv.includes("--datetime")) {
-    suites.push(...datetimeBenchmarks.suites);
-  }
-  if (argv.includes("--ipv4")) {
-    suites.push(...ipv4Benchmarks.suites);
-  }
+if (!argv.size) {
+  throw new Error("No benchmarks specified");
 }
 
-for (const suite of suites) {
-  suite.run({});
+const ALL = argv.has("--all");
+
+if (ALL || argv.has("--string")) {
+  await string();
+}
+if (ALL || argv.has("--number")) {
+  await number();
+}
+if (ALL || argv.has("--boolean")) {
+  await boolean();
+}
+if (ALL || argv.has("--datetime")) {
+  await datetime();
+}
+if (ALL || argv.has("--object")) {
+  await objectSmall();
+}
+if (ALL || argv.has("--object-fail")) {
+  await objectSmallFail();
+}
+if (ALL || argv.has("--object-moltar")) {
+  await objectMoltar();
+}
+if (ALL || argv.has("--union")) {
+  await union();
+}
+if (ALL || argv.has("--discriminated-union")) {
+  await discriminatedUnion();
+}
+if (ALL || argv.has("--ipv4-regex")) {
+  await ipv4Regex();
+}
+if (ALL || argv.has("--datetime-regex")) {
+  await datetimeRegex();
 }
 
 // exit on Ctrl-C

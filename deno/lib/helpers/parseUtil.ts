@@ -64,7 +64,9 @@ export interface ParseContext {
 export type ParseInput = any;
 
 export const NOT_SET = Symbol.for("NOT_SET");
+export const ZOD_FAILURE = "ZOD_FAILURE";
 export class ZodFailure {
+  [ZOD_FAILURE]: true;
   constructor(
     public issues: IssueData[],
     protected _value: unknown = NOT_SET
@@ -93,8 +95,15 @@ export type ParseReturnType<T> =
   | SyncParseReturnType<T>
   | AsyncParseReturnType<T>;
 
-export const isAborted = (x: ParseReturnType<unknown>): x is ZodFailure =>
-  x instanceof ZodFailure;
+export function isAborted(x: ParseReturnType<unknown>): x is ZodFailure {
+  return (x as any)[ZOD_FAILURE];
+}
+// export function isAborted(x: ParseReturnType<unknown>): x is ZodFailure {
+//   return typeof x === "object" && ZOD_FAILURE in (x as any);
+// }
+// export function isAborted(x: ParseReturnType<unknown>): x is ZodFailure {
+//   return x instanceof ZodFailure;
+// }
 export const isValid = <T>(x: ParseReturnType<T>): x is T =>
   !(x instanceof ZodFailure);
 export const isAsync = <T>(

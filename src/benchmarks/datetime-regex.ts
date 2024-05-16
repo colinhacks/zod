@@ -1,5 +1,5 @@
 import { Bench } from "tinybench";
-import { runBench } from "./benchUtil.mjs";
+import { runBench } from "./benchUtil.js";
 
 const bench = new Bench();
 
@@ -54,6 +54,6 @@ export default async function run() {
   await runBench("datetime regex", bench);
 }
 
-if (import.meta.filename === process.argv[1]) {
+if (require.main === module) {
   run();
 }

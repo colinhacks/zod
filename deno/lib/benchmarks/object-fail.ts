@@ -1,5 +1,5 @@
 import { Bench } from "tinybench";
-import { makeSchema, runBench } from "./benchUtil.mjs";
+import { makeSchema, runBench } from "./benchUtil.js";
 
 const { zod3, zod4 } = makeSchema((z) =>
   z.object({
@@ -33,6 +33,6 @@ export default async function run() {
   await runBench("fail: z.object().parse", failBench);
 }
 
-if (import.meta.filename === process.argv[1]) {
+if (require.main === module) {
   run();
 }

@@ -1,5 +1,5 @@
 import { Bench } from "tinybench";
-import { runBench } from "./benchUtil.mjs";
+import { runBench } from "./benchUtil.js";
 
 const DATA = "127.0.0.1";
 const ipv4RegexA =
@@ -51,6 +51,6 @@ export default async function run() {
   await runBench("ipv4 regex", bench);
 }
 
-if (import.meta.filename === process.argv[1]) {
+if (require.main === module) {
   run();
 }

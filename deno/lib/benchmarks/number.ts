@@ -1,5 +1,5 @@
 import { Bench } from "tinybench";
-import { makeSchema, runBench } from "./benchUtil.mjs";
+import { makeSchema, runBench } from "./benchUtil.js";
 
 const { zod3, zod4 } = makeSchema((z) => z.number());
 const DATA = Math.random();
@@ -12,6 +12,6 @@ export default async function run() {
   await runBench("z.number().parse", bench);
 }
 
-if (import.meta.filename === process.argv[1]) {
+if (require.main === module) {
   run();
 }

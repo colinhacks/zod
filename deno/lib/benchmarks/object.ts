@@ -1,69 +1,33 @@
-import Benchmark from "benchmark";
+import { Bench } from "tinybench";
+import { makeSchema, runBench } from "./benchUtil.js";
 
-import { z } from "../index.ts";
+const { zod3, zod4 } = makeSchema((z) =>
+  z.object({
+    string: z.string(),
+    boolean: z.boolean(),
+    number: z.number(),
+  })
+);
 
-const emptySuite = new Benchmark.Suite("z.object: empty");
-const shortSuite = new Benchmark.Suite("z.object: short");
-const longSuite = new Benchmark.Suite("z.object: long");
-
-const empty = z.object({});
-const short = z.object({
-  string: z.string(),
+const DATA = Object.freeze({
+  number: Math.random(),
+  string: `${Math.random()}`,
+  boolean: Math.random() > 0.5,
 });
-const long = z.object({
-  string: z.string(),
-  number: z.number(),
-  boolean: z.boolean(),
-});
 
-emptySuite
-  .add("valid", () => {
-    empty.parse({});
-  })
-  .add("valid: extra keys", () => {
-    empty.parse({ string: "string" });
-  })
-  .add("invalid: null", () => {
-    try {
-      empty.parse(null);
-    } catch (err) {}
-  })
-  .on("cycle", (e: Benchmark.Event) => {
-    console.log(`${(emptySuite as any).name}: ${e.target}`);
-  });
+const parseBench = new Bench();
+parseBench.add("zod3", () => zod3.parse(DATA));
+parseBench.add("zod4", () => zod4.parse(DATA));
 
-shortSuite
-  .add("valid", () => {
-    short.parse({ string: "string" });
-  })
-  .add("valid: extra keys", () => {
-    short.parse({ string: "string", number: 42 });
-  })
-  .add("invalid: null", () => {
-    try {
-      short.parse(null);
-    } catch (err) {}
-  })
-  .on("cycle", (e: Benchmark.Event) => {
-    console.log(`${(shortSuite as any).name}: ${e.target}`);
-  });
+const safeParseBench = new Bench();
+safeParseBench.add("zod3", () => zod3.safeParse(DATA));
+safeParseBench.add("zod4", () => zod4.safeParse(DATA));
 
-longSuite
-  .add("valid", () => {
-    long.parse({ string: "string", number: 42, boolean: true });
-  })
-  .add("valid: extra keys", () => {
-    long.parse({ string: "string", number: 42, boolean: true, list: [] });
-  })
-  .add("invalid: null", () => {
-    try {
-      long.parse(null);
-    } catch (err) {}
-  })
-  .on("cycle", (e: Benchmark.Event) => {
-    console.log(`${(longSuite as any).name}: ${e.target}`);
-  });
+export default async function run() {
+  await runBench("small: z.object().parse", parseBench);
+  await runBench("small: z.object().safeParse", safeParseBench);
+}
 
-export default {
-  suites: [emptySuite, shortSuite, longSuite],
-};
+if (require.main === module) {
+  run();
+}
