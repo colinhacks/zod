@@ -1,15 +1,7 @@
-import { Bench } from "tinybench";
-import { makeSchema, runBench } from "./benchUtil.js";
+import { metabench } from "./benchUtil";
+import { zod3, zod4 } from "./object";
 
-const { zod3, zod4 } = makeSchema((z) =>
-  z.object({
-    string: z.string(),
-    boolean: z.boolean(),
-    number: z.number(),
-  })
-);
-
-const DATA = Object.freeze({
+const BADDATA = Object.freeze({
   nest: {
     number: "asdf",
     string: 12,
@@ -17,22 +9,17 @@ const DATA = Object.freeze({
   },
 });
 
-const failBench = new Bench();
-failBench.add("zod3", () => {
-  try {
-    zod3.parse(DATA);
-  } catch (e) {}
-});
-failBench.add("zod4", () => {
-  try {
-    zod4.parse(DATA);
-  } catch (e) {}
+const bench = metabench("small: z.object().safeParseAsync", {
+  zod3() {
+    zod3.parse(BADDATA);
+  },
+  zod4() {
+    zod4.parse(BADDATA);
+  },
 });
 
 export default async function run() {
-  await runBench("fail: z.object().parse", failBench);
+  await bench.run();
 }
 
-if (require.main === module) {
-  run();
-}
+if (require.main === module) run();

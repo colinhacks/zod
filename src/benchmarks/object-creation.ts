@@ -1,12 +1,11 @@
-import { Bench } from "tinybench";
-import { runBench } from "./benchUtil.js";
+import { metabench } from "./benchUtil.js";
 
 class ZodFail {
   status = "fail";
   constructor(public value: string) {}
 }
 
-const bench = new Bench()
+const bench = metabench("object creation")
   .add("raw object", () => {
     const obj = { status: "fail", value: "this is a test" };
     obj.value;
@@ -17,7 +16,7 @@ const bench = new Bench()
   });
 
 export default async function run() {
-  await runBench("object creation", bench);
+  await bench.run();
 }
 
 if (require.main === module) {

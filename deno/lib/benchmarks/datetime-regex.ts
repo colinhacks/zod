@@ -1,7 +1,6 @@
-import { Bench } from "tinybench";
-import { runBench } from "./benchUtil.js";
+import { metabench } from "./benchUtil.js";
 
-const bench = new Bench();
+const bench = metabench("datetime regex");
 
 const DATA = "2021-01-01";
 const MONTHS_31 = new Set([1, 3, 5, 7, 8, 10, 12]);
@@ -51,7 +50,7 @@ bench
   });
 
 export default async function run() {
-  await runBench("datetime regex", bench);
+  await bench.run();
 }
 
 if (require.main === module) {

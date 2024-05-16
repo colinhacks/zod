@@ -54,4 +54,4 @@ type replaceTagged<
   : T;
 
 const tx1 = transformer((arg) => arg.optional().nullable().array());
-type out1 = Replacer<typeof tx1, z.ZodString>;
+export type out1 = Replacer<typeof tx1, z.ZodString>;

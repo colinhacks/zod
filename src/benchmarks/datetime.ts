@@ -1,15 +1,19 @@
-import { Bench } from "tinybench";
-import { makeSchema, runBench } from "./benchUtil.js";
+import { makeSchema, metabench } from "./benchUtil.js";
 
 const { zod3, zod4 } = makeSchema((z) => z.string().datetime());
 const DATA = new Date().toISOString();
 
-const bench = new Bench();
-bench.add("zod3", () => zod3.parse(DATA));
-bench.add("zod4", () => zod4.parse(DATA));
+const bench = metabench("z.string().datetime().parse", {
+  zod3() {
+    zod3.parse(DATA);
+  },
+  zod4() {
+    zod4.parse(DATA);
+  },
+});
 
 export default async function run() {
-  await runBench("z.string().datetime().parse", bench);
+  await bench.run();
 }
 
 if (require.main === module) {

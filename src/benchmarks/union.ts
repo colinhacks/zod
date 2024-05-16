@@ -1,5 +1,4 @@
-import { Bench } from "tinybench";
-import { makeSchema, runBench } from "./benchUtil.js";
+import { makeSchema, metabench } from "./benchUtil.js";
 
 const { zod3, zod4 } = makeSchema((z) => {
   const aSchema = z.object({
@@ -18,7 +17,7 @@ const { zod3, zod4 } = makeSchema((z) => {
 });
 
 const DATA = { type: "c" };
-const bench = new Bench()
+const bench = metabench("z.union().parse")
   .add("zod3", () => {
     zod3.parse(DATA);
   })
@@ -27,7 +26,7 @@ const bench = new Bench()
   });
 
 export default async function run() {
-  await runBench("z.union().parse", bench);
+  await bench.run();
 }
 
 if (require.main === module) {

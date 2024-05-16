@@ -1,5 +1,4 @@
-import { Bench } from "tinybench";
-import { runBench } from "./benchUtil.js";
+import { metabench } from "./benchUtil.js";
 
 const DATA = "127.0.0.1";
 const ipv4RegexA =
@@ -18,7 +17,7 @@ const ipv4RegexH = /^((25[0-5]|(2[0-4]|1[0-9]|[1-9]|)[0-9])(\.(?!$)|$)){4}$/;
 const ipv4RegexI =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
 
-const bench = new Bench()
+const bench = metabench("ipv4 regex")
   .add("A", () => {
     return ipv4RegexA.test(DATA);
   })
@@ -48,7 +47,7 @@ const bench = new Bench()
   });
 
 export default async function run() {
-  await runBench("ipv4 regex", bench);
+  await bench.run();
 }
 
 if (require.main === module) {

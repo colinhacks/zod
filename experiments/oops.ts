@@ -43,14 +43,14 @@ type PrimitiveTypes =
 abstract class ZodPrimitive extends ZodType {
   kind: "primitive" = "primitive";
   types: { [k in PrimitiveTypes]?: true | false };
-  "~output": Primitive;
-  "~input": Primitive;
+  override "~output": Primitive;
+  override "~input": Primitive;
 }
 
 class ZodString extends ZodPrimitive {
   types: { string: true } = { string: true };
-  "~output": string;
-  "~input": string;
+  override "~output": string;
+  override "~input": string;
   "~parse"(x: unknown): string {
     if (typeof x === "string") return x;
     throw new Error();

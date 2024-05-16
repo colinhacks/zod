@@ -1,5 +1,5 @@
-import { Bench } from "tinybench";
-import { makeSchema, runBench } from "./benchUtil.js";
+import { metabench } from "./benchUtil.js";
+import { makeSchema } from "./benchUtil.js";
 
 const { zod3, zod4 } = makeSchema((z) =>
   z.object({
@@ -31,21 +31,20 @@ const datum = Object.freeze({
     bool: false,
   },
 });
+
 const DATA = Array.from({ length: 1000 }, () => datum);
 
-const bench = new Bench();
-
-bench.add("zod3", () => {
-  for (const _ of DATA) zod3.parse(_);
-});
-bench.add("zod4", () => {
-  for (const _ of DATA) zod4.parse(_);
+const bench = metabench("small: z.object().safeParseAsync", {
+  zod3() {
+    for (const _ of DATA) zod3.parse(_);
+  },
+  zod4() {
+    for (const _ of DATA) zod4.parse(_);
+  },
 });
 
 export default async function run() {
-  await runBench("moltar: z.object().parse", bench);
+  await bench.run();
 }
 
-if (require.main === module) {
-  run();
-}
+if (require.main === module) run();
