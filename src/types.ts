@@ -1039,14 +1039,14 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
         }
       } else if (check.kind === "e164") {
-        if (!e164Regex.test(input.data)) {
-          ctx = this._getOrReturnCtx(input, ctx);
-          addIssueToContext(ctx, {
+        if (!e164Regex.test(input)) {
+          issues = issues || [];
+          issues.push({
+            input,
             validation: "e164",
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
-          status.dirty();
         }
       } else {
         util.assertNever(check);
