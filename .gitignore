@@ -7,6 +7,7 @@ coverage
 .idea
 *.log
 playground.ts
+playground.mts
 deno/lib/playground.ts
 .eslintcache
 workspace.code-workspace
