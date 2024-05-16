@@ -3,10 +3,10 @@
 > ⚠ The default branch has just been switched to `main` from `master` (as of May 15th, 2024). Follow the following instructions to update your local fork.
 >
 > ```sh
-> git branch -m master main
-> git fetch origin
-> git branch -u origin/main main
-> git remote set-head origin -a
+> git branch -m master main   # rename local branch
+> git fetch origin   # fetch from remote
+> git branch -u origin/main main   # set upstream
+> git remote set-head origin -a   # update remote
 > ```
 
 When it comes to open source, there are different ways you can contribute, all

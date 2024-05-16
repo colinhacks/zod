@@ -290,6 +290,24 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 #### Silver
 
+<p align="center">
+	<a href="https://www.numeric.io">
+    <img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric logo" />
+  </a>
+  <a href="https://marcatopartners.com">
+    <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" height="40px;" alt="Marcato Partners" />
+  </a>
+  <a href="https://interval.com">
+    <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" height="40px;" alt="" />
+  </a>
+  <a href="https://seasoned.cc">
+    <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" height="40px;" alt="" />
+  </a>
+  <a href="https://www.bamboocreative.nz/">
+    <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative logo" />
+  </a>
+</p>
+
 <table>
   <tr>
     <td align="center">
