@@ -551,7 +551,7 @@ export type ZodStringCheck =
   | { kind: "duration"; message?: string }
   | { kind: "ip"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string }
-  | { kind: "json"; message?: string };
+  | { kind: "json"; message?: string }
   | { kind: "e164"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
