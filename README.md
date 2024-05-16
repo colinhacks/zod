@@ -305,24 +305,24 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
         <img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric logo" />
       </a>
     </td>
-    <td>
+    <td align="center">
       <a href="https://marcatopartners.com">
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" height="40px;" alt="Marcato Partners" />
       </a>
     </td>
-    <td>
+    <td align="center">
       <a href="https://interval.com">
         <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" height="40px;" alt="" />
       </a>
     </td>
   </tr>
   <tr>
-    <td>
+    <td align="center">
       <a href="https://seasoned.cc">
         <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" height="40px;" alt="" />
       </a>
     </td>
-    <td>
+    <td align="center">
       <a href="https://www.bamboocreative.nz/">
         <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative logo" />
       </a>
@@ -356,9 +356,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     <td>Connor Sinnott</td>
     <td>Mohammad-Ali A'râbi</td>
     <td>Supatool</td>
-  </tr>
-  <tr>
-    <td>Social Crow</td>
   </tr>
 </table>
 
