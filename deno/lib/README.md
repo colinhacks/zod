@@ -788,7 +788,6 @@ const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
 ```
 
-<<<<<<< HEAD
 ### JSON
 
 The `z.string().json(...)` method parses strings as JSON, then [pipes](#pipe) the result to another specified schema.
@@ -827,7 +826,6 @@ if (!env.success) {
 
 This is recommended over using `z.string().transform(s => JSON.parse(s))`, since that will not catch parse errors, even when using `.safeParse`.
 
-=======
 ### E.164 telephone numbers
 
 The z.string().e164() method can be used to validate international telephone numbers.
@@ -842,7 +840,6 @@ e164Number.parse("555555555"); // fail
 e164Number.parse("+1 1555555"); // fail
 ```
 
->>>>>>> cc17c188 (added documentation)
 ## Numbers
 
 You can customize certain error messages when creating a number schema.

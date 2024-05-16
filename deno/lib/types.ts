@@ -551,11 +551,8 @@ export type ZodStringCheck =
   | { kind: "duration"; message?: string }
   | { kind: "ip"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string }
-<<<<<<< HEAD
   | { kind: "json"; message?: string };
-=======
   | { kind: "e164"; message?: string };
->>>>>>> 84694186 (Added e164 validation)
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -614,26 +611,19 @@ let emojiRegex: RegExp;
 // faster, simpler, safer
 const ipv4Regex =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
-
 const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
 const base64Regex =
   /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
-
-<<<<<<< HEAD
-<<<<<<< HEAD
 // based on https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
+
 const hostnameRegex =
   /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
-=======
-// https://blog.stevenlevithan.com/archives/validate-phone-number#r4-3 (regex from there allows spaces)
-=======
+
 // https://blog.stevenlevithan.com/archives/validate-phone-number#r4-3 (regex sans spaces)
->>>>>>> 0c908749 (cleanup and missing files)
 const e164Regex = /^\+(?:[0-9]){6,14}[0-9]$/;
->>>>>>> 84694186 (Added e164 validation)
 
 // simple
 // const dateRegexSource = `\\d{4}-\\d{2}-\\d{2}`;
