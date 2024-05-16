@@ -205,10 +205,13 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 #### Gold
 
-<div align="center">
-  <p><img src="https://avatars.githubusercontent.com/u/89474619?s=200&v=4" height="45px;" alt="PropelAuth" /><br /><a href="https://www.propelauth.com/" target="_blank">PropelAuth</a></p>
-  <p><img src="https://avatars.githubusercontent.com/u/80861386?s=200&v=4" height="45px;" alt="Cerbos" /><br /><a href="https://cerbos.dev/" target="_blank">Cerbos</a></p>
-</div>
+<p align="center">
+  <a href="https://www.propelauth.com/" target="_blank"><img src="https://avatars.githubusercontent.com/u/89474619?s=200&v=4" height="45px;" alt="PropelAuth" /><br />PropelAuth</a>
+  &nbsp;&nbsp;
+  <a href="https://cerbos.dev/" target="_blank"><img src="https://avatars.githubusercontent.com/u/80861386?s=200&v=4" height="45px;" alt="Cerbos" /><br />Cerbos</a>
+  &nbsp;&nbsp;
+  <a href="https://scalar.com/" target="_blank"><img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="45px;" alt="Scalar.com logo" /><br />Scalar</a>
+</p>
 
 <table>
   <tr>
