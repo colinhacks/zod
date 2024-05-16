@@ -187,8 +187,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Platinum</h3>
 
-<blockquote>
-<a href="mailto:colin@colinhacks.com" target="_blank">Email me</a> to discuss becoming a Platinum sponsor of Zod.
+<blockquote align="center" width="400px">
+  <a href="mailto:colin@colinhacks.com" target="_blank">Email me</a> to discuss becoming a Platinum sponsor of Zod.
 </blockquote>
 
 <!-- <table>
@@ -325,7 +325,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Bronze</h3>
 
-<table>
+<table align="center">
   <tr>
     <td>Brandon Bayer</td>
     <td>Jiří Brabec</td>
