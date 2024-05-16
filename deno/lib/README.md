@@ -181,13 +181,15 @@ Some other great aspects:
 - Functional approach: [parse, don't validate](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/)
 - Works with plain JavaScript too! You don't need to use TypeScript.
 
-### Sponsors
+## Sponsors
 
 Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
 
-#### Platinum
+<h3 align="center">Platinum</h3>
 
-> [Email me](mailto:colin@colinhacks.com) to discuss sponsoring Zod at this level.
+<blockquote>
+<a href="mailto:colin@colinhacks.com" target="_blank">Email me</a> to discuss becoming a Platinum sponsor of Zod.
+</blockquote>
 
 <!-- <table>
   <tr>
@@ -203,17 +205,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table> -->
 
-#### Gold
+<h3 align="center">Gold</h3>
 
-<p align="center">
-  <a href="https://www.propelauth.com/" target="_blank"><img src="https://avatars.githubusercontent.com/u/89474619?s=200&v=4" height="45px;" alt="PropelAuth" /><br />PropelAuth</a>
-  &nbsp;&nbsp;
-  <a href="https://cerbos.dev/" target="_blank"><img src="https://avatars.githubusercontent.com/u/80861386?s=200&v=4" height="45px;" alt="Cerbos" /><br />Cerbos</a>
-  &nbsp;&nbsp;
-  <a href="https://scalar.com/" target="_blank"><img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="45px;" alt="Scalar.com logo" /><br />Scalar</a>
-</p>
-
-<table>
+<table align="center">
   <tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/89474619?s=200&v=4" height="45px;" alt="PropelAuth" />
@@ -235,6 +229,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://speakeasyapi.dev/" target="_blank">Speakeasy</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" height="45px;" alt="Deletype logo" />
       <br />
@@ -245,7 +240,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://trigger.dev" target="_blank">Trigger.dev</a>
     </td>
-  </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" height="45px;" alt="Transloadit logo" />
       <br />
@@ -257,6 +251,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a href="https://infisical.com" target="_blank">Infisical</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" height="45px;" alt="Whop logo" />
       <br />
@@ -296,21 +291,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table>
 
-#### Silver
+<h3 align="center">Silver</h3>
 
-<p align="center">
-	<a href="https://www.numeric.io"><img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric logo" /></a>
-  &nbsp;&nbsp;
-  <a href="https://marcatopartners.com"><img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" height="40px;" alt="Marcato Partners" /></a>
-  &nbsp;&nbsp;
-  <a href="https://interval.com"><img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" height="40px;" alt="" /></a>
-  &nbsp;&nbsp;
-  <a href="https://seasoned.cc"><img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" height="40px;" alt="" /></a>
-  &nbsp;&nbsp;
-  <a href="https://www.bamboocreative.nz/"><img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative logo" /></a>
-</p>
-
-<table>
+<table align="center">
   <tr>
     <td align="center">
       <a href="https://www.numeric.io">
@@ -340,7 +323,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table>
 
-#### Bronze
+<h3 align="center">Bronze</h3>
 
 <table>
   <tr>
