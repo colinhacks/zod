@@ -34,7 +34,8 @@ function toFixed(val: number) {
 
 export function toTable(bench: Bench) {
   const sorted = bench.tasks.sort((a, b) => a.result!.mean - b.result!.mean);
-  const fastest = sorted[0];
+  // const fastest = sorted[0];
+  const slowest = sorted[sorted.length - 1];
 
   const table = new Table({
     columns: [
@@ -51,10 +52,10 @@ export function toTable(bench: Bench) {
     table.addRow({
       name: task.name,
       summary:
-        task === sorted[0]
-          ? "fastest"
-          : (task.result!.mean / fastest.result!.mean).toFixed(3) +
-            `x slower than ${fastest.name}`,
+        task === slowest
+          ? "slowest"
+          : (task.result!.hz / slowest.result!.hz).toFixed(3) +
+            `x faster than ${slowest.name}`,
       "ops/sec": formatNumber(task.result!.hz) + " ops/sec",
       "time/op": formatNumber(task.result!.mean / 1000) + "s",
       margin: "±" + task.result!.rme.toFixed(2) + "%",
