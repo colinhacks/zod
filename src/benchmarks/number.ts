@@ -1,11 +1,17 @@
-import { makeSchema, metabench } from "./benchUtil.js";
+import { makeData, makeSchema } from "./benchUtil.js";
+import { metabench } from "./metabench";
 
 const { zod3, zod4 } = makeSchema((z) => z.number());
-const DATA = Math.random();
-const bench = metabench("z.number().parse");
 
-bench.add("zod3", () => zod3.parse(DATA));
-bench.add("zod4", () => zod4.parse(DATA));
+const DATA = makeData(10000, () => Math.random());
+const bench = metabench("z.number().parse", {
+  zod3() {
+    for (const _ of DATA) zod3.parse(_);
+  },
+  zod4() {
+    for (const _ of DATA) zod4.parse(_);
+  },
+});
 
 export default async function run() {
   await bench.run();

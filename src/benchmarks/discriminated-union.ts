@@ -1,4 +1,5 @@
-import { makeSchema, metabench } from "./benchUtil.js";
+import { makeSchema } from "./benchUtil.js";
+import { metabench } from "./metabench";
 
 const { zod3, zod4 } = makeSchema((z) => {
   const aSchema = z.object({

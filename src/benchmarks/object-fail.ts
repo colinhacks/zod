@@ -1,20 +1,23 @@
-import { metabench } from "./benchUtil";
+import { makeData } from "./benchUtil";
+import { metabench } from "./metabench";
 import { zod3, zod4 } from "./object";
 
-const BADDATA = Object.freeze({
-  nest: {
-    number: "asdf",
-    string: 12,
-    // boolean: undefined,
-  },
+const DATA = makeData(1000, () => {
+  return Object.freeze({
+    nest: {
+      number: "asdf",
+      string: 12,
+      // boolean: undefined,
+    },
+  });
 });
 
 const bench = metabench("small: z.object().safeParseAsync", {
   zod3() {
-    zod3.parse(BADDATA);
+    for (const _ of DATA) zod3.parse(_);
   },
   zod4() {
-    zod4.parse(BADDATA);
+    for (const _ of DATA) zod4.parse(_);
   },
 });
 

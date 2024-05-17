@@ -1,14 +1,15 @@
-import { makeSchema, metabench } from "./benchUtil.js";
+import { makeData, makeSchema } from "./benchUtil.js";
+import { metabench } from "./metabench.ts";
 
 const { zod3, zod4 } = makeSchema((z) => z.string().datetime());
-const DATA = new Date().toISOString();
+const DATA = makeData(10000, () => new Date().toISOString());
 
 const bench = metabench("z.string().datetime().parse", {
   zod3() {
-    zod3.parse(DATA);
+    for (const _ of DATA) zod3.parse(_);
   },
   zod4() {
-    zod4.parse(DATA);
+    for (const _ of DATA) zod4.parse(_);
   },
 });
 

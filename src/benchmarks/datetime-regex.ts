@@ -1,4 +1,4 @@
-import { metabench } from "./benchUtil.js";
+import { metabench } from "./metabench";
 
 const bench = metabench("datetime regex");
 

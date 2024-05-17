@@ -1,12 +1,12 @@
-import { metabench } from "./benchUtil.js";
+import { metabench } from "./metabench.ts";
 import { DATA, zod3, zod4 } from "./object.js";
 
 const bench = metabench("small: z.object().parseAsync", {
-  zod3() {
-    zod3.parseAsync(DATA);
+  async zod3() {
+    for (const _ of DATA) await zod3.parseAsync(_);
   },
-  zod4() {
-    zod4.parseAsync(DATA);
+  async zod4() {
+    for (const _ of DATA) await zod4.parseAsync(_);
   },
 });
 

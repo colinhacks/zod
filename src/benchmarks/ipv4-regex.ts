@@ -1,4 +1,4 @@
-import { metabench } from "./benchUtil.js";
+import { metabench } from "./metabench";
 
 const DATA = "127.0.0.1";
 const ipv4RegexA =

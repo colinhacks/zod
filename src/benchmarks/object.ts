@@ -1,4 +1,5 @@
-import { makeSchema, metabench, runBench } from "./benchUtil.js";
+import { makeData, makeSchema } from "./benchUtil.js";
+import { metabench } from "./metabench.js";
 
 export const { zod3, zod4 } = makeSchema((z) =>
   z.object({
@@ -8,15 +9,22 @@ export const { zod3, zod4 } = makeSchema((z) =>
   })
 );
 
-export const DATA = Object.freeze({
-  number: Math.random(),
-  string: `${Math.random()}`,
-  boolean: Math.random() > 0.5,
+export const DATA = makeData(1000, () => {
+  return Object.freeze({
+    number: Math.random(),
+    string: `${Math.random()}`,
+    boolean: Math.random() > 0.5,
+  });
 });
 
-const bench = metabench("small: z.object().parse");
-bench.add("zod3", () => zod3.parse(DATA));
-bench.add("zod4", () => zod4.parse(DATA));
+const bench = metabench("small: z.object().parse", {
+  zod3() {
+    for (const _ of DATA) zod3.parse(_);
+  },
+  zod4() {
+    for (const _ of DATA) zod4.parse(_);
+  },
+});
 
 export default async function run() {
   await bench.run();

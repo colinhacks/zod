@@ -1,12 +1,12 @@
-import { metabench } from "./benchUtil.js";
+import { metabench } from "./metabench.ts";
 import { DATA, zod3, zod4 } from "./object.js";
 
 const bench = metabench("small: z.object().safeParse", {
   zod3() {
-    zod3.safeParse(DATA);
+    for (const _ of DATA) zod3.safeParse(_);
   },
   zod4() {
-    zod4.safeParse(DATA);
+    for (const _ of DATA) zod4.safeParse(_);
   },
 });
 

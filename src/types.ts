@@ -12,6 +12,7 @@ import {
   ParseReturnType,
   SyncParseReturnType,
   NOT_SET,
+  ZOD_FAILURE,
 } from "./helpers/parseUtil";
 import { Primitive } from "./helpers/typeAliases";
 import { getParsedType, objectKeys, ZodParsedType } from "./helpers/util";
@@ -182,13 +183,12 @@ export abstract class ZodType<
       const result = this._parse(data, this.cache.defaultSyncContext);
       if (result instanceof Promise)
         throw Error("Synchronous parse encountered promise.");
-      // if ((result as any)[ZOD_FAILURE])
-      if (isAborted(result))
+
+      if ((result as any)?._key === ZOD_FAILURE)
         throw issuesToZodError(
           this.cache.defaultSyncContext,
           (result as ZodFailure).issues
         );
-
       return result as any;
     }
     const ctx: ParseContext = {
@@ -2746,7 +2746,7 @@ export class ZodObject<
 
   _parse(
     input: ParseInput,
-    ctx: ParseContext
+    ctx?: ParseContext
   ): ParseReturnType<this["_output"]> {
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.object) {

@@ -1,4 +1,5 @@
-import { makeData, metabench } from "./benchUtil.js";
+import { makeData } from "./benchUtil.js";
+import { metabench } from "./metabench.js";
 
 const ZOD_FAILURE = "~~key~~";
 
@@ -41,37 +42,37 @@ const nullChainCheckTag = (x: any) => x?.tag === ZOD_FAILURE; // 1.74
 
 const bench = metabench("instanceof")
   .add("instanceofClass", () => {
-    for (const d of DATA) instanceofClass(d);
+    for (const _ of DATA) instanceofClass(_);
   })
   .add("instanceofPromise", () => {
-    for (const d of DATA) instanceofPromise(d);
+    for (const _ of DATA) instanceofPromise(_);
   })
   .add("keyin", () => {
-    for (const d of DATA) keyin(d);
+    for (const _ of DATA) keyin(_);
   })
   .add("typeofThenCheckSymbol", () => {
-    for (const d of DATA) typeofThenCheckSymbol(d);
+    for (const _ of DATA) typeofThenCheckSymbol(_);
   })
   .add("typeofThenCheckTag", () => {
-    for (const d of DATA) typeofThenCheckTag(d);
+    for (const _ of DATA) typeofThenCheckTag(_);
   })
   .add("instanceofObjectThenCheckSymbol", () => {
-    for (const d of DATA) instanceofObjectThenCheckSymbol(d);
+    for (const _ of DATA) instanceofObjectThenCheckSymbol(_);
   })
   .add("instanceofObjectThenCheckTag", () => {
-    for (const d of DATA) instanceofObjectThenCheckTag(d);
+    for (const _ of DATA) instanceofObjectThenCheckTag(_);
   })
   .add("falsyThenCheckTag", () => {
-    for (const d of DATA) falsyThenCheckTag(d);
+    for (const _ of DATA) falsyThenCheckTag(_);
   })
   .add("falsyThenCheckSymbol", () => {
-    for (const d of DATA) falsyThenCheckSymbol(d);
+    for (const _ of DATA) falsyThenCheckSymbol(_);
   })
   .add("nullChainCheckSymbol", () => {
-    for (const d of DATA) nullChainCheckSymbol(d);
+    for (const _ of DATA) nullChainCheckSymbol(_);
   })
   .add("nullChainCheckTag", () => {
-    for (const d of DATA) nullChainCheckTag(d);
+    for (const _ of DATA) nullChainCheckTag(_);
   });
 
 export default async function run() {
