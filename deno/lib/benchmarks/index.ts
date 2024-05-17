@@ -72,7 +72,7 @@ async function run() {
 
 run();
 // exit on Ctrl-C
-process.on("SIGINT", function () {
+process.on("SIGINT", () => {
   console.log("Exiting...");
   process.exit();
 });

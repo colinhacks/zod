@@ -1,7 +1,7 @@
 import type { input, TypeOf, ZodFirstPartyTypeKind, ZodType } from "./index.ts";
 import { util } from "./helpers/index.ts";
-import { Primitive } from "./helpers/typeAliases.ts";
-import { ZodParsedType } from "./helpers/util.ts";
+import type { Primitive } from "./helpers/typeAliases.ts";
+import type { ZodParsedType } from "./helpers/util.ts";
 
 type allKeys<T> = T extends any ? keyof T : never;
 
@@ -248,10 +248,7 @@ export class ZodError<T = any> extends Error {
   format<U>(mapper: (issue: ZodIssue) => U): ZodFormattedError<T, U>;
   format(_mapper?: any) {
     const mapper: (issue: ZodIssue) => any =
-      _mapper ||
-      function (issue: ZodIssue) {
-        return issue.message;
-      };
+      _mapper || ((issue: ZodIssue) => issue.message);
     const fieldErrors: ZodFormattedError<T> = { _errors: [] } as any;
     const processError = (error: ZodError) => {
       for (const issue of error.issues) {

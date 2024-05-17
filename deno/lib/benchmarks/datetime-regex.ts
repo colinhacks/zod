@@ -14,7 +14,7 @@ const datetimeRegexWithLeapYearValidation =
 
 bench
   .add("new Date()", () => {
-    return !isNaN(new Date(DATA).getTime());
+    return !Number.isNaN(new Date(DATA).getTime());
   })
   .add("regex (no validation)", () => {
     return simpleDatetimeRegex.test(DATA);

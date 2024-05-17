@@ -6,8 +6,8 @@ import { util } from "../helpers/index.ts";
 import * as z from "../index.ts";
 
 enum testEnum {
-  A,
-  B,
+  A = 0,
+  B = 1,
 }
 
 const schemas = [

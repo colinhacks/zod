@@ -29,31 +29,31 @@ test("passing validations", () => {
   z.number().parse(0);
   z.number().parse(-1.5);
   z.number().parse(-1);
-  z.number().parse(Infinity);
-  z.number().parse(-Infinity);
+  z.number().parse(Number.POSITIVE_INFINITY);
+  z.number().parse(Number.NEGATIVE_INFINITY);
   gtFive.parse(6);
-  gtFive.parse(Infinity);
+  gtFive.parse(Number.POSITIVE_INFINITY);
   gteFive.parse(5);
-  gteFive.parse(Infinity);
+  gteFive.parse(Number.POSITIVE_INFINITY);
   minFive.parse(5);
-  minFive.parse(Infinity);
+  minFive.parse(Number.POSITIVE_INFINITY);
   ltFive.parse(4);
-  ltFive.parse(-Infinity);
+  ltFive.parse(Number.NEGATIVE_INFINITY);
   lteFive.parse(5);
-  lteFive.parse(-Infinity);
+  lteFive.parse(Number.NEGATIVE_INFINITY);
   maxFive.parse(5);
-  maxFive.parse(-Infinity);
+  maxFive.parse(Number.NEGATIVE_INFINITY);
   intNum.parse(4);
   positive.parse(1);
-  positive.parse(Infinity);
+  positive.parse(Number.POSITIVE_INFINITY);
   negative.parse(-1);
-  negative.parse(-Infinity);
+  negative.parse(Number.NEGATIVE_INFINITY);
   nonpositive.parse(0);
   nonpositive.parse(-1);
-  nonpositive.parse(-Infinity);
+  nonpositive.parse(Number.NEGATIVE_INFINITY);
   nonnegative.parse(0);
   nonnegative.parse(1);
-  nonnegative.parse(Infinity);
+  nonnegative.parse(Number.POSITIVE_INFINITY);
   multipleOfFive.parse(15);
   multipleOfFive.parse(-15);
   multipleOfNegativeFive.parse(-15);
@@ -86,8 +86,8 @@ test("failing validations", () => {
   expect(() => multipleOfFive.parse(-7.5)).toThrow();
   expect(() => multipleOfNegativeFive.parse(-7.5)).toThrow();
   expect(() => multipleOfNegativeFive.parse(7.5)).toThrow();
-  expect(() => finite.parse(Infinity)).toThrow();
-  expect(() => finite.parse(-Infinity)).toThrow();
+  expect(() => finite.parse(Number.POSITIVE_INFINITY)).toThrow();
+  expect(() => finite.parse(Number.NEGATIVE_INFINITY)).toThrow();
   expect(() => safe.parse(Number.MIN_SAFE_INTEGER - 1)).toThrow();
   expect(() => safe.parse(Number.MAX_SAFE_INTEGER + 1)).toThrow();
 
@@ -97,7 +97,7 @@ test("failing validations", () => {
 });
 
 test("parse NaN", () => {
-  expect(() => z.number().parse(NaN)).toThrow();
+  expect(() => z.number().parse(Number.NaN)).toThrow();
 });
 
 test("min max getters", () => {

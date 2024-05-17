@@ -223,7 +223,7 @@ test("valid - literals with .default or .preprocess", () => {
 
 test("enum and nativeEnum", () => {
   enum MyEnum {
-    d,
+    d = 0,
     e = "e",
   }
 

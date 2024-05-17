@@ -4,7 +4,7 @@ import { expect, test } from "@jest/globals";
 import { util } from "../helpers";
 import * as z from "../index";
 
-const stringToNumber = z.string().transform((arg) => parseFloat(arg));
+const stringToNumber = z.string().transform((arg) => Number.parseFloat(arg));
 // const numberToString = z
 //   .transformer(z.number())
 //   .transform((n) => String(n));

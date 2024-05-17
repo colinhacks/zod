@@ -41,7 +41,7 @@ type PrimitiveTypes =
   | "null";
 
 abstract class ZodPrimitive extends ZodType {
-  kind: "primitive" = "primitive";
+  kind = "primitive" as const;
   types: { [k in PrimitiveTypes]?: true | false };
   override "~output": Primitive;
   override "~input": Primitive;

@@ -41,9 +41,7 @@ export const getValidEnumValues = (obj: any) => {
 };
 
 export const objectValues = (obj: any) => {
-  return objectKeys(obj).map(function (e) {
-    return obj[e];
-  });
+  return objectKeys(obj).map((e) => obj[e]);
 };
 
 export const objectKeys: ObjectConstructor["keys"] =

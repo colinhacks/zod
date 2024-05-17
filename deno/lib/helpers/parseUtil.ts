@@ -71,7 +71,7 @@ export class ZodFailure {
     public issues: IssueData[],
     protected _value: unknown = NOT_SET
   ) {}
-  status: "aborted" = "aborted";
+  status = "aborted" as const;
 
   get value() {
     return this._value;

@@ -1,27 +1,33 @@
-import { enumUtil, errorUtil, objectUtil, partialUtil, util } from "./helpers";
 import {
-  AsyncParseReturnType,
+  type enumUtil,
+  errorUtil,
+  type objectUtil,
+  type partialUtil,
+  util,
+} from "./helpers";
+import {
+  type AsyncParseReturnType,
   ZodFailure,
   isAborted,
   isAsync,
   isValid,
   makeIssue,
-  ParseContext,
-  ParseInput,
-  ParseParams,
-  ParseReturnType,
-  SyncParseReturnType,
+  type ParseContext,
+  type ParseInput,
+  type ParseParams,
+  type ParseReturnType,
+  type SyncParseReturnType,
   NOT_SET,
 } from "./helpers/parseUtil";
-import { Primitive } from "./helpers/typeAliases";
+import type { Primitive } from "./helpers/typeAliases";
 import { getParsedType, objectKeys, ZodParsedType } from "./helpers/util";
 import {
-  IssueData,
-  StringValidation,
-  ZodCustomIssue,
+  type IssueData,
+  type StringValidation,
+  type ZodCustomIssue,
   ZodError,
-  ZodErrorMap,
-  ZodIssue,
+  type ZodErrorMap,
+  type ZodIssue,
   ZodIssueCode,
   ZodTemplateLiteralUnsupportedCheckError,
   ZodTemplateLiteralUnsupportedTypeError,
@@ -1452,8 +1458,8 @@ function floatSafeRemainder(val: number, step: number) {
   const valDecCount = (val.toString().split(".")[1] || "").length;
   const stepDecCount = (step.toString().split(".")[1] || "").length;
   const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
-  const valInt = parseInt(val.toFixed(decCount).replace(".", ""));
-  const stepInt = parseInt(step.toFixed(decCount).replace(".", ""));
+  const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
+  const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
   return (valInt % stepInt) / Math.pow(10, decCount);
 }
 
@@ -6051,7 +6057,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
 
   // FIXME: we don't support transformations, so `.trim()` is not supported.
   protected _transformZodStringPartToRegexString(part: ZodString): string {
-    let maxLength = Infinity,
+    let maxLength = Number.POSITIVE_INFINITY,
       minLength = 0,
       endsWith = "",
       startsWith = "";
@@ -6087,7 +6093,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     );
     const constrainedMaxLength = Number.isFinite(maxLength)
       ? Math.max(0, maxLength - startsWith.length - endsWith.length)
-      : Infinity;
+      : Number.POSITIVE_INFINITY;
 
     if (
       constrainedMaxLength === 0 ||
@@ -6135,7 +6141,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       return minLength === 1 ? "" : `{${minLength}}`;
     }
 
-    if (maxLength !== Infinity) {
+    if (maxLength !== Number.POSITIVE_INFINITY) {
       return `{${minLength},${maxLength}}`;
     }
 
@@ -6154,8 +6160,8 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
   protected _transformZodNumberPartToRegexString(part: ZodNumber): string {
     let canBeNegative = true,
       canBePositive = true,
-      min = -Infinity,
-      max = Infinity,
+      min = Number.NEGATIVE_INFINITY,
+      max = Number.POSITIVE_INFINITY,
       canBeZero = true,
       isFinite = false,
       isInt = false,

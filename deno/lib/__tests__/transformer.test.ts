@@ -5,7 +5,7 @@ const test = Deno.test;
 import { util } from "../helpers/index.ts";
 import * as z from "../index.ts";
 
-const stringToNumber = z.string().transform((arg) => parseFloat(arg));
+const stringToNumber = z.string().transform((arg) => Number.parseFloat(arg));
 // const numberToString = z
 //   .transformer(z.number())
 //   .transform((n) => String(n));
