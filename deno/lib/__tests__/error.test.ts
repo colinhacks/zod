@@ -33,7 +33,7 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
     }
   }
   if (error.code === ZodIssueCode.custom) {
-    return { message: `less-than-${(error.params || {}).minimum}` };
+    return { message: `less-than-${error.params?.minimum}` };
   }
   return { message: ctx.defaultError };
 };
@@ -41,8 +41,8 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
 test("type error with custom error map", () => {
   const result = z.string().safeParse(234, { errorMap });
 
-  expect(result.error!.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
-  expect(result.error!.issues[0].message).toEqual(`bad type!`);
+  expect(result.error?.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
+  expect(result.error?.issues[0].message).toEqual(`bad type!`);
 });
 
 test("refinement fail with params", () => {
@@ -179,7 +179,7 @@ test("error metadata from value", () => {
     const sub = result.error.issues[0];
     expect(result.error.issues[0].code).toEqual("custom");
     if (sub.code === "custom") {
-      expect(sub.params!.val).toEqual("asdf");
+      expect(sub.params?.val).toEqual("asdf");
     }
   }
 });

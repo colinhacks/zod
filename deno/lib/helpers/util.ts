@@ -73,7 +73,7 @@ export const isInteger: NumberConstructor["isInteger"] =
   typeof Number.isInteger === "function"
     ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban
     : (val) =>
-        typeof val === "number" && isFinite(val) && Math.floor(val) === val;
+        typeof val === "number" && Number.isFinite(val) && Math.floor(val) === val;
 
 export function joinValues<T extends any[]>(
   array: T,
@@ -128,7 +128,7 @@ export const getParsedType = (data: any): ZodParsedType => {
       return ZodParsedType.string;
 
     case "number":
-      return isNaN(data) ? ZodParsedType.nan : ZodParsedType.number;
+      return Number.isNaN(data) ? ZodParsedType.nan : ZodParsedType.number;
 
     case "boolean":
       return ZodParsedType.boolean;

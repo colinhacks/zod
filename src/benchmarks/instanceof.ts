@@ -15,7 +15,7 @@ class ZodFailure {
 //   [ZOD_FAILURE]: true,
 //   [ZOD_FAILURE]: true,
 // });
-export var DATA = makeData(1000, () => {
+export const DATA = makeData(1000, () => {
   const random = Math.random();
   if (random > 0.75) return new ZodFailure("test");
   if (random > 0.5) return { name: "Colin" };
@@ -36,7 +36,7 @@ const instanceofObjectThenCheckSymbol = (x: any) =>
 const instanceofObjectThenCheckTag = (x: any) =>
   x instanceof Object && x.tag === ZOD_FAILURE; // 1.69
 const falsyThenCheckTag = (x: any) => x && x.tag === ZOD_FAILURE; // 1.59
-const falsyThenCheckSymbol = (x: any) => x && x[ZOD_FAILURE]; // 1.74
+const falsyThenCheckSymbol = (x: any) => x?.[ZOD_FAILURE]; // 1.74
 const nullChainCheckSymbol = (x: any) => x?.[ZOD_FAILURE]; // 1.74
 const nullChainCheckTag = (x: any) => x?.tag === ZOD_FAILURE; // 1.74
 

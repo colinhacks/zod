@@ -302,11 +302,11 @@ export abstract class ZodType<
     const getIssueProperties = (val: Output) => {
       if (typeof message === "string" || typeof message === "undefined") {
         return { message };
-      } else if (typeof message === "function") {
-        return message(val);
-      } else {
-        return message;
       }
+      if (typeof message === "function") {
+        return message(val);
+      }
+      return message;
     };
     return this._refinement((val, ctx) => {
       const result = check(val);
@@ -321,17 +321,15 @@ export abstract class ZodType<
           if (!data) {
             setError();
             return false;
-          } else {
-            return true;
           }
+          return true;
         });
       }
       if (!result) {
         setError();
         return false;
-      } else {
-        return true;
       }
+      return true;
     });
   }
 
@@ -355,9 +353,8 @@ export abstract class ZodType<
             : refinementData
         );
         return false;
-      } else {
-        return true;
       }
+      return true;
     });
   }
 
@@ -1075,7 +1072,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       }
     }
 
-    if (issues && issues.length) {
+    if (issues?.length) {
       return new ZodFailure(issues);
     }
 
@@ -1460,7 +1457,7 @@ function floatSafeRemainder(val: number, step: number) {
   const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
   const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
   const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
-  return (valInt % stepInt) / Math.pow(10, decCount);
+  return (valInt % stepInt) / 10 ** decCount;
 }
 
 export interface ZodNumberDef extends ZodTypeDef {
@@ -1565,7 +1562,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
       }
     }
 
-    if (issues && issues.length) {
+    if (issues?.length) {
       return new ZodFailure(issues);
     }
 
@@ -1728,8 +1725,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
   }
 
   get isFinite() {
-    let max: number | null = null,
-      min: number | null = null;
+    let max: number | null = null;
+    let min: number | null = null;
     for (const ch of this._def.checks) {
       if (
         ch.kind === "finite" ||
@@ -1737,7 +1734,8 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
         ch.kind === "multipleOf"
       ) {
         return true;
-      } else if (ch.kind === "min") {
+      }
+      if (ch.kind === "min") {
         if (min === null || ch.value > min) min = ch.value;
       } else if (ch.kind === "max") {
         if (max === null || ch.value < max) max = ch.value;
@@ -2032,7 +2030,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
       ]);
     }
 
-    if (isNaN(input.getTime())) {
+    if (Number.isNaN(input.getTime())) {
       return new ZodFailure([
         {
           input,
@@ -2712,22 +2710,25 @@ function deepPartialify(schema: ZodTypeAny): any {
       ...schema._def,
       shape: () => newShape,
     }) as any;
-  } else if (schema instanceof ZodArray) {
+  }
+  if (schema instanceof ZodArray) {
     return new ZodArray({
       ...schema._def,
       type: deepPartialify(schema.element),
     });
-  } else if (schema instanceof ZodOptional) {
+  }
+  if (schema instanceof ZodOptional) {
     return ZodOptional.create(deepPartialify(schema.unwrap()));
-  } else if (schema instanceof ZodNullable) {
+  }
+  if (schema instanceof ZodNullable) {
     return ZodNullable.create(deepPartialify(schema.unwrap()));
-  } else if (schema instanceof ZodTuple) {
+  }
+  if (schema instanceof ZodTuple) {
     return ZodTuple.create(
       schema.items.map((item: any) => deepPartialify(item))
     );
-  } else {
-    return schema;
   }
+  return schema;
 }
 
 export class ZodObject<
@@ -3332,27 +3333,26 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 
     if (hasPromises) {
       return Promise.all(parseResults).then(handleResults);
-    } else {
-      const issues: ZodIssue[][] = [];
-      for (const result of parseResults as SyncParseReturnType<any>[]) {
-        // we know it's sync because hasPromises is false
-        if (!isAborted(result)) {
-          return result;
-        }
-
-        issues.push(result.issues.map((issue) => makeIssue(issue, ctx)));
+    }
+    const issues: ZodIssue[][] = [];
+    for (const result of parseResults as SyncParseReturnType<any>[]) {
+      // we know it's sync because hasPromises is false
+      if (!isAborted(result)) {
+        return result;
       }
 
-      const unionErrors = issues.map((issues) => new ZodError(issues));
-
-      return new ZodFailure([
-        {
-          input,
-          code: ZodIssueCode.invalid_union,
-          unionErrors,
-        },
-      ]);
+      issues.push(result.issues.map((issue) => makeIssue(issue, ctx)));
     }
+
+    const unionErrors = issues.map((issues) => new ZodError(issues));
+
+    return new ZodFailure([
+      {
+        input,
+        code: ZodIssueCode.invalid_union,
+        unionErrors,
+      },
+    ]);
   }
 
   get options() {
@@ -3382,34 +3382,45 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
   if (type instanceof ZodLazy) {
     return getDiscriminator(type.schema);
-  } else if (type instanceof ZodEffects) {
+  }
+  if (type instanceof ZodEffects) {
     return getDiscriminator(type.innerType());
-  } else if (type instanceof ZodLiteral) {
+  }
+  if (type instanceof ZodLiteral) {
     return [type.value];
-  } else if (type instanceof ZodEnum) {
+  }
+  if (type instanceof ZodEnum) {
     return type.options;
-  } else if (type instanceof ZodNativeEnum) {
+  }
+  if (type instanceof ZodNativeEnum) {
     // eslint-disable-next-line ban/ban
     return util.objectValues(type.enum as any);
-  } else if (type instanceof ZodDefault) {
-    return getDiscriminator(type._def.innerType);
-  } else if (type instanceof ZodUndefined) {
-    return [undefined];
-  } else if (type instanceof ZodNull) {
-    return [null];
-  } else if (type instanceof ZodOptional) {
-    return [undefined, ...getDiscriminator(type.unwrap())];
-  } else if (type instanceof ZodNullable) {
-    return [null, ...getDiscriminator(type.unwrap())];
-  } else if (type instanceof ZodBranded) {
-    return getDiscriminator(type.unwrap());
-  } else if (type instanceof ZodReadonly) {
-    return getDiscriminator(type.unwrap());
-  } else if (type instanceof ZodCatch) {
-    return getDiscriminator(type._def.innerType);
-  } else {
-    return [];
   }
+  if (type instanceof ZodDefault) {
+    return getDiscriminator(type._def.innerType);
+  }
+  if (type instanceof ZodUndefined) {
+    return [undefined];
+  }
+  if (type instanceof ZodNull) {
+    return [null];
+  }
+  if (type instanceof ZodOptional) {
+    return [undefined, ...getDiscriminator(type.unwrap())];
+  }
+  if (type instanceof ZodNullable) {
+    return [null, ...getDiscriminator(type.unwrap())];
+  }
+  if (type instanceof ZodBranded) {
+    return getDiscriminator(type.unwrap());
+  }
+  if (type instanceof ZodReadonly) {
+    return getDiscriminator(type.unwrap());
+  }
+  if (type instanceof ZodCatch) {
+    return getDiscriminator(type._def.innerType);
+  }
+  return [];
 };
 
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
@@ -3570,7 +3581,8 @@ function mergeValues(
 
   if (a === b) {
     return { valid: true, data: a };
-  } else if (aType === ZodParsedType.object && bType === ZodParsedType.object) {
+  }
+  if (aType === ZodParsedType.object && bType === ZodParsedType.object) {
     const bKeys = util.objectKeys(b);
     const sharedKeys = util
       .objectKeys(a)
@@ -3589,7 +3601,8 @@ function mergeValues(
     }
 
     return { valid: true, data: newObj };
-  } else if (aType === ZodParsedType.array && bType === ZodParsedType.array) {
+  }
+  if (aType === ZodParsedType.array && bType === ZodParsedType.array) {
     if (a.length !== b.length) {
       return { valid: false, mergeErrorPath: [] };
     }
@@ -3611,15 +3624,15 @@ function mergeValues(
     }
 
     return { valid: true, data: newArray };
-  } else if (
+  }
+  if (
     aType === ZodParsedType.date &&
     bType === ZodParsedType.date &&
     +a === +b
   ) {
     return { valid: true, data: a };
-  } else {
-    return { valid: false, mergeErrorPath: [] };
   }
+  return { valid: false, mergeErrorPath: [] };
 }
 
 export class ZodIntersection<
@@ -3672,12 +3685,11 @@ export class ZodIntersection<
       return Promise.all(parseResults).then(([left, right]) =>
         handleParsed(left, right)
       );
-    } else {
-      return handleParsed(
-        parseResults[0] as SyncParseReturnType,
-        parseResults[1] as SyncParseReturnType
-      );
     }
+    return handleParsed(
+      parseResults[0] as SyncParseReturnType,
+      parseResults[1] as SyncParseReturnType
+    );
   }
 
   static create<T extends ZodTypeAny, U extends ZodTypeAny>(
@@ -3821,23 +3833,22 @@ export class ZodTuple<
         }
         return results.map((x) => x as any) as any;
       });
-    } else {
-      issues.push(
-        ...(items as SyncParseReturnType<any>[]).flatMap((r, i) =>
-          !isAborted(r)
-            ? []
-            : r.issues.map((issue) => ({
-                ...issue,
-                path: [i, ...(issue.path || [])],
-              }))
-        )
-      );
-
-      if (issues.length) {
-        return new ZodFailure(issues);
-      }
-      return items.map((x) => x as any) as any;
     }
+    issues.push(
+      ...(items as SyncParseReturnType<any>[]).flatMap((r, i) =>
+        !isAborted(r)
+          ? []
+          : r.issues.map((issue) => ({
+              ...issue,
+              path: [i, ...(issue.path || [])],
+            }))
+      )
+    );
+
+    if (issues.length) {
+      return new ZodFailure(issues);
+    }
+    return items.map((x) => x as any) as any;
   }
 
   get items() {
@@ -4003,12 +4014,11 @@ export class ZodRecord<
         }
         return final as this["_output"];
       });
-    } else {
-      if (issues.length) {
-        return new ZodFailure(issues);
-      }
-      return final as this["_output"];
     }
+    if (issues.length) {
+      return new ZodFailure(issues);
+    }
+    return final as this["_output"];
   }
 
   get element() {
@@ -4168,13 +4178,12 @@ export class ZodMap<
 
         return final;
       });
-    } else {
-      if (issues.length) {
-        return new ZodFailure(issues);
-      }
-
-      return final;
     }
+    if (issues.length) {
+      return new ZodFailure(issues);
+    }
+
+    return final;
   }
   static create<
     Key extends ZodTypeAny = ZodTypeAny,
@@ -4298,9 +4307,8 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
 
     if (hasPromises) {
       return Promise.all(elements).then(finalizeSet);
-    } else {
-      return finalizeSet(elements as SyncParseReturnType[]);
     }
+    return finalizeSet(elements as SyncParseReturnType[]);
   }
 
   min(minSize: number, message?: errorUtil.ErrMessage): this {
@@ -4439,24 +4447,23 @@ export class ZodFunction<
           });
         return parsedReturns;
       };
-    } else {
-      // Would love a way to avoid disabling this rule, but we need
-      // an alias (using an arrow function was what caused 2651).
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
-      const me = this;
-      return function (this: any, ...args: any[]) {
-        const parsedArgs = me._def.args.safeParse(args, params);
-        if (!parsedArgs.success) {
-          throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
-        }
-        const result = Reflect.apply(fn, this, parsedArgs.data);
-        const parsedReturns = me._def.returns.safeParse(result, params);
-        if (!parsedReturns.success) {
-          throw new ZodError([makeReturnsIssue(result, parsedReturns.error)]);
-        }
-        return parsedReturns.data;
-      } as any;
     }
+    // Would love a way to avoid disabling this rule, but we need
+    // an alias (using an arrow function was what caused 2651).
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    const me = this;
+    return function (this: any, ...args: any[]) {
+      const parsedArgs = me._def.args.safeParse(args, params);
+      if (!parsedArgs.success) {
+        throw new ZodError([makeArgsIssue(args, parsedArgs.error)]);
+      }
+      const result = Reflect.apply(fn, this, parsedArgs.data);
+      const parsedReturns = me._def.returns.safeParse(result, params);
+      if (!parsedReturns.success) {
+        throw new ZodError([makeReturnsIssue(result, parsedReturns.error)]);
+      }
+      return parsedReturns.data;
+    } as any;
   }
 
   parameters() {
@@ -5255,29 +5262,28 @@ export class ZodEffects<
 
           return issues.length ? new ZodFailure(issues) : result;
         }) as any;
-      } else {
-        if (issues.some((i) => i.fatal)) {
-          return new ZodFailure(issues);
-        }
-        const result = this._def.schema._parse(processed, ctx);
-
-        if (result instanceof Promise) {
-          return result.then((r) => {
-            if (isAborted(r)) {
-              issues.push(...r.issues);
-            }
-            if (issues.length) return new ZodFailure(issues);
-            return r;
-          });
-        }
-
-        if (isAborted(result)) {
-          issues.push(...result.issues);
-          return new ZodFailure(issues);
-        }
-
-        return issues.length ? new ZodFailure(issues) : (result as any);
       }
+      if (issues.some((i) => i.fatal)) {
+        return new ZodFailure(issues);
+      }
+      const result = this._def.schema._parse(processed, ctx);
+
+      if (result instanceof Promise) {
+        return result.then((r) => {
+          if (isAborted(r)) {
+            issues.push(...r.issues);
+          }
+          if (issues.length) return new ZodFailure(issues);
+          return r;
+        });
+      }
+
+      if (isAborted(result)) {
+        issues.push(...result.issues);
+        return new ZodFailure(issues);
+      }
+
+      return issues.length ? new ZodFailure(issues) : (result as any);
     }
 
     if (effect.type === "refinement") {
@@ -5319,35 +5325,34 @@ export class ZodEffects<
 
         if (issues.length) return new ZodFailure(issues, inner);
         return inner as any;
-      } else {
-        return inner.then((inner) => {
-          if (isAborted(inner)) {
-            issues.push(...inner.issues);
-          }
-
-          if (issues.some((i) => i.fatal)) {
-            return new ZodFailure(issues, inner);
-          }
-
-          const value = isAborted(inner)
-            ? inner.value !== NOT_SET
-              ? inner.value
-              : input // if valid, use parsed value
-            : inner;
-
-          const executed = executeRefinement(value);
-
-          if (executed instanceof Promise) {
-            return executed.then(() => {
-              if (issues.length) return new ZodFailure(issues, inner);
-              return inner;
-            });
-          }
-
-          if (issues.length) return new ZodFailure(issues), inner;
-          return inner;
-        });
       }
+      return inner.then((inner) => {
+        if (isAborted(inner)) {
+          issues.push(...inner.issues);
+        }
+
+        if (issues.some((i) => i.fatal)) {
+          return new ZodFailure(issues, inner);
+        }
+
+        const value = isAborted(inner)
+          ? inner.value !== NOT_SET
+            ? inner.value
+            : input // if valid, use parsed value
+          : inner;
+
+        const executed = executeRefinement(value);
+
+        if (executed instanceof Promise) {
+          return executed.then(() => {
+            if (issues.length) return new ZodFailure(issues, inner);
+            return inner;
+          });
+        }
+
+        if (issues.length) return new ZodFailure(issues), inner;
+        return inner;
+      });
     }
 
     if (effect.type === "transform") {
@@ -5376,33 +5381,32 @@ export class ZodEffects<
 
         if (issues.length) return new ZodFailure(issues, result);
         return result;
-      } else {
-        return inner.then((inner) => {
-          if (isAborted(inner)) {
-            issues.push(...inner.issues);
-          }
-
-          if (issues.length) return new ZodFailure(issues, inner);
-
-          const value = isAborted(inner)
-            ? inner.value === NOT_SET
-              ? input
-              : inner.value
-            : inner;
-
-          const result = effect.transform(value, checkCtx);
-
-          if (result instanceof Promise) {
-            return result.then((result) => {
-              if (issues.length) return new ZodFailure(issues, result);
-              return result;
-            });
-          }
-
-          if (issues.length) return new ZodFailure(issues, result);
-          return result;
-        });
       }
+      return inner.then((inner) => {
+        if (isAborted(inner)) {
+          issues.push(...inner.issues);
+        }
+
+        if (issues.length) return new ZodFailure(issues, inner);
+
+        const value = isAborted(inner)
+          ? inner.value === NOT_SET
+            ? input
+            : inner.value
+          : inner;
+
+        const result = effect.transform(value, checkCtx);
+
+        if (result instanceof Promise) {
+          return result.then((result) => {
+            if (issues.length) return new ZodFailure(issues, result);
+            return result;
+          });
+        }
+
+        if (issues.length) return new ZodFailure(issues, result);
+        return result;
+      });
     }
 
     util.assertNever(effect);
@@ -5624,18 +5628,17 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
             : result,
         };
       });
-    } else {
-      return isAborted(result)
-        ? this._def.catchValue({
-            get error() {
-              return new ZodError(
-                result.issues.map((issue) => makeIssue(issue, ctx))
-              );
-            },
-            input,
-          })
-        : result;
     }
+    return isAborted(result)
+      ? this._def.catchValue({
+          get error() {
+            return new ZodError(
+              result.issues.map((issue) => makeIssue(issue, ctx))
+            );
+          },
+          input,
+        })
+      : result;
   }
 
   removeCatch() {
@@ -5755,11 +5758,10 @@ export class ZodPipeline<
 
         return this._def.out._parse(inResult, ctx);
       });
-    } else {
-      if (isAborted(result)) return result;
-
-      return this._def.out._parse(result, ctx);
     }
+    if (isAborted(result)) return result;
+
+    return this._def.out._parse(result, ctx);
   }
 
   static create<A extends ZodTypeAny, B extends ZodTypeAny>(
@@ -6057,10 +6059,10 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
 
   // FIXME: we don't support transformations, so `.trim()` is not supported.
   protected _transformZodStringPartToRegexString(part: ZodString): string {
-    let maxLength = Number.POSITIVE_INFINITY,
-      minLength = 0,
-      endsWith = "",
-      startsWith = "";
+    let maxLength = Number.POSITIVE_INFINITY;
+    let minLength = 0;
+    let endsWith = "";
+    let startsWith = "";
 
     for (const ch of part._def.checks) {
       const regex = this._resolveRegexForStringCheck(ch);
@@ -6158,14 +6160,14 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
 
   // FIXME: we do not support exponent notation (e.g. 2e5) since it conflicts with `.int()`.
   protected _transformZodNumberPartToRegexString(part: ZodNumber): string {
-    let canBeNegative = true,
-      canBePositive = true,
-      min = Number.NEGATIVE_INFINITY,
-      max = Number.POSITIVE_INFINITY,
-      canBeZero = true,
-      isFinite = false,
-      isInt = false,
-      acc = "";
+    let canBeNegative = true;
+    let canBePositive = true;
+    let min = Number.NEGATIVE_INFINITY;
+    let max = Number.POSITIVE_INFINITY;
+    let canBeZero = true;
+    let isFinite = false;
+    let isInt = false;
+    let acc = "";
 
     for (const ch of part._def.checks) {
       if (ch.kind === "finite") {
@@ -6458,9 +6460,7 @@ export type ZodFirstPartySchemaTypes =
   | ZodTemplateLiteral<any>;
 
 // requires TS 4.4+
-abstract class Class {
-  constructor(..._: any[]) {}
-}
+abstract class Class {}
 const instanceOfType = <T extends typeof Class>(
   // const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,

@@ -22,26 +22,25 @@ export function makeData(count: number, factory: {} | (() => any)) {
 
 export function formatNumber(val: number) {
   if (val >= 1e12) {
-    return toFixed(val / 1e12) + "T";
-  } else if (val >= 1e9) {
-    return toFixed(val / 1e9) + "B";
-  } else if (val >= 1e6) {
-    return toFixed(val / 1e6) + "M";
-  } else if (val >= 1e3) {
-    return toFixed(val / 1e3) + "k";
-  } else if (val >= 1) {
+    return `${toFixed(val / 1e12)}T`;
+  }if (val >= 1e9) {
+    return `${toFixed(val / 1e9)}B`;
+  }if (val >= 1e6) {
+    return `${toFixed(val / 1e6)}M`;
+  }if (val >= 1e3) {
+    return `${toFixed(val / 1e3)}k`;
+  }if (val >= 1) {
     return val.toString();
-  } else if (val >= 1e-3) {
-    return toFixed(val * 1e3) + "m";
-  } else if (val >= 1e-6) {
-    return toFixed(val * 1e6) + "µ";
-  } else if (val >= 1e-9) {
-    return toFixed(val * 1e9) + "n";
-  } else if (val >= 1e-12) {
-    return toFixed(val * 1e12) + "p";
-  } else {
-    return val.toString();
+  }if (val >= 1e-3) {
+    return `${toFixed(val * 1e3)}m`;
+  }if (val >= 1e-6) {
+    return `${toFixed(val * 1e6)}µ`;
+  }if (val >= 1e-9) {
+    return `${toFixed(val * 1e9)}n`;
+  }if (val >= 1e-12) {
+    return `${toFixed(val * 1e12)}p`;
   }
+    return val.toString();
 }
 
 function toFixed(val: number) {

@@ -82,7 +82,7 @@ test("complex chain example", () => {
   const complex = z
     .string()
     .catch("asdf")
-    .transform((val) => val + "!")
+    .transform((val) => `${val}!`)
     .transform((val) => val.toUpperCase())
     .catch("qwer")
     .removeCatch()
