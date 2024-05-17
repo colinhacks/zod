@@ -1,4 +1,4 @@
-import zNew from "..";
+import zNew from "../index";
 import zOld from "zod";
 
 export function randomString(length: number) {
