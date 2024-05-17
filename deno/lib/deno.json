@@ -1,8 +1,0 @@
-{
-  "name": "@zod/zod",
-  "version": "3.23.8",
-  "exports": "./mod.ts",
-  "imports": {
-    "expect/": "https://deno.land/x/expect@v0.2.6/"
-  }
-}

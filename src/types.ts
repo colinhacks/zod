@@ -12,7 +12,6 @@ import {
   ParseReturnType,
   SyncParseReturnType,
   NOT_SET,
-  ZOD_FAILURE,
 } from "./helpers/parseUtil";
 import { Primitive } from "./helpers/typeAliases";
 import { getParsedType, objectKeys, ZodParsedType } from "./helpers/util";
@@ -184,7 +183,7 @@ export abstract class ZodType<
       if (result instanceof Promise)
         throw Error("Synchronous parse encountered promise.");
 
-      if ((result as any)?._key === ZOD_FAILURE)
+      if (isAborted(result))
         throw issuesToZodError(
           this.cache.defaultSyncContext,
           (result as ZodFailure).issues
