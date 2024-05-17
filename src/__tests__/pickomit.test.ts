@@ -48,6 +48,7 @@ test("pick parse - fail", () => {
 test("omit type inference", () => {
   const nonameFish = fish.omit({ name: true });
   type nonameFish = z.infer<typeof nonameFish>;
+  // biome-ignore lint/complexity/noBannedTypes:
   util.assertEqual<nonameFish, { age: number; nested: {} }>(true);
 });
 

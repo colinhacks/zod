@@ -11,7 +11,7 @@ export function randomString(length: number) {
   return result;
 }
 
-export function makeData(count: number, factory: {} | (() => any)) {
+export function makeData(count: number, factory: object | (() => any)) {
   return Array.from({ length: count }, () => {
     // clone non primitive data
     if (typeof factory === "object") return { ...factory };
@@ -23,24 +23,32 @@ export function makeData(count: number, factory: {} | (() => any)) {
 export function formatNumber(val: number) {
   if (val >= 1e12) {
     return `${toFixed(val / 1e12)}T`;
-  }if (val >= 1e9) {
+  }
+  if (val >= 1e9) {
     return `${toFixed(val / 1e9)}B`;
-  }if (val >= 1e6) {
+  }
+  if (val >= 1e6) {
     return `${toFixed(val / 1e6)}M`;
-  }if (val >= 1e3) {
+  }
+  if (val >= 1e3) {
     return `${toFixed(val / 1e3)}k`;
-  }if (val >= 1) {
+  }
+  if (val >= 1) {
     return val.toString();
-  }if (val >= 1e-3) {
+  }
+  if (val >= 1e-3) {
     return `${toFixed(val * 1e3)}m`;
-  }if (val >= 1e-6) {
+  }
+  if (val >= 1e-6) {
     return `${toFixed(val * 1e6)}µ`;
-  }if (val >= 1e-9) {
+  }
+  if (val >= 1e-9) {
     return `${toFixed(val * 1e9)}n`;
-  }if (val >= 1e-12) {
+  }
+  if (val >= 1e-12) {
     return `${toFixed(val * 1e12)}p`;
   }
-    return val.toString();
+  return val.toString();
 }
 
 function toFixed(val: number) {

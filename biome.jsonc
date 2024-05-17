@@ -3,6 +3,7 @@
   "organizeImports": {
     "enabled": true
   },
+
   "linter": {
     "enabled": true,
     "rules": {
@@ -11,8 +12,12 @@
         "noExplicitAny": "off"
       },
       "style": {
-        "noUnusedTemplateLiteral": "off"
+        "noUnusedTemplateLiteral": "off",
+        "noParameterAssign": "off"
       }
     }
+  },
+  "files": {
+    "ignore": ["deno", "lib", ".vscode", "coverage"]
   }
 }

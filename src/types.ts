@@ -2803,10 +2803,13 @@ export class ZodObject<
           }))
         );
       } else {
-        (key in input ||
+        if (
+          key in input ||
           keyValidator instanceof ZodDefault ||
-          keyValidator instanceof ZodCatch) &&
-          (final[key] = parseResult);
+          keyValidator instanceof ZodCatch
+        ) {
+          final[key] = parseResult;
+        }
       }
     }
 
@@ -2847,10 +2850,13 @@ export class ZodObject<
             }))
           );
         } else {
-          (key in input ||
+          if (
+            key in input ||
             catchall instanceof ZodDefault ||
-            catchall instanceof ZodCatch) &&
-            (final[key] = parseResult);
+            catchall instanceof ZodCatch
+          ) {
+            final[key] = parseResult;
+          }
         }
       }
     }
@@ -2868,7 +2874,9 @@ export class ZodObject<
                 }))
               );
             } else {
-              asyncResult.key in input && (final[asyncResult.key] = result);
+              if (asyncResult.key in input) {
+                final[asyncResult.key] = result;
+              }
             }
           }
         })
@@ -2889,7 +2897,7 @@ export class ZodObject<
   }
 
   get shape() {
-    return this._def.shape();
+    return this._cached.shape;
   }
 
   strict(message?: errorUtil.ErrMessage): ZodObject<T, "strict", Catchall> {
@@ -3106,11 +3114,11 @@ export class ZodObject<
   ): ZodObject<Pick<T, Extract<keyof T, keyof Mask>>, UnknownKeys, Catchall> {
     const shape: any = {};
 
-    util.objectKeys(mask).forEach((key) => {
+    for (const key of util.objectKeys(mask)) {
       if (mask[key] && this.shape[key]) {
         shape[key] = this.shape[key];
       }
-    });
+    }
 
     return new ZodObject({
       ...this._def,
@@ -3123,11 +3131,11 @@ export class ZodObject<
   ): ZodObject<Omit<T, keyof Mask>, UnknownKeys, Catchall> {
     const shape: any = {};
 
-    util.objectKeys(this.shape).forEach((key) => {
+    for (const key of util.objectKeys(this.shape)) {
       if (!mask[key]) {
         shape[key] = this.shape[key];
       }
-    });
+    }
 
     return new ZodObject({
       ...this._def,
@@ -3159,7 +3167,18 @@ export class ZodObject<
   partial(mask?: any) {
     const newShape: any = {};
 
-    util.objectKeys(this.shape).forEach((key) => {
+    // util.objectKeys(this.shape).forEach((key) => {
+    //   const fieldSchema = this.shape[key];
+
+    //   if (mask && !mask[key]) {
+    //     newShape[key] = fieldSchema;
+    //   } else {
+    //     newShape[key] = fieldSchema.optional();
+    //   }
+    // });
+
+    // rewrite to use for of
+    for (const key of this._cached.keys) {
       const fieldSchema = this.shape[key];
 
       if (mask && !mask[key]) {
@@ -3167,7 +3186,7 @@ export class ZodObject<
       } else {
         newShape[key] = fieldSchema.optional();
       }
-    });
+    }
 
     return new ZodObject({
       ...this._def,
@@ -3191,8 +3210,7 @@ export class ZodObject<
   >;
   required(mask?: any) {
     const newShape: any = {};
-
-    util.objectKeys(this.shape).forEach((key) => {
+    for (const key of this._cached.keys) {
       if (mask && !mask[key]) {
         newShape[key] = this.shape[key];
       } else {
@@ -3205,7 +3223,7 @@ export class ZodObject<
 
         newShape[key] = newField;
       }
-    });
+    }
 
     return new ZodObject({
       ...this._def,
@@ -5350,7 +5368,7 @@ export class ZodEffects<
           });
         }
 
-        if (issues.length) return new ZodFailure(issues), inner;
+        if (issues.length) return new ZodFailure(issues, inner);
         return inner;
       });
     }
@@ -6165,13 +6183,13 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     let min = Number.NEGATIVE_INFINITY;
     let max = Number.POSITIVE_INFINITY;
     let canBeZero = true;
-    let isFinite = false;
+    let finite = false;
     let isInt = false;
     let acc = "";
 
     for (const ch of part._def.checks) {
       if (ch.kind === "finite") {
-        isFinite = true;
+        finite = true;
       } else if (ch.kind === "int") {
         isInt = true;
       } else if (ch.kind === "max") {
@@ -6203,7 +6221,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
     }
 
     if (Number.isFinite(min) && Number.isFinite(max)) {
-      isFinite = true;
+      finite = true;
     }
 
     if (canBeNegative) {
@@ -6216,7 +6234,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       return "0+";
     }
 
-    if (!isFinite) {
+    if (!finite) {
       acc = `${acc}(Infinity|(`;
     }
 
@@ -6232,7 +6250,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
       acc = `${acc}\\d+(\\.\\d+)?`;
     }
 
-    if (!isFinite) {
+    if (!finite) {
       acc = `${acc}))`;
     }
 

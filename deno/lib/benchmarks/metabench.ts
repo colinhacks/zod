@@ -51,7 +51,8 @@ class Tinybench extends Metabench {
     console.log(`   ${chalk.bold.white(this.name)}`);
 
     bench.addEventListener("cycle", (e) => {
-      const task = e.task?.result!;
+      const task = e.task?.result;
+      if (!task) throw new Error("Task has no result");
 
       console.log(
         chalk.dim("   ") +
@@ -67,7 +68,10 @@ class Tinybench extends Metabench {
     await bench.warmup();
     await bench.run();
 
-    const sorted = bench.tasks.sort((a, b) => a.result?.mean - b.result?.mean);
+    const sorted = bench.tasks.sort((a, b) => {
+      if (!a.result || !b.result) throw new Error("Task has no result");
+      return a.result?.mean - b.result?.mean;
+    });
     // const fastest = sorted[0];
     const slowest = sorted[sorted.length - 1];
 
@@ -83,16 +87,21 @@ class Tinybench extends Metabench {
     });
 
     for (const task of sorted) {
+      const result = task.result;
+      if (!result) throw new Error("Task has no result");
+      if (!slowest.result) throw new Error("Task has no result");
       table.addRow({
         name: task.name,
         summary:
           task === slowest
             ? "slowest"
-            : `${(task.result?.hz / slowest.result?.hz).toFixed(3)}x faster than ${slowest.name}`,
-        "ops/sec": `${formatNumber(task.result?.hz)} ops/sec`,
-        "time/op": `${formatNumber(task.result?.mean / 1000)}s`,
-        margin: `±${task.result?.rme.toFixed(2)}%`,
-        samples: task.result?.samples.length,
+            : `${(result.hz / slowest.result.hz).toFixed(3)}x faster than ${
+                slowest.name
+              }`,
+        "ops/sec": `${formatNumber(result.hz)} ops/sec`,
+        "time/op": `${formatNumber(result.mean / 1000)}s`,
+        margin: `±${result.rme.toFixed(2)}%`,
+        samples: result.samples.length,
       });
     }
     const rendered = `   ${table.render().split("\n").join("\n   ")}`;
@@ -153,7 +162,9 @@ class BenchmarkJS extends Metabench {
           summary:
             result === slowest
               ? "slowest"
-              : `${(result.hz / slowest.hz).toFixed(3)}x faster than ${slowest.name}`,
+              : `${(result.hz / slowest.hz).toFixed(3)}x faster than ${
+                  slowest.name
+                }`,
           "ops/sec": `${formatNumber(result.hz)} ops/sec`,
           "time/op": `${formatNumber(1 / result.hz)}s`,
           margin: `±${result.rme.toFixed(2)}%`,

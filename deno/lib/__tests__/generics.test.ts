@@ -15,6 +15,7 @@ test("generics", () => {
         nested: schema, // as z.ZodTypeAny,
       })
       .transform((data) => {
+        // biome-ignore lint/style/noNonNullAssertion: <explanation>
         return data.nested!;
       })
       .parse({ nested: data });

@@ -5,7 +5,7 @@ const test = Deno.test;
 import * as z from "../index.ts";
 
 function checkErrors(a: z.ZodTypeAny, bad: any) {
-  let expected;
+  let expected: any;
   try {
     a.parse(bad);
   } catch (error) {
