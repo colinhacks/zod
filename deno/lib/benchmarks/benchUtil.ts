@@ -1,6 +1,8 @@
 import zNew from "../index.ts";
 import zOld from "zod";
 
+console.log(require.resolve("zod"));
+
 export function randomString(length: number) {
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
