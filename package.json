@@ -31,7 +31,6 @@
     "lint-staged": "^12.3.7",
     "mitata": "^0.1.11",
     "nodemon": "^2.0.15",
-    "pkgroll": "^2.1.0",
     "prettier": "^2.6.0",
     "rollup": "^2.70.1",
     "tinybench": "^2.8.0",
