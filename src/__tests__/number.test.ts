@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index.js";
+import * as z from "../index";
 
 const gtFive = z.number().gt(5);
 const gteFive = z.number().gte(5);

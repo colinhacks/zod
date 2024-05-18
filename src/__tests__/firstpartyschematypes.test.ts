@@ -1,10 +1,7 @@
 // @ts-ignore TS6133
 import { test } from "@jest/globals";
 
-import type {
-  ZodFirstPartySchemaTypes,
-  ZodFirstPartyTypeKind,
-} from "../index.js";
+import type { ZodFirstPartySchemaTypes, ZodFirstPartyTypeKind } from "../index";
 import { util } from "../helpers";
 
 test("Identify missing [ZodFirstPartySchemaTypes]", () => {

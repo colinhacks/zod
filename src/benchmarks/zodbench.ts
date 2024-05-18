@@ -1,4 +1,4 @@
-import type z from "../index.js";
+import type z from "../index";
 import { makeSchema } from "./benchUtil";
 import { metabench } from "./metabench";
 

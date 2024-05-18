@@ -2,10 +2,7 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import type {
-  ZodFirstPartySchemaTypes,
-  ZodFirstPartyTypeKind,
-} from "../index.js";
+import type { ZodFirstPartySchemaTypes, ZodFirstPartyTypeKind } from "../index.ts";
 import { util } from "../helpers/index.ts";
 
 test("Identify missing [ZodFirstPartySchemaTypes]", () => {

@@ -3,7 +3,7 @@ import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
 import { util } from "../helpers/index.ts";
-import * as z from "../index.js";
+import * as z from "../index.ts";
 
 const empty = z.literal.template([]);
 const hello = z.literal.template(["hello"]);

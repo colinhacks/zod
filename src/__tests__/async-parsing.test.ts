@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index.js";
+import * as z from "../index";
 
 /// string
 const stringSchema = z.string();

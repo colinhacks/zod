@@ -2,7 +2,7 @@
 import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index.js";
+import * as z from "../index";
 
 const minTwo = z.string().array().min(2);
 const maxTwo = z.string().array().max(2);

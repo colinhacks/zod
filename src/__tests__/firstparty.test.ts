@@ -2,7 +2,7 @@
 import { test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index.js";
+import * as z from "../index";
 
 test("first party switch", () => {
   const myType = z.string() as z.ZodFirstPartySchemaTypes;

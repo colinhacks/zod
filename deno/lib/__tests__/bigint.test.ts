@@ -2,7 +2,7 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import * as z from "../index.js";
+import * as z from "../index.ts";
 
 const gtFive = z.bigint().gt(BigInt(5));
 const gteFive = z.bigint().gte(BigInt(5));

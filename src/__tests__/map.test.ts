@@ -2,8 +2,8 @@
 import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index.js";
-import { ZodIssueCode } from "../index.js";
+import * as z from "../index";
+import { ZodIssueCode } from "../index";
 
 const stringMap = z.map(z.string(), z.string());
 type stringMap = z.infer<typeof stringMap>;

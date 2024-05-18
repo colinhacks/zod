@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index.js";
+import * as z from "../index";
 
 const gtFive = z.bigint().gt(BigInt(5));
 const gteFive = z.bigint().gte(BigInt(5));

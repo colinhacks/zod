@@ -2,7 +2,7 @@
 import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index.js";
+import * as z from "../index";
 
 const booleanRecord = z.record(z.boolean());
 type booleanRecord = z.infer<typeof booleanRecord>;

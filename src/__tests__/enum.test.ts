@@ -2,7 +2,7 @@
 import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index.js";
+import * as z from "../index";
 
 test("create enum", () => {
   const MyEnum = z.enum(["Red", "Green", "Blue"]);

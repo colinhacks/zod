@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index.js";
+import * as z from "../index";
 
 const minFive = z.string().min(5, "min5");
 const maxFive = z.string().max(5, "max5");

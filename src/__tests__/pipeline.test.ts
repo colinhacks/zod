@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index.js";
+import * as z from "../index";
 
 test("string to number pipeline", () => {
   const schema = z.string().transform(Number).pipe(z.number());

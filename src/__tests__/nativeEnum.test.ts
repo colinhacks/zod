@@ -2,7 +2,7 @@
 import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index.js";
+import * as z from "../index";
 
 test("nativeEnum test with consts", () => {
   const Fruits: { Apple: "apple"; Banana: "banana" } = {

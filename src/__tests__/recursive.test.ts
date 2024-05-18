@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { test } from "@jest/globals";
 
-import { z } from "../index.js";
+import { z } from "../index";
 
 interface Category {
   name: string;
