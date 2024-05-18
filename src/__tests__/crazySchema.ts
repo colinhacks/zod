@@ -1,4 +1,4 @@
-import * as z from "../index";
+import * as z from "../index.js";
 
 export const crazySchema = z.object({
   tuple: z.tuple([

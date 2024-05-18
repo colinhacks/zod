@@ -2,7 +2,7 @@
 import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index";
+import * as z from "../index.js";
 
 test("type guard", () => {
   const stringToNumber = z.string().transform((arg) => arg.length);

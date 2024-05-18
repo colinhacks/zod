@@ -2,7 +2,7 @@
 import { test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index";
+import * as z from "../index.js";
 
 test("branded types", () => {
   const mySchema = z

@@ -2,7 +2,7 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import * as z from "../index.ts";
+import * as z from "../index.js";
 
 const minFive = z.string().min(5, "min5");
 const maxFive = z.string().max(5, "max5");

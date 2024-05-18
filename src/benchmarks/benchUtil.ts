@@ -1,7 +1,14 @@
-import zNew from "../index";
-import zOld from "zod";
+const zNew = require("../../lib/index");
+const zodNewTs = require("../index");
+const zOld = require("../../node_modules/zod/lib/index");
 
-console.log(require.resolve("zod"));
+export function makeSchema<T>(factory: (z: typeof zNew) => T) {
+  return {
+    zod3: factory(zOld as any),
+    zod4: factory(zNew as any),
+    // zod4Ts: factory(zodNewTs as any),
+  };
+}
 
 export function randomString(length: number) {
   const characters =
@@ -55,11 +62,4 @@ export function formatNumber(val: number) {
 
 function toFixed(val: number) {
   return val.toPrecision(3);
-}
-
-export function makeSchema<T>(factory: (z: typeof zNew) => T) {
-  return {
-    zod4: factory(zNew),
-    zod3: factory(zOld as any),
-  };
 }

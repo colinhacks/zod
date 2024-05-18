@@ -8,7 +8,7 @@ import { assertNever } from "../helpers/util.ts";
 import { formatNumber } from "./benchUtil.ts";
 
 type BENCH = "tinybench" | "benchmarkjs" | "mitata";
-const BENCH: BENCH = (process.env.BENCH as BENCH) || "tinybench";
+const BENCH: BENCH = (process.env.BENCH as BENCH) || "benchmarkjs";
 
 export function metabench<T extends { [k: string]: () => any }>(
   name: string,
@@ -115,7 +115,8 @@ class BenchmarkJS extends Metabench {
   async run() {
     const suite = new Benchmark.Suite();
     console.log(`  ${chalk.white(this.name)}`);
-    for (const [name, fn] of Object.entries(this.benchmarks)) {
+    for (const name in this.benchmarks) {
+      const fn = this.benchmarks[name];
       suite.add(name, fn);
     }
     suite.on("cycle", (event: Benchmark.Event) => {

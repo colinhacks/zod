@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index";
+import * as z from "../index.js";
 
 test("string coercion", () => {
   const schema = z.coerce.string();
@@ -41,8 +41,12 @@ test("number coercion", () => {
   expect(schema.parse(3.14)).toEqual(3.14);
   expect(schema.parse(BigInt(15))).toEqual(15);
   expect(() => schema.parse(Number.NaN)).toThrow(); // z.ZodError
-  expect(schema.parse(Number.POSITIVE_INFINITY)).toEqual(Number.POSITIVE_INFINITY);
-  expect(schema.parse(Number.NEGATIVE_INFINITY)).toEqual(Number.NEGATIVE_INFINITY);
+  expect(schema.parse(Number.POSITIVE_INFINITY)).toEqual(
+    Number.POSITIVE_INFINITY
+  );
+  expect(schema.parse(Number.NEGATIVE_INFINITY)).toEqual(
+    Number.NEGATIVE_INFINITY
+  );
   expect(schema.parse(true)).toEqual(1);
   expect(schema.parse(false)).toEqual(0);
   expect(schema.parse(null)).toEqual(0);

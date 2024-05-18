@@ -3,8 +3,8 @@ import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
 import { util } from "../helpers/index.ts";
-import * as z from "../index.ts";
-import { ZodIssueCode } from "../index.ts";
+import * as z from "../index.js";
+import { ZodIssueCode } from "../index.js";
 
 const stringMap = z.map(z.string(), z.string());
 type stringMap = z.infer<typeof stringMap>;

@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index";
+import * as z from "../index.js";
 
 const literalTuna = z.literal("tuna");
 const literalTunaCustomMessage = z.literal("tuna", {

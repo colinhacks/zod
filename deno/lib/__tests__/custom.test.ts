@@ -2,7 +2,7 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import * as z from "../index.ts";
+import * as z from "../index.js";
 
 test("passing validations", () => {
   const example1 = z.custom<number>((x) => typeof x === "number");

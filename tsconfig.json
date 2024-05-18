@@ -6,5 +6,5 @@
     "./playground.ts",
     "./.eslintrc.js"
   ],
-  "exclude": ["deno"]
+  "exclude": ["deno/**/*"]
 }

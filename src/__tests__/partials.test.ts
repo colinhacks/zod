@@ -2,8 +2,8 @@
 import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index";
-import { ZodNullable, ZodOptional } from "../index";
+import * as z from "../index.js";
+import { ZodNullable, ZodOptional } from "../index.js";
 
 const nested = z.object({
   name: z.string(),

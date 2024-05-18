@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "lib": ["es5", "es6", "es7", "esnext", "dom"],
-    "target": "es2018",
+    "target": "esnext",
     "removeComments": false,
     "esModuleInterop": true,
     "moduleResolution": "node",

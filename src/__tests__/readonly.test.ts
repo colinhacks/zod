@@ -2,7 +2,7 @@
 import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index";
+import * as z from "../index.js";
 
 enum testEnum {
   A = 0,

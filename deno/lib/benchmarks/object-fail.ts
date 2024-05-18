@@ -1,6 +1,6 @@
 import { makeData } from "./benchUtil.ts";
 import { metabench } from "./metabench.ts";
-import { zod3, zod4 } from "./object.ts";
+import { zod3, zod4 } from "./object-old.ts";
 
 const DATA = makeData(1000, () => {
   return Object.freeze({

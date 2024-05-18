@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index";
+import * as z from "../index.js";
 
 // @ts-ignore TS2304
 const isDeno = typeof Deno === "object";

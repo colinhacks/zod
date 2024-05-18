@@ -7,7 +7,7 @@ import type {
   ZodTuple,
   ZodTupleItems,
   ZodTypeAny,
-} from "../index.ts";
+} from "../index.js";
 
 // export type DeepPartial<T extends AnyZodObject> = T extends AnyZodObject
 //   ? ZodObject<

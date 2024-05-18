@@ -1,4 +1,4 @@
-import type { input, TypeOf, ZodFirstPartyTypeKind, ZodType } from "./index.ts";
+import type { input, TypeOf, ZodFirstPartyTypeKind, ZodType } from "./index.js";
 import { util } from "./helpers/index.ts";
 import type { Primitive } from "./helpers/typeAliases.ts";
 import type { ZodParsedType } from "./helpers/util.ts";

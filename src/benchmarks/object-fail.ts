@@ -1,6 +1,6 @@
 import { makeData } from "./benchUtil";
 import { metabench } from "./metabench";
-import { zod3, zod4 } from "./object";
+import { zod3, zod4 } from "./object-old";
 
 const DATA = makeData(1000, () => {
   return Object.freeze({

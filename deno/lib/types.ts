@@ -6478,7 +6478,12 @@ export type ZodFirstPartySchemaTypes =
   | ZodTemplateLiteral<any>;
 
 // requires TS 4.4+
-abstract class Class {}
+
+abstract class Class {
+  // biome-ignore lint/complexity/noUselessConstructor:
+  constructor(..._: any[]) {}
+}
+
 const instanceOfType = <T extends typeof Class>(
   // const instanceOfType = <T extends new (...args: any[]) => any>(
   cls: T,

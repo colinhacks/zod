@@ -2,8 +2,8 @@
 import { expect, test } from "@jest/globals";
 
 import { util } from "../helpers";
-import * as z from "../index";
-import { ZodIssueCode } from "../index";
+import * as z from "../index.js";
+import { ZodIssueCode } from "../index.js";
 
 const stringSet = z.set(z.string());
 type stringSet = z.infer<typeof stringSet>;

@@ -3,7 +3,7 @@ import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 import { File as WebFile } from "@web-std/file";
 
-import * as z from "../index.ts";
+import * as z from "../index.js";
 
 const minCheck = z.file().min(5);
 const maxCheck = z.file().max(8);

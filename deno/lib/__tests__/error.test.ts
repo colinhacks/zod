@@ -2,7 +2,7 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import * as z from "../index.ts";
+import * as z from "../index.js";
 import { ZodError, ZodIssueCode } from "../ZodError.ts";
 
 test("error creation", () => {

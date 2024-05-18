@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index";
+import * as z from "../index.js";
 
 const beforeBenchmarkDate = new Date(2022, 10, 4);
 const benchmarkDate = new Date(2022, 10, 5);

@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import * as z from "../index";
+import * as z from "../index.js";
 
 test("parse async test", async () => {
   const schema1 = z.string().refine(async (_val) => false);

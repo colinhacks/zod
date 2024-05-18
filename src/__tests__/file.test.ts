@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, expect, test } from "@jest/globals";
 import { File as WebFile } from "@web-std/file";
 
-import * as z from "../index";
+import * as z from "../index.js";
 
 const minCheck = z.file().min(5);
 const maxCheck = z.file().max(8);
