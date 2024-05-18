@@ -12,7 +12,6 @@
     "../src/**/__tests__",
     "../playground.ts",
     "../src/benchmarks/**/*",
-    "../experiments/**/*",
-    "../.eslintrc.js"
+    "../experiments/**/*"
   ]
 }

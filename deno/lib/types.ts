@@ -163,7 +163,7 @@ export function makeCache<This, T extends { [k: string]: () => unknown }>(
 export abstract class ZodType<
   Output = unknown,
   Def extends ZodTypeDef = ZodTypeDef,
-  Input = unknown
+  Input = unknown,
 > {
   readonly _type!: Output;
   readonly _output!: Output;
@@ -611,7 +611,6 @@ const guidRegex =
 // const emailRegex = /^((([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+(\.([a-z]|\d|[!#\$%&'\*\+\-\/=\?\^_`{\|}~]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])+)*)|((\x22)((((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(([\x01-\x08\x0b\x0c\x0e-\x1f\x7f]|\x21|[\x23-\x5b]|[\x5d-\x7e]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(\\([\x01-\x09\x0b\x0c\x0d-\x7f]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF]))))*(((\x20|\x09)*(\x0d\x0a))?(\x20|\x09)+)?(\x22)))@((([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|\d|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))\.)+(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])|(([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])([a-z]|\d|-|\.|_|~|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])*([a-z]|[\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF])))$/i;
 //old email regex
 // const emailRegex = /^(([^<>()[\].,;:\s@"]+(\.[^<>()[\].,;:\s@"]+)*)|(".+"))@((?!-)([^<>()[\].,;:\s@"]+\.)+[^<>()[\].,;:\s@"]{1,})[^-<>()[\].,;:\s@"]$/i;
-// eslint-disable-next-line
 // const emailRegex =
 //   /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\])|(\[IPv6:(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))\])|([A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])*(\.[A-Za-z]{2,})+))$/;
 // const emailRegex =
@@ -2407,14 +2406,14 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
 export type ArrayCardinality = "many" | "atleastone";
 export type arrayOutputType<
   T extends ZodTypeAny,
-  Cardinality extends ArrayCardinality = "many"
+  Cardinality extends ArrayCardinality = "many",
 > = Cardinality extends "atleastone"
   ? [T["_output"], ...T["_output"][]]
   : T["_output"][];
 
 export class ZodArray<
   T extends ZodTypeAny,
-  Cardinality extends ArrayCardinality = "many"
+  Cardinality extends ArrayCardinality = "many",
 > extends ZodType<
   arrayOutputType<T, Cardinality>,
   ZodArrayDef<T>,
@@ -2629,7 +2628,7 @@ export type UnknownKeysParam = "passthrough" | "strict" | "strip";
 export interface ZodObjectDef<
   T extends ZodRawShape = ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
-  Catchall extends ZodTypeAny = ZodTypeAny
+  Catchall extends ZodTypeAny = ZodTypeAny,
 > extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodObject;
   shape: () => T;
@@ -2641,14 +2640,14 @@ export type mergeTypes<A, B> = {
   [k in keyof A | keyof B]: k extends keyof B
     ? B[k]
     : k extends keyof A
-    ? A[k]
-    : never;
+      ? A[k]
+      : never;
 };
 
 export type objectOutputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
-  UnknownKeys extends UnknownKeysParam = UnknownKeysParam
+  UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
 > = objectUtil.flatten<
   objectUtil.addQuestionMarks<baseObjectOutputType<Shape>>
 > &
@@ -2662,7 +2661,7 @@ export type baseObjectOutputType<Shape extends ZodRawShape> = {
 export type objectInputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
-  UnknownKeys extends UnknownKeysParam = UnknownKeysParam
+  UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
 > = objectUtil.flatten<baseObjectInputType<Shape>> &
   CatchallInput<Catchall> &
   PassthroughType<UnknownKeys>;
@@ -2685,8 +2684,8 @@ export type PassthroughType<T extends UnknownKeysParam> =
 export type deoptional<T extends ZodTypeAny> = T extends ZodOptional<infer U>
   ? deoptional<U>
   : T extends ZodNullable<infer U>
-  ? ZodNullable<deoptional<U>>
-  : T;
+    ? ZodNullable<deoptional<U>>
+    : T;
 
 export type SomeZodObject = ZodObject<
   ZodRawShape,
@@ -2736,7 +2735,7 @@ export class ZodObject<
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
   Catchall extends ZodTypeAny = ZodTypeAny,
   Output = objectOutputType<T, Catchall, UnknownKeys>,
-  Input = objectInputType<T, Catchall, UnknownKeys>
+  Input = objectInputType<T, Catchall, UnknownKeys>,
 > extends ZodType<Output, ZodObjectDef<T, UnknownKeys, Catchall>, Input> {
   private _cached = makeCache(this, {
     shape() {
@@ -3296,7 +3295,7 @@ export type ZodUnionOptions = Readonly<[ZodTypeAny, ...ZodTypeAny[]]>;
 export interface ZodUnionDef<
   T extends ZodUnionOptions = Readonly<
     [ZodTypeAny, ZodTypeAny, ...ZodTypeAny[]]
-  >
+  >,
 > extends ZodTypeDef {
   options: T;
   typeName: ZodFirstPartyTypeKind.ZodUnion;
@@ -3411,7 +3410,6 @@ const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
     return type.options;
   }
   if (type instanceof ZodNativeEnum) {
-    // eslint-disable-next-line ban/ban
     return util.objectValues(type.enum as any);
   }
   if (type instanceof ZodDefault) {
@@ -3450,7 +3448,8 @@ export type ZodDiscriminatedUnionOption<Discriminator extends string> =
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
+  Options extends
+    ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[],
 > extends ZodTypeDef {
   discriminator: Discriminator;
   options: Options;
@@ -3460,7 +3459,7 @@ export interface ZodDiscriminatedUnionDef<
 
 export class ZodDiscriminatedUnion<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<Discriminator>[]
+  Options extends ZodDiscriminatedUnionOption<Discriminator>[],
 > extends ZodType<
   output<Options[number]>,
   ZodDiscriminatedUnionDef<Discriminator, Options>,
@@ -3527,8 +3526,8 @@ export class ZodDiscriminatedUnion<
     Discriminator extends string,
     Types extends [
       ZodDiscriminatedUnionOption<Discriminator>,
-      ...ZodDiscriminatedUnionOption<Discriminator>[]
-    ]
+      ...ZodDiscriminatedUnionOption<Discriminator>[],
+    ],
   >(
     discriminator: Discriminator,
     options: Types,
@@ -3581,7 +3580,7 @@ export class ZodDiscriminatedUnion<
 ///////////////////////////////////////////////
 export interface ZodIntersectionDef<
   T extends ZodTypeAny = ZodTypeAny,
-  U extends ZodTypeAny = ZodTypeAny
+  U extends ZodTypeAny = ZodTypeAny,
 > extends ZodTypeDef {
   left: T;
   right: U;
@@ -3655,7 +3654,7 @@ function mergeValues(
 
 export class ZodIntersection<
   T extends ZodTypeAny,
-  U extends ZodTypeAny
+  U extends ZodTypeAny,
 > extends ZodType<
   T["_output"] & U["_output"],
   ZodIntersectionDef<T, U>,
@@ -3738,7 +3737,7 @@ export type OutputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<{
 }>;
 export type OutputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
-  Rest extends ZodTypeAny | null = null
+  Rest extends ZodTypeAny | null = null,
 > = Rest extends ZodTypeAny
   ? [...OutputTypeOfTuple<T>, ...Rest["_output"][]]
   : OutputTypeOfTuple<T>;
@@ -3748,14 +3747,14 @@ export type InputTypeOfTuple<T extends ZodTupleItems | []> = AssertArray<{
 }>;
 export type InputTypeOfTupleWithRest<
   T extends ZodTupleItems | [],
-  Rest extends ZodTypeAny | null = null
+  Rest extends ZodTypeAny | null = null,
 > = Rest extends ZodTypeAny
   ? [...InputTypeOfTuple<T>, ...Rest["_input"][]]
   : InputTypeOfTuple<T>;
 
 export interface ZodTupleDef<
   T extends ZodTupleItems | [] = ZodTupleItems,
-  Rest extends ZodTypeAny | null = null
+  Rest extends ZodTypeAny | null = null,
 > extends ZodTypeDef {
   items: T;
   rest: Rest;
@@ -3768,7 +3767,7 @@ export type AnyZodTuple = ZodTuple<
 >;
 export class ZodTuple<
   T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]],
-  Rest extends ZodTypeAny | null = null
+  Rest extends ZodTypeAny | null = null,
 > extends ZodType<
   OutputTypeOfTupleWithRest<T, Rest>,
   ZodTupleDef<T, Rest>,
@@ -3905,7 +3904,7 @@ export class ZodTuple<
 /////////////////////////////////////////
 export interface ZodRecordDef<
   Key extends KeySchema = ZodString,
-  Value extends ZodTypeAny = ZodTypeAny
+  Value extends ZodTypeAny = ZodTypeAny,
 > extends ZodTypeDef {
   valueType: Value;
   keyType: Key;
@@ -3914,19 +3913,19 @@ export interface ZodRecordDef<
 
 export type KeySchema = ZodType<string | number | symbol, any, any>;
 export type RecordType<K extends string | number | symbol, V> = [
-  string
+  string,
 ] extends [K]
   ? Record<K, V>
   : [number] extends [K]
-  ? Record<K, V>
-  : [symbol] extends [K]
-  ? Record<K, V>
-  : [BRAND<string | number | symbol>] extends [K]
-  ? Record<K, V>
-  : Partial<Record<K, V>>;
+    ? Record<K, V>
+    : [symbol] extends [K]
+      ? Record<K, V>
+      : [BRAND<string | number | symbol>] extends [K]
+        ? Record<K, V>
+        : Partial<Record<K, V>>;
 export class ZodRecord<
   Key extends KeySchema = ZodString,
-  Value extends ZodTypeAny = ZodTypeAny
+  Value extends ZodTypeAny = ZodTypeAny,
 > extends ZodType<
   RecordType<Key["_output"], Value["_output"]>,
   ZodRecordDef<Key, Value>,
@@ -4080,7 +4079,7 @@ export class ZodRecord<
 //////////////////////////////////////
 export interface ZodMapDef<
   Key extends ZodTypeAny = ZodTypeAny,
-  Value extends ZodTypeAny = ZodTypeAny
+  Value extends ZodTypeAny = ZodTypeAny,
 > extends ZodTypeDef {
   valueType: Value;
   keyType: Key;
@@ -4089,7 +4088,7 @@ export interface ZodMapDef<
 
 export class ZodMap<
   Key extends ZodTypeAny = ZodTypeAny,
-  Value extends ZodTypeAny = ZodTypeAny
+  Value extends ZodTypeAny = ZodTypeAny,
 > extends ZodType<
   Map<Key["_output"], Value["_output"]>,
   ZodMapDef<Key, Value>,
@@ -4205,7 +4204,7 @@ export class ZodMap<
   }
   static create<
     Key extends ZodTypeAny = ZodTypeAny,
-    Value extends ZodTypeAny = ZodTypeAny
+    Value extends ZodTypeAny = ZodTypeAny,
   >(
     keyType: Key,
     valueType: Value,
@@ -4374,7 +4373,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
 ///////////////////////////////////////////
 export interface ZodFunctionDef<
   Args extends ZodTuple<any, any> = ZodTuple<any, any>,
-  Returns extends ZodTypeAny = ZodTypeAny
+  Returns extends ZodTypeAny = ZodTypeAny,
 > extends ZodTypeDef {
   args: Args;
   returns: Returns;
@@ -4383,21 +4382,21 @@ export interface ZodFunctionDef<
 
 export type OuterTypeOfFunction<
   Args extends ZodTuple<any, any>,
-  Returns extends ZodTypeAny
+  Returns extends ZodTypeAny,
 > = Args["_input"] extends Array<any>
   ? (...args: Args["_input"]) => Returns["_output"]
   : never;
 
 export type InnerTypeOfFunction<
   Args extends ZodTuple<any, any>,
-  Returns extends ZodTypeAny
+  Returns extends ZodTypeAny,
 > = Args["_output"] extends Array<any>
   ? (...args: Args["_output"]) => Returns["_input"]
   : never;
 
 export class ZodFunction<
   Args extends ZodTuple<any, any>,
-  Returns extends ZodTypeAny
+  Returns extends ZodTypeAny,
 > extends ZodType<
   OuterTypeOfFunction<Args, Returns>,
   ZodFunctionDef<Args, Returns>,
@@ -4444,7 +4443,6 @@ export class ZodFunction<
     if (this._def.returns instanceof ZodPromise) {
       // Would love a way to avoid disabling this rule, but we need
       // an alias (using an arrow function was what caused 2651).
-      // eslint-disable-next-line @typescript-eslint/no-this-alias
       const me = this;
       return async function (this: any, ...args: any[]) {
         const error = new ZodError([]);
@@ -4468,7 +4466,6 @@ export class ZodFunction<
     }
     // Would love a way to avoid disabling this rule, but we need
     // an alias (using an arrow function was what caused 2651).
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const me = this;
     return function (this: any, ...args: any[]) {
       const parsedArgs = me._def.args.safeParse(args, params);
@@ -4538,7 +4535,7 @@ export class ZodFunction<
   ): ZodFunction<T, U>;
   static create<
     T extends AnyZodTuple = ZodTuple<[], ZodUnknown>,
-    U extends ZodTypeAny = ZodUnknown
+    U extends ZodTypeAny = ZodUnknown,
   >(args: T, returns: U, params?: RawCreateParams): ZodFunction<T, U>;
   static create(
     args?: AnyZodTuple,
@@ -4674,10 +4671,10 @@ export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 export type FilterEnum<Values, ToExclude> = Values extends []
   ? []
   : Values extends [infer Head, ...infer Rest]
-  ? Head extends ToExclude
-    ? FilterEnum<Rest, ToExclude>
-    : [Head, ...FilterEnum<Rest, ToExclude>]
-  : never;
+    ? Head extends ToExclude
+      ? FilterEnum<Rest, ToExclude>
+      : [Head, ...FilterEnum<Rest, ToExclude>]
+    : never;
 
 export type typecast<A, T> = A extends T ? A : never;
 
@@ -5226,7 +5223,7 @@ export interface ZodEffectsDef<T extends ZodTypeAny = ZodTypeAny>
 export class ZodEffects<
   T extends ZodTypeAny,
   Output = output<T>,
-  Input = input<T>
+  Input = input<T>,
 > extends ZodType<Output, ZodEffectsDef<T>, Input> {
   innerType() {
     return this._def.schema;
@@ -5738,7 +5735,7 @@ export type BRAND<T extends string | number | symbol> = {
 
 export class ZodBranded<
   T extends ZodTypeAny,
-  B extends string | number | symbol
+  B extends string | number | symbol,
 > extends ZodType<T["_output"] & BRAND<B>, ZodBrandedDef<T>, T["_input"]> {
   _parse(input: ParseInput, ctx: ParseContext): ParseReturnType<any> {
     return this._def.type._parse(input, ctx);
@@ -5766,7 +5763,7 @@ export interface ZodPipelineDef<A extends ZodTypeAny, B extends ZodTypeAny>
 
 export class ZodPipeline<
   A extends ZodTypeAny,
-  B extends ZodTypeAny
+  B extends ZodTypeAny,
 > extends ZodType<B["_output"], ZodPipelineDef<A, B>, A["_input"]> {
   _parse(input: ParseInput, ctx: ParseContext): ParseReturnType<any> {
     const result = this._def.in._parse(input, ctx);
@@ -5813,14 +5810,14 @@ type BuiltIn =
 type MakeReadonly<T> = T extends Map<infer K, infer V>
   ? ReadonlyMap<K, V>
   : T extends Set<infer V>
-  ? ReadonlySet<V>
-  : T extends [infer Head, ...infer Tail]
-  ? readonly [Head, ...Tail]
-  : T extends Array<infer V>
-  ? ReadonlyArray<V>
-  : T extends BuiltIn
-  ? T
-  : Readonly<T>;
+    ? ReadonlySet<V>
+    : T extends [infer Head, ...infer Tail]
+      ? readonly [Head, ...Tail]
+      : T extends Array<infer V>
+        ? ReadonlyArray<V>
+        : T extends BuiltIn
+          ? T
+          : Readonly<T>;
 
 export interface ZodReadonlyDef<T extends ZodTypeAny = ZodTypeAny>
   extends ZodTypeDef {
@@ -5884,28 +5881,28 @@ type TemplateLiteralPart =
 
 type appendToTemplateLiteral<
   Template extends string,
-  Suffix extends TemplateLiteralPrimitive | ZodType
+  Suffix extends TemplateLiteralPrimitive | ZodType,
 > = Suffix extends TemplateLiteralPrimitive
   ? `${Template}${Suffix}`
   : Suffix extends ZodOptional<infer UnderlyingType>
-  ? Template | appendToTemplateLiteral<Template, UnderlyingType>
-  : Suffix extends ZodBranded<infer UnderlyingType, any>
-  ? appendToTemplateLiteral<Template, UnderlyingType>
-  : Suffix extends ZodType<infer Output, any, any>
-  ? Output extends TemplateLiteralPrimitive | bigint
-    ? `${Template}${Output}`
-    : never
-  : never;
+    ? Template | appendToTemplateLiteral<Template, UnderlyingType>
+    : Suffix extends ZodBranded<infer UnderlyingType, any>
+      ? appendToTemplateLiteral<Template, UnderlyingType>
+      : Suffix extends ZodType<infer Output, any, any>
+        ? Output extends TemplateLiteralPrimitive | bigint
+          ? `${Template}${Output}`
+          : never
+        : never;
 
 type partsToTemplateLiteral<Parts extends TemplateLiteralPart[]> =
   [] extends Parts
     ? ``
     : Parts extends [
-        ...infer Rest extends TemplateLiteralPart[],
-        infer Last extends TemplateLiteralPart
-      ]
-    ? appendToTemplateLiteral<partsToTemplateLiteral<Rest>, Last>
-    : never;
+          ...infer Rest extends TemplateLiteralPart[],
+          infer Last extends TemplateLiteralPart,
+        ]
+      ? appendToTemplateLiteral<partsToTemplateLiteral<Rest>, Last>
+      : never;
 
 export interface ZodTemplateLiteralDef extends ZodTypeDef {
   coerce: boolean;
@@ -6335,7 +6332,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
 
   static create<
     Part extends TemplateLiteralPart,
-    Parts extends [] | [Part, ...Part[]]
+    Parts extends [] | [Part, ...Part[]],
   >(
     parts: Parts,
     params?: RawCreateParams & { coerce?: true }
@@ -6379,8 +6376,8 @@ export function custom<T>(
           typeof params === "function"
             ? params(data)
             : typeof params === "string"
-            ? { message: params }
-            : params;
+              ? { message: params }
+              : params;
         const _fatal = p.fatal ?? fatal ?? true;
         const p2 = typeof p === "string" ? { message: p } : p;
         ctx.addIssue({ input: data, code: "custom", ...p2, fatal: _fatal });

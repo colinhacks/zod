@@ -7,7 +7,7 @@ type allKeys<T> = T extends any ? keyof T : never;
 
 export type inferFlattenedErrors<
   T extends ZodType<any, any, any>,
-  U = string
+  U = string,
 > = typeToFlattenedError<input<T>, U>;
 export type typeToFlattenedError<T, U = string> = {
   formErrors: U[];
@@ -209,10 +209,10 @@ export const quotelessJson = (obj: any) => {
 type recursiveZodFormattedError<T> = T extends [any, ...any[]]
   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
   : T extends any[]
-  ? { [k: number]: ZodFormattedError<T[number]> }
-  : T extends object
-  ? { [K in keyof T]?: ZodFormattedError<T[K]> }
-  : unknown;
+    ? { [k: number]: ZodFormattedError<T[number]> }
+    : T extends object
+      ? { [K in keyof T]?: ZodFormattedError<T[K]> }
+      : unknown;
 
 export type ZodFormattedError<T, U = string> = {
   _errors: U[];
@@ -220,7 +220,7 @@ export type ZodFormattedError<T, U = string> = {
 
 export type inferFormattedError<
   T extends ZodType<any, any, any>,
-  U = string
+  U = string,
 > = ZodFormattedError<TypeOf<T>, U>;
 
 export class ZodError<T = any> extends Error {
@@ -235,7 +235,6 @@ export class ZodError<T = any> extends Error {
 
     const actualProto = new.target.prototype;
     if (Object.setPrototypeOf) {
-      // eslint-disable-next-line ban/ban
       Object.setPrototypeOf(this, actualProto);
     } else {
       (this as any).__proto__ = actualProto;
@@ -371,7 +370,6 @@ export class ZodTemplateLiteralUnsupportedTypeError extends Error {
 
     const actualProto = new.target.prototype;
     if (Object.setPrototypeOf) {
-      // eslint-disable-next-line ban/ban
       Object.setPrototypeOf(this, actualProto);
     } else {
       (this as any).__proto__ = actualProto;
@@ -388,7 +386,6 @@ export class ZodTemplateLiteralUnsupportedCheckError extends Error {
 
     const actualProto = new.target.prototype;
     if (Object.setPrototypeOf) {
-      // eslint-disable-next-line ban/ban
       Object.setPrototypeOf(this, actualProto);
     } else {
       (this as any).__proto__ = actualProto;

@@ -45,8 +45,8 @@ export const objectValues = (obj: any) => {
 };
 
 export const objectKeys: ObjectConstructor["keys"] =
-  typeof Object.keys === "function" // eslint-disable-line ban/ban
-    ? (obj: any) => Object.keys(obj) // eslint-disable-line ban/ban
+  typeof Object.keys === "function"
+    ? (obj: any) => Object.keys(obj)
     : (object: any) => {
         const keys = [];
         for (const key in object) {
@@ -71,7 +71,7 @@ export type noUndefined<T> = T extends undefined ? never : T;
 
 export const isInteger: NumberConstructor["isInteger"] =
   typeof Number.isInteger === "function"
-    ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban
+    ? (val) => Number.isInteger(val)
     : (val) =>
         typeof val === "number" &&
         Number.isFinite(val) &&

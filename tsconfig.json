@@ -1,10 +1,5 @@
 {
   "extends": "./configs/tsconfig.base.json",
-  "include": [
-    "./src/**/*.ts",
-    "./experiments/**/*",
-    "./playground.ts",
-    "./.eslintrc.js"
-  ],
+  "include": ["./src/**/*.ts", "./experiments/**/*", "./playground.ts"],
   "exclude": ["deno/**/*"]
 }
