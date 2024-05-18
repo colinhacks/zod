@@ -52,34 +52,21 @@
       "require": "./lib/index.js",
       "import": "./lib/index.mjs"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locales/*": "./lib/locales/*"
   },
   "bugs": {
     "url": "https://github.com/colinhacks/zod/issues"
   },
   "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "files": [
-    "/lib",
-    "/index.d.ts"
-  ],
+  "files": ["/lib", "/index.d.ts"],
   "funding": "https://github.com/sponsors/colinhacks",
   "homepage": "https://zod.dev",
-  "keywords": [
-    "typescript",
-    "schema",
-    "validation",
-    "type",
-    "inference"
-  ],
+  "keywords": ["typescript", "schema", "validation", "type", "inference"],
   "license": "MIT",
   "lint-staged": {
-    "src/*.ts": [
-      "biome format --write",
-      "biome lint --apply"
-    ],
-    "*.md": [
-      "prettier --ignore-unknown --write"
-    ]
+    "src/*.ts": ["biome format --write", "biome lint --apply"],
+    "*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
     "format:check": "biome format .",
