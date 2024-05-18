@@ -22,8 +22,6 @@ export function zodbench<T extends z.ZodType, D>(
   const zod4Bench = params.benchmark.bind({ schema: zod4 });
 
   if (params.batch === null) {
-    // biome-ignore lint/style/noVar: <explanation>
-    // biome-ignore lint/correctness/noInnerDeclarations: <explanation>
     const DATA = params.data();
     bench.add("zod4", () => {
       zod4Bench(DATA);
@@ -32,14 +30,12 @@ export function zodbench<T extends z.ZodType, D>(
       zod3Bench(DATA);
     });
   } else {
-    // biome-ignore lint/style/noVar: <explanation>
-    // biome-ignore lint/correctness/noInnerDeclarations: <explanation>
-    const BATCHDATA = Array.from({ length: params.batch || 1000 }, params.data);
+    const DATA = Array.from({ length: params.batch || 1000 }, params.data);
     bench.add("zod4", () => {
-      for (const d of BATCHDATA) zod4Bench(d);
+      for (const d of DATA) zod4Bench(d);
     });
     bench.add("zod3", () => {
-      for (const d of BATCHDATA) zod3Bench(d);
+      for (const d of DATA) zod3Bench(d);
     });
   }
 

@@ -8,6 +8,11 @@
     "enabled": true,
     "indentStyle": "space"
   },
+  "javascript": {
+    "formatter": {
+      "trailingComma": "es5"
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {

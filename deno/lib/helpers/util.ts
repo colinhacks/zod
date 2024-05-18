@@ -1,7 +1,7 @@
 // import { objectUtil } from ".";
 
 export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
-  V
+  V,
 >() => V extends U ? 1 : 2
   ? true
   : false;
@@ -73,7 +73,9 @@ export const isInteger: NumberConstructor["isInteger"] =
   typeof Number.isInteger === "function"
     ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban
     : (val) =>
-        typeof val === "number" && Number.isFinite(val) && Math.floor(val) === val;
+        typeof val === "number" &&
+        Number.isFinite(val) &&
+        Math.floor(val) === val;
 
 export function joinValues<T extends any[]>(
   array: T,
