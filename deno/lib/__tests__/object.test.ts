@@ -193,6 +193,16 @@ test("test catchall parsing", async () => {
   expect(result2.success).toEqual(false);
 });
 
+test("catchall instanceof", async () => {
+  const date = new Date();
+  const schema = z.object({ name: z.string() }).catchall(z.instanceof(Date));
+  type Schema = z.infer<typeof schema>;
+  util.assertEqual<Schema, { name: string } & { [k: string]: Date }>(true);
+
+  const result = schema.parse({ name: "Foo", date });
+  expect(result).toEqual({ name: "Foo", date });
+});
+
 test("test nonexistent keys", async () => {
   const Schema = z.union([
     z.object({ a: z.string() }),
