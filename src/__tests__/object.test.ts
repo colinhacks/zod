@@ -195,11 +195,38 @@ test("test catchall parsing", async () => {
 test("catchall instanceof", async () => {
   const date = new Date();
   const schema = z.object({ name: z.string() }).catchall(z.instanceof(Date));
+
   type Schema = z.infer<typeof schema>;
   util.assertEqual<Schema, { name: string } & { [k: string]: Date }>(true);
 
   const result = schema.parse({ name: "Foo", date });
   expect(result).toEqual({ name: "Foo", date });
+});
+
+test("catchall custom", async () => {
+  const schema = z
+    .object({ name: z.string() })
+    .catchall(z.custom<number>((x) => typeof x === "number"));
+  type Schema = z.infer<typeof schema>;
+  util.assertEqual<Schema, { name: string } & { [k: string]: number }>(true);
+
+  const result = schema.parse({ name: "Foo", asdf: 1234 });
+  expect(result).toEqual({ name: "Foo", asdf: 1234 });
+});
+
+test("catchall custom", async () => {
+  const date = new Date();
+  const schema = z.object({ name: z.string() }).catchall(z.instanceof(Date));
+
+  type Schema = z.infer<typeof schema>;
+  util.assertEqual<Schema, { name: string } & { [k: string]: Date }>(true);
+
+  const result = schema.parse({ name: "Foo", date });
+  expect(result).toEqual({ name: "Foo", date });
+
+  const schema2 = z.object({ name: z.string() }).catchall(z.custom());
+  type Schema2 = z.infer<typeof schema2>;
+  util.assertEqual<Schema2, { name: string } & { [k: string]: unknown }>(true);
 });
 
 test("test nonexistent keys", async () => {
