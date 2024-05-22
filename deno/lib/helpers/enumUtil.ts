@@ -1,5 +1,7 @@
 type UnionToIntersectionFn<T> = (
-  T extends unknown ? (k: () => T) => void : never
+  T extends unknown
+    ? (k: () => T) => void
+    : never
 ) extends (k: infer Intersection) => void
   ? Intersection
   : never;

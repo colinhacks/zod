@@ -6,7 +6,7 @@ import {
   ZodFailure,
   isAborted,
   isValid,
-  SyncParseReturnType,
+  type SyncParseReturnType,
 } from "../helpers/parseUtil.ts";
 
 test("parseUtil isInvalid should use structural typing", () => {

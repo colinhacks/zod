@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import { z } from "..";
+import { z } from "../index";
 import { util } from "../helpers";
 
 test("basic catch", () => {
@@ -81,7 +81,7 @@ test("complex chain example", () => {
   const complex = z
     .string()
     .catch("asdf")
-    .transform((val) => val + "!")
+    .transform((val) => `${val}!`)
     .transform((val) => val.toUpperCase())
     .catch("qwer")
     .removeCatch()

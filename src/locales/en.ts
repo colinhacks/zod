@@ -1,5 +1,5 @@
 import { util } from "../helpers";
-import { ZodErrorMap, ZodIssueCode } from "../ZodError";
+import { type ZodErrorMap, ZodIssueCode } from "../ZodError";
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {
   let message: string;
@@ -80,16 +80,16 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
           issue.exact
             ? `exactly equal to `
             : issue.inclusive
-            ? `greater than or equal to `
-            : `greater than `
+              ? `greater than or equal to `
+              : `greater than `
         }${issue.minimum}`;
       else if (issue.type === "date")
         message = `Date must be ${
           issue.exact
             ? `exactly equal to `
             : issue.inclusive
-            ? `greater than or equal to `
-            : `greater than `
+              ? `greater than or equal to `
+              : `greater than `
         }${new Date(Number(issue.minimum))}`;
       else message = "Invalid input";
       break;
@@ -107,24 +107,24 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
           issue.exact
             ? `exactly`
             : issue.inclusive
-            ? `less than or equal to`
-            : `less than`
+              ? `less than or equal to`
+              : `less than`
         } ${issue.maximum}`;
       else if (issue.type === "bigint")
         message = `BigInt must be ${
           issue.exact
             ? `exactly`
             : issue.inclusive
-            ? `less than or equal to`
-            : `less than`
+              ? `less than or equal to`
+              : `less than`
         } ${issue.maximum}`;
       else if (issue.type === "date")
         message = `Date must be ${
           issue.exact
             ? `exactly`
             : issue.inclusive
-            ? `smaller than or equal to`
-            : `smaller than`
+              ? `smaller than or equal to`
+              : `smaller than`
         } ${new Date(Number(issue.maximum))}`;
       else message = "Invalid input";
       break;

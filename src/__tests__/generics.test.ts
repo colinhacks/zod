@@ -14,13 +14,13 @@ test("generics", () => {
         nested: schema, // as z.ZodTypeAny,
       })
       .transform((data) => {
-        return data.nested!;
+        return data.nested;
       })
       .parse({ nested: data });
   }
 
   const result = stripOuter(z.object({ a: z.string() }), { a: "asdf" });
-  util.assertEqual<typeof result, Promise<{ a: string }>>(true);
+  util.assertEqual<typeof result, Promise<{ a: string } | undefined>>(true);
 });
 
 // test("assignability", () => {

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://biomejs.dev/schemas/1.7.3/schema.json",
+  "organizeImports": {
+    "enabled": true
+  },
+
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space"
+  },
+  "javascript": {
+    "formatter": {
+      "trailingComma": "es5"
+    }
+  },
+  "linter": {
+    "enabled": true,
+
+    "rules": {
+      "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "off" // `any` is amazing
+      },
+      "style": {
+        "noUnusedTemplateLiteral": "off", // why is this even a best practice?
+        "noParameterAssign": "off" // required for performant coercion in _parse
+      }
+    }
+  },
+  "files": {
+    "ignore": ["deno", "lib", ".vscode", "coverage"]
+  }
+}

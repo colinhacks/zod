@@ -32,7 +32,7 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
     }
   }
   if (error.code === ZodIssueCode.custom) {
-    return { message: `less-than-${(error.params || {}).minimum}` };
+    return { message: `less-than-${error.params?.minimum}` };
   }
   return { message: ctx.defaultError };
 };
@@ -40,8 +40,8 @@ const errorMap: z.ZodErrorMap = (error, ctx) => {
 test("type error with custom error map", () => {
   const result = z.string().safeParse(234, { errorMap });
 
-  expect(result.error!.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
-  expect(result.error!.issues[0].message).toEqual(`bad type!`);
+  expect(result.error?.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
+  expect(result.error?.issues[0].message).toEqual(`bad type!`);
 });
 
 test("refinement fail with params", () => {
@@ -52,7 +52,7 @@ test("refinement fail with params", () => {
       })
       .parse(2, { errorMap });
   } catch (err) {
-    const zerr: z.ZodError = err as any;
+    const zerr = err as unknown as z.ZodError;
     expect(zerr.issues[0].code).toEqual(z.ZodIssueCode.custom);
     expect(zerr.issues[0].message).toEqual(`less-than-3`);
   }
@@ -67,7 +67,7 @@ test("custom error with custom errormap", () => {
       })
       .parse("asdf", { errorMap });
   } catch (err) {
-    const zerr: z.ZodError = err as any;
+    const zerr = err as unknown as z.ZodError;
     expect(zerr.issues[0].message).toEqual("override");
   }
 });
@@ -78,7 +78,7 @@ test("default error message", () => {
       .refine((x) => x > 3)
       .parse(2);
   } catch (err) {
-    const zerr: z.ZodError = err as any;
+    const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
     expect(zerr.issues[0].message).toEqual("Invalid input");
   }
@@ -90,7 +90,7 @@ test("override error in refine", () => {
       .refine((x) => x > 3, "override")
       .parse(2);
   } catch (err) {
-    const zerr: z.ZodError = err as any;
+    const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
     expect(zerr.issues[0].message).toEqual("override");
   }
@@ -104,7 +104,7 @@ test("override error in refinement", () => {
       })
       .parse(2);
   } catch (err) {
-    const zerr: z.ZodError = err as any;
+    const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
     expect(zerr.issues[0].message).toEqual("override");
   }
@@ -178,7 +178,7 @@ test("error metadata from value", () => {
     const sub = result.error.issues[0];
     expect(result.error.issues[0].code).toEqual("custom");
     if (sub.code === "custom") {
-      expect(sub.params!.val).toEqual("asdf");
+      expect(sub.params?.val).toEqual("asdf");
     }
   }
 });
@@ -481,7 +481,7 @@ test("enum error message, invalid enum elementstring", () => {
   try {
     z.enum(["Tuna", "Trout"]).parse("Salmon");
   } catch (err) {
-    const zerr: z.ZodError = err as any;
+    const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
     expect(zerr.issues[0].message).toEqual(
       "Invalid enum value. Expected 'Tuna' | 'Trout', received 'Salmon'"
@@ -493,7 +493,7 @@ test("enum error message, invalid type", () => {
   try {
     z.enum(["Tuna", "Trout"]).parse(12);
   } catch (err) {
-    const zerr: z.ZodError = err as any;
+    const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
     expect(zerr.issues[0].message).toEqual(
       "Expected 'Tuna' | 'Trout', received number"
@@ -509,7 +509,7 @@ test("nativeEnum default error message", () => {
   try {
     z.nativeEnum(Fish).parse("Salmon");
   } catch (err) {
-    const zerr: z.ZodError = err as any;
+    const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
     expect(zerr.issues[0].message).toEqual(
       "Invalid enum value. Expected 'Tuna' | 'Trout', received 'Salmon'"
@@ -521,7 +521,7 @@ test("literal default error message", () => {
   try {
     z.literal("Tuna").parse("Trout");
   } catch (err) {
-    const zerr: z.ZodError = err as any;
+    const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
     expect(zerr.issues[0].message).toEqual(
       `Invalid literal value, expected "Tuna"`
@@ -533,7 +533,7 @@ test("literal bigint default error message", () => {
   try {
     z.literal(BigInt(12)).parse(BigInt(13));
   } catch (err) {
-    const zerr: z.ZodError = err as any;
+    const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
     expect(zerr.issues[0].message).toEqual(
       `Invalid literal value, expected "12"`

@@ -294,7 +294,7 @@ test("promise async parse bad", async () => {
   const badData = Promise.resolve("XXX");
   const badResult = await promiseSchema.safeParseAsync(badData);
   expect(badResult.success).toBe(false);
-  expect(badResult.error!).toBeInstanceOf(z.ZodError);
+  expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
 
 test("async validation non-empty strings", async () => {
@@ -347,7 +347,7 @@ test("async validation multiple errors 2", async () => {
   const r1 = result1;
   await result2.then((r2) => {
     if (r1.success === false && r2.success === false)
-      expect(r2.error!.issues.length).toBe(r1.error!.issues.length);
+      expect(r2.error?.issues.length).toBe(r1.error?.issues.length);
   });
 });
 

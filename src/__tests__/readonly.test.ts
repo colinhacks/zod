@@ -5,8 +5,8 @@ import { util } from "../helpers";
 import * as z from "../index";
 
 enum testEnum {
-  A,
-  B,
+  A = 0,
+  B = 1,
 }
 
 const schemas = [

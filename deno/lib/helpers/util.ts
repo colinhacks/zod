@@ -1,7 +1,7 @@
 // import { objectUtil } from ".";
 
 export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
-  V
+  V,
 >() => V extends U ? 1 : 2
   ? true
   : false;
@@ -41,14 +41,12 @@ export const getValidEnumValues = (obj: any) => {
 };
 
 export const objectValues = (obj: any) => {
-  return objectKeys(obj).map(function (e) {
-    return obj[e];
-  });
+  return objectKeys(obj).map((e) => obj[e]);
 };
 
 export const objectKeys: ObjectConstructor["keys"] =
-  typeof Object.keys === "function" // eslint-disable-line ban/ban
-    ? (obj: any) => Object.keys(obj) // eslint-disable-line ban/ban
+  typeof Object.keys === "function"
+    ? (obj: any) => Object.keys(obj)
     : (object: any) => {
         const keys = [];
         for (const key in object) {
@@ -73,9 +71,11 @@ export type noUndefined<T> = T extends undefined ? never : T;
 
 export const isInteger: NumberConstructor["isInteger"] =
   typeof Number.isInteger === "function"
-    ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban
+    ? (val) => Number.isInteger(val)
     : (val) =>
-        typeof val === "number" && isFinite(val) && Math.floor(val) === val;
+        typeof val === "number" &&
+        Number.isFinite(val) &&
+        Math.floor(val) === val;
 
 export function joinValues<T extends any[]>(
   array: T,
@@ -130,7 +130,7 @@ export const getParsedType = (data: any): ZodParsedType => {
       return ZodParsedType.string;
 
     case "number":
-      return isNaN(data) ? ZodParsedType.nan : ZodParsedType.number;
+      return Number.isNaN(data) ? ZodParsedType.nan : ZodParsedType.number;
 
     case "boolean":
       return ZodParsedType.boolean;

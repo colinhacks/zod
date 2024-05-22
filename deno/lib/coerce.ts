@@ -32,5 +32,5 @@ export {
   coerceDate as date,
   coerceNumber as number,
   coerceString as string,
-  templateLiteral as templateLiteral,
+  templateLiteral,
 };

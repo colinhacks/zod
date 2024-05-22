@@ -50,7 +50,7 @@ test("nativeEnum test with const with numeric keys", () => {
 
 test("from enum", () => {
   enum Fruits {
-    Cantaloupe,
+    Cantaloupe = 0,
     Apple = "apple",
     Banana = "banana",
   }

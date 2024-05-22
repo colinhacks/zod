@@ -11,8 +11,8 @@ import {
   readFileSync,
   statSync,
   writeFileSync,
-} from "fs";
-import { dirname } from "path";
+} from "node:fs";
+import { dirname } from "node:path";
 
 // Node's path.join() normalize explicitly-relative paths like "./index.ts" to
 // paths like "index.ts" which don't work as relative ES imports, so we do this.
@@ -54,12 +54,12 @@ const walkAndBuild = (/** @type string */ dir) => {
           }
 
           const targetNodePath = join(dirname(nodePath), target);
-          const targetNodePathIfFile = targetNodePath + ".ts";
+          const targetNodePathIfFile = `${targetNodePath}.ts`;
           const targetNodePathIfDir = join(targetNodePath, "index.ts");
 
           try {
             if (statSync(targetNodePathIfFile)?.isFile()) {
-              return line.replace(target, target + ".ts");
+              return line.replace(target, `${target}.ts`);
             }
           } catch (error) {
             if (error?.code !== "ENOENT") {

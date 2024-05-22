@@ -12,9 +12,9 @@ test("string coercion", () => {
   expect(schema.parse(-12)).toEqual("-12");
   expect(schema.parse(3.14)).toEqual("3.14");
   expect(schema.parse(BigInt(15))).toEqual("15");
-  expect(schema.parse(NaN)).toEqual("NaN");
-  expect(schema.parse(Infinity)).toEqual("Infinity");
-  expect(schema.parse(-Infinity)).toEqual("-Infinity");
+  expect(schema.parse(Number.NaN)).toEqual("NaN");
+  expect(schema.parse(Number.POSITIVE_INFINITY)).toEqual("Infinity");
+  expect(schema.parse(Number.NEGATIVE_INFINITY)).toEqual("-Infinity");
   expect(schema.parse(true)).toEqual("true");
   expect(schema.parse(false)).toEqual("false");
   expect(schema.parse(null)).toEqual("null");
@@ -40,9 +40,13 @@ test("number coercion", () => {
   expect(schema.parse(-12)).toEqual(-12);
   expect(schema.parse(3.14)).toEqual(3.14);
   expect(schema.parse(BigInt(15))).toEqual(15);
-  expect(() => schema.parse(NaN)).toThrow(); // z.ZodError
-  expect(schema.parse(Infinity)).toEqual(Infinity);
-  expect(schema.parse(-Infinity)).toEqual(-Infinity);
+  expect(() => schema.parse(Number.NaN)).toThrow(); // z.ZodError
+  expect(schema.parse(Number.POSITIVE_INFINITY)).toEqual(
+    Number.POSITIVE_INFINITY
+  );
+  expect(schema.parse(Number.NEGATIVE_INFINITY)).toEqual(
+    Number.NEGATIVE_INFINITY
+  );
   expect(schema.parse(true)).toEqual(1);
   expect(schema.parse(false)).toEqual(0);
   expect(schema.parse(null)).toEqual(0);
@@ -65,9 +69,9 @@ test("boolean coercion", () => {
   expect(schema.parse(-1)).toEqual(true);
   expect(schema.parse(3.14)).toEqual(true);
   expect(schema.parse(BigInt(15))).toEqual(true);
-  expect(schema.parse(NaN)).toEqual(false);
-  expect(schema.parse(Infinity)).toEqual(true);
-  expect(schema.parse(-Infinity)).toEqual(true);
+  expect(schema.parse(Number.NaN)).toEqual(false);
+  expect(schema.parse(Number.POSITIVE_INFINITY)).toEqual(true);
+  expect(schema.parse(Number.NEGATIVE_INFINITY)).toEqual(true);
   expect(schema.parse(true)).toEqual(true);
   expect(schema.parse(false)).toEqual(false);
   expect(schema.parse(null)).toEqual(false);
@@ -91,9 +95,9 @@ test("bigint coercion", () => {
   expect(schema.parse(-5)).toEqual(BigInt(-5));
   expect(() => schema.parse(3.14)).toThrow(); // not a z.ZodError!
   expect(schema.parse(BigInt(5))).toEqual(BigInt(5));
-  expect(() => schema.parse(NaN)).toThrow(); // not a z.ZodError!
-  expect(() => schema.parse(Infinity)).toThrow(); // not a z.ZodError!
-  expect(() => schema.parse(-Infinity)).toThrow(); // not a z.ZodError!
+  expect(() => schema.parse(Number.NaN)).toThrow(); // not a z.ZodError!
+  expect(() => schema.parse(Number.POSITIVE_INFINITY)).toThrow(); // not a z.ZodError!
+  expect(() => schema.parse(Number.NEGATIVE_INFINITY)).toThrow(); // not a z.ZodError!
   expect(schema.parse(true)).toEqual(BigInt(1));
   expect(schema.parse(false)).toEqual(BigInt(0));
   expect(() => schema.parse(null)).toThrow(); // not a z.ZodError!
@@ -121,9 +125,9 @@ test("date coercion", () => {
   expect(schema.parse(-5)).toBeInstanceOf(Date);
   expect(schema.parse(3.14)).toBeInstanceOf(Date);
   expect(() => schema.parse(BigInt(5))).toThrow(); // not a z.ZodError!
-  expect(() => schema.parse(NaN)).toThrow(); // z.ZodError
-  expect(() => schema.parse(Infinity)).toThrow(); // z.ZodError
-  expect(() => schema.parse(-Infinity)).toThrow(); // z.ZodError
+  expect(() => schema.parse(Number.NaN)).toThrow(); // z.ZodError
+  expect(() => schema.parse(Number.POSITIVE_INFINITY)).toThrow(); // z.ZodError
+  expect(() => schema.parse(Number.NEGATIVE_INFINITY)).toThrow(); // z.ZodError
   expect(schema.parse(true)).toBeInstanceOf(Date);
   expect(schema.parse(false)).toBeInstanceOf(Date);
   expect(schema.parse(null)).toBeInstanceOf(Date);

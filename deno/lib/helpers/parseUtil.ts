@@ -71,7 +71,7 @@ export class ZodFailure {
     public issues: IssueData[],
     protected _value: unknown = NOT_SET
   ) {}
-  status: "aborted" = "aborted";
+  status = "aborted" as const;
 
   get value() {
     return this._value;
@@ -93,11 +93,11 @@ export type ParseReturnType<T> =
   | AsyncParseReturnType<T>;
 
 export function isAborted(x: any): x is ZodFailure {
-  return x?._tag === ZOD_FAILURE; // 1.59
+  return x?._tag === ZOD_FAILURE;
 }
 
 export const isValid = <T>(x: any): x is T => {
-  return x?._tag !== ZOD_FAILURE; // 1.59
+  return x?._tag !== ZOD_FAILURE;
 };
 
 export const isAsync = <T>(

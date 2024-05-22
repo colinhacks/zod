@@ -7,7 +7,7 @@ import * as z from "../index.ts";
 const schema = z.nan();
 
 test("passing validations", () => {
-  schema.parse(NaN);
+  schema.parse(Number.NaN);
   schema.parse(Number("Not a number"));
 });
 

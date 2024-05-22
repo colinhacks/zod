@@ -4,8 +4,8 @@ const test = Deno.test;
 
 import * as z from "../index.ts";
 
-function checkErrors(a: z.ZodTypeAny, bad: any) {
-  let expected;
+function checkErrors(a: z.ZodTypeAny, bad: unknown) {
+  let expected: unknown;
   try {
     a.parse(bad);
   } catch (error) {

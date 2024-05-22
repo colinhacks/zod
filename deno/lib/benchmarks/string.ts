@@ -1,16 +1,17 @@
-import { makeSchema, randomString } from "./benchUtil.js";
-import { metabench } from "./metabench.ts";
+import { randomString } from "./benchUtil.js";
+import { zodbench } from "./zodbench.js";
 
-const { zod3, zod4 } = makeSchema((z) => z.string());
-
-const DATA = Array.from({ length: 10000 }, () => randomString(10));
-
-const bench = metabench("z.string().parse", {
-  zod3() {
-    for (const _ of DATA) zod3.parse(_);
+const bench = zodbench({
+  name: "z.string().parse",
+  batch: 10000,
+  schema(z) {
+    return z.string();
   },
-  zod4() {
-    for (const _ of DATA) zod4.parse(_);
+  data() {
+    return randomString(10);
+  },
+  benchmark(d) {
+    this.schema.parse(d);
   },
 });
 

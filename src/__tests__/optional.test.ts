@@ -4,7 +4,7 @@ import { expect, test } from "@jest/globals";
 import * as z from "../index";
 
 function checkErrors(a: z.ZodTypeAny, bad: any) {
-  let expected;
+  let expected: any;
   try {
     a.parse(bad);
   } catch (error) {

@@ -3,8 +3,8 @@ import { expect, test } from "@jest/globals";
 
 import * as z from "../index";
 
-function checkErrors(a: z.ZodTypeAny, bad: any) {
-  let expected;
+function checkErrors(a: z.ZodTypeAny, bad: unknown) {
+  let expected: unknown;
   try {
     a.parse(bad);
   } catch (error) {

@@ -1,4 +1,4 @@
-import { util, ZodErrorMap, ZodIssueCode, ZodParsedType } from "..";
+import { util, type ZodErrorMap, ZodIssueCode, ZodParsedType } from "../index";
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {
   let message: string;
@@ -79,16 +79,16 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
           issue.exact
             ? `دقیقا برابر با `
             : issue.inclusive
-            ? `بزرگتر یا مساوی با `
-            : `بزرگتر از `
+              ? `بزرگتر یا مساوی با `
+              : `بزرگتر از `
         }${issue.minimum} باشد`;
       else if (issue.type === "date")
         message = `تاریخ باید ${
           issue.exact
             ? `دقیقا برابر با `
             : issue.inclusive
-            ? `بزرگتر یا مساوی با `
-            : `بزرگتر از `
+              ? `بزرگتر یا مساوی با `
+              : `بزرگتر از `
         }${new Date(Number(issue.minimum))} باشد`;
       else message = "ورودی نامعتبر است";
       break;
@@ -106,24 +106,24 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
           issue.exact
             ? `دقیقا`
             : issue.inclusive
-            ? `کمتر یا مساوی با`
-            : `کمتر از`
+              ? `کمتر یا مساوی با`
+              : `کمتر از`
         } ${issue.maximum} باشد`;
       else if (issue.type === "bigint")
         message = `BigInt باید ${
           issue.exact
             ? `دقیقا`
             : issue.inclusive
-            ? `کمتر یا مساوی با`
-            : `کمتر از`
+              ? `کمتر یا مساوی با`
+              : `کمتر از`
         } ${issue.maximum} باشد`;
       else if (issue.type === "date")
         message = `تاریخ باید ${
           issue.exact
             ? `دقیقا`
             : issue.inclusive
-            ? `کوچکتر یا مساوی با`
-            : `کوچکتر از`
+              ? `کوچکتر یا مساوی با`
+              : `کوچکتر از`
         } ${new Date(Number(issue.maximum))} باشد`;
       else message = "ورودی نامعتبر است";
       break;

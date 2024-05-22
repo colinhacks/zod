@@ -4,7 +4,7 @@ export type optionalKeys<T extends object> = {
 export type requiredKeys<T extends object> = {
   [k in keyof T]: undefined extends T[k] ? never : k;
 }[keyof T];
-export type addQuestionMarks<T extends object, _O = any> = {
+export type addQuestionMarks<T extends object, _O = unknown> = {
   [K in requiredKeys<T>]: T[K];
 } & {
   [K in optionalKeys<T>]?: T[K];
@@ -32,6 +32,6 @@ export type extendShape<A extends object, B extends object> = {
   [K in keyof A | keyof B]: K extends keyof B
     ? B[K]
     : K extends keyof A
-    ? A[K]
-    : never;
+      ? A[K]
+      : never;
 };
