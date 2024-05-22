@@ -1249,8 +1249,9 @@ export type ZodNumberCheck =
 function floatSafeRemainder(val: number, step: number) {
   const valDecCount = (val.toString().split(".")[1] || "").length;
   let stepDecCount = (step.toString().split(".")[1] || "").length;
-  if (stepDecCount === 0 && /\d?e-\d?/.test(step.toString())) {
-    const match = step.toString().match(/\d?e-(\d?)/);
+  const stepString = step.toString();
+  if (stepDecCount === 0 && /\d?e-\d?/.test(stepString)) {
+    const match = stepString.match(/\d?e-(\d?)/);
     if (match && match[1]) {
       stepDecCount = parseInt(match[1]);
     }
