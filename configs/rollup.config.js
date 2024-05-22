@@ -1,7 +1,5 @@
 // rollup.config.js
 import typescript from "@rollup/plugin-typescript";
-// import commonjs from "@rollup/plugin-commonjs";
-// import { nodeResolve } from "@rollup/plugin-node-resolve";
 
 export default [
   {
@@ -20,20 +18,12 @@ export default [
         sourcemap: false,
         exports: "named",
       },
-      // {
-      //   file: "lib/index.js",
-      //   format: "cjs",
-      //   sourcemap: false,
-      //   exports: "named",
-      // },
     ],
     plugins: [
       typescript({
         tsconfig: "./configs/tsconfig.esm.json",
         sourceMap: false,
       }),
-      // nodeResolve(),
-      // commonjs(),
     ],
   },
 ];

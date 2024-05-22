@@ -15,14 +15,15 @@
   },
   "linter": {
     "enabled": true,
+
     "rules": {
       "recommended": true,
       "suspicious": {
-        "noExplicitAny": "off"
+        "noExplicitAny": "off" // `any` is amazing
       },
       "style": {
-        "noUnusedTemplateLiteral": "off",
-        "noParameterAssign": "off"
+        "noUnusedTemplateLiteral": "off", // why is this even a best practice?
+        "noParameterAssign": "off" // required for performant coercion in _parse
       }
     }
   },
