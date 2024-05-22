@@ -17,7 +17,6 @@ describe('z.number().multipleOf() behavior', () => {
     schema7: z.number().multipleOf(0.0000001),
   };
 
-  describe('schema6 tests', () => {
     test('should not throw for number3', () => {
       expect(() => schemas.schema6.parse(numbers.number3)).not.toThrow();
     });
@@ -33,9 +32,7 @@ describe('z.number().multipleOf() behavior', () => {
     test('should throw for number8', () => {
       expect(() => schemas.schema6.parse(numbers.number8)).toThrow();
     });
-  });
 
-  describe('schema7 tests', () => {
     test('should not throw for number3', () => {
       expect(() => schemas.schema7.parse(numbers.number3)).not.toThrow();
     });
@@ -51,5 +48,4 @@ describe('z.number().multipleOf() behavior', () => {
     test('should throw for number8', () => {
       expect(() => schemas.schema7.parse(numbers.number8)).toThrow();
     });
-  });
 });
