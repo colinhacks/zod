@@ -139,6 +139,7 @@
     - [Async transforms](#async-transforms)
   - [`.default`](#default)
   - [`.describe`](#describe)
+  - [`.example`](#example)
   - [`.catch`](#catch)
   - [`.optional`](#optional)
   - [`.nullable`](#nullable)
@@ -2322,6 +2323,31 @@ documentedString.description; // A useful bit of text…
 ```
 
 This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
+
+### `.example`
+
+Use `.example()` to add an `examples` property to the resulting schema.
+
+```ts
+const documentedString = z
+  .string()
+  .url()
+  .example("https://example.com");
+documentedString.examples; // ["https://example.com"]
+```
+
+Subsequent calls of `.example()` will add more examples to your schema.
+
+```ts
+const documentedString = z
+  .string()
+  .url()
+  .example("https://example.com")
+  .example("https://example.local");
+documentedString.examples; // ["https://example.com", "https://example.local"]
+```
+
+Like with `.describe()` this can be useful for documenting field examples, such as when using a JSON Schema library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
 
 ### `.catch`
 
