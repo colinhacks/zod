@@ -22,7 +22,7 @@ Before you start working on a contribution, create an issue describing what you 
 - Fork the repo
 - Clone your forked repository: `git clone git@github.com:{your_username}/zod.git`
 - Enter the zod directory: `cd zod`
-- Create a new branch off the `master` branch: `git checkout -b your-feature-name`
+- Create a new branch off the `main` branch: `git checkout -b your-feature-name`
 - Implement your contributions (see the Development section for more information)
 - Push your branch to the repo: `git push origin your-feature-name`
 - Go to https://github.com/colinhacks/zod/compare and select the branch you just pushed in the "compare:" dropdown
