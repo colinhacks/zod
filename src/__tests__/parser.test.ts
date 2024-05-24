@@ -14,7 +14,7 @@ test("parse strict object with unknown keys", () => {
 
 test("parse nonstrict object with unknown keys", () => {
   z.object({ name: z.string() })
-    .nonstrict()
+    .passthrough()
     .parse({ name: "bill", unknownKey: 12 });
 });
 
