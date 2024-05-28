@@ -4,16 +4,15 @@ interface ZodDef {
   kind: string;
 }
 
-abstract class ZodType implements ZodDef {
+abstract class ZodType<Out = unknown, In = unknown> implements ZodDef {
   kind: string;
 
+  "~optional": boolean;
   "~metadata"?: unknown;
-  "~output": unknown;
-  "~input": unknown;
+  "~output": Out;
+  "~input": In;
   "~context": unknown;
-  abstract "~parse"(x: unknown): this["~output"];
-
-  shortcircuits: Set<Primitive> = new Set();
+  abstract "~parse"(x: unknown): Out;
 
   meta(): this["~metadata"];
   meta<M>(meta: M): $meta<this, M>;
@@ -25,8 +24,7 @@ abstract class ZodType implements ZodDef {
   optional(): $optional<this> {
     return {
       ...this,
-      shortcircuits: new Set([...this.shortcircuits, undefined]),
-    };
+    } as any;
   }
 }
 
@@ -40,7 +38,7 @@ type PrimitiveTypes =
   | "undefined"
   | "null";
 
-abstract class ZodPrimitive extends ZodType {
+abstract class ZodPrimitive extends ZodType<Primitive, Primitive> {
   kind = "primitive" as const;
   types: { [k in PrimitiveTypes]?: true | false };
   override "~output": Primitive;
@@ -56,6 +54,8 @@ class ZodString extends ZodPrimitive {
     throw new Error();
   }
 }
+
+// type ZodType<T> =
 
 type $meta<T extends ZodType, M> = T & { "~metadata": M; "~inner": T };
 const $optional = Symbol("optional");
@@ -78,3 +78,7 @@ schema["~output"];
 console.log(schema["~parse"]("asdfasdf"));
 
 // z.string().mutate(val => val.toLowerCase());
+
+type $infer<T> = T extends { "~output": infer U } ? U : never;
+
+type A = $infer<typeof schema>;
