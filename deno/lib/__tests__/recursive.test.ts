@@ -136,11 +136,11 @@ test("recursion involving union type", () => {
 //             .object({
 //               val: z.number(),
 //             })
-//             .nonstrict(),
+//             .passthrough(),
 //         })
-//         .nonstrict(),
+//         .passthrough(),
 //     })
-//     .nonstrict();
+//     .passthrough();
 
 //   const fragment = FragmentOnA.parse(a);
 //   fragment;
