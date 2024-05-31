@@ -296,6 +296,11 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table align="center">
   <tr>
     <td align="center">
+      <a href="https://encore.dev">
+        <img src="https://avatars.githubusercontent.com/u/50438175?s=200&v=4" height="40px;" alt="Encore.dev logo" />
+      </a>
+    </td>
+    <td align="center">
       <a href="https://www.replay.io/">
         <img src="https://avatars.githubusercontent.com/u/60818315?s=200&v=4" height="40px;" alt="Replay.io logo" />
       </a>
@@ -310,13 +315,13 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" height="40px;" alt="Marcato Partners" />
       </a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://interval.com">
         <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" height="40px;" alt="" />
       </a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://seasoned.cc">
         <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" height="40px;" alt="" />
