@@ -34,6 +34,7 @@
   },
   "editor.codeActionsOnSave": {
     "source.organizeImports.biome": "explicit",
-    "source.fixAll": "always"
+    "source.fixAll": "always",
+    "quickfix.biome": "always"
   }
 }
