@@ -297,7 +297,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <tr>
     <td align="center">
       <a href="https://encore.dev">
-        <img src="https://avatars.githubusercontent.com/u/50438175?s=200&v=4" height="40px;" alt="Encore.dev logo" />
+        <img src="https://github.com/colinhacks/zod/assets/3084745/5ad94e73-cd34-4957-9979-37da85fcf9cd" height="40px;" alt="Encore.dev logo" />
       </a>
     </td>
     <td align="center">
