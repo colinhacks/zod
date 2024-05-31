@@ -1,13 +1,38 @@
 {
   "name": "zod",
   "version": "3.23.6",
-  "author": "Colin McDonnell <colin@colinhacks.com>",
+  "author": "Colin McDonnell <zodsupport@zod.dev>",
+  "description": "TypeScript-first schema declaration and validation library with static type inference",
+  "files": ["/lib", "/index.d.ts"],
+  "funding": "https://github.com/sponsors/colinhacks",
+  "homepage": "https://zod.dev",
+  "keywords": ["typescript", "schema", "validation", "type", "inference"],
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "./lib/index.js",
+  "module": "./lib/index.mjs",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs"
+    },
+    "./package.json": "./package.json",
+    "./locales/*": "./lib/locales/*"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/colinhacks/zod.git"
   },
-  "main": "./lib/index.js",
-  "module": "./lib/index.mjs",
+  "bugs": {
+    "url": "https://github.com/colinhacks/zod/issues"
+  },
+  "support": {
+    "backing": {
+      "npm-funding": true
+    }
+  },
   "devDependencies": {
     "@babel/core": "^7.22.5",
     "@babel/preset-env": "^7.22.5",
@@ -43,24 +68,6 @@
     "vitest": "^0.32.2",
     "zod": "^3.23.8"
   },
-  "exports": {
-    ".": {
-      "types": "./index.d.ts",
-      "require": "./lib/index.js",
-      "import": "./lib/index.mjs"
-    },
-    "./package.json": "./package.json",
-    "./locales/*": "./lib/locales/*"
-  },
-  "bugs": {
-    "url": "https://github.com/colinhacks/zod/issues"
-  },
-  "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "files": ["/lib", "/index.d.ts"],
-  "funding": "https://github.com/sponsors/colinhacks",
-  "homepage": "https://zod.dev",
-  "keywords": ["typescript", "schema", "validation", "type", "inference"],
-  "license": "MIT",
   "lint-staged": {
     "src/*.ts": ["biome format --write", "biome lint --apply"],
     "*.md": ["prettier --ignore-unknown --write"]
@@ -88,12 +95,5 @@
     "depcruise": "depcruise -c .dependency-cruiser.js src",
     "bench": "yarn build:cjs && tsx src/benchmarks/index.ts",
     "prepare": "husky install"
-  },
-  "sideEffects": false,
-  "support": {
-    "backing": {
-      "npm-funding": true
-    }
-  },
-  "types": "./index.d.ts"
+  }
 }
