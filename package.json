@@ -66,12 +66,8 @@
     "*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
-    "format:check": "biome check .",
-    "format:fix": "biome check --apply .",
-    "lint:check": "biome lint .",
-    "lint:fix": "biome lint --apply .",
-    "check": "yarn lint:check && yarn format:check",
-    "fix": "yarn lint:fix && yarn format:fix",
+    "format": "biome check --apply .",
+    "lint": "biome lint --apply .",
     "clean": "rm -rf lib/* deno/lib/*",
     "build": "yarn run clean && yarn build:cjs && yarn build:esm && yarn build:deno",
     "build:deno": "node ./deno-build.mjs && cp ./README.md ./deno/lib",

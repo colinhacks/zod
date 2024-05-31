@@ -1,8 +1,5 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.7.3/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space"
@@ -28,7 +25,7 @@
         "noUnusedTemplateLiteral": "off", // why is this even a best practice?
         "noParameterAssign": "off" // required for performant coercion in _parse
       },
-      "correctness":{
+      "correctness": {
         "noUnusedImports": "error"
       }
     }
