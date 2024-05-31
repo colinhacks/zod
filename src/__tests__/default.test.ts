@@ -1,8 +1,8 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
-import { z } from "../index";
 import { util } from "../helpers";
+import { z } from "../index";
 
 test("basic defaults", () => {
   expect(z.string().default("default").parse(undefined)).toBe("default");

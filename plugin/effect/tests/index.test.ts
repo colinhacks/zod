@@ -1,8 +1,8 @@
 import "../src/index";
 
-import { Cause, Effect, Exit } from "effect";
 import assert from "node:assert";
 import test from "node:test";
+import { Cause, Effect, Exit } from "effect";
 import * as z from "zod";
 
 const syncSchema = z.string();

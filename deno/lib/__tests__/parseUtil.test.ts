@@ -3,10 +3,10 @@ import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
 import {
+  type SyncParseReturnType,
   ZodFailure,
   isAborted,
   isValid,
-  type SyncParseReturnType,
 } from "../helpers/parseUtil.ts";
 
 test("parseUtil isInvalid should use structural typing", () => {

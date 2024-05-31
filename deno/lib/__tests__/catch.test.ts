@@ -2,8 +2,8 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
-import { z } from "../index.ts";
 import { util } from "../helpers/index.ts";
+import { z } from "../index.ts";
 
 test("basic catch", () => {
   expect(z.string().catch("default").parse(undefined)).toBe("default");

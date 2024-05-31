@@ -2,9 +2,9 @@
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
 
+import { ZodError } from "../ZodError.ts";
 import { util } from "../helpers/index.ts";
 import * as z from "../index.ts";
-import { ZodError } from "../ZodError.ts";
 
 const testTuple = z.tuple([
   z.string(),

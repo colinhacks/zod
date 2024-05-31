@@ -2,10 +2,10 @@
 import { expect, test } from "@jest/globals";
 
 import {
+  type SyncParseReturnType,
   ZodFailure,
   isAborted,
   isValid,
-  type SyncParseReturnType,
 } from "../helpers/parseUtil";
 
 test("parseUtil isInvalid should use structural typing", () => {

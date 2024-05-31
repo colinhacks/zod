@@ -1,8 +1,8 @@
 import Benchmark from "benchmark";
-import { Bench } from "tinybench";
-import * as mitata from "mitata";
-import { Table } from "console-table-printer";
 import chalk from "chalk";
+import { Table } from "console-table-printer";
+import * as mitata from "mitata";
+import { Bench } from "tinybench";
 
 import { assertNever } from "../helpers/util.ts";
 import { formatNumber } from "./benchUtil.ts";

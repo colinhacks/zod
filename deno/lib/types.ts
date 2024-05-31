@@ -819,6 +819,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           issues.push({
             input,
             validation: "jwt",
+
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
@@ -6556,6 +6557,7 @@ Object.defineProperty(_literalType, "template", {
   value: ZodTemplateLiteral.create,
 });
 const literalType = _literalType as Literal;
+
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();

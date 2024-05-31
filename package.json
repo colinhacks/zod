@@ -66,8 +66,8 @@
     "*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
-    "format:check": "biome format .",
-    "format:fix": "biome format --write .",
+    "format:check": "biome check .",
+    "format:fix": "biome check --apply .",
     "lint:check": "biome lint .",
     "lint:fix": "biome lint --apply .",
     "check": "yarn lint:check && yarn format:check",

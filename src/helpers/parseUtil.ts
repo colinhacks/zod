@@ -1,6 +1,6 @@
+import type { IssueData, ZodErrorMap, ZodIssue } from "../ZodError";
 import { getErrorMap } from "../errors";
 import defaultErrorMap from "../locales/en";
-import type { IssueData, ZodErrorMap, ZodIssue } from "../ZodError";
 
 export const makeIssue = (
   issueData: IssueData,

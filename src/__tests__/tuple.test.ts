@@ -1,9 +1,9 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
 
+import { ZodError } from "../ZodError";
 import { util } from "../helpers";
 import * as z from "../index";
-import { ZodError } from "../ZodError";
 
 const testTuple = z.tuple([
   z.string(),

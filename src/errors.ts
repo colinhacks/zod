@@ -1,5 +1,5 @@
-import defaultErrorMap from "./locales/en";
 import type { ZodErrorMap } from "./ZodError";
+import defaultErrorMap from "./locales/en";
 
 let overrideErrorMap = defaultErrorMap;
 export { defaultErrorMap };
