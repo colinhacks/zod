@@ -9,17 +9,30 @@
   "search.exclude": {
     "**/deno": true
   },
+  "typescript.validate.enable": true,
+  "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+
   "editor.defaultFormatter": "biomejs.biome",
   "editor.formatOnSave": true,
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
   "[typescript]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
   "[javascript]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "biomejs.biome"
+  },
   "[json]": {
     "editor.defaultFormatter": "biomejs.biome"
   },
-  "typescript.validate.enable": true,
-  "typescript.tsserver.experimental.enableProjectDiagnostics": true
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.biome": "explicit"
+  }
 }

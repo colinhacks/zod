@@ -1,27 +1,4 @@
 import {
-  type enumUtil,
-  errorUtil,
-  type objectUtil,
-  type partialUtil,
-  util,
-} from "./helpers";
-import {
-  type AsyncParseReturnType,
-  ZodFailure,
-  isAborted,
-  isAsync,
-  isValid,
-  makeIssue,
-  type ParseContext,
-  type ParseInput,
-  type ParseParams,
-  type ParseReturnType,
-  type SyncParseReturnType,
-  NOT_SET,
-} from "./helpers/parseUtil";
-import type { Primitive } from "./helpers/typeAliases";
-import { getParsedType, objectKeys, ZodParsedType } from "./helpers/util";
-import {
   type IssueData,
   type StringValidation,
   type ZodCustomIssue,
@@ -32,6 +9,30 @@ import {
   ZodTemplateLiteralUnsupportedCheckError,
   ZodTemplateLiteralUnsupportedTypeError,
 } from "./ZodError";
+import {
+  util,
+  type enumUtil,
+  errorUtil,
+  type objectUtil,
+  type partialUtil,
+} from "./helpers";
+
+import {
+  type AsyncParseReturnType,
+  NOT_SET,
+  type ParseContext,
+  type ParseInput,
+  type ParseParams,
+  type ParseReturnType,
+  type SyncParseReturnType,
+  ZodFailure,
+  isAborted,
+  isAsync,
+  isValid,
+  makeIssue,
+} from "./helpers/parseUtil";
+import type { Primitive } from "./helpers/typeAliases";
+import { ZodParsedType, getParsedType, objectKeys } from "./helpers/util";
 
 export { ZodParsedType } from "./helpers/util";
 
@@ -341,6 +342,7 @@ export abstract class ZodType<
     check: (arg: Output) => boolean,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
   ): ZodEffects<this, Output, Input>;
+
   refinement(
     check: (arg: Output) => unknown,
     refinementData: IssueData | ((arg: Output, ctx: RefinementCtx) => IssueData)
@@ -1420,18 +1422,6 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       ...processCreateParams(params),
     });
     return base;
-    // const instance = Object.assign(Object.create(base), {
-    //   parse(input: unknown, params?: Partial<ParseParams>) {
-    //     if (params) return base.parse(input, params);
-    //     if (typeof input === "string") return input;
-    //     return base.parse(input, params);
-    //   },
-    //   async parseAsync(data: unknown) {
-    //     if (typeof data === "string") return data;
-    //     return base.parseAsync(data);
-    //   },
-    // });
-    // return instance;
   }
 }
 
@@ -3154,6 +3144,7 @@ export class ZodObject<
     UnknownKeys,
     Catchall
   >;
+
   partial<Mask extends util.Exactly<{ [k in keyof T]?: true }, Mask>>(
     mask: Mask
   ): ZodObject<
@@ -6434,6 +6425,7 @@ export enum ZodFirstPartyTypeKind {
   ZodReadonly = "ZodReadonly",
   ZodTemplateLiteral = "ZodTemplateLiteral",
 }
+
 export type ZodFirstPartySchemaTypes =
   | ZodString
   | ZodNumber
@@ -6544,6 +6536,7 @@ const optionalType: typeof ZodOptional.create = (...args) =>
   ZodOptional.create(...args);
 const nullableType: typeof ZodNullable.create = (...args) =>
   ZodNullable.create(...args);
+
 const preprocessType: typeof ZodEffects.createWithPreprocess = (...args) =>
   ZodEffects.createWithPreprocess(...args);
 const pipelineType: typeof ZodPipeline.create = (...args) =>
@@ -6604,7 +6597,6 @@ export {
   strictObjectType as strictObject,
   stringType as string,
   symbolType as symbol,
-  // templateLiteralType as templateLiteral,
   effectsType as transformer,
   tupleType as tuple,
   undefinedType as undefined,

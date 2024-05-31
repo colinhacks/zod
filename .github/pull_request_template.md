@@ -1,17 +1,5 @@
 <!--
 
-Development of the next major version of Zod (`v4`) is currently underway.
-
-If your PR implements new functionality, it should target the `v4` branch, NOT the `master` branch. If it's a bugfix, the `master` branch is fine.
-
-Thanks for your contribution!
+Development of the next major version of Zod (`v4`) is currently underway. During this phase, only bugfixes and documentation improvements are being accepted into the `main` branch. All other PRs should target the `v4` branch. Thanks for contribting to OSS!
 
 -->
-
-## {title}
-
-Thank you for your contribution to our project! Before submitting your pull request, please ensure the following:
-
-- [ ] Your code changes are well-documented.
-- [ ] You have tested your changes.
-- [ ] You have updated any relevant documentation.

@@ -3,7 +3,6 @@
   "organizeImports": {
     "enabled": true
   },
-
   "formatter": {
     "enabled": true,
     "indentStyle": "space"
@@ -13,9 +12,13 @@
       "trailingComma": "es5"
     }
   },
+  "json": {
+    "formatter": {
+      "trailingCommas": "none"
+    }
+  },
   "linter": {
     "enabled": true,
-
     "rules": {
       "recommended": true,
       "suspicious": {
