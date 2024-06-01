@@ -6,10 +6,11 @@ coverage
 .idea
 *.log
 playground.ts
-deno/lib/playground.ts
+deno
 workspace.code-workspace
 .netlify
 bun.lockb
 out.png
 logos
 .zed
+dist

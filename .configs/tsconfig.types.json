@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "${configDir}/lib",
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true
+  },
+  "exclude": [
+    "../src/**/__tests__",
+    "../playground.ts",
+    "../src/benchmarks/**/*",
+    "../experiments/**/*"
+  ]
+}

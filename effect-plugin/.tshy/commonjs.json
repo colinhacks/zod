@@ -1,0 +1,14 @@
+{
+  "extends": "./build.json",
+  "include": [
+    "../src/**/*.ts",
+    "../src/**/*.cts",
+    "../src/**/*.tsx"
+  ],
+  "exclude": [
+    "../src/**/*.mts"
+  ],
+  "compilerOptions": {
+    "outDir": "../.tshy-build/commonjs"
+  }
+}

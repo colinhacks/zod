@@ -1,0 +1,63 @@
+{
+  "name": "@zod-plugin/effect",
+  "version": "0.1.0",
+  "type": "module",
+  "author": "Colin McDonnell <zod@colinhacks.com>",
+  "files": ["src", "dist"],
+  "funding": "https://github.com/sponsors/colinhacks",
+  "homepage": "https://zod.dev",
+  "keywords": ["typescript", "schema", "validation", "type", "inference"],
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "./src/index.ts",
+  "exports": "./src/index.ts",
+  "types": "./src/index.ts",
+
+  "publishConfig": {
+    "main": "./dist/cjs/index.js",
+    "module": "./dist/esm/index.js",
+    "types": "./dist/esm/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/esm/index.d.ts",
+        "require": "./dist/cjs/index.js",
+        "import": "./dist/esm/index.js"
+      },
+      "./package.json": "./package.json",
+      "./locales/*": {
+        ".": {
+          "types": "./dist/esm/locales/*.d.ts",
+          "require": "./dist/cjs/locales/*.js",
+          "import": "./dist/esm/locales/*.js"
+        }
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/colinhacks/zod.git"
+  },
+
+  "peerDependencies": {
+    "effect": "^3.0.0",
+    "zod": "^3.0.0"
+  },
+
+  "bugs": {
+    "url": "https://github.com/colinhacks/zod/issues"
+  },
+  "support": {
+    "backing": {
+      "npm-funding": true
+    }
+  },
+
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "pnpm run clean && pnpm build:cjs && pnpm build:esm",
+    "build:esm": "pnpm tsc -p ./tsconfig.build.json --noEmit false --declaration --declarationMap --sourceMap --rootDir src --module esnext --outDir dist/esm",
+    "build:cjs": "pnpm tsc -p ./tsconfig.build.json --noEmit false --rootDir src --sourceMap --module commonjs --outDir dist/cjs",
+    "test": "tsx tests/*.ts",
+    "prepublishOnly": "pnpm test && pnpm build"
+  }
+}
