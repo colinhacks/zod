@@ -13,10 +13,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    // "noUncheckedIndexedAccess": true,
+
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
-    // "customConditions": ["typescript"],
+    "customConditions": ["typescript"],
 
     "noEmit": true,
     "removeComments": true,
