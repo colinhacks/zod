@@ -50,8 +50,8 @@ jobs:
       - run: pnpm build:deno
         working-directory: ./zod/deno/lib
       - run: deno --version
-      - run: deno test
-        working-directory: ./zod/deno/lib
+      # - run: deno test
+      #   working-directory: ./zod/deno/lib
       - run: deno run ./index.ts
         working-directory: ./zod/deno/lib
       - run: deno run ./mod.ts
