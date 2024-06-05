@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2018",
     "lib": ["es6", "dom"],
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "node",
     "jsx": "react",
     "rootDir": "${configDir}/src",
 
@@ -13,9 +13,10 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noImplicitReturns": true,
-    "noUncheckedIndexedAccess": true,
+    // "noUncheckedIndexedAccess": true,
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
+    // "customConditions": ["typescript"],
 
     "noEmit": true,
     "removeComments": true,

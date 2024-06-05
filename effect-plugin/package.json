@@ -9,28 +9,23 @@
   "keywords": ["typescript", "schema", "validation", "type", "inference"],
   "license": "MIT",
   "sideEffects": false,
-  "main": "./src/index.ts",
-  "exports": "./src/index.ts",
-  "types": "./src/index.ts",
 
-  "publishConfig": {
-    "main": "./dist/cjs/index.js",
-    "module": "./dist/esm/index.js",
-    "types": "./dist/esm/index.d.ts",
-    "exports": {
-      ".": {
-        "types": "./dist/esm/index.d.ts",
-        "require": "./dist/cjs/index.js",
-        "import": "./dist/esm/index.js"
-      },
-      "./package.json": "./package.json",
-      "./locales/*": {
-        ".": {
-          "types": "./dist/esm/locales/*.d.ts",
-          "require": "./dist/cjs/locales/*.js",
-          "import": "./dist/esm/locales/*.js"
-        }
-      }
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "typescript": "./src/index.ts",
+      "types": "./dist/esm/index.d.ts",
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js"
+    },
+    "./package.json": "./package.json",
+    "./locales/*": {
+      "typescript": "./src/locales/*.ts",
+      "types": "./dist/esm/locales/*.d.ts",
+      "require": "./dist/cjs/locales/*.js",
+      "import": "./dist/esm/locales/*.js"
     }
   },
   "repository": {
@@ -42,7 +37,6 @@
     "effect": "^3.0.0",
     "zod": "^3.0.0"
   },
-
   "bugs": {
     "url": "https://github.com/colinhacks/zod/issues"
   },
