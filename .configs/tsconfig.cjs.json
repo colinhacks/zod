@@ -7,5 +7,9 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "exclude": ["${configDir}/tests", "${configDir}/playground.ts"]
+  "exclude": [
+    "${configDir}/tests",
+    "${configDir}/playground.ts",
+    "${configDir}/.configs"
+  ]
 }
