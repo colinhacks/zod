@@ -42,22 +42,24 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: latest
+      - uses: pnpm/action-setup@v4
       - uses: denoland/setup-deno@v1
         with:
           deno-version: ${{ matrix.deno }}
       - run: pnpm install
       - run: pnpm build:deno
+        working-directory: ./zod/deno/lib
       - run: deno --version
       - run: deno test
-        working-directory: ./deno/lib
+        working-directory: ./zod/deno/lib
       - run: deno run ./index.ts
-        working-directory: ./deno/lib
+        working-directory: ./zod/deno/lib
       - run: deno run ./mod.ts
-        working-directory: ./deno/lib
+        working-directory: ./zod/deno/lib
       - run: |
           deno bundle ./mod.ts ./bundle.js
           deno run ./bundle.js
-        working-directory: ./deno/lib
+        working-directory: ./zod/deno/lib
 
   lint:
     runs-on: ubuntu-latest
@@ -70,6 +72,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@v4
       - run: pnpm install
       - run: pnpm format:check
       - run: pnpm lint:check
