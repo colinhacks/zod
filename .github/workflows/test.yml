@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         node: ["latest"]
-        typescript: ["5.0", "latest"]
+        typescript: ["5.0", "next"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +27,7 @@ jobs:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4
       - run: pnpm install
-      - run: pnpm add typescript@${{ matrix.typescript }}
+      - run: pnpm add typescript@${{ matrix.typescript }} -w
       - run: pnpm build
       - run: pnpm test
 
