@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "es2018",
     "lib": ["es6", "dom"],
-    "moduleResolution": "Node16",
-    "module": "Node16",
+    "moduleResolution": "Node",
+    "module": null, // must be set explicitly
     "jsx": "react",
     "rootDir": "${configDir}/src",
 
