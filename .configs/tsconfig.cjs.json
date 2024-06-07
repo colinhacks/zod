@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "${configDir}/dist/cjs",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true
+  },
+  "exclude": [
+    "${configDir}/tests",
+    "${configDir}/playground.ts",
+    "${configDir}/.configs"
+  ]
+}

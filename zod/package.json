@@ -1,0 +1,60 @@
+{
+  "name": "zod",
+  "version": "3.23.6",
+  "author": "Colin McDonnell <zod@colinhacks.com>",
+  "description": "TypeScript-first schema declaration and validation library with static type inference",
+  "files": ["src", "dist"],
+  "funding": "https://github.com/sponsors/colinhacks",
+  "homepage": "https://zod.dev",
+  "keywords": ["typescript", "schema", "validation", "type", "inference"],
+  "license": "MIT",
+  "sideEffects": false,
+
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "typescript": "./src/index.ts",
+      "types": "./dist/esm/index.d.ts",
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js"
+    },
+    "./package.json": "./package.json",
+    "./locales/*": {
+      "typescript": "./src/index.ts",
+      "types": "./dist/esm/locales/*.d.ts",
+      "require": "./dist/cjs/locales/*.js",
+      "import": "./dist/esm/locales/*.js"
+    }
+  },
+
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/colinhacks/zod.git"
+  },
+  "bugs": {
+    "url": "https://github.com/colinhacks/zod/issues"
+  },
+  "support": {
+    "backing": {
+      "npm-funding": true
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "pnpm run clean && pnpm build:cjs && pnpm build:esm",
+    "build:esm": "pnpm tsc -p ./tsconfig.build.json --noEmit false --declaration --declarationMap --sourceMap --rootDir src --module esnext --outDir dist/esm",
+    "build:cjs": "pnpm tsc -p ./tsconfig.build.json --noEmit false --rootDir src --sourceMap --module commonjs --outDir dist/cjs",
+    "build:deno": "node ./deno-build.mjs && cp ../README.md ./deno/lib",
+    "build:rollup": "rollup --config ../.configs/rollup.esm.mjs",
+    "test:watch": "pnpm test:ts-jest --watch",
+    "test": "pnpm test:ts-jest",
+    "test:babel": "jest --coverage --config ../.configs/babel-jest.config.json",
+    "test:bun": "bun test src/",
+    "test:vitest": "npx vitest --config ../.configs/vitest.config.ts",
+    "test:ts-jest": "npx jest --config ../.configs/ts-jest.config.json",
+    "test:swc": "npx jest --config ../.configs/swc-jest.config.json",
+    "prepublishOnly": "pnpm test && pnpm run build"
+  }
+}

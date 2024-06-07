@@ -31,6 +31,6 @@
     }
   },
   "files": {
-    "ignore": ["deno", "lib", ".vscode", "coverage"]
+    "ignore": ["deno", "lib", "coverage", "dist", ".tshy"]
   }
 }

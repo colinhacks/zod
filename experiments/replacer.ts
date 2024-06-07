@@ -1,4 +1,4 @@
-import type { z } from "../src/index.js";
+import type { z } from "../zod/src/index";
 
 type Tagged = z.ZodType & { _tag: string };
 function transformer<Out extends z.ZodType>(tx: (arg: Tagged) => Out) {

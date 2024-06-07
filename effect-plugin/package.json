@@ -1,0 +1,57 @@
+{
+  "name": "@zod-plugin/effect",
+  "version": "0.1.0",
+  "type": "module",
+  "author": "Colin McDonnell <zod@colinhacks.com>",
+  "files": ["src", "dist"],
+  "funding": "https://github.com/sponsors/colinhacks",
+  "homepage": "https://zod.dev",
+  "keywords": ["typescript", "schema", "validation", "type", "inference"],
+  "license": "MIT",
+  "sideEffects": false,
+  "main": "./dist/commonjs/index.js",
+  "types": "./dist/commonjs/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/index.d.ts",
+        "default": "./dist/commonjs/index.js"
+      }
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/colinhacks/zod.git"
+  },
+  "peerDependencies": {
+    "effect": "^3.0.0",
+    "zod": "^3.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/colinhacks/zod/issues"
+  },
+  "support": {
+    "backing": {
+      "npm-funding": true
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "pnpm run clean && pnpm build:cjs && pnpm build:esm",
+    "build:esm": "pnpm tsc -p ./tsconfig.build.json --noEmit false --declaration --declarationMap --sourceMap --rootDir src --module esnext --moduleResolution node10 --outDir dist/esm",
+    "build:cjs": "pnpm tsc -p ./tsconfig.build.json --noEmit false --rootDir src --sourceMap --module commonjs --moduleResolution node10 --outDir dist/cjs",
+    "test": "tsx tests/*.ts",
+    "prepublishOnly": "pnpm test && pnpm build"
+  },
+  "tshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts"
+    }
+  }
+}

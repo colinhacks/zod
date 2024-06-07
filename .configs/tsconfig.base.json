@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "es2018",
+    "lib": ["es6", "dom"],
+    "moduleResolution": "Node",
+    "module": null,
+    "jsx": "react",
+    "rootDir": "${configDir}/src",
+
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+
+    "noFallthroughCasesInSwitch": true,
+    "resolveJsonModule": true,
+    "customConditions": ["typescript"],
+
+    "noEmit": true,
+    "removeComments": true,
+    "esModuleInterop": true,
+    "downlevelIteration": true,
+    "isolatedModules": true
+  }
+}

@@ -27,9 +27,9 @@ The following steps will get you setup to contribute changes to this repo:
 
 2. Clone your forked repo: `git clone git@github.com:{your_username}/zod.git`
 
-3. Run `yarn` to install dependencies.
+3. Run `pnpm i` to install dependencies.
 
-4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `yarn play` below) or start implementing a feature right away.
+4. Start playing with the code! You can do some simple experimentation in [`playground.ts`](playground.ts) (see `pnpm play` below) or start implementing a feature right away.
 
 ## Alternative: VSCode Dev Container setup
 
@@ -44,19 +44,19 @@ In the OSS version of VSCode the extension may be not available.
 
 ### Commands
 
-**`yarn build`**
+**`pnpm build`**
 
 - deletes `lib` and re-compiles `src` to `lib`
 
-**`yarn test`**
+**`pnpm test`**
 
 - runs all Jest tests and generates coverage badge
 
-**`yarn test enum`**
+**`pnpm test enum`**
 
 - runs a single test file (e.g. `enum.test.ts`)
 
-**`yarn play`**
+**`pnpm play`**
 
 - executes [`playground.ts`](playground.ts), watches for changes. useful for experimentation
 
@@ -64,7 +64,7 @@ In the OSS version of VSCode the extension may be not available.
 
 Zod uses Jest for testing. After implementing your contribution, write tests for it. Just create a new file under `src/__tests__` or add additional tests to the appropriate existing file.
 
-Before submitting your PR, run `yarn test` to make sure there are no (unintended) breaking changes.
+Before submitting your PR, run `pnpm test` to make sure there are no (unintended) breaking changes.
 
 ### Documentation
 
