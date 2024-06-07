@@ -50,6 +50,7 @@
 - [Table of contents](#table-of-contents)
 - [Introduction](#introduction)
   - [Sponsors](#sponsors)
+    - [Platinum](#platinum)
     - [Gold](#gold)
     - [Silver](#silver)
     - [Bronze](#bronze)
@@ -205,6 +206,18 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table> -->
 
+<h3 align="center">Platinum</h3>
+
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="80px;" alt="Speakeasy API" />
+      <br />
+      <a style="text-decoration:none;" href="https://speakeasyapi.dev?utm_source=zod" target="_blank">Speakeasy</a>
+    </td>
+  </tr>
+</table>
+
 <h3 align="center">Gold</h3>
 
 <table align="center">
@@ -223,11 +236,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="50px;" alt="Scalar.com logo" />
       <br />
       <a style="text-decoration:none;" href="https://scalar.com/" target="_blank">Scalar</a>
-    </td>
-    <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="50px;" alt="Speakeasy API" />
-      <br />
-      <a style="text-decoration:none;" href="https://speakeasyapi.dev/" target="_blank">Speakeasy</a>
     </td>
     </tr><tr>
     <td align="center">
