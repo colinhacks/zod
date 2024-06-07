@@ -212,6 +212,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
         <a style="text-decoration:none;" href="https://speakeasyapi.dev?utm_source=zod" target="_blank">Speakeasy</a>
         <br/>
         SDKs & Terraform Providers for Your API
+        <br>
+        (powered by Zod!)
       </p>
     </td>
   </tr>
