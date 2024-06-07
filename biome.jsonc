@@ -31,6 +31,6 @@
     }
   },
   "files": {
-    "ignore": ["deno", "lib", "coverage", "dist"]
+    "ignore": ["deno", "lib", "coverage", "dist", ".tshy"]
   }
 }

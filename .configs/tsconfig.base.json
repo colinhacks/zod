@@ -3,7 +3,7 @@
     "target": "es2018",
     "lib": ["es6", "dom"],
     "moduleResolution": "Node",
-    "module": null, // must be set explicitly
+    "module": null,
     "jsx": "react",
     "rootDir": "${configDir}/src",
 
