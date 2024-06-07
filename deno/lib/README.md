@@ -208,8 +208,10 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="100px;" alt="Speakeasy API" />
     </td>
     <td>
-      <p>SDKs & Terraform Providers for Your API<br/>
-      <a style="text-decoration:none;" href="https://speakeasyapi.dev?utm_source=zod" target="_blank">Speakeasy</a>
+      <p>
+        <a style="text-decoration:none;" href="https://speakeasyapi.dev?utm_source=zod" target="_blank">Speakeasy</a>
+        <br/>
+        SDKs & Terraform Providers for Your API
       </p>
     </td>
   </tr>
