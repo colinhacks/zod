@@ -84,7 +84,7 @@ importers:
         specifier: ^0.1.11
         version: 0.1.11
       nodemon:
-        specifier: ^2.0.15
+        specifier: ^2.0.22
         version: 2.0.22
       prettier:
         specifier: ^3.2.5
