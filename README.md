@@ -237,12 +237,12 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a style="text-decoration:none;" href="https://scalar.com/" target="_blank">Scalar</a>
     </td>
-    </tr><tr>
     <td align="center">
       <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" height="50px;" alt="Deletype logo" />
       <br />
       <a style="text-decoration:none;" href="https://deletype.com" target="_blank">Deletype</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" height="50px;" alt="Trigger.dev logo" />
       <br />
@@ -259,12 +259,12 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a style="text-decoration:none;" href="https://infisical.com" target="_blank">Infisical</a>
     </td>
-    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/91036480?s=200&v=4" height="50px;" alt="Whop logo" />
       <br />
       <a style="text-decoration:none;" href="https://whop.com/" target="_blank">Whop</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" height="50px;" alt="CryptoJobsList logo" />
       <br />
@@ -280,12 +280,12 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a style="text-decoration:none;" href="https://inngest.com/" target="_blank">Inngest</a>
     </td>
-  </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/13880908?s=200&v=4" height="50px;" alt="Storyblok CMS" />
       <br />
       <a style="text-decoration:none;" href="https://storyblok.com/" target="_blank">Storyblok</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" height="50px;" alt="Mux logo" />
       <br />
