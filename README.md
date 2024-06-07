@@ -186,12 +186,6 @@ Some other great aspects:
 
 Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
 
-<h3 align="center">Platinum</h3>
-
-<blockquote align="center" width="400px">
-  <a href="mailto:colin@colinhacks.com" target="_blank">Email me</a> to discuss becoming a Platinum sponsor of Zod.
-</blockquote>
-
 <!-- <table>
   <tr>
     <td align="center">
@@ -213,7 +207,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="100px;" alt="Speakeasy API" />
       <br />
-      <a style="text-decoration:none;" href="https://speakeasyapi.dev?utm_source=zod" target="_blank">Speakeasy</a>
+      <a style="text-decoration:none;" href="https://speakeasyapi.dev?utm_source=zod" target="_blank">Speakeasy — SDKs & Terraform Providers for Your API</a>
     </td>
   </tr>
 </table>
@@ -236,11 +230,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <img src="https://avatars.githubusercontent.com/u/301879?s=200&v=4" height="50px;" alt="Scalar.com logo" />
       <br />
       <a style="text-decoration:none;" href="https://scalar.com/" target="_blank">Scalar</a>
-    </td>
-    <td align="center">
-      <img src="https://avatars0.githubusercontent.com/u/15068039?s=200&v=4" height="50px;" alt="Deletype logo" />
-      <br />
-      <a style="text-decoration:none;" href="https://deletype.com" target="_blank">Deletype</a>
     </td>
     </tr><tr>
     <td align="center">
@@ -291,11 +280,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br />
       <a style="text-decoration:none;" href="https://mux.link/zod" target="_blank">Mux</a>
     </td>
-    <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/180984?v=4" height="50px;" alt="@emreb" />
-      <br />
-      <a style="text-decoration:none;" href="https://github.com/emreb" target="_blank"><code>@emreb</code></a>
-    </td>
   </tr>
 </table>
 
@@ -338,6 +322,11 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     <td align="center">
       <a href="https://www.bamboocreative.nz/">
         <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative logo" />
+      </a>
+    </td>
+     <td align="center">
+     <a href="https://github.com/jasonLaster">
+        <img src="https://avatars.githubusercontent.com/u/254562?v=4" height="40px;" alt="Jason Laster" />
       </a>
     </td>
   </tr>
