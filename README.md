@@ -211,7 +211,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table align="center">
   <tr>
     <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="80px;" alt="Speakeasy API" />
+      <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="100px;" alt="Speakeasy API" />
       <br />
       <a style="text-decoration:none;" href="https://speakeasyapi.dev?utm_source=zod" target="_blank">Speakeasy</a>
     </td>
