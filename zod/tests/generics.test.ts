@@ -1,5 +1,5 @@
 // @ts-ignore TS6133
-import { test } from "@jest/globals";
+import { expect, test } from "@jest/globals";
 
 import { util } from "../src/helpers";
 import * as z from "../src/index";

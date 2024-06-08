@@ -1,5 +1,5 @@
-const zNew = require("../../lib/index");
-const zOld = require("../../node_modules/zod/lib/index");
+const zNew = require("../zod/lib");
+const zOld = require("../node_modules/zod/lib/index");
 
 export function makeSchema<T>(factory: (z: typeof zNew) => T) {
   return {
