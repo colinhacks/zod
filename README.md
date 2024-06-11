@@ -38,9 +38,11 @@
 
 <h4><strong>✨ Announcement ✨</strong><br/>Zod has recieved the <a href="https://clerk.com">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="./clerk-fellowship.md">clerk.com/blog</a></h4>
 
-> These docs have been translated into [Chinese](./README_ZH.md).
+<br/>
 
 ## Table of contents
+
+> These docs have been translated into [Chinese](./README_ZH.md).
 
 <!-- The full documentation is available both on the [official documentation site](https://zod.js.org/) (recommended) and in `README.md`.
 
