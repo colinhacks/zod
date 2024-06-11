@@ -36,7 +36,7 @@
 <br/>
 <br/>
 
-#### **✨ Announcement ✨** Zod has recieved the [Clerk](https://clerk.com) OSS Fellowship! Read the announcement post 👉 [clerk.com/blog](./clerk-fellowship.md)
+<h4><strong>✨ Announcement ✨</strong> Zod has recieved the <a href="https://clerk.com">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="./clerk-fellowship.md">clerk.com/blog</a></h4>
 
 > These docs have been translated into [Chinese](./README_ZH.md).
 
