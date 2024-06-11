@@ -37,9 +37,7 @@
 <br/>
 <br/>
 
-Zod is a Clerk [OSS Fellow](clerk-zod-oss.md)!
-
-> Zod 3.23 is out! View the [release notes](https://github.com/colinhacks/zod/releases/tag/v3.23.0).
+#### Zod has recieved the Clerk [OSS Fellowship](clerk-fellowship.md)! See the announcement post: [clerk.com/blog](https://clerk.com/blog)
 
 > These docs have been translated into [Chinese](./README_ZH.md).
 
