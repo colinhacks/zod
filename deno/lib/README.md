@@ -37,6 +37,8 @@
 <br/>
 <br/>
 
+Zod is a Clerk [OSS Fellow](clerk-zod-oss.md)!
+
 > Zod 3.23 is out! View the [release notes](https://github.com/colinhacks/zod/releases/tag/v3.23.0).
 
 > These docs have been translated into [Chinese](./README_ZH.md).
@@ -202,7 +204,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Platinum</h3>
 
-<table align="center">
+<table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="100px;" alt="Speakeasy API" />
@@ -221,7 +223,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Gold</h3>
 
-<table align="center">
+<table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/89474619?s=200&v=4" height="50px;" alt="PropelAuth" />
@@ -291,7 +293,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Silver</h3>
 
-<table align="center">
+<table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
       <a href="https://encore.dev">
@@ -340,7 +342,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Bronze</h3>
 
-<table align="center">
+<table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td>Brandon Bayer</td>
     <td>Jiří Brabec</td>
