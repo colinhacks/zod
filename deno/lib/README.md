@@ -14,7 +14,6 @@
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="License"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
-<a href="https://discord.gg/KaSRdyX2vc" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
 </p>
 
 <div align="center">
@@ -37,7 +36,7 @@
 <br/>
 <br/>
 
-#### Zod has recieved the Clerk [OSS Fellowship](clerk-fellowship.md)! See the announcement post: [clerk.com/blog](https://clerk.com/blog)
+#### **Announcement** Zod has recieved the Clerk [OSS Fellowship](clerk-fellowship.md)! See the announcement post 👉 [clerk.com/blog](https://clerk.com/blog)
 
 > These docs have been translated into [Chinese](./README_ZH.md).
 
