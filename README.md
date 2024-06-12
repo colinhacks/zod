@@ -200,7 +200,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
 </table> -->
-<h3 align="center">Diamond</h3>
+<h3 align="center">Diamond 💎</h3>
 
 <div align="center" style="justify-content: center;align-items: center;display: flex;">
   <a href="https://go.clerk.com/zod-clerk"><img src="https://github.com/colinhacks/zod/assets/3084745/9421817e-dc1c-414d-a49c-1ce438d042ab" height="200px;" alt="Clerk logo" /></a>
