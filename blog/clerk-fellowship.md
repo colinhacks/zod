@@ -16,7 +16,7 @@ Let's look at some of the context here.
 
 The current major version of Zod (v3) was released in 2021. In terms of structure and implementation, I got a lot of things right with Zod 3. The codebase has been versatile enough to supporting 23(!) minor releases, each with new features and enhancements, with no breaking changes to the public API.
 
-But there are a couple structural issues that need to be addressed and will require breaking changes. (It's worth noting upfront that most Zod users will not be affected, but a lot of the libraries in Zod's ecosystem rely on internal APIs and will need to be updated.)
+But there are a couple recurring DX papercuts that will require structural changes to address, and that will involve breaking changes. (It's worth noting upfront that most Zod users will not be affected, but a lot of the libraries in Zod's ecosystem rely on internal APIs and will need to be updated.)
 
 - To simplify the codebase and enable easier code generation tooling, some subclasses of `ZodType` will be split or consolidated.
 - To improve performance, the signature of the (quasi-)internal `_parse` method will be changed. Any user-defined subclasses of `ZodType` will need to be updated accordingly.
