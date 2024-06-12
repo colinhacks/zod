@@ -213,7 +213,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </p>
 </div>
 
-<div align="center" width="300px"><p align="center" width="300px">Note from <a href="https://github.com/colinhacks">@colinhacks</a>: <em>Clerk is sponsoring my full-time development of Zod! If you're building an app, it really is the easiest way to set up authentication and user accounts.</em></p></div>
+<!-- <div align="center" width="300px"><p align="center" width="300px">Note from <a href="https://github.com/colinhacks">@colinhacks</a>: <em>Clerk is sponsoring my full-time development of Zod! If you're building an app, it really is the easiest way to set up authentication and user accounts.</em></p></div> -->
+
+> Note from [@colinhacks](https://github.com/colinhacks): Clerk is sponsoring<br/>my full-time development of Zod! If you're building an app, it really<br/> is the easiest way to set up authentication and user accounts.
 
 <br/>
 <br/>
