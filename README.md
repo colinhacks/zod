@@ -211,7 +211,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </p>
 </div>
 
-<p align="center" width="300">Note from <a href="https://github.com/colinhacks">@colinhacks</a>: <em>Clerk is sponsoring my full-time development of Zod! If you're building an app, it really is the easiest way to set up authentication and user accounts.<em></p>
+<p align="center" style="max-width:300px">Note from <a href="https://github.com/colinhacks">@colinhacks</a>: <em>Clerk is sponsoring my full-time development of Zod! If you're building an app, it really is the easiest way to set up authentication and user accounts.<em></p>
 
 <h3 align="center">Platinum</h3>
 
