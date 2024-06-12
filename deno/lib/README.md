@@ -203,7 +203,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <h3 align="center">Diamond 💎</h3>
 
 <div align="center" style="justify-content: center;align-items: center;display: flex;">
-  <a href="https://go.clerk.com/zod-clerk"><img src="https://github.com/colinhacks/zod/assets/3084745/9421817e-dc1c-414d-a49c-1ce438d042ab" height="200px;" alt="Clerk logo" /></a>
+  <a href="https://go.clerk.com/zod-clerk"><img src="https://github.com/colinhacks/zod/assets/3084745/fdc65682-171d-41e6-9e1e-a6f90baf6796" height="200px;" alt="Clerk logo" /></a>
   <p>
     The most comprehensive User Management Platform
     <br/>
