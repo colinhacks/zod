@@ -29,7 +29,7 @@ All told, Zod 4 will be a ground-up rewrite of the library with few breaking cha
 
 ## Zod's current funding story
 
-Zod's has [many generous donors](https://github.com/sponsors/colinhacks) and is likely one of the most well-sponsored TypeScript utility libraries of its kind. Right now, that works out to just over $2600/mo. I'm greatful for this level of support, and it far exceeds the expectations I had when I first set up my GitHub Sponsors profile.
+Zod's has [many generous donors](https://github.com/sponsors/colinhacks) and is likely one of the most well-sponsored TypeScript utility libraries of its kind. Right now, that works out to just over $2600/mo. I'm grateful for this level of support, and it far exceeds the expectations I had when I first set up my GitHub Sponsors profile.
 
 But with much love and appreciation to all the people and companies that support Zod, that's far from replacing a full-time salary in the US.
 
