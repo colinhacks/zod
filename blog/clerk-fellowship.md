@@ -33,7 +33,7 @@ Zod's has [many generous donors](https://github.com/sponsors/colinhacks) and is 
 
 But with much love and appreciation to all the people and companies that support Zod, that's far from replacing a full-time salary in the US.
 
-I've spent about two months thus far releasing Zod 3.23 (the final 3.x releases) and spec'ing out the roadmap for Zod 4. In my estimation it will take about three more months of full-time work to complete the rewrite and roll out the new release responsibly to Zod's now-massive base of users and third-party ecosystem libraries. I'm beyond excited to do all this work, but that's a long time to be without an income.
+I've spent about two months thus far releasing Zod 3.23 (the final 3.x release) and spec'ing out the roadmap for Zod 4. In my estimation it will take about three more months of full-time work to complete the rewrite and roll out the new release responsibly to Zod's now-massive base of users and third-party ecosystem libraries. I'm beyond excited to do all this work, but that's a long time to be without an income.
 
 ## The Clerk fellowship
 
