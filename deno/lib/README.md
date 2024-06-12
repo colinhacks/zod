@@ -36,7 +36,7 @@
 <br/>
 <br/>
 
-<h4><strong>Announcement ✨</strong><br/>Zod has recieved the <a href="https://clerk.com">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://zod.dev/blog/clerk-fellowship">zod.dev/blog/clerk-fellowship</a></h4>
+<h4><strong>Announcement ✨</strong><br/>Zod has recieved the <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://zod.dev/blog/clerk-fellowship">zod.dev/blog/clerk-fellowship</a></h4>
 
 <br/>
 
@@ -187,6 +187,8 @@ Some other great aspects:
 
 Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
 
+> Clerk is currently sponsoring my full-time development of Zod! If you're building an app, give it a shot—it really is the easiest way to set up authentication and user accounts. (Seriously, their DX is unparalleled.)
+
 <!-- <table>
   <tr>
     <td align="center">
@@ -201,9 +203,44 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </tr>
 </table> -->
 
+<br/>
+<h3 align="center">Diamond 💎</h3>
+
+<br/>
+
+<div align="center" style="justify-content: center;align-items: center;display: flex;">
+  <a href="https://go.clerk.com/zod-clerk"><img src="https://github.com/colinhacks/zod/assets/3084745/fdc65682-171d-41e6-9e1e-a6f90baf6796" height="200px;" alt="Clerk logo" /></a>
+  <p>
+    The most comprehensive User Management Platform
+    <br/>
+    <a style="text-decoration:none;" href="https://go.clerk.com/zod-clerk" target="_blank">clerk.com</a>
+  </p>
+</div>
+
+<br/>
+<br/>
+
 <h3 align="center">Platinum</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
+  <tr>
+    <td align="center">
+      <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
+        <picture height="40px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
+          <img alt="speakeasy'" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
+        </picture>
+      </a>
+      <p>
+        SDKs & Terraform Providers for Your API
+        <br/>
+        <a href="https://speakeasyapi.dev/?utm_source=zod+docs">speakeasyapi.dev</a>
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="100px;" alt="Speakeasy API" />
@@ -218,7 +255,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       </p>
     </td>
   </tr>
-</table>
+</table> -->
+
+<br/>
 
 <h3 align="center">Gold</h3>
 
@@ -289,6 +328,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
 </table>
+
+<br/>
 
 <h3 align="center">Silver</h3>
 
