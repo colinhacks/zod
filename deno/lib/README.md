@@ -205,13 +205,13 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <div align="center" style="justify-content: center;align-items: center;display: flex;">
   <a href="https://go.clerk.com/zod-clerk"><img src="https://github.com/colinhacks/zod/assets/3084745/9421817e-dc1c-414d-a49c-1ce438d042ab" height="200px;" alt="Clerk logo" /></a>
   <p>
-    <a style="text-decoration:none;" href="https://go.clerk.com/zod-clerk" target="_blank">Clerk</a>
-    <br/>
     The most comprehensive User Management Platform
+    <br/>
+    <a style="text-decoration:none;" href="https://go.clerk.com/zod-clerk" target="_blank">clerk.com</a>
   </p>
 </div>
 
-<p align="center" width="300">Note from <a href="https://github.com/colinhacks">@colinhacks</a>: <em>Clerk is sponsoring the full-time development of Zod! If you're building an app, it really is the easiest way to set up authentication and user accounts.<em></p>
+<p align="center" width="300">Note from <a href="https://github.com/colinhacks">@colinhacks</a>: <em>Clerk is sponsoring my full-time development of Zod! If you're building an app, it really is the easiest way to set up authentication and user accounts.<em></p>
 
 <h3 align="center">Platinum</h3>
 
