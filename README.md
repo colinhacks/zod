@@ -223,6 +223,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Platinum</h3>
 
+<br/>
+
 <div align="center" style="justify-content: center;align-items: center;display: flex;">
   <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
     <picture height="50px">
@@ -236,7 +238,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     <a href="https://speakeasyapi.dev/?utm_source=zod+docs">speakeasyapi.dev</a>
   </p>
 </div>
-
+<!-- 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
@@ -252,7 +254,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       </p>
     </td>
   </tr>
-</table>
+</table> -->
 
 <br/>
 
