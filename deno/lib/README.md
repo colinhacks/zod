@@ -213,7 +213,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   </p>
 </div>
 
-<div align="center" width="300px"><p align="center" width="300px">Note from <a href="https://github.com/colinhacks">@colinhacks</a>: <em>Clerk is sponsoring<br/>my full-time development of Zod! If you're building<br/>an app, consider Clerk for authentication and user management. (Seriously, their DX is un-paralleled.)</em></p></div>
+<div align="center" width="300px"><p align="center" width="300px">Note from <a href="https://github.com/colinhacks">@colinhacks</a>: <em>Clerk is sponsoring<br/>my full-time development of Zod! If you're building<br/>an app, consider Clerk for authentication<br/>and user management. (Seriously, their DX<br/>is un-paralleled.)</em></p></div>
 
 > Note from [@colinhacks](https://github.com/colinhacks): Clerk is sponsoring<br/>my full-time development of Zod! If you're building an app, it really<br/> is the easiest way to set up authentication and user accounts.
 
