@@ -239,8 +239,26 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     <a href="https://speakeasyapi.dev/?utm_source=zod+docs">speakeasyapi.dev</a>
   </p>
 </div>
-<!-- 
+
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
+  <tr>
+    <td align="center">
+      <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
+        <picture height="40px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
+          <img alt="speakeasy'" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
+        </picture>
+      </a>
+      <p>
+        SDKs & Terraform Providers for Your API
+        <br/>
+        <a href="https://speakeasyapi.dev/?utm_source=zod+docs">speakeasyapi.dev</a>
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="100px;" alt="Speakeasy API" />
