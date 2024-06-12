@@ -1,4 +1,4 @@
-<h1 style="border-bottom:1px solid #dddddd;">Zod 🤝 Clerk: An experiment in fixed-term OSS patronage</h1>
+<h1 style="border-bottom:1px solid #dddddd;">Joining Clerk as an OSS Fellow to work on Zod 4</h1>
 
 <p>
 <a href="https://twitter.com/colinhacks" style="font-weight:500;text-decoration:none;">Colin McDonnell</a>
