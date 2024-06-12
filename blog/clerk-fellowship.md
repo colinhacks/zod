@@ -12,29 +12,28 @@ In the context of both my own career path and Zod's development, this is a perfe
 
 Let's look at some of the context here.
 
-## Zod's current funding story
-
-Zod's has [many generous donors](https://github.com/sponsors/colinhacks) and is likely one of the most well-sponsored TypeScript utility libraries of its kind. Right now, that works out to just over $2600/mo.
-
-I'm greatful for this level of support, and it far exceed my expectations from when I first set up my GitHub Sponsors profile. But with much love and appreciation to all the people and companies that support Zod, it's far from replacing a full-time salary in the US.
-
 ## On deck: Zod 4
 
-Starting in April, I spent ~6 weeks merging or closing over a hundred pull requests, culminating in the release of Zod 3.23. For the last month or so I've been speccing out Zod's next major version. In my estimation it will take about three more months of full-time work to complete the rewrite and roll out the new release responsibly to Zod's now-massive base of users and third-party ecosystem libraries.
-
-The current major version of Zod (v3) was released in 2021. In terms of structure and implementation, I got a lot of things right with Zod 3; it's been capable of supporting 23(!) minor releases, each with new features and enhancements, with no breaking changes to the public API.
+The current major version of Zod (v3) was released in 2021. In terms of structure and implementation, I got a lot of things right with Zod 3. The codebase has been versatile enough to supporting 23(!) minor releases, each with new features and enhancements, with no breaking changes to the public API.
 
 But there are a couple structural issues that need to be addressed and will require breaking changes. (It's worth noting that the vast majority of Zod users will not be affected, but a lot of the libraries in Zod's ecosystem rely on internal APIs and will need to be updated.)
 
 - To simplify the codebase and enable easier code generation tooling, some subclasses of `ZodType` will be split or consolidated.
 - To improve performance, the signature of the (quasi-)internal `_parse` method will be changed. Any user-defined subclasses of `ZodType` will need to be updated accordingly.
 - To clean up autocompletion, some internal methods and properties will be made `protected`. Some current APIs will be deprecated; some deprecated APIs will be removed.
+- To improve error reporting, I'll be simplifying Zod's error map system. The new system will also be more amenable to internationalization.
 - To enable `exactOptionalPropertyTypes` semantics, the logic used to determine key optionality in `ZodObject` will change. Depending on the value of `exactOptionalPropertyTypes` in your `tsconfig.json`, some inferred types may change (RFC forthcoming).
 - To improve TypeScript server performance, some generic class signatures (e.g. `ZodUnion`) will be changed or simplified. Other type utilities will be re-implemented for efficiency, but may result in marginally different behavior in some contexts.
 
-All told, Zod 4 will be a ground-up rewrite of the library with virtually no breaking changes for typical users, dramatic speed improvements, a simpler internal structure, and a big slate of new features. In my estimation, it'll take around three months to complete the rewrite and roll out the new release responsibly to Zod's now-massive base of users and third-party ecosystem libraries. (This includes the time required to build a new documentation site and coordinate a larger effort around internationalization.)
+All told, Zod 4 will be a ground-up rewrite of the library (with few breaking changes for typical users), dramatic speed improvements, a simpler internal structure, and a big slate of new features.
 
-I'm beyond excited to do all this work, but that's a long time to be without an income.
+## Zod's current funding story
+
+Zod's has [many generous donors](https://github.com/sponsors/colinhacks) and is likely one of the most well-sponsored TypeScript utility libraries of its kind. Right now, that works out to just over $2600/mo. I'm greatful for this level of support, and it far exceed my expectations from when I first set up my GitHub Sponsors profile.
+
+But with much love and appreciation to all the people and companies that support Zod, that's far from replacing a full-time salary in the US.
+
+I've spent about two months thus far releasing Zod 3.23 (the final 3.x releases) and spec'ing out the roadmap for Zod 4. In my estimation it will take about three more months of full-time work to complete the rewrite and roll out the new release responsibly to Zod's now-massive base of users and third-party ecosystem libraries. I'm beyond excited to do all this work, but that's a long time to be without an income.
 
 ## The Clerk fellowship
 
@@ -53,8 +52,8 @@ In exchange for the support, Clerk is getting a super-charged version of the per
 
 ## OSS and funding models
 
-This model represents an interesting middle ground between the traditional sponsorship model and the "maintainer-in-residence" approach that companies like Vercel have taken with Rich Harris/Svelte. Zod doesn't need a full-time maintainer in perpetuity (wouldn't mind that though 🙄), but it does need full-time attention to get this major version out the door.
+This model represents an interesting middle ground between the traditional sponsorship model and the "maintainer-in-residence" approach that companies like Vercel have taken with Rich Harris/Svelte. Zod doesn't need a full-time maintainer in perpetuity (actually, I wouldn't mind that... 🙄) but it does need full-time attention to get this major version out the door.
 
-This fellowship is a way to bridge that gap. All-in-all, I'm beyond excited to have found a partner in Clerk that is interested in trying something like this. I encourage other companies to try similar things. I know for a fact that Valibot, ArkType, and tRPC all have maintainers working full-time for free.
+This fellowship is a way to bridge that gap. All-in-all, I'm beyond excited to have found a partner in Clerk that is interested in trying something like this. I encourage other companies to try similar things.
 
 So if you're building an app sometime soon, be smart: validate your `Request` bodies (or, uh, Server Action arguments?) and don't roll your own auth.
