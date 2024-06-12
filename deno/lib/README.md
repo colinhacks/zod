@@ -202,16 +202,16 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 </table> -->
 <h3 align="center">Diamond</h3>
 
-<p align="center" width="300">Note from <a href="https://github.com/colinhacks">@colinhacks</a>: Clerk is sponsoring the full-time development of Zod! If you're building an app, it really is the easiest way to set up authentication and user accounts.
-
 <div align="center" style="justify-content: center;align-items: center;display: flex;">
-  <a href="https://go.clerk.com/zod-clerk"><img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="100px;" alt="Speakeasy API" /></a>
+  <a href="https://go.clerk.com/zod-clerk"><img src="https://github.com/colinhacks/zod/assets/3084745/9421817e-dc1c-414d-a49c-1ce438d042ab" height="200px;" alt="Clerk logo" /></a>
   <p>
     <a style="text-decoration:none;" href="https://go.clerk.com/zod-clerk" target="_blank">Clerk</a>
     <br/>
     The most comprehensive User Management Platform
   </p>
-</table>
+</div>
+
+<p align="center" width="300">Note from <a href="https://github.com/colinhacks">@colinhacks</a>: <em>Clerk is sponsoring the full-time development of Zod! If you're building an app, it really is the easiest way to set up authentication and user accounts.<em></p>
 
 <h3 align="center">Platinum</h3>
 
