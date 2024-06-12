@@ -56,6 +56,8 @@ In exchange for the support, Clerk is getting a super-charged version of the per
 
 This model represents an interesting middle ground between the traditional sponsorship model and the "maintainer-in-residence" approach that companies like Vercel have taken with Rich Harris/Svelte. Zod doesn't need a full-time maintainer in perpetuity (actually, I wouldn't mind that... 🙄) but it does need full-time attention to get this major version out the door.
 
-This fellowship is a way to bridge that gap. All-in-all, I'm beyond excited to have found a partner in Clerk that is interested in trying something like this. I encourage other companies to try similar things! There is no shortage of massively valuable and influential libraries with full-time maintainers who are forgoing a regular income to build free tools (ArkType, Valibot, and tRPC come to mind).
+This fellowship is a way to bridge that gap. All-in-all, I'm beyond excited to have found a partner in Clerk that is interested in trying something like this.
+
+> I encourage other companies to try similar things! There is no shortage of invaluable libraries with full-time (or nearly full-time) maintainers who are forgoing a regular income to build free tools. ArkType, Valibot, and tRPC come to mind.
 
 So if you're building an app sometime soon, be smart—validate your `Request` bodies (or, uh, Server Action arguments?) and don't roll your own auth.
