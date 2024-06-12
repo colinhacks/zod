@@ -208,8 +208,11 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <br/>
 
-<div align="center" style="justify-content: center;align-items: center;display: flex;">
-  <a href="https://go.clerk.com/zod-clerk"><img src="https://github.com/colinhacks/zod/assets/3084745/fdc65682-171d-41e6-9e1e-a6f90baf6796" height="200px;" alt="Clerk logo" /></a>
+<div align="center">
+  <a href="https://go.clerk.com/zod-clerk">
+    <img src="https://github.com/colinhacks/zod/assets/3084745/fdc65682-171d-41e6-9e1e-a6f90baf6796" alt="Clerk logo" />
+  </a>
+  <br/>
   <p>
     The most comprehensive User Management Platform
     <br/>
@@ -225,16 +228,17 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
+      <p>
       <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
         <picture height="40px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
           <img alt="speakeasy'" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
         </picture>
       </a>
-      <p>
-        SDKs & Terraform Providers for Your API
-        <br/>
-        <a href="https://speakeasyapi.dev/?utm_source=zod+docs">speakeasyapi.dev</a>
+      <br  />   
+      SDKs & Terraform Providers for Your API
+      <br/>
+      <a href="https://speakeasyapi.dev/?utm_source=zod+docs">speakeasyapi.dev</a>
       </p>
     </td>
   </tr>
