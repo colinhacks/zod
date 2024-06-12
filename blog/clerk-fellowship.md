@@ -8,7 +8,7 @@ June 11, 2024
 
 I'm thrilled to announce that I'm the inaugural recipient of [Clerk's](https://clerk.com/) OSS Fellowship! This fellowship is kind of like a "summer internship"—Clerk is paying me a full-time wage (think entry-level software engineer) to work on Zod full-time throughout summer 2024.
 
-In the context of both my own career path and Zod's development, this is a perfect arrangement and I'm beyond grateful that Clerk was willing to experiment with some alternative funding arrangements for OSS.
+In the context of both my own career path and Zod's development, this is a perfect arrangement, and I'm beyond grateful that Clerk was willing to experiment with some alternative funding arrangements for OSS.
 
 Let's look at some of the context here.
 
@@ -33,11 +33,13 @@ Zod's has [many generous donors](https://github.com/sponsors/colinhacks) and is 
 
 But with much love and appreciation to all the people and companies that support Zod, that's far from replacing a full-time salary in the US.
 
-I've spent about two months thus far releasing Zod 3.23 (the final 3.x release) and spec'ing out the roadmap for Zod 4. In my estimation it will take about three more months of full-time work to complete the rewrite and roll out the new release responsibly to Zod's now-massive base of users and third-party ecosystem libraries. I'm beyond excited to do all this work, but that's a long time to be without an income.
+I left Bun early this year and spent a couple months recovering from burnout and learning new things. Starting in April, I spent about 6 weeks merging PRs and fixing issues, culminating in the release of Zod 3.23 (the final 3.x version). I've spent the last month or so spec'ing out Zod 4.
 
-## The Clerk fellowship
+In my estimation it will take about three more months of full-time work to complete the rewrite and roll out the new release responsibly to Zod's now-massive base of users and third-party ecosystem libraries. I'm beyond excited to do all this work, but that's a long time to be without an income.
 
 So I reached out to a few companies with an experimental proposal: an "OSS incubator" where the company would sponsor the development of Zod for 12 weeks (my timeline for the release of Zod 4). During this pre-determined window, I'd get paid some reasonable wage, and the company would be Zod's primary patron. The cost to the company is known upfront, since everything is term-limited; it's like an incubator or an internship.
+
+## The Clerk fellowship
 
 Much to my delight, [Colin](https://twitter.com/tweetsbycolin) from Clerk (AKA "other Colin") was enthusiastically on board. I've admired Clerk for a long time for their product, eye for developer experience, and commitment to open source. In fact, I covered them on my podcast the day they launched on HN in February 2021. They've already been sponsoring [Auth.js](https://authjs.dev/) (formerly NextAuth) for some time and were immediately open to discussing the terms of a potential "fellowship".
 
@@ -50,10 +52,10 @@ In exchange for the support, Clerk is getting a super-charged version of the per
 5. For continuity after the release of Zod 4, Clerk gets "first dibs" (right of first refusal) on a new ongoing "diamond tier" sponsor slot for 6 months. The idea is that this is an exclusive "slot"—only one company can hold it at a time.The perks of this tier include the big README logo and the sidebar ad placement.
 6. This announcement post! Yes, you've been reading marketing material this whole time. Gotcha.
 
-## OSS and funding models
+## OSS, funding models, and trying new things
 
 This model represents an interesting middle ground between the traditional sponsorship model and the "maintainer-in-residence" approach that companies like Vercel have taken with Rich Harris/Svelte. Zod doesn't need a full-time maintainer in perpetuity (actually, I wouldn't mind that... 🙄) but it does need full-time attention to get this major version out the door.
 
-This fellowship is a way to bridge that gap. All-in-all, I'm beyond excited to have found a partner in Clerk that is interested in trying something like this. I encourage other companies to try similar things.
+This fellowship is a way to bridge that gap. All-in-all, I'm beyond excited to have found a partner in Clerk that is interested in trying something like this. I encourage other companies to try similar things! There is no shortage of massively valuable and influential libraries with full-time maintainers who are forgoing a regular income to build free tools (ArkType, Valibot, and tRPC come to mind).
 
-So if you're building an app sometime soon, be smart: validate your `Request` bodies (or, uh, Server Action arguments?) and don't roll your own auth.
+So if you're building an app sometime soon, be smart—validate your `Request` bodies (or, uh, Server Action arguments?) and don't roll your own auth.
