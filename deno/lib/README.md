@@ -220,8 +220,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <br/>
 <br/>
 
-<br/>
-
 <h3 align="center">Platinum</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
