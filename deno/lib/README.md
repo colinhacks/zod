@@ -187,6 +187,8 @@ Some other great aspects:
 
 Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
 
+> Clerk is currently sponsoring my full-time development of Zod! If you're building an app, give it a shot—it really is the easiest way to set up authentication and user accounts. (Seriously, their DX is unparalleled.)
+
 <!-- <table>
   <tr>
     <td align="center">
@@ -217,8 +219,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <br/>
 <br/>
-
-> Note from [@colinhacks](https://github.com/colinhacks): Clerk is sponsoring my full-time development of Zod! If you're building an app, it really is the easiest way to set up authentication and user accounts. (Seriously, their DX is unparalleled.)
 
 <br/>
 
