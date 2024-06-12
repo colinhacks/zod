@@ -41,7 +41,7 @@ So I reached out to a few companies with an experimental proposal: an "OSS incub
 
 ## The Clerk fellowship
 
-Much to my delight, [Colin](https://twitter.com/tweetsbycolin) from Clerk (AKA "other Colin") was enthusiastically on board. I've admired Clerk for a long time for their product, eye for developer experience, and commitment to open source. In fact, I covered them on my podcast the day they launched on HN in February 2021. They've already been sponsoring [Auth.js](https://authjs.dev/) (formerly NextAuth) for some time and were immediately open to discussing the terms of a potential "fellowship".
+Much to my delight, [Colin](https://twitter.com/tweetsbycolin) from Clerk (AKA "other Colin") was enthusiastically on board. I've admired Clerk for a long time for their product, eye for developer experience, and commitment to open source. In fact, I covered them on my podcast the day they launched on HN in February 2021. They've already been sponsoring [Auth.js](https://authjs.dev) (formerly NextAuth) for some time and were immediately open to discussing the terms of a potential "fellowship".
 
 In exchange for the support, Clerk is getting a super-charged version of the perks that Zod's other sponsors already get:
 
