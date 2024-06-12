@@ -6,7 +6,7 @@
 June 11, 2024
 </p>
 
-I'm thrilled to announce that I'm the inaugural recipient of [Clerk's](https://clerk.com/) OSS Fellowship! This fellowship is kind of like a "summer internship"—Clerk is paying me a full-time wage (think entry-level software engineer) to work on Zod full-time throughout summer 2024.
+I'm thrilled to announce that I'm the inaugural recipient of [Clerk's](https://go.clerk.com/zod-clerk) OSS Fellowship! This fellowship is kind of like a "summer internship"—Clerk is paying me a full-time wage (think entry-level software engineer) to work on Zod full-time throughout summer 2024.
 
 In the context of both my own career path and Zod's development, this is a perfect arrangement, and I'm beyond grateful that Clerk was willing to experiment with some alternative funding arrangements for OSS.
 
