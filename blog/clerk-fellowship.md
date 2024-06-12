@@ -1,7 +1,7 @@
-# Joining Clerk as an OSS Fellow
+<h1 style="border-bottom:1px solid #dddddd;">Joining Clerk as an OSS Fellow</h1>
 
 <p>
-<a href="https://twitter.com/colinhacks" style="font-weight:500px;text-decoration:none;">Colin McDonnell</a>
+<a href="https://twitter.com/colinhacks" style="font-weight:500;text-decoration:none;">Colin McDonnell</a>
 <br/>
 June 11, 2024
 </p>
