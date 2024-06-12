@@ -204,6 +204,8 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <br/>
 <h3 align="center">Diamond 💎</h3>
 
+<br/>
+
 <div align="center" style="justify-content: center;align-items: center;display: flex;">
   <a href="https://go.clerk.com/zod-clerk"><img src="https://github.com/colinhacks/zod/assets/3084745/fdc65682-171d-41e6-9e1e-a6f90baf6796" height="200px;" alt="Clerk logo" /></a>
   <p>
@@ -219,7 +221,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 > Note from [@colinhacks](https://github.com/colinhacks): Clerk is sponsoring my full-time development of Zod! If you're building an app, it really is the easiest way to set up authentication and user accounts. (Seriously, their DX is unparalleled.)
 
 <br/>
-<br/>
 
 <h3 align="center">Platinum</h3>
 
@@ -233,7 +234,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </picture>
   </a>
   <p>
-    SDKs & Terraform Providers for Your API (powered by Zod!)
+    SDKs & Terraform Providers for Your API
+    <br/>
+    Powered by Zod!
     <br/>
     <a href="https://speakeasyapi.dev/?utm_source=zod+docs">speakeasyapi.dev</a>
   </p>
