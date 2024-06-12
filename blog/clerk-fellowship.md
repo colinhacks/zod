@@ -1,4 +1,4 @@
-<h1 style="border-bottom:1px solid #dddddd;">Joining Clerk as an OSS Fellow</h1>
+<h1 style="border-bottom:1px solid #dddddd;">Joining Clerk as an OSS Fellow to build Zod 4</h1>
 
 <p>
 <a href="https://twitter.com/colinhacks" style="font-weight:500;text-decoration:none;">Colin McDonnell</a>
@@ -16,16 +16,16 @@ Let's look at some of the context here.
 
 The current major version of Zod (v3) was released in 2021. In terms of structure and implementation, I got a lot of things right with Zod 3. The codebase has been versatile enough to supporting 23(!) minor releases, each with new features and enhancements, with no breaking changes to the public API.
 
-But there are a couple structural issues that need to be addressed and will require breaking changes. (It's worth noting that most Zod users will not be affected, but a lot of the libraries in Zod's ecosystem rely on internal APIs and will need to be updated.)
+But there are a couple structural issues that need to be addressed and will require breaking changes. (It's worth noting upfront that most Zod users will not be affected, but a lot of the libraries in Zod's ecosystem rely on internal APIs and will need to be updated.)
 
 - To simplify the codebase and enable easier code generation tooling, some subclasses of `ZodType` will be split or consolidated.
 - To improve performance, the signature of the (quasi-)internal `_parse` method will be changed. Any user-defined subclasses of `ZodType` will need to be updated accordingly.
 - To clean up autocompletion, some internal methods and properties will be made `protected`. Some current APIs will be deprecated; some deprecated APIs will be removed.
-- To improve error reporting, I'll be simplifying Zod's error map system. The new system will also be more amenable to internationalization.
+- To improve error reporting, I'll be simplifying Zod's error map system. The new system will also be more amenable to internationalization (RFC forthcoming).
 - To enable `exactOptionalPropertyTypes` semantics, the logic used to determine key optionality in `ZodObject` will change. Depending on the value of `exactOptionalPropertyTypes` in your `tsconfig.json`, some inferred types may change (RFC forthcoming).
 - To improve TypeScript server performance, some generic class signatures (e.g. `ZodUnion`) will be changed or simplified. Other type utilities will be re-implemented for efficiency, but may result in marginally different behavior in some contexts.
 
-All told, Zod 4 will be a ground-up rewrite of the library (with few breaking changes for typical users), dramatic speed improvements, a simpler internal structure, and a big slate of new features.
+All told, Zod 4 will be a ground-up rewrite of the library with few breaking changes for typical users, dramatic speed improvements, a simpler internal structure, and a big slate of new features.
 
 ## Zod's current funding story
 
