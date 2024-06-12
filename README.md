@@ -229,7 +229,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
     <picture height="50px">
       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
-      <img alt="speakeasy'" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
+      <img alt="speakeasy'" height="50px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
     </picture>
   </a>
   <p>
