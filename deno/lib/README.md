@@ -14,7 +14,6 @@
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="License"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
-<a href="https://discord.gg/KaSRdyX2vc" rel="nofollow"><img src="https://img.shields.io/discord/893487829802418277?label=Discord&logo=discord&logoColor=white" alt="discord server"></a>
 </p>
 
 <div align="center">
@@ -37,11 +36,13 @@
 <br/>
 <br/>
 
-> Zod 3.23 is out! View the [release notes](https://github.com/colinhacks/zod/releases/tag/v3.23.0).
+<h4><strong>Announcement ✨</strong><br/>Zod has recieved the <a href="https://clerk.com">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://zod.dev/blog/clerk-fellowship">zod.dev/blog/clerk-fellowship</a></h4>
 
-> These docs have been translated into [Chinese](./README_ZH.md).
+<br/>
 
 ## Table of contents
+
+> These docs have been translated into [Chinese](./README_ZH.md).
 
 <!-- The full documentation is available both on the [official documentation site](https://zod.js.org/) (recommended) and in `README.md`.
 
@@ -202,7 +203,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Platinum</h3>
 
-<table align="center">
+<table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="100px;" alt="Speakeasy API" />
@@ -221,7 +222,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Gold</h3>
 
-<table align="center">
+<table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/89474619?s=200&v=4" height="50px;" alt="PropelAuth" />
@@ -291,7 +292,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Silver</h3>
 
-<table align="center">
+<table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
       <a href="https://encore.dev">
@@ -340,7 +341,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <h3 align="center">Bronze</h3>
 
-<table align="center">
+<table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td>Brandon Bayer</td>
     <td>Jiří Brabec</td>
