@@ -190,7 +190,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 > Clerk is currently sponsoring my full-time development of Zod! If you're building an app, give it a shot—it really is the easiest way to set up authentication and user accounts. (Seriously, their DX is unparalleled.)
 
 <br/>
-<h3 align="center">Diamond 💎</h3>
+<h3 align="center">💎 Diamond 💎</h3>
 
 <br/>
 
