@@ -196,11 +196,12 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <div align="center">
   <a href="https://go.clerk.com/PKHrcwh">
-    <picture height="40px">
+    <picture height="105px">
       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/167ea625-bf23-4f7b-afc2-1dbb0ad60a3e">
-      <img alt="speakeasy'" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/68a43b31-62e5-4344-a112-7066dcf3d830">
+      <img alt="speakeasy'" height="105px" src="https://github.com/colinhacks/zod/assets/3084745/68a43b31-62e5-4344-a112-7066dcf3d830">
     </picture>
   </a>
+  <br/>
   <br/>
   <p>
     The most comprehensive User Management Platform
