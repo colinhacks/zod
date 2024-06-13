@@ -189,34 +189,23 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 > Clerk is currently sponsoring my full-time development of Zod! If you're building an app, give it a shot—it really is the easiest way to set up authentication and user accounts. (Seriously, their DX is unparalleled.)
 
-<!-- <table>
-  <tr>
-    <td align="center">
-      <a href="https://www.example.com" target="_blank">
-        <img src="https://example.com/image.png" height="100px;" alt="XXX" />
-      </a>
-      <br />
-      <b>XXX</b>
-      <br />
-      <a href="https://www.example.com" target="_blank">example.com</a>
-    </td>
-  </tr>
-</table> -->
-
 <br/>
 <h3 align="center">Diamond 💎</h3>
 
 <br/>
 
 <div align="center">
-  <a href="https://go.clerk.com/zod-clerk">
-    <img src="https://github.com/colinhacks/zod/assets/3084745/fdc65682-171d-41e6-9e1e-a6f90baf6796" alt="Clerk logo" />
+  <a href="https://go.clerk.com/PKHrcwh">
+    <picture height="40px">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/167ea625-bf23-4f7b-afc2-1dbb0ad60a3e">
+      <img alt="speakeasy'" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/68a43b31-62e5-4344-a112-7066dcf3d830">
+    </picture>
   </a>
   <br/>
   <p>
     The most comprehensive User Management Platform
     <br/>
-    <a style="text-decoration:none;" href="https://go.clerk.com/zod-clerk" target="_blank">clerk.com</a>
+    <a style="text-decoration:none;" href="https://go.clerk.com/PKHrcwh" target="_blank">clerk.com</a>
   </p>
 </div>
 
@@ -243,23 +232,6 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
   </tr>
 </table>
-
-<!-- <table align="center" style="justify-content: center;align-items: center;display: flex;">
-  <tr>
-    <td align="center">
-      <img src="https://avatars.githubusercontent.com/u/91446104?s=200&v=4" height="100px;" alt="Speakeasy API" />
-    </td>
-    <td>
-      <p>
-        <a style="text-decoration:none;" href="https://speakeasyapi.dev?utm_source=zod" target="_blank">Speakeasy</a>
-        <br/>
-        SDKs & Terraform Providers for Your API
-        <br>
-        (powered by Zod!)
-      </p>
-    </td>
-  </tr>
-</table> -->
 
 <br/>
 
