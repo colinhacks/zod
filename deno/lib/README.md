@@ -228,7 +228,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br  />   
       SDKs & Terraform Providers for Your API
       <br/>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs">speakeasyapi.dev</a>
+      <a href="https://speakeasyapi.dev/?utm_source=zod+docs" style="text-decoration:none;">speakeasyapi.dev</a>
       </p>
     </td>
   </tr>
