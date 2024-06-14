@@ -25,7 +25,6 @@
     "benchmark": "^2.1.4",
     "chalk": "^5.3.0",
     "console-table-printer": "^2.12.0",
-    "dependency-cruiser": "^9.19.0",
     "execa": "^9.1.0",
     "husky": "^7.0.4",
     "lint-staged": "^12.3.7",
@@ -58,7 +57,6 @@
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm run test && pnpm run build && pnpm run build:deno",
     "play": "tsx --watch playground.ts ",
-    "depcruise": "depcruise -c .dependency-cruiser.js src",
     "bench": "pnpm run build:cjs && tsx benchmarks/index.ts",
     "prepare": "husky install"
   }
