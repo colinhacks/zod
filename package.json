@@ -13,10 +13,7 @@
       "npm-funding": true
     }
   },
-  "workspaces": [
-    "zod",
-    "effect-plugin"
-  ],
+  "workspaces": ["zod", "effect-plugin"],
   "devDependencies": {
     "@babel/core": "^7.22.5",
     "@babel/preset-env": "^7.22.5",
@@ -51,18 +48,12 @@
     "ts-morph": "^14.0.0",
     "ts-node": "^10.9.1",
     "tslib": "^2.3.1",
-    "tsx": "^4.10.2",
     "typescript": "next",
     "vitest": "^0.32.2"
   },
   "lint-staged": {
-    "src/*.ts": [
-      "biome format --write",
-      "biome lint --apply"
-    ],
-    "*.md": [
-      "prettier --ignore-unknown --write"
-    ]
+    "src/*.ts": ["biome format --write", "biome lint --apply"],
+    "*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
     "format": "biome check --apply .",
@@ -85,9 +76,9 @@
     "test:swc": "npx jest --config ./.configs/swc-jest.config.json",
     "test:deno": "cd deno && deno test",
     "prepublishOnly": "pnpm run test && pnpm run build && pnpm run build:deno",
-    "play": "nodemon -e ts,mts -w . -x tsx playground.ts",
+    "play": "nodemon -e ts,mts -w . -x ts-node playground.ts",
     "depcruise": "depcruise -c .dependency-cruiser.js src",
-    "bench": "pnpm run build:cjs && tsx benchmarks/index.ts",
+    "bench": "pnpm run build:cjs && ts-node benchmarks/index.ts",
     "prepare": "husky install"
   }
 }
