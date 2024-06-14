@@ -7,9 +7,9 @@
     "emitDeclarationOnly": true
   },
   "exclude": [
-    "../src/**/__tests__",
+    "../packages/*/tests/**/*",
     "../playground.ts",
-    "../src/benchmarks/**/*",
+    "../packages/benchmarks/**/*",
     "../experiments/**/*"
   ]
 }
