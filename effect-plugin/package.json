@@ -47,11 +47,5 @@
     "build:cjs": "pnpm tsc -p ./tsconfig.build.json --noEmit false --rootDir src --sourceMap --module commonjs --moduleResolution node10 --outDir dist/cjs",
     "test": "tsx tests/*.ts",
     "prepublishOnly": "pnpm test && pnpm build"
-  },
-  "tshy": {
-    "exports": {
-      "./package.json": "./package.json",
-      ".": "./src/index.ts"
-    }
   }
 }

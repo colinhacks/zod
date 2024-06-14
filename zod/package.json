@@ -15,14 +15,12 @@
   "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "typescript": "./src/index.ts",
       "types": "./dist/esm/index.d.ts",
       "require": "./dist/cjs/index.js",
       "import": "./dist/esm/index.js"
     },
     "./package.json": "./package.json",
     "./locales/*": {
-      "typescript": "./src/index.ts",
       "types": "./dist/esm/locales/*.d.ts",
       "require": "./dist/cjs/locales/*.js",
       "import": "./dist/esm/locales/*.js"
