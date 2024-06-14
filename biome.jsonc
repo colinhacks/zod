@@ -31,6 +31,6 @@
     }
   },
   "files": {
-    "ignore": ["deno", "lib", "coverage", "dist"]
+    "ignore": ["lib", "coverage", "dist"]
   }
 }

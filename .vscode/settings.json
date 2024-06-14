@@ -1,14 +1,5 @@
 {
   "typescript.tsdk": "./node_modules/typescript/lib",
-  "files.exclude": {
-    "**/deno": true
-  },
-  "files.watcherExclude": {
-    "**/deno": true
-  },
-  "search.exclude": {
-    "**/deno": true
-  },
   "typescript.validate.enable": true,
   "typescript.tsserver.experimental.enableProjectDiagnostics": true,
 
