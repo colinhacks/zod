@@ -48,18 +48,18 @@ jobs:
           deno-version: ${{ matrix.deno }}
       - run: pnpm install
       - run: pnpm build:deno
-        working-directory: ./zod/deno/lib
+        working-directory: ./packages/zod/deno/lib
       - run: deno --version
       # - run: deno test
-      #   working-directory: ./zod/deno/lib
+      #   working-directory: ./packages/zod/deno/lib
       - run: deno run ./index.ts
-        working-directory: ./zod/deno/lib
+        working-directory: ./packages/zod/deno/lib
       - run: deno run ./mod.ts
-        working-directory: ./zod/deno/lib
+        working-directory: ./packages/zod/deno/lib
       - run: |
           deno bundle ./mod.ts ./bundle.js
           deno run ./bundle.js
-        working-directory: ./zod/deno/lib
+        working-directory: ./packages/zod/deno/lib
 
   lint:
     runs-on: ubuntu-latest

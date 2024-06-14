@@ -65,7 +65,7 @@ jobs:
 
       - name: Push to Deno
         if: steps.publish.outputs.type != 'none'
-        working-directory: deno/lib
+        working-directory: ./packages/zod/deno/lib
         run: |
           git config --global user.email "zodbot@colinhacks.com"
           git config --global user.name "Zod Bot"
