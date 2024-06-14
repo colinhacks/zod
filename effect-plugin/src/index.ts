@@ -1,7 +1,7 @@
 import * as Effect from "effect/Effect";
-import * as z from "zod";
+import { ZodError, ZodType } from "zod";
 
-function zodEffect(this: z.ZodType, data: unknown, params?: any) {
+function zodEffect(this: ZodType, data: unknown, params?: any) {
   return Effect.flatMap(
     Effect.promise(() => this.safeParseAsync(data, params)),
     (result) =>
@@ -9,7 +9,7 @@ function zodEffect(this: z.ZodType, data: unknown, params?: any) {
   );
 }
 
-function zodEffectSync(this: z.ZodType, data: unknown, params?: any) {
+function zodEffectSync(this: ZodType, data: unknown, params?: any) {
   return Effect.suspend(() => {
     const result = this.safeParse(data, params);
     return result.success
@@ -21,7 +21,7 @@ function zodEffectSync(this: z.ZodType, data: unknown, params?: any) {
 const sym = Symbol.for("zod_effect_executed");
 if (!(globalThis as { [k: symbol]: unknown })[sym]) {
   (globalThis as { [k: symbol]: unknown })[sym] = true;
-  Object.defineProperty(z.ZodType.prototype, "effect", {
+  Object.defineProperty(ZodType.prototype, "effect", {
     get() {
       return {
         parse: zodEffect.bind(this),
@@ -29,16 +29,16 @@ if (!(globalThis as { [k: symbol]: unknown })[sym]) {
       };
     },
   });
-  z.ZodError.prototype._tag = "ZodError";
+  ZodError.prototype._tag = "ZodError";
 }
 
 interface EffectMethods<T> {
   parse(
-    ...args: Parameters<z.ZodType["parseAsync"]>
-  ): Effect.Effect<T, z.ZodError<T>>;
+    ...args: Parameters<ZodType["parseAsync"]>
+  ): Effect.Effect<T, ZodError<T>>;
   parseSync(
-    ...args: Parameters<z.ZodType["parse"]>
-  ): Effect.Effect<T, z.ZodError<T>>;
+    ...args: Parameters<ZodType["parse"]>
+  ): Effect.Effect<T, ZodError<T>>;
 }
 declare module "zod" {
   interface ZodType {

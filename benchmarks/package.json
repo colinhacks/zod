@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "devDependencies": {
+    "zod": "^3.0.0"
+  }
+}

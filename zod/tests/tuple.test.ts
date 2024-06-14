@@ -1,5 +1,5 @@
 // @ts-ignore TS6133
-import { expect, test } from "@jest/globals";
+import { expect, test } from "vitest";
 
 import { ZodError } from "../src/ZodError";
 import { util } from "../src/helpers";

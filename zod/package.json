@@ -9,7 +9,6 @@
   "keywords": ["typescript", "schema", "validation", "type", "inference"],
   "license": "MIT",
   "sideEffects": false,
-
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/esm/index.d.ts",
@@ -46,13 +45,8 @@
     "build:cjs": "pnpm tsc -p ./tsconfig.build.json --noEmit false --rootDir src --sourceMap --module commonjs --outDir dist/cjs",
     "build:deno": "node ./deno-build.mjs && cp ../README.md ./deno/lib",
     "build:rollup": "rollup --config ../.configs/rollup.esm.mjs",
-    "test:watch": "pnpm test:ts-jest --watch",
-    "test": "pnpm test:ts-jest",
-    "test:babel": "jest --coverage --config ../.configs/babel-jest.config.json",
-    "test:bun": "bun test src/",
-    "test:vitest": "npx vitest --config ../.configs/vitest.config.ts",
-    "test:ts-jest": "npx jest --config ../.configs/ts-jest.config.json",
-    "test:swc": "npx jest --config ../.configs/swc-jest.config.json",
+    "test:watch": "pnpm vitest",
+    "test": "pnpm vitest run",
     "prepublishOnly": "pnpm test && pnpm run build"
   }
 }
