@@ -30,13 +30,12 @@
     "husky": "^7.0.4",
     "lint-staged": "^12.3.7",
     "mitata": "^0.1.11",
-    "nodemon": "^2.0.22",
     "prettier": "^3.2.5",
     "rollup": "^4.18.0",
     "tinybench": "^2.8.0",
     "ts-morph": "^14.0.0",
-    "ts-node": "^10.9.2",
     "tslib": "^2.3.1",
+    "tsx": "^4.15.4",
     "typescript": "next",
     "vitest": "^1.6.0"
   },
@@ -58,9 +57,9 @@
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm run test && pnpm run build && pnpm run build:deno",
-    "play": "nodemon -e ts,mts -w . -x ts-node playground.ts",
+    "play": "tsx --watch playground.ts ",
     "depcruise": "depcruise -c .dependency-cruiser.js src",
-    "bench": "pnpm run build:cjs && ts-node benchmarks/index.ts",
+    "bench": "pnpm run build:cjs && tsx benchmarks/index.ts",
     "prepare": "husky install"
   }
 }
