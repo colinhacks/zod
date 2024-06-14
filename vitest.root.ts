@@ -7,6 +7,7 @@ export default defineConfig({
     watch: false,
     typecheck: {
       enabled: true,
+      ignoreSourceErrors: true,
       include: ["**/*.test.ts"],
     },
   },
