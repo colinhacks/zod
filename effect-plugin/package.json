@@ -1,7 +1,6 @@
 {
   "name": "@zod-plugin/effect",
   "version": "0.1.0",
-
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "files": ["src", "dist"],
   "funding": "https://github.com/sponsors/colinhacks",
@@ -30,7 +29,7 @@
   },
   "peerDependencies": {
     "effect": "^3.0.0",
-    "zod": "3.23.6"
+    "zod": "^3.0.0"
   },
   "bugs": {
     "url": "https://github.com/colinhacks/zod/issues"

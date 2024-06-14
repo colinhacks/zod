@@ -6,7 +6,6 @@ coverage
 .idea
 *.log
 playground.ts
-# deno/lib
 workspace.code-workspace
 .netlify
 bun.lockb

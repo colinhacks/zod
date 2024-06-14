@@ -36,6 +36,7 @@
     "rollup": "^4.18.0",
     "tinybench": "^2.8.0",
     "ts-morph": "^14.0.0",
+    "ts-node": "^10.9.2",
     "tslib": "^2.3.1",
     "typescript": "next",
     "vitest": "^1.6.0"
