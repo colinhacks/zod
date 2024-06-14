@@ -49,7 +49,7 @@ const walkAndBuild = (/** @type string */ dir) => {
       const denoSource = nodeSource.replace(
         /^(?:import|export)[\s\S]*?from\s*['"]([^'"]*)['"];$/gm,
         (line, target) => {
-          if (target === "@jest/globals") {
+          if (target === "vitest") {
             return `import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";\nconst test = Deno.test;`;
           }
 

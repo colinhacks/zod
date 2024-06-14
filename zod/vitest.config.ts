@@ -1,12 +1,4 @@
-import type { UserConfig } from "vitest/config";
+import { defineConfig, mergeConfig } from "vitest/config";
+import rootConfig from "../vitest.root";
 
-export default {
-  test: {
-    alias: {
-      "@jest/globals": "vitest",
-    },
-    include: ["**/*.test.ts"],
-    isolate: false,
-    watch: false,
-  },
-} satisfies UserConfig;
+export default mergeConfig(rootConfig, defineConfig({}));

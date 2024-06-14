@@ -50,11 +50,19 @@ In the OSS version of VSCode the extension may be not available.
 
 **`pnpm test`**
 
-- runs all Jest tests and generates coverage badge
+- runs all Vitest tests and generates coverage badge
 
-**`pnpm test enum`**
+**`pnpm test:watch`**
 
-- runs a single test file (e.g. `enum.test.ts`)
+- runs all Vitest tests and
+
+**`pnpm test <file>`**
+
+- runs all test files that match `<file>`
+
+**`pnpm test --filter <ws> <file>`**
+
+- runs all test files in `<ws>` that match `<file>` (e.g. `"enum"` will match `"enum.test.ts"`)
 
 **`pnpm play`**
 
@@ -62,9 +70,9 @@ In the OSS version of VSCode the extension may be not available.
 
 ### Tests
 
-Zod uses Jest for testing. After implementing your contribution, write tests for it. Just create a new file under `src/__tests__` or add additional tests to the appropriate existing file.
+Zod uses Vitest for testing. After implementing your contribution, write tests for it. Just create a new file in the `tests` directory of any workspace, or add additional tests to an existing file if appropriate.
 
-Before submitting your PR, run `pnpm test` to make sure there are no (unintended) breaking changes.
+> Zod uses git hooks to execute tests before `git push`. Before submitting your PR, run `pnpm test` to make sure there are no (unintended) breaking changes.
 
 ### Documentation
 

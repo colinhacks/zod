@@ -1,6 +1,6 @@
-// @ts-ignore TS6133
-import { afterEach, beforeEach, expect, test } from "@jest/globals";
 import { File as WebFile } from "@web-std/file";
+// @ts-ignore TS6133
+import { afterEach, beforeEach, expect, test } from "vitest";
 
 import * as z from "../src/index";
 
