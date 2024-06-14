@@ -7,7 +7,6 @@ import * as z from "zod";
 const syncSchema = z.string();
 const asyncSchema = z.string().refine(async () => true);
 
-console.log(z.ZodError);
 describe("Schema validation tests", () => {
   test("Sync schema should return the input value", () => {
     const result = Effect.runSync(syncSchema.effect.parseSync("hello"));
