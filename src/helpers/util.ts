@@ -88,6 +88,10 @@ export namespace util {
       .join(separator);
   }
 
+  export function pluralize(count: number | bigint, singular: string, plural: string = singular + "s") {
+    return count === 1 ? singular : plural;
+  }
+
   export const jsonStringifyReplacer = (_: string, value: any): any => {
     if (typeof value === "bigint") {
       return value.toString();
