@@ -84,6 +84,12 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0(@types/node@20.13.0)
 
+  benchmarks:
+    devDependencies:
+      zod:
+        specifier: ^3.0.0
+        version: link:../zod
+
   effect-plugin:
     dependencies:
       effect:
