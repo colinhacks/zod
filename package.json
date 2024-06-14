@@ -48,7 +48,7 @@
     "format:check": "biome check .",
     "lint": "biome lint --apply .",
     "lint:check": "biome lint .",
-    "clean": "pnpm run -r clean",
+    "clean": "pnpm run -r clean && rm -rf node_modules",
     "build": "pnpm run -r build",
     "build:deno": "pnpm run --filter zod build:deno",
     "build:esm": "pnpm run --filter zod build:esm",
