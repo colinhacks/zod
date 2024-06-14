@@ -1,1 +1,1 @@
-export default ["zod", "effect-plugin"];
+export default ["packages/*"];
