@@ -13,7 +13,6 @@
       "npm-funding": true
     }
   },
-  "workspaces": ["zod", "effect-plugin"],
   "devDependencies": {
     "@biomejs/biome": "^1.7.3",
     "@rollup/plugin-commonjs": "^25.0.8",
@@ -50,11 +49,11 @@
     "format:check": "biome check .",
     "lint": "biome lint --apply .",
     "lint:check": "biome lint .",
-    "clean": "rm -rf dist",
+    "clean": "pnpm run -r clean",
     "build": "pnpm run -r build",
     "build:deno": "pnpm run --filter zod build:deno",
-    "build:esm": "rollup --config ./.configs/rollup.config.mjs",
-    "build:cjs": "tsc -p ./.configs/tsconfig.cjs.json --rootDir .",
+    "build:esm": "pnpm run --filter zod build:esm",
+    "build:cjs": "pnpm run --filter zod build:cjs",
     "build:types": "tsc -p ./.configs/tsconfig.types.json",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",

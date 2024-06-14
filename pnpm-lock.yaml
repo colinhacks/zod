@@ -88,9 +88,9 @@ importers:
     devDependencies:
       zod:
         specifier: ^3.0.0
-        version: link:../zod
+        version: link:../packages/zod
 
-  effect-plugin:
+  packages/effect-plugin:
     dependencies:
       effect:
         specifier: ^3.0.0
@@ -99,7 +99,7 @@ importers:
         specifier: ^3.0.0
         version: link:../zod
 
-  zod: {}
+  packages/zod: {}
 
 packages:
 
