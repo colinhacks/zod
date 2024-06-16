@@ -27,6 +27,7 @@
     "console-table-printer": "^2.12.0",
     "execa": "^9.1.0",
     "husky": "^7.0.4",
+    "jsr": "^0.12.4",
     "lint-staged": "^12.3.7",
     "mitata": "^0.1.11",
     "prettier": "^3.2.5",
