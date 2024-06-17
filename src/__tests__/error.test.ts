@@ -162,7 +162,7 @@ test("custom path in custom error map", () => {
 
   const errorMap: z.ZodErrorMap = (error) => {
     expect(error.path.length).toBe(2);
-    return { message: "doesnt matter" };
+    return { message: "doesn't matter" };
   };
   const result = schema.safeParse({ items: ["first"] }, { errorMap });
   expect(result.success).toEqual(false);
