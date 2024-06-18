@@ -1827,6 +1827,7 @@ const avatar = z
   .refine((file) => {
     return !file || constraints.type.includes(file.type)
   }, `Only following image types allowed: ${constraints.type.join(", ")}`)
+  .or(z.string().url()) // Add this if existing avatar is stored as URL string
 ```
 
 **FYI**
