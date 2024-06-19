@@ -221,10 +221,9 @@
       .dark .theme-btn {
         background-image: url("./static/sun.svg");
       }
-      .dark .light-mode-logo {
+      /* .dark .light-mode-logo {
         display: block !important;
       }
-      /* dark mode */
       @media (prefers-color-scheme: light) {
         .dark .light-mode-logo {
           display: block !important;
@@ -235,12 +234,12 @@
         .dark .light-mode-logo {
           display: none !important;
         }
-      }
+      } */
     </style>
   </head>
 
   <body data-theme="dark">
-    <div class="theme-btn"></div>
+    <!-- <div class="theme-btn"></div> -->
     <div id="app"></div>
     <script src="//cdnjs.cloudflare.com/ajax/libs/docsify/4.12.2/docsify.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-typescript.min.js"></script>
@@ -303,13 +302,13 @@
         ],
       };
     </script>
-    <script>
+    <!-- <script>
       window.addEventListener("DOMContentLoaded", () => {
         document
           .querySelector("aside")
           .prepend(document.querySelector(".theme-btn"));
       });
-    </script>
+    </script> -->
     <script src="https://www.unpkg.com/zod/lib/index.umd.js"></script>
   </body>
 </html>
