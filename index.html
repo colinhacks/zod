@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -221,31 +221,63 @@
       .dark .theme-btn {
         background-image: url("./static/sun.svg");
       }
+      .dark .light-mode-logo {
+        display: block !important;
+      }
+      /* dark mode */
+      @media (prefers-color-scheme: light) {
+        .dark .light-mode-logo {
+          display: block !important;
+        }
+        .dark picture {
+          display: none;
+        }
+        .dark .light-mode-logo {
+          display: none !important;
+        }
+      }
     </style>
   </head>
 
-  <body>
+  <body data-theme="dark">
     <div class="theme-btn"></div>
     <div id="app"></div>
     <script src="//cdnjs.cloudflare.com/ajax/libs/docsify/4.12.2/docsify.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-typescript.min.js"></script>
     <script>
-      toggleDarkTheme(localStorage.getItem("dark-theme") === "true" || false);
+      function checkDark() {
+        return (
+          localStorage.getItem("dark-theme") === "true" ??
+          window.matchMedia("(prefers-color-scheme: dark)").matches ??
+          false
+        );
+      }
+
+      let isDark = checkDark();
+      toggleDarkTheme(isDark);
 
       window
         .matchMedia("(prefers-color-scheme: dark)")
-        .addEventListener("change", (e) => toggleDarkTheme(e.matches));
+        .addEventListener("change", (e) => toggleDarkTheme(e.matches()));
 
-      document
-        .querySelector(".theme-btn")
-        .addEventListener("click", () => toggleDarkTheme());
+      document.querySelector(".theme-btn").addEventListener("click", () => {
+        const isDark = checkDark();
+        console.log("isDark", isDark);
+        toggleDarkTheme(!isDark);
+      });
 
-      function toggleDarkTheme(force) {
-        document.body.classList.toggle("dark", force);
-        localStorage.setItem(
-          "dark-theme",
-          document.body.classList.contains("dark")
+      function toggleDarkTheme(isDark) {
+        if (isDark) {
+          document.body.classList.add("dark");
+        } else {
+          document.body.classList.remove("dark");
+        }
+
+        document.documentElement.setAttribute(
+          "data-theme",
+          isDark ? "dark" : "light"
         );
+        localStorage.setItem("dark-theme", isDark ? "true" : "false");
       }
     </script>
 
