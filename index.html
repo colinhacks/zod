@@ -244,11 +244,11 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/docsify/4.12.2/docsify.min.js"></script>
     <script src="//cdnjs.cloudflare.com/ajax/libs/prism/1.28.0/components/prism-typescript.min.js"></script>
     <script>
+      localStorage.removeItem("dark-theme");
       function checkDark() {
         return (
-          localStorage.getItem("dark-theme") === "true" ??
-          window.matchMedia("(prefers-color-scheme: dark)").matches ??
-          false
+          // localStorage.getItem("dark-theme") === "true" ??
+          window.matchMedia("(prefers-color-scheme: dark)").matches ?? false
         );
       }
 
@@ -276,7 +276,7 @@
           "data-theme",
           isDark ? "dark" : "light"
         );
-        localStorage.setItem("dark-theme", isDark ? "true" : "false");
+        // localStorage.setItem("dark-theme", isDark ? "true" : "false");
       }
     </script>
 
