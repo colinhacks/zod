@@ -581,6 +581,7 @@ z.bigint();
 z.boolean();
 z.date();
 z.symbol();
+z.enum();
 
 // empty types
 z.undefined();
@@ -981,7 +982,7 @@ const VALUES = ["Salmon", "Tuna", "Trout"] as const;
 const FishEnum = z.enum(VALUES);
 ```
 
-This is not allowed, since Zod isn't able to infer the exact values of each element.
+The following is not allowed, since Zod isn't able to infer the exact values of each element.
 
 ```ts
 const fish = ["Salmon", "Tuna", "Trout"];
