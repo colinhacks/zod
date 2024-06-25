@@ -426,7 +426,7 @@ export abstract class ZodType<
     this.default = this.default.bind(this);
     this.catch = this.catch.bind(this);
     this.describe = this.describe.bind(this);
-    this.describeTitle = this.describeTitle.bind(this);
+    this.titled = this.titled.bind(this);
     this.pipe = this.pipe.bind(this);
     this.readonly = this.readonly.bind(this);
     this.isNullable = this.isNullable.bind(this);
@@ -513,7 +513,7 @@ export abstract class ZodType<
     });
   }
 
-  describeTitle(title: string): this {
+  titled(title: string): this {
     const This = (this as any).constructor;
     return new This({
       ...this._def,

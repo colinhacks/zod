@@ -12,10 +12,10 @@ test("passing `title` to schema should add a title", () => {
   expect(z.boolean({ title }).title).toEqual(title);
 });
 
-test("`.describeTitle` should add a description", () => {
-  expect(z.string().describeTitle(title).title).toEqual(title);
-  expect(z.number().describeTitle(title).title).toEqual(title);
-  expect(z.boolean().describeTitle(title).title).toEqual(title);
+test("`.titled` should add a description", () => {
+  expect(z.string().titled(title).title).toEqual(title);
+  expect(z.number().titled(title).title).toEqual(title);
+  expect(z.boolean().titled(title).title).toEqual(title);
 });
 
 test("title should carry over to chained schemas", () => {
