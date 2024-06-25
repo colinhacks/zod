@@ -141,6 +141,7 @@
     - [Async transforms](#async-transforms)
   - [`.default`](#default)
   - [`.describe`](#describe)
+  - [`.describeTitle`](#describeTitle)
   - [`.catch`](#catch)
   - [`.optional`](#optional)
   - [`.nullable`](#nullable)
@@ -2346,6 +2347,17 @@ const documentedString = z
   .string()
   .describe("A useful bit of text, if you know what to do with it.");
 documentedString.description; // A useful bit of text…
+```
+
+This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
+
+### `.describeTitle`
+
+Use `.describeTitle()` to add a `title` property to the resulting schema.
+
+```ts
+const documentedString = z.string().describeTitle("Tile In Readable Format");
+documentedString.title; // A useful name for presentation
 ```
 
 This can be useful for documenting a field, for example in a JSON Schema using a library like [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)).
