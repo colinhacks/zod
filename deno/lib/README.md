@@ -206,13 +206,13 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <img alt="clerk logo" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
     </picture>
   </a>
-  <!-- <br/>
+  <br/>
   <br/>
   <p>
     The most comprehensive User Management Platform
     <br/>
     <a style="text-decoration:none;" href="https://go.clerk.com/PKHrcwh" target="_blank">clerk.com</a>
-  </p> -->
+  </p>
 </div>
 
 <br/>
