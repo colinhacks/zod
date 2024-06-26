@@ -218,7 +218,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
-      <p>
+      <p style="margin:5px;">
       <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
         <picture height="40px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
@@ -233,7 +233,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
     </tr><tr>
      <td align="center">
-      <p>
+      <p style="margin:5px;">
       <a href="https://stainlessapi.com">
         <picture height="45px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/f20759c1-3e51-49d0-a31e-bbc43abec665">
