@@ -228,13 +228,13 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br  />   
       SDKs & Terraform providers for your API
       <br/>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs" style="text-decoration:none;">stainlessapi.com</a>
+      <a href="https://speakeasyapi.dev/?utm_source=zod+docs" style="text-decoration:none;">speakeasyapi.dev</a>
       </p>
     </td>
      <td align="center">
       <p>
       <a href="https://stainlessapi.com">
-        <picture height="40px">
+        <picture height="45px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/f20759c1-3e51-49d0-a31e-bbc43abec665">
           <img alt="stainless" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/e9444e44-d991-4bba-a697-dbcfad608e47">
         </picture>
@@ -242,7 +242,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br  />   
       Generate best-in-class SDKs
       <br/>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs" style="text-decoration:none;">speakeasyapi.dev</a>
+      <a href="https://stainlessapi.com" style="text-decoration:none;">stainlessapi.com</a>
       </p>
     </td>
   </tr>
