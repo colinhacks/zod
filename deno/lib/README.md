@@ -235,7 +235,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
     </td>
     </tr><tr>
      <td align="center">
-     <br/>
+      <p></p>
       <p>
       <a href="https://stainlessapi.com">
         <picture height="45px">
@@ -248,7 +248,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
       <br/>
       <a href="https://stainlessapi.com" style="text-decoration:none;">stainlessapi.com</a>
       </p>
-      <br/>
+      <p></p>
     </td>
   </tr>
 </table>
