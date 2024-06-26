@@ -1,6 +1,8 @@
 {
   "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "."
+    "rootDir": ".",
+    "isolatedDeclarations": true,
+    "composite": true
   }
 }

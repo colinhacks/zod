@@ -19,7 +19,7 @@ importers:
         version: 15.2.3(rollup@4.18.0)
       '@rollup/plugin-typescript':
         specifier: ^11.1.6
-        version: 11.1.6(rollup@4.18.0)(tslib@2.6.2)(typescript@5.5.0-dev.20240531)
+        version: 11.1.6(rollup@4.18.0)(tslib@2.6.2)(typescript@5.6.0-dev.20240619)
       '@types/benchmark':
         specifier: ^2.1.5
         version: 2.1.5
@@ -75,8 +75,8 @@ importers:
         specifier: ^4.15.4
         version: 4.15.4
       typescript:
-        specifier: next
-        version: 5.5.0-dev.20240531
+        specifier: 5.6.0-dev.20240619
+        version: 5.6.0-dev.20240619
       vitest:
         specifier: ^1.6.0
         version: 1.6.0(@types/node@20.13.0)
@@ -1220,8 +1220,8 @@ packages:
     resolution: {integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==}
     engines: {node: '>=10'}
 
-  typescript@5.5.0-dev.20240531:
-    resolution: {integrity: sha512-OzmPvUfcE/QfBFZGl+a976k3SCEo26/eGhDEOSz/gGUTWCOqoLjdBFgtQx9OJRKLBMJd+oI59BdRC/cbtDa11g==}
+  typescript@5.6.0-dev.20240619:
+    resolution: {integrity: sha512-sm/XGC2JAkC4NyslRNZhIyHOTEEcl3sY2bzaJ4mi1iz/wAH5nzOblREvminnB5lleWZhWxJiA+IgM0VBMdMmfA==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -1485,11 +1485,11 @@ snapshots:
     optionalDependencies:
       rollup: 4.18.0
 
-  '@rollup/plugin-typescript@11.1.6(rollup@4.18.0)(tslib@2.6.2)(typescript@5.5.0-dev.20240531)':
+  '@rollup/plugin-typescript@11.1.6(rollup@4.18.0)(tslib@2.6.2)(typescript@5.6.0-dev.20240619)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.18.0)
       resolve: 1.22.8
-      typescript: 5.5.0-dev.20240531
+      typescript: 5.6.0-dev.20240619
     optionalDependencies:
       rollup: 4.18.0
       tslib: 2.6.2
@@ -2344,7 +2344,7 @@ snapshots:
 
   type-fest@0.21.3: {}
 
-  typescript@5.5.0-dev.20240531: {}
+  typescript@5.6.0-dev.20240619: {}
 
   ufo@1.5.3: {}
 
