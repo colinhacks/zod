@@ -36,6 +36,13 @@
 <br/>
 <br/>
 
+<a href="https://go.clerk.com/m35be06">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/c7040412-5b79-4426-8c06-d13472ba3d53">
+    <img alt="clerk announcement"  src="https://github.com/colinhacks/zod/assets/3084745/55141330-7eb0-417f-bc05-6d8808de6982">
+  </picture>
+</a>
+
 <h4><strong>Announcement ✨</strong><br/>Zod has recieved the <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://zod.dev/blog/clerk-fellowship">zod.dev/blog/clerk-fellowship</a></h4>
 
 <br/>
