@@ -192,9 +192,7 @@ Some other great aspects:
 
 ## Sponsors
 
-Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
-
-> Clerk is currently sponsoring my full-time development of Zod! If you're building an app, give it a shot—it really is the easiest way to set up authentication and user accounts. (Seriously, their DX is unparalleled.)
+Sponsorship at any level is appreciated and encouraged. If you built a paid product using Zod, consider one of the [corporate tiers](https://github.com/sponsors/colinhacks).
 
 <br/>
 <h3 align="center">Diamond</h3>
