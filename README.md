@@ -36,7 +36,7 @@
 <br/>
 <br/>
 
-<h4><strong>Announcement ✨</strong> Zod has recieved the <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://zod.dev/blog/clerk-fellowship">zod.dev/blog/clerk-fellowship</a></h4>
+<p><strong>Announcement ✨</strong> Zod has recieved the <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://zod.dev/blog/clerk-fellowship">zod.dev/blog/clerk-fellowship</a></p>
 
 <a href="https://go.clerk.com/m35be06">
   <picture>
