@@ -198,11 +198,7 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
   <a href="https://go.clerk.com/PKHrcwh">
     <picture height="120px" >
       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/167ea625-bf23-4f7b-afc2-1dbb0ad60a3e">
-<<<<<<< HEAD
       <img alt="clerk logo" height="120px" src="https://github.com/colinhacks/zod/assets/3084745/68a43b31-62e5-4344-a112-7066dcf3d830">
-=======
-      <img alt="speakeasy" height="120px" src="https://github.com/colinhacks/zod/assets/3084745/68a43b31-62e5-4344-a112-7066dcf3d830">
->>>>>>> 660ea47f (Add stainless)
     </picture>
   </a>
   <br/>
