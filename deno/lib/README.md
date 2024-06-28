@@ -36,17 +36,15 @@
 <br/>
 <br/>
 
-<h4><strong>Announcement ✨</strong><br/>Zod has recieved the <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://zod.dev/blog/clerk-fellowship">zod.dev/blog/clerk-fellowship</a></h4>
+<!-- <p><strong>Announcement ✨</strong> Zod has recieved the <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://go.clerk.com/zod-clerk">clerk.com/blog/zod-fellowship</a></p> -->
+
+[![clerk announcement](https://github.com/colinhacks/zod/assets/3084745/6327cf99-8d82-4b44-a5b1-ba2b5c2ff6ad)](https://go.clerk.com/hqN4rp7)
 
 <br/>
 
 ## Table of contents
 
 > These docs have been translated into [Chinese](./README_ZH.md).
-
-<!-- The full documentation is available both on the [official documentation site](https://zod.js.org/) (recommended) and in `README.md`.
-
-#### Go to [zod.js.org](https://zod.js.org) >> -->
 
 - [Table of contents](#table-of-contents)
 - [Introduction](#introduction)
@@ -185,9 +183,7 @@ Some other great aspects:
 
 ## Sponsors
 
-Sponsorship at any level is appreciated and encouraged. For individual developers, consider the [Cup of Coffee tier](https://github.com/sponsors/colinhacks). If you built a paid product using Zod, consider one of the [podium tiers](https://github.com/sponsors/colinhacks).
-
-> Clerk is currently sponsoring my full-time development of Zod! If you're building an app, give it a shot—it really is the easiest way to set up authentication and user accounts. (Seriously, their DX is unparalleled.)
+Sponsorship at any level is appreciated and encouraged. If you built a paid product using Zod, consider one of the [corporate tiers](https://github.com/sponsors/colinhacks).
 
 <br/>
 <h3 align="center">Diamond</h3>
@@ -196,9 +192,9 @@ Sponsorship at any level is appreciated and encouraged. For individual developer
 
 <div align="center">
   <a href="https://go.clerk.com/PKHrcwh">
-    <picture height="120px" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/167ea625-bf23-4f7b-afc2-1dbb0ad60a3e">
-      <img alt="clerk logo" height="120px" src="https://github.com/colinhacks/zod/assets/3084745/68a43b31-62e5-4344-a112-7066dcf3d830">
+    <picture width="100%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
+      <img alt="clerk logo" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
     </picture>
   </a>
   <br/>
