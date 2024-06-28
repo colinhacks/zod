@@ -38,9 +38,7 @@
 
 <!-- <p><strong>Announcement ✨</strong> Zod has recieved the <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://go.clerk.com/zod-clerk">clerk.com/blog/zod-fellowship</a></p> -->
 
-<a href="https://go.clerk.com/hqN4rp7">
-  <img alt="clerk announcement"  src="https://github.com/colinhacks/zod/assets/3084745/6327cf99-8d82-4b44-a5b1-ba2b5c2ff6ad">
-</a>
+[![clerk announcement](https://github.com/colinhacks/zod/assets/3084745/6327cf99-8d82-4b44-a5b1-ba2b5c2ff6ad)](https://go.clerk.com/hqN4rp7)
 
 <br/>
 
