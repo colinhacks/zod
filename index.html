@@ -260,11 +260,11 @@
         .matchMedia("(prefers-color-scheme: dark)")
         .addEventListener("change", (e) => toggleDarkTheme(e.matches()));
 
-      document.querySelector(".theme-btn").addEventListener("click", () => {
-        const isDark = checkDark();
-        console.log("isDark", isDark);
-        toggleDarkTheme(!isDark);
-      });
+      // document.querySelector(".theme-btn").addEventListener("click", () => {
+      //   const isDark = checkDark();
+      //   console.log("isDark", isDark);
+      //   toggleDarkTheme(!isDark);
+      // });
 
       function toggleDarkTheme(isDark) {
         if (isDark) {
@@ -300,8 +300,26 @@
           "https://zod.dev/",
           "https://deno.land/x/zod",
           "https://zod.dev/blog/clerk-fellowship",
+          "https://go.clerk.com/hqN4rp7",
+          "https://go.clerk.com/Qgor5NQ"
         ],
       };
+    </script>
+    <script>
+      window.onload = () => {
+        const sidebar = document.querySelector(".sidebar-nav");
+        console.log(sidebar);
+        const clerkLink = document.createElement("a");
+        clerkLink.style.display = "block";
+        clerkLink.style.padding = "14px 8px 0px 8px";
+        clerkLink.href = "https://go.clerk.com/Qgor5NQ";
+        const clerkImg = document.createElement("img");
+        clerkImg.src = "https://github.com/colinhacks/zod/assets/3084745/944665e0-113d-42a4-a340-bd6c61e25880";
+        // clerkImg.style.padding = "10px 12px 0px 12px";
+        clerkLink.appendChild(clerkImg);
+        sidebar.appendChild(clerkLink)
+      };
+      
     </script>
     <!-- <script>
       window.addEventListener("DOMContentLoaded", () => {

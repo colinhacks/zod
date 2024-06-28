@@ -36,12 +36,12 @@
 <br/>
 <br/>
 
-<p><strong>Announcement ✨</strong> Zod has recieved the <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://zod.dev/blog/clerk-fellowship">zod.dev/blog/clerk-fellowship</a></p>
+<!-- <p><strong>Announcement ✨</strong> Zod has recieved the <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://go.clerk.com/zod-clerk">clerk.com/blog/zod-fellowship</a></p> -->
 
-<a href="https://go.clerk.com/m35be06">
+<a href="https://go.clerk.com/hqN4rp7">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/c7040412-5b79-4426-8c06-d13472ba3d53">
-    <img alt="clerk announcement"  src="https://github.com/colinhacks/zod/assets/3084745/55141330-7eb0-417f-bc05-6d8808de6982">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/4a126821-b691-4a3f-a54a-bcb05f37385b">
+    <img alt="clerk announcement"  src="https://github.com/colinhacks/zod/assets/3084745/4a126821-b691-4a3f-a54a-bcb05f37385b">
   </picture>
 </a>
 
