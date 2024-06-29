@@ -364,9 +364,16 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative logo" />
       </a>
     </td>
-     <td align="center">
+    <td align="center">
      <a href="https://github.com/jasonLaster">
         <img src="https://avatars.githubusercontent.com/u/254562?v=4" height="40px;" alt="Jason Laster" />
+      </a>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://www.route4me.com/">
+        <img src="https://avatars.githubusercontent.com/u/7936820?s=200&v=4" height="40px;" alt="route4me logo" />
       </a>
     </td>
   </tr>
