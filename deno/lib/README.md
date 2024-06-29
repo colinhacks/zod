@@ -328,6 +328,11 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
+      <a href="https://www.route4me.com/">
+        <img src="https://avatars.githubusercontent.com/u/7936820?s=200&v=4" height="40px;" alt="route4me logo" />
+      </a>
+    </td>
+    <td align="center">
       <a href="https://encore.dev">
         <img src="https://github.com/colinhacks/zod/assets/3084745/5ad94e73-cd34-4957-9979-37da85fcf9cd" height="40px;" alt="Encore.dev logo" />
       </a>
@@ -342,13 +347,13 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         <img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric logo" />
       </a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://marcatopartners.com">
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" height="40px;" alt="Marcato Partners" />
       </a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://interval.com">
         <img src="https://avatars.githubusercontent.com/u/67802063?s=200&v=4" height="40px;" alt="" />
@@ -364,8 +369,10 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative logo" />
       </a>
     </td>
-     <td align="center">
-     <a href="https://github.com/jasonLaster">
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/jasonLaster">
         <img src="https://avatars.githubusercontent.com/u/254562?v=4" height="40px;" alt="Jason Laster" />
       </a>
     </td>
