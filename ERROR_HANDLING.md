@@ -133,7 +133,7 @@ Here are the errors that will be printed:
     code: "unrecognized_keys",
     keys: ["extra"],
     path: ["address"],
-    message: "Unrecognized key(s) in object: 'extra'",
+    message: "Unrecognized key in object: 'extra'",
   },
   {
     code: "too_small",
