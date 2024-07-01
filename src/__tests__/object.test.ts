@@ -90,7 +90,7 @@ test("unknownkeys override", () => {
     .strict()
     .passthrough()
     .strip()
-    .nonstrict()
+    .passthrough()
     .parse(data);
 
   expect(val).toEqual(data);
