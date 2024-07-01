@@ -308,3 +308,14 @@ test("optional and nullable", () => {
   if (value.key === "b") value.b;
   if (value.key === null) value.b;
 });
+
+test("readonly array of options", () => {
+  const options = [
+    z.object({ type: z.literal("x"), val: z.literal(1) }),
+    z.object({ type: z.literal("y"), val: z.literal(2) }),
+  ] as const;
+
+  expect(
+    z.discriminatedUnion("type", options).parse({ type: "x", val: 1 })
+  ).toEqual({ type: "x", val: 1 });
+});
