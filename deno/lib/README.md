@@ -486,6 +486,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-fixture`](https://github.com/timdeschryver/zod-fixture): Use your zod schemas to automate the generation of non-relevant test fixtures in a deterministic way.
 - [`zocker`](https://zocker.sigrist.dev): Generate plausible mock-data from your schemas.
 - [`zodock`](https://github.com/ItMaga/zodock) Generate mock data based on Zod schemas.
+- [`zod-schema-faker`](https://github.com/soc221b/zod-schema-faker) Generates mock data from Zod schemas. Powered by [@faker-js/faker](https://github.com/faker-js/faker) and [randexp.js](https://github.com/fent/randexp.js)
 
 #### Powered by Zod
 

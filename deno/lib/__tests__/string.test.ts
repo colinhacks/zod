@@ -331,8 +331,8 @@ test("ulid", () => {
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("Invalid ulid");
   }
-  const caseInsensitive = ulid.safeParse("01arZ3nDeKTsV4RRffQ69G5FAV")
-  expect(caseInsensitive.success).toEqual(true)
+  const caseInsensitive = ulid.safeParse("01arZ3nDeKTsV4RRffQ69G5FAV");
+  expect(caseInsensitive.success).toEqual(true);
 });
 
 test("regex", () => {
