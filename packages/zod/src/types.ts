@@ -4629,7 +4629,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
     return input;
   }
 
-  get value() {
+  get value(): T {
     return this._def.value;
   }
 
@@ -5009,7 +5009,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
     return file;
   }
 
-  _addCheck(check: ZodFileCheck) {
+  _addCheck(check: ZodFileCheck): ZodFile {
     return new ZodFile({
       ...this._def,
       checks: [...this._def.checks, check],
@@ -5019,7 +5019,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
   /**
    * Restricts file size to the specified min.
    */
-  min(minSize: number, message?: errorUtil.ErrMessage) {
+  min(minSize: number, message?: errorUtil.ErrMessage): ZodFile {
     return this._addCheck({
       kind: "min",
       value: minSize,
@@ -5030,7 +5030,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
   /**
    * Restricts file size to the specified max.
    */
-  max(maxSize: number, message?: errorUtil.ErrMessage) {
+  max(maxSize: number, message?: errorUtil.ErrMessage): ZodFile {
     return this._addCheck({
       kind: "max",
       value: maxSize,
@@ -5042,7 +5042,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
    * Restrict accepted file types.
    * @see https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/file#unique_file_type_specifiers
    */
-  type(fileTypes: Array<string>, message?: errorUtil.ErrMessage) {
+  type(fileTypes: Array<string>, message?: errorUtil.ErrMessage): ZodFile {
     const invalidTypes = [];
     for (const t of fileTypes) {
       if (!t.includes("/")) {
@@ -5062,7 +5062,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
   /**
    * Validates file name against the provided schema.
    */
-  name(schema: ZodTypeAny, message?: errorUtil.ErrMessage) {
+  name(schema: ZodTypeAny, message?: errorUtil.ErrMessage): ZodFile {
     return this._addCheck({
       kind: "filename",
       value: schema,
@@ -5070,7 +5070,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
     });
   }
 
-  get minSize() {
+  get minSize(): number | null {
     let min: number | null = null;
     for (const check of this._def.checks) {
       if (check.kind === "min") {
@@ -5082,7 +5082,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
     return min;
   }
 
-  get maxSize() {
+  get maxSize(): number | null {
     let max: number | null = null;
     for (const check of this._def.checks) {
       if (check.kind === "max") {
@@ -5097,7 +5097,7 @@ export class ZodFile extends ZodType<File, ZodFileDef> {
   /**
    * Returns accepted file types or undefined if any file type is acceptable.
    */
-  get acceptedTypes() {
+  get acceptedTypes(): string[] | undefined {
     let result: Array<string> | undefined;
     for (const check of this._def.checks) {
       if (check.kind === "type") {
@@ -5146,7 +5146,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
   ZodPromiseDef<T>,
   Promise<T["_input"]>
 > {
-  unwrap() {
+  unwrap(): T {
     return this._def.type;
   }
 
@@ -5227,7 +5227,7 @@ export class ZodEffects<
   Output = output<T>,
   Input = input<T>,
 > extends ZodType<Output, ZodEffectsDef<T>, Input> {
-  innerType() {
+  innerType(): T {
     return this._def.schema;
   }
 
@@ -5489,7 +5489,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType._parse(input, ctx);
   }
 
-  unwrap() {
+  unwrap(): T {
     return this._def.innerType;
   }
 
@@ -5536,7 +5536,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType._parse(input, ctx);
   }
 
-  unwrap() {
+  unwrap(): T {
     return this._def.innerType;
   }
 
@@ -5582,7 +5582,7 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
     return this._def.innerType._parse(input, ctx) as any;
   }
 
-  removeDefault() {
+  removeDefault(): T {
     return this._def.innerType;
   }
 
@@ -5658,7 +5658,7 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
       : result;
   }
 
-  removeCatch() {
+  removeCatch(): T {
     return this._def.innerType;
   }
 
@@ -5743,7 +5743,7 @@ export class ZodBranded<
     return this._def.type._parse(input, ctx);
   }
 
-  unwrap() {
+  unwrap(): T {
     return this._def.type;
   }
 }
@@ -5859,7 +5859,7 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
     }) as any;
   }
 
-  unwrap() {
+  unwrap(): T {
     return this._def.innerType;
   }
 }
@@ -6355,6 +6355,7 @@ export class ZodTemplateLiteral<Template extends string = ""> extends ZodType<
 ////////////////////////////////////////
 ////////////////////////////////////////
 type CustomParams = CustomErrorParams & { fatal?: boolean };
+export type ZodCustom<T> = ZodType<T, ZodTypeDef, T>;
 export function custom<T>(
   check?: (data: any) => any,
   params: string | CustomParams | ((input: any) => CustomParams) = {},
@@ -6370,7 +6371,7 @@ export function custom<T>(
    */
 
   fatal?: boolean
-): ZodType<T, ZodTypeDef, T> {
+): ZodCustom<T> {
   if (check)
     return ZodAny.create().superRefine((data, ctx) => {
       if (!check(data)) {
@@ -6392,7 +6393,7 @@ export { ZodType as Schema, ZodType as ZodSchema };
 
 const lateObject: typeof ZodObject.lazycreate = (...args: [any]) =>
   ZodObject.lazycreate(...args);
-export const late = {
+export const late: { object: typeof lateObject } = {
   object: lateObject,
 };
 
@@ -6484,18 +6485,15 @@ abstract class Class {
   constructor(..._: any[]) {}
 }
 
-const instanceOfType = <T extends typeof Class>(
-  // const instanceOfType = <T extends new (...args: any[]) => any>(
+function instanceOfType<T extends typeof Class>(
   cls: T,
   params: CustomParams = {
     message: `Input not instance of ${cls.name}`,
   }
-) => custom<InstanceType<T>>((data) => data instanceof cls, params);
+): ZodCustom<InstanceType<T>> {
+  return custom((data) => data instanceof cls, params);
+}
 
-//////////////////////////////////////////////////////
-// MUST be aliased using wrapper functions.         //
-// See: https://github.com/colinhacks/zod/pull/2850 //
-//////////////////////////////////////////////////////
 const stringType: typeof ZodString.create = (...args) =>
   ZodString.create(...args);
 const numberType: typeof ZodNumber.create = (...args) =>
@@ -6568,9 +6566,9 @@ Object.defineProperty(_literalType, "template", {
 });
 const literalType = _literalType as Literal;
 
-const ostring = () => stringType().optional();
-const onumber = () => numberType().optional();
-const oboolean = () => booleanType().optional();
+const ostring: () => ZodOptional<ZodString> = () => stringType().optional();
+const onumber: () => ZodOptional<ZodNumber> = () => numberType().optional();
+const oboolean: () => ZodOptional<ZodBoolean> = () => booleanType().optional();
 
 export * as coerce from "./coerce";
 
