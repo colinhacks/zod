@@ -8,7 +8,7 @@
     "./locales/fa": "./src/locales/fa.ts"
   },
   "publish": {
-    "include": ["LICENSE", "package.json", "README.md", "src"],
+    "include": ["src", "LICENSE", "package.json", "README.md"],
     "exclude": ["tests", "dist"]
   }
 }
