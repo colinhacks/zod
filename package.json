@@ -36,7 +36,7 @@
     "ts-morph": "^14.0.0",
     "tslib": "^2.3.1",
     "tsx": "^4.15.4",
-    "typescript": "5.6.0-dev.20240702",
+    "typescript": "5.5.3",
     "vitest": "^1.6.0"
   },
   "lint-staged": {
