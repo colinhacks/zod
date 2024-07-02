@@ -73,7 +73,7 @@ export class ZodFailure {
   ) {}
   status = "aborted" as const;
 
-  get value() {
+  get value(): unknown {
     return this._value;
   }
   set value(v: unknown) {
