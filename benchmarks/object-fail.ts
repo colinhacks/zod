@@ -1,6 +1,12 @@
-import { makeData } from "./benchUtil";
+import { makeData, makeSchema } from "./benchUtil";
 import { metabench } from "./metabench";
-import { zod3, zod4 } from "./object-old";
+const { zod3, zod4 } = makeSchema((z) =>
+  z.object({
+    string: z.string(),
+    boolean: z.boolean(),
+    number: z.number(),
+  })
+);
 
 const DATA = makeData(1000, () => {
   return Object.freeze({
@@ -21,7 +27,7 @@ const bench = metabench("small: z.object().safeParseAsync", {
   },
 });
 
-export default async function run() {
+export default async function run(): Promise<void> {
   await bench.run();
 }
 
