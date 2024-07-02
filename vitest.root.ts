@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { type UserConfig, defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
@@ -11,4 +11,4 @@ export default defineConfig({
       include: ["**/*.test.ts"],
     },
   },
-});
+}) as UserConfig;

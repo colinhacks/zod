@@ -1,1 +1,1 @@
-export default ["packages/*"];
+export default ["packages/*"] as [string];

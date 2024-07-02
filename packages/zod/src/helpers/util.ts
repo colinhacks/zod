@@ -7,7 +7,9 @@ export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
   : false;
 
 export type isAny<T> = 0 extends 1 & T ? true : false;
-export const assertEqual = <A, B>(val: AssertEqual<A, B>) => val;
+export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {
+  return val;
+}
 export function assertIs<T>(_arg: T): void {}
 export function assertNever(_x: never): never {
   throw new Error();
@@ -29,7 +31,7 @@ export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
   return obj as any;
 };
 
-export const getValidEnumValues = (obj: any) => {
+export function getValidEnumValues(obj: any): any {
   const validKeys = objectKeys(obj).filter(
     (k: any) => typeof obj[obj[k]] !== "number"
   );
@@ -38,11 +40,11 @@ export const getValidEnumValues = (obj: any) => {
     filtered[k] = obj[k];
   }
   return objectValues(filtered);
-};
+}
 
-export const objectValues = (obj: any) => {
+export function objectValues(obj: any): any {
   return objectKeys(obj).map((e) => obj[e]);
-};
+}
 
 export const objectKeys: ObjectConstructor["keys"] =
   typeof Object.keys === "function"
@@ -93,7 +95,29 @@ export const jsonStringifyReplacer = (_: string, value: any): any => {
   return value;
 };
 
-export const ZodParsedType = arrayToEnum([
+export const ZodParsedType: {
+  string: "string";
+  nan: "nan";
+  number: "number";
+  integer: "integer";
+  float: "float";
+  boolean: "boolean";
+  date: "date";
+  bigint: "bigint";
+  symbol: "symbol";
+  function: "function";
+  undefined: "undefined";
+  null: "null";
+  array: "array";
+  object: "object";
+  unknown: "unknown";
+  promise: "promise";
+  void: "void";
+  never: "never";
+  map: "map";
+  set: "set";
+  file: "file";
+} = arrayToEnum([
   "string",
   "nan",
   "number",

@@ -13,7 +13,7 @@ const BENCH: BENCH = (process.env.BENCH as BENCH) || "benchmarkjs";
 export function metabench<T extends { [k: string]: () => any }>(
   name: string,
   benchmarks?: T
-) {
+): Metabench {
   let bench: Metabench;
   if (BENCH === "tinybench") {
     bench = new Tinybench(name, benchmarks || {});
@@ -28,13 +28,13 @@ export function metabench<T extends { [k: string]: () => any }>(
 }
 
 abstract class Metabench {
-  abstract run(): Promise<void>;
+  abstract run(): void | Promise<void>;
   constructor(
     public name: string,
     public benchmarks: { [k: string]: () => any }
   ) {}
 
-  add(name: string, fn: () => any) {
+  add(name: string, fn: () => any): this {
     this.benchmarks[name] = fn;
     return this;
   }

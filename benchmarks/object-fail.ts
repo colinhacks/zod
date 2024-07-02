@@ -1,16 +1,5 @@
-import { makeData } from "./benchUtil";
 import { metabench } from "./metabench";
-import { zod3, zod4 } from "./object-old";
-
-const DATA = makeData(1000, () => {
-  return Object.freeze({
-    nest: {
-      number: "asdf",
-      string: 12,
-      // boolean: undefined,
-    },
-  });
-});
+import { DATA, zod3, zod4 } from "./object-old";
 
 const bench = metabench("small: z.object().safeParseAsync", {
   zod3() {

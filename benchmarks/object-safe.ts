@@ -1,5 +1,5 @@
 import { metabench } from "./metabench";
-import { DATA, zod3, zod4 } from "./object-old.js";
+import { DATA, zod3, zod4 } from "./object-old";
 
 const bench = metabench("small: z.object().safeParse", {
   zod3() {

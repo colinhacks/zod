@@ -27,6 +27,7 @@
     "console-table-printer": "^2.12.0",
     "execa": "^9.1.0",
     "husky": "^7.0.4",
+    "jsr": "^0.12.4",
     "lint-staged": "^12.3.7",
     "mitata": "^0.1.11",
     "prettier": "^3.2.5",
@@ -35,7 +36,7 @@
     "ts-morph": "^14.0.0",
     "tslib": "^2.3.1",
     "tsx": "^4.15.4",
-    "typescript": "next",
+    "typescript": "5.5.3",
     "vitest": "^1.6.0"
   },
   "lint-staged": {
@@ -49,15 +50,15 @@
     "lint:check": "biome lint .",
     "clean": "pnpm run -r clean && rm -rf node_modules",
     "build": "pnpm run -r build",
-    "build:deno": "pnpm run --filter zod build:deno",
     "build:esm": "pnpm run --filter zod build:esm",
     "build:cjs": "pnpm run --filter zod build:cjs",
     "build:types": "tsc -p ./.configs/tsconfig.types.json",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
-    "prepublishOnly": "pnpm run test && pnpm run build && pnpm run build:deno",
+    "prepublishOnly": "pnpm run test && pnpm run build",
     "play": "tsx --watch playground.ts ",
     "bench": "pnpm run build:cjs && tsx benchmarks/index.ts",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "publish:jsr": "jsr publish --dry-run"
   }
 }

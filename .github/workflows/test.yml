@@ -31,36 +31,6 @@ jobs:
       - run: pnpm build
       - run: pnpm test
 
-  test-deno:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        deno: ["v1.x"]
-    name: Test with Deno ${{ matrix.deno }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: latest
-      - uses: pnpm/action-setup@v4
-      - uses: denoland/setup-deno@v1
-        with:
-          deno-version: ${{ matrix.deno }}
-      - run: pnpm install
-      - run: pnpm build:deno
-        working-directory: ./packages/zod/deno/lib
-      - run: deno --version
-      # - run: deno test
-      #   working-directory: ./packages/zod/deno/lib
-      - run: deno run ./index.ts
-        working-directory: ./packages/zod/deno/lib
-      - run: deno run ./mod.ts
-        working-directory: ./packages/zod/deno/lib
-      - run: |
-          deno bundle ./mod.ts ./bundle.js
-          deno run ./bundle.js
-        working-directory: ./packages/zod/deno/lib
-
   lint:
     runs-on: ubuntu-latest
     strategy:

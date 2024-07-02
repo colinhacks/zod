@@ -3,9 +3,6 @@ import { expect, test } from "vitest";
 
 import * as z from "../src/index";
 
-// @ts-ignore TS2304
-const isDeno = typeof Deno === "object";
-
 test("overload types", () => {
   const schema = z.string().json();
   z.util.assertEqual<typeof schema, z.ZodString>(true);

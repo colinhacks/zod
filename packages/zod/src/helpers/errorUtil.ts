@@ -1,5 +1,5 @@
 export type ErrMessage = string | { message?: string };
-export const errToObj = (message?: ErrMessage) =>
+export const errToObj = (message?: ErrMessage): { message?: string } =>
   typeof message === "string" ? { message } : message || {};
 
 // biome-ignore lint/suspicious/noShadowRestrictedNames: <explanation>

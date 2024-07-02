@@ -5,7 +5,6 @@
     "moduleResolution": "Node",
     "module": null,
     "jsx": "react",
-    "rootDir": "${configDir}/src",
 
     "strict": true,
     "strictPropertyInitialization": false,
