@@ -40,13 +40,8 @@
     "vitest": "^1.6.0"
   },
   "lint-staged": {
-    "src/*.ts": [
-      "biome format --write",
-      "biome lint --apply"
-    ],
-    "*.md": [
-      "prettier --ignore-unknown --write"
-    ]
+    "src/*.ts": ["biome format --write", "biome lint --apply"],
+    "*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {
     "format": "biome check --apply .",
@@ -63,6 +58,7 @@
     "prepublishOnly": "pnpm run test && pnpm run build",
     "play": "tsx --watch playground.ts ",
     "bench": "pnpm run build:cjs && tsx benchmarks/index.ts",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "publish:jsr": "jsr publish --dry-run"
   }
 }
