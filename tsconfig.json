@@ -4,5 +4,6 @@
     "rootDir": ".",
     "isolatedDeclarations": true,
     "composite": true
-  }
+  },
+  "exclude": ["**/tests/**/*", "benchmarks"]
 }

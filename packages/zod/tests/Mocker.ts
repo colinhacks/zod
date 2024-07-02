@@ -5,26 +5,26 @@ function getRandomInt(max: number) {
 const testSymbol = Symbol("test");
 
 export class Mocker {
-  pick = (...args: any[]) => {
+  pick = (...args: any[]): any => {
     return args[getRandomInt(args.length)];
   };
 
-  get string() {
+  get string(): string {
     return Math.random().toString(36).substring(7);
   }
-  get number() {
+  get number(): number {
     return Math.random() * 100;
   }
-  get bigint() {
+  get bigint(): bigint {
     return BigInt(Math.floor(Math.random() * 10000));
   }
-  get boolean() {
+  get boolean(): boolean {
     return Math.random() < 0.5;
   }
-  get date() {
+  get date(): Date {
     return new Date(Math.floor(Date.now() * Math.random()));
   }
-  get symbol() {
+  get symbol(): symbol {
     return testSymbol;
   }
   get null(): null {
@@ -33,22 +33,22 @@ export class Mocker {
   get undefined(): undefined {
     return undefined;
   }
-  get stringOptional() {
+  get stringOptional(): string | undefined {
     return this.pick(this.string, this.undefined);
   }
-  get stringNullable() {
+  get stringNullable(): string | null {
     return this.pick(this.string, this.null);
   }
-  get numberOptional() {
+  get numberOptional(): number | undefined {
     return this.pick(this.number, this.undefined);
   }
-  get numberNullable() {
+  get numberNullable(): number | null {
     return this.pick(this.number, this.null);
   }
-  get booleanOptional() {
+  get booleanOptional(): boolean | undefined {
     return this.pick(this.boolean, this.undefined);
   }
-  get booleanNullable() {
+  get booleanNullable(): boolean | null {
     return this.pick(this.boolean, this.null);
   }
 }

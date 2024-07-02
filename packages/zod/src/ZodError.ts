@@ -16,7 +16,27 @@ export type typeToFlattenedError<T, U = string> = {
   };
 };
 
-export const ZodIssueCode = util.arrayToEnum([
+export const ZodIssueCode: {
+  invalid_type: "invalid_type";
+  invalid_literal: "invalid_literal";
+  custom: "custom";
+  invalid_union: "invalid_union";
+  invalid_union_discriminator: "invalid_union_discriminator";
+  invalid_enum_value: "invalid_enum_value";
+  unrecognized_keys: "unrecognized_keys";
+  invalid_arguments: "invalid_arguments";
+  invalid_return_type: "invalid_return_type";
+  invalid_date: "invalid_date";
+  invalid_string: "invalid_string";
+  too_small: "too_small";
+  too_big: "too_big";
+  invalid_intersection_types: "invalid_intersection_types";
+  not_multiple_of: "not_multiple_of";
+  not_finite: "not_finite";
+  uniqueness: "uniqueness";
+  invalid_file_type: "invalid_file_type";
+  invalid_file_name: "invalid_file_name";
+} = util.arrayToEnum([
   "invalid_type",
   "invalid_literal",
   "custom",
@@ -201,7 +221,7 @@ export type ZodIssue = ZodIssueOptionalMessage & {
   message: string;
 };
 
-export const quotelessJson = (obj: any) => {
+export const quotelessJson: (obj: any) => string = (obj: any) => {
   const json = JSON.stringify(obj, null, 2);
   return json.replace(/"([^"]+)":/g, "$1:");
 };
@@ -226,7 +246,7 @@ export type inferFormattedError<
 export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
 
-  get errors() {
+  get errors(): ZodIssue[] {
     return this.issues;
   }
 
@@ -291,7 +311,7 @@ export class ZodError<T = any> extends Error {
     return fieldErrors;
   }
 
-  static create(issues: ZodIssue[]) {
+  static create(issues: ZodIssue[]): ZodError<any> {
     const error = new ZodError(issues);
     return error;
   }
@@ -302,10 +322,10 @@ export class ZodError<T = any> extends Error {
     }
   }
 
-  toString() {
+  toString(): string {
     return this.message;
   }
-  get message() {
+  get message(): string {
     return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
   }
 
@@ -313,11 +333,11 @@ export class ZodError<T = any> extends Error {
     return this.issues.length === 0;
   }
 
-  addIssue = (sub: ZodIssue) => {
+  addIssue = (sub: ZodIssue): void => {
     this.issues = [...this.issues, sub];
   };
 
-  addIssues = (subs: ZodIssue[] = []) => {
+  addIssues = (subs: ZodIssue[] = []): void => {
     this.issues = [...this.issues, ...subs];
   };
 
@@ -339,7 +359,7 @@ export class ZodError<T = any> extends Error {
     return { formErrors, fieldErrors };
   }
 
-  get formErrors() {
+  get formErrors(): typeToFlattenedError<T> {
     return this.flatten();
   }
 }

@@ -14,7 +14,7 @@ const bench = metabench("z.string().parse", {
   },
 });
 
-export default async function run() {
+export default async function run(): Promise<void> {
   await bench.run();
 }
 

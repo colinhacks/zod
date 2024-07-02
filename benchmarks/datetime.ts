@@ -13,7 +13,7 @@ const bench = metabench("z.string().datetime().parse", {
   },
 });
 
-export default async function run() {
+export default async function run(): Promise<void> {
   await bench.run();
 }
 

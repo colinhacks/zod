@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": null,
+    "isolatedDeclarations": false
+  }
+}

@@ -1,15 +1,18 @@
-const zNew = require("../packages/zod/dist/cjs");
-const zOld = require("./node_modules/zod/lib/index");
+// const zNew = require("../packages/zod/dist/cjs");
+// const zOld = require("./node_modules/zod/lib/index");
 
-export function makeSchema<T>(factory: (z: typeof zNew) => T) {
+import * as zNew from "../packages/zod/dist/cjs/index";
+import * as zOld from "./node_modules/zod/lib/index";
+
+export function makeSchema<T>(factory: (z: typeof zOld) => T) {
   return {
-    zod3: factory(zOld as any),
-    zod4: factory(zNew as any),
+    zod3: factory(zOld as any) as T,
+    zod4: factory(zNew as any) as T,
     // zod4Ts: factory(zodNewTs as any),
   };
 }
 
-export function randomString(length: number) {
+export function randomString(length: number): string {
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
@@ -19,7 +22,7 @@ export function randomString(length: number) {
   return result;
 }
 
-export function makeData(count: number, factory: object | (() => any)) {
+export function makeData(count: number, factory: object | (() => any)): any[] {
   return Array.from({ length: count }, () => {
     // clone non primitive data
     if (typeof factory === "object") return { ...factory };
@@ -28,7 +31,7 @@ export function makeData(count: number, factory: object | (() => any)) {
   });
 }
 
-export function formatNumber(val: number) {
+export function formatNumber(val: number): string {
   if (val >= 1e12) {
     return `${toFixed(val / 1e12)}T`;
   }
