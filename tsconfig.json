@@ -5,5 +5,5 @@
     "isolatedDeclarations": true,
     "composite": true
   },
-  "exclude": ["**/tests/**/*", "benchmarks"]
+  "exclude": ["benchmarks"]
 }

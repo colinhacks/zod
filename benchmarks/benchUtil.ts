@@ -1,10 +1,7 @@
-// const zNew = require("../packages/zod/dist/cjs");
-// const zOld = require("./node_modules/zod/lib/index");
-
-import * as zNew from "../packages/zod/dist/cjs/index";
+import * as zNew from "../packages/zod/dist/esm";
 import * as zOld from "./node_modules/zod/lib/index";
 
-export function makeSchema<T>(factory: (z: typeof zOld) => T) {
+export function makeSchema<T>(factory: (z: typeof zNew) => T) {
   return {
     zod3: factory(zOld as any) as T,
     zod4: factory(zNew as any) as T,

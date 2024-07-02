@@ -2,6 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "outDir": "${configDir}/lib",
+    "rootDir": "${configDir}/src",
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": true

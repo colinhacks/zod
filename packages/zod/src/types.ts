@@ -291,7 +291,10 @@ export abstract class ZodType<
   });
 
   /** Alias of safeParseAsync */
-  spa: (typeof this)["safeParseAsync"] = this.safeParseAsync;
+  spa: (
+    data: unknown,
+    params?: Partial<ParseParams>
+  ) => Promise<SafeParseReturnType<Input, Output>> = this.safeParseAsync;
 
   refine<RefinedOutput extends Output>(
     check: (arg: Output) => arg is RefinedOutput,
