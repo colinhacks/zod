@@ -1,4 +1,4 @@
-import type z from "../packages/zod/src/index";
+import type z from "../packages/zod/dist/esm";
 import { makeSchema } from "./benchUtil";
 import { metabench } from "./metabench";
 

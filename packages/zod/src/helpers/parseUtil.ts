@@ -63,10 +63,10 @@ export interface ParseContext {
 
 export type ParseInput = any;
 
-export const NOT_SET = Symbol.for("NOT_SET");
-export const ZOD_FAILURE = Symbol.for("~~zodfail~~");
+export const NOT_SET: symbol = Symbol.for("NOT_SET");
+export const ZOD_FAILURE: symbol = Symbol.for("~~zodfail~~");
 export class ZodFailure {
-  protected _tag = ZOD_FAILURE;
+  protected _tag: typeof ZOD_FAILURE = ZOD_FAILURE;
   constructor(
     public issues: IssueData[],
     protected _value: unknown = NOT_SET

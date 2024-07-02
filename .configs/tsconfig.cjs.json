@@ -3,6 +3,7 @@
   "compilerOptions": {
     "module": "commonjs",
     "outDir": "${configDir}/dist/cjs",
+    "rootDir": "${configDir}/src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true

@@ -64,9 +64,9 @@ type $optional<T extends ZodType> = Omit<T, "~output" | "~input"> & {
   "~input": T["~input"] | typeof $optional;
 };
 
-type OmitVirtuals<T> = {
-  [k in keyof T as k extends `~${string}` ? never : k]: T[k];
-};
+// type OmitVirtuals<T> = {
+//   [k in keyof T as k extends `~${string}` ? never : k]: T[k];
+// };
 
 function makeString(): ZodString {
   return new ZodString();
@@ -82,3 +82,5 @@ console.log(schema["~parse"]("asdfasdf"));
 type $infer<T> = T extends { "~output": infer U } ? U : never;
 
 type A = $infer<typeof schema>;
+
+export type {};

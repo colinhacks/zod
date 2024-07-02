@@ -15,7 +15,7 @@ class ZodFailure {
 //   [ZOD_FAILURE]: true,
 //   [ZOD_FAILURE]: true,
 // });
-export const DATA = makeData(1000, () => {
+const DATA = makeData(1000, () => {
   const random = Math.random();
   if (random > 0.75) return new ZodFailure("test");
   if (random > 0.5) return { name: "Colin" };
@@ -75,7 +75,7 @@ const bench = metabench("instanceof")
     for (const _ of DATA) nullChainCheckTag(_);
   });
 
-export default async function run() {
+export default async function run(): Promise<void> {
   await bench.run();
 }
 

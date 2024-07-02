@@ -15,7 +15,7 @@ const bench = metabench("object creation")
     obj.value;
   });
 
-export default async function run() {
+export default async function run(): Promise<void> {
   await bench.run();
 }
 
