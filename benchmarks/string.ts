@@ -15,7 +15,7 @@ const bench = zodbench({
   },
 });
 
-export default async function run(): Promise<void> {
+export default async function run() {
   await bench.run();
 }
 

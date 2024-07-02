@@ -22,9 +22,7 @@ const bench = zodbench({
   },
 });
 
-const run = bench.run;
-
-export default run;
+export default bench.run;
 
 if (require.main === module) {
   bench.run();

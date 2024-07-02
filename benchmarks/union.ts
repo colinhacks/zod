@@ -26,7 +26,7 @@ const bench = metabench("z.union().parse")
     zod4.parse(DATA);
   });
 
-export default async function run(): Promise<void> {
+export default async function run() {
   await bench.run();
 }
 

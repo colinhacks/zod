@@ -4,7 +4,7 @@ import { Table } from "console-table-printer";
 import * as mitata from "mitata";
 import { Bench } from "tinybench";
 
-import { util } from "zod";
+import { assertNever } from "../packages/zod/src/helpers/util";
 import { formatNumber } from "./benchUtil";
 
 type BENCH = "tinybench" | "benchmarkjs" | "mitata";
@@ -22,13 +22,13 @@ export function metabench<T extends { [k: string]: () => any }>(
   } else if (BENCH === "mitata") {
     bench = new Mitata(name, benchmarks || {});
   } else {
-    util.assertNever(BENCH);
+    assertNever(BENCH);
   }
   return bench;
 }
 
 abstract class Metabench {
-  abstract run(): Promise<void>;
+  abstract run(): void | Promise<void>;
   constructor(
     public name: string,
     public benchmarks: { [k: string]: () => any }

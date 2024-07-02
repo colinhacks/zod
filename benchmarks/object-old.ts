@@ -1,7 +1,7 @@
 import { makeData, makeSchema } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-const { zod3, zod4 } = makeSchema((z) =>
+export const { zod3, zod4 } = makeSchema((z) =>
   z.object({
     string: z.string(),
     boolean: z.boolean(),
@@ -11,7 +11,7 @@ const { zod3, zod4 } = makeSchema((z) =>
 
 // biome-ignore lint/style/noVar: <explanation>
 // biome-ignore lint/correctness/noInnerDeclarations: <explanation>
-var DATA: any[] = makeData(1000, () => {
+export var DATA: any[] = makeData(1000, () => {
   return Object.freeze({
     number: Math.random(),
     string: `${Math.random()}`,
@@ -32,7 +32,7 @@ const bench = metabench("small: z.object().parse", {
   },
 });
 
-export default async function run(): Promise<void> {
+export default async function run() {
   await bench.run();
 }
 

@@ -75,7 +75,7 @@ const bench = metabench("instanceof")
     for (const _ of DATA) nullChainCheckTag(_);
   });
 
-export default async function run(): Promise<void> {
+export default async function run() {
   await bench.run();
 }
 

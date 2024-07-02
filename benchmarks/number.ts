@@ -13,7 +13,7 @@ const bench = metabench("z.number().parse", {
   },
 });
 
-export default async function run(): Promise<void> {
+export default async function run() {
   await bench.run();
 }
 

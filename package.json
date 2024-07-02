@@ -36,12 +36,17 @@
     "ts-morph": "^14.0.0",
     "tslib": "^2.3.1",
     "tsx": "^4.15.4",
-    "typescript": "5.6.0-dev.20240619",
+    "typescript": "5.6.0-dev.20240702",
     "vitest": "^1.6.0"
   },
   "lint-staged": {
-    "src/*.ts": ["biome format --write", "biome lint --apply"],
-    "*.md": ["prettier --ignore-unknown --write"]
+    "src/*.ts": [
+      "biome format --write",
+      "biome lint --apply"
+    ],
+    "*.md": [
+      "prettier --ignore-unknown --write"
+    ]
   },
   "scripts": {
     "format": "biome check --apply .",
