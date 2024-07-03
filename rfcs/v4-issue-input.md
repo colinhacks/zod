@@ -8,7 +8,7 @@ My full-time work on Zod 4, including the design & implementation of this propos
 
 ## Current behavior
 
-Zod has had a long-standing policy of not exposing input data in `ZodError` for security reasons. The idea is that error loggers may accidentally persist sensistive information or PHI, which is undesirable in security-sensitive applications.
+Zod has had a long-standing policy of not exposing input data in `ZodError` for security reasons. The idea is that error loggers may accidentally persist sensistive information, which is be undesirable in some contexts (healthcare, etc).
 
 ## Proposed change
 
