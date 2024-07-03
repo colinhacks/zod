@@ -138,7 +138,56 @@ This also solves the inconsistency between Zod's error customization API and the
 
 > A `"required"` issue code will also be an important part of Zod's new approach to key optionality in objects (`exactOptionalPropertyTypes`)—RFC forthcoming. This code will be used when a key that's required by a `ZodObject` shape isn't specified in the input.
 
-# Issue 4: Unnecessary `ctx`
+# Issue 4: Bottom-up execution
+
+Zod's current approach to resolving error maps is a little backwards.
+
+Zod generates error messages by passing a `message`-less version of the issue (`ZodIssueOptionalMessage`) into a pipeline of error maps. In order of increasing precedence, the error maps are:
+
+1. contextual error map (passed into `.parse(<data>, {errorMap: myErrorMap})`)
+2. schema-specific error map (`z.string({ errorMap: myErrorMap })`)
+
+   - using `invalid_type_error` and `required_error` also creates a schema-specific error map internally
+
+3. `overrideErrorMap` (settable with `z.setErrorMap()`)
+4. `defaultErrorMap` (the standard English error map in `locales/en.ts`)
+
+The reasonable thing to do would be to pass the issue into the #1 and see if it returns a message. If it does, that message will be used; otherwise, proceed to the next map in the chain.
+
+For some reason Zod does this "bottom-up". It first gets a message from the lowest-priority map first, then passes that into the higher-priority maps as `ctx.defaultError`.
+
+```ts
+const errorMap: ZodErrorMap = (issue, ctx) => {
+  if (issue instanceof ZodInvalidLiteralIssue) {
+    return { message: "Invalid literal!" };
+  }
+  return { message: ctx.defaultError };
+};
+```
+
+The idea was to simplify the error map type signature by always requiring a return type of `{message: string}`. It would also encourage exhaustiveness checking by forcing the developer to explicitly return `{ message: ctx.defaultError }` if they want to defer to lower-priority error maps.
+
+But this "bottom up" approach occurs an unnecessary performance penalty. All error maps must be run for each new issue.
+
+## The fix
+
+Switch over to a "top-down" resolution strategy. To accommodate this, error maps should allow returning `undefined/void` to signal that the issue should be passed down to the next map in the chain.
+
+```diff
+  export type ZodErrorMap = (
+    issue: ZodIssueOptionalMessage,
+    ctx: {
+      /** @deprecated */
+      defaultError: string;
+      data: any
+    }
+-  ) => { message: string } | string;
++  ) => { message: string } | string | undefined;
+```
+
+For compatibility `ctx.defaultError` can be set to some unique internal string value like `"{{zod_default_error}}"`. When Zod sees this value, it will know to proceed to the next error map in the chain.
+
+# Issue 5: Unnecessary `ctx`
 
 With `ctx.defaultError` becoming irrelevant, the only remaining key on `ctx` is `ctx.data`.
 
@@ -169,62 +218,6 @@ z.string({
 ```
 
 > The `ctx` argument of the error map signature will be entirely deprecated (but still supported for backwards compatibility).
-
-# Issue 5: Bottom-up execution
-
-Zod's current approach to resolving error maps is a little backwards.
-
-Zod generates error messages by passing a `message`-less version of the issue (`ZodIssueOptionalMessage`) into a pipeline of error maps. In order of increasing precedence, the error maps are:
-
-1. contextual error map (passed into `.parse(<data>, {errorMap: myErrorMap})`)
-2. schema-specific error map (`z.string({ errorMap: myErrorMap })`)
-
-   - `invalid_type_error` and `required_error` also creates a schema-specific error map internally
-
-3. `overrideErrorMap` (settable with `z.setErrorMap()`)
-4. `defaultErrorMap` (the standard English error map in `locales/en.ts`)
-
-The reasonable thing to do would be to pass the issue into the #1 and see if it returns a message. If it does, that message will be used; otherwise, proceed to the next map in the chain.
-
-For some reason Zod does this "bottom-up". It first gets a message from the lowest-priority map first, then passes that into the higher-priority maps as `ctx.defaultError`.
-
-```ts
-const errorMap: ZodErrorMap = (issue, ctx) => {
-  if (issue instanceof ZodInvalidLiteralIssue) {
-    return { message: "Invalid literal!" };
-  }
-  return { message: ctx.defaultError };
-};
-```
-
-The idea was to simplify the error map type signature by always requiring a return type of `{message: string}`. It would also encourage exhaustiveness checking by forcing the developer to explicitly return `{ message: ctx.defaultError }` if they want to defer to lower-priority error maps.
-
-```ts
-export type ZodErrorMap = (
-  issue: ZodIssueOptionalMessage,
-  ctx: { defaultError: string; data: any }
-) => { message: string };
-
-export type ZodIssueOptionalMessage =
-  | ZodInvalidTypeIssue
-  | ZodInvalidLiteralIssue
-  // ...
-  | ZodCustomIssue;
-```
-
-But this "bottom up" approach occurs an unnecessary performance penalty. All error maps must be run for each new issue.
-
-## The fix
-
-Switch over to a "top-down" resolution strategy. To accommodate this, error maps should allow returning `undefined/void` to signal that the issue should be passed down to the next map in the chain.
-
-```diff
-  export type ZodErrorMap = (
-    issue: ZodIssueOptionalMessage,
-    ctx: { defaultError: string; data: any }
--  ) => { message: string } | string;
-+  ) => { message: string } | string | undefined;
-```
 
 # Final proposal
 
