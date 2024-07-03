@@ -256,6 +256,8 @@ The `error` key will also support an even simpler string-based syntax. The passe
 z.string({ error: "Invalid input" });
 ```
 
+A new `"required"` issue code will be added. This code will be used whenever the input to a non-optional schema is `undefined`.
+
 Currently, all refinement methods support error customization via the `message` key.
 
 ```ts
