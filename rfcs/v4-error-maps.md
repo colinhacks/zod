@@ -21,7 +21,7 @@ const errorMap: ZodErrorMap = (issue, ctx) => {
 };
 ```
 
-## The fix
+### The fix
 
 Allow returning a string directly.
 
@@ -73,7 +73,7 @@ These keys are snake-case for the sake of visual consistency with Zod's issue co
 
 ### Footguns
 
-The `invalid_type_error` will only be applied to issues with code `invalid_type`. This makes sense, but it has also confused users who think their custom message will be applied more broadly.
+The `invalid_type_error` will only be applied to issues with code `invalid_type`. This makes sense, but it also has understandably confused users who think their custom message will be applied more broadly.
 
 A particularly unfortunate example is this:
 
@@ -83,7 +83,7 @@ z.enum(["red", "white", "blue"], { invalid_type_error: "Invalid color" });
 
 The custom message `invalid_type_error` is only applied to issues with code `invalid_type`. If the input is, say `"green"`, the resulting issue code is `invalid_enum_value`. As such the `invalid_type_error` message will not be applied. This is confusing.
 
-## The fix(es)
+### The fix(es)
 
 Zod will support an object-based syntactic sugar API on the `error` key. This customizing the error message for all issue codes. This also siloes the snake case keys into their own object, so they aren't alongside camelCase keys.
 
@@ -117,7 +117,7 @@ While `invalid_type` is a Zod issue code, `required` is not. If you pass `undefi
 
 To users with knowledge of Zod's issue codes, the existence of `required_error` can be confusing because it doesn't correspond to an issue code.
 
-## The fix
+### The fix
 
 Zod will add a new issue code `"required"` issue code. This issue code will be used any time a value of `undefined` is passed into a non-optional schema.
 
@@ -167,7 +167,7 @@ The idea was to simplify the error map type signature by always requiring a retu
 
 But this "bottom up" approach occurs an unnecessary performance penalty. All error maps must be run for each new issue.
 
-## The fix
+### The fix
 
 Switch over to a "top-down" resolution strategy. To accommodate this, error maps should allow returning `undefined/void` to signal that the issue should be passed down to the next map in the chain.
 
@@ -195,7 +195,7 @@ Zod has had a long-standing policy of hiding input data from issues for security
 
 This obviates the need for `ctx.data`, since the same information will be available on `issue.input`.
 
-## The fix
+### The fix
 
 Deprecate `ctx` entirely.
 
