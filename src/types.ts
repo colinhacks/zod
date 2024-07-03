@@ -4500,11 +4500,20 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
     if (ctx.parsedType === ZodParsedType.undefined) {
       data = this._def.defaultValue();
     }
-    return this._def.innerType._parse({
+    const parsed = this._def.innerType._parse({
       data,
       path: ctx.path,
       parent: ctx,
     });
+    return "then" in parsed
+      ? parsed.then((parsed) =>
+          parsed.status === "valid" && parsed.value === undefined
+            ? OK(this._def.defaultValue())
+            : parsed
+        )
+      : parsed.status === "valid" && parsed.value === undefined
+      ? OK(this._def.defaultValue())
+      : parsed;
   }
 
   removeDefault() {

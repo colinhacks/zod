@@ -27,6 +27,39 @@ test("default with transform", () => {
   util.assertEqual<out, string>(true);
 });
 
+test("default after transform that returns undefined", () => {
+  const schema = z
+    .union([z.literal("").transform(() => undefined), z.string().optional()])
+    .default("default");
+
+  expect(schema.parse(undefined)).toBe("default");
+  expect(schema.parse("foo")).toBe("foo");
+  expect(schema.parse("")).toBe("default");
+
+  type inp = z.input<typeof schema>;
+  util.assertEqual<inp, string | undefined>(true);
+  type out = z.output<typeof schema>;
+  util.assertEqual<out, string>(true);
+});
+
+test("default after async transform that returns undefined", async () => {
+  const schema = z
+    .union([
+      z.literal("").transform(async () => undefined),
+      z.string().optional(),
+    ])
+    .default("default");
+
+  expect(await schema.parseAsync(undefined)).toBe("default");
+  expect(await schema.parseAsync("foo")).toBe("foo");
+  expect(await schema.parseAsync("")).toBe("default");
+
+  type inp = z.input<typeof schema>;
+  util.assertEqual<inp, string | undefined>(true);
+  type out = z.output<typeof schema>;
+  util.assertEqual<out, string>(true);
+});
+
 test("default on existing optional", () => {
   const stringWithDefault = z.string().optional().default("asdf");
   expect(stringWithDefault.parse(undefined)).toBe("asdf");
