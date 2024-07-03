@@ -40,33 +40,10 @@ This will be supported alongside the more verbose `{message: string}` syntax.
     issue: ZodIssueOptionalMessage,
     ctx: { defaultError: string; data: any }
 +  ) => { message: string };
-+  ) => string | { message: string };
++  ) => { message: string } | string;
 ```
 
-# Issue 2: "Required" errors
-
-Zod supports some syntactic sugar for customizing messages for certain issue types: `invalid_type_error` and `required_error`.
-
-```ts
-const emailSchema = z.string({
-  invalid_type_error: "Email must be a string",
-  required_error: "Field cannot be left blank",
-});
-```
-
-While `invalid_type` is a Zod issue code, `required` is not. If you pass `undefined` into a `ZodString`, you get an `invalid_type` error. The same is true if you pass `null`, `12`, or any non-string value.
-
-To users with knowledge of Zod's issue codes, the existence of `required_error` can be confusing because it doesn't correspond to an error code.
-
-## The fix
-
-Zod will add a new issue code `"required"` issue code. This issue code will be used any time a value of `undefined` is passed into a non-optional schema. It will also be used if a required key isn't specified in `ZodObject`.
-
-Trying to consolidate all type errors under `invalid_type` for the sake of elegance isn't pragmatic here. Some special treatment for `undefined` is inevitable in JavaScript. Arguably, `undefined` is not a value and has no type, so it should be considered separately from other type errors.
-
-> A `"required"` issue code will also be an important part of Zod's new approach to key optionality in objects (`exactOptionalPropertyTypes`)—RFC forthcoming.
-
-# Issue 3: Inconsistency
+# Issue 1: Inconsistency
 
 Due to the verbosity of the current API, it was onerous for users to customize error messages for a specific schema.
 
@@ -125,25 +102,63 @@ Zod can limit the keys to the issue codes that are actually throwable by the sch
 
 > Technically, a `ZodString` schema can produce `custom` issues from its stored refinements, but these mesages should be customized in the method that introduces the constraint (e.g. `.refine()`, `.uuid()`, `.min()`, etc).
 
-# Issue 5: Unnecessary `ctx`
+The `invalid_type_error` and `required_error` fields will be deprecated.
 
-With `ctx.defaultError` becoming irrelevant, the only remaining key on `ctx` is `ctx.data`. That's a little silly.
+# Issue 3: "Required" errors
 
-To make it even more silly, a sister RFC (yet to be published) will propose adding back a `input` key into `ZodIssue` in development environments. Zod has had a long-standing policy of hiding input data from issues for security reasons, because error loggers may accidentally write sensistive information to disk. Zod 4 will likely add back `issue.input`, which will then be stripped if `NODE_ENV=production`.
+There is an additional inconsistency in the current `invalid_type_error` and `required_error` API.
+
+```ts
+const emailSchema = z.string({
+  invalid_type_error: "Email must be a string",
+  required_error: "Field cannot be left blank",
+});
+```
+
+While `invalid_type` is a Zod issue code, `required` is not. If you pass `undefined` into a `ZodString`, you get an `invalid_type` error. The same is true if you pass `null`, `12`, or any non-string value.
+
+To users with knowledge of Zod's issue codes, the existence of `required_error` can be confusing because it doesn't correspond to an issue code.
 
 ## The fix
 
-Remove `ctx` from the error map signature.
+Zod will add a new issue code `"required"` issue code. This issue code will be used any time a value of `undefined` is passed into a non-optional schema.
+
+```ts
+const emailSchema = z.string({
+  error: {
+    required: "Field cannot be left blank",
+    invalid_type: "Email must be a string",
+  },
+});
+```
+
+Trying to consolidate all type errors under `invalid_type` for the sake of elegance isn't pragmatic here. Some special treatment for `undefined` is inevitable in JavaScript. Arguably, `undefined` is not a value and has no type, so it should be considered separately from other type errors.
+
+This also solves the inconsistency between Zod's error customization API and the set of issue codes that Zod actually throws.
+
+> A `"required"` issue code will also be an important part of Zod's new approach to key optionality in objects (`exactOptionalPropertyTypes`)—RFC forthcoming. This code will be used when a key that's required by a `ZodObject` shape isn't specified in the input.
+
+# Issue 4: Unnecessary `ctx`
+
+With `ctx.defaultError` becoming irrelevant, the only remaining key on `ctx` is `ctx.data`.
+
+On top of that, a sister RFC (yet to be published) will propose adding back a `input` key into `ZodIssue` in development environments. This key will contain the raw input data passed into the schema that originated the issue.
+
+Zod has had a long-standing policy of hiding input data from issues for security reasons, because error loggers may accidentally write sensistive information to disk. Zod 4 will likely add back `issue.input`, which will then be stripped if `NODE_ENV=production`.
+
+This obviates the need for `ctx.data`, since the same information will be available on `issue.input`.
+
+## The fix
+
+Deprecate `ctx` entirely.
 
 ```diff
   export type ZodErrorMap = (
--    issue: ZodIssueOptionalMessage,
-+    issue: ZodIssueOptionalMessage,
--    ctx: { defaultError: string; data: any }
+    issue: ZodIssueOptionalMessage,
++   /** @deprecated */
+    ctx: { defaultError: string; data: any }
   ) => { message: string } | string | undefined;
 ```
-
-The `ZodIssueOptionalMessage` will still be a union of all possible issue types, but it will include an `input` key that can be used to access the input data.
 
 ```ts
 z.string({
@@ -153,7 +168,7 @@ z.string({
 });
 ```
 
-> The `ctx` argument of the error map signature will be entirelyt deprecated (but still supported for backwards compatibility).
+> The `ctx` argument of the error map signature will be entirely deprecated (but still supported for backwards compatibility).
 
 # Issue 5: Bottom-up execution
 
