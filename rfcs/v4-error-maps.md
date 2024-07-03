@@ -172,12 +172,14 @@ z.string({
 
 # Issue 5: Bottom-up execution
 
-Zod's current approach to error maps is a little backwards. For starters, Zod generates error messages by passing a `message`-less version of the issue into a pipeline of error maps. In order of increasing precedence, the error maps are:
+Zod's current approach to resolving error maps is a little backwards.
+
+Zod generates error messages by passing a `message`-less version of the issue (`ZodIssueOptionalMessage`) into a pipeline of error maps. In order of increasing precedence, the error maps are:
 
 1. contextual error map (passed into `.parse(<data>, {errorMap: myErrorMap})`)
 2. schema-specific error map (`z.string({ errorMap: myErrorMap })`)
 
-- `invalid_type_error` and `required_error` also creates a schema-specific error map internally
+   - `invalid_type_error` and `required_error` also creates a schema-specific error map internally
 
 3. `overrideErrorMap` (settable with `z.setErrorMap()`)
 4. `defaultErrorMap` (the standard English error map in `locales/en.ts`)
