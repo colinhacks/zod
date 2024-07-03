@@ -1,4 +1,4 @@
-My full-time work on Zod 4, including the design & implementation of this proposal, is supported by my friends at [Clerk](https://go.clerk.com/DHliRIG). Friends don't let friends roll their own auth 🫶 — Colin
+My full-time work on Zod 4, including the design & implementation of this proposal, is supported by [Clerk](https://go.clerk.com/DHliRIG). Friends don't let friends roll their own auth! 🤙
 
 [![clerk logo](https://avatars.githubusercontent.com/u/49538330?s=200&v=4)](https://go.clerk.com/DHliRIG)
 
