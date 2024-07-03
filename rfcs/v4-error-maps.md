@@ -6,9 +6,11 @@ My full-time work on Zod 4, including the design & implementation of this propos
 
 ---
 
+# Error maps in Zod 4
+
 This document proposes a new error map API for Zod 4.
 
-# Issue 1: Verbosity
+## Issue 1: Verbosity
 
 The current API is verbose. To override the error message for a particular issue code:
 
@@ -41,7 +43,7 @@ This will be supported alongside the more verbose `{message: string}` syntax.
 +  ) => { message: string } | string;
 ```
 
-# Issue 2: Confusing sugar
+## Issue 2: Confusing sugar
 
 Due to the verbosity of the current API, it was onerous for users to customize error messages for a specific schema.
 
@@ -102,7 +104,7 @@ Zod can limit the keys to the issue codes that are actually throwable by the sch
 
 The `invalid_type_error` and `required_error` fields will be deprecated.
 
-# Issue 3: "Required" errors
+## Issue 3: "Required" errors
 
 There is an additional inconsistency in the current `invalid_type_error` and `required_error` API.
 
@@ -136,7 +138,7 @@ This also solves the inconsistency between Zod's error customization API and the
 
 > A `"required"` issue code will also be an important part of Zod's new approach to key optionality in objects (`exactOptionalPropertyTypes`)—RFC forthcoming. This code will be used when a key that's required by a `ZodObject` shape isn't specified in the input.
 
-# Issue 4: Bottom-up execution
+## Issue 4: Bottom-up execution
 
 Zod's current approach to resolving error maps is a little backwards.
 
@@ -182,7 +184,7 @@ Switch over to a "top-down" resolution strategy. To accommodate this, error maps
 
 For compatibility `ctx.defaultError` can be set to some unique internal string value like `"{{zod_default_error}}"`. When Zod sees this value, it will know to proceed to the next error map in the chain.
 
-# Issue 5: Unnecessary `ctx`
+## Issue 5: Unnecessary `ctx`
 
 With `ctx.defaultError` becoming irrelevant, the only remaining key on `ctx` is `ctx.data`.
 
