@@ -39,11 +39,11 @@ This will be supported alongside the more verbose `{message: string}` syntax.
   export type ZodErrorMap = (
     issue: ZodIssueOptionalMessage,
     ctx: { defaultError: string; data: any }
-+  ) => { message: string };
+-  ) => { message: string };
 +  ) => { message: string } | string;
 ```
 
-# Issue 1: Inconsistency
+# Issue 2: Inconsistency
 
 Due to the verbosity of the current API, it was onerous for users to customize error messages for a specific schema.
 
