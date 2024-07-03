@@ -1,7 +1,7 @@
 My full-time work on Zod 4, including the design & implementation of this proposal, is supported by [Clerk](https://go.clerk.com/DHliRIG). Friends don't let friends roll their own auth.
 
 <a href="https://go.clerk.com/DHliRIG">
-  <img src="https://github.com/colinhacks/zod/assets/3084745/22a4a523-5845-4ac7-b5be-02fbf436409f" alt="clerk logo" height="100" />
+  <img src="https://github.com/colinhacks/zod/assets/3084745/22a4a523-5845-4ac7-b5be-02fbf436409f" alt="clerk logo" height="80" />
 </a>
 
 ---
