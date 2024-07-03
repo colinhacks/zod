@@ -413,3 +413,15 @@ export class ZodTemplateLiteralUnsupportedCheckError extends Error {
     this.name = "ZodTemplateLiteralUnsupportedCheckError";
   }
 }
+
+export type ZodNewErrorMap = (
+  issue: ZodIssueOptionalMessage,
+  ctx: {
+    /** @deprecated */
+    defaultError: string;
+    data: any;
+  }
+) => { message: string } | string | undefined;
+const errm: ZodNewErrorMap = (iss, ctx) => {
+  if (iss.code === "invalid_type") return "Sup";
+};

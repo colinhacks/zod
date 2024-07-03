@@ -56,7 +56,7 @@
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm run test && pnpm run build",
-    "play": "tsx --watch playground.ts ",
+    "play": "tsx --watch playground.ts",
     "bench": "pnpm run build:cjs && tsx benchmarks/index.ts",
     "prepare": "husky install",
     "publish:jsr": "jsr publish --dry-run"
