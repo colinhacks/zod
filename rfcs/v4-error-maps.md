@@ -1,8 +1,6 @@
-# Error maps
-
 This document proposes a new error map API for Zod 4.
 
-## Issue #1: Bottom-up execution
+# Issue #1: Bottom-up execution
 
 Zod's current approach to error maps is a little backwards. For starters, Zod generates error messages by passing a `message`-less version of the issue into a pipeline of error maps. In order of increasing precedence, the error maps are:
 
@@ -44,7 +42,7 @@ export type ZodIssueOptionalMessage =
 
 But this "bottom up" approach occurs an unnecessary performance penalty. All error maps must be run for each new issue.
 
-### The fix
+## The fix
 
 Switch over to a "top-down" resolution strategy. To accommodate this, error maps should allow returning `undefined/void` to signal that the issue should be passed down to the next map in the chain.
 
@@ -56,7 +54,7 @@ Switch over to a "top-down" resolution strategy. To accommodate this, error maps
 +  ) => undefined | { message: string };
 ```
 
-## Issue #2: Verbosity
+# Issue #2: Verbosity
 
 The current API is verbose. To override the error message for a particular issue code:
 
@@ -69,7 +67,7 @@ const errorMap: ZodErrorMap = (issue, ctx) => {
 };
 ```
 
-### The fix
+## The fix
 
 Allow returning a string directly.
 
@@ -89,7 +87,7 @@ This will be supported alongside the more verbose `{message: string}` syntax.
 +  ) => undefined | message | { message: string };
 ```
 
-## Issue #4: Inconsistency
+# Issue #3: Inconsistency
 
 Due to the verbosity of the current API, it was onerous for users to customize error messages for a specific schema.
 
@@ -135,7 +133,7 @@ z.enum(["red", "white", "blue"], { invalid_type_error: "Invalid color" });
 
 The custom message will only be applied if the input data is a non-string. If an invalid color ("green") is passed in, the resulting issue code is `invalid_enum_value`. As such the `invalid_type_error` message will not be applied. This is confusing. There's currently no easy one-liner for customizing the message for invalid enum values.
 
-### The fix(es)
+## The fix(es)
 
 Zod will add a special `"required"` issue code. This is pragmatic. Trying to consolidate all type errors under `invalid_type` for the sake of elegance isn't pragmatic here. Some special treatment for `undefined` is inevitable in JavaScript.
 
@@ -169,7 +167,7 @@ z.enum(["red", "white", "blue"], {
 });
 ```
 
-## Final proposal
+# Final proposal
 
 The type signature for ZodErrorMap will be changed to allow returning `undefined`. This will signal to Zod that the error map is kicking the can down to the next map in the chain.
 
@@ -186,8 +184,6 @@ export type ZodErrorMap = (
 
 A custom error map can be passed into a schema via the `error` key.
 
-> Currently error maps are passed as `errorMap`. This will be deprecated but supported for backwards compatibility.
-
 ```ts
 z.string({
   error: (issue, ctx) => {
@@ -195,6 +191,8 @@ z.string({
   },
 });
 ```
+
+> Currently error maps are passed as `errorMap`. This will be deprecated but supported for backwards compatibility.
 
 This key will also support an object-based syntactic sugar:
 
@@ -213,12 +211,12 @@ An even simpler string-based syntax will also be supported. This will be applied
 z.string({ error: "Invalid input" });
 ```
 
-> For consistency, all refinement methods will also be updated to support `error` in addition to the current `message` key:
->
-> ```ts
-> // current
-> z.string().min(5, { message: "Too short" });
->
-> // new
-> z.string().min(5, { error: "Too short" });
-> ```
+Currently, all refinement methods support error customization via the `message` key. For consistency, this will be deprecated in favor of `error` (but still supported).
+
+```ts
+// current
+z.string().min(5, { message: "Too short" });
+
+// new
+z.string().min(5, { error: "Too short" });
+```
