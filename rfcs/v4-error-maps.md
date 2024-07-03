@@ -1,5 +1,9 @@
 This document proposes a new error map API for Zod 4.
 
+My full-time work on Zod 4, including the design & implementation of this proposal, is supported by my friends at [Clerk](https://go.clerk.com/DHliRIG). Friends don't let friends roll their own auth 🫶
+
+[![clerk logo](https://avatars.githubusercontent.com/u/49538330?s=200&v=4)](https://go.clerk.com/DHliRIG)
+
 # Issue #1: Bottom-up execution
 
 Zod's current approach to error maps is a little backwards. For starters, Zod generates error messages by passing a `message`-less version of the issue into a pipeline of error maps. In order of increasing precedence, the error maps are:
@@ -135,11 +139,11 @@ The custom message will only be applied if the input data is a non-string. If an
 
 ## The fix(es)
 
-Zod will add a special `"required"` issue code. This is pragmatic. Trying to consolidate all type errors under `invalid_type` for the sake of elegance isn't pragmatic here. Some special treatment for `undefined` is inevitable in JavaScript.
+Zod will add a special `"required"` issue code. Trying to consolidate all type errors under `invalid_type` for the sake of elegance isn't pragmatic here. Some special treatment for `undefined` is inevitable in JavaScript.
 
 > A `"required"` issue code is also an important part of Zod's new approach to key optionality in objects (`exactOptionalPropertyTypes`)—RFC forthcoming.
 
-Zod will support an object-based syntactic sugar API on the `error` key. This customizing the error message for all issue codes.
+Zod will support an object-based syntactic sugar API on the `error` key. This customizing the error message for all issue codes. This also siloes the snake case keys into their own object, so they aren't alongside camelCase keys.
 
 ```ts
 const emailSchema = z.string({
