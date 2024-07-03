@@ -10,7 +10,152 @@ My full-time work on Zod 4, including the design & implementation of this propos
 
 This document proposes a new error map API for Zod 4.
 
-# Issue #1: Bottom-up execution
+# Issue 1: Verbosity
+
+The current API is verbose. To override the error message for a particular issue code:
+
+```ts
+const errorMap: ZodErrorMap = (issue, ctx) => {
+  if (issue instanceof ZodInvalidLiteralIssue) {
+    return { message: "Invalid literal!" };
+  }
+  return { message: ctx.defaultError };
+};
+```
+
+## The fix
+
+Allow returning a string directly.
+
+```ts
+const errorMap: ZodErrorMap = (issue, ctx) => {
+  if (issue instanceof ZodInvalidLiteralIssue) return "Invalid literal!";
+};
+```
+
+This will be supported alongside the more verbose `{message: string}` syntax.
+
+```diff
+  export type ZodErrorMap = (
+    issue: ZodIssueOptionalMessage,
+    ctx: { defaultError: string; data: any }
++  ) => { message: string };
++  ) => string | { message: string };
+```
+
+# Issue 2: "Required" errors
+
+Zod supports some syntactic sugar for customizing messages for certain issue types: `invalid_type_error` and `required_error`.
+
+```ts
+const emailSchema = z.string({
+  invalid_type_error: "Email must be a string",
+  required_error: "Field cannot be left blank",
+});
+```
+
+While `invalid_type` is a Zod issue code, `required` is not. If you pass `undefined` into a `ZodString`, you get an `invalid_type` error. The same is true if you pass `null`, `12`, or any non-string value.
+
+To users with knowledge of Zod's issue codes, the existence of `required_error` can be confusing because it doesn't correspond to an error code.
+
+## The fix
+
+Zod will add a new issue code `"required"` issue code. This issue code will be used any time a value of `undefined` is passed into a non-optional schema. It will also be used if a required key isn't specified in `ZodObject`.
+
+Trying to consolidate all type errors under `invalid_type` for the sake of elegance isn't pragmatic here. Some special treatment for `undefined` is inevitable in JavaScript. Arguably, `undefined` is not a value and has no type, so it should be considered separately from other type errors.
+
+> A `"required"` issue code will also be an important part of Zod's new approach to key optionality in objects (`exactOptionalPropertyTypes`)—RFC forthcoming.
+
+# Issue 3: Inconsistency
+
+Due to the verbosity of the current API, it was onerous for users to customize error messages for a specific schema.
+
+```ts
+const emailSchema = z.string({
+  errorMap: (iss, ctx) => {
+    if (iss.code === "invalid_type") {
+      return { message: "Email must be a string" };
+    }
+    return { message: ctx.defaultError };
+  },
+});
+```
+
+To address this, Zod added some syntactic sugar: `invalid_type_error` and `required_error`.
+
+```ts
+const emailSchema = z.string({
+  invalid_type_error: "Email must be a string",
+  required_error: "Field cannot be left blank",
+});
+```
+
+This has been useful for a lot of people, but it's quite inelegant in the context of Zod's broader error reporting system.
+
+### Snake case
+
+These keys are snake-case for the sake of visual consistency with Zod's issue code (e.g. `"invalid_type"`). But it's not consistent with the rest of Zod's API.
+
+### Footguns
+
+The `invalid_type_error` will only be applied to issues with code `invalid_type`. This makes sense, but it has also confused users who think their custom message will be applied more broadly.
+
+A particularly unfortunate example is this:
+
+```ts
+z.enum(["red", "white", "blue"], { invalid_type_error: "Invalid color" });
+```
+
+The custom message `invalid_type_error` is only applied to issues with code `invalid_type`. If the input is, say `"green"`, the resulting issue code is `invalid_enum_value`. As such the `invalid_type_error` message will not be applied. This is confusing.
+
+## The fix(es)
+
+Zod will support an object-based syntactic sugar API on the `error` key. This customizing the error message for all issue codes. This also siloes the snake case keys into their own object, so they aren't alongside camelCase keys.
+
+```ts
+const emailSchema = z.enum(["red", "white", "blue"], {
+  error: {
+    invalid_type: "Value should be a string",
+    invalid_enum_value: "Invalid color",
+  },
+});
+```
+
+Zod can limit the keys to the issue codes that are actually throwable by the schema. For instance, `ZodEnum` will only ever produce `invalid_type` and `invalid_enum_value` errors. This will be enforced by TypeScript.
+
+> Technically, a `ZodString` schema can produce `custom` issues from its stored refinements, but these mesages should be customized in the method that introduces the constraint (e.g. `.refine()`, `.uuid()`, `.min()`, etc).
+
+# Issue 5: Unnecessary `ctx`
+
+With `ctx.defaultError` becoming irrelevant, the only remaining key on `ctx` is `ctx.data`. That's a little silly.
+
+To make it even more silly, a sister RFC (yet to be published) will propose adding back a `input` key into `ZodIssue` in development environments. Zod has had a long-standing policy of hiding input data from issues for security reasons, because error loggers may accidentally write sensistive information to disk. Zod 4 will likely add back `issue.input`, which will then be stripped if `NODE_ENV=production`.
+
+## The fix
+
+Remove `ctx` from the error map signature.
+
+```diff
+  export type ZodErrorMap = (
+-    issue: ZodIssueOptionalMessage,
++    issue: ZodIssueOptionalMessage,
+-    ctx: { defaultError: string; data: any }
+  ) => { message: string } | string | undefined;
+```
+
+The `ZodIssueOptionalMessage` will still be a union of all possible issue types, but it will include an `input` key that can be used to access the input data.
+
+```ts
+z.string({
+  error(issue) {
+    if (issue.code === "invalid_type") return `Bad input: ${issue.input}`;
+  },
+});
+```
+
+> The `ctx` argument of the error map signature will be entirelyt deprecated (but still supported for backwards compatibility).
+
+# Issue 5: Bottom-up execution
 
 Zod's current approach to error maps is a little backwards. For starters, Zod generates error messages by passing a `message`-less version of the issue into a pipeline of error maps. In order of increasing precedence, the error maps are:
 
@@ -60,135 +205,20 @@ Switch over to a "top-down" resolution strategy. To accommodate this, error maps
   export type ZodErrorMap = (
     issue: ZodIssueOptionalMessage,
     ctx: { defaultError: string; data: any }
--  ) => { message: string };
-+  ) => undefined | { message: string };
-```
-
-# Issue #2: Verbosity
-
-The current API is verbose. To override the error message for a particular issue code:
-
-```ts
-const errorMap: ZodErrorMap = (issue, ctx) => {
-  if (issue instanceof ZodInvalidLiteralIssue) {
-    return { message: "Invalid literal!" };
-  }
-  return { message: ctx.defaultError };
-};
-```
-
-## The fix
-
-Allow returning a string directly.
-
-```ts
-const errorMap: ZodErrorMap = (issue, ctx) => {
-  if (issue instanceof ZodInvalidLiteralIssue) return "Invalid literal!";
-};
-```
-
-This will be supported alongside the more verbose `{message: string}` syntax.
-
-```diff
-  export type ZodErrorMap = (
-    issue: ZodIssueOptionalMessage,
-    ctx: { defaultError: string; data: any }
-+  ) => undefined | { message: string };
-+  ) => undefined | message | { message: string };
-```
-
-# Issue #3: Inconsistency
-
-Due to the verbosity of the current API, it was onerous for users to customize error messages for a specific schema.
-
-```ts
-const emailSchema = z.string({
-  errorMap: (iss, ctx) => {
-    if (iss.code === "invalid_type") {
-      return { message: "Email must be a string" };
-    }
-    return { message: ctx.defaultError };
-  },
-});
-```
-
-To address this, Zod added some syntactic sugar: `invalid_type_error` and `required_error`.
-
-```ts
-const emailSchema = z.string({
-  invalid_type_error: "Email must be a string",
-  required_error: "Field cannot be left blank",
-});
-```
-
-This has been useful for a lot of people, but it's quite inelegant in the context of Zod's broader error reporting system.
-
-### Snake case
-
-It's snake-case for the sake of visual consistency with Zod's issue code (e.g. `"invalid_type"`). But it's not consistent with the rest of Zod's API.
-
-### Inconsistency with issue codes
-
-While `invalid_type` is a known issue code, `required` is not. There's no special issue type for when a required field is missing...it's just an `invalid_type` error like any other. To users with knowledge of Zod's issue codes, the existence of `required_error` can be confusing.
-
-### Footguns
-
-The `invalid_type_error` will only be applied to issues with code `invalid_type`. This makes sense, but it has also confused users who think their custom message will be applied more broadly.
-
-A particularly unfortunate example is this:
-
-```ts
-z.enum(["red", "white", "blue"], { invalid_type_error: "Invalid color" });
-```
-
-The custom message will only be applied if the input data is a non-string. If an invalid color ("green") is passed in, the resulting issue code is `invalid_enum_value`. As such the `invalid_type_error` message will not be applied. This is confusing. There's currently no easy one-liner for customizing the message for invalid enum values.
-
-## The fix(es)
-
-Zod will add a special `"required"` issue code. Trying to consolidate all type errors under `invalid_type` for the sake of elegance isn't pragmatic here. Some special treatment for `undefined` is inevitable in JavaScript.
-
-> A `"required"` issue code is also an important part of Zod's new approach to key optionality in objects (`exactOptionalPropertyTypes`)—RFC forthcoming.
-
-Zod will support an object-based syntactic sugar API on the `error` key. This customizing the error message for all issue codes. This also siloes the snake case keys into their own object, so they aren't alongside camelCase keys.
-
-```ts
-const emailSchema = z.string({
-  error: {
-    invalid_type: "Email must be a string",
-    required: "Field cannot be blank",
-  },
-});
-```
-
-> As indicated in the previous example, Zod will add a special-cased issue code `"required"` for the case where `undefined` is passed as input into a non-optional schema.
-
-Zod can limit the keys to the issue codes that are actually throwable by the schema. For instance, `ZodString` can only produce `invalid_type` and `required` errors. This will be enforced by TypeScript.
-
-Technically, a `ZodString` schema can produce `invalid_string`, `too_small`, and `too_big` errors too, but these error messages should be customized in the method that introduces the constraint (e.g. `.uuid()`, `.min()`, etc).
-
-Here's the enum example using the new API:
-
-```ts
-z.enum(["red", "white", "blue"], {
-  error: {
-    invalid_type: "Must be a string",
-    invalid_enum_value: "Invalid color",
-  },
-});
+-  ) => { message: string } | string;
++  ) => { message: string } | string | undefined;
 ```
 
 # Final proposal
 
-The type signature for ZodErrorMap will be changed to allow returning `undefined`. This will signal to Zod that the error map is kicking the can down to the next map in the chain.
+The type signature for ZodErrorMap will be changed to allow returning `undefined`. This will signal to Zod that the error map is kicking the can down to the next map in the chain. It will also support returning a plain string instead of `{message: string}`.
 
 ```ts
 export type ZodErrorMap = (
+  // includes `input` field to replace `ctx.data`
   issue: ZodIssueOptionalMessage,
-  ctx: {
-    /** @deprecated */
-    defaultError: string;
-    data: any;
-  }
+  /** @deprecated */
+  ctx: { defaultError: string; data: any }
 ) => { message: string } | string | undefined;
 ```
 
@@ -196,7 +226,7 @@ A custom error map can be passed into a schema via the `error` key.
 
 ```ts
 z.string({
-  error: (issue, ctx) => {
+  error(issue) {
     if (issue.code === "invalid_type") return "Email must be a string";
   },
 });
@@ -204,7 +234,7 @@ z.string({
 
 > Currently error maps are passed as `errorMap`. This will be deprecated but supported for backwards compatibility.
 
-This key will also support an object-based syntactic sugar:
+The `error` key will also support an object-based syntactic sugar.
 
 ```ts
 z.string({
@@ -215,18 +245,22 @@ z.string({
 });
 ```
 
-An even simpler string-based syntax will also be supported. This will be applied for all issue codes.
+The `error` key will also support an even simpler string-based syntax. The passed error message will be applied for all issues that originate from inside this schema.
 
 ```ts
 z.string({ error: "Invalid input" });
 ```
 
-Currently, all refinement methods support error customization via the `message` key. For consistency, this will be deprecated in favor of `error` (but still supported).
+Currently, all refinement methods support error customization via the `message` key.
 
 ```ts
 // current
 z.string().min(5, { message: "Too short" });
+```
 
+For consistency, this will be deprecated in favor of `error`. The `message` field will still be supported, but will be removed in a future major version.
+
+```ts
 // new
 z.string().min(5, { error: "Too short" });
 ```
