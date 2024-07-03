@@ -41,7 +41,7 @@ This will be supported alongside the more verbose `{message: string}` syntax.
 +  ) => { message: string } | string;
 ```
 
-# Issue 2: Inconsistency
+# Issue 2: Confusing sugar
 
 Due to the verbosity of the current API, it was onerous for users to customize error messages for a specific schema.
 
