@@ -162,7 +162,7 @@ const errorMap: ZodErrorMap = (issue, ctx) => {
 
 The idea was to simplify the error map type signature by always requiring a return type of `{message: string}`. It would also encourage exhaustiveness checking by forcing the developer to explicitly return `{ message: ctx.defaultError }` if they want to defer to lower-priority error maps.
 
-But this "bottom up" approach occurs an unnecessary performance penalty. All error maps must be run for each new issue.
+But ultimately I don't think either of those reasons are particularly compelling, and is arguably more confusing than the alternative. This "bottom up" approach also incurs an unnecessary performance penalty since all error maps must be run for each new issue.
 
 ### The fix
 
@@ -172,7 +172,7 @@ Switch over to a "top-down" resolution strategy. To accommodate this, error maps
   export type ZodErrorMap = (
     issue: ZodIssueOptionalMessage,
     ctx: {
-      /** @deprecated */
++     /** @deprecated */
       defaultError: string;
       data: any
     }
