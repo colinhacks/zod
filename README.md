@@ -124,6 +124,10 @@
   - [`.parseAsync`](#parseasync)
   - [`.safeParse`](#safeparse)
   - [`.safeParseAsync`](#safeparseasync)
+  - [`.typedParse`](#typedparse)
+  - [`.typedSafeParse`](#typedsafeparse)
+  - [`.typedParseAsync`](#typedparseasync)
+  - [`.typedSafeParseAsync`](#typedsafeparseasync)
   - [`.refine`](#refine)
     - [Arguments](#arguments)
     - [Customize error path](#customize-error-path)
@@ -2055,6 +2059,27 @@ For convenience, this has been aliased to `.spa`:
 ```ts
 await stringSchema.spa("billie");
 ```
+
+### `.typedParse`
+
+A typed version of `.parse` that type-checks the input
+
+```ts
+await stringSchema.typedParse("typed"); // No problem.
+await stringSchema.typedParse(12); // Argument of type 'number' is not assignable to parameter of type 'string'.
+```
+
+### `.typedSafeParse`
+
+A typed version of `.safeParse` that type-checks the input
+
+### `.typedParseAsync`
+
+A typed version of `.parseAsync` that type-checks the input
+
+### `.typedSafeParseAsync`
+
+A typed version of `.safeParseAsync` that type-checks the input
 
 ### `.refine`
 
