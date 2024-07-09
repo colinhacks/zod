@@ -4507,10 +4507,9 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
     });
     const checkParsedDefault = (parsed: SyncParseReturnType<any>) => {
       if (parsed.status === "valid" && parsed.value === undefined) {
-        ctx.common.issues.push({
+        addIssueToContext(ctx, {
           code: ZodIssueCode.failed_default,
           path: ctx.path,
-          message: "default value parsed to undefined",
         });
         return INVALID;
       }
