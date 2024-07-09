@@ -29,12 +29,37 @@ test("default with transform", () => {
 
 test("default after transform that returns undefined", () => {
   const schema = z
-    .union([z.literal("").transform(() => undefined), z.string().optional()])
+    .union([
+      z.literal("").transform(() => undefined),
+      z.string().toUpperCase().optional(),
+    ])
     .default("default");
 
-  expect(schema.parse(undefined)).toBe("default");
+  expect(schema.parse(undefined)).toBe("DEFAULT");
+  expect(schema.parse("foo")).toBe("FOO");
+  expect(schema.parse("")).toBe("DEFAULT");
+
+  type inp = z.input<typeof schema>;
+  util.assertEqual<inp, string | undefined>(true);
+  type out = z.output<typeof schema>;
+  util.assertEqual<out, string>(true);
+});
+
+test("default when transform returns undefined on default value", () => {
+  const schema = z
+    .union([
+      z.enum(["", "default"]).transform(() => undefined),
+      z.string().optional(),
+    ])
+    .default("default");
+
+  expect(() => schema.parse(undefined)).toThrow(
+    "default value parsed to undefined"
+  );
   expect(schema.parse("foo")).toBe("foo");
-  expect(schema.parse("")).toBe("default");
+  expect(() => schema.parse("")).toThrowError(
+    "default value parsed to undefined"
+  );
 
   type inp = z.input<typeof schema>;
   util.assertEqual<inp, string | undefined>(true);

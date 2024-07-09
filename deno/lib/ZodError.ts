@@ -27,6 +27,7 @@ export const ZodIssueCode = util.arrayToEnum([
   "invalid_return_type",
   "invalid_date",
   "invalid_string",
+  "failed_default",
   "too_small",
   "too_big",
   "invalid_intersection_types",
@@ -137,6 +138,10 @@ export interface ZodNotFiniteIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.not_finite;
 }
 
+export interface ZodFailedDefaultIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.failed_default;
+}
+
 export interface ZodCustomIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.custom;
   params?: { [k: string]: any };
@@ -160,6 +165,7 @@ export type ZodIssueOptionalMessage =
   | ZodInvalidIntersectionTypesIssue
   | ZodNotMultipleOfIssue
   | ZodNotFiniteIssue
+  | ZodFailedDefaultIssue
   | ZodCustomIssue;
 
 export type ZodIssue = ZodIssueOptionalMessage & {

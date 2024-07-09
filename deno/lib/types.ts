@@ -4505,15 +4505,31 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
       path: ctx.path,
       parent: ctx,
     });
-    return "then" in parsed
-      ? parsed.then((parsed) =>
-          parsed.status === "valid" && parsed.value === undefined
-            ? OK(this._def.defaultValue())
-            : parsed
-        )
-      : parsed.status === "valid" && parsed.value === undefined
-      ? OK(this._def.defaultValue())
-      : parsed;
+    const checkParsedDefault = (parsed: SyncParseReturnType<any>) => {
+      if (parsed.status === "valid" && parsed.value === undefined) {
+        ctx.common.issues.push({
+          code: ZodIssueCode.failed_default,
+          path: ctx.path,
+          message: "default value parsed to undefined",
+        });
+        return INVALID;
+      }
+      return parsed;
+    };
+    const checkParsed = (parsed: SyncParseReturnType<any>) => {
+      if (parsed.status !== "valid" || parsed.value !== undefined) {
+        return parsed;
+      }
+      const parsedDefault = this._def.innerType._parse({
+        data: this._def.defaultValue(),
+        path: ctx.path,
+        parent: ctx,
+      });
+      return "then" in parsedDefault
+        ? parsedDefault.then(checkParsedDefault)
+        : checkParsedDefault(parsedDefault);
+    };
+    return "then" in parsed ? parsed.then(checkParsed) : checkParsed(parsed);
   }
 
   removeDefault() {
