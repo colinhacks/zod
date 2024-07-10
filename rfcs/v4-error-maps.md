@@ -10,7 +10,53 @@ My full-time work on Zod 4, including the design & implementation of this propos
 
 This document proposes a new error map API for Zod 4. It breaks down 5 issues with the current API and proposes changes incrementally. The final proposal is re-iterated at the bottom of the document under "Final proposal".
 
-# Issue 1: Verbosity
+# Issue 1: Slow bottom-up execution model
+
+Zod's current approach to resolving error maps is a little backwards.
+
+Zod generates error messages by passing a `message`-less version of the issue (`ZodIssueOptionalMessage`) into a pipeline of error maps. In order of increasing precedence, the error maps are:
+
+1. contextual error map (passed into `.parse(<data>, {errorMap: myErrorMap})`)
+2. schema-specific error map (`z.string({ errorMap: myErrorMap })` or `invalid_type_error`, etc)
+3. `overrideErrorMap` (settable with `z.setErrorMap()`)
+4. `defaultErrorMap` (the standard English error map in `locales/en.ts`)
+
+The reasonable thing to do would be to pass the issue into the #1 and see if it returns a message. If it does, that message will be used; otherwise, proceed to the next map in the chain.
+
+For some reason Zod does this "bottom-up". It first gets a message from the lowest-priority map first, then passes that into the higher-priority maps as `ctx.defaultError`.
+
+```ts
+const errorMap: ZodErrorMap = (issue, ctx) => {
+  if (issue instanceof ZodInvalidLiteralIssue) {
+    return { message: "Invalid literal!" };
+  }
+  return { message: ctx.defaultError };
+};
+```
+
+The idea was to simplify the error map type signature by always requiring a return type of `{message: string}`. It would also encourage exhaustiveness checking by forcing the developer to explicitly return `{ message: ctx.defaultError }` if they want to defer to lower-priority error maps.
+
+But ultimately I don't think either of those reasons are particularly compelling, and is arguably more confusing than the alternative. This "bottom up" approach also incurs an unnecessary performance penalty since all error maps must be run for each new issue.
+
+### The fix
+
+Switch over to a "top-down" resolution strategy. To accommodate this, error maps should allow returning `undefined/void` to signal that the issue should be passed down to the next map in the chain.
+
+```diff
+  export type ZodErrorMap = (
+    issue: ZodIssueOptionalMessage,
+    ctx: {
++     /** @deprecated */
+      defaultError: string;
+      data: any
+    }
+-  ) => { message: string };
++  ) => { message: string } | undefined;
+```
+
+For compatibility `ctx.defaultError` can be set to some unique internal string value like `"{{zod_default_error}}"`. When Zod sees this value, it will know to proceed to the next error map in the chain.
+
+# Issue 2: Verbosity
 
 The current API is verbose. To override the error message for a particular issue code:
 
@@ -38,12 +84,16 @@ This will be supported alongside the more verbose `{message: string}` syntax.
 ```diff
   export type ZodErrorMap = (
     issue: ZodIssueOptionalMessage,
-    ctx: { defaultError: string; data: any }
--  ) => { message: string };
-+  ) => { message: string } | string;
+    ctx: {
+      /** @deprecated */
+      defaultError: string;
+      data: any
+    }
+-  ) => { message: string } | undefined;
++  ) => { message: string } | undefined | string;
 ```
 
-# Issue 2: Confusing sugar
+# Issue 3: Confusing sugar
 
 Due to the verbosity of the current API, it was onerous for users to customize error messages for a specific schema.
 
@@ -85,7 +135,7 @@ z.enum(["red", "white", "blue"], { invalid_type_error: "Invalid color" });
 
 The custom message `invalid_type_error` is only applied to issues with code `invalid_type`. If the input is, say `"green"`, the resulting issue code is `invalid_enum_value`. As such the `invalid_type_error` message will not be applied. This is confusing.
 
-### The fix(es)
+### The fix
 
 Zod will support an object-based syntactic sugar API on the `error` key. This customizing the error message for all issue codes. This also siloes the snake case keys into their own object, so they aren't alongside camelCase keys.
 
@@ -104,7 +154,7 @@ Zod can limit the keys to the issue codes that are actually throwable by the sch
 
 The `invalid_type_error` and `required_error` fields will be deprecated.
 
-# Issue 3: "Required" errors
+# Issue 4: "Required" errors
 
 There is an additional inconsistency in the current `invalid_type_error` and `required_error` API.
 
@@ -137,52 +187,6 @@ Trying to consolidate all type errors under `invalid_type` for the sake of elega
 This also solves the inconsistency between Zod's error customization API and the set of issue codes that Zod actually throws.
 
 > A `"required"` issue code will also be an important part of Zod's new approach to key optionality in objects (`exactOptionalPropertyTypes`)—RFC forthcoming. This code will be used when a key that's required by a `ZodObject` shape isn't specified in the input.
-
-# Issue 4: Bottom-up execution
-
-Zod's current approach to resolving error maps is a little backwards.
-
-Zod generates error messages by passing a `message`-less version of the issue (`ZodIssueOptionalMessage`) into a pipeline of error maps. In order of increasing precedence, the error maps are:
-
-1. contextual error map (passed into `.parse(<data>, {errorMap: myErrorMap})`)
-2. schema-specific error map (`z.string({ errorMap: myErrorMap })` or `invalid_type_error`, etc)
-3. `overrideErrorMap` (settable with `z.setErrorMap()`)
-4. `defaultErrorMap` (the standard English error map in `locales/en.ts`)
-
-The reasonable thing to do would be to pass the issue into the #1 and see if it returns a message. If it does, that message will be used; otherwise, proceed to the next map in the chain.
-
-For some reason Zod does this "bottom-up". It first gets a message from the lowest-priority map first, then passes that into the higher-priority maps as `ctx.defaultError`.
-
-```ts
-const errorMap: ZodErrorMap = (issue, ctx) => {
-  if (issue instanceof ZodInvalidLiteralIssue) {
-    return { message: "Invalid literal!" };
-  }
-  return { message: ctx.defaultError };
-};
-```
-
-The idea was to simplify the error map type signature by always requiring a return type of `{message: string}`. It would also encourage exhaustiveness checking by forcing the developer to explicitly return `{ message: ctx.defaultError }` if they want to defer to lower-priority error maps.
-
-But ultimately I don't think either of those reasons are particularly compelling, and is arguably more confusing than the alternative. This "bottom up" approach also incurs an unnecessary performance penalty since all error maps must be run for each new issue.
-
-### The fix
-
-Switch over to a "top-down" resolution strategy. To accommodate this, error maps should allow returning `undefined/void` to signal that the issue should be passed down to the next map in the chain.
-
-```diff
-  export type ZodErrorMap = (
-    issue: ZodIssueOptionalMessage,
-    ctx: {
-+     /** @deprecated */
-      defaultError: string;
-      data: any
-    }
--  ) => { message: string } | string;
-+  ) => { message: string } | string | undefined;
-```
-
-For compatibility `ctx.defaultError` can be set to some unique internal string value like `"{{zod_default_error}}"`. When Zod sees this value, it will know to proceed to the next error map in the chain.
 
 # Issue 5: Unnecessary `ctx`
 
@@ -229,7 +233,7 @@ export type ZodErrorMap = (
 ) => { message: string } | string | undefined;
 ```
 
-A custom error map can be passed into a schema via the `error` key.
+A custom error map will be passed into a schema via the `error` key.
 
 ```ts
 z.string({
@@ -260,16 +264,12 @@ z.string({ error: "Invalid input" });
 
 A new `"required"` issue code will be added. This code will be used whenever the input to a non-optional schema is `undefined`.
 
-Currently, all refinement methods support error customization via the `message` key.
+Currently, all refinement methods support error customization via the `message` key. For consistency, this will be deprecated in favor of `error`. The `message` field will still be supported, but will be removed in a future major version.
 
 ```ts
 // current
 z.string().min(5, { message: "Too short" });
-```
 
-For consistency, this will be deprecated in favor of `error`. The `message` field will still be supported, but will be removed in a future major version.
-
-```ts
 // new
 z.string().min(5, { error: "Too short" });
 ```
