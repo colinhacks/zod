@@ -216,21 +216,22 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
-        <picture height="40px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
-          <img alt="speakeasy" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
+      <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod">
+        <picture height="45px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/ac65013f-aeb4-48dd-a2ee-41040b69cbe6">
+          <img alt="stainless" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/5ef4c11b-efeb-4495-90a8-41b83f798600">
         </picture>
       </a>
       <br  />   
-      SDKs & Terraform providers for your API
+      Build AI apps and workflows with Retool AI
       <br/>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs" style="text-decoration:none;">speakeasyapi.dev</a>
+      <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod" style="text-decoration:none;">retool.com</a>
       </p>
       <p></p>
     </td>
-    </tr><tr>
-     <td align="center">
+  </tr>
+  <tr>
+    <td align="center">
       <p></p>
       <p>
       <a href="https://stainlessapi.com">
@@ -243,6 +244,24 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       Generate best-in-class SDKs
       <br/>
       <a href="https://stainlessapi.com" style="text-decoration:none;">stainlessapi.com</a>
+      </p>
+      <p></p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <p></p>
+      <p>
+      <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
+        <picture height="40px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
+          <img alt="speakeasy" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
+        </picture>
+      </a>
+      <br  />   
+      SDKs & Terraform providers for your API
+      <br/>
+      <a href="https://speakeasyapi.dev/?utm_source=zod+docs" style="text-decoration:none;">speakeasyapi.dev</a>
       </p>
       <p></p>
     </td>
