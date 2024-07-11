@@ -218,7 +218,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <p>
       <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod">
         <picture height="45px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/5ef4c11b-efeb-4495-90a8-41b83f798600">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/ac65013f-aeb4-48dd-a2ee-41040b69cbe6">
           <img alt="stainless" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/5ef4c11b-efeb-4495-90a8-41b83f798600">
         </picture>
       </a>
