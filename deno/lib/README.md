@@ -223,7 +223,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         </picture>
       </a>
       <br  />   
-      Build AI apps and workflows with Retool AI
+      Build AI apps and workflows with <a href="https://retool.com/products/ai?utm_source=github&utm_medium=referral&utm_campaign=zod">Retool AI</a>
       <br/>
       <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod" style="text-decoration:none;">retool.com</a>
       </p>
