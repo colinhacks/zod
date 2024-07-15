@@ -1,30 +1,29 @@
 type HasInstance = (instance: any) => boolean;
-function checkSymbol(sym: symbol): (instance: any) => boolean {
+function checkSymbol(sym: string): (instance: any) => boolean {
   return (instance: any) => instance[sym] === true;
 }
-function attachSymbol(c: Constructor, sym: symbol): void {
+function attachTag(c: Constructor, sym: string): void {
   c[Symbol.hasInstance] = checkSymbol(sym);
   (c.prototype as any)[sym] = true;
 }
 
-const $ZOD_TYPE: unique symbol = Symbol.for("{{$ZOD_TYPE}}");
-type $ZOD_TYPE = typeof $ZOD_TYPE;
+// const $ZOD_TYPE: unique symbol = Symbol.for("{{$ZOD_TYPE}}");
+// type $ZOD_TYPE = typeof $ZOD_TYPE;
 export abstract class $ZodType<T = unknown> {
   _type: T;
-  [$ZOD_TYPE]: true;
+  "{{zod_type_v4}}": true;
 
   abstract parse(data: unknown): this["_type"];
 }
-attachSymbol($ZodType, $ZOD_TYPE);
+attachTag($ZodType, "{{zod_type_v4}}");
 
-const $ZOD_STRING: unique symbol = Symbol.for("{{ZOD_STRING}}");
 export class $ZodString extends $ZodType<string> {
-  [$ZOD_STRING]: boolean;
+  "{{ZOD_STRING}}": boolean;
   parse(data: unknown): this["_type"] {
     return "asdf";
   }
 }
-attachSymbol($ZodString, $ZOD_STRING);
+attachTag($ZodString, "$ZOD_STRING");
 
 const ZOD_OPTIONAL: unique symbol = Symbol.for("{{ZOD_OPTIONAL}}");
 type ZOD_OPTIONAL = typeof ZOD_OPTIONAL;
@@ -46,14 +45,14 @@ export class $ZodOptional<T extends $ZodType> extends $ZodType<
     return "asdf";
   }
 }
-attachSymbol($ZodOptional, ZOD_OPTIONAL);
+attachTag($ZodOptional, "ZOD_OPTIONAL");
 
 // declare let x: $ZodOptional<$ZodString>;
 // x[$ZOD_TYPE];
 
 // type Constructor<T extends $ZodType> = new (...args: any[]) => T;
 type Constructor = abstract new (...args: any[]) => $ZodType;
-const ZOD_TYPE: unique symbol = Symbol.for("{{ZOD_OPTIONAL}}");
+// const ZOD_TYPE = Symbol.for("{{ZOD_OPTIONAL}}");
 
 const ZodStringMixin: ZodTypeMixed<typeof $ZodType> = ZodTypeMixin($ZodType);
 export abstract class ZodType extends ZodStringMixin {
@@ -68,8 +67,8 @@ export function ZodTypeMixin<T extends Constructor>(
   SuperClass: T
 ): ZodTypeMixed<T> {
   abstract class $Temp extends SuperClass {
-    protected [ZOD_TYPE]: true;
-    static [Symbol.hasInstance]: HasInstance = checkSymbol(ZOD_TYPE);
+    protected "{{ZOD_OPTIONAL}}": true;
+    static [Symbol.hasInstance]: HasInstance = checkSymbol("{{ZOD_OPTIONAL}}");
     // constructor(...args: any[]) {
     //   super(...args);
     // }
@@ -101,7 +100,7 @@ export class ZodString extends ZodStringBase {
     [ZOD_STRING]: true;
   };
 }
-attachSymbol(ZodString, $ZOD_STRING);
+attachTag(ZodString, "$ZOD_STRING");
 
 declare const t: ZodString;
 

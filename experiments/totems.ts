@@ -13,7 +13,7 @@ type Prettify<T> = {
 //   Omit<Old, keyof New> & New
 // >;
 type $merge<Old extends ZodT, New extends Partial<ZodT>> = Prettify<{
-  "~override": true;
+  "~overrides": true;
   "~input": "~input" extends keyof New ? New["~input"] : Old["~input"];
   "~output": "~output" extends keyof New ? New["~output"] : Old["~output"];
   "~async": "~async" extends keyof New ? New["~async"] : Old["~async"];
@@ -30,7 +30,7 @@ type $merge<Old extends ZodT, New extends Partial<ZodT>> = Prettify<{
 //   "~meta": "~meta" extends keyof O ? O["~meta"] : T["~meta"];
 // } & T["~base"];
 type $override<T extends $ZodType, O extends ZodT> = T & { "~overrides": O };
-type $meta<T extends $ZodType, M> = T & { "~overrides": { "~meta": M } };
+type $meta<M> = { "~overrides": { "~meta": M } };
 abstract class $ZodType {
   "~base": $ZodType;
   "~overrides": ZodT;
@@ -44,9 +44,8 @@ abstract class $ZodType {
 
   abstract parse(data: unknown): this["~output"];
 
-  meta<T>(
-    data: T
-  ): $override<this["~base"], $merge<this["~overrides"], { "~meta": T }>> {
+  meta<T>(data: T): this & $meta<T> {
+    // $override<this["~base"], $merge<this["~overrides"], { "~meta": T }>> {
     return this as any;
   }
 
@@ -66,20 +65,21 @@ class $ZodString extends $ZodType {
   }
 }
 
-type ZodString = $override<
-  $ZodString,
-  {
+interface ZodString extends $ZodType {
+  "~overrides": {
     "~input": string;
     "~output": string;
     "~async": false;
     "~meta": unknown;
-  }
->;
+  };
+}
+
 function string(): ZodString {
   return new $ZodString() as any;
 }
 
 const s1 = string();
+s1["~overrides"];
 s1.parse("hello");
 const s2 = s1.meta({ hello: "there" }); //.async();
 const d2 = s2.parse("hello");
