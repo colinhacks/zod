@@ -2132,7 +2132,9 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
     return max != null ? new Date(max) : null;
   }
 
-  static create(params?: RawCreateParams & { coerce?: boolean | "iso" }): ZodDate {
+  static create(
+    params?: RawCreateParams & { coerce?: boolean | "iso" }
+  ): ZodDate {
     return new ZodDate({
       checks: [],
       coerce: params?.coerce || false,
