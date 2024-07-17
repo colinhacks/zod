@@ -970,7 +970,7 @@ For older zod versions, use [`z.preprocess`](#preprocess) like [described in thi
 
 If you prefer to only coerce [valid ISO 8601 strings](https://en.wikipedia.org/wiki/ISO_8601), use the `coerce` parameter.
 
-This method is useful when using zod with a tool that uses JSON to serialize/deserialize, since `Date` objects are serialized via `.toISOString()` with `JSON.stringify`.
+This method is useful to avoid accidentally coercing `null` into `1970-01-01`, and also when using zod with a tool that uses JSON to serialize/deserialize (since `Date` objects are serialized via `.toISOString()` with `JSON.stringify`).
 
 ```ts
 const dateSchema = z.date({ coerce: "iso" });
