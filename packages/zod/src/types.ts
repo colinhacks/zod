@@ -2009,7 +2009,7 @@ export type ZodDateCheck =
   | { kind: "max"; value: number; message?: string };
 export interface ZodDateDef extends ZodTypeDef {
   checks: ZodDateCheck[];
-  coerce: boolean;
+  coerce: boolean | "iso";
   typeName: ZodFirstPartyTypeKind.ZodDate;
 }
 
@@ -2018,7 +2018,12 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
     input: ParseInput,
     _ctx: ParseContext
   ): ParseReturnType<this["_output"]> {
-    if (this._def.coerce) {
+    if (this._def.coerce === "iso") {
+      const coerced = typeof input === "string" ? new Date(input) : null;
+      if (coerced && coerced.toISOString() === input) {
+        input = coerced;
+      }
+    } else if (this._def.coerce) {
       input = new Date(input);
     }
     const parsedType = this._getType(input);
@@ -2127,7 +2132,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
     return max != null ? new Date(max) : null;
   }
 
-  static create(params?: RawCreateParams & { coerce?: boolean }): ZodDate {
+  static create(params?: RawCreateParams & { coerce?: boolean | "iso" }): ZodDate {
     return new ZodDate({
       checks: [],
       coerce: params?.coerce || false,

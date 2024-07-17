@@ -966,6 +966,23 @@ console.log(dateSchema.safeParse("0000-00-00").success); // false
 
 For older zod versions, use [`z.preprocess`](#preprocess) like [described in this thread](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276).
 
+**ISO 8601 coercion**
+
+If you prefer to only coerce [valid ISO 8601 strings](https://en.wikipedia.org/wiki/ISO_8601), use the `coerce` parameter.
+
+This method is useful when using zod with a tool that uses JSON to serialize/deserialize, since `Date` objects are serialized via `.toISOString()` with `JSON.stringify`.
+
+```ts
+const dateSchema = z.date({ coerce: "iso" });
+
+console.log(dateSchema.safeParse("2023-01-10T00:00:00.000Z").success); // true
+console.log(dateSchema.safeParse(new Date()).success); // true
+
+console.log(dateSchema.safeParse("1/10/23").success); // false
+console.log(dateSchema.safeParse(0).success); // false
+console.log(dateSchema.safeParse(null).success); // false
+```
+
 ## Files (Browser only)
 
 Use z.file() to validate `File` instances.
