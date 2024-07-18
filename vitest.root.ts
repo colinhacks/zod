@@ -2,13 +2,11 @@ import { type UserConfig, defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    include: ["**/*.test.ts"],
-    isolate: false,
     watch: false,
+    isolate: false,
     typecheck: {
       enabled: true,
-      ignoreSourceErrors: true,
-      include: ["**/*.test.ts"],
+      ignoreSourceErrors: false,
     },
   },
 }) as UserConfig;
