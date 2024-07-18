@@ -23,6 +23,13 @@
       }
     }
   },
+  "tshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts"
+    },
+    "sourceDialects": ["@zod/source"]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/colinhacks/zod.git"

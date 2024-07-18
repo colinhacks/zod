@@ -1,5 +1,5 @@
 import * as zNew from "../packages/zod/dist/esm";
-import * as zOld from "./node_modules/zod/lib/index";
+import * as zOld from "./node_modules/zod/dist/commonjs/index";
 
 export function makeSchema<T>(factory: (z: typeof zNew) => T) {
   return {

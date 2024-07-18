@@ -7,12 +7,15 @@
     "jsx": "react",
 
     "strict": true,
+    "alwaysStrict": true,
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": false,
     "noUnusedParameters": true,
+    "noImplicitAny": true,
     "noImplicitReturns": true,
+    "noImplicitThis": true,
 
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
@@ -20,7 +23,11 @@
     "noEmit": true,
     "removeComments": true,
     "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "downlevelIteration": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+
+    "pretty": true
   }
 }

@@ -14,16 +14,35 @@
   "types": "./dist/esm/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/esm/index.d.ts",
-      "require": "./dist/cjs/index.js",
-      "import": "./dist/esm/index.js"
+      "import": {
+        "@zod/source": "./src/index.ts",
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/index.d.ts",
+        "default": "./dist/commonjs/index.js"
+      }
     },
-    "./package.json": "./package.json",
     "./locales/*": {
-      "types": "./dist/esm/locales/*.d.ts",
-      "require": "./dist/cjs/locales/*.js",
-      "import": "./dist/esm/locales/*.js"
+      "import": {
+        "@zod/source": "./src/locales/*",
+        "types": "./dist/esm/locales/*",
+        "default": "./dist/esm/locales/*"
+      },
+      "require": {
+        "types": "./dist/commonjs/locales/*",
+        "default": "./dist/commonjs/locales/*"
+      }
     }
+  },
+  "tshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      ".": "./src/index.ts",
+      "./locales/*": "./src/locales/*"
+    },
+    "sourceDialects": ["@zod/source"]
   },
   "repository": {
     "type": "git",
