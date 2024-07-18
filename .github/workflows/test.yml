@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         node: ["latest"]
-        typescript: ["5.0", "next"]
+        typescript: ["latest", "next"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v4
