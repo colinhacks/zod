@@ -1,3 +1,7 @@
 {
-  "extends": "../../../.configs/tsconfig.test.json"
+  "extends": "../../../.configs/tsconfig.base.json",
+  "compilerOptions": {
+    "isolatedDeclarations": false,
+    "rootDir": "."
+  }
 }
