@@ -1,8 +1,8 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import { util } from "../src/helpers";
-import { z } from "../src/index";
+import { util } from "../src/helpers/index.js";
+import { z } from "../src/index.js";
 
 test("basic catch", () => {
   expect(z.string().catch("default").parse(undefined)).toBe("default");

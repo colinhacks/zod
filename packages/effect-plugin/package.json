@@ -1,5 +1,6 @@
 {
   "name": "@zod-plugin/effect",
+  "type": "module",
   "version": "0.1.0",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "files": ["src", "dist"],
@@ -9,11 +10,13 @@
   "license": "MIT",
   "sideEffects": false,
   "main": "./dist/commonjs/index.js",
+  "module": "./dist/esm/index.js",
   "types": "./dist/commonjs/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
     ".": {
       "import": {
+        "@zod/source": "./src/index.ts",
         "types": "./dist/esm/index.d.ts",
         "default": "./dist/esm/index.js"
       },
@@ -48,9 +51,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist",
-    "build": "pnpm run clean && pnpm build:cjs && pnpm build:esm",
-    "build:esm": "pnpm tsc -p ./tsconfig.build.json --noEmit false --declaration --declarationMap --sourceMap --rootDir src --module esnext --moduleResolution node10 --outDir dist/esm",
-    "build:cjs": "pnpm tsc -p ./tsconfig.build.json --noEmit false --rootDir src --sourceMap --module commonjs --moduleResolution node10 --outDir dist/cjs",
+    "build": "tshy",
     "test": "vitest run",
     "prepublishOnly": "pnpm test && pnpm build"
   }

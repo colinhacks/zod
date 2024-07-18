@@ -20,7 +20,6 @@
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
 
-    "noEmit": true,
     "removeComments": true,
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,

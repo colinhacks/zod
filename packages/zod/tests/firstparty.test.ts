@@ -1,8 +1,8 @@
 // @ts-ignore TS6133
 import { test } from "vitest";
 
-import { util } from "../src/helpers";
-import * as z from "../src/index";
+import { util } from "../src/helpers/index.js";
+import * as z from "../src/index.js";
 
 test("first party switch", () => {
   const myType = z.string() as z.ZodFirstPartySchemaTypes;

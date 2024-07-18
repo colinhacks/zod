@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import * as z from "../src/index";
+import * as z from "../src/index.js";
 
 test("passing validations", () => {
   const example1 = z.custom<number>((x) => typeof x === "number");

@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import * as z from "../src/index";
+import * as z from "../src/index.js";
 
 test("parse strict object with unknown keys", () => {
   expect(() =>

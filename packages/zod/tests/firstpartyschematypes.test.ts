@@ -1,11 +1,11 @@
 // @ts-ignore TS6133
 import { test } from "vitest";
 
-import { util } from "../src/helpers";
+import { util } from "../src/helpers/index.js";
 import type {
   ZodFirstPartySchemaTypes,
   ZodFirstPartyTypeKind,
-} from "../src/index";
+} from "../src/index.js";
 
 test("Identify missing [ZodFirstPartySchemaTypes]", () => {
   type ZodFirstPartySchemaForType<T extends ZodFirstPartyTypeKind> =

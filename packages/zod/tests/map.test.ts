@@ -1,9 +1,9 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import { util } from "../src/helpers";
-import * as z from "../src/index";
-import { ZodIssueCode } from "../src/index";
+import { util } from "../src/helpers/index.js";
+import * as z from "../src/index.js";
+import { ZodIssueCode } from "../src/index.js";
 
 const stringMap = z.map(z.string(), z.string());
 type stringMap = z.infer<typeof stringMap>;

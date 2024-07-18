@@ -1,7 +1,7 @@
-import { util } from "./helpers";
-import type { Primitive } from "./helpers/typeAliases";
-import type { ZodParsedType } from "./helpers/util";
-import type { TypeOf, ZodFirstPartyTypeKind, ZodType, input } from "./index";
+import { util } from "./helpers/index.js";
+import type { Primitive } from "./helpers/typeAliases.js";
+import type { ZodParsedType } from "./helpers/util.js";
+import type { TypeOf, ZodFirstPartyTypeKind, ZodType, input } from "./index.js";
 
 type allKeys<T> = T extends any ? keyof T : never;
 
