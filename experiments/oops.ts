@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 // a less object-oriented approach
 
 interface ZodDef {

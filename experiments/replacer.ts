@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import type { z } from "../packages/zod/src/index";
 
 type Tagged = z.ZodType & { _tag: string };

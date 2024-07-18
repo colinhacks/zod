@@ -1,4 +1,4 @@
-import { defineConfig, mergeConfig } from "vitest/config";
+import { defineProject, mergeConfig } from "vitest/config";
 import rootConfig from "../../vitest.root";
 
-export default mergeConfig(rootConfig, defineConfig({})) as object;
+export default mergeConfig(rootConfig, defineProject({})) as object;
