@@ -27,7 +27,7 @@ abstract class $ZodType {
 
   abstract parse(data: unknown): this["~output"];
 
-  meta<T>(data: T): this & $meta<T> {
+  meta<T>(_data: T): this & $meta<T> {
     return this as any;
   }
 

@@ -44,7 +44,7 @@ abstract class $ZodType {
 
   abstract parse(data: unknown): this["~output"];
 
-  meta<T>(data: T): this & $meta<T> {
+  meta<T>(_data: T): this & $meta<T> {
     // $override<this["~base"], $merge<this["~overrides"], { "~meta": T }>> {
     return this as any;
   }
@@ -82,7 +82,7 @@ const s1 = string();
 s1["~overrides"];
 s1.parse("hello");
 const s2 = s1.meta({ hello: "there" }); //.async();
-const d2 = s2.parse("hello");
+const _d2 = s2.parse("hello");
 
 export type {};
 

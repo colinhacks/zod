@@ -19,7 +19,7 @@ attachTag($ZodType, "{{zod_type_v4}}");
 
 export class $ZodString extends $ZodType<string> {
   "{{ZOD_STRING}}": boolean;
-  parse(data: unknown): this["_type"] {
+  parse(_data: unknown): this["_type"] {
     return "asdf";
   }
 }
@@ -76,7 +76,7 @@ export function ZodTypeMixin<T extends Constructor>(
       return new $ZodOptional(this);
     }
 
-    constant<T extends string>(val: T): $constant<this, T> {
+    constant<T extends string>(_val: T): $constant<this, T> {
       return this as any;
     }
     // parse(data: unknown): this["_type"] {
