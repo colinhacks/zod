@@ -6569,7 +6569,7 @@ Object.defineProperty(_literalType, "template", {
 });
 const literalType = _literalType as Literal;
 
-const ostring: () => ZodString<ZodString> = () => stringType().optional();
+const ostring: () => ZodOptional<ZodString> = () => stringType().optional();
 const onumber: () => ZodOptional<ZodNumber> = () => numberType().optional();
 const oboolean: () => ZodOptional<ZodBoolean> = () => booleanType().optional();
 
