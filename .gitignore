@@ -13,3 +13,5 @@ out.png
 logos
 .zed
 dist
+.tshy
+.tshy-build

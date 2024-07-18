@@ -2,6 +2,6 @@
   "private": true,
   "name": "zod-benchmarks",
   "devDependencies": {
-    "zod": "3.23.5"
+    "zod": "3.23.8"
   }
 }
