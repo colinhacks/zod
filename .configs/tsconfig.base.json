@@ -2,8 +2,8 @@
   "compilerOptions": {
     "target": "es2018",
     "lib": ["es6", "dom"],
-    "moduleResolution": "Node",
-    "module": null,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "jsx": "react",
 
     "strict": true,

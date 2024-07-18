@@ -4,8 +4,8 @@ import { Table } from "console-table-printer";
 import * as mitata from "mitata";
 import { Bench } from "tinybench";
 
-import { assertNever } from "../packages/zod/src/helpers/util";
-import { formatNumber } from "./benchUtil";
+import { assertNever } from "../packages/zod/src/helpers/util.js";
+import { formatNumber } from "./benchUtil.js";
 
 type BENCH = "tinybench" | "benchmarkjs" | "mitata";
 const BENCH: BENCH = (process.env.BENCH as BENCH) || "benchmarkjs";
