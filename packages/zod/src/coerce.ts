@@ -5,7 +5,7 @@ import {
   ZodNumber,
   ZodString,
   ZodTemplateLiteral,
-} from "./types.js";
+} from "./classes.js";
 
 const coerceString = ((arg) =>
   ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"];

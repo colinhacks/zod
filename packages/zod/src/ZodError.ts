@@ -6,7 +6,7 @@ import type { TypeOf, ZodFirstPartyTypeKind, ZodType, input } from "./index.js";
 type allKeys<T> = T extends any ? keyof T : never;
 
 export type inferFlattenedErrors<
-  T extends ZodType<any, any, any>,
+  T extends ZodType,
   U = string,
 > = typeToFlattenedError<input<T>, U>;
 export type typeToFlattenedError<T, U = string> = {
@@ -239,7 +239,7 @@ export type ZodFormattedError<T, U = string> = {
 } & recursiveZodFormattedError<NonNullable<T>>;
 
 export type inferFormattedError<
-  T extends ZodType<any, any, any>,
+  T extends ZodType,
   U = string,
 > = ZodFormattedError<TypeOf<T>, U>;
 

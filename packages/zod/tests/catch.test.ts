@@ -43,7 +43,7 @@ test("catch with transform", () => {
   expect(stringWithDefault).toBeInstanceOf(z.ZodCatch);
   expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodEffects);
   expect(stringWithDefault._def.innerType._def.schema).toBeInstanceOf(
-    z.ZodSchema
+    z.ZodType
   );
 
   type inp = z.input<typeof stringWithDefault>;
