@@ -1,6 +1,7 @@
 {
   "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "."
+    "rootDir": ".",
+    "noEmit": true
   }
 }
