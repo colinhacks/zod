@@ -3,7 +3,6 @@ import { expect, test } from "vitest";
 
 import { util } from "../src/helpers/index.js";
 import * as z from "../src/index.js";
-import { ZodNullable, ZodOptional } from "../src/index.js";
 
 const nested = z.object({
   name: z.string(),
@@ -35,100 +34,110 @@ test("shallow partial parse", () => {
   });
 });
 
-test("deep partial inference", () => {
-  const deep = nested.deepPartial();
-  const asdf = deep.shape.array.unwrap().element.shape.asdf.unwrap();
-  asdf.parse("asdf");
-  type deep = z.infer<typeof deep>;
-  type correct = {
-    array?: { asdf?: string }[];
-    name?: string | undefined;
-    age?: number | undefined;
-    outer?: { inner?: string | undefined } | undefined;
-  };
+// test("deep partial inference", () => {
+//   const deep = nested.deepPartial();
+//   const asdf = deep.shape.array.unwrap().element.shape.asdf.unwrap();
+//   asdf.parse("asdf");
+//   type deep = z.infer<typeof deep>;
+//   type correct = {
+//     array?: { asdf?: string }[];
+//     name?: string | undefined;
+//     age?: number | undefined;
+//     outer?: { inner?: string | undefined } | undefined;
+//   };
 
-  util.assertEqual<deep, correct>(true);
-});
+//   util.assertEqual<deep, correct>(true);
+// });
 
-test("deep partial parse", () => {
-  const deep = nested.deepPartial();
+// test("deep partial parse", () => {
+//   const deep = nested.deepPartial();
 
-  expect(deep.shape.name instanceof z.ZodOptional).toBe(true);
-  expect(deep.shape.outer instanceof z.ZodOptional).toBe(true);
-  expect(deep.shape.outer._def.innerType instanceof z.ZodObject).toBe(true);
-  expect(
-    deep.shape.outer._def.innerType.shape.inner instanceof z.ZodOptional
-  ).toBe(true);
-  expect(
-    deep.shape.outer._def.innerType.shape.inner._def.innerType instanceof
-      z.ZodString
-  ).toBe(true);
-});
+//   expect(deep.shape.name instanceof z.ZodOptional).toBe(true);
+//   expect(deep.shape.outer instanceof z.ZodOptional).toBe(true);
+//   expect(deep.shape.outer._def.innerType instanceof z.ZodObject).toBe(true);
+//   expect(
+//     deep.shape.outer._def.innerType.shape.inner instanceof z.ZodOptional
+//   ).toBe(true);
+//   expect(
+//     deep.shape.outer._def.innerType.shape.inner._def.innerType instanceof
+//       z.ZodString
+//   ).toBe(true);
+// });
 
-test("deep partial runtime tests", () => {
-  const deep = nested.deepPartial();
-  deep.parse({});
-  deep.parse({
-    outer: {},
-  });
-  deep.parse({
-    name: "asdf",
-    age: 23143,
-    outer: {
-      inner: "adsf",
-    },
-  });
-});
+// test("deep partial runtime tests", () => {
+//   const deep = nested.deepPartial();
+//   deep.parse({});
+//   deep.parse({
+//     outer: {},
+//   });
+//   deep.parse({
+//     name: "asdf",
+//     age: 23143,
+//     outer: {
+//       inner: "adsf",
+//     },
+//   });
+// });
 
-test("deep partial optional/nullable", () => {
-  const schema = z
-    .object({
-      name: z.string().optional(),
-      age: z.number().nullable(),
-    })
-    .deepPartial();
+// test("deep partial optional/nullable", () => {
+//   const schema = z
+//     .object({
+//       name: z.string().optional(),
+//       age: z.number().nullable(),
+//     })
+//     .deepPartial();
 
-  expect(schema.shape.name.unwrap()).toBeInstanceOf(ZodOptional);
-  expect(schema.shape.age.unwrap()).toBeInstanceOf(ZodNullable);
-});
+//   expect(schema.shape.name.unwrap()).toBeInstanceOf(ZodOptional);
+//   expect(schema.shape.age.unwrap()).toBeInstanceOf(ZodNullable);
+// });
 
-test("deep partial tuple", () => {
-  const schema = z
-    .object({
-      tuple: z.tuple([
-        z.object({
-          name: z.string().optional(),
-          age: z.number().nullable(),
-        }),
-      ]),
-    })
-    .deepPartial();
+// test("deep partial tuple", () => {
+//   const schema = z
+//     .object({
+//       tuple: z.tuple([
+//         z.object({
+//           name: z.string().optional(),
+//           age: z.number().nullable(),
+//         }),
+//       ]),
+//     })
+//     .deepPartial();
 
-  expect(schema.shape.tuple.unwrap().items[0].shape.name).toBeInstanceOf(
-    ZodOptional
-  );
-});
+//   expect(schema.shape.tuple.unwrap().items[0].shape.name).toBeInstanceOf(
+//     ZodOptional
+//   );
+// });
 
-test("deep partial inference", () => {
-  const mySchema = z.object({
-    name: z.string(),
-    array: z.array(z.object({ asdf: z.string() })),
-    tuple: z.tuple([z.object({ value: z.string() })]),
-  });
+// test("deep partial inference", () => {
+//   const mySchema = z.object({
+//     name: z.string(),
+//     array: z.array(z.object({ asdf: z.string() })),
+//     tuple: z.tuple([z.object({ value: z.string() })]),
+//   });
 
-  const partialed = mySchema.deepPartial();
-  type partialed = z.infer<typeof partialed>;
-  type expected = {
-    name?: string | undefined;
-    array?:
-      | {
-          asdf?: string | undefined;
-        }[]
-      | undefined;
-    tuple?: [{ value?: string }] | undefined;
-  };
-  util.assertEqual<expected, partialed>(true);
-});
+//   const partialed = mySchema.deepPartial();
+//   type partialed = z.infer<typeof partialed>;
+//   type expected = {
+//     name?: string | undefined;
+//     array?:
+//       | {
+//           asdf?: string | undefined;
+//         }[]
+//       | undefined;
+//     tuple?: [{ value?: string }] | undefined;
+//   };
+//   util.assertEqual<expected, partialed>(true);
+// });
+
+// test("deeppartial array", () => {
+//   const schema = z.object({ array: z.string().array().min(42) }).deepPartial();
+
+//   // works as expected
+//   schema.parse({});
+
+//   // should be false, but is true
+//   expect(schema.safeParse({ array: [] }).success).toBe(false);
+// });
 
 test("required", () => {
   const object = z.object({
@@ -239,14 +248,4 @@ test("partial with mask -- ignore falsy values", async () => {
 
   masked.parse({ country: "US" });
   await masked.parseAsync({ country: "US" });
-});
-
-test("deeppartial array", () => {
-  const schema = z.object({ array: z.string().array().min(42) }).deepPartial();
-
-  // works as expected
-  schema.parse({});
-
-  // should be false, but is true
-  expect(schema.safeParse({ array: [] }).success).toBe(false);
 });

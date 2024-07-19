@@ -14,7 +14,6 @@ import {
   type enumUtil,
   errorUtil,
   type objectUtil,
-  type partialUtil,
 } from "./helpers/index.js";
 
 import {
@@ -2702,38 +2701,38 @@ export type noUnrecognized<Obj extends object, Shape extends object> = {
   [k in keyof Obj]: k extends keyof Shape ? Obj[k] : never;
 };
 
-function deepPartialify(schema: ZodTypeAny): any {
-  if (schema instanceof ZodObject) {
-    const newShape: any = {};
+// function deepPartialify(schema: ZodTypeAny): any {
+//   if (schema instanceof ZodObject) {
+//     const newShape: any = {};
 
-    for (const key in schema.shape) {
-      const fieldSchema = schema.shape[key];
-      newShape[key] = ZodOptional.create(deepPartialify(fieldSchema));
-    }
-    return new ZodObject({
-      ...schema._def,
-      shape: () => newShape,
-    }) as any;
-  }
-  if (schema instanceof ZodArray) {
-    return new ZodArray({
-      ...schema._def,
-      type: deepPartialify(schema.element),
-    });
-  }
-  if (schema instanceof ZodOptional) {
-    return ZodOptional.create(deepPartialify(schema.unwrap()));
-  }
-  if (schema instanceof ZodNullable) {
-    return ZodNullable.create(deepPartialify(schema.unwrap()));
-  }
-  if (schema instanceof ZodTuple) {
-    return ZodTuple.create(
-      schema.items.map((item: any) => deepPartialify(item))
-    );
-  }
-  return schema;
-}
+//     for (const key in schema.shape) {
+//       const fieldSchema = schema.shape[key];
+//       newShape[key] = ZodOptional.create(deepPartialify(fieldSchema));
+//     }
+//     return new ZodObject({
+//       ...schema._def,
+//       shape: () => newShape,
+//     }) as any;
+//   }
+//   if (schema instanceof ZodArray) {
+//     return new ZodArray({
+//       ...schema._def,
+//       type: deepPartialify(schema.element),
+//     });
+//   }
+//   if (schema instanceof ZodOptional) {
+//     return ZodOptional.create(deepPartialify(schema.unwrap()));
+//   }
+//   if (schema instanceof ZodNullable) {
+//     return ZodNullable.create(deepPartialify(schema.unwrap()));
+//   }
+//   if (schema instanceof ZodTuple) {
+//     return ZodTuple.create(
+//       schema.items.map((item: any) => deepPartialify(item))
+//     );
+//   }
+//   return schema;
+// }
 
 export class ZodObject<
   T extends ZodRawShape,
@@ -3151,9 +3150,9 @@ export class ZodObject<
   /**
    * @deprecated
    */
-  deepPartial(): partialUtil.DeepPartial<this> {
-    return deepPartialify(this) as any;
-  }
+  // deepPartial(): partialUtil.DeepPartial<this> {
+  //   return deepPartialify(this) as any;
+  // }
 
   partial(): ZodObject<
     { [k in keyof T]: ZodOptional<T[k]> },
