@@ -15,10 +15,4 @@ const bench = metabench("object creation")
     obj.value;
   });
 
-export default async function run() {
-  await bench.run();
-}
-
-if (require.main === module) {
-  run();
-}
+await bench.run();

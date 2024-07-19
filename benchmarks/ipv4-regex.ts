@@ -46,10 +46,4 @@ const bench = metabench("ipv4 regex")
     return ipv4RegexI.test(DATA);
   });
 
-export default async function run() {
-  await bench.run();
-}
-
-if (require.main === module) {
-  run();
-}
+await bench.run();

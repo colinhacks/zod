@@ -15,10 +15,4 @@ const bench = zodbench({
   },
 });
 
-export default async function run() {
-  await bench.run();
-}
-
-if (require.main === module) {
-  run();
-}
+await bench.run();
