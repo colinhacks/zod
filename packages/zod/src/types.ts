@@ -8,14 +8,14 @@ import {
   ZodIssueCode,
   ZodTemplateLiteralUnsupportedCheckError,
   ZodTemplateLiteralUnsupportedTypeError,
-} from "./ZodError";
+} from "./ZodError.js";
 import {
   util,
   type enumUtil,
   errorUtil,
   type objectUtil,
   type partialUtil,
-} from "./helpers";
+} from "./helpers/index.js";
 
 import {
   type AsyncParseReturnType,
@@ -30,11 +30,11 @@ import {
   isAsync,
   isValid,
   makeIssue,
-} from "./helpers/parseUtil";
-import type { Primitive } from "./helpers/typeAliases";
-import { ZodParsedType, getParsedType, objectKeys } from "./helpers/util";
+} from "./helpers/parseUtil.js";
+import type { Primitive } from "./helpers/typeAliases.js";
+import { ZodParsedType, getParsedType, objectKeys } from "./helpers/util.js";
 
-export { ZodParsedType } from "./helpers/util";
+export { ZodParsedType } from "./helpers/util.js";
 
 ///////////////////////////////////////
 ///////////////////////////////////////
@@ -6573,7 +6573,7 @@ const ostring: () => ZodOptional<ZodString> = () => stringType().optional();
 const onumber: () => ZodOptional<ZodNumber> = () => numberType().optional();
 const oboolean: () => ZodOptional<ZodBoolean> = () => booleanType().optional();
 
-export * as coerce from "./coerce";
+export * as coerce from "./coerce.js";
 
 export {
   anyType as any,

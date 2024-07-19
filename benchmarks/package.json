@@ -1,5 +1,6 @@
 {
   "private": true,
+  "type": "module",
   "name": "zod-benchmarks",
   "devDependencies": {
     "zod": "3.23.8"

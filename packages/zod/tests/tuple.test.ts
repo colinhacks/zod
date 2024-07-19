@@ -1,9 +1,9 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import { ZodError } from "../src/ZodError";
-import { util } from "../src/helpers";
-import * as z from "../src/index";
+import { ZodError } from "../src/ZodError.js";
+import { util } from "../src/helpers/index.js";
+import * as z from "../src/index.js";
 
 const testTuple = z.tuple([
   z.string(),

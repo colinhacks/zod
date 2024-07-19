@@ -1,9 +1,9 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import { util } from "../src/helpers";
-import * as z from "../src/index";
-import { Mocker } from "./Mocker";
+import { util } from "../src/helpers/index.js";
+import * as z from "../src/index.js";
+import { Mocker } from "./Mocker.js";
 
 const literalStringSchema = z.literal("asdf");
 const literalNumberSchema = z.literal(12);

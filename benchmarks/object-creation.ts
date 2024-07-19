@@ -1,4 +1,4 @@
-import { metabench } from "./metabench";
+import { metabench } from "./metabench.js";
 
 class ZodFail {
   status = "fail";

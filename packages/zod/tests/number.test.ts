@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import * as z from "../src/index";
+import * as z from "../src/index.js";
 
 const gtFive = z.number().gt(5);
 const gteFive = z.number().gte(5);

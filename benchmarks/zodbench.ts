@@ -1,6 +1,6 @@
-import type z from "../packages/zod/dist/esm";
-import { makeSchema } from "./benchUtil";
-import { metabench } from "./metabench";
+import type z from "../packages/zod/dist/commonjs/index.js";
+import { makeSchema } from "./benchUtil.js";
+import { metabench } from "./metabench.js";
 
 interface ZodBenchParams<T extends z.ZodType, D> {
   name: string;

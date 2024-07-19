@@ -2,8 +2,6 @@
   "extends": "./.configs/tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
-    "isolatedDeclarations": true,
-    "composite": true
-  },
-  "exclude": ["benchmarks"]
+    "noEmit": true
+  }
 }

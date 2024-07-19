@@ -1,4 +1,4 @@
-import "../src/index";
+import "../src/index.js";
 
 import { Cause, Effect, Exit } from "effect";
 import { describe, expect, test } from "vitest";

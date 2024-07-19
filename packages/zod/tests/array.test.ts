@@ -1,8 +1,8 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import { util } from "../src/helpers";
-import * as z from "../src/index";
+import { util } from "../src/helpers/index.js";
+import * as z from "../src/index.js";
 
 const minTwo = z.string().array().min(2);
 const maxTwo = z.string().array().max(2);

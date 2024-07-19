@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { test } from "vitest";
 
-import { Mocker } from "./Mocker";
+import { Mocker } from "./Mocker.js";
 
 test("mocker", () => {
   const mocker = new Mocker();

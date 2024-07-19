@@ -1,8 +1,8 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import { ZodError, ZodIssueCode } from "../src/ZodError";
-import * as z from "../src/index";
+import { ZodError, ZodIssueCode } from "../src/ZodError.js";
+import * as z from "../src/index.js";
 
 test("error creation", () => {
   const err1 = ZodError.create([]);
