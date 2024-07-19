@@ -32,6 +32,6 @@
     }
   },
   "files": {
-    "ignore": ["lib", "coverage", "dist"]
+    "ignore": ["lib", "coverage", "dist", ".tshy", ".tshy-build"]
   }
 }
