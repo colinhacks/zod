@@ -4,10 +4,19 @@
   "version": "3.23.8",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
-  "files": ["src", "dist"],
+  "files": [
+    "src",
+    "dist"
+  ],
   "funding": "https://github.com/sponsors/colinhacks",
   "homepage": "https://zod.dev",
-  "keywords": ["typescript", "schema", "validation", "type", "inference"],
+  "keywords": [
+    "typescript",
+    "schema",
+    "validation",
+    "type",
+    "inference"
+  ],
   "license": "MIT",
   "sideEffects": false,
   "main": "./dist/commonjs/index.js",
@@ -44,7 +53,9 @@
       ".": "./src/index.ts",
       "./locales/*": "./src/locales/*"
     },
-    "sourceDialects": ["@zod/source"]
+    "sourceDialects": [
+      "@zod/source"
+    ]
   },
   "repository": {
     "type": "git",
