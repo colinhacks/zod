@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      tshy:
-        specifier: ^3.0.2
-        version: 3.0.2
     devDependencies:
       '@biomejs/biome':
         specifier: ^1.7.3
@@ -72,6 +68,9 @@ importers:
       ts-morph:
         specifier: ^14.0.0
         version: 14.0.0
+      tshy:
+        specifier: ^3.0.2
+        version: 3.0.2
       tslib:
         specifier: ^2.3.1
         version: 2.6.3
