@@ -38,7 +38,10 @@
     "exports": {
       "./package.json": "./package.json",
       ".": "./src/index.ts"
-    }
+    },
+    "sourceDialects": [
+      "@zod/source"
+    ]
   },
   "repository": {
     "type": "git",
