@@ -43,8 +43,7 @@
       "./package.json": "./package.json",
       ".": "./src/index.ts",
       "./locales/*": "./src/locales/*"
-    },
-    "sourceDialects": ["@zod/source"]
+    }
   },
   "repository": {
     "type": "git",
