@@ -6,7 +6,7 @@ export default defineConfig({
     isolate: false,
     typecheck: {
       enabled: true,
-      // ignoreSourceErrors: false,
+      ignoreSourceErrors: false,
     },
   },
 }) as UserConfig;
