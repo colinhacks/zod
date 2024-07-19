@@ -52,14 +52,11 @@
     "lint:check": "biome lint .",
     "clean": "pnpm run -r clean && rm -rf node_modules",
     "build": "pnpm run -r build",
-    "build:esm": "pnpm run --filter zod build:esm",
-    "build:cjs": "pnpm run --filter zod build:cjs",
-    "build:types": "tsc -p ./.configs/tsconfig.types.json",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm run test && pnpm run build",
     "play": "tsx --watch playground.ts ",
-    "bench": "pnpm run build:cjs && tsx benchmarks/index.ts",
+    "bench": "tsx benchmarks/index.ts",
     "prepare": "husky install",
     "publish:jsr": "jsr publish --dry-run"
   }
