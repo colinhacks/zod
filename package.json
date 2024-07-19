@@ -41,6 +41,7 @@
   },
   "lint-staged": {
     "src/*.ts": ["biome format --write", "biome lint --write"],
+    "*.json": ["biome format --write", "biome lint --write"],
     "*.md": ["prettier --ignore-unknown --write"]
   },
   "scripts": {

@@ -12,6 +12,7 @@
   "main": "./dist/commonjs/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/commonjs/index.d.ts",
+
   "exports": {
     "./package.json": "./package.json",
     ".": {
