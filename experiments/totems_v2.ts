@@ -35,6 +35,12 @@ abstract class $ZodType {
     return this as any;
   }
 
+  check<R extends Check<this["~output"], unknown>>(
+    _r: R
+  ): $output<this, R["~output"]> {
+    return this as any;
+  }
+
   optional(): this & $optional {
     return {
       ...this,
@@ -44,6 +50,20 @@ abstract class $ZodType {
       },
     };
   }
+}
+
+interface Check<I, O> {
+  "~output": O;
+  "~input": I;
+  run(ctx: { val: I }): void;
+  dependencies: (string | number | symbol)[];
+}
+
+function brand(): Check<any, { __tag: "BRAND" }> {
+  return {
+    run(_ctx: any) {},
+    dependencies: [],
+  } as any;
 }
 
 interface Methods {
@@ -81,6 +101,7 @@ const d2 = s2.parse("hello");
 const s3 = s2.async();
 const d3 = s3.parse("hello");
 
+s1.check(brand());
 export type {};
 
 type alksjdf = Prettify<
