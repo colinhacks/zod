@@ -24,7 +24,8 @@
       },
       "style": {
         "noUnusedTemplateLiteral": "off", // why is this even a best practice?
-        "noParameterAssign": "off" // required for performant coercion in _parse
+        "noParameterAssign": "off", // required for performant coercion in _parse
+        "noNonNullAssertion": "off"
       },
       "correctness": {
         "noUnusedImports": "error"
