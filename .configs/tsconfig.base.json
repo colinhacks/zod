@@ -16,6 +16,7 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
+    "noImplicitOverride": true,
 
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
