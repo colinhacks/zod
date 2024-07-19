@@ -27,6 +27,7 @@
     "downlevelIteration": true,
     "isolatedModules": true,
 
-    "pretty": true
+    "pretty": true,
+    "customConditions": ["@zod/source"]
   }
 }

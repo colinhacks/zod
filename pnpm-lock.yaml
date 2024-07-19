@@ -100,7 +100,11 @@ importers:
         specifier: ^3.0.0
         version: link:../zod
 
-  packages/zod: {}
+  packages/zod:
+    dependencies:
+      effect:
+        specifier: ^3.5.6
+        version: 3.5.6
 
 packages:
 
