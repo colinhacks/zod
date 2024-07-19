@@ -1,5 +1,5 @@
 import { metabench } from "./metabench.js";
-import { DATA, zod3, zod4 } from "./object-old.js";
+import { DATA, zod3, zod4 } from "./object-setup.js";
 
 const bench = metabench("small: z.object().safeParseAsync", {
   zod3() {
@@ -10,8 +10,4 @@ const bench = metabench("small: z.object().safeParseAsync", {
   },
 });
 
-export default async function run() {
-  await bench.run();
-}
-
-if (require.main === module) run();
+await bench.run();

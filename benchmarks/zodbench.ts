@@ -1,4 +1,4 @@
-import type z from "../packages/zod/dist/commonjs/index.js";
+import type z from "../packages/zod/src/index.js";
 import { makeSchema } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 

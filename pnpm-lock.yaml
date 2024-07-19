@@ -88,8 +88,8 @@ importers:
   benchmarks:
     devDependencies:
       zod:
-        specifier: 3.23.8
-        version: link:../packages/zod
+        specifier: 3.23.7
+        version: 3.23.7
 
   packages/effect-plugin:
     dependencies:
@@ -1402,6 +1402,9 @@ packages:
     resolution: {integrity: sha512-GQHQqAopRhwU8Kt1DDM8NjibDXHC8eoh1erhGAJPEyveY9qqVeXvVikNKrDz69sHowPMorbPUrH/mx8c50eiBQ==}
     engines: {node: '>=18'}
 
+  zod@3.23.7:
+    resolution: {integrity: sha512-NBeIoqbtOiUMomACV/y+V3Qfs9+Okr18vR5c/5pHClPpufWOrsx8TENboDPe265lFdfewX2yBtNTLPvnmCxwog==}
+
 snapshots:
 
   '@ampproject/remapping@2.3.0':
@@ -2603,3 +2606,5 @@ snapshots:
   yaml@1.10.2: {}
 
   yoctocolors@2.1.1: {}
+
+  zod@3.23.7: {}

@@ -26,10 +26,4 @@ const bench = metabench("z.disriminatedUnion().parse")
     zod4.parse(DATA);
   });
 
-export default async function run() {
-  await bench.run();
-}
-
-if (require.main === module) {
-  run();
-}
+await bench.run();

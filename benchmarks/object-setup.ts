@@ -1,5 +1,5 @@
 import { makeData, makeSchema } from "./benchUtil.js";
-import { metabench } from "./metabench.js";
+// import { metabench } from "./metabench.js";
 
 export const { zod3, zod4 } = makeSchema((z) =>
   z.object({
@@ -19,23 +19,17 @@ export var DATA: any[] = makeData(1000, () => {
   });
 });
 
-const bench = metabench("small: z.object().parse", {
-  zod3() {
-    for (const d of DATA) {
-      zod3.parse(d);
-    }
-  },
-  zod4() {
-    for (const d of DATA) {
-      zod4.parse(d);
-    }
-  },
-});
+// const bench = metabench("small: z.object().parse", {
+//   zod3() {
+//     for (const d of DATA) {
+//       zod3.parse(d);
+//     }
+//   },
+//   zod4() {
+//     for (const d of DATA) {
+//       zod4.parse(d);
+//     }
+//   },
+// });
 
-export default async function run() {
-  await bench.run();
-}
-
-if (require.main === module) {
-  run();
-}
+// await bench.run();

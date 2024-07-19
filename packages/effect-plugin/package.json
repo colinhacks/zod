@@ -3,10 +3,19 @@
   "type": "module",
   "version": "0.1.0",
   "author": "Colin McDonnell <zod@colinhacks.com>",
-  "files": ["src", "dist"],
+  "files": [
+    "src",
+    "dist"
+  ],
   "funding": "https://github.com/sponsors/colinhacks",
   "homepage": "https://zod.dev",
-  "keywords": ["typescript", "schema", "validation", "type", "inference"],
+  "keywords": [
+    "typescript",
+    "schema",
+    "validation",
+    "type",
+    "inference"
+  ],
   "license": "MIT",
   "sideEffects": false,
   "main": "./dist/commonjs/index.js",
@@ -16,7 +25,6 @@
     "./package.json": "./package.json",
     ".": {
       "import": {
-        "@zod/source": "./src/index.ts",
         "types": "./dist/esm/index.d.ts",
         "default": "./dist/esm/index.js"
       },

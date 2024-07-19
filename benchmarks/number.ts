@@ -13,10 +13,4 @@ const bench = metabench("z.number().parse", {
   },
 });
 
-export default async function run() {
-  await bench.run();
-}
-
-if (require.main === module) {
-  run();
-}
+await bench.run();

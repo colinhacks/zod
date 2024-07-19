@@ -43,8 +43,4 @@ const bench = metabench("small: z.object().safeParseAsync", {
   },
 });
 
-export default async function run() {
-  await bench.run();
-}
-
-if (require.main === module) run();
+await bench.run();
