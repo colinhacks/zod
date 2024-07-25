@@ -27,9 +27,19 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       message = `Invalid input`;
       break;
     case ZodIssueCode.invalid_union_discriminator:
-      message = `Invalid discriminator value. Expected ${util.joinValues(
-        issue.options
-      )}`;
+      message = `Invalid discriminator value ${JSON.stringify(
+        issue.received
+      )}. Expected ${util.joinValues(issue.options)}${
+        issue.otherOptions > 0
+          ? ` (+ ${issue.otherOptions} other option(s))`
+          : ""
+      }`;
+      break;
+    case ZodIssueCode.ambiguous_union_discriminator:
+      message = `Ambiguous discriminator value: ${JSON.stringify(
+        issue.received,
+        util.jsonStringifyReplacer
+      )} matched ${issue.optionsMatched} options`;
       break;
     case ZodIssueCode.invalid_enum_value:
       message = `Invalid enum value. Expected ${util.joinValues(
