@@ -262,6 +262,17 @@ export abstract class ZodType<
     return handleResult(ctx, result);
   }
 
+  typedParse(data: Input, params?: Partial<ParseParams>): Output {
+    return this.parse(data, params);
+  }
+
+  typedSafeParse(
+    data: Input,
+    params?: Partial<ParseParams>
+  ): SafeParseReturnType<Input, Output> {
+    return this.safeParse(data, params);
+  }
+
   async parseAsync(
     data: unknown,
     params?: Partial<ParseParams>
@@ -293,6 +304,20 @@ export abstract class ZodType<
       ? maybeAsyncResult
       : Promise.resolve(maybeAsyncResult));
     return handleResult(ctx, result);
+  }
+
+  async typedParseAsync(
+    data: Input,
+    params?: Partial<ParseParams>
+  ): Promise<Output> {
+    return this.parseAsync(data, params);
+  }
+
+  async typedSafeParseAsync(
+    data: Input,
+    params?: Partial<ParseParams>
+  ): Promise<SafeParseReturnType<Input, Output>> {
+    return this.safeParseAsync(data, params);
   }
 
   /** Alias of safeParseAsync */
@@ -402,6 +427,10 @@ export abstract class ZodType<
     this.safeParse = this.safeParse.bind(this);
     this.parseAsync = this.parseAsync.bind(this);
     this.safeParseAsync = this.safeParseAsync.bind(this);
+    this.typedParse = this.typedParse.bind(this);
+    this.typedParseAsync = this.typedParseAsync.bind(this);
+    this.typedSafeParse = this.typedSafeParse.bind(this);
+    this.typedSafeParseAsync = this.typedSafeParseAsync.bind(this);
     this.spa = this.spa.bind(this);
     this.refine = this.refine.bind(this);
     this.refinement = this.refinement.bind(this);
