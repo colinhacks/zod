@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 const minTwo = z.string().array().min(2);
@@ -15,10 +14,10 @@ const uniqueArrayOfObjects = z
   .unique({ identifier: (item) => item.name });
 
 type t1 = z.infer<typeof nonEmptyMax>;
-util.assertEqual<[string, ...string[]], t1>(true);
+core.assertEqual<[string, ...string[]], t1>(true);
 
 type t2 = z.infer<typeof minTwo>;
-util.assertEqual<string[], t2>(true);
+core.assertEqual<string[], t2>(true);
 
 test("passing validations", () => {
   minTwo.parse(["a", "a"]);

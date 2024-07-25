@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import type {
   ZodFirstPartySchemaTypes,
   ZodFirstPartyTypeKind,
@@ -23,5 +22,5 @@ test("Identify missing [ZodFirstPartySchemaTypes]", () => {
       : never]: unknown;
   };
 
-  util.assertEqual<ZodFirstPartySchemaTypesMissingFromUnion, never>(true);
+  core.assertEqual<ZodFirstPartySchemaTypesMissingFromUnion, never>(true);
 });

@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 test("generics", () => {
@@ -20,7 +19,7 @@ test("generics", () => {
   }
 
   const result = stripOuter(z.object({ a: z.string() }), { a: "asdf" });
-  util.assertEqual<typeof result, Promise<{ a: string } | undefined>>(true);
+  core.assertEqual<typeof result, Promise<{ a: string } | undefined>>(true);
 });
 
 // test("assignability", () => {
@@ -39,13 +38,13 @@ test("generics", () => {
 //     // return inferred;
 //   };
 //   const parsed = createSchemaAndParse("foo", z.string(), { foo: "" });
-//   util.assertEqual<typeof parsed, { foo: string }>(true);
+//   core.assertEqual<typeof parsed, { foo: string }>(true);
 // });
 
 test("nested no undefined", () => {
   const inner = z.string().or(z.array(z.string()));
   const outer = z.object({ inner });
   type outerSchema = z.infer<typeof outer>;
-  z.util.assertEqual<outerSchema, { inner: string | string[] }>(true);
+  core.assertEqual<outerSchema, { inner: string | string[] }>(true);
   expect(outer.safeParse({ inner: undefined }).success).toEqual(false);
 });

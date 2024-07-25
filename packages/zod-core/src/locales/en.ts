@@ -1,11 +1,13 @@
-import { type ZodErrorMap, ZodIssueCode } from "../ZodError.js";
-import { util } from "../helpers/index.js";
+import { type ZodErrorMap, ZodIssueCode } from "../errors.js";
+import { ZodParsedType } from "../parse.js";
+import * as util from "../util.js";
+import { jsonStringifyReplacer } from "../util.js";
 
 const errorMap: ZodErrorMap = (issue, _ctx) => {
   let message: string;
   switch (issue.code) {
     case ZodIssueCode.invalid_type:
-      if (issue.received === util.ZodParsedType.undefined) {
+      if (issue.received === ZodParsedType.undefined) {
         message = "Required";
       } else {
         message = `Expected ${issue.expected}, received ${issue.received}`;
@@ -14,7 +16,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.invalid_literal:
       message = `Invalid literal value, expected ${JSON.stringify(
         issue.expected,
-        util.jsonStringifyReplacer
+        jsonStringifyReplacer
       )}`;
       break;
     case ZodIssueCode.unrecognized_keys:

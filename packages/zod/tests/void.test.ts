@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 test("void", () => {
   const v = z.void();
@@ -11,5 +10,5 @@ test("void", () => {
   expect(() => v.parse("")).toThrow();
 
   type v = z.infer<typeof v>;
-  util.assertEqual<v, void>(true);
+  core.assertEqual<v, void>(true);
 });

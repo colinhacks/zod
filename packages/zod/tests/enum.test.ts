@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 test("create enum", () => {
@@ -14,7 +13,7 @@ test("create enum", () => {
 test("infer enum", () => {
   const MyEnum = z.enum(["Red", "Green", "Blue"]);
   type MyEnum = z.infer<typeof MyEnum>;
-  util.assertEqual<MyEnum, "Red" | "Green" | "Blue">(true);
+  core.assertEqual<MyEnum, "Red" | "Green" | "Blue">(true);
 });
 
 test("get options", () => {
@@ -25,7 +24,7 @@ test("readonly enum", () => {
   const HTTP_SUCCESS = ["200", "201"] as const;
   const arg = z.enum(HTTP_SUCCESS);
   type arg = z.infer<typeof arg>;
-  util.assertEqual<arg, "200" | "201">(true);
+  core.assertEqual<arg, "200" | "201">(true);
 
   arg.parse("201");
   expect(() => arg.parse("202")).toThrow();
@@ -48,14 +47,14 @@ test("extract/exclude", () => {
   const UnhealthyEnum = FoodEnum.exclude(["Salad"]);
   const EmptyFoodEnum = FoodEnum.exclude(foods);
 
-  util.assertEqual<z.infer<typeof ItalianEnum>, "Pasta" | "Pizza">(true);
-  util.assertEqual<
+  core.assertEqual<z.infer<typeof ItalianEnum>, "Pasta" | "Pizza">(true);
+  core.assertEqual<
     z.infer<typeof UnhealthyEnum>,
     "Pasta" | "Pizza" | "Tacos" | "Burgers"
   >(true);
   // @ts-expect-error TS2344
-  util.assertEqual<typeof EmptyFoodEnum, z.ZodEnum<[]>>(true);
-  util.assertEqual<z.infer<typeof EmptyFoodEnum>, never>(true);
+  core.assertEqual<typeof EmptyFoodEnum, z.ZodEnum<[]>>(true);
+  core.assertEqual<z.infer<typeof EmptyFoodEnum>, never>(true);
 });
 
 test("error map in extract/exclude", () => {

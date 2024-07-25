@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 const promSchema = z.promise(
@@ -13,7 +12,7 @@ const promSchema = z.promise(
 
 test("promise inference", () => {
   type promSchemaType = z.infer<typeof promSchema>;
-  util.assertEqual<promSchemaType, Promise<{ name: string; age: number }>>(
+  core.assertEqual<promSchemaType, Promise<{ name: string; age: number }>>(
     true
   );
 });

@@ -101,6 +101,12 @@ importers:
 
   packages/zod:
     dependencies:
+      zod-core:
+        specifier: 3.23.8
+        version: link:../zod-core
+
+  packages/zod-core:
+    dependencies:
       effect:
         specifier: ^3.5.6
         version: 3.5.6

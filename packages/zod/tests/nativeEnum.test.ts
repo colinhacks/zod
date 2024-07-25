@@ -1,9 +1,9 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 
+type alksdjf = z.ZodString;
 test("nativeEnum test with consts", () => {
   const Fruits: { Apple: "apple"; Banana: "banana" } = {
     Apple: "apple",
@@ -15,7 +15,7 @@ test("nativeEnum test with consts", () => {
   fruitEnum.parse("banana");
   fruitEnum.parse(Fruits.Apple);
   fruitEnum.parse(Fruits.Banana);
-  util.assertEqual<fruitEnum, "apple" | "banana">(true);
+  core.assertEqual<fruitEnum, "apple" | "banana">(true);
 });
 
 test("nativeEnum test with real enum", () => {
@@ -30,7 +30,7 @@ test("nativeEnum test with real enum", () => {
   fruitEnum.parse("banana");
   fruitEnum.parse(Fruits.Apple);
   fruitEnum.parse(Fruits.Banana);
-  util.assertIs<fruitEnum extends Fruits ? true : false>(true);
+  core.assertIs<fruitEnum extends Fruits ? true : false>(true);
 });
 
 test("nativeEnum test with const with numeric keys", () => {
@@ -45,7 +45,7 @@ test("nativeEnum test with const with numeric keys", () => {
   fruitEnum.parse(20);
   fruitEnum.parse(FruitValues.Apple);
   fruitEnum.parse(FruitValues.Banana);
-  util.assertEqual<fruitEnum, 10 | 20>(true);
+  core.assertEqual<fruitEnum, 10 | 20>(true);
 });
 
 test("from enum", () => {

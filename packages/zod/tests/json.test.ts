@@ -1,18 +1,18 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 test("overload types", () => {
   const schema = z.string().json();
-  z.util.assertEqual<typeof schema, z.ZodString>(true);
+  core.assertEqual<typeof schema, z.ZodString>(true);
   const schema2 = z.string().json(z.number());
-  z.util.assertEqual<
+  core.assertEqual<
     typeof schema2,
     z.ZodPipeline<z.ZodEffects<z.ZodString, any, string>, z.ZodNumber>
   >(true);
   const r2 = schema2.parse("12");
-  z.util.assertEqual<number, typeof r2>(true);
+  core.assertEqual<number, typeof r2>(true);
 });
 test("parse string to json", async () => {
   const Env = z.object({
@@ -100,7 +100,7 @@ test("parse string to json", async () => {
 
 test("no argument", () => {
   const schema = z.string().json();
-  z.util.assertEqual<typeof schema, z.ZodString>(true);
+  core.assertEqual<typeof schema, z.ZodString>(true);
   z.string().json().parse(`{}`);
   z.string().json().parse(`null`);
   z.string().json().parse(`12`);

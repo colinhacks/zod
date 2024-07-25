@@ -6,7 +6,7 @@ import {
   ZodFailure,
   isAborted,
   isValid,
-} from "../src/helpers/parseUtil.js";
+} from "zod-core";
 
 test("parseUtil isInvalid should use structural typing", () => {
   // Test for issue #556: https://github.com/colinhacks/zod/issues/556

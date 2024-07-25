@@ -1,5 +1,6 @@
 {
   "private": true,
+  "type": "module",
   "packageManager": "pnpm@9.1.4",
   "repository": {
     "type": "git",
@@ -55,8 +56,8 @@
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm run test && pnpm run build",
-    "play": "tsx --watch playground.ts ",
-    "bench": "tsx benchmarks/index.ts",
+    "play": "tsx --conditions @zod/source --watch playground.ts ",
+    "bench": "tsx --conditions @zod/source benchmarks/index.ts",
     "prepare": "husky install",
     "publish:jsr": "jsr publish --dry-run"
   }

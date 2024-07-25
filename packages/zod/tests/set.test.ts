@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 import { ZodIssueCode } from "../src/index.js";
 
@@ -15,7 +14,7 @@ const nonEmpty = z.set(z.string()).nonempty();
 const nonEmptyMax = z.set(z.string()).nonempty().max(2);
 
 test("type inference", () => {
-  util.assertEqual<stringSet, Set<string>>(true);
+  core.assertEqual<stringSet, Set<string>>(true);
 });
 
 test("valid parse", () => {

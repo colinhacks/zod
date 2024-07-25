@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 const booleanRecord = z.record(z.boolean());
@@ -17,14 +16,14 @@ const recordWithLiteralKeys = z.record(
 type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
 
 test("type inference", () => {
-  util.assertEqual<booleanRecord, Record<string, boolean>>(true);
+  core.assertEqual<booleanRecord, Record<string, boolean>>(true);
 
-  util.assertEqual<
+  core.assertEqual<
     recordWithEnumKeys,
     Partial<Record<"Tuna" | "Salmon", string>>
   >(true);
 
-  util.assertEqual<
+  core.assertEqual<
     recordWithLiteralKeys,
     Partial<Record<"Tuna" | "Salmon", string>>
   >(true);
@@ -183,7 +182,7 @@ test("allow undefined values", () => {
   const schema = z.record(z.string(), z.undefined());
 
   expect(
-    util.objectKeys(
+    core.objectKeys(
       schema.parse({
         _test: undefined,
       })
@@ -195,7 +194,7 @@ test("allow undefined values async", async () => {
   const schemaAsync = z.record(z.string().optional()).refine(async () => true);
 
   expect(
-    util.objectKeys(
+    core.objectKeys(
       await schemaAsync.parseAsync({
         _test: undefined,
       })

@@ -8,7 +8,7 @@ async function run() {
     .map((file) => import.meta.resolve(`./${file}`).replace("file://", ""));
 
   for (const file of files) {
-    await $`pnpm tsx ${file}`;
+    await $`pnpm tsx --conditions @zod/source ${file}`;
   }
 }
 

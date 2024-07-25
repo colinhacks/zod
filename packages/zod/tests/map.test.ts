@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 import { ZodIssueCode } from "../src/index.js";
 
@@ -9,7 +8,7 @@ const stringMap = z.map(z.string(), z.string());
 type stringMap = z.infer<typeof stringMap>;
 
 test("type inference", () => {
-  util.assertEqual<stringMap, Map<string, string>>(true);
+  core.assertEqual<stringMap, Map<string, string>>(true);
 });
 
 test("valid parse", () => {

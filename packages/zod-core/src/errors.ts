@@ -1,12 +1,13 @@
-import { util } from "./helpers/index.js";
-import type { Primitive } from "./helpers/typeAliases.js";
-import type { ZodParsedType } from "./helpers/util.js";
-import type { TypeOf, ZodFirstPartyTypeKind, ZodType, input } from "./index.js";
+import type { $ZodType, input, output } from "./core.js";
+import defaultErrorMap from "./locales/en.js";
+import type { ParseContext, ZodParsedType } from "./parse.js";
+import type { OmitKeys, Primitive } from "./types.js";
+import { jsonStringifyReplacer } from "./util.js";
 
 type allKeys<T> = T extends any ? keyof T : never;
 
 export type inferFlattenedErrors<
-  T extends ZodType,
+  T extends $ZodType,
   U = string,
 > = typeToFlattenedError<input<T>, U>;
 export type typeToFlattenedError<T, U = string> = {
@@ -16,54 +17,33 @@ export type typeToFlattenedError<T, U = string> = {
   };
 };
 
-export const ZodIssueCode: {
-  invalid_type: "invalid_type";
-  invalid_literal: "invalid_literal";
-  custom: "custom";
-  invalid_union: "invalid_union";
-  invalid_union_discriminator: "invalid_union_discriminator";
-  invalid_enum_value: "invalid_enum_value";
-  unrecognized_keys: "unrecognized_keys";
-  invalid_arguments: "invalid_arguments";
-  invalid_return_type: "invalid_return_type";
-  invalid_date: "invalid_date";
-  invalid_string: "invalid_string";
-  too_small: "too_small";
-  too_big: "too_big";
-  invalid_intersection_types: "invalid_intersection_types";
-  not_multiple_of: "not_multiple_of";
-  not_finite: "not_finite";
-  uniqueness: "uniqueness";
-  invalid_file_type: "invalid_file_type";
-  invalid_file_name: "invalid_file_name";
-} = util.arrayToEnum([
-  "invalid_type",
-  "invalid_literal",
-  "custom",
-  "invalid_union",
-  "invalid_union_discriminator",
-  "invalid_enum_value",
-  "unrecognized_keys",
-  "invalid_arguments",
-  "invalid_return_type",
-  "invalid_date",
-  "invalid_string",
-  "too_small",
-  "too_big",
-  "invalid_intersection_types",
-  "not_multiple_of",
-  "not_finite",
-  "uniqueness",
-  "invalid_file_type",
-  "invalid_file_name",
-]);
+export const ZodIssueCode = {
+  invalid_type: "invalid_type",
+  invalid_literal: "invalid_literal",
+  custom: "custom",
+  invalid_union: "invalid_union",
+  invalid_union_discriminator: "invalid_union_discriminator",
+  invalid_enum_value: "invalid_enum_value",
+  unrecognized_keys: "unrecognized_keys",
+  invalid_arguments: "invalid_arguments",
+  invalid_return_type: "invalid_return_type",
+  invalid_date: "invalid_date",
+  invalid_string: "invalid_string",
+  too_small: "too_small",
+  too_big: "too_big",
+  invalid_intersection_types: "invalid_intersection_types",
+  not_multiple_of: "not_multiple_of",
+  not_finite: "not_finite",
+  uniqueness: "uniqueness",
+  invalid_file_type: "invalid_file_type",
+  invalid_file_name: "invalid_file_name",
+} as const;
+export type ZodIssueCode = (typeof ZodIssueCode)[keyof typeof ZodIssueCode];
 
-export type ZodIssueCode = keyof typeof ZodIssueCode;
-
-export type ZodIssueBase = {
+export interface ZodIssueBase {
   path: (string | number)[];
   message?: string;
-};
+}
 
 export interface ZodInvalidTypeIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_type;
@@ -221,11 +201,6 @@ export type ZodIssue = ZodIssueOptionalMessage & {
   message: string;
 };
 
-export const quotelessJson: (obj: any) => string = (obj: any) => {
-  const json = JSON.stringify(obj, null, 2);
-  return json.replace(/"([^"]+)":/g, "$1:");
-};
-
 type recursiveZodFormattedError<T> = T extends [any, ...any[]]
   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
   : T extends any[]
@@ -239,9 +214,9 @@ export type ZodFormattedError<T, U = string> = {
 } & recursiveZodFormattedError<NonNullable<T>>;
 
 export type inferFormattedError<
-  T extends ZodType,
+  T extends $ZodType,
   U = string,
-> = ZodFormattedError<TypeOf<T>, U>;
+> = ZodFormattedError<output<T>, U>;
 
 export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
@@ -326,7 +301,7 @@ export class ZodError<T = any> extends Error {
     return this.message;
   }
   override get message(): string {
-    return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
+    return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
   }
 
   get isEmpty(): boolean {
@@ -364,9 +339,7 @@ export class ZodError<T = any> extends Error {
   }
 }
 
-type stripPath<T extends object> = T extends any
-  ? util.OmitKeys<T, "path">
-  : never;
+type stripPath<T extends object> = T extends any ? OmitKeys<T, "path"> : never;
 
 export type IssueData = stripPath<ZodIssueOptionalMessage> & {
   input: any;
@@ -399,7 +372,7 @@ export class ZodTemplateLiteralUnsupportedTypeError extends Error {
 }
 
 export class ZodTemplateLiteralUnsupportedCheckError extends Error {
-  constructor(typeKind: ZodFirstPartyTypeKind, check: string) {
+  constructor(typeKind: string /*ZodFirstPartyTypeKind*/, check: string) {
     super(
       `${typeKind}'s "${check}" check is not supported in template literals!`
     );
@@ -413,3 +386,59 @@ export class ZodTemplateLiteralUnsupportedCheckError extends Error {
     this.name = "ZodTemplateLiteralUnsupportedCheckError";
   }
 }
+
+let overrideErrorMap = defaultErrorMap;
+export { defaultErrorMap };
+
+export function setErrorMap(map: ZodErrorMap): void {
+  overrideErrorMap = map;
+}
+
+export function getErrorMap(): ZodErrorMap {
+  return overrideErrorMap;
+}
+
+export const makeIssue = (
+  issueData: IssueData,
+  ctx: ParseContext
+): ZodIssue => {
+  const { basePath, contextualErrorMap, schemaErrorMap } = ctx;
+  const fullPath = [...basePath, ...(issueData.path || [])];
+  const fullIssue = {
+    ...issueData,
+    path: fullPath,
+  };
+
+  if (issueData.message !== undefined) {
+    return {
+      ...issueData,
+      path: fullPath,
+      message: issueData.message,
+    };
+  }
+
+  const errorMaps = [
+    contextualErrorMap,
+    schemaErrorMap,
+    getErrorMap(),
+    defaultErrorMap,
+  ].filter((x) => !!x) as ZodErrorMap[];
+
+  let errorMessage = "";
+  const maps = errorMaps
+    .filter((m) => !!m)
+    .slice()
+    .reverse() as ZodErrorMap[];
+  for (const map of maps) {
+    errorMessage = map(fullIssue, {
+      data: issueData.input,
+      defaultError: errorMessage,
+    }).message;
+  }
+
+  return {
+    ...issueData,
+    path: fullPath,
+    message: errorMessage,
+  };
+};

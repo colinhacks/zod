@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import { z } from "../src/index.js";
 
 test("basic defaults", () => {
@@ -21,9 +20,9 @@ test("default with transform", () => {
   );
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string | undefined>(true);
+  core.assertEqual<inp, string | undefined>(true);
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string>(true);
+  core.assertEqual<out, string>(true);
 });
 
 test("default on existing optional", () => {
@@ -36,18 +35,18 @@ test("default on existing optional", () => {
   );
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string | undefined>(true);
+  core.assertEqual<inp, string | undefined>(true);
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string>(true);
+  core.assertEqual<out, string>(true);
 });
 
 test("optional on default", () => {
   const stringWithDefault = z.string().default("asdf").optional();
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string | undefined>(true);
+  core.assertEqual<inp, string | undefined>(true);
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string | undefined>(true);
+  core.assertEqual<out, string | undefined>(true);
 });
 
 test("complex chain example", () => {
@@ -67,7 +66,7 @@ test("removeDefault", () => {
   const stringWithRemovedDefault = z.string().default("asdf").removeDefault();
 
   type out = z.output<typeof stringWithRemovedDefault>;
-  util.assertEqual<out, string>(true);
+  core.assertEqual<out, string>(true);
 });
 
 test("nested", () => {
@@ -76,9 +75,9 @@ test("nested", () => {
     inner: undefined,
   });
   type input = z.input<typeof outer>;
-  util.assertEqual<input, { inner?: string | undefined } | undefined>(true);
+  core.assertEqual<input, { inner?: string | undefined } | undefined>(true);
   type out = z.output<typeof outer>;
-  util.assertEqual<out, { inner: string }>(true);
+  core.assertEqual<out, { inner: string }>(true);
   expect(outer.parse(undefined)).toEqual({ inner: "asdf" });
   expect(outer.parse({})).toEqual({ inner: "asdf" });
   expect(outer.parse({ inner: undefined })).toEqual({ inner: "asdf" });

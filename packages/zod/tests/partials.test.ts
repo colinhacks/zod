@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 const nested = z.object({
@@ -22,7 +21,7 @@ test("shallow inference", () => {
     outer?: { inner: string } | undefined;
     array?: { asdf: string }[];
   };
-  util.assertEqual<shallow, correct>(true);
+  core.assertEqual<shallow, correct>(true);
 });
 
 test("shallow partial parse", () => {
@@ -46,7 +45,7 @@ test("shallow partial parse", () => {
 //     outer?: { inner?: string | undefined } | undefined;
 //   };
 
-//   util.assertEqual<deep, correct>(true);
+//   core.assertEqual<deep, correct>(true);
 // });
 
 // test("deep partial parse", () => {
@@ -126,7 +125,7 @@ test("shallow partial parse", () => {
 //       | undefined;
 //     tuple?: [{ value?: string }] | undefined;
 //   };
-//   util.assertEqual<expected, partialed>(true);
+//   core.assertEqual<expected, partialed>(true);
 // });
 
 // test("deeppartial array", () => {
@@ -175,7 +174,7 @@ test("required inference", () => {
     nullableField: number | null;
     nullishField: string | null;
   };
-  util.assertEqual<expected, required>(true);
+  core.assertEqual<expected, required>(true);
 });
 
 test("required with mask", () => {

@@ -1,7 +1,6 @@
-import type { errorUtil } from "./helpers/index.js";
-
+import * as core from "zod-core";
+import type { CustomErrorParams, Primitive } from "zod-core";
 import {
-  type CustomErrorParams,
   type RawCreateParams,
   ZodAny,
   ZodArray,
@@ -39,9 +38,8 @@ import {
   ZodUnknown,
   ZodVoid,
 } from "./classes.js";
-import type { Primitive } from "./helpers/typeAliases.js";
 
-export { ZodParsedType } from "./helpers/util.js";
+export * from "zod-core";
 
 // requires TS 4.4+
 
@@ -119,7 +117,7 @@ const pipelineType: typeof ZodPipeline.create = (...args) =>
 interface Literal {
   <T extends Primitive>(
     value: T,
-    params?: RawCreateParams & Exclude<errorUtil.ErrMessage, string>
+    params?: RawCreateParams & Exclude<core.ErrMessage, string>
   ): ZodLiteral<T>;
 
   template: typeof ZodTemplateLiteral.create;
@@ -171,7 +169,12 @@ export function custom<T>(
               : params;
         const _fatal = p.fatal ?? fatal ?? true;
         const p2 = typeof p === "string" ? { message: p } : p;
-        ctx.addIssue({ input: data, code: "custom", ...p2, fatal: _fatal });
+        ctx.addIssue({
+          input: data,
+          code: core.ZodIssueCode.custom,
+          ...p2,
+          fatal: _fatal,
+        });
       }
     });
   return ZodAny.create();

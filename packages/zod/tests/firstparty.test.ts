@@ -1,9 +1,7 @@
 // @ts-ignore TS6133
 import { test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
-
 test("first party switch", () => {
   const myType = z.string() as z.ZodFirstPartySchemaTypes;
   const def = myType._def;
@@ -87,6 +85,6 @@ test("first party switch", () => {
       break;
 
     default:
-      util.assertNever(def);
+      core.assertNever(def);
   }
 });

@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 const Test = z.object({
@@ -22,8 +22,8 @@ test("default flattened errors type inference", () => {
     fieldErrors: { [P in keyof z.TypeOf<typeof Test>]?: string[] | undefined };
   };
 
-  util.assertEqual<z.inferFlattenedErrors<typeof Test>, TestTypeErrors>(true);
-  util.assertEqual<
+  core.assertEqual<z.inferFlattenedErrors<typeof Test>, TestTypeErrors>(true);
+  core.assertEqual<
     z.inferFlattenedErrors<typeof Test, { message: string }>,
     TestTypeErrors
   >(false);
@@ -38,12 +38,12 @@ test("custom flattened errors type inference", () => {
     };
   };
 
-  util.assertEqual<z.inferFlattenedErrors<typeof Test>, TestTypeErrors>(false);
-  util.assertEqual<
+  core.assertEqual<z.inferFlattenedErrors<typeof Test>, TestTypeErrors>(false);
+  core.assertEqual<
     z.inferFlattenedErrors<typeof Test, { message: string; code: number }>,
     TestTypeErrors
   >(true);
-  util.assertEqual<
+  core.assertEqual<
     z.inferFlattenedErrors<typeof Test, { message: string }>,
     TestTypeErrors
   >(false);
@@ -55,7 +55,7 @@ test("form errors type inference", () => {
     fieldErrors: { [P in keyof z.TypeOf<typeof Test>]?: string[] | undefined };
   };
 
-  util.assertEqual<z.inferFlattenedErrors<typeof Test>, TestTypeErrors>(true);
+  core.assertEqual<z.inferFlattenedErrors<typeof Test>, TestTypeErrors>(true);
 });
 
 test(".flatten() type assertion", () => {

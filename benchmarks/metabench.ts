@@ -4,15 +4,16 @@ import { Table } from "console-table-printer";
 import * as mitata from "mitata";
 import { Bench } from "tinybench";
 
-import { assertNever } from "../packages/zod/src/helpers/util.js";
+import { assertNever } from "../packages/zod-core/src/index.js";
 import { formatNumber } from "./benchUtil.js";
 
 type BENCH = "tinybench" | "benchmarkjs" | "mitata";
 const BENCH: BENCH = (process.env.BENCH as BENCH) || "benchmarkjs";
 
-export function metabench<T extends { [k: string]: () => any }>(
+type Benchmarks<T = unknown> = { [k: string]: (d: T) => any };
+export function metabench<D>(
   name: string,
-  benchmarks?: T
+  benchmarks?: Benchmarks<D>
 ): Metabench {
   let bench: Metabench;
   if (BENCH === "tinybench") {
@@ -27,15 +28,61 @@ export function metabench<T extends { [k: string]: () => any }>(
   return bench;
 }
 
-abstract class Metabench {
+interface MetabenchParams<D> {
+  name: string;
+  data: () => D;
+  batch?: number | null;
+  benchmarks?: Benchmarks<D>;
+}
+interface BenchWithDataParams<D> {
+  name: string;
+  data: () => D;
+  batch?: number | null;
+  benchmarks?: Benchmarks<D>;
+}
+
+export function benchWithData<D>(
+  params: BenchWithDataParams<D> & ThisType<{ data: D }>
+): Metabench<D> {
+  const bench = metabench(params.name);
+  console.log(`Batch size: ${params.batch}`);
+
+  if (params.batch === null) {
+    const DATA = params.data();
+    for (const key in params.benchmarks) {
+      const _bench = params.benchmarks[key].bind({
+        data: DATA,
+      }) as any;
+      bench.add(key, _bench);
+    }
+  } else {
+    const DATA = Array.from({ length: params.batch || 1000 }, params.data);
+    for (const key in params.benchmarks) {
+      const _bench = params.benchmarks[key].bind({
+        data: DATA,
+      }) as any;
+      bench.add(key, () => {
+        for (const d of DATA) {
+          _bench(d);
+        }
+      });
+    }
+  }
+
+  return bench;
+}
+
+abstract class Metabench<D = any> {
   abstract run(): void | Promise<void>;
+
   constructor(
     public name: string,
-    public benchmarks: { [k: string]: () => any }
+    public benchmarks: Benchmarks<D>
+    //  params?: Omit<MetabenchParams<D>, "name" | "benchmarks">
   ) {}
 
-  add(name: string, fn: () => any): this {
-    this.benchmarks[name] = fn;
+  add(name: string, fn: (val: D) => any): this {
+    this.benchmarks![name] = fn;
     return this;
   }
 }
@@ -44,7 +91,7 @@ class Tinybench extends Metabench {
   async run() {
     const bench = new Bench({ time: 1500 });
     for (const [name, fn] of Object.entries(this.benchmarks)) {
-      bench.add(name, fn);
+      bench.add(name, fn as any);
     }
     // await runBench(this.name, bench);
     console.log();
@@ -186,7 +233,7 @@ class Mitata extends Metabench {
   async run() {
     mitata.group(this.name, () => {
       for (const [name, fn] of Object.entries(this.benchmarks)) {
-        mitata.bench(name, fn);
+        mitata.bench(name, fn as any);
       }
     });
 

@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { util } from "../src/helpers/index.js";
+import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 const empty = z.literal.template([]);
@@ -114,64 +113,64 @@ const connectionString = z.literal.template([
 ]);
 
 test("template literal type inference", () => {
-  util.assertEqual<z.infer<typeof empty>, ``>(true);
-  util.assertEqual<z.infer<typeof hello>, `hello`>(true);
-  util.assertEqual<z.infer<typeof world>, `world`>(true);
-  util.assertEqual<z.infer<typeof one>, `1`>(true);
-  util.assertEqual<z.infer<typeof two>, `2`>(true);
-  util.assertEqual<z.infer<typeof truee>, `true`>(true);
-  util.assertEqual<z.infer<typeof anotherTrue>, `true`>(true);
-  util.assertEqual<z.infer<typeof falsee>, `false`>(true);
-  util.assertEqual<z.infer<typeof anotherFalse>, `false`>(true);
-  util.assertEqual<z.infer<typeof nulll>, `null`>(true);
-  util.assertEqual<z.infer<typeof anotherNull>, `null`>(true);
-  util.assertEqual<z.infer<typeof undefinedd>, `undefined`>(true);
-  util.assertEqual<z.infer<typeof anotherUndefined>, `undefined`>(true);
-  util.assertEqual<z.infer<typeof anyString>, string>(true);
-  util.assertEqual<z.infer<typeof anyNumber>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof anyFiniteNumber>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof anyInt>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof anyNegativeNumber>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof anyPositiveNumber>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof zeroButInADumbWay>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof finiteButInADumbWay>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof bool>, `true` | `false`>(true);
-  util.assertEqual<z.infer<typeof bigone>, `${bigint}`>(true);
-  util.assertEqual<z.infer<typeof anyBigint>, `${bigint}`>(true);
-  util.assertEqual<z.infer<typeof nullableYo>, `yo` | `null`>(true);
-  util.assertEqual<z.infer<typeof nullableString>, string>(true);
-  util.assertEqual<z.infer<typeof optionalYeah>, `yeah` | ``>(true);
-  util.assertEqual<z.infer<typeof optionalString>, string>(true);
-  util.assertEqual<z.infer<typeof optionalNumber>, `${number}` | ``>(true);
-  util.assertEqual<z.infer<typeof nullishBruh>, `bruh` | `null` | ``>(true);
-  util.assertEqual<z.infer<typeof nullishString>, string>(true);
-  util.assertEqual<z.infer<typeof cuid>, string>(true);
-  util.assertEqual<z.infer<typeof cuidZZZ>, `${string}ZZZ`>(true);
-  util.assertEqual<z.infer<typeof cuid2>, string>(true);
-  util.assertEqual<z.infer<typeof datetime>, string>(true);
-  util.assertEqual<z.infer<typeof email>, string>(true);
-  util.assertEqual<z.infer<typeof ip>, string>(true);
-  util.assertEqual<z.infer<typeof ipv4>, string>(true);
-  util.assertEqual<z.infer<typeof ipv6>, string>(true);
-  util.assertEqual<z.infer<typeof ulid>, string>(true);
-  util.assertEqual<z.infer<typeof uuid>, string>(true);
-  util.assertEqual<z.infer<typeof stringAToZ>, string>(true);
-  util.assertEqual<z.infer<typeof stringStartsWith>, string>(true);
-  util.assertEqual<z.infer<typeof stringEndsWith>, string>(true);
-  util.assertEqual<z.infer<typeof stringMax5>, string>(true);
-  util.assertEqual<z.infer<typeof stringMin5>, string>(true);
-  util.assertEqual<z.infer<typeof stringLen5>, string>(true);
-  util.assertEqual<z.infer<typeof stringMin5Max10>, string>(true);
-  util.assertEqual<z.infer<typeof stringStartsWithMax5>, string>(true);
-  util.assertEqual<z.infer<typeof brandedString>, string>(true);
-  util.assertEqual<z.infer<typeof anything>, `${any}`>(true);
+  core.assertEqual<z.infer<typeof empty>, ``>(true);
+  core.assertEqual<z.infer<typeof hello>, `hello`>(true);
+  core.assertEqual<z.infer<typeof world>, `world`>(true);
+  core.assertEqual<z.infer<typeof one>, `1`>(true);
+  core.assertEqual<z.infer<typeof two>, `2`>(true);
+  core.assertEqual<z.infer<typeof truee>, `true`>(true);
+  core.assertEqual<z.infer<typeof anotherTrue>, `true`>(true);
+  core.assertEqual<z.infer<typeof falsee>, `false`>(true);
+  core.assertEqual<z.infer<typeof anotherFalse>, `false`>(true);
+  core.assertEqual<z.infer<typeof nulll>, `null`>(true);
+  core.assertEqual<z.infer<typeof anotherNull>, `null`>(true);
+  core.assertEqual<z.infer<typeof undefinedd>, `undefined`>(true);
+  core.assertEqual<z.infer<typeof anotherUndefined>, `undefined`>(true);
+  core.assertEqual<z.infer<typeof anyString>, string>(true);
+  core.assertEqual<z.infer<typeof anyNumber>, `${number}`>(true);
+  core.assertEqual<z.infer<typeof anyFiniteNumber>, `${number}`>(true);
+  core.assertEqual<z.infer<typeof anyInt>, `${number}`>(true);
+  core.assertEqual<z.infer<typeof anyNegativeNumber>, `${number}`>(true);
+  core.assertEqual<z.infer<typeof anyPositiveNumber>, `${number}`>(true);
+  core.assertEqual<z.infer<typeof zeroButInADumbWay>, `${number}`>(true);
+  core.assertEqual<z.infer<typeof finiteButInADumbWay>, `${number}`>(true);
+  core.assertEqual<z.infer<typeof bool>, `true` | `false`>(true);
+  core.assertEqual<z.infer<typeof bigone>, `${bigint}`>(true);
+  core.assertEqual<z.infer<typeof anyBigint>, `${bigint}`>(true);
+  core.assertEqual<z.infer<typeof nullableYo>, `yo` | `null`>(true);
+  core.assertEqual<z.infer<typeof nullableString>, string>(true);
+  core.assertEqual<z.infer<typeof optionalYeah>, `yeah` | ``>(true);
+  core.assertEqual<z.infer<typeof optionalString>, string>(true);
+  core.assertEqual<z.infer<typeof optionalNumber>, `${number}` | ``>(true);
+  core.assertEqual<z.infer<typeof nullishBruh>, `bruh` | `null` | ``>(true);
+  core.assertEqual<z.infer<typeof nullishString>, string>(true);
+  core.assertEqual<z.infer<typeof cuid>, string>(true);
+  core.assertEqual<z.infer<typeof cuidZZZ>, `${string}ZZZ`>(true);
+  core.assertEqual<z.infer<typeof cuid2>, string>(true);
+  core.assertEqual<z.infer<typeof datetime>, string>(true);
+  core.assertEqual<z.infer<typeof email>, string>(true);
+  core.assertEqual<z.infer<typeof ip>, string>(true);
+  core.assertEqual<z.infer<typeof ipv4>, string>(true);
+  core.assertEqual<z.infer<typeof ipv6>, string>(true);
+  core.assertEqual<z.infer<typeof ulid>, string>(true);
+  core.assertEqual<z.infer<typeof uuid>, string>(true);
+  core.assertEqual<z.infer<typeof stringAToZ>, string>(true);
+  core.assertEqual<z.infer<typeof stringStartsWith>, string>(true);
+  core.assertEqual<z.infer<typeof stringEndsWith>, string>(true);
+  core.assertEqual<z.infer<typeof stringMax5>, string>(true);
+  core.assertEqual<z.infer<typeof stringMin5>, string>(true);
+  core.assertEqual<z.infer<typeof stringLen5>, string>(true);
+  core.assertEqual<z.infer<typeof stringMin5Max10>, string>(true);
+  core.assertEqual<z.infer<typeof stringStartsWithMax5>, string>(true);
+  core.assertEqual<z.infer<typeof brandedString>, string>(true);
+  core.assertEqual<z.infer<typeof anything>, `${any}`>(true);
 
-  util.assertEqual<
+  core.assertEqual<
     z.infer<typeof url>,
     `https://${string}.com` | `https://${string}.net`
   >(true);
 
-  util.assertEqual<
+  core.assertEqual<
     z.infer<typeof measurement>,
     | `${number}`
     | `${number}px`
@@ -183,7 +182,7 @@ test("template literal type inference", () => {
     | `${number}vmax`
   >(true);
 
-  util.assertEqual<
+  core.assertEqual<
     z.infer<typeof connectionString>,
     | `mongodb://${string}:${number}`
     | `mongodb://${string}:${number}/${string}`
