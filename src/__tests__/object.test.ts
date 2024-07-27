@@ -1,5 +1,5 @@
 // @ts-ignore TS6133
-import { describe, expect, it, test } from "@jest/globals";
+import { describe, expect, test, beforeEach } from "@jest/globals";
 
 import { util } from "../helpers/util";
 import * as z from "../index";
@@ -472,30 +472,19 @@ test("xor", () => {
 });
 
 describe(".upgrade()", () => {
-  const objectToUpgrade = z.object({
+  let objectToUpgrade = z.object({
     firstName: z.string(),
     lastName: z.string(),
   });
 
-  test("upgrade() should not have power to override existing key with other z type", () => {
-    expect(() => {
-      objectToUpgrade.upgrade({
-        // @ts-expect-error
-        lastName: (lastName) => z.number(),
-      });
-    }).toThrow("Cannot override existing key 'lastName'");
+  beforeEach(async () => {
+    objectToUpgrade = z.object({
+      firstName: z.string(),
+      lastName: z.string(),
+    });
   });
 
-  test("upgrade() should not have power to override existing key with anything", () => {
-    expect(() => {
-      objectToUpgrade.upgrade({
-        // @ts-expect-error
-        lastName: (lastName) => "None",
-      });
-    }).toThrow("Cannot override existing key 'lastName'");
-  });
-
-  test("upgrade() should have power to upgrade existing key", () => {
+  test("upgrade existing key", () => {
     const PersonUpgraded = objectToUpgrade.upgrade({
       lastName: (lastName) => lastName.min(2),
     });
@@ -517,7 +506,25 @@ describe(".upgrade()", () => {
     );
   });
 
-  test("upgrade() should not have power to add new keys", () => {
+  test("can't overwrite existing key with other z type", () => {
+    expect(() => {
+      objectToUpgrade.upgrade({
+        // @ts-expect-error
+        lastName: (lastName) => z.number(),
+      });
+    }).toThrow("Cannot override existing key 'lastName'");
+  });
+
+  test("can't override existing key with anything", () => {
+    expect(() => {
+      objectToUpgrade.upgrade({
+        // @ts-expect-error
+        lastName: (lastName) => "None",
+      });
+    }).toThrow("Cannot override existing key 'lastName'");
+  });
+
+  test("can't add new keys", () => {
     const PersonUpgraded = objectToUpgrade.upgrade({
       // @ts-expect-error
       nickName: () => z.string(),
@@ -528,6 +535,19 @@ describe(".upgrade()", () => {
     util.assertEqual<PersonUpgraded, { firstName: string; lastName: string }>(
       true
     );
+  });
+
+  test("constraints can't be overwritten", () => {
+    const originalObj = z.object({
+      name: z.string(),
+      age: z.number().min(18),
+    });
+
+    const upgradedObj = originalObj.upgrade({
+      age: (age) => age.min(0),
+    });
+
+    expect(() => upgradedObj.parse({ name: "test", age: 17 })).toThrow();
   });
 
   test("flat object", () => {

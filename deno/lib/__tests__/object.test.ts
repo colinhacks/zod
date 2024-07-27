@@ -471,3 +471,477 @@ test("xor", () => {
     ]),
   });
 });
+
+describe(".upgrade()", () => {
+  let objectToUpgrade = z.object({
+    firstName: z.string(),
+    lastName: z.string(),
+  });
+
+  beforeEach(async () => {
+    objectToUpgrade = z.object({
+      firstName: z.string(),
+      lastName: z.string(),
+    });
+  });
+
+  test("upgrade existing key", () => {
+    const PersonUpgraded = objectToUpgrade.upgrade({
+      lastName: (lastName) => lastName.min(2),
+    });
+
+    type PersonUpgraded = z.infer<typeof PersonUpgraded>;
+
+    const validPerson: PersonUpgraded = {
+      firstName: "John",
+      lastName: "Doe",
+    };
+    expect(PersonUpgraded.parse(validPerson)).toEqual(validPerson);
+
+    expect(() =>
+      PersonUpgraded.parse({ firstName: "John", lastName: "D" })
+    ).toThrow();
+
+    util.assertEqual<PersonUpgraded, { firstName: string; lastName: string }>(
+      true
+    );
+  });
+
+  test("can't overwrite existing key with other z type", () => {
+    expect(() => {
+      objectToUpgrade.upgrade({
+        // @ts-expect-error
+        lastName: (lastName) => z.number(),
+      });
+    }).toThrow("Cannot override existing key 'lastName'");
+  });
+
+  test("can't override existing key with anything", () => {
+    expect(() => {
+      objectToUpgrade.upgrade({
+        // @ts-expect-error
+        lastName: (lastName) => "None",
+      });
+    }).toThrow("Cannot override existing key 'lastName'");
+  });
+
+  test("can't add new keys", () => {
+    const PersonUpgraded = objectToUpgrade.upgrade({
+      // @ts-expect-error
+      nickName: () => z.string(),
+    });
+
+    type PersonUpgraded = z.infer<typeof PersonUpgraded>;
+
+    util.assertEqual<PersonUpgraded, { firstName: string; lastName: string }>(
+      true
+    );
+  });
+
+  test("constraints can't be overwritten", () => {
+    const originalObj = z.object({
+      name: z.string(),
+      age: z.number().min(18),
+    });
+
+    const upgradedObj = originalObj.upgrade({
+      age: (age) => age.min(0),
+    });
+
+    expect(() => upgradedObj.parse({ name: "test", age: 17 })).toThrow();
+  });
+
+  test("flat object", () => {
+    const originalSchema = z.object({
+      name: z.string(),
+      age: z.number(),
+    });
+
+    const upgradedSchema = originalSchema.upgrade({
+      name: (name) => name.min(2).max(50),
+      age: (age) => age.min(0).max(120),
+    });
+
+    expect(upgradedSchema.shape.name).toBeInstanceOf(z.ZodString);
+    expect(upgradedSchema.shape.age).toBeInstanceOf(z.ZodNumber);
+
+    expect(upgradedSchema.parse({ name: "John", age: 30 })).toEqual({
+      name: "John",
+      age: 30,
+    });
+    expect(() => upgradedSchema.parse({ name: "J", age: 30 })).toThrow();
+    expect(() => upgradedSchema.parse({ name: "John", age: -1 })).toThrow();
+  });
+
+  test("default upgrade", () => {
+    const originalSchema = z.object({
+      text: z.string(),
+    });
+
+    const upgradedSchema = originalSchema.upgrade({
+      text: (text) => text.default("Hello World"),
+    });
+
+    expect(upgradedSchema.shape.text).toBeInstanceOf(z.ZodDefault);
+
+    expect(upgradedSchema.parse({})).toEqual({
+      text: "Hello World",
+    });
+  });
+
+  test("optional upgrade", () => {
+    const originalSchema = z.object({
+      text: z.string(),
+    });
+
+    const upgradedSchema = originalSchema.upgrade({
+      text: (text) => text.optional(),
+    });
+
+    expect(upgradedSchema.shape.text).toBeInstanceOf(z.ZodOptional);
+
+    expect(upgradedSchema.parse({})).toEqual({});
+  });
+
+  test("enum w/ default", () => {
+    const originalSchema = z.object({
+      theme: z.enum(["light", "dark"]),
+    });
+
+    const upgradedSchema = originalSchema.upgrade({
+      theme: (theme) => theme.default("light"),
+    });
+
+    expect(upgradedSchema.shape.theme).toBeInstanceOf(z.ZodDefault);
+
+    expect(
+      upgradedSchema.parse({
+        theme: "dark",
+      })
+    ).toEqual({
+      theme: "dark",
+    });
+
+    expect(() =>
+      upgradedSchema.parse({
+        theme: "lol",
+      })
+    ).toThrow();
+
+    expect(upgradedSchema.parse({})).toEqual({
+      theme: "light",
+    });
+  });
+
+  test("nested objects", () => {
+    const originalSchema = z.object({
+      user: z.object({
+        name: z.string(),
+        email: z.string(),
+      }),
+      settings: z.object({
+        theme: z.string(),
+      }),
+    });
+
+    const upgradedSchema = originalSchema.upgrade({
+      user: {
+        name: (name) => name.min(2).max(50),
+        email: (email) => email.email(),
+      },
+      settings: {
+        theme: (theme) => theme.trim(),
+      },
+    });
+
+    expect(upgradedSchema.shape.user).toBeInstanceOf(z.ZodObject);
+    expect(upgradedSchema.shape.settings).toBeInstanceOf(z.ZodObject);
+
+    expect(
+      upgradedSchema.parse({
+        user: { name: "John", email: "john@example.com" },
+        settings: { theme: "dark" },
+      })
+    ).toEqual({
+      user: { name: "John", email: "john@example.com" },
+      settings: { theme: "dark" },
+    });
+
+    expect(() =>
+      upgradedSchema.parse({
+        user: { name: "J", email: "john@example.com" },
+        settings: { theme: "dark" },
+      })
+    ).toThrow();
+
+    expect(() =>
+      upgradedSchema.parse({
+        user: { name: "John", email: "not-an-email" },
+        settings: { theme: "dark" },
+      })
+    ).toThrow();
+  });
+
+  test("preserve non-upgraded fields", () => {
+    const originalSchema = z.object({
+      name: z.string(),
+      age: z.number(),
+      email: z.string(),
+    });
+
+    const upgradedSchema = originalSchema.upgrade({
+      name: (name) => name.min(2),
+      email: (email) => email.email(),
+    });
+
+    expect(upgradedSchema.shape.age).toBe(originalSchema.shape.age);
+
+    expect(
+      upgradedSchema.parse({
+        name: "John",
+        age: 30,
+        email: "john@example.com",
+      })
+    ).toEqual({ name: "John", age: 30, email: "john@example.com" });
+  });
+
+  test("handle arrays", () => {
+    const originalSchema = z.object({
+      tags: z.array(z.string()),
+    });
+
+    const upgradedSchema = originalSchema.upgrade({
+      tags: (tags) => tags.min(1).max(5),
+    });
+
+    expect(upgradedSchema.shape.tags).toBeInstanceOf(z.ZodArray);
+
+    expect(upgradedSchema.parse({ tags: ["a", "b", "c"] })).toEqual({
+      tags: ["a", "b", "c"],
+    });
+
+    expect(() => upgradedSchema.parse({ tags: [] })).toThrow();
+
+    expect(() =>
+      upgradedSchema.parse({ tags: ["a", "b", "c", "d", "e", "f"] })
+    ).toThrow();
+  });
+
+  test("complex nested structures", () => {
+    const originalSchema = z.object({
+      user: z.object({
+        name: z.string(),
+        contacts: z.array(
+          z.object({
+            type: z.enum(["email", "phone"]),
+            value: z.string(),
+          })
+        ),
+      }),
+    });
+
+    const upgradedSchema = originalSchema.upgrade({
+      user: {
+        name: (name) => name.min(2).max(50),
+        contacts: (contacts) => contacts.min(1).max(3),
+      },
+    });
+
+    expect(upgradedSchema.shape.user).toBeInstanceOf(z.ZodObject);
+
+    const validData = {
+      user: {
+        name: "John",
+        contacts: [
+          { type: "email", value: "john@example.com" },
+          { type: "phone", value: "1234567890" },
+        ],
+      },
+    };
+
+    expect(upgradedSchema.parse(validData)).toEqual(validData);
+
+    expect(() =>
+      upgradedSchema.parse({
+        user: {
+          name: "J",
+          contacts: [],
+        },
+      })
+    ).toThrow();
+  });
+
+  // it.todo("can we upgrade elements in an array ?", () => {
+  //   // or do we also remove array beforehand ?
+  // });
+
+  // Test ZodOptional
+  test("should add ZodOptional to a field", () => {
+    const originalSchema = z.object({ field: z.string() });
+    const upgradedSchema = originalSchema.upgrade({
+      field: (field) => field.optional(),
+    });
+
+    expect(upgradedSchema.shape.field).toBeInstanceOf(z.ZodOptional);
+    expect(upgradedSchema.parse({})).toEqual({});
+    expect(upgradedSchema.parse({ field: "test" })).toEqual({
+      field: "test",
+    });
+  });
+
+  // Test ZodNullable
+  test("should add ZodNullable to a field", () => {
+    const originalSchema = z.object({ field: z.string() });
+    const upgradedSchema = originalSchema.upgrade({
+      field: (field) => field.nullable(),
+    });
+
+    expect(upgradedSchema.shape.field).toBeInstanceOf(z.ZodNullable);
+    expect(upgradedSchema.parse({ field: null })).toEqual({ field: null });
+    expect(upgradedSchema.parse({ field: "test" })).toEqual({
+      field: "test",
+    });
+    expect(() => upgradedSchema.parse({ field: undefined })).toThrow(
+      z.ZodError
+    );
+  });
+
+  // Test ZodPromise
+  test("should add ZodPromise to a field", async () => {
+    const originalSchema = z.object({ field: z.number() });
+    const upgradedSchema = originalSchema.upgrade({
+      field: (field) => z.promise(field),
+    });
+
+    expect(upgradedSchema.shape.field).toBeInstanceOf(z.ZodPromise);
+  });
+
+  // Test ZodLazy (with recursive structure)
+  test("should add ZodLazy to create a recursive structure", () => {
+    type Tree = { value: number; children?: Tree[] };
+    const treeSchema: z.ZodType<Tree> = z.lazy(() =>
+      z.object({
+        value: z.number(),
+        children: z.array(treeSchema).optional(),
+      })
+    );
+
+    const originalSchema = z.object({ tree: z.number() });
+    const upgradedSchema = originalSchema.upgrade({
+      tree: () => treeSchema,
+    });
+
+    expect(upgradedSchema.shape.tree).toBeInstanceOf(z.ZodLazy);
+    expect(
+      upgradedSchema.parse({ tree: { value: 1, children: [{ value: 2 }] } })
+    ).toEqual({ tree: { value: 1, children: [{ value: 2 }] } });
+    expect(() => upgradedSchema.parse({ tree: { value: "1" } })).toThrow(
+      z.ZodError
+    );
+  });
+
+  // Test ZodCatch
+  test("should add ZodCatch to a field", () => {
+    const originalSchema = z.object({ field: z.number() });
+    const upgradedSchema = originalSchema.upgrade({
+      field: (field) => field.catch(0),
+    });
+
+    expect(upgradedSchema.shape.field).toBeInstanceOf(z.ZodCatch);
+    expect(upgradedSchema.parse({ field: 5 })).toEqual({ field: 5 });
+    expect(upgradedSchema.parse({ field: "invalid" })).toEqual({ field: 0 });
+  });
+
+  // Test ZodPipeline
+  test("should add ZodPipeline to a field", () => {
+    const originalSchema = z.object({ field: z.string() });
+    const upgradedSchema = originalSchema.upgrade({
+      field: (field) => field.pipe(z.coerce.number()),
+    });
+
+    expect(upgradedSchema.shape.field).toBeInstanceOf(z.ZodPipeline);
+    expect(upgradedSchema.parse({ field: "5" })).toEqual({ field: 5 });
+    expect(() => upgradedSchema.parse({ field: "invalid" })).toThrow(
+      z.ZodError
+    );
+  });
+
+  // Test ZodUnion
+  test("should add ZodUnion to a field", () => {
+    const originalSchema = z.object({ field: z.string() });
+    const upgradedSchema = originalSchema.upgrade({
+      field: (field) => z.union([field, z.number()]),
+    });
+
+    expect(upgradedSchema.shape.field).toBeInstanceOf(z.ZodUnion);
+    expect(upgradedSchema.parse({ field: "test" })).toEqual({
+      field: "test",
+    });
+    expect(upgradedSchema.parse({ field: 5 })).toEqual({ field: 5 });
+    expect(() => upgradedSchema.parse({ field: true })).toThrow(z.ZodError);
+  });
+
+  // Test ZodIntersection
+  test("should add ZodIntersection to a field", () => {
+    const originalSchema = z.object({ field: z.object({ a: z.string() }) });
+    const upgradedSchema = originalSchema.upgrade({
+      field: (field) => z.intersection(field, z.object({ b: z.number() })),
+    });
+
+    expect(upgradedSchema.shape.field).toBeInstanceOf(z.ZodIntersection);
+    expect(upgradedSchema.parse({ field: { a: "test", b: 5 } })).toEqual({
+      field: { a: "test", b: 5 },
+    });
+    expect(() => upgradedSchema.parse({ field: { a: "test" } })).toThrow(
+      z.ZodError
+    );
+  });
+
+  // Test ZodEffects (with multiple effect types)
+  test("should add various ZodEffects to a field", () => {
+    const originalSchema = z.object({ field: z.string() });
+    const upgradedSchema = originalSchema.upgrade({
+      field: (field) =>
+        field
+          .transform((val) => val.toUpperCase())
+          .refine((val) => val.length > 3, {
+            message: "String must be longer than 3 characters",
+          })
+          .transform((val) => ({ value: val })),
+    });
+
+    expect(upgradedSchema.shape.field).toBeInstanceOf(z.ZodEffects);
+    expect(upgradedSchema.parse({ field: "test" })).toEqual({
+      field: { value: "TEST" },
+    });
+    expect(() => upgradedSchema.parse({ field: "ab" })).toThrow(z.ZodError);
+  });
+
+  // Test ZodReadonly
+  test("should add ZodReadonly to a field", () => {
+    const originalSchema = z.object({ field: z.string() });
+    const upgradedSchema = originalSchema.upgrade({
+      field: (field) => field.readonly(),
+    });
+
+    expect(upgradedSchema.shape.field).toBeInstanceOf(z.ZodReadonly);
+    expect(upgradedSchema.parse({ field: "test" })).toEqual({
+      field: "test",
+    });
+  });
+
+  // Test ZodBranded (with type checking)
+  test("should add ZodBranded to a field", () => {
+    const originalSchema = z.object({ field: z.string() });
+    const upgradedSchema = originalSchema.upgrade({
+      field: (field) => field.brand<"special">(),
+    });
+
+    expect(upgradedSchema.shape.field).toBeInstanceOf(z.ZodBranded);
+    const result = upgradedSchema.parse({ field: "test" });
+    expect(result).toEqual({ field: "test" });
+
+    // Type checking (this would cause a TypeScript error if uncommented)
+    // const wrongType: { field: string } = result;
+  });
+});

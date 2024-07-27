@@ -252,7 +252,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
+      <a href="https://speakeasy.com/?utm_source=zod+docs">
         <picture height="40px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
           <img alt="speakeasy" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
@@ -261,7 +261,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br  />   
       SDKs & Terraform providers for your API
       <br/>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs" style="text-decoration:none;">speakeasyapi.dev</a>
+      <a href="https://speakeasy.com/?utm_source=zod+docs" style="text-decoration:none;">speakeasy.com</a>
       </p>
       <p></p>
     </td>
@@ -490,6 +490,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Generate Zod schemas from your Prisma schema.
 - [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs.
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
+- [`drizzle-zod`](https://orm.drizzle.team/docs/zod): Emit Zod schemas from your Drizzle schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
 - [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) Create Zod types from your Prisma models.
 - [`quicktype`](https://app.quicktype.io/): Convert JSON objects and JSON schemas into Zod schemas.
