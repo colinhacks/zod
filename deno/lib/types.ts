@@ -2409,6 +2409,28 @@ function deepPartialify(schema: ZodTypeAny): any {
   }
 }
 
+type AnyZodType = ZodTypeAny;
+type Upgrade<T extends AnyZodType> = (schema: T) => AnyZodType;
+type UpgradeObject<T extends ZodRawShape> = {
+  [K in keyof T]?: T[K] extends AnyZodObject
+    ? UpgradeObject<T[K]["shape"]>
+    : Upgrade<T[K]>;
+};
+
+type UpgradedShape<T extends ZodRawShape, U extends UpgradeObject<T>> = {
+  [K in keyof T]: K extends keyof U
+    ? U[K] extends Upgrade<T[K]>
+      ? ReturnType<U[K]> extends AnyZodType
+        ? ReturnType<U[K]>
+        : T[K]
+      : T[K] extends AnyZodObject
+      ? U[K] extends UpgradeObject<T[K]["shape"]>
+        ? ZodObject<UpgradedShape<T[K]["shape"], U[K]>>
+        : T[K]
+      : T[K]
+    : T[K];
+};
+
 export class ZodObject<
   T extends ZodRawShape,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam,
@@ -2854,6 +2876,41 @@ export class ZodObject<
     }) as any;
   }
 
+  upgrade<U extends UpgradeObject<T>>(
+    upgrades: U
+  ): ZodObject<UpgradedShape<T, U>, UnknownKeys, Catchall> {
+    const shape = this.shape;
+    const newShape: ZodRawShape = {};
+    for (const key in shape) {
+      if (key in upgrades) {
+        const upgrade = upgrades[key];
+        if (typeof upgrade === "function") {
+          // Check if the upgraded schema is compatible with the original
+          const upgradedSchema = upgrade(shape[key]);
+          if (!isCompatibleSchema(shape[key], upgradedSchema)) {
+            throw new Error(
+              `Cannot override existing key '${key}' with incompatible schema`
+            );
+          }
+          newShape[key] = upgradedSchema;
+        } else if (
+          shape[key] instanceof ZodObject &&
+          typeof upgrade === "object"
+        ) {
+          newShape[key] = (shape[key] as AnyZodObject).upgrade(upgrade as any);
+        } else {
+          newShape[key] = shape[key];
+        }
+      } else {
+        newShape[key] = shape[key];
+      }
+    }
+    return new ZodObject({
+      ...this._def,
+      shape: () => newShape,
+    }) as any;
+  }
+
   keyof(): ZodEnum<enumUtil.UnionToTupleString<keyof T>> {
     return createZodEnum(
       util.objectKeys(this.shape) as [string, ...string[]]
@@ -3049,6 +3106,33 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
   };
 }
 
+// Helper function to check if schemas are compatible
+function isCompatibleSchema(
+  original: ZodTypeAny,
+  upgraded: ZodTypeAny
+): boolean {
+  if (
+    // compatible if wrapper
+    upgraded instanceof ZodDefault ||
+    upgraded instanceof ZodArray ||
+    upgraded instanceof ZodOptional ||
+    upgraded instanceof ZodNullable ||
+    upgraded instanceof ZodPromise ||
+    upgraded instanceof ZodLazy ||
+    upgraded instanceof ZodCatch ||
+    upgraded instanceof ZodPipeline ||
+    upgraded instanceof ZodUnion ||
+    upgraded instanceof ZodIntersection ||
+    upgraded instanceof ZodEffects ||
+    upgraded instanceof ZodReadonly ||
+    upgraded instanceof ZodBranded
+  ) {
+    return true;
+  }
+
+  // otherwise only compatible if of the same type
+  return original.constructor === upgraded.constructor;
+}
 /////////////////////////////////////////////////////
 /////////////////////////////////////////////////////
 //////////                                 //////////
