@@ -544,6 +544,8 @@ export type ZodStringCheck =
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
   | { kind: "trim"; message?: string }
+  | { kind: "lowercase"; message?: string }
+  | { kind: "uppercase"; message?: string }
   | { kind: "toLowerCase"; message?: string }
   | { kind: "toUpperCase"; message?: string }
   | {
@@ -851,6 +853,26 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "lowercase") {
+        if (input.data !== input.data.toLowerCase()) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "lowercase",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "uppercase") {
+        if (input.data !== input.data.toUpperCase()) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "uppercase",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "toLowerCase") {
         input.data = input.data.toLowerCase();
       } else if (check.kind === "toUpperCase") {
@@ -1002,6 +1024,13 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 
   ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
+  }
+
+  lowercase(message?: string) {
+    return this._addCheck({ kind: "lowercase", message });
+  }
+  uppercase(message?: string) {
+    return this._addCheck({ kind: "uppercase", message });
   }
 
   datetime(
@@ -1199,6 +1228,12 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   get isBase64() {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
+  }
+  get isLowerCase() {
+    return !!this._def.checks.find((ch) => ch.kind === "lowercase");
+  }
+  get isUpperCase() {
+    return !!this._def.checks.find((ch) => ch.kind === "uppercase");
   }
 
   get minLength() {
