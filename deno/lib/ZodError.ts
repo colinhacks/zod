@@ -104,6 +104,8 @@ export type StringValidation =
   | "duration"
   | "ip"
   | "base64"
+  | "uppercase"
+  | "lowercase"
   | { includes: string; position?: number }
   | { startsWith: string }
   | { endsWith: string };
