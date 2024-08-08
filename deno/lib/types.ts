@@ -540,6 +540,7 @@ export type ZodStringCheck =
   | { kind: "includes"; value: string; position?: number; message?: string }
   | { kind: "cuid2"; message?: string }
   | { kind: "ulid"; message?: string }
+  | { kind: "hostname"; message?: string }
   | { kind: "startsWith"; value: string; message?: string }
   | { kind: "endsWith"; value: string; message?: string }
   | { kind: "regex"; regex: RegExp; message?: string }
@@ -855,6 +856,29 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         input.data = input.data.toLowerCase();
       } else if (check.kind === "toUpperCase") {
         input.data = input.data.toUpperCase();
+      } else if (check.kind === "hostname") {
+        const domainNameRegex =
+          /^(?!-)(?!.*--)(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63})*$/;
+        const punycodeRegex = /^xn--[a-zA-Z0-9-]{1,63}$/;
+        const ipv4Regex =
+          /^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$/;
+        const ipv6Regex = /^\[[0-9a-fA-F:]+\]$/;
+
+        const isValid =
+          domainNameRegex.test(input.data) ||
+          ipv4Regex.test(input.data) ||
+          ipv6Regex.test(input.data) ||
+          punycodeRegex.test(input.data);
+
+        if (!isValid) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            code: ZodIssueCode.invalid_string,
+            validation: { hostname: input.data },
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "startsWith") {
         if (!(input.data as string).startsWith(check.value)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -1078,6 +1102,13 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       kind: "includes",
       value: value,
       position: options?.position,
+      ...errorUtil.errToObj(options?.message),
+    });
+  }
+
+  hostname(options?: { message?: string }) {
+    return this._addCheck({
+      kind: "hostname",
       ...errorUtil.errToObj(options?.message),
     });
   }

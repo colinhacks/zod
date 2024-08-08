@@ -12,6 +12,7 @@ const includes = z.string().includes("includes");
 const includesFromIndex2 = z.string().includes("includes", { position: 2 });
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
+const hostname = z.string().hostname();
 
 test("passing validations", () => {
   minFive.parse("12345");
@@ -24,6 +25,12 @@ test("passing validations", () => {
   includesFromIndex2.parse("XXXincludesXX");
   startsWith.parse("startsWithX");
   endsWith.parse("XendsWith");
+  hostname.parse("developer.mozilla.org");
+  hostname.parse("hello.world.example.com");
+  hostname.parse("www.google.com");
+  hostname.parse("[2001:db8::ff00:42:8329]");
+  hostname.parse("192.168.1.1");
+  hostname.parse("xn--d1acj3b");
 });
 
 test("failing validations", () => {
@@ -36,6 +43,13 @@ test("failing validations", () => {
   expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
+  expect(() => hostname.parse("ht!tp://invalid.com")).toThrow();
+  expect(() => hostname.parse("xn--d1acj3b..com")).toThrow();
+  expect(() => hostname.parse("ex@mple.com")).toThrow();
+  expect(() => hostname.parse("[2001:db8::zzzz]")).toThrow();
+  expect(() => hostname.parse("exa mple.com")).toThrow();
+  expect(() => hostname.parse("-example.com")).toThrow();
+  expect(() => hostname.parse("example..com")).toThrow();
 });
 
 test("email validations", () => {

@@ -106,6 +106,7 @@ export type StringValidation =
   | "base64"
   | { includes: string; position?: number }
   | { startsWith: string }
+  | { hostname: string }
   | { endsWith: string };
 
 export interface ZodInvalidStringIssue extends ZodIssueBase {
