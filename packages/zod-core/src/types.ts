@@ -14,7 +14,7 @@ export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
   ? true
   : false;
 
-export type isAny<T> = 0 extends 1 & T ? true : false;
+export type IsAny<T> = 0 extends 1 & T ? true : false;
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
@@ -76,3 +76,19 @@ type CastToStringTuple<T> = T extends [string, ...string[]] ? T : never;
 export type UnionToTupleString<T> = CastToStringTuple<UnionToTuple<T>>;
 
 export type ErrMessage = string | { message?: string };
+
+export type AnyFunc = (...args: any[]) => any;
+export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
+export type IsMethod<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
+export type OmitString<T, Pattern extends string> = T extends Pattern
+  ? never
+  : T;
+export type PickProps<T> = { [k in keyof T as IsProp<T, k>]: T[k] };
+
+// type PropsTest = $Def<{
+//   a: string;
+//   b: number;
+//   c: () => void;
+//   _d: string;
+//   "~e": string;
+// }>;

@@ -96,3 +96,11 @@ export const errToObj = (message?: ErrMessage): { message?: string } =>
 
 export const errToString = (message?: ErrMessage): string | undefined =>
   typeof message === "string" ? message : message?.message;
+
+export function getElementAtPath(
+  obj: any,
+  path: (string | number)[] | null | undefined
+): any {
+  if (!path) return obj;
+  return path.reduce((acc, key) => acc?.[key], obj);
+}

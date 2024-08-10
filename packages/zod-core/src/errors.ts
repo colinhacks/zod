@@ -1,7 +1,7 @@
 import type { $ZodType, input, output } from "./core.js";
 import defaultErrorMap from "./locales/en.js";
 import type { ParseContext, ZodParsedType } from "./parse.js";
-import type { OmitKeys, Primitive } from "./types.js";
+import type { Primitive } from "./types.js";
 import { jsonStringifyReplacer } from "./util.js";
 
 type allKeys<T> = T extends any ? keyof T : never;
@@ -34,7 +34,7 @@ export const ZodIssueCode = {
   invalid_intersection_types: "invalid_intersection_types",
   not_multiple_of: "not_multiple_of",
   not_finite: "not_finite",
-  uniqueness: "uniqueness",
+  not_unique: "not_unique",
   invalid_file_type: "invalid_file_type",
   invalid_file_name: "invalid_file_name",
 } as const;
@@ -45,50 +45,59 @@ export interface ZodIssueBase {
   message?: string;
 }
 
-export interface ZodInvalidTypeIssue extends ZodIssueBase {
+export interface ZodIssueCore {
+  input: unknown;
+  code: ZodIssueCode;
+  path: (string | number)[];
+  message: string;
+  // fatal: boolean;
+  level: "warn" | "error" | "abort";
+}
+
+export interface ZodIssueInvalidType extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_type;
   expected: ZodParsedType;
   received: ZodParsedType;
 }
 
-export interface ZodInvalidLiteralIssue extends ZodIssueBase {
+export interface ZodIssueInvalidLiteral extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_literal;
   expected: unknown;
   received: unknown;
 }
 
-export interface ZodUnrecognizedKeysIssue extends ZodIssueBase {
+export interface ZodIssueUnrecognizedKeys extends ZodIssueCore {
   code: typeof ZodIssueCode.unrecognized_keys;
   keys: string[];
 }
 
-export interface ZodInvalidUnionIssue extends ZodIssueBase {
+export interface ZodIssueInvalidUnion extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_union;
   unionErrors: ZodError[];
 }
 
-export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
+export interface ZodIssueInvalidUnionDiscriminator extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_union_discriminator;
   options: Primitive[];
 }
 
-export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
+export interface ZodIssueInvalidEnumValue extends ZodIssueCore {
   received: string | number;
   code: typeof ZodIssueCode.invalid_enum_value;
   options: (string | number)[];
 }
 
-export interface ZodInvalidArgumentsIssue extends ZodIssueBase {
+export interface ZodIssueInvalidArguments extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_arguments;
   argumentsError: ZodError;
 }
 
-export interface ZodInvalidReturnTypeIssue extends ZodIssueBase {
+export interface ZodIssueInvalidReturnType extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_return_type;
   returnTypeError: ZodError;
 }
 
-export interface ZodInvalidDateIssue extends ZodIssueBase {
+export interface ZodIssueInvalidDate extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_date;
 }
 
@@ -118,12 +127,12 @@ export type StringValidation =
   | { startsWith: string }
   | { endsWith: string };
 
-export interface ZodInvalidStringIssue extends ZodIssueBase {
+export interface ZodIssueInvalidString extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_string;
   validation: StringValidation;
 }
 
-export interface ZodTooSmallIssue extends ZodIssueBase {
+export interface ZodIssueTooSmall extends ZodIssueCore {
   code: typeof ZodIssueCode.too_small;
   minimum: number | bigint;
   inclusive: boolean;
@@ -131,7 +140,7 @@ export interface ZodTooSmallIssue extends ZodIssueBase {
   type: "array" | "string" | "number" | "set" | "date" | "bigint" | "file";
 }
 
-export interface ZodTooBigIssue extends ZodIssueBase {
+export interface ZodIssueTooBig extends ZodIssueCore {
   code: typeof ZodIssueCode.too_big;
   maximum: number | bigint;
   inclusive: boolean;
@@ -139,67 +148,74 @@ export interface ZodTooBigIssue extends ZodIssueBase {
   type: "array" | "string" | "number" | "set" | "date" | "bigint" | "file";
 }
 
-export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
+export interface ZodIssueInvalidIntersectionTypes extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_intersection_types;
   mergeErrorPath: (string | number)[];
 }
 
-export interface ZodNotMultipleOfIssue extends ZodIssueBase {
+export interface ZodIssueNotMultipleOf extends ZodIssueCore {
   code: typeof ZodIssueCode.not_multiple_of;
   multipleOf: number | bigint;
 }
 
-export interface ZodNotFiniteIssue extends ZodIssueBase {
+export interface ZodIssueNotFinite extends ZodIssueCore {
   code: typeof ZodIssueCode.not_finite;
 }
 
-export interface ZodUniquenessIssue<T = unknown> extends ZodIssueBase {
-  code: typeof ZodIssueCode.uniqueness;
-  duplicateElements?: Array<T>;
+export interface ZodIssueNotUnique<T = unknown> extends ZodIssueCore {
+  code: typeof ZodIssueCode.not_unique;
+  duplicates?: Array<T>;
 }
 
-export interface ZodInvalidFileTypeIssue extends ZodIssueBase {
+export interface ZodIssueInvalidFileType extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_file_type;
   expected: string[];
   received: string;
 }
 
-export interface ZodInvalidFileNameIssue extends ZodIssueBase {
+export interface ZodIssueInvalidFileName extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_file_name;
 }
 
-export interface ZodCustomIssue extends ZodIssueBase {
+export interface ZodIssueCustom extends ZodIssueCore {
   code: typeof ZodIssueCode.custom;
   params?: { [k: string]: any };
 }
 
 export type DenormalizedError = { [k: string]: DenormalizedError | string[] };
 
-export type ZodIssueOptionalMessage =
-  | ZodInvalidTypeIssue
-  | ZodInvalidLiteralIssue
-  | ZodUnrecognizedKeysIssue
-  | ZodInvalidUnionIssue
-  | ZodInvalidUnionDiscriminatorIssue
-  | ZodInvalidEnumValueIssue
-  | ZodInvalidArgumentsIssue
-  | ZodInvalidReturnTypeIssue
-  | ZodInvalidDateIssue
-  | ZodInvalidStringIssue
-  | ZodTooSmallIssue
-  | ZodTooBigIssue
-  | ZodInvalidIntersectionTypesIssue
-  | ZodNotMultipleOfIssue
-  | ZodNotFiniteIssue
-  | ZodUniquenessIssue
-  | ZodInvalidFileTypeIssue
-  | ZodInvalidFileNameIssue
-  | ZodCustomIssue;
+export interface ZodIssues {
+  InvalidType: ZodIssueInvalidType;
+  InvalidLiteral: ZodIssueInvalidLiteral;
+  UnrecognizedKeys: ZodIssueUnrecognizedKeys;
+  InvalidUnion: ZodIssueInvalidUnion;
+  InvalidUnionDiscriminator: ZodIssueInvalidUnionDiscriminator;
+  InvalidEnumValue: ZodIssueInvalidEnumValue;
+  InvalidArguments: ZodIssueInvalidArguments;
+  InvalidReturnType: ZodIssueInvalidReturnType;
+  InvalidDate: ZodIssueInvalidDate;
+  InvalidString: ZodIssueInvalidString;
+  TooSmall: ZodIssueTooSmall;
+  TooBig: ZodIssueTooBig;
+  InvalidIntersectionTypes: ZodIssueInvalidIntersectionTypes;
+  NotMultipleOf: ZodIssueNotMultipleOf;
+  NotFinite: ZodIssueNotFinite;
+  NotUnique: ZodIssueNotUnique;
+  InvalidFileType: ZodIssueInvalidFileType;
+  InvalidFileName: ZodIssueInvalidFileName;
+  Custom: ZodIssueCustom;
+}
 
-export type ZodIssue = ZodIssueOptionalMessage & {
-  fatal?: boolean;
-  message: string;
-};
+export type ZodIssue = ZodIssues[keyof ZodIssues];
+
+export type ZodErrorMapInput<T = ZodIssue> = T extends ZodIssueBase
+  ? Omit<T, "message" | "fatal" | "level"> & {
+      message?: string;
+      fatal?: boolean;
+      level?: "warn" | "error" | "abort";
+    }
+  : never;
+export type ZodIssueOptionalMessage = ZodErrorMapInput;
 
 type recursiveZodFormattedError<T> = T extends [any, ...any[]]
   ? { [K in keyof T]?: ZodFormattedError<T[K]> }
@@ -339,13 +355,15 @@ export class ZodError<T = any> extends Error {
   }
 }
 
-type stripPath<T extends object> = T extends any ? OmitKeys<T, "path"> : never;
-
-export type IssueData = stripPath<ZodIssueOptionalMessage> & {
-  input: any;
-  path?: (string | number)[];
-  fatal?: boolean;
-};
+export type IssueData<T extends ZodIssueCore = ZodIssue> = T extends infer U
+  ? Omit<U, "path" | "level" | "message"> & {
+      // input?: any;
+      path?: (string | number)[];
+      // fatal?: boolean;
+      level?: "warn" | "error" | "abort";
+      message?: string;
+    }
+  : never;
 
 export type ErrorMapCtx = {
   defaultError: string;
@@ -353,7 +371,7 @@ export type ErrorMapCtx = {
 };
 
 export type ZodErrorMap = (
-  issue: ZodIssueOptionalMessage,
+  issue: ZodErrorMapInput,
   _ctx: ErrorMapCtx
 ) => { message: string };
 
@@ -406,6 +424,8 @@ export const makeIssue = (
   const fullPath = [...basePath, ...(issueData.path || [])];
   const fullIssue = {
     ...issueData,
+    // fatal: issueData.fatal ?? false,
+    level: issueData.level ?? "error",
     path: fullPath,
   };
 
@@ -414,6 +434,8 @@ export const makeIssue = (
       ...issueData,
       path: fullPath,
       message: issueData.message,
+      // fatal: issueData.fatal ?? false,
+      level: issueData.level ?? "error",
     };
   }
 
@@ -439,6 +461,17 @@ export const makeIssue = (
   return {
     ...issueData,
     path: fullPath,
+    // fatal: issueData.fatal ?? false,
+    level: issueData.level ?? "error",
     message: errorMessage,
   };
 };
+
+export function issuesToZodError(
+  ctx: ParseContext,
+  issues: IssueData[]
+): ZodError {
+  return new ZodError(issues.map((issue) => makeIssue(issue, ctx)));
+}
+
+export type CustomErrorParams = Partial<Omit<ZodIssueCustom, "code">>;

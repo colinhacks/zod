@@ -140,9 +140,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.not_finite:
       message = "Le nombre doit être fini";
       break;
-    case ZodIssueCode.uniqueness:
-      message = issue.duplicateElements?.length
-        ? `Élément(s) : '${issue.duplicateElements}' non unique(s)`
+    case ZodIssueCode.not_unique:
+      message = issue.duplicates?.length
+        ? `Élément(s) : '${issue.duplicates}' non unique(s)`
         : "Les valeurs doivent être uniques";
       break;
     case ZodIssueCode.invalid_file_type:

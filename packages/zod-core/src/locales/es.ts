@@ -148,9 +148,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.not_finite:
       message = "Número no puede ser infinito";
       break;
-    case ZodIssueCode.uniqueness:
-      message = issue.duplicateElements?.length
-        ? `Elemento(s): '${issue.duplicateElements}' no son únicos`
+    case ZodIssueCode.not_unique:
+      message = issue.duplicates?.length
+        ? `Elemento(s): '${issue.duplicates}' no son únicos`
         : "Los valores deben ser únicos";
       break;
     case ZodIssueCode.invalid_file_type:

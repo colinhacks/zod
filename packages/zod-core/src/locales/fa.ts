@@ -140,7 +140,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.not_finite:
       message = "عدد باید محدود باشد";
       break;
-    case ZodIssueCode.uniqueness:
+    case ZodIssueCode.not_unique:
       message = `عناصر تکراری`;
       break;
     case ZodIssueCode.invalid_file_type:

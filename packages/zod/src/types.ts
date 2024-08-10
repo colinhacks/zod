@@ -2501,8 +2501,8 @@
 //       if (duplicates.length) {
 //         issues.push({
 //           input,
-//           code: ZodIssueCode.uniqueness,
-//           duplicateElements: showDuplicates ? duplicates : undefined,
+//           code: ZodIssueCode.not_unique,
+//           duplicates: showDuplicates ? duplicates : undefined,
 //           message:
 //             typeof message === "function" ? message(duplicates) : message,
 //         });

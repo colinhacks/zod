@@ -1,98 +1,161 @@
-import {
-  type IssueData,
-  type ZodCustomIssue,
-  ZodError,
-  type ZodErrorMap,
-  makeIssue,
-} from "./errors.js";
-import {
-  type ParseContext,
-  type ParseInput,
-  type ParseReturnType,
-  type SyncParseReturnType,
-  isAborted,
-} from "./parse.js";
-import type * as util from "./types.js";
+import type { CheckCtx, ZodCheck } from "./checks.js";
+import type { ZodErrorMap } from "./errors.js";
+import type { ParseContext, ParseInput, ParseReturnType } from "./parse.js";
+import type * as types from "./types.js";
 
-export const NEVER = Symbol.for("{{zod.never}}") as never;
+import * as parse from "./parse.js";
 
-export function issuesToZodError(
-  ctx: ParseContext,
-  issues: IssueData[]
-): ZodError {
-  return new ZodError(issues.map((issue) => makeIssue(issue, ctx)));
-}
+type inputFunc<T> = (arg: T) => any;
 
-export function safeResult<Input, Output>(
-  ctx: ParseContext,
-  result: SyncParseReturnType<Output>
-):
-  | { success: true; data: Output }
-  | { success: false; error: ZodError<Input> } {
-  if (isAborted(result)) {
-    if (!result.issues.length) {
-      throw new Error("Validation failed but no issues detected.");
-    }
-
-    return {
-      success: false,
-      get error() {
-        if ((this as any)._error) return (this as any)._error as Error;
-        const err = issuesToZodError(ctx, result.issues);
-        (this as any)._error = err;
-        return (this as any)._error;
-      },
-    };
-  }
-  return { success: true, data: result as any };
-}
-
-export interface $Check {
-  deps: (string | number | (string | number)[])[];
-  run(check: $CheckCtx): void;
-  error?: ZodErrorMap;
-}
-
-export interface $CheckCtx {
-  addIssue: (data: IssueData) => void;
-  input: any;
-}
+const sym: unique symbol = Symbol.for("$ZodType");
 
 export interface $ZodTypeDef {
-  typeName: string;
-  errorMap?: ZodErrorMap;
-  description?: string;
-  // checks: $Check[] | null;
+  checks: ZodCheck<any>[];
+  readonly description?: string;
+  readonly errorMap?: ZodErrorMap;
 }
+export interface $ZodType extends $ZodTypeDef {}
+export abstract class $ZodType<out Output = unknown, in Input = never> {
+  readonly class: Set<symbol> = new Set();
 
-export type SafeParseSuccess<Output> = {
-  success: true;
-  data: Output;
-  error?: never;
-};
-export type SafeParseError<Input> = {
-  success: false;
-  error: ZodError<Input>;
-  data?: never;
-};
-
-export type SafeParseReturnType<Input, Output> =
-  | SafeParseSuccess<Awaited<Output>>
-  | SafeParseError<Awaited<Input>>;
-
-export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
-
-export abstract class $ZodType<Output = unknown, Input = unknown> {
-  readonly _def!: $ZodTypeDef;
   readonly "~output"!: Output;
-  readonly "~input"!: Input;
+  readonly "~input": inputFunc<Input>;
+
+  readonly "~omit": string;
   abstract "~parse"(
     input: ParseInput,
     ctx?: ParseContext
   ): ParseReturnType<Output>;
 
-  constructor(def: $ZodTypeDef) {
-    this._def = def;
+  static "~def": $Def<$ZodType>;
+  public constructor(def: $ZodTypeDef) {
+    Object.assign(this, def);
+  }
+
+  "~clone"(this: any): this {
+    const def: any = {};
+    for (const key of Reflect.ownKeys(this)) {
+      if (typeof this[key] !== "function") def[key] = this[key];
+    }
+    return new this.constructor(def);
+  }
+
+  "~check"(check: ZodCheck<this["~output"]>): this {
+    const clone = this["~clone"]();
+    clone.checks = [...(clone.checks || []), check];
+    return clone;
+  }
+
+  "~runChecks"(ctx: CheckCtx<Output>): void | Promise<void> {
+    // const checkCtx: CheckCtx<Output> = {
+    //   addIssue: (arg: err.IssueData) => {
+    //     issues.push(arg);
+    //   },
+    //   report: "asdf" as any,
+    //   input,
+    // };
+    let acc: Promise<void> | undefined;
+
+    for (const [i, check] of this.checks.entries()) {
+      const result = check.run(ctx);
+      if (result instanceof Promise) {
+        return result.then(async (result) => {
+          // iterate over
+          for (const [j, check] of this.checks.slice(i).entries()) {
+            const result = check.run(ctx);
+            if (result instanceof Promise) await result;
+            if (ctx.aborted) return;
+          }
+        });
+      }
+      // do stuff
+
+      // const result = acc ? acc.then(() => check.run(ctx)) : check.run(ctx);
+
+      // if(ctx.aborted) return
+      // const executeCheck = (acc: unknown): any => {
+      //   check.run(ctx);
+      //   const result = check.run(ctx);
+      //   if (result instanceof Promise) {
+      //     return result;
+      //   }
+      //   return acc;
+      // };
+
+      // const inner = this.schema["~parse"](input, ctx);
+
+      if (!(inner instanceof Promise)) {
+        if (parse.isAborted(inner)) {
+          issues.push(...inner.issues);
+        }
+
+        const value = parse.isAborted(inner)
+          ? inner.value !== symbols.NOT_SET
+            ? inner.value
+            : input // if valid, use parsed value
+          : inner;
+        // else, check parse.ZodFailure for `.value` (set after transforms)
+        // then fall back to original input
+        if (issues.some((i) => i.fatal)) {
+          return new parse.ZodFailure(issues, value);
+        }
+
+        // return value is ignored
+        const executed = executeCheck(value);
+
+        if (executed instanceof Promise) {
+          return executed.then(() => {
+            if (issues.length) return new parse.ZodFailure(issues, inner);
+            return inner;
+          }) as any;
+        }
+
+        if (issues.length) return new parse.ZodFailure(issues, inner);
+        return inner as any;
+      }
+      return inner.then((inner) => {
+        if (parse.isAborted(inner)) {
+          issues.push(...inner.issues);
+        }
+
+        if (issues.some((i) => i.fatal)) {
+          return new parse.ZodFailure(issues, inner);
+        }
+
+        const value = parse.isAborted(inner)
+          ? inner.value !== symbols.NOT_SET
+            ? inner.value
+            : input // if valid, use parsed value
+          : inner;
+
+        const executed = executeCheck(value);
+
+        if (executed instanceof Promise) {
+          return executed.then(() => {
+            if (issues.length) return new parse.ZodFailure(issues, inner);
+            return inner;
+          });
+        }
+
+        if (issues.length) return new parse.ZodFailure(issues, inner);
+        return inner;
+      });
+    }
+  }
+}
+
+export interface $ZodStringDef extends $ZodTypeDef {
+  coerce: true;
+}
+
+export interface $ZodString extends $ZodStringDef {}
+export class $ZodString extends $ZodType<string, unknown> {
+  public constructor(def: $ZodStringDef) {
+    super(def);
+    // Object.ass/ign(this, def);
+  }
+  "~parse"(data: unknown): this["~output"] {
+    return "asdf";
   }
 }
 
@@ -100,3 +163,13 @@ type Infer<T extends $ZodType> = T["~output"];
 export type input<T extends $ZodType> = T["~input"];
 export type output<T extends $ZodType> = T["~output"];
 export type { Infer as infer };
+
+export type $Def<
+  T extends $ZodType = $ZodType,
+  // K extends keyof T = OmitString<keyof T, `~${string}` | `_${string}`>,
+> = Omit<
+  types.PickProps<
+    Pick<T, types.OmitString<keyof T, `~${string}` | `_${string}`>>
+  >,
+  string extends T["~omit"] ? never : T["~omit"]
+>; //{ [k in keyof T]: T[k] };

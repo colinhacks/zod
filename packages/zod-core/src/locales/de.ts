@@ -140,9 +140,9 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
     case ZodIssueCode.not_finite:
       message = "Zahl muss endlich sein";
       break;
-    case ZodIssueCode.uniqueness:
-      message = issue.duplicateElements?.length
-        ? `Element(e): '${issue.duplicateElements}' nicht eindeutig`
+    case ZodIssueCode.not_unique:
+      message = issue.duplicates?.length
+        ? `Element(e): '${issue.duplicates}' nicht eindeutig`
         : "Werte müssen eindeutig sein";
       break;
     case ZodIssueCode.invalid_file_type:

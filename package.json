@@ -55,10 +55,14 @@
     "build": "pnpm run -r build",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
-    "prepublishOnly": "pnpm run test && pnpm run build",
-    "play": "tsx --conditions @zod/source --watch playground.ts ",
+    "prepublishOnly": "pnpm run test && pnpm run build && tsx scripts/prepublish.ts",
+    "dev": "tsx --conditions @zod/source --watch",
+    "dev:play": "pnpm dev playground.ts",
     "bench": "tsx --conditions @zod/source benchmarks/index.ts",
     "prepare": "husky install",
     "publish:jsr": "jsr publish --dry-run"
+  },
+  "dependencies": {
+    "lerna": "^8.1.7"
   }
 }

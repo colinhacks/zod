@@ -20,7 +20,8 @@
       "recommended": true,
       "suspicious": {
         "noExplicitAny": "off", // `any` is amazing
-        "noUnsafeDeclarationMerging": "off"
+        "noUnsafeDeclarationMerging": "off",
+        "noMisleadingInstantiator": "off"
       },
       "style": {
         "noUnusedTemplateLiteral": "off", // why is this even a best practice?
@@ -29,6 +30,9 @@
       },
       "correctness": {
         "noUnusedImports": "error"
+      },
+      "complexity": {
+        "noUselessConstructor": "off"
       }
     }
   },

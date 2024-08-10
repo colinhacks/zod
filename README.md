@@ -2860,7 +2860,7 @@ parseData("sup", z.string());
 
 #### Constraining allowable inputs
 
-The `ZodType` class has two generic parameters.
+The `ZodType` class has three generic parameters.
 
 ```ts
 class ZodType<

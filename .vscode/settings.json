@@ -29,5 +29,12 @@
   "editor.codeActionsOnSave": {
     "source.organizeImports.biome": "explicit",
     "source.fixAll": "always"
-  }
+  },
+  "files.exclude": {
+    "./scratch": false
+  },
+  "search.exclude": {
+    "./scratch": false
+  },
+  "editor.guides.indentation": false
 }

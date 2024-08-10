@@ -1,4 +1,10 @@
-import type { IssueData, ZodErrorMap } from "./errors.js";
+import {
+  type IssueData,
+  type ZodError,
+  type ZodErrorMap,
+  issuesToZodError,
+} from "./errors.js";
+import { FAILURE, NOT_SET } from "./symbols.js";
 
 export const ZodParsedType = {
   string: "string",
@@ -100,10 +106,8 @@ export interface ParseContext {
 
 export type ParseInput = any;
 
-export const NOT_SET: symbol = Symbol.for("NOT_SET");
-export const ZOD_FAILURE: symbol = Symbol.for("~~ZodFailure~~");
 export class ZodFailure {
-  protected "~tag": typeof ZOD_FAILURE = ZOD_FAILURE;
+  protected "~tag": typeof FAILURE = FAILURE;
   constructor(
     public issues: IssueData[],
     protected _value: unknown = NOT_SET
@@ -124,7 +128,7 @@ export class ZodFailure {
 }
 
 Object.defineProperty(ZodFailure, Symbol.hasInstance, {
-  value: (inst: any) => inst?.["~tag"] === ZOD_FAILURE,
+  value: (inst: any) => inst?.["~tag"] === FAILURE,
 });
 
 export type SyncParseReturnType<T = unknown> = T | ZodFailure;
@@ -134,14 +138,53 @@ export type ParseReturnType<T> =
   | AsyncParseReturnType<T>;
 
 export function isAborted(x: any): x is ZodFailure {
-  return x?.["~tag"] === ZOD_FAILURE;
+  return x?.["~tag"] === FAILURE;
 }
 
 export const isValid = <T>(x: any): x is T => {
-  return x?.["~tag"] !== ZOD_FAILURE;
+  return x?.["~tag"] !== FAILURE;
 };
 
 export const isAsync = <T>(
   x: ParseReturnType<T>
 ): x is AsyncParseReturnType<T> =>
   typeof Promise !== "undefined" && x instanceof Promise;
+
+export function safeResult<Input, Output>(
+  ctx: ParseContext,
+  result: SyncParseReturnType<Output>
+):
+  | { success: true; data: Output }
+  | { success: false; error: ZodError<Input> } {
+  if (isAborted(result)) {
+    if (!result.issues.length) {
+      throw new Error("Validation failed but no issues detected.");
+    }
+
+    return {
+      success: false,
+      get error() {
+        if ((this as any)._error) return (this as any)._error as Error;
+        const err = issuesToZodError(ctx, result.issues);
+        (this as any)._error = err;
+        return (this as any)._error;
+      },
+    };
+  }
+  return { success: true, data: result as any };
+}
+
+export type SafeParseSuccess<Output> = {
+  success: true;
+  data: Output;
+  error?: never;
+};
+export type SafeParseError<Input> = {
+  success: false;
+  error: ZodError<Input>;
+  data?: never;
+};
+
+export type SafeParseReturnType<Input, Output> =
+  | SafeParseSuccess<Awaited<Output>>
+  | SafeParseError<Awaited<Input>>;

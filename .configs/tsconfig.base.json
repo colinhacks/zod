@@ -9,6 +9,7 @@
     "strict": true,
     "alwaysStrict": true,
     "strictPropertyInitialization": false,
+    "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "noUnusedLocals": false,
