@@ -216,6 +216,24 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
+      <a href="https://neon.tech">
+        <picture height="68px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/83b4b1b1-a9ab-4ae5-a632-56d282f0c444">
+          <img alt="stainless" height="68px" src="https://github.com/user-attachments/assets/83b4b1b1-a9ab-4ae5-a632-56d282f0c444">
+        </picture>
+      </a>
+      <br  />   
+      Serverless Postgres — Ship faster
+      <br/>
+      <a href="https://neon.tech" style="text-decoration:none;">neon.tech</a>
+      </p>
+      <p></p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <p></p>
+      <p>
       <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod">
         <picture height="45px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/ac65013f-aeb4-48dd-a2ee-41040b69cbe6">
