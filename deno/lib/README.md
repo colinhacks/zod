@@ -83,6 +83,7 @@
 - [Dates](#dates)
 - [Zod enums](#zod-enums)
 - [Native enums](#native-enums)
+- [Not](#not)
 - [Optionals](#optionals)
 - [Nullables](#nullables)
 - [Objects](#objects)
@@ -252,7 +253,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
+      <a href="https://speakeasy.com/?utm_source=zod+docs">
         <picture height="40px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
           <img alt="speakeasy" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
@@ -261,7 +262,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br  />   
       SDKs & Terraform providers for your API
       <br/>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs" style="text-decoration:none;">speakeasyapi.dev</a>
+      <a href="https://speakeasy.com/?utm_source=zod+docs" style="text-decoration:none;">speakeasy.com</a>
       </p>
       <p></p>
     </td>
@@ -490,6 +491,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Generate Zod schemas from your Prisma schema.
 - [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs.
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
+- [`drizzle-zod`](https://orm.drizzle.team/docs/zod): Emit Zod schemas from your Drizzle schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
 - [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) Create Zod types from your Prisma models.
 - [`quicktype`](https://app.quicktype.io/): Convert JSON objects and JSON schemas into Zod schemas.
@@ -1130,6 +1132,27 @@ You can access the underlying object with the `.enum` property:
 
 ```ts
 FruitEnum.enum.Apple; // "apple"
+```
+
+## Not
+
+You can use `z.not()` to create a schema that rejects a specific type. This wraps the schema in a `ZodNot` instance and returns the result.
+
+```ts
+const schema = z.not(z.string());
+
+schema.parse(1234); // => passes, as 1234 is not a string
+schema.parse("hello"); // => throws an error, as "hello" is a string
+```
+
+For convenience, you can also call the `.not()` method on an existing schema.
+
+```ts
+const schema = z.string().email().not();
+
+schema.parse(1234); // => passes, as 1234 is not a string or a valid email
+schema.parse("hello"); // => passes, as "hello" is not a valid email
+schema.parse("user@example.com"); // => throws an error, as "user@example.com" is a valid email
 ```
 
 ## Optionals
