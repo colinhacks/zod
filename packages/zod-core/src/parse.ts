@@ -1,10 +1,6 @@
-import {
-  type IssueData,
-  type ZodError,
-  type ZodErrorMap,
-  issuesToZodError,
-} from "./errors.js";
-import { FAILURE, NOT_SET } from "./symbols.js";
+import * as errors from "./errors.js";
+import * as symbols from "./symbols.js";
+import { FAILURE } from "./symbols.js";
 
 export const ZodParsedType = {
   string: "string",
@@ -90,46 +86,74 @@ export const getParsedType = (data: any): ZodParsedType => {
       return ZodParsedType.unknown;
   }
 };
+export { getParsedType as t };
 
 export type ParseParams = {
   path: (string | number)[];
-  errorMap: ZodErrorMap;
+  errorMap: errors.ZodErrorMap;
 };
 
 export type ParsePathComponent = string | number;
 export type ParsePath = ParsePathComponent[];
 export interface ParseContext {
-  readonly contextualErrorMap?: ZodErrorMap;
-  readonly basePath: ParsePath;
-  readonly schemaErrorMap?: ZodErrorMap;
+  readonly path?: ParsePath;
+  readonly contextualErrorMap?: errors.ZodErrorMap;
+  readonly schemaErrorMap?: errors.ZodErrorMap;
 }
 
 export type ParseInput = any;
 
-export class ZodFailure {
-  protected "~tag": typeof FAILURE = FAILURE;
-  constructor(
-    public issues: IssueData[],
-    protected _value: unknown = NOT_SET
-  ) {}
-  status = "aborted" as const;
+export type ErrorLevel = "warn" | "error" | "abort";
+const errorLevels: ErrorLevel[] = ["warn", "error", "abort"];
 
-  get value(): unknown {
-    return this._value;
+export class ZodFailure {
+  protected "~tag": typeof symbols.RESULT = symbols.RESULT;
+  issues: errors.ZodIssue[] = [];
+  ctx?: ParseContext | undefined;
+
+  constructor(issues?: errors.IssueData[], ctx?: ParseContext) {
+    this.issues = issues?.map((iss) => errors.makeIssue(iss, this.ctx)) || [];
+    this.ctx = ctx;
   }
-  set value(v: unknown) {
-    if (this._value !== NOT_SET) {
-      console.log(`curr`, this._value);
-      console.log(`v`, v);
-      throw new Error("value already set");
+
+  level: ErrorLevel | null = null;
+  report(data: errors.IssueData): void {
+    const iss = errors.makeIssue(data, this.ctx);
+    // elevate level if needed
+    if (errorLevels.indexOf(iss.level) > errorLevels.indexOf(this.level!)) {
+      this.level = iss.level;
     }
-    this._value = v;
+    this.issues.push(iss);
   }
 }
-
 Object.defineProperty(ZodFailure, Symbol.hasInstance, {
-  value: (inst: any) => inst?.["~tag"] === FAILURE,
+  value: (inst: any) => inst?.["~tag"] === symbols.RESULT,
 });
+
+// export class ZodFailure {
+//   protected "~tag": typeof FAILURE = FAILURE;
+//   constructor(
+//     public issues: errors.IssueData[],
+//     protected _value: unknown = NOT_SET
+//   ) {}
+//   status = "aborted" as const;
+
+//   get value(): unknown {
+//     return this._value;
+//   }
+//   set value(v: unknown) {
+//     if (this._value !== NOT_SET) {
+//       console.log(`curr`, this._value);
+//       console.log(`v`, v);
+//       throw new Error("value already set");
+//     }
+//     this._value = v;
+//   }
+// }
+
+// Object.defineProperty(ZodFailure, Symbol.hasInstance, {
+//   value: (inst: any) => inst?.["~tag"] === FAILURE,
+// });
 
 export type SyncParseReturnType<T = unknown> = T | ZodFailure;
 export type AsyncParseReturnType<T> = Promise<SyncParseReturnType<T>>;
@@ -155,7 +179,7 @@ export function safeResult<Input, Output>(
   result: SyncParseReturnType<Output>
 ):
   | { success: true; data: Output }
-  | { success: false; error: ZodError<Input> } {
+  | { success: false; error: errors.ZodError<Input> } {
   if (isAborted(result)) {
     if (!result.issues.length) {
       throw new Error("Validation failed but no issues detected.");
@@ -165,7 +189,7 @@ export function safeResult<Input, Output>(
       success: false,
       get error() {
         if ((this as any)._error) return (this as any)._error as Error;
-        const err = issuesToZodError(ctx, result.issues);
+        const err = errors.issuesToZodError(ctx, result.issues);
         (this as any)._error = err;
         return (this as any)._error;
       },
@@ -181,7 +205,7 @@ export type SafeParseSuccess<Output> = {
 };
 export type SafeParseError<Input> = {
   success: false;
-  error: ZodError<Input>;
+  error: errors.ZodError<Input>;
   data?: never;
 };
 

@@ -1,114 +1,58 @@
 import * as err from "./errors.js";
-import {
-  type ParseContext,
-  ZodFailure,
-  type ZodParsedType,
-  getParsedType,
-} from "./parse.js";
+import { type ZodFailure, type ZodParsedType, getParsedType } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type * as types from "./types.js";
 
-function processParams(params?: string | ZodCheckParams): ZodCheckParams {
+function processParams(params?: string | $ZodCheckParams): $ZodCheckParams {
   if (typeof params === "string") return { error: params };
   if (!params) return {};
   return params;
 }
-export interface ZodCheckParams {
+export interface $ZodCheckParams {
   error?: string;
 }
 
-export interface ZodCheckDef {
-  kind: string;
-  deps?: string[];
-  error?: string;
-}
-
-export interface ZodCheck<T> extends ZodCheckDef {}
-
-type $CheckDef<T extends ZodCheck> = types.PickProps<
-  Pick<T, types.OmitString<keyof T, `~${string}` | `_${string}`>>
+type $Def<T extends $ZodCheck, AlsoOmit extends string = never> = Omit<
+  types.PickProps<T>,
+  "kind" | AlsoOmit
 >;
-// type domain<T extends ZodCheck> =
 
-export abstract class ZodCheck<in T = never> {
-  constructor(def: $CheckDef<ZodCheck>) {
+export interface $CheckCtx<T> {
+  fail?: ZodFailure;
+  input: T;
+  addIssue(issue: err.IssueData): void;
+}
+
+interface $ZodCheckDef extends $Def<$ZodCheck> {}
+declare const a: $ZodCheckDef;
+
+export abstract class $ZodCheck<in T = never> {
+  abstract readonly kind: string;
+  deps?: string[];
+  error?: string | undefined;
+  constructor(def: object) {
     Object.assign(this, def);
   }
 
-  abstract run(ctx: CheckCtx<T>): void | Promise<void>;
+  abstract run(ctx: $CheckCtx<T>): void;
 }
-// const ch: ZodCheck<any> = {} as any as ZodCheck<string | number>;
 
-type CheckCtxReporter = {
-  (data: err.IssueData): void;
-  invalid_type(data: err.IssueData<err.ZodIssues["InvalidType"]>): void;
-  invalid_literal(data: err.IssueData<err.ZodIssueInvalidLiteral>): void;
-  unrecognized_keys(data: err.IssueData<err.ZodIssueUnrecognizedKeys>): void;
-  invalid_union(data: err.IssueData<err.ZodIssueInvalidUnion>): void;
-  invalid_union_discriminator(
-    data: err.IssueData<err.ZodIssueInvalidUnionDiscriminator>
-  ): void;
-  invalid_enum_value(data: err.IssueData<err.ZodIssueInvalidEnumValue>): void;
-  invalid_arguments(data: err.IssueData<err.ZodIssueInvalidArguments>): void;
-  invalid_return_type(data: err.IssueData<err.ZodIssueInvalidReturnType>): void;
-  invalid_date(data: err.IssueData<err.ZodIssueInvalidDate>): void;
-  invalid_string(data: err.IssueData<err.ZodIssueInvalidString>): void;
-  too_small(data: err.IssueData<err.ZodIssueTooSmall>): void;
-  too_big(data: err.IssueData<err.ZodIssueTooBig>): void;
-  invalid_intersection_types(
-    data: err.IssueData<err.ZodIssueInvalidIntersectionTypes>
-  ): void;
-  not_multiple_of(data: err.IssueData<err.ZodIssueNotMultipleOf>): void;
-  not_finite(data: err.IssueData<err.ZodIssueNotFinite>): void;
-  uniqueness(data: err.IssueData<err.ZodIssueNotUnique>): void;
-  invalid_file_type(data: err.IssueData<err.ZodIssueInvalidFileType>): void;
-  invalid_file_name(data: err.IssueData<err.ZodIssueInvalidFileName>): void;
-  custom(data: err.IssueData<err.ZodIssueCustom>): void;
-};
-
-export class CheckCtx<T> {
-  aborted = false;
-  constructor(
-    public input: T,
-    public _issues: err.IssueData[],
-    public ctx: ParseContext
-  ) {
-    if (_issues) {
-      this.aborted = _issues.some((issue) => issue.level === "abort");
-    }
-  }
-  addIssue(data: err.IssueData): void {
-    this._issues = this._issues || [];
-    if (data.level === "abort") this.aborted = true;
-  }
-  toFail(): ZodFailure {
-    return new ZodFailure(
-      this._issues.map((iss) => err.makeIssue(iss, this.ctx))
-    ); //  err.issuesToZodError(this.ctx, this._issues);
-  }
+/////////////////////////////////
+/////    $ZodCheckEquals    /////
+/////////////////////////////////
+interface $ZodCheckEqualsDef {
+  value: $ZodCheckEqualsDomain;
 }
-// export interface CheckCtx<T> {
-//   addIssue: CheckCtxReporter;
-//   input: T;
-//   report: CheckCtxReporter;
-
-// }
-
-// type adsf = err.IssueData;
-
-////////////////////////////////
-/////    ZodCheckEquals    /////
-////////////////////////////////
-type ZodCheckEqualsDomain = Array<any> | Set<any> | File;
-export class ZodCheckEquals<
-  T extends ZodCheckEqualsDomain = ZodCheckEqualsDomain,
-> extends ZodCheck<T> {
-  override kind: "equals";
-  value: T;
-  constructor(def: $CheckDef<ZodCheckEquals>) {
+type $ZodCheckEqualsDomain = number | bigint | Date;
+export class $ZodCheckEquals<
+  T extends $ZodCheckEqualsDomain = $ZodCheckEqualsDomain,
+> extends $ZodCheck<T> {
+  override kind = "equals" as const;
+  value!: T;
+  constructor(def: $ZodCheckEqualsDef) {
     super(def);
   }
-  run(ctx: CheckCtx<T>): void {
+  run(ctx: $CheckCtx<T>): void {
     const type = getParsedType(ctx.input);
 
     if (ctx.input !== this.value) {
@@ -130,20 +74,21 @@ export class ZodCheckEquals<
 }
 
 //////////////////////////////////////
-/////      ZodCheckLessThan      /////
+/////      $ZodCheckLessThan      /////
 //////////////////////////////////////
-type ZodCheckLessThanDomain = number | bigint | Date;
+type $ZodCheckLessThanDomain = number | bigint | Date;
 
-export class ZodCheckLessThan<
-  T extends ZodCheckLessThanDomain = ZodCheckLessThanDomain,
-> extends ZodCheck<T> {
-  override kind: "less_than";
-  value: T;
-  inclusive: boolean;
-  constructor(def: $CheckDef<ZodCheckLessThan>) {
+export class $ZodCheckLessThan<
+  T extends $ZodCheckLessThanDomain = $ZodCheckLessThanDomain,
+> extends $ZodCheck<T> {
+  override kind = "less_than" as const;
+  value!: T;
+  inclusive!: boolean;
+
+  constructor(def: $Def<$ZodCheckLessThan>) {
     super(def);
   }
-  run(ctx: CheckCtx<T>): void {
+  run(ctx: $CheckCtx<T>): void {
     const type = getParsedType(ctx.input);
 
     if (this.inclusive ? this.value <= ctx.input : this.value < ctx.input) {
@@ -159,45 +104,45 @@ export class ZodCheckLessThan<
   }
 }
 
-export function lt<T extends ZodCheckLessThanDomain>(
+export function lt<T extends $ZodCheckLessThanDomain>(
   value: T,
-  params?: string | ZodCheckParams
-): ZodCheckLessThan<T> {
-  return new ZodCheckLessThan({
+  params?: string | $ZodCheckParams
+): $ZodCheckLessThan<T> {
+  return new $ZodCheckLessThan({
     ...processParams(params),
-    kind: "less_than",
     value,
     inclusive: false,
   });
 }
 
-export function lte<T extends ZodCheckLessThanDomain>(
+export function lte<T extends $ZodCheckLessThanDomain>(
   value: T,
-  params?: string | ZodCheckParams
-): ZodCheckLessThan<T> {
-  return new ZodCheckLessThan({
+  params?: string | $ZodCheckParams
+): $ZodCheckLessThan<T> {
+  return new $ZodCheckLessThan({
     ...processParams(params),
-    kind: "less_than",
     value,
     inclusive: true,
   });
 }
 
 /////////////////////////////////////
-/////    ZodCheckGreaterThan    /////
+/////    $ZodCheckGreaterThan    /////
 /////////////////////////////////////
-type ZodCheckGreaterThanDomain = number | bigint | Date;
+type $ZodCheckGreaterThanDomain = number | bigint | Date;
 
-export class ZodCheckGreaterThan<
-  T extends ZodCheckGreaterThanDomain = ZodCheckGreaterThanDomain,
-> extends ZodCheck<T> {
-  override kind: "greater_than";
-  value: T;
-  inclusive: boolean;
-  constructor(def: $CheckDef<ZodCheckGreaterThan>) {
+export class $ZodCheckGreaterThan<
+  T extends $ZodCheckGreaterThanDomain = $ZodCheckGreaterThanDomain,
+> extends $ZodCheck<T> {
+  override kind = "greater_than" as const;
+  value!: T;
+  inclusive!: boolean;
+
+  constructor(def: $Def<$ZodCheckGreaterThan>) {
     super(def);
   }
-  run(ctx: CheckCtx<T>): void {
+
+  run(ctx: $CheckCtx<T>): void {
     const type = getParsedType(ctx.input);
     if (this.inclusive ? this.value > ctx.input : this.value >= ctx.input) {
       ctx.addIssue({
@@ -212,34 +157,36 @@ export class ZodCheckGreaterThan<
   }
 }
 
-export function gt<T extends ZodCheckGreaterThanDomain>(
+export function gt<T extends $ZodCheckGreaterThanDomain>(
   value: T,
-  params?: string | ZodCheckParams
-): ZodCheckGreaterThan<T> {
-  return new ZodCheckGreaterThan({
+  params?: string | $ZodCheckParams
+): $ZodCheckGreaterThan<T> {
+  return new $ZodCheckGreaterThan({
     ...processParams(params),
-    kind: "greater_than",
     value,
     inclusive: false,
   });
 }
 
-export function gte<T extends ZodCheckGreaterThanDomain>(
+export function gte<T extends $ZodCheckGreaterThanDomain>(
   value: T,
-  params?: string | ZodCheckParams
-): ZodCheckGreaterThan<T> {
-  return new ZodCheckGreaterThan({
+  params?: string | $ZodCheckParams
+): $ZodCheckGreaterThan<T> {
+  return new $ZodCheckGreaterThan({
     ...processParams(params),
-    kind: "greater_than",
     value,
     inclusive: true,
   });
 }
 
 //////////////////////////////////////
-/////    ZodCheckSizeLessThan    /////
+/////    $ZodCheckSizeLessThan    /////
 //////////////////////////////////////
-type ZodCheckSizeLessThanDomain = string | Array<unknown> | Set<unknown> | File;
+type $ZodCheckSizeLessThanDomain =
+  | string
+  | Array<unknown>
+  | Set<unknown>
+  | File;
 
 function getSize(input: any, type: ZodParsedType) {
   switch (type) {
@@ -255,15 +202,16 @@ function getSize(input: any, type: ZodParsedType) {
       throw new Error(`Invalid input for size check: ${type}`);
   }
 }
-export class ZodCheckSizeLessThan<
-  T extends ZodCheckSizeLessThanDomain = ZodCheckSizeLessThanDomain,
-> extends ZodCheck<T> {
-  override kind: "size_less_than";
-  value: number;
-  constructor(def: $CheckDef<ZodCheckSizeLessThan>) {
+export class $ZodCheckSizeLessThan<
+  T extends $ZodCheckSizeLessThanDomain = $ZodCheckSizeLessThanDomain,
+> extends $ZodCheck<T> {
+  override kind = "size_less_than" as const;
+  value!: number;
+  constructor(def: $Def<$ZodCheckSizeLessThan>) {
     super(def);
   }
-  run(ctx: CheckCtx<T>): void {
+
+  run(ctx: $CheckCtx<T>): void {
     const type = getParsedType(ctx.input);
     const size = getSize(ctx.input, type);
     if (size < ctx.input) {
@@ -281,35 +229,36 @@ export class ZodCheckSizeLessThan<
 
 export function minItems(
   value: number,
-  params?: string | ZodCheckParams
-): ZodCheckSizeLessThan<string | Array<any>> {
-  return new ZodCheckSizeLessThan({
+  params?: string | $ZodCheckParams
+): $ZodCheckSizeLessThan<string | Array<any>> {
+  return new $ZodCheckSizeLessThan({
     ...processParams(params),
-    kind: "size_less_than",
+
     value,
   });
 }
 
 /////////////////////////////////////
-/////    ZodCheckGreaterThan    /////
+/////    $ZodCheckGreaterThan    /////
 /////////////////////////////////////
-type ZodCheckSizeGreaterThanDomain =
+type $ZodCheckSizeGreaterThanDomain =
   | string
   | Array<unknown>
   | Set<unknown>
   | File;
 
-export class ZodCheckSizeGreaterThan<
-  T extends ZodCheckSizeGreaterThanDomain = ZodCheckSizeGreaterThanDomain,
-> extends ZodCheck<T> {
-  override kind: "size_greater_than";
-  value: number;
-  inclusive: boolean;
+export class $ZodCheckSizeGreaterThan<
+  T extends $ZodCheckSizeGreaterThanDomain = $ZodCheckSizeGreaterThanDomain,
+> extends $ZodCheck<T> {
+  override kind = "size_greater_than" as const;
+  value!: number;
+  inclusive!: boolean;
   path?: "length" | "size";
-  constructor(def: $CheckDef<ZodCheckSizeGreaterThan>) {
+  constructor(def: $Def<$ZodCheckSizeGreaterThan>) {
     super(def);
   }
-  run(ctx: CheckCtx<T>): void {
+
+  run(ctx: $CheckCtx<T>): void {
     const type = getParsedType(ctx.input);
 
     const input = getSize(ctx.input, type);
@@ -328,30 +277,36 @@ export class ZodCheckSizeGreaterThan<
 
 export function maxItems(
   value: number,
-  params?: string | ZodCheckParams
-): ZodCheckSizeGreaterThan<Set<any> | File> {
-  return new ZodCheckSizeGreaterThan({
+  params?: string | $ZodCheckParams
+): $ZodCheckSizeGreaterThan<Set<any> | File> {
+  return new $ZodCheckSizeGreaterThan({
     ...processParams(params),
-    kind: "size_greater_than",
     value,
     inclusive: true,
   });
 }
 
-//////////////////////////////////////
-/////    ZodCheckStringFormat    /////
-//////////////////////////////////////
-interface ZodCheckRegexParams {
+/////////////////////////////////
+/////    $ZodCheckFormat    /////
+/////////////////////////////////
+
+interface $ZodCheckOptionalRegexParams {
+  error?: string;
+  pattern?: RegExp;
+}
+type $StringFormatDef<T extends $ZodCheck> = $Def<T, "format">;
+
+interface $ZodCheckRegexParams {
   error?: string;
   pattern: RegExp;
 }
-abstract class $ZodCheckRegex extends ZodCheck<string> {
-  // override kind: "string.regex";
-  format?: err.StringValidation;
-  pattern: RegExp;
-
-  override run(ctx: CheckCtx<string>): void {
-    if (!this.pattern.test(ctx.input)) {
+abstract class _$ZodCheckStringFormat extends $ZodCheck<string> {
+  override kind = "string_format" as const;
+  abstract format: err.StringValidation;
+  pattern?: RegExp;
+  override run(ctx: $CheckCtx<string>): void {
+    if (!this.pattern) throw new Error("Not implemented.");
+    if (this.pattern.test(ctx.input)) {
       ctx.addIssue({
         code: "invalid_string",
         validation: this.format || "regex",
@@ -362,54 +317,56 @@ abstract class $ZodCheckRegex extends ZodCheck<string> {
   }
 }
 
-class ZodCheckRegex extends $ZodCheckRegex {
-  override kind: "regex";
-
-  constructor(def: $CheckDef<ZodCheckRegex>) {
+export class $ZodCheckRegex extends _$ZodCheckStringFormat {
+  override format = "regex" as const;
+  override pattern!: RegExp;
+  constructor(def: $StringFormatDef<$ZodCheckRegex>) {
     super(def);
   }
 }
 
 export function regex(
   pattern: RegExp,
-  params?: string | ZodCheckParams
-): ZodCheckRegex {
-  return new ZodCheckRegex({
+  params?: string | $ZodCheckParams
+): $ZodCheckRegex {
+  return new $ZodCheckRegex({
     ...processParams(params),
-    kind: "regex",
-    format: "regex",
     pattern,
   });
 }
 
-interface ZodCheckOptionalRegexParams {
-  error?: string;
-  pattern?: RegExp;
-}
-export class ZodCheckStringEmail extends ZodCheckRegex {
-  validation: "email";
-  constructor(def: $CheckDef<ZodCheckStringEmail>) {
+////////////////////////////////
+/////    $ZodCheckEmail    /////
+////////////////////////////////
+export class $ZodCheckEmail extends _$ZodCheckStringFormat {
+  override format = "email" as const;
+  override pattern: RegExp = regexes.emailRegex;
+  constructor(def: $StringFormatDef<$ZodCheckEmail>) {
     super(def);
   }
 }
 
 export function email(
-  params?: string | ZodCheckOptionalRegexParams
-): ZodCheckStringEmail {
-  return new ZodCheckStringEmail({
+  params?: string | $ZodCheckOptionalRegexParams
+): $ZodCheckEmail {
+  return new $ZodCheckEmail({
     ...processParams(params),
-    kind: "regex",
-    validation: "email",
-    pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+    //
+
+    // format: "email",
+    pattern: regexes.emailRegex,
   });
 }
 
-class ZodCheckStringURL extends ZodCheck<string> {
-  validation: "url";
-  constructor(def: $CheckDef<ZodCheckStringURL>) {
+//////////////////////////////
+/////    $ZodCheckURL    /////
+//////////////////////////////
+class $ZodCheckURL extends _$ZodCheckStringFormat {
+  override format = "url" as const;
+  constructor(def: $StringFormatDef<$ZodCheckURL>) {
     super(def);
   }
-  run(ctx: CheckCtx<string>): void {
+  override run(ctx: $CheckCtx<string>): void {
     try {
       const url = new URL(ctx.input);
       if (!regexes.hostnameRegex.test(url.hostname)) {
@@ -432,15 +389,28 @@ class ZodCheckStringURL extends ZodCheck<string> {
 }
 
 export function url(
-  params?: string | ZodCheckOptionalRegexParams
-): ZodCheckStringURL {
-  return new ZodCheckStringURL({
+  params?: string | $ZodCheckOptionalRegexParams
+): $ZodCheckURL {
+  return new $ZodCheckURL({
     ...processParams(params),
-    kind: "url",
-    validation: "url",
+    format: "url",
   });
 }
 
+export type IpVersion = "v4" | "v6";
+export type JwtAlgorithm =
+  | "HS256"
+  | "HS384"
+  | "HS512"
+  | "RS256"
+  | "RS384"
+  | "RS512"
+  | "ES256"
+  | "ES384"
+  | "ES512"
+  | "PS256"
+  | "PS384"
+  | "PS512";
 function isValidJwt(token: string, algorithm: JwtAlgorithm | null = null) {
   try {
     const tokensParts = token.split(".");
@@ -467,149 +437,149 @@ function isValidJwt(token: string, algorithm: JwtAlgorithm | null = null) {
     return false;
   }
 }
-class ZodCheckStringJWT extends ZodCheckRegex {
-  validation: "jwt";
-  constructor(def: $CheckDef<ZodCheckStringJWT>) {
+class $ZodCheckJWT extends _$ZodCheckStringFormat {
+  override format = "jwt" as const;
+  constructor(def: $StringFormatDef<$ZodCheckJWT>) {
     super(def);
   }
 }
 
-class ZodCheckStringEmoji extends ZodCheckRegex {
-  validation: "emoji";
-  constructor(def: $CheckDef<ZodCheckStringEmoji>) {
+class $ZodCheckEmoji extends _$ZodCheckStringFormat {
+  override format = "emoji" as const;
+  constructor(def: $StringFormatDef<$ZodCheckEmoji>) {
     super(def);
   }
 }
 
-class ZodCheckStringUUID extends ZodCheckRegex {
-  validation: "uuid";
-  constructor(def: $CheckDef<ZodCheckStringUUID>) {
+class $ZodCheckUUID extends _$ZodCheckStringFormat {
+  override format = "uuid" as const;
+  constructor(def: $StringFormatDef<$ZodCheckUUID>) {
     super(def);
   }
 }
 
-class ZodCheckStringNanoID extends ZodCheckRegex {
-  validation: "nanoid";
-  constructor(def: $CheckDef<ZodCheckStringNanoID>) {
+class $ZodCheckNanoID extends _$ZodCheckStringFormat {
+  override format = "nanoid" as const;
+  constructor(def: $StringFormatDef<$ZodCheckNanoID>) {
     super(def);
   }
 }
 
-class ZodCheckStringGUID extends ZodCheckRegex {
-  validation: "guid";
-  constructor(def: $CheckDef<ZodCheckStringGUID>) {
+class $ZodCheckGUID extends _$ZodCheckStringFormat {
+  override format = "guid" as const;
+  constructor(def: $StringFormatDef<$ZodCheckGUID>) {
     super(def);
   }
 }
 
-class ZodCheckStringCUID extends ZodCheckRegex {
-  validation: "cuid";
-  constructor(def: $CheckDef<ZodCheckStringCUID>) {
+class $ZodCheckCUID extends _$ZodCheckStringFormat {
+  override format = "cuid" as const;
+  constructor(def: $StringFormatDef<$ZodCheckCUID>) {
     super(def);
   }
 }
 
-class ZodCheckStringCUID2 extends ZodCheckRegex {
-  validation: "cuid2";
-  constructor(def: $CheckDef<ZodCheckStringCUID2>) {
+class $ZodCheckCUID2 extends _$ZodCheckStringFormat {
+  override format = "cuid2" as const;
+  constructor(def: $StringFormatDef<$ZodCheckCUID2>) {
     super(def);
   }
 }
 
-class ZodCheckStringULID extends ZodCheckRegex {
-  validation: "ulid";
-  constructor(def: $CheckDef<ZodCheckStringULID>) {
+class $ZodCheckULID extends _$ZodCheckStringFormat {
+  override format = "ulid" as const;
+  constructor(def: $StringFormatDef<$ZodCheckULID>) {
     super(def);
   }
 }
 
-class ZodCheckStringXID extends ZodCheckRegex {
-  validation: "xid";
-  constructor(def: $CheckDef<ZodCheckStringXID>) {
+class $ZodCheckXID extends _$ZodCheckStringFormat {
+  override format = "xid" as const;
+  constructor(def: $StringFormatDef<$ZodCheckXID>) {
     super(def);
   }
 }
 
-class ZodCheckStringKSUID extends ZodCheckRegex {
-  validation: "ksuid";
-  constructor(def: $CheckDef<ZodCheckStringKSUID>) {
+class $ZodCheckKSUID extends _$ZodCheckStringFormat {
+  override format = "ksuid" as const;
+  constructor(def: $StringFormatDef<$ZodCheckKSUID>) {
     super(def);
   }
 }
 
-class ZodCheckStringIncludes extends ZodCheckRegex {
-  validation: "includes";
-  constructor(def: $CheckDef<ZodCheckStringIncludes>) {
+class $ZodCheckIncludes extends _$ZodCheckStringFormat {
+  override format = "includes" as const;
+  constructor(def: $StringFormatDef<$ZodCheckIncludes>) {
     super(def);
   }
 }
 
-class ZodCheckStringStartsWith extends ZodCheckRegex {
-  validation: "startswith";
-  constructor(def: $CheckDef<ZodCheckStringStartsWith>) {
+class $ZodCheckStartsWith extends _$ZodCheckStringFormat {
+  override format = "starts_with" as const;
+  constructor(def: $StringFormatDef<$ZodCheckStartsWith>) {
     super(def);
   }
 }
 
-class ZodCheckStringEndsWith extends ZodCheckRegex {
-  validation: "endswith";
-  constructor(def: $CheckDef<ZodCheckStringEndsWith>) {
+class $ZodCheckEndsWith extends _$ZodCheckStringFormat {
+  override format = "endsWith" as const;
+  constructor(def: $StringFormatDef<$ZodCheckEndsWith>) {
     super(def);
   }
 }
 
-class ZodCheckStringDateTime extends ZodCheckRegex {
-  validation: "datetime";
-  constructor(def: $CheckDef<ZodCheckStringDateTime>) {
+class $ZodCheckDateTime extends _$ZodCheckStringFormat {
+  override format = "datetime" as const;
+  constructor(def: $StringFormatDef<$ZodCheckDateTime>) {
     super(def);
   }
 }
 
-class ZodCheckStringDate extends ZodCheckRegex {
-  validation: "date";
-  constructor(def: $CheckDef<ZodCheckStringDate>) {
+class $ZodCheckDate extends _$ZodCheckStringFormat {
+  override format = "date" as const;
+  constructor(def: $StringFormatDef<$ZodCheckDate>) {
     super(def);
   }
 }
 
-class ZodCheckStringTime extends ZodCheckRegex {
-  validation: "time";
-  constructor(def: $CheckDef<ZodCheckStringTime>) {
+class $ZodCheckTime extends _$ZodCheckStringFormat {
+  override format = "time" as const;
+  constructor(def: $StringFormatDef<$ZodCheckTime>) {
     super(def);
   }
 }
 
-class ZodCheckStringDuration extends ZodCheckRegex {
-  validation: "duration";
-  constructor(def: $CheckDef<ZodCheckStringDuration>) {
+class $ZodCheckDuration extends _$ZodCheckStringFormat {
+  override format = "duration" as const;
+  constructor(def: $StringFormatDef<$ZodCheckDuration>) {
     super(def);
   }
 }
 
-class ZodCheckStringIP extends ZodCheckRegex {
-  validation: "ip";
-  constructor(def: $CheckDef<ZodCheckStringIP>) {
+class $ZodCheckIP extends _$ZodCheckStringFormat {
+  override format = "ip" as const;
+  constructor(def: $StringFormatDef<$ZodCheckIP>) {
     super(def);
   }
 }
 
-class ZodCheckStringBase64 extends ZodCheckRegex {
-  validation: "base64";
-  constructor(def: $CheckDef<ZodCheckStringBase64>) {
+class $ZodCheckBase64 extends _$ZodCheckStringFormat {
+  override format = "base64" as const;
+  constructor(def: $StringFormatDef<$ZodCheckBase64>) {
     super(def);
   }
 }
 
-class ZodCheckStringJSON extends ZodCheckRegex {
-  validation: "json";
-  constructor(def: $CheckDef<ZodCheckStringJSON>) {
+class $ZodCheckJSON extends _$ZodCheckStringFormat {
+  override format = "json" as const;
+  constructor(def: $StringFormatDef<$ZodCheckJSON>) {
     super(def);
   }
 }
 
-class ZodCheckStringE164 extends ZodCheckRegex {
-  validation: "e164";
-  constructor(def: $CheckDef<ZodCheckStringE164>) {
+class $ZodCheckE164 extends _$ZodCheckStringFormat {
+  override format = "e164" as const;
+  constructor(def: $StringFormatDef<$ZodCheckE164>) {
     super(def);
   }
 }

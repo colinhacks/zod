@@ -84,11 +84,14 @@ export type OmitString<T, Pattern extends string> = T extends Pattern
   ? never
   : T;
 export type PickProps<T> = { [k in keyof T as IsProp<T, k>]: T[k] };
+export type Def<T extends object> = PickProps<Omit<T, keyof T & `_${string}`>>;
 
-// type PropsTest = $Def<{
-//   a: string;
-//   b: number;
-//   c: () => void;
-//   _d: string;
-//   "~e": string;
-// }>;
+export type MergeOverrides<
+  Base extends object,
+  Defaults extends Base,
+  Overrides extends Partial<Base>,
+> = {
+  [k in keyof Base]: k extends keyof Overrides
+    ? noUndefined<Overrides[k]>
+    : Defaults[k];
+};

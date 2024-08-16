@@ -5,6 +5,7 @@ import * as regexes from "./regexes.js";
 import * as symbols from "./symbols.js";
 import type * as types from "./types.js";
 import * as util from "./util.js";
+
 ///////////////////////////////////////
 ///////////////////////////////////////
 //////////                   //////////
@@ -13,17 +14,40 @@ import * as util from "./util.js";
 ///////////////////////////////////////
 ///////////////////////////////////////
 
-export type RefinementCtx = {
+type $RefinementCtx = {
   addIssue: (arg: err.IssueData) => void;
 };
-export type $ZodRawShape = { [k: string]: $ZodType };
-export type $ZodType = core.$ZodType;
+type $ZodRawShape = { [k: string]: core.$ZodType };
+type $Def<T extends object> = types.PickProps<Omit<T, `_${string}`>>;
 
 export type RawCreateParams =
   | {
+      error?: err.ZodErrorMap;
+      /** @deprecated The `errorMap` parameter has been renamed to simply `error`.
+       *
+       * @example ```ts
+       * z.string().create({ error: myErrorMap });
+       * ```
+       */
       errorMap?: err.ZodErrorMap;
+      /** @deprecated The `invalid_type_error` parameter has been deprecated and will be removed in a future version. Use the `error` field instead.
+       *
+       * @example ```ts
+       * z.string({
+       *   error: { invalid_type: 'Custom error message' }
+       * });
+       * ```
+       */
       invalid_type_error?: string;
+      /**
+       * @deprecated The `required_error` parameter has been deprecated and will be removed in a future version. Use the `error` field instead.
+       * @example ```ts
+       * z.string({
+       *  error: { required: 'Custom error message' }
+       * });
+       */
       required_error?: string;
+      /** @deprecated Use `error` instead. */
       message?: string;
       description?: string;
     }
@@ -31,7 +55,7 @@ export type RawCreateParams =
 
 export type ProcessedCreateParams = {
   errorMap?: err.ZodErrorMap;
-  description?: string;
+  description?: string | undefined;
 };
 
 export function processCreateParams(
@@ -174,12 +198,20 @@ function isValidJwt(token: string, algorithm: JwtAlgorithm | null = null) {
   }
 }
 
-export class $ZodString extends core.$ZodType<string, string> {
-  override typeName: $ZodFirstPartyTypeKind.ZodString;
-  coerce: boolean;
+interface $ZodStringVirtuals extends core.$ZodVirtuals {
+  output: string;
+  input: unknown;
+}
+interface $ZodStringDef extends core.$Def<$ZodString> {}
 
-  constructor(_def: core.$Def<$ZodString>) {
-    super(_def);
+export class $ZodString<
+  T extends Partial<$ZodStringVirtuals> = Partial<$ZodStringVirtuals>,
+> extends core.$ZodType<T & $ZodStringVirtuals> {
+  override type = "string" as const;
+  coerce!: boolean;
+
+  constructor(def: $ZodStringDef) {
+    super(def);
   }
   "~parse"(
     input: parse.ParseInput,
@@ -553,12 +585,12 @@ export class $ZodString extends core.$ZodType<string, string> {
     );
   }
 
-  _addCheck(check: $ZodStringCheck): $ZodString {
-    return new $ZodString({
-      ...this,
-      checks: [...this.checks, check],
-    });
-  }
+  // _addCheck(check: $ZodStringCheck): $ZodString {
+  //   return new $ZodString({
+  //     ...this,
+  //     checks: [...this.checks, check],
+  //   });
+  // }
 
   email(message?: types.ErrMessage): $ZodString {
     return this._addCheck({ kind: "email", ...util.errToObj(message) });
@@ -912,12 +944,17 @@ function floatSafeRemainder(val: number, step: number) {
   return (valInt % stepInt) / 10 ** decCount;
 }
 
-export type $ZodNumberDef = core.$Def<$ZodNumber>;
-
-export class $ZodNumber extends core.$ZodType<number, number> {
-  override typeName: $ZodFirstPartyTypeKind.ZodNumber;
-  coerce: boolean;
-  constructor(_def: core.$Def<$ZodNumber>) {
+interface $ZodNumberVirtuals extends core.$ZodVirtuals {
+  output: number;
+  input: unknown;
+}
+interface $ZodNumberDef extends core.$Def<$ZodString> {}
+export class $ZodNumber<
+  T extends Partial<$ZodNumberVirtuals> = {},
+> extends core.$ZodType<T & core.$ZodVirtuals> {
+  override type = "number" as const;
+  coerce!: boolean;
+  constructor(_def: $ZodNumberDef) {
     super(_def);
   }
   "~parse"(
@@ -1215,13 +1252,20 @@ export type $ZodBigIntCheck =
   | { kind: "max"; value: bigint; inclusive: boolean; message?: string }
   | { kind: "multipleOf"; value: bigint; message?: string };
 
-export type $ZodBigIntDef = core.$Def<$ZodBigInt>;
+// export type $ZodBigIntDef = core.$Def<$ZodBigInt>;
 
-export class $ZodBigInt extends core.$ZodType<bigint, bigint> {
-  override typeName: $ZodFirstPartyTypeKind.ZodBigInt;
-  coerce: boolean;
-  constructor(_def: core.$Def<$ZodBigInt>) {
-    super(_def);
+interface $ZodBigIntVirtuals extends core.$ZodVirtuals {
+  output: bigint;
+  input: unknown;
+}
+interface $ZodBigIntDef extends core.$Def<$ZodBigInt> {}
+export class $ZodBigInt<
+  T extends Partial<$ZodBigIntVirtuals> = {},
+> extends core.$ZodType<T & core.$ZodVirtuals> {
+  override type = "bigint" as const;
+  coerce!: boolean;
+  constructor(def: $ZodBigIntDef) {
+    super(def);
   }
 
   "~parse"(
@@ -1300,7 +1344,6 @@ export class $ZodBigInt extends core.$ZodType<bigint, bigint> {
       checks: [],
       typeName: $ZodFirstPartyTypeKind.ZodBigInt,
       coerce: params?.coerce ?? false,
-      checks: [],
       ...processCreateParams(params),
     });
   }
@@ -4613,23 +4656,23 @@ export class $ZodPromise<T extends $ZodType = $ZodType> extends core.$ZodType<
 //////////////////////////////////////////////
 //////////////////////////////////////////////
 
-export type Refinement<T> = (arg: T, ctx: RefinementCtx) => any;
+export type Refinement<T> = (arg: T, ctx: $RefinementCtx) => any;
 export type SuperRefinement<T> = (
   arg: T,
-  ctx: RefinementCtx
+  ctx: $RefinementCtx
 ) => void | Promise<void>;
 
 export type RefinementEffect<T> = {
   type: "refinement";
-  refinement: (arg: T, ctx: RefinementCtx) => any;
+  refinement: (arg: T, ctx: $RefinementCtx) => any;
 };
 export type TransformEffect<T> = {
   type: "transform";
-  transform: (arg: T, ctx: RefinementCtx) => any;
+  transform: (arg: T, ctx: $RefinementCtx) => any;
 };
 export type PreprocessEffect<T> = {
   type: "preprocess";
-  transform: (arg: T, ctx: RefinementCtx) => any;
+  transform: (arg: T, ctx: $RefinementCtx) => any;
 };
 export type Effect<T> =
   | RefinementEffect<T>
@@ -4665,7 +4708,7 @@ export class $ZodEffects<
 
     const issues: err.IssueData[] = [];
 
-    const checkCtx: RefinementCtx = {
+    const checkCtx: $RefinementCtx = {
       addIssue: (arg: err.IssueData) => {
         issues.push(arg);
       },
@@ -4864,7 +4907,7 @@ export class $ZodEffects<
   }
 
   static createWithPreprocess<I extends $ZodType>(
-    preprocess: (arg: unknown, ctx: RefinementCtx) => unknown,
+    preprocess: (arg: unknown, ctx: $RefinementCtx) => unknown,
     schema: I,
     params?: RawCreateParams
   ): $ZodEffects<I, I["~output"], unknown> {

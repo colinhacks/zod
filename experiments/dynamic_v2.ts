@@ -94,7 +94,7 @@ class $ZodArray<D extends $ZodArrayDef> extends $ZodType<D> {
 //////////        ZodType        ///////////////
 ////////////////////////////////////////////////
 interface ZodTypeDef extends $ZodTypeDef {}
-interface ZodType<O, D extends ZodTypeDef, I>
+interface ZodType<O = unknown, D extends ZodTypeDef = ZodTypeDef, I = unknown>
   extends $ZodType<
     {
       "~output": O;
@@ -129,7 +129,7 @@ interface ZodString
   "~input": string;
   "~output": string;
 }
-class ZodString {
+class ZodString extends $ZodString<$ZodStringDef>{
   /** @deprecated Not deprecated, but for internal use only. */
   readonly "{zod.string}": true;
 }
@@ -141,25 +141,15 @@ declare const str: ZodString;
 // };
 // class ZodString extends $ZodType<ZodStringDef> {}
 
-/////////////////////////////////////////////////////
-//////////        ZodStringCoerced        ///////////
-/////////////////////////////////////////////////////
-interface ZodStringCoercedDef
-  extends $ZodStringDef,
-    ZodTypeDef<ZodStringCoerced> {
-  "~input": unknown;
-  "~output": string;
-  /** @deprecated Not deprecated, but for internal use only. */
-  readonly "{zod.string}": true;
-}
-class ZodStringCoerced extends $ZodString<ZodStringCoercedDef> {}
-
 ////////////////////////////////////////////////
 //////////        ZodOptional        ///////////
 ////////////////////////////////////////////////
 interface ZodOptionalDef<T extends ZodType = ZodType>
   extends $ZodOptionalDef<T>,
-    ZodTypeDef<ZodOptional<T>> {}
+    ZodTypeDef {
+  // "~input": T["~input"] | undefined;
+  // "~output": T["~output"] | undefined;
+}
 class ZodOptional<T extends ZodType = ZodType> extends $ZodOptional<
   ZodOptionalDef<T>
-> {}
+>, ZodType {}

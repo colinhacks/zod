@@ -1,7 +1,6 @@
 import type { $ZodType, input, output } from "./core.js";
 import defaultErrorMap from "./locales/en.js";
 import type { ParseContext, ZodParsedType } from "./parse.js";
-import type { Primitive } from "./types.js";
 import { jsonStringifyReplacer } from "./util.js";
 
 type allKeys<T> = T extends any ? keyof T : never;
@@ -19,56 +18,69 @@ export type typeToFlattenedError<T, U = string> = {
 
 export const ZodIssueCode = {
   invalid_type: "invalid_type",
-  invalid_literal: "invalid_literal",
+  // invalid_literal: "invalid_literal",
   custom: "custom",
   invalid_union: "invalid_union",
-  invalid_union_discriminator: "invalid_union_discriminator",
-  invalid_enum_value: "invalid_enum_value",
-  unrecognized_keys: "unrecognized_keys",
-  invalid_arguments: "invalid_arguments",
-  invalid_return_type: "invalid_return_type",
+  // invalid_union_discriminator: "invalid_union_discriminator",
+  // invalid_enum_value: "invalid_enum_value",
+  // unrecognized_keys: "unrecognized_keys",
+  // invalid_arguments: "invalid_arguments",
+  // invalid_return_type: "invalid_return_type",
   invalid_date: "invalid_date",
   invalid_string: "invalid_string",
-  too_small: "too_small",
-  too_big: "too_big",
-  invalid_intersection_types: "invalid_intersection_types",
-  not_multiple_of: "not_multiple_of",
-  not_finite: "not_finite",
-  not_unique: "not_unique",
-  invalid_file_type: "invalid_file_type",
-  invalid_file_name: "invalid_file_name",
+  // too_small: "too_small",
+  // too_big: "too_big",
+  // invalid_intersection_types: "invalid_intersection_types",
+  // not_multiple_of: "not_multiple_of",
+  // not_finite: "not_finite",
+  // not_unique: "not_unique",
+  // invalid_file_type: "invalid_file_type",
+  // invalid_file_name: "invalid_file_name",
+  invalid_array: "invalid_array",
+  invalid_number: "invalid_number",
+  invalid_set: "invalid_set",
+  invalid_object: "invalid_object",
+  invalid_bigint: "invalid_bigint",
+  invalid_file: "invalid_file",
 } as const;
 export type ZodIssueCode = (typeof ZodIssueCode)[keyof typeof ZodIssueCode];
 
 export interface ZodIssueBase {
   path: (string | number)[];
-  message?: string;
+  message?: string | undefined;
 }
 
 export interface ZodIssueCore {
-  input: unknown;
+  input?: unknown;
   code: ZodIssueCode;
   path: (string | number)[];
   message: string;
-  // fatal: boolean;
   level: "warn" | "error" | "abort";
 }
 
 export interface ZodIssueInvalidType extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_type;
-  expected: ZodParsedType;
-  received: ZodParsedType;
+  expected: ZodParsedType | (string & {});
+  received: ZodParsedType | (string & {});
 }
 
-export interface ZodIssueInvalidLiteral extends ZodIssueCore {
-  code: typeof ZodIssueCode.invalid_literal;
-  expected: unknown;
-  received: unknown;
-}
+// 👉 absorbed into ZodIssueInvalidType
+// export interface ZodIssueInvalidLiteral extends ZodIssueCore {
+//   code: typeof ZodIssueCode.invalid_literal;
+//   expected: unknown;
+//   received: unknown;
+// }
 
-export interface ZodIssueUnrecognizedKeys extends ZodIssueCore {
-  code: typeof ZodIssueCode.unrecognized_keys;
-  keys: string[];
+// 👉 absorbed into ZodIssueInvalidObject
+// export interface ZodIssueUnrecognizedKeys extends ZodIssueCore {
+//   code: typeof ZodIssueCode.unrecognized_keys;
+//   keys: string[];
+// }
+export interface ZodIssueInvalidObject extends ZodIssueCore {
+  code: typeof ZodIssueCode.invalid_object;
+  subcode: "unrecognized_keys" | "missing_keys";
+  unrecognizedKeys?: string[];
+  missingKeys?: string[];
 }
 
 export interface ZodIssueInvalidUnion extends ZodIssueCore {
@@ -76,32 +88,66 @@ export interface ZodIssueInvalidUnion extends ZodIssueCore {
   unionErrors: ZodError[];
 }
 
-export interface ZodIssueInvalidUnionDiscriminator extends ZodIssueCore {
-  code: typeof ZodIssueCode.invalid_union_discriminator;
-  options: Primitive[];
-}
+// 👉 discriminated union is removed
+// export interface ZodIssueInvalidUnionDiscriminator extends ZodIssueCore {
+//   code: typeof ZodIssueCode.invalid_union_discriminator;
+//   options: Primitive[];
+// }
 
-export interface ZodIssueInvalidEnumValue extends ZodIssueCore {
-  received: string | number;
-  code: typeof ZodIssueCode.invalid_enum_value;
-  options: (string | number)[];
-}
+// 👉 absorbed into invalid_type
+// export interface ZodIssueInvalidEnumValue extends ZodIssueCore {
+//   received: string | number;
+//   code: typeof ZodIssueCode.invalid_enum_value;
+//   options: (string | number)[];
+// }
 
-export interface ZodIssueInvalidArguments extends ZodIssueCore {
-  code: typeof ZodIssueCode.invalid_arguments;
-  argumentsError: ZodError;
-}
+// 👉 ZodFunction will be deprecated
+// export interface ZodIssueInvalidArguments extends ZodIssueCore {
+//   code: typeof ZodIssueCode.invalid_arguments;
+//   argumentsError: ZodError;
+// }
 
-export interface ZodIssueInvalidReturnType extends ZodIssueCore {
-  code: typeof ZodIssueCode.invalid_return_type;
-  returnTypeError: ZodError;
-}
+// 👉 ZodFunction will be deprecated
+// export interface ZodIssueInvalidReturnType extends ZodIssueCore {
+//   code: typeof ZodIssueCode.invalid_return_type;
+//   returnTypeError: ZodError;
+// }
 
 export interface ZodIssueInvalidDate extends ZodIssueCore {
-  code: typeof ZodIssueCode.invalid_date;
+  code: "invalid_date";
+  subcode: "too_big" | "too_small";
+  minimum?: number;
+  maximum?: number;
+  exclusive?: boolean;
 }
 
-export type StringValidation =
+// type StringValidation =
+//   | "email"
+//   | "url"
+//   | "jwt"
+//   | "json"
+//   | "emoji"
+//   | "uuid"
+//   | "nanoid"
+//   | "guid"
+//   | "regex"
+//   | "cuid"
+//   | "cuid2"
+//   | "ulid"
+//   | "xid"
+//   | "ksuid"
+//   | "datetime"
+//   | "date"
+//   | "time"
+//   | "duration"
+//   | "ip"
+//   | "base64"
+//   | "e164"
+//   | { includes: string; position?: number }
+//   | { startsWith: string }
+//   | { endsWith: string };
+
+type $StringFormats =
   | "email"
   | "url"
   | "jwt"
@@ -122,60 +168,105 @@ export type StringValidation =
   | "duration"
   | "ip"
   | "base64"
-  | "e164"
-  | { includes: string; position?: number }
-  | { startsWith: string }
-  | { endsWith: string };
+  | "e164";
 
 export interface ZodIssueInvalidString extends ZodIssueCore {
   code: typeof ZodIssueCode.invalid_string;
-  validation: StringValidation;
+  subcode: "too_small" | "too_big" | "invalid_format";
+  // validation: StringValidation;
+  format?: $StringFormats;
+  pattern?: string;
+  startsWith?: string;
+  endsWith?: string;
+  includes?: string;
 }
 
-export interface ZodIssueTooSmall extends ZodIssueCore {
-  code: typeof ZodIssueCode.too_small;
-  minimum: number | bigint;
-  inclusive: boolean;
-  exact?: boolean;
-  type: "array" | "string" | "number" | "set" | "date" | "bigint" | "file";
+// 👉 split up into per-type issues (invalid_array, invalid_string, etc)
+// export interface ZodIssueTooSmall extends ZodIssueCore {
+//   code: typeof ZodIssueCode.too_small;
+//   minimum: number | bigint;
+//   inclusive: boolean;
+//   exact?: boolean;
+//   type: "array" | "string" | "number" | "set" | "date" | "bigint" | "file";
+// }
+
+// 👉 split up into per-type issues (invalid_array, invalid_string, etc)
+// export interface ZodIssueTooBig extends ZodIssueCore {
+//   code: typeof ZodIssueCode.too_big;
+//   maximum: number | bigint;
+//   inclusive: boolean;
+//   exact?: boolean;
+//   type: "array" | "string" | "number" | "set" | "date" | "bigint" | "file";
+// }
+
+export interface ZodIssueInvalidArray extends ZodIssueCore {
+  code: "invalid_array";
+  subcode: "too_big" | "too_small" | "not_unique";
+  minimum?: number;
+  maximum?: number;
 }
 
-export interface ZodIssueTooBig extends ZodIssueCore {
-  code: typeof ZodIssueCode.too_big;
-  maximum: number | bigint;
-  inclusive: boolean;
-  exact?: boolean;
-  type: "array" | "string" | "number" | "set" | "date" | "bigint" | "file";
+export interface ZodIssueInvalidNumber extends ZodIssueCore {
+  code: "invalid_number";
+  subcode: "too_big" | "too_small" | "not_integer" | "not_multiple_of";
+  minimum?: number;
+  maximum?: number;
+  exclusive?: boolean;
+  multipleOf?: number;
 }
 
-export interface ZodIssueInvalidIntersectionTypes extends ZodIssueCore {
-  code: typeof ZodIssueCode.invalid_intersection_types;
-  mergeErrorPath: (string | number)[];
+export interface ZodIssueInvalidSet extends ZodIssueCore {
+  code: "invalid_set";
+  subcode: "too_big" | "too_small" | "not_unique";
+  minimum?: number;
+  maximum?: number;
 }
 
-export interface ZodIssueNotMultipleOf extends ZodIssueCore {
-  code: typeof ZodIssueCode.not_multiple_of;
-  multipleOf: number | bigint;
+export interface ZodIssueInvalidBigInt extends ZodIssueCore {
+  code: "invalid_bigint";
+  subcode: "too_big" | "too_small";
+  minimum?: number;
+  maximum?: number;
+  exclusive?: boolean;
 }
 
-export interface ZodIssueNotFinite extends ZodIssueCore {
-  code: typeof ZodIssueCode.not_finite;
+export interface ZodIssueInvalidFile extends ZodIssueCore {
+  code: "invalid_file";
+  subcode: "too_big" | "too_small" | "invalid_mime" | "invalid_name";
+  minimum?: number;
+  maximum?: number;
+  acceptedTypes?: string[];
+  name?: string;
 }
 
-export interface ZodIssueNotUnique<T = unknown> extends ZodIssueCore {
-  code: typeof ZodIssueCode.not_unique;
-  duplicates?: Array<T>;
-}
+// export interface ZodIssueInvalidIntersectionTypes extends ZodIssueCore {
+//   code: typeof ZodIssueCode.invalid_intersection_types;
+//   mergeErrorPath: (string | number)[];
+// }
 
-export interface ZodIssueInvalidFileType extends ZodIssueCore {
-  code: typeof ZodIssueCode.invalid_file_type;
-  expected: string[];
-  received: string;
-}
+// export interface ZodIssueNotMultipleOf extends ZodIssueCore {
+//   code: typeof ZodIssueCode.not_multiple_of;
+//   multipleOf: number | bigint;
+// }
 
-export interface ZodIssueInvalidFileName extends ZodIssueCore {
-  code: typeof ZodIssueCode.invalid_file_name;
-}
+// export interface ZodIssueNotFinite extends ZodIssueCore {
+//   code: typeof ZodIssueCode.not_finite;
+// }
+
+// export interface ZodIssueNotUnique<T = unknown> extends ZodIssueCore {
+//   code: typeof ZodIssueCode.not_unique;
+//   duplicates?: Array<T>;
+// }
+
+// export interface ZodIssueInvalidFileType extends ZodIssueCore {
+//   code: typeof ZodIssueCode.invalid_file_type;
+//   expected: string[];
+//   received: string;
+// }
+
+// export interface ZodIssueInvalidFileName extends ZodIssueCore {
+//   code: typeof ZodIssueCode.invalid_file_name;
+// }
 
 export interface ZodIssueCustom extends ZodIssueCore {
   code: typeof ZodIssueCode.custom;
@@ -186,31 +277,47 @@ export type DenormalizedError = { [k: string]: DenormalizedError | string[] };
 
 export interface ZodIssues {
   InvalidType: ZodIssueInvalidType;
-  InvalidLiteral: ZodIssueInvalidLiteral;
-  UnrecognizedKeys: ZodIssueUnrecognizedKeys;
+  // InvalidLiteral: ZodIssueInvalidLiteral;
+  // UnrecognizedKeys: ZodIssueUnrecognizedKeys;
   InvalidUnion: ZodIssueInvalidUnion;
-  InvalidUnionDiscriminator: ZodIssueInvalidUnionDiscriminator;
-  InvalidEnumValue: ZodIssueInvalidEnumValue;
-  InvalidArguments: ZodIssueInvalidArguments;
-  InvalidReturnType: ZodIssueInvalidReturnType;
-  InvalidDate: ZodIssueInvalidDate;
+  // InvalidUnionDiscriminator: ZodIssueInvalidUnionDiscriminator;
+  // InvalidEnumValue: ZodIssueInvalidEnumValue;
+  // InvalidArguments: ZodIssueInvalidArguments;
+  // InvalidReturnType: ZodIssueInvalidReturnType;
+  // InvalidDate: ZodIssueInvalidDate;
   InvalidString: ZodIssueInvalidString;
-  TooSmall: ZodIssueTooSmall;
-  TooBig: ZodIssueTooBig;
-  InvalidIntersectionTypes: ZodIssueInvalidIntersectionTypes;
-  NotMultipleOf: ZodIssueNotMultipleOf;
-  NotFinite: ZodIssueNotFinite;
-  NotUnique: ZodIssueNotUnique;
-  InvalidFileType: ZodIssueInvalidFileType;
-  InvalidFileName: ZodIssueInvalidFileName;
+  // TooSmall: ZodIssueTooSmall;
+  // TooBig: ZodIssueTooBig;
+  // InvalidIntersectionTypes: ZodIssueInvalidIntersectionTypes;
+  // NotMultipleOf: ZodIssueNotMultipleOf;
+  // NotFinite: ZodIssueNotFinite;
+  // NotUnique: ZodIssueNotUnique;
+  // InvalidFileType: ZodIssueInvalidFileType;
+  // InvalidFileName: ZodIssueInvalidFileName;
   Custom: ZodIssueCustom;
+  InvalidArray: ZodIssueInvalidArray;
+  InvalidNumber: ZodIssueInvalidNumber;
+  InvalidSet: ZodIssueInvalidSet;
+  InvalidObject: ZodIssueInvalidObject;
+  InvalidBigInt: ZodIssueInvalidBigInt;
+  InvalidFile: ZodIssueInvalidFile;
 }
 
-export type ZodIssue = ZodIssues[keyof ZodIssues];
+export type ZodIssue =
+  | ZodIssueInvalidType
+  | ZodIssueInvalidUnion
+  | ZodIssueInvalidString
+  | ZodIssueInvalidArray
+  | ZodIssueInvalidNumber
+  | ZodIssueInvalidSet
+  | ZodIssueInvalidObject
+  | ZodIssueInvalidBigInt
+  | ZodIssueInvalidFile
+  | ZodIssueCustom;
 
 export type ZodErrorMapInput<T = ZodIssue> = T extends ZodIssueBase
   ? Omit<T, "message" | "fatal" | "level"> & {
-      message?: string;
+      message?: string | undefined;
       fatal?: boolean;
       level?: "warn" | "error" | "abort";
     }
@@ -361,7 +468,7 @@ export type IssueData<T extends ZodIssueCore = ZodIssue> = T extends infer U
       path?: (string | number)[];
       // fatal?: boolean;
       level?: "warn" | "error" | "abort";
-      message?: string;
+      message?: string | undefined;
     }
   : never;
 
@@ -418,10 +525,16 @@ export function getErrorMap(): ZodErrorMap {
 
 export const makeIssue = (
   issueData: IssueData,
-  ctx: ParseContext
+  ctx?: ParseContext
 ): ZodIssue => {
-  const { basePath, contextualErrorMap, schemaErrorMap } = ctx;
-  const fullPath = [...basePath, ...(issueData.path || [])];
+  const fullPath = ctx?.path
+    ? issueData.path
+      ? [...ctx.path, ...issueData.path]
+      : ctx.path
+    : issueData.path
+      ? issueData.path
+      : [];
+
   const fullIssue = {
     ...issueData,
     // fatal: issueData.fatal ?? false,
@@ -440,8 +553,8 @@ export const makeIssue = (
   }
 
   const errorMaps = [
-    contextualErrorMap,
-    schemaErrorMap,
+    ctx?.contextualErrorMap,
+    ctx?.schemaErrorMap,
     getErrorMap(),
     defaultErrorMap,
   ].filter((x) => !!x) as ZodErrorMap[];

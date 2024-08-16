@@ -208,7 +208,7 @@ type _ZodString = $ZodString & ZodType;
 // {
 //   optional(): $optional<this>;
 // }
-export interface ZodString extends $ZodString, ZodType<string, string> {}
+export interface ZodString extends $ZodString, ZodType {}
 export class ZodString extends $ZodString {
   min(min: number) {
     const clone = this["~clone"]();
@@ -222,12 +222,12 @@ const str = new ZodString({
   checks: [],
 
   // "zod.type": true,
-  typeName: "zod.core.string",
+  // typeName: "zod.core.string",
   coerce: false,
 
   class: new Set(),
 });
-// str.
+
 str["~toJsonSchema"];
 console.log(str.min(5));
 console.log(str.optional());
