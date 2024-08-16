@@ -65,6 +65,8 @@ export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
   subcode: "too_small" | "too_big" | "invalid_format";
   format?: StringValidation;
+  minimum?: number;
+  maximum?: number;
   pattern?: string;
   startsWith?: string;
   endsWith?: string;
