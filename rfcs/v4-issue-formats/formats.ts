@@ -43,33 +43,28 @@ export interface ZodInvalidDateIssue extends ZodIssueBase {
   exclusive?: boolean;
 }
 
-type $StringFormats =
+// there will be some additions here
+export type StringValidation =
   | "email"
   | "url"
-  | "jwt"
-  | "json"
   | "emoji"
   | "uuid"
   | "nanoid"
-  | "guid"
   | "regex"
   | "cuid"
   | "cuid2"
   | "ulid"
-  | "xid"
-  | "ksuid"
   | "datetime"
   | "date"
   | "time"
   | "duration"
   | "ip"
-  | "base64"
-  | "e164";
+  | "base64";
 
 export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
   subcode: "too_small" | "too_big" | "invalid_format";
-  format?: $StringFormats;
+  format?: StringValidation;
   pattern?: string;
   startsWith?: string;
   endsWith?: string;
