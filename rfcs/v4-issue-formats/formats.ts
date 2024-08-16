@@ -4,27 +4,24 @@ class ZodError {}
 
 export enum ZodIssueCode {
   invalid_type = "invalid_type",
-  invalid_literal = "invalid_literal",
   custom = "custom",
   invalid_union = "invalid_union",
-  invalid_union_discriminator = "invalid_union_discriminator",
-  invalid_enum_value = "invalid_enum_value",
-  unrecognized_keys = "unrecognized_keys",
-  invalid_arguments = "invalid_arguments",
-  invalid_return_type = "invalid_return_type",
   invalid_date = "invalid_date",
   invalid_string = "invalid_string",
-  too_small = "too_small",
-  too_big = "too_big",
-  invalid_intersection_types = "invalid_intersection_types",
-  not_multiple_of = "not_multiple_of",
-  not_finite = "not_finite",
+  invalid_array = "invalid_array",
+  invalid_number = "invalid_number",
+  invalid_set = "invalid_set",
+  invalid_object = "invalid_object",
+  invalid_bigint = "invalid_bigint",
+  invalid_file = "invalid_file",
 }
 
 export type ZodIssueBase = {
   path: (string | number)[];
   message?: string;
-  fatal?: boolean;
+  input?: unknown;
+  code: ZodIssueCode;
+  level: "warn" | "error" | "abort";
 };
 
 export interface ZodInvalidTypeIssue extends ZodIssueBase {
@@ -33,99 +30,97 @@ export interface ZodInvalidTypeIssue extends ZodIssueBase {
   received: ZodParsedType;
 }
 
-export interface ZodInvalidLiteralIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.invalid_literal;
-  expected: unknown;
-  received: unknown;
-}
-
-export interface ZodUnrecognizedKeysIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.unrecognized_keys;
-  keys: string[];
-}
-
 export interface ZodInvalidUnionIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_union;
   unionErrors: ZodError[];
 }
 
-export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.invalid_union_discriminator;
-  options: Primitive[];
-}
-
-export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
-  received: string | number;
-  code: typeof ZodIssueCode.invalid_enum_value;
-  options: (string | number)[];
-}
-
-export interface ZodInvalidArgumentsIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.invalid_arguments;
-  argumentsError: ZodError;
-}
-
-export interface ZodInvalidReturnTypeIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.invalid_return_type;
-  returnTypeError: ZodError;
-}
-
 export interface ZodInvalidDateIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.invalid_date;
+  code: ZodIssueCode.invalid_date;
+  subcode: "too_big" | "too_small";
+  minimum?: number;
+  maximum?: number;
+  exclusive?: boolean;
 }
 
-export type StringValidation =
+type $StringFormats =
   | "email"
   | "url"
+  | "jwt"
+  | "json"
   | "emoji"
   | "uuid"
   | "nanoid"
+  | "guid"
   | "regex"
   | "cuid"
   | "cuid2"
   | "ulid"
+  | "xid"
+  | "ksuid"
   | "datetime"
   | "date"
   | "time"
   | "duration"
   | "ip"
   | "base64"
-  | { includes: string; position?: number }
-  | { startsWith: string }
-  | { endsWith: string };
+  | "e164";
 
 export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
-  validation: StringValidation;
+  subcode: "too_small" | "too_big" | "invalid_format";
+  format?: $StringFormats;
+  pattern?: string;
+  startsWith?: string;
+  endsWith?: string;
+  includes?: string;
 }
 
-export interface ZodTooSmallIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.too_small;
-  minimum: number | bigint;
-  inclusive: boolean;
-  exact?: boolean;
-  type: "array" | "string" | "number" | "set" | "date" | "bigint";
+export interface ZodInvalidObjectIssue extends ZodIssueBase {
+  code: typeof ZodIssueCode.invalid_object;
+  subcode: "unrecognized_keys" | "missing_keys";
+  unrecognizedKeys?: string[];
+  missingKeys?: string[];
 }
 
-export interface ZodTooBigIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.too_big;
-  maximum: number | bigint;
-  inclusive: boolean;
-  exact?: boolean;
-  type: "array" | "string" | "number" | "set" | "date" | "bigint";
+export interface ZodInvalidArrayIssue extends ZodIssueBase {
+  code: ZodIssueCode.invalid_array;
+  subcode: "too_big" | "too_small" | "not_unique";
+  minimum?: number;
+  maximum?: number;
 }
 
-export interface ZodInvalidIntersectionTypesIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.invalid_intersection_types;
+export interface ZodInvalidNumberIssue extends ZodIssueBase {
+  code: ZodIssueCode.invalid_number;
+  subcode: "too_big" | "too_small" | "not_integer" | "not_multiple_of";
+  minimum?: number;
+  maximum?: number;
+  exclusive?: boolean;
+  multipleOf?: number;
 }
 
-export interface ZodNotMultipleOfIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.not_multiple_of;
-  multipleOf: number | bigint;
+export interface ZodInvalidSetIssue extends ZodIssueBase {
+  code: ZodIssueCode.invalid_set;
+  subcode: "too_big" | "too_small" | "not_unique";
+  minimum?: number;
+  maximum?: number;
 }
 
-export interface ZodNotFiniteIssue extends ZodIssueBase {
-  code: typeof ZodIssueCode.not_finite;
+export interface ZodInvalidBigIntIssue extends ZodIssueBase {
+  code: ZodIssueCode.invalid_bigint;
+  subcode: "too_big" | "too_small";
+  minimum?: number;
+  maximum?: number;
+  exclusive?: boolean;
+}
+
+export interface ZodInvalidFileIssue extends ZodIssueBase {
+  code: ZodIssueCode.invalid_file;
+  subcode: "too_big" | "too_small" | "invalid_mime" | "invalid_name";
+  minimum?: number;
+  maximum?: number;
+  acceptedTypes?: string[];
+  name?: string;
 }
 
 export interface ZodCustomIssue extends ZodIssueBase {
@@ -135,18 +130,12 @@ export interface ZodCustomIssue extends ZodIssueBase {
 
 export type ZodIssue =
   | ZodInvalidTypeIssue
-  | ZodInvalidLiteralIssue
-  | ZodUnrecognizedKeysIssue
   | ZodInvalidUnionIssue
-  | ZodInvalidUnionDiscriminatorIssue
-  | ZodInvalidEnumValueIssue
-  | ZodInvalidArgumentsIssue
-  | ZodInvalidReturnTypeIssue
-  | ZodInvalidDateIssue
   | ZodInvalidStringIssue
-  | ZodTooSmallIssue
-  | ZodTooBigIssue
-  | ZodInvalidIntersectionTypesIssue
-  | ZodNotMultipleOfIssue
-  | ZodNotFiniteIssue
+  | ZodInvalidArrayIssue
+  | ZodInvalidNumberIssue
+  | ZodInvalidSetIssue
+  | ZodInvalidObjectIssue
+  | ZodInvalidBigIntIssue
+  | ZodInvalidFileIssue
   | ZodCustomIssue;
