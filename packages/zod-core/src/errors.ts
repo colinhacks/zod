@@ -1,6 +1,7 @@
 import type { $ZodType, input, output } from "./core.js";
 import defaultErrorMap from "./locales/en.js";
 import type { ParseContext, ZodParsedType } from "./parse.js";
+import type { Primitive } from "./types.js";
 import { jsonStringifyReplacer } from "./util.js";
 
 type allKeys<T> = T extends any ? keyof T : never;
@@ -16,33 +17,54 @@ export type typeToFlattenedError<T, U = string> = {
   };
 };
 
+// export const ZodIssueCode = {
+//   invalid_type: "invalid_type",
+//   // invalid_literal: "invalid_literal",
+//   custom: "custom",
+//   invalid_union: "invalid_union",
+//   // invalid_union_discriminator: "invalid_union_discriminator",
+//   // invalid_enum_value: "invalid_enum_value",
+//   // unrecognized_keys: "unrecognized_keys",
+//   // invalid_arguments: "invalid_arguments",
+//   // invalid_return_type: "invalid_return_type",
+//   invalid_date: "invalid_date",
+//   invalid_string: "invalid_string",
+//   // too_small: "too_small",
+//   // too_big: "too_big",
+//   // invalid_intersection_types: "invalid_intersection_types",
+//   // not_multiple_of: "not_multiple_of",
+//   // not_finite: "not_finite",
+//   // not_unique: "not_unique",
+//   // invalid_file_type: "invalid_file_type",
+//   // invalid_file_name: "invalid_file_name",
+//   invalid_array: "invalid_array",
+//   invalid_number: "invalid_number",
+//   invalid_set: "invalid_set",
+//   invalid_object: "invalid_object",
+//   invalid_bigint: "invalid_bigint",
+//   invalid_file: "invalid_file",
+// } as const;
 export const ZodIssueCode = {
   invalid_type: "invalid_type",
-  // invalid_literal: "invalid_literal",
+  invalid_literal: "invalid_literal",
   custom: "custom",
   invalid_union: "invalid_union",
-  // invalid_union_discriminator: "invalid_union_discriminator",
-  // invalid_enum_value: "invalid_enum_value",
-  // unrecognized_keys: "unrecognized_keys",
-  // invalid_arguments: "invalid_arguments",
-  // invalid_return_type: "invalid_return_type",
+  invalid_union_discriminator: "invalid_union_discriminator",
+  invalid_enum_value: "invalid_enum_value",
+  unrecognized_keys: "unrecognized_keys",
+  missing_keys: "missing_keys",
+  invalid_arguments: "invalid_arguments",
+  invalid_return_type: "invalid_return_type",
   invalid_date: "invalid_date",
   invalid_string: "invalid_string",
-  // too_small: "too_small",
-  // too_big: "too_big",
-  // invalid_intersection_types: "invalid_intersection_types",
-  // not_multiple_of: "not_multiple_of",
-  // not_finite: "not_finite",
-  // not_unique: "not_unique",
-  // invalid_file_type: "invalid_file_type",
-  // invalid_file_name: "invalid_file_name",
-  invalid_array: "invalid_array",
-  invalid_number: "invalid_number",
-  invalid_set: "invalid_set",
-  invalid_object: "invalid_object",
-  invalid_bigint: "invalid_bigint",
-  invalid_file: "invalid_file",
+  not_equal: "not_equal",
+  too_small: "too_small",
+  too_big: "too_big",
+  invalid_intersection_types: "invalid_intersection_types",
+  not_multiple_of: "not_multiple_of",
+  not_finite: "not_finite",
 } as const;
+
 export type ZodIssueCode = (typeof ZodIssueCode)[keyof typeof ZodIssueCode];
 
 export interface ZodIssueBase {
@@ -58,11 +80,26 @@ export interface ZodIssueCore {
   level: "warn" | "error" | "abort";
 }
 
-export interface ZodIssueInvalidType extends ZodIssueCore {
+export type ZodInvalidTypeIssue = ZodIssueBase & {
   code: typeof ZodIssueCode.invalid_type;
-  expected: ZodParsedType | (string & {});
-  received: ZodParsedType | (string & {});
-}
+} & (
+    | {
+        expected: ZodParsedType;
+        received: ZodParsedType;
+      }
+    | {
+        expected: "union";
+        unionErrors: ZodError[];
+      }
+    | {
+        expected: "literal";
+        literalValues: Primitive[];
+      }
+    | {
+        expected: "enum";
+        enumValues: (string | number)[];
+      }
+  );
 
 // 👉 absorbed into ZodIssueInvalidType
 // export interface ZodIssueInvalidLiteral extends ZodIssueCore {
@@ -76,17 +113,21 @@ export interface ZodIssueInvalidType extends ZodIssueCore {
 //   code: typeof ZodIssueCode.unrecognized_keys;
 //   keys: string[];
 // }
-export interface ZodIssueInvalidObject extends ZodIssueCore {
-  code: typeof ZodIssueCode.invalid_object;
-  subcode: "unrecognized_keys" | "missing_keys";
-  unrecognizedKeys?: string[];
-  missingKeys?: string[];
-}
+export type ZodObjectIssues = ZodIssueCore & { type: "object" } & (
+    | {
+        code: "unrecognized_keys";
+        keys: string[];
+      }
+    | {
+        code: "missing_keys";
+        keys?: string[];
+      }
+  );
 
-export interface ZodIssueInvalidUnion extends ZodIssueCore {
-  code: typeof ZodIssueCode.invalid_union;
-  unionErrors: ZodError[];
-}
+// export interface ZodIssueInvalidUnion extends ZodIssueCore {
+//   code: typeof ZodIssueCode.invalid_union;
+//   unionErrors: ZodError[];
+// }
 
 // 👉 discriminated union is removed
 // export interface ZodIssueInvalidUnionDiscriminator extends ZodIssueCore {
@@ -113,13 +154,12 @@ export interface ZodIssueInvalidUnion extends ZodIssueCore {
 //   returnTypeError: ZodError;
 // }
 
-export interface ZodIssueInvalidDate extends ZodIssueCore {
-  code: "invalid_date";
-  subcode: "too_big" | "too_small";
+export type ZodDateIssues = ZodIssueCore & { type: "date" } & {
+  code: "too_big" | "too_small";
   minimum?: number;
   maximum?: number;
   exclusive?: boolean;
-}
+};
 
 // type StringValidation =
 //   | "email"
