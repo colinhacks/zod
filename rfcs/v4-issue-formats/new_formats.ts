@@ -182,7 +182,7 @@ export type ZodInvalidSetIssue = ZodIssueBase & {
         maximum: number;
       }
     | {
-        check: "items";
+        check: "size";
         size: number;
       }
   );
@@ -237,6 +237,6 @@ const IssueB = {
   code: ZodIssueCode.invalid_string,
   check: "minimum",
   minimum: 5,
-  path: ["size"],
+  path: ["length"],
   level: "error",
 };
