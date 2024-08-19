@@ -222,21 +222,3 @@ export type ZodIssue =
   | ZodInvalidObjectIssue
   | ZodInvalidFileIssue
   | ZodCustomIssue;
-
-// z.string().min(5).parse("four");
-
-const IssueA = {
-  code: ZodIssueCode.invalid_string,
-  check: "min_size",
-  minimum: 5,
-  path: [],
-  level: "error",
-};
-
-const IssueB = {
-  code: ZodIssueCode.invalid_string,
-  check: "minimum",
-  minimum: 5,
-  path: ["length"],
-  level: "error",
-};
