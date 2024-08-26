@@ -62,3 +62,23 @@ test("readonly union", async () => {
   union.parse("asdf");
   union.parse(12);
 });
+
+test("union of strict objects", async () => {
+  // ensure bug in 3.23.8 is fixed, where "dirty" parse failures would mean reporting the first error, rather than a proper `invalid_union` with `unionErrors`.
+  // Demo of bug: https://stackblitz.com/edit/stackblitz-starters-swdj3e?file=index.test.js&startScript=test
+  const union = z.union([
+    z.object({ x: z.number() }).strict(), //
+    z.object({ y: z.number() }).strict(),
+  ]);
+  expect(union.safeParse({ x: 1, y: 1 })).toMatchObject({
+    success: false,
+    error: {
+      issues: [
+        {
+          code: "invalid_union",
+          unionErrors: [expect.any(z.ZodError), expect.any(z.ZodError)],
+        },
+      ],
+    },
+  });
+});
