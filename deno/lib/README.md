@@ -219,7 +219,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <a href="https://neon.tech">
         <picture height="68px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/83b4b1b1-a9ab-4ae5-a632-56d282f0c444">
-          <img alt="stainless" height="68px" src="https://github.com/user-attachments/assets/83b4b1b1-a9ab-4ae5-a632-56d282f0c444">
+          <img alt="Neon" height="68px" src="https://github.com/user-attachments/assets/b5799fc8-81ff-4053-a1c3-b29adf85e7a1">
         </picture>
       </a>
       <br  />   
