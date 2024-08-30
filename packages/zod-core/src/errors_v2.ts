@@ -18,15 +18,16 @@ export const ZodIssueCode = {
 export type ZodIssueCode = typeof ZodIssueCode;
 
 export type ZodIssueBase = {
+  level: "warn" | "error" | "abort";
+  check: string;
   path: (string | number)[];
+  domain?: string;
   message?: string;
   input?: unknown;
-  code: string;
-  level: "warn" | "error" | "abort";
 };
 
 export type ZodInvalidTypeIssue = ZodIssueBase & {
-  code: "invalid_type";
+  domain: "type";
 } & (
     | {
         check: ZodParsedType;
@@ -64,7 +65,7 @@ export type $StringFormat =
   | "base64";
 
 export type ZodInvalidStringIssue = ZodIssueBase & {
-  code: "invalid_string";
+  domain: "string";
 } & (
     | {
         check: $StringFormat;
@@ -100,7 +101,7 @@ export type ZodInvalidStringIssue = ZodIssueBase & {
   );
 
 export type ZodInvalidNumberIssue = ZodIssueBase & {
-  code: "invalid_number";
+  domain: "number";
 } & (
     | {
         check: "maximum";
@@ -117,7 +118,7 @@ export type ZodInvalidNumberIssue = ZodIssueBase & {
   );
 
 export type ZodInvalidDateIssue = ZodIssueBase & {
-  code: "invalid_date";
+  domain: "date";
 } & (
     | {
         check: "maximum";
@@ -130,7 +131,7 @@ export type ZodInvalidDateIssue = ZodIssueBase & {
   );
 
 export type ZodInvalidBigIntIssue = ZodIssueBase & {
-  code: "invalid_bigint";
+  domain: "bigint";
 } & (
     | {
         check: "maximum";
@@ -147,14 +148,14 @@ export type ZodInvalidBigIntIssue = ZodIssueBase & {
   );
 
 export type ZodInvalidObjectIssue = ZodIssueBase & {
-  code: "invalid_object";
+  domain: "object";
 } & {
   check: "unrecognized_keys";
   keys: string[];
 };
 
 export type ZodInvalidArrayIssue = ZodIssueBase & {
-  code: "invalid_array";
+  domain: "array";
 } & (
     | {
         check: "min_size";
@@ -171,7 +172,7 @@ export type ZodInvalidArrayIssue = ZodIssueBase & {
   );
 
 export type ZodInvalidSetIssue = ZodIssueBase & {
-  code: "invalid_set";
+  domain: "set";
 } & (
     | {
         check: "min_size";
@@ -188,7 +189,7 @@ export type ZodInvalidSetIssue = ZodIssueBase & {
   );
 
 export type ZodInvalidFileIssue = ZodIssueBase & {
-  code: "invalid_file";
+  domain: "file";
 } & (
     | {
         check: "min_size";
@@ -209,7 +210,7 @@ type _ZodCustomIssue<T extends keyof ZodCustomIssues = keyof ZodCustomIssues> =
   T extends keyof ZodCustomIssues
     ? flatten<{ check: T } & ZodCustomIssues[T]>
     : never;
-type ZodCustomIssue = ZodIssueBase & { code: "custom" } & _ZodCustomIssue;
+type ZodCustomIssue = ZodIssueBase & _ZodCustomIssue;
 
 export type ZodIssue =
   | ZodInvalidTypeIssue

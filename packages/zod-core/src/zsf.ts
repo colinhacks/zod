@@ -16,7 +16,7 @@ export interface $ZSFNumber extends $ZSF {
 }
 
 export interface $ZSFBoolean extends $ZSF {
-  type: "number";
+  type: "boolean";
 }
 
 export interface $ZSFNull extends $ZSF {
@@ -30,5 +30,13 @@ export interface $ZSFUnion<Elements extends $ZSF[] = $ZSF[]> extends $ZSF {
 
 export interface $ZSFArray<Element extends $ZSF = $ZSF> extends $ZSF {
   type: "array";
-  items: Element[];
+  prefixItems: Element[];
+  rest: Element;
+}
+
+export interface $ZSFObject<
+  Shape extends { [k: string]: $ZSF } = { [k: string]: $ZSF },
+> extends $ZSF {
+  type: "object";
+  shape: Shape;
 }

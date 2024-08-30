@@ -46,7 +46,7 @@ export abstract class $ZodType<T extends Partial<$ZodVirtuals> = $ZodVirtuals>
 {
   $zod: { version: number } = { version: 4 };
   $zsf: { version: number } = { version: 0 };
-  checks: checks.$ZodCheck<this["output"]>[] = [];
+  checks: checks.$ZodCheck<this["input"]>[] = [];
 
   constructor(def: $ZodTypeDef) {
     super();
@@ -82,7 +82,7 @@ export abstract class $ZodType<T extends Partial<$ZodVirtuals> = $ZodVirtuals>
   }
 
   /** @deprecated Internal API, use with caution. (Not deprecated.) */
-  _addCheck(check: checks.$ZodCheck<this["output"]>): this {
+  _addCheck(check: checks.$ZodCheck<this["input"]>): this {
     const clone = this._clone();
     clone.checks = [...(clone.checks || []), check];
     return clone;

@@ -1,4 +1,4 @@
-import * as err from "./errors.js";
+import * as err from "./errors_v2.js";
 import { type ZodFailure, type ZodParsedType, getParsedType } from "./parse.js";
 import * as regexes from "./regexes.js";
 import type * as types from "./types.js";
