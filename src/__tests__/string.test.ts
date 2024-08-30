@@ -164,89 +164,85 @@ test("email validations", () => {
   ).toBe(true);
 });
 
-test("base64 validations", () => {
-  const validBase64Strings = [
-    "SGVsbG8gV29ybGQ=", // "Hello World"
-    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string"
-    "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work"
-    "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
-    "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun"
-    "MTIzNDU2Nzg5MA==", // "1234567890"
-    "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz"
-    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "ISIkJSMmJyonKCk=", // "!\"#$%&'()*"
-    "", // Empty string is technically valid base64
-    "w7/Dv8O+w74K", // ÿÿþþ
-  ];
+const validBase64Strings = [
+  "SGVsbG8gV29ybGQ=", // "Hello World"
+  "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string"
+  "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work"
+  "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
+  "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun"
+  "MTIzNDU2Nzg5MA==", // "1234567890"
+  "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz"
+  "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  "ISIkJSMmJyonKCk=", // "!\"#$%&'()*"
+  "", // Empty string is technically valid base64
+  "w7/Dv8O+w74K", // ÿÿþþ
+];
 
-  for (const str of validBase64Strings) {
-    expect(str + z.string().base64().safeParse(str).success).toBe(str + "true");
-  }
-
-  const invalidBase64Strings = [
-    "12345", // Not padded correctly, not a multiple of 4 characters
-    "12345===", // Not padded correctly
-    "SGVsbG8gV29ybGQ", // Missing padding
-    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // Missing padding
-    "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
-    "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
-    ".MTIzND2Nzg5MC4=", // Invalid character '.'
-    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
-    "w7_Dv8O-w74K", // Has - and _ characters (is base64url)
-  ];
-
-  for (const str of invalidBase64Strings) {
-    expect(str + z.string().base64().safeParse(str).success).toBe(
-      str + "false"
-    );
-  }
+test.each(validBase64Strings)("base64 should accept %s", (str: string) => {
+  expect(z.string().base64().safeParse(str).success).toBe(true);
 });
 
-test("base64url validations", () => {
-  const validBase64urlStrings = [
-    "SGVsbG8gV29ybGQ", // "Hello World"
-    "SGVsbG8gV29ybGQ=", // "Hello World" with padding
-    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // "This is an encoded string"
-    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string" with padding
-    "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms", // "Many hands make light work"
-    "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work" with padding
-    "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
-    "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg", // "Base64 encoding is fun"
-    "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun" with padding
-    "MTIzNDU2Nzg5MA", // "1234567890"
-    "MTIzNDU2Nzg5MA==", // "1234567890" with padding
-    "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo", // "abcdefghijklmnopqrstuvwxyz"
-    "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz with padding"
-    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ" with padding
-    "ISIkJSMmJyonKCk", // "!\"#$%&'()*"
-    "ISIkJSMmJyonKCk=", // "!\"#$%&'()*" with padding
-    "", // Empty string is technically valid base64url
-    "w7_Dv8O-w74K", // ÿÿþþ
-    "123456",
-  ];
+const invalidBase64Strings = [
+  "12345", // Not padded correctly, not a multiple of 4 characters
+  "12345===", // Not padded correctly
+  "SGVsbG8gV29ybGQ", // Missing padding
+  "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // Missing padding
+  "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
+  "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
+  ".MTIzND2Nzg5MC4=", // Invalid character '.'
+  "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
+  "w7_Dv8O-w74K", // Has - and _ characters (is base64url)
+];
 
-  for (const str of validBase64urlStrings) {
-    expect(str + z.string().base64url().safeParse(str).success).toBe(
-      str + "true"
-    );
-  }
-
-  const invalidBase64urlStrings = [
-    "w7/Dv8O+w74K", // Has + and / characters (is base64)
-    "12345", // Invalid length (not a multiple of 4 characters when adding allowed number of padding characters)
-    "12345===", // Not padded correctly
-    "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
-    "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
-    ".MTIzND2Nzg5MC4=", // Invalid character '.'
-  ];
-
-  for (const str of invalidBase64urlStrings) {
-    expect(str + z.string().base64url().safeParse(str).success).toBe(
-      str + "false"
-    );
-  }
+test.each(invalidBase64Strings)("base64 should reject %s", (str: string) => {
+  expect(z.string().base64().safeParse(str).success).toBe(false);
 });
+
+const validBase64urlStrings = [
+  "SGVsbG8gV29ybGQ", // "Hello World"
+  "SGVsbG8gV29ybGQ=", // "Hello World" with padding
+  "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // "This is an encoded string"
+  "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string" with padding
+  "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms", // "Many hands make light work"
+  "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work" with padding
+  "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
+  "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg", // "Base64 encoding is fun"
+  "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun" with padding
+  "MTIzNDU2Nzg5MA", // "1234567890"
+  "MTIzNDU2Nzg5MA==", // "1234567890" with padding
+  "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo", // "abcdefghijklmnopqrstuvwxyz"
+  "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz with padding"
+  "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ" with padding
+  "ISIkJSMmJyonKCk", // "!\"#$%&'()*"
+  "ISIkJSMmJyonKCk=", // "!\"#$%&'()*" with padding
+  "", // Empty string is technically valid base64url
+  "w7_Dv8O-w74K", // ÿÿþþ
+  "123456",
+];
+
+test.each(validBase64urlStrings)(
+  "base64url should accept %s",
+  (str: string) => {
+    expect(z.string().base64url().safeParse(str).success).toBe(true);
+  }
+);
+
+const invalidBase64urlStrings = [
+  "w7/Dv8O+w74K", // Has + and / characters (is base64)
+  "12345", // Invalid length (not a multiple of 4 characters when adding allowed number of padding characters)
+  "12345===", // Not padded correctly
+  "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
+  "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
+  ".MTIzND2Nzg5MC4=", // Invalid character '.'
+];
+
+test.each(invalidBase64urlStrings)(
+  "base64url should reject %s",
+  (str: string) => {
+    expect(z.string().base64url().safeParse(str).success).toBe(false);
+  }
+);
 
 test("url validations", () => {
   const url = z.string().url();
