@@ -1043,6 +1043,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
   }
   base64url(message?: errorUtil.ErrMessage) {
+    // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return this._addCheck({ kind: "base64url", ...errorUtil.errToObj(message) });
   }
 
@@ -1254,6 +1255,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
   }
   get isBase64url() {
+    // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return !!this._def.checks.find((ch) => ch.kind === "base64url");
   }
 
