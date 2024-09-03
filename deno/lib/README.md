@@ -252,7 +252,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs">
+      <a href="https://speakeasy.com/?utm_source=zod+docs">
         <picture height="40px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/b1d86601-c7fb-483c-9927-5dc24ce8b737">
           <img alt="speakeasy" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
@@ -261,7 +261,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br  />   
       SDKs & Terraform providers for your API
       <br/>
-      <a href="https://speakeasyapi.dev/?utm_source=zod+docs" style="text-decoration:none;">speakeasyapi.dev</a>
+      <a href="https://speakeasy.com/?utm_source=zod+docs" style="text-decoration:none;">speakeasy.com</a>
       </p>
       <p></p>
     </td>
@@ -347,6 +347,11 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
+      <a href="https://www.val.town/">
+        <img src="https://avatars.githubusercontent.com/u/114268765?s=200&v=4" height="40px;" alt="val town logo" />
+      </a>
+    </td>
+    <td align="center">
       <a href="https://www.route4me.com/">
         <img src="https://avatars.githubusercontent.com/u/7936820?s=200&v=4" height="40px;" alt="route4me logo" />
       </a>
@@ -361,13 +366,13 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         <img src="https://avatars.githubusercontent.com/u/60818315?s=200&v=4" height="40px;" alt="Replay.io logo" />
       </a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://www.numeric.io">
         <img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric logo" />
       </a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://marcatopartners.com">
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" height="40px;" alt="Marcato Partners" />
@@ -383,13 +388,13 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" height="40px;" alt="" />
       </a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://www.bamboocreative.nz/">
         <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative logo" />
       </a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://github.com/jasonLaster">
         <img src="https://avatars.githubusercontent.com/u/254562?v=4" height="40px;" alt="Jason Laster" />
@@ -490,6 +495,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-prisma`](https://github.com/CarterGrimmeisen/zod-prisma): Generate Zod schemas from your Prisma schema.
 - [`Supervillain`](https://github.com/Southclaws/supervillain): Generate Zod schemas from your Go structs.
 - [`prisma-zod-generator`](https://github.com/omar-dulaimi/prisma-zod-generator): Emit Zod schemas from your Prisma schema.
+- [`drizzle-zod`](https://orm.drizzle.team/docs/zod): Emit Zod schemas from your Drizzle schema.
 - [`prisma-trpc-generator`](https://github.com/omar-dulaimi/prisma-trpc-generator): Emit fully implemented tRPC routers and their validation schemas using Zod.
 - [`zod-prisma-types`](https://github.com/chrishoermann/zod-prisma-types) Create Zod types from your Prisma models.
 - [`quicktype`](https://app.quicktype.io/): Convert JSON objects and JSON schemas into Zod schemas.
