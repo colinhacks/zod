@@ -350,7 +350,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <a href="https://www.val.town/">
         <picture width="100%" height="40px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/36961d2e-d92e-42af-9031-a41885ece5f4">
-          <img alt="val town logo" src="https://github.com/user-attachments/assets/95305fc4-4da6-4bf8-aea4-bae8f5893e5d">
+          <img alt="val town logo" src="https://github.com/user-attachments/assets/95305fc4-4da6-4bf8-aea4-bae8f5893e5d" height="40px">
         </picture>
       </a>
     </td>
