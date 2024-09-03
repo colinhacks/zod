@@ -365,6 +365,14 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
+      <a href="https://www.val.town/">
+        <picture width="100%" height="40px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/36961d2e-d92e-42af-9031-a41885ece5f4">
+          <img alt="val town logo" src="https://github.com/user-attachments/assets/95305fc4-4da6-4bf8-aea4-bae8f5893e5d" height="40px">
+        </picture>
+      </a>
+    </td>
+    <td align="center">
       <a href="https://www.route4me.com/">
         <img src="https://avatars.githubusercontent.com/u/7936820?s=200&v=4" height="40px;" alt="route4me logo" />
       </a>
@@ -379,13 +387,13 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         <img src="https://avatars.githubusercontent.com/u/60818315?s=200&v=4" height="40px;" alt="Replay.io logo" />
       </a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://www.numeric.io">
         <img src="https://i.imgur.com/kTiLtZt.png" height="40px;" alt="Numeric logo" />
       </a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://marcatopartners.com">
         <img src="https://avatars.githubusercontent.com/u/84106192?s=200&v=4" height="40px;" alt="Marcato Partners" />
@@ -401,13 +409,13 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
         <img src="https://avatars.githubusercontent.com/u/33913103?s=200&v=4" height="40px;" alt="" />
       </a>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <a href="https://www.bamboocreative.nz/">
         <img src="https://avatars.githubusercontent.com/u/41406870?v=4" height="40px;" alt="Bamboo Creative logo" />
       </a>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <a href="https://github.com/jasonLaster">
         <img src="https://avatars.githubusercontent.com/u/254562?v=4" height="40px;" alt="Jason Laster" />
