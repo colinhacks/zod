@@ -1903,6 +1903,39 @@ TestSchema.parse(new Test()); // passes
 TestSchema.parse(blob); // throws
 ```
 
+### How to validate file upload using `instanceof` method
+```ts
+const constraints = {
+  maxSize: 1024 * 1024 * 2, // 2MB
+  type: ['image/png', 'image/jpg', 'image/jpeg'],
+}
+
+const avatar = z
+  .instanceof(File, { message: "Choose an image" })
+  .nullable() // Add this, if image upload is optional in your case
+  .refine((file) => {
+    return !file || file.size <= constraints.maxSize
+  }, "Maximum file size is 2Mb")
+  .refine((file) => {
+    return !file || constraints.type.includes(file.type)
+  }, `Only following image types allowed: ${constraints.type.join(", ")}`)
+  .or(z.string().url()) // Add this if existing avatar is stored as URL string
+```
+
+**FYI**
+1. File is a built-in class that's only defined on the browser.
+2. If you're using a Node.js library to handle file uploads, use the File class provided by that library.
+3. If you're writing code that will run in the browser, you need to tell TypeScript to include browser-specific classes like `File`. Add `dom` to your `lib` array in `tsconfig.json`
+```json
+{
+  "compilerOptions": {
+    "lib": [
+      "dom"
+    ]
+  }
+}
+```
+
 ## Functions
 
 Zod also lets you define "function schemas". This makes it easy to validate the inputs and outputs of a function without intermixing your validation code and "business logic".
