@@ -14,7 +14,7 @@ test("parse", () => {
     sumMinLength: [12, 15, 16, 98, 24, 63],
     intersection: {},
     enum: "one",
-    nonstrict: { points: 1234 },
+    passthrough: { points: 1234 },
     numProm: Promise.resolve(12),
     lenfun: (x: string) => x.length,
   });
