@@ -32,17 +32,29 @@ test("return valid over invalid", () => {
   });
 });
 
-test("return dirty result over aborted", () => {
+test("union with dirty result", () => {
   const result = z
     .union([z.number(), z.string().refine(() => false)])
     .safeParse("a");
   expect(result.success).toEqual(false);
   if (!result.success) {
-    expect(result.error.issues).toEqual([
+    expect(result.error.issues).toMatchObject([
       {
-        code: "custom",
-        message: "Invalid input",
-        path: [],
+        code: "invalid_union",
+        unionErrors: [
+          expect.objectContaining({
+            code: "invalid_type",
+            expected: "number",
+            received: "string",
+            path: [],
+            message: "Expected number, received string",
+          }),
+          expect.objectContaining({
+            code: "custom",
+            message: "Invalid input",
+            path: [],
+          }),
+        ],
       },
     ]);
   }
