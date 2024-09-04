@@ -22,7 +22,7 @@ type ZodCheckCode =
   | "unrecognized_keys";
 
 export type ZodIssueBase = {
-  level: "warn" | "error" | "abort";
+  level: "error" | "abort";
   check: ZodCheckCode;
   path: (string | number)[];
   message?: string;
