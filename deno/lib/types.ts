@@ -138,14 +138,17 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   const customMap: ZodErrorMap = (iss, ctx) => {
     const { message } = params;
 
+    if (message != null) {
+      return { message };
+    }
     if (iss.code === "invalid_enum_value") {
-      return { message: message ?? ctx.defaultError };
+      return { message: ctx.defaultError };
     }
     if (typeof ctx.data === "undefined") {
-      return { message: message ?? required_error ?? ctx.defaultError };
+      return { message: required_error ?? ctx.defaultError };
     }
     if (iss.code !== "invalid_type") return { message: ctx.defaultError };
-    return { message: message ?? invalid_type_error ?? ctx.defaultError };
+    return { message: invalid_type_error ?? ctx.defaultError };
   };
   return { errorMap: customMap, description };
 }
