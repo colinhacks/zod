@@ -13,7 +13,7 @@
 <a href="https://twitter.com/colinhacks" rel="nofollow"><img src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell"></a>
 <a href="https://opensource.org/licenses/MIT" rel="nofollow"><img src="https://img.shields.io/github/license/colinhacks/zod" alt="License"></a>
 <a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/npm/dw/zod.svg" alt="npm"></a>
-<a href="https://www.npmjs.com/package/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
+<a href="https://github.com/colinhacks/zod" rel="nofollow"><img src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars"></a>
 </p>
 
 <div align="center">
@@ -76,6 +76,7 @@
   - [Dates](#dates)
   - [Times](#times)
   - [IP addresses](#ip-addresses)
+  - [IP addresses range](#ip-addresses-range)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -219,7 +220,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <a href="https://neon.tech">
         <picture height="68px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/83b4b1b1-a9ab-4ae5-a632-56d282f0c444">
-          <img alt="stainless" height="68px" src="https://github.com/user-attachments/assets/83b4b1b1-a9ab-4ae5-a632-56d282f0c444">
+          <img alt="Neon" height="68px" src="https://github.com/user-attachments/assets/b5799fc8-81ff-4053-a1c3-b29adf85e7a1">
         </picture>
       </a>
       <br  />   
@@ -806,6 +807,7 @@ z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 z.string().date({ message: "Invalid date string!" });
 z.string().time({ message: "Invalid time string!" });
 z.string().ip({ message: "Invalid IP address" });
+z.string().ipRange({ message: "Invalid IP address range" });
 ```
 
 ### Datetimes
@@ -909,6 +911,35 @@ ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
 
 const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
+```
+
+### IP addresses range
+
+The `z.string().ipRange()` method by default validate IPv4 and IPv6.
+
+```ts
+const ipRange = z.string().ipRange();
+
+ipRange.parse("192.168.1.1/32"); // pass
+ipRange.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003/128"); // pass
+ipRange.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1/64"); // pass
+
+ipRange.parse("256.1.1.1/32"); // fail
+ipRange.parse("192.168.1.1/33"); // fail
+ipRange.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003/128"); // fail
+ipRange.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003/129"); // fail
+```
+
+You can additionally set the IP `version`.
+
+```ts
+const ipv4Range = z.string().ipRange({ version: "v4" });
+ipv4Range.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003/128"); // fail
+ipv4Range.parse("192.168.1.1/128"); // fail
+
+const ipv6Range = z.string().ipRange({ version: "v6" });
+ipv6Range.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003/32"); // fail
+ipv6Range.parse("192.168.1.1/128"); // fail
 ```
 
 ## Numbers

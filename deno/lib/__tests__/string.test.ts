@@ -373,6 +373,7 @@ test("checks getters", () => {
   expect(z.string().email().isUUID).toEqual(false);
   expect(z.string().email().isNANOID).toEqual(false);
   expect(z.string().email().isIP).toEqual(false);
+  expect(z.string().email().isIPRange).toEqual(false);
   expect(z.string().email().isULID).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
@@ -382,6 +383,7 @@ test("checks getters", () => {
   expect(z.string().url().isUUID).toEqual(false);
   expect(z.string().url().isNANOID).toEqual(false);
   expect(z.string().url().isIP).toEqual(false);
+  expect(z.string().url().isIPRange).toEqual(false);
   expect(z.string().url().isULID).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
@@ -391,6 +393,7 @@ test("checks getters", () => {
   expect(z.string().cuid().isUUID).toEqual(false);
   expect(z.string().cuid().isNANOID).toEqual(false);
   expect(z.string().cuid().isIP).toEqual(false);
+  expect(z.string().cuid().isIPRange).toEqual(false);
   expect(z.string().cuid().isULID).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
@@ -400,6 +403,7 @@ test("checks getters", () => {
   expect(z.string().cuid2().isUUID).toEqual(false);
   expect(z.string().cuid2().isNANOID).toEqual(false);
   expect(z.string().cuid2().isIP).toEqual(false);
+  expect(z.string().cuid2().isIPRange).toEqual(false);
   expect(z.string().cuid2().isULID).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
@@ -409,6 +413,7 @@ test("checks getters", () => {
   expect(z.string().uuid().isUUID).toEqual(true);
   expect(z.string().uuid().isNANOID).toEqual(false);
   expect(z.string().uuid().isIP).toEqual(false);
+  expect(z.string().uuid().isIPRange).toEqual(false);
   expect(z.string().uuid().isULID).toEqual(false);
 
   expect(z.string().nanoid().isEmail).toEqual(false);
@@ -418,6 +423,7 @@ test("checks getters", () => {
   expect(z.string().nanoid().isUUID).toEqual(false);
   expect(z.string().nanoid().isNANOID).toEqual(true);
   expect(z.string().nanoid().isIP).toEqual(false);
+  expect(z.string().nanoid().isIPRange).toEqual(false);
   expect(z.string().nanoid().isULID).toEqual(false);
 
   expect(z.string().ip().isEmail).toEqual(false);
@@ -427,7 +433,18 @@ test("checks getters", () => {
   expect(z.string().ip().isUUID).toEqual(false);
   expect(z.string().ip().isNANOID).toEqual(false);
   expect(z.string().ip().isIP).toEqual(true);
+  expect(z.string().ip().isIPRange).toEqual(false);
   expect(z.string().ip().isULID).toEqual(false);
+
+  expect(z.string().ipRange().isEmail).toEqual(false);
+  expect(z.string().ipRange().isURL).toEqual(false);
+  expect(z.string().ipRange().isCUID).toEqual(false);
+  expect(z.string().ipRange().isCUID2).toEqual(false);
+  expect(z.string().ipRange().isUUID).toEqual(false);
+  expect(z.string().ipRange().isNANOID).toEqual(false);
+  expect(z.string().ipRange().isIP).toEqual(false);
+  expect(z.string().ipRange().isIPRange).toEqual(true);
+  expect(z.string().ipRange().isULID).toEqual(false);
 
   expect(z.string().ulid().isEmail).toEqual(false);
   expect(z.string().ulid().isURL).toEqual(false);
@@ -436,6 +453,7 @@ test("checks getters", () => {
   expect(z.string().ulid().isUUID).toEqual(false);
   expect(z.string().ulid().isNANOID).toEqual(false);
   expect(z.string().ulid().isIP).toEqual(false);
+  expect(z.string().ulid().isIPRange).toEqual(false);
   expect(z.string().ulid().isULID).toEqual(true);
 });
 
@@ -765,5 +783,61 @@ test("IP validation", () => {
   expect(validIPs.every((ip) => ipSchema.safeParse(ip).success)).toBe(true);
   expect(
     invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
+  ).toBe(true);
+});
+
+test("IP Range validation", () => {
+  const ipRange = z.string().ipRange();
+  expect(ipRange.safeParse("122.122.122.122/0").success).toBe(true);
+  expect(ipRange.safeParse("122.122.122.122/32").success).toBe(true);
+  expect(ipRange.safeParse("122.122.122.122/-1").success).toBe(false);
+  expect(ipRange.safeParse("122.122.122.122/33").success).toBe(false);
+
+  const ipv4Range = z.string().ipRange({ version: "v4" });
+  expect(() =>
+    ipv4Range.parse("6097:adfa:6f0b:220d:db08:5021:6191:7990/128")
+  ).toThrow();
+
+  const ipv6Range = z.string().ipRange({ version: "v6" });
+  expect(() => ipv6Range.parse("254.164.77.1/32")).toThrow();
+
+  const validIPRanges = [
+    "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c/0",
+    "9d4:c956:420f:5788:4339:9b3b:2418:75c3/128",
+    "a6ea::2454:a5ce:94.105.123.75/32",
+    "474f:4c83::4e40:a47:ff95:0cda/16",
+    "d329:0:25b4:db47:a9d1:0:4926:0000/64",
+    "e48:10fb:1499:3e28:e4b6:dea5:4692:912c/8",
+    "114.71.82.94/0",
+    "0.0.0.0/0",
+    "37.85.236.115/32",
+  ];
+
+  const invalidIPRanges = [
+    "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c/129",
+    "d329:1be4:25b4:db47:a9d1:dc71:4926:992c:14af/128",
+    "474f:4c83::4e40:a47:ff95:0cda/129",
+    "8f69::c757:395e:976e::3441/64",
+    "54cb::473f:d516:0.255.256.22/64",
+    "54cb::473f:d516:192.168.1/64",
+    "474f:4c83::4e40:a47:ff95:0cda/129",
+    "d329:0:25b4:db47:a9d1:0:4926:0000/129",
+    "e48:10fb:1499:3e28:e4b6:dea5:4692:912c/129",
+    "256.0.4.4/16",
+    "-1.0.555.4/32",
+    "0.0.0.0.0/0",
+    "1.1.1/16",
+    "114.71.82.94/128",
+    "0.0.0.0/33",
+  ];
+  // no parameters check IPv4 or IPv6
+  const ipRangeSchema = z.string().ipRange();
+  expect(
+    validIPRanges.every((ipRange) => ipRangeSchema.safeParse(ipRange).success)
+  ).toBe(true);
+  expect(
+    invalidIPRanges.every(
+      (ipRange) => ipRangeSchema.safeParse(ipRange).success === false
+    )
   ).toBe(true);
 });
