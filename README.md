@@ -939,7 +939,7 @@ ipv4Range.parse("192.168.1.1/128"); // fail
 
 const ipv6Range = z.string().ipRange({ version: "v6" });
 ipv6Range.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003/32"); // fail
-ipv6Range.parse("192.168.1.1/128"); // fail
+ipv6Range.parse("192.168.1.1/32"); // fail
 ```
 
 ## Numbers
