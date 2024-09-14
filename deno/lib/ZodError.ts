@@ -103,6 +103,7 @@ export type StringValidation =
   | "time"
   | "duration"
   | "ip"
+  | "ipRange"
   | "base64"
   | { includes: string; position?: number }
   | { startsWith: string }

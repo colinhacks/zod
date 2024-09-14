@@ -565,6 +565,7 @@ export type ZodStringCheck =
     }
   | { kind: "duration"; message?: string }
   | { kind: "ip"; version?: IpVersion; message?: string }
+  | { kind: "ipRange"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
@@ -608,9 +609,11 @@ let emojiRegex: RegExp;
 // faster, simpler, safer
 const ipv4Regex =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
+const ipv4CidrRegex = /^(3[0-2]|[12]?[0-9])$/;
 
 const ipv6Regex =
   /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
+const ipv6CidrRegex = /^(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/;
 
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
 const base64Regex =
@@ -663,6 +666,36 @@ function isValidIP(ip: string, version?: IpVersion) {
     return true;
   }
   if ((version === "v6" || !version) && ipv6Regex.test(ip)) {
+    return true;
+  }
+
+  return false;
+}
+
+function isValidIPRange(ip: string, version?: IpVersion) {
+  const [ipAddress, mask] = ip.split("/");
+  if (ipAddress === undefined || mask === undefined) {
+    return false;
+  }
+  if (
+    !version &&
+    ((ipv4Regex.test(ipAddress) && ipv4CidrRegex.test(mask)) ||
+      (ipv6Regex.test(ipAddress) && ipv6CidrRegex.test(mask)))
+  ) {
+    return true;
+  }
+  if (
+    version === "v4" &&
+    ipv4Regex.test(ipAddress) &&
+    ipv4CidrRegex.test(mask)
+  ) {
+    return true;
+  }
+  if (
+    version === "v6" &&
+    ipv6Regex.test(ipAddress) &&
+    ipv6CidrRegex.test(mask)
+  ) {
     return true;
   }
 
@@ -931,6 +964,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "ipRange") {
+        if (!isValidIPRange(input.data, check.version)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "ipRange",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "base64") {
         if (!base64Regex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -1002,6 +1045,13 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 
   ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
+  }
+
+  ipRange(options?: string | { version?: IpVersion; message?: string }) {
+    return this._addCheck({
+      kind: "ipRange",
+      ...errorUtil.errToObj(options),
+    });
   }
 
   datetime(
@@ -1196,6 +1246,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   get isIP() {
     return !!this._def.checks.find((ch) => ch.kind === "ip");
+  }
+  get isIPRange() {
+    return !!this._def.checks.find((ch) => ch.kind === "ipRange");
   }
   get isBase64() {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
