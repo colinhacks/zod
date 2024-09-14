@@ -1000,7 +1000,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
   }
 
-  ip(options?: string | { version?: "v4" | "v6"; message?: string }) {
+  ip(options?: string | { version?: IpVersion; message?: string }) {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
   }
 
