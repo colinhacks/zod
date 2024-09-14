@@ -1,7 +1,7 @@
-import type { ZodCheck } from "./checks.js";
-import type { ZodErrorMap } from "./errors.js";
-import type * as parse from "./parse.js";
-import type * as types from "./types.js";
+import type { ZodCheck } from "../checks.js";
+import type { ZodErrorMap } from "./errors_old.js";
+import type * as parse from "../parse.js";
+import type * as types from "../types.js";
 
 export type $Def<
   T extends $ZodType,

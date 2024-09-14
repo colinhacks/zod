@@ -1,4 +1,4 @@
-import type * as types from "./types";
+import type * as types from "../types.js";
 export const InnerDynamicBase = class {
   constructor(properties: object) {
     Object.assign(this, properties);
@@ -76,20 +76,6 @@ class $ZodOptional<D extends $ZodOptionalDef> extends $ZodType<D> {
   }
 }
 
-////////////////////////////////////////////////
-//////////        $ZodNullable        //////////
-////////////////////////////////////////////////
-interface $ZodNullableDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
-  "~input": T["~input"] | undefined;
-  "~output": T["~output"] | undefined;
-  element: T;
-}
-class $ZodNullable<D extends $ZodNullableDef> extends $ZodType<D> {
-  parse(): this["~output"] {
-    return "asdf";
-  }
-}
-
 /////////////////////////////////////////////
 //////////        $ZodArray        //////////
 /////////////////////////////////////////////
@@ -107,98 +93,49 @@ class $ZodArray<D extends $ZodArrayDef> extends $ZodType<D> {
 ////////////////////////////////////////////////
 //////////        ZodType        ///////////////
 ////////////////////////////////////////////////
-interface ZodTypeDef extends $ZodTypeDef {}
-interface ZodType<O = unknown, D extends ZodTypeDef = ZodTypeDef, I = unknown>
-  extends $ZodType {
-  optional(): ZodOptional<this>;
-  nullable(): ZodNullable<this>;
+interface ZodTypeDef<T extends ZodType> {
+  /** @deprecated Not deprecated, but for internal use only. */
+  readonly "{zod.type}": true;
+  optional(): ZodOptional<T>;
+  nullable(): ZodOptional<T>;
 }
-//  {
-//   /** @deprecated Not deprecated, but for internal use only. */
-//   readonly "{zod.type}": true;
-//   optional(): ZodOptional<T>;
-//   nullable(): ZodOptional<T>;
-// }
 
-// abstract class ZodType extends $ZodType<$ZodTypeDef & ZodTypeDef<ZodType>> {
-//   parse(): this["~output"] {
-//     return "asdf";
-//   }
-// }
+abstract class ZodType extends $ZodType<$ZodTypeDef & ZodTypeDef<ZodType>> {
+  parse(): this["~output"] {
+    return "asdf";
+  }
+}
 
 ////////////////////////////////////////////////
 //////////        ZodString        /////////////
 ////////////////////////////////////////////////
-interface ZodStringDef extends $ZodStringDef {
-  // "~output": string;
-  // optional: any;
-  // nullable: any;
-}
-// interface ZodString extends ZodType {}
-
-// @ts-ignore
-class ZodString
-  extends $ZodString<ZodStringDef>
-  implements
-    ZodType<ZodStringDef["~output"], ZodStringDef, ZodStringDef["~input"]>
-{
-  constructor(def: ZodStringDef) {
-    super(def);
-  }
-  // optional(): ZodOptional<this> {
-  //   throw new Error("Method not implemented.");
-  // }
-  // nullable(): ZodNullable<this> {
-  //   throw new Error("Method not implemented.");
-  // }
+interface ZodStringDef extends $ZodStringDef, ZodTypeDef<ZodString> {
+  "~input": string;
+  "~output": string;
   /** @deprecated Not deprecated, but for internal use only. */
   readonly "{zod.string}": true;
 }
-declare const str: ZodString & { stuff: true };
+class ZodString extends $ZodString<ZodStringDef> {}
 
-// function ZodString() {}
-// ZodString.prototype.sup = () => {
-//   console.log("sup");
-// };
-// class ZodString extends $ZodType<ZodStringDef> {}
+/////////////////////////////////////////////////////
+//////////        ZodStringCoerced        ///////////
+/////////////////////////////////////////////////////
+interface ZodStringCoercedDef
+  extends $ZodStringDef,
+    ZodTypeDef<ZodStringCoerced> {
+  "~input": unknown;
+  "~output": string;
+  /** @deprecated Not deprecated, but for internal use only. */
+  readonly "{zod.string}": true;
+}
+class ZodStringCoerced extends $ZodString<ZodStringCoercedDef> {}
 
 ////////////////////////////////////////////////
 //////////        ZodOptional        ///////////
 ////////////////////////////////////////////////
 interface ZodOptionalDef<T extends ZodType = ZodType>
   extends $ZodOptionalDef<T>,
-    ZodTypeDef {
-  "~input": T["~input"] | undefined;
-  "~output": T["~output"] | undefined;
-}
-class ZodOptional<T extends ZodType = ZodType>
-  extends $ZodOptional<ZodOptionalDef<T>>
-  implements
-    ZodType<ZodOptionalDef["~output"], ZodOptionalDef, ZodOptionalDef["~input"]>
-{
-  optional(): ZodOptional<this> {
-    throw new Error("Method not implemented.");
-  }
-  nullable(): ZodNullable<this> {
-    throw new Error("Method not implemented.");
-  }
-}
-
-////////////////////////////////////////////////
-//////////        ZodNullable        ///////////
-////////////////////////////////////////////////
-interface ZodNullableDef<T extends ZodType = ZodType>
-  extends $ZodNullableDef<T>,
-    ZodTypeDef {
-  "~input": T["~input"] | undefined;
-  "~output": T["~output"] | undefined;
-}
-// @ts-ignore
-class ZodNullable<T extends ZodType = ZodType>
-  extends $ZodNullable<ZodNullableDef<T>>
-  implements
-    ZodType<
-      ZodNullableDef["~output"],
-      ZodNullableDef,
-      ZodNullableDef["~input"]
-    > {}
+    ZodTypeDef<ZodOptional<T>> {}
+class ZodOptional<T extends ZodType = ZodType> extends $ZodOptional<
+  ZodOptionalDef<T>
+> {}

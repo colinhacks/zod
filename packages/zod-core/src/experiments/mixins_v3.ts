@@ -1,9 +1,9 @@
 // import type * as core from "./core";
-import { CheckCtx, type ZodCheck } from "./checks.js";
-import * as errors from "./errors.js";
-import * as parse from "./parse.js";
-import * as symbols from "./symbols.js";
-import type * as zsf from "./zsf.js";
+import { $CheckCtx, type $ZodCheck } from "../checks.js";
+import * as errors from "./errors_old.js";
+import * as parse from "../parse.js";
+import * as symbols from "../symbols.js";
+import type * as zsf from "../zsf.js";
 
 type $in<T> = (arg: T) => void;
 type Infer<T extends $ZodType> = T["~output"];
@@ -37,8 +37,8 @@ export type ParseResult<T> = ParseResultSync<T> | ParseResultAsync<T>;
 
 abstract class $ZodType<out O = unknown, in I = never> implements zsf.$ZSF {
   readonly $zod: { version: number } = { version: 4 };
-  override readonly $zsf: { version: number } = { version: 0 };
-  type: string;
+  readonly $zsf: { version: number } = { version: 0 };
+  readonly type!: string;
 
   "~output": O;
   "~input": $in<I>;
@@ -51,7 +51,7 @@ abstract class $ZodType<out O = unknown, in I = never> implements zsf.$ZSF {
   abstract "~validateType"(input: O, ctx?: parse.ParseContext): ParseResult<O>;
   "~runChecks"(input: O, ctx: parse.ParseContext): ParseResult<O> {
     if (!this["~checks"]) return input;
-    const checkCtx = new CheckCtx(input, [], ctx);
+    const checkCtx = new $CheckCtx(input, [], ctx);
     const result = input;
     for (const check of this["~checks"]) {
       // check.run(checkCtx);
@@ -67,13 +67,12 @@ abstract class $ZodType<out O = unknown, in I = never> implements zsf.$ZSF {
 //////////        $ZSFString        ////////////
 ////////////////////////////////////////////////
 
-class $ZodString<O extends string = string, I = never>
+class $ZodString<out O extends string = string, in I = never>
   extends $ZodType<O, I>
   implements zsf.$ZSFString
 {
-  override $zsf: { version: number };
-  readonly type = "string" as const;
-  readonly $schema: "zsf";
+  
+  override readonly type = "string" as const;
   override "~output": O;
   override "~input": $in<I>;
   override "~validateType"(
@@ -273,7 +272,7 @@ class $ZodArray<Item extends $ZodType>
   extends $ZodType<output<Item>[], input<Item>[]>
   implements zsf.$ZSFArray
 {
-  type: "array";
+  override type: "array";
   items: zsf.$ZSF[];
   rest: zsf.$ZSF | null;
   override $zsf: { version: number };

@@ -1,4 +1,4 @@
-import type * as types from "./types";
+import type * as types from "../types.js";
 export const InnerDynamicBase = class {
   constructor(properties: object) {
     Object.assign(this, properties);
@@ -93,49 +93,63 @@ class $ZodArray<D extends $ZodArrayDef> extends $ZodType<D> {
 ////////////////////////////////////////////////
 //////////        ZodType        ///////////////
 ////////////////////////////////////////////////
-interface ZodTypeDef<T extends ZodType> {
-  /** @deprecated Not deprecated, but for internal use only. */
-  readonly "{zod.type}": true;
-  optional(): ZodOptional<T>;
-  nullable(): ZodOptional<T>;
+interface ZodTypeDef extends $ZodTypeDef {}
+interface ZodType<O = unknown, D extends ZodTypeDef = ZodTypeDef, I = unknown>
+  extends $ZodType<
+    {
+      "~output": O;
+      "~input": I;
+    } & D
+  > {
+  optional(): ZodOptional<this>;
+  nullable(): ZodOptional<this>;
 }
+//  {
+//   /** @deprecated Not deprecated, but for internal use only. */
+//   readonly "{zod.type}": true;
+//   optional(): ZodOptional<T>;
+//   nullable(): ZodOptional<T>;
+// }
 
-abstract class ZodType extends $ZodType<$ZodTypeDef & ZodTypeDef<ZodType>> {
-  parse(): this["~output"] {
-    return "asdf";
-  }
-}
+// abstract class ZodType extends $ZodType<$ZodTypeDef & ZodTypeDef<ZodType>> {
+//   parse(): this["~output"] {
+//     return "asdf";
+//   }
+// }
 
 ////////////////////////////////////////////////
 //////////        ZodString        /////////////
 ////////////////////////////////////////////////
-interface ZodStringDef extends $ZodStringDef, ZodTypeDef<ZodString> {
+interface ZodStringDef extends $ZodStringDef, ZodTypeDef {
+  "~output": string;
+}
+interface ZodString
+  extends $ZodStringDef,
+    ZodType<string, ZodStringDef, string> {
   "~input": string;
   "~output": string;
+}
+class ZodString extends $ZodString<$ZodStringDef>{
   /** @deprecated Not deprecated, but for internal use only. */
   readonly "{zod.string}": true;
 }
-class ZodString extends $ZodString<ZodStringDef> {}
+declare const str: ZodString;
 
-/////////////////////////////////////////////////////
-//////////        ZodStringCoerced        ///////////
-/////////////////////////////////////////////////////
-interface ZodStringCoercedDef
-  extends $ZodStringDef,
-    ZodTypeDef<ZodStringCoerced> {
-  "~input": unknown;
-  "~output": string;
-  /** @deprecated Not deprecated, but for internal use only. */
-  readonly "{zod.string}": true;
-}
-class ZodStringCoerced extends $ZodString<ZodStringCoercedDef> {}
+// function ZodString() {}
+// ZodString.prototype.sup = () => {
+//   console.log("sup");
+// };
+// class ZodString extends $ZodType<ZodStringDef> {}
 
 ////////////////////////////////////////////////
 //////////        ZodOptional        ///////////
 ////////////////////////////////////////////////
 interface ZodOptionalDef<T extends ZodType = ZodType>
   extends $ZodOptionalDef<T>,
-    ZodTypeDef<ZodOptional<T>> {}
+    ZodTypeDef {
+  // "~input": T["~input"] | undefined;
+  // "~output": T["~output"] | undefined;
+}
 class ZodOptional<T extends ZodType = ZodType> extends $ZodOptional<
   ZodOptionalDef<T>
-> {}
+>, ZodType {}

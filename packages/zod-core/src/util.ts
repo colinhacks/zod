@@ -63,9 +63,7 @@ export function joinValues<T extends any[]>(
     .join(separator);
 }
 export function jsonStringifyReplacer(_: string, value: any): any {
-  if (typeof value === "bigint") {
-    return value.toString();
-  }
+  if (typeof value === "bigint") return value.toString();
   return value;
 }
 

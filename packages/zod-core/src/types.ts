@@ -6,8 +6,44 @@ export type Primitive =
   | boolean
   | null
   | undefined;
+
 export type Scalars = Primitive | Primitive[];
 
+export type Sizeable = string | Array<unknown> | Set<unknown> | File;
+
+export type Numeric = number | bigint | Date;
+
+export type JWTAlgorithm =
+  | "HS256"
+  | "HS384"
+  | "HS512"
+  | "RS256"
+  | "RS384"
+  | "RS512"
+  | "ES256"
+  | "ES384"
+  | "ES512"
+  | "PS256"
+  | "PS384"
+  | "PS512";
+
+export type IntegerTypes =
+  | "int8"
+  | "uint8"
+  | "int16"
+  | "uint16"
+  | "int32"
+  | "uint32"
+  | "int64"
+  | "uint64"
+  | "int128"
+  | "uint128";
+
+export type IPVersion = "v4" | "v6";
+
+/////////////////////////////
+///////     UTILS     ///////
+/////////////////////////////
 export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
   V,
 >() => V extends U ? 1 : 2

@@ -1,4 +1,4 @@
-import * as core from "./index.js";
+import * as core from "../index.js";
 
 export class $ZodString extends core.$ZodType<string, string> {
   override typeName: "zod.core.string";

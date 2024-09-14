@@ -1,8 +1,8 @@
-import type z from "../packages/zod/src/index.js";
+import type * as z from "../packages/zod-core/src/index.js";
 import { makeSchema } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-interface ZodBenchParams<T extends z.ZodType, D> {
+interface ZodBenchParams<T extends z.$ZodType, D> {
   name: string;
   schema: (_z: typeof z) => T;
   data: () => D;
@@ -10,7 +10,7 @@ interface ZodBenchParams<T extends z.ZodType, D> {
   benchmark: (arg: D) => void | Promise<void>;
 }
 
-export function zodbench<T extends z.ZodType, D>(
+export function zodbench<T extends z.$ZodType, D>(
   params: ZodBenchParams<T, D> & ThisType<{ schema: T }>
 ) {
   const bench = metabench(params.name);

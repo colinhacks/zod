@@ -1,8 +1,13 @@
 // import type * as core from "./core";
-import { CheckCtx, type ZodCheck } from "./checks.js";
-import * as errors from "./errors.js";
-import * as parse from "./parse.js";
-import * as symbols from "./symbols.js";
+import { CheckCtx, type ZodCheck } from "../checks.js";
+import * as errors from "./errors_old.js";
+import * as parse from "../parse.js";
+import * as symbols from "../symbols.js";
+
+import type * as _zsf from "../zsf.js";
+
+type zsf = _zsf.$ZSF<ZodType>;
+type $ZSF = zsf["Base"];
 type $in<T> = (arg: T) => void;
 type Infer<T extends $ZodType> = T["~output"];
 export type input<T extends $ZodType> = Parameters<T["~input"]>[0];
@@ -32,21 +37,22 @@ export type ParseResult<T> = ParseResultSync<T> | ParseResultAsync<T>;
 //////////        $ZodType        //////////////
 ////////////////////////////////////////////////
 // type ID<T> = T;
-// interface $ZodType {
-//   $zod: {
-//     version: number;
-//   };
-//   "~output": unknown;
-//   "~input": (input: never) => void;
-//   "~parse"(input: unknown, ...args: unknown[]): ParseResult<this["~output"]>;
-// }
-
-interface $ZSF {
-  $zsf: {
+interface $ZodType {
+  $zod: {
     version: number;
   };
-  type: string;
+  "~output": unknown;
+  "~input": (input: never) => void;
+  "~parse"(input: unknown, ...args: unknown[]): ParseResult<this["~output"]>;
 }
+
+// interface $ZSF extends $ZSFExtension {
+//   $zsf: {
+//     version: number;
+//   };
+//   type: string;
+// }
+// interface $ZSF extends $ZodType {}
 
 // const arg: $ZodType = {
 //   $zod: {
@@ -59,10 +65,8 @@ interface $ZSF {
 //   },
 // }
 
-abstract class $ZodType<out O = unknown, in I = never> implements $ZSF {
-  readonly $zod: { version: number } = { version: 4 };
-  readonly $zsf: { version: number } = { version: 0 };
-  type: string;
+abstract class ZodType<O = unknown, I = never> implements $ZodType {
+  readonly $zod = { version: 4 };
   "~output": O;
   "~input": $in<I>;
   "~checks"?: ZodCheck<never>[];
@@ -80,28 +84,22 @@ abstract class $ZodType<out O = unknown, in I = never> implements $ZSF {
     }
     return "asd" as any;
   }
+  optional(): ZodOptional<this> {
+    return this as any;
+  }
+  nullable(): ZodNullable<this> {
+    return this as any;
+  }
   constructor(def: object) {
     Object.assign(def);
   }
 }
 
-interface $ZodTypeExtended<O, I> extends $ZodType<O, I> {
-  nullable(): ZodNullable<this>;
-}
-abstract class $ZodTypeExtended<O, I> extends $ZodType<O, I> {
-  // nullable(): ZodNullable<this> {
-  //   return this as any;
-  // }
-}
-
 ////////////////////////////////////////////////
 //////////        $ZSFString        ////////////
 ////////////////////////////////////////////////
-interface $ZSFString extends $ZSF {
-  type: "string";
-}
 function validateString(
-  this: $ZSFString,
+  this: zsf["String"],
   input: unknown,
   ctx?: parse.ParseContext
 ): ParseResult<string> {
@@ -121,7 +119,7 @@ function validateString(
   return input;
 }
 
-class ZodString extends $ZodTypeExtended<string, string> implements $ZSFString {
+class ZodString extends ZodType<string, string> implements $ZSFString {
   $zsf: { version: number };
   readonly type = "string" as const;
   readonly $schema: "zsf";
@@ -165,10 +163,7 @@ function validateNumber(
 }
 
 interface ZodNumberDef extends $ZSFNumber {}
-class $ZodNumber
-  extends $ZodTypeExtended<number, number>
-  implements $ZSFNumber
-{
+class ZodNumber extends ZodType<number, number> implements $ZSFNumber {
   min: number;
   max: number;
   readonly type = "number" as const;
@@ -273,18 +268,10 @@ function validateNullable(
 ): ParseResult<unknown> {
   if (input === null) return input;
 }
-class ZodNullable<T extends $ZodType>
-  extends $ZodTypeExtended<output<T> | null, input<T> | null>
-  implements ZodNullableDef
-{
-  type: "union";
-  elements: ZodNullableDef["elements"]; // = [{  type: "null" }, T];
-  constructor(def: ZodNullableDef) {
-    super(def);
-
-    // this.elements = [{$zsf: true, type: "null"}, def.elements];
-  }
-
+class ZodNullable<T extends ZodType> extends ZodType<
+  output<T> | null,
+  input<T> | null
+> {
   "~validateType"(
     input: unknown,
     ctx?: parse.ParseContext
@@ -302,19 +289,3 @@ interface $ZSFArray extends $ZSF {
   items: $ZSF[];
   rest: $ZSF | null;
 }
-
-interface Base {
-  a: string;
-  b: number;
-}
-
-interface Base {
-  optional(): any;
-}
-interface Base {
-  /** @deprecated @internal */
-  optional(): this;
-}
-
-declare const base: Base;
-base.optional();

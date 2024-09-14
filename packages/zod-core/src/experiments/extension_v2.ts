@@ -1,6 +1,6 @@
-import type { ZodCheck } from "./checks.js";
-import type { ZodErrorMap } from "./errors.js";
-import type { ParseContext, ParseInput, ParseReturnType } from "./parse.js";
+import type { ZodCheck } from "../checks.js";
+import type { ZodErrorMap } from "./errors_old.js";
+import type { ParseContext, ParseInput, ParseReturnType } from "../parse.js";
 
 type inputFunc<T> = (arg: T) => any;
 

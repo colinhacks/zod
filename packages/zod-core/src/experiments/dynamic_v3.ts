@@ -1,4 +1,4 @@
-import type * as types from "./types";
+import type * as types from "../types.js";
 export const InnerDynamicBase = class {
   constructor(properties: object) {
     Object.assign(this, properties);
@@ -76,6 +76,20 @@ class $ZodOptional<D extends $ZodOptionalDef> extends $ZodType<D> {
   }
 }
 
+////////////////////////////////////////////////
+//////////        $ZodNullable        //////////
+////////////////////////////////////////////////
+interface $ZodNullableDef<T extends $ZodType = $ZodType> extends $ZodTypeDef {
+  "~input": T["~input"] | undefined;
+  "~output": T["~output"] | undefined;
+  element: T;
+}
+class $ZodNullable<D extends $ZodNullableDef> extends $ZodType<D> {
+  parse(): this["~output"] {
+    return "asdf";
+  }
+}
+
 /////////////////////////////////////////////
 //////////        $ZodArray        //////////
 /////////////////////////////////////////////
@@ -95,14 +109,9 @@ class $ZodArray<D extends $ZodArrayDef> extends $ZodType<D> {
 ////////////////////////////////////////////////
 interface ZodTypeDef extends $ZodTypeDef {}
 interface ZodType<O = unknown, D extends ZodTypeDef = ZodTypeDef, I = unknown>
-  extends $ZodType<
-    {
-      "~output": O;
-      "~input": I;
-    } & D
-  > {
+  extends $ZodType {
   optional(): ZodOptional<this>;
-  nullable(): ZodOptional<this>;
+  nullable(): ZodNullable<this>;
 }
 //  {
 //   /** @deprecated Not deprecated, but for internal use only. */
@@ -120,20 +129,32 @@ interface ZodType<O = unknown, D extends ZodTypeDef = ZodTypeDef, I = unknown>
 ////////////////////////////////////////////////
 //////////        ZodString        /////////////
 ////////////////////////////////////////////////
-interface ZodStringDef extends $ZodStringDef, ZodTypeDef {
-  "~output": string;
+interface ZodStringDef extends $ZodStringDef {
+  // "~output": string;
+  // optional: any;
+  // nullable: any;
 }
-interface ZodString
-  extends $ZodStringDef,
-    ZodType<string, ZodStringDef, string> {
-  "~input": string;
-  "~output": string;
-}
-class ZodString extends $ZodString<$ZodStringDef>{
+// interface ZodString extends ZodType {}
+
+// @ts-ignore
+class ZodString
+  extends $ZodString<ZodStringDef>
+  implements
+    ZodType<ZodStringDef["~output"], ZodStringDef, ZodStringDef["~input"]>
+{
+  constructor(def: ZodStringDef) {
+    super(def);
+  }
+  // optional(): ZodOptional<this> {
+  //   throw new Error("Method not implemented.");
+  // }
+  // nullable(): ZodNullable<this> {
+  //   throw new Error("Method not implemented.");
+  // }
   /** @deprecated Not deprecated, but for internal use only. */
   readonly "{zod.string}": true;
 }
-declare const str: ZodString;
+declare const str: ZodString & { stuff: true };
 
 // function ZodString() {}
 // ZodString.prototype.sup = () => {
@@ -147,9 +168,37 @@ declare const str: ZodString;
 interface ZodOptionalDef<T extends ZodType = ZodType>
   extends $ZodOptionalDef<T>,
     ZodTypeDef {
-  // "~input": T["~input"] | undefined;
-  // "~output": T["~output"] | undefined;
+  "~input": T["~input"] | undefined;
+  "~output": T["~output"] | undefined;
 }
-class ZodOptional<T extends ZodType = ZodType> extends $ZodOptional<
-  ZodOptionalDef<T>
->, ZodType {}
+class ZodOptional<T extends ZodType = ZodType>
+  extends $ZodOptional<ZodOptionalDef<T>>
+  implements
+    ZodType<ZodOptionalDef["~output"], ZodOptionalDef, ZodOptionalDef["~input"]>
+{
+  optional(): ZodOptional<this> {
+    throw new Error("Method not implemented.");
+  }
+  nullable(): ZodNullable<this> {
+    throw new Error("Method not implemented.");
+  }
+}
+
+////////////////////////////////////////////////
+//////////        ZodNullable        ///////////
+////////////////////////////////////////////////
+interface ZodNullableDef<T extends ZodType = ZodType>
+  extends $ZodNullableDef<T>,
+    ZodTypeDef {
+  "~input": T["~input"] | undefined;
+  "~output": T["~output"] | undefined;
+}
+// @ts-ignore
+class ZodNullable<T extends ZodType = ZodType>
+  extends $ZodNullable<ZodNullableDef<T>>
+  implements
+    ZodType<
+      ZodNullableDef["~output"],
+      ZodNullableDef,
+      ZodNullableDef["~input"]
+    > {}

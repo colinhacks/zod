@@ -1,4 +1,4 @@
-import * as core from "./index.js";
+import * as core from "../index.js";
 
 // type ClassType = { prototype: any; new (...args: string[]): any };
 // function merge<A extends ClassType, B extends ClassType>(

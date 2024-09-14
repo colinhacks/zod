@@ -1,8 +1,8 @@
 // import type * as core from "./core";
-import { CheckCtx, type ZodCheck } from "./checks.js";
-import * as errors from "./errors.js";
-import * as parse from "./parse.js";
-import * as symbols from "./symbols.js";
+import { CheckCtx, type ZodCheck } from "../checks.js";
+import * as errors from "./errors_old.js";
+import * as parse from "../parse.js";
+import * as symbols from "../symbols.js";
 
 type $in<T> = (arg: T) => void;
 type Infer<T extends $ZodType> = T["~output"];

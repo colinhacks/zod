@@ -1,7 +1,9 @@
-import * as errors from "./errors.js";
+import type * as errors from "./errors.js";
+import defaultErrorMap from "./locales/en.js";
 import * as symbols from "./symbols.js";
 import { FAILURE } from "./symbols.js";
 
+/** @deprecated Use string literals instead, e.g. `"string"` instead of `ZodParsedType.string` */
 export const ZodParsedType = {
   string: "string",
   nan: "nan",
@@ -33,32 +35,32 @@ export const getParsedType = (data: any): ZodParsedType => {
 
   switch (t) {
     case "undefined":
-      return ZodParsedType.undefined;
+      return "undefined";
 
     case "string":
-      return ZodParsedType.string;
+      return "string";
 
     case "number":
-      return Number.isNaN(data) ? ZodParsedType.nan : ZodParsedType.number;
+      return Number.isNaN(data) ? "nan" : "number";
 
     case "boolean":
-      return ZodParsedType.boolean;
+      return "boolean";
 
     case "function":
-      return ZodParsedType.function;
+      return "function";
 
     case "bigint":
-      return ZodParsedType.bigint;
+      return "bigint";
 
     case "symbol":
-      return ZodParsedType.symbol;
+      return "symbol";
 
     case "object":
       if (Array.isArray(data)) {
-        return ZodParsedType.array;
+        return "array";
       }
       if (data === null) {
-        return ZodParsedType.null;
+        return "null";
       }
       if (
         data.then &&
@@ -66,121 +68,124 @@ export const getParsedType = (data: any): ZodParsedType => {
         data.catch &&
         typeof data.catch === "function"
       ) {
-        return ZodParsedType.promise;
+        return "promise";
       }
       if (typeof Map !== "undefined" && data instanceof Map) {
-        return ZodParsedType.map;
+        return "map";
       }
       if (typeof Set !== "undefined" && data instanceof Set) {
-        return ZodParsedType.set;
+        return "set";
       }
       if (typeof Date !== "undefined" && data instanceof Date) {
-        return ZodParsedType.date;
+        return "date";
       }
       if (typeof File !== "undefined" && data instanceof File) {
-        return ZodParsedType.file;
+        return "file";
       }
-      return ZodParsedType.object;
+      return "object";
 
     default:
-      return ZodParsedType.unknown;
+      return "unknown";
   }
 };
 export { getParsedType as t };
 
 export type ParseParams = {
-  path: (string | number)[];
-  errorMap: errors.ZodErrorMap;
+  path?: (string | number)[];
+  error?: errors.$ZodErrorMap;
 };
 
-export type ParsePathComponent = string | number;
-export type ParsePath = ParsePathComponent[];
+type ParsePathComponent = string | number;
+type ParsePath = ParsePathComponent[];
 export interface ParseContext {
   readonly path?: ParsePath;
-  readonly contextualErrorMap?: errors.ZodErrorMap;
-  readonly schemaErrorMap?: errors.ZodErrorMap;
+  readonly error?: errors.$ZodErrorMap<never>;
+  // readonly contextualErrorMap?: errors.$ZodErrorMap;
+  // readonly schemaErrorMap?: errors.$ZodErrorMap;
 }
 
-export type ParseInput = any;
+export type ErrorLevel = "error" | "abort";
+const errorLevels: ErrorLevel[] = ["error", "abort"];
 
-export type ErrorLevel = "warn" | "error" | "abort";
-const errorLevels: ErrorLevel[] = ["warn", "error", "abort"];
-
-export class ZodFailure {
+export class $ZodFailure {
   protected "~tag": typeof symbols.RESULT = symbols.RESULT;
-  issues: errors.ZodIssue[] = [];
+  issues: errors.$ZodIssue[] = [];
   ctx?: ParseContext | undefined;
 
-  constructor(issues?: errors.IssueData[], ctx?: ParseContext) {
-    this.issues = issues?.map((iss) => errors.makeIssue(iss, this.ctx)) || [];
+  constructor(issues?: errors.$ZodIssue[], ctx?: ParseContext) {
+    this.issues = issues ?? [];
+    // this.issues = issues?.map((iss) => makeIssue(iss, this.ctx)) || [];
     this.ctx = ctx;
   }
 
+  mergeIn(fail: $ZodFailure, ...path: (string | number)[]): void {
+    if (!fail || !fail.issues) return;
+    for (const iss of fail.issues) {
+      iss.path.unshift(...path);
+      this.issues.push(iss);
+    }
+  }
+
+  static from(
+    issueDatas: errors.$ZodIssueData[],
+    ctx: ParseContext | undefined,
+    schema?: { error?: errors.$ZodErrorMap<never> | undefined }
+  ): $ZodFailure {
+    return new $ZodFailure(
+      issueDatas.map((iss) => makeIssue(iss, schema, ctx)),
+      ctx
+    );
+  }
+
   level: ErrorLevel | null = null;
-  report(data: errors.IssueData): void {
-    const iss = errors.makeIssue(data, this.ctx);
+  addIssue(
+    data: errors.$ZodIssueData,
+    // ctx?: { error?: errors.$ZodErrorMap },
+    schema?: { error?: errors.$ZodErrorMap<never> | undefined }
+  ): void {
+    const iss = makeIssue(data, schema);
     // elevate level if needed
     if (errorLevels.indexOf(iss.level) > errorLevels.indexOf(this.level!)) {
       this.level = iss.level;
     }
     this.issues.push(iss);
   }
+
+  /** @internal */
+  static [Symbol.hasInstance](inst: any) {
+    return inst?.["~tag"] === symbols.RESULT;
+  }
 }
-Object.defineProperty(ZodFailure, Symbol.hasInstance, {
-  value: (inst: any) => inst?.["~tag"] === symbols.RESULT,
-});
 
-// export class ZodFailure {
-//   protected "~tag": typeof FAILURE = FAILURE;
-//   constructor(
-//     public issues: errors.IssueData[],
-//     protected _value: unknown = NOT_SET
-//   ) {}
-//   status = "aborted" as const;
-
-//   get value(): unknown {
-//     return this._value;
-//   }
-//   set value(v: unknown) {
-//     if (this._value !== NOT_SET) {
-//       console.log(`curr`, this._value);
-//       console.log(`v`, v);
-//       throw new Error("value already set");
-//     }
-//     this._value = v;
-//   }
-// }
-
-// Object.defineProperty(ZodFailure, Symbol.hasInstance, {
-//   value: (inst: any) => inst?.["~tag"] === FAILURE,
-// });
-
-export type SyncParseReturnType<T = unknown> = T | ZodFailure;
+export type SyncParseReturnType<T = unknown> = T | $ZodFailure;
 export type AsyncParseReturnType<T> = Promise<SyncParseReturnType<T>>;
 export type ParseReturnType<T> =
   | SyncParseReturnType<T>
   | AsyncParseReturnType<T>;
 
-export function isAborted(x: any): x is ZodFailure {
+export function failed(x: any): x is $ZodFailure {
   return x?.["~tag"] === FAILURE;
 }
 
-export const isValid = <T>(x: any): x is T => {
-  return x?.["~tag"] !== FAILURE;
-};
+export function aborted(x: $ZodFailure): x is $ZodFailure {
+  return x.level === "abort";
+}
 
-export const isAsync = <T>(
+export function isValid<T>(x: any): x is T {
+  return x?.["~tag"] !== FAILURE;
+}
+
+export function isAsync<T>(
   x: ParseReturnType<T>
-): x is AsyncParseReturnType<T> =>
-  typeof Promise !== "undefined" && x instanceof Promise;
+): x is AsyncParseReturnType<T> {
+  return typeof Promise !== "undefined" && x instanceof Promise;
+}
 
 export function safeResult<Input, Output>(
   ctx: ParseContext,
   result: SyncParseReturnType<Output>
-):
-  | { success: true; data: Output }
-  | { success: false; error: errors.ZodError<Input> } {
-  if (isAborted(result)) {
+): { success: true; data: Output } | { success: false; error: $ZodFailure } {
+  if (failed(result) && aborted(result)) {
     if (!result.issues.length) {
       throw new Error("Validation failed but no issues detected.");
     }
@@ -189,8 +194,8 @@ export function safeResult<Input, Output>(
       success: false,
       get error() {
         if ((this as any)._error) return (this as any)._error as Error;
-        const err = errors.issuesToZodError(ctx, result.issues);
-        (this as any)._error = err;
+        const error = new $ZodFailure(result.issues, ctx);
+        (this as any)._error = error;
         return (this as any)._error;
       },
     };
@@ -205,10 +210,50 @@ export type SafeParseSuccess<Output> = {
 };
 export type SafeParseError<Input> = {
   success: false;
-  error: errors.ZodError<Input>;
+  error: $ZodFailure;
   data?: never;
 };
 
 export type SafeParseReturnType<Input, Output> =
   | SafeParseSuccess<Awaited<Output>>
   | SafeParseError<Awaited<Input>>;
+
+let overrideErrorMap: errors.$ZodErrorMap = defaultErrorMap;
+export { defaultErrorMap };
+
+export function setErrorMap(map: errors.$ZodErrorMap): void {
+  overrideErrorMap = map;
+}
+
+export function getErrorMap(): errors.$ZodErrorMap {
+  return overrideErrorMap;
+}
+
+export const makeIssue = (
+  issueData: errors.$ZodIssueData,
+  schema?: { error?: errors.$ZodErrorMap<never> | undefined },
+  ctx?: ParseContext
+): errors.$ZodIssue => {
+  const fullPath = ctx?.path
+    ? issueData.path
+      ? [...ctx.path, ...issueData.path]
+      : ctx.path
+    : issueData.path
+      ? issueData.path
+      : [];
+
+  const fullIssue = {
+    ...issueData,
+    level: issueData.level ?? "error",
+    path: fullPath,
+  };
+
+  if (issueData.message) return fullIssue as errors.$ZodIssue;
+  const _message: any =
+    schema?.error?.(fullIssue as never) ??
+    ctx?.error?.(fullIssue as never) ??
+    getErrorMap()(fullIssue) ??
+    defaultErrorMap(fullIssue);
+  fullIssue.message = _message.message ?? _message;
+  return fullIssue as errors.$ZodIssue;
+};

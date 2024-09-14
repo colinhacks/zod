@@ -2636,8 +2636,8 @@
 // > extends ZodTypeDef {
 //   typeName: ZodFirstPartyTypeKind.ZodObject;
 //   shape: () => T;
-//   catchall: Catchall;
-//   unknownKeys: UnknownKeys;
+//   catchall: $ZodType;
+//   unknownKeys: "passthrough" | "strict" | "strip";
 // }
 
 // export type mergeTypes<A, B> = {

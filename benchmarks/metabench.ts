@@ -4,7 +4,7 @@ import { Table } from "console-table-printer";
 import * as mitata from "mitata";
 import { Bench } from "tinybench";
 
-import { assertNever } from "../packages/zod-core/src/index.js";
+// import { assertNever } from "../packages/zod-core/src/index.js";
 import { formatNumber } from "./benchUtil.js";
 
 type BENCH = "tinybench" | "benchmarkjs" | "mitata";
@@ -23,7 +23,7 @@ export function metabench<D>(
   } else if (BENCH === "mitata") {
     bench = new Mitata(name, benchmarks || {});
   } else {
-    assertNever(BENCH);
+    throw new Error(`Unknown benchmark runner: ${BENCH}`);
   }
   return bench;
 }
@@ -45,7 +45,7 @@ export function benchWithData<D>(
   params: BenchWithDataParams<D> & ThisType<{ data: D }>
 ): Metabench<D> {
   const bench = metabench(params.name);
-  console.log(`Batch size: ${params.batch}`);
+  // console.log(`Batch size: ${params.batch}`);
 
   if (params.batch === null) {
     const DATA = params.data();

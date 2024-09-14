@@ -1,585 +1,383 @@
-import * as err from "./errors_v2.js";
-import { type ZodFailure, type ZodParsedType, getParsedType } from "./parse.js";
-import * as regexes from "./regexes.js";
+import type * as err from "./errors.js";
+import { type $ZodFailure, getParsedType } from "./parse.js";
+
 import type * as types from "./types.js";
 
-function processParams(params?: string | $ZodCheckParams): $ZodCheckParams {
-  if (typeof params === "string") return { error: params };
-  if (!params) return {};
-  return params;
-}
-export interface $ZodCheckParams {
-  error?: string;
-}
-
-type $Def<T extends $ZodCheck, AlsoOmit extends string = never> = Omit<
-  types.PickProps<T>,
-  "kind" | AlsoOmit
->;
+export type $ZodCheckDef<
+  T extends $ZodCheck,
+  AlsoOmit extends string = never,
+  Extra extends object = {},
+> = types.flatten<Omit<types.PickProps<T>, "check" | AlsoOmit> & Extra>;
 
 export interface $CheckCtx<T> {
-  fail?: ZodFailure;
   input: T;
-  addIssue(issue: err.IssueData): void;
+  fail?: $ZodFailure | undefined;
+  addIssue(
+    issue: err.$ZodIssueData,
+    schema?: { error?: err.$ZodErrorMap<never> | undefined }
+  ): void;
 }
 
-interface $ZodCheckDef extends $Def<$ZodCheck> {}
-declare const a: $ZodCheckDef;
-
-export abstract class $ZodCheck<in T = never> {
-  abstract readonly kind: string;
+export abstract class $ZodCheck<
+  in In = never,
+  out Out = In,
+  Issues extends err.$ZodIssueBase = never,
+> {
+  abstract check: string;
   deps?: string[];
-  error?: string | undefined;
+  message?: string | err.$ZodErrorMap<Issues> | undefined;
   constructor(def: object) {
     Object.assign(this, def);
   }
 
-  abstract run(ctx: $CheckCtx<T>): void;
+  // return T or ZodFailure
+  // T cannot occur in signature to maintain contravariance
+  abstract run(ctx: $CheckCtx<Out>): void;
+
+  // alternative signature
+  // return T or ZodFailure
+  // returned value will override input
+  // abstract run2: (ctx: In) => Out | ZodFailure;
 }
 
 /////////////////////////////////
 /////    $ZodCheckEquals    /////
 /////////////////////////////////
-interface $ZodCheckEqualsDef {
-  value: $ZodCheckEqualsDomain;
-}
-type $ZodCheckEqualsDomain = number | bigint | Date;
-export class $ZodCheckEquals<
-  T extends $ZodCheckEqualsDomain = $ZodCheckEqualsDomain,
-> extends $ZodCheck<T> {
-  override kind = "equals" as const;
-  value!: T;
-  constructor(def: $ZodCheckEqualsDef) {
-    super(def);
-  }
-  run(ctx: $CheckCtx<T>): void {
-    const type = getParsedType(ctx.input);
-
-    if (ctx.input !== this.value) {
-      const tooBig = ctx.input > this.value;
-      ctx.addIssue({
-        code: tooBig ? "too_big" : "too_small",
-        type: type as err.ZodIssueTooBig["type"],
-        input: ctx.input,
-        inclusive: true,
-        minimum: tooBig ? (undefined as any) : this.value,
-        maximum: tooBig ? this.value : (undefined as any),
-        exact: true,
-        message: this.error,
-      } satisfies
-        | err.IssueData<err.ZodIssueTooBig>
-        | err.IssueData<err.ZodIssueTooSmall>);
-    }
-  }
-}
+// export class $ZodCheckEquals<
+//   T extends types.Numeric = types.Numeric,
+// > extends $ZodCheck<T> {
+//   override check = "equals" as const;
+//   value!: types.Numeric;
+//   constructor(def: $ZodCheckDef<$ZodCheckEquals>) {
+//     super(def);
+//   }
+//   run(ctx: $CheckCtx<T>): void {
+//     const type = getParsedType(ctx.input);
+//     if (ctx.input !== this.value) {
+//       ctx.addIssue({
+//         code: "invalid_number",
+//         expected: "==",
+//         value: this.value,
+//         input: ctx.input,
+//       });
+//     }
+//   }
+// }
 
 //////////////////////////////////////
 /////      $ZodCheckLessThan      /////
 //////////////////////////////////////
-type $ZodCheckLessThanDomain = number | bigint | Date;
-
 export class $ZodCheckLessThan<
-  T extends $ZodCheckLessThanDomain = $ZodCheckLessThanDomain,
+  T extends types.Numeric = types.Numeric,
 > extends $ZodCheck<T> {
-  override kind = "less_than" as const;
+  override check = "less_than" as const;
   value!: T;
   inclusive!: boolean;
 
-  constructor(def: $Def<$ZodCheckLessThan>) {
+  constructor(def: $ZodCheckDef<$ZodCheckLessThan>) {
     super(def);
   }
   run(ctx: $CheckCtx<T>): void {
-    const type = getParsedType(ctx.input);
-
     if (this.inclusive ? this.value <= ctx.input : this.value < ctx.input) {
       ctx.addIssue({
-        code: "too_small",
-        type: type as err.ZodIssueTooSmall["type"],
+        code: "invalid_number",
+        expected: this.inclusive ? "less_than_or_equal" : "less_than",
+        maximum: this.value,
         input: ctx.input,
-        inclusive: false,
-        minimum: this.value instanceof Date ? this.value.getTime() : this.value,
-        message: this.error,
       });
     }
   }
 }
 
-export function lt<T extends $ZodCheckLessThanDomain>(
-  value: T,
-  params?: string | $ZodCheckParams
-): $ZodCheckLessThan<T> {
-  return new $ZodCheckLessThan({
-    ...processParams(params),
-    value,
-    inclusive: false,
-  });
-}
-
-export function lte<T extends $ZodCheckLessThanDomain>(
-  value: T,
-  params?: string | $ZodCheckParams
-): $ZodCheckLessThan<T> {
-  return new $ZodCheckLessThan({
-    ...processParams(params),
-    value,
-    inclusive: true,
-  });
-}
-
 /////////////////////////////////////
 /////    $ZodCheckGreaterThan    /////
 /////////////////////////////////////
-type $ZodCheckGreaterThanDomain = number | bigint | Date;
-
 export class $ZodCheckGreaterThan<
-  T extends $ZodCheckGreaterThanDomain = $ZodCheckGreaterThanDomain,
+  T extends types.Numeric = types.Numeric,
 > extends $ZodCheck<T> {
-  override kind = "greater_than" as const;
+  override check = "greater_than" as const;
+  declare message?:
+    | string
+    | err.$ZodErrorMap<err.$ZodIssueGreaterThan>
+    | undefined;
   value!: T;
   inclusive!: boolean;
 
-  constructor(def: $Def<$ZodCheckGreaterThan>) {
+  constructor(def: $ZodCheckDef<$ZodCheckGreaterThan>) {
     super(def);
   }
 
   run(ctx: $CheckCtx<T>): void {
-    const type = getParsedType(ctx.input);
     if (this.inclusive ? this.value > ctx.input : this.value >= ctx.input) {
       ctx.addIssue({
-        code: "too_big",
-        type: type as err.ZodIssueTooBig["type"],
-        input: ctx.input,
-        inclusive: false,
-        maximum: this.value instanceof Date ? this.value.getTime() : this.value,
-        message: this.error,
-      });
-    }
-  }
-}
-
-export function gt<T extends $ZodCheckGreaterThanDomain>(
-  value: T,
-  params?: string | $ZodCheckParams
-): $ZodCheckGreaterThan<T> {
-  return new $ZodCheckGreaterThan({
-    ...processParams(params),
-    value,
-    inclusive: false,
-  });
-}
-
-export function gte<T extends $ZodCheckGreaterThanDomain>(
-  value: T,
-  params?: string | $ZodCheckParams
-): $ZodCheckGreaterThan<T> {
-  return new $ZodCheckGreaterThan({
-    ...processParams(params),
-    value,
-    inclusive: true,
-  });
-}
-
-//////////////////////////////////////
-/////    $ZodCheckSizeLessThan    /////
-//////////////////////////////////////
-type $ZodCheckSizeLessThanDomain =
-  | string
-  | Array<unknown>
-  | Set<unknown>
-  | File;
-
-function getSize(input: any, type: ZodParsedType) {
-  switch (type) {
-    case "string":
-      return input.length;
-    case "array":
-      return input.length;
-    case "set":
-      return input.size;
-    case "file":
-      return input.size;
-    default:
-      throw new Error(`Invalid input for size check: ${type}`);
-  }
-}
-export class $ZodCheckSizeLessThan<
-  T extends $ZodCheckSizeLessThanDomain = $ZodCheckSizeLessThanDomain,
-> extends $ZodCheck<T> {
-  override kind = "size_less_than" as const;
-  value!: number;
-  constructor(def: $Def<$ZodCheckSizeLessThan>) {
-    super(def);
-  }
-
-  run(ctx: $CheckCtx<T>): void {
-    const type = getParsedType(ctx.input);
-    const size = getSize(ctx.input, type);
-    if (size < ctx.input) {
-      ctx.addIssue({
-        code: "too_small",
-        type: type as err.ZodIssueTooSmall["type"],
-        input: ctx.input,
-        inclusive: false,
+        code: "invalid_number",
+        expected: this.inclusive ? "greater_than_or_equal" : "greater_than",
         minimum: this.value,
-        message: this.error,
+        input: ctx.input,
       });
     }
   }
 }
 
-export function minItems(
-  value: number,
-  params?: string | $ZodCheckParams
-): $ZodCheckSizeLessThan<string | Array<any>> {
-  return new $ZodCheckSizeLessThan({
-    ...processParams(params),
+/////////////////////////////////////////
+/////    $ZodCheckMultipleOf    /////
+/////////////////////////////////////////
 
-    value,
-  });
+// https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
+function floatSafeRemainder(val: number, step: number) {
+  const valDecCount = (val.toString().split(".")[1] || "").length;
+  const stepDecCount = (step.toString().split(".")[1] || "").length;
+  const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
+  const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
+  const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
+  return (valInt % stepInt) / 10 ** decCount;
+}
+export class $ZodCheckMultipleOf<
+  T extends number | bigint = number | bigint,
+> extends $ZodCheck<T> {
+  override check = "multiple_of" as const;
+  value!: T;
+  constructor(def: $ZodCheckDef<$ZodCheckMultipleOf>) {
+    super(def);
+  }
+  run(ctx: $CheckCtx<T>): void {
+    if (typeof ctx.input !== typeof this.value)
+      throw new Error("Cannot mix number and bigint in multiple_of check.");
+    // the casts are safe because we know the types are the same
+    const isMultiple =
+      typeof ctx.input === "bigint"
+        ? ctx.input % (this.value as bigint) === BigInt(0)
+        : floatSafeRemainder(ctx.input, this.value as number);
+
+    if (!isMultiple) {
+      ctx.addIssue({
+        code: "invalid_number",
+        expected: "multiple_of",
+        value: this.value,
+        input: ctx.input,
+      });
+    }
+  }
 }
 
-/////////////////////////////////////
-/////    $ZodCheckGreaterThan    /////
-/////////////////////////////////////
-type $ZodCheckSizeGreaterThanDomain =
-  | string
-  | Array<unknown>
-  | Set<unknown>
-  | File;
+// //////////////////////////////////////
+// /////    $ZodCheckMaxSize    /////
+// //////////////////////////////////////
+export type $ZodSizable = string | Array<unknown> | Set<unknown> | File;
 
-export class $ZodCheckSizeGreaterThan<
-  T extends $ZodCheckSizeGreaterThanDomain = $ZodCheckSizeGreaterThanDomain,
+function getSize(input: any): {
+  type: "string" | "array" | "set" | "file";
+  size: number;
+} {
+  if (typeof input === "string") return { type: "string", size: input.length };
+  if (Array.isArray(input)) return { type: "array", size: input.length };
+  if (input instanceof Set) return { type: "set", size: input.size };
+  if (input instanceof File) return { type: "file", size: input.size };
+  throw new Error(`Invalid input for size check: ${getParsedType(input)}`);
+}
+
+export class $ZodCheckMaxSize<
+  T extends types.Sizeable = types.Sizeable,
 > extends $ZodCheck<T> {
-  override kind = "size_greater_than" as const;
-  value!: number;
-  inclusive!: boolean;
-  path?: "length" | "size";
-  constructor(def: $Def<$ZodCheckSizeGreaterThan>) {
+  override check = "max_size" as const;
+  maximum!: number;
+  declare message?: string | err.$ZodErrorMap<err.$ZodIssueMaxSize>;
+  constructor(def: $ZodCheckDef<$ZodCheckMaxSize>) {
     super(def);
   }
 
   run(ctx: $CheckCtx<T>): void {
-    const type = getParsedType(ctx.input);
-
-    const input = getSize(ctx.input, type);
-    if (this.inclusive ? input >= ctx.input : input > ctx.input) {
+    const size = getSize(ctx.input);
+    if (size.size > this.maximum) {
       ctx.addIssue({
-        code: "too_big",
-        type: type as err.ZodIssueTooBig["type"],
+        code: "size_out_of_range",
+        expected: "<",
+        size: this.maximum,
+        domain: size.type,
         input: ctx.input,
-        inclusive: false,
-        maximum: this.value,
-        message: this.error,
       });
     }
   }
 }
 
-export function maxItems(
-  value: number,
-  params?: string | $ZodCheckParams
-): $ZodCheckSizeGreaterThan<Set<any> | File> {
-  return new $ZodCheckSizeGreaterThan({
-    ...processParams(params),
-    value,
-    inclusive: true,
-  });
+// /////////////////////////////////////
+// /////    $ZodCheckMinSize    /////
+// /////////////////////////////////////
+
+export class $ZodCheckMinSize<
+  T extends types.Sizeable = types.Sizeable,
+> extends $ZodCheck<T> {
+  override check = "size_greater_than" as const;
+  minimum!: number;
+  constructor(def: $ZodCheckDef<$ZodCheckMinSize>) {
+    super(def);
+  }
+
+  run(ctx: $CheckCtx<T>): void {
+    const size = getSize(ctx.input);
+    if (size.size < this.minimum) {
+      ctx.addIssue({
+        code: "size_out_of_range",
+        expected: ">",
+        size: this.minimum,
+        domain: size.type,
+        input: ctx.input,
+      });
+    }
+  }
 }
 
-/////////////////////////////////
-/////    $ZodCheckFormat    /////
-/////////////////////////////////
+// /////////////////////////////////
+// /////    $ZodCheckFormat    /////
+// /////////////////////////////////
+type $ZodCheckStringFormatDef<T extends $ZodCheck> = $ZodCheckDef<
+  T,
+  "pattern",
+  { pattern?: RegExp }
+>;
 
-interface $ZodCheckOptionalRegexParams {
-  error?: string;
-  pattern?: RegExp;
-}
-type $StringFormatDef<T extends $ZodCheck> = $Def<T, "format">;
-
-interface $ZodCheckRegexParams {
-  error?: string;
-  pattern: RegExp;
-}
-abstract class _$ZodCheckStringFormat extends $ZodCheck<string> {
-  override kind = "string_format" as const;
-  abstract format: err.StringValidation;
+export abstract class $ZodCheckStringFormat extends $ZodCheck<string, string> {
+  abstract override check: err.$ZodStringFormats;
   pattern?: RegExp;
   override run(ctx: $CheckCtx<string>): void {
     if (!this.pattern) throw new Error("Not implemented.");
-    if (this.pattern.test(ctx.input)) {
+    if (!this.pattern.test(ctx.input)) {
       ctx.addIssue({
         code: "invalid_string",
-        validation: this.format || "regex",
+        format: this.check,
+        pattern: this.pattern,
         input: ctx.input,
-        message: this.error,
+      } as err.$ZodIssueData);
+    }
+  }
+}
+
+// export class $ZodCheckRegex extends $ZodCheckStringFormat {
+//   override check = "regex" as const;
+//   override pattern!: RegExp;
+//   constructor(def: $ZodCheckStringFormatDef<$ZodCheckRegex>) {
+//     super(def);
+//   }
+// }
+
+export class $ZodCheckIncludes extends $ZodCheckStringFormat {
+  override check = "includes" as const;
+  includes!: string;
+
+  constructor(def: $ZodCheckDef<$ZodCheckIncludes>) {
+    super(def);
+  }
+
+  override run(ctx: $CheckCtx<string>): void {
+    if (!ctx.input.includes(this.includes)) {
+      ctx.addIssue({
+        code: "invalid_string",
+        format: this.check,
+        includes: this.includes,
+        input: ctx.input,
       });
     }
   }
 }
 
-export class $ZodCheckRegex extends _$ZodCheckStringFormat {
-  override format = "regex" as const;
-  override pattern!: RegExp;
-  constructor(def: $StringFormatDef<$ZodCheckRegex>) {
-    super(def);
+export class $ZodCheckTrim extends $ZodCheck<string, string> {
+  override check = "trim" as const;
+  override run(ctx: $CheckCtx<string>): void {
+    ctx.input = ctx.input.trim();
   }
 }
 
-export function regex(
-  pattern: RegExp,
-  params?: string | $ZodCheckParams
-): $ZodCheckRegex {
-  return new $ZodCheckRegex({
-    ...processParams(params),
-    pattern,
-  });
-}
-
-////////////////////////////////
-/////    $ZodCheckEmail    /////
-////////////////////////////////
-export class $ZodCheckEmail extends _$ZodCheckStringFormat {
-  override format = "email" as const;
-  override pattern: RegExp = regexes.emailRegex;
-  constructor(def: $StringFormatDef<$ZodCheckEmail>) {
-    super(def);
+export class $ZodCheckToLowerCase extends $ZodCheck<string, string> {
+  override check = "to_lowercase" as const;
+  override run(ctx: $CheckCtx<string>): void {
+    ctx.input = ctx.input.toLowerCase();
   }
 }
 
-export function email(
-  params?: string | $ZodCheckOptionalRegexParams
-): $ZodCheckEmail {
-  return new $ZodCheckEmail({
-    ...processParams(params),
-    //
-
-    // format: "email",
-    pattern: regexes.emailRegex,
-  });
+export class $ZodCheckToUpperCase extends $ZodCheck<string, string> {
+  override check = "to_uppercase" as const;
+  override run(ctx: $CheckCtx<string>): void {
+    ctx.input = ctx.input.toUpperCase();
+  }
 }
 
-//////////////////////////////
-/////    $ZodCheckURL    /////
-//////////////////////////////
-class $ZodCheckURL extends _$ZodCheckStringFormat {
-  override format = "url" as const;
-  constructor(def: $StringFormatDef<$ZodCheckURL>) {
+export class $ZodCheckNormalize extends $ZodCheck<string, string> {
+  override check = "normalize" as const;
+  override run(ctx: $CheckCtx<string>): void {
+    ctx.input = ctx.input.normalize();
+  }
+}
+
+export class $ZodCheckStartsWith extends $ZodCheckStringFormat {
+  override check = "starts_with" as const;
+  starts_with!: string;
+  constructor(def: $ZodCheckDef<$ZodCheckStartsWith>) {
     super(def);
   }
   override run(ctx: $CheckCtx<string>): void {
-    try {
-      const url = new URL(ctx.input);
-      if (!regexes.hostnameRegex.test(url.hostname)) {
-        ctx.addIssue({
-          input: ctx.input,
-          validation: "url",
-          code: err.ZodIssueCode.invalid_string,
-          message: this.error,
-        });
-      }
-    } catch {
+    if (!ctx.input.startsWith(this.starts_with)) {
       ctx.addIssue({
+        code: "invalid_string",
+        format: this.check,
+        starts_with: this.starts_with,
         input: ctx.input,
-        validation: "url",
-        code: err.ZodIssueCode.invalid_string,
-        message: this.error,
       });
     }
   }
 }
 
-export function url(
-  params?: string | $ZodCheckOptionalRegexParams
-): $ZodCheckURL {
-  return new $ZodCheckURL({
-    ...processParams(params),
-    format: "url",
-  });
-}
-
-export type IpVersion = "v4" | "v6";
-export type JwtAlgorithm =
-  | "HS256"
-  | "HS384"
-  | "HS512"
-  | "RS256"
-  | "RS384"
-  | "RS512"
-  | "ES256"
-  | "ES384"
-  | "ES512"
-  | "PS256"
-  | "PS384"
-  | "PS512";
-function isValidJwt(token: string, algorithm: JwtAlgorithm | null = null) {
-  try {
-    const tokensParts = token.split(".");
-    if (tokensParts.length !== 3) {
-      return false;
+export class $ZodCheckEndsWith extends $ZodCheckStringFormat {
+  override check = "ends_with" as const;
+  ends_with!: string;
+  constructor(def: $ZodCheckDef<$ZodCheckEndsWith>) {
+    super(def);
+  }
+  override run(ctx: $CheckCtx<string>): void {
+    if (!ctx.input.endsWith(this.ends_with)) {
+      ctx.addIssue({
+        code: "invalid_string",
+        format: this.check,
+        ends_with: this.ends_with,
+        input: ctx.input,
+      });
     }
+  }
+}
 
-    const [header] = tokensParts;
-    const parsedHeader = JSON.parse(atob(header));
-
-    if (!("typ" in parsedHeader) || parsedHeader.typ !== "JWT") {
-      return false;
+export class $ZodCheckFileType extends $ZodCheck<File, File> {
+  override check = "file_type" as const;
+  fileTypes!: types.MimeTypes[];
+  constructor(def: $ZodCheckDef<$ZodCheckFileType>) {
+    super(def);
+  }
+  override run(ctx: $CheckCtx<File>): void {
+    if (this.fileTypes.indexOf(ctx.input.type)) {
+      ctx.addIssue({
+        code: "invalid_type",
+        expected: "literal",
+        literalValues: this.fileTypes,
+        input: ctx.input,
+        path: ["type"],
+      });
     }
+  }
+}
 
-    if (
-      algorithm &&
-      (!("alg" in parsedHeader) || parsedHeader.alg !== algorithm)
-    ) {
-      return false;
+export class $ZodCheckFileName extends $ZodCheck<File, File> {
+  override check = "file_name" as const;
+  fileName!: string;
+  constructor(def: $ZodCheckDef<$ZodCheckFileName>) {
+    super(def);
+  }
+  override run(ctx: $CheckCtx<File>): void {
+    if (this.fileName !== ctx.input.name) {
+      ctx.addIssue({
+        code: "invalid_type",
+        expected: "literal",
+        literalValues: [this.fileName],
+        input: ctx.input,
+        path: ["name"],
+      });
     }
-
-    return true;
-  } catch {
-    return false;
-  }
-}
-class $ZodCheckJWT extends _$ZodCheckStringFormat {
-  override format = "jwt" as const;
-  constructor(def: $StringFormatDef<$ZodCheckJWT>) {
-    super(def);
-  }
-}
-
-class $ZodCheckEmoji extends _$ZodCheckStringFormat {
-  override format = "emoji" as const;
-  constructor(def: $StringFormatDef<$ZodCheckEmoji>) {
-    super(def);
-  }
-}
-
-class $ZodCheckUUID extends _$ZodCheckStringFormat {
-  override format = "uuid" as const;
-  constructor(def: $StringFormatDef<$ZodCheckUUID>) {
-    super(def);
-  }
-}
-
-class $ZodCheckNanoID extends _$ZodCheckStringFormat {
-  override format = "nanoid" as const;
-  constructor(def: $StringFormatDef<$ZodCheckNanoID>) {
-    super(def);
-  }
-}
-
-class $ZodCheckGUID extends _$ZodCheckStringFormat {
-  override format = "guid" as const;
-  constructor(def: $StringFormatDef<$ZodCheckGUID>) {
-    super(def);
-  }
-}
-
-class $ZodCheckCUID extends _$ZodCheckStringFormat {
-  override format = "cuid" as const;
-  constructor(def: $StringFormatDef<$ZodCheckCUID>) {
-    super(def);
-  }
-}
-
-class $ZodCheckCUID2 extends _$ZodCheckStringFormat {
-  override format = "cuid2" as const;
-  constructor(def: $StringFormatDef<$ZodCheckCUID2>) {
-    super(def);
-  }
-}
-
-class $ZodCheckULID extends _$ZodCheckStringFormat {
-  override format = "ulid" as const;
-  constructor(def: $StringFormatDef<$ZodCheckULID>) {
-    super(def);
-  }
-}
-
-class $ZodCheckXID extends _$ZodCheckStringFormat {
-  override format = "xid" as const;
-  constructor(def: $StringFormatDef<$ZodCheckXID>) {
-    super(def);
-  }
-}
-
-class $ZodCheckKSUID extends _$ZodCheckStringFormat {
-  override format = "ksuid" as const;
-  constructor(def: $StringFormatDef<$ZodCheckKSUID>) {
-    super(def);
-  }
-}
-
-class $ZodCheckIncludes extends _$ZodCheckStringFormat {
-  override format = "includes" as const;
-  constructor(def: $StringFormatDef<$ZodCheckIncludes>) {
-    super(def);
-  }
-}
-
-class $ZodCheckStartsWith extends _$ZodCheckStringFormat {
-  override format = "starts_with" as const;
-  constructor(def: $StringFormatDef<$ZodCheckStartsWith>) {
-    super(def);
-  }
-}
-
-class $ZodCheckEndsWith extends _$ZodCheckStringFormat {
-  override format = "endsWith" as const;
-  constructor(def: $StringFormatDef<$ZodCheckEndsWith>) {
-    super(def);
-  }
-}
-
-class $ZodCheckDateTime extends _$ZodCheckStringFormat {
-  override format = "datetime" as const;
-  constructor(def: $StringFormatDef<$ZodCheckDateTime>) {
-    super(def);
-  }
-}
-
-class $ZodCheckDate extends _$ZodCheckStringFormat {
-  override format = "date" as const;
-  constructor(def: $StringFormatDef<$ZodCheckDate>) {
-    super(def);
-  }
-}
-
-class $ZodCheckTime extends _$ZodCheckStringFormat {
-  override format = "time" as const;
-  constructor(def: $StringFormatDef<$ZodCheckTime>) {
-    super(def);
-  }
-}
-
-class $ZodCheckDuration extends _$ZodCheckStringFormat {
-  override format = "duration" as const;
-  constructor(def: $StringFormatDef<$ZodCheckDuration>) {
-    super(def);
-  }
-}
-
-class $ZodCheckIP extends _$ZodCheckStringFormat {
-  override format = "ip" as const;
-  constructor(def: $StringFormatDef<$ZodCheckIP>) {
-    super(def);
-  }
-}
-
-class $ZodCheckBase64 extends _$ZodCheckStringFormat {
-  override format = "base64" as const;
-  constructor(def: $StringFormatDef<$ZodCheckBase64>) {
-    super(def);
-  }
-}
-
-class $ZodCheckJSON extends _$ZodCheckStringFormat {
-  override format = "json" as const;
-  constructor(def: $StringFormatDef<$ZodCheckJSON>) {
-    super(def);
-  }
-}
-
-class $ZodCheckE164 extends _$ZodCheckStringFormat {
-  override format = "e164" as const;
-  constructor(def: $StringFormatDef<$ZodCheckE164>) {
-    super(def);
   }
 }
