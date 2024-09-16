@@ -50,16 +50,11 @@ export type $ZodIssueInvalidTypeBasic = _$ZodIssueInvalidType & {
   received: parse.ZodParsedType;
 };
 
-export type $ZodIssueInvalidTypeObjectUnrecognizedKeys =
-  _$ZodIssueInvalidType & {
-    expected: "object";
-    received: "object";
-    unrecognized_keys: string[];
-  };
-
-export type $ZodIssueInvalidTypeInvalidDate = _$ZodIssueInvalidType & {
-  expected: "date";
-  received: "invalid_date";
+// this should be invalid_object
+export type $ZodIssueInvalidTypeUnrecognizedKeys = _$ZodIssueInvalidType & {
+  expected: "object";
+  received: "unrecognized_keys";
+  keys: string[];
 };
 
 export type $ZodIssueInvalidTypeUnion = _$ZodIssueInvalidType & {
@@ -79,241 +74,168 @@ export type $ZodIssueInvalidTypeEnum = _$ZodIssueInvalidType & {
 
 export type $ZodInvalidTypeIssues =
   | $ZodIssueInvalidTypeBasic
-  | $ZodIssueInvalidTypeObjectUnrecognizedKeys
-  | $ZodIssueInvalidTypeInvalidDate
+  | $ZodIssueInvalidTypeUnrecognizedKeys
   | $ZodIssueInvalidTypeUnion
   | $ZodIssueInvalidTypeLiteral
   | $ZodIssueInvalidTypeEnum;
 
-////////////////////////////////////
-////     STRING FORMAT ISSUES   ////
-////////////////////////////////////
-interface _$ZodIssueStringFormat extends $ZodIssueBase {
-  code: "invalid_string";
+////////////////////////////////
+////     INVALID_FORMAT     ////
+////////////////////////////////
+
+interface _$ZodIssueInvalidFormat extends $ZodIssueBase {
+  code: "invalid_format";
+  format: string;
 }
 
-export type $ZodIssueRegex = _$ZodIssueStringFormat & {
+type _StringFormats =
+  | "email"
+  | "url"
+  | "emoji"
+  | "uuid"
+  | "uuidv4"
+  | "uuidv6"
+  | "nanoid"
+  | "guid"
+  | "cuid"
+  | "cuid2"
+  | "ulid"
+  | "xid"
+  | "ksuid"
+  | "iso_datetime"
+  | "iso_date"
+  | "iso_time"
+  | "duration"
+  | "ip"
+  | "ipv4"
+  | "ipv6"
+  | "base64"
+  | "json_string"
+  | "e164";
+// | (string & {});
+
+export type $ZodIssueStringFormat = _$ZodIssueInvalidFormat & {
+  format: _StringFormats;
+  input: string;
+};
+
+export type $ZodIssueRegex = _$ZodIssueInvalidFormat & {
   format: "regex";
   pattern: string;
+  input: string;
 };
 
-export type $ZodIssueEmail = _$ZodIssueStringFormat & {
-  format: "email";
-};
-
-export type $ZodIssueURL = _$ZodIssueStringFormat & {
-  format: "url";
-};
-
-export type $ZodIssueEmoji = _$ZodIssueStringFormat & {
-  format: "emoji";
-};
-
-export type $ZodIssueUUID = _$ZodIssueStringFormat & {
-  format: "uuid";
-};
-
-export type $ZodIssueUUIDv4 = _$ZodIssueStringFormat & {
-  format: "uuidv4";
-};
-
-export type $ZodIssueUUIDv6 = _$ZodIssueStringFormat & {
-  format: "uuidv6";
-};
-
-export type $ZodIssueNanoid = _$ZodIssueStringFormat & {
-  format: "nanoid";
-};
-
-export type $ZodIssueGUID = _$ZodIssueStringFormat & {
-  format: "guid";
-};
-
-export type $ZodIssueCUID = _$ZodIssueStringFormat & {
-  format: "cuid";
-};
-
-export type $ZodIssueCUID2 = _$ZodIssueStringFormat & {
-  format: "cuid2";
-};
-
-export type $ZodIssueULID = _$ZodIssueStringFormat & {
-  format: "ulid";
-};
-
-export type $ZodIssueXID = _$ZodIssueStringFormat & {
-  format: "xid";
-};
-
-export type $ZodIssueKSUID = _$ZodIssueStringFormat & {
-  format: "ksuid";
-};
-
-export type $ZodIssueISODateTime = _$ZodIssueStringFormat & {
-  format: "iso_datetime";
-};
-
-export type $ZodIssueISODate = _$ZodIssueStringFormat & {
-  format: "iso_date";
-};
-
-export type $ZodIssueISOTime = _$ZodIssueStringFormat & {
-  format: "iso_time";
-};
-
-export type $ZodIssueDuration = _$ZodIssueStringFormat & {
-  format: "duration";
-};
-
-export type $ZodIssueIP = _$ZodIssueStringFormat & {
-  format: "ip";
-};
-
-export type $ZodIssueIPv4 = _$ZodIssueStringFormat & {
-  format: "ipv4";
-};
-
-export type $ZodIssueIPv6 = _$ZodIssueStringFormat & {
-  format: "ipv6";
-};
-
-export type $ZodIssueBase64 = _$ZodIssueStringFormat & {
-  format: "base64";
-};
-
-export type $ZodIssueJWT = _$ZodIssueStringFormat & {
+export type $ZodIssueJWT = _$ZodIssueInvalidFormat & {
   format: "jwt";
   algorithm?: JWTAlgorithm | undefined;
+  input: string;
 };
 
-export type $ZodIssueJSONString = _$ZodIssueStringFormat & {
-  format: "json_string";
-};
-
-export type $ZodIssueE164 = _$ZodIssueStringFormat & {
-  format: "e164";
-};
-
-export type $ZodIssueStartsWith = _$ZodIssueStringFormat & {
+export type $ZodIssueStartsWith = _$ZodIssueInvalidFormat & {
   format: "starts_with";
   starts_with: string;
+  input: string;
 };
 
-export type $ZodIssueEndsWith = _$ZodIssueStringFormat & {
+export type $ZodIssueEndsWith = _$ZodIssueInvalidFormat & {
   format: "ends_with";
   ends_with: string;
+  input: string;
 };
 
-export type $ZodIssueIncludes = _$ZodIssueStringFormat & {
+export type $ZodIssueIncludes = _$ZodIssueInvalidFormat & {
   format: "includes";
   includes: string;
+  input: string;
 };
 
-export type $ZodStringFormatIssues =
+type $ZodInvalidFormatIssues =
+  | $ZodIssueStringFormat
   | $ZodIssueRegex
-  | $ZodIssueEmail
-  | $ZodIssueURL
-  | $ZodIssueEmoji
-  | $ZodIssueUUID
-  | $ZodIssueUUIDv4
-  | $ZodIssueUUIDv6
-  | $ZodIssueNanoid
-  | $ZodIssueGUID
-  | $ZodIssueCUID
-  | $ZodIssueCUID2
-  | $ZodIssueULID
-  | $ZodIssueXID
-  | $ZodIssueKSUID
-  | $ZodIssueISODateTime
-  | $ZodIssueISODate
-  | $ZodIssueISOTime
-  | $ZodIssueDuration
-  | $ZodIssueIP
-  | $ZodIssueIPv4
-  | $ZodIssueIPv6
-  | $ZodIssueBase64
   | $ZodIssueJWT
-  | $ZodIssueJSONString
-  | $ZodIssueE164
   | $ZodIssueStartsWith
   | $ZodIssueEndsWith
   | $ZodIssueIncludes;
 
-export type $ZodStringFormats = $ZodStringFormatIssues["format"];
+export type $ZodStringFormats =
+  | $ZodInvalidFormatIssues["format"]
+  | (string & {});
 
-//////////////////////////////////////////
-////     SIZE OUT OF RANGE ISSUES     ////
-//////////////////////////////////////////
+//////////////////////////////
+////     INVALID_SIZE     ////
+//////////////////////////////
 interface _$ZodIssueSizeOutOfRange extends $ZodIssueBase {
-  code: "size_out_of_range";
+  code: "invalid_size";
   domain: "string" | "array" | "set" | "file";
 }
-export type $ZodIssueMinSize = _$ZodIssueSizeOutOfRange & {
-  expected: ">";
-  size: number;
+
+export type $ZodIssueTooSmall = _$ZodIssueSizeOutOfRange & {
+  received: "too_small";
+  minimum: number;
   input?: types.Sizeable;
 };
 
-export type $ZodIssueMaxSize = _$ZodIssueSizeOutOfRange & {
-  expected: "<";
-  size: number;
+export type $ZodIssueTooBig = _$ZodIssueSizeOutOfRange & {
+  received: "too_big";
+  maximum: number;
   input?: types.Sizeable;
 };
 
-export type $ZodIssueSize = _$ZodIssueSizeOutOfRange & {
-  expected: "==";
-  size: number;
-  input?: types.Sizeable;
-};
+export type $ZodInvalidSizeIssues = $ZodIssueTooSmall | $ZodIssueTooBig;
 
-export type $ZodSizeOutOfRangeIssues =
-  | $ZodIssueMinSize
-  | $ZodIssueMaxSize
-  | $ZodIssueSize;
-
-/////////////////////////////////////////
-////     VALUE OUT OF RANGE ISSUES   ////
-/////////////////////////////////////////
-interface _$ZodIssueInvalidNumber extends $ZodIssueBase {
-  code: "invalid_number";
+///////////////////////////////
+////     INVALID_VALUE     ////
+///////////////////////////////
+interface _$ZodIssueInvalidValue extends $ZodIssueBase {
+  code: "invalid_value";
 }
 
-export type $ZodIssueLessThan = _$ZodIssueInvalidNumber & {
+export type $ZodIssueLessThan = _$ZodIssueInvalidValue & {
   expected: "less_than";
   maximum: types.Numeric;
+
   input?: types.Numeric;
 };
 
-export type $ZodIssueLessThanOrEqual = _$ZodIssueInvalidNumber & {
+export type $ZodIssueLessThanOrEqual = _$ZodIssueInvalidValue & {
   expected: "less_than_or_equal";
   maximum: types.Numeric;
+
   input?: types.Numeric;
 };
 
-export type $ZodIssueGreaterThan = _$ZodIssueInvalidNumber & {
+export type $ZodIssueGreaterThan = _$ZodIssueInvalidValue & {
   expected: "greater_than";
   minimum: types.Numeric;
+
   input?: types.Numeric;
 };
 
-export type $ZodIssueGreaterThanOrEqual = _$ZodIssueInvalidNumber & {
+export type $ZodIssueGreaterThanOrEqual = _$ZodIssueInvalidValue & {
   expected: "greater_than_or_equal";
   minimum: types.Numeric;
+
   input?: types.Numeric;
 };
 
-export type $ZodIssueMultipleOf = _$ZodIssueInvalidNumber & {
+export type $ZodIssueMultipleOf = _$ZodIssueInvalidValue & {
   expected: "multiple_of";
   value: types.Numeric;
   input?: types.Numeric;
 };
 
-export type $ZodNumberIssues =
+export interface $ZodIssueInvalidDate extends $ZodIssueBase {
+  expected: "valid_date";
+  input?: Date;
+}
+
+export type $ZodInvalidValueIssues =
   | $ZodIssueLessThan
   | $ZodIssueLessThanOrEqual
   | $ZodIssueGreaterThan
   | $ZodIssueGreaterThanOrEqual
-  | $ZodIssueMultipleOf;
+  | $ZodIssueMultipleOf
+  | $ZodIssueInvalidDate;
 
 /// MAP ISSUES
 // export type $ZodIssueInvalidMapKey = $ZodIssueBase & {
@@ -341,10 +263,10 @@ type _ZodCustomIssue = $ZodIssueBase & { code: "custom" } & flatten<
 export type $ZodCustomIssues = _ZodCustomIssue;
 
 export type $ZodIssue =
-  | $ZodInvalidTypeIssues
-  | $ZodStringFormatIssues
-  | $ZodSizeOutOfRangeIssues
-  | $ZodNumberIssues
+  | $ZodInvalidTypeIssues // invalid type
+  | $ZodInvalidFormatIssues // invalid format
+  | $ZodInvalidSizeIssues // invalid_size
+  | $ZodInvalidValueIssues // invalid_value
   | $ZodCustomIssues;
 
 //////////////////////////////
@@ -379,7 +301,7 @@ export type ErrorMapCtx = {
   data: any;
 };
 
-export type $ZodErrorMap<in T extends $ZodIssueBase = $ZodIssue> = (
+export type $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> = (
   issue: $ZodIssueData<T>,
   /** @deprecated */
   _ctx?: ErrorMapCtx

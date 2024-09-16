@@ -2,9 +2,7 @@
 ////////////////      TYPES     ///////////////////
 ///////////////////////////////////////////////////
 export interface $ZSF {
-  $zsf: {
-    version: number;
-  };
+  $zsf: { version: number };
   type: string;
 }
 
@@ -32,6 +30,7 @@ export type IntegerTypes =
   | "uint64"
   | "int128"
   | "uint128";
+
 export interface $ZSFInteger extends $ZSFNumber {
   format?: IntegerTypes;
   minimum?: number;
@@ -46,13 +45,17 @@ export interface $ZSFNull extends $ZSF {
   type: "null";
 }
 
-export interface $ZSFOptional extends $ZSF {
+export interface $ZSFOptional<T extends $ZSF = $ZSF> extends $ZSF {
   type: "optional";
-  inner: $ZSF;
+  inner: T;
 }
 
 export interface $ZSFNever extends $ZSF {
   type: "never";
+}
+
+export interface $ZSFAny extends $ZSF {
+  type: "any";
 }
 
 export interface $ZSFUnion<Elements extends $ZSF[] = $ZSF[]> extends $ZSF {
@@ -71,6 +74,16 @@ export interface $ZSFObject<
 > extends $ZSF {
   type: "object";
   properties: Shape;
+}
+
+export interface $ZSFIntersection extends $ZSF {
+  type: "intersection";
+  elements: $ZSF[];
+}
+
+export interface $ZSFTuple<T extends $ZSF[]> extends $ZSF {
+  type: "array";
+  prefixItems: T;
 }
 
 /////////////////////////////////////////////////

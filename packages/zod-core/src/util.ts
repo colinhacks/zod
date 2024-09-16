@@ -67,6 +67,25 @@ export function jsonStringifyReplacer(_: string, value: any): any {
   return value;
 }
 
+export function cached<This, T>(
+  th: This,
+  key: string,
+  getter: () => T & ThisType<This>
+): T {
+  Object.defineProperty(th, key, {
+    get() {
+      const value = getter();
+      Object.defineProperty(th, key, {
+        value,
+        configurable: true,
+      });
+      return value;
+    },
+    configurable: true,
+  });
+  return undefined as any;
+}
+
 export function makeCache<This, T extends { [k: string]: () => unknown }>(
   th: This,
   elements: T & ThisType<This>
@@ -101,4 +120,17 @@ export function getElementAtPath(
 ): any {
   if (!path) return obj;
   return path.reduce((acc, key) => acc?.[key], obj);
+}
+
+export function promiseAllObject<T extends object>(promisesObj: T): Promise<T> {
+  const keys = Object.keys(promisesObj);
+  const promises = keys.map((key) => (promisesObj as any)[key]);
+
+  return Promise.all(promises).then((results) => {
+    const resolvedObj: any = {};
+    for (let i = 0; i < keys.length; i++) {
+      resolvedObj[keys[i]] = results[i];
+    }
+    return resolvedObj;
+  });
 }

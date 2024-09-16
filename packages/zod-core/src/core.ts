@@ -14,11 +14,7 @@ export type {
 
 // @ts-expect-error
 export interface Dynamic<T extends object> extends T {}
-export class Dynamic<T extends object> {
-  constructor() {
-    // Object.assign(this, properties);
-  }
-}
+export class Dynamic<T extends object> {}
 
 type NonConstructorKeys = "output" | "input" | "$zod" | "$zsf";
 export type $Def<
@@ -89,72 +85,70 @@ const _parse: Parse<any> = function (
   return result;
 } as any;
 
-export type $ZodVirtuals = {
-  "~async": boolean;
-  "~meta": unknown;
-};
-
 export interface $ZodTypeDef {
   readonly description?: string | undefined;
-  readonly error?: errors.$ZodErrorMap<never> | undefined;
-  checks: checks.$ZodCheck<never, unknown>[];
+  readonly error?: errors.$ZodErrorMap | undefined;
+  checks: checks.$ZodCheck<never>[];
 }
 
+export type $ZodDiscriminators = Array<
+  { key: PropertyKey; discs: $ZodDiscriminators } | Set<unknown>
+>;
+
 export abstract class $ZodType<
-    out O,
-    in I,
+    out O = unknown,
+    in I = never,
     out D extends $ZodTypeDef = $ZodTypeDef,
-    V extends $ZodVirtuals = $ZodVirtuals,
   >
-  extends Dynamic<D & V> // sets defaults
+  extends Dynamic<D>
   implements zsf.$ZSF
 {
-  "~output": O;
-  "~input": $contravar<I>;
-  "~def": D;
+  declare "~output": O;
+  declare "~input": $contravar<I>;
+  declare "~meta": unknown;
+  declare "~optional": unknown;
+  declare "~async"?: boolean;
+  declare "~def": D;
+  get discriminators(): $ZodDiscriminators | undefined {
+    return undefined;
+  }
+  // overidden for literals, enum, null, undefined,
   $zod: { version: number } = { version: 4 };
   $zsf: { version: number } = { version: 0 };
-  override checks: checks.$ZodCheck<never, this["~output"]>[] = [];
-  // readonly description?: string | undefined;
-  // readonly error?: errors.$ZodErrorMap<never> | undefined;
   abstract type: string;
 
   constructor(def: D) {
     super();
     this["~def"] = def;
     Object.assign(this, def);
-    // if (!this.checks.length) this._parse = this._typeCheck;
+    // if (!this.checks.length) this._parse = this._parseInput;
   }
 
-  // parse: Parse<O> (input: unknown, ctx?: parse.ParseContext): this["~output"] {
-  //   const result = this._parse(input, ctx);
-  //   if (parse.failed(result)) throw result;
-  //   return result;
-  // }
+  // parse: Parse<O> = _parse;
 
   /** @deprecated Internal API, use with caution. */
   _parse(
     input: unknown,
     ctx?: parse.ParseContext
   ): parse.ParseReturnType<this["~output"]> {
-    const result = this._typeCheck(input, ctx);
-    if (!this.checks.length) return result;
+    const result = this._parseInput(input, ctx);
+    if (!this.checks || !this.checks.length) return result;
     if (parse.failed(result)) {
       if (parse.aborted(result)) return result;
-      return this._runChecks(input, ctx, result);
+      return this._refineInput(input, ctx, result);
     }
 
-    return this._runChecks(input, ctx);
+    return this._refineInput(input, ctx);
   }
 
   /** @deprecated Internal API, use with caution. */
-  abstract _typeCheck(
+  protected abstract _parseInput(
     input: unknown,
     ctx?: parse.ParseContext
   ): parse.ParseReturnType<this["~output"]>;
 
-  _runCheck(
-    check: checks.$ZodCheck<never, this["~output"]>,
+  protected _runCheck(
+    check: checks.$ZodCheck<this["~output"]>,
     input: unknown,
     ctx?: parse.ParseContext,
     fail?: parse.$ZodFailure
@@ -165,16 +159,15 @@ export abstract class $ZodType<
   }
 
   /** @deprecated Internal API, use with caution. */
-  _runChecks(
+  protected _refineInput(
     input: unknown,
     ctx?: parse.ParseContext,
     fail?: parse.$ZodFailure,
-    checks?: checks.$ZodCheck<never, this["~output"]>[]
+    checks?: checks.$ZodCheck<this["~output"]>[]
   ): parse.ParseReturnType<this["~output"]> {
     console.log("_checks::fail", fail);
-    const checkCtx = $makeCheckCtx<any>(input as any, ctx, fail);
-
-    for (const check of checks || this.checks) {
+    const checkCtx = $makeCheckCtx<never>(input as never, ctx, fail);
+    for (const check of checks || this.checks || []) {
       check.run(checkCtx);
       if (checkCtx.fail && checkCtx.fail.level === "abort")
         return checkCtx.fail;
@@ -193,7 +186,7 @@ export abstract class $ZodType<
   }
 
   /** @deprecated Internal API, use with caution. */
-  _addCheck(check: checks.$ZodCheck<never, this["~output"]>): this {
+  _addCheck(check: checks.$ZodCheck<this["~output"]>): this {
     const clone = this._clone();
     clone.checks = [...(clone.checks || []), check];
     return clone;

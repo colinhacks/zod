@@ -3,7 +3,8 @@
   "compilerOptions": {
     "isolatedDeclarations": true,
     "composite": true,
-    "stripInternal": true
+    "stripInternal": true,
+    "strictFunctionTypes": true
   },
   "exclude": ["vitest.config.ts"]
 }

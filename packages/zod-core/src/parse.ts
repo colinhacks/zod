@@ -108,7 +108,7 @@ export type ErrorLevel = "error" | "abort";
 const errorLevels: ErrorLevel[] = ["error", "abort"];
 
 export class $ZodFailure {
-  protected "~tag": typeof symbols.RESULT = symbols.RESULT;
+  protected "~tag": typeof symbols.FAILURE = symbols.FAILURE;
   issues: errors.$ZodIssue[] = [];
   ctx?: ParseContext | undefined;
 
@@ -153,7 +153,7 @@ export class $ZodFailure {
 
   /** @internal */
   static [Symbol.hasInstance](inst: any) {
-    return inst?.["~tag"] === symbols.RESULT;
+    return inst?.["~tag"] === symbols.FAILURE;
   }
 }
 
@@ -163,8 +163,8 @@ export type ParseReturnType<T> =
   | SyncParseReturnType<T>
   | AsyncParseReturnType<T>;
 
-export function failed(x: any): x is $ZodFailure {
-  return x?.["~tag"] === FAILURE;
+export function failed(x: SyncParseReturnType<unknown>): x is $ZodFailure {
+  return (x as any)?.["~tag"] === FAILURE;
 }
 
 export function aborted(x: $ZodFailure): x is $ZodFailure {

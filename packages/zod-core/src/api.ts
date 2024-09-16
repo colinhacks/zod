@@ -704,28 +704,28 @@ export function normalizeCheckParams<T extends $ZodCheckParamsBase>(
   return params as any;
 }
 
-interface $ZodStringFormat extends $ZodBaseParams {
-  message?:
-    | string
-    | err.$ZodErrorMap<
-        err.$ZodIssueInvalidTypeBasic | err.$ZodStringFormatIssues
-      >;
-}
+// interface $ZodStringFormat extends $ZodBaseParams {
+//   message?:
+//     | string
+//     | err.$ZodErrorMap<
+//         err.$ZodIssueInvalidTypeBasic | err.$ZodInvalidStringIssues
+//       >;
+// }
 
 interface $ZodCheckParamsBase {
   message?: string | err.$ZodErrorMap<err.$ZodIssueBase>;
 }
 
 // $ZodCheckEquals;
-export function equals<T extends types.Numeric>(
-  value: T,
-  params?: string | $ZodCheckParamsBase
-): checks.$ZodCheckEquals<T> {
-  return new checks.$ZodCheckEquals({
-    ...normalizeCheckParams(params),
-    value,
-  });
-}
+// export function equals<T extends types.Numeric>(
+//   value: T,
+//   params?: string | $ZodCheckParamsBase
+// ): checks.$ZodCheckEquals<T> {
+//   return new checks.$ZodCheckEquals({
+//     ...normalizeCheckParams(params),
+//     value,
+//   });
+// }
 
 // $ZodCheckLessThan;
 export function lt<T extends types.Numeric>(
