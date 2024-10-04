@@ -5,7 +5,7 @@ import type { ZodParsedType } from "./util";
 
 export const makeIssue = (params: {
   data: any;
-  path: (string | number)[];
+  path: ParsePath;
   errorMaps: ZodErrorMap[];
   issueData: IssueData;
 }): ZodIssue => {
@@ -41,12 +41,15 @@ export const makeIssue = (params: {
 };
 
 export type ParseParams = {
-  path: (string | number)[];
+  path: ParsePath;
   errorMap: ZodErrorMap;
   async: boolean;
 };
 
-export type ParsePathComponent = string | number;
+export type ParsePathComponent =
+  | string
+  | number
+  | { discriminator: string; value: string };
 export type ParsePath = ParsePathComponent[];
 export const EMPTY_PATH: ParsePath = [];
 
@@ -65,7 +68,7 @@ export interface ParseContext {
 
 export type ParseInput = {
   data: any;
-  path: (string | number)[];
+  path: ParsePath;
   parent: ParseContext;
 };
 

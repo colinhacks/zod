@@ -43,7 +43,7 @@ import {
 
 export interface RefinementCtx {
   addIssue: (arg: IssueData) => void;
-  path: (string | number)[];
+  path: ParsePath;
 }
 export type ZodRawShape = { [k: string]: ZodTypeAny };
 export type ZodTypeAny = ZodType<any, any, any>;
@@ -3138,22 +3138,20 @@ export class ZodDiscriminatedUnion<
         code: ZodIssueCode.invalid_union_discriminator,
         options: Array.from(this.optionsMap.keys()),
         path: [discriminator],
+        received: discriminatorValue,
       });
       return INVALID;
     }
 
+    const optionCtx = {
+      data: ctx.data,
+      path: [...ctx.path, { discriminator, value: discriminatorValue }],
+      parent: ctx,
+    };
     if (ctx.common.async) {
-      return option._parseAsync({
-        data: ctx.data,
-        path: ctx.path,
-        parent: ctx,
-      }) as any;
+      return option._parseAsync(optionCtx) as any;
     } else {
-      return option._parseSync({
-        data: ctx.data,
-        path: ctx.path,
-        parent: ctx,
-      }) as any;
+      return option._parseSync(optionCtx) as any;
     }
   }
 
