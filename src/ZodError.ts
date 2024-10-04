@@ -1,4 +1,4 @@
-import type { TypeOf, ZodType } from ".";
+import type { ParsePath, TypeOf, ZodType } from ".";
 import { Primitive } from "./helpers/typeAliases";
 import { util, ZodParsedType } from "./helpers/util";
 
@@ -37,7 +37,7 @@ export const ZodIssueCode = util.arrayToEnum([
 export type ZodIssueCode = keyof typeof ZodIssueCode;
 
 export type ZodIssueBase = {
-  path: (string | number)[];
+  path: ParsePath;
   message?: string;
 };
 
@@ -66,6 +66,7 @@ export interface ZodInvalidUnionIssue extends ZodIssueBase {
 export interface ZodInvalidUnionDiscriminatorIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_union_discriminator;
   options: Primitive[];
+  received: string;
 }
 
 export interface ZodInvalidEnumValueIssue extends ZodIssueBase {
@@ -239,23 +240,27 @@ export class ZodError<T = any> extends Error {
           let i = 0;
           while (i < issue.path.length) {
             const el = issue.path[i];
+            const value =
+              typeof el === "object" && "discriminator" in el && "value" in el
+                ? el.value
+                : el;
             const terminal = i === issue.path.length - 1;
 
             if (!terminal) {
-              curr[el] = curr[el] || { _errors: [] };
-              // if (typeof el === "string") {
-              //   curr[el] = curr[el] || { _errors: [] };
-              // } else if (typeof el === "number") {
+              curr[value] = curr[value] || { _errors: [] };
+              // if (typeof value === "string") {
+              //   curr[value] = curr[value] || { _errors: [] };
+              // } valuese if (typeof value === "number") {
               //   const errorArray: any = [];
               //   errorArray._errors = [];
-              //   curr[el] = curr[el] || errorArray;
+              //   curr[value] = curr[value] || errorArray;
               // }
             } else {
-              curr[el] = curr[el] || { _errors: [] };
-              curr[el]._errors.push(mapper(issue));
+              curr[value] = curr[value] || { _errors: [] };
+              curr[value]._errors.push(mapper(issue));
             }
 
-            curr = curr[el];
+            curr = curr[value];
             i++;
           }
         }
@@ -305,8 +310,15 @@ export class ZodError<T = any> extends Error {
     const formErrors: U[] = [];
     for (const sub of this.issues) {
       if (sub.path.length > 0) {
-        fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
-        fieldErrors[sub.path[0]].push(mapper(sub));
+        const pathItem = sub.path[0];
+        const value =
+          typeof pathItem === "object" &&
+          "discriminator" in pathItem &&
+          "value" in pathItem
+            ? pathItem.value
+            : pathItem;
+        fieldErrors[value] = fieldErrors[value] || [];
+        fieldErrors[value].push(mapper(sub));
       } else {
         formErrors.push(mapper(sub));
       }
@@ -324,7 +336,7 @@ type stripPath<T extends object> = T extends any
   : never;
 
 export type IssueData = stripPath<ZodIssueOptionalMessage> & {
-  path?: (string | number)[];
+  path?: ParsePath;
   fatal?: boolean;
 };
 

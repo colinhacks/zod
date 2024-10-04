@@ -94,8 +94,10 @@ test("invalid discriminator value", () => {
       {
         code: z.ZodIssueCode.invalid_union_discriminator,
         options: ["a", "b"],
-        message: "Invalid discriminator value. Expected 'a' | 'b'",
+        message:
+          "Invalid discriminator value. Expected 'a' | 'b', received 'x'",
         path: ["type"],
+        received: "x",
       },
     ]);
   }
@@ -114,7 +116,7 @@ test("valid discriminator value, invalid data", () => {
         code: z.ZodIssueCode.invalid_type,
         expected: z.ZodParsedType.string,
         message: "Required",
-        path: ["a"],
+        path: [{ discriminator: "type", value: "a" }, "a"],
         received: z.ZodParsedType.undefined,
       },
     ]);
@@ -189,7 +191,7 @@ test("async - invalid", async () => {
         code: "invalid_type",
         expected: "string",
         received: "number",
-        path: ["a"],
+        path: [{ discriminator: "type", value: "a" }, "a"],
         message: "Expected string, received number",
       },
     ]);
