@@ -29,7 +29,8 @@ test("passing validations", () => {
   hostname.parse("www.google.com");
   hostname.parse("[2001:db8::ff00:42:8329]");
   hostname.parse("192.168.1.1");
-  hostname.parse("xn--d1acj3b");
+  hostname.parse("xn--d1acj3b.com");
+  hostname.parse("xn--d1acj3b.org");
 });
 
 test("failing validations", () => {
@@ -43,6 +44,7 @@ test("failing validations", () => {
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
   expect(() => hostname.parse("ht!tp://invalid.com")).toThrow();
+  expect(() => hostname.parse("xn--d1acj3b")).toThrow();
   expect(() => hostname.parse("xn--d1acj3b..com")).toThrow();
   expect(() => hostname.parse("ex@mple.com")).toThrow();
   expect(() => hostname.parse("[2001:db8::zzzz]")).toThrow();

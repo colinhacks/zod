@@ -859,7 +859,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
       } else if (check.kind === "hostname") {
         const domainNameRegex =
           /^(?!-)(?!.*--)(?!.*\.\.)(?!.*\.$)[a-zA-Z0-9-]{1,63}(?<!-)(\.[a-zA-Z0-9-]{1,63})*$/;
-        const punycodeRegex = /^xn--[a-zA-Z0-9-]{1,63}$/;
+        const punycodeRegex = /^xn--[a-zA-Z0-9-]{1,63}\.[a-zA-Z]{2,}$/; // Ensure TLD after punycode
         const ipv4Regex =
           /^(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$/;
         const ipv6Regex = /^\[[0-9a-fA-F:]+\]$/;
@@ -868,7 +868,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           domainNameRegex.test(input.data) ||
           ipv4Regex.test(input.data) ||
           ipv6Regex.test(input.data) ||
-          punycodeRegex.test(input.data);
+          punycodeRegex.test(input.data); // Apply punycodeRegex here
 
         if (!isValid) {
           ctx = this._getOrReturnCtx(input, ctx);
