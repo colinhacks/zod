@@ -505,6 +505,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-openapi`](https://github.com/samchungy/zod-openapi): Create full OpenAPI v3.x documentation from Zod schemas.
 - [`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi): Fastify type provider, validation, serialization and @fastify/swagger support for Zod schemas.
 - [`typeschema`](https://typeschema.com/): Universal adapter for schema validation.
+- [`zodex`](https://github.com/commonbaseapp/zodex): (De)serialization for zod schemas
 
 #### X to Zod
 
