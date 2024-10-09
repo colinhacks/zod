@@ -1,5 +1,3 @@
-// import type * as zsf from "./zsf.js";
-
 import type * as parse from "./parse.js";
 import type * as types from "./types.js";
 import type { JWTAlgorithm } from "./types.js";
@@ -78,6 +76,24 @@ export type $ZodInvalidTypeIssues =
   | $ZodIssueInvalidTypeUnion
   | $ZodIssueInvalidTypeLiteral
   | $ZodIssueInvalidTypeEnum;
+
+//////////////////////////////
+////     INVALID_KEY     /////
+//////////////////////////////
+
+export interface $ZodIssueInvalidMapKey extends $ZodIssueBase {
+  code: "invalid_map_key";
+  received: "invalid_key";
+  input: unknown;
+  issue: $ZodIssue;
+}
+export interface $ZodIssueInvalidMapValue extends $ZodIssueBase {
+  code: "invalid_map_value";
+  received: "invalid_value";
+  key: unknown;
+  input: unknown;
+  issue: $ZodIssue;
+}
 
 ////////////////////////////////
 ////     INVALID_FORMAT     ////
@@ -224,7 +240,8 @@ export type $ZodIssueMultipleOf = _$ZodIssueInvalidValue & {
   input?: types.Numeric;
 };
 
-export interface $ZodIssueInvalidDate extends $ZodIssueBase {
+export interface $ZodIssueInvalidDate extends _$ZodIssueInvalidValue {
+  code: "invalid_value";
   expected: "valid_date";
   input?: Date;
 }
@@ -236,17 +253,6 @@ export type $ZodInvalidValueIssues =
   | $ZodIssueGreaterThanOrEqual
   | $ZodIssueMultipleOf
   | $ZodIssueInvalidDate;
-
-/// MAP ISSUES
-// export type $ZodIssueInvalidMapKey = $ZodIssueBase & {
-//   code: "invalid_map_key";
-//   issue: $ZodIssue;
-// };
-
-// export type $ZodIssueInvalidMapValue = $ZodIssueBase & {
-//   code: "invalid_map_value";
-//   issue: $ZodIssue;
-// };
 
 //////////////////////////////
 ////     CUSTOM ISSUES    ////
@@ -276,9 +282,7 @@ export type $ZodIssueData<T extends $ZodIssueBase = $ZodIssue> =
   (T extends infer U
     ? Omit<Required<U>, "message" | "path" | "level">
     : never) & {
-    // input?: any;
     path?: (string | number)[];
-    // fatal?: boolean;
     level?: "error" | "abort";
     message?: string | undefined;
   };
@@ -309,3 +313,5 @@ export type $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> = (
 
 /** @deprecated Use `$ZodErrorMap` instead. */
 export type ZodErrorMap = $ZodErrorMap;
+
+type lkjasdf = $ZodIssue;

@@ -1,95 +1,99 @@
-import { Dynamic } from "./core.js";
-import type * as err from "./errors.js";
+import * as core from "./core.js";
+import type * as err from "./errors_v2.js";
 import { type $ZodFailure, getParsedType } from "./parse.js";
 
 import type * as types from "./types.js";
 
-export interface $CheckCtx<T> {
-  input: T;
-  fail?: $ZodFailure | undefined;
-  addIssue(
-    issue: err.$ZodIssueData,
-    schema?: { error?: err.$ZodErrorMap<never> | undefined }
-  ): void;
-}
+// export interface $ZodCheckCtx<out I> {
+//   input: I;
+//   fail?: $ZodFailure | undefined;
+//   addIssue(
+//     issue: err.$ZodIssueData,
+//     schema?: { error?: err.$ZodErrorMap<never> | undefined }
+//   ): void;
+// }
 
-export interface $ZodCheckDef {
-  deps?: string[];
-  error?: err.$ZodErrorMap<never> | undefined;
-}
-export abstract class $ZodCheck<
-  in T,
-  out Def extends $ZodCheckDef = $ZodCheckDef,
-> extends Dynamic<Def> {
-  abstract check: string;
-  constructor(def: object) {
-    super();
-    Object.assign(this, def);
-  }
+// export interface core.$ZodCheckDef {
+//   deps?: string[];
+//   error?: err.$ZodErrorMap<never> | undefined;
+// }
 
-  // return T or ZodFailure
-  // T cannot occur in signature to maintain contravariance
-  abstract run(ctx: $CheckCtx<T>): void | Promise<void>;
+// export abstract class $ZodCheck<
+//   in I,
+//   out O = I,
+//   out Def extends core.$ZodCheckDef = core.$ZodCheckDef,
+// > extends Dynamic<Def> {
+//   abstract check: string;
+//   constructor(def: object) {
+//     super();
+//     Object.assign(this, def);
+//   }
 
-  // alternative signature
-  // return T or ZodFailure
-  // returned value will override input
-  // abstract run2: (ctx: In) => Out | ZodFailure;
-}
+//   // return T or ZodFailure
+//   // T cannot occur in signature to maintain contravariance
+//   abstract run(ctx: $ZodCheckCtx<I>): void | Promise<void>;
+
+//   // alternative signature
+//   // return T or ZodFailure
+//   // returned value will override input
+//   abstract run2: (ctx: I) => O | $ZodFailure;
+// }
 
 ///////////////////////////////////////
 /////      $ZodCheckLessThan      /////
 ///////////////////////////////////////
-interface $ZodCheckLessThanDef extends $ZodCheckDef {
+interface $ZodCheckLessThanDef extends core.$ZodCheckDef {
   value: types.Numeric;
   inclusive: boolean;
   error?: err.$ZodErrorMap<err.$ZodIssueLessThan> | undefined;
 }
 export class $ZodCheckLessThan<
   T extends types.Numeric = types.Numeric,
-> extends $ZodCheck<T, $ZodCheckLessThanDef> {
+> extends core.$ZodCheck<T, $ZodCheckLessThanDef> {
   override check = "less_than" as const;
 
-  run(ctx: $CheckCtx<T>): void {
-    if (this.inclusive ? this.value <= ctx.input : this.value < ctx.input) {
-      ctx.addIssue(
-        {
-          code: "invalid_value",
-          expected: this.inclusive ? "less_than_or_equal" : "less_than",
-          maximum: this.value,
-          input: ctx.input,
-        },
-        this
-      );
-    }
+  run(ctx: $ZodCheckCtx<T>): void {
+    if (this.inclusive ? ctx.input <= this.value : ctx.input < this.value)
+      return;
+
+    ctx.addIssue(
+      {
+        code: "invalid_value",
+        expected: this.inclusive ? "less_than_or_equal" : "less_than",
+        maximum: this.value,
+        input: ctx.input,
+      },
+      this
+    );
   }
 }
 
 /////////////////////////////////////
 /////    $ZodCheckGreaterThan    /////
 /////////////////////////////////////
-interface $ZodCheckGreaterThanDef extends $ZodCheckDef {
+interface $ZodCheckGreaterThanDef extends core.$ZodCheckDef {
   value: types.Numeric;
   inclusive: boolean;
   error?: err.$ZodErrorMap<err.$ZodIssueGreaterThan> | undefined;
 }
 export class $ZodCheckGreaterThan<
   T extends types.Numeric = types.Numeric,
-> extends $ZodCheck<T, $ZodCheckGreaterThanDef> {
+> extends core.$ZodCheck<T, $ZodCheckGreaterThanDef> {
   override check = "greater_than" as const;
 
-  run(ctx: $CheckCtx<T>): void {
-    if (this.inclusive ? this.value > ctx.input : this.value >= ctx.input) {
-      ctx.addIssue(
-        {
-          code: "invalid_value",
-          expected: this.inclusive ? "greater_than_or_equal" : "greater_than",
-          minimum: this.value,
-          input: ctx.input,
-        },
-        this
-      );
-    }
+  run(ctx: $ZodCheckCtx<T>): void {
+    if (this.inclusive ? ctx.input >= this.value : ctx.input >= this.value)
+      return;
+
+    ctx.addIssue(
+      {
+        code: "invalid_value",
+        expected: this.inclusive ? "greater_than_or_equal" : "greater_than",
+        minimum: this.value,
+        input: ctx.input,
+      },
+      this
+    );
   }
 }
 
@@ -107,16 +111,16 @@ function floatSafeRemainder(val: number, step: number) {
 }
 
 interface $ZodCheckMultipleOfDef<T extends number | bigint>
-  extends $ZodCheckDef {
+  extends core.$ZodCheckDef {
   value: T;
   error?: err.$ZodErrorMap<err.$ZodIssueMultipleOf> | undefined;
 }
 export class $ZodCheckMultipleOf<
   T extends number | bigint = number | bigint,
-> extends $ZodCheck<T, $ZodCheckMultipleOfDef<T>> {
+> extends core.$ZodCheck<T, $ZodCheckMultipleOfDef<T>> {
   override check = "multiple_of" as const;
 
-  run(ctx: $CheckCtx<T>): void {
+  run(ctx: $ZodCheckCtx<T>): void {
     if (typeof ctx.input !== typeof this.value)
       throw new Error("Cannot mix number and bigint in multiple_of check.");
     // the casts are safe because we know the types are the same
@@ -155,16 +159,16 @@ function getSize(input: any): {
   throw new Error(`Invalid input for size check: ${getParsedType(input)}`);
 }
 
-interface $ZodCheckMaxSizeDef extends $ZodCheckDef {
+interface $ZodCheckMaxSizeDef extends core.$ZodCheckDef {
   maximum: number;
   error?: err.$ZodErrorMap<err.$ZodIssueTooBig> | undefined;
 }
 export class $ZodCheckMaxSize<
   T extends types.Sizeable = types.Sizeable,
-> extends $ZodCheck<T, $ZodCheckMaxSizeDef> {
+> extends core.$ZodCheck<T, $ZodCheckMaxSizeDef> {
   override check = "max_size" as const;
 
-  run(ctx: $CheckCtx<T>): void {
+  run(ctx: $ZodCheckCtx<T>): void {
     const size = getSize(ctx.input);
     if (size.size > this.maximum) {
       ctx.addIssue(
@@ -184,16 +188,16 @@ export class $ZodCheckMaxSize<
 //////////////////////////////////
 /////    $ZodCheckMinSize    /////
 //////////////////////////////////
-interface $ZodCheckMinSizeDef extends $ZodCheckDef {
+interface $ZodCheckMinSizeDef extends core.$ZodCheckDef {
   minimum: number;
   error?: err.$ZodErrorMap<err.$ZodIssueTooSmall> | undefined;
 }
 export class $ZodCheckMinSize<
   T extends types.Sizeable = types.Sizeable,
-> extends $ZodCheck<T, $ZodCheckMinSizeDef> {
+> extends core.$ZodCheck<T, $ZodCheckMinSizeDef> {
   override check = "size_greater_than" as const;
 
-  run(ctx: $CheckCtx<T>): void {
+  run(ctx: $ZodCheckCtx<T>): void {
     const size = getSize(ctx.input);
     if (size.size < this.minimum) {
       ctx.addIssue(
@@ -213,7 +217,7 @@ export class $ZodCheckMinSize<
 /////////////////////////////////////
 /////    $ZodCheckSizeEquals    /////
 /////////////////////////////////////
-interface $ZodCheckSizeEqualsDef extends $ZodCheckDef {
+interface $ZodCheckSizeEqualsDef extends core.$ZodCheckDef {
   size: number;
   error?:
     | err.$ZodErrorMap<err.$ZodIssueTooBig | err.$ZodIssueTooSmall>
@@ -222,10 +226,10 @@ interface $ZodCheckSizeEqualsDef extends $ZodCheckDef {
 
 export class $ZodCheckSizeEquals<
   T extends types.Sizeable = types.Sizeable,
-> extends $ZodCheck<T, $ZodCheckSizeEqualsDef> {
+> extends core.$ZodCheck<T, $ZodCheckSizeEqualsDef> {
   override check = "size_equals" as const;
 
-  run(ctx: $CheckCtx<T>): void {
+  run(ctx: $ZodCheckCtx<T>): void {
     const size = getSize(ctx.input);
     if (size.size !== this.size) {
       const tooBig = size.size > this.size;
@@ -247,16 +251,16 @@ export class $ZodCheckSizeEquals<
 ////////////////////////////////
 /////    $ZodCheckRegex    /////
 ////////////////////////////////
-interface $ZodCheckRegexDef extends $ZodCheckDef {
+interface $ZodCheckRegexDef extends core.$ZodCheckDef {
   pattern: RegExp;
   error?: err.$ZodErrorMap<err.$ZodIssueRegex> | undefined;
 }
 
 export abstract class $ZodCheckRegex<
-  D extends $ZodCheckRegexDef = $ZodCheckRegexDef,
-> extends $ZodCheck<string, D> {
+  D extends core.$ZodCheckRegexDef = $ZodCheckRegexDef,
+> extends core.$ZodCheck<string, D> {
   abstract override check: err.$ZodStringFormats;
-  override run(ctx: $CheckCtx<string>): void {
+  override run(ctx: $ZodCheckCtx<string>): void {
     if (!this.pattern.test(ctx.input)) {
       ctx.addIssue(
         {
@@ -274,13 +278,16 @@ export abstract class $ZodCheckRegex<
 ///////////////////////////////////
 /////    $ZodCheckIncludes    /////
 ///////////////////////////////////
-interface $ZodCheckIncludesDef extends $ZodCheckRegexDef {
+interface $ZodCheckIncludesDef extends core.$ZodCheckRegexDef {
   includes: string;
 }
-export class $ZodCheckIncludes extends $ZodCheck<string, $ZodCheckIncludesDef> {
+export class $ZodCheckIncludes extends core.$ZodCheck<
+  string,
+  $ZodCheckIncludesDef
+> {
   override check = "includes" as const;
 
-  override run(ctx: $CheckCtx<string>): void {
+  override run(ctx: $ZodCheckCtx<string>): void {
     if (!ctx.input.includes(this.includes)) {
       ctx.addIssue(
         {
@@ -298,9 +305,9 @@ export class $ZodCheckIncludes extends $ZodCheck<string, $ZodCheckIncludesDef> {
 ///////////////////////////////
 /////    $ZodCheckTrim    /////
 ///////////////////////////////
-export class $ZodCheckTrim extends $ZodCheck<string, $ZodCheckDef> {
+export class $ZodCheckTrim extends core.$ZodCheck<string, core.$ZodCheckDef> {
   override check = "trim" as const;
-  override run(ctx: $CheckCtx<string>): void {
+  override run(ctx: $ZodCheckCtx<string>): void {
     ctx.input = ctx.input.trim();
   }
 }
@@ -308,9 +315,12 @@ export class $ZodCheckTrim extends $ZodCheck<string, $ZodCheckDef> {
 //////////////////////////////////////
 /////    $ZodCheckToLowerCase    /////
 //////////////////////////////////////
-export class $ZodCheckToLowerCase extends $ZodCheck<string, $ZodCheckDef> {
+export class $ZodCheckToLowerCase extends core.$ZodCheck<
+  string,
+  core.$ZodCheckDef
+> {
   override check = "to_lowercase" as const;
-  override run(ctx: $CheckCtx<string>): void {
+  override run(ctx: $ZodCheckCtx<string>): void {
     ctx.input = ctx.input.toLowerCase();
   }
 }
@@ -318,16 +328,22 @@ export class $ZodCheckToLowerCase extends $ZodCheck<string, $ZodCheckDef> {
 //////////////////////////////////////
 /////    $ZodCheckToUpperCase    /////
 //////////////////////////////////////
-export class $ZodCheckToUpperCase extends $ZodCheck<string, $ZodCheckDef> {
+export class $ZodCheckToUpperCase extends core.$ZodCheck<
+  string,
+  core.$ZodCheckDef
+> {
   override check = "to_uppercase" as const;
-  override run(ctx: $CheckCtx<string>): void {
+  override run(ctx: $ZodCheckCtx<string>): void {
     ctx.input = ctx.input.toUpperCase();
   }
 }
 
-export class $ZodCheckNormalize extends $ZodCheck<string, $ZodCheckDef> {
+export class $ZodCheckNormalize extends core.$ZodCheck<
+  string,
+  core.$ZodCheckDef
+> {
   override check = "normalize" as const;
-  override run(ctx: $CheckCtx<string>): void {
+  override run(ctx: $ZodCheckCtx<string>): void {
     ctx.input = ctx.input.normalize();
   }
 }
@@ -335,15 +351,15 @@ export class $ZodCheckNormalize extends $ZodCheck<string, $ZodCheckDef> {
 /////////////////////////////////////
 /////    $ZodCheckStartsWith    /////
 /////////////////////////////////////
-interface $ZodCheckStartsWithDef extends $ZodCheckDef {
+interface $ZodCheckStartsWithDef extends core.$ZodCheckDef {
   starts_with: string;
 }
-export class $ZodCheckStartsWith extends $ZodCheck<
+export class $ZodCheckStartsWith extends core.$ZodCheck<
   string,
   $ZodCheckStartsWithDef
 > {
   override check = "starts_with" as const;
-  override run(ctx: $CheckCtx<string>): void {
+  override run(ctx: $ZodCheckCtx<string>): void {
     if (!ctx.input.startsWith(this.starts_with)) {
       ctx.addIssue(
         {
@@ -361,12 +377,15 @@ export class $ZodCheckStartsWith extends $ZodCheck<
 //////////////////////////////////
 /////   $ZodCheckEndsWith    /////
 //////////////////////////////////
-interface $ZodCheckEndsWithDef extends $ZodCheckDef {
+interface $ZodCheckEndsWithDef extends core.$ZodCheckDef {
   ends_with: string;
 }
-export class $ZodCheckEndsWith extends $ZodCheck<string, $ZodCheckEndsWithDef> {
+export class $ZodCheckEndsWith extends core.$ZodCheck<
+  string,
+  $ZodCheckEndsWithDef
+> {
   override check = "ends_with" as const;
-  override run(ctx: $CheckCtx<string>): void {
+  override run(ctx: $ZodCheckCtx<string>): void {
     if (!ctx.input.endsWith(this.ends_with)) {
       ctx.addIssue(
         {
@@ -384,12 +403,15 @@ export class $ZodCheckEndsWith extends $ZodCheck<string, $ZodCheckEndsWithDef> {
 ///////////////////////////////////
 /////    $ZodCheckFileType    /////
 ///////////////////////////////////
-interface $ZodCheckFileTypeDef extends $ZodCheckDef {
+interface $ZodCheckFileTypeDef extends core.$ZodCheckDef {
   fileTypes: types.MimeTypes[];
 }
-export class $ZodCheckFileType extends $ZodCheck<File, $ZodCheckFileTypeDef> {
+export class $ZodCheckFileType extends core.$ZodCheck<
+  File,
+  $ZodCheckFileTypeDef
+> {
   override check = "file_type" as const;
-  override run(ctx: $CheckCtx<File>): void {
+  override run(ctx: $ZodCheckCtx<File>): void {
     if (this.fileTypes.indexOf(ctx.input.type)) {
       ctx.addIssue(
         {
@@ -408,13 +430,16 @@ export class $ZodCheckFileType extends $ZodCheck<File, $ZodCheckFileTypeDef> {
 ///////////////////////////////////
 /////    $ZodCheckFileName    /////
 ///////////////////////////////////
-interface $ZodCheckFileNameDef extends $ZodCheckDef {
+interface $ZodCheckFileNameDef extends core.$ZodCheckDef {
   fileName: string;
 }
-export class $ZodCheckFileName extends $ZodCheck<File, $ZodCheckFileNameDef> {
+export class $ZodCheckFileName extends core.$ZodCheck<
+  File,
+  $ZodCheckFileNameDef
+> {
   override check = "file_name" as const;
 
-  override run(ctx: $CheckCtx<File>): void {
+  override run(ctx: $ZodCheckCtx<File>): void {
     if (this.fileName !== ctx.input.name) {
       ctx.addIssue(
         {

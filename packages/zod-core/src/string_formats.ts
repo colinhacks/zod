@@ -1,6 +1,6 @@
 import type * as checks from "./checks.js";
 import { $ZodString, type $ZodStringDef } from "./classes.js";
-import type * as err from "./errors.js";
+import type * as err from "./errors_v2.js";
 import * as parse from "./parse.js";
 import * as regexes from "./regexes.js";
 import type * as types from "./types.js";
@@ -27,7 +27,7 @@ export abstract class $ZodStringFormat<
 {
   abstract check: err.$ZodStringFormats;
 
-  run(ctx: checks.$CheckCtx<string>): void {
+  run(ctx: checks.$ZodCheckCtx<string>): void {
     if (!this.pattern) throw new Error("Not implemented.");
     if (!this.pattern.test(ctx.input)) {
       ctx.addIssue(
@@ -87,7 +87,7 @@ export class $ZodEmail extends $ZodStringFormat {
 export class $ZodURL extends $ZodStringFormat {
   check = "url" as const;
 
-  override run(ctx: checks.$CheckCtx<string>): void {
+  override run(ctx: checks.$ZodCheckCtx<string>): void {
     try {
       const url = new URL(ctx.input);
       if (!regexes.hostnameRegex.test(url.hostname)) {
@@ -146,7 +146,7 @@ interface $ZodJWTDef extends $ZodStringFormatDef {
 }
 export class $ZodJWT extends $ZodStringFormat<$ZodJWTDef> {
   check = "jwt" as const;
-  override run(ctx: checks.$CheckCtx<string>): void {
+  override run(ctx: checks.$ZodCheckCtx<string>): void {
     if (!isValidJWT(ctx.input, this.algorithm)) {
       ctx.addIssue({
         code: "invalid_format",
@@ -289,7 +289,7 @@ export class $ZodIP extends $ZodStringFormat {
   check = "ip" as const;
   override pattern: RegExp = regexes.ipv4Regex;
 
-  override run(ctx: checks.$CheckCtx<string>): void {
+  override run(ctx: checks.$ZodCheckCtx<string>): void {
     if (regexes.ipv4Regex.test(ctx.input) || regexes.ipv6Regex.test(ctx.input))
       return;
     ctx.addIssue({
@@ -330,7 +330,7 @@ export class $ZodBase64 extends $ZodStringFormat {
 export class $ZodJSONString extends $ZodStringFormat {
   check = "json_string" as const;
 
-  override run(ctx: checks.$CheckCtx<string>): void {
+  override run(ctx: checks.$ZodCheckCtx<string>): void {
     try {
       JSON.parse(ctx.input);
     } catch (err) {

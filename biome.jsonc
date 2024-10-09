@@ -2,7 +2,8 @@
   "$schema": "https://biomejs.dev/schemas/1.8.3/schema.json",
   "formatter": {
     "enabled": true,
-    "indentStyle": "space"
+    "indentStyle": "space",
+    "lineWidth": 120
   },
   "javascript": {
     "formatter": {
@@ -30,11 +31,19 @@
         "noNonNullAssertion": "off"
       },
       "correctness": {
-        "noUnusedImports": "error"
+        "noUnusedImports": {
+          "level": "error",
+          "fix": "none"
+        },
+        "noUnusedVariables": {
+          "level": "warn",
+          "fix": "none"
+        }
       },
       "complexity": {
         "noUselessConstructor": "off",
-        "noBannedTypes": "off"
+        "noBannedTypes": "off",
+        "useArrowFunction": "off"
       }
     }
   },

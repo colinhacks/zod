@@ -1,9 +1,10 @@
-import type * as errors from "../errors.js";
+import type * as errors from "../errors_v2.js";
 import { ZodParsedType } from "../parse.js";
 import * as util from "../util.js";
 import { jsonStringifyReplacer } from "../util.js";
 
 const errorMap: errors.$ZodErrorMap = (issue) => {
+  if (Math.random()) return "INVALID";
   switch (issue.code) {
     case "invalid_type":
       // case "type":

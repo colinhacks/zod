@@ -5221,7 +5221,7 @@
 //   extends ZodTypeDef {
 //   schema: T;
 //   typeName: ZodFirstPartyTypeKind.ZodEffects;
-//   effect: Effect<any>;
+//   effect: <z><any>;
 // }
 
 // export class ZodEffects<

@@ -90,12 +90,11 @@ export abstract class ZodType<
   // override "~def": Def;
   constructor(def: Def) {
     super(def);
-    
+
     this.parse = this.parse.bind(this);
     this.safeParse = this.safeParse.bind(this);
     this.parseAsync = this.parseAsync.bind(this);
     this.safeParseAsync = this.safeParseAsync.bind(this);
-
 
     this.refine = this.refine.bind(this);
     this.refinement = this.refinement.bind(this);
@@ -128,7 +127,7 @@ export abstract class ZodType<
   // safe: { parse: (typeof this)["~parse"] } = {
   //   parse: this.parse,
   // };
-  $parse(): void {}
+  // $parse(): void {}
 
   parse(data: unknown, params?: Partial<core.ParseParams>): Output {
     if (!params) {

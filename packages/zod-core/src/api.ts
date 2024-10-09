@@ -1,139 +1,254 @@
 import * as checks from "./checks.js";
-import * as classes from "./classes.js";
-import type * as err from "./errors.js";
+import type * as core from "./core.js";
+import type * as err from "./errors_v2.js";
 import * as regexes from "./regexes.js";
+import * as schemas from "./schemas.js";
 import type * as types from "./types.js";
 
-export interface $ZodBaseParams {
-  error?: string | err.$ZodErrorMap;
-  /** @deprecated The `errorMap` parameter has been renamed to simply `message`.
-   *
-   * @example ```ts
-   * z.string().create({ error: myErrorMap });
-   * ```
-   */
-  errorMap?: err.$ZodErrorMap;
-  /** @deprecated The `invalid_type_error` parameter has been deprecated and will be removed in a future version. Use the `message` field instead.
-   *
-   * @example ```ts
-   * z.string({
-   *   error: 'Custom error message'
-   * });
-   * ```
-   */
-  invalid_type_error?: string;
-  /**
-   * @deprecated The `required_error` parameter has been deprecated and will be removed in a future version. Use the `message` field instead.
-   * @example ```ts
-   * z.string({
-   *  error: (issue)=>issue.input === undefined ? 'Field is required!' : undefined
-   * });
-   */
-  required_error?: string;
-  description?: string;
+/*
+ZodType
+  .refine
+  .superRefine
+  .transform
+  .default
+  .describe
+  .catch
+  .optional
+  .nullable
+  .nullish
+  .array
+  .promise
+  .or
+  .and
+  .brand
+  .readonly
+  .pipe
+ZodObject
+  .shape
+  .keyof
+  .extend
+  .merge
+  .pick/.omit
+  .partial
+  .deepPartial
+  .required
+  .passthrough
+  .strict
+  .strip
+  .catchall
+*/
+export interface $RawCreateParams {
+  error?: string | err.$ZodErrorMap | undefined;
+  description?: string | undefined;
+  [k: string]: unknown;
 }
-export type RawCreateParams = $ZodBaseParams | undefined;
 
-export type ProcessedCreateParams = {
+export type $ProcessedCreateParams = {
   error?: err.$ZodErrorMap | undefined;
   description?: string | undefined;
 };
 
-export function processCreateParams(
-  params: RawCreateParams
-): ProcessedCreateParams {
-  if (!params) return {};
-  const {
-    error: _error,
-    invalid_type_error,
-    required_error,
-    description,
-  } = params;
-  const error = typeof _error === "string" ? () => _error : _error;
-  if (error && params.errorMap) {
-    throw new Error(`Do not specify "message" and "errorMap" together`);
-  }
-
-  const _customMap: err.$ZodErrorMap | undefined = error ?? params.errorMap;
-  if (_customMap && (invalid_type_error || required_error)) {
-    throw new Error(
-      `Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`
-    );
-  }
-  if (_customMap) return { error: _customMap, description };
-
-  const customMap: err.$ZodErrorMap = (iss) => {
-    if (iss.code !== "invalid_type") return;
-    if (params.required_error && typeof iss.input === "undefined")
-      return params.required_error;
-    return invalid_type_error;
-  };
-  return { error: customMap, description };
+export function processCreateParams<T extends $RawCreateParams>(params?: T | undefined): $ProcessedCreateParams {
+  const processed: $ProcessedCreateParams = {};
+  if (!params) return processed;
+  const { error: _error, description, ...rest } = params;
+  if (_error) processed.error = typeof _error === "string" ? () => _error : _error;
+  if (description) processed.description = description;
+  Object.assign(processed, rest);
+  return processed;
 }
+
+function splitChecksAndParams<T extends $RawCreateParams>(
+  _paramsOrChecks?: T | unknown[],
+  _checks?: unknown[]
+): {
+  checks: core.$ZodCheck<any>[];
+  params: T;
+} {
+  const params: object = Array.isArray(_paramsOrChecks) ? {} : _paramsOrChecks ?? {};
+  const checks: any[] = Array.isArray(_paramsOrChecks) ? _paramsOrChecks : _checks ?? [];
+  return {
+    checks,
+    params: params as T,
+  };
+}
+
+// declare const z: any;
+
+// z.string([
+//   z.min(5, "minimum is five"),
+//   z.max(10, "maxiumum is ten!")
+// ], { description: "asdf", error: "Not valid!" });
+
+// z.string({ description: "asdf", error: "Not valid!" }, [
+//   z.min(5, "minimum is five"),
+//   z.max(10, "maxiumum is ten!")
+// ]);
+
+// z.string({}).refine([z.min(5), z.max(10)]);
 
 ////////////////////////////////////////////
 //////////      SCHEMA TYPES      //////////
 ////////////////////////////////////////////
-
-export function string(
-  params?: RawCreateParams & { coerce?: true }
-): classes.$ZodString;
-export function string(
-  checks: checks.$ZodCheck<string>[],
-  params?: RawCreateParams & { coerce?: true }
-): classes.$ZodString;
-export function string(
-  _paramsOrChecks?: Array<unknown> | (RawCreateParams & { coerce?: true }),
-  _params?: RawCreateParams & { coerce?: true }
-): classes.$ZodString {
-  const checks: checks.$ZodCheck<string>[] = Array.isArray(_paramsOrChecks)
-    ? (_paramsOrChecks as any[])
-    : [];
-  const params: undefined | (RawCreateParams & { coerce?: true }) =
-    Array.isArray(_paramsOrChecks) ? _params : _paramsOrChecks;
-  const base = new classes.$ZodString({
-    // type:"string",
-    // typeName: classes.$ZodFirstPartyTypeKind.ZodString,
-    coerce: params?.coerce ?? false,
-    checks,
-    ...processCreateParams(params),
-  });
-  return base;
+interface PrimitiveFactory<Params extends $RawCreateParams, T extends core.$ZodType> {
+  (): T;
+  (checks: core.$ZodCheck<core.output<T>>[]): T;
+  (params: Params, checks?: core.$ZodCheck<core.output<T>>[]): T;
 }
 
-export function uuid(
-  params?: RawCreateParams & { coerce?: true }
-): classes.$ZodUUID;
-export function uuid(
-  checks: checks.$ZodCheck<string>[],
-  params?: RawCreateParams & { coerce?: true }
-): classes.$ZodUUID;
-export function uuid(
-  _paramsOrChecks?: Array<unknown> | (RawCreateParams & { coerce?: true }),
-  _params?: RawCreateParams & { coerce?: true }
-): classes.$ZodUUID {
-  const checks: checks.$ZodCheck<string>[] = Array.isArray(_paramsOrChecks)
-    ? (_paramsOrChecks as any[])
-    : [];
-  const params: undefined | (RawCreateParams & { coerce?: true }) =
-    Array.isArray(_paramsOrChecks) ? _params : _paramsOrChecks;
-  const base = new classes.$ZodUUID({
-    coerce: params?.coerce ?? false,
-    checks,
-    ...processCreateParams(params),
-  });
-  return base;
+const factory: <Params extends $RawCreateParams, T extends core.$ZodType>(
+  Cls: any,
+  defaultParams: Omit<T["_def"], "checks" | "description" | "error">
+) => PrimitiveFactory<Params, T> = (Cls, defaultParams) => {
+  return <T extends core.$ZodType>(...args: any[]) => {
+    const { checks, params } = splitChecksAndParams(args);
+    return new Cls({
+      ...defaultParams,
+      checks,
+      ...processCreateParams(params),
+    }) as T;
+  };
+};
+
+//////////////////   $ZodString   //////////////////
+interface $PrimitiveParams extends $RawCreateParams {
+  coerce?: true;
 }
 
-export function number(
-  params?: RawCreateParams & { coerce?: boolean }
-): classes.$ZodNumber {
-  return new classes.$ZodNumber({
-    coerce: params?.coerce ?? false,
-    checks: [],
+// export function string(): schemas.$ZodString;
+// export function string(checks: core.$ZodCheck<string>[]): schemas.$ZodString;
+// export function string(params: $ZodStringParams, checks: core.$ZodCheck<string>[]): schemas.$ZodString;
+// export function string(
+//   _paramsOrChecks?: Array<unknown> | $ZodStringParams,
+//   _checks?: Array<unknown>
+// ): schemas.$ZodString {
+//   const { checks, params } = splitChecksAndParams(_paramsOrChecks, _checks);
+//   return new schemas.$ZodString({
+//     type: "string" as const,
+//     coerce: params?.coerce ?? false,
+//     checks,
+//     ...processCreateParams(params),
+//   });
+// }
+
+// $ZodString
+interface $ZodStringParams extends $PrimitiveParams {}
+export const string: PrimitiveFactory<$ZodStringParams, schemas.$ZodString> = factory(schemas.$ZodString, {
+  type: "string",
+  coerce: false,
+});
+
+// $ZodNumber
+interface $ZodNumberParams extends $PrimitiveParams {}
+export const number: PrimitiveFactory<$ZodNumberParams, schemas.$ZodNumber> = factory(schemas.$ZodNumberFast, {
+  type: "number",
+  coerce: false,
+});
+
+export const int16: PrimitiveFactory<$ZodNumberParams, schemas.$ZodNumber> = factory(schemas.$ZodNumber, {
+  type: "number",
+  format: "int32",
+  coerce: false,
+});
+
+// $ZodBoolean
+interface $ZodBooleanParams extends $PrimitiveParams {}
+export const boolean: PrimitiveFactory<$ZodBooleanParams, schemas.$ZodBoolean> = factory(schemas.$ZodBoolean, {
+  type: "boolean",
+  coerce: false,
+});
+
+// $ZodBigInt
+interface $ZodBigIntParams extends $PrimitiveParams {}
+export const bigint: PrimitiveFactory<$ZodBigIntParams, schemas.$ZodBigInt> = factory(schemas.$ZodBigInt, {
+  type: "bigint",
+  coerce: false,
+});
+
+// $ZodSymbol
+interface $ZodSymbolParams extends $RawCreateParams {}
+export const symbol: PrimitiveFactory<$ZodSymbolParams, schemas.$ZodSymbol> = factory(schemas.$ZodSymbol, {
+  type: "symbol",
+});
+
+// $ZodDate
+interface $ZodDateParams extends $PrimitiveParams {}
+export const date: PrimitiveFactory<$ZodDateParams, schemas.$ZodDate> = factory(schemas.$ZodDate, {
+  type: "date",
+  coerce: false,
+});
+
+// $ZodUndefined
+interface $ZodUndefinedParams extends $RawCreateParams {}
+const _undefined: PrimitiveFactory<$ZodUndefinedParams, schemas.$ZodUndefined> = factory(schemas.$ZodUndefined, {
+  type: "undefined",
+});
+export { _undefined as undefined };
+
+// $ZodNull
+interface $ZodNullParams extends $RawCreateParams {}
+export const _null: PrimitiveFactory<$ZodNullParams, schemas.$ZodNull> = factory(schemas.$ZodNull, {
+  type: "null",
+});
+export { _null as null };
+
+// $ZodAny
+interface $ZodAnyParams extends $RawCreateParams {}
+export const any: PrimitiveFactory<$ZodAnyParams, schemas.$ZodAny> = factory(schemas.$ZodAny, {
+  type: "any",
+});
+
+// $ZodUnknown
+interface $ZodUnknownParams extends $RawCreateParams {}
+export const unknown: PrimitiveFactory<$ZodUnknownParams, schemas.$ZodUnknown> = factory(schemas.$ZodUnknown, {
+  type: "unknown",
+});
+
+// $ZodNever
+interface $ZodNeverParams extends $RawCreateParams {}
+export const never: PrimitiveFactory<$ZodNeverParams, schemas.$ZodNever> = factory(schemas.$ZodNever, {
+  type: "never",
+});
+
+// $ZodVoid
+interface $ZodVoidParams extends $RawCreateParams {}
+export const _void: PrimitiveFactory<$ZodVoidParams, schemas.$ZodVoid> = factory(schemas.$ZodVoid, {
+  type: "void",
+});
+export { _void as void };
+
+// $ZodArray
+interface $ZodArrayParams extends $RawCreateParams {}
+export function array<T extends core.$ZodType>(schema: T, params?: $ZodArrayParams): schemas.$ZodArray<T> {
+  return new schemas.$ZodArray({
+    type: "array",
+    items: schema as T,
     ...processCreateParams(params),
-  });
+  }) as schemas.$ZodArray<T>;
 }
+
+// $ZodObject
+
+// $ZodUnion
+// $ZodDiscriminatedUnion
+// $ZodIntersection
+// $ZodTuple
+// $ZodRecord
+// $ZodMap
+// $ZodSet
+// $ZodEnum
+// $ZodLiteral
+// $ZodNativeEnum
+// $ZodFile
+// $ZodTransform
+// $ZodOptional
+// $ZodNullable
+// $ZodDefault
+// $ZodCatch
+// $ZodNaN
+// $ZodPipeline
+// $ZodReadonly
+// $ZodTemplateLiteral
 
 // export function bigint(
 //   params?: RawCreateParams & { coerce?: boolean }
@@ -683,11 +798,11 @@ export function number(
 //   Parts extends [] | [Part, ...Part[]],
 // >(
 //   parts: Parts,
-//   params?: RawCreateParams & { coerce?: true }
+//   params?: $ZodStringParams
 // ): classes.$ZodTemplateLiteral<partsToTemplateLiteral<Parts>>;
 // function templateLiteral(
 //   parts: TemplateLiteralPart[],
-//   params?: RawCreateParams & { coerce?: true }
+//   params?: $ZodStringParams
 // ) {
 //   return classes.$ZodTemplateLiteral.empty(params)._addParts(parts) as any;
 // }
@@ -696,15 +811,13 @@ export function number(
 ///////    CHECKS     ////////
 //////////////////////////////
 
-export function normalizeCheckParams<T extends $ZodCheckParamsBase>(
-  params?: string | T
-): T extends string ? never : T {
+export function normalizeCheckParams<T extends $ZodCheckParamsBase>(params?: string | T): T extends string ? never : T {
   if (typeof params === "string") return { message: params } as any;
   if (!params) return {} as any;
   return params as any;
 }
 
-// interface $ZodStringFormat extends $ZodBaseParams {
+// interface $ZodStringFormat extends $RawCreateParams {
 //   message?:
 //     | string
 //     | err.$ZodErrorMap<
@@ -800,10 +913,7 @@ export interface $ZodCheckStringFormatParams extends $ZodCheckParamsBase {
 }
 
 // $ZodCheckRegex;
-export function regex(
-  pattern: RegExp,
-  params?: string | $ZodCheckParamsBase
-): checks.$ZodCheckRegex {
+export function regex(pattern: RegExp, params?: string | $ZodCheckParamsBase): checks.$ZodCheckRegex {
   return new checks.$ZodCheckRegex({
     ...normalizeCheckParams(params),
     pattern,
@@ -812,18 +922,14 @@ export function regex(
 
 // $ZodCheckEmail;
 
-export function email(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckEmail {
+export function email(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckEmail {
   return new checks.$ZodCheckEmail({
     ...normalizeCheckParams(params),
     pattern: regexes.emailRegex,
   });
 }
 // $ZodCheckURL;
-export function url(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckURL {
+export function url(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckURL {
   return new checks.$ZodCheckURL({
     ...normalizeCheckParams(params),
   });
@@ -840,9 +946,7 @@ export function jwt(params?: string | $ZodCheckJWTParams): classes.$ZodJWT {
 }
 
 // $ZodCheckEmoji;
-export function emoji(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckEmoji {
+export function emoji(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckEmoji {
   return new checks.$ZodCheckEmoji({
     ...normalizeCheckParams(params),
   });
@@ -858,126 +962,98 @@ export function emoji(
 // }
 
 // $ZodCheckNanoID;
-export function nanoid(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckNanoID {
+export function nanoid(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckNanoID {
   return new checks.$ZodCheckNanoID({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckGUID;
-export function guid(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckGUID {
+export function guid(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckGUID {
   return new checks.$ZodCheckGUID({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckCUID;
-export function cuid(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckCUID {
+export function cuid(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckCUID {
   return new checks.$ZodCheckCUID({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckCUID2;
-export function cuid2(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckCUID2 {
+export function cuid2(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckCUID2 {
   return new checks.$ZodCheckCUID2({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckULID;
-export function ulid(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckULID {
+export function ulid(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckULID {
   return new checks.$ZodCheckULID({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckXID;
-export function xid(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckXID {
+export function xid(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckXID {
   return new checks.$ZodCheckXID({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckKSUID;
-export function ksuid(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckKSUID {
+export function ksuid(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckKSUID {
   return new checks.$ZodCheckKSUID({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckDuration;
-export function duration(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckDuration {
+export function duration(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckDuration {
   return new checks.$ZodCheckDuration({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckIP;
-export function ip(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckIP {
+export function ip(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckIP {
   return new checks.$ZodCheckIP({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckIPv4;
-export function ipv4(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckIPv4 {
+export function ipv4(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckIPv4 {
   return new checks.$ZodCheckIPv4({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckIPv6;
-export function ipv6(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckIPv6 {
+export function ipv6(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckIPv6 {
   return new checks.$ZodCheckIPv6({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckBase64;
-export function base64(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckBase64 {
+export function base64(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckBase64 {
   return new checks.$ZodCheckBase64({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckJSON;
-export function json(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckJSONString {
+export function json(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckJSONString {
   return new checks.$ZodCheckJSONString({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckE164;
-export function e164(
-  params?: string | $ZodCheckStringFormatParams
-): checks.$ZodCheckE164 {
+export function e164(params?: string | $ZodCheckStringFormatParams): checks.$ZodCheckE164 {
   return new checks.$ZodCheckE164({
     ...normalizeCheckParams(params),
   });
@@ -992,10 +1068,7 @@ export * as iso from "./iso.js";
 //////    ADDITIONAL STRING CHECKS   //////
 ///////////////////////////////////////////
 // $ZodCheckIncludes;
-export function includes(
-  includes: string,
-  params?: string | $ZodCheckParamsBase
-): checks.$ZodCheckIncludes {
+export function includes(includes: string, params?: string | $ZodCheckParamsBase): checks.$ZodCheckIncludes {
   return new checks.$ZodCheckIncludes({
     ...normalizeCheckParams(params),
     includes,
@@ -1003,10 +1076,7 @@ export function includes(
 }
 
 // $ZodCheckStartsWith;
-export function startsWith(
-  starts_with: string,
-  params?: string | $ZodCheckParamsBase
-): checks.$ZodCheckStartsWith {
+export function startsWith(starts_with: string, params?: string | $ZodCheckParamsBase): checks.$ZodCheckStartsWith {
   return new checks.$ZodCheckStartsWith({
     ...normalizeCheckParams(params),
     starts_with,
@@ -1014,10 +1084,7 @@ export function startsWith(
 }
 
 // $ZodCheckEndsWith;
-export function endsWith(
-  ends_with: string,
-  params?: string | $ZodCheckParamsBase
-): checks.$ZodCheckEndsWith {
+export function endsWith(ends_with: string, params?: string | $ZodCheckParamsBase): checks.$ZodCheckEndsWith {
   return new checks.$ZodCheckEndsWith({
     ...normalizeCheckParams(params),
     ends_with,
@@ -1028,36 +1095,28 @@ export function endsWith(
 ///////     STRING TRANSFORMS     ///////
 /////////////////////////////////////////
 // $ZodCheckTrim;
-export function trim(
-  params?: string | $ZodCheckParamsBase
-): checks.$ZodCheckTrim {
+export function trim(params?: string | $ZodCheckParamsBase): checks.$ZodCheckTrim {
   return new checks.$ZodCheckTrim({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckToLowerCase;
-export function toLowerCase(
-  params?: string | $ZodCheckParamsBase
-): checks.$ZodCheckToLowerCase {
+export function toLowerCase(params?: string | $ZodCheckParamsBase): checks.$ZodCheckToLowerCase {
   return new checks.$ZodCheckToLowerCase({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckToUpperCase;
-export function toUpperCase(
-  params?: string | $ZodCheckParamsBase
-): checks.$ZodCheckToUpperCase {
+export function toUpperCase(params?: string | $ZodCheckParamsBase): checks.$ZodCheckToUpperCase {
   return new checks.$ZodCheckToUpperCase({
     ...normalizeCheckParams(params),
   });
 }
 
 // $ZodCheckNormalize;
-export function normalize(
-  params?: string | $ZodCheckParamsBase
-): checks.$ZodCheckNormalize {
+export function normalize(params?: string | $ZodCheckParamsBase): checks.$ZodCheckNormalize {
   return new checks.$ZodCheckNormalize({
     ...normalizeCheckParams(params),
   });

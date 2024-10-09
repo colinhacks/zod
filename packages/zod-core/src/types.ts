@@ -170,3 +170,5 @@ export type MergeOverrides<
     ? noUndefined<Overrides[k]>
     : Defaults[k];
 };
+
+export type MaybeAsync<T> = T | Promise<T>;

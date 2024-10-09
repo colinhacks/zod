@@ -39,13 +39,13 @@
     },
     "./error": {
       "import": {
-        "@zod/source": "./src/errors.ts",
-        "types": "./dist/esm/errors.d.ts",
-        "default": "./dist/esm/errors.js"
+        "@zod/source": "./src/errors_v2.ts",
+        "types": "./dist/esm/errors_v2.d.ts",
+        "default": "./dist/esm/errors_v2.js"
       },
       "require": {
-        "types": "./dist/commonjs/errors.d.ts",
-        "default": "./dist/commonjs/errors.js"
+        "types": "./dist/commonjs/errors_v2.d.ts",
+        "default": "./dist/commonjs/errors_v2.js"
       }
     },
     "./parse": {

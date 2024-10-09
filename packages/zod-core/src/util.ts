@@ -7,7 +7,7 @@ export function assertIs<T>(_arg: T): void {}
 export function assertNever(_x: never): never {
   throw new Error();
 }
-
+export function assert<T>(_: any): asserts _ is T {}
 export function arrayToEnum<T extends string, U extends [T, ...T[]]>(
   items: U
 ): { [k in U[number]]: k } {

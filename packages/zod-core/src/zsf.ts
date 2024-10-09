@@ -1,40 +1,39 @@
 ///////////////////////////////////////////////////
 ////////////////      TYPES     ///////////////////
 ///////////////////////////////////////////////////
+
 export interface $ZSF {
   $zsf: { version: number };
   type: string;
+  // default value if not defined
+  default: unknown;
+  // fallback value if validation fails
+  fallback: unknown;
 }
 
 export interface $ZSFString extends $ZSF {
   type: "string";
-  minLength?: number;
-  maxLength?: number;
+  min_length?: number;
+  max_length?: number;
+  pattern?: string;
 }
+
+export type NumberTypes =
+  | "float32"
+  | "int32"
+  | "uint32"
+  | "float64"
+  | "int64"
+  | "uint64"
+  | "bigint"
+  | "bigdecimal";
 
 export interface $ZSFNumber extends $ZSF {
   type: "number";
+  format?: NumberTypes;
   minimum?: number;
   maximum?: number;
-}
-
-export type IntegerTypes =
-  | "int"
-  | "int8"
-  | "uint8"
-  | "int16"
-  | "uint16"
-  | "int32"
-  | "uint32"
-  | "int64"
-  | "uint64"
-  | "int128"
-  | "uint128";
-
-export interface $ZSFInteger extends $ZSFNumber {
-  format?: IntegerTypes;
-  minimum?: number;
-  maximum?: number;
+  multiple_of?: number;
 }
 
 export interface $ZSFBoolean extends $ZSF {
@@ -43,6 +42,10 @@ export interface $ZSFBoolean extends $ZSF {
 
 export interface $ZSFNull extends $ZSF {
   type: "null";
+}
+
+export interface $ZSFUndefined extends $ZSF {
+  type: "undefined";
 }
 
 export interface $ZSFOptional<T extends $ZSF = $ZSF> extends $ZSF {
@@ -58,22 +61,56 @@ export interface $ZSFAny extends $ZSF {
   type: "any";
 }
 
-export interface $ZSFUnion<Elements extends $ZSF[] = $ZSF[]> extends $ZSF {
-  type: "union";
+/** Supports */
+export interface $ZSFEnum<
+  Elements extends { [k: string]: $ZSFLiteral } = { [k: string]: $ZSFLiteral },
+> extends $ZSF {
+  type: "enum";
   elements: Elements;
 }
 
-export interface $ZSFArray extends $ZSF {
+export interface $ZSFArray<
+  PrefixItems extends $ZSF[] = $ZSF[],
+  Items extends $ZSF = $ZSF,
+> extends $ZSF {
   type: "array";
-  prefixItems: $ZSF[];
-  items: $ZSF;
+  prefixItems: PrefixItems;
+  items: Items;
 }
 
+// type $ZSFObjectProperties = { [k: string]: $ZSF };
+type $ZSFObjectProperties = Array<{
+  key: string;
+  value: $ZSF;
+  format?: "literal" | "pattern";
+  ordering?: number;
+}>;
 export interface $ZSFObject<
-  Shape extends { [k: string]: $ZSF } = { [k: string]: $ZSF },
+  Properties extends $ZSFObjectProperties = $ZSFObjectProperties,
 > extends $ZSF {
   type: "object";
-  properties: Shape;
+  properties: Properties;
+}
+
+// export interface $ZSFTuple<
+//   Items extends $ZSF[] = $ZSF[],
+//   Rest extends $ZSF = $ZSF,
+// > extends $ZSF {
+//   type: "array";
+//   items: Items;
+//   rest: Rest;
+// }
+
+/** Supports arbitrary literal values */
+export interface $ZSFLiteral<T extends $ZSF = $ZSF> extends $ZSF {
+  type: "literal";
+  schema: T;
+  value: unknown;
+}
+
+export interface $ZSFUnion<Elements extends $ZSF[] = $ZSF[]> extends $ZSF {
+  type: "union";
+  elements: Elements;
 }
 
 export interface $ZSFIntersection extends $ZSF {
@@ -81,9 +118,22 @@ export interface $ZSFIntersection extends $ZSF {
   elements: $ZSF[];
 }
 
-export interface $ZSFTuple<T extends $ZSF[]> extends $ZSF {
-  type: "array";
-  prefixItems: T;
+export interface $ZSFMap<K extends $ZSF = $ZSF, V extends $ZSF = $ZSF>
+  extends $ZSF {
+  type: "map";
+  keys: K;
+  values: V;
+}
+
+export interface $ZSFConditional<
+  If extends $ZSF,
+  Then extends $ZSF,
+  Else extends $ZSF,
+> extends $ZSF {
+  type: "conditional";
+  if: If;
+  then: Then;
+  else: Else;
 }
 
 /////////////////////////////////////////////////

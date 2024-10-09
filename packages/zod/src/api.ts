@@ -1,137 +1,94 @@
 import * as core from "zod-core";
-import type { CustomErrorParams, Primitive } from "zod-core";
-import {
-  type RawCreateParams,
-  ZodAny,
-  ZodArray,
-  ZodBigInt,
-  ZodBoolean,
-  ZodDate,
-  ZodDiscriminatedUnion,
-  ZodEffects,
-  ZodEnum,
-  ZodFile,
-  ZodFunction,
-  ZodIntersection,
-  ZodLazy,
-  ZodLiteral,
-  ZodMap,
-  ZodNaN,
-  ZodNativeEnum,
-  ZodNever,
-  ZodNull,
-  ZodNullable,
-  ZodNumber,
-  ZodObject,
-  ZodOptional,
-  ZodPipeline,
-  ZodPromise,
-  ZodRecord,
-  ZodSet,
-  ZodString,
-  ZodSymbol,
-  ZodTemplateLiteral,
-  ZodTuple,
-  type ZodType,
-  ZodUndefined,
-  ZodUnion,
-  ZodUnknown,
-  ZodVoid,
-} from "./classes.js";
+import type * as err from "zod-core/error";
+import * as schemas from "./schemas.js";
 
-export * from "zod-core";
-
-// requires TS 4.4+
-
-abstract class Class {
-  // biome-ignore lint/complexity/noUselessConstructor:
-  constructor(..._: any[]) {}
+export interface RawCreateParams {
+  error?: string | err.$ZodErrorMap;
+  /** @deprecated The `errorMap` parameter has been renamed to just `error`.
+   *
+   * @example ```ts
+   * z.string().create({ error: myErrorMap });
+   * ```
+   */
+  errorMap?: err.$ZodErrorMap;
+  /** @deprecated The `invalid_type_error` parameter has been deprecated and will be removed in a future version. Use the `error` field instead.
+   *
+   * @example ```ts
+   * z.string({
+   *   error: 'Bad input'
+   * });
+   * ```
+   */
+  invalid_type_error?: string;
+  /**
+   * @deprecated The `required_error` parameter has been deprecated and will be removed in a future version. Use the `error` field instead.
+   * @example ```ts
+   * z.string({
+   *  error: (issue) => issue.input === undefined ? 'Field is required!' : undefined
+   * });
+   */
+  required_error?: string;
+  description?: string;
 }
 
-function instanceOfType<T extends typeof Class>(
-  cls: T,
-  params: CustomParams = {
-    message: `Input not instance of ${cls.name}`,
+export type ProcessedCreateParams = {
+  error?: err.$ZodErrorMap | undefined;
+  description?: string | undefined;
+};
+
+export function processParams(params: RawCreateParams | undefined): ProcessedCreateParams {
+  if (!params) return {};
+  const { error: _error, invalid_type_error, required_error, description, ...rest } = params;
+  const error = typeof _error === "string" ? () => _error : _error;
+  if (error && params.errorMap) {
+    throw new Error(`Do not specify "message" and "errorMap" together`);
   }
-): ZodCustom<InstanceType<T>> {
-  return custom((data) => data instanceof cls, params);
+
+  const _customMap: err.$ZodErrorMap | undefined = error ?? params.errorMap;
+  if (_customMap && (invalid_type_error || required_error)) {
+    throw new Error(`Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`);
+  }
+  if (_customMap) return { error: _customMap, description, ...rest };
+
+  const customMap: err.$ZodErrorMap = (iss) => {
+    if (iss.code !== "invalid_type") return;
+    if (params.required_error && typeof iss.input === "undefined") return params.required_error;
+    return invalid_type_error;
+  };
+  return { error: customMap, description, ...rest };
 }
 
-const stringType: typeof ZodString.create = (...args) =>
-  ZodString.create(...args);
-const numberType: typeof ZodNumber.create = (...args) =>
-  ZodNumber.create(...args);
-const nanType: typeof ZodNaN.create = (...args) => ZodNaN.create(...args);
-const bigIntType: typeof ZodBigInt.create = (...args) =>
-  ZodBigInt.create(...args);
-const booleanType: typeof ZodBoolean.create = (...args) =>
-  ZodBoolean.create(...args);
-const dateType: typeof ZodDate.create = (...args) => ZodDate.create(...args);
-const fileType: typeof ZodFile.create = (...args) => ZodFile.create(...args);
-const symbolType: typeof ZodSymbol.create = (...args) =>
-  ZodSymbol.create(...args);
-const undefinedType: typeof ZodUndefined.create = (...args) =>
-  ZodUndefined.create(...args);
-const nullType: typeof ZodNull.create = (...args) => ZodNull.create(...args);
-const anyType: typeof ZodAny.create = (...args) => ZodAny.create(...args);
-const unknownType: typeof ZodUnknown.create = (...args) =>
-  ZodUnknown.create(...args);
-const neverType: typeof ZodNever.create = (...args) => ZodNever.create(...args);
-const voidType: typeof ZodVoid.create = (...args) => ZodVoid.create(...args);
-const arrayType: typeof ZodArray.create = (...args) => ZodArray.create(...args);
-const objectType: typeof ZodObject.create = (...args) =>
-  ZodObject.create(...args);
-const strictObjectType: typeof ZodObject.strictCreate = (...args) =>
-  ZodObject.strictCreate(...args);
-const unionType: typeof ZodUnion.create = (...args) => ZodUnion.create(...args);
-const discriminatedUnionType: typeof ZodDiscriminatedUnion.create = (...args) =>
-  ZodDiscriminatedUnion.create(...args);
-const intersectionType: typeof ZodIntersection.create = (...args) =>
-  ZodIntersection.create(...args);
-const tupleType: typeof ZodTuple.create = (...args) => ZodTuple.create(...args);
-const recordType: typeof ZodRecord.create = (...args: [any]) =>
-  ZodRecord.create(...args);
-const mapType: typeof ZodMap.create = (...args) => ZodMap.create(...args);
-const setType: typeof ZodSet.create = (...args) => ZodSet.create(...args);
-const functionType: typeof ZodFunction.create = (...args: [any?]) =>
-  ZodFunction.create(...args);
-const lazyType: typeof ZodLazy.create = (...args) => ZodLazy.create(...args);
-const enumType: typeof ZodEnum.create = (...args: [any]) =>
-  ZodEnum.create(...args);
-const nativeEnumType: typeof ZodNativeEnum.create = (...args) =>
-  ZodNativeEnum.create(...args);
-const promiseType: typeof ZodPromise.create = (...args) =>
-  ZodPromise.create(...args);
-const effectsType: typeof ZodEffects.create = (...args) =>
-  ZodEffects.create(...args);
-const optionalType: typeof ZodOptional.create = (...args) =>
-  ZodOptional.create(...args);
-const nullableType: typeof ZodNullable.create = (...args) =>
-  ZodNullable.create(...args);
+type PrimitiveParams = ((...args: any[]) => any) | Record<string, any>; // | string;
+function processChecksAndParams(_paramsOrChecks?: any[] | PrimitiveParams, _params?: PrimitiveParams) {
+  const params: RawCreateParams = {};
+  let raw: PrimitiveParams;
+  if (Array.isArray(_paramsOrChecks)) {
+    params.checks = _paramsOrChecks;
+    raw = _params as any;
+  } else {
+    raw = _paramsOrChecks as any;
+  }
 
-const preprocessType: typeof ZodEffects.createWithPreprocess = (...args) =>
-  ZodEffects.createWithPreprocess(...args);
-const pipelineType: typeof ZodPipeline.create = (...args) =>
-  ZodPipeline.create(...args);
+  if (typeof raw === "string") {
+    params.error = () => raw;
+  } else if (typeof raw === "function") {
+    params.error = raw as any;
+  } else if (core.isPlainObject(params)) {
+    Object.assign(params, raw);
+  } else {
+    throw new Error("Invalid params");
+  }
 
-interface Literal {
-  <T extends Primitive>(
-    value: T,
-    params?: RawCreateParams & Exclude<core.ErrMessage, string>
-  ): ZodLiteral<T>;
-
-  template: typeof ZodTemplateLiteral.create;
+  // const params = Array.isArray(_paramsOrChecks) ? _params : _paramsOrChecks;
+  // const checks = Array.isArray(_paramsOrChecks) ? _paramsOrChecks : [];
+  return {
+    checks,
+    ...processCreateParams(params),
+  };
 }
-const _literalType: typeof ZodLiteral.create = (...args) =>
-  ZodLiteral.create(...args);
-Object.defineProperty(_literalType, "template", {
-  value: ZodTemplateLiteral.create,
-});
-const literalType = _literalType as Literal;
 
-const ostring: () => ZodOptional<ZodString> = () => stringType().optional();
-const onumber: () => ZodOptional<ZodNumber> = () => numberType().optional();
-const oboolean: () => ZodOptional<ZodBoolean> = () => booleanType().optional();
+/* string */
+export function string(params?: ZodTypeParams): core.ZodString;
 
 ////////////////////////////////////////
 ////////////////////////////////////////
@@ -140,6 +97,8 @@ const oboolean: () => ZodOptional<ZodBoolean> = () => booleanType().optional();
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
+
+/* custom */
 type CustomParams = CustomErrorParams & { fatal?: boolean };
 export type ZodCustom<T> = ZodType<T, T>;
 export function custom<T>(
@@ -162,11 +121,7 @@ export function custom<T>(
     return ZodAny.create().superRefine((data, ctx) => {
       if (!check(data)) {
         const p =
-          typeof params === "function"
-            ? params(data)
-            : typeof params === "string"
-              ? { message: params }
-              : params;
+          typeof params === "function" ? params(data) : typeof params === "string" ? { message: params } : params;
         const _fatal = p.fatal ?? fatal ?? true;
         const p2 = typeof p === "string" ? { message: p } : p;
         ctx.addIssue({
@@ -180,53 +135,47 @@ export function custom<T>(
   return ZodAny.create();
 }
 
-const lateObject: typeof ZodObject.lazycreate = (...args: [any]) =>
-  ZodObject.lazycreate(...args);
+/* lateObject */
+const lateObject: typeof ZodObject.lazycreate = (...args: [any]) => ZodObject.lazycreate(...args);
 export const late: { object: typeof lateObject } = {
   object: lateObject,
 };
 
-export * as coerce from "./coerce.js";
+/* instanceof */
+abstract class Class {
+  constructor(..._: any[]) {}
+}
 
-export {
-  anyType as any,
-  arrayType as array,
-  bigIntType as bigint,
-  booleanType as boolean,
-  dateType as date,
-  discriminatedUnionType as discriminatedUnion,
-  effectsType as effect,
-  enumType as enum,
-  fileType as file,
-  functionType as function,
-  instanceOfType as instanceof,
-  intersectionType as intersection,
-  lazyType as lazy,
-  literalType as literal,
-  mapType as map,
-  nanType as nan,
-  nativeEnumType as nativeEnum,
-  neverType as never,
-  nullType as null,
-  nullableType as nullable,
-  numberType as number,
-  objectType as object,
-  oboolean,
-  onumber,
-  optionalType as optional,
-  ostring,
-  pipelineType as pipeline,
-  preprocessType as preprocess,
-  promiseType as promise,
-  recordType as record,
-  setType as set,
-  strictObjectType as strictObject,
-  stringType as string,
-  symbolType as symbol,
-  effectsType as transformer,
-  tupleType as tuple,
-  undefinedType as undefined,
-  unionType as union,
-  unknownType as unknown,
-  voidType as void,
-};
+function instanceOfType<T extends typeof Class>(
+  cls: T,
+  params: CustomParams = {
+    message: `Input not instance of ${cls.name}`,
+  }
+): ZodCustom<InstanceType<T>> {
+  return custom((data) => data instanceof cls, params);
+}
+export { instanceOfType as instanceof };
+
+/* lateObject */
+export * as coerce from "./coerce.js";
+/*
+  - strictObject
+  - lateObject
+  - ostring
+  - onumber
+  - oboolean
+  - instanceof
+  - late
+  - lazy
+  - custom
+*/
+
+/** @deprecated Use z.configure() instead. */
+export function setErrorMap(map: err.$ZodErrorMap): void {
+  core.getConfig().error = map;
+}
+
+/** @deprecated Use z.getConfig().error instead. */
+export function getErrorMap(): err.$ZodErrorMap {
+  return core.getConfig().error;
+}
