@@ -1,7 +1,6 @@
-import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
-const test = Deno.test;
+import { test } from "@jest/globals";
 
-import * as z from "../index.ts";
+import * as z from "../index";
 
 test("ZodType is covariant with the output", () => {
   function f<S extends z.ZodType<string, any, any>>(_: S) {}
