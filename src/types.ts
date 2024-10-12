@@ -170,11 +170,11 @@ export type SafeParseReturnType<Input, Output> =
 export abstract class ZodType<
   Output = any,
   Def extends ZodTypeDef = ZodTypeDef,
-  in Input = Output
+  /*in*/ Input = Output
 > {
   readonly _type!: Output;
   readonly _output!: Output;
-  _input(_: Input): void {}
+  readonly _input!: (_: Input) => void;
   readonly _def!: Def;
 
   get description() {
@@ -3027,12 +3027,14 @@ export type ZodDiscriminatedUnionOption<Discriminator extends string> =
   ZodObject<
     { [key in Discriminator]: ZodTypeAny },
     UnknownKeysParam,
-    ZodTypeAny
+    ZodTypeAny,
+    any,
+    never
   >;
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
+  Options extends ZodDiscriminatedUnionOption<Discriminator>[] = ZodDiscriminatedUnionOption<Discriminator>[]
 > extends ZodTypeDef {
   discriminator: Discriminator;
   options: Options;
@@ -3153,7 +3155,7 @@ export class ZodDiscriminatedUnion<
       typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion,
       discriminator,
       options,
-      optionsMap,
+      optionsMap: optionsMap as any,
       ...processCreateParams(params),
     });
   }
