@@ -22,8 +22,8 @@ test("break if dirty", () => {
     .refine((c) => c === "1234")
     .transform(async (val) => Number(val))
     .pipe(z.number().refine((v) => v < 100));
-  const r1: any = schema.safeParse("12345");
+  const r1: any = z.safeParse(schema, "12345");
   expect(r1.error.issues.length).toBe(1);
-  const r2: any = schema.safeParse("3");
+  const r2: any = z.safeParse(schema, "3");
   expect(r2.error.issues.length).toBe(1);
 });

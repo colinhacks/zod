@@ -155,7 +155,7 @@ test("is not vulnerable to prototype pollution", async () => {
   const obj1 = rec.parse(data);
   expect(obj1.a).toBeUndefined();
 
-  const obj2 = rec.safeParse(data);
+  const obj2 = z.safeParse(rec, data);
   expect(obj2.success).toBe(true);
   if (obj2.success) {
     expect(obj2.data.a).toBeUndefined();
@@ -164,7 +164,7 @@ test("is not vulnerable to prototype pollution", async () => {
   const obj3 = await rec.parseAsync(data);
   expect(obj3.a).toBeUndefined();
 
-  const obj4 = await rec.safeParseAsync(data);
+  const obj4 = await z.safeParseAsync(rec, data);
   expect(obj4.success).toBe(true);
   if (obj4.success) {
     expect(obj4.data.a).toBeUndefined();

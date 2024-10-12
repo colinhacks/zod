@@ -45,7 +45,7 @@ test("failed validation", () => {
 });
 
 test("failed async validation", async () => {
-  const res = await testTuple.safeParse(badData);
+  const res = await z.safeParse(testTuple, badData);
   expect(res.success).toEqual(false);
   if (!res.success) {
     expect(res.error.issues.length).toEqual(3);

@@ -5242,24 +5242,15 @@ export async function safeParseAsync<Output, Input>(
 /** Alias of safeParseAsync */
 export const spa = safeParseAsync;
 
-export function catch_<
-  Output,
-  Input,
-  Schema extends ZodType<Output, any, Input>
->(schema: Schema, def: Output): ZodCatch<Schema>;
-export function catch_<
-  Output,
-  Input,
-  Schema extends ZodType<Output, any, Input>
->(
+export function catch_<Schema extends ZodTypeAny>(
   schema: Schema,
-  def: (ctx: { error: ZodError; input: Input }) => Output
+  def: output<Schema>
 ): ZodCatch<Schema>;
-export function catch_<
-  Output,
-  Input,
-  Schema extends ZodType<Output, any, Input>
->(schema: Schema, def: any) {
+export function catch_<Schema extends ZodTypeAny>(
+  schema: Schema,
+  def: (ctx: { error: ZodError; input: input<Schema> }) => output<Schema>
+): ZodCatch<Schema>;
+export function catch_<Schema extends ZodTypeAny>(schema: Schema, def: any) {
   const catchValueFunc = typeof def === "function" ? def : () => def;
 
   return new ZodCatch({

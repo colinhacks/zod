@@ -44,9 +44,8 @@ test("transform ctx.addIssue with parse", () => {
 test("transform ctx.addIssue with parseAsync", async () => {
   const strs = ["foo", "bar"];
 
-  const result = await z
-    .string()
-    .transform(async (data, ctx) => {
+  const result = await z.safeParseAsync(
+    z.string().transform(async (data, ctx) => {
       const i = strs.indexOf(data);
       if (i === -1) {
         ctx.addIssue({
@@ -55,8 +54,9 @@ test("transform ctx.addIssue with parseAsync", async () => {
         });
       }
       return data.length;
-    })
-    .safeParseAsync("asdf");
+    }),
+    "asdf"
+  );
 
   expect(JSON.parse(JSON.stringify(result))).toEqual({
     success: false,
@@ -86,7 +86,7 @@ test("z.NEVER in transform", () => {
     });
   type foo = z.infer<typeof foo>;
   util.assertEqual<foo, number>(true);
-  const arg = foo.safeParse(undefined);
+  const arg = z.safeParse(foo, undefined);
   if (!arg.success) {
     expect(arg.error.issues[0].message).toEqual("bad");
   }
@@ -201,13 +201,13 @@ test("short circuit on dirty", () => {
     .string()
     .refine(() => false)
     .transform((val) => val.toUpperCase());
-  const result = schema.safeParse("asdf");
+  const result = z.safeParse(schema, "asdf");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].code).toEqual(z.ZodIssueCode.custom);
   }
 
-  const result2 = schema.safeParse(1234);
+  const result2 = z.safeParse(schema, 1234);
   expect(result2.success).toEqual(false);
   if (!result2.success) {
     expect(result2.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
@@ -219,13 +219,13 @@ test("async short circuit on dirty", async () => {
     .string()
     .refine(() => false)
     .transform((val) => val.toUpperCase());
-  const result = await schema.spa("asdf");
+  const result = await z.spa(schema, "asdf");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].code).toEqual(z.ZodIssueCode.custom);
   }
 
-  const result2 = await schema.spa(1234);
+  const result2 = await z.spa(schema, 1234);
   expect(result2.success).toEqual(false);
   if (!result2.success) {
     expect(result2.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);

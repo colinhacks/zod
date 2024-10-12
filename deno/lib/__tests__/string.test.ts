@@ -155,12 +155,12 @@ test("email validations", () => {
 
   expect(
     validEmails.every((email) => {
-      return emailSchema.safeParse(email).success;
+      return z.safeParse(emailSchema, email).success;
     })
   ).toBe(true);
   expect(
     invalidEmails.every((email) => {
-      return emailSchema.safeParse(email).success === false;
+      return z.safeParse(emailSchema, email).success === false;
     })
   ).toBe(true);
 });
@@ -180,7 +180,9 @@ test("base64 validations", () => {
   ];
 
   for (const str of validBase64Strings) {
-    expect(str + z.string().base64().safeParse(str).success).toBe(str + "true");
+    expect(str + z.safeParse(z.string().base64(), str).success).toBe(
+      str + "true"
+    );
   }
 
   const invalidBase64Strings = [
@@ -194,7 +196,7 @@ test("base64 validations", () => {
   ];
 
   for (const str of invalidBase64Strings) {
-    expect(str + z.string().base64().safeParse(str).success).toBe(
+    expect(str + z.safeParse(z.string().base64(), str).success).toBe(
       str + "false"
     );
   }
@@ -251,7 +253,7 @@ test("uuid", () => {
   uuid.parse("00000000-0000-0000-0000-000000000000");
   uuid.parse("b3ce60f8-e8b9-40f5-1150-172ede56ff74"); // Variant 0 - RFC 4122: Reserved, NCS backward compatibility
   uuid.parse("92e76bf9-28b3-4730-cd7f-cb6bc51f8c09"); // Variant 2 - RFC 4122: Reserved, Microsoft Corporation backward compatibility
-  const result = uuid.safeParse("9491d710-3185-4e06-bea0-6a2f275345e0X");
+  const result = z.safeParse(uuid, "9491d710-3185-4e06-bea0-6a2f275345e0X");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("custom error");
@@ -261,7 +263,7 @@ test("uuid", () => {
 test("bad uuid", () => {
   const uuid = z.string().uuid("custom error");
   uuid.parse("9491d710-3185-4e06-bea0-6a2f275345e0");
-  const result = uuid.safeParse("invalid uuid");
+  const result = z.safeParse(uuid, "invalid uuid");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("custom error");
@@ -274,7 +276,7 @@ test("nanoid", () => {
   nanoid.parse("mIU_4PJWikaU8fMbmkouz");
   nanoid.parse("Hb9ZUtUa2JDm_dD-47EGv");
   nanoid.parse("5Noocgv_8vQ9oPijj4ioQ");
-  const result = nanoid.safeParse("Xq90uDyhddC53KsoASYJGX");
+  const result = z.safeParse(nanoid, "Xq90uDyhddC53KsoASYJGX");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("custom error");
@@ -284,7 +286,7 @@ test("nanoid", () => {
 test("bad nanoid", () => {
   const nanoid = z.string().nanoid("custom error");
   nanoid.parse("ySh_984wpDUu7IQRrLXAp");
-  const result = nanoid.safeParse("invalid nanoid");
+  const result = z.safeParse(nanoid, "invalid nanoid");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("custom error");
@@ -294,7 +296,7 @@ test("bad nanoid", () => {
 test("cuid", () => {
   const cuid = z.string().cuid();
   cuid.parse("ckopqwooh000001la8mbi2im9");
-  const result = cuid.safeParse("cifjhdsfhsd-invalid-cuid");
+  const result = z.safeParse(cuid, "cifjhdsfhsd-invalid-cuid");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("Invalid cuid");
@@ -314,7 +316,7 @@ test("cuid2", () => {
     "tz4a98xxat96iws9zMbrgj3a", // include uppercase
     "tz4a98xxat96iws-zmbrgj3a", // involve symbols
   ];
-  const results = invalidStrings.map((s) => cuid2.safeParse(s));
+  const results = invalidStrings.map((s) => z.safeParse(cuid2, s));
   expect(results.every((r) => !r.success)).toEqual(true);
   if (!results[0].success) {
     expect(results[0].error.issues[0].message).toEqual("Invalid cuid2");
@@ -324,10 +326,10 @@ test("cuid2", () => {
 test("ulid", () => {
   const ulid = z.string().ulid();
   ulid.parse("01ARZ3NDEKTSV4RRFFQ69G5FAV");
-  const result = ulid.safeParse("invalidulid");
+  const result = z.safeParse(ulid, "invalidulid");
   expect(result.success).toEqual(false);
   const tooLong = "01ARZ3NDEKTSV4RRFFQ69G5FAVA";
-  expect(ulid.safeParse(tooLong).success).toEqual(false);
+  expect(z.safeParse(ulid, tooLong).success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("Invalid ulid");
   }
@@ -341,10 +343,10 @@ test("regex", () => {
 });
 
 test("regexp error message", () => {
-  const result = z
+  const result = z.safeParse(z
     .string()
     .regex(/^moo+$/)
-    .safeParse("boooo");
+    ,"boooo")
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("Invalid");
   } else {
@@ -356,11 +358,11 @@ test("regexp error message", () => {
 
 test("regex lastIndex reset", () => {
   const schema = z.string().regex(/^\d+$/g);
-  expect(schema.safeParse("123").success).toEqual(true);
-  expect(schema.safeParse("123").success).toEqual(true);
-  expect(schema.safeParse("123").success).toEqual(true);
-  expect(schema.safeParse("123").success).toEqual(true);
-  expect(schema.safeParse("123").success).toEqual(true);
+  expect(z.safeParse(schema, "123").success).toEqual(true);
+  expect(z.safeParse(schema, "123").success).toEqual(true);
+  expect(z.safeParse(schema, "123").success).toEqual(true);
+  expect(z.safeParse(schema, "123").success).toEqual(true);
+  expect(z.safeParse(schema, "123").success).toEqual(true);
 });
 
 test("checks getters", () => {
@@ -708,14 +710,14 @@ test("duration", () => {
   ];
 
   for (const val of validDurations) {
-    const result = duration.safeParse(val);
+    const result = z.safeParse(duration, val);
     if (!result.success) {
       throw Error(`Valid duration could not be parsed: ${val}`);
     }
   }
 
   for (const val of invalidDurations) {
-    const result = duration.safeParse(val);
+    const result = z.safeParse(duration, val);
 
     if (result.success) {
       throw Error(`Invalid duration was successful parsed: ${val}`);
@@ -727,7 +729,7 @@ test("duration", () => {
 
 test("IP validation", () => {
   const ip = z.string().ip();
-  expect(ip.safeParse("122.122.122.122").success).toBe(true);
+  expect(z.safeParse(ip, "122.122.122.122").success).toBe(true);
 
   const ipv4 = z.string().ip({ version: "v4" });
   expect(() => ipv4.parse("6097:adfa:6f0b:220d:db08:5021:6191:7990")).toThrow();
@@ -760,8 +762,8 @@ test("IP validation", () => {
   ];
   // no parameters check IPv4 or IPv6
   const ipSchema = z.string().ip();
-  expect(validIPs.every((ip) => ipSchema.safeParse(ip).success)).toBe(true);
+  expect(validIPs.every((ip) => z.safeParse(ipSchema, ip).success)).toBe(true);
   expect(
-    invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
+    invalidIPs.every((ip) => z.safeParse(ipSchema, ip).success === false)
   ).toBe(true);
 });
