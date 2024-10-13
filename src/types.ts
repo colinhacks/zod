@@ -2839,7 +2839,7 @@ export class ZodObject<
   };
 }
 
-export type AnyZodObject = ZodObject<any, any, any>;
+export type AnyZodObject = ZodObject<any, any, any, any, never>;
 
 ////////////////////////////////////////
 ////////////////////////////////////////
@@ -3347,17 +3347,15 @@ export interface ZodTupleDef<
   typeName: ZodFirstPartyTypeKind.ZodTuple;
 }
 
-export type AnyZodTuple = ZodTuple<
-  [ZodTypeAny, ...ZodTypeAny[]] | [],
-  ZodTypeAny | null
->;
+export type AnyZodTuple = ZodTuple<[] | ZodTupleItems, any, any | never>;
 export class ZodTuple<
   T extends [ZodTypeAny, ...ZodTypeAny[]] | [] = [ZodTypeAny, ...ZodTypeAny[]],
-  Rest extends ZodTypeAny | null = null
+  Rest extends ZodTypeAny | null = null,
+  Input = InputTypeOfTupleWithRest<T, Rest>
 > extends ZodType<
   OutputTypeOfTupleWithRest<T, Rest>,
   ZodTupleDef<T, Rest>,
-  InputTypeOfTupleWithRest<T, Rest>
+  Input
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
@@ -3788,7 +3786,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
 ///////////////////////////////////////////
 ///////////////////////////////////////////
 export interface ZodFunctionDef<
-  Args extends ZodTuple<any, any> = ZodTuple<any, any>,
+  Args extends AnyZodTuple = AnyZodTuple,
   Returns extends ZodTypeAny = ZodTypeAny
 > extends ZodTypeDef {
   args: Args;
@@ -3797,21 +3795,21 @@ export interface ZodFunctionDef<
 }
 
 export type OuterTypeOfFunction<
-  Args extends ZodTuple<any, any>,
+  Args extends AnyZodTuple,
   Returns extends ZodTypeAny
 > = input<Args> extends Array<any>
   ? (...args: input<Args>) => Returns["_output"]
   : never;
 
 export type InnerTypeOfFunction<
-  Args extends ZodTuple<any, any>,
+  Args extends AnyZodTuple,
   Returns extends ZodTypeAny
 > = Args["_output"] extends Array<any>
   ? (...args: Args["_output"]) => input<Returns>
   : never;
 
 export class ZodFunction<
-  Args extends ZodTuple<any, any>,
+  Args extends AnyZodTuple,
   Returns extends ZodTypeAny
 > extends ZodType<
   OuterTypeOfFunction<Args, Returns>,
