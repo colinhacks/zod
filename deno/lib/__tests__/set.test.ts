@@ -20,7 +20,7 @@ test("type inference", () => {
 });
 
 test("valid parse", () => {
-  const result = stringSet.safeParse(new Set(["first", "second"]));
+  const result = z.safeParse(stringSet, new Set(["first", "second"]));
   expect(result.success).toEqual(true);
   if (result.success) {
     expect(result.data.has("first")).toEqual(true);
@@ -40,7 +40,7 @@ test("valid parse", () => {
 });
 
 test("valid parse async", async () => {
-  const result = await stringSet.spa(new Set(["first", "second"]));
+  const result = await z.spa(stringSet, new Set(["first", "second"]));
   expect(result.success).toEqual(true);
   if (result.success) {
     expect(result.data.has("first")).toEqual(true);
@@ -48,7 +48,10 @@ test("valid parse async", async () => {
     expect(result.data.has("third")).toEqual(false);
   }
 
-  const asyncResult = await stringSet.safeParse(new Set(["first", "second"]));
+  const asyncResult = await z.safeParse(
+    stringSet,
+    new Set(["first", "second"])
+  );
   expect(asyncResult.success).toEqual(true);
   if (asyncResult.success) {
     expect(asyncResult.data.has("first")).toEqual(true);
@@ -76,7 +79,7 @@ test("valid parse: size-related methods", () => {
 });
 
 test("failing when parsing empty set in nonempty ", () => {
-  const result = nonEmpty.safeParse(new Set());
+  const result = z.safeParse(nonEmpty, new Set());
   expect(result.success).toEqual(false);
 
   if (result.success === false) {
@@ -86,7 +89,7 @@ test("failing when parsing empty set in nonempty ", () => {
 });
 
 test("failing when set is smaller than min() ", () => {
-  const result = minTwo.safeParse(new Set(["just_one"]));
+  const result = z.safeParse(minTwo, new Set(["just_one"]));
   expect(result.success).toEqual(false);
 
   if (result.success === false) {
@@ -96,7 +99,7 @@ test("failing when set is smaller than min() ", () => {
 });
 
 test("failing when set is bigger than max() ", () => {
-  const result = maxTwo.safeParse(new Set(["one", "two", "three"]));
+  const result = z.safeParse(maxTwo, new Set(["one", "two", "three"]));
   expect(result.success).toEqual(false);
 
   if (result.success === false) {
@@ -106,12 +109,12 @@ test("failing when set is bigger than max() ", () => {
 });
 
 test("doesn’t throw when an empty set is given", () => {
-  const result = stringSet.safeParse(new Set([]));
+  const result = z.safeParse(stringSet, new Set([]));
   expect(result.success).toEqual(true);
 });
 
 test("throws when a Map is given", () => {
-  const result = stringSet.safeParse(new Map([]));
+  const result = z.safeParse(stringSet, new Map([]));
   expect(result.success).toEqual(false);
   if (result.success === false) {
     expect(result.error.issues.length).toEqual(1);
@@ -120,7 +123,7 @@ test("throws when a Map is given", () => {
 });
 
 test("throws when the given set has invalid input", () => {
-  const result = stringSet.safeParse(new Set([Symbol()]));
+  const result = z.safeParse(stringSet, new Set([Symbol()]));
   expect(result.success).toEqual(false);
   if (result.success === false) {
     expect(result.error.issues.length).toEqual(1);
@@ -130,7 +133,7 @@ test("throws when the given set has invalid input", () => {
 });
 
 test("throws when the given set has multiple invalid entries", () => {
-  const result = stringSet.safeParse(new Set([1, 2] as any[]) as Set<any>);
+  const result = z.safeParse(stringSet, new Set([1, 2] as any[]) as Set<any>);
 
   expect(result.success).toEqual(false);
   if (result.success === false) {

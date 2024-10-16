@@ -59,7 +59,7 @@ test("form errors type inference", () => {
 });
 
 test(".flatten() type assertion", () => {
-  const parsed = Test.safeParse({}) as z.SafeParseError<void>;
+  const parsed = z.safeParse(Test, {}) as z.SafeParseError<void>;
   const validFlattenedErrors: TestFlattenedErrors = parsed.error.flatten(
     () => ({ message: "", code: 0 })
   );
@@ -81,7 +81,7 @@ test(".flatten() type assertion", () => {
 });
 
 test(".formErrors type assertion", () => {
-  const parsed = Test.safeParse({}) as z.SafeParseError<void>;
+  const parsed = z.safeParse(Test, {}) as z.SafeParseError<void>;
   const validFormErrors: TestFormErrors = parsed.error.formErrors;
   // @ts-expect-error should fail assertion between `TestFlattenedErrors` and `.formErrors`.
   const invalidFlattenedErrors: TestFlattenedErrors = parsed.error.formErrors;

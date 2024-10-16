@@ -8,14 +8,15 @@ test("function parsing", () => {
     z.string().refine(() => false),
     z.number().refine(() => false),
   ]);
-  const result = schema.safeParse("asdf");
+  const result = z.safeParse(schema, "asdf");
   expect(result.success).toEqual(false);
 });
 
 test("union 2", () => {
-  const result = z
-    .union([z.number(), z.string().refine(() => false)])
-    .safeParse("a");
+  const result = z.safeParse(
+    z.union([z.number(), z.string().refine(() => false)]),
+    "a"
+  );
   expect(result.success).toEqual(false);
 });
 
@@ -33,9 +34,10 @@ test("return valid over invalid", () => {
 });
 
 test("return dirty result over aborted", () => {
-  const result = z
-    .union([z.number(), z.string().refine(() => false)])
-    .safeParse("a");
+  const result = z.safeParse(
+    z.union([z.number(), z.string().refine(() => false)]),
+    "a"
+  );
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues).toEqual([

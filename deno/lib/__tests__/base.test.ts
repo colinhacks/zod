@@ -14,7 +14,7 @@ test("type guard", () => {
   type t1 = z.input<typeof s1>;
 
   const data = { stringToNumber: "asdf" };
-  const parsed = s1.safeParse(data);
+  const parsed = z.safeParse(s1, data);
   if (parsed.success) {
     util.assertEqual<typeof data, t1>(true);
   }
@@ -25,6 +25,10 @@ test("test this binding", () => {
     return predicate("hello");
   };
 
-  expect(callback((value) => z.string().safeParse(value).success)).toBe(true); // true
-  expect(callback((value) => z.string().safeParse(value).success)).toBe(true); // true
+  expect(callback((value) => z.safeParse(z.string(), value).success)).toBe(
+    true
+  ); // true
+  expect(callback((value) => z.safeParse(z.string(), value).success)).toBe(
+    true
+  ); // true
 });

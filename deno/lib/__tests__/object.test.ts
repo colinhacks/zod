@@ -110,7 +110,7 @@ test("strip unknown", () => {
 });
 
 test("strict", () => {
-  const val = z.object({ points: z.number() }).strict().safeParse(data);
+  const val = z.safeParse(z.object({ points: z.number() }).strict(), data);
 
   expect(val.success).toEqual(false);
 });
@@ -185,10 +185,10 @@ test("test catchall parsing", async () => {
 
   expect(result).toEqual({ name: "Foo", validExtraKey: 61 });
 
-  const result2 = z
-    .object({ name: z.string() })
-    .catchall(z.number())
-    .safeParse({ name: "Foo", validExtraKey: 61, invalid: "asdf" });
+  const result2 = z.safeParse(
+    z.object({ name: z.string() }).catchall(z.number()),
+    { name: "Foo", validExtraKey: 61, invalid: "asdf" }
+  );
 
   expect(result2.success).toEqual(false);
 });
@@ -199,7 +199,7 @@ test("test nonexistent keys", async () => {
     z.object({ b: z.number() }),
   ]);
   const obj = { a: "A" };
-  const result = await Schema.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
+  const result = await z.spa(Schema, obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
   expect(result.success).toBe(true);
 });
 
@@ -214,7 +214,7 @@ test("test async union", async () => {
   ]);
 
   const obj = { ty: "A" };
-  const result = await Schema2.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
+  const result = await z.spa(Schema2, obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
   expect(result.success).toEqual(true);
 });
 
@@ -311,10 +311,10 @@ test("strictcreate", async () => {
     name: z.string(),
   });
 
-  const syncResult = strictObj.safeParse({ name: "asdf", unexpected: 13 });
+  const syncResult = z.safeParse(strictObj, { name: "asdf", unexpected: 13 });
   expect(syncResult.success).toEqual(false);
 
-  const asyncResult = await strictObj.spa({ name: "asdf", unexpected: 13 });
+  const asyncResult = await z.spa(strictObj, { name: "asdf", unexpected: 13 });
   expect(asyncResult.success).toEqual(false);
 });
 

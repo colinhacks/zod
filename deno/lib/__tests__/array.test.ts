@@ -56,7 +56,7 @@ test("continue parsing despite array size error", () => {
     people: z.string().array().min(2),
   });
 
-  const result = schema.safeParse({
+  const result = z.safeParse(schema, {
     people: [123],
   });
   expect(result.success).toEqual(false);

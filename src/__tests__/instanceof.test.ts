@@ -36,6 +36,6 @@ test("instanceof", async () => {
 
 test("instanceof fatal", () => {
   const schema = z.instanceof(Date).refine((d) => d.toString());
-  const res = schema.safeParse(null);
+  const res = z.safeParse(schema, null);
   expect(res.success).toBe(false);
 });

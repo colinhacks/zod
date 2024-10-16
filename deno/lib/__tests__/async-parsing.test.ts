@@ -11,11 +11,11 @@ test("string async parse", async () => {
   const goodData = "XXX";
   const badData = 12;
 
-  const goodResult = await stringSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(stringSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await stringSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(stringSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -26,11 +26,11 @@ test("number async parse", async () => {
   const goodData = 1234.2353;
   const badData = "1234";
 
-  const goodResult = await numberSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(numberSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await numberSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(numberSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -41,11 +41,11 @@ test("bigInt async parse", async () => {
   const goodData = BigInt(145);
   const badData = 134;
 
-  const goodResult = await bigIntSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(bigIntSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await bigIntSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(bigIntSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -56,11 +56,11 @@ test("boolean async parse", async () => {
   const goodData = true;
   const badData = 1;
 
-  const goodResult = await booleanSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(booleanSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await booleanSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(booleanSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -71,11 +71,11 @@ test("date async parse", async () => {
   const goodData = new Date();
   const badData = new Date().toISOString();
 
-  const goodResult = await dateSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(dateSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await dateSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(dateSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -86,11 +86,11 @@ test("undefined async parse", async () => {
   const goodData = undefined;
   const badData = "XXX";
 
-  const goodResult = await undefinedSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(undefinedSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(undefined);
 
-  const badResult = await undefinedSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(undefinedSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -101,11 +101,11 @@ test("null async parse", async () => {
   const goodData = null;
   const badData = undefined;
 
-  const goodResult = await nullSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(nullSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await nullSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(nullSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -116,11 +116,11 @@ test("any async parse", async () => {
   const goodData = [{}];
   // const badData = 'XXX';
 
-  const goodResult = await anySchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(anySchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  // const badResult = await anySchema.safeParseAsync(badData);
+  // const badResult = await z.safeParseAsync(anySchema, badData);
   // expect(badResult.success).toBe(false);
   // if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -131,11 +131,11 @@ test("unknown async parse", async () => {
   const goodData = ["asdf", 124, () => {}];
   // const badData = 'XXX';
 
-  const goodResult = await unknownSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(unknownSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  // const badResult = await unknownSchema.safeParseAsync(badData);
+  // const badResult = await z.safeParseAsync(unknownSchema, badData);
   // expect(badResult.success).toBe(false);
   // if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -146,11 +146,11 @@ test("void async parse", async () => {
   const goodData = undefined;
   const badData = 0;
 
-  const goodResult = await voidSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(voidSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await voidSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(voidSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -161,11 +161,11 @@ test("array async parse", async () => {
   const goodData = ["XXX"];
   const badData = "XXX";
 
-  const goodResult = await arraySchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(arraySchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await arraySchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(arraySchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -176,11 +176,11 @@ test("object async parse", async () => {
   const goodData = { string: "XXX" };
   const badData = { string: 12 };
 
-  const goodResult = await objectSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(objectSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await objectSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(objectSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -191,11 +191,11 @@ test("union async parse", async () => {
   const goodData = undefined;
   const badData = null;
 
-  const goodResult = await unionSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(unionSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await unionSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(unionSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -206,11 +206,11 @@ test("record async parse", async () => {
   const goodData = { adsf: {}, asdf: {} };
   const badData = [{}];
 
-  const goodResult = await recordSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(recordSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await recordSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(recordSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -221,11 +221,11 @@ test("function async parse", async () => {
   const goodData = () => {};
   const badData = "XXX";
 
-  const goodResult = await functionSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(functionSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(typeof goodResult.data).toEqual("function");
 
-  const badResult = await functionSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(functionSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -236,11 +236,11 @@ test("literal async parse", async () => {
   const goodData = "asdf";
   const badData = "asdff";
 
-  const goodResult = await literalSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(literalSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await literalSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(literalSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -251,11 +251,11 @@ test("enum async parse", async () => {
   const goodData = "whale";
   const badData = "leopard";
 
-  const goodResult = await enumSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(enumSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await enumSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(enumSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -270,11 +270,11 @@ test("nativeEnum async parse", async () => {
   const goodData = nativeEnumTest.asdf;
   const badData = "asdf";
 
-  const goodResult = await nativeEnumSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(nativeEnumSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) expect(goodResult.data).toEqual(goodData);
 
-  const badResult = await nativeEnumSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(nativeEnumSchema, badData);
   expect(badResult.success).toBe(false);
   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
 });
@@ -284,7 +284,7 @@ const promiseSchema = z.promise(z.number());
 test("promise async parse good", async () => {
   const goodData = Promise.resolve(123);
 
-  const goodResult = await promiseSchema.safeParseAsync(goodData);
+  const goodResult = await z.safeParseAsync(promiseSchema, goodData);
   expect(goodResult.success).toBe(true);
   if (goodResult.success) {
     expect(goodResult.data).toBeInstanceOf(Promise);
@@ -299,7 +299,7 @@ test("promise async parse good", async () => {
 
 test("promise async parse bad", async () => {
   const badData = Promise.resolve("XXX");
-  const badResult = await promiseSchema.safeParseAsync(badData);
+  const badResult = await z.safeParseAsync(promiseSchema, badData);
   expect(badResult.success).toBe(true);
   if (badResult.success) {
     await expect(badResult.data).rejects.toBeInstanceOf(z.ZodError);
@@ -315,8 +315,8 @@ test("async validation non-empty strings", async () => {
   });
 
   const testval = { hello: "", foo: "" };
-  const result1 = base.safeParse(testval);
-  const result2 = base.safeParseAsync(testval);
+  const result1 = z.safeParse(base, testval);
+  const result2 = z.safeParseAsync(base, testval);
 
   const r1 = result1;
   await result2.then((r2) => {
@@ -332,8 +332,8 @@ test("async validation multiple errors 1", async () => {
   });
 
   const testval = { hello: 3, foo: "hello" };
-  const result1 = base.safeParse(testval);
-  const result2 = base.safeParseAsync(testval);
+  const result1 = z.safeParse(base, testval);
+  const result2 = z.safeParseAsync(base, testval);
 
   const r1 = result1;
   await result2.then((r2) => {
@@ -352,8 +352,8 @@ test("async validation multiple errors 2", async () => {
     });
 
   const testval = { hello: 3, foo: { bar: 4 } };
-  const result1 = base().safeParse(testval);
-  const result2 = base(true).safeParseAsync(testval);
+  const result1 = z.safeParse(base(), testval);
+  const result2 = z.safeParseAsync(base(true), testval);
 
   const r1 = result1;
   await result2.then((r2) => {
@@ -379,7 +379,7 @@ test("ensure early async failure prevents follow-up refinement checks", async ()
   });
 
   const testval = { hello: "bye", foo: 3 };
-  const result = await base.safeParseAsync(testval);
+  const result = await z.safeParseAsync(base, testval);
   if (result.success === false) {
     expect(result.error.issues.length).toBe(1);
     expect(count).toBe(1);

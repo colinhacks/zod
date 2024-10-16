@@ -48,5 +48,5 @@ test("nested no undefined", () => {
   const outer = z.object({ inner });
   type outerSchema = z.infer<typeof outer>;
   z.util.assertEqual<outerSchema, { inner: string | string[] }>(true);
-  expect(outer.safeParse({ inner: undefined }).success).toEqual(false);
+  expect(z.safeParse(outer, { inner: undefined }).success).toEqual(false);
 });

@@ -9,7 +9,7 @@ test("preprocess", () => {
 
   const value = schema.parse("asdf");
   expect(value).toEqual(["asdf"]);
-  util.assertEqual<(typeof schema)["_input"], unknown>(true);
+  util.assertEqual<z.input<typeof schema>, unknown>(true);
 });
 
 test("async preprocess", async () => {
@@ -99,15 +99,16 @@ test("async preprocess ctx.addIssue with parse", async () => {
 });
 
 test("preprocess ctx.addIssue with parseAsync", async () => {
-  const result = await z
-    .preprocess(async (data, ctx) => {
+  const result = await z.safeParseAsync(
+    z.preprocess(async (data, ctx) => {
       ctx.addIssue({
         code: "custom",
         message: `${data} is not one of our allowed strings`,
       });
       return data;
-    }, z.string())
-    .safeParseAsync("asdf");
+    }, z.string()),
+    "asdf"
+  );
 
   expect(JSON.parse(JSON.stringify(result))).toEqual({
     success: false,
@@ -135,7 +136,7 @@ test("z.NEVER in preprocess", () => {
 
   type foo = z.infer<typeof foo>;
   util.assertEqual<foo, number>(true);
-  const arg = foo.safeParse(undefined);
+  const arg = z.safeParse(foo, undefined);
   if (!arg.success) {
     expect(arg.error.issues[0].message).toEqual("bad");
   }
@@ -145,7 +146,7 @@ test("preprocess as the second property of object", () => {
     nonEmptyStr: z.string().min(1),
     positiveNum: z.preprocess((v) => Number(v), z.number().positive()),
   });
-  const result = schema.safeParse({
+  const result = z.safeParse(schema, {
     nonEmptyStr: "",
     positiveNum: "",
   });

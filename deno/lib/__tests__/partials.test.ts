@@ -249,5 +249,5 @@ test("deeppartial array", () => {
   schema.parse({});
 
   // should be false, but is true
-  expect(schema.safeParse({ array: [] }).success).toBe(false);
+  expect(z.safeParse(schema, { array: [] }).success).toBe(false);
 });

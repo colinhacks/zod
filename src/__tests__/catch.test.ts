@@ -5,7 +5,7 @@ import { z } from "..";
 import { util } from "../helpers/util";
 
 test("basic catch", () => {
-  expect(z.string().catch("default").parse(undefined)).toBe("default");
+  expect(z.catch_(z.string(), "default").parse(undefined)).toBe("default");
 });
 
 test("catch fn does not run when parsing succeeds", () => {
@@ -14,30 +14,30 @@ test("catch fn does not run when parsing succeeds", () => {
     isCalled = true;
     return "asdf";
   };
-  expect(z.string().catch(cb).parse("test")).toBe("test");
+  expect(z.catch_(z.string(), cb).parse("test")).toBe("test");
   expect(isCalled).toEqual(false);
 });
 
 test("basic catch async", async () => {
-  const result = await z.string().catch("default").parseAsync(1243);
+  const result = await z.catch_(z.string(), "default").parseAsync(1243);
   expect(result).toBe("default");
 });
 
 test("catch replace wrong types", () => {
-  expect(z.string().catch("default").parse(true)).toBe("default");
-  expect(z.string().catch("default").parse(true)).toBe("default");
-  expect(z.string().catch("default").parse(15)).toBe("default");
-  expect(z.string().catch("default").parse([])).toBe("default");
-  expect(z.string().catch("default").parse(new Map())).toBe("default");
-  expect(z.string().catch("default").parse(new Set())).toBe("default");
-  expect(z.string().catch("default").parse({})).toBe("default");
+  expect(z.catch_(z.string(), "default").parse(true)).toBe("default");
+  expect(z.catch_(z.string(), "default").parse(true)).toBe("default");
+  expect(z.catch_(z.string(), "default").parse(15)).toBe("default");
+  expect(z.catch_(z.string(), "default").parse([])).toBe("default");
+  expect(z.catch_(z.string(), "default").parse(new Map())).toBe("default");
+  expect(z.catch_(z.string(), "default").parse(new Set())).toBe("default");
+  expect(z.catch_(z.string(), "default").parse({})).toBe("default");
 });
 
 test("catch with transform", () => {
-  const stringWithDefault = z
-    .string()
-    .transform((val) => val.toUpperCase())
-    .catch("default");
+  const stringWithDefault = z.catch_(
+    z.string().transform((val) => val.toUpperCase()),
+    "default"
+  );
   expect(stringWithDefault.parse(undefined)).toBe("default");
   expect(stringWithDefault.parse(15)).toBe("default");
   expect(stringWithDefault).toBeInstanceOf(z.ZodCatch);
@@ -53,7 +53,7 @@ test("catch with transform", () => {
 });
 
 test("catch on existing optional", () => {
-  const stringWithDefault = z.string().optional().catch("asdf");
+  const stringWithDefault = z.catch_(z.string().optional(), "asdf");
   expect(stringWithDefault.parse(undefined)).toBe(undefined);
   expect(stringWithDefault.parse(15)).toBe("asdf");
   expect(stringWithDefault).toBeInstanceOf(z.ZodCatch);
@@ -69,7 +69,7 @@ test("catch on existing optional", () => {
 });
 
 test("optional on catch", () => {
-  const stringWithDefault = z.string().catch("asdf").optional();
+  const stringWithDefault = z.catch_(z.string(), "asdf").optional();
 
   type inp = z.input<typeof stringWithDefault>;
   util.assertEqual<inp, unknown>(true);
@@ -78,15 +78,19 @@ test("optional on catch", () => {
 });
 
 test("complex chain example", () => {
-  const complex = z
-    .string()
-    .catch("asdf")
-    .transform((val) => val + "!")
-    .transform((val) => val.toUpperCase())
-    .catch("qwer")
-    .removeCatch()
-    .optional()
-    .catch("asdfasdf");
+  const complex = z.catch_(
+    z
+      .catch_(
+        z
+          .catch_(z.string(), "asdf")
+          .transform((val) => val + "!")
+          .transform((val) => val.toUpperCase()),
+        "qwer"
+      )
+      .removeCatch()
+      .optional(),
+    "asdfasdf"
+  );
 
   expect(complex.parse("qwer")).toBe("QWER!");
   expect(complex.parse(15)).toBe("ASDF!");
@@ -94,15 +98,15 @@ test("complex chain example", () => {
 });
 
 test("removeCatch", () => {
-  const stringWithRemovedDefault = z.string().catch("asdf").removeCatch();
+  const stringWithRemovedDefault = z.catch_(z.string(), "asdf").removeCatch();
 
   type out = z.output<typeof stringWithRemovedDefault>;
   util.assertEqual<out, string>(true);
 });
 
 test("nested", () => {
-  const inner = z.string().catch("asdf");
-  const outer = z.object({ inner }).catch({
+  const inner = z.catch_(z.string(), "asdf");
+  const outer = z.catch_(z.object({ inner }), {
     inner: "asdf",
   });
   type input = z.input<typeof outer>;
@@ -115,7 +119,7 @@ test("nested", () => {
 });
 
 test("chained catch", () => {
-  const stringWithDefault = z.string().catch("inner").catch("outer");
+  const stringWithDefault = z.catch_(z.catch_(z.string(), "inner"), "outer");
   const result = stringWithDefault.parse(undefined);
   expect(result).toEqual("inner");
   const resultDiff = stringWithDefault.parse(5);
@@ -135,7 +139,7 @@ test("native enum", () => {
   }
 
   const schema = z.object({
-    fruit: z.nativeEnum(Fruits).catch(Fruits.apple),
+    fruit: z.catch_(z.nativeEnum(Fruits), Fruits.apple),
   });
 
   expect(schema.parse({})).toEqual({ fruit: Fruits.apple });
@@ -144,7 +148,7 @@ test("native enum", () => {
 
 test("enum", () => {
   const schema = z.object({
-    fruit: z.enum(["apple", "orange"]).catch("apple"),
+    fruit: z.catch_(z.enum(["apple", "orange"]), "apple"),
   });
 
   expect(schema.parse({})).toEqual({ fruit: "apple" });
@@ -158,11 +162,11 @@ test("reported issues with nested usage", () => {
     obj: z.object({
       sub: z.object({
         lit: z.literal("a"),
-        subCatch: z.number().catch(23),
+        subCatch: z.catch_(z.number(), 23),
       }),
-      midCatch: z.number().catch(42),
+      midCatch: z.catch_(z.number(), 42),
     }),
-    number: z.number().catch(0),
+    number: z.catch_(z.number(), 0),
     bool: z.boolean(),
   });
 
@@ -194,14 +198,14 @@ test("catch error", () => {
 
   const schema = z.object({
     age: z.number(),
-    name: z.string().catch((ctx) => {
+    name: z.catch_(z.string(), (ctx) => {
       catchError = ctx.error;
 
       return "John Doe";
     }),
   });
 
-  const result = schema.safeParse({
+  const result = z.safeParse(schema, {
     age: null,
     name: null,
   });
@@ -220,7 +224,7 @@ test("catch error", () => {
 });
 
 test("ctx.input", () => {
-  const schema = z.string().catch((ctx) => {
+  const schema = z.catch_(z.string(), (ctx) => {
     return String(ctx.input);
   });
 

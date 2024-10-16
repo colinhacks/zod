@@ -14,7 +14,8 @@ test("type inference", () => {
 });
 
 test("valid parse", () => {
-  const result = stringMap.safeParse(
+  const result = z.safeParse(
+    stringMap,
     new Map([
       ["first", "foo"],
       ["second", "bar"],
@@ -30,7 +31,8 @@ test("valid parse", () => {
 });
 
 test("valid parse async", async () => {
-  const result = await stringMap.spa(
+  const result = await z.spa(
+    stringMap,
     new Map([
       ["first", "foo"],
       ["second", "bar"],
@@ -46,7 +48,7 @@ test("valid parse async", async () => {
 });
 
 test("throws when a Set is given", () => {
-  const result = stringMap.safeParse(new Set([]));
+  const result = z.safeParse(stringMap, new Set([]));
   expect(result.success).toEqual(false);
   if (result.success === false) {
     expect(result.error.issues.length).toEqual(1);
@@ -55,7 +57,7 @@ test("throws when a Set is given", () => {
 });
 
 test("throws when the given map has invalid key and invalid input", () => {
-  const result = stringMap.safeParse(new Map([[42, Symbol()]]));
+  const result = z.safeParse(stringMap, new Map([[42, Symbol()]]));
   expect(result.success).toEqual(false);
   if (result.success === false) {
     expect(result.error.issues.length).toEqual(2);
@@ -67,16 +69,17 @@ test("throws when the given map has invalid key and invalid input", () => {
 });
 
 test("throws when the given map has multiple invalid entries", () => {
-  // const result = stringMap.safeParse(new Map([[42, Symbol()]]));
+  // const result = z.safeParse(stringMap, new Map([[42, Symbol()]]));
 
-  const result = stringMap.safeParse(
+  const result = z.safeParse(
+    stringMap,
     new Map([
       [1, "foo"],
       ["bar", 2],
     ] as [any, any][]) as Map<any, any>
   );
 
-  // const result = stringMap.safeParse(new Map([[42, Symbol()]]));
+  // const result = z.safeParse(stringMap, new Map([[42, Symbol()]]));
   expect(result.success).toEqual(false);
   if (result.success === false) {
     expect(result.error.issues.length).toEqual(2);
@@ -94,7 +97,8 @@ test("dirty", async () => {
     }),
     z.string()
   );
-  const result = await map.spa(
+  const result = await z.spa(
+    map,
     new Map([
       ["first", "foo"],
       ["second", "bar"],
