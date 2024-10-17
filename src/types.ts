@@ -434,7 +434,7 @@ export abstract class ZodType<
     return this.nullable().optional();
   }
   array(): ZodArray<this> {
-    return ZodArray.create(this, this._def);
+    return ZodArray.create(this);
   }
   promise(): ZodPromise<this> {
     return ZodPromise.create(this, this._def);
