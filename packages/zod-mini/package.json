@@ -1,5 +1,5 @@
 {
-  "name": "zod-core",
+  "name": "zod",
   "type": "module",
   "version": "3.23.8",
   "author": "Colin McDonnell <zod@colinhacks.com>",
@@ -24,50 +24,6 @@
       "require": {
         "types": "./dist/commonjs/index.d.ts",
         "default": "./dist/commonjs/index.js"
-      }
-    },
-    "./util": {
-      "import": {
-        "@zod/source": "./src/util.ts",
-        "types": "./dist/esm/util.d.ts",
-        "default": "./dist/esm/util.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/util.d.ts",
-        "default": "./dist/commonjs/util.js"
-      }
-    },
-    "./error": {
-      "import": {
-        "@zod/source": "./src/errors_v2.ts",
-        "types": "./dist/esm/errors_v2.d.ts",
-        "default": "./dist/esm/errors_v2.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/errors_v2.d.ts",
-        "default": "./dist/commonjs/errors_v2.js"
-      }
-    },
-    "./parse": {
-      "import": {
-        "@zod/source": "./src/parse.ts",
-        "types": "./dist/esm/parse.d.ts",
-        "default": "./dist/esm/parse.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/parse.d.ts",
-        "default": "./dist/commonjs/parse.js"
-      }
-    },
-    "./checks": {
-      "import": {
-        "@zod/source": "./src/checks.ts",
-        "types": "./dist/esm/checks.d.ts",
-        "default": "./dist/esm/checks.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/checks.d.ts",
-        "default": "./dist/commonjs/checks.js"
       }
     },
     "./locales/*": {
@@ -110,6 +66,6 @@
     "prepublishOnly": "pnpm test && pnpm run build"
   },
   "dependencies": {
-    "effect": "^3.5.6"
+    "zod-core": "3.23.8"
   }
 }

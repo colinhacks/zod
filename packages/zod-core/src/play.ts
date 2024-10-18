@@ -1,26 +1,31 @@
-import * as z from "./index.js";
+// import * as z from "./api.js";
+import { $ZodString } from "./schemas.js";
+const schema = new $ZodString({
+  checks: [],
+  type: "string",
+  coerce: false,
+});
+console.log(schema._parse("asdf"));
+console.log(schema);
+// const str = z
+//   .string({
+//     checks: [],
+//     coerce: false,
+//     type: "string",
+//   })
+//   ._refine(z.startsWith("asdf"));
+// // console.log(str._parse("asdfasdf"));
+// // console.log(str._parse("qwerqwer"));
 
-const str = z
-  .string({
-    checks: [],
-    coerce: false,
-    type: "string",
-  })
-  ._refine(z.startsWith("asdf"));
-// console.log(str._parse("asdfasdf"));
-// console.log(str._parse("qwerqwer"));
+// console.log(z.number);
 
-const num = z
-  .number({
-    // checks: [],
-    coerce: false,
-    // type: "number",
-  })(z.gte(0))
-  ._refine(z.lte(10));
+// const num = z.number([z.lte(10)]);
+
 // console.log(num);
-console.log(num._parse(-10));
-console.log(num._parse(20));
-console.log(num._parse(5));
+// // console.log(num);
+// console.log(num._parse(-10));
+// console.log(num._parse(20));
+// console.log(num._parse(5));
 
 // const schema = z._union({
 //   type: "union",

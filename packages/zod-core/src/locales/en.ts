@@ -1,329 +1,92 @@
-import type * as errors from "../errors_v2.js";
-import { ZodParsedType } from "../parse.js";
+import type * as errors from "../errors.js";
 import * as util from "../util.js";
-import { jsonStringifyReplacer } from "../util.js";
+
+const HasSize: Record<string, string> = {
+  string: "characters",
+  file: "bytes",
+  array: "items",
+  set: "items",
+};
+
+const Nouns: {
+  [k in
+    | errors.$ZodStringFormats
+    | errors.$ZodIssue["origin"]
+    | (string & {})]?: string;
+} = {
+  regex: "string",
+  email: "email",
+  url: "URL",
+  emoji: "emoji",
+  uuid: "UUID",
+  uuidv4: "UUIDv4",
+  uuidv6: "UUIDv6",
+  nanoid: "nanoid",
+  guid: "GUID",
+  cuid: "cuid",
+  cuid2: "cuid2",
+  ulid: "ULID",
+  xid: "XID",
+  ksuid: "KSUID",
+  iso_datetime: "ISO datetime",
+  iso_date: "ISO date",
+  iso_time: "ISO time",
+  duration: "duration",
+  ip: "IP address",
+  ipv4: "IPv4 address",
+  ipv6: "IPv6 address",
+  base64: "base64-encoded string",
+  json_string: "JSON string",
+  e164: "E.164 number",
+  jwt: "JWT",
+};
+
+declare const x: errors.$ZodIssueData<errors.$ZodIssue>;
 
 const errorMap: errors.$ZodErrorMap = (issue) => {
-  if (Math.random()) return "INVALID";
   switch (issue.code) {
     case "invalid_type":
-      // case "type":
-      if (issue.expected === "union") return `Invalid input`;
-      if (issue.expected === "literal")
-        return `Invalid literal value, expected ${issue.literalValues.map((val) => JSON.stringify(val, jsonStringifyReplacer)).join("|")}`;
-      if (issue.expected === "enum")
-        return `Invalid option, expected ${issue.enumValues.map((val) => JSON.stringify(val, jsonStringifyReplacer)).join("|")}`;
-      if (issue.input === ZodParsedType.undefined) return "Required";
-      return `Expected ${issue.expected}, received ${issue.received}`;
-    case "invalid_object": {
-      if (issue.check === "unrecognized_keys") {
-        const plural = issue.keys.length > 1 ? "s" : "";
-        return `Unrecognized key${plural}: ${util.joinValues(issue.keys, ", ")}`;
+      if (issue.origin === "enum") {
       }
-      break;
+      return `Invalid input: expected ${issue.origin}, received ${util.getParsedType(issue.input)}`;
+    case "invalid_enum":
+      return `Invalid option: expected one of ${util.joinValues(issue.options, ", ")}`;
+    case "too_big":
+      if (issue.origin in HasSize)
+        return `Too big: expected ${issue.origin} to have less than ${issue.maximum}${HasSize[issue.origin]}`;
+      return `Too big: expected ${issue.origin} to be less than ${issue.maximum}`;
+    case "too_small":
+      if (issue.origin in HasSize)
+        return `Too small: expected ${issue.origin} to have more than ${issue.minimum}${HasSize[issue.origin]}`;
+      return `Too small: expected ${issue.origin} to be more than ${issue.minimum}`;
+    case "not_multiple_of":
+      return `Invalid number: must be a multiple of ${issue.divisor}`;
+    case "invalid_format": {
+      const _issue = issue as errors.$FirstPartyStringFormats;
+      if (_issue.format === "starts_with")
+        return `Invalid string: must start with "${issue}"`;
+      if (_issue.format === "ends_with")
+        return `Invalid string: must end with "${_issue.suffix}"`;
+      if (_issue.format === "includes")
+        return `Invalid string: must include "${_issue.includes}"`;
+      if (_issue.format === "regex")
+        return `Invalid string: must match pattern ${_issue.pattern}`;
+      return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
     }
 
-    case "invalid_number":
-      if (issue.format === "multiple_of") {
-        return `Expected multiple of ${issue.value}`;
-      }
-      break;
-    case "invalid_string":
-      switch (issue.format) {
-        case "starts_with":
-          return `Input must start with "${issue.starts_with}"`;
-        case "ends_with":
-          return `Input must end with "${issue.ends_with}"`;
-        case "includes":
-          return `Input must include "${issue.includes}"`;
-        case "regex":
-          return `Input does not match pattern ${issue.pattern}`;
-        default:
-          return `Invalid ${issue.format}`;
-      }
-    case "size_out_of_range":
-      if (issue.expected === ">") {
-        if (issue.domain === "string")
-          return `Input must contain more than ${issue.minimum} characters`;
-        if (issue.domain === "array")
-          return `List must contain more than ${issue.minimum} items`;
-        if (issue.domain === "file")
-          return `File must be larger than ${issue.minimum} bytes`;
-        if (issue.domain === "set")
-          return `Set must contain more than ${issue.minimum} items`;
-      }
-      if (issue.expected === "<") {
-        if (issue.domain === "string")
-          return `String must contain less than ${issue.maximum} characters`;
-        if (issue.domain === "array")
-          return `Array must contain less than ${issue.maximum} items`;
-        if (issue.domain === "file")
-          return `File must be smaller than ${issue.maximum} bytes`;
-        if (issue.domain === "set")
-          return `Set must contain less than ${issue.maximum} items`;
-      }
-      if (issue.expected === "==") {
-        if (issue.domain === "string")
-          return `String must contain exactly ${issue.size} characters`;
-        if (issue.domain === "array")
-          return `Array must contain exactly ${issue.size} items`;
-        if (issue.domain === "file")
-          return `File must be exactly ${issue.size} bytes`;
-        if (issue.domain === "set")
-          return `Set must contain exactly ${issue.size} items`;
-      }
-      return `Invalid size, expected ${issue.domain} to be ${issue.expected}${issue.size}`;
-
-    case ZodIssueCode.too_small:
-      if (issue.type === "array")
-        message = `Array must contain ${
-          issue.exact ? "exactly" : issue.inclusive ? `at least` : `more than`
-        } ${issue.minimum} element(s)`;
-      else if (issue.type === "string")
-        message = `String must contain ${
-          issue.exact ? "exactly" : issue.inclusive ? `at least` : `over`
-        } ${issue.minimum} character(s)`;
-      else if (issue.type === "number")
-        message = `Number must be ${
-          issue.exact
-            ? `exactly equal to `
-            : issue.inclusive
-              ? `greater than or equal to `
-              : `greater than `
-        }${issue.minimum}`;
-      else if (issue.type === "date")
-        message = `Date must be ${
-          issue.exact
-            ? `exactly equal to `
-            : issue.inclusive
-              ? `greater than or equal to `
-              : `greater than `
-        }${new Date(Number(issue.minimum))}`;
-      else message = "Invalid input";
-      break;
-    case ZodIssueCode.too_big:
-      if (issue.type === "array")
-        message = `Array must contain ${
-          issue.exact ? `exactly` : issue.inclusive ? `at most` : `less than`
-        } ${issue.maximum} element(s)`;
-      else if (issue.type === "string")
-        message = `String must contain ${
-          issue.exact ? `exactly` : issue.inclusive ? `at most` : `under`
-        } ${issue.maximum} character(s)`;
-      else if (issue.type === "number")
-        message = `Number must be ${
-          issue.exact
-            ? `exactly`
-            : issue.inclusive
-              ? `less than or equal to`
-              : `less than`
-        } ${issue.maximum}`;
-      else if (issue.type === "bigint")
-        message = `BigInt must be ${
-          issue.exact
-            ? `exactly`
-            : issue.inclusive
-              ? `less than or equal to`
-              : `less than`
-        } ${issue.maximum}`;
-      else if (issue.type === "date")
-        message = `Date must be ${
-          issue.exact
-            ? `exactly`
-            : issue.inclusive
-              ? `smaller than or equal to`
-              : `smaller than`
-        } ${new Date(Number(issue.maximum))}`;
-      else message = "Invalid input";
-      break;
-    case ZodIssueCode.custom:
-      message = `Invalid input`;
-      break;
-    case ZodIssueCode.invalid_intersection_types:
-      message = `Intersection results could not be merged`;
-      break;
-    case ZodIssueCode.not_multiple_of:
-      message = `Number must be a multiple of ${issue.multipleOf}`;
-      break;
-    case ZodIssueCode.not_finite:
-      message = "Number must be finite";
-      break;
-    case ZodIssueCode.not_unique:
-      message = issue.duplicates?.length
-        ? `Element(s): '${issue.duplicates}' not unique`
-        : "Values must be unique";
-      break;
-    case ZodIssueCode.invalid_file_type:
-      message = `Invalid file type. Expected ${util.joinValues(
-        issue.expected
-      )}, received '${issue.received}'`;
-      break;
-    case ZodIssueCode.invalid_file_name:
-      message = `Invalid file name`;
-      break;
-    default:
-      message = _ctx.defaultError;
-      util.assertNever(issue);
+    case "invalid_date":
+      return "Invalid Date";
+    case "unrecognized_keys":
+      return `Unrecognized key${issue.keys.length > 1 ? "s" : ""}: ${util.joinValues(issue.keys, ", ")}`;
+    case "invalid_union":
+      return "Invalid input";
+    case "invalid_key":
+      return `Invalid key in ${issue.origin}`;
+    case "invalid_value":
+      return `Invalid value in ${issue.origin}`;
   }
+
+  return `Invalid input`;
 };
 
 export default errorMap;
-
-// const errorMap: ZodErrorMap = (issue, _ctx) => {
-//   let message: string;
-//   switch (issue.code) {
-//     case ZodIssueCode.invalid_type:
-//       if (issue.received === ZodParsedType.undefined) {
-//         message = "Required";
-//       } else {
-//         message = `Expected ${issue.expected}, received ${issue.received}`;
-//       }
-//       break;
-//     case ZodIssueCode.invalid_literal:
-//       message = `Invalid literal value, expected ${JSON.stringify(
-//         issue.expected,
-//         jsonStringifyReplacer
-//       )}`;
-//       break;
-//     case ZodIssueCode.unrecognized_keys:
-//       message = `Unrecognized key(s) in object: ${util.joinValues(
-//         issue.keys,
-//         ", "
-//       )}`;
-//       break;
-//     case ZodIssueCode.invalid_union:
-//       message = `Invalid input`;
-//       break;
-//     case ZodIssueCode.invalid_union_discriminator:
-//       message = `Invalid discriminator value. Expected ${util.joinValues(
-//         issue.options
-//       )}`;
-//       break;
-//     case ZodIssueCode.invalid_enum_value:
-//       message = `Invalid enum value. Expected ${util.joinValues(
-//         issue.options
-//       )}, received '${issue.received}'`;
-//       break;
-//     case ZodIssueCode.invalid_arguments:
-//       message = `Invalid function arguments`;
-//       break;
-//     case ZodIssueCode.invalid_return_type:
-//       message = `Invalid function return type`;
-//       break;
-//     case ZodIssueCode.invalid_date:
-//       message = `Invalid date`;
-//       break;
-//     case ZodIssueCode.invalid_string:
-//       if (typeof issue.validation === "object") {
-//         if ("includes" in issue.validation) {
-//           message = `Invalid input: must include "${issue.validation.includes}"`;
-
-//           if (typeof issue.validation.position === "number") {
-//             message = `${message} at one or more positions greater than or equal to ${issue.validation.position}`;
-//           }
-//         } else if ("startsWith" in issue.validation) {
-//           message = `Invalid input: must start with "${issue.validation.startsWith}"`;
-//         } else if ("endsWith" in issue.validation) {
-//           message = `Invalid input: must end with "${issue.validation.endsWith}"`;
-//         } else {
-//           util.assertNever(issue.validation);
-//         }
-//       } else if (issue.validation !== "regex") {
-//         message = `Invalid ${issue.validation}`;
-//       } else {
-//         message = "Invalid";
-//       }
-//       break;
-//     case ZodIssueCode.too_small:
-//       if (issue.type === "array")
-//         message = `Array must contain ${
-//           issue.exact ? "exactly" : issue.inclusive ? `at least` : `more than`
-//         } ${issue.minimum} element(s)`;
-//       else if (issue.type === "string")
-//         message = `String must contain ${
-//           issue.exact ? "exactly" : issue.inclusive ? `at least` : `over`
-//         } ${issue.minimum} character(s)`;
-//       else if (issue.type === "number")
-//         message = `Number must be ${
-//           issue.exact
-//             ? `exactly equal to `
-//             : issue.inclusive
-//               ? `greater than or equal to `
-//               : `greater than `
-//         }${issue.minimum}`;
-//       else if (issue.type === "date")
-//         message = `Date must be ${
-//           issue.exact
-//             ? `exactly equal to `
-//             : issue.inclusive
-//               ? `greater than or equal to `
-//               : `greater than `
-//         }${new Date(Number(issue.minimum))}`;
-//       else message = "Invalid input";
-//       break;
-//     case ZodIssueCode.too_big:
-//       if (issue.type === "array")
-//         message = `Array must contain ${
-//           issue.exact ? `exactly` : issue.inclusive ? `at most` : `less than`
-//         } ${issue.maximum} element(s)`;
-//       else if (issue.type === "string")
-//         message = `String must contain ${
-//           issue.exact ? `exactly` : issue.inclusive ? `at most` : `under`
-//         } ${issue.maximum} character(s)`;
-//       else if (issue.type === "number")
-//         message = `Number must be ${
-//           issue.exact
-//             ? `exactly`
-//             : issue.inclusive
-//               ? `less than or equal to`
-//               : `less than`
-//         } ${issue.maximum}`;
-//       else if (issue.type === "bigint")
-//         message = `BigInt must be ${
-//           issue.exact
-//             ? `exactly`
-//             : issue.inclusive
-//               ? `less than or equal to`
-//               : `less than`
-//         } ${issue.maximum}`;
-//       else if (issue.type === "date")
-//         message = `Date must be ${
-//           issue.exact
-//             ? `exactly`
-//             : issue.inclusive
-//               ? `smaller than or equal to`
-//               : `smaller than`
-//         } ${new Date(Number(issue.maximum))}`;
-//       else message = "Invalid input";
-//       break;
-//     case ZodIssueCode.custom:
-//       message = `Invalid input`;
-//       break;
-//     case ZodIssueCode.invalid_intersection_types:
-//       message = `Intersection results could not be merged`;
-//       break;
-//     case ZodIssueCode.not_multiple_of:
-//       message = `Number must be a multiple of ${issue.multipleOf}`;
-//       break;
-//     case ZodIssueCode.not_finite:
-//       message = "Number must be finite";
-//       break;
-//     case ZodIssueCode.not_unique:
-//       message = issue.duplicates?.length
-//         ? `Element(s): '${issue.duplicates}' not unique`
-//         : "Values must be unique";
-//       break;
-//     case ZodIssueCode.invalid_file_type:
-//       message = `Invalid file type. Expected ${util.joinValues(
-//         issue.expected
-//       )}, received '${issue.received}'`;
-//       break;
-//     case ZodIssueCode.invalid_file_name:
-//       message = `Invalid file name`;
-//       break;
-//     default:
-//       message = _ctx.defaultError;
-//       util.assertNever(issue);
-//   }
-//   return { message };
-// };

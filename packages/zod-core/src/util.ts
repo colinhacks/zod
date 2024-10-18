@@ -1,4 +1,4 @@
-import type { AssertEqual, ErrMessage } from "./types.js";
+import type { AssertEqual, ErrMessage, ParsedTypes } from "./types.js";
 
 export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {
   return val;
@@ -134,3 +134,70 @@ export function promiseAllObject<T extends object>(promisesObj: T): Promise<T> {
     return resolvedObj;
   });
 }
+
+export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
+  return (
+    typeof data === "object" &&
+    data !== null &&
+    Object.getPrototypeOf(data) === Object.prototype
+  );
+}
+
+export const getParsedType = (data: any): ParsedTypes => {
+  const t = typeof data;
+
+  switch (t) {
+    case "undefined":
+      return "undefined";
+
+    case "string":
+      return "string";
+
+    case "number":
+      return Number.isNaN(data) ? "nan" : "number";
+
+    case "boolean":
+      return "boolean";
+
+    case "function":
+      return "function";
+
+    case "bigint":
+      return "bigint";
+
+    case "symbol":
+      return "symbol";
+
+    case "object":
+      if (Array.isArray(data)) {
+        return "array";
+      }
+      if (data === null) {
+        return "null";
+      }
+      if (
+        data.then &&
+        typeof data.then === "function" &&
+        data.catch &&
+        typeof data.catch === "function"
+      ) {
+        return "promise";
+      }
+      if (typeof Map !== "undefined" && data instanceof Map) {
+        return "map";
+      }
+      if (typeof Set !== "undefined" && data instanceof Set) {
+        return "set";
+      }
+      if (typeof Date !== "undefined" && data instanceof Date) {
+        return "date";
+      }
+      if (typeof File !== "undefined" && data instanceof File) {
+        return "file";
+      }
+      return "object";
+
+    default:
+      throw new Error(`Unknown data type: ${t}`);
+  }
+};

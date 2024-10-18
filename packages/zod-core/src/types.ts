@@ -80,6 +80,24 @@ export type MimeTypes =
   | "multipart/form-data"
   | (string & {});
 
+export type ParsedTypes =
+  | "string"
+  | "number"
+  | "bigint"
+  | "boolean"
+  | "symbol"
+  | "undefined"
+  | "object"
+  | "function"
+  | "file"
+  | "date"
+  | "array"
+  | "map"
+  | "set"
+  | "nan"
+  | "null"
+  | "promise";
+
 /////////////////////////////
 ///////     UTILS     ///////
 /////////////////////////////
@@ -172,3 +190,17 @@ export type MergeOverrides<
 };
 
 export type MaybeAsync<T> = T | Promise<T>;
+
+export type OmitIndex<T> = {
+  [K in keyof T as string extends K
+    ? never
+    : K extends string
+      ? K
+      : never]: T[K];
+};
+
+export type ExtractIndex<T> = {
+  [K in keyof T as string extends K ? K : K extends string ? never : K]: T[K];
+};
+
+export type Keys<T extends object> = keyof OmitIndex<T>;

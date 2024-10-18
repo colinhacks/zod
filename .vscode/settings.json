@@ -36,5 +36,6 @@
   "search.exclude": {
     "./scratch": false
   },
+  "search.useIgnoreFiles": false,
   "editor.guides.indentation": false
 }
