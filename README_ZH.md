@@ -483,8 +483,8 @@ z.string().ulid();
 z.string().duration();
 z.string().regex(regex);
 z.string().includes(string);
-z.string().startsWith(string);
-z.string().endsWith(string);
+z.string().startsWith(string | string[]);
+z.string().endsWith(string | string[]);
 z.string().datetime(); // ISO 8601；默认值为无 UTC 偏移，选项见下文
 z.string().ip(); // 默认为 IPv4 和 IPv6，选项见下文
 
@@ -517,7 +517,13 @@ z.string().emoji({ message: "Contains non-emoji characters" });
 z.string().uuid({ message: "Invalid UUID" });
 z.string().includes("tuna", { message: "Must include tuna" });
 z.string().startsWith("https://", { message: "Must provide secure URL" });
+z.string().startsWith(["https://", "http://"], {
+  message: "Must provide a valid URL starting with http:// or https://",
+});
 z.string().endsWith(".com", { message: "Only .com domains allowed" });
+z.string().endsWith([".com", ".org"], {
+  message: "Only .com or .org domains allowed",
+});
 z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 z.string().ip({ message: "Invalid IP address" });
 ```
