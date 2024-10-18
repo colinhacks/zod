@@ -3104,6 +3104,12 @@ export interface ZodDiscriminatedUnionDef<
   discriminator: Discriminator;
   options: Options;
   optionsMap: Map<Primitive, ZodDiscriminatedUnionOption<any>>;
+  otherOptions: Array<
+    [
+      ZodDiscriminatedUnionOption<any>["shape"][Discriminator],
+      ZodDiscriminatedUnionOption<any>
+    ]
+  >;
   typeName: ZodFirstPartyTypeKind.ZodDiscriminatedUnion;
 }
 
@@ -3131,24 +3137,111 @@ export class ZodDiscriminatedUnion<
 
     const discriminatorValue: string = ctx.data[discriminator];
 
-    const option = this.optionsMap.get(discriminatorValue);
+    const optionByValue = this.optionsMap.get(discriminatorValue);
 
-    if (!option) {
-      addIssueToContext(ctx, {
-        code: ZodIssueCode.invalid_union_discriminator,
-        options: Array.from(this.optionsMap.keys()),
-        path: [discriminator],
-      });
-      return INVALID;
-    }
+    const getSingleOption = (
+      otherOptionsParsed: Array<{
+        result: ParseReturnType<any>;
+        option: ZodDiscriminatedUnionOption<any>;
+      }>
+    ) => {
+      const otherOptions = otherOptionsParsed
+        .filter(({ result }) => isValid(result))
+        .map(({ option }) => option);
+
+      const options = [
+        ...(optionByValue != null ? [optionByValue] : []),
+        ...otherOptions,
+      ];
+      if (!options.length) {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.invalid_union_discriminator,
+          options: Array.from(this.optionsMap.keys()),
+          otherOptions: this.otherOptions.length,
+          path: [discriminator],
+          received: discriminatorValue,
+        });
+        return null;
+      }
+
+      if (options.length > 1) {
+        addIssueToContext(ctx, {
+          code: ZodIssueCode.ambiguous_union_discriminator,
+          path: [discriminator],
+          received: discriminatorValue,
+          optionsMatched: options.length,
+        });
+        return null;
+      }
+
+      return options[0];
+    };
 
     if (ctx.common.async) {
-      return option._parseAsync({
-        data: ctx.data,
-        path: ctx.path,
-        parent: ctx,
-      }) as any;
+      return Promise.resolve().then(async () => {
+        const otherOptionsParsed = await Promise.all(
+          this.otherOptions.map(async ([schema, option]) => {
+            const childCtx: ParseContext = {
+              ...ctx,
+              common: {
+                ...ctx.common,
+                issues: [],
+              },
+              parent: null,
+            };
+            return {
+              result: await schema._parseAsync(
+                new ParseInputLazyPath(
+                  childCtx,
+                  discriminatorValue,
+                  ctx.path,
+                  discriminator
+                )
+              ),
+              option,
+            };
+          })
+        );
+
+        const option = getSingleOption(otherOptionsParsed);
+        if (option == null) {
+          return INVALID;
+        }
+
+        return option._parseAsync({
+          data: ctx.data,
+          path: ctx.path,
+          parent: ctx,
+        }) as any;
+      });
     } else {
+      const otherOptionsParsed = this.otherOptions.map(([schema, option]) => {
+        const childCtx: ParseContext = {
+          ...ctx,
+          common: {
+            ...ctx.common,
+            issues: [],
+          },
+          parent: null,
+        };
+        return {
+          result: schema._parse(
+            new ParseInputLazyPath(
+              childCtx,
+              discriminatorValue,
+              ctx.path,
+              discriminator
+            )
+          ),
+          option,
+        };
+      });
+
+      const option = getSingleOption(otherOptionsParsed);
+      if (option == null) {
+        return INVALID;
+      }
+
       return option._parseSync({
         data: ctx.data,
         path: ctx.path,
@@ -3167,6 +3260,10 @@ export class ZodDiscriminatedUnion<
 
   get optionsMap() {
     return this._def.optionsMap;
+  }
+
+  get otherOptions() {
+    return this._def.otherOptions;
   }
 
   /**
@@ -3190,25 +3287,33 @@ export class ZodDiscriminatedUnion<
   ): ZodDiscriminatedUnion<Discriminator, Types> {
     // Get all the valid discriminator values
     const optionsMap: Map<Primitive, Types[number]> = new Map();
+    const otherOptions: Array<
+      [Types[number]["shape"][Discriminator], Types[number]]
+    > = [];
 
     // try {
     for (const type of options) {
-      const discriminatorValues = getDiscriminator(type.shape[discriminator]);
-      if (!discriminatorValues.length) {
+      const typeDiscriminator = type.shape[discriminator];
+      if (!typeDiscriminator) {
         throw new Error(
           `A discriminator value for key \`${discriminator}\` could not be extracted from all schema options`
         );
       }
-      for (const value of discriminatorValues) {
-        if (optionsMap.has(value)) {
-          throw new Error(
-            `Discriminator property ${String(
-              discriminator
-            )} has duplicate value ${String(value)}`
-          );
-        }
+      const discriminatorValues = getDiscriminator(typeDiscriminator);
+      if (!discriminatorValues.length) {
+        otherOptions.push([typeDiscriminator, type]);
+      } else {
+        for (const value of discriminatorValues) {
+          if (optionsMap.has(value)) {
+            throw new Error(
+              `Discriminator property ${String(
+                discriminator
+              )} has duplicate value ${String(value)}`
+            );
+          }
 
-        optionsMap.set(value, type);
+          optionsMap.set(value, type);
+        }
       }
     }
 
@@ -3221,6 +3326,7 @@ export class ZodDiscriminatedUnion<
       discriminator,
       options,
       optionsMap,
+      otherOptions,
       ...processCreateParams(params),
     });
   }
