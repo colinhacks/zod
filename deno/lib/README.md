@@ -491,6 +491,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`sveltekit-superforms`](https://github.com/ciscoheat/sveltekit-superforms): Supercharged form library for SvelteKit with Zod validation.
 - [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod.
 - [`@vee-validate/zod`](https://github.com/logaretm/vee-validate/tree/main/packages/zod): Form library for Vue.js with Zod schema validation.
+- [`zod-form-renderer`](https://github.com/thepeaklab/zod-form-renderer): Auto-infer form fields from zod schema and render them with react-hook-form with E2E type safety.
 
 #### Zod to X
 
@@ -505,6 +506,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-openapi`](https://github.com/samchungy/zod-openapi): Create full OpenAPI v3.x documentation from Zod schemas.
 - [`fastify-zod-openapi`](https://github.com/samchungy/fastify-zod-openapi): Fastify type provider, validation, serialization and @fastify/swagger support for Zod schemas.
 - [`typeschema`](https://typeschema.com/): Universal adapter for schema validation.
+- [`zodex`](https://github.com/commonbaseapp/zodex): (De)serialization for zod schemas
 
 #### X to Zod
 
@@ -538,11 +540,13 @@ There are a growing number of tools that are built atop or support Zod natively!
 
 - [`freerstore`](https://github.com/JacobWeisenburger/freerstore): Firestore cost optimizer.
 - [`slonik`](https://github.com/gajus/slonik/tree/gajus/add-zod-validation-backwards-compatible#runtime-validation-and-static-type-inference): Node.js Postgres client with strong Zod integration.
+- [`schemql`](https://github.com/a2lix/schemql): Enhances your SQL workflow by combining raw SQL with targeted type safety and schema validation.
 - [`soly`](https://github.com/mdbetancourt/soly): Create CLI applications with zod.
 - [`pastel`](https://github.com/vadimdemedes/pastel): Create CLI applications with react, zod, and ink.
 - [`zod-xlsx`](https://github.com/sidwebworks/zod-xlsx): A xlsx based resource validator using Zod schemas.
 - [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas.
 - [`zod-config`](https://github.com/alexmarqs/zod-config): Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.
+- [`unplugin-environment`](https://github.com/r17x/js/tree/main/packages/unplugin-environment#readme): A plugin for loading enviroment variables safely with schema validation, simple with virtual module, type-safe with intellisense, and better DX 🔥 🚀 👷. Powered by Zod.
 
 #### Utilities for Zod
 
