@@ -101,11 +101,11 @@ export namespace objectUtil {
     [k in Exclude<keyof U, keyof V>]: U[k];
   } & V;
 
-  type optionalKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? k : never;
-  }[keyof T];
   type requiredKeys<T extends object> = {
-    [k in keyof T]: undefined extends T[k] ? never : k;
+    [k in keyof T]: {} extends Pick<T, k> ? never : k;
+  }[keyof T];
+  type optionalKeys<T extends object> = {
+    [k in keyof T]: {} extends Pick<T, k> ? k : never;
   }[keyof T];
   export type addQuestionMarks<T extends object, _O = any> = {
     [K in requiredKeys<T>]: T[K];
