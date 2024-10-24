@@ -2330,27 +2330,17 @@ export type objectOutputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
-> = objectUtil.flatten<
-  objectUtil.addQuestionMarks<baseObjectOutputType<Shape>>
-> &
+> = objectUtil.flatten<objectUtil.addQuestionMarks<Shape, "_output">> &
   CatchallOutput<Catchall> &
   PassthroughType<UnknownKeys>;
-
-export type baseObjectOutputType<Shape extends ZodRawShape> = {
-  [k in keyof Shape]: Shape[k]["_output"];
-};
 
 export type objectInputType<
   Shape extends ZodRawShape,
   Catchall extends ZodTypeAny,
   UnknownKeys extends UnknownKeysParam = UnknownKeysParam
-> = objectUtil.flatten<baseObjectInputType<Shape>> &
+> = objectUtil.flatten<objectUtil.addQuestionMarks<Shape, "_input">> &
   CatchallInput<Catchall> &
   PassthroughType<UnknownKeys>;
-export type baseObjectInputType<Shape extends ZodRawShape> =
-  objectUtil.addQuestionMarks<{
-    [k in keyof Shape]: Shape[k]["_input"];
-  }>;
 
 export type CatchallOutput<T extends ZodType> = ZodType extends T
   ? unknown

@@ -289,9 +289,9 @@ test("inferred type for unknown/any keys", () => {
     myType,
     {
       anyOptional?: any;
-      anyRequired?: any;
+      anyRequired: any;
       unknownOptional?: unknown;
-      unknownRequired?: unknown;
+      unknownRequired: unknown;
     }
   >(true);
 });

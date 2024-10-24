@@ -1,3 +1,5 @@
+import type { ZodDefault, ZodOptional, ZodRawShape, ZodTypeAny } from "../types";
+
 export namespace util {
   type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
     V
@@ -101,17 +103,29 @@ export namespace objectUtil {
     [k in Exclude<keyof U, keyof V>]: U[k];
   } & V;
 
-  type optionalKeys<T extends object> = {
-    [k in keyof T]: {} extends Pick<T, k> ? k : never;
+  type ObjectField =  '_output' | '_input';
+
+  type optionalKeys<T extends ZodRawShape, I extends ObjectField> = {
+    [k in keyof T]: T[k] extends ZodOptional<ZodTypeAny>
+      ? k 
+      : T[k] extends ZodDefault<ZodTypeAny> 
+        ? I extends '_output' ? never : k 
+        : never;
   }[keyof T];
-  type requiredKeys<T extends object> = {
-    [k in keyof T]: {} extends Pick<T, k> ? never : k;
+
+  type requiredKeys<T extends ZodRawShape, I extends ObjectField> = {
+    [k in keyof T]: T[k] extends ZodOptional<ZodTypeAny> 
+      ? never 
+      :  T[k] extends ZodDefault<ZodTypeAny> 
+        ? I extends '_output' ? k : never
+        : k;
   }[keyof T];
-  export type addQuestionMarks<T extends object, _O = any> = {
-    [K in requiredKeys<T>]: T[K];
+
+  export type addQuestionMarks<Shape extends ZodRawShape, I extends '_output' | '_input', _O = any> = {
+    [K in requiredKeys<Shape, I>]: Shape[K][I];
   } & {
-    [K in optionalKeys<T>]?: T[K];
-  } & { [k in keyof T]?: unknown };
+    [K in optionalKeys<Shape, I>]?: Shape[K][I] | undefined;
+  } & { [k in keyof Shape]?: unknown };
 
   export type identity<T> = T;
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
