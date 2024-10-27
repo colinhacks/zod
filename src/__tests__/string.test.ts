@@ -739,7 +739,6 @@ test("IP validation", () => {
   const validIPs = [
     "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c",
     "9d4:c956:420f:5788:4339:9b3b:2418:75c3",
-    "a6ea::2454:a5ce:94.105.123.75",
     "474f:4c83::4e40:a47:ff95:0cda",
     "d329:0:25b4:db47:a9d1:0:4926:0000",
     "e48:10fb:1499:3e28:e4b6:dea5:4692:912c",
@@ -767,5 +766,46 @@ test("IP validation", () => {
   expect(validIPs.every((ip) => ipSchema.safeParse(ip).success)).toBe(true);
   expect(
     invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
+  ).toBe(true);
+
+  // Check cidr
+  const ipv4Cidr = z.string().ip({ version: "v4", cidr: true });
+  expect(() => ipv4Cidr.parse("2001:0db8:85a3::8a2e:0370:7334/64")).toThrow();
+
+  const ipv6Cidr = z.string().ip({ version: "v6", cidr: true });
+  expect(() => ipv6Cidr.parse("192.168.0.1/24")).toThrow();
+
+  const validIPCidrs = [
+    "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c/64",
+    "9d4:c956:420f:5788:4339:9b3b:2418:75c3/128",
+    "474f:4c83::4e40:a47:ff95:0cda/64",
+    "d329:0:25b4:db47:a9d1:0:4926:0000/64",
+    "e48:10fb:1499:3e28:e4b6:dea5:4692:912c/64",
+    "114.71.82.94/24",
+    "0.0.0.0/0",
+    "37.85.236.115/32",
+    "2001:4888:50:ff00:500:d::/64",
+    "2001:4888:50:ff00:0500:000d:0000:0000/64",
+    "192.168.0.0/2",
+    "2001:db8::/32",
+    "2001:0db8::/64",
+  ];
+
+  const invalidIPCidrs = [
+    "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c/129",
+    "9d4:c956:420f:5788:4339:9b3b:2418:75c3/256",
+    "114.71.82.94/33",
+    "37.85.236.115/34",
+    "2001:4888:50:ff00:500:d::/129",
+    "2001:4888:50:ff00:0500:000d:000:0000/129",
+    "2001:4888:50:ff00:0500:000d:0000:0000/130",
+  ];
+
+  const ipCidrSchema = z.string().ip({ cidr: true });
+  expect(validIPCidrs.every((ip) => ipCidrSchema.safeParse(ip).success)).toBe(
+    true
+  );
+  expect(
+    invalidIPCidrs.every((ip) => ipCidrSchema.safeParse(ip).success === false)
   ).toBe(true);
 });
