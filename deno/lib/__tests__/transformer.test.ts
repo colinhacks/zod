@@ -59,19 +59,13 @@ test("transform ctx.addIssue with parseAsync", async () => {
     })
     .safeParseAsync("asdf");
 
-  expect(JSON.parse(JSON.stringify(result))).toEqual({
-    success: false,
-    error: {
-      issues: [
-        {
-          code: "custom",
-          message: "asdf is not one of our allowed strings",
-          path: [],
-        },
-      ],
-      name: "ZodError",
+  expect(result.error?.issues).toEqual([
+    {
+      code: "custom",
+      message: "asdf is not one of our allowed strings",
+      path: [],
     },
-  });
+  ]);
 });
 
 test("z.NEVER in transform", () => {
