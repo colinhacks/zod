@@ -915,6 +915,16 @@ const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
 ```
 
+You can additionally set the `cidr`.
+
+```ts
+const cidr = z.string().ip({ cidr: true });
+cidr.parse("192.168.0.0/24"); // pass
+cidr.parse("2001:db8::/32"); // pass
+cidr.parse("192.168.1.1/33"); // fail
+cidr.parse("2001:db8::1/129"); // fail
+```
+
 ## Numbers
 
 You can customize certain error messages when creating a number schema.
