@@ -195,7 +195,11 @@ export type inferFormattedError<
 > = ZodFormattedError<TypeOf<T>, U>;
 
 export function isZodError(error: unknown): error is ZodError {
-  return (error instanceof Error) && error["instanceofZodError"] = true;
+  return (
+    error instanceof Error &&
+    "instanceofZodError" in error &&
+    error["instanceofZodError"] === true
+  );
 }
 
 export class ZodError<T = any> extends Error {
