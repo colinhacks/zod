@@ -435,16 +435,6 @@ test("checks getters", () => {
   expect(z.string().ip().isIPRange).toEqual(false);
   expect(z.string().ip().isULID).toEqual(false);
 
-  expect(z.string().ipRange().isEmail).toEqual(false);
-  expect(z.string().ipRange().isURL).toEqual(false);
-  expect(z.string().ipRange().isCUID).toEqual(false);
-  expect(z.string().ipRange().isCUID2).toEqual(false);
-  expect(z.string().ipRange().isUUID).toEqual(false);
-  expect(z.string().ipRange().isNANOID).toEqual(false);
-  expect(z.string().ipRange().isIP).toEqual(false);
-  expect(z.string().ipRange().isIPRange).toEqual(true);
-  expect(z.string().ipRange().isULID).toEqual(false);
-
   expect(z.string().ulid().isEmail).toEqual(false);
   expect(z.string().ulid().isURL).toEqual(false);
   expect(z.string().ulid().isCUID).toEqual(false);
@@ -788,56 +778,83 @@ test("IP validation", () => {
 });
 
 test("IP Range validation", () => {
-  const ipRange = z.string().ipRange();
-  expect(ipRange.safeParse("122.122.122.122/0").success).toBe(true);
-  expect(ipRange.safeParse("122.122.122.122/32").success).toBe(true);
-  expect(ipRange.safeParse("122.122.122.122/-1").success).toBe(false);
-  expect(ipRange.safeParse("122.122.122.122/33").success).toBe(false);
+  const ipv4Range = z
+    .string()
+    .ipRange({ cidr: "192.168.1.0/33", version: "v4" });
+  expect(() => ipv4Range.parse("192.168.1.1")).toThrow();
 
-  const ipv4Range = z.string().ipRange({ version: "v4" });
-  expect(() =>
-    ipv4Range.parse("6097:adfa:6f0b:220d:db08:5021:6191:7990/128")
-  ).toThrow();
+  const ipv6Range = z
+    .string()
+    .ipRange({ cidr: "2001:db8::/129", version: "v6" });
+  expect(() => ipv6Range.parse("2001:db9::1")).toThrow();
 
-  const ipv6Range = z.string().ipRange({ version: "v6" });
-  expect(() => ipv6Range.parse("254.164.77.1/32")).toThrow();
-
-  const validIPRanges = [
-    "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c/0",
-    "9d4:c956:420f:5788:4339:9b3b:2418:75c3/128",
-    "474f:4c83::4e40:a47:ff95:0cda/16",
-    "d329:0:25b4:db47:a9d1:0:4926:0000/64",
-    "e48:10fb:1499:3e28:e4b6:dea5:4692:912c/8",
-    "114.71.82.94/0",
-    "0.0.0.0/0",
-    "37.85.236.115/32",
+  const validIPv4Ranges = [
+    { ip: "192.168.1.10", cidr: "192.168.1.0/24" },
+    { ip: "192.168.1.20", cidr: "192.168.1.0/24" },
+    { ip: "172.16.0.5", cidr: "172.16.0.0/12" },
+    { ip: "10.0.0.1", cidr: "10.0.0.0/8" },
+    { ip: "2001:db8::1", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:1234:5678:abcd:ef01:2345:6789", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:85a3::8a2e:370:7334", cidr: "2001:db8::/32" },
+    { ip: "0.0.0.0", cidr: "0.0.0.0/0" },
+    { ip: "37.85.236.115", cidr: "37.85.236.0/24" },
+    { ip: "114.71.82.94", cidr: "114.71.82.0/24" },
   ];
 
-  const invalidIPRanges = [
-    "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c/129",
-    "d329:1be4:25b4:db47:a9d1:dc71:4926:992c:14af/128",
-    "474f:4c83::4e40:a47:ff95:0cda/129",
-    "8f69::c757:395e:976e::3441/64",
-    "54cb::473f:d516:0.255.256.22/64",
-    "54cb::473f:d516:192.168.1/64",
-    "474f:4c83::4e40:a47:ff95:0cda/129",
-    "d329:0:25b4:db47:a9d1:0:4926:0000/129",
-    "e48:10fb:1499:3e28:e4b6:dea5:4692:912c/129",
-    "256.0.4.4/16",
-    "-1.0.555.4/32",
-    "0.0.0.0.0/0",
-    "1.1.1/16",
-    "114.71.82.94/128",
-    "0.0.0.0/33",
+  const invalidIPv4Ranges = [
+    { ip: "192.168.2.10", cidr: "192.168.1.0/24" },
+    { ip: "192.168.2.5", cidr: "192.168.1.0/24" },
+    { ip: "10.1.1.1", cidr: "11.0.0.0/8" },
+    { ip: "37.85.237.115", cidr: "37.85.236.0/24" },
+    { ip: "114.71.83.94", cidr: "114.71.82.0/24" },
+    { ip: "172.32.0.1", cidr: "172.16.0.0/12" },
   ];
-  // no parameters check IPv4 or IPv6
-  const ipRangeSchema = z.string().ipRange();
+
   expect(
-    validIPRanges.every((ipRange) => ipRangeSchema.safeParse(ipRange).success)
+    validIPv4Ranges.every(({ ip, cidr }) => {
+      const ipRangeSchema = z.string().ipRange({ cidr, version: "v4" });
+
+      return ipRangeSchema.safeParse(ip).success;
+    })
   ).toBe(true);
   expect(
-    invalidIPRanges.every(
-      (ipRange) => ipRangeSchema.safeParse(ipRange).success === false
-    )
+    invalidIPv4Ranges.every(({ ip, cidr }) => {
+      const ipRangeSchema = z.string().ipRange({ cidr, version: "v4" });
+
+      return ipRangeSchema.safeParse(ip).success === false;
+    })
+  ).toBe(true);
+
+  const validIPv6Ranges = [
+    { ip: "2001:db8::1", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:1234:5678:abcd:ef01:2345:6789", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:85a3::8a2e:370:7334", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:abcd:ef01:2345:6789:abcd:ef01", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:0:1:0:0:0:1", cidr: "2001:db8:0:1::/64" },
+    { ip: "fe80::1", cidr: "fe80::/10" },
+    { ip: "2001:4888:50:ff00:500:d::", cidr: "2001:4888:50:ff00::/64" },
+  ];
+
+  const invalidIPv6Ranges = [
+    { ip: "::1", cidr: "::/128" },
+    { ip: "2001:db9::1", cidr: "2001:db8::/32" },
+    { ip: "fe80::1", cidr: "2001:db8::/32" },
+    { ip: "ff00::1", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:abcd:1234::1", cidr: "2001:db8:abcd:5678::/64" },
+  ];
+
+  expect(
+    validIPv6Ranges.every(({ ip, cidr }) => {
+      const ipRangeSchema = z.string().ipRange({ cidr, version: "v6" });
+
+      return ipRangeSchema.safeParse(ip).success;
+    })
+  ).toBe(true);
+  expect(
+    invalidIPv6Ranges.every(({ ip, cidr }) => {
+      const ipRangeSchema = z.string().ipRange({ cidr, version: "v6" });
+
+      return ipRangeSchema.safeParse(ip).success === false;
+    })
   ).toBe(true);
 });

@@ -811,7 +811,6 @@ z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 z.string().date({ message: "Invalid date string!" });
 z.string().time({ message: "Invalid time string!" });
 z.string().ip({ message: "Invalid IP address" });
-z.string().ipRange({ message: "Invalid IP address range" });
 ```
 
 ### Datetimes
@@ -919,31 +918,19 @@ ipv6.parse("192.168.1.1"); // fail
 
 ### IP addresses range
 
-The `z.string().ipRange()` method by default validate IPv4 and IPv6.
+The `z.string().ipRange()` method checks if a given IP address falls within a specified CIDR range.
 
 ```ts
-const ipRange = z.string().ipRange();
+const ipv4Range = z.string().ipRange({ cidr: "192.168.1.0/24", version: "v4" });
 
-ipRange.parse("192.168.1.1/32"); // pass
-ipRange.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003/128"); // pass
-ipRange.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1/64"); // pass
+ipv4Range.parse("192.168.1.10"); // pass
+ipv4Range.parse("192.168.1.20"); // pass
+ipv4Range.parse("192.168.2.10"); // fail
 
-ipRange.parse("256.1.1.1/32"); // fail
-ipRange.parse("192.168.1.1/33"); // fail
-ipRange.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003/128"); // fail
-ipRange.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003/129"); // fail
-```
+const ipv6Range = z.string().ipRange({ cidr: "2001:db8::/32", version: "v6" });
 
-You can additionally set the IP `version`.
-
-```ts
-const ipv4Range = z.string().ipRange({ version: "v4" });
-ipv4Range.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003/128"); // fail
-ipv4Range.parse("192.168.1.1/128"); // fail
-
-const ipv6Range = z.string().ipRange({ version: "v6" });
-ipv6Range.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003/32"); // fail
-ipv6Range.parse("192.168.1.1/32"); // fail
+ipv6Range.parse("2001:db8::1"); // pass
+ipv6Range.parse("2001:db9::1"); // fail
 ```
 
 ## Numbers

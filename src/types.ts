@@ -565,7 +565,7 @@ export type ZodStringCheck =
     }
   | { kind: "duration"; message?: string }
   | { kind: "ip"; version?: IpVersion; message?: string }
-  | { kind: "ipRange"; version?: IpVersion; message?: string }
+  | { kind: "ipRange"; cidr: string; version: IpVersion; message?: string }
   | { kind: "base64"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
@@ -609,11 +609,9 @@ let emojiRegex: RegExp;
 // faster, simpler, safer
 const ipv4Regex =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
-const ipv4CidrRegex = /^(3[0-2]|[12]?[0-9])$/;
 
 const ipv6Regex =
   /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
-const ipv6CidrRegex = /^(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/;
 
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
 const base64Regex =
@@ -672,34 +670,55 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
-function isValidIPRange(ip: string, version?: IpVersion) {
-  const [ipAddress, mask] = ip.split("/");
-  if (ipAddress === undefined || mask === undefined) {
-    return false;
+const ipToBinary = (ip: string, version: IpVersion): string => {
+  if (version === "v4") {
+    return ip
+      .split(".")
+      .map((octet) => parseInt(octet, 10).toString(2).padStart(8, "0"))
+      .join("");
+  } else if (version === "v6") {
+    const segments = ip.split(":");
+    const fullSegments: string[] = [];
+    let zeroFillCount = 0;
+
+    for (const segment of segments) {
+      if (segment === "") {
+        zeroFillCount = 8 - (segments.length - 1);
+        continue;
+      }
+      fullSegments.push(segment.padStart(4, "0"));
+    }
+
+    for (let i = 0; i < zeroFillCount; i++) {
+      fullSegments.splice(segments.indexOf("") + i, 0, "0000");
+    }
+
+    return fullSegments
+      .map((segment) => parseInt(segment, 16).toString(2).padStart(16, "0"))
+      .join("");
+  } else {
+    throw new Error("Invalid IP version");
   }
+};
+
+function isValidIPRange(ip: string, cidr: string, version: IpVersion) {
+  const [rangeIp, prefixLengthStr] = cidr.split("/");
+  const prefixLength = parseInt(prefixLengthStr, 10);
+
   if (
-    !version &&
-    ((ipv4Regex.test(ipAddress) && ipv4CidrRegex.test(mask)) ||
-      (ipv6Regex.test(ipAddress) && ipv6CidrRegex.test(mask)))
+    (version === "v4" && (prefixLength < 0 || prefixLength > 32)) ||
+    (version === "v6" && (prefixLength < 0 || prefixLength > 128))
   ) {
-    return true;
-  }
-  if (
-    version === "v4" &&
-    ipv4Regex.test(ipAddress) &&
-    ipv4CidrRegex.test(mask)
-  ) {
-    return true;
-  }
-  if (
-    version === "v6" &&
-    ipv6Regex.test(ipAddress) &&
-    ipv6CidrRegex.test(mask)
-  ) {
-    return true;
+    throw new Error("Invalid prefix length");
   }
 
-  return false;
+  const ipBinary = ipToBinary(ip, version);
+  const rangeBinary = ipToBinary(rangeIp, version);
+
+  return (
+    ipBinary.substring(0, prefixLength) ===
+    rangeBinary.substring(0, prefixLength)
+  );
 }
 
 export class ZodString extends ZodType<string, ZodStringDef, string> {
@@ -965,7 +984,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           status.dirty();
         }
       } else if (check.kind === "ipRange") {
-        if (!isValidIPRange(input.data, check.version)) {
+        if (!isValidIPRange(input.data, check.cidr, check.version)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "ipRange",
@@ -1047,9 +1066,14 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
   }
 
-  ipRange(options?: string | { version?: IpVersion; message?: string }) {
+  ipRange(
+    args: { cidr: string; version: IpVersion },
+    options?: string | { message?: string }
+  ) {
     return this._addCheck({
       kind: "ipRange",
+      cidr: args.cidr,
+      version: args.version,
       ...errorUtil.errToObj(options),
     });
   }
