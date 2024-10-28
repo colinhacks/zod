@@ -1549,7 +1549,11 @@ export interface ZodBigIntDef extends ZodTypeDef {
 export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
   _parse(input: ParseInput): ParseReturnType<bigint> {
     if (this._def.coerce) {
-      input.data = BigInt(input.data);
+      try {
+        input.data = BigInt(input.data);
+      } catch {
+        input.data = undefined;
+      }
     }
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.bigint) {
