@@ -40,20 +40,17 @@ export const $ZodString: core.$constructor<$ZodString> =
   /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.stringRegex;
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (typeof input === "string") return input;
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "string",
-            code: "invalid_type",
-            level: "abort",
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+      return core.$ZodFailure.from([
+        {
+          origin: "string",
+          code: "invalid_type",
+          level: "abort",
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -130,17 +127,22 @@ export interface $ZodURL extends $ZodStringFormat {
 export const $ZodURL: core.$constructor<$ZodURL> =
   /*@__PURE__*/ core.$constructor("$ZodURL", function (inst, def) {
     $ZodStringFormat.init(inst, def);
-    inst.run = (ctx) => {
+    inst.run = (input) => {
       try {
-        const url = new URL(ctx.input);
+        const url = new URL(input);
         if (regexes.hostnameRegex.test(url.hostname)) return;
       } catch {}
-      ctx.addIssue({
-        origin: "string",
-        code: "invalid_format",
-        format: inst._def.format,
-        input: ctx.input,
-      });
+      return {
+        issues: [
+          {
+            origin: "string",
+            code: "invalid_format",
+            format: inst._def.format,
+            input: input,
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -190,21 +192,6 @@ export const $ZodCUID: core.$constructor<$ZodCUID> =
     inst._def.pattern = regexes.cuidRegex;
   });
 
-// todo: implement zodcuid2
-// todo: implement zodulid
-// todo: implement zodxid
-// todo: implement zodksuid
-// todo: implement zodiso_datetime
-// todo: implement zodiso_date
-// todo: implement zodiso_time
-// todo: implement zodduration
-// todo: implement zodip
-// todo: implement zodipv4
-// todo: implement zodipv6
-// todo: implement zodbase64
-// todo: implement zodjson_string
-// todo: implement zode164
-// todo: implement zodjwt
 //////////////////////////////   ZodCUID2   //////////////////////////////
 
 export interface $ZodCUID2Def extends $ZodStringFormatDef {
@@ -348,8 +335,8 @@ export const $ZodIP: core.$constructor<$ZodIP> =
     $ZodStringFormat.init(inst, def);
     inst._def.pattern = regexes.ipRegex;
     // const superCheck = inst._typecheck;
-    // inst._typecheck = (input, ctx) => {
-    //   const result = superCheck(input, ctx);
+    // inst._typecheck = (input, _ctx) => {
+    //   const result = superCheck(input, _ctx);
     //   let fail!: core.$ZodFailure;
     //   if (core.failed(result)) {
     //     if (core.aborted(result)) return result;
@@ -358,8 +345,8 @@ export const $ZodIP: core.$constructor<$ZodIP> =
 
     //   if (regexes.ipv4Regex.test(input as string) || regexes.ipv6Regex.test(input as string))
     // return input as string;
-    //   fail = fail ?? new core.$ZodFailure([], ctx);
-    //   fail.addIssue({ origin: "string", code: "invalid_format", format: "ip", input:
+    //   fail = fail ?? core.$ZodFailure.from([], );
+    //   fail.push({ origin: "string", code: "invalid_format", format: "ip", input:
     // input as string }, ctx);
     //   return fail;
     // };
@@ -422,37 +409,23 @@ export interface $ZodJSONString extends $ZodStringFormat {
 export const $ZodJSONString: core.$constructor<$ZodJSONString> =
   /*@__PURE__*/ core.$constructor("$ZodJSONString", function (inst, def): void {
     $ZodStringFormat.init(inst, def);
-    inst._typecheck = (input, ctx) => {
-      if (typeof input === "string") {
-        try {
-          JSON.parse(input);
-          return input;
-        } catch {
-          return core.$ZodFailure.from(
-            [
-              {
-                origin: "string",
-                code: "invalid_format",
-                format: "json_string",
-                input,
-              },
-            ],
-            ctx,
-            def
-          );
-        }
+    inst.run = (input) => {
+      try {
+        JSON.parse(input);
+        return;
+      } catch {
+        return {
+          issues: [
+            {
+              origin: "string",
+              code: "invalid_format",
+              format: "json_string",
+              input,
+              def,
+            },
+          ],
+        };
       }
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "string",
-            code: "invalid_type",
-            input,
-          },
-        ],
-        ctx,
-        def
-      );
     };
   });
 
@@ -505,15 +478,20 @@ export interface $ZodJWT extends $ZodStringFormat {
 export const $ZodJWT: core.$constructor<$ZodJWT> =
   /*@__PURE__*/ core.$constructor("$ZodJWT", function (inst, def): void {
     $ZodStringFormat.init(inst, def);
-    inst.run = (ctx) => {
-      if (!isValidJWT(ctx.input, inst._def.algorithm)) {
-        ctx.addIssue({
-          origin: "string",
-          code: "invalid_format",
-          format: inst._def.format,
-          input: ctx.input,
-        });
-      }
+    inst.run = (input) => {
+      if (isValidJWT(input, inst._def.algorithm)) return;
+
+      return {
+        issues: [
+          {
+            origin: "string",
+            code: "invalid_format",
+            format: inst._def.format,
+            input: input,
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -570,21 +548,17 @@ export const $ZodNumberFast: core.$constructor<$ZodNumber> =
   /*@__PURE__*/ core.$constructor("$ZodNumber", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.numberRegex;
-    inst._typecheck = (input, ctx) => {
-      console.log(`input: ${input}`);
+    inst._typecheck = (input, _ctx) => {
       if (typeof input === "number") return input;
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "number",
-            code: "invalid_type",
-            level: "abort",
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+      return core.$ZodFailure.from([
+        {
+          origin: "number",
+          code: "invalid_type",
+          level: "abort",
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -596,49 +570,51 @@ export const $ZodNumber: core.$constructor<$ZodNumber> =
     if (inst._def.format.includes("int")) {
       inst._pattern = regexes.intRegex;
     }
+
     const fastcheck = inst._typecheck; // super._typecheck
-    inst._typecheck = (input, ctx) => {
-      // if (typeof input === "number" && Number.isInteger(input)) return input;
-      const result = fastcheck(input, ctx) as core.$SyncParseResult<number>;
+    const isInt = def.format?.includes("int");
+    const origin = isInt ? "int" : "number";
+    const [minimum, maximum] = NUMBER_FORMAT_RANGES[inst._def.format!];
+
+    inst._typecheck = (input, _ctx) => {
+      const result = fastcheck(input, _ctx) as core.$SyncParseResult<number>;
+
       if (core.failed(result)) return result;
       let fail!: core.$ZodFailure;
-      if (!Number.isInteger(result)) {
-        fail = fail || core.$ZodFailure.empty(ctx);
-        fail.addIssue({
+      if (isInt && !Number.isInteger(result)) {
+        fail = core.$ZodFailure.from([
+          {
+            origin,
+            format: def.format,
+            code: "invalid_type",
+            level: "abort",
+            input,
+            def,
+          },
+        ]);
+      }
+
+      if (result < minimum) {
+        if (!fail) fail = new core.$ZodFailure();
+        fail.push({
           origin: "number",
-          code: "invalid_type",
-          level: "abort",
-          input,
+          input: input as number,
+          code: "too_small",
+          minimum: minimum as number,
+          inclusive: true,
+          def,
         });
       }
 
-      // const range = INT_RANGES[inst._def.format];
-      const [minimum, maximum] = NUMBER_FORMAT_RANGES[inst._def.format!];
-
-      if (result < minimum) {
-        fail = fail || core.$ZodFailure.empty(ctx);
-        fail.addIssue(
-          {
-            origin: "number",
-            input: input as number,
-            code: "too_small",
-            minimum: minimum as number,
-            inclusive: true,
-          },
-          inst._def
-        );
-      }
       if (result > maximum) {
-        fail = fail || core.$ZodFailure.empty(ctx);
-        fail.addIssue(
-          {
-            origin: "number",
-            input: input as number,
-            code: "too_big",
-            maximum,
-          } as any,
-          inst._def
-        );
+        if (!fail) fail = new core.$ZodFailure();
+        fail.push({
+          origin: "number",
+          input: input as number,
+          code: "too_big",
+          maximum,
+          def,
+        } as any);
       }
       return fail ?? result;
     };
@@ -668,20 +644,17 @@ export const $ZodBoolean: core.$constructor<$ZodBoolean> =
   /*@__PURE__*/ core.$constructor("$ZodBoolean", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.booleanRegex;
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (typeof input === "boolean") return input;
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "boolean",
-            code: "invalid_type",
-            level: "abort",
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+      return core.$ZodFailure.from([
+        {
+          origin: "boolean",
+          code: "invalid_type",
+          level: "abort",
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -708,20 +681,17 @@ export const $ZodBigInt: core.$constructor<$ZodBigInt> =
   /*@__PURE__*/ core.$constructor("$ZodBigInt", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.bigintRegex;
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (typeof input === "bigint") return input;
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "bigint",
-            code: "invalid_type",
-            level: "abort",
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+      return core.$ZodFailure.from([
+        {
+          origin: "bigint",
+          code: "invalid_type",
+          level: "abort",
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -744,20 +714,17 @@ export interface $ZodSymbol extends core.$ZodType<symbol, unknown> {
 export const $ZodSymbol: core.$constructor<$ZodSymbol> =
   /*@__PURE__*/ core.$constructor("$ZodSymbol", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (typeof input === "symbol") return input;
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "symbol",
-            code: "invalid_type",
-            level: "abort",
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+      return core.$ZodFailure.from([
+        {
+          origin: "symbol",
+          code: "invalid_type",
+          level: "abort",
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -782,20 +749,17 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> =
   /*@__PURE__*/ core.$constructor("$ZodUndefined", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.undefinedRegex;
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (typeof input === "undefined") return undefined;
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "undefined",
-            code: "invalid_type",
-            level: "abort",
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+      return core.$ZodFailure.from([
+        {
+          origin: "undefined",
+          code: "invalid_type",
+          level: "abort",
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -821,20 +785,17 @@ export const $ZodNull: core.$constructor<$ZodNull> =
   /*@__PURE__*/ core.$constructor("$ZodNull", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.nullRegex;
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (input === null) return null;
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "null",
-            code: "invalid_type",
-            level: "abort",
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+      return core.$ZodFailure.from([
+        {
+          origin: "null",
+          code: "invalid_type",
+          level: "abort",
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -898,19 +859,16 @@ export interface $ZodNever extends core.$ZodType<never, never> {
 export const $ZodNever: core.$constructor<$ZodNever> =
   /*@__PURE__*/ core.$constructor("$ZodNever", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "never",
-            code: "invalid_type",
-            level: "abort",
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+    inst._typecheck = (input, _ctx) => {
+      return core.$ZodFailure.from([
+        {
+          origin: "never",
+          code: "invalid_type",
+          level: "abort",
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -933,20 +891,17 @@ export interface $ZodVoid extends core.$ZodType<void, void> {
 export const $ZodVoid: core.$constructor<$ZodVoid> =
   /*@__PURE__*/ core.$constructor("$ZodVoid", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (typeof input === "undefined") return undefined;
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "void",
-            code: "invalid_type",
-            level: "abort",
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+      return core.$ZodFailure.from([
+        {
+          origin: "void",
+          code: "invalid_type",
+          level: "abort",
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -972,7 +927,7 @@ export interface $ZodDate extends core.$ZodType<Date, Date> {
 export const $ZodDate: core.$constructor<$ZodDate> =
   /*@__PURE__*/ core.$constructor("$ZodDate", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (input instanceof Date && !Number.isNaN(input.getTime())) return input;
       if (inst._def.coerce) {
         try {
@@ -981,26 +936,21 @@ export const $ZodDate: core.$constructor<$ZodDate> =
       }
 
       if (!(input instanceof Date)) {
-        return core.$ZodFailure.from(
-          [
-            {
-              origin: "date",
-              code: "invalid_type",
-              level: "abort",
-              input,
-            },
-          ],
-          ctx,
-          inst._def
-        );
+        return core.$ZodFailure.from([
+          {
+            origin: "date",
+            code: "invalid_type",
+            level: "abort",
+            input,
+            def,
+          },
+        ]);
       }
 
       if (Number.isNaN(input.getTime())) {
-        return core.$ZodFailure.from(
-          [{ origin: "date", code: "invalid_date", input }],
-          ctx,
-          inst._def
-        );
+        return core.$ZodFailure.from([
+          { origin: "date", code: "invalid_date", input, def },
+        ]);
       }
 
       return new Date(input.getTime());
@@ -1029,34 +979,31 @@ export interface $ZodArray<T extends core.$ZodType = core.$ZodType>
 export const $ZodArray: core.$constructor<$ZodArray> =
   /*@__PURE__*/ core.$constructor("$ZodArray", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (!Array.isArray(input)) {
-        return core.$ZodFailure.from(
-          [
-            {
-              origin: "array",
-              code: "invalid_type",
-              level: "abort",
-              input,
-            },
-          ],
-          ctx,
-          inst._def
-        );
+        return core.$ZodFailure.from([
+          {
+            origin: "array",
+            code: "invalid_type",
+            level: "abort",
+            input,
+            def,
+          },
+        ]);
       }
 
       let fail!: core.$ZodFailure;
       let hasPromises = false;
       const parseResults = Array(input.length);
       for (const [i, item] of Object.entries(input) as [number, any]) {
-        const result = inst._def.element._parse(item, ctx);
+        const result = inst._def.element._parse(item, _ctx);
         parseResults[i] = result;
         if (result instanceof Promise) {
           hasPromises = true;
           break;
         }
         if (core.failed(result)) {
-          fail = fail ? fail.mergeIn(result) : result;
+          fail = fail ? core.mergeFails(fail, result) : result;
         }
       }
 
@@ -1068,7 +1015,7 @@ export const $ZodArray: core.$constructor<$ZodArray> =
       return Promise.all(parseResults).then((results) => {
         for (const [i, result] of Object.entries(results)) {
           if (core.failed(result)) {
-            fail = fail ? fail.mergeIn(result, i) : result;
+            fail = fail ? core.mergeFails(fail, result, i) : result;
           }
         }
         return fail ?? results;
@@ -1086,17 +1033,40 @@ export const $ZodArray: core.$constructor<$ZodArray> =
 export type $ZodRawShape = {
   [k: string]: core.$ZodType;
 };
-type asdf = keyof $ZodRawShape;
+// type asdf = keyof $ZodRawShape;
+// export type AddQuestionMarks<T extends $ZodRawShape> = {
+//   [k in keyof T as T[k]["_qout"] extends true ? k : never]?: T[k]["_output"];
+// } & {
+//   [k in keyof T as boolean extends T[k]["_qout"] ? k : never]: T[k]["_output"];
+// };
 
-export type InferObjectOutput<Shape extends $ZodRawShape> =
-  types.addQuestionMarks<{
-    [k in keyof Shape]: Shape[k]["_output"];
-  }>;
+export type OptionalShapeKeys<T extends $ZodRawShape> = {
+  [k in keyof T]: T[k]["_qout"] extends "true" ? k : never;
+}[keyof T];
+export type RequiredShapeKeys<T extends $ZodRawShape> = {
+  [k in keyof T]: undefined extends T[k]["_qout"] ? k : never;
+}[keyof T];
+export type InferObjectOutput<T extends $ZodRawShape> = {
+  [K in RequiredShapeKeys<T>]: T[K]["_output"];
+} & {
+  [K in OptionalShapeKeys<T>]?: T[K]["_output"];
+};
+export type InferObjectInput<T extends $ZodRawShape> = {
+  [K in RequiredShapeKeys<T>]: T[K]["_input"];
+} & {
+  [K in OptionalShapeKeys<T>]?: T[K]["_input"];
+};
+// & { [k in keyof T]?: unknown };
 
-export type InferObjectInput<Shape extends $ZodRawShape> =
-  types.addQuestionMarks<{
-    [k in keyof Shape]: Shape[k]["_input"];
-  }>;
+// export type InferObjectOutput<Shape extends $ZodRawShape> =
+//   types.AddQuestionMarks<{
+//     [k in keyof Shape]: Shape[k]["_output"];
+//   }>;
+
+// export type InferObjectInput<Shape extends $ZodRawShape> =
+//   types.AddQuestionMarks<{
+//     [k in keyof Shape]: Shape[k]["_input"];
+//   }>;
 
 // type shapeToEntries<T extends $ZodRawShape> =
 export interface $ZodObjectDef extends core.$ZodTypeDef {
@@ -1115,13 +1085,13 @@ export interface $ZodObject<Shape extends $ZodRawShape = $ZodRawShape>
 
 function handleObjectResults(
   results: Record<PropertyKey, core.$SyncParseResult>,
-  ctx: core.$ParseContext | undefined,
   fail?: core.$ZodFailure
 ) {
   for (const key in results) {
     if (core.failed(results[key])) {
-      fail = fail || new core.$ZodFailure([], ctx);
-      fail.mergeIn(results[key], key);
+      if (!fail) fail = new core.$ZodFailure();
+      // core.mergeFails(fail, results[key], key);
+      fail = core.mergeFails(fail, results[key], key);
     }
   }
   return fail ?? results;
@@ -1129,11 +1099,11 @@ function handleObjectResults(
 
 async function handleObjectResultsAsync(
   results: Record<PropertyKey, core.$AsyncParseResult>,
-  ctx: core.$ParseContext | undefined,
+  // ctx: core.$ParseContext | undefined,
   fail?: core.$ZodFailure
 ): core.$AsyncParseResult<object> {
   const resolvedResults = await util.promiseAllObject(results);
-  return handleObjectResults(resolvedResults, ctx, fail);
+  return handleObjectResults(resolvedResults, fail);
 }
 
 export const $ZodObject: core.$constructor<$ZodObject> =
@@ -1149,18 +1119,15 @@ export const $ZodObject: core.$constructor<$ZodObject> =
 
     inst._typecheck = (input: unknown, ctx) => {
       if (!util.isPlainObject(input)) {
-        return core.$ZodFailure.from(
-          [
-            {
-              origin: "object",
-              code: "invalid_type",
-              level: "abort",
-              input,
-            },
-          ],
-          ctx,
-          inst._def
-        );
+        return core.$ZodFailure.from([
+          {
+            origin: "object",
+            code: "invalid_type",
+            level: "abort",
+            input,
+            def,
+          },
+        ]);
       }
 
       let async!: true;
@@ -1186,29 +1153,22 @@ export const $ZodObject: core.$constructor<$ZodObject> =
         if (inst._def.catchall) {
           objectResults[key] = inst._def.catchall._parse((input as any)[key]);
           if (objectResults[key] instanceof Promise) async = true;
-        } else {
-          // unrecognizedKeys = unrecognizedKeys ?? new Set();
-          // unrecognizedKeys.add(key);
         }
       }
 
       if (unrecognizedKeys) {
-        fail = core.$ZodFailure.from(
-          [
-            {
-              origin: "object",
-              code: "unrecognized_keys",
-              keys: [...unrecognizedKeys],
-              input: input,
-            },
-          ],
-          ctx,
-          inst._def
-        );
+        fail = core.$ZodFailure.from([
+          {
+            origin: "object",
+            code: "unrecognized_keys",
+            keys: [...unrecognizedKeys],
+            input: input,
+            def,
+          },
+        ]);
       }
-      if (!async)
-        return handleObjectResults(objectResults, ctx, fail) as object;
-      return handleObjectResultsAsync(objectResults, ctx, fail) as any;
+      if (!async) return handleObjectResults(objectResults, fail) as object;
+      return handleObjectResultsAsync(objectResults, fail) as any;
     };
   });
 
@@ -1229,40 +1189,42 @@ export interface $ZodUnion<T extends core.$ZodType[] = core.$ZodType[]>
   _def: $ZodUnionDef;
 }
 
+function handleUnionResults(
+  results: core.$SyncParseResult[],
+  input: unknown,
+  def: $ZodUnionDef
+) {
+  for (const result of results) {
+    if (core.succeeded(result)) return result;
+  }
+
+  return core.$ZodFailure.from([
+    {
+      origin: "union",
+      code: "invalid_union",
+      input,
+      def,
+      errors: (results as any as core.$ZodFailure[]).map((fail) => fail.issues),
+    },
+  ]);
+}
+
 export const $ZodUnion: core.$constructor<$ZodUnion> =
   /*@__PURE__*/ core.$constructor("$ZodUnion", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._typecheck = (input, ctx) => {
       let async = false;
-      const results: any[] = Array(inst._def.options.length);
-      for (const i in inst._def.options) {
-        const option = inst._def.options[i];
-        results[i] = option._parse(input, ctx);
-        if (results[i] instanceof Promise) async = true;
-        if (async) continue;
-        if (!core.failed(results[i])) {
-          return results[i];
-        }
+      const results: core.$SyncParseResult[] = [];
+      for (const option of inst._def.options) {
+        const result = option._parse(input, ctx);
+        results.push(result);
+        if (result instanceof Promise) async = true;
+        if (core.succeeded(result)) return result;
       }
 
-      if (!async)
-        return core.$ZodFailure.from(
-          [{ origin: "union", code: "invalid_union", errors: results, input }],
-          ctx,
-          inst._def
-        );
-
+      if (!async) return handleUnionResults(results, input, def);
       return Promise.all(results).then((results) => {
-        for (const result of results) {
-          if (!core.failed(result)) {
-            return result;
-          }
-        }
-        return core.$ZodFailure.from(
-          [{ origin: "union", code: "invalid_union", errors: results, input }],
-          ctx,
-          inst._def
-        );
+        return handleUnionResults(results, input, def);
       });
     };
   });
@@ -1274,12 +1236,14 @@ export const $ZodUnion: core.$constructor<$ZodUnion> =
 //////////                                  //////////
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
-export interface $ZodDiscriminatedUnionDef extends $ZodUnionDef {}
+export interface $ZodDiscriminatedUnionDef extends $ZodUnionDef {
+  _discriminators: Map<core.$ZodType, $ZodDiscriminators>;
+}
 
 export interface $ZodDiscriminatedUnion<
   Options extends core.$ZodType[] = core.$ZodType[],
 > extends $ZodUnion<Options> {
-  _def: $ZodUnionDef;
+  _def: $ZodDiscriminatedUnionDef;
 }
 
 function matchDiscriminators(input: any, discs: $ZodDiscriminators): boolean {
@@ -1299,18 +1263,19 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
   core.$constructor("$ZodDiscriminatedUnion", (inst, def) => {
     $ZodUnion.init(inst, def);
     const _unionParse = inst._parse;
-    const _discMap: Map<core.$ZodType, $ZodDiscriminators> = new Map();
+    def._discriminators = new Map();
     for (const option of inst._def.options) {
-      const discs = (option as any)["~discriminators"];
+      const discs = option._discriminators;
       if (discs) {
-        _discMap.set(option, discs);
+        def._discriminators.set(option, discs);
       }
     }
-    inst._typecheck = (input, ctx) => {
+
+    inst._typecheck = (input, _ctx) => {
       const filteredOptions: core.$ZodType[] = [];
       for (const option of inst._def.options) {
-        if (_discMap.has(option)) {
-          if (matchDiscriminators(input, _discMap.get(option)!)) {
+        if (def._discriminators.has(option)) {
+          if (matchDiscriminators(input, def._discriminators.get(option)!)) {
             filteredOptions.push(option);
           }
         } else {
@@ -1319,9 +1284,9 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
       }
 
       if (filteredOptions.length === 1)
-        return filteredOptions[0]._parse(input, ctx) as any;
+        return filteredOptions[0]._parse(input, _ctx) as any;
 
-      return _unionParse(input, ctx);
+      return _unionParse(input, _ctx);
     };
   });
 
@@ -1421,7 +1386,7 @@ function handleIntersectionResults(
   }
 
   if (core.failed(parsedRight)) {
-    fail = fail ? fail.mergeIn(parsedRight) : parsedRight;
+    fail = fail ? core.mergeFails(fail, parsedRight) : parsedRight;
   }
 
   if (fail) return fail;
@@ -1441,9 +1406,9 @@ function handleIntersectionResults(
 export const $ZodIntersection: core.$constructor<$ZodIntersection> =
   /*@__PURE__*/ core.$constructor("$ZodIntersection", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
-      const resultLeft = inst._def.left._parse(input, ctx);
-      const resultRight = inst._def.right._parse(input, ctx);
+    inst._typecheck = (input, _ctx) => {
+      const resultLeft = inst._def.left._parse(input, _ctx);
+      const resultRight = inst._def.right._parse(input, _ctx);
       const async =
         resultLeft instanceof Promise || resultRight instanceof Promise;
       return async
@@ -1473,24 +1438,43 @@ export interface $ZodTupleDef extends core.$ZodTypeDef {
 }
 
 type ZodTupleItems = core.$ZodType[];
-export type TupleOutputType<
-  T extends ZodTupleItems,
-  Rest extends core.$ZodType | null,
-> = [
-  ...{
-    [k in keyof T]: T[k]["_output"];
-  },
-  ...(Rest extends core.$ZodType ? Rest["_output"][] : []),
-];
 export type TupleInputType<
   T extends ZodTupleItems,
   Rest extends core.$ZodType | null,
 > = [
-  ...{
-    [k in keyof T]: T[k]["_input"];
-  },
+  ...TupleInputTypeWithOptionals<T>,
   ...(Rest extends core.$ZodType ? Rest["_input"][] : []),
 ];
+type TupleInputTypeNoOptionals<T extends ZodTupleItems> = {
+  [k in keyof T]: T[k]["_input"];
+};
+type TupleInputTypeWithOptionals<T extends ZodTupleItems> = T extends [
+  ...infer Prefix extends core.$ZodType[],
+  infer Tail extends core.$ZodType,
+]
+  ? Tail["_qin"] extends "true"
+    ? [...TupleInputTypeWithOptionals<Prefix>, Tail["_input"]?]
+    : TupleInputTypeNoOptionals<T>
+  : [];
+
+export type TupleOutputType<
+  T extends ZodTupleItems,
+  Rest extends core.$ZodType | null,
+> = [
+  ...TupleOutputTypeWithOptionals<T>,
+  ...(Rest extends core.$ZodType ? Rest["_output"][] : []),
+];
+type TupleOutputTypeNoOptionals<T extends ZodTupleItems> = {
+  [k in keyof T]: T[k]["_output"];
+};
+type TupleOutputTypeWithOptionals<T extends ZodTupleItems> = T extends [
+  ...infer Prefix extends core.$ZodType[],
+  infer Tail extends core.$ZodType,
+]
+  ? Tail["_qout"] extends "true"
+    ? [...TupleOutputTypeWithOptionals<Prefix>, Tail["_output"]?]
+    : TupleOutputTypeNoOptionals<T>
+  : [];
 
 function handleTupleResults<T extends unknown[]>(
   results: T,
@@ -1500,8 +1484,8 @@ function handleTupleResults<T extends unknown[]>(
   for (const i in results) {
     const result = results[i];
     if (core.failed(result)) {
-      fail = fail || new core.$ZodFailure([], ctx);
-      fail.mergeIn(result, i);
+      if (!fail) fail = new core.$ZodFailure();
+      core.mergeFails(fail, result, i);
     }
   }
   return fail ?? results;
@@ -1525,58 +1509,70 @@ export interface $ZodTuple<
 export const $ZodTuple: core.$constructor<$ZodTuple> =
   /*@__PURE__*/ core.$constructor("$ZodTuple", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
-      if (!Array.isArray(input)) {
-        return core.$ZodFailure.from(
-          [
-            {
-              input,
-              origin: "tuple",
-              code: "invalid_type",
-              level: "abort",
-            },
-          ],
-          ctx,
-          inst._def
-        );
-      }
+    const items = inst._def.items;
+    // const itemsLength = items.length;
+    // const optIndex = itemsLength;
+    const optStart =
+      items.length -
+      [...items].reverse().findIndex((item) => item._qout !== "true");
+    console.log({ optStart });
+    // [string, number, string, boolean, string?, number?];
+    // optStart = 3
+    // first non-true index is 2
+    // length is 5
+    //
 
-      if (!inst._def.rest && input.length !== inst._def.items.length) {
-        const tooBig = input.length !== inst._def.items.length;
-        return core.$ZodFailure.from(
-          [
-            {
-              input,
-              origin: "array",
-              ...(tooBig
-                ? { code: "too_big", maximum: inst._def.items.length }
-                : { code: "too_small", minimum: inst._def.items.length }),
-            },
-          ],
-          ctx,
-          inst._def
-        );
+    inst._typecheck = (input, _ctx) => {
+      if (!Array.isArray(input)) {
+        return core.$ZodFailure.from([
+          {
+            input,
+            def,
+            origin: "tuple",
+            code: "invalid_type",
+            level: "abort",
+          },
+        ]);
       }
 
       let async = false;
-
       const results: any[] = Array(input.length);
-      for (const i in inst._def.items) {
-        const prefixItem = inst._def.items[i];
-        results[i] = prefixItem._parse(input[i], ctx);
+
+      if (!inst._def.rest) {
+        const tooBig = input.length > items.length;
+        const tooSmall = input.length < optStart;
+        if (tooBig || tooSmall)
+          return core.$ZodFailure.from([
+            {
+              input,
+              def,
+              origin: "array",
+              ...(tooBig
+                ? { code: "too_big", maximum: items.length }
+                : { code: "too_small", minimum: items.length }),
+            },
+          ]);
+      }
+
+      let i = -1;
+      for (const item of items) {
+        i++;
+        if (i >= input.length) if (i >= optStart) continue;
+        results[i] = item._parse(input[i], _ctx);
         if (results[i] instanceof Promise) async = true;
       }
       if (inst._def.rest) {
-        const rest = input.slice(inst._def.items.length);
+        const rest = input.slice(items.length);
         for (const el of rest) {
-          const result = inst._def.rest._parse(el, ctx);
-          results.push(result);
+          i++;
+          const result = inst._def.rest._parse(el, _ctx);
+          results[i] = result;
           if (result instanceof Promise) async = true;
         }
       }
 
-      if (!async) return handleTupleResults(results, ctx);
-      return handleTupleResultsAsync(results, ctx);
+      if (!async) return handleTupleResults(results, _ctx);
+      return handleTupleResultsAsync(results, _ctx);
     };
   });
 
@@ -1638,18 +1634,15 @@ export const $ZodRecord: core.$constructor<$ZodRecord> =
       let fail!: core.$ZodFailure;
       let async!: boolean;
       if (!util.isPlainObject(input)) {
-        return core.$ZodFailure.from(
-          [
-            {
-              origin: "record",
-              code: "invalid_type",
-              level: "abort",
-              input,
-            },
-          ],
-          ctx,
-          inst._def
-        );
+        return core.$ZodFailure.from([
+          {
+            origin: "record",
+            code: "invalid_type",
+            level: "abort",
+            input,
+            def,
+          },
+        ]);
       }
 
       if ("_values" in inst._def.keySchema) {
@@ -1668,15 +1661,16 @@ export const $ZodRecord: core.$constructor<$ZodRecord> =
 Open an issue if you need this feature."
             );
           if (core.failed(keyResult)) {
-            fail = fail ?? new core.$ZodFailure([], ctx);
-            fail.addIssue({
+            fail = fail ?? new core.$ZodFailure();
+            fail.push({
               origin: "record",
               code: "invalid_key",
               issues: keyResult.issues,
               input: key,
               path: [key],
+              def,
             });
-            fail.mergeIn(keyResult, key);
+            fail = core.mergeFails(fail, keyResult, key);
             continue;
           }
           objectResults[keyResult] = inst._def.valueSchema._parse(
@@ -1687,9 +1681,8 @@ Open an issue if you need this feature."
         }
       }
 
-      if (!async)
-        return handleObjectResults(objectResults, ctx, fail) as object;
-      return handleObjectResultsAsync(objectResults, ctx, fail) as any;
+      if (!async) return handleObjectResults(objectResults, fail) as object;
+      return handleObjectResultsAsync(objectResults, fail) as any;
     };
   });
 
@@ -1730,37 +1723,39 @@ export const $PropertyKeyTypes: Set<string> = new Set([
 async function handleMapResultsAsync(
   _results: Promise<[core.$SyncParseResult, core.$SyncParseResult, unknown][]>,
   input: Map<any, any>,
-  ctx: core.$ParseContext | undefined
+  def: $ZodMapDef
 ): core.$AsyncParseResult<Map<any, any>> {
   const results = await _results;
-  return handleMapResults(results, input, ctx);
+  return handleMapResults(results, input, def);
 }
 
 function handleMapResults(
   results: [unknown, unknown, unknown][],
   input: Map<any, any>,
-  ctx: core.$ParseContext | undefined
+  def: $ZodMapDef
 ): core.$SyncParseResult<Map<any, any>> {
   let fail!: core.$ZodFailure;
   const parsedMap = new Map();
   for (const [keyResult, valueResult, originalKey] of results) {
     if (core.failed(keyResult)) {
-      fail = fail || new core.$ZodFailure([], ctx);
+      if (!fail) fail = new core.$ZodFailure();
       if ($PropertyKeyTypes.has(typeof originalKey))
-        fail.mergeIn(keyResult, originalKey as PropertyKey);
+        core.mergeFails(fail, keyResult, originalKey as PropertyKey);
       else
-        fail.addIssue({
+        fail.push({
           origin: "map",
           code: "invalid_key",
           input,
+          def,
           issues: fail.issues,
         });
     } else if (core.failed(valueResult)) {
-      fail = fail || new core.$ZodFailure([], ctx);
-      fail.addIssue({
+      if (!fail) fail = new core.$ZodFailure();
+      fail.push({
         origin: "map",
         code: "invalid_value",
         input,
+        def,
         key: keyResult,
         issues: fail.issues,
       });
@@ -1774,37 +1769,34 @@ function handleMapResults(
 export const $ZodMap: core.$constructor<$ZodMap> =
   /*@__PURE__*/ core.$constructor("$ZodMap", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (!(input instanceof Map)) {
-        return core.$ZodFailure.from(
-          [
-            {
-              input,
-              origin: "map",
-              code: "invalid_type",
-            },
-          ],
-          ctx,
-          inst._def
-        );
+        return core.$ZodFailure.from([
+          {
+            origin: "map",
+            code: "invalid_type",
+            input,
+            def,
+          },
+        ]);
       }
 
       let async = false;
       const mapResults: [unknown, unknown, unknown][] = [];
 
       for (const [key, value] of Object.entries(input)) {
-        const keyResult = inst._def.keyType._parse(key, ctx);
-        const valueResult = inst._def.valueType._parse(value, ctx);
+        const keyResult = inst._def.keyType._parse(key, _ctx);
+        const valueResult = inst._def.valueType._parse(value, _ctx);
         if (keyResult instanceof Promise || valueResult instanceof Promise) {
           mapResults.push(Promise.all([keyResult, valueResult, key]) as any);
           async = true;
         } else mapResults.push([keyResult, valueResult, key]);
       }
 
-      // if (async) return Promise.all(mapResults).then((mapResults) => handleMapResults(mapResults, input, ctx));
+      // if (async) return Promise.all(mapResults).then((mapResults) => handleMapResults(mapResults, input, _ctx));
       if (async)
-        return handleMapResultsAsync(Promise.all(mapResults), input, ctx);
-      return handleMapResults(mapResults, input, ctx);
+        return handleMapResultsAsync(Promise.all(mapResults), input, def);
+      return handleMapResults(mapResults, input, def);
     };
   });
 
@@ -1834,8 +1826,8 @@ function handleSetResults(
   let fail!: core.$ZodFailure;
   for (const result of setResults) {
     if (core.failed(result)) {
-      fail = fail || new core.$ZodFailure([], ctx);
-      fail.mergeIn(result);
+      if (!fail) fail = new core.$ZodFailure();
+      core.mergeFails(fail, result);
     } else {
       parsedSet.add(result);
     }
@@ -1853,35 +1845,32 @@ async function handleSetResultsAsync(
 export const $ZodSet: core.$constructor<$ZodSet> =
   /*@__PURE__*/ core.$constructor("$ZodSet", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (!(input instanceof Set)) {
-        return core.$ZodFailure.from(
-          [
-            {
-              input,
-              origin: "set",
-              code: "invalid_type",
-              level: "abort",
-            },
-          ],
-          ctx,
-          inst._def
-        );
+        return core.$ZodFailure.from([
+          {
+            input,
+            def,
+            origin: "set",
+            code: "invalid_type",
+            level: "abort",
+          },
+        ]);
       }
 
       const setResults: any[] = Array(input.size);
       let async!: boolean;
       let index = 0;
       for (const item of input) {
-        const result = def.valueType._parse(item, ctx);
+        const result = def.valueType._parse(item, _ctx);
         if (result instanceof Promise) {
           async = true;
         }
         setResults[index++] = result;
       }
 
-      if (async) return handleSetResultsAsync(Promise.all(setResults), ctx);
-      return handleSetResults(setResults, ctx);
+      if (async) return handleSetResultsAsync(Promise.all(setResults), _ctx);
+      return handleSetResults(setResults, _ctx);
     };
   });
 
@@ -1969,22 +1958,19 @@ export const $ZodEnum: core.$constructor<$ZodEnum> =
       if (typeof value === "number") _enum[value] = value;
     }
     inst.enum = _enum;
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (optionsSet.has(input as any)) {
         return input as any;
       }
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "enum",
-            code: "invalid_enum",
-            options,
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+      return core.$ZodFailure.from([
+        {
+          origin: "enum",
+          code: "invalid_enum",
+          options,
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -2030,20 +2016,17 @@ export interface $ZodFile extends core.$ZodType<File, File> {
 export const $ZodFile: core.$constructor<$ZodFile> =
   /*@__PURE__*/ core.$constructor("$ZodFile", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (input instanceof File) return input;
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "file",
-            code: "invalid_type",
-            level: "abort",
-            input,
-          },
-        ],
-        ctx,
-        inst._def
-      );
+      return core.$ZodFailure.from([
+        {
+          origin: "file",
+          code: "invalid_type",
+          level: "abort",
+          input,
+          def,
+        },
+      ]);
     };
   });
 
@@ -2086,14 +2069,19 @@ export interface $ZodOptionalDef extends core.$ZodTypeDef {
 export interface $ZodOptional<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<T["_output"] | undefined, T["_input"] | undefined> {
   _def: $ZodOptionalDef;
+
+  _qin: "true";
+  _qout: "true";
 }
 
 export const $ZodOptional: core.$constructor<$ZodOptional> =
   /*@__PURE__*/ core.$constructor("$ZodOptional", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._qin = "true";
+    inst._qout = "true";
+    inst._typecheck = (input, _ctx) => {
       if (input === undefined) return undefined;
-      return def.innerType._parse(input, ctx);
+      return def.innerType._parse(input, _ctx);
     };
   });
 
@@ -2113,14 +2101,18 @@ export interface $ZodNullableDef extends core.$ZodTypeDef {
 export interface $ZodNullable<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<T["_output"] | null, T["_input"] | null> {
   _def: $ZodNullableDef;
+  _qin: T["_qin"];
+  _qout: T["_qout"];
 }
 
 export const $ZodNullable: core.$constructor<$ZodNullable> =
   /*@__PURE__*/ core.$constructor("$ZodNullable", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._qin = def.innerType._qin;
+    inst._qout = def.innerType._qout;
+    inst._typecheck = (input, _ctx) => {
       if (input === null) return null;
-      return def.innerType._parse(input, ctx);
+      return def.innerType._parse(input, _ctx);
     };
   });
 
@@ -2145,8 +2137,8 @@ export interface $ZodSuccess<T extends core.$ZodType = core.$ZodType>
 export const $ZodSuccess: core.$constructor<$ZodSuccess> =
   /*@__PURE__*/ core.$constructor("$ZodSuccess", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
-      const result = def.innerType._parse(input, ctx);
+    inst._typecheck = (input, _ctx) => {
+      const result = def.innerType._parse(input, _ctx);
       if (result instanceof Promise)
         return result.then((x) => core.succeeded(x));
       return core.succeeded(result);
@@ -2170,6 +2162,7 @@ function handleDefaultResults(
       : result
     : result;
 }
+
 export interface $ZodDefaultDef extends core.$ZodTypeDef {
   type: "default";
   innerType: core.$ZodType;
@@ -2179,26 +2172,28 @@ export interface $ZodDefaultDef extends core.$ZodTypeDef {
 
 export interface $ZodDefault<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<
-    types.noUndefined<T["_output"]>,
+    types.NoUndefined<T["_output"]>,
     // T["_output"], // it can still return undefined
     core.input<T> | undefined
   > {
   _def: $ZodDefaultDef;
+  _qin: T["_qin"];
 }
 
 export const $ZodDefault: core.$constructor<$ZodDefault> =
   /*@__PURE__*/ core.$constructor("$ZodDefault", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._qin = def.innerType._qin;
+    inst._typecheck = (input, _ctx) => {
       if (input === undefined) {
         input = def.defaultValue();
       }
       if (input instanceof Promise)
         return input
-          .then((input) => def.innerType._parse(input, ctx))
+          .then((input) => def.innerType._parse(input, _ctx))
           .then((result) => handleDefaultResults(result, def.defaultValue));
       return handleDefaultResults(
-        def.innerType._parse(input, ctx),
+        def.innerType._parse(input, _ctx),
         def.defaultValue
       );
     };
@@ -2224,13 +2219,17 @@ export interface $ZodCatchDef extends core.$ZodTypeDef {
 export interface $ZodCatch<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<T["_output"], unknown> {
   _def: $ZodCatchDef;
+  _qin: T["_qin"];
+  _qout: T["_qout"];
 }
 
 export const $ZodCatch: core.$constructor<$ZodCatch> =
   /*@__PURE__*/ core.$constructor("$ZodCatch", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
-      const result = def.innerType._parse(input, ctx);
+    inst._qin = def.innerType._qin;
+    inst._qout = def.innerType._qout;
+    inst._typecheck = (input, _ctx) => {
+      const result = def.innerType._parse(input, _ctx);
       if (result instanceof Promise) {
         return result.then((res) => {
           return core.failed(res) ? def.catchValue({ error: res, input }) : res;
@@ -2261,19 +2260,16 @@ export interface $ZodNaN extends core.$ZodType<number, number> {
 export const $ZodNaN: core.$constructor<$ZodNaN> =
   /*@__PURE__*/ core.$constructor("$ZodNaN", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (typeof input !== "number" || !Number.isNaN(input)) {
-        return core.$ZodFailure.from(
-          [
-            {
-              input,
-              origin: "nan",
-              code: "invalid_type",
-            },
-          ],
-          ctx,
-          inst._def
-        );
+        return core.$ZodFailure.from([
+          {
+            input,
+            def,
+            origin: "nan",
+            code: "invalid_type",
+          },
+        ]);
       }
       return input;
     };
@@ -2303,20 +2299,20 @@ export interface $ZodPipeline<
 export const $ZodPipeline: core.$constructor<$ZodPipeline> =
   /*@__PURE__*/ core.$constructor("$ZodPipeline", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
-      const result = def.in._parse(input, ctx);
+    inst._typecheck = (input, _ctx) => {
+      const result = def.in._parse(input, _ctx);
       if (result instanceof Promise) {
         return result.then((res) => {
           if (core.failed(res)) {
             return res;
           }
-          return def.out._parse(res, ctx);
+          return def.out._parse(res, _ctx);
         });
       }
       if (core.failed(result)) {
         return result;
       }
-      return def.out._parse(result, ctx);
+      return def.out._parse(result, _ctx);
     };
   });
 
@@ -2366,13 +2362,17 @@ export interface $ZodReadonly<T extends core.$ZodType = core.$ZodType>
     MakeReadonly<core.input<T>>
   > {
   _def: $ZodReadonlyDef;
+  _qin: T["_qin"];
+  _qout: T["_qout"];
 }
 
 export const $ZodReadonly: core.$constructor<$ZodReadonly> =
   /*@__PURE__*/ core.$constructor("$ZodReadonly", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, ctx) => {
-      const result = def.innerType._parse(input, ctx);
+    inst._qin = def.innerType._qin;
+    inst._qout = def.innerType._qout;
+    inst._typecheck = (input, _ctx) => {
+      const result = def.innerType._parse(input, _ctx);
       if (result instanceof Promise) {
         return result.then(handleReadonlyResult);
       }
@@ -2448,33 +2448,27 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> =
     }
     inst._pattern = new RegExp(`^${regexParts.join(".*")}$`);
 
-    inst._typecheck = (input, ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (typeof input !== "string") {
-        return core.$ZodFailure.from(
-          [
-            {
-              input,
-              origin: "template_literal",
-              code: "invalid_type",
-            },
-          ],
-          ctx,
-          inst._def
-        );
+        return core.$ZodFailure.from([
+          {
+            input,
+            def,
+            origin: "template_literal",
+            code: "invalid_type",
+          },
+        ]);
       }
 
       if (!inst._pattern.test(input)) {
-        return core.$ZodFailure.from(
-          [
-            {
-              input,
-              origin: "template_literal",
-              code: "invalid_type",
-            },
-          ],
-          ctx,
-          inst._def
-        );
+        return core.$ZodFailure.from([
+          {
+            input,
+            def,
+            origin: "template_literal",
+            code: "invalid_type",
+          },
+        ]);
       }
 
       return input;

@@ -33,23 +33,26 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> =
       numericOriginMap[
         typeof inst._def.value as "number" | "bigint" | "object"
       ];
-    inst.run = (ctx) => {
+
+    inst.run = (input) => {
       if (
-        inst._def.inclusive
-          ? ctx.input <= inst._def.value
-          : ctx.input < inst._def.value
+        inst._def.inclusive ? input <= inst._def.value : input < inst._def.value
       ) {
         return;
       }
 
-      // casting to avoid type errors
-      ctx.addIssue({
-        origin: origin as "number",
-        code: "too_big",
-        maximum: inst._def.value as number,
-        input: ctx.input as number,
-        inclusive: inst._def.inclusive,
-      });
+      return {
+        issues: [
+          {
+            origin: origin as "number",
+            code: "too_big",
+            maximum: inst._def.value as number,
+            input,
+            inclusive: inst._def.inclusive,
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -78,22 +81,26 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> =
       numericOriginMap[
         typeof inst._def.value as "number" | "bigint" | "object"
       ];
-    inst.run = (ctx) => {
+
+    inst.run = (input) => {
       if (
-        inst._def.inclusive
-          ? ctx.input >= inst._def.value
-          : ctx.input > inst._def.value
+        inst._def.inclusive ? input >= inst._def.value : input > inst._def.value
       ) {
         return;
       }
 
-      ctx.addIssue({
-        origin: origin as "number",
-        code: "too_small",
-        minimum: inst._def.value as number,
-        input: ctx.input as number,
-        inclusive: inst._def.inclusive,
-      });
+      return {
+        issues: [
+          {
+            origin: origin as "number",
+            code: "too_small",
+            minimum: inst._def.value as number,
+            input,
+            inclusive: inst._def.inclusive,
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -127,23 +134,27 @@ export const $ZodCheckMultipleOf: core.$constructor<
   $ZodCheckMultipleOf<number | bigint>
 > = core.$constructor("$ZodCheckMultipleOf", (inst, def) => {
   core.$ZodCheck.init(inst, def);
-  inst.run = (ctx) => {
-    if (typeof ctx.input !== typeof inst._def.value)
-      throw new Error("Cannot mix number and bigint in multiple_of check.");
-    // the casts are safe because we know the types are the same
-    const isMultiple =
-      typeof ctx.input === "bigint"
-        ? ctx.input % (inst._def.value as bigint) === BigInt(0)
-        : floatSafeRemainder(ctx.input, inst._def.value as number);
 
-    if (!isMultiple) {
-      ctx.addIssue({
-        origin: typeof ctx.input as "number",
-        code: "not_multiple_of",
-        divisor: inst._def.value as number,
-        input: ctx.input as number,
-      });
-    }
+  inst.run = (input) => {
+    if (typeof input !== typeof inst._def.value)
+      throw new Error("Cannot mix number and bigint in multiple_of check.");
+    const isMultiple =
+      typeof input === "bigint"
+        ? input % (inst._def.value as bigint) === BigInt(0)
+        : floatSafeRemainder(input, inst._def.value as number);
+
+    if (isMultiple) return;
+    return {
+      issues: [
+        {
+          origin: typeof input as "number",
+          code: "not_multiple_of",
+          divisor: inst._def.value as number,
+          input,
+          def,
+        },
+      ],
+    };
   };
 });
 //////////////////////////////////
@@ -179,16 +190,21 @@ export interface $ZodCheckMaxSize<T extends types.Sizeable = types.Sizeable>
 export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> =
   core.$constructor("$ZodCheckMaxSize", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      const size = getSize(ctx.input);
-      if (size.size > inst._def.maximum) {
-        ctx.addIssue({
-          origin: size.type as "array",
-          code: "too_big",
-          maximum: inst._def.maximum,
-          input: ctx.input as unknown[],
-        });
-      }
+
+    inst.run = (input) => {
+      const size = getSize(input);
+      if (size.size <= inst._def.maximum) return;
+      return {
+        issues: [
+          {
+            origin: size.type as "array",
+            code: "too_big",
+            maximum: inst._def.maximum,
+            input,
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -215,16 +231,21 @@ export interface $ZodCheckMinSize<T extends types.Sizeable = types.Sizeable>
 export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> =
   core.$constructor("$ZodCheckMinSize", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      const size = getSize(ctx.input);
-      if (size.size < inst._def.minimum) {
-        ctx.addIssue({
-          origin: size.type as "array",
-          code: "too_small",
-          minimum: inst._def.minimum,
-          input: ctx.input as unknown[],
-        });
-      }
+
+    inst.run = (input) => {
+      const size = getSize(input);
+      if (size.size >= inst._def.minimum) return;
+      return {
+        issues: [
+          {
+            origin: size.type as "array",
+            code: "too_small",
+            minimum: inst._def.minimum,
+            input,
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -254,18 +275,23 @@ export interface $ZodCheckSizeEquals<T extends types.Sizeable = types.Sizeable>
 export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> =
   core.$constructor("$ZodCheckSizeEquals", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      const size = getSize(ctx.input);
-      if (size.size !== inst._def.size) {
-        const tooBig = size.size > inst._def.size;
-        ctx.addIssue({
-          origin: size.type as "array",
-          ...(tooBig
-            ? { code: "too_big", maximum: inst._def.size }
-            : { code: "too_small", minimum: inst._def.size }),
-          input: ctx.input as unknown[],
-        });
-      }
+
+    inst.run = (input) => {
+      const size = getSize(input);
+      if (size.size === inst._def.size) return;
+      const tooBig = size.size > inst._def.size;
+      return {
+        issues: [
+          {
+            origin: size.type as "array",
+            ...(tooBig
+              ? { code: "too_big", maximum: inst._def.size }
+              : { code: "too_small", minimum: inst._def.size }),
+            input,
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -287,19 +313,24 @@ export interface _$ZodCheckStringFormat extends core.$ZodCheck<string> {
 export const _$ZodCheckStringFormat: core.$constructor<_$ZodCheckStringFormat> =
   core.$constructor("_$ZodCheckStringFormat", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
+
+    inst.run = (input) => {
       if (!inst._def.pattern) throw new Error("Not implemented.");
-      if (!inst._def.pattern.test(ctx.input)) {
-        ctx.addIssue({
-          origin: "string",
-          code: "invalid_format",
-          format: inst._def.format,
-          input: ctx.input,
-          ...(inst._def.pattern
-            ? { pattern: inst._def.pattern.toString() }
-            : {}),
-        });
-      }
+      if (inst._def.pattern.test(input)) return;
+      return {
+        issues: [
+          {
+            origin: "string",
+            code: "invalid_format",
+            format: inst._def.format,
+            input,
+            ...(inst._def.pattern
+              ? { pattern: inst._def.pattern.toString() }
+              : {}),
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -337,16 +368,21 @@ export interface $ZodCheckIncludes<T extends string = string>
 export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> =
   core.$constructor("$ZodCheckIncludes", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      if (!ctx.input.includes(inst._def.includes)) {
-        ctx.addIssue({
-          origin: "string",
-          code: "invalid_format",
-          format: inst._def.check,
-          includes: inst._def.includes,
-          input: ctx.input,
-        });
-      }
+
+    inst.run = (input) => {
+      if (input.includes(inst._def.includes)) return;
+      return {
+        issues: [
+          {
+            origin: "string",
+            code: "invalid_format",
+            format: inst._def.check,
+            includes: inst._def.includes,
+            input,
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -364,8 +400,9 @@ export interface $ZodCheckTrim extends core.$ZodCheck<string> {
 export const $ZodCheckTrim: core.$constructor<$ZodCheckTrim> =
   core.$constructor("$ZodCheckTrim", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      ctx.input = ctx.input.trim();
+
+    inst.run = (input) => {
+      return { override: input.trim() };
     };
   });
 
@@ -384,8 +421,9 @@ export interface $ZodCheckToLowerCase extends core.$ZodCheck<string> {
 export const $ZodCheckToLowerCase: core.$constructor<$ZodCheckToLowerCase> =
   core.$constructor("$ZodCheckToLowerCase", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      ctx.input = ctx.input.toLowerCase();
+
+    inst.run = (input) => {
+      return { override: input.toLowerCase() };
     };
   });
 
@@ -404,8 +442,9 @@ export interface $ZodCheckToUpperCase extends core.$ZodCheck<string> {
 export const $ZodCheckToUpperCase: core.$constructor<$ZodCheckToUpperCase> =
   core.$constructor("$ZodCheckToUpperCase", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      ctx.input = ctx.input.toUpperCase();
+
+    inst.run = (input) => {
+      return { override: input.toUpperCase() };
     };
   });
 
@@ -424,8 +463,9 @@ export interface $ZodCheckNormalize extends core.$ZodCheck<string> {
 export const $ZodCheckNormalize: core.$constructor<$ZodCheckNormalize> =
   core.$constructor("$ZodCheckNormalize", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      ctx.input = ctx.input.normalize();
+
+    inst.run = (input) => {
+      return { override: input.normalize() };
     };
   });
 
@@ -445,16 +485,21 @@ export interface $ZodCheckStartsWith<T extends string = string>
 export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> =
   core.$constructor("$ZodCheckStartsWith", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      if (!ctx.input.startsWith(inst._def.prefix)) {
-        ctx.addIssue({
-          origin: "string",
-          code: "invalid_format",
-          format: "starts_with",
-          prefix: inst._def.prefix,
-          input: ctx.input,
-        });
-      }
+
+    inst.run = (input) => {
+      if (input.startsWith(inst._def.prefix)) return;
+      return {
+        issues: [
+          {
+            origin: "string",
+            code: "invalid_format",
+            format: "starts_with",
+            prefix: inst._def.prefix,
+            input,
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -474,16 +519,21 @@ export interface $ZodCheckEndsWith<T extends string = string>
 export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> =
   core.$constructor("$ZodCheckEndsWith", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      if (!ctx.input.endsWith(inst._def.suffix)) {
-        ctx.addIssue({
-          origin: "string",
-          code: "invalid_format",
-          format: "ends_with",
-          suffix: inst._def.suffix,
-          input: ctx.input,
-        });
-      }
+
+    inst.run = (input) => {
+      if (input.endsWith(inst._def.suffix)) return;
+      return {
+        issues: [
+          {
+            origin: "string",
+            code: "invalid_format",
+            format: "ends_with",
+            suffix: inst._def.suffix,
+            input,
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -502,33 +552,6 @@ export interface $ZodCheckProperty<T extends File = File>
   _def: $ZodCheckPropertyDef;
 }
 
-function handleCheckPropertyResults(
-  results: core.$SyncParseResult,
-  ctx: core.$ZodCheckCtx<File>,
-  prop: string
-) {
-  if (core.failed(results)) {
-    ctx.fail!.issues.push(
-      ...results.issues.map((i) => ({
-        ...i,
-        path: [prop, ...i.path],
-      }))
-    );
-  }
-}
-export const $ZodCheckProperty: core.$constructor<$ZodCheckProperty> =
-  core.$constructor("$ZodCheckProperty", (inst, def) => {
-    core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      const prop = (ctx.input as any)[inst._def.property];
-      const result = inst._def.schema._parse(prop);
-      if (result instanceof Promise) {
-        return result.then((res) => handleCheckPropertyResults(res, ctx, prop));
-      }
-      return handleCheckPropertyResults(result, ctx, prop);
-    };
-  });
-
 ///////////////////////////////////
 /////    $ZodCheckFileType    /////
 ///////////////////////////////////
@@ -545,16 +568,21 @@ export interface $ZodCheckFileType<T extends File = File>
 export const $ZodCheckFileType: core.$constructor<$ZodCheckFileType> =
   core.$constructor("$ZodCheckFileType", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      if (!inst._def.fileTypes.includes(ctx.input.type as types.MimeTypes)) {
-        ctx.addIssue({
-          origin: "file",
-          code: "invalid_enum",
-          options: inst._def.fileTypes,
-          input: ctx.input.type,
-          path: ["type"],
-        });
-      }
+
+    inst.run = (input) => {
+      if (inst._def.fileTypes.includes(input.type as types.MimeTypes)) return;
+      return {
+        issues: [
+          {
+            origin: "file",
+            code: "invalid_enum",
+            options: inst._def.fileTypes,
+            input: input.type,
+            path: ["type"],
+            def,
+          },
+        ],
+      };
     };
   });
 
@@ -574,15 +602,20 @@ export interface $ZodCheckFileName<T extends File = File>
 export const $ZodCheckFileName: core.$constructor<$ZodCheckFileName> =
   core.$constructor("$ZodCheckFileName", (inst, def) => {
     core.$ZodCheck.init(inst, def);
-    inst.run = (ctx) => {
-      if (inst._def.fileName !== ctx.input.name) {
-        ctx.addIssue({
-          origin: "file",
-          code: "invalid_enum",
-          options: [inst._def.fileName],
-          input: ctx.input,
-          path: ["name"],
-        });
-      }
+
+    inst.run = (input) => {
+      if (inst._def.fileName === input.name) return;
+      return {
+        issues: [
+          {
+            origin: "file",
+            code: "invalid_enum",
+            options: [inst._def.fileName],
+            input: input,
+            path: ["name"],
+            def,
+          },
+        ],
+      };
     };
   });

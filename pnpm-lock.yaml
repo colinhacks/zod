@@ -91,11 +91,20 @@ importers:
         specifier: 2.0.3
         version: 2.0.3(@types/node@20.14.11)(terser@5.34.1)
 
-  benchmarks:
-    devDependencies:
+  packages/benchmarks:
+    dependencies:
       zod:
-        specifier: 3.23.7
-        version: 3.23.7
+        specifier: ^3.23.7
+        version: link:../zod
+      zod-core:
+        specifier: ^3.23.8
+        version: link:../zod-core
+      zod-mini:
+        specifier: ^3.23.8
+        version: link:../zod-mini
+      zod3:
+        specifier: npm:zod@3.23.7
+        version: zod@3.23.7
 
   packages/effect-plugin:
     dependencies:
@@ -104,7 +113,7 @@ importers:
         version: 3.5.6
       zod:
         specifier: ^3.0.0
-        version: link:../zod-mini
+        version: link:../zod
 
   packages/zod:
     dependencies:

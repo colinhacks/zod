@@ -568,17 +568,34 @@ export function intersection<
 // tuple
 interface ZodMiniTupleParams
   extends util.Params<schemas.ZodMiniTuple, "items"> {
-  rest?: schemas.ZodMiniTuple["_def"]["rest"];
+  // rest?: schemas.ZodMiniTuple["_def"]["rest"];
 }
+
 export function tuple<
   T extends [schemas.ZodMiniType, ...schemas.ZodMiniType[]],
->(items: T, params?: ZodMiniTupleParams): schemas.ZodMiniTuple<T> {
+>(items: T, params?: ZodMiniTupleParams): schemas.ZodMiniTuple<T, null>;
+export function tuple<
+  T extends [schemas.ZodMiniType, ...schemas.ZodMiniType[]],
+  Rest extends schemas.ZodMiniType,
+>(
+  items: T,
+  rest: Rest,
+  params?: ZodMiniTupleParams
+): schemas.ZodMiniTuple<T, Rest>;
+export function tuple(
+  items: schemas.ZodMiniType[],
+  _paramsOrRest?: ZodMiniTupleParams | schemas.ZodMiniType,
+  _params?: ZodMiniTupleParams
+) {
+  const hasRest = _paramsOrRest instanceof schemas.ZodMiniType;
+  const params = hasRest ? _params : _paramsOrRest;
+  const rest = hasRest ? _paramsOrRest : null;
   return new schemas.ZodMiniTuple({
     type: "tuple",
     items,
-    rest: params?.rest ?? null,
+    rest,
     ...util.normalizeCreateParams(params),
-  }) as schemas.ZodMiniTuple<T>;
+  });
 }
 
 // record
@@ -955,18 +972,25 @@ export function refine<T>(
 ): core.$ZodCheck<T> {
   const _params: CustomParams =
     typeof params === "string" ? { message: params } : params;
-  return {
+  const check: core.$ZodCheck<T> = {
     _def: { check: "custom" },
-    run(ctx) {
-      if (!refinement(ctx.input)) {
-        ctx.addIssue({
-          input: ctx.input,
-          code: "custom",
-          origin: "custom",
-          level: "error",
-          ..._params,
-        });
-      }
-    },
+  } as any;
+  check.run = (input) => {
+    if (!refinement(input)) {
+      return {
+        issues: [
+          {
+            input,
+            code: "custom",
+            origin: "custom",
+            level: "error",
+            def: check._def,
+            ..._params,
+          },
+        ],
+      };
+    }
+    return;
   };
+  return check;
 }

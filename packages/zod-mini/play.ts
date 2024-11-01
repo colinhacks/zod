@@ -1,5 +1,21 @@
-import * as z from "./src/api.js";
+import * as z from "./src/index.js";
 
-const a = z.uuid();
-console.log(a);
-console.log(a.parse("123"));
+const a = z.discriminatedUnion([
+  z.object({
+    type: z.literal("A"),
+    name: z.string(),
+  }),
+  z.object({
+    type: z.literal("B"),
+    age: z.number(),
+  }),
+]);
+
+// a._discriminators;
+
+const aa = z.object({
+  type: z.literal("A"),
+  name: z.string(),
+});
+
+a._values;

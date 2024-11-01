@@ -4,32 +4,41 @@ import * as util from "./util.js";
 export function lt<T extends $.Numeric>(
   value: T,
   params?: string | util.RawCheckParams
-): $.$ZodCheckLessThan<T> {
+): $.$ZodCheckLessThan<$.Numeric> {
   return new $.$ZodCheckLessThan({
     check: "less_than",
     ...util.normalizeCheckParams(params),
     value,
     inclusive: false,
-  });
+  }) as any;
 }
 
-export function lte<T extends $.Numeric>(
-  value: T,
+export function lte(
+  value: $.Numeric,
   params?: string | util.RawCheckParams
-): $.$ZodCheckLessThan<T> {
+): $.$ZodCheckLessThan<$.Numeric> {
   return new $.$ZodCheckLessThan({
     check: "less_than",
     ...util.normalizeCheckParams(params),
     value,
     inclusive: true,
-  });
+  }) as any;
 }
 
-// $ZodCheckGreaterThan;
-export function gt<T extends $.Numeric>(
-  value: T,
+type Params = string | util.RawCheckParams;
+// export function gt(
+//   value: number,
+//   params?: Params
+// ): $.$ZodCheckGreaterThan<number>;
+// export function gt(
+//   value: bigint,
+//   params?: Params
+// ): $.$ZodCheckGreaterThan<bigint>;
+// export function gt(value: Date, params?: Params): $.$ZodCheckGreaterThan<Date>;
+export function gt(
+  value: $.Numeric,
   params?: string | util.RawCheckParams
-): $.$ZodCheckGreaterThan<T> {
+): $.$ZodCheckGreaterThan {
   return new $.$ZodCheckGreaterThan({
     check: "greater_than",
     ...util.normalizeCheckParams(params),
@@ -47,10 +56,9 @@ export function gte<T extends $.Numeric>(
     ...util.normalizeCheckParams(params),
     value,
     inclusive: true,
-  });
+  }) as any;
 }
 
-// $ZodCheckMaxSize;
 export function maxSize(
   maximum: number,
   params?: string | util.RawCheckParams
@@ -62,7 +70,6 @@ export function maxSize(
   });
 }
 
-// $ZodCheckMinSize;
 export function minSize(
   minimum: number,
   params?: string | util.RawCheckParams
@@ -73,7 +80,7 @@ export function minSize(
     minimum,
   });
 }
-// $ZodCheckRegex;
+
 export function regex(
   pattern: RegExp,
   params?: string | util.RawCheckParams
@@ -86,7 +93,6 @@ export function regex(
   });
 }
 
-// $ZodCheckIncludes;
 export function includes(
   includes: string,
   params?: string | util.RawCheckParams
@@ -98,7 +104,6 @@ export function includes(
   });
 }
 
-// $ZodCheckStartsWith;
 export function startsWith(
   prefix: string,
   params?: string | util.RawCheckParams
@@ -110,7 +115,6 @@ export function startsWith(
   });
 }
 
-// $ZodCheckEndsWith;
 export function endsWith(
   suffix: string,
   params?: string | util.RawCheckParams

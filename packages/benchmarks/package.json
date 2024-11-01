@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "type": "module",
+  "name": "zod-benchmarks",
+  "dependencies": {
+    "zod": "^3.23.7",
+    "zod-core": "^3.23.8",
+    "zod-mini": "^3.23.8",
+    "zod3": "npm:zod@3.23.7"
+  }
+}

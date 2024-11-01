@@ -1071,7 +1071,7 @@ export const ZodMiniSuccess: core.$constructor<ZodMiniSuccess> =
 export interface ZodMiniDefaultDef extends core.$ZodDefaultDef {}
 export interface ZodMiniDefault<T extends ZodMiniType = ZodMiniType>
   extends core.$ZodDefault<T>,
-    ZodMiniType<core.noUndefined<T["_output"]>, core.input<T> | undefined> {
+    ZodMiniType<core.NoUndefined<T["_output"]>, core.input<T> | undefined> {
   _def: ZodMiniDefaultDef;
 }
 export const ZodMiniDefault: core.$constructor<ZodMiniDefault> =

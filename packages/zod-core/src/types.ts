@@ -115,32 +115,32 @@ export type MakePartial<T, K extends keyof T> = Omit<T, K> &
   Partial<Pick<T, K>>;
 export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 
-export type noUndefined<T> = T extends undefined ? never : T;
+export type NoUndefined<T> = T extends undefined ? never : T;
 
-export type optionalKeys<T extends object> = {
-  [k in keyof T]: undefined extends T[k] ? k : never;
-}[keyof T];
-export type requiredKeys<T extends object> = {
-  [k in keyof T]: undefined extends T[k] ? never : k;
-}[keyof T];
-export type addQuestionMarks<T extends object, _O = unknown> = {
-  [K in requiredKeys<T>]: T[K];
-} & {
-  [K in optionalKeys<T>]?: T[K];
-} & { [k in keyof T]?: unknown };
+// export type OptionalKeys<T extends object> = {
+//   [k in keyof T]: undefined extends T[k] ? k : never;
+// }[keyof T];
+// export type RequiredKeys<T extends object> = {
+//   [k in keyof T]: undefined extends T[k] ? never : k;
+// }[keyof T];
+// export type AddQuestionMarks<T extends object, _O = unknown> = {
+//   [K in RequiredKeys<T>]: T[K];
+// } & {
+//   [K in OptionalKeys<T>]?: T[K];
+// } & { [k in keyof T]?: unknown };
 
-export type identity<T> = T;
-export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
+export type Identity<T> = T;
+export type Flatten<T> = Identity<{ [k in keyof T]: T[k] }>;
 
-export type noNeverKeys<T> = {
+export type NoNeverKeys<T> = {
   [k in keyof T]: [T[k]] extends [never] ? never : k;
 }[keyof T];
 
-export type noNever<T> = identity<{
-  [k in noNeverKeys<T>]: k extends keyof T ? T[k] : never;
+export type NoNever<T> = Identity<{
+  [k in NoNeverKeys<T>]: k extends keyof T ? T[k] : never;
 }>;
 
-export type extendShape<A extends object, B extends object> = {
+export type ExtendShape<A extends object, B extends object> = {
   [K in keyof A | keyof B]: K extends keyof B
     ? B[K]
     : K extends keyof A
@@ -185,7 +185,7 @@ export type MergeOverrides<
   Overrides extends Partial<Base>,
 > = {
   [k in keyof Base]: k extends keyof Overrides
-    ? noUndefined<Overrides[k]>
+    ? NoUndefined<Overrides[k]>
     : Defaults[k];
 };
 

@@ -97,3 +97,8 @@ export const factory: <
     }) as T;
   };
 };
+
+function inferNumber<T>(value: T): T {
+  return value;
+}
+const result = inferNumber(0);

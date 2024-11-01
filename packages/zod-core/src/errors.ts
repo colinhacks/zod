@@ -10,7 +10,6 @@ export interface $ZodIssueBase<
 > {
   code: string;
   origin: Origin;
-  level: "error" | "abort";
   input?: Input;
   path: PropertyKey[];
   message: string;
@@ -202,14 +201,15 @@ export type $ZodIssueData<T extends $ZodIssueBase = $ZodIssue> = T extends any
 
 type ComputedIssueDataPieces<In> = {
   path?: PropertyKey[] | undefined;
-  level?: "error" | "abort" | undefined;
+  // level?: "error" | "abort" | undefined;
   message?: string | undefined;
   input: In;
+  def: { error?: $ZodErrorMap<never> | undefined };
 };
 
 export type _$ZodIssueData<T extends $ZodIssueBase> = Omit<
   types.OmitIndex<T>,
-  "message" | "path" | "level" | "input"
+  "message" | "path" | "input"
 > &
   ComputedIssueDataPieces<T["input"]> &
   types.ExtractIndex<T>;

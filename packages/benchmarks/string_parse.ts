@@ -1,5 +1,5 @@
 import * as zOld from "zod";
-import * as zNew from "../packages/zod-core/src/index.js";
+import * as zNew from "zod-core";
 import { randomString } from "./benchUtil.js";
 import { benchWithData } from "./metabench.js";
 

@@ -1,13 +1,13 @@
-import * as zOld from "zod";
-import * as zNew from "../packages/zod-core/src/index.js";
+// import * as zOld from "zod";
+// import * as zNew from "zod-core";
 
-export function makeSchema<T>(factory: (z: typeof zNew) => T) {
-  return {
-    zod3: factory(zOld as any) as T,
-    zod4: factory(zNew as any) as T,
-    // zod4Ts: factory(zodNewTs as any),
-  };
-}
+// export function makeSchema<T>(factory: (z: typeof zNew) => T) {
+//   return {
+//     zod3: factory(zOld as any) as T,
+//     zod4: factory(zNew as any) as T,
+//     // zod4Ts: factory(zodNewTs as any),
+//   };
+// }
 
 export function randomString(length: number): string {
   const characters =
