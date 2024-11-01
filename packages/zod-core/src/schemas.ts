@@ -13,9 +13,9 @@ import * as util from "./util.js";
 ////////////////////////////////////////
 ////////////////////////////////////////
 
-export type $ZodDiscriminators = Array<
-  { key: PropertyKey; discs: $ZodDiscriminators } | Set<unknown>
->;
+// export type $ZodDiscriminators = Array<
+//   { key: PropertyKey; discs: $ZodDiscriminators } | Set<unknown>
+// >;
 
 //////////////////////////////////////////
 //////////////////////////////////////////
@@ -1237,7 +1237,7 @@ export const $ZodUnion: core.$constructor<$ZodUnion> =
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 export interface $ZodDiscriminatedUnionDef extends $ZodUnionDef {
-  _discriminators: Map<core.$ZodType, $ZodDiscriminators>;
+  // _discriminators: Map<core.$ZodType, $ZodDiscriminators>;
 }
 
 export interface $ZodDiscriminatedUnion<
@@ -1246,7 +1246,10 @@ export interface $ZodDiscriminatedUnion<
   _def: $ZodDiscriminatedUnionDef;
 }
 
-function matchDiscriminators(input: any, discs: $ZodDiscriminators): boolean {
+function matchDiscriminators(
+  input: any,
+  discs: core.$ZodDiscriminators
+): boolean {
   for (const disc of discs) {
     if (disc instanceof Set) {
       if (!disc.has(input)) return false;
@@ -1263,19 +1266,19 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
   core.$constructor("$ZodDiscriminatedUnion", (inst, def) => {
     $ZodUnion.init(inst, def);
     const _unionParse = inst._parse;
-    def._discriminators = new Map();
+    const discMap: Map<core.$ZodType, core.$ZodDiscriminators> = new Map();
     for (const option of inst._def.options) {
       const discs = option._discriminators;
       if (discs) {
-        def._discriminators.set(option, discs);
+        discMap.set(option, discs);
       }
     }
 
     inst._typecheck = (input, _ctx) => {
       const filteredOptions: core.$ZodType[] = [];
       for (const option of inst._def.options) {
-        if (def._discriminators.has(option)) {
-          if (matchDiscriminators(input, def._discriminators.get(option)!)) {
+        if (discMap.has(option)) {
+          if (matchDiscriminators(input, discMap.get(option)!)) {
             filteredOptions.push(option);
           }
         } else {
