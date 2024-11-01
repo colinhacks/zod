@@ -218,8 +218,8 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <p>
       <a href="https://liblab.com/">
         <picture height="78px">
-          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/a1e4406a-4812-46f9-9ead-8dd54863a9d1">
-          <img alt="LibLab" height="78px" src="https://github.com/user-attachments/assets/a1e4406a-4812-46f9-9ead-8dd54863a9d1">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/cf81a8d4-beb5-4f6f-b662-72f743ca4eb0">
+          <img alt="LibLab" height="78px" src="https://github.com/user-attachments/assets/cf81a8d4-beb5-4f6f-b662-72f743ca4eb0">
         </picture>
       </a>
       <br  />   
