@@ -216,6 +216,24 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
+      <a href="https://liblab.com/">
+        <picture height="78px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/cf81a8d4-beb5-4f6f-b662-72f743ca4eb0">
+          <img alt="LibLab" height="78px" src="https://github.com/user-attachments/assets/cf81a8d4-beb5-4f6f-b662-72f743ca4eb0">
+        </picture>
+      </a>
+      <br  />   
+      Your API Deserves Better SDKs
+      <br/>
+      <a href="https://liblab.com/" style="text-decoration:none;">liblab.com</a>
+      </p>
+      <p></p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <p></p>
+      <p>
       <a href="https://neon.tech">
         <picture height="68px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/83b4b1b1-a9ab-4ae5-a632-56d282f0c444">
