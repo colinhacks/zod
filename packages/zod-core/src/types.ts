@@ -27,17 +27,17 @@ export type JWTAlgorithm =
   | "PS384"
   | "PS512";
 
-export type IntegerTypes =
-  | "int8"
-  | "uint8"
-  | "int16"
-  | "uint16"
-  | "int32"
-  | "uint32"
-  | "int64"
-  | "uint64"
-  | "int128"
-  | "uint128";
+// export type IntegerTypes =
+//   | "int8"
+//   | "uint8"
+//   | "int16"
+//   | "uint16"
+//   | "int32"
+//   | "uint32"
+//   | "int64"
+//   | "uint64"
+//   | "int128"
+//   | "uint128";
 
 export type IPVersion = "v4" | "v6";
 
@@ -114,7 +114,6 @@ export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
 export type MakePartial<T, K extends keyof T> = Omit<T, K> &
   Partial<Pick<T, K>>;
 export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
-
 export type NoUndefined<T> = T extends undefined ? never : T;
 
 // export type OptionalKeys<T extends object> = {
@@ -148,50 +147,49 @@ export type ExtendShape<A extends object, B extends object> = {
       : never;
 };
 
-type UnionToIntersectionFn<T> = (
-  T extends unknown
-    ? (k: () => T) => void
-    : never
-) extends (k: infer Intersection) => void
-  ? Intersection
-  : never;
+// type UnionToIntersectionFn<T> = (
+//   T extends unknown
+//     ? (k: () => T) => void
+//     : never
+// ) extends (k: infer Intersection) => void
+//   ? Intersection
+//   : never;
 
-type GetUnionLast<T> = UnionToIntersectionFn<T> extends () => infer Last
-  ? Last
-  : never;
+// type GetUnionLast<T> = UnionToIntersectionFn<T> extends () => infer Last
+//   ? Last
+//   : never;
 
-type UnionToTuple<T, Tuple extends unknown[] = []> = [T] extends [never]
-  ? Tuple
-  : UnionToTuple<Exclude<T, GetUnionLast<T>>, [GetUnionLast<T>, ...Tuple]>;
+// type UnionToTuple<T, Tuple extends unknown[] = []> = [T] extends [never]
+//   ? Tuple
+//   : UnionToTuple<Exclude<T, GetUnionLast<T>>, [GetUnionLast<T>, ...Tuple]>;
 
-type CastToStringTuple<T> = T extends [string, ...string[]] ? T : never;
+// type CastToStringTuple<T> = T extends [string, ...string[]] ? T : never;
 
-export type UnionToTupleString<T> = CastToStringTuple<UnionToTuple<T>>;
+// export type UnionToTupleString<T> = CastToStringTuple<UnionToTuple<T>>;
 
 export type ErrMessage = string | { message?: string };
-
 export type AnyFunc = (...args: any[]) => any;
 export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
-export type IsMethod<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
-export type OmitString<T, Pattern extends string> = T extends Pattern
-  ? never
-  : T;
-export type PickProps<T> = { [k in keyof T as IsProp<T, k>]: T[k] };
-export type Def<T extends object> = PickProps<Omit<T, keyof T & `_${string}`>>;
+// export type IsMethod<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
+// export type OmitString<T, Pattern extends string> = T extends Pattern
+//   ? never
+//   : T;
+// export type PickProps<T> = { [k in keyof T as IsProp<T, k>]: T[k] };
+// export type Def<T extends object> = PickProps<Omit<T, keyof T & `_${string}`>>;
 
-export type MergeOverrides<
-  Base extends object,
-  Defaults extends Base,
-  Overrides extends Partial<Base>,
-> = {
-  [k in keyof Base]: k extends keyof Overrides
-    ? NoUndefined<Overrides[k]>
-    : Defaults[k];
-};
+// export type MergeOverrides<
+//   Base extends object,
+//   Defaults extends Base,
+//   Overrides extends Partial<Base>,
+// > = {
+//   [k in keyof Base]: k extends keyof Overrides
+//     ? NoUndefined<Overrides[k]>
+//     : Defaults[k];
+// };
 
 export type MaybeAsync<T> = T | Promise<T>;
 
-export type OmitIndex<T> = {
+export type OmitIndexSignature<T> = {
   [K in keyof T as string extends K
     ? never
     : K extends string
@@ -199,8 +197,14 @@ export type OmitIndex<T> = {
       : never]: T[K];
 };
 
-export type ExtractIndex<T> = {
+type LoosePayload = { name: string; [k: string]: unknown };
+type StrictPayload = OmitIndexSignature<LoosePayload>;
+// { name: string; }
+
+type asdf = LoosePayload | StrictPayload;
+
+export type ExtractIndexSignature<T> = {
   [K in keyof T as string extends K ? K : K extends string ? never : K]: T[K];
 };
 
-export type Keys<T extends object> = keyof OmitIndex<T>;
+export type Keys<T extends object> = keyof OmitIndexSignature<T>;

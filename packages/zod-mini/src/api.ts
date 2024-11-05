@@ -508,8 +508,6 @@ export function partial<T extends schemas.ZodMiniObject>(
   }) as any;
 }
 
-// .required
-
 // union
 interface ZodMiniUnionParams
   extends util.Params<schemas.ZodMiniUnion, "options"> {}
@@ -528,10 +526,14 @@ export function union<T extends schemas.ZodMiniType[]>(
 // export const or: typeof union = union;
 
 // discriminatedUnion
+
 interface ZodMiniDiscriminatedUnionParams
   extends util.Params<schemas.ZodMiniDiscriminatedUnion, "options"> {}
 export function discriminatedUnion<
-  Types extends [schemas.ZodMiniObject, ...schemas.ZodMiniObject[]],
+  Types extends [
+    schemas.ZodMiniHasDiscriminator,
+    ...schemas.ZodMiniHasDiscriminator[],
+  ],
 >(
   options: Types,
   params?: ZodMiniDiscriminatedUnionParams
@@ -602,7 +604,7 @@ export function tuple(
 interface ZodMiniRecordParams
   extends util.Params<schemas.ZodMiniRecord, "keySchema" | "valueSchema"> {}
 export function record<
-  Key extends schemas.ZodMiniHasValues,
+  Key extends schemas.ZodMiniPropertyKey,
   Value extends schemas.ZodMiniType,
 >(
   keySchema: Key,
@@ -653,7 +655,7 @@ export function set<Value extends schemas.ZodMiniType>(
 // enum
 interface ZodMiniEnumParams
   extends util.Params<schemas.ZodMiniEnum, "values"> {}
-function _enum<T extends string[]>(
+function _enum<const T extends string[]>(
   values: T,
   params?: ZodMiniEnumParams
 ): schemas.ZodMiniEnum<T> {
@@ -916,11 +918,17 @@ export function templateLiteral<
 }
 
 // custom
-interface CustomParams
-  extends Omit<
-    core.$ZodIssueData<core.$ZodIssueCustom>,
-    "code" | "origin" | "input"
-  > {}
+// type lkjasdf = core.$ZodIssueCustom[''];
+// interface CustomParams
+//   extends Omit<
+//     core.$ZodIssueData<core.$ZodIssueCustom>,
+//     "code" | "origin" | "input"
+//   > {}
+
+type CustomParams = {
+  message?: string;
+  path?: PropertyKey[];
+};
 export type ZodCustom<T> = schemas.ZodMiniType<T, T>;
 export function custom<T>(
   check?: (data: unknown) => unknown,
@@ -966,6 +974,28 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 // refine
+function handleRefineResult(
+  result: unknown,
+  input: unknown,
+  check: core.$ZodCheck,
+  params: CustomParams
+) {
+  if (!result) {
+    return {
+      issues: [
+        {
+          input,
+          code: "custom",
+          origin: "custom",
+          level: "error",
+          def: check._def,
+          ...params,
+        } as core.$ZodIssueData<core.$ZodIssueCustom>,
+      ],
+    };
+  }
+  return;
+}
 export function refine<T>(
   refinement: (arg: T) => unknown | Promise<unknown>,
   params: string | CustomParams = {}
@@ -976,21 +1006,12 @@ export function refine<T>(
     _def: { check: "custom" },
   } as any;
   check.run = (input) => {
-    if (!refinement(input)) {
-      return {
-        issues: [
-          {
-            input,
-            code: "custom",
-            origin: "custom",
-            level: "error",
-            def: check._def,
-            ..._params,
-          },
-        ],
-      };
-    }
-    return;
+    const result = refinement(input);
+    if (result instanceof Promise)
+      return result.then((res) =>
+        handleRefineResult(res, input, check, _params)
+      );
+    return handleRefineResult(result, input, check, _params);
   };
   return check;
 }

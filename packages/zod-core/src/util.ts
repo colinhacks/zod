@@ -201,3 +201,9 @@ export const getParsedType = (data: any): ParsedTypes => {
       throw new Error(`Unknown data type: ${t}`);
   }
 };
+
+export const propertyKeyTypes: Set<string> = new Set([
+  "string",
+  "number",
+  "symbol",
+]);

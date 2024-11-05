@@ -17,3 +17,5 @@ dist
 .tshy
 .tshy-build
 packages/tsc-perf
+
+tsconfig.vitest-temp.json

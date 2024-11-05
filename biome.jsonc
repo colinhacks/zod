@@ -15,6 +15,7 @@
       "trailingCommas": "none"
     }
   },
+
   "linter": {
     "enabled": true,
     "rules": {
@@ -23,7 +24,8 @@
         "noExplicitAny": "off", // `any` is amazing
         "noUnsafeDeclarationMerging": "off",
         "noMisleadingInstantiator": "off",
-        "noEmptyInterface": "off"
+        "noEmptyInterface": "off",
+        "noConfusingVoidType": "off"
       },
       "style": {
         "noUnusedTemplateLiteral": "off", // why is this even a best practice?

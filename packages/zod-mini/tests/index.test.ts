@@ -1,7 +1,7 @@
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "../src/index.js";
 
-test("z.string", () => {
+test("z.string", async () => {
   const a = z.string();
   expect(a.parse("hello")).toEqual("hello");
   expect(() => a.parse(123)).toThrow();
@@ -13,6 +13,11 @@ test("z.string", () => {
 
   const c = z.string({ error: () => "BAD" });
   expect(c.safeParse(123).error!.issues[0].message).toEqual("BAD");
+
+  // async
+  const d = z.string([z.refine<string>(async (_) => false)]);
+  expect(d.parse("hello")).toEqual("hello");
+  expect(() => d.parse("hi")).toThrow();
 });
 
 test("z.uuid", () => {
@@ -197,6 +202,9 @@ test("z.number", () => {
   expect(a.parse(123.45)).toEqual(123.45);
   expect(() => a.parse("123")).toThrow();
   expect(() => a.parse(false)).toThrow();
+
+  // async
+  const b = z.number([z.refine<number>(async (_) => false)]);
 });
 
 test("z.int", () => {
@@ -295,6 +303,54 @@ test("z.date", () => {
   const date = new Date();
   expect(a.parse(date)).toEqual(date);
   expect(() => a.parse("date")).toThrow();
+});
+
+test("z.coerce.string", () => {
+  const a = z.coerce.string();
+  expect(a.parse(123)).toEqual("123");
+  expect(a.parse(true)).toEqual("true");
+  expect(a.parse(null)).toEqual("null");
+  expect(a.parse(undefined)).toEqual("undefined");
+});
+
+test("z.coerce.number", () => {
+  const a = z.coerce.number();
+  expect(a.parse("123")).toEqual(123);
+  expect(a.parse("123.45")).toEqual(123.45);
+  expect(a.parse(true)).toEqual(1);
+  expect(a.parse(false)).toEqual(0);
+  expect(() => a.parse("abc")).toThrow();
+});
+
+test("z.coerce.boolean", () => {
+  const a = z.coerce.boolean();
+  // test booleans
+  expect(a.parse(true)).toEqual(true);
+  expect(a.parse(false)).toEqual(false);
+  expect(a.parse("true")).toEqual(true);
+  expect(a.parse("false")).toEqual(true);
+  expect(a.parse(1)).toEqual(true);
+  expect(a.parse(0)).toEqual(false);
+  expect(a.parse({})).toEqual(true);
+  expect(a.parse([])).toEqual(true);
+  expect(a.parse(undefined)).toEqual(false);
+  expect(a.parse(null)).toEqual(false);
+  expect(a.parse("")).toEqual(false);
+});
+
+test("z.coerce.bigint", () => {
+  const a = z.coerce.bigint();
+  expect(a.parse("123")).toEqual(BigInt(123));
+  expect(a.parse(123)).toEqual(BigInt(123));
+  expect(() => a.parse("abc")).toThrow();
+});
+
+test("z.coerce.date", () => {
+  const a = z.coerce.date();
+  const date = new Date();
+  expect(a.parse(date.toISOString())).toEqual(date);
+  expect(a.parse(date.getTime())).toEqual(date);
+  expect(() => a.parse("invalid date")).toThrow();
 });
 
 test("z.undefined", () => {
@@ -460,28 +516,98 @@ test("z.union", () => {
 });
 
 test("z.discriminatedUnion", () => {
-  const a = z.discriminatedUnion([
+  const a = z.object({
+    type: z.literal("A"),
+    name: z.string(),
+  });
+  expect(a._disc.get("type")).toEqual({
+    values: new Set(["A"]),
+    maps: [],
+  });
+
+  const b = z.object({
+    type: z.literal("B"),
+    age: z.number(),
+  });
+
+  const c = z.discriminatedUnion([a, b]);
+
+  expect(c._def.options.length).toEqual(2);
+  expect(c._disc.get("type")!.values.has("A")).toEqual(true);
+  expect(c._disc.get("type")!.values.has("B")).toEqual(true);
+
+  expect(c.parse({ type: "A", name: "john" })).toEqual({
+    type: "A",
+    name: "john",
+  });
+  expect(c.parse({ type: "B", age: 30 })).toEqual({ type: "B", age: 30 });
+});
+
+test("z.discriminatedUnion with nested discriminator", () => {
+  const a = z.object({
+    type: z.object({ key: z.literal("A") }),
+    name: z.string(),
+  });
+
+  const b = z.object({
+    type: z.object({ key: z.literal("B") }),
+    age: z.number(),
+  });
+
+  const c = z.discriminatedUnion([a, b]);
+  expect(c._disc!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(
+    true
+  );
+  expect(c._disc!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(
+    true
+  );
+
+  expect(c.parse({ type: { key: "A" }, name: "john" })).toEqual({
+    type: { key: "A" },
+    name: "john",
+  });
+  expect(c.parse({ type: { key: "B" }, age: 30 })).toEqual({
+    type: { key: "B" },
+    age: 30,
+  });
+});
+
+test("z.discriminatedUnion nested", () => {
+  const schema1 = z.discriminatedUnion([
     z.object({
       type: z.literal("A"),
       name: z.string(),
     }),
     z.object({
+      num: z.literal(1),
       type: z.literal("B"),
       age: z.number(),
     }),
   ]);
 
-  expect(a._def.options.length).toEqual(2);
-  const [aDef, bDef] = a._def.options;
-  expect(a._def._discriminators.get(aDef));
+  const schema2 = z.discriminatedUnion([
+    z.object({
+      num: z.literal(2),
+      type: z.literal("C"),
+      name: z.string(),
+    }),
+    z.object({
+      num: z.literal(2),
+      type: z.literal("D"),
+      age: z.number(),
+    }),
+  ]);
 
-  expect(a.parse({ type: "A", name: "john" })).toEqual({
-    type: "A",
-    name: "john",
+  const hyper = z.discriminatedUnion([schema1, schema2]);
+  expect(hyper._disc.get("num")).toEqual({
+    values: new Set([1, 2]),
+    maps: [],
   });
-  expect(a.parse({ type: "B", age: 30 })).toEqual({ type: "B", age: 30 });
+  expect(hyper._disc.get("type")).toEqual({
+    values: new Set(["A", "B", "C", "D"]),
+    maps: [],
+  });
 });
-
 test("z.intersection", () => {
   const a = z.intersection(
     z.object({ a: z.string() }),
@@ -525,9 +651,54 @@ test("z.tuple", () => {
   expect(() => b.parse(["hello", 123, "world", 123])).toThrow();
 });
 
-test("z.record", () => {});
+test("z.record", () => {
+  // record schema with enum keys
+  const a = z.record(z.string(), z.string());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<Record<string, string>>();
 
-test("z.map", () => {});
+  const b = z.record(z.union([z.string(), z.number(), z.symbol()]), z.string());
+  type b = z.output<typeof b>;
+  expectTypeOf<b>().toEqualTypeOf<Record<string | number | symbol, string>>();
+  expect(
+    b.parse({ a: "hello", 1: "world", [Symbol.for("asdf")]: "symbol" })
+  ).toEqual({
+    a: "hello",
+    1: "world",
+    [Symbol.for("asdf")]: "symbol",
+  });
+
+  // enum keys
+  const c = z.record(z.enum(["a", "b", "c"]), z.string());
+  type c = z.output<typeof c>;
+  expectTypeOf<c>().toEqualTypeOf<Record<"a" | "b" | "c", string>>();
+  expect(c.parse({ a: "hello", b: "world", c: "world" })).toEqual({
+    a: "hello",
+    b: "world",
+    c: "world",
+  });
+  // missing keys
+  expect(() => c.parse({ a: "hello", b: "world" })).toThrow();
+  // extra keys
+  expect(() =>
+    c.parse({ a: "hello", b: "world", c: "world", d: "world" })
+  ).toThrow();
+});
+
+test("z.map", () => {
+  const a = z.map(z.string(), z.number());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<Map<string, number>>();
+  expect(a.parse(new Map([["hello", 123]]))).toEqual(new Map([["hello", 123]]));
+  expect(() => a.parse(new Map([["hello", "world"]]))).toThrow();
+  expect(() => a.parse(new Map([[1243, "world"]]))).toThrow();
+  expect(() => a.parse("hello")).toThrow();
+
+  const b = z.map(
+    z.string()._refine((val) => val.length > 3),
+    z.number()
+  );
+});
 
 test("z.set", () => {});
 
@@ -535,7 +706,9 @@ test("z.enum", () => {});
 
 test("z.nativeEnum", () => {});
 
-test("z.literal", () => {});
+test("z.literal", () => {
+  // check _values
+});
 
 test("z.file", () => {});
 
@@ -572,7 +745,7 @@ test("z.effect", () => {
   expect(a.parse(123)).toEqual("123");
 });
 
-test(".brand()", () => {
+test("z.brand()", () => {
   const a = z.string().brand<"my-brand">();
   type a = z.output<typeof a>;
   const branded = (_: a) => {};

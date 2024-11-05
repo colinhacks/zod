@@ -25,6 +25,7 @@ export function metabench<D>(
   } else {
     throw new Error(`Unknown benchmark runner: ${BENCH}`);
   }
+  // console.log(`running benchmark with ${BENCH}...`);
   return bench;
 }
 
@@ -88,6 +89,7 @@ abstract class Metabench<D = any> {
 }
 
 class Tinybench extends Metabench {
+  runner = "tinybench";
   async run() {
     const bench = new Bench({ time: 1500 });
     for (const [name, fn] of Object.entries(this.benchmarks)) {
@@ -95,7 +97,9 @@ class Tinybench extends Metabench {
     }
     // await runBench(this.name, bench);
     console.log();
-    console.log(`   ${chalk.bold.white(this.name)}`);
+    console.log(
+      `   benchmarking ${chalk.bold.white(this.name)} with ${chalk.bold.white(this.runner)}`
+    );
 
     bench.addEventListener("cycle", (e) => {
       const task = e.task?.result;
@@ -104,7 +108,7 @@ class Tinybench extends Metabench {
       console.log(
         chalk.dim("   ") +
           chalk.white.dim(`→ `) +
-          chalk.white.dim(e.task.name) +
+          chalk.white(e.task.name) +
           chalk.white.dim(" ") +
           chalk.cyan(formatNumber(task.hz)) +
           chalk.cyan(` ops/sec`) +
@@ -159,9 +163,10 @@ class Tinybench extends Metabench {
 }
 
 class BenchmarkJS extends Metabench {
+  runner = "benchmarkjs";
   async run() {
     const suite = new Benchmark.Suite();
-    console.log(`  ${chalk.white(this.name)}`);
+    console.log(`  benchmarking ${chalk.white(this.name)} with ${this.runner}`);
     for (const name in this.benchmarks) {
       const fn = this.benchmarks[name];
       suite.add(name, fn);
@@ -169,7 +174,7 @@ class BenchmarkJS extends Metabench {
     suite.on("cycle", (event: Benchmark.Event) => {
       // const target = event.target;
       // console.log(target.name, target.hz, target.stats!.mean);
-      console.log(`  → ${String(event.target)}`);
+      console.log(chalk.white.dim(`  → ${String(event.target)}`));
       // print summary
     });
     suite.on("complete", (event: Benchmark.Event) => {
@@ -230,6 +235,7 @@ class BenchmarkJS extends Metabench {
 }
 
 class Mitata extends Metabench {
+  runner = "mitata";
   async run() {
     mitata.group(this.name, () => {
       for (const [name, fn] of Object.entries(this.benchmarks)) {

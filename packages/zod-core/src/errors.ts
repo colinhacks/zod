@@ -65,7 +65,7 @@ export interface $ZodIssueInvalidDate extends $ZodIssueBase<"date", Date> {
 }
 
 export interface $ZodIssueUnrecognizedKeys
-  extends $ZodIssueBase<"object", Record<string, unknown>> {
+  extends $ZodIssueBase<"object" | "record", Record<string, unknown>> {
   code: "unrecognized_keys";
   keys: string[];
 }
@@ -208,11 +208,11 @@ type ComputedIssueDataPieces<In> = {
 };
 
 export type _$ZodIssueData<T extends $ZodIssueBase> = Omit<
-  types.OmitIndex<T>,
+  types.OmitIndexSignature<T>,
   "message" | "path" | "input"
 > &
   ComputedIssueDataPieces<T["input"]> &
-  types.ExtractIndex<T>;
+  types.ExtractIndexSignature<T>;
 
 /** @deprecated Use `$ZodIssueData` instead. */
 export type IssueData = $ZodIssueData;
