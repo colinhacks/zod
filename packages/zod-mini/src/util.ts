@@ -58,10 +58,12 @@ export function splitChecksAndParams<T extends RawCreateParams>(
 }
 
 export interface RawCheckParams {
-  error?: string | core.$ZodErrorMap;
+  error?: string | core.$ZodErrorMap<never>;
+  path?: PropertyKey[] | undefined;
 }
 export interface NormalizedCheckParams {
   error?: core.$ZodErrorMap;
+  path?: PropertyKey[] | undefined;
 }
 
 export function normalizeCheckParams(
@@ -69,6 +71,8 @@ export function normalizeCheckParams(
 ): NormalizedCheckParams {
   if (typeof params === "string") return { error: params } as any;
   if (!params) return {} as any;
+  if (typeof params.error === "string")
+    return { ...params, error: () => params.error } as any;
   return params as any;
 }
 
@@ -77,24 +81,44 @@ export interface PrimitiveFactory<
   T extends schemas.ZodMiniType,
 > {
   (): T;
-  (params: Partial<Params>, checks?: core.$ZodCheck<core.output<T>>[]): T;
   (checks: core.$ZodCheck<core.output<T>>[]): T;
+  (params: Partial<Params>, checks?: core.$ZodCheck<core.output<T>>[]): T;
 }
 
+// export const factory: <
+//   Params extends RawCreateParams,
+//   T extends schemas.ZodMiniType,
+// >(
+//   Cls: T,
+//   defaultParams: Omit<T["_def"], "checks" | "description" | "error">
+// ) => PrimitiveFactory<Params, T> = (Cls, defaultParams) => {
+//   return <T extends schemas.ZodMiniType>(...args: any[]) => {
+//     const { checks, params } = splitChecksAndParams(...args);
+//     return new Cls({
+//       ...defaultParams,
+//       checks,
+//       ...normalizeCreateParams(params),
+//     }) as T;
+//   };
+// };
 export const factory: <
+  Cls extends { new (...args: any[]): schemas.ZodMiniType },
   Params extends RawCreateParams,
-  T extends schemas.ZodMiniType,
+  // T extends InstanceType<Cls> = InstanceType<Cls>,
 >(
-  Cls: any,
-  defaultParams: Omit<T["_def"], "checks" | "description" | "error">
-) => PrimitiveFactory<Params, T> = (Cls, defaultParams) => {
-  return <T extends schemas.ZodMiniType>(...args: any[]) => {
+  Cls: Cls,
+  defaultParams: Omit<
+    InstanceType<Cls>["_def"],
+    "checks" | "description" | "error"
+  >
+) => PrimitiveFactory<Params, InstanceType<Cls>> = (Cls, defaultParams) => {
+  return (...args: any[]) => {
     const { checks, params } = splitChecksAndParams(...args);
     return new Cls({
       ...defaultParams,
       checks,
       ...normalizeCreateParams(params),
-    }) as T;
+    }) as InstanceType<typeof Cls>;
   };
 };
 

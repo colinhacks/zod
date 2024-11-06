@@ -1,4 +1,4 @@
-import type * as core from "zod-core";
+import * as core from "zod-core";
 import * as schemas from "./schemas.js";
 import * as util from "./util.js";
 
@@ -322,6 +322,7 @@ const _undefined: util.PrimitiveFactory<
   ZodMiniUndefinedParams,
   schemas.ZodMiniUndefined
 > = util.factory(schemas.ZodMiniUndefined, { type: "undefined" });
+
 export { _undefined as undefined };
 
 // null
@@ -654,14 +655,14 @@ export function set<Value extends schemas.ZodMiniType>(
 
 // enum
 interface ZodMiniEnumParams
-  extends util.Params<schemas.ZodMiniEnum, "values"> {}
+  extends util.Params<schemas.ZodMiniEnum, "entries"> {}
 function _enum<const T extends string[]>(
   values: T,
   params?: ZodMiniEnumParams
 ): schemas.ZodMiniEnum<T> {
   return new schemas.ZodMiniEnum({
     type: "enum",
-    values: values.map((value) => ({ key: value, value })),
+    entries: values.map((value) => ({ key: value, value })),
     ...util.normalizeCreateParams(params),
   }) as any as schemas.ZodMiniEnum<T>;
 }
@@ -669,28 +670,30 @@ export { _enum as enum };
 
 // nativeEnum
 interface ZodMiniNativeEnumParams
-  extends util.Params<schemas.ZodMiniNativeEnum> {}
+  extends util.Params<schemas.ZodMiniNativeEnum, "entries"> {}
 export function nativeEnum<T extends core.$EnumLike>(
   values: T,
   params?: ZodMiniNativeEnumParams
 ): schemas.ZodMiniNativeEnum<T> {
   return new schemas.ZodMiniNativeEnum({
     type: "enum",
-    values: Object.entries(values).map(([key, value]) => ({ key, value })),
+    entries: Object.entries(values).map(([key, value]) => ({ key, value })),
     ...util.normalizeCreateParams(params),
   }) as any as schemas.ZodMiniNativeEnum<T>;
 }
 
 // literal
 interface ZodMiniLiteralParams
-  extends util.Params<schemas.ZodMiniLiteral, "values"> {}
-export function literal<T extends core.Primitive | core.Primitive[]>(
+  extends util.Params<schemas.ZodMiniLiteral, "entries"> {}
+export function literal<const T extends core.Primitive | core.Primitive[]>(
   value: T,
   params?: ZodMiniLiteralParams
 ): schemas.ZodMiniLiteral<T extends core.Primitive ? [T] : T> {
   return new schemas.ZodMiniLiteral({
     type: "enum",
-    values: (Array.isArray(value) ? value : [value]).map((v) => ({ value: v })),
+    entries: (Array.isArray(value) ? value : [value]).map((v) => ({
+      value: v,
+    })),
     ...util.normalizeCreateParams(params),
   }) as any as schemas.ZodMiniLiteral<T extends core.Primitive ? [T] : T>;
 }
@@ -768,8 +771,11 @@ export function transform<T extends schemas.ZodMiniType, NewOut>(
   schema: T,
   _effect: (arg: core.output<T>) => NewOut,
   params?: ZodMiniTransformParams
-): schemas.ZodMiniPipeline<T, schemas.ZodMiniEffect<NewOut, core.output<T>>> {
-  return pipeline(schema, effect(_effect, params), params);
+): schemas.ZodMiniPipeline<
+  T,
+  schemas.ZodMiniEffect<Awaited<NewOut>, core.output<T>>
+> {
+  return pipeline(schema, effect(_effect, params), params) as any;
 }
 // interface ZodMiniTransformParams
 //   extends util.Params<schemas.ZodMiniTransform, "schema" | "effect"> {}
@@ -844,7 +850,7 @@ function _default<T extends schemas.ZodMiniType>(
     ...util.normalizeCreateParams(params),
   }) as schemas.ZodMiniDefault<T>;
 }
-export { _default as default };
+export { _default };
 
 // catch
 interface ZodMiniCatchParams
@@ -873,9 +879,10 @@ interface ZodMiniPipelineParams
   extends util.Params<schemas.ZodMiniPipeline, "in" | "out"> {}
 export function pipeline<
   T extends schemas.ZodMiniType,
-  U extends schemas.ZodMiniType,
+  U extends schemas.ZodMiniType<any, T["_output"]>,
 >(
   in_: T,
+  // fn: (arg: core.output<T>) => core.input<U>,
   out: U,
   params?: ZodMiniPipelineParams
 ): schemas.ZodMiniPipeline<T, U> {
@@ -925,34 +932,38 @@ export function templateLiteral<
 //     "code" | "origin" | "input"
 //   > {}
 
-type CustomParams = {
-  message?: string;
+interface CustomParams extends util.RawCheckParams {
+  error?: string | core.$ZodErrorMap<core.$ZodIssueCustom>;
   path?: PropertyKey[];
-};
+}
 export type ZodCustom<T> = schemas.ZodMiniType<T, T>;
 export function custom<T>(
-  check?: (data: unknown) => unknown,
+  fn?: (data: unknown) => unknown,
   _params: string | CustomParams = {}
 ): ZodCustom<T> {
   let result = new schemas.ZodMiniAny({
     type: "any",
   });
 
-  const params: CustomParams =
-    typeof _params === "string" ? { message: _params } : _params;
+  const params = util.normalizeCheckParams(_params);
 
-  if (check)
-    result = result._refine({
+  if (fn)
+    result = result._check({
       _def: { check: "custom" },
-      run(ctx) {
-        if (!check(ctx.input)) {
-          ctx.addIssue({
-            input: ctx.input,
-            code: "custom",
-            origin: "custom",
-            level: "error",
-            ...params,
-          });
+      run(input) {
+        if (!fn(input)) {
+          return {
+            issues: [
+              {
+                input,
+                code: "custom",
+                origin: "custom",
+                level: "error",
+                def: params,
+                path: params?.path,
+              },
+            ],
+          };
         }
       },
     });
@@ -966,7 +977,7 @@ abstract class Class {
 function _instanceof<T extends typeof Class>(
   cls: T,
   params: CustomParams = {
-    message: `Input not instance of ${cls.name}`,
+    error: `Input not instance of ${cls.name}`,
   }
 ): ZodCustom<InstanceType<T>> {
   return custom((data) => data instanceof cls, params);
@@ -974,44 +985,119 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 // refine
-function handleRefineResult(
-  result: unknown,
-  input: unknown,
-  check: core.$ZodCheck,
-  params: CustomParams
-) {
-  if (!result) {
-    return {
-      issues: [
-        {
-          input,
-          code: "custom",
-          origin: "custom",
-          level: "error",
-          def: check._def,
-          ...params,
-        } as core.$ZodIssueData<core.$ZodIssueCustom>,
-      ],
-    };
-  }
-  return;
-}
-export function refine<T>(
-  refinement: (arg: T) => unknown | Promise<unknown>,
-  params: string | CustomParams = {}
-): core.$ZodCheck<T> {
-  const _params: CustomParams =
-    typeof params === "string" ? { message: params } : params;
-  const check: core.$ZodCheck<T> = {
-    _def: { check: "custom" },
-  } as any;
-  check.run = (input) => {
-    const result = refinement(input);
-    if (result instanceof Promise)
-      return result.then((res) =>
-        handleRefineResult(res, input, check, _params)
-      );
-    return handleRefineResult(result, input, check, _params);
+function customErr(
+  err: Pick<core.$ZodIssueData<core.$ZodIssueCustom>, "input" | "path" | "def">
+): { issues: core.$ZodIssueData[] } {
+  return {
+    issues: [
+      {
+        code: "custom",
+        origin: "custom",
+        ...err,
+      }, // as core.$ZodIssueData<core.$ZodIssueCustom>,
+    ],
   };
-  return check;
+}
+
+export function refine<T>(
+  fn: (arg: T) => unknown | Promise<unknown>,
+  _params: string | CustomParams = {}
+): core.$ZodCheck<T> {
+  const params = util.normalizeCheckParams(_params as util.RawCheckParams);
+  return {
+    _def: { check: "custom", error: params.error },
+    run(input: T) {
+      const res = fn(input);
+      if (res instanceof Promise)
+        return res.then((r) =>
+          r ? undefined : customErr({ input, def: params, path: params.path })
+        );
+      return res
+        ? undefined
+        : customErr({ input, def: params, path: params.path });
+    },
+  };
+}
+
+///////////        METHODS       ///////////
+
+/**
+ * parse(data: unknown, params?: Partial<core.$ParseContext>): Output;
+ */
+export function parse<T extends schemas.ZodMiniType>(
+  schema: T,
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): core.output<T> {
+  const result = schema._parse(data, params);
+  if (result instanceof Promise) {
+    throw new Error(
+      "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
+    );
+  }
+  if (core.succeeded(result)) return result as core.output<T>;
+  throw result;
+}
+
+/**
+ * safeParse(
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): SafeParseResult<Output>;
+ */
+type SafeParseResult<T> =
+  | { success: true; data: T; error?: never }
+  | { success: false; data?: never; error: core.$ZodFailure };
+export function safeParse<T extends schemas.ZodMiniType>(
+  schema: T,
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): SafeParseResult<core.output<T>> {
+  const result = schema._parse(data, params);
+  if (result instanceof Promise)
+    throw new Error(
+      "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
+    );
+  return (
+    core.succeeded(result)
+      ? { success: true, data: result }
+      : { success: false, error: result }
+  ) as SafeParseResult<core.output<T>>;
+}
+
+/**
+ * parseAsync(
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): Promise<Output>;
+ */
+export async function parseAsync<T extends schemas.ZodMiniType>(
+  schema: T,
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): Promise<core.output<T>> {
+  let result = schema._parse(data, params);
+  if (result instanceof Promise) result = await result;
+  if (core.succeeded(result)) return result as core.output<T>;
+  throw result;
+}
+
+/**
+ * safeParseAsync(
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): Promise<SafeParseResult<Output>>;
+ */
+export async function safeParseAsync<T extends schemas.ZodMiniType>(
+  schema: T,
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): Promise<SafeParseResult<core.output<T>>> {
+  let result = schema._parse(data, params);
+  if (result instanceof Promise) result = await result;
+  return (
+    core.succeeded(result)
+      ? { success: true, data: result }
+      : { success: false, error: result }
+  ) as SafeParseResult<core.output<T>>;
 }

@@ -207,3 +207,7 @@ export const propertyKeyTypes: Set<string> = new Set([
   "number",
   "symbol",
 ]);
+
+export function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}

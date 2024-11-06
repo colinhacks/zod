@@ -7,92 +7,18 @@ import * as core from "zod-core";
 //////////                         //////////
 /////////////////////////////////////////////
 /////////////////////////////////////////////
-type ErrMessage = string | { error?: string };
-type SafeParseResult<T> =
-  | { success: true; data: T; error?: never }
-  | { success: false; data?: never; error: core.$ZodFailure };
 export interface ZodMiniTypeDef extends core.$ZodTypeDef {}
 export interface ZodMiniType<Output = unknown, Input = unknown>
   extends core.$ZodType<Output, Input> {
   _def: ZodMiniTypeDef;
-
-  // parse methods
-  parse(data: unknown, params?: Partial<core.$ParseContext>): Output;
-  safeParse(
-    data: unknown,
-    params?: Partial<core.$ParseContext>
-  ): SafeParseResult<Output>;
-  parseAsync(
-    data: unknown,
-    params?: Partial<core.$ParseContext>
-  ): Promise<Output>;
-  safeParseAsync(
-    data: unknown,
-    params?: Partial<core.$ParseContext>
-  ): Promise<SafeParseResult<Output>>;
-  check: this["_check"];
-  refine(refineFn: (arg: Output) => unknown, error?: ErrMessage): this;
+  check(...checks: core.$ZodCheck<Output>[]): this;
 }
+
 export const ZodMiniType: core.$constructor<ZodMiniType> = core.$constructor(
   "ZodMiniType",
   (inst) => {
-    inst.parse = (data, params) => {
-      const result = inst._parse(data, params);
-      if (result instanceof Promise) {
-        throw new Error(
-          "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
-        );
-      }
-      if (core.succeeded(result)) return result;
-      throw result;
-    };
-    inst.safeParse = (data, params) => {
-      const result = inst._parse(data, params);
-      if (result instanceof Promise)
-        throw new Error(
-          "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
-        );
-      return core.succeeded(result)
-        ? { success: true, data: result }
-        : { success: false, error: result };
-    };
-    inst.parseAsync = async (data, params) => {
-      let result = inst._parse(data, params);
-      if (result instanceof Promise) result = await result;
-      if (core.succeeded(result)) return result;
-      throw result;
-    };
-    inst.safeParseAsync = async (data, params) => {
-      let result = inst._parse(data, params);
-      if (result instanceof Promise) result = await result;
-      return core.succeeded(result)
-        ? { success: true, data: result }
-        : { success: false, error: result };
-    };
-
-    function handleRefineResult(arg){
-      return arg ? undefined : ({
-        issues: 1234
-      } satisfies Awaited<ReturnType<core.$ZodCheck['run']>>)
-    }
-    inst.refine = (_check, _error) => {
-      const error: core.$ZodErrorMap = () =>
-        typeof _error === "string" ? _error : _error?.error;
-
-      return inst._check({
-        run(input: any) {
-          const r = _check(input);
-          if (r instanceof Promise) return r.then(async(v) => (v ? undefined : {
-            iss
-          }));
-          return {
-            ''
-          }
-        },
-        _def: { check: "custom", error },
-      });
-    };
     inst.check = inst._check;
+
     return inst;
   }
 );
@@ -761,7 +687,7 @@ export interface ZodMiniObjectDef extends core.$ZodObjectDef {
 }
 export interface ZodMiniObject<Shape extends ZodMiniRawShape = ZodMiniRawShape>
   extends core.$ZodObject<Shape>,
-    ZodMiniType<core.InferObjectOutput<Shape>, core.InferObjectInput<Shape>> {
+    ZodMiniType<core.$InferObjectOutput<Shape>, core.$InferObjectInput<Shape>> {
   _def: ZodMiniObjectDef;
   _disc: core.$DiscriminatorMap;
   shape: Shape;
@@ -856,7 +782,10 @@ export interface ZodMiniTuple<
   T extends ZodTupleItems = ZodTupleItems,
   Rest extends ZodMiniType | null = ZodMiniType | null,
 > extends core.$ZodTuple<T, Rest>,
-    ZodMiniType<core.TupleOutputType<T, Rest>, core.TupleInputType<T, Rest>> {
+    ZodMiniType<
+      core.$InferTupleOutputType<T, Rest>,
+      core.$InferTupleInputType<T, Rest>
+    > {
   _def: ZodMiniTupleDef;
 }
 export const ZodMiniTuple: core.$constructor<ZodMiniTuple> =
@@ -956,7 +885,7 @@ export const ZodMiniSet: core.$constructor<ZodMiniSet> =
 export interface ZodMiniEnumDef extends core.$ZodEnumDef {}
 export interface ZodMiniEnum<T extends core.$EnumValues = core.$EnumValues>
   extends core.$ZodEnum<T>,
-    ZodMiniType<core.InferEnumOutput<T>, core.InferEnumInput<T>> {
+    ZodMiniType<core.$InferEnumOutput<T>, core.$InferEnumInput<T>> {
   _def: ZodMiniEnumDef;
   _values: Set<core.Primitive>;
   enum: core.$ValuesToEnum<T>;
@@ -965,6 +894,7 @@ export const ZodMiniEnum: core.$constructor<ZodMiniEnum> =
   /*@__PURE__*/ core.$constructor("ZodMiniEnum", (inst, def) => {
     core.$ZodEnum.init(inst, def);
     ZodMiniType.init(inst, def);
+    inst.enum = core.$toEnum(def.entries);
   });
 
 /////////////////////////////////////////////
@@ -978,7 +908,7 @@ export const ZodMiniEnum: core.$constructor<ZodMiniEnum> =
 export interface ZodMiniLiteralDef extends core.$ZodEnumDef {}
 export interface ZodMiniLiteral<T extends core.Primitive[] = core.Primitive[]>
   extends core.$ZodEnum<T>,
-    ZodMiniType<core.InferEnumOutput<T>, core.InferEnumInput<T>> {
+    ZodMiniType<core.$InferEnumOutput<T>, core.$InferEnumInput<T>> {
   _def: ZodMiniLiteralDef;
   _values: Set<core.Primitive>;
 }
@@ -998,14 +928,16 @@ export const ZodMiniLiteral: core.$constructor<ZodMiniLiteral> =
 export interface ZodMiniNativeEnumDef extends core.$ZodEnumDef {}
 export interface ZodMiniNativeEnum<T extends core.$EnumLike = core.$EnumLike>
   extends core.$ZodEnum<T>,
-    ZodMiniType<core.InferEnumOutput<T>, core.InferEnumInput<T>> {
+    ZodMiniType<core.$InferEnumOutput<T>, core.$InferEnumInput<T>> {
   _def: ZodMiniNativeEnumDef;
   _values: Set<core.Primitive>;
+  enum: T;
 }
 export const ZodMiniNativeEnum: core.$constructor<ZodMiniNativeEnum> =
   /*@__PURE__*/ core.$constructor("ZodMiniNativeEnum", (inst, def) => {
     core.$ZodEnum.init(inst, def);
     ZodMiniType.init(inst, def);
+    inst.enum = core.$toEnum(def.entries);
   });
 
 /////////////////////////////////////////////

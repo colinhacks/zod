@@ -3,410 +3,438 @@ import * as z from "../src/index.js";
 
 test("z.string", async () => {
   const a = z.string();
-  expect(a.parse("hello")).toEqual("hello");
-  expect(() => a.parse(123)).toThrow();
-  expect(() => a.parse(false)).toThrow();
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(() => z.parse(a, 123)).toThrow();
+  expect(() => z.parse(a, false)).toThrow();
+});
 
-  const b = z.string({ description: "string description" });
-  b._def;
-  expect(b._def.description).toEqual("string description");
+test("z.string with description", () => {
+  const a = z.string({ description: "string description" });
+  a._def;
+  expect(a._def.description).toEqual("string description");
+});
 
-  const c = z.string({ error: () => "BAD" });
-  expect(c.safeParse(123).error!.issues[0].message).toEqual("BAD");
+test("z.string with custom error", () => {
+  const a = z.string({ error: () => "BAD" });
+  expect(z.safeParse(a, 123).error!.issues[0].message).toEqual("BAD");
+});
 
+test("inference in checks", () => {
+  const a = z.string([z.refine((val) => val.length)]);
+  z.parse(a, "___");
+  expect(() => z.parse(a, "")).toThrow();
+  const b = z.string([z.refine((val) => val.length)]);
+  z.parse(b, "___");
+  expect(() => z.parse(b, "")).toThrow();
+  const c = z.string({ description: "" }, [z.refine((val) => val.length)]);
+  z.parse(c, "___");
+  expect(() => z.parse(c, "")).toThrow();
+  const d = z.string().check(z.refine((val) => val.length));
+  z.parse(d, "___");
+  expect(() => z.parse(d, "")).toThrow();
+});
+
+test("z.string async", async () => {
   // async
-  const d = z.string([z.refine<string>(async (_) => false)]);
-  expect(d.parse("hello")).toEqual("hello");
-  expect(() => d.parse("hi")).toThrow();
+  const a = z.string([z.refine(async (val) => val.length)]);
+  expect(await z.parseAsync(a, "___")).toEqual("___");
+  await expect(() => z.parseAsync(a, "")).rejects.toThrowError();
 });
 
 test("z.uuid", () => {
   const a = z.uuid();
   // parse uuid
-  expect(a.parse("550e8400-e29b-41d4-a716-446655440000")).toEqual(
+  expect(z.parse(a, "550e8400-e29b-41d4-a716-446655440000")).toEqual(
     "550e8400-e29b-41d4-a716-446655440000"
   );
   // bad uuid
-  expect(() => a.parse("hello")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
   // wrong type
-  expect(() => a.parse(123)).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
 });
 
 test("z.email", () => {
   const a = z.email();
-  expect(a.parse("test@test.com")).toEqual("test@test.com");
-  expect(() => a.parse("test")).toThrow();
+  expect(z.parse(a, "test@test.com")).toEqual("test@test.com");
+  expect(() => z.parse(a, "test")).toThrow();
 });
 
 test("z.url", () => {
   const a = z.url();
-  expect(a.parse("http://example.com")).toEqual("http://example.com");
-  expect(() => a.parse("asdf")).toThrow();
+  expect(z.parse(a, "http://example.com")).toEqual("http://example.com");
+  expect(() => z.parse(a, "asdf")).toThrow();
 });
 
 test("z.emoji", () => {
   const a = z.emoji();
-  expect(a.parse("😀")).toEqual("😀");
-  expect(() => a.parse("hello")).toThrow();
+  expect(z.parse(a, "😀")).toEqual("😀");
+  expect(() => z.parse(a, "hello")).toThrow();
 });
 
 test("z.nanoid", () => {
   const a = z.nanoid();
-  expect(a.parse("8FHZpIxleEK3axQRBNNjN")).toEqual("8FHZpIxleEK3axQRBNNjN");
-  expect(() => a.parse("abc")).toThrow();
+  expect(z.parse(a, "8FHZpIxleEK3axQRBNNjN")).toEqual("8FHZpIxleEK3axQRBNNjN");
+  expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.cuid", () => {
   const a = z.cuid();
-  expect(a.parse("cixs7y0c0000f7x3b1z6m3w6r")).toEqual(
+  expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual(
     "cixs7y0c0000f7x3b1z6m3w6r"
   );
-  expect(() => a.parse("abc")).toThrow();
+  expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.cuid2", () => {
   const a = z.cuid2();
-  expect(a.parse("cixs7y0c0000f7x3b1z6m3w6r")).toEqual(
+  expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual(
     "cixs7y0c0000f7x3b1z6m3w6r"
   );
-  expect(() => a.parse(123)).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
 });
 
 test("z.ulid", () => {
   const a = z.ulid();
-  expect(a.parse("01ETGRM9QYVX6S9V2F3B6JXG4N")).toEqual(
+  expect(z.parse(a, "01ETGRM9QYVX6S9V2F3B6JXG4N")).toEqual(
     "01ETGRM9QYVX6S9V2F3B6JXG4N"
   );
-  expect(() => a.parse("abc")).toThrow();
+  expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.xid", () => {
   const a = z.xid();
-  expect(a.parse("9m4e2mr0ui3e8a215n4g")).toEqual("9m4e2mr0ui3e8a215n4g");
-  expect(() => a.parse("abc")).toThrow();
+  expect(z.parse(a, "9m4e2mr0ui3e8a215n4g")).toEqual("9m4e2mr0ui3e8a215n4g");
+  expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.ksuid", () => {
   const a = z.ksuid();
-  expect(a.parse("2naeRjTrrHJAkfd3tOuEjw90WCA")).toEqual(
+  expect(z.parse(a, "2naeRjTrrHJAkfd3tOuEjw90WCA")).toEqual(
     "2naeRjTrrHJAkfd3tOuEjw90WCA"
   );
-  expect(() => a.parse("abc")).toThrow();
+  expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.duration", () => {
   const a = z.duration();
-  expect(a.parse("P3Y6M4DT12H30M5S")).toEqual("P3Y6M4DT12H30M5S");
-  expect(() => a.parse("abc")).toThrow();
+  expect(z.parse(a, "P3Y6M4DT12H30M5S")).toEqual("P3Y6M4DT12H30M5S");
+  expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.ip", () => {
   const a = z.ip();
-  expect(a.parse("127.0.0.1")).toEqual("127.0.0.1");
-  expect(a.parse("2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual(
+  expect(z.parse(a, "127.0.0.1")).toEqual("127.0.0.1");
+  expect(z.parse(a, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual(
     "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
   );
-  expect(() => a.parse("abc")).toThrow();
+  expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.ipv4", () => {
   const a = z.ipv4();
   // valid ipv4
-  expect(a.parse("192.168.1.1")).toEqual("192.168.1.1");
-  expect(a.parse("255.255.255.255")).toEqual("255.255.255.255");
+  expect(z.parse(a, "192.168.1.1")).toEqual("192.168.1.1");
+  expect(z.parse(a, "255.255.255.255")).toEqual("255.255.255.255");
   // invalid ipv4
-  expect(() => a.parse("999.999.999.999")).toThrow();
-  expect(() => a.parse("256.256.256.256")).toThrow();
-  expect(() => a.parse("192.168.1")).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(() => z.parse(a, "999.999.999.999")).toThrow();
+  expect(() => z.parse(a, "256.256.256.256")).toThrow();
+  expect(() => z.parse(a, "192.168.1")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
   // wrong type
-  expect(() => a.parse(123)).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
 });
 
 test("z.ipv6", () => {
   const a = z.ipv6();
   // valid ipv6
-  expect(a.parse("2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual(
+  expect(z.parse(a, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual(
     "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
   );
-  expect(a.parse("::1")).toEqual("::1");
+  expect(z.parse(a, "::1")).toEqual("::1");
   // invalid ipv6
-  expect(() => a.parse("2001:db8::85a3::8a2e:370:7334")).toThrow();
-  expect(() => a.parse("2001:db8:85a3:0:0:8a2e:370g:7334")).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(() => z.parse(a, "2001:db8::85a3::8a2e:370:7334")).toThrow();
+  expect(() => z.parse(a, "2001:db8:85a3:0:0:8a2e:370g:7334")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
   // wrong type
-  expect(() => a.parse(123)).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
 });
 
 test("z.base64", () => {
   const a = z.base64();
   // valid base64
-  expect(a.parse("SGVsbG8gd29ybGQ=")).toEqual("SGVsbG8gd29ybGQ=");
-  expect(a.parse("U29tZSBvdGhlciBzdHJpbmc=")).toEqual(
+  expect(z.parse(a, "SGVsbG8gd29ybGQ=")).toEqual("SGVsbG8gd29ybGQ=");
+  expect(z.parse(a, "U29tZSBvdGhlciBzdHJpbmc=")).toEqual(
     "U29tZSBvdGhlciBzdHJpbmc="
   );
   // invalid base64
-  expect(() => a.parse("SGVsbG8gd29ybGQ")).toThrow();
-  expect(() => a.parse("U29tZSBvdGhlciBzdHJpbmc")).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(() => z.parse(a, "SGVsbG8gd29ybGQ")).toThrow();
+  expect(() => z.parse(a, "U29tZSBvdGhlciBzdHJpbmc")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
   // wrong type
-  expect(() => a.parse(123)).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
 });
 
 test("z.jsonString", () => {
   const a = z.jsonString();
   // valid JSON string
-  expect(a.parse('{"key":"value"}')).toEqual('{"key":"value"}');
-  expect(a.parse('["item1", "item2"]')).toEqual('["item1", "item2"]');
+  expect(z.parse(a, '{"key":"value"}')).toEqual('{"key":"value"}');
+  expect(z.parse(a, '["item1", "item2"]')).toEqual('["item1", "item2"]');
   // invalid JSON string
-  expect(() => a.parse('{"key":value}')).toThrow();
-  expect(() => a.parse('["item1", "item2"')).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(() => z.parse(a, '{"key":value}')).toThrow();
+  expect(() => z.parse(a, '["item1", "item2"')).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
   // wrong type
-  expect(() => a.parse(123)).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
 });
 
 test("z.e164", () => {
   const a = z.e164();
   // valid e164
-  expect(a.parse("+1234567890")).toEqual("+1234567890");
-  expect(a.parse("+19876543210")).toEqual("+19876543210");
+  expect(z.parse(a, "+1234567890")).toEqual("+1234567890");
+  expect(z.parse(a, "+19876543210")).toEqual("+19876543210");
   // invalid e164
-  expect(() => a.parse("1234567890")).toThrow();
-  expect(() => a.parse("+12345")).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(() => z.parse(a, "1234567890")).toThrow();
+  expect(() => z.parse(a, "+12345")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
   // wrong type
-  expect(() => a.parse(123)).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
 });
 
 test("z.jwt", () => {
   const a = z.jwt();
   // valid jwt
   expect(
-    a.parse(
+    z.parse(
+      a,
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
     )
   ).toEqual(
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
   );
   // invalid jwt
-  expect(() => a.parse("invalid.jwt.token")).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(() => z.parse(a, "invalid.jwt.token")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
   // wrong type
-  expect(() => a.parse(123)).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
 });
 
 test("z.number", () => {
   const a = z.number();
-  expect(a.parse(123)).toEqual(123);
-  expect(a.parse(123.45)).toEqual(123.45);
-  expect(() => a.parse("123")).toThrow();
-  expect(() => a.parse(false)).toThrow();
+  expect(z.parse(a, 123)).toEqual(123);
+  expect(z.parse(a, 123.45)).toEqual(123.45);
+  expect(() => z.parse(a, "123")).toThrow();
+  expect(() => z.parse(a, false)).toThrow();
+});
 
-  // async
-  const b = z.number([z.refine<number>(async (_) => false)]);
+test("z.number async", async () => {
+  const a = z.number([z.refine(async (_) => _ > 0)]);
+  await expect(z.parseAsync(a, 123)).resolves.toEqual(123);
+  await expect(() => z.parseAsync(a, -123)).rejects.toThrow();
+  await expect(() => z.parseAsync(a, "123")).rejects.toThrow();
+
+  // a.check(()=>)
 });
 
 test("z.int", () => {
   const a = z.int();
-  expect(a.parse(123)).toEqual(123);
-  expect(() => a.parse(123.45)).toThrow();
-  expect(() => a.parse("123")).toThrow();
-  expect(() => a.parse(false)).toThrow();
+  expect(z.parse(a, 123)).toEqual(123);
+  expect(() => z.parse(a, 123.45)).toThrow();
+  expect(() => z.parse(a, "123")).toThrow();
+  expect(() => z.parse(a, false)).toThrow();
 });
 
 test("z.float32", () => {
   const a = z.float32();
-  expect(a.parse(123.45)).toEqual(123.45);
-  expect(() => a.parse("123.45")).toThrow();
-  expect(() => a.parse(false)).toThrow();
+  expect(z.parse(a, 123.45)).toEqual(123.45);
+  expect(() => z.parse(a, "123.45")).toThrow();
+  expect(() => z.parse(a, false)).toThrow();
   // -3.4028234663852886e38, 3.4028234663852886e38;
-  expect(() => a.parse(3.4028234663852886e38 * 2)).toThrow(); // Exceeds max
-  expect(() => a.parse(-3.4028234663852886e38 * 2)).toThrow(); // Exceeds min
+  expect(() => z.parse(a, 3.4028234663852886e38 * 2)).toThrow(); // Exceeds max
+  expect(() => z.parse(a, -3.4028234663852886e38 * 2)).toThrow(); // Exceeds min
 });
 
 test("z.float64", () => {
   const a = z.float64();
-  expect(a.parse(123.45)).toEqual(123.45);
-  expect(() => a.parse("123.45")).toThrow();
-  expect(() => a.parse(false)).toThrow();
-  expect(() => a.parse(1.7976931348623157e308 * 2)).toThrow(); // Exceeds max
-  expect(() => a.parse(-1.7976931348623157e308 * 2)).toThrow(); // Exceeds min
+  expect(z.parse(a, 123.45)).toEqual(123.45);
+  expect(() => z.parse(a, "123.45")).toThrow();
+  expect(() => z.parse(a, false)).toThrow();
+  expect(() => z.parse(a, 1.7976931348623157e308 * 2)).toThrow(); // Exceeds max
+  expect(() => z.parse(a, -1.7976931348623157e308 * 2)).toThrow(); // Exceeds min
 });
 
 test("z.int32", () => {
   const a = z.int32();
-  expect(a.parse(123)).toEqual(123);
-  expect(() => a.parse(123.45)).toThrow();
-  expect(() => a.parse("123")).toThrow();
-  expect(() => a.parse(false)).toThrow();
-  expect(() => a.parse(2147483648)).toThrow(); // Exceeds max
-  expect(() => a.parse(-2147483649)).toThrow(); // Exceeds min
+  expect(z.parse(a, 123)).toEqual(123);
+  expect(() => z.parse(a, 123.45)).toThrow();
+  expect(() => z.parse(a, "123")).toThrow();
+  expect(() => z.parse(a, false)).toThrow();
+  expect(() => z.parse(a, 2147483648)).toThrow(); // Exceeds max
+  expect(() => z.parse(a, -2147483649)).toThrow(); // Exceeds min
 });
 
 test("z.uint32", () => {
   const a = z.uint32();
-  expect(a.parse(123)).toEqual(123);
-  expect(() => a.parse(-123)).toThrow();
-  expect(() => a.parse(123.45)).toThrow();
-  expect(() => a.parse("123")).toThrow();
-  expect(() => a.parse(false)).toThrow();
-  expect(() => a.parse(4294967296)).toThrow(); // Exceeds max
-  expect(() => a.parse(-1)).toThrow(); // Below min
+  expect(z.parse(a, 123)).toEqual(123);
+  expect(() => z.parse(a, -123)).toThrow();
+  expect(() => z.parse(a, 123.45)).toThrow();
+  expect(() => z.parse(a, "123")).toThrow();
+  expect(() => z.parse(a, false)).toThrow();
+  expect(() => z.parse(a, 4294967296)).toThrow(); // Exceeds max
+  expect(() => z.parse(a, -1)).toThrow(); // Below min
 });
 
 test("z.int64", () => {
   const a = z.int64();
-  expect(a.parse(123)).toEqual(123);
-  expect(() => a.parse(123.45)).toThrow();
-  expect(() => a.parse("123")).toThrow();
-  expect(() => a.parse(false)).toThrow();
-  // expect(() => a.parse(BigInt("9223372036854775808"))).toThrow(); // Exceeds max
-  // expect(() => a.parse(BigInt("-9223372036854775809"))).toThrow(); // Exceeds min
+  expect(z.parse(a, 123)).toEqual(123);
+  expect(() => z.parse(a, 123.45)).toThrow();
+  expect(() => z.parse(a, "123")).toThrow();
+  expect(() => z.parse(a, false)).toThrow();
+  // expect(() => z.parse(a, BigInt("9223372036854775808"))).toThrow(); // Exceeds max
+  // expect(() => z.parse(a, BigInt("-9223372036854775809"))).toThrow(); // Exceeds min
 });
 
 test("z.uint64", () => {
   const a = z.uint64();
-  expect(a.parse(123)).toEqual(123);
-  expect(() => a.parse(-123)).toThrow();
-  expect(() => a.parse(123.45)).toThrow();
-  expect(() => a.parse("123")).toThrow();
-  expect(() => a.parse(false)).toThrow();
-  // expect(() => a.parse(BigInt("18446744073709551616"))).toThrow(); // Exceeds max
-  // expect(() => a.parse(BigInt("-1"))).toThrow(); // Below min
+  expect(z.parse(a, 123)).toEqual(123);
+  expect(() => z.parse(a, -123)).toThrow();
+  expect(() => z.parse(a, 123.45)).toThrow();
+  expect(() => z.parse(a, "123")).toThrow();
+  expect(() => z.parse(a, false)).toThrow();
+  // expect(() => z.parse(a, BigInt("18446744073709551616"))).toThrow(); // Exceeds max
+  // expect(() => z.parse(a, BigInt("-1"))).toThrow(); // Below min
 });
 
 test("z.boolean", () => {
   const a = z.boolean();
-  expect(a.parse(true)).toEqual(true);
-  expect(a.parse(false)).toEqual(false);
-  expect(() => a.parse(123)).toThrow();
-  expect(() => a.parse("true")).toThrow();
+  expect(z.parse(a, true)).toEqual(true);
+  expect(z.parse(a, false)).toEqual(false);
+  expect(() => z.parse(a, 123)).toThrow();
+  expect(() => z.parse(a, "true")).toThrow();
 });
 
 test("z.bigint", () => {
   const a = z.bigint();
-  expect(a.parse(BigInt(123))).toEqual(BigInt(123));
-  expect(() => a.parse(123)).toThrow();
-  expect(() => a.parse("123")).toThrow();
+  expect(z.parse(a, BigInt(123))).toEqual(BigInt(123));
+  expect(() => z.parse(a, 123)).toThrow();
+  expect(() => z.parse(a, "123")).toThrow();
 });
 
 test("z.symbol", () => {
   const a = z.symbol();
   const sym = Symbol();
-  expect(a.parse(sym)).toEqual(sym);
-  expect(() => a.parse("symbol")).toThrow();
+  expect(z.parse(a, sym)).toEqual(sym);
+  expect(() => z.parse(a, "symbol")).toThrow();
 });
 
 test("z.date", () => {
   const a = z.date();
   const date = new Date();
-  expect(a.parse(date)).toEqual(date);
-  expect(() => a.parse("date")).toThrow();
+  expect(z.parse(a, date)).toEqual(date);
+  expect(() => z.parse(a, "date")).toThrow();
 });
 
 test("z.coerce.string", () => {
   const a = z.coerce.string();
-  expect(a.parse(123)).toEqual("123");
-  expect(a.parse(true)).toEqual("true");
-  expect(a.parse(null)).toEqual("null");
-  expect(a.parse(undefined)).toEqual("undefined");
+  expect(z.parse(a, 123)).toEqual("123");
+  expect(z.parse(a, true)).toEqual("true");
+  expect(z.parse(a, null)).toEqual("null");
+  expect(z.parse(a, undefined)).toEqual("undefined");
 });
 
 test("z.coerce.number", () => {
   const a = z.coerce.number();
-  expect(a.parse("123")).toEqual(123);
-  expect(a.parse("123.45")).toEqual(123.45);
-  expect(a.parse(true)).toEqual(1);
-  expect(a.parse(false)).toEqual(0);
-  expect(() => a.parse("abc")).toThrow();
+  expect(z.parse(a, "123")).toEqual(123);
+  expect(z.parse(a, "123.45")).toEqual(123.45);
+  expect(z.parse(a, true)).toEqual(1);
+  expect(z.parse(a, false)).toEqual(0);
+  expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.coerce.boolean", () => {
   const a = z.coerce.boolean();
   // test booleans
-  expect(a.parse(true)).toEqual(true);
-  expect(a.parse(false)).toEqual(false);
-  expect(a.parse("true")).toEqual(true);
-  expect(a.parse("false")).toEqual(true);
-  expect(a.parse(1)).toEqual(true);
-  expect(a.parse(0)).toEqual(false);
-  expect(a.parse({})).toEqual(true);
-  expect(a.parse([])).toEqual(true);
-  expect(a.parse(undefined)).toEqual(false);
-  expect(a.parse(null)).toEqual(false);
-  expect(a.parse("")).toEqual(false);
+  expect(z.parse(a, true)).toEqual(true);
+  expect(z.parse(a, false)).toEqual(false);
+  expect(z.parse(a, "true")).toEqual(true);
+  expect(z.parse(a, "false")).toEqual(true);
+  expect(z.parse(a, 1)).toEqual(true);
+  expect(z.parse(a, 0)).toEqual(false);
+  expect(z.parse(a, {})).toEqual(true);
+  expect(z.parse(a, [])).toEqual(true);
+  expect(z.parse(a, undefined)).toEqual(false);
+  expect(z.parse(a, null)).toEqual(false);
+  expect(z.parse(a, "")).toEqual(false);
 });
 
 test("z.coerce.bigint", () => {
   const a = z.coerce.bigint();
-  expect(a.parse("123")).toEqual(BigInt(123));
-  expect(a.parse(123)).toEqual(BigInt(123));
-  expect(() => a.parse("abc")).toThrow();
+  expect(z.parse(a, "123")).toEqual(BigInt(123));
+  expect(z.parse(a, 123)).toEqual(BigInt(123));
+  expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.coerce.date", () => {
   const a = z.coerce.date();
   const date = new Date();
-  expect(a.parse(date.toISOString())).toEqual(date);
-  expect(a.parse(date.getTime())).toEqual(date);
-  expect(() => a.parse("invalid date")).toThrow();
+  expect(z.parse(a, date.toISOString())).toEqual(date);
+  expect(z.parse(a, date.getTime())).toEqual(date);
+  expect(() => z.parse(a, "invalid date")).toThrow();
 });
 
 test("z.undefined", () => {
   const a = z.undefined();
-  expect(a.parse(undefined)).toEqual(undefined);
-  expect(() => a.parse("undefined")).toThrow();
+  expect(z.parse(a, undefined)).toEqual(undefined);
+  expect(() => z.parse(a, "undefined")).toThrow();
 });
 
 test("z.null", () => {
   const a = z.null();
-  expect(a.parse(null)).toEqual(null);
-  expect(() => a.parse("null")).toThrow();
+  expect(z.parse(a, null)).toEqual(null);
+  expect(() => z.parse(a, "null")).toThrow();
 });
 
 test("z.any", () => {
   const a = z.any();
-  expect(a.parse("hello")).toEqual("hello");
-  expect(a.parse(123)).toEqual(123);
-  expect(a.parse(true)).toEqual(true);
-  expect(a.parse(null)).toEqual(null);
-  expect(a.parse(undefined)).toEqual(undefined);
-  a.parse({});
-  a.parse([]);
-  a.parse(Symbol());
-  a.parse(new Date());
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(z.parse(a, 123)).toEqual(123);
+  expect(z.parse(a, true)).toEqual(true);
+  expect(z.parse(a, null)).toEqual(null);
+  expect(z.parse(a, undefined)).toEqual(undefined);
+  z.parse(a, {});
+  z.parse(a, []);
+  z.parse(a, Symbol());
+  z.parse(a, new Date());
 });
 
 test("z.unknown", () => {
   const a = z.unknown();
-  expect(a.parse("hello")).toEqual("hello");
-  expect(a.parse(123)).toEqual(123);
-  expect(a.parse(true)).toEqual(true);
-  expect(a.parse(null)).toEqual(null);
-  expect(a.parse(undefined)).toEqual(undefined);
-  a.parse({});
-  a.parse([]);
-  a.parse(Symbol());
-  a.parse(new Date());
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(z.parse(a, 123)).toEqual(123);
+  expect(z.parse(a, true)).toEqual(true);
+  expect(z.parse(a, null)).toEqual(null);
+  expect(z.parse(a, undefined)).toEqual(undefined);
+  z.parse(a, {});
+  z.parse(a, []);
+  z.parse(a, Symbol());
+  z.parse(a, new Date());
 });
 
 test("z.never", () => {
   const a = z.never();
-  expect(() => a.parse("hello")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
 });
 
 test("z.void", () => {
   const a = z.void();
-  expect(a.parse(undefined)).toEqual(undefined);
-  expect(() => a.parse(null)).toThrow();
+  expect(z.parse(a, undefined)).toEqual(undefined);
+  expect(() => z.parse(a, null)).toThrow();
 });
 
 test("z.array", () => {
   const a = z.array(z.string());
-  expect(a.parse(["hello", "world"])).toEqual(["hello", "world"]);
-  expect(() => a.parse([123])).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(z.parse(a, ["hello", "world"])).toEqual(["hello", "world"]);
+  expect(() => z.parse(a, [123])).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
 });
 
 test("z.object", () => {
@@ -423,18 +451,21 @@ test("z.object", () => {
     age: number;
     points?: number;
   }>();
-  expect(a.parse({ name: "john", age: 30 })).toEqual({ name: "john", age: 30 });
-  expect(() => a.parse({ name: "john", age: "30" })).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(z.parse(a, { name: "john", age: 30 })).toEqual({
+    name: "john",
+    age: 30,
+  });
+  expect(() => z.parse(a, { name: "john", age: "30" })).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
 });
 
 test("z.strictObject", () => {
   const a = z.strictObject({
     name: z.string(),
   });
-  expect(a.parse({ name: "john" })).toEqual({ name: "john" });
-  expect(() => a.parse({ name: "john", age: 30 })).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(z.parse(a, { name: "john" })).toEqual({ name: "john" });
+  expect(() => z.parse(a, { name: "john", age: 30 })).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
 });
 
 test("z.looseObject", () => {
@@ -442,13 +473,16 @@ test("z.looseObject", () => {
     name: z.string(),
     age: z.number(),
   });
-  expect(a.parse({ name: "john", age: 30 })).toEqual({ name: "john", age: 30 });
-  expect(a.parse({ name: "john", age: 30, extra: true })).toEqual({
+  expect(z.parse(a, { name: "john", age: 30 })).toEqual({
+    name: "john",
+    age: 30,
+  });
+  expect(z.parse(a, { name: "john", age: 30, extra: true })).toEqual({
     name: "john",
     age: 30,
     extra: true,
   });
-  expect(() => a.parse("hello")).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
 });
 
 test("z.keyof", () => {
@@ -458,10 +492,10 @@ test("z.keyof", () => {
     c: z.boolean(),
   });
   const b = z.keyof(a);
-  expect(b.parse("a")).toEqual("a");
-  expect(b.parse("b")).toEqual("b");
-  expect(b.parse("c")).toEqual("c");
-  expect(() => b.parse("d")).toThrow();
+  expect(z.parse(b, "a")).toEqual("a");
+  expect(z.parse(b, "b")).toEqual("b");
+  expect(z.parse(b, "c")).toEqual("c");
+  expect(() => z.parse(b, "d")).toThrow();
 });
 
 test("z.extend", () => {
@@ -471,9 +505,12 @@ test("z.extend", () => {
   const b = z.extend(a, {
     age: z.number(),
   });
-  expect(b.parse({ name: "john", age: 30 })).toEqual({ name: "john", age: 30 });
-  expect(() => b.parse({ name: "john" })).toThrow();
-  expect(() => b.parse("hello")).toThrow();
+  expect(z.parse(b, { name: "john", age: 30 })).toEqual({
+    name: "john",
+    age: 30,
+  });
+  expect(() => z.parse(b, { name: "john" })).toThrow();
+  expect(() => z.parse(b, "hello")).toThrow();
 });
 
 // test("z.merge", () => {});
@@ -484,9 +521,9 @@ test("z.pick", () => {
     age: z.number(),
   });
   const b = z.pick(a, { name: true });
-  expect(b.parse({ name: "john" })).toEqual({ name: "john" });
-  expect(() => b.parse({ name: "john", age: 30 })).toThrow();
-  expect(() => b.parse("hello")).toThrow();
+  expect(z.parse(b, { name: "john" })).toEqual({ name: "john" });
+  expect(() => z.parse(b, { name: "john", age: 30 })).toThrow();
+  expect(() => z.parse(b, "hello")).toThrow();
 });
 
 test("z.omit", () => {
@@ -495,24 +532,24 @@ test("z.omit", () => {
     age: z.number(),
   });
   const b = z.omit(a, { age: true });
-  expect(b.parse({ name: "john" })).toEqual({ name: "john" });
-  expect(() => b.parse({ name: "john", age: 30 })).toThrow();
-  expect(() => b.parse("hello")).toThrow();
+  expect(z.parse(b, { name: "john" })).toEqual({ name: "john" });
+  expect(() => z.parse(b, { name: "john", age: 30 })).toThrow();
+  expect(() => z.parse(b, "hello")).toThrow();
 });
 
 test("z.partial", () => {
   const a = z.partial(z.object({ name: z.string() }));
-  expect(a.parse({ name: "john" })).toEqual({ name: "john" });
-  expect(a.parse({})).toEqual({});
-  expect(() => a.parse({ name: 123 })).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(z.parse(a, { name: "john" })).toEqual({ name: "john" });
+  expect(z.parse(a, {})).toEqual({});
+  expect(() => z.parse(a, { name: 123 })).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
 });
 
 test("z.union", () => {
   const a = z.union([z.string(), z.number()]);
-  expect(a.parse("hello")).toEqual("hello");
-  expect(a.parse(123)).toEqual(123);
-  expect(() => a.parse(true)).toThrow();
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(z.parse(a, 123)).toEqual(123);
+  expect(() => z.parse(a, true)).toThrow();
 });
 
 test("z.discriminatedUnion", () => {
@@ -536,11 +573,11 @@ test("z.discriminatedUnion", () => {
   expect(c._disc.get("type")!.values.has("A")).toEqual(true);
   expect(c._disc.get("type")!.values.has("B")).toEqual(true);
 
-  expect(c.parse({ type: "A", name: "john" })).toEqual({
+  expect(z.parse(c, { type: "A", name: "john" })).toEqual({
     type: "A",
     name: "john",
   });
-  expect(c.parse({ type: "B", age: 30 })).toEqual({ type: "B", age: 30 });
+  expect(z.parse(c, { type: "B", age: 30 })).toEqual({ type: "B", age: 30 });
 });
 
 test("z.discriminatedUnion with nested discriminator", () => {
@@ -562,11 +599,11 @@ test("z.discriminatedUnion with nested discriminator", () => {
     true
   );
 
-  expect(c.parse({ type: { key: "A" }, name: "john" })).toEqual({
+  expect(z.parse(c, { type: { key: "A" }, name: "john" })).toEqual({
     type: { key: "A" },
     name: "john",
   });
-  expect(c.parse({ type: { key: "B" }, age: 30 })).toEqual({
+  expect(z.parse(c, { type: { key: "B" }, age: 30 })).toEqual({
     type: { key: "B" },
     age: 30,
   });
@@ -613,18 +650,18 @@ test("z.intersection", () => {
     z.object({ a: z.string() }),
     z.object({ b: z.number() })
   );
-  expect(a.parse({ a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });
-  expect(() => a.parse({ a: "hello" })).toThrow();
-  expect(() => a.parse({ b: 123 })).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(z.parse(a, { a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });
+  expect(() => z.parse(a, { a: "hello" })).toThrow();
+  expect(() => z.parse(a, { b: 123 })).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
 });
 
 test("z.tuple", () => {
   const a = z.tuple([z.string(), z.number()]);
-  expect(a.parse(["hello", 123])).toEqual(["hello", 123]);
-  expect(() => a.parse(["hello", "world"])).toThrow();
-  expect(() => a.parse([123, 456])).toThrow();
-  expect(() => a.parse("hello")).toThrow();
+  expect(z.parse(a, ["hello", 123])).toEqual(["hello", 123]);
+  expect(() => z.parse(a, ["hello", "world"])).toThrow();
+  expect(() => z.parse(a, [123, 456])).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
 
   // tuple with rest
   const b = z.tuple(
@@ -644,11 +681,11 @@ test("z.tuple", () => {
     ["hello", 123, "world", true, false, true],
   ];
   for (const data of datas) {
-    expect(b.parse(data)).toEqual(data);
+    expect(z.parse(b, data)).toEqual(data);
   }
 
-  expect(() => b.parse(["hello", 123, 123])).toThrow();
-  expect(() => b.parse(["hello", 123, "world", 123])).toThrow();
+  expect(() => z.parse(b, ["hello", 123, 123])).toThrow();
+  expect(() => z.parse(b, ["hello", 123, "world", 123])).toThrow();
 });
 
 test("z.record", () => {
@@ -661,7 +698,7 @@ test("z.record", () => {
   type b = z.output<typeof b>;
   expectTypeOf<b>().toEqualTypeOf<Record<string | number | symbol, string>>();
   expect(
-    b.parse({ a: "hello", 1: "world", [Symbol.for("asdf")]: "symbol" })
+    z.parse(b, { a: "hello", 1: "world", [Symbol.for("asdf")]: "symbol" })
   ).toEqual({
     a: "hello",
     1: "world",
@@ -672,16 +709,16 @@ test("z.record", () => {
   const c = z.record(z.enum(["a", "b", "c"]), z.string());
   type c = z.output<typeof c>;
   expectTypeOf<c>().toEqualTypeOf<Record<"a" | "b" | "c", string>>();
-  expect(c.parse({ a: "hello", b: "world", c: "world" })).toEqual({
+  expect(z.parse(c, { a: "hello", b: "world", c: "world" })).toEqual({
     a: "hello",
     b: "world",
     c: "world",
   });
   // missing keys
-  expect(() => c.parse({ a: "hello", b: "world" })).toThrow();
+  expect(() => z.parse(c, { a: "hello", b: "world" })).toThrow();
   // extra keys
   expect(() =>
-    c.parse({ a: "hello", b: "world", c: "world", d: "world" })
+    z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })
   ).toThrow();
 });
 
@@ -689,60 +726,315 @@ test("z.map", () => {
   const a = z.map(z.string(), z.number());
   type a = z.output<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<Map<string, number>>();
-  expect(a.parse(new Map([["hello", 123]]))).toEqual(new Map([["hello", 123]]));
-  expect(() => a.parse(new Map([["hello", "world"]]))).toThrow();
-  expect(() => a.parse(new Map([[1243, "world"]]))).toThrow();
-  expect(() => a.parse("hello")).toThrow();
-
-  const b = z.map(
-    z.string()._refine((val) => val.length > 3),
-    z.number()
+  expect(z.parse(a, new Map([["hello", 123]]))).toEqual(
+    new Map([["hello", 123]])
   );
+  expect(() => z.parse(a, new Map([["hello", "world"]]))).toThrow();
+  expect(() => z.parse(a, new Map([[1243, "world"]]))).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
+
+  const r1: any = a._parse(new Map([[123, 123]]));
+  expect(r1.issues[0].code).toEqual("invalid_type");
+  expect(r1.issues[0].path).toEqual([123]);
+
+  const r2: any = a._parse(new Map([[BigInt(123), 123]]));
+  expect(r2.issues[0].code).toEqual("invalid_key");
+  expect(r2.issues[0].path).toEqual([]);
+
+  const r3: any = a._parse(new Map([["hello", "world"]]));
+  expect(r3.issues[0].code).toEqual("invalid_type");
+  expect(r3.issues[0].path).toEqual(["hello"]);
 });
 
-test("z.set", () => {});
+test("z.map invalid_value", () => {
+  const a = z.map(z.bigint(), z.number());
+  const r1: any = a._parse(new Map([[BigInt(123), BigInt(123)]]));
+  expect(r1.issues[0].code).toEqual("invalid_value");
+  expect(r1.issues[0].path).toEqual([]);
+});
 
-test("z.enum", () => {});
+test("z.map async", async () => {
+  const a = z.map(
+    z.string().check(z.refine(async () => true)),
+    z.number().check(z.refine(async () => true))
+  );
+  const d1 = new Map([["hello", 123]]);
+  expect(await z.parseAsync(a, d1)).toEqual(d1);
 
-test("z.nativeEnum", () => {});
+  await expect(z.parseAsync(a, new Map([[123, 123]]))).rejects.toThrow();
+  await expect(z.parseAsync(a, new Map([["hi", "world"]]))).rejects.toThrow();
+  await expect(z.parseAsync(a, new Map([[1243, "world"]]))).rejects.toThrow();
+  await expect(z.parseAsync(a, "hello")).rejects.toThrow();
+
+  const r = await z.safeParseAsync(a, new Map([[123, 123]]));
+  expect(r.success).toEqual(false);
+  expect(r.error!.issues[0].code).toEqual("invalid_type");
+  expect(r.error!.issues[0].path).toEqual([123]);
+});
+
+test("z.set", () => {
+  const a = z.set(z.string());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<Set<string>>();
+  expect(z.parse(a, new Set(["hello", "world"]))).toEqual(
+    new Set(["hello", "world"])
+  );
+  expect(() => z.parse(a, new Set([123]))).toThrow();
+  expect(() => z.parse(a, ["hello", "world"])).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
+
+  const b = z.set(z.number());
+  expect(z.parse(b, new Set([1, 2, 3]))).toEqual(new Set([1, 2, 3]));
+  expect(() => z.parse(b, new Set(["hello"]))).toThrow();
+  expect(() => z.parse(b, [1, 2, 3])).toThrow();
+  expect(() => z.parse(b, 123)).toThrow();
+});
+
+test("z.enum", () => {
+  const a = z.enum(["A", "B", "C"]);
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<"A" | "B" | "C">();
+  expect(z.parse(a, "A")).toEqual("A");
+  expect(z.parse(a, "B")).toEqual("B");
+  expect(z.parse(a, "C")).toEqual("C");
+  expect(() => z.parse(a, "D")).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
+
+  expect(a.enum.A).toEqual("A");
+  expect(a.enum.B).toEqual("B");
+  expect(a.enum.C).toEqual("C");
+  expect((a.enum as any).D).toEqual(undefined);
+});
+
+test("z.nativeEnum", () => {
+  enum NativeEnum {
+    A = "A",
+    B = "B",
+    C = "C",
+  }
+  const a = z.nativeEnum(NativeEnum);
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<NativeEnum>();
+  expect(z.parse(a, NativeEnum.A)).toEqual(NativeEnum.A);
+  expect(z.parse(a, NativeEnum.B)).toEqual(NativeEnum.B);
+  expect(z.parse(a, NativeEnum.C)).toEqual(NativeEnum.C);
+  expect(() => z.parse(a, "D")).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
+
+  // test a.enum
+  expect(a.enum.A).toEqual(NativeEnum.A);
+  expect(a.enum.B).toEqual(NativeEnum.B);
+  expect(a.enum.C).toEqual(NativeEnum.C);
+});
 
 test("z.literal", () => {
-  // check _values
+  const a = z.literal("hello");
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<"hello">();
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(() => z.parse(a, "world")).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
 });
 
-test("z.file", () => {});
+test("z.file", () => {
+  const a = z.file();
+  const file = new File(["content"], "filename.txt", { type: "text/plain" });
+  expect(z.parse(a, file)).toEqual(file);
+  expect(() => z.parse(a, "file")).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
+});
 
-test("z.transform", () => {});
+test("z.transform", () => {
+  const a = z.transform(z.string(), (val) => val.toUpperCase());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<string>();
+  expect(z.parse(a, "hello")).toEqual("HELLO");
+  expect(() => z.parse(a, 123)).toThrow();
+});
 
-test("z.preprocess", () => {});
+test("z.transform async", async () => {
+  const a = z.transform(z.string(), async (val) => val.toUpperCase());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<string>();
+  expect(await z.parseAsync(a, "hello")).toEqual("HELLO");
+  await expect(() => z.parseAsync(a, 123)).rejects.toThrow();
+});
 
-test("z.optional", () => {});
+test("z.preprocess", () => {
+  const a = z.preprocess((val) => String(val).toUpperCase(), z.string());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<string>();
+  expect(z.parse(a, 123)).toEqual("123");
+  expect(z.parse(a, true)).toEqual("TRUE");
+  expect(z.parse(a, BigInt(1234))).toEqual("1234");
+  // expect(() => z.parse(a, Symbol("asdf"))).toThrow();
+});
 
-test("z.nullable", () => {});
+// test("z.preprocess async", () => {
+//   const a = z.preprocess(async (val) => String(val), z.string());
+//   type a = z.output<typeof a>;
+//   expectTypeOf<a>().toEqualTypeOf<string>();
+//   expect(z.parse(a, 123)).toEqual("123");
+//   expect(z.parse(a, true)).toEqual("true");
+//   expect(() => z.parse(a, {})).toThrow();
+// });
 
-test("z.default", () => {});
+test("z.optional", () => {
+  const a = z.optional(z.string());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<string | undefined>();
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(z.parse(a, undefined)).toEqual(undefined);
+  expect(() => z.parse(a, 123)).toThrow();
+});
 
-test("z.catch", () => {});
+test("z.nullable", () => {
+  const a = z.nullable(z.string());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<string | null>();
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(z.parse(a, null)).toEqual(null);
+  expect(() => z.parse(a, 123)).toThrow();
+});
 
-test("z.nan", () => {});
+test("z.default", () => {
+  const a = z._default(z.string(), "default");
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<string>();
+  expect(z.parse(a, undefined)).toEqual("default");
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(() => z.parse(a, 123)).toThrow();
 
-test("z.pipeline", () => {});
+  const b = z._default(z.string(), () => "default");
+  expect(z.parse(b, undefined)).toEqual("default");
+  expect(z.parse(b, "hello")).toEqual("hello");
+  expect(() => z.parse(b, 123)).toThrow();
+});
 
-test("z.readonly", () => {});
+test("z.catch", () => {
+  const a = z.catch(z.string(), "default");
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<string>();
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(z.parse(a, 123)).toEqual("default");
 
-test("z.templateLiteral", () => {});
+  const b = z.catch(z.string(), () => "default");
+  expect(z.parse(b, "hello")).toEqual("hello");
+  expect(z.parse(b, 123)).toEqual("default");
+});
 
-test("z.custom", () => {});
+test("z.nan", () => {
+  const a = z.nan();
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<number>();
+  expect(z.parse(a, Number.NaN)).toEqual(Number.NaN);
+  expect(() => z.parse(a, 123)).toThrow();
+  expect(() => z.parse(a, "NaN")).toThrow();
+});
 
-test("z.instanceof", () => {});
+test("z.pipeline", () => {
+  const a = z.pipeline(
+    z.transform(z.string(), (val) => val.length),
+    z.number()
+  );
+  type a_in = z.input<typeof a>;
+  expectTypeOf<a_in>().toEqualTypeOf<string>();
+  type a_out = z.output<typeof a>;
+  expectTypeOf<a_out>().toEqualTypeOf<number>();
 
-test("z.refine", () => {});
+  expect(z.parse(a, "123")).toEqual(3);
+  expect(z.parse(a, "hello")).toEqual(5);
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
+test("z.readonly", () => {
+  const a = z.readonly(z.string());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<Readonly<string>>();
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
+test("z.templateLiteral", () => {
+  const a = z.templateLiteral([z.string(), z.number()]);
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<`${string}${number}`>();
+  expect(z.parse(a, "hello123")).toEqual("hello123");
+  expect(() => z.parse(a, "hello")).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
+
+  // multipart
+  const b = z.templateLiteral([z.string(), z.number(), z.string()]);
+  type b = z.output<typeof b>;
+  expectTypeOf<b>().toEqualTypeOf<`${string}${number}${string}`>();
+  expect(z.parse(b, "hello123world")).toEqual("hello123world");
+  expect(z.parse(b, "123")).toEqual("123");
+  expect(() => z.parse(b, "hello")).toThrow();
+  expect(() => z.parse(b, 123)).toThrow();
+
+  // include boolean
+  const c = z.templateLiteral([z.string(), z.boolean()]);
+  type c = z.output<typeof c>;
+  expectTypeOf<c>().toEqualTypeOf<`${string}${boolean}`>();
+  expect(z.parse(c, "hellotrue")).toEqual("hellotrue");
+  expect(z.parse(c, "hellofalse")).toEqual("hellofalse");
+  expect(() => z.parse(c, "hello")).toThrow();
+  expect(() => z.parse(c, 123)).toThrow();
+
+  // include literal prefix
+  const d = z.templateLiteral([z.literal("hello"), z.number()]);
+  type d = z.output<typeof d>;
+  expectTypeOf<d>().toEqualTypeOf<`hello${number}`>();
+  expect(z.parse(d, "hello123")).toEqual("hello123");
+  expect(() => z.parse(d, 123)).toThrow();
+  expect(() => z.parse(d, "world123")).toThrow();
+
+  // include literal union
+  const e = z.templateLiteral([z.literal(["aa", "bb"]), z.number()]);
+  type e = z.output<typeof e>;
+  expectTypeOf<e>().toEqualTypeOf<`aa${number}` | `bb${number}`>();
+  expect(z.parse(e, "aa123")).toEqual("aa123");
+  expect(z.parse(e, "bb123")).toEqual("bb123");
+  expect(() => z.parse(e, "cc123")).toThrow();
+  expect(() => z.parse(e, 123)).toThrow();
+});
+
+test("z.custom", () => {
+  const a = z.custom((val) => {
+    return typeof val === "string";
+  });
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
+test("z.instanceof", () => {
+  class A {}
+
+  const a = z.instanceof(A);
+  expect(z.parse(a, new A())).toBeInstanceOf(A);
+  expect(() => z.parse(a, {})).toThrow();
+});
+
+test("z.refine", () => {
+  const a = z.number().check(
+    z.refine((val) => val > 3),
+    z.refine((val) => val < 10)
+  );
+  expect(z.parse(a, 5)).toEqual(5);
+  expect(() => z.parse(a, 2)).toThrow();
+  expect(() => z.parse(a, 11)).toThrow();
+  expect(() => z.parse(a, "hi")).toThrow();
+});
 
 test("z.effect", () => {
-  const a = z.effect((val: number, ctx) => {
+  const a = z.effect((val: number) => {
     return `${val}`;
   });
-  expect(a.parse(123)).toEqual("123");
+  type a_in = z.input<typeof a>;
+  expectTypeOf<a_in>().toEqualTypeOf<number>();
+  type a_out = z.output<typeof a>;
+  expectTypeOf<a_out>().toEqualTypeOf<string>();
+  expect(z.parse(a, 123)).toEqual("123");
 });
 
 test("z.brand()", () => {

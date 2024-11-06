@@ -33,7 +33,9 @@ export interface $ZodStringDef extends core.$ZodTypeDef {
 
 export interface $ZodString<Input = unknown>
   extends core.$ZodType<string, Input> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _pattern: RegExp;
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodStringDef;
 }
 
@@ -73,6 +75,7 @@ export interface $ZodStringFormat
   extends $ZodString<string>,
     checks._$ZodCheckStringFormat {
   _pattern: RegExp;
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodStringFormatDef;
 }
 
@@ -93,6 +96,7 @@ export interface $ZodUUIDDef extends $ZodStringFormatDef {
   version?: number;
 }
 export interface $ZodUUID extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodUUIDDef;
 }
 
@@ -108,6 +112,7 @@ export interface $ZodEmailDef extends $ZodStringFormatDef {
   format: "email";
 }
 export interface $ZodEmail extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodEmailDef;
 }
 
@@ -124,6 +129,7 @@ export interface $ZodURLDef extends $ZodStringFormatDef {
 }
 
 export interface $ZodURL extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodURLDef;
 }
 
@@ -155,6 +161,7 @@ export interface $ZodEmojiDef extends $ZodStringFormatDef {
   format: "emoji";
 }
 export interface $ZodEmoji extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodEmojiDef;
 }
 
@@ -171,6 +178,7 @@ export interface $ZodNanoIDDef extends $ZodStringFormatDef {
 }
 
 export interface $ZodNanoID extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodNanoIDDef;
 }
 
@@ -186,6 +194,7 @@ export interface $ZodCUIDDef extends $ZodStringFormatDef {
   format: "cuid";
 }
 export interface $ZodCUID extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodCUIDDef;
 }
 
@@ -201,6 +210,7 @@ export interface $ZodCUID2Def extends $ZodStringFormatDef {
   format: "cuid2";
 }
 export interface $ZodCUID2 extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodCUID2Def;
 }
 
@@ -216,6 +226,7 @@ export interface $ZodULIDDef extends $ZodStringFormatDef {
   format: "ulid";
 }
 export interface $ZodULID extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodULIDDef;
 }
 
@@ -231,6 +242,7 @@ export interface $ZodXIDDef extends $ZodStringFormatDef {
   format: "xid";
 }
 export interface $ZodXID extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodXIDDef;
 }
 
@@ -246,6 +258,7 @@ export interface $ZodKSUIDDef extends $ZodStringFormatDef {
   format: "ksuid";
 }
 export interface $ZodKSUID extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodKSUIDDef;
 }
 
@@ -264,6 +277,7 @@ export interface $ZodISODateTimeDef extends $ZodStringFormatDef {
   local: boolean;
 }
 export interface $ZodISODateTime extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodISODateTimeDef;
 }
 
@@ -282,6 +296,7 @@ export interface $ZodISODateDef extends $ZodStringFormatDef {
   format: "iso_date";
 }
 export interface $ZodISODate extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodISODateDef;
 }
 
@@ -300,6 +315,7 @@ export interface $ZodISOTimeDef extends $ZodStringFormatDef {
   precision?: number | null;
 }
 export interface $ZodISOTime extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodISOTimeDef;
 }
 
@@ -315,6 +331,7 @@ export interface $ZodDurationDef extends $ZodStringFormatDef {
   format: "duration";
 }
 export interface $ZodDuration extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodDurationDef;
 }
 
@@ -330,6 +347,7 @@ export interface $ZodIPDef extends $ZodStringFormatDef {
   format: "ip";
 }
 export interface $ZodIP extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodIPDef;
 }
 
@@ -361,6 +379,7 @@ export interface $ZodIPv4Def extends $ZodStringFormatDef {
   format: "ipv4";
 }
 export interface $ZodIPv4 extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodIPv4Def;
 }
 
@@ -376,6 +395,7 @@ export interface $ZodIPv6Def extends $ZodStringFormatDef {
   format: "ipv6";
 }
 export interface $ZodIPv6 extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodIPv6Def;
 }
 
@@ -391,6 +411,7 @@ export interface $ZodBase64Def extends $ZodStringFormatDef {
   format: "base64";
 }
 export interface $ZodBase64 extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodBase64Def;
 }
 
@@ -406,6 +427,7 @@ export interface $ZodJSONStringDef extends $ZodStringFormatDef {
   format: "json_string";
 }
 export interface $ZodJSONString extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodJSONStringDef;
 }
 
@@ -438,6 +460,7 @@ export interface $ZodE164Def extends $ZodStringFormatDef {
   format: "e164";
 }
 export interface $ZodE164 extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodE164Def;
 }
 
@@ -475,6 +498,7 @@ export interface $ZodJWTDef extends $ZodStringFormatDef {
   algorithm?: types.JWTAlgorithm | undefined;
 }
 export interface $ZodJWT extends $ZodStringFormat {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodJWTDef;
 }
 
@@ -537,6 +561,7 @@ export type $ZodNumberFormats = $ZodIntegerFormats | $ZodFloatFormats;
 
 export interface $ZodNumber<T = unknown> extends core.$ZodType<number, T> {
   _pattern: RegExp;
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodNumberDef;
   computed?: {
     minimum?: number | bigint;
@@ -644,6 +669,7 @@ export interface $ZodBooleanDef extends core.$ZodTypeDef {
 
 export interface $ZodBoolean<T = unknown> extends core.$ZodType<boolean, T> {
   _pattern: RegExp;
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodBooleanDef;
 }
 
@@ -683,6 +709,7 @@ export interface $ZodBigIntDef extends core.$ZodTypeDef {
 
 export interface $ZodBigInt<T = unknown> extends core.$ZodType<bigint, T> {
   _pattern: RegExp;
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodBigIntDef;
 }
 
@@ -719,6 +746,7 @@ export interface $ZodSymbolDef extends core.$ZodTypeDef {
 }
 
 export interface $ZodSymbol<T = unknown> extends core.$ZodType<symbol, T> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodSymbolDef;
 }
 
@@ -755,6 +783,7 @@ export interface $ZodUndefinedDef extends core.$ZodTypeDef {
 
 export interface $ZodUndefined extends core.$ZodType<undefined, undefined> {
   _pattern: RegExp;
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodUndefinedDef;
 }
 
@@ -793,6 +822,7 @@ export interface $ZodNullDef extends core.$ZodTypeDef {
 
 export interface $ZodNull extends core.$ZodType<null, null> {
   _pattern: RegExp;
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodNullDef;
 }
 
@@ -830,6 +860,7 @@ export interface $ZodAnyDef extends core.$ZodTypeDef {
 }
 
 export interface $ZodAny extends core.$ZodType<any, any> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodAnyDef;
 }
 
@@ -847,6 +878,7 @@ export interface $ZodUnknownDef extends core.$ZodTypeDef {
 }
 
 export interface $ZodUnknown extends core.$ZodType<unknown, unknown> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodUnknownDef;
 }
 
@@ -870,6 +902,7 @@ export interface $ZodNeverDef extends core.$ZodTypeDef {
 }
 
 export interface $ZodNever extends core.$ZodType<never, never> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodNeverDef;
 }
 
@@ -904,6 +937,7 @@ export interface $ZodVoidDef extends core.$ZodTypeDef {
 }
 
 export interface $ZodVoid extends core.$ZodType<void, void> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodVoidDef;
 }
 
@@ -942,6 +976,7 @@ export interface $ZodDateDef extends core.$ZodTypeDef {
 }
 
 export interface $ZodDate<T = unknown> extends core.$ZodType<Date, T> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodDateDef;
 }
 
@@ -996,6 +1031,7 @@ export interface $ZodArrayDef extends core.$ZodTypeDef {
 
 export interface $ZodArray<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<T["_output"][], T["_input"][]> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodArrayDef;
 }
 
@@ -1072,24 +1108,24 @@ export type OptionalShapeKeys<T extends $ZodRawShape> = {
 export type RequiredShapeKeys<T extends $ZodRawShape> = {
   [k in keyof T]: undefined extends T[k]["_qout"] ? k : never;
 }[keyof T];
-export type InferObjectOutput<T extends $ZodRawShape> = {
+export type $InferObjectOutput<T extends $ZodRawShape> = {
   [K in RequiredShapeKeys<T>]: T[K]["_output"];
 } & {
   [K in OptionalShapeKeys<T>]?: T[K]["_output"];
 };
-export type InferObjectInput<T extends $ZodRawShape> = {
+export type $InferObjectInput<T extends $ZodRawShape> = {
   [K in RequiredShapeKeys<T>]: T[K]["_input"];
 } & {
   [K in OptionalShapeKeys<T>]?: T[K]["_input"];
 };
 // & { [k in keyof T]?: unknown };
 
-// export type InferObjectOutput<Shape extends $ZodRawShape> =
+// export type $InferObjectOutput<Shape extends $ZodRawShape> =
 //   types.AddQuestionMarks<{
 //     [k in keyof Shape]: Shape[k]["_output"];
 //   }>;
 
-// export type InferObjectInput<Shape extends $ZodRawShape> =
+// export type $InferObjectInput<Shape extends $ZodRawShape> =
 //   types.AddQuestionMarks<{
 //     [k in keyof Shape]: Shape[k]["_input"];
 //   }>;
@@ -1105,7 +1141,8 @@ export interface $ZodObjectDef extends core.$ZodTypeDef {
 }
 
 export interface $ZodObject<Shape extends $ZodRawShape = $ZodRawShape>
-  extends core.$ZodType<InferObjectOutput<Shape>, InferObjectInput<Shape>> {
+  extends core.$ZodType<$InferObjectOutput<Shape>, $InferObjectInput<Shape>> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodObjectDef;
   _disc: core.$DiscriminatorMap;
 }
@@ -1231,6 +1268,7 @@ export interface $ZodUnionDef extends core.$ZodTypeDef {
 
 export interface $ZodUnion<T extends core.$ZodType[] = core.$ZodType[]>
   extends core.$ZodType<T[number]["_output"], T[number]["_input"]> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodUnionDef;
 }
 
@@ -1289,6 +1327,7 @@ export interface $ZodDiscriminatedUnionDef extends $ZodUnionDef {
 export interface $ZodDiscriminatedUnion<
   Options extends core.$ZodType[] = core.$ZodType[],
 > extends $ZodUnion<Options> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodDiscriminatedUnionDef;
   _disc: core.$DiscriminatorMap;
 }
@@ -1449,6 +1488,7 @@ export interface $ZodIntersection<
     A["_output"] & B["_output"],
     A["_input"] & B["_input"]
   > {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodIntersectionDef;
 }
 
@@ -1514,7 +1554,7 @@ export interface $ZodTupleDef extends core.$ZodTypeDef {
 }
 
 type ZodTupleItems = core.$ZodType[];
-export type TupleInputType<
+export type $InferTupleInputType<
   T extends ZodTupleItems,
   Rest extends core.$ZodType | null,
 > = [
@@ -1533,7 +1573,7 @@ type TupleInputTypeWithOptionals<T extends ZodTupleItems> = T extends [
     : TupleInputTypeNoOptionals<T>
   : [];
 
-export type TupleOutputType<
+export type $InferTupleOutputType<
   T extends ZodTupleItems,
   Rest extends core.$ZodType | null,
 > = [
@@ -1561,7 +1601,7 @@ function handleTupleResults<T extends unknown[]>(
     const result = results[i];
     if (core.failed(result)) {
       if (!fail) fail = new core.$ZodFailure();
-      core.mergeFails(fail, result, i);
+      fail = core.mergeFails(fail, result, i);
     }
   }
   return fail ?? results;
@@ -1578,7 +1618,11 @@ async function handleTupleResultsAsync<T extends Promise<unknown>[]>(
 export interface $ZodTuple<
   T extends ZodTupleItems = ZodTupleItems,
   Rest extends core.$ZodType | null = core.$ZodType | null,
-> extends core.$ZodType<TupleOutputType<T, Rest>, TupleInputType<T, Rest>> {
+> extends core.$ZodType<
+    $InferTupleOutputType<T, Rest>,
+    $InferTupleInputType<T, Rest>
+  > {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodTupleDef;
 }
 
@@ -1704,6 +1748,7 @@ export interface $ZodRecord<
     Record<Key["_output"], Value["_output"]>,
     Record<Key["_input"], Value["_input"]>
   > {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodRecordDef;
 }
 
@@ -1821,6 +1866,7 @@ export interface $ZodMap<
     Map<Key["_output"], Value["_output"]>,
     Map<Key["_input"], Value["_input"]>
   > {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodMapDef;
 }
 
@@ -1849,27 +1895,36 @@ function handleMapResults(
   for (const [keyResult, valueResult, originalKey] of results) {
     if (core.failed(keyResult)) {
       if (!fail) fail = new core.$ZodFailure();
-      if ($PropertyKeyTypes.has(typeof originalKey))
-        core.mergeFails(fail, keyResult, originalKey as PropertyKey);
-      else
+      if ($PropertyKeyTypes.has(typeof originalKey)) {
+        console.log(`merge!`);
+        fail = core.mergeFails(fail, keyResult, originalKey as PropertyKey);
+      } else {
+        console.log(`push`);
         fail.push({
           origin: "map",
           code: "invalid_key",
           input,
           def,
-          issues: fail.issues,
+          issues: keyResult.issues,
         });
-    } else if (core.failed(valueResult)) {
+      }
+    }
+    if (core.failed(valueResult)) {
       if (!fail) fail = new core.$ZodFailure();
       console.log(`failed valueResult`);
-      fail.push({
-        origin: "map",
-        code: "invalid_value",
-        input,
-        def,
-        key: keyResult,
-        issues: fail.issues,
-      });
+      if ($PropertyKeyTypes.has(typeof originalKey)) {
+        console.log(`merge!`);
+        fail = core.mergeFails(fail, valueResult, originalKey as PropertyKey);
+      } else {
+        fail.push({
+          origin: "map",
+          code: "invalid_value",
+          input,
+          def,
+          key: originalKey,
+          issues: valueResult.issues,
+        });
+      }
     } else {
       console.log(`setting ${keyResult} to ${valueResult}`);
       parsedMap.set(keyResult, valueResult);
@@ -1927,6 +1982,7 @@ export interface $ZodSetDef extends core.$ZodTypeDef {
 
 export interface $ZodSet<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<Set<T["_output"]>, Set<T["_input"]>> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodSetDef;
 }
 
@@ -1939,7 +1995,7 @@ function handleSetResults(
   for (const result of setResults) {
     if (core.failed(result)) {
       if (!fail) fail = new core.$ZodFailure();
-      core.mergeFails(fail, result);
+      fail = core.mergeFails(fail, result);
     } else {
       parsedSet.add(result);
     }
@@ -1995,9 +2051,9 @@ export const $ZodSet: core.$constructor<$ZodSet> =
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-
-export type $EnumLike = Record<string | number, types.Primitive>;
-export type $PrimitiveArray = Array<types.Primitive>;
+export type $EnumValue = string | number | bigint | boolean | symbol;
+export type $EnumLike = Record<string | number, $EnumValue>;
+export type $PrimitiveArray = Array<$EnumValue>;
 export type $EnumValues = $EnumLike | $PrimitiveArray;
 type IsString<T> = T extends PropertyKey ? T : never;
 export type $ValuesToEnum<T extends $EnumValues> = T extends $EnumLike
@@ -2023,13 +2079,13 @@ export type $ValuesToEnum<T extends $EnumValues> = T extends $EnumLike
 // type arg7 = $ValuesToEnum<string[]>;
 // type arg8 = $ValuesToEnum<$PrimitiveArray>;
 
-export type InferEnumOutput<T extends $EnumValues> = T extends $EnumLike
+export type $InferEnumOutput<T extends $EnumValues> = T extends $EnumLike
   ? T[keyof T]
   : T extends $PrimitiveArray
     ? T[number]
     : keyof T;
 
-export type InferEnumInput<T extends $EnumValues> = InferEnumOutput<T>;
+export type $InferEnumInput<T extends $EnumValues> = $InferEnumOutput<T>;
 
 // type inf0 = InferEnumOutput<typeof Color>;
 // type inf1 = InferEnumOutput<{ a: "a"; b: "b" }>;
@@ -2039,39 +2095,52 @@ export type InferEnumInput<T extends $EnumValues> = InferEnumOutput<T>;
 // type inf5 = InferEnumOutput<{ a: "a"; b: "b"; c: 1234n; d: true }>;
 // type inf6 = InferEnumOutput<number[]>;
 
+// type $EnumValues = Array<{ key?: string; value: types.Primitive }>;
+type $EnumEntries = Array<{ key?: string; value: $EnumValue }>;
 export interface $ZodEnumDef extends core.$ZodTypeDef {
   type: "enum";
-  values: Array<{ key?: string; value: types.Primitive }>;
+  entries: $EnumEntries;
   error?: err.$ZodErrorMap<err.$ZodIssueInvalidEnum> | undefined;
 }
 
 export interface $ZodEnum<T extends $EnumValues = $EnumValues>
-  extends core.$ZodType<InferEnumOutput<T>, InferEnumInput<T>> {
-  enum: $ValuesToEnum<T>;
+  extends core.$ZodType<$InferEnumOutput<T>, $InferEnumInput<T>> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodEnumDef;
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _values: core.$PrimitiveSet;
+  /** @deprecated Internal API, use with caution (not deprecated) */
+  _pattern: RegExp;
+}
+
+export function $toEnum(
+  values: Array<{ key?: string; value: types.Primitive }>
+): $ValuesToEnum<$EnumValues> {
+  const _enum = {} as any;
+  for (const { key, value } of values) {
+    if (key) _enum[key] = value;
+    if (typeof value === "string") _enum[value] = value;
+    if (typeof value === "number") _enum[value] = value;
+    if (typeof value === "symbol") _enum[value] = value;
+  }
+  return _enum;
 }
 
 export const $ZodEnum: core.$constructor<$ZodEnum> =
   /*@__PURE__*/ core.$constructor("$ZodEnum", (inst, def) => {
     core.$ZodType.init(inst, def);
-
-    const options: types.Primitive[] = Object.entries(def.values).map(
-      ([_, v]) => v.value
+    const options = def.entries.map((e) => e.value);
+    inst._values = new Set<types.Primitive>(options);
+    inst._pattern = new RegExp(
+      `^(${options
+        .filter((k) => util.propertyKeyTypes.has(typeof k))
+        .map((o) =>
+          typeof o === "string" ? util.escapeRegex(o) : o.toString()
+        )
+        .join("|")})$`
     );
-    const optionsSet = new Set(options);
-    const _values = new Set<string | number | symbol>(options as any);
-    inst._values = _values;
-
-    const _enum = {} as any;
-    for (const [key, value] of Object.entries(def.values)) {
-      if (key) _enum[key] = value.value;
-      if (typeof value === "string") _enum[value] = value;
-      if (typeof value === "number") _enum[value] = value;
-    }
-    inst.enum = _enum;
     inst._typecheck = (input, _ctx) => {
-      if (optionsSet.has(input as any)) {
+      if (inst._values.has(input as any)) {
         return input as any;
       }
       return core.$ZodFailure.from(
@@ -2092,6 +2161,7 @@ export const $ZodEnum: core.$constructor<$ZodEnum> =
 /////////////////////////////////////   $ZodLiteral   /////////////////////////////////////
 // export interface $ZodLiteral<T extends types.Primitive[] = types.Primitive[]>
 //   extends $ZodEnum<T> {
+/** @deprecated Internal API, use with caution (not deprecated) */
 //   _def: $ZodEnumDef;
 // }
 
@@ -2103,6 +2173,7 @@ export const $ZodEnum: core.$constructor<$ZodEnum> =
 // /////////////////////////////////////   $ZodNativeEnum   /////////////////////////////////////
 // export interface $ZodNativeEnum<T extends $EnumLike = $EnumLike>
 //   extends $ZodEnum<T> {
+/** @deprecated Internal API, use with caution (not deprecated) */
 //   _def: $ZodEnumDef;
 // }
 
@@ -2125,6 +2196,7 @@ export interface $ZodFileDef extends core.$ZodTypeDef {
 }
 
 export interface $ZodFile extends core.$ZodType<File, File> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodFileDef;
 }
 
@@ -2161,6 +2233,7 @@ export interface $ZodEffectDef extends core.$ZodTypeDef {
 }
 export interface $ZodEffect<O = unknown, I = unknown>
   extends core.$ZodType<O, I> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodEffectDef;
 }
 
@@ -2185,6 +2258,7 @@ export interface $ZodOptionalDef extends core.$ZodTypeDef {
 
 export interface $ZodOptional<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<T["_output"] | undefined, T["_input"] | undefined> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodOptionalDef;
 
   _qin: "true";
@@ -2217,6 +2291,7 @@ export interface $ZodNullableDef extends core.$ZodTypeDef {
 
 export interface $ZodNullable<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<T["_output"] | null, T["_input"] | null> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodNullableDef;
   _qin: T["_qin"];
   _qout: T["_qout"];
@@ -2248,6 +2323,7 @@ export interface $ZodSuccessDef extends core.$ZodTypeDef {
 
 export interface $ZodSuccess<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<boolean, T["_input"]> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodSuccessDef;
 }
 
@@ -2293,6 +2369,7 @@ export interface $ZodDefault<T extends core.$ZodType = core.$ZodType>
     // T["_output"], // it can still return undefined
     T["_input"] | undefined
   > {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodDefaultDef;
   _qin: T["_qin"];
 }
@@ -2335,6 +2412,7 @@ export interface $ZodCatchDef extends core.$ZodTypeDef {
 
 export interface $ZodCatch<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<T["_output"], unknown> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodCatchDef;
   _qin: T["_qin"];
   _qout: T["_qout"];
@@ -2371,6 +2449,7 @@ export interface $ZodNaNDef extends core.$ZodTypeDef {
 }
 
 export interface $ZodNaN extends core.$ZodType<number, number> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodNaNDef;
 }
 
@@ -2413,6 +2492,7 @@ export interface $ZodPipeline<
   A extends core.$ZodType = core.$ZodType,
   B extends core.$ZodType = core.$ZodType,
 > extends core.$ZodType<B["_output"], A["_input"]> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodPipelineDef;
 }
 
@@ -2478,6 +2558,7 @@ export interface $ZodReadonlyDef extends core.$ZodTypeDef {
 
 export interface $ZodReadonly<T extends core.$ZodType = core.$ZodType>
   extends core.$ZodType<MakeReadonly<T["_output"]>, MakeReadonly<T["_input"]>> {
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodReadonlyDef;
   _qin: T["_qin"];
   _qout: T["_qout"];
@@ -2505,10 +2586,6 @@ export const $ZodReadonly: core.$constructor<$ZodReadonly> =
 /////////////////////////////////////////////
 /////////////////////////////////////////////
 
-// any schema that resolves to a literal or a regex can be used
-// type TemplateLiteralPart =
-// string | number | boolean | null
-// undefined | bigint | core.$ZodType<string | number, any>;
 export interface $ZodTemplateLiteralDef extends core.$ZodTypeDef {
   type: "template_literal";
   parts: $TemplateLiteralPart[];
@@ -2517,17 +2594,17 @@ export interface $ZodTemplateLiteralDef extends core.$ZodTypeDef {
 export interface $ZodTemplateLiteral<Template extends string = string>
   extends core.$ZodType<Template, Template> {
   _pattern: RegExp;
+  /** @deprecated Internal API, use with caution (not deprecated) */
   _def: $ZodTemplateLiteralDef;
 }
 
 export type $LiteralPart = string | number | boolean | null | undefined;
-interface $SchemaPart
-  extends core.$ZodType<$TemplateLiteralPart, $TemplateLiteralPart> {
-  _pattern: string | RegExp;
+export interface $SchemaPart extends core.$ZodType<$LiteralPart, $LiteralPart> {
+  _pattern: RegExp;
 }
 export type $TemplateLiteralPart = $LiteralPart | $SchemaPart;
 
-type appendToTemplateLiteral<
+type AppendToTemplateLiteral<
   Template extends string,
   Suffix extends $LiteralPart | core.$ZodType,
 > = Suffix extends $LiteralPart
@@ -2543,7 +2620,7 @@ export type $PartsToTemplateLiteral<Parts extends $TemplateLiteralPart[]> =
           ...infer Rest extends $TemplateLiteralPart[],
           infer Last extends $TemplateLiteralPart,
         ]
-      ? appendToTemplateLiteral<$PartsToTemplateLiteral<Rest>, Last>
+      ? AppendToTemplateLiteral<$PartsToTemplateLiteral<Rest>, Last>
       : never;
 
 export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> =
@@ -2556,6 +2633,9 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> =
           part._pattern instanceof RegExp
             ? part._pattern.source
             : part._pattern;
+        if (!source)
+          throw new Error(`Invalid template literal part: ${part._traits}`);
+        console.log({ source });
         const start = source.startsWith("^") ? 1 : 0;
         const end = source.endsWith("$") ? source.length - 1 : source.length;
         regexParts.push(source.slice(start, end));
@@ -2563,7 +2643,7 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> =
         regexParts.push(`${part}`);
       }
     }
-    inst._pattern = new RegExp(`^${regexParts.join(".*")}$`);
+    inst._pattern = new RegExp(`^${regexParts.join("")}$`);
 
     inst._typecheck = (input, _ctx) => {
       if (typeof input !== "string") {
@@ -2580,6 +2660,7 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> =
         );
       }
 
+      console.log(inst._pattern);
       if (!inst._pattern.test(input)) {
         return core.$ZodFailure.from(
           [

@@ -133,7 +133,9 @@ export interface $ZodType<out O = unknown, out I = unknown> extends $Zod<O, I> {
   /** @deprecated Internal API, use with caution (not deprecated) */
   _computed?: object;
 
-  brand<T extends PropertyKey = PropertyKey>(): this & { _output: BRAND<T> };
+  brand<T extends PropertyKey = PropertyKey>(): this & {
+    _output: O & BRAND<T>;
+  };
 }
 
 // type asdf = PropertyKey & BRAND<PropertyKey>;
@@ -168,55 +170,59 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
     // let asyncChecks = false;
 
     if (noChecks) {
-      inst._parse = (input, ctx) => {};
+      inst._parse = (...args) => inst._typecheck(...args);
+    } else {
+      inst._parse = (_input, ctx) => {
+        const parseResult = inst._typecheck(_input, ctx);
+        let fail!: $ZodFailure;
+        let input!: unknown;
+        if (failed(parseResult)) {
+          fail = parseResult;
+          if (parseResult.aborted) return parseResult;
+        } else {
+          input = parseResult;
+        }
+
+        let i = 0;
+        for (const check of checks) {
+          console.log(`check ${i}`);
+          const _checkResult = check.run(input as never);
+          if (!_checkResult) continue;
+          if (_checkResult instanceof Promise) {
+            console.log(`check ${i} is async`);
+            return _checkResult.then(async () => {
+              const remainingChecks = inst._def.checks!.slice(i);
+              for (const check of remainingChecks) {
+                let _checkResult = check.run(input as never);
+                if (_checkResult instanceof Promise)
+                  _checkResult = await _checkResult;
+                if (!_checkResult) continue;
+                if (_checkResult.override) input = _checkResult.override;
+                if (_checkResult.issues) {
+                  if (!fail) fail = new $ZodFailure();
+                  fail.push(..._checkResult.issues);
+                }
+                if (_checkResult.abort) {
+                  fail.aborted = true;
+                  return fail;
+                }
+              }
+              return fail ?? input;
+            });
+          }
+
+          if (_checkResult.issues) {
+            if (!fail) fail = new $ZodFailure();
+            fail.push(..._checkResult.issues);
+          }
+          if (_checkResult.abort) return fail;
+          if (_checkResult.override) input = _checkResult.override;
+
+          i++;
+        }
+        return fail ?? input;
+      };
     }
-    inst._parse = (input, ctx) => {
-      const parseResult = inst._typecheck(input, ctx);
-      let fail!: $ZodFailure;
-      if (failed(parseResult)) {
-        fail = parseResult;
-        if (parseResult.aborted) return parseResult;
-      }
-
-      let i = 0;
-      for (const check of checks) {
-        console.log(`check ${i}`);
-        const _checkResult = check.run(input as never);
-        if (!_checkResult) continue;
-        if (_checkResult instanceof Promise) {
-          console.log(`check ${i} is async`);
-          return _checkResult.then(async () => {
-            const remainingChecks = inst._def.checks!.slice(i);
-            for (const check of remainingChecks) {
-              let asyncResult = check.run(input as never);
-              if (asyncResult instanceof Promise)
-                asyncResult = await asyncResult;
-              if (!asyncResult) continue;
-              if (asyncResult.override) input = asyncResult.override;
-              if (asyncResult.issues) {
-                if (!fail) fail = new $ZodFailure();
-                fail.push(...asyncResult.issues);
-              }
-              if (asyncResult.abort) {
-                fail.aborted = true;
-                return fail;
-              }
-            }
-            return fail ?? input;
-          });
-        }
-
-        if (_checkResult.issues) {
-          if (!fail) fail = new $ZodFailure();
-          fail.push(..._checkResult.issues);
-        }
-        if (_checkResult.abort) return fail;
-        if (_checkResult.override) input = _checkResult.override;
-
-        i++;
-      }
-      return fail ?? input;
-    };
     inst._dev = (...args: [any, any]) => {
       const result = inst._parse(...args);
       console.log(result);
@@ -492,11 +498,10 @@ export interface $ZodCheckDef {
   error?: err.$ZodErrorMap<never> | undefined;
 }
 
-export interface $ZodCheck<in T = never, out O = unknown> {
+// @ts-ignore cast variance
+export interface $ZodCheck<in T = never> {
   _def: $ZodCheckDef;
-  // if?: null | ((err: $ZodFailure) => boolean);
-
-  run: (input: T) => types.MaybeAsync<void | $ZodCheckResult<O>>;
+  run: (input: T) => types.MaybeAsync<void | $ZodCheckResult<T>>;
 }
 
 export type $ZodCheckResult<O = unknown> = {

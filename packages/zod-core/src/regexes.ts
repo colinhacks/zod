@@ -86,7 +86,7 @@ export function datetimeRegex(args: {
 export const stringRegex: RegExp = /^[\s\S]*$/;
 export const bigintRegex: RegExp = /\\-?\\d+/;
 export const intRegex: RegExp = /\\-?\\d+/;
-export const numberRegex: RegExp = /\\-?\\d+(?:\\.\\d+)?(?:e-?\\d+)?/i;
+export const numberRegex: RegExp = /-?\d+(?:\.\d+)?(?:e-?\d+)?/i;
 export const booleanRegex: RegExp = /true|false/i;
 export const nullRegex: RegExp = /null/i;
 export const undefinedRegex: RegExp = /undefined/i;
