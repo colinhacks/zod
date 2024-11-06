@@ -906,7 +906,7 @@ export const ZodMiniEnum: core.$constructor<ZodMiniEnum> =
 /////////////////////////////////////////////
 
 export interface ZodMiniLiteralDef extends core.$ZodEnumDef {}
-export interface ZodMiniLiteral<T extends core.Primitive[] = core.Primitive[]>
+export interface ZodMiniLiteral<T extends core.$EnumValue[] = core.$EnumValue[]>
   extends core.$ZodEnum<T>,
     ZodMiniType<core.$InferEnumOutput<T>, core.$InferEnumInput<T>> {
   _def: ZodMiniLiteralDef;
