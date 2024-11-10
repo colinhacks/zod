@@ -665,18 +665,7 @@ export function datetimeRegex(args: {
   return new RegExp(`^${regex}$`);
 }
 
-function isValidIP(ip: string, version?: IpVersion, cidr?: boolean) {
-  if (cidr) {
-    if ((version === "v4" || !version) && ipv4CidrRegex.test(ip)) {
-      return true;
-    }
-    if ((version === "v6" || !version) && ipv6CidrRegex.test(ip)) {
-      return true;
-    }
-
-    return false;
-  }
-
+function isValidIP(ip: string, version?: IpVersion) {
   if ((version === "v4" || !version) && ipv4Regex.test(ip)) {
     return true;
   }
