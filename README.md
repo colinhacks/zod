@@ -76,6 +76,7 @@
   - [Dates](#dates)
   - [Times](#times)
   - [IP addresses](#ip-addresses)
+  - [Classless Inter-Domain Routing](#classless-inter-domain-routing)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -787,6 +788,7 @@ z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // ISO 8601; by default only `Z` timezone allowed
 z.string().ip(); // defaults to allow both IPv4 and IPv6
+z.string().cidr(); // defaults to allow both IPv4 and IPv6
 
 // transforms
 z.string().trim(); // trim whitespace
@@ -828,6 +830,7 @@ z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 z.string().date({ message: "Invalid date string!" });
 z.string().time({ message: "Invalid time string!" });
 z.string().ip({ message: "Invalid IP address" });
+z.string().cidr({ message: "Invalid CIDR" });
 ```
 
 ### Datetimes
@@ -933,14 +936,27 @@ const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
 ```
 
-You can additionally set the `cidr`.
+### Classless Inter-Domain Routing
+
+The `z.string().cidr()` method by default validate IPv4 and IPv6.
 
 ```ts
-const cidr = z.string().ip({ cidr: true });
+const cidr = z.string().cidr();
 cidr.parse("192.168.0.0/24"); // pass
 cidr.parse("2001:db8::/32"); // pass
+
 cidr.parse("192.168.1.1/33"); // fail
 cidr.parse("2001:db8::1/129"); // fail
+```
+
+You can additionally set the IP `version`.
+
+```ts
+const ipv4Cidr = z.string().cidr({ version: "v4" });
+ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+
+const ipv6Cidr = z.string().cidr({ version: "v6" });
+ipv6Cidr.parse("192.168.1.1"); // fail
 ```
 
 ## Numbers

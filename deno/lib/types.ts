@@ -564,7 +564,8 @@ export type ZodStringCheck =
       message?: string;
     }
   | { kind: "duration"; message?: string }
-  | { kind: "ip"; version?: IpVersion; cidr?: boolean; message?: string }
+  | { kind: "ip"; version?: IpVersion; message?: string }
+  | { kind: "cidr"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
@@ -680,6 +681,17 @@ function isValidIP(ip: string, version?: IpVersion, cidr?: boolean) {
     return true;
   }
   if ((version === "v6" || !version) && ipv6Regex.test(ip)) {
+    return true;
+  }
+
+  return false;
+}
+
+function isValidCidr(ip: string, version?: IpVersion) {
+  if ((version === "v4" || !version) && ipv4CidrRegex.test(ip)) {
+    return true;
+  }
+  if ((version === "v6" || !version) && ipv6CidrRegex.test(ip)) {
     return true;
   }
 
@@ -939,10 +951,20 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           status.dirty();
         }
       } else if (check.kind === "ip") {
-        if (!isValidIP(input.data, check.version, check.cidr)) {
+        if (!isValidIP(input.data, check.version)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "ip",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "cidr") {
+        if (!isValidCidr(input.data, check.version)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "cidr",
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
@@ -1017,10 +1039,12 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
   }
 
-  ip(
-    options?: string | { version?: IpVersion; cidr?: boolean; message?: string }
-  ) {
+  ip(options?: string | { version?: IpVersion; message?: string }) {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
+  }
+
+  cidr(options?: string | { version?: IpVersion; message?: string }) {
+    return this._addCheck({ kind: "cidr", ...errorUtil.errToObj(options) });
   }
 
   datetime(
@@ -1215,6 +1239,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   get isIP() {
     return !!this._def.checks.find((ch) => ch.kind === "ip");
+  }
+  get isCIDR() {
+    return !!this._def.checks.find((ch) => ch.kind === "cidr");
   }
   get isBase64() {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
