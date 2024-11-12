@@ -12,10 +12,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       }
       break;
     case ZodIssueCode.invalid_literal:
-      message = `Invalid literal value, expected ${JSON.stringify(
-        issue.expected,
-        util.jsonStringifyReplacer
-      )}`;
+      message = `Invalid literal value`;
       break;
     case ZodIssueCode.unrecognized_keys:
       message = `Unrecognized key(s) in object: ${util.joinValues(
