@@ -238,6 +238,7 @@ type $ParsePath = $ParsePathComponent[];
 export interface $ParseContext {
   readonly path?: $ParsePath;
   readonly error?: err.$ZodErrorMap<never>;
+  readonly includeInputInErrors?: boolean;
 }
 
 export type $SyncParseResult<T = unknown> = T | $ZodFailure;
@@ -259,72 +260,68 @@ export const FAILURE: symbol = Symbol.for("{{zod.failure}}");
 // function emptyFail
 export class $ZodFailure {
   protected "~tag": typeof FAILURE = FAILURE;
-  issues: err.$ZodIssue[];
+  issues: err.$ZodIssueData[];
   aborted: boolean;
 
-  constructor(issues?: err.$ZodIssue[], aborted?: boolean | undefined) {
+  constructor(issues?: err.$ZodIssueData[], aborted?: boolean | undefined) {
     this.issues = issues ?? [];
     this.aborted = !!aborted;
   }
 
   static from(issues: err.$ZodIssueData[], aborted?: boolean): $ZodFailure {
-    return new $ZodFailure(
-      issues.map((iss) => makeIssue(iss)),
-      aborted
-    );
+    return new $ZodFailure(issues, aborted);
   }
 
   push(...issues: err.$ZodIssueData[]): void {
-    this.issues.push(...issues.map((iss) => makeIssue(iss)));
+    this.issues.push(...issues);
   }
 
-  // mergeIn(fail: $ZodFailure, ...path: PropertyKey[]): $ZodFailure {
-  //   if (!fail || !fail.issues) return this;
-
-  //   for (const iss of fail.issues) {
-  //     if (fail.issues.length > 5) throw new Error("Too many issues");
-
-  //     iss.path.unshift(...path);
-
-  //     this.issues.push(iss);
-  //   }
-  //   return this;
-  // }
-
-  // static from(
-  // issueDatas: err.$ZodIssueData[],
-  // ctx: $ParseContext | undefined,
-  // schema: { error?: err.$ZodErrorMap<never> | undefined }
-  // ): $ZodFailure {
-  //   return new $ZodFailure(
-  //     issueDatas.map((iss) => makeIssue(iss, schema, ctx)),
-  //     ctx
-  //   );
-  // }
-
-  // get level(): ErrorLevel | null {
-  //   let level: ErrorLevel | null = null;
-  //   for (const iss of this.issues) {
-  //     if (iss.level === "abort") return "abort";
-  //     if (iss.level === "error") {
-  //       if (level === null) level = "error";
-  //     }
-  //   }
-  //   return level;
-  // }
-
-  // addIssue(
-  //   data: err.$ZodIssueData,
-  //   // schema?: { error?: err.$ZodErrorMap<never> | undefined }
-  // ): void {
-
-  //   const iss = makeIssue(data, schema);
-  //   this.issues.push(iss);
-  // }
+  finalize(ctx?: $ParseContext): $ZodError {
+    return new $ZodError(
+      this.issues.map((iss) => {
+        const full = { ...iss } as err.$ZodIssue;
+        if (!iss.message) {
+          const message =
+            ctx?.error?.(iss as never) ??
+            iss?.def?.error?.(iss as never) ??
+            getConfig().error?.(iss) ??
+            defaultErrorMap(iss);
+          full.message = typeof message === "string" ? message : message?.message!
+        }
+        delete full.def;
+        if(!ctx?.includeInputInErrors) delete full.input;
+        return full;
+      })
+    );
+  }
 
   // @ts-ignore
   static [Symbol.hasInstance](inst: any) {
     return inst?.["~tag"] === FAILURE;
+  }
+}
+
+// function finalize(data: err.$ZodIssueData, ctx?: $ParseContext): err.$ZodIssue {
+//   const iss = { ...data } as err.$ZodIssue;
+//   if (!data.message) {
+//     const message =
+//       ctx?.error?.(data as never) ??
+//       data?.def?.error?.(data as never) ??
+//       getConfig().error?.(data) ??
+//       defaultErrorMap(data);
+//     iss.message = typeof message === "string" ? message : message?.message!
+//   }
+//   delete iss.def;
+//   if(!ctx?.includeInputInErrors) delete iss.input;
+//   return iss;
+// }
+
+export const ZOD_ERROR: symbol = Symbol.for("{{zod.error}}");
+export class $ZodError {
+  protected "~tag": typeof ZOD_ERROR = ZOD_ERROR;
+  public issues: err.$ZodIssue[];
+  constructor(issues: err.$ZodIssue[]) {
+    this.issues = issues;
   }
 }
 

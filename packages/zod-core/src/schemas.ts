@@ -1055,13 +1055,13 @@ export const $ZodArray: core.$constructor<$ZodArray> =
       }
 
       let fail!: core.$ZodFailure;
-      let hasPromises = false;
+      let async = false;
       const parseResults = Array(input.length);
       for (const [i, item] of Object.entries(input) as [number, any]) {
         const result = def.element._parse(item, _ctx);
         parseResults[i] = result;
         if (result instanceof Promise) {
-          hasPromises = true;
+          async = true;
           break;
         }
         if (core.failed(result)) {
@@ -1069,7 +1069,7 @@ export const $ZodArray: core.$constructor<$ZodArray> =
         }
       }
 
-      if (!hasPromises) {
+      if (!async) {
         if (!fail) return parseResults as any;
         return fail;
       }
@@ -1275,7 +1275,8 @@ export interface $ZodUnion<T extends core.$ZodType[] = core.$ZodType[]>
 function handleUnionResults(
   results: core.$SyncParseResult[],
   input: unknown,
-  def: $ZodUnionDef
+  def: $ZodUnionDef,
+  ctx?: core.$ParseContext
 ) {
   for (const result of results) {
     if (core.succeeded(result)) return result;
@@ -1287,7 +1288,7 @@ function handleUnionResults(
       code: "invalid_union",
       input,
       def,
-      errors: (results as any as core.$ZodFailure[]).map((fail) => fail.issues),
+      errors: (results as any as core.$ZodFailure[]).map((fail) => fail.finalize(ctx).issues),
     },
   ]);
 }
@@ -1306,9 +1307,9 @@ export const $ZodUnion: core.$constructor<$ZodUnion> =
         if (core.succeeded(result)) return result;
       }
 
-      if (!async) return handleUnionResults(results, input, def);
+      if (!async) return handleUnionResults(results, input, def, ctx);
       return Promise.all(results).then((results) => {
-        return handleUnionResults(results, input, def);
+        return handleUnionResults(results, input, def, ctx);
       });
     };
   });
@@ -1822,7 +1823,7 @@ Open an issue if you need this feature."
             fail.push({
               origin: "record",
               code: "invalid_key",
-              issues: keyResult.issues,
+              issues: keyResult.finalize(ctx).issues,
               input: key,
               path: [key],
               def,
@@ -1878,16 +1879,17 @@ export const $PropertyKeyTypes: Set<string> = new Set([
 async function handleMapResultsAsync(
   _results: Promise<[core.$SyncParseResult, core.$SyncParseResult, unknown][]>,
   input: Map<any, any>,
-  def: $ZodMapDef
+  def: $ZodMapDef, 
+  ctx?: core.$ParseContext
 ): core.$AsyncParseResult<Map<any, any>> {
   const results = await _results;
-  return handleMapResults(results, input, def);
+  return handleMapResults(results, input, def, ctx);
 }
 
 function handleMapResults(
   results: [unknown, unknown, unknown][],
   input: Map<any, any>,
-  def: $ZodMapDef
+  def: $ZodMapDef, ctx?: core.$ParseContext
 ): core.$SyncParseResult<Map<any, any>> {
   let fail!: core.$ZodFailure;
   const parsedMap = new Map();
@@ -1905,7 +1907,7 @@ function handleMapResults(
           code: "invalid_key",
           input,
           def,
-          issues: keyResult.issues,
+          issues: keyResult.finalize(ctx).issues,
         });
       }
     }
@@ -1922,7 +1924,7 @@ function handleMapResults(
           input,
           def,
           key: originalKey,
-          issues: valueResult.issues,
+          issues: valueResult.finalize(ctx).issues,
         });
       }
     } else {
@@ -1936,7 +1938,7 @@ function handleMapResults(
 export const $ZodMap: core.$constructor<$ZodMap> =
   /*@__PURE__*/ core.$constructor("$ZodMap", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input, _ctx) => {
+    inst._typecheck = (input, ctx) => {
       if (!(input instanceof Map)) {
         return core.$ZodFailure.from([
           {
@@ -1952,8 +1954,8 @@ export const $ZodMap: core.$constructor<$ZodMap> =
       const mapResults: [unknown, unknown, unknown][] = [];
 
       for (const [key, value] of input) {
-        const keyResult = def.keyType._parse(key, _ctx);
-        const valueResult = def.valueType._parse(value, _ctx);
+        const keyResult = def.keyType._parse(key, ctx);
+        const valueResult = def.valueType._parse(value, ctx);
         if (keyResult instanceof Promise || valueResult instanceof Promise) {
           mapResults.push(Promise.all([keyResult, valueResult, key]) as any);
           async = true;
@@ -1962,8 +1964,8 @@ export const $ZodMap: core.$constructor<$ZodMap> =
 
       // if (async) return Promise.all(mapResults).then((mapResults) => handleMapResults(mapResults, input, _ctx));
       if (async)
-        return handleMapResultsAsync(Promise.all(mapResults), input, def);
-      return handleMapResults(mapResults, input, def);
+        return handleMapResultsAsync(Promise.all(mapResults), input, def, ctx);
+      return handleMapResults(mapResults, input, def, ctx);
     };
   });
 

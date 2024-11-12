@@ -1,181 +1,1103 @@
 import * as core from "zod-core";
-import type * as err from "zod-core/error";
 import * as schemas from "./schemas.js";
+import * as util from "./util.js";
 
-export interface RawCreateParams {
-  error?: string | err.$ZodErrorMap;
-  /** @deprecated The `errorMap` parameter has been renamed to just `error`.
-   *
-   * @example ```ts
-   * z.string().create({ error: myErrorMap });
-   * ```
-   */
-  errorMap?: err.$ZodErrorMap;
-  /** @deprecated The `invalid_type_error` parameter has been deprecated and will be removed in a future version. Use the `error` field instead.
-   *
-   * @example ```ts
-   * z.string({
-   *   error: 'Bad input'
-   * });
-   * ```
-   */
-  invalid_type_error?: string;
-  /**
-   * @deprecated The `required_error` parameter has been deprecated and will be removed in a future version. Use the `error` field instead.
-   * @example ```ts
-   * z.string({
-   *  error: (issue) => issue.input === undefined ? 'Field is required!' : undefined
-   * });
-   */
-  required_error?: string;
-  description?: string;
+/**
+ * Dropped:
+ * - effect
+ * - function
+ * - preprocess
+ * - promise
+ * - strictObject
+ * - transformer
+ * - oboolean
+ * - onumber
+ * - ostring
+ */
+
+interface ZodMiniStringParams
+  extends util.Params<schemas.ZodMiniString, "coerce"> {}
+export const string: util.PrimitiveFactory<
+  ZodMiniStringParams,
+  schemas.ZodMiniString
+> = util.factory(schemas.ZodMiniString, {
+  type: "string",
+});
+
+// ZodMiniUUID
+interface ZodMiniUUIDParams
+  extends util.Params<schemas.ZodMiniUUID, "coerce"> {}
+export const uuid: util.PrimitiveFactory<
+  ZodMiniUUIDParams,
+  schemas.ZodMiniUUID
+> = util.factory(schemas.ZodMiniUUID, {
+  type: "string",
+  format: "uuid",
+  check: "string_format",
+});
+
+// ZodMiniEmail
+interface ZodMiniEmailParams
+  extends util.Params<schemas.ZodMiniEmail, "coerce"> {}
+export const email: util.PrimitiveFactory<
+  ZodMiniEmailParams,
+  schemas.ZodMiniEmail
+> = util.factory(schemas.ZodMiniEmail, {
+  type: "string",
+  format: "email",
+  check: "string_format",
+});
+
+// ZodMiniURL
+interface ZodMiniURLParams extends util.Params<schemas.ZodMiniURL, "coerce"> {}
+export const url: util.PrimitiveFactory<ZodMiniURLParams, schemas.ZodMiniURL> =
+  util.factory(schemas.ZodMiniURL, {
+    type: "string",
+    format: "url",
+    check: "string_format",
+  });
+
+// ZodMiniEmoji
+interface ZodMiniEmojiParams
+  extends util.Params<schemas.ZodMiniEmoji, "coerce"> {}
+export const emoji: util.PrimitiveFactory<
+  ZodMiniEmojiParams,
+  schemas.ZodMiniEmoji
+> = util.factory(schemas.ZodMiniEmoji, {
+  type: "string",
+  format: "emoji",
+  check: "string_format",
+});
+
+// ZodMiniNanoID
+interface ZodMiniNanoIDParams
+  extends util.Params<schemas.ZodMiniNanoID, "coerce"> {}
+export const nanoid: util.PrimitiveFactory<
+  ZodMiniNanoIDParams,
+  schemas.ZodMiniNanoID
+> = util.factory(schemas.ZodMiniNanoID, {
+  type: "string",
+  format: "nanoid",
+  check: "string_format",
+});
+
+// ZodMiniCUID
+interface ZodMiniCUIDParams
+  extends util.Params<schemas.ZodMiniCUID, "coerce"> {}
+export const cuid: util.PrimitiveFactory<
+  ZodMiniCUIDParams,
+  schemas.ZodMiniCUID
+> = util.factory(schemas.ZodMiniCUID, {
+  type: "string",
+  format: "cuid",
+  check: "string_format",
+});
+
+// ZodMiniCUID2
+interface ZodMiniCUID2Params
+  extends util.Params<schemas.ZodMiniCUID2, "coerce"> {}
+export const cuid2: util.PrimitiveFactory<
+  ZodMiniCUID2Params,
+  schemas.ZodMiniCUID2
+> = util.factory(schemas.ZodMiniCUID2, {
+  type: "string",
+  format: "cuid2",
+  check: "string_format",
+});
+
+// ZodMiniULID
+interface ZodMiniULIDParams
+  extends util.Params<schemas.ZodMiniULID, "coerce"> {}
+export const ulid: util.PrimitiveFactory<
+  ZodMiniULIDParams,
+  schemas.ZodMiniULID
+> = util.factory(schemas.ZodMiniULID, {
+  type: "string",
+  format: "ulid",
+  check: "string_format",
+});
+
+// ZodMiniXID
+interface ZodMiniXIDParams extends util.Params<schemas.ZodMiniXID, "coerce"> {}
+export const xid: util.PrimitiveFactory<ZodMiniXIDParams, schemas.ZodMiniXID> =
+  util.factory(schemas.ZodMiniXID, {
+    type: "string",
+    format: "xid",
+    check: "string_format",
+  });
+
+// ZodMiniKSUID
+interface ZodMiniKSUIDParams
+  extends util.Params<schemas.ZodMiniKSUID, "coerce"> {}
+export const ksuid: util.PrimitiveFactory<
+  ZodMiniKSUIDParams,
+  schemas.ZodMiniKSUID
+> = util.factory(schemas.ZodMiniKSUID, {
+  type: "string",
+  format: "ksuid",
+  check: "string_format",
+});
+
+// ZodMiniDuration
+interface ZodMiniDurationParams
+  extends util.Params<schemas.ZodMiniDuration, "coerce"> {}
+export const duration: util.PrimitiveFactory<
+  ZodMiniDurationParams,
+  schemas.ZodMiniDuration
+> = util.factory(schemas.ZodMiniDuration, {
+  type: "string",
+  format: "duration",
+  check: "string_format",
+});
+
+// ZodMiniIP
+interface ZodMiniIPParams extends util.Params<schemas.ZodMiniIP, "coerce"> {}
+export const ip: util.PrimitiveFactory<ZodMiniIPParams, schemas.ZodMiniIP> =
+  util.factory(schemas.ZodMiniIP, {
+    type: "string",
+    format: "ip",
+    check: "string_format",
+  });
+
+// ZodMiniIPv4
+interface ZodMiniIPv4Params
+  extends util.Params<schemas.ZodMiniIPv4, "coerce"> {}
+export const ipv4: util.PrimitiveFactory<
+  ZodMiniIPv4Params,
+  schemas.ZodMiniIPv4
+> = util.factory(schemas.ZodMiniIPv4, {
+  type: "string",
+  format: "ipv4",
+  check: "string_format",
+});
+
+// ZodMiniIPv6
+interface ZodMiniIPv6Params
+  extends util.Params<schemas.ZodMiniIPv6, "coerce"> {}
+export const ipv6: util.PrimitiveFactory<
+  ZodMiniIPv6Params,
+  schemas.ZodMiniIPv6
+> = util.factory(schemas.ZodMiniIPv6, {
+  type: "string",
+  format: "ipv6",
+  check: "string_format",
+});
+
+// ZodMiniBase64
+interface ZodMiniBase64Params
+  extends util.Params<schemas.ZodMiniBase64, "coerce"> {}
+export const base64: util.PrimitiveFactory<
+  ZodMiniBase64Params,
+  schemas.ZodMiniBase64
+> = util.factory(schemas.ZodMiniBase64, {
+  type: "string",
+  format: "base64",
+  check: "string_format",
+});
+
+// ZodMiniJSONString
+interface ZodMiniJSONStringParams
+  extends util.Params<schemas.ZodMiniJSONString, "coerce"> {}
+export const jsonString: util.PrimitiveFactory<
+  ZodMiniJSONStringParams,
+  schemas.ZodMiniJSONString
+> = util.factory(schemas.ZodMiniJSONString, {
+  type: "string",
+  format: "json_string",
+  check: "string_format",
+});
+
+// ZodMiniE164
+interface ZodMiniE164Params
+  extends util.Params<schemas.ZodMiniE164, "coerce"> {}
+export const e164: util.PrimitiveFactory<
+  ZodMiniE164Params,
+  schemas.ZodMiniE164
+> = util.factory(schemas.ZodMiniE164, {
+  type: "string",
+  format: "e164",
+  check: "string_format",
+});
+
+// ZodMiniJWT
+interface ZodMiniJWTParams extends util.Params<schemas.ZodMiniJWT, "coerce"> {
+  algorithm?: schemas.ZodMiniJWT["_def"]["algorithm"];
+}
+export const jwt: util.PrimitiveFactory<ZodMiniJWTParams, schemas.ZodMiniJWT> =
+  util.factory(schemas.ZodMiniJWT, {
+    type: "string",
+    format: "jwt",
+    check: "string_format",
+  });
+
+// number
+interface ZodMiniNumberParams
+  extends util.Params<schemas.ZodMiniNumber, "format" | "coerce"> {}
+export const number: util.PrimitiveFactory<
+  ZodMiniNumberParams,
+  schemas.ZodMiniNumber
+> = util.factory(schemas.ZodMiniNumberFast, { type: "number" });
+
+// int
+interface ZodMiniIntParams extends ZodMiniNumberParams {}
+export const int: util.PrimitiveFactory<
+  ZodMiniIntParams,
+  schemas.ZodMiniNumber
+> = util.factory(schemas.ZodMiniNumber, { type: "number", format: "safeint" });
+
+// float32
+interface ZodMiniFloat32Params extends ZodMiniNumberParams {}
+export const float32: util.PrimitiveFactory<
+  ZodMiniFloat32Params,
+  schemas.ZodMiniNumber
+> = util.factory(schemas.ZodMiniNumber, { type: "number", format: "float32" });
+
+// float64
+interface ZodMiniFloat64Params extends ZodMiniNumberParams {}
+export const float64: util.PrimitiveFactory<
+  ZodMiniFloat64Params,
+  schemas.ZodMiniNumber
+> = util.factory(schemas.ZodMiniNumber, { type: "number", format: "float64" });
+
+// int32
+interface ZodMiniInt32Params extends ZodMiniNumberParams {}
+export const int32: util.PrimitiveFactory<
+  ZodMiniInt32Params,
+  schemas.ZodMiniNumber
+> = util.factory(schemas.ZodMiniNumber, { type: "number", format: "int32" });
+
+// uint32
+interface ZodMiniUInt32Params extends ZodMiniNumberParams {}
+export const uint32: util.PrimitiveFactory<
+  ZodMiniUInt32Params,
+  schemas.ZodMiniNumber
+> = util.factory(schemas.ZodMiniNumber, { type: "number", format: "uint32" });
+
+// int64
+interface ZodMiniInt64Params extends ZodMiniNumberParams {}
+export const int64: util.PrimitiveFactory<
+  ZodMiniInt64Params,
+  schemas.ZodMiniNumber
+> = util.factory(schemas.ZodMiniNumber, { type: "number", format: "int64" });
+
+// uint64
+interface ZodMiniUInt64Params extends ZodMiniNumberParams {}
+export const uint64: util.PrimitiveFactory<
+  ZodMiniUInt64Params,
+  schemas.ZodMiniNumber
+> = util.factory(schemas.ZodMiniNumber, { type: "number", format: "uint64" });
+
+// boolean
+interface ZodMiniBooleanParams extends util.Params<schemas.ZodMiniBoolean> {}
+export const boolean: util.PrimitiveFactory<
+  ZodMiniBooleanParams,
+  schemas.ZodMiniBoolean
+> = util.factory(schemas.ZodMiniBoolean, { type: "boolean" });
+
+// bigint
+interface ZodMiniBigIntParams extends util.Params<schemas.ZodMiniBigInt> {}
+export const bigint: util.PrimitiveFactory<
+  ZodMiniBigIntParams,
+  schemas.ZodMiniBigInt
+> = util.factory(schemas.ZodMiniBigInt, { type: "bigint" });
+
+// symbol
+interface ZodMiniSymbolParams extends util.Params<schemas.ZodMiniSymbol> {}
+export const symbol: util.PrimitiveFactory<
+  ZodMiniSymbolParams,
+  schemas.ZodMiniSymbol
+> = util.factory(schemas.ZodMiniSymbol, { type: "symbol" });
+
+// date
+interface ZodMiniDateParams extends util.Params<schemas.ZodMiniDate> {}
+export const date: util.PrimitiveFactory<
+  ZodMiniDateParams,
+  schemas.ZodMiniDate
+> = util.factory(schemas.ZodMiniDate, { type: "date" });
+
+// undefined
+interface ZodMiniUndefinedParams
+  extends util.Params<schemas.ZodMiniUndefined> {}
+const _undefined: util.PrimitiveFactory<
+  ZodMiniUndefinedParams,
+  schemas.ZodMiniUndefined
+> = util.factory(schemas.ZodMiniUndefined, { type: "undefined" });
+
+export { _undefined as undefined };
+
+// null
+interface ZodMiniNullParams extends util.Params<schemas.ZodMiniNull> {}
+export const _null: util.PrimitiveFactory<
+  ZodMiniNullParams,
+  schemas.ZodMiniNull
+> = util.factory(schemas.ZodMiniNull, { type: "null" });
+export { _null as null };
+
+// any
+interface ZodMiniAnyParams extends util.Params<schemas.ZodMiniAny> {}
+export const any: util.PrimitiveFactory<ZodMiniAnyParams, schemas.ZodMiniAny> =
+  util.factory(schemas.ZodMiniAny, { type: "any" });
+
+// unknown
+interface ZodMiniUnknownParams extends util.Params<schemas.ZodMiniUnknown> {}
+export const unknown: util.PrimitiveFactory<
+  ZodMiniUnknownParams,
+  schemas.ZodMiniUnknown
+> = util.factory(schemas.ZodMiniUnknown, { type: "unknown" });
+
+// never
+interface ZodMiniNeverParams extends util.Params<schemas.ZodMiniNever> {}
+export const never: util.PrimitiveFactory<
+  ZodMiniNeverParams,
+  schemas.ZodMiniNever
+> = util.factory(schemas.ZodMiniNever, { type: "never" });
+
+// void
+interface ZodMiniVoidParams extends util.Params<schemas.ZodMiniVoid> {}
+export const _void: util.PrimitiveFactory<
+  ZodMiniVoidParams,
+  schemas.ZodMiniVoid
+> = util.factory(schemas.ZodMiniVoid, { type: "void" });
+export { _void as void };
+
+// array
+interface ZodMiniArrayParams
+  extends util.Params<schemas.ZodMiniArray, "element"> {}
+export function array<T extends schemas.ZodMiniType>(
+  element: T,
+  params?: ZodMiniArrayParams
+): schemas.ZodMiniArray<T> {
+  return new schemas.ZodMiniArray({
+    type: "array",
+    element,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniArray<T>;
 }
 
-export type ProcessedCreateParams = {
-  error?: err.$ZodErrorMap | undefined;
-  description?: string | undefined;
-};
-
-export function processParams(params: RawCreateParams | undefined): ProcessedCreateParams {
-  if (!params) return {};
-  const { error: _error, invalid_type_error, required_error, description, ...rest } = params;
-  const error = typeof _error === "string" ? () => _error : _error;
-  if (error && params.errorMap) {
-    throw new Error(`Do not specify "message" and "errorMap" together`);
-  }
-
-  const _customMap: err.$ZodErrorMap | undefined = error ?? params.errorMap;
-  if (_customMap && (invalid_type_error || required_error)) {
-    throw new Error(`Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`);
-  }
-  if (_customMap) return { error: _customMap, description, ...rest };
-
-  const customMap: err.$ZodErrorMap = (iss) => {
-    if (iss.code !== "invalid_type") return;
-    if (params.required_error && typeof iss.input === "undefined") return params.required_error;
-    return invalid_type_error;
+// object
+interface ZodMiniObjectParams
+  extends util.Params<schemas.ZodMiniObject, "shape"> {}
+export function object<T extends schemas.ZodMiniRawShape>(
+  shape: T,
+  params?: ZodMiniObjectParams
+): schemas.ZodMiniObject<T> {
+  const def: schemas.ZodMiniObjectDef = {
+    type: "object",
+    shape,
+    ...util.normalizeCreateParams(params),
   };
-  return { error: customMap, description, ...rest };
+  return new schemas.ZodMiniObject(def) as schemas.ZodMiniObject<T>;
 }
 
-type PrimitiveParams = ((...args: any[]) => any) | Record<string, any>; // | string;
-function processChecksAndParams(_paramsOrChecks?: any[] | PrimitiveParams, _params?: PrimitiveParams) {
-  const params: RawCreateParams = {};
-  let raw: PrimitiveParams;
-  if (Array.isArray(_paramsOrChecks)) {
-    params.checks = _paramsOrChecks;
-    raw = _params as any;
-  } else {
-    raw = _paramsOrChecks as any;
-  }
-
-  if (typeof raw === "string") {
-    params.error = () => raw;
-  } else if (typeof raw === "function") {
-    params.error = raw as any;
-  } else if (core.isPlainObject(params)) {
-    Object.assign(params, raw);
-  } else {
-    throw new Error("Invalid params");
-  }
-
-  // const params = Array.isArray(_paramsOrChecks) ? _params : _paramsOrChecks;
-  // const checks = Array.isArray(_paramsOrChecks) ? _paramsOrChecks : [];
-  return {
-    checks,
-    ...processCreateParams(params),
+// strictObject
+interface ZodMiniStrictObjectParams
+  extends util.Params<schemas.ZodMiniObject, "shape" | "catchall"> {}
+export function strictObject<T extends schemas.ZodMiniRawShape>(
+  shape: T,
+  params?: ZodMiniStrictObjectParams
+): schemas.ZodMiniObject<T> {
+  const def: schemas.ZodMiniObjectDef = {
+    type: "object",
+    shape,
+    catchall: never(),
+    ...util.normalizeCreateParams(params),
   };
+  return new schemas.ZodMiniObject(def) as schemas.ZodMiniObject<T>;
 }
 
-/* string */
-export function string(params?: ZodTypeParams): core.ZodString;
+// looseObject
+interface ZodMiniLooseObjectParams
+  extends util.Params<schemas.ZodMiniObject, "shape" | "catchall"> {}
+export function looseObject<T extends schemas.ZodMiniRawShape>(
+  shape: T,
+  params?: ZodMiniLooseObjectParams
+): schemas.ZodMiniObject<T> {
+  const def: schemas.ZodMiniObjectDef = {
+    type: "object",
+    shape,
+    catchall: unknown(),
+    ...util.normalizeCreateParams(params),
+  };
+  return new schemas.ZodMiniObject(def) as schemas.ZodMiniObject<T>;
+}
 
-////////////////////////////////////////
-////////////////////////////////////////
-//////////                    //////////
-//////////      z.custom      //////////
-//////////                    //////////
-////////////////////////////////////////
-////////////////////////////////////////
+// .keyof
+export function keyof<T extends schemas.ZodMiniObject>(
+  schema: T
+): schemas.ZodMiniEnum<Array<keyof T["_def"]["shape"]>> {
+  return _enum(Object.keys(schema._def.shape)) as any;
+}
 
-/* custom */
-type CustomParams = CustomErrorParams & { fatal?: boolean };
-export type ZodCustom<T> = ZodType<T, T>;
+// .extend
+export function extend<
+  T extends schemas.ZodMiniObject,
+  U extends schemas.ZodMiniRawShape,
+>(schema: T, shape: U): schemas.ZodMiniObject<T["_def"]["shape"] & U> {
+  return schema._clone({
+    ...schema._def,
+    shape: { ...schema._def.shape, ...shape },
+    checks: [],
+  }) as any;
+}
+
+// .merge
+export function merge<
+  T extends schemas.ZodMiniObject,
+  U extends schemas.ZodMiniObject,
+>(
+  base: T,
+  incoming: U
+): schemas.ZodMiniObject<T["_def"]["shape"] & U["_def"]["shape"]> {
+  return incoming._clone({
+    ...incoming._def, // incoming overrides properties on base
+    shape: { ...base._def.shape, ...incoming._def.shape },
+    checks: [],
+  });
+}
+
+// .pick
+type Mask<Keys extends PropertyKey> = { [K in Keys]?: true };
+export function pick<
+  T extends schemas.ZodMiniObject,
+  M extends core.Exactly<Mask<keyof T["shape"]>, M>,
+>(
+  schema: T,
+  mask: M
+): schemas.ZodMiniObject<Pick<T["shape"], Extract<keyof T["shape"], keyof M>>> {
+  const shape: any = {};
+  for (const key in mask) {
+    shape[key] = schema._def.shape[key];
+  }
+  return schema._clone({
+    ...schema._def,
+    shape,
+    checks: [],
+  }) as any;
+}
+
+// .omit
+export function omit<
+  T extends schemas.ZodMiniObject,
+  M extends core.Exactly<Mask<keyof T["shape"]>, M>,
+>(
+  schema: T,
+  mask: M
+): schemas.ZodMiniObject<Omit<T["shape"], Extract<keyof T["shape"], keyof M>>> {
+  const shape: schemas.ZodMiniRawShape = { ...schema.shape };
+  for (const key in mask) delete shape[key];
+  return schema._clone({
+    ...schema._def,
+    shape,
+    checks: [],
+  }) as any;
+}
+
+// .partial
+export function partial<T extends schemas.ZodMiniObject>(
+  schema: T
+): schemas.ZodMiniObject<{
+  [k in keyof T["shape"]]: schemas.ZodMiniOptional<T["shape"][k]>;
+}> {
+  const shape: schemas.ZodMiniRawShape = {};
+  for (const key in schema._def.shape) {
+    shape[key] = optional(schema._def.shape[key]);
+  }
+  return schema._clone({
+    ...schema._def,
+    shape,
+    checks: [],
+  }) as any;
+}
+
+// union
+interface ZodMiniUnionParams
+  extends util.Params<schemas.ZodMiniUnion, "options"> {}
+export function union<T extends schemas.ZodMiniType[]>(
+  options: T,
+  params?: ZodMiniUnionParams
+): schemas.ZodMiniUnion<T> {
+  return new schemas.ZodMiniUnion({
+    type: "union",
+    options,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniUnion<T>;
+}
+
+// or
+// export const or: typeof union = union;
+
+// discriminatedUnion
+
+interface ZodMiniDiscriminatedUnionParams
+  extends util.Params<schemas.ZodMiniDiscriminatedUnion, "options"> {}
+export function discriminatedUnion<
+  Types extends [
+    schemas.ZodMiniHasDiscriminator,
+    ...schemas.ZodMiniHasDiscriminator[],
+  ],
+>(
+  options: Types,
+  params?: ZodMiniDiscriminatedUnionParams
+): schemas.ZodMiniDiscriminatedUnion<Types> {
+  return new schemas.ZodMiniDiscriminatedUnion({
+    type: "union",
+    options,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniDiscriminatedUnion<Types>;
+}
+
+// intersection
+interface ZodMiniIntersectionParams
+  extends util.Params<schemas.ZodMiniIntersection, "left" | "right"> {}
+export function intersection<
+  T extends schemas.ZodMiniType,
+  U extends schemas.ZodMiniType,
+>(
+  left: T,
+  right: U,
+  params?: ZodMiniIntersectionParams
+): schemas.ZodMiniIntersection<T, U> {
+  return new schemas.ZodMiniIntersection({
+    type: "intersection",
+    left,
+    right,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniIntersection<T, U>;
+}
+
+// and
+// export const and: typeof intersection = intersection;
+
+// tuple
+interface ZodMiniTupleParams
+  extends util.Params<schemas.ZodMiniTuple, "items"> {
+  // rest?: schemas.ZodMiniTuple["_def"]["rest"];
+}
+
+export function tuple<
+  T extends [schemas.ZodMiniType, ...schemas.ZodMiniType[]],
+>(items: T, params?: ZodMiniTupleParams): schemas.ZodMiniTuple<T, null>;
+export function tuple<
+  T extends [schemas.ZodMiniType, ...schemas.ZodMiniType[]],
+  Rest extends schemas.ZodMiniType,
+>(
+  items: T,
+  rest: Rest,
+  params?: ZodMiniTupleParams
+): schemas.ZodMiniTuple<T, Rest>;
+export function tuple(
+  items: schemas.ZodMiniType[],
+  _paramsOrRest?: ZodMiniTupleParams | schemas.ZodMiniType,
+  _params?: ZodMiniTupleParams
+) {
+  const hasRest = _paramsOrRest instanceof schemas.ZodMiniType;
+  const params = hasRest ? _params : _paramsOrRest;
+  const rest = hasRest ? _paramsOrRest : null;
+  return new schemas.ZodMiniTuple({
+    type: "tuple",
+    items,
+    rest,
+    ...util.normalizeCreateParams(params),
+  });
+}
+
+// record
+interface ZodMiniRecordParams
+  extends util.Params<schemas.ZodMiniRecord, "keySchema" | "valueSchema"> {}
+export function record<
+  Key extends schemas.ZodMiniPropertyKey,
+  Value extends schemas.ZodMiniType,
+>(
+  keySchema: Key,
+  valueSchema: Value,
+  params?: ZodMiniRecordParams
+): schemas.ZodMiniRecord<Key, Value> {
+  return new schemas.ZodMiniRecord({
+    type: "record",
+    keySchema,
+    valueSchema,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniRecord<Key, Value>;
+}
+
+// map
+interface ZodMiniMapParams
+  extends util.Params<schemas.ZodMiniMap, "keyType" | "valueType"> {}
+export function map<
+  Key extends schemas.ZodMiniType,
+  Value extends schemas.ZodMiniType,
+>(
+  keyType: Key,
+  valueType: Value,
+  params?: ZodMiniMapParams
+): schemas.ZodMiniMap<Key, Value> {
+  return new schemas.ZodMiniMap({
+    type: "map",
+    keyType,
+    valueType,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniMap<Key, Value>;
+}
+
+// set
+interface ZodMiniSetParams
+  extends util.Params<schemas.ZodMiniSet, "valueType"> {}
+export function set<Value extends schemas.ZodMiniType>(
+  valueType: Value,
+  params?: ZodMiniSetParams
+): schemas.ZodMiniSet<Value> {
+  return new schemas.ZodMiniSet({
+    type: "set",
+    valueType,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniSet<Value>;
+}
+
+// enum
+interface ZodMiniEnumParams
+  extends util.Params<schemas.ZodMiniEnum, "entries"> {}
+function _enum<const T extends string[]>(
+  values: T,
+  params?: ZodMiniEnumParams
+): schemas.ZodMiniEnum<T> {
+  return new schemas.ZodMiniEnum({
+    type: "enum",
+    entries: values.map((value) => ({ key: value, value })),
+    ...util.normalizeCreateParams(params),
+  }) as any as schemas.ZodMiniEnum<T>;
+}
+export { _enum as enum };
+
+// nativeEnum
+interface ZodMiniNativeEnumParams
+  extends util.Params<schemas.ZodMiniNativeEnum, "entries"> {}
+export function nativeEnum<T extends core.$EnumLike>(
+  values: T,
+  params?: ZodMiniNativeEnumParams
+): schemas.ZodMiniNativeEnum<T> {
+  return new schemas.ZodMiniNativeEnum({
+    type: "enum",
+    entries: Object.entries(values).map(([key, value]) => ({ key, value })),
+    ...util.normalizeCreateParams(params),
+  }) as any as schemas.ZodMiniNativeEnum<T>;
+}
+
+// literal
+interface ZodMiniLiteralParams
+  extends util.Params<schemas.ZodMiniLiteral, "entries"> {}
+export function literal<const T extends core.Primitive | core.Primitive[]>(
+  value: T,
+  params?: ZodMiniLiteralParams
+): schemas.ZodMiniLiteral<T extends core.Primitive ? [T] : T> {
+  return new schemas.ZodMiniLiteral({
+    type: "enum",
+    entries: (Array.isArray(value) ? value : [value]).map((v) => ({
+      value: v,
+    })),
+    ...util.normalizeCreateParams(params),
+  }) as any as schemas.ZodMiniLiteral<T extends core.Primitive ? [T] : T>;
+}
+
+// envbool
+// interface ZodMiniEnvBoolParams
+//   extends util.Params<schemas.ZodMiniSuccess, "innerType">,
+//     util.Params<schemas.ZodMiniEnum, "values"> {
+//   error?:
+//     | string
+//     | core.$ZodErrorMap<core.$ZodIssueEnumInvalidValue>
+//     | undefined;
+// }
+
+// export function envbool<T extends string[]>(
+//   values: T = ["true"],
+//   params?: ZodMiniEnvBoolParams
+// ): schemas.ZodMiniSuccess<schemas.ZodMiniEnum<T>> {
+//   return any()._refine;
+// }
+
+// file
+interface ZodMiniFileParams extends util.Params<schemas.ZodMiniFile> {}
+export const file: util.PrimitiveFactory<
+  ZodMiniFileParams,
+  schemas.ZodMiniFile
+> = util.factory(schemas.ZodMiniFile, { type: "file" });
+
+// effect
+interface ZodMiniEffectParams
+  extends util.Params<schemas.ZodMiniEffect, "effect"> {}
+export function effect<O = unknown, I = unknown>(
+  effect: (input: I, ctx?: core.$ParseContext) => O,
+  params?: ZodMiniEffectParams
+): schemas.ZodMiniEffect<O, I> {
+  return new schemas.ZodMiniEffect({
+    type: "effect",
+    effect: effect as any,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniEffect<O, I>;
+}
+
+// preprocess
+interface ZodMiniPreprocessParams
+  extends ZodMiniEffectParams,
+    ZodMiniPipelineParams {}
+export function preprocess<T extends schemas.ZodMiniType>(
+  _effect: (arg: unknown) => core.input<T>,
+  schema: T,
+  params?: ZodMiniPreprocessParams
+): schemas.ZodMiniPipeline<schemas.ZodMiniEffect<T["_input"], unknown>, T> {
+  return pipeline(effect(_effect, params), schema, params);
+}
+// interface ZodMiniPreprocessParams
+//   extends util.Params<schemas.ZodMiniPreprocess, "effect"> {}
+// export function preprocess<T extends schemas.ZodMiniType>(
+//   schema: T,
+//   effect: (arg: unknown) => core.input<T>,
+//   params?: ZodMiniPreprocessParams
+// ): schemas.ZodMiniPreprocess<T> {
+//   return new schemas.ZodMiniPreprocess({
+//     type: "preprocess",
+//     schema,
+//     effect,
+//     ...util.normalizeCreateParams(params),
+//   }) as schemas.ZodMiniPreprocess<T>;
+// }
+
+// transform
+// rewrite to use pipeline and effect
+interface ZodMiniTransformParams
+  extends ZodMiniEffectParams,
+    ZodMiniPipelineParams {}
+export function transform<T extends schemas.ZodMiniType, NewOut>(
+  schema: T,
+  _effect: (arg: core.output<T>) => NewOut,
+  params?: ZodMiniTransformParams
+): schemas.ZodMiniPipeline<
+  T,
+  schemas.ZodMiniEffect<Awaited<NewOut>, core.output<T>>
+> {
+  return pipeline(schema, effect(_effect, params), params) as any;
+}
+// interface ZodMiniTransformParams
+//   extends util.Params<schemas.ZodMiniTransform, "schema" | "effect"> {}
+// export function transform<T extends schemas.ZodMiniType, NewOut>(
+//   schema: T,
+//   effect: (arg: core.output<T>) => NewOut,
+//   params?: ZodMiniTransformParams
+// ): schemas.ZodMiniTransform<T> {
+//   return new schemas.ZodMiniTransform({
+//     type: "transform",
+//     schema,
+//     effect,
+//     ...util.normalizeCreateParams(params),
+//   }) as schemas.ZodMiniTransform<T>;
+// }
+
+// optional
+interface ZodMiniOptionalParams
+  extends util.Params<schemas.ZodMiniOptional, "innerType"> {}
+export function optional<T extends schemas.ZodMiniType>(
+  innerType: T,
+  params?: ZodMiniOptionalParams
+): schemas.ZodMiniOptional<T> {
+  return new schemas.ZodMiniOptional({
+    type: "optional",
+    innerType,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniOptional<T>;
+}
+
+// nullable
+interface ZodMiniNullableParams
+  extends util.Params<schemas.ZodMiniNullable, "innerType"> {}
+export function nullable<T extends schemas.ZodMiniType>(
+  innerType: T,
+  params?: ZodMiniNullableParams
+): schemas.ZodMiniNullable<T> {
+  return new schemas.ZodMiniNullable({
+    type: "nullable",
+    innerType,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniNullable<T>;
+}
+
+// success
+interface ZodMiniSuccessParams
+  extends util.Params<schemas.ZodMiniSuccess, "innerType"> {}
+export function success<T extends schemas.ZodMiniType>(
+  innerType: T,
+  params?: ZodMiniSuccessParams
+): schemas.ZodMiniSuccess<T> {
+  return new schemas.ZodMiniSuccess({
+    type: "success",
+    innerType,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniSuccess<T>;
+}
+
+// default
+interface ZodMiniDefaultParams
+  extends util.Params<schemas.ZodMiniDefault, "innerType"> {}
+function _default<T extends schemas.ZodMiniType>(
+  innerType: T,
+  defaultValue: core.output<T> | (() => core.output<T>),
+  params?: ZodMiniDefaultParams
+): schemas.ZodMiniDefault<T> {
+  return new schemas.ZodMiniDefault({
+    type: "default",
+    innerType,
+    defaultValue:
+      defaultValue instanceof Function ? defaultValue : () => defaultValue,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniDefault<T>;
+}
+export { _default };
+
+// catch
+interface ZodMiniCatchParams
+  extends util.Params<schemas.ZodMiniCatch, "innerType"> {}
+function _catch<T extends schemas.ZodMiniType>(
+  innerType: T,
+  catchValue: core.output<T> | (() => core.output<T>),
+  params?: ZodMiniCatchParams
+): schemas.ZodMiniCatch<T> {
+  return new schemas.ZodMiniCatch({
+    type: "catch",
+    innerType,
+    catchValue: catchValue instanceof Function ? catchValue : () => catchValue,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniCatch<T>;
+}
+export { _catch as catch };
+
+// nan
+interface ZodMiniNaNParams extends util.Params<schemas.ZodMiniNaN> {}
+export const nan: util.PrimitiveFactory<ZodMiniNaNParams, schemas.ZodMiniNaN> =
+  util.factory(schemas.ZodMiniNaN, { type: "nan" });
+
+// pipeline
+interface ZodMiniPipelineParams
+  extends util.Params<schemas.ZodMiniPipeline, "in" | "out"> {}
+export function pipeline<
+  T extends schemas.ZodMiniType,
+  U extends schemas.ZodMiniType<any, T["_output"]>,
+>(
+  in_: T,
+  // fn: (arg: core.output<T>) => core.input<U>,
+  out: U,
+  params?: ZodMiniPipelineParams
+): schemas.ZodMiniPipeline<T, U> {
+  return new schemas.ZodMiniPipeline({
+    type: "pipeline",
+    in: in_,
+    out,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniPipeline<T, U>;
+}
+
+// readonly
+interface ZodMiniReadonlyParams
+  extends util.Params<schemas.ZodMiniReadonly, "innerType"> {}
+export function readonly<T extends schemas.ZodMiniType>(
+  innerType: T,
+  params?: ZodMiniReadonlyParams
+): schemas.ZodMiniReadonly<T> {
+  return new schemas.ZodMiniReadonly({
+    type: "readonly",
+    innerType,
+    ...util.normalizeCreateParams(params),
+  }) as schemas.ZodMiniReadonly<T>;
+}
+
+// templateLiteral
+interface ZodMiniTemplateLiteralParams
+  extends util.Params<schemas.ZodMiniTemplateLiteral, "parts"> {}
+export function templateLiteral<
+  const Parts extends core.$TemplateLiteralPart[],
+>(
+  parts: Parts,
+  params?: ZodMiniTemplateLiteralParams
+): schemas.ZodMiniTemplateLiteral<core.$PartsToTemplateLiteral<Parts>> {
+  return new schemas.ZodMiniTemplateLiteral({
+    type: "template_literal",
+    parts,
+    ...util.normalizeCreateParams(params),
+  }) as any;
+}
+
+// custom
+// type lkjasdf = core.$ZodIssueCustom[''];
+// interface CustomParams
+//   extends Omit<
+//     core.$ZodIssueData<core.$ZodIssueCustom>,
+//     "code" | "origin" | "input"
+//   > {}
+
+interface CustomParams extends util.RawCheckParams {
+  error?: string | core.$ZodErrorMap<core.$ZodIssueCustom>;
+  path?: PropertyKey[];
+}
+export type ZodCustom<T> = schemas.ZodMiniType<T, T>;
 export function custom<T>(
-  check?: (data: any) => any,
-  params: string | CustomParams | ((input: any) => CustomParams) = {},
-  /**
-   * @deprecated
-   *
-   * Pass `fatal` into the params object instead:
-   *
-   * ```ts
-   * z.string().custom((val) => val.length > 5, { fatal: false })
-   * ```
-   *
-   */
-
-  fatal?: boolean
+  fn?: (data: unknown) => unknown,
+  _params: string | CustomParams = {}
 ): ZodCustom<T> {
-  if (check)
-    return ZodAny.create().superRefine((data, ctx) => {
-      if (!check(data)) {
-        const p =
-          typeof params === "function" ? params(data) : typeof params === "string" ? { message: params } : params;
-        const _fatal = p.fatal ?? fatal ?? true;
-        const p2 = typeof p === "string" ? { message: p } : p;
-        ctx.addIssue({
-          input: data,
-          code: core.ZodIssueCode.custom,
-          ...p2,
-          fatal: _fatal,
-        });
-      }
+  let result = new schemas.ZodMiniAny({
+    type: "any",
+  });
+
+  const params = util.normalizeCheckParams(_params);
+
+  if (fn)
+    result = result._check({
+      _def: { check: "custom" },
+      run(input) {
+        if (!fn(input)) {
+          return {
+            issues: [
+              {
+                input,
+                code: "custom",
+                origin: "custom",
+                level: "error",
+                def: params,
+                path: params?.path,
+              },
+            ],
+          };
+        }
+      },
     });
-  return ZodAny.create();
+  return result;
 }
 
-/* lateObject */
-const lateObject: typeof ZodObject.lazycreate = (...args: [any]) => ZodObject.lazycreate(...args);
-export const late: { object: typeof lateObject } = {
-  object: lateObject,
-};
-
-/* instanceof */
+// instanceof
 abstract class Class {
   constructor(..._: any[]) {}
 }
-
-function instanceOfType<T extends typeof Class>(
+function _instanceof<T extends typeof Class>(
   cls: T,
   params: CustomParams = {
-    message: `Input not instance of ${cls.name}`,
+    error: `Input not instance of ${cls.name}`,
   }
 ): ZodCustom<InstanceType<T>> {
   return custom((data) => data instanceof cls, params);
 }
-export { instanceOfType as instanceof };
+export { _instanceof as instanceof };
 
-/* lateObject */
-export * as coerce from "./coerce.js";
-/*
-  - strictObject
-  - lateObject
-  - ostring
-  - onumber
-  - oboolean
-  - instanceof
-  - late
-  - lazy
-  - custom
-*/
-
-/** @deprecated Use z.configure() instead. */
-export function setErrorMap(map: err.$ZodErrorMap): void {
-  core.getConfig().error = map;
+// refine
+function customErr(
+  err: Pick<core.$ZodIssueData<core.$ZodIssueCustom>, "input" | "path" | "def">
+): { issues: core.$ZodIssueData[] } {
+  return {
+    issues: [
+      {
+        code: "custom",
+        origin: "custom",
+        ...err,
+      }, // as core.$ZodIssueData<core.$ZodIssueCustom>,
+    ],
+  };
 }
 
-/** @deprecated Use z.getConfig().error instead. */
-export function getErrorMap(): err.$ZodErrorMap {
-  return core.getConfig().error;
+export function refine<T>(
+  fn: (arg: T) => unknown | Promise<unknown>,
+  _params: string | CustomParams = {}
+): core.$ZodCheck<T> {
+  const params = util.normalizeCheckParams(_params as util.RawCheckParams);
+  return {
+    _def: { check: "custom", error: params.error },
+    run(input: T) {
+      const res = fn(input);
+      if (res instanceof Promise)
+        return res.then((r) =>
+          r ? undefined : customErr({ input, def: params, path: params.path })
+        );
+      return res
+        ? undefined
+        : customErr({ input, def: params, path: params.path });
+    },
+  };
+}
+
+///////////        METHODS       ///////////
+
+/**
+ * parse(data: unknown, params?: Partial<core.$ParseContext>): Output;
+ */
+export function parse<T extends schemas.ZodMiniType>(
+  schema: T,
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): core.output<T> {
+  const result = schema._parse(data, params);
+  if (result instanceof Promise) {
+    throw new Error(
+      "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
+    );
+  }
+  if (core.succeeded(result)) return result as core.output<T>;
+  throw result;
+}
+
+/**
+ * safeParse(
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): SafeParseResult<Output>;
+ */
+type SafeParseResult<T> =
+  | { success: true; data: T; error?: never }
+  | { success: false; data?: never; error: core.$ZodFailure };
+export function safeParse<T extends schemas.ZodMiniType>(
+  schema: T,
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): SafeParseResult<core.output<T>> {
+  const result = schema._parse(data, params);
+  if (result instanceof Promise)
+    throw new Error(
+      "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
+    );
+  return (
+    core.succeeded(result)
+      ? { success: true, data: result }
+      : { success: false, error: result }
+  ) as SafeParseResult<core.output<T>>;
+}
+
+/**
+ * parseAsync(
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): Promise<Output>;
+ */
+export async function parseAsync<T extends schemas.ZodMiniType>(
+  schema: T,
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): Promise<core.output<T>> {
+  let result = schema._parse(data, params);
+  if (result instanceof Promise) result = await result;
+  if (core.succeeded(result)) return result as core.output<T>;
+  throw result;
+}
+
+/**
+ * safeParseAsync(
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): Promise<SafeParseResult<Output>>;
+ */
+export async function safeParseAsync<T extends schemas.ZodMiniType>(
+  schema: T,
+  data: unknown,
+  params?: Partial<core.$ParseContext>
+): Promise<SafeParseResult<core.output<T>>> {
+  let result = schema._parse(data, params);
+  if (result instanceof Promise) result = await result;
+  return (
+    core.succeeded(result)
+      ? { success: true, data: result }
+      : { success: false, error: result }
+  ) as SafeParseResult<core.output<T>>;
 }

@@ -10,7 +10,7 @@ export interface $ZodIssueBase<
 > {
   code: string;
   origin: Origin;
-  input?: Input;
+  input?: Input | undefined;
   path: PropertyKey[];
   message: string;
   [k: string]: unknown;
