@@ -80,7 +80,7 @@
 - [BigInts](#bigints)
 - [NaNs](#nans)
 - [Booleans](#booleans)
-- [Dates](#dates)
+- [Dates](#dates-1)
 - [Zod enums](#zod-enums)
 - [Native enums](#native-enums)
 - [Optionals](#optionals)
