@@ -373,6 +373,7 @@ test("checks getters", () => {
   expect(z.string().email().isUUID).toEqual(false);
   expect(z.string().email().isNANOID).toEqual(false);
   expect(z.string().email().isIP).toEqual(false);
+  expect(z.string().email().isCIDR).toEqual(false);
   expect(z.string().email().isULID).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
@@ -382,6 +383,7 @@ test("checks getters", () => {
   expect(z.string().url().isUUID).toEqual(false);
   expect(z.string().url().isNANOID).toEqual(false);
   expect(z.string().url().isIP).toEqual(false);
+  expect(z.string().url().isCIDR).toEqual(false);
   expect(z.string().url().isULID).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
@@ -391,6 +393,7 @@ test("checks getters", () => {
   expect(z.string().cuid().isUUID).toEqual(false);
   expect(z.string().cuid().isNANOID).toEqual(false);
   expect(z.string().cuid().isIP).toEqual(false);
+  expect(z.string().cuid().isCIDR).toEqual(false);
   expect(z.string().cuid().isULID).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
@@ -400,6 +403,7 @@ test("checks getters", () => {
   expect(z.string().cuid2().isUUID).toEqual(false);
   expect(z.string().cuid2().isNANOID).toEqual(false);
   expect(z.string().cuid2().isIP).toEqual(false);
+  expect(z.string().cuid2().isCIDR).toEqual(false);
   expect(z.string().cuid2().isULID).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
@@ -409,6 +413,7 @@ test("checks getters", () => {
   expect(z.string().uuid().isUUID).toEqual(true);
   expect(z.string().uuid().isNANOID).toEqual(false);
   expect(z.string().uuid().isIP).toEqual(false);
+  expect(z.string().uuid().isCIDR).toEqual(false);
   expect(z.string().uuid().isULID).toEqual(false);
 
   expect(z.string().nanoid().isEmail).toEqual(false);
@@ -418,6 +423,7 @@ test("checks getters", () => {
   expect(z.string().nanoid().isUUID).toEqual(false);
   expect(z.string().nanoid().isNANOID).toEqual(true);
   expect(z.string().nanoid().isIP).toEqual(false);
+  expect(z.string().nanoid().isCIDR).toEqual(false);
   expect(z.string().nanoid().isULID).toEqual(false);
 
   expect(z.string().ip().isEmail).toEqual(false);
@@ -427,7 +433,18 @@ test("checks getters", () => {
   expect(z.string().ip().isUUID).toEqual(false);
   expect(z.string().ip().isNANOID).toEqual(false);
   expect(z.string().ip().isIP).toEqual(true);
+  expect(z.string().ip().isCIDR).toEqual(false);
   expect(z.string().ip().isULID).toEqual(false);
+
+  expect(z.string().cidr().isEmail).toEqual(false);
+  expect(z.string().cidr().isURL).toEqual(false);
+  expect(z.string().cidr().isCUID).toEqual(false);
+  expect(z.string().cidr().isCUID2).toEqual(false);
+  expect(z.string().cidr().isUUID).toEqual(false);
+  expect(z.string().cidr().isNANOID).toEqual(false);
+  expect(z.string().cidr().isIP).toEqual(false);
+  expect(z.string().cidr().isCIDR).toEqual(true);
+  expect(z.string().cidr().isULID).toEqual(false);
 
   expect(z.string().ulid().isEmail).toEqual(false);
   expect(z.string().ulid().isURL).toEqual(false);
@@ -436,6 +453,7 @@ test("checks getters", () => {
   expect(z.string().ulid().isUUID).toEqual(false);
   expect(z.string().ulid().isNANOID).toEqual(false);
   expect(z.string().ulid().isIP).toEqual(false);
+  expect(z.string().ulid().isCIDR).toEqual(false);
   expect(z.string().ulid().isULID).toEqual(true);
 });
 
@@ -767,5 +785,47 @@ test("IP validation", () => {
   expect(validIPs.every((ip) => ipSchema.safeParse(ip).success)).toBe(true);
   expect(
     invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
+  ).toBe(true);
+});
+
+test("CIDR validation", () => {
+  const ipv4Cidr = z.string().cidr({ version: "v4" });
+  expect(() => ipv4Cidr.parse("2001:0db8:85a3::8a2e:0370:7334/64")).toThrow();
+
+  const ipv6Cidr = z.string().cidr({ version: "v6" });
+  expect(() => ipv6Cidr.parse("192.168.0.1/24")).toThrow();
+
+  const validCidrs = [
+    "192.168.0.0/24",
+    "10.0.0.0/8",
+    "203.0.113.0/24",
+    "192.0.2.0/24",
+    "127.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.1.0/24",
+    "fc00::/7",
+    "fd00::/8",
+    "2001:db8::/32",
+    "2607:f0d0:1002:51::4/64",
+    "2001:0db8:85a3:0000:0000:8a2e:0370:7334/128",
+    "2001:0db8:1234:0000::/64",
+  ];
+
+  const invalidCidrs = [
+    "192.168.1.1/33",
+    "10.0.0.1/-1",
+    "192.168.1.1/24/24",
+    "192.168.1.0/abc",
+    "2001:db8::1/129",
+    "2001:db8::1/-1",
+    "2001:db8::1/64/64",
+    "2001:db8::1/abc",
+  ];
+
+  // no parameters check IPv4 or IPv6
+  const cidrSchema = z.string().cidr();
+  expect(validCidrs.every((ip) => cidrSchema.safeParse(ip).success)).toBe(true);
+  expect(
+    invalidCidrs.every((ip) => cidrSchema.safeParse(ip).success === false)
   ).toBe(true);
 });
