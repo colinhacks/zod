@@ -76,6 +76,7 @@
   - [Dates](#dates)
   - [Times](#times)
   - [IP addresses](#ip-addresses)
+  - [IP addresses range](#ip-addresses-range)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -931,6 +932,23 @@ ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
 
 const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
+```
+
+### IP addresses range
+
+The `z.string().ipRange()` method checks if a given IP address falls within a specified CIDR range.
+
+```ts
+const ipv4Range = z.string().ipRange({ cidr: "192.168.1.0/24", version: "v4" });
+
+ipv4Range.parse("192.168.1.10"); // pass
+ipv4Range.parse("192.168.1.20"); // pass
+ipv4Range.parse("192.168.2.10"); // fail
+
+const ipv6Range = z.string().ipRange({ cidr: "2001:db8::/32", version: "v6" });
+
+ipv6Range.parse("2001:db8::1"); // pass
+ipv6Range.parse("2001:db9::1"); // fail
 ```
 
 ## Numbers

@@ -565,6 +565,7 @@ export type ZodStringCheck =
     }
   | { kind: "duration"; message?: string }
   | { kind: "ip"; version?: IpVersion; message?: string }
+  | { kind: "ipRange"; cidr: string; version: IpVersion; message?: string }
   | { kind: "base64"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
@@ -669,6 +670,57 @@ function isValidIP(ip: string, version?: IpVersion) {
   }
 
   return false;
+}
+
+const ipToBinary = (ip: string, version: IpVersion): string => {
+  if (version === "v4") {
+    return ip
+      .split(".")
+      .map((octet) => parseInt(octet, 10).toString(2).padStart(8, "0"))
+      .join("");
+  } else if (version === "v6") {
+    const segments = ip.split(":");
+    const fullSegments: string[] = [];
+    let zeroFillCount = 0;
+
+    for (const segment of segments) {
+      if (segment === "") {
+        zeroFillCount = 8 - (segments.length - 1);
+        continue;
+      }
+      fullSegments.push(segment.padStart(4, "0"));
+    }
+
+    for (let i = 0; i < zeroFillCount; i++) {
+      fullSegments.splice(segments.indexOf("") + i, 0, "0000");
+    }
+
+    return fullSegments
+      .map((segment) => parseInt(segment, 16).toString(2).padStart(16, "0"))
+      .join("");
+  } else {
+    throw new Error("Invalid IP version");
+  }
+};
+
+function isValidIPRange(ip: string, cidr: string, version: IpVersion) {
+  const [rangeIp, prefixLengthStr] = cidr.split("/");
+  const prefixLength = parseInt(prefixLengthStr, 10);
+
+  if (
+    (version === "v4" && (prefixLength < 0 || prefixLength > 32)) ||
+    (version === "v6" && (prefixLength < 0 || prefixLength > 128))
+  ) {
+    throw new Error("Invalid prefix length");
+  }
+
+  const ipBinary = ipToBinary(ip, version);
+  const rangeBinary = ipToBinary(rangeIp, version);
+
+  return (
+    ipBinary.substring(0, prefixLength) ===
+    rangeBinary.substring(0, prefixLength)
+  );
 }
 
 export class ZodString extends ZodType<string, ZodStringDef, string> {
@@ -933,6 +985,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "ipRange") {
+        if (!isValidIPRange(input.data, check.cidr, check.version)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "ipRange",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "base64") {
         if (!base64Regex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -1004,6 +1066,18 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 
   ip(options?: string | { version?: IpVersion; message?: string }) {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
+  }
+
+  ipRange(
+    args: { cidr: string; version: IpVersion },
+    options?: string | { message?: string }
+  ) {
+    return this._addCheck({
+      kind: "ipRange",
+      cidr: args.cidr,
+      version: args.version,
+      ...errorUtil.errToObj(options),
+    });
   }
 
   datetime(
@@ -1198,6 +1272,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   get isIP() {
     return !!this._def.checks.find((ch) => ch.kind === "ip");
+  }
+  get isIPRange() {
+    return !!this._def.checks.find((ch) => ch.kind === "ipRange");
   }
   get isBase64() {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
