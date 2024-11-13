@@ -565,7 +565,8 @@ export type ZodStringCheck =
     }
   | { kind: "duration"; message?: string }
   | { kind: "ip"; version?: IpVersion; message?: string }
-  | { kind: "base64"; message?: string };
+  | { kind: "base64"; message?: string }
+  | { kind: "base64url"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -617,6 +618,10 @@ const ipv6Regex =
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
 const base64Regex =
   /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+
+// https://base64.guru/standards/base64url
+const base64urlRegex =
+  /^([0-9a-zA-Z-_]{4})*(([0-9a-zA-Z-_]{2}(==)?)|([0-9a-zA-Z-_]{3}(=)?))?$/;
 
 // simple
 // const dateRegexSource = `\\d{4}-\\d{2}-\\d{2}`;
@@ -943,6 +948,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "base64url") {
+        if (!base64urlRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "base64url",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -1000,6 +1015,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   base64(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
+  }
+  base64url(message?: errorUtil.ErrMessage) {
+    // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
+    return this._addCheck({ kind: "base64url", ...errorUtil.errToObj(message) });
   }
 
   ip(options?: string | { version?: IpVersion; message?: string }) {
@@ -1201,6 +1220,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   get isBase64() {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
+  }
+  get isBase64url() {
+    // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
+    return !!this._def.checks.find((ch) => ch.kind === "base64url");
   }
 
   get minLength() {
