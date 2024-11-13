@@ -85,13 +85,15 @@ test("refinement Promise", async () => {
 });
 
 test("custom path", async () => {
-  const result = await z
-    .object({
-      password: z.string(),
-      confirm: z.string(),
-    })
-    .refine((data) => data.confirm === data.password, { path: ["confirm"] })
-    .spa({ password: "asdf", confirm: "qewr" });
+  const result = await z.spa(
+    z
+      .object({
+        password: z.string(),
+        confirm: z.string(),
+      })
+      .refine((data) => data.confirm === data.password, { path: ["confirm"] }),
+    { password: "asdf", confirm: "qewr" }
+  );
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].path).toEqual(["confirm"]);
@@ -115,8 +117,8 @@ test("use path in refinement context", async () => {
     foo: noNested,
   });
 
-  const t1 = await noNested.spa("asdf");
-  const t2 = await data.spa({ foo: "asdf" });
+  const t1 = await z.spa(noNested, "asdf");
+  const t2 = await z.spa(data, { foo: "asdf" });
 
   expect(t1.success).toBe(true);
   expect(t2.success).toBe(false);
@@ -148,7 +150,7 @@ test("superRefine", () => {
     }
   });
 
-  const result = Strings.safeParse(["asfd", "asfd", "asfd", "asfd"]);
+  const result = z.safeParse(Strings, ["asfd", "asfd", "asfd", "asfd"]);
 
   expect(result.success).toEqual(false);
   if (!result.success) expect(result.error.issues.length).toEqual(2);
@@ -177,7 +179,12 @@ test("superRefine async", async () => {
     }
   });
 
-  const result = await Strings.safeParseAsync(["asfd", "asfd", "asfd", "asfd"]);
+  const result = await z.safeParseAsync(Strings, [
+    "asfd",
+    "asfd",
+    "asfd",
+    "asfd",
+  ]);
 
   expect(result.success).toEqual(false);
   if (!result.success) expect(result.error.issues.length).toEqual(2);
@@ -208,8 +215,8 @@ test("superRefine - type narrowing", () => {
 
   util.assertEqual<z.infer<typeof schema>, NarrowType>(true);
 
-  expect(schema.safeParse({ type: "test", age: 0 }).success).toEqual(true);
-  expect(schema.safeParse(null).success).toEqual(false);
+  expect(z.safeParse(schema, { type: "test", age: 0 }).success).toEqual(true);
+  expect(z.safeParse(schema, null).success).toEqual(false);
 });
 
 test("chained mixed refining types", () => {
@@ -264,14 +271,14 @@ test("chained refinements", () => {
       path: ["size"],
       message: "size greater than 7",
     });
-  const r1 = objectSchema.safeParse({
+  const r1 = z.safeParse(objectSchema, {
     length: 4,
     size: 9,
   });
   expect(r1.success).toEqual(false);
   if (!r1.success) expect(r1.error.issues.length).toEqual(1);
 
-  const r2 = objectSchema.safeParse({
+  const r2 = z.safeParse(objectSchema, {
     length: 4,
     size: 3,
   });
@@ -300,7 +307,7 @@ test("fatal superRefine", () => {
       }
     });
 
-  const result = Strings.safeParse("");
+  const result = z.safeParse(Strings, "");
 
   expect(result.success).toEqual(false);
   if (!result.success) expect(result.error.issues.length).toEqual(1);

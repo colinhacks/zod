@@ -165,7 +165,7 @@ test("custom path in custom error map", () => {
     expect(error.path.length).toBe(2);
     return { message: "doesnt matter" };
   };
-  const result = schema.safeParse({ items: ["first"] }, { errorMap });
+  const result = z.safeParse(schema, { items: ["first"] }, { errorMap });
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].path).toEqual(["items", "items-too-few"]);
@@ -178,7 +178,7 @@ test("error metadata from value", () => {
     (val) => ({ params: { val } })
   );
 
-  const result = dynamicRefine.safeParse("asdf");
+  const result = z.safeParse(dynamicRefine, "asdf");
   expect(result.success).toEqual(false);
   if (!result.success) {
     const sub = result.error.issues[0];
@@ -199,12 +199,12 @@ test("error metadata from value", () => {
 //     ])
 //     .refine((v) => v >= 1);
 
-//   expect(() => asdf.safeParse("foo")).not.toThrow();
+//   expect(() => z.safeParse(asdf, "foo")).not.toThrow();
 // });
 
 test("root level formatting", () => {
   const schema = z.string().email();
-  const result = schema.safeParse("asdfsdf");
+  const result = z.safeParse(schema, "asdfsdf");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.format()._errors).toEqual(["Invalid email"]);
@@ -219,7 +219,7 @@ test("custom path", () => {
     })
     .refine((val) => val.confirm === val.password, { path: ["confirm"] });
 
-  const result = schema.safeParse({
+  const result = z.safeParse(schema, {
     password: "peanuts",
     confirm: "qeanuts",
   });
@@ -242,7 +242,7 @@ test("custom path", () => {
     })
     .refine((val) => val.confirm === val.password);
 
-  const result = schema.safeParse({
+  const result = z.safeParse(schema, {
     password: "qwer",
     confirm: "asdf",
   });
@@ -268,7 +268,7 @@ test("no abort early on refinements", () => {
     inner: { name: ["aasd", "asdfasdfasfd"] },
   };
 
-  const result1 = schema.safeParse(invalidItem);
+  const result1 = z.safeParse(schema, invalidItem);
   expect(result1.success).toEqual(false);
   if (!result1.success) {
     expect(result1.error.issues.length).toEqual(2);
@@ -281,8 +281,8 @@ test("formatting", () => {
   const invalidArray = {
     inner: { name: ["asdfasdf", "asdfasdfasfd"] },
   };
-  const result1 = schema.safeParse(invalidItem);
-  const result2 = schema.safeParse(invalidArray);
+  const result1 = z.safeParse(schema, invalidItem);
+  const result2 = z.safeParse(schema, invalidArray);
 
   expect(result1.success).toEqual(false);
   expect(result2.success).toEqual(false);
@@ -334,7 +334,7 @@ test("formatting with nullable and optional fields", () => {
     optionalArray: ["abcd"],
     optionalTuple: ["abcd", "abcd", 1],
   };
-  const result = schema.safeParse(invalidItem);
+  const result = z.safeParse(schema, invalidItem);
   expect(result.success).toEqual(false);
   if (!result.success) {
     type FormattedError = z.inferFormattedError<typeof schema>;
@@ -369,20 +369,20 @@ const stringWithCustomError = z.string({
 });
 
 test("schema-bound error map", () => {
-  const result = stringWithCustomError.safeParse(1234);
+  const result = z.safeParse(stringWithCustomError, 1234);
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("Invalid name");
   }
 
-  const result2 = stringWithCustomError.safeParse(undefined);
+  const result2 = z.safeParse(stringWithCustomError, undefined);
   expect(result2.success).toEqual(false);
   if (!result2.success) {
     expect(result2.error.issues[0].message).toEqual("Name is required");
   }
 
   // support contextual override
-  const result3 = stringWithCustomError.safeParse(undefined, {
+  const result3 = z.safeParse(stringWithCustomError, undefined, {
     errorMap: () => ({ message: "OVERRIDE" }),
   });
   expect(result3.success).toEqual(false);
@@ -394,7 +394,7 @@ test("schema-bound error map", () => {
 test("overrideErrorMap", () => {
   // support overrideErrorMap
   z.setErrorMap(() => ({ message: "OVERRIDE" }));
-  const result4 = stringWithCustomError.min(10).safeParse("tooshort");
+  const result4 = z.safeParse(stringWithCustomError.min(10), "tooshort");
   expect(result4.success).toEqual(false);
   if (!result4.success) {
     expect(result4.error.issues[0].message).toEqual("OVERRIDE");
@@ -407,12 +407,12 @@ test("invalid and required", () => {
     invalid_type_error: "Invalid name",
     required_error: "Name is required",
   });
-  const result1 = str.safeParse(1234);
+  const result1 = z.safeParse(str, 1234);
   expect(result1.success).toEqual(false);
   if (!result1.success) {
     expect(result1.error.issues[0].message).toEqual("Invalid name");
   }
-  const result2 = str.safeParse(undefined);
+  const result2 = z.safeParse(str, undefined);
   expect(result2.success).toEqual(false);
   if (!result2.success) {
     expect(result2.error.issues[0].message).toEqual("Name is required");
@@ -425,7 +425,7 @@ test("Fallback to default required error", () => {
     // required_error: "Name is required",
   });
 
-  const result2 = str.safeParse(undefined);
+  const result2 = z.safeParse(str, undefined);
   expect(result2.success).toEqual(false);
   if (!result2.success) {
     expect(result2.error.issues[0].message).toEqual("Required");
@@ -445,7 +445,7 @@ test("invalid and required and errorMap", () => {
 test("strict error message", () => {
   const errorMsg = "Invalid object";
   const obj = z.object({ x: z.string() }).strict(errorMsg);
-  const result = obj.safeParse({ x: "a", y: "b" });
+  const result = z.safeParse(obj, { x: "a", y: "b" });
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual(errorMsg);
@@ -521,7 +521,7 @@ test("enum with message returns the custom error message", () => {
     message: "the value provided is invalid",
   });
 
-  const result1 = schema.safeParse("berries");
+  const result1 = z.safeParse(schema, "berries");
   expect(result1.success).toEqual(false);
   if (!result1.success) {
     expect(result1.error.issues[0].message).toEqual(
@@ -529,7 +529,7 @@ test("enum with message returns the custom error message", () => {
     );
   }
 
-  const result2 = schema.safeParse(undefined);
+  const result2 = z.safeParse(schema, undefined);
   expect(result2.success).toEqual(false);
   if (!result2.success) {
     expect(result2.error.issues[0].message).toEqual(
@@ -537,10 +537,10 @@ test("enum with message returns the custom error message", () => {
     );
   }
 
-  const result3 = schema.safeParse("banana");
+  const result3 = z.safeParse(schema, "banana");
   expect(result3.success).toEqual(true);
 
-  const result4 = schema.safeParse(null);
+  const result4 = z.safeParse(schema, null);
   expect(result4.success).toEqual(false);
   if (!result4.success) {
     expect(result4.error.issues[0].message).toEqual(
@@ -551,7 +551,7 @@ test("enum with message returns the custom error message", () => {
 
 test("when the message is falsy, it is used as is provided", () => {
   const schema = z.string().max(1, { message: "" });
-  const result = schema.safeParse("asdf");
+  const result = z.safeParse(schema, "asdf");
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("");
@@ -568,7 +568,7 @@ test("when the message is falsy, it is used as is provided", () => {
 //       message: "Passwords don't match",
 //       path: ["confirm"],
 //     });
-//   const result = user.safeParse({ password: "asdf", confirm: "qwer" });
+//   const result = z.safeParse(user, { password: "asdf", confirm: "qwer" });
 //   if (!result.success) {
 //     expect(result.error.issues.length).toEqual(2);
 //   }

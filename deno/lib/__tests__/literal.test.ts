@@ -27,7 +27,7 @@ test("failing validations", () => {
 
 test("invalid_literal should have `received` field with data", () => {
   const data = "shark";
-  const result = literalTuna.safeParse(data);
+  const result = z.safeParse(literalTuna, data);
   if (!result.success) {
     const issue = result.error.issues[0];
     if (issue.code === "invalid_literal") {
