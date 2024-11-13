@@ -56,6 +56,7 @@ export type CustomErrorParams = Partial<util.Omit<ZodCustomIssue, "code">>;
 export interface ZodTypeDef {
   errorMap?: ZodErrorMap;
   description?: string;
+  examples?: any[];
 }
 
 class ParseInputLazyPath implements ParseInput {
@@ -120,21 +121,29 @@ export type RawCreateParams =
       required_error?: string;
       message?: string;
       description?: string;
+      examples?: any[];
     }
   | undefined;
 export type ProcessedCreateParams = {
   errorMap?: ZodErrorMap;
   description?: string;
+  examples?: any[];
 };
 function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   if (!params) return {};
-  const { errorMap, invalid_type_error, required_error, description } = params;
+  const {
+    errorMap,
+    invalid_type_error,
+    required_error,
+    description,
+    examples,
+  } = params;
   if (errorMap && (invalid_type_error || required_error)) {
     throw new Error(
       `Can't use "invalid_type_error" or "required_error" in conjunction with custom error map.`
     );
   }
-  if (errorMap) return { errorMap: errorMap, description };
+  if (errorMap) return { errorMap: errorMap, description, examples };
   const customMap: ZodErrorMap = (iss, ctx) => {
     const { message } = params;
 
@@ -147,7 +156,7 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
     if (iss.code !== "invalid_type") return { message: ctx.defaultError };
     return { message: message ?? invalid_type_error ?? ctx.defaultError };
   };
-  return { errorMap: customMap, description };
+  return { errorMap: customMap, description, examples };
 }
 
 export type SafeParseSuccess<Output> = {
@@ -177,6 +186,10 @@ export abstract class ZodType<
 
   get description() {
     return this._def.description;
+  }
+
+  get examples() {
+    return this._def.examples;
   }
 
   abstract _parse(input: ParseInput): ParseReturnType<Output>;
@@ -418,6 +431,7 @@ export abstract class ZodType<
     this.default = this.default.bind(this);
     this.catch = this.catch.bind(this);
     this.describe = this.describe.bind(this);
+    this.example = this.example.bind(this);
     this.pipe = this.pipe.bind(this);
     this.readonly = this.readonly.bind(this);
     this.isNullable = this.isNullable.bind(this);
@@ -501,6 +515,14 @@ export abstract class ZodType<
     return new This({
       ...this._def,
       description,
+    });
+  }
+
+  example(example: any): this {
+    const This = (this as any).constructor;
+    return new This({
+      ...this._def,
+      examples: [...(this._def.examples || []), example],
     });
   }
 
