@@ -59,12 +59,35 @@ export interface $ParseContext {
 
 export const RESULT: symbol = Symbol.for("{{zod.result}}");
 
-export interface $ZodResult<T = unknown> {
-  tag: typeof RESULT;
-  value: T;
+export type $ZodResult<T = unknown> =
+  //$ZodSuccess<T> | $ZodFail;
+  {
+    tag: typeof RESULT;
+    value?: T;
+    issues?: err.$ZodIssueData[];
+    aborted?: boolean;
+  };
+
+export type $ZodResultFull<T = unknown> = Required<$ZodResult<T>>;
+export interface $ZodResultWithIssues extends $ZodResult {
   issues: err.$ZodIssueData[];
-  aborted?: boolean;
 }
+export interface $ZodResultWithValue<T> extends $ZodResult<T> {
+  value: T;
+}
+// export interface $ZodResultSuccess<T = unknown> {
+//   tag: typeof RESULT;
+//   value: T;
+//   issues: err.$ZodIssueData[];
+//   aborted: boolean;
+// }
+
+// export interface $ZodResultFail {
+//   tag: typeof RESULT;
+//   issues?: err.$ZodIssueData[];
+//   aborted: boolean;
+//   value: never;
+// }
 
 export function $result(
   value: unknown,
@@ -74,23 +97,23 @@ export function $result(
   return { tag: RESULT, value, issues, aborted };
 }
 
-// export function $fail(
-//   issues: err.$ZodIssueData[],
-//   aborted = false
-// ): $ZodResult {
-//   return { tag: RESULT, issues, aborted } as any;
-// }
-
-export function $succeed(value: unknown): $ZodResult {
-  return { tag: RESULT, issues: [], value, aborted: false };
+export function $fail(
+  issues: err.$ZodIssueData[],
+  aborted = false
+): $ZodResultFull {
+  return { tag: RESULT, issues, aborted, value: null } as any;
 }
 
-export function $failed(x: $ZodResult): boolean {
+export function $succeed<T>(value: T): $ZodResultFull<T> {
+  return { tag: RESULT, issues: [], aborted: false, value };
+}
+
+export function $failed(x: $ZodResult): x is $ZodResultWithIssues {
   return x.issues?.length as any;
 }
 
-export function $succeeded(x: $ZodResult): boolean {
-  return !x.issues?.length;
+export function $succeeded<T>(x: $ZodResult<T>): x is $ZodResultWithValue<T> {
+  return !x.issues?.length as any;
 }
 
 export function mergeIn(

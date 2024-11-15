@@ -5,7 +5,7 @@ console.log(z.parse(z.string(), "hello"));
 
 // test object
 console.log(
-  z.parse(
+  z.parseAsync(
     z.object({
       a: z.string(),
       b: z.string(),
