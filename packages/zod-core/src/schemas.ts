@@ -1210,7 +1210,34 @@ async function handleObjectResultsAsync(
   return handleObjectResults(resolvedResults, result);
 }
 
-// function handleObjectResult(result: core.$ZodResult, finalResult: core.$ZodResult, key: PropertyKey) {};
+function handleObjectResultSimple(
+  result: core.$ZodResult,
+  finalResult: core.$ZodResult,
+  key: PropertyKey
+) {
+  if (core.$failed(result)) {
+    finalResult.issues.push(...core.$prefixIssues(key, result.issues));
+  } else {
+    (finalResult.value as any)[key] = result.value;
+  }
+}
+// function handleObjectResult(result: core.$ZodResult, finalResult: core.$ZodResult, key: PropertyKey, proms: any[]) {
+//   if (result instanceof Promise) {
+//     proms.push(
+//       result.then((result) => {
+//         if (core.$failed(result)) {
+//           finalResult.issues.push(...core.$prefixIssues(key, result.issues));
+//         } else {
+//           (finalResult.value as any)[key] = result.value;
+//         }
+//       })
+//     );
+//   } else {
+//     if (core.$failed(result)) {
+//       finalResult.issues.push(...core.$prefixIssues(key, result.issues));
+//     } else (finalResult.value as any)[key] = result.value;
+//   }
+// };
 export const $ZodObject: core.$constructor<$ZodObject> =
   /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
     core.$ZodType.init(inst, def);
@@ -1275,21 +1302,12 @@ export const $ZodObject: core.$constructor<$ZodObject> =
 
         if (result instanceof Promise) {
           proms.push(
-            result.then((result) => {
-              if (core.$failed(result)) {
-                finalResult.issues.push(
-                  ...core.$prefixIssues(key, result.issues)
-                );
-              } else {
-                (finalResult.value as any)[key] = result.value;
-              }
-            })
+            result.then((result) =>
+              handleObjectResultSimple(result, finalResult, key)
+            )
           );
-          //async = true;
         } else {
-          if (core.$failed(result)) {
-            finalResult.issues.push(...core.$prefixIssues(key, result.issues));
-          } else (finalResult.value as any)[key] = result.value;
+          handleObjectResultSimple(result, finalResult, key);
         }
       }
 
@@ -1301,22 +1319,12 @@ export const $ZodObject: core.$constructor<$ZodObject> =
           if (result instanceof Promise) {
             proms.push(
               result.then((result) => {
-                if (core.$failed(result)) {
-                  finalResult.issues.push(
-                    ...core.$prefixIssues(key, result.issues)
-                  );
-                } else {
-                  (finalResult.value as any)[key] = result.value;
-                }
+                handleObjectResultSimple(result, finalResult, key);
               })
             );
             //async = true;
           } else {
-            if (core.$failed(result)) {
-              finalResult.issues.push(
-                ...core.$prefixIssues(key, result.issues)
-              );
-            } else (finalResult.value as any)[key] = result.value;
+            handleObjectResultSimple(result, finalResult, key);
           }
           // objectResults[key] = def.catchall._parse((input as any)[key]);
           // if (objectResults[key] instanceof Promise) async = true;
