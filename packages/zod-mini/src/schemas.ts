@@ -18,7 +18,6 @@ export const ZodMiniType: core.$constructor<ZodMiniType> = core.$constructor(
   "ZodMiniType",
   (inst) => {
     inst.check = inst._check;
-
     return inst;
   }
 );
@@ -803,15 +802,16 @@ export const ZodMiniTuple: core.$constructor<ZodMiniTuple> =
 /////////////////////////////////////////////
 export interface ZodMiniPropertyKey
   extends ZodMiniType<PropertyKey, PropertyKey> {}
-export interface ZodMiniHasValues
-  extends ZodMiniType<PropertyKey, PropertyKey> {
-  _values: Set<PropertyKey>;
-}
 
-export interface ZodMiniHasPattern
-  extends ZodMiniType<PropertyKey, PropertyKey> {
-  _pattern: RegExp;
-}
+// export interface ZodMiniHasValues
+//   extends ZodMiniType<PropertyKey, PropertyKey> {
+//   _values: Set<PropertyKey>;
+// }
+
+// export interface ZodMiniHasPattern
+//   extends ZodMiniType<PropertyKey, PropertyKey> {
+//   _pattern: RegExp;
+// }
 
 type ZodMiniRecordKey = ZodMiniPropertyKey; // ZodMiniHasValues | ZodMiniHasPattern;
 export interface ZodMiniRecordDef extends core.$ZodRecordDef {}

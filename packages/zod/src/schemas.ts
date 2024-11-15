@@ -1,5 +1,7 @@
 import * as core from "zod-core";
 import * as checks from "zod-core";
+import * as api from "./api.js";
+import type * as util from "./util.js";
 
 export type CustomErrorParams = Omit<core.$ZodIssueBase, "code">;
 export interface ParseContext extends core.$ParseContext {}
@@ -11,10 +13,13 @@ interface RefinementCtx {
   ): void;
 }
 
+export interface ZodError extends core.$ZodFailure {}
+
 /////////////////////////////////////////
 ////////////     ZodType     ////////////
 /////////////////////////////////////////
-type SafeParseReturnType<T> =
+// type SafeParseReturnType<T> =
+type SafeParseResult<T> =
   | {
       success: true;
       error?: never;
@@ -26,6 +31,10 @@ type SafeParseReturnType<T> =
       data: never;
     };
 export interface ZodTypeDef extends core.$ZodTypeDef {}
+
+interface OptionalParams extends util.Params<ZodOptional, "innerType"> {}
+interface NullableParams extends util.Params<ZodNullable, "innerType"> {}
+
 export interface ZodType<Output = unknown, Input = unknown>
   extends core.$ZodType<Output, Input> {
   _def: ZodTypeDef;
@@ -34,120 +43,147 @@ export interface ZodType<Output = unknown, Input = unknown>
   safeParse(
     data: unknown,
     params?: Partial<ParseContext>
-  ): SafeParseReturnType<Output>;
+  ): SafeParseResult<Output>;
   parseAsync(data: unknown, params?: Partial<ParseContext>): Promise<Output>;
   safeParseAsync(
     data: unknown,
     params?: Partial<ParseContext>
-  ): Promise<SafeParseReturnType<Output>>;
+  ): Promise<SafeParseResult<Output>>;
   spa: (
     data: unknown,
     params?: Partial<ParseContext>
-  ) => Promise<SafeParseReturnType<Output>>;
+  ) => Promise<SafeParseResult<Output>>;
 
-  // schema methods
-  refine<RefinedOutput extends Output>(
-    check: (arg: Output) => arg is RefinedOutput,
-    message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
-  ): ZodEffects<this, RefinedOutput, Input>;
   refine(
     check: (arg: Output) => unknown | Promise<unknown>,
-    message?: string | CustomErrorParams | ((arg: Output) => CustomErrorParams)
-  ): ZodEffects<this, Output, Input>;
+    message?:
+      | string
+      | CustomErrorParams
+      | core.$ZodErrorMap<core.$ZodIssueCustom>
+  ): this;
   /**
    * @deprecated Use `.check()` instead.
    */
-  refinement<RefinedOutput extends Output>(
-    check: (arg: Output) => arg is RefinedOutput,
-    refinementData:
-      | core.IssueData
-      | ((arg: Output, ctx: RefinementCtx) => core.IssueData)
-  ): ZodEffects<this, RefinedOutput, Input>;
-  /**
-   * @deprecated Use `.check()` instead.
-   */
-  refinement(
-    check: (arg: Output) => boolean,
-    refinementData:
-      | core.IssueData
-      | ((arg: Output, ctx: RefinementCtx) => core.IssueData)
-  ): ZodEffects<this, Output, Input>;
-  _refinement(
-    refinement: RefinementEffect<Output>["refinement"]
-  ): ZodEffects<this, Output, Input>;
-  /**
-   * @deprecated Use `.check()` instead.
-   */
-  superRefine<RefinedOutput extends Output>(
-    refinement: (arg: Output, ctx: RefinementCtx) => arg is RefinedOutput
-  ): ZodEffects<this, RefinedOutput, Input>;
+  // refinement<RefinedOutput extends Output>(
+  //   check: (arg: Output) => arg is RefinedOutput,
+  //   refinementData:
+  //     | core.IssueData
+  //     | ((arg: Output, ctx: RefinementCtx) => core.IssueData)
+  // ): this;
+  // /**
+  //  * @deprecated Use `.check()` instead.
+  //  */
+  // refinement(
+  //   check: (arg: Output) => boolean,
+  //   refinementData:
+  //     | core.IssueData
+  //     | ((arg: Output, ctx: RefinementCtx) => core.IssueData)
+  // ): this;
+  // _refinement(refinement: RefinementEffect<Output>["refinement"]): this;
+  // /**
+  //  * @deprecated Use `.check()` instead.
+  //  */
+  // superRefine<RefinedOutput extends Output>(
+  //   refinement: (arg: Output, ctx: RefinementCtx) => arg is RefinedOutput
+  // ): this;
   /**
    * @deprecated Use `.check()` instead.
    */
   superRefine(
     refinement: (arg: Output, ctx: RefinementCtx) => void | Promise<void>
-  ): ZodEffects<this, Output, Input>;
-  optional(): ZodOptional<this>;
-  nullable(): ZodNullable<this>;
+  ): this;
+
+  check(...checks: core.$ZodCheck<Output>[]): this;
+
+  optional(params?: OptionalParams): ZodOptional<this>;
+  nullable(params?: NullableParams): ZodNullable<this>;
   nullish(): ZodOptional<ZodNullable<this>>;
   array(): ZodArray<this>;
-  promise(): ZodPromise<this>;
-  or<T extends ZodTypeAny>(option: T): ZodUnion<[this, T]>;
-  and<T extends ZodTypeAny>(incoming: T): ZodIntersection<this, T>;
+  // promise(): ZodPromise<this>;
+  or<T extends ZodType>(option: T): ZodUnion<[this, T]>;
+  and<T extends ZodType>(incoming: T): ZodIntersection<this, T>;
   transform<NewOut>(
-    transform: (arg: Output, ctx: RefinementCtx) => NewOut | Promise<NewOut>
-  ): ZodEffects<this, NewOut>;
-  default(def: core.noUndefined<Input>): ZodDefault<this>;
-  default(def: () => core.noUndefined<Input>): ZodDefault<this>;
-  // brand<B extends string | number | symbol>(brand?: B): ZodBranded<this, B>;
+    transform: (
+      arg: Output
+      // ctx: RefinementCtx
+    ) => NewOut | Promise<NewOut>
+  ): ZodPipeline<this, ZodEffect<Awaited<NewOut>, core.output<this>>>;
+  default(def: core.NoUndefined<Input>): ZodDefault<this>;
+  default(def: () => core.NoUndefined<Input>): ZodDefault<this>;
   catch(def: Output): ZodCatch<this>;
   describe(description: string): this;
-  pipe<T extends ZodTypeAny>(target: T): ZodPipeline<this, T>;
+  pipe<T extends ZodType>(target: T): ZodPipeline<this, T>;
   isOptional(): boolean;
   isNullable(): boolean;
 }
 
-export const ZodType: core.$constructor<ZodType, ZodTypeDef> =
-  core.$constructor("ZodType", (inst, def) => {
+const asyncError =
+  "Encountered Promise during synchronous .parse(). Use .parseAsync() instead.";
+export const ZodType: core.$constructor<ZodType> = core.$constructor(
+  "ZodType",
+  (inst, def) => {
+    core.$ZodType.init(inst, def);
     inst.parse = (data, params) => {
       const result = inst._parse(data, params);
       if (result instanceof Promise) {
-        throw new Error(
-          "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
-        );
+        throw new Error(asyncError);
       }
-      if (core.succeeded(result)) return result;
-      throw result;
+      if (core.failed(result)) throw result;
+      return result;
     };
     inst.safeParse = (data, params) => {
       const result = inst._parse(data, params);
-      if (result instanceof Promise)
-        throw new Error(
-          "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
-        );
-      return core.succeeded(result)
-        ? { success: true, data: result }
-        : { success: false, error: result };
+      if (result instanceof Promise) throw new Error(asyncError);
+      return (
+        core.failed(result)
+          ? { success: false, error: result }
+          : { success: true, data: result }
+      ) as SafeParseResult<any>;
     };
     inst.parseAsync = async (data, params) => {
       let result = inst._parse(data, params);
       if (result instanceof Promise) result = await result;
-      if (core.succeeded(result)) return result;
-      throw result;
+      if (core.failed(result)) throw result;
+      return result;
     };
     inst.safeParseAsync = async (data, params) => {
       let result = inst._parse(data, params);
       if (result instanceof Promise) result = await result;
-      return core.succeeded(result)
-        ? { success: true, data: result }
-        : { success: false, error: result };
+      return (
+        core.failed(result)
+          ? { success: false, error: result }
+          : { success: true, data: result }
+      ) as SafeParseResult<any>;
     };
-    // inst.refine =
+
+    // check
+    inst.check = inst._check;
+    // optional
+    inst.optional = (params) => api.optional(inst, params);
+    // nullable
+    inst.nullable = (params) => api.nullable(inst, params);
+    // nullish
+    inst.nullish = () => api.optional(api.nullable(inst));
+    // array
+    inst.array = () => api.array(inst);
+    // or
+    inst.or = (arg) => api.union([inst, arg]);
+    // and
+    inst.and = (arg) => api.intersection(inst, arg);
+    // transform
+    inst.transform = (tx) => api.transform(inst, tx);
+    // default
+    // catch
+    // describe
+    // pipe
+    // isOptional
+    // isNullable
     return inst;
-  });
+  }
+);
 
 /** @deprecated Use z.ZodType (without generics) instead. */
-type ZodTypeAny = ZodType;
+export type ZodTypeAny = ZodType;
 
 ///////////////////////////////////////////
 ////////////     ZodString     ////////////
@@ -155,8 +191,9 @@ type ZodTypeAny = ZodType;
 
 export interface ZodStringDef extends core.$ZodStringDef {}
 export interface ZodString
-  extends core.$ZodString,
-    ZodType<string, string, ZodStringDef> {
+  extends core.$ZodString<string>,
+    ZodType<string, string> {
+  _def: ZodStringDef;
   email(message?: core.ErrMessage): ZodString;
   url(message?: core.ErrMessage): ZodString;
   jwt(
@@ -202,9 +239,9 @@ export interface ZodString
   startsWith(value: string, message?: core.ErrMessage): ZodString;
   endsWith(value: string, message?: core.ErrMessage): ZodString;
   json(message?: core.ErrMessage): this;
-  json<T extends ZodTypeAny>(
+  json<T extends ZodType>(
     pipeTo: T
-  ): ZodPipeline<ZodEffects<this, any, core.input<this>>, T>;
+  ): ZodPipeline<ZodEffect<this, any, core.input<this>>, T>;
   min(minLength: number, message?: core.ErrMessage): ZodString;
   max(maxLength: number, message?: core.ErrMessage): ZodString;
   length(len: number, message?: core.ErrMessage): ZodString;

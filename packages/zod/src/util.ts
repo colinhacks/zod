@@ -5,7 +5,7 @@ export type ZodMiniErrorMap<T extends core.$ZodIssueBase = core.$ZodIssueBase> =
   core.$ZodErrorMap<T>;
 
 export type Params<
-  T extends schemas.ZodMiniType,
+  T extends schemas.ZodType,
   AlsoOmit extends keyof T["_def"] = never,
 > = Partial<Omit<T["_def"], "type" | "checks" | "error" | AlsoOmit>> & {
   error?: string | T["_def"]["error"] | undefined;
@@ -78,16 +78,15 @@ export function normalizeCheckParams(
 
 export interface PrimitiveFactory<
   Params extends RawCreateParams,
-  T extends schemas.ZodMiniType,
+  T extends schemas.ZodType,
 > {
   (): T;
   (checks: core.$ZodCheck<core.output<T>>[]): T;
   (params: Partial<Params>, checks?: core.$ZodCheck<core.output<T>>[]): T;
 }
 
-
 export const factory: <
-  Cls extends { new (...args: any[]): schemas.ZodMiniType },
+  Cls extends { new (...args: any[]): schemas.ZodType },
   Params extends RawCreateParams,
   // T extends InstanceType<Cls> = InstanceType<Cls>,
 >(

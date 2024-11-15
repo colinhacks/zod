@@ -1,7 +1,7 @@
 import * as core from "./core.js";
+import { RESULT as tag } from "./core.js";
 import type * as err from "./errors.js";
 import type * as types from "./types.js";
-
 ///////////////////////////////////////
 /////      $ZodCheckLessThan      /////
 ///////////////////////////////////////

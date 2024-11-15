@@ -1,5 +1,6 @@
 import * as checks from "./checks.js";
 import * as core from "./core.js";
+import { RESULT as tag } from "./core.js";
 import type * as err from "./errors.js";
 import * as regexes from "./regexes.js";
 import type * as types from "./types.js";
@@ -57,6 +58,49 @@ export const $ZodString: core.$constructor<$ZodString> =
         true
       );
     };
+
+    inst._typecheck2 = (input, _ctx) => {
+      if (typeof input === "string") return { tag, value: input };
+
+      return {
+        tag,
+        issues: [
+          {
+            origin: "string",
+            code: "invalid_type",
+            input,
+            def,
+          },
+        ],
+        aborted: true,
+      };
+    };
+
+    inst._typecheck3 = (result, _ctx) => {
+      if (typeof result.value === "string") return; // result;
+
+      console.log("fail!");
+      result.issues!.push({
+        origin: "string",
+        code: "invalid_type",
+        input: result.value,
+        def,
+      });
+      return;
+      // return {
+      //   tag,
+      //   issues: [
+      //     {
+      //       origin: "string",
+      //       code: "invalid_type",
+      //       input,
+      //       def,
+      //     },
+      //   ],
+      //   aborted: true,
+      // };
+    };
+    // inst._parse2 = inst._typecheck2;
   });
 
 //////////////////////////////   ZodStringFormat   //////////////////////////////
@@ -1170,6 +1214,52 @@ async function handleObjectResultsAsync(
   return handleObjectResults(resolvedResults, fail);
 }
 
+function handleObjectResults2(
+  results: Record<PropertyKey, core.$ZodResult>,
+  result?: core.$ZodResult | undefined
+) {
+  for (const key in results) {
+    if (core.$failed(results[key])) {
+      if (!result) result = core.$fail([], false);
+      for (const i of results[key].issues!) {
+        result.issues?.push({ ...i, path: [key, ...(i.path ?? [])] });
+      }
+    }
+  }
+  return result ?? { tag, value: results };
+}
+
+async function handleObjectResultsAsync2(
+  results: Record<PropertyKey, Promise<core.$ZodResult>>,
+  result?: core.$ZodResult
+): core.$AsyncParseResult<object> {
+  const resolvedResults = await util.promiseAllObject(results);
+  return handleObjectResults2(resolvedResults, result);
+}
+
+function handleObjectResults3(
+  results: Record<PropertyKey, core.$ZodResult>,
+  result: core.$ZodResult3
+): void {
+  for (const key in results) {
+    if (core.$failed(results[key])) {
+      for (const i of results[key].issues!) {
+        result.issues.push({ ...i, path: [key, ...(i.path ?? [])] });
+      }
+    }
+  }
+
+  if (!core.$failed(result)) result.value = results;
+}
+
+async function handleObjectResultsAsync3(
+  results: Record<PropertyKey, Promise<core.$ZodResult>>,
+  result: core.$ZodResult3
+): Promise<void> {
+  const resolvedResults = await util.promiseAllObject(results);
+  return handleObjectResults3(resolvedResults, result);
+}
+
 export const $ZodObject: core.$constructor<$ZodObject> =
   /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
     core.$ZodType.init(inst, def);
@@ -1194,7 +1284,7 @@ export const $ZodObject: core.$constructor<$ZodObject> =
         return (v as any)["~optional"];
       })
     );
-    const _shapeEntries = Object.entries(def.shape);
+    // const _shapeEntries = Object.entries(def.shape);
     const _allKeys = Reflect.ownKeys(def.shape);
     inst._typecheck = (input: unknown, ctx) => {
       if (!util.isPlainObject(input)) {
@@ -1252,6 +1342,116 @@ export const $ZodObject: core.$constructor<$ZodObject> =
       if (!async) return handleObjectResults(objectResults, fail) as object;
       return handleObjectResultsAsync(objectResults, fail) as any;
     };
+
+    inst._typecheck2 = (input: unknown, ctx) => {
+      if (!util.isPlainObject(input)) {
+        return core.$fail(
+          [
+            {
+              origin: "object",
+              code: "invalid_type",
+              input,
+              def,
+            },
+          ],
+          true
+        );
+      }
+
+      let async!: true;
+      let fail!: core.$ZodResult;
+      const objectResults: any = {}; // in coerce mode, reuse `input` instead of {}
+      let unrecognizedKeys!: Set<string>;
+
+      // iterate over shape keys
+      for (const key of _allKeys) {
+        const value = def.shape[key];
+        // do not add omitted optional keys
+        if (!(key in input) && _optionalKeys.has(key)) {
+          continue;
+        }
+
+        const result = value._parse((input as any)[key], ctx);
+        objectResults[key] = result;
+        if (result instanceof Promise) async = true;
+      }
+
+      // iterate over input keys
+      for (const key of Reflect.ownKeys(input)) {
+        if (_shapeKeys.has(key)) continue;
+        if (def.catchall) {
+          objectResults[key] = def.catchall._parse((input as any)[key]);
+          if (objectResults[key] instanceof Promise) async = true;
+        }
+      }
+
+      if (unrecognizedKeys) {
+        fail = core.$fail([
+          {
+            origin: "object",
+            code: "unrecognized_keys",
+            keys: [...unrecognizedKeys],
+            input: input,
+            def,
+          },
+        ]);
+      }
+      if (!async) return handleObjectResults2(objectResults, fail) as object;
+      return handleObjectResultsAsync2(objectResults, fail) as any;
+    };
+
+    inst._typecheck3 = (result, ctx) => {
+      const input = result.value;
+      if (!util.isPlainObject(input)) {
+        result.issues.push({
+          origin: "object",
+          code: "invalid_type",
+          input: input,
+          def,
+        });
+        result.aborted = true;
+        return;
+      }
+
+      let async!: true;
+      // let fail!: core.$ZodResult;
+      const objectResults: any = {}; // in coerce mode, reuse `input` instead of {}
+      let unrecognizedKeys!: Set<string>;
+
+      // iterate over shape keys
+      for (const key of _allKeys) {
+        const value = def.shape[key];
+        // do not add omitted optional keys
+        if (!(key in input) && _optionalKeys.has(key)) {
+          continue;
+        }
+
+        const result = value._parse((input as any)[key], ctx);
+        objectResults[key] = result;
+        if (result instanceof Promise) async = true;
+      }
+
+      // iterate over input keys
+      for (const key of Reflect.ownKeys(input)) {
+        if (_shapeKeys.has(key)) continue;
+        if (def.catchall) {
+          objectResults[key] = def.catchall._parse((input as any)[key]);
+          if (objectResults[key] instanceof Promise) async = true;
+        }
+      }
+
+      if (unrecognizedKeys) {
+        result.issues.push({
+          origin: "object",
+          code: "unrecognized_keys",
+          keys: [...unrecognizedKeys],
+          input: input,
+          def,
+        });
+      }
+      if (!async) return handleObjectResults3(objectResults, result);
+      return handleObjectResultsAsync3(objectResults, result) as any;
+    };
   });
 
 /////////////////////////////////////////
@@ -1288,7 +1488,9 @@ function handleUnionResults(
       code: "invalid_union",
       input,
       def,
-      errors: (results as any as core.$ZodFailure[]).map((fail) => fail.finalize(ctx).issues),
+      errors: (results as any as core.$ZodFailure[]).map(
+        (fail) => fail.finalize(ctx).issues
+      ),
     },
   ]);
 }
@@ -1298,13 +1500,9 @@ export const $ZodUnion: core.$constructor<$ZodUnion> =
     core.$ZodType.init(inst, def);
 
     inst._typecheck = (input, ctx) => {
-      let async = false;
+      const async = false;
       const results: core.$SyncParseResult[] = [];
       for (const option of def.options) {
-        const result = option._parse(input, ctx);
-        results.push(result);
-        if (result instanceof Promise) async = true;
-        if (core.succeeded(result)) return result;
       }
 
       if (!async) return handleUnionResults(results, input, def, ctx);
@@ -1879,7 +2077,7 @@ export const $PropertyKeyTypes: Set<string> = new Set([
 async function handleMapResultsAsync(
   _results: Promise<[core.$SyncParseResult, core.$SyncParseResult, unknown][]>,
   input: Map<any, any>,
-  def: $ZodMapDef, 
+  def: $ZodMapDef,
   ctx?: core.$ParseContext
 ): core.$AsyncParseResult<Map<any, any>> {
   const results = await _results;
@@ -1889,7 +2087,8 @@ async function handleMapResultsAsync(
 function handleMapResults(
   results: [unknown, unknown, unknown][],
   input: Map<any, any>,
-  def: $ZodMapDef, ctx?: core.$ParseContext
+  def: $ZodMapDef,
+  ctx?: core.$ParseContext
 ): core.$SyncParseResult<Map<any, any>> {
   let fail!: core.$ZodFailure;
   const parsedMap = new Map();

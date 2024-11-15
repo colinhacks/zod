@@ -1,4 +1,5 @@
 import * as core from "zod-core";
+import { RESULT as tag } from "zod-core";
 import * as schemas from "./schemas.js";
 import * as util from "./util.js";
 
@@ -685,7 +686,7 @@ export function nativeEnum<T extends core.$EnumLike>(
 // literal
 interface ZodMiniLiteralParams
   extends util.Params<schemas.ZodMiniLiteral, "entries"> {}
-export function literal<const T extends core.Primitive | core.Primitive[]>(
+export function literal<const T extends core.$EnumValue | core.$EnumValue>(
   value: T,
   params?: ZodMiniLiteralParams
 ): schemas.ZodMiniLiteral<T extends core.Primitive ? [T] : T> {
@@ -1019,6 +1020,30 @@ export function refine<T>(
   };
 }
 
+// superRefine(
+//     refinement: (arg: Output, ctx: RefinementCtx) => void | Promise<void>
+//   ): this;
+// export function superRefine<T>(
+//   fn: (arg: T) => unknown | Promise<unknown>,
+//   ctx:
+//   _params: string | CustomParams = {}
+// ): core.$ZodCheck<T> {
+//   const params = util.normalizeCheckParams(_params as util.RawCheckParams);
+//   return {
+//     _def: { check: "custom", error: params.error },
+//     run(input: T) {
+//       const res = fn(input);
+//       if (res instanceof Promise)
+//         return res.then((r) =>
+//           r ? undefined : customErr({ input, def: params, path: params.path })
+//         );
+//       return res
+//         ? undefined
+//         : customErr({ input, def: params, path: params.path });
+//     },
+//   };
+// }
+
 ///////////        METHODS       ///////////
 
 /**
@@ -1027,16 +1052,57 @@ export function refine<T>(
 export function parse<T extends schemas.ZodMiniType>(
   schema: T,
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  ctx?: core.$ParseContext
 ): core.output<T> {
-  const result = schema._parse(data, params);
+  const result = schema._parse(data, ctx);
   if (result instanceof Promise) {
     throw new Error(
       "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
     );
   }
-  if (core.succeeded(result)) return result as core.output<T>;
-  throw result;
+
+  if (core.failed(result)) {
+    throw result.finalize(ctx);
+  }
+
+  return result as core.output<T>;
+}
+
+export function parse2<T extends schemas.ZodMiniType>(
+  schema: T,
+  data: unknown,
+  ctx?: core.$ParseContext
+): core.output<T> {
+  const result = schema._parse2(data, ctx);
+  if (result instanceof Promise) {
+    throw new Error(
+      "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
+    );
+  }
+
+  if (result.issues?.length) {
+    throw core.finalize(result.issues!, ctx);
+  }
+  return result.value as core.output<T>;
+}
+
+export function parse3<T extends schemas.ZodMiniType>(
+  schema: T,
+  value: unknown,
+  ctx?: core.$ParseContext
+): core.output<T> {
+  const result: core.$ZodResult3 = { issues: [], value, aborted: false };
+  const _ = schema._parse3(result, ctx);
+  if (_ instanceof Promise) {
+    throw new Error(
+      "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
+    );
+  }
+
+  if (result.issues?.length) {
+    throw core.finalize(result.issues!, ctx);
+  }
+  return result.value as core.output<T>;
 }
 
 /**

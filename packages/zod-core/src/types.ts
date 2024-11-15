@@ -197,12 +197,6 @@ export type OmitIndexSignature<T> = {
       : never]: T[K];
 };
 
-type LoosePayload = { name: string; [k: string]: unknown };
-type StrictPayload = OmitIndexSignature<LoosePayload>;
-// { name: string; }
-
-type asdf = LoosePayload | StrictPayload;
-
 export type ExtractIndexSignature<T> = {
   [K in keyof T as string extends K ? K : K extends string ? never : K]: T[K];
 };

@@ -46,6 +46,9 @@
         "noUselessConstructor": "off",
         "noBannedTypes": "off",
         "useArrowFunction": "off"
+      },
+      "performance": {
+        "noDelete": "off"
       }
     }
   },
