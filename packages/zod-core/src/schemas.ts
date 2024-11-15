@@ -1210,6 +1210,7 @@ async function handleObjectResultsAsync(
   return handleObjectResults(resolvedResults, result);
 }
 
+// function handleObjectResult(result: core.$ZodResult, finalResult: core.$ZodResult, key: PropertyKey) {};
 export const $ZodObject: core.$constructor<$ZodObject> =
   /*@__PURE__*/ core.$constructor("$ZodObject", (inst, def) => {
     core.$ZodType.init(inst, def);
@@ -1258,7 +1259,8 @@ export const $ZodObject: core.$constructor<$ZodObject> =
       const finalResult = core.$result({}, [], false) as core.$ZodResult<
         Record<string, unknown>
       >;
-      const objectResults: any = {}; // in coerce mode, reuse `input` instead of {}
+      // const objectResults: any = {}; // in coerce mode, reuse `input` instead of {}
+      const proms: Promise<any>[] = [];
       let unrecognizedKeys!: Set<string>;
 
       // iterate over shape keys
@@ -1270,16 +1272,54 @@ export const $ZodObject: core.$constructor<$ZodObject> =
         }
 
         const result = value._parse((input as any)[key], ctx);
-        objectResults[key] = result;
-        if (result instanceof Promise) async = true;
+
+        if (result instanceof Promise) {
+          proms.push(
+            result.then((result) => {
+              if (core.$failed(result)) {
+                finalResult.issues.push(
+                  ...core.$prefixIssues(key, result.issues)
+                );
+              } else {
+                (finalResult.value as any)[key] = result.value;
+              }
+            })
+          );
+          //async = true;
+        } else {
+          if (core.$failed(result)) {
+            finalResult.issues.push(...core.$prefixIssues(key, result.issues));
+          } else (finalResult.value as any)[key] = result.value;
+        }
       }
 
       // iterate over input keys
       for (const key of Reflect.ownKeys(input)) {
         if (_shapeKeys.has(key)) continue;
         if (def.catchall) {
-          objectResults[key] = def.catchall._parse((input as any)[key]);
-          if (objectResults[key] instanceof Promise) async = true;
+          const result = def.catchall._parse((input as any)[key]);
+          if (result instanceof Promise) {
+            proms.push(
+              result.then((result) => {
+                if (core.$failed(result)) {
+                  finalResult.issues.push(
+                    ...core.$prefixIssues(key, result.issues)
+                  );
+                } else {
+                  (finalResult.value as any)[key] = result.value;
+                }
+              })
+            );
+            //async = true;
+          } else {
+            if (core.$failed(result)) {
+              finalResult.issues.push(
+                ...core.$prefixIssues(key, result.issues)
+              );
+            } else (finalResult.value as any)[key] = result.value;
+          }
+          // objectResults[key] = def.catchall._parse((input as any)[key]);
+          // if (objectResults[key] instanceof Promise) async = true;
         }
       }
 
@@ -1293,9 +1333,8 @@ export const $ZodObject: core.$constructor<$ZodObject> =
           def,
         });
       }
-      if (!async)
-        return handleObjectResults(objectResults, finalResult) as object;
-      return handleObjectResultsAsync(objectResults, finalResult) as any;
+      if (!async) return finalResult; //handleObjectResults(objectResults, finalResult) as object;
+      return Promise.all(proms).then(() => finalResult); //handleObjectResultsAsync(objectResults, finalResult) as any;
     };
   });
 
