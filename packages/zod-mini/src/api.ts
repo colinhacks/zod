@@ -1049,6 +1049,25 @@ export function refine<T>(
 /**
  * parse(data: unknown, params?: Partial<core.$ParseContext>): Output;
  */
+// export function parse<T extends schemas.ZodMiniType>(
+//   schema: T,
+//   data: unknown,
+//   ctx?: core.$ParseContext
+// ): core.output<T> {
+//   const result = schema._parse(data, ctx);
+//   if (result instanceof Promise) {
+//     throw new Error(
+//       "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
+//     );
+//   }
+
+//   if (core.failed(result)) {
+//     throw result.finalize(ctx);
+//   }
+
+//   return result as core.output<T>;
+// }
+
 export function parse<T extends schemas.ZodMiniType>(
   schema: T,
   data: unknown,
@@ -1061,11 +1080,10 @@ export function parse<T extends schemas.ZodMiniType>(
     );
   }
 
-  if (core.failed(result)) {
-    throw result.finalize(ctx);
+  if (result.issues?.length) {
+    throw core.finalize(result.issues!, ctx);
   }
-
-  return result as core.output<T>;
+  return result.value as core.output<T>;
 }
 
 export function parse2<T extends schemas.ZodMiniType>(
@@ -1086,24 +1104,24 @@ export function parse2<T extends schemas.ZodMiniType>(
   return result.value as core.output<T>;
 }
 
-export function parse3<T extends schemas.ZodMiniType>(
-  schema: T,
-  value: unknown,
-  ctx?: core.$ParseContext
-): core.output<T> {
-  const result: core.$ZodResult3 = { issues: [], value, aborted: false };
-  const _ = schema._parse3(result, ctx);
-  if (_ instanceof Promise) {
-    throw new Error(
-      "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
-    );
-  }
+// export function parse3<T extends schemas.ZodMiniType>(
+//   schema: T,
+//   value: unknown,
+//   ctx?: core.$ParseContext
+// ): core.output<T> {
+//   const result: core.$ZodResult3 = { issues: [], value, aborted: false };
+//   const _ = schema._parse3(result, ctx);
+//   if (_ instanceof Promise) {
+//     throw new Error(
+//       "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
+//     );
+//   }
 
-  if (result.issues?.length) {
-    throw core.finalize(result.issues!, ctx);
-  }
-  return result.value as core.output<T>;
-}
+//   if (result.issues?.length) {
+//     throw core.finalize(result.issues!, ctx);
+//   }
+//   return result.value as core.output<T>;
+// }
 
 /**
  * safeParse(

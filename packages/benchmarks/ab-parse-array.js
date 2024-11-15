@@ -3,17 +3,13 @@ import { metabench } from "./metabench.js";
 
 import * as z from "zod-mini";
 
-const schema = z.object({
-  a: z.string(),
-  b: z.string(),
-  c: z.string(),
-});
+const schema = z.array(z.string());
 
-const DATA = makeData(1000, () => ({
-  a: randomString(10),
-  b: randomString(10),
-  c: randomString(10),
-}));
+const DATA = makeData(1000, () => [
+  randomString(10),
+  randomString(10),
+  randomString(10),
+]);
 
 console.log(z.parse(schema, DATA[0]));
 // console.log(z.parse2(schema, DATA[0]));

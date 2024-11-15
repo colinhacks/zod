@@ -3,6 +3,7 @@ import * as core from "./core.js";
 import { RESULT as tag } from "./core.js";
 import type * as err from "./errors.js";
 import * as regexes from "./regexes.js";
+
 import type * as types from "./types.js";
 import * as util from "./util.js";
 
@@ -44,26 +45,13 @@ export const $ZodString: core.$constructor<$ZodString> =
   /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.stringRegex;
-    inst._typecheck = (input, _ctx) => {
-      if (typeof input === "string") return input;
-      return core.$ZodFailure.from(
-        [
-          {
-            origin: "string",
-            code: "invalid_type",
-            input,
-            def,
-          },
-        ],
-        true
-      );
-    };
 
-    inst._typecheck2 = (input, _ctx) => {
+    inst._typecheck = (input, _ctx) => {
       if (typeof input === "string") return { tag, value: input };
 
       return {
         tag,
+        value: input,
         issues: [
           {
             origin: "string",
@@ -75,32 +63,6 @@ export const $ZodString: core.$constructor<$ZodString> =
         aborted: true,
       };
     };
-
-    inst._typecheck3 = (result, _ctx) => {
-      if (typeof result.value === "string") return; // result;
-
-      console.log("fail!");
-      result.issues!.push({
-        origin: "string",
-        code: "invalid_type",
-        input: result.value,
-        def,
-      });
-      return;
-      // return {
-      //   tag,
-      //   issues: [
-      //     {
-      //       origin: "string",
-      //       code: "invalid_type",
-      //       input,
-      //       def,
-      //     },
-      //   ],
-      //   aborted: true,
-      // };
-    };
-    // inst._parse2 = inst._typecheck2;
   });
 
 //////////////////////////////   ZodStringFormat   //////////////////////////////
@@ -399,22 +361,6 @@ export const $ZodIP: core.$constructor<$ZodIP> =
   /*@__PURE__*/ core.$constructor("$ZodIP", function (inst, def): void {
     $ZodStringFormat.init(inst, def);
     def.pattern = regexes.ipRegex;
-    // const superCheck = inst._typecheck;
-    // inst._typecheck = (input, _ctx) => {
-    //   const result = superCheck(input, _ctx);
-    //   let fail!: core.$ZodFailure;
-    //   if (core.failed(result)) {
-    //     if (core.aborted(result)) return result;
-    //     fail = result;
-    //   }
-
-    //   if (regexes.ipv4Regex.test(input as string) || regexes.ipv6Regex.test(input as string))
-    // return input as string;
-    //   fail = fail ?? core.$ZodFailure.from([], );
-    //   fail.push({ origin: "string", code: "invalid_format", format: "ip", input:
-    // input as string }, ctx);
-    //   return fail;
-    // };
   });
 
 //////////////////////////////   ZodIPv4   //////////////////////////////
@@ -621,8 +567,10 @@ export const $ZodNumberFast: core.$constructor<$ZodNumber> =
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.numberRegex;
     inst._typecheck = (input, _ctx) => {
-      if (typeof input === "number" && !Number.isNaN(input)) return input;
-      return core.$ZodFailure.from(
+      if (typeof input === "number" && !Number.isNaN(input))
+        return core.$succeed(input);
+      return core.$result(
+        input,
         [
           {
             origin: "number",
@@ -651,28 +599,27 @@ export const $ZodNumber: core.$constructor<$ZodNumber> =
     const [minimum, maximum] = NUMBER_FORMAT_RANGES[def.format!];
 
     inst._typecheck = (input, _ctx) => {
-      const result = fastcheck(input, _ctx) as core.$SyncParseResult<number>;
+      const result = fastcheck(input, _ctx) as core.$ZodResult<number>;
 
-      if (core.failed(result)) return result;
-      let fail!: core.$ZodFailure;
+      if (core.$failed(result)) return result;
+      // let fail!: core.$ZodFailure;
+      // const result = core.$succeed(input);
       if (isInt && !Number.isInteger(result)) {
-        fail = core.$ZodFailure.from(
-          [
-            {
-              origin,
-              format: def.format,
-              code: "invalid_type",
-              input,
-              def,
-            },
-          ],
-          true
-        );
+        result.issues = result.issues || [];
+        result.issues.push({
+          origin,
+          format: def.format,
+          code: "invalid_type",
+          input,
+          def,
+        });
+        result.aborted = true;
+        return result;
       }
 
-      if (result < minimum) {
-        if (!fail) fail = new core.$ZodFailure();
-        fail.push({
+      if (result.value < minimum) {
+        result.issues = result.issues || [];
+        result.issues.push({
           origin: "number",
           input: input as number,
           code: "too_small",
@@ -682,9 +629,9 @@ export const $ZodNumber: core.$constructor<$ZodNumber> =
         });
       }
 
-      if (result > maximum) {
-        if (!fail) fail = new core.$ZodFailure();
-        fail.push({
+      if (result.value > maximum) {
+        result.issues = result.issues || [];
+        result.issues.push({
           origin: "number",
           input: input as number,
           code: "too_big",
@@ -692,7 +639,7 @@ export const $ZodNumber: core.$constructor<$ZodNumber> =
           def,
         } as any);
       }
-      return fail ?? result;
+      return result;
     };
   });
 
@@ -722,8 +669,9 @@ export const $ZodBoolean: core.$constructor<$ZodBoolean> =
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.booleanRegex;
     inst._typecheck = (input, _ctx) => {
-      if (typeof input === "boolean") return input;
-      return core.$ZodFailure.from(
+      if (typeof input === "boolean") return core.$succeed(input);
+      return core.$result(
+        input,
         [
           {
             origin: "boolean",
@@ -762,8 +710,9 @@ export const $ZodBigInt: core.$constructor<$ZodBigInt> =
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.bigintRegex;
     inst._typecheck = (input, _ctx) => {
-      if (typeof input === "bigint") return input;
-      return core.$ZodFailure.from(
+      if (typeof input === "bigint") return core.$succeed(input);
+      return core.$result(
+        input,
         [
           {
             origin: "bigint",
@@ -798,8 +747,9 @@ export const $ZodSymbol: core.$constructor<$ZodSymbol> =
   /*@__PURE__*/ core.$constructor("$ZodSymbol", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._typecheck = (input, _ctx) => {
-      if (typeof input === "symbol") return input;
-      return core.$ZodFailure.from(
+      if (typeof input === "symbol") return core.$succeed(input);
+      return core.$result(
+        input,
         [
           {
             origin: "symbol",
@@ -836,8 +786,9 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> =
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.undefinedRegex;
     inst._typecheck = (input, _ctx) => {
-      if (typeof input === "undefined") return undefined;
-      return core.$ZodFailure.from(
+      if (typeof input === "undefined") return core.$succeed(undefined);
+      return core.$result(
+        input,
         [
           {
             origin: "undefined",
@@ -875,8 +826,9 @@ export const $ZodNull: core.$constructor<$ZodNull> =
     core.$ZodType.init(inst, def);
     inst._pattern = regexes.nullRegex;
     inst._typecheck = (input, _ctx) => {
-      if (input === null) return null;
-      return core.$ZodFailure.from(
+      if (input === null) return core.$succeed(null);
+      return core.$result(
+        input,
         [
           {
             origin: "null",
@@ -911,7 +863,7 @@ export interface $ZodAny extends core.$ZodType<any, any> {
 export const $ZodAny: core.$constructor<$ZodAny> =
   /*@__PURE__*/ core.$constructor("$ZodAny", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input) => input;
+    inst._typecheck = (input) => core.$succeed(input);
   });
 
 /////////////////////////////////////////
@@ -929,7 +881,7 @@ export interface $ZodUnknown extends core.$ZodType<unknown, unknown> {
 export const $ZodUnknown: core.$constructor<$ZodUnknown> =
   /*@__PURE__*/ core.$constructor("$ZodUnknown", (inst, def) => {
     core.$ZodType.init(inst, def);
-    inst._typecheck = (input) => input;
+    inst._typecheck = (input) => core.$succeed(input);
   });
 
 /////////////////////////////////////////
@@ -954,7 +906,8 @@ export const $ZodNever: core.$constructor<$ZodNever> =
   /*@__PURE__*/ core.$constructor("$ZodNever", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._typecheck = (input, _ctx) => {
-      return core.$ZodFailure.from(
+      return core.$result(
+        input,
         [
           {
             origin: "never",
@@ -989,8 +942,9 @@ export const $ZodVoid: core.$constructor<$ZodVoid> =
   /*@__PURE__*/ core.$constructor("$ZodVoid", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._typecheck = (input, _ctx) => {
-      if (typeof input === "undefined") return undefined;
-      return core.$ZodFailure.from(
+      if (typeof input === "undefined") return core.$succeed(undefined);
+      return core.$result(
+        input,
         [
           {
             origin: "void",
@@ -1028,7 +982,8 @@ export const $ZodDate: core.$constructor<$ZodDate> =
   /*@__PURE__*/ core.$constructor("$ZodDate", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._typecheck = (input, _ctx) => {
-      if (input instanceof Date && !Number.isNaN(input.getTime())) return input;
+      if (input instanceof Date && !Number.isNaN(input.getTime()))
+        return core.$succeed(input);
       if (def.coerce) {
         try {
           input = new Date(input as string | number | Date);
@@ -1036,7 +991,8 @@ export const $ZodDate: core.$constructor<$ZodDate> =
       }
 
       if (!(input instanceof Date)) {
-        return core.$ZodFailure.from(
+        return core.$result(
+          input,
           [
             {
               origin: "date",
@@ -1050,12 +1006,12 @@ export const $ZodDate: core.$constructor<$ZodDate> =
       }
 
       if (Number.isNaN(input.getTime())) {
-        return core.$ZodFailure.from([
+        return core.$result(input, [
           { origin: "date", code: "invalid_date", input, def },
         ]);
       }
 
-      return new Date(input.getTime());
+      return core.$succeed(new Date(input.getTime()));
     };
   });
 
@@ -1079,12 +1035,36 @@ export interface $ZodArray<T extends core.$ZodType = core.$ZodType>
   _def: $ZodArrayDef;
 }
 
+function handleArrayResults(
+  results: core.$ZodResult[],
+  result: core.$ZodResult
+) {
+  for (const i in results) {
+    const item = results[i];
+    (result.value! as unknown[])[i] = item.value;
+    if (core.$failed(item)) {
+      result.issues.push(...core.$prefixIssues(i, item.issues));
+    }
+  }
+  return result;
+}
+
+function handleArrayResultsAsync(
+  results: types.MaybeAsync<core.$ZodResult>[],
+  result: core.$ZodResult
+): Promise<core.$ZodResult> {
+  return Promise.all(results).then((res) => {
+    return handleArrayResults(res, result);
+  });
+}
+
 export const $ZodArray: core.$constructor<$ZodArray> =
   /*@__PURE__*/ core.$constructor("$ZodArray", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._typecheck = (input, _ctx) => {
       if (!Array.isArray(input)) {
-        return core.$ZodFailure.from(
+        return core.$result(
+          input,
           [
             {
               origin: "array",
@@ -1098,34 +1078,51 @@ export const $ZodArray: core.$constructor<$ZodArray> =
         );
       }
 
-      let fail!: core.$ZodFailure;
+      // let fail!: core.$ZodFailure;
+      // const issues: err.$ZodIssueData[] = [];
       let async = false;
-      const parseResults = Array(input.length);
-      for (const [i, item] of Object.entries(input) as [number, any]) {
+      const finalResult = {
+        tag,
+        issues: [],
+        value: Array.from({ length: input.length }),
+      };
+      // const parseResults = Array(input.length);
+      const parseResults = input.map((item, index) => {
+        //  const item = input
         const result = def.element._parse(item, _ctx);
-        parseResults[i] = result;
+        // parseResults[i] = result;
         if (result instanceof Promise) {
           async = true;
-          break;
+          // break;
         }
-        if (core.failed(result)) {
-          fail = fail ? core.mergeFails(fail, result) : result;
-        }
-      }
+        return result;
+        // if (core.$failed(result)) {
+        //   issues.push(...core.$prefixIssues(i, result.issues!)); // = core.mergeIn(result);
+        // fail = fail ? core.mergeFails(fail, result) : result;
+        // }
+      });
+      // for (const i of input) {
+      //   const item = input
+      //   const result = def.element._parse(item, _ctx);
+      //   parseResults[i] = result;
+      //   if (result instanceof Promise) {
+      //     async = true;
+      //     break;
+      //   }
+      //   if (core.$failed(result)) {
+      //     issues.push(...core.$prefixIssues(i, result.issues!)); // = core.mergeIn(result);
+      //     // fail = fail ? core.mergeFails(fail, result) : result;
+      //   }
+      // }
 
       if (!async) {
-        if (!fail) return parseResults as any;
-        return fail;
+        return handleArrayResults(
+          parseResults as core.$ZodResult<unknown>[],
+          finalResult
+        );
       }
 
-      return Promise.all(parseResults).then((results) => {
-        for (const [i, result] of Object.entries(results)) {
-          if (core.failed(result)) {
-            fail = fail ? core.mergeFails(fail, result, i) : result;
-          }
-        }
-        return fail ?? results;
-      });
+      return handleArrayResultsAsync(parseResults, finalResult);
     };
   });
 
@@ -1192,72 +1189,25 @@ export interface $ZodObject<Shape extends $ZodRawShape = $ZodRawShape>
 }
 
 function handleObjectResults(
-  results: Record<PropertyKey, core.$SyncParseResult>,
-  fail?: core.$ZodFailure
-) {
+  results: Record<PropertyKey, core.$ZodResult>,
+  final: core.$ZodResult<Record<string, unknown>>
+): core.$ZodResult<Record<string, unknown>> {
   for (const key in results) {
-    if (core.failed(results[key])) {
-      if (!fail) fail = new core.$ZodFailure();
-      // core.mergeFails(fail, results[key], key);
-      fail = core.mergeFails(fail, results[key], key);
+    const val = results[key];
+    final.value![key] = val.value;
+    if (core.$failed(results[key])) {
+      final.issues.push(...core.$prefixIssues(key, results[key].issues));
     }
   }
-  return fail ?? results;
+  return final;
 }
 
 async function handleObjectResultsAsync(
-  results: Record<PropertyKey, core.$AsyncParseResult>,
-  // ctx: core.$ParseContext | undefined,
-  fail?: core.$ZodFailure
-): core.$AsyncParseResult<object> {
-  const resolvedResults = await util.promiseAllObject(results);
-  return handleObjectResults(resolvedResults, fail);
-}
-
-function handleObjectResults2(
-  results: Record<PropertyKey, core.$ZodResult>,
-  result?: core.$ZodResult | undefined
-) {
-  for (const key in results) {
-    if (core.$failed(results[key])) {
-      if (!result) result = core.$fail([], false);
-      for (const i of results[key].issues!) {
-        result.issues?.push({ ...i, path: [key, ...(i.path ?? [])] });
-      }
-    }
-  }
-  return result ?? { tag, value: results };
-}
-
-async function handleObjectResultsAsync2(
   results: Record<PropertyKey, Promise<core.$ZodResult>>,
-  result?: core.$ZodResult
-): core.$AsyncParseResult<object> {
+  result: core.$ZodResult<Record<string, unknown>>
+): Promise<core.$ZodResult<Record<string, unknown>>> {
   const resolvedResults = await util.promiseAllObject(results);
-  return handleObjectResults2(resolvedResults, result);
-}
-
-function handleObjectResults3(
-  results: Record<PropertyKey, core.$ZodResult>,
-  result: core.$ZodResult3
-): void {
-  for (const key in results) {
-    if (core.$failed(results[key])) {
-      for (const i of results[key].issues!) {
-        result.issues.push({ ...i, path: [key, ...(i.path ?? [])] });
-      }
-    }
-  }
-
-  if (!core.$failed(result)) result.value = results;
-}
-
-async function handleObjectResultsAsync3(
-  results: Record<PropertyKey, Promise<core.$ZodResult>>,
-  result: core.$ZodResult3
-): Promise<void> {
-  const resolvedResults = await util.promiseAllObject(results);
-  return handleObjectResults3(resolvedResults, result);
+  return handleObjectResults(resolvedResults, result);
 }
 
 export const $ZodObject: core.$constructor<$ZodObject> =
@@ -1286,9 +1236,11 @@ export const $ZodObject: core.$constructor<$ZodObject> =
     );
     // const _shapeEntries = Object.entries(def.shape);
     const _allKeys = Reflect.ownKeys(def.shape);
+
     inst._typecheck = (input: unknown, ctx) => {
       if (!util.isPlainObject(input)) {
-        return core.$ZodFailure.from(
+        return core.$result(
+          input,
           [
             {
               origin: "object",
@@ -1299,122 +1251,13 @@ export const $ZodObject: core.$constructor<$ZodObject> =
           ],
           true
         );
-      }
-
-      let async!: true;
-      let fail!: core.$ZodFailure;
-      const objectResults: any = {}; // in coerce mode, reuse `input` instead of {}
-      let unrecognizedKeys!: Set<string>;
-
-      // iterate over shape keys
-      for (const key of _allKeys) {
-        const value = def.shape[key];
-        // do not add omitted optional keys
-        if (!(key in input) && _optionalKeys.has(key)) {
-          continue;
-        }
-
-        const result = value._parse((input as any)[key], ctx);
-        objectResults[key] = result;
-        if (result instanceof Promise) async = true;
-      }
-
-      // iterate over input keys
-      for (const key of Reflect.ownKeys(input)) {
-        if (_shapeKeys.has(key)) continue;
-        if (def.catchall) {
-          objectResults[key] = def.catchall._parse((input as any)[key]);
-          if (objectResults[key] instanceof Promise) async = true;
-        }
-      }
-
-      if (unrecognizedKeys) {
-        fail = core.$ZodFailure.from([
-          {
-            origin: "object",
-            code: "unrecognized_keys",
-            keys: [...unrecognizedKeys],
-            input: input,
-            def,
-          },
-        ]);
-      }
-      if (!async) return handleObjectResults(objectResults, fail) as object;
-      return handleObjectResultsAsync(objectResults, fail) as any;
-    };
-
-    inst._typecheck2 = (input: unknown, ctx) => {
-      if (!util.isPlainObject(input)) {
-        return core.$fail(
-          [
-            {
-              origin: "object",
-              code: "invalid_type",
-              input,
-              def,
-            },
-          ],
-          true
-        );
-      }
-
-      let async!: true;
-      let fail!: core.$ZodResult;
-      const objectResults: any = {}; // in coerce mode, reuse `input` instead of {}
-      let unrecognizedKeys!: Set<string>;
-
-      // iterate over shape keys
-      for (const key of _allKeys) {
-        const value = def.shape[key];
-        // do not add omitted optional keys
-        if (!(key in input) && _optionalKeys.has(key)) {
-          continue;
-        }
-
-        const result = value._parse((input as any)[key], ctx);
-        objectResults[key] = result;
-        if (result instanceof Promise) async = true;
-      }
-
-      // iterate over input keys
-      for (const key of Reflect.ownKeys(input)) {
-        if (_shapeKeys.has(key)) continue;
-        if (def.catchall) {
-          objectResults[key] = def.catchall._parse((input as any)[key]);
-          if (objectResults[key] instanceof Promise) async = true;
-        }
-      }
-
-      if (unrecognizedKeys) {
-        fail = core.$fail([
-          {
-            origin: "object",
-            code: "unrecognized_keys",
-            keys: [...unrecognizedKeys],
-            input: input,
-            def,
-          },
-        ]);
-      }
-      if (!async) return handleObjectResults2(objectResults, fail) as object;
-      return handleObjectResultsAsync2(objectResults, fail) as any;
-    };
-
-    inst._typecheck3 = (result, ctx) => {
-      const input = result.value;
-      if (!util.isPlainObject(input)) {
-        result.issues.push({
-          origin: "object",
-          code: "invalid_type",
-          input: input,
-          def,
-        });
-        result.aborted = true;
-        return;
       }
 
       let async!: true;
       // let fail!: core.$ZodResult;
+      const finalResult = core.$result({}, [], false) as core.$ZodResult<
+        Record<string, unknown>
+      >;
       const objectResults: any = {}; // in coerce mode, reuse `input` instead of {}
       let unrecognizedKeys!: Set<string>;
 
@@ -1441,7 +1284,8 @@ export const $ZodObject: core.$constructor<$ZodObject> =
       }
 
       if (unrecognizedKeys) {
-        result.issues.push({
+        finalResult.issues = finalResult.issues ?? [];
+        finalResult.issues.push({
           origin: "object",
           code: "unrecognized_keys",
           keys: [...unrecognizedKeys],
@@ -1449,8 +1293,9 @@ export const $ZodObject: core.$constructor<$ZodObject> =
           def,
         });
       }
-      if (!async) return handleObjectResults3(objectResults, result);
-      return handleObjectResultsAsync3(objectResults, result) as any;
+      if (!async)
+        return handleObjectResults(objectResults, finalResult) as object;
+      return handleObjectResultsAsync(objectResults, finalResult) as any;
     };
   });
 
@@ -1473,24 +1318,22 @@ export interface $ZodUnion<T extends core.$ZodType[] = core.$ZodType[]>
 }
 
 function handleUnionResults(
-  results: core.$SyncParseResult[],
+  results: core.$ZodResult[],
   input: unknown,
   def: $ZodUnionDef,
   ctx?: core.$ParseContext
 ) {
   for (const result of results) {
-    if (core.succeeded(result)) return result;
+    if (core.$succeeded(result)) return result;
   }
 
-  return core.$ZodFailure.from([
+  return core.$result(input, [
     {
       origin: "union",
       code: "invalid_union",
       input,
       def,
-      errors: (results as any as core.$ZodFailure[]).map(
-        (fail) => fail.finalize(ctx).issues
-      ),
+      errors: results.map((result) => core.finalize(result.issues, ctx).issues),
     },
   ]);
 }
@@ -1500,9 +1343,12 @@ export const $ZodUnion: core.$constructor<$ZodUnion> =
     core.$ZodType.init(inst, def);
 
     inst._typecheck = (input, ctx) => {
-      const async = false;
-      const results: core.$SyncParseResult[] = [];
+      let async = false;
+      const results: core.$ZodResult[] = [];
       for (const option of def.options) {
+        const result = option._parse(input, ctx);
+        results.push(result as core.$ZodResult);
+        if (result instanceof Promise) async = true;
       }
 
       if (!async) return handleUnionResults(results, input, def, ctx);
@@ -1692,16 +1538,18 @@ export interface $ZodIntersection<
 }
 
 function handleIntersectionResults(
-  results: [core.$SyncParseResult, core.$SyncParseResult]
-): core.$SyncParseResult {
+  results: [core.$ZodResult, core.$ZodResult]
+): core.$ZodResult {
   const [parsedLeft, parsedRight] = results;
-  let fail!: core.$ZodFailure;
-  if (core.failed(parsedLeft)) {
+  let fail!: core.$ZodResult;
+  if (core.$failed(parsedLeft)) {
     fail = parsedLeft;
   }
 
-  if (core.failed(parsedRight)) {
-    fail = fail ? core.mergeFails(fail, parsedRight) : parsedRight;
+  if (core.$failed(parsedRight)) {
+    fail = fail
+      ? { ...fail, issues: [...fail.issues, parsedRight.issues] }
+      : parsedRight;
   }
 
   if (fail) return fail;
@@ -1843,7 +1691,8 @@ export const $ZodTuple: core.$constructor<$ZodTuple> =
 
     inst._typecheck = (input, _ctx) => {
       if (!Array.isArray(input)) {
-        return core.$ZodFailure.from(
+        return core.$result(
+          input,
           [
             {
               input,
@@ -1863,7 +1712,7 @@ export const $ZodTuple: core.$constructor<$ZodTuple> =
         const tooBig = input.length > items.length;
         const tooSmall = input.length < optStart;
         if (tooBig || tooSmall)
-          return core.$ZodFailure.from([
+          return core.$result(input, [
             {
               input,
               def,
@@ -1960,7 +1809,8 @@ export const $ZodRecord: core.$constructor<$ZodRecord> =
       let fail!: core.$ZodFailure;
       let async!: boolean;
       if (!util.isPlainObject(input)) {
-        return core.$ZodFailure.from(
+        return core.$result(
+          input,
           [
             {
               origin: "record",
@@ -1994,7 +1844,8 @@ export const $ZodRecord: core.$constructor<$ZodRecord> =
           }
         }
         if (unrecognized && unrecognized.length > 0) {
-          fail = core.$ZodFailure.from(
+          fail = core.$result(
+            input,
             [
               {
                 origin: "record",
@@ -2139,7 +1990,7 @@ export const $ZodMap: core.$constructor<$ZodMap> =
     core.$ZodType.init(inst, def);
     inst._typecheck = (input, ctx) => {
       if (!(input instanceof Map)) {
-        return core.$ZodFailure.from([
+        return core.$result(input, [
           {
             origin: "map",
             code: "invalid_type",
@@ -2216,7 +2067,8 @@ export const $ZodSet: core.$constructor<$ZodSet> =
     core.$ZodType.init(inst, def);
     inst._typecheck = (input, _ctx) => {
       if (!(input instanceof Set)) {
-        return core.$ZodFailure.from(
+        return core.$result(
+          input,
           [
             {
               input,
@@ -2342,9 +2194,10 @@ export const $ZodEnum: core.$constructor<$ZodEnum> =
     );
     inst._typecheck = (input, _ctx) => {
       if (inst._values.has(input as any)) {
-        return input as any;
+        return core.$succeed(input) as any;
       }
-      return core.$ZodFailure.from(
+      return core.$result(
+        input,
         [
           {
             origin: "enum",
@@ -2405,8 +2258,9 @@ export const $ZodFile: core.$constructor<$ZodFile> =
   /*@__PURE__*/ core.$constructor("$ZodFile", (inst, def) => {
     core.$ZodType.init(inst, def);
     inst._typecheck = (input, _ctx) => {
-      if (input instanceof File) return input;
-      return core.$ZodFailure.from(
+      if (input instanceof File) return core.$succeed(input);
+      return core.$result(
+        input,
         [
           {
             origin: "file",
@@ -2584,7 +2438,8 @@ export const $ZodDefault: core.$constructor<$ZodDefault> =
         input = def.defaultValue();
       }
       if (input instanceof Promise)
-        return input
+        return core
+          .$succeed(input)
           .then((input) => def.innerType._parse(input, _ctx))
           .then((result) => handleDefaultResults(result, def.defaultValue));
       return handleDefaultResults(
@@ -2659,7 +2514,8 @@ export const $ZodNaN: core.$constructor<$ZodNaN> =
     core.$ZodType.init(inst, def);
     inst._typecheck = (input, _ctx) => {
       if (typeof input !== "number" || !Number.isNaN(input)) {
-        return core.$ZodFailure.from(
+        return core.$result(
+          input,
           [
             {
               input,
@@ -2671,7 +2527,7 @@ export const $ZodNaN: core.$constructor<$ZodNaN> =
           true
         );
       }
-      return input;
+      return core.$succeed(input);
     };
   });
 
@@ -2848,7 +2704,8 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> =
 
     inst._typecheck = (input, _ctx) => {
       if (typeof input !== "string") {
-        return core.$ZodFailure.from(
+        return core.$result(
+          input,
           [
             {
               input,
@@ -2863,7 +2720,8 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> =
 
       console.log(inst._pattern);
       if (!inst._pattern.test(input)) {
-        return core.$ZodFailure.from(
+        return core.$result(
+          input,
           [
             {
               input,
@@ -2876,6 +2734,6 @@ export const $ZodTemplateLiteral: core.$constructor<$ZodTemplateLiteral> =
         );
       }
 
-      return input;
+      return core.$succeed(input);
     };
   });

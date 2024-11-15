@@ -1,21 +1,29 @@
 import * as z from "./src/index.js";
 
-const schema = z.object({
-  a: z.string(),
-  b: z.string(),
-  c: z.string(),
-});
-const data = {
-  a: "hello",
-  b: "123",
-  c: "true",
-};
+// test stirng
+console.log(z.parse(z.string(), "hello"));
 
-// const schema = z.string();
-// const data = "124";
-console.log(z.parse(schema, data));
-console.log(z.parse2(schema, data));
-console.log(z.parse3(schema, data));
+// test object
+console.log(
+  z.parse(
+    z.object({
+      a: z.string(),
+      b: z.string(),
+      c: z.string(),
+    }),
+    {
+      a: "hello",
+      b: "123",
+      c: "true",
+    }
+  )
+);
+
+// test array
+console.log(z.parse(z.array(z.string()), ["data"]));
+
+// console.log(z.parse2(schema, data));
+// console.log(z.parse3(schema, data));
 
 // const a = z.templateLiteral([z.string(), z.number()]);
 // type a = z.output<typeof a>;

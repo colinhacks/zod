@@ -17,9 +17,6 @@ const bench = metabench("AB test: strings", {
   _parse2() {
     for (const _ of DATA) z.parse2(schema, _);
   },
-  _parse3() {
-    for (const _ of DATA) z.parse3(schema, _);
-  },
 });
 
 await bench.run();
