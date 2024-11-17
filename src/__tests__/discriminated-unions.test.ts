@@ -94,8 +94,10 @@ test("invalid discriminator value", () => {
       {
         code: z.ZodIssueCode.invalid_union_discriminator,
         options: ["a", "b"],
-        message: "Invalid discriminator value. Expected 'a' | 'b'",
+        message: "Invalid discriminator value \"x\". Expected 'a' | 'b'",
+        otherOptions: 0,
         path: ["type"],
+        received: "x",
       },
     ]);
   }
@@ -116,6 +118,70 @@ test("valid discriminator value, invalid data", () => {
         message: "Required",
         path: ["a"],
         received: z.ZodParsedType.undefined,
+      },
+    ]);
+  }
+});
+
+test("valid - non-literal discriminator", () => {
+  const schema = z.discriminatedUnion("type", [
+    z.object({ type: z.literal("a"), val: z.string() }),
+    z.object({ type: z.number(), val: z.number() }),
+  ]);
+
+  expect(schema.parse({ type: "a", val: "abc" })).toEqual({
+    type: "a",
+    val: "abc",
+  });
+  expect(schema.parse({ type: 1, val: 2 })).toEqual({ type: 1, val: 2 });
+});
+
+test("invalid - ambiguous non-literal discriminator", () => {
+  try {
+    z.discriminatedUnion("type", [
+      z.object({
+        type: z.literal("a"),
+        a: z.string(),
+      }),
+      z.object({
+        type: z.string().refine((val) => val === "a"),
+        b: z.string(),
+      }),
+    ]).parse({ type: "a", a: "abc" });
+    throw new Error();
+  } catch (e: any) {
+    expect(JSON.parse(e.message)).toEqual([
+      {
+        code: z.ZodIssueCode.ambiguous_union_discriminator,
+        message: 'Ambiguous discriminator value: "a" matched 2 options',
+        optionsMatched: 2,
+        path: ["type"],
+        received: "a",
+      },
+    ]);
+  }
+});
+
+test("invalid value for non-literal discriminator", () => {
+  try {
+    z.discriminatedUnion("type", [
+      z.object({ type: z.literal("a"), a: z.string() }),
+      z.object({
+        type: z.string().refine((val) => val === "b"),
+        b: z.string(),
+      }),
+    ]).parse({ type: "x", a: "abc" });
+    throw new Error();
+  } catch (e: any) {
+    expect(JSON.parse(e.message)).toEqual([
+      {
+        code: z.ZodIssueCode.invalid_union_discriminator,
+        options: ["a"],
+        message:
+          "Invalid discriminator value \"x\". Expected 'a' (+ 1 other option(s))",
+        otherOptions: 1,
+        path: ["type"],
+        received: "x",
       },
     ]);
   }
@@ -194,6 +260,26 @@ test("async - invalid", async () => {
       },
     ]);
   }
+});
+
+test("async - valid non-literal discriminator", async () => {
+  expect(
+    await z
+      .discriminatedUnion("type", [
+        z.object({
+          type: z.string().refine(async (val) => val === "a"),
+          a: z
+            .string()
+            .refine(async () => true)
+            .transform(async (val) => Number(val)),
+        }),
+        z.object({
+          type: z.literal("b"),
+          b: z.string(),
+        }),
+      ])
+      .parseAsync({ type: "a", a: "1" })
+  ).toEqual({ type: "a", a: 1 });
 });
 
 test("valid - literals with .default or .preprocess", () => {
