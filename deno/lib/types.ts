@@ -517,6 +517,13 @@ export abstract class ZodType<
   isNullable(): boolean {
     return this.safeParse(null).success;
   }
+
+  guard<T extends Output>(
+    this: ZodType<T, any, T>,
+    data: unknown
+  ): data is Output {
+    return this.safeParse(data).success;
+  }
 }
 
 /////////////////////////////////////////
