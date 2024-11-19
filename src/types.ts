@@ -518,10 +518,7 @@ export abstract class ZodType<
     return this.safeParse(null).success;
   }
 
-  guard<T extends Output>(
-    this: ZodType<T, any, T>,
-    data: unknown
-  ): data is Output {
+  guard(this: ZodType<Output>, data: unknown): data is Output {
     return this.safeParse(data).success;
   }
 }
@@ -678,7 +675,11 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
-export class ZodString extends ZodType<string, ZodStringDef, string> {
+export class ZodString<TCoerce extends boolean = false> extends ZodType<
+  string,
+  ZodStringDef,
+  TCoerce extends true ? unknown : string
+> {
   _parse(input: ParseInput): ParseReturnType<string> {
     if (this._def.coerce) {
       input.data = String(input.data);
@@ -1230,8 +1231,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return max;
   }
 
-  static create = (params?: RawCreateParams & { coerce?: true }): ZodString => {
-    return new ZodString({
+  static create = <TParam extends RawCreateParams & { coerce?: true }>(
+    params?: TParam
+  ): ZodString<TParam["coerce"] extends true ? true : false> => {
+    return new ZodString<TParam["coerce"] extends true ? true : false>({
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodString,
       coerce: params?.coerce ?? false,
@@ -1270,7 +1273,11 @@ export interface ZodNumberDef extends ZodTypeDef {
   coerce: boolean;
 }
 
-export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
+export class ZodNumber<TCoerce extends boolean = false> extends ZodType<
+  number,
+  ZodNumberDef,
+  TCoerce extends true ? unknown : number
+> {
   _parse(input: ParseInput): ParseReturnType<number> {
     if (this._def.coerce) {
       input.data = Number(input.data);
@@ -1360,10 +1367,10 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
     return { status: status.value, value: input.data };
   }
 
-  static create = (
-    params?: RawCreateParams & { coerce?: boolean }
-  ): ZodNumber => {
-    return new ZodNumber({
+  static create = <TParam extends RawCreateParams & { coerce?: boolean }>(
+    params?: TParam
+  ): ZodNumber<TParam["coerce"] extends true ? true : false> => {
+    return new ZodNumber<TParam["coerce"] extends true ? true : false>({
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodNumber,
       coerce: params?.coerce || false,
@@ -1555,7 +1562,11 @@ export interface ZodBigIntDef extends ZodTypeDef {
   coerce: boolean;
 }
 
-export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
+export class ZodBigInt<TCoerce extends boolean = false> extends ZodType<
+  bigint,
+  ZodBigIntDef,
+  TCoerce extends true ? unknown : bigint
+> {
   _parse(input: ParseInput): ParseReturnType<bigint> {
     if (this._def.coerce) {
       input.data = BigInt(input.data);
@@ -1623,10 +1634,10 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     return { status: status.value, value: input.data };
   }
 
-  static create = (
-    params?: RawCreateParams & { coerce?: boolean }
-  ): ZodBigInt => {
-    return new ZodBigInt({
+  static create = <TParam extends RawCreateParams & { coerce?: true }>(
+    params?: TParam
+  ): ZodBigInt<TParam["coerce"] extends true ? true : false> => {
+    return new ZodBigInt<TParam["coerce"] extends true ? true : false>({
       checks: [],
       typeName: ZodFirstPartyTypeKind.ZodBigInt,
       coerce: params?.coerce ?? false,
@@ -1756,7 +1767,11 @@ export interface ZodBooleanDef extends ZodTypeDef {
   coerce: boolean;
 }
 
-export class ZodBoolean extends ZodType<boolean, ZodBooleanDef, boolean> {
+export class ZodBoolean<TCoerce extends boolean = false> extends ZodType<
+  boolean,
+  ZodBooleanDef,
+  TCoerce extends true ? unknown : boolean
+> {
   _parse(input: ParseInput): ParseReturnType<boolean> {
     if (this._def.coerce) {
       input.data = Boolean(input.data);
@@ -1775,10 +1790,10 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef, boolean> {
     return OK(input.data);
   }
 
-  static create = (
-    params?: RawCreateParams & { coerce?: boolean }
-  ): ZodBoolean => {
-    return new ZodBoolean({
+  static create = <TParam extends RawCreateParams & { coerce?: true }>(
+    params?: TParam
+  ): ZodBoolean<TParam["coerce"] extends true ? true : false> => {
+    return new ZodBoolean<TParam["coerce"] extends true ? true : false>({
       typeName: ZodFirstPartyTypeKind.ZodBoolean,
       coerce: params?.coerce || false,
       ...processCreateParams(params),
@@ -1802,7 +1817,11 @@ export interface ZodDateDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodDate;
 }
 
-export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
+export class ZodDate<TCoerce extends boolean = false> extends ZodType<
+  Date,
+  ZodDateDef,
+  TCoerce extends true ? unknown : Date
+> {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     if (this._def.coerce) {
       input.data = new Date(input.data);
@@ -1913,10 +1932,10 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
     return max != null ? new Date(max) : null;
   }
 
-  static create = (
-    params?: RawCreateParams & { coerce?: boolean }
-  ): ZodDate => {
-    return new ZodDate({
+  static create = <TParam extends RawCreateParams & { coerce?: true }>(
+    params?: TParam
+  ): ZodDate<TParam["coerce"] extends true ? true : false> => {
+    return new ZodDate<TParam["coerce"] extends true ? true : false>({
       checks: [],
       coerce: params?.coerce || false,
       typeName: ZodFirstPartyTypeKind.ZodDate,
@@ -5250,19 +5269,19 @@ const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
 
 export const coerce = {
-  string: ((arg) =>
-    ZodString.create({ ...arg, coerce: true })) as (typeof ZodString)["create"],
-  number: ((arg) =>
-    ZodNumber.create({ ...arg, coerce: true })) as (typeof ZodNumber)["create"],
-  boolean: ((arg) =>
+  string: (arg?: Parameters<typeof ZodString.create>[0]) =>
+    ZodString.create({ ...arg, coerce: true }),
+  number: (arg?: Parameters<typeof ZodNumber.create>[0]) =>
+    ZodNumber.create({ ...arg, coerce: true }),
+  boolean: (arg?: Parameters<typeof ZodBoolean.create>[0]) =>
     ZodBoolean.create({
       ...arg,
       coerce: true,
-    })) as (typeof ZodBoolean)["create"],
-  bigint: ((arg) =>
-    ZodBigInt.create({ ...arg, coerce: true })) as (typeof ZodBigInt)["create"],
-  date: ((arg) =>
-    ZodDate.create({ ...arg, coerce: true })) as (typeof ZodDate)["create"],
+    }),
+  bigint: (arg?: Parameters<typeof ZodBigInt.create>[0]) =>
+    ZodBigInt.create({ ...arg, coerce: true }),
+  date: (arg?: Parameters<typeof ZodDate.create>[0]) =>
+    ZodDate.create({ ...arg, coerce: true }),
 };
 
 export {

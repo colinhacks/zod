@@ -26,4 +26,22 @@ describe("guard", () => {
     // @ts-expect-error - compile error as Input does not extend Output
     inputDiffersFromOutputSchema.guard(val);
   });
+
+  test("coerce to impact the Import", () => {
+    const schemaA = z.coerce.string();
+    type InputA = (typeof schemaA)["_input"];
+    expectTypeOf({} as InputA).toEqualTypeOf<unknown>();
+    expectTypeOf({} as InputA).not.toEqualTypeOf<string>();
+    // @ts-expect-error - compile error as Input does not extend Output
+    schemaA.guard({});
+
+    const schemaB = z.date({
+      coerce: true,
+    });
+    type InputB = (typeof schemaB)["_input"];
+    expectTypeOf({} as InputB).toEqualTypeOf<unknown>();
+    expectTypeOf({} as InputB).not.toEqualTypeOf<Date>();
+    // @ts-expect-error - compile error as Input does not extend Output
+    schemaB.guard({});
+  });
 });
