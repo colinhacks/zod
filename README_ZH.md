@@ -316,28 +316,16 @@ _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://
 }
 ```
 
-### 从`npm`(Node/Bun)安装
+### 从`npm` 安装
 
 ```sh
 npm install zod
+deno add npm:zod      # deno
 yarn add zod          # yarn
 bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
-### 从`deno.land/x` (Deno)安装
-
-和 Node 不同，Deno 依靠一个直接的 URL 导入而非像 npm 这样的包管理器。可以这样导入最新版本的 Zod:
-
-```ts
-import { z } from "https://deno.land/x/zod/mod.ts";
-```
-
-你也可以指定一个具体的版本：
-
-```ts
-import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
-```
 
 > README 的剩余部分假定你是直接通过 npm 安装的`zod`包。
 
