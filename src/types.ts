@@ -517,6 +517,28 @@ export abstract class ZodType<
   isNullable(): boolean {
     return this.safeParse(null).success;
   }
+
+  convert(data: Input, params?: Partial<ParseParams>): Output {
+    return this.parse(data, params);
+  }
+
+  safeConvert(
+    data: Input,
+    params?: Partial<ParseParams>
+  ): SafeParseReturnType<Input, Output> {
+    return this.safeParse(data, params);
+  }
+
+  convertAsync(data: Input, params?: Partial<ParseParams>): Promise<Output> {
+    return this.parseAsync(data, params);
+  }
+
+  safeConvertAsync(
+    data: Input,
+    params?: Partial<ParseParams>
+  ): Promise<SafeParseReturnType<Input, Output>> {
+    return this.safeParseAsync(data, params);
+  }
 }
 
 /////////////////////////////////////////
