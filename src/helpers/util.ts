@@ -1,3 +1,5 @@
+import { ZodRawShape } from '../types';
+
 export namespace util {
   type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
     V
@@ -107,11 +109,23 @@ export namespace objectUtil {
   type requiredKeys<T extends object> = {
     [k in keyof T]: undefined extends T[k] ? never : k;
   }[keyof T];
-  export type addQuestionMarks<T extends object, _O = any> = {
+  export type addInputDecorations<T extends object, _O = any> = {
     [K in requiredKeys<T>]: T[K];
   } & {
     [K in optionalKeys<T>]?: T[K];
   } & { [k in keyof T]?: unknown };
+
+  type ShapeOutput<S extends ZodRawShape> = {
+    [k in keyof S]: S[k]['_output'];
+  };
+  
+  type optionalShapeKeys<S extends ZodRawShape> = {
+    [k in keyof S]: undefined extends S[k]['_output'] ? k : never;
+  }[keyof S];
+
+  export type addOutputDecorations<S extends ZodRawShape, _O = any> = Omit<ShapeOutput<S>, optionalShapeKeys<S>>
+    & Partial<Pick<ShapeOutput<S>, optionalShapeKeys<S>>>
+    & { [k in keyof S]?: unknown };
 
   export type identity<T> = T;
   export type flatten<T> = identity<{ [k in keyof T]: T[k] }>;
