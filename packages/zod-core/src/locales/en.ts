@@ -49,7 +49,7 @@ const errorMap: errors.$ZodErrorMap = (issue) => {
       if (issue.origin === "enum") {
       }
       return `Invalid input: expected ${issue.origin}, received ${util.getParsedType(issue.input)}`;
-    case "invalid_enum":
+    case "invalid_value":
       return `Invalid option: expected one of ${util.joinValues(issue.options, ", ")}`;
     case "too_big":
       if (issue.origin in HasSize)
@@ -82,7 +82,7 @@ const errorMap: errors.$ZodErrorMap = (issue) => {
       return "Invalid input";
     case "invalid_key":
       return `Invalid key in ${issue.origin}`;
-    case "invalid_value":
+    case "invalid_element":
       return `Invalid value in ${issue.origin}`;
   }
 

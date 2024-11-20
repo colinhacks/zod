@@ -1,20 +1,19 @@
 import * as core from "zod-core";
-import * as mini from "./schemas.js";
-import * as util from "./util.js";
+import * as util from "./api.js";
 
-//////////    ZodMiniCoercedString    //////////
+//////////    $ZodCoercedString    //////////
 
-export interface ZodMiniCoercedStringDef extends core.$ZodStringDef {}
-export interface ZodMiniCoercedString
+export interface $ZodCoercedStringDef extends core.$ZodStringDef {}
+export interface $ZodCoercedString
   extends core.$ZodString<unknown>,
-    mini.ZodMiniType<string, unknown> {
-  _def: ZodMiniCoercedStringDef;
+    core.$ZodType<string, unknown> {
+  _def: $ZodCoercedStringDef;
 }
 
-export const ZodMiniCoercedString: core.$constructor<ZodMiniCoercedString> =
-  /*@__PURE__*/ core.$constructor("ZodMiniCoercedString", (inst, def) => {
+export const $ZodCoercedString: core.$constructor<$ZodCoercedString> =
+  /*@__PURE__*/ core.$constructor("$ZodCoercedString", (inst, def) => {
     core.$ZodString.init(inst, def); // no format checks
-    mini.ZodMiniType.init(inst, def);
+    core.$ZodType.init(inst, def);
     const _super = inst._typecheck;
     inst._typecheck = (input, ctx) => {
       if (def.coerce) {
@@ -39,28 +38,27 @@ export const ZodMiniCoercedString: core.$constructor<ZodMiniCoercedString> =
     };
   });
 
-interface ZodMiniStringParams
-  extends util.Params<ZodMiniCoercedString, "coerce"> {}
+interface $ZodStringParams extends util.Params<$ZodCoercedString, "coerce"> {}
 export const string: util.PrimitiveFactory<
-  ZodMiniStringParams,
-  ZodMiniCoercedString
-> = util.factory(ZodMiniCoercedString, {
+  $ZodStringParams,
+  $ZodCoercedString
+> = util.factory($ZodCoercedString, {
   type: "string",
   coerce: true,
 });
 
-//////////    ZodMiniCoercedNumber    //////////
-export interface ZodMiniCoercedNumberDef extends core.$ZodNumberDef {}
-export interface ZodMiniCoercedNumber
+//////////    $ZodCoercedNumber    //////////
+export interface $ZodCoercedNumberDef extends core.$ZodNumberDef {}
+export interface $ZodCoercedNumber
   extends core.$ZodNumber<unknown>,
-    mini.ZodMiniType<number, unknown> {
-  _def: ZodMiniCoercedNumberDef;
+    core.$ZodType<number, unknown> {
+  _def: $ZodCoercedNumberDef;
 }
 
-export const ZodMiniCoercedNumber: core.$constructor<ZodMiniCoercedNumber> =
-  /*@__PURE__*/ core.$constructor("ZodMiniCoercedNumber", (inst, def) => {
+export const $ZodCoercedNumber: core.$constructor<$ZodCoercedNumber> =
+  /*@__PURE__*/ core.$constructor("$ZodCoercedNumber", (inst, def) => {
     core.$ZodNumber.init(inst, def); // no format checks
-    mini.ZodMiniType.init(inst, def);
+    core.$ZodType.init(inst, def);
     const _super = inst._typecheck;
     inst._typecheck = (input, ctx) => {
       if (def.coerce) {
@@ -85,24 +83,24 @@ export const ZodMiniCoercedNumber: core.$constructor<ZodMiniCoercedNumber> =
     };
   });
 
-interface ZodMiniNumberParams
-  extends util.Params<ZodMiniCoercedNumber, "format" | "coerce"> {}
+interface $ZodNumberParams
+  extends util.Params<$ZodCoercedNumber, "format" | "coerce"> {}
 export const number: util.PrimitiveFactory<
-  ZodMiniNumberParams,
-  ZodMiniCoercedNumber
-> = util.factory(ZodMiniCoercedNumber, { type: "number", coerce: true });
-//////////    ZodMiniCoercedBoolean    //////////
-export interface ZodMiniCoercedBooleanDef extends core.$ZodBooleanDef {}
-export interface ZodMiniCoercedBoolean
+  $ZodNumberParams,
+  $ZodCoercedNumber
+> = util.factory($ZodCoercedNumber, { type: "number", coerce: true });
+//////////    $ZodCoercedBoolean    //////////
+export interface $ZodCoercedBooleanDef extends core.$ZodBooleanDef {}
+export interface $ZodCoercedBoolean
   extends core.$ZodBoolean<unknown>,
-    mini.ZodMiniType<boolean, unknown> {
-  _def: ZodMiniCoercedBooleanDef;
+    core.$ZodType<boolean, unknown> {
+  _def: $ZodCoercedBooleanDef;
 }
 
-export const ZodMiniCoercedBoolean: core.$constructor<ZodMiniCoercedBoolean> =
-  /*@__PURE__*/ core.$constructor("ZodMiniCoercedBoolean", (inst, def) => {
+export const $ZodCoercedBoolean: core.$constructor<$ZodCoercedBoolean> =
+  /*@__PURE__*/ core.$constructor("$ZodCoercedBoolean", (inst, def) => {
     core.$ZodBoolean.init(inst, def); // no format checks
-    mini.ZodMiniType.init(inst, def);
+    core.$ZodType.init(inst, def);
     const _super = inst._typecheck;
     inst._typecheck = (input, ctx) => {
       if (def.coerce) {
@@ -127,24 +125,24 @@ export const ZodMiniCoercedBoolean: core.$constructor<ZodMiniCoercedBoolean> =
     };
   });
 
-interface ZodMiniBooleanParams extends util.Params<ZodMiniCoercedBoolean> {}
+interface $ZodBooleanParams extends util.Params<$ZodCoercedBoolean> {}
 export const boolean: util.PrimitiveFactory<
-  ZodMiniBooleanParams,
-  ZodMiniCoercedBoolean
-> = util.factory(ZodMiniCoercedBoolean, { type: "boolean", coerce: true });
+  $ZodBooleanParams,
+  $ZodCoercedBoolean
+> = util.factory($ZodCoercedBoolean, { type: "boolean", coerce: true });
 
-//////////    ZodMiniCoercedBigInt    //////////
-export interface ZodMiniCoercedBigIntDef extends core.$ZodBigIntDef {}
-export interface ZodMiniCoercedBigInt
+//////////    $ZodCoercedBigInt    //////////
+export interface $ZodCoercedBigIntDef extends core.$ZodBigIntDef {}
+export interface $ZodCoercedBigInt
   extends core.$ZodBigInt<unknown>,
-    mini.ZodMiniType<bigint, unknown> {
-  _def: ZodMiniCoercedBigIntDef;
+    core.$ZodType<bigint, unknown> {
+  _def: $ZodCoercedBigIntDef;
 }
 
-export const ZodMiniCoercedBigInt: core.$constructor<ZodMiniCoercedBigInt> =
-  /*@__PURE__*/ core.$constructor("ZodMiniCoercedBigInt", (inst, def) => {
+export const $ZodCoercedBigInt: core.$constructor<$ZodCoercedBigInt> =
+  /*@__PURE__*/ core.$constructor("$ZodCoercedBigInt", (inst, def) => {
     core.$ZodBigInt.init(inst, def); // no format checks
-    mini.ZodMiniType.init(inst, def);
+    core.$ZodType.init(inst, def);
     const _super = inst._typecheck;
     inst._typecheck = (input, ctx) => {
       if (def.coerce) {
@@ -169,24 +167,24 @@ export const ZodMiniCoercedBigInt: core.$constructor<ZodMiniCoercedBigInt> =
     };
   });
 
-interface ZodMiniBigIntParams extends util.Params<ZodMiniCoercedBigInt> {}
+interface $ZodBigIntParams extends util.Params<$ZodCoercedBigInt> {}
 export const bigint: util.PrimitiveFactory<
-  ZodMiniBigIntParams,
-  ZodMiniCoercedBigInt
-> = util.factory(ZodMiniCoercedBigInt, { type: "bigint", coerce: true });
+  $ZodBigIntParams,
+  $ZodCoercedBigInt
+> = util.factory($ZodCoercedBigInt, { type: "bigint", coerce: true });
 
-//////////    ZodMiniCoercedDate    //////////
-export interface ZodMiniCoercedDateDef extends core.$ZodDateDef {}
-export interface ZodMiniCoercedDate
+//////////    $ZodCoercedDate    //////////
+export interface $ZodCoercedDateDef extends core.$ZodDateDef {}
+export interface $ZodCoercedDate
   extends core.$ZodDate<unknown>,
-    mini.ZodMiniType<Date, unknown> {
-  _def: ZodMiniCoercedDateDef;
+    core.$ZodType<Date, unknown> {
+  _def: $ZodCoercedDateDef;
 }
 
-export const ZodMiniCoercedDate: core.$constructor<ZodMiniCoercedDate> =
-  /*@__PURE__*/ core.$constructor("ZodMiniCoercedDate", (inst, def) => {
+export const $ZodCoercedDate: core.$constructor<$ZodCoercedDate> =
+  /*@__PURE__*/ core.$constructor("$ZodCoercedDate", (inst, def) => {
     core.$ZodDate.init(inst, def); // no format checks
-    mini.ZodMiniType.init(inst, def);
+    core.$ZodType.init(inst, def);
     const _super = inst._typecheck;
     inst._typecheck = (input, ctx) => {
       if (def.coerce) {
@@ -211,8 +209,6 @@ export const ZodMiniCoercedDate: core.$constructor<ZodMiniCoercedDate> =
     };
   });
 
-interface ZodMiniDateParams extends util.Params<ZodMiniCoercedDate> {}
-export const date: util.PrimitiveFactory<
-  ZodMiniDateParams,
-  ZodMiniCoercedDate
-> = util.factory(ZodMiniCoercedDate, { type: "date", coerce: true });
+interface $ZodDateParams extends util.Params<$ZodCoercedDate> {}
+export const date: util.PrimitiveFactory<$ZodDateParams, $ZodCoercedDate> =
+  util.factory($ZodCoercedDate, { type: "date", coerce: true });

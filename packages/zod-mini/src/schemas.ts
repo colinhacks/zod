@@ -724,10 +724,6 @@ export const ZodMiniUnion: core.$constructor<ZodMiniUnion> =
 //////////                         //////////
 /////////////////////////////////////////////
 /////////////////////////////////////////////
-export interface ZodMiniHasDiscriminator extends ZodMiniType {
-  _disc: core.$DiscriminatorMap;
-}
-
 export interface ZodMiniDiscriminatedUnionDef
   extends core.$ZodDiscriminatedUnionDef {}
 
@@ -883,18 +879,18 @@ export const ZodMiniSet: core.$constructor<ZodMiniSet> =
 /////////////////////////////////////////////
 
 export interface ZodMiniEnumDef extends core.$ZodEnumDef {}
-export interface ZodMiniEnum<T extends core.$EnumValues = core.$EnumValues>
-  extends core.$ZodEnum<T>,
-    ZodMiniType<core.$InferEnumOutput<T>, core.$InferEnumInput<T>> {
+export interface ZodMiniEnum<T extends core.$EnumValue[] = core.$EnumValue[]>
+  extends core.$ZodEnum<core.$ToEnum<T[number]>>,
+    ZodMiniType<T[number], T[number]> {
   _def: ZodMiniEnumDef;
   _values: Set<core.Primitive>;
-  enum: core.$ValuesToEnum<T>;
+  enum: core.$ToEnum<T[number]>;
 }
 export const ZodMiniEnum: core.$constructor<ZodMiniEnum> =
   /*@__PURE__*/ core.$constructor("ZodMiniEnum", (inst, def) => {
     core.$ZodEnum.init(inst, def);
     ZodMiniType.init(inst, def);
-    inst.enum = core.$toEnum(def.entries);
+    inst.enum = def.entries as any;
   });
 
 /////////////////////////////////////////////
@@ -905,16 +901,16 @@ export const ZodMiniEnum: core.$constructor<ZodMiniEnum> =
 /////////////////////////////////////////////
 /////////////////////////////////////////////
 
-export interface ZodMiniLiteralDef extends core.$ZodEnumDef {}
+export interface ZodMiniLiteralDef extends core.$ZodLiteralDef {}
 export interface ZodMiniLiteral<T extends core.$EnumValue[] = core.$EnumValue[]>
-  extends core.$ZodEnum<T>,
-    ZodMiniType<core.$InferEnumOutput<T>, core.$InferEnumInput<T>> {
+  extends core.$ZodLiteral<T>,
+    ZodMiniType<T[number], T[number]> {
   _def: ZodMiniLiteralDef;
   _values: Set<core.Primitive>;
 }
 export const ZodMiniLiteral: core.$constructor<ZodMiniLiteral> =
   /*@__PURE__*/ core.$constructor("ZodMiniLiteral", (inst, def) => {
-    core.$ZodEnum.init(inst, def);
+    core.$ZodLiteral.init(inst, def);
     ZodMiniType.init(inst, def);
   });
 
@@ -937,7 +933,7 @@ export const ZodMiniNativeEnum: core.$constructor<ZodMiniNativeEnum> =
   /*@__PURE__*/ core.$constructor("ZodMiniNativeEnum", (inst, def) => {
     core.$ZodEnum.init(inst, def);
     ZodMiniType.init(inst, def);
-    inst.enum = core.$toEnum(def.entries);
+    inst.enum = def.entries;
   });
 
 /////////////////////////////////////////////

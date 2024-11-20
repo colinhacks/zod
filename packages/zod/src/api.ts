@@ -15,6 +15,8 @@ import * as util from "./util.js";
  * - ostring
  */
 
+export * as coerce from "./coerce.js";
+
 interface ZodStringParams extends util.Params<schemas.ZodString, "coerce"> {}
 export const string: util.PrimitiveFactory<ZodStringParams, schemas.ZodString> =
   util.factory(schemas.ZodString, {
@@ -602,17 +604,17 @@ export function nativeEnum<T extends core.$EnumLike>(
 
 // literal
 interface ZodLiteralParams extends util.Params<schemas.ZodLiteral, "entries"> {}
-export function literal<const T extends core.Primitive | core.Primitive[]>(
+export function literal<const T extends core.$EnumValue | core.$EnumValue[]>(
   value: T,
   params?: ZodLiteralParams
-): schemas.ZodLiteral<T extends core.Primitive ? [T] : T> {
+): schemas.ZodLiteral<T extends core.$EnumValue[] ? T : [T]> {
   return new schemas.ZodLiteral({
     type: "enum",
     entries: (Array.isArray(value) ? value : [value]).map((v) => ({
       value: v,
     })),
     ...util.normalizeCreateParams(params),
-  }) as any as schemas.ZodLiteral<T extends core.Primitive ? [T] : T>;
+  }) as any as schemas.ZodLiteral<T extends core.$EnumValue[] ? T : [T]>;
 }
 
 // envbool
@@ -928,27 +930,27 @@ export function refine<T>(
 ///////////        METHODS       ///////////
 
 /**
- * parse(data: unknown, params?: Partial<core.$ParseContext>): Output;
+ * parse(data: unknown, params?: core.$ParseContext): Output;
  */
 export function parse<T extends schemas.ZodType>(
   schema: T,
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  ctx?: core.$ParseContext
 ): core.output<T> {
-  const result = schema._parse(data, params);
+  const result = schema._parse(data, ctx);
   if (result instanceof Promise) {
     throw new Error(
       "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
     );
   }
-  if (core.succeeded(result)) return result as core.output<T>;
-  throw result;
+  if (core.$failed(result)) throw core.$finalize(result.issues, ctx);
+  return result as core.output<T>;
 }
 
 /**
  * safeParse(
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  params?: core.$ParseContext
 ): SafeParseResult<Output>;
  */
 type SafeParseResult<T> =
@@ -957,15 +959,15 @@ type SafeParseResult<T> =
 export function safeParse<T extends schemas.ZodType>(
   schema: T,
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  ctx?: core.$ParseContext
 ): SafeParseResult<core.output<T>> {
-  const result = schema._parse(data, params);
+  const result = schema._parse(data, ctx);
   if (result instanceof Promise)
     throw new Error(
       "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
     );
   return (
-    core.succeeded(result)
+    core.$succeeded(result)
       ? { success: true, data: result }
       : { success: false, error: result }
   ) as SafeParseResult<core.output<T>>;
@@ -974,35 +976,35 @@ export function safeParse<T extends schemas.ZodType>(
 /**
  * parseAsync(
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  params?: core.$ParseContext
 ): Promise<Output>;
  */
 export async function parseAsync<T extends schemas.ZodType>(
   schema: T,
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  ctx?: core.$ParseContext
 ): Promise<core.output<T>> {
-  let result = schema._parse(data, params);
+  let result = schema._parse(data, ctx);
   if (result instanceof Promise) result = await result;
-  if (core.succeeded(result)) return result as core.output<T>;
+  if (core.$succeeded(result)) return result as core.output<T>;
   throw result;
 }
 
 /**
  * safeParseAsync(
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  params?: core.$ParseContext
 ): Promise<SafeParseResult<Output>>;
  */
 export async function safeParseAsync<T extends schemas.ZodType>(
   schema: T,
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  ctx?: core.$ParseContext
 ): Promise<SafeParseResult<core.output<T>>> {
-  let result = schema._parse(data, params);
+  let result = schema._parse(data, ctx);
   if (result instanceof Promise) result = await result;
   return (
-    core.succeeded(result)
+    core.$succeeded(result)
       ? { success: true, data: result }
       : { success: false, error: result }
   ) as SafeParseResult<core.output<T>>;

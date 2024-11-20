@@ -59,18 +59,17 @@ export interface $ParseContext {
 
 export const RESULT: symbol = Symbol.for("{{zod.result}}");
 
-export type $ZodResult<T = unknown> =
-  //$ZodSuccess<T> | $ZodFail;
-  {
-    tag: typeof RESULT;
-    value?: T;
-    issues?: err.$ZodIssueData[];
-    aborted?: boolean;
-  };
+export type $ZodResult<T = unknown> = {
+  tag: typeof RESULT;
+  value?: T;
+  issues?: err.$ZodIssueData[];
+  aborted?: boolean;
+};
 
 export type $ZodResultFull<T = unknown> = Required<$ZodResult<T>>;
 export interface $ZodResultWithIssues extends $ZodResult {
   issues: err.$ZodIssueData[];
+  value: never;
 }
 export interface $ZodResultWithValue<T> extends $ZodResult<T> {
   value: T;
@@ -89,11 +88,11 @@ export interface $ZodResultWithValue<T> extends $ZodResult<T> {
 //   value: never;
 // }
 
-export function $result(
-  value: unknown,
+export function $result<T>(
+  value: T,
   issues: err.$ZodIssueData[] = [],
   aborted = false
-): $ZodResult {
+): $ZodResultFull<T> {
   return { tag: RESULT, value, issues, aborted };
 }
 
@@ -113,19 +112,7 @@ export function $failed(x: $ZodResult): x is $ZodResultWithIssues {
 }
 
 export function $succeeded<T>(x: $ZodResult<T>): x is $ZodResultWithValue<T> {
-  return !x.issues?.length as any;
-}
-
-export function mergeIn(
-  a: $ZodResult,
-  b: $ZodResult,
-  path: PropertyKey
-): $ZodResult {
-  if (!b.issues?.length) return a;
-  return {
-    ...a,
-    issues: [...(a.issues ?? []), ...$prefixIssues(path, b.issues)],
-  };
+  return !x?.issues?.length as any;
 }
 
 export function $prefixIssues(
@@ -292,64 +279,7 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
 
     if (noChecks) {
       inst._parse = (...args) => inst._typecheck(...args);
-      // inst._parse2 = (...args) => inst._typecheck2(...args);
-      // inst._parse3 = (...args) => inst._typecheck3(...args);
     } else {
-      //   inst._parse = (_input, ctx) => {
-      //     // const finalResult = {
-      //     //   tag: RESULT,
-      //     //   issues: [],
-      //     //   aborted: false,
-      //     //   value: _input,
-      //     // };
-      //     const result = inst._typecheck(_input, ctx);
-      //     if (result instanceof Promise) throw "";
-      //     // let fail!: $ZodFailure;
-      //     // let input!: unknown;
-      //     if ($failed(result)) {
-      //       // fail = result;
-      //       if (result.aborted) return result;
-      //     }
-
-      //     let i = 0;
-      //     for (const check of checks) {
-      //       const _checkResult = check.run(result.value as never);
-      //       if (!_checkResult) continue;
-      //       if (_checkResult instanceof Promise) {
-      //         console.log(`check ${i} is async`);
-      //         return _checkResult.then(async () => {
-      //           const remainingChecks = inst._def.checks!.slice(i);
-      //           for (const check of remainingChecks) {
-      //             let _checkResult = check.run(result.value as never);
-      //             if (_checkResult instanceof Promise)
-      //               _checkResult = await _checkResult;
-      //             if (!_checkResult) continue;
-      //             if (_checkResult.override) input = _checkResult.override;
-      //             if (_checkResult.issues) {
-      //               if (!fail) fail = new $ZodFailure();
-      //               fail.push(..._checkResult.issues);
-      //             }
-      //             if (_checkResult.abort) {
-      //               fail.aborted = true;
-      //               return fail;
-      //             }
-      //           }
-      //           return fail ?? input;
-      //         });
-      //       }
-
-      //       if (_checkResult.issues) {
-      //         if (!fail) fail = new $ZodFailure();
-      //         fail.push(..._checkResult.issues);
-      //       }
-      //       if (_checkResult.abort) return fail;
-      //       if (_checkResult.override) input = _checkResult.override;
-
-      //       i++;
-      //     }
-      //     return fail ?? input;
-      //   };
-      // }
       inst._parse = (_input, ctx) => {
         const result = inst._typecheck(_input, ctx);
         if (result instanceof Promise) throw "";
@@ -363,7 +293,6 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
           const _ = check.run2(result as $ZodResult<never>);
           if (!_) continue;
           if (_ instanceof Promise) {
-            console.log(`check ${i} is async`);
             return _.then(async () => {
               const remainingChecks = inst._def.checks!.slice(i);
               for (const check of remainingChecks) {
@@ -402,6 +331,9 @@ export type {
   /** @deprecated Use z.output<typeof schema> instead */
   output as Infer,
 };
+
+// type alksjdf = null extends object ? true : false;
+// type asdf =
 
 // function emptyFail
 // export const FAILURE: symbol = Symbol.for("{{zod.failure}}");
@@ -451,25 +383,28 @@ export type {
 //   }
 // }
 
-export function finalize(
+export function $finalize(
   issues: err.$ZodIssueData[],
   ctx?: $ParseContext
 ): $ZodError {
   return new $ZodError(
     issues.map((iss) => {
-      const full = { ...iss } as err.$ZodIssue;
+      const full = { ...iss, path: iss.path ?? [] } as err.$ZodIssue;
       if (!iss.message) {
         const message =
           ctx?.error?.(iss as never) ??
-          iss?.def?.error?.(iss as never) ??
+          iss.def?.error?.(iss as never) ??
           getConfig().error?.(iss) ??
-          defaultErrorMap(iss);
-        full.message =
-          typeof message === "string" ? message : message?.message!;
+          defaultErrorMap(iss)!;
+        full.message = typeof message === "string" ? message : message?.message;
       }
 
+      // biome-ignore lint:
       delete full.def;
-      if (!ctx?.includeInputInErrors) delete full.input;
+      if (!ctx?.includeInputInErrors) {
+        // biome-ignore lint:
+        delete full.input;
+      }
       return full;
     })
   );
@@ -571,8 +506,7 @@ export interface $ZodCheckDef {
 // @ts-ignore cast variance
 export interface $ZodCheck<in T = never> {
   _def: $ZodCheckDef;
-  run(input: T): types.MaybeAsync<void | $ZodCheckResult<T>>;
-  run2(input: $ZodResult<T>): types.MaybeAsync<void>;
+  run2(input: $ZodResultFull<T>): types.MaybeAsync<void>;
 }
 
 export type $ZodCheckResult<O = unknown> = {

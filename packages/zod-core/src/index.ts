@@ -6,3 +6,5 @@ export * from "./api.js";
 export * from "./schemas.js";
 export * from "./regexes.js";
 // export * from "./util.js";
+
+export * as coerce from "./coerce.js";

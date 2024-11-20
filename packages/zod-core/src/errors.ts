@@ -70,6 +70,12 @@ export interface $ZodIssueUnrecognizedKeys
   keys: string[];
 }
 
+// export interface $ZodIssueMissingKeys
+//   extends $ZodIssueBase<"object" | "record", Record<string, unknown>> {
+//   code: "missing_keys";
+//   keys: string[];
+// }
+
 export interface $ZodIssueInvalidUnion extends $ZodIssueBase<"union", unknown> {
   code: "invalid_union";
   errors: $ZodIssue[][];
@@ -83,20 +89,20 @@ export interface $ZodIssueInvalidKey<
   issues: $ZodIssue[];
 }
 
-export interface $ZodIssueInvalidValue<
+export interface $ZodIssueInvalidElement<
   Origin extends "map" | "set" = "map" | "set",
   Input = unknown,
 > extends $ZodIssueBase<Origin, Input> {
-  code: "invalid_value";
+  code: "invalid_element";
   key: unknown;
   issues: $ZodIssue[];
 }
 
-export interface $ZodIssueInvalidEnum<
+export interface $ZodIssueInvalidValue<
   Origin extends $ZodSchemaTypes = $ZodSchemaTypes,
   Input = unknown,
 > extends $ZodIssueBase<Origin, Input> {
-  code: "invalid_enum";
+  code: "invalid_value";
   options: types.Primitive[];
 }
 
@@ -191,8 +197,8 @@ export type $ZodIssue =
   | $ZodIssueUnrecognizedKeys
   | $ZodIssueInvalidUnion
   | $ZodIssueInvalidKey
+  | $ZodIssueInvalidElement
   | $ZodIssueInvalidValue
-  | $ZodIssueInvalidEnum
   | $ZodIssueCustom;
 
 export type $ZodIssueData<T extends $ZodIssueBase = $ZodIssue> = T extends any
@@ -204,7 +210,7 @@ type ComputedIssueDataPieces<In> = {
   // level?: "error" | "abort" | undefined;
   message?: string | undefined;
   input: In;
-  def: { error?: $ZodErrorMap<never> | undefined };
+  def?: { error?: $ZodErrorMap<never> | undefined };
 };
 
 export type _$ZodIssueData<T extends $ZodIssueBase> = Omit<

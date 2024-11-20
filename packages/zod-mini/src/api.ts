@@ -1,5 +1,4 @@
 import * as core from "zod-core";
-import { RESULT as tag } from "zod-core";
 import * as schemas from "./schemas.js";
 import * as util from "./util.js";
 
@@ -528,14 +527,13 @@ export function union<T extends schemas.ZodMiniType[]>(
 // export const or: typeof union = union;
 
 // discriminatedUnion
-
+export interface ZodMiniHasDiscriminator extends schemas.ZodMiniType {
+  _disc: core.$DiscriminatorMap;
+}
 interface ZodMiniDiscriminatedUnionParams
   extends util.Params<schemas.ZodMiniDiscriminatedUnion, "options"> {}
 export function discriminatedUnion<
-  Types extends [
-    schemas.ZodMiniHasDiscriminator,
-    ...schemas.ZodMiniHasDiscriminator[],
-  ],
+  Types extends [ZodMiniHasDiscriminator, ...ZodMiniHasDiscriminator[]],
 >(
   options: Types,
   params?: ZodMiniDiscriminatedUnionParams
@@ -741,11 +739,11 @@ export function effect<O = unknown, I = unknown>(
 interface ZodMiniPreprocessParams
   extends ZodMiniEffectParams,
     ZodMiniPipelineParams {}
-export function preprocess<T extends schemas.ZodMiniType>(
-  _effect: (arg: unknown) => core.input<T>,
-  schema: T,
+export function preprocess<T, U extends schemas.ZodMiniType<unknown, T>>(
+  _effect: (arg: unknown) => T,
+  schema: U,
   params?: ZodMiniPreprocessParams
-): schemas.ZodMiniPipeline<schemas.ZodMiniEffect<T["_input"], unknown>, T> {
+): schemas.ZodMiniPipeline<schemas.ZodMiniEffect<T, unknown>, U> {
   return pipeline(effect(_effect, params), schema, params);
 }
 // interface ZodMiniPreprocessParams
@@ -951,20 +949,16 @@ export function custom<T>(
   if (fn)
     result = result._check({
       _def: { check: "custom" },
-      run(input) {
-        if (!fn(input)) {
-          return {
-            issues: [
-              {
-                input,
-                code: "custom",
-                origin: "custom",
-                level: "error",
-                def: params,
-                path: params?.path,
-              },
-            ],
-          };
+      run2(ctx) {
+        if (!fn(ctx.value)) {
+          ctx.issues.push({
+            input: ctx.value,
+            code: "custom",
+            origin: "custom",
+            level: "error",
+            def: params,
+            path: params?.path,
+          });
         }
       },
     });
@@ -986,18 +980,29 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 // refine
-function customErr(
-  err: Pick<core.$ZodIssueData<core.$ZodIssueCustom>, "input" | "path" | "def">
-): { issues: core.$ZodIssueData[] } {
+function customIssue(
+  err: Pick<
+    core.$ZodIssueData<core.$ZodIssueCustom>,
+    "input" | "path" | "def" | "message"
+  >
+): core.$ZodIssueData {
   return {
-    issues: [
-      {
-        code: "custom",
-        origin: "custom",
-        ...err,
-      }, // as core.$ZodIssueData<core.$ZodIssueCustom>,
-    ],
+    code: "custom",
+    origin: "custom",
+    ...err,
   };
+}
+
+function handleRefineResult(
+  result: unknown,
+  final: core.$ZodResultFull,
+  input: unknown,
+  def: util.NormalizedCheckParams,
+  path: PropertyKey[] = []
+): void | Promise<void> {
+  if (!result) {
+    final.issues.push(customIssue({ input, def, path }));
+  }
 }
 
 export function refine<T>(
@@ -1007,66 +1012,45 @@ export function refine<T>(
   const params = util.normalizeCheckParams(_params as util.RawCheckParams);
   return {
     _def: { check: "custom", error: params.error },
-    run(input: T) {
-      const res = fn(input);
-      if (res instanceof Promise)
-        return res.then((r) =>
-          r ? undefined : customErr({ input, def: params, path: params.path })
-        );
-      return res
-        ? undefined
-        : customErr({ input, def: params, path: params.path });
+    run2(ctx) {
+      const result = fn(ctx.value);
+      if (result instanceof Promise)
+        return result.then((result) => {
+          handleRefineResult(result, ctx, ctx.value, params);
+        });
+
+      return handleRefineResult(result, ctx, ctx.value, params);
     },
   };
 }
 
-// superRefine(
-//     refinement: (arg: Output, ctx: RefinementCtx) => void | Promise<void>
-//   ): this;
-// export function superRefine<T>(
-//   fn: (arg: T) => unknown | Promise<unknown>,
-//   ctx:
-//   _params: string | CustomParams = {}
-// ): core.$ZodCheck<T> {
-//   const params = util.normalizeCheckParams(_params as util.RawCheckParams);
-//   return {
-//     _def: { check: "custom", error: params.error },
-//     run(input: T) {
-//       const res = fn(input);
-//       if (res instanceof Promise)
-//         return res.then((r) =>
-//           r ? undefined : customErr({ input, def: params, path: params.path })
-//         );
-//       return res
-//         ? undefined
-//         : customErr({ input, def: params, path: params.path });
-//     },
-//   };
-// }
+interface RefinementCtx {
+  addIssue(arg: core.$ZodIssueData | string): void;
+}
+export function superRefine<T>(
+  fn: (arg: T, ctx: RefinementCtx) => void | Promise<void>
+): core.$ZodCheck<T> {
+  return {
+    _def: { check: "custom" },
+    run2(ctx) {
+      const result = fn(ctx.value, {
+        addIssue(issue) {
+          if (typeof issue === "string") {
+            ctx.issues.push(
+              customIssue({
+                input: ctx.value,
+                message: issue,
+              })
+            );
+          } else ctx.issues.push(issue);
+        },
+      });
+      return result;
+    },
+  };
+}
 
 ///////////        METHODS       ///////////
-
-/**
- * parse(data: unknown, params?: Partial<core.$ParseContext>): Output;
- */
-// export function parse<T extends schemas.ZodMiniType>(
-//   schema: T,
-//   data: unknown,
-//   ctx?: core.$ParseContext
-// ): core.output<T> {
-//   const result = schema._parse(data, ctx);
-//   if (result instanceof Promise) {
-//     throw new Error(
-//       "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
-//     );
-//   }
-
-//   if (core.failed(result)) {
-//     throw result.finalize(ctx);
-//   }
-
-//   return result as core.output<T>;
-// }
 
 export function parse<T extends schemas.ZodMiniType>(
   schema: T,
@@ -1081,107 +1065,52 @@ export function parse<T extends schemas.ZodMiniType>(
   }
 
   if (result.issues?.length) {
-    throw core.finalize(result.issues!, ctx);
+    throw core.$finalize(result.issues!, ctx);
   }
   return result.value as core.output<T>;
 }
 
-export function parse2<T extends schemas.ZodMiniType>(
-  schema: T,
-  data: unknown,
-  ctx?: core.$ParseContext
-): core.output<T> {
-  const result = schema._parse2(data, ctx);
-  if (result instanceof Promise) {
-    throw new Error(
-      "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
-    );
-  }
-
-  if (result.issues?.length) {
-    throw core.finalize(result.issues!, ctx);
-  }
-  return result.value as core.output<T>;
-}
-
-// export function parse3<T extends schemas.ZodMiniType>(
-//   schema: T,
-//   value: unknown,
-//   ctx?: core.$ParseContext
-// ): core.output<T> {
-//   const result: core.$ZodResult3 = { issues: [], value, aborted: false };
-//   const _ = schema._parse3(result, ctx);
-//   if (_ instanceof Promise) {
-//     throw new Error(
-//       "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
-//     );
-//   }
-
-//   if (result.issues?.length) {
-//     throw core.finalize(result.issues!, ctx);
-//   }
-//   return result.value as core.output<T>;
-// }
-
-/**
- * safeParse(
-  data: unknown,
-  params?: Partial<core.$ParseContext>
-): SafeParseResult<Output>;
- */
 type SafeParseResult<T> =
   | { success: true; data: T; error?: never }
-  | { success: false; data?: never; error: core.$ZodFailure };
+  | { success: false; data?: never; error: core.$ZodError };
 export function safeParse<T extends schemas.ZodMiniType>(
   schema: T,
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  ctx?: core.$ParseContext
 ): SafeParseResult<core.output<T>> {
-  const result = schema._parse(data, params);
+  const result = schema._parse(data, ctx);
   if (result instanceof Promise)
     throw new Error(
       "Encountered Promise during synchronous .parse(). Use .parseAsync() instead."
     );
   return (
-    core.succeeded(result)
-      ? { success: true, data: result }
-      : { success: false, error: result }
+    core.$failed(result)
+      ? { success: false, error: core.$finalize(result.issues, ctx) }
+      : { success: true, data: result.value }
   ) as SafeParseResult<core.output<T>>;
 }
 
-/**
- * parseAsync(
-  data: unknown,
-  params?: Partial<core.$ParseContext>
-): Promise<Output>;
- */
 export async function parseAsync<T extends schemas.ZodMiniType>(
   schema: T,
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  ctx?: core.$ParseContext
 ): Promise<core.output<T>> {
-  let result = schema._parse(data, params);
+  let result = schema._parse(data, ctx);
   if (result instanceof Promise) result = await result;
-  if (core.succeeded(result)) return result as core.output<T>;
-  throw result;
+  if (core.$failed(result)) throw core.$finalize(result.issues);
+  return result.value as core.output<T>;
 }
 
-/**
- * safeParseAsync(
-  data: unknown,
-  params?: Partial<core.$ParseContext>
-): Promise<SafeParseResult<Output>>;
- */
 export async function safeParseAsync<T extends schemas.ZodMiniType>(
   schema: T,
   data: unknown,
-  params?: Partial<core.$ParseContext>
+  ctx?: core.$ParseContext
 ): Promise<SafeParseResult<core.output<T>>> {
-  let result = schema._parse(data, params);
+  let result = schema._parse(data, ctx);
   if (result instanceof Promise) result = await result;
   return (
-    core.succeeded(result)
-      ? { success: true, data: result }
-      : { success: false, error: result }
+    core.$failed(result)
+      ? { success: false, error: core.$finalize(result.issues, ctx) }
+      : { success: true, data: result.value }
   ) as SafeParseResult<core.output<T>>;
 }

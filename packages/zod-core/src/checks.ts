@@ -1,5 +1,4 @@
 import * as core from "./core.js";
-import { RESULT as tag } from "./core.js";
 import type * as err from "./errors.js";
 import type * as types from "./types.js";
 ///////////////////////////////////////
@@ -34,25 +33,23 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> =
         typeof inst._def.value as "number" | "bigint" | "object"
       ];
 
-    inst.run = (input) => {
+    inst.run2 = (ctx) => {
       if (
-        inst._def.inclusive ? input <= inst._def.value : input < inst._def.value
+        inst._def.inclusive
+          ? ctx.value <= inst._def.value
+          : ctx.value < inst._def.value
       ) {
         return;
       }
 
-      return {
-        issues: [
-          {
-            origin: origin as "number",
-            code: "too_big",
-            maximum: inst._def.value as number,
-            input,
-            inclusive: inst._def.inclusive,
-            def,
-          },
-        ],
-      };
+      ctx.issues.push({
+        origin: origin as "number",
+        code: "too_big",
+        maximum: inst._def.value as number,
+        input: ctx.value,
+        inclusive: inst._def.inclusive,
+        def,
+      });
     };
   });
 
@@ -82,25 +79,23 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> =
         typeof inst._def.value as "number" | "bigint" | "object"
       ];
 
-    inst.run = (input) => {
+    inst.run2 = (ctx) => {
       if (
-        inst._def.inclusive ? input >= inst._def.value : input > inst._def.value
+        inst._def.inclusive
+          ? ctx.value >= inst._def.value
+          : ctx.value > inst._def.value
       ) {
         return;
       }
 
-      return {
-        issues: [
-          {
-            origin: origin as "number",
-            code: "too_small",
-            minimum: inst._def.value as number,
-            input,
-            inclusive: inst._def.inclusive,
-            def,
-          },
-        ],
-      };
+      ctx.issues.push({
+        origin: origin as "number",
+        code: "too_small",
+        minimum: inst._def.value as number,
+        input: ctx.value,
+        inclusive: inst._def.inclusive,
+        def,
+      });
     };
   });
 
@@ -135,26 +130,22 @@ export const $ZodCheckMultipleOf: core.$constructor<
 > = core.$constructor("$ZodCheckMultipleOf", (inst, def) => {
   core.$ZodCheck.init(inst, def);
 
-  inst.run = (input) => {
-    if (typeof input !== typeof inst._def.value)
+  inst.run2 = (ctx) => {
+    if (typeof ctx.value !== typeof inst._def.value)
       throw new Error("Cannot mix number and bigint in multiple_of check.");
     const isMultiple =
-      typeof input === "bigint"
-        ? input % (inst._def.value as bigint) === BigInt(0)
-        : floatSafeRemainder(input, inst._def.value as number);
+      typeof ctx.value === "bigint"
+        ? ctx.value % (inst._def.value as bigint) === BigInt(0)
+        : floatSafeRemainder(ctx.value, inst._def.value as number);
 
     if (isMultiple) return;
-    return {
-      issues: [
-        {
-          origin: typeof input as "number",
-          code: "not_multiple_of",
-          divisor: inst._def.value as number,
-          input,
-          def,
-        },
-      ],
-    };
+    ctx.issues.push({
+      origin: typeof ctx.value as "number",
+      code: "not_multiple_of",
+      divisor: inst._def.value as number,
+      input: ctx.value,
+      def,
+    });
   };
 });
 //////////////////////////////////
@@ -191,20 +182,16 @@ export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> =
   core.$constructor("$ZodCheckMaxSize", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      const size = getSize(input);
+    inst.run2 = (ctx) => {
+      const size = getSize(ctx.value);
       if (size.size <= inst._def.maximum) return;
-      return {
-        issues: [
-          {
-            origin: size.type as "array",
-            code: "too_big",
-            maximum: inst._def.maximum,
-            input,
-            def,
-          },
-        ],
-      };
+      ctx.issues.push({
+        origin: size.type as "array",
+        code: "too_big",
+        maximum: inst._def.maximum,
+        input: ctx.value,
+        def,
+      });
     };
   });
 
@@ -232,20 +219,16 @@ export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> =
   core.$constructor("$ZodCheckMinSize", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      const size = getSize(input);
+    inst.run2 = (ctx) => {
+      const size = getSize(ctx.value);
       if (size.size >= inst._def.minimum) return;
-      return {
-        issues: [
-          {
-            origin: size.type as "array",
-            code: "too_small",
-            minimum: inst._def.minimum,
-            input,
-            def,
-          },
-        ],
-      };
+      ctx.issues.push({
+        origin: size.type as "array",
+        code: "too_small",
+        minimum: inst._def.minimum,
+        input: ctx.value,
+        def,
+      });
     };
   });
 
@@ -276,22 +259,18 @@ export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> =
   core.$constructor("$ZodCheckSizeEquals", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      const size = getSize(input);
+    inst.run2 = (ctx) => {
+      const size = getSize(ctx.value);
       if (size.size === inst._def.size) return;
       const tooBig = size.size > inst._def.size;
-      return {
-        issues: [
-          {
-            origin: size.type as "array",
-            ...(tooBig
-              ? { code: "too_big", maximum: inst._def.size }
-              : { code: "too_small", minimum: inst._def.size }),
-            input,
-            def,
-          },
-        ],
-      };
+      ctx.issues.push({
+        origin: size.type as "array",
+        ...(tooBig
+          ? { code: "too_big", maximum: inst._def.size }
+          : { code: "too_small", minimum: inst._def.size }),
+        input: ctx.value,
+        def,
+      });
     };
   });
 
@@ -314,23 +293,17 @@ export const _$ZodCheckStringFormat: core.$constructor<_$ZodCheckStringFormat> =
   core.$constructor("_$ZodCheckStringFormat", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
+    inst.run2 = (ctx) => {
       if (!inst._def.pattern) throw new Error("Not implemented.");
-      if (inst._def.pattern.test(input)) return;
-      return {
-        issues: [
-          {
-            origin: "string",
-            code: "invalid_format",
-            format: inst._def.format,
-            input,
-            ...(inst._def.pattern
-              ? { pattern: inst._def.pattern.toString() }
-              : {}),
-            def,
-          },
-        ],
-      };
+      if (inst._def.pattern.test(ctx.value)) return;
+      ctx.issues.push({
+        origin: "string",
+        code: "invalid_format",
+        format: inst._def.format,
+        input: ctx.value,
+        ...(inst._def.pattern ? { pattern: inst._def.pattern.toString() } : {}),
+        def,
+      });
     };
   });
 
@@ -369,20 +342,16 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> =
   core.$constructor("$ZodCheckIncludes", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      if (input.includes(inst._def.includes)) return;
-      return {
-        issues: [
-          {
-            origin: "string",
-            code: "invalid_format",
-            format: inst._def.check,
-            includes: inst._def.includes,
-            input,
-            def,
-          },
-        ],
-      };
+    inst.run2 = (ctx) => {
+      if (ctx.value.includes(inst._def.includes)) return;
+      ctx.issues.push({
+        origin: "string",
+        code: "invalid_format",
+        format: inst._def.check,
+        includes: inst._def.includes,
+        input: ctx.value,
+        def,
+      });
     };
   });
 
@@ -401,8 +370,8 @@ export const $ZodCheckTrim: core.$constructor<$ZodCheckTrim> =
   core.$constructor("$ZodCheckTrim", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      return { override: input.trim() };
+    inst.run2 = (ctx) => {
+      ctx.value = ctx.value.trim();
     };
   });
 
@@ -422,8 +391,8 @@ export const $ZodCheckToLowerCase: core.$constructor<$ZodCheckToLowerCase> =
   core.$constructor("$ZodCheckToLowerCase", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      return { override: input.toLowerCase() };
+    inst.run2 = (ctx) => {
+      ctx.value = ctx.value.toLowerCase();
     };
   });
 
@@ -443,8 +412,8 @@ export const $ZodCheckToUpperCase: core.$constructor<$ZodCheckToUpperCase> =
   core.$constructor("$ZodCheckToUpperCase", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      return { override: input.toUpperCase() };
+    inst.run2 = (ctx) => {
+      ctx.value = ctx.value.toUpperCase();
     };
   });
 
@@ -464,8 +433,8 @@ export const $ZodCheckNormalize: core.$constructor<$ZodCheckNormalize> =
   core.$constructor("$ZodCheckNormalize", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      return { override: input.normalize() };
+    inst.run2 = (ctx) => {
+      ctx.value = ctx.value.normalize();
     };
   });
 
@@ -486,20 +455,16 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> =
   core.$constructor("$ZodCheckStartsWith", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      if (input.startsWith(inst._def.prefix)) return;
-      return {
-        issues: [
-          {
-            origin: "string",
-            code: "invalid_format",
-            format: "starts_with",
-            prefix: inst._def.prefix,
-            input,
-            def,
-          },
-        ],
-      };
+    inst.run2 = (ctx) => {
+      if (ctx.value.startsWith(inst._def.prefix)) return;
+      ctx.issues.push({
+        origin: "string",
+        code: "invalid_format",
+        format: "starts_with",
+        prefix: inst._def.prefix,
+        input: ctx.value,
+        def,
+      });
     };
   });
 
@@ -520,20 +485,16 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> =
   core.$constructor("$ZodCheckEndsWith", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      if (input.endsWith(inst._def.suffix)) return;
-      return {
-        issues: [
-          {
-            origin: "string",
-            code: "invalid_format",
-            format: "ends_with",
-            suffix: inst._def.suffix,
-            input,
-            def,
-          },
-        ],
-      };
+    inst.run2 = (ctx) => {
+      if (ctx.value.endsWith(inst._def.suffix)) return;
+      ctx.issues.push({
+        origin: "string",
+        code: "invalid_format",
+        format: "ends_with",
+        suffix: inst._def.suffix,
+        input: ctx.value,
+        def,
+      });
     };
   });
 
@@ -569,20 +530,17 @@ export const $ZodCheckFileType: core.$constructor<$ZodCheckFileType> =
   core.$constructor("$ZodCheckFileType", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      if (inst._def.fileTypes.includes(input.type as types.MimeTypes)) return;
-      return {
-        issues: [
-          {
-            origin: "file",
-            code: "invalid_enum",
-            options: inst._def.fileTypes,
-            input: input.type,
-            path: ["type"],
-            def,
-          },
-        ],
-      };
+    inst.run2 = (ctx) => {
+      if (inst._def.fileTypes.includes(ctx.value.type as types.MimeTypes))
+        return;
+      ctx.issues.push({
+        origin: "file",
+        code: "invalid_value",
+        options: inst._def.fileTypes,
+        input: ctx.value.type,
+        path: ["type"],
+        def,
+      });
     };
   });
 
@@ -603,19 +561,15 @@ export const $ZodCheckFileName: core.$constructor<$ZodCheckFileName> =
   core.$constructor("$ZodCheckFileName", (inst, def) => {
     core.$ZodCheck.init(inst, def);
 
-    inst.run = (input) => {
-      if (inst._def.fileName === input.name) return;
-      return {
-        issues: [
-          {
-            origin: "file",
-            code: "invalid_enum",
-            options: [inst._def.fileName],
-            input: input,
-            path: ["name"],
-            def,
-          },
-        ],
-      };
+    inst.run2 = (ctx) => {
+      if (inst._def.fileName === ctx.value.name) return;
+      ctx.issues.push({
+        origin: "file",
+        code: "invalid_value",
+        options: [inst._def.fileName],
+        input: ctx.value,
+        path: ["name"],
+        def,
+      });
     };
   });

@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "../src/index.js";
+import * as z from "zod-core";
 
 test("z.string", async () => {
   const a = z.string();
@@ -29,7 +29,7 @@ test("inference in checks", () => {
   const c = z.string({ description: "" }, [z.refine((val) => val.length)]);
   z.parse(c, "___");
   expect(() => z.parse(c, "")).toThrow();
-  const d = z.string().check(z.refine((val) => val.length));
+  const d = z.string()._check(z.refine((val) => val.length));
   z.parse(d, "___");
   expect(() => z.parse(d, "")).toThrow();
 });
@@ -232,7 +232,7 @@ test("z.number async", async () => {
   await expect(() => z.parseAsync(a, -123)).rejects.toThrow();
   await expect(() => z.parseAsync(a, "123")).rejects.toThrow();
 
-  // a.check(()=>)
+  // a._check(()=>)
 });
 
 test("z.int", () => {
@@ -443,6 +443,7 @@ test("z.object", () => {
     age: z.number(),
     points: z.optional(z.number()),
   });
+  a._shape.points._qout;
 
   type a = z.output<typeof a>;
 
@@ -737,26 +738,27 @@ test("z.map", () => {
   expect(r1.issues[0].code).toEqual("invalid_type");
   expect(r1.issues[0].path).toEqual([123]);
 
-  const r2: any = a._parse(new Map([[BigInt(123), 123]]));
-  expect(r2.issues[0].code).toEqual("invalid_key");
-  expect(r2.issues[0].path).toEqual([]);
+  const r2: any = z.safeParse(a, new Map([[BigInt(123), 123]]));
+  expect(r2.error!.issues[0].code).toEqual("invalid_key");
+  expect(r2.error!.issues[0].path).toEqual([]);
 
   const r3: any = a._parse(new Map([["hello", "world"]]));
   expect(r3.issues[0].code).toEqual("invalid_type");
   expect(r3.issues[0].path).toEqual(["hello"]);
 });
 
-test("z.map invalid_value", () => {
+test("z.map invalid_element", () => {
   const a = z.map(z.bigint(), z.number());
-  const r1: any = a._parse(new Map([[BigInt(123), BigInt(123)]]));
-  expect(r1.issues[0].code).toEqual("invalid_value");
-  expect(r1.issues[0].path).toEqual([]);
+  const r1 = z.safeParse(a, new Map([[BigInt(123), BigInt(123)]]));
+
+  expect(r1.error!.issues[0].code).toEqual("invalid_element");
+  expect(r1.error!.issues[0].path).toEqual([]);
 });
 
 test("z.map async", async () => {
   const a = z.map(
-    z.string().check(z.refine(async () => true)),
-    z.number().check(z.refine(async () => true))
+    z.string()._check(z.refine(async () => true)),
+    z.number()._check(z.refine(async () => true))
   );
   const d1 = new Map([["hello", 123]]);
   expect(await z.parseAsync(a, d1)).toEqual(d1);
@@ -822,6 +824,7 @@ test("z.nativeEnum", () => {
   expect(() => z.parse(a, 123)).toThrow();
 
   // test a.enum
+  a;
   expect(a.enum.A).toEqual(NativeEnum.A);
   expect(a.enum.B).toEqual(NativeEnum.B);
   expect(a.enum.C).toEqual(NativeEnum.C);
@@ -1016,10 +1019,34 @@ test("z.instanceof", () => {
 });
 
 test("z.refine", () => {
-  const a = z.number().check(
+  const a = z.number()._check(
     z.refine((val) => val > 3),
     z.refine((val) => val < 10)
   );
+  expect(z.parse(a, 5)).toEqual(5);
+  expect(() => z.parse(a, 2)).toThrow();
+  expect(() => z.parse(a, 11)).toThrow();
+  expect(() => z.parse(a, "hi")).toThrow();
+});
+
+test("z.superRefine", () => {
+  const a = z.number()._check(
+    z.superRefine((val, ctx) => {
+      if (val < 3) {
+        return ctx.addIssue({
+          code: "custom",
+          origin: "custom",
+          message: "Too small",
+          input: val,
+        });
+      }
+      if (val > 10) {
+        return ctx.addIssue("Too big");
+      }
+    })
+    // z.superRefine((val) => val < 10, "must be less than 10")
+  );
+
   expect(z.parse(a, 5)).toEqual(5);
   expect(() => z.parse(a, 2)).toThrow();
   expect(() => z.parse(a, 11)).toThrow();
