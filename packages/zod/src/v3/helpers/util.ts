@@ -1,5 +1,8 @@
 export namespace util {
-  type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? true : false;
+  type AssertEqual<T, U> =
+    (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2
+      ? true
+      : false;
 
   export type isAny<T> = 0 extends 1 & T ? true : false;
   export const assertEqual = <A, B>(_: AssertEqual<A, B>): void => {};
@@ -10,10 +13,13 @@ export namespace util {
 
   export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
   export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
-  export type MakePartial<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+  export type MakePartial<T, K extends keyof T> = Omit<T, K> &
+    Partial<Pick<T, K>>;
   export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
   export type InexactPartial<T> = { [k in keyof T]?: T[k] | undefined };
-  export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(items: U): { [k in U[number]]: k } => {
+  export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
+    items: U,
+  ): { [k in U[number]]: k } => {
     const obj: any = {};
     for (const item of items) {
       obj[item] = item;
@@ -22,7 +28,9 @@ export namespace util {
   };
 
   export const getValidEnumValues = (obj: any): any[] => {
-    const validKeys = objectKeys(obj).filter((k: any) => typeof obj[obj[k]] !== "number");
+    const validKeys = objectKeys(obj).filter(
+      (k: any) => typeof obj[obj[k]] !== "number",
+    );
     const filtered: any = {};
     for (const k of validKeys) {
       filtered[k] = obj[k];
@@ -49,7 +57,10 @@ export namespace util {
           return keys;
         };
 
-  export const find = <T>(arr: T[], checker: (arg: T) => any): T | undefined => {
+  export const find = <T>(
+    arr: T[],
+    checker: (arg: T) => any,
+  ): T | undefined => {
     for (const item of arr) {
       if (checker(item)) return item;
     }
@@ -64,10 +75,18 @@ export namespace util {
   export const isInteger: NumberConstructor["isInteger"] =
     typeof Number.isInteger === "function"
       ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban
-      : (val) => typeof val === "number" && Number.isFinite(val) && Math.floor(val) === val;
+      : (val) =>
+          typeof val === "number" &&
+          Number.isFinite(val) &&
+          Math.floor(val) === val;
 
-  export function joinValues<T extends any[]>(array: T, separator = " | "): string {
-    return array.map((val) => (typeof val === "string" ? `'${val}'` : val)).join(separator);
+  export function joinValues<T extends any[]>(
+    array: T,
+    separator = " | ",
+  ): string {
+    return array
+      .map((val) => (typeof val === "string" ? `'${val}'` : val))
+      .join(separator);
   }
 
   export const jsonStringifyReplacer = (_: string, value: any): any => {
@@ -117,7 +136,8 @@ export namespace objectUtil {
     };
   };
 
-  export type extendShape<A extends object, B extends object> = keyof A & keyof B extends never // fast path when there is no keys overlap
+  export type extendShape<A extends object, B extends object> = keyof A &
+    keyof B extends never // fast path when there is no keys overlap
     ? A & B
     : {
         [K in keyof A as K extends keyof B ? never : K]: A[K];
@@ -136,6 +156,7 @@ export const ZodParsedType: {
   date: "date";
   bigint: "bigint";
   symbol: "symbol";
+  file: "file";
   function: "function";
   undefined: "undefined";
   null: "null";
@@ -157,6 +178,7 @@ export const ZodParsedType: {
   "date",
   "bigint",
   "symbol",
+  "file",
   "function",
   "undefined",
   "null",
@@ -198,13 +220,21 @@ export const getParsedType = (data: any): ZodParsedType => {
       return ZodParsedType.symbol;
 
     case "object":
+      if (data instanceof File) {
+        return ZodParsedType.file;
+      }
       if (Array.isArray(data)) {
         return ZodParsedType.array;
       }
       if (data === null) {
         return ZodParsedType.null;
       }
-      if (data.then && typeof data.then === "function" && data.catch && typeof data.catch === "function") {
+      if (
+        data.then &&
+        typeof data.then === "function" &&
+        data.catch &&
+        typeof data.catch === "function"
+      ) {
         return ZodParsedType.promise;
       }
       if (typeof Map !== "undefined" && data instanceof Map) {

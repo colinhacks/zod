@@ -51,6 +51,8 @@ test("first party switch", () => {
       break;
     case z.ZodFirstPartyTypeKind.ZodSet:
       break;
+    case z.ZodFirstPartyTypeKind.ZodFile:
+      break;
     case z.ZodFirstPartyTypeKind.ZodFunction:
       break;
     case z.ZodFirstPartyTypeKind.ZodLazy:
