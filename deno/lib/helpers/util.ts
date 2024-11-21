@@ -148,6 +148,7 @@ export const ZodParsedType = util.arrayToEnum([
   "date",
   "bigint",
   "symbol",
+  "file",
   "function",
   "undefined",
   "null",
@@ -189,6 +190,9 @@ export const getParsedType = (data: any): ZodParsedType => {
       return ZodParsedType.symbol;
 
     case "object":
+      if (data instanceof File) {
+        return ZodParsedType.file;
+      }
       if (Array.isArray(data)) {
         return ZodParsedType.array;
       }
