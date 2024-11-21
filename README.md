@@ -116,6 +116,7 @@
   - [Cyclical objects](#cyclical-objects)
 - [Promises](#promises)
 - [Instanceof](#instanceof)
+- [Files](#files)
 - [Functions](#functions)
 - [Preprocess](#preprocess)
 - [Custom schemas](#custom-schemas)
@@ -1923,6 +1924,34 @@ const TestSchema = z.instanceof(Test);
 const blob: any = "whatever";
 TestSchema.parse(new Test()); // passes
 TestSchema.parse(blob); // throws
+```
+
+## Files
+
+This basic implementation validates the input type. As usual, you can set custom error messages.
+
+```ts
+const imageFile = z.file({
+  required_error: "file is required",
+  invalid_type_error: "This object must be a file",
+});
+```
+
+You can validate the file's minimum and maximum size.
+
+```ts
+const imageFile = z.file().size({ min: 100000, max: 200000 });
+```
+
+You check again min and max size of the file.
+
+```ts
+// Validate MIME type for any image
+const imageFileAny = z.file().mimeType("image/*");
+
+// Validate specific MIME types
+const imageFileJpegPng = z.file().mimeType("image/jpeg,image/png");
+const imageFileJpegPngArray = z.file().mimeType(["image/jpeg", "image/png"]);
 ```
 
 ## Functions
