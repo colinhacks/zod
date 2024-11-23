@@ -1,5 +1,5 @@
 import * as classes from "../classes.js";
-import type * as core from "../packages/zod-core/src/core.js";
+import type * as core from "../packages/zod-core/src/base.js";
 
 type AnyZodType = core.$ZodType<{
   "~output": any;

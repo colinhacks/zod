@@ -1,5 +1,5 @@
-import type { $ZodSchemaTypes } from "./core.js";
-import type * as types from "./types.js";
+import type { $ZodSchemaTypes } from "./base.js";
+import type * as util from "./util.js";
 
 ///////////////////////////
 ////     base type     ////
@@ -24,7 +24,7 @@ export interface $ZodIssueInvalidType<
   Input = unknown,
 > extends $ZodIssueBase<Origin, Input> {
   code: "invalid_type";
-  received?: string;
+  // received?: string;
 }
 
 export interface $ZodIssueTooBig<
@@ -103,7 +103,7 @@ export interface $ZodIssueInvalidValue<
   Input = unknown,
 > extends $ZodIssueBase<Origin, Input> {
   code: "invalid_value";
-  options: types.Primitive[];
+  options: util.Primitive[];
 }
 
 export interface $ZodIssueCustom extends $ZodIssueBase<"custom", unknown> {
@@ -120,8 +120,7 @@ export type _RegularFormats =
   | "url"
   | "emoji"
   | "uuid"
-  | "uuidv4"
-  | "uuidv6"
+  | "guid"
   | "nanoid"
   | "guid"
   | "cuid"
@@ -138,7 +137,9 @@ export type _RegularFormats =
   | "ipv6"
   | "base64"
   | "json_string"
-  | "e164";
+  | "e164"
+  | "lowercase"
+  | "uppercase";
 
 export interface $ZodIssueStringCommonFormats
   extends $ZodIssueInvalidStringFormat {
@@ -210,15 +211,15 @@ type ComputedIssueDataPieces<In> = {
   // level?: "error" | "abort" | undefined;
   message?: string | undefined;
   input: In;
-  def?: { error?: $ZodErrorMap<never> | undefined };
+  def: { error?: $ZodErrorMap<never> | undefined } | undefined;
 };
 
 export type _$ZodIssueData<T extends $ZodIssueBase> = Omit<
-  types.OmitIndexSignature<T>,
+  util.OmitIndexSignature<T>,
   "message" | "path" | "input"
 > &
   ComputedIssueDataPieces<T["input"]> &
-  types.ExtractIndexSignature<T>;
+  util.ExtractIndexSignature<T>;
 
 /** @deprecated Use `$ZodIssueData` instead. */
 export type IssueData = $ZodIssueData;
@@ -238,11 +239,11 @@ export type ErrorMapCtx = {
   data: any;
 };
 
-export type $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> = (
-  issue: $ZodIssueData<T>,
-  /** @deprecated */
-  _ctx?: ErrorMapCtx
-) => { message: string } | string | undefined;
-
-/** @deprecated Use `$ZodErrorMap` instead. */
-export type ZodErrorMap = $ZodErrorMap;
+export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
+  // biome-ignore lint:
+  (
+    issue: $ZodIssueData<T>,
+    /** @deprecated */
+    _ctx?: ErrorMapCtx
+  ): { message: string } | string | undefined;
+}

@@ -1,5 +1,5 @@
 import type * as err from "./errors.js";
-import type * as types from "./types.js";
+import type * as util from "./util.js";
 
 //////////////////////////////   CONSTRUCTORS   ///////////////////////////////////////
 type Trait = { _def: unknown };
@@ -67,9 +67,9 @@ export type $ZodResult<T = unknown> = {
 };
 
 export type $ZodResultFull<T = unknown> = Required<$ZodResult<T>>;
-export interface $ZodResultWithIssues extends $ZodResult {
+export interface $ZodResultWithIssues<T = unknown> extends $ZodResult<T> {
   issues: err.$ZodIssueData[];
-  value: never;
+  value?: never;
 }
 export interface $ZodResultWithValue<T> extends $ZodResult<T> {
   value: T;
@@ -185,7 +185,7 @@ export type $brand<
 // export type $Parse<O> = (
 //   input: unknown,
 //   ctx?: $ParseContext
-// ) => types.MaybeAsync<O | $ZodFailure>;
+// ) => util.MaybeAsync<O | $ZodFailure>;
 
 // @ts-ignore cast variance
 export interface $Zod<out O = unknown, in I = unknown> {
@@ -201,20 +201,20 @@ export interface $Zod<out O = unknown, in I = unknown> {
   // _parse(
   //   input: unknown,
   //   ctx?: $ParseContext
-  // ): types.MaybeAsync<O | $ZodFailure>;
-  _parse(input: unknown, ctx?: $ParseContext): types.MaybeAsync<$ZodResult>;
-  _dev(input: unknown, ctx?: $ParseContext): types.MaybeAsync<$ZodResult>;
+  // ): util.MaybeAsync<O | $ZodFailure>;
+  _parse(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  _dev(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
 }
 
 export type $DiscriminatorMapElement = {
-  values: Set<types.Primitive>;
+  values: Set<util.Primitive>;
   maps: $DiscriminatorMap[];
 };
 export type $DiscriminatorMap = Map<PropertyKey, $DiscriminatorMapElement>;
-export type $PrimitiveSet = Set<types.Primitive>;
+export type $PrimitiveSet = Set<util.Primitive>;
 export interface $ZodType<out O = unknown, out I = unknown> extends $Zod<O, I> {
   /** @deprecated Internal API, use with caution (not deprecated) */
-  _typecheck(input: unknown, ctx?: $ParseContext): types.MaybeAsync<$ZodResult>;
+  _typecheck(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
   /** @deprecated Internal API, use with caution (not deprecated) */
   _check(...checks: $ZodCheck<O>[]): this;
   /** @deprecated Internal API, use with caution (not deprecated) */
@@ -289,14 +289,15 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
         }
 
         let i = 0;
+        result.issues ??= [];
         for (const check of checks) {
-          const _ = check.run2(result as $ZodResult<never>);
+          const _ = check.run2(result as $ZodResultFull<never>);
           if (!_) continue;
           if (_ instanceof Promise) {
             return _.then(async () => {
               const remainingChecks = inst._def.checks!.slice(i);
               for (const check of remainingChecks) {
-                const _ = check.run2(result as $ZodResult<never>);
+                const _ = check.run2(result as $ZodResultFull<never>);
                 if (_ instanceof Promise) await _;
                 if (result.aborted) return result;
               }
@@ -321,10 +322,10 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
 ////////////////////////////  TYPE HELPERS  ///////////////////////////////////
 
 export type input<T extends $ZodType> = T["_input"] extends object
-  ? types.Flatten<T["_input"]>
+  ? util.Flatten<T["_input"]>
   : T["_input"];
 export type output<T extends $ZodType> = T["_output"] extends object
-  ? types.Flatten<T["_output"]>
+  ? util.Flatten<T["_output"]>
   : T["_output"];
 export type {
   output as infer,
@@ -394,7 +395,7 @@ export function $finalize(
         const message =
           ctx?.error?.(iss as never) ??
           iss.def?.error?.(iss as never) ??
-          getConfig().error?.(iss) ??
+          config().error?.(iss) ??
           defaultErrorMap(iss)!;
         full.message = typeof message === "string" ? message : message?.message;
       }
@@ -486,11 +487,8 @@ const globalZodConfig: ZodConfig = {
   error: defaultErrorMap,
 };
 
-export function configure(config: Partial<ZodConfig>): void {
-  Object.assign(globalZodConfig, config);
-}
-
-export function getConfig(): ZodConfig {
+export function config(config?: Partial<ZodConfig>): ZodConfig {
+  if (config) Object.assign(globalZodConfig, config);
   return globalZodConfig;
 }
 
@@ -506,14 +504,8 @@ export interface $ZodCheckDef {
 // @ts-ignore cast variance
 export interface $ZodCheck<in T = never> {
   _def: $ZodCheckDef;
-  run2(input: $ZodResultFull<T>): types.MaybeAsync<void>;
+  run2(input: $ZodResultFull<T>): util.MaybeAsync<void>;
 }
-
-export type $ZodCheckResult<O = unknown> = {
-  override?: O;
-  issues?: err.$ZodIssueData[];
-  abort?: boolean;
-};
 
 export const $ZodCheck: $constructor<$ZodCheck<any>> = $constructor(
   "$ZodCheck",

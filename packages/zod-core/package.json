@@ -37,26 +37,59 @@
         "default": "./dist/commonjs/util.js"
       }
     },
-    "./error": {
+    "./errors": {
       "import": {
-        "@zod/source": "./src/errors_v2.ts",
-        "types": "./dist/esm/errors_v2.d.ts",
-        "default": "./dist/esm/errors_v2.js"
+        "@zod/source": "./src/errors.ts",
+        "types": "./dist/esm/errors.d.ts",
+        "default": "./dist/esm/errors.js"
       },
       "require": {
-        "types": "./dist/commonjs/errors_v2.d.ts",
-        "default": "./dist/commonjs/errors_v2.js"
+        "types": "./dist/commonjs/errors.d.ts",
+        "default": "./dist/commonjs/errors.js"
       }
     },
-    "./parse": {
+    "./types": {
       "import": {
-        "@zod/source": "./src/parse.ts",
-        "types": "./dist/esm/parse.d.ts",
-        "default": "./dist/esm/parse.js"
+        "@zod/source": "./src/types.ts",
+        "types": "./dist/esm/types.d.ts",
+        "default": "./dist/esm/types.js"
       },
       "require": {
-        "types": "./dist/commonjs/parse.d.ts",
-        "default": "./dist/commonjs/parse.js"
+        "types": "./dist/commonjs/types.d.ts",
+        "default": "./dist/commonjs/types.js"
+      }
+    },
+    "./schemas": {
+      "import": {
+        "@zod/source": "./src/schemas.ts",
+        "types": "./dist/esm/schemas.d.ts",
+        "default": "./dist/esm/schemas.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/schemas.d.ts",
+        "default": "./dist/commonjs/schemas.js"
+      }
+    },
+    "./base": {
+      "import": {
+        "@zod/source": "./src/base.ts",
+        "types": "./dist/esm/base.d.ts",
+        "default": "./dist/esm/base.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/base.d.ts",
+        "default": "./dist/commonjs/base.js"
+      }
+    },
+    "./api": {
+      "import": {
+        "@zod/source": "./src/api.ts",
+        "types": "./dist/esm/api.d.ts",
+        "default": "./dist/esm/api.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/api.d.ts",
+        "default": "./dist/commonjs/api.js"
       }
     },
     "./checks": {

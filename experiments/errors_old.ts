@@ -1,6 +1,6 @@
 import defaultErrorMap from "zod-core/locales/en.js";
 import { jsonStringifyReplacer } from "zod-core/util";
-import type { $ZodType, input, output } from "../packages/zod-core/src/core.js";
+import type { $ZodType, input, output } from "../packages/zod-core/src/base.js";
 import type { Primitive } from "../packages/zod-core/src/types.js";
 import type { ParseContext, ZodParsedType } from "../parse.js";
 

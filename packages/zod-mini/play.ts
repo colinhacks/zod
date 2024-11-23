@@ -1,6 +1,14 @@
 import * as z from "zod-core";
+// import type * as util from "zod-core/util";
 
-const a = z.enum(["a", "b", "c"]);
-a.enum;
+const arg = z.object({
+  /** testing! */
+  a: z.string(),
+  b: z.union([z.string(), z.undefined()]),
+  c: z.optional(z.string()),
+  d: z._default(z.string(), "bob"),
+  "e?": z.string(),
+});
 
-console.log(a);
+type argOut = z.output<typeof arg>;
+type argIn = z.input<typeof arg>;

@@ -1,3 +1,5 @@
+import { uuid } from "./api.js";
+
 export const cuidRegex: RegExp = /^c[^\s-]{8,}$/i;
 export const cuid2Regex: RegExp = /^[0-9a-z]+$/;
 export const ulidRegex: RegExp = /^[0-9A-HJKMNP-TV-Z]{26}$/;
@@ -6,6 +8,14 @@ export const ksuidRegex: RegExp = /^[A-Za-z0-9]{27}$/;
 export const nanoidRegex: RegExp = /^[a-z0-9_-]{21}$/i;
 export const durationRegex: RegExp =
   /^[-+]?P(?!$)(?:(?:[-+]?\d+Y)|(?:[-+]?\d+[.,]\d+Y$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:(?:[-+]?\d+W)|(?:[-+]?\d+[.,]\d+W$))?(?:(?:[-+]?\d+D)|(?:[-+]?\d+[.,]\d+D$))?(?:T(?=[\d+-])(?:(?:[-+]?\d+H)|(?:[-+]?\d+[.,]\d+H$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:[-+]?\d+(?:[.,]\d+)?S)?)??$/;
+
+/** A regex for any UUID-like identifier. */
+export const guidRegex: RegExp =
+  /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+
+/** Returns a regex for validating an RFC 4122 UUID.
+ *
+ * @param version Optionally specify a version 1-8. If no version is specified, all versions are supported. */
 export const uuidRegex = (version?: number | undefined): RegExp => {
   if (!version)
     return /^([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
@@ -14,10 +24,10 @@ export const uuidRegex = (version?: number | undefined): RegExp => {
     "i"
   );
 };
-export const uuid4Regex: RegExp =
-  /^([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
-export const uuid6Regex: RegExp =
-  /^([0-9a-f]{8}-[0-9a-f]{4}-6[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i;
+export const uuid4Regex: RegExp = uuidRegex(4);
+export const uuid6Regex: RegExp = uuidRegex(6);
+export const uuid7Regex: RegExp = uuidRegex(7);
+
 export const emailRegex: RegExp =
   /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
 
@@ -90,3 +100,8 @@ export const numberRegex: RegExp = /-?\d+(?:\.\d+)?(?:e-?\d+)?/i;
 export const booleanRegex: RegExp = /true|false/i;
 export const nullRegex: RegExp = /null/i;
 export const undefinedRegex: RegExp = /undefined/i;
+
+// regex for string with no uppercase letters
+export const lowercaseRegex: RegExp = /^[^A-Z]*$/;
+// regex for string with no lowercase letters
+export const uppercaseRegex: RegExp = /^[^a-z]*$/;

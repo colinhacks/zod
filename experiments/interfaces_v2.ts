@@ -1,4 +1,4 @@
-import type * as core from "../packages/zod-core/src/core.js";
+import type * as core from "../packages/zod-core/src/base.js";
 import type * as parse from "../parse.js";
 
 export class Test {

@@ -1,203 +1,209 @@
 import * as core from "zod-core";
-import * as mini from "./schemas.js";
-import * as util from "./util.js";
+import * as util from "zod-core/util";
+import * as schemas from "./schemas.js";
 
-//////////    ZodMiniCoercedString    //////////
+//////////    ZodCoercedString    //////////
 
-export interface ZodMiniCoercedStringDef extends core.$ZodStringDef {}
-export interface ZodMiniCoercedString
+export interface ZodCoercedStringDef extends core.$ZodStringDef {}
+export interface ZodCoercedString
   extends core.$ZodString<unknown>,
-    mini.ZodMiniType<string, unknown> {
-  _def: ZodMiniCoercedStringDef;
+    schemas.ZodType<string, unknown> {
+  _def: ZodCoercedStringDef;
 }
 
-export const ZodMiniCoercedString: core.$constructor<ZodMiniCoercedString> =
-  /*@__PURE__*/ core.$constructor("ZodMiniCoercedString", (inst, def) => {
+export const ZodCoercedString: core.$constructor<ZodCoercedString> =
+  /*@__PURE__*/ core.$constructor("ZodCoercedString", (inst, def) => {
     core.$ZodString.init(inst, def); // no format checks
-    mini.ZodMiniType.init(inst, def);
+    schemas.ZodType.init(inst, def);
     const _super = inst._typecheck;
     inst._typecheck = (input, ctx) => {
       if (def.coerce) {
         try {
           input = String(input);
         } catch (_) {
-          return core.$ZodFailure.from([
-            {
-              origin: "string",
-              code: "invalid_type",
-              level: "abort",
-              input,
-              def,
-            },
-          ]);
+          return core.$fail(
+            [
+              {
+                origin: "string",
+                code: "invalid_type",
+                level: "abort",
+                input,
+                def,
+              },
+            ],
+            true
+          );
         }
       }
       return _super(input, ctx);
     };
   });
 
-interface ZodMiniStringParams
-  extends util.Params<ZodMiniCoercedString, "coerce"> {}
-export const string: util.PrimitiveFactory<
-  ZodMiniStringParams,
-  ZodMiniCoercedString
-> = util.factory(ZodMiniCoercedString, {
-  type: "string",
-  coerce: true,
-});
+interface ZodStringParams extends util.TypeParams<ZodCoercedString, "coerce"> {}
+export const string: util.PrimitiveFactory<ZodStringParams, ZodCoercedString> =
+  util.factory(ZodCoercedString, {
+    type: "string",
+    coerce: true,
+  });
 
-//////////    ZodMiniCoercedNumber    //////////
-export interface ZodMiniCoercedNumberDef extends core.$ZodNumberDef {}
-export interface ZodMiniCoercedNumber
+//////////    ZodCoercedNumber    //////////
+export interface ZodCoercedNumberDef extends core.$ZodNumberDef {}
+export interface ZodCoercedNumber
   extends core.$ZodNumber<unknown>,
-    mini.ZodMiniType<number, unknown> {
-  _def: ZodMiniCoercedNumberDef;
+    schemas.ZodType<number, unknown> {
+  _def: ZodCoercedNumberDef;
 }
 
-export const ZodMiniCoercedNumber: core.$constructor<ZodMiniCoercedNumber> =
-  /*@__PURE__*/ core.$constructor("ZodMiniCoercedNumber", (inst, def) => {
+export const ZodCoercedNumber: core.$constructor<ZodCoercedNumber> =
+  /*@__PURE__*/ core.$constructor("ZodCoercedNumber", (inst, def) => {
     core.$ZodNumber.init(inst, def); // no format checks
-    mini.ZodMiniType.init(inst, def);
+    schemas.ZodType.init(inst, def);
     const _super = inst._typecheck;
     inst._typecheck = (input, ctx) => {
       if (def.coerce) {
         try {
           input = Number(input);
         } catch (_) {
-          return core.$ZodFailure.from([
-            {
-              origin: "number",
-              code: "invalid_type",
-              level: "abort",
-              input,
-              def,
-            },
-          ]);
+          return core.$fail(
+            [
+              {
+                origin: "number",
+                code: "invalid_type",
+                level: "abort",
+                input,
+                def,
+              },
+            ],
+            true
+          );
         }
       }
       return _super(input, ctx);
     };
   });
 
-interface ZodMiniNumberParams
-  extends util.Params<ZodMiniCoercedNumber, "format" | "coerce"> {}
-export const number: util.PrimitiveFactory<
-  ZodMiniNumberParams,
-  ZodMiniCoercedNumber
-> = util.factory(ZodMiniCoercedNumber, { type: "number", coerce: true });
-//////////    ZodMiniCoercedBoolean    //////////
-export interface ZodMiniCoercedBooleanDef extends core.$ZodBooleanDef {}
-export interface ZodMiniCoercedBoolean
+interface ZodNumberParams
+  extends util.TypeParams<ZodCoercedNumber, "format" | "coerce"> {}
+export const number: util.PrimitiveFactory<ZodNumberParams, ZodCoercedNumber> =
+  util.factory(ZodCoercedNumber, { type: "number", coerce: true });
+//////////    ZodCoercedBoolean    //////////
+export interface ZodCoercedBooleanDef extends core.$ZodBooleanDef {}
+export interface ZodCoercedBoolean
   extends core.$ZodBoolean<unknown>,
-    mini.ZodMiniType<boolean, unknown> {
-  _def: ZodMiniCoercedBooleanDef;
+    schemas.ZodType<boolean, unknown> {
+  _def: ZodCoercedBooleanDef;
 }
 
-export const ZodMiniCoercedBoolean: core.$constructor<ZodMiniCoercedBoolean> =
-  /*@__PURE__*/ core.$constructor("ZodMiniCoercedBoolean", (inst, def) => {
+export const ZodCoercedBoolean: core.$constructor<ZodCoercedBoolean> =
+  /*@__PURE__*/ core.$constructor("ZodCoercedBoolean", (inst, def) => {
     core.$ZodBoolean.init(inst, def); // no format checks
-    mini.ZodMiniType.init(inst, def);
+    schemas.ZodType.init(inst, def);
     const _super = inst._typecheck;
     inst._typecheck = (input, ctx) => {
       if (def.coerce) {
         try {
           input = Boolean(input);
         } catch (_) {
-          return core.$ZodFailure.from([
-            {
-              origin: "boolean",
-              code: "invalid_type",
-              level: "abort",
-              input,
-              def,
-            },
-          ]);
+          return core.$fail(
+            [
+              {
+                origin: "boolean",
+                code: "invalid_type",
+                level: "abort",
+                input,
+                def,
+              },
+            ],
+            true
+          );
         }
       }
       return _super(input, ctx);
     };
   });
 
-interface ZodMiniBooleanParams extends util.Params<ZodMiniCoercedBoolean> {}
+interface ZodBooleanParams extends util.TypeParams<ZodCoercedBoolean> {}
 export const boolean: util.PrimitiveFactory<
-  ZodMiniBooleanParams,
-  ZodMiniCoercedBoolean
-> = util.factory(ZodMiniCoercedBoolean, { type: "boolean", coerce: true });
+  ZodBooleanParams,
+  ZodCoercedBoolean
+> = util.factory(ZodCoercedBoolean, { type: "boolean", coerce: true });
 
-//////////    ZodMiniCoercedBigInt    //////////
-export interface ZodMiniCoercedBigIntDef extends core.$ZodBigIntDef {}
-export interface ZodMiniCoercedBigInt
+//////////    ZodCoercedBigInt    //////////
+export interface ZodCoercedBigIntDef extends core.$ZodBigIntDef {}
+export interface ZodCoercedBigInt
   extends core.$ZodBigInt<unknown>,
-    mini.ZodMiniType<bigint, unknown> {
-  _def: ZodMiniCoercedBigIntDef;
+    schemas.ZodType<bigint, unknown> {
+  _def: ZodCoercedBigIntDef;
 }
 
-export const ZodMiniCoercedBigInt: core.$constructor<ZodMiniCoercedBigInt> =
-  /*@__PURE__*/ core.$constructor("ZodMiniCoercedBigInt", (inst, def) => {
+export const ZodCoercedBigInt: core.$constructor<ZodCoercedBigInt> =
+  /*@__PURE__*/ core.$constructor("ZodCoercedBigInt", (inst, def) => {
     core.$ZodBigInt.init(inst, def); // no format checks
-    mini.ZodMiniType.init(inst, def);
+    schemas.ZodType.init(inst, def);
     const _super = inst._typecheck;
     inst._typecheck = (input, ctx) => {
       if (def.coerce) {
         try {
           input = BigInt(input as any);
         } catch (_) {
-          return core.$ZodFailure.from([
-            {
-              origin: "bigint",
-              code: "invalid_type",
-              level: "abort",
-              input,
-              def,
-            },
-          ]);
+          return core.$fail(
+            [
+              {
+                origin: "bigint",
+                code: "invalid_type",
+                level: "abort",
+                input,
+                def,
+              },
+            ],
+            true
+          );
         }
       }
       return _super(input, ctx);
     };
   });
 
-interface ZodMiniBigIntParams extends util.Params<ZodMiniCoercedBigInt> {}
-export const bigint: util.PrimitiveFactory<
-  ZodMiniBigIntParams,
-  ZodMiniCoercedBigInt
-> = util.factory(ZodMiniCoercedBigInt, { type: "bigint", coerce: true });
+interface ZodBigIntParams extends util.TypeParams<ZodCoercedBigInt> {}
+export const bigint: util.PrimitiveFactory<ZodBigIntParams, ZodCoercedBigInt> =
+  util.factory(ZodCoercedBigInt, { type: "bigint", coerce: true });
 
-//////////    ZodMiniCoercedDate    //////////
-export interface ZodMiniCoercedDateDef extends core.$ZodDateDef {}
-export interface ZodMiniCoercedDate
+//////////    ZodCoercedDate    //////////
+export interface ZodCoercedDateDef extends core.$ZodDateDef {}
+export interface ZodCoercedDate
   extends core.$ZodDate<unknown>,
-    mini.ZodMiniType<Date, unknown> {
-  _def: ZodMiniCoercedDateDef;
+    schemas.ZodType<Date, unknown> {
+  _def: ZodCoercedDateDef;
 }
 
-export const ZodMiniCoercedDate: core.$constructor<ZodMiniCoercedDate> =
-  /*@__PURE__*/ core.$constructor("ZodMiniCoercedDate", (inst, def) => {
+export const ZodCoercedDate: core.$constructor<ZodCoercedDate> =
+  /*@__PURE__*/ core.$constructor("ZodCoercedDate", (inst, def) => {
     core.$ZodDate.init(inst, def); // no format checks
-    mini.ZodMiniType.init(inst, def);
+    schemas.ZodType.init(inst, def);
     const _super = inst._typecheck;
     inst._typecheck = (input, ctx) => {
       if (def.coerce) {
         try {
           input = new Date(input as any);
         } catch (_) {
-          return core.$ZodFailure.from([
-            {
-              origin: "date",
-              code: "invalid_type",
-              level: "abort",
-              input,
-              def,
-            },
-          ]);
+          return core.$fail(
+            [
+              {
+                origin: "date",
+                code: "invalid_type",
+                level: "abort",
+                input,
+                def,
+              },
+            ],
+            true
+          );
         }
       }
       return _super(input, ctx);
     };
   });
 
-interface ZodMiniDateParams extends util.Params<ZodMiniCoercedDate> {}
-export const date: util.PrimitiveFactory<
-  ZodMiniDateParams,
-  ZodMiniCoercedDate
-> = util.factory(ZodMiniCoercedDate, { type: "date", coerce: true });
+interface ZodDateParams extends util.TypeParams<ZodCoercedDate> {}
+export const date: util.PrimitiveFactory<ZodDateParams, ZodCoercedDate> =
+  util.factory(ZodCoercedDate, { type: "date", coerce: true });

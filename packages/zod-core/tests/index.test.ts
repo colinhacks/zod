@@ -57,6 +57,25 @@ test("z.email", () => {
   const a = z.email();
   expect(z.parse(a, "test@test.com")).toEqual("test@test.com");
   expect(() => z.parse(a, "test")).toThrow();
+  expect(
+    z.safeParse(a, "bad email", { error: () => "bad email" }).error!.issues[0]
+      .message
+  ).toEqual("bad email");
+
+  const b = z.email("bad email");
+  expect(z.safeParse(b, "bad email").error!.issues[0].message).toEqual(
+    "bad email"
+  );
+
+  const c = z.email({ error: "bad email" });
+  expect(z.safeParse(c, "bad email").error!.issues[0].message).toEqual(
+    "bad email"
+  );
+
+  const d = z.email({ error: () => "bad email" });
+  expect(z.safeParse(d, "bad email").error!.issues[0].message).toEqual(
+    "bad email"
+  );
 });
 
 test("z.url", () => {
@@ -112,12 +131,6 @@ test("z.ksuid", () => {
   expect(z.parse(a, "2naeRjTrrHJAkfd3tOuEjw90WCA")).toEqual(
     "2naeRjTrrHJAkfd3tOuEjw90WCA"
   );
-  expect(() => z.parse(a, "abc")).toThrow();
-});
-
-test("z.duration", () => {
-  const a = z.duration();
-  expect(z.parse(a, "P3Y6M4DT12H30M5S")).toEqual("P3Y6M4DT12H30M5S");
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
@@ -381,6 +394,90 @@ test("z.coerce.date", () => {
   expect(() => z.parse(a, "invalid date")).toThrow();
 });
 
+test("z.iso.datetime", () => {
+  const d1 = "2021-01-01T00:00:00Z";
+  const d2 = "2021-01-01T00:00:00.123Z";
+  const d3 = "2021-01-01T00:00:00";
+  const d4 = "2021-01-01T00:00:00+07:00";
+  const d5 = "bad data";
+
+  // local: false, offset: false, precision: null
+  const a = z.iso.datetime();
+  expect(z.safeParse(a, d1).success).toEqual(true);
+  expect(z.safeParse(a, d2).success).toEqual(true);
+  expect(z.safeParse(a, d3).success).toEqual(false);
+  expect(z.safeParse(a, d4).success).toEqual(false);
+  expect(z.safeParse(a, d5).success).toEqual(false);
+
+  const b = z.iso.datetime({ local: true });
+  expect(z.safeParse(b, d1).success).toEqual(true);
+  expect(z.safeParse(b, d2).success).toEqual(true);
+  expect(z.safeParse(b, d3).success).toEqual(true);
+  expect(z.safeParse(b, d4).success).toEqual(false);
+  expect(z.safeParse(b, d5).success).toEqual(false);
+
+  const c = z.iso.datetime({ offset: true });
+  expect(z.safeParse(c, d1).success).toEqual(true);
+  expect(z.safeParse(c, d2).success).toEqual(true);
+  expect(z.safeParse(c, d3).success).toEqual(false);
+  expect(z.safeParse(c, d4).success).toEqual(true);
+  expect(z.safeParse(c, d5).success).toEqual(false);
+
+  const d = z.iso.datetime({ precision: 3 });
+  expect(z.safeParse(d, d1).success).toEqual(false);
+  expect(z.safeParse(d, d2).success).toEqual(true);
+  expect(z.safeParse(d, d3).success).toEqual(false);
+  expect(z.safeParse(d, d4).success).toEqual(false);
+  expect(z.safeParse(d, d5).success).toEqual(false);
+});
+
+test("z.iso.date", () => {
+  const d1 = "2021-01-01";
+  const d2 = "bad data";
+
+  const a = z.iso.date();
+  expect(z.safeParse(a, d1).success).toEqual(true);
+  expect(z.safeParse(a, d2).success).toEqual(false);
+
+  const b = z.string([z.iso.date()]);
+  expect(z.safeParse(b, d1).success).toEqual(true);
+  expect(z.safeParse(b, d2).success).toEqual(false);
+});
+
+test("z.iso.time", () => {
+  const d1 = "00:00:00";
+  const d2 = "00:00:00.123";
+  const d3 = "bad data";
+
+  const a = z.iso.time();
+  expect(z.safeParse(a, d1).success).toEqual(true);
+  expect(z.safeParse(a, d2).success).toEqual(true);
+  expect(z.safeParse(a, d3).success).toEqual(false);
+
+  const b = z.iso.time({ precision: 3 });
+  expect(z.safeParse(b, d1).success).toEqual(false);
+  expect(z.safeParse(b, d2).success).toEqual(true);
+  expect(z.safeParse(b, d3).success).toEqual(false);
+
+  const c = z.string([z.iso.time()]);
+  expect(z.safeParse(c, d1).success).toEqual(true);
+  expect(z.safeParse(c, d2).success).toEqual(true);
+  expect(z.safeParse(c, d3).success).toEqual(false);
+});
+
+test("z.iso.duration", () => {
+  const d1 = "P3Y6M4DT12H30M5S";
+  const d2 = "bad data";
+
+  const a = z.iso.duration();
+  expect(z.safeParse(a, d1).success).toEqual(true);
+  expect(z.safeParse(a, d2).success).toEqual(false);
+
+  const b = z.string([z.iso.duration()]);
+  expect(z.safeParse(b, d1).success).toEqual(true);
+  expect(z.safeParse(b, d2).success).toEqual(false);
+});
+
 test("z.undefined", () => {
   const a = z.undefined();
   expect(z.parse(a, undefined)).toEqual(undefined);
@@ -443,7 +540,7 @@ test("z.object", () => {
     age: z.number(),
     points: z.optional(z.number()),
   });
-  a._shape.points._qout;
+  a._def.shape.points._qout;
 
   type a = z.output<typeof a>;
 
