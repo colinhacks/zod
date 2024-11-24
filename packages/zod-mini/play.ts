@@ -1,4 +1,4 @@
-import * as z from "zod-core";
+import * as z from "zod-mini";
 // import type * as util from "zod-core/util";
 
 const arg = z.object({

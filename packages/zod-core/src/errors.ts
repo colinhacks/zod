@@ -211,7 +211,7 @@ type ComputedIssueDataPieces<In> = {
   // level?: "error" | "abort" | undefined;
   message?: string | undefined;
   input: In;
-  def: { error?: $ZodErrorMap<never> | undefined } | undefined;
+  def?: { error?: $ZodErrorMap<never> | undefined } | undefined;
 };
 
 export type _$ZodIssueData<T extends $ZodIssueBase> = Omit<

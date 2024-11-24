@@ -1089,21 +1089,29 @@ export const $ZodArray: base.$constructor<$ZodArray> =
 //////////                      //////////
 //////////////////////////////////////////
 //////////////////////////////////////////
-export type $ZodRawShape = {
+// export type $ZodRawShape = object;
+export type $ZodRawShape = Record<PropertyKey, any>;
+// export type $ZodRawShape = Record<string, base.$ZodType>;
+// export type $ZodRawShape = {
+//   [k: PropertyKey]: base.$ZodType;
+// };
+
+export type $ZodShape = {
   [k: PropertyKey]: base.$ZodType;
 };
-
 // declare const $optional: unique symbol;
 // export type $optional = typeof $optional;
 
 export type Values<T> = T[keyof T];
-type StripQuestionMarks<T extends PropertyKey> = T extends `${infer K}?`
+type QuestionMarkKeys<T extends PropertyKey> = T extends `${infer K}?`
   ? K
   : never;
 type NonQuestionMarkKeys<T extends PropertyKey> = Exclude<T, `${string}?`>;
 
 export type _ObjectOutputOptionalKeys<T extends $ZodRawShape> = {
-  [k in NonQuestionMarkKeys<keyof T>]: T[k]["_qout"] extends "true" ? k : never;
+  [k in NonQuestionMarkKeys<keyof T>]: T[k] extends { _qout: "true" }
+    ? k
+    : never;
 };
 export type ObjectOutputOptionalKeys<T extends $ZodRawShape> = Values<
   _ObjectOutputOptionalKeys<T>
@@ -1112,16 +1120,23 @@ export type ObjectOutputRequiredKeys<T extends $ZodRawShape> = Exclude<
   NonQuestionMarkKeys<keyof T>,
   ObjectOutputOptionalKeys<T>
 >;
+
 export type $InferObjectOutput<T extends $ZodRawShape> = {
-  [K in StripQuestionMarks<keyof T>]?: T[`${K}?`]["_output"];
+  // [K in QuestionMarkKeys<keyof T>]?: T[`${K}?`]["_output"];
+  [K in keyof T as K extends `${infer Key}?` ? Key : never]?: T[K]["_output"];
 } & {
-  [K in ObjectOutputRequiredKeys<T>]: T[K]["_output"];
-} & {
-  [K in ObjectOutputOptionalKeys<T>]?: T[K]["_output"];
+  [K in NonQuestionMarkKeys<keyof T>]: T[K]["_output"];
 };
+//  & {
+//   [K in ObjectOutputRequiredKeys<T>]: T[K]["_output"];
+// } & {
+//   [K in ObjectOutputOptionalKeys<T>]?: T[K]["_output"];
+// };
 
 export type _ObjectInputOptionalKeys<T extends $ZodRawShape> = {
-  [k in NonQuestionMarkKeys<keyof T>]: T[k]["_qin"] extends "true" ? k : never;
+  [k in NonQuestionMarkKeys<keyof T>]: T[k] extends { _qin: "true" }
+    ? k
+    : never;
 };
 export type ObjectInputOptionalKeys<T extends $ZodRawShape> = Values<
   _ObjectInputOptionalKeys<T>
@@ -1131,7 +1146,7 @@ export type ObjectInputRequiredKeys<T extends $ZodRawShape> = Exclude<
   ObjectInputOptionalKeys<T>
 >;
 export type $InferObjectInput<T extends $ZodRawShape> = {
-  [K in StripQuestionMarks<keyof T>]?: T[`${K}?`]["_input"];
+  [K in QuestionMarkKeys<keyof T>]?: T[`${K}?`]["_input"];
 } & {
   [K in ObjectInputRequiredKeys<T>]: T[K]["_input"];
 } & {
@@ -1161,7 +1176,10 @@ export type $InferObjectInput<T extends $ZodRawShape> = {
 //   [K in keyof T]: NonNullable<T[K]>["_input"];
 // };
 
-export interface $ZodObjectDef<Shape extends $ZodRawShape = $ZodRawShape>
+export type CleanShape<T extends $ZodRawShape> = {
+  [k in keyof T]: T[k] extends base.$ZodType ? T[k] : never;
+};
+export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape>
   extends base.$ZodTypeDef {
   type: "object";
   shape: Shape;
@@ -1173,11 +1191,13 @@ export interface $ZodObjectDef<Shape extends $ZodRawShape = $ZodRawShape>
     | undefined;
 }
 
-export interface $ZodObject<Shape extends $ZodRawShape = $ZodRawShape>
+export interface $ZodObject<Shape extends $ZodRawShape = $ZodShape>
   extends base.$ZodType<$InferObjectOutput<Shape>, $InferObjectInput<Shape>> {
   /** @deprecated Internal API, use with caution (not deprecated) */
   // _shape: Shape;
-  _def: $ZodObjectDef<Shape>;
+  _def: $ZodObjectDef<{
+    [k in keyof Shape]: Shape[k] extends base.$ZodType ? Shape[k] : never;
+  }>;
   _disc: base.$DiscriminatorMap;
 }
 
@@ -1196,33 +1216,45 @@ function handleObjectResult(
 export const $ZodObject: base.$constructor<$ZodObject> =
   /*@__PURE__*/ base.$constructor("$ZodObject", (inst, def) => {
     base.$ZodType.init(inst, def);
+    // for (const k in def.shape) {
+    //   if (!(def.shape[k] instanceof base.$ZodType)) {
+    //     throw new Error(`Invalid schema at key "${k}"`);
+    //   }
+    // }
 
     // inst._shape = def.shape;
+    Object.defineProperty(inst, "_disc", {
+      get() {
+        const discMap: base.$DiscriminatorMap = new Map();
+        for (const key in def.shape) {
+          const field = def.shape[key];
+          if (field._values || field._disc) {
+            const o: base.$DiscriminatorMapElement = {
+              values: new Set(field._values ?? []),
+              maps: field._disc ? [field._disc] : [],
+            };
+            discMap.set(key, o)!;
+          }
+        }
+        return discMap;
+      },
+    });
 
-    const discMap: base.$DiscriminatorMap = new Map();
-    for (const key in def.shape) {
-      const field = def.shape[key];
-      if (field._values || field._disc) {
-        const o: base.$DiscriminatorMapElement = {
-          values: new Set(field._values ?? []),
-          maps: field._disc ? [field._disc] : [],
-        };
-        discMap.set(key, o)!;
-      }
-    }
-    inst._disc = discMap;
-    const _shapeKeys: Set<string | symbol> = new Set(
-      Reflect.ownKeys(def.shape)
-    );
-    const _optionalKeys = new Set(
-      Reflect.ownKeys(def.shape).filter((k) => {
-        return def.shape[k]._qout === "true";
-      })
-    );
-    // const _shapeEntries = Object.entries(def.shape);
-    const _allKeys = Reflect.ownKeys(def.shape);
+    const _computed = util.cached(() => {
+      const _shapeKeys: Set<string | symbol> = new Set(
+        Reflect.ownKeys(def.shape)
+      );
+      const _optionalKeys = new Set(
+        Reflect.ownKeys(def.shape).filter((k) => {
+          return def.shape[k]._qout === "true";
+        })
+      );
+      const _allKeys = Reflect.ownKeys(def.shape);
+      return { _shapeKeys, _optionalKeys, _allKeys };
+    });
 
     inst._typecheck = (input: unknown, ctx) => {
+      const { _shapeKeys, _optionalKeys, _allKeys } = _computed.value;
       if (!util.isPlainObject(input)) {
         return base.$fail(
           [

@@ -111,6 +111,7 @@ export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
   ? true
   : false;
 
+export type AssertExtends<T, U> = T extends U ? T : never;
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
@@ -273,45 +274,62 @@ export function jsonStringifyReplacer(_: string, value: any): any {
   return value;
 }
 
-export function cached<This, T>(
-  th: This,
-  key: string,
-  getter: () => T & ThisType<This>
-): T {
-  Object.defineProperty(th, key, {
-    get() {
-      const value = getter();
-      Object.defineProperty(th, key, {
-        value,
-        configurable: true,
-      });
-      return value;
-    },
-    configurable: true,
-  });
-  return undefined as any;
-}
+// export function cached<This, T>(
+//   th: This,
+//   key: string,
+//   getter: () => T & ThisType<This>
+// ): T {
+//   Object.defineProperty(th, key, {
+//     get() {
+//       const value = getter();
+//       Object.defineProperty(th, key, {
+//         value,
+//         configurable: true,
+//       });
+//       return value;
+//     },
+//     configurable: true,
+//   });
+//   return undefined as any;
+// }
 
-export function makeCache<This, T extends { [k: string]: () => unknown }>(
-  th: This,
-  elements: T & ThisType<This>
-): { [k in keyof T]: ReturnType<T[k]> } {
-  const cache: { [k: string]: unknown } = {};
-  for (const key in elements) {
-    const getter = elements[key].bind(th);
-    Object.defineProperty(cache, key, {
-      get() {
-        const value = getter();
-        Object.defineProperty(cache, key, {
-          value,
-          configurable: true,
+// export function makeCache<This, T extends { [k: string]: () => unknown }>(
+//   th: This,
+//   elements: T & ThisType<This>
+// ): { [k in keyof T]: ReturnType<T[k]> } {
+//   const cache: { [k: string]: unknown } = {};
+//   for (const key in elements) {
+//     const getter = elements[key].bind(th);
+//     Object.defineProperty(cache, key, {
+//       get() {
+//         const value = getter();
+//         Object.defineProperty(cache, key, {
+//           value,
+//           configurable: true,
+//         });
+//         return value;
+//       },
+//       configurable: true,
+//     });
+//   }
+//   return cache as any;
+// }
+
+export function cached<T>(getter: () => T): { value: T } {
+  const set = false;
+  return {
+    get value() {
+      if (!set) {
+        const _value = getter();
+        Object.defineProperty(this, "value", {
+          value: _value,
         });
-        return value;
-      },
-      configurable: true,
-    });
-  }
-  return cache as any;
+        return _value;
+      }
+      throw new Error("cached value already set");
+    },
+  };
+  // const cache: { [k: string]: unknown } = {};
 }
 
 export function getElementAtPath(
@@ -546,7 +564,6 @@ export const factory: <
 ) => PrimitiveFactory<Params, InstanceType<Cls>> = (Cls, defaultParams) => {
   return (...args: any[]) => {
     const { checks, params } = splitChecksAndParams(...args);
-    console.log({ checks, params });
     return new Cls({
       ...defaultParams,
       checks,
@@ -568,3 +585,46 @@ export type LiteralArray = Array<Literal>;
 export type SafeParseResult<T> =
   | { success: true; data: T; error?: never }
   | { success: false; data?: never; error: base.$ZodError };
+
+export function createTransparentProxy<T extends object>(getter: () => T): T {
+  let target: T;
+  return new Proxy(
+    {},
+    {
+      get(_, prop, receiver) {
+        target ??= getter();
+        return Reflect.get(target, prop, receiver);
+      },
+      set(_, prop, value, receiver) {
+        target ??= getter();
+        return Reflect.set(target, prop, value, receiver);
+      },
+      has(_, prop) {
+        target ??= getter();
+        return Reflect.has(target, prop);
+      },
+      deleteProperty(_, prop) {
+        target ??= getter();
+        return Reflect.deleteProperty(target, prop);
+      },
+      ownKeys(_) {
+        target ??= getter();
+        return Reflect.ownKeys(target);
+      },
+      getOwnPropertyDescriptor(_, prop) {
+        target ??= getter();
+        return Reflect.getOwnPropertyDescriptor(target, prop);
+      },
+      defineProperty(_, prop, descriptor) {
+        target ??= getter();
+        return Reflect.defineProperty(target, prop, descriptor);
+      },
+      // apply(target, thisArg, args) {
+      //   return Reflect.apply(target, thisArg, args);
+      // },
+      // construct(target, args, newTarget) {
+      //   return Reflect.construct(target, args, newTarget);
+      // },
+    }
+  ) as T;
+}

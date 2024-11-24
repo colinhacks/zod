@@ -6,7 +6,6 @@ import * as util from "./util.js";
 
 export * as iso from "./iso.js";
 export * as coerce from "./coerce.js";
-export * from "./checks.js";
 
 /**
  * Dropped:
@@ -181,22 +180,24 @@ export const ip: util.PrimitiveFactory<$ZodIPParams, schemas.$ZodIP> =
 
 // $ZodIPv4
 interface $ZodIPv4Params
-  extends util.StringFormatParams<schemas.$ZodIPv4, "coerce"> {}
-export const ipv4: util.PrimitiveFactory<$ZodIPv4Params, schemas.$ZodIPv4> =
-  util.factory(schemas.$ZodIPv4, {
+  extends util.StringFormatParams<schemas.$ZodIP, "coerce"> {}
+export const ipv4: util.PrimitiveFactory<$ZodIPv4Params, schemas.$ZodIP> =
+  util.factory(schemas.$ZodIP, {
     type: "string",
-    format: "ipv4",
+    format: "ip",
     check: "string_format",
+    version: 4,
   });
 
 // $ZodIPv6
 interface $ZodIPv6Params
-  extends util.StringFormatParams<schemas.$ZodIPv6, "coerce"> {}
-export const ipv6: util.PrimitiveFactory<$ZodIPv6Params, schemas.$ZodIPv6> =
-  util.factory(schemas.$ZodIPv6, {
+  extends util.StringFormatParams<schemas.$ZodIP, "coerce"> {}
+export const ipv6: util.PrimitiveFactory<$ZodIPv6Params, schemas.$ZodIP> =
+  util.factory(schemas.$ZodIP, {
     type: "string",
-    format: "ipv6",
+    format: "ip",
     check: "string_format",
+    version: 6,
   });
 
 // $ZodBase64
@@ -391,67 +392,69 @@ export const _void: util.PrimitiveFactory<$ZodVoidParams, schemas.$ZodVoid> =
 export { _void as void };
 
 // array
+
 interface $ZodArrayParams
   extends util.TypeParams<schemas.$ZodArray, "element"> {}
 export function array<T extends base.$ZodType>(
   element: T,
   params?: $ZodArrayParams
+): schemas.$ZodArray<T>;
+export function array<T>(
+  element: () => T,
+  params?: $ZodArrayParams
+): T extends base.$ZodType ? schemas.$ZodArray<T> : never;
+export function array<T extends base.$ZodType>(
+  element: T | (() => T),
+  params?: $ZodArrayParams
 ): schemas.$ZodArray<T> {
   return new schemas.$ZodArray({
     type: "array",
-    element,
+    get element() {
+      return typeof element === "function" ? element() : element;
+    },
     ...util.normalizeTypeParams(params),
   }) as schemas.$ZodArray<T>;
 }
 
+// type aljkdf = keyof  schemas.$ZodObject & (string |{})
+
 // object
 interface $ZodObjectParams
   extends util.TypeParams<schemas.$ZodObject, "shape"> {}
+export function object<T extends schemas.$ZodRawShape>(
+  shape: () => T,
+  params?: $ZodObjectParams
+): schemas.$ZodObject<T>;
+export function object<T extends schemas.$ZodRawShape>(
+  shape: T,
+  params?: $ZodObjectParams
+): schemas.$ZodObject<T>;
 export function object<T extends schemas.$ZodRawShape>(
   shape: T,
   params?: $ZodObjectParams
 ): schemas.$ZodObject<T> {
   const def: schemas.$ZodObjectDef = {
     type: "object",
-    shape,
+    shape: shape as schemas.$ZodShape,
     ...util.normalizeTypeParams(params),
   };
   return new schemas.$ZodObject(def) as any;
 }
 
-// type OptionalKeys<T extends PropertyKey> = T extends `${string}?` ? T : never;
-// type RequiredKeys<T extends PropertyKey> = Exclude<T, `${string}?`>;
-
-// // type lkjdf = OptionalKeys<{ "a?": string }>;
-// type ShapeWithQuestionMarks<T extends schemas.$ZodRawShape> = util.Flatten<
-//   {
-//     [K in RequiredKeys<keyof T>]: T[K];
-//   } & {
-//     [K in OptionalKeys<keyof T> as K extends `${infer K}?` ? K : never]?: T[K];
-//   }
-// >;
-
-// type $optional = { _qout: "true"; _qin: "true" };
-// type ShapeWithQuestionMarks<T extends schemas.$ZodRawShape> = util.Flatten<{
-//   [k in keyof T as k extends `${infer NewK}?`
-//     ? NewK
-//     : k]: k extends `${string}?` ? T[k] & $optional : T[k];
-// }>;
-// type asdf = Exclude<{ a?: string | undefined }, { a?: undefined }>;
-// interface $NewZodObjectParams extends util.TypeParams<schemas.$ZodObject, "shape"> {}
-// export function newobject<T extends schemas.$ZodRawShape>(
-//   shape: T,
-//   params?: $NewZodObjectParams
-// ): schemas.$ZodObject<ShapeWithQuestionMarks<T>> {
-//   const def: schemas.$ZodObjectDef = {
-//     type: "object",
-//     shape,
-//     ...util.normalizeTypeParams(params),
-//   };
-//   return new schemas.$ZodObject(def) as schemas.$ZodObject<
-//     ShapeWithQuestionMarks<T>
-//   >;
-// }
+// object
+// interface $ZodObjectParams
+//   extends util.TypeParams<schemas.$ZodObject, "shape"> {}
+export function newobject<T extends schemas.$ZodShape>(
+  shape: T,
+  params?: $ZodObjectParams
+): schemas.$ZodObject<T> {
+  const def: schemas.$ZodObjectDef = {
+    type: "object",
+    shape: shape as schemas.$ZodShape,
+    ...util.normalizeTypeParams(params),
+  };
+  return new schemas.$ZodObject(def) as any;
+}
 
 // strictObject
 interface $ZodStrictObjectParams
@@ -462,7 +465,7 @@ export function strictObject<T extends schemas.$ZodRawShape>(
 ): schemas.$ZodObject<T> {
   const def: schemas.$ZodObjectDef = {
     type: "object",
-    shape,
+    shape: shape as schemas.$ZodShape,
     catchall: never(),
     ...util.normalizeTypeParams(params),
   };
@@ -478,7 +481,7 @@ export function looseObject<T extends schemas.$ZodRawShape>(
 ): schemas.$ZodObject<T> {
   const def: schemas.$ZodObjectDef = {
     type: "object",
-    shape,
+    shape: shape as schemas.$ZodShape,
     catchall: unknown(),
     ...util.normalizeTypeParams(params),
   };
@@ -530,7 +533,7 @@ export function pick<
 ): schemas.$ZodObject<
   Pick<T["_def"]["shape"], Extract<keyof T["_def"]["shape"], keyof M>>
 > {
-  const shape: any = {};
+  const shape: schemas.$ZodShape = {};
   for (const key in mask) {
     shape[key] = schema._def.shape[key];
   }
@@ -551,8 +554,8 @@ export function omit<
 ): schemas.$ZodObject<
   Omit<T["_def"]["shape"], Extract<keyof T["_def"]["shape"], keyof M>>
 > {
-  const shape: schemas.$ZodRawShape = { ...schema._def.shape };
-  for (const key in mask) delete shape[key];
+  const shape: schemas.$ZodShape = { ...schema._def.shape };
+  for (const key in mask) delete (shape as any)[key];
   return schema._clone({
     ...schema._def,
     shape,
@@ -566,7 +569,7 @@ export function partial<T extends schemas.$ZodObject>(
 ): schemas.$ZodObject<{
   [k in keyof T["_def"]["shape"]]: schemas.$ZodOptional<T["_def"]["shape"][k]>;
 }> {
-  const shape: schemas.$ZodRawShape = {};
+  const shape: schemas.$ZodShape = {};
   for (const key in schema._def.shape) {
     shape[key] = optional(schema._def.shape[key]);
   }
@@ -575,6 +578,11 @@ export function partial<T extends schemas.$ZodObject>(
     shape,
     checks: [],
   }) as any;
+}
+
+// lazy
+export function lazy<T extends object>(getter: () => T): T {
+  return util.createTransparentProxy<T>(getter);
 }
 
 // union
@@ -757,20 +765,54 @@ export function literal<const T extends util.Literal | util.Literal[]>(
 }
 
 // envbool
-// interface $ZodEnvBoolParams
-//   extends util.TypeParams<schemas.$ZodSuccess, "innerType">,
-//     util.TypeParams<schemas.$ZodEnum, "values"> {
-//   error?:
-//     | string
-//     | errors.$ZodErrorMap<errors.$ZodIssueEnumInvalidValue>
-//     | undefined;
-// }
+interface $ZodEnvBoolParams extends util.TypeParams {
+  true?: string[];
+  false?: string[];
+  error?:
+    | string
+    | errors.$ZodErrorMap<
+        errors.$ZodIssueInvalidUnion | errors.$ZodIssueInvalidType
+      >;
+}
 
-// export function envbool<T extends string[]>(
-//   values: T = ["true"],
-//   params?: $ZodEnvBoolParams
-// ): schemas.$ZodSuccess<schemas.$ZodEnum<T>> {
-//   return any()._refine;
+export function envbool(
+  params?: $ZodEnvBoolParams
+): schemas.$ZodCatch<
+  schemas.$ZodUnion<
+    [
+      schemas.$ZodSuccess<schemas.$ZodLiteral<string[]>>,
+      schemas.$ZodSuccess<schemas.$ZodLiteral<string[]>>,
+      schemas.$ZodNull,
+    ]
+  >
+> {
+  const trueValues = params?.true ?? ["true", "1", "yes", "on"];
+  const falseValues = params?.false ?? ["false", "0", "no", "off"];
+  return _catch(
+    union(
+      [success(literal(trueValues)), success(literal(falseValues)), _null()],
+      params
+    ),
+    null
+  );
+}
+
+// json
+
+// export function json() {
+// const literalSchema = union([string(), number(), boolean(), _null()]);
+
+// const jsonSchema = union([
+//   literalSchema,
+//   array(() => jsonSchema),
+//   // record(string(), jsonSchema),
+// ]);
+// const jsonSchema2 = object({
+//   get name() {
+//     return jsonSchema2;
+//   },
+// });
+// return jsonSchema;
 // }
 
 // file
@@ -847,7 +889,7 @@ export function transform<T extends base.$ZodType, NewOut>(
 // optional
 interface $ZodOptionalParams
   extends util.TypeParams<schemas.$ZodOptional, "innerType"> {}
-export function optional<T extends base.$ZodType>(
+export function optional<T extends base.$ZodType<any, any>>(
   innerType: T,
   params?: $ZodOptionalParams
 ): schemas.$ZodOptional<T> {
@@ -976,13 +1018,7 @@ export function templateLiteral<
   }) as any;
 }
 
-// custom
-// type lkjasdf = errors.$ZodIssueCustom[''];
-// interface CustomParams
-//   extends Omit<
-//     errors.$ZodIssueData<errors.$ZodIssueCustom>,
-//     "code" | "origin" | "input"
-//   > {}
+//////////    CUSTOM     //////////
 
 interface CustomParams extends util.CheckParams {
   error?: string | errors.$ZodErrorMap<errors.$ZodIssueCustom>;
@@ -1018,7 +1054,8 @@ export function custom<T>(
   return result;
 }
 
-// instanceof
+//////////    INSTANCEOF     //////////
+
 abstract class Class {
   constructor(..._: any[]) {}
 }
@@ -1032,7 +1069,8 @@ function _instanceof<T extends typeof Class>(
 }
 export { _instanceof as instanceof };
 
-// refine
+//////////    REFINES     //////////
+
 function customIssue(
   err: Pick<
     errors.$ZodIssueData<errors.$ZodIssueCustom>,

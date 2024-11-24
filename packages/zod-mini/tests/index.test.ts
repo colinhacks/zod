@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod-core";
+import * as z from "zod-mini";
 
 test("z.string", async () => {
   const a = z.string();
@@ -581,6 +581,58 @@ test("z.looseObject", () => {
     extra: true,
   });
   expect(() => z.parse(a, "hello")).toThrow();
+});
+
+test("z.object mutually recursive", () => {
+  const A = z.object(() => ({
+    name: z.string(),
+    get b() {
+      return z.array(() => B);
+      // return B;
+    },
+  }));
+  const B = z.object({
+    name: z.string(),
+    get a() {
+      // return A;
+      return z.array(() => A);
+    },
+  });
+
+  A._output.b[0].a;
+  // A._output.b[0];
+  // B._output.a.b.a.b.a.b.a.b.a.b.a;;
+  const good = { name: "john", b: { name: "doe", a: { name: "john" } } };
+  z.parse(A, good);
+
+  const bad = [
+    { _: "john" },
+    { name: "john", b: { name: "doe", a: { name: 123 } } },
+  ];
+  for (const b of bad) {
+    expect(z.safeParse(A, b).success).toEqual(false);
+  }
+});
+
+test("z.object self recursive", () => {
+  const A = z.object({
+    name: z.string(),
+    get a() {
+      return A;
+      // return z.array(() => A);
+    },
+  });
+
+  const good = { name: "john", a: { name: "doe", a: { name: "john" } } };
+  z.parse(A, good);
+
+  const bad = [
+    { _: "john" },
+    { name: "john", a: { name: "doe", a: { name: 123 } } },
+  ];
+  for (const b of bad) {
+    expect(z.safeParse(A, b).success).toEqual(false);
+  }
 });
 
 test("z.keyof", () => {
