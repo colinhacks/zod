@@ -787,6 +787,8 @@ z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // ISO 8601; by default only `Z` timezone allowed
 z.string().ip(); // defaults to allow both IPv4 and IPv6
+z.string().uppercase();
+z.string().lowercase();
 
 // transforms
 z.string().trim(); // trim whitespace

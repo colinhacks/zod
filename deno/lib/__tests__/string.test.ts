@@ -769,3 +769,13 @@ test("IP validation", () => {
     invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
   ).toBe(true);
 });
+
+test("lowercase and uppercase validation", () => {
+  const lowercase = z.string().lowercase();
+  expect(lowercase.safeParse("lowercasedstring").success).toBeTruthy();
+  expect(lowercase.safeParse("UPPERCASESTRING").success).toBeFalsy();
+
+  const uppercase = z.string().uppercase();
+  expect(uppercase.safeParse("UPPERCASESTRING").success).toBeTruthy();
+  expect(uppercase.safeParse("lowercasedstring").success).toBeFalsy();
+});
