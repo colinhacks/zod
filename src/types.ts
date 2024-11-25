@@ -532,6 +532,7 @@ export type ZodStringCheck =
   | { kind: "max"; value: number; message?: string }
   | { kind: "length"; value: number; message?: string }
   | { kind: "email"; message?: string }
+  | { kind: "emailUtf8"; message?: string }
   | { kind: "url"; message?: string }
   | { kind: "emoji"; message?: string }
   | { kind: "uuid"; message?: string }
@@ -600,6 +601,9 @@ const emailRegex =
   /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
 // const emailRegex =
 //   /^[a-z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9\-]+)*$/i;
+
+const emailRegexUtf8Extended =
+  /^(?!.*[@]{2})(?!.*[.]{2})(?!.*[.@]$)[\p{L}\p{N}!#$%&'*+/=?^_{|}~-](?:[\p{L}\p{N}!#$%&'*+/=?^_{|}~.-]*[\p{L}\p{N}!#$%&'*+/=?^_{|}~-])?@[\p{L}\p{N}][\p{L}\p{N}-]*?(\.[\p{L}\p{N}-]+)*\.[\p{L}]{2,}$/u;
 
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
 const _emojiRegex = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
@@ -746,6 +750,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "email") {
         if (!emailRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "email",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "emailUtf8") {
+        if (!emailRegexUtf8Extended.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "email",
@@ -974,6 +988,13 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return this._addCheck({ kind: "email", ...errorUtil.errToObj(message) });
   }
 
+  emailUtf8(message?: errorUtil.ErrMessage) {
+    return this._addCheck({
+      kind: "emailUtf8",
+      ...errorUtil.errToObj(message),
+    });
+  }
+
   url(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "url", ...errorUtil.errToObj(message) });
   }
@@ -1169,7 +1190,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
 
   get isEmail() {
-    return !!this._def.checks.find((ch) => ch.kind === "email");
+    return !!this._def.checks.find(
+      (ch) => ch.kind === "email" || ch.kind === "emailUtf8"
+    );
   }
 
   get isURL() {
