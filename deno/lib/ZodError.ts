@@ -194,7 +194,8 @@ export type inferFormattedError<
   U = string
 > = ZodFormattedError<TypeOf<T>, U>;
 
-export class ZodError<T = any> extends Error {
+export class ZodError<T = any> {
+  name: string;
   issues: ZodIssue[] = [];
 
   get errors() {
@@ -202,8 +203,6 @@ export class ZodError<T = any> extends Error {
   }
 
   constructor(issues: ZodIssue[]) {
-    super();
-
     const actualProto = new.target.prototype;
     if (Object.setPrototypeOf) {
       // eslint-disable-next-line ban/ban
