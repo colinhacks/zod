@@ -44,6 +44,7 @@ export type ParseParams = {
   path: (string | number)[];
   errorMap: ZodErrorMap;
   async: boolean;
+  strict: boolean;
 };
 
 export type ParsePathComponent = string | number;
@@ -55,6 +56,7 @@ export interface ParseContext {
     readonly issues: ZodIssue[];
     readonly contextualErrorMap?: ZodErrorMap;
     readonly async: boolean;
+    readonly strict: boolean;
   };
   readonly path: ParsePath;
   readonly schemaErrorMap?: ZodErrorMap;
@@ -88,6 +90,82 @@ export function addIssueToContext(
   ctx.common.issues.push(issue);
 }
 
+export const mergeArray = (
+  status: ParseStatus,
+  results: SyncParseReturnType<any>[],
+  stripInvalidFrom?: number,
+  minLength?: number
+): SyncParseReturnType => {
+  const arrayValue: any[] = [];
+  const strip = typeof stripInvalidFrom === "number";
+  let stripped = false;
+  for (let i = 0; i < results.length; i++) {
+    const s = results[i];
+    if (isAborted(s)) {
+      if (!strip || i < stripInvalidFrom) {
+        return INVALID;
+      }
+
+      status.dirty();
+      stripped = true;
+      continue;
+    }
+    if (isDirty(s)) {
+      status.dirty();
+    }
+    arrayValue.push(s.value);
+  }
+
+  if (stripped && minLength && arrayValue.length < minLength) {
+    return INVALID;
+  }
+
+  return { status: status.value, value: arrayValue };
+};
+
+export const mergeObjectAsync = async (
+  status: ParseStatus,
+  pairs: { key: ParseReturnType<any>; value: ParseReturnType<any> }[]
+): Promise<SyncParseReturnType<any>> => {
+  const syncPairs: ObjectPair[] = [];
+  for (const pair of pairs) {
+    const key = await pair.key;
+    const value = await pair.value;
+    syncPairs.push({
+      key,
+      value,
+    });
+  }
+  return mergeObjectSync(status, syncPairs);
+};
+
+export const mergeObjectSync = (
+  status: ParseStatus,
+  pairs: {
+    key: SyncParseReturnType<any>;
+    value: SyncParseReturnType<any>;
+    alwaysSet?: boolean;
+  }[]
+): SyncParseReturnType => {
+  const finalObject: any = {};
+  for (const pair of pairs) {
+    const { key, value } = pair;
+    if (key.status === "aborted") return INVALID;
+    if (value.status === "aborted") return INVALID;
+    if (key.status === "dirty") status.dirty();
+    if (value.status === "dirty") status.dirty();
+
+    if (
+      key.value !== "__proto__" &&
+      (typeof value.value !== "undefined" || pair.alwaysSet)
+    ) {
+      finalObject[key.value] = value.value;
+    }
+  }
+
+  return { status: status.value, value: finalObject };
+};
+
 export type ObjectPair = {
   key: SyncParseReturnType<any>;
   value: SyncParseReturnType<any>;
@@ -100,64 +178,8 @@ export class ParseStatus {
   abort() {
     if (this.value !== "aborted") this.value = "aborted";
   }
-
-  static mergeArray(
-    status: ParseStatus,
-    results: SyncParseReturnType<any>[]
-  ): SyncParseReturnType {
-    const arrayValue: any[] = [];
-    for (const s of results) {
-      if (s.status === "aborted") return INVALID;
-      if (s.status === "dirty") status.dirty();
-      arrayValue.push(s.value);
-    }
-
-    return { status: status.value, value: arrayValue };
-  }
-
-  static async mergeObjectAsync(
-    status: ParseStatus,
-    pairs: { key: ParseReturnType<any>; value: ParseReturnType<any> }[]
-  ): Promise<SyncParseReturnType<any>> {
-    const syncPairs: ObjectPair[] = [];
-    for (const pair of pairs) {
-      const key = await pair.key;
-      const value = await pair.value;
-      syncPairs.push({
-        key,
-        value,
-      });
-    }
-    return ParseStatus.mergeObjectSync(status, syncPairs);
-  }
-
-  static mergeObjectSync(
-    status: ParseStatus,
-    pairs: {
-      key: SyncParseReturnType<any>;
-      value: SyncParseReturnType<any>;
-      alwaysSet?: boolean;
-    }[]
-  ): SyncParseReturnType {
-    const finalObject: any = {};
-    for (const pair of pairs) {
-      const { key, value } = pair;
-      if (key.status === "aborted") return INVALID;
-      if (value.status === "aborted") return INVALID;
-      if (key.status === "dirty") status.dirty();
-      if (value.status === "dirty") status.dirty();
-
-      if (
-        key.value !== "__proto__" &&
-        (typeof value.value !== "undefined" || pair.alwaysSet)
-      ) {
-        finalObject[key.value] = value.value;
-      }
-    }
-
-    return { status: status.value, value: finalObject };
-  }
 }
+
 export interface ParseResult {
   status: "aborted" | "dirty" | "valid";
   data: any;

@@ -11,6 +11,9 @@ import {
   isDirty,
   isValid,
   makeIssue,
+  mergeArray,
+  mergeObjectAsync,
+  mergeObjectSync,
   OK,
   ParseContext,
   ParseInput,
@@ -91,18 +94,19 @@ class ParseInputLazyPath implements ParseInput {
 const handleResult = <Input, Output>(
   ctx: ParseContext,
   result: SyncParseReturnType<Output>
-):
-  | { success: true; data: Output }
-  | { success: false; error: ZodError<Input> } => {
+): SafeParseReturnType<Input, Output> => {
   if (isValid(result)) {
     return { success: true, data: result.value };
-  } else {
-    if (!ctx.common.issues.length) {
-      throw new Error("Validation failed but no issues detected.");
-    }
+  }
 
+  if (!ctx.common.issues.length) {
+    throw new Error("Validation failed but no issues detected.");
+  }
+
+  if (!ctx.common.strict && !isAborted(result)) {
     return {
-      success: false,
+      success: true,
+      data: result.value,
       get error() {
         if ((this as any)._error) return (this as any)._error as Error;
         const error = new ZodError(ctx.common.issues);
@@ -111,6 +115,16 @@ const handleResult = <Input, Output>(
       },
     };
   }
+
+  return {
+    success: false,
+    get error() {
+      if ((this as any)._error) return (this as any)._error as Error;
+      const error = new ZodError(ctx.common.issues);
+      (this as any)._error = error;
+      return (this as any)._error;
+    },
+  };
 };
 
 export type RawCreateParams =
@@ -150,6 +164,11 @@ function processCreateParams(params: RawCreateParams): ProcessedCreateParams {
   return { errorMap: customMap, description };
 }
 
+export type SafeParseDirtySuccess<Input, Output> = {
+  success: true;
+  data: Output;
+  error?: ZodError<Input>;
+};
 export type SafeParseSuccess<Output> = {
   success: true;
   data: Output;
@@ -163,6 +182,7 @@ export type SafeParseError<Input> = {
 
 export type SafeParseReturnType<Input, Output> =
   | SafeParseSuccess<Output>
+  | SafeParseDirtySuccess<Input, Output>
   | SafeParseError<Input>;
 
 export abstract class ZodType<
@@ -249,6 +269,7 @@ export abstract class ZodType<
       common: {
         issues: [],
         async: params?.async ?? false,
+        strict: params?.strict ?? true,
         contextualErrorMap: params?.errorMap,
       },
       path: params?.path || [],
@@ -280,6 +301,7 @@ export abstract class ZodType<
         issues: [],
         contextualErrorMap: params?.errorMap,
         async: true,
+        strict: params?.strict ?? true,
       },
       path: params?.path || [],
       schemaErrorMap: this._def.errorMap,
@@ -2232,6 +2254,8 @@ export class ZodArray<
       }
     }
 
+    const stripInvalidFrom = !ctx.common.strict ? 0 : undefined;
+
     if (ctx.common.async) {
       return Promise.all(
         ([...ctx.data] as any[]).map((item, i) => {
@@ -2239,18 +2263,23 @@ export class ZodArray<
             new ParseInputLazyPath(ctx, item, ctx.path, i)
           );
         })
-      ).then((result) => {
-        return ParseStatus.mergeArray(status, result);
+      ).then((results) => {
+        return mergeArray(
+          status,
+          results,
+          stripInvalidFrom,
+          def.minLength?.value
+        );
       });
     }
 
-    const result = ([...ctx.data] as any[]).map((item, i) => {
+    const results = ([...ctx.data] as any[]).map((item, i) => {
       return def.type._parseSync(
         new ParseInputLazyPath(ctx, item, ctx.path, i)
       );
     });
 
-    return ParseStatus.mergeArray(status, result);
+    return mergeArray(status, results, stripInvalidFrom, def.minLength?.value);
   }
 
   get element() {
@@ -2528,10 +2557,10 @@ export class ZodObject<
           return syncPairs;
         })
         .then((syncPairs) => {
-          return ParseStatus.mergeObjectSync(status, syncPairs);
+          return mergeObjectSync(status, syncPairs);
         });
     } else {
-      return ParseStatus.mergeObjectSync(status, pairs as any);
+      return mergeObjectSync(status, pairs as any);
     }
   }
 
@@ -3462,22 +3491,24 @@ export class ZodTuple<
       status.dirty();
     }
 
-    const items = ([...ctx.data] as any[])
-      .map((item, itemIndex) => {
-        const schema = this._def.items[itemIndex] || this._def.rest;
-        if (!schema) return null as any as SyncParseReturnType<any>;
-        return schema._parse(
-          new ParseInputLazyPath(ctx, item, ctx.path, itemIndex)
-        );
-      })
-      .filter((x) => !!x); // filter nulls
+    const items = ([...ctx.data] as any[]).map((item, itemIndex) => {
+      // schema must be always present for any item due to guards above
+      const schema = this._def.items[itemIndex] || rest;
+      return schema._parse(
+        new ParseInputLazyPath(ctx, item, ctx.path, itemIndex)
+      );
+    });
+
+    const stripInvalidFrom =
+      !ctx.common.strict && rest ? this._def.items.length : undefined;
 
     if (ctx.common.async) {
-      return Promise.all(items).then((results) => {
-        return ParseStatus.mergeArray(status, results);
-      });
+      return Promise.all(items).then((results) =>
+        mergeArray(status, results, stripInvalidFrom)
+      );
     } else {
-      return ParseStatus.mergeArray(status, items as SyncParseReturnType[]);
+      const results = items as SyncParseReturnType[];
+      return mergeArray(status, results, stripInvalidFrom);
     }
   }
 
@@ -3581,9 +3612,9 @@ export class ZodRecord<
     }
 
     if (ctx.common.async) {
-      return ParseStatus.mergeObjectAsync(status, pairs);
+      return mergeObjectAsync(status, pairs);
     } else {
-      return ParseStatus.mergeObjectSync(status, pairs as any);
+      return mergeObjectSync(status, pairs as any);
     }
   }
 
@@ -4642,11 +4673,17 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
   T["_input"] | undefined
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const { status, ctx } = this._processInputParams(input);
     const parsedType = this._getType(input);
     if (parsedType === ZodParsedType.undefined) {
       return OK(undefined);
     }
-    return this._def.innerType._parse(input);
+    const result = this._def.innerType._parse(input);
+    if (!ctx.common.strict && !isValid(result)) {
+      status.dirty();
+      return DIRTY(undefined);
+    }
+    return result;
   }
 
   unwrap() {
