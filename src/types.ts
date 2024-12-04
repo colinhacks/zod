@@ -19,6 +19,7 @@ import {
   ParseReturnType,
   ParseStatus,
   SyncParseReturnType,
+  processInChunks,
 } from "./helpers/parseUtil";
 import { partialUtil } from "./helpers/partialUtil";
 import { Primitive } from "./helpers/typeAliases";
