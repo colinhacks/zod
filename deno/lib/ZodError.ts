@@ -104,6 +104,7 @@ export type StringValidation =
   | "duration"
   | "ip"
   | "base64"
+  | "currency"
   | { includes: string; position?: number }
   | { startsWith: string }
   | { endsWith: string };

@@ -565,7 +565,8 @@ export type ZodStringCheck =
     }
   | { kind: "duration"; message?: string }
   | { kind: "ip"; version?: IpVersion; message?: string }
-  | { kind: "base64"; message?: string };
+  | { kind: "base64"; message?: string }
+  | { kind: "currency"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -668,6 +669,193 @@ function isValidIP(ip: string, version?: IpVersion) {
     return true;
   }
 
+  return false;
+}
+
+// ISO 4217
+const currencies = new Set([
+  "AED",
+  "AFN",
+  "ALL",
+  "AMD",
+  "ANG",
+  "AOA",
+  "ARS",
+  "AUD",
+  "AWG",
+  "AZN",
+  "BAM",
+  "BBD",
+  "BDT",
+  "BGN",
+  "BHD",
+  "BIF",
+  "BMD",
+  "BND",
+  "BOB",
+  "BOV",
+  "BRL",
+  "BSD",
+  "BTN",
+  "BWP",
+  "BYN",
+  "BZD",
+  "CAD",
+  "CDF",
+  "CHE",
+  "CHF",
+  "CHW",
+  "CLF",
+  "CLP",
+  "CNY",
+  "COP",
+  "COU",
+  "CRC",
+  "CUP",
+  "CVE",
+  "CZK",
+  "DJF",
+  "DKK",
+  "DOP",
+  "DZD",
+  "EGP",
+  "ERN",
+  "ETB",
+  "EUR",
+  "FJD",
+  "FKP",
+  "GBP",
+  "GEL",
+  "GHS",
+  "GIP",
+  "GMD",
+  "GNF",
+  "GTQ",
+  "GYD",
+  "HKD",
+  "HNL",
+  "HTG",
+  "HUF",
+  "IDR",
+  "ILS",
+  "INR",
+  "IQD",
+  "IRR",
+  "ISK",
+  "JMD",
+  "JOD",
+  "JPY",
+  "KES",
+  "KGS",
+  "KHR",
+  "KMF",
+  "KPW",
+  "KRW",
+  "KWD",
+  "KYD",
+  "KZT",
+  "LAK",
+  "LBP",
+  "LKR",
+  "LRD",
+  "LSL",
+  "LYD",
+  "MAD",
+  "MDL",
+  "MGA",
+  "MKD",
+  "MMK",
+  "MNT",
+  "MOP",
+  "MRU",
+  "MUR",
+  "MVR",
+  "MWK",
+  "MXN",
+  "MXV",
+  "MYR",
+  "MZN",
+  "NAD",
+  "NGN",
+  "NIO",
+  "NOK",
+  "NPR",
+  "NZD",
+  "OMR",
+  "PAB",
+  "PEN",
+  "PGK",
+  "PHP",
+  "PKR",
+  "PLN",
+  "PYG",
+  "QAR",
+  "RON",
+  "RSD",
+  "RUB",
+  "RWF",
+  "SAR",
+  "SBD",
+  "SCR",
+  "SDG",
+  "SEK",
+  "SGD",
+  "SHP",
+  "SLE",
+  "SOS",
+  "SRD",
+  "SSP",
+  "STN",
+  "SVC",
+  "SYP",
+  "SZL",
+  "THB",
+  "TJS",
+  "TMT",
+  "TND",
+  "TOP",
+  "TRY",
+  "TTD",
+  "TWD",
+  "TZS",
+  "UAH",
+  "UGX",
+  "USD",
+  "USN",
+  "UYI",
+  "UYU",
+  "UYW",
+  "UZS",
+  "VED",
+  "VES",
+  "VND",
+  "VUV",
+  "WST",
+  "XAF",
+  "XAG",
+  "XAU",
+  "XBA",
+  "XBB",
+  "XBC",
+  "XBD",
+  "XCD",
+  "XDR",
+  "XOF",
+  "XPD",
+  "XPF",
+  "XPT",
+  "XSU",
+  "XTS",
+  "XUA",
+  "XXX",
+  "YER",
+  "ZAR",
+  "ZMW",
+  "ZWL",
+]);
+
+function isValidCurrency(currency: string) {
+  if (currencies.has(currency)) return true;
   return false;
 }
 
@@ -943,6 +1131,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "currency") {
+        if (!isValidCurrency(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "currency",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -1000,6 +1198,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   base64(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
+  }
+
+  currency(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "currency", ...errorUtil.errToObj(message) });
   }
 
   ip(options?: string | { version?: IpVersion; message?: string }) {
@@ -1201,6 +1403,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   get isBase64() {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
+  }
+
+  get isCurrency() {
+    return !!this._def.checks.find((ch) => ch.kind === "currency");
   }
 
   get minLength() {

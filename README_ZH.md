@@ -492,6 +492,7 @@ z.string().ip(); // 默认为 IPv4 和 IPv6，选项见下文
 z.string().trim(); // 减除空白
 z.string().toLowerCase(); // 小写化
 z.string().toUpperCase(); // 大写化
+z.string().currency(); // ISO 4217
 ```
 
 > 请查看 [validator.js](https://github.com/validatorjs/validator.js)，了解可与 [Refinements](#refine) 结合使用的大量其他有用字符串验证函数。

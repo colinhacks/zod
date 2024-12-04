@@ -798,6 +798,7 @@ z.string().date(); // ISO date format (YYYY-MM-DD)
 z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
 z.string().duration(); // ISO 8601 duration
 z.string().base64();
+z.string().currency(); // ISO 4217 currencies
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).

@@ -373,6 +373,7 @@ test("checks getters", () => {
   expect(z.string().email().isNANOID).toEqual(false);
   expect(z.string().email().isIP).toEqual(false);
   expect(z.string().email().isULID).toEqual(false);
+  expect(z.string().email().isCurrency).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
   expect(z.string().url().isURL).toEqual(true);
@@ -382,6 +383,7 @@ test("checks getters", () => {
   expect(z.string().url().isNANOID).toEqual(false);
   expect(z.string().url().isIP).toEqual(false);
   expect(z.string().url().isULID).toEqual(false);
+  expect(z.string().url().isCurrency).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
   expect(z.string().cuid().isURL).toEqual(false);
@@ -391,6 +393,7 @@ test("checks getters", () => {
   expect(z.string().cuid().isNANOID).toEqual(false);
   expect(z.string().cuid().isIP).toEqual(false);
   expect(z.string().cuid().isULID).toEqual(false);
+  expect(z.string().cuid().isCurrency).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
   expect(z.string().cuid2().isURL).toEqual(false);
@@ -400,6 +403,7 @@ test("checks getters", () => {
   expect(z.string().cuid2().isNANOID).toEqual(false);
   expect(z.string().cuid2().isIP).toEqual(false);
   expect(z.string().cuid2().isULID).toEqual(false);
+  expect(z.string().cuid2().isCurrency).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
   expect(z.string().uuid().isURL).toEqual(false);
@@ -409,6 +413,7 @@ test("checks getters", () => {
   expect(z.string().uuid().isNANOID).toEqual(false);
   expect(z.string().uuid().isIP).toEqual(false);
   expect(z.string().uuid().isULID).toEqual(false);
+  expect(z.string().uuid().isCurrency).toEqual(false);
 
   expect(z.string().nanoid().isEmail).toEqual(false);
   expect(z.string().nanoid().isURL).toEqual(false);
@@ -418,6 +423,7 @@ test("checks getters", () => {
   expect(z.string().nanoid().isNANOID).toEqual(true);
   expect(z.string().nanoid().isIP).toEqual(false);
   expect(z.string().nanoid().isULID).toEqual(false);
+  expect(z.string().nanoid().isCurrency).toEqual(false);
 
   expect(z.string().ip().isEmail).toEqual(false);
   expect(z.string().ip().isURL).toEqual(false);
@@ -427,6 +433,7 @@ test("checks getters", () => {
   expect(z.string().ip().isNANOID).toEqual(false);
   expect(z.string().ip().isIP).toEqual(true);
   expect(z.string().ip().isULID).toEqual(false);
+  expect(z.string().ip().isCurrency).toEqual(false);
 
   expect(z.string().ulid().isEmail).toEqual(false);
   expect(z.string().ulid().isURL).toEqual(false);
@@ -436,6 +443,17 @@ test("checks getters", () => {
   expect(z.string().ulid().isNANOID).toEqual(false);
   expect(z.string().ulid().isIP).toEqual(false);
   expect(z.string().ulid().isULID).toEqual(true);
+  expect(z.string().ulid().isCurrency).toEqual(false);
+
+  expect(z.string().currency().isEmail).toEqual(false);
+  expect(z.string().currency().isURL).toEqual(false);
+  expect(z.string().currency().isCUID).toEqual(false);
+  expect(z.string().currency().isCUID2).toEqual(false);
+  expect(z.string().currency().isUUID).toEqual(false);
+  expect(z.string().currency().isNANOID).toEqual(false);
+  expect(z.string().currency().isIP).toEqual(false);
+  expect(z.string().currency().isULID).toEqual(false);
+  expect(z.string().currency().isCurrency).toEqual(true);
 });
 
 test("min max getters", () => {
@@ -766,5 +784,26 @@ test("IP validation", () => {
   expect(validIPs.every((ip) => ipSchema.safeParse(ip).success)).toBe(true);
   expect(
     invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
+  ).toBe(true);
+});
+
+test("currency", () => {
+  const currency = z.string().currency();
+  expect(currency.isCurrency).toEqual(true);
+
+  const validCurrencies = ["USD", "EUR", "CAD", "TOP", "ALL", "PEN"];
+
+  const invalidCurrencies = ["AAA", "322", "AXAXAX"];
+
+  const currencySchema = z.string().currency();
+  expect(
+    validCurrencies.every(
+      (currency) => currencySchema.safeParse(currency).success
+    )
+  ).toBe(true);
+  expect(
+    invalidCurrencies.every(
+      (currency) => currencySchema.safeParse(currency).success === false
+    )
   ).toBe(true);
 });
