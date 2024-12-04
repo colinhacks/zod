@@ -83,33 +83,28 @@ test("async preprocess ctx.addIssue with parse", async () => {
     return data;
   }, z.string());
 
-  expect(schema.parseAsync("asdf")).rejects.toThrow(
-    JSON.stringify(
-      [
-        {
-          code: "custom",
-          message: "custom error",
-          path: [],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  return expect(schema.parseAsync("asdf")).rejects.toMatchObject({
+    issues: [
+      {
+        code: "custom",
+        message: "custom error",
+        path: [],
+      },
+    ],
+    name: "ZodError",
+  });
 });
 
 test("preprocess ctx.addIssue with parseAsync", async () => {
-  const result = await z
-    .preprocess(async (data, ctx) => {
-      ctx.addIssue({
-        code: "custom",
-        message: `${data} is not one of our allowed strings`,
-      });
-      return data;
-    }, z.string())
-    .safeParseAsync("asdf");
+  const schema = z.preprocess(async (data, ctx) => {
+    ctx.addIssue({
+      code: "custom",
+      message: `${data} is not one of our allowed strings`,
+    });
+    return data;
+  }, z.string());
 
-  expect(JSON.parse(JSON.stringify(result))).toEqual({
+  return expect(schema.safeParseAsync("asdf")).resolves.toMatchObject({
     success: false,
     error: {
       issues: [

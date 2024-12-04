@@ -1,6 +1,7 @@
 import type { TypeOf, ZodType } from "./index.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { util, ZodParsedType } from "./helpers/util.ts";
+//import { inspect } from "util";
 
 type allKeys<T> = T extends any ? keyof T : never;
 
@@ -194,6 +195,7 @@ export type inferFormattedError<
   U = string
 > = ZodFormattedError<TypeOf<T>, U>;
 
+// inheriting from Error removed as it has huge performance impact and no benefits
 export class ZodError<T = any> {
   name: string;
   issues: ZodIssue[] = [];
@@ -285,6 +287,15 @@ export class ZodError<T = any> {
 
   get isEmpty(): boolean {
     return this.issues.length === 0;
+  }
+
+  // for console.*
+  /*[inspect.custom]() {
+    return this.message;
+  }*/
+
+  toJSON() {
+    return { issues: this.issues, name: this.name };
   }
 
   addIssue = (sub: ZodIssue) => {

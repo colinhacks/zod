@@ -84,7 +84,7 @@ export namespace util {
     separator = " | "
   ): string {
     return array
-      .map((val) => (typeof val === "string" ? `'${val}'` : val))
+      .map((val) => (typeof val === "string" ? `'${val}'` : `${val}`))
       .join(separator);
   }
 
