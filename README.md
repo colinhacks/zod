@@ -628,37 +628,53 @@ import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
 
 ## Basic usage
 
-Creating a simple string schema
+Creating a simple string schema:
 
 ```ts
 import { z } from "zod";
 
-// creating a schema for strings
+// Create a schema for string validation
 const mySchema = z.string();
 
-// parsing
-mySchema.parse("tuna"); // => "tuna"
-mySchema.parse(12); // => throws ZodError
+// parse() returns the validated data directly or throws ZodError
+const validString = mySchema.parse("tuna");
+// validString: string = "tuna"
 
-// "safe" parsing (doesn't throw error if validation fails)
-mySchema.safeParse("tuna"); // => { success: true; data: "tuna" }
-mySchema.safeParse(12); // => { success: false; error: ZodError }
+try {
+  mySchema.parse(12);  // throws ZodError because 12 is not a string
+} catch (error) {
+  // handle validation error
+}
+
+// safeParse() returns a discriminated union for error handling
+const safeResult = mySchema.safeParse("tuna");
+// safeResult: { success: true, data: string } | { success: false, error: ZodError }
+
+if (safeResult.success) {
+  // safeResult.data: string = "tuna"
+} else {
+  // safeResult.error: ZodError
+}
 ```
 
-Creating an object schema
+Creating an object schema:
 
 ```ts
 import { z } from "zod";
 
+// Define a schema for validating user data
 const User = z.object({
   username: z.string(),
 });
 
-User.parse({ username: "Ludwig" });
+const user = User.parse({ username: "Ludwig" });
+// user: { username: string } = { username: "Ludwig" }
 
-// extract the inferred type
+// Extract the inferred TypeScript type from the schema
 type User = z.infer<typeof User>;
-// { username: string }
+// User: { username: string }
+```
+
 ```
 
 ## Primitives
