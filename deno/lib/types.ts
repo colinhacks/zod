@@ -527,6 +527,25 @@ export abstract class ZodType<
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type IpVersion = "v4" | "v6";
+export type JWTAlgorithm =
+  | "HS256"
+  | "HS384"
+  | "HS512"
+  | "RS256"
+  | "RS384"
+  | "RS512"
+  | "ES256"
+  | "ES384"
+  | "ES512"
+  | "PS256"
+  | "PS384"
+  | "PS512";
+
+export interface JWTValidation {
+  alg?: JWTAlgorithm;
+  message?: string;
+}
+
 export type ZodStringCheck =
   | { kind: "min"; value: number; message?: string }
   | { kind: "max"; value: number; message?: string }
@@ -546,6 +565,7 @@ export type ZodStringCheck =
   | { kind: "trim"; message?: string }
   | { kind: "toLowerCase"; message?: string }
   | { kind: "toUpperCase"; message?: string }
+  | { kind: "jwt"; options?: JWTValidation; message?: string }
   | {
       kind: "datetime";
       offset: boolean;
@@ -943,6 +963,41 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "jwt") {
+        const parts = input.data.split(".");
+        if (parts.length !== 3) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "jwt",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        } else {
+          try {
+            // Validate all parts are base64
+            for (const part of parts) {
+              if (!base64Regex.test(part)) throw new Error();
+            }
+
+            // Decode and validate header
+            const header = JSON.parse(atob(parts[0]));
+            if (!header.typ || !header.alg) throw new Error();
+
+            // Validate algorithm if specified
+            if (check.options?.alg && header.alg !== check.options.alg) {
+              throw new Error();
+            }
+          } catch {
+            ctx = this._getOrReturnCtx(input, ctx);
+            addIssueToContext(ctx, {
+              validation: "jwt",
+              code: ZodIssueCode.invalid_string,
+              message: check.message,
+            });
+            status.dirty();
+          }
+        }
       } else {
         util.assertNever(check);
       }
@@ -1000,6 +1055,17 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
   base64(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
+  }
+
+  jwt(options?: JWTValidation | string) {
+    if (typeof options === "string") {
+      return this._addCheck({ kind: "jwt", message: options });
+    }
+    return this._addCheck({
+      kind: "jwt",
+      options,
+      ...errorUtil.errToObj(options?.message),
+    });
   }
 
   ip(options?: string | { version?: IpVersion; message?: string }) {

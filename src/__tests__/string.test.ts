@@ -193,10 +193,36 @@ test("base64 validations", () => {
   ];
 
   for (const str of invalidBase64Strings) {
-    expect(str + z.string().base64().safeParse(str).success).toBe(
-      str + "false"
-    );
+    expect(str + z.string().base64().safeParse(str).success).toBe(str + "false");
   }
+});
+
+test("jwt validations", () => {
+  const jwt = z.string().jwt();
+  const jwtWithAlg = z.string().jwt({ alg: "HS256" });
+
+  // Valid JWTs
+  const validHeader = btoa(JSON.stringify({ typ: "JWT", alg: "HS256" }));
+  const validPayload = btoa(JSON.stringify({ sub: "1234" }));
+  const validSignature = btoa("signature");
+  const validJWT = `${validHeader}.${validPayload}.${validSignature}`;
+
+  expect(jwt.safeParse(validJWT).success).toBe(true);
+  expect(jwtWithAlg.safeParse(validJWT).success).toBe(true);
+
+  // Different algorithm
+  const headerWithDiffAlg = btoa(JSON.stringify({ typ: "JWT", alg: "RS256" }));
+  const jwtWithDiffAlg = `${headerWithDiffAlg}.${validPayload}.${validSignature}`;
+  expect(jwt.safeParse(jwtWithDiffAlg).success).toBe(true);
+  expect(jwtWithAlg.safeParse(jwtWithDiffAlg).success).toBe(false);
+
+  // Invalid cases
+  expect(jwt.safeParse("not.a.jwt").success).toBe(false);
+  expect(jwt.safeParse("not.enough.parts.here").success).toBe(false);
+  expect(jwt.safeParse("invalid!base64.parts.here").success).toBe(false);
+  expect(jwt.safeParse(`${btoa("invalid json")}.${validPayload}.${validSignature}`).success).toBe(false);
+  expect(jwt.safeParse(`${btoa(JSON.stringify({ alg: "HS256" }))}.${validPayload}.${validSignature}`).success).toBe(false);
+  expect(jwt.safeParse(`${btoa(JSON.stringify({ typ: "JWT" }))}.${validPayload}.${validSignature}`).success).toBe(false);
 });
 
 test("url validations", () => {
