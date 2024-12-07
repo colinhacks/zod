@@ -691,6 +691,30 @@ function isValidIP(ip: string, version?: IpVersion) {
   return false;
 }
 
+function isValidJWT(jwt: string, options?: JWTValidation): boolean {
+  try {
+    // Check three-part structure
+    const parts = jwt.split(".");
+    if (parts.length !== 3) return false;
+
+    // Validate all parts are base64
+    for (const part of parts) {
+      if (!base64Regex.test(part)) return false;
+    }
+
+    // Decode and validate header
+    const header = JSON.parse(atob(parts[0]));
+    if (!header.typ || !header.alg) return false;
+
+    // Validate algorithm if specified
+    if (options?.alg && header.alg !== options.alg) return false;
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export class ZodString extends ZodType<string, ZodStringDef, string> {
   _parse(input: ParseInput): ParseReturnType<string> {
     if (this._def.coerce) {
@@ -964,8 +988,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           status.dirty();
         }
       } else if (check.kind === "jwt") {
-        const parts = input.data.split(".");
-        if (parts.length !== 3) {
+        if (!isValidJWT(input.data, check.options)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "jwt",
@@ -973,30 +996,6 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
             message: check.message,
           });
           status.dirty();
-        } else {
-          try {
-            // Validate all parts are base64
-            for (const part of parts) {
-              if (!base64Regex.test(part)) throw new Error();
-            }
-
-            // Decode and validate header
-            const header = JSON.parse(atob(parts[0]));
-            if (!header.typ || !header.alg) throw new Error();
-
-            // Validate algorithm if specified
-            if (check.options?.alg && header.alg !== check.options.alg) {
-              throw new Error();
-            }
-          } catch {
-            ctx = this._getOrReturnCtx(input, ctx);
-            addIssueToContext(ctx, {
-              validation: "jwt",
-              code: ZodIssueCode.invalid_string,
-              message: check.message,
-            });
-            status.dirty();
-          }
         }
       } else {
         util.assertNever(check);
