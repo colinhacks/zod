@@ -199,6 +199,44 @@ test("base64 validations", () => {
   }
 });
 
+test("jwt validations", () => {
+  const jwt = z.string().jwt();
+  const jwtWithAlg = z.string().jwt({ algorithm: "HS256" });
+
+  // Valid JWTs
+  const validHeader = Buffer.from(JSON.stringify({ typ: "JWT", alg: "HS256" })).toString('base64url');
+  const validPayload = Buffer.from("{}").toString('base64url');
+  const validSignature = "signature";
+  const validJWT = `${validHeader}.${validPayload}.${validSignature}`;
+
+  expect(() => jwt.parse(validJWT)).not.toThrow();
+  expect(() => jwtWithAlg.parse(validJWT)).not.toThrow();
+
+  // Invalid format
+  expect(() => jwt.parse("invalid")).toThrow();
+  expect(() => jwt.parse("invalid.invalid")).toThrow();
+  expect(() => jwt.parse("invalid.invalid.invalid")).toThrow();
+
+  // Invalid header
+  const invalidHeader = Buffer.from("{}").toString('base64url');
+  const invalidHeaderJWT = `${invalidHeader}.${validPayload}.${validSignature}`;
+  expect(() => jwt.parse(invalidHeaderJWT)).toThrow();
+
+  // Wrong algorithm
+  const wrongAlgHeader = Buffer.from(JSON.stringify({ typ: "JWT", alg: "RS256" })).toString('base64url');
+  const wrongAlgJWT = `${wrongAlgHeader}.${validPayload}.${validSignature}`;
+  expect(() => jwtWithAlg.parse(wrongAlgJWT)).toThrow();
+
+  // Custom error message
+  const customMsg = "Invalid JWT token";
+  const jwtWithMsg = z.string().jwt({ message: customMsg });
+  try {
+    jwtWithMsg.parse("invalid");
+  } catch (error) {
+    expect((error as z.ZodError).issues[0].message).toBe(customMsg);
+  }
+});
+
 test("url validations", () => {
   const url = z.string().url();
   url.parse("http://google.com");
