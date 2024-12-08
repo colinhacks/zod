@@ -53,12 +53,12 @@ const errorMap: errors.$ZodErrorMap = (issue) => {
       return `Invalid option: expected one of ${util.joinValues(issue.options, ", ")}`;
     case "too_big":
       if (issue.origin in HasSize)
-        return `Too big: expected ${issue.origin} to have less than ${issue.maximum}${HasSize[issue.origin]}`;
-      return `Too big: expected ${issue.origin} to be less than ${issue.maximum}`;
+        return `Too big: expected ${issue.origin} to have less than ${issue.maximum.toString()}${HasSize[issue.origin]}`;
+      return `Too big: expected ${issue.origin} to be less than ${issue.maximum.toString()}`;
     case "too_small":
       if (issue.origin in HasSize)
-        return `Too small: expected ${issue.origin} to have more than ${issue.minimum}${HasSize[issue.origin]}`;
-      return `Too small: expected ${issue.origin} to be more than ${issue.minimum}`;
+        return `Too small: expected ${issue.origin} to have more than ${issue.minimum.toString()}${HasSize[issue.origin]}`;
+      return `Too small: expected ${issue.origin} to be more than ${issue.minimum.toString()}`;
     case "not_multiple_of":
       return `Invalid number: must be a multiple of ${issue.divisor}`;
     case "invalid_format": {

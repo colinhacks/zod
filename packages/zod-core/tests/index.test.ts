@@ -1,5 +1,5 @@
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod-mini";
+import * as z from "zod-core";
 
 test("z.string", async () => {
   const a = z.string();
@@ -10,8 +10,8 @@ test("z.string", async () => {
 
 test("z.string with description", () => {
   const a = z.string({ description: "string description" });
-  a._def;
-  expect(a._def.description).toEqual("string description");
+  a["~def"];
+  expect(a["~def"].description).toEqual("string description");
 });
 
 test("z.string with custom error", () => {
@@ -29,7 +29,7 @@ test("inference in checks", () => {
   const c = z.string({ description: "" }, [z.refine((val) => val.length)]);
   z.parse(c, "___");
   expect(() => z.parse(c, "")).toThrow();
-  const d = z.string()._check(z.refine((val) => val.length));
+  const d = z.string().check(z.refine((val) => val.length));
   z.parse(d, "___");
   expect(() => z.parse(d, "")).toThrow();
 });
@@ -245,7 +245,7 @@ test("z.number async", async () => {
   await expect(() => z.parseAsync(a, -123)).rejects.toThrow();
   await expect(() => z.parseAsync(a, "123")).rejects.toThrow();
 
-  // a._check(()=>)
+  // a.check(()=>)
 });
 
 test("z.int", () => {
@@ -298,21 +298,27 @@ test("z.uint32", () => {
 
 test("z.int64", () => {
   const a = z.int64();
-  expect(z.parse(a, 123)).toEqual(123);
+  expect(z.parse(a, BigInt(123))).toEqual(BigInt(123));
+  expect(() => z.parse(a, 123)).toThrow();
   expect(() => z.parse(a, 123.45)).toThrow();
   expect(() => z.parse(a, "123")).toThrow();
   expect(() => z.parse(a, false)).toThrow();
+  expect(() => z.parse(a, BigInt("9223372036854775808"))).toThrow();
+  expect(() => z.parse(a, BigInt("-9223372036854775809"))).toThrow();
   // expect(() => z.parse(a, BigInt("9223372036854775808"))).toThrow(); // Exceeds max
   // expect(() => z.parse(a, BigInt("-9223372036854775809"))).toThrow(); // Exceeds min
 });
 
 test("z.uint64", () => {
   const a = z.uint64();
-  expect(z.parse(a, 123)).toEqual(123);
+  expect(z.parse(a, BigInt(123))).toEqual(BigInt(123));
+  expect(() => z.parse(a, 123)).toThrow();
   expect(() => z.parse(a, -123)).toThrow();
   expect(() => z.parse(a, 123.45)).toThrow();
   expect(() => z.parse(a, "123")).toThrow();
   expect(() => z.parse(a, false)).toThrow();
+  expect(() => z.parse(a, BigInt("18446744073709551616"))).toThrow(); // Exceeds max
+  expect(() => z.parse(a, BigInt("-1"))).toThrow(); // Below min
   // expect(() => z.parse(a, BigInt("18446744073709551616"))).toThrow(); // Exceeds max
   // expect(() => z.parse(a, BigInt("-1"))).toThrow(); // Below min
 });
@@ -539,8 +545,11 @@ test("z.object", () => {
     name: z.string(),
     age: z.number(),
     points: z.optional(z.number()),
+    "test?": z.boolean(),
   });
-  a._def.shape.points._qout;
+
+  a["~def"].shape["test?"];
+  a["~def"].shape.points["~qout"];
 
   type a = z.output<typeof a>;
 
@@ -548,11 +557,14 @@ test("z.object", () => {
     name: string;
     age: number;
     points?: number;
+    "test?": boolean;
   }>();
-  expect(z.parse(a, { name: "john", age: 30 })).toEqual({
+  expect(z.parse(a, { name: "john", age: 30, "test?": true })).toEqual({
     name: "john",
     age: 30,
+    "test?": true,
   });
+  // "test?" is required in ZodObject
   expect(() => z.parse(a, { name: "john", age: "30" })).toThrow();
   expect(() => z.parse(a, "hello")).toThrow();
 });
@@ -583,56 +595,172 @@ test("z.looseObject", () => {
   expect(() => z.parse(a, "hello")).toThrow();
 });
 
-test("z.object mutually recursive", () => {
-  const A = z.object(() => ({
+test("z.interface", () => {
+  const a = z.interface({
+    name: z.string(),
+    age: z.number(),
+  });
+  expect(z.parse(a, { name: "john", age: 30 })).toEqual({
+    name: "john",
+    age: 30,
+  });
+  expect(() => z.parse(a, { name: "john", age: "30" })).toThrow();
+  expect(() => z.parse(a, "hello")).toThrow();
+});
+
+test("z.interface optionals", () => {
+  const a = z.interface({
+    a: z.string(),
+    "b?": z.string(),
+    "?c": z._default(z.string(), "c"),
+    d: z._default(z.string(), "d"),
+    e: z.optional(z.string()),
+    "?f": z.optional(z.string()),
+  });
+
+  interface a_in {
+    a: string;
+    b?: string;
+    c?: string;
+    d: string | undefined;
+    e: string | undefined;
+    f?: string | undefined;
+  }
+  interface a_out {
+    a: string;
+    b?: string;
+    c: string;
+    d: string;
+    e: string | undefined;
+    f: string | undefined;
+  }
+
+  expectTypeOf<(typeof a)["~output"]>().toEqualTypeOf<a_out>();
+  expectTypeOf<(typeof a)["~input"]>().toEqualTypeOf<a_in>();
+
+  // check parsing behavior
+  // b is optional in input and output
+  // c is optional in input but will always show up in output
+  // d is required in input & output but will be overwritten if `undefined`
+  // e is required in input & output but can be `undefined`
+  // f is optional in input but will always show up in output
+  expect(
+    z.parse(a, { a: "a", b: "b", c: "c", d: "d", e: "e", f: "f" })
+  ).toEqual({
+    a: "a",
+    b: "b",
+    c: "c",
+    d: "d",
+    e: "e",
+    f: "f",
+  });
+
+  // omit b, c, and f to test optionality
+  expect(z.parse(a, { a: "a", d: "d", e: "e" })).toEqual({
+    a: "a",
+    c: "c", // default
+    d: "d",
+    e: "e",
+    f: undefined,
+  });
+
+  // test default values for d and f
+  expect(z.parse(a, { a: "a", d: undefined, e: "e", f: undefined })).toEqual({
+    a: "a",
+    c: "c",
+    d: "d",
+    e: "e",
+    f: undefined,
+  });
+});
+
+test("z.interface one to one", () => {
+  const A = z.interface({
     name: z.string(),
     get b() {
-      return z.array(() => B);
-      // return B;
-    },
-  }));
-  const B = z.object({
-    name: z.string(),
-    get a() {
-      // return A;
-      return z.array(() => A);
+      return z._default(z.optional(B), {} as any);
     },
   });
 
-  A._output.b[0].a;
-  // A._output.b[0];
-  // B._output.a.b.a.b.a.b.a.b.a.b.a;;
-  const good = { name: "john", b: { name: "doe", a: { name: "john" } } };
-  z.parse(A, good);
-
-  const bad = [
-    { _: "john" },
-    { name: "john", b: { name: "doe", a: { name: 123 } } },
-  ];
-  for (const b of bad) {
-    expect(z.safeParse(A, b).success).toEqual(false);
-  }
-});
-
-test("z.object self recursive", () => {
-  const A = z.object({
+  const B = z.interface({
     name: z.string(),
     get a() {
       return A;
-      // return z.array(() => A);
     },
   });
 
-  const good = { name: "john", a: { name: "doe", a: { name: "john" } } };
-  z.parse(A, good);
-
-  const bad = [
-    { _: "john" },
-    { name: "john", a: { name: "doe", a: { name: 123 } } },
-  ];
-  for (const b of bad) {
-    expect(z.safeParse(A, b).success).toEqual(false);
+  interface A {
+    name: string;
+    b: B | undefined;
   }
+  interface B {
+    name: string;
+    a: A;
+  }
+  expectTypeOf<
+    (typeof A)["~output"]["b"]["a"]["b"]["name"]
+  >().toEqualTypeOf<string>();
+  expectTypeOf<(typeof A)["~input"]["b"]>().toEqualTypeOf<B | undefined>();
+});
+
+test("z.interface one to many", () => {
+  const C = z.interface({
+    name: z.string(),
+    get d() {
+      return z.array(D);
+    },
+  });
+  const D = z.interface({
+    age: z.number(),
+    get c() {
+      return C;
+    },
+  });
+
+  interface _C {
+    name: string;
+    d: _D[];
+  }
+  interface _D {
+    age: number;
+    c: _C;
+  }
+
+  // C["~output"].d.c.d.c.d;
+  expectTypeOf<(typeof C)["~def"]["shape"]>().toEqualTypeOf<z.$ZodShape>();
+  expectTypeOf<(typeof C)["~output"]>().toEqualTypeOf<_C>();
+  expectTypeOf<(typeof D)["~output"]["c"]["d"][number]>().toEqualTypeOf<_D>();
+});
+
+test("z.interface self recursive", () => {
+  const E = z.interface({
+    name: z.string(),
+    get e() {
+      return E;
+    },
+  });
+
+  interface _E {
+    name: string;
+    e: _E;
+  }
+  expectTypeOf<(typeof E)["~output"]["e"]["e"]["e"]>().toEqualTypeOf<_E>();
+});
+
+test("z.interface self recursive optional", () => {
+  const F = z.interface({
+    name: z.string(),
+    get "f?"() {
+      return z.nullable(F);
+    },
+  });
+
+  interface _F {
+    name: string;
+    f?: _F | null;
+  }
+
+  expectTypeOf<(typeof F)["~output"]>().toEqualTypeOf<_F>();
 });
 
 test("z.keyof", () => {
@@ -707,7 +835,7 @@ test("z.discriminatedUnion", () => {
     type: z.literal("A"),
     name: z.string(),
   });
-  expect(a._disc.get("type")).toEqual({
+  expect(a["~disc"].get("type")).toEqual({
     values: new Set(["A"]),
     maps: [],
   });
@@ -719,9 +847,9 @@ test("z.discriminatedUnion", () => {
 
   const c = z.discriminatedUnion([a, b]);
 
-  expect(c._def.options.length).toEqual(2);
-  expect(c._disc.get("type")!.values.has("A")).toEqual(true);
-  expect(c._disc.get("type")!.values.has("B")).toEqual(true);
+  expect(c["~def"].options.length).toEqual(2);
+  expect(c["~disc"].get("type")!.values.has("A")).toEqual(true);
+  expect(c["~disc"].get("type")!.values.has("B")).toEqual(true);
 
   expect(z.parse(c, { type: "A", name: "john" })).toEqual({
     type: "A",
@@ -742,10 +870,10 @@ test("z.discriminatedUnion with nested discriminator", () => {
   });
 
   const c = z.discriminatedUnion([a, b]);
-  expect(c._disc!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(
+  expect(c["~disc"]!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(
     true
   );
-  expect(c._disc!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(
+  expect(c["~disc"]!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(
     true
   );
 
@@ -786,11 +914,11 @@ test("z.discriminatedUnion nested", () => {
   ]);
 
   const hyper = z.discriminatedUnion([schema1, schema2]);
-  expect(hyper._disc.get("num")).toEqual({
+  expect(hyper["~disc"].get("num")).toEqual({
     values: new Set([1, 2]),
     maps: [],
   });
-  expect(hyper._disc.get("type")).toEqual({
+  expect(hyper["~disc"].get("type")).toEqual({
     values: new Set(["A", "B", "C", "D"]),
     maps: [],
   });
@@ -819,10 +947,8 @@ test("z.tuple", () => {
     z.boolean()
   );
 
-  // z.optional(z.string())._qout
   type b = z.output<typeof b>;
-  // const arg: [string, number, number?] = ["hello", 123, undefined];
-  // const arg: [string, number, number?, ...boolean[]] = ["hello", 123, true];
+
   expectTypeOf<b>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
   const datas = [
     ["hello", 123],
@@ -883,7 +1009,7 @@ test("z.map", () => {
   expect(() => z.parse(a, new Map([[1243, "world"]]))).toThrow();
   expect(() => z.parse(a, "hello")).toThrow();
 
-  const r1: any = a._parse(new Map([[123, 123]]));
+  const r1: any = a["~parse"](new Map([[123, 123]]));
   expect(r1.issues[0].code).toEqual("invalid_type");
   expect(r1.issues[0].path).toEqual([123]);
 
@@ -891,7 +1017,7 @@ test("z.map", () => {
   expect(r2.error!.issues[0].code).toEqual("invalid_key");
   expect(r2.error!.issues[0].path).toEqual([]);
 
-  const r3: any = a._parse(new Map([["hello", "world"]]));
+  const r3: any = a["~parse"](new Map([["hello", "world"]]));
   expect(r3.issues[0].code).toEqual("invalid_type");
   expect(r3.issues[0].path).toEqual(["hello"]);
 });
@@ -906,8 +1032,8 @@ test("z.map invalid_element", () => {
 
 test("z.map async", async () => {
   const a = z.map(
-    z.string()._check(z.refine(async () => true)),
-    z.number()._check(z.refine(async () => true))
+    z.string().check(z.refine(async () => true)),
+    z.number().check(z.refine(async () => true))
   );
   const d1 = new Map([["hello", 123]]);
   expect(await z.parseAsync(a, d1)).toEqual(d1);
@@ -1151,12 +1277,17 @@ test("z.templateLiteral", () => {
   expect(() => z.parse(e, 123)).toThrow();
 });
 
+// this returns both a schema and a check
 test("z.custom", () => {
   const a = z.custom((val) => {
     return typeof val === "string";
   });
   expect(z.parse(a, "hello")).toEqual("hello");
   expect(() => z.parse(a, 123)).toThrow();
+
+  const b = z.string().check(z.custom((val) => val.length > 3));
+  expect(z.parse(b, "hello")).toEqual("hello");
+  expect(() => z.parse(b, "hi")).toThrow();
 });
 
 test("z.instanceof", () => {
@@ -1168,7 +1299,7 @@ test("z.instanceof", () => {
 });
 
 test("z.refine", () => {
-  const a = z.number()._check(
+  const a = z.number().check(
     z.refine((val) => val > 3),
     z.refine((val) => val < 10)
   );
@@ -1179,7 +1310,7 @@ test("z.refine", () => {
 });
 
 test("z.superRefine", () => {
-  const a = z.number()._check(
+  const a = z.number().check(
     z.superRefine((val, ctx) => {
       if (val < 3) {
         return ctx.addIssue({
@@ -1219,4 +1350,54 @@ test("z.brand()", () => {
   const branded = (_: a) => {};
   // @ts-expect-error
   branded("asdf");
+});
+
+test("z.lazy", () => {
+  const a = z.lazy(() => z.string());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<string>();
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(() => z.parse(a, 123)).toThrow();
+});
+
+// schema that validates JSON-like data
+test("z.json", () => {
+  const a = z.json();
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<z.JSONType>();
+
+  expect(z.parse(a, "hello")).toEqual("hello");
+  expect(z.parse(a, 123)).toEqual(123);
+  expect(z.parse(a, true)).toEqual(true);
+  expect(z.parse(a, null)).toEqual(null);
+  expect(z.parse(a, {})).toEqual({});
+  expect(z.parse(a, { a: "hello" })).toEqual({ a: "hello" });
+  expect(z.parse(a, [1, 2, 3])).toEqual([1, 2, 3]);
+  expect(z.parse(a, [{ a: "hello" }])).toEqual([{ a: "hello" }]);
+
+  // fail cases
+  expect(() => z.parse(a, new Date())).toThrow();
+  expect(() => z.parse(a, Symbol())).toThrow();
+  expect(() => z.parse(a, { a: new Date() })).toThrow();
+  expect(() => z.parse(a, undefined)).toThrow();
+  expect(() => z.parse(a, { a: undefined })).toThrow();
+});
+
+test("z.envbool", () => {
+  const a = z.envbool();
+
+  expect(z.parse(a, "true")).toEqual(true);
+  expect(z.parse(a, "yes")).toEqual(true);
+  expect(z.parse(a, "1")).toEqual(true);
+  expect(z.parse(a, "on")).toEqual(true);
+
+  expect(z.parse(a, "false")).toEqual(false);
+  expect(z.parse(a, "no")).toEqual(false);
+  expect(z.parse(a, "0")).toEqual(false);
+  expect(z.parse(a, "off")).toEqual(false);
+
+  expect(z.parse(a, "other")).toEqual(null);
+  expect(z.parse(a, "")).toEqual(null);
+  expect(z.parse(a, undefined)).toEqual(null);
+  expect(z.parse(a, {})).toEqual(null);
 });

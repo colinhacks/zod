@@ -1,6 +1,7 @@
 import type * as base from "./base.js";
+import type { $ZodBigIntFormats, $ZodNumberFormats } from "./checks.js";
 import type * as errors from "./errors.js";
-import type { $ZodStringFormat } from "./schemas.js";
+import type { $ZodRawShape, $ZodShape, $ZodStringFormat } from "./schemas.js";
 
 export type Primitive =
   | string
@@ -111,6 +112,12 @@ export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
   ? true
   : false;
 
+export type AssertNotEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
+  V,
+>() => V extends U ? 1 : 2
+  ? false
+  : true;
+
 export type AssertExtends<T, U> = T extends U ? T : never;
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
@@ -210,6 +217,13 @@ export type Keys<T extends object> = keyof OmitIndexSignature<T>;
 export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {
   return val;
 }
+
+export function assertNotEqual<A, B>(
+  val: AssertNotEqual<A, B>
+): AssertNotEqual<A, B> {
+  return val;
+}
+
 export function assertIs<T>(_arg: T): void {}
 export function assertNever(_x: never): never {
   throw new Error();
@@ -320,16 +334,13 @@ export function cached<T>(getter: () => T): { value: T } {
   return {
     get value() {
       if (!set) {
-        const _value = getter();
-        Object.defineProperty(this, "value", {
-          value: _value,
-        });
-        return _value;
+        const value = getter();
+        Object.defineProperty(this, "value", { value });
+        return value;
       }
       throw new Error("cached value already set");
     },
   };
-  // const cache: { [k: string]: unknown } = {};
 }
 
 export function getElementAtPath(
@@ -439,53 +450,154 @@ export function escapeRegex(str: string): string {
 
 // strips fields that are not exposed in the public factory
 // incl. `type`, `checks`, `error`
+export type Params<
+  T extends base.$ZodType | base.$ZodCheck,
+  IssueTypes extends errors.$ZodIssueBase,
+  OmitKeys extends keyof T["~def"] = never,
+  // IssueTypes extends errors.$ZodIssueBase = errors.$ZodIssueBase,
+  // Extra
+  // AlsoOmit extends Exclude<
+  //   keyof T["~def"],
+  //   "type" | "checks" | "error"
+  // > = never,
+> = Flatten<
+  Partial<
+    Omit<T["~def"], OmitKeys> &
+      ([IssueTypes] extends [never]
+        ? unknown
+        : {
+            error?: string | errors.$ZodErrorMap<IssueTypes> | undefined;
+            /** @deprecated This parameter is deprecated. Use `error` instead. */
+            message?: string | undefined; // supported in Zod 3
+          })
+  >
+>;
+
+// type lkjasdf = (base.$ZodType & { "~issp": never })['']
 export type TypeParams<
-  T extends base.$ZodType = base.$ZodType,
-  AlsoOmit extends keyof T["_def"] = never,
-> = Partial<Omit<T["_def"], "type" | "checks" | "error" | AlsoOmit>> & {
-  error?: string | T["_def"]["error"] | undefined;
-  /** @deprecated This parameter is deprecated. Use `error` instead. */
-  message?: string | undefined; // supported in Zod 3
-};
+  T extends base.$ZodType = base.$ZodType & { "~issp": never },
+  AlsoOmit extends Exclude<
+    keyof T["~def"],
+    "type" | "checks" | "error"
+  > = never,
+> = Params<T, NonNullable<T["~issp"]>, "type" | "checks" | "error" | AlsoOmit>;
 
 // strips types that are not exposed in the public factory
 // incl. `error`, `check`
 export type CheckParams<
-  T extends base.$ZodCheck = base.$ZodCheck,
-  AlsoOmit extends keyof T["_def"] = never,
-> = Partial<Omit<T["_def"], "check" | "error" | AlsoOmit>> & {
-  error?: string | T["_def"]["error"] | undefined;
-  /** @deprecated This parameter is deprecated. Use `error` instead. */
-  message?: string | undefined; // supported in Zod 3
-};
+  T extends base.$ZodCheck = base.$ZodCheck, // & { "~issc": never },
+  AlsoOmit extends Exclude<keyof T["~def"], "check" | "error"> = never,
+> = Params<T, NonNullable<T["~issc"]>, "check" | "error" | AlsoOmit>;
 
 // strips types that are not exposed in the public factory
 // incl. `type`, `checks`, `error`, `check`, `format`
 export type StringFormatParams<
   T extends $ZodStringFormat = $ZodStringFormat,
-  AlsoOmit extends keyof T["_def"] = never,
-> = Partial<
-  Omit<T["_def"], "type" | "checks" | "error" | "check" | "format" | AlsoOmit>
-> & {
-  error?: string | T["_def"]["error"] | undefined;
-  /** @deprecated This parameter is deprecated. Use `error` instead. */
-  message?: string | undefined; // supported in Zod 3
-};
-
-export type NormalizedTypeParams<T extends TypeParams = TypeParams> = Omit<
+  AlsoOmit extends Exclude<
+    keyof T["~def"],
+    "type" | "coerce" | "checks" | "error" | "check" | "format"
+  > = never,
+> = Params<
   T,
-  "error" | "message"
-> & {
-  error?: errors.$ZodErrorMap<errors.$ZodIssueBase> | undefined;
-  // description?: string | undefined;
-};
+  NonNullable<T["~issp"] | T["~issc"]>,
+  "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit
+>;
 
-export function normalizeTypeParams<T extends TypeParams = TypeParams>(
-  params?: string | TypeParams
-): NormalizedTypeParams<T> {
+export type CheckStringFormatParams<
+  T extends $ZodStringFormat = $ZodStringFormat,
+  AlsoOmit extends Exclude<
+    keyof T["~def"],
+    "type" | "coerce" | "checks" | "error" | "check" | "format"
+  > = never,
+> = Params<
+  T,
+  NonNullable<T["~issc"]>,
+  "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit
+>;
+
+export type CheckTypeParams<
+  T extends base.$ZodType & base.$ZodCheck = base.$ZodType & base.$ZodCheck,
+  AlsoOmit extends Exclude<
+    keyof T["~def"],
+    "type" | "checks" | "error" | "check"
+  > = never,
+> = Params<
+  T,
+  NonNullable<T["~issp"] | T["~issc"]>,
+  "type" | "checks" | "error" | "check" | AlsoOmit
+>;
+
+// export type NormalizedTypeParams<T extends TypeParams = TypeParams> = Omit<
+//   T,
+//   "error" | "message"
+// > & {
+//   error?: errors.$ZodErrorMap<errors.$ZodIssueBase> | undefined;
+//   // description?: string | undefined;
+// };
+
+export type Def<T extends base.$ZodType = base.$ZodType> = Omit<
+  T["~def"],
+  never
+  // "error" | "message"
+>;
+
+// export function normalizeTypeArgs<T extends base.$ZodType = base.$ZodType>(
+//   __params?: string | TypeParams<T> | base.$ZodCheck<any>[],
+//   __checks?: base.$ZodCheck<any>[],
+//   __defaults?: Partial<T["~def"]>
+// ): Def<T> {
+//   const params = (Array.isArray(__params)
+//     ? {}
+//     : typeof __params === "string"
+//       ? { error: () => __params }
+//       : {}) as any as TypeParams<T>;
+//   Object.assign(params, __defaults);
+//   const checks = (
+//     Array.isArray(__params) ? __params : __checks ?? []
+//   ) as base.$ZodCheck<any>[];
+
+//   if (params.message) {
+//     params.error ??= () => params.message;
+//     delete params.message;
+//   }
+
+//   const _error = params.error;
+//   if (_error) params.error = typeof _error === "string" ? () => _error : _error;
+
+//   const final: Def<T> = {} as any;
+//   Object.assign(final, __defaults);
+//   Object.assign(final, params);
+//   final.checks = checks;
+//   return final;
+// }
+
+// type kljadf = TypeParams;
+// type lk = kljadf
+export function splitChecksAndParams<T extends TypeParams>(
+  _paramsOrChecks?: T | unknown[] | string,
+  _checks?: unknown[]
+): {
+  checks: base.$ZodCheck<any>[];
+  params: T | string;
+} {
+  const params = (
+    Array.isArray(_paramsOrChecks) ? {} : _paramsOrChecks ?? {}
+  ) as T;
+  const checks: any[] = Array.isArray(_paramsOrChecks)
+    ? _paramsOrChecks
+    : _checks ?? [];
+  return {
+    checks,
+    params,
+  };
+}
+
+export function normalizeTypeParams<
+  T extends TypeParams = TypeParams<base.$ZodType>,
+>(params?: any): Normalize<T> {
   if (!params) return {} as any;
   if (typeof params === "string") return { error: () => params } as any;
-  const processed: NormalizedTypeParams<T> = {} as any;
+  const processed: Normalize<T> = {} as any;
 
   if (params?.message) {
     params.error ??= params.message;
@@ -499,40 +611,22 @@ export function normalizeTypeParams<T extends TypeParams = TypeParams>(
   return processed;
 }
 
-export function splitChecksAndParams<T extends TypeParams>(
-  _paramsOrChecks?: T | unknown[] | string,
-  _checks?: unknown[]
-): {
-  checks: base.$ZodCheck<any>[];
-  params: T;
-} {
-  if (typeof _paramsOrChecks === "string")
-    _paramsOrChecks = { error: _paramsOrChecks } as T;
-  const params = (
-    Array.isArray(_paramsOrChecks) ? {} : _paramsOrChecks ?? {}
-  ) as T;
-  const checks: any[] = Array.isArray(_paramsOrChecks)
-    ? _paramsOrChecks
-    : _checks ?? [];
-  return {
-    checks,
-    params,
-  };
-}
+export type Normalize<T> = T extends Record<any, any>
+  ? Flatten<
+      {
+        [k in Exclude<keyof T, "error" | "message">]: T[k];
+      } & {
+        error?: Exclude<T["error"], string>;
+        path?: PropertyKey[] | undefined;
+      }
+    >
+  : never;
 
-export type NormalizedCheckParams<T extends CheckParams = CheckParams> = Omit<
-  T,
-  "error" | "message"
-> & {
-  error?: errors.$ZodErrorMap;
-  path?: PropertyKey[] | undefined;
-};
+export function normalizeCheckParams<T>(_params: T): Normalize<T> {
+  const params: any = _params;
 
-export function normalizeCheckParams<T extends CheckParams = CheckParams>(
-  params?: string | CheckParams
-): NormalizedCheckParams<T> {
   if (!params) return {} as any;
-  if (typeof params === "string") return { error: params } as any;
+  if (typeof params === "string") return { error: () => params } as any;
   if (params?.message) {
     params.error ??= params.message;
   }
@@ -541,39 +635,115 @@ export function normalizeCheckParams<T extends CheckParams = CheckParams>(
   return params as any;
 }
 
-export type PrimitiveFactory<
-  Params extends TypeParams,
-  T extends base.$ZodType,
-> = {
-  (): T;
-  (checks: base.$ZodCheck<base.output<T>>[]): T;
-  (error: string): T;
-  (params: Partial<Params>, checks?: base.$ZodCheck<base.output<T>>[]): T;
-};
+// export type PrimitiveFactory<
+//   Params extends TypeParams,
+//   T extends base.$ZodType,
+// > = {
+//   (checks: base.$ZodCheck<base.output<T>>[]): T;
+//   (
+//     params?: string | Partial<Params>,
+//     checks?: base.$ZodCheck<base.output<T>>[]
+//   ): T;
+// };
 
-export const factory: <
-  Cls extends { new (...args: any[]): base.$ZodType },
-  Params extends TypeParams,
-  // T extends InstanceType<Cls> = InstanceType<Cls>,
->(
-  Cls: Cls,
-  defaultParams: Omit<
-    InstanceType<Cls>["_def"],
-    "checks" | "description" | "error"
-  >
-) => PrimitiveFactory<Params, InstanceType<Cls>> = (Cls, defaultParams) => {
-  return (...args: any[]) => {
+// export const factory: <
+//   Cls extends { new (...args: any[]): base.$ZodType },
+//   Params extends TypeParams,
+//   // T extends InstanceType<Cls> = InstanceType<Cls>,
+// >(
+//   Cls: Cls,
+//   defaultParams: Omit<
+//     InstanceType<Cls>["~def"],
+//     "checks" | "description" | "error"
+//   >
+// ) => PrimitiveFactory<Params, InstanceType<Cls>> = (Cls, defaultParams) => {
+//   return (...args: any[]) => {
+//     const { checks, params } = splitChecksAndParams(...args);
+//     return new Cls({
+//       ...defaultParams,
+//       checks,
+//       ...normalizeTypeParams(params),
+//     }) as InstanceType<typeof Cls>;
+//   };
+// };
+type ClassType<T> = { new (...args: any[]): T };
+export const factory =
+  <Cls extends ClassType<base.$ZodType>>(
+    _class: Cls,
+    _defaults: Omit<InstanceType<Cls>["~def"], "checks" | "error">
+  ) =>
+  (...args: any[]): InstanceType<Cls> => {
     const { checks, params } = splitChecksAndParams(...args);
-    return new Cls({
-      ...defaultParams,
+    return new _class({
+      ..._defaults,
       checks,
       ...normalizeTypeParams(params),
-    }) as InstanceType<typeof Cls>;
+    }) as any;
   };
-};
+
+export type FactoryParams<
+  T extends base.$ZodTypeDef,
+  Omitted extends keyof T,
+  Optionals extends keyof T,
+> = Flatten<
+  Omit<T, "error" | "checks" | Omitted | Optionals> &
+    Partial<{ [k in Optionals]: T[k] }> & {
+      error?: string | T["error"] | undefined;
+      /** @deprecated This parameter is deprecated. Use `error` instead. */
+      message?: string | undefined;
+    }
+>;
+
+export const makeFactory =
+  <Class extends ClassType<base.$ZodType>>(_class: Class) =>
+  <
+    Fixed extends Partial<InstanceType<Class>["~def"]>,
+    Defaults extends Partial<InstanceType<Class>["~def"]>,
+  >(
+    fixed: Fixed,
+    defaults: Defaults
+  ): Factory<InstanceType<Class>, Fixed, Defaults> => {
+    return new Factory<InstanceType<Class>, Fixed, Defaults>(
+      _class as any,
+      fixed,
+      defaults
+    );
+  };
+
+export class Factory<
+  Class extends base.$ZodType,
+  Fixed extends Partial<Class["~def"]>,
+  Defaults extends Partial<Class["~def"]>,
+> {
+  _class: ClassType<Class>;
+  _fixed: Fixed;
+  _default: Defaults;
+  Params!: FactoryParams<
+    Class["~def"],
+    keyof Class["~def"] & keyof Fixed,
+    keyof Class["~def"] & keyof Defaults
+  >;
+
+  constructor(_class: ClassType<Class>, fixed: Fixed, defaults: Defaults) {
+    this._class = _class;
+    this._fixed = fixed;
+    this._default = defaults;
+  }
+
+  init(...params: any[]): Class {
+    const { checks, params: _params } = splitChecksAndParams(...params);
+    return new this._class({
+      ...this._fixed,
+      ...this._default,
+      checks,
+      ...normalizeTypeParams(_params),
+    });
+  }
+}
 
 export interface RefinementCtx {
   addIssue(arg: errors.$ZodIssueData | string): void;
+  abort(): void;
 }
 export type EnumValue = string | number; // | bigint | boolean | symbol;
 export type EnumLike = Record<EnumValue, EnumValue>;
@@ -628,3 +798,53 @@ export function createTransparentProxy<T extends object>(getter: () => T): T {
     }
   ) as T;
 }
+
+export type MethodParams<Err extends errors.$ZodIssueBase, Extra = unknown> =
+  | string
+  | ({
+      error?: string | errors.$ZodErrorMap<Err> | undefined;
+      /** @deprecated This parameter is deprecated. Use `error` instead. */
+      message?: string;
+    } & Extra);
+
+export function optionalObjectKeys(shape: $ZodShape): Set<PropertyKey> {
+  return new Set(
+    Reflect.ownKeys(shape).filter((k) => {
+      return shape[k]["~qout"] === "true";
+    })
+  );
+}
+
+export function optionalInterfaceKeys(shape: $ZodRawShape): Set<string> {
+  return new Set(
+    Object.keys(shape)
+      .filter((k) => {
+        return k.endsWith("?");
+      })
+      .map((k) => k.replace(/\?$/, ""))
+  );
+}
+
+export function cleanInterfaceShape(shape: $ZodRawShape): $ZodShape {
+  return Object.fromEntries(
+    Object.entries(shape).map(([key, value]) => [
+      key.replace(/^\?/, "").replace(/\?$/, ""),
+      value,
+    ])
+  );
+}
+
+export const NUMBER_FORMAT_RANGES: Record<$ZodNumberFormats, [number, number]> =
+  {
+    safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
+    int32: [-2147483648, 2147483647],
+    uint32: [0, 4294967295],
+    float32: [-3.4028234663852886e38, 3.4028234663852886e38],
+    float64: [-1.7976931348623157e308, 1.7976931348623157e308],
+  };
+
+export const BIGINT_FORMAT_RANGES: Record<$ZodBigIntFormats, [bigint, bigint]> =
+  {
+    int64: [BigInt("-9223372036854775808"), BigInt("9223372036854775807")],
+    uint64: [BigInt(0), BigInt("18446744073709551615")],
+  };

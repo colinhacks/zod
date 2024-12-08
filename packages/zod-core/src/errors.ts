@@ -114,7 +114,7 @@ export interface $ZodIssueCustom extends $ZodIssueBase<"custom", unknown> {
 ////     first-party string formats     ////
 ////////////////////////////////////////////
 
-export type _RegularFormats =
+type CommonStringFormats =
   | "regex"
   | "email"
   | "url"
@@ -143,7 +143,7 @@ export type _RegularFormats =
 
 export interface $ZodIssueStringCommonFormats
   extends $ZodIssueInvalidStringFormat {
-  format: _RegularFormats;
+  format: CommonStringFormats;
 }
 
 export interface $ZodIssueStringInvalidRegex
@@ -214,12 +214,11 @@ type ComputedIssueDataPieces<In> = {
   def?: { error?: $ZodErrorMap<never> | undefined } | undefined;
 };
 
-export type _$ZodIssueData<T extends $ZodIssueBase> = Omit<
-  util.OmitIndexSignature<T>,
-  "message" | "path" | "input"
-> &
-  ComputedIssueDataPieces<T["input"]> &
-  util.ExtractIndexSignature<T>;
+type _$ZodIssueData<T extends $ZodIssueBase> = util.Flatten<
+  Omit<util.OmitIndexSignature<T>, "message" | "path" | "input"> &
+    ComputedIssueDataPieces<T["input"]> &
+    util.ExtractIndexSignature<T>
+>;
 
 /** @deprecated Use `$ZodIssueData` instead. */
 export type IssueData = $ZodIssueData;

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import * as z from "zod-mini";
+import * as z from "../src/index.js";
 
 // lt;
 test("lt", () => {

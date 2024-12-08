@@ -1,14 +1,7 @@
+import { randomUUID } from "node:crypto";
 import * as z from "zod-mini";
-// import type * as util from "zod-core/util";
 
-const arg = z.object({
-  /** testing! */
-  a: z.string(),
-  b: z.union([z.string(), z.undefined()]),
-  c: z.optional(z.string()),
-  d: z._default(z.string(), "bob"),
-  "e?": z.string(),
-});
+const schema = z.string([z.uuid()]);
 
-type argOut = z.output<typeof arg>;
-type argIn = z.input<typeof arg>;
+z.parse(schema, "asdf");
+z.parse(schema, randomUUID());

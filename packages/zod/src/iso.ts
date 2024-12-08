@@ -1,17 +1,12 @@
+import type * as core from "zod-core";
 import * as util from "zod-core/util";
 import * as schemas from "./schemas.js";
 
 // ZodISODateTime
-interface ZodISODateTimeParams
-  extends util.TypeParams<
-    schemas.ZodISODateTime,
-    "check" | "pattern" | "coerce" | "format"
-  > {}
+export interface ZodISODateTimeParams
+  extends util.StringFormatParams<schemas.ZodISODateTime, "pattern"> {}
 
-export const datetime: util.PrimitiveFactory<
-  ZodISODateTimeParams,
-  schemas.ZodISODateTime
-> = util.factory(schemas.ZodISODateTime, {
+const _datetime = util.factory(schemas.ZodISODateTime, {
   type: "string",
   format: "iso_datetime",
   check: "string_format",
@@ -19,47 +14,69 @@ export const datetime: util.PrimitiveFactory<
   local: false,
   precision: null,
 });
+export function datetime(
+  checks?: core.$ZodCheck<string>[]
+): schemas.ZodISODateTime;
+export function datetime(
+  params?: string | ZodISODateTimeParams,
+  checks?: core.$ZodCheck<string>[]
+): schemas.ZodISODateTime;
+export function datetime(...args: any[]): schemas.ZodISODateTime {
+  return _datetime(...args);
+}
 
 // ZodISODate
-interface ZodISODateParams
-  extends util.TypeParams<
-    schemas.ZodISODate,
-    "check" | "pattern" | "coerce" | "format"
-  > {}
-export const date: util.PrimitiveFactory<ZodISODateParams, schemas.ZodISODate> =
-  util.factory(schemas.ZodISODate, {
-    type: "string",
-    format: "iso_date",
-    check: "string_format",
-  });
+export interface ZodISODateParams
+  extends util.StringFormatParams<schemas.ZodISODate, "pattern"> {}
+const _date = util.factory(schemas.ZodISODate, {
+  type: "string",
+  format: "iso_date",
+  check: "string_format",
+});
+export function date(checks?: core.$ZodCheck<string>[]): schemas.ZodISODate;
+export function date(
+  params?: string | ZodISODateParams,
+  checks?: core.$ZodCheck<string>[]
+): schemas.ZodISODate;
+export function date(...args: any[]): schemas.ZodISODate {
+  return _date(...args);
+}
 
 // ZodISOTime
-interface ZodISOTimeParams
-  extends util.TypeParams<
-    schemas.ZodISOTime,
-    "check" | "pattern" | "coerce" | "format"
-  > {}
-export const time: util.PrimitiveFactory<ZodISOTimeParams, schemas.ZodISOTime> =
-  util.factory(schemas.ZodISOTime, {
-    type: "string",
-    format: "iso_time",
-    check: "string_format",
-    offset: false,
-    local: false,
-    precision: null,
-  });
+export interface ZodISOTimeParams
+  extends util.StringFormatParams<schemas.ZodISOTime, "pattern"> {}
+const _time = util.factory(schemas.ZodISOTime, {
+  type: "string",
+  format: "iso_time",
+  check: "string_format",
+  offset: false,
+  local: false,
+  precision: null,
+});
+export function time(checks?: core.$ZodCheck<string>[]): schemas.ZodISOTime;
+export function time(
+  params?: string | ZodISOTimeParams,
+  checks?: core.$ZodCheck<string>[]
+): schemas.ZodISOTime;
+export function time(...args: any[]): schemas.ZodISOTime {
+  return _time(...args);
+}
 
 // ZodISODuration
-interface ZodISODurationParams
-  extends util.TypeParams<
-    schemas.ZodISODuration,
-    "check" | "pattern" | "coerce" | "format"
-  > {}
-export const duration: util.PrimitiveFactory<
-  ZodISODurationParams,
-  schemas.ZodISODuration
-> = util.factory(schemas.ZodISODuration, {
+export interface ZodISODurationParams
+  extends util.StringFormatParams<schemas.ZodISODuration, "pattern"> {}
+const _duration = util.factory(schemas.ZodISODuration, {
   type: "string",
   format: "duration",
   check: "string_format",
 });
+export function duration(
+  checks?: core.$ZodCheck<string>[]
+): schemas.ZodISODuration;
+export function duration(
+  params?: string | ZodISODurationParams,
+  checks?: core.$ZodCheck<string>[]
+): schemas.ZodISODuration;
+export function duration(...args: any[]): schemas.ZodISODuration {
+  return _duration(...args);
+}

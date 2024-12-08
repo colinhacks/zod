@@ -1,5 +1,3 @@
-import { uuid } from "./api.js";
-
 export const cuidRegex: RegExp = /^c[^\s-]{8,}$/i;
 export const cuid2Regex: RegExp = /^[0-9a-z]+$/;
 export const ulidRegex: RegExp = /^[0-9A-HJKMNP-TV-Z]{26}$/;
