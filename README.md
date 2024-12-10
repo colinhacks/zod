@@ -65,8 +65,7 @@
     - [Utilities for Zod](#utilities-for-zod)
 - [Installation](#installation)
   - [Requirements](#requirements)
-  - [From `npm` (Node/Bun)](#from-npm-nodebun)
-  - [From `deno.land/x` (Deno)](#from-denolandx-deno)
+  - [From `npm`](#from-npm)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
 - [Coercion for primitives](#coercion-for-primitives)
@@ -594,10 +593,11 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### From `npm` (Node/Bun)
+### From `npm`
 
 ```sh
 npm install zod       # npm
+deno add npm:zod      # deno
 yarn add zod          # yarn
 bun add zod           # bun
 pnpm add zod          # pnpm
@@ -607,24 +607,12 @@ Zod also publishes a canary version on every commit. To install the canary:
 
 ```sh
 npm install zod@canary       # npm
+deno add npm:zod@canary      # deno
 yarn add zod@canary          # yarn
 bun add zod@canary           # bun
 pnpm add zod@canary          # pnpm
 ```
 
-### From `deno.land/x` (Deno)
-
-Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](https://deno.land/x). The latest version can be imported like so:
-
-```ts
-import { z } from "https://deno.land/x/zod/mod.ts";
-```
-
-You can also specify a particular version:
-
-```ts
-import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
-```
 
 > The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
 
