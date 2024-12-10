@@ -604,6 +604,7 @@ export type ZodStringCheck =
   | { kind: "trim"; message?: string }
   | { kind: "toLowerCase"; message?: string }
   | { kind: "toUpperCase"; message?: string }
+  | { kind: "jwt"; alg?: string; message?: string }
   | {
       kind: "datetime";
       offset: boolean;
@@ -641,6 +642,7 @@ const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 const uuidRegex =
   /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i;
 const nanoidRegex = /^[a-z0-9_-]{21}$/i;
+const jwtRegex = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/;
 const durationRegex =
   /^[-+]?P(?!$)(?:(?:[-+]?\d+Y)|(?:[-+]?\d+[.,]\d+Y$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:(?:[-+]?\d+W)|(?:[-+]?\d+[.,]\d+W$))?(?:(?:[-+]?\d+D)|(?:[-+]?\d+[.,]\d+D$))?(?:T(?=[\d+-])(?:(?:[-+]?\d+H)|(?:[-+]?\d+[.,]\d+H$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:[-+]?\d+(?:[.,]\d+)?S)?)??$/;
 
@@ -737,6 +739,25 @@ function isValidIP(ip: string, version?: IpVersion) {
   }
 
   return false;
+}
+
+function isValidJWT(jwt: string, alg?: string): boolean {
+  if (!jwtRegex.test(jwt)) return false;
+  try {
+    const [header] = jwt.split(".");
+    // Convert base64url to base64
+    const base64 = header
+      .replace(/-/g, "+")
+      .replace(/_/g, "/")
+      .padEnd(header.length + ((4 - (header.length % 4)) % 4), "=");
+    const decoded = JSON.parse(atob(base64));
+    if (typeof decoded !== "object" || decoded === null) return false;
+    if (!decoded.typ || !decoded.alg) return false;
+    if (alg && decoded.alg !== alg) return false;
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function isValidCidr(ip: string, version?: IpVersion) {
@@ -1012,6 +1033,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "jwt") {
+        if (!isValidJWT(input.data, check.alg)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "jwt",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "cidr") {
         if (!isValidCidr(input.data, check.version)) {
           ctx = this._getOrReturnCtx(input, ctx);
@@ -1103,6 +1134,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   base64url(message?: errorUtil.ErrMessage) {
     // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return this._addCheck({ kind: "base64url", ...errorUtil.errToObj(message) });
+  }
+
+  jwt(options?: { alg?: string; message?: string }) {
+    return this._addCheck({ kind: "jwt", ...errorUtil.errToObj(options) });
   }
 
   ip(options?: string | { version?: IpVersion; message?: string }) {
