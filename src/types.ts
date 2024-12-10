@@ -1551,17 +1551,15 @@ export interface ZodBigIntDef extends ZodTypeDef {
 export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
   _parse(input: ParseInput): ParseReturnType<bigint> {
     if (this._def.coerce) {
-      input.data = BigInt(input.data);
+      try {
+        input.data = BigInt(input.data);
+      } catch {
+        return this._getInvalidInput(input);
+      }
     }
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.bigint) {
-      const ctx = this._getOrReturnCtx(input);
-      addIssueToContext(ctx, {
-        code: ZodIssueCode.invalid_type,
-        expected: ZodParsedType.bigint,
-        received: ctx.parsedType,
-      });
-      return INVALID;
+      return this._getInvalidInput(input);
     }
 
     let ctx: undefined | ParseContext = undefined;
@@ -1614,6 +1612,16 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     }
 
     return { status: status.value, value: input.data };
+  }
+
+  _getInvalidInput(input: ParseInput) {
+    const ctx = this._getOrReturnCtx(input);
+    addIssueToContext(ctx, {
+      code: ZodIssueCode.invalid_type,
+      expected: ZodParsedType.bigint,
+      received: ctx.parsedType,
+    });
+    return INVALID;
   }
 
   static create = (
