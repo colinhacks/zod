@@ -4,7 +4,7 @@ import { util } from "../helpers/util";
 
 import * as z from "../index";
 
-import type { StandardSchemaV1 } from "../standard-schema";
+import type { StandardSchemaV1 } from "@standard-schema/spec";
 
 test("assignability", () => {
   const _s1: StandardSchemaV1 = z.string();
