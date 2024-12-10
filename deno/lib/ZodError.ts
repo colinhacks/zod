@@ -103,8 +103,10 @@ export type StringValidation =
   | "time"
   | "duration"
   | "ip"
+  | "cidr"
   | "base64"
   | "jwt"
+  | "base64url"
   | { includes: string; position?: number }
   | { startsWith: string }
   | { endsWith: string };

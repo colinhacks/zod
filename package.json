@@ -14,6 +14,7 @@
 		"@babel/preset-typescript": "^7.22.5",
 		"@jest/globals": "^29.4.3",
 		"@rollup/plugin-typescript": "^8.2.0",
+		"@standard-schema/spec": "^1.0.0-beta.4",
 		"@swc/core": "^1.3.66",
 		"@swc/jest": "^0.2.26",
 		"@types/benchmark": "^2.1.0",
@@ -59,14 +60,28 @@
 		"url": "https://github.com/colinhacks/zod/issues"
 	},
 	"description": "TypeScript-first schema declaration and validation library with static type inference",
-	"files": ["/lib", "/index.d.ts"],
+	"files": [
+		"/lib",
+		"/index.d.ts"
+	],
 	"funding": "https://github.com/sponsors/colinhacks",
 	"homepage": "https://zod.dev",
-	"keywords": ["typescript", "schema", "validation", "type", "inference"],
+	"keywords": [
+		"typescript",
+		"schema",
+		"validation",
+		"type",
+		"inference"
+	],
 	"license": "MIT",
 	"lint-staged": {
-		"src/*.ts": ["eslint --cache --fix", "prettier --ignore-unknown --write"],
-		"*.md": ["prettier --ignore-unknown --write"]
+		"src/*.ts": [
+			"eslint --cache --fix",
+			"prettier --ignore-unknown --write"
+		],
+		"*.md": [
+			"prettier --ignore-unknown --write"
+		]
 	},
 	"scripts": {
 		"prettier:check": "prettier --check src/**/*.ts deno/lib/**/*.ts *.md --no-error-on-unmatched-pattern",

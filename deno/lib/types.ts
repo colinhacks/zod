@@ -23,6 +23,7 @@ import {
 import { partialUtil } from "./helpers/partialUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { getParsedType, objectUtil, util, ZodParsedType } from "./helpers/util.ts";
+import type { StandardSchemaV1 } from "./standard-schema.ts";
 import {
   IssueData,
   StringValidation,
@@ -169,7 +170,8 @@ export abstract class ZodType<
   Output = any,
   Def extends ZodTypeDef = ZodTypeDef,
   Input = Output
-> {
+> implements StandardSchemaV1<Input, Output>
+{
   readonly _type!: Output;
   readonly _output!: Output;
   readonly _input!: Input;
@@ -178,6 +180,8 @@ export abstract class ZodType<
   get description() {
     return this._def.description;
   }
+
+  "~standard": StandardSchemaV1.Props<Input, Output>;
 
   abstract _parse(input: ParseInput): ParseReturnType<Output>;
 
@@ -260,6 +264,55 @@ export abstract class ZodType<
     const result = this._parseSync({ data, path: ctx.path, parent: ctx });
 
     return handleResult(ctx, result);
+  }
+
+  "~validate"(
+    data: unknown
+  ):
+    | StandardSchemaV1.Result<Output>
+    | Promise<StandardSchemaV1.Result<Output>> {
+    const ctx: ParseContext = {
+      common: {
+        issues: [],
+        async: !!(this["~standard"] as any).async,
+      },
+      path: [],
+      schemaErrorMap: this._def.errorMap,
+      parent: null,
+      data,
+      parsedType: getParsedType(data),
+    };
+
+    if (!(this["~standard"] as any).async) {
+      try {
+        const result = this._parseSync({ data, path: [], parent: ctx });
+        return isValid(result)
+          ? {
+              value: result.value,
+            }
+          : {
+              issues: ctx.common.issues,
+            };
+      } catch (err: any) {
+        if ((err as Error)?.message?.toLowerCase()?.includes("encountered")) {
+          (this["~standard"] as any).async = true;
+        }
+        (ctx as any).common = {
+          issues: [],
+          async: true,
+        };
+      }
+    }
+
+    return this._parseAsync({ data, path: [], parent: ctx }).then((result) =>
+      isValid(result)
+        ? {
+            value: result.value,
+          }
+        : {
+            issues: ctx.common.issues,
+          }
+    );
   }
 
   async parseAsync(
@@ -422,6 +475,11 @@ export abstract class ZodType<
     this.readonly = this.readonly.bind(this);
     this.isNullable = this.isNullable.bind(this);
     this.isOptional = this.isOptional.bind(this);
+    this["~standard"] = {
+      version: 1,
+      vendor: "zod",
+      validate: (data) => this["~validate"](data),
+    };
   }
 
   optional(): ZodOptional<this> {
@@ -434,7 +492,7 @@ export abstract class ZodType<
     return this.nullable().optional();
   }
   array(): ZodArray<this> {
-    return ZodArray.create(this, this._def);
+    return ZodArray.create(this);
   }
   promise(): ZodPromise<this> {
     return ZodPromise.create(this, this._def);
@@ -566,7 +624,9 @@ export type ZodStringCheck =
     }
   | { kind: "duration"; message?: string }
   | { kind: "ip"; version?: IpVersion; message?: string }
-  | { kind: "base64"; message?: string };
+  | { kind: "cidr"; version?: IpVersion; message?: string }
+  | { kind: "base64"; message?: string }
+  | { kind: "base64url"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -610,15 +670,23 @@ let emojiRegex: RegExp;
 // faster, simpler, safer
 const ipv4Regex =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
+const ipv4CidrRegex =
+  /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\/(3[0-2]|[12]?[0-9])$/;
 
 // const ipv6Regex =
 // /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 const ipv6Regex =
   /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
+const ipv6CidrRegex =
+  /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))\/(12[0-8]|1[01][0-9]|[1-9]?[0-9])$/;
 
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
 const base64Regex =
   /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+
+// https://base64.guru/standards/base64url
+const base64urlRegex =
+  /^([0-9a-zA-Z-_]{4})*(([0-9a-zA-Z-_]{2}(==)?)|([0-9a-zA-Z-_]{3}(=)?))?$/;
 
 // simple
 // const dateRegexSource = `\\d{4}-\\d{2}-\\d{2}`;
@@ -690,6 +758,17 @@ function isValidJWT(jwt: string, alg?: string): boolean {
   } catch {
     return false;
   }
+}
+
+function isValidCidr(ip: string, version?: IpVersion) {
+  if ((version === "v4" || !version) && ipv4CidrRegex.test(ip)) {
+    return true;
+  }
+  if ((version === "v6" || !version) && ipv6CidrRegex.test(ip)) {
+    return true;
+  }
+
+  return false;
 }
 
 export class ZodString extends ZodType<string, ZodStringDef, string> {
@@ -964,11 +1043,31 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "cidr") {
+        if (!isValidCidr(input.data, check.version)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "cidr",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else if (check.kind === "base64") {
         if (!base64Regex.test(input.data)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "base64",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
+      } else if (check.kind === "base64url") {
+        if (!base64urlRegex.test(input.data)) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "base64url",
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
@@ -1032,6 +1131,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   base64(message?: errorUtil.ErrMessage) {
     return this._addCheck({ kind: "base64", ...errorUtil.errToObj(message) });
   }
+  base64url(message?: errorUtil.ErrMessage) {
+    // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
+    return this._addCheck({ kind: "base64url", ...errorUtil.errToObj(message) });
+  }
 
   jwt(options?: { alg?: string; message?: string }) {
     return this._addCheck({ kind: "jwt", ...errorUtil.errToObj(options) });
@@ -1039,6 +1142,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 
   ip(options?: string | { version?: IpVersion; message?: string }) {
     return this._addCheck({ kind: "ip", ...errorUtil.errToObj(options) });
+  }
+
+  cidr(options?: string | { version?: IpVersion; message?: string }) {
+    return this._addCheck({ kind: "cidr", ...errorUtil.errToObj(options) });
   }
 
   datetime(
@@ -1234,8 +1341,15 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   get isIP() {
     return !!this._def.checks.find((ch) => ch.kind === "ip");
   }
+  get isCIDR() {
+    return !!this._def.checks.find((ch) => ch.kind === "cidr");
+  }
   get isBase64() {
     return !!this._def.checks.find((ch) => ch.kind === "base64");
+  }
+  get isBase64url() {
+    // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
+    return !!this._def.checks.find((ch) => ch.kind === "base64url");
   }
 
   get minLength() {
@@ -1586,17 +1700,15 @@ export interface ZodBigIntDef extends ZodTypeDef {
 export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
   _parse(input: ParseInput): ParseReturnType<bigint> {
     if (this._def.coerce) {
-      input.data = BigInt(input.data);
+      try {
+        input.data = BigInt(input.data);
+      } catch {
+        return this._getInvalidInput(input);
+      }
     }
     const parsedType = this._getType(input);
     if (parsedType !== ZodParsedType.bigint) {
-      const ctx = this._getOrReturnCtx(input);
-      addIssueToContext(ctx, {
-        code: ZodIssueCode.invalid_type,
-        expected: ZodParsedType.bigint,
-        received: ctx.parsedType,
-      });
-      return INVALID;
+      return this._getInvalidInput(input);
     }
 
     let ctx: undefined | ParseContext = undefined;
@@ -1649,6 +1761,16 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     }
 
     return { status: status.value, value: input.data };
+  }
+
+  _getInvalidInput(input: ParseInput) {
+    const ctx = this._getOrReturnCtx(input);
+    addIssueToContext(ctx, {
+      code: ZodIssueCode.invalid_type,
+      expected: ZodParsedType.bigint,
+      received: ctx.parsedType,
+    });
+    return INVALID;
   }
 
   static create = (
@@ -3136,7 +3258,7 @@ export type ZodDiscriminatedUnionOption<Discriminator extends string> =
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
+  Options extends readonly ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
 > extends ZodTypeDef {
   discriminator: Discriminator;
   options: Options;
@@ -3146,7 +3268,7 @@ export interface ZodDiscriminatedUnionDef<
 
 export class ZodDiscriminatedUnion<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<Discriminator>[]
+  Options extends readonly ZodDiscriminatedUnionOption<Discriminator>[]
 > extends ZodType<
   output<Options[number]>,
   ZodDiscriminatedUnionDef<Discriminator, Options>,
@@ -3216,7 +3338,7 @@ export class ZodDiscriminatedUnion<
    */
   static create<
     Discriminator extends string,
-    Types extends [
+    Types extends readonly [
       ZodDiscriminatedUnionOption<Discriminator>,
       ...ZodDiscriminatedUnionOption<Discriminator>[]
     ]
