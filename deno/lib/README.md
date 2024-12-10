@@ -76,7 +76,7 @@
   - [Dates](#dates)
   - [Times](#times)
   - [IP addresses](#ip-addresses)
-  - [Classless Inter-Domain Routing](#classless-inter-domain-routing)
+  - [IP ranges](#ip-ranges-cidr)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -913,7 +913,7 @@ time.parse("00:00:00"); // fail
 
 ### IP addresses
 
-The `z.string().ip()` method by default validate IPv4 and IPv6.
+By default `.ip()` allows both IPv4 and IPv6.
 
 ```ts
 const ip = z.string().ip();
@@ -936,20 +936,17 @@ const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // fail
 ```
 
-### Classless Inter-Domain Routing
+### IP ranges (CIDR)
 
-The `z.string().cidr()` method by default validate IPv4 and IPv6.
+Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing). By default, `.cidr()` allows both IPv4 and IPv6.
 
 ```ts
 const cidr = z.string().cidr();
 cidr.parse("192.168.0.0/24"); // pass
 cidr.parse("2001:db8::/32"); // pass
-
-cidr.parse("192.168.1.1/33"); // fail
-cidr.parse("2001:db8::1/129"); // fail
 ```
 
-You can additionally set the IP `version`.
+You can specify a version with the `version` parameter.
 
 ```ts
 const ipv4Cidr = z.string().cidr({ version: "v4" });
