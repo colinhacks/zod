@@ -280,10 +280,10 @@ export class ZodError<T = any> extends Error {
     }
   }
 
-  toString() {
+  override toString() {
     return this.message;
   }
-  get message() {
+  override get message() {
     return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
   }
 

@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
+import { Buffer } from "node:buffer";
 
 import * as z from "../index";
 
