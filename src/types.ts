@@ -23,6 +23,7 @@ import {
 import { partialUtil } from "./helpers/partialUtil";
 import { Primitive } from "./helpers/typeAliases";
 import { getParsedType, objectUtil, util, ZodParsedType } from "./helpers/util";
+import type { StandardSchemaV1 } from "./standard-schema";
 import {
   IssueData,
   StringValidation,
@@ -169,7 +170,8 @@ export abstract class ZodType<
   Output = any,
   Def extends ZodTypeDef = ZodTypeDef,
   Input = Output
-> {
+> implements StandardSchemaV1<Input, Output>
+{
   readonly _type!: Output;
   readonly _output!: Output;
   readonly _input!: Input;
@@ -178,6 +180,8 @@ export abstract class ZodType<
   get description() {
     return this._def.description;
   }
+
+  "~standard": StandardSchemaV1.Props<Input, Output>;
 
   abstract _parse(input: ParseInput): ParseReturnType<Output>;
 
@@ -260,6 +264,55 @@ export abstract class ZodType<
     const result = this._parseSync({ data, path: ctx.path, parent: ctx });
 
     return handleResult(ctx, result);
+  }
+
+  "~validate"(
+    data: unknown
+  ):
+    | StandardSchemaV1.Result<Output>
+    | Promise<StandardSchemaV1.Result<Output>> {
+    const ctx: ParseContext = {
+      common: {
+        issues: [],
+        async: !!(this["~standard"] as any).async,
+      },
+      path: [],
+      schemaErrorMap: this._def.errorMap,
+      parent: null,
+      data,
+      parsedType: getParsedType(data),
+    };
+
+    if (!(this["~standard"] as any).async) {
+      try {
+        const result = this._parseSync({ data, path: [], parent: ctx });
+        return isValid(result)
+          ? {
+              value: result.value,
+            }
+          : {
+              issues: ctx.common.issues,
+            };
+      } catch (err: any) {
+        if ((err as Error)?.message?.toLowerCase()?.includes("encountered")) {
+          (this["~standard"] as any).async = true;
+        }
+        (ctx as any).common = {
+          issues: [],
+          async: true,
+        };
+      }
+    }
+
+    return this._parseAsync({ data, path: [], parent: ctx }).then((result) =>
+      isValid(result)
+        ? {
+            value: result.value,
+          }
+        : {
+            issues: ctx.common.issues,
+          }
+    );
   }
 
   async parseAsync(
@@ -422,6 +475,11 @@ export abstract class ZodType<
     this.readonly = this.readonly.bind(this);
     this.isNullable = this.isNullable.bind(this);
     this.isOptional = this.isOptional.bind(this);
+    this["~standard"] = {
+      version: 1,
+      vendor: "zod",
+      validate: (data) => this["~validate"](data),
+    };
   }
 
   optional(): ZodOptional<this> {
