@@ -326,7 +326,6 @@ bun add zod           # bun
 pnpm add zod          # pnpm
 ```
 
-
 > README 的剩余部分假定你是直接通过 npm 安装的`zod`包。
 
 # 基本用法
