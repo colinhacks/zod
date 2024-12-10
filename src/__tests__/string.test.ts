@@ -251,8 +251,10 @@ test("jwt validations", () => {
   const jwtWithAlg = z.string().jwt({ alg: "HS256" });
 
   // Valid JWTs
-  const validHeader = Buffer.from(JSON.stringify({ typ: "JWT", alg: "HS256" })).toString('base64url');
-  const validPayload = Buffer.from("{}").toString('base64url');
+  const validHeader = Buffer.from(
+    JSON.stringify({ typ: "JWT", alg: "HS256" })
+  ).toString("base64url");
+  const validPayload = Buffer.from("{}").toString("base64url");
   const validSignature = "signature";
   const validJWT = `${validHeader}.${validPayload}.${validSignature}`;
 
@@ -265,12 +267,14 @@ test("jwt validations", () => {
   expect(() => jwt.parse("invalid.invalid.invalid")).toThrow();
 
   // Invalid header
-  const invalidHeader = Buffer.from("{}").toString('base64url');
+  const invalidHeader = Buffer.from("{}").toString("base64url");
   const invalidHeaderJWT = `${invalidHeader}.${validPayload}.${validSignature}`;
   expect(() => jwt.parse(invalidHeaderJWT)).toThrow();
 
   // Wrong algorithm
-  const wrongAlgHeader = Buffer.from(JSON.stringify({ typ: "JWT", alg: "RS256" })).toString('base64url');
+  const wrongAlgHeader = Buffer.from(
+    JSON.stringify({ typ: "JWT", alg: "RS256" })
+  ).toString("base64url");
   const wrongAlgJWT = `${wrongAlgHeader}.${validPayload}.${validSignature}`;
   expect(() => jwtWithAlg.parse(wrongAlgJWT)).toThrow();
 

@@ -1,11 +1,10 @@
 // @ts-ignore TS6133
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
-import { util } from "../helpers/util.ts";
-
-import * as z from "../index.ts";
-
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+
+import { util } from "../helpers/util.ts";
+import * as z from "../index.ts";
 
 test("assignability", () => {
   const _s1: StandardSchemaV1 = z.string();

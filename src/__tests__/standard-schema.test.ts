@@ -1,10 +1,9 @@
 // @ts-ignore TS6133
 import { expect, test } from "@jest/globals";
-import { util } from "../helpers/util";
-
-import * as z from "../index";
-
 import type { StandardSchemaV1 } from "@standard-schema/spec";
+
+import { util } from "../helpers/util";
+import * as z from "../index";
 
 test("assignability", () => {
   const _s1: StandardSchemaV1 = z.string();
