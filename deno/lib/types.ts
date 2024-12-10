@@ -170,8 +170,7 @@ export abstract class ZodType<
   Output = any,
   Def extends ZodTypeDef = ZodTypeDef,
   Input = Output
-> implements StandardSchemaV1<Input, Output>
-{
+> {
   readonly _type!: Output;
   readonly _output!: Output;
   readonly _input!: Input;
