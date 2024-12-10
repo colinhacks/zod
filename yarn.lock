@@ -6251,9 +6251,9 @@ finalhandler@1.2.0:
     unpipe "~1.0.0"
 
 find-my-way@^8.0.0:
-  version "8.2.0"
-  resolved "https://registry.yarnpkg.com/find-my-way/-/find-my-way-8.2.0.tgz#ef1b83d008114a300118c9c707d8dc65947d9960"
-  integrity sha512-HdWXgFYc6b1BJcOBDBwjqWuHJj1WYiqrxSh25qtU4DabpMFdj/gSunNBQb83t+8Zt67D7CXEzJWTkxaShMTMOA==
+  version "8.2.2"
+  resolved "https://registry.yarnpkg.com/find-my-way/-/find-my-way-8.2.2.tgz#f3e78bc6ead2da4fdaa201335da3228600ed0285"
+  integrity sha512-Dobi7gcTEq8yszimcfp/R7+owiT4WncAJ7VTTgFH1jYJ5GaG1FbhjwDG820hptN0QDFvzVY3RfCzdInvGPGzjA==
   dependencies:
     fast-deep-equal "^3.1.3"
     fast-querystring "^1.0.0"
