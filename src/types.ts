@@ -3165,7 +3165,7 @@ export type ZodDiscriminatedUnionOption<Discriminator extends string> =
 
 export interface ZodDiscriminatedUnionDef<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
+  Options extends readonly ZodDiscriminatedUnionOption<string>[] = ZodDiscriminatedUnionOption<string>[]
 > extends ZodTypeDef {
   discriminator: Discriminator;
   options: Options;
@@ -3175,7 +3175,7 @@ export interface ZodDiscriminatedUnionDef<
 
 export class ZodDiscriminatedUnion<
   Discriminator extends string,
-  Options extends ZodDiscriminatedUnionOption<Discriminator>[]
+  Options extends readonly ZodDiscriminatedUnionOption<Discriminator>[]
 > extends ZodType<
   output<Options[number]>,
   ZodDiscriminatedUnionDef<Discriminator, Options>,
@@ -3245,7 +3245,7 @@ export class ZodDiscriminatedUnion<
    */
   static create<
     Discriminator extends string,
-    Types extends [
+    Types extends readonly [
       ZodDiscriminatedUnionOption<Discriminator>,
       ...ZodDiscriminatedUnionOption<Discriminator>[]
     ]
