@@ -850,6 +850,13 @@ datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
 datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
 ```
 
+Allow unqualified (timezone-less) datetimes with the `local` flag.
+
+```ts
+const schema = z.string().datetime({ local: true });
+schema.parse("2020-01-01T00:00:00"); // pass
+```
+
 You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
 
 ```ts
