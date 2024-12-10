@@ -178,9 +178,11 @@ const validBase64Strings = [
   "w7/Dv8O+w74K", // ÿÿþþ
 ];
 
-test.each(validBase64Strings)("base64 should accept %s", (str: string) => {
-  expect(z.string().base64().safeParse(str).success).toBe(true);
-});
+for (const str of validBase64Strings) {
+  test(`base64 should accept ${str}`, () => {
+    expect(z.string().base64().safeParse(str).success).toBe(true);
+  });
+}
 
 const invalidBase64Strings = [
   "12345", // Not padded correctly, not a multiple of 4 characters
@@ -194,11 +196,13 @@ const invalidBase64Strings = [
   "w7_Dv8O-w74K", // Has - and _ characters (is base64url)
 ];
 
-test.each(invalidBase64Strings)("base64 should reject %s", (str: string) => {
-  expect(z.string().base64().safeParse(str).success).toBe(false);
-});
+for (const str of invalidBase64Strings) {
+  test(`base64 should reject ${str}`, () => {
+    expect(z.string().base64().safeParse(str).success).toBe(false);
+  });
+}
 
-const validBase64urlStrings = [
+const validBase64URLStrings = [
   "SGVsbG8gV29ybGQ", // "Hello World"
   "SGVsbG8gV29ybGQ=", // "Hello World" with padding
   "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // "This is an encoded string"
@@ -221,14 +225,13 @@ const validBase64urlStrings = [
   "123456",
 ];
 
-test.each(validBase64urlStrings)(
-  "base64url should accept %s",
-  (str: string) => {
+for (const str of validBase64URLStrings) {
+  test(`base64url should accept ${str}`, () => {
     expect(z.string().base64url().safeParse(str).success).toBe(true);
-  }
-);
+  });
+}
 
-const invalidBase64urlStrings = [
+const invalidBase64URLStrings = [
   "w7/Dv8O+w74K", // Has + and / characters (is base64)
   "12345", // Invalid length (not a multiple of 4 characters when adding allowed number of padding characters)
   "12345===", // Not padded correctly
@@ -237,12 +240,11 @@ const invalidBase64urlStrings = [
   ".MTIzND2Nzg5MC4=", // Invalid character '.'
 ];
 
-test.each(invalidBase64urlStrings)(
-  "base64url should reject %s",
-  (str: string) => {
+for (const str of invalidBase64URLStrings) {
+  test(`base64url should reject ${str}`, () => {
     expect(z.string().base64url().safeParse(str).success).toBe(false);
-  }
-);
+  });
+}
 
 test("url validations", () => {
   const url = z.string().url();
