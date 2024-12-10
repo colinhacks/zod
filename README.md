@@ -614,7 +614,6 @@ bun add zod@canary           # bun
 pnpm add zod@canary          # pnpm
 ```
 
-
 > The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
 
 ## Basic usage

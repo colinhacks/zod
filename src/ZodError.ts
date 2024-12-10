@@ -105,6 +105,7 @@ export type StringValidation =
   | "ip"
   | "cidr"
   | "base64"
+  | "base64url"
   | { includes: string; position?: number }
   | { startsWith: string }
   | { endsWith: string };
