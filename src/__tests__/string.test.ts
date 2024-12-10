@@ -248,7 +248,7 @@ for (const str of invalidBase64URLStrings) {
 
 test("jwt validations", () => {
   const jwt = z.string().jwt();
-  const jwtWithAlg = z.string().jwt({ algorithm: "HS256" });
+  const jwtWithAlg = z.string().jwt({ alg: "HS256" });
 
   // Valid JWTs
   const validHeader = Buffer.from(JSON.stringify({ typ: "JWT", alg: "HS256" })).toString('base64url');

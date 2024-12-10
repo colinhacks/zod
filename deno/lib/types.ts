@@ -604,7 +604,7 @@ export type ZodStringCheck =
   | { kind: "trim"; message?: string }
   | { kind: "toLowerCase"; message?: string }
   | { kind: "toUpperCase"; message?: string }
-  | { kind: "jwt"; algorithm?: string; message?: string }
+  | { kind: "jwt"; alg?: string; message?: string }
   | {
       kind: "datetime";
       offset: boolean;
@@ -1034,7 +1034,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           status.dirty();
         }
       } else if (check.kind === "jwt") {
-        if (!isValidJWT(input.data, check.algorithm)) {
+        if (!isValidJWT(input.data, check.alg)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "jwt",
