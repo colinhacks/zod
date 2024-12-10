@@ -1,17 +1,18 @@
-declare namespace v1 {
+/**
+ * The Standard Schema interface.
+ */
+export type StandardSchemaV1<Input = unknown, Output = Input> = {
   /**
-   * The Standard Schema interface.
+   * The Standard Schema properties.
    */
-  interface StandardSchema<Input = unknown, Output = Input> {
-    /**
-     * The Standard Schema properties.
-     */
-    readonly "~standard": StandardSchemaProps<Input, Output>;
-  }
+  readonly "~standard": StandardSchemaV1.Props<Input, Output>;
+};
+
+export declare namespace StandardSchemaV1 {
   /**
    * The Standard Schema properties interface.
    */
-  interface StandardSchemaProps<Input = unknown, Output = Input> {
+  export interface Props<Input = unknown, Output = Input> {
     /**
      * The version number of the standard.
      */
@@ -25,22 +26,22 @@ declare namespace v1 {
      */
     readonly validate: (
       value: unknown
-    ) => StandardResult<Output> | Promise<StandardResult<Output>>;
+    ) => Result<Output> | Promise<Result<Output>>;
     /**
      * Inferred types associated with the schema.
      */
-    readonly types?: StandardTypes<Input, Output> | undefined;
+    readonly types?: Types<Input, Output> | undefined;
   }
+
   /**
    * The result interface of the validate function.
    */
-  type StandardResult<Output> =
-    | StandardSuccessResult<Output>
-    | StandardFailureResult;
+  export type Result<Output> = SuccessResult<Output> | FailureResult;
+
   /**
    * The result interface if validation succeeds.
    */
-  interface StandardSuccessResult<Output> {
+  export interface SuccessResult<Output> {
     /**
      * The typed output value.
      */
@@ -50,19 +51,21 @@ declare namespace v1 {
      */
     readonly issues?: undefined;
   }
+
   /**
    * The result interface if validation fails.
    */
-  interface StandardFailureResult {
+  export interface FailureResult {
     /**
      * The issues of failed validation.
      */
-    readonly issues: ReadonlyArray<StandardIssue>;
+    readonly issues: ReadonlyArray<Issue>;
   }
+
   /**
    * The issue interface of the failure output.
    */
-  interface StandardIssue {
+  export interface Issue {
     /**
      * The error message of the issue.
      */
@@ -70,23 +73,23 @@ declare namespace v1 {
     /**
      * The path of the issue, if any.
      */
-    readonly path?:
-      | ReadonlyArray<PropertyKey | StandardPathSegment>
-      | undefined;
+    readonly path?: ReadonlyArray<PropertyKey | PathSegment> | undefined;
   }
+
   /**
    * The path segment interface of the issue.
    */
-  interface StandardPathSegment {
+  export interface PathSegment {
     /**
      * The key representing a path segment.
      */
     readonly key: PropertyKey;
   }
+
   /**
-   * The base types interface of Standard Schema.
+   * The Standard Schema types interface.
    */
-  interface StandardTypes<Input, Output> {
+  export interface Types<Input = unknown, Output = Input> {
     /**
      * The input type of the schema.
      */
@@ -96,18 +99,21 @@ declare namespace v1 {
      */
     readonly output: Output;
   }
+
   /**
    * Infers the input type of a Standard Schema.
    */
-  type InferInput<Schema extends StandardSchema> = NonNullable<
+  export type InferInput<Schema extends StandardSchemaV1> = NonNullable<
     Schema["~standard"]["types"]
   >["input"];
+
   /**
    * Infers the output type of a Standard Schema.
    */
-  type InferOutput<Schema extends StandardSchema> = NonNullable<
+  export type InferOutput<Schema extends StandardSchemaV1> = NonNullable<
     Schema["~standard"]["types"]
   >["output"];
-}
 
-export type { v1 };
+  // biome-ignore lint/complexity/noUselessEmptyExport: needed for granular visibility control of TS namespace
+  export {};
+}

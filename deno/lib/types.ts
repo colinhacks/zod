@@ -23,7 +23,7 @@ import {
 import { partialUtil } from "./helpers/partialUtil.ts";
 import { Primitive } from "./helpers/typeAliases.ts";
 import { getParsedType, objectUtil, util, ZodParsedType } from "./helpers/util.ts";
-import { v1 } from "./standard-schema.ts";
+import type { StandardSchemaV1 } from "./standard-schema.ts";
 import {
   IssueData,
   StringValidation,
@@ -170,7 +170,7 @@ export abstract class ZodType<
   Output = any,
   Def extends ZodTypeDef = ZodTypeDef,
   Input = Output
-> implements v1.StandardSchema<Input, Output>
+> implements StandardSchemaV1<Input, Output>
 {
   readonly _type!: Output;
   readonly _output!: Output;
@@ -181,7 +181,7 @@ export abstract class ZodType<
     return this._def.description;
   }
 
-  "~standard": v1.StandardSchemaProps<Input, Output>;
+  "~standard": StandardSchemaV1.Props<Input, Output>;
 
   abstract _parse(input: ParseInput): ParseReturnType<Output>;
 
@@ -268,7 +268,9 @@ export abstract class ZodType<
 
   "~validate"(
     data: unknown
-  ): v1.StandardResult<Output> | Promise<v1.StandardResult<Output>> {
+  ):
+    | StandardSchemaV1.Result<Output>
+    | Promise<StandardSchemaV1.Result<Output>> {
     const ctx: ParseContext = {
       common: {
         issues: [],

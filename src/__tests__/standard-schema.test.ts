@@ -4,21 +4,21 @@ import { util } from "../helpers/util";
 
 import * as z from "../index";
 
-import type { v1 } from "../standard-schema";
+import type { StandardSchemaV1 } from "../standard-schema";
 
 test("assignability", () => {
-  const _s1: v1.StandardSchema = z.string();
-  const _s2: v1.StandardSchema<string> = z.string();
-  const _s3: v1.StandardSchema<string, string> = z.string();
-  const _s4: v1.StandardSchema<unknown, string> = z.string();
+  const _s1: StandardSchemaV1 = z.string();
+  const _s2: StandardSchemaV1<string> = z.string();
+  const _s3: StandardSchemaV1<string, string> = z.string();
+  const _s4: StandardSchemaV1<unknown, string> = z.string();
   [_s1, _s2, _s3, _s4];
 });
 
 test("type inference", () => {
   const stringToNumber = z.string().transform((x) => x.length);
-  type input = v1.InferInput<typeof stringToNumber>;
+  type input = StandardSchemaV1.InferInput<typeof stringToNumber>;
   util.assertEqual<input, string>(true);
-  type output = v1.InferOutput<typeof stringToNumber>;
+  type output = StandardSchemaV1.InferOutput<typeof stringToNumber>;
   util.assertEqual<output, number>(true);
 });
 
