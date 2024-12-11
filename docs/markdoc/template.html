@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zod Documentation</title>
+    <meta property="og:title" content="Zod Documentation">
+    <meta property="og:description" content="TypeScript-first schema validation with static type inference">
+    <meta property="og:image" content="og-image.png">
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://unpkg.com/prismjs@1.29.0/themes/prism-tomorrow.css" rel="stylesheet" />
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-slate-100 antialiased">
+    <div class="flex">
+        <main class="w-full max-w-4xl px-6 py-12 mx-auto prose prose-invert prose-slate prose-headings:scroll-mt-20 prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-pre:bg-transparent prose-pre:p-0 prose-pre:m-0 prose-a:text-blue-400 prose-a:no-underline hover:prose-a:text-blue-300 prose-img:rounded-lg prose-img:shadow-lg">
+            {{ content }}
+        </main>
+        <aside class="fixed top-0 right-0 w-72 h-screen overflow-y-auto p-6 border-l border-slate-700/50 bg-slate-900/80 backdrop-blur-sm shadow-xl">
+            <nav class="space-y-1">
+                {{ sidebar }}
+            </nav>
+        </aside>
+    </div>
+    <script src="https://unpkg.com/prismjs@1.29.0/components/prism-core.min.js"></script>
+    <script src="https://unpkg.com/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="tabs.js"></script>
+    <script src="scroll.js"></script>
+    <script>
+        // Initialize syntax highlighting
+        Prism.highlightAll();
+
+        // Re-run highlighting when switching tabs
+        document.addEventListener('tabChanged', () => {
+            Prism.highlightAll();
+        });
+    </script>
+</body>
+</html>

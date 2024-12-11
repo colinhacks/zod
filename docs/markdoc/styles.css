@@ -1,0 +1,178 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+body {
+  @apply bg-slate-900 text-slate-100;
+}
+
+/* Main layout */
+.content {
+  @apply max-w-4xl mx-auto px-6 pb-24 pt-8;
+  margin-right: 20rem;
+}
+
+/* Sidebar styles */
+.sidebar {
+  @apply fixed right-0 top-0 h-screen w-72 overflow-y-auto
+         bg-gradient-to-br from-slate-900/95 to-slate-800/95
+         p-6 border-l border-slate-700/50 shadow-lg backdrop-blur-sm;
+}
+
+.sidebar-link {
+  @apply block py-2 text-slate-400 hover:text-blue-400
+         transition-all duration-200 rounded-md relative
+         hover:bg-blue-500/5 px-4 mb-1;
+}
+
+.sidebar-link.active {
+  @apply text-blue-400 bg-blue-500/10 font-medium;
+}
+
+.sidebar-link.active::before {
+  content: '';
+  @apply absolute left-0 top-0 h-full w-1.5 bg-gradient-to-b from-blue-400 to-blue-500 rounded-r;
+}
+
+/* Code block styles */
+pre {
+  @apply my-6 rounded-lg overflow-x-auto
+         bg-gradient-to-br from-slate-900/95 to-slate-800/95
+         text-slate-100 border border-slate-700/50 shadow-lg
+         ring-1 ring-white/10;
+}
+
+code {
+  @apply font-mono text-sm p-5 block;
+}
+
+/* Tab styles */
+.tab-group {
+  @apply border border-slate-700/50 rounded-lg overflow-hidden mb-6
+         bg-gradient-to-br from-slate-800/90 to-slate-900/90
+         shadow-lg backdrop-blur-sm ring-1 ring-white/10;
+}
+
+.tab-list {
+  @apply flex gap-1.5 p-2.5 bg-gradient-to-br from-slate-900/90 to-slate-800/90
+         border-b border-slate-700/50;
+}
+
+.tab {
+  @apply px-4 py-2 text-sm font-medium text-slate-400
+         hover:text-slate-200 cursor-pointer transition-all duration-200
+         rounded-md hover:bg-blue-500/10 focus:outline-none focus:ring-2
+         focus:ring-blue-500/50 focus:ring-offset-2 focus:ring-offset-slate-800
+         hover:scale-[1.02] active:scale-[0.98];
+}
+
+.tab.active {
+  @apply text-blue-400 bg-gradient-to-br from-blue-500/10 to-blue-400/5
+         font-semibold shadow-sm shadow-blue-500/10 border border-blue-500/20;
+}
+
+.tab-contents {
+  @apply bg-gradient-to-br from-slate-800/95 to-slate-900/95 backdrop-blur-sm;
+}
+
+.tab-content {
+  @apply hidden;
+}
+
+.tab-content.active {
+  @apply block animate-fadeIn;
+}
+
+/* Heading styles */
+h1, h2, h3 {
+  @apply font-bold scroll-mt-16 text-slate-100;
+}
+
+h1 {
+  @apply text-3xl mt-8 mb-4;
+}
+
+h2 {
+  @apply text-2xl mt-6 mb-3;
+}
+
+h3 {
+  @apply text-xl mt-4 mb-2;
+}
+
+/* Link styles */
+a {
+  @apply text-blue-400 hover:text-blue-300 transition-colors duration-200;
+}
+
+/* Table styles */
+table {
+  @apply w-full border-collapse my-4 bg-slate-800 rounded-lg overflow-hidden border border-slate-700;
+}
+
+th {
+  @apply border-b border-slate-700 p-3 text-left bg-slate-900 text-slate-200 font-semibold;
+}
+
+td {
+  @apply border-b border-slate-700 p-3 text-left text-slate-300;
+}
+
+tr:last-child td {
+  @apply border-b-0;
+}
+
+/* Syntax highlighting tokens */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  @apply text-slate-400;
+}
+
+.token.punctuation {
+  @apply text-slate-300;
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol {
+  @apply text-cyan-300;
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin {
+  @apply text-emerald-300;
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  @apply text-amber-300;
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  @apply text-violet-300;
+}
+
+.token.function,
+.token.class-name {
+  @apply text-rose-300;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  @apply text-orange-300;
+}

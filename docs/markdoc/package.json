@@ -1,0 +1,36 @@
+{
+  "name": "markdoc-site",
+  "version": "1.0.0",
+  "description": "Static site generator for Zod documentation",
+  "type": "module",
+  "scripts": {
+    "clean": "rm -rf out/*",
+    "copy-assets": "cp ~/repos/zod/logo.svg out/ && cp tabs.js scroll.js out/",
+    "build:ts": "tsc",
+    "build:css": "tailwindcss -i styles.css -o out/styles.css",
+    "build:og": "node out/generate-og.js",
+    "build": "pnpm clean && pnpm build:css && pnpm build:ts && pnpm copy-assets && node out/build.js && pnpm build:og",
+    "format": "biome format --write .",
+    "lint": "biome lint ."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "@markdoc/markdoc": "^0.4.0",
+    "@tailwindcss/typography": "^0.5.15",
+    "@types/node": "^22.10.1",
+    "@types/node-fetch": "^2.6.12",
+    "autoprefixer": "^10.4.20",
+    "node-fetch": "^2.7.0",
+    "postcss": "^8.4.49",
+    "satori": "^0.12.0",
+    "sharp": "^0.33.5",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "html-entities": "^2.5.2"
+  }
+}
