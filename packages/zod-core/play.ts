@@ -2,13 +2,6 @@ import * as z from "zod-core";
 
 z;
 
-const a = z.custom((val) => {
-  return typeof val === "string";
-}, {});
+const a = z.envbool();
 
-console.log(a["~def"].fn("asdf"));
-console.log(a["~def"].fn(123));
-console.log(z.safeParse(a, "asdf"));
-console.log(z.safeParse(a, 123));
-
-console.log(a["~parse"]);
+console.log(JSON.stringify(z.safeParse(a, "true"), null, 2));

@@ -595,7 +595,7 @@ export function looseInterface<T extends schemas.ZodRawShape>(
 // .keyof
 export function keyof<T extends schemas.ZodObject>(
   schema: T
-): schemas.ZodEnum<util.KeyOf<T["~def"]["shape"]>> {
+): schemas.ZodEnum<util.KeysEnum<T["~def"]["shape"]>> {
   return _enum(Object.keys(schema["~def"].shape)) as any;
 }
 

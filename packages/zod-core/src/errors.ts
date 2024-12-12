@@ -24,6 +24,7 @@ export interface $ZodIssueInvalidType<
   Input = unknown,
 > extends $ZodIssueBase<Origin, Input> {
   code: "invalid_type";
+  input: Input;
   // received?: string;
 }
 
@@ -206,17 +207,24 @@ export type $ZodIssueData<T extends $ZodIssueBase = $ZodIssue> = T extends any
   ? _$ZodIssueData<T>
   : never;
 
-type ComputedIssueDataPieces<In> = {
+// type ComputedIssueDataPieces<In> = {
+//   path?: PropertyKey[] | undefined;
+//   // level?: "error" | "abort" | undefined;
+//   message?: string | undefined;
+//   input: In;
+//   def?: { error?: $ZodErrorMap<never> | undefined } | undefined;
+// };
+type ComputedIssueDataPieces = {
   path?: PropertyKey[] | undefined;
   // level?: "error" | "abort" | undefined;
   message?: string | undefined;
-  input: In;
+
   def?: { error?: $ZodErrorMap<never> | undefined } | undefined;
 };
 
 type _$ZodIssueData<T extends $ZodIssueBase> = util.Flatten<
-  Omit<util.OmitIndexSignature<T>, "message" | "path" | "input"> &
-    ComputedIssueDataPieces<T["input"]> &
+  Omit<util.OmitIndexSignature<T>, "message" | "path"> &
+    ComputedIssueDataPieces &
     util.ExtractIndexSignature<T>
 >;
 

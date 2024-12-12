@@ -1232,6 +1232,7 @@ export type $InferObjectInput<T extends $ZodShape> = OptionalInProps<T> &
 export interface $ZodObjectClassic<Shape extends $ZodShape = $ZodShape>
   extends $ZodObject<$InferObjectOutput<Shape>, $InferObjectInput<Shape>> {
   "~def": $ZodObjectDef<Shape>;
+  "~subtype": "classic";
 }
 
 ///////////////////////////////////////////////////
@@ -1264,10 +1265,11 @@ export type $InferInterfaceInput<T extends $ZodRawShape> = util.Flatten<
 >;
 
 export interface $ZodInterface<
-  O extends object = object,
-  I extends object = object,
+  O extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
+  I extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
 > extends $ZodObject<O, I> {
   "~def": $ZodObjectDef;
+  "~subtype": "interface";
 }
 
 /////////////////////////////////////////
@@ -2168,8 +2170,8 @@ export interface $ZodLiteralDef extends base.$ZodTypeDef {
   // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidValue> | undefined;
 }
 
-export interface $ZodLiteral<T extends util.LiteralArray = util.LiteralArray>
-  extends base.$ZodType<T[number], T[number]> {
+export interface $ZodLiteral<T extends util.Literal = util.Literal>
+  extends base.$ZodType<T, T> {
   "~def": $ZodLiteralDef;
   "~values": base.$PrimitiveSet;
   "~pattern": RegExp;
@@ -2697,13 +2699,13 @@ export const $ZodTemplateLiteral: base.$constructor<$ZodTemplateLiteral> =
 ////  $ZodCustom   ////
 export interface $ZodCustomDef extends base.$ZodTypeDef, base.$ZodCheckDef {
   type: "custom";
-  fn: (data: unknown) => unknown;
+  fn: base.$ZodCheck["run2"];
   // error?: errors.$ZodErrorMap<errors.$ZodIssueCustom> | undefined;
   // path?: PropertyKey[];
 }
-export interface $ZodCustom<T = unknown>
-  extends base.$ZodType<T, T>,
-    base.$ZodCheck<T> {
+export interface $ZodCustom<O = unknown, I = unknown>
+  extends base.$ZodType<O, I>,
+    base.$ZodCheck<O> {
   "~def": $ZodCustomDef;
   "~issc": errors.$ZodIssueCustom;
   "~issp": never;
@@ -2717,31 +2719,34 @@ export const $ZodCustom: base.$constructor<$ZodCustom<unknown>> =
     base.$ZodCheck.init(inst, def);
     base.$ZodType.init(inst, def);
 
-    inst["~typecheck"] = (input, _) => {
+    inst["~typecheck"] = (input, ctx) => {
+      // return def.fn(input, ctx);
       return base.$succeed(input);
     };
 
-    inst.run2 = (ctx) => {
-      const r = def.fn(ctx.value);
-      if (r instanceof Promise)
-        return r.then((r) => {
-          if (!r) {
-            ctx.issues.push({
-              input: ctx.value,
-              code: "custom",
-              origin: "custom",
-              def,
-            });
-          }
-        });
-      if (!r) {
-        ctx.issues.push({
-          input: ctx.value,
-          code: "custom",
-          origin: "custom",
-          def,
-        });
-      }
-      return;
-    };
+    inst.run2 = (_) => def.fn(_ as any);
+
+    // inst.run2 = (ctx) => {
+    //   const r = def.fn(ctx.value);
+    //   if (r instanceof Promise)
+    //     return r.then((r) => {
+    //       if (!r) {
+    //         ctx.issues.push({
+    //           input: ctx.value,
+    //           code: "custom",
+    //           origin: "custom",
+    //           def,
+    //         });
+    //       }
+    //     });
+    //   if (!r) {
+    //     ctx.issues.push({
+    //       input: ctx.value,
+    //       code: "custom",
+    //       origin: "custom",
+    //       def,
+    //     });
+    //   }
+    //   return;
+    // };
   });

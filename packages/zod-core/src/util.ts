@@ -581,11 +581,11 @@ export function splitChecksAndParams<T extends TypeParams>(
   params: T | string;
 } {
   const params = (
-    Array.isArray(_paramsOrChecks) ? {} : _paramsOrChecks ?? {}
+    Array.isArray(_paramsOrChecks) ? {} : (_paramsOrChecks ?? {})
   ) as T;
   const checks: any[] = Array.isArray(_paramsOrChecks)
     ? _paramsOrChecks
-    : _checks ?? [];
+    : (_checks ?? []);
   return {
     checks,
     params,
@@ -748,7 +748,8 @@ export interface RefinementCtx {
 export type EnumValue = string | number; // | bigint | boolean | symbol;
 export type EnumLike = Record<EnumValue, EnumValue>;
 export type ToEnum<T extends EnumValue> = { [k in T]: k };
-export type KeyOf<T extends object> = ToEnum<Exclude<keyof T, symbol>>;
+export type KeysEnum<T extends object> = ToEnum<Exclude<keyof T, symbol>>;
+export type KeysArray<T extends object> = Flatten<(keyof T & string)[]>;
 export type Literal = string | number | bigint | boolean | symbol;
 export type LiteralArray = Array<Literal>;
 

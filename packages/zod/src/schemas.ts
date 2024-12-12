@@ -1395,9 +1395,9 @@ export const ZodNativeEnum: core.$constructor<ZodNativeEnum> =
 //////////////////////////////////////////
 
 export interface ZodLiteralDef extends core.$ZodLiteralDef {}
-export interface ZodLiteral<T extends util.Literal[] = util.Literal[]>
+export interface ZodLiteral<T extends util.Literal = util.Literal>
   extends core.$ZodLiteral<T>,
-    ZodType<T[number], T[number]> {
+    ZodType<T, T> {
   "~def": ZodLiteralDef;
   "~values": Set<util.Primitive>;
   "~issp": core.$ZodIssueInvalidValue<"literal">;
