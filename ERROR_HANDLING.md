@@ -92,10 +92,12 @@ Here's a sample Person schema.
 ```ts
 const person = z.object({
   names: z.array(z.string()).nonempty(), // at least 1 name
-  address: z.object({
-    line1: z.string(),
-    zipCode: z.number().min(10000), // American 5-digit code
-  }).strict(); // do not allow unrecognized keys
+  address: z
+    .object({
+      line1: z.string(),
+      zipCode: z.number().min(10000), // American 5-digit code
+    })
+    .strict(), // do not allow unrecognized keys
 });
 ```
 

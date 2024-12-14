@@ -65,8 +65,7 @@
     - [Utilities for Zod](#utilities-for-zod)
 - [Installation](#installation)
   - [Requirements](#requirements)
-  - [From `npm` (Node/Bun)](#from-npm-nodebun)
-  - [From `deno.land/x` (Deno)](#from-denolandx-deno)
+  - [From `npm`](#from-npm)
 - [Basic usage](#basic-usage)
 - [Primitives](#primitives)
 - [Coercion for primitives](#coercion-for-primitives)
@@ -77,11 +76,12 @@
   - [Times](#times)
   - [IP addresses](#ip-addresses)
   - [IP addresses range](#ip-addresses-range)
+  - [IP ranges](#ip-ranges-cidr)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
 - [Booleans](#booleans)
-- [Dates](#dates)
+- [Dates](#dates-1)
 - [Zod enums](#zod-enums)
 - [Native enums](#native-enums)
 - [Optionals](#optionals)
@@ -213,6 +213,24 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 <h3 align="center">Platinum</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
+  <tr>
+    <td align="center">
+      <p></p>
+      <p>
+      <a href="https://liblab.com/?utm_source=zod">
+        <picture height="62px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/34dfa1a2-ce94-46f4-8902-fbfac3e1a9bc">
+          <img alt="LibLab" height="62px" src="https://github.com/user-attachments/assets/3de0b617-5137-49c4-b72d-a033cbe602d8">
+        </picture>
+      </a>
+      <br  />   
+      Generate better SDKs for your APIs
+      <br/>
+      <a href="https://liblab.com/?utm_source=zod" style="text-decoration:none;">liblab.com</a>
+      </p>
+      <p></p>
+    </td>
+  </tr>
   <tr>
     <td align="center">
       <p></p>
@@ -475,6 +493,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`tapiduck`](https://github.com/sumukhbarve/monoduck/blob/main/src/tapiduck/README.md): End-to-end typesafe JSON APIs with Zod and Express; a bit like tRPC, but simpler.
 - [`koa-zod-router`](https://github.com/JakeFenley/koa-zod-router): Create typesafe routes in Koa with I/O validation using Zod.
 - [`zod-sockets`](https://github.com/RobinTail/zod-sockets): Zod-powered Socket.IO microframework with I/O validation and built-in AsyncAPI specs
+- [`oas-tszod-gen`](https://github.com/inkognitro/oas-tszod-gen): Client SDK code generator to convert OpenApi v3 specifications into TS endpoint caller functions with Zod types.
 
 #### Form integrations
 
@@ -493,6 +512,8 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): Data-first form builder based on MobX & Zod.
 - [`@vee-validate/zod`](https://github.com/logaretm/vee-validate/tree/main/packages/zod): Form library for Vue.js with Zod schema validation.
 - [`zod-form-renderer`](https://github.com/thepeaklab/zod-form-renderer): Auto-infer form fields from zod schema and render them with react-hook-form with E2E type safety.
+- [`antd-zod`](https://github.com/MrBr/antd-zod): Zod adapter for Ant Design form fields validation.
+- [`frrm`](https://github.com/schalkventer/frrm): Tiny 0.5kb Zod-based, HTML form abstraction that goes brr.
 
 #### Zod to X
 
@@ -575,10 +596,11 @@ There are a growing number of tools that are built atop or support Zod natively!
   }
   ```
 
-### From `npm` (Node/Bun)
+### From `npm`
 
 ```sh
 npm install zod       # npm
+deno add npm:zod      # deno
 yarn add zod          # yarn
 bun add zod           # bun
 pnpm add zod          # pnpm
@@ -588,23 +610,10 @@ Zod also publishes a canary version on every commit. To install the canary:
 
 ```sh
 npm install zod@canary       # npm
+deno add npm:zod@canary      # deno
 yarn add zod@canary          # yarn
 bun add zod@canary           # bun
 pnpm add zod@canary          # pnpm
-```
-
-### From `deno.land/x` (Deno)
-
-Unlike Node, Deno relies on direct URL imports instead of a package manager like NPM. Zod is available on [deno.land/x](https://deno.land/x). The latest version can be imported like so:
-
-```ts
-import { z } from "https://deno.land/x/zod/mod.ts";
-```
-
-You can also specify a particular version:
-
-```ts
-import { z } from "https://deno.land/x/zod@v3.16.1/mod.ts";
 ```
 
 > The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
@@ -770,6 +779,7 @@ z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // ISO 8601; by default only `Z` timezone allowed
 z.string().ip(); // defaults to allow both IPv4 and IPv6
+z.string().cidr(); // defaults to allow both IPv4 and IPv6
 
 // transforms
 z.string().trim(); // trim whitespace
@@ -811,6 +821,7 @@ z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
 z.string().date({ message: "Invalid date string!" });
 z.string().time({ message: "Invalid time string!" });
 z.string().ip({ message: "Invalid IP address" });
+z.string().cidr({ message: "Invalid CIDR" });
 ```
 
 ### Datetimes
@@ -838,6 +849,13 @@ datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
 datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
 datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
+```
+
+Allow unqualified (timezone-less) datetimes with the `local` flag.
+
+```ts
+const schema = z.string().datetime({ local: true });
+schema.parse("2020-01-01T00:00:00"); // pass
 ```
 
 You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
@@ -893,7 +911,7 @@ time.parse("00:00:00"); // fail
 
 ### IP addresses
 
-The `z.string().ip()` method by default validate IPv4 and IPv6.
+By default `.ip()` allows both IPv4 and IPv6.
 
 ```ts
 const ip = z.string().ip();
@@ -931,6 +949,26 @@ const ipv6Range = z.string().ipRange({ cidr: "2001:db8::/32", version: "v6" });
 
 ipv6Range.parse("2001:db8::1"); // pass
 ipv6Range.parse("2001:db9::1"); // fail
+```
+
+### IP ranges (CIDR)
+
+Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing). By default, `.cidr()` allows both IPv4 and IPv6.
+
+```ts
+const cidr = z.string().cidr();
+cidr.parse("192.168.0.0/24"); // pass
+cidr.parse("2001:db8::/32"); // pass
+```
+
+You can specify a version with the `version` parameter.
+
+```ts
+const ipv4Cidr = z.string().cidr({ version: "v4" });
+ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+
+const ipv6Cidr = z.string().cidr({ version: "v6" });
+ipv6Cidr.parse("192.168.1.1"); // fail
 ```
 
 ## Numbers

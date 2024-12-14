@@ -1,13 +1,14 @@
 // @ts-ignore TS6133
 import { expect } from "https://deno.land/x/expect@v0.2.6/mod.ts";
 const test = Deno.test;
+import { Buffer } from "node:buffer";
 
 import * as z from "../index.ts";
 
 const minFive = z.string().min(5, "min5");
 const maxFive = z.string().max(5, "max5");
 const justFive = z.string().length(5);
-const nonempty = z.string().min(1, "nonempty");
+const nonempty = z.string().nonempty("nonempty");
 const includes = z.string().includes("includes");
 const includesFromIndex2 = z.string().includes("includes", { position: 2 });
 const startsWith = z.string().startsWith("startsWith");
@@ -165,38 +166,127 @@ test("email validations", () => {
   ).toBe(true);
 });
 
-test("base64 validations", () => {
-  const validBase64Strings = [
-    "SGVsbG8gV29ybGQ=", // "Hello World"
-    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string"
-    "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work"
-    "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
-    "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun"
-    "MTIzNDU2Nzg5MA==", // "1234567890"
-    "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz"
-    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    "ISIkJSMmJyonKCk=", // "!\"#$%&'()*"
-    "", // Empty string is technically a valid base64
-  ];
+const validBase64Strings = [
+  "SGVsbG8gV29ybGQ=", // "Hello World"
+  "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string"
+  "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work"
+  "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
+  "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun"
+  "MTIzNDU2Nzg5MA==", // "1234567890"
+  "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz"
+  "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  "ISIkJSMmJyonKCk=", // "!\"#$%&'()*"
+  "", // Empty string is technically valid base64
+  "w7/Dv8O+w74K", // ÿÿþþ
+];
 
-  for (const str of validBase64Strings) {
-    expect(str + z.string().base64().safeParse(str).success).toBe(str + "true");
-  }
+for (const str of validBase64Strings) {
+  test(`base64 should accept ${str}`, () => {
+    expect(z.string().base64().safeParse(str).success).toBe(true);
+  });
+}
 
-  const invalidBase64Strings = [
-    "12345", // Not padded correctly, not a multiple of 4 characters
-    "SGVsbG8gV29ybGQ", // Missing padding
-    "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // Missing padding
-    "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
-    "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
-    ".MTIzND2Nzg5MC4=", // Invalid character '.'
-    "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
-  ];
+const invalidBase64Strings = [
+  "12345", // Not padded correctly, not a multiple of 4 characters
+  "12345===", // Not padded correctly
+  "SGVsbG8gV29ybGQ", // Missing padding
+  "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // Missing padding
+  "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
+  "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
+  ".MTIzND2Nzg5MC4=", // Invalid character '.'
+  "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // Missing padding
+  "w7_Dv8O-w74K", // Has - and _ characters (is base64url)
+];
 
-  for (const str of invalidBase64Strings) {
-    expect(str + z.string().base64().safeParse(str).success).toBe(
-      str + "false"
-    );
+for (const str of invalidBase64Strings) {
+  test(`base64 should reject ${str}`, () => {
+    expect(z.string().base64().safeParse(str).success).toBe(false);
+  });
+}
+
+const validBase64URLStrings = [
+  "SGVsbG8gV29ybGQ", // "Hello World"
+  "SGVsbG8gV29ybGQ=", // "Hello World" with padding
+  "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw", // "This is an encoded string"
+  "VGhpcyBpcyBhbiBlbmNvZGVkIHN0cmluZw==", // "This is an encoded string" with padding
+  "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms", // "Many hands make light work"
+  "TWFueSBoYW5kcyBtYWtlIGxpZ2h0IHdvcms=", // "Many hands make light work" with padding
+  "UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // "Patience is the key to success"
+  "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg", // "Base64 encoding is fun"
+  "QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // "Base64 encoding is fun" with padding
+  "MTIzNDU2Nzg5MA", // "1234567890"
+  "MTIzNDU2Nzg5MA==", // "1234567890" with padding
+  "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo", // "abcdefghijklmnopqrstuvwxyz"
+  "YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXo=", // "abcdefghijklmnopqrstuvwxyz with padding"
+  "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  "QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVo=", // "ABCDEFGHIJKLMNOPQRSTUVWXYZ" with padding
+  "ISIkJSMmJyonKCk", // "!\"#$%&'()*"
+  "ISIkJSMmJyonKCk=", // "!\"#$%&'()*" with padding
+  "", // Empty string is technically valid base64url
+  "w7_Dv8O-w74K", // ÿÿþþ
+  "123456",
+];
+
+for (const str of validBase64URLStrings) {
+  test(`base64url should accept ${str}`, () => {
+    expect(z.string().base64url().safeParse(str).success).toBe(true);
+  });
+}
+
+const invalidBase64URLStrings = [
+  "w7/Dv8O+w74K", // Has + and / characters (is base64)
+  "12345", // Invalid length (not a multiple of 4 characters when adding allowed number of padding characters)
+  "12345===", // Not padded correctly
+  "!UGF0aWVuY2UgaXMgdGhlIGtleSB0byBzdWNjZXNz", // Invalid character '!'
+  "?QmFzZTY0IGVuY29kaW5nIGlzIGZ1bg==", // Invalid character '?'
+  ".MTIzND2Nzg5MC4=", // Invalid character '.'
+];
+
+for (const str of invalidBase64URLStrings) {
+  test(`base64url should reject ${str}`, () => {
+    expect(z.string().base64url().safeParse(str).success).toBe(false);
+  });
+}
+
+test("jwt validations", () => {
+  const jwt = z.string().jwt();
+  const jwtWithAlg = z.string().jwt({ alg: "HS256" });
+
+  // Valid JWTs
+  const validHeader = Buffer.from(
+    JSON.stringify({ typ: "JWT", alg: "HS256" })
+  ).toString("base64url");
+  const validPayload = Buffer.from("{}").toString("base64url");
+  const validSignature = "signature";
+  const validJWT = `${validHeader}.${validPayload}.${validSignature}`;
+
+  expect(() => jwt.parse(validJWT)).not.toThrow();
+  expect(() => jwtWithAlg.parse(validJWT)).not.toThrow();
+
+  // Invalid format
+  expect(() => jwt.parse("invalid")).toThrow();
+  expect(() => jwt.parse("invalid.invalid")).toThrow();
+  expect(() => jwt.parse("invalid.invalid.invalid")).toThrow();
+
+  // Invalid header
+  const invalidHeader = Buffer.from("{}").toString("base64url");
+  const invalidHeaderJWT = `${invalidHeader}.${validPayload}.${validSignature}`;
+  expect(() => jwt.parse(invalidHeaderJWT)).toThrow();
+
+  // Wrong algorithm
+  const wrongAlgHeader = Buffer.from(
+    JSON.stringify({ typ: "JWT", alg: "RS256" })
+  ).toString("base64url");
+  const wrongAlgJWT = `${wrongAlgHeader}.${validPayload}.${validSignature}`;
+  expect(() => jwtWithAlg.parse(wrongAlgJWT)).toThrow();
+
+  // Custom error message
+  const customMsg = "Invalid JWT token";
+  const jwtWithMsg = z.string().jwt({ message: customMsg });
+  try {
+    jwtWithMsg.parse("invalid");
+  } catch (error) {
+    expect((error as z.ZodError).issues[0].message).toBe(customMsg);
   }
 });
 
@@ -374,6 +464,7 @@ test("checks getters", () => {
   expect(z.string().email().isNANOID).toEqual(false);
   expect(z.string().email().isIP).toEqual(false);
   expect(z.string().email().isIPRange).toEqual(false);
+  expect(z.string().email().isCIDR).toEqual(false);
   expect(z.string().email().isULID).toEqual(false);
 
   expect(z.string().url().isEmail).toEqual(false);
@@ -384,6 +475,7 @@ test("checks getters", () => {
   expect(z.string().url().isNANOID).toEqual(false);
   expect(z.string().url().isIP).toEqual(false);
   expect(z.string().url().isIPRange).toEqual(false);
+  expect(z.string().url().isCIDR).toEqual(false);
   expect(z.string().url().isULID).toEqual(false);
 
   expect(z.string().cuid().isEmail).toEqual(false);
@@ -394,6 +486,7 @@ test("checks getters", () => {
   expect(z.string().cuid().isNANOID).toEqual(false);
   expect(z.string().cuid().isIP).toEqual(false);
   expect(z.string().cuid().isIPRange).toEqual(false);
+  expect(z.string().cuid().isCIDR).toEqual(false);
   expect(z.string().cuid().isULID).toEqual(false);
 
   expect(z.string().cuid2().isEmail).toEqual(false);
@@ -404,6 +497,7 @@ test("checks getters", () => {
   expect(z.string().cuid2().isNANOID).toEqual(false);
   expect(z.string().cuid2().isIP).toEqual(false);
   expect(z.string().cuid2().isIPRange).toEqual(false);
+  expect(z.string().cuid2().isCIDR).toEqual(false);
   expect(z.string().cuid2().isULID).toEqual(false);
 
   expect(z.string().uuid().isEmail).toEqual(false);
@@ -414,6 +508,7 @@ test("checks getters", () => {
   expect(z.string().uuid().isNANOID).toEqual(false);
   expect(z.string().uuid().isIP).toEqual(false);
   expect(z.string().uuid().isIPRange).toEqual(false);
+  expect(z.string().uuid().isCIDR).toEqual(false);
   expect(z.string().uuid().isULID).toEqual(false);
 
   expect(z.string().nanoid().isEmail).toEqual(false);
@@ -424,6 +519,7 @@ test("checks getters", () => {
   expect(z.string().nanoid().isNANOID).toEqual(true);
   expect(z.string().nanoid().isIP).toEqual(false);
   expect(z.string().nanoid().isIPRange).toEqual(false);
+  expect(z.string().nanoid().isCIDR).toEqual(false);
   expect(z.string().nanoid().isULID).toEqual(false);
 
   expect(z.string().ip().isEmail).toEqual(false);
@@ -434,7 +530,18 @@ test("checks getters", () => {
   expect(z.string().ip().isNANOID).toEqual(false);
   expect(z.string().ip().isIP).toEqual(true);
   expect(z.string().ip().isIPRange).toEqual(false);
+  expect(z.string().ip().isCIDR).toEqual(false);
   expect(z.string().ip().isULID).toEqual(false);
+
+  expect(z.string().cidr().isEmail).toEqual(false);
+  expect(z.string().cidr().isURL).toEqual(false);
+  expect(z.string().cidr().isCUID).toEqual(false);
+  expect(z.string().cidr().isCUID2).toEqual(false);
+  expect(z.string().cidr().isUUID).toEqual(false);
+  expect(z.string().cidr().isNANOID).toEqual(false);
+  expect(z.string().cidr().isIP).toEqual(false);
+  expect(z.string().cidr().isCIDR).toEqual(true);
+  expect(z.string().cidr().isULID).toEqual(false);
 
   expect(z.string().ulid().isEmail).toEqual(false);
   expect(z.string().ulid().isURL).toEqual(false);
@@ -444,6 +551,7 @@ test("checks getters", () => {
   expect(z.string().ulid().isNANOID).toEqual(false);
   expect(z.string().ulid().isIP).toEqual(false);
   expect(z.string().ulid().isIPRange).toEqual(false);
+  expect(z.string().ulid().isCIDR).toEqual(false);
   expect(z.string().ulid().isULID).toEqual(true);
 });
 
@@ -857,5 +965,47 @@ test("IP Range validation", () => {
 
       return ipRangeSchema.safeParse(ip).success === false;
     })
+  );
+});
+
+test("CIDR validation", () => {
+  const ipv4Cidr = z.string().cidr({ version: "v4" });
+  expect(() => ipv4Cidr.parse("2001:0db8:85a3::8a2e:0370:7334/64")).toThrow();
+
+  const ipv6Cidr = z.string().cidr({ version: "v6" });
+  expect(() => ipv6Cidr.parse("192.168.0.1/24")).toThrow();
+
+  const validCidrs = [
+    "192.168.0.0/24",
+    "10.0.0.0/8",
+    "203.0.113.0/24",
+    "192.0.2.0/24",
+    "127.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.1.0/24",
+    "fc00::/7",
+    "fd00::/8",
+    "2001:db8::/32",
+    "2607:f0d0:1002:51::4/64",
+    "2001:0db8:85a3:0000:0000:8a2e:0370:7334/128",
+    "2001:0db8:1234:0000::/64",
+  ];
+
+  const invalidCidrs = [
+    "192.168.1.1/33",
+    "10.0.0.1/-1",
+    "192.168.1.1/24/24",
+    "192.168.1.0/abc",
+    "2001:db8::1/129",
+    "2001:db8::1/-1",
+    "2001:db8::1/64/64",
+    "2001:db8::1/abc",
+  ];
+
+  // no parameters check IPv4 or IPv6
+  const cidrSchema = z.string().cidr();
+  expect(validCidrs.every((ip) => cidrSchema.safeParse(ip).success)).toBe(true);
+  expect(
+    invalidCidrs.every((ip) => cidrSchema.safeParse(ip).success === false)
   ).toBe(true);
 });
