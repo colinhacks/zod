@@ -297,6 +297,7 @@ test("url validations", () => {
   expect(() => url.parse("asdf")).toThrow();
   expect(() => url.parse("https:/")).toThrow();
   expect(() => url.parse("asdfj@lkjsdf.com")).toThrow();
+  expect(() => url.parse("https://asdf.com,https://asdf")).toThrow();
 });
 
 test("url error overrides", () => {
