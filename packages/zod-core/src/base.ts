@@ -145,6 +145,7 @@ export type $ZodSchemaTypes =
   | "literal"
   | "nullable"
   | "optional"
+  | "required"
   | "success"
   | "preprocess"
   | "effect"
@@ -156,6 +157,7 @@ export type $ZodSchemaTypes =
   | "pipeline"
   | "readonly"
   | "template_literal"
+  | "promise"
   | "custom";
 
 export type $IO<O, I> = { output: O; input: I };
@@ -236,8 +238,9 @@ export interface $ZodType<out O = unknown, out I = unknown> {
     def: any
   ) => any;
   /** @internal Internal API, use with caution. */
-  "~computed"?: object;
-  "~issp"?: errors.$ZodIssueBase;
+  "~computed": Record<string, unknown>;
+  /** The set of issues this schema might throw during type checking. */
+  "~isst"?: errors.$ZodIssueBase;
 }
 
 // type asdf = PropertyKey & BRAND<PropertyKey>;
@@ -248,10 +251,10 @@ export function runCheck(
 ): util.MaybeAsync<$ZodResult<never>> {
   if (result instanceof Promise)
     return result.then((result) => {
-      check.run2(result);
+      check["~run"](result);
       return result;
     });
-  check.run2(result);
+  check["~run"](result);
   return result;
 }
 
@@ -271,7 +274,7 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
           ...(def.checks ?? []),
           ...checks.map((ch) =>
             typeof ch === "function"
-              ? { run2: ch, "~def": { check: "custom" } }
+              ? { "~run": ch, "~def": { check: "custom" } }
               : ch
           ),
         ],
@@ -289,7 +292,9 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
     // if inst is itself a $ZodCheck, run it as a check
     if (inst["~traits"].has("$ZodCheck")) {
       checks.unshift(inst as any);
-    } else {
+    }
+    for (const ch of checks) {
+      ch["~attach"]?.(inst);
     }
 
     if (checks.length === 0) {
@@ -303,7 +308,7 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
       for (const ch of checks.slice().reverse()) {
         const _curr = runChecks;
         runChecks = (result) => {
-          const _ = ch.run2(result as $ZodResult<never>);
+          const _ = ch["~run"](result as $ZodResult<never>);
           if (_ instanceof Promise) {
             return _.then((_) => {
               if (result.aborted) return result;
@@ -427,10 +432,13 @@ export function $finalize(
 
 const ZOD_ERROR: symbol = Symbol.for("{{zod.error}}");
 export class $ZodError {
-  protected "~tag": typeof ZOD_ERROR = ZOD_ERROR;
+  "~tag": typeof ZOD_ERROR = ZOD_ERROR;
   public issues: errors.$ZodIssue[];
   constructor(issues: errors.$ZodIssue[]) {
     this.issues = issues;
+  }
+  static [Symbol.hasInstance](inst: any) {
+    return inst?.["~tag"] === ZOD_ERROR;
   }
 }
 
@@ -520,9 +528,11 @@ export interface $ZodCheckDef {
 // @ts-ignore cast variance
 export interface $ZodCheck<in T = never> {
   "~def": $ZodCheckDef;
+  /** The set of issues this check might throw. */
   "~issc"?: errors.$ZodIssueBase;
 
-  run2(input: $ZodResult<T>): util.MaybeAsync<void>;
+  "~run"(input: $ZodResult<T>): util.MaybeAsync<void>;
+  "~attach"?(schema: $ZodType): void;
 }
 
 export const $ZodCheck: $constructor<$ZodCheck<any>> = $constructor(

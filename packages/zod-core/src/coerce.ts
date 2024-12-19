@@ -10,7 +10,7 @@ export interface $ZodCoercedString
   extends schemas.$ZodString<unknown>,
     base.$ZodType<string, unknown> {
   "~def": $ZodCoercedStringDef;
-  "~issp": errors.$ZodIssueInvalidType<"string">;
+  "~isst": errors.$ZodIssueInvalidType<"string">;
 }
 
 export const $ZodCoercedString: base.$constructor<$ZodCoercedString> =
@@ -64,7 +64,7 @@ export interface $ZodCoercedNumber
   extends schemas.$ZodNumber<unknown>,
     base.$ZodType<number, unknown> {
   "~def": $ZodCoercedNumberDef;
-  "~issp": errors.$ZodIssueInvalidType<"number">;
+  "~isst": errors.$ZodIssueInvalidType<"number">;
   "~computed": {
     minimum?: number | bigint;
     maximum?: number | bigint;
@@ -122,7 +122,7 @@ export interface $ZodCoercedBoolean
   extends schemas.$ZodBoolean<unknown>,
     base.$ZodType<boolean, unknown> {
   "~def": $ZodCoercedBooleanDef;
-  "~issp": errors.$ZodIssueInvalidType<"boolean">;
+  "~isst": errors.$ZodIssueInvalidType<"boolean">;
 }
 
 export const $ZodCoercedBoolean: base.$constructor<$ZodCoercedBoolean> =
@@ -175,7 +175,7 @@ export interface $ZodCoercedBigInt
   extends schemas.$ZodBigInt<unknown>,
     base.$ZodType<bigint, unknown> {
   "~def": $ZodCoercedBigIntDef;
-  "~issp": errors.$ZodIssueInvalidType<"bigint">;
+  "~isst": errors.$ZodIssueInvalidType<"bigint">;
 }
 
 export const $ZodCoercedBigInt: base.$constructor<$ZodCoercedBigInt> =
@@ -227,7 +227,7 @@ export interface $ZodCoercedDate
   extends schemas.$ZodDate<unknown>,
     base.$ZodType<Date, unknown> {
   "~def": $ZodCoercedDateDef;
-  "~issp": errors.$ZodIssueInvalidType<"date">;
+  "~isst": errors.$ZodIssueInvalidType<"date">;
 }
 
 export const $ZodCoercedDate: base.$constructor<$ZodCoercedDate> =

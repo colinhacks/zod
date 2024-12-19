@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 import * as z from "../src/index.js";
 
@@ -15,7 +16,7 @@ test("nativeEnum test with consts", () => {
   fruitEnum.parse("banana");
   fruitEnum.parse(Fruits.Apple);
   fruitEnum.parse(Fruits.Banana);
-  core.assertEqual<fruitEnum, "apple" | "banana">(true);
+  util.assertEqual<fruitEnum, "apple" | "banana">(true);
 });
 
 test("nativeEnum test with real enum", () => {
@@ -45,7 +46,7 @@ test("nativeEnum test with const with numeric keys", () => {
   fruitEnum.parse(20);
   fruitEnum.parse(FruitValues.Apple);
   fruitEnum.parse(FruitValues.Banana);
-  core.assertEqual<fruitEnum, 10 | 20>(true);
+  util.assertEqual<fruitEnum, 10 | 20>(true);
 });
 
 test("from enum", () => {

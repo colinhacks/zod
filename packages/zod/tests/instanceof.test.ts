@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 import * as z from "../src/index.js";
 
@@ -30,7 +31,7 @@ test("instanceof", async () => {
     /Input not instance of Test/
   );
 
-  core.assertEqual<Test, z.infer<typeof TestSchema>>(true);
+  util.assertEqual<Test, z.infer<typeof TestSchema>>(true);
 });
 
 test("instanceof fatal", () => {

@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 import * as z from "../src/index.js";
 
@@ -16,14 +17,14 @@ const recordWithLiteralKeys = z.record(
 type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
 
 test("type inference", () => {
-  core.assertEqual<booleanRecord, Record<string, boolean>>(true);
+  util.assertEqual<booleanRecord, Record<string, boolean>>(true);
 
-  core.assertEqual<
+  util.assertEqual<
     recordWithEnumKeys,
     Partial<Record<"Tuna" | "Salmon", string>>
   >(true);
 
-  core.assertEqual<
+  util.assertEqual<
     recordWithLiteralKeys,
     Partial<Record<"Tuna" | "Salmon", string>>
   >(true);

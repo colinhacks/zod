@@ -35,7 +35,11 @@ export const $ZodCheckLessThan: base.$constructor<$ZodCheckLessThan> =
     const origin =
       numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
 
-    inst.run2 = (ctx) => {
+    inst["~attach"] = (inst) => {
+      const curr = inst["~computed"].maxSize ?? Number.POSITIVE_INFINITY;
+      if (def.value < curr) inst["~computed"].maxSize = def.value;
+    };
+    inst["~run"] = (ctx) => {
       if (def.inclusive ? ctx.value <= def.value : ctx.value < def.value) {
         return;
       }
@@ -58,11 +62,6 @@ interface $ZodCheckGreaterThanDef extends base.$ZodCheckDef {
   check: "greater_than";
   value: util.Numeric;
   inclusive: boolean;
-  // error?:
-  //   | errors.$ZodErrorMap<
-  //       errors.$ZodIssueTooBig<"number" | "bigint" | "date", util.Numeric>
-  //     >
-  //   | undefined;
 }
 export interface $ZodCheckGreaterThan<T extends util.Numeric = util.Numeric>
   extends base.$ZodCheck<T> {
@@ -76,7 +75,11 @@ export const $ZodCheckGreaterThan: base.$constructor<$ZodCheckGreaterThan> =
     const origin =
       numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
 
-    inst.run2 = (ctx) => {
+    inst["~attach"] = (inst) => {
+      const curr = inst["~computed"].minSize ?? Number.NEGATIVE_INFINITY;
+      if (def.value > curr) inst["~computed"].minSize = def.value;
+    };
+    inst["~run"] = (ctx) => {
       if (def.inclusive ? ctx.value >= def.value : ctx.value > def.value) {
         return;
       }
@@ -124,7 +127,11 @@ export const $ZodCheckMultipleOf: base.$constructor<
 > = base.$constructor("$ZodCheckMultipleOf", (inst, def) => {
   base.$ZodCheck.init(inst, def);
 
-  inst.run2 = (ctx) => {
+  inst["~attach"] = (inst) => {
+    inst["~computed"].multipleOf ??= def.value;
+  };
+
+  inst["~run"] = (ctx) => {
     if (typeof ctx.value !== typeof def.value)
       throw new Error("Cannot mix number and bigint in multiple_of check.");
     const isMultiple =
@@ -148,7 +155,6 @@ export const $ZodCheckMultipleOf: base.$constructor<
 /////////////////////////////////////
 interface $ZodCheckFiniteDef extends base.$ZodCheckDef {
   check: "finite";
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodCheckFinite extends base.$ZodCheck<number> {
@@ -162,7 +168,11 @@ export const $ZodCheckFinite: base.$constructor<$ZodCheckFinite> =
   base.$constructor("$ZodCheckFinite", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~attach"] = (inst) => {
+      inst["~computed"].minSize ??= Number.NEGATIVE_INFINITY;
+      inst["~computed"].maxSize ??= Number.POSITIVE_INFINITY;
+    };
+    inst["~run"] = (ctx) => {
       if (Number.isFinite(ctx.value)) return;
       ctx.issues.push({
         origin: "number",
@@ -224,7 +234,11 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> =
     const origin = isInt ? "int" : "number";
     const [minimum, maximum] = util.NUMBER_FORMAT_RANGES[def.format!];
 
-    inst.run2 = (ctx) => {
+    inst["~attach"] = (inst) => {
+      inst["~computed"].format = def.format;
+    };
+
+    inst["~run"] = (ctx) => {
       const input = ctx.value;
 
       if (isInt && !Number.isInteger(input)) {
@@ -303,7 +317,11 @@ export const $ZodCheckBigIntFormat: base.$constructor<$ZodCheckBigIntFormat> =
 
     const [minimum, maximum] = util.BIGINT_FORMAT_RANGES[def.format!];
 
-    inst.run2 = (ctx) => {
+    inst["~attach"] = (inst) => {
+      inst["~computed"].format = def.format;
+    };
+
+    inst["~run"] = (ctx) => {
       const input = ctx.value;
 
       if (input < minimum) {
@@ -348,14 +366,6 @@ function getSize(input: any): {
 interface $ZodCheckMaxSizeDef extends base.$ZodCheckDef {
   check: "max_size";
   maximum: number;
-  // error?:
-  //   | errors.$ZodErrorMap<
-  //       errors.$ZodIssueTooBig<
-  //         "string" | "array" | "set" | "file",
-  //         util.Sizeable
-  //       >
-  //     >
-  //   | undefined;
 }
 export interface $ZodCheckMaxSize<T extends util.Sizeable = util.Sizeable>
   extends base.$ZodCheck<T> {
@@ -367,7 +377,11 @@ export const $ZodCheckMaxSize: base.$constructor<$ZodCheckMaxSize> =
   base.$constructor("$ZodCheckMaxSize", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~attach"] = (inst) => {
+      inst["~computed"].maxSize ??= def.maximum;
+    };
+
+    inst["~run"] = (ctx) => {
       const size = getSize(ctx.value);
       if (size.size <= def.maximum) return;
       ctx.issues.push({
@@ -405,7 +419,7 @@ export const $ZodCheckMinSize: base.$constructor<$ZodCheckMinSize> =
   base.$constructor("$ZodCheckMinSize", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~run"] = (ctx) => {
       const size = getSize(ctx.value);
       if (size.size >= def.minimum) return;
       ctx.issues.push({
@@ -448,7 +462,7 @@ export const $ZodCheckSizeEquals: base.$constructor<$ZodCheckSizeEquals> =
   base.$constructor("$ZodCheckSizeEquals", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~run"] = (ctx) => {
       const size = getSize(ctx.value);
       if (size.size === def.size) return;
       const tooBig = size.size > def.size;
@@ -485,7 +499,7 @@ export const $ZodCheckStringFormat: base.$constructor<$ZodCheckStringFormat> =
   base.$constructor("$ZodCheckStringFormat", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~run"] = (ctx) => {
       if (!def.pattern) throw new Error("Not implemented.");
       if (def.pattern.test(ctx.value)) return;
       ctx.issues.push({
@@ -534,7 +548,7 @@ export const $ZodCheckJSONString: base.$constructor<$ZodCheckJSONString> =
   base.$constructor("$ZodCheckJSONString", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~run"] = (ctx) => {
       try {
         JSON.parse(ctx.value);
         return;
@@ -606,7 +620,7 @@ export const $ZodCheckIncludes: base.$constructor<$ZodCheckIncludes> =
   base.$constructor("$ZodCheckIncludes", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~run"] = (ctx) => {
       if (ctx.value.includes(def.includes)) return;
       ctx.issues.push({
         origin: "string",
@@ -637,7 +651,7 @@ export const $ZodCheckStartsWith: base.$constructor<$ZodCheckStartsWith> =
   base.$constructor("$ZodCheckStartsWith", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~run"] = (ctx) => {
       if (ctx.value.startsWith(def.prefix)) return;
       ctx.issues.push({
         origin: "string",
@@ -667,7 +681,7 @@ export const $ZodCheckEndsWith: base.$constructor<$ZodCheckEndsWith> =
   base.$constructor("$ZodCheckEndsWith", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~run"] = (ctx) => {
       if (ctx.value.endsWith(def.suffix)) return;
       ctx.issues.push({
         origin: "string",
@@ -715,7 +729,7 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> =
   base.$constructor("$ZodCheckProperty", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~run"] = (ctx) => {
       if (typeof ctx.value !== "object") {
         // invalid_type
         ctx.issues.push({
@@ -759,7 +773,7 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> =
 //   base.$constructor("$ZodCheckFileType", (inst, def) => {
 //     base.$ZodCheck.init(inst, def);
 
-//     inst.run2 = (ctx) => {
+//     inst['~run'] = (ctx) => {
 //       if (def.fileTypes.includes(ctx.value.type as util.MimeTypes)) return;
 //       ctx.issues.push({
 //         origin: "file",
@@ -789,7 +803,7 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> =
 //   base.$constructor("$ZodCheckFileName", (inst, def) => {
 //     base.$ZodCheck.init(inst, def);
 
-//     inst.run2 = (ctx) => {
+//     inst['~run'] = (ctx) => {
 //       if (def.fileName === ctx.value.name) return;
 //       ctx.issues.push({
 //         origin: "file",
@@ -820,7 +834,7 @@ export const $ZodCheckOverwrite: base.$constructor<$ZodCheckOverwrite> =
   base.$constructor("$ZodCheckOverwrite", (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
-    inst.run2 = (ctx) => {
+    inst["~run"] = (ctx) => {
       ctx.value = def.tx(ctx.value);
     };
   });
@@ -840,7 +854,7 @@ export const $ZodCheckOverwrite: base.$constructor<$ZodCheckOverwrite> =
 //   base.$constructor("$ZodCheckTrim", (inst, def) => {
 //     base.$ZodCheck.init(inst, def);
 
-//     inst.run2 = (ctx) => {
+//     inst['~run'] = (ctx) => {
 //       ctx.value = ctx.value.trim();
 //     };
 //   });
@@ -861,7 +875,7 @@ export const $ZodCheckOverwrite: base.$constructor<$ZodCheckOverwrite> =
 //   base.$constructor("$ZodCheckNormalize", (inst, def) => {
 //     base.$ZodCheck.init(inst, def);
 
-//     inst.run2 = (ctx) => {
+//     inst['~run'] = (ctx) => {
 //       ctx.value = ctx.value.normalize();
 //     };
 //   });

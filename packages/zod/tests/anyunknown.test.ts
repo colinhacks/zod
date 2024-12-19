@@ -1,6 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as core from "zod-core";
+import * as util from "zod-core/util";
+
 import * as z from "../src/index.js";
 
 test("check any inference", () => {
@@ -8,7 +9,7 @@ test("check any inference", () => {
   t1.optional();
   t1.nullable();
   type t1 = z.infer<typeof t1>;
-  core.assertEqual<t1, any>(true);
+  util.assertEqual<t1, any>(true);
 });
 
 test("check unknown inference", () => {
@@ -16,7 +17,7 @@ test("check unknown inference", () => {
   t1.optional();
   t1.nullable();
   type t1 = z.infer<typeof t1>;
-  core.assertEqual<t1, unknown>(true);
+  util.assertEqual<t1, unknown>(true);
 });
 
 test("check never inference", () => {

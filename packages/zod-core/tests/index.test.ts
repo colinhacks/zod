@@ -360,6 +360,10 @@ test("z.tuple", () => {
 
   expect(() => z.parse(b, ["hello", 123, 123])).toThrow();
   expect(() => z.parse(b, ["hello", 123, "world", 123])).toThrow();
+
+  // tuple with readonly args
+  const cArgs = [z.string(), z.number(), z.optional(z.string())] as const;
+  const c = z.tuple(cArgs, z.boolean());
 });
 
 test("z.record", () => {
@@ -481,6 +485,28 @@ test("z.enum", () => {
   expect((a.enum as any).D).toEqual(undefined);
 });
 
+test("z.enum - native", () => {
+  enum NativeEnum {
+    A = "A",
+    B = "B",
+    C = "C",
+  }
+  const a = z.enum(NativeEnum);
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<NativeEnum>();
+  expect(z.parse(a, NativeEnum.A)).toEqual(NativeEnum.A);
+  expect(z.parse(a, NativeEnum.B)).toEqual(NativeEnum.B);
+  expect(z.parse(a, NativeEnum.C)).toEqual(NativeEnum.C);
+  expect(() => z.parse(a, "D")).toThrow();
+  expect(() => z.parse(a, 123)).toThrow();
+
+  // test a.enum
+  a;
+  expect(a.enum.A).toEqual(NativeEnum.A);
+  expect(a.enum.B).toEqual(NativeEnum.B);
+  expect(a.enum.C).toEqual(NativeEnum.C);
+});
+
 test("z.nativeEnum", () => {
   enum NativeEnum {
     A = "A",
@@ -597,6 +623,12 @@ test("z.catch", () => {
   const b = z.catch(z.string(), () => "default");
   expect(z.parse(b, "hello")).toEqual("hello");
   expect(z.parse(b, 123)).toEqual("default");
+
+  const c = z.catch(z.string(), (ctx) => {
+    console.log(ctx);
+    return `${ctx.error.issues.length}issues`;
+  });
+  expect(z.parse(c, 1234)).toEqual("1issues");
 });
 
 test("z.nan", () => {
@@ -688,13 +720,11 @@ test("z.custom", () => {
   expect(() => z.parse(b, "hi")).toThrow();
 });
 
-test("z._custom", () => {
+test("z.check", () => {
   // this is a more flexible version of z.custom that accepts an arbitrary ~typecheck logic
   // the function should return base.$ZodResult
-  const a = z._custom<string>((ctx) => {
-    if (typeof ctx.value === "string") {
-      return;
-    }
+  const a = z.check<string>((ctx) => {
+    if (typeof ctx.value === "string") return;
     ctx.issues.push({
       code: "custom",
       origin: "custom",
@@ -804,8 +834,8 @@ test("z.json", () => {
   expect(() => z.parse(a, { a: undefined })).toThrow();
 });
 
-test("z.envbool", () => {
-  const a = z.envbool();
+test("z.stringbool", () => {
+  const a = z.stringbool();
 
   expect(z.parse(a, "true")).toEqual(true);
   expect(z.parse(a, "yes")).toEqual(true);
@@ -830,7 +860,7 @@ test("z.envbool", () => {
   expect(z.safeParse(a, true)).toMatchObject({ success: false });
   expect(z.safeParse(a, false)).toMatchObject({ success: false });
 
-  const b = z.envbool({
+  const b = z.stringbool({
     true: ["y"],
     false: ["n"],
   });
@@ -839,9 +869,27 @@ test("z.envbool", () => {
   expect(z.safeParse(b, "true")).toMatchObject({ success: false });
   expect(z.safeParse(b, "false")).toMatchObject({ success: false });
 
-  const c = z.envbool({
+  const c = z.stringbool({
     case: "sensitive",
   });
   expect(z.parse(c, "true")).toEqual(true);
   expect(z.safeParse(c, "TRUE")).toMatchObject({ success: false });
+});
+
+// promise
+test("z.promise", async () => {
+  const a = z.promise(z.string());
+  type a = z.output<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<string>();
+
+  expect(await z.safeParseAsync(a, Promise.resolve("hello"))).toMatchObject({
+    success: true,
+    data: "hello",
+  });
+  expect(await z.safeParseAsync(a, Promise.resolve(123))).toMatchObject({
+    success: false,
+  });
+
+  const b = z.string();
+  expect(() => z.parse(b, Promise.resolve("hello"))).toThrow();
 });

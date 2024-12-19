@@ -200,7 +200,7 @@ test("union async parse", async () => {
 });
 
 /// record
-const recordSchema = z.record(z.object({}));
+const recordSchema = z.record(z.string(), z.object({}));
 test("record async parse", async () => {
   const goodData = { adsf: {}, asdf: {} };
   const badData = [{}];

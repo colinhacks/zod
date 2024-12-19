@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 import * as z from "../src/index.js";
 
@@ -24,7 +25,7 @@ test("parsed function fail 2", () => {
 
 test("function inference 1", () => {
   type func1 = z.TypeOf<typeof func1>;
-  core.assertEqual<func1, (k: string) => number>(true);
+  util.assertEqual<func1, (k: string) => number>(true);
 });
 
 test("method parsing", () => {
@@ -60,15 +61,15 @@ test("async method parsing", async () => {
 test("args method", () => {
   const t1 = z.function();
   type t1 = z.infer<typeof t1>;
-  core.assertEqual<t1, (...args_1: unknown[]) => unknown>(true);
+  util.assertEqual<t1, (...args_1: unknown[]) => unknown>(true);
 
   const t2 = t1.args(z.string());
   type t2 = z.infer<typeof t2>;
-  core.assertEqual<t2, (arg: string, ...args_1: unknown[]) => unknown>(true);
+  util.assertEqual<t2, (arg: string, ...args_1: unknown[]) => unknown>(true);
 
   const t3 = t2.returns(z.boolean());
   type t3 = z.infer<typeof t3>;
-  core.assertEqual<t3, (arg: string, ...args_1: unknown[]) => boolean>(true);
+  util.assertEqual<t3, (arg: string, ...args_1: unknown[]) => boolean>(true);
 });
 
 const args2 = z.tuple([
@@ -84,7 +85,7 @@ const func2 = z.function(args2, returns2);
 
 test("function inference 2", () => {
   type func2 = z.TypeOf<typeof func2>;
-  core.assertEqual<
+  util.assertEqual<
     func2,
     (arg: {
       f1: number;
@@ -247,7 +248,7 @@ test("inference with transforms", () => {
   });
   myFunc("asdf");
 
-  core.assertEqual<
+  util.assertEqual<
     typeof myFunc,
     (arg: string, ...args_1: unknown[]) => { val: number; extra: string }
   >(true);
@@ -263,7 +264,7 @@ test("fallback to OuterTypeOfFunction", () => {
     return { arg: val, arg2: false };
   });
 
-  core.assertEqual<
+  util.assertEqual<
     typeof myFunc,
     (arg: string, ...args_1: unknown[]) => number
   >(true);

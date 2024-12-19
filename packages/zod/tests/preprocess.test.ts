@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 import * as z from "../src/index.js";
 
@@ -8,7 +9,7 @@ test("preprocess", () => {
 
   const value = schema.parse("asdf");
   expect(value).toEqual(["asdf"]);
-  core.assertEqual<(typeof schema)["~input"], unknown>(true);
+  util.assertEqual<(typeof schema)["~input"], unknown>(true);
 });
 
 test("async preprocess", async () => {
@@ -141,7 +142,7 @@ test("z.NEVER in preprocess", () => {
   }, z.number());
 
   type foo = z.infer<typeof foo>;
-  core.assertEqual<foo, number>(true);
+  util.assertEqual<foo, number>(true);
   const arg = foo.safeParse(undefined);
   if (!arg.success) {
     expect(arg.error.issues[0].message).toEqual("bad");

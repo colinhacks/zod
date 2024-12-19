@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 import * as z from "../src/index.js";
 import { Mocker } from "./Mocker.js";
@@ -136,7 +137,7 @@ test("literal bigint object", () => {
 });
 
 test("literal symbol", () => {
-  core.assertEqual<z.infer<typeof literalSymbolSchema>, typeof MySymbol>(true);
+  util.assertEqual<z.infer<typeof literalSymbolSchema>, typeof MySymbol>(true);
   literalSymbolSchema.parse(MySymbol);
   expect(() => literalSymbolSchema.parse(Symbol("asdf"))).toThrow();
 });
@@ -374,43 +375,43 @@ test("parse nullSchema null", () => {
 });
 
 test("primitive inference", () => {
-  core.assertEqual<z.TypeOf<typeof literalStringSchema>, "asdf">(true);
-  core.assertEqual<z.TypeOf<typeof literalNumberSchema>, 12>(true);
-  core.assertEqual<z.TypeOf<typeof literalBooleanSchema>, true>(true);
-  core.assertEqual<z.TypeOf<typeof literalBigIntSchema>, bigint>(true);
-  core.assertEqual<z.TypeOf<typeof stringSchema>, string>(true);
-  core.assertEqual<z.TypeOf<typeof numberSchema>, number>(true);
-  core.assertEqual<z.TypeOf<typeof bigintSchema>, bigint>(true);
-  core.assertEqual<z.TypeOf<typeof booleanSchema>, boolean>(true);
-  core.assertEqual<z.TypeOf<typeof dateSchema>, Date>(true);
-  core.assertEqual<z.TypeOf<typeof symbolSchema>, symbol>(true);
+  util.assertEqual<z.TypeOf<typeof literalStringSchema>, "asdf">(true);
+  util.assertEqual<z.TypeOf<typeof literalNumberSchema>, 12>(true);
+  util.assertEqual<z.TypeOf<typeof literalBooleanSchema>, true>(true);
+  util.assertEqual<z.TypeOf<typeof literalBigIntSchema>, bigint>(true);
+  util.assertEqual<z.TypeOf<typeof stringSchema>, string>(true);
+  util.assertEqual<z.TypeOf<typeof numberSchema>, number>(true);
+  util.assertEqual<z.TypeOf<typeof bigintSchema>, bigint>(true);
+  util.assertEqual<z.TypeOf<typeof booleanSchema>, boolean>(true);
+  util.assertEqual<z.TypeOf<typeof dateSchema>, Date>(true);
+  util.assertEqual<z.TypeOf<typeof symbolSchema>, symbol>(true);
 
-  core.assertEqual<z.TypeOf<typeof nullSchema>, null>(true);
-  core.assertEqual<z.TypeOf<typeof undefinedSchema>, undefined>(true);
-  core.assertEqual<z.TypeOf<typeof stringSchemaOptional>, string | undefined>(
+  util.assertEqual<z.TypeOf<typeof nullSchema>, null>(true);
+  util.assertEqual<z.TypeOf<typeof undefinedSchema>, undefined>(true);
+  util.assertEqual<z.TypeOf<typeof stringSchemaOptional>, string | undefined>(
     true
   );
-  core.assertEqual<z.TypeOf<typeof stringSchemaNullable>, string | null>(true);
-  core.assertEqual<z.TypeOf<typeof numberSchemaOptional>, number | undefined>(
+  util.assertEqual<z.TypeOf<typeof stringSchemaNullable>, string | null>(true);
+  util.assertEqual<z.TypeOf<typeof numberSchemaOptional>, number | undefined>(
     true
   );
-  core.assertEqual<z.TypeOf<typeof numberSchemaNullable>, number | null>(true);
-  core.assertEqual<z.TypeOf<typeof bigintSchemaOptional>, bigint | undefined>(
+  util.assertEqual<z.TypeOf<typeof numberSchemaNullable>, number | null>(true);
+  util.assertEqual<z.TypeOf<typeof bigintSchemaOptional>, bigint | undefined>(
     true
   );
-  core.assertEqual<z.TypeOf<typeof bigintSchemaNullable>, bigint | null>(true);
-  core.assertEqual<z.TypeOf<typeof booleanSchemaOptional>, boolean | undefined>(
+  util.assertEqual<z.TypeOf<typeof bigintSchemaNullable>, bigint | null>(true);
+  util.assertEqual<z.TypeOf<typeof booleanSchemaOptional>, boolean | undefined>(
     true
   );
-  core.assertEqual<z.TypeOf<typeof booleanSchemaNullable>, boolean | null>(
+  util.assertEqual<z.TypeOf<typeof booleanSchemaNullable>, boolean | null>(
     true
   );
-  core.assertEqual<z.TypeOf<typeof dateSchemaOptional>, Date | undefined>(true);
-  core.assertEqual<z.TypeOf<typeof dateSchemaNullable>, Date | null>(true);
-  core.assertEqual<z.TypeOf<typeof symbolSchemaOptional>, symbol | undefined>(
+  util.assertEqual<z.TypeOf<typeof dateSchemaOptional>, Date | undefined>(true);
+  util.assertEqual<z.TypeOf<typeof dateSchemaNullable>, Date | null>(true);
+  util.assertEqual<z.TypeOf<typeof symbolSchemaOptional>, symbol | undefined>(
     true
   );
-  core.assertEqual<z.TypeOf<typeof symbolSchemaNullable>, symbol | null>(true);
+  util.assertEqual<z.TypeOf<typeof symbolSchemaNullable>, symbol | null>(true);
 
   // [
   //   literalStringSchemaTest,

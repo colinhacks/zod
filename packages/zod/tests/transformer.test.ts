@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 import * as z from "../src/index.js";
 
@@ -92,7 +93,7 @@ test("z.NEVER in transform", () => {
       return val;
     });
   type foo = z.infer<typeof foo>;
-  core.assertEqual<foo, number>(true);
+  util.assertEqual<foo, number>(true);
   const arg = foo.safeParse(undefined);
   if (!arg.success) {
     expect(arg.error.issues[0].message).toEqual("bad");
@@ -184,8 +185,8 @@ test("object typing", () => {
   type t1 = z.input<typeof t1>;
   type t2 = z.output<typeof t1>;
 
-  core.assertEqual<t1, { stringToNumber: string }>(true);
-  core.assertEqual<t2, { stringToNumber: number }>(true);
+  util.assertEqual<t1, { stringToNumber: string }>(true);
+  util.assertEqual<t2, { stringToNumber: number }>(true);
 });
 
 test("transform method overloads", () => {

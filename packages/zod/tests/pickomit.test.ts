@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 import * as z from "../src/index.js";
 
@@ -12,7 +13,7 @@ const fish = z.object({
 test("pick type inference", () => {
   const nameonlyFish = fish.pick({ name: true });
   type nameonlyFish = z.infer<typeof nameonlyFish>;
-  core.assertEqual<nameonlyFish, { name: string }>(true);
+  util.assertEqual<nameonlyFish, { name: string }>(true);
 });
 
 test("pick parse - success", () => {
@@ -48,7 +49,7 @@ test("omit type inference", () => {
   const nonameFish = fish.omit({ name: true });
   type nonameFish = z.infer<typeof nonameFish>;
   // biome-ignore lint/complexity/noBannedTypes:
-  core.assertEqual<nonameFish, { age: number; nested: {} }>(true);
+  util.assertEqual<nonameFish, { age: number; nested: {} }>(true);
 });
 
 test("omit parse - success", () => {
@@ -79,7 +80,7 @@ test("omit parse - fail", () => {
 test("nonstrict inference", () => {
   const laxfish = fish.pick({ name: true }).catchall(z.any());
   type laxfish = z.infer<typeof laxfish>;
-  core.assertEqual<laxfish, { name: string } & { [k: string]: any }>(true);
+  util.assertEqual<laxfish, { name: string } & { [k: string]: any }>(true);
 });
 
 test("nonstrict parsing - pass", () => {

@@ -116,6 +116,7 @@ test("z.interface one to many", () => {
       return z.array(D);
     },
   });
+
   const D = z.interface({
     age: z.number(),
     get c() {
@@ -136,6 +137,34 @@ test("z.interface one to many", () => {
   expectTypeOf<(typeof C)["~def"]["shape"]>().toEqualTypeOf<z.$ZodShape>();
   expectTypeOf<(typeof C)["~output"]>().toEqualTypeOf<_C>();
   expectTypeOf<(typeof D)["~output"]["c"]["d"][number]>().toEqualTypeOf<_D>();
+});
+
+test("z.interface many to many", () => {
+  const E = z.interface({
+    name: z.string(),
+    get f() {
+      return z.array(F);
+    },
+  });
+
+  const F = z.interface({
+    age: z.number(),
+    get e() {
+      return z.array(E);
+    },
+  });
+
+  interface _E {
+    name: string;
+    f: _F[];
+  }
+  interface _F {
+    age: number;
+    e: _E[];
+  }
+
+  expectTypeOf<(typeof E)["~output"]>().toEqualTypeOf<_E>();
+  expectTypeOf<(typeof F)["~output"]["e"][number]>().toEqualTypeOf<_E>();
 });
 
 test("z.interface self recursive", () => {

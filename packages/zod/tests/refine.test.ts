@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 import * as z from "../src/index.js";
 
@@ -54,11 +55,11 @@ test("refinement type guard", () => {
   type Input = z.input<typeof validationSchema>;
   type Schema = z.infer<typeof validationSchema>;
 
-  core.assertEqual<"a", Input["a"]>(false);
-  core.assertEqual<string, Input["a"]>(true);
+  util.assertEqual<"a", Input["a"]>(false);
+  util.assertEqual<string, Input["a"]>(true);
 
-  core.assertEqual<"a", Schema["a"]>(true);
-  core.assertEqual<string, Schema["a"]>(false);
+  util.assertEqual<"a", Schema["a"]>(true);
+  util.assertEqual<string, Schema["a"]>(false);
 });
 
 test("refinement Promise", async () => {
@@ -179,7 +180,7 @@ test("superRefine - type narrowing", () => {
       return true;
     });
 
-  core.assertEqual<z.infer<typeof schema>, NarrowType>(true);
+  util.assertEqual<z.infer<typeof schema>, NarrowType>(true);
 
   expect(schema.safeParse({ type: "test", age: 0 }).success).toEqual(true);
   expect(schema.safeParse(null).success).toEqual(false);
@@ -198,7 +199,7 @@ test("chained mixed refining types", () => {
     .nullable()
     .refine((arg): arg is firstRefinement => !!arg?.third)
     .superRefine((arg, ctx): arg is secondRefinement => {
-      core.assertEqual<typeof arg, firstRefinement>(true);
+      util.assertEqual<typeof arg, firstRefinement>(true);
       if (arg.first !== "bob") {
         ctx.addIssue({
           input: arg,
@@ -210,11 +211,11 @@ test("chained mixed refining types", () => {
       return true;
     })
     .refine((arg): arg is thirdRefinement => {
-      core.assertEqual<typeof arg, secondRefinement>(true);
+      util.assertEqual<typeof arg, secondRefinement>(true);
       return arg.second === 33;
     });
 
-  core.assertEqual<z.infer<typeof schema>, thirdRefinement>(true);
+  util.assertEqual<z.infer<typeof schema>, thirdRefinement>(true);
 });
 
 test("get inner type", () => {

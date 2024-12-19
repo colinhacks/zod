@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 
 import { z } from "../src/index.js";
@@ -47,9 +48,9 @@ test("catch with transform", () => {
   );
 
   type inp = z.input<typeof stringWithDefault>;
-  core.assertEqual<inp, unknown>(true);
+  util.assertEqual<inp, unknown>(true);
   type out = z.output<typeof stringWithDefault>;
-  core.assertEqual<out, string>(true);
+  util.assertEqual<out, string>(true);
 });
 
 test("catch on existing optional", () => {
@@ -63,18 +64,18 @@ test("catch on existing optional", () => {
   );
 
   type inp = z.input<typeof stringWithDefault>;
-  core.assertEqual<inp, unknown>(true);
+  util.assertEqual<inp, unknown>(true);
   type out = z.output<typeof stringWithDefault>;
-  core.assertEqual<out, string | undefined>(true);
+  util.assertEqual<out, string | undefined>(true);
 });
 
 test("optional on catch", () => {
   const stringWithDefault = z.string().catch("asdf").optional();
 
   type inp = z.input<typeof stringWithDefault>;
-  core.assertEqual<inp, unknown>(true);
+  util.assertEqual<inp, unknown>(true);
   type out = z.output<typeof stringWithDefault>;
-  core.assertEqual<out, string | undefined>(true);
+  util.assertEqual<out, string | undefined>(true);
 });
 
 test("complex chain example", () => {
@@ -97,7 +98,7 @@ test("removeCatch", () => {
   const stringWithRemovedDefault = z.string().catch("asdf").removeCatch();
 
   type out = z.output<typeof stringWithRemovedDefault>;
-  core.assertEqual<out, string>(true);
+  util.assertEqual<out, string>(true);
 });
 
 test("nested", () => {
@@ -106,9 +107,9 @@ test("nested", () => {
     inner: "asdf",
   });
   type input = z.input<typeof outer>;
-  core.assertEqual<input, unknown>(true);
+  util.assertEqual<input, unknown>(true);
   type out = z.output<typeof outer>;
-  core.assertEqual<out, { inner: string }>(true);
+  util.assertEqual<out, { inner: string }>(true);
   expect(outer.parse(undefined)).toEqual({ inner: "asdf" });
   expect(outer.parse({})).toEqual({ inner: "asdf" });
   expect(outer.parse({ inner: undefined })).toEqual({ inner: "asdf" });

@@ -1,6 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as core from "zod-core";
+import * as util from "zod-core/util";
 import * as z from "../src/index.js";
 
 test("type guard", () => {
@@ -14,7 +14,7 @@ test("type guard", () => {
   const data = { stringToNumber: "asdf" };
   const parsed = s1.safeParse(data);
   if (parsed.success) {
-    core.assertEqual<typeof data, t1>(true);
+    util.assertEqual<typeof data, t1>(true);
   }
 });
 

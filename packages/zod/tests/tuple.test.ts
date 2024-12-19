@@ -1,5 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
+import * as util from "zod-core/util";
 import * as core from "zod-core";
 import { ZodError } from "zod-core";
 import * as z from "../src/index.js";
@@ -17,7 +18,7 @@ test("tuple inference", () => {
   const returns1 = z.number();
   const func1 = z.function(args1, returns1);
   type func1 = z.TypeOf<typeof func1>;
-  core.assertEqual<func1, (k: string) => number>(true);
+  util.assertEqual<func1, (k: string) => number>(true);
 });
 
 test("successful validation", () => {
@@ -63,9 +64,9 @@ test("tuple with transformers", () => {
   const val = z.tuple([stringToNumber]);
 
   type t1 = z.input<typeof val>;
-  core.assertEqual<t1, [string]>(true);
+  util.assertEqual<t1, [string]>(true);
   type t2 = z.output<typeof val>;
-  core.assertEqual<t2, [number]>(true);
+  util.assertEqual<t2, [number]>(true);
   expect(val.parse(["1234"])).toEqual([4]);
 });
 
@@ -84,7 +85,7 @@ test("tuple with rest schema", () => {
   expect(() => myTuple.parse(["asdf", 1234, "asdf"])).toThrow();
   type t1 = z.output<typeof myTuple>;
 
-  core.assertEqual<t1, [string, number, ...boolean[]]>(true);
+  util.assertEqual<t1, [string, number, ...boolean[]]>(true);
 });
 
 test("parse should fail given sparse array as tuple", () => {
