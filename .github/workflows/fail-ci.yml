@@ -1,0 +1,24 @@
+name: Fail CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  fail-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Wait for 1 minute
+        run: sleep 60
+
+      - name: Intentionally fail
+        run: |
+          echo "This CI is designed to fail after 1 minute."
+          exit 1
