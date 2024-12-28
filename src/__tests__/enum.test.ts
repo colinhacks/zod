@@ -87,3 +87,62 @@ test("readonly in ZodEnumDef", () => {
   let _t!: z.ZodEnumDef<readonly ["a", "b"]>;
   _t;
 });
+
+test("enum parsing works after cloning", () => {
+  function deepClone(value: any) {
+    // Handle null and undefined
+    if (value == null) {
+      return value;
+    }
+  
+    // Get the constructor and prototype
+    const constructor = Object.getPrototypeOf(value).constructor;
+  
+    // Handle primitive wrappers
+    if ([Boolean, Number, String].includes(constructor)) {
+      return new constructor(value);
+    }
+  
+    // Handle Date objects
+    if (constructor === Date) {
+      return new Date(value.getTime());
+    }
+  
+    // Handle Arrays
+    if (constructor === Array) {
+      return value.map((item: any) => deepClone(item));
+    }
+  
+    // Handle basic RegExp
+    if (constructor === RegExp) {
+      return new RegExp(value.source, value.flags);
+    }
+  
+    // Handle Objects (including custom classes)
+    if (typeof value === 'object') {
+      // Create new instance while preserving the prototype chain
+      const cloned = Object.create(Object.getPrototypeOf(value));
+      
+      // Clone own properties
+      const descriptors = Object.getOwnPropertyDescriptors(value);
+      for (const [key, descriptor] of Object.entries(descriptors)) {
+        if (descriptor.value !== undefined) {
+          descriptor.value = deepClone(descriptor.value);
+        }
+        Object.defineProperty(cloned, key, descriptor);
+      }
+  
+      return cloned;
+    }
+  
+    // Return primitives and functions as is
+    return value;
+  }
+  
+  const schema = {
+    mood: z.enum(["happy", "sad", "neutral", "feisty"]),
+  };
+  z.object(schema).safeParse({ mood: "feisty" }); //Sanity check before cloning
+  const clonedDeep2 = deepClone(schema);
+  z.object(clonedDeep2).safeParse({ mood: "feisty" }); 
+});
