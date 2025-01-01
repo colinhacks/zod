@@ -65,11 +65,6 @@ export interface $ZodCoercedNumber
     base.$ZodType<number, unknown> {
   "~def": $ZodCoercedNumberDef;
   "~isst": errors.$ZodIssueInvalidType<"number">;
-  "~computed": {
-    minimum?: number | bigint;
-    maximum?: number | bigint;
-    multiple_of?: number;
-  };
 }
 
 export const $ZodCoercedNumber: base.$constructor<$ZodCoercedNumber> =

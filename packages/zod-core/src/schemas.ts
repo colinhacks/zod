@@ -25,11 +25,6 @@ export interface $ZodString<Input = unknown>
 
   "~def": $ZodStringDef;
   "~isst": errors.$ZodIssueInvalidType;
-  "~computed": {
-    format?: string;
-    minSize?: number;
-    maxSize?: number;
-  };
 }
 
 export const $ZodString: base.$constructor<$ZodString> =
@@ -100,8 +95,8 @@ export interface $ZodGUID extends $ZodStringFormat {
 
 export const $ZodGUID: base.$constructor<$ZodGUID> =
   /*@__PURE__*/ base.$constructor("$ZodGUID", (inst, def): void => {
+    def.pattern ??= regexes.guidRegex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.guidRegex;
   });
 
 //////////////////////////////   ZodUUID   //////////////////////////////
@@ -115,8 +110,8 @@ export interface $ZodUUID extends $ZodStringFormat {
 
 export const $ZodUUID: base.$constructor<$ZodUUID> =
   /*@__PURE__*/ base.$constructor("$ZodUUID", (inst, def): void => {
+    def.pattern ??= regexes.uuidRegex(def.version);
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.uuidRegex(def.version);
   });
 
 //////////////////////////////   ZodEmail   //////////////////////////////
@@ -128,8 +123,8 @@ export interface $ZodEmail extends $ZodStringFormat {
 
 export const $ZodEmail: base.$constructor<$ZodEmail> =
   /*@__PURE__*/ base.$constructor("$ZodEmail", (inst, def): void => {
+    def.pattern ??= regexes.emailRegex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.emailRegex;
   });
 
 //////////////////////////////   ZodURL   //////////////////////////////
@@ -167,8 +162,8 @@ export interface $ZodEmoji extends $ZodStringFormat {
 
 export const $ZodEmoji: base.$constructor<$ZodEmoji> =
   /*@__PURE__*/ base.$constructor("$ZodEmoji", (inst, def): void => {
+    def.pattern ??= regexes.emojiRegex();
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.emojiRegex();
   });
 
 //////////////////////////////   ZodNanoID   //////////////////////////////
@@ -181,8 +176,8 @@ export interface $ZodNanoID extends $ZodStringFormat {
 
 export const $ZodNanoID: base.$constructor<$ZodNanoID> =
   /*@__PURE__*/ base.$constructor("$ZodNanoID", (inst, def): void => {
+    def.pattern ??= regexes.nanoidRegex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.nanoidRegex;
   });
 
 //////////////////////////////   ZodCUID   //////////////////////////////
@@ -194,8 +189,8 @@ export interface $ZodCUID extends $ZodStringFormat {
 
 export const $ZodCUID: base.$constructor<$ZodCUID> =
   /*@__PURE__*/ base.$constructor("$ZodCUID", (inst, def): void => {
+    def.pattern ??= regexes.cuidRegex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.cuidRegex;
   });
 
 //////////////////////////////   ZodCUID2   //////////////////////////////
@@ -207,8 +202,8 @@ export interface $ZodCUID2 extends $ZodStringFormat {
 
 export const $ZodCUID2: base.$constructor<$ZodCUID2> =
   /*@__PURE__*/ base.$constructor("$ZodCUID2", (inst, def): void => {
+    def.pattern ??= regexes.cuid2Regex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.cuid2Regex;
   });
 
 //////////////////////////////   ZodULID   //////////////////////////////
@@ -220,8 +215,8 @@ export interface $ZodULID extends $ZodStringFormat {
 
 export const $ZodULID: base.$constructor<$ZodULID> =
   /*@__PURE__*/ base.$constructor("$ZodULID", (inst, def): void => {
+    def.pattern ??= regexes.ulidRegex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.ulidRegex;
   });
 
 //////////////////////////////   ZodXID   //////////////////////////////
@@ -233,8 +228,8 @@ export interface $ZodXID extends $ZodStringFormat {
 
 export const $ZodXID: base.$constructor<$ZodXID> =
   /*@__PURE__*/ base.$constructor("$ZodXID", (inst, def): void => {
+    def.pattern ??= regexes.xidRegex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.xidRegex;
   });
 
 //////////////////////////////   ZodKSUID   //////////////////////////////
@@ -246,8 +241,8 @@ export interface $ZodKSUID extends $ZodStringFormat {
 
 export const $ZodKSUID: base.$constructor<$ZodKSUID> =
   /*@__PURE__*/ base.$constructor("$ZodKSUID", (inst, def): void => {
+    def.pattern ??= regexes.ksuidRegex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.ksuidRegex;
   });
 
 //////////////////////////////   ZodISODateTime   //////////////////////////////
@@ -264,8 +259,8 @@ export interface $ZodISODateTime extends $ZodStringFormat {
 
 export const $ZodISODateTime: base.$constructor<$ZodISODateTime> =
   /*@__PURE__*/ base.$constructor("$ZodISODateTime", (inst, def): void => {
+    def.pattern ??= regexes.datetimeRegex(def);
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.datetimeRegex(inst["~def"]);
   });
 
 //////////////////////////////   ZodISODate   //////////////////////////////
@@ -277,8 +272,8 @@ export interface $ZodISODate extends $ZodStringFormat {
 
 export const $ZodISODate: base.$constructor<$ZodISODate> =
   /*@__PURE__*/ base.$constructor("$ZodISODate", (inst, def): void => {
+    def.pattern ??= regexes.dateRegex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.dateRegex;
   });
 
 //////////////////////////////   ZodISOTime   //////////////////////////////
@@ -294,8 +289,8 @@ export interface $ZodISOTime extends $ZodStringFormat {
 
 export const $ZodISOTime: base.$constructor<$ZodISOTime> =
   /*@__PURE__*/ base.$constructor("$ZodISOTime", (inst, def): void => {
+    def.pattern ??= regexes.timeRegex(def);
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.timeRegex(inst["~def"]);
   });
 
 //////////////////////////////   ZodISODuration   //////////////////////////////
@@ -307,8 +302,8 @@ export interface $ZodISODuration extends $ZodStringFormat {
 
 export const $ZodISODuration: base.$constructor<$ZodISODuration> =
   /*@__PURE__*/ base.$constructor("$ZodISODuration", (inst, def): void => {
+    def.pattern ??= regexes.durationRegex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.durationRegex;
   });
 
 //////////////////////////////   ZodIP   //////////////////////////////
@@ -322,10 +317,10 @@ export interface $ZodIP extends $ZodStringFormat {
 
 export const $ZodIP: base.$constructor<$ZodIP> =
   /*@__PURE__*/ base.$constructor("$ZodIP", (inst, def): void => {
+    if (def.version === 4) def.pattern ??= regexes.ipv4Regex;
+    else if (def.version === 6) def.pattern ??= regexes.ipv6Regex;
+    else def.pattern ??= regexes.ipRegex;
     $ZodStringFormat.init(inst, def);
-    if (def.version === 4) def.pattern = regexes.ipv4Regex;
-    else if (def.version === 6) def.pattern = regexes.ipv6Regex;
-    else def.pattern = regexes.ipRegex;
   });
 
 //////////////////////////////   ZodBase64   //////////////////////////////
@@ -337,8 +332,8 @@ export interface $ZodBase64 extends $ZodStringFormat {
 
 export const $ZodBase64: base.$constructor<$ZodBase64> =
   /*@__PURE__*/ base.$constructor("$ZodBase64", (inst, def): void => {
+    def.pattern ??= regexes.base64Regex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.base64Regex;
   });
 
 //////////////////////////////   ZodJSONString   //////////////////////////////
@@ -376,8 +371,8 @@ export interface $ZodE164 extends $ZodStringFormat {
 
 export const $ZodE164: base.$constructor<$ZodE164> =
   /*@__PURE__*/ base.$constructor("$ZodE164", (inst, def): void => {
+    def.pattern ??= regexes.e164Regex;
     $ZodStringFormat.init(inst, def);
-    def.pattern = regexes.e164Regex;
   });
 
 //////////////////////////////   ZodJWT   //////////////////////////////
@@ -444,11 +439,6 @@ export interface $ZodNumber<T = unknown> extends base.$ZodType<number, T> {
   "~pattern": RegExp;
 
   "~def": $ZodNumberDef;
-  "~computed": {
-    minimum?: number | bigint;
-    maximum?: number | bigint;
-    multiple_of?: number;
-  };
   "~isst": errors.$ZodIssueInvalidType<"number">;
 }
 
@@ -827,6 +817,7 @@ export const $ZodNever: base.$constructor<$ZodNever> =
 ////////////////////////////////////////
 
 export interface $ZodVoidDef extends base.$ZodTypeDef {
+  type: "void";
   // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
@@ -1041,9 +1032,9 @@ export type $ZodShape = {
 
 export interface $ZodObjectLikeDef<Shape extends $ZodShape = $ZodShape>
   extends base.$ZodTypeDef {
-  type: "object";
+  type: "object" | "interface";
+  // mode: "object" | "interface";
   shape: Shape;
-  // qout: Set<PropertyKey>;
   catchall?: base.$ZodType | undefined;
 }
 
@@ -1090,10 +1081,10 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> =
     });
 
     const _computed = util.cached(() => {
-      if (inst["~traits"].has("$ZodInterface")) {
+      if (def.type === "interface") {
         const shape = util.cleanInterfaceShape(def.shape);
         const shapeKeySet = new Set(Reflect.ownKeys(shape));
-        const shapeKeys = Reflect.ownKeys(def.shape);
+        const shapeKeys = Reflect.ownKeys(shape);
         return {
           shape,
           shapeKeys,
@@ -1101,8 +1092,7 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> =
           optionals: util.optionalInterfaceKeys(def.shape),
         };
       }
-
-      if (inst["~traits"].has("$ZodObject")) {
+      if (def.type === "object") {
         const shapeKeySet: Set<string | symbol> = new Set(
           Reflect.ownKeys(def.shape)
         );
@@ -1114,12 +1104,12 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> =
           optionals: util.optionalObjectKeys(def.shape),
         };
       }
-
       throw new Error("Invalid object-like type");
     });
 
     inst["~typecheck"] = (input: unknown, ctx) => {
       const { shape, shapeKeys, shapeKeySet, optionals } = _computed.value;
+
       if (!util.isPlainObject(input)) {
         return base.$fail(
           [
@@ -1222,11 +1212,14 @@ export type $InferInterfaceInput<T extends $ZodRawShape> = util.Flatten<
   }
 >;
 
+export interface $ZodInterfaceDef extends $ZodObjectLikeDef {
+  type: "interface";
+}
 export interface $ZodInterface<
   O extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
   I extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
 > extends $ZodObjectLike<O, I> {
-  "~def": $ZodObjectLikeDef;
+  "~def": $ZodInterfaceDef;
   "~subtype": "interface";
 }
 
@@ -1271,9 +1264,13 @@ export type RequiredInProps<T extends $ZodShape> = {
 export type $InferObjectInput<T extends $ZodShape> = OptionalInProps<T> &
   RequiredInProps<T>;
 
+export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape>
+  extends $ZodObjectLikeDef<Shape> {
+  type: "object";
+}
 export interface $ZodObject<Shape extends $ZodShape = $ZodShape>
   extends $ZodObjectLike<$InferObjectOutput<Shape>, $InferObjectInput<Shape>> {
-  "~def": $ZodObjectLikeDef<Shape>;
+  "~def": $ZodObjectDef<Shape>;
   "~subtype": "object";
 }
 
@@ -1290,6 +1287,7 @@ export const $ZodObject: base.$constructor<$ZodObject> =
 /////////////////////////////////////////
 /////////////////////////////////////////
 export interface $ZodUnionDef extends base.$ZodTypeDef {
+  type: "union";
   options: base.$ZodType[];
 }
 
@@ -1566,6 +1564,7 @@ export interface $ZodTupleDef<
   T extends ZodTupleItems = ZodTupleItems,
   Rest extends base.$ZodType | null = base.$ZodType | null,
 > extends base.$ZodTypeDef {
+  type: "tuple";
   items: T;
   rest: Rest;
   // error?:
@@ -1758,6 +1757,7 @@ type $ZodRecordKey = base.$ZodType<
   string | number | symbol
 >; // $HasValues | $HasPattern;
 export interface $ZodRecordDef extends base.$ZodTypeDef {
+  type: "record";
   keySchema: $ZodRecordKey;
   valueSchema: base.$ZodType;
   // error?:
@@ -1899,6 +1899,7 @@ Open an issue if you need this feature."
 ///////////////////////////////////////
 ///////////////////////////////////////
 export interface $ZodMapDef extends base.$ZodTypeDef {
+  type: "map";
   keyType: base.$ZodType;
   valueType: base.$ZodType;
   // error?:
@@ -2172,7 +2173,7 @@ export const $ZodEnum: base.$constructor<$ZodEnum> =
 ////////////////////////////////////////
 
 export interface $ZodLiteralDef extends base.$ZodTypeDef {
-  type: "enum";
+  type: "literal";
   literals: util.LiteralArray;
   // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidValue> | undefined;
 }

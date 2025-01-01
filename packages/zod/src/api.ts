@@ -533,25 +533,27 @@ export function looseObject<T extends schemas.ZodRawShape>(
 }
 
 // interface
-type ZodInterfaceParams = util.TypeParams<schemas.ZodInterface, "shape">;
-function _interface<T extends schemas.ZodRawShape>(
+function _interface<T extends core.$ZodRawShape>(
   shape: T,
-  params?: ZodInterfaceParams
-): schemas.ZodInterface<T> {
+  params?: core.$ZodInterfaceParams
+): schemas.ZodInterface<
+  core.$InferInterfaceOutput<T>,
+  core.$InferInterfaceInput<T>
+> {
   const def: core.$ZodObjectLikeDef<schemas.ZodShape> = {
     type: "object",
     shape,
     ...util.normalizeTypeParams(params),
   };
-  return new schemas.ZodInterface(def) as schemas.ZodInterface<T>;
+  return new schemas.ZodInterface(def) as any;
 }
 export { _interface as interface };
 
 // strictInterface
-type ZodStrictInterfaceParams = util.TypeParams<schemas.ZodInterface, "shape">;
-export function strictInterface<T extends schemas.ZodRawShape>(
+// type ZodStrictInterfaceParams = util.TypeParams<schemas.ZodInterface, "shape">;
+export function strictInterface<T extends core.$ZodRawShape>(
   shape: T,
-  params?: ZodStrictInterfaceParams
+  params?: core.$ZodStrictInterfaceParams
 ): schemas.ZodInterface<T> {
   const def: core.$ZodObjectLikeDef<schemas.ZodShape> = {
     type: "object",
@@ -563,10 +565,10 @@ export function strictInterface<T extends schemas.ZodRawShape>(
 }
 
 // looseInterface
-type ZodLooseInterfaceParams = util.TypeParams<schemas.ZodInterface, "shape">;
-export function looseInterface<T extends schemas.ZodRawShape>(
+
+export function looseInterface<T extends core.$ZodRawShape>(
   shape: T,
-  params?: ZodLooseInterfaceParams
+  params?: core.$ZodLooseInterfaceParams
 ): schemas.ZodInterface<T> {
   const def: core.$ZodObjectLikeDef<schemas.ZodShape> = {
     type: "object",
@@ -587,7 +589,7 @@ export function looseInterface<T extends schemas.ZodRawShape>(
 // // .extend
 // export function extend<
 //   T extends schemas.ZodObject,
-//   U extends schemas.ZodRawShape,
+//   U extends core.$ZodRawShape,
 // >(schema: T, shape: U): schemas.ZodObject<T["~def"]["shape"] & U> {
 //   return schema.clone({
 //     ...schema["~def"],
@@ -696,7 +698,7 @@ export function extend(
   schema: schemas.ZodObject,
   shape: schemas.ZodShape
 ): any {
-  if (schema["~traits"].has("$ZodInterface")) {
+  if (schema["~def"].type === "interface") {
     return schema.clone({
       ...schema["~def"],
       get shape() {
@@ -709,7 +711,7 @@ export function extend(
       checks: [], // delete existing checks
     }) as any;
   }
-  if (schema["~traits"].has("$ZodObject")) {
+  if (schema["~def"].type === "object") {
     return schema.clone({
       ...schema["~def"],
       shape: { ...schema["~def"].shape, ...shape },
@@ -996,7 +998,7 @@ export function literal<const T extends util.Literal | util.Literal[]>(
   params?: ZodLiteralParams
 ): schemas.ZodLiteral<T extends unknown[] ? T[number] : T> {
   return new schemas.ZodLiteral({
-    type: "enum",
+    type: "literal",
     literals: Array.isArray(literals) ? literals : [literals],
     ...util.normalizeTypeParams(params),
   }) as any as schemas.ZodLiteral<T extends unknown[] ? T[number] : T>;

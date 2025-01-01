@@ -14,5 +14,3 @@ if (zodPackageJson.version !== zodCorePackageJson.version) {
     `zod and zod-core versions do not match: ${zodPackageJson.version} !== ${zodCorePackageJson.version}`
   );
 }
-
-console.log("PUBLISH");

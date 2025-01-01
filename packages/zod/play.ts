@@ -1,5 +1,15 @@
 import * as z from "zod";
 
+z;
+
+const a = z.interface({
+  aa: z.string(),
+  "bb?": z.string(),
+  "?cc": z._default(z.string(), "c"),
+});
+
+const b = z.omit(a, {});
+
 const mySchema = z.string();
 
 // there is a global schema registry

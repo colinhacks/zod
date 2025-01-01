@@ -133,6 +133,7 @@ export type $ZodSchemaTypes =
   | "unknown"
   | "date"
   | "object"
+  | "interface"
   | "record"
   | "file"
   | "array"
@@ -167,13 +168,6 @@ export type $brand<
 > = {
   [BRAND]: { [k in T]: true };
 };
-
-// export type $Parse<O> = (
-//   input: unknown,
-//   ctx?: $ParseContext
-// ) => util.MaybeAsync<O | $ZodFailure>;
-
-// @ts-ignore cast variance
 
 export type $DiscriminatorMapElement = {
   values: Set<util.Primitive>;
@@ -294,7 +288,7 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
       checks.unshift(inst as any);
     }
     for (const ch of checks) {
-      ch["~attach"]?.(inst);
+      ch["~onattach"]?.(inst);
     }
 
     if (checks.length === 0) {
@@ -532,7 +526,7 @@ export interface $ZodCheck<in T = never> {
   "~issc"?: errors.$ZodIssueBase;
 
   "~run"(input: $ZodResult<T>): util.MaybeAsync<void>;
-  "~attach"?(schema: $ZodType): void;
+  "~onattach"?(schema: $ZodType): void;
 }
 
 export const $ZodCheck: $constructor<$ZodCheck<any>> = $constructor(

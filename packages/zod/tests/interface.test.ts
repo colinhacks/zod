@@ -1,5 +1,6 @@
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod-core";
+import * as z from "zod";
+import type { $ZodShape } from "zod-core";
 
 test("z.interface", () => {
   const a = z.interface({
@@ -14,7 +15,7 @@ test("z.interface", () => {
   expect(() => z.parse(a, "hello")).toThrow();
 });
 
-test("optionals", () => {
+test("z.interface optionals", () => {
   const a = z.interface({
     a: z.string(),
     "b?": z.string(),
@@ -80,7 +81,7 @@ test("optionals", () => {
   });
 });
 
-test("one to one", () => {
+test("z.interface one to one", () => {
   const A = z.interface({
     name: z.string(),
     get b() {
@@ -109,7 +110,7 @@ test("one to one", () => {
   expectTypeOf<(typeof A)["~input"]["b"]>().toEqualTypeOf<B | undefined>();
 });
 
-test("one to many", () => {
+test("z.interface one to many", () => {
   const C = z.interface({
     name: z.string(),
     get d() {
@@ -134,12 +135,12 @@ test("one to many", () => {
   }
 
   // C["~output"].d.c.d.c.d;
-  expectTypeOf<(typeof C)["~def"]["shape"]>().toEqualTypeOf<z.$ZodShape>();
+  expectTypeOf<(typeof C)["~def"]["shape"]>().toEqualTypeOf<$ZodShape>();
   expectTypeOf<(typeof C)["~output"]>().toEqualTypeOf<_C>();
   expectTypeOf<(typeof D)["~output"]["c"]["d"][number]>().toEqualTypeOf<_D>();
 });
 
-test("many to many", () => {
+test("z.interface many to many", () => {
   const E = z.interface({
     name: z.string(),
     get f() {
@@ -167,7 +168,7 @@ test("many to many", () => {
   expectTypeOf<(typeof F)["~output"]["e"][number]>().toEqualTypeOf<_E>();
 });
 
-test("self recursive", () => {
+test("z.interface self recursive", () => {
   const E = z.interface({
     name: z.string(),
     get e() {
@@ -182,7 +183,7 @@ test("self recursive", () => {
   expectTypeOf<(typeof E)["~output"]["e"]["e"]["e"]>().toEqualTypeOf<_E>();
 });
 
-test("self recursive optional", () => {
+test("z.interface self recursive optional", () => {
   const F = z.interface({
     name: z.string(),
     get "f?"() {
@@ -246,7 +247,6 @@ test("z.pick", () => {
 
 test("z.omit", () => {
   const omittedSchema = z.omit(userSchema, { age: true });
-
   type OmittedUser = z.infer<typeof omittedSchema>;
   expectTypeOf<OmittedUser>().toEqualTypeOf<{ name: string; email?: string }>();
   expect(omittedSchema).toBeDefined();

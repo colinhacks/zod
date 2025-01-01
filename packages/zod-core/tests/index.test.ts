@@ -625,7 +625,6 @@ test("z.catch", () => {
   expect(z.parse(b, 123)).toEqual("default");
 
   const c = z.catch(z.string(), (ctx) => {
-    console.log(ctx);
     return `${ctx.error.issues.length}issues`;
   });
   expect(z.parse(c, 1234)).toEqual("1issues");

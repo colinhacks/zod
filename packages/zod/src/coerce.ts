@@ -1,5 +1,5 @@
-import * as util from "zod-core/util";
 import * as core from "zod-core";
+import * as util from "zod-core/util";
 import * as util from "zod-core/util";
 import * as schemas from "./schemas.js";
 
@@ -61,7 +61,6 @@ export interface ZodCoercedNumber
   extends core.$ZodNumber<unknown>,
     schemas.ZodType<number, unknown> {
   "~def": ZodCoercedNumberDef;
-  "~computed": core.$ZodNumber<unknown>["~computed"];
   "~isst": core.$ZodIssueInvalidType<"number">;
 }
 

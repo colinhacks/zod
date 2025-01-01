@@ -188,11 +188,6 @@ export interface ZodString
     ZodType<string, string> {
   "~def": core.$ZodStringDef;
   "~isst": core.$ZodIssueInvalidType<"string">;
-  "~computed": {
-    format?: string;
-    minSize?: number;
-    maxSize?: number;
-  };
 
   // string format checks
   // email(): ZodString;
@@ -729,11 +724,6 @@ export interface ZodNumber
   extends core.$ZodNumber<number>,
     ZodType<number, number> {
   "~def": core.$ZodNumberDef;
-  "~computed": {
-    minimum?: number | bigint;
-    maximum?: number | bigint;
-    multipleOf?: number;
-  };
   "~isst": core.$ZodIssueInvalidType<"number">;
   gt(value: number, message?: core.$ZodCheckGreaterThanParams): this;
   gte(value: number, message?: core.$ZodCheckGreaterThanParams): this;
@@ -1206,15 +1196,17 @@ export const ZodObject: core.$constructor<ZodObject> =
 /////////////////////////////////////////
 
 export interface ZodInterface<
-  O extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
-  I extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
+  // @ts-ignore
+  out O extends Record<PropertyKey, any> = Record<PropertyKey, any>,
+  // @ts-ignore
+  out I extends Record<PropertyKey, any> = Record<PropertyKey, unknown>,
 > extends core.$ZodInterface<O, I>,
     ZodType<O, I> {
   "~def": core.$ZodObjectLikeDef;
   "~disc": core.$DiscriminatorMap;
   "~isst": core.$ZodIssueInvalidType<"object"> | core.$ZodIssueUnrecognizedKeys;
 
-  keyof(): ZodLiteral<keyof this["~output"]>;
+  keyof(): ZodLiteral<keyof O>;
 
   extend<U extends ZodShape>(
     shape: U
@@ -1233,15 +1225,15 @@ export interface ZodInterface<
   pick<const M extends util.Exactly<util.Mask<keyof this["~output"]>, M>>(
     mask: M
   ): ZodInterface<
-    Pick<this["~output"], keyof M & keyof this["~output"]>,
-    Pick<this["~input"], keyof M & keyof this["~output"]>
+    Pick<this["~output"], keyof M>,
+    Pick<this["~input"], keyof M>
   >;
 
   omit<const M extends util.Exactly<util.Mask<keyof this["~output"]>, M>>(
     mask: M
   ): ZodInterface<
-    Omit<this["~output"], Extract<keyof this["~output"], keyof M>>,
-    Omit<this["~input"], Extract<keyof this["~input"], keyof M>>
+    Omit<this["~output"], keyof M>,
+    Omit<this["~input"], keyof M>
   >;
 
   partial(): ZodInterface<Partial<this["~output"]>, Partial<this["~input"]>>;

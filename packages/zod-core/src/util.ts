@@ -689,11 +689,12 @@ export const factory =
   ) =>
   (...args: any[]): InstanceType<Cls> => {
     const { checks, params } = splitChecksAndParams(...args);
-    return new _class({
+    const finalParams = {
       ..._defaults,
       checks,
       ...normalizeTypeParams(params),
-    }) as any;
+    };
+    return new _class(finalParams) as any;
   };
 
 export type FactoryParams<
@@ -953,7 +954,7 @@ export function required(
   Class: new (def: $ZodRequiredDef<any>) => $ZodRequired
 ): any {
   const shape: $ZodShape = { ...schema["~def"].shape };
-  z;
+
   for (const key in schema["~def"].shape) {
     if (mask) {
       if (key in mask) {

@@ -106,8 +106,15 @@ test("z.pick", () => {
 test("z.omit", () => {
   const omittedSchema = z.omit(userSchema, { age: true });
   type OmittedUser = z.infer<typeof omittedSchema>;
-  expectTypeOf<OmittedUser>().toEqualTypeOf<{ name: string; email?: string }>();
+  expectTypeOf<OmittedUser>().toEqualTypeOf<{
+    name: string;
+    email?: string | undefined;
+  }>();
   expect(omittedSchema).toBeDefined();
+  expect(Reflect.ownKeys(omittedSchema["~def"].shape)).toEqual([
+    "name",
+    "email",
+  ]);
   expect(
     z.safeParse(omittedSchema, { name: "John", email: "john@example.com" })
       .success
