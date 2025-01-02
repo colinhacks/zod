@@ -1,4 +1,4 @@
-declare namespace JSONSchema {
+export namespace JSONSchema {
   export type Schema =
     | boolean
     | ObjectSchema

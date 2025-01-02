@@ -431,6 +431,7 @@ export class $ZodError {
   constructor(issues: errors.$ZodIssue[]) {
     this.issues = issues;
   }
+
   static [Symbol.hasInstance](inst: any) {
     return inst?.["~tag"] === ZOD_ERROR;
   }

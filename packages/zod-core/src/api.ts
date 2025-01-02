@@ -24,7 +24,7 @@ export * as coerce from "./coerce.js";
 //////   API   //////
 // $ZodString
 export type $ZodStringParams = util.TypeParams<schemas.$ZodString<string>>;
-const _string = util.factory(schemas.$ZodString, {
+const _string = util.factory(() => schemas.$ZodString, {
   type: "string",
 });
 export function string(
@@ -42,7 +42,7 @@ export function string(...args: any): schemas.$ZodString<string> {
 export type $ZodGUIDParams = util.StringFormatParams<schemas.$ZodGUID>;
 export type $ZodCheckGUIDParams =
   util.CheckStringFormatParams<schemas.$ZodGUID>;
-const _guid = util.factory(schemas.$ZodGUID, {
+const _guid = util.factory(() => schemas.$ZodGUID, {
   type: "string",
   format: "guid",
   check: "string_format",
@@ -65,7 +65,7 @@ export type $ZodCheckUUIDParams = util.CheckStringFormatParams<
   schemas.$ZodUUID,
   "pattern"
 >;
-const _uuid = util.factory(schemas.$ZodUUID, {
+const _uuid = util.factory(() => schemas.$ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
@@ -88,7 +88,7 @@ export type $ZodCheckUUIDv4Params = util.CheckStringFormatParams<
   schemas.$ZodUUID,
   "pattern"
 >;
-const _uuidv4 = util.factory(schemas.$ZodUUID, {
+const _uuidv4 = util.factory(() => schemas.$ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
@@ -112,7 +112,7 @@ export type $ZodCheckUUIDv6Params = util.CheckStringFormatParams<
   schemas.$ZodUUID,
   "pattern"
 >;
-const _uuidv6 = util.factory(schemas.$ZodUUID, {
+const _uuidv6 = util.factory(() => schemas.$ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
@@ -136,7 +136,7 @@ export type $ZodCheckUUIDv7Params = util.CheckStringFormatParams<
   schemas.$ZodUUID,
   "pattern"
 >;
-const _uuidv7 = util.factory(schemas.$ZodUUID, {
+const _uuidv7 = util.factory(() => schemas.$ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
@@ -155,7 +155,7 @@ export function uuidv7(...args: any): schemas.$ZodUUID {
 export type $ZodEmailParams = util.StringFormatParams<schemas.$ZodEmail>;
 export type $ZodCheckEmailParams =
   util.CheckStringFormatParams<schemas.$ZodEmail>;
-const _email = util.factory(schemas.$ZodEmail, {
+const _email = util.factory(() => schemas.$ZodEmail, {
   type: "string",
   format: "email",
   check: "string_format",
@@ -172,7 +172,7 @@ export function email(...args: any): schemas.$ZodEmail {
 // $ZodURL
 export type $ZodURLParams = util.StringFormatParams<schemas.$ZodURL>;
 export type $ZodCheckURLParams = util.CheckStringFormatParams<schemas.$ZodURL>;
-const _url = util.factory(schemas.$ZodURL, {
+const _url = util.factory(() => schemas.$ZodURL, {
   type: "string",
   format: "url",
   check: "string_format",
@@ -190,7 +190,7 @@ export function url(...args: any): schemas.$ZodURL {
 export type $ZodEmojiParams = util.StringFormatParams<schemas.$ZodEmoji>;
 export type $ZodCheckEmojiParams =
   util.CheckStringFormatParams<schemas.$ZodEmoji>;
-const _emoji = util.factory(schemas.$ZodEmoji, {
+const _emoji = util.factory(() => schemas.$ZodEmoji, {
   type: "string",
   format: "emoji",
   check: "string_format",
@@ -208,7 +208,7 @@ export function emoji(...args: any): schemas.$ZodEmoji {
 export type $ZodNanoIDParams = util.StringFormatParams<schemas.$ZodNanoID>;
 export type $ZodCheckNanoIDParams =
   util.CheckStringFormatParams<schemas.$ZodNanoID>;
-const _nanoid = util.factory(schemas.$ZodNanoID, {
+const _nanoid = util.factory(() => schemas.$ZodNanoID, {
   type: "string",
   format: "nanoid",
   check: "string_format",
@@ -226,7 +226,7 @@ export function nanoid(...args: any): schemas.$ZodNanoID {
 export type $ZodCUIDParams = util.StringFormatParams<schemas.$ZodCUID>;
 export type $ZodCheckCUIDParams =
   util.CheckStringFormatParams<schemas.$ZodCUID>;
-const _cuid = util.factory(schemas.$ZodCUID, {
+const _cuid = util.factory(() => schemas.$ZodCUID, {
   type: "string",
   format: "cuid",
   check: "string_format",
@@ -244,7 +244,7 @@ export function cuid(...args: any): schemas.$ZodCUID {
 export type $ZodCUID2Params = util.StringFormatParams<schemas.$ZodCUID2>;
 export type $ZodCheckCUID2Params =
   util.CheckStringFormatParams<schemas.$ZodCUID2>;
-const _cuid2 = util.factory(schemas.$ZodCUID2, {
+const _cuid2 = util.factory(() => schemas.$ZodCUID2, {
   type: "string",
   format: "cuid2",
   check: "string_format",
@@ -262,7 +262,7 @@ export function cuid2(...args: any): schemas.$ZodCUID2 {
 export type $ZodULIDParams = util.StringFormatParams<schemas.$ZodULID>;
 export type $ZodCheckULIDParams =
   util.CheckStringFormatParams<schemas.$ZodULID>;
-const _ulid = util.factory(schemas.$ZodULID, {
+const _ulid = util.factory(() => schemas.$ZodULID, {
   type: "string",
   format: "ulid",
   check: "string_format",
@@ -279,7 +279,7 @@ export function ulid(...args: any): schemas.$ZodULID {
 // $ZodXID
 export type $ZodXIDParams = util.StringFormatParams<schemas.$ZodXID>;
 export type $ZodCheckXIDParams = util.CheckStringFormatParams<schemas.$ZodXID>;
-const _xid = util.factory(schemas.$ZodXID, {
+const _xid = util.factory(() => schemas.$ZodXID, {
   type: "string",
   format: "xid",
   check: "string_format",
@@ -297,7 +297,7 @@ export function xid(...args: any): schemas.$ZodXID {
 export type $ZodKSUIDParams = util.StringFormatParams<schemas.$ZodKSUID>;
 export type $ZodCheckKSUIDParams =
   util.CheckStringFormatParams<schemas.$ZodKSUID>;
-const _ksuid = util.factory(schemas.$ZodKSUID, {
+const _ksuid = util.factory(() => schemas.$ZodKSUID, {
   type: "string",
   format: "ksuid",
   check: "string_format",
@@ -314,7 +314,7 @@ export function ksuid(...args: any): schemas.$ZodKSUID {
 // $ZodIP
 export type $ZodIPParams = util.StringFormatParams<schemas.$ZodIP>;
 export type $ZodCheckIPParams = util.CheckStringFormatParams<schemas.$ZodIP>;
-const _ip = util.factory(schemas.$ZodIP, {
+const _ip = util.factory(() => schemas.$ZodIP, {
   type: "string",
   format: "ip",
   check: "string_format",
@@ -331,7 +331,7 @@ export function ip(...args: any): schemas.$ZodIP {
 // $ZodIPv4
 export type $ZodIPv4Params = util.StringFormatParams<schemas.$ZodIP>;
 export type $ZodCheckIPv4Params = util.CheckStringFormatParams<schemas.$ZodIP>;
-const _ipv4 = util.factory(schemas.$ZodIP, {
+const _ipv4 = util.factory(() => schemas.$ZodIP, {
   type: "string",
   format: "ip",
   check: "string_format",
@@ -349,7 +349,7 @@ export function ipv4(...args: any): schemas.$ZodIP {
 // $ZodIPv6
 export type $ZodIPv6Params = util.StringFormatParams<schemas.$ZodIP>;
 export type $ZodCheckIPv6Params = util.CheckStringFormatParams<schemas.$ZodIP>;
-const _ipv6 = util.factory(schemas.$ZodIP, {
+const _ipv6 = util.factory(() => schemas.$ZodIP, {
   type: "string",
   format: "ip",
   check: "string_format",
@@ -368,7 +368,7 @@ export function ipv6(...args: any): schemas.$ZodIP {
 export type $ZodBase64Params = util.StringFormatParams<schemas.$ZodBase64>;
 export type $ZodCheckBase64Params =
   util.CheckStringFormatParams<schemas.$ZodBase64>;
-const _base64 = util.factory(schemas.$ZodBase64, {
+const _base64 = util.factory(() => schemas.$ZodBase64, {
   type: "string",
   format: "base64",
   check: "string_format",
@@ -387,7 +387,7 @@ export type $ZodJSONStringParams =
   util.StringFormatParams<schemas.$ZodJSONString>;
 export type $ZodCheckJSONStringParams =
   util.CheckStringFormatParams<schemas.$ZodJSONString>;
-const _jsonString = util.factory(schemas.$ZodJSONString, {
+const _jsonString = util.factory(() => schemas.$ZodJSONString, {
   type: "string",
   format: "json_string",
   check: "string_format",
@@ -407,7 +407,7 @@ export function jsonString(...args: any): schemas.$ZodJSONString {
 export type $ZodE164Params = util.StringFormatParams<schemas.$ZodE164>;
 export type $ZodCheckE164Params =
   util.CheckStringFormatParams<schemas.$ZodE164>;
-const _e164 = util.factory(schemas.$ZodE164, {
+const _e164 = util.factory(() => schemas.$ZodE164, {
   type: "string",
   format: "e164",
   check: "string_format",
@@ -427,7 +427,7 @@ export type $ZodCheckJWTParams = util.CheckStringFormatParams<
   schemas.$ZodJWT,
   "pattern"
 >;
-const _jwt = util.factory(schemas.$ZodJWT, {
+const _jwt = util.factory(() => schemas.$ZodJWT, {
   type: "string",
   format: "jwt",
   check: "string_format",
@@ -442,7 +442,7 @@ export function jwt(...args: any): schemas.$ZodJWT {
 }
 
 // number
-const _number = util.factory(schemas.$ZodNumber, { type: "number" });
+const _number = util.factory(() => schemas.$ZodNumber, { type: "number" });
 export type $ZodNumberParams = util.TypeParams<schemas.$ZodNumber<number>>;
 export function number(
   checks?: base.$ZodCheck<number>[]
@@ -466,7 +466,7 @@ export type $ZodCheckNumberFormatParams = util.CheckParams<
 >;
 
 // int
-const _int = util.factory(schemas.$ZodNumberFormat, {
+const _int = util.factory(() => schemas.$ZodNumberFormat, {
   type: "number",
   check: "number_format",
   format: "safeint",
@@ -483,7 +483,7 @@ export function int(...args: any): schemas.$ZodNumberFormat {
 }
 
 // float32
-const _float32 = util.factory(schemas.$ZodNumberFormat, {
+const _float32 = util.factory(() => schemas.$ZodNumberFormat, {
   type: "number",
   check: "number_format",
   format: "float32",
@@ -500,7 +500,7 @@ export function float32(...args: any): schemas.$ZodNumberFormat {
 }
 
 // float64
-const _float64 = util.factory(schemas.$ZodNumberFormat, {
+const _float64 = util.factory(() => schemas.$ZodNumberFormat, {
   type: "number",
   check: "number_format",
   format: "float64",
@@ -517,7 +517,7 @@ export function float64(...args: any): schemas.$ZodNumberFormat {
 }
 
 // int32
-const _int32 = util.factory(schemas.$ZodNumberFormat, {
+const _int32 = util.factory(() => schemas.$ZodNumberFormat, {
   type: "number",
   check: "number_format",
   format: "int32",
@@ -534,7 +534,7 @@ export function int32(...args: any): schemas.$ZodNumberFormat {
 }
 
 // uint32
-const _uint32 = util.factory(schemas.$ZodNumberFormat, {
+const _uint32 = util.factory(() => schemas.$ZodNumberFormat, {
   type: "number",
   check: "number_format",
   format: "uint32",
@@ -552,7 +552,9 @@ export function uint32(...args: any): schemas.$ZodNumberFormat {
 
 // bigint
 type $ZodBigIntParams = util.TypeParams<schemas.$ZodBigInt<bigint>>;
-const _bigint = util.factory(schemas.$ZodBigInt, { type: "bigint" }) as any;
+const _bigint = util.factory(() => schemas.$ZodBigInt, {
+  type: "bigint",
+}) as any;
 export function bigint(
   checks?: base.$ZodCheck<bigint>[]
 ): schemas.$ZodBigInt<bigint>;
@@ -574,7 +576,7 @@ export type $ZodCheckBigIntFormatParams = util.CheckParams<
   "format"
 >;
 // int64
-const _int64 = util.factory(schemas.$ZodBigIntFormat, {
+const _int64 = util.factory(() => schemas.$ZodBigIntFormat, {
   type: "bigint",
   check: "bigint_format",
   format: "int64",
@@ -591,7 +593,7 @@ export function int64(...args: any): schemas.$ZodBigIntFormat {
 }
 
 // uint64
-const _uint64 = util.factory(schemas.$ZodBigIntFormat, {
+const _uint64 = util.factory(() => schemas.$ZodBigIntFormat, {
   type: "bigint",
   check: "bigint_format",
   format: "uint64",
@@ -609,7 +611,9 @@ export function uint64(...args: any): schemas.$ZodBigIntFormat {
 
 // boolean
 type $ZodBooleanParams = util.TypeParams<schemas.$ZodBoolean<boolean>>;
-const _boolean = util.factory(schemas.$ZodBoolean, { type: "boolean" }) as any;
+const _boolean = util.factory(() => schemas.$ZodBoolean, {
+  type: "boolean",
+}) as any;
 export function boolean(
   checks?: base.$ZodCheck<boolean>[]
 ): schemas.$ZodBoolean<boolean>;
@@ -623,7 +627,9 @@ export function boolean(...args: any): schemas.$ZodBoolean<boolean> {
 
 // symbol
 type $ZodSymbolParams = util.TypeParams<schemas.$ZodSymbol>;
-const _symbol = util.factory(schemas.$ZodSymbol, { type: "symbol" }) as any;
+const _symbol = util.factory(() => schemas.$ZodSymbol, {
+  type: "symbol",
+}) as any;
 export function symbol(checks?: base.$ZodCheck<symbol>[]): schemas.$ZodSymbol;
 export function symbol(
   params?: string | $ZodSymbolParams,
@@ -635,7 +641,7 @@ export function symbol(...args: any): schemas.$ZodSymbol {
 
 // date
 type $ZodDateParams = util.TypeParams<schemas.$ZodDate>;
-const _date = util.factory(schemas.$ZodDate, { type: "date" });
+const _date = util.factory(() => schemas.$ZodDate, { type: "date" });
 export function date(checks?: base.$ZodCheck<Date>[]): schemas.$ZodDate;
 export function date(
   params?: string | $ZodDateParams,
@@ -647,7 +653,7 @@ export function date(...args: any): schemas.$ZodDate {
 
 // undefined
 type $ZodUndefinedParams = util.TypeParams<schemas.$ZodUndefined>;
-const _undefinedFactory = util.factory(schemas.$ZodUndefined, {
+const _undefinedFactory = util.factory(() => schemas.$ZodUndefined, {
   type: "undefined",
 });
 function _undefined(
@@ -664,7 +670,7 @@ export { _undefined as undefined };
 
 // null
 type $ZodNullParams = util.TypeParams<schemas.$ZodNull>;
-const _nullFactory = util.factory(schemas.$ZodNull, { type: "null" });
+const _nullFactory = util.factory(() => schemas.$ZodNull, { type: "null" });
 function _null(checks?: base.$ZodCheck<null>[]): schemas.$ZodNull;
 function _null(
   params?: string | $ZodNullParams,
@@ -677,7 +683,7 @@ export { _null as null };
 
 // any
 type $ZodAnyParams = util.TypeParams<schemas.$ZodAny>;
-const _any = util.factory(schemas.$ZodAny, { type: "any" });
+const _any = util.factory(() => schemas.$ZodAny, { type: "any" });
 export function any(checks?: base.$ZodCheck<any>[]): schemas.$ZodAny;
 export function any(
   params?: string | $ZodAnyParams,
@@ -689,7 +695,7 @@ export function any(...args: any): schemas.$ZodAny {
 
 // unknown
 type $ZodUnknownParams = util.TypeParams<schemas.$ZodUnknown>;
-const _unknown = util.factory(schemas.$ZodUnknown, { type: "unknown" });
+const _unknown = util.factory(() => schemas.$ZodUnknown, { type: "unknown" });
 export function unknown(
   checks?: base.$ZodCheck<unknown>[]
 ): schemas.$ZodUnknown;
@@ -703,7 +709,7 @@ export function unknown(...args: any): schemas.$ZodUnknown {
 
 // never
 type $ZodNeverParams = util.TypeParams<schemas.$ZodNever>;
-const _never = util.factory(schemas.$ZodNever, { type: "never" });
+const _never = util.factory(() => schemas.$ZodNever, { type: "never" });
 export function never(checks?: base.$ZodCheck<never>[]): schemas.$ZodNever;
 export function never(
   params?: string | $ZodNeverParams,
@@ -715,7 +721,7 @@ export function never(...args: any): schemas.$ZodNever {
 
 // void
 type $ZodVoidParams = util.TypeParams<schemas.$ZodVoid>;
-const _voidFactory = util.factory(schemas.$ZodVoid, { type: "void" });
+const _voidFactory = util.factory(() => schemas.$ZodVoid, { type: "void" });
 function _void(checks?: base.$ZodCheck<void>[]): schemas.$ZodVoid;
 function _void(
   params?: string | $ZodVoidParams,
@@ -1378,7 +1384,7 @@ export function truthy(
 
 // file
 type $ZodFileParams = util.TypeParams<schemas.$ZodFile>;
-const _file = util.factory(schemas.$ZodFile, { type: "file" });
+const _file = util.factory(() => schemas.$ZodFile, { type: "file" });
 export function file(checks?: base.$ZodCheck<File>[]): schemas.$ZodFile;
 
 export function file(
@@ -1524,7 +1530,7 @@ export { _catch as catch };
 
 // nan
 type $ZodNaNParams = util.TypeParams<schemas.$ZodNaN>;
-const _nan = util.factory(schemas.$ZodNaN, { type: "nan" });
+const _nan = util.factory(() => schemas.$ZodNaN, { type: "nan" });
 export function nan(checks?: base.$ZodCheck<number>[]): schemas.$ZodNaN;
 export function nan(
   params?: string | $ZodNaNParams,

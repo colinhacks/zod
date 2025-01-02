@@ -33,12 +33,8 @@ if (!(globalThis as { [k: symbol]: unknown })[sym]) {
 }
 
 interface EffectMethods<T> {
-  parse(
-    ...args: Parameters<ZodType["parseAsync"]>
-  ): Effect.Effect<T, ZodError<T>>;
-  parseSync(
-    ...args: Parameters<ZodType["parse"]>
-  ): Effect.Effect<T, ZodError<T>>;
+  parse(...args: Parameters<ZodType["parseAsync"]>): Effect.Effect<T, ZodError>;
+  parseSync(...args: Parameters<ZodType["parse"]>): Effect.Effect<T, ZodError>;
 }
 declare module "zod" {
   interface ZodType {

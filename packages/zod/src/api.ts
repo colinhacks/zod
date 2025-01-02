@@ -1,6 +1,5 @@
 import * as core from "zod-core";
 import * as util from "zod-core/util";
-import * as util from "zod-core/util";
 import * as factories from "./factories.js";
 import * as schemas from "./schemas.js";
 
@@ -488,7 +487,7 @@ export function object<T extends schemas.ZodRawShape>(
   shape: T,
   params?: ZodObjectParams
 ): schemas.ZodObject<T> {
-  const def: core.$ZodObjectLikeDef<schemas.ZodShape> = {
+  const def: core.$ZodObjectDef<schemas.ZodShape> = {
     type: "object",
     shape,
     ...util.normalizeTypeParams(params),
@@ -505,7 +504,7 @@ export function strictObject<T extends schemas.ZodRawShape>(
   shape: T,
   params?: ZodStrictObjectParams
 ): schemas.ZodObject<T> {
-  const def: core.$ZodObjectLikeDef<T> = {
+  const def: core.$ZodObjectDef<T> = {
     type: "object",
     shape,
     catchall: never(),
@@ -523,7 +522,7 @@ export function looseObject<T extends schemas.ZodRawShape>(
   shape: T,
   params?: ZodLooseObjectParams
 ): schemas.ZodObject<T> {
-  const def: core.$ZodObjectLikeDef<schemas.ZodShape> = {
+  const def: core.$ZodObjectDef<schemas.ZodShape> = {
     type: "object",
     shape,
     catchall: unknown(),
@@ -540,8 +539,8 @@ function _interface<T extends core.$ZodRawShape>(
   core.$InferInterfaceOutput<T>,
   core.$InferInterfaceInput<T>
 > {
-  const def: core.$ZodObjectLikeDef<schemas.ZodShape> = {
-    type: "object",
+  const def: core.$ZodInterfaceDef = {
+    type: "interface",
     shape,
     ...util.normalizeTypeParams(params),
   };
@@ -555,8 +554,8 @@ export function strictInterface<T extends core.$ZodRawShape>(
   shape: T,
   params?: core.$ZodStrictInterfaceParams
 ): schemas.ZodInterface<T> {
-  const def: core.$ZodObjectLikeDef<schemas.ZodShape> = {
-    type: "object",
+  const def: core.$ZodInterfaceDef = {
+    type: "interface",
     shape,
     catchall: never(),
     ...util.normalizeTypeParams(params),
@@ -570,8 +569,8 @@ export function looseInterface<T extends core.$ZodRawShape>(
   shape: T,
   params?: core.$ZodLooseInterfaceParams
 ): schemas.ZodInterface<T> {
-  const def: core.$ZodObjectLikeDef<schemas.ZodShape> = {
-    type: "object",
+  const def: core.$ZodInterfaceDef = {
+    type: "interface",
     shape,
     catchall: unknown(),
     ...util.normalizeTypeParams(params),
@@ -664,14 +663,16 @@ export function looseInterface<T extends core.$ZodRawShape>(
 //   }) as any;
 // }
 
+type ZodObjectLike = schemas.ZodObject | schemas.ZodInterface;
+
 // .keyof
-export function keyof<T extends schemas.ZodObject>(
+export function keyof<T extends ZodObjectLike>(
   schema: T
 ): schemas.ZodLiteral<keyof T["~def"]["shape"]>;
 export function keyof<T extends schemas.ZodInterface>(
   schema: T
 ): schemas.ZodLiteral<keyof T["~output"]>;
-export function keyof(schema: schemas.ZodObject) {
+export function keyof(schema: ZodObjectLike) {
   return literal(Object.keys(schema["~def"].shape)) as any;
 }
 
@@ -695,7 +696,7 @@ export function extend<
   util.Flatten<util.Overwrite<T["~input"], core.$InferInterfaceInput<U>>>
 >;
 export function extend(
-  schema: schemas.ZodObject,
+  schema: core.$ZodObjectLike,
   shape: schemas.ZodShape
 ): any {
   if (schema["~def"].type === "interface") {
@@ -707,7 +708,6 @@ export function extend(
           ...shape,
         };
       },
-
       checks: [], // delete existing checks
     }) as any;
   }
@@ -1006,7 +1006,7 @@ export function literal<const T extends util.Literal | util.Literal[]>(
 
 // file
 interface ZodFileParams extends util.TypeParams<schemas.ZodFile> {}
-const _file = util.factory(schemas.ZodFile, { type: "file" });
+const _file = util.factory(() => schemas.ZodFile, { type: "file" });
 export function file(checks?: core.$ZodCheck<File>[]): schemas.ZodFile;
 export function file(
   params?: string | ZodFileParams,
@@ -1151,7 +1151,7 @@ export { _catch as catch };
 
 // nan
 interface ZodNaNParams extends util.TypeParams<schemas.ZodNaN> {}
-const _nan = util.factory(schemas.ZodNaN, { type: "nan" });
+const _nan = util.factory(() => schemas.ZodNaN, { type: "nan" });
 export function nan(checks?: core.$ZodCheck<number>[]): schemas.ZodNaN;
 export function nan(
   params?: string | ZodNaNParams,

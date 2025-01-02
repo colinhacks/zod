@@ -6,7 +6,7 @@ import * as schemas from "./schemas.js";
 export interface ZodISODateTimeParams
   extends util.StringFormatParams<schemas.ZodISODateTime, "pattern"> {}
 
-const _datetime = util.factory(schemas.ZodISODateTime, {
+const _datetime = util.factory(() => schemas.ZodISODateTime, {
   type: "string",
   format: "iso_datetime",
   check: "string_format",
@@ -28,7 +28,7 @@ export function datetime(...args: any[]): schemas.ZodISODateTime {
 // ZodISODate
 export interface ZodISODateParams
   extends util.StringFormatParams<schemas.ZodISODate, "pattern"> {}
-const _date = util.factory(schemas.ZodISODate, {
+const _date = util.factory(() => schemas.ZodISODate, {
   type: "string",
   format: "iso_date",
   check: "string_format",
@@ -45,7 +45,7 @@ export function date(...args: any[]): schemas.ZodISODate {
 // ZodISOTime
 export interface ZodISOTimeParams
   extends util.StringFormatParams<schemas.ZodISOTime, "pattern"> {}
-const _time = util.factory(schemas.ZodISOTime, {
+const _time = util.factory(() => schemas.ZodISOTime, {
   type: "string",
   format: "iso_time",
   check: "string_format",
@@ -65,7 +65,7 @@ export function time(...args: any[]): schemas.ZodISOTime {
 // ZodISODuration
 export interface ZodISODurationParams
   extends util.StringFormatParams<schemas.ZodISODuration, "pattern"> {}
-const _duration = util.factory(schemas.ZodISODuration, {
+const _duration = util.factory(() => schemas.ZodISODuration, {
   type: "string",
   format: "duration",
   check: "string_format",

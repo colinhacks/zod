@@ -1,6 +1,108 @@
 import type { $ZodType } from "./base.js";
 import type * as schemas from "./schemas.js";
 
+export namespace JSONSchema {
+  export type Schema =
+    // | boolean
+    | ObjectSchema
+    | ArraySchema
+    | StringSchema
+    | NumberSchema
+    | IntegerSchema
+    | BooleanSchema
+    | NullSchema;
+
+  export interface BaseSchema {
+    $id?: string;
+    $schema?: string;
+    $ref?: string;
+    $anchor?: string;
+    $defs?: { [key: string]: Schema };
+    $comment?: string;
+    title?: string;
+    description?: string;
+    default?: unknown;
+    examples?: unknown[];
+    readOnly?: boolean;
+    writeOnly?: boolean;
+    deprecated?: boolean;
+    allOf?: Schema[];
+    anyOf?: Schema[];
+    oneOf?: Schema[];
+    not?: Schema;
+    if?: Schema;
+    then?: Schema;
+    else?: Schema;
+
+    // Zod-specific
+    // catch?: unknown;
+  }
+
+  export interface ObjectSchema extends BaseSchema {
+    type: "object";
+    properties?: { [key: string]: Schema };
+    // patternProperties?: { [key: string]: Schema };
+    additionalProperties?: Schema | boolean;
+    required?: string[];
+    // dependentRequired?: { [key: string]: string[] };
+    // propertyNames?: Schema;
+    minProperties?: number;
+    maxProperties?: number;
+    // unevaluatedProperties?: Schema | boolean;
+    // dependentSchemas?: { [key: string]: Schema };
+  }
+
+  export interface ArraySchema extends BaseSchema {
+    type: "array";
+    items?: Schema;
+    prefixItems?: Schema[];
+    // additionalItems?: Schema | boolean; (deprecated)
+    contains?: Schema;
+    minItems?: number;
+    maxItems?: number;
+    minContains?: number;
+    maxContains?: number;
+    uniqueItems?: boolean;
+    unevaluatedItems?: Schema | boolean;
+  }
+
+  export interface StringSchema extends BaseSchema {
+    type: "string";
+    minLength?: number;
+    maxLength?: number;
+    pattern?: string;
+    format?: string;
+    // contentEncoding?: string;
+    // contentMediaType?: string;
+  }
+
+  export interface NumberSchema extends BaseSchema {
+    type: "number";
+    minimum?: number;
+    maximum?: number;
+    exclusiveMinimum?: number;
+    exclusiveMaximum?: number;
+    multipleOf?: number;
+  }
+
+  export interface IntegerSchema extends BaseSchema {
+    type: "integer";
+    minimum?: number;
+    maximum?: number;
+    exclusiveMinimum?: number;
+    exclusiveMaximum?: number;
+    multipleOf?: number;
+  }
+
+  export interface BooleanSchema extends BaseSchema {
+    type: "boolean";
+  }
+
+  export interface NullSchema extends BaseSchema {
+    type: "null";
+  }
+}
+
 export type $ZodFirstPartyTypes =
   | schemas.$ZodString
   // | schemas.$ZodStringFormat
@@ -65,7 +167,7 @@ export type $ZodFirstPartyTypes =
   | schemas.$ZodPromise
   | schemas.$ZodCustom;
 
-export function toJSONSchema(_schema: $ZodType): object {
+export function toJSONSchema(_schema: $ZodType): JSONSchema.Schema {
   const schema = _schema as $ZodFirstPartyTypes;
 
   // if (schema["~def"].type === "string") {
@@ -106,10 +208,14 @@ export function toJSONSchema(_schema: $ZodType): object {
   const def = schema["~def"];
   switch (def.type) {
     case "string": {
-      break;
+      return {
+        type: "string",
+      };
     }
     case "number": {
-      break;
+      return {
+        type: "number",
+      };
     }
     case "boolean": {
       break;
@@ -144,7 +250,8 @@ export function toJSONSchema(_schema: $ZodType): object {
     case "array": {
       break;
     }
-    case "object": {
+    case "object":
+    case "interface": {
       break;
     }
     case "union": {
@@ -217,4 +324,5 @@ export function toJSONSchema(_schema: $ZodType): object {
       def satisfies never;
     }
   }
+  return {} as any;
 }

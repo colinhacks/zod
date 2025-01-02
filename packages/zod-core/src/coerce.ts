@@ -43,7 +43,7 @@ export const $ZodCoercedString: base.$constructor<$ZodCoercedString> =
 
 interface $ZodStringParams
   extends util.TypeParams<$ZodCoercedString, "coerce"> {}
-const _string = util.factory($ZodCoercedString, {
+const _string = util.factory(() => $ZodCoercedString, {
   type: "string",
   coerce: true,
 });
@@ -97,7 +97,7 @@ export const $ZodCoercedNumber: base.$constructor<$ZodCoercedNumber> =
 
 interface $ZodNumberParams
   extends util.TypeParams<$ZodCoercedNumber, "coerce"> {}
-const _number = util.factory($ZodCoercedNumber, {
+const _number = util.factory(() => $ZodCoercedNumber, {
   type: "number",
   coerce: true,
 });
@@ -151,7 +151,7 @@ export const $ZodCoercedBoolean: base.$constructor<$ZodCoercedBoolean> =
 interface $ZodBooleanParams
   extends util.TypeParams<$ZodCoercedBoolean, "coerce"> {}
 /** @deprecated Use `z.truthy()` instead. */
-const _boolean = util.factory($ZodCoercedBoolean, {
+const _boolean = util.factory(() => $ZodCoercedBoolean, {
   type: "boolean",
   coerce: true,
 });
@@ -203,7 +203,7 @@ export const $ZodCoercedBigInt: base.$constructor<$ZodCoercedBigInt> =
 
 interface $ZodBigIntParams
   extends util.TypeParams<$ZodCoercedBigInt, "coerce"> {}
-const _bigint = util.factory($ZodCoercedBigInt, {
+const _bigint = util.factory(() => $ZodCoercedBigInt, {
   type: "bigint",
   coerce: true,
 });
@@ -254,7 +254,10 @@ export const $ZodCoercedDate: base.$constructor<$ZodCoercedDate> =
   });
 
 interface $ZodDateParams extends util.TypeParams<$ZodCoercedDate, "coerce"> {}
-const _date = util.factory($ZodCoercedDate, { type: "date", coerce: true });
+const _date = util.factory(() => $ZodCoercedDate, {
+  type: "date",
+  coerce: true,
+});
 export function date(checks?: base.$ZodCheck<Date>[]): $ZodCoercedDate;
 export function date(
   params?: string | $ZodDateParams,

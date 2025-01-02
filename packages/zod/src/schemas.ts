@@ -1,7 +1,10 @@
+// import * as core from "../../zod-core/src/index.js";
+// import * as util from "../../zod-core/src/util.js";
 import * as core from "zod-core";
 import * as util from "zod-core/util";
 import * as api from "./api.js";
 import * as factories from "./factories.js";
+
 export type CustomErrorParams = Omit<core.$ZodIssueBase, "code">;
 export interface ParseContext extends core.$ParseContext {}
 
@@ -113,16 +116,16 @@ export const ZodType: core.$constructor<ZodType> = core.$constructor(
   (inst, def) => {
     core.$ZodType.init(inst, def);
     inst.parse = (data, params) => {
-      return api.parse(inst, data, params);
+      return core.parse(inst, data, params);
     };
     inst.safeParse = (data, params) => {
-      return api.safeParse(inst, data, params);
+      return core.safeParse(inst, data, params);
     };
     inst.parseAsync = async (data, params) => {
-      return api.parseAsync(inst, data, params);
+      return core.parseAsync(inst, data, params);
     };
     inst.safeParseAsync = async (data, params) => {
-      return api.safeParseAsync(inst, data, params);
+      return core.safeParseAsync(inst, data, params);
     };
 
     // optional
@@ -1094,7 +1097,7 @@ export type { ZodShape as ZodRawShape };
 export interface ZodObject<Shape extends ZodShape = ZodShape>
   extends core.$ZodObject<Shape>,
     ZodType<core.$InferObjectOutput<Shape>, core.$InferObjectInput<Shape>> {
-  "~def": core.$ZodObjectLikeDef<Shape>;
+  "~def": core.$ZodObjectDef<Shape>;
   "~disc": core.$DiscriminatorMap;
   "~isst": core.$ZodIssueInvalidType<"object"> | core.$ZodIssueUnrecognizedKeys;
   shape: Shape;
@@ -1202,7 +1205,7 @@ export interface ZodInterface<
   out I extends Record<PropertyKey, any> = Record<PropertyKey, unknown>,
 > extends core.$ZodInterface<O, I>,
     ZodType<O, I> {
-  "~def": core.$ZodObjectLikeDef;
+  "~def": core.$ZodInterfaceDef;
   "~disc": core.$DiscriminatorMap;
   "~isst": core.$ZodIssueInvalidType<"object"> | core.$ZodIssueUnrecognizedKeys;
 

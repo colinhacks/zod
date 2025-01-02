@@ -684,7 +684,7 @@ export function normalizeCheckParams<T>(_params: T): Normalize<T> {
 type ClassType<T> = { new (...args: any[]): T };
 export const factory =
   <Cls extends ClassType<base.$ZodType>>(
-    _class: Cls,
+    _class: () => Cls,
     _defaults: Omit<InstanceType<Cls>["~def"], "checks" | "error">
   ) =>
   (...args: any[]): InstanceType<Cls> => {
@@ -694,7 +694,8 @@ export const factory =
       checks,
       ...normalizeTypeParams(params),
     };
-    return new _class(finalParams) as any;
+
+    return new (_class())(finalParams) as any;
   };
 
 export type FactoryParams<
