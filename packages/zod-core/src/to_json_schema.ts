@@ -1,3 +1,4 @@
+import { json } from "stream/consumers";
 import type { $ZodType } from "./base.js";
 import type * as schemas from "./schemas.js";
 
@@ -206,11 +207,12 @@ export function toJSONSchema(_schema: $ZodType): JSONSchema.Schema {
   //   schema["~def"].type === "";
   // }
   const def = schema["~def"];
+  const jsonSchema: any = {};
   switch (def.type) {
     case "string": {
-      return {
-        type: "string",
-      };
+      jsonSchema.type = "string";
+      if (schema["~computed"].minimum)
+        jsonSchema.minLength = schema["~computed"].minimum;
     }
     case "number": {
       return {

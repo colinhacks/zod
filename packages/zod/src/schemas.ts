@@ -192,6 +192,10 @@ export interface ZodString
   "~def": core.$ZodStringDef;
   "~isst": core.$ZodIssueInvalidType<"string">;
 
+  format: string | null;
+  minLength: number | null;
+  maxLength: number | null;
+
   // string format checks
   // email(): ZodString;
   // email(params?: string): ZodString;
@@ -199,7 +203,7 @@ export interface ZodString
   /** @deprecated Use `z.email()` instead. */
   email(params?: string | core.$ZodCheckEmailParams): ZodString;
   /** @deprecated Use `z.url()` instead. */
-  url(params?: core.$ZodCheckURLParams): ZodString;
+  url(params?: string | core.$ZodCheckURLParams): ZodString;
   /** @deprecated Use `z.jwt()` instead. */
   jwt(params?: string | core.$ZodCheckJWTParams): ZodString;
   /** @deprecated Use `z.emoji()` instead. */
@@ -295,9 +299,6 @@ export interface ZodString
   normalize(form?: "NFC" | "NFD" | "NFKC" | "NFKD" | (string & {})): ZodString;
   toLowerCase(): ZodString;
   toUpperCase(): ZodString;
-
-  get minLength(): number | null;
-  get maxLength(): number | null;
 }
 
 export const ZodString: core.$constructor<ZodString> = core.$constructor(
@@ -305,6 +306,10 @@ export const ZodString: core.$constructor<ZodString> = core.$constructor(
   (inst, def) => {
     core.$ZodString.init(inst, def);
     ZodType.init(inst, def);
+
+    inst.format = inst["~computed"].format ?? null;
+    inst.minLength = inst["~computed"].minimum ?? null;
+    inst.maxLength = inst["~computed"].maximum ?? null;
 
     inst.email = (params) => inst.check(factories._email(params));
     inst.url = (params) => inst.check(factories._url(params));
@@ -335,7 +340,7 @@ export const ZodString: core.$constructor<ZodString> = core.$constructor(
     inst.duration = (params) => inst.check(api.iso.duration(params));
 
     inst.regex = (params) => inst.check(core.regex(params));
-    inst.includes = (params) => inst.check(core.includes(params));
+    inst.includes = (...args) => inst.check(core.includes(...args));
     inst.startsWith = (params) => inst.check(core.startsWith(params));
     inst.endsWith = (params) => inst.check(core.endsWith(params));
     inst.min = (...args) => inst.check(core.minSize(...args));

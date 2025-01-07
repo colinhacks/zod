@@ -102,7 +102,7 @@ export const $ZodGUID: base.$constructor<$ZodGUID> =
 //////////////////////////////   ZodUUID   //////////////////////////////
 
 export interface $ZodUUIDDef extends $ZodStringFormatDef<"uuid"> {
-  version?: number;
+  version?: "v1" | "v2" | "v3" | "v4" | "v5" | "v6" | "v7" | "v8";
 }
 export interface $ZodUUID extends $ZodStringFormat {
   "~def": $ZodUUIDDef;
@@ -110,7 +110,12 @@ export interface $ZodUUID extends $ZodStringFormat {
 
 export const $ZodUUID: base.$constructor<$ZodUUID> =
   /*@__PURE__*/ base.$constructor("$ZodUUID", (inst, def): void => {
-    def.pattern ??= regexes.uuidRegex(def.version);
+    if (def.version) {
+      const v = Number.parseInt(def.version);
+      if (v < 1 || v > 8)
+        throw new Error(`Invalid UUID version: "${def.version}"`);
+      def.pattern ??= regexes.uuidRegex(v);
+    } else def.pattern ??= regexes.uuidRegex();
     $ZodStringFormat.init(inst, def);
   });
 
@@ -141,6 +146,7 @@ export const $ZodURL: base.$constructor<$ZodURL> =
     inst["~run"] = (ctx) => {
       try {
         const url = new URL(ctx.value);
+        regexes.hostnameRegex.lastIndex = 0;
         if (regexes.hostnameRegex.test(url.hostname)) return;
       } catch {}
       ctx.issues.push({
@@ -309,7 +315,7 @@ export const $ZodISODuration: base.$constructor<$ZodISODuration> =
 //////////////////////////////   ZodIP   //////////////////////////////
 
 export interface $ZodIPDef extends $ZodStringFormatDef<"ip"> {
-  version?: 4 | 6;
+  version?: "v4" | "v6";
 }
 export interface $ZodIP extends $ZodStringFormat {
   "~def": $ZodIPDef;
@@ -317,8 +323,8 @@ export interface $ZodIP extends $ZodStringFormat {
 
 export const $ZodIP: base.$constructor<$ZodIP> =
   /*@__PURE__*/ base.$constructor("$ZodIP", (inst, def): void => {
-    if (def.version === 4) def.pattern ??= regexes.ipv4Regex;
-    else if (def.version === 6) def.pattern ??= regexes.ipv6Regex;
+    if (def.version === "v4") def.pattern ??= regexes.ipv4Regex;
+    else if (def.version === "v6") def.pattern ??= regexes.ipv6Regex;
     else def.pattern ??= regexes.ipRegex;
     $ZodStringFormat.init(inst, def);
   });
@@ -399,7 +405,7 @@ export function isValidJWT(
 }
 
 export interface $ZodJWTDef extends $ZodStringFormatDef<"jwt"> {
-  algorithm?: util.JWTAlgorithm | undefined;
+  alg?: util.JWTAlgorithm | undefined;
 }
 export interface $ZodJWT extends $ZodStringFormat {
   "~def": $ZodJWTDef;
@@ -409,7 +415,7 @@ export const $ZodJWT: base.$constructor<$ZodJWT> =
   /*@__PURE__*/ base.$constructor("$ZodJWT", (inst, def): void => {
     $ZodStringFormat.init(inst, def);
     inst["~run"] = (ctx) => {
-      if (isValidJWT(ctx.value, def.algorithm)) return;
+      if (isValidJWT(ctx.value, def.alg)) return;
 
       ctx.issues.push({
         origin: "string",

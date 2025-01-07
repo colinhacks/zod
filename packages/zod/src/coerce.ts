@@ -41,7 +41,7 @@ export const ZodCoercedString: core.$constructor<ZodCoercedString> =
   });
 
 interface ZodStringParams extends util.TypeParams<ZodCoercedString, "coerce"> {}
-const _string = util.factory(ZodCoercedString, {
+const _string = util.factory(() => ZodCoercedString, {
   type: "string",
   coerce: true,
 });
@@ -92,7 +92,7 @@ export const ZodCoercedNumber: core.$constructor<ZodCoercedNumber> =
   });
 
 interface ZodNumberParams extends util.TypeParams<ZodCoercedNumber, "coerce"> {}
-const _number = util.factory(ZodCoercedNumber, {
+const _number = util.factory(() => ZodCoercedNumber, {
   type: "number",
   coerce: true,
 });
@@ -144,7 +144,7 @@ export const ZodCoercedBoolean: core.$constructor<ZodCoercedBoolean> =
 
 interface ZodBooleanParams
   extends util.TypeParams<ZodCoercedBoolean, "coerce"> {}
-const _boolean = util.factory(ZodCoercedBoolean, {
+const _boolean = util.factory(() => ZodCoercedBoolean, {
   type: "boolean",
   coerce: true,
 });
@@ -196,7 +196,7 @@ export const ZodCoercedBigInt: core.$constructor<ZodCoercedBigInt> =
   });
 
 interface ZodBigIntParams extends util.TypeParams<ZodCoercedBigInt, "coerce"> {}
-const _bigint = util.factory(ZodCoercedBigInt, {
+const _bigint = util.factory(() => ZodCoercedBigInt, {
   type: "bigint",
   coerce: true,
 });
@@ -248,7 +248,7 @@ export const ZodCoercedDate: core.$constructor<ZodCoercedDate> =
   });
 
 interface ZodDateParams extends util.TypeParams<ZodCoercedDate, "coerce"> {}
-const _date = util.factory(ZodCoercedDate, {
+const _date = util.factory(() => ZodCoercedDate, {
   type: "date",
   coerce: true,
 });

@@ -2,11 +2,14 @@ import * as z from "zod";
 
 z;
 
-const schema = z.string();
-function test() {
-  return schema.parse("asdf");
-}
-console.log(test());
+const schema = z.string().regex(/^\d+$/g);
+// console.log(schema);
+console.log(schema.safeParse("123"));
+console.log(schema.safeParse("123"));
+console.log(schema.safeParse("123"));
+console.log(schema.safeParse("123"));
+console.log(schema.safeParse("123"));
+
 // const a = z.interface({
 //   aa: z.string(),
 //   "bb?": z.string(),

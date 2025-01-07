@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`ksuid 1`] = `
+[
+  {
+    "code": "invalid_format",
+    "format": "ksuid",
+    "message": "Invalid KSUID",
+    "origin": "string",
+    "path": [],
+    "pattern": "/^[A-Za-z0-9]{27}$/",
+  },
+]
+`;
+
+exports[`regexp error message 1`] = `
+[
+  {
+    "code": "invalid_format",
+    "format": "regex",
+    "message": "Invalid string: must match pattern /^moo+$/",
+    "origin": "string",
+    "path": [],
+    "pattern": "/^moo+$/",
+  },
+]
+`;

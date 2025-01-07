@@ -232,7 +232,7 @@ export interface $ZodType<out O = unknown, out I = unknown> {
     def: any
   ) => any;
   /** @internal Internal API, use with caution. */
-  "~computed": Record<string, unknown>;
+  "~computed": Record<string, any>;
   /** The set of issues this schema might throw during type checking. */
   "~isst"?: errors.$ZodIssueBase;
 }

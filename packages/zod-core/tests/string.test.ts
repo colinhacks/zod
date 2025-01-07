@@ -1,6 +1,8 @@
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod-core";
 
+const FAIL = { success: false };
+
 test("z.string", async () => {
   const a = z.string();
   expect(z.parse(a, "hello")).toEqual("hello");
@@ -46,13 +48,34 @@ test("z.string async", async () => {
 test("z.uuid", () => {
   const a = z.uuid();
   // parse uuid
-  expect(z.parse(a, "550e8400-e29b-41d4-a716-446655440000")).toEqual(
-    "550e8400-e29b-41d4-a716-446655440000"
-  );
+  z.parse(a, "550e8400-e29b-41d4-a716-446655440000");
+  z.parse(a, "550e8400-e29b-61d4-a716-446655440000");
+
   // bad uuid
   expect(() => z.parse(a, "hello")).toThrow();
   // wrong type
   expect(() => z.parse(a, 123)).toThrow();
+
+  const b = z.uuidv4();
+  z.parse(b, "550e8400-e29b-41d4-a716-446655440000");
+  expect(z.safeParse(b, "550e8400-e29b-61d4-a716-446655440000")).toMatchObject(
+    FAIL
+  );
+
+  const c = z.uuidv6();
+  z.parse(c, "550e8400-e29b-61d4-a716-446655440000");
+  expect(z.safeParse(c, "550e8400-e29b-41d4-a716-446655440000")).toMatchObject(
+    FAIL
+  );
+
+  const d = z.uuidv7();
+  z.parse(d, "550e8400-e29b-71d4-a716-446655440000");
+  expect(z.safeParse(d, "550e8400-e29b-41d4-a716-446655440000")).toMatchObject(
+    FAIL
+  );
+  expect(z.safeParse(d, "550e8400-e29b-61d4-a716-446655440000")).toMatchObject(
+    FAIL
+  );
 });
 
 test("z.email", () => {

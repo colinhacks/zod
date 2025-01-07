@@ -412,8 +412,8 @@ export const $ZodCheckMinSize: base.$constructor<$ZodCheckMinSize> =
 
     inst["~onattach"] = (inst) => {
       const curr = (inst["~computed"].minimum ??
-        Number.POSITIVE_INFINITY) as number;
-      if (def.minimum < curr) inst["~computed"].minimum = def.minimum;
+        Number.NEGATIVE_INFINITY) as number;
+      if (def.minimum > curr) inst["~computed"].minimum = def.minimum;
     };
 
     inst["~run"] = (ctx) => {
@@ -495,6 +495,7 @@ export const $ZodCheckStringFormat: base.$constructor<$ZodCheckStringFormat> =
 
     inst["~run"] = (ctx) => {
       if (!def.pattern) throw new Error("Not implemented.");
+      def.pattern.lastIndex = 0;
       if (def.pattern.test(ctx.value)) return;
       ctx.issues.push({
         origin: "string",
@@ -602,6 +603,7 @@ export const $ZodCheckUpperCase: base.$constructor<$ZodCheckUpperCase> =
 interface $ZodCheckIncludesDef extends $ZodCheckStringFormatDef<"includes"> {
   // check: "includes";
   includes: string;
+  position?: number | undefined;
   // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidStringFormat> | undefined;
 }
 
@@ -615,7 +617,7 @@ export const $ZodCheckIncludes: base.$constructor<$ZodCheckIncludes> =
     base.$ZodCheck.init(inst, def);
 
     inst["~run"] = (ctx) => {
-      if (ctx.value.includes(def.includes)) return;
+      if (ctx.value.includes(def.includes, def.position)) return;
       ctx.issues.push({
         origin: "string",
         code: "invalid_format",

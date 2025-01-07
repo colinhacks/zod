@@ -61,7 +61,7 @@ function timeRegexSource(args: { precision?: number | null }) {
   // let regex = `\\d{2}:\\d{2}:\\d{2}`;
   let regex = `([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d`;
 
-  if (args?.precision) {
+  if (args.precision) {
     regex = `${regex}\\.\\d{${args.precision}}`;
   } else if (args.precision == null) {
     regex = `${regex}(\\.\\d+)?`;

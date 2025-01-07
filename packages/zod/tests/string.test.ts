@@ -12,27 +12,33 @@ const includesFromIndex2 = z.string().includes("includes", { position: 2 });
 const startsWith = z.string().startsWith("startsWith");
 const endsWith = z.string().endsWith("endsWith");
 
-test("passing validations", () => {
+test("length checks", () => {
   minFive.parse("12345");
   minFive.parse("123456");
   maxFive.parse("12345");
   maxFive.parse("1234");
   nonempty.parse("1");
   justFive.parse("12345");
-  includes.parse("XincludesXX");
-  includesFromIndex2.parse("XXXincludesXX");
-  startsWith.parse("startsWithX");
-  endsWith.parse("XendsWith");
-});
 
-test("failing validations", () => {
   expect(() => minFive.parse("1234")).toThrow();
   expect(() => maxFive.parse("123456")).toThrow();
   expect(() => nonempty.parse("")).toThrow();
   expect(() => justFive.parse("1234")).toThrow();
   expect(() => justFive.parse("123456")).toThrow();
+});
+
+test("includes", () => {
+  includes.parse("XincludesXX");
+  includesFromIndex2.parse("XXXincludesXX");
+
   expect(() => includes.parse("XincludeXX")).toThrow();
   expect(() => includesFromIndex2.parse("XincludesXX")).toThrow();
+});
+
+test("startswith/endswith", () => {
+  startsWith.parse("startsWithX");
+  endsWith.parse("XendsWith");
+
   expect(() => startsWith.parse("x")).toThrow();
   expect(() => endsWith.parse("x")).toThrow();
 });
@@ -259,7 +265,7 @@ test("url error overrides", () => {
   try {
     z.string().url().parse("https");
   } catch (err) {
-    expect((err as z.ZodError).issues[0].message).toEqual("Invalid url");
+    expect((err as z.ZodError).issues[0].message).toEqual("Invalid URL");
   }
   try {
     z.string().url("badurl").parse("https");
@@ -297,7 +303,7 @@ test("nanoid", () => {
   nanoid.parse("Hb9ZUtUa2JDm_dD-47EGv");
   nanoid.parse("5Noocgv_8vQ9oPijj4ioQ");
   const result = nanoid.safeParse("Xq90uDyhddC53KsoASYJGX");
-  expect(result.success).toEqual(false);
+  expect(result).toMatchObject({ success: false });
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("custom error");
   }
@@ -307,7 +313,7 @@ test("bad nanoid", () => {
   const nanoid = z.string().nanoid("custom error");
   nanoid.parse("ySh_984wpDUu7IQRrLXAp");
   const result = nanoid.safeParse("invalid nanoid");
-  expect(result.success).toEqual(false);
+  expect(result).toMatchObject({ success: false });
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("custom error");
   }
@@ -346,7 +352,7 @@ test(`bad uuid`, () => {
     "ffffffff-ffff-ffff-ffff-ffffffffffff",
   ]) {
     const result = uuid.safeParse(badUuid);
-    expect(result.success).toEqual(false);
+    expect(result).toMatchObject({ success: false });
     expect(result.error?.issues[0].message).toEqual("custom error");
   }
 });
@@ -369,7 +375,7 @@ test("bad guid", () => {
   const guid = z.string().guid("custom error");
   for (const badGuid of ["9491d710-3185-4e06-bea0-6a2f275345e0X"]) {
     const result = guid.safeParse(badGuid);
-    expect(result.success).toEqual(false);
+    expect(result).toMatchObject({ success: false });
     expect(result.error?.issues[0].message).toEqual("custom error");
   }
 });
@@ -378,7 +384,7 @@ test("cuid", () => {
   const cuid = z.string().cuid();
   cuid.parse("ckopqwooh000001la8mbi2im9");
   const result = cuid.safeParse("cifjhdsfhsd-invalid-cuid");
-  expect(result.success).toEqual(false);
+  expect(result).toMatchObject({ success: false });
   if (!result.success) {
     expect(result.error.issues[0].message).toEqual("Invalid cuid");
   }
@@ -411,11 +417,11 @@ test("ulid", () => {
   const ulid = z.string().ulid();
   ulid.parse("01ARZ3NDEKTSV4RRFFQ69G5FAV");
   const result = ulid.safeParse("invalidulid");
-  expect(result.success).toEqual(false);
+  expect(result).toMatchObject({ success: false });
   const tooLong = "01ARZ3NDEKTSV4RRFFQ69G5FAVA";
-  expect(ulid.safeParse(tooLong).success).toEqual(false);
+  expect(ulid.safeParse(tooLong)).toMatchObject({ success: false });
   if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("Invalid ulid");
+    expect(result.error.issues[0].message).toEqual("Invalid ULID");
   }
 });
 
@@ -423,9 +429,9 @@ test("xid", () => {
   const xid = z.string().xid();
   xid.parse("9m4e2mr0ui3e8a215n4g");
   const result = xid.safeParse("invalidxid");
-  expect(result.success).toEqual(false);
+  expect(result).toMatchObject({ success: false });
   if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("Invalid xid");
+    expect(result.error.issues[0].message).toEqual("Invalid XID");
   }
 });
 
@@ -433,11 +439,11 @@ test("ksuid", () => {
   const ksuid = z.string().ksuid();
   ksuid.parse("0o0t9hkGxgFLtd3lmJ4TSTeY0Vb");
   const result = ksuid.safeParse("invalidksuid");
-  expect(result.success).toEqual(false);
+  expect(result).toMatchObject({ success: false });
   const tooLong = "0o0t9hkGxgFLtd3lmJ4TSTeY0VbA";
-  expect(ksuid.safeParse(tooLong).success).toEqual(false);
+  expect(ksuid.safeParse(tooLong)).toMatchObject({ success: false });
   if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("Invalid ksuid");
+    expect(result.error.issues).toMatchSnapshot();
   }
 });
 
@@ -454,7 +460,7 @@ test("regexp error message", () => {
     .regex(/^moo+$/)
     .safeParse("boooo");
   if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("Invalid");
+    expect(result.error.issues).toMatchSnapshot();
   } else {
     throw new Error("validation should have failed");
   }
@@ -471,111 +477,151 @@ test("regex lastIndex reset", () => {
   expect(schema.safeParse("123").success).toEqual(true);
 });
 
-test("checks getters", () => {
-  expect(z.string().email().isEmail).toEqual(true);
-  expect(z.string().email().isURL).toEqual(false);
-  expect(z.string().email().isCUID).toEqual(false);
-  expect(z.string().email().isCUID2).toEqual(false);
-  expect(z.string().email().isUUID).toEqual(false);
-  expect(z.string().email().isNANOID).toEqual(false);
-  expect(z.string().email().isIP).toEqual(false);
-  expect(z.string().email().isULID).toEqual(false);
-  expect(z.string().email().isXID).toEqual(false);
-  expect(z.string().email().isKSUID).toEqual(false);
-
-  expect(z.string().url().isEmail).toEqual(false);
-  expect(z.string().url().isURL).toEqual(true);
-  expect(z.string().url().isCUID).toEqual(false);
-  expect(z.string().url().isCUID2).toEqual(false);
-  expect(z.string().url().isUUID).toEqual(false);
-  expect(z.string().url().isNANOID).toEqual(false);
-  expect(z.string().url().isIP).toEqual(false);
-  expect(z.string().url().isULID).toEqual(false);
-  expect(z.string().url().isXID).toEqual(false);
-  expect(z.string().url().isKSUID).toEqual(false);
-
-  expect(z.string().cuid().isEmail).toEqual(false);
-  expect(z.string().cuid().isURL).toEqual(false);
-  expect(z.string().cuid().isCUID).toEqual(true);
-  expect(z.string().cuid().isCUID2).toEqual(false);
-  expect(z.string().cuid().isUUID).toEqual(false);
-  expect(z.string().cuid().isNANOID).toEqual(false);
-  expect(z.string().cuid().isIP).toEqual(false);
-  expect(z.string().cuid().isULID).toEqual(false);
-  expect(z.string().cuid().isXID).toEqual(false);
-  expect(z.string().cuid().isKSUID).toEqual(false);
-
-  expect(z.string().cuid2().isEmail).toEqual(false);
-  expect(z.string().cuid2().isURL).toEqual(false);
-  expect(z.string().cuid2().isCUID).toEqual(false);
-  expect(z.string().cuid2().isCUID2).toEqual(true);
-  expect(z.string().cuid2().isUUID).toEqual(false);
-  expect(z.string().cuid2().isNANOID).toEqual(false);
-  expect(z.string().cuid2().isIP).toEqual(false);
-  expect(z.string().cuid2().isULID).toEqual(false);
-  expect(z.string().cuid2().isXID).toEqual(false);
-  expect(z.string().cuid2().isKSUID).toEqual(false);
-
-  expect(z.string().uuid().isEmail).toEqual(false);
-  expect(z.string().uuid().isURL).toEqual(false);
-  expect(z.string().uuid().isCUID).toEqual(false);
-  expect(z.string().uuid().isCUID2).toEqual(false);
-  expect(z.string().uuid().isUUID).toEqual(true);
-  expect(z.string().uuid().isNANOID).toEqual(false);
-  expect(z.string().uuid().isIP).toEqual(false);
-  expect(z.string().uuid().isULID).toEqual(false);
-  expect(z.string().uuid().isXID).toEqual(false);
-
-  expect(z.string().nanoid().isEmail).toEqual(false);
-  expect(z.string().nanoid().isURL).toEqual(false);
-  expect(z.string().nanoid().isCUID).toEqual(false);
-  expect(z.string().nanoid().isCUID2).toEqual(false);
-  expect(z.string().nanoid().isUUID).toEqual(false);
-  expect(z.string().nanoid().isNANOID).toEqual(true);
-  expect(z.string().nanoid().isIP).toEqual(false);
-  expect(z.string().nanoid().isULID).toEqual(false);
-  expect(z.string().uuid().isKSUID).toEqual(false);
-
-  expect(z.string().ip().isEmail).toEqual(false);
-  expect(z.string().ip().isURL).toEqual(false);
-  expect(z.string().ip().isCUID).toEqual(false);
-  expect(z.string().ip().isCUID2).toEqual(false);
-  expect(z.string().ip().isUUID).toEqual(false);
-  expect(z.string().ip().isNANOID).toEqual(false);
-  expect(z.string().ip().isIP).toEqual(true);
-  expect(z.string().ip().isULID).toEqual(false);
-  expect(z.string().ip().isXID).toEqual(false);
-  expect(z.string().ip().isKSUID).toEqual(false);
-
-  expect(z.string().ulid().isEmail).toEqual(false);
-  expect(z.string().ulid().isURL).toEqual(false);
-  expect(z.string().ulid().isCUID).toEqual(false);
-  expect(z.string().ulid().isCUID2).toEqual(false);
-  expect(z.string().ulid().isUUID).toEqual(false);
-  expect(z.string().ulid().isNANOID).toEqual(false);
-  expect(z.string().ulid().isIP).toEqual(false);
-  expect(z.string().ulid().isULID).toEqual(true);
-  expect(z.string().ulid().isXID).toEqual(false);
-
-  expect(z.string().xid().isEmail).toEqual(false);
-  expect(z.string().xid().isURL).toEqual(false);
-  expect(z.string().xid().isCUID).toEqual(false);
-  expect(z.string().xid().isCUID2).toEqual(false);
-  expect(z.string().xid().isUUID).toEqual(false);
-  expect(z.string().xid().isIP).toEqual(false);
-  expect(z.string().xid().isULID).toEqual(false);
-  expect(z.string().xid().isXID).toEqual(true);
-  expect(z.string().ulid().isKSUID).toEqual(false);
-
-  expect(z.string().ksuid().isEmail).toEqual(false);
-  expect(z.string().ksuid().isURL).toEqual(false);
-  expect(z.string().ksuid().isCUID).toEqual(false);
-  expect(z.string().ksuid().isCUID2).toEqual(false);
-  expect(z.string().ksuid().isUUID).toEqual(false);
-  expect(z.string().ksuid().isIP).toEqual(false);
-  expect(z.string().ksuid().isULID).toEqual(false);
-  expect(z.string().ksuid().isKSUID).toEqual(true);
+test("format", () => {
+  // expect(z.string().email().format).toEqual("email");
+  // expect(z.string().url().format).toEqual("url");
+  // expect(z.string().cuid().format).toEqual("cuid");
+  // expect(z.string().cuid2().format).toEqual("cuid2");
+  // expect(z.string().uuid().format).toEqual("uuid");
+  // expect(z.string().ip().format).toEqual("ip");
+  // expect(z.string().ipv4().format).toEqual("ip");
+  // expect(z.string().ipv6().format).toEqual("ip");
+  // expect(z.string().ipv4().format).toEqual("ip");
+  // expect(z.string().ulid().format).toEqual("ulid");
+  // expect(z.string().ksuid().format).toEqual("ksuid");
+  expect(z.string().email().format).toEqual("email");
+  expect(z.string().url().format).toEqual("url");
+  expect(z.string().jwt().format).toEqual("jwt");
+  expect(z.string().emoji().format).toEqual("emoji");
+  expect(z.string().guid().format).toEqual("guid");
+  expect(z.string().uuid().format).toEqual("uuid");
+  expect(z.string().uuidv4().format).toEqual("uuid");
+  expect(z.string().uuidv6().format).toEqual("uuid");
+  expect(z.string().uuidv7().format).toEqual("uuid");
+  expect(z.string().nanoid().format).toEqual("nanoid");
+  expect(z.string().guid().format).toEqual("guid");
+  expect(z.string().cuid().format).toEqual("cuid");
+  expect(z.string().cuid2().format).toEqual("cuid2");
+  expect(z.string().ulid().format).toEqual("ulid");
+  expect(z.string().base64().format).toEqual("base64");
+  expect(z.string().jsonString().format).toEqual("json_string");
+  expect(z.string().xid().format).toEqual("xid");
+  expect(z.string().ksuid().format).toEqual("ksuid");
+  expect(z.string().ip().format).toEqual("ip");
+  expect(z.string().ipv4().format).toEqual("ip");
+  expect(z.string().ipv6().format).toEqual("ip");
+  expect(z.string().e164().format).toEqual("e164");
+  expect(z.string().datetime().format).toEqual("iso_datetime");
+  expect(z.string().date().format).toEqual("iso_date");
+  expect(z.string().time().format).toEqual("iso_time");
+  expect(z.string().duration().format).toEqual("duration");
+  expect(z.string().json().format).toEqual("json_string");
 });
+// test("checks getters", () => {
+//   expect(z.string().email().isEmail).toEqual(true);
+//   expect(z.string().email().isURL).toEqual(false);
+//   expect(z.string().email().isCUID).toEqual(false);
+//   expect(z.string().email().isCUID2).toEqual(false);
+//   expect(z.string().email().isUUID).toEqual(false);
+//   expect(z.string().email().isNANOID).toEqual(false);
+//   expect(z.string().email().isIP).toEqual(false);
+//   expect(z.string().email().isULID).toEqual(false);
+//   expect(z.string().email().isXID).toEqual(false);
+//   expect(z.string().email().isKSUID).toEqual(false);
+
+//   expect(z.string().url().isEmail).toEqual(false);
+//   expect(z.string().url().isURL).toEqual(true);
+//   expect(z.string().url().isCUID).toEqual(false);
+//   expect(z.string().url().isCUID2).toEqual(false);
+//   expect(z.string().url().isUUID).toEqual(false);
+//   expect(z.string().url().isNANOID).toEqual(false);
+//   expect(z.string().url().isIP).toEqual(false);
+//   expect(z.string().url().isULID).toEqual(false);
+//   expect(z.string().url().isXID).toEqual(false);
+//   expect(z.string().url().isKSUID).toEqual(false);
+
+//   expect(z.string().cuid().isEmail).toEqual(false);
+//   expect(z.string().cuid().isURL).toEqual(false);
+//   expect(z.string().cuid().isCUID).toEqual(true);
+//   expect(z.string().cuid().isCUID2).toEqual(false);
+//   expect(z.string().cuid().isUUID).toEqual(false);
+//   expect(z.string().cuid().isNANOID).toEqual(false);
+//   expect(z.string().cuid().isIP).toEqual(false);
+//   expect(z.string().cuid().isULID).toEqual(false);
+//   expect(z.string().cuid().isXID).toEqual(false);
+//   expect(z.string().cuid().isKSUID).toEqual(false);
+
+//   expect(z.string().cuid2().isEmail).toEqual(false);
+//   expect(z.string().cuid2().isURL).toEqual(false);
+//   expect(z.string().cuid2().isCUID).toEqual(false);
+//   expect(z.string().cuid2().isCUID2).toEqual(true);
+//   expect(z.string().cuid2().isUUID).toEqual(false);
+//   expect(z.string().cuid2().isNANOID).toEqual(false);
+//   expect(z.string().cuid2().isIP).toEqual(false);
+//   expect(z.string().cuid2().isULID).toEqual(false);
+//   expect(z.string().cuid2().isXID).toEqual(false);
+//   expect(z.string().cuid2().isKSUID).toEqual(false);
+
+//   expect(z.string().uuid().isEmail).toEqual(false);
+//   expect(z.string().uuid().isURL).toEqual(false);
+//   expect(z.string().uuid().isCUID).toEqual(false);
+//   expect(z.string().uuid().isCUID2).toEqual(false);
+//   expect(z.string().uuid().isUUID).toEqual(true);
+//   expect(z.string().uuid().isNANOID).toEqual(false);
+//   expect(z.string().uuid().isIP).toEqual(false);
+//   expect(z.string().uuid().isULID).toEqual(false);
+//   expect(z.string().uuid().isXID).toEqual(false);
+
+//   expect(z.string().nanoid().isEmail).toEqual(false);
+//   expect(z.string().nanoid().isURL).toEqual(false);
+//   expect(z.string().nanoid().isCUID).toEqual(false);
+//   expect(z.string().nanoid().isCUID2).toEqual(false);
+//   expect(z.string().nanoid().isUUID).toEqual(false);
+//   expect(z.string().nanoid().isNANOID).toEqual(true);
+//   expect(z.string().nanoid().isIP).toEqual(false);
+//   expect(z.string().nanoid().isULID).toEqual(false);
+//   expect(z.string().uuid().isKSUID).toEqual(false);
+
+//   expect(z.string().ip().isEmail).toEqual(false);
+//   expect(z.string().ip().isURL).toEqual(false);
+//   expect(z.string().ip().isCUID).toEqual(false);
+//   expect(z.string().ip().isCUID2).toEqual(false);
+//   expect(z.string().ip().isUUID).toEqual(false);
+//   expect(z.string().ip().isNANOID).toEqual(false);
+//   expect(z.string().ip().isIP).toEqual(true);
+//   expect(z.string().ip().isULID).toEqual(false);
+//   expect(z.string().ip().isXID).toEqual(false);
+//   expect(z.string().ip().isKSUID).toEqual(false);
+
+//   expect(z.string().ulid().isEmail).toEqual(false);
+//   expect(z.string().ulid().isURL).toEqual(false);
+//   expect(z.string().ulid().isCUID).toEqual(false);
+//   expect(z.string().ulid().isCUID2).toEqual(false);
+//   expect(z.string().ulid().isUUID).toEqual(false);
+//   expect(z.string().ulid().isNANOID).toEqual(false);
+//   expect(z.string().ulid().isIP).toEqual(false);
+//   expect(z.string().ulid().isULID).toEqual(true);
+//   expect(z.string().ulid().isXID).toEqual(false);
+
+//   expect(z.string().xid().isEmail).toEqual(false);
+//   expect(z.string().xid().isURL).toEqual(false);
+//   expect(z.string().xid().isCUID).toEqual(false);
+//   expect(z.string().xid().isCUID2).toEqual(false);
+//   expect(z.string().xid().isUUID).toEqual(false);
+//   expect(z.string().xid().isIP).toEqual(false);
+//   expect(z.string().xid().isULID).toEqual(false);
+//   expect(z.string().xid().isXID).toEqual(true);
+//   expect(z.string().ulid().isKSUID).toEqual(false);
+
+//   expect(z.string().ksuid().isEmail).toEqual(false);
+//   expect(z.string().ksuid().isURL).toEqual(false);
+//   expect(z.string().ksuid().isCUID).toEqual(false);
+//   expect(z.string().ksuid().isCUID2).toEqual(false);
+//   expect(z.string().ksuid().isUUID).toEqual(false);
+//   expect(z.string().ksuid().isIP).toEqual(false);
+//   expect(z.string().ksuid().isULID).toEqual(false);
+//   expect(z.string().ksuid().isKSUID).toEqual(true);
+// });
 
 test("min max getters", () => {
   expect(z.string().min(5).minLength).toEqual(5);
@@ -598,23 +644,6 @@ test("trim", () => {
 test("lowerCase", () => {
   expect(z.string().toLowerCase().parse("ASDF")).toEqual("asdf");
   expect(z.string().toUpperCase().parse("asdf")).toEqual("ASDF");
-});
-
-test("datetime", () => {
-  const a = z.string().datetime({});
-  expect(a.isDatetime).toEqual(true);
-
-  const b = z.string().datetime({ offset: true });
-  expect(b.isDatetime).toEqual(true);
-
-  const c = z.string().datetime({ precision: 3 });
-  expect(c.isDatetime).toEqual(true);
-
-  const d = z.string().datetime({ offset: true, precision: 0 });
-  expect(d.isDatetime).toEqual(true);
-
-  const { isDatetime } = z.string().datetime();
-  expect(isDatetime).toEqual(true);
 });
 
 test("datetime parsing", () => {
@@ -688,11 +717,6 @@ test("datetime parsing", () => {
   ).toThrow();
 });
 
-test("date", () => {
-  const a = z.string().date();
-  expect(a.isDate).toEqual(true);
-});
-
 test("date parsing", () => {
   const date = z.string().date();
   date.parse("1970-01-01");
@@ -745,11 +769,6 @@ test("date parsing", () => {
   expect(() => date.parse("2000-06-31")).toThrow();
   expect(() => date.parse("2000-09-31")).toThrow();
   expect(() => date.parse("2000-11-31")).toThrow();
-});
-
-test("time", () => {
-  const a = z.string().time();
-  expect(a.isTime).toEqual(true);
 });
 
 test("time parsing", () => {
@@ -813,7 +832,6 @@ test("time parsing", () => {
 
 test("duration", () => {
   const duration = z.string().duration();
-  expect(duration.isDuration).toEqual(true);
 
   const validDurations = [
     "P3Y6M4DT12H30M5S",

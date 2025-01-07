@@ -24,7 +24,7 @@ export const _uuidv4: Factory = util.factory(() => schemas.ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
-  version: 4,
+  version: "v4",
 });
 
 export const _uuidv6: Factory = util.factory(() => schemas.ZodUUID, {

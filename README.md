@@ -766,7 +766,7 @@ time.parse("00:00:00"); // fail
 
 ### IP addresses
 
-The `z.string().ip()` method by default validate IPv4 and IPv6.
+The `z.string().ip()` method by default validate IPv4 and IP 6.
 
 ```ts
 const ip = z.string().ip();
