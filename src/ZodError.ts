@@ -283,6 +283,10 @@ export class ZodError<T = any> extends Error {
   override toString() {
     return this.message;
   }
+
+  /**
+   * message returns the .issues field as a pretty-printed JSON string, NOT necessarily a human-readable message.
+   */
   override get message() {
     return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
   }
