@@ -144,6 +144,7 @@ export type $ZodSchemaTypes =
   | "set"
   | "enum"
   | "literal"
+  | "const"
   | "nullable"
   | "optional"
   | "required"
@@ -252,6 +253,10 @@ export function runCheck(
   return result;
 }
 
+export function clone<T extends $ZodType>(inst: T, def: T["~def"]): T {
+  return new inst["~constr"](def);
+}
+
 export const $ZodType: $constructor<$ZodType> = $constructor(
   "$ZodType",
   (inst, def) => {
@@ -259,7 +264,7 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
     inst["~standard"] = 1; // set standard-schema version
     inst["~computed"] = inst["~computed"] || {}; // initialize _computed object
 
-    inst.clone = (_def) => new inst["~constr"](_def ?? def);
+    inst.clone = (_def) => clone(inst, _def ?? def);
 
     inst.check = (...checks) => {
       return inst.clone({

@@ -53,13 +53,7 @@ export const $ZodString: base.$constructor<$ZodString> =
 export interface $ZodStringFormatDef<
   Format extends errors.$ZodStringFormats = errors.$ZodStringFormats,
 > extends $ZodStringDef,
-    checks.$ZodCheckStringFormatDef<Format> {
-  // error?:
-  //   | errors.$ZodErrorMap<
-  //       errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidStringFormat
-  //     >
-  //   | undefined;
-}
+    checks.$ZodCheckStringFormatDef<Format> {}
 
 export interface $ZodStringFormat
   extends $ZodString<string>,
@@ -443,7 +437,6 @@ export interface $ZodNumberDef extends base.$ZodTypeDef {
 
 export interface $ZodNumber<T = unknown> extends base.$ZodType<number, T> {
   "~pattern": RegExp;
-
   "~def": $ZodNumberDef;
   "~isst": errors.$ZodIssueInvalidType<"number">;
 }
@@ -474,15 +467,7 @@ export const $ZodNumber: base.$constructor<$ZodNumber> =
 ///////////////////////////////////////////////
 export interface $ZodNumberFormatDef
   extends $ZodNumberDef,
-    checks.$ZodCheckNumberFormatDef {
-  // error?:
-  //   | errors.$ZodErrorMap<
-  //       | errors.$ZodIssueInvalidType<"number", number>
-  //       | errors.$ZodIssueTooBig<"number">
-  //       | errors.$ZodIssueTooSmall<"number">
-  //     >
-  //   | undefined;
-}
+    checks.$ZodCheckNumberFormatDef {}
 
 export interface $ZodNumberFormat
   extends $ZodNumber<number>,
@@ -557,9 +542,6 @@ export interface $ZodBigIntDef extends base.$ZodTypeDef {
   type: "bigint";
   coerce?: boolean;
   checks: base.$ZodCheck<bigint>[];
-  // error?:
-  //   | errors.$ZodErrorMap<errors.$ZodIssueInvalidType<"bigint">>
-  //   | undefined;
 }
 
 export interface $ZodBigInt<T = unknown> extends base.$ZodType<bigint, T> {
@@ -596,13 +578,6 @@ export interface $ZodBigIntFormatDef
   extends $ZodBigIntDef,
     checks.$ZodCheckBigIntFormatDef {
   check: "bigint_format";
-  // error?:
-  //   | errors.$ZodErrorMap<
-  //       | errors.$ZodIssueInvalidType<"bigint">
-  //       | errors.$ZodIssueTooBig<"bigint">
-  //       | errors.$ZodIssueTooSmall<"bigint">
-  //     >
-  //   | undefined;
 }
 
 export interface $ZodBigIntFormat
@@ -861,11 +836,6 @@ export const $ZodVoid: base.$constructor<$ZodVoid> =
 export interface $ZodDateDef extends base.$ZodTypeDef {
   type: "date";
   coerce?: boolean;
-  // error?:
-  //   | errors.$ZodErrorMap<
-  //       errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidDate
-  //     >
-  //   | undefined;
 }
 
 export interface $ZodDate<T = unknown> extends base.$ZodType<Date, T> {
@@ -1036,11 +1006,10 @@ export type $ZodShape = {
   [k: PropertyKey]: base.$ZodType;
 };
 
-export interface $ZodObjectLikeDef<Shape extends $ZodShape = $ZodShape>
-  extends base.$ZodTypeDef {
+export interface $ZodObjectLikeDef extends base.$ZodTypeDef {
   type: "object" | "interface";
   // mode: "object" | "interface";
-  shape: Shape;
+  shape: $ZodShape;
   catchall?: base.$ZodType | undefined;
 }
 
@@ -1271,8 +1240,9 @@ export type $InferObjectInput<T extends $ZodShape> = OptionalInProps<T> &
   RequiredInProps<T>;
 
 export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape>
-  extends $ZodObjectLikeDef<Shape> {
+  extends $ZodObjectLikeDef {
   type: "object";
+  shape: Shape;
 }
 export interface $ZodObject<Shape extends $ZodShape = $ZodShape>
   extends $ZodObjectLike<$InferObjectOutput<Shape>, $InferObjectInput<Shape>> {
@@ -1573,13 +1543,6 @@ export interface $ZodTupleDef<
   type: "tuple";
   items: T;
   rest: Rest;
-  // error?:
-  //   | errors.$ZodErrorMap<
-  //       | errors.$ZodIssueInvalidType
-  //       | errors.$ZodIssueTooBig<"array", Array<unknown>>
-  //       | errors.$ZodIssueTooSmall<"array", Array<unknown>>
-  //     >
-  //   | undefined;
 }
 
 export type ZodTupleItems = readonly base.$ZodType[];
@@ -1766,12 +1729,6 @@ export interface $ZodRecordDef extends base.$ZodTypeDef {
   type: "record";
   keySchema: $ZodRecordKey;
   valueSchema: base.$ZodType;
-  // error?:
-  //   | errors.$ZodErrorMap<
-  //       | errors.$ZodIssueInvalidType
-  //       | errors.$ZodIssueInvalidKey<"record", Record<PropertyKey, unknown>>
-  //     >
-  //   | undefined;
 }
 // export type KeySchema = $HasValues | $HasPattern;
 // export type RecordType<K extends string | number | symbol, V> = [
@@ -1908,13 +1865,6 @@ export interface $ZodMapDef extends base.$ZodTypeDef {
   type: "map";
   keyType: base.$ZodType;
   valueType: base.$ZodType;
-  // error?:
-  //   | errors.$ZodErrorMap<
-  //       | errors.$ZodIssueInvalidType
-  //       | errors.$ZodIssueInvalidKey<"map">
-  //       | errors.$ZodIssueInvalidElement<"map", unknown>
-  //     >
-  //   | undefined;
 }
 
 export interface $ZodMap<
@@ -2222,6 +2172,56 @@ export const $ZodLiteral: base.$constructor<$ZodLiteral> =
         ],
         true
       );
+    };
+  });
+
+////////////////////////////////////////
+////////////////////////////////////////
+//////////                    //////////
+//////////      $ZodConst      //////////
+//////////                    //////////
+////////////////////////////////////////
+////////////////////////////////////////
+
+export interface $ZodConstDef extends base.$ZodTypeDef {
+  type: "const";
+  value: unknown;
+  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidValue> | undefined;
+}
+
+export interface $ZodConst<T extends util.Literal = util.Literal>
+  extends base.$ZodType<T, T> {
+  "~def": $ZodConstDef;
+  "~values": base.$PrimitiveSet;
+  "~pattern": RegExp;
+  "~isst": errors.$ZodIssueInvalidValue<"literal">;
+}
+
+export const $ZodConst: base.$constructor<$ZodConst> =
+  /*@__PURE__*/ base.$constructor("$ZodConst", (inst, def) => {
+    base.$ZodType.init(inst, def);
+
+    if (util.primitiveTypes.has(typeof def.value) || def.value === null) {
+      inst["~values"] = new Set<util.Primitive>(def.value as any);
+    }
+
+    Object.defineProperty(inst, "~pattern", {
+      get() {
+        if (util.propertyKeyTypes.has(typeof def.value)) {
+          return new RegExp(
+            `^(${
+              typeof def.value === "string"
+                ? util.escapeRegex(def.value)
+                : (def.value as any).toString()
+            })$`
+          );
+        }
+        throw new Error("Const value cannot be converted to regex");
+      },
+    });
+
+    inst["~typecheck"] = (_, _ctx) => {
+      return base.$succeed(def.value) as any;
     };
   });
 
@@ -2817,33 +2817,8 @@ export const $ZodCustom: base.$constructor<$ZodCustom<unknown>> =
     base.$ZodType.init(inst, def);
 
     inst["~typecheck"] = (input, _) => {
-      // return def.fn(input, ctx);
       return base.$succeed(input);
     };
 
     inst["~run"] = (_) => def.fn(_ as any);
-
-    // inst['~run'] = (ctx) => {
-    //   const r = def.fn(ctx.value);
-    //   if (r instanceof Promise)
-    //     return r.then((r) => {
-    //       if (!r) {
-    //         ctx.issues.push({
-    //           input: ctx.value,
-    //           code: "custom",
-    //           origin: "custom",
-    //           def,
-    //         });
-    //       }
-    //     });
-    //   if (!r) {
-    //     ctx.issues.push({
-    //       input: ctx.value,
-    //       code: "custom",
-    //       origin: "custom",
-    //       def,
-    //     });
-    //   }
-    //   return;
-    // };
   });

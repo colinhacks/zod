@@ -434,8 +434,8 @@ test("z.map invalid_element", () => {
 
 test("z.map async", async () => {
   const a = z.map(
-    z.string().check(z.refine(async () => true)),
-    z.number().check(z.refine(async () => true))
+    z.string([z.refine(async () => true)]),
+    z.number([z.refine(async () => true)])
   );
   const d1 = new Map([["hello", 123]]);
   expect(await z.parseAsync(a, d1)).toEqual(d1);
@@ -714,7 +714,8 @@ test("z.custom", () => {
   expect(z.parse(a, "hello")).toEqual("hello");
   expect(() => z.parse(a, 123)).toThrow();
 
-  const b = z.string().check(z.custom((val) => val.length > 3));
+  const b = z.string([z.custom((val) => val.length > 3)]);
+
   expect(z.parse(b, "hello")).toEqual("hello");
   expect(() => z.parse(b, "hi")).toThrow();
 });
@@ -750,10 +751,7 @@ test("z.instanceof", () => {
 });
 
 test("z.refine", () => {
-  const a = z.number().check(
-    z.refine((val) => val > 3),
-    z.refine((val) => val < 10)
-  );
+  const a = z.number([z.refine((val) => val > 3), z.refine((val) => val < 10)]);
   expect(z.parse(a, 5)).toEqual(5);
   expect(() => z.parse(a, 2)).toThrow();
   expect(() => z.parse(a, 11)).toThrow();
@@ -761,7 +759,7 @@ test("z.refine", () => {
 });
 
 test("z.superRefine", () => {
-  const a = z.number().check(
+  const a = z.number([
     z.superRefine((val, ctx) => {
       if (val < 3) {
         return ctx.addIssue({
@@ -774,8 +772,8 @@ test("z.superRefine", () => {
       if (val > 10) {
         return ctx.addIssue("Too big");
       }
-    })
-  );
+    }),
+  ]);
 
   expect(z.parse(a, 5)).toEqual(5);
   expect(() => z.parse(a, 2)).toThrow();

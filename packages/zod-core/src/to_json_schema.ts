@@ -2,6 +2,15 @@ import { json } from "stream/consumers";
 import type { $ZodType } from "./base.js";
 import type * as schemas from "./schemas.js";
 
+function* integers() {
+  let n = 0;
+  while (true) {
+    yield ++n;
+  }
+}
+
+type asdf = Generator;
+
 export namespace JSONSchema {
   export type Schema =
     // | boolean
@@ -213,6 +222,10 @@ export function toJSONSchema(_schema: $ZodType): JSONSchema.Schema {
       jsonSchema.type = "string";
       if (schema["~computed"].minimum)
         jsonSchema.minLength = schema["~computed"].minimum;
+      if (schema["~computed"].maximum)
+        jsonSchema.maxLength = schema["~computed"].maximum;
+
+      break;
     }
     case "number": {
       return {

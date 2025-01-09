@@ -454,6 +454,15 @@ export const propertyKeyTypes: Set<string> = new Set([
   "symbol",
 ]);
 
+export const primitiveTypes = new Set([
+  "string",
+  "number",
+  "bigint",
+  "boolean",
+  "symbol",
+  "undefined",
+  // "null",
+]);
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

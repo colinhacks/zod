@@ -92,7 +92,7 @@ const _uuidv4 = util.factory(() => schemas.$ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
-  version: 4,
+  version: "v4",
 });
 export function uuidv4(checks?: base.$ZodCheck<string>[]): schemas.$ZodUUID;
 export function uuidv4(
@@ -116,7 +116,7 @@ const _uuidv6 = util.factory(() => schemas.$ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
-  version: 6,
+  version: "v6",
 });
 export function uuidv6(checks?: base.$ZodCheck<string>[]): schemas.$ZodUUID;
 export function uuidv6(
@@ -140,7 +140,7 @@ const _uuidv7 = util.factory(() => schemas.$ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
-  version: 7,
+  version: "v7",
 });
 export function uuidv7(checks?: base.$ZodCheck<string>[]): schemas.$ZodUUID;
 export function uuidv7(
@@ -335,7 +335,7 @@ const _ipv4 = util.factory(() => schemas.$ZodIP, {
   type: "string",
   format: "ip",
   check: "string_format",
-  version: 4,
+  version: "v4",
 });
 export function ipv4(checks?: base.$ZodCheck<string>[]): schemas.$ZodIP;
 export function ipv4(
@@ -353,7 +353,7 @@ const _ipv6 = util.factory(() => schemas.$ZodIP, {
   type: "string",
   format: "ip",
   check: "string_format",
-  version: 6,
+  version: "v6",
 });
 export function ipv6(checks?: base.$ZodCheck<string>[]): schemas.$ZodIP;
 export function ipv6(
@@ -1626,16 +1626,35 @@ type $ZodCustomParams = util.CheckTypeParams<schemas.$ZodCustom, "fn"> & {
 //     ...params,
 //   }) as any;
 // }
-
+export function check<T extends base.$ZodType>(
+  inst: T,
+  ...checks: Array<base.$CheckFn<T["~output"]> | base.$ZodCheck<T["~output"]>>
+): T;
 export function check<O = unknown>(
   fn: base.$CheckFn<O>,
-  _params: $ZodCustomParams = {}
-): schemas.$ZodCustom<O> {
+  params?: $ZodCustomParams
+): schemas.$ZodCustom<O>;
+export function check(schemaOrFn: any, ...rest: any[]) {
+  if (schemaOrFn instanceof base.$ZodType) {
+    return base.clone(schemaOrFn, {
+      ...schemaOrFn["~def"],
+      checks: [
+        ...(schemaOrFn["~def"].checks ?? []),
+        ...(rest as any[]).map((ch) =>
+          typeof ch === "function"
+            ? { "~run": ch, "~def": { check: "custom" } }
+            : ch
+        ),
+      ],
+    });
+  }
+
+  const _params = rest[0];
   const params = util.normalizeCheckParams(_params);
   return new schemas.$ZodCustom({
     type: "custom",
     check: "custom",
-    fn,
+    fn: schemaOrFn,
     ...params,
   }) as any;
 }
