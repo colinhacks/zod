@@ -3,6 +3,7 @@ import { expect, test } from "vitest";
 
 import * as z from "../src/index.js";
 
+const num = z.number();
 const gtFive = z.number().gt(5);
 const gteFive = z.number().gte(5);
 const minFive = z.number().min(5);
@@ -22,81 +23,113 @@ const stepPointOne = z.number().step(0.1);
 const stepPointZeroZeroZeroOne = z.number().step(0.0001);
 const stepSixPointFour = z.number().step(6.4);
 
-test("passing validations", () => {
-  z.number().parse(1);
-  z.number().parse(1.5);
-  z.number().parse(0);
-  z.number().parse(-1.5);
-  z.number().parse(-1);
-  z.number().parse(Number.POSITIVE_INFINITY);
-  z.number().parse(Number.NEGATIVE_INFINITY);
-  gtFive.parse(6);
-  gtFive.parse(Number.POSITIVE_INFINITY);
-  gteFive.parse(5);
-  gteFive.parse(Number.POSITIVE_INFINITY);
-  minFive.parse(5);
-  minFive.parse(Number.POSITIVE_INFINITY);
-  ltFive.parse(4);
-  ltFive.parse(Number.NEGATIVE_INFINITY);
-  lteFive.parse(5);
-  lteFive.parse(Number.NEGATIVE_INFINITY);
-  maxFive.parse(5);
-  maxFive.parse(Number.NEGATIVE_INFINITY);
-  intNum.parse(4);
-  positive.parse(1);
-  positive.parse(Number.POSITIVE_INFINITY);
-  negative.parse(-1);
-  negative.parse(Number.NEGATIVE_INFINITY);
-  nonpositive.parse(0);
-  nonpositive.parse(-1);
-  nonpositive.parse(Number.NEGATIVE_INFINITY);
-  nonnegative.parse(0);
-  nonnegative.parse(1);
-  nonnegative.parse(Number.POSITIVE_INFINITY);
-  multipleOfFive.parse(15);
-  multipleOfFive.parse(-15);
-  multipleOfNegativeFive.parse(-15);
-  multipleOfNegativeFive.parse(15);
-  finite.parse(123);
-  safe.parse(Number.MIN_SAFE_INTEGER);
-  safe.parse(Number.MAX_SAFE_INTEGER);
-  stepPointOne.parse(6);
-  stepPointOne.parse(6.1);
-  stepPointOne.parse(6.1);
-  stepSixPointFour.parse(12.8);
-  stepPointZeroZeroZeroOne.parse(3.01);
+test("z.number()", () => {
+  expect(num.parse(1234)).toEqual(1234);
 });
 
-test("failing validations", () => {
-  expect(() => ltFive.parse(5)).toThrow();
-  expect(() => lteFive.parse(6)).toThrow();
-  expect(() => maxFive.parse(6)).toThrow();
+test("NaN not valid", () => {
+  expect(() => z.number().parse(Number.NaN)).toThrow();
+});
+
+test("Infinity not valid", () => {
+  expect(() => z.number().parse(Number.POSITIVE_INFINITY)).toThrow();
+  expect(() => z.number().parse(Number.NEGATIVE_INFINITY)).toThrow();
+});
+
+test(".gt()", () => {
+  expect(gtFive.parse(6)).toEqual(6);
   expect(() => gtFive.parse(5)).toThrow();
+});
+
+test(".gte()", () => {
+  expect(gteFive.parse(5)).toEqual(5);
   expect(() => gteFive.parse(4)).toThrow();
+});
+
+test(".min()", () => {
+  expect(minFive.parse(5)).toEqual(5);
   expect(() => minFive.parse(4)).toThrow();
+});
+
+test(".lt()", () => {
+  expect(ltFive.parse(4)).toEqual(4);
+  expect(() => ltFive.parse(5)).toThrow();
+});
+
+test(".lte()", () => {
+  expect(lteFive.parse(5)).toEqual(5);
+  expect(() => lteFive.parse(6)).toThrow();
+});
+
+test(".max()", () => {
+  expect(maxFive.parse(5)).toEqual(5);
+  expect(() => maxFive.parse(6)).toThrow();
+});
+
+test(".int()", () => {
+  expect(intNum.parse(4)).toEqual(4);
   expect(() => intNum.parse(3.14)).toThrow();
+});
+
+test(".positive()", () => {
+  expect(positive.parse(1)).toEqual(1);
   expect(() => positive.parse(0)).toThrow();
   expect(() => positive.parse(-1)).toThrow();
+});
+
+test(".negative()", () => {
+  expect(negative.parse(-1)).toEqual(-1);
   expect(() => negative.parse(0)).toThrow();
   expect(() => negative.parse(1)).toThrow();
+});
+
+test(".nonpositive()", () => {
+  expect(nonpositive.parse(0)).toEqual(0);
+  expect(nonpositive.parse(-1)).toEqual(-1);
   expect(() => nonpositive.parse(1)).toThrow();
+});
+
+test(".nonnegative()", () => {
+  expect(nonnegative.parse(0)).toEqual(0);
+  expect(nonnegative.parse(1)).toEqual(1);
   expect(() => nonnegative.parse(-1)).toThrow();
+});
+
+test(".multipleOf()", () => {
+  expect(multipleOfFive.parse(15)).toEqual(15);
+  expect(multipleOfFive.parse(-15)).toEqual(-15);
   expect(() => multipleOfFive.parse(7.5)).toThrow();
   expect(() => multipleOfFive.parse(-7.5)).toThrow();
+});
+
+test(".multipleOf() with negative divisor", () => {
+  expect(multipleOfNegativeFive.parse(-15)).toEqual(-15);
+  expect(multipleOfNegativeFive.parse(15)).toEqual(15);
   expect(() => multipleOfNegativeFive.parse(-7.5)).toThrow();
   expect(() => multipleOfNegativeFive.parse(7.5)).toThrow();
-  expect(() => finite.parse(Number.POSITIVE_INFINITY)).toThrow();
-  expect(() => finite.parse(Number.NEGATIVE_INFINITY)).toThrow();
-  expect(() => safe.parse(Number.MIN_SAFE_INTEGER - 1)).toThrow();
-  expect(() => safe.parse(Number.MAX_SAFE_INTEGER + 1)).toThrow();
+});
 
+test(".step()", () => {
+  expect(stepPointOne.parse(6)).toEqual(6);
+  expect(stepPointOne.parse(6.1)).toEqual(6.1);
+  expect(stepSixPointFour.parse(12.8)).toEqual(12.8);
+  expect(stepPointZeroZeroZeroOne.parse(3.01)).toEqual(3.01);
   expect(() => stepPointOne.parse(6.11)).toThrow();
   expect(() => stepPointOne.parse(6.1000000001)).toThrow();
   expect(() => stepSixPointFour.parse(6.41)).toThrow();
 });
 
-test("parse NaN", () => {
-  expect(() => z.number().parse(Number.NaN)).toThrow();
+test(".finite()", () => {
+  expect(finite.parse(123)).toEqual(123);
+  expect(() => finite.parse(Number.POSITIVE_INFINITY)).toThrow();
+  expect(() => finite.parse(Number.NEGATIVE_INFINITY)).toThrow();
+});
+
+test(".safe()", () => {
+  expect(safe.parse(Number.MIN_SAFE_INTEGER)).toEqual(Number.MIN_SAFE_INTEGER);
+  expect(safe.parse(Number.MAX_SAFE_INTEGER)).toEqual(Number.MAX_SAFE_INTEGER);
+  expect(() => safe.parse(Number.MIN_SAFE_INTEGER - 1)).toThrow();
+  expect(() => safe.parse(Number.MAX_SAFE_INTEGER + 1)).toThrow();
 });
 
 test("min max getters", () => {
@@ -137,40 +170,12 @@ test("min max getters", () => {
 
 test("int getter", () => {
   expect(z.number().isInt).toEqual(false);
-  expect(z.number().multipleOf(1.5).isInt).toEqual(false);
-  expect(gtFive.isInt).toEqual(false);
-  expect(gteFive.isInt).toEqual(false);
-  expect(minFive.isInt).toEqual(false);
-  expect(positive.isInt).toEqual(false);
-  expect(nonnegative.isInt).toEqual(false);
-  expect(finite.isInt).toEqual(false);
-  expect(ltFive.isInt).toEqual(false);
-  expect(lteFive.isInt).toEqual(false);
-  expect(maxFive.isInt).toEqual(false);
-  expect(negative.isInt).toEqual(false);
-  expect(nonpositive.isInt).toEqual(false);
-  expect(safe.isInt).toEqual(false);
-
-  expect(intNum.isInt).toEqual(true);
+  expect(z.number().int().isInt).toEqual(true);
+  expect(z.number().safe().isInt).toEqual(true);
   expect(multipleOfFive.isInt).toEqual(true);
 });
 
+/** In Zod 4, number schemas don't accept infinite values. */
 test("finite getter", () => {
-  expect(z.number().isFinite).toEqual(false);
-  expect(gtFive.isFinite).toEqual(false);
-  expect(gteFive.isFinite).toEqual(false);
-  expect(minFive.isFinite).toEqual(false);
-  expect(positive.isFinite).toEqual(false);
-  expect(nonnegative.isFinite).toEqual(false);
-  expect(ltFive.isFinite).toEqual(false);
-  expect(lteFive.isFinite).toEqual(false);
-  expect(maxFive.isFinite).toEqual(false);
-  expect(negative.isFinite).toEqual(false);
-  expect(nonpositive.isFinite).toEqual(false);
-
-  expect(finite.isFinite).toEqual(true);
-  expect(intNum.isFinite).toEqual(true);
-  expect(multipleOfFive.isFinite).toEqual(true);
-  expect(z.number().min(5).max(10).isFinite).toEqual(true);
-  expect(safe.isFinite).toEqual(true);
+  expect(z.number().isFinite).toEqual(true);
 });

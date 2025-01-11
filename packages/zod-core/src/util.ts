@@ -2,10 +2,11 @@ import type * as base from "./base.js";
 import type { $ZodBigIntFormats, $ZodNumberFormats } from "./checks.js";
 import type * as errors from "./errors.js";
 import type {
+  $ZodInterface,
+  $ZodLooseShape,
   $ZodObjectLike,
   $ZodOptional,
   $ZodOptionalDef,
-  $ZodRawShape,
   $ZodRequired,
   $ZodRequiredDef,
   $ZodShape,
@@ -149,7 +150,7 @@ export type Mask<Keys extends PropertyKey> = { [K in Keys]?: true };
 //   [K in OptionalKeys<T>]?: T[K];
 // } & { [k in keyof T]?: unknown };
 
-export type SomeObject = Record<PropertyKey, unknown>;
+export type SomeObject = Record<PropertyKey, any>;
 export type Identity<T> = T;
 export type Flatten<T> = Identity<{ [k in keyof T]: T[k] }>;
 export type Overwrite<T extends SomeObject, U extends SomeObject> = Omit<
@@ -214,6 +215,8 @@ export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
 // };
 
 export type MaybeAsync<T> = T | Promise<T>;
+
+export type KeyOf<T> = keyof OmitIndexSignature<T>;
 
 export type OmitIndexSignature<T> = {
   [K in keyof T as string extends K
@@ -836,13 +839,13 @@ export type MethodParams<Err extends errors.$ZodIssueBase, Extra = unknown> =
 
 export function optionalObjectKeys(shape: $ZodShape): Set<PropertyKey> {
   return new Set(
-    Reflect.ownKeys(shape).filter((k) => {
+    Object.keys(shape).filter((k) => {
       return shape[k]["~qout"] === "true";
     })
   );
 }
 
-export function optionalInterfaceKeys(shape: $ZodRawShape): Set<string> {
+export function optionalInterfaceKeys(shape: $ZodLooseShape): Set<string> {
   return new Set(
     Object.keys(shape)
       .filter((k) => {
@@ -852,7 +855,7 @@ export function optionalInterfaceKeys(shape: $ZodRawShape): Set<string> {
   );
 }
 
-export function cleanInterfaceShape(shape: $ZodRawShape): $ZodShape {
+export function cleanInterfaceShape(shape: $ZodLooseShape): $ZodShape {
   return Object.fromEntries(
     Object.entries(shape).map(([key, value]) => [
       key.replace(/^\?/, "").replace(/\?$/, ""),
@@ -929,7 +932,7 @@ export function extend(schema: $ZodObjectLike, shape: $ZodShape): any {
   }) as any;
 }
 
-export function partial(
+export function partialObject(
   schema: $ZodObjectLike,
   mask: object | undefined,
   Class: new (def: $ZodOptionalDef<any>) => $ZodOptional
@@ -958,7 +961,7 @@ export function partial(
   }) as any;
 }
 
-export function required(
+export function requiredObject(
   schema: $ZodObjectLike,
   mask: object | undefined,
   Class: new (def: $ZodRequiredDef<any>) => $ZodRequired
@@ -987,4 +990,59 @@ export function required(
   }) as any;
 }
 
+export function partialInterface(
+  schema: $ZodInterface,
+  mask: object | undefined
+): any {
+  const shape: $ZodShape = {
+    ...schema["~def"].shape,
+  };
+
+  for (const key in schema["~def"].shape) {
+    if (mask && !(key in mask)) continue;
+    if (key[key.length - 1] === "?") continue;
+
+    delete shape[key];
+    shape[key + "?"] = schema["~def"].shape[key];
+  }
+  return schema.clone({
+    ...schema["~def"],
+    shape,
+    checks: [],
+  });
+}
+
+export function requiredInterface(
+  schema: $ZodInterface,
+  mask: object | undefined
+): any {
+  const shape: $ZodShape = { ...schema["~def"].shape };
+  for (const key in schema["~def"].shape) {
+    if (mask && !(key in mask)) continue;
+    if (key[key.length - 1] === "?") {
+      delete shape[key];
+      shape[key.slice(0, -1)] = schema["~def"].shape[key];
+    } else if (key[0] === "?") {
+      delete shape[key];
+      shape[key.slice(1)] = schema["~def"].shape[key];
+    } else {
+      // do nothing, key is already required
+    }
+  }
+  return schema.clone({
+    ...schema["~def"],
+    shape,
+    checks: [],
+  });
+}
+
 export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
+
+export function floatSafeRemainder(val: number, step: number) {
+  const valDecCount = (val.toString().split(".")[1] || "").length;
+  const stepDecCount = (step.toString().split(".")[1] || "").length;
+  const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
+  const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
+  const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
+  return (valInt % stepInt) / 10 ** decCount;
+}

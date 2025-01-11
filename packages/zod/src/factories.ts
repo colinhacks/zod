@@ -31,14 +31,14 @@ export const _uuidv6: Factory = util.factory(() => schemas.ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
-  version: 6,
+  version: "v6",
 });
 
 export const _uuidv7: Factory = util.factory(() => schemas.ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
-  version: 7,
+  version: "v7",
 });
 
 export const _email: Factory = util.factory(() => schemas.ZodEmail, {

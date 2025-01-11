@@ -27,7 +27,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<
       (inst as any)["~def"] = def;
     }
     static [Symbol.hasInstance](inst: any) {
-      return inst?.["~traits"].has(name);
+      return inst?.["~traits"]?.has(name);
     }
   }
   Object.defineProperty(_, "name", { value: name });
@@ -337,21 +337,9 @@ export const $ZodType: $constructor<$ZodType> = $constructor(
 
 ////////////////////////////  TYPE HELPERS  ///////////////////////////////////
 
-export type input<T extends $ZodType> = T["~input"] extends object
-  ? util.Flatten<T["~input"]>
-  : T["~input"];
-export type output<T extends $ZodType> =
-  // T extends $ZodObject<
-  //   infer T
-  //   // infer Params
-  // >
-  //   ? $InferObjectOutput<T>
-  T["~output"] extends object ? util.Flatten<T["~output"]> : T["~output"];
-export type {
-  output as infer,
-  /** @deprecated Use z.output<typeof schema> instead */
-  output as Infer,
-};
+export type input<T extends $ZodType> = T["~input"]; // extends object ? util.Flatten<T["~input"]> : T["~input"];
+export type output<T extends $ZodType> = T["~output"]; // extends object ? util.Flatten<T["~output"]> : T["~output"];
+export type { output as infer };
 
 // type alksjdf = null extends object ? true : false;
 // type asdf =

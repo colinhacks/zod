@@ -50,7 +50,7 @@ const errorMap: errors.$ZodErrorMap = (issue) => {
       }
       return `Invalid input: expected ${issue.origin}, received ${util.getParsedType(issue.input)}`;
     case "invalid_value":
-      return `Invalid option: expected one of ${util.joinValues(issue.options, ", ")}`;
+      return `Invalid option: expected one of ${util.joinValues(issue.values, ", ")}`;
     case "too_big":
       if (issue.origin in HasSize)
         return `Too big: expected ${issue.origin} to have less than ${issue.maximum.toString()}${HasSize[issue.origin]}`;

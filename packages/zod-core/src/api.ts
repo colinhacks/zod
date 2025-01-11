@@ -802,15 +802,17 @@ export type $ZodLooseObjectParams = util.TypeParams<
 export function looseObject<T extends schemas.$ZodShape>(
   shape: T,
   params?: $ZodLooseObjectParams
-): schemas.$ZodObject<T> {
+): schemas.$ZodObject<T, { [k: string]: unknown }> {
   const def: schemas.$ZodObjectDef = {
     type: "object",
-
     shape: shape as schemas.$ZodShape,
     catchall: unknown(),
     ...util.normalizeTypeParams(params),
   };
-  return new schemas.$ZodObject(def) as schemas.$ZodObject<T>;
+  return new schemas.$ZodObject(def) as schemas.$ZodObject<
+    T,
+    { [k: string]: unknown }
+  >;
 }
 
 // interface
@@ -818,13 +820,12 @@ export type $ZodInterfaceParams = util.TypeParams<
   schemas.$ZodInterface,
   "shape"
 >;
-function _interface<T extends schemas.$ZodRawShape>(
+function _interface<T extends schemas.$ZodLooseShape>(
   shape: T,
   params?: $ZodInterfaceParams
-): schemas.$ZodInterface<
-  schemas.$InferInterfaceOutput<T>,
-  schemas.$InferInterfaceInput<T>
-> {
+): schemas.$ZodInterface<{
+  [k in keyof T]: base.$ZodType<T[k]["~output"], T[k]["~input"]>;
+}> {
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
     shape,
@@ -839,13 +840,12 @@ export type $ZodStrictInterfaceParams = util.TypeParams<
   schemas.$ZodObjectLike,
   "shape" | "catchall"
 >;
-export function strictInterface<T extends schemas.$ZodRawShape>(
+export function strictInterface<T extends schemas.$ZodLooseShape>(
   shape: T,
   params?: $ZodStrictInterfaceParams
-): schemas.$ZodInterface<
-  schemas.$InferInterfaceOutput<T>,
-  schemas.$InferInterfaceInput<T>
-> {
+): schemas.$ZodInterface<{
+  [k in keyof T]: base.$ZodType<T[k]["~output"], T[k]["~input"]>;
+}> {
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
 
@@ -861,13 +861,12 @@ export type $ZodLooseInterfaceParams = util.TypeParams<
   schemas.$ZodObjectLike,
   "shape" | "catchall"
 >;
-export function looseInterface<T extends schemas.$ZodRawShape>(
+export function looseInterface<T extends schemas.$ZodLooseShape>(
   shape: T,
   params?: $ZodLooseInterfaceParams
-): schemas.$ZodInterface<
-  schemas.$InferInterfaceOutput<T>,
-  schemas.$InferInterfaceInput<T>
-> {
+): schemas.$ZodInterface<{
+  [k in keyof T]: base.$ZodType<T[k]["~output"], T[k]["~input"]>;
+}> {
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
 
@@ -1040,7 +1039,13 @@ export function partial(
   schema: schemas.$ZodObjectLike,
   mask?: object
 ): schemas.$ZodObjectLike {
-  return util.partial(schema, mask, schemas.$ZodOptional);
+  if (schema["~traits"].has("$ZodInterface")) {
+    return util.partialInterface(schema as any, mask);
+  }
+  if (schema["~traits"].has("$ZodObject")) {
+    return util.partialObject(schema, mask, schemas.$ZodOptional);
+  }
+  throw new Error(`Unexpected input to partial(): ${schema["~def"].type}`);
 }
 
 // .required
@@ -1077,7 +1082,14 @@ export function required(
   schema: schemas.$ZodObjectLike,
   mask?: object
 ): schemas.$ZodObjectLike {
-  return util.required(schema, mask, schemas.$ZodRequired);
+  if (schema["~traits"].has("$ZodInterface")) {
+    return util.requiredInterface(schema as any, mask);
+  }
+
+  if (schema["~traits"].has("$ZodObject")) {
+    return util.requiredObject(schema, mask, schemas.$ZodRequired);
+  }
+  throw new Error(`Unexpected input to required(): ${schema["~def"].type}`);
 }
 
 // lazy
@@ -1269,14 +1281,14 @@ export function nativeEnum<T extends util.EnumLike>(
 }
 
 // literal
-type $ZodLiteralParams = util.TypeParams<schemas.$ZodLiteral, "literals">;
+type $ZodLiteralParams = util.TypeParams<schemas.$ZodLiteral, "values">;
 export function literal<const T extends util.Literal | util.Literal[]>(
   value: T,
   params?: $ZodLiteralParams
 ): schemas.$ZodLiteral<T extends any[] ? T[number] : T> {
   return new schemas.$ZodLiteral({
     type: "literal",
-    literals: Array.isArray(value) ? value : [value],
+    values: Array.isArray(value) ? value : [value],
     ...util.normalizeTypeParams(params),
   }) as schemas.$ZodLiteral<T extends any[] ? T[number] : T>;
 }
@@ -1372,15 +1384,15 @@ export function json(): $ZodJSONSchema {
 }
 
 // truthy
-type $ZodTruthyParams = util.TypeParams<schemas.$ZodBoolean>;
-export function truthy(
-  params?: $ZodTruthyParams
-): schemas.$ZodPipeline<
-  schemas.$ZodEffect<boolean, unknown>,
-  schemas.$ZodBoolean
-> {
-  return preprocess((val) => Boolean(val), boolean(params));
-}
+// type $ZodTruthyParams = util.TypeParams<schemas.$ZodBoolean>;
+// export function truthy(
+//   params?: $ZodTruthyParams
+// ): schemas.$ZodPipeline<
+//   schemas.$ZodEffect<boolean, unknown>,
+//   schemas.$ZodBoolean
+// > {
+//   return preprocess((val) => Boolean(val), boolean(params));
+// }
 
 // file
 type $ZodFileParams = util.TypeParams<schemas.$ZodFile>;
@@ -1635,28 +1647,28 @@ export function check<O = unknown>(
   params?: $ZodCustomParams
 ): schemas.$ZodCustom<O>;
 export function check(schemaOrFn: any, ...rest: any[]) {
-  if (schemaOrFn instanceof base.$ZodType) {
-    return base.clone(schemaOrFn, {
-      ...schemaOrFn["~def"],
-      checks: [
-        ...(schemaOrFn["~def"].checks ?? []),
-        ...(rest as any[]).map((ch) =>
-          typeof ch === "function"
-            ? { "~run": ch, "~def": { check: "custom" } }
-            : ch
-        ),
-      ],
-    });
+  if (typeof schemaOrFn === "function") {
+    const _params = rest[0];
+    const params = util.normalizeCheckParams(_params);
+    return new schemas.$ZodCustom({
+      type: "custom",
+      check: "custom",
+      fn: schemaOrFn,
+      ...params,
+    }) as any;
   }
 
-  const _params = rest[0];
-  const params = util.normalizeCheckParams(_params);
-  return new schemas.$ZodCustom({
-    type: "custom",
-    check: "custom",
-    fn: schemaOrFn,
-    ...params,
-  }) as any;
+  return base.clone(schemaOrFn, {
+    ...schemaOrFn["~def"],
+    checks: [
+      ...(schemaOrFn["~def"].checks ?? []),
+      ...(rest as any[]).map((ch) =>
+        typeof ch === "function"
+          ? { "~run": ch, "~def": { check: "custom" } }
+          : ch
+      ),
+    ],
+  });
 }
 
 function _custom<O = unknown, I = O>(
@@ -1897,7 +1909,10 @@ export function lte(
     inclusive: true,
   });
 }
-export { lte as max };
+export {
+  /** @deprecated Use `z.lte()` instead. */
+  lte as max,
+};
 
 export type $ZodCheckGreaterThanParams = util.CheckParams<
   checks.$ZodCheckGreaterThan,
@@ -1928,7 +1943,10 @@ export function gte(
   });
 }
 
-export { gte as min };
+export {
+  /** @deprecated Use `z.gte()` instead. */
+  gte as min,
+};
 
 // multipleOf
 export type $ZodCheckMultipleOfParams = util.CheckParams<
@@ -1975,14 +1993,29 @@ export function nonnegative(
   return gte(0, params);
 }
 
+/** z.number() only accepts finite values now */
 // finite
-export type $ZodCheckFiniteParams = util.CheckParams<checks.$ZodCheckFinite>;
-export function finite(
-  params?: string | $ZodCheckFiniteParams
-): checks.$ZodCheckFinite {
-  return new checks.$ZodCheckFinite({
-    check: "finite",
+// export type $ZodCheckFiniteParams = util.CheckParams<checks.$ZodCheckFinite>;
+// export function finite(
+//   params?: string | $ZodCheckFiniteParams
+// ): checks.$ZodCheckFinite {
+//   return new checks.$ZodCheckFinite({
+//     check: "finite",
+//     ...util.normalizeCheckParams(params),
+//   });
+// }
+export type $ZodCheckMinSizeParams = util.CheckParams<
+  checks.$ZodCheckMinSize,
+  "minimum"
+>;
+export function minSize(
+  minimum: number,
+  params?: string | $ZodCheckMinSizeParams
+): checks.$ZodCheckMinSize<util.Sizeable> {
+  return new checks.$ZodCheckMinSize({
+    check: "min_size",
     ...util.normalizeCheckParams(params),
+    minimum,
   });
 }
 
@@ -2002,20 +2035,14 @@ export function maxSize(
   });
 }
 
-export type $ZodCheckMinSizeParams = util.CheckParams<
-  checks.$ZodCheckMinSize,
-  "minimum"
->;
-export function minSize(
-  minimum: number,
-  params?: string | $ZodCheckMinSizeParams
-): checks.$ZodCheckMinSize<util.Sizeable> {
-  return new checks.$ZodCheckMinSize({
-    check: "min_size",
-    ...util.normalizeCheckParams(params),
-    minimum,
-  });
-}
+export {
+  /** Identical to `minSize`. */
+  minSize as minLength,
+  /** Identical to `maxSize`. */
+  maxSize as maxLength,
+  /** Identical to `size`. */
+  size as length,
+};
 
 export type $ZodCheckSizeEqualsParams = util.CheckParams<
   checks.$ZodCheckSizeEquals,
@@ -2097,7 +2124,7 @@ export function endsWith(
   });
 }
 
-type $ZodCheckLowerCaseParams = util.CheckParams<
+export type $ZodCheckLowerCaseParams = util.CheckParams<
   checks.$ZodCheckLowerCase,
   "format"
 >;
@@ -2112,7 +2139,7 @@ export function lowercase(
   });
 }
 
-type $ZodCheckUpperCaseParams = util.CheckParams<
+export type $ZodCheckUpperCaseParams = util.CheckParams<
   checks.$ZodCheckUpperCase,
   "format"
 >;
@@ -2127,11 +2154,11 @@ export function uppercase(
   });
 }
 
-type $ZodCheckPropertyParams = util.CheckParams<
+export type $ZodCheckPropertyParams = util.CheckParams<
   checks.$ZodCheckProperty,
   "property" | "schema"
 >;
-export function prop(
+export function property(
   property: string,
   schema: base.$ZodType,
   params?: string | $ZodCheckPropertyParams
@@ -2145,7 +2172,6 @@ export function prop(
 }
 
 ////////    TRANSFORMS   ////////
-
 export function overwrite<T>(
   tx: (input: T) => T
 ): checks.$ZodCheckOverwrite<T> {

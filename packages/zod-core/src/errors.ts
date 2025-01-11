@@ -33,7 +33,7 @@ export interface $ZodIssueTooBig<
   Input = unknown,
 > extends $ZodIssueBase<Origin, Input> {
   code: "too_big";
-  maximum: number;
+  maximum: number | bigint;
   inclusive?: boolean;
 }
 
@@ -42,7 +42,7 @@ export interface $ZodIssueTooSmall<
   Input = unknown,
 > extends $ZodIssueBase<Origin, Input> {
   code: "too_small";
-  minimum: number;
+  minimum: number | bigint;
   inclusive?: boolean;
 }
 
@@ -104,7 +104,7 @@ export interface $ZodIssueInvalidValue<
   Input = unknown,
 > extends $ZodIssueBase<Origin, Input> {
   code: "invalid_value";
-  options: util.Primitive[];
+  values: util.Primitive[];
 }
 
 export interface $ZodIssueCustom extends $ZodIssueBase<"custom", unknown> {

@@ -532,7 +532,7 @@ export function looseObject<T extends schemas.ZodRawShape>(
 }
 
 // interface
-function _interface<T extends core.$ZodRawShape>(
+function _interface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: core.$ZodInterfaceParams
 ): schemas.ZodInterface<
@@ -550,7 +550,7 @@ export { _interface as interface };
 
 // strictInterface
 // type ZodStrictInterfaceParams = util.TypeParams<schemas.ZodInterface, "shape">;
-export function strictInterface<T extends core.$ZodRawShape>(
+export function strictInterface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: core.$ZodStrictInterfaceParams
 ): schemas.ZodInterface<T> {
@@ -565,7 +565,7 @@ export function strictInterface<T extends core.$ZodRawShape>(
 
 // looseInterface
 
-export function looseInterface<T extends core.$ZodRawShape>(
+export function looseInterface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: core.$ZodLooseInterfaceParams
 ): schemas.ZodInterface<T> {
@@ -588,7 +588,7 @@ export function looseInterface<T extends core.$ZodRawShape>(
 // // .extend
 // export function extend<
 //   T extends schemas.ZodObject,
-//   U extends core.$ZodRawShape,
+//   U extends core.$ZodLooseShape,
 // >(schema: T, shape: U): schemas.ZodObject<T["~def"]["shape"] & U> {
 //   return schema.clone({
 //     ...schema["~def"],
@@ -992,14 +992,14 @@ export function nativeEnum<T extends util.EnumLike>(
 }
 
 // literal
-type ZodLiteralParams = util.TypeParams<schemas.ZodLiteral, "literals">;
+type ZodLiteralParams = util.TypeParams<schemas.ZodLiteral, "values">;
 export function literal<const T extends util.Literal | util.Literal[]>(
   literals: T,
   params?: ZodLiteralParams
 ): schemas.ZodLiteral<T extends unknown[] ? T[number] : T> {
   return new schemas.ZodLiteral({
     type: "literal",
-    literals: Array.isArray(literals) ? literals : [literals],
+    values: Array.isArray(literals) ? literals : [literals],
     ...util.normalizeTypeParams(params),
   }) as any as schemas.ZodLiteral<T extends unknown[] ? T[number] : T>;
 }
@@ -1253,12 +1253,12 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 // refine
-export function refine<T>(
-  fn: (arg: T) => unknown | Promise<unknown>,
-  _params: string | ZodCustomParams = {}
-): core.$ZodCheck<T> {
-  return core.refine<T>(fn, _params);
-}
+// export function refine<T>(
+//   fn: (arg: T) => unknown | Promise<unknown>,
+//   _params: string | ZodCustomParams = {}
+// ): core.$ZodCheck<T> {
+//   return core.refine<T>(fn, _params);
+// }
 
 ///////////        METHODS       ///////////
 export function parse<T extends schemas.ZodType>(

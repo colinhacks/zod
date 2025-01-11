@@ -264,7 +264,10 @@ test("z.partial", () => {
     age?: number;
     email?: string;
   }>();
-  expect(z.safeParse(partialSchema, { name: "John" }).success).toBe(true);
+  expect(z.safeParse(partialSchema, {}).success).toBe(true);
+  expect(z.safeParse(partialSchema, { name: "foo" }).success).toBe(true);
+  expect(z.safeParse(partialSchema, { age: 123 }).success).toBe(true);
+  expect(z.safeParse(partialSchema, { email: "foo" }).success).toBe(true);
 
   const partialSchemaWithMask = z.partial(userSchema, { name: true });
   type PartialUserWithMask = z.infer<typeof partialSchemaWithMask>;
@@ -277,4 +280,18 @@ test("z.partial", () => {
   expect(z.safeParse(partialSchemaWithMask, { name: "John" }).success).toBe(
     false
   );
+});
+
+test("z.required()", () => {
+  const reqSchema = z.required(userSchema);
+  expect(z.parse(reqSchema, { name: "John", age: 30, email: "foo" })).toEqual({
+    name: "John",
+    age: 30,
+    email: "foo",
+  });
+
+  expect(() => z.parse(reqSchema, { age: 30 })).toThrow();
+  expect(() => z.parse(reqSchema, { name: "John" })).toThrow();
+  expect(() => z.parse(reqSchema, { email: "John" })).toThrow();
+  expect(() => z.parse(reqSchema, {})).toThrow();
 });

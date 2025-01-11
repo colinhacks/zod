@@ -105,8 +105,18 @@ export interface $ZodUUID extends $ZodStringFormat {
 export const $ZodUUID: base.$constructor<$ZodUUID> =
   /*@__PURE__*/ base.$constructor("$ZodUUID", (inst, def): void => {
     if (def.version) {
-      const v = Number.parseInt(def.version);
-      if (v < 1 || v > 8)
+      const versionMap: Record<string, number> = {
+        v1: 1,
+        v2: 2,
+        v3: 3,
+        v4: 4,
+        v5: 5,
+        v6: 6,
+        v7: 7,
+        v8: 8,
+      };
+      const v = versionMap[def.version];
+      if (v === undefined)
         throw new Error(`Invalid UUID version: "${def.version}"`);
       def.pattern ??= regexes.uuidRegex(v);
     } else def.pattern ??= regexes.uuidRegex();
@@ -446,7 +456,11 @@ export const $ZodNumber: base.$constructor<$ZodNumber> =
     base.$ZodType.init(inst, def);
     inst["~pattern"] = regexes.numberRegex;
     inst["~typecheck"] = (input, _ctx) => {
-      if (typeof input === "number" && !Number.isNaN(input))
+      if (
+        typeof input === "number" &&
+        !Number.isNaN(input) &&
+        Number.isFinite(input)
+      )
         return base.$succeed(input);
       return base.$fail(
         [
@@ -1003,7 +1017,7 @@ export const $ZodArray: base.$constructor<$ZodArray> =
 //////////////////////////////////////////
 
 export type $ZodShape = {
-  [k: PropertyKey]: base.$ZodType;
+  [k: string]: base.$ZodType;
 };
 
 export interface $ZodObjectLikeDef extends base.$ZodTypeDef {
@@ -1058,8 +1072,8 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> =
     const _computed = util.cached(() => {
       if (def.type === "interface") {
         const shape = util.cleanInterfaceShape(def.shape);
-        const shapeKeySet = new Set(Reflect.ownKeys(shape));
-        const shapeKeys = Reflect.ownKeys(shape);
+        const shapeKeySet = new Set(Object.keys(shape));
+        const shapeKeys = Object.keys(shape);
         return {
           shape,
           shapeKeys,
@@ -1069,9 +1083,9 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> =
       }
       if (def.type === "object") {
         const shapeKeySet: Set<string | symbol> = new Set(
-          Reflect.ownKeys(def.shape)
+          Object.keys(def.shape)
         );
-        const shapeKeys = Reflect.ownKeys(def.shape);
+        const shapeKeys = Object.keys(def.shape);
         return {
           shape: def.shape,
           shapeKeys,
@@ -1124,7 +1138,7 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> =
       }
 
       // iterate over input keys
-      for (const key of Reflect.ownKeys(input)) {
+      for (const key of Object.keys(input)) {
         if (shapeKeySet.has(key)) continue;
         if (def.catchall) {
           const result = def.catchall["~parse"]((input as any)[key]);
@@ -1162,8 +1176,8 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> =
 /////////////      $ZodInterface      /////////////
 ///////////////////////////////////////////////////
 // looser type is required for recursive inference
-export type $ZodRawShape = Readonly<Record<PropertyKey, any>>;
-export type $InferInterfaceOutput<T extends $ZodRawShape> = util.Flatten<
+export type $ZodLooseShape = Readonly<Record<string, any>>;
+export type $InferInterfaceOutput<T extends $ZodLooseShape> = util.Flatten<
   {
     -readonly [k in keyof T as k extends `${infer K}?`
       ? K
@@ -1175,7 +1189,7 @@ export type $InferInterfaceOutput<T extends $ZodRawShape> = util.Flatten<
   }
 >;
 
-export type $InferInterfaceInput<T extends $ZodRawShape> = util.Flatten<
+export type $InferInterfaceInput<T extends $ZodLooseShape> = util.Flatten<
   {
     [k in keyof T as k extends `${infer K}?`
       ? K
@@ -1190,24 +1204,42 @@ export type $InferInterfaceInput<T extends $ZodRawShape> = util.Flatten<
 export interface $ZodInterfaceDef extends $ZodObjectLikeDef {
   type: "interface";
 }
+
 export interface $ZodInterface<
-  O extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
-  I extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
-> extends $ZodObjectLike<O, I> {
+  Shape extends $ZodLooseShape = $ZodLooseShape,
+  // O extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
+  // I extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
+> extends $ZodObjectLike<
+    $InferInterfaceOutput<Shape>,
+    $InferInterfaceInput<Shape>
+  > {
   "~def": $ZodInterfaceDef;
   "~subtype": "interface";
+}
+
+export interface $ZodLooseInterface<
+  Shape extends $ZodLooseShape = $ZodLooseShape,
+> extends $ZodInterface<Shape> {
+  "~output": $InferInterfaceOutput<Shape> & Record<string, unknown>;
+  "~input": $InferInterfaceInput<Shape> & Record<string, unknown>;
 }
 
 export const $ZodInterface: base.$constructor<$ZodInterface> =
   /*@__PURE__*/ base.$constructor("$ZodInterface", (inst, def) => {
     $ZodObjectLike.init(inst, def);
   });
+
 ///////////////////////////////////////////////////////
 /////////////      $ZodObject      /////////////
 ///////////////////////////////////////////////////////
+// type x = {
+//   name: $ZodString;
+//   [k: string]: base.$ZodType<unknown>;
+// };
 
+// type a = OptionalOutKeys<x>;
+// type b = RequiredOutKeys<x>;
 // compute output type
-
 type OptionalOutKeys<T extends $ZodShape> = {
   [k in keyof T]: T[k] extends { "~qout": "true" } ? k : never;
 }[keyof T];
@@ -1244,8 +1276,13 @@ export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape>
   type: "object";
   shape: Shape;
 }
-export interface $ZodObject<Shape extends $ZodShape = $ZodShape>
-  extends $ZodObjectLike<$InferObjectOutput<Shape>, $InferObjectInput<Shape>> {
+export interface $ZodObject<
+  Shape extends $ZodShape = $ZodShape,
+  Extra extends object = object,
+> extends $ZodObjectLike<
+    util.Flatten<$InferObjectOutput<Shape> & Extra>,
+    util.Flatten<$InferObjectInput<Shape> & Extra>
+  > {
   "~def": $ZodObjectDef<Shape>;
   "~subtype": "object";
 }
@@ -2091,10 +2128,12 @@ export const $ZodEnum: base.$constructor<$ZodEnum> =
     base.$ZodType.init(inst, def);
 
     inst.enum = def.entries;
-    const options = Object.values(def.entries);
-    inst["~values"] = new Set<util.Primitive>(options);
+
+    const values = Object.values(def.entries);
+
+    inst["~values"] = new Set<util.Primitive>(values);
     inst["~pattern"] = new RegExp(
-      `^(${options
+      `^(${values
         .filter((k) => util.propertyKeyTypes.has(typeof k))
         .map((o) =>
           typeof o === "string" ? util.escapeRegex(o) : o.toString()
@@ -2110,7 +2149,7 @@ export const $ZodEnum: base.$constructor<$ZodEnum> =
           {
             origin: "enum",
             code: "invalid_value",
-            options,
+            values,
             input,
             def,
           },
@@ -2130,7 +2169,7 @@ export const $ZodEnum: base.$constructor<$ZodEnum> =
 
 export interface $ZodLiteralDef extends base.$ZodTypeDef {
   type: "literal";
-  literals: util.LiteralArray;
+  values: util.LiteralArray;
   // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidValue> | undefined;
 }
 
@@ -2146,10 +2185,9 @@ export const $ZodLiteral: base.$constructor<$ZodLiteral> =
   /*@__PURE__*/ base.$constructor("$ZodLiteral", (inst, def) => {
     base.$ZodType.init(inst, def);
 
-    // const options = def.literals.map((e) => e);
-    inst["~values"] = new Set<util.Primitive>(def.literals);
+    inst["~values"] = new Set<util.Primitive>(def.values);
     inst["~pattern"] = new RegExp(
-      `^(${def.literals
+      `^(${def.values
         .filter((k) => util.propertyKeyTypes.has(typeof k))
         .map((o) =>
           typeof o === "string" ? util.escapeRegex(o) : o.toString()
@@ -2165,7 +2203,7 @@ export const $ZodLiteral: base.$constructor<$ZodLiteral> =
           {
             origin: "literal",
             code: "invalid_value",
-            options: def.literals,
+            values: def.values,
             input,
             def,
           },

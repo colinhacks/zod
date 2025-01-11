@@ -150,7 +150,7 @@ export const $ZodCoercedBoolean: base.$constructor<$ZodCoercedBoolean> =
 
 interface $ZodBooleanParams
   extends util.TypeParams<$ZodCoercedBoolean, "coerce"> {}
-/** @deprecated Use `z.truthy()` instead. */
+/** Use `z.stringbool()` to convert strings to boolean. */
 const _boolean = util.factory(() => $ZodCoercedBoolean, {
   type: "boolean",
   coerce: true,

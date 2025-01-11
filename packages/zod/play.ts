@@ -1,63 +1,47 @@
 import * as z from "zod";
+import type { $ZodShape } from "zod-core";
+import type * as util from "zod-core/util";
+// import type { $InferObjectOutput } from "zod-core";
 
 z;
 
-const schema = z.string().regex(/^\d+$/g);
-// console.log(schema);
-console.log(schema.safeParse("123"));
-console.log(schema.safeParse("123"));
-console.log(schema.safeParse("123"));
-console.log(schema.safeParse("123"));
-console.log(schema.safeParse("123"));
+const a = z.uint32();
+console.log(z.safeParse(a, 123));
+console.log(z.safeParse(a, -123));
 
-// const a = z.interface({
-//   aa: z.string(),
-//   "bb?": z.string(),
-//   "?cc": z._default(z.string(), "c"),
-// });
+type Shape = {
+  name: z.ZodString;
+  [k: string]: z.ZodType<unknown>;
+};
 
-// const b = z.omit(a, {});
+type OptionalOutKeys<T extends $ZodShape> = {
+  [k in keyof T]: T[k] extends { "~qout": "true" } ? k : never;
+}[keyof T];
 
-// const mySchema = z.string();
+type OptionalOutProps<T extends $ZodShape> = {
+  [k in OptionalOutKeys<T>]?: T[k]["~output"];
+};
+export type RequiredOutKeys<T extends $ZodShape> = {
+  [k in keyof T]: T[k] extends { "~qout": "true" } ? never : k;
+}[keyof T];
+export type RequiredOutProps<T extends $ZodShape> = {
+  [k in RequiredOutKeys<T>]: T[k]["~output"];
+};
 
-// // there is a global schema registry
-// z.globalRegistry; // => ZodRegistry<unknown, z.ZodType>
+export type Props<T extends $ZodShape> = {
+  [k in keyof T]: T[k]["~output"];
+};
 
-// // add schema to registry w/ associated metadata
-// z.globalRegistry.add(mySchema, { name: "foo", description: "bar" });
-// // equivalent convenience method (returns mySchema)
-// mySchema.meta({ name: "foo", whatever: "bar" });
+type asdf = Props<util.ExtractIndexSignature<Shape>>;
+export type $InferObjectOutput<T extends $ZodShape> = util.Flatten<
+  OptionalOutProps<util.OmitIndexSignature<T>> &
+    RequiredOutProps<util.OmitIndexSignature<T>> &
+    Props<util.ExtractIndexSignature<T>>
+>;
 
-// // global registry is untyped (accepts anything as metadata)
-// z.globalRegistry.add(z.string(), "hello");
-// z.globalRegistry.add(z.string(), 1234);
-// z.globalRegistry.add(z.string(), { foo: "bar" });
+interface Test<out T> {
+  a: T;
+}
 
-// // to retrive metadata from global registry
-// z.globalRegistry.get(mySchema); // returns metadata (type is `unknown`)
-// // equivalent convenience method
-// mySchema.meta();
-
-// // for typed metadata, use a custom registry
-// const myRegistry = z.registry<{ name: string; description: string }>();
-
-// // register typed metadata
-// myRegistry.add(mySchema, { name: "foo", description: "bar" });
-// // equivalent convenience method (returns mySchema)
-// mySchema.register(myRegistry, { name: "foo", description: "bar" });
-
-// // retrive typed metadata
-// myRegistry.get(mySchema);
-// // => { name: string; description: string } | undefined
-
-// // you can register your metadata "inline"
-// const User = z.object({
-//   name: z.string().register(myRegistry, {
-//     name: "name",
-//     description: "The name of the user",
-//   }),
-//   age: z.number().register(myRegistry, {
-//     name: "age",
-//     description: "The age of the user",
-//   }),
-// });
+const test: Test<{ [k: string]: unknown }> = {} as Test<{}>;
+test.a;

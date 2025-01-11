@@ -79,6 +79,7 @@ export const $ZodCheckGreaterThan: base.$constructor<$ZodCheckGreaterThan> =
       const curr = inst["~computed"].minimum ?? Number.NEGATIVE_INFINITY;
       if (def.value > curr) inst["~computed"].minimum = def.value;
     };
+
     inst["~run"] = (ctx) => {
       if (def.inclusive ? ctx.value >= def.value : ctx.value > def.value) {
         return;
@@ -99,14 +100,6 @@ export const $ZodCheckGreaterThan: base.$constructor<$ZodCheckGreaterThan> =
 /////    $ZodCheckMultipleOf    /////
 /////////////////////////////////////
 // https://stackoverflow.com/questions/3966484/why-does-modulus-operator-return-fractional-number-in-javascript/31711034#31711034
-function floatSafeRemainder(val: number, step: number) {
-  const valDecCount = (val.toString().split(".")[1] || "").length;
-  const stepDecCount = (step.toString().split(".")[1] || "").length;
-  const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
-  const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
-  const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
-  return (valInt % stepInt) / 10 ** decCount;
-}
 
 interface $ZodCheckMultipleOfDef<T extends number | bigint>
   extends base.$ZodCheckDef {
@@ -137,7 +130,7 @@ export const $ZodCheckMultipleOf: base.$constructor<
     const isMultiple =
       typeof ctx.value === "bigint"
         ? ctx.value % (def.value as bigint) === BigInt(0)
-        : floatSafeRemainder(ctx.value, def.value as number);
+        : util.floatSafeRemainder(ctx.value, def.value as number) === 0;
 
     if (isMultiple) return;
     ctx.issues.push({
@@ -153,46 +146,46 @@ export const $ZodCheckMultipleOf: base.$constructor<
 /////////////////////////////////////
 /////    $ZodCheckFinite    /////
 /////////////////////////////////////
-interface $ZodCheckFiniteDef extends base.$ZodCheckDef {
-  check: "finite";
-}
+// interface $ZodCheckFiniteDef extends base.$ZodCheckDef {
+//   check: "finite";
+// }
 
-export interface $ZodCheckFinite extends base.$ZodCheck<number> {
-  "~def": $ZodCheckFiniteDef;
-  "~issc":
-    | errors.$ZodIssueTooBig<"number", number>
-    | errors.$ZodIssueTooSmall<"number", number>;
-}
+// export interface $ZodCheckFinite extends base.$ZodCheck<number> {
+//   "~def": $ZodCheckFiniteDef;
+//   "~issc":
+//     | errors.$ZodIssueTooBig<"number", number>
+//     | errors.$ZodIssueTooSmall<"number", number>;
+// }
 
-export const $ZodCheckFinite: base.$constructor<$ZodCheckFinite> =
-  base.$constructor("$ZodCheckFinite", (inst, def) => {
-    base.$ZodCheck.init(inst, def);
+// export const $ZodCheckFinite: base.$constructor<$ZodCheckFinite> =
+//   base.$constructor("$ZodCheckFinite", (inst, def) => {
+//     base.$ZodCheck.init(inst, def);
 
-    // inst["~onattach"] = (inst) => {
-    //   inst["~computed"].minSize ??= Number.NEGATIVE_INFINITY;
-    //   inst["~computed"].maxSize ??= Number.POSITIVE_INFINITY;
-    // };
-    inst["~run"] = (ctx) => {
-      if (Number.isFinite(ctx.value)) return;
-      ctx.issues.push({
-        origin: "number",
-        ...(ctx.value === Number.POSITIVE_INFINITY
-          ? {
-              code: "too_big",
-              maximum: Number.POSITIVE_INFINITY,
-            }
-          : {
-              code: "too_small",
-              minimum: Number.NEGATIVE_INFINITY,
-            }),
-        // code: ctx.value === Number.POSITIVE_INFINITY ? "too_big" : "too_big",
-        // maximum: Number.POSITIVE_INFINITY,
-        inclusive: false,
-        input: ctx.value,
-        def,
-      });
-    };
-  });
+//     inst["~onattach"] = (inst) => {
+//       inst["~computed"].finite = true;
+//     };
+
+//     inst["~run"] = (ctx) => {
+//       if (Number.isFinite(ctx.value)) return;
+//       ctx.issues.push({
+//         origin: "number",
+//         ...(ctx.value === Number.POSITIVE_INFINITY
+//           ? {
+//               code: "too_big",
+//               maximum: Number.POSITIVE_INFINITY,
+//             }
+//           : {
+//               code: "too_small",
+//               minimum: Number.NEGATIVE_INFINITY,
+//             }),
+//         // code: ctx.value === Number.POSITIVE_INFINITY ? "too_big" : "too_big",
+//         // maximum: Number.POSITIVE_INFINITY,
+//         inclusive: false,
+//         input: ctx.value,
+//         def,
+//       });
+//     };
+//   });
 
 /////////////////////////////////////
 /////    $ZodCheckNumberFormat    /////
@@ -236,26 +229,41 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> =
     inst["~run"] = (ctx) => {
       const input = ctx.value;
 
-      if (isInt && !Number.isInteger(input)) {
-        // invalid_type issue
-        ctx.issues.push({
-          origin,
-          format: def.format,
-          code: "invalid_type",
-          input,
-          def,
-        });
+      if (isInt) {
+        if (!Number.isInteger(input)) {
+          // invalid_type issue
+          ctx.issues.push({
+            origin,
+            format: def.format,
+            code: "invalid_type",
+            input,
+            def,
+          });
+          ctx.aborted = true;
+          return;
 
-        // not_ multiple_of issue
-        // ctx.issues.push({
-        //   code: "not_multiple_of",
-        //   origin: "number",
-        //   input,
-        //   def,
-        //   divisor: 1,
-        // });
-        ctx.aborted = true;
-        return;
+          // not_ multiple_of issue
+          // ctx.issues.push({
+          //   code: "not_multiple_of",
+          //   origin: "number",
+          //   input,
+          //   def,
+          //   divisor: 1,
+          // });
+        }
+        if (!Number.isSafeInteger(input)) {
+          ctx.issues.push({
+            origin,
+            input,
+            ...(input > 0
+              ? { code: "too_big", maximum: Number.MAX_SAFE_INTEGER }
+              : { code: "too_small", minimum: Number.MIN_SAFE_INTEGER }),
+            note: "Integers must be within the range of Number.MIN_SAFE_INTEGER and Number.MAX_SAFE_INTEGER.",
+            def,
+          });
+          ctx.aborted = true;
+          return;
+        }
       }
 
       if (input < minimum) {
@@ -607,8 +615,7 @@ interface $ZodCheckIncludesDef extends $ZodCheckStringFormatDef<"includes"> {
   // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidStringFormat> | undefined;
 }
 
-export interface $ZodCheckIncludes<T extends string = string>
-  extends $ZodCheckStringFormat {
+export interface $ZodCheckIncludes extends $ZodCheckStringFormat {
   "~def": $ZodCheckIncludesDef;
 }
 
@@ -634,12 +641,9 @@ export const $ZodCheckIncludes: base.$constructor<$ZodCheckIncludes> =
 /////////////////////////////////////
 interface $ZodCheckStartsWithDef
   extends $ZodCheckStringFormatDef<"starts_with"> {
-  // check: "starts_with";
   prefix: string;
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidStringFormat> | undefined;
 }
-export interface $ZodCheckStartsWith<T extends string = string>
-  extends $ZodCheckStringFormat {
+export interface $ZodCheckStartsWith extends $ZodCheckStringFormat {
   "~def": $ZodCheckStartsWithDef;
 }
 
@@ -668,8 +672,7 @@ interface $ZodCheckEndsWithDef extends $ZodCheckStringFormatDef<"ends_with"> {
   suffix: string;
   // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidStringFormat> | undefined;
 }
-export interface $ZodCheckEndsWith<T extends string = string>
-  extends $ZodCheckStringFormat {
+export interface $ZodCheckEndsWith extends $ZodCheckStringFormat {
   "~def": $ZodCheckEndsWithDef;
 }
 
