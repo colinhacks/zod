@@ -1097,8 +1097,15 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       }
     };
 
-    inst["~parse"] = (input, ctx) => {
-      const { shape, shapeKeys, shapeKeySet, optionals } = _computed.value;
+    util.defineLazy(inst, "~parse", () => {
+      const parser = new Function(
+        "globalCtx",
+        "input",
+        "ctx",
+        `
+        console.log(globalCtx);
+        const {base, util, def, handleObjectResult, shape, shapeKeys, shapeKeySet, optionals} = globalCtx;
+        //  const { shape, shapeKeys, shapeKeySet, optionals } = _computed.value;
 
       if (!util.isPlainObject(input)) {
         return base.$fail(
@@ -1114,35 +1121,41 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
         );
       }
 
-      const final = base.$result<Record<PropertyKey, unknown>>({}, []);
-      const proms: Promise<any>[] = [];
-      let unrecognizedKeys!: Set<string>;
+      const final = base.$result({}, []);
+      const proms = [];
+      let unrecognizedKeys;
 
       // iterate over shape keys
-      for (const key of shapeKeys) {
-        const value = shape[key];
+      ${_computed.value.shapeKeys
+        .map((key) => {
+          const keyArg = util.randomString();
+          return `
+          const ${keyArg} = shape["${key}"];
 
         // do not add omitted optional keys
-        if (!(key in input)) {
-          if (optionals.has(key)) continue;
-        }
-
-        // console.log(value);
-        const result = value["~run"]((input as any)[key], ctx);
-
-        if (result instanceof Promise) {
-          proms.push(result.then((result) => handleObjectResult(result, final, key)));
+        if (!("${key}" in input) && optionals.has("${key}")) {
+          
         } else {
-          handleObjectResult(result, final, key);
+          // console.log(value);
+          const result = ${keyArg}["~run"]((input)["${key}"], ctx);
+
+          if (result instanceof Promise) {
+            proms.push(result.then((result) => handleObjectResult(result, final, "${key}")));
+          } else {
+            handleObjectResult(result, final, "${key}");
+          }
         }
-      }
+        `;
+        })
+        .join("\n")}
+      
 
       // iterate over input keys
       if (def.catchall) {
         for (const key of Object.keys(input)) {
           if (shapeKeySet.has(key)) continue;
           // if (def.catchall) {
-          const result = def.catchall["~run"]((input as any)[key]);
+          const result = def.catchall["~run"]((input)[key]);
           if (result instanceof Promise) {
             proms.push(
               result.then((result) => {
@@ -1153,9 +1166,6 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
           } else {
             handleObjectResult(result, final, key);
           }
-          // objectResults[key] = def.catchall["~run"]((input as any)[key]);
-          // if (objectResults[key] instanceof Promise) async = true;
-          // }
         }
       }
 
@@ -1170,7 +1180,94 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       }
       if (!proms.length) return final;
       return Promise.all(proms).then(() => final);
-    };
+    `
+      );
+
+      const finalParser = parser.bind(null, {
+        base,
+        util,
+        def,
+        ..._computed.value,
+        handleObjectResult,
+      });
+
+      return finalParser;
+    });
+
+    // inst["~parse"] = (input, ctx) => {
+    //   const { shape, shapeKeys, shapeKeySet, optionals } = _computed.value;
+
+    //   if (!util.isPlainObject(input)) {
+    //     return base.$fail(
+    //       [
+    //         {
+    //           expected: "object",
+    //           code: "invalid_type",
+    //           input,
+    //           def,
+    //         },
+    //       ],
+    //       true
+    //     );
+    //   }
+
+    //   const final = base.$result({}, []);
+    //   const proms: Promise<any>[] = [];
+    //   let unrecognizedKeys!: Set<string>;
+
+    //   // iterate over shape keys
+    //   for (const key of shapeKeys) {
+    //     const value = shape[key];
+
+    //     // do not add omitted optional keys
+    //     if (!(key in input)) {
+    //       if (optionals.has(key)) continue;
+    //     }
+
+    //     // console.log(value);
+    //     const result = value["~run"]((input as any)[key], ctx);
+
+    //     if (result instanceof Promise) {
+    //       proms.push(result.then((result) => handleObjectResult(result, final, key)));
+    //     } else {
+    //       handleObjectResult(result, final, key);
+    //     }
+    //   }
+
+    //   // iterate over input keys
+    //   if (def.catchall) {
+    //     for (const key of Object.keys(input)) {
+    //       if (shapeKeySet.has(key)) continue;
+    //       // if (def.catchall) {
+    //       const result = def.catchall["~run"]((input as any)[key]);
+    //       if (result instanceof Promise) {
+    //         proms.push(
+    //           result.then((result) => {
+    //             handleObjectResult(result, final, key);
+    //           })
+    //         );
+    //         //async = true;
+    //       } else {
+    //         handleObjectResult(result, final, key);
+    //       }
+    //       // objectResults[key] = def.catchall["~run"]((input as any)[key]);
+    //       // if (objectResults[key] instanceof Promise) async = true;
+    //       // }
+    //     }
+    //   }
+
+    //   if (unrecognizedKeys) {
+    //     final.issues = final.issues ?? [];
+    //     final.issues.push({
+    //       code: "unrecognized_keys",
+    //       keys: [...unrecognizedKeys],
+    //       input: input,
+    //       def,
+    //     });
+    //   }
+    //   if (!proms.length) return final;
+    //   return Promise.all(proms).then(() => final);
+    // };
 
     // const computed = _computed.value;
     // // base case
