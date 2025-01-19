@@ -31,7 +31,9 @@
     "source.fixAll": "always"
   },
   "files.exclude": {
-    "./scratch": false
+    "./scratch": false,
+    "**/.tshy-build": true,
+    "**/lib": true
   },
   "search.exclude": {
     "./scratch": false

@@ -1,47 +1,23 @@
 import * as z from "zod";
-import type { $ZodShape } from "zod-core";
-import type * as util from "zod-core/util";
-// import type { $InferObjectOutput } from "zod-core";
 
 z;
 
-const a = z.uint32();
-console.log(z.safeParse(a, 123));
-console.log(z.safeParse(a, -123));
+// const a = z.string(); //.check(z.check(async (_) => {}));
+// console.log(a.parse("asdf"));
 
-type Shape = {
-  name: z.ZodString;
-  [k: string]: z.ZodType<unknown>;
-};
+// console.log("sadf");
 
-type OptionalOutKeys<T extends $ZodShape> = {
-  [k in keyof T]: T[k] extends { "~qout": "true" } ? k : never;
-}[keyof T];
+const myFunction = new Function(
+  "ctx",
+  "a", // Parameter with default value
+  "b", // Another parameter with a default value
+  "return [ctx.value, a + b]"
+);
 
-type OptionalOutProps<T extends $ZodShape> = {
-  [k in OptionalOutKeys<T>]?: T[k]["~output"];
-};
-export type RequiredOutKeys<T extends $ZodShape> = {
-  [k in keyof T]: T[k] extends { "~qout": "true" } ? never : k;
-}[keyof T];
-export type RequiredOutProps<T extends $ZodShape> = {
-  [k in RequiredOutKeys<T>]: T[k]["~output"];
-};
+// console.log(myFunction.arguments);
+console.log(myFunction.toString());
+// console.log(myFunction({ value: "sup" }, 1, 2));
 
-export type Props<T extends $ZodShape> = {
-  [k in keyof T]: T[k]["~output"];
-};
-
-type asdf = Props<util.ExtractIndexSignature<Shape>>;
-export type $InferObjectOutput<T extends $ZodShape> = util.Flatten<
-  OptionalOutProps<util.OmitIndexSignature<T>> &
-    RequiredOutProps<util.OmitIndexSignature<T>> &
-    Props<util.ExtractIndexSignature<T>>
->;
-
-interface Test<out T> {
-  a: T;
-}
-
-const test: Test<{ [k: string]: unknown }> = {} as Test<{}>;
-test.a;
+const bound = myFunction.bind({}, { value: "sup" });
+console.log(myFunction.toString());
+console.log(bound(1, 2));

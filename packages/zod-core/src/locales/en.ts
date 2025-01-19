@@ -11,7 +11,7 @@ const HasSize: Record<string, string> = {
 const Nouns: {
   [k in
     | errors.$ZodStringFormats
-    | errors.$ZodIssue["origin"]
+    // | errors.$ZodIssue
     | (string & {})]?: string;
 } = {
   regex: "string",
@@ -41,39 +41,38 @@ const Nouns: {
   jwt: "JWT",
 };
 
-declare const x: errors.$ZodIssueData<errors.$ZodIssue>;
-
 const errorMap: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
     case "invalid_type":
-      if (issue.origin === "enum") {
-      }
-      return `Invalid input: expected ${issue.origin}, received ${util.getParsedType(issue.input)}`;
+      return `Invalid input: expected ${issue.expected}`;
+    // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
     case "invalid_value":
       return `Invalid option: expected one of ${util.joinValues(issue.values, ", ")}`;
-    case "too_big":
+    case "too_big": {
+      const adj = issue.inclusive ? "less than or equal to" : "less than";
       if (issue.origin in HasSize)
-        return `Too big: expected ${issue.origin} to have less than ${issue.maximum.toString()}${HasSize[issue.origin]}`;
-      return `Too big: expected ${issue.origin} to be less than ${issue.maximum.toString()}`;
-    case "too_small":
-      if (issue.origin in HasSize)
-        return `Too small: expected ${issue.origin} to have more than ${issue.minimum.toString()}${HasSize[issue.origin]}`;
-      return `Too small: expected ${issue.origin} to be more than ${issue.minimum.toString()}`;
+        return `Too big: expected ${issue.origin} to have ${adj} ${issue.maximum.toString()} ${HasSize[issue.origin]}`;
+      return `Too big: expected ${issue.origin} to be ${adj} ${issue.maximum.toString()}`;
+    }
+    case "too_small": {
+      const adj = issue.inclusive ? "greater than or equal to" : "greater than";
+      if (issue.origin in HasSize) {
+        return `Too small: expected ${issue.origin} to have ${adj} ${issue.minimum.toString()} ${HasSize[issue.origin]}`;
+      }
+
+      return `Too small: expected ${issue.origin} to be ${adj} ${issue.minimum.toString()}`;
+    }
     case "not_multiple_of":
       return `Invalid number: must be a multiple of ${issue.divisor}`;
     case "invalid_format": {
       const _issue = issue as errors.$FirstPartyStringFormats;
-      if (_issue.format === "starts_with")
-        return `Invalid string: must start with "${issue}"`;
-      if (_issue.format === "ends_with")
-        return `Invalid string: must end with "${_issue.suffix}"`;
-      if (_issue.format === "includes")
-        return `Invalid string: must include "${_issue.includes}"`;
-      if (_issue.format === "regex")
-        return `Invalid string: must match pattern ${_issue.pattern}`;
+      if (_issue.format === "starts_with") return `Invalid string: must start with "${issue}"`;
+      if (_issue.format === "ends_with") return `Invalid string: must end with "${_issue.suffix}"`;
+      if (_issue.format === "includes") return `Invalid string: must include "${_issue.includes}"`;
+      if (_issue.format === "regex") return `Invalid string: must match pattern ${_issue.pattern}`;
+      // _issue.fo
       return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
     }
-
     case "invalid_date":
       return "Invalid Date";
     case "unrecognized_keys":
@@ -84,9 +83,9 @@ const errorMap: errors.$ZodErrorMap = (issue) => {
       return `Invalid key in ${issue.origin}`;
     case "invalid_element":
       return `Invalid value in ${issue.origin}`;
+    default:
+      return `Invalid input`;
   }
-
-  return `Invalid input`;
 };
 
 export default errorMap;

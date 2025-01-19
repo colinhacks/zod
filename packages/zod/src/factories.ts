@@ -105,14 +105,14 @@ export const _ipv4: Factory = util.factory(() => schemas.ZodIP, {
   type: "string",
   format: "ip",
   check: "string_format",
-  version: 4,
+  version: "v4",
 });
 
 export const _ipv6: Factory = util.factory(() => schemas.ZodIP, {
   type: "string",
   format: "ip",
   check: "string_format",
-  version: 6,
+  version: "v6",
 });
 
 export const _base64: Factory = util.factory(() => schemas.ZodBase64, {

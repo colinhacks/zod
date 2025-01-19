@@ -22,7 +22,7 @@
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
 
-    "removeComments": true,
+    "removeComments": false,
     "esModuleInterop": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,

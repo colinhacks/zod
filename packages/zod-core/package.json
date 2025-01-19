@@ -48,6 +48,17 @@
         "default": "./dist/commonjs/util.js"
       }
     },
+    "./errors": {
+      "import": {
+        "@zod/source": "./src/errors.ts",
+        "types": "./dist/esm/errors.d.ts",
+        "default": "./dist/esm/errors.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/errors.d.ts",
+        "default": "./dist/commonjs/errors.js"
+      }
+    },
     "./api": {
       "import": {
         "@zod/source": "./src/api.ts",
@@ -66,6 +77,7 @@
       ".": "./src/index.ts",
       "./locales/*": "./src/locales/*",
       "./util": "./src/util.ts",
+      "./errors": "./src/errors.ts",
       "./api": "./src/api.ts"
     },
     "sourceDialects": ["@zod/source"]

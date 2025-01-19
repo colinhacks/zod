@@ -1,0 +1,19 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "node",
+      "runtimeExecutable": "/Users/colinmcd94/.nvm/versions/node/v22.13.0/bin/node",
+      "request": "launch",
+      "name": "Run play.ts",
+      "args": [],
+      "runtimeArgs": ["--experimental-strip-types"],
+      "skipFiles": ["<node_internals>/**"],
+      "program": "${workspaceFolder}/play.ts",
+      "outFiles": ["${workspaceFolder}/**/*.js"]
+    }
+  ]
+}

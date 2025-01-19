@@ -267,12 +267,8 @@ test("z.discriminatedUnion with nested discriminator", () => {
   });
 
   const c = z.discriminatedUnion([a, b]);
-  expect(c["~disc"]!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(
-    true
-  );
-  expect(c["~disc"]!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(
-    true
-  );
+  expect(c["~disc"]!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(true);
+  expect(c["~disc"]!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(true);
 
   expect(z.parse(c, { type: { key: "A" }, name: "john" })).toEqual({
     type: { key: "A" },
@@ -322,10 +318,7 @@ test("z.discriminatedUnion nested", () => {
 });
 
 test("z.intersection", () => {
-  const a = z.intersection(
-    z.object({ a: z.string() }),
-    z.object({ b: z.number() })
-  );
+  const a = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
   expect(z.parse(a, { a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });
   expect(() => z.parse(a, { a: "hello" })).toThrow();
   expect(() => z.parse(a, { b: 123 })).toThrow();
@@ -340,10 +333,7 @@ test("z.tuple", () => {
   expect(() => z.parse(a, "hello")).toThrow();
 
   // tuple with rest
-  const b = z.tuple(
-    [z.string(), z.number(), z.optional(z.string())],
-    z.boolean()
-  );
+  const b = z.tuple([z.string(), z.number(), z.optional(z.string())], z.boolean());
 
   type b = z.output<typeof b>;
 
@@ -375,9 +365,7 @@ test("z.record", () => {
   const b = z.record(z.union([z.string(), z.number(), z.symbol()]), z.string());
   type b = z.output<typeof b>;
   expectTypeOf<b>().toEqualTypeOf<Record<string | number | symbol, string>>();
-  expect(
-    z.parse(b, { a: "hello", 1: "world", [Symbol.for("asdf")]: "symbol" })
-  ).toEqual({
+  expect(z.parse(b, { a: "hello", 1: "world", [Symbol.for("asdf")]: "symbol" })).toEqual({
     a: "hello",
     1: "world",
     [Symbol.for("asdf")]: "symbol",
@@ -395,23 +383,19 @@ test("z.record", () => {
   // missing keys
   expect(() => z.parse(c, { a: "hello", b: "world" })).toThrow();
   // extra keys
-  expect(() =>
-    z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })
-  ).toThrow();
+  expect(() => z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })).toThrow();
 });
 
 test("z.map", () => {
   const a = z.map(z.string(), z.number());
   type a = z.output<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<Map<string, number>>();
-  expect(z.parse(a, new Map([["hello", 123]]))).toEqual(
-    new Map([["hello", 123]])
-  );
+  expect(z.parse(a, new Map([["hello", 123]]))).toEqual(new Map([["hello", 123]]));
   expect(() => z.parse(a, new Map([["hello", "world"]]))).toThrow();
   expect(() => z.parse(a, new Map([[1243, "world"]]))).toThrow();
   expect(() => z.parse(a, "hello")).toThrow();
 
-  const r1: any = a["~parse"](new Map([[123, 123]]));
+  const r1: any = a["~run"](new Map([[123, 123]]));
   expect(r1.issues[0].code).toEqual("invalid_type");
   expect(r1.issues[0].path).toEqual([123]);
 
@@ -419,7 +403,7 @@ test("z.map", () => {
   expect(r2.error!.issues[0].code).toEqual("invalid_key");
   expect(r2.error!.issues[0].path).toEqual([]);
 
-  const r3: any = a["~parse"](new Map([["hello", "world"]]));
+  const r3: any = a["~run"](new Map([["hello", "world"]]));
   expect(r3.issues[0].code).toEqual("invalid_type");
   expect(r3.issues[0].path).toEqual(["hello"]);
 });
@@ -433,10 +417,7 @@ test("z.map invalid_element", () => {
 });
 
 test("z.map async", async () => {
-  const a = z.map(
-    z.string([z.refine(async () => true)]),
-    z.number([z.refine(async () => true)])
-  );
+  const a = z.map(z.string([z.refine(async () => true)]), z.number([z.refine(async () => true)]));
   const d1 = new Map([["hello", 123]]);
   expect(await z.parseAsync(a, d1)).toEqual(d1);
 
@@ -455,9 +436,7 @@ test("z.set", () => {
   const a = z.set(z.string());
   type a = z.output<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<Set<string>>();
-  expect(z.parse(a, new Set(["hello", "world"]))).toEqual(
-    new Set(["hello", "world"])
-  );
+  expect(z.parse(a, new Set(["hello", "world"]))).toEqual(new Set(["hello", "world"]));
   expect(() => z.parse(a, new Set([123]))).toThrow();
   expect(() => z.parse(a, ["hello", "world"])).toThrow();
   expect(() => z.parse(a, "hello")).toThrow();
@@ -721,7 +700,7 @@ test("z.custom", () => {
 });
 
 test("z.check", () => {
-  // this is a more flexible version of z.custom that accepts an arbitrary ~typecheck logic
+  // this is a more flexible version of z.custom that accepts an arbitrary ~parse logic
   // the function should return base.$ZodResult
   const a = z.check<string>((ctx) => {
     if (typeof ctx.value === "string") return;

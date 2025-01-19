@@ -15,25 +15,16 @@ const DATA = makeData(1000, () => ({
   c: randomString(10),
 }));
 
-// console.log(z.parse(schema, DATA[0]));
 console.log(schema.parse(DATA[0]));
-// console.log(z.parse2(schema, DATA[0]));
-console.log(schema.parse2(DATA[0]));
-
-// console.log(z.parse2(schema, DATA[0]));
-// console.log(z.parse3(schema, DATA[0]));
+console.log(schema.parse2(DATA[0], { skipFast: true }));
 
 const bench = metabench("AB test: objects", {
-  _parse() {
+  fast() {
     for (const _ of DATA) schema.parse(_);
   },
-  _parse2() {
-    for (const _ of DATA) schema.parse2(_);
+  skipFast() {
+    for (const _ of DATA) schema.parse(_, { skipFast: true });
   },
-
-  // _parse3() {
-  //   for (const _ of DATA) z.parse3(schema, _);
-  // },
 });
 
 await bench.run();

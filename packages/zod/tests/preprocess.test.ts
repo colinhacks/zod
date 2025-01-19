@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 import * as util from "zod-core/util";
-import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 test("preprocess", () => {
@@ -13,123 +12,73 @@ test("preprocess", () => {
 });
 
 test("async preprocess", async () => {
-  const schema = z.preprocess(async (data) => [data], z.string().array());
-
+  const schema = z.preprocess(async (data) => {
+    return [data];
+  }, z.string().array());
   const value = await schema.parseAsync("asdf");
   expect(value).toEqual(["asdf"]);
 });
 
 test("preprocess ctx.addIssue with parse", () => {
-  expect(() => {
-    z.preprocess((data, ctx) => {
-      ctx.addIssue({
-        input: data,
-        code: "custom",
-        message: `${data} is not one of our allowed strings`,
-      });
-      return data;
-    }, z.string()).parse("asdf");
-  }).toThrow(
-    JSON.stringify(
-      [
-        {
-          input: "asdf",
-          code: "custom",
-          message: "asdf is not one of our allowed strings",
-          path: [],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  const a = z.preprocess((data, ctx) => {
+    ctx.addIssue({
+      input: data,
+      code: "custom",
+      message: `${data} is not one of our allowed strings`,
+    });
+    return data;
+  }, z.string());
+
+  const result = a.safeParse("asdf");
+
+  // expect(result.error!.toJSON()).toContain("not one of our allowed strings");
+  expect(result.error).toMatchSnapshot();
 });
 
 test("preprocess ctx.addIssue non-fatal by default", () => {
-  try {
-    z.preprocess((data, ctx) => {
-      ctx.addIssue({
-        input: data,
-        code: "custom",
-        message: `custom error`,
-      });
-      return data;
-    }, z.string()).parse(1234);
-  } catch (err) {
-    z.ZodError.assert(err);
-    expect(err.issues.length).toEqual(2);
-  }
-});
-
-test("preprocess ctx.addIssue fatal true", () => {
-  try {
-    z.preprocess((data, ctx) => {
-      ctx.addIssue({
-        input: data,
-        code: "custom",
-        message: `custom error`,
-        fatal: true,
-      });
-      return data;
-    }, z.string()).parse(1234);
-  } catch (err) {
-    z.ZodError.assert(err);
-    expect(err.issues.length).toEqual(1);
-  }
-});
-
-test("async preprocess ctx.addIssue with parse", async () => {
-  const schema = z.preprocess(async (data, ctx) => {
+  const schema = z.preprocess((data, ctx) => {
     ctx.addIssue({
-      input: data,
       code: "custom",
       message: `custom error`,
     });
     return data;
   }, z.string());
-
-  expect(schema.parseAsync("asdf")).rejects.toThrow(
-    JSON.stringify(
-      [
-        {
-          input: "asdf",
-          code: "custom",
-          message: "custom error",
-          path: [],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  const result = schema.safeParse(1234);
+  expect(result.error).toBeInstanceOf(z.ZodError);
+  expect(result.error?.issues.length).toEqual(2);
+  // expect(result).toMatchSnapshot();
 });
 
-test("preprocess ctx.addIssue with parseAsync", async () => {
-  const result = await z
-    .preprocess(async (data, ctx) => {
-      ctx.addIssue({
-        input: data,
-        code: "custom",
-        message: `${data} is not one of our allowed strings`,
-      });
-      return data;
-    }, z.string())
-    .safeParseAsync("asdf");
+test("preprocess ctx.addIssue fatal true", () => {
+  const schema = z.preprocess((data, ctx) => {
+    ctx.addIssue({
+      input: data,
+      code: "custom",
+      origin: "custom",
+      message: `custom error`,
+      fatal: true,
+    });
+    return data;
+  }, z.string());
 
-  expect(JSON.parse(JSON.stringify(result))).toEqual({
-    success: false,
-    error: {
-      issues: [
-        {
-          code: "custom",
-          input: "asdf",
-          message: "asdf is not one of our allowed strings",
-          path: [],
-        },
-      ],
-      name: "ZodError",
-    },
-  });
+  const result = schema.safeParse(1234);
+
+  expect(result.error).toBeInstanceOf(z.ZodError);
+  expect(result.error!.issues.length).toEqual(1);
+});
+
+test("async preprocess ctx.addIssue with parseAsync", async () => {
+  const schema = z.preprocess(async (data, ctx) => {
+    ctx.addIssue({
+      input: data,
+      code: "custom",
+      message: `${data} is not one of our allowed strings`,
+    });
+    return data;
+  }, z.string());
+
+  const result = schema.parseAsync("asdf");
+  expect(result).rejects.toThrowErrorMatchingSnapshot();
 });
 
 test("z.NEVER in preprocess", () => {
@@ -148,6 +97,7 @@ test("z.NEVER in preprocess", () => {
     expect(arg.error.issues[0].message).toEqual("bad");
   }
 });
+
 test("preprocess as the second property of object", () => {
   const schema = z.object({
     nonEmptyStr: z.string().min(1),
@@ -166,41 +116,13 @@ test("preprocess as the second property of object", () => {
 });
 
 test("preprocess validates with sibling errors", () => {
-  expect(() => {
-    z.object({
-      // Must be first
-      missing: z.string().refine(() => false),
-      preprocess: z.preprocess(
-        (data: any) => data?.trim(),
-        z.string().regex(/ asdf/)
-      ),
-    }).parse({ preprocess: " asdf" });
-  }).toThrow(
-    JSON.stringify(
-      [
-        {
-          code: "invalid_type",
-          input: undefined,
-          expected: "string",
-          received: "undefined",
-          path: ["missing"],
-          message: "Required",
-        },
-        {
-          code: "custom",
-          message: "Invalid input",
-          path: ["missing"],
-        },
-        {
-          input: "asdf",
-          validation: "regex",
-          code: "invalid_string",
-          message: "Invalid",
-          path: ["preprocess"],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  const schema = z.object({
+    missing: z.string().refine(() => false),
+    preprocess: z.preprocess((data: any) => data?.trim(), z.string().regex(/ asdf/)),
+  });
+
+  const result = schema.safeParse({ preprocess: " asdf" });
+  expect(result.error).toBeInstanceOf(z.ZodError);
+  expect(result.error?.issues.length).toEqual(2);
+  expect(result.error!.issues).toMatchSnapshot();
 });

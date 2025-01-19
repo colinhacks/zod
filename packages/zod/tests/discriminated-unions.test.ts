@@ -1,7 +1,6 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 import * as util from "zod-core/util";
-import * as core from "zod-core";
 
 import * as z from "../src/index.js";
 
@@ -18,50 +17,53 @@ test("valid", () => {
 
 test("valid - discriminator value of various primitive types", () => {
   const schema = z.discriminatedUnion("type", [
-    z.object({ type: z.literal("1"), val: z.literal(1) }),
-    z.object({ type: z.literal(1), val: z.literal(2) }),
-    z.object({ type: z.literal(BigInt(1)), val: z.literal(3) }),
-    z.object({ type: z.literal("true"), val: z.literal(4) }),
-    z.object({ type: z.literal(true), val: z.literal(5) }),
-    z.object({ type: z.literal("null"), val: z.literal(6) }),
-    z.object({ type: z.literal(null), val: z.literal(7) }),
-    z.object({ type: z.literal("undefined"), val: z.literal(8) }),
-    z.object({ type: z.literal(undefined), val: z.literal(9) }),
-    z.object({ type: z.literal("transform"), val: z.literal(10) }),
-    z.object({ type: z.literal("refine"), val: z.literal(11) }),
-    z.object({ type: z.literal("superRefine"), val: z.literal(12) }),
+    z.object({ type: z.literal("1"), val: z.string() }),
+    z.object({ type: z.literal(1), val: z.string() }),
+    z.object({ type: z.literal(BigInt(1)), val: z.string() }),
+    z.object({ type: z.literal("true"), val: z.string() }),
+    z.object({ type: z.literal(true), val: z.string() }),
+    z.object({ type: z.literal("null"), val: z.string() }),
+    z.object({ type: z.null(), val: z.string() }),
+    z.object({ type: z.literal("undefined"), val: z.string() }),
+    z.object({ type: z.undefined(), val: z.string() }),
   ]);
 
-  expect(schema.parse({ type: "1", val: 1 })).toEqual({ type: "1", val: 1 });
-  expect(schema.parse({ type: 1, val: 2 })).toEqual({ type: 1, val: 2 });
-  expect(schema.parse({ type: BigInt(1), val: 3 })).toEqual({
+  expect(schema.parse({ type: "1", val: "val" })).toEqual({ type: "1", val: "val" });
+  expect(schema.parse({ type: 1, val: "val" })).toEqual({ type: 1, val: "val" });
+  expect(schema.parse({ type: BigInt(1), val: "val" })).toEqual({
     type: BigInt(1),
-    val: 3,
+    val: "val",
   });
-  expect(schema.parse({ type: "true", val: 4 })).toEqual({
+  expect(schema.parse({ type: "true", val: "val" })).toEqual({
     type: "true",
-    val: 4,
+    val: "val",
   });
-  expect(schema.parse({ type: true, val: 5 })).toEqual({
+  expect(schema.parse({ type: true, val: "val" })).toEqual({
     type: true,
-    val: 5,
+    val: "val",
   });
-  expect(schema.parse({ type: "null", val: 6 })).toEqual({
+  expect(schema.parse({ type: "null", val: "val" })).toEqual({
     type: "null",
-    val: 6,
+    val: "val",
   });
-  expect(schema.parse({ type: null, val: 7 })).toEqual({
+  expect(schema.parse({ type: null, val: "val" })).toEqual({
     type: null,
-    val: 7,
+    val: "val",
   });
-  expect(schema.parse({ type: "undefined", val: 8 })).toEqual({
+  expect(schema.parse({ type: "undefined", val: "val" })).toEqual({
     type: "undefined",
-    val: 8,
+    val: "val",
   });
-  expect(schema.parse({ type: undefined, val: 9 })).toEqual({
+  expect(schema.parse({ type: undefined, val: "val" })).toEqual({
     type: undefined,
-    val: 9,
+    val: "val",
   });
+
+  const fail = schema.safeParse({
+    type: "not_a_key",
+    val: "val",
+  });
+  expect(fail.error).toBeInstanceOf(z.ZodError);
 });
 
 test("invalid - null", () => {
@@ -72,57 +74,158 @@ test("invalid - null", () => {
     ]).parse(null);
     throw new Error();
   } catch (e: any) {
-    expect(JSON.parse(e.message)).toEqual([
-      {
-        code: z.ZodIssueCode.invalid_type,
-        expected: z.ZodParsedType.object,
-        input: null,
-        message: "Expected object, received null",
-        received: z.ZodParsedType.null,
-        path: [],
-      },
-    ]);
+    // [
+    //   {
+    //     code: z.ZodIssueCode.invalid_type,
+    //     expected: z.ZodParsedType.object,
+    //     input: null,
+    //     message: "Expected object, received null",
+    //     received: z.ZodParsedType.null,
+    //     path: [],
+    //   },
+    // ];
+    expect(e).toMatchInlineSnapshot(`
+      $ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "object",
+            "message": "Invalid input: expected object",
+            "path": [],
+          },
+        ],
+      }
+    `);
   }
 });
 
 test("invalid discriminator value", () => {
-  try {
-    z.discriminatedUnion("type", [
+  const result = z
+    .discriminatedUnion("type", [
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ type: z.literal("b"), b: z.string() }),
-    ]).parse({ type: "x", a: "abc" });
-    throw new Error();
-  } catch (e: any) {
-    expect(JSON.parse(e.message)).toEqual([
-      {
-        code: z.ZodIssueCode.invalid_union_discriminator,
-        input: { type: "x", a: "abc" },
-        options: ["a", "b"],
-        message: "Invalid discriminator value. Expected 'a' | 'b'",
-        path: ["type"],
+    ])
+    .safeParse({ type: "x", a: "abc" });
+
+  // [
+  //   {
+  //     code: z.ZodIssueCode.invalid_union_discriminator,
+  //     input: { type: "x", a: "abc" },
+  //     options: ["a", "b"],
+  //     message: "Invalid discriminator value. Expected 'a' | 'b'",
+  //     path: ["type"],
+  //   },
+  // ];
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": $ZodError {
+        "issues": [
+          {
+            "code": "invalid_union",
+            "errors": [],
+            "message": "Invalid input",
+            "note": "No matching discriminator",
+            "path": [],
+          },
+        ],
       },
-    ]);
-  }
+      "success": false,
+    }
+  `);
+});
+
+test("invalid discriminator value - unionFallback", () => {
+  const result = z
+    .discriminatedUnion(
+      "type",
+      [z.object({ type: z.literal("a"), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })],
+      { unionFallback: true }
+    )
+    .safeParse({ type: "x", a: "abc" });
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": $ZodError {
+        "issues": [
+          {
+            "code": "invalid_union",
+            "errors": [
+              [
+                {
+                  "code": "invalid_value",
+                  "message": "Invalid option: expected one of 'a'",
+                  "path": [
+                    "type",
+                  ],
+                  "values": [
+                    "a",
+                  ],
+                },
+              ],
+              [
+                {
+                  "code": "invalid_value",
+                  "message": "Invalid option: expected one of 'b'",
+                  "path": [
+                    "type",
+                  ],
+                  "values": [
+                    "b",
+                  ],
+                },
+                {
+                  "code": "invalid_type",
+                  "expected": "string",
+                  "message": "Invalid input: expected string",
+                  "path": [
+                    "b",
+                  ],
+                },
+              ],
+            ],
+            "message": "Invalid input",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
 
 test("valid discriminator value, invalid data", () => {
-  try {
-    z.discriminatedUnion("type", [
+  const result = z
+    .discriminatedUnion("type", [
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ type: z.literal("b"), b: z.string() }),
-    ]).parse({ type: "a", b: "abc" });
-    throw new Error();
-  } catch (e: any) {
-    expect(JSON.parse(e.message)).toEqual([
-      {
-        code: z.ZodIssueCode.invalid_type,
-        expected: z.ZodParsedType.string,
-        message: "Required",
-        path: ["a"],
-        received: z.ZodParsedType.undefined,
+    ])
+    .safeParse({ type: "a", b: "abc" });
+
+  // [
+  //   {
+  //     code: z.ZodIssueCode.invalid_type,
+  //     expected: z.ZodParsedType.string,
+  //     message: "Required",
+  //     path: ["a"],
+  //     received: z.ZodParsedType.undefined,
+  //   },
+  // ];
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": $ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string",
+            "path": [
+              "a",
+            ],
+          },
+        ],
       },
-    ]);
-  }
+      "success": false,
+    }
+  `);
 });
 
 test("wrong schema - missing discriminator", () => {
@@ -170,35 +273,46 @@ test("async - valid", async () => {
 });
 
 test("async - invalid", async () => {
-  try {
-    await z
-      .discriminatedUnion("type", [
-        z.object({
-          type: z.literal("a"),
-          a: z
-            .string()
-            .refine(async () => true)
-            .transform(async (val) => val),
-        }),
-        z.object({
-          type: z.literal("b"),
-          b: z.string(),
-        }),
-      ])
-      .parseAsync({ type: "a", a: 1 });
-    throw new Error();
-  } catch (e: any) {
-    expect(JSON.parse(e.message)).toEqual([
-      {
-        code: "invalid_type",
-        expected: "string",
-        input: 1,
-        received: "number",
-        path: ["a"],
-        message: "Expected string, received number",
-      },
-    ]);
-  }
+  // try {
+  const a = z.discriminatedUnion("type", [
+    z.object({
+      type: z.literal("a"),
+      a: z
+        .string()
+        .refine(async () => true)
+        .transform(async (val) => val),
+    }),
+    z.object({
+      type: z.literal("b"),
+      b: z.string(),
+    }),
+  ]);
+  const result = await a.safeParseAsync({ type: "a", a: 1 });
+
+  // expect(JSON.parse(e.message)).toEqual([
+  //   {
+  //     code: "invalid_type",
+  //     expected: "string",
+  //     input: 1,
+  //     received: "number",
+  //     path: ["a"],
+  //     message: "Expected string, received number",
+  //   },
+  // ]);
+  expect(result.error).toMatchInlineSnapshot(`
+    $ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string",
+          "path": [
+            "a",
+          ],
+        },
+      ],
+    }
+  `);
 });
 
 test("valid - literals with .default or .preprocess", () => {
@@ -260,13 +374,12 @@ test("branded", () => {
       // Add other properties specific to this option
     }),
     z.object({
-      key: z.literal("b").brand("asdfaf"),
+      key: z.literal("b").brand<"asdfasdf">(),
       // Add other properties specific to this option
     }),
   ]);
 
   type schema = z.infer<typeof schema>;
-
   schema.parse({ key: "a" });
   schema.parse({ key: "b" });
   expect(() => {
@@ -288,10 +401,7 @@ test("optional and nullable", () => {
   ]);
 
   type schema = z.infer<typeof schema>;
-  util.assertEqual<
-    schema,
-    { key?: "a" | undefined; a: true } | { key: "b" | null; b: true }
-  >(true);
+  util.assertEqual<schema, { key?: "a" | undefined; a: true } | { key: "b" | null; b: true }>(true);
 
   schema.parse({ key: "a", a: true });
   schema.parse({ key: undefined, a: true });

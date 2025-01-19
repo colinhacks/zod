@@ -1,17 +1,16 @@
-// import * as zOld from "zod";
-// import * as zNew from "zod-core";
+import * as zNew from "zod";
+import * as zOld from "zod3";
 
-// export function makeSchema<T>(factory: (z: typeof zNew) => T) {
-//   return {
-//     zod3: factory(zOld as any) as T,
-//     zod4: factory(zNew as any) as T,
-//     // zod4Ts: factory(zodNewTs as any),
-//   };
-// }
+export function makeSchema<T>(factory: (z: typeof zNew) => T) {
+  return {
+    zod3: factory(zOld as any) as T,
+    zod4: factory(zNew as any) as T,
+    // zod4Ts: factory(zodNewTs as any),
+  };
+}
 
 export function randomString(length: number): string {
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
   for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));

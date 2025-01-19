@@ -4,18 +4,13 @@ import { expect, test } from "vitest";
 import * as z from "../src/index.js";
 
 test("function parsing", () => {
-  const schema = z.union([
-    z.string().refine(() => false),
-    z.number().refine(() => false),
-  ]);
+  const schema = z.union([z.string().refine(() => false), z.number().refine(() => false)]);
   const result = schema.safeParse("asdf");
   expect(result.success).toEqual(false);
 });
 
 test("union 2", () => {
-  const result = z
-    .union([z.number(), z.string().refine(() => false)])
-    .safeParse("a");
+  const result = z.union([z.number(), z.string().refine(() => false)]).safeParse("a");
   expect(result.success).toEqual(false);
 });
 
@@ -33,38 +28,35 @@ test("return valid over invalid", () => {
 });
 
 test("return errors from both union arms", () => {
-  const result = z
-    .union([z.number(), z.string().refine(() => false)])
-    .safeParse("a");
+  const result = z.union([z.number(), z.string().refine(() => false)]).safeParse("a");
   expect(result.success).toEqual(false);
   if (!result.success) {
-    expect(result.error.issues).toEqual([
-      {
-        code: "invalid_union",
-        input: "a",
-        message: "Invalid input",
-        path: [],
-        unionErrors: [expect.any(z.ZodError), expect.any(z.ZodError)],
-      },
-    ]);
-    expect((result.error.issues[0] as any).unionErrors[0].issues).toEqual([
-      {
-        code: "invalid_type",
-        expected: "number",
-        received: "string",
-        path: [],
-        message: "Expected number, received string",
-        input: "a",
-      },
-    ]);
-    expect((result.error.issues[0] as any).unionErrors[1].issues).toEqual([
-      {
-        code: "custom",
-        message: "Invalid input",
-        path: [],
-        input: "a",
-      },
-    ]);
+    expect(result.error.issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "invalid_union",
+          "errors": [
+            [
+              {
+                "code": "invalid_type",
+                "expected": "number",
+                "message": "Invalid input: expected number",
+                "path": [],
+              },
+            ],
+            [
+              {
+                "code": "custom",
+                "message": "Invalid input",
+                "path": [],
+              },
+            ],
+          ],
+          "message": "Invalid input",
+          "path": [],
+        },
+      ]
+    `);
   }
 });
 

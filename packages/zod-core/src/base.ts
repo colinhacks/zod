@@ -1,5 +1,6 @@
+import { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
-import type * as util from "./util.js";
+import * as util from "./util.js";
 
 //////////////////////////////   CONSTRUCTORS   ///////////////////////////////////////
 interface Trait {
@@ -11,10 +12,10 @@ export interface $constructor<T extends Trait> {
   init(inst: T, def: T["~def"]): void;
 }
 
-export /*@__NO_SIDE_EFFECTS__*/ function $constructor<
-  T extends Trait,
-  D = T["~def"],
->(name: string, initializer: (inst: T, def: D) => void): $constructor<T> {
+export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends Trait, D = T["~def"]>(
+  name: string,
+  initializer: (inst: T, def: D) => void
+): $constructor<T> {
   class _ {
     constructor(def: D) {
       _.init(this as any as T, def);
@@ -45,12 +46,13 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<
 
 /////////////////////////////   PARSE   //////////////////////////////
 
-type $ParsePathComponent = PropertyKey;
-type $ParsePath = $ParsePathComponent[];
+// type $ParsePathComponent = PropertyKey;
+// type $ParsePath = $ParsePathComponent[];
 export interface $ParseContext {
-  readonly path?: $ParsePath;
+  // readonly path?: $ParsePath;
   readonly error?: errors.$ZodErrorMap<never>;
   readonly includeInputInErrors?: boolean;
+  readonly skipFast?: boolean;
 }
 
 // export type $SyncParseResult<T = unknown> = T | $ZodFailure;
@@ -63,34 +65,22 @@ export interface $ParseContext {
 
 export interface $ZodResult<T = unknown> {
   value: T;
-  issues: errors.$ZodIssueData[];
+  issues: errors.$ZodRawIssue[];
   aborted: boolean;
 }
 export interface $ZodResultWithIssues<T = unknown> extends $ZodResult<T> {
-  issues: errors.$ZodIssueData[];
+  issues: errors.$ZodRawIssue[];
 }
 
-// interface $ZodResultSuccess<T> extends $ZodResult<T> {
-//   value: T;
-//   issues: undefined;
-// }
-
-// interface $ZodResultFailure extends $ZodResult<never> {
-//   issues: errors.$ZodIssueData[];
-// }
-
-export function $result<T>(
-  value: T,
-  issues: errors.$ZodIssueData[] = [],
-  aborted = false
-): $ZodResultWithIssues<T> {
+export function $result<T>(value: T, issues: errors.$ZodRawIssue[] = [], aborted = false): $ZodResultWithIssues<T> {
   return { value, issues, aborted };
 }
 
-export function $fail(
-  issues: errors.$ZodIssueData[],
-  aborted = false
-): $ZodResult {
+export function $input<T>(value: T): ParseInput {
+  return { value, issues: [], aborted: false };
+}
+
+export function $fail(issues: errors.$ZodRawIssue[], aborted = false): $ZodResult {
   return { issues, aborted, value: null } as any;
 }
 
@@ -106,10 +96,7 @@ export function $succeeded<T>(x: $ZodResult<T>): boolean {
   return !x?.issues?.length as any;
 }
 
-export function $prefixIssues(
-  path: PropertyKey,
-  issues: errors.$ZodIssueData[]
-): errors.$ZodIssueData[] {
+export function $prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
   return issues.map((iss) => {
     iss.path = [path, ...(iss.path ?? [])];
     return iss;
@@ -164,9 +151,7 @@ export type $ZodSchemaTypes =
 
 export type $IO<O, I> = { output: O; input: I };
 const BRAND: unique symbol = Symbol("zod_brand");
-export type $brand<
-  T extends string | number | symbol = string | number | symbol,
-> = {
+export type $brand<T extends string | number | symbol = string | number | symbol> = {
   [BRAND]: { [k in T]: true };
 };
 
@@ -186,8 +171,11 @@ export interface $ZodTypeDef {
   checks?: $ZodCheck<never>[];
 }
 
+interface ParseInput extends $ZodResult {
+  // ctx: $ParseContext | undefined;
+}
 export interface $ZodType<out O = unknown, out I = unknown> {
-  check(...checks: ($CheckFn<O> | $ZodCheck<O>)[]): this;
+  check(...checks: ($CheckFn<this["~output"]> | $ZodCheck<this["~output"]>)[]): this;
   clone(def?: this["~def"]): this;
   register<R extends $ZodRegistry>(
     registry: R,
@@ -197,10 +185,11 @@ export interface $ZodType<out O = unknown, out I = unknown> {
         : [R["_meta"]]
       : ["Incompatible schema"]
   ): this;
-  brand<T extends PropertyKey = PropertyKey>(): this & {
-    "~output": O & $brand<T>;
+  brand<T extends PropertyKey = PropertyKey, Output = this["~output"]>(): this & {
+    "~output": Output & $brand<T>;
   };
 
+  "~id": string;
   /** @internal Internal API, use with caution. */
   "~standard": number;
   /** @internal Internal API, use with caution. */
@@ -210,12 +199,17 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   /** @internal Internal API, use with caution. */
   "~input": I;
   /** @internal Internal API, use with caution. */
-  "~parse"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  "~fastrun"(input: unknown): boolean;
+  "~fastrunner": Function | null;
+  "~fastparse"?(doc: Doc, arg: string): void;
   /** @internal Internal API, use with caution. */
-  "~typecheck"(
-    input: unknown,
-    ctx?: $ParseContext
-  ): util.MaybeAsync<$ZodResult>;
+  "~run"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  "~run2"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  // "~run2"(payload: ParseInput, ctx: $ParseContext): ParseInput;
+  /** @internal Internal API, use with caution. */
+  "~parse"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  "~parse2"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  // "~parse2"(payload: ParseInput, ctx: $ParseContext): util.MaybeAsync<$ZodResult>;
   /** @internal Internal API, use with caution. */
   "~traits": Set<string>;
   /** @internal Internal API, use with caution. */
@@ -246,10 +240,10 @@ export function runCheck(
 ): util.MaybeAsync<$ZodResult<never>> {
   if (result instanceof Promise)
     return result.then((result) => {
-      check["~run"](result);
+      check["~check"](result);
       return result;
     });
-  check["~run"](result);
+  check["~check"](result);
   return result;
 }
 
@@ -257,83 +251,108 @@ export function clone<T extends $ZodType>(inst: T, def: T["~def"]): T {
   return new inst["~constr"](def);
 }
 
-export const $ZodType: $constructor<$ZodType> = $constructor(
-  "$ZodType",
-  (inst, def) => {
-    inst["~def"] = def; // set _def property
-    inst["~standard"] = 1; // set standard-schema version
-    inst["~computed"] = inst["~computed"] || {}; // initialize _computed object
+export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, def) => {
+  inst["~id"] = def.type + "_" + util.randomString(10);
+  inst["~def"] = def; // set _def property
+  inst["~standard"] = 1; // set standard-schema version
+  inst["~computed"] = inst["~computed"] || {}; // initialize _computed object
 
-    inst.clone = (_def) => clone(inst, _def ?? def);
+  inst.clone = (_def) => clone(inst, _def ?? def);
 
-    inst.check = (...checks) => {
-      return inst.clone({
-        ...def,
-        checks: [
-          ...(def.checks ?? []),
-          ...checks.map((ch) =>
-            typeof ch === "function"
-              ? { "~run": ch, "~def": { check: "custom" } }
-              : ch
-          ),
-        ],
-      });
-    };
+  inst.check = (...checks) => {
+    return inst.clone({
+      ...def,
+      checks: [
+        ...(def.checks ?? []),
+        ...checks.map((ch) => (typeof ch === "function" ? { "~check": ch, "~def": { check: "custom" } } : ch)),
+      ],
+    });
+  };
 
-    inst.brand = () => inst as any;
-    inst.register = ((reg: any, meta: any) => {
-      reg.add(inst, meta);
-      return inst;
-    }) as any;
+  inst.brand = () => inst as any;
+  inst.register = ((reg: any, meta: any) => {
+    reg.add(inst, meta);
+    return inst;
+  }) as any;
 
-    const checks = [...(inst["~def"].checks ?? [])];
+  const checks = [...(inst["~def"].checks ?? [])];
 
-    // if inst is itself a $ZodCheck, run it as a check
-    if (inst["~traits"].has("$ZodCheck")) {
-      checks.unshift(inst as any);
-    }
-    for (const ch of checks) {
-      ch["~onattach"]?.(inst);
-    }
+  // if inst is itself a $ZodCheck, run it as a check
+  if (inst["~traits"].has("$ZodCheck")) {
+    checks.unshift(inst as any);
+  }
+  for (const ch of checks) {
+    ch["~onattach"]?.(inst);
+  }
 
-    if (checks.length === 0) {
-      inst["~parse"] = (...args) => inst["~typecheck"](...args);
-    } else {
-      let runChecks = (
-        result: $ZodResult<never>
-      ): util.MaybeAsync<$ZodResult> => {
-        return result;
-      };
-      for (const ch of checks.slice().reverse()) {
-        const _curr = runChecks;
-        runChecks = (result) => {
-          const _ = ch["~run"](result as $ZodResult<never>);
-          if (_ instanceof Promise) {
-            return _.then((_) => {
-              if (result.aborted) return result;
-              return _curr(result);
-            });
-          }
+  util.defineLazy(inst, "~fastrunner", () => {
+    try {
+      const doc = new Doc();
+      const arg = doc.arg;
 
-          if (result.aborted) return result;
-          return _curr(result);
-        };
+      inst["~fastparse"]!(doc, arg);
+      for (const check of checks) {
+        check["~fastcheck"]!(doc, arg);
       }
+      return doc.finalize(arg);
+    } catch (_) {
+      return null;
+    }
+  });
 
-      inst["~parse"] = (_input, ctx) => {
-        const result = inst["~typecheck"](_input, ctx);
-        if (result instanceof Promise) {
-          return result.then((result) => {
+  inst["~fastrun"] = (input) => {
+    const frun = inst["~fastrunner"];
+    if (!frun) {
+      return false;
+    }
+
+    return frun(input);
+  };
+
+  if (checks.length === 0) {
+    inst["~run"] = (input, ctx) => {
+      // if (!ctx?.skipFast && inst["~fastrun"](input)) {
+      //   return $succeed(input);
+      // }
+
+      return inst["~parse"](input, ctx);
+    };
+    inst["~run2"] = (...args) => inst["~parse2"](...args);
+  } else {
+    let runChecks = (result: $ZodResult<never>): util.MaybeAsync<$ZodResult> => {
+      return result;
+    };
+    for (const ch of checks.slice().reverse()) {
+      const _curr = runChecks;
+      runChecks = (result) => {
+        const _ = ch["~check"](result as $ZodResult<never>);
+        if (_ instanceof Promise) {
+          return _.then((_) => {
             if (result.aborted) return result;
-            return runChecks(result as any);
+            return _curr(result);
           });
         }
+
         if (result.aborted) return result;
-        return runChecks(result as any);
+        return _curr(result);
       };
     }
+
+    inst["~run"] = (_input, ctx) => {
+      // if (inst["~fastrun"](_input)) return $succeed(_input);
+
+      const result = inst["~parse"](_input, ctx);
+      if (result instanceof Promise) {
+        return result.then((result) => {
+          if (result.aborted) return result;
+          return runChecks(result as any);
+        });
+      }
+      if (result.aborted) return result;
+      return runChecks(result as any);
+    };
   }
-);
+});
 
 ////////////////////////////  TYPE HELPERS  ///////////////////////////////////
 
@@ -341,61 +360,7 @@ export type input<T extends $ZodType> = T["~input"]; // extends object ? util.Fl
 export type output<T extends $ZodType> = T["~output"]; // extends object ? util.Flatten<T["~output"]> : T["~output"];
 export type { output as infer };
 
-// type alksjdf = null extends object ? true : false;
-// type asdf =
-
-// function emptyFail
-// export const FAILURE: symbol = Symbol.for("{{zod.failure}}");
-
-// export class $ZodFailure {
-//   protected "~tag": typeof FAILURE = FAILURE;
-//   issues: errors.$ZodIssueData[];
-//   aborted: boolean;
-
-//   constructor(issues?: errors.$ZodIssueData[], aborted?: boolean | undefined) {
-//     this.issues = issues ?? [];
-//     this.aborted = !!aborted;
-//   }
-
-//   static from(issues: errors.$ZodIssueData[], aborted?: boolean): $ZodFailure {
-//     return new $ZodFailure(issues, aborted);
-//   }
-
-//   push(...issues: errors.$ZodIssueData[]): void {
-//     this.issues.push(...issues);
-//   }
-
-//   finalize(ctx?: $ParseContext): $ZodError {
-//     return new $ZodError(
-//       this.issues.map((iss) => {
-//         const full = { ...iss } as errors.$ZodIssue;
-//         if (!iss.message) {
-//           const message =
-//             ctx?.error?.(iss as never) ??
-//             iss?.def?.error?.(iss as never) ??
-//             getConfig().error?.(iss) ??
-//             defaultErrorMap(iss);
-//           full.message =
-//             typeof message === "string" ? message : message?.message!;
-//         }
-
-//         delete full.def;
-//         if (!ctx?.includeInputInErrors) delete full.input;
-//         return full;
-//       })
-//     );
-//   }
-
-//   // @ts-ignore
-//   static [Symbol.hasInstance](inst: any) {
-//     return inst?["~tag"] === FAILURE;
-//   }
-// }
-
-export function $finalize(
-  issues: errors.$ZodIssueData[],
-  ctx?: $ParseContext
-): $ZodError {
+export function $finalize(issues: errors.$ZodRawIssue[], ctx?: $ParseContext): $ZodError {
   return new $ZodError(
     issues.map((iss) => {
       const full = { ...iss, path: iss.path ?? [] } as errors.$ZodIssue;
@@ -408,7 +373,7 @@ export function $finalize(
         full.message = typeof message === "string" ? message : message?.message;
       }
 
-      delete full.def;
+      delete (full as any).def;
       if (!ctx?.includeInputInErrors) {
         delete full.input;
       }
@@ -419,74 +384,23 @@ export function $finalize(
 
 const ZOD_ERROR: symbol = Symbol.for("{{zod.error}}");
 export class $ZodError {
-  "~tag": typeof ZOD_ERROR = ZOD_ERROR;
+  // "~tag": typeof ZOD_ERROR = ZOD_ERROR;
   public issues: errors.$ZodIssue[];
   constructor(issues: errors.$ZodIssue[]) {
+    Object.defineProperty(this, "~tag", { value: ZOD_ERROR, enumerable: false });
     this.issues = issues;
   }
 
   static [Symbol.hasInstance](inst: any) {
     return inst?.["~tag"] === ZOD_ERROR;
   }
+
+  static assert(value: unknown): asserts value is $ZodError {
+    if (!(value instanceof $ZodError)) {
+      throw new Error(`Not a $ZodError: ${value}`);
+    }
+  }
 }
-
-// export const makeIssue = (
-//   issueData: errors.$ZodIssueData,
-//   // schema?: { error?: errors.$ZodErrorMap<never> | undefined },
-//   ctx?: $ParseContext
-// ): errors.$ZodIssue => {
-//   const fullPath = ctx?.path
-//     ? issueData.path
-//       ? [...ctx.path, ...issueData.path]
-//       : ctx.path
-//     : issueData.path
-//       ? issueData.path
-//       : [];
-
-//   const fullIssue = {
-//     ...issueData,
-//     // level: issueData.level ?? "error",
-//     path: fullPath,
-//   };
-
-//   if (issueData.message) return fullIssue as errors.$ZodIssue;
-//   const _message: any =
-//     ctx?.error?.(fullIssue as never) ??
-//     issueData?.def?.error?.(fullIssue as never) ??
-//     getConfig().error?.(fullIssue) ??
-//     defaultErrorMap(fullIssue);
-//   fullIssue.message = _message.message ?? _message;
-//   return fullIssue as errors.$ZodIssue;
-// };
-
-// export function failed(x: $SyncParseResult<unknown>): x is $ZodFailure {
-//   return (x as any)?["~tag"] === FAILURE;
-// }
-
-// export function aborted(x: $ZodFailure): x is $ZodFailure {
-//   return !!x.aborted;
-// }
-
-// export function succeeded<T>(x: any): x is T {
-//   return x?["~tag"] !== FAILURE;
-// }
-
-//////////////////////////////   ZodFail   ///////////////////////////////////////
-
-// export type $ZodFail = {
-//   "~tag": typeof FAILURE;
-//   issues: errors.$ZodIssueData[];
-//   aborted?: boolean;
-// };
-
-// export function fail(issues: errors.$ZodIssueData[]): $ZodFail {
-//   return {
-//     "~tag": FAILURE,
-//     issues,
-//   };
-// }
-
-//////////////////////////////   ERROR MAPS   ///////////////////////////////////////
 
 import defaultErrorMap from "./locales/en.js";
 import type { $ZodRegistry } from "./registries.js";
@@ -519,47 +433,14 @@ export interface $ZodCheck<in T = never> {
   /** The set of issues this check might throw. */
   "~issc"?: errors.$ZodIssueBase;
 
-  "~run"(input: $ZodResult<T>): util.MaybeAsync<void>;
+  "~check"(input: $ZodResult<T>): util.MaybeAsync<void>;
+  "~fastcheck"?(doc: Doc, arg: string): void;
   "~onattach"?(schema: $ZodType): void;
 }
 
-export const $ZodCheck: $constructor<$ZodCheck<any>> = $constructor(
-  "$ZodCheck",
-  (inst, def) => {
-    inst["~def"] = def;
-  }
-);
-
-// export function makeCheckCtx<T>(
-//   input: T,
-//   ctx: $ParseContext | undefined,
-//   fail: $ZodFailure | undefined
-// ): $ZodCheckCtx<T> {
-//   if (fail) {
-//     const checkCtx: $ZodCheckCtx<T> = {
-//       input,
-//       fail,
-//       addIssue(iss, schema) {
-//         this.fail!.addIssue(iss, schema); //.bind(fail),
-//       },
-//     };
-//     return checkCtx;
-//   }
-
-//   const checkCtx: $ZodCheckCtx<T> = {
-//     input,
-//     addIssue(
-//       issue: errors.$ZodIssueData,
-//       schema?: { error?: errors.$ZodErrorMap<never> | undefined }
-//     ) {
-//       if (!checkCtx.fail) {
-//         const fail = new $ZodFailure([]);
-//         // fail.addIssue(issue, schema);
-//         checkCtx.fail = fail;
-//         // return;
-//       }
-//       checkCtx.fail.addIssue(issue, schema);
-//     },
-//   };
-//   return checkCtx;
-// }
+export const $ZodCheck: $constructor<$ZodCheck<any>> = $constructor("$ZodCheck", (inst, def) => {
+  inst["~def"] = def;
+  inst["~fastcheck"] = (_doc, _arg) => {
+    throw new Error("Not implemented");
+  };
+});

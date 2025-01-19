@@ -13,14 +13,7 @@ import type {
   $ZodStringFormat,
 } from "./schemas.js";
 
-export type Primitive =
-  | string
-  | number
-  | symbol
-  | bigint
-  | boolean
-  | null
-  | undefined;
+export type Primitive = string | number | symbol | bigint | boolean | null | undefined;
 
 export type Scalars = Primitive | Primitive[];
 
@@ -116,28 +109,23 @@ export type ParsedTypes =
 /////////////////////////////
 ///////     UTILS     ///////
 /////////////////////////////
-export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
-  V,
->() => V extends U ? 1 : 2
-  ? true
-  : false;
+export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? true : false;
 
-export type AssertNotEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <
-  V,
->() => V extends U ? 1 : 2
-  ? false
-  : true;
+export type AssertNotEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? false : true;
 
 export type AssertExtends<T, U> = T extends U ? T : never;
 export type IsAny<T> = 0 extends 1 & T ? true : false;
 
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
-export type MakePartial<T, K extends keyof T> = Omit<T, K> &
-  Partial<Pick<T, K>>;
+export type MakePartial<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 export type NoUndefined<T> = T extends undefined ? never : T;
-export type Mask<Keys extends PropertyKey> = { [K in Keys]?: true };
+export type Mask<Keys extends PropertyKey> = { [K in string & Keys]?: true };
+export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
+export type InexactPartial<T> = {
+  [P in keyof T]?: T[P] | undefined;
+};
 // export type OptionalKeys<T extends object> = {
 //   [k in keyof T]: undefined extends T[k] ? k : never;
 // }[keyof T];
@@ -153,11 +141,7 @@ export type Mask<Keys extends PropertyKey> = { [K in Keys]?: true };
 export type SomeObject = Record<PropertyKey, any>;
 export type Identity<T> = T;
 export type Flatten<T> = Identity<{ [k in keyof T]: T[k] }>;
-export type Overwrite<T extends SomeObject, U extends SomeObject> = Omit<
-  T,
-  keyof U
-> &
-  U;
+export type Overwrite<T extends SomeObject, U extends SomeObject> = Omit<T, keyof U> & U;
 
 export type NoNeverKeys<T> = {
   [k in keyof T]: [T[k]] extends [never] ? never : k;
@@ -168,11 +152,7 @@ export type NoNever<T> = Identity<{
 }>;
 
 export type ExtendShape<A extends object, B extends object> = {
-  [K in keyof A | keyof B]: K extends keyof B
-    ? B[K]
-    : K extends keyof A
-      ? A[K]
-      : never;
+  [K in keyof A | keyof B]: K extends keyof B ? B[K] : K extends keyof A ? A[K] : never;
 };
 
 // type UnionToIntersectionFn<T> = (
@@ -219,11 +199,7 @@ export type MaybeAsync<T> = T | Promise<T>;
 export type KeyOf<T> = keyof OmitIndexSignature<T>;
 
 export type OmitIndexSignature<T> = {
-  [K in keyof T as string extends K
-    ? never
-    : K extends string
-      ? K
-      : never]: T[K];
+  [K in keyof T as string extends K ? never : K extends string ? K : never]: T[K];
 };
 
 export type ExtractIndexSignature<T> = {
@@ -236,9 +212,7 @@ export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {
   return val;
 }
 
-export function assertNotEqual<A, B>(
-  val: AssertNotEqual<A, B>
-): AssertNotEqual<A, B> {
+export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<A, B> {
   return val;
 }
 
@@ -247,9 +221,7 @@ export function assertNever(_x: never): never {
   throw new Error();
 }
 export function assert<T>(_: any): asserts _ is T {}
-export function arrayToEnum<T extends string, U extends [T, ...T[]]>(
-  items: U
-): { [k in U[number]]: k } {
+export function arrayToEnum<T extends string, U extends [T, ...T[]]>(items: U): { [k in U[number]]: k } {
   const obj: any = {};
   for (const item of items) {
     obj[item] = item;
@@ -258,9 +230,7 @@ export function arrayToEnum<T extends string, U extends [T, ...T[]]>(
 }
 
 export function getValidEnumValues(obj: any): any {
-  const validKeys = objectKeys(obj).filter(
-    (k: any) => typeof obj[obj[k]] !== "number"
-  );
+  const validKeys = objectKeys(obj).filter((k: any) => typeof obj[obj[k]] !== "number");
   const filtered: any = {};
   for (const k of validKeys) {
     filtered[k] = obj[k];
@@ -288,18 +258,10 @@ export const objectKeys: ObjectConstructor["keys"] =
 export const isInteger: NumberConstructor["isInteger"] =
   typeof Number.isInteger === "function"
     ? (val) => Number.isInteger(val)
-    : (val) =>
-        typeof val === "number" &&
-        Number.isFinite(val) &&
-        Math.floor(val) === val;
+    : (val) => typeof val === "number" && Number.isFinite(val) && Math.floor(val) === val;
 
-export function joinValues<T extends any[]>(
-  array: T,
-  separator = " | "
-): string {
-  return array
-    .map((val) => (typeof val === "string" ? `'${val}'` : val))
-    .join(separator);
+export function joinValues<T extends any[]>(array: T, separator = " | "): string {
+  return array.map((val) => (typeof val === "string" ? `'${val}'` : val)).join(separator);
 }
 export function jsonStringifyReplacer(_: string, value: any): any {
   if (typeof value === "bigint") return value.toString();
@@ -361,17 +323,30 @@ export function cached<T>(getter: () => T): { value: T } {
   };
 }
 
-export function getElementAtPath(
-  obj: any,
-  path: (string | number)[] | null | undefined
-): any {
+export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () => T[K]): void {
+  const set = false;
+  Object.defineProperty(object, key, {
+    get() {
+      if (!set) {
+        const value = getter();
+        Object.defineProperty(object, key, { value });
+        return value;
+      }
+      throw new Error("cached value already set");
+    },
+    set(v) {
+      object[key] = v;
+    },
+    configurable: true,
+  });
+}
+
+export function getElementAtPath(obj: any, path: (string | number)[] | null | undefined): any {
   if (!path) return obj;
   return path.reduce((acc, key) => acc?.[key], obj);
 }
 
-export function promiseAllObject<T extends object>(
-  promisesObj: T
-): Promise<{ [k in keyof T]: Awaited<T[k]> }> {
+export function promiseAllObject<T extends object>(promisesObj: T): Promise<{ [k in keyof T]: Awaited<T[k]> }> {
   const keys = Object.keys(promisesObj);
   const promises = keys.map((key) => (promisesObj as any)[key]);
 
@@ -384,12 +359,31 @@ export function promiseAllObject<T extends object>(
   });
 }
 
+export function randomString(length = 10): string {
+  const chars = "abcdefghijklmnopqrstuvwxyz";
+  let str = "";
+  for (let i = 0; i < length; i++) {
+    str += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return str;
+}
+
+export function isObject(data: any): data is Record<PropertyKey, unknown> {
+  return typeof data === "object" && data !== null;
+}
+
 export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
-  return (
-    typeof data === "object" &&
-    data !== null &&
-    Object.getPrototypeOf(data) === Object.prototype
-  );
+  return typeof data === "object" && data !== null && Object.getPrototypeOf(data) === Object.prototype;
+}
+
+export function numKeys(data: any): number {
+  let keyCount = 0;
+  for (const key in data) {
+    if (Object.prototype.hasOwnProperty.call(data, key)) {
+      keyCount++;
+    }
+  }
+  return keyCount;
 }
 
 export const getParsedType = (data: any): ParsedTypes => {
@@ -424,12 +418,7 @@ export const getParsedType = (data: any): ParsedTypes => {
       if (data === null) {
         return "null";
       }
-      if (
-        data.then &&
-        typeof data.then === "function" &&
-        data.catch &&
-        typeof data.catch === "function"
-      ) {
+      if (data.then && typeof data.then === "function" && data.catch && typeof data.catch === "function") {
         return "promise";
       }
       if (typeof Map !== "undefined" && data instanceof Map) {
@@ -451,11 +440,7 @@ export const getParsedType = (data: any): ParsedTypes => {
   }
 };
 
-export const propertyKeyTypes: Set<string> = new Set([
-  "string",
-  "number",
-  "symbol",
-]);
+export const propertyKeyTypes: Set<string> = new Set(["string", "number", "symbol"]);
 
 export const primitiveTypes = new Set([
   "string",
@@ -503,10 +488,7 @@ export type Params<
 // type lkjasdf = (base.$ZodType & { "~isst": never })['']
 export type TypeParams<
   T extends base.$ZodType = base.$ZodType & { "~isst": never },
-  AlsoOmit extends Exclude<
-    keyof T["~def"],
-    "type" | "checks" | "error"
-  > = never,
+  AlsoOmit extends Exclude<keyof T["~def"], "type" | "checks" | "error"> = never,
 > = Params<T, NonNullable<T["~isst"]>, "type" | "checks" | "error" | AlsoOmit>;
 
 // strips types that are not exposed in the public factory
@@ -520,10 +502,7 @@ export type CheckParams<
 // incl. `type`, `checks`, `error`, `check`, `format`
 export type StringFormatParams<
   T extends $ZodStringFormat = $ZodStringFormat,
-  AlsoOmit extends Exclude<
-    keyof T["~def"],
-    "type" | "coerce" | "checks" | "error" | "check" | "format"
-  > = never,
+  AlsoOmit extends Exclude<keyof T["~def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
 > = Params<
   T,
   NonNullable<T["~isst"] | T["~issc"]>,
@@ -532,27 +511,13 @@ export type StringFormatParams<
 
 export type CheckStringFormatParams<
   T extends $ZodStringFormat = $ZodStringFormat,
-  AlsoOmit extends Exclude<
-    keyof T["~def"],
-    "type" | "coerce" | "checks" | "error" | "check" | "format"
-  > = never,
-> = Params<
-  T,
-  NonNullable<T["~issc"]>,
-  "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit
->;
+  AlsoOmit extends Exclude<keyof T["~def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
+> = Params<T, NonNullable<T["~issc"]>, "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit>;
 
 export type CheckTypeParams<
   T extends base.$ZodType & base.$ZodCheck = base.$ZodType & base.$ZodCheck,
-  AlsoOmit extends Exclude<
-    keyof T["~def"],
-    "type" | "checks" | "error" | "check"
-  > = never,
-> = Params<
-  T,
-  NonNullable<T["~isst"] | T["~issc"]>,
-  "type" | "checks" | "error" | "check" | AlsoOmit
->;
+  AlsoOmit extends Exclude<keyof T["~def"], "type" | "checks" | "error" | "check"> = never,
+> = Params<T, NonNullable<T["~isst"] | T["~issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
 
 // export type NormalizedTypeParams<T extends TypeParams = TypeParams> = Omit<
 //   T,
@@ -607,21 +572,15 @@ export function splitChecksAndParams<T extends TypeParams>(
   checks: base.$ZodCheck<any>[];
   params: T | string;
 } {
-  const params = (
-    Array.isArray(_paramsOrChecks) ? {} : _paramsOrChecks ?? {}
-  ) as T;
-  const checks: any[] = Array.isArray(_paramsOrChecks)
-    ? _paramsOrChecks
-    : _checks ?? [];
+  const params = (Array.isArray(_paramsOrChecks) ? {} : (_paramsOrChecks ?? {})) as T;
+  const checks: any[] = Array.isArray(_paramsOrChecks) ? _paramsOrChecks : (_checks ?? []);
   return {
     checks,
     params,
   };
 }
 
-export function normalizeTypeParams<
-  T extends TypeParams = TypeParams<base.$ZodType>,
->(params?: any): Normalize<T> {
+export function normalizeTypeParams<T extends TypeParams = TypeParams<base.$ZodType>>(params?: any): Normalize<T> {
   if (!params) return {} as any;
   if (typeof params === "string") return { error: () => params } as any;
   const processed: Normalize<T> = {} as any;
@@ -630,9 +589,7 @@ export function normalizeTypeParams<
     params.error ??= params.message;
   }
   const { error: _error, description, ...rest } = params;
-  if (_error)
-    (processed as any).error =
-      typeof _error === "string" ? () => _error : _error;
+  if (_error) (processed as any).error = typeof _error === "string" ? () => _error : _error;
   if (description) processed.description = description;
   Object.assign(processed, rest);
   return processed;
@@ -657,8 +614,7 @@ export function normalizeCheckParams<T>(_params: T): Normalize<T> {
   if (params?.message) {
     params.error ??= params.message;
   }
-  if (typeof params.error === "string")
-    return { ...params, error: () => params.error } as any;
+  if (typeof params.error === "string") return { ...params, error: () => params.error } as any;
   return params as any;
 }
 
@@ -710,11 +666,7 @@ export const factory =
     return new (_class())(finalParams) as any;
   };
 
-export type FactoryParams<
-  T extends base.$ZodTypeDef,
-  Omitted extends keyof T,
-  Optionals extends keyof T,
-> = Flatten<
+export type FactoryParams<T extends base.$ZodTypeDef, Omitted extends keyof T, Optionals extends keyof T> = Flatten<
   Omit<T, "error" | "checks" | Omitted | Optionals> &
     Partial<{ [k in Optionals]: T[k] }> & {
       error?: string | T["error"] | undefined;
@@ -725,18 +677,11 @@ export type FactoryParams<
 
 export const makeFactory =
   <Class extends ClassType<base.$ZodType>>(_class: Class) =>
-  <
-    Fixed extends Partial<InstanceType<Class>["~def"]>,
-    Defaults extends Partial<InstanceType<Class>["~def"]>,
-  >(
+  <Fixed extends Partial<InstanceType<Class>["~def"]>, Defaults extends Partial<InstanceType<Class>["~def"]>>(
     fixed: Fixed,
     defaults: Defaults
   ): Factory<InstanceType<Class>, Fixed, Defaults> => {
-    return new Factory<InstanceType<Class>, Fixed, Defaults>(
-      _class as any,
-      fixed,
-      defaults
-    );
+    return new Factory<InstanceType<Class>, Fixed, Defaults>(_class as any, fixed, defaults);
   };
 
 export class Factory<
@@ -747,11 +692,7 @@ export class Factory<
   _class: ClassType<Class>;
   _fixed: Fixed;
   _default: Defaults;
-  Params!: FactoryParams<
-    Class["~def"],
-    keyof Class["~def"] & keyof Fixed,
-    keyof Class["~def"] & keyof Defaults
-  >;
+  Params!: FactoryParams<Class["~def"], keyof Class["~def"] & keyof Fixed, keyof Class["~def"] & keyof Defaults>;
 
   constructor(_class: ClassType<Class>, fixed: Fixed, defaults: Defaults) {
     this._class = _class;
@@ -770,10 +711,6 @@ export class Factory<
   }
 }
 
-export interface RefinementCtx {
-  addIssue(arg: errors.$ZodIssueData | string): void;
-  abort(): void;
-}
 export type EnumValue = string | number; // | bigint | boolean | symbol;
 export type EnumLike = Record<EnumValue, EnumValue>;
 export type ToEnum<T extends EnumValue> = { [k in T]: k };
@@ -857,30 +794,25 @@ export function optionalInterfaceKeys(shape: $ZodLooseShape): Set<string> {
 
 export function cleanInterfaceShape(shape: $ZodLooseShape): $ZodShape {
   return Object.fromEntries(
-    Object.entries(shape).map(([key, value]) => [
-      key.replace(/^\?/, "").replace(/\?$/, ""),
-      value,
-    ])
+    Object.entries(shape).map(([key, value]) => [key.replace(/^\?/, "").replace(/\?$/, ""), value])
   );
 }
 
-export const NUMBER_FORMAT_RANGES: Record<$ZodNumberFormats, [number, number]> =
-  {
-    safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
-    int32: [-2147483648, 2147483647],
-    uint32: [0, 4294967295],
-    float32: [-3.4028234663852886e38, 3.4028234663852886e38],
-    float64: [-1.7976931348623157e308, 1.7976931348623157e308],
-  };
+export const NUMBER_FORMAT_RANGES: Record<$ZodNumberFormats, [number, number]> = {
+  safeint: [Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER],
+  int32: [-2147483648, 2147483647],
+  uint32: [0, 4294967295],
+  float32: [-3.4028234663852886e38, 3.4028234663852886e38],
+  float64: [-1.7976931348623157e308, 1.7976931348623157e308],
+};
 
-export const BIGINT_FORMAT_RANGES: Record<$ZodBigIntFormats, [bigint, bigint]> =
-  {
-    int64: [BigInt("-9223372036854775808"), BigInt("9223372036854775807")],
-    uint64: [BigInt(0), BigInt("18446744073709551615")],
-  };
+export const BIGINT_FORMAT_RANGES: Record<$ZodBigIntFormats, [bigint, bigint]> = {
+  int64: [BigInt("-9223372036854775808"), BigInt("9223372036854775807")],
+  uint64: [BigInt(0), BigInt("18446744073709551615")],
+};
 
 export function pick(schema: $ZodObjectLike, mask: object) {
-  const shape: $ZodShape = {};
+  const shape: Writeable<$ZodShape> = {};
   const currShape = schema["~def"].shape;
   for (const key in mask) {
     // shape[key] = schema["~def"].shape[key];
@@ -903,7 +835,7 @@ export function pick(schema: $ZodObjectLike, mask: object) {
 }
 
 export function omit(schema: $ZodObjectLike, mask: object) {
-  const shape: $ZodShape = { ...schema["~def"].shape };
+  const shape: Writeable<$ZodShape> = { ...schema["~def"].shape };
   for (const key in mask) {
     if (key in shape) {
       delete shape[key];
@@ -937,7 +869,7 @@ export function partialObject(
   mask: object | undefined,
   Class: new (def: $ZodOptionalDef<any>) => $ZodOptional
 ): any {
-  const shape: $ZodShape = { ...schema["~def"].shape };
+  const shape: Writeable<$ZodShape> = { ...schema["~def"].shape };
 
   for (const key in schema["~def"].shape) {
     if (mask) {
@@ -966,7 +898,7 @@ export function requiredObject(
   mask: object | undefined,
   Class: new (def: $ZodRequiredDef<any>) => $ZodRequired
 ): any {
-  const shape: $ZodShape = { ...schema["~def"].shape };
+  const shape: Writeable<$ZodShape> = { ...schema["~def"].shape };
 
   for (const key in schema["~def"].shape) {
     if (mask) {
@@ -990,11 +922,18 @@ export function requiredObject(
   }) as any;
 }
 
-export function partialInterface(
-  schema: $ZodInterface,
-  mask: object | undefined
-): any {
-  const shape: $ZodShape = {
+// merge two shapes
+export type ExtendInterfaceShape<T extends $ZodShape, Shape extends $ZodShape> = Flatten<Overwrite<T["~shape"], Shape>>;
+
+// add question mark to all non-optional keys
+export type PartialInterfaceShape<T extends $ZodShape, Keys extends string> = Flatten<
+  Omit<T, Keys> & {
+    [k in Keys as k extends `${string}?` ? k : `${string & k}?`]: T[k];
+  }
+>;
+
+export function partialInterface(schema: $ZodInterface, mask: object | undefined): any {
+  const shape: Record<string, base.$ZodType> = {
     ...schema["~def"].shape,
   };
 
@@ -1012,11 +951,14 @@ export function partialInterface(
   });
 }
 
-export function requiredInterface(
-  schema: $ZodInterface,
-  mask: object | undefined
-): any {
-  const shape: $ZodShape = { ...schema["~def"].shape };
+export type RequiredInterfaceShape<T extends $ZodShape, Keys extends string> = Flatten<
+  Omit<T, Keys> & {
+    [k in Keys as k extends `${infer NewK}?` ? NewK : k extends `?${infer NewK}` ? NewK : k]: T[k];
+  }
+>;
+
+export function requiredInterface(schema: $ZodInterface, mask: object | undefined): any {
+  const shape: Record<string, base.$ZodType> = { ...schema["~def"].shape };
   for (const key in schema["~def"].shape) {
     if (mask && !(key in mask)) continue;
     if (key[key.length - 1] === "?") {
@@ -1035,6 +977,14 @@ export function requiredInterface(
     checks: [],
   });
 }
+
+export type InterfaceKeys<Keys extends string> = string extends Keys
+  ? string
+  : Keys extends `${infer K}?`
+    ? K
+    : Keys extends `?${infer K}`
+      ? K
+      : Keys;
 
 export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
 

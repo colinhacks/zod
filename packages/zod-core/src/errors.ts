@@ -4,110 +4,105 @@ import type * as util from "./util.js";
 ///////////////////////////
 ////     base type     ////
 ///////////////////////////
-export interface $ZodIssueBase<
-  Origin extends $ZodSchemaTypes = $ZodSchemaTypes,
-  Input = unknown,
-> {
+export interface $ZodIssueBase<Input = unknown> {
   code: string;
-  origin: Origin;
   input?: Input | undefined;
   path: PropertyKey[];
   message: string;
-  [k: string]: unknown;
+  // [k: string]: unknown;
 }
 
 ////////////////////////////////
 ////     issue subtypes     ////
 ////////////////////////////////
-export interface $ZodIssueInvalidType<
-  Origin extends $ZodSchemaTypes = $ZodSchemaTypes,
-  Input = unknown,
-> extends $ZodIssueBase<Origin, Input> {
+export interface $ZodIssueInvalidType<Input = unknown>
+  extends $ZodIssueBase<Input> {
   code: "invalid_type";
+  expected: $ZodSchemaTypes;
   input: Input;
-  // received?: string;
 }
 
-export interface $ZodIssueTooBig<
-  Origin extends $ZodSchemaTypes = $ZodSchemaTypes,
-  Input = unknown,
-> extends $ZodIssueBase<Origin, Input> {
+export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase<Input> {
   code: "too_big";
+  origin:
+    | "number"
+    | "int"
+    | "bigint"
+    | "date"
+    | "string"
+    | "array"
+    | "set"
+    | "file";
   maximum: number | bigint;
   inclusive?: boolean;
 }
 
-export interface $ZodIssueTooSmall<
-  Origin extends $ZodSchemaTypes = $ZodSchemaTypes,
-  Input = unknown,
-> extends $ZodIssueBase<Origin, Input> {
+export interface $ZodIssueTooSmall<Input = unknown>
+  extends $ZodIssueBase<Input> {
   code: "too_small";
+  origin:
+    | "number"
+    | "int"
+    | "bigint"
+    | "date"
+    | "string"
+    | "array"
+    | "set"
+    | "file";
   minimum: number | bigint;
   inclusive?: boolean;
 }
 
-export interface $ZodIssueInvalidStringFormat
-  extends $ZodIssueBase<"string", string> {
+export interface $ZodIssueInvalidStringFormat extends $ZodIssueBase<string> {
   code: "invalid_format";
   format: string;
   pattern?: string;
 }
 
 export interface $ZodIssueNotMultipleOf<
-  Origin extends "number" | "bigint" = "number" | "bigint",
   Input extends number | bigint = number | bigint,
-> extends $ZodIssueBase<Origin, Input> {
+> extends $ZodIssueBase<Input> {
   code: "not_multiple_of";
   divisor: number;
 }
 
-export interface $ZodIssueInvalidDate extends $ZodIssueBase<"date", Date> {
+export interface $ZodIssueInvalidDate extends $ZodIssueBase<Date> {
   code: "invalid_date";
 }
 
 export interface $ZodIssueUnrecognizedKeys
-  extends $ZodIssueBase<"object" | "record", Record<string, unknown>> {
+  extends $ZodIssueBase<Record<string, unknown>> {
   code: "unrecognized_keys";
   keys: string[];
 }
 
-// export interface $ZodIssueMissingKeys
-//   extends $ZodIssueBase<"object" | "record", Record<string, unknown>> {
-//   code: "missing_keys";
-//   keys: string[];
-// }
-
-export interface $ZodIssueInvalidUnion extends $ZodIssueBase<"union", unknown> {
+export interface $ZodIssueInvalidUnion extends $ZodIssueBase<unknown> {
   code: "invalid_union";
   errors: $ZodIssue[][];
 }
 
-export interface $ZodIssueInvalidKey<
-  Origin extends "map" | "record" = "map" | "record",
-  Input = unknown,
-> extends $ZodIssueBase<Origin, Input> {
+export interface $ZodIssueInvalidKey<Input = unknown>
+  extends $ZodIssueBase<Input> {
   code: "invalid_key";
+  origin: "map" | "record";
   issues: $ZodIssue[];
 }
 
-export interface $ZodIssueInvalidElement<
-  Origin extends "map" | "set" = "map" | "set",
-  Input = unknown,
-> extends $ZodIssueBase<Origin, Input> {
+export interface $ZodIssueInvalidElement<Input = unknown>
+  extends $ZodIssueBase<Input> {
   code: "invalid_element";
+  origin: "map" | "set";
   key: unknown;
   issues: $ZodIssue[];
 }
 
-export interface $ZodIssueInvalidValue<
-  Origin extends $ZodSchemaTypes = $ZodSchemaTypes,
-  Input = unknown,
-> extends $ZodIssueBase<Origin, Input> {
+export interface $ZodIssueInvalidValue<Input = unknown>
+  extends $ZodIssueBase<Input> {
   code: "invalid_value";
   values: util.Primitive[];
 }
 
-export interface $ZodIssueCustom extends $ZodIssueBase<"custom", unknown> {
+export interface $ZodIssueCustom extends $ZodIssueBase<unknown> {
   code: "custom";
 }
 
@@ -203,33 +198,22 @@ export type $ZodIssue =
   | $ZodIssueInvalidValue
   | $ZodIssueCustom;
 
-export type $ZodIssueData<T extends $ZodIssueBase = $ZodIssue> = T extends any
-  ? _$ZodIssueData<T>
+export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any
+  ? RawIssue<T>
   : never;
 
-// type ComputedIssueDataPieces<In> = {
-//   path?: PropertyKey[] | undefined;
-//   // level?: "error" | "abort" | undefined;
-//   message?: string | undefined;
-//   input: In;
-//   def?: { error?: $ZodErrorMap<never> | undefined } | undefined;
-// };
-type ComputedIssueDataPieces = {
-  path?: PropertyKey[] | undefined;
-  // level?: "error" | "abort" | undefined;
-  message?: string | undefined;
+type DefLike = { error?: $ZodErrorMap<never> | undefined };
 
-  def?: { error?: $ZodErrorMap<never> | undefined } | undefined;
-};
-
-type _$ZodIssueData<T extends $ZodIssueBase> = util.Flatten<
-  Omit<util.OmitIndexSignature<T>, "message" | "path"> &
-    ComputedIssueDataPieces &
-    util.ExtractIndexSignature<T>
+type RawIssue<T extends $ZodIssueBase> = util.Flatten<
+  Omit<T, "message" | "path"> & {
+    path?: PropertyKey[] | undefined;
+    message?: string | undefined;
+    def?: DefLike | undefined;
+  } & Record<string, unknown>
 >;
 
-/** @deprecated Use `$ZodIssueData` instead. */
-export type IssueData = $ZodIssueData;
+/** @deprecated Use `$ZodRawIssue` instead. */
+export type IssueData = $ZodRawIssue;
 
 /** @deprecated */
 export type ErrorMapCtx = {
@@ -249,7 +233,7 @@ export type ErrorMapCtx = {
 export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
   // biome-ignore lint:
   (
-    issue: $ZodIssueData<T>,
+    issue: $ZodRawIssue<T>,
     /** @deprecated */
     _ctx?: ErrorMapCtx
   ): { message: string } | string | undefined;

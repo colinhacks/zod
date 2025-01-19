@@ -10,13 +10,11 @@ interface ZodBenchParams<T extends z.$ZodType, D> {
   benchmark: (arg: D) => void | Promise<void>;
 }
 
-export function zodbench<T extends z.$ZodType, D>(
-  params: ZodBenchParams<T, D> & ThisType<{ schema: T }>
-) {
+export function zodbench<T extends z.$ZodType, D>(params: ZodBenchParams<T, D> & ThisType<{ schema: T }>) {
   const bench = metabench(params.name);
   console.log(`Batch size: ${params.batch}`);
 
-  const { zod3, zod4 } = makeSchema(params.schema);
+  const { zod3, zod4 } = makeSchema(params.schema as any);
 
   const zod3Bench = params.benchmark.bind({ schema: zod3 });
   const zod4Bench = params.benchmark.bind({ schema: zod4 });
