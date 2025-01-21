@@ -3005,13 +3005,15 @@ This more declarative API makes schema definitions vastly more concise.
 
 ### Runtypes
 
-[https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
+[https://github.com/runtypes/runtypes](https://github.com/runtypes/runtypes)
 
-Good type inference support.
+Runtypes is focused on ergonomics, with good type inference support.
 
 - Supports "pattern matching": computed properties that distribute over unions
+- Supports branded types
+- Supports template literals
+- Supports conformance to predefined static types
 - Missing object methods: (deepPartial, merge)
-- Missing nonempty arrays with proper typing (`[T, ...T[]]`)
 - Missing promise schemas
 - Missing error customization
 
