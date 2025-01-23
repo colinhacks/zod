@@ -1481,7 +1481,7 @@ export function superRefine<T>(
 ///////////        METHODS       ///////////
 
 export function parse<T extends base.$ZodType>(schema: T, data: unknown, ctx?: base.$ParseContext): base.output<T> {
-  const result = schema["~run"](data, ctx);
+  const result = schema["~run"](data, ctx ? { ...ctx, async: false } : undefined);
   if (result instanceof Promise) {
     throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
   }

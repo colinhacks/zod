@@ -49,7 +49,6 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends Trait, D = T["~d
 // type $ParsePathComponent = PropertyKey;
 // type $ParsePath = $ParsePathComponent[];
 export interface $ParseContext {
-  // readonly path?: $ParsePath;
   readonly error?: errors.$ZodErrorMap<never>;
   readonly includeInputInErrors?: boolean;
   readonly skipFast?: boolean;
@@ -174,6 +173,15 @@ export interface $ZodTypeDef {
 interface ParseInput extends $ZodResult {
   // ctx: $ParseContext | undefined;
 }
+
+type PathSegment = {
+  key: PropertyKey;
+  parent: PathSegment | null;
+};
+interface NewParseCtx extends $ParseContext {
+  readonly async: boolean;
+  readonly issue: errors.$ZodRawIssue[];
+}
 export interface $ZodType<out O = unknown, out I = unknown> {
   check(...checks: ($CheckFn<this["~output"]> | $ZodCheck<this["~output"]>)[]): this;
   clone(def?: this["~def"]): this;
@@ -199,17 +207,25 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   /** @internal Internal API, use with caution. */
   "~input": I;
   /** @internal Internal API, use with caution. */
-  "~fastrun"(input: unknown): boolean;
-  "~fastrunner": Function | null;
-  "~fastparse"?(doc: Doc, arg: string): void;
+  // "~fastrun"(input: unknown): boolean;
+  // "~fastrunner": Function | null;
+  // "~fastparse"(doc: Doc, arg: string): void;
+  // doc stuff
+  _doc: Doc;
+  _docParse(doc: Doc): void;
+  _docCheck(doc: Doc): void;
   /** @internal Internal API, use with caution. */
   "~run"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
-  "~run2"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  "~runb"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
   // "~run2"(payload: ParseInput, ctx: $ParseContext): ParseInput;
   /** @internal Internal API, use with caution. */
   "~parse"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
-  "~parse2"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
-  // "~parse2"(payload: ParseInput, ctx: $ParseContext): util.MaybeAsync<$ZodResult>;
+  "~parseb"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  "~parsec"(
+    payload: { input: unknown; aborted: boolean; path: PathSegment },
+    ctx?: $ParseContext
+  ): util.MaybeAsync<$ZodResult>;
+
   /** @internal Internal API, use with caution. */
   "~traits": Set<string>;
   /** @internal Internal API, use with caution. */
@@ -285,29 +301,38 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
     ch["~onattach"]?.(inst);
   }
 
-  util.defineLazy(inst, "~fastrunner", () => {
-    try {
-      const doc = new Doc();
-      const arg = doc.arg;
+  // util.defineLazy(inst, "~fastrunner", () => {
+  //   try {
+  //     const doc = new Doc();
+  //     const arg = doc.arg;
+  //     inst["~fastparse"]!(doc, arg);
+  //     for (const check of checks) {
+  //       check["~fastcheck"]!(doc, arg);
+  //     }
+  //     return doc.linearize(arg);
+  //   } catch (_) {
+  //     return null;
+  //   }
+  // });
+  // inst["~fastrun"] = (input) => {
+  //   const frun = inst["~fastrunner"];
+  //   if (!frun) return false;
+  //   return frun(input);
+  // };
 
-      inst["~fastparse"]!(doc, arg);
-      for (const check of checks) {
-        check["~fastcheck"]!(doc, arg);
-      }
-      return doc.finalize(arg);
-    } catch (_) {
-      return null;
-    }
+  util.defineLazy(inst, "_doc", () => {
+    const doc = new Doc();
+    // doc.write("function parse(input) {");
+    // doc.indented((doc) => {
+    //   doc.write("const result = { issues: [], aborted: false };");
+    //   doc.finalize();
+    //   doc.write("return input;");
+    // });
+    // doc.write("}")
+    doc.register(inst);
+    doc.finalize();
+    return doc;
   });
-
-  inst["~fastrun"] = (input) => {
-    const frun = inst["~fastrunner"];
-    if (!frun) {
-      return false;
-    }
-
-    return frun(input);
-  };
 
   if (checks.length === 0) {
     inst["~run"] = (input, ctx) => {
@@ -317,7 +342,7 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
 
       return inst["~parse"](input, ctx);
     };
-    inst["~run2"] = (...args) => inst["~parse2"](...args);
+    inst["~runb"] = (...args) => inst["~parseb"](...args);
   } else {
     let runChecks = (result: $ZodResult<never>): util.MaybeAsync<$ZodResult> => {
       return result;

@@ -28,7 +28,7 @@ console.log(atschema(DATA[0]) === DATA[0]);
 
 const bench = metabench("zod vs arktype", {
   zod4() {
-    for (const _ of DATA) schema.parse(_);
+    for (const _ of DATA) schema["~fastrunner"]!(_);
   },
   arktype() {
     for (const _ of DATA) atschema(_);
