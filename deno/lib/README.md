@@ -216,6 +216,24 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
+      <a href="https://www.courier.com/?utm_source=zod&utm_campaign=osssponsors">
+        <picture height="62px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/6b09506a-78de-47e8-a8c1-792efe31910a">
+          <img alt="Courier logo" height="62px" src="https://github.com/user-attachments/assets/6b09506a-78de-47e8-a8c1-792efe31910a">
+        </picture>
+      </a>
+      <br  />   
+      The API platform for sending notifications
+      <br/>
+      <a href="https://www.courier.com/?utm_source=zod&utm_campaign=osssponsors" style="text-decoration:none;">courier.com</a>
+      </p>
+      <p></p>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <p></p>
+      <p>
       <a href="https://liblab.com/?utm_source=zod">
         <picture height="62px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/34dfa1a2-ce94-46f4-8902-fbfac3e1a9bc">
@@ -568,6 +586,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`znv`](https://github.com/lostfictions/znv): Type-safe environment parsing and validation for Node.js with Zod schemas.
 - [`zod-config`](https://github.com/alexmarqs/zod-config): Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.
 - [`unplugin-environment`](https://github.com/r17x/js/tree/main/packages/unplugin-environment#readme): A plugin for loading enviroment variables safely with schema validation, simple with virtual module, type-safe with intellisense, and better DX 🔥 🚀 👷. Powered by Zod.
+- [`zod-struct`](https://codeberg.org/reesericci/zod-struct): Create runtime-checked structs with Zod.
 
 #### Utilities for Zod
 
@@ -3005,13 +3024,15 @@ This more declarative API makes schema definitions vastly more concise.
 
 ### Runtypes
 
-[https://github.com/pelotom/runtypes](https://github.com/pelotom/runtypes)
+[https://github.com/runtypes/runtypes](https://github.com/runtypes/runtypes)
 
-Good type inference support.
+Runtypes is focused on ergonomics, with good type inference support.
 
 - Supports "pattern matching": computed properties that distribute over unions
+- Supports branded types
+- Supports template literals
+- Supports conformance to predefined static types
 - Missing object methods: (deepPartial, merge)
-- Missing nonempty arrays with proper typing (`[T, ...T[]]`)
 - Missing promise schemas
 - Missing error customization
 
