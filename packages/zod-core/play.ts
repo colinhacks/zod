@@ -2,20 +2,9 @@ import * as z from "zod-core";
 
 z;
 
-const schema = z.interface({
-  a: z.string(),
-  b: z.string(),
-  c: z.string(),
-  // c: z.number(),
-});
+const schema = z.string();
 
-const data = {
-  a: "asdf",
-  b: "asdf",
-  c: "asdf",
-};
-const a = await z.parse(schema, data);
-console.log(a);
-
-const b = await z.parseB(schema, data);
-console.log(b);
+const DATA = "asdf";
+console.log(JSON.stringify(z.safeParse(schema, DATA), null, 2));
+console.log(JSON.stringify(z.safeParseB(schema, DATA), null, 2));
+console.log(JSON.stringify(z.safeParseC(schema, DATA), null, 2));

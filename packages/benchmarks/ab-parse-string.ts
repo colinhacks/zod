@@ -1,21 +1,25 @@
 import { makeData, randomString } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-import * as z from "zod";
-// import * as z3 from "./node_modules/zod3/lib/index.js";
+import * as z from "zod-core";
 
-const DATA = makeData(1000, () => randomString(10));
+const DATA = makeData(10000, () => randomString(10));
 
 const schema = z.string();
-console.log(schema.parse("asdf"));
-console.log(schema.parse2("asdf"));
+
+console.log(z.safeParse(schema, "asdf"));
+console.log(z.safeParseB(schema, "asdf"));
+console.log(z.safeParseC(schema, "asdf"));
 
 const bench = metabench("AB test: strings", {
   parse() {
-    for (const _ of DATA) schema.parse("asdf");
+    for (const _ of DATA) z.safeParse(schema, _);
   },
-  parse2() {
-    for (const _ of DATA) schema.parse2("asdf");
+  parseB() {
+    for (const _ of DATA) z.safeParseB(schema, _);
+  },
+  parseC() {
+    for (const _ of DATA) z.safeParseC(schema, _);
   },
 });
 

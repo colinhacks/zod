@@ -1,4 +1,4 @@
-import { Doc } from "./doc.js";
+import type { Doc } from "./doc.js";
 import type * as errors from "./errors.js";
 import * as util from "./util.js";
 
@@ -184,9 +184,16 @@ interface ParseContextB extends $ParseContext {
 }
 
 type ParsePayloadB = {
-  data: unknown;
+  value: unknown;
   aborted: boolean;
   path: ParsePathSegment;
+};
+
+type ParsePayloadC = {
+  value: unknown;
+  aborted: boolean;
+  path: ParsePathSegment;
+  issues: errors.$ZodRawIssueB[];
 };
 export interface $ZodType<out O = unknown, out I = unknown> {
   check(...checks: ($CheckFn<this["~output"]> | $ZodCheck<this["~output"]>)[]): this;
@@ -213,22 +220,17 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   /** @internal Internal API, use with caution. */
   "~input": I;
   /** @internal Internal API, use with caution. */
-  // "~fastrun"(input: unknown): boolean;
-  // "~fastrunner": Function | null;
-  // "~fastparse"(doc: Doc, arg: string): void;
-  // doc stuff
-  _doc: Doc;
-  _docParse(doc: Doc): void;
-  _docCheck(doc: Doc): void;
-  /** @internal Internal API, use with caution. */
-
   _run(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
-  _runB(payload: ParsePayloadB, ctx: ParseContextB): util.MaybeAsync<O>;
+  /** @internal Internal API, use with caution. */
+  _runB(payload: ParsePayloadB, ctx: ParseContextB): util.MaybeAsync<ParsePayloadB>;
+  // _runC(payload: ParsePayloadC, ctx: any): util.MaybeAsync<ParsePayloadC>;
+  _runC(data: unknown, path: ParsePathSegment, ctx: any): util.MaybeAsync<ParsePayloadC>;
 
   /** @internal Internal API, use with caution. */
   _parse(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
   /** @internal Internal API, use with caution. */
-  _parseB(payload: ParsePayloadB, ctx: ParseContextB): util.MaybeAsync<unknown>;
+  _parseB(payload: ParsePayloadB, ctx: ParseContextB): util.MaybeAsync<ParsePayloadB>;
+  _parseC(data: unknown, path: ParsePathSegment, ctx: any): util.MaybeAsync<ParsePayloadC>;
 
   /** @internal Internal API, use with caution. */
   "~traits": Set<string>;
@@ -298,19 +300,16 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
   if (inst["~traits"].has("$ZodCheck")) {
     checks.unshift(inst as any);
   }
+
   for (const ch of checks) {
     ch["~onattach"]?.(inst);
   }
-  util.defineLazy(inst, "_doc", () => {
-    const doc = new Doc();
-    doc.register(inst);
-    doc.finalize();
-    return doc;
-  });
 
   if (checks.length === 0) {
+    console.log({ checks });
     inst._run = (...args) => inst._parse(...args);
     inst._runB = (...args) => inst._parseB(...args);
+    inst._runC = (...args) => inst._parseC(...args);
   } else {
     let runChecks = (result: $ZodResult<never>): util.MaybeAsync<$ZodResult> => {
       return result;
@@ -333,12 +332,14 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
 
     inst._run = (_input, ctx) => {
       const result = inst._parse(_input, ctx);
+
       if (result instanceof Promise) {
         return result.then((result) => {
           if (result.aborted) return result;
           return runChecks(result as any);
         });
       }
+      console.log("precheck", { result });
       if (result.aborted) return result;
       return runChecks(result as any);
     };
@@ -469,7 +470,6 @@ export interface $ZodCheck<in T = never> {
   "~def": $ZodCheckDef;
   /** The set of issues this check might throw. */
   "~issc"?: errors.$ZodIssueBase;
-
   "~check"(input: $ZodResult<T>): util.MaybeAsync<void>;
   "~fastcheck"?(doc: Doc, arg: string): void;
   "~onattach"?(schema: $ZodType): void;

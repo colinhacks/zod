@@ -201,12 +201,9 @@ export const _date: Factory = util.factory(() => schemas.ZodDate, {
   type: "date",
 });
 
-export const _undefinedFactory: Factory = util.factory(
-  () => schemas.ZodUndefined,
-  {
-    type: "undefined",
-  }
-);
+export const _undefinedFactory: Factory = util.factory(() => schemas.ZodUndefined, {
+  type: "undefined",
+});
 
 export const _nullFactory: Factory = util.factory(() => schemas.ZodNull, {
   type: "null",

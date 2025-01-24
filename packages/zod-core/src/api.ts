@@ -1492,23 +1492,51 @@ export function parse<T extends base.$ZodType>(schema: T, data: unknown, ctx?: b
   return result.value as base.output<T>;
 }
 
-export function _parseB<T extends base.$ZodType>(schema: T, data: unknown, _ctx?: base.$ParseContext): base.output<T> {
+export function _parseB<T extends base.$ZodType>(schema: T, value: unknown, _ctx?: base.$ParseContext): base.output<T> {
   const ctx = { ..._ctx, issues: [], async: false };
-  const result = schema._runB({ data, aborted: false, path: null }, ctx);
+  const result = schema._runB({ value, aborted: false, path: null }, ctx);
   return result;
 }
 
-export function parseB<T extends base.$ZodType>(schema: T, data: unknown, _ctx?: base.$ParseContext): base.output<T> {
-  const ctx = { ..._ctx, issues: [], async: false };
-  const result = schema._runB({ data, aborted: false, path: null }, ctx);
+export function safeParseB<T extends base.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: base.$ParseContext
+): base.output<T> {
+  const ctx = { ..._ctx, issues: [], async: false }; // : { issues: [], async: false };
+  const result = schema._runB({ value, aborted: false, path: null }, ctx);
   if (result instanceof Promise) {
     throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
   }
 
-  if (ctx.issues.length) {
-    throw base.$finalize(ctx.issues!, ctx);
+  return (
+    ctx.issues.length
+      ? { success: false, error: base.$finalize(ctx.issues, ctx) }
+      : { success: true, data: result.value }
+  ) as util.SafeParseResult<base.output<T>>;
+  // if (ctx.issues.length) {
+  //   throw base.$finalize(ctx.issues!, ctx);
+  // }
+  // return result.value as base.output<T>;
+}
+
+export function safeParseC<T extends base.$ZodType>(
+  schema: T,
+  value: unknown,
+  _ctx?: base.$ParseContext
+): base.output<T> {
+  // const ctx = { ..._ctx, issues: [], async: false };
+  const result = schema._runC(value, null, _ctx);
+  if (result instanceof Promise) {
+    throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
   }
-  return result as base.output<T>;
+
+  return result.issues.length
+    ? { success: false, error: base.$finalize(result.issues as any, _ctx) }
+    : {
+        success: true,
+        data: result.value as base.output<T>,
+      };
 }
 
 export function safeParse<T extends base.$ZodType>(
