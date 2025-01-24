@@ -1111,6 +1111,7 @@ export function superRefine<T>(fn: (arg: T, ctx: schemas.RefinementCtx<T>) => vo
       if (typeof issue === "string") {
         ctx.issues.push(
           core.issue({
+            code: "custom",
             input: ctx.value,
             message: issue,
             def: undefined,

@@ -376,6 +376,15 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null;
 }
 
+export const allowsEval = cached(() => {
+  try {
+    new Function("");
+    return true;
+  } catch (_) {
+    return false;
+  }
+});
+
 export function isPlainObject(data: any): data is Record<PropertyKey, unknown> {
   return typeof data === "object" && data !== null && Object.getPrototypeOf(data) === Object.prototype;
 }
@@ -796,10 +805,24 @@ export function optionalInterfaceKeys(shape: $ZodLooseShape): Set<string> {
   );
 }
 
-export function cleanInterfaceShape(shape: $ZodLooseShape): $ZodShape {
-  return Object.fromEntries(
-    Object.entries(shape).map(([key, value]) => [key.replace(/^\?/, "").replace(/\?$/, ""), value])
-  );
+export function cleanInterfaceKey(key: string): string {
+  return key.replace(/^\?/, "").replace(/\?$/, "");
+}
+
+export function cleanInterfaceShape(_shape: $ZodLooseShape): {
+  shape: Record<string, base.$ZodType>;
+  keyMap: Record<string, string>;
+} {
+  const keyMap: Record<string, string> = {};
+  const shape: Record<string, base.$ZodType> = {};
+
+  for (const [key, value] of Object.entries(_shape)) {
+    const cleanKey = cleanInterfaceKey(key);
+    shape[cleanKey] = value;
+    keyMap[cleanKey] = key;
+  }
+
+  return { shape, keyMap };
 }
 
 export const NUMBER_FORMAT_RANGES: Record<$ZodNumberFormats, [number, number]> = {

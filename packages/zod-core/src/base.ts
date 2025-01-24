@@ -174,14 +174,20 @@ interface ParseInput extends $ZodResult {
   // ctx: $ParseContext | undefined;
 }
 
-type PathSegment = {
+type ParsePathSegment = {
   key: PropertyKey;
-  parent: PathSegment | null;
-};
-interface NewParseCtx extends $ParseContext {
-  readonly async: boolean;
-  readonly issue: errors.$ZodRawIssue[];
+  parent: ParsePathSegment;
+} | null;
+interface ParseContextB extends $ParseContext {
+  readonly async?: boolean | undefined;
+  readonly issues: errors.$ZodRawIssueB[];
 }
+
+type ParsePayloadB = {
+  data: unknown;
+  aborted: boolean;
+  path: ParsePathSegment;
+};
 export interface $ZodType<out O = unknown, out I = unknown> {
   check(...checks: ($CheckFn<this["~output"]> | $ZodCheck<this["~output"]>)[]): this;
   clone(def?: this["~def"]): this;
@@ -215,16 +221,14 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   _docParse(doc: Doc): void;
   _docCheck(doc: Doc): void;
   /** @internal Internal API, use with caution. */
-  "~run"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
-  "~runb"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
-  // "~run2"(payload: ParseInput, ctx: $ParseContext): ParseInput;
+
+  _run(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  _runB(payload: ParsePayloadB, ctx: ParseContextB): util.MaybeAsync<O>;
+
   /** @internal Internal API, use with caution. */
-  "~parse"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
-  "~parseb"(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
-  "~parsec"(
-    payload: { input: unknown; aborted: boolean; path: PathSegment },
-    ctx?: $ParseContext
-  ): util.MaybeAsync<$ZodResult>;
+  _parse(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  /** @internal Internal API, use with caution. */
+  _parseB(payload: ParsePayloadB, ctx: ParseContextB): util.MaybeAsync<unknown>;
 
   /** @internal Internal API, use with caution. */
   "~traits": Set<string>;
@@ -248,8 +252,6 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   "~isst"?: errors.$ZodIssueBase;
 }
 
-// type asdf = PropertyKey & BRAND<PropertyKey>;
-
 export function runCheck(
   check: $ZodCheck<never>,
   result: util.MaybeAsync<$ZodResult<never>>
@@ -272,7 +274,6 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
   inst["~def"] = def; // set _def property
   inst["~standard"] = 1; // set standard-schema version
   inst["~computed"] = inst["~computed"] || {}; // initialize _computed object
-
   inst.clone = (_def) => clone(inst, _def ?? def);
 
   inst.check = (...checks) => {
@@ -300,49 +301,16 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
   for (const ch of checks) {
     ch["~onattach"]?.(inst);
   }
-
-  // util.defineLazy(inst, "~fastrunner", () => {
-  //   try {
-  //     const doc = new Doc();
-  //     const arg = doc.arg;
-  //     inst["~fastparse"]!(doc, arg);
-  //     for (const check of checks) {
-  //       check["~fastcheck"]!(doc, arg);
-  //     }
-  //     return doc.linearize(arg);
-  //   } catch (_) {
-  //     return null;
-  //   }
-  // });
-  // inst["~fastrun"] = (input) => {
-  //   const frun = inst["~fastrunner"];
-  //   if (!frun) return false;
-  //   return frun(input);
-  // };
-
   util.defineLazy(inst, "_doc", () => {
     const doc = new Doc();
-    // doc.write("function parse(input) {");
-    // doc.indented((doc) => {
-    //   doc.write("const result = { issues: [], aborted: false };");
-    //   doc.finalize();
-    //   doc.write("return input;");
-    // });
-    // doc.write("}")
     doc.register(inst);
     doc.finalize();
     return doc;
   });
 
   if (checks.length === 0) {
-    inst["~run"] = (input, ctx) => {
-      // if (!ctx?.skipFast && inst["~fastrun"](input)) {
-      //   return $succeed(input);
-      // }
-
-      return inst["~parse"](input, ctx);
-    };
-    inst["~runb"] = (...args) => inst["~parseb"](...args);
+    inst._run = (...args) => inst._parse(...args);
+    inst._runB = (...args) => inst._parseB(...args);
   } else {
     let runChecks = (result: $ZodResult<never>): util.MaybeAsync<$ZodResult> => {
       return result;
@@ -363,10 +331,8 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
       };
     }
 
-    inst["~run"] = (_input, ctx) => {
-      // if (inst["~fastrun"](_input)) return $succeed(_input);
-
-      const result = inst["~parse"](_input, ctx);
+    inst._run = (_input, ctx) => {
+      const result = inst._parse(_input, ctx);
       if (result instanceof Promise) {
         return result.then((result) => {
           if (result.aborted) return result;
@@ -375,6 +341,52 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
       }
       if (result.aborted) return result;
       return runChecks(result as any);
+    };
+
+    // let runChecksB = (result: $ZodResult<never>): util.MaybeAsync<$ZodResult> => {
+    //   return result;
+    // };
+    // for (const ch of checks.slice().reverse()) {
+    //   const _curr = runChecks;
+    //   runChecks = (result) => {
+    //     const _ = ch["~check"](result as $ZodResult<never>);
+    //     if (_ instanceof Promise) {
+    //       return _.then((_) => {
+    //         if (result.aborted) return result;
+    //         return _curr(result);
+    //       });
+    //     }
+
+    //     if (result.aborted) return result;
+    //     return _curr(result);
+    //   };
+    // }
+    inst._runB = (payload, ctx) => {
+      // const payload= {
+      //   data: _input,
+      //   aborted: false,
+      //   path
+      // }
+      const result = inst._parseB(payload, ctx);
+      if (result instanceof Promise) {
+        return result.then((result) => {
+          if (payload.aborted) return result;
+          const f = runChecks({
+            value: result as never,
+            aborted: false,
+            issues: ctx.issues as any,
+          });
+          return f instanceof Promise ? f.then((f) => f.value) : f.value;
+        });
+      }
+      if (payload.aborted) return result;
+      const f = runChecks({
+        // value: result,
+        value: result as never,
+        aborted: false,
+        issues: ctx.issues as any,
+      });
+      return f instanceof Promise ? f.then((f) => f.value) : f.value;
     };
   }
 });

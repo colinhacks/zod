@@ -3,6 +3,7 @@ import { metabench } from "./metabench.js";
 
 import { type } from "arktype";
 import * as z from "zod";
+import * as zc from "zod-core";
 
 const schema = z.object({
   a: z.string(),
@@ -28,7 +29,7 @@ console.log(atschema(DATA[0]) === DATA[0]);
 
 const bench = metabench("zod vs arktype", {
   zod4() {
-    for (const _ of DATA) schema["~fastrunner"]!(_);
+    for (const _ of DATA) zc.parseB(schema, _);
   },
   arktype() {
     for (const _ of DATA) atschema(_);

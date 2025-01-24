@@ -1521,7 +1521,7 @@ export const ZodEffect: core.$constructor<ZodEffect> = /*@__PURE__*/ core.$const
   ZodType.init(inst, def);
 
   // override super implementation to support RefinementCtx
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     const result = core.$result<unknown>(input) as RefinementCtx;
 
     result.addIssue = (issue) => {

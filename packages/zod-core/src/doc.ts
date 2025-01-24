@@ -102,6 +102,12 @@ export class Doc {
     return new Function("input", lines.join("\n"));
   }
 
+  compile() {
+    const lines = [...this.content.map((x) => `  ${x}`)];
+    console.log(lines.join("\n"));
+    return new Function("def", "payload", "ctx", lines.join("\n"));
+  }
+
   static build(schema: $ZodType, modes: { execution: "sync" | "async" }): (...args: any[]) => any {
     const doc = new Doc();
     const fn = doc.call(schema, modes);
@@ -118,7 +124,6 @@ export class Doc {
     lines.push(`return result;`);
 
     const body = lines.join("\n");
-    // console.log(body);
 
     const func = new Function("globalCtx", "input", body);
     return func.bind(null, doc.ctx);

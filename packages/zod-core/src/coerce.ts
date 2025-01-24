@@ -16,8 +16,8 @@ export const $ZodCoercedString: base.$constructor<$ZodCoercedString> = /*@__PURE
   (inst, def) => {
     schemas.$ZodString.init(inst, def); // no format checks
     base.$ZodType.init(inst, def);
-    const _super = inst["~parse"];
-    inst["~parse"] = (input, ctx) => {
+    const _super = inst._parse;
+    inst._parse = (input, ctx) => {
       if (def.coerce) {
         try {
           input = String(input);
@@ -66,8 +66,8 @@ export const $ZodCoercedNumber: base.$constructor<$ZodCoercedNumber> = /*@__PURE
   (inst, def) => {
     schemas.$ZodNumber.init(inst, def); // no format checks
     base.$ZodType.init(inst, def);
-    const _super = inst["~parse"];
-    inst["~parse"] = (input, ctx) => {
+    const _super = inst._parse;
+    inst._parse = (input, ctx) => {
       if (def.coerce) {
         try {
           input = Number(input);
@@ -115,8 +115,8 @@ export const $ZodCoercedBoolean: base.$constructor<$ZodCoercedBoolean> = /*@__PU
   (inst, def) => {
     schemas.$ZodBoolean.init(inst, def); // no format checks
     base.$ZodType.init(inst, def);
-    const _super = inst["~parse"];
-    inst["~parse"] = (input, ctx) => {
+    const _super = inst._parse;
+    inst._parse = (input, ctx) => {
       if (def.coerce) {
         try {
           input = Boolean(input);
@@ -164,8 +164,8 @@ export const $ZodCoercedBigInt: base.$constructor<$ZodCoercedBigInt> = /*@__PURE
   (inst, def) => {
     schemas.$ZodBigInt.init(inst, def); // no format checks
     base.$ZodType.init(inst, def);
-    const _super = inst["~parse"];
-    inst["~parse"] = (input, ctx) => {
+    const _super = inst._parse;
+    inst._parse = (input, ctx) => {
       if (def.coerce) {
         try {
           input = BigInt(input as any);
@@ -212,8 +212,8 @@ export const $ZodCoercedDate: base.$constructor<$ZodCoercedDate> = /*@__PURE__*/
   (inst, def) => {
     schemas.$ZodDate.init(inst, def); // no format checks
     base.$ZodType.init(inst, def);
-    const _super = inst["~parse"];
-    inst["~parse"] = (input, ctx) => {
+    const _super = inst._parse;
+    inst._parse = (input, ctx) => {
       if (def.coerce) {
         try {
           input = new Date(input as any);

@@ -740,7 +740,7 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> = base.$con
         });
         return;
       }
-      const result = def.schema["~run"]((ctx.value as any)[def.property]);
+      const result = def.schema._run((ctx.value as any)[def.property]);
       if (result instanceof Promise) {
         return result.then((result) => {
           if (base.$failed(result)) {

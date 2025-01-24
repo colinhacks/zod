@@ -15,8 +15,8 @@ export const ZodCoercedString: core.$constructor<ZodCoercedString> = /*@__PURE__
   (inst, def) => {
     core.coerce.$ZodCoercedString.init(inst, def); // no format checks
     schemas.ZodType.init(inst, def);
-    // const _super = inst["~parse"];
-    // inst["~parse"] = (input, ctx) => {
+    // const _super = inst._parse;
+    // inst._parse = (input, ctx) => {
     //   if (def.coerce) {
     //     try {
     //       input = String(input);
@@ -63,8 +63,8 @@ export const ZodCoercedNumber: core.$constructor<ZodCoercedNumber> = /*@__PURE__
   (inst, def) => {
     core.coerce.$ZodCoercedNumber.init(inst, def); // no format checks
     schemas.ZodType.init(inst, def);
-    // const _super = inst["~parse"];
-    // inst["~parse"] = (input, ctx) => {
+    // const _super = inst._parse;
+    // inst._parse = (input, ctx) => {
     //   if (def.coerce) {
     //     try {
     //       input = Number(input);
@@ -111,8 +111,8 @@ export const ZodCoercedBoolean: core.$constructor<ZodCoercedBoolean> = /*@__PURE
   (inst, def) => {
     core.coerce.$ZodCoercedBoolean.init(inst, def); // no format checks
     schemas.ZodType.init(inst, def);
-    // const _super = inst["~parse"];
-    // inst["~parse"] = (input, ctx) => {
+    // const _super = inst._parse;
+    // inst._parse = (input, ctx) => {
     //   if (def.coerce) {
     //     try {
     //       input = Boolean(input);
@@ -160,8 +160,8 @@ export const ZodCoercedBigInt: core.$constructor<ZodCoercedBigInt> = /*@__PURE__
   (inst, def) => {
     core.coerce.$ZodCoercedBigInt.init(inst, def); // no format checks
     schemas.ZodType.init(inst, def);
-    // const _super = inst["~parse"];
-    // inst["~parse"] = (input, ctx) => {
+    // const _super = inst._parse;
+    // inst._parse = (input, ctx) => {
     //   if (def.coerce) {
     //     try {
     //       input = BigInt(input as any);
@@ -209,8 +209,8 @@ export const ZodCoercedDate: core.$constructor<ZodCoercedDate> = /*@__PURE__*/ c
   (inst, def) => {
     core.coerce.$ZodCoercedDate.init(inst, def); // no format checks
     schemas.ZodType.init(inst, def);
-    // const _super = inst["~parse"];
-    // inst["~parse"] = (input, ctx) => {
+    // const _super = inst._parse;
+    // inst._parse = (input, ctx) => {
     //   if (def.coerce) {
     //     try {
     //       input = new Date(input as any);

@@ -6,7 +6,7 @@ import type * as util from "./util.js";
 ///////////////////////////
 export interface $ZodIssueBase<Input = unknown> {
   code: string;
-  input?: Input | undefined;
+  input: Input | undefined;
   path: PropertyKey[];
   message: string;
   // [k: string]: unknown;
@@ -171,13 +171,7 @@ export type $ZodIssue =
   | $ZodIssueCustom;
 
 export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
-
 type DefLike = { error?: $ZodErrorMap<never> | undefined };
-
-// type PathList = {
-//   key: PropertyKey;
-//   parent: PathList | undefined;
-// }
 type RawIssue<T extends $ZodIssueBase> = util.Flatten<
   Omit<T, "message" | "path"> & {
     path?: PropertyKey[] | undefined;
@@ -185,6 +179,23 @@ type RawIssue<T extends $ZodIssueBase> = util.Flatten<
     def?: DefLike | undefined;
   } & Record<string, unknown>
 >;
+
+export type $ZodRawIssueB<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssueB<T> : never;
+type PathList = {
+  key: PropertyKey;
+  parent: PathList;
+} | null;
+type RawIssueB<T extends $ZodIssueBase> = util.Flatten<
+  Omit<T, "message" | "path"> & {
+    path?: PathList | undefined;
+    message?: string | undefined;
+    def?: DefLike | undefined;
+  } & Record<string, unknown>
+>;
+// type PathList = {
+//   key: PropertyKey;
+//   parent: PathList | undefined;
+// };
 
 /** @deprecated Use `$ZodRawIssue` instead. */
 export type IssueData = $ZodRawIssue;

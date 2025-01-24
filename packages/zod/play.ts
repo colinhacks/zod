@@ -22,5 +22,5 @@ console.log(doc.toString());
 console.log(doc(data));
 // console.log(doc(data));
 // console.log(doc(data));
-// console.log(a["~parse"](data));
+// console.log(a._parse(data));
 // console.log(doc(123));

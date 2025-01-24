@@ -1481,7 +1481,7 @@ export function superRefine<T>(
 ///////////        METHODS       ///////////
 
 export function parse<T extends base.$ZodType>(schema: T, data: unknown, ctx?: base.$ParseContext): base.output<T> {
-  const result = schema["~run"](data, ctx ? { ...ctx, async: false } : undefined);
+  const result = schema._run(data, ctx ? { ...ctx } : undefined);
   if (result instanceof Promise) {
     throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
   }
@@ -1492,41 +1492,31 @@ export function parse<T extends base.$ZodType>(schema: T, data: unknown, ctx?: b
   return result.value as base.output<T>;
 }
 
-export function parse2<T extends base.$ZodType>(schema: T, data: unknown, ctx?: base.$ParseContext): base.output<T> {
-  const result = schema["~run2"](data, ctx);
+export function _parseB<T extends base.$ZodType>(schema: T, data: unknown, _ctx?: base.$ParseContext): base.output<T> {
+  const ctx = { ..._ctx, issues: [], async: false };
+  const result = schema._runB({ data, aborted: false, path: null }, ctx);
+  return result;
+}
+
+export function parseB<T extends base.$ZodType>(schema: T, data: unknown, _ctx?: base.$ParseContext): base.output<T> {
+  const ctx = { ..._ctx, issues: [], async: false };
+  const result = schema._runB({ data, aborted: false, path: null }, ctx);
   if (result instanceof Promise) {
     throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
   }
 
-  if (result.issues?.length) {
-    throw base.$finalize(result.issues!, ctx);
+  if (ctx.issues.length) {
+    throw base.$finalize(ctx.issues!, ctx);
   }
-  return result.value as base.output<T>;
+  return result as base.output<T>;
 }
-
-// export function parse2<T extends base.$ZodType>(schema: T, data: unknown, ctx?: base.$ParseContext): base.output<T> {
-//   const result = schema["~run2"]({
-//     value: data,
-//     issues: [],
-//     aborted: false,
-//     ctx,
-//   });
-//   if (result instanceof Promise) {
-//     throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
-//   }
-
-//   if (result.issues?.length) {
-//     throw base.$finalize(result.issues!, ctx);
-//   }
-//   return result.value as base.output<T>;
-// }
 
 export function safeParse<T extends base.$ZodType>(
   schema: T,
   data: unknown,
   ctx?: base.$ParseContext
 ): util.SafeParseResult<base.output<T>> {
-  const result = schema["~run"](data, ctx);
+  const result = schema._run(data, ctx);
 
   if (result instanceof Promise)
     throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
@@ -1542,7 +1532,7 @@ export async function parseAsync<T extends base.$ZodType>(
   data: unknown,
   ctx?: base.$ParseContext
 ): Promise<base.output<T>> {
-  let result = schema["~run"](data, ctx);
+  let result = schema._run(data, ctx);
   if (result instanceof Promise) result = await result;
   if (base.$failed(result)) throw base.$finalize(result.issues);
   return result.value as base.output<T>;
@@ -1553,7 +1543,7 @@ export async function safeParseAsync<T extends base.$ZodType>(
   data: unknown,
   ctx?: base.$ParseContext
 ): Promise<util.SafeParseResult<base.output<T>>> {
-  let result = schema["~run"](data, ctx);
+  let result = schema._run(data, ctx);
   if (result instanceof Promise) result = await result;
   return (
     base.$failed(result)

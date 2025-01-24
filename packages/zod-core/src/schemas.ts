@@ -22,7 +22,6 @@ export interface $ZodStringDef extends base.$ZodTypeDef {
 export interface $ZodString<Input = unknown> extends base.$ZodType<string, Input> {
   /** @deprecated Internal API, use with caution (not deprecated) */
   "~pattern": RegExp;
-
   "~def": $ZodStringDef;
   "~isst": errors.$ZodIssueInvalidType;
 }
@@ -51,7 +50,7 @@ export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$con
     });
   };
 
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     if (typeof input === "string") return base.$succeed(input);
     return base.$fail(
       [
@@ -66,8 +65,17 @@ export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$con
     );
   };
 
-  inst["~parseb"] = (input, _ctx) => {
-    return inst["~parse"](input, _ctx);
+  inst._parseB = (payload, ctx) => {
+    if (typeof payload.data === "string") return payload.data;
+    ctx.issues.push({
+      expected: "string",
+      code: "invalid_type",
+      input: payload.data,
+      def,
+      path: payload.path,
+    });
+    return;
+    // return inst._parse(input, _ctx);
   };
 });
 
@@ -92,8 +100,8 @@ export const $ZodStringFormat: base.$constructor<$ZodStringFormat> = /*@__PURE__
     checks.$ZodCheckStringFormat.init(inst, def);
     $ZodString.init(inst, def);
 
-    // const superTypecheck = inst["~parse"];
-    // inst["~parse"] = (input, ctx) => {
+    // const superTypecheck = inst._parse;
+    // inst._parse = (input, ctx) => {
     //   const result = superTypecheck(input, ctx);
     //   return base.runCheck(inst, result as base.$ZodResult<never>);
     // };
@@ -477,7 +485,7 @@ export interface $ZodNumber<T = unknown> extends base.$ZodType<number, T> {
 export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$constructor("$ZodNumber", (inst, def) => {
   base.$ZodType.init(inst, def);
   inst["~pattern"] = regexes.numberRegex;
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) return base.$succeed(input);
     return base.$fail(
       [
@@ -542,7 +550,7 @@ export const $ZodBoolean: base.$constructor<$ZodBoolean> = /*@__PURE__*/ base.$c
   (inst, def) => {
     base.$ZodType.init(inst, def);
     inst["~pattern"] = regexes.booleanRegex;
-    inst["~parse"] = (input, _ctx) => {
+    inst._parse = (input, _ctx) => {
       if (typeof input === "boolean") return base.$succeed(input);
       return base.$fail(
         [
@@ -583,7 +591,7 @@ export interface $ZodBigInt<T = unknown> extends base.$ZodType<bigint, T> {
 export const $ZodBigInt: base.$constructor<$ZodBigInt> = /*@__PURE__*/ base.$constructor("$ZodBigInt", (inst, def) => {
   base.$ZodType.init(inst, def);
   inst["~pattern"] = regexes.bigintRegex;
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     if (typeof input === "bigint") return base.$succeed(input);
     return base.$fail(
       [
@@ -637,7 +645,7 @@ export interface $ZodSymbol extends base.$ZodType<symbol, symbol> {
 
 export const $ZodSymbol: base.$constructor<$ZodSymbol> = /*@__PURE__*/ base.$constructor("$ZodSymbol", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     if (typeof input === "symbol") return base.$succeed(input);
     return base.$fail(
       [
@@ -678,7 +686,7 @@ export const $ZodUndefined: base.$constructor<$ZodUndefined> = /*@__PURE__*/ bas
     base.$ZodType.init(inst, def);
     inst["~pattern"] = regexes.undefinedRegex;
     inst["~values"] = new Set([undefined]);
-    inst["~parse"] = (input, _ctx) => {
+    inst._parse = (input, _ctx) => {
       if (typeof input === "undefined") return base.$succeed(undefined);
       return base.$fail(
         [
@@ -719,7 +727,7 @@ export const $ZodNull: base.$constructor<$ZodNull> = /*@__PURE__*/ base.$constru
   base.$ZodType.init(inst, def);
   inst["~pattern"] = regexes.nullRegex;
   inst["~values"] = new Set([null]);
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     if (input === null) return base.$succeed(null);
     return base.$fail(
       [
@@ -755,7 +763,7 @@ export interface $ZodAny extends base.$ZodType<any, any> {
 
 export const $ZodAny: base.$constructor<$ZodAny> = /*@__PURE__*/ base.$constructor("$ZodAny", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input) => base.$succeed(input);
+  inst._parse = (input) => base.$succeed(input);
 });
 
 //////////////////////////////////////////
@@ -780,7 +788,7 @@ export const $ZodUnknown: base.$constructor<$ZodUnknown> = /*@__PURE__*/ base.$c
   "$ZodUnknown",
   (inst, def) => {
     base.$ZodType.init(inst, def);
-    inst["~parse"] = (input) => base.$succeed(input);
+    inst._parse = (input) => base.$succeed(input);
   }
 );
 
@@ -804,7 +812,7 @@ export interface $ZodNever extends base.$ZodType<never, never> {
 
 export const $ZodNever: base.$constructor<$ZodNever> = /*@__PURE__*/ base.$constructor("$ZodNever", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     return base.$fail(
       [
         {
@@ -839,7 +847,7 @@ export interface $ZodVoid extends base.$ZodType<void, void> {
 
 export const $ZodVoid: base.$constructor<$ZodVoid> = /*@__PURE__*/ base.$constructor("$ZodVoid", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     if (typeof input === "undefined") return base.$succeed(undefined);
     return base.$fail(
       [
@@ -874,7 +882,7 @@ export interface $ZodDate<T = unknown> extends base.$ZodType<Date, T> {
 
 export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constructor("$ZodDate", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     if (input instanceof Date && !Number.isNaN(input.getTime())) return base.$succeed(input);
     if (def.coerce) {
       try {
@@ -934,7 +942,7 @@ function handleArrayResult(result: base.$ZodResult, final: base.$ZodResultWithIs
 
 export const $ZodArray: base.$constructor<$ZodArray> = /*@__PURE__*/ base.$constructor("$ZodArray", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input, ctx) => {
+  inst._parse = (input, ctx) => {
     if (!Array.isArray(input)) {
       return base.$fail(
         [
@@ -957,7 +965,7 @@ export const $ZodArray: base.$constructor<$ZodArray> = /*@__PURE__*/ base.$const
     for (const index in input) {
       const item = input[index];
 
-      const result = def.element["~run"](item, ctx);
+      const result = def.element._run(item, ctx);
       if (result instanceof Promise) {
         proms.push(result.then((result) => handleArrayResult(result, final, index as any)));
       } else {
@@ -967,7 +975,7 @@ export const $ZodArray: base.$constructor<$ZodArray> = /*@__PURE__*/ base.$const
 
     // const parseResults = input.map((item, index) => {
     //   //  const item = input
-    //   const result = def.element["~run"](item, ctx);
+    //   const result = def.element._run(item, ctx);
     //   // parseResults[i] = result;
     //   if (result instanceof Promise) {
     //     // async = true;
@@ -985,7 +993,7 @@ export const $ZodArray: base.$constructor<$ZodArray> = /*@__PURE__*/ base.$const
     // });
     // for (const i of input) {
     //   const item = input
-    //   const result = def.element["~run"](item, ctx);
+    //   const result = def.element._run(item, ctx);
     //   parseResults[i] = result;
     //   if (result instanceof Promise) {
     //     async = true;
@@ -1064,440 +1072,214 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       },
     });
 
-    const _computed = util.cached(() => {
+    const _normalized = util.cached(() => {
       if (def.type === "interface") {
-        const shape = util.cleanInterfaceShape(def.shape);
-        const shapeKeySet = new Set(Object.keys(shape));
-        const shapeKeys = Object.keys(shape);
-        const unfilled: any = {};
-        for (const key of shapeKeys) {
-          unfilled[key] = null;
-        }
+        const { shape, keyMap } = util.cleanInterfaceShape(def.shape);
+        const keys = Object.keys(def.shape);
+        const keySet = new Set(Object.keys(shape));
+
         return {
           shape,
-          shapeKeys,
-          shapeKeySet,
-          numShapeKeys: shapeKeys.length,
-          unfilled,
+          keyMap,
+          keys,
+          keySet,
+          numKeys: keys.length,
           optionals: util.optionalInterfaceKeys(def.shape),
         };
       }
       if (def.type === "object") {
-        const shapeKeySet: Set<string | symbol> = new Set(Object.keys(def.shape));
-        const shapeKeys = Object.keys(def.shape);
-        const unfilled: any = {};
-        for (const key of shapeKeys) {
-          unfilled[key] = null;
-        }
+        const keys = Object.keys(def.shape);
+        const keySet: Set<string> = new Set(Object.keys(def.shape));
+        const keyMap: Record<string, string> = Object.fromEntries(Object.keys(def.shape).map((k) => [k, k]));
+
         return {
           shape: def.shape,
-          shapeKeys,
-          numShapeKeys: shapeKeys.length,
-          shapeKeySet,
-          unfilled,
+          keyMap,
+          keys,
+          keySet,
+          numKeys: keys.length,
           optionals: util.optionalObjectKeys(def.shape),
         };
       }
       throw new Error("Invalid object-like type");
     });
 
-    inst._docParse = (doc) => {
-      // if (def.catchall) throw new Error("Not implemented");
+    inst._parse = (input, ctx) => {
+      const { shape, keys, keySet, optionals } = _normalized.value;
 
-      doc.parser(inst, { hello: "world" }, (doc, params) => {
-        doc.write(`
-            if(typeof input !== "object" || input === null) {
-              result.issues.push({
-                expected: "object",
-                code: "invalid_type",
-                input,
-                // def,
-                path
-              });
-              return result;
-            }
-          `);
+      if (!util.isPlainObject(input)) {
+        return base.$fail(
+          [
+            {
+              expected: "object",
+              code: "invalid_type",
+              input,
+              def,
+            },
+          ],
+          true
+        );
+      }
 
-        const computed = _computed.value;
-        const keyMap: Record<string, string> = {};
-        doc.write(`return {`);
-        // console.log(computed.shapeKeys);
-        for (const key of computed.shapeKeys) {
-          const schema = computed.shape[key];
-          keyMap[key] = util.randomString();
+      const final = base.$result({}, []);
+      const proms: Promise<any>[] = [];
+      let unrecognizedKeys!: Set<string>;
 
-          doc.write(
-            `${util.esc(key)}: ${params.execution === "async" ? "await" : ""} ${doc.call(schema, params)}(
-              input[${util.esc(key)}], 
-              { key: ${util.esc(key)}, parent: path }
-              // path.concat(${util.esc(key)})
-            ),`
-          );
+      // iterate over shape keys
+      for (const key of keys) {
+        const value = shape[key];
+
+        // do not add omitted optional keys
+        if (!(key in input)) {
+          if (optionals.has(key)) continue;
         }
-        doc.write(`}`);
 
-        // if (params.execution === "async") {
-        //   for (const key of computed.shapeKeys) {
-        //     keyMap[key] = util.randomString();
-        //     doc.write(`${keyMap[key]} = await ${keyMap[key]};`);
-        //   }
-        // }
+        // console.log(value);
+        const result = value._run((input as any)[key], ctx);
 
-        if (def.catchall) {
-          const key = util.randomString();
-          doc.write(`const keymap = { ${computed.shapeKeys.map((k) => `${util.esc(k)}: true,`)} }`);
-          doc.write(`for(const ${key} in input) {
-              if(!(${key} in keymap)) {
-                ${keyMap[key]} = ${doc.call(def.catchall, params)}(
-                  input[${key}], 
-                  { key: ${util.esc(key)}, parent: path }
-                  // path.concat(${util.esc(key)})
-                );
-              }
-            }`);
+        if (result instanceof Promise) {
+          proms.push(result.then((result) => handleObjectResult(result, final, key)));
+        } else {
+          handleObjectResult(result, final, key);
+        }
+      }
+
+      // iterate over input keys
+      if (def.catchall) {
+        for (const key of Object.keys(input)) {
+          if (keySet.has(key)) continue;
+          // if (def.catchall) {
+          const result = def.catchall._run((input as any)[key]);
+          if (result instanceof Promise) {
+            proms.push(
+              result.then((result) => {
+                handleObjectResult(result, final, key);
+              })
+            );
+            //async = true;
+          } else {
+            handleObjectResult(result, final, key);
+          }
+          // objectResults[key] = def.catchall._run((input as any)[key]);
+          // if (objectResults[key] instanceof Promise) async = true;
+          // }
+        }
+      }
+
+      if (unrecognizedKeys) {
+        final.issues = final.issues ?? [];
+        final.issues.push({
+          code: "unrecognized_keys",
+          keys: [...unrecognizedKeys],
+          input: input,
+          def,
+        });
+      }
+      if (!proms.length) return final;
+      return Promise.all(proms).then(() => final);
+    };
+
+    const fastParseShape = util.cached(() => {
+      const { shape, keys, optionals, keyMap } = _normalized.value;
+      const doc = new Doc();
+      const parseStr = (cleanKey: string) => {
+        const k = util.esc(cleanKey);
+        const shapeKey = util.esc(keyMap[cleanKey]);
+        return `shape[${shapeKey}]._parseB({ data: input[${k}], path: { key: ${k}, parent: path }, aborted: false }, ctx)`;
+      };
+      doc.write(`const input = payload.data;`);
+      doc.write(`const shape = def.shape;`);
+      doc.write(`const path = payload.path;`);
+      doc.write(`const obj = {`);
+
+      // add required keys to result
+      doc.indented(() => {
+        for (const key of keys) {
+          if (optionals.has(key)) continue;
+          doc.write(`${util.esc(key)}: ${parseStr(key)},`);
         }
       });
-    };
+      doc.write(`}`);
 
-    // inst["~fastparse"] = (doc, arg) => {
-    //   const computed = _computed.value;
-    //   doc.write(`if (typeof ${arg} !== "object") return false;`);
-    //   doc.write(`if (${arg} === null) return false;`);
-    //   // doc.write(`if (Object.getPrototypeOf(${arg}) !== Object.prototype) return false;`);
-    //   for (const key of computed.shapeKeys) {
-    //     const schema = computed.shape[key];
-    //     const keyArg = doc.arg;
-    //     doc.write(`const ${keyArg} = ${arg}["${key}"];`);
-    //     schema["~fastparse"]!(doc, keyArg);
-    //   }
-    // };
-
-    inst["~parse"] = (input, ctx) => {
-      const { shape, shapeKeys, shapeKeySet, optionals } = _computed.value;
-
-      if (!util.isPlainObject(input)) {
-        return base.$fail(
-          [
-            {
-              expected: "object",
-              code: "invalid_type",
-              input,
-              def,
-            },
-          ],
-          true
-        );
-      }
-
-      const final = base.$result({}, []);
-      const proms: Promise<any>[] = [];
-      let unrecognizedKeys!: Set<string>;
-
-      // iterate over shape keys
-      for (const key of shapeKeys) {
-        const value = shape[key];
-
-        // do not add omitted optional keys
-        if (!(key in input)) {
-          if (optionals.has(key)) continue;
-        }
-
-        // console.log(value);
-        const result = value["~run"]((input as any)[key], ctx);
-
-        if (result instanceof Promise) {
-          proms.push(result.then((result) => handleObjectResult(result, final, key)));
-        } else {
-          handleObjectResult(result, final, key);
+      // add in optionals if defined
+      for (const key of keys) {
+        if (optionals.has(key)) {
+          doc.write(`if (${util.esc(key)} in input) {
+              obj[${util.esc(key)}] = ${shape[key]["~id"]};
+            };`);
         }
       }
 
-      // iterate over input keys
-      if (def.catchall) {
-        for (const key of Object.keys(input)) {
-          if (shapeKeySet.has(key)) continue;
-          // if (def.catchall) {
-          const result = def.catchall["~run"]((input as any)[key]);
-          if (result instanceof Promise) {
-            proms.push(
-              result.then((result) => {
-                handleObjectResult(result, final, key);
-              })
-            );
-            //async = true;
-          } else {
-            handleObjectResult(result, final, key);
-          }
-          // objectResults[key] = def.catchall["~run"]((input as any)[key]);
-          // if (objectResults[key] instanceof Promise) async = true;
-          // }
-        }
-      }
+      doc.write(`return obj;`);
+      return doc.compile();
+    });
 
-      if (unrecognizedKeys) {
-        final.issues = final.issues ?? [];
-        final.issues.push({
-          code: "unrecognized_keys",
-          keys: [...unrecognizedKeys],
-          input: input,
+    inst._parseB = (payload, ctx) => {
+      const { shape, keys, optionals, keySet } = _normalized.value;
+      const input = payload.data;
+
+      if (!util.isObject(input)) {
+        ctx.issues.push({
+          expected: "object",
+          code: "invalid_type",
+          input,
           def,
         });
-      }
-      if (!proms.length) return final;
-      return Promise.all(proms).then(() => final);
-    };
-
-    // const keyParser = util.cached(()=>{
-    //     const computed = _computed.value;
-    //     const keyMap: Record<string, string> = {};
-    //     const doc = new Doc();
-    //     doc.write(`return {`)
-    //     doc.write((doc, modes)=>{
-    //       doc.write(`fparse_${modes.execution}(input, ctx) {`)
-    //       const keyToVar : Record<string, string> = {};
-    //       for(const key of computed.shapeKeys) {
-    //         const randomVar = util.randomString();
-    //         keyToVar[key] = randomVar;
-    //         doc.write(`let ${randomVar} = def['~shape']['~parse'](input[${util.esc(key)}]);`);
-    //       }
-    //       for (const key of computed.shapeKeys) {
-    //         const randomVar = keyToVar[key];
-    //         doc.write(`if(${randomVar} instanceof Promise) ${randomVar} = await ${randomVar}`)
-    //         keyToVar[key] = randomVar;
-    //         doc.write(`const ${randomVar} = def['~shape']['~parse'](input[${util.esc(key)}]);`);
-    //       }
-    //       doc.write(`},`);
-    //     })
-    //     doc.write(`}`);
-
-    //     // console.log(computed.shapeKeys);
-    //     for (const key of computed.shapeKeys) {
-    //       const schema = computed.shape[key];
-    //       keyMap[key] = util.randomString();
-
-    //       doc.write(
-    //         `${util.esc(key)}: ${params.execution === "async" ? "await" : ""} ${doc.call(schema, params)}(
-    //           input[${util.esc(key)}],
-    //           // path.concat(${util.esc(key)})
-    //         ),`
-    //       );
-    //     }
-    //     doc.write(`}`);
-    // })
-    inst["~fparse"] = (input, ctx) => {
-      const { shape, shapeKeys, shapeKeySet, optionals } = _computed.value;
-
-      if (!util.isPlainObject(input)) {
-        return base.$fail(
-          [
-            {
-              expected: "object",
-              code: "invalid_type",
-              input,
-              def,
-            },
-          ],
-          true
-        );
+        return;
       }
 
-      const final = base.$result({}, []);
+      const fast = util.allowsEval.value && ctx.async === false;
       const proms: Promise<any>[] = [];
-      let unrecognizedKeys!: Set<string>;
+      let result!: any;
+      if (fast) {
+        fastParseShape.value(def, payload, ctx);
+        result = payload.data;
+      } else {
+        console.log("REGULAR");
+        result = {};
+        for (const key of keys) {
+          const valueSchema = shape[key];
 
-      // iterate over shape keys
-      for (const key of shapeKeys) {
-        const value = shape[key];
+          // do not add omitted optional keys
+          if (!(key in input)) {
+            if (optionals.has(key)) continue;
+          }
 
-        // do not add omitted optional keys
-        if (!(key in input)) {
-          if (optionals.has(key)) continue;
-        }
+          const r = valueSchema._runB({ data: input[key], path: { key, parent: payload.path }, aborted: false }, ctx);
 
-        // console.log(value);
-        const result = value["~run"]((input as any)[key], ctx);
-
-        if (result instanceof Promise) {
-          proms.push(result.then((result) => handleObjectResult(result, final, key)));
-        } else {
-          handleObjectResult(result, final, key);
-        }
-      }
-
-      // iterate over input keys
-      if (def.catchall) {
-        for (const key of Object.keys(input)) {
-          if (shapeKeySet.has(key)) continue;
-          // if (def.catchall) {
-          const result = def.catchall["~run"]((input as any)[key]);
-          if (result instanceof Promise) {
+          if (r instanceof Promise) {
             proms.push(
-              result.then((result) => {
-                handleObjectResult(result, final, key);
+              r.then((r) => {
+                result[key] = r;
               })
             );
-            //async = true;
           } else {
-            handleObjectResult(result, final, key);
+            result[key] = r;
           }
-          // objectResults[key] = def.catchall["~run"]((input as any)[key]);
-          // if (objectResults[key] instanceof Promise) async = true;
-          // }
         }
       }
 
-      if (unrecognizedKeys) {
-        final.issues = final.issues ?? [];
-        final.issues.push({
-          code: "unrecognized_keys",
-          keys: [...unrecognizedKeys],
-          input: input,
-          def,
-        });
-      }
-      if (!proms.length) return final;
-      return Promise.all(proms).then(() => final);
-    };
+      if (def.catchall) {
+        // iterate over input keys
+        for (const key of Object.keys(input)) {
+          if (keySet.has(key)) continue;
 
-    const regularParse = inst["~parse"];
-    // util.defineLazy(inst, "~fparse", () => {
-    //   const parser = new Function(
-    //     "globalCtx",
-    //     "input",
-    //     "ctx",
-    //     `
-    //     const { def, handleObjectResult, shape, shapeKeys, shapeKeySet, optionals} = globalCtx;
-    //     const final = { value: {}, issues: [], aborted: false }
+          const r = def.catchall._runB({ data: input[key], path: { key, parent: payload.path }, aborted: false }, ctx);
 
-    //   if(typeof input !== "object" || input === null) {
-    //     // if (!util.isPlainObject(input)) {
-    //     final.issues.push({
-    //       expected: "object",
-    //       code: "invalid_type",
-    //       input,
-    //       // def,
-    //     })
-    //     return final;
-    //   }
-
-    //   // const final = { value: {}, issues: [], aborted: false }
-    //   const proms = [];
-    //   // let unrecognizedKeys;
-
-    //   // iterate over shape keys
-    //   ${_computed.value.shapeKeys
-    //     .map((key) => {
-    //       const keyArg = util.randomString();
-    //       return `
-    //       const ${keyArg} = shape["${key}"];
-
-    //     // do not add omitted optional keys
-    //     if (!("${key}" in input) && optionals.has("${key}")) {
-
-    //     } else {
-    //       // console.log(value);
-    //       const result = ${keyArg}["~run"]((input)["${key}"], ctx);
-
-    //       if (result instanceof Promise) {
-    //         proms.push(result.then((result) => handleObjectResult(result, final, "${key}")));
-    //       } else {
-    //         handleObjectResult(result, final, "${key}");
-    //       }
-    //     }
-    //     `;
-    //     })
-    //     .join("\n")}
-
-    //   // iterate over input keys
-    //   ${
-    //     def.catchall
-    //       ? `
-    //   for (const key of Object.keys(input)) {
-    //       if (shapeKeySet.has(key)) continue;
-    //       // if (def.catchall) {
-    //       const result = def.catchall["~run"]((input)[key]);
-    //       if (result instanceof Promise) {
-    //         proms.push(
-    //           result.then((result) => {
-    //             handleObjectResult(result, final, key);
-    //           })
-    //         );
-    //         //async = true;
-    //       } else {
-    //         handleObjectResult(result, final, key);
-    //       }
-    //     }
-    //   `
-    //       : ``
-    //   }
-
-    //   // if (unrecognizedKeys) {
-    //   //   final.issues = final.issues ?? [];
-    //   //   final.issues.push({
-    //   //     code: "unrecognized_keys",
-    //   //     keys: [...unrecognizedKeys],
-    //   //     input: input,
-    //   //     def,
-    //   //   });
-    //   // }
-    //   return final
-    //   // if (!proms.length) return final;
-    //   // return Promise.all(proms).then(() => final);
-    // `
-    //   );
-
-    //   const finalParser = parser.bind(null, {
-    //     // base,
-    //     // util,
-    //     def,
-    //     ..._computed.value,
-    //     handleObjectResult,
-    //   });
-
-    //   return finalParser;
-    // });
-
-    const computed = _computed.value;
-    // base case
-    let checkShape = (
-      result: base.$ZodResult,
-      input: any,
-      ctx?: base.$ParseContext | undefined
-    ): util.MaybeAsync<base.$ZodResult> => {
-      return result;
-    };
-    for (const key of Object.keys(def.shape)) {
-      const currCheckShape = checkShape;
-      checkShape = (result, input, ctx) => {
-        const value = computed.shape[key];
-        // do not add omitted optional keys
-        if (!(key in input)) {
-          if (computed.optionals.has(key)) {
-            return currCheckShape(result, input, ctx);
+          if (r instanceof Promise) {
+            proms.push(
+              r.then((r) => {
+                result[key] = r;
+              })
+            );
+          } else {
+            result[key] = r;
           }
         }
-        const keyResult = value["~run2"]((input as any)[key], ctx);
-        if (keyResult instanceof Promise) {
-          // async = true;
-          // proms = proms ?? [];
-          return keyResult.then((keyResult) => {
-            handleObjectResult(keyResult, result, key);
-            return currCheckShape(result, input, ctx);
-          });
-          // .then(() => {
-          //   return currCheckShape(result, input, ctx);
-          // });
-        }
-        handleObjectResult(keyResult, result, key);
-        return currCheckShape(result, input, ctx);
-        // return result;
-      };
-    }
+      }
 
-    console.log(checkShape.toString());
-
-    inst["~parseb"] = (input, ctx) => {
-      return inst["~parse"](input, ctx);
+      if (!proms.length) return result;
+      return Promise.all(proms).then(() => result);
     };
   }
 );
@@ -1506,11 +1288,7 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
 /////////////      $ZodInterface      /////////////
 ///////////////////////////////////////////////////
 // looser type is required for recursive inference
-export type $ZodLooseShape = Readonly<
-  Record<string, any>
-  // Record<string, unknown>
-  // Record<string, { "~input": unknown; "~output": unknown }>
->;
+export type $ZodLooseShape = Readonly<Record<string, any>>;
 
 export type $InferInterfaceOutput<
   T extends $ZodLooseShape,
@@ -1533,8 +1311,6 @@ export type $InferInterfaceInput<
     } & {
       [k in Exclude<keyof T, `${string}?` | `?${string}`>]: T[k]["~input"];
     } & Extra;
-
-// export type $InferInterfaceInput<T> = any;
 
 export interface $ZodInterfaceDef extends $ZodObjectLikeDef {
   type: "interface";
@@ -1650,11 +1426,11 @@ function handleUnionResults(results: base.$ZodResult[], input: unknown, def: $Zo
 export const $ZodUnion: base.$constructor<$ZodUnion> = /*@__PURE__*/ base.$constructor("$ZodUnion", (inst, def) => {
   base.$ZodType.init(inst, def);
 
-  inst["~parse"] = (input, ctx) => {
+  inst._parse = (input, ctx) => {
     let async = false;
     const results: base.$ZodResult[] = [];
     for (const option of def.options) {
-      const result = option["~run"](input, ctx);
+      const result = option._run(input, ctx);
       results.push(result as base.$ZodResult);
       if (result instanceof Promise) async = true;
     }
@@ -1701,7 +1477,7 @@ export const $ZodDiscriminatedUnion: base.$constructor<$ZodDiscriminatedUnion> =
   /*@__PURE__*/
   base.$constructor("$ZodDiscriminatedUnion", (inst, def) => {
     $ZodUnion.init(inst, def);
-    const _super = inst["~parse"];
+    const _super = inst._parse;
     const _disc: base.$DiscriminatorMap = new Map();
     for (const el of def.options) {
       if (!el["~disc"]) throw new Error(`Invalid discriminated union element: ${el["~def"].type}`);
@@ -1727,7 +1503,7 @@ export const $ZodDiscriminatedUnion: base.$constructor<$ZodDiscriminatedUnion> =
       discMap.set(option, disc);
     }
 
-    inst["~parse"] = (input, ctx) => {
+    inst._parse = (input, ctx) => {
       if (!util.isObject(input)) {
         return base.$fail([
           {
@@ -1751,7 +1527,7 @@ export const $ZodDiscriminatedUnion: base.$constructor<$ZodDiscriminatedUnion> =
         }
       }
 
-      if (filteredOptions.length === 1) return filteredOptions[0]["~run"](input, ctx) as any;
+      if (filteredOptions.length === 1) return filteredOptions[0]._run(input, ctx) as any;
 
       if (def.unionFallback) {
         return _super(input, ctx);
@@ -1868,9 +1644,9 @@ export const $ZodIntersection: base.$constructor<$ZodIntersection> = /*@__PURE__
   "$ZodIntersection",
   (inst, def) => {
     base.$ZodType.init(inst, def);
-    inst["~parse"] = (input, ctx) => {
-      const resultLeft = def.left["~run"](input, ctx);
-      const resultRight = def.right["~run"](input, ctx);
+    inst._parse = (input, ctx) => {
+      const resultLeft = def.left._run(input, ctx);
+      const resultRight = def.right._run(input, ctx);
       const async = resultLeft instanceof Promise || resultRight instanceof Promise;
       return async
         ? Promise.all([resultLeft, resultRight]).then(handleIntersectionResults)
@@ -1959,7 +1735,7 @@ export const $ZodTuple: base.$constructor<$ZodTuple> = /*@__PURE__*/ base.$const
   // length is 5
   //
 
-  inst["~parse"] = (input, ctx) => {
+  inst._parse = (input, ctx) => {
     if (!Array.isArray(input)) {
       return base.$fail(
         [
@@ -2000,7 +1776,7 @@ export const $ZodTuple: base.$constructor<$ZodTuple> = /*@__PURE__*/ base.$const
     for (const item of items) {
       i++;
       if (i >= input.length) if (i >= optStart) continue;
-      const result = item["~run"](input[i], ctx);
+      const result = item._run(input[i], ctx);
 
       if (result instanceof Promise) {
         proms.push(result.then((result) => handleTupleResult(result, final, i)));
@@ -2013,7 +1789,7 @@ export const $ZodTuple: base.$constructor<$ZodTuple> = /*@__PURE__*/ base.$const
       const rest = input.slice(items.length);
       for (const el of rest) {
         i++;
-        const result = def.rest["~run"](el, ctx);
+        const result = def.rest._run(el, ctx);
 
         if (result instanceof Promise) {
           proms.push(result.then((result) => handleTupleResult(result, final, i)));
@@ -2074,7 +1850,7 @@ export interface $ZodRecord<Key extends $ZodRecordKey = $ZodRecordKey, Value ext
 export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$constructor("$ZodRecord", (inst, def) => {
   base.$ZodType.init(inst, def);
 
-  inst["~parse"] = (input, ctx) => {
+  inst._parse = (input, ctx) => {
     // const objectResults: any = {};
     // let fail!: base.$ZodFailure;
     // let async!: boolean;
@@ -2099,7 +1875,7 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
       const values = def.keySchema["~values"];
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
-          const valueResult = def.valueSchema["~run"](input[key], ctx);
+          const valueResult = def.valueSchema._run(input[key], ctx);
 
           if (valueResult instanceof Promise) {
             proms.push(valueResult.then((val) => handleObjectResult(val, final, key)));
@@ -2125,7 +1901,7 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
       }
     } else {
       for (const key of Reflect.ownKeys(input)) {
-        const keyResult = def.keySchema["~run"](key, ctx);
+        const keyResult = def.keySchema._run(key, ctx);
         if (keyResult instanceof Promise)
           throw new Error(
             "Async schemas not supported in object keys currently.\
@@ -2145,11 +1921,11 @@ Open an issue if you need this feature."
           // fail = base.mergeFails(fail, keyResult, key);
           continue;
         }
-        const valueResult = def.valueSchema["~run"](input[key], ctx);
+        const valueResult = def.valueSchema._run(input[key], ctx);
         if (valueResult instanceof Promise) {
           proms.push(valueResult.then((val) => handleObjectResult(val, final, key)));
         } else handleObjectResult(valueResult, final, key);
-        // objectResults[keyResult] = def.valueSchema["~run"](input[key], ctx);
+        // objectResults[keyResult] = def.valueSchema._run(input[key], ctx);
         // if (objectResults[key] instanceof Promise) async = true;
       }
     }
@@ -2226,7 +2002,7 @@ function handleMapResult(
 
 export const $ZodMap: base.$constructor<$ZodMap> = /*@__PURE__*/ base.$constructor("$ZodMap", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input, ctx) => {
+  inst._parse = (input, ctx) => {
     if (!(input instanceof Map)) {
       return base.$fail([
         {
@@ -2244,8 +2020,8 @@ export const $ZodMap: base.$constructor<$ZodMap> = /*@__PURE__*/ base.$construct
     const final = base.$result<Map<any, any>>(new Map(), []);
 
     for (const [key, value] of input) {
-      const keyResult = def.keyType["~run"](key, ctx);
-      const valueResult = def.valueType["~run"](value, ctx);
+      const keyResult = def.keyType._run(key, ctx);
+      const valueResult = def.valueType._run(value, ctx);
       if (keyResult instanceof Promise || valueResult instanceof Promise) {
         proms.push(
           Promise.all([keyResult, valueResult]).then(([keyResult, valueResult]) => {
@@ -2295,7 +2071,7 @@ function handleSetResult(result: base.$ZodResult<any>, final: base.$ZodResultWit
 
 export const $ZodSet: base.$constructor<$ZodSet> = /*@__PURE__*/ base.$constructor("$ZodSet", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input, ctx) => {
+  inst._parse = (input, ctx) => {
     if (!(input instanceof Set)) {
       return base.$fail(
         [
@@ -2316,7 +2092,7 @@ export const $ZodSet: base.$constructor<$ZodSet> = /*@__PURE__*/ base.$construct
     const final = base.$result<Set<any>>(new Set(), []);
     // let index = 0;
     for (const item of input) {
-      const result = def.valueType["~run"](item, ctx);
+      const result = def.valueType._run(item, ctx);
       if (result instanceof Promise) {
         proms.push(result.then((result) => handleSetResult(result, final)));
       } else handleSetResult(result, final);
@@ -2371,7 +2147,7 @@ export const $ZodEnum: base.$constructor<$ZodEnum> = /*@__PURE__*/ base.$constru
       .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o.toString()))
       .join("|")})$`
   );
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     if (inst["~values"].has(input as any)) {
       return base.$succeed(input) as any;
     }
@@ -2422,7 +2198,7 @@ export const $ZodLiteral: base.$constructor<$ZodLiteral> = /*@__PURE__*/ base.$c
         .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o.toString()))
         .join("|")})$`
     );
-    inst["~parse"] = (input, _ctx) => {
+    inst._parse = (input, _ctx) => {
       if (inst["~values"].has(input as any)) {
         return base.$succeed(input) as any;
       }
@@ -2480,7 +2256,7 @@ export const $ZodConst: base.$constructor<$ZodConst> = /*@__PURE__*/ base.$const
     },
   });
 
-  inst["~parse"] = (_, _ctx) => {
+  inst._parse = (_, _ctx) => {
     return base.$succeed(def.value) as any;
   };
 });
@@ -2505,7 +2281,7 @@ export interface $ZodFile extends base.$ZodType<File, File> {
 
 export const $ZodFile: base.$constructor<$ZodFile> = /*@__PURE__*/ base.$constructor("$ZodFile", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     if (input instanceof File) return base.$succeed(input);
     return base.$fail(
       [
@@ -2544,7 +2320,7 @@ export interface $ZodEffect<O = unknown, I = unknown> extends base.$ZodType<O, I
 
 export const $ZodEffect: base.$constructor<$ZodEffect> = /*@__PURE__*/ base.$constructor("$ZodEffect", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     const result = base.$result<unknown>(input);
     const output = def.effect(input, result);
     if (base.$failed(result)) return result;
@@ -2579,9 +2355,9 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
     base.$ZodType.init(inst, def);
     inst["~qin"] = "true";
     inst["~qout"] = "true";
-    inst["~parse"] = (input, ctx) => {
+    inst._parse = (input, ctx) => {
       if (input === undefined) return base.$succeed(undefined);
-      return def.innerType["~run"](input, ctx);
+      return def.innerType._run(input, ctx);
     };
   }
 );
@@ -2613,9 +2389,9 @@ export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.
     base.$ZodType.init(inst, def);
     inst["~qin"] = def.innerType["~qin"];
     inst["~qout"] = def.innerType["~qout"];
-    inst["~parse"] = (input, ctx) => {
+    inst._parse = (input, ctx) => {
       if (input === null) return base.$succeed(null);
-      return def.innerType["~run"](input, ctx);
+      return def.innerType._run(input, ctx);
     };
   }
 );
@@ -2644,7 +2420,7 @@ export const $ZodRequired: base.$constructor<$ZodRequired> = /*@__PURE__*/ base.
   (inst, def) => {
     base.$ZodType.init(inst, def);
 
-    inst["~parse"] = (input, ctx) => {
+    inst._parse = (input, ctx) => {
       if (input === undefined) {
         return base.$fail([
           {
@@ -2655,7 +2431,7 @@ export const $ZodRequired: base.$constructor<$ZodRequired> = /*@__PURE__*/ base.
           },
         ]);
       }
-      return def.innerType["~run"](input, ctx);
+      return def.innerType._run(input, ctx);
     };
   }
 );
@@ -2682,8 +2458,8 @@ export const $ZodSuccess: base.$constructor<$ZodSuccess> = /*@__PURE__*/ base.$c
   "$ZodSuccess",
   (inst, def) => {
     base.$ZodType.init(inst, def);
-    inst["~parse"] = (input, ctx) => {
-      const result = def.innerType["~run"](input, ctx);
+    inst._parse = (input, ctx) => {
+      const result = def.innerType._run(input, ctx);
       if (result instanceof Promise) return result.then((result) => base.$succeed(!base.$failed(result)));
       return base.$succeed(!base.$failed(result));
     };
@@ -2720,10 +2496,10 @@ export const $ZodDefault: base.$constructor<$ZodDefault> = /*@__PURE__*/ base.$c
   (inst, def) => {
     base.$ZodType.init(inst, def);
     inst["~qin"] = "true"; //def.innerType["~qin"];
-    inst["~parse"] = (input, ctx) => {
+    inst._parse = (input, ctx) => {
       if (input === undefined) return base.$succeed(def.defaultValue());
-      return def.innerType["~run"](input, ctx);
-      // const result = def.innerType["~run"](input, ctx);
+      return def.innerType._run(input, ctx);
+      // const result = def.innerType._run(input, ctx);
       // if (result instanceof Promise) {
       //   return result.then((result) =>
       //     handleDefaultResult(result, def.defaultValue)
@@ -2762,8 +2538,8 @@ export const $ZodCatch: base.$constructor<$ZodCatch> = /*@__PURE__*/ base.$const
   base.$ZodType.init(inst, def);
   inst["~qin"] = def.innerType["~qin"];
   inst["~qout"] = def.innerType["~qout"];
-  inst["~parse"] = (input, ctx) => {
-    const result = def.innerType["~run"](input, ctx);
+  inst._parse = (input, ctx) => {
+    const result = def.innerType._run(input, ctx);
     if (result instanceof Promise) {
       return result.then((result) => {
         if (base.$failed(result)) return base.$succeed(def.catchValue({ error: base.$finalize(result.issues, ctx) }));
@@ -2794,7 +2570,7 @@ export interface $ZodNaN extends base.$ZodType<number, number> {
 
 export const $ZodNaN: base.$constructor<$ZodNaN> = /*@__PURE__*/ base.$constructor("$ZodNaN", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst["~parse"] = (input, _ctx) => {
+  inst._parse = (input, _ctx) => {
     if (typeof input !== "number" || !Number.isNaN(input)) {
       return base.$fail(
         [
@@ -2843,7 +2619,7 @@ function handleBPipelineResult(result: base.$ZodResult, outResult: base.$ZodResu
 
 function handleAPipelineResult(result: base.$ZodResult, def: $ZodPipelineDef, ctx?: base.$ParseContext) {
   if (result.aborted) return result;
-  const outResult = def.out["~run"](result.value, ctx);
+  const outResult = def.out._run(result.value, ctx);
   if (outResult instanceof Promise) {
     return outResult.then((outResult) => {
       return handleBPipelineResult(result, outResult);
@@ -2856,8 +2632,8 @@ export const $ZodPipeline: base.$constructor<$ZodPipeline> = /*@__PURE__*/ base.
   "$ZodPipeline",
   (inst, def) => {
     base.$ZodType.init(inst, def);
-    inst["~parse"] = (input, ctx) => {
-      const result = def.in["~run"](input, ctx);
+    inst._parse = (input, ctx) => {
+      const result = def.in._run(input, ctx);
       if (result instanceof Promise) {
         return result.then((result) => handleAPipelineResult(result, def, ctx));
       }
@@ -2919,8 +2695,8 @@ export const $ZodReadonly: base.$constructor<$ZodReadonly> = /*@__PURE__*/ base.
     base.$ZodType.init(inst, def);
     inst["~qin"] = def.innerType["~qin"];
     inst["~qout"] = def.innerType["~qout"];
-    inst["~parse"] = (input, ctx) => {
-      const result = def.innerType["~run"](input, ctx);
+    inst._parse = (input, ctx) => {
+      const result = def.innerType._run(input, ctx);
       if (result instanceof Promise) {
         return result.then(handleReadonlyResult);
       }
@@ -2988,7 +2764,7 @@ export const $ZodTemplateLiteral: base.$constructor<$ZodTemplateLiteral> = /*@__
     }
     inst["~pattern"] = new RegExp(`^${regexParts.join("")}$`);
 
-    inst["~parse"] = (input, _ctx) => {
+    inst._parse = (input, _ctx) => {
       if (typeof input !== "string") {
         return base.$fail(
           [
@@ -3045,8 +2821,8 @@ export const $ZodPromise: base.$constructor<$ZodPromise> = /*@__PURE__*/ base.$c
   "$ZodPromise",
   (inst, def) => {
     base.$ZodType.init(inst, def);
-    inst["~parse"] = (input, ctx) => {
-      return Promise.resolve(input).then((inner) => def.innerType["~run"](inner, ctx));
+    inst._parse = (input, ctx) => {
+      return Promise.resolve(input).then((inner) => def.innerType._run(inner, ctx));
     };
   }
 );
@@ -3074,7 +2850,7 @@ export const $ZodCustom: base.$constructor<$ZodCustom<unknown>> = base.$construc
   base.$ZodCheck.init(inst, def);
   base.$ZodType.init(inst, def);
 
-  inst["~parse"] = (input, _) => {
+  inst._parse = (input, _) => {
     return base.$succeed(input);
   };
 
