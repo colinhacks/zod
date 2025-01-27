@@ -38,37 +38,20 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   safeParseAsync(data: unknown, params?: ParseContext): Promise<util.SafeParseResult<this["~output"]>>;
   spa: (data: unknown, params?: ParseContext) => Promise<util.SafeParseResult<this["~output"]>>;
 
-  refine(
-    check: (arg: Output) => unknown | Promise<unknown>,
+  /** Use `.refineAsync` for asynchronous refinements. */
+  refine(check: (arg: Output) => Promise<unknown>, ...args: any[]): never;
+  refine(check: (arg: Output) => unknown | Promise<unknown>, message?: string | core.$RefineParams): this;
+
+  refineAsync(
+    check: (arg: Output) => Promise<unknown>,
     message?: string | core.$RefineParams
     // | core.$ZodErrorMap<core.$ZodIssueCustom>
   ): this;
-  /**
-   * @deprecated Use `.check()` instead.
-   */
-  // refinement<RefinedOutput extends Output>(
-  //   check: (arg: Output) => arg is RefinedOutput,
-  //   refinementData:
-  //     | core.IssueData
-  //     | ((arg: Output, ctx: RefinementCtx) => core.IssueData)
-  // ): this;
-  // /**
-  //  * @deprecated Use `.check()` instead.
-  //  */
-  // refinement(
-  //   check: (arg: Output) => boolean,
-  //   refinementData:
-  //     | core.IssueData
-  //     | ((arg: Output, ctx: RefinementCtx) => core.IssueData)
-  // ): this;
-  // _refinement(refinement: RefinementEffect<Output>["refinement"]): this;
-  // /**
-  //  * @deprecated Use `.check()` instead.
-  //  */
-  // superRefine<RefinedOutput extends Output>(
-  //   refinement: (arg: Output, ctx: RefinementCtx) => arg is RefinedOutput
-  // ): this;
 
+  /**
+   * @deprecated Use `.checkAsync()` for asynchronous refinement logic.
+   */
+  superRefine(refinement: (arg: Output, ctx: RefinementCtx) => Promise<void>): never;
   /**
    * @deprecated Use `.check()` instead.
    */
@@ -81,12 +64,17 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   // promise(): ZodPromise<this>;
   or<T extends ZodType>(option: T): ZodUnion<[this, T]>;
   and<T extends ZodType>(incoming: T): ZodIntersection<this, T>;
+
+  /** Use `.transformAsync()` for asynchronous transforms. */
+  transform<NewOut>(transform: (arg: Output) => Promise<NewOut>): never;
   transform<NewOut>(
-    transform: (
-      arg: Output
-      // ctx: RefinementCtx
-    ) => NewOut | Promise<NewOut>
+    transform: (arg: Output) => NewOut | Promise<NewOut>
   ): ZodPipeline<this, ZodEffect<Awaited<NewOut>, core.output<this>>>;
+
+  transformAsync<NewOut>(
+    transform: (arg: Output) => Promise<NewOut>
+  ): ZodPipeline<this, ZodEffect<Awaited<NewOut>, core.output<this>>>;
+
   default(def: util.NoUndefined<Input>): ZodDefault<this>;
   default(def: () => util.NoUndefined<Input>): ZodDefault<this>;
   catch(def: Output): ZodCatch<this>;
@@ -110,9 +98,6 @@ export const ZodType: core.$constructor<ZodType> = core.$constructor("ZodType", 
   inst.parse = (data, params) => {
     return core.parse(inst, data, params);
   };
-  inst.parse2 = (data, params) => {
-    return core.parse2(inst, data, params);
-  };
   inst.safeParse = (data, params) => {
     return core.safeParse(inst, data, params);
   };
@@ -124,7 +109,8 @@ export const ZodType: core.$constructor<ZodType> = core.$constructor("ZodType", 
   };
   inst.spa = inst.safeParseAsync;
 
-  inst.refine = (check, message) => inst.check(api.refine(check, message));
+  inst.refine = (check, message) => inst.check(api.refine(check, message)) as never;
+  inst.refineAsync = (check, message) => inst.check(api.refineAsync(check, message));
 
   // optional
   inst.optional = (params) => api.optional(inst, params);
@@ -139,7 +125,8 @@ export const ZodType: core.$constructor<ZodType> = core.$constructor("ZodType", 
   // and
   inst.and = (arg) => api.intersection(inst, arg);
   // transform
-  inst.transform = (tx) => api.transform(inst, tx);
+  inst.transform = (tx) => api.transform(inst, tx) as never;
+  inst.transformAsync = (tx) => api.transformAsync(inst, tx);
   // default
   inst.default = (def) => api._default(inst, def);
   // catch

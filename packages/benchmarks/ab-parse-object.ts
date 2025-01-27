@@ -5,10 +5,10 @@ import * as z from "zod-core";
 
 const schema = z.object({
   a: z.string(),
-  // b: z.string(),
-  // c: z.string(),
-  // d: z.string(),
-  // e: z.string(),
+  b: z.string(),
+  c: z.string(),
+  d: z.string(),
+  e: z.string(),
   // f: z.string(),
   // g: z.string(),
   // h: z.string(),
@@ -26,10 +26,10 @@ const schema = z.object({
 
 const DATA = makeData(1000, () => ({
   a: randomString(10),
-  // b: randomString(10),
-  // c: randomString(10),
-  // d: randomString(10),
-  // e: randomString(10),
+  b: randomString(10),
+  c: randomString(10),
+  d: randomString(10),
+  e: randomString(10),
   // f: randomString(10),
   // g: randomString(10),
   // h: randomString(10),

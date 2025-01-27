@@ -1105,15 +1105,40 @@ export function file(...args: any): schemas.$ZodFile {
 
 // effect
 export type $ZodEffectParams = util.TypeParams<schemas.$ZodEffect, "effect">;
+
+/** @deprecated Asynchronous functions are not supported in `z.effect()`. Use `z.effectAsync()`. */
+export function effect<O extends Promise<unknown> = Promise<unknown>, I = unknown>(
+  effect: (input: I, ctx?: base.$ParseContext) => O,
+  params?: $ZodEffectParams
+): never;
+export function effect<O = unknown, I = unknown>(
+  effect: (input: I, ctx?: base.$ParseContext) => O,
+  params?: $ZodEffectParams
+): schemas.$ZodEffect<O, I>;
 export function effect<O = unknown, I = unknown>(
   effect: (input: I, ctx?: base.$ParseContext) => O,
   params?: $ZodEffectParams
 ): schemas.$ZodEffect<O, I> {
   return new schemas.$ZodEffect({
     type: "effect",
+    async: false,
     effect: effect as any,
     ...util.normalizeTypeParams(params),
   }) as schemas.$ZodEffect<O, I>;
+}
+
+export function effectAsync<O = unknown, I = unknown>(
+  effect: (input: I, ctx?: base.$ParseContext) => O,
+  params?: $ZodEffectParams
+): schemas.$ZodEffect<O, I> {
+  const ef = new schemas.$ZodEffect({
+    type: "effect",
+    async: true,
+    effect: effect as any,
+    ...util.normalizeTypeParams(params),
+  }) as schemas.$ZodEffect<O, I>;
+  ef._async = true;
+  return ef;
 }
 
 // preprocess
@@ -1394,9 +1419,8 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 //////////    REFINES     //////////
-
 export function issue(_iss: string | errors.$ZodRawIssue): errors.$ZodRawIssue {
-  const iss = typeof _iss === "string" ? ({ message: _iss, code: "custom" } as const) : _iss;
+  const iss = typeof _iss === "string" ? ({ message: _iss, code: "custom", input: null } as const) : _iss;
   return iss;
 }
 
@@ -1424,8 +1448,28 @@ function handleRefineResult(
 export interface $RefineParams extends $ZodCustomParams {
   abort?: boolean;
 }
+/** @deprecated Use `refineAsync` for asynchronous refinements. */
+export function refine<T>(fn: (arg: T) => Promise<unknown>, ...args: any[]): never;
+export function refine<T>(fn: (arg: T) => unknown, _params?: string | $RefineParams): base.$ZodCheck<T>;
+export function refine<T>(fn: (arg: T) => unknown, _params: string | $RefineParams = {}): base.$ZodCheck<T> {
+  const params = util.normalizeCheckParams(_params);
 
-export function refine<T>(
+  return {
+    "~def": { check: "custom", error: params.error },
+    "~check"(ctx) {
+      const result = fn(ctx.value);
+      if (result instanceof Promise)
+        return result.then((result) => {
+          handleRefineResult(result, ctx, ctx.value, params);
+        });
+
+      return handleRefineResult(result, ctx, ctx.value, params);
+    },
+    "~async": false,
+  };
+}
+
+export function refineAsync<T>(
   fn: (arg: T) => unknown | Promise<unknown>,
   _params: string | $RefineParams = {}
 ): base.$ZodCheck<T> {
@@ -1442,44 +1486,38 @@ export function refine<T>(
 
       return handleRefineResult(result, ctx, ctx.value, params);
     },
+
+    "~async": true,
   };
 }
 
-export function superRefine<T>(
-  // fn: (arg: T, ctx: util.RefinementCtx) => void | Promise<void>
-  fn: (arg: T, ctx: base.$ZodResult<T>) => void | Promise<void>
-): base.$ZodCheck<T> {
+/** @deprecated Use `superRefineAsync` for asynchronous refinements. */
+export function superRefine<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => Promise<void>): never;
+export function superRefine<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => void): base.$ZodCheck<T>;
+export function superRefine<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => void | Promise<void>): base.$ZodCheck<T> {
   return {
     "~def": { check: "custom" },
     "~check"(ctx) {
-      // const result = base.$result(ctx)
-      const result = fn(
-        ctx.value,
-        ctx
-        //   {
-        //   addIssue(issue) {
-        //     if (typeof issue === "string") {
-        //       ctx.issues.push(
-        //         customIssue({
-        //           input: ctx.value,
-        //           message: issue,
-        //           def: undefined,
-        //         })
-        //       );
-        //     } else ctx.issues.push(issue);
-        //   },
-        //   abort() {
-        //     ctx.aborted = true;
-        //   },
-        // }
-      );
+      const result = fn(ctx.value, ctx);
       return result;
     },
+    "~async": false,
+  };
+}
+
+/** @deprecated super  */
+export function superRefineAsync<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => void | Promise<void>): base.$ZodCheck<T> {
+  return {
+    "~def": { check: "custom" },
+    "~check"(ctx) {
+      const result = fn(ctx.value, ctx);
+      return result;
+    },
+    "~async": true,
   };
 }
 
 ///////////        METHODS       ///////////
-
 export function parse<T extends base.$ZodType>(schema: T, data: unknown, ctx?: base.$ParseContext): base.output<T> {
   const result = schema._run(data, ctx ? { ...ctx } : undefined);
   if (result instanceof Promise) {
@@ -1518,25 +1556,6 @@ export function safeParseB<T extends base.$ZodType>(
   //   throw base.$finalize(ctx.issues!, ctx);
   // }
   // return result.value as base.output<T>;
-}
-
-export function safeParseC<T extends base.$ZodType>(
-  schema: T,
-  value: unknown,
-  _ctx?: base.$ParseContext
-): base.output<T> {
-  // const ctx = { ..._ctx, issues: [], async: false };
-  const result = schema._runC(value, null, _ctx);
-  if (result instanceof Promise) {
-    throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
-  }
-
-  return result.issues.length
-    ? { success: false, error: base.$finalize(result.issues as any, _ctx) }
-    : {
-        success: true,
-        data: result.value as base.output<T>,
-      };
 }
 
 export function safeParse<T extends base.$ZodType>(
@@ -1834,11 +1853,11 @@ export function registry<T = undefined, S extends base.$ZodType = base.$ZodType>
   return new registries.$ZodRegistry();
 }
 
-export function namedRegistry<
-  T extends { name: string } = { name: string },
-  S extends base.$ZodType = base.$ZodType,
->(): registries.$ZodNamedRegistry<T, S, {}> {
-  return new registries.$ZodNamedRegistry();
-}
+// export function namedRegistry<
+//   T extends { name: string } = { name: string },
+//   S extends base.$ZodType = base.$ZodType,
+// >(): registries.$ZodNamedRegistry<T, S, {}> {
+//   return new registries.$ZodNamedRegistry();
+// }
 
 export const globalRegistry: registries.$ZodRegistry<unknown> = /*@__PURE__*/ new registries.$ZodRegistry<unknown>();

@@ -47,10 +47,7 @@ test("z.registry no metadata", () => {
 });
 
 test("z.registry with schema constraints", () => {
-  const fieldRegistry = z.registry<
-    { name: string; description: string },
-    z.$ZodString
-  >();
+  const fieldRegistry = z.registry<{ name: string; description: string }, z.$ZodString>();
 
   const a = z.string();
   fieldRegistry.add(a, { name: "hello", description: "world" });
@@ -60,35 +57,73 @@ test("z.registry with schema constraints", () => {
   z.number().register(fieldRegistry, { name: "test", description: "test" });
 });
 
-test("z.namedRegistry", () => {
-  const namedReg = z
-    .namedRegistry<{ name: string; description: string }>()
-    .add(z.string(), { name: "hello", description: "world" })
-    .add(z.number(), { name: "number", description: "number" });
+// test("z.namedRegistry", () => {
+//   const namedReg = z
+//     .namedRegistry<{ name: string; description: string }>()
+//     .add(z.string(), { name: "hello", description: "world" })
+//     .add(z.number(), { name: "number", description: "number" });
 
-  expect(namedReg.get("hello")).toEqual({
-    name: "hello",
-    description: "world",
-  });
-  expect(namedReg.has("hello")).toEqual(true);
-  expect(namedReg.get("number")).toEqual({
-    name: "number",
-    description: "number",
-  });
+//   expect(namedReg.get("hello")).toEqual({
+//     name: "hello",
+//     description: "world",
+//   });
+//   expect(namedReg.has("hello")).toEqual(true);
+//   expect(namedReg.get("number")).toEqual({
+//     name: "number",
+//     description: "number",
+//   });
+
+//   // @ts-expect-error
+//   namedReg.get("world");
+//   // @ts-expect-error
+//   expect(namedReg.get("world")).toEqual(undefined);
+
+//   const hello = namedReg.get("hello");
+//   expect(hello).toEqual({ name: "hello", description: "world" });
+//   expectTypeOf<typeof hello>().toEqualTypeOf<{
+//     name: "hello";
+//     description: "world";
+//   }>();
+//   expectTypeOf<typeof namedReg.items>().toEqualTypeOf<{
+//     hello: { name: "hello"; description: "world" };
+//     number: { name: "number"; description: "number" };
+//   }>();
+// });
+
+test("output type in registry meta", () => {
+  const reg = z.registry<z.OUTPUT>();
+  const a = z.string();
+  reg.add(a, "asdf");
+  // @ts-expect-error
+  reg.add(a, 1234);
+  expectTypeOf(reg.get(a)).toEqualTypeOf<string | undefined>();
+});
+
+test("output type in registry meta - objects and arrays", () => {
+  const reg = z.registry<{ name: string; examples: z.OUTPUT[] }>();
+  const a = z.string();
+  reg.add(a, { name: "hello", examples: ["world"] });
 
   // @ts-expect-error
-  namedReg.get("world");
-  // @ts-expect-error
-  expect(namedReg.get("world")).toEqual(undefined);
+  reg.add(a, { name: "hello", examples: "world" });
+  expectTypeOf(reg.get(a)).toEqualTypeOf<{ name: string; examples: string[] } | undefined>();
+});
 
-  const hello = namedReg.get("hello");
-  expect(hello).toEqual({ name: "hello", description: "world" });
-  expectTypeOf<typeof hello>().toEqualTypeOf<{
-    name: "hello";
-    description: "world";
-  }>();
-  expectTypeOf<typeof namedReg.items>().toEqualTypeOf<{
-    hello: { name: "hello"; description: "world" };
-    number: { name: "number"; description: "number" };
-  }>();
+test("input type in registry meta", () => {
+  const reg = z.registry<z.INPUT>();
+  const a = z.pipeline(z.number(), z.effect(String));
+  reg.add(a, 1234);
+  // @ts-expect-error
+  reg.add(a, "1234");
+  expectTypeOf(reg.get(a)).toEqualTypeOf<number | undefined>();
+});
+
+test("input type in registry meta - objects and arrays", () => {
+  const reg = z.registry<{ name: string; examples: z.INPUT[] }>();
+  const a = z.pipeline(z.number(), z.effect(String));
+  reg.add(a, { name: "hello", examples: [1234] });
+
+  // @ts-expect-error
+  reg.add(a, { name: "hello", examples: "world" });
+  expectTypeOf(reg.get(a)).toEqualTypeOf<{ name: string; examples: number[] } | undefined>();
 });

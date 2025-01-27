@@ -891,16 +891,35 @@ export function file(...args: any[]): schemas.ZodFile {
 
 // effect
 // type ZodEffectParams = util.TypeParams<schemas.ZodEffect, "effect">;
+/** @deprecated Asynchronous functions are not supported in `z.effect()`. Use `z.effectAsync()`. */
+export function effect<O extends Promise<unknown> = Promise<unknown>, I = unknown>(
+  effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
+  params?: core.$ZodEffectParams
+): never;
 export function effect<O = unknown, I = unknown>(
-  effect: (
-    input: I,
-    // ctx?: core.$ZodResult<unknown>
-    ctx?: schemas.RefinementCtx<unknown>
-  ) => O,
+  effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
+  params?: core.$ZodEffectParams
+): schemas.ZodEffect<O, I>;
+export function effect<O = unknown, I = unknown>(
+  effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
   params?: core.$ZodEffectParams
 ): schemas.ZodEffect<O, I> {
   return new schemas.ZodEffect({
     type: "effect",
+    async: false,
+    effect: effect as any,
+    ...util.normalizeTypeParams(params),
+  }) as schemas.ZodEffect<O, I>;
+}
+
+// effectAsync
+export function effectAsync<O = unknown, I = unknown>(
+  effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => Promise<O>,
+  params?: core.$ZodEffectParams
+): schemas.ZodEffect<O, I> {
+  return new schemas.ZodEffect({
+    type: "effect",
+    async: true,
     effect: effect as any,
     ...util.normalizeTypeParams(params),
   }) as schemas.ZodEffect<O, I>;
@@ -908,28 +927,65 @@ export function effect<O = unknown, I = unknown>(
 
 // preprocess
 interface ZodPreprocessParams extends core.$ZodEffectParams, core.$ZodPipelineParams {}
+/** @deprecated Asynchronous functions not supported in `z.preprocess()`. Use `z.preprocessAsync()`. */
+export function preprocess<A extends Promise<unknown>, U extends schemas.ZodType>(
+  fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
+  schema: U,
+  params?: ZodPreprocessParams
+): never;
 /** @deprecated Use `z.unknown().transform().pipe()` */
 export function preprocess<A, U extends schemas.ZodType>(
-  fn: (
-    arg: unknown,
-    ctx: schemas.RefinementCtx
-    // ctx?: core.$ZodResult<unknown>
-  ) => A,
+  fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
+  schema: U,
+  params?: ZodPreprocessParams
+): schemas.ZodPipeline<schemas.ZodEffect<A, unknown>, U>;
+export function preprocess<A, U extends schemas.ZodType>(
+  fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
   schema: U,
   params?: ZodPreprocessParams
 ): schemas.ZodPipeline<schemas.ZodEffect<A, unknown>, U> {
   return pipeline(effect(fn as any, params), schema as any, params);
 }
 
+// preprocessAsync
+interface ZodPreprocessAsyncParams extends core.$ZodEffectParams, core.$ZodPipelineParams {}
+export function preprocessAsync<A, U extends schemas.ZodType>(
+  fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
+  schema: U,
+  params?: ZodPreprocessAsyncParams
+): schemas.ZodPipeline<schemas.ZodEffect<A, unknown>, U> {
+  return pipeline(effectAsync(fn as any, params), schema as any, params);
+}
+
 // transform
-// rewrite to use pipeline and effect
 interface ZodTransformParams extends core.$ZodEffectParams, core.$ZodPipelineParams {}
+/** @deprecated Asynchronous functions are not supported in `z.transform()`. Use `z.transformAsync()` instead. */
+export function transform<T extends schemas.ZodType, NewOut extends Promise<unknown>>(
+  schema: T,
+  fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => NewOut,
+  params?: ZodTransformParams
+): never;
+export function transform<T extends schemas.ZodType, NewOut>(
+  schema: T,
+  fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => NewOut,
+  params?: ZodTransformParams
+): schemas.ZodPipeline<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>>;
 export function transform<T extends schemas.ZodType, NewOut>(
   schema: T,
   fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => NewOut,
   params?: ZodTransformParams
 ): schemas.ZodPipeline<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>> {
   return pipeline(schema, effect(fn as any, params), params) as any;
+}
+
+// transformAsync
+interface ZodTransformAsyncParams extends core.$ZodEffectParams, core.$ZodPipelineParams {}
+export function transformAsync<T extends schemas.ZodType, NewOut>(
+  schema: T,
+  fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => Promise<NewOut>,
+  params?: ZodTransformAsyncParams
+): schemas.ZodPipeline<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>> {
+  return pipeline(schema, effectAsync(fn, params), params) as any;
 }
 
 // optional
@@ -1068,8 +1124,14 @@ export function promise<T extends schemas.ZodType>(
 
 // type ZodCustomParams = util.CheckTypeParams<schemas.ZodCustom, "fn">;
 
+/** @deprecated Use `z.customAsync()` to define asynchronous custom */
+export function custom(fn: (data: unknown) => Promise<unknown>, ...args: any[]): never;
 export function custom<T>(
   fn?: (data: unknown) => unknown,
+  _params?: string | core.$ZodCustomParams
+): schemas.ZodCustom<T>;
+export function custom<T>(
+  fn?: (data: unknown) => unknown | Promise<unknown>,
   _params: string | core.$ZodCustomParams = {}
 ): schemas.ZodCustom<T> {
   return new schemas.ZodCustom({
@@ -1078,6 +1140,20 @@ export function custom<T>(
     fn: fn ? (fn as any) : () => true,
     ...util.normalizeCheckParams(_params),
   }) as schemas.ZodCustom<T>;
+}
+
+export function customAsync<T>(
+  fn?: (data: unknown) => Promise<unknown>,
+  _params: string | core.$ZodCustomParams = {}
+): schemas.ZodCustom<T> {
+  const schema = new schemas.ZodCustom({
+    type: "custom",
+    check: "custom",
+    fn: fn ? (fn as any) : () => true,
+    ...util.normalizeCheckParams(_params),
+  }) as schemas.ZodCustom<T>;
+  schema["~async"] = true;
+  return schema;
 }
 
 // instanceof
@@ -1095,11 +1171,23 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 // refine
+
+/** @deprecated Use `z.refineAsync() to define asynchronous refinements in Zod 4. */
+export function refine<T>(fn: (arg: T) => Promise<unknown>, ...args: any[]): never;
 export function refine<T>(
+  fn: (arg: T) => unknown | Promise<unknown>,
+  _params: string | core.$RefineParams
+): core.$ZodCheck<T>;
+export function refine<T>(fn: (arg: T) => unknown, _params: string | core.$RefineParams = {}): core.$ZodCheck<T> {
+  return core.refine<T>(fn, _params);
+}
+
+// refine
+export function refineAsync<T>(
   fn: (arg: T) => unknown | Promise<unknown>,
   _params: string | core.$RefineParams = {}
 ): core.$ZodCheck<T> {
-  return core.refine<T>(fn, _params);
+  return core.refineAsync<T>(fn, _params);
 }
 
 export function superRefine<T>(fn: (arg: T, ctx: schemas.RefinementCtx<T>) => void | Promise<void>): core.$ZodCheck<T> {

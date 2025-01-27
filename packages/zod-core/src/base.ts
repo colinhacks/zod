@@ -189,12 +189,6 @@ type ParsePayloadB = {
   path: ParsePathSegment;
 };
 
-type ParsePayloadC = {
-  value: unknown;
-  aborted: boolean;
-  path: ParsePathSegment;
-  issues: errors.$ZodRawIssueB[];
-};
 export interface $ZodType<out O = unknown, out I = unknown> {
   check(...checks: ($CheckFn<this["~output"]> | $ZodCheck<this["~output"]>)[]): this;
   clone(def?: this["~def"]): this;
@@ -223,14 +217,11 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   _run(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
   /** @internal Internal API, use with caution. */
   _runB(payload: ParsePayloadB, ctx: ParseContextB): util.MaybeAsync<ParsePayloadB>;
-  // _runC(payload: ParsePayloadC, ctx: any): util.MaybeAsync<ParsePayloadC>;
-  _runC(data: unknown, path: ParsePathSegment, ctx: any): util.MaybeAsync<ParsePayloadC>;
 
   /** @internal Internal API, use with caution. */
   _parse(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
   /** @internal Internal API, use with caution. */
   _parseB(payload: ParsePayloadB, ctx: ParseContextB): util.MaybeAsync<ParsePayloadB>;
-  _parseC(data: unknown, path: ParsePathSegment, ctx: any): util.MaybeAsync<ParsePayloadC>;
 
   /** @internal Internal API, use with caution. */
   "~traits": Set<string>;
@@ -252,6 +243,8 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   "~computed": Record<string, any>;
   /** The set of issues this schema might throw during type checking. */
   "~isst"?: errors.$ZodIssueBase;
+  /** Whether this schema might return a Promise */
+  _async: boolean;
 }
 
 export function runCheck(
@@ -473,6 +466,7 @@ export interface $ZodCheck<in T = never> {
   "~check"(input: $ZodResult<T>): util.MaybeAsync<void>;
   "~fastcheck"?(doc: Doc, arg: string): void;
   "~onattach"?(schema: $ZodType): void;
+  "~async": boolean;
 }
 
 export const $ZodCheck: $constructor<$ZodCheck<any>> = $constructor("$ZodCheck", (inst, def) => {
