@@ -181,15 +181,13 @@ type RawIssue<T extends $ZodIssueBase> = util.Flatten<
 >;
 
 export type $ZodRawIssueB<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssueB<T> : never;
-type PathList = {
-  key: PropertyKey;
-  parent: PathList;
-} | null;
+
 type RawIssueB<T extends $ZodIssueBase> = util.Flatten<
   Omit<T, "message" | "path"> & {
-    path?: PathList | undefined;
+    path?: PropertyKey[] | undefined;
     message?: string | undefined;
     def?: DefLike | undefined;
+    abort: boolean;
   } & Record<string, unknown>
 >;
 // type PathList = {

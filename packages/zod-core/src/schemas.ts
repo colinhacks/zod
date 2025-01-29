@@ -53,7 +53,7 @@ export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$con
       code: "invalid_type",
       input,
       def,
-      path: payload.path,
+      abort: true,
     });
     payload.aborted = true;
     return payload;

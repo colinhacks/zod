@@ -1106,11 +1106,11 @@ export function file(...args: any): schemas.$ZodFile {
 // effect
 export type $ZodEffectParams = util.TypeParams<schemas.$ZodEffect, "effect">;
 
-/** @deprecated Asynchronous functions are not supported in `z.effect()`. Use `z.effectAsync()`. */
-export function effect<O extends Promise<unknown> = Promise<unknown>, I = unknown>(
-  effect: (input: I, ctx?: base.$ParseContext) => O,
-  params?: $ZodEffectParams
-): never;
+// /** @deprecated Asynchronous functions are not supported in `z.effect()`. Use `z.effectAsync()`. */
+// export function effect<O extends Promise<unknown> = Promise<unknown>, I = unknown>(
+//   effect: (input: I, ctx?: base.$ParseContext) => O,
+//   params?: $ZodEffectParams
+// ): never;
 export function effect<O = unknown, I = unknown>(
   effect: (input: I, ctx?: base.$ParseContext) => O,
   params?: $ZodEffectParams
@@ -1127,19 +1127,19 @@ export function effect<O = unknown, I = unknown>(
   }) as schemas.$ZodEffect<O, I>;
 }
 
-export function effectAsync<O = unknown, I = unknown>(
-  effect: (input: I, ctx?: base.$ParseContext) => O,
-  params?: $ZodEffectParams
-): schemas.$ZodEffect<O, I> {
-  const ef = new schemas.$ZodEffect({
-    type: "effect",
-    async: true,
-    effect: effect as any,
-    ...util.normalizeTypeParams(params),
-  }) as schemas.$ZodEffect<O, I>;
-  ef._async = true;
-  return ef;
-}
+// export function effectAsync<O = unknown, I = unknown>(
+//   effect: (input: I, ctx?: base.$ParseContext) => O,
+//   params?: $ZodEffectParams
+// ): schemas.$ZodEffect<O, I> {
+//   const ef = new schemas.$ZodEffect({
+//     type: "effect",
+//     async: true,
+//     effect: effect as any,
+//     ...util.normalizeTypeParams(params),
+//   }) as schemas.$ZodEffect<O, I>;
+//   ef._async = true;
+//   return ef;
+// }
 
 // preprocess
 // export type $ZodPreprocessParams = util.Flatten<
@@ -1439,6 +1439,7 @@ function handleRefineResult(
         input,
         def, // incorporates params.error into issue reporting
         path: def.path, // incorporates params.error into issue reporting
+        continue: true,
       })
     );
     if (def.abort) final.aborted = true;
@@ -1448,10 +1449,16 @@ function handleRefineResult(
 export interface $RefineParams extends $ZodCustomParams {
   abort?: boolean;
 }
-/** @deprecated Use `refineAsync` for asynchronous refinements. */
-export function refine<T>(fn: (arg: T) => Promise<unknown>, ...args: any[]): never;
-export function refine<T>(fn: (arg: T) => unknown, _params?: string | $RefineParams): base.$ZodCheck<T>;
+// /** @deprecated Use `refineAsync` for asynchronous refinements. */
+// export function refine<T, R>(
+//   fn: (
+//     arg: NoInfer<T>
+//   ) => R extends Promise<unknown> ? "Error: Async functions not supported. Use .refineAsync() instead." : R,
+//   params?: string | $RefineParams
+// ): base.$ZodCheck<T>;
+export function refine<T>(fn: (arg: NoInfer<T>) => unknown, params?: string | $RefineParams): base.$ZodCheck<T>;
 export function refine<T>(fn: (arg: T) => unknown, _params: string | $RefineParams = {}): base.$ZodCheck<T> {
+  if (fn.constructor.name === "AsyncFunction") throw new Error("Use refineAsync for asynchronous refinements.");
   const params = util.normalizeCheckParams(_params);
 
   return {
@@ -1469,30 +1476,30 @@ export function refine<T>(fn: (arg: T) => unknown, _params: string | $RefinePara
   };
 }
 
-export function refineAsync<T>(
-  fn: (arg: T) => unknown | Promise<unknown>,
-  _params: string | $RefineParams = {}
-): base.$ZodCheck<T> {
-  const params = util.normalizeCheckParams(_params);
+// export function refineAsync<T>(
+//   fn: (arg: T) => unknown | Promise<unknown>,
+//   _params: string | $RefineParams = {}
+// ): base.$ZodCheck<T> {
+//   const params = util.normalizeCheckParams(_params);
 
-  return {
-    "~def": { check: "custom", error: params.error },
-    "~check"(ctx) {
-      const result = fn(ctx.value);
-      if (result instanceof Promise)
-        return result.then((result) => {
-          handleRefineResult(result, ctx, ctx.value, params);
-        });
+//   return {
+//     "~def": { check: "custom", error: params.error },
+//     "~check"(ctx) {
+//       const result = fn(ctx.value);
+//       if (result instanceof Promise)
+//         return result.then((result) => {
+//           handleRefineResult(result, ctx, ctx.value, params);
+//         });
 
-      return handleRefineResult(result, ctx, ctx.value, params);
-    },
+//       return handleRefineResult(result, ctx, ctx.value, params);
+//     },
 
-    "~async": true,
-  };
-}
+//     "~async": true,
+//   };
+// }
 
-/** @deprecated Use `superRefineAsync` for asynchronous refinements. */
-export function superRefine<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => Promise<void>): never;
+// /** @deprecated Use `superRefineAsync` for asynchronous refinements. */
+// export function superRefine<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => Promise<void>): never;
 export function superRefine<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => void): base.$ZodCheck<T>;
 export function superRefine<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => void | Promise<void>): base.$ZodCheck<T> {
   return {
@@ -1505,17 +1512,17 @@ export function superRefine<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => void | P
   };
 }
 
-/** @deprecated super  */
-export function superRefineAsync<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => void | Promise<void>): base.$ZodCheck<T> {
-  return {
-    "~def": { check: "custom" },
-    "~check"(ctx) {
-      const result = fn(ctx.value, ctx);
-      return result;
-    },
-    "~async": true,
-  };
-}
+// /** @deprecated super  */
+// export function superRefineAsync<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => void | Promise<void>): base.$ZodCheck<T> {
+//   return {
+//     "~def": { check: "custom" },
+//     "~check"(ctx) {
+//       const result = fn(ctx.value, ctx);
+//       return result;
+//     },
+//     "~async": true,
+//   };
+// }
 
 ///////////        METHODS       ///////////
 export function parse<T extends base.$ZodType>(schema: T, data: unknown, ctx?: base.$ParseContext): base.output<T> {

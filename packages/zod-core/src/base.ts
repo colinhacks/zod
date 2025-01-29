@@ -97,7 +97,8 @@ export function $succeeded<T>(x: $ZodResult<T>): boolean {
 
 export function $prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
   return issues.map((iss) => {
-    iss.path = [path, ...(iss.path ?? [])];
+    iss.path ??= [];
+    iss.path.unshift(path); // = [path, ...(iss.path ?? [])];
     return iss;
   });
 }
@@ -174,19 +175,21 @@ interface ParseInput extends $ZodResult {
   // ctx: $ParseContext | undefined;
 }
 
-type ParsePathSegment = {
-  key: PropertyKey;
-  parent: ParsePathSegment;
-} | null;
+// type ParsePathSegment = {
+//   key: PropertyKey;
+//   parent: ParsePathSegment;
+// } | null;
+
 interface ParseContextB extends $ParseContext {
-  readonly async?: boolean | undefined;
+  // readonly async?: boolean | undefined;
   readonly issues: errors.$ZodRawIssueB[];
 }
 
 type ParsePayloadB = {
   value: unknown;
   aborted: boolean;
-  path: ParsePathSegment;
+  issues: errors.$ZodRawIssueB[];
+  // path: ParsePathSegment;
 };
 
 export interface $ZodType<out O = unknown, out I = unknown> {
@@ -276,7 +279,9 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
       ...def,
       checks: [
         ...(def.checks ?? []),
-        ...checks.map((ch) => (typeof ch === "function" ? { "~check": ch, "~def": { check: "custom" } } : ch)),
+        ...checks.map((ch) =>
+          typeof ch === "function" ? { "~check": ch, "~def": { check: "custom" }, "~async": false } : ch
+        ),
       ],
     });
   };
@@ -302,7 +307,6 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
     console.log({ checks });
     inst._run = (...args) => inst._parse(...args);
     inst._runB = (...args) => inst._parseB(...args);
-    inst._runC = (...args) => inst._parseC(...args);
   } else {
     let runChecks = (result: $ZodResult<never>): util.MaybeAsync<$ZodResult> => {
       return result;
