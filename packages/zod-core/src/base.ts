@@ -180,12 +180,12 @@ interface ParseInput extends $ZodResult {
 //   parent: ParsePathSegment;
 // } | null;
 
-interface ParseContextB extends $ParseContext {
+export interface ParseContextB extends $ParseContext {
   // readonly async?: boolean | undefined;
   readonly issues: errors.$ZodRawIssueB[];
 }
 
-type ParsePayloadB = {
+export type ParsePayloadB = {
   value: unknown;
   aborted: boolean;
   issues: errors.$ZodRawIssueB[];

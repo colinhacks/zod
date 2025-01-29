@@ -1537,19 +1537,19 @@ export function parse<T extends base.$ZodType>(schema: T, data: unknown, ctx?: b
   return result.value as base.output<T>;
 }
 
-export function _parseB<T extends base.$ZodType>(schema: T, value: unknown, _ctx?: base.$ParseContext): base.output<T> {
-  const ctx = { ..._ctx, issues: [], async: false };
-  const result = schema._runB({ value, aborted: false, path: null }, ctx);
-  return result;
-}
+// export function _parseB<T extends base.$ZodType>(schema: T, value: unknown, _ctx?: base.$ParseContext): base.output<T> {
+//   const ctx = { ..._ctx, issues: [], async: false };
+//   const result = schema._runB({ value, aborted: false, issues: [] }, ctx);
+//   return result;
+// }
 
 export function safeParseB<T extends base.$ZodType>(
   schema: T,
   value: unknown,
-  _ctx?: base.$ParseContext
+  _ctx?: base.ParseContextB
 ): base.output<T> {
   const ctx = _ctx ? { ..._ctx, issues: [], async: false } : { issues: [], async: false };
-  const result = schema._runB({ value, aborted: false, path: null }, ctx);
+  const result = schema._runB({ value, aborted: false, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
   }
