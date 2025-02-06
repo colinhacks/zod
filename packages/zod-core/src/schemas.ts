@@ -45,17 +45,15 @@ export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$con
     );
   };
 
-  inst._parseB = (payload, ctx) => {
-    const { value: input } = payload;
+  inst._parseB = (payload, _) => {
+    if (def.coerce) payload.value = Number(payload.value);
     if (typeof payload.value === "string") return payload;
-    ctx.issues.push({
+    payload.issues.push({
       expected: "string",
       code: "invalid_type",
-      input,
+      input: payload.value,
       def,
-      abort: true,
     });
-    payload.aborted = true;
     return payload;
   };
 });
@@ -64,7 +62,10 @@ export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$con
 
 export interface $ZodStringFormatDef<Format extends errors.$ZodStringFormats = errors.$ZodStringFormats>
   extends $ZodStringDef,
-    checks.$ZodCheckStringFormatDef<Format> {}
+    checks.$ZodCheckStringFormatDef<Format> {
+  /** Whether parsing should continue if this check fails. */
+  // abort?: boolean;
+}
 
 export interface $ZodStringFormat extends $ZodString<string>, checks.$ZodCheckStringFormat {
   "~pattern": RegExp;
@@ -160,6 +161,20 @@ export const $ZodURL: base.$constructor<$ZodURL> = /*@__PURE__*/ base.$construct
       def,
     });
   };
+
+  // inst._checkB = (payload) => {
+  //   try {
+  //     const url = new URL(payload.value);
+  //     regexes.hostnameRegex.lastIndex = 0;
+  //     if (regexes.hostnameRegex.test(url.hostname)) return;
+  //   } catch {}
+  //   payload.issues.push({
+  //     code: "invalid_format",
+  //     format: def.format,
+  //     input: payload.value,
+  //     def,
+  //   });
+  // };
 });
 
 //////////////////////////////   ZodEmoji   //////////////////////////////
@@ -382,6 +397,20 @@ export const $ZodJSONString: base.$constructor<$ZodJSONString> = /*@__PURE__*/ b
         });
       }
     };
+
+    // inst._checkB = (payload) => {
+    //   try {
+    //     JSON.parse(payload.value);
+    //     return;
+    //   } catch {
+    //     payload.issues.push({
+    //       code: "invalid_format",
+    //       format: "json_string",
+    //       input: payload.value,
+    //       def,
+    //     });
+    //   }
+    // };
   }
 );
 
@@ -432,6 +461,17 @@ export const $ZodJWT: base.$constructor<$ZodJWT> = /*@__PURE__*/ base.$construct
       def,
     });
   };
+
+  // inst._checkB = (payload) => {
+  //   if (!isValidJWT(payload.value, def.alg)) {
+  //     payload.issues.push({
+  //       code: "invalid_format",
+  //       format: "jwt",
+  //       input: payload.value,
+  //       def,
+  //     });
+  //   }
+  // };
 });
 
 /////////////////////////////////////////
@@ -458,6 +498,7 @@ export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$con
   base.$ZodType.init(inst, def);
   inst["~pattern"] = regexes.numberRegex;
   inst._parse = (input, _ctx) => {
+    if (def.coerce) input = Number(input);
     if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) return base.$succeed(input);
     return base.$fail(
       [
@@ -470,6 +511,21 @@ export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$con
       ],
       true
     );
+  };
+
+  inst._parseB = (payload, _ctx) => {
+    if (def.coerce) payload.value = Number(payload.value);
+    const input = payload.value;
+    if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) {
+      return payload;
+    }
+    payload.issues.push({
+      expected: "number",
+      code: "invalid_type",
+      input,
+      def,
+    });
+    return payload;
   };
 
   // inst._parseB = (payload, ctx) => {
@@ -560,6 +616,19 @@ export const $ZodBoolean: base.$constructor<$ZodBoolean> = /*@__PURE__*/ base.$c
         true
       );
     };
+
+    inst._parseB = (payload, _ctx) => {
+      if (def.coerce) payload.value = Boolean(payload.value);
+      const input = payload.value;
+      if (typeof input === "boolean") return payload;
+      payload.issues.push({
+        expected: "boolean",
+        code: "invalid_type",
+        input,
+        def,
+      });
+      return payload;
+    };
   }
 );
 
@@ -600,6 +669,19 @@ export const $ZodBigInt: base.$constructor<$ZodBigInt> = /*@__PURE__*/ base.$con
       ],
       true
     );
+  };
+
+  inst._parseB = (payload, _ctx) => {
+    if (def.coerce) payload.value = BigInt(payload.value);
+    const { value: input } = payload;
+    if (typeof input === "bigint") return payload;
+    payload.issues.push({
+      expected: "bigint",
+      code: "invalid_type",
+      input,
+      def,
+    });
+    return payload;
   };
 });
 
@@ -655,6 +737,18 @@ export const $ZodSymbol: base.$constructor<$ZodSymbol> = /*@__PURE__*/ base.$con
       true
     );
   };
+
+  inst._parseB = (payload, _ctx) => {
+    const { value: input } = payload;
+    if (typeof input === "symbol") return payload;
+    payload.issues.push({
+      expected: "symbol",
+      code: "invalid_type",
+      input,
+      def,
+    });
+    return payload;
+  };
 });
 
 ////////////////////////////////////////////
@@ -695,6 +789,18 @@ export const $ZodUndefined: base.$constructor<$ZodUndefined> = /*@__PURE__*/ bas
         ],
         true
       );
+    };
+
+    inst._parseB = (payload, _ctx) => {
+      const { value: input } = payload;
+      if (typeof input === "undefined") return payload;
+      payload.issues.push({
+        expected: "undefined",
+        code: "invalid_type",
+        input,
+        def,
+      });
+      return payload;
     };
   }
 );
@@ -737,6 +843,18 @@ export const $ZodNull: base.$constructor<$ZodNull> = /*@__PURE__*/ base.$constru
       true
     );
   };
+
+  inst._parseB = (payload, _ctx) => {
+    const { value: input } = payload;
+    if (input === null) return payload;
+    payload.issues.push({
+      expected: "null",
+      code: "invalid_type",
+      input,
+      def,
+    });
+    return payload;
+  };
 });
 
 //////////////////////////////////////
@@ -760,6 +878,7 @@ export interface $ZodAny extends base.$ZodType<any, any> {
 export const $ZodAny: base.$constructor<$ZodAny> = /*@__PURE__*/ base.$constructor("$ZodAny", (inst, def) => {
   base.$ZodType.init(inst, def);
   inst._parse = (input) => base.$succeed(input);
+  inst._parseB = (payload) => payload;
 });
 
 //////////////////////////////////////////
@@ -785,6 +904,7 @@ export const $ZodUnknown: base.$constructor<$ZodUnknown> = /*@__PURE__*/ base.$c
   (inst, def) => {
     base.$ZodType.init(inst, def);
     inst._parse = (input) => base.$succeed(input);
+    inst._parseB = (payload) => payload;
   }
 );
 
@@ -821,6 +941,16 @@ export const $ZodNever: base.$constructor<$ZodNever> = /*@__PURE__*/ base.$const
       true
     );
   };
+
+  inst._parseB = (payload, _ctx) => {
+    payload.issues.push({
+      expected: "never",
+      code: "invalid_type",
+      input: payload.value,
+      def,
+    });
+    return payload;
+  };
 });
 
 ////////////////////////////////////////
@@ -856,6 +986,18 @@ export const $ZodVoid: base.$constructor<$ZodVoid> = /*@__PURE__*/ base.$constru
       ],
       true
     );
+  };
+
+  inst._parseB = (payload, _ctx) => {
+    const { value: input } = payload;
+    if (typeof input === "undefined") return payload;
+    payload.issues.push({
+      expected: "void",
+      code: "invalid_type",
+      input,
+      def,
+    });
+    return payload;
   };
 });
 
@@ -906,6 +1048,31 @@ export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constru
 
     return base.$succeed(new Date(input.getTime()));
   };
+
+  inst._parseB = (payload, _ctx) => {
+    if (def.coerce) {
+      try {
+        payload.value = new Date(payload.value as string | number | Date);
+      } catch (_err: any) {}
+    }
+    const input = payload.value;
+
+    if (!(input instanceof Date)) {
+      payload.issues.push({
+        expected: "date",
+        code: "invalid_type",
+        input,
+        def,
+      });
+      // return payload;
+    } else if (Number.isNaN(input.getTime())) {
+      payload.issues.push({ code: "invalid_date", input, def });
+    } else {
+      payload.value = new Date(input.getTime());
+    }
+
+    return payload;
+  };
 });
 
 /////////////////////////////////////////
@@ -928,8 +1095,16 @@ export interface $ZodArray<T extends base.$ZodType = base.$ZodType>
   "~isst": errors.$ZodIssueInvalidType;
 }
 
-function handleArrayResult(result: base.$ZodResult, final: base.$ZodResultWithIssues<any[]>, index: number) {
+function handleArrayResult(result: base.$ZodResult, final: base.$ZodResult<any[]>, index: number) {
   if (base.$failed(result)) {
+    final.issues.push(...base.$prefixIssues(index, result.issues));
+  } else {
+    final.value[index] = result.value;
+  }
+}
+
+function handleArrayResultB(result: base.ParsePayloadB<any>, final: base.ParsePayloadB<any[]>, index: number) {
+  if (result.issues.length) {
     final.issues.push(...base.$prefixIssues(index, result.issues));
   } else {
     final.value[index] = result.value;
@@ -954,7 +1129,6 @@ export const $ZodArray: base.$constructor<$ZodArray> = /*@__PURE__*/ base.$const
       );
     }
 
-    // let async = false;
     const proms: Promise<any>[] = [];
     const final = base.$result(Array.from({ length: input.length }));
 
@@ -969,47 +1143,52 @@ export const $ZodArray: base.$constructor<$ZodArray> = /*@__PURE__*/ base.$const
       }
     }
 
-    // const parseResults = input.map((item, index) => {
-    //   //  const item = input
-    //   const result = def.element._run(item, ctx);
-    //   // parseResults[i] = result;
-    //   if (result instanceof Promise) {
-    //     // async = true;
-    //     proms.push(
-    //       result.then((res) => handleArrayResult(res, final, index))
-    //     );
-    //     // break;
-    //   } else {
-    //   }
-    //   return result;
-    //   // if (base.$failed(result)) {
-    //   //   issues.push(...base.$prefixIssues(i, result.issues!)); // = base.mergeIn(result);
-    //   // fail = fail ? base.mergeFails(fail, result) : result;
-    //   // }
-    // });
-    // for (const i of input) {
-    //   const item = input
-    //   const result = def.element._run(item, ctx);
-    //   parseResults[i] = result;
-    //   if (result instanceof Promise) {
-    //     async = true;
-    //     break;
-    //   }
-    //   if (base.$failed(result)) {
-    //     issues.push(...base.$prefixIssues(i, result.issues!)); // = base.mergeIn(result);
-    //     // fail = fail ? base.mergeFails(fail, result) : result;
-    //   }
-    // }
-
     if (proms.length) {
       return Promise.all(proms).then(() => final);
-      // handleArrayResults(
-      //   parseResults as base.$ZodResult<unknown>[],
-      //   final
-      // );
     }
 
     return final; //handleArrayResultsAsync(parseResults, final);
+  };
+
+  inst._parseB = (payload, ctx) => {
+    const input = payload.value;
+    payload.value = [];
+    if (!Array.isArray(input)) {
+      payload.issues.push({
+        expected: "array",
+        code: "invalid_type",
+        input,
+        def,
+      });
+      return payload;
+    }
+
+    const proms: Promise<any>[] = [];
+    // const final = [];//base.$result(Array.from({ length: input.length }));
+
+    for (const index in input) {
+      const item = input[index];
+
+      const result = def.element._runB(
+        {
+          value: item,
+          issues: [],
+          $payload: true,
+        },
+        ctx
+      );
+      if (result instanceof Promise) {
+        proms.push(result.then((result) => handleArrayResultB(result, payload, index as any)));
+      } else {
+        handleArrayResultB(result, payload, index as any);
+      }
+    }
+
+    if (proms.length) {
+      return Promise.all(proms).then(() => payload);
+    }
+
+    return payload; //handleArrayResultsAsync(parseResults, final);
   };
 });
 
@@ -1046,6 +1225,14 @@ function handleObjectResult(result: base.$ZodResult, final: base.$ZodResultWithI
   }
 }
 
+function handleObjectResultB(result: base.ParsePayloadB, final: base.ParsePayloadB, key: PropertyKey) {
+  if (result.issues.length) {
+    final.issues.push(...base.$prefixIssuesB(key, result.issues));
+  } else {
+    (final.value as any)[key] = result.value;
+  }
+}
+
 export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$constructor(
   "$ZodObjectLike",
   (inst, def) => {
@@ -1068,37 +1255,7 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       },
     });
 
-    const _normalized = util.cached(() => {
-      if (def.type === "interface") {
-        const { shape, keyMap } = util.cleanInterfaceShape(def.shape);
-        const keys = Object.keys(def.shape);
-        const keySet = new Set(Object.keys(shape));
-
-        return {
-          shape,
-          keyMap,
-          keys,
-          keySet,
-          numKeys: keys.length,
-          optionals: util.optionalInterfaceKeys(def.shape),
-        };
-      }
-      if (def.type === "object") {
-        const keys = Object.keys(def.shape);
-        const keySet: Set<string> = new Set(Object.keys(def.shape));
-        const keyMap: Record<string, string> = Object.fromEntries(Object.keys(def.shape).map((k) => [k, k]));
-
-        return {
-          shape: def.shape,
-          keyMap,
-          keys,
-          keySet,
-          numKeys: keys.length,
-          optionals: util.optionalObjectKeys(def.shape),
-        };
-      }
-      throw new Error("Invalid object-like type");
-    });
+    const _normalized = util.cached(() => util.normalizeObjectLikeDef(def));
 
     inst._parse = (input, ctx) => {
       const { shape, keys, keySet, optionals } = _normalized.value;
@@ -1125,12 +1282,11 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       for (const key of keys) {
         const value = shape[key];
 
-        // do not add omitted optional keys
         if (!(key in input)) {
+          // do not add omitted optional keys
           if (optionals.has(key)) continue;
         }
 
-        // console.log(value);
         const result = value._run((input as any)[key], ctx);
 
         if (result instanceof Promise) {
@@ -1177,27 +1333,29 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
 
     const fastParseShape = util.cached(() => {
       const { shape, keys, optionals, keyMap } = _normalized.value;
-      const doc = new Doc(["def", "payload", "ctx"]);
-      const parseStr = (cleanKey: string) => {
-        const k = util.esc(cleanKey);
-        const shapeKey = util.esc(keyMap[cleanKey]);
-        return `shape[${shapeKey}]._parseB({ value: input[${k}], path: { key: ${k}, parent: path }, aborted: false }, ctx)`;
+      const doc = new Doc(["shape", "payload", "ctx"]);
+      const parseStr = (key: string) => {
+        const k = util.esc(key);
+        return `shape[${k}]._runB({ value: input[${k}], issues: [] }, ctx)`;
       };
+
       doc.write(`const input = payload.value;`);
-      doc.write(`const shape = def.shape;`);
-      doc.write(`const path = payload.path;`);
 
       for (const key of keys) {
         // assign results to var based on ~id
         const id = shape[key]["~id"];
         doc.write(``);
         doc.write(`const ${id} = ${parseStr(key)};`);
-        doc.write(`if (${id}.aborted) payload.aborted = true;`);
+        doc.write(`if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({ 
+           ...iss, 
+           path: iss.path ? [${util.esc(keyMap[key])}, ...iss.path] : [${util.esc(keyMap[key])}]
+        })));`);
       }
-      doc.write(`if (payload.aborted) return payload;`);
+
+      doc.write(`if (payload.issues.length && payload.issues.some(iss => iss.continue !== true)) return payload;`);
 
       // add required keys to result
-      doc.write(`const obj = {`);
+      doc.write(`payload.value = {`);
       doc.indented(() => {
         for (const key of keys) {
           if (optionals.has(key)) continue;
@@ -1212,11 +1370,11 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       for (const key of keys) {
         if (optionals.has(key)) {
           const id = shape[key]["~id"];
-          doc.write(`if (${util.esc(key)} in input) { obj[${util.esc(key)}] = ${id}.value; };`);
+          doc.write(`if (${util.esc(key)} in input) { payload.value[${util.esc(key)}] = ${id}.value; };`);
         }
       }
 
-      doc.write(`return obj;`);
+      doc.write(`return payload;`);
       return doc.compile();
     });
 
@@ -1225,23 +1383,25 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       const { value: input } = payload;
 
       if (!util.isObject(input)) {
-        ctx.issues.push({
+        payload.issues.push({
           expected: "object",
           code: "invalid_type",
           input,
           def,
+          abort: true,
         });
-        payload.aborted = true;
         return payload;
       }
 
       const fast = util.allowsEval.value && ctx.async === false;
       const proms: Promise<any>[] = [];
-      let result!: any;
+
       if (fast) {
-        result = fastParseShape.value(def, payload, ctx);
+        // always synchronous
+        // this overwrites payload.value
+        fastParseShape.value(shape, payload, ctx);
       } else {
-        result = {};
+        payload.value = {};
         for (const key of keys) {
           const valueSchema = shape[key];
 
@@ -1250,16 +1410,11 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
             if (optionals.has(key)) continue;
           }
 
-          const r = valueSchema._runB({ value: input[key], path: { key, parent: payload.path }, aborted: false }, ctx);
-
+          const r = valueSchema._runB({ value: input[key], issues: [], $payload: true }, ctx);
           if (r instanceof Promise) {
-            proms.push(
-              r.then((r) => {
-                result[key] = r;
-              })
-            );
+            proms.push(r.then((r) => handleObjectResultB(r, payload, key)));
           } else {
-            result[key] = r;
+            handleObjectResultB(r, payload, key);
           }
         }
       }
@@ -1269,26 +1424,18 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
         for (const key of Object.keys(input)) {
           if (keySet.has(key)) continue;
 
-          const r = def.catchall._runB({ value: input[key], path: { key, parent: payload.path }, aborted: false }, ctx);
+          const r = def.catchall._runB({ value: input[key], issues: [], $payload: true }, ctx);
 
           if (r instanceof Promise) {
-            proms.push(
-              r.then((r) => {
-                result[key] = r;
-              })
-            );
+            proms.push(r.then((r) => handleObjectResultB(r, payload, key)));
           } else {
-            result[key] = r;
+            handleObjectResultB(r, payload, key);
           }
         }
       }
 
-      if (!proms.length) {
-        payload.value = result;
-        return payload;
-      }
+      if (!proms.length) return payload;
       return Promise.all(proms).then(() => {
-        payload.value = result;
         return payload;
       });
     };
@@ -1306,11 +1453,13 @@ export type $InferInterfaceOutput<
   Extra extends Record<string, unknown> = Record<string, unknown>,
 > = string extends keyof T
   ? Record<string, unknown>
-  : {
-      [k in keyof T as k extends `${infer K}?` ? K : never]?: T[k]["~output"];
-    } & {
-      [k in Exclude<keyof T, `${string}?`> as k extends `?${infer K}` ? K : k]: T[k]["~output"];
-    } & Extra;
+  : util.Flatten<
+      {
+        -readonly [k in keyof T as k extends `${infer K}?` ? K : never]?: T[k]["~output"];
+      } & {
+        -readonly [k in Exclude<keyof T, `${string}?`> as k extends `?${infer K}` ? K : k]: T[k]["~output"];
+      } & Extra
+    >;
 
 export type $InferInterfaceInput<
   T extends $ZodLooseShape,
@@ -1318,9 +1467,9 @@ export type $InferInterfaceInput<
 > = string extends keyof T
   ? Record<string, unknown>
   : {
-      [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : never]?: T[k]["~input"];
+      -readonly [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : never]?: T[k]["~input"];
     } & {
-      [k in Exclude<keyof T, `${string}?` | `?${string}`>]: T[k]["~input"];
+      -readonly [k in Exclude<keyof T, `${string}?` | `?${string}`>]: T[k]["~input"];
     } & Extra;
 
 export interface $ZodInterfaceDef extends $ZodObjectLikeDef {
@@ -1328,7 +1477,7 @@ export interface $ZodInterfaceDef extends $ZodObjectLikeDef {
 }
 
 export interface $ZodInterface<
-  // @ts-ignore Cast variance
+  /** @ts-ignore Cast variance */
   out Shape extends $ZodLooseShape = $ZodLooseShape,
   out Extra extends Record<string, unknown> = Record<string, unknown>,
 > extends $ZodObjectLike<$InferInterfaceOutput<Shape, Extra>, $InferInterfaceInput<Shape, Extra>> {
@@ -1395,6 +1544,7 @@ export interface $ZodObject<
   "~def": $ZodObjectDef<Shape>;
   "~shape": Shape;
   "~subtype": "object";
+  "~extra": Extra;
 }
 
 export const $ZodObject: base.$constructor<$ZodObject> = /*@__PURE__*/ base.$constructor("$ZodObject", (inst, def) => {
@@ -1434,6 +1584,28 @@ function handleUnionResults(results: base.$ZodResult[], input: unknown, def: $Zo
   ]);
 }
 
+function handleUnionResultsB(
+  results: base.ParsePayloadB[],
+  final: base.ParsePayloadB,
+  def: $ZodUnionDef
+  // ctx?: base.$ParseContext
+) {
+  for (const result of results) {
+    if (result.issues.length === 0) {
+      final.value = result.value;
+      return final;
+    }
+  }
+
+  final.issues.push({
+    code: "invalid_union",
+    input: final.value,
+    def,
+    errors: results.map((result) => base.$finalize(result.issues).issues),
+  });
+  return final;
+}
+
 export const $ZodUnion: base.$constructor<$ZodUnion> = /*@__PURE__*/ base.$constructor("$ZodUnion", (inst, def) => {
   base.$ZodType.init(inst, def);
 
@@ -1449,6 +1621,22 @@ export const $ZodUnion: base.$constructor<$ZodUnion> = /*@__PURE__*/ base.$const
     if (!async) return handleUnionResults(results, input, def, ctx);
     return Promise.all(results).then((results) => {
       return handleUnionResults(results, input, def, ctx);
+    });
+  };
+
+  inst._parseB = (payload, ctx) => {
+    let async = false;
+
+    const results: util.MaybeAsync<base.ParsePayloadB>[] = [];
+    for (const option of def.options) {
+      const result = option._runB(payload, ctx);
+      results.push(result);
+      if (result instanceof Promise) async = true;
+    }
+
+    if (!async) return handleUnionResultsB(results as base.ParsePayloadB[], payload, def);
+    return Promise.all(results).then((results) => {
+      return handleUnionResultsB(results as base.ParsePayloadB[], payload, def);
     });
   };
 });
@@ -1552,6 +1740,44 @@ export const $ZodDiscriminatedUnion: base.$constructor<$ZodDiscriminatedUnion> =
           def,
         },
       ]);
+    };
+
+    inst._parseB = (payload, ctx) => {
+      const input = payload.value;
+      if (!util.isObject(input)) {
+        payload.issues.push({
+          code: "invalid_type",
+          expected: "object",
+          input,
+          def,
+        });
+        return payload;
+      }
+
+      const filteredOptions: base.$ZodType[] = [];
+      for (const option of def.options) {
+        if (discMap.has(option)) {
+          if (matchDiscriminators(input, discMap.get(option)!)) {
+            filteredOptions.push(option);
+          }
+        } else {
+          // no discriminator
+          filteredOptions.push(option);
+        }
+      }
+
+      if (filteredOptions.length === 1) return filteredOptions[0]._run(input, ctx) as any;
+
+      if (def.unionFallback) {
+        return _super(input, ctx);
+      }
+      payload.issues.push({
+        code: "invalid_union",
+        errors: [],
+        note: "No matching discriminator",
+        input,
+        def,
+      });
     };
   });
 
@@ -1663,6 +1889,49 @@ export const $ZodIntersection: base.$constructor<$ZodIntersection> = /*@__PURE__
         ? Promise.all([resultLeft, resultRight]).then(handleIntersectionResults)
         : handleIntersectionResults([resultLeft, resultRight]);
     };
+
+    inst._parseB = (payload, ctx) => {
+      const { value: input } = payload;
+      const resultLeft = def.left._runB({ value: input, issues: [], $payload: true }, ctx);
+      const resultRight = def.right._runB({ value: input, issues: [], $payload: true }, ctx);
+      const async = resultLeft instanceof Promise || resultRight instanceof Promise;
+
+      if (async) {
+        return Promise.all([resultLeft, resultRight]).then(([left, right]) => {
+          if (left.issues.length || right.issues.length) {
+            payload.issues.push(...left.issues, ...right.issues);
+            return payload;
+          }
+
+          const merged = mergeValues(left.value, right.value);
+          if (!merged.valid) {
+            throw new Error(
+              `Unmergable intersection types at ` +
+                `${merged.mergeErrorPath.join(".")}: ${typeof left.value} and ${typeof right.value}`
+            );
+          }
+
+          payload.value = merged.data;
+          return payload;
+        });
+      }
+
+      if ((resultLeft as any).issues.length || (resultRight as any).issues.length) {
+        payload.issues.push(...(resultLeft as any).issues, ...(resultRight as any).issues);
+        return payload;
+      }
+
+      const merged = mergeValues((resultLeft as any).value, (resultRight as any).value);
+      if (!merged.valid) {
+        throw new Error(
+          `Unmergable intersection types at ` +
+            `${merged.mergeErrorPath.join(".")}: ${typeof (resultLeft as any).value} and ${typeof (resultRight as any).value}`
+        );
+      }
+
+      payload.value = merged.data;
+      return payload;
+    };
   }
 );
 
@@ -1725,6 +1994,14 @@ function handleTupleResult(result: base.$ZodResult, final: base.$ZodResultWithIs
   }
 }
 
+function handleTupleResultB(result: base.ParsePayloadB, final: base.ParsePayloadB<any[]>, index: number) {
+  if (result.issues.length) {
+    final.issues.push(...base.$prefixIssues(index, result.issues));
+  } else {
+    final.value[index] = result.value;
+  }
+}
+
 export interface $ZodTuple<
   T extends ZodTupleItems = ZodTupleItems,
   Rest extends base.$ZodType | null = base.$ZodType | null,
@@ -1775,7 +2052,7 @@ export const $ZodTuple: base.$constructor<$ZodTuple> = /*@__PURE__*/ base.$const
             {
               input,
               def,
-              origin: "array",
+              origin: "array" as const,
               ...(tooBig ? { code: "too_big", maximum: items.length } : { code: "too_small", minimum: items.length }),
             },
           ],
@@ -1812,6 +2089,83 @@ export const $ZodTuple: base.$constructor<$ZodTuple> = /*@__PURE__*/ base.$const
 
     if (proms.length) return Promise.all(proms).then(() => final);
     return final;
+  };
+
+  inst._parseB = (payload, ctx) => {
+    const input = payload.value;
+    if (!Array.isArray(input)) {
+      payload.issues.push({
+        input,
+        def,
+        expected: "tuple",
+        code: "invalid_type",
+      });
+      return payload;
+    }
+
+    // let async = false;
+    // const final = base.$result<any[]>(Array(input.length), []);
+    payload.value = [];
+    const proms: Promise<any>[] = [];
+    // const results: any[] = Array(input.length);
+
+    if (!def.rest) {
+      const tooBig = input.length > items.length;
+      const tooSmall = input.length < optStart;
+      if (tooBig || tooSmall) {
+        payload.issues.push({
+          input,
+          def,
+          origin: "array" as const,
+          ...(tooBig ? { code: "too_big", maximum: items.length } : { code: "too_small", minimum: items.length }),
+        });
+        return payload;
+      }
+    }
+
+    let i = -1;
+    for (const item of items) {
+      i++;
+      if (i >= input.length) if (i >= optStart) continue;
+      const result = item._runB(
+        {
+          value: input[i],
+          issues: [],
+          $payload: true,
+        },
+        ctx
+      );
+
+      if (result instanceof Promise) {
+        proms.push(result.then((result) => handleTupleResultB(result, payload, i)));
+      } else {
+        handleTupleResultB(result, payload, i);
+      }
+    }
+
+    if (def.rest) {
+      const rest = input.slice(items.length);
+      for (const el of rest) {
+        i++;
+        const result = def.rest._runB(
+          {
+            value: el,
+            issues: [],
+            $payload: true,
+          },
+          ctx
+        );
+
+        if (result instanceof Promise) {
+          proms.push(result.then((result) => handleTupleResultB(result, payload, i)));
+        } else {
+          handleTupleResultB(result, payload, i);
+        }
+      }
+    }
+
+    if (proms.length) return Promise.all(proms).then(() => payload);
+    return payload;
   };
 });
 
@@ -1944,6 +2298,113 @@ Open an issue if you need this feature."
     if (proms.length) return Promise.all(proms).then(() => final); // handleObjectResults(objectResults, fail) as object;
     return final;
   };
+
+  inst._parseB = (payload, ctx) => {
+    const input = payload.value;
+
+    if (!util.isPlainObject(input)) {
+      payload.issues.push({
+        expected: "record",
+        code: "invalid_type",
+        input,
+        def,
+      });
+      return payload;
+    }
+
+    const proms: Promise<any>[] = [];
+
+    if ("~values" in def.keySchema) {
+      const values = def.keySchema["~values"];
+      payload.value = {};
+
+      for (const key of values) {
+        if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
+          const result = def.valueSchema._runB({ value: input[key], issues: [], $payload: true }, ctx);
+
+          if (result instanceof Promise) {
+            proms.push(
+              result.then((result) => {
+                if (result.issues.length) {
+                  payload.issues.push(...base.$prefixIssues(key, result.issues));
+                } else {
+                  payload.value[key] = result.value;
+                }
+              })
+            );
+          } else {
+            if (result.issues.length) {
+              payload.issues.push(...base.$prefixIssues(key, result.issues));
+            } else {
+              payload.value[key] = result.value;
+            }
+          }
+        }
+      }
+
+      let unrecognized!: string[];
+      for (const key in input) {
+        if (!values.has(key)) {
+          unrecognized = unrecognized ?? [];
+          unrecognized.push(key);
+        }
+      }
+      if (unrecognized && unrecognized.length > 0) {
+        payload.issues.push({
+          code: "unrecognized_keys",
+          input,
+          def,
+          keys: unrecognized,
+        });
+      }
+    } else {
+      payload.value = {};
+      for (const key of Reflect.ownKeys(input)) {
+        const keyResult = def.keySchema._runB({ value: key, issues: [], $payload: true }, ctx);
+
+        if (keyResult instanceof Promise) {
+          throw new Error("Async schemas not supported in object keys currently");
+        }
+
+        if (keyResult.issues.length) {
+          payload.issues.push({
+            origin: "record",
+            code: "invalid_key",
+            issues: base.$finalize(keyResult.issues).issues,
+            input: key,
+            path: [key],
+            def,
+          });
+          continue;
+        }
+
+        const result = def.valueSchema._runB({ value: input[key], issues: [], $payload: true }, ctx);
+
+        if (result instanceof Promise) {
+          proms.push(
+            result.then((result) => {
+              if (result.issues.length) {
+                payload.issues.push(...base.$prefixIssues(key, result.issues));
+              } else {
+                payload.value[keyResult.value as PropertyKey] = result.value;
+              }
+            })
+          );
+        } else {
+          if (result.issues.length) {
+            payload.issues.push(...base.$prefixIssues(key, result.issues));
+          } else {
+            payload.value[keyResult.value as PropertyKey] = result.value;
+          }
+        }
+      }
+    }
+
+    if (proms.length) {
+      return Promise.all(proms).then(() => payload);
+    }
+    return payload;
+  };
 });
 
 ///////////////////////////////////////
@@ -2011,6 +2472,52 @@ function handleMapResult(
   }
 }
 
+function handleMapResultB(
+  keyResult: base.ParsePayloadB,
+  valueResult: base.ParsePayloadB,
+  final: base.ParsePayloadB<Map<unknown, unknown>>,
+  key: unknown,
+  input: Map<any, any>,
+  def: $ZodMapDef,
+  ctx?: base.$ParseContext | undefined
+): void {
+  if (keyResult.issues.length) {
+    // if (!fail) fail = new base.$ZodFailure();
+    if (util.propertyKeyTypes.has(typeof key)) {
+      final.issues.push(...base.$prefixIssues(key as PropertyKey, keyResult.issues));
+      // fail = base.mergeFails(fail, keyResult, key as PropertyKey);
+    } else {
+      final.issues.push({
+        origin: "map",
+        code: "invalid_key",
+        input,
+        def,
+        issues: base.$finalize(keyResult.issues, ctx).issues,
+      });
+    }
+  }
+  if (valueResult.issues.length) {
+    // if (!fail) fail = new base.$ZodFailure();
+
+    if (util.propertyKeyTypes.has(typeof key)) {
+      final.issues.push(...base.$prefixIssues(key as PropertyKey, valueResult.issues));
+      // fail = base.mergeFails(fail, valueResult, key as PropertyKey);
+    } else {
+      final.issues.push({
+        origin: "map",
+        code: "invalid_element",
+        input,
+        def,
+        key: key,
+        issues: base.$finalize(valueResult.issues, ctx).issues,
+      });
+    }
+    // return final;
+  } else {
+    final.value.set(keyResult.value, valueResult.value);
+  }
+}
+
 export const $ZodMap: base.$constructor<$ZodMap> = /*@__PURE__*/ base.$constructor("$ZodMap", (inst, def) => {
   base.$ZodType.init(inst, def);
   inst._parse = (input, ctx) => {
@@ -2051,6 +2558,48 @@ export const $ZodMap: base.$constructor<$ZodMap> = /*@__PURE__*/ base.$construct
     if (proms.length) return Promise.all(proms).then(() => final);
     return final;
   };
+
+  inst._parseB = (payload, ctx) => {
+    const input = payload.value;
+    if (!(input instanceof Map)) {
+      payload.issues.push({
+        expected: "map",
+        code: "invalid_type",
+        input,
+        def,
+      });
+      return payload;
+    }
+
+    const proms: Promise<any>[] = [];
+    payload.value = new Map();
+
+    for (const [key, value] of input) {
+      const keyResult = def.keyType._runB({ value: key, issues: [], $payload: true }, ctx);
+      const valueResult = def.valueType._runB({ value: value, issues: [], $payload: true }, ctx);
+
+      if (keyResult instanceof Promise || valueResult instanceof Promise) {
+        proms.push(
+          Promise.all([keyResult, valueResult]).then(([keyResult, valueResult]) => {
+            handleMapResultB(keyResult, valueResult, payload, key, input, def, ctx);
+          })
+        );
+      } else {
+        handleMapResultB(
+          keyResult as base.ParsePayloadB,
+          valueResult as base.ParsePayloadB,
+          payload,
+          key,
+          input,
+          def,
+          ctx
+        );
+      }
+    }
+
+    if (proms.length) return Promise.all(proms).then(() => payload);
+    return payload;
+  };
 });
 
 ///////////////////////////////////////
@@ -2074,6 +2623,14 @@ export interface $ZodSet<T extends base.$ZodType = base.$ZodType>
 
 function handleSetResult(result: base.$ZodResult<any>, final: base.$ZodResultWithIssues<Set<any>>) {
   if (base.$failed(result)) {
+    final.issues.push(...result.issues);
+  } else {
+    final.value.add(result.value);
+  }
+}
+
+function handleSetResultB(result: base.ParsePayloadB, final: base.ParsePayloadB<Set<any>>) {
+  if (result.issues.length) {
     final.issues.push(...result.issues);
   } else {
     final.value.add(result.value);
@@ -2112,6 +2669,31 @@ export const $ZodSet: base.$constructor<$ZodSet> = /*@__PURE__*/ base.$construct
 
     if (proms.length) return Promise.all(proms).then(() => final);
     return final;
+  };
+
+  inst._parseB = (payload, ctx) => {
+    const input = payload.value;
+    if (!(input instanceof Set)) {
+      payload.issues.push({
+        input,
+        def,
+        expected: "set",
+        code: "invalid_type",
+      });
+      return payload;
+    }
+
+    const proms: Promise<any>[] = [];
+    payload.value = new Set();
+    for (const item of input) {
+      const result = def.valueType._runB({ value: item, issues: [], $payload: true }, ctx);
+      if (result instanceof Promise) {
+        proms.push(result.then((result) => handleSetResultB(result, payload)));
+      } else handleSetResultB(result, payload);
+    }
+
+    if (proms.length) return Promise.all(proms).then(() => payload);
+    return payload;
   };
 });
 
@@ -2174,6 +2756,20 @@ export const $ZodEnum: base.$constructor<$ZodEnum> = /*@__PURE__*/ base.$constru
       true
     );
   };
+
+  inst._parseB = (payload, _ctx) => {
+    const input = payload.value;
+    if (inst["~values"].has(input as any)) {
+      return payload;
+    }
+    payload.issues.push({
+      code: "invalid_value",
+      values,
+      input,
+      def,
+    });
+    return payload;
+  };
 });
 
 ////////////////////////////////////////
@@ -2225,6 +2821,20 @@ export const $ZodLiteral: base.$constructor<$ZodLiteral> = /*@__PURE__*/ base.$c
         true
       );
     };
+
+    inst._parseB = (payload, _ctx) => {
+      const input = payload.value;
+      if (inst["~values"].has(input as any)) {
+        return payload;
+      }
+      payload.issues.push({
+        code: "invalid_value",
+        values: def.values,
+        input,
+        def,
+      });
+      return payload;
+    };
   }
 );
 
@@ -2270,6 +2880,10 @@ export const $ZodConst: base.$constructor<$ZodConst> = /*@__PURE__*/ base.$const
   inst._parse = (_, _ctx) => {
     return base.$succeed(def.value) as any;
   };
+
+  inst._parseB = (payload, _ctx) => {
+    return payload;
+  };
 });
 
 //////////////////////////////////////////
@@ -2306,6 +2920,18 @@ export const $ZodFile: base.$constructor<$ZodFile> = /*@__PURE__*/ base.$constru
       true
     );
   };
+
+  inst._parseB = (payload, _ctx) => {
+    const input = payload.value;
+    if (input instanceof File) return payload;
+    payload.issues.push({
+      expected: "file",
+      code: "invalid_type",
+      input,
+      def,
+    });
+    return payload;
+  };
 });
 
 //////////////////////////////////////////////
@@ -2322,8 +2948,13 @@ export interface $ZodEffectDef extends base.$ZodTypeDef {
     ctx?: base.$ZodResult<unknown>
     // ctx?: base.$ParseContext | undefined
   ) => util.MaybeAsync<unknown>;
+  effectB: (
+    payload: base.ParsePayloadB<unknown>,
+    ctx?: base.ParseContextB
+    // ctx?: base.$ParseContext | undefined
+  ) => util.MaybeAsync<unknown>;
   // error?: errors.$ZodErrorMap<never> | undefined;
-  async: boolean;
+  // async: boolean;
 }
 export interface $ZodEffect<O = unknown, I = unknown> extends base.$ZodType<O, I> {
   "~def": $ZodEffectDef;
@@ -2332,7 +2963,7 @@ export interface $ZodEffect<O = unknown, I = unknown> extends base.$ZodType<O, I
 
 export const $ZodEffect: base.$constructor<$ZodEffect> = /*@__PURE__*/ base.$constructor("$ZodEffect", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst._async = def.async;
+  // inst._async = def.async;
 
   inst._parse = (input, _ctx) => {
     const result = base.$result<unknown>(input);
@@ -2344,6 +2975,18 @@ export const $ZodEffect: base.$constructor<$ZodEffect> = /*@__PURE__*/ base.$con
     }
     if (base.$failed(result)) return result;
     return base.$succeed(output);
+  };
+
+  inst._parseB = (payload, _ctx) => {
+    const output = def.effectB(payload, _ctx);
+    if (output instanceof Promise) {
+      return output.then((output) => {
+        payload.value = output;
+        return payload;
+      });
+    }
+    payload.value = output;
+    return payload;
   };
 });
 
@@ -2378,6 +3021,11 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
       if (input === undefined) return base.$succeed(undefined);
       return def.innerType._run(input, ctx);
     };
+
+    inst._parseB = (payload, ctx) => {
+      if (payload.value === undefined) return payload;
+      return def.innerType._runB(payload, ctx);
+    };
   }
 );
 
@@ -2411,6 +3059,11 @@ export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.
     inst._parse = (input, ctx) => {
       if (input === null) return base.$succeed(null);
       return def.innerType._run(input, ctx);
+    };
+
+    inst._parseB = (payload, ctx) => {
+      if (payload.value === null) return payload;
+      return def.innerType._runB(payload, ctx);
     };
   }
 );
@@ -2452,6 +3105,19 @@ export const $ZodRequired: base.$constructor<$ZodRequired> = /*@__PURE__*/ base.
       }
       return def.innerType._run(input, ctx);
     };
+
+    inst._parseB = (payload, ctx) => {
+      if (payload.value === undefined) {
+        payload.issues.push({
+          expected: "required",
+          code: "invalid_type",
+          input: payload.value,
+          def,
+        });
+        return payload;
+      }
+      return def.innerType._runB(payload, ctx);
+    };
   }
 );
 
@@ -2481,6 +3147,18 @@ export const $ZodSuccess: base.$constructor<$ZodSuccess> = /*@__PURE__*/ base.$c
       const result = def.innerType._run(input, ctx);
       if (result instanceof Promise) return result.then((result) => base.$succeed(!base.$failed(result)));
       return base.$succeed(!base.$failed(result));
+    };
+
+    inst._parseB = (payload, ctx) => {
+      const result = def.innerType._runB(payload, ctx);
+      if (result instanceof Promise) {
+        return result.then((result) => {
+          payload.value = result.issues.length === 0;
+          return payload;
+        });
+      }
+      payload.value = result.issues.length === 0;
+      return payload;
     };
   }
 );
@@ -2526,6 +3204,14 @@ export const $ZodDefault: base.$constructor<$ZodDefault> = /*@__PURE__*/ base.$c
       // }
       // return handleDefaultResult(result, def.defaultValue);
     };
+
+    inst._parseB = (payload, ctx) => {
+      if (payload.value === undefined) {
+        payload.value = def.defaultValue();
+        return payload;
+      }
+      return def.innerType._runB(payload, ctx);
+    };
   }
 );
 
@@ -2568,6 +3254,29 @@ export const $ZodCatch: base.$constructor<$ZodCatch> = /*@__PURE__*/ base.$const
     if (base.$failed(result)) return base.$succeed(def.catchValue({ error: base.$finalize(result.issues, ctx) }));
     return result;
   };
+
+  inst._parseB = (payload, ctx) => {
+    const result = def.innerType._runB(payload, ctx);
+    if (result instanceof Promise) {
+      return result.then((result) => {
+        if (result.issues.length) {
+          payload.value = def.catchValue({ error: base.$finalize(result.issues, ctx) });
+          payload.issues = [];
+        } else {
+          payload.value = result.value;
+        }
+        return payload;
+      });
+    }
+
+    if (result.issues.length) {
+      payload.value = def.catchValue({ error: base.$finalize(result.issues, ctx) });
+      payload.issues = [];
+    } else {
+      payload.value = result.value;
+    }
+    return payload;
+  };
 });
 
 ////////////////////////////////////////////
@@ -2604,6 +3313,19 @@ export const $ZodNaN: base.$constructor<$ZodNaN> = /*@__PURE__*/ base.$construct
       );
     }
     return base.$succeed(input);
+  };
+
+  inst._parseB = (payload, _ctx) => {
+    if (typeof payload.value !== "number" || !Number.isNaN(payload.value)) {
+      payload.issues.push({
+        input: payload.value,
+        def,
+        expected: "nan",
+        code: "invalid_type",
+      });
+      return payload;
+    }
+    return payload;
   };
 });
 
@@ -2647,6 +3369,25 @@ function handleAPipelineResult(result: base.$ZodResult, def: $ZodPipelineDef, ct
   return handleBPipelineResult(result, outResult);
 }
 
+function handleBPipelineResultB(resultB: base.ParsePayloadB, outResultB: base.ParsePayloadB) {
+  if (outResultB.issues.length) {
+    resultB.issues.push(...outResultB.issues);
+  }
+  resultB.value = outResultB.value;
+  return resultB;
+}
+
+function handleAPipelineResultB(resultB: base.ParsePayloadB, def: $ZodPipelineDef, ctx: base.ParseContextB) {
+  if (resultB.issues.length) return resultB;
+  const outResultB = def.out._runB({ value: resultB.value, issues: [], $payload: true }, ctx);
+  if (outResultB instanceof Promise) {
+    return outResultB.then((outResultB) => {
+      return handleBPipelineResultB(resultB, outResultB);
+    });
+  }
+  return handleBPipelineResultB(resultB, outResultB);
+}
+
 export const $ZodPipeline: base.$constructor<$ZodPipeline> = /*@__PURE__*/ base.$constructor(
   "$ZodPipeline",
   (inst, def) => {
@@ -2657,6 +3398,14 @@ export const $ZodPipeline: base.$constructor<$ZodPipeline> = /*@__PURE__*/ base.
         return result.then((result) => handleAPipelineResult(result, def, ctx));
       }
       return handleAPipelineResult(result, def, ctx);
+    };
+
+    inst._parseB = (payload, ctx) => {
+      const result = def.in._runB(payload, ctx);
+      if (result instanceof Promise) {
+        return result.then((result) => handleAPipelineResultB(result, def, ctx));
+      }
+      return handleAPipelineResultB(result, def, ctx);
     };
   }
 );
@@ -2694,6 +3443,12 @@ function handleReadonlyResult(result: base.$ZodResult): Readonly<base.$ZodResult
   result.value = Object.freeze(result.value);
   return result;
 }
+
+function handleReadonlyResultB(payload: base.ParsePayloadB): base.ParsePayloadB {
+  payload.value = Object.freeze(payload.value);
+  return payload;
+}
+
 export interface $ZodReadonlyDef extends base.$ZodTypeDef {
   type: "readonly";
   innerType: base.$ZodType;
@@ -2720,6 +3475,14 @@ export const $ZodReadonly: base.$constructor<$ZodReadonly> = /*@__PURE__*/ base.
         return result.then(handleReadonlyResult);
       }
       return handleReadonlyResult(result);
+    };
+
+    inst._parseB = (payload, ctx) => {
+      const result = def.innerType._runB(payload, ctx);
+      if (result instanceof Promise) {
+        return result.then(handleReadonlyResultB);
+      }
+      return handleReadonlyResultB(result);
     };
   }
 );
@@ -2815,6 +3578,31 @@ export const $ZodTemplateLiteral: base.$constructor<$ZodTemplateLiteral> = /*@__
 
       return base.$succeed(input);
     };
+
+    inst._parseB = (payload, _ctx) => {
+      if (typeof payload.value !== "string") {
+        payload.issues.push({
+          input: payload.value,
+          def,
+          expected: "template_literal",
+          code: "invalid_type",
+        });
+        return payload;
+      }
+
+      if (!inst["~pattern"].test(payload.value)) {
+        payload.issues.push({
+          input: payload.value,
+          def,
+          expected: "template_literal",
+          code: "invalid_type",
+          pattern: inst["~pattern"],
+        });
+        return payload;
+      }
+
+      return payload;
+    };
   }
 );
 
@@ -2842,6 +3630,12 @@ export const $ZodPromise: base.$constructor<$ZodPromise> = /*@__PURE__*/ base.$c
     base.$ZodType.init(inst, def);
     inst._parse = (input, ctx) => {
       return Promise.resolve(input).then((inner) => def.innerType._run(inner, ctx));
+    };
+
+    inst._parseB = (payload, ctx) => {
+      return Promise.resolve(payload.value).then((inner) =>
+        def.innerType._runB({ value: inner, issues: [], $payload: true }, ctx)
+      );
     };
   }
 );
@@ -2873,5 +3667,10 @@ export const $ZodCustom: base.$constructor<$ZodCustom<unknown>> = base.$construc
     return base.$succeed(input);
   };
 
+  inst._parseB = (payload, _) => {
+    return payload;
+  };
+
   inst["~check"] = (_) => def.fn(_ as any);
+  inst._checkB = (_) => def.fn(_ as any);
 });

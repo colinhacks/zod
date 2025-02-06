@@ -10,6 +10,7 @@ interface $ZodCheckLessThanDef extends base.$ZodCheckDef {
   check: "less_than";
   value: util.Numeric;
   inclusive: boolean;
+  // abort?: boolean;
   // error?:
   //   | errors.$ZodErrorMap<
   //       errors.$ZodIssueTooSmall<"number" | "bigint" | "date", util.Numeric>
@@ -51,8 +52,26 @@ export const $ZodCheckLessThan: base.$constructor<$ZodCheckLessThan> = base.$con
         input: ctx.value,
         inclusive: def.inclusive,
         def,
+        continue: !def.abort,
       });
     };
+
+    // inst["~checkB"] = (payload,_ctx) => {
+    //   if (def.inclusive ? payload.value <= def.value : payload.value < def.value) {
+    //     return;
+    //   }
+
+    //   payload.issues.push({
+    //     origin,
+    //     code: "too_big",
+    //     maximum: def.value as number,
+    //     input: payload.value,
+    //     inclusive: def.inclusive,
+    //     def,
+    //     continue: !def.abort,
+    //   });
+    //   // return payload;
+    // };
   }
 );
 
@@ -63,6 +82,7 @@ interface $ZodCheckGreaterThanDef extends base.$ZodCheckDef {
   check: "greater_than";
   value: util.Numeric;
   inclusive: boolean;
+  // abort?: boolean;
 }
 export interface $ZodCheckGreaterThan<T extends util.Numeric = util.Numeric> extends base.$ZodCheck<T> {
   "~def": $ZodCheckGreaterThanDef;
@@ -92,8 +112,26 @@ export const $ZodCheckGreaterThan: base.$constructor<$ZodCheckGreaterThan> = bas
         input: ctx.value,
         inclusive: def.inclusive,
         def,
+        continue: !def.abort,
       });
     };
+
+    // inst._checkB = (payload) => {
+    //   if (def.inclusive ? payload.value >= def.value : payload.value > def.value) {
+    //     return;
+    //   }
+
+    //   payload.issues.push({
+    //     origin: origin as "number",
+    //     code: "too_small",
+    //     minimum: def.value as number,
+    //     input: payload.value,
+    //     inclusive: def.inclusive,
+    //     def,
+    //     continue: !def.abort,
+    //   });
+    //   // return payload;
+    // };
   }
 );
 
@@ -105,6 +143,7 @@ export const $ZodCheckGreaterThan: base.$constructor<$ZodCheckGreaterThan> = bas
 interface $ZodCheckMultipleOfDef<T extends number | bigint> extends base.$ZodCheckDef {
   check: "multiple_of";
   value: T;
+  // abort?: boolean;
   // error?: errors.$ZodErrorMap<errors.$ZodIssueNotMultipleOf> | undefined;
 }
 
@@ -136,6 +175,7 @@ export const $ZodCheckMultipleOf: base.$constructor<$ZodCheckMultipleOf<number |
         divisor: def.value as number,
         input: ctx.value,
         def,
+        continue: !def.abort,
       });
     };
   }
@@ -194,6 +234,7 @@ export type $ZodNumberFormats = "int32" | "uint32" | "float32" | "float64" | "sa
 export interface $ZodCheckNumberFormatDef extends base.$ZodCheckDef {
   check: "number_format";
   format: $ZodNumberFormats;
+  // abort?: boolean;
 }
 
 export interface $ZodCheckNumberFormat extends base.$ZodCheck<number> {
@@ -233,7 +274,7 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
           ctx.aborted = true;
           return;
 
-          // not_ multiple_of issue
+          // not_multiple_of issue
           // ctx.issues.push({
           //   code: "not_multiple_of",
           //   origin: "number",
@@ -243,16 +284,31 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
           // });
         }
         if (!Number.isSafeInteger(input)) {
-          origin;
-          ctx.issues.push({
-            input,
-            ...(input > 0
-              ? { code: "too_big", maximum: Number.MAX_SAFE_INTEGER }
-              : { code: "too_small", minimum: Number.MIN_SAFE_INTEGER }),
-            origin,
-            note: "Integers must be within the range of Number.MIN_SAFE_INTEGER and Number.MAX_SAFE_INTEGER.",
-            def,
-          });
+          // origin;
+          if (input > 0) {
+            // too_big
+            ctx.issues.push({
+              input,
+              code: "too_big",
+              maximum: Number.MAX_SAFE_INTEGER,
+              note: "Integers must be within the the safe integer range.",
+              def,
+              origin,
+              continue: !def.abort,
+            });
+          } else {
+            // too_small
+            ctx.issues.push({
+              input,
+              code: "too_small",
+              minimum: Number.MIN_SAFE_INTEGER,
+              note: "Integers must be within the safe integer range.",
+              def,
+              origin,
+              continue: !def.abort,
+            });
+          }
+
           ctx.aborted = true;
           return;
         }
@@ -266,6 +322,7 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
           minimum: minimum as number,
           inclusive: true,
           def,
+          continue: !def.abort,
         });
       }
 
@@ -329,6 +386,7 @@ export const $ZodCheckBigIntFormat: base.$constructor<$ZodCheckBigIntFormat> = /
           minimum: minimum as any,
           inclusive: true,
           def,
+          continue: !def.abort,
         });
       }
 
@@ -389,6 +447,7 @@ export const $ZodCheckMaxSize: base.$constructor<$ZodCheckMaxSize> = base.$const
         maximum: def.maximum,
         input: ctx.value,
         def,
+        continue: !def.abort,
       });
     };
   }
@@ -425,6 +484,7 @@ export const $ZodCheckMinSize: base.$constructor<$ZodCheckMinSize> = base.$const
         minimum: def.minimum,
         input: ctx.value,
         def,
+        continue: !def.abort,
       });
     };
   }
@@ -461,6 +521,7 @@ export const $ZodCheckSizeEquals: base.$constructor<$ZodCheckSizeEquals> = base.
         ...(tooBig ? { code: "too_big", maximum: def.size } : { code: "too_small", minimum: def.size }),
         input: ctx.value,
         def,
+        continue: !def.abort,
       });
     };
   }
@@ -474,6 +535,7 @@ export interface $ZodCheckStringFormatDef<Format extends errors.$ZodStringFormat
   check: "string_format";
   format: Format;
   pattern?: RegExp | undefined;
+  // abort?: boolean;
 }
 
 export interface $ZodCheckStringFormat extends base.$ZodCheck<string> {
@@ -502,6 +564,7 @@ export const $ZodCheckStringFormat: base.$constructor<$ZodCheckStringFormat> = b
         input: ctx.value,
         ...(def.pattern ? { pattern: def.pattern.toString() } : {}),
         def,
+        continue: !def.abort,
       });
     };
   }
@@ -552,6 +615,7 @@ export const $ZodCheckJSONString: base.$constructor<$ZodCheckJSONString> = base.
           format: def.format,
           input: ctx.value,
           def,
+          continue: !def.abort,
         });
       }
     };
@@ -628,6 +692,7 @@ export const $ZodCheckIncludes: base.$constructor<$ZodCheckIncludes> = base.$con
         includes: def.includes,
         input: ctx.value,
         def,
+        continue: !def.abort,
       });
     };
   }
@@ -657,6 +722,7 @@ export const $ZodCheckStartsWith: base.$constructor<$ZodCheckStartsWith> = base.
         prefix: def.prefix,
         input: ctx.value,
         def,
+        continue: !def.abort,
       });
     };
   }
@@ -688,6 +754,7 @@ export const $ZodCheckEndsWith: base.$constructor<$ZodCheckEndsWith> = base.$con
         suffix: def.suffix,
         input: ctx.value,
         def,
+        continue: !def.abort,
       });
     };
   }
@@ -736,7 +803,7 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> = base.$con
           code: "invalid_type",
           expected: "object",
           input: ctx.value,
-          def,
+          def: { error: def?.error }, // do not include def.abort if it exists
         });
         return;
       }

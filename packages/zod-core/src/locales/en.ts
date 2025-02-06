@@ -70,7 +70,6 @@ const errorMap: errors.$ZodErrorMap = (issue) => {
       if (_issue.format === "ends_with") return `Invalid string: must end with "${_issue.suffix}"`;
       if (_issue.format === "includes") return `Invalid string: must include "${_issue.includes}"`;
       if (_issue.format === "regex") return `Invalid string: must match pattern ${_issue.pattern}`;
-      // _issue.fo
       return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
     }
     case "invalid_date":

@@ -3,7 +3,7 @@
   "compilerOptions": {
     "declaration": true,
     "extendedDiagnostics": true,
-    "skipLibCheck": false
+    "skipLibCheck": true
   },
   "files": ["src/index.ts"]
 }

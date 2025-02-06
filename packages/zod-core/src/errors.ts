@@ -5,7 +5,7 @@ import type * as util from "./util.js";
 ////     base type     ////
 ///////////////////////////
 export interface $ZodIssueBase<Input = unknown> {
-  code: string;
+  code?: string;
   input: Input | undefined;
   path: PropertyKey[];
   message: string;
@@ -26,6 +26,7 @@ export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase<Input> {
   origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file";
   maximum: number | bigint;
   inclusive?: boolean;
+  // abort: boolean | undefined;
 }
 
 export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase<Input> {
@@ -33,17 +34,20 @@ export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase<Input>
   origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file";
   minimum: number | bigint;
   inclusive?: boolean;
+  // abort: boolean | undefined;
 }
 
 export interface $ZodIssueInvalidStringFormat extends $ZodIssueBase<string> {
   code: "invalid_format";
   format: string;
   pattern?: string;
+  // abort: boolean | undefined;
 }
 
 export interface $ZodIssueNotMultipleOf<Input extends number | bigint = number | bigint> extends $ZodIssueBase<Input> {
   code: "not_multiple_of";
   divisor: number;
+  // abort: boolean | undefined;
 }
 
 export interface $ZodIssueInvalidDate extends $ZodIssueBase<Date> {
@@ -79,7 +83,8 @@ export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase<In
 }
 
 export interface $ZodIssueCustom extends $ZodIssueBase<unknown> {
-  code: "custom";
+  code?: "custom";
+  // abort: boolean | undefined;
 }
 
 ////////////////////////////////////////////
@@ -177,8 +182,11 @@ type RawIssue<T extends $ZodIssueBase> = util.Flatten<
     path?: PropertyKey[] | undefined;
     message?: string | undefined;
     def?: DefLike | undefined;
+    // continue?: boolean | undefined;
   } & Record<string, unknown>
 >;
+
+// type alkjdf = RawIssueB<$ZodIssueCustom>;
 
 export type $ZodRawIssueB<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssueB<T> : never;
 
@@ -187,7 +195,7 @@ type RawIssueB<T extends $ZodIssueBase> = util.Flatten<
     path?: PropertyKey[] | undefined;
     message?: string | undefined;
     def?: DefLike | undefined;
-    abort: boolean;
+    continue?: boolean | undefined;
   } & Record<string, unknown>
 >;
 // type PathList = {

@@ -1,9 +1,16 @@
 import { $ } from "execa";
-import {
-  // ARKTYPE, VALIBOT,
-  ZOD,
-  generate,
-} from "./generate.js";
+import { ARKTYPE, VALIBOT, ZOD, generate } from "./generate.js";
+
+// detect control c and process.exit()
+process.on("SIGINT", () => {
+  for (const proc of procs) {
+    if (proc.killed) continue;
+    console.log(`killing ${proc.pid}`);
+    proc.kill();
+  }
+
+  throw new Error("Exiting...");
+});
 
 /**
  * Target: 300
@@ -21,7 +28,6 @@ import {
  * 1, 256, 384
  *
  */
-
 const procs: any[] = [];
 
 // bisect
@@ -34,36 +40,27 @@ let CURR = MIN;
 // shape interface: 43472
 
 while (!MAX || MAX - MIN > 10) {
-  // CURR = !MAX ? MIN : Math.floor((MAX + MIN) / 2);
-  // console.log(`Generating with ${CURR} keys`);
-
-  // await generate({
-  //   numSchemas: CURR,
-  //   numKeys: 3,
-  //   numRefs: 0,
-  //   path: "src/index.ts",
-  //   schemaType: "z.interface",
-  // });
   generate({
     path: "src/index.ts",
-    ...ZOD,
+    // ...ZOD,
     // ...ARKTYPE,
-    // ...VALIBOT,
-    // schemaType: "z.interface",
+    ...VALIBOT,
+
     methods: [""],
-    numSchemas: 1,
-    numKeys: CURR,
-    numRefs: 0,
-    // numOmits: 10,
-    // numPicks: 10,
-    // numExtends: 10,
+    numSchemas: CURR,
+    numKeys: 3,
+    numRefs: 1,
+    numOmits: 0,
+    numPicks: 0,
+    numExtends: 0,
   });
 
-  try {
-    console.log(`Attempting tsc compilation...`);
-    const _proc = $`pnpm run bench`;
+  console.log(`Attempting tsc compilation...`);
+  const _proc = $`pnpm run bench`;
 
+  try {
     procs.push(_proc);
+    process.on("SIGINT", () => _proc.kill());
     const proc = await _proc;
 
     // get instantiations
@@ -71,8 +68,6 @@ while (!MAX || MAX - MIN > 10) {
     const instantiations = proc.stdout.match(/instantiations:\s+(.+)/i)![1];
     const memory = proc.stdout.match(/memory used:\s+(.+)/i)![1];
     console.log(`Compilation succeeded.\n   Time: ${time}\n   Instantiations: ${instantiations}\n   Memory ${memory}`);
-    // console.log(proc.stdout);
-    // console.log("failed?", proc.failed);
 
     // success
     if (!MAX) {
@@ -81,10 +76,11 @@ while (!MAX || MAX - MIN > 10) {
       MIN = CURR;
       CURR = Math.floor((MAX + MIN) / 2);
     }
-  } catch (err) {
+  } catch (err: any) {
     // fail
     console.log("tsc compilation failed...");
     console.log(err);
+    if (err.isTerminated) process.exit();
     MAX = CURR;
     CURR = Math.floor((MAX + MIN) / 2);
   }
@@ -98,11 +94,3 @@ while (!MAX || MAX - MIN > 10) {
 }
 
 console.log("ANSWER: ", MIN);
-
-// detect control c and process.exit()
-process.on("SIGINT", () => {
-  for (const proc of procs) {
-    proc.kill();
-  }
-  process.exit();
-});

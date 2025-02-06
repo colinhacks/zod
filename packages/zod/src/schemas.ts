@@ -126,7 +126,7 @@ export const ZodType: core.$constructor<ZodType> = core.$constructor("ZodType", 
   inst.and = (arg) => api.intersection(inst, arg);
   // transform
   inst.transform = (tx) => api.transform(inst, tx) as never;
-  inst.transformAsync = (tx) => api.transformAsync(inst, tx);
+  // inst.transformAsync = (tx) => api.transformAsync(inst, tx);
   // default
   inst.default = (def) => api._default(inst, def);
   // catch
@@ -688,6 +688,7 @@ export interface ZodNumber extends core.$ZodNumber<number>, ZodType<number, numb
   /** Identical to .max() */
   lte(value: number, message?: core.$ZodCheckLessThanParams): this;
   max(value: number, message?: core.$ZodCheckLessThanParams): this;
+  /** @deprecated Use `z.int()` instead. */
   int(params?: core.$ZodCheckNumberFormatParams): this;
   /** @deprecated This is now identical to `.int()` instead. Only numbers in the safe integer range are accepted. */
   safe(params?: core.$ZodCheckNumberFormatParams): this;
@@ -1046,7 +1047,7 @@ export interface ZodShape {
 export type { ZodShape as ZodRawShape };
 
 export interface ZodObject<
-  // @ts-ignore
+  /** @ts-ignore */
   out Shape extends ZodShape = ZodShape,
   Extra extends Record<string, unknown> = Record<string, unknown>,
 > extends core.$ZodObject<Shape, Extra>,
@@ -1136,11 +1137,11 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
 //////////                     //////////
 /////////////////////////////////////////
 /////////////////////////////////////////
-type ZodInterfaceExtend<T extends ZodInterface, Shape extends ZodShape> = ZodInterface<
-  // util.Flatten<util.Overwrite<T["~shape"], Shape>>,
-  util.ExtendInterfaceShape<T["~shape"], Shape>,
-  T["~extra"]
->;
+// type ZodInterfaceExtend<T extends ZodInterface, Shape extends ZodShape> = ZodInterface<
+//   // util.Flatten<util.Overwrite<T["~shape"], Shape>>,
+//   util.ExtendInterfaceShape<T["~shape"], Shape>,
+//   T["~extra"]
+// >;
 
 type ZodInterfacePartial<T extends ZodInterface, Keys extends string> = ZodInterface<
   util.PartialInterfaceShape<T["~shape"], Keys>,
@@ -1148,22 +1149,19 @@ type ZodInterfacePartial<T extends ZodInterface, Keys extends string> = ZodInter
 >;
 
 type ZodInterfaceRequired<T extends ZodInterface, Keys extends string> = ZodInterface<
-  util.Flatten<
-    Omit<T, Keys> & {
-      [k in Keys as k extends `${infer NewK}?` ? NewK : k extends `?${infer NewK}` ? NewK : k]: T["~shape"][k];
-    }
-  >,
+  util.RequiredInterfaceShape<T["~shape"], Keys>,
+  // util.Flatten<
+  //   Omit<T, Keys> & {
+  //     [k in Keys as k extends `${infer NewK}?` ? NewK : k extends `?${infer NewK}` ? NewK : k]: T["~shape"][k];
+  //   }
+  // >,
   T["~extra"]
 >;
 
 export interface ZodInterface<
-  // @ts-ignore Cast variance
+  /** @ts-ignore Cast variance */
   out Shape extends core.$ZodLooseShape = core.$ZodLooseShape,
   out Extra extends Record<string, any> = Record<string, any>,
-  // @ts-ignore
-  // out O extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
-  // @ts-ignore
-  // out I extends Record<PropertyKey, unknown> = Record<PropertyKey, unknown>,
 > extends core.$ZodInterface<Shape, Extra>,
     ZodType<
       // unknown,
@@ -1182,7 +1180,7 @@ export interface ZodInterface<
 
   catchall(schema: ZodType): this;
 
-  extend<U extends ZodShape>(shape: U): ZodInterface<util.ExtendInterfaceShape<Shape, U>, Extra>;
+  extend<U extends ZodShape>(shape: U): ZodInterface<util.ExtendShape<Shape, U>, Extra>;
 
   merge<U extends ZodInterface>(
     incoming: U
@@ -1423,7 +1421,7 @@ export const ZodSet: core.$constructor<ZodSet> = /*@__PURE__*/ core.$constructor
 ///////////////////////////////////////
 
 export interface ZodEnum<
-  // @ts-ignore
+  /** @ts-ignore */
   out T extends util.EnumLike = util.EnumLike,
 > extends core.$ZodEnum<T>,
     ZodType<core.$InferEnumOutput<T>, core.$InferEnumInput<T>> {

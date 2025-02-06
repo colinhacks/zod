@@ -1,4 +1,5 @@
 export * from "./base.js";
+export * from "./parse.js";
 export * from "./errors.js";
 export * from "./schemas.js";
 export * from "./api.js";

@@ -86,10 +86,7 @@ test("z.extend", () => {
     isAdmin: boolean;
   }>();
   expect(extendedSchema).toBeDefined();
-  expect(
-    z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true })
-      .success
-  ).toBe(true);
+  expect(z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
 });
 
 test("z.pick", () => {
@@ -97,10 +94,7 @@ test("z.pick", () => {
   type PickedUser = z.infer<typeof pickedSchema>;
   expectTypeOf<PickedUser>().toEqualTypeOf<{ name: string; email?: string }>();
   expect(pickedSchema).toBeDefined();
-  expect(
-    z.safeParse(pickedSchema, { name: "John", email: "john@example.com" })
-      .success
-  ).toBe(true);
+  expect(z.safeParse(pickedSchema, { name: "John", email: "john@example.com" }).success).toBe(true);
 });
 
 test("z.omit", () => {
@@ -111,14 +105,8 @@ test("z.omit", () => {
     email?: string | undefined;
   }>();
   expect(omittedSchema).toBeDefined();
-  expect(Reflect.ownKeys(omittedSchema["~def"].shape)).toEqual([
-    "name",
-    "email",
-  ]);
-  expect(
-    z.safeParse(omittedSchema, { name: "John", email: "john@example.com" })
-      .success
-  ).toBe(true);
+  expect(Reflect.ownKeys(omittedSchema["~def"].shape)).toEqual(["name", "email"]);
+  expect(z.safeParse(omittedSchema, { name: "John", email: "john@example.com" }).success).toBe(true);
 });
 
 test("z.partial", () => {
@@ -139,7 +127,5 @@ test("z.partial", () => {
     email?: string;
   }>();
   expect(z.safeParse(partialSchemaWithMask, { age: 30 }).success).toBe(true);
-  expect(z.safeParse(partialSchemaWithMask, { name: "John" }).success).toBe(
-    false
-  );
+  expect(z.safeParse(partialSchemaWithMask, { name: "John" }).success).toBe(false);
 });

@@ -1,3 +1,4 @@
+import * as zc from "zod-core";
 import { makeSchema } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
@@ -34,12 +35,15 @@ const DATA = Array.from({ length: 1000 }, () =>
   })
 );
 
+console.log(zod3.safeParse(DATA[0]));
+console.log(zc.safeParseB(zod4, DATA[0]));
+
 const bench = metabench("small: z.object().safeParseAsync", {
   zod3() {
-    for (const _ of DATA) zod3.parse(_);
+    for (const _ of DATA) zod3.safeParse(_);
   },
   zod4() {
-    for (const _ of DATA) zod4.parse(_);
+    for (const _ of DATA) zc.safeParseB(zod4, _);
   },
 });
 

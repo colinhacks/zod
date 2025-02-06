@@ -356,16 +356,15 @@ export function never(...args: any[]): schemas.ZodNever {
 }
 
 // void
-interface ZodVoidParams extends util.TypeParams<schemas.ZodVoid> {}
+
 function _void(checks?: core.$ZodCheck<void>[]): schemas.ZodVoid;
-function _void(params?: string | ZodVoidParams, checks?: core.$ZodCheck<void>[]): schemas.ZodVoid;
+function _void(params?: string | core.$ZodVoidParams, checks?: core.$ZodCheck<void>[]): schemas.ZodVoid;
 function _void(...args: any[]): schemas.ZodVoid {
   return factories._voidFactory(...args);
 }
 export { _void as void };
 
 // array
-interface ZodArrayParams extends util.TypeParams<schemas.ZodArray, "element"> {}
 export function array<T extends schemas.ZodType>(element: T, params?: core.$ZodArrayParams): schemas.ZodArray<T> {
   return new schemas.ZodArray({
     type: "array",
@@ -380,7 +379,6 @@ export function array<T extends schemas.ZodType>(element: T, params?: core.$ZodA
 export function object<T extends schemas.ZodShape>(
   shape: T,
   params?: core.$ZodObjectLikeParams
-  // @ts-ignore
 ): schemas.ZodObject<T, Record<never, unknown>>;
 export function object<T extends schemas.ZodRawShape>(
   shape: T,
@@ -906,8 +904,9 @@ export function effect<O = unknown, I = unknown>(
 ): schemas.ZodEffect<O, I> {
   return new schemas.ZodEffect({
     type: "effect",
-    async: false,
+    // async: false,
     effect: effect as any,
+    effectB: effect as any,
     ...util.normalizeTypeParams(params),
   }) as schemas.ZodEffect<O, I>;
 }
@@ -1142,20 +1141,6 @@ export function custom<T>(
     fn: fn ? (fn as any) : () => true,
     ...util.normalizeCheckParams(_params),
   }) as schemas.ZodCustom<T>;
-}
-
-export function customAsync<T>(
-  fn?: (data: unknown) => Promise<unknown>,
-  _params: string | core.$ZodCustomParams = {}
-): schemas.ZodCustom<T> {
-  const schema = new schemas.ZodCustom({
-    type: "custom",
-    check: "custom",
-    fn: fn ? (fn as any) : () => true,
-    ...util.normalizeCheckParams(_params),
-  }) as schemas.ZodCustom<T>;
-  schema["~async"] = true;
-  return schema;
 }
 
 // instanceof

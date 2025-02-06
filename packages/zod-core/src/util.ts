@@ -5,6 +5,7 @@ import type {
   $ZodInterface,
   $ZodLooseShape,
   $ZodObjectLike,
+  $ZodObjectLikeDef,
   $ZodOptional,
   $ZodOptionalDef,
   $ZodRequired,
@@ -154,6 +155,7 @@ export type NoNever<T> = Identity<{
 export type ExtendShape<A extends object, B extends object> = {
   [K in keyof A | keyof B]: K extends keyof B ? B[K] : K extends keyof A ? A[K] : never;
 };
+// export type ExtendShape<T extends $ZodShape, Shape extends $ZodShape> = Flatten<Overwrite<T, Shape>>;
 
 // type UnionToIntersectionFn<T> = (
 //   T extends unknown
@@ -335,7 +337,11 @@ export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () =
       throw new Error("cached value already set");
     },
     set(v) {
-      object[key] = v;
+      Object.defineProperty(object, key, {
+        value: v,
+        configurable: true,
+      });
+      // object[key] = v;
     },
     configurable: true,
   });
@@ -615,6 +621,7 @@ export type Normalize<T> = T extends Record<any, any>
       } & {
         error?: Exclude<T["error"], string>;
         path?: PropertyKey[] | undefined;
+        message?: string | undefined;
       }
     >
   : never;
@@ -841,15 +848,18 @@ export const BIGINT_FORMAT_RANGES: Record<$ZodBigIntFormats, [bigint, bigint]> =
 export function pick(schema: $ZodObjectLike, mask: object) {
   const shape: Writeable<$ZodShape> = {};
   const currShape = schema["~def"].shape;
+
   for (const key in mask) {
     // shape[key] = schema["~def"].shape[key];
     if (key in currShape) {
       shape[key] = currShape[key];
-    } else if (`${key}?` in currShape) {
-      shape[`${key}?`] = currShape[`${key}?`];
-    } else if (`?${key}` in currShape) {
-      shape[`?${key}`] = currShape[`?${key}`];
-    } else {
+    }
+    // else if (`${key}?` in currShape) {
+    //   shape[`${key}?`] = currShape[`${key}?`];
+    // } else if (`?${key}` in currShape) {
+    //   shape[`?${key}`] = currShape[`?${key}`];
+    // }
+    else {
       throw new Error(`Unrecognized key: "${key}"`);
     }
   }
@@ -866,11 +876,13 @@ export function omit(schema: $ZodObjectLike, mask: object) {
   for (const key in mask) {
     if (key in shape) {
       delete shape[key];
-    } else if (`${key}?` in shape) {
-      delete shape[`${key}?`];
-    } else if (`?${key}` in shape) {
-      delete shape[`?${key}`];
-    } else {
+    }
+    //  else if (`${key}?` in shape) {
+    //   delete shape[`${key}?`];
+    // } else if (`?${key}` in shape) {
+    //   delete shape[`?${key}`];
+    // }
+    else {
       throw new Error(`Unrecognized key: "${key}"`);
     }
   }
@@ -949,9 +961,6 @@ export function requiredObject(
   }) as any;
 }
 
-// merge two shapes
-export type ExtendInterfaceShape<T extends $ZodShape, Shape extends $ZodShape> = Flatten<Overwrite<T["~shape"], Shape>>;
-
 // add question mark to all non-optional keys
 export type PartialInterfaceShape<T extends $ZodShape, Keys extends string> = Flatten<
   Omit<T, Keys> & {
@@ -1022,4 +1031,43 @@ export function floatSafeRemainder(val: number, step: number) {
   const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
   const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
   return (valInt % stepInt) / 10 ** decCount;
+}
+
+export function normalizeObjectLikeDef(def: $ZodObjectLikeDef): {
+  shape: Readonly<Record<string, base.$ZodType<unknown, unknown>>>;
+  keyMap: Record<string, string>;
+  keys: string[];
+  keySet: Set<string>;
+  numKeys: number;
+  optionals: Set<PropertyKey>;
+} {
+  if (def.type === "interface") {
+    const { shape, keyMap } = cleanInterfaceShape(def.shape);
+    const keys = Object.keys(shape);
+    const keySet = new Set(Object.keys(shape));
+
+    return {
+      shape,
+      keyMap,
+      keys,
+      keySet,
+      numKeys: keys.length,
+      optionals: optionalInterfaceKeys(def.shape),
+    };
+  }
+  if (def.type === "object") {
+    const keys = Object.keys(def.shape);
+    const keySet: Set<string> = new Set(Object.keys(def.shape));
+    const keyMap: Record<string, string> = Object.fromEntries(Object.keys(def.shape).map((k) => [k, k]));
+
+    return {
+      shape: def.shape,
+      keyMap,
+      keys,
+      keySet,
+      numKeys: keys.length,
+      optionals: optionalObjectKeys(def.shape),
+    };
+  }
+  throw new Error("Invalid object-like type");
 }

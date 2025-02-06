@@ -12,18 +12,21 @@ export const _guid: Factory = util.factory(() => schemas.ZodGUID, {
   type: "string",
   format: "guid",
   check: "string_format",
+  abort: false,
 });
 
 export const _uuid: Factory = util.factory(() => schemas.ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
+  abort: false,
 });
 
 export const _uuidv4: Factory = util.factory(() => schemas.ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
+  abort: false,
   version: "v4",
 });
 
@@ -31,6 +34,7 @@ export const _uuidv6: Factory = util.factory(() => schemas.ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
+  abort: false,
   version: "v6",
 });
 
@@ -38,6 +42,7 @@ export const _uuidv7: Factory = util.factory(() => schemas.ZodUUID, {
   type: "string",
   format: "uuid",
   check: "string_format",
+  abort: false,
   version: "v7",
 });
 
@@ -45,66 +50,77 @@ export const _email: Factory = util.factory(() => schemas.ZodEmail, {
   type: "string",
   format: "email",
   check: "string_format",
+  abort: false,
 });
 
 export const _url: Factory = util.factory(() => schemas.ZodURL, {
   type: "string",
   format: "url",
   check: "string_format",
+  abort: false,
 });
 
 export const _emoji: Factory = util.factory(() => schemas.ZodEmoji, {
   type: "string",
   format: "emoji",
   check: "string_format",
+  abort: false,
 });
 
 export const _nanoid: Factory = util.factory(() => schemas.ZodNanoID, {
   type: "string",
   format: "nanoid",
   check: "string_format",
+  abort: false,
 });
 
 export const _cuid: Factory = util.factory(() => schemas.ZodCUID, {
   type: "string",
   format: "cuid",
   check: "string_format",
+  abort: false,
 });
 
 export const _cuid2: Factory = util.factory(() => schemas.ZodCUID2, {
   type: "string",
   format: "cuid2",
   check: "string_format",
+  abort: false,
 });
 
 export const _ulid: Factory = util.factory(() => schemas.ZodULID, {
   type: "string",
   format: "ulid",
   check: "string_format",
+  abort: false,
 });
 
 export const _xid: Factory = util.factory(() => schemas.ZodXID, {
   type: "string",
   format: "xid",
   check: "string_format",
+  abort: false,
 });
 
 export const _ksuid: Factory = util.factory(() => schemas.ZodKSUID, {
   type: "string",
   format: "ksuid",
   check: "string_format",
+  abort: false,
 });
 
 export const _ip: Factory = util.factory(() => schemas.ZodIP, {
   type: "string",
   format: "ip",
   check: "string_format",
+  abort: false,
 });
 
 export const _ipv4: Factory = util.factory(() => schemas.ZodIP, {
   type: "string",
   format: "ip",
   check: "string_format",
+  abort: false,
   version: "v4",
 });
 
@@ -112,6 +128,7 @@ export const _ipv6: Factory = util.factory(() => schemas.ZodIP, {
   type: "string",
   format: "ip",
   check: "string_format",
+  abort: false,
   version: "v6",
 });
 
@@ -119,24 +136,28 @@ export const _base64: Factory = util.factory(() => schemas.ZodBase64, {
   type: "string",
   format: "base64",
   check: "string_format",
+  abort: false,
 });
 
 export const _jsonString: Factory = util.factory(() => schemas.ZodJSONString, {
   type: "string",
   format: "json_string",
   check: "string_format",
+  abort: false,
 });
 
 export const _e164: Factory = util.factory(() => schemas.ZodE164, {
   type: "string",
   format: "e164",
   check: "string_format",
+  abort: false,
 });
 
 export const _jwt: Factory = util.factory(() => schemas.ZodJWT, {
   type: "string",
   format: "jwt",
   check: "string_format",
+  abort: false,
 });
 
 export const _number: Factory = util.factory(() => schemas.ZodNumber, {
@@ -146,42 +167,49 @@ export const _number: Factory = util.factory(() => schemas.ZodNumber, {
 export const _int: Factory = util.factory(() => schemas.ZodNumberFormat, {
   type: "number",
   check: "number_format",
+  abort: false,
   format: "safeint",
 });
 
 export const _float32: Factory = util.factory(() => schemas.ZodNumberFormat, {
   type: "number",
   check: "number_format",
+  abort: false,
   format: "float32",
 });
 
 export const _float64: Factory = util.factory(() => schemas.ZodNumberFormat, {
   type: "number",
   check: "number_format",
+  abort: false,
   format: "float64",
 });
 
 export const _int32: Factory = util.factory(() => schemas.ZodNumberFormat, {
   type: "number",
   check: "number_format",
+  abort: false,
   format: "int32",
 });
 
 export const _uint32: Factory = util.factory(() => schemas.ZodNumberFormat, {
   type: "number",
   check: "number_format",
+  abort: false,
   format: "uint32",
 });
 
 export const _int64: Factory = util.factory(() => schemas.ZodBigIntFormat, {
   type: "bigint",
   check: "bigint_format",
+  abort: false,
   format: "int64",
 });
 
 export const _uint64: Factory = util.factory(() => schemas.ZodBigIntFormat, {
   type: "bigint",
   check: "bigint_format",
+  abort: false,
   format: "uint64",
 });
 

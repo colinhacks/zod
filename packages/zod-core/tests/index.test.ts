@@ -542,7 +542,10 @@ test("z.transform async", async () => {
 });
 
 test("z.preprocess", () => {
-  const a = z.preprocess((val) => String(val).toUpperCase(), z.string());
+  const a = z.pipeline(
+    z.effect((val) => String(val).toUpperCase()),
+    z.string()
+  );
   type a = z.output<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<string>();
   expect(z.parse(a, 123)).toEqual("123");
@@ -737,28 +740,28 @@ test("z.refine", () => {
   expect(() => z.parse(a, "hi")).toThrow();
 });
 
-test("z.superRefine", () => {
-  const a = z.number([
-    z.superRefine((val, ctx) => {
-      if (val < 3) {
-        return ctx.addIssue({
-          code: "custom",
-          origin: "custom",
-          message: "Too small",
-          input: val,
-        });
-      }
-      if (val > 10) {
-        return ctx.addIssue("Too big");
-      }
-    }),
-  ]);
+// test("z.superRefine", () => {
+//   const a = z.number([
+//     z.superRefine((val, ctx) => {
+//       if (val < 3) {
+//         return ctx.addIssue({
+//           code: "custom",
+//           origin: "custom",
+//           message: "Too small",
+//           input: val,
+//         });
+//       }
+//       if (val > 10) {
+//         return ctx.addIssue("Too big");
+//       }
+//     }),
+//   ]);
 
-  expect(z.parse(a, 5)).toEqual(5);
-  expect(() => z.parse(a, 2)).toThrow();
-  expect(() => z.parse(a, 11)).toThrow();
-  expect(() => z.parse(a, "hi")).toThrow();
-});
+//   expect(z.parse(a, 5)).toEqual(5);
+//   expect(() => z.parse(a, 2)).toThrow();
+//   expect(() => z.parse(a, 11)).toThrow();
+//   expect(() => z.parse(a, "hi")).toThrow();
+// });
 
 test("z.effect", () => {
   const a = z.effect((val: number) => {

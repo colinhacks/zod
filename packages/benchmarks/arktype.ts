@@ -29,7 +29,7 @@ console.log(atschema(DATA[0]) === DATA[0]);
 
 const bench = metabench("zod vs arktype", {
   zod4() {
-    for (const _ of DATA) zc.parseB(schema, _);
+    for (const _ of DATA) zc.safeParseB(schema, _);
   },
   arktype() {
     for (const _ of DATA) atschema(_);
