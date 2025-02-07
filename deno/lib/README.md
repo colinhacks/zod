@@ -409,6 +409,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br />
       <a style="text-decoration:none;" href="https://storyblok.com/" target="_blank">Storyblok</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" height="50px;" alt="Mux logo" />
       <br />
