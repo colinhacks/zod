@@ -212,10 +212,8 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 <h3 align="center">Platinum</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
-  <td>No platinum sponsors yet. Be the first!</td>
+  <td>This tier was just added. [Be the first platinum sponsor! 👉](https://github.com/sponsors/colinhacks)</td>
 </table>
-
-<p align="center">No platinum sponsors yet. Be the first!</p>
 
 <h3 align="center">Gold</h3>
 
@@ -237,8 +235,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <p></p>
       <p>
@@ -273,8 +269,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <p></p>
       <p>
@@ -309,8 +303,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <p></p>
       <p>
