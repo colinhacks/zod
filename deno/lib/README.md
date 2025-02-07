@@ -346,7 +346,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
-    
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/72055470?s=200&v=4" height="50px;" alt="Nitric" />
       <br />
