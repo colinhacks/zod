@@ -225,7 +225,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <a href="https://www.coderabbit.ai/">
         <picture height="51px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d">
-          <img alt="CodeRabbit logo" height="62px" src="https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74">
+          <img alt="CodeRabbit logo" height="51px" src="https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74">
         </picture>
       </a>
       <br  />   
