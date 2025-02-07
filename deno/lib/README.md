@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logo.svg" width="200px" align="center" alt="Zod logo" />
+  <img src="../../logo.svg" width="200px" align="center" alt="Zod logo" />
   <h1 align="center">Zod</h1>
   <p align="center">
     ✨ <a href="https://zod.dev">https://zod.dev</a> ✨
