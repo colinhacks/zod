@@ -1,87 +1,70 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
 import * as core from "zod-core";
+import * as util from "zod-core/util";
 import * as z from "../src/index.js";
 
-const empty = z.literal.template([]);
-const hello = z.literal.template(["hello"]);
-const world = z.literal.template(["", z.literal("world")]);
-const one = z.literal.template([1]);
-const two = z.literal.template(["", z.literal(2)]);
-const truee = z.literal.template([true]);
-const anotherTrue = z.literal.template(["", z.literal(true)]);
-const falsee = z.literal.template([false]);
-const anotherFalse = z.literal.template(["", z.literal(false)]);
-const nulll = z.literal.template([null]);
-const anotherNull = z.literal.template(["", z.null()]);
-const undefinedd = z.literal.template([undefined]);
-const anotherUndefined = z.literal.template(["", z.undefined()]);
-const anyString = z.literal.template(["", z.string()]);
-const anyNumber = z.literal.template(["", z.number()]);
-const anyFiniteNumber = z.literal.template(["", z.number().finite()]);
-const anyInt = z.literal.template(["", z.number().int()]);
-const anyNegativeNumber = z.literal.template(["", z.number().negative()]);
-const anyPositiveNumber = z.literal.template(["", z.number().positive()]);
-const zeroButInADumbWay = z.literal.template([
-  "",
-  z.number().nonnegative().nonpositive(),
-]);
-const finiteButInADumbWay = z.literal.template(["", z.number().min(5).max(10)]);
-const bool = z.literal.template(["", z.boolean()]);
-const bigone = z.literal.template(["", z.literal(BigInt(1))]);
-const anyBigint = z.literal.template(["", z.bigint()]);
-const nullableYo = z.literal.template(["", z.nullable(z.literal("yo"))]);
-const nullableString = z.literal.template(["", z.nullable(z.string())]);
-const optionalYeah = z.literal.template(["", z.literal("yeah").optional()]);
-const optionalString = z.literal.template(["", z.string().optional()]);
-const optionalNumber = z.literal.template(["", z.number().optional()]);
-const nullishBruh = z.literal.template(["", z.literal("bruh").nullish()]);
-const nullishString = z.literal.template(["", z.string().nullish()]);
-const cuid = z.literal.template(["", z.string().cuid()]);
-const cuidZZZ = z.literal.template(["", z.string().cuid(), "ZZZ"]);
-const cuid2 = z.literal.template(["", z.string().cuid2()]);
-const datetime = z.literal.template(["", z.string().datetime()]);
-const email = z.literal.template(["", z.string().email()]);
-const ip = z.literal.template(["", z.string().ip()]);
-const ipv4 = z.literal.template(["", z.string().ip({ version: "v4" })]);
-const ipv6 = z.literal.template(["", z.string().ip({ version: "v6" })]);
-const ulid = z.literal.template(["", z.string().ulid()]);
-const uuid = z.literal.template(["", z.string().uuid()]);
-const stringAToZ = z.literal.template(["", z.string().regex(/^[a-z]+$/)]);
-const stringStartsWith = z.literal.template([
-  "",
-  z.string().startsWith("hello"),
-]);
-const stringEndsWith = z.literal.template(["", z.string().endsWith("world")]);
-const stringMax5 = z.literal.template(["", z.string().max(5)]);
-const stringMin5 = z.literal.template(["", z.string().min(5)]);
-const stringLen5 = z.literal.template(["", z.string().length(5)]);
-const stringMin5Max10 = z.literal.template(["", z.string().min(5).max(10)]);
-const stringStartsWithMax5 = z.literal.template([
-  "",
-  z.string().startsWith("hello").max(5),
-]);
-const brandedString = z.literal.template([
-  "",
-  z.string().min(1).brand("myBrand"),
-]);
-const anything = z.literal.template(["", z.any()]);
+const empty = z.templateLiteral([]);
+const hello = z.templateLiteral(["hello"]);
+const world = z.templateLiteral(["", z.literal("world")]);
+const one = z.templateLiteral([1]);
+const two = z.templateLiteral(["", z.literal(2)]);
+const truee = z.templateLiteral([true]);
+const anotherTrue = z.templateLiteral(["", z.literal(true)]);
+const falsee = z.templateLiteral([false]);
+const anotherFalse = z.templateLiteral(["", z.literal(false)]);
+const nulll = z.templateLiteral([null]);
+const anotherNull = z.templateLiteral(["", z.null()]);
+const undefinedd = z.templateLiteral([undefined]);
+const anotherUndefined = z.templateLiteral(["", z.undefined()]);
+const anyString = z.templateLiteral(["", z.string()]);
+const anyNumber = z.templateLiteral(["", z.number()]);
+const anyFiniteNumber = z.templateLiteral(["", z.number().finite()]);
+const anyInt = z.templateLiteral(["", z.number().int()]);
+const anyNegativeNumber = z.templateLiteral(["", z.number().negative()]);
+const anyPositiveNumber = z.templateLiteral(["", z.number().positive()]);
+const zeroButInADumbWay = z.templateLiteral(["", z.number().nonnegative().nonpositive()]);
+const finiteButInADumbWay = z.templateLiteral(["", z.number().min(5).max(10)]);
+const bool = z.templateLiteral(["", z.boolean()]);
+const bigone = z.templateLiteral(["", z.literal(BigInt(1))]);
+const anyBigint = z.templateLiteral(["", z.bigint()]);
+const nullableYo = z.templateLiteral(["", z.nullable(z.literal("yo"))]);
+const nullableString = z.templateLiteral(["", z.nullable(z.string())]);
+const optionalYeah = z.templateLiteral(["", z.literal("yeah").optional()]);
+const optionalString = z.templateLiteral(["", z.string().optional()]);
+const optionalNumber = z.templateLiteral(["", z.number().optional()]);
+const nullishBruh = z.templateLiteral(["", z.literal("bruh").nullish()]);
+const nullishString = z.templateLiteral(["", z.string().nullish()]);
+const cuid = z.templateLiteral(["", z.string().cuid()]);
+const cuidZZZ = z.templateLiteral(["", z.string().cuid(), "ZZZ"]);
+const cuid2 = z.templateLiteral(["", z.string().cuid2()]);
+const datetime = z.templateLiteral(["", z.string().datetime()]);
+const email = z.templateLiteral(["", z.string().email()]);
+const ip = z.templateLiteral(["", z.string().ip()]);
+const ipv4 = z.templateLiteral(["", z.string().ip({ version: "v4" })]);
+const ipv6 = z.templateLiteral(["", z.string().ip({ version: "v6" })]);
+const ulid = z.templateLiteral(["", z.string().ulid()]);
+const uuid = z.templateLiteral(["", z.string().uuid()]);
+const stringAToZ = z.templateLiteral(["", z.string().regex(/^[a-z]+$/)]);
+const stringStartsWith = z.templateLiteral(["", z.string().startsWith("hello")]);
+const stringEndsWith = z.templateLiteral(["", z.string().endsWith("world")]);
+const stringMax5 = z.templateLiteral(["", z.string().max(5)]);
+const stringMin5 = z.templateLiteral(["", z.string().min(5)]);
+const stringLen5 = z.templateLiteral(["", z.string().length(5)]);
+const stringMin5Max10 = z.templateLiteral(["", z.string().min(5).max(10)]);
+const stringStartsWithMax5 = z.templateLiteral(["", z.string().startsWith("hello").max(5)]);
+const brandedString = z.templateLiteral(["", z.string().min(1).brand("myBrand")]);
+const anything = z.templateLiteral(["", z.any()]);
 
-const url = z.literal.template([
-  "https://",
-  z.string().regex(/\w+/),
-  ".",
-  z.enum(["com", "net"]),
-]);
+const url = z.templateLiteral(["https://", z.string().regex(/\w+/), ".", z.enum(["com", "net"])]);
 
-const measurement = z.literal.template([
+const measurement = z.templateLiteral([
   "",
   z.number().finite(),
   z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional(),
 ]);
 
-const connectionString = z.literal.template([
+const connectionString = z.templateLiteral([
   "mongodb://",
   z.literal
     .template([
@@ -166,10 +149,7 @@ test("template literal type inference", () => {
   util.assertEqual<z.infer<typeof brandedString>, string>(true);
   util.assertEqual<z.infer<typeof anything>, `${any}`>(true);
 
-  util.assertEqual<
-    z.infer<typeof url>,
-    `https://${string}.com` | `https://${string}.net`
-  >(true);
+  util.assertEqual<z.infer<typeof url>, `https://${string}.com` | `https://${string}.net`>(true);
 
   util.assertEqual<
     z.infer<typeof measurement>,
@@ -197,116 +177,116 @@ test("template literal type inference", () => {
 test("template literal unsupported args", () => {
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.object({})])
+    z.templateLiteral([z.object({})])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.array(z.object({}))])
+    z.templateLiteral([z.array(z.object({}))])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.union([z.object({}), z.string()])])
+    z.templateLiteral([z.union([z.object({}), z.string()])])
   ).toThrow();
   // @ts-expect-error
-  expect(() => z.literal.template([z.date()])).toThrow();
+  expect(() => z.templateLiteral([z.date()])).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.custom<object>((data) => true)])
+    z.templateLiteral([z.custom<object>((data) => true)])
   ).toThrow();
   expect(() =>
-    z.literal.template([
+    z.templateLiteral([
       // @ts-expect-error
       z.discriminatedUnion("discriminator", [z.object({}), z.object({})]),
     ])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.function()])
+    z.templateLiteral([z.function()])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.instanceof(class MyClass {})])
+    z.templateLiteral([z.instanceof(class MyClass {})])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.intersection(z.object({}), z.object({}))])
+    z.templateLiteral([z.intersection(z.object({}), z.object({}))])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.map(z.string(), z.string())])
+    z.templateLiteral([z.map(z.string(), z.string())])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.nullable(z.object({}))])
+    z.templateLiteral([z.nullable(z.object({}))])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.optional(z.object({}))])
+    z.templateLiteral([z.optional(z.object({}))])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.promise()])
+    z.templateLiteral([z.promise()])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.record(z.unknown())])
+    z.templateLiteral([z.record(z.unknown())])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.set(z.string())])
+    z.templateLiteral([z.set(z.string())])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.symbol()])
+    z.templateLiteral([z.symbol()])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.tuple([z.string()])])
+    z.templateLiteral([z.tuple([z.string()])])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.unknown()])
+    z.templateLiteral([z.unknown()])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.void()])
+    z.templateLiteral([z.void()])
   ).toThrow();
 
   // These throw at runtime but not statically. This could be fixed, but
   // I think an informative runtime error is better than a confusing TS one
   expect(() =>
     // no @ts-expect-error
-    z.literal.template([z.never()])
+    z.templateLiteral([z.never()])
   ).toThrow();
   // no @ts-expect-error
-  expect(() => z.literal.template([z.nan()])).toThrow();
+  expect(() => z.templateLiteral([z.nan()])).toThrow();
   expect(() =>
     // no @ts-expect-error
-    z.literal.template([z.pipeline(z.string(), z.string())])
+    z.templateLiteral([z.pipe(z.string(), z.string())])
   ).toThrow();
   expect(() =>
     // no @ts-expect-error
-    z.literal.template([z.lazy(() => z.string())])
+    z.templateLiteral([z.lazy(() => z.string())])
   ).toThrow();
   expect(() =>
     // no @ts-expect-error
-    z.literal.template([z.preprocess(() => true, z.boolean())])
+    z.templateLiteral([z.preprocess(() => true, z.boolean())])
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.literal.template([z.object({}).brand("brand")])
+    z.templateLiteral([z.object({}).brand("brand")])
   ).toThrow();
-  expect(() => z.literal.template([z.number().multipleOf(2)])).toThrow();
-  expect(() => z.literal.template([z.string().emoji()])).toThrow();
-  expect(() => z.literal.template([z.string().url()])).toThrow();
-  expect(() => z.literal.template([z.string().trim()])).toThrow();
-  expect(() => z.literal.template([z.string().includes("train")])).toThrow();
-  expect(() => z.literal.template([z.string().toLowerCase()])).toThrow();
-  expect(() => z.literal.template([z.string().toUpperCase()])).toThrow();
+  expect(() => z.templateLiteral([z.number().multipleOf(2)])).toThrow();
+  expect(() => z.templateLiteral([z.string().emoji()])).toThrow();
+  expect(() => z.templateLiteral([z.string().url()])).toThrow();
+  expect(() => z.templateLiteral([z.string().trim()])).toThrow();
+  expect(() => z.templateLiteral([z.string().includes("train")])).toThrow();
+  expect(() => z.templateLiteral([z.string().toLowerCase()])).toThrow();
+  expect(() => z.templateLiteral([z.string().toUpperCase()])).toThrow();
 });
 
 test("template literal parsing - success - basic cases", () => {
-  expect(() => z.literal.template([]).parse(7)).toThrow();
+  expect(() => z.templateLiteral([]).parse(7)).toThrow();
 
   empty.parse("");
   hello.parse("hello");
@@ -514,9 +494,7 @@ test("template literal parsing - failure - basic cases", () => {
   expect(() => ip.parse("c359.f57c:21e5:39eb:1187:e501:f936:b452")).toThrow();
   expect(() => ipv4.parse("1213.174.246.205")).toThrow();
   expect(() => ipv4.parse("c359:f57c:21e5:39eb:1187:e501:f936:b452")).toThrow();
-  expect(() =>
-    ipv6.parse("c359:f57c:21e5:39eb:1187:e501:f936:b4521")
-  ).toThrow();
+  expect(() => ipv6.parse("c359:f57c:21e5:39eb:1187:e501:f936:b4521")).toThrow();
   expect(() => ipv6.parse("213.174.246.205")).toThrow();
   expect(() => ulid.parse("01GW3D2QZJBYB6P1Z1AE997VPW!")).toThrow();
   expect(() => uuid.parse("808989fd-3a6e-4af2-b607-737323a176f6Z")).toThrow();
@@ -590,28 +568,18 @@ test("template literal parsing - success - complex cases", () => {
   connectionString.parse("mongodb://host:1234/");
   connectionString.parse("mongodb://host:1234/defaultauthdb");
   connectionString.parse("mongodb://host:1234/defaultauthdb?authSource=admin");
-  connectionString.parse(
-    "mongodb://host:1234/defaultauthdb?authSource=admin&connectTimeoutMS=300000"
-  );
+  connectionString.parse("mongodb://host:1234/defaultauthdb?authSource=admin&connectTimeoutMS=300000");
   connectionString.parse("mongodb://host:1234/?authSource=admin");
-  connectionString.parse(
-    "mongodb://host:1234/?authSource=admin&connectTimeoutMS=300000"
-  );
+  connectionString.parse("mongodb://host:1234/?authSource=admin&connectTimeoutMS=300000");
   connectionString.parse("mongodb://username:password@host:1234");
   connectionString.parse("mongodb://username:password@host:1234/");
   connectionString.parse("mongodb://username:password@host:1234/defaultauthdb");
-  connectionString.parse(
-    "mongodb://username:password@host:1234/defaultauthdb?authSource=admin"
-  );
+  connectionString.parse("mongodb://username:password@host:1234/defaultauthdb?authSource=admin");
   connectionString.parse(
     "mongodb://username:password@host:1234/defaultauthdb?authSource=admin&connectTimeoutMS=300000"
   );
-  connectionString.parse(
-    "mongodb://username:password@host:1234/?authSource=admin"
-  );
-  connectionString.parse(
-    "mongodb://username:password@host:1234/?authSource=admin&connectTimeoutMS=300000"
-  );
+  connectionString.parse("mongodb://username:password@host:1234/?authSource=admin");
+  connectionString.parse("mongodb://username:password@host:1234/?authSource=admin&connectTimeoutMS=300000");
 });
 
 test("template literal parsing - failure - complex cases", () => {
@@ -635,28 +603,12 @@ test("template literal parsing - failure - complex cases", () => {
   expect(() => connectionString.parse("mongodb://host:-1234")).toThrow();
   expect(() => connectionString.parse("mongodb://host:-12.34")).toThrow();
   expect(() => connectionString.parse("mongodb://host:")).toThrow();
-  expect(() =>
-    connectionString.parse("mongodb://:password@host:1234")
-  ).toThrow();
-  expect(() =>
-    connectionString.parse("mongodb://usernamepassword@host:1234")
-  ).toThrow();
-  expect(() =>
-    connectionString.parse("mongodb://username:@host:1234")
-  ).toThrow();
+  expect(() => connectionString.parse("mongodb://:password@host:1234")).toThrow();
+  expect(() => connectionString.parse("mongodb://usernamepassword@host:1234")).toThrow();
+  expect(() => connectionString.parse("mongodb://username:@host:1234")).toThrow();
   expect(() => connectionString.parse("mongodb://@host:1234")).toThrow();
-  expect(() =>
-    connectionString.parse("mongodb://host:1234/defaultauthdb?authSourceadmin")
-  ).toThrow();
-  expect(() =>
-    connectionString.parse("mongodb://host:1234/?authSourceadmin")
-  ).toThrow();
-  expect(() =>
-    connectionString.parse(
-      "mongodb://host:1234/defaultauthdb?&authSource=admin"
-    )
-  ).toThrow();
-  expect(() =>
-    connectionString.parse("mongodb://host:1234/?&authSource=admin")
-  ).toThrow();
+  expect(() => connectionString.parse("mongodb://host:1234/defaultauthdb?authSourceadmin")).toThrow();
+  expect(() => connectionString.parse("mongodb://host:1234/?authSourceadmin")).toThrow();
+  expect(() => connectionString.parse("mongodb://host:1234/defaultauthdb?&authSource=admin")).toThrow();
+  expect(() => connectionString.parse("mongodb://host:1234/?&authSource=admin")).toThrow();
 });

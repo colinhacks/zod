@@ -5,7 +5,7 @@ import * as schemas from "./schemas.js";
 //////////    ZodCoercedString    //////////
 
 export interface ZodCoercedStringDef extends core.$ZodStringDef {}
-export interface ZodCoercedString extends core.$ZodString<unknown>, schemas.ZodType<string, unknown> {
+export interface ZodCoercedString extends core.$ZodString<unknown>, schemas._ZodType<string, unknown> {
   "~def": ZodCoercedStringDef;
   "~isst": core.$ZodIssueInvalidType<"string">;
 }
@@ -53,7 +53,7 @@ export function string(...args: any[]): ZodCoercedString {
 
 //////////    ZodCoercedNumber    //////////
 export interface ZodCoercedNumberDef extends core.$ZodNumberDef {}
-export interface ZodCoercedNumber extends core.$ZodNumber<unknown>, schemas.ZodType<number, unknown> {
+export interface ZodCoercedNumber extends core.$ZodNumber<unknown>, schemas._ZodType<number, unknown> {
   "~def": ZodCoercedNumberDef;
   "~isst": core.$ZodIssueInvalidType<"number">;
 }
@@ -101,7 +101,7 @@ export function number(...args: any[]): ZodCoercedNumber {
 
 //////////    ZodCoercedBoolean    //////////
 export interface ZodCoercedBooleanDef extends core.$ZodBooleanDef {}
-export interface ZodCoercedBoolean extends core.$ZodBoolean<unknown>, schemas.ZodType<boolean, unknown> {
+export interface ZodCoercedBoolean extends core.$ZodBoolean<unknown>, schemas._ZodType<boolean, unknown> {
   "~def": ZodCoercedBooleanDef;
   "~isst": core.$ZodIssueInvalidType<"boolean">;
 }
@@ -150,7 +150,7 @@ export function boolean(...args: any[]): ZodCoercedBoolean {
 
 //////////    ZodCoercedBigInt    //////////
 export interface ZodCoercedBigIntDef extends core.$ZodBigIntDef {}
-export interface ZodCoercedBigInt extends core.$ZodBigInt<unknown>, schemas.ZodType<bigint, unknown> {
+export interface ZodCoercedBigInt extends core.$ZodBigInt<unknown>, schemas._ZodType<bigint, unknown> {
   "~def": ZodCoercedBigIntDef;
   "~isst": core.$ZodIssueInvalidType<"bigint">;
 }
@@ -199,7 +199,7 @@ export function bigint(...args: any[]): ZodCoercedBigInt {
 
 //////////    ZodCoercedDate    //////////
 export interface ZodCoercedDateDef extends core.$ZodDateDef {}
-export interface ZodCoercedDate extends core.$ZodDate<unknown>, schemas.ZodType<Date, unknown> {
+export interface ZodCoercedDate extends core.$ZodDate<unknown>, schemas._ZodType<Date, unknown> {
   "~def": ZodCoercedDateDef;
   "~isst": core.$ZodIssueInvalidType<"date">;
 }

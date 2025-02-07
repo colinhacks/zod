@@ -31,7 +31,7 @@ generate({
   // ...ARKTYPE,
   // ...VALIBOT,
 
-  numSchemas: 100,
+  numSchemas: 1,
   methods: [""],
   numKeys: 10,
   numRefs: 0,

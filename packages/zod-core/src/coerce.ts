@@ -27,7 +27,6 @@ export const $ZodCoercedString: base.$constructor<$ZodCoercedString> = /*@__PURE
               {
                 expected: "string",
                 code: "invalid_type",
-                level: "abort",
                 input,
                 def,
               },
@@ -37,6 +36,14 @@ export const $ZodCoercedString: base.$constructor<$ZodCoercedString> = /*@__PURE
         }
       }
       return _super(input, ctx);
+    };
+
+    const superB = inst._parseB;
+    inst._parseB = (payload, ctx) => {
+      try {
+        payload.value = String(payload.value);
+      } catch {}
+      return superB(payload, ctx);
     };
   }
 );
@@ -88,6 +95,14 @@ export const $ZodCoercedNumber: base.$constructor<$ZodCoercedNumber> = /*@__PURE
       }
       return _super(input, ctx);
     };
+
+    const superB = inst._parseB;
+    inst._parseB = (payload, ctx) => {
+      try {
+        payload.value = Number(payload.value);
+      } catch {}
+      return superB(payload, ctx);
+    };
   }
 );
 
@@ -136,6 +151,14 @@ export const $ZodCoercedBoolean: base.$constructor<$ZodCoercedBoolean> = /*@__PU
         }
       }
       return _super(input, ctx);
+    };
+
+    const superB = inst._parseB;
+    inst._parseB = (payload, ctx) => {
+      try {
+        payload.value = Boolean(payload.value);
+      } catch {}
+      return superB(payload, ctx);
     };
   }
 );
@@ -186,6 +209,14 @@ export const $ZodCoercedBigInt: base.$constructor<$ZodCoercedBigInt> = /*@__PURE
       }
       return _super(input, ctx);
     };
+
+    const superB = inst._parseB;
+    inst._parseB = (payload, ctx) => {
+      try {
+        payload.value = BigInt(payload.value);
+      } catch {}
+      return superB(payload, ctx);
+    };
   }
 );
 
@@ -233,6 +264,14 @@ export const $ZodCoercedDate: base.$constructor<$ZodCoercedDate> = /*@__PURE__*/
         }
       }
       return _super(input, ctx);
+    };
+
+    const superB = inst._parseB;
+    inst._parseB = (payload, ctx) => {
+      try {
+        payload.value = new Date(payload.value);
+      } catch {}
+      return superB(payload, ctx);
     };
   }
 );

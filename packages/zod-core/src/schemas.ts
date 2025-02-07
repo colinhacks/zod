@@ -29,7 +29,6 @@ export interface $ZodString<Input = unknown> extends base.$ZodType<string, Input
 export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$constructor("$ZodString", (inst, def) => {
   base.$ZodType.init(inst, def);
   inst["~pattern"] = regexes.stringRegex;
-
   inst._parse = (input, _ctx) => {
     if (typeof input === "string") return base.$succeed(input);
     return base.$fail(
@@ -46,7 +45,7 @@ export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$con
   };
 
   inst._parseB = (payload, _) => {
-    if (def.coerce) payload.value = Number(payload.value);
+    // if (def.coerce) payload.value = String(payload.value);
     if (typeof payload.value === "string") return payload;
     payload.issues.push({
       expected: "string",
@@ -148,7 +147,7 @@ export interface $ZodURL extends $ZodStringFormat {
 
 export const $ZodURL: base.$constructor<$ZodURL> = /*@__PURE__*/ base.$constructor("$ZodURL", (inst, def) => {
   $ZodStringFormat.init(inst, def);
-  inst["~check"] = (ctx) => {
+  inst._check = (ctx) => {
     try {
       const url = new URL(ctx.value);
       regexes.hostnameRegex.lastIndex = 0;
@@ -384,7 +383,7 @@ export const $ZodJSONString: base.$constructor<$ZodJSONString> = /*@__PURE__*/ b
   "$ZodJSONString",
   (inst, def): void => {
     $ZodStringFormat.init(inst, def);
-    inst["~check"] = (ctx) => {
+    inst._check = (ctx) => {
       try {
         JSON.parse(ctx.value);
         return;
@@ -451,7 +450,7 @@ export interface $ZodJWT extends $ZodStringFormat {
 
 export const $ZodJWT: base.$constructor<$ZodJWT> = /*@__PURE__*/ base.$constructor("$ZodJWT", (inst, def): void => {
   $ZodStringFormat.init(inst, def);
-  inst["~check"] = (ctx) => {
+  inst._check = (ctx) => {
     if (isValidJWT(ctx.value, def.alg)) return;
 
     ctx.issues.push({
@@ -498,7 +497,6 @@ export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$con
   base.$ZodType.init(inst, def);
   inst["~pattern"] = regexes.numberRegex;
   inst._parse = (input, _ctx) => {
-    if (def.coerce) input = Number(input);
     if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) return base.$succeed(input);
     return base.$fail(
       [
@@ -514,7 +512,7 @@ export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$con
   };
 
   inst._parseB = (payload, _ctx) => {
-    if (def.coerce) payload.value = Number(payload.value);
+    // if (def.coerce) payload.value = Number(payload.value);
     const input = payload.value;
     if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) {
       return payload;
@@ -618,7 +616,7 @@ export const $ZodBoolean: base.$constructor<$ZodBoolean> = /*@__PURE__*/ base.$c
     };
 
     inst._parseB = (payload, _ctx) => {
-      if (def.coerce) payload.value = Boolean(payload.value);
+      // if (def.coerce) payload.value = Boolean(payload.value);
       const input = payload.value;
       if (typeof input === "boolean") return payload;
       payload.issues.push({
@@ -672,7 +670,7 @@ export const $ZodBigInt: base.$constructor<$ZodBigInt> = /*@__PURE__*/ base.$con
   };
 
   inst._parseB = (payload, _ctx) => {
-    if (def.coerce) payload.value = BigInt(payload.value);
+    // if (def.coerce) payload.value = BigInt(payload.value);
     const { value: input } = payload;
     if (typeof input === "bigint") return payload;
     payload.issues.push({
@@ -1022,11 +1020,6 @@ export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constru
   base.$ZodType.init(inst, def);
   inst._parse = (input, _ctx) => {
     if (input instanceof Date && !Number.isNaN(input.getTime())) return base.$succeed(input);
-    if (def.coerce) {
-      try {
-        input = new Date(input as string | number | Date);
-      } catch (_err: any) {}
-    }
 
     if (!(input instanceof Date)) {
       return base.$fail(
@@ -1050,11 +1043,11 @@ export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constru
   };
 
   inst._parseB = (payload, _ctx) => {
-    if (def.coerce) {
-      try {
-        payload.value = new Date(payload.value as string | number | Date);
-      } catch (_err: any) {}
-    }
+    // if (def.coerce) {
+    //   try {
+    //     payload.value = new Date(payload.value as string | number | Date);
+    //   } catch (_err: any) {}
+    // }
     const input = payload.value;
 
     if (!(input instanceof Date)) {
@@ -1255,7 +1248,10 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       },
     });
 
-    const _normalized = util.cached(() => util.normalizeObjectLikeDef(def));
+    const _normalized = util.cached(() => {
+      const n = util.normalizeObjectLikeDef(def);
+      return n;
+    });
 
     inst._parse = (input, ctx) => {
       const { shape, keys, keySet, optionals } = _normalized.value;
@@ -1342,17 +1338,14 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       doc.write(`const input = payload.value;`);
 
       for (const key of keys) {
-        // assign results to var based on ~id
+        if (optionals.has(key)) continue;
         const id = shape[key]["~id"];
-        doc.write(``);
         doc.write(`const ${id} = ${parseStr(key)};`);
-        doc.write(`if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({ 
-           ...iss, 
+        doc.write(`if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+           ...iss,
            path: iss.path ? [${util.esc(keyMap[key])}, ...iss.path] : [${util.esc(keyMap[key])}]
         })));`);
       }
-
-      doc.write(`if (payload.issues.length && payload.issues.some(iss => iss.continue !== true)) return payload;`);
 
       // add required keys to result
       doc.write(`payload.value = {`);
@@ -1361,17 +1354,22 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
           if (optionals.has(key)) continue;
           const id = shape[key]["~id"];
           doc.write(`  ${util.esc(key)}: ${id}.value,`);
-          // doc.write(`${util.esc(key)}: ${parseStr(key)}.value,`);
         }
       });
       doc.write(`}`);
 
       // add in optionals if defined
       for (const key of keys) {
-        if (optionals.has(key)) {
-          const id = shape[key]["~id"];
-          doc.write(`if (${util.esc(key)} in input) { payload.value[${util.esc(key)}] = ${id}.value; };`);
-        }
+        if (!optionals.has(key)) continue;
+        const id = shape[key]["~id"];
+        doc.write(`if (${util.esc(key)} in input) {`);
+        doc.indented(() => {
+          doc.write(`  const ${id} = ${parseStr(key)};`);
+          doc.write(`  payload.value[${util.esc(key)}] = ${id}.value;`);
+          doc.write(`if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({ ...iss, path: iss.path ? [${util.esc(keyMap[key])}, ...iss.path] : [${util.esc(keyMap[key])}]
+        })));`);
+        });
+        doc.write(`}`);
       }
 
       doc.write(`return payload;`);
@@ -1466,11 +1464,13 @@ export type $InferInterfaceInput<
   Extra extends Record<string, unknown> = Record<string, unknown>,
 > = string extends keyof T
   ? Record<string, unknown>
-  : {
-      -readonly [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : never]?: T[k]["~input"];
-    } & {
-      -readonly [k in Exclude<keyof T, `${string}?` | `?${string}`>]: T[k]["~input"];
-    } & Extra;
+  : util.Flatten<
+      {
+        -readonly [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : never]?: T[k]["~input"];
+      } & {
+        -readonly [k in Exclude<keyof T, `${string}?` | `?${string}`>]: T[k]["~input"];
+      } & Extra
+    >;
 
 export interface $ZodInterfaceDef extends $ZodObjectLikeDef {
   type: "interface";
@@ -1625,13 +1625,24 @@ export const $ZodUnion: base.$constructor<$ZodUnion> = /*@__PURE__*/ base.$const
   };
 
   inst._parseB = (payload, ctx) => {
-    let async = false;
+    const async = false;
 
     const results: util.MaybeAsync<base.ParsePayloadB>[] = [];
     for (const option of def.options) {
-      const result = option._runB(payload, ctx);
-      results.push(result);
-      if (result instanceof Promise) async = true;
+      const result = option._runB(
+        {
+          value: payload.value,
+          issues: [],
+          $payload: true,
+        },
+        ctx
+      );
+      if (result instanceof Promise) {
+        results.push(result);
+      } else {
+        if (result.issues.length === 0) return result;
+        results.push(result);
+      }
     }
 
     if (!async) return handleUnionResultsB(results as base.ParsePayloadB[], payload, def);
@@ -2943,14 +2954,15 @@ export const $ZodFile: base.$constructor<$ZodFile> = /*@__PURE__*/ base.$constru
 //////////////////////////////////////////////
 export interface $ZodEffectDef extends base.$ZodTypeDef {
   type: "effect";
+  // effect: (
+  //   input: unknown,
+  //   ctx?: base.$ZodResult<unknown>
+  //   // ctx?: base.$ParseContext | undefined
+  // ) => util.MaybeAsync<unknown>;
   effect: (
     input: unknown,
-    ctx?: base.$ZodResult<unknown>
-    // ctx?: base.$ParseContext | undefined
-  ) => util.MaybeAsync<unknown>;
-  effectB: (
-    payload: base.ParsePayloadB<unknown>,
-    ctx?: base.ParseContextB
+    payload: base.ParsePayloadB<unknown>
+    // ctx?: base.ParseContextB['']
     // ctx?: base.$ParseContext | undefined
   ) => util.MaybeAsync<unknown>;
   // error?: errors.$ZodErrorMap<never> | undefined;
@@ -2967,7 +2979,7 @@ export const $ZodEffect: base.$constructor<$ZodEffect> = /*@__PURE__*/ base.$con
 
   inst._parse = (input, _ctx) => {
     const result = base.$result<unknown>(input);
-    const output = def.effect(input, result);
+    const output = def.effect(input, { value: input, issues: [], $payload: true });
     if (output instanceof Promise) {
       return output.then((output) => {
         return base.$failed(result) ? result : base.$succeed(output);
@@ -2978,7 +2990,8 @@ export const $ZodEffect: base.$constructor<$ZodEffect> = /*@__PURE__*/ base.$con
   };
 
   inst._parseB = (payload, _ctx) => {
-    const output = def.effectB(payload, _ctx);
+    const output = def.effect(payload.value, payload);
+
     if (output instanceof Promise) {
       return output.then((output) => {
         payload.value = output;
@@ -3332,24 +3345,24 @@ export const $ZodNaN: base.$constructor<$ZodNaN> = /*@__PURE__*/ base.$construct
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 //////////                        //////////
-//////////      $ZodPipeline      //////////
+//////////      $ZodPipe      //////////
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodPipelineDef extends base.$ZodTypeDef {
-  type: "pipeline";
+export interface $ZodPipeDef extends base.$ZodTypeDef {
+  type: "pipe";
   in: base.$ZodType;
   out: base.$ZodType;
   // error?: errors.$ZodErrorMap<never> | undefined;
 }
 
-export interface $ZodPipeline<A extends base.$ZodType = base.$ZodType, B extends base.$ZodType = base.$ZodType>
+export interface $ZodPipe<A extends base.$ZodType = base.$ZodType, B extends base.$ZodType = base.$ZodType>
   extends base.$ZodType<B["~output"], A["~input"]> {
-  "~def": $ZodPipelineDef;
+  "~def": $ZodPipeDef;
   "~isst": never;
 }
 
-function handleBPipelineResult(result: base.$ZodResult, outResult: base.$ZodResult) {
+function handleBPipeResult(result: base.$ZodResult, outResult: base.$ZodResult) {
   if (base.$failed(outResult)) {
     result.issues.push(...outResult.issues);
   }
@@ -3358,18 +3371,18 @@ function handleBPipelineResult(result: base.$ZodResult, outResult: base.$ZodResu
   return result;
 }
 
-function handleAPipelineResult(result: base.$ZodResult, def: $ZodPipelineDef, ctx?: base.$ParseContext) {
+function handleAPipeResult(result: base.$ZodResult, def: $ZodPipeDef, ctx?: base.$ParseContext) {
   if (result.aborted) return result;
   const outResult = def.out._run(result.value, ctx);
   if (outResult instanceof Promise) {
     return outResult.then((outResult) => {
-      return handleBPipelineResult(result, outResult);
+      return handleBPipeResult(result, outResult);
     });
   }
-  return handleBPipelineResult(result, outResult);
+  return handleBPipeResult(result, outResult);
 }
 
-function handleBPipelineResultB(resultB: base.ParsePayloadB, outResultB: base.ParsePayloadB) {
+function handleBPipeResultB(resultB: base.ParsePayloadB, outResultB: base.ParsePayloadB) {
   if (outResultB.issues.length) {
     resultB.issues.push(...outResultB.issues);
   }
@@ -3377,38 +3390,35 @@ function handleBPipelineResultB(resultB: base.ParsePayloadB, outResultB: base.Pa
   return resultB;
 }
 
-function handleAPipelineResultB(resultB: base.ParsePayloadB, def: $ZodPipelineDef, ctx: base.ParseContextB) {
+function handleAPipeResultB(resultB: base.ParsePayloadB, def: $ZodPipeDef, ctx: base.ParseContextB) {
   if (resultB.issues.length) return resultB;
   const outResultB = def.out._runB({ value: resultB.value, issues: [], $payload: true }, ctx);
   if (outResultB instanceof Promise) {
     return outResultB.then((outResultB) => {
-      return handleBPipelineResultB(resultB, outResultB);
+      return handleBPipeResultB(resultB, outResultB);
     });
   }
-  return handleBPipelineResultB(resultB, outResultB);
+  return handleBPipeResultB(resultB, outResultB);
 }
 
-export const $ZodPipeline: base.$constructor<$ZodPipeline> = /*@__PURE__*/ base.$constructor(
-  "$ZodPipeline",
-  (inst, def) => {
-    base.$ZodType.init(inst, def);
-    inst._parse = (input, ctx) => {
-      const result = def.in._run(input, ctx);
-      if (result instanceof Promise) {
-        return result.then((result) => handleAPipelineResult(result, def, ctx));
-      }
-      return handleAPipelineResult(result, def, ctx);
-    };
+export const $ZodPipe: base.$constructor<$ZodPipe> = /*@__PURE__*/ base.$constructor("$ZodPipe", (inst, def) => {
+  base.$ZodType.init(inst, def);
+  inst._parse = (input, ctx) => {
+    const result = def.in._run(input, ctx);
+    if (result instanceof Promise) {
+      return result.then((result) => handleAPipeResult(result, def, ctx));
+    }
+    return handleAPipeResult(result, def, ctx);
+  };
 
-    inst._parseB = (payload, ctx) => {
-      const result = def.in._runB(payload, ctx);
-      if (result instanceof Promise) {
-        return result.then((result) => handleAPipelineResultB(result, def, ctx));
-      }
-      return handleAPipelineResultB(result, def, ctx);
-    };
-  }
-);
+  inst._parseB = (payload, ctx) => {
+    const result = def.in._runB(payload, ctx);
+    if (result instanceof Promise) {
+      return result.then((result) => handleAPipeResultB(result, def, ctx));
+    }
+    return handleAPipeResultB(result, def, ctx);
+  };
+});
 
 ////////////////////////////////////////////
 ////////////////////////////////////////////
@@ -3649,7 +3659,7 @@ export const $ZodPromise: base.$constructor<$ZodPromise> = /*@__PURE__*/ base.$c
 ////////////////////////////////////////
 export interface $ZodCustomDef extends base.$ZodTypeDef, base.$ZodCheckDef {
   type: "custom";
-  fn: base.$ZodCheck["~check"];
+  fn: base.$ZodCheck["_check"];
 }
 export interface $ZodCustom<O = unknown, I = unknown> extends base.$ZodType<O, I>, base.$ZodCheck<O> {
   "~def": $ZodCustomDef;
@@ -3671,6 +3681,6 @@ export const $ZodCustom: base.$constructor<$ZodCustom<unknown>> = base.$construc
     return payload;
   };
 
-  inst["~check"] = (_) => def.fn(_ as any);
-  inst._checkB = (_) => def.fn(_ as any);
+  // inst._check = (_) => def.fn(_ as any);
+  inst._check = (_) => def.fn(_ as any);
 });

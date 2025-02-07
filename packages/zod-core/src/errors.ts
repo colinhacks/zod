@@ -175,22 +175,20 @@ export type $ZodIssue =
   | $ZodIssueInvalidValue
   | $ZodIssueCustom;
 
-export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
+// export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
 type DefLike = { error?: $ZodErrorMap<never> | undefined };
+// type RawIssue<T extends $ZodIssueBase> = util.Flatten<
+//   Omit<T, "message" | "path"> & {
+//     path?: PropertyKey[] | undefined;
+//     message?: string | undefined;
+//     def?: DefLike | undefined;
+//     // continue?: boolean | undefined;
+//   } & Record<string, unknown>
+// >;
+
+export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
+
 type RawIssue<T extends $ZodIssueBase> = util.Flatten<
-  Omit<T, "message" | "path"> & {
-    path?: PropertyKey[] | undefined;
-    message?: string | undefined;
-    def?: DefLike | undefined;
-    // continue?: boolean | undefined;
-  } & Record<string, unknown>
->;
-
-// type alkjdf = RawIssueB<$ZodIssueCustom>;
-
-export type $ZodRawIssueB<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssueB<T> : never;
-
-type RawIssueB<T extends $ZodIssueBase> = util.Flatten<
   Omit<T, "message" | "path"> & {
     path?: PropertyKey[] | undefined;
     message?: string | undefined;

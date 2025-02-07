@@ -1,17 +1,14 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
 import * as core from "zod-core";
+import * as util from "zod-core/util";
 import * as z from "../src/index.js";
 
 test("overload types", () => {
   const schema = z.string().json();
   util.assertEqual<typeof schema, z.ZodString>(true);
   const schema2 = z.string().json(z.number());
-  util.assertEqual<
-    typeof schema2,
-    z.ZodPipeline<z.ZodEffects<z.ZodString, any, string>, z.ZodNumber>
-  >(true);
+  util.assertEqual<typeof schema2, z.ZodPipe<z.ZodEffects<z.ZodString, any, string>, z.ZodNumber>>(true);
   const r2 = schema2.parse("12");
   util.assertEqual<number, typeof r2>(true);
 });

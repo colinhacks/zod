@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { test } from "vitest";
-import * as util from "zod-core/util";
 import * as core from "zod-core";
+import * as util from "zod-core/util";
 import * as z from "../src/index.js";
 test("first party switch", () => {
   const myType = z.string() as z.ZodFirstPartySchemaTypes;
@@ -76,7 +76,7 @@ test("first party switch", () => {
       break;
     case z.ZodFirstPartyTypeKind.ZodBranded:
       break;
-    case z.ZodFirstPartyTypeKind.ZodPipeline:
+    case z.ZodFirstPartyTypeKind.ZodPipe:
       break;
     case z.ZodFirstPartyTypeKind.ZodSymbol:
       break;

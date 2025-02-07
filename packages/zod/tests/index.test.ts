@@ -45,9 +45,7 @@ test("z.string async", async () => {
 test("z.uuid", () => {
   const a = z.uuid();
   // parse uuid
-  expect(z.parse(a, "550e8400-e29b-41d4-a716-446655440000")).toEqual(
-    "550e8400-e29b-41d4-a716-446655440000"
-  );
+  expect(z.parse(a, "550e8400-e29b-41d4-a716-446655440000")).toEqual("550e8400-e29b-41d4-a716-446655440000");
   // bad uuid
   expect(() => z.parse(a, "hello")).toThrow();
   // wrong type
@@ -58,25 +56,16 @@ test("z.email", () => {
   const a = z.email();
   expect(z.parse(a, "test@test.com")).toEqual("test@test.com");
   expect(() => z.parse(a, "test")).toThrow();
-  expect(
-    z.safeParse(a, "bad email", { error: () => "bad email" }).error!.issues[0]
-      .message
-  ).toEqual("bad email");
+  expect(z.safeParse(a, "bad email", { error: () => "bad email" }).error!.issues[0].message).toEqual("bad email");
 
   const b = z.email("bad email");
-  expect(z.safeParse(b, "bad email").error!.issues[0].message).toEqual(
-    "bad email"
-  );
+  expect(z.safeParse(b, "bad email").error!.issues[0].message).toEqual("bad email");
 
   const c = z.email({ error: "bad email" });
-  expect(z.safeParse(c, "bad email").error!.issues[0].message).toEqual(
-    "bad email"
-  );
+  expect(z.safeParse(c, "bad email").error!.issues[0].message).toEqual("bad email");
 
   const d = z.email({ error: () => "bad email" });
-  expect(z.safeParse(d, "bad email").error!.issues[0].message).toEqual(
-    "bad email"
-  );
+  expect(z.safeParse(d, "bad email").error!.issues[0].message).toEqual("bad email");
 });
 
 test("z.url", () => {
@@ -99,25 +88,19 @@ test("z.nanoid", () => {
 
 test("z.cuid", () => {
   const a = z.cuid();
-  expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual(
-    "cixs7y0c0000f7x3b1z6m3w6r"
-  );
+  expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual("cixs7y0c0000f7x3b1z6m3w6r");
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.cuid2", () => {
   const a = z.cuid2();
-  expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual(
-    "cixs7y0c0000f7x3b1z6m3w6r"
-  );
+  expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual("cixs7y0c0000f7x3b1z6m3w6r");
   expect(() => z.parse(a, 123)).toThrow();
 });
 
 test("z.ulid", () => {
   const a = z.ulid();
-  expect(z.parse(a, "01ETGRM9QYVX6S9V2F3B6JXG4N")).toEqual(
-    "01ETGRM9QYVX6S9V2F3B6JXG4N"
-  );
+  expect(z.parse(a, "01ETGRM9QYVX6S9V2F3B6JXG4N")).toEqual("01ETGRM9QYVX6S9V2F3B6JXG4N");
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
@@ -129,18 +112,14 @@ test("z.xid", () => {
 
 test("z.ksuid", () => {
   const a = z.ksuid();
-  expect(z.parse(a, "2naeRjTrrHJAkfd3tOuEjw90WCA")).toEqual(
-    "2naeRjTrrHJAkfd3tOuEjw90WCA"
-  );
+  expect(z.parse(a, "2naeRjTrrHJAkfd3tOuEjw90WCA")).toEqual("2naeRjTrrHJAkfd3tOuEjw90WCA");
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.ip", () => {
   const a = z.ip();
   expect(z.parse(a, "127.0.0.1")).toEqual("127.0.0.1");
-  expect(z.parse(a, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual(
-    "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
-  );
+  expect(z.parse(a, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual("2001:0db8:85a3:0000:0000:8a2e:0370:7334");
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
@@ -161,9 +140,7 @@ test("z.ipv4", () => {
 test("z.ipv6", () => {
   const a = z.ipv6();
   // valid ipv6
-  expect(z.parse(a, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual(
-    "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
-  );
+  expect(z.parse(a, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual("2001:0db8:85a3:0000:0000:8a2e:0370:7334");
   expect(z.parse(a, "::1")).toEqual("::1");
   // invalid ipv6
   expect(() => z.parse(a, "2001:db8::85a3::8a2e:370:7334")).toThrow();
@@ -177,9 +154,7 @@ test("z.base64", () => {
   const a = z.base64();
   // valid base64
   expect(z.parse(a, "SGVsbG8gd29ybGQ=")).toEqual("SGVsbG8gd29ybGQ=");
-  expect(z.parse(a, "U29tZSBvdGhlciBzdHJpbmc=")).toEqual(
-    "U29tZSBvdGhlciBzdHJpbmc="
-  );
+  expect(z.parse(a, "U29tZSBvdGhlciBzdHJpbmc=")).toEqual("U29tZSBvdGhlciBzdHJpbmc=");
   // invalid base64
   expect(() => z.parse(a, "SGVsbG8gd29ybGQ")).toThrow();
   expect(() => z.parse(a, "U29tZSBvdGhlciBzdHJpbmc")).toThrow();
@@ -553,6 +528,7 @@ test("z.object", () => {
     name: string;
     age: number;
     points?: number;
+    "test?": boolean;
   }>();
   expect(z.parse(a, { name: "john", age: 30 })).toEqual({
     name: "john",
@@ -794,12 +770,8 @@ test("z.discriminatedUnion with nested discriminator", () => {
   });
 
   const c = z.discriminatedUnion([a, b]);
-  expect(c._disc!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(
-    true
-  );
-  expect(c._disc!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(
-    true
-  );
+  expect(c._disc!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(true);
+  expect(c._disc!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(true);
 
   expect(z.parse(c, { type: { key: "A" }, name: "john" })).toEqual({
     type: { key: "A" },
@@ -848,10 +820,7 @@ test("z.discriminatedUnion nested", () => {
   });
 });
 test("z.intersection", () => {
-  const a = z.intersection(
-    z.object({ a: z.string() }),
-    z.object({ b: z.number() })
-  );
+  const a = z.intersection(z.object({ a: z.string() }), z.object({ b: z.number() }));
   expect(z.parse(a, { a: "hello", b: 123 })).toEqual({ a: "hello", b: 123 });
   expect(() => z.parse(a, { a: "hello" })).toThrow();
   expect(() => z.parse(a, { b: 123 })).toThrow();
@@ -866,10 +835,7 @@ test("z.tuple", () => {
   expect(() => z.parse(a, "hello")).toThrow();
 
   // tuple with rest
-  const b = z.tuple(
-    [z.string(), z.number(), z.optional(z.string())],
-    z.boolean()
-  );
+  const b = z.tuple([z.string(), z.number(), z.optional(z.string())], z.boolean());
 
   // z.optional(z.string())._qout
   type b = z.output<typeof b>;
@@ -899,9 +865,7 @@ test("z.record", () => {
   const b = z.record(z.union([z.string(), z.number(), z.symbol()]), z.string());
   type b = z.output<typeof b>;
   expectTypeOf<b>().toEqualTypeOf<Record<string | number | symbol, string>>();
-  expect(
-    z.parse(b, { a: "hello", 1: "world", [Symbol.for("asdf")]: "symbol" })
-  ).toEqual({
+  expect(z.parse(b, { a: "hello", 1: "world", [Symbol.for("asdf")]: "symbol" })).toEqual({
     a: "hello",
     1: "world",
     [Symbol.for("asdf")]: "symbol",
@@ -919,18 +883,14 @@ test("z.record", () => {
   // missing keys
   expect(() => z.parse(c, { a: "hello", b: "world" })).toThrow();
   // extra keys
-  expect(() =>
-    z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })
-  ).toThrow();
+  expect(() => z.parse(c, { a: "hello", b: "world", c: "world", d: "world" })).toThrow();
 });
 
 test("z.map", () => {
   const a = z.map(z.string(), z.number());
   type a = z.output<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<Map<string, number>>();
-  expect(z.parse(a, new Map([["hello", 123]]))).toEqual(
-    new Map([["hello", 123]])
-  );
+  expect(z.parse(a, new Map([["hello", 123]]))).toEqual(new Map([["hello", 123]]));
   expect(() => z.parse(a, new Map([["hello", "world"]]))).toThrow();
   expect(() => z.parse(a, new Map([[1243, "world"]]))).toThrow();
   expect(() => z.parse(a, "hello")).toThrow();
@@ -957,10 +917,7 @@ test("z.map invalid_element", () => {
 });
 
 test("z.map async", async () => {
-  const a = z.map(
-    z.string()._check(z.refine(async () => true)),
-    z.number()._check(z.refine(async () => true))
-  );
+  const a = z.map(z.string()._check(z.refine(async () => true)), z.number()._check(z.refine(async () => true)));
   const d1 = new Map([["hello", 123]]);
   expect(await z.parseAsync(a, d1)).toEqual(d1);
 
@@ -979,9 +936,7 @@ test("z.set", () => {
   const a = z.set(z.string());
   type a = z.output<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<Set<string>>();
-  expect(z.parse(a, new Set(["hello", "world"]))).toEqual(
-    new Set(["hello", "world"])
-  );
+  expect(z.parse(a, new Set(["hello", "world"]))).toEqual(new Set(["hello", "world"]));
   expect(() => z.parse(a, new Set([123]))).toThrow();
   expect(() => z.parse(a, ["hello", "world"])).toThrow();
   expect(() => z.parse(a, "hello")).toThrow();
@@ -1136,8 +1091,8 @@ test("z.nan", () => {
   expect(() => z.parse(a, "NaN")).toThrow();
 });
 
-test("z.pipeline", () => {
-  const a = z.pipeline(
+test("z.pipe", () => {
+  const a = z.pipe(
     z.transform(z.string(), (val) => val.length),
     z.number()
   );
@@ -1254,8 +1209,8 @@ test("z.superRefine", () => {
   expect(() => z.parse(a, "hi")).toThrow();
 });
 
-test("z.effect", () => {
-  const a = z.effect((val: number) => {
+test("z.transform", () => {
+  const a = z.transform((val: number) => {
     return `${val}`;
   });
   type a_in = z.input<typeof a>;

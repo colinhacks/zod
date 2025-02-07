@@ -14,13 +14,7 @@ type asdf = Generator;
 export namespace JSONSchema {
   export type Schema =
     // | boolean
-    | ObjectSchema
-    | ArraySchema
-    | StringSchema
-    | NumberSchema
-    | IntegerSchema
-    | BooleanSchema
-    | NullSchema;
+    ObjectSchema | ArraySchema | StringSchema | NumberSchema | IntegerSchema | BooleanSchema | NullSchema;
 
   export interface BaseSchema {
     $id?: string;
@@ -171,7 +165,7 @@ export type $ZodFirstPartyTypes =
   | schemas.$ZodDefault
   | schemas.$ZodCatch
   | schemas.$ZodNaN
-  | schemas.$ZodPipeline
+  | schemas.$ZodPipe
   | schemas.$ZodReadonly
   | schemas.$ZodTemplateLiteral
   | schemas.$ZodPromise
@@ -207,7 +201,7 @@ export function toJSONSchema(_schema: $ZodType): JSONSchema.Schema {
   // } else if (schema["~def"].type === "default") {
   // } else if (schema["~def"].type === "catch") {
   // } else if (schema["~def"].type === "nan") {
-  // } else if (schema["~def"].type === "pipeline") {
+  // } else if (schema["~def"].type === "pipe") {
   // } else if (schema["~def"].type === "readonly") {
   // } else if (schema["~def"].type === "template_literal") {
   // } else if (schema["~def"].type === "promise") {
@@ -220,10 +214,8 @@ export function toJSONSchema(_schema: $ZodType): JSONSchema.Schema {
   switch (def.type) {
     case "string": {
       jsonSchema.type = "string";
-      if (schema["~computed"].minimum)
-        jsonSchema.minLength = schema["~computed"].minimum;
-      if (schema["~computed"].maximum)
-        jsonSchema.maxLength = schema["~computed"].maximum;
+      if (schema["~computed"].minimum) jsonSchema.minLength = schema["~computed"].minimum;
+      if (schema["~computed"].maximum) jsonSchema.maxLength = schema["~computed"].maximum;
 
       break;
     }
@@ -320,7 +312,7 @@ export function toJSONSchema(_schema: $ZodType): JSONSchema.Schema {
     case "nan": {
       break;
     }
-    case "pipeline": {
+    case "pipe": {
       break;
     }
     case "readonly": {

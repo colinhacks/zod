@@ -974,9 +974,13 @@ export function partialInterface(schema: $ZodInterface, mask: object | undefined
   };
 
   for (const key in schema["~def"].shape) {
+    // if key is not in mask, keep it as-is
     if (mask && !(key in mask)) continue;
+
+    // if key is already optional, keep it as-is
     if (key[key.length - 1] === "?") continue;
 
+    // delete existing key, add ?-suffixed key
     delete shape[key];
     shape[key + "?"] = schema["~def"].shape[key];
   }

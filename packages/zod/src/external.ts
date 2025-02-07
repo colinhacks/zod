@@ -25,10 +25,12 @@ export const ZodIssueCode = {
   custom: "custom",
 } as const;
 
+/** @deprecated Not necessary in Zod 4. */
 type INVALID = { status: "aborted" };
+/** @deprecated Not necessary in Zod 4. */
 const INVALID: INVALID = Object.freeze({
   status: "aborted",
 });
 
-/** @deprecated No necessary  */
+/** @deprecated Not necessary in Zod 4. */
 export const NEVER = INVALID as never;

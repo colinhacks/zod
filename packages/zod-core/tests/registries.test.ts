@@ -111,7 +111,7 @@ test("output type in registry meta - objects and arrays", () => {
 
 test("input type in registry meta", () => {
   const reg = z.registry<z.INPUT>();
-  const a = z.pipeline(z.number(), z.effect(String));
+  const a = z.pipe(z.number(), z.transform(String));
   reg.add(a, 1234);
   // @ts-expect-error
   reg.add(a, "1234");
@@ -120,7 +120,7 @@ test("input type in registry meta", () => {
 
 test("input type in registry meta - objects and arrays", () => {
   const reg = z.registry<{ name: string; examples: z.INPUT[] }>();
-  const a = z.pipeline(z.number(), z.effect(String));
+  const a = z.pipe(z.number(), z.transform(String));
   reg.add(a, { name: "hello", examples: [1234] });
 
   // @ts-expect-error

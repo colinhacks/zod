@@ -526,7 +526,10 @@ test("z.file", () => {
 });
 
 test("z.transform", () => {
-  const a = z.transform(z.string(), (val) => val.toUpperCase());
+  const a = z.pipe(
+    z.string(),
+    z.transform((val) => val.toUpperCase())
+  );
   type a = z.output<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<string>();
   expect(z.parse(a, "hello")).toEqual("HELLO");
@@ -534,7 +537,10 @@ test("z.transform", () => {
 });
 
 test("z.transform async", async () => {
-  const a = z.transform(z.string(), async (val) => val.toUpperCase());
+  const a = z.pipe(
+    z.string(),
+    z.transform(async (val) => val.toUpperCase())
+  );
   type a = z.output<typeof a>;
   expectTypeOf<a>().toEqualTypeOf<string>();
   expect(await z.parseAsync(a, "hello")).toEqual("HELLO");
@@ -542,8 +548,8 @@ test("z.transform async", async () => {
 });
 
 test("z.preprocess", () => {
-  const a = z.pipeline(
-    z.effect((val) => String(val).toUpperCase()),
+  const a = z.pipe(
+    z.transform((val) => String(val).toUpperCase()),
     z.string()
   );
   type a = z.output<typeof a>;
@@ -621,8 +627,8 @@ test("z.nan", () => {
   expect(() => z.parse(a, "NaN")).toThrow();
 });
 
-test("z.pipeline", () => {
-  const a = z.pipeline(
+test("z.pipe", () => {
+  const a = z.pipe(
     z.transform(z.string(), (val) => val.length),
     z.number()
   );
@@ -763,8 +769,8 @@ test("z.refine", () => {
 //   expect(() => z.parse(a, "hi")).toThrow();
 // });
 
-test("z.effect", () => {
-  const a = z.effect((val: number) => {
+test("z.transform", () => {
+  const a = z.transform((val: number) => {
     return `${val}`;
   });
   type a_in = z.input<typeof a>;

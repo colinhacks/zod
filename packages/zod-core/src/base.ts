@@ -94,7 +94,7 @@ export function $abortedB(x: ParsePayloadB): boolean {
   return x.issues.some((iss) => iss.continue !== true);
 }
 
-export function $continuable(issues: errors.$ZodRawIssueB[]): boolean {
+export function $continuable(issues: errors.$ZodRawIssue[]): boolean {
   return issues.every((iss) => iss.continue === true);
 }
 
@@ -102,15 +102,15 @@ export function $succeeded<T>(x: $ZodResult<T>): boolean {
   return !x?.issues?.length as any;
 }
 
-export function $prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
-  return issues.map((iss) => {
-    iss.path ??= [];
-    iss.path.unshift(path); // = [path, ...(iss.path ?? [])];
-    return iss;
-  });
-}
+// export function $prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
+//   return issues.map((iss) => {
+//     iss.path ??= [];
+//     iss.path.unshift(path); // = [path, ...(iss.path ?? [])];
+//     return iss;
+//   });
+// }
 
-export function $prefixIssuesB(path: PropertyKey, issues: errors.$ZodRawIssueB[]): errors.$ZodRawIssueB[] {
+export function $prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
   return issues.map((iss) => {
     iss.path ??= [];
     iss.path.unshift(path); // = [path, ...(iss.path ?? [])];
@@ -158,7 +158,7 @@ export type $ZodSchemaTypes =
   | "catch"
   | "nan"
   | "branded"
-  | "pipeline"
+  | "pipe"
   | "readonly"
   | "template_literal"
   | "promise"
@@ -197,13 +197,13 @@ interface ParseInput extends $ZodResult {
 
 export interface ParseContextB extends $ParseContext {
   readonly async?: boolean | undefined;
-  // readonly issues: errors.$ZodRawIssueB[];
+  // readonly issues: errors.$ZodRawIssue[];
 }
 
 export type ParsePayloadB<T = unknown> = {
   value: T;
   // aborted: boolean;
-  issues: errors.$ZodRawIssueB[];
+  issues: errors.$ZodRawIssue[];
   $payload: true;
   // path: ParsePathSegment;
 };
@@ -232,15 +232,12 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   "~output": O;
   /** @internal Internal API, use with caution. */
   "~input": I;
-  /** @internal Internal API, use with caution. */
-  _run(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
-  /** @internal Internal API, use with caution. */
-  _runB(payload: ParsePayloadB, ctx: ParseContextB): util.MaybeAsync<ParsePayloadB>;
 
   /** @internal Internal API, use with caution. */
-  _parse(input: unknown, ctx?: $ParseContext): util.MaybeAsync<$ZodResult>;
+  _run(payload: ParsePayloadB, ctx: ParseContextB): util.MaybeAsync<ParsePayloadB>;
+
   /** @internal Internal API, use with caution. */
-  _parseB(payload: ParsePayloadB<any>, ctx: ParseContextB): util.MaybeAsync<ParsePayloadB>;
+  _parse(payload: ParsePayloadB<any>, ctx: ParseContextB): util.MaybeAsync<ParsePayloadB>;
 
   /** @internal Internal API, use with caution. */
   "~traits": Set<string>;
@@ -264,19 +261,6 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   "~isst"?: errors.$ZodIssueBase;
 }
 
-export function runCheck(
-  check: $ZodCheck<never>,
-  result: util.MaybeAsync<$ZodResult<never>>
-): util.MaybeAsync<$ZodResult<never>> {
-  if (result instanceof Promise)
-    return result.then((result) => {
-      check["~check"](result);
-      return result;
-    });
-  check["~check"](result);
-  return result;
-}
-
 export function clone<T extends $ZodType>(inst: T, def: T["~def"]): T {
   return new inst["~constr"](def);
 }
@@ -294,7 +278,7 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
       checks: [
         ...(def.checks ?? []),
         ...checks.map((ch) =>
-          typeof ch === "function" ? { "~check": ch, _checkB: ch as any, "~def": { check: "custom" } } : ch
+          typeof ch === "function" ? { "~check": ch, _check: ch as any, "~def": { check: "custom" } } : ch
         ),
       ],
     });
@@ -318,54 +302,20 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
   }
 
   if (checks.length === 0) {
-    inst._run = (...args) => inst._parse(...args);
-    inst._runB = (...args) => {
-      return inst._parseB(...args);
+    inst._run = (...args) => {
+      return inst._parse(...args);
     };
   } else {
-    let runChecks = (result: $ZodResult<never>): util.MaybeAsync<$ZodResult> => {
-      return result;
-    };
-    for (const ch of checks.slice().reverse()) {
-      const _curr = runChecks;
-      runChecks = (result) => {
-        const _ = ch["~check"](result as $ZodResult<never>);
-        if (_ instanceof Promise) {
-          return _.then((_) => {
-            if (result.aborted) return result;
-            return _curr(result);
-          });
-        }
-
-        if (result.aborted) return result;
-        return _curr(result);
-      };
-    }
-
-    inst._run = (_input, ctx) => {
-      const result = inst._parse(_input, ctx);
-
-      if (result instanceof Promise) {
-        return result.then((result) => {
-          if (result.aborted) return result;
-          return runChecks(result as any);
-        });
-      }
-
-      if (result.aborted) return result;
-      return runChecks(result as any);
-    };
-
-    let runChecksB = (result: ParsePayloadB<any>): util.MaybeAsync<ParsePayloadB> => {
+    let runChecks = (result: ParsePayloadB<any>): util.MaybeAsync<ParsePayloadB> => {
       return result;
     };
 
     for (const ch of checks.slice().reverse()) {
       // console.log("ch");
-      const _curr = runChecksB;
-      runChecksB = (result) => {
+      const _curr = runChecks;
+      runChecks = (result) => {
         const numIssues = result.issues.length;
-        const _ = ch._checkB(result as any);
+        const _ = ch._check(result as any);
         if (_ instanceof Promise) {
           return _.then((_) => {
             if (result.issues.length > numIssues && $abortedB(result)) return result;
@@ -379,18 +329,18 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
       };
     }
 
-    inst._runB = (payload, ctx) => {
-      const result = inst._parseB(payload, ctx);
+    inst._run = (payload, ctx) => {
+      const result = inst._parse(payload, ctx);
 
       if (result instanceof Promise) {
         return result.then((result) => {
           if ($abortedB(result)) return result;
-          return runChecksB(result);
+          return runChecks(result);
         });
       }
 
       if ($abortedB(result)) return result;
-      return runChecksB(result);
+      return runChecks(result);
     };
   }
 });
@@ -476,8 +426,8 @@ export interface $ZodCheck<in T = never> {
   "~def": $ZodCheckDef;
   /** The set of issues this check might throw. */
   "~issc"?: errors.$ZodIssueBase;
-  "~check"(input: $ZodResult<T>): util.MaybeAsync<void>;
-  _checkB(payload: ParsePayloadB<T>): util.MaybeAsync<void>;
+  // "~check"(input: $ZodResult<T>): util.MaybeAsync<void>;
+  _check(payload: ParsePayloadB<T>): util.MaybeAsync<void>;
   // _parseB(payload: ParsePayloadB<any>, ctx: ParseContextB): util.MaybeAsync<ParsePayloadB>;
   "~onattach"?(schema: $ZodType): void;
   // "~async": boolean;
@@ -485,6 +435,6 @@ export interface $ZodCheck<in T = never> {
 
 export const $ZodCheck: $constructor<$ZodCheck<any>> = $constructor("$ZodCheck", (inst, def) => {
   inst["~def"] = def;
-  // inst._checkB = inst["~check"];
-  util.defineLazy(inst, "_checkB", () => inst["~check"] as any);
+  // inst._checkB = inst._check;
+  // util.defineLazy(inst, "_checkB", () => inst._check as any);
 });

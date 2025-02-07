@@ -365,7 +365,7 @@ function _void(...args: any[]): schemas.ZodVoid {
 export { _void as void };
 
 // array
-export function array<T extends schemas.ZodType>(element: T, params?: core.$ZodArrayParams): schemas.ZodArray<T> {
+export function array<T extends core.$ZodType>(element: T, params?: core.$ZodArrayParams): schemas.ZodArray<T> {
   return new schemas.ZodArray({
     type: "array",
     element,
@@ -379,7 +379,7 @@ export function array<T extends schemas.ZodType>(element: T, params?: core.$ZodA
 export function object<T extends schemas.ZodShape>(
   shape: T,
   params?: core.$ZodObjectLikeParams
-): schemas.ZodObject<T, Record<never, unknown>>;
+): schemas.ZodObject<T, {}>;
 export function object<T extends schemas.ZodRawShape>(
   shape: T,
   params?: core.$ZodObjectLikeParams
@@ -397,7 +397,7 @@ export function object<T extends schemas.ZodRawShape>(
 export function strictObject<T extends schemas.ZodRawShape>(
   shape: T,
   params?: core.$ZodStrictObjectParams
-): schemas.ZodObject<T, Record<never, unknown>> {
+): schemas.ZodObject<T, {}> {
   const def: core.$ZodObjectDef<T> = {
     type: "object",
     shape,
@@ -702,7 +702,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 
 // union
 // interface ZodUnionParams extends util.TypeParams<schemas.ZodUnion, "options"> {}
-export function union<T extends readonly schemas.ZodType[]>(
+export function union<T extends readonly core.$ZodType[]>(
   options: T,
   params?: core.$ZodUnionParams
 ): schemas.ZodUnion<T> {
@@ -737,7 +737,7 @@ export function discriminatedUnion(...args: any[]): any {
 
 // intersection
 // type ZodIntersectionParams = util.TypeParams<schemas.ZodIntersection, "left" | "right">;
-export function intersection<T extends schemas.ZodType, U extends schemas.ZodType>(
+export function intersection<T extends core.$ZodType, U extends core.$ZodType>(
   left: T,
   right: U,
   params?: core.$ZodIntersectionParams
@@ -758,22 +758,22 @@ const _and: typeof intersection = intersection;
 // rest?: schemas.ZodTuple["~def"]["rest"];
 // }
 
-export function tuple<T extends [schemas.ZodType, ...schemas.ZodType[]]>(
+export function tuple<T extends [core.$ZodType, ...core.$ZodType[]]>(
   items: T,
   params?: core.$ZodTupleParams
 ): schemas.ZodTuple<T, null>;
-export function tuple<T extends [schemas.ZodType, ...schemas.ZodType[]], Rest extends schemas.ZodType>(
+export function tuple<T extends [core.$ZodType, ...core.$ZodType[]], Rest extends core.$ZodType>(
   items: T,
   rest: Rest,
   params?: core.$ZodTupleParams
 ): schemas.ZodTuple<T, Rest>;
 export function tuple(items: [], params?: core.$ZodTupleParams): schemas.ZodTuple<[], null>;
 export function tuple(
-  items: schemas.ZodType[],
-  _paramsOrRest?: core.$ZodTupleParams | schemas.ZodType,
+  items: core.$ZodType[],
+  _paramsOrRest?: core.$ZodTupleParams | core.$ZodType,
   _params?: core.$ZodTupleParams
 ) {
-  const hasRest = _paramsOrRest instanceof schemas.ZodType;
+  const hasRest = _paramsOrRest instanceof core.$ZodType;
   const params = hasRest ? _params : _paramsOrRest;
   const rest = hasRest ? _paramsOrRest : null;
   return new schemas.ZodTuple({
@@ -786,7 +786,7 @@ export function tuple(
 
 // record
 // type ZodRecordParams = util.TypeParams<schemas.ZodRecord, "keySchema" | "valueSchema">;
-export function record<Key extends schemas.ZodPropertyKey, Value extends schemas.ZodType>(
+export function record<Key extends schemas.ZodPropertyKey, Value extends core.$ZodType>(
   keySchema: Key,
   valueSchema: Value,
   params?: core.$ZodRecordParams
@@ -801,7 +801,7 @@ export function record<Key extends schemas.ZodPropertyKey, Value extends schemas
 
 // map
 // type ZodMapParams = util.TypeParams<schemas.ZodMap, "keyType" | "valueType">;
-export function map<Key extends schemas.ZodType, Value extends schemas.ZodType>(
+export function map<Key extends core.$ZodType, Value extends core.$ZodType>(
   keyType: Key,
   valueType: Value,
   params?: core.$ZodMapParams
@@ -815,11 +815,8 @@ export function map<Key extends schemas.ZodType, Value extends schemas.ZodType>(
 }
 
 // set
-interface ZodSetParams extends util.TypeParams<schemas.ZodSet, "valueType"> {}
-export function set<Value extends schemas.ZodType>(
-  valueType: Value,
-  params?: core.$ZodSetParams
-): schemas.ZodSet<Value> {
+// interface ZodSetParams extends util.TypeParams<schemas.ZodSet, "valueType"> {}
+export function set<Value extends core.$ZodType>(valueType: Value, params?: core.$ZodSetParams): schemas.ZodSet<Value> {
   return new schemas.ZodSet({
     type: "set",
     valueType,
@@ -828,7 +825,7 @@ export function set<Value extends schemas.ZodType>(
 }
 
 // enum
-interface ZodEnumParams extends util.TypeParams<schemas.ZodEnum, "entries"> {}
+// interface ZodEnumParams extends util.TypeParams<schemas.ZodEnum, "entries"> {}
 function _enum<const T extends readonly string[]>(
   values: T,
   params?: core.$ZodEnumParams
@@ -889,16 +886,21 @@ export function file(...args: any[]): schemas.ZodFile {
 
 // effect
 // type ZodEffectParams = util.TypeParams<schemas.ZodEffect, "effect">;
-/** @deprecated Asynchronous functions are not supported in `z.effect()`. Use `z.effectAsync()`. */
-export function effect<O extends Promise<unknown> = Promise<unknown>, I = unknown>(
-  effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
+
+// export function transform<O = unknown, I = unknown>(
+//   effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
+//   params?: core.$ZodEffectParams
+// ): schemas.ZodEffect<O, I>;
+// export function transform<T extends core.$ZodType, NewOut>(
+//   schema: T,
+//   fn: (arg: core.output<T>) => NewOut,
+//   params?: core.$ZodEffectParams
+// ): schemas.ZodPipe<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>>;
+export function transform<I = unknown, O = I>(
+  fn: (input: I, ctx?: core.ParsePayloadB) => O,
   params?: core.$ZodEffectParams
-): never;
-export function effect<O = unknown, I = unknown>(
-  effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
-  params?: core.$ZodEffectParams
-): schemas.ZodEffect<O, I>;
-export function effect<O = unknown, I = unknown>(
+): schemas.ZodEffect<Awaited<O>, I>;
+export function transform<O = unknown, I = unknown>(
   effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
   params?: core.$ZodEffectParams
 ): schemas.ZodEffect<O, I> {
@@ -906,7 +908,6 @@ export function effect<O = unknown, I = unknown>(
     type: "effect",
     // async: false,
     effect: effect as any,
-    effectB: effect as any,
     ...util.normalizeTypeParams(params),
   }) as schemas.ZodEffect<O, I>;
 }
@@ -925,73 +926,73 @@ export function effect<O = unknown, I = unknown>(
 // }
 
 // preprocess
-interface ZodPreprocessParams extends core.$ZodEffectParams, core.$ZodPipelineParams {}
+interface ZodPreprocessParams extends core.$ZodEffectParams, core.$ZodPipeParams {}
 
 /** @deprecated Asynchronous functions not supported in `z.preprocess()`. Use `z.preprocessAsync()`. */
-// export function preprocess<A extends Promise<unknown>, U extends schemas.ZodType>(
+// export function preprocess<A extends Promise<unknown>, U extends core.$ZodType>(
 //   fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
 //   schema: U,
 //   params?: ZodPreprocessParams
 // ): never;
 /** @deprecated Use `z.unknown().transform().pipe()` */
-export function preprocess<A, U extends schemas.ZodType>(
+export function preprocess<A, U extends core.$ZodType>(
   fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
   schema: U,
   params?: ZodPreprocessParams
-): schemas.ZodPipeline<schemas.ZodEffect<A, unknown>, U>;
-export function preprocess<A, U extends schemas.ZodType>(
+): schemas.ZodPipe<schemas.ZodEffect<A, unknown>, U>;
+export function preprocess<A, U extends core.$ZodType>(
   fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
   schema: U,
   params?: ZodPreprocessParams
-): schemas.ZodPipeline<schemas.ZodEffect<A, unknown>, U> {
-  return pipeline(effect(fn as any, params), schema as any, params);
+): schemas.ZodPipe<schemas.ZodEffect<A, unknown>, U> {
+  return pipe(transform(fn as any, params), schema as any, params);
 }
 
 // // preprocessAsync
-// interface ZodPreprocessAsyncParams extends core.$ZodEffectParams, core.$ZodPipelineParams {}
-// export function preprocessAsync<A, U extends schemas.ZodType>(
+// interface ZodPreprocessAsyncParams extends core.$ZodEffectParams, core.$ZodPipeParams {}
+// export function preprocessAsync<A, U extends core.$ZodType>(
 //   fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
 //   schema: U,
 //   params?: ZodPreprocessAsyncParams
-// ): schemas.ZodPipeline<schemas.ZodEffect<A, unknown>, U> {
-//   return pipeline(effectAsync(fn as any, params), schema as any, params);
+// ): schemas.ZodPipe<schemas.ZodEffect<A, unknown>, U> {
+//   return pipe(effectAsync(fn as any, params), schema as any, params);
 // }
 
 // transform
-interface ZodTransformParams extends core.$ZodEffectParams, core.$ZodPipelineParams {}
+// interface ZodTransformParams extends core.$ZodEffectParams, core.$ZodPipeParams {}
 
 // /** @deprecated Asynchronous functions are not supported in `z.transform()`. Use `z.transformAsync()` instead. */
-// export function transform<T extends schemas.ZodType, NewOut extends Promise<unknown>>(
+// export function transform<T extends core.$ZodType, NewOut extends Promise<unknown>>(
 //   schema: T,
 //   fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => NewOut,
 //   params?: ZodTransformParams
 // ): never;
-export function transform<T extends schemas.ZodType, NewOut>(
-  schema: T,
-  fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => NewOut,
-  params?: ZodTransformParams
-): schemas.ZodPipeline<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>>;
-export function transform<T extends schemas.ZodType, NewOut>(
-  schema: T,
-  fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => NewOut,
-  params?: ZodTransformParams
-): schemas.ZodPipeline<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>> {
-  return pipeline(schema, effect(fn as any, params), params) as any;
-}
+// export function transform<T extends core.$ZodType, NewOut>(
+//   schema: T,
+//   fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => NewOut,
+//   params?: ZodTransformParams
+// ): schemas.ZodPipe<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>>;
+// export function transform<T extends core.$ZodType, NewOut>(
+//   schema: T,
+//   fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => NewOut,
+//   params?: ZodTransformParams
+// ): schemas.ZodPipe<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>> {
+//   return pipe(schema, effect(fn as any, params), params) as any;
+// }
 
 // transformAsync
-// interface ZodTransformAsyncParams extends core.$ZodEffectParams, core.$ZodPipelineParams {}
-// export function transformAsync<T extends schemas.ZodType, NewOut>(
+// interface ZodTransformAsyncParams extends core.$ZodEffectParams, core.$ZodPipeParams {}
+// export function transformAsync<T extends core.$ZodType, NewOut>(
 //   schema: T,
 //   fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => Promise<NewOut>,
 //   params?: ZodTransformAsyncParams
-// ): schemas.ZodPipeline<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>> {
-//   return pipeline(schema, effectAsync(fn, params), params) as any;
+// ): schemas.ZodPipe<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>> {
+//   return pipe(schema, effectAsync(fn, params), params) as any;
 // }
 
 // optional
 // type ZodOptionalParams = util.TypeParams<schemas.ZodOptional, "innerType">;
-export function optional<T extends schemas.ZodType>(
+export function optional<T extends core.$ZodType>(
   innerType: T,
   params?: core.$ZodOptionalParams
 ): schemas.ZodOptional<T> {
@@ -1004,7 +1005,7 @@ export function optional<T extends schemas.ZodType>(
 
 // nullable
 // type ZodNullableParams = util.TypeParams<schemas.ZodNullable, "innerType">;
-export function nullable<T extends schemas.ZodType>(
+export function nullable<T extends core.$ZodType>(
   innerType: T,
   params?: core.$ZodNullableParams
 ): schemas.ZodNullable<T> {
@@ -1017,10 +1018,7 @@ export function nullable<T extends schemas.ZodType>(
 
 // success
 // type ZodSuccessParams = util.TypeParams<schemas.ZodSuccess, "innerType">;
-export function success<T extends schemas.ZodType>(
-  innerType: T,
-  params?: core.$ZodSuccessParams
-): schemas.ZodSuccess<T> {
+export function success<T extends core.$ZodType>(innerType: T, params?: core.$ZodSuccessParams): schemas.ZodSuccess<T> {
   return new schemas.ZodSuccess({
     type: "success",
     innerType,
@@ -1030,7 +1028,7 @@ export function success<T extends schemas.ZodType>(
 
 // default
 // type ZodDefaultParams = util.TypeParams<schemas.ZodDefault, "innerType">;
-export function _default<T extends schemas.ZodType>(
+export function _default<T extends core.$ZodType>(
   innerType: T,
   defaultValue: core.output<T> | (() => core.output<T>),
   params?: core.$ZodDefaultParams
@@ -1045,7 +1043,7 @@ export function _default<T extends schemas.ZodType>(
 
 // catch
 // type ZodCatchParams = util.TypeParams<schemas.ZodCatch, "innerType">;
-function _catch<T extends schemas.ZodType>(
+function _catch<T extends core.$ZodType>(
   innerType: T,
   catchValue: core.output<T> | ((ctx: core.$ZodCatchCtx) => core.output<T>),
   params?: core.$ZodCatchParams
@@ -1068,25 +1066,25 @@ export function nan(...args: any[]): schemas.ZodNaN {
   return _nan(...args);
 }
 
-// pipeline
-// type ZodPipelineParams = util.TypeParams<schemas.ZodPipeline, "in" | "out">;
-export function pipeline<T extends schemas.ZodType, U extends schemas.ZodType<any, T["~output"]>>(
+// pipe
+// type ZodPipeParams = util.TypeParams<schemas.ZodPipe, "in" | "out">;
+export function pipe<T extends core.$ZodType, U extends core.$ZodType<any, T["~output"]>>(
   in_: T,
   // fn: (arg: core.output<T>) => core.input<U>,
   out: U,
-  params?: core.$ZodPipelineParams
-): schemas.ZodPipeline<T, U> {
-  return new schemas.ZodPipeline({
-    type: "pipeline",
+  params?: core.$ZodPipeParams
+): schemas.ZodPipe<T, U> {
+  return new schemas.ZodPipe({
+    type: "pipe",
     in: in_,
     out,
     ...util.normalizeTypeParams(params),
-  }) as schemas.ZodPipeline<T, U>;
+  }) as schemas.ZodPipe<T, U>;
 }
 
 // readonly
 // type ZodReadonlyParams = util.TypeParams<schemas.ZodReadonly, "innerType">;
-export function readonly<T extends schemas.ZodType>(
+export function readonly<T extends core.$ZodType>(
   innerType: T,
   params?: core.$ZodReadonlyParams
 ): schemas.ZodReadonly<T> {
@@ -1112,10 +1110,7 @@ export function templateLiteral<const Parts extends core.$TemplateLiteralPart[]>
 
 // promise
 // type ZodPromiseParams = util.TypeParams<schemas.ZodPromise, "innerType">;
-export function promise<T extends schemas.ZodType>(
-  innerType: T,
-  params?: core.$ZodPromiseParams
-): schemas.ZodPromise<T> {
+export function promise<T extends core.$ZodType>(innerType: T, params?: core.$ZodPromiseParams): schemas.ZodPromise<T> {
   return new schemas.ZodPromise({
     type: "promise",
     innerType,
@@ -1181,7 +1176,7 @@ export function superRefine<T>(fn: (arg: T, ctx: schemas.RefinementCtx<T>) => vo
   const check = new core.$ZodCheck({
     check: "custom",
   });
-  check["~check"] = (ctx) => {
+  check._check = (ctx) => {
     (ctx as schemas.RefinementCtx).addIssue = (issue) => {
       if (typeof issue === "string") {
         ctx.issues.push(
@@ -1200,14 +1195,14 @@ export function superRefine<T>(fn: (arg: T, ctx: schemas.RefinementCtx<T>) => vo
 }
 
 ///////////        METHODS       ///////////
-export function parse<T extends schemas.ZodType>(schema: T, data: unknown, ctx?: core.$ParseContext): core.output<T> {
+export function parse<T extends core.$ZodType>(schema: T, data: unknown, ctx?: core.$ParseContext): core.output<T> {
   return core.parse(schema, data, ctx);
 }
 
 type SafeParseResult<T> =
   | { success: true; data: T; error?: never }
   | { success: false; data?: never; error: core.$ZodError };
-export function safeParse<T extends schemas.ZodType>(
+export function safeParse<T extends core.$ZodType>(
   schema: T,
   data: unknown,
   ctx?: core.$ParseContext
@@ -1215,7 +1210,7 @@ export function safeParse<T extends schemas.ZodType>(
   return core.safeParse(schema, data, ctx);
 }
 
-export async function parseAsync<T extends schemas.ZodType>(
+export async function parseAsync<T extends core.$ZodType>(
   schema: T,
   data: unknown,
   ctx?: core.$ParseContext
@@ -1223,7 +1218,7 @@ export async function parseAsync<T extends schemas.ZodType>(
   return core.parseAsync(schema, data, ctx);
 }
 
-export async function safeParseAsync<T extends schemas.ZodType>(
+export async function safeParseAsync<T extends core.$ZodType>(
   schema: T,
   data: unknown,
   ctx?: core.$ParseContext

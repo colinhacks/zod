@@ -3,12 +3,12 @@ import { expect, test } from "vitest";
 
 import * as z from "../src/index.js";
 
-test("string to number pipeline", () => {
+test("string to number pipe", () => {
   const schema = z.string().transform(Number).pipe(z.number());
   expect(schema.parse("1234")).toEqual(1234);
 });
 
-test("string to number pipeline async", async () => {
+test("string to number pipe async", async () => {
   const schema = z
     .string()
     .transform(async (val) => Number(val))

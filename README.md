@@ -1989,7 +1989,7 @@ z.literal.template(["Hello", 3.14, true, null, undefined]);
 
 The schema components can be any literal, primitive, or enum schema.
 
-> **Note** — Refinements, transforms, and pipelines are not supported.
+> **Note** — Refinements, transforms, and pipes are not supported.
 
 ```ts
 z.template.literal([
@@ -2699,7 +2699,7 @@ z.set(z.string()).readonly();
 
 ### `.pipe`
 
-Schemas can be chained into validation "pipelines". It's useful for easily validating the result after a `.transform()`:
+Schemas can be chained into validation "pipes". It's useful for easily validating the result after a `.transform()`:
 
 ```ts
 z.string()
@@ -2707,7 +2707,7 @@ z.string()
   .pipe(z.number().min(5));
 ```
 
-The `.pipe()` method returns a `ZodPipeline` instance.
+The `.pipe()` method returns a `ZodPipe` instance.
 
 #### You can use `.pipe()` to fix common issues with `z.coerce`.
 

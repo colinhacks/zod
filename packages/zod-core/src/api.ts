@@ -1079,7 +1079,7 @@ export interface $ZodStringBoolParams extends util.TypeParams {
 
 export function stringbool(
   params?: $ZodStringBoolParams
-): schemas.$ZodPipeline<schemas.$ZodCustom<unknown>, schemas.$ZodBoolean<boolean>> {
+): schemas.$ZodPipe<schemas.$ZodCustom<unknown>, schemas.$ZodBoolean<boolean>> {
   const trueValues = new Set(params?.true ?? ["true", "1", "yes", "on", "y", "enabled"]);
   const falseValues = new Set(params?.false ?? ["false", "0", "no", "off", "n", "disabled"]);
 
@@ -1111,7 +1111,7 @@ export function stringbool(
   });
 
   // return parser;
-  return pipeline(parser, boolean());
+  return pipe(parser, boolean());
 }
 
 // json
@@ -1144,7 +1144,7 @@ export function json(): $ZodJSONSchema {
 // type $ZodTruthyParams = util.TypeParams<schemas.$ZodBoolean>;
 // export function truthy(
 //   params?: $ZodTruthyParams
-// ): schemas.$ZodPipeline<
+// ): schemas.$ZodPipe<
 //   schemas.$ZodEffect<boolean, unknown>,
 //   schemas.$ZodBoolean
 // > {
@@ -1164,23 +1164,34 @@ export function file(...args: any): schemas.$ZodFile {
 // effect
 export type $ZodEffectParams = util.TypeParams<schemas.$ZodEffect, "effect">;
 
-// /** @deprecated Asynchronous functions are not supported in `z.effect()`. Use `z.effectAsync()`. */
-// export function effect<O extends Promise<unknown> = Promise<unknown>, I = unknown>(
-//   effect: (input: I, ctx?: base.$ParseContext) => O,
-//   params?: $ZodEffectParams
-// ): never;
-export function effect<O = unknown, I = unknown>(
-  effect: (input: I, ctx?: base.$ParseContext) => O,
+// transform
+// rewrite to use pipe and effect
+interface $ZodTransformParams extends $ZodEffectParams, $ZodPipeParams {}
+export function transform<T extends base.$ZodType, NewOut>(
+  schema: T,
+  fn: (arg: base.output<T>) => NewOut,
+  params?: $ZodTransformParams
+): schemas.$ZodPipe<T, schemas.$ZodEffect<Awaited<NewOut>, base.output<T>>>;
+export function transform<I = unknown, O = I>(
+  fn: (input: I, ctx?: base.ParsePayloadB) => O,
   params?: $ZodEffectParams
-): schemas.$ZodEffect<O, I>;
-export function effect<O = unknown, I = unknown>(
-  effect: (input: I, ctx?: base.$ParseContext) => O,
-  params?: $ZodEffectParams
-): schemas.$ZodEffect<O, I> {
+): schemas.$ZodEffect<Awaited<O>, I>;
+export function transform<I = unknown, O = I>(
+  schemaOrFn: base.$ZodType | util.AnyFunc,
+  fnOrParams?: $ZodEffectParams | util.AnyFunc,
+  _params?: object
+) {
+  if (schemaOrFn instanceof base.$ZodType) {
+    const schema = schemaOrFn as base.$ZodType;
+    const fn = fnOrParams as util.AnyFunc;
+    return pipe(schema, transform(fn, _params), _params) as any;
+  }
+
+  const fn = schemaOrFn as util.AnyFunc;
+  const params = fnOrParams as $ZodEffectParams;
   return new schemas.$ZodEffect({
     type: "effect",
-    effect: effect as any,
-    effectB: effect as any,
+    effect: fn as any,
     ...util.normalizeTypeParams(params),
   }) as schemas.$ZodEffect<O, I>;
 }
@@ -1201,26 +1212,15 @@ export function effect<O = unknown, I = unknown>(
 
 // preprocess
 // export type $ZodPreprocessParams = util.Flatten<
-//   $ZodEffectParams & $ZodPipelineParams
+//   $ZodEffectParams & $ZodPipeParams
 // >;
 // export function preprocess<T, U extends base.$ZodType<unknown, T>>(
 //   fn: (arg: unknown) => T,
 //   schema: U,
 //   params?: $ZodPreprocessParams
-// ): schemas.$ZodPipeline<schemas.$ZodEffect<T, unknown>, U> {
-//   return pipeline(effect(fn, params), schema, params);
+// ): schemas.$ZodPipe<schemas.$ZodEffect<T, unknown>, U> {
+//   return pipe(effect(fn, params), schema, params);
 // }
-
-// transform
-// rewrite to use pipeline and effect
-interface $ZodTransformParams extends $ZodEffectParams, $ZodPipelineParams {}
-export function transform<T extends base.$ZodType, NewOut>(
-  schema: T,
-  fn: (arg: base.output<T>) => NewOut,
-  params?: $ZodTransformParams
-): schemas.$ZodPipeline<T, schemas.$ZodEffect<Awaited<NewOut>, base.output<T>>> {
-  return pipeline(schema, effect(fn, params), params) as any;
-}
 
 // optional
 export type $ZodOptionalParams = util.TypeParams<schemas.$ZodOptional, "innerType">;
@@ -1306,23 +1306,20 @@ export function nan(...args: any): schemas.$ZodNaN {
   return _nan(...args) as any;
 }
 
-// pipeline
-export type $ZodPipelineParams = util.TypeParams<schemas.$ZodPipeline, "in" | "out">;
-export function pipeline<
-  const A extends base.$ZodType<any, any>,
-  const B extends base.$ZodType<any, NoInfer<A["~output"]>>,
->(
-  in_: A,
-  // fn: (arg: base.output<T>) => base.input<U>,
-  out: B,
-  params?: $ZodPipelineParams
-): schemas.$ZodPipeline<A, typeof out> {
-  return new schemas.$ZodPipeline({
-    type: "pipeline",
+// pipe
+export type $ZodPipeParams = util.TypeParams<schemas.$ZodPipe, "in" | "out">;
+
+export function pipe<
+  const A extends base.$ZodType,
+  B extends base.$ZodType<unknown, base.output<A>> = base.$ZodType<unknown, base.output<A>>,
+>(in_: A, out: B | base.$ZodType<unknown, base.output<A>>, params?: $ZodPipeParams): schemas.$ZodPipe<A, B>;
+export function pipe(in_: base.$ZodType, out: base.$ZodType, params?: $ZodPipeParams) {
+  return new schemas.$ZodPipe({
+    type: "pipe",
     in: in_,
     out,
     ...util.normalizeTypeParams(params),
-  }) as schemas.$ZodPipeline<A, B>;
+  });
 }
 
 // readonly
@@ -1403,7 +1400,7 @@ export function check(schemaOrFn: any, ...rest: any[]) {
     ...schemaOrFn["~def"],
     checks: [
       ...(schemaOrFn["~def"].checks ?? []),
-      ...(rest as any[]).map((ch) => (typeof ch === "function" ? { "~check": ch, "~def": { check: "custom" } } : ch)),
+      ...(rest as any[]).map((ch) => (typeof ch === "function" ? { _check: ch, "~def": { check: "custom" } } : ch)),
     ],
   });
 }
@@ -1474,9 +1471,19 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 //////////    REFINES     //////////
-export function issue(_iss: string | errors.$ZodRawIssue): errors.$ZodRawIssue {
-  const iss = typeof _iss === "string" ? ({ message: _iss, code: "custom", input: null } as const) : _iss;
-  return iss;
+export function issue(_iss: string, input: any, def: any): errors.$ZodRawIssue;
+export function issue(_iss: errors.$ZodRawIssue): errors.$ZodRawIssue;
+export function issue(_iss: errors.$ZodRawIssue, input, def): errors.$ZodRawIssue {
+  if (typeof _iss === "string") {
+    return {
+      message: _iss,
+      code: "custom",
+      input,
+      def,
+    };
+  }
+
+  return { ..._iss };
 }
 
 function handleRefineResult(
@@ -1538,16 +1545,8 @@ export function refine<T>(fn: (arg: T) => unknown, _params: string | $RefinePara
 
   return {
     "~def": { check: "custom", error: params.error },
-    "~check"(ctx) {
-      const result = fn(ctx.value);
-      if (result instanceof Promise)
-        return result.then((result) => {
-          handleRefineResult(result, ctx, ctx.value, params);
-        });
 
-      return handleRefineResult(result, ctx, ctx.value, params);
-    },
-    _checkB(payload) {
+    _check(payload) {
       const result = fn(payload.value);
       if (result instanceof Promise)
         return result.then((result) => {
@@ -1558,28 +1557,6 @@ export function refine<T>(fn: (arg: T) => unknown, _params: string | $RefinePara
     },
   };
 }
-
-// export function refineAsync<T>(
-//   fn: (arg: T) => unknown | Promise<unknown>,
-//   _params: string | $RefineParams = {}
-// ): base.$ZodCheck<T> {
-//   const params = util.normalizeCheckParams(_params);
-
-//   return {
-//     "~def": { check: "custom", error: params.error },
-//     "~check"(ctx) {
-//       const result = fn(ctx.value);
-//       if (result instanceof Promise)
-//         return result.then((result) => {
-//           handleRefineResult(result, ctx, ctx.value, params);
-//         });
-
-//       return handleRefineResult(result, ctx, ctx.value, params);
-//     },
-
-//     "~async": true,
-//   };
-// }
 
 // /** @deprecated Use `superRefineAsync` for asynchronous refinements. */
 // export function superRefine<T>(fn: (arg: T, ctx: base.$ZodResult<T>) => Promise<void>): never;
