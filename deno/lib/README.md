@@ -347,6 +347,11 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/72055470?s=200&v=4" height="50px;" alt="Nitric" />
+      <br />
+      <a style="text-decoration:none;" href="https://nitric.io/" target="_blank">Nitric</a>
+    </td>
+    <td align="center">
       <img src="https://avatars.githubusercontent.com/u/89474619?s=200&v=4" height="50px;" alt="PropelAuth" />
       <br />
       <a style="text-decoration:none;" href="https://www.propelauth.com/" target="_blank">PropelAuth</a>
@@ -361,12 +366,12 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br />
       <a style="text-decoration:none;" href="https://scalar.com/" target="_blank">Scalar</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" height="50px;" alt="Trigger.dev logo" />
       <br />
       <a style="text-decoration:none;" href="https://trigger.dev" target="_blank">Trigger.dev</a>
     </td>
-    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" height="50px;" alt="Transloadit logo" />
       <br />
@@ -383,12 +388,12 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br />
       <a style="text-decoration:none;" href="https://whop.com/" target="_blank">Whop</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" height="50px;" alt="CryptoJobsList logo" />
       <br />
       <a style="text-decoration:none;" href="https://cryptojobslist.com/" target="_blank">CryptoJobsList</a>
     </td>
-    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" height="50px;" alt="Plain logo" />
       <br />
@@ -404,6 +409,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br />
       <a style="text-decoration:none;" href="https://storyblok.com/" target="_blank">Storyblok</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" height="50px;" alt="Mux logo" />
       <br />
