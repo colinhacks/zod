@@ -211,7 +211,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <h3 align="center">Platinum</h3>
 
-No platinum sponsors yet. Be the first!
+<p align="center">No platinum sponsors yet. Be the first!</p>
 
 <h3 align="center">Gold</h3>
 
