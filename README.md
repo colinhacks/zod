@@ -211,6 +211,10 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <h3 align="center">Platinum</h3>
 
+No platinum sponsors yet. Be the first!
+
+<h3 align="center">Gold</h3>
+
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
     <td align="center">
@@ -324,7 +328,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <br/>
 
-<h3 align="center">Gold</h3>
+<h3 align="center">Silver</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -396,7 +400,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <br/>
 
-<h3 align="center">Silver</h3>
+<h3 align="center">Bronze</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -460,7 +464,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
   </tr>
 </table>
 
-<h3 align="center">Bronze</h3>
+<!-- <h3 align="center">Bronze</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -487,7 +491,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td>Mohammad-Ali A'râbi</td>
     <td>Supatool</td>
   </tr>
-</table>
+</table> -->
 
 ### Ecosystem
 
