@@ -2,7 +2,7 @@ import * as z from "zod-core";
 
 z;
 
-/** Standard Form:
+/* Standard Form:
  *
  * ```
  * const schema = z.union([z.string(), z.number(), z.boolean()]);
@@ -14,8 +14,8 @@ z;
 
 const schema = z.pipe(
   z.string(),
-  z.transform(async (val) => val.toUpperCase())
+  z.transform((val) => val.length)
 );
-const data = 123;
-const result = z.safeParse(schema, data, { includeInputInErrors: true });
+const data = "asdf";
+const result = z.safeParseAsync(schema, data);
 console.log(JSON.stringify(result, null, 2));

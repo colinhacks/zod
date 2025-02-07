@@ -4,9 +4,9 @@ import type * as util from "./util.js";
 ///////////////////////////
 ////     base type     ////
 ///////////////////////////
-export interface $ZodIssueBase<Input = unknown> {
+export interface $ZodIssueBase {
   code?: string;
-  input: Input | undefined;
+  input?: unknown;
   path: PropertyKey[];
   message: string;
   // [k: string]: unknown;
@@ -15,76 +15,81 @@ export interface $ZodIssueBase<Input = unknown> {
 ////////////////////////////////
 ////     issue subtypes     ////
 ////////////////////////////////
-export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase<Input> {
+export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase {
   code: "invalid_type";
   expected: $ZodSchemaTypes;
   input: Input;
 }
 
-export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase<Input> {
+export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase {
   code: "too_big";
   origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file";
   maximum: number | bigint;
   inclusive?: boolean;
-  // abort: boolean | undefined;
+  input: Input;
 }
 
-export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase<Input> {
+export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase {
   code: "too_small";
   origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file";
   minimum: number | bigint;
   inclusive?: boolean;
-  // abort: boolean | undefined;
+  input: Input;
 }
 
-export interface $ZodIssueInvalidStringFormat extends $ZodIssueBase<string> {
+export interface $ZodIssueInvalidStringFormat extends $ZodIssueBase {
   code: "invalid_format";
   format: string;
   pattern?: string;
-  // abort: boolean | undefined;
+  input: string;
 }
 
-export interface $ZodIssueNotMultipleOf<Input extends number | bigint = number | bigint> extends $ZodIssueBase<Input> {
+export interface $ZodIssueNotMultipleOf<Input extends number | bigint = number | bigint> extends $ZodIssueBase {
   code: "not_multiple_of";
   divisor: number;
-  // abort: boolean | undefined;
+  input: Input;
 }
 
-export interface $ZodIssueInvalidDate extends $ZodIssueBase<Date> {
+export interface $ZodIssueInvalidDate extends $ZodIssueBase {
   code: "invalid_date";
+  input: Date;
 }
 
-export interface $ZodIssueUnrecognizedKeys extends $ZodIssueBase<Record<string, unknown>> {
+export interface $ZodIssueUnrecognizedKeys extends $ZodIssueBase {
   code: "unrecognized_keys";
   keys: string[];
+  input: Record<string, unknown>;
 }
 
-export interface $ZodIssueInvalidUnion extends $ZodIssueBase<unknown> {
+export interface $ZodIssueInvalidUnion extends $ZodIssueBase {
   code: "invalid_union";
   errors: $ZodIssue[][];
+  input: unknown;
 }
 
-export interface $ZodIssueInvalidKey<Input = unknown> extends $ZodIssueBase<Input> {
+export interface $ZodIssueInvalidKey<Input = unknown> extends $ZodIssueBase {
   code: "invalid_key";
   origin: "map" | "record";
   issues: $ZodIssue[];
+  input: Input;
 }
 
-export interface $ZodIssueInvalidElement<Input = unknown> extends $ZodIssueBase<Input> {
+export interface $ZodIssueInvalidElement<Input = unknown> extends $ZodIssueBase {
   code: "invalid_element";
   origin: "map" | "set";
   key: unknown;
   issues: $ZodIssue[];
+  input: Input;
 }
 
-export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase<Input> {
+export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
   code: "invalid_value";
   values: util.Primitive[];
+  input: Input;
 }
 
-export interface $ZodIssueCustom extends $ZodIssueBase<unknown> {
+export interface $ZodIssueCustom extends $ZodIssueBase {
   code?: "custom";
-  // abort: boolean | undefined;
 }
 
 ////////////////////////////////////////////
@@ -175,31 +180,15 @@ export type $ZodIssue =
   | $ZodIssueInvalidValue
   | $ZodIssueCustom;
 
-// export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
 type DefLike = { error?: $ZodErrorMap<never> | undefined };
-// type RawIssue<T extends $ZodIssueBase> = util.Flatten<
-//   Omit<T, "message" | "path"> & {
-//     path?: PropertyKey[] | undefined;
-//     message?: string | undefined;
-//     def?: DefLike | undefined;
-//     // continue?: boolean | undefined;
-//   } & Record<string, unknown>
-// >;
-
 export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
-
 type RawIssue<T extends $ZodIssueBase> = util.Flatten<
-  Omit<T, "message" | "path"> & {
-    path?: PropertyKey[] | undefined;
-    message?: string | undefined;
+  util.MakePartial<T, "message" | "path"> & {
     def?: DefLike | undefined;
     continue?: boolean | undefined;
+    input?: unknown;
   } & Record<string, unknown>
 >;
-// type PathList = {
-//   key: PropertyKey;
-//   parent: PathList | undefined;
-// };
 
 /** @deprecated Use `$ZodRawIssue` instead. */
 export type IssueData = $ZodRawIssue;

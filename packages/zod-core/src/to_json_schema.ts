@@ -1,4 +1,3 @@
-import { json } from "stream/consumers";
 import type { $ZodType } from "./base.js";
 import type * as schemas from "./schemas.js";
 
@@ -157,7 +156,7 @@ export type $ZodFirstPartyTypes =
   | schemas.$ZodEnum
   | schemas.$ZodLiteral
   | schemas.$ZodFile
-  | schemas.$ZodEffect
+  | schemas.$ZodTransform
   | schemas.$ZodOptional
   | schemas.$ZodNullable
   | schemas.$ZodRequired
@@ -174,42 +173,42 @@ export type $ZodFirstPartyTypes =
 export function toJSONSchema(_schema: $ZodType): JSONSchema.Schema {
   const schema = _schema as $ZodFirstPartyTypes;
 
-  // if (schema["~def"].type === "string") {
-  // } else if (schema["~def"].type === "number") {
-  // } else if (schema["~def"].type === "boolean") {
-  // } else if (schema["~def"].type === "bigint") {
-  // } else if (schema["~def"].type === "symbol") {
-  // } else if (schema["~def"].type === "undefined") {
-  // } else if (schema["~def"].type === "null") {
-  // } else if (schema["~def"].type === "any") {
-  // } else if (schema["~def"].type === "unknown") {
-  // } else if (schema["~def"].type === "never") {
-  // } else if (schema["~def"].type === "date") {
-  // } else if (schema["~def"].type === "array") {
-  // } else if (schema["~def"].type === "object") {
-  // } else if (schema["~def"].type === "intersection") {
-  // } else if (schema["~def"].type === "set") {
-  // } else if (schema["~def"].type === "enum") {
+  // if (schema["_def"].type === "string") {
+  // } else if (schema["_def"].type === "number") {
+  // } else if (schema["_def"].type === "boolean") {
+  // } else if (schema["_def"].type === "bigint") {
+  // } else if (schema["_def"].type === "symbol") {
+  // } else if (schema["_def"].type === "undefined") {
+  // } else if (schema["_def"].type === "null") {
+  // } else if (schema["_def"].type === "any") {
+  // } else if (schema["_def"].type === "unknown") {
+  // } else if (schema["_def"].type === "never") {
+  // } else if (schema["_def"].type === "date") {
+  // } else if (schema["_def"].type === "array") {
+  // } else if (schema["_def"].type === "object") {
+  // } else if (schema["_def"].type === "intersection") {
+  // } else if (schema["_def"].type === "set") {
+  // } else if (schema["_def"].type === "enum") {
   // }
-  // // else if(schema["~def"].type === "enum") {}
-  // else if (schema["~def"].type === "file") {
-  // } else if (schema["~def"].type === "effect") {
-  // } else if (schema["~def"].type === "optional") {
-  // } else if (schema["~def"].type === "nullable") {
-  // } else if (schema["~def"].type === "required") {
-  // } else if (schema["~def"].type === "success") {
-  // } else if (schema["~def"].type === "default") {
-  // } else if (schema["~def"].type === "catch") {
-  // } else if (schema["~def"].type === "nan") {
-  // } else if (schema["~def"].type === "pipe") {
-  // } else if (schema["~def"].type === "readonly") {
-  // } else if (schema["~def"].type === "template_literal") {
-  // } else if (schema["~def"].type === "promise") {
-  // } else if (schema["~def"].type === "custom") {
+  // // else if(schema["_def"].type === "enum") {}
+  // else if (schema["_def"].type === "file") {
+  // } else if (schema["_def"].type === "effect") {
+  // } else if (schema["_def"].type === "optional") {
+  // } else if (schema["_def"].type === "nullable") {
+  // } else if (schema["_def"].type === "required") {
+  // } else if (schema["_def"].type === "success") {
+  // } else if (schema["_def"].type === "default") {
+  // } else if (schema["_def"].type === "catch") {
+  // } else if (schema["_def"].type === "nan") {
+  // } else if (schema["_def"].type === "pipe") {
+  // } else if (schema["_def"].type === "readonly") {
+  // } else if (schema["_def"].type === "template_literal") {
+  // } else if (schema["_def"].type === "promise") {
+  // } else if (schema["_def"].type === "custom") {
   // } else {
-  //   schema["~def"].type === "";
+  //   schema["_def"].type === "";
   // }
-  const def = schema["~def"];
+  const def = schema._def;
   const jsonSchema: any = {};
   switch (def.type) {
     case "string": {

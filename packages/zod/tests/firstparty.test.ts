@@ -60,7 +60,7 @@ test("first party switch", () => {
       break;
     case z.ZodFirstPartyTypeKind.ZodEnum:
       break;
-    case z.ZodFirstPartyTypeKind.ZodEffects:
+    case z.ZodFirstPartyTypeKind.ZodTransform:
       break;
     case z.ZodFirstPartyTypeKind.ZodNativeEnum:
       break;

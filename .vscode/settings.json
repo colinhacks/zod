@@ -28,7 +28,8 @@
   },
   "editor.codeActionsOnSave": {
     "source.organizeImports.biome": "explicit",
-    "source.fixAll": "always"
+    "source.fixAll": "always",
+    "quickfix.biome": "explicit"
   },
   "files.exclude": {
     "./scratch": false,

@@ -244,7 +244,7 @@ test("z.discriminatedUnion", () => {
 
   const c = z.discriminatedUnion([a, b]);
 
-  expect(c["~def"].options.length).toEqual(2);
+  expect(c["_def"].options.length).toEqual(2);
   expect(c["~disc"].get("type")!.values.has("A")).toEqual(true);
   expect(c["~disc"].get("type")!.values.has("B")).toEqual(true);
 
@@ -395,17 +395,17 @@ test("z.map", () => {
   expect(() => z.parse(a, new Map([[1243, "world"]]))).toThrow();
   expect(() => z.parse(a, "hello")).toThrow();
 
-  const r1: any = a._run(new Map([[123, 123]]));
-  expect(r1.issues[0].code).toEqual("invalid_type");
-  expect(r1.issues[0].path).toEqual([123]);
+  const r1 = z.safeParse(a, new Map([[123, 123]]));
+  expect(r1.error?.issues[0].code).toEqual("invalid_type");
+  expect(r1.error?.issues[0].path).toEqual([123]);
 
   const r2: any = z.safeParse(a, new Map([[BigInt(123), 123]]));
   expect(r2.error!.issues[0].code).toEqual("invalid_key");
   expect(r2.error!.issues[0].path).toEqual([]);
 
-  const r3: any = a._run(new Map([["hello", "world"]]));
-  expect(r3.issues[0].code).toEqual("invalid_type");
-  expect(r3.issues[0].path).toEqual(["hello"]);
+  const r3: any = z.safeParse(a, new Map([["hello", "world"]]));
+  expect(r3.error!.issues[0].code).toEqual("invalid_type");
+  expect(r3.error!.issues[0].path).toEqual(["hello"]);
 });
 
 test("z.map invalid_element", () => {
@@ -629,7 +629,10 @@ test("z.nan", () => {
 
 test("z.pipe", () => {
   const a = z.pipe(
-    z.transform(z.string(), (val) => val.length),
+    z.pipe(
+      z.string(),
+      z.transform((val) => val.length)
+    ),
     z.number()
   );
   type a_in = z.input<typeof a>;

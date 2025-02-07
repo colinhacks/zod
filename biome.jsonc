@@ -46,7 +46,11 @@
       "complexity": {
         "noUselessConstructor": "off",
         "noBannedTypes": "off",
-        "useArrowFunction": "off"
+        "useArrowFunction": "off",
+        "useLiteralKeys": {
+          "fix": "unsafe",
+          "level": "error"
+        }
       },
       "performance": {
         "noDelete": "off"

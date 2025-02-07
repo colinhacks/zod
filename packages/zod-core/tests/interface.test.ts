@@ -130,7 +130,7 @@ test("one to many", () => {
   }
 
   // C["~output"].d.c.d.c.d;
-  expectTypeOf<(typeof C)["~def"]["shape"]>().toEqualTypeOf<z.$ZodShape>();
+  expectTypeOf<(typeof C)["_def"]["shape"]>().toEqualTypeOf<z.$ZodShape>();
   expectTypeOf<(typeof C)["~output"]>().toEqualTypeOf<_C>();
   expectTypeOf<(typeof D)["~output"]["c"]["d"][number]>().toEqualTypeOf<_D>();
 });

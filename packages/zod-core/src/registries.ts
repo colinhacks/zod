@@ -5,7 +5,7 @@ export type OUTPUT = typeof OUTPUT;
 export const INPUT = Symbol("ZodInput");
 export type INPUT = typeof INPUT;
 
-type Replacer<Meta, S extends base.$ZodType> = Meta extends OUTPUT
+export type Replacer<Meta, S extends base.$ZodType> = Meta extends OUTPUT
   ? base.output<S>
   : Meta extends INPUT
     ? base.input<S>
@@ -102,3 +102,12 @@ export class $ZodRegistry<Meta = unknown, Schema extends base.$ZodType = base.$Z
 //     return this._metaMap.has(arg);
 //   }
 // }
+
+export interface GlobalMeta {
+  title?: string;
+  description?: string;
+  examples?: OUTPUT[];
+  [k: string]: unknown;
+}
+
+export const globalRegistry: $ZodRegistry<GlobalMeta> = /*@__PURE__*/ new $ZodRegistry<GlobalMeta>();

@@ -114,7 +114,7 @@
 - [Sets](#sets)
 - [Intersections](#intersections)
 - [Recursive types](#recursive-types)
-  - [ZodType with ZodEffects](#zodtype-with-zodeffects)
+  - [ZodType with ZodTransform](#zodtype-with-ZodTransform)
   - [JSON type](#json-type)
   - [Cyclical objects](#cyclical-objects)
 - [Promises](#promises)
@@ -1779,9 +1779,9 @@ categorySchema.parse({
 
 Thanks to [crasite](https://github.com/crasite) for this example.
 
-### ZodType with ZodEffects
+### ZodType with ZodTransform
 
-When using `z.ZodType` with `z.ZodEffects` (
+When using `z.ZodType` with `z.ZodTransform` (
 [`.refine`](https://github.com/colinhacks/zod#refine),
 [`.transform`](https://github.com/colinhacks/zod#transform),
 [`preprocess`](https://github.com/colinhacks/zod#preprocess),
@@ -2095,7 +2095,7 @@ But sometimes you want to apply some transform to the input _before_ parsing hap
 const castToString = z.preprocess((val) => String(val), z.string());
 ```
 
-This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
+This returns a `ZodTransform` instance. `ZodTransform` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
 
 ## Custom schemas
 
@@ -2415,7 +2415,7 @@ stringToNumber.parse("string"); // => 6
 
 #### Chaining order
 
-Note that `stringToNumber` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transforms.
+Note that `stringToNumber` above is an instance of the `ZodTransform` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transforms.
 
 ```ts
 const emailToDomain = z

@@ -1,20 +1,17 @@
 import * as Effect from "effect/Effect";
 import { ZodError, ZodType } from "zod";
 
-function zodEffect(this: ZodType, data: unknown, params?: any) {
+function ZodTransform(this: ZodType, data: unknown, params?: any) {
   return Effect.flatMap(
     Effect.promise(() => this.safeParseAsync(data, params)),
-    (result) =>
-      result.success ? Effect.succeed(result.data) : Effect.fail(result.error)
+    (result) => (result.success ? Effect.succeed(result.data) : Effect.fail(result.error))
   );
 }
 
-function zodEffectSync(this: ZodType, data: unknown, params?: any) {
+function ZodTransformync(this: ZodType, data: unknown, params?: any) {
   return Effect.suspend(() => {
     const result = this.safeParse(data, params);
-    return result.success
-      ? Effect.succeed(result.data)
-      : Effect.fail(result.error);
+    return result.success ? Effect.succeed(result.data) : Effect.fail(result.error);
   });
 }
 
@@ -24,8 +21,8 @@ if (!(globalThis as { [k: symbol]: unknown })[sym]) {
   Object.defineProperty(ZodType.prototype, "effect", {
     get() {
       return {
-        parse: zodEffect.bind(this),
-        parseSync: zodEffectSync.bind(this),
+        parse: ZodTransform.bind(this),
+        parseSync: ZodTransformync.bind(this),
       };
     },
   });

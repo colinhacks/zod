@@ -7,8 +7,8 @@ import * as util from "./util.js";
 
 export interface $ZodCoercedStringDef extends schemas.$ZodStringDef {}
 export interface $ZodCoercedString extends schemas.$ZodString<unknown>, base.$ZodType<string, unknown> {
-  "~def": $ZodCoercedStringDef;
-  "~isst": errors.$ZodIssueInvalidType<"string">;
+  _def: $ZodCoercedStringDef;
+  _isst: errors.$ZodIssueInvalidType<"string">;
 }
 
 export const $ZodCoercedString: base.$constructor<$ZodCoercedString> = /*@__PURE__*/ base.$constructor(
@@ -16,34 +16,13 @@ export const $ZodCoercedString: base.$constructor<$ZodCoercedString> = /*@__PURE
   (inst, def) => {
     schemas.$ZodString.init(inst, def); // no format checks
     base.$ZodType.init(inst, def);
-    const _super = inst._parse;
-    inst._parse = (input, ctx) => {
-      if (def.coerce) {
-        try {
-          input = String(input);
-        } catch (_) {
-          return base.$fail(
-            [
-              {
-                expected: "string",
-                code: "invalid_type",
-                input,
-                def,
-              },
-            ],
-            true
-          );
-        }
-      }
-      return _super(input, ctx);
-    };
 
-    const superB = inst._parseB;
-    inst._parseB = (payload, ctx) => {
+    const _super = inst._parse;
+    inst._parse = (payload, ctx) => {
       try {
         payload.value = String(payload.value);
       } catch {}
-      return superB(payload, ctx);
+      return _super(payload, ctx);
     };
   }
 );
@@ -64,8 +43,8 @@ export function string(...args: any[]): $ZodCoercedString {
 
 export interface $ZodCoercedNumberDef extends schemas.$ZodNumberDef {}
 export interface $ZodCoercedNumber extends schemas.$ZodNumber<unknown>, base.$ZodType<number, unknown> {
-  "~def": $ZodCoercedNumberDef;
-  "~isst": errors.$ZodIssueInvalidType<"number">;
+  _def: $ZodCoercedNumberDef;
+  _isst: errors.$ZodIssueInvalidType<"number">;
 }
 
 export const $ZodCoercedNumber: base.$constructor<$ZodCoercedNumber> = /*@__PURE__*/ base.$constructor(
@@ -73,35 +52,13 @@ export const $ZodCoercedNumber: base.$constructor<$ZodCoercedNumber> = /*@__PURE
   (inst, def) => {
     schemas.$ZodNumber.init(inst, def); // no format checks
     base.$ZodType.init(inst, def);
-    const _super = inst._parse;
-    inst._parse = (input, ctx) => {
-      if (def.coerce) {
-        try {
-          input = Number(input);
-        } catch (_) {
-          return base.$fail(
-            [
-              {
-                expected: "number",
-                code: "invalid_type",
-                level: "abort",
-                input,
-                def,
-              },
-            ],
-            true
-          );
-        }
-      }
-      return _super(input, ctx);
-    };
 
-    const superB = inst._parseB;
-    inst._parseB = (payload, ctx) => {
+    const _super = inst._parse;
+    inst._parse = (payload, ctx) => {
       try {
         payload.value = Number(payload.value);
       } catch {}
-      return superB(payload, ctx);
+      return _super(payload, ctx);
     };
   }
 );
@@ -121,8 +78,8 @@ export function number(...args: any[]): $ZodCoercedNumber {
 
 export interface $ZodCoercedBooleanDef extends schemas.$ZodBooleanDef {}
 export interface $ZodCoercedBoolean extends schemas.$ZodBoolean<unknown>, base.$ZodType<boolean, unknown> {
-  "~def": $ZodCoercedBooleanDef;
-  "~isst": errors.$ZodIssueInvalidType<"boolean">;
+  _def: $ZodCoercedBooleanDef;
+  _isst: errors.$ZodIssueInvalidType<"boolean">;
 }
 
 export const $ZodCoercedBoolean: base.$constructor<$ZodCoercedBoolean> = /*@__PURE__*/ base.$constructor(
@@ -130,35 +87,13 @@ export const $ZodCoercedBoolean: base.$constructor<$ZodCoercedBoolean> = /*@__PU
   (inst, def) => {
     schemas.$ZodBoolean.init(inst, def); // no format checks
     base.$ZodType.init(inst, def);
-    const _super = inst._parse;
-    inst._parse = (input, ctx) => {
-      if (def.coerce) {
-        try {
-          input = Boolean(input);
-        } catch (_) {
-          return base.$fail(
-            [
-              {
-                expected: "boolean",
-                code: "invalid_type",
-                level: "abort",
-                input,
-                def,
-              },
-            ],
-            true
-          );
-        }
-      }
-      return _super(input, ctx);
-    };
 
-    const superB = inst._parseB;
-    inst._parseB = (payload, ctx) => {
+    const _super = inst._parse;
+    inst._parse = (payload, ctx) => {
       try {
         payload.value = Boolean(payload.value);
       } catch {}
-      return superB(payload, ctx);
+      return _super(payload, ctx);
     };
   }
 );
@@ -178,8 +113,8 @@ export function boolean(...args: any[]): $ZodCoercedBoolean {
 //////////    $ZodCoercedBigInt    //////////
 export interface $ZodCoercedBigIntDef extends schemas.$ZodBigIntDef {}
 export interface $ZodCoercedBigInt extends schemas.$ZodBigInt<unknown>, base.$ZodType<bigint, unknown> {
-  "~def": $ZodCoercedBigIntDef;
-  "~isst": errors.$ZodIssueInvalidType<"bigint">;
+  _def: $ZodCoercedBigIntDef;
+  _isst: errors.$ZodIssueInvalidType<"bigint">;
 }
 
 export const $ZodCoercedBigInt: base.$constructor<$ZodCoercedBigInt> = /*@__PURE__*/ base.$constructor(
@@ -187,35 +122,13 @@ export const $ZodCoercedBigInt: base.$constructor<$ZodCoercedBigInt> = /*@__PURE
   (inst, def) => {
     schemas.$ZodBigInt.init(inst, def); // no format checks
     base.$ZodType.init(inst, def);
-    const _super = inst._parse;
-    inst._parse = (input, ctx) => {
-      if (def.coerce) {
-        try {
-          input = BigInt(input as any);
-        } catch (_) {
-          return base.$fail(
-            [
-              {
-                expected: "bigint",
-                code: "invalid_type",
-                level: "abort",
-                input,
-                def,
-              },
-            ],
-            true
-          );
-        }
-      }
-      return _super(input, ctx);
-    };
 
-    const superB = inst._parseB;
-    inst._parseB = (payload, ctx) => {
+    const _super = inst._parse;
+    inst._parse = (payload, ctx) => {
       try {
         payload.value = BigInt(payload.value);
       } catch {}
-      return superB(payload, ctx);
+      return _super(payload, ctx);
     };
   }
 );
@@ -234,8 +147,8 @@ export function bigint(...args: any[]): $ZodCoercedBigInt {
 //////////    $ZodCoercedDate    //////////
 export interface $ZodCoercedDateDef extends schemas.$ZodDateDef {}
 export interface $ZodCoercedDate extends schemas.$ZodDate<unknown>, base.$ZodType<Date, unknown> {
-  "~def": $ZodCoercedDateDef;
-  "~isst": errors.$ZodIssueInvalidType<"date">;
+  _def: $ZodCoercedDateDef;
+  _isst: errors.$ZodIssueInvalidType<"date">;
 }
 
 export const $ZodCoercedDate: base.$constructor<$ZodCoercedDate> = /*@__PURE__*/ base.$constructor(
@@ -243,35 +156,13 @@ export const $ZodCoercedDate: base.$constructor<$ZodCoercedDate> = /*@__PURE__*/
   (inst, def) => {
     schemas.$ZodDate.init(inst, def); // no format checks
     base.$ZodType.init(inst, def);
-    const _super = inst._parse;
-    inst._parse = (input, ctx) => {
-      if (def.coerce) {
-        try {
-          input = new Date(input as any);
-        } catch (_) {
-          return base.$fail(
-            [
-              {
-                expected: "date",
-                code: "invalid_type",
-                level: "abort",
-                input,
-                def,
-              },
-            ],
-            true
-          );
-        }
-      }
-      return _super(input, ctx);
-    };
 
-    const superB = inst._parseB;
-    inst._parseB = (payload, ctx) => {
+    const _super = inst._parse;
+    inst._parse = (payload, ctx) => {
       try {
         payload.value = new Date(payload.value);
       } catch {}
-      return superB(payload, ctx);
+      return _super(payload, ctx);
     };
   }
 );

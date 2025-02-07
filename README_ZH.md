@@ -1679,7 +1679,7 @@ stringToNumber.parse("string"); // => 6
 
 #### Chaining order
 
-注意，上面的`stringToNumber`是`ZodEffects`子类的一个实例。它不是`ZodString`的实例。如果你想使用`ZodString`的内置方法（例如`.email()`），你必须在进行任何转换 _之前_ 应用这些方法。
+注意，上面的`stringToNumber`是`ZodTransform`子类的一个实例。它不是`ZodString`的实例。如果你想使用`ZodString`的内置方法（例如`.email()`），你必须在进行任何转换 _之前_ 应用这些方法。
 
 ```ts
 const emailToDomain = z

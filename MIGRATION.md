@@ -56,7 +56,7 @@ Zod 2 is being retired and will not leave beta. This is due to some unintuitive 
   z.string().transform((val) => val.length);
   ```
 
-- Under the hood, all refinements and transformations are executed inside a dedicated "ZodEffects" class. Post-parsing, ZodEffects passes the data through a chain of refinements and transformations, then returns the final value. As such, you can now _interleave_ transformations and refinements. For instance:
+- Under the hood, all refinements and transformations are executed inside a dedicated "ZodTransform" class. Post-parsing, ZodTransform passes the data through a chain of refinements and transformations, then returns the final value. As such, you can now _interleave_ transformations and refinements. For instance:
 
   ```ts
   const test = z

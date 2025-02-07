@@ -111,15 +111,13 @@ export type ParsedTypes =
 ///////     UTILS     ///////
 /////////////////////////////
 export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? true : false;
-
 export type AssertNotEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? false : true;
-
 export type AssertExtends<T, U> = T extends U ? T : never;
 export type IsAny<T> = 0 extends 1 & T ? true : false;
-
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
-export type MakePartial<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type MakePartial<T, K extends keyof T> = Omit<T, K> & InexactPartial<Pick<T, K>>;
+export type MakeRequired<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
 export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 export type NoUndefined<T> = T extends undefined ? never : T;
 export type Mask<Keys extends PropertyKey> = { [K in string & Keys]?: true };
@@ -484,16 +482,16 @@ export function escapeRegex(str: string): string {
 export type Params<
   T extends base.$ZodType | base.$ZodCheck,
   IssueTypes extends errors.$ZodIssueBase,
-  OmitKeys extends keyof T["~def"] = never,
+  OmitKeys extends keyof T["_def"] = never,
   // IssueTypes extends errors.$ZodIssueBase = errors.$ZodIssueBase,
   // Extra
   // AlsoOmit extends Exclude<
-  //   keyof T["~def"],
+  //   keyof T["_def"],
   //   "type" | "checks" | "error"
   // > = never,
 > = Flatten<
   Partial<
-    Omit<T["~def"], OmitKeys> &
+    Omit<T["_def"], OmitKeys> &
       ([IssueTypes] extends [never]
         ? unknown
         : {
@@ -504,39 +502,39 @@ export type Params<
   >
 >;
 
-// type lkjasdf = (base.$ZodType & { "~isst": never })['']
+// type lkjasdf = (base.$ZodType & { _isst: never })['']
 export type TypeParams<
-  T extends base.$ZodType = base.$ZodType & { "~isst": never },
-  AlsoOmit extends Exclude<keyof T["~def"], "type" | "checks" | "error"> = never,
+  T extends base.$ZodType = base.$ZodType & { _isst: never },
+  AlsoOmit extends Exclude<keyof T["_def"], "type" | "checks" | "error"> = never,
 > = Params<T, NonNullable<T["~isst"]>, "type" | "checks" | "error" | AlsoOmit>;
 
 // strips types that are not exposed in the public factory
 // incl. `error`, `check`
 export type CheckParams<
-  T extends base.$ZodCheck = base.$ZodCheck, // & { "~issc": never },
-  AlsoOmit extends Exclude<keyof T["~def"], "check" | "error"> = never,
-> = Params<T, NonNullable<T["~issc"]>, "check" | "error" | AlsoOmit>;
+  T extends base.$ZodCheck = base.$ZodCheck, // & { _issc: never },
+  AlsoOmit extends Exclude<keyof T["_def"], "check" | "error"> = never,
+> = Params<T, NonNullable<T["_issc"]>, "check" | "error" | AlsoOmit>;
 
 // strips types that are not exposed in the public factory
 // incl. `type`, `checks`, `error`, `check`, `format`
 export type StringFormatParams<
   T extends $ZodStringFormat = $ZodStringFormat,
-  AlsoOmit extends Exclude<keyof T["~def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
+  AlsoOmit extends Exclude<keyof T["_def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
 > = Params<
   T,
-  NonNullable<T["~isst"] | T["~issc"]>,
+  NonNullable<T["~isst"] | T["_issc"]>,
   "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit
 >;
 
 export type CheckStringFormatParams<
   T extends $ZodStringFormat = $ZodStringFormat,
-  AlsoOmit extends Exclude<keyof T["~def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
-> = Params<T, NonNullable<T["~issc"]>, "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit>;
+  AlsoOmit extends Exclude<keyof T["_def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
+> = Params<T, NonNullable<T["_issc"]>, "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit>;
 
 export type CheckTypeParams<
   T extends base.$ZodType & base.$ZodCheck = base.$ZodType & base.$ZodCheck,
-  AlsoOmit extends Exclude<keyof T["~def"], "type" | "checks" | "error" | "check"> = never,
-> = Params<T, NonNullable<T["~isst"] | T["~issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
+  AlsoOmit extends Exclude<keyof T["_def"], "type" | "checks" | "error" | "check"> = never,
+> = Params<T, NonNullable<T["~isst"] | T["_issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
 
 // export type NormalizedTypeParams<T extends TypeParams = TypeParams> = Omit<
 //   T,
@@ -547,7 +545,7 @@ export type CheckTypeParams<
 // };
 
 export type Def<T extends base.$ZodType = base.$ZodType> = Omit<
-  T["~def"],
+  T["_def"],
   never
   // "error" | "message"
 >;
@@ -555,7 +553,7 @@ export type Def<T extends base.$ZodType = base.$ZodType> = Omit<
 // export function normalizeTypeArgs<T extends base.$ZodType = base.$ZodType>(
 //   __params?: string | TypeParams<T> | base.$ZodCheck<any>[],
 //   __checks?: base.$ZodCheck<any>[],
-//   __defaults?: Partial<T["~def"]>
+//   __defaults?: Partial<T["_def"]>
 // ): Def<T> {
 //   const params = (Array.isArray(__params)
 //     ? {}
@@ -656,7 +654,7 @@ export function normalizeCheckParams<T>(_params: T): Normalize<T> {
 // >(
 //   Cls: Cls,
 //   defaultParams: Omit<
-//     InstanceType<Cls>["~def"],
+//     InstanceType<Cls>["_def"],
 //     "checks" | "description" | "error"
 //   >
 // ) => PrimitiveFactory<Params, InstanceType<Cls>> = (Cls, defaultParams) => {
@@ -673,7 +671,7 @@ type ClassType<T> = { new (...args: any[]): T };
 export const factory =
   <Cls extends ClassType<base.$ZodType>>(
     _class: () => Cls,
-    _defaults: Omit<InstanceType<Cls>["~def"], "checks" | "error">
+    _defaults: Omit<InstanceType<Cls>["_def"], "checks" | "error">
   ) =>
   (...args: any[]): InstanceType<Cls> => {
     const { checks, params } = splitChecksAndParams(...args);
@@ -697,7 +695,7 @@ export type FactoryParams<T extends base.$ZodTypeDef, Omitted extends keyof T, O
 
 export const makeFactory =
   <Class extends ClassType<base.$ZodType>>(_class: Class) =>
-  <Fixed extends Partial<InstanceType<Class>["~def"]>, Defaults extends Partial<InstanceType<Class>["~def"]>>(
+  <Fixed extends Partial<InstanceType<Class>["_def"]>, Defaults extends Partial<InstanceType<Class>["_def"]>>(
     fixed: Fixed,
     defaults: Defaults
   ): Factory<InstanceType<Class>, Fixed, Defaults> => {
@@ -706,13 +704,13 @@ export const makeFactory =
 
 export class Factory<
   Class extends base.$ZodType,
-  Fixed extends Partial<Class["~def"]>,
-  Defaults extends Partial<Class["~def"]>,
+  Fixed extends Partial<Class["_def"]>,
+  Defaults extends Partial<Class["_def"]>,
 > {
   _class: ClassType<Class>;
   _fixed: Fixed;
   _default: Defaults;
-  Params!: FactoryParams<Class["~def"], keyof Class["~def"] & keyof Fixed, keyof Class["~def"] & keyof Defaults>;
+  Params!: FactoryParams<Class["_def"], keyof Class["_def"] & keyof Fixed, keyof Class["_def"] & keyof Defaults>;
 
   constructor(_class: ClassType<Class>, fixed: Fixed, defaults: Defaults) {
     this._class = _class;
@@ -739,10 +737,9 @@ export type KeysArray<T extends object> = Flatten<(keyof T & string)[]>;
 export type Literal = string | number | bigint | boolean | symbol;
 export type LiteralArray = Array<Literal>;
 
-export type SafeParseResult<T> =
-  | { success: true; data: T; error?: never }
-  | { success: false; data?: never; error: base.$ZodError };
-
+export type SafeParseResult<T> = SafeParseSuccess<T> | SafeParseError<T>;
+export type SafeParseSuccess<T> = { success: true; data: T; error?: never };
+export type SafeParseError<T> = { success: false; data?: never; error: base.$ZodError<T> };
 export function createTransparentProxy<T extends object>(getter: () => T): T {
   let target: T;
   return new Proxy(
@@ -847,10 +844,10 @@ export const BIGINT_FORMAT_RANGES: Record<$ZodBigIntFormats, [bigint, bigint]> =
 
 export function pick(schema: $ZodObjectLike, mask: object) {
   const shape: Writeable<$ZodShape> = {};
-  const currShape = schema["~def"].shape;
+  const currShape = schema._def.shape;
 
   for (const key in mask) {
-    // shape[key] = schema["~def"].shape[key];
+    // shape[key] = schema._def.shape[key];
     if (key in currShape) {
       shape[key] = currShape[key];
     }
@@ -865,14 +862,14 @@ export function pick(schema: $ZodObjectLike, mask: object) {
   }
 
   return schema.clone({
-    ...schema["~def"],
+    ...schema._def,
     shape,
     checks: [],
   }) as any;
 }
 
 export function omit(schema: $ZodObjectLike, mask: object) {
-  const shape: Writeable<$ZodShape> = { ...schema["~def"].shape };
+  const shape: Writeable<$ZodShape> = { ...schema._def.shape };
   for (const key in mask) {
     if (key in shape) {
       delete shape[key];
@@ -887,7 +884,7 @@ export function omit(schema: $ZodObjectLike, mask: object) {
     }
   }
   return schema.clone({
-    ...schema["~def"],
+    ...schema._def,
     shape,
     checks: [],
   }) as any;
@@ -895,9 +892,9 @@ export function omit(schema: $ZodObjectLike, mask: object) {
 
 export function extend(schema: $ZodObjectLike, shape: $ZodShape): any {
   return schema.clone({
-    ...schema["~def"],
+    ...schema._def,
     get shape() {
-      return { ...schema["~def"].shape, ...shape };
+      return { ...schema._def.shape, ...shape };
     },
     checks: [], // delete existing checks
   }) as any;
@@ -908,25 +905,25 @@ export function partialObject(
   mask: object | undefined,
   Class: new (def: $ZodOptionalDef<any>) => $ZodOptional
 ): any {
-  const shape: Writeable<$ZodShape> = { ...schema["~def"].shape };
+  const shape: Writeable<$ZodShape> = { ...schema._def.shape };
 
-  for (const key in schema["~def"].shape) {
+  for (const key in schema._def.shape) {
     if (mask) {
       if (key in mask) {
         shape[key] = new Class({
           type: "optional",
-          innerType: schema["~def"].shape[key],
+          innerType: schema._def.shape[key],
         });
       }
     } else {
       shape[key] = new Class({
         type: "optional",
-        innerType: schema["~def"].shape[key],
+        innerType: schema._def.shape[key],
       });
     }
   }
   return schema.clone({
-    ...schema["~def"],
+    ...schema._def,
     shape,
     checks: [],
   }) as any;
@@ -937,25 +934,25 @@ export function requiredObject(
   mask: object | undefined,
   Class: new (def: $ZodRequiredDef<any>) => $ZodRequired
 ): any {
-  const shape: Writeable<$ZodShape> = { ...schema["~def"].shape };
+  const shape: Writeable<$ZodShape> = { ...schema._def.shape };
 
-  for (const key in schema["~def"].shape) {
+  for (const key in schema._def.shape) {
     if (mask) {
       if (key in mask) {
         shape[key] = new Class({
           type: "required",
-          innerType: schema["~def"].shape[key],
+          innerType: schema._def.shape[key],
         });
       }
     } else {
       shape[key] = new Class({
         type: "required",
-        innerType: schema["~def"].shape[key],
+        innerType: schema._def.shape[key],
       });
     }
   }
   return schema.clone({
-    ...schema["~def"],
+    ...schema._def,
     shape,
     checks: [],
   }) as any;
@@ -970,10 +967,10 @@ export type PartialInterfaceShape<T extends $ZodShape, Keys extends string> = Fl
 
 export function partialInterface(schema: $ZodInterface, mask: object | undefined): any {
   const shape: Record<string, base.$ZodType> = {
-    ...schema["~def"].shape,
+    ...schema._def.shape,
   };
 
-  for (const key in schema["~def"].shape) {
+  for (const key in schema._def.shape) {
     // if key is not in mask, keep it as-is
     if (mask && !(key in mask)) continue;
 
@@ -982,10 +979,10 @@ export function partialInterface(schema: $ZodInterface, mask: object | undefined
 
     // delete existing key, add ?-suffixed key
     delete shape[key];
-    shape[key + "?"] = schema["~def"].shape[key];
+    shape[key + "?"] = schema._def.shape[key];
   }
   return schema.clone({
-    ...schema["~def"],
+    ...schema._def,
     shape,
     checks: [],
   });
@@ -998,21 +995,21 @@ export type RequiredInterfaceShape<T extends $ZodShape, Keys extends string> = F
 >;
 
 export function requiredInterface(schema: $ZodInterface, mask: object | undefined): any {
-  const shape: Record<string, base.$ZodType> = { ...schema["~def"].shape };
-  for (const key in schema["~def"].shape) {
+  const shape: Record<string, base.$ZodType> = { ...schema._def.shape };
+  for (const key in schema._def.shape) {
     if (mask && !(key in mask)) continue;
     if (key[key.length - 1] === "?") {
       delete shape[key];
-      shape[key.slice(0, -1)] = schema["~def"].shape[key];
+      shape[key.slice(0, -1)] = schema._def.shape[key];
     } else if (key[0] === "?") {
       delete shape[key];
-      shape[key.slice(1)] = schema["~def"].shape[key];
+      shape[key.slice(1)] = schema._def.shape[key];
     } else {
       // do nothing, key is already required
     }
   }
   return schema.clone({
-    ...schema["~def"],
+    ...schema._def,
     shape,
     checks: [],
   });

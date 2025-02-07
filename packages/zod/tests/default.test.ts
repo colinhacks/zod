@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
 import * as core from "zod-core";
+import * as util from "zod-core/util";
 import { z } from "../src/index.js";
 
 test("basic defaults", () => {
@@ -15,10 +15,8 @@ test("default with transform", () => {
     .default("default");
   expect(stringWithDefault.parse(undefined)).toBe("DEFAULT");
   expect(stringWithDefault).toBeInstanceOf(z.ZodDefault);
-  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodEffects);
-  expect(stringWithDefault._def.innerType._def.schema).toBeInstanceOf(
-    z.ZodType
-  );
+  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodTransform);
+  expect(stringWithDefault._def.innerType._def.schema).toBeInstanceOf(z.ZodType);
 
   type inp = z.input<typeof stringWithDefault>;
   util.assertEqual<inp, string | undefined>(true);
@@ -31,9 +29,7 @@ test("default on existing optional", () => {
   expect(stringWithDefault.parse(undefined)).toBe("asdf");
   expect(stringWithDefault).toBeInstanceOf(z.ZodDefault);
   expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodOptional);
-  expect(stringWithDefault._def.innerType._def.innerType).toBeInstanceOf(
-    z.ZodString
-  );
+  expect(stringWithDefault._def.innerType._def.innerType).toBeInstanceOf(z.ZodString);
 
   type inp = z.input<typeof stringWithDefault>;
   util.assertEqual<inp, string | undefined>(true);
@@ -91,9 +87,7 @@ test("chained defaults", () => {
 });
 
 test("factory", () => {
-  expect(
-    z.ZodDefault.create(z.string(), { default: "asdf" }).parse(undefined)
-  ).toEqual("asdf");
+  expect(z.ZodDefault.create(z.string(), { default: "asdf" }).parse(undefined)).toEqual("asdf");
 });
 
 test("native enum", () => {

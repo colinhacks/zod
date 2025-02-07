@@ -14,8 +14,8 @@ test("z.string", async () => {
 
 test("z.string with description", () => {
   const a = z.string({ description: "string description" });
-  a["~def"];
-  expect(a["~def"].description).toEqual("string description");
+  a["_def"];
+  expect(a["_def"].description).toEqual("string description");
 });
 
 test("z.string with custom error", () => {
@@ -58,49 +58,32 @@ test("z.uuid", () => {
 
   const b = z.uuidv4();
   z.parse(b, "550e8400-e29b-41d4-a716-446655440000");
-  expect(z.safeParse(b, "550e8400-e29b-61d4-a716-446655440000")).toMatchObject(
-    FAIL
-  );
+  expect(z.safeParse(b, "550e8400-e29b-61d4-a716-446655440000")).toMatchObject(FAIL);
 
   const c = z.uuidv6();
   z.parse(c, "550e8400-e29b-61d4-a716-446655440000");
-  expect(z.safeParse(c, "550e8400-e29b-41d4-a716-446655440000")).toMatchObject(
-    FAIL
-  );
+  expect(z.safeParse(c, "550e8400-e29b-41d4-a716-446655440000")).toMatchObject(FAIL);
 
   const d = z.uuidv7();
   z.parse(d, "550e8400-e29b-71d4-a716-446655440000");
-  expect(z.safeParse(d, "550e8400-e29b-41d4-a716-446655440000")).toMatchObject(
-    FAIL
-  );
-  expect(z.safeParse(d, "550e8400-e29b-61d4-a716-446655440000")).toMatchObject(
-    FAIL
-  );
+  expect(z.safeParse(d, "550e8400-e29b-41d4-a716-446655440000")).toMatchObject(FAIL);
+  expect(z.safeParse(d, "550e8400-e29b-61d4-a716-446655440000")).toMatchObject(FAIL);
 });
 
 test("z.email", () => {
   const a = z.email();
   expect(z.parse(a, "test@test.com")).toEqual("test@test.com");
   expect(() => z.parse(a, "test")).toThrow();
-  expect(
-    z.safeParse(a, "bad email", { error: () => "bad email" }).error!.issues[0]
-      .message
-  ).toEqual("bad email");
+  expect(z.safeParse(a, "bad email", { error: () => "bad email" }).error!.issues[0].message).toEqual("bad email");
 
   const b = z.email("bad email");
-  expect(z.safeParse(b, "bad email").error!.issues[0].message).toEqual(
-    "bad email"
-  );
+  expect(z.safeParse(b, "bad email").error!.issues[0].message).toEqual("bad email");
 
   const c = z.email({ error: "bad email" });
-  expect(z.safeParse(c, "bad email").error!.issues[0].message).toEqual(
-    "bad email"
-  );
+  expect(z.safeParse(c, "bad email").error!.issues[0].message).toEqual("bad email");
 
   const d = z.email({ error: () => "bad email" });
-  expect(z.safeParse(d, "bad email").error!.issues[0].message).toEqual(
-    "bad email"
-  );
+  expect(z.safeParse(d, "bad email").error!.issues[0].message).toEqual("bad email");
 });
 
 test("z.url", () => {
@@ -123,25 +106,19 @@ test("z.nanoid", () => {
 
 test("z.cuid", () => {
   const a = z.cuid();
-  expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual(
-    "cixs7y0c0000f7x3b1z6m3w6r"
-  );
+  expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual("cixs7y0c0000f7x3b1z6m3w6r");
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.cuid2", () => {
   const a = z.cuid2();
-  expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual(
-    "cixs7y0c0000f7x3b1z6m3w6r"
-  );
+  expect(z.parse(a, "cixs7y0c0000f7x3b1z6m3w6r")).toEqual("cixs7y0c0000f7x3b1z6m3w6r");
   expect(() => z.parse(a, 123)).toThrow();
 });
 
 test("z.ulid", () => {
   const a = z.ulid();
-  expect(z.parse(a, "01ETGRM9QYVX6S9V2F3B6JXG4N")).toEqual(
-    "01ETGRM9QYVX6S9V2F3B6JXG4N"
-  );
+  expect(z.parse(a, "01ETGRM9QYVX6S9V2F3B6JXG4N")).toEqual("01ETGRM9QYVX6S9V2F3B6JXG4N");
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
@@ -153,18 +130,14 @@ test("z.xid", () => {
 
 test("z.ksuid", () => {
   const a = z.ksuid();
-  expect(z.parse(a, "2naeRjTrrHJAkfd3tOuEjw90WCA")).toEqual(
-    "2naeRjTrrHJAkfd3tOuEjw90WCA"
-  );
+  expect(z.parse(a, "2naeRjTrrHJAkfd3tOuEjw90WCA")).toEqual("2naeRjTrrHJAkfd3tOuEjw90WCA");
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
 test("z.ip", () => {
   const a = z.ip();
   expect(z.parse(a, "127.0.0.1")).toEqual("127.0.0.1");
-  expect(z.parse(a, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual(
-    "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
-  );
+  expect(z.parse(a, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual("2001:0db8:85a3:0000:0000:8a2e:0370:7334");
   expect(() => z.parse(a, "abc")).toThrow();
 });
 
@@ -185,9 +158,7 @@ test("z.ipv4", () => {
 test("z.ipv6", () => {
   const a = z.ipv6();
   // valid ipv6
-  expect(z.parse(a, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual(
-    "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
-  );
+  expect(z.parse(a, "2001:0db8:85a3:0000:0000:8a2e:0370:7334")).toEqual("2001:0db8:85a3:0000:0000:8a2e:0370:7334");
   expect(z.parse(a, "::1")).toEqual("::1");
   // invalid ipv6
   expect(() => z.parse(a, "2001:db8::85a3::8a2e:370:7334")).toThrow();
@@ -201,9 +172,7 @@ test("z.base64", () => {
   const a = z.base64();
   // valid base64
   expect(z.parse(a, "SGVsbG8gd29ybGQ=")).toEqual("SGVsbG8gd29ybGQ=");
-  expect(z.parse(a, "U29tZSBvdGhlciBzdHJpbmc=")).toEqual(
-    "U29tZSBvdGhlciBzdHJpbmc="
-  );
+  expect(z.parse(a, "U29tZSBvdGhlciBzdHJpbmc=")).toEqual("U29tZSBvdGhlciBzdHJpbmc=");
   // invalid base64
   expect(() => z.parse(a, "SGVsbG8gd29ybGQ")).toThrow();
   expect(() => z.parse(a, "U29tZSBvdGhlciBzdHJpbmc")).toThrow();

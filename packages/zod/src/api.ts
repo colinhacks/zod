@@ -469,18 +469,18 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 // // .keyof
 // export function keyof<T extends schemas.ZodObject>(
 //   schema: T
-// ): schemas.ZodEnum<util.KeysEnum<T["~def"]["shape"]>> {
-//   return _enum(Object.keys(schema["~def"].shape)) as any;
+// ): schemas.ZodEnum<util.KeysEnum<T["_def"]["shape"]>> {
+//   return _enum(Object.keys(schema["_def"].shape)) as any;
 // }
 
 // // .extend
 // export function extend<
 //   T extends schemas.ZodObject,
 //   U extends core.$ZodLooseShape,
-// >(schema: T, shape: U): schemas.ZodObject<T["~def"]["shape"] & U> {
+// >(schema: T, shape: U): schemas.ZodObject<T["_def"]["shape"] & U> {
 //   return schema.clone({
-//     ...schema["~def"],
-//     shape: { ...schema["~def"].shape, ...shape },
+//     ...schema["_def"],
+//     shape: { ...schema["_def"].shape, ...shape },
 //     checks: [],
 //   }) as any;
 // }
@@ -489,10 +489,10 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 // export function merge<T extends schemas.ZodObject, U extends schemas.ZodObject>(
 //   base: T,
 //   incoming: U
-// ): schemas.ZodObject<T["~def"]["shape"] & U["~def"]["shape"]> {
+// ): schemas.ZodObject<T["_def"]["shape"] & U["_def"]["shape"]> {
 //   return incoming.clone({
-//     ...incoming["~def"], // incoming overrides properties on base
-//     shape: { ...base["~def"].shape, ...incoming["~def"].shape },
+//     ...incoming["_def"], // incoming overrides properties on base
+//     shape: { ...base["_def"].shape, ...incoming["_def"].shape },
 //     checks: [],
 //   });
 // }
@@ -508,10 +508,10 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 // ): schemas.ZodObject<Pick<T["shape"], Extract<keyof T["shape"], keyof M>>> {
 //   const shape: any = {};
 //   for (const key in mask) {
-//     shape[key] = schema["~def"].shape[key];
+//     shape[key] = schema["_def"].shape[key];
 //   }
 //   return schema.clone({
-//     ...schema["~def"],
+//     ...schema["_def"],
 //     shape,
 //     checks: [],
 //   }) as any;
@@ -528,7 +528,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //   const shape: schemas.ZodRawShape = { ...schema.shape };
 //   for (const key in mask) delete shape[key];
 //   return schema.clone({
-//     ...schema["~def"],
+//     ...schema["_def"],
 //     shape,
 //     checks: [],
 //   }) as any;
@@ -541,11 +541,11 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //   [k in keyof T["shape"]]: schemas.ZodOptional<T["shape"][k]>;
 // }> {
 //   const shape: schemas.ZodRawShape = {};
-//   for (const key in schema["~def"].shape) {
-//     shape[key] = optional(schema["~def"].shape[key]);
+//   for (const key in schema["_def"].shape) {
+//     shape[key] = optional(schema["_def"].shape[key]);
 //   }
 //   return schema.clone({
-//     ...schema["~def"],
+//     ...schema["_def"],
 //     shape,
 //     checks: [],
 //   }) as any;
@@ -556,12 +556,12 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 // .keyof
 // export function keyof<T extends ZodObjectLike>(
 //   schema: T
-// ): schemas.ZodLiteral<keyof T["~def"]["shape"]>;
+// ): schemas.ZodLiteral<keyof T["_def"]["shape"]>;
 // export function keyof<T extends schemas.ZodInterface>(
 //   schema: T
 // ): schemas.ZodLiteral<keyof T["~output"]>;
 // export function keyof(schema: ZodObjectLike) {
-//   return literal(Object.keys(schema["~def"].shape)) as any;
+//   return literal(Object.keys(schema["_def"].shape)) as any;
 // }
 
 // type Overwrite<T, U> = Omit<T, keyof U> & U;
@@ -570,7 +570,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 // export function extend<T extends schemas.ZodObject, U extends schemas.ZodShape>(
 //   schema: T,
 //   shape: U
-// ): schemas.ZodObject<util.Flatten<util.Overwrite<T["~def"]["shape"], U>>>;
+// ): schemas.ZodObject<util.Flatten<util.Overwrite<T["_def"]["shape"], U>>>;
 // export function extend<
 //   T extends schemas.ZodInterface,
 //   U extends schemas.ZodShape,
@@ -587,38 +587,38 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //   schema: core.$ZodObjectLike,
 //   shape: schemas.ZodShape
 // ): any {
-//   if (schema["~def"].type === "interface") {
+//   if (schema["_def"].type === "interface") {
 //     return schema.clone({
-//       ...schema["~def"],
+//       ...schema["_def"],
 //       get shape() {
 //         return {
-//           ...schema["~def"].shape,
+//           ...schema["_def"].shape,
 //           ...shape,
 //         };
 //       },
 //       checks: [], // delete existing checks
 //     }) as any;
 //   }
-//   if (schema["~def"].type === "object") {
+//   if (schema["_def"].type === "object") {
 //     return schema.clone({
-//       ...schema["~def"],
-//       shape: { ...schema["~def"].shape, ...shape },
+//       ...schema["_def"],
+//       shape: { ...schema["_def"].shape, ...shape },
 //       checks: [], // delete existing checks
 //     }) as any;
 //   }
 
-//   throw new Error(`Invalid argument to extend(): ${schema["~def"].type}`);
+//   throw new Error(`Invalid argument to extend(): ${schema["_def"].type}`);
 // }
 
 // .pick
 // export function pick<
 //   T extends schemas.ZodObject,
-//   M extends util.Exactly<util.Mask<keyof T["~shape"]>, M>,
+//   M extends util.Exactly<util.Mask<keyof T["_shape"]>, M>,
 // >(
 //   schema: T,
 //   mask: M
 // ): schemas.ZodObject<
-//   util.Flatten<Pick<T["~shape"], Extract<keyof T["~shape"], keyof M>>>
+//   util.Flatten<Pick<T["_shape"], Extract<keyof T["_shape"], keyof M>>>
 // >;
 // export function pick<
 //   T extends schemas.ZodInterface,
@@ -637,12 +637,12 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 // .omit
 // export function omit<
 //   T extends schemas.ZodObject,
-//   M extends util.Exactly<util.Mask<keyof T["~shape"]>, M>,
+//   M extends util.Exactly<util.Mask<keyof T["_shape"]>, M>,
 // >(
 //   schema: T,
 //   mask: M
 // ): schemas.ZodObject<
-//   util.Flatten<Omit<T["~shape"], Extract<keyof T["~shape"], keyof M>>>
+//   util.Flatten<Omit<T["_shape"], Extract<keyof T["_shape"], keyof M>>>
 // >;
 // export function omit<
 //   T extends schemas.ZodInterface,
@@ -663,20 +663,20 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //   schema: T
 // ): schemas.ZodObject<
 //   {
-//     [k in keyof T["~shape"]]: schemas.ZodOptional<T["~shape"][k]>;
+//     [k in keyof T["_shape"]]: schemas.ZodOptional<T["_shape"][k]>;
 //   },
 //   T["~extra"]
 // >;
 // export function partial<
 //   T extends schemas.ZodObject,
-//   M extends util.Exactly<util.Mask<keyof T["~shape"]>, M>,
+//   M extends util.Exactly<util.Mask<keyof T["_shape"]>, M>,
 // >(
 //   schema: T,
 //   mask: M
 // ): schemas.ZodObject<{
-//   [k in keyof T["~shape"]]: k extends keyof M
-//     ? schemas.ZodOptional<T["~shape"][k]>
-//     : T["~shape"][k];
+//   [k in keyof T["_shape"]]: k extends keyof M
+//     ? schemas.ZodOptional<T["_shape"][k]>
+//     : T["_shape"][k];
 // }, T['~extra']>;
 // export function partial<T extends schemas.ZodInterface>(
 //   schema: T
@@ -755,7 +755,7 @@ const _and: typeof intersection = intersection;
 
 // tuple
 // interface ZodTupleParams extends util.TypeParams<schemas.ZodTuple, "items"> {
-// rest?: schemas.ZodTuple["~def"]["rest"];
+// rest?: schemas.ZodTuple["_def"]["rest"];
 // }
 
 export function tuple<T extends [core.$ZodType, ...core.$ZodType[]]>(
@@ -885,48 +885,48 @@ export function file(...args: any[]): schemas.ZodFile {
 }
 
 // effect
-// type ZodEffectParams = util.TypeParams<schemas.ZodEffect, "effect">;
+// type ZodTransformParams = util.TypeParams<schemas.ZodTransform, "effect">;
 
 // export function transform<O = unknown, I = unknown>(
 //   effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
-//   params?: core.$ZodEffectParams
-// ): schemas.ZodEffect<O, I>;
+//   params?: core.$ZodTransformParams
+// ): schemas.ZodTransform<O, I>;
 // export function transform<T extends core.$ZodType, NewOut>(
 //   schema: T,
 //   fn: (arg: core.output<T>) => NewOut,
-//   params?: core.$ZodEffectParams
-// ): schemas.ZodPipe<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>>;
+//   params?: core.$ZodTransformParams
+// ): schemas.ZodPipe<T, schemas.ZodTransform<Awaited<NewOut>, core.output<T>>>;
 export function transform<I = unknown, O = I>(
-  fn: (input: I, ctx?: core.ParsePayloadB) => O,
-  params?: core.$ZodEffectParams
-): schemas.ZodEffect<Awaited<O>, I>;
+  fn: (input: I, ctx?: core.$ParsePayload) => O,
+  params?: core.$ZodTransformParams
+): schemas.ZodTransform<Awaited<O>, I>;
 export function transform<O = unknown, I = unknown>(
   effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
-  params?: core.$ZodEffectParams
-): schemas.ZodEffect<O, I> {
-  return new schemas.ZodEffect({
+  params?: core.$ZodTransformParams
+): schemas.ZodTransform<O, I> {
+  return new schemas.ZodTransform({
     type: "effect",
     // async: false,
     effect: effect as any,
     ...util.normalizeTypeParams(params),
-  }) as schemas.ZodEffect<O, I>;
+  }) as schemas.ZodTransform<O, I>;
 }
 
 // effectAsync
 // export function effectAsync<O = unknown, I = unknown>(
 //   effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => Promise<O>,
-//   params?: core.$ZodEffectParams
-// ): schemas.ZodEffect<O, I> {
-//   return new schemas.ZodEffect({
+//   params?: core.$ZodTransformParams
+// ): schemas.ZodTransform<O, I> {
+//   return new schemas.ZodTransform({
 //     type: "effect",
 //     async: true,
 //     effect: effect as any,
 //     ...util.normalizeTypeParams(params),
-//   }) as schemas.ZodEffect<O, I>;
+//   }) as schemas.ZodTransform<O, I>;
 // }
 
 // preprocess
-interface ZodPreprocessParams extends core.$ZodEffectParams, core.$ZodPipeParams {}
+interface ZodPreprocessParams extends core.$ZodTransformParams, core.$ZodPipeParams {}
 
 /** @deprecated Asynchronous functions not supported in `z.preprocess()`. Use `z.preprocessAsync()`. */
 // export function preprocess<A extends Promise<unknown>, U extends core.$ZodType>(
@@ -939,27 +939,27 @@ export function preprocess<A, U extends core.$ZodType>(
   fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
   schema: U,
   params?: ZodPreprocessParams
-): schemas.ZodPipe<schemas.ZodEffect<A, unknown>, U>;
+): schemas.ZodPipe<schemas.ZodTransform<A, unknown>, U>;
 export function preprocess<A, U extends core.$ZodType>(
   fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
   schema: U,
   params?: ZodPreprocessParams
-): schemas.ZodPipe<schemas.ZodEffect<A, unknown>, U> {
+): schemas.ZodPipe<schemas.ZodTransform<A, unknown>, U> {
   return pipe(transform(fn as any, params), schema as any, params);
 }
 
 // // preprocessAsync
-// interface ZodPreprocessAsyncParams extends core.$ZodEffectParams, core.$ZodPipeParams {}
+// interface ZodPreprocessAsyncParams extends core.$ZodTransformParams, core.$ZodPipeParams {}
 // export function preprocessAsync<A, U extends core.$ZodType>(
 //   fn: (arg: unknown, ctx: schemas.RefinementCtx) => A,
 //   schema: U,
 //   params?: ZodPreprocessAsyncParams
-// ): schemas.ZodPipe<schemas.ZodEffect<A, unknown>, U> {
+// ): schemas.ZodPipe<schemas.ZodTransform<A, unknown>, U> {
 //   return pipe(effectAsync(fn as any, params), schema as any, params);
 // }
 
 // transform
-// interface ZodTransformParams extends core.$ZodEffectParams, core.$ZodPipeParams {}
+// interface ZodTransformParams extends core.$ZodTransformParams, core.$ZodPipeParams {}
 
 // /** @deprecated Asynchronous functions are not supported in `z.transform()`. Use `z.transformAsync()` instead. */
 // export function transform<T extends core.$ZodType, NewOut extends Promise<unknown>>(
@@ -971,22 +971,22 @@ export function preprocess<A, U extends core.$ZodType>(
 //   schema: T,
 //   fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => NewOut,
 //   params?: ZodTransformParams
-// ): schemas.ZodPipe<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>>;
+// ): schemas.ZodPipe<T, schemas.ZodTransform<Awaited<NewOut>, core.output<T>>>;
 // export function transform<T extends core.$ZodType, NewOut>(
 //   schema: T,
 //   fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => NewOut,
 //   params?: ZodTransformParams
-// ): schemas.ZodPipe<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>> {
+// ): schemas.ZodPipe<T, schemas.ZodTransform<Awaited<NewOut>, core.output<T>>> {
 //   return pipe(schema, effect(fn as any, params), params) as any;
 // }
 
 // transformAsync
-// interface ZodTransformAsyncParams extends core.$ZodEffectParams, core.$ZodPipeParams {}
+// interface ZodTransformAsyncParams extends core.$ZodTransformParams, core.$ZodPipeParams {}
 // export function transformAsync<T extends core.$ZodType, NewOut>(
 //   schema: T,
 //   fn: (arg: core.output<NoInfer<T>>, ctx?: schemas.RefinementCtx) => Promise<NewOut>,
 //   params?: ZodTransformAsyncParams
-// ): schemas.ZodPipe<T, schemas.ZodEffect<Awaited<NewOut>, core.output<T>>> {
+// ): schemas.ZodPipe<T, schemas.ZodTransform<Awaited<NewOut>, core.output<T>>> {
 //   return pipe(schema, effectAsync(fn, params), params) as any;
 // }
 
@@ -1153,9 +1153,6 @@ function _instanceof<T extends typeof Class>(
 export { _instanceof as instanceof };
 
 // refine
-
-// /** @deprecated Use `z.refineAsync() to define asynchronous refinements in Zod 4. */
-// export function refine<T>(fn: (arg: T) => Promise<unknown>, ...args: any[]): never;
 export function refine<T>(
   fn: (arg: T) => unknown | Promise<unknown>,
   _params?: string | core.$RefineParams
@@ -1164,34 +1161,50 @@ export function refine<T>(fn: (arg: T) => unknown, _params: string | core.$Refin
   return core.refine<T>(fn, _params);
 }
 
-// refine
-// export function refineAsync<T>(
-//   fn: (arg: T) => unknown | Promise<unknown>,
-//   _params: string | core.$RefineParams = {}
-// ): core.$ZodCheck<T> {
-//   return core.refineAsync<T>(fn, _params);
-// }
-
-export function superRefine<T>(fn: (arg: T, ctx: schemas.RefinementCtx<T>) => void | Promise<void>): core.$ZodCheck<T> {
-  const check = new core.$ZodCheck({
-    check: "custom",
-  });
-  check._check = (ctx) => {
-    (ctx as schemas.RefinementCtx).addIssue = (issue) => {
+// superRefine
+export function superRefine<T>(
+  fn: (arg: T, payload: schemas.RefinementCtx<T>) => void | Promise<void>
+): core.$ZodCheck<T> {
+  const ch = core.check<T>((payload) => {
+    (payload as schemas.RefinementCtx).addIssue = (issue) => {
       if (typeof issue === "string") {
-        ctx.issues.push(
-          core.issue({
-            code: "custom",
-            input: ctx.value,
-            message: issue,
-            def: undefined,
-          })
-        );
-      } else ctx.issues.push(issue);
+        payload.issues.push(core.issue(issue, payload.value, ch._def));
+      } else {
+        // for Zod 3 backwards compatibility
+        if ((issue as any).fatal) issue.continue = false;
+        issue.code ??= "custom";
+        issue.input ??= payload.value;
+        issue.def ??= ch._def;
+        issue.continue ??= !ch._def.abort;
+        payload.issues.push(core.issue(issue));
+      }
     };
-    return fn(ctx.value, ctx as schemas.RefinementCtx<any>);
-  };
-  return check;
+
+    return fn(payload.value, payload as schemas.RefinementCtx<T>);
+  }, {});
+  return ch;
+  // ch["_def"];
+  // const _check = new core.$ZodCheck({
+  //   check: "custom",
+  // });
+  // _check._check = (payload) => {
+  //   (payload as schemas.RefinementCtx).addIssue = (issue) => {
+  //     if (typeof issue === "string") {
+  //       payload.issues.push(core.issue(issue, payload.value, check["_def"]));
+  //     } else {
+  //       // for Zod 3 backwards compatibility
+  //       if ((issue as any).fatal) issue.continue = false;
+  //       issue.code ??= "custom";
+  //       issue.input ??= payload.value;
+  //       issue.def ??= check["_def"];
+  //       issue.continue ??= !def.abort;
+  //       payload.issues.push(core.issue(issue));
+  //     }
+  //   };
+
+  //   return fn(payload.value, payload as schemas.RefinementCtx<any>);
+  // };
+  // return _check;
 }
 
 ///////////        METHODS       ///////////

@@ -2,7 +2,7 @@
 import { expect, test } from "vitest";
 import * as util from "zod-core/util";
 
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 test("check any inference", () => {
   const t1 = z.any();

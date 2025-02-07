@@ -6,8 +6,8 @@ import * as schemas from "./schemas.js";
 
 export interface ZodCoercedStringDef extends core.$ZodStringDef {}
 export interface ZodCoercedString extends core.$ZodString<unknown>, schemas._ZodType<string, unknown> {
-  "~def": ZodCoercedStringDef;
-  "~isst": core.$ZodIssueInvalidType<"string">;
+  _def: ZodCoercedStringDef;
+  _isst: core.$ZodIssueInvalidType<"string">;
 }
 
 export const ZodCoercedString: core.$constructor<ZodCoercedString> = /*@__PURE__*/ core.$constructor(
@@ -54,8 +54,8 @@ export function string(...args: any[]): ZodCoercedString {
 //////////    ZodCoercedNumber    //////////
 export interface ZodCoercedNumberDef extends core.$ZodNumberDef {}
 export interface ZodCoercedNumber extends core.$ZodNumber<unknown>, schemas._ZodType<number, unknown> {
-  "~def": ZodCoercedNumberDef;
-  "~isst": core.$ZodIssueInvalidType<"number">;
+  _def: ZodCoercedNumberDef;
+  _isst: core.$ZodIssueInvalidType<"number">;
 }
 
 export const ZodCoercedNumber: core.$constructor<ZodCoercedNumber> = /*@__PURE__*/ core.$constructor(
@@ -102,8 +102,8 @@ export function number(...args: any[]): ZodCoercedNumber {
 //////////    ZodCoercedBoolean    //////////
 export interface ZodCoercedBooleanDef extends core.$ZodBooleanDef {}
 export interface ZodCoercedBoolean extends core.$ZodBoolean<unknown>, schemas._ZodType<boolean, unknown> {
-  "~def": ZodCoercedBooleanDef;
-  "~isst": core.$ZodIssueInvalidType<"boolean">;
+  _def: ZodCoercedBooleanDef;
+  _isst: core.$ZodIssueInvalidType<"boolean">;
 }
 
 export const ZodCoercedBoolean: core.$constructor<ZodCoercedBoolean> = /*@__PURE__*/ core.$constructor(
@@ -151,8 +151,8 @@ export function boolean(...args: any[]): ZodCoercedBoolean {
 //////////    ZodCoercedBigInt    //////////
 export interface ZodCoercedBigIntDef extends core.$ZodBigIntDef {}
 export interface ZodCoercedBigInt extends core.$ZodBigInt<unknown>, schemas._ZodType<bigint, unknown> {
-  "~def": ZodCoercedBigIntDef;
-  "~isst": core.$ZodIssueInvalidType<"bigint">;
+  _def: ZodCoercedBigIntDef;
+  _isst: core.$ZodIssueInvalidType<"bigint">;
 }
 
 export const ZodCoercedBigInt: core.$constructor<ZodCoercedBigInt> = /*@__PURE__*/ core.$constructor(
@@ -200,8 +200,8 @@ export function bigint(...args: any[]): ZodCoercedBigInt {
 //////////    ZodCoercedDate    //////////
 export interface ZodCoercedDateDef extends core.$ZodDateDef {}
 export interface ZodCoercedDate extends core.$ZodDate<unknown>, schemas._ZodType<Date, unknown> {
-  "~def": ZodCoercedDateDef;
-  "~isst": core.$ZodIssueInvalidType<"date">;
+  _def: ZodCoercedDateDef;
+  _isst: core.$ZodIssueInvalidType<"date">;
 }
 
 export const ZodCoercedDate: core.$constructor<ZodCoercedDate> = /*@__PURE__*/ core.$constructor(
