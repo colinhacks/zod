@@ -1087,7 +1087,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           status.dirty();
         }
       } else if (check.kind === "mac") {
-        if(!isValidMac(input.data)) {
+        if (!isValidMac(input.data)) {
           ctx = this._getOrReturnCtx(input,ctx);
           addIssueToContext(ctx, {
             validation: "mac",
