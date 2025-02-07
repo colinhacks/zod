@@ -222,6 +222,22 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
+      <a href="https://www.coderabbit.ai/">
+        <picture height="62px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d">
+          <img alt="Courier logo" height="62px" src="https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d">
+        </picture>
+      </a>
+      <br  />   
+      Cut code review time & bugs in half
+      <br/>
+      <a href="https://www.coderabbit.ai/" style="text-decoration:none;">coderabbit.ai</a>
+      </p>
+      <p></p>
+    </td>
+    <td align="center">
+      <p></p>
+      <p>
       <a href="https://www.courier.com/?utm_source=zod&utm_campaign=osssponsors">
         <picture height="62px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/6b09506a-78de-47e8-a8c1-792efe31910a">
@@ -235,6 +251,8 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <p></p>
       <p>
@@ -251,8 +269,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <p></p>
       <p>
@@ -269,6 +285,8 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <p></p>
       <p>
@@ -285,8 +303,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <p></p>
       <p>
@@ -303,6 +319,8 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
+  </tr>
+  <tr>
     <td align="center">
       <p></p>
       <p>
