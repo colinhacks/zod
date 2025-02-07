@@ -212,7 +212,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 <h3 align="center">Platinum</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
-  <td>This tier was just added. [Be the first platinum sponsor! 👉](https://github.com/sponsors/colinhacks)</td>
+  <td>The platinum tier was just added. <a href="https://github.com/sponsors/colinhacks">Be the first platinum sponsor! 👉</a></td>
 </table>
 
 <h3 align="center">Gold</h3>
