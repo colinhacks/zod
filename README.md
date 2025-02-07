@@ -810,7 +810,7 @@ z.string().date(); // ISO date format (YYYY-MM-DD)
 z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
 z.string().duration(); // ISO 8601 duration
 z.string().base64();
-z.string().mac(); //Validate 48-bit MAC  
+z.string().mac(); // Validate 48-bit MAC  
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
@@ -983,7 +983,7 @@ const mac = z.string().mac();
 mac.parse("00:1A:2B:3C:4D:5E"); // Pass
 mac.parse("98-76-54-32-10-FF"); // Pass
 mac.parse("00:1A:2B:3C:4D:5E:FF"); // Fail
-//Fails if mixed sperator used
+// Fails if mixed separator is used
 mac.parse("00:1A:2B-3C:4D:5E"); // Fail
 ```
 
