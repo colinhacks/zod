@@ -5250,7 +5250,7 @@ export function custom<T>(
    *
    */
   fatal?: boolean
-): ZodType<T, ZodTypeDef, T> {
+): T extends undefined ? ZodAny : ZodEffects<ZodAny, T, T> {
   if (check)
     return ZodAny.create().superRefine((data, ctx) => {
       if (!check(data)) {
@@ -5264,8 +5264,8 @@ export function custom<T>(
         const p2 = typeof p === "string" ? { message: p } : p;
         ctx.addIssue({ code: "custom", ...p2, fatal: _fatal });
       }
-    });
-  return ZodAny.create();
+    }) as any;
+  return ZodAny.create() as any;
 }
 
 export { ZodType as Schema, ZodType as ZodSchema };
