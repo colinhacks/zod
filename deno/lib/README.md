@@ -44,7 +44,7 @@
 
 ## Table of contents
 
-> These docs have been translated into [Chinese](./README_ZH.md).
+> These docs have been translated into [Chinese](./README_ZH.md) and (Korean)[./README_KO.md].
 
 - [Table of contents](#table-of-contents)
 - [Introduction](#introduction)
