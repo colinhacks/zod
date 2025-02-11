@@ -232,6 +232,8 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
   </tr>
 </table>
 
+<br/>
+
 <h3 align="center">Gold</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
