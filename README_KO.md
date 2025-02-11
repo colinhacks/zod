@@ -42,7 +42,6 @@
 
 <br/>
 
-
 ## 목차
 
 > 이 문서는 [중국어](./README_ZH.md)로도 번역되었습니다.
@@ -164,7 +163,6 @@
     - [Ow](#ow)
   - [변경 내역](#변경-내역)
 
-
 ## 소개
 
 Zod는 TypeScript를 우선으로 하는 스키마 선언 및 검증 라이브러리입니다. 여기서 "스키마"라는 용어는 단순한 `string`부터 복잡한 중첩 객체까지 모든 데이터 타입을 포괄적으로 의미합니다.
@@ -180,7 +178,6 @@ Zod의 주요 특징은 다음과 같습니다:
 - **간결한 체인 인터페이스**: 메서드 체이닝을 통해 코드를 간결하게 작성할 수 있습니다.
 - **함수형 접근**: ["검증하지 말고 파싱하라"](https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/) 철학을 따릅니다.
 - **JavaScript 지원**: TypeScript를 사용하지 않아도 됩니다. 일반 JavaScript에서도 동작합니다.
-
 
 ## 스폰서
 
@@ -472,17 +469,14 @@ Zod의 주요 특징은 다음과 같습니다:
   </tr>
 </table>
 
-
 ### 생태계
 
 Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구들이 점점 늘어나고 있습니다! 여러분이 Zod를 기반으로 도구나 라이브러리를 만들었다면, [트위터](https://twitter.com/colinhacks)로 알려주거나 [GitHub Discussions](https://github.com/colinhacks/zod/discussions)에 글을 남겨주세요. 아래에 추가하고 트윗으로 알리겠습니다.
-
 
 #### 리소스
 
 - [Total TypeScript Zod 튜토리얼](https://www.totaltypescript.com/tutorials/zod) by [@mattpocockuk](https://twitter.com/mattpocockuk)
 - [TypeScript의 약점 해결: 런타임 타입 체크](https://www.youtube.com/watch?v=rY_XqfSHock) by [@jherr](https://twitter.com/jherr)
-
 
 #### API 라이브러리
 
@@ -497,7 +491,6 @@ Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구�
 - [`koa-zod-router`](https://github.com/JakeFenley/koa-zod-router): Koa에서 Zod를 사용해 I/O 검증이 포함된 타입 안전한 라우트 생성.
 - [`zod-sockets`](https://github.com/RobinTail/zod-sockets): Zod 기반 Socket.IO 마이크로프레임워크. I/O 검증과 내장 AsyncAPI 스펙 지원.
 - [`oas-tszod-gen`](https://github.com/inkognitro/oas-tszod-gen): OpenAPI v3 스펙을 Zod 타입이 포함된 TS 엔드포인트 호출 함수로 변환하는 클라이언트 SDK 코드 생성기.
-
 
 #### 폼 통합 라이브러리
 
@@ -519,7 +512,6 @@ Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구�
 - [`antd-zod`](https://github.com/MrBr/antd-zod): Ant Design 폼 필드 검증을 위한 Zod 어댑터입니다.
 - [`frrm`](https://github.com/schalkventer/frrm): 0.5kb 크기의 Zod 기반 HTML 폼 추상화 라이브러리입니다.
 
-
 #### Zod를 활용한 다양한 도구들
 
 - **[`zod-to-ts`](https://github.com/sachinraja/zod-to-ts)**: Zod 스키마를 TypeScript 타입 정의로 변환해주는 도구입니다.
@@ -536,7 +528,6 @@ Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구�
 - **[`zodex`](https://github.com/commonbaseapp/zodex)**: Zod 스키마의 (역)직렬화를 지원합니다.
 
 이 도구들은 Zod 스키마를 다양한 형식으로 변환하거나 다른 프레임워크와 통합하는 데 유용하게 사용할 수 있습니다.
-
 
 #### X to Zod
 
@@ -557,7 +548,6 @@ Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구�
 - [`Orval`](https://github.com/anymaniax/orval): OpenAPI 스키마에서 Zod 스키마를 생성합니다.
 - [`Kubb`](https://github.com/kubb-labs/kubb): OpenAPI 스키마에서 SDK와 Zod 스키마를 생성합니다.
 
-
 #### 목킹(Mocking)
 
 - [`@anatine/zod-mock`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-mock): Zod 스키마에서 목 데이터를 생성합니다. [faker.js](https://github.com/faker-js/faker)를 기반으로 동작합니다.
@@ -566,7 +556,6 @@ Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구�
 - [`zocker`](https://zocker.sigrist.dev): 스키마를 기반으로 실제와 유사한 목 데이터를 생성합니다.
 - [`zodock`](https://github.com/ItMaga/zodock): Zod 스키마를 기반으로 목 데이터를 생성합니다.
 - [`zod-schema-faker`](https://github.com/soc221b/zod-schema-faker): Zod 스키마에서 목 데이터를 생성합니다. [@faker-js/faker](https://github.com/faker-js/faker)와 [randexp.js](https://github.com/fent/randexp.js)를 사용합니다.
-
 
 #### Zod로 구동되는 프로젝트들
 
@@ -580,7 +569,6 @@ Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구�
 - [`zod-config`](https://github.com/alexmarqs/zod-config): 유연한 어댑터를 통해 여러 소스에서 설정을 로드하고 Zod를 사용해 타입 안전성 보장.
 - [`unplugin-environment`](https://github.com/r17x/js/tree/main/packages/unplugin-environment#readme): 스키마 검증을 통해 안전하게 환경 변수를 로드하는 플러그인. 가상 모듈을 사용해 간단하고, 인텔리센스를 통해 타입 안전성을 제공하며, 더 나은 개발자 경험(DX)을 제공. Zod로 구동.
 
-
 #### Zod 유틸리티 모음
 
 - [`zod_utilz`](https://github.com/JacobWeisenburger/zod_utilz): 프레임워크에 구애받지 않는 Zod 유틸리티 모음.
@@ -589,12 +577,7 @@ Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구�
 - [`zod-dev`](https://github.com/schalkventer/zod-dev): 프로덕션 환경에서 Zod 런타임 파싱을 조건부로 비활성화.
 - [`zod-accelerator`](https://github.com/duplojs/duplojs-zod-accelerator): Zod의 처리 속도를 최대 ~100배까지 가속.
 
-
 ## 설치
-
-
-
-
 
 ### 요구사항
 
@@ -611,7 +594,6 @@ Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구�
     }
   }
   ```
-
 
 ### `npm`에서 설치하기
 
@@ -634,7 +616,6 @@ pnpm add zod@canary          # pnpm
 ```
 
 > 이 README의 나머지 부분은 여러분이 npm을 사용하고 `"zod"` 패키지에서 직접 임포트한다고 가정합니다.
-
 
 ## 기본 사용법
 
@@ -671,7 +652,6 @@ type User = z.infer;
 // { username: string }
 ```
 
-
 ## 기본 타입(Primitives)
 
 ```ts
@@ -699,7 +679,6 @@ z.unknown();
 // 어떤 값도 허용하지 않음
 z.never();
 ```
-
 
 ## 기본 타입 강제 변환(Coercion)
 
@@ -757,7 +736,6 @@ schema.parse(null); // => false
 
 강제 변환 로직을 더 세밀하게 제어하려면 [`z.preprocess`](#전처리preprocess) 또는 [`z.pipe()`](#pipe)를 사용하는 것을 고려해보세요.
 
-
 ## 리터럴(Literals)
 
 리터럴 스키마는 `"hello world"`나 `5`와 같은 [리터럴 타입](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types)을 나타냅니다.
@@ -776,7 +754,6 @@ tuna.value; // "tuna"
 ```
 
 > 현재 Zod에서는 Date 리터럴을 지원하지 않습니다. 이 기능이 필요한 경우 이슈를 등록해 주세요.
-
 
 ## 문자열
 
@@ -839,13 +816,14 @@ z.string().uuid({ message: "유효하지 않은 UUID입니다" });
 z.string().includes("tuna", { message: "'tuna'가 포함되어야 합니다" });
 z.string().startsWith("https://", { message: "보안 URL이어야 합니다" });
 z.string().endsWith(".com", { message: ".com 도메인만 허용됩니다" });
-z.string().datetime({ message: "유효하지 않은 날짜/시간 문자열입니다! UTC여야 합니다." });
+z.string().datetime({
+  message: "유효하지 않은 날짜/시간 문자열입니다! UTC여야 합니다.",
+});
 z.string().date({ message: "유효하지 않은 날짜 문자열입니다!" });
 z.string().time({ message: "유효하지 않은 시간 문자열입니다!" });
 z.string().ip({ message: "유효하지 않은 IP 주소입니다" });
 z.string().cidr({ message: "유효하지 않은 CIDR입니다" });
 ```
-
 
 ### 날짜와 시간
 
@@ -891,7 +869,6 @@ datetime.parse("2020-01-01T00:00:00Z"); // 실패
 datetime.parse("2020-01-01T00:00:00.123456Z"); // 실패
 ```
 
-
 ### 날짜
 
 > Zod 3.23에서 추가됨
@@ -905,7 +882,6 @@ date.parse("2020-01-01"); // 통과
 date.parse("2020-1-1"); // 실패
 date.parse("2020-01-32"); // 실패
 ```
-
 
 ### 시간 형식 검증
 
@@ -934,7 +910,6 @@ time.parse("00:00:00.123456"); // 실패
 time.parse("00:00:00"); // 실패
 ```
 
-
 ### IP 주소
 
 기본적으로 `.ip()`는 IPv4와 IPv6를 모두 허용합니다.
@@ -960,7 +935,6 @@ const ipv6 = z.string().ip({ version: "v6" });
 ipv6.parse("192.168.1.1"); // 실패
 ```
 
-
 ### IP 범위 (CIDR)
 
 [CIDR 표기법](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing)으로 지정된 IP 주소 범위를 검증합니다. 기본적으로 `.cidr()`은 IPv4와 IPv6를 모두 허용합니다.
@@ -980,7 +954,6 @@ ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // 실패
 const ipv6Cidr = z.string().cidr({ version: "v6" });
 ipv6Cidr.parse("192.168.1.1"); // 실패
 ```
-
 
 ## 숫자
 
@@ -1020,7 +993,6 @@ z.number().safe(); // Number.MIN_SAFE_INTEGER와 Number.MAX_SAFE_INTEGER 사이�
 z.number().lte(5, { message: "이👏값은👏너무👏큽니다" });
 ```
 
-
 ## BigInts
 
 Zod는 BigInt 타입을 위한 몇 가지 유효성 검사를 제공합니다.
@@ -1039,7 +1011,6 @@ z.bigint().nonpositive(); // 0n보다 작거나 같은지 확인
 z.bigint().multipleOf(5n); // 5n으로 나누어 떨어지는지 확인
 ```
 
-
 ## NaN (Not a Number)
 
 NaN 스키마를 생성할 때 특정 오류 메시지를 커스텀할 수 있습니다.
@@ -1051,7 +1022,6 @@ const isNaN = z.nan({
 });
 ```
 
-
 ## 불리언(Booleans)
 
 불리언 스키마를 생성할 때 특정 오류 메시지를 커스텀할 수 있습니다.
@@ -1062,7 +1032,6 @@ const isActive = z.boolean({
   invalid_type_error: "isActive는 불리언 타입이어야 합니다",
 });
 ```
-
 
 ## 날짜
 
@@ -1110,7 +1079,6 @@ console.log(dateSchema.safeParse("0000-00-00").success); // false
 ```
 
 이전 버전의 zod를 사용하는 경우, [이 스레드](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276)에서 설명한 대로 [`z.preprocess`](#전처리preprocess)를 사용하세요.
-
 
 ## Zod 열거형(enum)
 
@@ -1166,7 +1134,6 @@ const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
 const SalmonAndTrout = FishEnum.extract(["Salmon", "Trout"]);
 const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
-
 
 ## 네이티브 열거형(Native Enums)
 
@@ -1236,7 +1203,6 @@ FruitEnum.parse("Cantaloupe"); // 실패
 FruitEnum.enum.Apple; // "apple"
 ```
 
-
 ## 옵셔널(Optional)
 
 `schema`를 옵셔널로 만들고 싶다면 `z.optional()`을 사용하면 됩니다. 이 함수는 스키마를 `ZodOptional` 인스턴스로 감싼 후 결과를 반환합니다.
@@ -1265,7 +1231,6 @@ const optionalString = stringSchema.optional();
 optionalString.unwrap() === stringSchema; // true
 ```
 
-
 ## Nullable 타입
 
 `z.nullable()`을 사용하면 nullable 타입을 만들 수 있습니다.
@@ -1291,7 +1256,6 @@ const nullableString = stringSchema.nullable();
 nullableString.unwrap() === stringSchema; // true
 ```
 
-
 ## 객체
 
 ```ts
@@ -1311,16 +1275,14 @@ type Dog = {
 };
 ```
 
-
 ### `.shape`
 
 특정 키에 대한 스키마에 접근하려면 `.shape`를 사용하세요.
 
 ```ts
 Dog.shape.name; // => 문자열 스키마
-Dog.shape.age;  // => 숫자 스키마
+Dog.shape.age; // => 숫자 스키마
 ```
-
 
 ### `.keyof`
 
@@ -1333,7 +1295,6 @@ keySchema; // ZodEnum
 
 이 코드는 `Dog` 객체 스키마의 키들을 기반으로 `ZodEnum` 스키마를 만듭니다. `keySchema`는 `ZodEnum` 타입이 됩니다.
 
-
 ### `.extend`
 
 `.extend` 메서드를 사용하면 객체 스키마에 추가 필드를 넣을 수 있습니다.
@@ -1345,7 +1306,6 @@ const DogWithBreed = Dog.extend({
 ```
 
 `.extend`는 기존 필드를 덮어쓸 때도 사용할 수 있습니다. 이 기능을 사용할 때는 주의가 필요합니다!
-
 
 ### `.merge`
 
@@ -1360,7 +1320,6 @@ type Teacher = z.infer; // => { students: string[], id: string }
 ```
 
 > 두 스키마가 동일한 키를 공유할 경우, B의 속성이 A의 속성을 덮어씁니다. 반환된 스키마는 B의 "unknownKeys" 정책(strip/strict/passthrough)과 catchall 스키마를 상속받습니다.
-
 
 ### `.pick` / `.omit`
 
@@ -1390,7 +1349,6 @@ const NoIDRecipe = Recipe.omit({ id: true });
 type NoIDRecipe = z.infer;
 // => { name: string, ingredients: string[] }
 ```
-
 
 ### `.partial`
 
@@ -1427,7 +1385,6 @@ const optionalEmail = user.partial({
 */
 ```
 
-
 ### `.deepPartial`
 
 `.partial` 메서드는 얕은(shallow) 동작만 수행합니다. 즉, 한 단계 깊이만 적용됩니다. 이에 더해 "깊은(deep)" 버전도 존재합니다:
@@ -1457,7 +1414,6 @@ const deepPartialUser = user.deepPartial();
 ```
 
 > **중요한 제한 사항**: 깊은 부분 적용(deep partials)은 객체, 배열, 튜플로 구성된 계층 구조에서만 예상대로 동작합니다.
-
 
 ### `.required`
 
@@ -1496,7 +1452,6 @@ const requiredEmail = user.required({
 */
 ```
 
-
 ### `.passthrough`
 
 기본적으로 Zod 객체 스키마는 파싱 과정에서 인식되지 않는 키를 제거합니다.
@@ -1524,7 +1479,6 @@ person.passthrough().parse({
 // => { name: "bob dylan", extraKey: 61 }
 ```
 
-
 ### `.strict`
 
 기본적으로 Zod 객체 스키마는 파싱 과정에서 인식되지 않는 키를 제거합니다. `.strict()`를 사용하면 알려지지 않은 키를 허용하지 않을 수 있습니다. 입력에 알려지지 않은 키가 있으면 Zod가 에러를 발생시킵니다.
@@ -1543,11 +1497,9 @@ person.parse({
 // => ZodError 발생
 ```
 
-
 ### `.strip` 메서드
 
 `.strip` 메서드를 사용하면 객체 스키마를 기본 동작으로 재설정할 수 있습니다. 이때, 인식되지 않는 키는 제거됩니다.
-
 
 ### `.catchall`
 
@@ -1574,7 +1526,6 @@ person.parse({
 
 `.catchall()`을 사용하면 `.passthrough()`, `.strip()`, `.strict()`가 필요 없어집니다. 모든 키가 "알려진" 것으로 간주됩니다.
 
-
 ## 배열
 
 ```ts
@@ -1593,7 +1544,6 @@ z.string().array().optional(); // string[] | undefined
 
 위 예제에서 첫 번째 줄은 각 요소가 `string` 또는 `undefined`일 수 있는 배열을 생성합니다. 반면 두 번째 줄은 `string` 배열 자체가 `undefined`일 수 있음을 의미합니다.
 
-
 ### `.element`
 
 배열의 요소에 대한 스키마에 접근하려면 `.element`를 사용합니다.
@@ -1601,7 +1551,6 @@ z.string().array().optional(); // string[] | undefined
 ```ts
 stringArray.element; // => string 스키마
 ```
-
 
 ### `.nonempty`
 
@@ -1625,7 +1574,6 @@ const nonEmptyStrings = z.string().array().nonempty({
 });
 ```
 
-
 ### `.min` / `.max` / `.length`
 
 ```ts
@@ -1635,7 +1583,6 @@ z.string().array().length(5); // 배열은 정확히 5개의 항목을 포함해
 ```
 
 `.nonempty()`와 달리, 이 메서드들은 타입 추론에 영향을 주지 않습니다.
-
 
 ## 튜플(Tuples)
 
@@ -1661,7 +1608,6 @@ const variadicTuple = z.tuple([z.string()]).rest(z.number());
 const result = variadicTuple.parse(["hello", 1, 2, 3]);
 // => [string, ...number[]];
 ```
-
 
 ## 유니온 타입
 
@@ -1697,7 +1643,6 @@ console.log(optionalUrl.safeParse("").success); // true
 console.log(optionalUrl.safeParse("https://zod.dev").success); // true
 console.log(optionalUrl.safeParse("not a valid url").success); // false
 ```
-
 
 ## 구별된 유니온(Discriminated Unions)
 
@@ -1740,7 +1685,6 @@ const B = z.discriminatedUnion("status", [
 
 const AB = z.discriminatedUnion("status", [...A.options, ...B.options]);
 ```
-
 
 ## 레코드(Records)
 
@@ -1787,7 +1731,6 @@ for (const key in testMap) {
 
 보시다시피, JavaScript는 모든 객체 키를 내부적으로 문자열로 변환합니다. Zod는 정적 타입과 런타임 타입 간의 간극을 메우려고 하기 때문에, 런타임 JavaScript에서는 숫자 키가 존재하지 않으므로 숫자 키를 가진 레코드 스키마를 생성하는 방법을 제공하는 것은 의미가 없습니다.
 
-
 ## 맵(Map)
 
 ```ts
@@ -1798,7 +1741,6 @@ type StringNumberMap = z.infer;
 ```
 
 위 코드는 `zod` 라이브러리를 사용하여 문자열을 키로, 숫자를 값으로 가지는 맵을 정의하는 예제입니다. `z.map()` 함수는 첫 번째 인자로 키의 타입을, 두 번째 인자로 값의 타입을 받습니다. 이렇게 정의된 맵의 타입은 `Map<string, number>`가 됩니다.
-
 
 ## Set(집합)
 
@@ -1816,7 +1758,6 @@ z.set(z.string()).min(5); // 5개 이상의 항목을 포함해야 함
 z.set(z.string()).max(5); // 5개 이하의 항목을 포함해야 함
 z.set(z.string()).size(5); // 정확히 5개의 항목을 포함해야 함
 ```
-
 
 ## 교차 타입(Intersections)
 
@@ -1866,7 +1807,6 @@ type Teacher = z.infer;
 // { id:string; name:string };
 ```  -->
 
-
 ## 재귀 타입
 
 Zod에서 재귀 스키마를 정의할 수 있지만, TypeScript의 한계로 인해 해당 타입을 정적으로 추론할 수 없습니다. 대신 타입 정의를 수동으로 작성하고, Zod에 "타입 힌트"로 제공해야 합니다.
@@ -1902,7 +1842,6 @@ categorySchema.parse({
 
 이 예제는 [crasite](https://github.com/crasite)에게 감사드립니다.
 
-
 ### ZodType과 ZodEffects 함께 사용하기
 
 `z.ZodType`과 `z.ZodEffects`를 함께 사용할 때 (
@@ -1935,7 +1874,6 @@ const schema: z.ZodType = baseSchema.extend({
 
 이 예제는 [marcus13371337](https://github.com/marcus13371337)와 [JoelBeeldi](https://github.com/JoelBeeldi)에게 감사드립니다.
 
-
 ### JSON 타입 검증
 
 JSON 값을 검증하고 싶다면 아래 코드 조각을 사용할 수 있습니다.
@@ -1953,13 +1891,11 @@ jsonSchema.parse(data);
 
 이 코드는 [ggoodman](https://github.com/ggoodman)이 제안한 내용을 기반으로 작성되었습니다.
 
-
 ### 순환 객체
 
 Zod는 재귀 스키마를 지원하지만, 순환 데이터를 전달하면 경우에 따라 무한 루프가 발생할 수 있습니다.
 
 > 문제가 발생하기 전에 순환 객체를 감지하려면 [이 방법](https://gist.github.com/colinhacks/d35825e505e635df27cc950776c5500b)을 고려해 보세요.
-
 
 ## Promise
 
@@ -1992,7 +1928,6 @@ const test = async () => {
 
 Promise를 "파싱"할 때, Zod는 전달된 값이 `.then`과 `.catch` 메서드를 가진 객체인지 확인합니다. 따라서 Bluebird와 같은 비네이티브 Promise를 `z.promise(...).parse`에 전달해도 문제없이 동작합니다. 단, 주의할 점은 파싱 함수의 반환 타입이 `네이티브` `Promise`가 되므로, 비표준 Promise 메서드를 사용하는 하위 로직이 있다면 작동하지 않을 수 있습니다. -->
 
-
 ## Instanceof
 
 `z.instanceof`를 사용하면 입력값이 특정 클래스의 인스턴스인지 확인할 수 있습니다. 이는 외부 라이브러리에서 내보낸 클래스에 대해 입력값을 검증할 때 유용합니다.
@@ -2010,7 +1945,6 @@ TestSchema.parse(blob); // 오류 발생
 ```
 
 위 예제에서 `TestSchema`는 `Test` 클래스의 인스턴스인지 검증합니다. `new Test()`는 검증을 통과하지만, `blob`은 문자열이므로 오류가 발생합니다.
-
 
 ## 함수
 
@@ -2078,7 +2012,6 @@ myFunction.returnType();
 // => ZodBoolean
 ```
 
-
 ## 전처리(Preprocess)
 
 > Zod는 이제 `.preprocess()` 없이도 기본 타입 강제 변환을 지원합니다. 자세한 내용은 [강제 변환 문서](#기본-타입-강제-변환coercion)를 참고하세요.
@@ -2092,7 +2025,6 @@ const castToString = z.preprocess((val) => String(val), z.string());
 ```
 
 이 코드는 `ZodEffects` 인스턴스를 반환합니다. `ZodEffects`는 전처리, 개선(refinements), 변환과 관련된 모든 로직을 포함하는 래퍼 클래스입니다.
-
 
 ## 커스텀 스키마
 
@@ -2121,11 +2053,9 @@ z.custom(); // 검증을 수행하지 않음
 z.custom((val) => ..., "커스텀 에러 메시지");
 ```
 
-
 ## 스키마 메서드
 
 모든 Zod 스키마는 특정 메서드를 포함하고 있습니다.
-
 
 ### `.parse`
 
@@ -2142,7 +2072,6 @@ stringSchema.parse("fish"); // => "fish" 반환
 stringSchema.parse(12); // 오류 발생
 ```
 
-
 ### `.parseAsync`
 
 `.parseAsync(data:unknown): Promise<T>`
@@ -2155,7 +2084,6 @@ const stringSchema = z.string().refine(async (val) => val.length <= 8);
 await stringSchema.parseAsync("hello"); // => "hello" 반환
 await stringSchema.parseAsync("hello world"); // => 에러 발생
 ```
-
 
 ### `.safeParse`
 
@@ -2184,7 +2112,6 @@ if (!result.success) {
 }
 ```
 
-
 ### `.safeParseAsync`
 
 > 별칭: `.spa`
@@ -2200,7 +2127,6 @@ await stringSchema.safeParseAsync("billie");
 ```ts
 await stringSchema.spa("billie");
 ```
-
 
 ### `.refine`
 
@@ -2219,7 +2145,6 @@ const myString = z.string().refine((val) => val.length <= 255, {
 ```
 
 > ⚠️ 리파인먼트 함수는 **에러를 던지지 않아야 합니다**. 대신 검증 실패 시 `falsy` 값을 반환해야 합니다.
-
 
 #### 인자
 
@@ -2250,7 +2175,6 @@ const longString = z.string().refine(
 );
 ```
 
-
 #### 에러 경로 커스텀하기
 
 ```ts
@@ -2279,7 +2203,6 @@ ZodError {
 }
 ```
 
-
 #### 비동기 정제(Refinements)
 
 정제는 비동기로도 사용할 수 있습니다:
@@ -2293,15 +2216,14 @@ const userId = z.string().refine(async (id) => {
 
 > ⚠️ 비동기 정제를 사용할 경우, 데이터를 파싱할 때 반드시 `.parseAsync` 메서드를 사용해야 합니다! 그렇지 않으면 Zod에서 에러가 발생합니다.
 
-
 #### transform과 refine의 관계
 
 transform과 refine은 서로 교차하여 사용할 수 있습니다:
 
 ```ts
 z.string()
-  .transform((val) => val.length)  // 문자열을 길이로 변환
-  .refine((val) => val > 25);      // 길이가 25보다 큰지 검증
+  .transform((val) => val.length) // 문자열을 길이로 변환
+  .refine((val) => val > 25); // 길이가 25보다 큰지 검증
 ```
 
 <!-- `path`가 `["confirm"]`로 설정되어 있으므로, "Confirm password" 텍스트박스 아래에 이 오류를 쉽게 표시할 수 있습니다.
@@ -2327,7 +2249,6 @@ ZodError {
   }]
 }
 ``` -->
-
 
 ### `.superRefine`
 
@@ -2358,7 +2279,6 @@ const Strings = z.array(z.string()).superRefine((val, ctx) => {
 
 일반적으로 리파인먼트는 항상 `ZodIssueCode.custom` 에러 코드를 가진 이슈를 생성하지만, `superRefine`을 사용하면 어떤 `ZodIssueCode`의 이슈든 던질 수 있습니다. 각 이슈 코드는 [ERROR_HANDLING.md](ERROR_HANDLING.md) 문서에서 자세히 설명되어 있습니다.
 
-
 #### 조기 중단
 
 기본적으로, 파싱은 검증 체크가 실패한 후에도 계속 진행됩니다. 예를 들어, 여러 개의 검증을 연쇄적으로 연결하면 모든 검증이 실행됩니다. 하지만, 이후의 검증이 실행되지 않도록 **조기 중단**하는 것이 바람직할 수 있습니다. 이를 위해 `ctx.addIssue`에 `fatal` 플래그를 전달하고 `z.NEVER`를 반환하면 됩니다.
@@ -2383,7 +2303,6 @@ const schema = z.number().superRefine((val, ctx) => {
   }
 });
 ```
-
 
 #### 타입 정제
 
@@ -2412,7 +2331,6 @@ const schema = z
 
 > ⚠️ 검증이 통과되었는지 여부를 나타내기 위해 불리언 값을 반환하는 대신 **반드시** `ctx.addIssue()`를 사용해야 합니다. 함수 실행 중에 `ctx.addIssue`가 호출되지 않으면 검증이 통과됩니다.
 
-
 ### `.transform`
 
 데이터를 파싱한 후 변환하려면 `transform` 메서드를 사용합니다.
@@ -2424,7 +2342,6 @@ stringToNumber.parse("string"); // => 6
 ```
 
 이 예제에서는 문자열의 길이를 반환하는 변환 함수를 적용했습니다. `"string"`이라는 문자열을 파싱하면 그 길이인 `6`이 반환됩니다.
-
 
 #### 체이닝 순서
 
@@ -2438,7 +2355,6 @@ const emailToDomain = z
 
 emailToDomain.parse("colinhacks@example.com"); // => example.com
 ```
-
 
 #### 변환 중에 유효성 검사하기
 
@@ -2464,7 +2380,6 @@ const numberInString = z.string().transform((val, ctx) => {
 });
 ```
 
-
 #### 변환과 정제의 관계
 
 변환(transform)과 정제(refine)는 서로 교차하여 사용할 수 있습니다. 이들은 선언된 순서대로 실행됩니다.
@@ -2480,7 +2395,6 @@ const nameToGreeting = z
 
 위 예제에서 각 단계는 순차적으로 실행됩니다. 먼저 문자열을 대문자로 변환한 후, 길이를 검증하고, 다시 문자열을 변환한 뒤, 마지막으로 특정 문자가 포함되지 않았는지 검증합니다.
 
-
 #### 비동기 변환(Async Transforms)
 
 변환(transform)은 비동기로도 동작할 수 있습니다.
@@ -2495,7 +2409,6 @@ const IdToUser = z
 ```
 
 > ⚠️ 스키마에 비동기 변환이 포함된 경우, 데이터를 파싱할 때 반드시 `.parseAsync()` 또는 `.safeParseAsync()`를 사용해야 합니다. 그렇지 않으면 Zod가 에러를 발생시킵니다.
-
 
 ### `.default`
 
@@ -2522,7 +2435,6 @@ numberWithRandomDefault.parse(undefined); // => 0.7223408162401552
 1. 입력값이 `undefined`인 경우, 기본값을 반환합니다.
 2. 그렇지 않으면, 기본 스키마를 사용해 데이터를 파싱합니다.
 
-
 ### `.describe`
 
 `.describe()`를 사용하면 결과 스키마에 `description` 속성을 추가할 수 있습니다.
@@ -2535,7 +2447,6 @@ documentedString.description; // 유용한 텍스트 조각…
 ```
 
 이 기능은 필드를 문서화할 때 유용합니다. 예를 들어, [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema)와 같은 라이브러리를 사용해 JSON 스키마를 생성할 때 활용할 수 있습니다.
-
 
 ### `.catch`
 
@@ -2566,7 +2477,6 @@ Zod가 "기본값"을 처리하는 방식은 다음과 같습니다:
 1. 기본 스키마를 사용해 데이터를 파싱합니다.
 2. 파싱이 실패하면 "기본값"을 반환합니다.
 
-
 ### `.optional`
 
 스키마의 옵셔널 버전을 반환하는 편의 메서드입니다.
@@ -2577,7 +2487,6 @@ const optionalString = z.string().optional(); // string | undefined
 // 아래와 동일합니다
 z.optional(z.string());
 ```
-
 
 ### `.nullable`
 
@@ -2592,7 +2501,6 @@ z.nullable(z.string());
 
 이 메서드를 사용하면 특정 타입에 `null`을 허용하는 스키마를 쉽게 정의할 수 있습니다. 예를 들어, `z.string().nullable()`은 문자열 또는 `null` 값을 허용하는 스키마를 생성합니다. 이는 `z.nullable(z.string())`과 동일한 결과를 제공합니다.
 
-
 ### `.nullish`
 
 스키마의 "nullish" 버전을 반환하는 편의 메서드입니다. Nullish 스키마는 `undefined`와 `null`을 모두 허용합니다. "nullish" 개념에 대해 더 자세히 알아보려면 [TypeScript 3.7 릴리스 노트](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#nullish-coalescing)를 참고하세요.
@@ -2603,7 +2511,6 @@ const nullishString = z.string().nullish(); // string | null | undefined
 // 위 코드는 아래와 동일합니다.
 z.string().nullable().optional();
 ```
-
 
 ### `.array()`
 
@@ -2618,7 +2525,6 @@ z.array(z.string());
 
 이 메서드를 사용하면 특정 타입의 배열을 간단하게 정의할 수 있습니다. 예를 들어, 문자열 배열을 만들고 싶다면 `z.string().array()`를 사용하면 됩니다. 이는 `z.array(z.string())`과 동일한 결과를 반환합니다.
 
-
 ### `.promise`
 
 Promise 타입을 위한 편의 메서드입니다:
@@ -2631,7 +2537,6 @@ z.promise(z.string());
 ```
 
 이 메서드는 주어진 스키마를 Promise로 감싸는 역할을 합니다. 예를 들어, `z.string().promise()`는 `Promise<string>` 타입을 반환합니다. 이는 `z.promise(z.string())`과 동일한 결과를 제공합니다.
-
 
 ### `.or`
 
@@ -2647,7 +2552,6 @@ z.union([z.string(), z.number()]);
 - `z.string().or(z.number())`는 문자열 또는 숫자 타입을 허용하는 유니온 타입을 생성합니다.
 - 이 메서드는 `z.union([z.string(), z.number()])`와 동일한 기능을 제공하지만, 더 간결하게 작성할 수 있습니다.
 
-
 ### `.and`
 
 교차 타입(intersection type)을 쉽게 만들 수 있는 편의 메서드입니다.
@@ -2660,7 +2564,6 @@ const nameAndAge = z
 // 위 코드는 아래와 동일합니다.
 z.intersection(z.object({ name: z.string() }), z.object({ age: z.number() }));
 ```
-
 
 ### `.brand`
 
@@ -2703,7 +2606,6 @@ type Cat = z.infer;
 
 브랜드 타입은 `.parse`의 런타임 결과에 영향을 미치지 않는다는 점에 유의하세요. 이는 오직 정적(static) 구조일 뿐입니다.
 
-
 ### `.readonly`
 
 `.readonly() => ZodReadonly<this>`
@@ -2735,19 +2637,17 @@ z.set(z.string()).readonly();
 // ReadonlySet
 ```
 
-
 ### `.pipe`
 
 스키마는 유효성 검사 "파이프라인"으로 연결할 수 있습니다. 이는 `.transform()` 이후의 결과를 쉽게 검증하는 데 유용합니다:
 
 ```ts
 z.string()
-  .transform((val) => val.length)  // 문자열을 길이로 변환
-  .pipe(z.number().min(5));        // 길이가 5 이상인지 검증
+  .transform((val) => val.length) // 문자열을 길이로 변환
+  .pipe(z.number().min(5)); // 길이가 5 이상인지 검증
 ```
 
 `.pipe()` 메서드는 `ZodPipeline` 인스턴스를 반환합니다.
-
 
 #### `.pipe()`를 사용하여 `z.coerce`의 일반적인 문제를 해결할 수 있습니다.
 
@@ -2807,12 +2707,7 @@ console.log(toBigInt.safeParse(null).success); // false
 
 이렇게 `.pipe()`를 사용하면 입력을 제한하고, 원하는 타입으로 안전하게 변환할 수 있습니다.
 
-
 ## Guides and concepts
-
-
-
-
 
 ### 타입 추론
 
@@ -2842,7 +2737,6 @@ type output = z.output; // number
 // z.output와 동일합니다!
 type inferred = z.infer; // number
 ```
-
 
 ### 제네릭 함수 작성하기
 
@@ -2880,7 +2774,6 @@ inferSchema(z.string());
 
 이제 결과는 완전히 타입이 지정되며, 타입 시스템은 스키마의 특정 하위 클래스를 정확히 추론할 수 있습니다.
 
-
 #### 추론된 타입 유추하기
 
 스키마의 제네릭 매개변수로 `z.ZodTypeAny`를 사용하는 것이 권장 사항이지만, 이 경우 파싱된 데이터가 스키마의 추론된 타입 대신 `any`로 타입 지정되는 문제가 발생할 수 있습니다.
@@ -2905,7 +2798,6 @@ function parseData(data: unknown, schema: T) {
 parseData("sup", z.string());
 // => string
 ```
-
 
 #### 허용 가능한 입력 제한하기
 
@@ -2932,7 +2824,6 @@ makeSchemaOptional(z.string());
 makeSchemaOptional(z.number());
 // 오류: 'ZodNumber'는 'ZodType' 타입의 매개변수에 할당할 수 없음
 ```
-
 
 ### 에러 처리
 
@@ -2963,7 +2854,6 @@ if (!result.success) {
 
 Zod의 에러 보고는 **완전성**과 **정확성**을 강조합니다. 최종 사용자에게 유용한 에러 메시지를 제공하려면, 에러 맵을 사용해 Zod의 에러 메시지를 재정의하거나, [`zod-validation-error`](https://github.com/causaly/zod-validation-error)와 같은 서드파티 라이브러리를 사용하는 것이 좋습니다.
 
-
 ### 에러 포맷팅
 
 `.format()` 메서드를 사용하여 이 에러를 중첩된 객체로 변환할 수 있습니다.
@@ -2987,7 +2877,6 @@ if (!result.success) {
 ```
 
 이 코드는 `zod` 라이브러리를 사용하여 객체의 유효성을 검사하고, 에러가 발생했을 때 해당 에러를 포맷팅하는 예제입니다. `name` 필드에 숫자 대신 문자열이 입력되어야 하는데, 숫자가 입력되면 에러 메시지가 반환됩니다.
-
 
 ## 비교
 
@@ -3043,13 +2932,11 @@ if (!result.success) {
 
 이 표와 설명은 각 라이브러리의 기능을 비교하며, 개발자가 프로젝트에 적합한 도구를 선택할 때 도움을 줍니다. 각 라이브러리의 강점과 약점을 이해하면 더 나은 결정을 내릴 수 있습니다.
 
-
 ### Joi
 
 [https://github.com/hapijs/joi](https://github.com/hapijs/joi)
 
 정적 타입 추적을 지원하지 않습니다 😕
-
 
 ### Yup
 
@@ -3065,7 +2952,6 @@ Yup은 처음에 바닐라 자바스크립트로 구현되었고, 이후 타입�
 - 유니온(union) 및 인터섹션(intersection) 스키마를 지원하지 않습니다.
 
 <!-- ¹Yup은 `required`라는 단어를 독특하게 해석합니다. "undefined가 아님"을 의미하는 대신, Yup은 이를 "비어 있지 않음"을 의미하는 것으로 사용합니다. 따라서 `yup.string().required()`는 빈 문자열을 허용하지 않으며, `yup.array(yup.string()).required()`는 빈 배열을 허용하지 않습니다. 대신, Yup에서는 Zod 배열과 같이 전용 `.nonempty()` 메서드를 사용하거나 커스텀 리파인먼트(custom refinement)를 통해 이를 구현할 수 있습니다. -->
-
 
 ### io-ts
 
@@ -3118,7 +3004,6 @@ type C = z.infer;
 - Promise 스키마 부재
 - 함수 스키마 부재
 
-
 ### Runtypes
 
 [Runtypes GitHub 페이지](https://github.com/pelotom/runtypes)
@@ -3133,7 +3018,6 @@ Runtypes는 **좋은 타입 추론**을 지원합니다.
 
 Runtypes는 타입 추론에 강점이 있지만, 몇 가지 기능이 아직 구현되지 않았습니다. 특히 객체 메서드와 비어 있지 않은 배열에 대한 타입 지원, Promise 스키마, 그리고 에러 커스터마이징 기능이 추가되면 더욱 완벽한 라이브러리가 될 것입니다.
 
-
 ### Ow
 
 [https://github.com/sindresorhus/ow](https://github.com/sindresorhus/ow)
@@ -3142,9 +3026,6 @@ Ow는 함수 입력값 검증에 초점을 맞춘 라이브러리입니다. 복�
 
 함수 입력값을 검증하고 싶다면, Zod의 함수 스키마를 사용해보세요. 이 방법은 함수 타입 선언을 재사용할 수 있게 해주며, 매번 함수 시작 부분에 Ow 검증문을 복사해 붙여넣는 번거로움을 줄여줍니다. 또한 Zod는 반환 타입도 검증할 수 있기 때문에, 예상치 못한 데이터가 전달되지 않도록 보장할 수 있습니다.
 
-
 ## 변경 내역
 
 변경 내역은 [CHANGELOG.md](CHANGELOG.md)에서 확인할 수 있습니다.
-
-
