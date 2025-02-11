@@ -5235,10 +5235,21 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
+function cleanParams(params: unknown, data: unknown) {
+  const p =
+    typeof params === "function"
+      ? params(data)
+      : typeof params === "string"
+      ? { message: params }
+      : params;
+
+  const p2 = typeof p === "string" ? { message: p } : p;
+  return p2;
+}
 type CustomParams = CustomErrorParams & { fatal?: boolean };
 export function custom<T>(
   check?: (data: any) => any,
-  params: string | CustomParams | ((input: any) => CustomParams) = {},
+  _params: string | CustomParams | ((input: any) => CustomParams) = {},
   /**
    * @deprecated
    *
@@ -5253,17 +5264,22 @@ export function custom<T>(
 ): ZodType<T, ZodTypeDef, T> {
   if (check)
     return ZodAny.create().superRefine((data, ctx) => {
-      if (!check(data)) {
-        const p =
-          typeof params === "function"
-            ? params(data)
-            : typeof params === "string"
-            ? { message: params }
-            : params;
-        const _fatal = p.fatal ?? fatal ?? true;
-        const p2 = typeof p === "string" ? { message: p } : p;
-        ctx.addIssue({ code: "custom", ...p2, fatal: _fatal });
+      const r = check(data);
+      if (r instanceof Promise) {
+        return r.then((r) => {
+          if (!r) {
+            const params = cleanParams(_params, data);
+            const _fatal = params.fatal ?? fatal ?? true;
+            ctx.addIssue({ code: "custom", ...params, fatal: _fatal });
+          }
+        });
       }
+      if (!r) {
+        const params = cleanParams(_params, data);
+        const _fatal = params.fatal ?? fatal ?? true;
+        ctx.addIssue({ code: "custom", ...params, fatal: _fatal });
+      }
+      return;
     });
   return ZodAny.create();
 }
