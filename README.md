@@ -1566,6 +1566,35 @@ person.parse({
 
 Using `.catchall()` obviates `.passthrough()` , `.strip()` , or `.strict()`. All keys are now considered "known".
 
+### `.readonlyProps`
+
+You can use the `.readonlyProps` method to mark all of the properties as readonly. When the `.extend` method is called on the resulting `ZodObject` the readonly decoration of the properties will be preserved.
+
+````ts
+const base = z
+  .object({
+    id: z.string(),
+    version: z.number(),
+  })
+  .readonlyProps();
+type Base = z.infer<base>;
+
+// Base = {
+//   readonly id: string,
+//   readonly version: number,
+// }
+
+const person = base.extend({
+  name: z.string(),
+});
+type Person = z.infer<person>;
+
+// Person = {
+//   readonly id: string,
+//   readonly version: number,
+//   name: string,
+// }
+
 ## Arrays
 
 ```ts
@@ -1573,7 +1602,7 @@ const stringArray = z.array(z.string());
 
 // equivalent
 const stringArray = z.string().array();
-```
+````
 
 Be careful with the `.array()` method. It returns a new `ZodArray` instance. This means the _order_ in which you call methods matters. For instance:
 
