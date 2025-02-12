@@ -1,5 +1,5 @@
+import * as z from "@zod/core";
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod-core";
 
 test("z.interface", () => {
   const a = z.interface({
@@ -41,8 +41,8 @@ test("optionals", () => {
     f: string | undefined;
   }
 
-  expectTypeOf<(typeof a)["~output"]>().toEqualTypeOf<a_out>();
-  expectTypeOf<(typeof a)["~input"]>().toEqualTypeOf<a_in>();
+  expectTypeOf<(typeof a)["_output"]>().toEqualTypeOf<a_out>();
+  expectTypeOf<(typeof a)["_input"]>().toEqualTypeOf<a_in>();
 
   // check parsing behavior
   // b is optional in input and output
@@ -101,8 +101,8 @@ test("one to one", () => {
     name: string;
     a: A;
   }
-  expectTypeOf<(typeof A)["~output"]["b"]["a"]["b"]["name"]>().toEqualTypeOf<string>();
-  expectTypeOf<(typeof A)["~input"]["b"]>().toEqualTypeOf<B | undefined>();
+  expectTypeOf<(typeof A)["_output"]["b"]["a"]["b"]["name"]>().toEqualTypeOf<string>();
+  expectTypeOf<(typeof A)["_input"]["b"]>().toEqualTypeOf<B | undefined>();
 });
 
 test("one to many", () => {
@@ -129,10 +129,10 @@ test("one to many", () => {
     c: _C;
   }
 
-  // C["~output"].d.c.d.c.d;
+  // C["_output"].d.c.d.c.d;
   expectTypeOf<(typeof C)["_def"]["shape"]>().toEqualTypeOf<z.$ZodShape>();
-  expectTypeOf<(typeof C)["~output"]>().toEqualTypeOf<_C>();
-  expectTypeOf<(typeof D)["~output"]["c"]["d"][number]>().toEqualTypeOf<_D>();
+  expectTypeOf<(typeof C)["_output"]>().toEqualTypeOf<_C>();
+  expectTypeOf<(typeof D)["_output"]["c"]["d"][number]>().toEqualTypeOf<_D>();
 });
 
 test("many to many", () => {
@@ -159,8 +159,8 @@ test("many to many", () => {
     e: _E[];
   }
 
-  expectTypeOf<(typeof E)["~output"]>().toEqualTypeOf<_E>();
-  expectTypeOf<(typeof F)["~output"]["e"][number]>().toEqualTypeOf<_E>();
+  expectTypeOf<(typeof E)["_output"]>().toEqualTypeOf<_E>();
+  expectTypeOf<(typeof F)["_output"]["e"][number]>().toEqualTypeOf<_E>();
 });
 
 test("self recursive", () => {
@@ -175,7 +175,7 @@ test("self recursive", () => {
     name: string;
     e: _E;
   }
-  expectTypeOf<(typeof E)["~output"]["e"]["e"]["e"]>().toEqualTypeOf<_E>();
+  expectTypeOf<(typeof E)["_output"]["e"]["e"]["e"]>().toEqualTypeOf<_E>();
 });
 
 test("self recursive optional", () => {
@@ -191,7 +191,7 @@ test("self recursive optional", () => {
     f?: _F | null;
   }
 
-  expectTypeOf<(typeof F)["~output"]>().toEqualTypeOf<_F>();
+  expectTypeOf<(typeof F)["_output"]>().toEqualTypeOf<_F>();
 });
 
 const userSchema = z.interface({

@@ -1,4 +1,4 @@
-import type { $ZodSchemaTypes } from "./base.js";
+import type * as base from "./base.js";
 import type * as util from "./util.js";
 
 ///////////////////////////
@@ -17,13 +17,13 @@ export interface $ZodIssueBase {
 ////////////////////////////////
 export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase {
   code: "invalid_type";
-  expected: $ZodSchemaTypes;
+  expected: base.$ZodSchemaTypes;
   input: Input;
 }
 
 export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase {
   code: "too_big";
-  origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file";
+  origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
   maximum: number | bigint;
   inclusive?: boolean;
   input: Input;
@@ -31,7 +31,7 @@ export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase {
 
 export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase {
   code: "too_small";
-  origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file";
+  origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
   minimum: number | bigint;
   inclusive?: boolean;
   input: Input;

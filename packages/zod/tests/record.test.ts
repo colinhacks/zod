@@ -1,7 +1,7 @@
+import * as core from "@zod/core";
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
-import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 const booleanRecord = z.record(z.boolean());
@@ -10,24 +10,15 @@ type booleanRecord = z.infer<typeof booleanRecord>;
 const recordWithEnumKeys = z.record(z.enum(["Tuna", "Salmon"]), z.string());
 type recordWithEnumKeys = z.infer<typeof recordWithEnumKeys>;
 
-const recordWithLiteralKeys = z.record(
-  z.union([z.literal("Tuna"), z.literal("Salmon")]),
-  z.string()
-);
+const recordWithLiteralKeys = z.record(z.union([z.literal("Tuna"), z.literal("Salmon")]), z.string());
 type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
 
 test("type inference", () => {
   util.assertEqual<booleanRecord, Record<string, boolean>>(true);
 
-  util.assertEqual<
-    recordWithEnumKeys,
-    Partial<Record<"Tuna" | "Salmon", string>>
-  >(true);
+  util.assertEqual<recordWithEnumKeys, Partial<Record<"Tuna" | "Salmon", string>>>(true);
 
-  util.assertEqual<
-    recordWithLiteralKeys,
-    Partial<Record<"Tuna" | "Salmon", string>>
-  >(true);
+  util.assertEqual<recordWithLiteralKeys, Partial<Record<"Tuna" | "Salmon", string>>>(true);
 });
 
 test("methods", () => {

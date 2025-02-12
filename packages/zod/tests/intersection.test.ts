@@ -18,9 +18,7 @@ test("object intersection", () => {
   expect(() => Teacher.parse({ subject: data.subjects })).toThrow();
   expect(Teacher.parse({ ...data, extra: 12 })).toEqual({ ...data, extra: 12 });
 
-  expect(() =>
-    z.intersection(BaseTeacher.strict(), HasID).parse({ ...data, extra: 12 })
-  ).toThrow();
+  expect(() => z.intersection(BaseTeacher.strict(), HasID).parse({ ...data, extra: 12 })).toThrow();
 });
 
 test("deep intersection", () => {
@@ -80,25 +78,15 @@ test("invalid intersection types", async () => {
   const syncResult = numberIntersection.safeParse(1234);
   expect(syncResult.success).toEqual(false);
   if (!syncResult.success) {
-    expect(syncResult.error.issues[0].code).toEqual(
-      z.ZodIssueCode.invalid_intersection_types
-    );
-    expect(
-      (syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
-        .mergeErrorPath
-    ).toEqual([]);
+    expect(syncResult.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_intersection_types);
+    expect((syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue).mergeErrorPath).toEqual([]);
   }
 
   const asyncResult = await numberIntersection.spa(1234);
   expect(asyncResult.success).toEqual(false);
   if (!asyncResult.success) {
-    expect(asyncResult.error.issues[0].code).toEqual(
-      z.ZodIssueCode.invalid_intersection_types
-    );
-    expect(
-      (asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
-        .mergeErrorPath
-    ).toEqual([]);
+    expect(asyncResult.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_intersection_types);
+    expect((asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue).mergeErrorPath).toEqual([]);
   }
 });
 
@@ -114,25 +102,15 @@ test("invalid array merge (incompatible lengths)", async () => {
   const syncResult = stringArrInt.safeParse(["asdf", "qwer"]);
   expect(syncResult.success).toEqual(false);
   if (!syncResult.success) {
-    expect(syncResult.error.issues[0].code).toEqual(
-      z.ZodIssueCode.invalid_intersection_types
-    );
-    expect(
-      (syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
-        .mergeErrorPath
-    ).toEqual([]);
+    expect(syncResult.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_intersection_types);
+    expect((syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue).mergeErrorPath).toEqual([]);
   }
 
   const asyncResult = await stringArrInt.spa(["asdf", "qwer"]);
   expect(asyncResult.success).toEqual(false);
   if (!asyncResult.success) {
-    expect(asyncResult.error.issues[0].code).toEqual(
-      z.ZodIssueCode.invalid_intersection_types
-    );
-    expect(
-      (asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
-        .mergeErrorPath
-    ).toEqual([]);
+    expect(asyncResult.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_intersection_types);
+    expect((asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue).mergeErrorPath).toEqual([]);
   }
 });
 
@@ -148,25 +126,15 @@ test("invalid array merge (incompatible elements)", async () => {
   const syncResult = stringArrInt.safeParse(["asdf", "qwer"]);
   expect(syncResult.success).toEqual(false);
   if (!syncResult.success) {
-    expect(syncResult.error.issues[0].code).toEqual(
-      z.ZodIssueCode.invalid_intersection_types
-    );
-    expect(
-      (syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
-        .mergeErrorPath
-    ).toEqual([1]);
+    expect(syncResult.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_intersection_types);
+    expect((syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue).mergeErrorPath).toEqual([1]);
   }
 
   const asyncResult = await stringArrInt.spa(["asdf", "qwer"]);
   expect(asyncResult.success).toEqual(false);
   if (!asyncResult.success) {
-    expect(asyncResult.error.issues[0].code).toEqual(
-      z.ZodIssueCode.invalid_intersection_types
-    );
-    expect(
-      (asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
-        .mergeErrorPath
-    ).toEqual([1]);
+    expect(asyncResult.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_intersection_types);
+    expect((asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue).mergeErrorPath).toEqual([1]);
   }
 });
 
@@ -182,25 +150,15 @@ test("invalid object merge", async () => {
   const syncResult = CatDog.safeParse({ phrase: "Hello, my name is CatDog." });
   expect(syncResult.success).toEqual(false);
   if (!syncResult.success) {
-    expect(syncResult.error.issues[0].code).toEqual(
-      z.ZodIssueCode.invalid_intersection_types
-    );
-    expect(
-      (syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
-        .mergeErrorPath
-    ).toEqual(["phrase"]);
+    expect(syncResult.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_intersection_types);
+    expect((syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue).mergeErrorPath).toEqual(["phrase"]);
   }
 
   const asyncResult = await CatDog.spa({ phrase: "Hello, my name is CatDog" });
   expect(asyncResult.success).toEqual(false);
   if (!asyncResult.success) {
-    expect(asyncResult.error.issues[0].code).toEqual(
-      z.ZodIssueCode.invalid_intersection_types
-    );
-    expect(
-      (asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
-        .mergeErrorPath
-    ).toEqual(["phrase"]);
+    expect(asyncResult.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_intersection_types);
+    expect((asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue).mergeErrorPath).toEqual(["phrase"]);
   }
 });
 
@@ -228,24 +186,22 @@ test("invalid deep merge of object and array combination", async () => {
   const syncResult = Registry.safeParse({ students });
   expect(syncResult.success).toEqual(false);
   if (!syncResult.success) {
-    expect(syncResult.error.issues[0].code).toEqual(
-      z.ZodIssueCode.invalid_intersection_types
-    );
-    expect(
-      (syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
-        .mergeErrorPath
-    ).toEqual(["students", 0, "name"]);
+    expect(syncResult.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_intersection_types);
+    expect((syncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue).mergeErrorPath).toEqual([
+      "students",
+      0,
+      "name",
+    ]);
   }
 
   const asyncResult = await Registry.spa({ students });
   expect(asyncResult.success).toEqual(false);
   if (!asyncResult.success) {
-    expect(asyncResult.error.issues[0].code).toEqual(
-      z.ZodIssueCode.invalid_intersection_types
-    );
-    expect(
-      (asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue)
-        .mergeErrorPath
-    ).toEqual(["students", 0, "name"]);
+    expect(asyncResult.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_intersection_types);
+    expect((asyncResult.error.issues[0] as z.ZodInvalidIntersectionTypesIssue).mergeErrorPath).toEqual([
+      "students",
+      0,
+      "name",
+    ]);
   }
 });

@@ -92,15 +92,15 @@ importers:
 
   packages/benchmarks:
     dependencies:
+      '@zod/core':
+        specifier: ^3.23.8
+        version: link:../zod-core
       arktype:
         specifier: 2.0.0
         version: 2.0.0
       zod:
         specifier: ^3.23.7
         version: link:../zod
-      zod-core:
-        specifier: ^3.23.8
-        version: link:../zod-core
       zod-mini:
         specifier: ^3.23.8
         version: link:../zod-mini
@@ -125,6 +125,9 @@ importers:
       '@typescript/analyze-trace':
         specifier: ^0.10.1
         version: 0.10.1
+      '@zod/core':
+        specifier: 3.23.8
+        version: link:../zod-core
       arktype:
         specifier: 2.0.0-rc.33
         version: 2.0.0-rc.33
@@ -137,9 +140,6 @@ importers:
       zod:
         specifier: 3.23.8
         version: link:../zod
-      zod-core:
-        specifier: 3.23.8
-        version: link:../zod-core
       zod3:
         specifier: npm:zod@3.23.7
         version: zod@3.23.7
@@ -150,7 +150,7 @@ importers:
 
   packages/zod:
     dependencies:
-      zod-core:
+      '@zod/core':
         specifier: 3.23.8
         version: link:../zod-core
 
@@ -162,7 +162,7 @@ importers:
 
   packages/zod-mini:
     dependencies:
-      zod-core:
+      '@zod/core':
         specifier: 3.23.8
         version: link:../zod-core
 

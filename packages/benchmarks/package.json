@@ -5,7 +5,7 @@
   "dependencies": {
     "arktype": "2.0.0",
     "zod": "^3.23.7",
-    "zod-core": "^3.23.8",
+    "@zod/core": "^3.23.8",
     "zod-mini": "^3.23.8",
     "zod3": "npm:zod@3.23.7"
   }

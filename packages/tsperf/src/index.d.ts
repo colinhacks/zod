@@ -1,5 +1,6 @@
-import * as z from "zod";
-export declare const kvggkjfmshqbndmmt: z.ZodObject<{
+import type * as z from "zod";
+export declare const kvggkjfmshqbndmmt: z.ZodObject<
+  {
     wuixxucq: z.ZodString;
     uzasxtrx: z.ZodString;
     kswylskv: z.ZodString;
@@ -10,4 +11,6 @@ export declare const kvggkjfmshqbndmmt: z.ZodObject<{
     mhqgjdeq: z.ZodString;
     tnkpnrxs: z.ZodString;
     lgcvhchv: z.ZodString;
-}, Record<never, unknown>>;
+  },
+  Record<never, unknown>
+>;

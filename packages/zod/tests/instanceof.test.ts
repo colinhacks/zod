@@ -1,7 +1,7 @@
+import * as core from "@zod/core";
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
-import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 test("instanceof", async () => {
@@ -24,12 +24,8 @@ test("instanceof", async () => {
   const bar = BarSchema.parse(new Bar("asdf"));
   expect(bar.val).toEqual("asdf");
 
-  await expect(() => SubtestSchema.parse(new Test())).toThrow(
-    /Input not instance of Subtest/
-  );
-  await expect(() => TestSchema.parse(12)).toThrow(
-    /Input not instance of Test/
-  );
+  await expect(() => SubtestSchema.parse(new Test())).toThrow(/Input not instance of Subtest/);
+  await expect(() => TestSchema.parse(12)).toThrow(/Input not instance of Test/);
 
   util.assertEqual<Test, z.infer<typeof TestSchema>>(true);
 });

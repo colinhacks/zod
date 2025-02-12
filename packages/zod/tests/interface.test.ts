@@ -1,7 +1,7 @@
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 import * as core from "zod";
-import * as util from "zod-core/util";
 import * as z from "../src/index.js";
 
 const Test = z.interface({
@@ -227,7 +227,7 @@ test("inferred enum type", async () => {
     b: "b",
   });
 
-  expect(Enum["_def"].entries).toEqual({
+  expect(Enum._def.entries).toEqual({
     a: "a",
     b: "b",
   });
@@ -351,16 +351,16 @@ test("constructor key", () => {
 
 test("catchall", () => {
   const a = z.interface({});
-  expect(a["_def"].catchall).toBeUndefined();
+  expect(a._def.catchall).toBeUndefined();
 
   const b = z.strictObject({});
-  expect(b["_def"].catchall).toBeInstanceOf(core.$ZodNever);
+  expect(b._def.catchall).toBeInstanceOf(core.$ZodNever);
 
   const c = z.looseObject({});
-  expect(c["_def"].catchall).toBeInstanceOf(core.$ZodUnknown);
+  expect(c._def.catchall).toBeInstanceOf(core.$ZodUnknown);
 
   const d = z.interface({}).catchall(z.number());
-  expect(d["_def"].catchall).toBeInstanceOf(core.$ZodNumber);
+  expect(d._def.catchall).toBeInstanceOf(core.$ZodNumber);
 });
 
 test("unknownkeys merging", () => {
@@ -373,7 +373,7 @@ test("unknownkeys merging", () => {
 
   // incoming object overrides
   const c = a.merge(b);
-  expect(c["_def"].catchall).toBeInstanceOf(core.$ZodNever);
+  expect(c._def.catchall).toBeInstanceOf(core.$ZodNever);
 
   // // This one is "strip"
   // const schemaB = z

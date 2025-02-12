@@ -9,6 +9,8 @@ interface Trait {
 export interface $constructor<T extends Trait> {
   new (def: T["_def"]): T;
   init(inst: T, def: T["_def"]): void;
+  extend(fns: Record<string, (this: T, ...args: any) => any>): void;
+  fns: Record<string, (...args: any) => any>;
 }
 
 export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends Trait, D = T["_def"]>(
@@ -20,14 +22,18 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends Trait, D = T["_d
       _.init(this as any as T, def);
     }
     static init(inst: T, def: D) {
-      (inst as any)["_traits"] ??= new Set();
-      (inst as any)["_traits"].add(name);
+      (inst as any)._traits ??= new Set();
+      (inst as any)._traits.add(name);
       initializer(inst, def);
-      (inst as any)["_constr"] = _;
-      (inst as any)["_def"] = def;
+      // support prototype modifications
+      for (const k in _.prototype) {
+        Object.defineProperty(inst, k, { value: (_.prototype as any)[k].bind(inst) });
+      }
+      (inst as any)._def = def;
     }
+
     static [Symbol.hasInstance](inst: any) {
-      return inst?.["_traits"]?.has(name);
+      return inst?._traits?.has(name);
     }
   }
   Object.defineProperty(_, "name", { value: name });
@@ -40,6 +46,10 @@ export interface $ParseContext {
   readonly error?: errors.$ZodErrorMap<never>;
   readonly includeInputInErrors?: boolean;
   readonly skipFast?: boolean;
+}
+
+/** @internal */
+export interface $InternalParseContext extends $ParseContext {
   readonly async?: boolean | undefined;
 }
 
@@ -51,8 +61,11 @@ export interface $ParsePayload<T = unknown> {
 
 /////////////////////////////   ZODRESULT   //////////////////////////////
 
-export function $aborted(x: $ParsePayload): boolean {
-  return x.issues.some((iss) => iss.continue !== true);
+export function $aborted(x: $ParsePayload, startIndex = 0): boolean {
+  for (let i = startIndex; i < x.issues.length; i++) {
+    if (x.issues[i].continue !== true) return true;
+  }
+  return false;
 }
 
 export function $continuable(issues: errors.$ZodRawIssue[]): boolean {
@@ -114,7 +127,7 @@ export type $ZodSchemaTypes =
   | "custom";
 
 export type $IO<O, I> = { output: O; input: I };
-const BRAND: unique symbol = Symbol("zod_brand");
+export const BRAND: unique symbol = Symbol("zod_brand");
 export type $brand<T extends string | number | symbol = string | number | symbol> = {
   [BRAND]: { [k in T]: true };
 };
@@ -136,7 +149,8 @@ export interface $ZodTypeDef {
 }
 
 export interface $ZodType<out O = unknown, out I = unknown> {
-  $check(...checks: ($CheckFn<this["_output"]> | $ZodCheck<this["_output"]>)[]): this;
+  check(...checks: ($CheckFn<this["_output"]> | $ZodCheck<this["_output"]>)[]): this;
+  // refine(...checks: ($ZodCheck<this["_output"]>)[]): this;
   clone(def?: this["_def"]): this;
   register<R extends $ZodRegistry>(
     registry: R,
@@ -147,9 +161,10 @@ export interface $ZodType<out O = unknown, out I = unknown> {
       : ["Incompatible schema"]
   ): this;
   brand<T extends PropertyKey = PropertyKey, Output = this["_output"]>(): this & {
-    "~output": Output & $brand<T>;
+    _output: Output & $brand<T>;
   };
 
+  /** @deprecated Internal API, use with caution. Not deprecated. */
   _id: string;
   /** @deprecated Internal API, use with caution. */
   _standard: number;
@@ -161,10 +176,10 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   _input: I;
 
   /** @deprecated Internal API, use with caution. */
-  _run(payload: $ParsePayload, ctx: $ParseContext): util.MaybeAsync<$ParsePayload>;
+  _run(payload: $ParsePayload, ctx: $InternalParseContext): util.MaybeAsync<$ParsePayload>;
 
   /** @deprecated Internal API, use with caution. */
-  _parse(payload: $ParsePayload<any>, ctx: $ParseContext): util.MaybeAsync<$ParsePayload>;
+  _parse(payload: $ParsePayload<any>, ctx: $InternalParseContext): util.MaybeAsync<$ParsePayload>;
 
   /** @deprecated Internal API, use with caution. */
   _traits: Set<string>;
@@ -192,14 +207,29 @@ export interface $ZodType<out O = unknown, out I = unknown> {
 }
 
 export function clone<T extends $ZodType>(inst: T, def: T["_def"]): T {
-  return new inst["_constr"](def);
+  return new inst._constr(def);
 }
 
+export class $ZodAsyncError extends Error {
+  constructor(public noun: string) {
+    super(`Asynchronous ${noun} encountered. Use an async parsing function instead.`);
+  }
+}
 export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, def) => {
-  inst["_id"] = def.type + "_" + util.randomString(10);
+  inst._id = def.type + "_" + util.randomString(10);
   inst._def = def; // set _def property
-  inst["_standard"] = 1; // set standard-schema version
-  inst["_computed"] = inst["_computed"] || {}; // initialize _computed object
+  inst._standard = 1; // set standard-schema version
+  inst._computed = inst._computed || {}; // initialize _computed object
+
+  inst.check = (...checks) => {
+    return inst.clone({
+      ...def,
+      checks: [
+        ...(def.checks ?? []),
+        ...checks.map((ch) => (typeof ch === "function" ? { _check: ch, _def: { check: "custom" } } : ch)),
+      ],
+    });
+  };
   inst.clone = (_def) => clone(inst, _def ?? def);
   inst.brand = () => inst as any;
   inst.register = ((reg: any, meta: any) => {
@@ -210,7 +240,7 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
   const checks = [...(inst._def.checks ?? [])];
 
   // if inst is itself a $ZodCheck, run it as a check
-  if (inst["_traits"].has("$ZodCheck")) {
+  if (inst._traits.has("$ZodCheck")) {
     checks.unshift(inst as any);
   }
 
@@ -234,14 +264,15 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
         const _ = ch._check(result as any);
         if (_ instanceof Promise) {
           return _.then((_) => {
-            if (result.issues.length > numIssues && $aborted(result)) return result;
+            const len = result.issues.length;
+            if (len > numIssues && $aborted(result)) return result;
             return _curr(result);
           });
         }
 
         // if ch has "when", run it
-        if (ch._def.when) {
-        }
+        // if (ch._def.when) {
+        // }
         // otherwise, check if parse has aborted and return
         if ($aborted(result)) return result;
         // if not aborted, continue running checks
@@ -250,17 +281,78 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
     }
 
     inst._run = (payload, ctx) => {
-      const result = inst._parse(payload, ctx);
+      const _result = inst._parse(payload, ctx);
 
-      if (result instanceof Promise) {
-        return result.then((result) => {
-          if ($aborted(result)) return result;
-          return runChecks(result);
-        });
+      if (!ctx.async) {
+        const result = _result as $ParsePayload;
+        // console.log("sync run");
+        let isAborted = $aborted(result);
+        for (const ch of checks) {
+          // console.log("running check", ch);
+          if (ch._when) {
+            const shouldRun = ch._when(result);
+            if (!shouldRun) continue;
+          } else {
+            if (isAborted) {
+              continue;
+              // console.log("aborted...skipping check...");
+            }
+          }
+
+          // run check
+          const currLen = result.issues.length;
+          const _ = ch._check(result as any) as any as $ParsePayload;
+          if (_ instanceof Promise) {
+            throw new $ZodAsyncError("check");
+          }
+          // console.log("check result", result);
+          const nextLen = result.issues.length;
+          if (nextLen === currLen) {
+            // console.log("no new issues detected");
+            continue;
+          }
+
+          // new issues detected, update isAborted
+          // console.log("detected new issues");
+          if (!isAborted) isAborted = $aborted(result, currLen);
+        }
+        return result;
       }
 
-      if ($aborted(result)) return result;
-      return runChecks(result);
+      console.log("async check run");
+      return Promise.resolve(_result).then(async (result) => {
+        console.log("async run");
+        // if ($aborted(result)) return result;
+        // return runChecks(result);
+        let isAborted = $aborted(result);
+        for (const ch of checks) {
+          console.log("running check", ch);
+          if (ch._when) {
+            const shouldRun = ch._when(result);
+            if (!shouldRun) continue;
+          } else {
+            if (isAborted) {
+              console.log("aborted...skipping check...");
+              continue;
+            }
+          }
+
+          // run check
+          const currLen = result.issues.length;
+          const _ = (await ch._check(result as any)) as any as $ParsePayload;
+          console.log("check result", result);
+          const nextLen = result.issues.length;
+          if (nextLen === currLen) {
+            console.log("no new issues detected");
+            continue;
+          }
+
+          // new issues detected, update isAborted
+          console.log("detected new issues");
+          if (!isAborted) isAborted = $aborted(result, currLen);
+        }
+        return result;
+      });
     };
   }
 });
@@ -271,27 +363,24 @@ export type input<T extends $ZodType> = T["_input"]; // extends object ? util.Fl
 export type output<T extends $ZodType> = T["_output"]; // extends object ? util.Flatten<T["_output"]> : T["_output"];
 export type { output as infer };
 
-export function $finalize(issues: errors.$ZodRawIssue[], ctx?: $ParseContext): $ZodError {
-  return new $ZodError(
-    issues.map((iss) => {
-      const full = { ...iss, path: iss.path ?? [] } as errors.$ZodIssue;
-      if (!iss.message) {
-        const message =
-          ctx?.error?.(iss as never) ??
-          iss.def?.error?.(iss as never) ??
-          config().error?.(iss) ??
-          defaultErrorMap(iss)!;
-        full.message = typeof message === "string" ? message : message?.message;
-      }
+export function $finalize(iss: errors.$ZodRawIssue, ctx: $InternalParseContext | undefined): errors.$ZodIssue {
+  // return new $ZodError(
+  // issues.map((iss) => {
+  const full = { ...iss, path: iss.path ?? [] } as errors.$ZodIssue;
+  if (!iss.message) {
+    const message =
+      ctx?.error?.(iss as never) ?? iss.def?.error?.(iss as never) ?? config().error?.(iss) ?? defaultErrorMap(iss)!;
+    full.message = typeof message === "string" ? message : message?.message;
+  }
 
-      delete (full as any).def;
-      delete (full as any).continue;
-      if (!ctx?.includeInputInErrors) {
-        delete full.input;
-      }
-      return full;
-    })
-  );
+  delete (full as any).def;
+  delete (full as any).continue;
+  if (!ctx?.includeInputInErrors) {
+    delete full.input;
+  }
+  return full;
+  // })
+  // );
 }
 
 const ZOD_ERROR: symbol = Symbol.for("{{zod.error}}");
@@ -300,12 +389,12 @@ export class $ZodError<T = unknown> {
   _t!: T;
   public issues: errors.$ZodIssue[];
   constructor(issues: errors.$ZodIssue[]) {
-    Object.defineProperty(this, "~tag", { value: ZOD_ERROR, enumerable: false });
+    Object.defineProperty(this, "_tag", { value: ZOD_ERROR, enumerable: false });
     this.issues = issues;
   }
 
   static [Symbol.hasInstance](inst: any) {
-    return inst?.["_tag"] === ZOD_ERROR;
+    return inst?._tag === ZOD_ERROR;
   }
 
   static assert(value: unknown): asserts value is $ZodError {
@@ -314,6 +403,8 @@ export class $ZodError<T = unknown> {
     }
   }
 }
+
+//////////////////////////////   CONFIG   ///////////////////////////////////////
 
 import defaultErrorMap from "./locales/en.js";
 import type { $ZodRegistry } from "./registries.js";
@@ -340,20 +431,103 @@ export interface $ZodCheckDef {
   error?: errors.$ZodErrorMap<never> | undefined;
   /** Whether parsing should be aborted if this check fails. */
   abort?: boolean | undefined;
-  when?: ((payload: $ParsePayload) => boolean) | undefined;
+  // when?: ((payload: $ParsePayload) => boolean) | undefined;
 }
 
 export interface $ZodCheck<in T = never> {
   _def: $ZodCheckDef;
   /** The set of issues this check might throw. */
   _issc?: errors.$ZodIssueBase;
-  // "~check"(input: $ZodResult<T>): util.MaybeAsync<void>;
+  // "_check"(input: $ZodResult<T>): util.MaybeAsync<void>;
   _check(payload: $ParsePayload<T>): util.MaybeAsync<void>;
   // _parseB(payload: $ParsePayload<any>, ctx: $ParseContext): util.MaybeAsync<$ParsePayload>;
   _onattach?(schema: $ZodType): void;
-  // "~async": boolean;
+  // "_async": boolean;
+  _when?: ((payload: $ParsePayload) => boolean) | undefined;
 }
 
 export const $ZodCheck: $constructor<$ZodCheck<any>> = $constructor("$ZodCheck", (inst, def) => {
   inst._def = def;
 });
+
+///////////////////    ERROR UTILITIES   ////////////////////////
+
+// flatten
+export type ZodFlattenedError<T, U = string> = _FlattenedError<T, U>;
+type _FlattenedError<T, U = string> = {
+  formErrors: U[];
+  fieldErrors: {
+    [P in keyof T]?: U[];
+  };
+};
+
+export function flatten<T>(error: $ZodError<T>): _FlattenedError<T>;
+export function flatten<T, U>(error: $ZodError<T>, mapper?: (issue: errors.$ZodIssue) => U): _FlattenedError<T, U>;
+export function flatten(error: $ZodError, mapper = (issue: errors.$ZodIssue) => issue.message): any {
+  const fieldErrors: any = {};
+  const formErrors: any[] = [];
+  for (const sub of error.issues) {
+    if (sub.path.length > 0) {
+      fieldErrors[sub.path[0]] = fieldErrors[sub.path[0]] || [];
+      fieldErrors[sub.path[0]].push(mapper(sub));
+    } else {
+      formErrors.push(mapper(sub));
+    }
+  }
+  return { formErrors, fieldErrors };
+}
+
+// format
+export type ZodFormattedError<T, U = string> = T extends any ? util.Flatten<_ZodFormattedError<T, U>> : never;
+type _ZodFormattedError<T, U = string> = {
+  _errors: U[];
+} & (T extends [any, ...any[]]
+  ? { [K in keyof T]?: ZodFormattedError<T[K], U> }
+  : T extends any[]
+    ? { [k: number]: ZodFormattedError<T[number], U> }
+    : T extends object
+      ? { [K in keyof T]?: ZodFormattedError<T[K], U> }
+      : unknown);
+
+export function format<T>(error: $ZodError<T>): ZodFormattedError<T>;
+export function format<T, U>(error: $ZodError<T>, mapper?: (issue: errors.$ZodIssue) => U): ZodFormattedError<T, U>;
+export function format<T>(error: $ZodError, _mapper?: any) {
+  const mapper: (issue: errors.$ZodIssue) => any =
+    _mapper ||
+    function (issue: errors.$ZodIssue) {
+      return issue.message;
+    };
+  const fieldErrors: ZodFormattedError<T> = { _errors: [] } as any;
+  const processError = (error: { issues: errors.$ZodIssue[] }) => {
+    for (const issue of error.issues) {
+      if (issue.code === "invalid_union") {
+        issue.errors.map((issues) => processError({ issues }));
+      } else if (issue.code === "invalid_key") {
+        processError({ issues: issue.issues });
+      } else if (issue.code === "invalid_element") {
+        processError({ issues: issue.issues });
+      } else if (issue.path.length === 0) {
+        (fieldErrors as any)._errors.push(mapper(issue));
+      } else {
+        let curr: any = fieldErrors;
+        let i = 0;
+        while (i < issue.path.length) {
+          const el = issue.path[i];
+          const terminal = i === issue.path.length - 1;
+
+          if (!terminal) {
+            curr[el] = curr[el] || { _errors: [] };
+          } else {
+            curr[el] = curr[el] || { _errors: [] };
+            curr[el]._errors.push(mapper(issue));
+          }
+
+          curr = curr[el];
+          i++;
+        }
+      }
+    }
+  };
+  processError(error);
+  return fieldErrors;
+}

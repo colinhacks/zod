@@ -14,9 +14,7 @@ type $merge<Old extends ZodT, New extends Partial<ZodT>> = Prettify<{
   "~input": "~input" extends keyof New ? New["~input"] : Old["~input"];
   "~output": "~output" extends keyof New ? New["~output"] : Old["~output"];
   "~async": "~async" extends keyof New ? New["~async"] : Old["~async"];
-  "~meta": "~meta" extends keyof New
-    ? Old["~meta"] & New["~meta"]
-    : Old["~meta"];
+  "~meta": "~meta" extends keyof New ? Old["~meta"] & New["~meta"] : Old["~meta"];
 }>;
 
 type $override<T extends $ZodType, O extends ZodT> = T & { "~overrides": O };
@@ -34,10 +32,7 @@ abstract class $ZodType {
     return this as any;
   }
 
-  async(): $override<
-    this["~base"],
-    $merge<this["~overrides"], { "~async": true }>
-  > {
+  async(): $override<this["~base"], $merge<this["~overrides"], { "~async": true }>> {
     return this as any;
   }
 }

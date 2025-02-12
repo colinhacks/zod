@@ -25,8 +25,8 @@
 //   Args extends base.$ZodType<unknown[], unknown[]>,
 //   Returns extends base.$ZodType,
 // > {
-//   "~args": Args;
-//   "~returns": Returns;
+//   "_args": Args;
+//   "_returns": Returns;
 //   implement<Fn extends InnerFunctionType<Args, Returns>>(
 //     fn: Fn
 //   ): OuterFunctionType<Args, Returns>;
@@ -78,23 +78,23 @@
 //   Returns extends base.$ZodType = schemas.$ZodUnknown,
 // >(args: $ZodFunctionArgs<Args, Returns>): $ZodFunction<Args, Returns> {
 //   return {
-//     "~args": args.args ?? (api.tuple([]) as any),
-//     "~returns": args.returns ?? (api.unknown() as any),
+//     "_args": args.args ?? (api.tuple([]) as any),
+//     "_returns": args.returns ?? (api.unknown() as any),
 //     implement(fn) {
 //       return (...args) =>
-//         typedCall(fn, args, this["~args"], this["~returns"]) as any;
+//         typedCall(fn, args, this["_args"], this["_returns"]) as any;
 //     },
 //     implementAsync(fn) {
 //       return async (...args) =>
-//         typedCallAsync(fn, args, this["~args"], this["~returns"]) as any;
+//         typedCallAsync(fn, args, this["_args"], this["_returns"]) as any;
 //     },
 //     strictImplement(fn) {
 //       return (...args) =>
-//         typedCall(fn, args, this["~args"], this["~returns"]) as any;
+//         typedCall(fn, args, this["_args"], this["_returns"]) as any;
 //     },
 //     strictImplementAsync(fn) {
 //       return async (...args) =>
-//         typedCallAsync(fn, args, this["~args"], this["~returns"]) as any;
+//         typedCallAsync(fn, args, this["_args"], this["_returns"]) as any;
 //     },
 //   };
 // }

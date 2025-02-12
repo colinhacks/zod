@@ -206,10 +206,9 @@ export interface ZodCustomIssues {
   // test: { name: "string" }
 }
 
-type _ZodCustomIssue<T extends keyof ZodCustomIssues = keyof ZodCustomIssues> =
-  T extends keyof ZodCustomIssues
-    ? flatten<{ check: T } & ZodCustomIssues[T]>
-    : never;
+type _ZodCustomIssue<T extends keyof ZodCustomIssues = keyof ZodCustomIssues> = T extends keyof ZodCustomIssues
+  ? flatten<{ check: T } & ZodCustomIssues[T]>
+  : never;
 type ZodCustomIssue = ZodIssueBase & _ZodCustomIssue;
 
 export type ZodIssue =

@@ -14,9 +14,7 @@ function merge<A extends ClassType, B extends ClassType>(
   a: A,
   b: B
 ): {
-  new (
-    def: ConstructorParameters<A>[0] & ConstructorParameters<B>[0]
-  ): A["prototype"] & B["prototype"];
+  new (def: ConstructorParameters<A>[0] & ConstructorParameters<B>[0]): A["prototype"] & B["prototype"];
 } {
   return class {
     constructor(def: any) {

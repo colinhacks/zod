@@ -1,8 +1,8 @@
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as core from "zod-core";
-import * as util from "zod-core/util";
 
+import type { $ZodIssue, $ZodRawIssue } from "@zod/core";
 import { z } from "../src/index.js";
 
 test("basic catch", () => {
@@ -42,8 +42,9 @@ test("catch with transform", () => {
   expect(stringWithDefault.parse(undefined)).toBe("default");
   expect(stringWithDefault.parse(15)).toBe("default");
   expect(stringWithDefault).toBeInstanceOf(z.ZodCatch);
-  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodTransform);
-  expect(stringWithDefault._def.innerType._def.schema).toBeInstanceOf(z.ZodType);
+  expect(stringWithDefault.unwrap()).toBeInstanceOf(z.ZodPipe);
+  expect(stringWithDefault.unwrap().in).toBeInstanceOf(z.ZodString);
+  expect(stringWithDefault.unwrap().out).toBeInstanceOf(z.ZodTransform);
 
   type inp = z.input<typeof stringWithDefault>;
   util.assertEqual<inp, unknown>(true);
@@ -56,8 +57,8 @@ test("catch on existing optional", () => {
   expect(stringWithDefault.parse(undefined)).toBe(undefined);
   expect(stringWithDefault.parse(15)).toBe("asdf");
   expect(stringWithDefault).toBeInstanceOf(z.ZodCatch);
-  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodOptional);
-  expect(stringWithDefault._def.innerType._def.innerType).toBeInstanceOf(z.ZodString);
+  expect(stringWithDefault.unwrap()).toBeInstanceOf(z.ZodOptional);
+  expect(stringWithDefault.unwrap().unwrap()).toBeInstanceOf(z.ZodString);
 
   type inp = z.input<typeof stringWithDefault>;
   util.assertEqual<inp, unknown>(true);
@@ -81,7 +82,7 @@ test("complex chain example", () => {
     .transform((val) => `${val}!`)
     .transform((val) => val.toUpperCase())
     .catch("qwer")
-    .removeCatch()
+    .unwrap()
     .optional()
     .catch("asdfasdf");
 
@@ -91,7 +92,7 @@ test("complex chain example", () => {
 });
 
 test("removeCatch", () => {
-  const stringWithRemovedDefault = z.string().catch("asdf").removeCatch();
+  const stringWithRemovedDefault = z.string().catch("asdf").unwrap();
 
   type out = z.output<typeof stringWithRemovedDefault>;
   util.assertEqual<out, string>(true);
@@ -117,12 +118,6 @@ test("chained catch", () => {
   expect(result).toEqual("inner");
   const resultDiff = stringWithDefault.parse(5);
   expect(resultDiff).toEqual("inner");
-});
-
-test("factory", () => {
-  z.ZodCatch.create(z.string(), {
-    catch: "asdf",
-  }).parse(undefined);
 });
 
 test("native enum", () => {
@@ -180,19 +175,52 @@ test("reported issues with nested usage", () => {
     const issues = (error as z.ZodError).issues;
 
     expect(issues.length).toEqual(3);
-    expect(issues[0].message).toMatch("string");
-    expect(issues[1].message).toMatch("literal");
-    expect(issues[2].message).toMatch("boolean");
+    expect(issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string",
+          "path": [
+            "string",
+          ],
+        },
+        {
+          "code": "invalid_value",
+          "message": "Invalid input: expected "a"",
+          "path": [
+            "obj",
+            "sub",
+            "lit",
+          ],
+          "values": [
+            "a",
+          ],
+        },
+        {
+          "code": "invalid_type",
+          "expected": "boolean",
+          "message": "Invalid input: expected boolean",
+          "path": [
+            "bool",
+          ],
+        },
+      ]
+    `);
+    // expect(issues[0].message).toMatch("string");
+    // expect(issues[1].message).toMatch("literal");
+    // expect(issues[2].message).toMatch("boolean");
   }
 });
 
 test("catch error", () => {
-  let catchError: z.ZodError | undefined = undefined;
+  let issues: $ZodRawIssue[] | undefined = undefined;
 
   const schema = z.object({
     age: z.number(),
     name: z.string().catch((ctx) => {
-      catchError = ctx.error;
+      ctx.issues;
+      issues = ctx.issues;
 
       return "John Doe";
     }),
@@ -204,12 +232,35 @@ test("catch error", () => {
   });
 
   expect(result.success).toEqual(false);
-  expect(!result.success && result.error.issues.length).toEqual(1);
-  expect(!result.success && result.error.issues[0].message).toMatch("number");
+  expect(result.error!).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "number",
+          "message": "Invalid input: expected number",
+          "path": [
+            "age",
+          ],
+        },
+      ],
+    }
+  `);
 
-  expect(catchError).toBeInstanceOf(z.ZodError);
-  expect(catchError !== undefined && (catchError as z.ZodError).issues.length).toEqual(1);
-  expect(catchError !== undefined && (catchError as z.ZodError).issues[0].message).toMatch("string");
+  expect(issues!.length).toEqual(1);
+  expect(issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_type",
+        "def": {
+          "checks": [],
+          "type": "string",
+        },
+        "expected": "string",
+        "input": null,
+      },
+    ]
+  `);
 });
 
 test("ctx.input", () => {

@@ -35,9 +35,7 @@ abstract class $ZodType {
     return this as any;
   }
 
-  check<R extends Check<this["~output"], unknown>>(
-    _r: R
-  ): $output<this, R["~output"]> {
+  check<R extends Check<this["~output"], unknown>>(_r: R): $output<this, R["~output"]> {
     return this as any;
   }
 

@@ -1,7 +1,7 @@
+import * as core from "@zod/core";
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { test } from "vitest";
-import * as core from "zod-core";
-import * as util from "zod-core/util";
 import * as z from "../src/index.js";
 test("first party switch", () => {
   const myType = z.string() as z.ZodFirstPartySchemaTypes;

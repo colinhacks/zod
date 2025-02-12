@@ -1,5 +1,5 @@
 {
-  "name": "zod-core",
+  "name": "@zod/core",
   "type": "module",
   "version": "3.23.8",
   "author": "Colin McDonnell <zod@colinhacks.com>",

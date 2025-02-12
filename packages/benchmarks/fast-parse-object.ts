@@ -2,7 +2,7 @@ import { Doc } from "../zod-core/src/doc.js";
 import { makeData, randomString } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-import * as z from "zod-core";
+import * as z from "@zod/core";
 
 const schema = z.object({
   a: z.string(),
@@ -27,7 +27,7 @@ const bench = metabench("AB test: objects", {
     for (const _ of DATA) z.parseB(schema, _);
   },
   // fastrun() {
-  //   for (const _ of DATA) schema["~fastrun"](_);
+  //   for (const _ of DATA) schema["_fastrun"](_);
   // },
   // "z.parse"() {
   //   for (const _ of DATA) z.parse(schema, _);

@@ -1,7 +1,7 @@
 import { makeData } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-const ZOD_FAILURE = "~~key~~";
+const ZOD_FAILURE = "_~key~~";
 
 class ZodFailure {
   [ZOD_FAILURE] = true;
@@ -27,14 +27,10 @@ const instanceofClass = (x: any) => x instanceof ZodFailure; // 0.64!
 const instanceofPromise = (x: any) => x instanceof Promise; // 0.64!
 const keyin = (x: any) => typeof x === "object" && x && ZOD_FAILURE in x;
 // const typeofObject = (x: any) => typeof x === "object";
-const typeofThenCheckSymbol = (x: any) =>
-  typeof x === "object" && x?.[ZOD_FAILURE]; // 1.69
-const typeofThenCheckTag = (x: any) =>
-  typeof x === "object" && x?.tag === ZOD_FAILURE; // 1.69
-const instanceofObjectThenCheckSymbol = (x: any) =>
-  x instanceof Object && x[ZOD_FAILURE]; // 1.69
-const instanceofObjectThenCheckTag = (x: any) =>
-  x instanceof Object && x.tag === ZOD_FAILURE; // 1.69
+const typeofThenCheckSymbol = (x: any) => typeof x === "object" && x?.[ZOD_FAILURE]; // 1.69
+const typeofThenCheckTag = (x: any) => typeof x === "object" && x?.tag === ZOD_FAILURE; // 1.69
+const instanceofObjectThenCheckSymbol = (x: any) => x instanceof Object && x[ZOD_FAILURE]; // 1.69
+const instanceofObjectThenCheckTag = (x: any) => x instanceof Object && x.tag === ZOD_FAILURE; // 1.69
 const falsyThenCheckTag = (x: any) => x && x.tag === ZOD_FAILURE; // 1.59
 const falsyThenCheckSymbol = (x: any) => x?.[ZOD_FAILURE]; // 1.74
 const nullChainCheckSymbol = (x: any) => x?.[ZOD_FAILURE]; // 1.74

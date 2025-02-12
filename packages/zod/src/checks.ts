@@ -26,4 +26,4 @@ export {
   toLowerCase,
   toUpperCase,
   normalize,
-} from "zod-core";
+} from "@zod/core";

@@ -11,10 +11,7 @@ export const InnerDynamicBase = class {
 export class DynamicBase<T extends object> extends InnerDynamicBase<T> {}
 
 type $Def<T> = types.PickProps<StripInternals<T>>;
-type StripInternals<T> = Pick<
-  T,
-  types.OmitString<keyof T, `~${string}` | `_${string}`>
->;
+type StripInternals<T> = Pick<T, types.OmitString<keyof T, `~${string}` | `_${string}`>>;
 
 interface $ZodTypeDef {
   checks: any[];
@@ -36,9 +33,7 @@ type ExtractKeyType<T, K extends string> = T extends { [k in K]: infer U }
 ////////////////////////////////////////////////
 //////////        $ZodType        //////////////
 ////////////////////////////////////////////////
-export abstract class $ZodType<
-  Def extends $ZodTypeDef = $ZodTypeDef,
-> extends DynamicBase<StripInternals<Def>> {
+export abstract class $ZodType<Def extends $ZodTypeDef = $ZodTypeDef> extends DynamicBase<StripInternals<Def>> {
   "~input": "~input" extends keyof Def ? Def["~input"] : unknown;
   "~output": Def["~output"];
   abstract parse(): this["~output"];
@@ -108,8 +103,7 @@ class $ZodArray<D extends $ZodArrayDef> extends $ZodType<D> {
 //////////        ZodType        ///////////////
 ////////////////////////////////////////////////
 interface ZodTypeDef extends $ZodTypeDef {}
-interface ZodType<O = unknown, D extends ZodTypeDef = ZodTypeDef, I = unknown>
-  extends $ZodType {
+interface ZodType<O = unknown, D extends ZodTypeDef = ZodTypeDef, I = unknown> extends $ZodType {
   optional(): ZodOptional<this>;
   nullable(): ZodNullable<this>;
 }
@@ -139,8 +133,7 @@ interface ZodStringDef extends $ZodStringDef {
 // @ts-ignore
 class ZodString
   extends $ZodString<ZodStringDef>
-  implements
-    ZodType<ZodStringDef["~output"], ZodStringDef, ZodStringDef["~input"]>
+  implements ZodType<ZodStringDef["~output"], ZodStringDef, ZodStringDef["~input"]>
 {
   constructor(def: ZodStringDef) {
     super(def);
@@ -165,16 +158,13 @@ declare const str: ZodString & { stuff: true };
 ////////////////////////////////////////////////
 //////////        ZodOptional        ///////////
 ////////////////////////////////////////////////
-interface ZodOptionalDef<T extends ZodType = ZodType>
-  extends $ZodOptionalDef<T>,
-    ZodTypeDef {
+interface ZodOptionalDef<T extends ZodType = ZodType> extends $ZodOptionalDef<T>, ZodTypeDef {
   "~input": T["~input"] | undefined;
   "~output": T["~output"] | undefined;
 }
 class ZodOptional<T extends ZodType = ZodType>
   extends $ZodOptional<ZodOptionalDef<T>>
-  implements
-    ZodType<ZodOptionalDef["~output"], ZodOptionalDef, ZodOptionalDef["~input"]>
+  implements ZodType<ZodOptionalDef["~output"], ZodOptionalDef, ZodOptionalDef["~input"]>
 {
   optional(): ZodOptional<this> {
     throw new Error("Method not implemented.");
@@ -187,18 +177,11 @@ class ZodOptional<T extends ZodType = ZodType>
 ////////////////////////////////////////////////
 //////////        ZodNullable        ///////////
 ////////////////////////////////////////////////
-interface ZodNullableDef<T extends ZodType = ZodType>
-  extends $ZodNullableDef<T>,
-    ZodTypeDef {
+interface ZodNullableDef<T extends ZodType = ZodType> extends $ZodNullableDef<T>, ZodTypeDef {
   "~input": T["~input"] | undefined;
   "~output": T["~output"] | undefined;
 }
 // @ts-ignore
 class ZodNullable<T extends ZodType = ZodType>
   extends $ZodNullable<ZodNullableDef<T>>
-  implements
-    ZodType<
-      ZodNullableDef["~output"],
-      ZodNullableDef,
-      ZodNullableDef["~input"]
-    > {}
+  implements ZodType<ZodNullableDef["~output"], ZodNullableDef, ZodNullableDef["~input"]> {}

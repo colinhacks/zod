@@ -18,7 +18,8 @@ export type Primitive = string | number | symbol | bigint | boolean | null | und
 
 export type Scalars = Primitive | Primitive[];
 
-export type Sizeable = string | Array<unknown> | Set<unknown> | File;
+export type HasSize = { size: number };
+export type HasLength = { length: number }; // string | Array<unknown> | Set<unknown> | File;
 
 export type Numeric = number | bigint | Date;
 
@@ -261,7 +262,7 @@ export const isInteger: NumberConstructor["isInteger"] =
     : (val) => typeof val === "number" && Number.isFinite(val) && Math.floor(val) === val;
 
 export function joinValues<T extends any[]>(array: T, separator = " | "): string {
-  return array.map((val) => (typeof val === "string" ? `'${val}'` : val)).join(separator);
+  return array.map((val) => (typeof val === "string" ? `\"${val}\"` : val)).join(separator);
 }
 export function jsonStringifyReplacer(_: string, value: any): any {
   if (typeof value === "bigint") return value.toString();
@@ -506,7 +507,7 @@ export type Params<
 export type TypeParams<
   T extends base.$ZodType = base.$ZodType & { _isst: never },
   AlsoOmit extends Exclude<keyof T["_def"], "type" | "checks" | "error"> = never,
-> = Params<T, NonNullable<T["~isst"]>, "type" | "checks" | "error" | AlsoOmit>;
+> = Params<T, NonNullable<T["_isst"]>, "type" | "checks" | "error" | AlsoOmit>;
 
 // strips types that are not exposed in the public factory
 // incl. `error`, `check`
@@ -522,7 +523,7 @@ export type StringFormatParams<
   AlsoOmit extends Exclude<keyof T["_def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
 > = Params<
   T,
-  NonNullable<T["~isst"] | T["_issc"]>,
+  NonNullable<T["_isst"] | T["_issc"]>,
   "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit
 >;
 
@@ -534,7 +535,7 @@ export type CheckStringFormatParams<
 export type CheckTypeParams<
   T extends base.$ZodType & base.$ZodCheck = base.$ZodType & base.$ZodCheck,
   AlsoOmit extends Exclude<keyof T["_def"], "type" | "checks" | "error" | "check"> = never,
-> = Params<T, NonNullable<T["~isst"] | T["_issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
+> = Params<T, NonNullable<T["_isst"] | T["_issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
 
 // export type NormalizedTypeParams<T extends TypeParams = TypeParams> = Omit<
 //   T,
@@ -737,9 +738,10 @@ export type KeysArray<T extends object> = Flatten<(keyof T & string)[]>;
 export type Literal = string | number | bigint | boolean | symbol;
 export type LiteralArray = Array<Literal>;
 
-export type SafeParseResult<T> = SafeParseSuccess<T> | SafeParseError<T>;
-export type SafeParseSuccess<T> = { success: true; data: T; error?: never };
-export type SafeParseError<T> = { success: false; data?: never; error: base.$ZodError<T> };
+export type $ZodSafeParseResult<T> = $ZodSafeParseSuccess<T> | $ZodSafeParseError<T>;
+export type $ZodSafeParseSuccess<T> = { success: true; data: T; error?: never };
+export type $ZodSafeParseError<T> = { success: false; data?: never; error: base.$ZodError<T> };
+
 export function createTransparentProxy<T extends object>(getter: () => T): T {
   let target: T;
   return new Proxy(
@@ -794,7 +796,7 @@ export type MethodParams<Err extends errors.$ZodIssueBase, Extra = unknown> =
 export function optionalObjectKeys(shape: $ZodShape): Set<PropertyKey> {
   return new Set(
     Object.keys(shape).filter((k) => {
-      return shape[k]["~qout"] === "true";
+      return shape[k]._qout === "true";
     })
   );
 }

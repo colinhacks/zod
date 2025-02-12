@@ -1,7 +1,7 @@
 import { makeData, randomString } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-import * as z from "zod-core";
+import * as z from "@zod/core";
 
 const DATA = makeData(10000, () => randomString(10));
 

@@ -1,4 +1,4 @@
-import * as z from "zod-core";
+import * as z from "@zod/core";
 
 z;
 
@@ -11,11 +11,7 @@ z;
  * console.log(JSON.stringify(result, null, 2));
  * ```
  */
-
-const schema = z.pipe(
-  z.string(),
-  z.transform((val) => val.length)
-);
-const data = "asdf";
-const result = z.safeParseAsync(schema, data);
-console.log(JSON.stringify(result, null, 2));
+const schema = z.string();
+const data = 123;
+const result = z.safeParse(schema, data);
+console.log(JSON.stringify(result.error, null, 2));

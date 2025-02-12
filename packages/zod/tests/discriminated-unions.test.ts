@@ -1,6 +1,6 @@
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
 
 import * as z from "../src/index.js";
 

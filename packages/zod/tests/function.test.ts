@@ -1,7 +1,7 @@
+import * as core from "@zod/core";
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
-import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 const args1 = z.tuple([z.string()]);
@@ -142,11 +142,9 @@ test("output validation error", () => {
 z.function(z.tuple([z.string()])).args()._def.args;
 
 test("special function error codes", () => {
-  const checker = z
-    .function(z.tuple([z.string()]), z.boolean())
-    .implement((arg) => {
-      return arg.length as any;
-    });
+  const checker = z.function(z.tuple([z.string()]), z.boolean()).implement((arg) => {
+    return arg.length as any;
+  });
   try {
     checker("12" as any);
   } catch (err) {
@@ -221,13 +219,7 @@ test("allow extra parameters", () => {
       return str.length <= 5;
     });
 
-  const filteredList = [
-    "apple",
-    "orange",
-    "pear",
-    "banana",
-    "strawberry",
-  ].filter(maxLength5);
+  const filteredList = ["apple", "orange", "pear", "banana", "strawberry"].filter(maxLength5);
   expect(filteredList.length).toEqual(2);
 });
 
@@ -248,10 +240,7 @@ test("inference with transforms", () => {
   });
   myFunc("asdf");
 
-  util.assertEqual<
-    typeof myFunc,
-    (arg: string, ...args_1: unknown[]) => { val: number; extra: string }
-  >(true);
+  util.assertEqual<typeof myFunc, (arg: string, ...args_1: unknown[]) => { val: number; extra: string }>(true);
 });
 
 test("fallback to OuterTypeOfFunction", () => {
@@ -264,8 +253,5 @@ test("fallback to OuterTypeOfFunction", () => {
     return { arg: val, arg2: false };
   });
 
-  util.assertEqual<
-    typeof myFunc,
-    (arg: string, ...args_1: unknown[]) => number
-  >(true);
+  util.assertEqual<typeof myFunc, (arg: string, ...args_1: unknown[]) => number>(true);
 });

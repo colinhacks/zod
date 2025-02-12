@@ -34,8 +34,7 @@ interface $ZodType<Output = unknown, Input = never>
 
 type Optional<T> = { optional: T };
 
-interface ZodType<out Output = unknown, Input = never>
-  extends $ZodType<Output, Input> {
+interface ZodType<out Output = unknown, Input = never> extends $ZodType<Output, Input> {
   optional(): Optional<this>;
 }
 

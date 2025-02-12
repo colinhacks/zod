@@ -663,7 +663,7 @@ function _interface<T extends schemas.$ZodLooseShape>(
   params?: $ZodInterfaceParams
 ): schemas.$ZodInterface<T, {}> {
   // {
-  //   [k in keyof T]: base.$ZodType<T[k]["~output"], T[k]["~input"]>;
+  //   [k in keyof T]: base.$ZodType<T[k]["_output"], T[k]["_input"]>;
   // }
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
@@ -682,7 +682,7 @@ export function strictInterface<T extends schemas.$ZodLooseShape>(
 ): schemas.$ZodInterface<
   T,
   {}
-  //{ [k in keyof T]: base.$ZodType<T[k]["~output"], T[k]["~input"]>;}
+  //{ [k in keyof T]: base.$ZodType<T[k]["_output"], T[k]["_input"]>;}
 > {
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
@@ -701,7 +701,7 @@ export function looseInterface<T extends schemas.$ZodLooseShape>(
 ): schemas.$ZodInterface<
   T,
   Record<string, unknown>
-  // {[k in keyof T]: base.$ZodType<T[k]["~output"], T[k]["~input"]>;}
+  // {[k in keyof T]: base.$ZodType<T[k]["_output"], T[k]["_input"]>;}
 > {
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
@@ -714,7 +714,7 @@ export function looseInterface<T extends schemas.$ZodLooseShape>(
 
 // .keyof
 export function keyof<T extends schemas.$ZodObject>(schema: T): schemas.$ZodLiteral<keyof T["_shape"]>;
-export function keyof<T extends schemas.$ZodInterface>(schema: T): schemas.$ZodLiteral<keyof T["~output"]>;
+export function keyof<T extends schemas.$ZodInterface>(schema: T): schemas.$ZodLiteral<keyof T["_output"]>;
 export function keyof(schema: schemas.$ZodObjectLike) {
   const shape =
     schema._def.type === "interface" ? util.cleanInterfaceShape(schema._def.shape).shape : schema._def.shape;
@@ -726,8 +726,8 @@ export function extend<T extends schemas.$ZodObjectLike, U extends schemas.$ZodS
   schema: T,
   shape: U
 ): T["_def"]["type"] extends "interface"
-  ? schemas.$ZodInterface<util.Flatten<util.ExtendShape<T["_shape"], U>>, T["~extra"]>
-  : schemas.$ZodObject<util.Flatten<util.ExtendShape<T["_shape"], U>>, T["~extra"]>;
+  ? schemas.$ZodInterface<util.Flatten<util.ExtendShape<T["_shape"], U>>, T["_extra"]>
+  : schemas.$ZodObject<util.Flatten<util.ExtendShape<T["_shape"], U>>, T["_extra"]>;
 
 export function extend(schema: schemas.$ZodObjectLike, shape: schemas.$ZodShape): schemas.$ZodObjectLike {
   return util.extend(schema, shape);
@@ -753,7 +753,7 @@ export function merge<T extends schemas.$ZodObjectLike, U extends schemas.$ZodOb
 // export function pick<
 //   T extends schemas.$ZodInterface,
 //   const M extends util.Exactly<util.Mask<keyof NoInfer<T>["_shape"]>, M>,
-// >(schema: T, mask: M): schemas.$ZodInterface<Pick<T["_shape"], string & keyof M>, T["~extra"]>;
+// >(schema: T, mask: M): schemas.$ZodInterface<Pick<T["_shape"], string & keyof M>, T["_extra"]>;
 // export function pick(schema: schemas.$ZodObjectLike, mask: object) {
 //   return util.pick(schema, mask);
 // }
@@ -763,8 +763,8 @@ export function pick<T extends schemas.$ZodObjectLike, M extends util.Exactly<ut
   schema: T,
   mask: M
 ): T["_def"]["type"] extends "interface"
-  ? schemas.$ZodInterface<util.Flatten<Pick<T["_shape"], keyof T["_shape"] & keyof M>>, T["~extra"]>
-  : schemas.$ZodObject<util.Flatten<Pick<T["_shape"], keyof T["_shape"] & keyof M>>, T["~extra"]>;
+  ? schemas.$ZodInterface<util.Flatten<Pick<T["_shape"], keyof T["_shape"] & keyof M>>, T["_extra"]>
+  : schemas.$ZodObject<util.Flatten<Pick<T["_shape"], keyof T["_shape"] & keyof M>>, T["_extra"]>;
 export function pick(schema: schemas.$ZodObjectLike, mask: object) {
   return util.pick(schema, mask);
 }
@@ -774,17 +774,17 @@ export function omit<T extends schemas.$ZodObjectLike, const M extends util.Exac
   schema: T,
   mask: M
 ): T["_def"]["type"] extends "interface"
-  ? schemas.$ZodInterface<util.Flatten<Omit<T["_shape"], keyof M>>, T["~extra"]>
-  : schemas.$ZodObject<util.Flatten<Omit<T["_shape"], keyof M>>, T["~extra"]>;
+  ? schemas.$ZodInterface<util.Flatten<Omit<T["_shape"], keyof M>>, T["_extra"]>
+  : schemas.$ZodObject<util.Flatten<Omit<T["_shape"], keyof M>>, T["_extra"]>;
 // export function omit<
 //   T extends schemas.$ZodInterface,
-//   M extends util.Exactly<util.Mask<keyof T["~output"]>, M>,
+//   M extends util.Exactly<util.Mask<keyof T["_output"]>, M>,
 // >(
 //   schema: T,
 //   mask: M
 // ): schemas.$ZodInterface<
-//   Omit<T["~output"], Extract<keyof T["~output"], keyof M>>,
-//   Omit<T["~input"], Extract<keyof T["~input"], keyof M>>
+//   Omit<T["_output"], Extract<keyof T["_output"], keyof M>>,
+//   Omit<T["_input"], Extract<keyof T["_input"], keyof M>>
 // >;
 // export function omit<
 //   T extends schemas.$ZodObject,
@@ -809,7 +809,7 @@ export function omit(schema: schemas.$ZodObjectLike, mask: object) {
 //   {
 //     [k in keyof T["_shape"]]: schemas.$ZodOptional<T["_shape"][k]>;
 //   },
-//   T["~extra"]
+//   T["_extra"]
 // >;
 // export function partial<T extends schemas.$ZodObject, M extends util.Exactly<util.Mask<keyof T["_shape"]>, M>>(
 //   schema: T,
@@ -818,44 +818,44 @@ export function omit(schema: schemas.$ZodObjectLike, mask: object) {
 //   {
 //     [k in keyof T["_shape"]]: k extends keyof M ? schemas.$ZodOptional<T["_shape"][k]> : T["_shape"][k];
 //   },
-//   T["~extra"]
+//   T["_extra"]
 // >;
 // export function partial<T extends schemas.$ZodInterface>(
 //   schema: T
-// ): schemas.$ZodInterface<Partial<T["~output"]>, Partial<T["~input"]>>;
-// export function partial<T extends schemas.$ZodInterface, M extends util.Mask<keyof T["~output"]>>(
+// ): schemas.$ZodInterface<Partial<T["_output"]>, Partial<T["_input"]>>;
+// export function partial<T extends schemas.$ZodInterface, M extends util.Mask<keyof T["_output"]>>(
 //   schema: T,
 //   mask: M
-// ): schemas.$ZodInterface<util.PartialInterfaceShape<T["_shape"], string & keyof M>, T["~extra"]>;
+// ): schemas.$ZodInterface<util.PartialInterfaceShape<T["_shape"], string & keyof M>, T["_extra"]>;
 export function partial<T extends schemas.$ZodObjectLike>(
   schema: T
 ): T["_def"]["type"] extends "interface"
-  ? schemas.$ZodInterface<util.PartialInterfaceShape<T["_shape"], string & keyof T["_shape"]>, T["~extra"]>
+  ? schemas.$ZodInterface<util.PartialInterfaceShape<T["_shape"], string & keyof T["_shape"]>, T["_extra"]>
   : schemas.$ZodObject<
       {
         [k in keyof T["_shape"]]: schemas.$ZodOptional<T["_shape"][k]>;
       },
-      T["~extra"]
+      T["_extra"]
     >;
 export function partial<T extends schemas.$ZodObjectLike, M extends util.Exactly<util.Mask<keyof T["_shape"]>, M>>(
   schema: T,
   mask: M
 ): T["_def"]["type"] extends "interface"
-  ? schemas.$ZodInterface<util.PartialInterfaceShape<T["_shape"], string & keyof M>, T["~extra"]>
+  ? schemas.$ZodInterface<util.PartialInterfaceShape<T["_shape"], string & keyof M>, T["_extra"]>
   : schemas.$ZodObject<
       {
         [k in keyof T["_shape"]]: k extends keyof M ? schemas.$ZodOptional<T["_shape"][k]> : T["_shape"][k];
       },
-      T["~extra"]
+      T["_extra"]
     >;
 
 // export function partial<T extends schemas.$ZodInterface>(
 //   schema: T
-// ): schemas.$ZodInterface<Partial<T["~output"]>, Partial<T["~input"]>>;
-// export function partial<T extends schemas.$ZodInterface, M extends util.Mask<keyof T["~output"]>>(
+// ): schemas.$ZodInterface<Partial<T["_output"]>, Partial<T["_input"]>>;
+// export function partial<T extends schemas.$ZodInterface, M extends util.Mask<keyof T["_output"]>>(
 //   schema: T,
 //   mask: M
-// ): schemas.$ZodInterface<util.PartialInterfaceShape<T["_shape"], string & keyof M>, T["~extra"]>;
+// ): schemas.$ZodInterface<util.PartialInterfaceShape<T["_shape"], string & keyof M>, T["_extra"]>;
 export function partial(schema: schemas.$ZodObjectLike, mask?: object): schemas.$ZodObjectLike {
   if (schema._def.type === "interface") {
     return util.partialInterface(schema as any, mask);
@@ -880,11 +880,11 @@ export function required<T extends schemas.$ZodObject, M extends util.Exactly<ut
 }>;
 export function required<T extends schemas.$ZodInterface>(
   schema: T
-): schemas.$ZodInterface<Required<T["~output"]>, Required<T["~input"]>>;
-export function required<T extends schemas.$ZodInterface, M extends util.Mask<keyof T["~output"]>>(
+): schemas.$ZodInterface<Required<T["_output"]>, Required<T["_input"]>>;
+export function required<T extends schemas.$ZodInterface, M extends util.Mask<keyof T["_output"]>>(
   schema: T,
   mask: M
-): schemas.$ZodInterface<util.RequiredInterfaceShape<T["_shape"], string & keyof M>, T["~extra"]>;
+): schemas.$ZodInterface<util.RequiredInterfaceShape<T["_shape"], string & keyof M>, T["_extra"]>;
 export function required(schema: schemas.$ZodObjectLike, mask?: object): schemas.$ZodObjectLike {
   if (schema._def.type === "interface") {
     return util.requiredInterface(schema as any, mask);
@@ -916,7 +916,7 @@ export function union<const T extends readonly base.$ZodType[]>(
 
 // discriminatedUnion
 export interface $ZodHasDiscriminator extends base.$ZodType {
-  "~disc": base.$DiscriminatorMap;
+  _disc: base.$DiscriminatorMap;
 }
 export type $ZodDiscriminatedUnionParams = util.TypeParams<schemas.$ZodDiscriminatedUnion, "options">;
 export function discriminatedUnion<Types extends [$ZodHasDiscriminator, ...$ZodHasDiscriminator[]]>(
@@ -1130,8 +1130,8 @@ export interface $ZodJSONSchema
       schemas.$ZodRecord<schemas.$ZodString<string>, $ZodJSONSchema>,
     ]
   > {
-  "~input": JSONType;
-  "~output": JSONType;
+  _input: JSONType;
+  _output: JSONType;
 }
 
 export function json(): $ZodJSONSchema {
@@ -1350,7 +1350,7 @@ export type $ZodCustomParams = util.CheckTypeParams<schemas.$ZodCustom, "fn"> & 
 
 // export function check<T extends base.$ZodType>(
 //   inst: T,
-//   ...checks: Array<base.$CheckFn<T["~output"]> | base.$ZodCheck<T["~output"]>>
+//   ...checks: Array<base.$CheckFn<T["_output"]> | base.$ZodCheck<T["_output"]>>
 // ): T;
 export function check<O = unknown>(fn: base.$CheckFn<O>, params?: $ZodCustomParams): schemas.$ZodCustom<O>;
 export function check(schemaOrFn: any, ...rest: any[]) {
@@ -1459,7 +1459,7 @@ function handleRefineResult(
   final: base.$ParsePayload,
   input: unknown,
   def: util.Normalize<$ZodCustomParams>
-): void | Promise<void> {
+): void {
   if (!result) {
     // check if result is falsy
     final.issues.push(
@@ -1483,10 +1483,12 @@ export function refine<T>(
     _def: { check: "custom", error: params.error },
     _check(payload) {
       const result = fn(payload.value);
-      if (result instanceof Promise)
+      if (result instanceof Promise) {
         return result.then((result) => {
           handleRefineResult(result, payload, payload.value, params);
+          console.log({ payload });
         });
+      }
 
       return handleRefineResult(result, payload, payload.value, params);
     },
@@ -1602,7 +1604,7 @@ export type $ZodCheckMinSizeParams = util.CheckParams<checks.$ZodCheckMinSize, "
 export function minSize(
   minimum: number,
   params?: string | $ZodCheckMinSizeParams
-): checks.$ZodCheckMinSize<util.Sizeable> {
+): checks.$ZodCheckMinSize<util.HasSize> {
   return new checks.$ZodCheckMinSize({
     check: "min_size",
     ...util.normalizeCheckParams(params),
@@ -1615,34 +1617,69 @@ export type $ZodCheckMaxSizeParams = util.CheckParams<checks.$ZodCheckMaxSize, "
 export function maxSize(
   maximum: number,
   params?: string | $ZodCheckMaxSizeParams
-): checks.$ZodCheckMaxSize<util.Sizeable> {
+): checks.$ZodCheckMaxSize<util.HasSize> {
   return new checks.$ZodCheckMaxSize({
     check: "max_size",
     ...util.normalizeCheckParams(params),
     maximum,
   });
 }
-
-export {
-  /** Identical to `minSize`. */
-  minSize as minLength,
-  /** Identical to `maxSize`. */
-  maxSize as maxLength,
-  /** Identical to `size`. */
-  size as length,
-};
-
 export type $ZodCheckSizeEqualsParams = util.CheckParams<checks.$ZodCheckSizeEquals, "size">;
 export function size(
   size: number,
   params?: string | $ZodCheckSizeEqualsParams
-): checks.$ZodCheckSizeEquals<util.Sizeable> {
+): checks.$ZodCheckSizeEquals<util.HasSize> {
   return new checks.$ZodCheckSizeEquals({
     check: "size_equals",
     ...util.normalizeCheckParams(params),
     size,
   });
 }
+
+export type $ZodCheckMinLengthParams = util.CheckParams<checks.$ZodCheckMinLength, "minimum">;
+export function minLength(
+  minimum: number,
+  params?: string | $ZodCheckMinLengthParams
+): checks.$ZodCheckMinLength<util.HasLength> {
+  return new checks.$ZodCheckMinLength({
+    check: "min_length",
+    ...util.normalizeCheckParams(params),
+    minimum,
+  });
+}
+
+export type $ZodCheckMaxLengthParams = util.CheckParams<checks.$ZodCheckMaxLength, "maximum">;
+
+export function maxLength(
+  maximum: number,
+  params?: string | $ZodCheckMaxLengthParams
+): checks.$ZodCheckMaxLength<util.HasLength> {
+  return new checks.$ZodCheckMaxLength({
+    check: "max_length",
+    ...util.normalizeCheckParams(params),
+    maximum,
+  });
+}
+export type $ZodCheckLengthEqualsParams = util.CheckParams<checks.$ZodCheckLengthEquals, "length">;
+export function length(
+  length: number,
+  params?: string | $ZodCheckLengthEqualsParams
+): checks.$ZodCheckLengthEquals<util.HasLength> {
+  return new checks.$ZodCheckLengthEquals({
+    check: "length_equals",
+    ...util.normalizeCheckParams(params),
+    length,
+  });
+}
+
+// export {
+//   /** Identical to `minSize`. */
+//   minSize as minLength,
+//   /** Identical to `maxSize`. */
+//   maxSize as maxLength,
+//   /** Identical to `size`. */
+//   size as length,
+// };
 
 export type $ZodCheckRegexParams = util.CheckParams<checks.$ZodCheckRegex, "format" | "pattern">;
 export function regex(pattern: RegExp, params?: string | $ZodCheckRegexParams): checks.$ZodCheckRegex {

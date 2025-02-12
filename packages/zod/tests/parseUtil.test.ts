@@ -1,12 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import {
-  type SyncParseReturnType,
-  ZodFailure,
-  isAborted,
-  isValid,
-} from "zod-core";
+import { type SyncParseReturnType, ZodFailure, isAborted, isValid } from "@zod/core";
 
 test("parseUtil isInvalid should use structural typing", () => {
   // Test for issue #556: https://github.com/colinhacks/zod/issues/556

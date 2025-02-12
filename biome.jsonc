@@ -15,7 +15,6 @@
       "trailingCommas": "none"
     }
   },
-
   "linter": {
     "enabled": true,
     "rules": {
@@ -58,6 +57,6 @@
     }
   },
   "files": {
-    "ignore": ["lib", "coverage", "dist", ".tshy", ".tshy-build"]
+    "ignore": ["lib", "coverage", "dist", ".tshy", ".tshy-build", "experiments"]
   }
 }

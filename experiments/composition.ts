@@ -7,10 +7,7 @@ export class $ZodString extends core.$ZodType<string, string> {
     super(def);
   }
   "~toJsonSchema"() {}
-  "~parse"(
-    input: core.ParseInput,
-    _ctx?: core.ParseContext
-  ): core.ParseReturnType<string> {
+  "~parse"(input: core.ParseInput, _ctx?: core.ParseContext): core.ParseReturnType<string> {
     if (this.coerce) {
       input = String(input) as string;
     }
@@ -30,16 +27,10 @@ export class $ZodString extends core.$ZodType<string, string> {
   }
 }
 
-export abstract class ZodType<
-  Output = unknown,
-  Input = never,
-> extends core.$ZodType<Output, Input> {
+export abstract class ZodType<Output = unknown, Input = never> extends core.$ZodType<Output, Input> {
   /** @internal @deprecated This field is not deprecated, but it is marked with @deprecated to hide it from autocomplete. */
   "~core": core.$ZodType<Output, Input>;
-  "~parse"(
-    input: core.ParseInput,
-    ctx?: core.ParseContext
-  ): core.ParseReturnType<this["~core"]["~output"]> {
+  "~parse"(input: core.ParseInput, ctx?: core.ParseContext): core.ParseReturnType<this["~core"]["~output"]> {
     return this["~core"]["~parse"](input, ctx) as any;
   }
   constructor(def: core.$Def<ZodType>) {

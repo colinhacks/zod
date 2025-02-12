@@ -19,9 +19,7 @@ describe("Schema validation tests", () => {
   });
 
   test("Sync schema should return fail ZodError", () => {
-    expect(() =>
-      Effect.runSync(z.number().effect.parseSync("hello"))
-    ).toThrow();
+    expect(() => Effect.runSync(z.number().effect.parseSync("hello"))).toThrow();
   });
 
   test("ZodError should have the correct tag", () => {

@@ -7,9 +7,7 @@ export type $Def<
   T extends $ZodType,
   // K extends keyof T = OmitString<keyof T, `~${string}` | `_${string}`>,
 > = Omit<
-  types.PickProps<
-    Pick<T, types.OmitString<keyof T, `~${string}` | `_${string}`>>
-  >,
+  types.PickProps<Pick<T, types.OmitString<keyof T, `~${string}` | `_${string}`>>>,
   string extends T["~omit"] ? never : T["~omit"]
 >;
 
@@ -35,10 +33,7 @@ export interface $ZodType<out Output = unknown, in Input = never> {
   readonly "~output": Output;
   readonly "~input": inputFunc<Input>;
   readonly "~omit": string;
-  "~parse"(
-    input: parse.ParseInput,
-    ctx?: parse.ParseContext
-  ): parse.ParseReturnType<Output>;
+  "~parse"(input: parse.ParseInput, ctx?: parse.ParseContext): parse.ParseReturnType<Output>;
   "~clone"(this: any): this;
   "~check"(check: ZodCheck<this["~output"]>): this;
 }
@@ -69,10 +64,7 @@ function $ZodType<T extends $ZodType>(def: $Def<$ZodType>): T {
 export interface $ZodString extends $ZodType<string, string> {
   "zod.core.string": true;
   coerce: boolean;
-  "~parse"(
-    input: parse.ParseInput,
-    _ctx?: parse.ParseContext
-  ): parse.ParseReturnType<string>;
+  "~parse"(input: parse.ParseInput, _ctx?: parse.ParseContext): parse.ParseReturnType<string>;
 }
 
 export function $ZodString<T extends $ZodString>(def: $Def<$ZodString>): T {
@@ -84,8 +76,7 @@ export function $ZodString<T extends $ZodString>(def: $Def<$ZodString>): T {
   } satisfies $ZodString;
 }
 
-export interface ZodType<Output = unknown, Input = never>
-  extends $ZodType<Output, Input> {
+export interface ZodType<Output = unknown, Input = never> extends $ZodType<Output, Input> {
   optional(params?: CreateParams): ZodOptional<this>;
 }
 
@@ -135,10 +126,7 @@ function string(params: { message: string }): ZodString {
   return bindAll(schema);
 }
 
-function optional<T extends ZodType>(
-  inner: T,
-  params: CreateParams
-): ZodOptional<T> {
+function optional<T extends ZodType>(inner: T, params: CreateParams): ZodOptional<T> {
   const schema = {
     // ...def,
     typeName: "zod.optional",

@@ -35,7 +35,7 @@ interface EffectMethods<T> {
 }
 declare module "zod" {
   interface ZodType {
-    effect: EffectMethods<this["~output"]>;
+    effect: EffectMethods<this["_output"]>;
   }
 
   interface ZodError {

@@ -4,11 +4,8 @@ interface $Virtuals<O, I> {
 }
 
 interface Dynamic<T extends object> extends T {}
-interface ZodBaseType<T extends $Virtuals<unknown, unknown>>
-  extends Dynamic<T> {}
-interface ZodString<
-  T extends $Virtuals<string, unknown> = $Virtuals<string, unknown>,
-> extends ZodBaseType<T> {}
+interface ZodBaseType<T extends $Virtuals<unknown, unknown>> extends Dynamic<T> {}
+interface ZodString<T extends $Virtuals<string, unknown> = $Virtuals<string, unknown>> extends ZodBaseType<T> {}
 declare const arg: ZodString<{ _output: string; _input: string }>;
 arg._output;
 

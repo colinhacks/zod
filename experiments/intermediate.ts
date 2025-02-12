@@ -100,11 +100,7 @@ abstract class $ZodTypeExtended<O, I> extends $ZodType<O, I> {
 interface $ZSFString extends $ZSF {
   type: "string";
 }
-function validateString(
-  this: $ZSFString,
-  input: unknown,
-  ctx?: parse.ParseContext
-): ParseResult<string> {
+function validateString(this: $ZSFString, input: unknown, ctx?: parse.ParseContext): ParseResult<string> {
   if (typeof input !== "string") {
     return new ZodFail(
       [
@@ -143,11 +139,7 @@ interface $ZSFNumber extends $ZSF {
   min: number;
   max: number;
 }
-function validateNumber(
-  this: $ZSFNumber & $ZodType,
-  input: unknown,
-  ctx?: parse.ParseContext
-): ParseResult<number> {
+function validateNumber(this: $ZSFNumber & $ZodType, input: unknown, ctx?: parse.ParseContext): ParseResult<number> {
   if (typeof input !== "number") {
     return new ZodFail(
       [
@@ -165,10 +157,7 @@ function validateNumber(
 }
 
 interface ZodNumberDef extends $ZSFNumber {}
-class $ZodNumber
-  extends $ZodTypeExtended<number, number>
-  implements $ZSFNumber
-{
+class $ZodNumber extends $ZodTypeExtended<number, number> implements $ZSFNumber {
   min: number;
   max: number;
   readonly type = "number" as const;
@@ -185,11 +174,7 @@ class $ZodNumber
 /////////////////////////////////////////////////
 //////////        $ZSFUndefined        //////////
 /////////////////////////////////////////////////
-function validateUndefined(
-  this: $ZSFUndefined,
-  input: unknown,
-  ctx?: parse.ParseContext
-): ParseResult<undefined> {
+function validateUndefined(this: $ZSFUndefined, input: unknown, ctx?: parse.ParseContext): ParseResult<undefined> {
   if (input !== undefined) {
     return new ZodFail(
       [
@@ -212,11 +197,7 @@ interface $ZSFUndefined extends $ZSF {
 ////////////////////////////////////////////
 //////////        $ZSFNull        //////////
 ////////////////////////////////////////////
-function validateNull(
-  this: $ZSFNull & $ZodType,
-  input: unknown,
-  ctx?: parse.ParseContext
-): ParseResult<null> {
+function validateNull(this: $ZSFNull & $ZodType, input: unknown, ctx?: parse.ParseContext): ParseResult<null> {
   if (input !== null) {
     return new ZodFail(
       [
@@ -243,11 +224,7 @@ interface $ZSFUnion<Elements extends $ZSF[] = $ZSF[]> extends $ZSF {
   type: "union";
   elements: Elements;
 }
-function validateUnion(
-  this: $ZSFUnion,
-  input: unknown,
-  ctx?: parse.ParseContext
-): ParseResult<unknown> {
+function validateUnion(this: $ZSFUnion, input: unknown, ctx?: parse.ParseContext): ParseResult<unknown> {
   for (const el of this.elements) {
     const result = el["~parse"](input, ctx);
     if (!(result instanceof ZodFail)) return result;
@@ -264,8 +241,7 @@ function validateUnion(
 ////////////////////////////////////////////////
 //////////        $ZodNullable        //////////
 ////////////////////////////////////////////////
-interface ZodNullableDef<T extends $ZSF = $ZSF>
-  extends $ZSFUnion<[$ZSFNull, T]> {}
+interface ZodNullableDef<T extends $ZSF = $ZSF> extends $ZSFUnion<[$ZSFNull, T]> {}
 function validateNullable(
   this: ZodNullableDef & $ZodType,
   input: unknown,
@@ -285,10 +261,7 @@ class ZodNullable<T extends $ZodType>
     // this.elements = [{$zsf: true, type: "null"}, def.elements];
   }
 
-  "~validateType"(
-    input: unknown,
-    ctx?: parse.ParseContext
-  ): ParseResult<unknown> {
+  "~validateType"(input: unknown, ctx?: parse.ParseContext): ParseResult<unknown> {
     if (input === null) return input;
     return;
   }

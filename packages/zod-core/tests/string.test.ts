@@ -1,5 +1,5 @@
+import * as z from "@zod/core";
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod-core";
 
 const FAIL = { success: false };
 
@@ -14,8 +14,8 @@ test("z.string", async () => {
 
 test("z.string with description", () => {
   const a = z.string({ description: "string description" });
-  a["_def"];
-  expect(a["_def"].description).toEqual("string description");
+  a._def;
+  expect(a._def.description).toEqual("string description");
 });
 
 test("z.string with custom error", () => {

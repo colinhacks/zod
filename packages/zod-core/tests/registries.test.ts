@@ -1,5 +1,5 @@
+import * as z from "@zod/core";
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod-core";
 
 test("globalRegistry", () => {
   const reg = z.registry();

@@ -1,4 +1,4 @@
-import type * as z from "zod-core";
+import type * as z from "@zod/core";
 import { makeSchema } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 

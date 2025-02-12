@@ -6,10 +6,7 @@ import type { ParseContext, ZodParsedType } from "../parse.js";
 
 type allKeys<T> = T extends any ? keyof T : never;
 
-export type inferFlattenedErrors<
-  T extends $ZodType,
-  U = string,
-> = typeToFlattenedError<input<T>, U>;
+export type inferFlattenedErrors<T extends $ZodType, U = string> = typeToFlattenedError<input<T>, U>;
 export type typeToFlattenedError<T, U = string> = {
   formErrors: U[];
   fieldErrors: {
@@ -376,10 +373,7 @@ export type ZodFormattedError<T, U = string> = {
   _errors: U[];
 } & recursiveZodFormattedError<NonNullable<T>>;
 
-export type inferFormattedError<
-  T extends $ZodType,
-  U = string,
-> = ZodFormattedError<output<T>, U>;
+export type inferFormattedError<T extends $ZodType, U = string> = ZodFormattedError<output<T>, U>;
 
 export class ZodError<T = any> extends Error {
   issues: ZodIssue[] = [];
@@ -404,8 +398,7 @@ export class ZodError<T = any> extends Error {
   format(): ZodFormattedError<T>;
   format<U>(mapper: (issue: ZodIssue) => U): ZodFormattedError<T, U>;
   format(_mapper?: any) {
-    const mapper: (issue: ZodIssue) => any =
-      _mapper || ((issue: ZodIssue) => issue.message);
+    const mapper: (issue: ZodIssue) => any = _mapper || ((issue: ZodIssue) => issue.message);
     const fieldErrors: ZodFormattedError<T> = { _errors: [] } as any;
     const processError = (error: ZodError) => {
       for (const issue of error.issues) {
@@ -481,9 +474,7 @@ export class ZodError<T = any> extends Error {
 
   flatten(): typeToFlattenedError<T>;
   flatten<U>(mapper?: (issue: ZodIssue) => U): typeToFlattenedError<T, U>;
-  flatten<U = string>(
-    mapper: (issue: ZodIssue) => U = (issue: ZodIssue) => issue.message as any
-  ): any {
+  flatten<U = string>(mapper: (issue: ZodIssue) => U = (issue: ZodIssue) => issue.message as any): any {
     const fieldErrors: any = {};
     const formErrors: U[] = [];
     for (const sub of this.issues) {
@@ -517,10 +508,7 @@ export type ErrorMapCtx = {
   data: any;
 };
 
-export type ZodErrorMap = (
-  issue: ZodErrorMapInput,
-  _ctx: ErrorMapCtx
-) => { message: string };
+export type ZodErrorMap = (issue: ZodErrorMapInput, _ctx: ErrorMapCtx) => { message: string };
 
 export class ZodTemplateLiteralUnsupportedTypeError extends Error {
   constructor() {
@@ -538,9 +526,7 @@ export class ZodTemplateLiteralUnsupportedTypeError extends Error {
 
 export class ZodTemplateLiteralUnsupportedCheckError extends Error {
   constructor(typeKind: string /*ZodFirstPartyTypeKind*/, check: string) {
-    super(
-      `${typeKind}'s "${check}" check is not supported in template literals!`
-    );
+    super(`${typeKind}'s "${check}" check is not supported in template literals!`);
 
     const actualProto = new.target.prototype;
     if (Object.setPrototypeOf) {
@@ -563,10 +549,7 @@ export function getErrorMap(): ZodErrorMap {
   return overrideErrorMap;
 }
 
-export const makeIssue = (
-  issueData: IssueData,
-  ctx?: ParseContext
-): ZodIssue => {
+export const makeIssue = (issueData: IssueData, ctx?: ParseContext): ZodIssue => {
   const fullPath = ctx?.path
     ? issueData.path
       ? [...ctx.path, ...issueData.path]
@@ -592,12 +575,9 @@ export const makeIssue = (
     };
   }
 
-  const errorMaps = [
-    ctx?.contextualErrorMap,
-    ctx?.schemaErrorMap,
-    getErrorMap(),
-    defaultErrorMap,
-  ].filter((x) => !!x) as ZodErrorMap[];
+  const errorMaps = [ctx?.contextualErrorMap, ctx?.schemaErrorMap, getErrorMap(), defaultErrorMap].filter(
+    (x) => !!x
+  ) as ZodErrorMap[];
 
   let errorMessage = "";
   const maps = errorMaps
@@ -620,10 +600,7 @@ export const makeIssue = (
   };
 };
 
-export function issuesToZodError(
-  ctx: ParseContext,
-  issues: IssueData[]
-): ZodError {
+export function issuesToZodError(ctx: ParseContext, issues: IssueData[]): ZodError {
   return new ZodError(issues.map((issue) => makeIssue(issue, ctx)));
 }
 

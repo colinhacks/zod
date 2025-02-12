@@ -1,7 +1,7 @@
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import { ZodError, ZodIssueCode } from "zod-core";
+import { ZodError, ZodIssueCode } from "@zod/core";
 import * as z from "../src/index.js";
 
 test("error creation", () => {
@@ -123,9 +123,7 @@ test("array minimum", () => {
   } catch (err) {
     const zerr: ZodError = err as any;
     expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
-    expect(zerr.issues[0].message).toEqual(
-      `Array must contain at least 3 element(s)`
-    );
+    expect(zerr.issues[0].message).toEqual(`Array must contain at least 3 element(s)`);
   }
 });
 
@@ -367,9 +365,7 @@ test("formatting with nullable and optional fields", () => {
 });
 
 test("inferFlattenedErrors", () => {
-  const schemaWithTransform = z
-    .object({ foo: z.string() })
-    .transform((o) => ({ bar: o.foo }));
+  const schemaWithTransform = z.object({ foo: z.string() }).transform((o) => ({ bar: o.foo }));
 
   const result = schemaWithTransform.safeParse({});
 
@@ -384,12 +380,7 @@ test("inferFlattenedErrors", () => {
 
 const stringWithCustomError = z.string({
   errorMap: (issue, ctx) => ({
-    message:
-      issue.code === "invalid_type"
-        ? ctx.data
-          ? "Invalid name"
-          : "Name is required"
-        : ctx.defaultError,
+    message: issue.code === "invalid_type" ? (ctx.data ? "Invalid name" : "Name is required") : ctx.defaultError,
   }),
 });
 
@@ -483,9 +474,7 @@ test("enum error message, invalid enum elementstring", () => {
   } catch (err) {
     const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual(
-      "Invalid enum value. Expected 'Tuna' | 'Trout', received 'Salmon'"
-    );
+    expect(zerr.issues[0].message).toEqual("Invalid enum value. Expected 'Tuna' | 'Trout', received 'Salmon'");
   }
 });
 
@@ -495,9 +484,7 @@ test("enum error message, invalid type", () => {
   } catch (err) {
     const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual(
-      "Expected 'Tuna' | 'Trout', received number"
-    );
+    expect(zerr.issues[0].message).toEqual("Expected 'Tuna' | 'Trout', received number");
   }
 });
 
@@ -511,9 +498,7 @@ test("nativeEnum default error message", () => {
   } catch (err) {
     const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual(
-      "Invalid enum value. Expected 'Tuna' | 'Trout', received 'Salmon'"
-    );
+    expect(zerr.issues[0].message).toEqual("Invalid enum value. Expected 'Tuna' | 'Trout', received 'Salmon'");
   }
 });
 
@@ -523,9 +508,7 @@ test("literal default error message", () => {
   } catch (err) {
     const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual(
-      `Invalid literal value, expected "Tuna"`
-    );
+    expect(zerr.issues[0].message).toEqual(`Invalid literal value, expected "Tuna"`);
   }
 });
 
@@ -535,9 +518,7 @@ test("literal bigint default error message", () => {
   } catch (err) {
     const zerr = err as unknown as z.ZodError;
     expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual(
-      `Invalid literal value, expected "12"`
-    );
+    expect(zerr.issues[0].message).toEqual(`Invalid literal value, expected "12"`);
   }
 });
 
@@ -549,17 +530,13 @@ test("enum with message returns the custom error message", () => {
   const result1 = schema.safeParse("berries");
   expect(result1.success).toEqual(false);
   if (!result1.success) {
-    expect(result1.error.issues[0].message).toEqual(
-      "the value provided is invalid"
-    );
+    expect(result1.error.issues[0].message).toEqual("the value provided is invalid");
   }
 
   const result2 = schema.safeParse(undefined);
   expect(result2.success).toEqual(false);
   if (!result2.success) {
-    expect(result2.error.issues[0].message).toEqual(
-      "the value provided is invalid"
-    );
+    expect(result2.error.issues[0].message).toEqual("the value provided is invalid");
   }
 
   const result3 = schema.safeParse("banana");
@@ -568,9 +545,7 @@ test("enum with message returns the custom error message", () => {
   const result4 = schema.safeParse(null);
   expect(result4.success).toEqual(false);
   if (!result4.success) {
-    expect(result4.error.issues[0].message).toEqual(
-      "the value provided is invalid"
-    );
+    expect(result4.error.issues[0].message).toEqual("the value provided is invalid");
   }
 });
 

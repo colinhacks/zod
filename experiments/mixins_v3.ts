@@ -67,17 +67,11 @@ abstract class $ZodType<out O = unknown, in I = never> implements zsf.$ZSF {
 //////////        $ZSFString        ////////////
 ////////////////////////////////////////////////
 
-class $ZodString<out O extends string = string, in I = never>
-  extends $ZodType<O, I>
-  implements zsf.$ZSFString
-{
+class $ZodString<out O extends string = string, in I = never> extends $ZodType<O, I> implements zsf.$ZSFString {
   override readonly type = "string" as const;
   override "~output": O;
   override "~input": $in<I>;
-  override "~validateType"(
-    input: unknown,
-    ctx?: parse.ParseContext
-  ): ParseResult<O> {
+  override "~validateType"(input: unknown, ctx?: parse.ParseContext): ParseResult<O> {
     if (typeof input !== "string") {
       return new ZodFail(
         [
@@ -134,11 +128,7 @@ class $ZodNumber extends $ZodType<number, number> implements zsf.$ZSFNumber {
     super(def);
   }
 
-  "~validateType"(
-    this: zsf.$ZSFNumber & $ZodType,
-    input: unknown,
-    ctx?: parse.ParseContext
-  ): ParseResult<number> {
+  "~validateType"(this: zsf.$ZSFNumber & $ZodType, input: unknown, ctx?: parse.ParseContext): ParseResult<number> {
     if (typeof input !== "number") {
       return new ZodFail(
         [
@@ -159,11 +149,7 @@ class $ZodNumber extends $ZodType<number, number> implements zsf.$ZSFNumber {
 /////////////////////////////////////////////////
 //////////        $ZSFUndefined        //////////
 /////////////////////////////////////////////////
-function validateUndefined(
-  this: $ZSFUndefined,
-  input: unknown,
-  ctx?: parse.ParseContext
-): ParseResult<undefined> {
+function validateUndefined(this: $ZSFUndefined, input: unknown, ctx?: parse.ParseContext): ParseResult<undefined> {
   if (input !== undefined) {
     return new ZodFail(
       [
@@ -186,11 +172,7 @@ interface $ZSFUndefined extends zsf.$ZSF {
 ////////////////////////////////////////////
 //////////        $ZSFNull        //////////
 ////////////////////////////////////////////
-function validateNull(
-  this: $ZSFNull & $ZodType,
-  input: unknown,
-  ctx?: parse.ParseContext
-): ParseResult<null> {
+function validateNull(this: $ZSFNull & $ZodType, input: unknown, ctx?: parse.ParseContext): ParseResult<null> {
   if (input !== null) {
     return new ZodFail(
       [
@@ -211,11 +193,7 @@ function validateNull(
 //////////        $ZSFUnion        //////////
 /////////////////////////////////////////////
 
-function validateUnion(
-  this: zsf.$ZSFUnion,
-  input: unknown,
-  ctx?: parse.ParseContext
-): ParseResult<unknown> {
+function validateUnion(this: zsf.$ZSFUnion, input: unknown, ctx?: parse.ParseContext): ParseResult<unknown> {
   for (const el of this.elements) {
     const result = el["~parse"](input, ctx);
     if (!(result instanceof ZodFail)) return result;
@@ -232,8 +210,7 @@ function validateUnion(
 ////////////////////////////////////////////////
 //////////        $ZodNullable        //////////
 ////////////////////////////////////////////////
-interface ZodNullableDef<T extends zsf.$ZSF = zsf.$ZSF>
-  extends zsf.$ZSFUnion<[zsf.$ZSFNull, T]> {}
+interface ZodNullableDef<T extends zsf.$ZSF = zsf.$ZSF> extends zsf.$ZSFUnion<[zsf.$ZSFNull, T]> {}
 function validateNullable(
   this: ZodNullableDef & $ZodType,
   input: unknown,
@@ -241,10 +218,7 @@ function validateNullable(
 ): ParseResult<unknown> {
   if (input === null) return input;
 }
-class ZodNullable<T extends $ZodType>
-  extends $ZodType<output<T> | null, input<T> | null>
-  implements ZodNullableDef
-{
+class ZodNullable<T extends $ZodType> extends $ZodType<output<T> | null, input<T> | null> implements ZodNullableDef {
   type: "union";
   elements: ZodNullableDef["elements"]; // = [{  type: "null" }, T];
   constructor(def: ZodNullableDef) {
@@ -254,10 +228,7 @@ class ZodNullable<T extends $ZodType>
   }
   override $zsf: { version: number };
 
-  "~validateType"(
-    input: unknown,
-    ctx?: parse.ParseContext
-  ): ParseResult<unknown> {
+  "~validateType"(input: unknown, ctx?: parse.ParseContext): ParseResult<unknown> {
     if (input === null) return input;
     return;
   }
@@ -267,10 +238,7 @@ class ZodNullable<T extends $ZodType>
 //////////        $ZodArray        //////////
 /////////////////////////////////////////////
 
-class $ZodArray<Item extends $ZodType>
-  extends $ZodType<output<Item>[], input<Item>[]>
-  implements zsf.$ZSFArray
-{
+class $ZodArray<Item extends $ZodType> extends $ZodType<output<Item>[], input<Item>[]> implements zsf.$ZSFArray {
   override type: "array";
   items: zsf.$ZSF[];
   rest: zsf.$ZSF | null;
@@ -307,6 +275,5 @@ abstract class ZodType<O, I> extends $ZodType<O, I> {
   }
 }
 
-interface ZodString<O extends string, I>
-  extends Mix<$ZodString<O, I>, ZodType<O, I>> {}
+interface ZodString<O extends string, I> extends Mix<$ZodString<O, I>, ZodType<O, I>> {}
 class ZodString<O = string, I = never> {}

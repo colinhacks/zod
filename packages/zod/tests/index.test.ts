@@ -1,6 +1,6 @@
+import type * as util from "@zod/core/util";
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
-import type * as util from "zod-core/util";
 
 test("z.string", async () => {
   const a = z.string();

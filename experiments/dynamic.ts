@@ -11,10 +11,7 @@ export const InnerDynamicBase = class {
 export class DynamicBase<T extends object> extends InnerDynamicBase<T> {}
 
 type $Def<T> = types.PickProps<StripInternals<T>>;
-type StripInternals<T> = Pick<
-  T,
-  types.OmitString<keyof T, `~${string}` | `_${string}`>
->;
+type StripInternals<T> = Pick<T, types.OmitString<keyof T, `~${string}` | `_${string}`>>;
 
 interface $ZodTypeDef {
   checks: any[];
@@ -36,9 +33,7 @@ type ExtractKeyType<T, K extends string> = T extends { [k in K]: infer U }
 ////////////////////////////////////////////////
 //////////        $ZodType        //////////////
 ////////////////////////////////////////////////
-export abstract class $ZodType<
-  Def extends $ZodTypeDef = $ZodTypeDef,
-> extends DynamicBase<StripInternals<Def>> {
+export abstract class $ZodType<Def extends $ZodTypeDef = $ZodTypeDef> extends DynamicBase<StripInternals<Def>> {
   "~input": "~input" extends keyof Def ? Def["~input"] : unknown;
   "~output": Def["~output"];
   abstract parse(): this["~output"];
@@ -120,9 +115,7 @@ class ZodString extends $ZodString<ZodStringDef> {}
 /////////////////////////////////////////////////////
 //////////        ZodStringCoerced        ///////////
 /////////////////////////////////////////////////////
-interface ZodStringCoercedDef
-  extends $ZodStringDef,
-    ZodTypeDef<ZodStringCoerced> {
+interface ZodStringCoercedDef extends $ZodStringDef, ZodTypeDef<ZodStringCoerced> {
   "~input": unknown;
   "~output": string;
   /** @deprecated Not deprecated, but for internal use only. */
@@ -133,9 +126,5 @@ class ZodStringCoerced extends $ZodString<ZodStringCoercedDef> {}
 ////////////////////////////////////////////////
 //////////        ZodOptional        ///////////
 ////////////////////////////////////////////////
-interface ZodOptionalDef<T extends ZodType = ZodType>
-  extends $ZodOptionalDef<T>,
-    ZodTypeDef<ZodOptional<T>> {}
-class ZodOptional<T extends ZodType = ZodType> extends $ZodOptional<
-  ZodOptionalDef<T>
-> {}
+interface ZodOptionalDef<T extends ZodType = ZodType> extends $ZodOptionalDef<T>, ZodTypeDef<ZodOptional<T>> {}
+class ZodOptional<T extends ZodType = ZodType> extends $ZodOptional<ZodOptionalDef<T>> {}

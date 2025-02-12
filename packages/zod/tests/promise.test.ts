@@ -1,7 +1,7 @@
+import * as core from "@zod/core";
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
-import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 const promSchema = z.promise(
@@ -13,15 +13,11 @@ const promSchema = z.promise(
 
 test("promise inference", () => {
   type promSchemaType = z.infer<typeof promSchema>;
-  util.assertEqual<promSchemaType, Promise<{ name: string; age: number }>>(
-    true
-  );
+  util.assertEqual<promSchemaType, Promise<{ name: string; age: number }>>(true);
 });
 
 test("promise parsing success", async () => {
-  expect(() =>
-    promSchema.parse(Promise.resolve({ name: "Bobby", age: 10 }))
-  ).toThrow();
+  expect(() => promSchema.parse(Promise.resolve({ name: "Bobby", age: 10 }))).toThrow();
   // expect(pr).toBeInstanceOf(Promise);
   // const result = await pr;
   // expect(typeof result).toBe("object");
@@ -43,18 +39,14 @@ test("promise parsing success 2", () => {
 });
 
 test("promise parsing fail", async () => {
-  expect(() =>
-    promSchema.parse(Promise.resolve({ name: "Bobby", age: "10" }))
-  ).toThrow();
+  expect(() => promSchema.parse(Promise.resolve({ name: "Bobby", age: "10" }))).toThrow();
   // return await expect(bad).resolves.toBe({ name: 'Bobby', age: '10' });
   // return await expect(bad).rejects.toBeInstanceOf(z.ZodError);
   // done();
 });
 
 test("promise parsing fail 2", async () => {
-  expect(() =>
-    promSchema.parse(Promise.resolve({ name: "Bobby", age: "10" }))
-  ).toThrow();
+  expect(() => promSchema.parse(Promise.resolve({ name: "Bobby", age: "10" }))).toThrow();
   // await expect(failPromise).rejects.toBeInstanceOf(z.ZodError);
   // done();
 });

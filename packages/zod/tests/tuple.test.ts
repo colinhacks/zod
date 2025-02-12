@@ -1,15 +1,11 @@
+import * as core from "@zod/core";
+import { ZodError } from "@zod/core";
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
-import * as core from "zod-core";
-import { ZodError } from "zod-core";
 import * as z from "../src/index.js";
 
-const testTuple = z.tuple([
-  z.string(),
-  z.object({ name: z.literal("Rudy") }),
-  z.array(z.literal("blue")),
-]);
+const testTuple = z.tuple([z.string(), z.object({ name: z.literal("Rudy") }), z.array(z.literal("blue"))]);
 const testData = ["asdf", { name: "Rudy" }, ["blue"]];
 const badData = [123, { name: "Rudy2" }, ["blue", "red"]];
 
@@ -72,13 +68,7 @@ test("tuple with transformers", () => {
 
 test("tuple with rest schema", () => {
   const myTuple = z.tuple([z.string(), z.number()]).rest(z.boolean());
-  expect(myTuple.parse(["asdf", 1234, true, false, true])).toEqual([
-    "asdf",
-    1234,
-    true,
-    false,
-    true,
-  ]);
+  expect(myTuple.parse(["asdf", 1234, true, false, true])).toEqual(["asdf", 1234, true, false, true]);
 
   expect(myTuple.parse(["asdf", 1234])).toEqual(["asdf", 1234]);
 

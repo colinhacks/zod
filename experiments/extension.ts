@@ -28,10 +28,7 @@ export class $ZodString extends core.$ZodType<string, string> {
     super(def);
   }
   // "~toJsonSchema"() {}
-  "~parse"(
-    input: core.ParseInput,
-    _ctx?: core.ParseContext
-  ): core.ParseReturnType<string> {
+  "~parse"(input: core.ParseInput, _ctx?: core.ParseContext): core.ParseReturnType<string> {
     if (this.coerce) {
       input = String(input) as string;
     }
@@ -61,10 +58,7 @@ type $optional<T extends core.$ZodType> = { optional: T };
 //   // "~inner": core.$ZodType;
 //   refine(): $optional<this>;
 // }
-abstract class ZodType<out O = unknown, in I = never> extends core.$ZodType<
-  O,
-  I
-> {
+abstract class ZodType<out O = unknown, in I = never> extends core.$ZodType<O, I> {
   // "zod.type" = true;
   // constructor(def: core.$Def<ZodType>) {
   //   super(def);
@@ -94,10 +88,7 @@ export abstract class _ZodType<
   "~inner": Inner;
   // "~def": Inner["~def"];
   "~output": Inner["~output"];
-  "~parse"(
-    input: core.ParseInput,
-    ctx?: core.ParseContext
-  ): core.ParseReturnType<this["~output"]> {
+  "~parse"(input: core.ParseInput, ctx?: core.ParseContext): core.ParseReturnType<this["~output"]> {
     return this["~inner"]["~parse"](input, ctx) as any;
   }
 }
@@ -167,9 +158,7 @@ function merge<A extends ClassType, B extends ClassType>(
   ClassB: B
 ): {
   prototype: A["prototype"] & B["prototype"];
-  new (
-    def: ConstructorParameters<A>[0] & ConstructorParameters<B>[0]
-  ): A["prototype"] & B["prototype"];
+  new (def: ConstructorParameters<A>[0] & ConstructorParameters<B>[0]): A["prototype"] & B["prototype"];
 } {
   const cProto: any = {};
   let aProto = ClassA.prototype;

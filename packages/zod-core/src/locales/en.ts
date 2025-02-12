@@ -47,12 +47,13 @@ const errorMap: errors.$ZodErrorMap = (issue) => {
       return `Invalid input: expected ${issue.expected}`;
     // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
     case "invalid_value":
-      return `Invalid option: expected one of ${util.joinValues(issue.values, ", ")}`;
+      if (issue.values.length === 1) return `Invalid input: expected "${String(issue.values[0])}"`;
+      return `Invalid input: expected one of ${util.joinValues(issue.values, ", ")}`;
     case "too_big": {
       const adj = issue.inclusive ? "less than or equal to" : "less than";
       if (issue.origin in HasSize)
-        return `Too big: expected ${issue.origin} to have ${adj} ${issue.maximum.toString()} ${HasSize[issue.origin]}`;
-      return `Too big: expected ${issue.origin} to be ${adj} ${issue.maximum.toString()}`;
+        return `Too big: expected ${issue.origin ?? "value"} to have ${adj} ${issue.maximum.toString()} ${HasSize[issue.origin] ?? "elements"}`;
+      return `Too big: expected ${issue.origin ?? "value"} to be ${adj} ${issue.maximum.toString()}1`;
     }
     case "too_small": {
       const adj = issue.inclusive ? "greater than or equal to" : "greater than";

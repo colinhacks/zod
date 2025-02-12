@@ -11,10 +11,7 @@ type BENCH = "tinybench" | "benchmarkjs" | "mitata";
 const BENCH: BENCH = (process.env.BENCH as BENCH) || "benchmarkjs";
 
 type Benchmarks<T = unknown> = { [k: string]: (d: T) => any };
-export function metabench<D>(
-  name: string,
-  benchmarks?: Benchmarks<D>
-): Metabench {
+export function metabench<D>(name: string, benchmarks?: Benchmarks<D>): Metabench {
   let bench: Metabench;
   if (BENCH === "tinybench") {
     bench = new Tinybench(name, benchmarks || {});
@@ -42,9 +39,7 @@ interface BenchWithDataParams<D> {
   benchmarks?: Benchmarks<D>;
 }
 
-export function benchWithData<D>(
-  params: BenchWithDataParams<D> & ThisType<{ data: D }>
-): Metabench<D> {
+export function benchWithData<D>(params: BenchWithDataParams<D> & ThisType<{ data: D }>): Metabench<D> {
   const bench = metabench(params.name);
   // console.log(`Batch size: ${params.batch}`);
 
@@ -97,9 +92,7 @@ class Tinybench extends Metabench {
     }
     // await runBench(this.name, bench);
     console.log();
-    console.log(
-      `   benchmarking ${chalk.bold.white(this.name)} with ${chalk.bold.white(this.runner)}`
-    );
+    console.log(`   benchmarking ${chalk.bold.white(this.name)} with ${chalk.bold.white(this.runner)}`);
 
     bench.addEventListener("cycle", (e) => {
       const task = e.task?.result;
@@ -144,11 +137,7 @@ class Tinybench extends Metabench {
       table.addRow({
         name: task.name,
         summary:
-          task === slowest
-            ? "slowest"
-            : `${(result.hz / slowest.result.hz).toFixed(3)}x faster than ${
-                slowest.name
-              }`,
+          task === slowest ? "slowest" : `${(result.hz / slowest.result.hz).toFixed(3)}x faster than ${slowest.name}`,
         "ops/sec": `${formatNumber(result.hz)} ops/sec`,
         "time/op": `${formatNumber(result.mean / 1000)}s`,
         margin: `±${result.rme.toFixed(2)}%`,
@@ -213,11 +202,7 @@ class BenchmarkJS extends Metabench {
         table.addRow({
           name: result.name,
           summary:
-            result === slowest
-              ? "slowest"
-              : `${(result.hz / slowest.hz).toFixed(3)}x faster than ${
-                  slowest.name
-                }`,
+            result === slowest ? "slowest" : `${(result.hz / slowest.hz).toFixed(3)}x faster than ${slowest.name}`,
           "ops/sec": `${formatNumber(result.hz)} ops/sec`,
           "time/op": `${formatNumber(1 / result.hz)}s`,
           margin: `±${result.rme.toFixed(2)}%`,

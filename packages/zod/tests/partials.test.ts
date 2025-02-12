@@ -1,7 +1,7 @@
+import * as core from "@zod/core";
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
-import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 const nested = z.object({
@@ -217,9 +217,7 @@ test("partial with mask", async () => {
     country: z.string(),
   });
 
-  const masked = object
-    .partial({ age: true, field: true, name: true })
-    .strict();
+  const masked = object.partial({ age: true, field: true, name: true }).strict();
 
   expect(masked.shape.name).toBeInstanceOf(z.ZodOptional);
   expect(masked.shape.age).toBeInstanceOf(z.ZodOptional);

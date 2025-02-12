@@ -30,9 +30,7 @@ type ZOD_OPTIONAL = typeof ZOD_OPTIONAL;
 export interface $ZodOptional<T extends $ZodType> {
   [ZOD_OPTIONAL]: boolean;
 }
-export class $ZodOptional<T extends $ZodType> extends $ZodType<
-  T["_type"] | undefined
-> {
+export class $ZodOptional<T extends $ZodType> extends $ZodType<T["_type"] | undefined> {
   "~~~": this["~~~"] & {
     [ZOD_OPTIONAL]: true;
   };
@@ -63,9 +61,7 @@ export abstract class ZodType extends ZodStringMixin {
 type ZodTypeMixed<T extends Constructor> = {
   new (...args: ConstructorParameters<T>): InstanceType<T> & ZodTypeMixin;
 };
-export function ZodTypeMixin<T extends Constructor>(
-  SuperClass: T
-): ZodTypeMixed<T> {
+export function ZodTypeMixin<T extends Constructor>(SuperClass: T): ZodTypeMixed<T> {
   abstract class $Temp extends SuperClass {
     protected "{{ZOD_OPTIONAL}}": true;
     static [Symbol.hasInstance]: HasInstance = checkSymbol("{{ZOD_OPTIONAL}}");
@@ -93,8 +89,7 @@ interface ZodTypeMixin extends $ZodType {
 
 const ZOD_STRING: unique symbol = Symbol.for("{{ZOD_STRING}}");
 type ZOD_STRING = typeof ZOD_STRING;
-export const ZodStringBase: ZodTypeMixed<typeof $ZodString> =
-  ZodTypeMixin($ZodString);
+export const ZodStringBase: ZodTypeMixed<typeof $ZodString> = ZodTypeMixin($ZodString);
 export class ZodString extends ZodStringBase {
   "~def": {
     [ZOD_STRING]: true;

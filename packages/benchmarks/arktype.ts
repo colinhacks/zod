@@ -1,9 +1,9 @@
 import { makeData, randomString } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
+import * as zc from "@zod/core";
 import { type } from "arktype";
 import * as z from "zod";
-import * as zc from "zod-core";
 
 const schema = z.object({
   a: z.string(),

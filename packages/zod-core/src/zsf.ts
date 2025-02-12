@@ -18,15 +18,7 @@ export interface $ZSFString extends $ZSF {
   pattern?: string;
 }
 
-export type NumberTypes =
-  | "float32"
-  | "int32"
-  | "uint32"
-  | "float64"
-  | "int64"
-  | "uint64"
-  | "bigint"
-  | "bigdecimal";
+export type NumberTypes = "float32" | "int32" | "uint32" | "float64" | "int64" | "uint64" | "bigint" | "bigdecimal";
 
 export interface $ZSFNumber extends $ZSF {
   type: "number";
@@ -62,17 +54,12 @@ export interface $ZSFAny extends $ZSF {
 }
 
 /** Supports */
-export interface $ZSFEnum<
-  Elements extends { [k: string]: $ZSFLiteral } = { [k: string]: $ZSFLiteral },
-> extends $ZSF {
+export interface $ZSFEnum<Elements extends { [k: string]: $ZSFLiteral } = { [k: string]: $ZSFLiteral }> extends $ZSF {
   type: "enum";
   elements: Elements;
 }
 
-export interface $ZSFArray<
-  PrefixItems extends $ZSF[] = $ZSF[],
-  Items extends $ZSF = $ZSF,
-> extends $ZSF {
+export interface $ZSFArray<PrefixItems extends $ZSF[] = $ZSF[], Items extends $ZSF = $ZSF> extends $ZSF {
   type: "array";
   prefixItems: PrefixItems;
   items: Items;
@@ -85,9 +72,7 @@ type $ZSFObjectProperties = Array<{
   format?: "literal" | "pattern";
   ordering?: number;
 }>;
-export interface $ZSFObject<
-  Properties extends $ZSFObjectProperties = $ZSFObjectProperties,
-> extends $ZSF {
+export interface $ZSFObject<Properties extends $ZSFObjectProperties = $ZSFObjectProperties> extends $ZSF {
   type: "object";
   properties: Properties;
 }
@@ -118,18 +103,13 @@ export interface $ZSFIntersection extends $ZSF {
   elements: $ZSF[];
 }
 
-export interface $ZSFMap<K extends $ZSF = $ZSF, V extends $ZSF = $ZSF>
-  extends $ZSF {
+export interface $ZSFMap<K extends $ZSF = $ZSF, V extends $ZSF = $ZSF> extends $ZSF {
   type: "map";
   keys: K;
   values: V;
 }
 
-export interface $ZSFConditional<
-  If extends $ZSF,
-  Then extends $ZSF,
-  Else extends $ZSF,
-> extends $ZSF {
+export interface $ZSFConditional<If extends $ZSF, Then extends $ZSF, Else extends $ZSF> extends $ZSF {
   type: "conditional";
   if: If;
   then: Then;

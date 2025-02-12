@@ -19,8 +19,7 @@ interface ZodType<O, I, Props extends { type: string }>
   nullable(): Nullable<this>;
 }
 
-export interface ZodString<O extends string, I extends never>
-  extends ZodType<O, I, { type: "string" }> {}
+export interface ZodString<O extends string, I extends never> extends ZodType<O, I, { type: "string" }> {}
 export class ZodString<O = string, I = never> extends classes.$ZodString<{
   "~output": O;
   "~input": I;

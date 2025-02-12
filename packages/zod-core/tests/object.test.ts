@@ -1,5 +1,5 @@
+import * as z from "@zod/core";
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod-core";
 
 test("z.object", () => {
   const a = z.object({
@@ -9,8 +9,8 @@ test("z.object", () => {
     "test?": z.boolean(),
   });
 
-  a["_def"].shape["test?"];
-  a["_def"].shape.points["~qout"];
+  a._def.shape["test?"];
+  a._def.shape.points._qout;
 
   type a = z.output<typeof a>;
 
@@ -105,7 +105,7 @@ test("z.omit", () => {
     email?: string | undefined;
   }>();
   expect(omittedSchema).toBeDefined();
-  expect(Reflect.ownKeys(omittedSchema["_def"].shape)).toEqual(["name", "email"]);
+  expect(Reflect.ownKeys(omittedSchema._def.shape)).toEqual(["name", "email"]);
   expect(z.safeParse(omittedSchema, { name: "John", email: "john@example.com" }).success).toBe(true);
 });
 

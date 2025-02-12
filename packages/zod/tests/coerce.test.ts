@@ -22,9 +22,7 @@ test("string coercion", () => {
   expect(schema.parse({ hello: "world!" })).toEqual("[object Object]");
   expect(schema.parse(["item", "another_item"])).toEqual("item,another_item");
   expect(schema.parse([])).toEqual("");
-  expect(schema.parse(new Date("2022-01-01T00:00:00.000Z"))).toEqual(
-    new Date("2022-01-01T00:00:00.000Z").toString()
-  );
+  expect(schema.parse(new Date("2022-01-01T00:00:00.000Z"))).toEqual(new Date("2022-01-01T00:00:00.000Z").toString());
 });
 
 test("number coercion", () => {
@@ -41,12 +39,8 @@ test("number coercion", () => {
   expect(schema.parse(3.14)).toEqual(3.14);
   expect(schema.parse(BigInt(15))).toEqual(15);
   expect(() => schema.parse(Number.NaN)).toThrow(); // z.ZodError
-  expect(schema.parse(Number.POSITIVE_INFINITY)).toEqual(
-    Number.POSITIVE_INFINITY
-  );
-  expect(schema.parse(Number.NEGATIVE_INFINITY)).toEqual(
-    Number.NEGATIVE_INFINITY
-  );
+  expect(schema.parse(Number.POSITIVE_INFINITY)).toEqual(Number.POSITIVE_INFINITY);
+  expect(schema.parse(Number.NEGATIVE_INFINITY)).toEqual(Number.NEGATIVE_INFINITY);
   expect(schema.parse(true)).toEqual(1);
   expect(schema.parse(false)).toEqual(0);
   expect(schema.parse(null)).toEqual(0);

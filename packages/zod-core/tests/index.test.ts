@@ -1,5 +1,5 @@
+import * as z from "@zod/core";
 import { expect, expectTypeOf, test } from "vitest";
-import * as z from "zod-core";
 
 test("z.boolean", () => {
   const a = z.boolean();
@@ -232,7 +232,7 @@ test("z.discriminatedUnion", () => {
     type: z.literal("A"),
     name: z.string(),
   });
-  expect(a["~disc"].get("type")).toEqual({
+  expect(a._disc.get("type")).toEqual({
     values: new Set(["A"]),
     maps: [],
   });
@@ -244,9 +244,9 @@ test("z.discriminatedUnion", () => {
 
   const c = z.discriminatedUnion([a, b]);
 
-  expect(c["_def"].options.length).toEqual(2);
-  expect(c["~disc"].get("type")!.values.has("A")).toEqual(true);
-  expect(c["~disc"].get("type")!.values.has("B")).toEqual(true);
+  expect(c._def.options.length).toEqual(2);
+  expect(c._disc.get("type")!.values.has("A")).toEqual(true);
+  expect(c._disc.get("type")!.values.has("B")).toEqual(true);
 
   expect(z.parse(c, { type: "A", name: "john" })).toEqual({
     type: "A",
@@ -267,8 +267,8 @@ test("z.discriminatedUnion with nested discriminator", () => {
   });
 
   const c = z.discriminatedUnion([a, b]);
-  expect(c["~disc"]!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(true);
-  expect(c["~disc"]!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(true);
+  expect(c._disc!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(true);
+  expect(c._disc!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(true);
 
   expect(z.parse(c, { type: { key: "A" }, name: "john" })).toEqual({
     type: { key: "A" },
@@ -307,11 +307,11 @@ test("z.discriminatedUnion nested", () => {
   ]);
 
   const hyper = z.discriminatedUnion([schema1, schema2]);
-  expect(hyper["~disc"].get("num")).toEqual({
+  expect(hyper._disc.get("num")).toEqual({
     values: new Set([1, 2]),
     maps: [],
   });
-  expect(hyper["~disc"].get("type")).toEqual({
+  expect(hyper._disc.get("type")).toEqual({
     values: new Set(["A", "B", "C", "D"]),
     maps: [],
   });
@@ -712,7 +712,7 @@ test("z.custom", () => {
 });
 
 test("z.check", () => {
-  // this is a more flexible version of z.custom that accepts an arbitrary ~parse logic
+  // this is a more flexible version of z.custom that accepts an arbitrary _parse logic
   // the function should return base.$ZodResult
   const a = z.check<string>((ctx) => {
     if (typeof ctx.value === "string") return;

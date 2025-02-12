@@ -213,8 +213,8 @@ export function toJSONSchema(_schema: $ZodType): JSONSchema.Schema {
   switch (def.type) {
     case "string": {
       jsonSchema.type = "string";
-      if (schema["~computed"].minimum) jsonSchema.minLength = schema["~computed"].minimum;
-      if (schema["~computed"].maximum) jsonSchema.maxLength = schema["~computed"].maximum;
+      if (schema._computed.minimum) jsonSchema.minLength = schema._computed.minimum;
+      if (schema._computed.maximum) jsonSchema.maxLength = schema._computed.maximum;
 
       break;
     }

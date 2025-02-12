@@ -1,13 +1,13 @@
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
 import * as z from "../src/index.js";
 
 test("preprocess", () => {
   const schema = z.preprocess((data) => [data], z.string().array());
   const value = schema.parse("asdf");
   expect(value).toEqual(["asdf"]);
-  util.assertEqual<(typeof schema)["~input"], unknown>(true);
+  util.assertEqual<(typeof schema)["_input"], unknown>(true);
 });
 
 test("async preprocess", async () => {

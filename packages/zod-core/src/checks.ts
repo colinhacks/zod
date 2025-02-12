@@ -36,8 +36,8 @@ export const $ZodCheckLessThan: base.$constructor<$ZodCheckLessThan> = base.$con
     const origin = numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
 
     inst._onattach = (inst) => {
-      const curr = inst["~computed"].maximum ?? Number.POSITIVE_INFINITY;
-      if (def.value < curr) inst["~computed"].maximum = def.value;
+      const curr = inst._computed.maximum ?? Number.POSITIVE_INFINITY;
+      if (def.value < curr) inst._computed.maximum = def.value;
     };
 
     inst._check = (payload) => {
@@ -56,7 +56,7 @@ export const $ZodCheckLessThan: base.$constructor<$ZodCheckLessThan> = base.$con
       });
     };
 
-    // inst["~checkB"] = (payload,_payload) => {
+    // inst["_checkB"] = (payload,_payload) => {
     //   if (def.inclusive ? payload.value <= def.value : payload.value < def.value) {
     //     return;
     //   }
@@ -96,8 +96,8 @@ export const $ZodCheckGreaterThan: base.$constructor<$ZodCheckGreaterThan> = bas
     const origin = numericOriginMap[typeof def.value as "number" | "bigint" | "object"];
 
     inst._onattach = (inst) => {
-      const curr = inst["~computed"].minimum ?? Number.NEGATIVE_INFINITY;
-      if (def.value > curr) inst["~computed"].minimum = def.value;
+      const curr = inst._computed.minimum ?? Number.NEGATIVE_INFINITY;
+      if (def.value > curr) inst._computed.minimum = def.value;
     };
 
     inst._check = (payload) => {
@@ -158,7 +158,7 @@ export const $ZodCheckMultipleOf: base.$constructor<$ZodCheckMultipleOf<number |
     base.$ZodCheck.init(inst, def);
 
     inst._onattach = (inst) => {
-      inst["~computed"].multipleOf ??= def.value;
+      inst._computed.multipleOf ??= def.value;
     };
 
     inst._check = (payload) => {
@@ -201,7 +201,7 @@ export const $ZodCheckMultipleOf: base.$constructor<$ZodCheckMultipleOf<number |
 //     base.$ZodCheck.init(inst, def);
 
 //     inst._onattach = (inst) => {
-//       inst["~computed"].finite = true;
+//       inst["_computed"].finite = true;
 //     };
 
 //     inst._check = (payload) => {
@@ -254,9 +254,9 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
     const [minimum, maximum] = util.NUMBER_FORMAT_RANGES[def.format!];
 
     inst._onattach = (inst) => {
-      inst["~computed"].format = def.format;
-      inst["~computed"].minimum = minimum;
-      inst["~computed"].maximum = maximum;
+      inst._computed.format = def.format;
+      inst._computed.minimum = minimum;
+      inst._computed.maximum = maximum;
     };
 
     inst._check = (payload) => {
@@ -370,9 +370,9 @@ export const $ZodCheckBigIntFormat: base.$constructor<$ZodCheckBigIntFormat> = /
     const [minimum, maximum] = util.BIGINT_FORMAT_RANGES[def.format!];
 
     inst._onattach = (inst) => {
-      inst["~computed"].format = def.format;
-      inst["~computed"].minimum = minimum;
-      inst["~computed"].maximum = maximum;
+      inst._computed.format = def.format;
+      inst._computed.minimum = minimum;
+      inst._computed.maximum = maximum;
     };
 
     inst._check = (payload) => {
@@ -406,24 +406,24 @@ export const $ZodCheckBigIntFormat: base.$constructor<$ZodCheckBigIntFormat> = /
 //////////////////////////////////
 /////    $ZodCheckMaxSize    /////
 //////////////////////////////////
-function getSize(input: any): {
-  type: "string" | "array" | "set" | "file";
-  size: number;
-} {
-  if (typeof input === "string") return { type: "string", size: input.length };
-  if (Array.isArray(input)) return { type: "array", size: input.length };
-  if (input instanceof Set) return { type: "set", size: input.size };
-  if (input instanceof File) return { type: "file", size: input.size };
-  throw new Error(
-    `Invalid input for size check: ${input?.constructor?.name ?? typeof input}. This is a problem with Zod, please file an issue.`
-  );
-}
+// function getSize(input: any): {
+//   type: "string" | "array" | "set" | "file";
+//   size: number;
+// } {
+//   if (typeof input === "string") return { type: "string", size: input.length };
+//   if (Array.isArray(input)) return { type: "array", size: input.length };
+//   if (input instanceof Set) return { type: "set", size: input.size };
+//   if (input instanceof File) return { type: "file", size: input.size };
+//   throw new Error(
+//     `Invalid input for size check: ${input?.constructor?.name ?? typeof input}. This is a problem with Zod, please file an issue.`
+//   );
+// }
 
 interface $ZodCheckMaxSizeDef extends base.$ZodCheckDef {
   check: "max_size";
   maximum: number;
 }
-export interface $ZodCheckMaxSize<T extends util.Sizeable = util.Sizeable> extends base.$ZodCheck<T> {
+export interface $ZodCheckMaxSize<T extends util.HasSize = util.HasSize> extends base.$ZodCheck<T> {
   _def: $ZodCheckMaxSizeDef;
   _issc: errors.$ZodIssueTooBig<T>;
 }
@@ -433,19 +433,27 @@ export const $ZodCheckMaxSize: base.$constructor<$ZodCheckMaxSize> = base.$const
   (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
+    inst._when = (payload) => {
+      const val = payload.value;
+      return !!val && (val as any).size !== undefined;
+    };
+
     inst._onattach = (inst) => {
-      const curr = (inst["~computed"].maximum ?? Number.POSITIVE_INFINITY) as number;
-      if (def.maximum < curr) inst["~computed"].maximum = def.maximum;
+      const curr = (inst._computed.maximum ?? Number.NEGATIVE_INFINITY) as number;
+      if (def.maximum > curr) inst._computed.maximum = def.maximum;
     };
 
     inst._check = (payload) => {
-      const size = getSize(payload.value);
-      if (size.size <= def.maximum) return;
+      const input = payload.value;
+      const size = input.size;
+
+      if (size <= def.maximum) return;
+      const origin = input instanceof Set ? "set" : input instanceof File ? "file" : "unknown";
       payload.issues.push({
-        origin: size.type,
+        origin,
         code: "too_big",
         maximum: def.maximum,
-        input: payload.value,
+        input,
         def,
         continue: !def.abort,
       });
@@ -460,7 +468,7 @@ interface $ZodCheckMinSizeDef extends base.$ZodCheckDef {
   check: "min_size";
   minimum: number;
 }
-export interface $ZodCheckMinSize<T extends util.Sizeable = util.Sizeable> extends base.$ZodCheck<T> {
+export interface $ZodCheckMinSize<T extends util.HasSize = util.HasSize> extends base.$ZodCheck<T> {
   _def: $ZodCheckMinSizeDef;
   _issc: errors.$ZodIssueTooSmall<T>;
 }
@@ -470,19 +478,27 @@ export const $ZodCheckMinSize: base.$constructor<$ZodCheckMinSize> = base.$const
   (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
+    inst._when = (payload) => {
+      const val = payload.value;
+      return !!val && (val as any).size !== undefined;
+    };
+
     inst._onattach = (inst) => {
-      const curr = (inst["~computed"].minimum ?? Number.NEGATIVE_INFINITY) as number;
-      if (def.minimum > curr) inst["~computed"].minimum = def.minimum;
+      const curr = (inst._computed.minimum ?? Number.NEGATIVE_INFINITY) as number;
+      if (def.minimum > curr) inst._computed.minimum = def.minimum;
     };
 
     inst._check = (payload) => {
-      const size = getSize(payload.value);
-      if (size.size >= def.minimum) return;
+      const input = payload.value;
+      const size = input.size;
+
+      if (size >= def.minimum) return;
+      const origin = input instanceof Set ? "set" : input instanceof File ? "file" : "unknown";
       payload.issues.push({
-        origin: size.type,
+        origin,
         code: "too_small",
         minimum: def.minimum,
-        input: payload.value,
+        input,
         def,
         continue: !def.abort,
       });
@@ -496,7 +512,7 @@ export const $ZodCheckMinSize: base.$constructor<$ZodCheckMinSize> = base.$const
 interface $ZodCheckSizeEqualsDef extends base.$ZodCheckDef {
   size: number;
 }
-export interface $ZodCheckSizeEquals<T extends util.Sizeable = util.Sizeable> extends base.$ZodCheck<T> {
+export interface $ZodCheckSizeEquals<T extends util.HasSize = util.HasSize> extends base.$ZodCheck<T> {
   _def: $ZodCheckSizeEqualsDef;
   _issc: errors.$ZodIssueTooBig<T> | errors.$ZodIssueTooSmall<T>;
 }
@@ -506,19 +522,162 @@ export const $ZodCheckSizeEquals: base.$constructor<$ZodCheckSizeEquals> = base.
   (inst, def) => {
     base.$ZodCheck.init(inst, def);
 
+    inst._when = (payload) => {
+      const val = payload.value;
+      return !!val && (val as any).size !== undefined;
+    };
+
     inst._onattach = (inst) => {
-      inst["~computed"].minimum = def.size;
-      inst["~computed"].maximum = def.size;
-      inst["~computed"].size = def.size;
+      inst._computed.minimum = def.size;
+      inst._computed.maximum = def.size;
+      inst._computed.size = def.size;
     };
 
     inst._check = (payload) => {
-      const size = getSize(payload.value);
-      if (size.size === def.size) return;
-      const tooBig = size.size > def.size;
+      const input = payload.value;
+      const size = input.size;
+      if (size === def.size) return;
+      const origin = input instanceof Set ? "set" : input instanceof File ? "file" : "unknown";
+      const tooBig = size > def.size;
       payload.issues.push({
-        origin: size.type,
+        origin,
         ...(tooBig ? { code: "too_big", maximum: def.size } : { code: "too_small", minimum: def.size }),
+        input: payload.value,
+        def,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
+//////////////////////////////////
+/////    $ZodCheckMaxLength    /////
+//////////////////////////////////
+
+interface $ZodCheckMaxLengthDef extends base.$ZodCheckDef {
+  check: "max_length";
+  maximum: number;
+}
+export interface $ZodCheckMaxLength<T extends util.HasLength = util.HasLength> extends base.$ZodCheck<T> {
+  _def: $ZodCheckMaxLengthDef;
+  _issc: errors.$ZodIssueTooBig<T>;
+}
+
+export const $ZodCheckMaxLength: base.$constructor<$ZodCheckMaxLength> = base.$constructor(
+  "$ZodCheckMaxLength",
+  (inst, def) => {
+    base.$ZodCheck.init(inst, def);
+
+    inst._when = (payload) => {
+      const val = payload.value;
+      return !!val && (val as any).length !== undefined;
+    };
+
+    inst._onattach = (inst) => {
+      const curr = (inst._computed.maximum ?? Number.NEGATIVE_INFINITY) as number;
+      if (def.maximum > curr) inst._computed.maximum = def.maximum;
+    };
+
+    inst._check = (payload) => {
+      const input = payload.value;
+      const length = input.length;
+
+      if (length <= def.maximum) return;
+      const origin = typeof input === "string" ? "string" : Array.isArray(input) ? "array" : "unknown";
+      payload.issues.push({
+        origin,
+        code: "too_big",
+        maximum: def.maximum,
+        input,
+        def,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
+//////////////////////////////////
+/////    $ZodCheckMinLength    /////
+//////////////////////////////////
+interface $ZodCheckMinLengthDef extends base.$ZodCheckDef {
+  check: "min_length";
+  minimum: number;
+}
+export interface $ZodCheckMinLength<T extends util.HasLength = util.HasLength> extends base.$ZodCheck<T> {
+  _def: $ZodCheckMinLengthDef;
+  _issc: errors.$ZodIssueTooSmall<T>;
+}
+
+export const $ZodCheckMinLength: base.$constructor<$ZodCheckMinLength> = base.$constructor(
+  "$ZodCheckMinLength",
+  (inst, def) => {
+    base.$ZodCheck.init(inst, def);
+
+    inst._when = (payload) => {
+      const val = payload.value;
+      return !!val && (val as any).length !== undefined;
+    };
+
+    inst._onattach = (inst) => {
+      const curr = (inst._computed.minimum ?? Number.NEGATIVE_INFINITY) as number;
+      if (def.minimum > curr) inst._computed.minimum = def.minimum;
+    };
+
+    inst._check = (payload) => {
+      const input = payload.value;
+      const length = input.length;
+
+      if (length >= def.minimum) return;
+      const origin = input instanceof Set ? "set" : input instanceof File ? "file" : "unknown";
+      payload.issues.push({
+        origin,
+        code: "too_small",
+        minimum: def.minimum,
+        input,
+        def,
+        continue: !def.abort,
+      });
+    };
+  }
+);
+
+/////////////////////////////////////
+/////    $ZodCheckLengthEquals    /////
+/////////////////////////////////////
+interface $ZodCheckLengthEqualsDef extends base.$ZodCheckDef {
+  check: "length_equals";
+  length: number;
+}
+export interface $ZodCheckLengthEquals<T extends util.HasLength = util.HasLength> extends base.$ZodCheck<T> {
+  _def: $ZodCheckLengthEqualsDef;
+  _issc: errors.$ZodIssueTooBig<T> | errors.$ZodIssueTooSmall<T>;
+}
+
+export const $ZodCheckLengthEquals: base.$constructor<$ZodCheckLengthEquals> = base.$constructor(
+  "$ZodCheckLengthEquals",
+  (inst, def) => {
+    base.$ZodCheck.init(inst, def);
+
+    inst._when = (payload) => {
+      const val = payload.value;
+      return !!val && (val as any).length !== undefined;
+    };
+
+    inst._onattach = (inst) => {
+      inst._computed.minimum = def.length;
+      inst._computed.maximum = def.length;
+      inst._computed.length = def.length;
+    };
+
+    inst._check = (payload) => {
+      const input = payload.value;
+      const length = input.length;
+      if (length === def.length) return;
+      const origin = input instanceof Set ? "set" : input instanceof File ? "file" : "unknown";
+      const tooBig = length > def.length;
+      payload.issues.push({
+        origin,
+        ...(tooBig ? { code: "too_big", maximum: def.length } : { code: "too_small", minimum: def.length }),
         input: payload.value,
         def,
         continue: !def.abort,
@@ -549,8 +708,8 @@ export const $ZodCheckStringFormat: base.$constructor<$ZodCheckStringFormat> = b
     base.$ZodCheck.init(inst, def);
 
     inst._onattach = (inst) => {
-      inst["~computed"].format = def.format;
-      if (def.pattern) inst["~computed"].pattern = def.pattern;
+      inst._computed.format = def.format;
+      if (def.pattern) inst._computed.pattern = def.pattern;
     };
 
     inst._check = (payload) => {
@@ -849,7 +1008,7 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> = base.$con
 //   base.$constructor("$ZodCheckFileType", (inst, def) => {
 //     base.$ZodCheck.init(inst, def);
 
-//     inst['~check'] = (payload) => {
+//     inst._check = (payload) => {
 //       if (def.fileTypes.includes(payload.value.type as util.MimeTypes)) return;
 //       payload.issues.push({
 //         origin: "file",
@@ -879,7 +1038,7 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> = base.$con
 //   base.$constructor("$ZodCheckFileName", (inst, def) => {
 //     base.$ZodCheck.init(inst, def);
 
-//     inst['~check'] = (payload) => {
+//     inst._check = (payload) => {
 //       if (def.fileName === payload.value.name) return;
 //       payload.issues.push({
 //         origin: "file",
@@ -932,7 +1091,7 @@ export const $ZodCheckOverwrite: base.$constructor<$ZodCheckOverwrite> = base.$c
 //   base.$constructor("$ZodCheckTrim", (inst, def) => {
 //     base.$ZodCheck.init(inst, def);
 
-//     inst['~check'] = (payload) => {
+//     inst._check = (payload) => {
 //       payload.value = payload.value.trim();
 //     };
 //   });
@@ -953,7 +1112,7 @@ export const $ZodCheckOverwrite: base.$constructor<$ZodCheckOverwrite> = base.$c
 //   base.$constructor("$ZodCheckNormalize", (inst, def) => {
 //     base.$ZodCheck.init(inst, def);
 
-//     inst['~check'] = (payload) => {
+//     inst._check = (payload) => {
 //       payload.value = payload.value.normalize();
 //     };
 //   });

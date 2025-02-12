@@ -1,7 +1,7 @@
+import * as core from "@zod/core";
+import * as util from "@zod/core/util";
 // @ts-ignore TS6133
 import { expect, test } from "vitest";
-import * as util from "zod-core/util";
-import * as core from "zod-core";
 import * as z from "../src/index.js";
 
 test("refinement", () => {
@@ -11,10 +11,7 @@ test("refinement", () => {
   });
   const obj2 = obj1.partial().strict();
 
-  const obj3 = obj2.refine(
-    (data) => data.first || data.second,
-    "Either first or second should be filled in."
-  );
+  const obj3 = obj2.refine((data) => data.first || data.second, "Either first or second should be filled in.");
 
   expect(obj1 === (obj2 as any)).toEqual(false);
   expect(obj2 === (obj3 as any)).toEqual(false);
@@ -34,10 +31,7 @@ test("refinement 2", () => {
       password: z.string(),
       confirmPassword: z.string(),
     })
-    .refine(
-      (data) => data.password === data.confirmPassword,
-      "Both password and confirmation must match"
-    );
+    .refine((data) => data.password === data.confirmPassword, "Both password and confirmation must match");
 
   expect(() =>
     validationSchema.parse({
@@ -70,8 +64,7 @@ test("refinement Promise", async () => {
       confirmPassword: z.string(),
     })
     .refine(
-      (data) =>
-        Promise.resolve().then(() => data.password === data.confirmPassword),
+      (data) => Promise.resolve().then(() => data.password === data.confirmPassword),
       "Both password and confirmation must match"
     );
 

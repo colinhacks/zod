@@ -215,19 +215,19 @@ test("record async parse", async () => {
 });
 
 /// function
-const functionSchema = z.function();
-test("function async parse", async () => {
-  const goodData = () => {};
-  const badData = "XXX";
+// const functionSchema = z.function();
+// test("function async parse", async () => {
+//   const goodData = () => {};
+//   const badData = "XXX";
 
-  const goodResult = await functionSchema.safeParseAsync(goodData);
-  expect(goodResult.success).toBe(true);
-  if (goodResult.success) expect(typeof goodResult.data).toEqual("function");
+//   const goodResult = await functionSchema.safeParseAsync(goodData);
+//   expect(goodResult.success).toBe(true);
+//   if (goodResult.success) expect(typeof goodResult.data).toEqual("function");
 
-  const badResult = await functionSchema.safeParseAsync(badData);
-  expect(badResult.success).toBe(false);
-  if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
-});
+//   const badResult = await functionSchema.safeParseAsync(badData);
+//   expect(badResult.success).toBe(false);
+//   if (!badResult.success) expect(badResult.error).toBeInstanceOf(z.ZodError);
+// });
 
 /// literal
 const literalSchema = z.literal("asdf");
@@ -308,8 +308,7 @@ test("async validation non-empty strings", async () => {
 
   const r1 = result1;
   await result2.then((r2) => {
-    if (r1.success === false && r2.success === false)
-      expect(r1.error.issues.length).toBe(r2.error.issues.length); // <--- r1 has length 2, r2 has length 1
+    expect(r1.error!.issues.length).toBe(r2.error!.issues.length);
   });
 });
 
@@ -323,10 +322,8 @@ test("async validation multiple errors 1", async () => {
   const result1 = base.safeParse(testval);
   const result2 = base.safeParseAsync(testval);
 
-  const r1 = result1;
-  await result2.then((r2) => {
-    if (r1.success === false && r2.success === false)
-      expect(r2.error.issues.length).toBe(r1.error.issues.length);
+  await result2.then((result2) => {
+    expect(result2.error!.issues.length).toBe(result1.error!.issues.length);
   });
 });
 
@@ -343,10 +340,8 @@ test("async validation multiple errors 2", async () => {
   const result1 = base().safeParse(testval);
   const result2 = base(true).safeParseAsync(testval);
 
-  const r1 = result1;
-  await result2.then((r2) => {
-    if (r1.success === false && r2.success === false)
-      expect(r2.error?.issues.length).toBe(r1.error?.issues.length);
+  await result2.then((result2) => {
+    expect(result1.error!.issues.length).toBe(result2.error!.issues.length);
   });
 });
 

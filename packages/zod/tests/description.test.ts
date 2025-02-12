@@ -21,7 +21,5 @@ test("description should carry over to chained schemas", () => {
   const schema = z.string({ description });
   expect(schema.description).toEqual(description);
   expect(schema.optional().description).toEqual(description);
-  expect(schema.optional().nullable().default("default").description).toEqual(
-    description
-  );
+  expect(schema.optional().nullable().default("default").description).toEqual(description);
 });

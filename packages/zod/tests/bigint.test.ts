@@ -48,9 +48,7 @@ test("failing validations", () => {
 
 test("min max getters", () => {
   expect(z.bigint().min(BigInt(5)).minValue).toEqual(BigInt(5));
-  expect(z.bigint().min(BigInt(5)).min(BigInt(10)).minValue).toEqual(
-    BigInt(10)
-  );
+  expect(z.bigint().min(BigInt(5)).min(BigInt(10)).minValue).toEqual(BigInt(10));
 
   expect(z.bigint().max(BigInt(5)).maxValue).toEqual(BigInt(5));
   expect(z.bigint().max(BigInt(5)).max(BigInt(1)).maxValue).toEqual(BigInt(1));

@@ -32,10 +32,7 @@ export abstract class $ZodType<
   readonly "~output"!: Output;
   readonly "~input": inputFunc<Input>;
 
-  abstract "~parse"(
-    input: ParseInput,
-    ctx?: ParseContext
-  ): ParseReturnType<Output>;
+  abstract "~parse"(input: ParseInput, ctx?: ParseContext): ParseReturnType<Output>;
 
   static "~def": $ZodTypeDef;
   public constructor(def: $ZodTypeDef & Ext) {

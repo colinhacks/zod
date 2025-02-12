@@ -28,9 +28,7 @@ test("passing validations", () => {
   maxCheck.parse(new File(["12345678"], "test.txt"));
   acceptCheck.parse(new File([""], "test.csv", { type: "text/plain" }));
   expect(() => acceptCheck.parse(new File([""], "test.txt"))).toThrow();
-  expect(() =>
-    acceptCheck.parse(new File([""], "test.txt", { type: "text/csv" }))
-  ).toThrow();
+  expect(() => acceptCheck.parse(new File([""], "test.txt", { type: "text/csv" }))).toThrow();
 
   filenameCheck.parse(new File([""], "xxy"));
 });
@@ -40,9 +38,7 @@ test("failing validations", () => {
   expect(() => maxCheck.parse(new File(["123456789"], "test.txt"))).toThrow();
 
   expect(() => acceptCheck.parse(new File([""], "test.csv"))).toThrow();
-  expect(() =>
-    acceptCheck.parse(new File([""], "test.csv", { type: "text/csv" }))
-  ).toThrow();
+  expect(() => acceptCheck.parse(new File([""], "test.csv", { type: "text/csv" }))).toThrow();
 
   expect(() => filenameCheck.parse(new File([""], "ax"))).toThrow();
 });
@@ -57,9 +53,7 @@ test("min max getters", () => {
 
 test("accept getter", () => {
   expect(acceptCheck.acceptedTypes).toEqual(["text/plain", "application/json"]);
-  expect(
-    acceptCheck.type(["text/plain", "application/xml"]).acceptedTypes
-  ).toEqual(["text/plain"]);
+  expect(acceptCheck.type(["text/plain", "application/xml"]).acceptedTypes).toEqual(["text/plain"]);
 });
 
 test("invalid mime types", () => {

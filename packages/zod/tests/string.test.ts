@@ -199,9 +199,7 @@ test("base64 validations", () => {
   ];
 
   for (const str of invalidBase64Strings) {
-    expect(str + z.string().base64().safeParse(str).success).toBe(
-      `${str}false`
-    );
+    expect(str + z.string().base64().safeParse(str).success).toBe(`${str}false`);
   }
 });
 
@@ -227,30 +225,20 @@ test("jwt token", () => {
   expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
   expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
   expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
-  expect(() =>
-    z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_HS256)
-  ).toThrow();
-  expect(() =>
-    z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_ES256)
-  ).toThrow();
+  expect(() => z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_HS256)).toThrow();
+  expect(() => z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_ES256)).toThrow();
   //Success
   expect(() => jwtSchema.parse(GOOD_JWT_HS256)).not.toThrow();
   expect(() => jwtSchema.parse(GOOD_JWT_ES256)).not.toThrow();
-  expect(() =>
-    z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_HS256)
-  ).not.toThrow();
-  expect(() =>
-    z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_ES256)
-  ).not.toThrow();
+  expect(() => z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_HS256)).not.toThrow();
+  expect(() => z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_ES256)).not.toThrow();
 });
 
 test("url validations", () => {
   const url = z.string().url();
   url.parse("http://google.com");
   url.parse("https://google.com/asdf?asdf=ljk3lk4&asdf=234#asdf");
-  url.parse(
-    "https://anonymous:flabada@developer.mozilla.org/en-US/docs/Web/API/URL/password"
-  );
+  url.parse("https://anonymous:flabada@developer.mozilla.org/en-US/docs/Web/API/URL/password");
   expect(() => url.parse("asdf")).toThrow();
   expect(() => url.parse("http:.......///broken.com")).toThrow();
   expect(() => url.parse("c:")).toThrow();
@@ -687,9 +675,7 @@ test("datetime parsing", () => {
   expect(() => datetimeOffset.parse("tuna")).toThrow();
   expect(() => datetimeOffset.parse("2022-10-13T09:52:31.Z")).toThrow();
 
-  const datetimeOffsetNoMs = z
-    .string()
-    .datetime({ offset: true, precision: 0 });
+  const datetimeOffsetNoMs = z.string().datetime({ offset: true, precision: 0 });
   datetimeOffsetNoMs.parse("1970-01-01T00:00:00Z");
   datetimeOffsetNoMs.parse("2022-10-13T09:52:31Z");
   datetimeOffsetNoMs.parse("2020-10-14T17:42:29+00:00");
@@ -699,22 +685,16 @@ test("datetime parsing", () => {
   expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.000Z")).toThrow();
   expect(() => datetimeOffsetNoMs.parse("1970-01-01T00:00:00.Z")).toThrow();
   expect(() => datetimeOffsetNoMs.parse("2022-10-13T09:52:31.816Z")).toThrow();
-  expect(() =>
-    datetimeOffsetNoMs.parse("2020-10-14T17:42:29.124+00:00")
-  ).toThrow();
+  expect(() => datetimeOffsetNoMs.parse("2020-10-14T17:42:29.124+00:00")).toThrow();
 
   const datetimeOffset4Ms = z.string().datetime({ offset: true, precision: 4 });
   datetimeOffset4Ms.parse("1970-01-01T00:00:00.1234Z");
   datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00:00");
   datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+0000");
-  expect(() =>
-    datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00")
-  ).toThrow();
+  expect(() => datetimeOffset4Ms.parse("2020-10-14T17:42:29.1234+00")).toThrow();
   expect(() => datetimeOffset4Ms.parse("tuna")).toThrow();
   expect(() => datetimeOffset4Ms.parse("1970-01-01T00:00:00.123Z")).toThrow();
-  expect(() =>
-    datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")
-  ).toThrow();
+  expect(() => datetimeOffset4Ms.parse("2020-10-14T17:42:29.124+00:00")).toThrow();
 });
 
 test("date parsing", () => {
@@ -854,16 +834,7 @@ test("duration", () => {
     "P42YT7.004M",
   ];
 
-  const invalidDurations = [
-    "foo bar",
-    "",
-    " ",
-    "P",
-    "T1H",
-    "P0.5Y1D",
-    "P0,5Y6M",
-    "P1YT",
-  ];
+  const invalidDurations = ["foo bar", "", " ", "P", "T1H", "P0.5Y1D", "P0,5Y6M", "P1YT"];
 
   for (const val of validDurations) {
     const result = duration.safeParse(val);
@@ -919,9 +890,7 @@ test("IP validation", () => {
   // no parameters check IPv4 or IPv6
   const ipSchema = z.string().ip();
   expect(validIPs.every((ip) => ipSchema.safeParse(ip).success)).toBe(true);
-  expect(
-    invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
-  ).toBe(true);
+  expect(invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)).toBe(true);
 });
 
 test("E.164 validation", () => {
@@ -956,12 +925,6 @@ test("E.164 validation", () => {
     "+1555555 ", // space after number
   ];
 
-  expect(
-    validE164Numbers.every((number) => e164Number.safeParse(number).success)
-  ).toBe(true);
-  expect(
-    invalidE164Numbers.every(
-      (number) => e164Number.safeParse(number).success === false
-    )
-  ).toBe(true);
+  expect(validE164Numbers.every((number) => e164Number.safeParse(number).success)).toBe(true);
+  expect(invalidE164Numbers.every((number) => e164Number.safeParse(number).success === false)).toBe(true);
 });

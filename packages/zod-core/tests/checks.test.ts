@@ -50,22 +50,22 @@ test("z.min", () => {
 });
 
 // maxSize;
-test("z.maxSize", () => {
-  const a = z.array(z.string()).check(z.maxSize(3));
+test("z.maxLength", () => {
+  const a = z.array(z.string()).check(z.maxLength(3));
   expect(z.safeParse(a, ["a", "b", "c"]).success).toEqual(true);
   expect(z.safeParse(a, ["a", "b", "c", "d"]).success).toEqual(false);
 });
 
 // minSize;
-test("z.minSize", () => {
-  const a = z.array(z.string()).check(z.minSize(3));
+test("z.minLength", () => {
+  const a = z.array(z.string()).check(z.minLength(3));
   expect(z.safeParse(a, ["a", "b"]).success).toEqual(false);
   expect(z.safeParse(a, ["a", "b", "c"]).success).toEqual(true);
 });
 
 // size;
-test("z.minSize", () => {
-  const a = z.array(z.string()).check(z.size(3));
+test("z.length", () => {
+  const a = z.array(z.string()).check(z.length(3));
   expect(z.safeParse(a, ["a", "b"]).success).toEqual(false);
   expect(z.safeParse(a, ["a", "b", "c"]).success).toEqual(true);
   expect(z.safeParse(a, ["a", "b", "c", "d"]).success).toEqual(false);

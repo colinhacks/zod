@@ -31,14 +31,7 @@ abstract class ZodType<Out = unknown, In = unknown> implements ZodDef {
 }
 
 type Primitive = string | number | boolean | bigint | symbol | undefined | null;
-type PrimitiveTypes =
-  | "string"
-  | "number"
-  | "boolean"
-  | "bigint"
-  | "symbol"
-  | "undefined"
-  | "null";
+type PrimitiveTypes = "string" | "number" | "boolean" | "bigint" | "symbol" | "undefined" | "null";
 
 abstract class ZodPrimitive extends ZodType<Primitive, Primitive> {
   kind = "primitive" as const;
