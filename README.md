@@ -83,6 +83,7 @@
 - [Dates](#dates-1)
 - [Zod enums](#zod-enums)
 - [Native enums](#native-enums)
+- [Not](#not)
 - [Optionals](#optionals)
 - [Nullables](#nullables)
 - [Objects](#objects)
@@ -1243,6 +1244,27 @@ You can access the underlying object with the `.enum` property:
 
 ```ts
 FruitEnum.enum.Apple; // "apple"
+```
+
+## Not
+
+You can use `z.not()` to create a schema that rejects a specific type. This wraps the schema in a `ZodNot` instance and returns the result.
+
+```ts
+const schema = z.not(z.string());
+
+schema.parse(1234); // => passes, as 1234 is not a string
+schema.parse("hello"); // => throws an error, as "hello" is a string
+```
+
+For convenience, you can also call the `.not()` method on an existing schema.
+
+```ts
+const schema = z.string().email().not();
+
+schema.parse(1234); // => passes, as 1234 is not a string or a valid email
+schema.parse("hello"); // => passes, as "hello" is not a valid email
+schema.parse("user@example.com"); // => throws an error, as "user@example.com" is a valid email
 ```
 
 ## Optionals

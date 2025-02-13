@@ -65,6 +65,7 @@
   - [.min/.max/.length](#minmaxlength)
 - [Unions](#unions)
 - [Discriminated unions](#discriminated-unions)
+- [Not](#not)
 - [Optionals](#optionals)
 - [Nullables](#nullables)
 - [Enums](#enums)
@@ -926,6 +927,27 @@ const B = z.discriminatedUnion("status", [
 ]);
 
 const AB = z.discriminatedUnion("status", [...A.options, ...B.options]);
+```
+
+## Not
+
+你可以用 `z.not()` 来创建一个拒绝特定类型的模式。这个方法会将模式包装在 `ZodNot` 实例中并返回结果。
+
+```ts
+const schema = z.not(z.string());
+
+schema.parse(1234); // => 通过，因为 1234 不是字符串
+schema.parse("hello"); // => 抛出错误，因为 "hello" 是字符串
+```
+
+为了方便，你也可以在现有的模式上直接调用 `.not()` 方法。
+
+```ts
+const schema = z.string().email().not();
+
+schema.parse(1234); // => 通过，因为 1234 不是字符串或有效的邮箱地址
+schema.parse("hello"); // => 通过，因为 "hello" 不是有效的邮箱地址
+schema.parse("user@example.com"); // => 抛出错误，因为 "user@example.com" 是一个有效的邮箱地址
 ```
 
 ## Optionals

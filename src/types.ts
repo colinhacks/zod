@@ -462,6 +462,7 @@ export abstract class ZodType<
     this.nullable = this.nullable.bind(this);
     this.nullish = this.nullish.bind(this);
     this.array = this.array.bind(this);
+    this.not = this.not.bind(this);
     this.promise = this.promise.bind(this);
     this.or = this.or.bind(this);
     this.and = this.and.bind(this);
@@ -492,6 +493,9 @@ export abstract class ZodType<
   }
   array(): ZodArray<this> {
     return ZodArray.create(this);
+  }
+  not(): ZodNot<this> {
+    return ZodNot.create(this, this._def);
   }
   promise(): ZodPromise<this> {
     return ZodPromise.create(this, this._def);
@@ -2450,6 +2454,62 @@ export class ZodArray<
       maxLength: null,
       exactLength: null,
       typeName: ZodFirstPartyTypeKind.ZodArray,
+      ...processCreateParams(params),
+    });
+  };
+}
+
+export interface ZodNotDef<T extends ZodTypeAny = ZodTypeAny>
+  extends ZodTypeDef {
+  item: T;
+  typeName: ZodFirstPartyTypeKind.ZodNot;
+}
+
+export class ZodNot<T extends ZodTypeAny> extends ZodType<
+  T["_output"] | null,
+  ZodNotDef<T>,
+  T["_input"] | null
+> {
+  _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    const { ctx } = this._processInputParams(input);
+
+    const schema = this._def.item;
+
+    if (!schema) {
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_arguments,
+        argumentsError: ctx.data,
+      });
+
+      return INVALID;
+    }
+
+    const result = schema._parse(
+      new ParseInputLazyPath(ctx, ctx.data, ctx.path, 0)
+    );
+
+    if (!!result && String((result as any).status) == "valid") {
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.custom,
+        message: "Invalid input",
+      });
+
+      return INVALID;
+    }
+
+    return OK(input.data);
+  }
+
+  static create = <T extends ZodTypeAny>(
+    schemas: T,
+    params?: RawCreateParams
+  ): ZodNot<T> => {
+    if (!schemas) {
+      throw new Error("You must pass a schema to z.not( ... )");
+    }
+    return new ZodNot({
+      item: schemas,
+      typeName: ZodFirstPartyTypeKind.ZodNot,
       ...processCreateParams(params),
     });
   };
@@ -5301,6 +5361,7 @@ export enum ZodFirstPartyTypeKind {
   ZodUndefined = "ZodUndefined",
   ZodNull = "ZodNull",
   ZodAny = "ZodAny",
+  ZodNot = "ZodNot",
   ZodUnknown = "ZodUnknown",
   ZodNever = "ZodNever",
   ZodVoid = "ZodVoid",
@@ -5392,6 +5453,7 @@ const unknownType = ZodUnknown.create;
 const neverType = ZodNever.create;
 const voidType = ZodVoid.create;
 const arrayType = ZodArray.create;
+const notType = ZodNot.create;
 const objectType = ZodObject.create;
 const strictObjectType = ZodObject.strictCreate;
 const unionType = ZodUnion.create;
@@ -5450,6 +5512,7 @@ export {
   nanType as nan,
   nativeEnumType as nativeEnum,
   neverType as never,
+  notType as not,
   nullType as null,
   nullableType as nullable,
   numberType as number,
