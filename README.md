@@ -696,6 +696,32 @@ type User = z.infer<typeof User>;
 // { username: string }
 ```
 
+Validating an API response:
+
+```ts
+import { z } from "zod";
+
+const userSchema = z.object({
+  id: z.number(),
+  username: z.string(),
+  email: z.string().email(),
+});
+
+type User = z.infer<typeof userSchema>;
+
+async function getUserById(id: number) {
+  const response = await fetch(`/api/users/${id}`);
+  // data is untyped JSON response from the API
+  const data = await response.json();
+
+  // parse and validate the data against the schema to ensure it matches the expected shape
+  const user = userSchema.parse(data);
+
+  // user is now fully typed as { id: number, username: string, email: string }
+  return user;
+}
+```
+
 ## Primitives
 
 ```ts
