@@ -377,16 +377,12 @@ export function array<T extends core.$ZodType>(element: T, params?: core.$ZodArr
 // type ZodObjectParams = util.TypeParams<schemas.ZodObject, "shape">;
 
 export function object<T extends schemas.ZodShape>(
-  shape: T,
+  shape?: T,
   params?: core.$ZodObjectLikeParams
-): schemas.ZodObject<T, {}>;
-export function object<T extends schemas.ZodRawShape>(
-  shape: T,
-  params?: core.$ZodObjectLikeParams
-): schemas.ZodObject<T, Record<never, unknown>> {
+): schemas.ZodObject<T, {}> {
   const def: core.$ZodObjectDef<schemas.ZodShape> = {
     type: "object",
-    shape,
+    shape: shape ?? {},
     ...util.normalizeTypeParams(params),
   };
   return new schemas.ZodObject(def) as any;
@@ -1015,6 +1011,17 @@ export function nullable<T extends core.$ZodType>(
   }) as schemas.ZodNullable<T>;
 }
 
+export function nonoptional<T extends core.$ZodType>(
+  innerType: T,
+  params?: core.$ZodRequiredParams
+): schemas.ZodRequired<T> {
+  return new schemas.ZodRequired({
+    type: "required",
+    innerType,
+    ...util.normalizeTypeParams(params),
+  }) as schemas.ZodRequired<T>;
+}
+
 // success
 // type ZodSuccessParams = util.TypeParams<schemas.ZodSuccess, "innerType">;
 export function success<T extends core.$ZodType>(innerType: T, params?: core.$ZodSuccessParams): schemas.ZodSuccess<T> {
@@ -1036,6 +1043,7 @@ export function _default<T extends core.$ZodType>(
     type: "default",
     innerType,
     defaultValue: defaultValue instanceof Function ? defaultValue : () => defaultValue,
+    // break: false,
     ...util.normalizeTypeParams(params),
   }) as schemas.ZodDefault<T>;
 }
@@ -1095,7 +1103,6 @@ export function readonly<T extends core.$ZodType>(
 }
 
 // templateLiteral
-// type ZodTemplateLiteralParams = util.TypeParams<schemas.ZodTemplateLiteral, "parts">;
 export function templateLiteral<const Parts extends core.$TemplateLiteralPart[]>(
   parts: Parts,
   params?: core.$ZodTemplateLiteralParams
@@ -1108,7 +1115,6 @@ export function templateLiteral<const Parts extends core.$TemplateLiteralPart[]>
 }
 
 // promise
-// type ZodPromiseParams = util.TypeParams<schemas.ZodPromise, "innerType">;
 export function promise<T extends core.$ZodType>(innerType: T, params?: core.$ZodPromiseParams): schemas.ZodPromise<T> {
   return new schemas.ZodPromise({
     type: "promise",
@@ -1119,22 +1125,11 @@ export function promise<T extends core.$ZodType>(innerType: T, params?: core.$Zo
 
 // type ZodCustomParams = util.CheckTypeParams<schemas.ZodCustom, "fn">;
 
-/** @deprecated Use `z.customAsync()` to define asynchronous custom */
-export function custom(fn: (data: unknown) => Promise<unknown>, ...args: any[]): never;
-export function custom<T>(
-  fn?: (data: unknown) => unknown,
+export function custom<O = unknown, I = O>(
+  fn?: (data: O) => unknown,
   _params?: string | core.$ZodCustomParams
-): schemas.ZodCustom<T>;
-export function custom<T>(
-  fn?: (data: unknown) => unknown | Promise<unknown>,
-  _params: string | core.$ZodCustomParams = {}
-): schemas.ZodCustom<T> {
-  return new schemas.ZodCustom({
-    type: "custom",
-    check: "custom",
-    fn: fn ? (fn as any) : () => true,
-    ...util.normalizeCheckParams(_params),
-  }) as schemas.ZodCustom<T>;
+): schemas.ZodCustom<O, I> {
+  return core._custom(fn ?? (() => true), _params, schemas.ZodCustom) as any;
 }
 
 // instanceof
@@ -1162,7 +1157,8 @@ export function refine<T>(fn: (arg: T) => unknown, _params: string | core.$ZodCu
 
 // superRefine
 export function superRefine<T>(
-  fn: (arg: T, payload: schemas.RefinementCtx<T>) => void | Promise<void>
+  fn: (arg: T, payload: schemas.RefinementCtx<T>) => void | Promise<void>,
+  params?: core.$ZodCustomParams
 ): core.$ZodCheck<T> {
   const ch = core.check<T>((payload) => {
     (payload as schemas.RefinementCtx).addIssue = (issue) => {
@@ -1180,60 +1176,6 @@ export function superRefine<T>(
     };
 
     return fn(payload.value, payload as schemas.RefinementCtx<T>);
-  }, {});
+  }, params);
   return ch;
-  // ch["_def"];
-  // const _check = new core.$ZodCheck({
-  //   check: "custom",
-  // });
-  // _check._check = (payload) => {
-  //   (payload as schemas.RefinementCtx).addIssue = (issue) => {
-  //     if (typeof issue === "string") {
-  //       payload.issues.push(core.issue(issue, payload.value, check["_def"]));
-  //     } else {
-  //       // for Zod 3 backwards compatibility
-  //       if ((issue as any).fatal) issue.continue = false;
-  //       issue.code ??= "custom";
-  //       issue.input ??= payload.value;
-  //       issue.def ??= check["_def"];
-  //       issue.continue ??= !def.abort;
-  //       payload.issues.push(core.issue(issue));
-  //     }
-  //   };
-
-  //   return fn(payload.value, payload as schemas.RefinementCtx<any>);
-  // };
-  // return _check;
 }
-
-// ///////////        METHODS       ///////////
-// export function parse<T extends core.$ZodType>(schema: T, data: unknown, ctx?: core.$ParseContext): core.output<T> {
-//   return core.parse(schema, data, ctx);
-// }
-
-// type SafeParseResult<T> =
-//   | { success: true; data: T; error?: never }
-//   | { success: false; data?: never; error: core.$ZodError };
-// export function safeParse<T extends core.$ZodType>(
-//   schema: T,
-//   data: unknown,
-//   ctx?: core.$ParseContext
-// ): SafeParseResult<core.output<T>> {
-//   return core.safeParse(schema, data, ctx);
-// }
-
-// export async function parseAsync<T extends core.$ZodType>(
-//   schema: T,
-//   data: unknown,
-//   ctx?: core.$ParseContext
-// ): Promise<core.output<T>> {
-//   return core.parseAsync(schema, data, ctx);
-// }
-
-// export async function safeParseAsync<T extends core.$ZodType>(
-//   schema: T,
-//   data: unknown,
-//   ctx?: core.$ParseContext
-// ): Promise<SafeParseResult<core.output<T>>> {
-//   return core.safeParseAsync(schema, data, ctx);
-// }

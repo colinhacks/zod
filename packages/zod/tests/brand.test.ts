@@ -1,6 +1,6 @@
 // import type * as core from "@zod/core";
 // import * as util from "@zod/core/util";
-// @ts-ignore TS6133
+
 import { expectTypeOf, test } from "vitest";
 
 import * as z from "zod";

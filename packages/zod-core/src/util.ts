@@ -619,7 +619,7 @@ export type Normalize<T> = T extends Record<any, any>
         [k in Exclude<keyof T, "error" | "message">]: T[k];
       } & {
         error?: Exclude<T["error"], string>;
-        path?: PropertyKey[] | undefined;
+        // path?: PropertyKey[] | undefined;
         message?: string | undefined;
       }
     >

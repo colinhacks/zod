@@ -29,6 +29,7 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends Trait, D = T["_d
       for (const k in _.prototype) {
         Object.defineProperty(inst, k, { value: (_.prototype as any)[k].bind(inst) });
       }
+      (inst as any)._constr = _;
       (inst as any)._def = def;
     }
 
@@ -46,6 +47,7 @@ export interface $ParseContext {
   readonly error?: errors.$ZodErrorMap<never>;
   readonly includeInputInErrors?: boolean;
   readonly skipFast?: boolean;
+  readonly abortEarly?: boolean;
 }
 
 /** @internal */
@@ -62,7 +64,9 @@ export interface $ParsePayload<T = unknown> {
 /////////////////////////////   ZODRESULT   //////////////////////////////
 
 export function $aborted(x: $ParsePayload, startIndex = 0): boolean {
+  // console.log("$aborted", `startIndex: ${startIndex}`);
   for (let i = startIndex; i < x.issues.length; i++) {
+    // console.log("checking issue", i);
     if (x.issues[i].continue !== true) return true;
   }
   return false;
@@ -124,6 +128,7 @@ export type $ZodSchemaTypes =
   | "readonly"
   | "template_literal"
   | "promise"
+  | "function"
   | "custom";
 
 export type $IO<O, I> = { output: O; input: I };
@@ -163,6 +168,9 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   brand<T extends PropertyKey = PropertyKey, Output = this["_output"]>(): this & {
     _output: Output & $brand<T>;
   };
+
+  // assertInput<T>(...args: T extends I ? [] : ["Invalid input type"]): void;
+  // assertOutput<T>(...args: T extends O ? [] : ["Invalid output type"]): void;
 
   /** @deprecated Internal API, use with caution. Not deprecated. */
   _id: string;
@@ -243,6 +251,7 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
   if (inst._traits.has("$ZodCheck")) {
     checks.unshift(inst as any);
   }
+  // console.log("checks", checks);
 
   for (const ch of checks) {
     ch._onattach?.(inst);
@@ -253,106 +262,117 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
       return inst._parse(...args);
     };
   } else {
-    let runChecks = (result: $ParsePayload<any>): util.MaybeAsync<$ParsePayload> => {
-      return result;
-    };
+    // console.log("running checks");
+    // let runChecks = (result: $ParsePayload<any>): util.MaybeAsync<$ParsePayload> => {
+    //   return result;
+    // };
 
-    for (const ch of checks.slice().reverse()) {
-      const _curr = runChecks;
-      runChecks = (result) => {
-        const numIssues = result.issues.length;
-        const _ = ch._check(result as any);
-        if (_ instanceof Promise) {
-          return _.then((_) => {
-            const len = result.issues.length;
-            if (len > numIssues && $aborted(result)) return result;
-            return _curr(result);
-          });
+    // for (const ch of checks.slice().reverse()) {
+    //   const _curr = runChecks;
+    //   runChecks = (result) => {
+    //     const numIssues = result.issues.length;
+    //     const _ = ch._check(result as any);
+    //     if (_ instanceof Promise) {
+    //       return _.then((_) => {
+    //         const len = result.issues.length;
+    //         if (len > numIssues && $aborted(result)) return result;
+    //         return _curr(result);
+    //       });
+    //     }
+
+    //     // if ch has "when", run it
+    //     // if (ch._def.when) {
+    //     // }
+    //     // otherwise, check if parse has aborted and return
+    //     if ($aborted(result)) return result;
+    //     // if not aborted, continue running checks
+    //     return _curr(result);
+    //   };
+    // }
+
+    function runChecks(
+      payload: $ParsePayload,
+      checks: $ZodCheck<never>[],
+      ctx?: $InternalParseContext | undefined
+    ): util.MaybeAsync<$ParsePayload> {
+      // let isAborted = $aborted(payload);
+      // for (const ch of checks) {
+      //   if (ch._when) {
+      //     const shouldRun = ch._when(payload);
+      //     if (!shouldRun) continue;
+      //   } else {
+      //     if (isAborted) {
+      //       continue;
+      //     }
+      //   }
+
+      //   const currLen = payload.issues.length;
+      //   const _ = ch._check(payload as any) as any as $ParsePayload;
+      //   const nextLen = payload.issues.length;
+      //   if (nextLen === currLen) {
+      //     continue;
+      //   }
+
+      //   if (!isAborted) isAborted = $aborted(payload, currLen);
+      // }
+      // return payload;
+      // const result = _result as $ParsePayload;
+      let isAborted = $aborted(payload); // initialize
+      let asyncResult!: Promise<unknown> | undefined; // = Promise.resolve();;
+      for (const ch of checks) {
+        // console.log("running check", ch);
+        if (ch._when) {
+          const shouldRun = ch._when(payload);
+          if (!shouldRun) continue;
+        } else {
+          if (isAborted) {
+            continue;
+            // console.log("aborted...skipping check...");
+          }
         }
 
-        // if ch has "when", run it
-        // if (ch._def.when) {
-        // }
-        // otherwise, check if parse has aborted and return
-        if ($aborted(result)) return result;
-        // if not aborted, continue running checks
-        return _curr(result);
-      };
+        const currLen = payload.issues.length;
+        const _ = ch._check(payload as any) as any as $ParsePayload;
+        if (_ instanceof Promise && ctx?.async === false) {
+          throw new $ZodAsyncError("check");
+        }
+        if (asyncResult || _ instanceof Promise) {
+          asyncResult = asyncResult ?? Promise.resolve();
+          asyncResult.then(async () => {
+            await _;
+            // console.log("async. issues:", payload.issues);
+            const nextLen = payload.issues.length;
+            if (nextLen === currLen) return;
+            if (!isAborted) isAborted = $aborted(payload, currLen);
+          });
+        } else {
+          // console.log("sync. issues:", payload.issues);
+          const nextLen = payload.issues.length;
+          // console.log(`currLen: ${currLen}, nextLen: ${nextLen}`);
+          if (nextLen === currLen) continue;
+          if (!isAborted) isAborted = $aborted(payload, currLen);
+        }
+      }
+
+      if (asyncResult) {
+        return asyncResult.then(() => {
+          return payload;
+        });
+      }
+      return payload;
     }
 
     inst._run = (payload, ctx) => {
-      const _result = inst._parse(payload, ctx);
+      const result = inst._parse(payload, ctx);
 
-      if (!ctx.async) {
-        const result = _result as $ParsePayload;
-        // console.log("sync run");
-        let isAborted = $aborted(result);
-        for (const ch of checks) {
-          // console.log("running check", ch);
-          if (ch._when) {
-            const shouldRun = ch._when(result);
-            if (!shouldRun) continue;
-          } else {
-            if (isAborted) {
-              continue;
-              // console.log("aborted...skipping check...");
-            }
-          }
-
-          // run check
-          const currLen = result.issues.length;
-          const _ = ch._check(result as any) as any as $ParsePayload;
-          if (_ instanceof Promise) {
-            throw new $ZodAsyncError("check");
-          }
-          // console.log("check result", result);
-          const nextLen = result.issues.length;
-          if (nextLen === currLen) {
-            // console.log("no new issues detected");
-            continue;
-          }
-
-          // new issues detected, update isAborted
-          // console.log("detected new issues");
-          if (!isAborted) isAborted = $aborted(result, currLen);
-        }
-        return result;
+      if (result instanceof Promise) {
+        if (ctx.async === false) throw new $ZodAsyncError("schema");
+        return result.then((result) => runChecks(result, checks, ctx));
       }
 
-      console.log("async check run");
-      return Promise.resolve(_result).then(async (result) => {
-        console.log("async run");
-        // if ($aborted(result)) return result;
-        // return runChecks(result);
-        let isAborted = $aborted(result);
-        for (const ch of checks) {
-          console.log("running check", ch);
-          if (ch._when) {
-            const shouldRun = ch._when(result);
-            if (!shouldRun) continue;
-          } else {
-            if (isAborted) {
-              console.log("aborted...skipping check...");
-              continue;
-            }
-          }
+      return runChecks(result, checks, ctx);
 
-          // run check
-          const currLen = result.issues.length;
-          const _ = (await ch._check(result as any)) as any as $ParsePayload;
-          console.log("check result", result);
-          const nextLen = result.issues.length;
-          if (nextLen === currLen) {
-            console.log("no new issues detected");
-            continue;
-          }
-
-          // new issues detected, update isAborted
-          console.log("detected new issues");
-          if (!isAborted) isAborted = $aborted(result, currLen);
-        }
-        return result;
-      });
+      // if (!ctx.async) {
     };
   }
 });

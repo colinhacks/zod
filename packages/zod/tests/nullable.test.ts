@@ -1,7 +1,6 @@
-// @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 function checkErrors(a: z.ZodTypeAny, bad: unknown) {
   let expected: unknown;

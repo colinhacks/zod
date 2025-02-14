@@ -1,7 +1,6 @@
-// @ts-ignore TS6133
 import { test } from "vitest";
 
-import { z } from "../src/index.js";
+import { z } from "zod";
 
 interface Category {
   name: string;

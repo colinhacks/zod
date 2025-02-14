@@ -1,7 +1,6 @@
-// @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 const gtFive = z.bigint().gt(BigInt(5));
 const gteFive = z.bigint().gte(BigInt(5));

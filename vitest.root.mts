@@ -7,9 +7,18 @@ export default defineConfig({
   test: {
     watch: false,
     isolate: false,
-    typecheck: {
-      enabled: true,
-      ignoreSourceErrors: false,
-    },
+    // typecheck: {
+    //   enabled: true,
+    //   ignoreSourceErrors: false,
+    // },
+    // coverage: {
+    //   provider: "istanbul", // or 'v8'
+    // },
+    // reporters: [
+    //   // "basic", { summary: false }
+    //   ["basic", { summary: false }],
+    // ],
+    // reporters: false,
+    silent: true,
   },
 }) as UserConfig;

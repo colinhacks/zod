@@ -1,7 +1,6 @@
-// @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 const minFive = z.string().min(5, "min5");
 const maxFive = z.string().max(5, "max5");

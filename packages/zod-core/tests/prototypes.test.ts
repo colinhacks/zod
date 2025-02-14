@@ -3,7 +3,7 @@ import { expect, test } from "vitest";
 
 declare module "@zod/core" {
   interface $ZodType {
-    fun(): void;
+    fun(): string;
   }
 }
 

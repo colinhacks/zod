@@ -16,7 +16,6 @@ export interface $ZodStringDef extends base.$ZodTypeDef {
   type: "string";
   coerce?: boolean;
   checks: base.$ZodCheck<string>[];
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodString<Input = unknown> extends base.$ZodType<string, Input> {
@@ -33,7 +32,7 @@ export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$con
   inst._pattern = regexes.stringRegex;
 
   inst._parse = (payload, _) => {
-    // if (def.coerce) payload.value = String(payload.value);
+    if (def.coerce) payload.value = String(payload.value);
     if (typeof payload.value === "string") return payload;
     payload.issues.push({
       expected: "string",
@@ -486,16 +485,22 @@ export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$con
   inst._pattern = regexes.numberRegex;
 
   inst._parse = (payload, _ctx) => {
-    // if (def.coerce) payload.value = Number(payload.value);
+    if (def.coerce) payload.value = Number(payload.value);
     const input = payload.value;
     if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) {
       return payload;
     }
+    const note = Number.isNaN(input)
+      ? "NaN is not a valid number"
+      : !Number.isFinite(input)
+        ? "Infinity is not a valid number"
+        : undefined;
     payload.issues.push({
       expected: "number",
       code: "invalid_type",
       input,
       def,
+      note,
     });
     return payload;
   };
@@ -560,7 +565,6 @@ export interface $ZodBooleanDef extends base.$ZodTypeDef {
   type: "boolean";
   coerce?: boolean;
   checks?: base.$ZodCheck<boolean>[];
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodBoolean<T = unknown> extends base.$ZodType<boolean, T> {
@@ -576,7 +580,7 @@ export const $ZodBoolean: base.$constructor<$ZodBoolean> = /*@__PURE__*/ base.$c
     inst._pattern = regexes.booleanRegex;
 
     inst._parse = (payload, _ctx) => {
-      // if (def.coerce) payload.value = Boolean(payload.value);
+      if (def.coerce) payload.value = Boolean(payload.value);
       const input = payload.value;
       if (typeof input === "boolean") return payload;
       payload.issues.push({
@@ -616,7 +620,7 @@ export const $ZodBigInt: base.$constructor<$ZodBigInt> = /*@__PURE__*/ base.$con
   inst._pattern = regexes.bigintRegex;
 
   inst._parse = (payload, _ctx) => {
-    // if (def.coerce) payload.value = BigInt(payload.value);
+    if (def.coerce) payload.value = BigInt(payload.value);
     const { value: input } = payload;
     if (typeof input === "bigint") return payload;
     payload.issues.push({
@@ -657,7 +661,6 @@ export const $ZodBigIntFormat: base.$constructor<$ZodBigIntFormat> = /*@__PURE__
 ////////////////////////////////////////////
 export interface $ZodSymbolDef extends base.$ZodTypeDef {
   type: "symbol";
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodSymbol extends base.$ZodType<symbol, symbol> {
@@ -690,7 +693,6 @@ export const $ZodSymbol: base.$constructor<$ZodSymbol> = /*@__PURE__*/ base.$con
 ////////////////////////////////////////////
 export interface $ZodUndefinedDef extends base.$ZodTypeDef {
   type: "undefined";
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodUndefined extends base.$ZodType<undefined, undefined> {
@@ -731,7 +733,6 @@ export const $ZodUndefined: base.$constructor<$ZodUndefined> = /*@__PURE__*/ bas
 
 export interface $ZodNullDef extends base.$ZodTypeDef {
   type: "null";
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodNull extends base.$ZodType<null, null> {
@@ -769,7 +770,6 @@ export const $ZodNull: base.$constructor<$ZodNull> = /*@__PURE__*/ base.$constru
 
 export interface $ZodAnyDef extends base.$ZodTypeDef {
   type: "any";
-  // error?: errors.$ZodErrorMap<never> | undefined;
 }
 
 export interface $ZodAny extends base.$ZodType<any, any> {
@@ -793,7 +793,6 @@ export const $ZodAny: base.$constructor<$ZodAny> = /*@__PURE__*/ base.$construct
 
 export interface $ZodUnknownDef extends base.$ZodTypeDef {
   type: "unknown";
-  // error?: errors.$ZodErrorMap<never> | undefined;
 }
 
 export interface $ZodUnknown extends base.$ZodType<unknown, unknown> {
@@ -820,7 +819,6 @@ export const $ZodUnknown: base.$constructor<$ZodUnknown> = /*@__PURE__*/ base.$c
 
 export interface $ZodNeverDef extends base.$ZodTypeDef {
   type: "never";
-  // error?: errors.$ZodErrorMap<errors.$ZodIssue> | undefined;
 }
 
 export interface $ZodNever extends base.$ZodType<never, never> {
@@ -852,7 +850,6 @@ export const $ZodNever: base.$constructor<$ZodNever> = /*@__PURE__*/ base.$const
 
 export interface $ZodVoidDef extends base.$ZodTypeDef {
   type: "void";
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodVoid extends base.$ZodType<void, void> {
@@ -897,11 +894,11 @@ export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constru
   base.$ZodType.init(inst, def);
 
   inst._parse = (payload, _ctx) => {
-    // if (def.coerce) {
-    //   try {
-    //     payload.value = new Date(payload.value as string | number | Date);
-    //   } catch (_err: any) {}
-    // }
+    if (def.coerce) {
+      try {
+        payload.value = new Date(payload.value as string | number | Date);
+      } catch (_err: any) {}
+    }
     const input = payload.value;
 
     if (!(input instanceof Date)) {
@@ -933,7 +930,6 @@ export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constru
 export interface $ZodArrayDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
   type: "array";
   element: T;
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodArray<T extends base.$ZodType = base.$ZodType>
@@ -1027,7 +1023,7 @@ function handleObjectResult(result: base.$ParsePayload, final: base.$ParsePayloa
   }
 }
 
-export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$constructor(
+const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$constructor(
   "$ZodObjectLike",
   (inst, def) => {
     base.$ZodType.init(inst, def);
@@ -1055,7 +1051,7 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       return n;
     });
 
-    const fastParseShape = util.cached(() => {
+    const fastpass = util.cached(() => {
       const { keys, optionals, keyMap } = _normalized.value;
       const doc = new Doc(["shape", "payload", "ctx"]);
       const parseStr = (key: string) => {
@@ -1129,7 +1125,7 @@ export const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ b
       if (fast) {
         // always synchronous
         // this overwrites payload.value
-        fastParseShape.value(shape, payload, ctx);
+        fastpass.value(shape, payload, ctx);
       } else {
         payload.value = {};
         for (const key of keys) {
@@ -1244,8 +1240,28 @@ export type RequiredOutProps<T extends $ZodShape> = {
   [k in RequiredOutKeys<T>]: T[k]["_output"];
 };
 export type $InferObjectOutput<T extends $ZodShape, Extra extends Record<string, unknown>> = util.Flatten<
-  OptionalOutProps<T> & RequiredOutProps<T> & Extra
+  ({} extends T ? object : OptionalOutProps<T> & RequiredOutProps<T>) & Extra
 >;
+
+// type Empty = {};
+// type RecordNever = Record<never, unknown>;
+// type KInNever = { [k in never]: unknown };
+// type A = util.Flatten<object & Empty>; // object
+// type B = util.Flatten<object & RecordNever>; // {}
+// type C = util.Flatten<object & KInNever>; // {}
+// type E = keyof {}; // true
+// type F = keyof { [k in never]?: unknown }; // false
+// type G = keyof { [k in never]: unknown }; // false
+// type H = keyof Record<never, unknown>; // false
+// type I = Empty extends RecordNever ? true : false;
+// type J = RecordNever extends Empty ? true : false;
+// type K = KInNever extends Empty ? true : false;
+// type L = Empty extends KInNever ? true : false;
+// type M = KInNever extends RecordNever ? true : false;
+// type N = RecordNever extends KInNever ? true : false;
+// type O = Empty[keyof Empty]; // never
+// type P = RecordNever[keyof RecordNever]; // unknown
+// type Q = KInNever[keyof KInNever]; // unknown
 
 // compute input type
 type OptionalInKeys<T extends $ZodShape> = {
@@ -1261,7 +1277,7 @@ export type RequiredInProps<T extends $ZodShape> = {
   [k in RequiredInKeys<T>]: T[k]["_input"];
 };
 export type $InferObjectInput<T extends $ZodShape, Extra extends Record<string, unknown>> = util.Flatten<
-  OptionalInProps<T> & RequiredInProps<T> & Extra
+  ({} extends T ? object : OptionalInProps<T> & RequiredInProps<T>) & Extra
 >;
 
 export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $ZodObjectLikeDef {
@@ -1524,7 +1540,6 @@ export interface $ZodIntersectionDef extends base.$ZodTypeDef {
   type: "intersection";
   left: base.$ZodType;
   right: base.$ZodType;
-  // error?: errors.$ZodErrorMap<never> | undefined;
 }
 
 export interface $ZodIntersection<A extends base.$ZodType = base.$ZodType, B extends base.$ZodType = base.$ZodType>
@@ -2031,7 +2046,6 @@ export const $ZodMap: base.$constructor<$ZodMap> = /*@__PURE__*/ base.$construct
 export interface $ZodSetDef extends base.$ZodTypeDef {
   type: "set";
   valueType: base.$ZodType;
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodSet<T extends base.$ZodType = base.$ZodType>
@@ -2091,7 +2105,6 @@ export type $InferEnumInput<T extends util.EnumLike> = $InferEnumOutput<T>;
 export interface $ZodEnumDef<T extends util.EnumLike = util.EnumLike> extends base.$ZodTypeDef {
   type: "enum";
   entries: T;
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidValue> | undefined;
 }
 
 export interface $ZodEnum<T extends util.EnumLike = util.EnumLike>
@@ -2147,7 +2160,6 @@ export const $ZodEnum: base.$constructor<$ZodEnum> = /*@__PURE__*/ base.$constru
 export interface $ZodLiteralDef extends base.$ZodTypeDef {
   type: "literal";
   values: util.LiteralArray;
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidValue> | undefined;
 }
 
 export interface $ZodLiteral<T extends util.Literal = util.Literal> extends base.$ZodType<T, T> {
@@ -2197,7 +2209,6 @@ export const $ZodLiteral: base.$constructor<$ZodLiteral> = /*@__PURE__*/ base.$c
 export interface $ZodConstDef extends base.$ZodTypeDef {
   type: "const";
   value: unknown;
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidValue> | undefined;
 }
 
 export interface $ZodConst<T extends util.Literal = util.Literal> extends base.$ZodType<T, T> {
@@ -2240,7 +2251,6 @@ export const $ZodConst: base.$constructor<$ZodConst> = /*@__PURE__*/ base.$const
 
 export interface $ZodFileDef extends base.$ZodTypeDef {
   type: "file";
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodFile extends base.$ZodType<File, File> {
@@ -2312,10 +2322,9 @@ export const $ZodTransform: base.$constructor<$ZodTransform> = /*@__PURE__*/ bas
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodOptionalDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
+export interface $ZodOptionalDef<T extends base.$ZodType> extends base.$ZodTypeDef {
   type: "optional";
   innerType: T;
-  // error?: errors.$ZodErrorMap<never> | undefined;
 }
 
 export interface $ZodOptional<T extends base.$ZodType = base.$ZodType>
@@ -2334,7 +2343,9 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
     inst._qout = "true";
 
     inst._parse = (payload, ctx) => {
-      if (payload.value === undefined) return payload;
+      if (payload.value === undefined) {
+        return payload;
+      }
       return def.innerType._run(payload, ctx);
     };
   }
@@ -2350,7 +2361,6 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
 export interface $ZodNullableDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
   type: "nullable";
   innerType: T;
-  // error?: errors.$ZodErrorMap<never> | undefined;
 }
 
 export interface $ZodNullable<T extends base.$ZodType = base.$ZodType>
@@ -2378,6 +2388,48 @@ export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.
 ////////////////////////////////////////////
 ////////////////////////////////////////////
 //////////                        //////////
+//////////      $ZodDefault       //////////
+//////////                        //////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+export interface $ZodDefaultDef<T extends base.$ZodType> extends base.$ZodTypeDef {
+  type: "default";
+  innerType: T;
+  defaultValue: () => T["_output"];
+}
+
+export interface $ZodDefault<T extends base.$ZodType = base.$ZodType>
+  extends base.$ZodType<
+    // this is pragmatic but not strictly correct
+    util.NoUndefined<T["_output"]>,
+    T["_input"] | undefined
+  > {
+  _def: $ZodDefaultDef<T>;
+  _qin: "true";
+  _isst: never;
+}
+
+export const $ZodDefault: base.$constructor<$ZodDefault> = /*@__PURE__*/ base.$constructor(
+  "$ZodDefault",
+  (inst, def) => {
+    base.$ZodType.init(inst, def);
+    inst._qin = "true"; //def.innerType["_qin"];
+
+    inst._parse = (payload, ctx) => {
+      if (payload.value === undefined) {
+        payload.value = def.defaultValue();
+        /**
+         * $ZodDefault always returns the default value immediately.
+         * It doesn't pass the default value into the validator ("prefault"). There's no reason to pass the default value through validation. The validity of the default is enforced by TypeScript statically. Otherwise, it's the responsibility of the user to ensure the default is valid. In the case of pipes with divergent in/out types, you can specify the default on the `in` schema of your ZodPipe to set a "prefault" for the pipe.   */
+        return payload;
+      }
+      return def.innerType._run(payload, ctx);
+    };
+  }
+);
+////////////////////////////////////////////
+////////////////////////////////////////////
+//////////                        //////////
 //////////      $ZodRequired      //////////
 //////////                        //////////
 ////////////////////////////////////////////
@@ -2385,31 +2437,43 @@ export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.
 export interface $ZodRequiredDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
   type: "required";
   innerType: T;
-  // error?: errors.$ZodErrorMap<never> | undefined;
+  defaultValue?: () => util.NoUndefined<T["_output"]>;
 }
 
 export interface $ZodRequired<T extends base.$ZodType = base.$ZodType>
-  extends base.$ZodType<util.NoUndefined<T["_output"]>, util.NoUndefined<T["_input"]>> {
+  extends base.$ZodType<util.NoUndefined<T["_output"]>, T["_input"]> {
   _def: $ZodRequiredDef<T>;
   _isst: errors.$ZodIssueInvalidType;
+  _qin: T["_qin"];
+}
+
+function handleRequiredResult(payload: base.$ParsePayload, def: $ZodRequiredDef) {
+  if (payload.value === undefined) {
+    if (def.defaultValue) {
+      payload.value = def.defaultValue();
+    } else {
+      payload.issues.push({
+        code: "invalid_type",
+        expected: "required",
+        input: payload.value,
+        def,
+      });
+    }
+  }
+  return payload;
 }
 
 export const $ZodRequired: base.$constructor<$ZodRequired> = /*@__PURE__*/ base.$constructor(
   "$ZodRequired",
   (inst, def) => {
     base.$ZodType.init(inst, def);
-
+    inst._qin = def.innerType._qin;
     inst._parse = (payload, ctx) => {
-      if (payload.value === undefined) {
-        payload.issues.push({
-          expected: "required",
-          code: "invalid_type",
-          input: payload.value,
-          def,
-        });
-        return payload;
+      const result = def.innerType._run(payload, ctx);
+      if (result instanceof Promise) {
+        return result.then((result) => handleRequiredResult(result, def));
       }
-      return def.innerType._run(payload, ctx);
+      return handleRequiredResult(result, def);
     };
   }
 );
@@ -2424,7 +2488,6 @@ export const $ZodRequired: base.$constructor<$ZodRequired> = /*@__PURE__*/ base.
 export interface $ZodSuccessDef extends base.$ZodTypeDef {
   type: "success";
   innerType: base.$ZodType;
-  // error?: errors.$ZodErrorMap<never> | undefined;
 }
 
 export interface $ZodSuccess<T extends base.$ZodType = base.$ZodType> extends base.$ZodType<boolean, T["_input"]> {
@@ -2447,47 +2510,6 @@ export const $ZodSuccess: base.$constructor<$ZodSuccess> = /*@__PURE__*/ base.$c
       }
       payload.value = result.issues.length === 0;
       return payload;
-    };
-  }
-);
-
-////////////////////////////////////////////
-////////////////////////////////////////////
-//////////                        //////////
-//////////      $ZodDefault       //////////
-//////////                        //////////
-////////////////////////////////////////////
-////////////////////////////////////////////
-export interface $ZodDefaultDef extends base.$ZodTypeDef {
-  type: "default";
-  innerType: base.$ZodType;
-  defaultValue: () => this["innerType"]["_input"];
-  // error?: errors.$ZodErrorMap<never> | undefined;
-}
-
-export interface $ZodDefault<T extends base.$ZodType = base.$ZodType>
-  extends base.$ZodType<
-    util.NoUndefined<T["_output"]>,
-    // T["_output"], // it can still return undefined
-    T["_input"] | undefined
-  > {
-  _def: $ZodDefaultDef;
-  _qin: "true";
-  _isst: never;
-}
-
-export const $ZodDefault: base.$constructor<$ZodDefault> = /*@__PURE__*/ base.$constructor(
-  "$ZodDefault",
-  (inst, def) => {
-    base.$ZodType.init(inst, def);
-    inst._qin = "true"; //def.innerType["_qin"];
-
-    inst._parse = (payload, ctx) => {
-      if (payload.value === undefined) {
-        payload.value = def.defaultValue();
-        return payload;
-      }
-      return def.innerType._run(payload, ctx);
     };
   }
 );
@@ -2564,7 +2586,6 @@ export const $ZodCatch: base.$constructor<$ZodCatch> = /*@__PURE__*/ base.$const
 ////////////////////////////////////////////
 export interface $ZodNaNDef extends base.$ZodTypeDef {
   type: "nan";
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 
 export interface $ZodNaN extends base.$ZodType<number, number> {
@@ -2596,16 +2617,16 @@ export const $ZodNaN: base.$constructor<$ZodNaN> = /*@__PURE__*/ base.$construct
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodPipeDef extends base.$ZodTypeDef {
+export interface $ZodPipeDef<A extends base.$ZodType = base.$ZodType, B extends base.$ZodType = base.$ZodType>
+  extends base.$ZodTypeDef {
   type: "pipe";
-  in: base.$ZodType;
-  out: base.$ZodType;
-  // error?: errors.$ZodErrorMap<never> | undefined;
+  in: A;
+  out: B;
 }
 
 export interface $ZodPipe<A extends base.$ZodType = base.$ZodType, B extends base.$ZodType = base.$ZodType>
   extends base.$ZodType<B["_output"], A["_input"]> {
-  _def: $ZodPipeDef;
+  _def: $ZodPipeDef<A, B>;
   _isst: never;
 }
 
@@ -2662,7 +2683,6 @@ function handleReadonlyResult(payload: base.$ParsePayload): base.$ParsePayload {
 export interface $ZodReadonlyDef extends base.$ZodTypeDef {
   type: "readonly";
   innerType: base.$ZodType;
-  // error?: errors.$ZodErrorMap<never> | undefined;
 }
 
 export interface $ZodReadonly<T extends base.$ZodType = base.$ZodType>
@@ -2701,7 +2721,6 @@ export const $ZodReadonly: base.$constructor<$ZodReadonly> = /*@__PURE__*/ base.
 export interface $ZodTemplateLiteralDef extends base.$ZodTypeDef {
   type: "template_literal";
   parts: $TemplateLiteralPart[];
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
 }
 export interface $ZodTemplateLiteral<Template extends string = string> extends base.$ZodType<Template, Template> {
   _pattern: RegExp;

@@ -1,9 +1,9 @@
 import * as core from "@zod/core";
 import { ZodError } from "@zod/core";
 import * as util from "@zod/core/util";
-// @ts-ignore TS6133
+
 import { expect, test } from "vitest";
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 const testTuple = z.tuple([z.string(), z.object({ name: z.literal("Rudy") }), z.array(z.literal("blue"))]);
 const testData = ["asdf", { name: "Rudy" }, ["blue"]];

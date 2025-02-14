@@ -1,11 +1,29 @@
-import * as core from "@zod/core";
 import * as util from "@zod/core/util";
-// @ts-ignore TS6133
-import { expect, test } from "vitest";
-import { z } from "../src/index.js";
+import { expect, expectTypeOf, test } from "vitest";
+import { z } from "zod";
 
 test("basic defaults", () => {
   expect(z.string().default("default").parse(undefined)).toBe("default");
+});
+
+test("default with optional", () => {
+  const schema = z.string().optional().default("default");
+  expect(schema.parse(undefined)).toBe("default");
+  expect(schema.unwrap().parse(undefined)).toBe(undefined);
+});
+
+test("nonoptional with default", () => {
+  const schema = z.string().optional().nonoptional("hi");
+  expectTypeOf<typeof schema._input>().toEqualTypeOf<string | undefined>();
+  expectTypeOf<typeof schema._output>().toEqualTypeOf<string>();
+  expect(schema.parse(undefined)).toBe("hi");
+});
+
+test("nonoptional in object", () => {
+  const schema =z.object({ hi: z.string().optional().nonoptional("hi");})
+  expectTypeOf<typeof schema._input>().toEqualTypeOf<string | undefined>();
+  expectTypeOf<typeof schema._output>().toEqualTypeOf<string>();
+  expect(schema.parse(undefined)).toBe("hi");
 });
 
 test("default with transform", () => {
@@ -13,10 +31,11 @@ test("default with transform", () => {
     .string()
     .transform((val) => val.toUpperCase())
     .default("default");
-  expect(stringWithDefault.parse(undefined)).toBe("DEFAULT");
+  expect(stringWithDefault.parse(undefined)).toBe("default");
   expect(stringWithDefault).toBeInstanceOf(z.ZodDefault);
-  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodTransform);
-  expect(stringWithDefault._def.innerType._def.schema).toBeInstanceOf(z.ZodType);
+  expect(stringWithDefault.unwrap()).toBeInstanceOf(z.ZodPipe);
+  expect(stringWithDefault.unwrap().in).toBeInstanceOf(z.ZodString);
+  expect(stringWithDefault.unwrap().out).toBeInstanceOf(z.ZodTransform);
 
   type inp = z.input<typeof stringWithDefault>;
   util.assertEqual<inp, string | undefined>(true);
@@ -28,8 +47,8 @@ test("default on existing optional", () => {
   const stringWithDefault = z.string().optional().default("asdf");
   expect(stringWithDefault.parse(undefined)).toBe("asdf");
   expect(stringWithDefault).toBeInstanceOf(z.ZodDefault);
-  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodOptional);
-  expect(stringWithDefault._def.innerType._def.innerType).toBeInstanceOf(z.ZodString);
+  expect(stringWithDefault.unwrap()).toBeInstanceOf(z.ZodOptional);
+  expect(stringWithDefault.unwrap().unwrap()).toBeInstanceOf(z.ZodString);
 
   type inp = z.input<typeof stringWithDefault>;
   util.assertEqual<inp, string | undefined>(true);
@@ -52,11 +71,12 @@ test("complex chain example", () => {
     .default("asdf")
     .transform((val) => val.toUpperCase())
     .default("qwer")
-    .removeDefault()
+    .unwrap()
     .optional()
     .default("asdfasdf");
 
-  expect(complex.parse(undefined)).toBe("ASDFASDF");
+  // expect(complex.parse(undefined)).toBe("ASDFASDF");
+  expect(complex.parse(undefined)).toBe("asdfasdf");
 });
 
 test("removeDefault", () => {
@@ -69,13 +89,13 @@ test("removeDefault", () => {
 test("nested", () => {
   const inner = z.string().default("asdf");
   const outer = z.object({ inner }).default({
-    inner: undefined,
+    inner: "qwer",
   });
   type input = z.input<typeof outer>;
   util.assertEqual<input, { inner?: string | undefined } | undefined>(true);
   type out = z.output<typeof outer>;
   util.assertEqual<out, { inner: string }>(true);
-  expect(outer.parse(undefined)).toEqual({ inner: "asdf" });
+  expect(outer.parse(undefined)).toEqual({ inner: "qwer" });
   expect(outer.parse({})).toEqual({ inner: "asdf" });
   expect(outer.parse({ inner: undefined })).toEqual({ inner: "asdf" });
 });
@@ -86,10 +106,6 @@ test("chained defaults", () => {
   expect(result).toEqual("outer");
 });
 
-test("factory", () => {
-  expect(z.ZodDefault.create(z.string(), { default: "asdf" }).parse(undefined)).toEqual("asdf");
-});
-
 test("native enum", () => {
   enum Fruits {
     apple = "apple",
@@ -97,7 +113,7 @@ test("native enum", () => {
   }
 
   const schema = z.object({
-    fruit: z.nativeEnum(Fruits).default(Fruits.apple),
+    fruit: z.enum(Fruits).default(Fruits.apple),
   });
 
   expect(schema.parse({})).toEqual({ fruit: Fruits.apple });

@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 test("test this binding", () => {
   const parse = z.string().parse;

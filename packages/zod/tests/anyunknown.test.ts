@@ -1,5 +1,5 @@
 import * as util from "@zod/core/util";
-// @ts-ignore TS6133
+
 import { expect, test } from "vitest";
 
 import * as z from "zod";

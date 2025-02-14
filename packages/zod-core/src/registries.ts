@@ -111,3 +111,8 @@ export interface GlobalMeta {
 }
 
 export const globalRegistry: $ZodRegistry<GlobalMeta> = /*@__PURE__*/ new $ZodRegistry<GlobalMeta>();
+
+//////////     REGISTRIES     //////////
+export function registry<T = undefined, S extends base.$ZodType = base.$ZodType>(): $ZodRegistry<T, S> {
+  return new $ZodRegistry();
+}

@@ -1,7 +1,7 @@
 import * as util from "@zod/core/util";
-// @ts-ignore TS6133
+
 import { expect, test } from "vitest";
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 const minTwo = z.string().array().min(2);
 const maxTwo = z.string().array().max(2);

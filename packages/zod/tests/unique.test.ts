@@ -1,4 +1,4 @@
-// // @ts-ignore TS6133
+//
 // import { expect, test } from "vitest";
 
 // import * as z from "zod";

@@ -1,8 +1,8 @@
 import * as core from "@zod/core";
 import * as util from "@zod/core/util";
-// @ts-ignore TS6133
+
 import { expect, test } from "vitest";
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 test("refinement", () => {
   const obj1 = z.object({
@@ -73,6 +73,53 @@ test("refinement Promise", async () => {
     password: "password",
     confirmPassword: "password",
   });
+});
+
+test("abort early w/ continue", () => {
+  const schema = z
+    .string()
+    .superRefine((val, ctx) => {
+      if (val.length < 2) {
+        ctx.addIssue({
+          code: "custom",
+          // fatal: true,
+          message: "BAD",
+          continue: false,
+        });
+      }
+    })
+    .refine((_) => false);
+  const data = "";
+  const result = schema.safeParse(data);
+  expect(result.error!.issues.length).toEqual(1);
+});
+
+test("abort early w/ fatal", () => {
+  const schema = z
+    .string()
+    .superRefine((val, ctx) => {
+      if (val.length < 2) {
+        ctx.addIssue({
+          code: "custom",
+          fatal: true, // for Zod 3 compat
+          message: "BAD",
+        });
+      }
+    })
+    .refine((_) => false);
+  const data = "";
+  const result = schema.safeParse(data);
+  expect(result.error!.issues.length).toEqual(1);
+});
+
+test("abort early w/ abort flag", () => {
+  const schema = z
+    .string()
+    .refine((_) => false, { abort: true })
+    .refine((_) => false);
+  const data = "";
+  const result = schema.safeParse(data);
+  expect(result.error!.issues.length).toEqual(1);
 });
 
 test("custom path", async () => {

@@ -1,6 +1,6 @@
 import type * as core from "@zod/core";
 import * as util from "@zod/core/util";
-// @ts-ignore TS6133
+
 import { test } from "vitest";
 
 import * as z from "../src/index.js";
@@ -18,14 +18,14 @@ test("branded types", () => {
   util.assertEqual<MySchema, { name: string } & core.$brand<"superschema">>(true);
 
   const doStuff = (arg: MySchema) => arg;
-  doStuff(mySchema.parse({ name: "hello there" }));
+  doStuff(z.parse(mySchema, { name: "hello there" }));
 
   // inheritance
   const extendedSchema = mySchema.brand<"subschema">();
   type ExtendedSchema = z.infer<typeof extendedSchema>;
-  util.assertEqual<ExtendedSchema, { name: string } & z.BRAND<"superschema"> & z.BRAND<"subschema">>(true);
+  util.assertEqual<ExtendedSchema, { name: string } & z.$brand<"superschema"> & z.$brand<"subschema">>(true);
 
-  doStuff(extendedSchema.parse({ name: "hello again" }));
+  doStuff(z.parse(extendedSchema, { name: "hello again" }));
 
   // number branding
   const numberSchema = z.number().brand<42>();
@@ -38,7 +38,7 @@ test("branded types", () => {
   const symbolBrand = z.number().brand<"sup">().brand<typeof MyBrand>();
   type SymbolBrand = z.infer<typeof symbolBrand>;
   // number & { [z.BRAND]: { sup: true, [MyBrand]: true } }
-  util.assertEqual<SymbolBrand, number & z.BRAND<"sup"> & z.BRAND<MyBrand>>(true);
+  util.assertEqual<SymbolBrand, number & z.$brand<"sup"> & z.$brand<MyBrand>>(true);
 
   // keeping brands out of input types
   const age = z.number().brand<"age">();
@@ -48,7 +48,7 @@ test("branded types", () => {
 
   util.assertEqual<AgeInput, Age>(false);
   util.assertEqual<number, AgeInput>(true);
-  util.assertEqual<number & z.BRAND<"age">, Age>(true);
+  util.assertEqual<number & z.$brand<"age">, Age>(true);
 
   // @ts-expect-error
   doStuff({ name: "hello there!" });

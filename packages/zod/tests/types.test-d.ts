@@ -1,3 +1,3 @@
-import { z } from "../src/index.js";
+import { z } from "zod";
 
 z;

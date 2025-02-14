@@ -1,7 +1,6 @@
-// @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 test("string to number pipe", () => {
   const schema = z.string().transform(Number).pipe(z.number());

@@ -1,4 +1,3 @@
-// @ts-ignore TS6133
 import { test } from "vitest";
 
 import { Mocker } from "./Mocker.js";

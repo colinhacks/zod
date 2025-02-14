@@ -334,7 +334,6 @@ test("z.tuple", () => {
 
   // tuple with rest
   const b = z.tuple([z.string(), z.number(), z.optional(z.string())], z.boolean());
-
   type b = z.output<typeof b>;
 
   expectTypeOf<b>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
@@ -849,8 +848,8 @@ test("z.stringbool", () => {
   expect(z.safeParse(a, false)).toMatchObject({ success: false });
 
   const b = z.stringbool({
-    true: ["y"],
-    false: ["n"],
+    truthy: ["y"],
+    falsy: ["n"],
   });
   expect(z.parse(b, "y")).toEqual(true);
   expect(z.parse(b, "n")).toEqual(false);
@@ -881,3 +880,17 @@ test("z.promise", async () => {
   const b = z.string();
   expect(() => z.parse(b, Promise.resolve("hello"))).toThrow();
 });
+
+// test("type assertions", () => {
+//   const schema = z.pipe(
+//     z.string(),
+//     z.transform((val) => val.length)
+//   );
+//   schema.assertInput<string>();
+//   // @ts-expect-error
+//   schema.assertInput<number>();
+
+//   schema.assertOutput<number>();
+//   // @ts-expect-error
+//   schema.assertOutput<string>();
+// });

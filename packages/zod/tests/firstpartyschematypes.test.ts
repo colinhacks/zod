@@ -1,8 +1,8 @@
 import * as core from "@zod/core";
 import * as util from "@zod/core/util";
-// @ts-ignore TS6133
+
 import { test } from "vitest";
-import type { ZodFirstPartySchemaTypes, ZodFirstPartyTypeKind } from "../src/index.js";
+import type { ZodFirstPartySchemaTypes, ZodFirstPartyTypeKind } from "zod";
 
 test("Identify missing [ZodFirstPartySchemaTypes]", () => {
   type ZodFirstPartySchemaForType<T extends ZodFirstPartyTypeKind> = ZodFirstPartySchemaTypes extends infer Schema

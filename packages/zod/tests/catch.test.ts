@@ -1,9 +1,9 @@
 import * as util from "@zod/core/util";
-// @ts-ignore TS6133
+
 import { expect, test } from "vitest";
 
 import type { $ZodIssue, $ZodRawIssue } from "@zod/core";
-import { z } from "../src/index.js";
+import { z } from "zod";
 
 test("basic catch", () => {
   expect(z.string().catch("default").parse(undefined)).toBe("default");

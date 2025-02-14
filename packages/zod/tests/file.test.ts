@@ -1,8 +1,8 @@
 import { File as WebFile } from "@web-std/file";
-// @ts-ignore TS6133
+
 import { afterEach, beforeEach, expect, test } from "vitest";
 
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 const minCheck = z.file().min(5);
 const maxCheck = z.file().max(8);

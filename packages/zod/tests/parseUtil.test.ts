@@ -1,4 +1,3 @@
-// @ts-ignore TS6133
 import { expect, test } from "vitest";
 
 import { type SyncParseReturnType, ZodFailure, isAborted, isValid } from "@zod/core";

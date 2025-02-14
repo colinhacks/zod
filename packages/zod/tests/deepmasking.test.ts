@@ -1,7 +1,6 @@
-// @ts-ignore TS6133
 import { test } from "vitest";
 
-import * as z from "../src/index.js";
+import * as z from "zod";
 
 test("test", () => {
   z;
