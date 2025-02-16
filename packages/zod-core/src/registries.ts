@@ -1,4 +1,5 @@
 import type * as base from "./base.js";
+import { cached } from "./util.js";
 
 export const OUTPUT = Symbol("ZodOutput");
 export type OUTPUT = typeof OUTPUT;
@@ -17,11 +18,11 @@ export type Replacer<Meta, S extends base.$ZodType> = Meta extends OUTPUT
         : Meta;
 
 export class $ZodRegistry<Meta = unknown, Schema extends base.$ZodType = base.$ZodType> {
-  _meta!: Replacer<Meta, Schema>;
+  _meta!: Meta;
   _schema!: Schema;
-  _metaMap: Map<Schema, this["_meta"]> = new Map();
+  _metaMap: Map<Schema, Replacer<Meta, Schema>> = new Map();
 
-  get entries(): Array<[Schema, this["_meta"]]> {
+  get entries(): Array<[Schema, Replacer<Meta, Schema>]> {
     return Array.from(this._metaMap.entries());
   }
 
@@ -102,15 +103,34 @@ export class $ZodRegistry<Meta = unknown, Schema extends base.$ZodType = base.$Z
 //     return this._metaMap.has(arg);
 //   }
 // }
-
-export interface GlobalMeta {
+export interface JSONSchemaMeta {
   title?: string;
   description?: string;
   examples?: OUTPUT[];
   [k: string]: unknown;
 }
 
-export const globalRegistry: $ZodRegistry<GlobalMeta> = /*@__PURE__*/ new $ZodRegistry<GlobalMeta>();
+export class $ZodJSONSchemaRegistry<
+  Meta extends JSONSchemaMeta = JSONSchemaMeta,
+  Schema extends base.$ZodType = base.$ZodType,
+> extends $ZodRegistry<Meta, Schema> {
+  toJSONSchema(title: string) {
+    let schema!: base.$ZodType;
+    for (const [_, meta] of this.entries) {
+      if (meta.title === title) {
+        if (schema) throw new Error(`Multiple schemas with title ${title}`);
+        schema = _;
+      }
+    }
+    // return toJSONSchema
+    return {};
+  }
+}
+
+export interface GlobalMeta extends JSONSchemaMeta {}
+
+export const globalRegistry: $ZodJSONSchemaRegistry<GlobalMeta> =
+  /*@__PURE__*/ new $ZodJSONSchemaRegistry<GlobalMeta>();
 
 //////////     REGISTRIES     //////////
 export function registry<T = undefined, S extends base.$ZodType = base.$ZodType>(): $ZodRegistry<T, S> {

@@ -159,7 +159,7 @@ export type $ZodFirstPartyTypes =
   | schemas.$ZodTransform
   | schemas.$ZodOptional
   | schemas.$ZodNullable
-  | schemas.$ZodRequired
+  | schemas.$ZodNonOptional
   | schemas.$ZodSuccess
   | schemas.$ZodDefault
   | schemas.$ZodCatch

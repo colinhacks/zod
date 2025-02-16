@@ -1048,6 +1048,7 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
 
     const _normalized = util.cached(() => {
       const n = util.normalizeObjectLikeDef(def);
+      console.log(n);
       return n;
     });
 
@@ -1845,17 +1846,15 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
               result.then((result) => {
                 if (result.issues.length) {
                   payload.issues.push(...base.$prefixIssues(key, result.issues));
-                } else {
-                  payload.value[key] = result.value;
                 }
+                payload.value[key] = result.value;
               })
             );
           } else {
             if (result.issues.length) {
               payload.issues.push(...base.$prefixIssues(key, result.issues));
-            } else {
-              payload.value[key] = result.value;
             }
+            payload.value[key] = result.value;
           }
         }
       }
@@ -2237,6 +2236,7 @@ export const $ZodConst: base.$constructor<$ZodConst> = /*@__PURE__*/ base.$const
   });
 
   inst._parse = (payload, _ctx) => {
+    payload.value = def.value; // always override
     return payload;
   };
 });
@@ -2392,10 +2392,10 @@ export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodDefaultDef<T extends base.$ZodType> extends base.$ZodTypeDef {
+export interface $ZodDefaultDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
   type: "default";
   innerType: T;
-  defaultValue: () => T["_output"];
+  defaultValue: () => util.NoUndefined<T["_output"]>;
 }
 
 export interface $ZodDefault<T extends base.$ZodType = base.$ZodType>
@@ -2407,6 +2407,13 @@ export interface $ZodDefault<T extends base.$ZodType = base.$ZodType>
   _def: $ZodDefaultDef<T>;
   _qin: "true";
   _isst: never;
+}
+
+function handleDefaultResult(payload: base.$ParsePayload, def: $ZodDefaultDef) {
+  if (payload.value === undefined) {
+    payload.value = def.defaultValue();
+  }
+  return payload;
 }
 
 export const $ZodDefault: base.$constructor<$ZodDefault> = /*@__PURE__*/ base.$constructor(
@@ -2423,57 +2430,95 @@ export const $ZodDefault: base.$constructor<$ZodDefault> = /*@__PURE__*/ base.$c
          * It doesn't pass the default value into the validator ("prefault"). There's no reason to pass the default value through validation. The validity of the default is enforced by TypeScript statically. Otherwise, it's the responsibility of the user to ensure the default is valid. In the case of pipes with divergent in/out types, you can specify the default on the `in` schema of your ZodPipe to set a "prefault" for the pipe.   */
         return payload;
       }
-      return def.innerType._run(payload, ctx);
+      const result = def.innerType._run(payload, ctx);
+      if (result instanceof Promise) {
+        return result.then((result) => handleDefaultResult(result, def));
+      }
+      return handleDefaultResult(result, def);
     };
   }
 );
-////////////////////////////////////////////
-////////////////////////////////////////////
-//////////                        //////////
-//////////      $ZodRequired      //////////
-//////////                        //////////
-////////////////////////////////////////////
-////////////////////////////////////////////
-export interface $ZodRequiredDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
-  type: "required";
+
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+//////////                           //////////
+//////////      $ZodNonOptional      //////////
+//////////                           //////////
+///////////////////////////////////////////////
+///////////////////////////////////////////////
+export interface $ZodNonOptionalDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
+  type: "nonoptional";
   innerType: T;
-  defaultValue?: () => util.NoUndefined<T["_output"]>;
 }
 
-export interface $ZodRequired<T extends base.$ZodType = base.$ZodType>
-  extends base.$ZodType<util.NoUndefined<T["_output"]>, T["_input"]> {
-  _def: $ZodRequiredDef<T>;
+export interface $ZodNonOptional<T extends base.$ZodType = base.$ZodType>
+  extends base.$ZodType<util.NoUndefined<T["_output"]>, util.NoUndefined<T["_input"]>> {
+  _def: $ZodNonOptionalDef<T>;
   _isst: errors.$ZodIssueInvalidType;
-  _qin: T["_qin"];
 }
 
-function handleRequiredResult(payload: base.$ParsePayload, def: $ZodRequiredDef) {
+function handleNonOptionalResult(payload: base.$ParsePayload, def: $ZodNonOptionalDef) {
   if (payload.value === undefined) {
-    if (def.defaultValue) {
-      payload.value = def.defaultValue();
-    } else {
-      payload.issues.push({
-        code: "invalid_type",
-        expected: "required",
-        input: payload.value,
-        def,
-      });
-    }
+    payload.issues.push({
+      code: "invalid_type",
+      expected: "nonoptional",
+      input: payload.value,
+      def,
+    });
   }
   return payload;
 }
 
-export const $ZodRequired: base.$constructor<$ZodRequired> = /*@__PURE__*/ base.$constructor(
-  "$ZodRequired",
+export const $ZodNonOptional: base.$constructor<$ZodNonOptional> = /*@__PURE__*/ base.$constructor(
+  "$ZodNonOptional",
+  (inst, def) => {
+    base.$ZodType.init(inst, def);
+    inst._parse = (payload, ctx) => {
+      const result = def.innerType._run(payload, ctx);
+      if (result instanceof Promise) {
+        return result.then((result) => handleNonOptionalResult(result, def));
+      }
+      return handleNonOptionalResult(result, def);
+    };
+  }
+);
+
+////////////////////////////////////////////
+////////////////////////////////////////////
+//////////                        //////////
+//////////      $ZodCoalesce      //////////
+//////////                        //////////
+////////////////////////////////////////////
+////////////////////////////////////////////
+export interface $ZodCoalesceDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
+  type: "coalesce";
+  innerType: T;
+  defaultValue: () => NonNullable<T["_output"]>;
+}
+
+export interface $ZodCoalesce<T extends base.$ZodType = base.$ZodType>
+  extends base.$ZodType<NonNullable<T["_output"]>, T["_input"] | undefined | null> {
+  _def: $ZodCoalesceDef<T>;
+  _isst: errors.$ZodIssueInvalidType;
+  _qin: "true";
+}
+
+function handleCoalesceResult(payload: base.$ParsePayload, def: $ZodCoalesceDef) {
+  payload.value ??= def.defaultValue();
+  return payload;
+}
+
+export const $ZodCoalesce: base.$constructor<$ZodCoalesce> = /*@__PURE__*/ base.$constructor(
+  "$ZodNonOptional",
   (inst, def) => {
     base.$ZodType.init(inst, def);
     inst._qin = def.innerType._qin;
     inst._parse = (payload, ctx) => {
       const result = def.innerType._run(payload, ctx);
       if (result instanceof Promise) {
-        return result.then((result) => handleRequiredResult(result, def));
+        return result.then((result) => handleCoalesceResult(result, def));
       }
-      return handleRequiredResult(result, def);
+      return handleCoalesceResult(result, def);
     };
   }
 );
@@ -2533,7 +2578,8 @@ export interface $ZodCatchDef extends base.$ZodTypeDef {
   catchValue: (ctx: $ZodCatchCtx) => unknown;
 }
 
-export interface $ZodCatch<T extends base.$ZodType = base.$ZodType> extends base.$ZodType<T["_output"], unknown> {
+export interface $ZodCatch<T extends base.$ZodType = base.$ZodType>
+  extends base.$ZodType<T["_output"], util.Loose<T["_input"]>> {
   _def: $ZodCatchDef;
   _qin: T["_qin"];
   _qout: T["_qout"];
@@ -2628,6 +2674,8 @@ export interface $ZodPipe<A extends base.$ZodType = base.$ZodType, B extends bas
   extends base.$ZodType<B["_output"], A["_input"]> {
   _def: $ZodPipeDef<A, B>;
   _isst: never;
+  _qin: A["_qin"];
+  _qout: B["_qout"];
 }
 
 function handlePipeResult(left: base.$ParsePayload, def: $ZodPipeDef, ctx: base.$ParseContext) {
@@ -2637,6 +2685,8 @@ function handlePipeResult(left: base.$ParsePayload, def: $ZodPipeDef, ctx: base.
 
 export const $ZodPipe: base.$constructor<$ZodPipe> = /*@__PURE__*/ base.$constructor("$ZodPipe", (inst, def) => {
   base.$ZodType.init(inst, def);
+  inst._qin = def.in._qin;
+  inst._qout = def.out._qout;
 
   inst._parse = (payload, ctx) => {
     const left = def.in._run(payload, ctx);

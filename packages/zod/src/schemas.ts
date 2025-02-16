@@ -36,13 +36,13 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
 
   // wrappers
   optional(params?: core.$ZodOptionalParams): ZodOptional<this>;
-  nonoptional(
-    def: util.NoUndefined<Output> | (() => util.NoUndefined<Output>),
-    params?: core.$ZodRequiredParams
-  ): ZodRequired<this>;
-  nonoptional(params?: core.$ZodRequiredParams): ZodRequired<this>;
+  nonoptional(params?: core.$ZodNonOptionalParams): ZodNonOptional<this>;
   nullable(params?: core.$ZodNullableParams): ZodNullable<this>;
   nullish(): ZodOptional<ZodNullable<this>>;
+  default(def: util.NoUndefined<Output>, params?: core.$ZodDefaultParams): ZodDefault<this>;
+  default(def: () => util.NoUndefined<Output>, params?: core.$ZodDefaultParams): ZodDefault<this>;
+  coalesce(def: NonNullable<Output> | (() => NonNullable<Output>), params?: core.$ZodCoalesceParams): ZodCoalesce<this>;
+
   array(): ZodArray<this>;
   // promise(): ZodPromise<this>;
   or<T extends core.$ZodType>(option: T): ZodUnion<[this, T]>;
@@ -50,15 +50,23 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   transform<NewOut>(
     transform: (arg: Output) => NewOut | Promise<NewOut>
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
-  default(def: util.NoUndefined<Output>, params?: core.$ZodDefaultParams): ZodDefault<this>;
-  default(def: () => util.NoUndefined<Output>, params?: core.$ZodDefaultParams): ZodDefault<this>;
   catch(def: Output): ZodCatch<this>;
   catch(def: (ctx: core.$ZodCatchCtx) => Output): ZodCatch<this>;
   describe(description: string): this;
   pipe<T extends core.$ZodType>(target: T): ZodPipe<this, T>;
+
   /** Registers schema to z.globalRegistry with the specified metadata */
   meta(): unknown | undefined;
   meta(data: object): this;
+  meta(
+    // registry: R,
+    ...meta: this extends R["_schema"]
+      ? undefined extends R["_meta"]
+        ? [R["_meta"]?]
+        : [R["_meta"]]
+      : ["Incompatible schema"]
+  ): this;
+
   /** @deprecated Try `.parse(undefined)` to determine optionality. */
   isOptional(): boolean;
   /** @deprecated Try `.parse(null)` to determine nullability. */
@@ -69,63 +77,38 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   core.$ZodType.init(inst, def);
 
   inst._def = def;
-  inst.parse = (data, params) => {
-    return parse(inst, data, params);
-  };
-  inst.safeParse = (data, params) => {
-    return safeParse(inst, data, params);
-  };
-  inst.parseAsync = async (data, params) => {
-    return parseAsync(inst, data, params);
-  };
-  inst.safeParseAsync = async (data, params) => {
-    return safeParseAsync(inst, data, params);
-  };
+  inst.parse = (data, params) => parse(inst, data, params);
+  inst.safeParse = (data, params) => safeParse(inst, data, params);
+  inst.parseAsync = async (data, params) => parseAsync(inst, data, params);
+  inst.safeParseAsync = async (data, params) => safeParseAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
-
   inst.refine = (check, message) => inst.check(api.refine(check, message));
   inst.superRefine = (refinement) => inst.check(api.superRefine(refinement));
   inst.overwrite = (fn) => inst.check(api.overwrite(fn));
-  // inst.refineAsync = (check, message) => inst.check(api.refineAsync(check, message));
-
-  // optional
   inst.optional = (params) => api.optional(inst, params);
-  // nullable
   inst.nullable = (params) => api.nullable(inst, params);
-  // nullish
   inst.nullish = () => api.optional(api.nullable(inst));
-  inst.nonoptional = (def, params) => api.nonoptional(inst, params);
-  // array
+  inst.nonoptional = (params) => api.nonoptional(inst, params);
   inst.array = () => api.array(inst);
-  // or
   inst.or = (arg) => api.union([inst, arg]);
-  // and
   inst.and = (arg) => api.intersection(inst, arg);
-  // transform
   inst.transform = (tx) => api.pipe(inst, api.transform(tx)) as never;
-  // default
   inst.default = (def, params) => api._default(inst, def, params);
-  // catch
+  inst.coalesce = (def, params) => api.coalesce(inst, def, params);
   inst.catch = (params) => api.catch(inst, params);
-  // describe
   inst.describe = (desc) => {
     return inst.clone({
       ...inst._def,
       description: desc,
     });
   };
-
-  // pipe
   inst.pipe = (target) => api.pipe(inst, target);
-  // meta
   inst.meta = (...args: any) => {
     if (args.length === 0) return core.globalRegistry.get(inst);
     core.globalRegistry.add(inst, args[0]);
     return inst as any;
   };
-  // isOptional
   inst.isOptional = () => inst.safeParse(undefined).success;
-  // isNullable
   inst.isNullable = () => inst.safeParse(null).success;
   return inst;
 });
@@ -1071,12 +1054,12 @@ export interface ZodObject<
 
   // required
   required(): ZodObject<{
-    [k in keyof Shape]: ZodRequired<Shape[k]>;
+    [k in keyof Shape]: ZodNonOptional<Shape[k]>;
   }>;
   required<M extends util.Exactly<util.Mask<string & keyof Shape>, M>>(
     mask: M
   ): ZodObject<{
-    [k in keyof Shape]: k extends keyof M ? ZodRequired<Shape[k]> : Shape[k];
+    [k in keyof Shape]: k extends keyof M ? ZodNonOptional<Shape[k]> : Shape[k];
   }>;
 }
 
@@ -1105,7 +1088,7 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   inst.pick = (mask) => util.pick(inst, mask);
   inst.omit = (mask) => util.omit(inst, mask);
   inst.partial = (...args: any[]) => util.partialObject(inst, args[0] as object, ZodOptional);
-  inst.required = (...args: any[]) => util.requiredObject(inst, args[0] as object, ZodRequired);
+  inst.required = (...args: any[]) => util.requiredObject(inst, args[0] as object, ZodNonOptional);
 });
 
 /////////////////////////////////////////
@@ -1551,26 +1534,53 @@ export const ZodNullable: core.$constructor<ZodNullable> = /*@__PURE__*/ core.$c
   }
 );
 
-///////////////////////////////////////////
-///////////////////////////////////////////
-//////////                       //////////
-//////////      ZodRequired      //////////
-//////////                       //////////
-//////////////////////////?////////////////
-///////////////////////////////////////////
+//////////////////////////////////////////////
+//////////////////////////////////////////////
+//////////                          //////////
+//////////      ZodNonOptional      //////////
+//////////                          //////////
+//////////////////////////////////////////////
+//////////////////////////////////////////////
 
-export interface ZodRequired<T extends core.$ZodType = core.$ZodType>
-  extends core.$ZodRequired<T>,
+export interface ZodNonOptional<T extends core.$ZodType = core.$ZodType>
+  extends core.$ZodNonOptional<T>,
     ZodType<util.NoUndefined<T["_output"]>, T["_input"]> {
-  _def: core.$ZodRequiredDef<T>;
+  _def: core.$ZodNonOptionalDef<T>;
   _isst: core.$ZodIssueInvalidType;
 
   unwrap(): T;
 }
-export const ZodRequired: core.$constructor<ZodRequired> = /*@__PURE__*/ core.$constructor(
-  "ZodRequired",
+export const ZodNonOptional: core.$constructor<ZodNonOptional> = /*@__PURE__*/ core.$constructor(
+  "ZodNonOptional",
   (inst, def) => {
-    core.$ZodRequired.init(inst, def);
+    core.$ZodNonOptional.init(inst, def);
+    ZodType.init(inst, def);
+
+    inst.unwrap = () => inst._def.innerType;
+  }
+);
+
+///////////////////////////////////////////
+///////////////////////////////////////////
+//////////                       //////////
+//////////      ZodCoalesce      //////////
+//////////                       //////////
+///////////////////////////////////////////
+///////////////////////////////////////////
+
+export interface ZodCoalesce<T extends core.$ZodType = core.$ZodType>
+  extends core.$ZodCoalesce<T>,
+    ZodType<NonNullable<T["_output"]>, T["_input"]> {
+  _def: core.$ZodCoalesceDef<T>;
+  _isst: core.$ZodIssueInvalidType;
+  _qin: T["_qin"];
+
+  unwrap(): T;
+}
+export const ZodCoalesce: core.$constructor<ZodCoalesce> = /*@__PURE__*/ core.$constructor(
+  "ZodCoalesce",
+  (inst, def) => {
+    core.$ZodCoalesce.init(inst, def);
     ZodType.init(inst, def);
 
     inst.unwrap = () => inst._def.innerType;

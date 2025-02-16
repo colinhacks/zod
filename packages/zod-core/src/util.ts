@@ -4,12 +4,12 @@ import type * as errors from "./errors.js";
 import type {
   $ZodInterface,
   $ZodLooseShape,
+  $ZodNonOptional,
+  $ZodNonOptionalDef,
   $ZodObjectLike,
   $ZodObjectLikeDef,
   $ZodOptional,
   $ZodOptionalDef,
-  $ZodRequired,
-  $ZodRequiredDef,
   $ZodShape,
   $ZodStringFormat,
 } from "./schemas.js";
@@ -121,6 +121,7 @@ export type MakePartial<T, K extends keyof T> = Omit<T, K> & InexactPartial<Pick
 export type MakeRequired<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
 export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 export type NoUndefined<T> = T extends undefined ? never : T;
+export type Loose<T> = T | {} | undefined | null;
 export type Mask<Keys extends PropertyKey> = { [K in string & Keys]?: true };
 export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 export type InexactPartial<T> = {
@@ -934,7 +935,7 @@ export function partialObject(
 export function requiredObject(
   schema: $ZodObjectLike,
   mask: object | undefined,
-  Class: new (def: $ZodRequiredDef<any>) => $ZodRequired
+  Class: new (def: $ZodNonOptionalDef<any>) => $ZodNonOptional
 ): any {
   const shape: Writeable<$ZodShape> = { ...schema._def.shape };
 

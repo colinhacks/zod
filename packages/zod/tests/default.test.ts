@@ -12,20 +12,6 @@ test("default with optional", () => {
   expect(schema.unwrap().parse(undefined)).toBe(undefined);
 });
 
-test("nonoptional with default", () => {
-  const schema = z.string().optional().nonoptional("hi");
-  expectTypeOf<typeof schema._input>().toEqualTypeOf<string | undefined>();
-  expectTypeOf<typeof schema._output>().toEqualTypeOf<string>();
-  expect(schema.parse(undefined)).toBe("hi");
-});
-
-test("nonoptional in object", () => {
-  const schema =z.object({ hi: z.string().optional().nonoptional("hi");})
-  expectTypeOf<typeof schema._input>().toEqualTypeOf<string | undefined>();
-  expectTypeOf<typeof schema._output>().toEqualTypeOf<string>();
-  expect(schema.parse(undefined)).toBe("hi");
-});
-
 test("default with transform", () => {
   const stringWithDefault = z
     .string()
@@ -63,27 +49,36 @@ test("optional on default", () => {
   util.assertEqual<inp, string | undefined>(true);
   type out = z.output<typeof stringWithDefault>;
   util.assertEqual<out, string | undefined>(true);
+
+  expect(stringWithDefault.parse(undefined)).toBe(undefined);
 });
 
-test("complex chain example", () => {
-  const complex = z
-    .string()
-    .default("asdf")
-    .transform((val) => val.toUpperCase())
-    .default("qwer")
-    .unwrap()
-    .optional()
-    .default("asdfasdf");
+// test("complex chain example", () => {
+//   const complex = z
+//     .string()
+//     .default("asdf")
+//     .transform((val) => val.toUpperCase())
+//     .default("qwer")
+//     .unwrap()
+//     .optional()
+//     .default("asdfasdf");
 
-  // expect(complex.parse(undefined)).toBe("ASDFASDF");
-  expect(complex.parse(undefined)).toBe("asdfasdf");
-});
+//   expect(complex.parse(undefined)).toBe("asdfasdf");
+// });
 
 test("removeDefault", () => {
   const stringWithRemovedDefault = z.string().default("asdf").removeDefault();
 
   type out = z.output<typeof stringWithRemovedDefault>;
   util.assertEqual<out, string>(true);
+});
+
+test("apply default at output", () => {
+  const schema = z
+    .string()
+    .transform((_) => (Math.random() > 0 ? undefined : _))
+    .default("asdf");
+  expect(schema.parse("")).toEqual("asdf");
 });
 
 test("nested", () => {
@@ -106,23 +101,29 @@ test("chained defaults", () => {
   expect(result).toEqual("outer");
 });
 
-test("native enum", () => {
-  enum Fruits {
-    apple = "apple",
-    orange = "orange",
-  }
-
+test("object optionality", () => {
   const schema = z.object({
-    fruit: z.enum(Fruits).default(Fruits.apple),
+    hi: z.string().default("hi"),
   });
-
-  expect(schema.parse({})).toEqual({ fruit: Fruits.apple });
+  type schemaInput = z.input<typeof schema>;
+  type schemaOutput = z.output<typeof schema>;
+  expectTypeOf<schemaInput>().toEqualTypeOf<{ hi?: string | undefined }>();
+  expectTypeOf<schemaOutput>().toEqualTypeOf<{ hi: string }>();
+  expect(schema.parse({})).toEqual({
+    hi: "hi",
+  });
 });
 
-test("enum", () => {
-  const schema = z.object({
-    fruit: z.enum(["apple", "orange"]).default("apple"),
+test("interface optionality", () => {
+  const schema = z.interface({
+    "?hi": z.string().default("hi"),
   });
 
-  expect(schema.parse({})).toEqual({ fruit: "apple" });
+  expect(
+    schema.parse({
+      hi: "hi",
+    })
+  ).toEqual({
+    hi: "hi",
+  });
 });

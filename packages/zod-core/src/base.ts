@@ -115,7 +115,8 @@ export type $ZodSchemaTypes =
   | "const"
   | "nullable"
   | "optional"
-  | "required"
+  | "nonoptional"
+  | "coalesce"
   | "success"
   | "preprocess"
   | "effect"
@@ -161,8 +162,8 @@ export interface $ZodType<out O = unknown, out I = unknown> {
     registry: R,
     ...meta: this extends R["_schema"]
       ? undefined extends R["_meta"]
-        ? [R["_meta"]?]
-        : [R["_meta"]]
+        ? [$ZodRegistry<R["_meta"], this>["_meta"]?]
+        : [$ZodRegistry<R["_meta"], this>["_meta"]]
       : ["Incompatible schema"]
   ): this;
   brand<T extends PropertyKey = PropertyKey, Output = this["_output"]>(): this & {
@@ -189,15 +190,19 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   /** @deprecated Internal API, use with caution. */
   _parse(payload: $ParsePayload<any>, ctx: $InternalParseContext): util.MaybeAsync<$ParsePayload>;
 
-  /** @deprecated Internal API, use with caution. */
+  /** @deprecated Internal API, use with caution. Stores identifiers for the set of traits implemented by this schema. */
   _traits: Set<string>;
-  /** @deprecated Internal API, use with caution. */
+  /** @deprecated Internal API, use with caution.
+   *
+   * Indicates that a schema output type should be considered optional inside objects.  */
   _qout?: "true" | undefined;
-  /** @deprecated Internal API, use with caution. */
+  /** @deprecated Internal API, use with caution.
+   *
+   * Indicates that a schema input type should be considered optional inside objects. */
   _qin?: "true" | undefined;
-  /** @deprecated Internal API, use with caution. */
+  /** @deprecated Internal API, use with caution. A set of literal discriminators used for the fast path in discriminated unions. */
   _disc?: $DiscriminatorMap;
-  /** @deprecated Internal API, use with caution. */
+  /** @deprecated Internal API, use with caution. The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality inside record schemas. */
   _values?: $PrimitiveSet;
   /** @deprecated Internal API, use with caution. */
   _def: $ZodTypeDef;

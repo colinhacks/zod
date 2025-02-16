@@ -21,7 +21,6 @@ export * as coerce from "./coerce.js";
 export * as iso from "./iso.js";
 export * from "./checks.js";
 
-// type ZodStringParams = util.TypeParams<schemas.ZodString>;
 export function string(checks?: core.$ZodCheck<string>[]): schemas.ZodString;
 export function string(params?: string | core.$ZodStringParams, checks?: core.$ZodCheck<string>[]): schemas.ZodString;
 export function string(...args: any): schemas.ZodString {
@@ -173,7 +172,6 @@ export function base64(...args: any): schemas.ZodBase64 {
 }
 
 // jsonString
-// type ZodJSONStringParams = util.StringFormatParams<schemas.ZodJSONString>;
 export function jsonString(checks?: core.$ZodCheck<string>[]): schemas.ZodJSONString;
 export function jsonString(
   params?: string | core.$ZodJSONStringParams,
@@ -200,7 +198,6 @@ export function jwt(...args: any): schemas.ZodJWT {
 }
 
 // number
-// type ZodNumberParams = util.TypeParams<schemas.ZodNumber>;
 export function number(checks?: core.$ZodCheck<number>[]): schemas.ZodNumber;
 export function number(params?: string | core.$ZodNumberParams, checks?: core.$ZodCheck<number>[]): schemas.ZodNumber;
 export function number(...args: any[]): schemas.ZodNumber {
@@ -210,7 +207,6 @@ export function number(...args: any[]): schemas.ZodNumber {
 // number formats
 
 // int
-// type ZodNumberFormatParams = util.CheckTypeParams<schemas.ZodNumberFormat>;
 export function int(checks?: core.$ZodCheck<number>[]): schemas.ZodNumber;
 export function int(
   params?: string | core.$ZodNumberFormatParams,
@@ -374,7 +370,6 @@ export function array<T extends core.$ZodType>(element: T, params?: core.$ZodArr
 }
 
 // object
-// type ZodObjectParams = util.TypeParams<schemas.ZodObject, "shape">;
 
 export function object<T extends schemas.ZodShape>(
   shape?: T,
@@ -389,7 +384,6 @@ export function object<T extends schemas.ZodShape>(
 }
 
 // strictObject
-// type ZodStrictObjectParams = util.TypeParams<schemas.ZodObject, "shape" | "catchall">;
 export function strictObject<T extends schemas.ZodRawShape>(
   shape: T,
   params?: core.$ZodStrictObjectParams
@@ -404,7 +398,6 @@ export function strictObject<T extends schemas.ZodRawShape>(
 }
 
 // looseObject
-// type ZodLooseObjectParams = util.TypeParams<schemas.ZodObject, "shape" | "catchall">;
 export function looseObject<T extends schemas.ZodRawShape>(
   shape: T,
   params?: core.$ZodLooseObjectParams
@@ -433,7 +426,6 @@ function _interface<T extends core.$ZodLooseShape>(
 export { _interface as interface };
 
 // strictInterface
-// type ZodStrictInterfaceParams = util.TypeParams<schemas.ZodInterface, "shape">;
 export function strictInterface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: core.$ZodStrictInterfaceParams
@@ -546,8 +538,6 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //     checks: [],
 //   }) as any;
 // }
-
-// type ZodObjectLike = schemas.ZodObject | schemas.ZodInterface;
 
 // .keyof
 // export function keyof<T extends ZodObjectLike>(
@@ -710,7 +700,6 @@ export function union<T extends readonly core.$ZodType[]>(
 }
 
 // discriminatedUnion
-// type ZodDiscriminatedUnionParams = util.TypeParams<schemas.ZodDiscriminatedUnion, "options">;
 export function discriminatedUnion<Types extends readonly schemas.ZodHasDiscriminator[]>(
   options: Types,
   params?: core.$ZodDiscriminatedUnionParams
@@ -732,7 +721,6 @@ export function discriminatedUnion(...args: any[]): any {
 }
 
 // intersection
-// type ZodIntersectionParams = util.TypeParams<schemas.ZodIntersection, "left" | "right">;
 export function intersection<T extends core.$ZodType, U extends core.$ZodType>(
   left: T,
   right: U,
@@ -781,7 +769,6 @@ export function tuple(
 }
 
 // record
-// type ZodRecordParams = util.TypeParams<schemas.ZodRecord, "keySchema" | "valueSchema">;
 export function record<Key extends schemas.ZodPropertyKey, Value extends core.$ZodType>(
   keySchema: Key,
   valueSchema: Value,
@@ -796,7 +783,6 @@ export function record<Key extends schemas.ZodPropertyKey, Value extends core.$Z
 }
 
 // map
-// type ZodMapParams = util.TypeParams<schemas.ZodMap, "keyType" | "valueType">;
 export function map<Key extends core.$ZodType, Value extends core.$ZodType>(
   keyType: Key,
   valueType: Value,
@@ -846,7 +832,6 @@ function _enum(values: any, params?: core.$ZodEnumParams) {
 export { _enum as enum };
 
 // nativeEnum
-// type ZodNativeEnumParams = util.TypeParams<schemas.ZodEnum, "entries">;
 /** @deprecated This API has been merged into `z.enum()`. Use `z.enum()` instead.
  *
  * ```ts
@@ -859,7 +844,6 @@ export function nativeEnum<T extends util.EnumLike>(entries: T, params?: core.$Z
 }
 
 // literal
-// type ZodLiteralParams = util.TypeParams<schemas.ZodLiteral, "values">;
 export function literal<const T extends util.Literal | util.Literal[]>(
   literals: T,
   params?: core.$ZodLiteralParams
@@ -881,7 +865,6 @@ export function file(...args: any[]): schemas.ZodFile {
 }
 
 // effect
-// type ZodTransformParams = util.TypeParams<schemas.ZodTransform, "effect">;
 
 // export function transform<O = unknown, I = unknown>(
 //   effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
@@ -999,7 +982,6 @@ export function optional<T extends core.$ZodType>(
 }
 
 // nullable
-// type ZodNullableParams = util.TypeParams<schemas.ZodNullable, "innerType">;
 export function nullable<T extends core.$ZodType>(
   innerType: T,
   params?: core.$ZodNullableParams
@@ -1013,27 +995,16 @@ export function nullable<T extends core.$ZodType>(
 
 export function nonoptional<T extends core.$ZodType>(
   innerType: T,
-  params?: core.$ZodRequiredParams
-): schemas.ZodRequired<T> {
-  return new schemas.ZodRequired({
-    type: "required",
+  params?: core.$ZodNonOptionalParams
+): schemas.ZodNonOptional<T> {
+  return new schemas.ZodNonOptional({
+    type: "nonoptional",
     innerType,
     ...util.normalizeTypeParams(params),
-  }) as schemas.ZodRequired<T>;
-}
-
-// success
-// type ZodSuccessParams = util.TypeParams<schemas.ZodSuccess, "innerType">;
-export function success<T extends core.$ZodType>(innerType: T, params?: core.$ZodSuccessParams): schemas.ZodSuccess<T> {
-  return new schemas.ZodSuccess({
-    type: "success",
-    innerType,
-    ...util.normalizeTypeParams(params),
-  }) as schemas.ZodSuccess<T>;
+  }) as schemas.ZodNonOptional<T>;
 }
 
 // default
-// type ZodDefaultParams = util.TypeParams<schemas.ZodDefault, "innerType">;
 export function _default<T extends core.$ZodType>(
   innerType: T,
   defaultValue: core.output<T> | (() => core.output<T>),
@@ -1048,8 +1019,31 @@ export function _default<T extends core.$ZodType>(
   }) as schemas.ZodDefault<T>;
 }
 
+// default
+export function coalesce<T extends core.$ZodType>(
+  innerType: T,
+  defaultValue: NonNullable<core.output<T>> | (() => NonNullable<core.output<T>>),
+  params?: core.$ZodCoalesceParams
+): schemas.ZodCoalesce<T> {
+  return new schemas.ZodCoalesce({
+    type: "coalesce",
+    innerType,
+    defaultValue: defaultValue instanceof Function ? defaultValue : () => defaultValue,
+    // break: false,
+    ...util.normalizeTypeParams(params),
+  }) as schemas.ZodCoalesce<T>;
+}
+
+// success
+export function success<T extends core.$ZodType>(innerType: T, params?: core.$ZodSuccessParams): schemas.ZodSuccess<T> {
+  return new schemas.ZodSuccess({
+    type: "success",
+    innerType,
+    ...util.normalizeTypeParams(params),
+  }) as schemas.ZodSuccess<T>;
+}
+
 // catch
-// type ZodCatchParams = util.TypeParams<schemas.ZodCatch, "innerType">;
 function _catch<T extends core.$ZodType>(
   innerType: T,
   catchValue: core.output<T> | ((ctx: core.$ZodCatchCtx) => core.output<T>),
@@ -1074,7 +1068,6 @@ export function nan(...args: any[]): schemas.ZodNaN {
 }
 
 // pipe
-// type ZodPipeParams = util.TypeParams<schemas.ZodPipe, "in" | "out">;
 export function pipe<T extends core.$ZodType, U extends core.$ZodType<any, T["_output"]>>(
   in_: T,
   // fn: (arg: core.output<T>) => core.input<U>,
@@ -1090,7 +1083,6 @@ export function pipe<T extends core.$ZodType, U extends core.$ZodType<any, T["_o
 }
 
 // readonly
-// type ZodReadonlyParams = util.TypeParams<schemas.ZodReadonly, "innerType">;
 export function readonly<T extends core.$ZodType>(
   innerType: T,
   params?: core.$ZodReadonlyParams
@@ -1122,8 +1114,6 @@ export function promise<T extends core.$ZodType>(innerType: T, params?: core.$Zo
     ...util.normalizeTypeParams(params),
   }) as schemas.ZodPromise<T>;
 }
-
-// type ZodCustomParams = util.CheckTypeParams<schemas.ZodCustom, "fn">;
 
 export function custom<O = unknown, I = O>(
   fn?: (data: O) => unknown,

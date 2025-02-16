@@ -870,13 +870,13 @@ export function partial(schema: schemas.$ZodObjectLike, mask?: object): schemas.
 export function required<T extends schemas.$ZodObject>(
   schema: T
 ): schemas.$ZodObject<{
-  [k in keyof T["_shape"]]: schemas.$ZodRequired<T["_shape"][k]>;
+  [k in keyof T["_shape"]]: schemas.$ZodNonOptional<T["_shape"][k]>;
 }>;
 export function required<T extends schemas.$ZodObject, M extends util.Exactly<util.Mask<keyof T["_shape"]>, M>>(
   schema: T,
   mask: M
 ): schemas.$ZodObject<{
-  [k in keyof T["_shape"]]: k extends keyof M ? schemas.$ZodRequired<T["_shape"][k]> : T["_shape"][k];
+  [k in keyof T["_shape"]]: k extends keyof M ? schemas.$ZodNonOptional<T["_shape"][k]> : T["_shape"][k];
 }>;
 export function required<T extends schemas.$ZodInterface>(
   schema: T
@@ -891,7 +891,7 @@ export function required(schema: schemas.$ZodObjectLike, mask?: object): schemas
   }
 
   if (schema._def.type === "object") {
-    return util.requiredObject(schema, mask, schemas.$ZodRequired);
+    return util.requiredObject(schema, mask, schemas.$ZodNonOptional);
   }
   throw new Error(`Unexpected input to required(): ${schema._def.type}`);
 }
@@ -1225,21 +1225,6 @@ export function optional<T extends base.$ZodType>(innerType: T, params?: $ZodOpt
   }) as schemas.$ZodOptional<T>;
 }
 
-// default
-export type $ZodDefaultParams = util.TypeParams<schemas.$ZodDefault, "innerType" | "defaultValue">;
-export function _default<T extends base.$ZodType>(
-  innerType: T,
-  defaultValue: base.output<T> | (() => base.output<T>),
-  params?: $ZodDefaultParams
-): schemas.$ZodDefault<T> {
-  return new schemas.$ZodDefault({
-    type: "default",
-    defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as () => base.output<T>,
-    innerType,
-    ...util.normalizeTypeParams(params),
-  }) as any as schemas.$ZodDefault<T>;
-}
-
 // nullable
 export type $ZodNullableParams = util.TypeParams<schemas.$ZodNullable, "innerType">;
 export function nullable<T extends base.$ZodType>(innerType: T, params?: $ZodNullableParams): schemas.$ZodNullable<T> {
@@ -1250,17 +1235,49 @@ export function nullable<T extends base.$ZodType>(innerType: T, params?: $ZodNul
   }) as schemas.$ZodNullable<T>;
 }
 
-// required
-export type $ZodRequiredParams = util.TypeParams<schemas.$ZodRequired, "innerType">;
+// nonoptional
+export type $ZodNonOptionalParams = util.TypeParams<schemas.$ZodNonOptional, "innerType">;
 export function nonoptional<T extends base.$ZodType>(
   innerType: T,
-  params?: $ZodRequiredParams
-): schemas.$ZodRequired<T> {
-  return new schemas.$ZodRequired({
-    type: "required",
+  params?: $ZodNonOptionalParams
+): schemas.$ZodNonOptional<T> {
+  return new schemas.$ZodNonOptional({
+    type: "nonoptional",
     innerType,
     ...util.normalizeTypeParams(params),
-  }) as schemas.$ZodRequired<T>;
+  }) as schemas.$ZodNonOptional<T>;
+}
+
+// default
+export type $ZodDefaultParams = util.TypeParams<schemas.$ZodDefault, "innerType" | "defaultValue">;
+export function _default<T extends base.$ZodType>(
+  innerType: T,
+  defaultValue: util.NoUndefined<base.output<T>> | (() => util.NoUndefined<base.output<T>>),
+  params?: $ZodDefaultParams
+): schemas.$ZodDefault<T> {
+  return new schemas.$ZodDefault({
+    type: "default",
+    defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as () => base.output<T>,
+    innerType,
+    ...util.normalizeTypeParams(params),
+  }) as any as schemas.$ZodDefault<T>;
+}
+
+// coalesce
+export type $ZodCoalesceParams = util.TypeParams<schemas.$ZodCoalesce, "innerType" | "defaultValue">;
+export function coalesce<T extends base.$ZodType>(
+  innerType: T,
+  defaultValue: base.output<T> | (() => base.output<T>),
+  params?: $ZodCoalesceParams
+): schemas.$ZodCoalesce<T> {
+  return new schemas.$ZodCoalesce({
+    type: "coalesce",
+    defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as () => NonNullable<
+      base.output<T>
+    >,
+    innerType,
+    ...util.normalizeTypeParams(params),
+  }) as any as schemas.$ZodCoalesce<T>;
 }
 
 // success
