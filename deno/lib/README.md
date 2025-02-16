@@ -44,7 +44,7 @@
 
 ## Table of contents
 
-> These docs have been translated into [Chinese](./README_ZH.md).
+> These docs have been translated into [Chinese](./README_ZH.md) and [Korean](./README_KO.md).
 
 - [Table of contents](#table-of-contents)
 - [Introduction](#introduction)
@@ -216,6 +216,31 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
+      <a href="https://www.coderabbit.ai/">
+        <picture height="80px">
+          <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/eea24edb-ff20-4532-b57c-e8719f455d6d">
+          <img alt="CodeRabbit logo" height="80px" src="https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74">
+        </picture>
+      </a>
+      <br  />   
+      Cut code review time & bugs in half
+      <br/>
+      <a href="https://www.coderabbit.ai/" style="text-decoration:none;">coderabbit.ai</a>
+      </p>
+      <p></p>
+    </td>
+  </tr>
+</table>
+
+<br/>
+
+<h3 align="center">Gold</h3>
+
+<table align="center" style="justify-content: center;align-items: center;display: flex;">
+  <tr>
+    <td align="center">
+      <p></p>
+      <p>
       <a href="https://www.courier.com/?utm_source=zod&utm_campaign=osssponsors">
         <picture height="62px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/6b09506a-78de-47e8-a8c1-792efe31910a">
@@ -229,8 +254,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <p></p>
       <p>
@@ -265,8 +288,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <p></p>
       <p>
@@ -301,8 +322,6 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       </p>
       <p></p>
     </td>
-  </tr>
-  <tr>
     <td align="center">
       <p></p>
       <p>
@@ -324,10 +343,15 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <br/>
 
-<h3 align="center">Gold</h3>
+<h3 align="center">Silver</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
+    <td align="center">
+      <img src="https://avatars.githubusercontent.com/u/72055470?s=200&v=4" height="50px;" alt="Nitric" />
+      <br />
+      <a style="text-decoration:none;" href="https://nitric.io/" target="_blank">Nitric</a>
+    </td>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/89474619?s=200&v=4" height="50px;" alt="PropelAuth" />
       <br />
@@ -343,12 +367,12 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br />
       <a style="text-decoration:none;" href="https://scalar.com/" target="_blank">Scalar</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/95297378?s=200&v=4" height="50px;" alt="Trigger.dev logo" />
       <br />
       <a style="text-decoration:none;" href="https://trigger.dev" target="_blank">Trigger.dev</a>
     </td>
-    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/125754?s=200&v=4" height="50px;" alt="Transloadit logo" />
       <br />
@@ -365,12 +389,12 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br />
       <a style="text-decoration:none;" href="https://whop.com/" target="_blank">Whop</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/36402888?s=200&v=4" height="50px;" alt="CryptoJobsList logo" />
       <br />
       <a style="text-decoration:none;" href="https://cryptojobslist.com/" target="_blank">CryptoJobsList</a>
     </td>
-    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/70170949?s=200&v=4" height="50px;" alt="Plain logo" />
       <br />
@@ -386,6 +410,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br />
       <a style="text-decoration:none;" href="https://storyblok.com/" target="_blank">Storyblok</a>
     </td>
+    </tr><tr>
     <td align="center">
       <img src="https://avatars.githubusercontent.com/u/16199997?s=200&v=4" height="50px;" alt="Mux logo" />
       <br />
@@ -396,7 +421,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <br/>
 
-<h3 align="center">Silver</h3>
+<h3 align="center">Bronze</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -460,7 +485,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
   </tr>
 </table>
 
-<h3 align="center">Bronze</h3>
+<!-- <h3 align="center">Bronze</h3>
 
 <table align="center" style="justify-content: center;align-items: center;display: flex;">
   <tr>
@@ -487,7 +512,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td>Mohammad-Ali A'râbi</td>
     <td>Supatool</td>
   </tr>
-</table>
+</table> -->
 
 ### Ecosystem
 
@@ -538,7 +563,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-to-json-schema`](https://github.com/StefanTerdell/zod-to-json-schema): Convert your Zod schemas into [JSON Schemas](https://json-schema.org/).
 - [`@anatine/zod-openapi`](https://github.com/anatine/zod-plugins/tree/main/packages/zod-openapi): Converts a Zod schema to an OpenAPI v3.x `SchemaObject`.
 - [`zod-fast-check`](https://github.com/DavidTimms/zod-fast-check): Generate `fast-check` arbitraries from Zod schemas.
-- [`zod-dto`](https://github.com/kbkk/abitia/tree/main/packages/zod-dto): Generate Nest.js DTOs from a Zod schema.
+- [`zod-dto`](https://github.com/kbkk/abitia/tree/master/packages/zod-dto): Generate Nest.js DTOs from a Zod schema.
 - [`fastify-type-provider-zod`](https://github.com/turkerdev/fastify-type-provider-zod): Create Fastify type providers from Zod schemas.
 - [`zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi): Generate full OpenAPI (Swagger) docs from Zod, including schemas, endpoints & parameters.
 - [`nestjs-graphql-zod`](https://github.com/incetarik/nestjs-graphql-zod): Generates NestJS GraphQL model classes from Zod schemas. Provides GraphQL method decorators working with Zod schemas.
@@ -550,7 +575,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 #### X to Zod
 
 - [`ts-to-zod`](https://github.com/fabien0102/ts-to-zod): Convert TypeScript definitions into Zod schemas.
-- [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping/tree/main/packages/zod): Generate Zod from static types & JSON schema.
+- [`@runtyping/zod`](https://github.com/johngeorgewright/runtyping): Generate Zod from static types & JSON schema.
 - [`json-schema-to-zod`](https://github.com/StefanTerdell/json-schema-to-zod): Convert your [JSON Schemas](https://json-schema.org/) into Zod schemas. [Live demo](https://StefanTerdell.github.io/json-schema-to-zod-react/).
 - [`json-to-zod`](https://github.com/rsinohara/json-to-zod): Convert JSON objects into Zod schemas. [Live demo](https://rsinohara.github.io/json-to-zod-react/).
 - [`graphql-codegen-typescript-validation-schema`](https://github.com/Code-Hex/graphql-codegen-typescript-validation-schema): GraphQL Code Generator plugin to generate form validation schema from your GraphQL schema.
