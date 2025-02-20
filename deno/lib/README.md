@@ -36,10 +36,29 @@
 <br/>
 <br/>
 
-<!-- <p><strong>Announcement ✨</strong> Zod has recieved the <a href="https://go.clerk.com/zod-clerk">Clerk</a> OSS Fellowship!<br/>Read the announcement post 👉 <a href="https://go.clerk.com/zod-clerk">clerk.com/blog/zod-fellowship</a></p> -->
+<h3 align="center">Featured sponsor</h3>
 
-[![clerk announcement](https://github.com/colinhacks/zod/assets/3084745/6327cf99-8d82-4b44-a5b1-ba2b5c2ff6ad)](https://go.clerk.com/hqN4rp7)
+<br/>
 
+<div align="center">
+  <a href="https://go.clerk.com/PKHrcwh">
+    <picture width="100%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
+      <img alt="clerk logo" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
+    </picture>
+  </a>
+  <br/>
+  <br/>
+  <p>
+    The most comprehensive User Management Platform
+    <br/>
+    <a style="text-decoration:none;" href="https://go.clerk.com/PKHrcwh" target="_blank">clerk.com</a>
+  </p>
+  <p><small><a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@zod.dev">Reach out</a> if you are interested in featuring here.</small></p> 
+</div>
+
+<br/>
+<br/>
 <br/>
 
 ## Table of contents
@@ -185,28 +204,6 @@ Some other great aspects:
 
 Sponsorship at any level is appreciated and encouraged. If you built a paid product using Zod, consider one of the [corporate tiers](https://github.com/sponsors/colinhacks).
 
-<br/>
-<h3 align="center">Diamond</h3>
-
-<br/>
-
-<div align="center">
-  <a href="https://go.clerk.com/PKHrcwh">
-    <picture width="100%">
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
-      <img alt="clerk logo" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
-    </picture>
-  </a>
-  <br/>
-  <br/>
-  <p>
-    The most comprehensive User Management Platform
-    <br/>
-    <a style="text-decoration:none;" href="https://go.clerk.com/PKHrcwh" target="_blank">clerk.com</a>
-  </p>
-</div>
-
-<br/>
 <br/>
 
 <h3 align="center">Platinum</h3>
