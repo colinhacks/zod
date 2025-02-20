@@ -36,8 +36,9 @@
 <br/>
 <br/>
 
+<table>
+<td>
 <h3 align="center">Featured sponsor</h3>
-
 <div align="center">
   <a href="https://go.clerk.com/PKHrcwh">
     <picture width="80%" >
@@ -48,6 +49,8 @@
   <br/>
   <p><sub>Interested in featuring? <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">Get in touch</a> about featured sponsorship.</sub></p> 
 </div>
+</td>
+</table>
 
 <br/>
 <br/>
