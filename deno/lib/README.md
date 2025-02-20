@@ -40,9 +40,9 @@
 
 <div align="center">
   <a href="https://go.clerk.com/PKHrcwh">
-    <picture width="100%">
+    <picture width="80%" >
       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
-      <img alt="clerk logo" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
+      <img alt="clerk logo" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3" width="80%">
     </picture>
   </a>
   <br/>
