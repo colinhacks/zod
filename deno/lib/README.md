@@ -3,6 +3,7 @@
   <h1 align="center">Zod</h1>
   <p align="center">
   <a href="https://zod.dev">zod.dev</a>
+  <br/>
     TypeScript-first schema validation with static type inference
   </p>
 </p>
