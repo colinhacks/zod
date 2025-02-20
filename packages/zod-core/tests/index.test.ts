@@ -1,4 +1,5 @@
 import * as z from "@zod/core";
+import type * as util from "@zod/core/util";
 import { expect, expectTypeOf, test } from "vitest";
 
 test("z.boolean", () => {
@@ -802,7 +803,7 @@ test("z.lazy", () => {
 test("z.json", () => {
   const a = z.json();
   type a = z.output<typeof a>;
-  expectTypeOf<a>().toEqualTypeOf<z.JSONType>();
+  expectTypeOf<a>().toEqualTypeOf<util.JSONType>();
 
   expect(z.parse(a, "hello")).toEqual("hello");
   expect(z.parse(a, 123)).toEqual(123);

@@ -812,9 +812,9 @@ function _enum<const T extends readonly string[]>(
   values: T,
   params?: core.$ZodEnumParams
 ): schemas.ZodEnum<util.ToEnum<T[number]>>;
-function _enum<T extends util.EnumLike>(entries: T, params?: core.$ZodEnumParams): schemas.ZodEnum<T>;
+function _enum<const T extends util.EnumLike>(entries: T, params?: core.$ZodEnumParams): schemas.ZodEnum<T>;
 function _enum(values: any, params?: core.$ZodEnumParams) {
-  const entries: util.EnumLike = {};
+  const entries: any = {};
   if (Array.isArray(values)) {
     for (const value of values) {
       entries[value] = value;
@@ -1019,20 +1019,20 @@ export function _default<T extends core.$ZodType>(
   }) as schemas.ZodDefault<T>;
 }
 
-// default
-export function coalesce<T extends core.$ZodType>(
-  innerType: T,
-  defaultValue: NonNullable<core.output<T>> | (() => NonNullable<core.output<T>>),
-  params?: core.$ZodCoalesceParams
-): schemas.ZodCoalesce<T> {
-  return new schemas.ZodCoalesce({
-    type: "coalesce",
-    innerType,
-    defaultValue: defaultValue instanceof Function ? defaultValue : () => defaultValue,
-    // break: false,
-    ...util.normalizeTypeParams(params),
-  }) as schemas.ZodCoalesce<T>;
-}
+// coalesce
+// export function coalesce<T extends core.$ZodType>(
+//   innerType: T,
+//   defaultValue: NonNullable<core.output<T>> | (() => NonNullable<core.output<T>>),
+//   params?: core.$ZodCoalesceParams
+// ): schemas.ZodCoalesce<T> {
+//   return new schemas.ZodCoalesce({
+//     type: "coalesce",
+//     innerType,
+//     defaultValue: defaultValue instanceof Function ? defaultValue : () => defaultValue,
+//     // break: false,
+//     ...util.normalizeTypeParams(params),
+//   }) as schemas.ZodCoalesce<T>;
+// }
 
 // success
 export function success<T extends core.$ZodType>(innerType: T, params?: core.$ZodSuccessParams): schemas.ZodSuccess<T> {
@@ -1139,10 +1139,10 @@ export { _instanceof as instanceof };
 // refine
 export function refine<T>(
   fn: (arg: T) => unknown | Promise<unknown>,
-  _params?: string | core.$ZodCustomParams
+  params?: string | core.$ZodRefineParams
 ): core.$ZodCheck<T>;
-export function refine<T>(fn: (arg: T) => unknown, _params: string | core.$ZodCustomParams = {}): core.$ZodCheck<T> {
-  return core.refine<T>(fn, _params);
+export function refine<T>(fn: (arg: T) => unknown, params: string | core.$ZodRefineParams = {}): core.$ZodCheck<T> {
+  return core.refine<T>(fn, params);
 }
 
 // superRefine

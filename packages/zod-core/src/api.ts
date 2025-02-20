@@ -1018,15 +1018,15 @@ export function set<Value extends base.$ZodType>(valueType: Value, params?: $Zod
 export type $ZodEnumParams = util.TypeParams<schemas.$ZodEnum, "entries">;
 function _enum<const T extends string[]>(values: T, params?: $ZodEnumParams): schemas.$ZodEnum<util.ToEnum<T[number]>>;
 function _enum<T extends util.EnumLike>(entries: T, params?: $ZodEnumParams): schemas.$ZodEnum<T>;
-function _enum<T extends util.EnumLike>(values: any, params?: $ZodEnumParams) {
-  const entries: util.EnumLike = {};
-  if (Array.isArray(values)) {
-    for (const value of values) {
-      entries[value] = value;
-    }
-  } else {
-    Object.assign(entries, values);
-  }
+function _enum(values: any, params?: $ZodEnumParams) {
+  const entries: any = Array.isArray(values) ? Object.fromEntries(values.map((v) => [v, v])) : values;
+  // if (Array.isArray(values)) {
+  //   for (const value of values) {
+  //     entries[value] = value;
+  //   }
+  // } else {
+  //   Object.assign(entries, values);
+  // }
   // const entries: util.EnumLike = {};
   // for (const val of values) {
   //   entries[val] = val;
@@ -1036,7 +1036,7 @@ function _enum<T extends util.EnumLike>(values: any, params?: $ZodEnumParams) {
     type: "enum",
     entries,
     ...util.normalizeTypeParams(params),
-  }) as any as schemas.$ZodEnum<util.ToEnum<T[number]>>;
+  }) as any;
 }
 export { _enum as enum };
 
@@ -1116,9 +1116,6 @@ export function stringbool(
   return pipe(parser, boolean());
 }
 
-// json
-export type JSONType = string | number | boolean | null | JSONType[] | { [key: string]: JSONType };
-
 export interface $ZodJSONSchema
   extends schemas.$ZodUnion<
     [
@@ -1130,8 +1127,8 @@ export interface $ZodJSONSchema
       schemas.$ZodRecord<schemas.$ZodString<string>, $ZodJSONSchema>,
     ]
   > {
-  _input: JSONType;
-  _output: JSONType;
+  _input: util.JSONType;
+  _output: util.JSONType;
 }
 
 export function json(): $ZodJSONSchema {
@@ -1264,21 +1261,21 @@ export function _default<T extends base.$ZodType>(
 }
 
 // coalesce
-export type $ZodCoalesceParams = util.TypeParams<schemas.$ZodCoalesce, "innerType" | "defaultValue">;
-export function coalesce<T extends base.$ZodType>(
-  innerType: T,
-  defaultValue: base.output<T> | (() => base.output<T>),
-  params?: $ZodCoalesceParams
-): schemas.$ZodCoalesce<T> {
-  return new schemas.$ZodCoalesce({
-    type: "coalesce",
-    defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as () => NonNullable<
-      base.output<T>
-    >,
-    innerType,
-    ...util.normalizeTypeParams(params),
-  }) as any as schemas.$ZodCoalesce<T>;
-}
+// export type $ZodCoalesceParams = util.TypeParams<schemas.$ZodCoalesce, "innerType" | "defaultValue">;
+// export function coalesce<T extends base.$ZodType>(
+//   innerType: T,
+//   defaultValue: base.output<T> | (() => base.output<T>),
+//   params?: $ZodCoalesceParams
+// ): schemas.$ZodCoalesce<T> {
+//   return new schemas.$ZodCoalesce({
+//     type: "coalesce",
+//     defaultValue: (typeof defaultValue === "function" ? defaultValue : () => defaultValue) as () => NonNullable<
+//       base.output<T>
+//     >,
+//     innerType,
+//     ...util.normalizeTypeParams(params),
+//   }) as any as schemas.$ZodCoalesce<T>;
+// }
 
 // success
 export type $ZodSuccessParams = util.TypeParams<schemas.$ZodSuccess, "innerType">;
@@ -1367,16 +1364,20 @@ export function promise<T extends base.$ZodType>(innerType: T, params?: $ZodProm
 }
 
 //////////    CUSTOM     //////////
-export interface $ZodCustomParams extends util.CheckTypeParams<schemas.$ZodCustom, "fn"> {}
-export interface $ZodCustomParamsWithPath extends $ZodCustomParams {
+export interface $ZodCustomParams extends util.CheckTypeParams<schemas.$ZodCustom, "fn"> {
+  // [k: string]: unknown;
+}
+
+export interface $ZodRefineParams extends $ZodCustomParams {
   path?: PropertyKey[];
+  params?: Record<string, any>;
 }
 
 // export function check<T extends base.$ZodType>(
 //   inst: T,
-//   ...checks: Array<base.$CheckFn<T["_output"]> | base.$ZodCheck<T["_output"]>>
+//   ...checks: Array<base.$ZodCheckFn<T["_output"]> | base.$ZodCheck<T["_output"]>>
 // ): T;
-export function check<O = unknown>(fn: base.$CheckFn<O>, params?: $ZodCustomParams): schemas.$ZodCustom<O> {
+export function check<O = unknown>(fn: base.$ZodCheckFn<O>, params?: $ZodCustomParams): schemas.$ZodCustom<O> {
   // if (typeof schemaOrFn === "function") {
   // const _params = rest[0];
   // const params = util.normalizeCheckParams(_params);
@@ -1401,11 +1402,10 @@ export function check<O = unknown>(fn: base.$CheckFn<O>, params?: $ZodCustomPara
 
 export function _custom<O = unknown, I = O>(
   fn: (data: O) => unknown,
-  _params: string | $ZodCustomParamsWithPath | undefined,
+  _params: string | $ZodRefineParams | undefined,
   Class: util.Constructor<schemas.$ZodCustom, [schemas.$ZodCustomDef]>
 ): schemas.$ZodCustom<O, I> {
   const params = util.normalizeCheckParams(_params);
-  params.path;
 
   return new Class({
     type: "custom",
@@ -1416,24 +1416,28 @@ export function _custom<O = unknown, I = O>(
           const r = fn(input as any);
           if (r instanceof Promise) {
             return r.then((r) => {
-              if (!r) {
-                ctx.issues.push({
-                  input,
-                  code: "custom",
-                  def: params,
-                  path: params.path,
-                });
-              }
+              handleRefineResult(r, ctx, input, params);
+              // if (!r) {
+              //   ctx.issues.push({
+              //     input,
+              //     code: "custom",
+              //     def: params,
+              //     path: params.path,
+              //     params: params.params,
+              //   });
+              // }
             });
           }
-          if (!r) {
-            ctx.issues.push({
-              input,
-              code: "custom",
-              def: params,
-              path: params.path,
-            });
-          }
+          handleRefineResult(r, ctx, input, params);
+          // if (!r) {
+          // ctx.issues.push({
+          //   input,
+          //   code: "custom",
+          //   def: params,
+          //   path: params.path,
+          //   params: params.params,
+          // });
+          // }
           return;
         }
       : () => {},
@@ -1484,10 +1488,9 @@ function handleRefineResult(
   result: unknown,
   final: base.$ParsePayload,
   input: unknown,
-  def: util.Normalize<$ZodCustomParamsWithPath>
+  def: util.Normalize<$ZodRefineParams>
 ): void {
   if (!result) {
-    // check if result is falsy
     final.issues.push(
       issue({
         code: "custom",
@@ -1495,6 +1498,7 @@ function handleRefineResult(
         def, // incorporates params.error into issue reporting
         path: def.path, // incorporates params.error into issue reporting
         continue: !def.abort,
+        params: def.params,
       })
     );
   }
@@ -1502,22 +1506,23 @@ function handleRefineResult(
 
 export function refine<T>(
   fn: (arg: NoInfer<T>) => unknown,
-  _params: string | $ZodCustomParamsWithPath = {}
+  _params: string | $ZodRefineParams = {}
 ): base.$ZodCheck<T> {
-  const params = util.normalizeCheckParams(_params);
-  return {
-    _def: { check: "custom", error: params.error },
-    _check(payload) {
-      const result = fn(payload.value);
-      if (result instanceof Promise) {
-        return result.then((result) => {
-          handleRefineResult(result, payload, payload.value, params);
-        });
-      }
+  return _custom(fn, _params, schemas.$ZodCustom);
+  // const params = util.normalizeCheckParams(_params);
+  // return {
+  //   _def: { check: "custom", error: params.error },
+  //   _check(payload) {
+  //     const result = fn(payload.value);
+  //     if (result instanceof Promise) {
+  //       return result.then((result) => {
+  //         handleRefineResult(result, payload, payload.value, params);
+  //       });
+  //     }
 
-      return handleRefineResult(result, payload, payload.value, params);
-    },
-  };
+  //     return handleRefineResult(result, payload, payload.value, params);
+  //   },
+  // };
 }
 
 // export function mutate<T>()
@@ -1681,11 +1686,12 @@ export function maxLength(
   maximum: number,
   params?: string | $ZodCheckMaxLengthParams
 ): checks.$ZodCheckMaxLength<util.HasLength> {
-  return new checks.$ZodCheckMaxLength({
+  const ch = new checks.$ZodCheckMaxLength({
     check: "max_length",
     ...util.normalizeCheckParams(params),
     maximum,
   });
+  return ch;
 }
 export type $ZodCheckLengthEqualsParams = util.CheckParams<checks.$ZodCheckLengthEquals, "length">;
 export function length(

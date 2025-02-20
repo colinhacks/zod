@@ -1,12 +1,16 @@
 import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
-const HasSize: Record<string, string> = {
-  string: "characters",
-  file: "bytes",
-  array: "items",
-  set: "items",
+const Sizable: Record<string, { dim: string; unit: string }> = {
+  string: { dim: "length", unit: "characters" },
+  file: { dim: "size", unit: "bytes" },
+  array: { dim: "length", unit: "items" },
+  set: { dim: "length", unit: "items" },
 };
+
+function getSizing(origin: string): { dim: string; unit: string } | null {
+  return Sizable[origin] ?? null;
+}
 
 const Nouns: {
   [k in
@@ -41,32 +45,34 @@ const Nouns: {
   jwt: "JWT",
 };
 
-const errorMap: errors.$ZodErrorMap = (issue) => {
+const error: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
     case "invalid_type":
       return `Invalid input: expected ${issue.expected}`;
     // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
     case "invalid_value":
-      if (issue.values.length === 1) return `Invalid input: expected "${String(issue.values[0])}"`;
-      return `Invalid input: expected one of ${util.joinValues(issue.values, ", ")}`;
+      if (issue.values.length === 1) return `Invalid input: expected ${util.stringifyPrimitive(issue.values[0])}`;
+      return `Invalid option: expected one of ${util.joinValues(issue.values, "|")}`;
     case "too_big": {
-      const adj = issue.inclusive ? "less than or equal to" : "less than";
-      if (issue.origin in HasSize)
-        return `Too big: expected ${issue.origin ?? "value"} to have ${adj} ${issue.maximum.toString()} ${HasSize[issue.origin] ?? "elements"}`;
-      return `Too big: expected ${issue.origin ?? "value"} to be ${adj} ${issue.maximum.toString()}1`;
+      const adj = issue.inclusive ? "<=" : "<";
+      const sizing = getSizing(issue.origin);
+      if (sizing)
+        return `Too big: expected ${issue.origin ?? "value"} ${sizing.dim} to be ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
+      return `Too big: expected ${issue.origin ?? "value"} to be ${adj}${issue.maximum.toString()}1`;
     }
     case "too_small": {
-      const adj = issue.inclusive ? "greater than or equal to" : "greater than";
-      if (issue.origin in HasSize) {
-        return `Too small: expected ${issue.origin} to have ${adj} ${issue.minimum.toString()} ${HasSize[issue.origin]}`;
+      const adj = issue.inclusive ? ">=" : ">";
+      const sizing = getSizing(issue.origin);
+      if (sizing) {
+        return `Too small: expected ${issue.origin} ${sizing.dim} to be ${adj}${issue.minimum.toString()} ${sizing.unit}`;
       }
 
-      return `Too small: expected ${issue.origin} to be ${adj} ${issue.minimum.toString()}`;
+      return `Too small: expected ${issue.origin} to be ${adj}${issue.minimum.toString()}`;
     }
     case "not_multiple_of":
       return `Invalid number: must be a multiple of ${issue.divisor}`;
     case "invalid_format": {
-      const _issue = issue as errors.$FirstPartyStringFormats;
+      const _issue = issue as errors.$ZodStringFormatIssues;
       if (_issue.format === "starts_with") return `Invalid string: must start with "${issue}"`;
       if (_issue.format === "ends_with") return `Invalid string: must end with "${_issue.suffix}"`;
       if (_issue.format === "includes") return `Invalid string: must include "${_issue.includes}"`;
@@ -88,4 +94,10 @@ const errorMap: errors.$ZodErrorMap = (issue) => {
   }
 };
 
-export default errorMap;
+export { error };
+
+export default function () {
+  return {
+    localeError: error,
+  };
+}

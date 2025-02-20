@@ -54,3 +54,34 @@ test("invalid_literal should return custom message", () => {
     expect(issue.message).toEqual(`That's not a tuna`);
   }
 });
+
+test("literal default error message", () => {
+  const result = z.literal("Tuna").safeParse("Trout");
+  expect(result.success).toEqual(false);
+  expect(result.error!.issues.length).toEqual(1);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_value",
+          "message": "Invalid input: expected "Tuna"",
+          "path": [],
+          "values": [
+            "Tuna",
+          ],
+        },
+      ],
+      "name": "$ZodError",
+    }
+  `);
+  // expect(result.error!.issues[0].message).toEqual(`Invalid input: expected "Tuna"`);
+});
+
+test("literal bigint default error message", () => {
+  const result = z.literal(BigInt(12)).safeParse(BigInt(13));
+  expect(result.success).toBe(false);
+  if (!result.success) {
+    expect(result.error!.issues.length).toEqual(1);
+    expect(result.error!.issues[0].message).toEqual(`Invalid input: expected 12n`);
+  }
+});

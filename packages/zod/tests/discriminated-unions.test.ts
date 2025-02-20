@@ -4,7 +4,54 @@ import { expect, test } from "vitest";
 
 import * as z from "zod";
 
-test("valid", () => {
+test("_values", () => {
+  expect(z.string()._values).toEqual(undefined);
+  expect(z.enum(["a", "b"])._values).toEqual(new Set(["a", "b"]));
+  expect(z.nativeEnum({ a: "A", b: "B" })._values).toEqual(new Set(["A", "B"]));
+  expect(z.literal("test")._values).toEqual(new Set(["test"]));
+  expect(z.literal(123)._values).toEqual(new Set([123]));
+  expect(z.literal(true)._values).toEqual(new Set([true]));
+  expect(z.literal(BigInt(123))._values).toEqual(new Set([BigInt(123)]));
+  expect(z.literal(Symbol.for("asdf"))._values).toEqual(new Set([Symbol.for("asdf")]));
+  expect(z.undefined()._values).toEqual(new Set([undefined]));
+  expect(z.null()._values).toEqual(new Set([null]));
+
+  const t = z.literal("test");
+  expect(t.optional()._values).toEqual(new Set(["test", undefined]));
+  expect(t.nullable()._values).toEqual(new Set(["test", null]));
+  expect(t.default("test")._values).toEqual(new Set(["test"]));
+  expect(t.catch("test")._values).toEqual(new Set(["test"]));
+
+  const pre = z.preprocess((val) => String(val), z.string()).pipe(z.literal("test"));
+  expect(pre._values).toEqual(undefined);
+
+  const post = z.literal("test").transform((val) => Math.random());
+  expect(post._values).toEqual(new Set(["test"]));
+});
+
+test("valid parse - object", () => {
+  expect(
+    z
+      .discriminatedUnion([
+        z.object({ type: z.literal("a"), a: z.string() }),
+        z.object({ type: z.literal("b"), b: z.string() }),
+      ])
+      .parse({ type: "a", a: "abc" })
+  ).toEqual({ type: "a", a: "abc" });
+});
+
+test("valid parse - interface", () => {
+  expect(
+    z
+      .discriminatedUnion([
+        z.interface({ type: z.literal("a"), a: z.string() }),
+        z.interface({ type: z.literal("b"), b: z.string() }),
+      ])
+      .parse({ type: "a", a: "abc" })
+  ).toEqual({ type: "a", a: "abc" });
+});
+
+test("valid - include discriminator key (deprecated)", () => {
   expect(
     z
       .discriminatedUnion("type", [
@@ -15,8 +62,27 @@ test("valid", () => {
   ).toEqual({ type: "a", a: "abc" });
 });
 
+test("valid - optional discriminator (object)", () => {
+  const schema = z.discriminatedUnion([
+    z.object({ type: z.literal("a").optional(), a: z.string() }),
+    z.object({ type: z.literal("b"), b: z.string() }),
+  ]);
+  expect(schema.parse({ type: "a", a: "abc" })).toEqual({ type: "a", a: "abc" });
+  expect(schema.parse({ a: "abc" })).toEqual({ a: "abc" });
+});
+
+test("valid - optional discriminator (interface)", () => {
+  const schema = z.discriminatedUnion([
+    z.interface({ type: z.literal("a").optional(), a: z.string() }),
+    z.interface({ type: z.literal("b"), b: z.string() }),
+  ]);
+  expect(schema.parse({ type: "a", a: "abc" })).toEqual({ type: "a", a: "abc" });
+  expect(schema.parse({ type: undefined, a: "abc" })).toEqual({ type: undefined, a: "abc" });
+  expect(schema.parse({ type: "b", b: "abc" })).toEqual({ type: "b", b: "abc" });
+});
+
 test("valid - discriminator value of various primitive types", () => {
-  const schema = z.discriminatedUnion("type", [
+  const schema = z.discriminatedUnion([
     z.object({ type: z.literal("1"), val: z.string() }),
     z.object({ type: z.literal(1), val: z.string() }),
     z.object({ type: z.literal(BigInt(1)), val: z.string() }),
@@ -68,7 +134,7 @@ test("valid - discriminator value of various primitive types", () => {
 
 test("invalid - null", () => {
   try {
-    z.discriminatedUnion("type", [
+    z.discriminatedUnion([
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ type: z.literal("b"), b: z.string() }),
     ]).parse(null);
@@ -85,7 +151,7 @@ test("invalid - null", () => {
     //   },
     // ];
     expect(e).toMatchInlineSnapshot(`
-      $ZodError {
+      ZodError {
         "issues": [
           {
             "code": "invalid_type",
@@ -101,24 +167,15 @@ test("invalid - null", () => {
 
 test("invalid discriminator value", () => {
   const result = z
-    .discriminatedUnion("type", [
+    .discriminatedUnion([
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ type: z.literal("b"), b: z.string() }),
     ])
     .safeParse({ type: "x", a: "abc" });
 
-  // [
-  //   {
-  //     code: z.ZodIssueCode.invalid_union_discriminator,
-  //     input: { type: "x", a: "abc" },
-  //     options: ["a", "b"],
-  //     message: "Invalid discriminator value. Expected 'a' | 'b'",
-  //     path: ["type"],
-  //   },
-  // ];
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": $ZodError {
+      "error": ZodError {
         "issues": [
           {
             "code": "invalid_union",
@@ -137,14 +194,13 @@ test("invalid discriminator value", () => {
 test("invalid discriminator value - unionFallback", () => {
   const result = z
     .discriminatedUnion(
-      "type",
       [z.object({ type: z.literal("a"), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })],
       { unionFallback: true }
     )
     .safeParse({ type: "x", a: "abc" });
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": $ZodError {
+      "error": ZodError {
         "issues": [
           {
             "code": "invalid_union",
@@ -152,7 +208,7 @@ test("invalid discriminator value - unionFallback", () => {
               [
                 {
                   "code": "invalid_value",
-                  "message": "Invalid option: expected one of 'a'",
+                  "message": "Invalid input: expected "a"",
                   "path": [
                     "type",
                   ],
@@ -164,7 +220,7 @@ test("invalid discriminator value - unionFallback", () => {
               [
                 {
                   "code": "invalid_value",
-                  "message": "Invalid option: expected one of 'b'",
+                  "message": "Invalid input: expected "b"",
                   "path": [
                     "type",
                   ],
@@ -194,7 +250,7 @@ test("invalid discriminator value - unionFallback", () => {
 
 test("valid discriminator value, invalid data", () => {
   const result = z
-    .discriminatedUnion("type", [
+    .discriminatedUnion([
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ type: z.literal("b"), b: z.string() }),
     ])
@@ -211,7 +267,7 @@ test("valid discriminator value, invalid data", () => {
   // ];
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": $ZodError {
+      "error": ZodError {
         "issues": [
           {
             "code": "invalid_type",
@@ -230,32 +286,29 @@ test("valid discriminator value, invalid data", () => {
 
 test("wrong schema - missing discriminator", () => {
   try {
-    z.discriminatedUnion("type", [
-      z.object({ type: z.literal("a"), a: z.string() }),
-      z.object({ b: z.string() }) as any,
-    ]);
+    z.discriminatedUnion([z.object({ type: z.literal("a"), a: z.string() }), z.object({ b: z.string() }) as any])._disc;
     throw new Error();
   } catch (e: any) {
-    expect(e.message.includes("could not be extracted")).toBe(true);
+    expect(e.message.includes("Invalid discriminated union option")).toBe(true);
   }
 });
 
 test("wrong schema - duplicate discriminator values", () => {
   try {
-    z.discriminatedUnion("type", [
+    z.discriminatedUnion([
       z.object({ type: z.literal("a"), a: z.string() }),
       z.object({ type: z.literal("a"), b: z.string() }),
     ]);
     throw new Error();
   } catch (e: any) {
-    expect(e.message.includes("has duplicate value")).toEqual(true);
+    expect(e.message.includes("Duplicate discriminator value")).toEqual(true);
   }
 });
 
 test("async - valid", async () => {
   expect(
     await z
-      .discriminatedUnion("type", [
+      .discriminatedUnion([
         z.object({
           type: z.literal("a"),
           a: z
@@ -274,7 +327,7 @@ test("async - valid", async () => {
 
 test("async - invalid", async () => {
   // try {
-  const a = z.discriminatedUnion("type", [
+  const a = z.discriminatedUnion([
     z.object({
       type: z.literal("a"),
       a: z
@@ -300,7 +353,7 @@ test("async - invalid", async () => {
   //   },
   // ]);
   expect(result.error).toMatchInlineSnapshot(`
-    $ZodError {
+    ZodError {
       "issues": [
         {
           "code": "invalid_type",
@@ -315,8 +368,8 @@ test("async - invalid", async () => {
   `);
 });
 
-test("valid - literals with .default or .preprocess", () => {
-  const schema = z.discriminatedUnion("type", [
+test("valid - literals with .default or .pipe", () => {
+  const schema = z.discriminatedUnion([
     z.object({
       type: z.literal("foo").default("foo"),
       a: z.string(),
@@ -326,7 +379,7 @@ test("valid - literals with .default or .preprocess", () => {
       method: z.string(),
     }),
     z.object({
-      type: z.preprocess((val) => String(val), z.literal("bar")),
+      type: z.literal("bar").transform((val) => val),
       c: z.string(),
     }),
   ]);

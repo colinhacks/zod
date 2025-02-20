@@ -448,9 +448,8 @@ export const $ZodCheckMaxSize: base.$constructor<$ZodCheckMaxSize> = base.$const
       const size = input.size;
 
       if (size <= def.maximum) return;
-      const origin = input instanceof Set ? "set" : input instanceof File ? "file" : "unknown";
       payload.issues.push({
-        origin,
+        origin: util.getSizableOrigin(input),
         code: "too_big",
         maximum: def.maximum,
         input,
@@ -493,9 +492,8 @@ export const $ZodCheckMinSize: base.$constructor<$ZodCheckMinSize> = base.$const
       const size = input.size;
 
       if (size >= def.minimum) return;
-      const origin = input instanceof Set ? "set" : input instanceof File ? "file" : "unknown";
       payload.issues.push({
-        origin,
+        origin: util.getSizableOrigin(input),
         code: "too_small",
         minimum: def.minimum,
         input,
@@ -537,10 +535,10 @@ export const $ZodCheckSizeEquals: base.$constructor<$ZodCheckSizeEquals> = base.
       const input = payload.value;
       const size = input.size;
       if (size === def.size) return;
-      const origin = input instanceof Set ? "set" : input instanceof File ? "file" : "unknown";
+
       const tooBig = size > def.size;
       payload.issues.push({
-        origin,
+        origin: util.getSizableOrigin(input),
         ...(tooBig ? { code: "too_big", maximum: def.size } : { code: "too_small", minimum: def.size }),
         input: payload.value,
         def,
@@ -583,7 +581,7 @@ export const $ZodCheckMaxLength: base.$constructor<$ZodCheckMaxLength> = base.$c
       const length = input.length;
 
       if (length <= def.maximum) return;
-      const origin = typeof input === "string" ? "string" : Array.isArray(input) ? "array" : "unknown";
+      const origin = util.getLengthableOrigin(input);
       payload.issues.push({
         origin,
         code: "too_big",
@@ -628,7 +626,7 @@ export const $ZodCheckMinLength: base.$constructor<$ZodCheckMinLength> = base.$c
       const length = input.length;
 
       if (length >= def.minimum) return;
-      const origin = input instanceof Set ? "set" : input instanceof File ? "file" : "unknown";
+      const origin = util.getLengthableOrigin(input);
       payload.issues.push({
         origin,
         code: "too_small",
@@ -673,7 +671,7 @@ export const $ZodCheckLengthEquals: base.$constructor<$ZodCheckLengthEquals> = b
       const input = payload.value;
       const length = input.length;
       if (length === def.length) return;
-      const origin = input instanceof Set ? "set" : input instanceof File ? "file" : "unknown";
+      const origin = util.getLengthableOrigin(input);
       const tooBig = length > def.length;
       payload.issues.push({
         origin,
@@ -979,12 +977,12 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> = base.$con
       if (result instanceof Promise) {
         return result.then((result) => {
           if (result.issues.length) {
-            payload.issues.push(...base.$prefixIssues(def.property, result.issues));
+            payload.issues.push(...util.prefixIssues(def.property, result.issues));
           }
         });
       }
       if (result.issues.length) {
-        payload.issues.push(...base.$prefixIssues(def.property, result.issues));
+        payload.issues.push(...util.prefixIssues(def.property, result.issues));
       }
       return;
     };

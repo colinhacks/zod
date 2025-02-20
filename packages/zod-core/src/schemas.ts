@@ -940,7 +940,7 @@ export interface $ZodArray<T extends base.$ZodType = base.$ZodType>
 
 function handleArrayResult(result: base.$ParsePayload<any>, final: base.$ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
-    final.issues.push(...base.$prefixIssues(index, result.issues));
+    final.issues.push(...util.prefixIssues(index, result.issues));
   }
   final.value[index] = result.value;
 }
@@ -1017,7 +1017,7 @@ export interface $ZodObjectLike<out O = object, out I = object> extends base.$Zo
 
 function handleObjectResult(result: base.$ParsePayload, final: base.$ParsePayload, key: PropertyKey) {
   if (result.issues.length) {
-    final.issues.push(...base.$prefixIssues(key, result.issues));
+    final.issues.push(...util.prefixIssues(key, result.issues));
   } else {
     (final.value as any)[key] = result.value;
   }
@@ -1029,27 +1029,30 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
     base.$ZodType.init(inst, def);
     inst._shape = def.shape;
 
+    const _normalized = util.cached(() => {
+      const n = util.normalizeObjectLikeDef(def);
+      return n;
+    });
+
     Object.defineProperty(inst, "_disc", {
       get() {
+        const shape = _normalized.value.shape;
         const discMap: base.$DiscriminatorMap = new Map();
-        for (const key in def.shape) {
-          const field = def.shape[key];
+        let hasDisc = false;
+        for (const key in shape) {
+          const field = shape[key];
           if (field._values || field._disc) {
+            hasDisc = true;
             const o: base.$DiscriminatorMapElement = {
               values: new Set(field._values ?? []),
               maps: field._disc ? [field._disc] : [],
             };
-            discMap.set(key, o)!;
+            discMap.set(key, o);
           }
         }
+        if (!hasDisc) return undefined;
         return discMap;
       },
-    });
-
-    const _normalized = util.cached(() => {
-      const n = util.normalizeObjectLikeDef(def);
-      console.log(n);
-      return n;
     });
 
     const fastpass = util.cached(() => {
@@ -1147,17 +1150,31 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
       }
 
       if (def.catchall) {
+        const catchall = def.catchall;
+        const unrecognized: string[] = [];
         // iterate over input keys
         for (const key of Object.keys(input)) {
           if (keySet.has(key)) continue;
-
-          const r = def.catchall._run({ value: input[key], issues: [], $payload: true }, ctx);
+          if (catchall._def.type === "never") {
+            unrecognized.push(key);
+            continue;
+          }
+          const r = catchall._run({ value: input[key], issues: [], $payload: true }, ctx);
 
           if (r instanceof Promise) {
             proms.push(r.then((r) => handleObjectResult(r, payload, key)));
           } else {
             handleObjectResult(r, payload, key);
           }
+        }
+
+        if (unrecognized.length) {
+          payload.issues.push({
+            code: "unrecognized_keys",
+            keys: unrecognized,
+            input,
+            def,
+          });
         }
       }
 
@@ -1234,10 +1251,10 @@ type OptionalOutKeys<T extends $ZodShape> = {
 type OptionalOutProps<T extends $ZodShape> = {
   [k in OptionalOutKeys<T>]?: T[k]["_output"];
 };
-export type RequiredOutKeys<T extends $ZodShape> = {
+type RequiredOutKeys<T extends $ZodShape> = {
   [k in keyof T]: T[k] extends { _qout: "true" } ? never : k;
 }[keyof T];
-export type RequiredOutProps<T extends $ZodShape> = {
+type RequiredOutProps<T extends $ZodShape> = {
   [k in RequiredOutKeys<T>]: T[k]["_output"];
 };
 export type $InferObjectOutput<T extends $ZodShape, Extra extends Record<string, unknown>> = util.Flatten<
@@ -1271,10 +1288,10 @@ type OptionalInKeys<T extends $ZodShape> = {
 type OptionalInProps<T extends $ZodShape> = {
   [k in OptionalInKeys<T>]?: T[k]["_input"];
 };
-export type RequiredInKeys<T extends $ZodShape> = {
+type RequiredInKeys<T extends $ZodShape> = {
   [k in keyof T]: T[k] extends { _qin: "true" } ? never : k;
 }[keyof T];
-export type RequiredInProps<T extends $ZodShape> = {
+type RequiredInProps<T extends $ZodShape> = {
   [k in RequiredInKeys<T>]: T[k]["_input"];
 };
 export type $InferObjectInput<T extends $ZodShape, Extra extends Record<string, unknown>> = util.Flatten<
@@ -1335,7 +1352,7 @@ function handleUnionResults(
     code: "invalid_union",
     input: final.value,
     def,
-    errors: results.map((result) => result.issues.map((iss) => base.$finalize(iss, ctx))),
+    errors: results.map((result) => result.issues.map((iss) => base.finalizeIssue(iss, ctx))),
   });
 
   return final;
@@ -1407,10 +1424,11 @@ export const $ZodDiscriminatedUnion: base.$constructor<$ZodDiscriminatedUnion> =
   /*@__PURE__*/
   base.$constructor("$ZodDiscriminatedUnion", (inst, def) => {
     $ZodUnion.init(inst, def);
+
     const _super = inst._parse;
     const _disc: base.$DiscriminatorMap = new Map();
     for (const el of def.options) {
-      if (!el._disc) throw new Error(`Invalid discriminated union element: ${el._def.type}`);
+      if (!el._disc) throw new Error(`Invalid discriminated union option at index "${def.options.indexOf(el)}"`);
       for (const [key, o] of el._disc) {
         if (!_disc.has(key))
           _disc.set(key, {
@@ -1418,7 +1436,12 @@ export const $ZodDiscriminatedUnion: base.$constructor<$ZodDiscriminatedUnion> =
             maps: [],
           });
         const _o = _disc.get(key)!;
-        for (const v of o.values) _o.values.add(v);
+        for (const v of o.values) {
+          if (_o.values.has(v)) {
+            throw new Error(`Duplicate discriminator value: ${String(v)}`);
+          }
+          _o.values.add(v);
+        }
         for (const m of o.maps) _o.maps.push(m);
       }
     }
@@ -1469,6 +1492,7 @@ export const $ZodDiscriminatedUnion: base.$constructor<$ZodDiscriminatedUnion> =
         input,
         def,
       });
+      return payload;
     };
   });
 
@@ -1560,7 +1584,7 @@ function handleIntersectionResults(
   if (right.issues.length) {
     result.issues.push(...right.issues);
   }
-  if (base.$aborted(result)) return result;
+  if (util.aborted(result)) return result;
   // const result = base.$result(undefined, [...(parsedLeft.issues ?? []), ...(parsedRight.issues ?? [])], true);
 
   // if (base.$failed(result)) return result;
@@ -1632,7 +1656,7 @@ export interface $ZodTupleDef<
   rest: Rest;
 }
 
-export type ZodTupleItems = readonly base.$ZodType[];
+type ZodTupleItems = readonly base.$ZodType[];
 export type $InferTupleInputType<T extends ZodTupleItems, Rest extends base.$ZodType | null> = [
   ...TupleInputTypeWithOptionals<T>,
   ...(Rest extends base.$ZodType ? Rest["_input"][] : []),
@@ -1667,7 +1691,7 @@ type TupleOutputTypeWithOptionals<T extends ZodTupleItems> = T extends [
 
 function handleTupleResult(result: base.$ParsePayload, final: base.$ParsePayload<any[]>, index: number) {
   if (result.issues.length) {
-    final.issues.push(...base.$prefixIssues(index, result.issues));
+    final.issues.push(...util.prefixIssues(index, result.issues));
   } else {
     final.value[index] = result.value;
   }
@@ -1834,7 +1858,7 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
     const proms: Promise<any>[] = [];
 
     if ("_values" in def.keySchema) {
-      const values = def.keySchema._values;
+      const values = def.keySchema._values!;
       payload.value = {};
 
       for (const key of values) {
@@ -1845,14 +1869,14 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
             proms.push(
               result.then((result) => {
                 if (result.issues.length) {
-                  payload.issues.push(...base.$prefixIssues(key, result.issues));
+                  payload.issues.push(...util.prefixIssues(key, result.issues));
                 }
                 payload.value[key] = result.value;
               })
             );
           } else {
             if (result.issues.length) {
-              payload.issues.push(...base.$prefixIssues(key, result.issues));
+              payload.issues.push(...util.prefixIssues(key, result.issues));
             }
             payload.value[key] = result.value;
           }
@@ -1887,7 +1911,7 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
           payload.issues.push({
             origin: "record",
             code: "invalid_key",
-            issues: keyResult.issues.map((iss) => base.$finalize(iss, ctx)),
+            issues: keyResult.issues.map((iss) => base.finalizeIssue(iss, ctx)),
             input: key,
             path: [key],
             def,
@@ -1901,7 +1925,7 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
           proms.push(
             result.then((result) => {
               if (result.issues.length) {
-                payload.issues.push(...base.$prefixIssues(key, result.issues));
+                payload.issues.push(...util.prefixIssues(key, result.issues));
               } else {
                 payload.value[keyResult.value as PropertyKey] = result.value;
               }
@@ -1909,7 +1933,7 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
           );
         } else {
           if (result.issues.length) {
-            payload.issues.push(...base.$prefixIssues(key, result.issues));
+            payload.issues.push(...util.prefixIssues(key, result.issues));
           } else {
             payload.value[keyResult.value as PropertyKey] = result.value;
           }
@@ -1955,7 +1979,7 @@ function handleMapResult(
   if (keyResult.issues.length) {
     // if (!fail) fail = new base.$ZodFailure();
     if (util.propertyKeyTypes.has(typeof key)) {
-      final.issues.push(...base.$prefixIssues(key as PropertyKey, keyResult.issues));
+      final.issues.push(...util.prefixIssues(key as PropertyKey, keyResult.issues));
       // fail = base.mergeFails(fail, keyResult, key as PropertyKey);
     } else {
       final.issues.push({
@@ -1963,7 +1987,7 @@ function handleMapResult(
         code: "invalid_key",
         input,
         def,
-        issues: keyResult.issues.map((iss) => base.$finalize(iss, ctx)),
+        issues: keyResult.issues.map((iss) => base.finalizeIssue(iss, ctx)),
       });
     }
   }
@@ -1971,7 +1995,7 @@ function handleMapResult(
     // if (!fail) fail = new base.$ZodFailure();
 
     if (util.propertyKeyTypes.has(typeof key)) {
-      final.issues.push(...base.$prefixIssues(key as PropertyKey, valueResult.issues));
+      final.issues.push(...util.prefixIssues(key as PropertyKey, valueResult.issues));
       // fail = base.mergeFails(fail, valueResult, key as PropertyKey);
     } else {
       final.issues.push({
@@ -1980,7 +2004,7 @@ function handleMapResult(
         input,
         def,
         key: key,
-        issues: valueResult.issues.map((iss) => base.$finalize(iss, ctx)),
+        issues: valueResult.issues.map((iss) => base.finalizeIssue(iss, ctx)),
       });
     }
     // return final;
@@ -2123,9 +2147,14 @@ export const $ZodEnum: base.$constructor<$ZodEnum> = /*@__PURE__*/ base.$constru
 
   inst.enum = def.entries;
 
-  const values = Object.values(def.entries);
-
+  const values = Object.entries(def.entries)
+    // remove reverse mappings
+    .filter(([k, _]) => {
+      return typeof def.entries[def.entries[k]] !== "number";
+    })
+    .map(([_, v]) => v);
   inst._values = new Set<util.Primitive>(values);
+
   inst._pattern = new RegExp(
     `^(${values
       .filter((k) => util.propertyKeyTypes.has(typeof k))
@@ -2224,16 +2253,13 @@ export const $ZodConst: base.$constructor<$ZodConst> = /*@__PURE__*/ base.$const
     inst._values = new Set<util.Primitive>(def.value as any);
   }
 
-  Object.defineProperty(inst, "_pattern", {
-    get() {
-      if (util.propertyKeyTypes.has(typeof def.value)) {
-        return new RegExp(
-          `^(${typeof def.value === "string" ? util.escapeRegex(def.value) : (def.value as any).toString()})$`
-        );
-      }
-      throw new Error("Const value cannot be converted to regex");
-    },
-  });
+  if (util.propertyKeyTypes.has(typeof def.value)) {
+    inst._pattern = new RegExp(
+      `^(${typeof def.value === "string" ? util.escapeRegex(def.value) : (def.value as any).toString()})$`
+    );
+  } else {
+    throw new Error("Const value cannot be converted to regex");
+  }
 
   inst._parse = (payload, _ctx) => {
     payload.value = def.value; // always override
@@ -2333,6 +2359,7 @@ export interface $ZodOptional<T extends base.$ZodType = base.$ZodType>
   _qin: "true";
   _qout: "true";
   _isst: never;
+  _values: T["_values"];
 }
 
 export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.$constructor(
@@ -2341,6 +2368,7 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
     base.$ZodType.init(inst, def);
     inst._qin = "true";
     inst._qout = "true";
+    if (def.innerType._values) inst._values = new Set([...def.innerType._values, undefined]);
 
     inst._parse = (payload, ctx) => {
       if (payload.value === undefined) {
@@ -2369,6 +2397,7 @@ export interface $ZodNullable<T extends base.$ZodType = base.$ZodType>
   _qin: T["_qin"];
   _qout: T["_qout"];
   _isst: never;
+  _values: T["_values"];
 }
 
 export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.$constructor(
@@ -2377,6 +2406,7 @@ export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.
     base.$ZodType.init(inst, def);
     inst._qin = def.innerType._qin;
     inst._qout = def.innerType._qout;
+    if (def.innerType._values) inst._values = new Set([...def.innerType._values, null]);
 
     inst._parse = (payload, ctx) => {
       if (payload.value === null) return payload;
@@ -2407,6 +2437,7 @@ export interface $ZodDefault<T extends base.$ZodType = base.$ZodType>
   _def: $ZodDefaultDef<T>;
   _qin: "true";
   _isst: never;
+  _values: T["_values"];
 }
 
 function handleDefaultResult(payload: base.$ParsePayload, def: $ZodDefaultDef) {
@@ -2421,6 +2452,7 @@ export const $ZodDefault: base.$constructor<$ZodDefault> = /*@__PURE__*/ base.$c
   (inst, def) => {
     base.$ZodType.init(inst, def);
     inst._qin = "true"; //def.innerType["_qin"];
+    inst._values = def.innerType._values;
 
     inst._parse = (payload, ctx) => {
       if (payload.value === undefined) {
@@ -2455,6 +2487,7 @@ export interface $ZodNonOptional<T extends base.$ZodType = base.$ZodType>
   extends base.$ZodType<util.NoUndefined<T["_output"]>, util.NoUndefined<T["_input"]>> {
   _def: $ZodNonOptionalDef<T>;
   _isst: errors.$ZodIssueInvalidType;
+  _values: T["_values"];
 }
 
 function handleNonOptionalResult(payload: base.$ParsePayload, def: $ZodNonOptionalDef) {
@@ -2473,6 +2506,7 @@ export const $ZodNonOptional: base.$constructor<$ZodNonOptional> = /*@__PURE__*/
   "$ZodNonOptional",
   (inst, def) => {
     base.$ZodType.init(inst, def);
+    if (def.innerType._values) inst._values = new Set([...def.innerType._values].filter((x) => x !== undefined));
     inst._parse = (payload, ctx) => {
       const result = def.innerType._run(payload, ctx);
       if (result instanceof Promise) {
@@ -2490,38 +2524,38 @@ export const $ZodNonOptional: base.$constructor<$ZodNonOptional> = /*@__PURE__*/
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodCoalesceDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
-  type: "coalesce";
-  innerType: T;
-  defaultValue: () => NonNullable<T["_output"]>;
-}
+// export interface $ZodCoalesceDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
+//   type: "coalesce";
+//   innerType: T;
+//   defaultValue: () => NonNullable<T["_output"]>;
+// }
 
-export interface $ZodCoalesce<T extends base.$ZodType = base.$ZodType>
-  extends base.$ZodType<NonNullable<T["_output"]>, T["_input"] | undefined | null> {
-  _def: $ZodCoalesceDef<T>;
-  _isst: errors.$ZodIssueInvalidType;
-  _qin: "true";
-}
+// export interface $ZodCoalesce<T extends base.$ZodType = base.$ZodType>
+//   extends base.$ZodType<NonNullable<T["_output"]>, T["_input"] | undefined | null> {
+//   _def: $ZodCoalesceDef<T>;
+//   _isst: errors.$ZodIssueInvalidType;
+//   _qin: "true";
+// }
 
-function handleCoalesceResult(payload: base.$ParsePayload, def: $ZodCoalesceDef) {
-  payload.value ??= def.defaultValue();
-  return payload;
-}
+// function handleCoalesceResult(payload: base.$ParsePayload, def: $ZodCoalesceDef) {
+//   payload.value ??= def.defaultValue();
+//   return payload;
+// }
 
-export const $ZodCoalesce: base.$constructor<$ZodCoalesce> = /*@__PURE__*/ base.$constructor(
-  "$ZodNonOptional",
-  (inst, def) => {
-    base.$ZodType.init(inst, def);
-    inst._qin = def.innerType._qin;
-    inst._parse = (payload, ctx) => {
-      const result = def.innerType._run(payload, ctx);
-      if (result instanceof Promise) {
-        return result.then((result) => handleCoalesceResult(result, def));
-      }
-      return handleCoalesceResult(result, def);
-    };
-  }
-);
+// export const $ZodCoalesce: base.$constructor<$ZodCoalesce> = /*@__PURE__*/ base.$constructor(
+//   "$ZodCoalesce",
+//   (inst, def) => {
+//     base.$ZodType.init(inst, def);
+//     inst._qin = "true";
+//     inst._parse = (payload, ctx) => {
+//       const result = def.innerType._run(payload, ctx);
+//       if (result instanceof Promise) {
+//         return result.then((result) => handleCoalesceResult(result, def));
+//       }
+//       return handleCoalesceResult(result, def);
+//     };
+//   }
+// );
 
 /////////////////////////////////////////////
 /////////////////////////////////////////////
@@ -2584,12 +2618,14 @@ export interface $ZodCatch<T extends base.$ZodType = base.$ZodType>
   _qin: T["_qin"];
   _qout: T["_qout"];
   _isst: never;
+  _values: T["_values"];
 }
 
 export const $ZodCatch: base.$constructor<$ZodCatch> = /*@__PURE__*/ base.$constructor("$ZodCatch", (inst, def) => {
   base.$ZodType.init(inst, def);
   inst._qin = def.innerType._qin;
   inst._qout = def.innerType._qout;
+  inst._values = def.innerType._values;
 
   inst._parse = (payload, ctx) => {
     const result = def.innerType._run(payload, ctx);
@@ -2598,7 +2634,7 @@ export const $ZodCatch: base.$constructor<$ZodCatch> = /*@__PURE__*/ base.$const
         if (result.issues.length) {
           payload.value = def.catchValue({
             ...payload,
-            error: { issues: result.issues.map((iss) => base.$finalize(iss, ctx)) },
+            error: { issues: result.issues.map((iss) => base.finalizeIssue(iss, ctx)) },
             input: payload.value,
           });
           payload.issues = [];
@@ -2612,7 +2648,7 @@ export const $ZodCatch: base.$constructor<$ZodCatch> = /*@__PURE__*/ base.$const
     if (result.issues.length) {
       payload.value = def.catchValue({
         ...payload,
-        error: { issues: result.issues.map((iss) => base.$finalize(iss, ctx)) },
+        error: { issues: result.issues.map((iss) => base.finalizeIssue(iss, ctx)) },
         input: payload.value,
       });
       payload.issues = [];
@@ -2674,19 +2710,21 @@ export interface $ZodPipe<A extends base.$ZodType = base.$ZodType, B extends bas
   extends base.$ZodType<B["_output"], A["_input"]> {
   _def: $ZodPipeDef<A, B>;
   _isst: never;
-  _qin: A["_qin"];
-  _qout: B["_qout"];
+  // _qin: A["_qin"];
+  // _qout: A["_qout"];
+  _values: A["_values"];
 }
 
 function handlePipeResult(left: base.$ParsePayload, def: $ZodPipeDef, ctx: base.$ParseContext) {
-  if (base.$aborted(left)) return left;
+  if (util.aborted(left)) return left;
   return def.out._run({ value: left.value, issues: left.issues, $payload: true }, ctx);
 }
 
 export const $ZodPipe: base.$constructor<$ZodPipe> = /*@__PURE__*/ base.$constructor("$ZodPipe", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst._qin = def.in._qin;
-  inst._qout = def.out._qout;
+  // inst._qin = def.in._qin;
+  // inst._qout = def.in._qout;
+  inst._values = def.in._values;
 
   inst._parse = (payload, ctx) => {
     const left = def.in._run(payload, ctx);
@@ -2704,26 +2742,6 @@ export const $ZodPipe: base.$constructor<$ZodPipe> = /*@__PURE__*/ base.$constru
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-type BuiltIn =
-  | (((...args: any[]) => any) | (new (...args: any[]) => any))
-  | { readonly [Symbol.toStringTag]: string }
-  | Date
-  | Error
-  | Generator
-  | Promise<unknown>
-  | RegExp;
-
-export type MakeReadonly<T> = T extends Map<infer K, infer V>
-  ? ReadonlyMap<K, V>
-  : T extends Set<infer V>
-    ? ReadonlySet<V>
-    : T extends [infer Head, ...infer Tail]
-      ? readonly [Head, ...Tail]
-      : T extends Array<infer V>
-        ? ReadonlyArray<V>
-        : T extends BuiltIn
-          ? T
-          : Readonly<T>;
 
 function handleReadonlyResult(payload: base.$ParsePayload): base.$ParsePayload {
   payload.value = Object.freeze(payload.value);
@@ -2736,7 +2754,7 @@ export interface $ZodReadonlyDef extends base.$ZodTypeDef {
 }
 
 export interface $ZodReadonly<T extends base.$ZodType = base.$ZodType>
-  extends base.$ZodType<MakeReadonly<T["_output"]>, MakeReadonly<T["_input"]>> {
+  extends base.$ZodType<util.MakeReadonly<T["_output"]>, util.MakeReadonly<T["_input"]>> {
   _def: $ZodReadonlyDef;
   _qin: T["_qin"];
   _qout: T["_qout"];

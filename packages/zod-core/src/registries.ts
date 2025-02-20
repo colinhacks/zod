@@ -1,50 +1,45 @@
 import type * as base from "./base.js";
-import { cached } from "./util.js";
 
 export const OUTPUT = Symbol("ZodOutput");
 export type OUTPUT = typeof OUTPUT;
 export const INPUT = Symbol("ZodInput");
 export type INPUT = typeof INPUT;
 
-export type Replacer<Meta, S extends base.$ZodType> = Meta extends OUTPUT
+export type $replace<Meta, S extends base.$ZodType> = Meta extends OUTPUT
   ? base.output<S>
   : Meta extends INPUT
     ? base.input<S>
     : Meta extends (infer M)[]
-      ? Replacer<M, S>[]
+      ? $replace<M, S>[]
       : // handle objecs
         Meta extends object
-        ? { [K in keyof Meta]: Replacer<Meta[K], S> }
+        ? { [K in keyof Meta]: $replace<Meta[K], S> }
         : Meta;
 
 export class $ZodRegistry<Meta = unknown, Schema extends base.$ZodType = base.$ZodType> {
   _meta!: Meta;
   _schema!: Schema;
-  _metaMap: Map<Schema, Replacer<Meta, Schema>> = new Map();
-
-  get entries(): Array<[Schema, Replacer<Meta, Schema>]> {
-    return Array.from(this._metaMap.entries());
-  }
+  _map: WeakMap<Schema, $replace<Meta, Schema>> = new WeakMap();
 
   add<S extends Schema>(
     schema: S,
-    ...meta: undefined extends Meta ? [Replacer<Meta, S>?] : [Replacer<Meta, S>]
+    ...meta: undefined extends Meta ? [$replace<Meta, S>?] : [$replace<Meta, S>]
   ): $ZodRegistry<Meta, Schema> {
-    this._metaMap.set(schema, (meta as any)[0]!);
+    this._map.set(schema, (meta as any)[0]!);
     return this as any;
   }
 
   remove(schema: Schema): this {
-    this._metaMap.delete(schema);
+    this._map.delete(schema);
     return this;
   }
 
-  get<S extends Schema>(schema: S): Replacer<Meta, S> | undefined {
-    return this._metaMap.get(schema) as any;
+  get<S extends Schema>(schema: S): $replace<Meta, S> | undefined {
+    return this._map.get(schema) as any;
   }
 
   has(schema: Schema): boolean {
-    return this._metaMap.has(schema);
+    return this._map.has(schema);
   }
 }
 
@@ -58,19 +53,19 @@ export class $ZodRegistry<Meta = unknown, Schema extends base.$ZodType = base.$Z
 //   get items(): Items {
 //     // return object with names as keys and meta objects as values
 //     const obj: any = {};
-//     for (const [k, v] of this._metaMap) {
+//     for (const [k, v] of this._map) {
 //       obj[v.name] = v;
 //     }
 //     return obj;
 //   }
-//   override _metaMap: Map<Schema, Replacer<Meta, Schema>> = new Map();
+//   override _map: Map<Schema, Replacer<Meta, Schema>> = new Map();
 //   _nameMap: Map<string, Schema> = new Map();
 
 //   override add<S extends Schema, const M extends Replacer<Meta, S>>(
 //     schema: S,
 //     meta: M
 //   ): $ZodNamedRegistry<Meta, S, Prettify<Items & { [k in M["name"]]: Writable<M> }>> {
-//     this._metaMap.set(schema, meta);
+//     this._map.set(schema, meta);
 //     this._nameMap.set(meta.name, schema);
 //     return this as any;
 //   }
@@ -80,8 +75,8 @@ export class $ZodRegistry<Meta = unknown, Schema extends base.$ZodType = base.$Z
 //   override remove(arg: any): $ZodNamedRegistry<Meta, Schema, Items> {
 //     const schema: Schema | undefined = typeof arg === "string" ? this._nameMap.get(arg) : arg;
 //     if (!schema) throw new Error("Schema not found");
-//     this._nameMap.delete(this._metaMap.get(schema)?.name!);
-//     this._metaMap.delete(schema);
+//     this._nameMap.delete(this._map.get(schema)?.name!);
+//     this._map.delete(schema);
 //     return this;
 //   }
 
@@ -89,9 +84,9 @@ export class $ZodRegistry<Meta = unknown, Schema extends base.$ZodType = base.$Z
 //   override get<K extends keyof Items>(key: K): Items[K];
 //   override get(arg: any): Meta | undefined {
 //     if (typeof arg === "string") {
-//       return this._metaMap.get(this._nameMap.get(arg)!);
+//       return this._map.get(this._nameMap.get(arg)!);
 //     }
-//     return this._metaMap.get(arg);
+//     return this._map.get(arg);
 //   }
 
 //   override has(schema: Schema): boolean;
@@ -100,7 +95,7 @@ export class $ZodRegistry<Meta = unknown, Schema extends base.$ZodType = base.$Z
 //     if (typeof arg === "string") {
 //       return this._nameMap.has(arg);
 //     }
-//     return this._metaMap.has(arg);
+//     return this._map.has(arg);
 //   }
 // }
 export interface JSONSchemaMeta {
@@ -114,14 +109,14 @@ export class $ZodJSONSchemaRegistry<
   Meta extends JSONSchemaMeta = JSONSchemaMeta,
   Schema extends base.$ZodType = base.$ZodType,
 > extends $ZodRegistry<Meta, Schema> {
-  toJSONSchema(title: string) {
-    let schema!: base.$ZodType;
-    for (const [_, meta] of this.entries) {
-      if (meta.title === title) {
-        if (schema) throw new Error(`Multiple schemas with title ${title}`);
-        schema = _;
-      }
-    }
+  toJSONSchema(schema: Schema): object {
+    // let schema!: base.$ZodType;
+    // for (const [_, meta] of this.entries) {
+    //   if (meta.title === title) {
+    //     if (schema) throw new Error(`Multiple schemas with title ${title}`);
+    //     schema = _;
+    //   }
+    // }
     // return toJSONSchema
     return {};
   }
@@ -135,4 +130,11 @@ export const globalRegistry: $ZodJSONSchemaRegistry<GlobalMeta> =
 //////////     REGISTRIES     //////////
 export function registry<T = undefined, S extends base.$ZodType = base.$ZodType>(): $ZodRegistry<T, S> {
   return new $ZodRegistry();
+}
+
+export function jsonSchemaRegistry<
+  T extends JSONSchemaMeta = JSONSchemaMeta,
+  S extends base.$ZodType = base.$ZodType,
+>(): $ZodJSONSchemaRegistry<T, S> {
+  return new $ZodJSONSchemaRegistry();
 }

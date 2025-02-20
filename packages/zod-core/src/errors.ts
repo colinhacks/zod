@@ -90,6 +90,7 @@ export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
 
 export interface $ZodIssueCustom extends $ZodIssueBase {
   code?: "custom";
+  params?: Record<string, any>;
 }
 
 ////////////////////////////////////////////
@@ -152,7 +153,7 @@ export interface $ZodIssueStringIncludes extends $ZodIssueInvalidStringFormat {
   includes: string;
 }
 
-export type $FirstPartyStringFormats =
+export type $ZodStringFormatIssues =
   | $ZodIssueStringCommonFormats
   | $ZodIssueStringInvalidRegex
   | $ZodIssueStringInvalidJWT
@@ -160,7 +161,7 @@ export type $FirstPartyStringFormats =
   | $ZodIssueStringEndsWith
   | $ZodIssueStringIncludes;
 
-export type $ZodStringFormats = $FirstPartyStringFormats["format"];
+export type $ZodStringFormats = $ZodStringFormatIssues["format"];
 
 ////////////////////////
 ////     utils     /////
@@ -180,39 +181,42 @@ export type $ZodIssue =
   | $ZodIssueInvalidValue
   | $ZodIssueCustom;
 
-type DefLike = { error?: $ZodErrorMap<never> | undefined };
 export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
+type DefLike = { error?: $ZodErrorMap<never> | undefined };
 type RawIssue<T extends $ZodIssueBase> = util.Flatten<
   util.MakePartial<T, "message" | "path"> & {
     def?: DefLike | undefined;
     continue?: boolean | undefined;
     input?: unknown;
-  } & Record<string, unknown>
+  } & Record<string, any>
 >;
 
-/** @deprecated Use `$ZodRawIssue` instead. */
-export type IssueData = $ZodRawIssue;
+// export type $ZodErrorMapCtx = {
+//   /** @deprecated To use the default error, return `undefined` or don't return anything at all. */
+//   defaultError?: string;
 
-/** @deprecated */
-export type ErrorMapCtx = {
-  /** @deprecated To use the default error, return `undefined` or don't return anything at all. */
-  defaultError: string;
-  /** @deprecated The input data is now available via the `input` property on the issue data (first parameter.)
-   *
-   * ```ts
-   * const errorMap: ZodErrorMap = (issue) => {
-   *   // issue.input ;
-   * }
-   * ```
-   */
-  data: any;
-};
+//   /**
+//    * @deprecated The input data is now available via the `input` property on the issue data (first parameter.)
+//    *
+//    * ```ts
+//    * const errorMap: $ZodErrorMap = (issue) => {
+//    *   // issue.input;
+//    * }
+//    * ```
+//    */
+//   data: any;
+// };
+
+// export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
+//   // biome-ignore lint:
+//   (
+//     issue: $ZodRawIssue<T>,
+//     /** @deprecated */
+//     _ctx?: $ZodErrorMapCtx
+//   ): { message: string } | string | undefined;
+// }
 
 export interface $ZodErrorMap<T extends $ZodIssueBase = $ZodIssue> {
   // biome-ignore lint:
-  (
-    issue: $ZodRawIssue<T>,
-    /** @deprecated */
-    _ctx?: ErrorMapCtx
-  ): { message: string } | string | undefined;
+  (issue: $ZodRawIssue<T>): { message: string } | string | undefined | null;
 }

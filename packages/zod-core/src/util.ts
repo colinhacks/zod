@@ -15,13 +15,13 @@ import type {
 } from "./schemas.js";
 
 export type Primitive = string | number | symbol | bigint | boolean | null | undefined;
-
 export type Scalars = Primitive | Primitive[];
-
 export type HasSize = { size: number };
 export type HasLength = { length: number }; // string | Array<unknown> | Set<unknown> | File;
-
 export type Numeric = number | bigint | Date;
+
+// json
+export type JSONType = string | number | boolean | null | JSONType[] | { [key: string]: JSONType };
 
 export type JWTAlgorithm =
   | "HS256"
@@ -119,6 +119,7 @@ export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type OmitKeys<T, K extends string> = Pick<T, Exclude<keyof T, K>>;
 export type MakePartial<T, K extends keyof T> = Omit<T, K> & InexactPartial<Pick<T, K>>;
 export type MakeRequired<T, K extends keyof T> = Omit<T, K> & Required<Pick<T, K>>;
+
 export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
 export type NoUndefined<T> = T extends undefined ? never : T;
 export type Loose<T> = T | {} | undefined | null;
@@ -127,6 +128,29 @@ export type Writeable<T> = { -readonly [P in keyof T]: T[P] };
 export type InexactPartial<T> = {
   [P in keyof T]?: T[P] | undefined;
 };
+export type EmptyObject = Record<string, never>;
+
+// readonly
+export type BuiltIn =
+  | (((...args: any[]) => any) | (new (...args: any[]) => any))
+  | { readonly [Symbol.toStringTag]: string }
+  | Date
+  | Error
+  | Generator
+  | Promise<unknown>
+  | RegExp;
+export type MakeReadonly<T> = T extends Map<infer K, infer V>
+  ? ReadonlyMap<K, V>
+  : T extends Set<infer V>
+    ? ReadonlySet<V>
+    : T extends [infer Head, ...infer Tail]
+      ? readonly [Head, ...Tail]
+      : T extends Array<infer V>
+        ? ReadonlyArray<V>
+        : T extends BuiltIn
+          ? T
+          : Readonly<T>;
+
 // export type OptionalKeys<T extends object> = {
 //   [k in keyof T]: undefined extends T[k] ? k : never;
 // }[keyof T];
@@ -142,6 +166,7 @@ export type InexactPartial<T> = {
 export type SomeObject = Record<PropertyKey, any>;
 export type Identity<T> = T;
 export type Flatten<T> = Identity<{ [k in keyof T]: T[k] }>;
+export type Mapped<T> = { [k in keyof T]: T[k] };
 export type Overwrite<T extends SomeObject, U extends SomeObject> = Omit<T, keyof U> & U;
 
 export type NoNeverKeys<T> = {
@@ -262,8 +287,11 @@ export const isInteger: NumberConstructor["isInteger"] =
     ? (val) => Number.isInteger(val)
     : (val) => typeof val === "number" && Number.isFinite(val) && Math.floor(val) === val;
 
-export function joinValues<T extends any[]>(array: T, separator = " | "): string {
-  return array.map((val) => (typeof val === "string" ? `\"${val}\"` : val)).join(separator);
+// export function joinValues<T extends any[]>(array: T, separator = " | "): string {
+//   return array.map((val) => (typeof val === "string" ? `\"${val}\"` : val)).join(separator);
+// }
+export function joinValues<T extends Primitive[]>(array: T, separator = "|"): string {
+  return array.map((val) => stringifyPrimitive(val)).join(separator);
 }
 export function jsonStringifyReplacer(_: string, value: any): any {
   if (typeof value === "bigint") return value.toString();
@@ -604,12 +632,12 @@ export function normalizeTypeParams<T extends TypeParams = TypeParams<base.$ZodT
   if (typeof params === "string") return { error: () => params } as any;
   const processed: Normalize<T> = {} as any;
 
-  if (params?.message) {
+  if (params?.message !== undefined) {
     params.error ??= params.message;
   }
   const { error: _error, description, ...rest } = params;
   if (_error) (processed as any).error = typeof _error === "string" ? () => _error : _error;
-  if (description) processed.description = description;
+  // if (description) processed.description = description;
   Object.assign(processed, rest);
   return processed;
 }
@@ -631,8 +659,9 @@ export function normalizeCheckParams<T>(_params: T): Normalize<T> {
 
   if (!params) return {} as any;
   if (typeof params === "string") return { error: () => params } as any;
-  if (params?.message) {
-    params.error ??= params.message;
+  if (params?.message !== undefined) {
+    if (params?.error !== undefined) throw new Error("Cannot specify both `message` and `error` params");
+    params.error = params.message;
   }
   if (typeof params.error === "string") return { ...params, error: () => params.error } as any;
   return params as any;
@@ -732,16 +761,16 @@ export class Factory<
 }
 
 export type EnumValue = string | number; // | bigint | boolean | symbol;
-export type EnumLike = Record<EnumValue, EnumValue>;
-export type ToEnum<T extends EnumValue> = { [k in T]: k };
+export type EnumLike = Readonly<Record<string, EnumValue>>;
+export type ToEnum<T extends EnumValue> = Flatten<{ [k in T]: k }>;
 export type KeysEnum<T extends object> = ToEnum<Exclude<keyof T, symbol>>;
 export type KeysArray<T extends object> = Flatten<(keyof T & string)[]>;
 export type Literal = string | number | bigint | boolean | symbol;
 export type LiteralArray = Array<Literal>;
 
-export type $ZodSafeParseResult<T> = $ZodSafeParseSuccess<T> | $ZodSafeParseError<T>;
-export type $ZodSafeParseSuccess<T> = { success: true; data: T; error?: never };
-export type $ZodSafeParseError<T> = { success: false; data?: never; error: base.$ZodError<T> };
+export type SafeParseResult<T> = SafeParseSuccess<T> | SafeParseError<T>;
+export type SafeParseSuccess<T> = { success: true; data: T; error?: never };
+export type SafeParseError<T> = { success: false; data?: never; error: base.$ZodError<T> };
 
 export function createTransparentProxy<T extends object>(getter: () => T): T {
   let target: T;
@@ -786,6 +815,13 @@ export function createTransparentProxy<T extends object>(getter: () => T): T {
   ) as T;
 }
 
+export function stringifyPrimitive(value: any): string {
+  if (typeof value === "bigint") return value.toString() + "n";
+  if (typeof value === "string") return `"${value}"`;
+  return `${value}`;
+}
+
+// export function removeReverse
 export type MethodParams<Err extends errors.$ZodIssueBase, Extra = unknown> =
   | string
   | ({
@@ -943,13 +979,13 @@ export function requiredObject(
     if (mask) {
       if (key in mask) {
         shape[key] = new Class({
-          type: "required",
+          type: "nonoptional",
           innerType: schema._def.shape[key],
         });
       }
     } else {
       shape[key] = new Class({
-        type: "required",
+        type: "nonoptional",
         innerType: schema._def.shape[key],
       });
     }
@@ -1074,4 +1110,32 @@ export function normalizeObjectLikeDef(def: $ZodObjectLikeDef): {
     };
   }
   throw new Error("Invalid object-like type");
+}
+
+export function aborted(x: base.$ParsePayload, startIndex = 0): boolean {
+  for (let i = startIndex; i < x.issues.length; i++) {
+    if (x.issues[i].continue !== true) return true;
+  }
+  return false;
+}
+
+export function prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
+  return issues.map((iss) => {
+    iss.path ??= [];
+    iss.path.unshift(path);
+    return iss;
+  });
+}
+
+export function getSizableOrigin(input: any): "set" | "map" | "file" | "unknown" {
+  if (input instanceof Set) return "set";
+  if (input instanceof Map) return "map";
+  if (input instanceof File) return "file";
+  return "unknown";
+}
+
+export function getLengthableOrigin(input: any): "array" | "string" | "unknown" {
+  if (Array.isArray(input)) return "array";
+  if (typeof input === "string") return "string";
+  return "unknown";
 }

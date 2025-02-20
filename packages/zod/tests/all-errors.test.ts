@@ -1,5 +1,3 @@
-import type * as core from "@zod/core";
-import * as util from "@zod/core/util";
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
@@ -85,7 +83,7 @@ test("custom .flatten()", () => {
 
 test(".format()", () => {
   const formatted = parsed.error!.format();
-  expectTypeOf(formatted).toEqualTypeOf<{
+  expectTypeOf(formatted).toMatchTypeOf<{
     _errors: string[];
     f2?: { _errors: string[] };
     f1?: { _errors: string[] };
@@ -126,7 +124,7 @@ test(".format()", () => {
 test("custom .format()", () => {
   type ErrorType = { message: string; code: number };
   const formatted = parsed.error!.format((iss) => ({ message: iss.message, code: 1234 }));
-  expectTypeOf(formatted).toEqualTypeOf<{
+  expectTypeOf(formatted).toMatchTypeOf<{
     _errors: ErrorType[];
     f2?: { _errors: ErrorType[] };
     f1?: { _errors: ErrorType[] };
@@ -192,7 +190,7 @@ test("all errors", () => {
     b: "qwer",
   });
 
-  expect(z.flatten(r1.error!)).toEqual({
+  expect(z.flattenError(r1.error!)).toEqual({
     formErrors: ["Must be equal"],
     fieldErrors: {},
   });
@@ -203,7 +201,7 @@ test("all errors", () => {
   });
 
   // const error = _error as z.ZodError;
-  expect(z.flatten(r2.error!)).toEqual({
+  expect(z.flattenError(r2.error!)).toEqual({
     formErrors: [],
     fieldErrors: {
       a: ["Invalid input: expected string"],
@@ -211,7 +209,7 @@ test("all errors", () => {
     },
   });
 
-  expect(z.flatten(r2.error!, (iss) => iss.message.toUpperCase())).toEqual({
+  expect(z.flattenError(r2.error!, (iss) => iss.message.toUpperCase())).toEqual({
     formErrors: [],
     fieldErrors: {
       a: ["INVALID INPUT: EXPECTED STRING"],
@@ -220,7 +218,7 @@ test("all errors", () => {
   });
   // Test identity
 
-  expect(z.flatten(r2.error!, (i: z.ZodIssue) => i)).toMatchInlineSnapshot(`
+  expect(z.flattenError(r2.error!, (i: z.ZodIssue) => i)).toMatchInlineSnapshot(`
     {
       "fieldErrors": {
         "a": [
@@ -249,7 +247,7 @@ test("all errors", () => {
   `);
 
   // Test mapping
-  const f1 = z.flatten(r2.error!, (i: z.ZodIssue) => i.message.length);
+  const f1 = z.flattenError(r2.error!, (i: z.ZodIssue) => i.message.length);
   expect(f1.fieldErrors.a![0]).toEqual("Invalid input: expected string".length);
   expect(f1).toMatchObject({
     formErrors: [],

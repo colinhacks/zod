@@ -12,11 +12,11 @@ test("z.string", async () => {
   expectTypeOf<a>().toEqualTypeOf<string>();
 });
 
-test("z.string with description", () => {
-  const a = z.string({ description: "string description" });
-  a._def;
-  expect(a._def.description).toEqual("string description");
-});
+// test("z.string with description", () => {
+//   const a = z.string({ description: "string description" });
+//   a._def;
+//   expect(a._def.description).toEqual("string description");
+// });
 
 test("z.string with custom error", () => {
   const a = z.string({ error: () => "BAD" });
@@ -30,7 +30,7 @@ test("inference in checks", () => {
   const b = z.string([z.refine((val) => val.length)]);
   z.parse(b, "___");
   expect(() => z.parse(b, "")).toThrow();
-  const c = z.string({ description: "" }, [z.refine((val) => val.length)]);
+  const c = z.string([z.refine((val) => val.length)]);
   z.parse(c, "___");
   expect(() => z.parse(c, "")).toThrow();
   const d = z.string().check(z.refine((val) => val.length));

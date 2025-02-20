@@ -1,6 +1,6 @@
 // Zod 3 compat layer
 
-import type * as core from "@zod/core";
+import * as core from "@zod/core";
 
 export type {
   /** @deprecated Use `z.output<>` instead. */
@@ -35,11 +35,11 @@ const INVALID: INVALID = Object.freeze({
 /** @deprecated Not necessary in Zod 4. */
 export const NEVER = INVALID as never;
 
-/** @deprecated Use `z.ZodFlattenedError` */
-export type inferFlattenedErrors<T extends core.$ZodType, U = string> = core.ZodFlattenedError<core.output<T>, U>;
+/** @deprecated Use `z.$ZodFlattenedError` */
+export type inferFlattenedErrors<T extends core.$ZodType, U = string> = core.$ZodFlattenedError<core.output<T>, U>;
 
-/** @deprecated Use `z.ZodFormattedError` */
-export type inferFormattedError<T extends core.$ZodType<any, any>, U = string> = core.ZodFormattedError<
+/** @deprecated Use `z.$ZodFormattedError` */
+export type inferFormattedError<T extends core.$ZodType<any, any>, U = string> = core.$ZodFormattedError<
   core.output<T>,
   U
 >;
@@ -48,3 +48,16 @@ export type BRAND<T extends string | number | symbol = string | number | symbol>
   [core.BRAND]: { [k in T]: true };
 };
 export { BRAND } from "@zod/core";
+export { config } from "@zod/core";
+
+/** @deprecated Use `z.config(params)` instead. */
+export function setErrorMap(map: core.$ZodErrorMap): void {
+  core.config({
+    error: map,
+  });
+}
+
+/** @deprecated Use `z.config()` instead. */
+export function getErrorMap(): core.$ZodErrorMap<core.$ZodIssue> | undefined {
+  return core.config().error;
+}

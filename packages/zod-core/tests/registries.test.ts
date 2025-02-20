@@ -27,12 +27,9 @@ test("z.registry", () => {
   const a_meta = fieldRegistry.get(a);
   expect(a_meta).toEqual({ name: "hello", description: "world" });
 
-  expect([...fieldRegistry._metaMap].length).toEqual(1);
-
   fieldRegistry.remove(a);
   expect(fieldRegistry.has(a)).toEqual(false);
   expect(fieldRegistry.get(a)).toEqual(undefined);
-  expect([...fieldRegistry._metaMap].length).toEqual(0);
 });
 
 test("z.registry no metadata", () => {
@@ -43,7 +40,6 @@ test("z.registry no metadata", () => {
   fieldRegistry.add(z.number());
   expect(fieldRegistry.get(a)).toEqual(undefined);
   expect(fieldRegistry.has(a)).toEqual(true);
-  expect([...fieldRegistry._metaMap].length).toEqual(2);
 });
 
 test("z.registry with schema constraints", () => {
