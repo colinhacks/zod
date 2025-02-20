@@ -41,6 +41,17 @@ test("error params", () => {
   }
 });
 
+test("extends", () => {
+  const italianFoods = ["Pasta", "Pizza"] as const;
+  const ItalianEnum = z.enum(italianFoods);
+  const FoodEnum = ItalianEnum.extend(["Tacos", "Burgers"]);
+
+  util.assertEqual<
+    z.infer<typeof FoodEnum>,
+    "Pasta" | "Pizza" | "Tacos" | "Burgers"
+  >(true);
+});
+
 test("extract/exclude", () => {
   const foods = ["Pasta", "Pizza", "Tacos", "Burgers", "Salad"] as const;
   const FoodEnum = z.enum(foods);
