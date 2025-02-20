@@ -2,8 +2,7 @@
   <img src="logo.svg" width="200px" align="center" alt="Zod logo" />
   <h1 align="center">Zod</h1>
   <p align="center">
-    ✨ <a href="https://zod.dev">https://zod.dev</a> ✨
-    <br/>
+  <a href="https://zod.dev">zod.dev</a>
     TypeScript-first schema validation with static type inference
   </p>
 </p>
@@ -16,19 +15,13 @@
 </p>
 
 <div align="center">
-  <a href="https://zod.dev">Documentation</a>
+  <a href="https://zod.dev">Web</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://www.npmjs.com/package/zod">npm</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://deno.land/x/zod">deno</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://github.com/colinhacks/zod/issues/new">Issues</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://twitter.com/colinhacks">@colinhacks</a>
-  <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-  <a href="https://trpc.io">tRPC</a>
+  <a href="https://twitter.com/colinhacks">𝕏</a>
   <br />
 </div>
 
