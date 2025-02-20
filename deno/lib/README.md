@@ -38,8 +38,6 @@
 
 <h3 align="center">Featured sponsor</h3>
 
-<br/>
-
 <div align="center">
   <a href="https://go.clerk.com/PKHrcwh">
     <picture width="100%">
@@ -48,13 +46,12 @@
     </picture>
   </a>
   <br/>
-  <br/>
   <p>
     The most comprehensive User Management Platform
     <br/>
     <a style="text-decoration:none;" href="https://go.clerk.com/PKHrcwh" target="_blank">clerk.com</a>
   </p>
-  <p><small><a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@zod.dev">Reach out</a> if you are interested in featuring here.</small></p> 
+  <p><sub><a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@zod.dev">Reach out</a> if you are interested in featuring here.</sub></p> 
 </div>
 
 <br/>
