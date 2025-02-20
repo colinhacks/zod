@@ -37,8 +37,8 @@
 <br/>
 <br/>
 
-<table>
-<td>
+<hr/>
+
 <h3 align="center">Featured sponsor</h3>
 <div align="center">
   <a href="https://go.clerk.com/PKHrcwh">
@@ -50,9 +50,8 @@
   <br/>
   <p><sub>Interested in featuring? <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">Get in touch</a> about featured sponsorship.</sub></p> 
 </div>
-</td>
-</table>
 
+<hr/>
 <br/>
 <br/>
 
