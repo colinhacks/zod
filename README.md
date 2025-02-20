@@ -15,7 +15,7 @@
 </p>
 
 <div align="center">
-  <a href="https://zod.dev">Web</a>
+  <a href="https://zod.dev">Website</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
   <a href="https://discord.gg/RcG33DQJdf">Discord</a>
   <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
