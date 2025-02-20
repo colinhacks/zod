@@ -46,11 +46,11 @@
     </picture>
   </a>
   <br/>
-  <p>
+  <!-- <p>
     The most comprehensive User Management Platform
     <br/>
     <a style="text-decoration:none;" href="https://go.clerk.com/PKHrcwh" target="_blank">clerk.com</a>
-  </p>
+  </p> -->
   <p><sub><a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@zod.dev">Reach out</a> if you are interested in featuring here.</sub></p> 
 </div>
 
