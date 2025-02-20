@@ -46,12 +46,7 @@
     </picture>
   </a>
   <br/>
-  <!-- <p>
-    The most comprehensive User Management Platform
-    <br/>
-    <a style="text-decoration:none;" href="https://go.clerk.com/PKHrcwh" target="_blank">clerk.com</a>
-  </p> -->
-  <p><sub>Interested in featuring? <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@zod.dev">Contact us</a> about featured sponsorships.</sub></p> 
+  <p><sub>Interested in featuring? <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">Get in touch</a> about featured sponsorship.</sub></p> 
 </div>
 
 <br/>
