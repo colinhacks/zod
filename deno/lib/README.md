@@ -35,7 +35,6 @@
 
 <br/>
 <br/>
-<br/>
 
 <!-- <hr/> -->
 
@@ -56,7 +55,6 @@
 <br/>
 
 <!-- ## Table of contents -->
-<br/>
 <h2 align="center">Table of contents</h2>
 
 > These docs have been translated into [Chinese](./README_ZH.md) and [Korean](./README_KO.md).
