@@ -491,6 +491,7 @@ Zod를 기반으로 구축되거나 Zod를 기본적으로 지원하는 도구�
 - [`koa-zod-router`](https://github.com/JakeFenley/koa-zod-router): Koa에서 Zod를 사용해 I/O 검증이 포함된 타입 안전한 라우트 생성.
 - [`zod-sockets`](https://github.com/RobinTail/zod-sockets): Zod 기반 Socket.IO 마이크로프레임워크. I/O 검증과 내장 AsyncAPI 스펙 지원.
 - [`oas-tszod-gen`](https://github.com/inkognitro/oas-tszod-gen): OpenAPI v3 스펙을 Zod 타입이 포함된 TS 엔드포인트 호출 함수로 변환하는 클라이언트 SDK 코드 생성기.
+- [`GQLoom`](https://github.com/modevol-com/gqloom): Zod를 사용하여 GraphQL 스키마와 리졸버를 엮습니다.
 
 #### 폼 통합 라이브러리
 

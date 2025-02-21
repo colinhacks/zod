@@ -297,6 +297,7 @@ _要在这里看到你的名字 + Twitter + 網站 , 请在[Freelancer](https://
 - [`zod-i18n-map`](https://github.com/aiji42/zod-i18n): 有助于翻译 zod 错误信息。
 - [`mobx-zod-form`](https://github.com/MonoidDev/mobx-zod-form): 以数据为中心的表格构建工具，基于 MobX 和 Zod。
 - [`zodock`](https://github.com/ItMaga/zodock): 基於 Zod 模式生成模擬數據。
+- [`GQLoom`](https://github.com/modevol-com/gqloom): 使用 ZOD 编织 GraphQL Schema 和解析器。
 
 # 安装
 
