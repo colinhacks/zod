@@ -18,7 +18,7 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       )}`;
       break;
     case ZodIssueCode.unrecognized_keys:
-      message = `Unrecognized key(s) in object: ${util.joinValues(
+      message = `Unrecognized ${util.pluralize(issue.keys.length, "key")} in object: ${util.joinValues(
         issue.keys,
         ", "
       )}`;
@@ -70,11 +70,11 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       if (issue.type === "array")
         message = `Array must contain ${
           issue.exact ? "exactly" : issue.inclusive ? `at least` : `more than`
-        } ${issue.minimum} element(s)`;
+        } ${issue.minimum} ${util.pluralize(issue.minimum, "element")}`;
       else if (issue.type === "string")
         message = `String must contain ${
           issue.exact ? "exactly" : issue.inclusive ? `at least` : `over`
-        } ${issue.minimum} character(s)`;
+        } ${issue.minimum} ${util.pluralize(issue.minimum, "character")}`;
       else if (issue.type === "number")
         message = `Number must be ${
           issue.exact
@@ -97,11 +97,11 @@ const errorMap: ZodErrorMap = (issue, _ctx) => {
       if (issue.type === "array")
         message = `Array must contain ${
           issue.exact ? `exactly` : issue.inclusive ? `at most` : `less than`
-        } ${issue.maximum} element(s)`;
+        } ${issue.maximum} ${util.pluralize(issue.maximum, "element")}`;
       else if (issue.type === "string")
         message = `String must contain ${
           issue.exact ? `exactly` : issue.inclusive ? `at most` : `under`
-        } ${issue.maximum} character(s)`;
+        } ${issue.maximum} ${util.pluralize(issue.maximum, "character")}`;
       else if (issue.type === "number")
         message = `Number must be ${
           issue.exact
