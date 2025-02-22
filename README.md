@@ -2777,32 +2777,6 @@ console.log(datelikeToDate.safeParse("2023-01-01").success); // true
 console.log(datelikeToDate.safeParse(null).success); // false
 ```
 
-You can also use this technique to avoid coercions that throw uncaught errors.
-
-without constrained input:
-
-```ts
-const toBigInt = z.coerce.bigint();
-
-// works intuitively
-console.log(toBigInt.safeParse("42")); // true
-
-// probably not what you want
-console.log(toBigInt.safeParse(null)); // throws uncaught error
-```
-
-with constrained input:
-
-```ts
-const toNumber = z.number().or(z.string()).pipe(z.coerce.number());
-const toBigInt = z.bigint().or(toNumber).pipe(z.coerce.bigint());
-
-// still works intuitively
-console.log(toBigInt.safeParse("42").success); // true
-
-// error handled by zod, more likely what you want
-console.log(toBigInt.safeParse(null).success); // false
-```
 
 <br/>
 
