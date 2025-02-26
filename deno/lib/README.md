@@ -31,7 +31,7 @@
 
 <br/>
 
-## Featured sponsor
+<h2 align="center">Featured sponsor</h2>
 
 <div align="center">
   <a href="https://go.clerk.com/PKHrcwh">
@@ -41,7 +41,7 @@
     </picture>
   </a>
   <br/>
-  <p><sub>Interested in featuring? <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">Get in touch</a> about featured sponsorship.</sub></p> 
+  <p><sub><a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">Get in touch</a> to learn more about featured sponsorship</sub></p> 
 </div>
 
 <!-- <hr/> -->
