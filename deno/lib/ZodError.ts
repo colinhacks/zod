@@ -283,6 +283,13 @@ export class ZodError<T = any> extends Error {
   override toString() {
     return this.message;
   }
+
+  /**
+   * message is a JSON.stringified issues array. This is an intentional decision
+   * to make the message property as informative as possible for logging, etc.
+   * You should use .issues to retrieve granular error information rather than
+   * JSON.parse(err.message).
+   */
   override get message() {
     return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
   }
