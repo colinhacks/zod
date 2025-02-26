@@ -148,20 +148,6 @@ export const $ZodURL: base.$constructor<$ZodURL> = /*@__PURE__*/ base.$construct
       inst,
     });
   };
-
-  // inst._checkB = (payload) => {
-  //   try {
-  //     const url = new URL(payload.value);
-  //     regexes.hostnameRegex.lastIndex = 0;
-  //     if (regexes.hostnameRegex.test(url.hostname)) return;
-  //   } catch {}
-  //   payload.issues.push({
-  //     code: "invalid_format",
-  //     format: def.format,
-  //     input: payload.value,
-  //     inst,
-  //   });
-  // };
 });
 
 //////////////////////////////   ZodEmoji   //////////////////////////////
@@ -362,44 +348,30 @@ export const $ZodBase64: base.$constructor<$ZodBase64> = /*@__PURE__*/ base.$con
 
 //////////////////////////////   ZodJSONString   //////////////////////////////
 
-export interface $ZodJSONStringDef extends $ZodStringFormatDef<"json_string"> {}
-export interface $ZodJSONString extends $ZodStringFormat {
-  _def: $ZodJSONStringDef;
-}
+// export interface $ZodJSONStringDef extends $ZodStringFormatDef<"json_string"> {}
+// export interface $ZodJSONString extends $ZodStringFormat {
+//   _def: $ZodJSONStringDef;
+// }
 
-export const $ZodJSONString: base.$constructor<$ZodJSONString> = /*@__PURE__*/ base.$constructor(
-  "$ZodJSONString",
-  (inst, def): void => {
-    $ZodStringFormat.init(inst, def);
-    inst._check = (payload) => {
-      try {
-        JSON.parse(payload.value);
-        return;
-      } catch {
-        payload.issues.push({
-          code: "invalid_format",
-          format: "json_string",
-          input: payload.value,
-          inst,
-        });
-      }
-    };
-
-    // inst._checkB = (payload) => {
-    //   try {
-    //     JSON.parse(payload.value);
-    //     return;
-    //   } catch {
-    //     payload.issues.push({
-    //       code: "invalid_format",
-    //       format: "json_string",
-    //       input: payload.value,
-    //       inst,
-    //     });
-    //   }
-    // };
-  }
-);
+// export const $ZodJSONString: base.$constructor<$ZodJSONString> = /*@__PURE__*/ base.$constructor(
+//   "$ZodJSONString",
+//   (inst, def): void => {
+//     $ZodStringFormat.init(inst, def);
+//     inst._check = (payload) => {
+//       try {
+//         JSON.parse(payload.value);
+//         return;
+//       } catch {
+//         payload.issues.push({
+//           code: "invalid_format",
+//           format: "json_string",
+//           input: payload.value,
+//           inst,
+//         });
+//       }
+//     };
+//   }
+// );
 
 //////////////////////////////   ZodE164   //////////////////////////////
 
@@ -448,17 +420,6 @@ export const $ZodJWT: base.$constructor<$ZodJWT> = /*@__PURE__*/ base.$construct
       inst,
     });
   };
-
-  // inst._checkB = (payload) => {
-  //   if (!isValidJWT(payload.value, def.alg)) {
-  //     payload.issues.push({
-  //       code: "invalid_format",
-  //       format: "jwt",
-  //       input: payload.value,
-  //       inst,
-  //     });
-  //   }
-  // };
 });
 
 /////////////////////////////////////////

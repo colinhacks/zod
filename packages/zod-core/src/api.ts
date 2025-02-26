@@ -310,22 +310,22 @@ export function base64(...args: any): schemas.$ZodBase64 {
 }
 
 // $ZodJSONString
-export type $ZodJSONStringParams = util.StringFormatParams<schemas.$ZodJSONString>;
-export type $ZodCheckJSONStringParams = util.CheckStringFormatParams<schemas.$ZodJSONString>;
-const _jsonString = util.factory(() => schemas.$ZodJSONString, {
-  type: "string",
-  format: "json_string",
-  check: "string_format",
-  abort: false,
-});
-export function jsonString(checks?: base.$ZodCheck<string>[]): schemas.$ZodJSONString;
-export function jsonString(
-  params?: string | $ZodJSONStringParams,
-  checks?: base.$ZodCheck<string>[]
-): schemas.$ZodJSONString;
-export function jsonString(...args: any): schemas.$ZodJSONString {
-  return _jsonString(...args);
-}
+// export type $ZodJSONStringParams = util.StringFormatParams<schemas.$ZodJSONString>;
+// export type $ZodCheckJSONStringParams = util.CheckStringFormatParams<schemas.$ZodJSONString>;
+// const _jsonString = util.factory(() => schemas.$ZodJSONString, {
+//   type: "string",
+//   format: "json_string",
+//   check: "string_format",
+//   abort: false,
+// });
+// export function jsonString(checks?: base.$ZodCheck<string>[]): schemas.$ZodJSONString;
+// export function jsonString(
+//   params?: string | $ZodJSONStringParams,
+//   checks?: base.$ZodCheck<string>[]
+// ): schemas.$ZodJSONString;
+// export function jsonString(...args: any): schemas.$ZodJSONString {
+//   return _jsonString(...args);
+// }
 
 // $ZodE164
 export type $ZodE164Params = util.StringFormatParams<schemas.$ZodE164>;

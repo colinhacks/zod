@@ -168,8 +168,8 @@ export interface ZodString extends core.$ZodString<string>, ZodType<string, stri
   ulid(params?: string | core.$ZodCheckULIDParams): ZodString;
   /** @deprecated Use `z.base64()` instead. */
   base64(params?: string | core.$ZodCheckBase64Params): ZodString;
-  /** @deprecated Use `z.jsonString()` instead. */
-  jsonString(params?: string | core.$ZodCheckJSONStringParams): ZodString;
+  // /** @deprecated Use `z.jsonString()` instead. */
+  // jsonString(params?: string | core.$ZodCheckJSONStringParams): ZodString;
   /** @deprecated Use `z.xid()` instead. */
   xid(params?: string | core.$ZodCheckXIDParams): ZodString;
   /** @deprecated Use `z.ksuid()` instead. */
@@ -201,8 +201,8 @@ export interface ZodString extends core.$ZodString<string>, ZodType<string, stri
   /** @deprecated Use `z.iso.duration()` instead. */
   duration(params?: string | core.iso.$ZodISODurationParams): ZodString;
 
-  /** @deprecated Use `z.jsonString()` instead. */
-  json(params?: string | core.$ZodCheckJSONStringParams): this;
+  // /** @deprecated Use `z.jsonString()` instead. */
+  // json(params?: string | core.$ZodCheckJSONStringParams): this;
 
   // miscellaneous checks
   regex(regex: RegExp, params?: StringFormatParams): ZodString;
@@ -246,14 +246,15 @@ export const ZodString: core.$constructor<ZodString> = /*@__PURE__*/ core.$const
   inst.cuid2 = (params) => inst.$check(factories._cuid2(params));
   inst.ulid = (params) => inst.$check(factories._ulid(params));
   inst.base64 = (params) => inst.$check(factories._base64(params));
-  inst.jsonString = (params) => inst.$check(factories._jsonString(params));
+  // inst.jsonString = (params) => inst.$check(factories._jsonString(params));
+  // inst.json = (params) => inst.$check(factories._jsonString(params));
   inst.xid = (params) => inst.$check(factories._xid(params));
   inst.ksuid = (params) => inst.$check(factories._ksuid(params));
   inst.ip = (params) => inst.$check(factories._ip(params));
   inst.ipv4 = (params) => inst.$check(factories._ipv4(params));
   inst.ipv6 = (params) => inst.$check(factories._ipv6(params));
   inst.e164 = (params) => inst.$check(factories._e164(params));
-  inst.json = (params) => inst.$check(factories._jsonString(params));
+
   inst.datetime = (params) => inst.$check(api.iso.datetime(params));
   inst.date = (params) => inst.$check(api.iso.date(params));
   inst.time = (params) => inst.$check(api.iso.time(params));
@@ -578,17 +579,17 @@ export const ZodBase64: core.$constructor<ZodBase64> = /*@__PURE__*/ core.$const
 /////////////////////////////////////////////
 /////////////////////////////////////////////
 
-export interface ZodJSONString extends core.$ZodJSONString, ZodType<string, string> {
-  _def: core.$ZodJSONStringDef;
-  _isst: core.$ZodIssueInvalidType;
-}
-export const ZodJSONString: core.$constructor<ZodJSONString> = /*@__PURE__*/ core.$constructor(
-  "ZodJSONString",
-  (inst, def) => {
-    core.$ZodJSONString.init(inst, def);
-    ZodType.init(inst, def);
-  }
-);
+// export interface ZodJSONString extends core.$ZodJSONString, ZodType<string, string> {
+//   _def: core.$ZodJSONStringDef;
+//   _isst: core.$ZodIssueInvalidType;
+// }
+// export const ZodJSONString: core.$constructor<ZodJSONString> = /*@__PURE__*/ core.$constructor(
+//   "ZodJSONString",
+//   (inst, def) => {
+//     core.$ZodJSONString.init(inst, def);
+//     ZodType.init(inst, def);
+//   }
+// );
 
 /////////////////////////////////////////
 /////////////////////////////////////////

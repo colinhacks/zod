@@ -139,12 +139,12 @@ export const _base64: Factory = util.factory(() => schemas.ZodBase64, {
   abort: false,
 });
 
-export const _jsonString: Factory = util.factory(() => schemas.ZodJSONString, {
-  type: "string",
-  format: "json_string",
-  check: "string_format",
-  abort: false,
-});
+// export const _jsonString: Factory = util.factory(() => schemas.ZodJSONString, {
+//   type: "string",
+//   format: "json_string",
+//   check: "string_format",
+//   abort: false,
+// });
 
 export const _e164: Factory = util.factory(() => schemas.ZodE164, {
   type: "string",

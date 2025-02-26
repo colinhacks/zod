@@ -710,38 +710,38 @@ export const $ZodCheckRegex: base.$constructor<$ZodCheckRegex> = base.$construct
 ///////////////////////////////////
 /////    $ZodCheckJSONString    /////
 ///////////////////////////////////
-interface $ZodCheckJSONStringDef extends $ZodCheckStringFormatDef<"json_string"> {
-  // check: "string_format";
-  // format: "json_string";
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidStringFormat> | undefined;
-}
+// interface $ZodCheckJSONStringDef extends $ZodCheckStringFormatDef<"json_string"> {
+//   // check: "string_format";
+//   // format: "json_string";
+//   // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidStringFormat> | undefined;
+// }
 
-export interface $ZodCheckJSONString extends $ZodCheckStringFormat {
-  _def: $ZodCheckJSONStringDef;
-}
+// export interface $ZodCheckJSONString extends $ZodCheckStringFormat {
+//   _def: $ZodCheckJSONStringDef;
+// }
 
-export const $ZodCheckJSONString: base.$constructor<$ZodCheckJSONString> = base.$constructor(
-  "$ZodCheckJSONString",
-  (inst, def) => {
-    base.$ZodCheck.init(inst, def);
+// export const $ZodCheckJSONString: base.$constructor<$ZodCheckJSONString> = base.$constructor(
+//   "$ZodCheckJSONString",
+//   (inst, def) => {
+//     base.$ZodCheck.init(inst, def);
 
-    inst._check = (payload) => {
-      try {
-        JSON.parse(payload.value);
-        return;
-      } catch (_) {
-        payload.issues.push({
-          origin: "string",
-          code: "invalid_format",
-          format: def.format,
-          input: payload.value,
-          inst,
-          continue: !def.abort,
-        });
-      }
-    };
-  }
-);
+//     inst._check = (payload) => {
+//       try {
+//         JSON.parse(payload.value);
+//         return;
+//       } catch (_) {
+//         payload.issues.push({
+//           origin: "string",
+//           code: "invalid_format",
+//           format: def.format,
+//           input: payload.value,
+//           inst,
+//           continue: !def.abort,
+//         });
+//       }
+//     };
+//   }
+// );
 
 //////////////////////////////////////
 /////    $ZodCheckLowerCase    /////

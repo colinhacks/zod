@@ -1,8 +1,8 @@
 import { makeData, randomString } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-import * as zc from "@zod/core";
 import { type } from "arktype";
+import * as v from "valibot";
 import * as z from "zod";
 
 const schema = z.object({
@@ -17,32 +17,41 @@ const atschema = type({
   c: "string",
 });
 
+const vschema = v.object({
+  a: v.string(),
+  b: v.string(),
+  c: v.string(),
+});
+
 const DATA = makeData(1000, () => ({
   a: randomString(10),
   b: randomString(10),
   c: randomString(10),
 }));
 
-console.log(schema.parse(DATA[0]));
+console.log(z.parse(schema, DATA[0]));
 console.log(atschema(DATA[0]));
-console.log(atschema(DATA[0]) === DATA[0]);
+console.log(v.parse(vschema, DATA[0]));
 
 const bench = metabench("zod vs arktype", {
   zod4() {
-    for (const _ of DATA) zc.safeParseB(schema, _);
+    for (const _ of DATA) z.parse(schema, _);
   },
   arktype() {
     for (const _ of DATA) atschema(_);
   },
-  baseline() {
-    for (const _ of DATA) {
-      typeof _ === "object" &&
-        _ !== null &&
-        typeof _.a === "string" &&
-        typeof _.b === "string" &&
-        typeof _.c === "string";
-    }
+  valibot() {
+    for (const _ of DATA) v.parse(vschema, _);
   },
+  // baseline() {
+  //   for (const _ of DATA) {
+  //     typeof _ === "object" &&
+  //       _ !== null &&
+  //       typeof _.a === "string" &&
+  //       typeof _.b === "string" &&
+  //       typeof _.c === "string";
+  //   }
+  // },
 });
 
 await bench.run();

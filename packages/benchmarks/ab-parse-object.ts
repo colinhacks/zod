@@ -84,15 +84,15 @@ const bench = metabench("AB test: objects", {
   // _parseC() {
   //   for (const _ of DATA) z.safeParseC(schema, _);
   // },
-  no_fastpass() {
-    for (const _ of DATA) z.safeParse(schema, _, { skipFast: true });
-  },
-  fastpass() {
+  // no_fastpass() {
+  //   for (const _ of DATA) z.safeParse(schema, _, { skipFast: true });
+  // },
+  zod4() {
     for (const _ of DATA) z.safeParse(schema, _);
   },
-  // zod3() {
-  //   for (const _ of DATA) v3schema.safeParse(_);
-  // },
+  zod3() {
+    for (const _ of DATA) v3schema.safeParse(_);
+  },
 });
 
 await bench.run();

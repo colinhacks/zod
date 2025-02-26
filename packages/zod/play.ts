@@ -13,9 +13,9 @@ z;
  * ```
  */
 
-const F = z.interface({
+const schema = z.interface({
   name: z.string(),
-  get "f?"() {
-    return z.nullable(F);
-  },
 });
+
+z.parse(schema, { name: "John" });
+z.parse(schema, { name: "John" });

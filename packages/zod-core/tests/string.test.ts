@@ -181,18 +181,18 @@ test("z.base64", () => {
   expect(() => z.parse(a, 123)).toThrow();
 });
 
-test("z.jsonString", () => {
-  const a = z.jsonString();
-  // valid JSON string
-  expect(z.parse(a, '{"key":"value"}')).toEqual('{"key":"value"}');
-  expect(z.parse(a, '["item1", "item2"]')).toEqual('["item1", "item2"]');
-  // invalid JSON string
-  expect(() => z.parse(a, '{"key":value}')).toThrow();
-  expect(() => z.parse(a, '["item1", "item2"')).toThrow();
-  expect(() => z.parse(a, "hello")).toThrow();
-  // wrong type
-  expect(() => z.parse(a, 123)).toThrow();
-});
+// test("z.jsonString", () => {
+//   const a = z.jsonString();
+//   // valid JSON string
+//   expect(z.parse(a, '{"key":"value"}')).toEqual('{"key":"value"}');
+//   expect(z.parse(a, '["item1", "item2"]')).toEqual('["item1", "item2"]');
+//   // invalid JSON string
+//   expect(() => z.parse(a, '{"key":value}')).toThrow();
+//   expect(() => z.parse(a, '["item1", "item2"')).toThrow();
+//   expect(() => z.parse(a, "hello")).toThrow();
+//   // wrong type
+//   expect(() => z.parse(a, 123)).toThrow();
+// });
 
 test("z.e164", () => {
   const a = z.e164();

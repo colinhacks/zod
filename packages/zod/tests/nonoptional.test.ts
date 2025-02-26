@@ -8,7 +8,22 @@ test("nonoptional with default", () => {
 
   const result = schema.safeParse(undefined);
   expect(result.success).toBe(false);
-  expect(result).toMatchInlineSnapshot();
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "nonoptional",
+            "message": "Invalid input: expected nonoptional",
+            "path": [],
+          },
+        ],
+        "name": "$ZodError",
+      },
+      "success": false,
+    }
+  `);
 });
 
 test("nonoptional in object", () => {

@@ -173,14 +173,14 @@ export function base64(...args: any): schemas.ZodBase64 {
 }
 
 // jsonString
-export function jsonString(checks?: core.$ZodCheck<string>[]): schemas.ZodJSONString;
-export function jsonString(
-  params?: string | core.$ZodJSONStringParams,
-  checks?: core.$ZodCheck<string>[]
-): schemas.ZodJSONString;
-export function jsonString(...args: any): schemas.ZodJSONString {
-  return factories._jsonString(...args);
-}
+// export function jsonString(checks?: core.$ZodCheck<string>[]): schemas.ZodJSONString;
+// export function jsonString(
+//   params?: string | core.$ZodJSONStringParams,
+//   checks?: core.$ZodCheck<string>[]
+// ): schemas.ZodJSONString;
+// export function jsonString(...args: any): schemas.ZodJSONString {
+//   return factories._jsonString(...args);
+// }
 
 // e164
 export type ZodE164Params = util.StringFormatParams<schemas.ZodE164>;

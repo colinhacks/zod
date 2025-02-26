@@ -897,7 +897,6 @@ export function cleanInterfaceShape<T extends $ZodLooseShape>(
   optional: string[];
   defaulted: string[];
 } {
-  console.log("cleanInterfaceShape!");
   const keyMap: Record<string, string> = {};
   const shape = {} as CleanInterfaceShape<T>;
   const optional: string[] = [];

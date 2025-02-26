@@ -158,9 +158,9 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   /** @deprecated Internal API, use with caution. Not deprecated. */
   _id: string;
   /** @deprecated Internal API, use with caution. */
-  _standard: number;
+  // _standard: number;
   /** @deprecated Internal API, use with caution. */
-  _types: $IO<this["_output"], this["_input"]>;
+  // _types: $IO<this["_output"], this["_input"]>;
   /** @deprecated Internal API, use with caution. */
   _output: O;
   /** @deprecated Internal API, use with caution. */
@@ -170,7 +170,7 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   _run(payload: $ParsePayload, ctx: $InternalParseContext): util.MaybeAsync<$ParsePayload>;
 
   /** @deprecated Internal API, use with caution. */
-  _parse(payload: $ParsePayload<any>, ctx: $InternalParseContext): util.MaybeAsync<$ParsePayload>;
+  _parse(payload: $ParsePayload, ctx: $InternalParseContext): util.MaybeAsync<$ParsePayload>;
 
   /** @deprecated Internal API, use with caution. Stores identifiers for the set of traits implemented by this schema. */
   _traits: Set<string>;
@@ -218,7 +218,6 @@ export class $ZodAsyncError extends Error {
 export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, def) => {
   inst._id = def.type + "_" + util.randomString(10);
   inst._def = def; // set _def property
-  inst._standard = 1; // set standard-schema version
   inst._computed = inst._computed || {}; // initialize _computed object
 
   inst.$check = (...checks) => {
