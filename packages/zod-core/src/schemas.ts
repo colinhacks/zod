@@ -25,6 +25,7 @@ export interface $ZodString<Input = unknown> extends base.$ZodType<string, Input
   _def: $ZodStringDef;
   /** @deprecated Internal API, use with caution (not deprecated) */
   _isst: errors.$ZodIssueInvalidType;
+  /** Computed properties */
 }
 
 export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$constructor("$ZodString", (inst, def) => {
@@ -38,7 +39,7 @@ export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$con
       expected: "string",
       code: "invalid_type",
       input: payload.value,
-      def,
+      inst,
     });
     return payload;
   };
@@ -144,7 +145,7 @@ export const $ZodURL: base.$constructor<$ZodURL> = /*@__PURE__*/ base.$construct
       code: "invalid_format",
       format: def.format,
       input: payload.value,
-      def,
+      inst,
     });
   };
 
@@ -158,7 +159,7 @@ export const $ZodURL: base.$constructor<$ZodURL> = /*@__PURE__*/ base.$construct
   //     code: "invalid_format",
   //     format: def.format,
   //     input: payload.value,
-  //     def,
+  //     inst,
   //   });
   // };
 });
@@ -379,7 +380,7 @@ export const $ZodJSONString: base.$constructor<$ZodJSONString> = /*@__PURE__*/ b
           code: "invalid_format",
           format: "json_string",
           input: payload.value,
-          def,
+          inst,
         });
       }
     };
@@ -393,7 +394,7 @@ export const $ZodJSONString: base.$constructor<$ZodJSONString> = /*@__PURE__*/ b
     //       code: "invalid_format",
     //       format: "json_string",
     //       input: payload.value,
-    //       def,
+    //       inst,
     //     });
     //   }
     // };
@@ -444,7 +445,7 @@ export const $ZodJWT: base.$constructor<$ZodJWT> = /*@__PURE__*/ base.$construct
       code: "invalid_format",
       format: "jwt",
       input: payload.value,
-      def,
+      inst,
     });
   };
 
@@ -454,7 +455,7 @@ export const $ZodJWT: base.$constructor<$ZodJWT> = /*@__PURE__*/ base.$construct
   //       code: "invalid_format",
   //       format: "jwt",
   //       input: payload.value,
-  //       def,
+  //       inst,
   //     });
   //   }
   // };
@@ -478,6 +479,7 @@ export interface $ZodNumber<T = unknown> extends base.$ZodType<number, T> {
   _pattern: RegExp;
   _def: $ZodNumberDef;
   _isst: errors.$ZodIssueInvalidType;
+  /** Computed properties */
 }
 
 export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$constructor("$ZodNumber", (inst, def) => {
@@ -499,8 +501,8 @@ export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$con
       expected: "number",
       code: "invalid_type",
       input,
-      def,
-      note,
+      inst,
+      ...(note ? { note } : {}),
     });
     return payload;
   };
@@ -514,7 +516,7 @@ export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$con
   //   //       expected: "number",
   //   //       code: "invalid_type",
   //   //       input,
-  //   //       def,
+  //   //       inst,
   //   //     },
   //   //   ],
   //   //   true
@@ -523,7 +525,7 @@ export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$con
   //     expected: "number",
   //     code: "invalid_type",
   //     input,
-  //     def,
+  //     inst,
   //   });
   //   payload.aborted = true;
   //   return payload;
@@ -571,6 +573,7 @@ export interface $ZodBoolean<T = unknown> extends base.$ZodType<boolean, T> {
   _pattern: RegExp;
   _def: $ZodBooleanDef;
   _isst: errors.$ZodIssueInvalidType;
+  /** Computed properties */
 }
 
 export const $ZodBoolean: base.$constructor<$ZodBoolean> = /*@__PURE__*/ base.$constructor(
@@ -587,7 +590,7 @@ export const $ZodBoolean: base.$constructor<$ZodBoolean> = /*@__PURE__*/ base.$c
         expected: "boolean",
         code: "invalid_type",
         input,
-        def,
+        inst,
       });
       return payload;
     };
@@ -613,6 +616,7 @@ export interface $ZodBigInt<T = unknown> extends base.$ZodType<bigint, T> {
   /** @internal Internal API, use with caution */
   _def: $ZodBigIntDef;
   _isst: errors.$ZodIssueInvalidType;
+  /** Computed properties */
 }
 
 export const $ZodBigInt: base.$constructor<$ZodBigInt> = /*@__PURE__*/ base.$constructor("$ZodBigInt", (inst, def) => {
@@ -627,7 +631,7 @@ export const $ZodBigInt: base.$constructor<$ZodBigInt> = /*@__PURE__*/ base.$con
       expected: "bigint",
       code: "invalid_type",
       input,
-      def,
+      inst,
     });
     return payload;
   };
@@ -678,7 +682,7 @@ export const $ZodSymbol: base.$constructor<$ZodSymbol> = /*@__PURE__*/ base.$con
       expected: "symbol",
       code: "invalid_type",
       input,
-      def,
+      inst,
     });
     return payload;
   };
@@ -716,7 +720,7 @@ export const $ZodUndefined: base.$constructor<$ZodUndefined> = /*@__PURE__*/ bas
         expected: "undefined",
         code: "invalid_type",
         input,
-        def,
+        inst,
       });
       return payload;
     };
@@ -754,7 +758,7 @@ export const $ZodNull: base.$constructor<$ZodNull> = /*@__PURE__*/ base.$constru
       expected: "null",
       code: "invalid_type",
       input,
-      def,
+      inst,
     });
     return payload;
   };
@@ -834,7 +838,7 @@ export const $ZodNever: base.$constructor<$ZodNever> = /*@__PURE__*/ base.$const
       expected: "never",
       code: "invalid_type",
       input: payload.value,
-      def,
+      inst,
     });
     return payload;
   };
@@ -867,7 +871,7 @@ export const $ZodVoid: base.$constructor<$ZodVoid> = /*@__PURE__*/ base.$constru
       expected: "void",
       code: "invalid_type",
       input,
-      def,
+      inst,
     });
     return payload;
   };
@@ -906,11 +910,11 @@ export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constru
         expected: "date",
         code: "invalid_type",
         input,
-        def,
+        inst,
       });
       // return payload;
     } else if (Number.isNaN(input.getTime())) {
-      payload.issues.push({ code: "invalid_date", input, def });
+      payload.issues.push({ code: "invalid_date", input, inst });
     } else {
       payload.value = new Date(input.getTime());
     }
@@ -956,7 +960,7 @@ export const $ZodArray: base.$constructor<$ZodArray> = /*@__PURE__*/ base.$const
         expected: "array",
         code: "invalid_type",
         input,
-        def,
+        inst,
       });
       return payload;
     }
@@ -998,19 +1002,23 @@ export const $ZodArray: base.$constructor<$ZodArray> = /*@__PURE__*/ base.$const
 //////////////////////////////////////////
 //////////////////////////////////////////
 
-export type $ZodShape = Readonly<Record<string, base.$ZodType>>;
+export type $ZodShape = Readonly<{ [k: string]: base.$ZodType }>;
 
-export interface $ZodObjectLikeDef extends base.$ZodTypeDef {
+export interface $ZodObjectLikeDef<out Shape extends $ZodShape = $ZodShape> extends base.$ZodTypeDef {
   type: "object" | "interface";
-  // mode: "object" | "interface";
-  shape: $ZodShape;
+  shape: Shape;
+  optional: string[];
   catchall?: base.$ZodType | undefined;
 }
 
 export interface $ZodObjectLike<out O = object, out I = object> extends base.$ZodType<O, I> {
   _def: $ZodObjectLikeDef;
   _shape: $ZodShape;
+  // _params: $ZodInterfaceNamedParams;
+  // _extra: Record<string, unknown>;
   _extra: Record<string, unknown>;
+  _optional: string;
+  _defaulted: string;
   _disc: base.$DiscriminatorMap;
   _isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
 }
@@ -1056,13 +1064,14 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
     });
 
     const fastpass = util.cached(() => {
-      const { keys, optionals, keyMap } = _normalized.value;
+      const { keys, optionalKeys } = _normalized.value;
       const doc = new Doc(["shape", "payload", "ctx"]);
       const parseStr = (key: string) => {
         const k = util.esc(key);
         return `shape[${k}]._run({ value: input[${k}], issues: [] }, ctx)`;
       };
 
+      // doc.write(`const shape = shape;`);
       doc.write(`const input = payload.value;`);
 
       const ids: any = {};
@@ -1070,35 +1079,56 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
         ids[key] = util.randomString(15);
       }
       for (const key of keys) {
-        if (optionals.has(key)) continue;
+        if (optionalKeys.has(key)) continue;
         const id = ids[key];
         doc.write(`const ${id} = ${parseStr(key)};`);
         doc.write(`if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
            ...iss,
-           path: iss.path ? [${util.esc(keyMap[key])}, ...iss.path] : [${util.esc(keyMap[key])}]
+           path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
         })));`);
       }
+
+      // check for missing keys
+      for (const key of keys) {
+        if (optionalKeys.has(key)) continue;
+        doc.write(`if(!(${util.esc(key)} in input)) {`);
+        doc.indented(() => {
+          doc.write(`payload.issues.push({`);
+          doc.indented(() => {
+            doc.write(`code: "invalid_type",`);
+            doc.write(`path: [${util.esc(key)}],`);
+            doc.write(`expected: "nonoptional",`);
+            doc.write(`note: 'Missing required key: "${key}"',`);
+            doc.write(`input,`);
+            doc.write(`inst,`);
+          });
+          doc.write(`});`);
+        });
+        doc.write(`}`);
+      }
+
+      // doc.write(`}`);
 
       // add required keys to result
       doc.write(`payload.value = {`);
       doc.indented(() => {
         for (const key of keys) {
-          if (optionals.has(key)) continue;
+          if (optionalKeys.has(key)) continue;
           const id = ids[key];
           doc.write(`  ${util.esc(key)}: ${id}.value,`);
         }
       });
       doc.write(`}`);
 
-      // add in optionals if defined
+      // add in optionalKeys if defined
       for (const key of keys) {
-        if (!optionals.has(key)) continue;
+        if (!optionalKeys.has(key)) continue;
         const id = ids[key];
         doc.write(`if (${util.esc(key)} in input) {`);
         doc.indented(() => {
           doc.write(`  const ${id} = ${parseStr(key)};`);
           doc.write(`  payload.value[${util.esc(key)}] = ${id}.value;`);
-          doc.write(`if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({ ...iss, path: iss.path ? [${util.esc(keyMap[key])}, ...iss.path] : [${util.esc(keyMap[key])}]
+          doc.write(`if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({ ...iss, path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
         })));`);
         });
         doc.write(`}`);
@@ -1109,7 +1139,7 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
     });
 
     inst._parse = (payload, ctx) => {
-      const { shape, keys, optionals, keySet } = _normalized.value;
+      const { shape, keys, optionalKeys, keySet } = _normalized.value;
       const { value: input } = payload;
 
       if (!util.isObject(input)) {
@@ -1117,8 +1147,7 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
           expected: "object",
           code: "invalid_type",
           input,
-          def,
-          abort: true,
+          inst,
         });
         return payload;
       }
@@ -1126,10 +1155,10 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
       const fast = util.allowsEval.value && ctx.async === false;
       const proms: Promise<any>[] = [];
 
-      if (fast) {
+      if (fast && !ctx.skipFast) {
         // always synchronous
         // this overwrites payload.value
-        fastpass.value(shape, payload, ctx);
+        fastpass.value(inst._def.shape, payload, ctx);
       } else {
         payload.value = {};
         for (const key of keys) {
@@ -1137,7 +1166,15 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
 
           // do not add omitted optional keys
           if (!(key in input)) {
-            if (optionals.has(key)) continue;
+            if (optionalKeys.has(key)) continue;
+            payload.issues.push({
+              code: "invalid_type",
+              path: [key],
+              expected: "nonoptional",
+              note: `Missing required key: "${key}"`,
+              input,
+              inst,
+            });
           }
 
           const r = valueSchema._run({ value: input[key], issues: [], $payload: true }, ctx);
@@ -1173,7 +1210,7 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
             code: "unrecognized_keys",
             keys: unrecognized,
             input,
-            def,
+            inst,
           });
         }
       }
@@ -1192,45 +1229,83 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
 // looser type is required for recursive inference
 export type $ZodLooseShape = Readonly<Record<string, any>>;
 
+// export type $InferInterfaceOutput<
+//   T extends $ZodLooseShape,
+//   Extra extends Record<string, unknown> = Record<string, unknown>,
+// > = string extends keyof T
+//   ? Record<string, unknown>
+//   : util.Flatten<
+//       {
+//         -readonly [k in keyof T as k extends `${infer K}?` ? K : never]?: T[k]["_output"];
+//       } & {
+//         -readonly [k in Exclude<keyof T, `${string}?`> as k extends `?${infer K}` ? K : k]: T[k]["_output"];
+//       } & Extra
+//     >;
+
+// export type $InferInterfaceInput<
+//   T extends $ZodLooseShape,
+//   Extra extends Record<string, unknown> = Record<string, unknown>,
+// > = string extends keyof T
+//   ? Record<string, unknown>
+//   : util.Flatten<
+//       {
+//         -readonly [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : never]?: T[k]["_input"];
+//       } & {
+//         -readonly [k in Exclude<keyof T, `${string}?` | `?${string}`>]: T[k]["_input"];
+//       } & Extra
+//     >;
+
 export type $InferInterfaceOutput<
   T extends $ZodLooseShape,
-  Extra extends Record<string, unknown> = Record<string, unknown>,
+  Params extends $ZodInterfaceNamedParams,
 > = string extends keyof T
   ? Record<string, unknown>
   : util.Flatten<
       {
-        -readonly [k in keyof T as k extends `${infer K}?` ? K : never]?: T[k]["_output"];
+        -readonly [k in Params["optional"]]?: T[k]["_output"];
       } & {
-        -readonly [k in Exclude<keyof T, `${string}?`> as k extends `?${infer K}` ? K : k]: T[k]["_output"];
-      } & Extra
+        -readonly [k in Exclude<keyof T, Params["optional"]>]: T[k]["_output"];
+      } & Params["extra"]
     >;
 
 export type $InferInterfaceInput<
   T extends $ZodLooseShape,
-  Extra extends Record<string, unknown> = Record<string, unknown>,
+  Params extends $ZodInterfaceNamedParams,
 > = string extends keyof T
   ? Record<string, unknown>
-  : util.Flatten<
-      {
-        -readonly [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : never]?: T[k]["_input"];
-      } & {
-        -readonly [k in Exclude<keyof T, `${string}?` | `?${string}`>]: T[k]["_input"];
-      } & Extra
-    >;
+  : $ZodInterfaceNamedParams extends Params
+    ? Record<string, unknown>
+    : util.Flatten<
+        {
+          -readonly [k in Params["optional"] | Params["defaulted"]]?: T[k]["_input"];
+        } & {
+          -readonly [k in Exclude<keyof T, Params["optional"] | Params["defaulted"]>]: T[k]["_input"];
+        } & Params["extra"]
+      >;
 
-export interface $ZodInterfaceDef extends $ZodObjectLikeDef {
+export interface $ZodInterfaceDef<out Shape extends $ZodLooseShape = $ZodLooseShape> extends $ZodObjectLikeDef<Shape> {
   type: "interface";
 }
 
+export interface $ZodInterfaceNamedParams {
+  optional: string;
+  defaulted: string;
+  extra: Record<string, unknown>;
+}
 export interface $ZodInterface<
-  /** @ts-ignore Cast variance */
-  out Shape extends $ZodLooseShape = $ZodLooseShape,
-  out Extra extends Record<string, unknown> = Record<string, unknown>,
-> extends $ZodObjectLike<$InferInterfaceOutput<Shape, Extra>, $InferInterfaceInput<Shape, Extra>> {
-  _def: $ZodInterfaceDef;
-  _shape: Shape;
-  _extra: Extra;
+  Shape extends $ZodLooseShape = $ZodLooseShape,
+  Params extends $ZodInterfaceNamedParams = {
+    optional: string & keyof Shape;
+    defaulted: string & keyof Shape;
+    extra: {};
+  },
+> extends $ZodObjectLike<$InferInterfaceOutput<Shape, Params>, $InferInterfaceInput<Shape, Params>> {
   _subtype: "interface";
+  _def: $ZodInterfaceDef<Shape>;
+  _shape: Shape;
+  _optional: Params["optional"];
+  _defaulted: Params["defaulted"];
+  _extra: Params["extra"];
 }
 
 export const $ZodInterface: base.$constructor<$ZodInterface> = /*@__PURE__*/ base.$constructor(
@@ -1251,15 +1326,22 @@ type OptionalOutKeys<T extends $ZodShape> = {
 type OptionalOutProps<T extends $ZodShape> = {
   [k in OptionalOutKeys<T>]?: T[k]["_output"];
 };
-type RequiredOutKeys<T extends $ZodShape> = {
-  [k in keyof T]: T[k] extends { _qout: "true" } ? never : k;
-}[keyof T];
+// type OptionalOutProps<T extends $ZodShape> = {
+//   [k in keyof T]?: T[k]["_output"];
+// };
+
+// type RequiredOutKeys<T extends $ZodShape> = {
+//   [k in keyof T]: T[k] extends { _qout: "true" } ? never : k;
+// }[keyof T];
+// type RequiredOutProps<T extends $ZodShape> = {
+//   [k in RequiredOutKeys<T>]: T[k]["_output"];
+// };
 type RequiredOutProps<T extends $ZodShape> = {
-  [k in RequiredOutKeys<T>]: T[k]["_output"];
+  [k in keyof T as T[k]["_qout"] extends "true" ? never : k]-?: T[k]["_output"];
 };
-export type $InferObjectOutput<T extends $ZodShape, Extra extends Record<string, unknown>> = util.Flatten<
-  ({} extends T ? object : OptionalOutProps<T> & RequiredOutProps<T>) & Extra
->;
+export type $InferObjectOutput<T extends $ZodShape, Extra extends Record<string, unknown>> = {} extends T
+  ? object & Extra
+  : util.Flatten<OptionalOutProps<T> & RequiredOutProps<T>> & Extra;
 
 // type Empty = {};
 // type RecordNever = Record<never, unknown>;
@@ -1298,7 +1380,7 @@ export type $InferObjectInput<T extends $ZodShape, Extra extends Record<string, 
   ({} extends T ? object : OptionalInProps<T> & RequiredInProps<T>) & Extra
 >;
 
-export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $ZodObjectLikeDef {
+export interface $ZodObjectDef<Shape extends $ZodShape = $ZodShape> extends $ZodObjectLikeDef<Shape> {
   type: "object";
   shape: Shape;
 }
@@ -1307,10 +1389,11 @@ export interface $ZodObject<
   Shape extends $ZodShape = $ZodShape,
   Extra extends Record<string, unknown> = Record<string, unknown>,
 > extends $ZodObjectLike<$InferObjectOutput<Shape, Extra>, $InferObjectInput<Shape, Extra>> {
+  _subtype: "object";
   _def: $ZodObjectDef<Shape>;
   _shape: Shape;
-  _subtype: "object";
   _extra: Extra;
+  // _params: {extra: Extra};
 }
 
 export const $ZodObject: base.$constructor<$ZodObject> = /*@__PURE__*/ base.$constructor("$ZodObject", (inst, def) => {
@@ -1338,7 +1421,7 @@ export interface $ZodUnion<T extends readonly base.$ZodType[] = readonly base.$Z
 function handleUnionResults(
   results: base.$ParsePayload[],
   final: base.$ParsePayload,
-  def: $ZodUnionDef,
+  inst: $ZodUnion,
   ctx?: base.$ParseContext
 ) {
   for (const result of results) {
@@ -1351,7 +1434,7 @@ function handleUnionResults(
   final.issues.push({
     code: "invalid_union",
     input: final.value,
-    def,
+    inst,
     errors: results.map((result) => result.issues.map((iss) => base.finalizeIssue(iss, ctx))),
   });
 
@@ -1382,9 +1465,9 @@ export const $ZodUnion: base.$constructor<$ZodUnion> = /*@__PURE__*/ base.$const
       }
     }
 
-    if (!async) return handleUnionResults(results as base.$ParsePayload[], payload, def, ctx);
+    if (!async) return handleUnionResults(results as base.$ParsePayload[], payload, inst, ctx);
     return Promise.all(results).then((results) => {
-      return handleUnionResults(results as base.$ParsePayload[], payload, def, ctx);
+      return handleUnionResults(results as base.$ParsePayload[], payload, inst, ctx);
     });
   };
 });
@@ -1437,9 +1520,11 @@ export const $ZodDiscriminatedUnion: base.$constructor<$ZodDiscriminatedUnion> =
           });
         const _o = _disc.get(key)!;
         for (const v of o.values) {
-          if (_o.values.has(v)) {
+          // Removed to account for unions of unions
+          // Some schemas may have the same discriminator value in this case
+          /* if (_o.values.has(v)) {
             throw new Error(`Duplicate discriminator value: ${String(v)}`);
-          }
+          } */
           _o.values.add(v);
         }
         for (const m of o.maps) _o.maps.push(m);
@@ -1463,7 +1548,7 @@ export const $ZodDiscriminatedUnion: base.$constructor<$ZodDiscriminatedUnion> =
           code: "invalid_type",
           expected: "object",
           input,
-          def,
+          inst,
         });
         return payload;
       }
@@ -1490,7 +1575,7 @@ export const $ZodDiscriminatedUnion: base.$constructor<$ZodDiscriminatedUnion> =
         errors: [],
         note: "No matching discriminator",
         input,
-        def,
+        inst,
       });
       return payload;
     };
@@ -1648,7 +1733,7 @@ export const $ZodIntersection: base.$constructor<$ZodIntersection> = /*@__PURE__
 /////////////////////////////////////////
 
 export interface $ZodTupleDef<
-  T extends ZodTupleItems = ZodTupleItems,
+  T extends $ZodTupleItems = $ZodTupleItems,
   Rest extends base.$ZodType | null = base.$ZodType | null,
 > extends base.$ZodTypeDef {
   type: "tuple";
@@ -1656,15 +1741,15 @@ export interface $ZodTupleDef<
   rest: Rest;
 }
 
-type ZodTupleItems = readonly base.$ZodType[];
-export type $InferTupleInputType<T extends ZodTupleItems, Rest extends base.$ZodType | null> = [
+export type $ZodTupleItems = readonly base.$ZodType[];
+export type $InferTupleInputType<T extends $ZodTupleItems, Rest extends base.$ZodType | null> = [
   ...TupleInputTypeWithOptionals<T>,
   ...(Rest extends base.$ZodType ? Rest["_input"][] : []),
 ];
-type TupleInputTypeNoOptionals<T extends ZodTupleItems> = {
+type TupleInputTypeNoOptionals<T extends $ZodTupleItems> = {
   [k in keyof T]: T[k]["_input"];
 };
-type TupleInputTypeWithOptionals<T extends ZodTupleItems> = T extends [
+type TupleInputTypeWithOptionals<T extends $ZodTupleItems> = T extends readonly [
   ...infer Prefix extends base.$ZodType[],
   infer Tail extends base.$ZodType,
 ]
@@ -1673,14 +1758,14 @@ type TupleInputTypeWithOptionals<T extends ZodTupleItems> = T extends [
     : TupleInputTypeNoOptionals<T>
   : [];
 
-export type $InferTupleOutputType<T extends ZodTupleItems, Rest extends base.$ZodType | null> = [
+export type $InferTupleOutputType<T extends $ZodTupleItems, Rest extends base.$ZodType | null> = [
   ...TupleOutputTypeWithOptionals<T>,
   ...(Rest extends base.$ZodType ? Rest["_output"][] : []),
 ];
-type TupleOutputTypeNoOptionals<T extends ZodTupleItems> = {
+type TupleOutputTypeNoOptionals<T extends $ZodTupleItems> = {
   [k in keyof T]: T[k]["_output"];
 };
-type TupleOutputTypeWithOptionals<T extends ZodTupleItems> = T extends [
+type TupleOutputTypeWithOptionals<T extends $ZodTupleItems> = T extends readonly [
   ...infer Prefix extends base.$ZodType[],
   infer Tail extends base.$ZodType,
 ]
@@ -1698,7 +1783,7 @@ function handleTupleResult(result: base.$ParsePayload, final: base.$ParsePayload
 }
 
 export interface $ZodTuple<
-  T extends ZodTupleItems = ZodTupleItems,
+  T extends $ZodTupleItems = $ZodTupleItems,
   Rest extends base.$ZodType | null = base.$ZodType | null,
 > extends base.$ZodType<$InferTupleOutputType<T, Rest>, $InferTupleInputType<T, Rest>> {
   _def: $ZodTupleDef<T, Rest>;
@@ -1708,22 +1793,14 @@ export interface $ZodTuple<
 export const $ZodTuple: base.$constructor<$ZodTuple> = /*@__PURE__*/ base.$constructor("$ZodTuple", (inst, def) => {
   base.$ZodType.init(inst, def);
   const items = def.items;
-  // const itemsLength = items.length;
-  // const optIndex = itemsLength;
   const optStart = items.length - [...items].reverse().findIndex((item) => item._qout !== "true");
-
-  // [string, number, string, boolean, string?, number?];
-  // optStart = 3
-  // first non-true index is 2
-  // length is 5
-  //
 
   inst._parse = (payload, ctx) => {
     const input = payload.value;
     if (!Array.isArray(input)) {
       payload.issues.push({
         input,
-        def,
+        inst,
         expected: "tuple",
         code: "invalid_type",
       });
@@ -1738,11 +1815,11 @@ export const $ZodTuple: base.$constructor<$ZodTuple> = /*@__PURE__*/ base.$const
 
     if (!def.rest) {
       const tooBig = input.length > items.length;
-      const tooSmall = input.length < optStart;
+      const tooSmall = input.length < optStart - 1;
       if (tooBig || tooSmall) {
         payload.issues.push({
           input,
-          def,
+          inst,
           origin: "array" as const,
           ...(tooBig ? { code: "too_big", maximum: items.length } : { code: "too_small", minimum: items.length }),
         });
@@ -1850,7 +1927,7 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
         expected: "record",
         code: "invalid_type",
         input,
-        def,
+        inst,
       });
       return payload;
     }
@@ -1894,7 +1971,7 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
         payload.issues.push({
           code: "unrecognized_keys",
           input,
-          def,
+          inst,
           keys: unrecognized,
         });
       }
@@ -1914,7 +1991,7 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
             issues: keyResult.issues.map((iss) => base.finalizeIssue(iss, ctx)),
             input: key,
             path: [key],
-            def,
+            inst,
           });
           continue;
         }
@@ -1973,20 +2050,18 @@ function handleMapResult(
   final: base.$ParsePayload<Map<unknown, unknown>>,
   key: unknown,
   input: Map<any, any>,
-  def: $ZodMapDef,
+  inst: $ZodMap,
   ctx?: base.$ParseContext | undefined
 ): void {
   if (keyResult.issues.length) {
-    // if (!fail) fail = new base.$ZodFailure();
     if (util.propertyKeyTypes.has(typeof key)) {
       final.issues.push(...util.prefixIssues(key as PropertyKey, keyResult.issues));
-      // fail = base.mergeFails(fail, keyResult, key as PropertyKey);
     } else {
       final.issues.push({
         origin: "map",
         code: "invalid_key",
         input,
-        def,
+        inst,
         issues: keyResult.issues.map((iss) => base.finalizeIssue(iss, ctx)),
       });
     }
@@ -2002,7 +2077,7 @@ function handleMapResult(
         origin: "map",
         code: "invalid_element",
         input,
-        def,
+        inst,
         key: key,
         issues: valueResult.issues.map((iss) => base.finalizeIssue(iss, ctx)),
       });
@@ -2023,7 +2098,7 @@ export const $ZodMap: base.$constructor<$ZodMap> = /*@__PURE__*/ base.$construct
         expected: "map",
         code: "invalid_type",
         input,
-        def,
+        inst,
       });
       return payload;
     }
@@ -2038,7 +2113,7 @@ export const $ZodMap: base.$constructor<$ZodMap> = /*@__PURE__*/ base.$construct
       if (keyResult instanceof Promise || valueResult instanceof Promise) {
         proms.push(
           Promise.all([keyResult, valueResult]).then(([keyResult, valueResult]) => {
-            handleMapResult(keyResult, valueResult, payload, key, input, def, ctx);
+            handleMapResult(keyResult, valueResult, payload, key, input, inst, ctx);
           })
         );
       } else {
@@ -2048,7 +2123,7 @@ export const $ZodMap: base.$constructor<$ZodMap> = /*@__PURE__*/ base.$construct
           payload,
           key,
           input,
-          def,
+          inst,
           ctx
         );
       }
@@ -2093,7 +2168,7 @@ export const $ZodSet: base.$constructor<$ZodSet> = /*@__PURE__*/ base.$construct
     if (!(input instanceof Set)) {
       payload.issues.push({
         input,
-        def,
+        inst,
         expected: "set",
         code: "invalid_type",
       });
@@ -2171,7 +2246,7 @@ export const $ZodEnum: base.$constructor<$ZodEnum> = /*@__PURE__*/ base.$constru
       code: "invalid_value",
       values,
       input,
-      def,
+      inst,
     });
     return payload;
   };
@@ -2190,7 +2265,7 @@ export interface $ZodLiteralDef extends base.$ZodTypeDef {
   values: util.LiteralArray;
 }
 
-export interface $ZodLiteral<T extends util.Literal = util.Literal> extends base.$ZodType<T, T> {
+export interface $ZodLiteral<T extends util.Primitive = util.Primitive> extends base.$ZodType<T, T> {
   _def: $ZodLiteralDef;
   _values: base.$PrimitiveSet;
   _pattern: RegExp;
@@ -2206,7 +2281,7 @@ export const $ZodLiteral: base.$constructor<$ZodLiteral> = /*@__PURE__*/ base.$c
     inst._pattern = new RegExp(
       `^(${def.values
         .filter((k) => util.propertyKeyTypes.has(typeof k))
-        .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o.toString()))
+        .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? o.toString() : String(o)))
         .join("|")})$`
     );
 
@@ -2219,7 +2294,7 @@ export const $ZodLiteral: base.$constructor<$ZodLiteral> = /*@__PURE__*/ base.$c
         code: "invalid_value",
         values: def.values,
         input,
-        def,
+        inst,
       });
       return payload;
     };
@@ -2234,38 +2309,38 @@ export const $ZodLiteral: base.$constructor<$ZodLiteral> = /*@__PURE__*/ base.$c
 ////////////////////////////////////////
 ////////////////////////////////////////
 
-export interface $ZodConstDef extends base.$ZodTypeDef {
-  type: "const";
-  value: unknown;
-}
+// export interface $ZodConstDef extends base.$ZodTypeDef {
+//   type: "const";
+//   value: unknown;
+// }
 
-export interface $ZodConst<T extends util.Literal = util.Literal> extends base.$ZodType<T, T> {
-  _def: $ZodConstDef;
-  _values: base.$PrimitiveSet;
-  _pattern: RegExp;
-  _isst: errors.$ZodIssueInvalidValue;
-}
+// export interface $ZodConst<T extends util.Literal = util.Literal> extends base.$ZodType<T, T> {
+//   _def: $ZodConstDef;
+//   _values: base.$PrimitiveSet;
+//   _pattern: RegExp;
+//   _isst: errors.$ZodIssueInvalidValue;
+// }
 
-export const $ZodConst: base.$constructor<$ZodConst> = /*@__PURE__*/ base.$constructor("$ZodConst", (inst, def) => {
-  base.$ZodType.init(inst, def);
+// export const $ZodConst: base.$constructor<$ZodConst> = /*@__PURE__*/ base.$constructor("$ZodConst", (inst, def) => {
+//   base.$ZodType.init(inst, def);
 
-  if (util.primitiveTypes.has(typeof def.value) || def.value === null) {
-    inst._values = new Set<util.Primitive>(def.value as any);
-  }
+//   if (util.primitiveTypes.has(typeof def.value) || def.value === null) {
+//     inst._values = new Set<util.Primitive>(def.value as any);
+//   }
 
-  if (util.propertyKeyTypes.has(typeof def.value)) {
-    inst._pattern = new RegExp(
-      `^(${typeof def.value === "string" ? util.escapeRegex(def.value) : (def.value as any).toString()})$`
-    );
-  } else {
-    throw new Error("Const value cannot be converted to regex");
-  }
+//   if (util.propertyKeyTypes.has(typeof def.value)) {
+//     inst._pattern = new RegExp(
+//       `^(${typeof def.value === "string" ? util.escapeRegex(def.value) : (def.value as any).toString()})$`
+//     );
+//   } else {
+//     throw new Error("Const value cannot be converted to regex");
+//   }
 
-  inst._parse = (payload, _ctx) => {
-    payload.value = def.value; // always override
-    return payload;
-  };
-});
+//   inst._parse = (payload, _ctx) => {
+//     payload.value = def.value; // always override
+//     return payload;
+//   };
+// });
 
 //////////////////////////////////////////
 //////////////////////////////////////////
@@ -2294,7 +2369,7 @@ export const $ZodFile: base.$constructor<$ZodFile> = /*@__PURE__*/ base.$constru
       expected: "file",
       code: "invalid_type",
       input,
-      def,
+      inst,
     });
     return payload;
   };
@@ -2308,8 +2383,8 @@ export const $ZodFile: base.$constructor<$ZodFile> = /*@__PURE__*/ base.$constru
 //////////////////////////////////////////////
 //////////////////////////////////////////////
 export interface $ZodTransformDef extends base.$ZodTypeDef {
-  type: "effect";
-  effect: (input: unknown, payload: base.$ParsePayload<unknown>) => util.MaybeAsync<unknown>;
+  type: "transform";
+  transform: (input: unknown, payload: base.$ParsePayload<unknown>) => util.MaybeAsync<unknown>;
   abort?: boolean | undefined;
 }
 export interface $ZodTransform<O = unknown, I = unknown> extends base.$ZodType<O, I> {
@@ -2322,7 +2397,7 @@ export const $ZodTransform: base.$constructor<$ZodTransform> = /*@__PURE__*/ bas
   (inst, def) => {
     base.$ZodType.init(inst, def);
     inst._parse = (payload, _ctx) => {
-      const _output = def.effect(payload.value, payload);
+      const _output = def.transform(payload.value, payload);
       if (_ctx.async) {
         const output = _output instanceof Promise ? _output : Promise.resolve(_output);
         return output.then((output) => {
@@ -2386,34 +2461,34 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-export interface $ZodNullableDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
-  type: "nullable";
-  innerType: T;
-}
+// export interface $ZodNullableDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
+//   type: "nullable";
+//   innerType: T;
+// }
 
-export interface $ZodNullable<T extends base.$ZodType = base.$ZodType>
-  extends base.$ZodType<T["_output"] | null, T["_input"] | null> {
-  _def: $ZodNullableDef<T>;
-  _qin: T["_qin"];
-  _qout: T["_qout"];
-  _isst: never;
-  _values: T["_values"];
-}
+// export interface $ZodNullable<T extends base.$ZodType = base.$ZodType>
+//   extends base.$ZodType<T["_output"] | null, T["_input"] | null> {
+//   _def: $ZodNullableDef<T>;
+//   _qin: T["_qin"];
+//   _qout: T["_qout"];
+//   _isst: never;
+//   _values: T["_values"];
+// }
 
-export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.$constructor(
-  "$ZodNullable",
-  (inst, def) => {
-    base.$ZodType.init(inst, def);
-    inst._qin = def.innerType._qin;
-    inst._qout = def.innerType._qout;
-    if (def.innerType._values) inst._values = new Set([...def.innerType._values, null]);
+// export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.$constructor(
+//   "$ZodNullable",
+//   (inst, def) => {
+//     base.$ZodType.init(inst, def);
+//     inst._qin = def.innerType._qin;
+//     inst._qout = def.innerType._qout;
+//     if (def.innerType._values) inst._values = new Set([...def.innerType._values, null]);
 
-    inst._parse = (payload, ctx) => {
-      if (payload.value === null) return payload;
-      return def.innerType._run(payload, ctx);
-    };
-  }
-);
+//     inst._parse = (payload, ctx) => {
+//       if (payload.value === null) return payload;
+//       return def.innerType._run(payload, ctx);
+//     };
+//   }
+// );
 
 ////////////////////////////////////////////
 ////////////////////////////////////////////
@@ -2490,13 +2565,13 @@ export interface $ZodNonOptional<T extends base.$ZodType = base.$ZodType>
   _values: T["_values"];
 }
 
-function handleNonOptionalResult(payload: base.$ParsePayload, def: $ZodNonOptionalDef) {
+function handleNonOptionalResult(payload: base.$ParsePayload, inst: $ZodNonOptional) {
   if (payload.value === undefined) {
     payload.issues.push({
       code: "invalid_type",
       expected: "nonoptional",
       input: payload.value,
-      def,
+      inst,
     });
   }
   return payload;
@@ -2510,9 +2585,9 @@ export const $ZodNonOptional: base.$constructor<$ZodNonOptional> = /*@__PURE__*/
     inst._parse = (payload, ctx) => {
       const result = def.innerType._run(payload, ctx);
       if (result instanceof Promise) {
-        return result.then((result) => handleNonOptionalResult(result, def));
+        return result.then((result) => handleNonOptionalResult(result, inst));
       }
-      return handleNonOptionalResult(result, def);
+      return handleNonOptionalResult(result, inst);
     };
   }
 );
@@ -2682,7 +2757,7 @@ export const $ZodNaN: base.$constructor<$ZodNaN> = /*@__PURE__*/ base.$construct
     if (typeof payload.value !== "number" || !Number.isNaN(payload.value)) {
       payload.issues.push({
         input: payload.value,
-        def,
+        inst,
         expected: "nan",
         code: "invalid_type",
       });
@@ -2796,7 +2871,7 @@ export interface $ZodTemplateLiteral<Template extends string = string> extends b
   _isst: errors.$ZodIssueInvalidType;
 }
 
-export type $LiteralPart = string | number | boolean | null | undefined;
+export type $LiteralPart = Exclude<util.Literal, symbol>; //string | number | boolean | null | undefined;
 export interface $SchemaPart extends base.$ZodType<$LiteralPart, $LiteralPart> {
   _pattern: RegExp;
 }
@@ -2840,7 +2915,7 @@ export const $ZodTemplateLiteral: base.$constructor<$ZodTemplateLiteral> = /*@__
       if (typeof payload.value !== "string") {
         payload.issues.push({
           input: payload.value,
-          def,
+          inst,
           expected: "template_literal",
           code: "invalid_type",
         });
@@ -2850,7 +2925,7 @@ export const $ZodTemplateLiteral: base.$constructor<$ZodTemplateLiteral> = /*@__
       if (!inst._pattern.test(payload.value)) {
         payload.issues.push({
           input: payload.value,
-          def,
+          inst,
           expected: "template_literal",
           code: "invalid_type",
           pattern: inst._pattern,
@@ -2901,15 +2976,34 @@ export const $ZodPromise: base.$constructor<$ZodPromise> = /*@__PURE__*/ base.$c
 //////////                    //////////
 ////////////////////////////////////////
 ////////////////////////////////////////
-export interface $ZodCustomDef extends base.$ZodTypeDef, base.$ZodCheckDef {
+export interface $ZodCustomDef<O = unknown> extends base.$ZodTypeDef, base.$ZodCheckDef {
   type: "custom";
   check: "custom";
-  fn: base.$ZodCheck["_check"];
+  path?: PropertyKey[] | undefined;
+  error?: errors.$ZodErrorMap | undefined;
+  params?: Record<string, any> | undefined;
+  fn: (arg: O) => unknown; // base.$ZodCheck<O>["_check"];
 }
+
 export interface $ZodCustom<O = unknown, I = unknown> extends base.$ZodType<O, I>, base.$ZodCheck<O> {
   _def: $ZodCustomDef;
   _issc: errors.$ZodIssue;
   _isst: never;
+}
+
+function handleRefineResult(result: unknown, payload: base.$ParsePayload, input: unknown, inst: $ZodCustom): void {
+  if (!result) {
+    payload.issues.push(
+      util.issue({
+        code: "custom",
+        input,
+        inst, // incorporates params.error into issue reporting
+        path: inst._def.path, // incorporates params.error into issue reporting
+        continue: !inst._def.abort,
+        params: inst._def.params,
+      })
+    );
+  }
 }
 
 export const $ZodCustom: base.$constructor<$ZodCustom<unknown>> = base.$constructor("$ZodCustom", (inst, def) => {
@@ -2922,6 +3016,53 @@ export const $ZodCustom: base.$constructor<$ZodCustom<unknown>> = base.$construc
     return payload;
   };
 
-  // inst._check = (_) => def.fn(_ as any);
-  inst._check = (_) => def.fn(_ as any);
+  inst._check = (payload) => {
+    const input = payload.value;
+    const r = def.fn(input as any);
+    if (r instanceof Promise) {
+      return r.then((r) => handleRefineResult(r, payload, input, inst));
+    }
+    handleRefineResult(r, payload, input, inst);
+    return;
+  };
 });
+
+////////   FIRST PARTY TYPES   ////////
+
+export type $ZodFirstPartySchemaTypes =
+  | $ZodString
+  | $ZodNumber
+  | $ZodBigInt
+  | $ZodBoolean
+  | $ZodDate
+  | $ZodSymbol
+  | $ZodUndefined
+  | $ZodNull
+  | $ZodAny
+  | $ZodUnknown
+  | $ZodNever
+  | $ZodVoid
+  | $ZodArray
+  | $ZodObject
+  | $ZodInterface
+  | $ZodUnion
+  | $ZodIntersection
+  | $ZodTuple
+  | $ZodRecord
+  | $ZodMap
+  | $ZodSet
+  | $ZodLiteral
+  | $ZodEnum
+  | $ZodPromise
+  | $ZodOptional
+  | $ZodDefault
+  | $ZodTemplateLiteral
+  | $ZodCustom
+  | $ZodTransform
+  | $ZodNonOptional
+  | $ZodReadonly
+  | $ZodNaN
+  | $ZodPipe
+  | $ZodSuccess
+  | $ZodCatch
+  | $ZodFile;

@@ -2,11 +2,14 @@
 
 import * as core from "@zod/core";
 
+export * as core from "@zod/core";
 export type {
-  /** @deprecated Use `z.output<>` instead. */
+  /** @deprecated Use `z.output<T>` instead. */
   output as TypeOf,
-  /** @deprecated Use `z.output<>` instead. */
+  /** @deprecated Use `z.output<T>` instead. */
   output as Infer,
+  /** @deprecated Use `z.core.$ZodFirstPartySchemaTypes` instead */
+  $ZodFirstPartySchemaTypes as ZodFirstPartySchemaTypes,
 } from "@zod/core";
 
 /** @deprecated Use the raw string literal codes instead, e.g. "invalid_type". */
@@ -47,17 +50,20 @@ export type inferFormattedError<T extends core.$ZodType<any, any>, U = string> =
 export type BRAND<T extends string | number | symbol = string | number | symbol> = {
   [core.BRAND]: { [k in T]: true };
 };
-export { BRAND } from "@zod/core";
-export { config } from "@zod/core";
+export { BRAND, config } from "@zod/core";
 
 /** @deprecated Use `z.config(params)` instead. */
 export function setErrorMap(map: core.$ZodErrorMap): void {
   core.config({
-    error: map,
+    customError: map,
   });
 }
 
 /** @deprecated Use `z.config()` instead. */
 export function getErrorMap(): core.$ZodErrorMap<core.$ZodIssue> | undefined {
-  return core.config().error;
+  return core.config().customError;
 }
+
+export { parse, safeParse, parseAsync, safeParseAsync } from "@zod/core";
+
+export { json, stringbool } from "@zod/core";

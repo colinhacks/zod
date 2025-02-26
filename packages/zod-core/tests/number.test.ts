@@ -18,7 +18,7 @@ test("z.number async", async () => {
   await expect(() => z.parseAsync(a, -123)).rejects.toThrow();
   await expect(() => z.parseAsync(a, "123")).rejects.toThrow();
 
-  // a.check(()=>)
+  // a.$check(()=>)
 });
 
 test("z.int", () => {

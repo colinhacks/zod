@@ -1,22 +1,35 @@
-import * as zc from "@zod/core";
-import { makeSchema } from "./benchUtil.js";
+import * as z4 from "zod";
+import * as z3 from "zod3";
+// import { makeSchema } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-const { zod3, zod4 } = makeSchema((z) =>
-  z.object({
-    number: z.number(),
-    negNumber: z.number(),
-    maxNumber: z.number(),
-    string: z.string(),
-    longString: z.string(),
-    boolean: z.boolean(),
-    deeplyNested: z.object({
-      foo: z.string(),
-      num: z.number(),
-      bool: z.boolean(),
-    }),
-  })
-);
+const z3schema = z3.object({
+  number: z3.number(),
+  negNumber: z3.number(),
+  maxNumber: z3.number(),
+  string: z3.string(),
+  longString: z3.string(),
+  boolean: z3.boolean(),
+  deeplyNested: z3.object({
+    foo: z3.string(),
+    num: z3.number(),
+    bool: z3.boolean(),
+  }),
+});
+
+const z4schema = z4.object({
+  number: z4.number(),
+  negNumber: z4.number(),
+  maxNumber: z4.number(),
+  string: z4.string(),
+  longString: z4.string(),
+  boolean: z4.boolean(),
+  deeplyNested: z4.object({
+    foo: z4.string(),
+    num: z4.number(),
+    bool: z4.boolean(),
+  }),
+});
 
 const DATA = Array.from({ length: 1000 }, () =>
   Object.freeze({
@@ -35,15 +48,15 @@ const DATA = Array.from({ length: 1000 }, () =>
   })
 );
 
-console.log(zod3.safeParse(DATA[0]));
-console.log(zc.safeParse(zod4, DATA[0]));
+console.log(z3schema.safeParse(DATA[0]));
+console.log(z4schema.safeParse(DATA[0]));
 
 const bench = metabench("small: z.object().safeParseAsync", {
   zod3() {
-    for (const _ of DATA) zod3.safeParse(_);
+    for (const _ of DATA) z3schema.safeParse(_);
   },
   zod4() {
-    for (const _ of DATA) zc.safeParse(zod4, _);
+    for (const _ of DATA) z4schema.safeParse(_);
   },
 });
 

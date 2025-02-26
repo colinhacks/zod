@@ -12,24 +12,27 @@ z;
  * console.log(JSON.stringify(result, null, 2));
  * ```
  */
+// const schema = z.instanceof(Date).refine((d) => d.toString());
+// const data = null;
+// const result = schema.safeParse(data);
+// console.log(JSON.stringify(result, null, 2));
 
-const errorMap: z.ZodErrorMap = (issue) => {
-  if (issue.code === "invalid_type") {
-    if (issue.expected === "string") {
-      return { message: "bad type!" };
-    }
-  }
-  if (issue.code === "custom") {
-    return { message: `less-than-${issue.minimum}` };
-  }
-  return undefined;
-};
-
-const schema = z.string().refine((val) => val.length > 12, {
-  params: { minimum: 13 },
-  message: "override",
-  error: (iss) => (iss.input === undefined ? "asdf" : null),
+const SNamedEntity = z.interface({
+  id: z.string(),
+  set: z.string().optional(),
+  unset: z.string().optional(),
 });
-const data = "asdf";
-const result = schema.safeParse(data, { error: errorMap });
-console.log(JSON.stringify(result, null, 2));
+
+const result = await SNamedEntity.safeParse(
+  {
+    id: "asdf",
+    set: undefined,
+    unset: undefined,
+  },
+  {
+    // skipFast: true,
+  }
+);
+
+console.log(SNamedEntity._def.catchall);
+console.log(result);

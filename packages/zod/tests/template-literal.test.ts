@@ -53,7 +53,7 @@ const stringMin5 = z.templateLiteral(["", z.string().min(5)]);
 const stringLen5 = z.templateLiteral(["", z.string().length(5)]);
 const stringMin5Max10 = z.templateLiteral(["", z.string().min(5).max(10)]);
 const stringStartsWithMax5 = z.templateLiteral(["", z.string().startsWith("hello").max(5)]);
-const brandedString = z.templateLiteral(["", z.string().min(1).brand("myBrand")]);
+const brandedString = z.templateLiteral(["", z.string().min(1).$brand("myBrand")]);
 const anything = z.templateLiteral(["", z.any()]);
 
 const url = z.templateLiteral(["https://", z.string().regex(/\w+/), ".", z.enum(["com", "net"])]);
@@ -274,7 +274,7 @@ test("template literal unsupported args", () => {
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral([z.object({}).brand("brand")])
+    z.templateLiteral([z.object({}).$brand("brand")])
   ).toThrow();
   expect(() => z.templateLiteral([z.number().multipleOf(2)])).toThrow();
   expect(() => z.templateLiteral([z.string().emoji()])).toThrow();

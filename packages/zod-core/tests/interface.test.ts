@@ -1,4 +1,5 @@
 import * as z from "@zod/core";
+
 import { expect, expectTypeOf, test } from "vitest";
 
 test("z.interface", () => {
@@ -130,7 +131,7 @@ test("one to many", () => {
   }
 
   // C["_output"].d.c.d.c.d;
-  expectTypeOf<(typeof C)["_def"]["shape"]>().toEqualTypeOf<z.$ZodShape>();
+  // expectTypeOf<(typeof C)["_def"]["shape"]>().toEqualTypeOf<z.$ZodShape>();
   expectTypeOf<(typeof C)["_output"]>().toEqualTypeOf<_C>();
   expectTypeOf<(typeof D)["_output"]["c"]["d"][number]>().toEqualTypeOf<_D>();
 });
@@ -226,8 +227,48 @@ test("z.extend", () => {
   expect(z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
 });
 
+// clean A keys (util.CleanKeys<string>)
+// clean B keys
+// omit all A keys that are being overwritten by B
+// merge A and B
+// return new shape
+// type klasdf = util.CleanKeys;
+// type ExtendInterface<A extends z.$ZodLooseShape, B extends z.$ZodLooseShape> = util.Flatten<
+//   Omit<A, PropertyKey & util.CleanKeysMap<A>[keyof util.CleanKeysMap<B>]> & B
+// >;
+
+// type t1 = ExtendInterface<
+//   { "a?": string; "?b": string; c: string; d: string; e: string  },
+//   { a: string; b: string; c: string; "d?": string }
+// >;
+
+// function extend<T extends z.$ZodObjectLike, Shape extends z.$ZodShape>(
+//   schema: T,
+//   shape: Shape
+// ): T["_def"]["type"] extends "interface"
+//   ? z.$ZodInterface<util.ExtendInterface<T["_shape"], Shape>, util.ExtendInterfaceParams<T, Shape>>
+//   : z.$ZodObject<util.ExtendObject<T["_shape"], Shape>, T["_extra"]>;
+// function extend(schema: z.$ZodObjectLike, shape: z.$ZodShape): z.$ZodObjectLike {
+//   return util.extend(schema, shape);
+// }
+
+test("z.extend with optional properties", () => {
+  const a = z.interface({ "a?": z.string(), b: z.string() });
+  const b = z.extend(a, { "?a": z.string(), "b?": z.string() });
+  type b = z.infer<typeof b>;
+  expectTypeOf(b._def.shape).toEqualTypeOf<{
+    a: z.$ZodString<string>;
+    b: z.$ZodString<string>;
+  }>();
+  expectTypeOf<(typeof a)["_defaulted"]>().toEqualTypeOf<never>();
+  expectTypeOf<(typeof a)["_optional"]>().toEqualTypeOf<"a">();
+  expectTypeOf<(typeof b)["_defaulted"]>().toEqualTypeOf<"a">();
+  expectTypeOf<(typeof b)["_optional"]>().toEqualTypeOf<"b">();
+  expectTypeOf<b>().toEqualTypeOf<{ a: string; b?: string }>();
+});
+
 test("z.pick", () => {
-  const pickedSchema = z.pick(userSchema, { name: true, "email?": true });
+  const pickedSchema = z.pick(userSchema, { name: true, email: true });
   type PickedUser = z.infer<typeof pickedSchema>;
   expectTypeOf<PickedUser>().toEqualTypeOf<{ name: string; email?: string }>();
   expect(pickedSchema).toBeDefined();

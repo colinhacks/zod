@@ -26,8 +26,8 @@ test("z.function", () => {
 
 // test("z.function async", async () => {
 //   const b = z.function({
-//     args: z.tuple([z.string()]).check(async (_) => {}),
-//     returns: z.string().check(async (_) => {}),
+//     args: z.tuple([z.string()]).$check(async (_) => {}),
+//     returns: z.string().$check(async (_) => {}),
 //   });
 //   const myFuncAsync = b.implementAsync(async (name) => `Hello, ${name}!`);
 

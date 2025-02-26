@@ -688,6 +688,7 @@ test("z.templateLiteral", () => {
   expect(() => z.parse(d, "world123")).toThrow();
 
   // include literal union
+  const arg = z.literal(["aa", "bb"]);
   const e = z.templateLiteral([z.literal(["aa", "bb"]), z.number()]);
   type e = z.output<typeof e>;
   expectTypeOf<e>().toEqualTypeOf<`aa${number}` | `bb${number}`>();
@@ -714,15 +715,17 @@ test("z.custom", () => {
 test("z.check", () => {
   // this is a more flexible version of z.custom that accepts an arbitrary _parse logic
   // the function should return base.$ZodResult
-  const a = z.check<string>((ctx) => {
-    if (typeof ctx.value === "string") return;
-    ctx.issues.push({
-      code: "custom",
-      origin: "custom",
-      message: "Expected a string",
-      input: ctx.value,
-    });
-  });
+  const a = z.any().$check(
+    z.check<string>((ctx) => {
+      if (typeof ctx.value === "string") return;
+      ctx.issues.push({
+        code: "custom",
+        origin: "custom",
+        message: "Expected a string",
+        input: ctx.value,
+      });
+    })
+  );
   expect(z.safeParse(a, "hello")).toMatchObject({
     success: true,
     data: "hello",
@@ -783,8 +786,8 @@ test("z.transform", () => {
   expect(z.parse(a, 123)).toEqual("123");
 });
 
-test("z.brand()", () => {
-  const a = z.string().brand<"my-brand">();
+test("z.$brand()", () => {
+  const a = z.string().$brand<"my-brand">();
   type a = z.output<typeof a>;
   const branded = (_: a) => {};
   // @ts-expect-error

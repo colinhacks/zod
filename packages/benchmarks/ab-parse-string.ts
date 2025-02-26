@@ -5,7 +5,7 @@ import * as z from "@zod/core";
 
 const DATA = makeData(10000, () => randomString(10));
 
-const schema = z.string().check(z.minLength(5));
+const schema = z.string().$check(z.minLength(5));
 
 console.log(z.safeParse(schema, "asdfasdf"));
 console.log(z.safeParseB(schema, "asdfasdf"));

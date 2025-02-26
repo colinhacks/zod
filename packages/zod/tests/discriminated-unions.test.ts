@@ -293,17 +293,18 @@ test("wrong schema - missing discriminator", () => {
   }
 });
 
-test("wrong schema - duplicate discriminator values", () => {
-  try {
-    z.discriminatedUnion([
-      z.object({ type: z.literal("a"), a: z.string() }),
-      z.object({ type: z.literal("a"), b: z.string() }),
-    ]);
-    throw new Error();
-  } catch (e: any) {
-    expect(e.message.includes("Duplicate discriminator value")).toEqual(true);
-  }
-});
+// removed to account for unions of unions
+// test("wrong schema - duplicate discriminator values", () => {
+//   try {
+//     z.discriminatedUnion([
+//       z.object({ type: z.literal("a"), a: z.string() }),
+//       z.object({ type: z.literal("a"), b: z.string() }),
+//     ]);
+//     throw new Error();
+//   } catch (e: any) {
+//     expect(e.message.includes("Duplicate discriminator value")).toEqual(true);
+//   }
+// });
 
 test("async - valid", async () => {
   expect(

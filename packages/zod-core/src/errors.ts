@@ -90,7 +90,8 @@ export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
 
 export interface $ZodIssueCustom extends $ZodIssueBase {
   code?: "custom";
-  params?: Record<string, any>;
+  params?: Record<string, any> | undefined;
+  input: unknown;
 }
 
 ////////////////////////////////////////////
@@ -182,10 +183,12 @@ export type $ZodIssue =
   | $ZodIssueCustom;
 
 export type $ZodRawIssue<T extends $ZodIssueBase = $ZodIssue> = T extends any ? RawIssue<T> : never;
-type DefLike = { error?: $ZodErrorMap<never> | undefined };
+// type DefLike = { error?: $ZodErrorMap<never> | undefined };
 type RawIssue<T extends $ZodIssueBase> = util.Flatten<
   util.MakePartial<T, "message" | "path"> & {
-    def?: DefLike | undefined;
+    // def?: DefLike | undefined;
+    def?: never;
+    inst?: base.$ZodType | base.$ZodCheck;
     continue?: boolean | undefined;
     input?: unknown;
   } & Record<string, any>

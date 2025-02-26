@@ -68,7 +68,7 @@ Zod 2 is being retired and will not leave beta. This is due to some unintuitive 
   test.parse("12characters"); // => 24
   ```
 
-- **Type guards** (the `.check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
+- **Type guards** (the `.$check()` method) have been removed. Type guards interact with transformers in unintuitive ways so they were removed. Use `.safeParse` instead.
 
 - Object merging now behaves differently. If you merge two object schema (`A.merge(B)`), the fields of B will overwrite the fields of A if there are shared keys. This is how the `.extend` method already works. If you're looking to create an intersection of the two types, use `z.intersection(A, B)` or use the new `.and` method (`A.and(B)`).
 

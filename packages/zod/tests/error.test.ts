@@ -121,6 +121,13 @@ test("array minimum", () => {
   expect(result.error!.issues[0].message).toEqual(`Too small: expected array length to be >3 items`);
 });
 
+test("literal bigint default error message", () => {
+  const result = z.literal(BigInt(12)).safeParse(BigInt(13));
+  expect(result.success).toBe(false);
+  expect(result.error!.issues.length).toEqual(1);
+  expect(result.error!.issues[0].message).toEqual(`Invalid input: expected 12n`);
+});
+
 // implement test for semi-smart union logic that checks for type error on either left or right
 // test("union smart errors", () => {
 //   // expect.assertions(2);
@@ -342,7 +349,8 @@ test("inferFlattenedErrors", () => {
   const result = schemaWithTransform.safeParse({});
 
   expect(result.success).toBe(false);
-  const error: z.inferFlattenedErrors<typeof schemaWithTransform> = result.error!.flatten();
+  type ValidationErrors = z.inferFlattenedErrors<typeof schemaWithTransform>;
+  const error: ValidationErrors = result.error!.flatten();
   expect(error.formErrors).toEqual([]);
   expect(error.fieldErrors).toEqual({ foo: ["Invalid input: expected string"] });
 });
@@ -368,6 +376,7 @@ test("bound error map overrides contextual", () => {
 
 test("z.config customError ", () => {
   // support overrideErrorMap
+
   z.config({ customError: () => ({ message: "override" }) });
   const result4 = stringWithCustomError.min(10).safeParse("tooshort");
   expect(result4.success).toBe(false);

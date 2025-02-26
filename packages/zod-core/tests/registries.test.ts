@@ -11,7 +11,7 @@ test("globalRegistry", () => {
   reg.remove(a);
   expect(reg.has(a)).toEqual(false);
 
-  a.register(z.globalRegistry, "sup");
+  a.$register(z.globalRegistry, "sup");
   expect(z.globalRegistry.has(a)).toEqual(true);
   expect(z.globalRegistry.get(a)).toEqual("sup");
 
@@ -50,7 +50,7 @@ test("z.registry with schema constraints", () => {
   // @ts-expect-error
   fieldRegistry.add(z.number(), { name: "test" });
   // @ts-expect-error
-  z.number().register(fieldRegistry, { name: "test", description: "test" });
+  z.number().$register(fieldRegistry, { name: "test", description: "test" });
 });
 
 // test("z.namedRegistry", () => {

@@ -33,7 +33,7 @@ test("inference in checks", () => {
   const c = z.string([z.refine((val) => val.length)]);
   z.parse(c, "___");
   expect(() => z.parse(c, "")).toThrow();
-  const d = z.string().check(z.refine((val) => val.length));
+  const d = z.string().$check(z.refine((val) => val.length));
   z.parse(d, "___");
   expect(() => z.parse(d, "")).toThrow();
 });

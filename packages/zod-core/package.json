@@ -100,8 +100,5 @@
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm test && pnpm run build"
-  },
-  "dependencies": {
-    "effect": "^3.5.6"
   }
 }

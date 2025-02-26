@@ -1,3 +1,4 @@
+import type { $ZodConfig } from "../base.js";
 import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
@@ -96,7 +97,7 @@ const error: errors.$ZodErrorMap = (issue) => {
 
 export { error };
 
-export default function () {
+export default function (): { localeError: errors.$ZodErrorMap } {
   return {
     localeError: error,
   };

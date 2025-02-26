@@ -24,6 +24,7 @@ export * from "./checks.js";
 export function string(checks?: core.$ZodCheck<string>[]): schemas.ZodString;
 export function string(params?: string | core.$ZodStringParams, checks?: core.$ZodCheck<string>[]): schemas.ZodString;
 export function string(...args: any): schemas.ZodString {
+  // return core.string(...args);
   return factories._string(...args);
 }
 
@@ -352,7 +353,6 @@ export function never(...args: any[]): schemas.ZodNever {
 }
 
 // void
-
 function _void(checks?: core.$ZodCheck<void>[]): schemas.ZodVoid;
 function _void(params?: string | core.$ZodVoidParams, checks?: core.$ZodCheck<void>[]): schemas.ZodVoid;
 function _void(...args: any[]): schemas.ZodVoid {
@@ -375,9 +375,11 @@ export function object<T extends schemas.ZodShape>(
   shape?: T,
   params?: core.$ZodObjectLikeParams
 ): schemas.ZodObject<T, {}> {
+  // const cleaned = util.clean
   const def: core.$ZodObjectDef<schemas.ZodShape> = {
     type: "object",
     shape: shape ?? {},
+    optional: util.optionalObjectKeys(shape ?? {}),
     ...util.normalizeTypeParams(params),
   };
   return new schemas.ZodObject(def) as any;
@@ -391,6 +393,7 @@ export function strictObject<T extends schemas.ZodRawShape>(
   const def: core.$ZodObjectDef<T> = {
     type: "object",
     shape,
+    optional: util.optionalObjectKeys(shape ?? {}),
     catchall: never(),
     ...util.normalizeTypeParams(params),
   };
@@ -405,6 +408,7 @@ export function looseObject<T extends schemas.ZodRawShape>(
   const def: core.$ZodObjectDef<schemas.ZodShape> = {
     type: "object",
     shape,
+    optional: util.optionalObjectKeys(shape ?? {}),
     catchall: unknown(),
     ...util.normalizeTypeParams(params),
   };
@@ -415,13 +419,17 @@ export function looseObject<T extends schemas.ZodRawShape>(
 function _interface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: core.$ZodInterfaceParams
-): schemas.ZodInterface<T, Record<never, unknown>> {
+): schemas.ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
+  const cleaned = util.cleanInterfaceShape(shape);
   const def: core.$ZodInterfaceDef = {
     type: "interface",
-    shape,
+    shape: cleaned.shape,
+    optional: cleaned.optional,
+    // catchall: never(),
     ...util.normalizeTypeParams(params),
   };
   return new schemas.ZodInterface(def) as any;
+  // return core.interface(shape, params, schemas.ZodInterface) as any;
 }
 export { _interface as interface };
 
@@ -429,14 +437,16 @@ export { _interface as interface };
 export function strictInterface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: core.$ZodStrictInterfaceParams
-): schemas.ZodInterface<T, Record<never, unknown>> {
+): schemas.ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
+  const cleaned = util.cleanInterfaceShape(shape);
   const def: core.$ZodInterfaceDef = {
     type: "interface",
-    shape,
+    shape: cleaned.shape,
+    optional: cleaned.optional,
     catchall: never(),
     ...util.normalizeTypeParams(params),
   };
-  return new schemas.ZodInterface(def) as schemas.ZodInterface<T>;
+  return new schemas.ZodInterface(def) as any;
 }
 
 // looseInterface
@@ -444,14 +454,16 @@ export function strictInterface<T extends core.$ZodLooseShape>(
 export function looseInterface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: core.$ZodLooseInterfaceParams
-): schemas.ZodInterface<T, Record<string, unknown>> {
+): schemas.ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, Record<string, unknown>>> {
+  const cleaned = util.cleanInterfaceShape(shape);
   const def: core.$ZodInterfaceDef = {
     type: "interface",
     shape,
+    optional: cleaned.optional,
     catchall: unknown(),
     ...util.normalizeTypeParams(params),
   };
-  return new schemas.ZodInterface(def) as schemas.ZodInterface<T>;
+  return new schemas.ZodInterface(def) as any;
 }
 
 // // .keyof
@@ -466,7 +478,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //   T extends schemas.ZodObject,
 //   U extends core.$ZodLooseShape,
 // >(schema: T, shape: U): schemas.ZodObject<T["_def"]["shape"] & U> {
-//   return schema.clone({
+//   return schema.$clone({
 //     ...schema["_def"],
 //     shape: { ...schema["_def"].shape, ...shape },
 //     checks: [],
@@ -478,7 +490,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //   base: T,
 //   incoming: U
 // ): schemas.ZodObject<T["_def"]["shape"] & U["_def"]["shape"]> {
-//   return incoming.clone({
+//   return incoming.$clone({
 //     ...incoming["_def"], // incoming overrides properties on base
 //     shape: { ...base["_def"].shape, ...incoming["_def"].shape },
 //     checks: [],
@@ -498,7 +510,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //   for (const key in mask) {
 //     shape[key] = schema["_def"].shape[key];
 //   }
-//   return schema.clone({
+//   return schema.$clone({
 //     ...schema["_def"],
 //     shape,
 //     checks: [],
@@ -515,7 +527,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 // ): schemas.ZodObject<Omit<T["shape"], Extract<keyof T["shape"], keyof M>>> {
 //   const shape: schemas.ZodRawShape = { ...schema.shape };
 //   for (const key in mask) delete shape[key];
-//   return schema.clone({
+//   return schema.$clone({
 //     ...schema["_def"],
 //     shape,
 //     checks: [],
@@ -532,7 +544,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //   for (const key in schema["_def"].shape) {
 //     shape[key] = optional(schema["_def"].shape[key]);
 //   }
-//   return schema.clone({
+//   return schema.$clone({
 //     ...schema["_def"],
 //     shape,
 //     checks: [],
@@ -574,7 +586,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //   shape: schemas.ZodShape
 // ): any {
 //   if (schema["_def"].type === "interface") {
-//     return schema.clone({
+//     return schema.$clone({
 //       ...schema["_def"],
 //       get shape() {
 //         return {
@@ -586,7 +598,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
 //     }) as any;
 //   }
 //   if (schema["_def"].type === "object") {
-//     return schema.clone({
+//     return schema.$clone({
 //       ...schema["_def"],
 //       shape: { ...schema["_def"].shape, ...shape },
 //       checks: [], // delete existing checks
@@ -742,7 +754,7 @@ const _and: typeof intersection = intersection;
 // rest?: schemas.ZodTuple["_def"]["rest"];
 // }
 
-export function tuple<T extends [core.$ZodType, ...core.$ZodType[]]>(
+export function tuple<T extends readonly [core.$ZodType, ...core.$ZodType[]]>(
   items: T,
   params?: core.$ZodTupleParams
 ): schemas.ZodTuple<T, null>;
@@ -844,6 +856,14 @@ export function nativeEnum<T extends util.EnumLike>(entries: T, params?: core.$Z
 }
 
 // literal
+export function literal<const T extends util.Literal>(
+  literal: T,
+  params?: core.$ZodLiteralParams
+): schemas.ZodLiteral<T>;
+export function literal<const T extends util.Literal[]>(
+  literals: T,
+  params?: core.$ZodLiteralParams
+): schemas.ZodLiteral<T[number]>;
 export function literal<const T extends util.Literal | util.Literal[]>(
   literals: T,
   params?: core.$ZodLiteralParams
@@ -852,8 +872,13 @@ export function literal<const T extends util.Literal | util.Literal[]>(
     type: "literal",
     values: Array.isArray(literals) ? literals : [literals],
     ...util.normalizeTypeParams(params),
-  }) as any as schemas.ZodLiteral<T extends unknown[] ? T[number] : T>;
+  }) as any;
 }
+
+// const
+// export function _const<T>(value: T, params?: core.$ZodLiteralParams): schemas.ZodLiteral<T> {
+//   return literal(value, params);
+// }
 
 // file
 interface ZodFileParams extends util.TypeParams<schemas.ZodFile> {}
@@ -864,31 +889,16 @@ export function file(...args: any[]): schemas.ZodFile {
   return _file(...args);
 }
 
-// effect
-
-// export function transform<O = unknown, I = unknown>(
-//   effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
-//   params?: core.$ZodTransformParams
-// ): schemas.ZodTransform<O, I>;
-// export function transform<T extends core.$ZodType, NewOut>(
-//   schema: T,
-//   fn: (arg: core.output<T>) => NewOut,
-//   params?: core.$ZodTransformParams
-// ): schemas.ZodPipe<T, schemas.ZodTransform<Awaited<NewOut>, core.output<T>>>;
+// transform
 export function transform<I = unknown, O = I>(
   fn: (input: I, ctx?: core.$ParsePayload) => O,
   params?: core.$ZodTransformParams
-): schemas.ZodTransform<Awaited<O>, I>;
-export function transform<O = unknown, I = unknown>(
-  effect: (input: I, ctx?: schemas.RefinementCtx<unknown>) => O,
-  params?: core.$ZodTransformParams
-): schemas.ZodTransform<O, I> {
+): schemas.ZodTransform<Awaited<O>, I> {
   return new schemas.ZodTransform({
-    type: "effect",
-    // async: false,
-    effect: effect as any,
+    type: "transform",
+    transform: fn as any,
     ...util.normalizeTypeParams(params),
-  }) as schemas.ZodTransform<O, I>;
+  }) as any;
 }
 
 // effectAsync
@@ -984,13 +994,9 @@ export function optional<T extends core.$ZodType>(
 // nullable
 export function nullable<T extends core.$ZodType>(
   innerType: T,
-  params?: core.$ZodNullableParams
-): schemas.ZodNullable<T> {
-  return new schemas.ZodNullable({
-    type: "nullable",
-    innerType,
-    ...util.normalizeTypeParams(params),
-  }) as schemas.ZodNullable<T>;
+  params?: core.$ZodNullParams
+): schemas.ZodUnion<readonly [T, schemas.ZodNull]> {
+  return union([innerType, _null(params)]);
 }
 
 export function nonoptional<T extends core.$ZodType>(
@@ -1068,19 +1074,30 @@ export function nan(...args: any[]): schemas.ZodNaN {
 }
 
 // pipe
-export function pipe<T extends core.$ZodType, U extends core.$ZodType<any, T["_output"]>>(
-  in_: T,
-  // fn: (arg: core.output<T>) => core.input<U>,
-  out: U,
-  params?: core.$ZodPipeParams
-): schemas.ZodPipe<T, U> {
+export function pipe<
+  const A extends core.$ZodType,
+  B extends core.$ZodType<unknown, core.output<A>> = core.$ZodType<unknown, core.output<A>>,
+>(in_: A, out: B | core.$ZodType<unknown, core.output<A>>, params?: core.$ZodPipeParams): schemas.ZodPipe<A, B>;
+export function pipe(in_: core.$ZodType, out: core.$ZodType, params?: core.$ZodPipeParams) {
   return new schemas.ZodPipe({
     type: "pipe",
     in: in_,
     out,
     ...util.normalizeTypeParams(params),
-  }) as schemas.ZodPipe<T, U>;
+  });
 }
+// export function pipe<T extends core.$ZodType, U extends core.$ZodType<any, T["_output"]>>(
+//   in_: T,
+//   out: U,
+//   params?: core.$ZodPipeParams
+// ): schemas.ZodPipe<T, U> {
+//   return new schemas.ZodPipe({
+//     type: "pipe",
+//     in: in_,
+//     out,
+//     ...util.normalizeTypeParams(params),
+//   }) as schemas.ZodPipe<T, U>;
+// }
 
 // readonly
 export function readonly<T extends core.$ZodType>(
@@ -1128,20 +1145,19 @@ abstract class Class {
 }
 function _instanceof<T extends typeof Class>(
   cls: T,
-  params: core.$ZodCustomParams = {
+  params: Omit<core.$ZodCustomParams, "abort"> = {
     error: `Input not instance of ${cls.name}`,
   }
 ): schemas.ZodCustom<InstanceType<T>> {
-  return custom((data) => data instanceof cls, params);
+  return custom((data) => data instanceof cls, params ? { ...params, abort: true } : { abort: true });
 }
 export { _instanceof as instanceof };
 
 // refine
 export function refine<T>(
-  fn: (arg: T) => unknown | Promise<unknown>,
-  params?: string | core.$ZodRefineParams
-): core.$ZodCheck<T>;
-export function refine<T>(fn: (arg: T) => unknown, params: string | core.$ZodRefineParams = {}): core.$ZodCheck<T> {
+  fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
+  params?: string | core.$ZodCustomParams
+): core.$ZodCheck<T> {
   return core.refine<T>(fn, params);
 }
 
@@ -1153,15 +1169,15 @@ export function superRefine<T>(
   const ch = core.check<T>((payload) => {
     (payload as schemas.RefinementCtx).addIssue = (issue) => {
       if (typeof issue === "string") {
-        payload.issues.push(core.issue(issue, payload.value, ch._def));
+        payload.issues.push(util.issue(issue, payload.value, ch._def));
       } else {
         // for Zod 3 backwards compatibility
         if ((issue as any).fatal) issue.continue = false;
         issue.code ??= "custom";
         issue.input ??= payload.value;
-        issue.def ??= ch._def;
+        issue.inst ??= ch;
         issue.continue ??= !ch._def.abort;
-        payload.issues.push(core.issue(issue));
+        payload.issues.push(util.issue(issue));
       }
     };
 
@@ -1169,3 +1185,5 @@ export function superRefine<T>(
   }, params);
   return ch;
 }
+
+export { lazy } from "@zod/core";

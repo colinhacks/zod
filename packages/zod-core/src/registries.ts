@@ -1,8 +1,8 @@
 import type * as base from "./base.js";
 
-export const OUTPUT = Symbol("ZodOutput");
+export const OUTPUT: unique symbol = Symbol("ZodOutput");
 export type OUTPUT = typeof OUTPUT;
-export const INPUT = Symbol("ZodInput");
+export const INPUT: unique symbol = Symbol("ZodInput");
 export type INPUT = typeof INPUT;
 
 export type $replace<Meta, S extends base.$ZodType> = Meta extends OUTPUT
@@ -109,7 +109,7 @@ export class $ZodJSONSchemaRegistry<
   Meta extends JSONSchemaMeta = JSONSchemaMeta,
   Schema extends base.$ZodType = base.$ZodType,
 > extends $ZodRegistry<Meta, Schema> {
-  toJSONSchema(schema: Schema): object {
+  toJSONSchema(_schema: Schema): object {
     // let schema!: base.$ZodType;
     // for (const [_, meta] of this.entries) {
     //   if (meta.title === title) {

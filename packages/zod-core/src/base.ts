@@ -138,10 +138,9 @@ export interface $ZodTypeDef {
 }
 
 export interface $ZodType<out O = unknown, out I = unknown> {
-  check(...checks: ($ZodCheckFn<this["_output"]> | $ZodCheck<this["_output"]>)[]): this;
-  // refine(...checks: ($ZodCheck<this["_output"]>)[]): this;
-  clone(def?: this["_def"]): this;
-  register<R extends $ZodRegistry>(
+  $check(...checks: ($ZodCheckFn<this["_output"]> | $ZodCheck<this["_output"]>)[]): this;
+  $clone(def?: this["_def"]): this;
+  $register<R extends $ZodRegistry>(
     registry: R,
     ...meta: this extends R["_schema"]
       ? undefined extends R["_meta"]
@@ -149,8 +148,8 @@ export interface $ZodType<out O = unknown, out I = unknown> {
         : [$ZodRegistry<R["_meta"], this>["_meta"]]
       : ["Incompatible schema"]
   ): this;
-  brand<T extends PropertyKey = PropertyKey, Output = this["_output"]>(): this & {
-    _output: Output & $brand<T>;
+  $brand<T extends PropertyKey = PropertyKey>(): this & {
+    _output: O & $brand<T>;
   };
 
   // assertInput<T>(...args: T extends I ? [] : ["Invalid input type"]): void;
@@ -191,7 +190,7 @@ export interface $ZodType<out O = unknown, out I = unknown> {
    * Passthrough: optional, nullable, branded, default, catch, pipe
    * Todo: unions?
    */
-  _values?: $PrimitiveSet;
+  _values?: $PrimitiveSet | undefined;
   /** @deprecated Internal API, use with caution. */
   _def: $ZodTypeDef;
   /** @deprecated Internal API, use with caution.
@@ -222,8 +221,8 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
   inst._standard = 1; // set standard-schema version
   inst._computed = inst._computed || {}; // initialize _computed object
 
-  inst.check = (...checks) => {
-    return inst.clone({
+  inst.$check = (...checks) => {
+    return inst.$clone({
       ...def,
       checks: [
         ...(def.checks ?? []),
@@ -231,9 +230,9 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
       ],
     });
   };
-  inst.clone = (_def) => clone(inst, _def ?? def);
-  inst.brand = () => inst as any;
-  inst.register = ((reg: any, meta: any) => {
+  inst.$clone = (_def) => clone(inst, _def ?? def);
+  inst.$brand = () => inst as any;
+  inst.$register = ((reg: any, meta: any) => {
     reg.add(inst, meta);
     return inst;
   }) as any;
@@ -251,9 +250,7 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
   }
 
   if (checks.length === 0) {
-    inst._run = (...args) => {
-      return inst._parse(...args);
-    };
+    inst._run = (...args) => inst._parse(...args);
   } else {
     // console.log("running checks");
     // let runChecks = (result: $ParsePayload<any>): util.MaybeAsync<$ParsePayload> => {
@@ -364,8 +361,6 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
       }
 
       return runChecks(result, checks, ctx);
-
-      // if (!ctx.async) {
     };
   }
 });
@@ -386,7 +381,7 @@ export function finalizeIssue(iss: errors.$ZodRawIssue, ctx: $InternalParseConte
   // const _ctx: errors.$ZodErrorMapCtx = { data: iss.input, defaultError: undefined as any };
   if (!iss.message) {
     const message =
-      unwrapMessage(iss.def?.error?.(iss as never)) ??
+      unwrapMessage(iss.inst?._def?.error?.(iss as never)) ??
       unwrapMessage(ctx?.error?.(iss as never)) ??
       unwrapMessage(config().customError?.(iss)) ??
       unwrapMessage(config().localeError?.(iss)) ??
@@ -394,7 +389,8 @@ export function finalizeIssue(iss: errors.$ZodRawIssue, ctx: $InternalParseConte
     full.message = message;
   }
 
-  delete (full as any).def;
+  // delete (full as any).def;
+  delete (full as any).inst;
   delete (full as any).continue;
   if (!ctx?.reportInput) {
     delete full.input;
@@ -409,7 +405,8 @@ export class $ZodError<T = unknown> implements Error {
   public issues: errors.$ZodIssue[];
 
   name = "$ZodError";
-  get message() {
+
+  get message(): string {
     return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
   }
 
@@ -435,9 +432,9 @@ import type { $ZodRegistry } from "./registries.js";
 
 export interface $ZodConfig {
   /** Custom error map. Overrides `config().localeError`. */
-  customError?: errors.$ZodErrorMap;
+  customError?: errors.$ZodErrorMap | undefined;
   /** Localized error map. Lowest priority. */
-  localeError?: errors.$ZodErrorMap;
+  localeError?: errors.$ZodErrorMap | undefined;
 }
 
 export const globalConfig: $ZodConfig = {};

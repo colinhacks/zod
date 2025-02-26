@@ -377,7 +377,7 @@ function MyForm(){
 
   return <div>
     <label>Name<label>
-    <input {...register('name')}>
+    <input {...$register('name')}>
     <Errors errors={errors?.name?._errors} />
   </div>
 }

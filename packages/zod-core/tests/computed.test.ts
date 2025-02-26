@@ -28,7 +28,7 @@ test("int32 format", () => {
 });
 
 test("array size", () => {
-  const e = z.array(z.string()).check(z.size(5));
+  const e = z.array(z.string()).$check(z.size(5));
   expect(e._computed.size).toEqual(5);
   expect(e._computed.minimum).toEqual(5);
   expect(e._computed.maximum).toEqual(5);

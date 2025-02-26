@@ -1,14 +1,29 @@
-import * as core from "@zod/core";
 import * as util from "@zod/core/util";
 
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
+function nest<TData extends z.ZodType>(schema: TData) {
+  return z.object({
+    nested: schema,
+  });
+}
+
 test("generics", () => {
-  async function stripOuter<TData extends z.ZodTypeAny>(schema: TData, data: unknown) {
+  const a = nest(z.object({ a: z.string() }));
+  type a = z.infer<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<{ nested: { a: string } }>();
+
+  const b = nest(z.object({ a: z.string().optional() }));
+  type b = z.infer<typeof b>;
+  expectTypeOf<b>().toEqualTypeOf<{ nested: { a?: string | undefined } }>();
+});
+
+test("generics with optional", () => {
+  async function stripOuter<TData extends z.ZodType>(schema: TData, data: unknown) {
     return z
       .object({
-        nested: schema, // as z.ZodTypeAny,
+        nested: schema.optional(),
       })
       .transform((data) => {
         return data.nested;
@@ -21,15 +36,11 @@ test("generics", () => {
 });
 
 // test("assignability", () => {
-//   const createSchemaAndParse = <K extends string, VS extends z.ZodString>(
-//     key: K,
-//     valueSchema: VS,
-//     data: unknown
-//   ) => {
+//   const createSchemaAndParse = <K extends string, VS extends z.ZodString>(key: K, valueSchema: VS, data: unknown) => {
 //     const schema = z.object({
 //       [key]: valueSchema,
-//     } as { [k in K]: VS });
-//     return { [key]: valueSchema };
+//     });
+//     // return { [key]: valueSchema };
 //     const parsed = schema.parse(data);
 //     return parsed;
 //     // const inferred: z.infer<z.ZodObject<{ [k in K]: VS }>> = parsed;

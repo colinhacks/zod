@@ -32,16 +32,16 @@ export class ZodError<T = unknown> extends core.$ZodError<T> {
 export { flattenError, formatError } from "@zod/core";
 
 export type {
-  /** @deprecated Use `$ZodFlattenedError` from `@zod/core` instead. */
+  /** @deprecated Use `z.core.$ZodFlattenedError` instead. */
   $ZodFlattenedError as ZodFlattenedError,
-  /** @deprecated Use `$ZodFormattedError` from `@zod/core` instead. */
+  /** @deprecated Use `z.core.$ZodFormattedError` instead. */
   $ZodFormattedError as ZodFormattedError,
-  /** @deprecated Use `$ZodErrorMap` from `@zod/core` instead. */
+  /** @deprecated Use `z.core.$ZodErrorMap` instead. */
   $ZodErrorMap as ZodErrorMap,
 } from "@zod/core";
 
 /** @deprecated Use `$ZodRawIssue` instead. */
 export type IssueData = core.$ZodRawIssue;
 
-// /** @deprecated Use `$ZodErrorMapCtx` from `@zod/core` instead. */
+// /** @deprecated Use `z.core.$ZodErrorMapCtx` instead. */
 // // export type ErrorMapCtx = core.$ZodErrorMapCtx;

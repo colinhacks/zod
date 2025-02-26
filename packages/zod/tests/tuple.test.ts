@@ -1,5 +1,5 @@
 import * as core from "@zod/core";
-import { ZodError } from "@zod/core";
+
 import * as util from "@zod/core/util";
 
 import { expect, test } from "vitest";
@@ -34,7 +34,7 @@ test("failed validation", () => {
   try {
     checker();
   } catch (err) {
-    if (err instanceof ZodError) {
+    if (err instanceof z.ZodError) {
       expect(err.issues.length).toEqual(3);
     }
   }

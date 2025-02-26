@@ -1,4 +1,3 @@
-import * as core from "@zod/core";
 import * as util from "@zod/core/util";
 
 import { expect, test } from "vitest";

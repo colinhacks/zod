@@ -51,21 +51,21 @@ test("z.min", () => {
 
 // maxSize;
 test("z.maxLength", () => {
-  const a = z.array(z.string()).check(z.maxLength(3));
+  const a = z.array(z.string()).$check(z.maxLength(3));
   expect(z.safeParse(a, ["a", "b", "c"]).success).toEqual(true);
   expect(z.safeParse(a, ["a", "b", "c", "d"]).success).toEqual(false);
 });
 
 // minSize;
 test("z.minLength", () => {
-  const a = z.array(z.string()).check(z.minLength(3));
+  const a = z.array(z.string()).$check(z.minLength(3));
   expect(z.safeParse(a, ["a", "b"]).success).toEqual(false);
   expect(z.safeParse(a, ["a", "b", "c"]).success).toEqual(true);
 });
 
 // size;
 test("z.length", () => {
-  const a = z.array(z.string()).check(z.length(3));
+  const a = z.array(z.string()).$check(z.length(3));
   expect(z.safeParse(a, ["a", "b"]).success).toEqual(false);
   expect(z.safeParse(a, ["a", "b", "c"]).success).toEqual(true);
   expect(z.safeParse(a, ["a", "b", "c", "d"]).success).toEqual(false);
@@ -133,7 +133,7 @@ test("z.overwrite", () => {
 // property
 
 test("abort early", () => {
-  const schema = z.string().check(
+  const schema = z.string().$check(
     z.refine((val) => val.length > 1),
     z.refine((val) => val.length > 2, { abort: true }),
     z.refine((val) => val.length > 3)

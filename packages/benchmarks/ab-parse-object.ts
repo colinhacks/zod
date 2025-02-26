@@ -1,9 +1,10 @@
 import { makeData, randomString } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
-import * as z from "@zod/core";
+// import * as zc from "@zod/core";
+import * as z from "zod";
 
-const schema = z.object({
+const schema = z.interface({
   a: z.string(),
   b: z.string(),
   c: z.string(),
@@ -46,8 +47,12 @@ const DATA = makeData(1000, () => ({
 }));
 
 // console.log(z.parse(schema, DATA[0]));
-console.log(z.safeParse(schema, DATA[0]));
-console.log(z.safeParseB(schema, DATA[0]));
+console.log(
+  schema.safeParse(DATA[0], {
+    skipFast: true,
+  })
+);
+console.log(schema.safeParse(DATA[0]));
 // console.log(z.safeParseC(schema, DATA[0]));
 
 // console.log(z.parse2(schema, DATA[0]));
@@ -57,11 +62,11 @@ const bench = metabench("AB test: objects", {
   // _parseC() {
   //   for (const _ of DATA) z.safeParseC(schema, _);
   // },
-  _parse() {
-    for (const _ of DATA) z.safeParse(schema, _);
+  no_fastpass() {
+    for (const _ of DATA) schema.safeParse(_, { skipFast: true });
   },
-  _parseB() {
-    for (const _ of DATA) z.safeParseB(schema, _);
+  fastpass() {
+    for (const _ of DATA) schema.safeParse(_, { skipFast: false });
   },
 });
 

@@ -51,27 +51,10 @@ export const $ZodCheckLessThan: base.$constructor<$ZodCheckLessThan> = base.$con
         maximum: def.value as number,
         input: payload.value,
         inclusive: def.inclusive,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
-
-    // inst["_checkB"] = (payload,_payload) => {
-    //   if (def.inclusive ? payload.value <= def.value : payload.value < def.value) {
-    //     return;
-    //   }
-
-    //   payload.issues.push({
-    //     origin,
-    //     code: "too_big",
-    //     maximum: def.value as number,
-    //     input: payload.value,
-    //     inclusive: def.inclusive,
-    //     def,
-    //     continue: !def.abort,
-    //   });
-    //   // return payload;
-    // };
   }
 );
 
@@ -111,27 +94,10 @@ export const $ZodCheckGreaterThan: base.$constructor<$ZodCheckGreaterThan> = bas
         minimum: def.value as number,
         input: payload.value,
         inclusive: def.inclusive,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
-
-    // inst._checkB = (payload) => {
-    //   if (def.inclusive ? payload.value >= def.value : payload.value > def.value) {
-    //     return;
-    //   }
-
-    //   payload.issues.push({
-    //     origin: origin as "number",
-    //     code: "too_small",
-    //     minimum: def.value as number,
-    //     input: payload.value,
-    //     inclusive: def.inclusive,
-    //     def,
-    //     continue: !def.abort,
-    //   });
-    //   // return payload;
-    // };
   }
 );
 
@@ -143,8 +109,6 @@ export const $ZodCheckGreaterThan: base.$constructor<$ZodCheckGreaterThan> = bas
 interface $ZodCheckMultipleOfDef<T extends number | bigint> extends base.$ZodCheckDef {
   check: "multiple_of";
   value: T;
-  // abort?: boolean;
-  // error?: errors.$ZodErrorMap<errors.$ZodIssueNotMultipleOf> | undefined;
 }
 
 export interface $ZodCheckMultipleOf<T extends number | bigint = number | bigint> extends base.$ZodCheck<T> {
@@ -175,7 +139,7 @@ export const $ZodCheckMultipleOf: base.$constructor<$ZodCheckMultipleOf<number |
         code: "not_multiple_of",
         divisor: def.value as number,
         input: payload.value,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -221,14 +185,14 @@ export const $ZodCheckMultipleOf: base.$constructor<$ZodCheckMultipleOf<number |
 //         // maximum: Number.POSITIVE_INFINITY,
 //         inclusive: false,
 //         input: payload.value,
-//         def,
+//         inst,
 //       });
 //     };
 //   });
 
-/////////////////////////////////////
+///////////////////////////////////////
 /////    $ZodCheckNumberFormat    /////
-/////////////////////////////////////
+///////////////////////////////////////
 
 export type $ZodNumberFormats = "int32" | "uint32" | "float32" | "float64" | "safeint";
 
@@ -270,7 +234,7 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
             format: def.format,
             code: "invalid_type",
             input,
-            def,
+            inst,
           });
 
           return;
@@ -280,7 +244,7 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
           //   code: "not_multiple_of",
           //   origin: "number",
           //   input,
-          //   def,
+          //   inst,
           //   divisor: 1,
           // });
         }
@@ -293,7 +257,7 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
               code: "too_big",
               maximum: Number.MAX_SAFE_INTEGER,
               note: "Integers must be within the the safe integer range.",
-              def,
+              inst,
               origin,
               continue: !def.abort,
             });
@@ -304,7 +268,7 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
               code: "too_small",
               minimum: Number.MIN_SAFE_INTEGER,
               note: "Integers must be within the safe integer range.",
-              def,
+              inst,
               origin,
               continue: !def.abort,
             });
@@ -321,7 +285,7 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
           code: "too_small",
           minimum: minimum as number,
           inclusive: true,
-          def,
+          inst,
           continue: !def.abort,
         });
       }
@@ -332,7 +296,7 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
           input,
           code: "too_big",
           maximum,
-          def,
+          inst,
         } as any);
       }
     };
@@ -385,7 +349,7 @@ export const $ZodCheckBigIntFormat: base.$constructor<$ZodCheckBigIntFormat> = /
           code: "too_small",
           minimum: minimum as any,
           inclusive: true,
-          def,
+          inst,
           continue: !def.abort,
         });
       }
@@ -396,7 +360,7 @@ export const $ZodCheckBigIntFormat: base.$constructor<$ZodCheckBigIntFormat> = /
           input,
           code: "too_big",
           maximum,
-          def,
+          inst,
         } as any);
       }
     };
@@ -453,7 +417,7 @@ export const $ZodCheckMaxSize: base.$constructor<$ZodCheckMaxSize> = base.$const
         code: "too_big",
         maximum: def.maximum,
         input,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -497,7 +461,7 @@ export const $ZodCheckMinSize: base.$constructor<$ZodCheckMinSize> = base.$const
         code: "too_small",
         minimum: def.minimum,
         input,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -541,7 +505,7 @@ export const $ZodCheckSizeEquals: base.$constructor<$ZodCheckSizeEquals> = base.
         origin: util.getSizableOrigin(input),
         ...(tooBig ? { code: "too_big", maximum: def.size } : { code: "too_small", minimum: def.size }),
         input: payload.value,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -587,7 +551,7 @@ export const $ZodCheckMaxLength: base.$constructor<$ZodCheckMaxLength> = base.$c
         code: "too_big",
         maximum: def.maximum,
         input,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -632,7 +596,7 @@ export const $ZodCheckMinLength: base.$constructor<$ZodCheckMinLength> = base.$c
         code: "too_small",
         minimum: def.minimum,
         input,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -677,7 +641,7 @@ export const $ZodCheckLengthEquals: base.$constructor<$ZodCheckLengthEquals> = b
         origin,
         ...(tooBig ? { code: "too_big", maximum: def.length } : { code: "too_small", minimum: def.length }),
         input: payload.value,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -720,7 +684,7 @@ export const $ZodCheckStringFormat: base.$constructor<$ZodCheckStringFormat> = b
         format: def.format,
         input: payload.value,
         ...(def.pattern ? { pattern: def.pattern.toString() } : {}),
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -771,7 +735,7 @@ export const $ZodCheckJSONString: base.$constructor<$ZodCheckJSONString> = base.
           code: "invalid_format",
           format: def.format,
           input: payload.value,
-          def,
+          inst,
           continue: !def.abort,
         });
       }
@@ -848,7 +812,7 @@ export const $ZodCheckIncludes: base.$constructor<$ZodCheckIncludes> = base.$con
         format: "includes",
         includes: def.includes,
         input: payload.value,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -878,7 +842,7 @@ export const $ZodCheckStartsWith: base.$constructor<$ZodCheckStartsWith> = base.
         format: "starts_with",
         prefix: def.prefix,
         input: payload.value,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -910,7 +874,7 @@ export const $ZodCheckEndsWith: base.$constructor<$ZodCheckEndsWith> = base.$con
         format: "ends_with",
         suffix: def.suffix,
         input: payload.value,
-        def,
+        inst,
         continue: !def.abort,
       });
     };
@@ -935,6 +899,15 @@ export const $ZodCheckEndsWith: base.$constructor<$ZodCheckEndsWith> = base.$con
 ///////////////////////////////////
 /////    $ZodCheckProperty    /////
 ///////////////////////////////////
+function handleCheckPropertyResult(
+  result: base.$ParsePayload<unknown>,
+  payload: base.$ParsePayload<unknown>,
+  property: string
+) {
+  if (result.issues.length) {
+    payload.issues.push(...util.prefixIssues(property, result.issues));
+  }
+}
 interface $ZodCheckPropertyDef extends base.$ZodCheckDef {
   check: "property";
   property: string;
@@ -953,17 +926,17 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> = base.$con
     base.$ZodCheck.init(inst, def);
 
     inst._check = (payload) => {
-      if (typeof payload.value !== "object") {
-        // invalid_type
-        payload.issues.push({
-          origin: "object",
-          code: "invalid_type",
-          expected: "object",
-          input: payload.value,
-          def: { error: def?.error }, // do not include def.abort if it exists
-        });
-        return;
-      }
+      // if (typeof payload.value !== "object") {
+      //   // invalid_type
+      //   payload.issues.push({
+      //     code: "invalid_type",
+      //     expected: "object",
+      //     input: payload.value,
+      //     inst,
+      //     // def: { error: def?.error }, // do not include def.abort if it exists
+      //   });
+      //   return;
+      // }
 
       const result = def.schema._run(
         {
@@ -975,49 +948,46 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> = base.$con
       );
 
       if (result instanceof Promise) {
-        return result.then((result) => {
-          if (result.issues.length) {
-            payload.issues.push(...util.prefixIssues(def.property, result.issues));
-          }
-        });
+        return result.then((result) => handleCheckPropertyResult(result, payload, def.property));
       }
-      if (result.issues.length) {
-        payload.issues.push(...util.prefixIssues(def.property, result.issues));
-      }
+
+      handleCheckPropertyResult(result, payload, def.property);
       return;
     };
   }
 );
 
 ///////////////////////////////////
-/////    $ZodCheckFileType    /////
+/////    $ZodCheckMimeType    /////
 ///////////////////////////////////
-// interface $ZodCheckFileTypeDef extends base.$ZodCheckDef {
-//   check: "file_type";
-//   fileTypes: util.MimeTypes[];
-//   // error?: errors.$ZodErrorMap<errors.$ZodIssueInvalidType> | undefined;
-// }
-// export interface $ZodCheckFileType<T extends File = File>
-//   extends base.$ZodCheck<T> {
-//   _def: $ZodCheckFileTypeDef;
-// }
+interface $ZodCheckMimeTypeDef extends base.$ZodCheckDef {
+  check: "mime_type";
+  mime: util.MimeTypes[];
+}
+export interface $ZodCheckMimeType<T extends File = File> extends base.$ZodCheck<T> {
+  _def: $ZodCheckMimeTypeDef;
+}
 
-// export const $ZodCheckFileType: base.$constructor<$ZodCheckFileType> =
-//   base.$constructor("$ZodCheckFileType", (inst, def) => {
-//     base.$ZodCheck.init(inst, def);
-
-//     inst._check = (payload) => {
-//       if (def.fileTypes.includes(payload.value.type as util.MimeTypes)) return;
-//       payload.issues.push({
-//         origin: "file",
-//         code: "invalid_value",
-//         options: def.fileTypes,
-//         input: payload.value.type,
-//         path: ["type"],
-//         def,
-//       });
-//     };
-//   });
+export const $ZodCheckMimeType: base.$constructor<$ZodCheckMimeType> = base.$constructor(
+  "$ZodCheckMimeType",
+  (inst, def) => {
+    base.$ZodCheck.init(inst, def);
+    const mimeSet = new Set(def.mime);
+    inst._onattach = (inst) => {
+      inst._computed.mime = def.mime;
+    };
+    inst._check = (payload) => {
+      if (mimeSet.has(payload.value.type)) return;
+      payload.issues.push({
+        code: "invalid_value",
+        values: def.mime,
+        input: payload.value.type,
+        path: ["type"],
+        inst,
+      });
+    };
+  }
+);
 
 ///////////////////////////////////
 /////    $ZodCheckFileName    /////
@@ -1044,7 +1014,7 @@ export const $ZodCheckProperty: base.$constructor<$ZodCheckProperty> = base.$con
 //         options: [def.fileName],
 //         input: payload.value,
 //         path: ["name"],
-//         def,
+//         inst,
 //       });
 //     };
 //   });
