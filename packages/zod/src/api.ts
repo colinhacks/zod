@@ -375,7 +375,6 @@ export function object<T extends schemas.ZodShape>(
   shape?: T,
   params?: core.$ZodObjectLikeParams
 ): schemas.ZodObject<T, {}> {
-  // const cleaned = util.clean
   const def: core.$ZodObjectDef<schemas.ZodShape> = {
     type: "object",
     shape: shape ?? {},
@@ -425,7 +424,6 @@ function _interface<T extends core.$ZodLooseShape>(
     type: "interface",
     shape: cleaned.shape,
     optional: cleaned.optional,
-    // catchall: never(),
     ...util.normalizeTypeParams(params),
   };
   return new schemas.ZodInterface(def) as any;

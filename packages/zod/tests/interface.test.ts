@@ -86,12 +86,6 @@ test("strip by default", () => {
   expect(val).toEqual({ points: 2314 });
 });
 
-test("unknownkeys override", () => {
-  const val = z.interface({ points: z.number() }).parse(data);
-
-  expect(val).toEqual(data);
-});
-
 test("z.looseInterface", () => {
   const val = z.looseInterface({ points: z.number() }).parse(data);
   expect(val).toEqual(data);
@@ -154,8 +148,8 @@ test("catchall overrides strict", () => {
 test("test that optional keys are unset", async () => {
   const SNamedEntity = z.interface({
     id: z.string(),
-    set: z.string().optional(),
-    unset: z.string().optional(),
+    "set?": z.string(),
+    "unset?": z.string(),
   });
   const result = await SNamedEntity.parse({
     id: "asdf",

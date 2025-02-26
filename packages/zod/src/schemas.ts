@@ -1560,7 +1560,6 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
         }
       };
 
-      console.log({ def });
       const output = def.transform(payload.value, payload);
       if (output instanceof Promise) {
         return output.then((output) => {

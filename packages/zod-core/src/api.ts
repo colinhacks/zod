@@ -664,11 +664,15 @@ function _interface<T extends schemas.$ZodLooseShape>(
   params?: $ZodInterfaceParams,
   Class: util.Constructor<schemas.$ZodInterface> = schemas.$ZodInterface
 ): schemas.$ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
-  const cleaned = util.cleanInterfaceShape(shape);
+  const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
-    shape: cleaned.shape,
-    optional: cleaned.optional,
+    get shape() {
+      return cleaned.value.shape;
+    },
+    get optional() {
+      return cleaned.value.optional;
+    },
     ...util.normalizeTypeParams(params),
   };
   return new Class(def) as any;

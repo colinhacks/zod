@@ -1,5 +1,4 @@
 import * as z from "@zod/core";
-import * as util from "@zod/core/util";
 
 /* Standard Form:
  *
@@ -10,9 +9,15 @@ import * as util from "@zod/core/util";
  * console.log(JSON.stringify(result, null, 2));
  * ```
  */
-const schema = z.interface({
-  "name?": z.string(),
+const userSchema = z.interface({
+  name: z.string(),
+  age: z.number(),
+  "email?": z.string(),
 });
-const data = { name: undefined };
-const result = z.safeParse(schema, data);
+
+console.log(userSchema._def.optional);
+const partialSchema = z.partial(userSchema, { age: true });
+console.log(partialSchema._def.optional);
+const data = { age: 234 };
+const result = z.safeParse(partialSchema, data);
 console.log(JSON.stringify(result, null, 2));

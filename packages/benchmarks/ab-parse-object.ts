@@ -3,11 +3,33 @@ import { metabench } from "./metabench.js";
 
 // import * as zc from "@zod/core";
 import * as z from "zod";
+import * as z3 from "zod3";
 
-const schema = z.interface({
+const schema = z.object({
   a: z.string(),
   b: z.string(),
   c: z.string(),
+  // d: z.string(),
+  // e: z.string(),
+  // f: z.string(),
+  // g: z.string(),
+  // h: z.string(),
+  // i: z.string(),
+  // j: z.string(),
+  // k: z.string(),
+  // l: z.string(),
+  // m: z.string(),
+  // n: z.string(),
+  // o: z.string(),
+  // p: z.string(),
+  // q: z.string(),
+  // r: z.string(),
+});
+
+const v3schema = z3.object({
+  a: z3.string(),
+  b: z3.string(),
+  c: z3.string(),
   // d: z.string(),
   // e: z.string(),
   // f: z.string(),
@@ -63,11 +85,14 @@ const bench = metabench("AB test: objects", {
   //   for (const _ of DATA) z.safeParseC(schema, _);
   // },
   no_fastpass() {
-    for (const _ of DATA) schema.safeParse(_, { skipFast: true });
+    for (const _ of DATA) z.safeParse(schema, _, { skipFast: true });
   },
   fastpass() {
-    for (const _ of DATA) schema.safeParse(_, { skipFast: false });
+    for (const _ of DATA) z.safeParse(schema, _);
   },
+  // zod3() {
+  //   for (const _ of DATA) v3schema.safeParse(_);
+  // },
 });
 
 await bench.run();

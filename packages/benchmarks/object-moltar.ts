@@ -1,6 +1,5 @@
 import * as z4 from "zod";
 import * as z3 from "zod3";
-// import { makeSchema } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
 const z3schema = z3.object({

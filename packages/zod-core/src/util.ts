@@ -897,14 +897,15 @@ export function cleanInterfaceShape<T extends $ZodLooseShape>(
   optional: string[];
   defaulted: string[];
 } {
+  console.log("cleanInterfaceShape!");
   const keyMap: Record<string, string> = {};
   const shape = {} as CleanInterfaceShape<T>;
   const optional: string[] = [];
   const defaulted: string[] = [];
 
   for (const [key, value] of Object.entries(_shape)) {
-    if (key.endsWith("?")) optional.push(key);
-    if (key.startsWith("?")) defaulted.push(key);
+    if (key.endsWith("?")) optional.push(key.slice(0, -1));
+    if (key.startsWith("?")) defaulted.push(key.slice(1));
     const cleanKey = cleanInterfaceKey(key);
     (shape as any)[cleanKey] = value;
     keyMap[cleanKey] = key;
@@ -1003,24 +1004,34 @@ export function partialObjectLike(
   Class: new (def: $ZodOptionalDef<any>) => $ZodOptional
 ): any {
   const shape: Writeable<$ZodShape> = { ...schema._def.shape };
-  const optional: string[] = Object.keys(schema._def.shape);
+  const optional: Set<string> = new Set(schema._def.optional);
+  console.log(optional);
+  console.log({ mask });
   for (const key in schema._def.shape) {
-    if (mask && key in mask) {
-      shape[key] = new Class({
-        type: "optional",
-        innerType: schema._def.shape[key],
-      });
+    console.log("check", key);
+    if (mask) {
+      if (key in mask) {
+        console.log("in mask:", key);
+        shape[key] = new Class({
+          type: "optional",
+          innerType: schema._def.shape[key],
+        });
+        optional.add(key);
+      }
     } else {
+      console.log("no mask:", key);
       shape[key] = new Class({
         type: "optional",
         innerType: schema._def.shape[key],
       });
+      optional.add(key);
     }
   }
+  console.log({ optional });
   return schema.$clone({
     ...schema._def,
     shape,
-    optional,
+    optional: [...optional],
     checks: [],
   }) as any;
 }

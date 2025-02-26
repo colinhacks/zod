@@ -1035,7 +1035,8 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
   "$ZodObjectLike",
   (inst, def) => {
     base.$ZodType.init(inst, def);
-    inst._shape = def.shape;
+    // inst._shape = def.shape;
+    // Object.defineProperty(inst, "_shape", )
 
     const _normalized = util.cached(() => {
       const n = util.normalizeObjectLikeDef(def);
@@ -1065,13 +1066,13 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
 
     const fastpass = util.cached(() => {
       const { keys, optionalKeys } = _normalized.value;
-      const doc = new Doc(["shape", "payload", "ctx"]);
+      const doc = new Doc(["inst", "payload", "ctx"]);
       const parseStr = (key: string) => {
         const k = util.esc(key);
         return `shape[${k}]._run({ value: input[${k}], issues: [] }, ctx)`;
       };
 
-      // doc.write(`const shape = shape;`);
+      doc.write(`const shape = inst._def.shape;`);
       doc.write(`const input = payload.value;`);
 
       const ids: any = {};
@@ -1089,28 +1090,26 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
       }
 
       // check for missing keys
-      for (const key of keys) {
-        if (optionalKeys.has(key)) continue;
-        doc.write(`if(!(${util.esc(key)} in input)) {`);
-        doc.indented(() => {
-          doc.write(`payload.issues.push({`);
-          doc.indented(() => {
-            doc.write(`code: "invalid_type",`);
-            doc.write(`path: [${util.esc(key)}],`);
-            doc.write(`expected: "nonoptional",`);
-            doc.write(`note: 'Missing required key: "${key}"',`);
-            doc.write(`input,`);
-            doc.write(`inst,`);
-          });
-          doc.write(`});`);
-        });
-        doc.write(`}`);
-      }
-
-      // doc.write(`}`);
+      // for (const key of keys) {
+      //   if (optionalKeys.has(key)) continue;
+      //   doc.write(`if(!(${util.esc(key)} in input)) {`);
+      //   doc.indented(() => {
+      //     doc.write(`payload.issues.push({`);
+      //     doc.indented(() => {
+      //       doc.write(`code: "invalid_type",`);
+      //       doc.write(`path: [${util.esc(key)}],`);
+      //       doc.write(`expected: "nonoptional",`);
+      //       doc.write(`note: 'Missing required key: "${key}"',`);
+      //       doc.write(`input,`);
+      //       doc.write(`inst,`);
+      //     });
+      //     doc.write(`});`);
+      //   });
+      //   doc.write(`}`);
+      // }
 
       // add required keys to result
-      doc.write(`payload.value = {`);
+      doc.write(`const value = {`);
       doc.indented(() => {
         for (const key of keys) {
           if (optionalKeys.has(key)) continue;
@@ -1126,15 +1125,24 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
         const id = ids[key];
         doc.write(`if (${util.esc(key)} in input) {`);
         doc.indented(() => {
-          doc.write(`  const ${id} = ${parseStr(key)};`);
-          doc.write(`  payload.value[${util.esc(key)}] = ${id}.value;`);
-          doc.write(`if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({ ...iss, path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
-        })));`);
+          doc.write(`if(input[${util.esc(key)}] === undefined) {`);
+          doc.indented(() => {
+            doc.write(`value[${util.esc(key)}] = undefined;`);
+          });
+          doc.write(`} else {`);
+          doc.indented(() => {
+            doc.write(`const ${id} = ${parseStr(key)};`);
+            doc.write(`value[${util.esc(key)}] = ${id}.value;`);
+            doc.write(
+              `if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({ ...iss, path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}] })));`
+            );
+          });
+          doc.write(`}`);
         });
         doc.write(`}`);
       }
 
-      doc.write(`return payload;`);
+      doc.write(`return value;`);
       return doc.compile();
     });
 
@@ -1155,27 +1163,27 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
       const fast = util.allowsEval.value && ctx.async === false;
       const proms: Promise<any>[] = [];
 
-      if (fast && !ctx.skipFast) {
+      if (fast && !def.catchall && !ctx.skipFast) {
         // always synchronous
         // this overwrites payload.value
-        fastpass.value(inst._def.shape, payload, ctx);
+        payload.value = fastpass.value(inst, payload, ctx);
       } else {
         payload.value = {};
         for (const key of keys) {
           const valueSchema = shape[key];
 
           // do not add omitted optional keys
-          if (!(key in input)) {
-            if (optionalKeys.has(key)) continue;
-            payload.issues.push({
-              code: "invalid_type",
-              path: [key],
-              expected: "nonoptional",
-              note: `Missing required key: "${key}"`,
-              input,
-              inst,
-            });
-          }
+          // if (!(key in input)) {
+          //   if (optionalKeys.has(key)) continue;
+          //   payload.issues.push({
+          //     code: "invalid_type",
+          //     path: [key],
+          //     expected: "nonoptional",
+          //     note: `Missing required key: "${key}"`,
+          //     input,
+          //     inst,
+          //   });
+          // }
 
           const r = valueSchema._run({ value: input[key], issues: [], $payload: true }, ctx);
           if (r instanceof Promise) {
@@ -1677,10 +1685,7 @@ function handleIntersectionResults(
   const merged = mergeValues(left.value, right.value);
 
   if (!merged.valid) {
-    throw new Error(
-      `Unmergable intersection types at ` +
-        `${merged.mergeErrorPath.join(".")}: ${typeof left.value} and ${typeof right.value}`
-    );
+    throw new Error(`Unmergable intersection. Error path: ` + `${JSON.stringify(merged.mergeErrorPath)}`);
   }
 
   result.value = merged.data;
@@ -2441,7 +2446,7 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
   "$ZodOptional",
   (inst, def) => {
     base.$ZodType.init(inst, def);
-    inst._qin = "true";
+    // inst._qin = "true";
     inst._qout = "true";
     if (def.innerType._values) inst._values = new Set([...def.innerType._values, undefined]);
 
@@ -2479,7 +2484,7 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
 //   "$ZodNullable",
 //   (inst, def) => {
 //     base.$ZodType.init(inst, def);
-//     inst._qin = def.innerType._qin;
+// inst._qin = def.innerType._qin;
 //     inst._qout = def.innerType._qout;
 //     if (def.innerType._values) inst._values = new Set([...def.innerType._values, null]);
 
@@ -2526,7 +2531,7 @@ export const $ZodDefault: base.$constructor<$ZodDefault> = /*@__PURE__*/ base.$c
   "$ZodDefault",
   (inst, def) => {
     base.$ZodType.init(inst, def);
-    inst._qin = "true"; //def.innerType["_qin"];
+    // inst._qin = "true"; //def.innerType["_qin"];
     inst._values = def.innerType._values;
 
     inst._parse = (payload, ctx) => {
@@ -2621,7 +2626,7 @@ export const $ZodNonOptional: base.$constructor<$ZodNonOptional> = /*@__PURE__*/
 //   "$ZodCoalesce",
 //   (inst, def) => {
 //     base.$ZodType.init(inst, def);
-//     inst._qin = "true";
+// inst._qin = "true";
 //     inst._parse = (payload, ctx) => {
 //       const result = def.innerType._run(payload, ctx);
 //       if (result instanceof Promise) {
@@ -2698,7 +2703,7 @@ export interface $ZodCatch<T extends base.$ZodType = base.$ZodType>
 
 export const $ZodCatch: base.$constructor<$ZodCatch> = /*@__PURE__*/ base.$constructor("$ZodCatch", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst._qin = def.innerType._qin;
+  // inst._qin = def.innerType._qin;
   inst._qout = def.innerType._qout;
   inst._values = def.innerType._values;
 
@@ -2840,7 +2845,7 @@ export const $ZodReadonly: base.$constructor<$ZodReadonly> = /*@__PURE__*/ base.
   "$ZodReadonly",
   (inst, def) => {
     base.$ZodType.init(inst, def);
-    inst._qin = def.innerType._qin;
+    // inst._qin = def.innerType._qin;
     inst._qout = def.innerType._qout;
 
     inst._parse = (payload, ctx) => {
