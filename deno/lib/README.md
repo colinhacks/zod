@@ -31,7 +31,7 @@
 
 <br/>
 
-## Featured sponsor
+<h2 align="center">Featured sponsor</h2>
 
 <div align="center">
   <a href="https://go.clerk.com/PKHrcwh">
