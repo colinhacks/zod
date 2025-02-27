@@ -103,6 +103,7 @@ export type StringValidation =
   | "time"
   | "duration"
   | "ip"
+  | "ipRange"
   | "cidr"
   | "base64"
   | "jwt"
