@@ -21,7 +21,7 @@ test("test", () => {
 //     name: z.string(),
 //     color: z.string(),
 //   })
-//   .nonstrict();
+//   .passthrough();
 
 // test('object pick type', () => {
 //   const modNonStrictFish = nonStrict.omit({ name: true });
