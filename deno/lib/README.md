@@ -31,13 +31,13 @@
 
 <br/>
 
-<h2 align="center">Featured sponsor</h2>
+<h2 align="center">Featured sponsor: Gel</h2>
 
 <div align="center">
-  <a href="https://go.clerk.com/PKHrcwh">
+  <a href="https://geldata.com/?utm_source=zod">
     <picture width="80%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
-      <img alt="clerk logo" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3" width="80%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/6fd5d004-9495-4ecb-939b-8a07548187d0">
+      <img alt="gel logo" src="https://github.com/user-attachments/assets/6fd5d004-9495-4ecb-939b-8a07548187d0" width="90%">
     </picture>
   </a>
   <br/>
