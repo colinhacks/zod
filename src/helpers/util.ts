@@ -73,6 +73,12 @@ export namespace util {
 
   export type noUndefined<T> = T extends undefined ? never : T;
 
+  export type inferCase<T extends string> = T extends Lowercase<string>
+    ? Lowercase<string>
+    : T extends Uppercase<string>
+    ? Uppercase<string>
+    : string;
+
   export const isInteger: NumberConstructor["isInteger"] =
     typeof Number.isInteger === "function"
       ? (val) => Number.isInteger(val) // eslint-disable-line ban/ban

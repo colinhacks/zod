@@ -770,8 +770,12 @@ function isValidCidr(ip: string, version?: IpVersion) {
   return false;
 }
 
-export class ZodString extends ZodType<string, ZodStringDef, string> {
-  _parse(input: ParseInput): ParseReturnType<string> {
+export class ZodString<Output extends string = string> extends ZodType<
+  Output,
+  ZodStringDef,
+  string
+> {
+  _parse(input: ParseInput): ParseReturnType<Output> {
     if (this._def.coerce) {
       input.data = String(input.data);
     }
@@ -1092,8 +1096,8 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  _addCheck(check: ZodStringCheck) {
-    return new ZodString({
+  _addCheck<CheckOutput extends string = Output>(check: ZodStringCheck) {
+    return new ZodString<CheckOutput>({
       ...this._def,
       checks: [...this._def.checks, check],
     });
@@ -1219,7 +1223,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  includes(value: string, options?: { message?: string; position?: number }) {
+  includes(
+    value: util.inferCase<Output>,
+    options?: { message?: string; position?: number }
+  ) {
     return this._addCheck({
       kind: "includes",
       value: value,
@@ -1228,7 +1235,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  startsWith(value: string, message?: errorUtil.ErrMessage) {
+  startsWith(value: util.inferCase<Output>, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "startsWith",
       value: value,
@@ -1236,7 +1243,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  endsWith(value: string, message?: errorUtil.ErrMessage) {
+  endsWith(value: util.inferCase<Output>, message?: errorUtil.ErrMessage) {
     return this._addCheck({
       kind: "endsWith",
       value: value,
@@ -1260,8 +1267,11 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  length(len: number, message?: errorUtil.ErrMessage) {
-    return this._addCheck({
+  length<StringLength extends number>(
+    len: StringLength,
+    message?: errorUtil.ErrMessage
+  ) {
+    return this._addCheck<Output & { length: StringLength }>({
       kind: "length",
       value: len,
       ...errorUtil.errToObj(message),
@@ -1276,24 +1286,15 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   }
 
   trim() {
-    return new ZodString({
-      ...this._def,
-      checks: [...this._def.checks, { kind: "trim" }],
-    });
+    return this._addCheck({ kind: "trim" });
   }
 
   toLowerCase() {
-    return new ZodString({
-      ...this._def,
-      checks: [...this._def.checks, { kind: "toLowerCase" }],
-    });
+    return this._addCheck<Lowercase<Output>>({ kind: "toLowerCase" });
   }
 
   toUpperCase() {
-    return new ZodString({
-      ...this._def,
-      checks: [...this._def.checks, { kind: "toUpperCase" }],
-    });
+    return this._addCheck<Uppercase<Output>>({ kind: "toUpperCase" });
   }
 
   get isDatetime() {
