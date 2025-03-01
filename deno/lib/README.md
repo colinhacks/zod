@@ -31,13 +31,13 @@
 
 <br/>
 
-<h2 align="center">Featured sponsor: Gel</h2>
+<h2 align="center">Featured sponsor: Mintlify</h2>
 
 <div align="center">
-  <a href="https://geldata.com/?utm_source=zod">
-    <picture width="80%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/6fd5d004-9495-4ecb-939b-8a07548187d0">
-      <img alt="gel logo" src="https://github.com/user-attachments/assets/6fd5d004-9495-4ecb-939b-8a07548187d0" width="90%">
+  <a href="http://mintlify.com/?utm_source=zod">
+    <picture width="85%" >
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/4210222e-a033-46f5-b083-08b9fe409de0">
+      <img alt="mintlify logo" src="https://github.com/user-attachments/assets/4210222e-a033-46f5-b083-08b9fe409de0" width="85%">
     </picture>
   </a>
   <br/>
