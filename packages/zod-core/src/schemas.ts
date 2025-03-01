@@ -3109,6 +3109,7 @@ export type $ZodTypes =
   | $ZodDate
   | $ZodSymbol
   | $ZodUndefined
+  | $ZodNullable
   | $ZodNull
   | $ZodAny
   | $ZodUnknown

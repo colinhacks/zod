@@ -212,7 +212,7 @@ export interface $ZodType<out O = unknown, out I = unknown> {
     _output: O & $brand<T>;
   };
 
-  _zod: this;
+  // _zod: this;
 
   // assertInput<T>(...args: T extends I ? [] : ["Invalid input type"]): void;
   // assertOutput<T>(...args: T extends O ? [] : ["Invalid output type"]): void;

@@ -12,3 +12,7 @@ const schema = z.object({
 const data = { type: "a", a: "1" };
 const result = await schema.safeParseAsync(data);
 console.log(JSON.stringify(result, null, 2));
+
+z.email({});
+
+z.object({});

@@ -906,21 +906,6 @@ export const $ZodCheckEndsWith: base.$constructor<$ZodCheckEndsWith> = base.$con
   }
 );
 
-// ///////////////////////////////////
-// /////    $ZodCheckProperty    /////
-// ///////////////////////////////////
-// interface $ZodCheckPropertyDef extends base.$ZodCheckDef {
-//   check: "property";
-//   property: string;
-//   schema: base.$ZodType;
-//   error?: errors.$ZodErrorMap<never> | undefined;
-// }
-
-// export interface $ZodCheckProperty<T extends File = File>
-//   extends base.$ZodCheck<T> {
-//   _def: $ZodCheckPropertyDef;
-// }
-
 ///////////////////////////////////
 /////    $ZodCheckProperty    /////
 ///////////////////////////////////
@@ -1047,7 +1032,7 @@ export const $ZodCheckMimeType: base.$constructor<$ZodCheckMimeType> = base.$con
 ///////////////////////////////////
 /////    $ZodCheckOverwrite    /////
 ///////////////////////////////////
-export interface $ZodCheckOverwriteDef<T> extends base.$ZodCheckDef {
+interface $ZodCheckOverwriteDef<T> extends base.$ZodCheckDef {
   check: "overwrite";
   tx(value: T): T;
   // error?: never;
@@ -1109,3 +1094,32 @@ export const $ZodCheckOverwrite: base.$constructor<$ZodCheckOverwrite> = base.$c
 //       payload.value = payload.value.normalize();
 //     };
 //   });
+
+export type $ZodChecks =
+  | $ZodCheckLessThan
+  | $ZodCheckGreaterThan
+  | $ZodCheckMultipleOf
+  // | $ZodCheckFinite
+  | $ZodCheckNumberFormatDef
+  | $ZodCheckNumberFormat
+  | $ZodCheckBigIntFormatDef
+  | $ZodCheckBigIntFormat
+  | $ZodCheckMaxSize
+  | $ZodCheckMinSize
+  | $ZodCheckSizeEquals
+  | $ZodCheckMaxLength
+  | $ZodCheckMinLength
+  | $ZodCheckLengthEquals
+  | $ZodCheckStringFormatDef
+  | $ZodCheckStringFormat
+  | $ZodCheckRegex
+  // | $ZodCheckJSONString
+  | $ZodCheckLowerCase
+  | $ZodCheckUpperCase
+  | $ZodCheckIncludes
+  | $ZodCheckStartsWith
+  | $ZodCheckEndsWith
+  // | $ZodCheckProperty
+  | $ZodCheckProperty
+  | $ZodCheckMimeType
+  | $ZodCheckOverwrite;
