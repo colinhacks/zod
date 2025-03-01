@@ -36,8 +36,8 @@
 <div align="center">
   <a href="http://mintlify.com/?utm_source=zod">
     <picture width="85%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/cbe804f1-2e64-4ea1-b766-38efa759a86c">
-      <img alt="mintlify logo" src="https://github.com/user-attachments/assets/cbe804f1-2e64-4ea1-b766-38efa759a86c" width="85%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/4210222e-a033-46f5-b083-08b9fe409de0">
+      <img alt="mintlify logo" src="https://github.com/user-attachments/assets/4210222e-a033-46f5-b083-08b9fe409de0" width="85%">
     </picture>
   </a>
   <br/>
