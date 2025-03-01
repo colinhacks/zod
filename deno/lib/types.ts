@@ -2314,22 +2314,31 @@ export interface ZodArrayDef<T extends ZodTypeAny = ZodTypeAny>
   maxLength: { value: number; message?: string } | null;
 }
 
-export type ArrayCardinality = "many" | "atleastone";
+export type ArrayCardinality = "many" | "atleastone" | "exact";
+export type ExactArrayLength<T extends ArrayCardinality> = T extends "exact"
+  ? number
+  : never;
 export type arrayOutputType<
   T extends ZodTypeAny,
-  Cardinality extends ArrayCardinality = "many"
+  Cardinality extends ArrayCardinality = "many",
+  ArrayLenght extends ExactArrayLength<Cardinality> = ExactArrayLength<Cardinality>
 > = Cardinality extends "atleastone"
   ? [T["_output"], ...T["_output"][]]
+  : Cardinality extends "exact"
+  ? util.ExactArray<T["_output"], ArrayLenght>
   : T["_output"][];
 
 export class ZodArray<
   T extends ZodTypeAny,
-  Cardinality extends ArrayCardinality = "many"
+  Cardinality extends ArrayCardinality = "many",
+  ArrayLenght extends ExactArrayLength<Cardinality> = ExactArrayLength<Cardinality>
 > extends ZodType<
-  arrayOutputType<T, Cardinality>,
+  arrayOutputType<T, Cardinality, ArrayLenght>,
   ZodArrayDef<T>,
   Cardinality extends "atleastone"
     ? [T["_input"], ...T["_input"][]]
+    : Cardinality extends "exact"
+    ? util.ExactArray<T["_input"], ArrayLenght>
     : T["_input"][]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
@@ -2416,28 +2425,37 @@ export class ZodArray<
     return this._def.type;
   }
 
-  min(minLength: number, message?: errorUtil.ErrMessage): this {
+  min<MinLength extends number>(
+    minLength: util.NonNegative<MinLength>,
+    message?: errorUtil.ErrMessage
+  ): this {
     return new ZodArray({
       ...this._def,
       minLength: { value: minLength, message: errorUtil.toString(message) },
     }) as any;
   }
 
-  max(maxLength: number, message?: errorUtil.ErrMessage): this {
+  max<MaxLength extends number>(
+    maxLength: util.NonNegative<MaxLength>,
+    message?: errorUtil.ErrMessage
+  ): this {
     return new ZodArray({
       ...this._def,
       maxLength: { value: maxLength, message: errorUtil.toString(message) },
     }) as any;
   }
 
-  length(len: number, message?: errorUtil.ErrMessage): this {
-    return new ZodArray({
+  length<ExactLength extends number>(
+    len: util.NonNegative<ExactLength>,
+    message?: errorUtil.ErrMessage
+  ): ZodExactArray<T, ExactLength> {
+    return new ZodArray<T, "exact", ExactLength>({
       ...this._def,
       exactLength: { value: len, message: errorUtil.toString(message) },
     }) as any;
   }
 
-  nonempty(message?: errorUtil.ErrMessage): ZodArray<T, "atleastone"> {
+  nonempty(message?: errorUtil.ErrMessage): ZodNonEmptyArray<T> {
     return this.min(1, message) as any;
   }
 
@@ -2457,6 +2475,10 @@ export class ZodArray<
 }
 
 export type ZodNonEmptyArray<T extends ZodTypeAny> = ZodArray<T, "atleastone">;
+export type ZodExactArray<
+  T extends ZodTypeAny,
+  Length extends number
+> = ZodArray<T, "exact", Length>;
 
 /////////////////////////////////////////
 /////////////////////////////////////////

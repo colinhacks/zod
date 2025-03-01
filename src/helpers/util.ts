@@ -17,6 +17,25 @@ export namespace util {
   export type MakePartial<T, K extends keyof T> = Omit<T, K> &
     Partial<Pick<T, K>>;
   export type Exactly<T, X> = T & Record<Exclude<keyof X, keyof T>, never>;
+  export type NonNegative<T extends number> = `${T}` extends `-${string}`
+    ? never
+    : T;
+
+  export type digit = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9;
+
+  export type ExactArray<
+    T,
+    N extends number,
+    R extends T[] = []
+  > = number extends N
+    ? T[]
+    : `${N}` extends `-${string}`
+    ? never
+    : `${N}` extends `${digit}` | `${Exclude<digit, 0>}${digit}` | "100"
+    ? R["length"] extends N
+      ? R & { length: N }
+      : ExactArray<T, N, [...R, T]>
+    : [T, ...T[]] & { length: N };
 
   export const arrayToEnum = <T extends string, U extends [T, ...T[]]>(
     items: U
