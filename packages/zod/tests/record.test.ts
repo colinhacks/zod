@@ -326,7 +326,6 @@ test("async parsing", async () => {
         {
           "code": "custom",
           "message": "Invalid input",
-          "params": undefined,
           "path": [
             "foo",
           ],
@@ -334,7 +333,6 @@ test("async parsing", async () => {
         {
           "code": "custom",
           "message": "Invalid input",
-          "params": undefined,
           "path": [
             "baz",
           ],
@@ -342,7 +340,6 @@ test("async parsing", async () => {
         {
           "code": "custom",
           "message": "Invalid input",
-          "params": undefined,
           "path": [],
         },
       ],

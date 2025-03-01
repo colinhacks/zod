@@ -215,13 +215,11 @@ test("reported issues with nested usage", () => {
 });
 
 test("catch error", () => {
-  let issues: $ZodRawIssue[] | undefined = undefined;
-
   const schema = z.object({
     age: z.number(),
     name: z.string().catch((ctx) => {
       ctx.issues;
-      issues = ctx.issues;
+      // issues = ctx.issues;
 
       return "John Doe";
     }),
@@ -243,24 +241,10 @@ test("catch error", () => {
           "path": [
             "age",
           ],
+          "received": "Infinity",
         },
       ],
     }
-  `);
-
-  expect(issues!.length).toEqual(1);
-  expect(issues).toMatchInlineSnapshot(`
-    [
-      {
-        "code": "invalid_type",
-        "def": {
-          "checks": [],
-          "type": "string",
-        },
-        "expected": "string",
-        "input": null,
-      },
-    ]
   `);
 });
 

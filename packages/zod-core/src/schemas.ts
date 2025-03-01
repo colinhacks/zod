@@ -462,17 +462,13 @@ export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$con
     if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) {
       return payload;
     }
-    const note = Number.isNaN(input)
-      ? "NaN is not a valid number"
-      : !Number.isFinite(input)
-        ? "Infinity is not a valid number"
-        : undefined;
+    const received = Number.isNaN(input) ? "NaN" : !Number.isFinite(input) ? "Infinity" : undefined;
     payload.issues.push({
       expected: "number",
       code: "invalid_type",
       input,
       inst,
-      ...(note ? { note } : {}),
+      ...(received ? { received } : {}),
     });
     return payload;
   };
@@ -876,14 +872,14 @@ export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constru
     }
     const input = payload.value;
 
-    if (input instanceof Date && !Number.isNaN(input.getTime())) return payload;
-
-    const isInvalid = Number.isNaN(input.getTime());
+    const isDate = input instanceof Date;
+    const isValidDate = isDate && !Number.isNaN(input.getTime());
+    if (isValidDate) return payload;
     payload.issues.push({
       expected: "date",
       code: "invalid_type",
       input,
-      ...(isInvalid ? { note: "Invalid Date" } : {}),
+      ...(isDate ? { received: "Invalid Date" } : {}),
       inst,
     });
 
@@ -1125,11 +1121,12 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
       doc.write(`return payload;`);
       return doc.compile();
     };
-    let fastpass!: ReturnType<typeof generateFastpass>;
 
+    let fastpass!: ReturnType<typeof generateFastpass>;
     const fastEnabled = util.allowsEval.value; // && !def.catchall;
     const isObject = util.isObject;
     const { catchall } = def;
+    // const noCatchall = !def.catchall;
 
     inst._parse = (payload, ctx) => {
       const input = payload.value;
@@ -1151,9 +1148,10 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
         payload = fastpass(inst, payload, ctx);
       } else {
         payload.value = {};
+        const normalized = _normalized.value;
 
-        for (const key of _normalized.value.keys) {
-          const valueSchema = _normalized.value.shape[key];
+        for (const key of normalized.keys) {
+          const valueSchema = normalized.shape[key];
 
           // do not add omitted optional keys
           // if (!(key in input)) {
@@ -1168,7 +1166,7 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
           //   });
           // }
 
-          if (_normalized.value.optionalKeys.has(key)) {
+          if (normalized.optionalKeys.has(key)) {
             if (!(key in input)) {
               continue;
             }
@@ -1187,8 +1185,9 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
         }
       }
 
-      if (!catchall) return payload;
-
+      if (!catchall) {
+        return proms.length ? Promise.all(proms).then(() => payload) : payload;
+      }
       const unrecognized: string[] = [];
       // iterate over input keys
       for (const key of Object.keys(input)) {
@@ -1460,6 +1459,7 @@ export const $ZodUnion: base.$constructor<$ZodUnion> = /*@__PURE__*/ base.$const
         values.add(v);
       }
     }
+    inst._values = values;
   }
 
   // computed union regex for _pattern if all options have _pattern
@@ -1467,8 +1467,6 @@ export const $ZodUnion: base.$constructor<$ZodUnion> = /*@__PURE__*/ base.$const
     const patterns = def.options.map((o) => (o as any)._pattern);
     (inst as any)._pattern = new RegExp(`^(${patterns.map((p) => util.cleanRegex(p.source)).join("|")})$`);
   }
-
-  inst._values = values;
 
   inst._parse = (payload, ctx) => {
     const async = false;
@@ -2422,6 +2420,7 @@ export const $ZodTransform: base.$constructor<$ZodTransform> = /*@__PURE__*/ bas
     base.$ZodType.init(inst, def);
     inst._parse = (payload, _ctx) => {
       const _output = def.transform(payload.value, payload);
+
       if (_ctx.async) {
         const output = _output instanceof Promise ? _output : Promise.resolve(_output);
         return output.then((output) => {
@@ -2500,6 +2499,7 @@ export interface $ZodNullable<T extends base.$ZodType = base.$ZodType>
   _qout: T["_qout"];
   _isst: never;
   _values: T["_values"];
+  _pattern: RegExp;
 }
 
 export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.$constructor(
@@ -2508,6 +2508,10 @@ export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.
     base.$ZodType.init(inst, def);
     inst._qin = def.innerType._qin;
     inst._qout = def.innerType._qout;
+
+    const pattern = (def.innerType as any)._pattern;
+    if (pattern) inst._pattern = new RegExp(`^(${util.cleanRegex(pattern.source)}|null)$`);
+
     if (def.innerType._values) inst._values = new Set([...def.innerType._values, null]);
 
     inst._parse = (payload, ctx) => {
@@ -2846,7 +2850,10 @@ export interface $ZodPipe<A extends base.$ZodType = base.$ZodType, B extends bas
 }
 
 function handlePipeResult(left: base.$ParsePayload, def: $ZodPipeDef, ctx: base.$ParseContext) {
-  if (util.aborted(left)) return left;
+  if (util.aborted(left)) {
+    return left;
+  }
+
   return def.out._run({ value: left.value, issues: left.issues, $payload: true }, ctx);
 }
 
@@ -3058,16 +3065,16 @@ export interface $ZodCustom<O = unknown, I = unknown> extends base.$ZodType<O, I
 
 function handleRefineResult(result: unknown, payload: base.$ParsePayload, input: unknown, inst: $ZodCustom): void {
   if (!result) {
-    payload.issues.push(
-      util.issue({
-        code: "custom",
-        input,
-        inst, // incorporates params.error into issue reporting
-        path: inst._def.path, // incorporates params.error into issue reporting
-        continue: !inst._def.abort,
-        params: inst._def.params,
-      })
-    );
+    const _iss: any = {
+      code: "custom",
+      input,
+      inst, // incorporates params.error into issue reporting
+      path: inst._def.path, // incorporates params.error into issue reporting
+      continue: !inst._def.abort,
+      // params: inst._def.params,
+    };
+    if (inst._def.params) _iss.params = inst._def.params;
+    payload.issues.push(util.issue(_iss));
   }
 }
 

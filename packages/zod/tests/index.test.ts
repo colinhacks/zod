@@ -354,6 +354,7 @@ test("z.tuple", () => {
   // tuple with readonly args
   const cArgs = [z.string(), z.number(), z.optional(z.string())] as const;
   const c = z.tuple(cArgs, z.boolean());
+  // type c = z.output<typeof c>;
 });
 
 test("z.record", () => {

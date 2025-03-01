@@ -209,7 +209,6 @@ test("short circuit on dirty", () => {
         {
           "code": "custom",
           "message": "Invalid input",
-          "params": undefined,
           "path": [],
         },
       ],
@@ -237,7 +236,6 @@ test("async short circuit on dirty", async () => {
         {
           "code": "custom",
           "message": "Invalid input",
-          "params": undefined,
           "path": [],
         },
       ],

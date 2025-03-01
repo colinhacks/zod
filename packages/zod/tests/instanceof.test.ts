@@ -1,6 +1,4 @@
-import * as util from "@zod/core/util";
-
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
 test("instanceof", async () => {
@@ -26,7 +24,7 @@ test("instanceof", async () => {
   await expect(() => SubtestSchema.parse(new Test())).toThrow(/Input not instance of Subtest/);
   await expect(() => TestSchema.parse(12)).toThrow(/Input not instance of Test/);
 
-   expectTypeOf<Test>().toEqualTypeOf<z.infer<typeof TestSchema>>();
+  expectTypeOf<Test>().toEqualTypeOf<z.infer<typeof TestSchema>>();
 });
 
 test("instanceof fatal", () => {

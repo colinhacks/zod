@@ -206,7 +206,9 @@ export interface $ZodType<out O = unknown, out I = unknown> {
         : [$ZodRegistry<R["_meta"], this>["_meta"]]
       : ["Incompatible schema"]
   ): this;
-  $brand<T extends PropertyKey = PropertyKey>(): this & {
+  $brand<T extends PropertyKey = PropertyKey>(
+    value?: T
+  ): this & {
     _output: O & $brand<T>;
   };
 

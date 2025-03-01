@@ -1,5 +1,4 @@
-import type * as core from "@zod/core";
-import { test, expectTypeOf } from "vitest";
+import { expectTypeOf, test } from "vitest";
 import * as z from "../src/index.js";
 
 test("branded types", () => {
@@ -41,7 +40,7 @@ test("branded types", () => {
   const age = z.number().$brand<"age">();
   type Age1 = z.infer<typeof age>;
   type AgeInput1 = z.input<typeof age>;
-  
+
   // Using not for type inequality assertion
   expectTypeOf<AgeInput1>().not.toEqualTypeOf<Age1>();
   expectTypeOf<number>().toEqualTypeOf<AgeInput1>();

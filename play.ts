@@ -2,14 +2,13 @@ import * as z from "zod";
 
 z;
 
-const a = z.looseObject({
-  a: z.string(),
+const schema = z.object({
+  type: z.literal("a"),
+  a: z
+    .string()
+    .refine(async () => true)
+    .transform((val) => Number(val)),
 });
-
-const b = z.strictObject({ b: z.string() });
-const c = a.merge(b);
-// incoming object overrides
-console.log(a._def);
-console.log(b._def);
-
-console.log(c._def);
+const data = { type: "a", a: "1" };
+const result = await schema.safeParseAsync(data);
+console.log(JSON.stringify(result, null, 2));

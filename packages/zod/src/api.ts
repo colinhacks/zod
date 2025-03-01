@@ -775,7 +775,7 @@ export function tuple<T extends readonly [core.$ZodType, ...core.$ZodType[]]>(
   items: T,
   params?: core.$ZodTupleParams
 ): schemas.ZodTuple<T, null>;
-export function tuple<T extends [core.$ZodType, ...core.$ZodType[]], Rest extends core.$ZodType>(
+export function tuple<T extends readonly [core.$ZodType, ...core.$ZodType[]], Rest extends core.$ZodType>(
   items: T,
   rest: Rest,
   params?: core.$ZodTupleParams

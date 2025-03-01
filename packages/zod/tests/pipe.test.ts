@@ -31,13 +31,11 @@ test("continue on non-fatal errors", () => {
           {
             "code": "custom",
             "message": "A",
-            "params": undefined,
             "path": [],
           },
           {
             "code": "custom",
             "message": "B",
-            "params": undefined,
             "path": [],
           },
         ],
@@ -63,7 +61,6 @@ test("break on fatal errors", () => {
           {
             "code": "custom",
             "message": "A",
-            "params": undefined,
             "path": [],
           },
         ],

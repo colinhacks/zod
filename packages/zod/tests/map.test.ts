@@ -37,7 +37,6 @@ test("valid parse async", async () => {
         {
           "code": "custom",
           "message": "bad key",
-          "params": undefined,
           "path": [
             "first",
           ],
@@ -45,7 +44,6 @@ test("valid parse async", async () => {
         {
           "code": "custom",
           "message": "bad value",
-          "params": undefined,
           "path": [
             "first",
           ],
@@ -153,7 +151,6 @@ test("dirty", async () => {
           {
             "code": "custom",
             "message": "Keys must be uppercase",
-            "params": undefined,
             "path": [
               "first",
             ],
@@ -161,7 +158,6 @@ test("dirty", async () => {
           {
             "code": "custom",
             "message": "Keys must be uppercase",
-            "params": undefined,
             "path": [
               "second",
             ],

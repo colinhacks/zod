@@ -304,23 +304,22 @@ test("wrong schema - missing discriminator", () => {
 // });
 
 test("async - valid", async () => {
-  expect(
-    await z
-      .discriminatedUnion([
-        z.object({
-          type: z.literal("a"),
-          a: z
-            .string()
-            .refine(async () => true)
-            .transform(async (val) => Number(val)),
-        }),
-        z.object({
-          type: z.literal("b"),
-          b: z.string(),
-        }),
-      ])
-      .parseAsync({ type: "a", a: "1" })
-  ).toEqual({ type: "a", a: 1 });
+  const schema = await z.discriminatedUnion([
+    z.object({
+      type: z.literal("a"),
+      a: z
+        .string()
+        .refine(async () => true)
+        .transform(async (val) => Number(val)),
+    }),
+    z.object({
+      type: z.literal("b"),
+      b: z.string(),
+    }),
+  ]);
+  const data = { type: "a", a: "1" };
+  const result = await schema.safeParseAsync(data);
+  expect(result.data).toEqual({ type: "a", a: 1 });
 });
 
 test("async - invalid", async () => {

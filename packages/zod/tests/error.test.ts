@@ -45,9 +45,19 @@ const errorMap: z.ZodErrorMap = (issue) => {
 
 test("type error with custom error map", () => {
   const result = z.string().safeParse(234, { error: errorMap });
-
-  expect(result.error?.issues[0].code).toEqual("invalid_type");
-  expect(result.error?.issues[0].message).toEqual(`bad type!`);
+  expect(result.success).toBe(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "bad type!",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("refinement fail with params", () => {
@@ -58,8 +68,20 @@ test("refinement fail with params", () => {
     })
     .safeParse(2, { error: errorMap });
   expect(result.success).toBe(false);
-  expect(result.error!.issues[0].code).toEqual("custom");
-  expect(result.error!.issues[0].message).toEqual(`less-than-3`);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "less-than-3",
+          "params": {
+            "minimum": 3,
+          },
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("hard coded error  with custom errormap", () => {
@@ -72,8 +94,20 @@ test("hard coded error  with custom errormap", () => {
     .safeParse("asdf", { error: () => "contextual" });
 
   expect(result.success).toBe(false);
-  // expect(result.error!.issues[0].message).toEqual("override");
-  expect(result.error!.issues[0].message).toEqual("override");
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "override",
+          "params": {
+            "minimum": 13,
+          },
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("default error message", () => {
@@ -83,8 +117,17 @@ test("default error message", () => {
     .safeParse(2);
 
   expect(result.success).toBe(false);
-  expect(result.error!.issues[0].message).toEqual("Invalid input");
-  expect(result.error!.issues.length).toEqual(1);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "Invalid input",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("override error in refine", () => {
@@ -94,7 +137,17 @@ test("override error in refine", () => {
     .safeParse(2);
   expect(result.success).toBe(false);
   expect(result.error!.issues.length).toEqual(1);
-  expect(result.error!.issues[0].message).toEqual("override");
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "override",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("override error in refinement", () => {
@@ -106,7 +159,17 @@ test("override error in refinement", () => {
     .safeParse(2);
   expect(result.success).toBe(false);
   expect(result.error!.issues.length).toEqual(1);
-  expect(result.error!.issues[0].message).toEqual("override");
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "override",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("array minimum", () => {
@@ -118,34 +181,40 @@ test("array minimum", () => {
   result = z.array(z.string()).min(3).safeParse(["asdf", "qwer"]);
   expect(result.success).toBe(false);
   expect(result.error!.issues[0].code).toEqual("too_small");
-  expect(result.error!.issues[0].message).toEqual(`Too small: expected array length to be >3 items`);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "too_small",
+          "message": "Too small: expected array to have >3 items",
+          "minimum": 3,
+          "origin": "array",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("literal bigint default error message", () => {
   const result = z.literal(BigInt(12)).safeParse(BigInt(13));
   expect(result.success).toBe(false);
   expect(result.error!.issues.length).toEqual(1);
-  expect(result.error!.issues[0].message).toEqual(`Invalid input: expected 12n`);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_value",
+          "message": "Invalid input: expected 12n",
+          "path": [],
+          "values": [
+            12n,
+          ],
+        },
+      ],
+    }
+  `);
 });
-
-// implement test for semi-smart union logic that checks for type error on either left or right
-// test("union smart errors", () => {
-//   // expect.assertions(2);
-
-//   const p1 = z
-//     .union([z.string(), z.number().refine((x) => x > 0)])
-//     .safeParse(-3.2);
-
-//   if (p1.success === true) throw new Error();
-//   expect(p1.success).toBe(false);
-//   expect(p1.error.issues[0].code).toEqual("custom");
-
-//   const p2 = z.union([z.string(), z.number()]).safeParse(false);
-//   // .catch(err => expect(err.issues[0].code).toEqual("invalid_union"));
-//   if (p2.success === true) throw new Error();
-//   expect(p2.success).toBe(false);
-//   expect(p2.error.issues[0].code).toEqual("invalid_union");
-// });
 
 test("custom path in custom error map", () => {
   const schema = z.object({
@@ -160,7 +229,20 @@ test("custom path in custom error map", () => {
   };
   const result = schema.safeParse({ items: ["first"] }, { error: errorMap });
   expect(result.success).toBe(false);
-  expect(result.error!.issues[0].path).toEqual(["items", "items-too-few"]);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "doesnt matter",
+          "path": [
+            "items",
+            "items-too-few",
+          ],
+        },
+      ],
+    }
+  `);
 });
 
 // test("error metadata from value", () => {
@@ -197,6 +279,7 @@ test("root level formatting", () => {
   const schema = z.string().email();
   const result = schema.safeParse("asdfsdf");
   expect(result.success).toBe(false);
+
   expect(result.error!.format()._errors).toEqual(["Invalid email"]);
 });
 
@@ -341,6 +424,70 @@ test("formatting with nullable and optional fields", () => {
   expect(error.optionalTuple?._errors).toEqual([]);
   expect(error.optionalTuple?.[0]?._errors).toEqual(["Invalid input"]);
   expect(error.optionalTuple?.[1]?._errors).toEqual(["Invalid input"]);
+
+  expect(error).toMatchInlineSnapshot(`
+    {
+      "_errors": [],
+      "nullableArray": {
+        "0": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "_errors": [],
+      },
+      "nullableObject": {
+        "_errors": [],
+        "name": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+      },
+      "nullableTuple": {
+        "0": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "1": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "_errors": [],
+      },
+      "optionalArray": {
+        "0": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "_errors": [],
+      },
+      "optionalObject": {
+        "_errors": [],
+        "name": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+      },
+      "optionalTuple": {
+        "0": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "1": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "_errors": [],
+      },
+    }
+  `);
 });
 
 test("inferFlattenedErrors", () => {
@@ -367,20 +514,33 @@ test("schema-bound error map", () => {
 
 test("bound error map overrides contextual", () => {
   // support contextual override
-  const result3 = stringWithCustomError.safeParse(undefined, {
+  const result = stringWithCustomError.safeParse(undefined, {
     error: () => ({ message: "override" }),
   });
-  expect(result3.success).toBe(false);
-  expect(result3.error!.issues[0].message).toEqual("bound");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].message).toEqual("bound");
 });
 
 test("z.config customError ", () => {
   // support overrideErrorMap
 
   z.config({ customError: () => ({ message: "override" }) });
-  const result4 = stringWithCustomError.min(10).safeParse("tooshort");
-  expect(result4.success).toBe(false);
-  expect(result4.error!.issues[0].message).toEqual("override");
+  const result = stringWithCustomError.min(10).safeParse("tooshort");
+  expect(result.success).toBe(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "too_small",
+          "message": "override",
+          "minimum": 10,
+          "origin": "string",
+          "path": [],
+        },
+      ],
+    }
+  `);
+  expect(result.error!.issues[0].message).toEqual("override");
   z.config({ customError: undefined });
 });
 
@@ -453,5 +613,27 @@ test("dont short circuit on continuable errors", () => {
     });
   const result = user.safeParse({ password: "asdf", confirm: "qwer" });
   expect(result.success).toBe(false);
-  expect(result.error!.issues.length).toEqual(2);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "too_small",
+          "message": "Too small: expected string to have >6 characters",
+          "minimum": 6,
+          "origin": "string",
+          "path": [
+            "password",
+          ],
+        },
+        {
+          "code": "custom",
+          "message": "Passwords don't match",
+          "path": [
+            "confirm",
+          ],
+        },
+      ],
+    }
+  `);
+  // expect(result.error!.issues.length).toEqual(2);
 });

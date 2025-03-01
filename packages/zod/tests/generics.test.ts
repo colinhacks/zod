@@ -1,5 +1,3 @@
-import * as util from "@zod/core/util";
-
 import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
@@ -55,6 +53,6 @@ test("nested no undefined", () => {
   const outer = z.object({ inner });
   type outerSchema = z.infer<typeof outer>;
   expectTypeOf<outerSchema>().toEqualTypeOf<{ inner: string | string[] }>();
-  
+
   expect(outer.safeParse({ inner: undefined }).success).toEqual(false);
 });

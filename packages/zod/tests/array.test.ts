@@ -121,9 +121,9 @@ test("continue parsing despite array size error", () => {
           },
           {
             "code": "too_small",
-            "message": "Too small: expected unknown to be greater than 2",
+            "message": "Too small: expected array to have >2 items",
             "minimum": 2,
-            "origin": "unknown",
+            "origin": "array",
             "path": [
               "people",
             ],

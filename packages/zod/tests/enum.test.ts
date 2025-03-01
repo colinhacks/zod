@@ -65,7 +65,7 @@ test("issue metadata", () => {
   expect(result.error!.issues[0]).toMatchInlineSnapshot(`
     {
       "code": "invalid_value",
-      "message": "Invalid input: expected one of "Red"|"Green"|"Blue"",
+      "message": "Invalid option: expected one of "Red"|"Green"|"Blue"",
       "path": [],
       "values": [
         "Red",
@@ -182,7 +182,7 @@ test("enum error message, invalid enum elementstring", () => {
   const result = z.enum(["Tuna", "Trout"]).safeParse("Salmon");
   expect(result.success).toEqual(false);
   expect(result.error!.issues.length).toEqual(1);
-  // expect(result.error!.issues[0].message).toEqual('Invalid input: expected one of "Tuna"|"Trout"');
+
   expect(result.error).toMatchInlineSnapshot(`
     ZodError {
       "issues": [
@@ -196,7 +196,6 @@ test("enum error message, invalid enum elementstring", () => {
           ],
         },
       ],
-      "name": "$ZodError",
     }
   `);
 });
@@ -219,7 +218,6 @@ test("enum error message, invalid type", () => {
           ],
         },
       ],
-      "name": "$ZodError",
     }
   `);
 });
@@ -246,7 +244,6 @@ test("nativeEnum default error message", () => {
           ],
         },
       ],
-      "name": "$ZodError",
     }
   `);
 });

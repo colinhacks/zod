@@ -1,6 +1,4 @@
-import * as util from "@zod/core/util";
-
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
 const args1 = z.tuple([z.string()]);
@@ -99,7 +97,6 @@ const func2 = z.function({
 test("function inference 2", () => {
   type func2 = (typeof func2)["_input"];
 
-  
   expectTypeOf<func2>().toEqualTypeOf<
     (arg: {
       f1: number;
@@ -144,7 +141,6 @@ test("input validation error", () => {
           ],
         },
       ],
-      "name": "$ZodError",
     }
   `);
 });
@@ -165,7 +161,6 @@ test("output validation error", () => {
           "path": [],
         },
       ],
-      "name": "$ZodError",
     }
   `);
 });

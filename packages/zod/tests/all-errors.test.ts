@@ -20,10 +20,10 @@ test("regular error", () => {
             "code": "invalid_type",
             "expected": "number",
             "message": "Invalid input: expected number",
-            "note": "Infinity is not a valid number",
             "path": [
               "f1",
             ],
+            "received": "Infinity",
           },
           {
             "code": "invalid_type",

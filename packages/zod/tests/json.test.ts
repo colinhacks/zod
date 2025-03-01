@@ -1,9 +1,7 @@
-// import * as core from "@zod/core";
-// import * as util from "@zod/core/util";
-
-// import { expect, test } from "vitest";
+import { test } from "vitest";
 // import * as z from "zod";
 
+test(() => {});
 // test("overload types", () => {
 //   const schema = z.string().json();
 //   util.assertEqual<typeof schema, z.ZodString>(true);
