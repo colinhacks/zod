@@ -1637,7 +1637,7 @@ const nonEmptyStrings = z.string().array().nonempty({
 
 ### `.length`
 
-To enforce a exact-length array, use `.length()`. This method changes the inferred type to a tuple of the specified length.
+To enforce an exact-length array, use `.length()`. This method changes the inferred type to a tuple of the specified length.
 
 ```ts
 z.string().array().length(5); // must contain 5 items exactly
@@ -1664,7 +1664,7 @@ Unlike `.nonempty()` and `.length()` these methods do not change the inferred ty
   // Inferred type: [string, ...string[]] & { length: 101 }
   ```
 
-- If a generic `number` is passed to `.lenght()`, Zod will validate the length but lose the tuple inference, resulting in a simple array:
+- If a generic `number` is passed to `.length()`, Zod will validate the length but lose the tuple inference, resulting in a simple array:
 
   ```ts
   let size: number = 2;

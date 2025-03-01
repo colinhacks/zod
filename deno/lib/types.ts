@@ -2358,24 +2358,24 @@ export type ExactArrayLength<T extends ArrayCardinality> = T extends "exact"
 export type arrayOutputType<
   T extends ZodTypeAny,
   Cardinality extends ArrayCardinality = "many",
-  ArrayLenght extends ExactArrayLength<Cardinality> = ExactArrayLength<Cardinality>
+  ArrayLength extends ExactArrayLength<Cardinality> = ExactArrayLength<Cardinality>
 > = Cardinality extends "atleastone"
   ? [T["_output"], ...T["_output"][]]
   : Cardinality extends "exact"
-  ? util.ExactArray<T["_output"], ArrayLenght>
+  ? util.ExactArray<T["_output"], ArrayLength>
   : T["_output"][];
 
 export class ZodArray<
   T extends ZodTypeAny,
   Cardinality extends ArrayCardinality = "many",
-  ArrayLenght extends ExactArrayLength<Cardinality> = ExactArrayLength<Cardinality>
+  ArrayLength extends ExactArrayLength<Cardinality> = ExactArrayLength<Cardinality>
 > extends ZodType<
-  arrayOutputType<T, Cardinality, ArrayLenght>,
+  arrayOutputType<T, Cardinality, ArrayLength>,
   ZodArrayDef<T>,
   Cardinality extends "atleastone"
     ? [T["_input"], ...T["_input"][]]
     : Cardinality extends "exact"
-    ? util.ExactArray<T["_input"], ArrayLenght>
+    ? util.ExactArray<T["_input"], ArrayLength>
     : T["_input"][]
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
