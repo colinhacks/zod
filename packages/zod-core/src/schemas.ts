@@ -30,7 +30,7 @@ export interface $ZodString<Input = unknown> extends base.$ZodType<string, Input
 
 export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$constructor("$ZodString", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst._pattern = regexes.stringRegex;
+  inst._pattern = inst?._computed?.pattern ?? regexes.stringRegex(inst._computed);
 
   inst._parse = (payload, _) => {
     if (def.coerce)
@@ -451,7 +451,7 @@ export interface $ZodNumber<T = unknown> extends base.$ZodType<number, T> {
 
 export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$constructor("$ZodNumber", (inst, def) => {
   base.$ZodType.init(inst, def);
-  inst._pattern = regexes.numberRegex;
+  inst._pattern = inst._computed.pattern ?? regexes.numberRegex;
 
   inst._parse = (payload, _ctx) => {
     if (def.coerce)
@@ -516,12 +516,7 @@ export const $ZodNumberFormat: base.$constructor<$ZodNumberFormat> = /*@__PURE__
   "$ZodNumber",
   (inst, def) => {
     checks.$ZodCheckNumberFormat.init(inst, def);
-    $ZodNumber.init(inst, def); // no format checks
-
-    // if format is integer:
-    if (def.format.includes("int")) {
-      inst._pattern = regexes.intRegex;
-    }
+    $ZodNumber.init(inst, def); // no format checksp
   }
 );
 
@@ -625,7 +620,7 @@ export interface $ZodBigIntFormat extends $ZodBigInt<bigint>, checks.$ZodCheckBi
 }
 
 export const $ZodBigIntFormat: base.$constructor<$ZodBigIntFormat> = /*@__PURE__*/ base.$constructor(
-  "$ZodNumber",
+  "$ZodBigInt",
   (inst, def) => {
     checks.$ZodCheckBigIntFormat.init(inst, def);
     $ZodBigInt.init(inst, def); // no format checks
@@ -1427,6 +1422,8 @@ export interface $ZodUnion<T extends readonly base.$ZodType[] = readonly base.$Z
   extends base.$ZodType<T[number]["_output"], T[number]["_input"]> {
   _def: $ZodUnionDef;
   _isst: errors.$ZodIssueInvalidUnion;
+
+  _pattern: [T[number]] extends { _pattern: RegExp } ? RegExp : never;
 }
 
 function handleUnionResults(
@@ -1463,6 +1460,13 @@ export const $ZodUnion: base.$constructor<$ZodUnion> = /*@__PURE__*/ base.$const
       }
     }
   }
+
+  // computed union regex for _pattern if all options have _pattern
+  if (def.options.every((o) => (o as any)._pattern)) {
+    const patterns = def.options.map((o) => (o as any)._pattern);
+    (inst as any)._pattern = new RegExp(`^(${patterns.map((p) => util.cleanRegex(p.source)).join("|")})$`);
+  }
+
   inst._values = values;
 
   inst._parse = (payload, ctx) => {
@@ -2298,7 +2302,7 @@ export const $ZodLiteral: base.$constructor<$ZodLiteral> = /*@__PURE__*/ base.$c
     inst._values = new Set<util.Primitive>(def.values);
     inst._pattern = new RegExp(
       `^(${def.values
-        .filter((k) => util.propertyKeyTypes.has(typeof k))
+        // .filter((k) => util.propertyKeyTypes.has(typeof k))
         .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? o.toString() : String(o)))
         .join("|")})$`
     );
@@ -2453,6 +2457,7 @@ export interface $ZodOptional<T extends base.$ZodType = base.$ZodType>
   _qout: "true";
   _isst: never;
   _values: T["_values"];
+  _pattern: RegExp;
 }
 
 export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.$constructor(
@@ -2462,6 +2467,7 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
     // inst._qin = "true";
     inst._qout = "true";
     if (def.innerType._values) inst._values = new Set([...def.innerType._values, undefined]);
+    if (def.innerType._pattern) inst._pattern = new RegExp(`^(${util.cleanRegex(def.innerType._pattern.source)})?$`);
 
     inst._parse = (payload, ctx) => {
       if (payload.value === undefined) {
@@ -2895,13 +2901,14 @@ export interface $SchemaPart extends base.$ZodType<$LiteralPart, $LiteralPart> {
 }
 export type $TemplateLiteralPart = $LiteralPart | $SchemaPart;
 
+type UndefinedToEmptyString<T> = T extends undefined ? "" : T;
 type AppendToTemplateLiteral<
   Template extends string,
   Suffix extends $LiteralPart | base.$ZodType,
 > = Suffix extends $LiteralPart
-  ? `${Template}${Suffix}`
+  ? `${Template}${UndefinedToEmptyString<Suffix>}`
   : Suffix extends base.$ZodType<infer Output extends $LiteralPart>
-    ? `${Template}${Output}`
+    ? `${Template}${UndefinedToEmptyString<Output>}`
     : never;
 
 export type $PartsToTemplateLiteral<Parts extends $TemplateLiteralPart[]> = [] extends Parts
@@ -2917,14 +2924,21 @@ export const $ZodTemplateLiteral: base.$constructor<$ZodTemplateLiteral> = /*@__
     const regexParts: string[] = [];
     for (const part of def.parts) {
       if (part instanceof base.$ZodType) {
+        if (!("_pattern" in part)) {
+          // if (!source)
+          throw new Error(`Invalid template literal part, no _pattern found: ${[...(part as any)._traits].shift()}`);
+        }
         const source = part._pattern instanceof RegExp ? part._pattern.source : part._pattern;
-        if (!source) throw new Error(`Invalid template literal part: ${part._traits}`);
+
+        // if (!source) throw new Error(`Invalid template literal part: ${part._traits}`);
 
         const start = source.startsWith("^") ? 1 : 0;
         const end = source.endsWith("$") ? source.length - 1 : source.length;
         regexParts.push(source.slice(start, end));
+      } else if (part === null || util.primitiveTypes.has(typeof part)) {
+        regexParts.push(util.escapeRegex(`${part}`));
       } else {
-        regexParts.push(`${part}`);
+        throw new Error(`Invalid template literal part: ${part}`);
       }
     }
     inst._pattern = new RegExp(`^${regexParts.join("")}$`);
@@ -2939,6 +2953,8 @@ export const $ZodTemplateLiteral: base.$constructor<$ZodTemplateLiteral> = /*@__
         });
         return payload;
       }
+
+      inst._pattern.lastIndex = 0;
 
       if (!inst._pattern.test(payload.value)) {
         payload.issues.push({

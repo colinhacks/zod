@@ -1,4 +1,3 @@
-import { min } from "./api.js";
 import * as base from "./base.js";
 import type * as errors from "./errors.js";
 import * as regexes from "./regexes.js";
@@ -38,6 +37,7 @@ export const $ZodCheckLessThan: base.$constructor<$ZodCheckLessThan> = base.$con
 
     inst._onattach = (inst) => {
       const curr = inst._computed.maximum ?? Number.POSITIVE_INFINITY;
+
       if (def.value < curr) inst._computed.maximum = def.value;
     };
 
@@ -222,6 +222,9 @@ export const $ZodCheckNumberFormat: base.$constructor<$ZodCheckNumberFormat> = /
       inst._computed.format = def.format;
       inst._computed.minimum = minimum;
       inst._computed.maximum = maximum;
+      if (isInt) {
+        inst._computed.pattern = regexes.intRegex;
+      }
     };
 
     inst._check = (payload) => {
@@ -404,8 +407,8 @@ export const $ZodCheckMaxSize: base.$constructor<$ZodCheckMaxSize> = base.$const
     };
 
     inst._onattach = (inst) => {
-      const curr = (inst._computed.maximum ?? Number.NEGATIVE_INFINITY) as number;
-      if (def.maximum > curr) inst._computed.maximum = def.maximum;
+      const curr = (inst._computed.maximum ?? Number.POSITIVE_INFINITY) as number;
+      if (def.maximum < curr) inst._computed.maximum = def.maximum;
     };
 
     inst._check = (payload) => {
@@ -537,8 +540,8 @@ export const $ZodCheckMaxLength: base.$constructor<$ZodCheckMaxLength> = base.$c
     };
 
     inst._onattach = (inst) => {
-      const curr = (inst._computed.maximum ?? Number.NEGATIVE_INFINITY) as number;
-      if (def.maximum > curr) inst._computed.maximum = def.maximum;
+      const curr = (inst._computed.maximum ?? Number.POSITIVE_INFINITY) as number;
+      if (def.maximum < curr) inst._computed.maximum = def.maximum;
     };
 
     inst._check = (payload) => {
@@ -706,6 +709,19 @@ export interface $ZodCheckRegex extends $ZodCheckStringFormat {
 
 export const $ZodCheckRegex: base.$constructor<$ZodCheckRegex> = base.$constructor("$ZodCheckRegex", (inst, def) => {
   $ZodCheckStringFormat.init(inst, def);
+
+  inst._check = (payload) => {
+    if (def.pattern.test(payload.value)) return;
+    payload.issues.push({
+      origin: "string",
+      code: "invalid_format",
+      format: "regex",
+      input: payload.value,
+      pattern: def.pattern.toString(),
+      inst,
+      continue: !def.abort,
+    });
+  };
 });
 
 ///////////////////////////////////
@@ -834,6 +850,9 @@ export const $ZodCheckStartsWith: base.$constructor<$ZodCheckStartsWith> = base.
   "$ZodCheckStartsWith",
   (inst, def) => {
     base.$ZodCheck.init(inst, def);
+    inst._onattach = (inst) => {
+      inst._computed.pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
+    };
 
     inst._check = (payload) => {
       if (payload.value.startsWith(def.prefix)) return;
@@ -866,6 +885,10 @@ export const $ZodCheckEndsWith: base.$constructor<$ZodCheckEndsWith> = base.$con
   "$ZodCheckEndsWith",
   (inst, def) => {
     base.$ZodCheck.init(inst, def);
+
+    inst._onattach = (inst) => {
+      inst._computed.pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
+    };
 
     inst._check = (payload) => {
       if (payload.value.endsWith(def.suffix)) return;

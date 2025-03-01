@@ -1,28 +1,33 @@
-export const cuidRegex: RegExp = /^c[^\s-]{8,}$/i;
+export const cuidRegex: RegExp = /^[cC][^\s-]{8,}$/;
 export const cuid2Regex: RegExp = /^[0-9a-z]+$/;
 export const ulidRegex: RegExp = /^[0-9A-HJKMNP-TV-Z]{26}$/;
-export const xidRegex: RegExp = /^[0-9a-v]{20}$/i;
+export const xidRegex: RegExp = /^[0-9a-vA-V]{20}$/;
 export const ksuidRegex: RegExp = /^[A-Za-z0-9]{27}$/;
-export const nanoidRegex: RegExp = /^[a-z0-9_-]{21}$/i;
+export const nanoidRegex: RegExp = /^[a-zA-Z0-9_-]{21}$/;
 export const durationRegex: RegExp =
   /^[-+]?P(?!$)(?:(?:[-+]?\d+Y)|(?:[-+]?\d+[.,]\d+Y$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:(?:[-+]?\d+W)|(?:[-+]?\d+[.,]\d+W$))?(?:(?:[-+]?\d+D)|(?:[-+]?\d+[.,]\d+D$))?(?:T(?=[\d+-])(?:(?:[-+]?\d+H)|(?:[-+]?\d+[.,]\d+H$))?(?:(?:[-+]?\d+M)|(?:[-+]?\d+[.,]\d+M$))?(?:[-+]?\d+(?:[.,]\d+)?S)?)??$/;
 
 /** A regex for any UUID-like identifier. */
-export const guidRegex: RegExp = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
+export const guidRegex: RegExp = /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/;
 
 /** Returns a regex for validating an RFC 4122 UUID.
  *
  * @param version Optionally specify a version 1-8. If no version is specified, all versions are supported. */
 export const uuidRegex = (version?: number | undefined): RegExp => {
   if (!version)
-    return /^([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
-  return new RegExp(`^([0-9a-f]{8}-[0-9a-f]{4}-${version}[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$`, "i");
+    // return /^([0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i;
+    return /^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$/;
+  // return new RegExp(`^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-${version}[0-9a-fA-F]{3}-[89ab][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$`, "i");
+  return new RegExp(
+    `^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-${version}[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$`
+  );
 };
 export const uuid4Regex: RegExp = uuidRegex(4);
 export const uuid6Regex: RegExp = uuidRegex(6);
 export const uuid7Regex: RegExp = uuidRegex(7);
 
-export const emailRegex: RegExp = /^(?!\.)(?!.*\.\.)([A-Z0-9_'+\-\.]*)[A-Z0-9_+-]@([A-Z0-9][A-Z0-9\-]*\.)+[A-Z]{2,}$/i;
+export const emailRegex: RegExp =
+  /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
 
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
 export const _emojiRegex = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
@@ -33,7 +38,7 @@ export function emojiRegex(): RegExp {
 export const ipv4Regex: RegExp =
   /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
 export const ipv6Regex: RegExp =
-  /^(([a-f0-9]{1,4}:){7}|::([a-f0-9]{1,4}:){0,6}|([a-f0-9]{1,4}:){1}:([a-f0-9]{1,4}:){0,5}|([a-f0-9]{1,4}:){2}:([a-f0-9]{1,4}:){0,4}|([a-f0-9]{1,4}:){3}:([a-f0-9]{1,4}:){0,3}|([a-f0-9]{1,4}:){4}:([a-f0-9]{1,4}:){0,2}|([a-f0-9]{1,4}:){5}:([a-f0-9]{1,4}:){0,1})([a-f0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
+  /^(([a-fA-F0-9]{1,4}:){7}|::([a-fA-F0-9]{1,4}:){0,6}|([a-fA-F0-9]{1,4}:){1}:([a-fA-F0-9]{1,4}:){0,5}|([a-fA-F0-9]{1,4}:){2}:([a-fA-F0-9]{1,4}:){0,4}|([a-fA-F0-9]{1,4}:){3}:([a-fA-F0-9]{1,4}:){0,3}|([a-fA-F0-9]{1,4}:){4}:([a-fA-F0-9]{1,4}:){0,2}|([a-fA-F0-9]{1,4}:){5}:([a-fA-F0-9]{1,4}:){0,1})([a-fA-F0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$/;
 export const ipRegex: RegExp = new RegExp(`(${ipv4Regex.source})|(${ipv6Regex.source})`);
 
 // https://stackoverflow.com/questions/7860392/determine-if-string-is-in-base64-using-javascript
@@ -83,10 +88,14 @@ export function datetimeRegex(args: {
   return new RegExp(`^${regex}$`);
 }
 
-export const stringRegex: RegExp = /^[\s\S]*$/;
-export const bigintRegex: RegExp = /\\-?\\d+/;
-export const intRegex: RegExp = /\\-?\\d+/;
-export const numberRegex: RegExp = /-?\d+(?:\.\d+)?(?:e-?\d+)?/i;
+export const stringRegex = (params?: { minimum?: number; maximum?: number }): RegExp => {
+  const regex = params ? `[\\s\\S]{${params?.minimum ?? 0},${params?.maximum ?? ""}}` : `[\\s\\S]*`;
+  return new RegExp(`^${regex}$`);
+};
+
+export const bigintRegex: RegExp = /^\d+n?$/;
+export const intRegex: RegExp = /^\d+$/;
+export const numberRegex: RegExp = /^-?\d+(?:\.\d+)?/i;
 export const booleanRegex: RegExp = /true|false/i;
 export const nullRegex: RegExp = /null/i;
 export const undefinedRegex: RegExp = /undefined/i;

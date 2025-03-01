@@ -1664,6 +1664,7 @@ export interface ZodOptional<T extends core.$ZodType = core.$ZodType>
   _qout: "true";
   _isst: never;
   _values: T["_values"];
+  // _pattern: T["_pattern"];
 
   unwrap(): T;
 }

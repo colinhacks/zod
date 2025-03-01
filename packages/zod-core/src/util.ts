@@ -487,15 +487,7 @@ export const getParsedType = (data: any): ParsedTypes => {
 
 export const propertyKeyTypes: Set<string> = new Set(["string", "number", "symbol"]);
 
-export const primitiveTypes: Set<string> = new Set([
-  "string",
-  "number",
-  "bigint",
-  "boolean",
-  "symbol",
-  "undefined",
-  // "null",
-]);
+export const primitiveTypes: Set<string> = new Set(["string", "number", "bigint", "boolean", "symbol", "undefined"]);
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -1293,4 +1285,10 @@ export function issue(...args: [string | errors.$ZodRawIssue, any?, any?]): erro
 
 export function nullish(input: any): boolean {
   return input === null || input === undefined;
+}
+
+export function cleanRegex(source: string): string {
+  const start = source.startsWith("^") ? 1 : 0;
+  const end = source.endsWith("$") ? source.length - 1 : source.length;
+  return source.slice(start, end);
 }
