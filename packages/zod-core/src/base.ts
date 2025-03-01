@@ -117,7 +117,7 @@ export type $ZodSchemaTypes =
   | "readonly"
   | "template_literal"
   | "promise"
-  | "function"
+  // | "function"
   | "custom";
 
 export type $IO<O, I> = { output: O; input: I };
