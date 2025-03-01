@@ -188,6 +188,33 @@ export abstract class ZodType<
     return getParsedType(input.data);
   }
 
+  /**
+   * Narrows the type of parsed input (or context) data.
+   *
+   * This generic method (defaulting to output type) forces TypeScript to infer the correct type for `data`
+   * after comparing the return type of {@link _getType|`this._getType`} with {@link ZodParsedType|`ZodParsedType`}.
+   * Despite the check, `data` remains typed as `any`.
+   *
+   * Call this method within {@link _parse|`_parse`} after the type comparison to force the narrowing of `data` from `any`
+   * to the expected type.
+   *
+   * This method supports two overloads:
+   *
+   * - When passed a {@link ParseInput|`ParseInput`} object, it narrows to:
+   *   `Omit<ParseInput, "data"> & { data: T }`
+   * - When passed a {@link ParseContext|`ParseContext`} object, it narrows to:
+   *   `Omit<ParseContext, "data"> & { readonly data: T }`
+   *
+   * *Note:* This method is a no-op at runtime since the type is already validated.
+   */
+  protected _assertParsedDataType<T = Output>(
+    input: ParseInput
+  ): asserts input is Omit<ParseInput, "data"> & { data: T };
+  protected _assertParsedDataType<T = Output>(
+    ctx: ParseContext
+  ): asserts ctx is Omit<ParseContext, "data"> & { readonly data: T };
+  protected _assertParsedDataType(): void {}
+
   _getOrReturnCtx(
     input: ParseInput,
     ctx?: ParseContext | undefined
@@ -790,6 +817,7 @@ export class ZodString<Output extends string = string> extends ZodType<
       });
       return INVALID;
     }
+    this._assertParsedDataType<string>(input);
 
     const status = new ParseStatus();
     let ctx: undefined | ParseContext = undefined;
@@ -947,7 +975,7 @@ export class ZodString<Output extends string = string> extends ZodType<
       } else if (check.kind === "trim") {
         input.data = input.data.trim();
       } else if (check.kind === "includes") {
-        if (!(input.data as string).includes(check.value, check.position)) {
+        if (!input.data.includes(check.value, check.position)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
@@ -961,7 +989,7 @@ export class ZodString<Output extends string = string> extends ZodType<
       } else if (check.kind === "toUpperCase") {
         input.data = input.data.toUpperCase();
       } else if (check.kind === "startsWith") {
-        if (!(input.data as string).startsWith(check.value)) {
+        if (!input.data.startsWith(check.value)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
@@ -971,7 +999,7 @@ export class ZodString<Output extends string = string> extends ZodType<
           status.dirty();
         }
       } else if (check.kind === "endsWith") {
-        if (!(input.data as string).endsWith(check.value)) {
+        if (!input.data.endsWith(check.value)) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             code: ZodIssueCode.invalid_string,
@@ -1081,7 +1109,7 @@ export class ZodString<Output extends string = string> extends ZodType<
       }
     }
 
-    return { status: status.value, value: input.data };
+    return { status: status.value, value: input.data } as any;
   }
 
   protected _regex(
@@ -1429,6 +1457,7 @@ export class ZodNumber extends ZodType<number, ZodNumberDef, number> {
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
 
     let ctx: undefined | ParseContext = undefined;
     const status = new ParseStatus();
@@ -1712,6 +1741,7 @@ export class ZodBigInt extends ZodType<bigint, ZodBigIntDef, bigint> {
     if (parsedType !== ZodParsedType.bigint) {
       return this._getInvalidInput(input);
     }
+    this._assertParsedDataType(input);
 
     let ctx: undefined | ParseContext = undefined;
     const status = new ParseStatus();
@@ -1924,6 +1954,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef, boolean> {
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
     return OK(input.data);
   }
 
@@ -1970,6 +2001,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
 
     if (isNaN(input.data.getTime())) {
       const ctx = this._getOrReturnCtx(input);
@@ -2016,7 +2048,7 @@ export class ZodDate extends ZodType<Date, ZodDateDef, Date> {
 
     return {
       status: status.value,
-      value: new Date((input.data as Date).getTime()),
+      value: new Date(input.data.getTime()),
     };
   }
 
@@ -2100,6 +2132,7 @@ export class ZodSymbol extends ZodType<symbol, ZodSymbolDef, symbol> {
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
 
     return OK(input.data);
   }
@@ -2139,6 +2172,7 @@ export class ZodUndefined extends ZodType<
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
     return OK(input.data);
   }
   params?: RawCreateParams;
@@ -2174,6 +2208,7 @@ export class ZodNull extends ZodType<null, ZodNullDef, null> {
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
     return OK(input.data);
   }
   static create = (params?: RawCreateParams): ZodNull => {
@@ -2224,6 +2259,7 @@ export class ZodUnknown extends ZodType<unknown, ZodUnknownDef, unknown> {
   // required
   _unknown = true as const;
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    this._assertParsedDataType(input);
     return OK(input.data);
   }
 
@@ -2287,6 +2323,7 @@ export class ZodVoid extends ZodType<void, ZodVoidDef, void> {
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
     return OK(input.data);
   }
 
@@ -2354,6 +2391,7 @@ export class ZodArray<
       });
       return INVALID;
     }
+    this._assertParsedDataType<T[]>(ctx);
 
     if (def.exactLength !== null) {
       const tooBig = ctx.data.length > def.exactLength.value;
@@ -2619,8 +2657,10 @@ export class ZodObject<
       });
       return INVALID;
     }
+    this._assertParsedDataType<ZodRawShape>(input);
 
     const { status, ctx } = this._processInputParams(input);
+    this._assertParsedDataType<ZodRawShape>(ctx);
 
     const { shape, keys: shapeKeys } = this._getCached();
     const extraKeys: string[] = [];
@@ -3115,6 +3155,7 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
+    this._assertParsedDataType(ctx);
     const options = this._def.options;
 
     function handleResults(
@@ -3309,6 +3350,7 @@ export class ZodDiscriminatedUnion<
       });
       return INVALID;
     }
+    this._assertParsedDataType(ctx);
 
     const discriminator = this.discriminator;
 
@@ -3490,6 +3532,7 @@ export class ZodIntersection<
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
+    this._assertParsedDataType(ctx);
     const handleParsed = (
       parsedLeft: SyncParseReturnType,
       parsedRight: SyncParseReturnType
@@ -3617,6 +3660,7 @@ export class ZodTuple<
       });
       return INVALID;
     }
+    this._assertParsedDataType(ctx);
 
     if (ctx.data.length < this._def.items.length) {
       addIssueToContext(ctx, {
@@ -3741,6 +3785,7 @@ export class ZodRecord<
       });
       return INVALID;
     }
+    this._assertParsedDataType(ctx);
 
     const pairs: {
       key: ParseReturnType<any>;
@@ -3840,22 +3885,21 @@ export class ZodMap<
       });
       return INVALID;
     }
+    this._assertParsedDataType(ctx);
 
     const keyType = this._def.keyType;
     const valueType = this._def.valueType;
 
-    const pairs = [...(ctx.data as Map<unknown, unknown>).entries()].map(
-      ([key, value], index) => {
-        return {
-          key: keyType._parse(
-            new ParseInputLazyPath(ctx, key, ctx.path, [index, "key"])
-          ),
-          value: valueType._parse(
-            new ParseInputLazyPath(ctx, value, ctx.path, [index, "value"])
-          ),
-        };
-      }
-    );
+    const pairs = [...ctx.data.entries()].map(([key, value], index) => {
+      return {
+        key: keyType._parse(
+          new ParseInputLazyPath(ctx, key, ctx.path, [index, "key"])
+        ),
+        value: valueType._parse(
+          new ParseInputLazyPath(ctx, value, ctx.path, [index, "value"])
+        ),
+      };
+    });
 
     if (ctx.common.async) {
       const finalMap = new Map();
@@ -3938,6 +3982,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
       });
       return INVALID;
     }
+    this._assertParsedDataType(ctx);
 
     const def = this._def;
 
@@ -3981,7 +4026,7 @@ export class ZodSet<Value extends ZodTypeAny = ZodTypeAny> extends ZodType<
       return { status: status.value, value: parsedSet };
     }
 
-    const elements = [...(ctx.data as Set<unknown>).values()].map((item, i) =>
+    const elements = [...ctx.data.values()].map((item, i) =>
       valueType._parse(new ParseInputLazyPath(ctx, item, ctx.path, i))
     );
 
@@ -4076,6 +4121,7 @@ export class ZodFunction<
       });
       return INVALID;
     }
+    this._assertParsedDataType(ctx);
 
     function makeArgsIssue(args: any, error: ZodError): ZodIssue {
       return makeIssue({
@@ -4254,6 +4300,7 @@ export class ZodLazy<T extends ZodTypeAny> extends ZodType<
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
+    this._assertParsedDataType(ctx);
     const lazySchema = this._def.getter();
     return lazySchema._parse({ data: ctx.data, path: ctx.path, parent: ctx });
   }
@@ -4293,6 +4340,7 @@ export class ZodLiteral<T> extends ZodType<T, ZodLiteralDef<T>, T> {
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
     return { status: "valid", value: input.data };
   }
 
@@ -4383,6 +4431,7 @@ export class ZodEnum<T extends [string, ...string[]]> extends ZodType<
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
 
     if (!this.#cache) {
       this.#cache = new Set(this._def.values);
@@ -4498,6 +4547,8 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
+    this._assertParsedDataType(ctx);
 
     if (!this.#cache) {
       this.#cache = new Set(util.getValidEnumValues(this._def.values));
@@ -4513,7 +4564,7 @@ export class ZodNativeEnum<T extends EnumLike> extends ZodType<
       });
       return INVALID;
     }
-    return OK(input.data as any);
+    return OK(input.data);
   }
 
   get enum() {
@@ -4567,6 +4618,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
       });
       return INVALID;
     }
+    this._assertParsedDataType(ctx);
 
     const promisified =
       ctx.parsedType === ZodParsedType.promise
@@ -4574,7 +4626,7 @@ export class ZodPromise<T extends ZodTypeAny> extends ZodType<
         : Promise.resolve(ctx.data);
 
     return OK(
-      promisified.then((data: any) => {
+      promisified.then((data) => {
         return this._def.type.parseAsync(data, {
           path: ctx.path,
           errorMap: ctx.common.contextualErrorMap,
@@ -4650,6 +4702,7 @@ export class ZodEffects<
 
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { status, ctx } = this._processInputParams(input);
+    this._assertParsedDataType(ctx);
 
     const effect = this._def.effect || null;
 
@@ -4827,6 +4880,7 @@ export class ZodOptional<T extends ZodTypeAny> extends ZodType<
     if (parsedType === ZodParsedType.undefined) {
       return OK(undefined);
     }
+    this._assertParsedDataType(input);
     return this._def.innerType._parse(input);
   }
 
@@ -4871,6 +4925,7 @@ export class ZodNullable<T extends ZodTypeAny> extends ZodType<
     if (parsedType === ZodParsedType.null) {
       return OK(null);
     }
+    this._assertParsedDataType(input);
     return this._def.innerType._parse(input);
   }
 
@@ -4911,6 +4966,7 @@ export class ZodDefault<T extends ZodTypeAny> extends ZodType<
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
     const { ctx } = this._processInputParams(input);
+    this._assertParsedDataType(ctx);
     let data = ctx.data;
     if (ctx.parsedType === ZodParsedType.undefined) {
       data = this._def.defaultValue();
@@ -4974,6 +5030,7 @@ export class ZodCatch<T extends ZodTypeAny> extends ZodType<
         issues: [],
       },
     };
+    this._assertParsedDataType(newCtx);
 
     const result = this._def.innerType._parse({
       data: newCtx.data,
@@ -5058,6 +5115,7 @@ export class ZodNaN extends ZodType<number, ZodNaNDef, number> {
       });
       return INVALID;
     }
+    this._assertParsedDataType(input);
 
     return { status: "valid", value: input.data };
   }
@@ -5094,6 +5152,7 @@ export class ZodBranded<
 > extends ZodType<T["_output"] & BRAND<B>, ZodBrandedDef<T>, T["_input"]> {
   _parse(input: ParseInput): ParseReturnType<any> {
     const { ctx } = this._processInputParams(input);
+    this._assertParsedDataType(ctx);
     const data = ctx.data;
     return this._def.type._parse({
       data,
@@ -5128,6 +5187,7 @@ export class ZodPipeline<
 > extends ZodType<B["_output"], ZodPipelineDef<A, B>, A["_input"]> {
   _parse(input: ParseInput): ParseReturnType<any> {
     const { status, ctx } = this._processInputParams(input);
+    this._assertParsedDataType(ctx);
     if (ctx.common.async) {
       const handleAsync = async () => {
         const inResult = await this._def.in._parseAsync({
@@ -5223,6 +5283,7 @@ export class ZodReadonly<T extends ZodTypeAny> extends ZodType<
   MakeReadonly<T["_input"]>
 > {
   _parse(input: ParseInput): ParseReturnType<this["_output"]> {
+    this._assertParsedDataType(input);
     const result = this._def.innerType._parse(input);
     const freeze = (data: ParseReturnType<this["_output"]>) => {
       if (isValid(data)) {
