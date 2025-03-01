@@ -101,7 +101,7 @@ export type $ZodSchemaTypes =
   | "enum"
   | "literal"
   // | "const"
-  // | "nullable"
+  | "nullable"
   | "optional"
   | "nonoptional"
   // | "coalesce"
@@ -206,10 +206,10 @@ export interface $ZodType<out O = unknown, out I = unknown> {
         : [$ZodRegistry<R["_meta"], this>["_meta"]]
       : ["Incompatible schema"]
   ): this;
-  $brand<T extends PropertyKey = PropertyKey>(brand?: T): this & Record<"_output", this["_output"] & $brand<T>>;
-  // {
-  //   _output: O & $brand<T>;
-  // };
+  $brand<T extends PropertyKey = PropertyKey>(): this & {
+    _output: O & $brand<T>;
+  };
+
   _zod: this;
 
   // assertInput<T>(...args: T extends I ? [] : ["Invalid input type"]): void;
@@ -254,7 +254,7 @@ export interface $ZodType<out O = unknown, out I = unknown> {
    * Todo: unions?
    */
   _values?: $PrimitiveSet | undefined;
-  _pattern?: RegExp;
+  // _pattern?: RegExp;
   /** @deprecated Internal API, use with caution. */
   _def: $ZodTypeDef;
   /** @deprecated Internal API, use with caution.

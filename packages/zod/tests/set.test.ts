@@ -148,3 +148,38 @@ test("throws when the given set has multiple invalid entries", () => {
     }
   `);
 });
+
+test("min/max", async () => {
+  const schema = z.set(z.string()).min(4).max(5);
+
+  const r1 = schema.safeParse(new Set(["a", "b", "c", "d"]));
+  expect(r1.success).toEqual(true);
+
+  const r2 = schema.safeParse(new Set(["a", "b", "c"]));
+  expect(r2.success).toEqual(false);
+  expect(r2.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "too_small",
+        "message": "Too small: expected set to have >4 items",
+        "minimum": 4,
+        "origin": "set",
+        "path": [],
+      },
+    ]
+  `);
+
+  const r3 = schema.safeParse(new Set(["a", "b", "c", "d", "e", "f"]));
+  expect(r3.success).toEqual(false);
+  expect(r3.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "too_big",
+        "maximum": 5,
+        "message": "Too big: expected set to have <5 items",
+        "origin": "set",
+        "path": [],
+      },
+    ]
+  `);
+});

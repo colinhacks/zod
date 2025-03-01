@@ -22,46 +22,45 @@ export interface RefinementCtx<T = unknown> extends core.$ParsePayload<T> {
 }
 
 export interface ZodType<out Output = unknown, out Input = unknown> extends core.$ZodType<Output, Input> {
-  /** @deprecated */
-  _def: core.$ZodTypeDef;
-  // parse methods
+  // parsing
   parse(data: unknown, params?: ParseContext): this["_output"];
   safeParse(data: unknown, params?: ParseContext): ZodSafeParseResult<this["_output"]>;
   parseAsync(data: unknown, params?: ParseContext): Promise<this["_output"]>;
   safeParseAsync(data: unknown, params?: ParseContext): Promise<ZodSafeParseResult<this["_output"]>>;
   spa: (data: unknown, params?: ParseContext) => Promise<ZodSafeParseResult<this["_output"]>>;
+
+  // refinements
   refine(check: (arg: Output) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;
   /** @deprecated Use `.$check()` instead. */
-  superRefine(refinement: (arg: Output, ctx: RefinementCtx) => void | Promise<void>): this;
+  superRefine(refinement: (arg: Output, ctx: RefinementCtx<Output>) => void | Promise<void>): this;
   overwrite(fn: (x: Output) => Output): this;
 
   // wrappers
   optional(params?: core.$ZodOptionalParams): ZodOptional<this>;
   nonoptional(params?: core.$ZodNonOptionalParams): ZodNonOptional<this>;
-  nullable(params?: core.$ZodNullParams): ZodUnion<readonly [this, ZodNull]>;
-  nullish(): ZodOptional<ZodUnion<readonly [this, ZodNull]>>;
+  nullable(params?: core.$ZodNullParams): ZodNullable<this>;
+  nullish(): ZodOptional<ZodNullable<this>>;
   default(def: util.NoUndefined<Output>, params?: core.$ZodDefaultParams): ZodDefault<this>;
   default(def: () => util.NoUndefined<Output>, params?: core.$ZodDefaultParams): ZodDefault<this>;
-
-  // coalesce(def: NonNullable<Output> | (() => NonNullable<Output>), params?: core.$ZodCoalesceParams): ZodCoalesce<this>;
-
   array(): ZodArray<this>;
   or<T extends core.$ZodType>(option: T): ZodUnion<[this, T]>;
   and<T extends core.$ZodType>(incoming: T): ZodIntersection<this, T>;
   transform<NewOut>(
-    transform: (arg: Output) => NewOut | Promise<NewOut>
+    transform: (arg: Output, ctx: RefinementCtx<Output>) => NewOut | Promise<NewOut>
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
   catch(def: Output): ZodCatch<this>;
   catch(def: (ctx: core.$ZodCatchCtx) => Output): ZodCatch<this>;
   pipe<T extends core.$ZodType>(target: T): ZodPipe<this, T>;
   readonly(): ZodReadonly<this>;
 
+  // metadata
   describe(description: string): this;
   description?: string;
   /** Registers schema to z.globalRegistry with the specified metadata */
   meta(): core.GlobalMeta | undefined;
   meta(data: core.$replace<core.GlobalMeta, this>): this;
 
+  // helpers
   isOptional(): boolean;
   isNullable(): boolean;
 }
@@ -70,14 +69,20 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   core.$ZodType.init(inst, def);
 
   inst._def = def;
+
+  // parsing
   inst.parse = (data, params) => parse(inst, data, params);
   inst.safeParse = (data, params) => safeParse(inst, data, params);
   inst.parseAsync = async (data, params) => parseAsync(inst, data, params);
   inst.safeParseAsync = async (data, params) => safeParseAsync(inst, data, params);
   inst.spa = inst.safeParseAsync;
+
+  // refinements
   inst.refine = (check, params) => inst.$check(api.refine(check, params));
   inst.superRefine = (refinement) => inst.$check(api.superRefine(refinement));
   inst.overwrite = (fn) => inst.$check(api.overwrite(fn));
+
+  // wrappers
   inst.optional = (params) => api.optional(inst, params);
   inst.nullable = (params) => api.nullable(inst, params);
   inst.nullish = () => api.optional(api.nullable(inst));
@@ -85,7 +90,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   inst.array = () => api.array(inst);
   inst.or = (arg) => api.union([inst, arg]);
   inst.and = (arg) => api.intersection(inst, arg);
-  inst.transform = (tx) => api.pipe(inst, api.transform(tx)) as never;
+  inst.transform = (tx) => api.pipe(inst, api.transform(tx as any)) as never;
   inst.default = (def, params) => api._default(inst, def, params);
   // inst.coalesce = (def, params) => api.coalesce(inst, def, params);
   inst.catch = (params) => api.catch(inst, params);
@@ -111,7 +116,7 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
     return inst as any;
   };
 
-  // nullish checks
+  // helpers
   inst.isOptional = () => inst.safeParse(undefined).success;
   inst.isNullable = () => inst.safeParse(null).success;
   return inst;
@@ -1022,7 +1027,9 @@ export interface ZodObject<
   _disc: core.$DiscriminatorMap;
   /** @deprecated */
   _isst: core.$ZodIssueInvalidType | core.$ZodIssueUnrecognizedKeys;
-  // shape: Shape;
+
+  /** @deprecated In Zod 4, you can pass `ZodObject` instances directly into `.extend()`. */
+  shape: Shape;
 
   keyof(): ZodEnum<util.ToEnum<keyof Shape & string>>;
   catchall<T extends core.$ZodType>(schema: T): ZodObject<Shape, Record<string, T["_output"]>>;
@@ -1092,7 +1099,8 @@ export interface ZodObject<
 export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$constructor("ZodObject", (inst, def) => {
   core.$ZodObject.init(inst, def);
   ZodType.init(inst, def);
-  // inst.shape = def.shape;
+
+  util.defineLazy(inst, "shape", () => def.shape);
 
   inst.keyof = () => api.enum(Object.keys(inst._def.shape)) as any;
   inst.catchall = (catchall) => inst.$clone({ ...inst._def, catchall });
@@ -1103,18 +1111,10 @@ export const ZodObject: core.$constructor<ZodObject> = /*@__PURE__*/ core.$const
   inst.strip = () => inst.$clone({ ...inst._def, catchall: undefined });
 
   inst.extend = (incoming: any) => {
-    if (incoming instanceof ZodObject) return util.mergeObjectLike(inst, incoming);
-    return util.mergeObjectLike(inst, api.object(incoming));
+    if (incoming instanceof ZodObject) return util.extendObjectLike(inst, incoming);
+    return util.extendObjectLike(inst, api.object(incoming));
   };
-  inst.merge = inst.extend;
-  // inst.merge = (other) => util.extend;
-  // other.$clone({
-  //   ...other._def,
-  //   get shape() {
-  //     return { ...inst.shape, ...other.shape };
-  //   },
-  //   checks: [],
-  // });
+  inst.merge = (other) => util.mergeObjectLike(inst, other);
   inst.pick = (mask) => util.pick(inst, mask);
   inst.omit = (mask) => util.omit(inst, mask);
   inst.partial = (...args: any[]) => util.partialObjectLike(inst, args[0] as object, ZodOptional);
@@ -1281,8 +1281,8 @@ export const ZodInterface: core.$constructor<ZodInterface> = /*@__PURE__*/ core.
     inst.strip = () => inst.$clone({ ...inst._def, catchall: undefined });
 
     inst.extend = (incoming: any) => {
-      if (incoming instanceof core.$ZodInterface) return util.mergeObjectLike(inst, incoming);
-      return util.mergeObjectLike(inst, api.interface(incoming));
+      if (incoming instanceof core.$ZodInterface) return util.extendObjectLike(inst, incoming);
+      return util.extendObjectLike(inst, api.interface(incoming));
     };
     inst.merge = (other) => util.mergeObjectLike(inst, other);
 
@@ -1304,7 +1304,7 @@ export const ZodInterface: core.$constructor<ZodInterface> = /*@__PURE__*/ core.
 export interface ZodUnion<Options extends readonly core.$ZodType[] = readonly core.$ZodType[]>
   extends core.$ZodUnion<Options>,
     ZodType<Options[number]["_output"], Options[number]["_input"]> {
-  _def: core.$ZodUnionDef;
+  _def: core.$ZodUnionDef<Options>;
   _isst: core.$ZodIssueInvalidUnion;
 
   options: Options;
@@ -1330,7 +1330,7 @@ export interface ZodHasDiscriminator extends core.$ZodType {
 export interface ZodDiscriminatedUnion<Options extends readonly core.$ZodType[] = readonly core.$ZodType[]>
   extends core.$ZodDiscriminatedUnion<Options>,
     ZodType<Options[number]["_output"], Options[number]["_input"]> {
-  _def: core.$ZodDiscriminatedUnionDef;
+  _def: core.$ZodDiscriminatedUnionDef<Options>;
   _disc: core.$DiscriminatorMap;
   _isst: core.$ZodIssueInvalidUnion;
 
@@ -1626,12 +1626,14 @@ export const ZodTransform: core.$constructor<ZodTransform> = /*@__PURE__*/ core.
           payload.issues.push(util.issue(issue, payload.value, def));
         } else {
           // for Zod 3 backwards compatibility
-          if ((issue as any).fatal) issue.continue = false;
-          issue.code ??= "custom";
-          issue.input ??= payload.value;
-          issue.inst ??= inst;
-          issue.continue ??= !def.abort;
-          payload.issues.push(util.issue(issue));
+          const _issue = issue as any;
+
+          if (_issue.fatal) _issue.continue = false;
+          _issue.code ??= "custom";
+          _issue.input ??= payload.value;
+          _issue.inst ??= inst;
+          _issue.continue ??= !def.abort;
+          payload.issues.push(util.issue(_issue));
         }
       };
 
@@ -1686,26 +1688,27 @@ export const ZodOptional: core.$constructor<ZodOptional> = /*@__PURE__*/ core.$c
 //////////                       //////////
 ///////////////////////////////////////////
 ///////////////////////////////////////////
-// export interface ZodNullable<T extends core.$ZodType = core.$ZodType>
-//   extends core.$ZodNullable<T>,
-//     ZodType<T["_output"] | null, T["_input"] | null> {
-//   _def: core.$ZodNullableDef<T>;
-//   _qin: T["_qin"];
-//   _qout: T["_qout"];
-//   _isst: never;
-//   _values: T["_values"];
 
-//   unwrap(): T;
-// }
-// export const ZodNullable: core.$constructor<ZodNullable> = /*@__PURE__*/ core.$constructor(
-//   "ZodNullable",
-//   (inst, def) => {
-//     core.$ZodNullable.init(inst, def);
-//     ZodType.init(inst, def);
+export interface ZodNullable<T extends core.$ZodType = core.$ZodType>
+  extends core.$ZodNullable<T>,
+    ZodType<T["_output"] | null, T["_input"] | null> {
+  _def: core.$ZodNullableDef<T>;
+  _qin: T["_qin"];
+  _qout: T["_qout"];
+  _isst: never;
+  _values: T["_values"];
 
-//     inst.unwrap = () => inst._def.innerType;
-//   }
-// );
+  unwrap(): T;
+}
+export const ZodNullable: core.$constructor<ZodNullable> = /*@__PURE__*/ core.$constructor(
+  "ZodNullable",
+  (inst, def) => {
+    core.$ZodNullable.init(inst, def);
+    ZodType.init(inst, def);
+
+    inst.unwrap = () => inst._def.innerType;
+  }
+);
 
 //////////////////////////////////////////////
 //////////////////////////////////////////////

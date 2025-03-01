@@ -11,6 +11,43 @@ const Test = z.object({
 // type TestFormErrors = core.inferFlattenedErrors<typeof Test>;
 const parsed = Test.safeParse({});
 
+test("regular error", () => {
+  expect(parsed).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "number",
+            "message": "Invalid input: expected number",
+            "note": "Infinity is not a valid number",
+            "path": [
+              "f1",
+            ],
+          },
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string",
+            "path": [
+              "f3",
+            ],
+          },
+          {
+            "code": "invalid_type",
+            "expected": "array",
+            "message": "Invalid input: expected array",
+            "path": [
+              "f4",
+            ],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+});
+
 test(".flatten()", () => {
   const flattened = parsed.error!.flatten();
   expectTypeOf(flattened).toMatchTypeOf<{

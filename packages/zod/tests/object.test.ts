@@ -33,7 +33,7 @@ test("shape() should return schema of particular key", () => {
 
   expect(f1Schema).toBeInstanceOf(z.ZodNumber);
   expect(f2Schema).toBeInstanceOf(z.ZodOptional);
-  expect(f3Schema).toBeInstanceOf(z.ZodUnion);
+  expect(f3Schema).toBeInstanceOf(z.ZodNullable);
   expect(f4Schema).toBeInstanceOf(z.ZodArray);
 });
 

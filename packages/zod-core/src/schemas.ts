@@ -1413,14 +1413,15 @@ export const $ZodObject: base.$constructor<$ZodObject> = /*@__PURE__*/ base.$con
 //////////                    ///////////
 /////////////////////////////////////////
 /////////////////////////////////////////
-export interface $ZodUnionDef extends base.$ZodTypeDef {
+export interface $ZodUnionDef<Options extends readonly base.$ZodType[] = readonly base.$ZodType[]>
+  extends base.$ZodTypeDef {
   type: "union";
-  options: readonly base.$ZodType[];
+  options: Options;
 }
 
 export interface $ZodUnion<T extends readonly base.$ZodType[] = readonly base.$ZodType[]>
   extends base.$ZodType<T[number]["_output"], T[number]["_input"]> {
-  _def: $ZodUnionDef;
+  _def: $ZodUnionDef<T>;
   _isst: errors.$ZodIssueInvalidUnion;
 
   _pattern: [T[number]] extends { _pattern: RegExp } ? RegExp : never;
@@ -1505,13 +1506,14 @@ export const $ZodUnion: base.$constructor<$ZodUnion> = /*@__PURE__*/ base.$const
 //////////////////////////////////////////////////////
 //////////////////////////////////////////////////////
 
-export interface $ZodDiscriminatedUnionDef extends $ZodUnionDef {
+export interface $ZodDiscriminatedUnionDef<Options extends readonly base.$ZodType[] = readonly base.$ZodType[]>
+  extends $ZodUnionDef<Options> {
   unionFallback?: boolean;
 }
 
 export interface $ZodDiscriminatedUnion<Options extends readonly base.$ZodType[] = readonly base.$ZodType[]>
   extends $ZodUnion<Options> {
-  _def: $ZodDiscriminatedUnionDef;
+  _def: $ZodDiscriminatedUnionDef<Options>;
   _disc: base.$DiscriminatorMap;
 }
 
@@ -2467,7 +2469,8 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
     // inst._qin = "true";
     inst._qout = "true";
     if (def.innerType._values) inst._values = new Set([...def.innerType._values, undefined]);
-    if (def.innerType._pattern) inst._pattern = new RegExp(`^(${util.cleanRegex(def.innerType._pattern.source)})?$`);
+    const pattern = (def.innerType as any)._pattern;
+    if (pattern) inst._pattern = new RegExp(`^(${util.cleanRegex(pattern.source)})?$`);
 
     inst._parse = (payload, ctx) => {
       if (payload.value === undefined) {
@@ -2485,14 +2488,41 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
 //////////                        //////////
 ////////////////////////////////////////////
 ////////////////////////////////////////////
-// export interface $ZodNullableDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
+export interface $ZodNullableDef<T extends base.$ZodType = base.$ZodType> extends base.$ZodTypeDef {
+  type: "nullable";
+  innerType: T;
+}
+
+export interface $ZodNullable<T extends base.$ZodType = base.$ZodType>
+  extends base.$ZodType<T["_output"] | null, T["_input"] | null> {
+  _def: $ZodNullableDef<T>;
+  _qin: T["_qin"];
+  _qout: T["_qout"];
+  _isst: never;
+  _values: T["_values"];
+}
+
+export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.$constructor(
+  "$ZodNullable",
+  (inst, def) => {
+    base.$ZodType.init(inst, def);
+    inst._qin = def.innerType._qin;
+    inst._qout = def.innerType._qout;
+    if (def.innerType._values) inst._values = new Set([...def.innerType._values, null]);
+
+    inst._parse = (payload, ctx) => {
+      if (payload.value === null) return payload;
+      return def.innerType._run(payload, ctx);
+    };
+  }
+);
+
+// export interface $ZodNullableDef<T extends base.$ZodType = base.$ZodType> extends $ZodUnionDef {
 //   type: "nullable";
 //   innerType: T;
 // }
 
-// export interface $ZodNullable<T extends base.$ZodType = base.$ZodType>
-//   extends base.$ZodType<T["_output"] | null, T["_input"] | null> {
-//   _def: $ZodNullableDef<T>;
+// export interface $ZodNullable<T extends base.$ZodType = base.$ZodType> extends $ZodUnion<[T, $ZodNull]> {
 //   _qin: T["_qin"];
 //   _qout: T["_qout"];
 //   _isst: never;
@@ -2502,14 +2532,15 @@ export const $ZodOptional: base.$constructor<$ZodOptional> = /*@__PURE__*/ base.
 // export const $ZodNullable: base.$constructor<$ZodNullable> = /*@__PURE__*/ base.$constructor(
 //   "$ZodNullable",
 //   (inst, def) => {
-//     base.$ZodType.init(inst, def);
-// inst._qin = def.innerType._qin;
-//     inst._qout = def.innerType._qout;
-//     if (def.innerType._values) inst._values = new Set([...def.innerType._values, null]);
+//     $ZodUnion.init(inst, def);
+//     const innerType = def.options[0];
+//     inst._qin = innerType._qin;
+//     inst._qout = innerType._qout;
+//     if (innerType._values) inst._values = new Set([...innerType._values, null]);
 
 //     inst._parse = (payload, ctx) => {
 //       if (payload.value === null) return payload;
-//       return def.innerType._run(payload, ctx);
+//       return innerType._run(payload, ctx);
 //     };
 //   }
 // );

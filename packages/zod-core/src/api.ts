@@ -1048,7 +1048,7 @@ export function intersection<T extends base.$ZodType, U extends base.$ZodType>(
 }
 
 // tuple
-export type $ZodTupleParams = util.TypeParams<schemas.$ZodTuple, "items">;
+export type $ZodTupleParams = util.TypeParams<schemas.$ZodTuple, "items" | "rest">;
 
 export function tuple<T extends readonly [base.$ZodType, ...base.$ZodType[]]>(
   items: T,
@@ -1318,11 +1318,7 @@ export function transform<I = unknown, O = I>(
 
 // optional
 export type $ZodOptionalParams = util.TypeParams<schemas.$ZodOptional, "innerType">;
-export function optional<T extends base.$ZodType, D extends T["_output"] | undefined>(
-  innerType: T,
-  params?: $ZodOptionalParams
-): schemas.$ZodOptional<T>;
-export function optional<T extends base.$ZodType>(innerType: T, params?: $ZodOptionalParams): schemas.$ZodOptional<T>;
+
 export function optional<T extends base.$ZodType>(innerType: T, params?: $ZodOptionalParams): schemas.$ZodOptional<T> {
   return new schemas.$ZodOptional({
     type: "optional",
@@ -1332,12 +1328,20 @@ export function optional<T extends base.$ZodType>(innerType: T, params?: $ZodOpt
 }
 
 // nullable
-export function nullable<T extends base.$ZodType>(
-  innerType: T,
-  params?: $ZodNullParams
-): schemas.$ZodUnion<readonly [T, schemas.$ZodNull]> {
-  return union([innerType, _null(params)]);
+export type $ZodNullableParams = util.TypeParams<schemas.$ZodNullable, "innerType">;
+export function nullable<T extends base.$ZodType>(innerType: T, params?: $ZodNullableParams): schemas.$ZodNullable<T> {
+  return new schemas.$ZodNullable({
+    type: "nullable",
+    innerType,
+    ...util.normalizeTypeParams(params),
+  }) as schemas.$ZodNullable<T>;
 }
+// export function nullable<T extends base.$ZodType>(
+//   innerType: T,
+//   params?: $ZodNullParams
+// ): schemas.$ZodUnion<readonly [T, schemas.$ZodNull]> {
+//   return union([innerType, _null(params)]);
+// }
 
 // nonoptional
 export type $ZodNonOptionalParams = util.TypeParams<schemas.$ZodNonOptional, "innerType">;

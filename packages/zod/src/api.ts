@@ -1009,11 +1009,12 @@ export function optional<T extends core.$ZodType>(
 }
 
 // nullable
-export function nullable<T extends core.$ZodType>(
-  innerType: T,
-  params?: core.$ZodNullParams
-): schemas.ZodUnion<readonly [T, schemas.ZodNull]> {
-  return union([innerType, _null(params)]);
+export function nullable<T extends core.$ZodType>(innerType: T, params?: core.$ZodNullParams): schemas.ZodNullable<T> {
+  return new schemas.ZodNullable({
+    type: "nullable",
+    innerType,
+    ...util.normalizeTypeParams(params),
+  }) as schemas.ZodNullable<T>;
 }
 
 export function nonoptional<T extends core.$ZodType>(

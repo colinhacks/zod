@@ -354,7 +354,6 @@ export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () =
   Object.defineProperty(object, key, {
     get() {
       if (!set) {
-        console.log(`setting `, key);
         const value = getter();
         object[key] = value;
         // Object.defineProperty(object, key, { value });
@@ -1026,6 +1025,7 @@ export function mergeObjectLike(a: $ZodObjectLike, b: $ZodObjectLike): any {
       return { ...a._def.shape, ...b._def.shape };
     },
     optional,
+    catchall: b._def.catchall,
     checks: [], // delete existing checks
   }) as any;
 }

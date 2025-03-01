@@ -1,69 +1,162 @@
-import * as core from "@zod/core";
-
-import * as util from "@zod/core/util";
-
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
-const testTuple = z.tuple([z.string(), z.object({ name: z.literal("Rudy") }), z.array(z.literal("blue"))]);
-const testData = ["asdf", { name: "Rudy" }, ["blue"]];
-const badData = [123, { name: "Rudy2" }, ["blue", "red"]];
-
-test("tuple inference", () => {
-  const args1 = z.tuple([z.string()]);
-  const returns1 = z.number();
-  const func1 = z.function(args1, returns1);
-  type func1 = z.TypeOf<typeof func1>;
-  expectTypeOf<func1>().toEqualTypeOf<(k: string) => number>();
-});
-
 test("successful validation", () => {
-  const val = testTuple.parse(testData);
-  expect(val).toEqual(["asdf", { name: "Rudy" }, ["blue"]]);
-});
+  const testTuple = z.tuple([z.string(), z.number()]);
+  expectTypeOf<typeof testTuple._output>().toEqualTypeOf<[string, number]>();
 
-test("successful async validation", async () => {
-  const val = await testTuple.parseAsync(testData);
-  return expect(val).toEqual(testData);
-});
+  const val = testTuple.parse(["asdf", 1234]);
+  expect(val).toEqual(val);
 
-test("failed validation", () => {
-  const checker = () => {
-    testTuple.parse([123, { name: "Rudy2" }, ["blue", "red"]] as any);
-  };
-  try {
-    checker();
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      expect(err.issues.length).toEqual(3);
+  const r1 = testTuple.safeParse(["asdf", "asdf"]);
+  expect(r1.success).toEqual(false);
+  expect(r1.error!).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "number",
+          "message": "Invalid input: expected number",
+          "note": "Infinity is not a valid number",
+          "path": [
+            1,
+          ],
+        },
+      ],
     }
+  `);
+
+  const r2 = testTuple.safeParse(["asdf", 1234, true]);
+  expect(r2.success).toEqual(false);
+  expect(r2.error!).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "too_big",
+          "maximum": 2,
+          "message": "Too big: expected array to have <2 items",
+          "origin": "array",
+          "path": [],
+        },
+      ],
+    }
+  `);
+
+  const r3 = testTuple.safeParse({});
+  expect(r3.success).toEqual(false);
+  expect(r3.error!).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "tuple",
+          "message": "Invalid input: expected tuple",
+          "path": [],
+        },
+      ],
+    }
+  `);
+});
+
+test("async validation", async () => {
+  const testTuple = z
+    .tuple([z.string().refine(async () => true), z.number().refine(async () => true)])
+    .refine(async () => true);
+  expectTypeOf<typeof testTuple._output>().toEqualTypeOf<[string, number]>();
+
+  const val = await testTuple.parseAsync(["asdf", 1234]);
+  expect(val).toEqual(val);
+
+  const r1 = await testTuple.safeParseAsync(["asdf", "asdf"]);
+  expect(r1.success).toEqual(false);
+  expect(r1.error!).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "number",
+          "message": "Invalid input: expected number",
+          "note": "Infinity is not a valid number",
+          "path": [
+            1,
+          ],
+        },
+      ],
+    }
+  `);
+
+  const r2 = await testTuple.safeParseAsync(["asdf", 1234, true]);
+  expect(r2.success).toEqual(false);
+  expect(r2.error!).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "too_big",
+          "maximum": 2,
+          "message": "Too big: expected array to have <2 items",
+          "origin": "array",
+          "path": [],
+        },
+      ],
+    }
+  `);
+
+  const r3 = await testTuple.safeParseAsync({});
+  expect(r3.success).toEqual(false);
+  expect(r3.error!).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "tuple",
+          "message": "Invalid input: expected tuple",
+          "path": [],
+        },
+      ],
+    }
+  `);
+});
+
+test("tuple with optional elements", () => {
+  const myTuple = z.tuple([z.string(), z.number().optional(), z.string().optional()]).rest(z.boolean());
+  expectTypeOf<typeof myTuple._output>().toEqualTypeOf<[string, number?, string?, ...boolean[]]>();
+
+  const goodData = [["asdf"], ["asdf", 1234], ["asdf", 1234, "asdf"], ["asdf", 1234, "asdf", true, false, true]];
+  for (const data of goodData) {
+    expect(myTuple.parse(data)).toEqual(data);
+  }
+
+  const badData = [
+    ["asdf", "asdf"],
+    ["asdf", 1234, "asdf", "asdf"],
+    ["asdf", 1234, "asdf", true, false, "asdf"],
+  ];
+  for (const data of badData) {
+    expect(() => myTuple.parse(data)).toThrow();
   }
 });
 
-test("failed async validation", async () => {
-  const res = await testTuple.safeParse(badData);
-  expect(res.success).toEqual(false);
-  if (!res.success) {
-    expect(res.error.issues.length).toEqual(3);
+test("tuple with optional elements followed by required", () => {
+  const myTuple = z.tuple([z.string(), z.number().optional(), z.string()]).rest(z.boolean());
+  expectTypeOf<typeof myTuple._output>().toEqualTypeOf<[string, number | undefined, string, ...boolean[]]>();
+
+  const goodData = [
+    ["asdf", 1234, "asdf"],
+    ["asdf", 1234, "asdf", true, false, true],
+  ];
+  for (const data of goodData) {
+    expect(myTuple.parse(data)).toEqual(data);
   }
-  // try {
-  //   checker();
-  // } catch (err) {
-  //   if (err instanceof ZodError) {
-  //     expect(err.issues.length).toEqual(3);
-  //   }
-  // }
-});
 
-test("tuple with transformers", () => {
-  const stringToNumber = z.string().transform((val) => val.length);
-  const val = z.tuple([stringToNumber]);
-
-  type t1 = z.input<typeof val>;
-  expectTypeOf<t1>().toEqualTypeOf<[string]>();
-  type t2 = z.output<typeof val>;
-  expectTypeOf<t2>().toEqualTypeOf<[number]>();
-  expect(val.parse(["1234"])).toEqual([4]);
+  const badData = [
+    ["asdf"],
+    ["asdf", 1234],
+    ["asdf", 1234, "asdf", "asdf"],
+    ["asdf", 1234, "asdf", true, false, "asdf"],
+  ];
+  for (const data of badData) {
+    expect(() => myTuple.parse(data)).toThrow();
+  }
 });
 
 test("tuple with rest schema", () => {
@@ -78,13 +171,7 @@ test("tuple with rest schema", () => {
   expectTypeOf<t1>().toEqualTypeOf<[string, number, ...boolean[]]>();
 });
 
-test("parse should fail given sparse array as tuple", () => {
-  expect(() => testTuple.parse(new Array(3))).toThrow();
+test("sparse array input", () => {
+  const schema = z.tuple([z.string(), z.number()]);
+  expect(() => schema.parse(new Array(2))).toThrow();
 });
-
-// test('tuple with optional elements', () => {
-//   const result = z
-//     .tuple([z.string(), z.number().optional()])
-//     .safeParse(['asdf']);
-//   expect(result).toEqual(['asdf']);
-// });

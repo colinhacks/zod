@@ -11,9 +11,8 @@ test(".nullable()", () => {
 
 test(".nullable unwrap", () => {
   const schema = z.string().nullable();
-  expect(schema).toBeInstanceOf(z.ZodUnion);
-  expect(schema.options[0]).toBeInstanceOf(z.ZodString);
-  expect(schema.options[1]).toBeInstanceOf(z.ZodNull);
+  expect(schema).toBeInstanceOf(z.ZodNullable);
+  expect(schema.unwrap()).toBeInstanceOf(z.ZodString);
 });
 
 test("z.null", () => {

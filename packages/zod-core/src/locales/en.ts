@@ -58,7 +58,7 @@ const error: errors.$ZodErrorMap = (issue) => {
       const sizing = getSizing(issue.origin);
       if (sizing)
         return `Too big: expected ${issue.origin ?? "value"} to have ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
-      return `Too big: expected ${issue.origin ?? "value"} to be ${adj}${issue.maximum.toString()}1`;
+      return `Too big: expected ${issue.origin ?? "value"} to be ${adj}${issue.maximum.toString()}`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";

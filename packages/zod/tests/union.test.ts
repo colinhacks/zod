@@ -40,6 +40,7 @@ test("return errors from both union arms", () => {
                 "code": "invalid_type",
                 "expected": "number",
                 "message": "Invalid input: expected number",
+                "note": "Infinity is not a valid number",
                 "path": [],
               },
             ],
@@ -47,6 +48,7 @@ test("return errors from both union arms", () => {
               {
                 "code": "custom",
                 "message": "Invalid input",
+                "params": undefined,
                 "path": [],
               },
             ],

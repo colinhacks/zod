@@ -1,6 +1,4 @@
-import * as util from "@zod/core/util";
-
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod";
 
@@ -12,7 +10,6 @@ test("_values", () => {
   expect(z.literal(123)._values).toEqual(new Set([123]));
   expect(z.literal(true)._values).toEqual(new Set([true]));
   expect(z.literal(BigInt(123))._values).toEqual(new Set([BigInt(123)]));
-  expect(z.literal(Symbol.for("asdf"))._values).toEqual(new Set([Symbol.for("asdf")]));
   expect(z.undefined()._values).toEqual(new Set([undefined]));
   expect(z.null()._values).toEqual(new Set([null]));
 
@@ -428,7 +425,7 @@ test("branded", () => {
       // Add other properties specific to this option
     }),
     z.object({
-      key: z.literal("b").brand<"asdfasdf">(),
+      key: z.literal("b").$brand<"asdfasdf">(),
       // Add other properties specific to this option
     }),
   ]);

@@ -1,46 +1,32 @@
-import * as core from "@zod/core";
-import * as util from "@zod/core/util";
-
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
-
-const stringToNumber = z.string().transform((arg) => Number.parseFloat(arg));
-// const numberToString = z
-//   .transformer(z.number())
-//   .transform((n) => String(n));
-const asyncNumberToString = z.number().transform(async (n) => String(n));
 
 test("transform ctx.addIssue with parse", () => {
   const strs = ["foo", "bar"];
-
-  expect(() => {
-    z.string()
-      .transform((data, ctx) => {
-        const i = strs.indexOf(data);
-        if (i === -1) {
-          ctx.addIssue({
-            input: data,
-            code: "custom",
-            message: `${data} is not one of our allowed strings`,
-          });
-        }
-        return data.length;
-      })
-      .parse("asdf");
-  }).toThrow(
-    JSON.stringify(
-      [
+  const schema = z.string().transform((data, ctx) => {
+    const i = strs.indexOf(data);
+    if (i === -1) {
+      ctx.addIssue({
+        input: data,
+        code: "custom",
+        message: `${data} is not one of our allowed strings`,
+      });
+    }
+    return data.length;
+  });
+  const result = schema.safeParse("asdf");
+  expect(result.success).toEqual(false);
+  expect(result.error!).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
         {
-          input: "asdf",
-          code: "custom",
-          message: "asdf is not one of our allowed strings",
-          path: [],
+          "code": "custom",
+          "message": "asdf is not one of our allowed strings",
+          "path": [],
         },
       ],
-      null,
-      2
-    )
-  );
+    }
+  `);
 });
 
 test("transform ctx.addIssue with parseAsync", async () => {
@@ -61,20 +47,20 @@ test("transform ctx.addIssue with parseAsync", async () => {
     })
     .safeParseAsync("asdf");
 
-  expect(JSON.parse(JSON.stringify(result))).toEqual({
-    success: false,
-    error: {
-      issues: [
-        {
-          code: "custom",
-          input: "asdf",
-          message: "asdf is not one of our allowed strings",
-          path: [],
-        },
-      ],
-      name: "ZodError",
-    },
-  });
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "custom",
+            "message": "asdf is not one of our allowed strings",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
 
 test("z.NEVER in transform", () => {
@@ -131,6 +117,7 @@ test("async coercion", async () => {
 });
 
 test("sync coercion async error", async () => {
+  const asyncNumberToString = z.number().transform(async (n) => String(n));
   expect(() =>
     z
       .object({
@@ -178,6 +165,8 @@ test("default with falsy values", () => {
 });
 
 test("object typing", () => {
+  const stringToNumber = z.string().transform((arg) => Number.parseFloat(arg));
+
   const t1 = z.object({
     stringToNumber,
   });
@@ -198,6 +187,8 @@ test("transform method overloads", () => {
 });
 
 test("multiple transformers", () => {
+  const stringToNumber = z.string().transform((arg) => Number.parseFloat(arg));
+
   const doubler = stringToNumber.transform((val) => {
     return val * 2;
   });
@@ -211,9 +202,19 @@ test("short circuit on dirty", () => {
     .transform((val) => val.toUpperCase());
   const result = schema.safeParse("asdf");
   expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].code).toEqual(z.ZodIssueCode.custom);
-  }
+
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "Invalid input",
+          "params": undefined,
+          "path": [],
+        },
+      ],
+    }
+  `);
 
   const result2 = schema.safeParse(1234);
   expect(result2.success).toEqual(false);
@@ -229,13 +230,33 @@ test("async short circuit on dirty", async () => {
     .transform((val) => val.toUpperCase());
   const result = await schema.spa("asdf");
   expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].code).toEqual(z.ZodIssueCode.custom);
-  }
+
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "Invalid input",
+          "params": undefined,
+          "path": [],
+        },
+      ],
+    }
+  `);
 
   const result2 = await schema.spa(1234);
   expect(result2.success).toEqual(false);
-  if (!result2.success) {
-    expect(result2.error.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
-  }
+
+  expect(result2.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });

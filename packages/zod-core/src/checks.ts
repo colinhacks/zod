@@ -711,6 +711,7 @@ export const $ZodCheckRegex: base.$constructor<$ZodCheckRegex> = base.$construct
   $ZodCheckStringFormat.init(inst, def);
 
   inst._check = (payload) => {
+    def.pattern.lastIndex = 0;
     if (def.pattern.test(payload.value)) return;
     payload.issues.push({
       origin: "string",
