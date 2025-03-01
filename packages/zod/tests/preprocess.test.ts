@@ -1,13 +1,11 @@
-import * as util from "@zod/core/util";
-
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
 test("preprocess", () => {
   const schema = z.preprocess((data) => [data], z.string().array());
   const value = schema.parse("asdf");
   expect(value).toEqual(["asdf"]);
-  util.assertEqual<(typeof schema)["_input"], unknown>(true);
+  expectTypeOf<(typeof schema)["_input"]>().toEqualTypeOf<unknown>();
 });
 
 test("async preprocess", async () => {
@@ -26,6 +24,28 @@ test("async preprocess", async () => {
   `);
 });
 
+test("ctx.addIssue accepts string", () => {
+  const schema = z.preprocess((val, ctx) => {
+    ctx.addIssue("bad stuff");
+  }, z.string());
+  const result = schema.safeParse("asdf");
+  expect(result.error!.issues).toHaveLength(1);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "custom",
+            "message": "bad stuff",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+});
+
 test("preprocess ctx.addIssue with parse", () => {
   const a = z.preprocess((data, ctx) => {
     ctx.addIssue({
@@ -39,9 +59,11 @@ test("preprocess ctx.addIssue with parse", () => {
   const result = a.safeParse("asdf");
 
   // expect(result.error!.toJSON()).toContain("not one of our allowed strings");
+
+  expect(result.error!.issues).toHaveLength(1);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": $ZodError {
+      "error": ZodError {
         "issues": [
           {
             "code": "custom",
@@ -64,9 +86,11 @@ test("preprocess ctx.addIssue non-fatal by default", () => {
     return data;
   }, z.string());
   const result = schema.safeParse(1234);
+
+  expect(result.error!.issues).toHaveLength(2);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": $ZodError {
+      "error": ZodError {
         "issues": [
           {
             "code": "custom",
@@ -100,9 +124,10 @@ test("preprocess ctx.addIssue fatal true", () => {
 
   const result = schema.safeParse(1234);
 
+  expect(result.error!.issues).toHaveLength(1);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": $ZodError {
+      "error": ZodError {
         "issues": [
           {
             "code": "custom",
@@ -130,9 +155,10 @@ test("async preprocess ctx.addIssue with parseAsync", async () => {
 
   const result = await schema.safeParseAsync("asdf");
 
+  expect(result.error!.issues).toHaveLength(1);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": $ZodError {
+      "error": ZodError {
         "issues": [
           {
             "code": "custom",
@@ -156,12 +182,13 @@ test("z.NEVER in preprocess", () => {
   }, z.number());
 
   type foo = z.infer<typeof foo>;
-  util.assertEqual<foo, number>(true);
+  expectTypeOf<foo>().toEqualTypeOf<number>();
   const result = foo.safeParse(undefined);
 
+  expect(result.error!.issues).toHaveLength(2);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": $ZodError {
+      "error": ZodError {
         "issues": [
           {
             "code": "custom",
@@ -172,6 +199,7 @@ test("z.NEVER in preprocess", () => {
             "code": "invalid_type",
             "expected": "number",
             "message": "Invalid input: expected number",
+            "note": "Infinity is not a valid number",
             "path": [],
           },
         ],
@@ -191,13 +219,14 @@ test("preprocess as the second property of object", () => {
     positiveNum: "",
   });
 
+  expect(result.error!.issues).toHaveLength(2);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": $ZodError {
+      "error": ZodError {
         "issues": [
           {
             "code": "too_small",
-            "message": "Too small: expected string to have greater than 1 characters",
+            "message": "Too small: expected string to have >1 characters",
             "minimum": 1,
             "origin": "string",
             "path": [
@@ -207,7 +236,7 @@ test("preprocess as the second property of object", () => {
           {
             "code": "too_small",
             "inclusive": false,
-            "message": "Too small: expected number to be greater than 0",
+            "message": "Too small: expected number to be >0",
             "minimum": 0,
             "origin": "number",
             "path": [
@@ -228,9 +257,11 @@ test("preprocess validates with sibling errors", () => {
   });
 
   const result = schema.safeParse({ preprocess: " asdf" });
+
+  expect(result.error!.issues).toHaveLength(2);
   expect(result).toMatchInlineSnapshot(`
     {
-      "error": $ZodError {
+      "error": ZodError {
         "issues": [
           {
             "code": "invalid_type",

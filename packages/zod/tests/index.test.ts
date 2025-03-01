@@ -884,7 +884,6 @@ test("z.promise", async () => {
   const b = z.string();
   expect(() => z.parse(b, Promise.resolve("hello"))).toThrow();
 });
-
 // test("type assertions", () => {
 //   const schema = z.pipe(
 //     z.string(),

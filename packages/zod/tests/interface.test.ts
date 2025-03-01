@@ -1,19 +1,16 @@
-import * as util from "@zod/core/util";
-
 import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod";
 
-const Test = z.interface({
-  f1: z.number(),
-  "f2?": z.string(),
-  f3: z.string().nullable(),
-  f4: z.array(z.interface({ t: z.union([z.string(), z.boolean()]) })),
-});
-
-type Test = z.output<typeof Test>;
-
 test("object type inference", () => {
+  const Test = z.interface({
+    f1: z.number(),
+    "f2?": z.string(),
+    f3: z.string().nullable(),
+    f4: z.array(z.interface({ t: z.union([z.string(), z.boolean()]) })),
+  });
+
+  type Test = z.output<typeof Test>;
   type TestType = {
     f1: number;
     f2?: string | undefined;
@@ -21,29 +18,9 @@ test("object type inference", () => {
     f4: { t: string | boolean }[];
   };
 
-  util.assertEqual<Test, TestType>(true);
-});
+  expectTypeOf<Test>().toEqualTypeOf<TestType>();
 
-test("unknown throw", () => {
-  const asdf: unknown = 35;
-  expect(() => Test.parse(asdf)).toThrow();
-});
-
-test("shape() should return schema of particular key", () => {
-  Test._def;
-  const f1Schema = Test._def.shape.f1;
-  const f2Schema = Test._def.shape.f2;
-  const f3Schema = Test._def.shape.f3;
-  const f4Schema = Test._def.shape.f4;
-
-  expect(f1Schema).toBeInstanceOf(z.ZodNumber);
-  expect(f2Schema).toBeInstanceOf(z.ZodString);
-  expect(f3Schema).toBeInstanceOf(z.ZodUnion);
-  expect(f4Schema).toBeInstanceOf(z.ZodArray);
-});
-
-test("correct parsing", () => {
-  Test.parse({
+  const data = {
     f1: 12,
     f2: "string",
     f3: "string",
@@ -52,152 +29,123 @@ test("correct parsing", () => {
         t: "string",
       },
     ],
-  });
-
-  Test.parse({
-    f1: 12,
-    f3: null,
-    f4: [
-      {
-        t: false,
-      },
-    ],
-  });
+  };
+  expect(Test.parse(data)).toEqual(data);
+  expect(Test.safeParse("foo")).toMatchObject({ success: false });
 });
 
-test("incorrect #1", () => {
-  expect(() => Test.parse({} as any)).toThrow();
-});
-
-test("nonstrict by default", () => {
-  z.interface({ points: z.number() }).parse({
-    points: 2314,
-    unknown: "asdf",
+test("shape() should return schema of particular key", () => {
+  const schema = z.interface({
+    name: z.string(),
   });
+
+  expect(schema.shape.name).toBeInstanceOf(z.ZodString);
 });
 
-const data = {
-  points: 2314,
-  unknown: "asdf",
-};
+test("optional with .optional()", () => {
+  const schema = z.interface({
+    a: z.string().optional(),
+  });
 
-test("strip by default", () => {
-  const val = z.interface({ points: z.number() }).parse(data);
-  expect(val).toEqual({ points: 2314 });
+  expect(schema.parse({})).toEqual({ a: undefined });
+  expect(schema.parse({ a: undefined })).toEqual({ a: undefined });
+});
+
+test("question mark optional", () => {
+  const schema = z.interface({
+    "a?": z.string().optional(),
+  });
+  expect(schema.parse({})).toEqual({});
+  expect("a" in schema.parse({})).toEqual(false);
+  expect(schema.parse({ a: undefined })).toEqual({ a: undefined });
+  expect("a" in schema.parse({ a: undefined })).toEqual(true);
+  expect(schema.parse({ a: "foo" })).toEqual({ a: "foo" });
+});
+
+test("defaulted key", () => {
+  const schema = z.interface({
+    "?a": z.string().default("asdf"),
+  });
+
+  expectTypeOf<typeof schema._input>().toEqualTypeOf<{ a?: string }>();
+  expectTypeOf<typeof schema._output>().toEqualTypeOf<{ a: string }>();
+  expect(schema.parse({})).toEqual({ a: "asdf" });
+  expect(schema.parse({ a: undefined })).toEqual({ a: "asdf" });
+});
+
+test("z.interface - strip by default", () => {
+  const schema = z.interface({ points: z.number() });
+  const data = { points: 2314, unknown: "asdf" };
+  const result = schema.safeParse(data);
+  expect(result.data).toEqual({ points: 2314 });
 });
 
 test("z.looseInterface", () => {
-  const val = z.looseInterface({ points: z.number() }).parse(data);
+  const schema = z.looseInterface({ points: z.number() });
+  const data = { points: 2314, unknown: "asdf" };
+  const val = schema.parse(data);
   expect(val).toEqual(data);
 });
 
-test("strip unknown", () => {
-  const val = z.interface({ points: z.number() }).parse(data);
-  expect(val).toEqual({ points: 2314 });
-});
-
 test("strict", () => {
-  const val = z.strictInterface({ points: z.number() }).safeParse(data);
+  const schema = z.strictInterface({ points: z.number() });
+  const data = { points: 2314, unknown: "asdf" };
+  const val = schema.safeParse(data);
   expect(val.success).toEqual(false);
 });
 
-test("catchall inference", () => {
-  const o1 = z
+test("catchall", () => {
+  const schema = z
     .interface({
       first: z.string(),
     })
     .catchall(z.number());
 
-  const d1 = o1.parse({ first: "asdf", num: 1243 });
-  // util.assertEqual<number, (typeof d1)["asdf"]>(true);
-  util.assertEqual<string, (typeof d1)["first"]>(true);
+  const d1 = schema.safeParse({ first: "asdf", num: 1243 });
+  expect(d1.data).toEqual({ first: "asdf", num: 1243 });
+
+  const d2 = schema.safeParse({ first: "asdf", num: "asdf" });
+  expect(d2.success).toEqual(false);
 });
 
 test("catchall overrides strict", () => {
-  const o1 = z.strictInterface({ first: z.string().optional() }).catchall(z.number());
+  const schema = z.strictInterface({ first: z.string().optional() }).catchall(z.number());
 
-  // should run fine
   // setting a catchall overrides the unknownKeys behavior
-  o1.parse({
-    asdf: 1234,
-  });
+  schema.parse({ asdf: 1234 });
+});
 
-  // should only run catchall validation
-  // against unknown keys
-  o1.parse({
+test("only run catchall on unknown keys", () => {
+  const schema = z.strictInterface({ first: z.string().optional() }).catchall(z.number());
+  schema.parse({
     first: "asdf",
     asdf: 1234,
   });
 });
 
-test("catchall overrides strict", () => {
-  const o1 = z
-    .strictInterface({
-      first: z.string(),
-    })
-    .catchall(z.number());
-
-  // should run fine
-  // setting a catchall overrides the unknownKeys behavior
-  o1.parse({
-    first: "asdf",
-    asdf: 1234,
-  });
+test("extend overrides existing", async () => {
+  const a = z.interface({ a: z.string() });
+  const b = z.interface({ a: z.number() });
+  const c = a.extend(b);
+  type c = z.infer<typeof c>;
+  expectTypeOf<c>().toEqualTypeOf<{ a: number }>();
 });
 
-test("test that optional keys are unset", async () => {
-  const SNamedEntity = z.interface({
-    id: z.string(),
-    "set?": z.string(),
-    "unset?": z.string(),
-  });
-  const result = await SNamedEntity.parse({
-    id: "asdf",
-    set: undefined,
-  });
-  expect(result);
-  expect(Object.keys(result)).toEqual(["id", "set"]);
-});
+test("extend overrides optionality", async () => {
+  const a = z.interface({ "?a": z.string(), "b?": z.string() });
+  const b = z.interface({ a: z.string(), b: z.string() });
+  const c = a.extend(b);
 
-test("test catchall parsing", async () => {
-  const result = z.interface({ name: z.string() }).catchall(z.number()).parse({ name: "Foo", validExtraKey: 61 });
+  type c = z.infer<typeof c>;
+  expectTypeOf<c>().toEqualTypeOf<{ a: string; b: string }>();
 
-  expect(result).toEqual({ name: "Foo", validExtraKey: 61 });
+  const aData = { a: "asdf" };
+  expect(a.parse(aData)).toEqual(aData);
 
-  const result2 = z
-    .interface({ name: z.string() })
-    .catchall(z.number())
-    .safeParse({ name: "Foo", validExtraKey: 61, invalid: "asdf" });
+  expect(c.safeParse(aData).success).toEqual(false);
 
-  expect(result2.success).toEqual(false);
-});
-
-test("test nonexistent keys", async () => {
-  const Schema = z.union([z.interface({ a: z.string() }), z.interface({ b: z.number() })]);
-  const obj = { a: "A" };
-  const result = await Schema.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
-  expect(result.success).toBe(true);
-});
-
-test("test async union", async () => {
-  const Schema2 = z.union([
-    z.interface({
-      ty: z.string(),
-    }),
-    z.interface({
-      ty: z.number(),
-    }),
-  ]);
-
-  const obj = { ty: "A" };
-  const result = await Schema2.spa(obj); // Works with 1.11.10, breaks with 2.0.0-beta.21
-  expect(result.success).toEqual(true);
-});
-
-test("test inferred merged type", async () => {
-  const asdf = z.interface({ a: z.string() }).extend(z.interface({ a: z.number() }).shape);
-  type asdf = z.infer<typeof asdf>;
-  util.assertEqual<asdf, { a: number }>(true);
+  const cData = { a: "asdf", b: "asdf" };
+  expect(c.parse(cData)).toEqual(cData);
 });
 
 test("inferred merged object type with optional properties", async () => {
@@ -206,8 +154,7 @@ test("inferred merged object type with optional properties", async () => {
   const c = a.merge(b);
   c.shape;
   type c = z.infer<typeof c>;
-  util.assertEqual<c, { a: string | undefined; b?: string }>(true);
-
+  expectTypeOf<c>().toEqualTypeOf<{ a: string | undefined; b?: string }>();
   expectTypeOf<typeof a>().toMatchTypeOf<z.ZodInterface>();
 });
 
@@ -219,7 +166,7 @@ test("inferred unioned object type with optional properties", async () => {
     z.interface({ "a?": z.string().optional(), b: z.string() }),
   ]);
   type Unioned = z.infer<typeof Unioned>;
-  util.assertEqual<Unioned, { a: string; b?: string } | { a?: string; b: string }>(true);
+  expectTypeOf<Unioned>().toEqualTypeOf<{ a: string; b?: string } | { a?: string; b: string }>();
 });
 
 test("inferred enum type", async () => {
@@ -235,13 +182,13 @@ test("inferred enum type", async () => {
     b: "b",
   });
   type Enum = z.infer<typeof Enum>;
-  util.assertEqual<Enum, "a" | "b">(true);
+  expectTypeOf<Enum>().toEqualTypeOf<"a" | "b">();
 });
 
 test(".partial", async () => {
   const Partial = z.interface({ a: z.string(), b: z.string().optional() }).partial();
   type Partial = z.infer<typeof Partial>;
-  util.assertEqual<Partial, { a?: string; b?: string }>(true);
+  expectTypeOf<Partial>().toEqualTypeOf<{ a?: string; b?: string }>();
   expect(Partial._def.shape.a).toBeInstanceOf(z.ZodOptional);
   expect(Partial._def.shape.b).toBeInstanceOf(z.ZodOptional);
   expect(Partial._def.optional).toEqual(["a", "b"]);
@@ -252,7 +199,7 @@ test(".required", async () => {
     .interface({ a: z.string(), b: z.string().optional(), "c?": z.string(), "?d": z.string() })
     .required();
   type Required = z.infer<typeof Required>;
-  util.assertEqual<Required, { a: string; b: string; c: string; d: string }>(true);
+  expectTypeOf<Required>().toEqualTypeOf<{ a: string; b: string; c: string; d: string }>();
   expectTypeOf<(typeof Required)["_optional"]>().toEqualTypeOf<never>();
   expectTypeOf<(typeof Required)["_defaulted"]>().toEqualTypeOf<"d">();
   expect(Required._def.shape.a).toBeInstanceOf(z.ZodNonOptional);
@@ -266,7 +213,7 @@ test(".required", async () => {
 test("inferred picked object type with optional properties", async () => {
   const Picked = z.interface({ a: z.string(), "b?": z.string() }).pick({ b: true });
   type Picked = z.infer<typeof Picked>;
-  util.assertEqual<Picked, { b?: string }>(true);
+  expectTypeOf<Picked>().toEqualTypeOf<{ b?: string }>();
 });
 
 test("inferred type for unknown/any keys", () => {
@@ -277,15 +224,12 @@ test("inferred type for unknown/any keys", () => {
     unknownRequired: z.unknown(),
   });
   type myType = z.infer<typeof myType>;
-  util.assertEqual<
-    myType,
-    {
-      anyOptional: any;
-      anyRequired: any;
-      unknownOptional: unknown;
-      unknownRequired: unknown;
-    }
-  >(true);
+  expectTypeOf<myType>().toEqualTypeOf<{
+    anyOptional: any;
+    anyRequired: any;
+    unknownOptional: unknown;
+    unknownRequired: unknown;
+  }>();
 
   const myType2 = z.interface({
     "anyOptional?": z.any().optional(),
@@ -294,15 +238,12 @@ test("inferred type for unknown/any keys", () => {
     "unknownRequired?": z.unknown(),
   });
   type myType2 = z.infer<typeof myType2>;
-  util.assertEqual<
-    myType2,
-    {
-      anyOptional?: any;
-      anyRequired?: any;
-      unknownOptional?: unknown;
-      unknownRequired?: unknown;
-    }
-  >(true);
+  expectTypeOf<myType2>().toEqualTypeOf<{
+    anyOptional?: any;
+    anyRequired?: any;
+    unknownOptional?: unknown;
+    unknownRequired?: unknown;
+  }>();
 });
 
 // test("setKey", () => {
@@ -310,7 +251,7 @@ test("inferred type for unknown/any keys", () => {
 //   const withNewKey = base.setKey("age", z.number());
 
 //   type withNewKey = z.infer<typeof withNewKey>;
-//   util.assertEqual<withNewKey, { name: string; age: number }>(true);
+//   expectTypeOf<withNewKey>().toEqualTypeOf<{ name: string; age: number }>();
 //   withNewKey.parse({ name: "asdf", age: 1234 });
 // });
 
@@ -410,10 +351,10 @@ test("unknownkeys merging", () => {
 
   // const mergedSchema = schemaA.merge(schemaB);
   // type mergedSchema = typeof mergedSchema;
-  // // util.assertEqual<mergedSchema["_def"].catchall, "strip">(true);
+  // // expectTypeOf<mergedSchema["_def"].catchall>().toEqualTypeOf<"strip">(true);
   // expect(mergedSchema._def.catchall).toBeInstanceOf(z.ZodUnknown);
 
-  // util.assertEqual<mergedSchema["_def"]["catchall"], z.ZodString>(true);
+  // expectTypeOf<mergedSchema["_def"]["catchall"]>().toEqualTypeOf<z.ZodString>(true);
   // expect(mergedSchema._def.catchall instanceof z.ZodString).toEqual(true);
 });
 
@@ -430,8 +371,8 @@ test("extend() should return schema with new key", () => {
   const actual = PersonWithNickname.parse(expected);
 
   expect(actual).toEqual(expected);
-  util.assertEqual<keyof PersonWithNickname, "firstName" | "lastName" | "nickName">(true);
-  util.assertEqual<PersonWithNickname, { firstName: string; lastName: string; nickName: string }>(true);
+  expectTypeOf<keyof PersonWithNickname>().toEqualTypeOf<"firstName" | "lastName" | "nickName">();
+  expectTypeOf<PersonWithNickname>().toEqualTypeOf<{ firstName: string; lastName: string; nickName: string }>();
 });
 
 test("extend() should have power to override existing key", () => {
@@ -444,16 +385,16 @@ test("extend() should have power to override existing key", () => {
   const actual = PersonWithNumberAsLastName.parse(expected);
 
   expect(actual).toEqual(expected);
-  util.assertEqual<PersonWithNumberAsLastName, { firstName: string; lastName: number }>(true);
+  expectTypeOf<PersonWithNumberAsLastName>().toEqualTypeOf<{ firstName: string; lastName: number }>();
 });
 
 // test("passthrough index signature", () => {
 //   const a = z.interface({ a: z.string() });
 //   type a = z.infer<typeof a>;
-//   util.assertEqual<{ a: string }, a>(true);
+//   expectTypeOf<{ a: string }>().toEqualTypeOf<a>(true);
 //   const b = a.passthrough();
 //   type b = z.infer<typeof b>;
-//   util.assertEqual<{ a: string } & { [k: string]: unknown }, b>(true);
+//   expectTypeOf<{ a: string } & { [k: string]: unknown }>().toEqualTypeOf<b>(true);
 // });
 
 test("xor", () => {

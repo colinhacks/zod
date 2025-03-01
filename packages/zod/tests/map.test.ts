@@ -2,13 +2,12 @@ import * as util from "@zod/core/util";
 
 import { expect, test } from "vitest";
 import * as z from "zod";
-import { ZodIssueCode } from "zod";
 
 const stringMap = z.map(z.string(), z.string());
 type stringMap = z.infer<typeof stringMap>;
 
 test("type inference", () => {
-  util.assertEqual<stringMap, Map<string, string>>(true);
+  expectTypeOf<stringMap>().toEqualTypeOf<Map<string, string>>();
 });
 
 test("valid parse", () => {
@@ -19,28 +18,43 @@ test("valid parse", () => {
     ])
   );
   expect(result.success).toEqual(true);
-  if (result.success) {
-    expect(result.data.has("first")).toEqual(true);
-    expect(result.data.has("second")).toEqual(true);
-    expect(result.data.get("first")).toEqual("foo");
-    expect(result.data.get("second")).toEqual("bar");
-  }
+  expect(result.data).toMatchInlineSnapshot(`
+    Map {
+      "first" => "foo",
+      "second" => "bar",
+    }
+  `);
 });
 
 test("valid parse async", async () => {
-  const result = await stringMap.spa(
-    new Map([
-      ["first", "foo"],
-      ["second", "bar"],
-    ])
+  const asyncMap = z.map(
+    z.string().refine(async () => false, "bad key"),
+    z.string().refine(async () => false, "bad value")
   );
-  expect(result.success).toEqual(true);
-  if (result.success) {
-    expect(result.data.has("first")).toEqual(true);
-    expect(result.data.has("second")).toEqual(true);
-    expect(result.data.get("first")).toEqual("foo");
-    expect(result.data.get("second")).toEqual("bar");
-  }
+  const result = await asyncMap.safeParseAsync(new Map([["first", "foo"]]));
+  expect(result.success).toEqual(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "bad key",
+          "params": undefined,
+          "path": [
+            "first",
+          ],
+        },
+        {
+          "code": "custom",
+          "message": "bad value",
+          "params": undefined,
+          "path": [
+            "first",
+          ],
+        },
+      ],
+    }
+  `);
 });
 
 test("throws when a Set is given", () => {
@@ -48,7 +62,7 @@ test("throws when a Set is given", () => {
   expect(result.success).toEqual(false);
   if (result.success === false) {
     expect(result.error.issues.length).toEqual(1);
-    expect(result.error.issues[0].code).toEqual(ZodIssueCode.invalid_type);
+    expect(result.error.issues[0].code).toEqual("invalid_type");
   }
 });
 
@@ -57,10 +71,28 @@ test("throws when the given map has invalid key and invalid input", () => {
   expect(result.success).toEqual(false);
   if (result.success === false) {
     expect(result.error.issues.length).toEqual(2);
-    expect(result.error.issues[0].code).toEqual(ZodIssueCode.invalid_type);
-    expect(result.error.issues[0].path).toEqual([0, "key"]);
-    expect(result.error.issues[1].code).toEqual(ZodIssueCode.invalid_type);
-    expect(result.error.issues[1].path).toEqual([0, "value"]);
+    expect(result.error).toMatchInlineSnapshot(`
+      ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string",
+            "path": [
+              42,
+            ],
+          },
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string",
+            "path": [
+              42,
+            ],
+          },
+        ],
+      }
+    `);
   }
 });
 
@@ -78,10 +110,26 @@ test("throws when the given map has multiple invalid entries", () => {
   expect(result.success).toEqual(false);
   if (result.success === false) {
     expect(result.error.issues.length).toEqual(2);
-    expect(result.error.issues[0].code).toEqual(ZodIssueCode.invalid_type);
-    expect(result.error.issues[0].path).toEqual([0, "key"]);
-    expect(result.error.issues[1].code).toEqual(ZodIssueCode.invalid_type);
-    expect(result.error.issues[1].path).toEqual([1, "value"]);
+    expect(result.error.issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string",
+          "path": [
+            1,
+          ],
+        },
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string",
+          "path": [
+            "bar",
+          ],
+        },
+      ]
+    `);
   }
 });
 
@@ -101,9 +149,62 @@ test("dirty", async () => {
   expect(result.success).toEqual(false);
   if (!result.success) {
     expect(result.error.issues.length).toEqual(2);
-    expect(result.error.issues[0].code).toEqual(z.ZodIssueCode.custom);
-    expect(result.error.issues[0].message).toEqual("Keys must be uppercase");
-    expect(result.error.issues[1].code).toEqual(z.ZodIssueCode.custom);
-    expect(result.error.issues[1].message).toEqual("Keys must be uppercase");
+    expect(result.error).toMatchInlineSnapshot(`
+      ZodError {
+        "issues": [
+          {
+            "code": "custom",
+            "message": "Keys must be uppercase",
+            "params": undefined,
+            "path": [
+              "first",
+            ],
+          },
+          {
+            "code": "custom",
+            "message": "Keys must be uppercase",
+            "params": undefined,
+            "path": [
+              "second",
+            ],
+          },
+        ],
+      }
+    `);
   }
+});
+
+test("map with object keys", () => {
+  const map = z.map(
+    z.object({
+      name: z.string(),
+      age: z.number(),
+    }),
+    z.string()
+  );
+  const data = new Map([
+    [{ name: "John", age: 30 }, "foo"],
+    [{ name: "Jane", age: 25 }, "bar"],
+  ]);
+  const result = map.safeParse(data);
+  expect(result.success).toEqual(true);
+  expect(result.data!).toEqual(data);
+
+  const badData = new Map([["bad", "foo"]]);
+  const badResult = map.safeParse(badData);
+  expect(badResult.success).toEqual(false);
+  expect(badResult.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "object",
+          "message": "Invalid input: expected object",
+          "path": [
+            "bad",
+          ],
+        },
+      ],
+    }
+  `);
 });

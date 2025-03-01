@@ -33,8 +33,13 @@ export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$con
   inst._pattern = regexes.stringRegex;
 
   inst._parse = (payload, _) => {
-    if (def.coerce) payload.value = String(payload.value);
+    if (def.coerce)
+      try {
+        payload.value = String(payload.value);
+      } catch (_) {}
+
     if (typeof payload.value === "string") return payload;
+
     payload.issues.push({
       expected: "string",
       code: "invalid_type",
@@ -43,6 +48,7 @@ export const $ZodString: base.$constructor<$ZodString> = /*@__PURE__*/ base.$con
     });
     return payload;
   };
+  // inst._run = inst._parse;
 });
 
 //////////////////////////////   ZodStringFormat   //////////////////////////////
@@ -448,7 +454,10 @@ export const $ZodNumber: base.$constructor<$ZodNumber> = /*@__PURE__*/ base.$con
   inst._pattern = regexes.numberRegex;
 
   inst._parse = (payload, _ctx) => {
-    if (def.coerce) payload.value = Number(payload.value);
+    if (def.coerce)
+      try {
+        payload.value = Number(payload.value);
+      } catch (_) {}
     const input = payload.value;
     if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) {
       return payload;
@@ -544,7 +553,10 @@ export const $ZodBoolean: base.$constructor<$ZodBoolean> = /*@__PURE__*/ base.$c
     inst._pattern = regexes.booleanRegex;
 
     inst._parse = (payload, _ctx) => {
-      if (def.coerce) payload.value = Boolean(payload.value);
+      if (def.coerce)
+        try {
+          payload.value = Boolean(payload.value);
+        } catch (_) {}
       const input = payload.value;
       if (typeof input === "boolean") return payload;
       payload.issues.push({
@@ -585,7 +597,10 @@ export const $ZodBigInt: base.$constructor<$ZodBigInt> = /*@__PURE__*/ base.$con
   inst._pattern = regexes.bigintRegex;
 
   inst._parse = (payload, _ctx) => {
-    if (def.coerce) payload.value = BigInt(payload.value);
+    if (def.coerce)
+      try {
+        payload.value = BigInt(payload.value as any);
+      } catch (_) {}
     const { value: input } = payload;
     if (typeof input === "bigint") return payload;
     payload.issues.push({
@@ -852,7 +867,7 @@ export interface $ZodDateDef extends base.$ZodTypeDef {
 
 export interface $ZodDate<T = unknown> extends base.$ZodType<Date, T> {
   _def: $ZodDateDef;
-  _isst: errors.$ZodIssueInvalidType | errors.$ZodIssueInvalidDate;
+  _isst: errors.$ZodIssueInvalidType; // | errors.$ZodIssueInvalidDate;
 }
 
 export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constructor("$ZodDate", (inst, def) => {
@@ -866,19 +881,16 @@ export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constru
     }
     const input = payload.value;
 
-    if (!(input instanceof Date)) {
-      payload.issues.push({
-        expected: "date",
-        code: "invalid_type",
-        input,
-        inst,
-      });
-      // return payload;
-    } else if (Number.isNaN(input.getTime())) {
-      payload.issues.push({ code: "invalid_date", input, inst });
-    } else {
-      payload.value = new Date(input.getTime());
-    }
+    if (input instanceof Date && !Number.isNaN(input.getTime())) return payload;
+
+    const isInvalid = Number.isNaN(input.getTime());
+    payload.issues.push({
+      expected: "date",
+      code: "invalid_type",
+      input,
+      ...(isInvalid ? { note: "Invalid Date" } : {}),
+      inst,
+    });
 
     return payload;
   };
@@ -973,14 +985,18 @@ export interface $ZodObjectLikeDef<out Shape extends $ZodShape = $ZodShape> exte
 }
 
 export interface $ZodObjectLike<out O = object, out I = object> extends base.$ZodType<O, I> {
+  /** @deprecated */
   _def: $ZodObjectLikeDef;
+  /** @deprecated */
   _shape: $ZodShape;
-  // _params: $ZodInterfaceNamedParams;
-  // _extra: Record<string, unknown>;
+  /** @deprecated */
   _extra: Record<string, unknown>;
+  /** @deprecated */
   _optional: string;
+  /** @deprecated */
   _defaulted: string;
-  _disc: base.$DiscriminatorMap;
+  // _disc: base.$DiscriminatorMap;
+  /** @deprecated */
   _isst: errors.$ZodIssueInvalidType | errors.$ZodIssueUnrecognizedKeys;
 }
 
@@ -1004,28 +1020,26 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
       return n;
     });
 
-    Object.defineProperty(inst, "_disc", {
-      get() {
-        const shape = _normalized.value.shape;
-        const discMap: base.$DiscriminatorMap = new Map();
-        let hasDisc = false;
-        for (const key in shape) {
-          const field = shape[key];
-          if (field._values || field._disc) {
-            hasDisc = true;
-            const o: base.$DiscriminatorMapElement = {
-              values: new Set(field._values ?? []),
-              maps: field._disc ? [field._disc] : [],
-            };
-            discMap.set(key, o);
-          }
+    util.defineLazy(inst, "_disc", () => {
+      const shape = _normalized.value.shape;
+      const discMap: base.$DiscriminatorMap = new Map();
+      let hasDisc = false;
+      for (const key in shape) {
+        const field = shape[key];
+        if (field._values || field._disc) {
+          hasDisc = true;
+          const o: base.$DiscriminatorMapElement = {
+            values: new Set(field._values ?? []),
+            maps: field._disc ? [field._disc] : [],
+          };
+          discMap.set(key, o);
         }
-        if (!hasDisc) return undefined;
-        return discMap;
-      },
+      }
+      if (!hasDisc) return undefined;
+      return discMap;
     });
 
-    const fastpass = util.cached(() => {
+    const generateFastpass = () => {
       const { keys, optionalKeys } = _normalized.value;
       const doc = new Doc(["inst", "payload", "ctx"]);
       const parseStr = (key: string) => {
@@ -1044,10 +1058,11 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
         if (optionalKeys.has(key)) continue;
         const id = ids[key];
         doc.write(`const ${id} = ${parseStr(key)};`);
-        doc.write(`if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
-           ...iss,
-           path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
-        })));`);
+        doc.write(`
+          if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+            ...iss,
+            path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
+          })));`);
       }
 
       // check for missing keys
@@ -1070,12 +1085,18 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
       // }
 
       // add required keys to result
-      doc.write(`const value = {`);
+      // doc.write(`return payload;`);
+      // doc.write(`if(Object.keys(input).length === ${keys.length}) {
+      //   payload.value = {...input};
+      //   return payload;
+      // }`);
+      doc.write(`payload.value = {`);
       doc.indented(() => {
         for (const key of keys) {
           if (optionalKeys.has(key)) continue;
           const id = ids[key];
           doc.write(`  ${util.esc(key)}: ${id}.value,`);
+          // doc.write(`payload.value[${util.esc(key)}] = ${id}.value;`);
         }
       });
       doc.write(`}`);
@@ -1088,30 +1109,36 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
         doc.indented(() => {
           doc.write(`if(input[${util.esc(key)}] === undefined) {`);
           doc.indented(() => {
-            doc.write(`value[${util.esc(key)}] = undefined;`);
+            doc.write(`payload.value[${util.esc(key)}] = undefined;`);
           });
           doc.write(`} else {`);
           doc.indented(() => {
             doc.write(`const ${id} = ${parseStr(key)};`);
-            doc.write(`value[${util.esc(key)}] = ${id}.value;`);
-            doc.write(
-              `if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({ ...iss, path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}] })));`
-            );
+            doc.write(`payload.value[${util.esc(key)}] = ${id}.value;`);
+            doc.write(`
+              if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({ 
+                ...iss, 
+                path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}] 
+              })));`);
           });
           doc.write(`}`);
         });
         doc.write(`}`);
       }
 
-      doc.write(`return value;`);
+      // doc.write(`payload.value = final;`);
+      doc.write(`return payload;`);
       return doc.compile();
-    });
+    };
+    let fastpass!: ReturnType<typeof generateFastpass>;
+
+    const fastEnabled = util.allowsEval.value; // && !def.catchall;
+    const isObject = util.isObject;
+    const { catchall } = def;
 
     inst._parse = (payload, ctx) => {
-      const { shape, keys, optionalKeys, keySet } = _normalized.value;
-      const { value: input } = payload;
-
-      if (!util.isObject(input)) {
+      const input = payload.value;
+      if (!isObject(input)) {
         payload.issues.push({
           expected: "object",
           code: "invalid_type",
@@ -1121,17 +1148,17 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
         return payload;
       }
 
-      const fast = util.allowsEval.value && ctx.async === false;
       const proms: Promise<any>[] = [];
 
-      if (fast && !def.catchall && !ctx.skipFast) {
+      if (fastEnabled && ctx.async === false && !ctx.skipFast) {
         // always synchronous
-        // this overwrites payload.value
-        payload.value = fastpass.value(inst, payload, ctx);
+        fastpass ??= generateFastpass();
+        payload = fastpass(inst, payload, ctx);
       } else {
         payload.value = {};
-        for (const key of keys) {
-          const valueSchema = shape[key];
+
+        for (const key of _normalized.value.keys) {
+          const valueSchema = _normalized.value.shape[key];
 
           // do not add omitted optional keys
           // if (!(key in input)) {
@@ -1146,6 +1173,16 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
           //   });
           // }
 
+          if (_normalized.value.optionalKeys.has(key)) {
+            if (!(key in input)) {
+              continue;
+            }
+            if (input[key] === undefined) {
+              input[key] = undefined;
+              continue;
+            }
+          }
+
           const r = valueSchema._run({ value: input[key], issues: [], $payload: true }, ctx);
           if (r instanceof Promise) {
             proms.push(r.then((r) => handleObjectResult(r, payload, key)));
@@ -1155,33 +1192,32 @@ const $ZodObjectLike: base.$constructor<$ZodObjectLike> = /*@__PURE__*/ base.$co
         }
       }
 
-      if (def.catchall) {
-        const catchall = def.catchall;
-        const unrecognized: string[] = [];
-        // iterate over input keys
-        for (const key of Object.keys(input)) {
-          if (keySet.has(key)) continue;
-          if (catchall._def.type === "never") {
-            unrecognized.push(key);
-            continue;
-          }
-          const r = catchall._run({ value: input[key], issues: [], $payload: true }, ctx);
+      if (!catchall) return payload;
 
-          if (r instanceof Promise) {
-            proms.push(r.then((r) => handleObjectResult(r, payload, key)));
-          } else {
-            handleObjectResult(r, payload, key);
-          }
+      const unrecognized: string[] = [];
+      // iterate over input keys
+      for (const key of Object.keys(input)) {
+        if (_normalized.value.keySet.has(key)) continue;
+        if (catchall._def.type === "never") {
+          unrecognized.push(key);
+          continue;
         }
+        const r = catchall._run({ value: input[key], issues: [], $payload: true }, ctx);
 
-        if (unrecognized.length) {
-          payload.issues.push({
-            code: "unrecognized_keys",
-            keys: unrecognized,
-            input,
-            inst,
-          });
+        if (r instanceof Promise) {
+          proms.push(r.then((r) => handleObjectResult(r, payload, key)));
+        } else {
+          handleObjectResult(r, payload, key);
         }
+      }
+
+      if (unrecognized.length) {
+        payload.issues.push({
+          code: "unrecognized_keys",
+          keys: unrecognized,
+          input,
+          inst,
+        });
       }
 
       if (!proms.length) return payload;
@@ -1228,14 +1264,16 @@ export type $InferInterfaceOutput<
   T extends $ZodLooseShape,
   Params extends $ZodInterfaceNamedParams,
 > = string extends keyof T
-  ? Record<string, unknown>
-  : util.Flatten<
-      {
-        -readonly [k in Params["optional"]]?: T[k]["_output"];
-      } & {
-        -readonly [k in Exclude<keyof T, Params["optional"]>]: T[k]["_output"];
-      } & Params["extra"]
-    >;
+  ? object
+  : {} extends T
+    ? object
+    : util.Flatten<
+        {
+          -readonly [k in Params["optional"]]?: T[k]["_output"];
+        } & {
+          -readonly [k in Exclude<keyof T, Params["optional"]>]: T[k]["_output"];
+        } & Params["extra"]
+      >;
 
 export type $InferInterfaceInput<
   T extends $ZodLooseShape,
@@ -1309,7 +1347,7 @@ type RequiredOutProps<T extends $ZodShape> = {
   [k in keyof T as T[k]["_qout"] extends "true" ? never : k]-?: T[k]["_output"];
 };
 export type $InferObjectOutput<T extends $ZodShape, Extra extends Record<string, unknown>> = {} extends T
-  ? object & Extra
+  ? object
   : util.Flatten<OptionalOutProps<T> & RequiredOutProps<T>> & Extra;
 
 // type Empty = {};
@@ -1358,9 +1396,13 @@ export interface $ZodObject<
   Shape extends $ZodShape = $ZodShape,
   Extra extends Record<string, unknown> = Record<string, unknown>,
 > extends $ZodObjectLike<$InferObjectOutput<Shape, Extra>, $InferObjectInput<Shape, Extra>> {
+  /** @deprecated */
   _subtype: "object";
+  /** @deprecated */
   _def: $ZodObjectDef<Shape>;
+  /** @deprecated */
   _shape: Shape;
+  /** @deprecated */
   _extra: Extra;
   // _params: {extra: Extra};
 }
@@ -1412,6 +1454,16 @@ function handleUnionResults(
 
 export const $ZodUnion: base.$constructor<$ZodUnion> = /*@__PURE__*/ base.$constructor("$ZodUnion", (inst, def) => {
   base.$ZodType.init(inst, def);
+
+  const values = new Set<util.Primitive>();
+  if (def.options.every((o) => o._values)) {
+    for (const option of def.options) {
+      for (const v of option._values!) {
+        values.add(v);
+      }
+    }
+  }
+  inst._values = values;
 
   inst._parse = (payload, ctx) => {
     const async = false;
@@ -1860,8 +1912,8 @@ export interface $ZodPropertyKey extends base.$ZodType<PropertyKey, PropertyKey>
 type $ZodRecordKey = base.$ZodType<string | number | symbol, string | number | symbol>; // $HasValues | $HasPattern;
 export interface $ZodRecordDef extends base.$ZodTypeDef {
   type: "record";
-  keySchema: $ZodRecordKey;
-  valueSchema: base.$ZodType;
+  keyType: $ZodRecordKey;
+  valueType: base.$ZodType;
 }
 // export type KeySchema = $HasValues | $HasPattern;
 // export type RecordType<K extends string | number | symbol, V> = [
@@ -1900,13 +1952,12 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
 
     const proms: Promise<any>[] = [];
 
-    if ("_values" in def.keySchema) {
-      const values = def.keySchema._values!;
+    if ("_values" in def.keyType) {
+      const values = def.keyType._values!;
       payload.value = {};
-
       for (const key of values) {
         if (typeof key === "string" || typeof key === "number" || typeof key === "symbol") {
-          const result = def.valueSchema._run({ value: input[key], issues: [], $payload: true }, ctx);
+          const result = def.valueType._run({ value: input[key], issues: [], $payload: true }, ctx);
 
           if (result instanceof Promise) {
             proms.push(
@@ -1944,7 +1995,8 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
     } else {
       payload.value = {};
       for (const key of Reflect.ownKeys(input)) {
-        const keyResult = def.keySchema._run({ value: key, issues: [], $payload: true }, ctx);
+        if (key === "__proto__") continue;
+        const keyResult = def.keyType._run({ value: key, issues: [], $payload: true }, ctx);
 
         if (keyResult instanceof Promise) {
           throw new Error("Async schemas not supported in object keys currently");
@@ -1962,7 +2014,7 @@ export const $ZodRecord: base.$constructor<$ZodRecord> = /*@__PURE__*/ base.$con
           continue;
         }
 
-        const result = def.valueSchema._run({ value: input[key], issues: [], $payload: true }, ctx);
+        const result = def.valueType._run({ value: input[key], issues: [], $payload: true }, ctx);
 
         if (result instanceof Promise) {
           proms.push(
@@ -2373,7 +2425,7 @@ export const $ZodTransform: base.$constructor<$ZodTransform> = /*@__PURE__*/ bas
       }
 
       if (_output instanceof Promise) {
-        throw new base.$ZodAsyncError("transform");
+        throw new base.$ZodAsyncError();
       }
 
       payload.value = _output;
@@ -2532,7 +2584,7 @@ export interface $ZodNonOptional<T extends base.$ZodType = base.$ZodType>
 }
 
 function handleNonOptionalResult(payload: base.$ParsePayload, inst: $ZodNonOptional) {
-  if (payload.value === undefined) {
+  if (!payload.issues.length && payload.value === undefined) {
     payload.issues.push({
       code: "invalid_type",
       expected: "nonoptional",
@@ -2995,7 +3047,7 @@ export const $ZodCustom: base.$constructor<$ZodCustom<unknown>> = base.$construc
 
 ////////   FIRST PARTY TYPES   ////////
 
-export type $ZodFirstPartySchemaTypes =
+export type $ZodTypes =
   | $ZodString
   | $ZodNumber
   | $ZodBigInt

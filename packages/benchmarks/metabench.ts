@@ -8,7 +8,7 @@ import { Bench } from "tinybench";
 import { formatNumber } from "./benchUtil.js";
 
 type BENCH = "tinybench" | "benchmarkjs" | "mitata";
-const BENCH: BENCH = (process.env.BENCH as BENCH) || "benchmarkjs";
+const BENCH: BENCH = (process.env.BENCH as BENCH) || "mitata";
 
 type Benchmarks<T = unknown> = { [k: string]: (d: T) => any };
 export function metabench<D>(name: string, benchmarks?: Benchmarks<D>): Metabench {

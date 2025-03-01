@@ -1,8 +1,7 @@
-import * as util from "@zod/core/util";
+import { expect, expectTypeOf, test } from "vitest";
 
-import { expect, test } from "vitest";
-
-import type { $ZodIssue, $ZodRawIssue } from "@zod/core";
+import type { $ZodRawIssue } from "@zod/core";
+import type * as util from "@zod/core/util";
 import { z } from "zod";
 
 test("basic catch", () => {
@@ -39,6 +38,7 @@ test("catch with transform", () => {
     .string()
     .transform((val) => val.toUpperCase())
     .catch("default");
+
   expect(stringWithDefault.parse(undefined)).toBe("default");
   expect(stringWithDefault.parse(15)).toBe("default");
   expect(stringWithDefault).toBeInstanceOf(z.ZodCatch);
@@ -47,9 +47,9 @@ test("catch with transform", () => {
   expect(stringWithDefault.unwrap().out).toBeInstanceOf(z.ZodTransform);
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, unknown>(true);
+  expectTypeOf<inp>().toEqualTypeOf<util.Loose<string>>();
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string>(true);
+  expectTypeOf<out>().toEqualTypeOf<string>();
 });
 
 test("catch on existing optional", () => {
@@ -61,18 +61,18 @@ test("catch on existing optional", () => {
   expect(stringWithDefault.unwrap().unwrap()).toBeInstanceOf(z.ZodString);
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, unknown>(true);
+  expectTypeOf<inp>().toEqualTypeOf<util.Loose<string | undefined>>();
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string | undefined>(true);
+  expectTypeOf<out>().toEqualTypeOf<string | undefined>();
 });
 
 test("optional on catch", () => {
   const stringWithDefault = z.string().catch("asdf").optional();
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, unknown>(true);
+  expectTypeOf<inp>().toEqualTypeOf<util.Loose<string | undefined>>();
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string | undefined>(true);
+  expectTypeOf<out>().toEqualTypeOf<string | undefined>();
 });
 
 test("complex chain example", () => {
@@ -95,7 +95,7 @@ test("removeCatch", () => {
   const stringWithRemovedDefault = z.string().catch("asdf").unwrap();
 
   type out = z.output<typeof stringWithRemovedDefault>;
-  util.assertEqual<out, string>(true);
+  expectTypeOf<out>().toEqualTypeOf<string>();
 });
 
 test("nested", () => {
@@ -104,9 +104,10 @@ test("nested", () => {
     inner: "asdf",
   });
   type input = z.input<typeof outer>;
-  util.assertEqual<input, unknown>(true);
+  expectTypeOf<input>().toEqualTypeOf<util.Loose<{ inner: util.Loose<string> }>>();
   type out = z.output<typeof outer>;
-  util.assertEqual<out, { inner: string }>(true);
+
+  expectTypeOf<out>().toEqualTypeOf<{ inner: string }>();
   expect(outer.parse(undefined)).toEqual({ inner: "asdf" });
   expect(outer.parse({})).toEqual({ inner: "asdf" });
   expect(outer.parse({ inner: undefined })).toEqual({ inner: "asdf" });

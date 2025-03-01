@@ -1,6 +1,4 @@
-import * as util from "@zod/core/util";
-
-import { expect, test } from "vitest";
+import { expect, test, expectTypeOf } from "vitest";
 import * as z from "zod";
 
 const minTwo = z.string().array().min(2);
@@ -10,7 +8,7 @@ const nonEmpty = z.string().array().nonempty();
 const nonEmptyMaxTwo = z.string().array().nonempty().max(2);
 
 type t2 = z.infer<typeof minTwo>;
-util.assertEqual<string[], t2>(true);
+expectTypeOf<t2>().toEqualTypeOf<string[]>();
 
 test("passing validations", () => {
   minTwo.parse(["a", "a"]);

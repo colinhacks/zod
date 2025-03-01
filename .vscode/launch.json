@@ -8,17 +8,22 @@
       "type": "node",
       "runtimeExecutable": "/Users/colinmcd94/.nvm/versions/node/v22.13.0/bin/node",
       "request": "launch",
-      "name": "Run play.ts",
+      "name": "node",
       "args": [],
       "runtimeArgs": ["--experimental-strip-types"],
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/play.ts",
-      "outFiles": ["${workspaceFolder}/**/*.js"]
+      // "program": "${workspaceFolder}/play.ts",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+
+      // "outFiles": ["${workspaceFolder}/**/*.js"]
     },
     {
       "name": "tsx",
       "type": "node",
       "request": "launch",
+      "runtimeArgs": ["--cpu-prof", "--conditions=@zod/source"],
 
       // Debug current file in VSCode
       "program": "${file}",

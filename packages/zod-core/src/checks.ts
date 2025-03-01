@@ -1,3 +1,4 @@
+import { min } from "./api.js";
 import * as base from "./base.js";
 import type * as errors from "./errors.js";
 import * as regexes from "./regexes.js";
@@ -399,7 +400,7 @@ export const $ZodCheckMaxSize: base.$constructor<$ZodCheckMaxSize> = base.$const
 
     inst._when = (payload) => {
       const val = payload.value;
-      return !!val && (val as any).size !== undefined;
+      return !util.nullish(val) && (val as any).size !== undefined;
     };
 
     inst._onattach = (inst) => {
@@ -443,7 +444,7 @@ export const $ZodCheckMinSize: base.$constructor<$ZodCheckMinSize> = base.$const
 
     inst._when = (payload) => {
       const val = payload.value;
-      return !!val && (val as any).size !== undefined;
+      return !util.nullish(val) && (val as any).size !== undefined;
     };
 
     inst._onattach = (inst) => {
@@ -486,7 +487,7 @@ export const $ZodCheckSizeEquals: base.$constructor<$ZodCheckSizeEquals> = base.
 
     inst._when = (payload) => {
       const val = payload.value;
-      return !!val && (val as any).size !== undefined;
+      return !util.nullish(val) && (val as any).size !== undefined;
     };
 
     inst._onattach = (inst) => {
@@ -532,7 +533,7 @@ export const $ZodCheckMaxLength: base.$constructor<$ZodCheckMaxLength> = base.$c
 
     inst._when = (payload) => {
       const val = payload.value;
-      return !!val && (val as any).length !== undefined;
+      return !util.nullish(val) && (val as any).length !== undefined;
     };
 
     inst._onattach = (inst) => {
@@ -577,7 +578,7 @@ export const $ZodCheckMinLength: base.$constructor<$ZodCheckMinLength> = base.$c
 
     inst._when = (payload) => {
       const val = payload.value;
-      return !!val && (val as any).length !== undefined;
+      return !util.nullish(val) && (val as any).length !== undefined;
     };
 
     inst._onattach = (inst) => {
@@ -622,7 +623,7 @@ export const $ZodCheckLengthEquals: base.$constructor<$ZodCheckLengthEquals> = b
 
     inst._when = (payload) => {
       const val = payload.value;
-      return !!val && (val as any).length !== undefined;
+      return !util.nullish(val) && (val as any).length !== undefined;
     };
 
     inst._onattach = (inst) => {

@@ -1,7 +1,7 @@
 import "../src/index.js";
 
 import { Cause, Effect, Exit } from "effect";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, expectTypeOf } from "vitest";
 import * as z from "zod";
 
 const syncSchema = z.string();
@@ -47,4 +47,7 @@ describe("Schema validation tests", () => {
       }
     }
   });
+
+  expectTypeOf<z.infer<typeof syncSchema>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof asyncSchema>>().toEqualTypeOf<string>();
 });

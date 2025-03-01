@@ -1,7 +1,4 @@
-import * as core from "@zod/core";
-import * as util from "@zod/core/util";
-
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
 const fish = z.object({
@@ -13,7 +10,7 @@ const fish = z.object({
 test("pick type inference", () => {
   const nameonlyFish = fish.pick({ name: true });
   type nameonlyFish = z.infer<typeof nameonlyFish>;
-  util.assertEqual<nameonlyFish, { name: string }>(true);
+  expectTypeOf<nameonlyFish>().toEqualTypeOf<{ name: string }>();
 });
 
 test("pick parse - success", () => {
@@ -45,11 +42,17 @@ test("pick parse - fail", () => {
   expect(bad4).toThrow();
 });
 
+test("pick - remove optional", () => {
+  const schema = z.interface({ a: z.string, "b?": z.string() });
+  expect(schema.pick({ a: true })._def.optional).toEqual([]);
+  expect(schema.pick({ b: true })._def.optional).toEqual(["b"]);
+});
+
 test("omit type inference", () => {
   const nonameFish = fish.omit({ name: true });
   type nonameFish = z.infer<typeof nonameFish>;
-  // biome-ignore lint/complexity/noBannedTypes:
-  util.assertEqual<nonameFish, { age: number; nested: {} }>(true);
+
+  expectTypeOf<nonameFish>().toEqualTypeOf<{ age: number; nested: object }>();
 });
 
 test("omit parse - success", () => {
@@ -77,10 +80,16 @@ test("omit parse - fail", () => {
   expect(bad4).toThrow();
 });
 
+test("omit - remove optional", () => {
+  const schema = z.interface({ a: z.string, "b?": z.string() });
+  expect(schema.omit({ a: true })._def.optional).toEqual(["b"]);
+  expect(schema.omit({ b: true })._def.optional).toEqual([]);
+});
+
 test("nonstrict inference", () => {
   const laxfish = fish.pick({ name: true }).catchall(z.any());
   type laxfish = z.infer<typeof laxfish>;
-  util.assertEqual<laxfish, { name: string } & { [k: string]: any }>(true);
+  expectTypeOf<laxfish>().toEqualTypeOf<{ name: string } & { [k: string]: any }>();
 });
 
 test("nonstrict parsing - pass", () => {
@@ -102,11 +111,11 @@ test("pick/omit/required/partial - do not allow unknown keys", () => {
   });
 
   // @ts-expect-error
-  schema.pick({ $unknown: true });
+  expect(() => schema.pick({ $unknown: true })).toThrow();
   // @ts-expect-error
-  schema.omit({ $unknown: true });
+  expect(() => schema.omit({ $unknown: true })).toThrow();
   // @ts-expect-error
-  schema.required({ $unknown: true });
+  expect(() => schema.required({ $unknown: true })).toThrow();
   // @ts-expect-error
-  schema.partial({ $unknown: true });
+  expect(() => schema.partial({ $unknown: true })).toThrow();
 });

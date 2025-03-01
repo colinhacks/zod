@@ -1,9 +1,19 @@
-import * as z from "./packages/zod-core/src/index.js";
+import * as z from "zod";
+// type LinkedList = null | { value: number; next: LinkedList };
 
-const schema = z.interface({
+const E = z.interface({
   name: z.string(),
+  get "e?"() {
+    return E;
+  },
 });
 
-z.parse(schema, { name: "John" });
-const result = z.parse(schema, { name: "John" });
-console.log(result);
+z.preprocess((val, ctx) => {
+  ctx.addIssue("bad stuff");
+}, z.string());
+
+const schema = z.string();
+
+const data = "asdf";
+
+data satisfies z.infer<typeof schema>;

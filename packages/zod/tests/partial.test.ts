@@ -1,7 +1,4 @@
-import * as core from "@zod/core";
-import * as util from "@zod/core/util";
-
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
 const nested = z.object({
@@ -16,13 +13,13 @@ const nested = z.object({
 test("shallow inference", () => {
   const shallow = nested.partial();
   type shallow = z.infer<typeof shallow>;
-  type correct = {
+
+  expectTypeOf<shallow>().toEqualTypeOf<{
     name?: string | undefined;
     age?: number | undefined;
     outer?: { inner: string } | undefined;
-    array?: { asdf: string }[];
-  };
-  util.assertEqual<shallow, correct>(true);
+    array?: { asdf: string }[] | undefined;
+  }>();
 });
 
 test("shallow partial parse", () => {
@@ -34,111 +31,6 @@ test("shallow partial parse", () => {
   });
 });
 
-// test("deep partial inference", () => {
-//   const deep = nested.deepPartial();
-//   const asdf = deep.shape.array.unwrap().element.shape.asdf.unwrap();
-//   asdf.parse("asdf");
-//   type deep = z.infer<typeof deep>;
-//   type correct = {
-//     array?: { asdf?: string }[];
-//     name?: string | undefined;
-//     age?: number | undefined;
-//     outer?: { inner?: string | undefined } | undefined;
-//   };
-
-//   util.assertEqual<deep, correct>(true);
-// });
-
-// test("deep partial parse", () => {
-//   const deep = nested.deepPartial();
-
-//   expect(deep.shape.name instanceof z.ZodOptional).toBe(true);
-//   expect(deep.shape.outer instanceof z.ZodOptional).toBe(true);
-//   expect(deep.shape.outer._def.innerType instanceof z.ZodObject).toBe(true);
-//   expect(
-//     deep.shape.outer._def.innerType.shape.inner instanceof z.ZodOptional
-//   ).toBe(true);
-//   expect(
-//     deep.shape.outer._def.innerType.shape.inner._def.innerType instanceof
-//       z.ZodString
-//   ).toBe(true);
-// });
-
-// test("deep partial runtime tests", () => {
-//   const deep = nested.deepPartial();
-//   deep.parse({});
-//   deep.parse({
-//     outer: {},
-//   });
-//   deep.parse({
-//     name: "asdf",
-//     age: 23143,
-//     outer: {
-//       inner: "adsf",
-//     },
-//   });
-// });
-
-// test("deep partial optional/nullable", () => {
-//   const schema = z
-//     .object({
-//       name: z.string().optional(),
-//       age: z.number().nullable(),
-//     })
-//     .deepPartial();
-
-//   expect(schema.shape.name.unwrap()).toBeInstanceOf(ZodOptional);
-//   expect(schema.shape.age.unwrap()).toBeInstanceOf(ZodNullable);
-// });
-
-// test("deep partial tuple", () => {
-//   const schema = z
-//     .object({
-//       tuple: z.tuple([
-//         z.object({
-//           name: z.string().optional(),
-//           age: z.number().nullable(),
-//         }),
-//       ]),
-//     })
-//     .deepPartial();
-
-//   expect(schema.shape.tuple.unwrap().items[0].shape.name).toBeInstanceOf(
-//     ZodOptional
-//   );
-// });
-
-// test("deep partial inference", () => {
-//   const mySchema = z.object({
-//     name: z.string(),
-//     array: z.array(z.object({ asdf: z.string() })),
-//     tuple: z.tuple([z.object({ value: z.string() })]),
-//   });
-
-//   const partialed = mySchema.deepPartial();
-//   type partialed = z.infer<typeof partialed>;
-//   type expected = {
-//     name?: string | undefined;
-//     array?:
-//       | {
-//           asdf?: string | undefined;
-//         }[]
-//       | undefined;
-//     tuple?: [{ value?: string }] | undefined;
-//   };
-//   util.assertEqual<expected, partialed>(true);
-// });
-
-// test("deeppartial array", () => {
-//   const schema = z.object({ array: z.string().array().min(42) }).deepPartial();
-
-//   // works as expected
-//   schema.parse({});
-
-//   // should be false, but is true
-//   expect(schema.safeParse({ array: [] }).success).toBe(false);
-// });
-
 test("required", () => {
   const object = z.object({
     name: z.string(),
@@ -149,11 +41,17 @@ test("required", () => {
   });
 
   const requiredObject = object.required();
-  expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
-  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
-  expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
-  expect(requiredObject.shape.nullableField).toBeInstanceOf(z.ZodNullable);
-  expect(requiredObject.shape.nullishField).toBeInstanceOf(z.ZodNullable);
+  expect(requiredObject.shape.name).toBeInstanceOf(z.ZodNonOptional);
+  expect(requiredObject.shape.name.unwrap()).toBeInstanceOf(z.ZodString);
+  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNonOptional);
+  expect(requiredObject.shape.age.unwrap()).toBeInstanceOf(z.ZodOptional);
+  expect(requiredObject.shape.field).toBeInstanceOf(z.ZodNonOptional);
+  expect(requiredObject.shape.field.unwrap()).toBeInstanceOf(z.ZodDefault);
+  expect(requiredObject.shape.nullableField).toBeInstanceOf(z.ZodNonOptional);
+  expect(requiredObject.shape.nullableField.unwrap()).toBeInstanceOf(z.ZodUnion);
+  expect(requiredObject.shape.nullishField).toBeInstanceOf(z.ZodNonOptional);
+  expect(requiredObject.shape.nullishField.unwrap()).toBeInstanceOf(z.ZodOptional);
+  expect(requiredObject.shape.nullishField.unwrap().unwrap()).toBeInstanceOf(z.ZodUnion);
 });
 
 test("required inference", () => {
@@ -175,7 +73,7 @@ test("required inference", () => {
     nullableField: number | null;
     nullishField: string | null;
   };
-  util.assertEqual<expected, required>(true);
+  expectTypeOf<expected>().toEqualTypeOf<required>();
 });
 
 test("required with mask", () => {
@@ -188,7 +86,7 @@ test("required with mask", () => {
 
   const requiredObject = object.required({ age: true });
   expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
-  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
+  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNonOptional);
   expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
   expect(requiredObject.shape.country).toBeInstanceOf(z.ZodOptional);
 });
@@ -204,7 +102,7 @@ test("required with mask -- ignore falsy values", () => {
   // @ts-expect-error
   const requiredObject = object.required({ age: true, country: false });
   expect(requiredObject.shape.name).toBeInstanceOf(z.ZodString);
-  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNumber);
+  expect(requiredObject.shape.age).toBeInstanceOf(z.ZodNonOptional);
   expect(requiredObject.shape.field).toBeInstanceOf(z.ZodDefault);
   expect(requiredObject.shape.country).toBeInstanceOf(z.ZodOptional);
 });

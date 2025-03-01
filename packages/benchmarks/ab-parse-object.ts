@@ -30,9 +30,9 @@ const v3schema = z3.object({
   a: z3.string(),
   b: z3.string(),
   c: z3.string(),
-  // d: z.string(),
-  // e: z.string(),
-  // f: z.string(),
+  // d: z3.string(),
+  // e: z3.string(),
+  // f: z3.string(),
   // g: z.string(),
   // h: z.string(),
   // i: z.string(),
@@ -68,27 +68,12 @@ const DATA = makeData(1000, () => ({
   // r: randomString(10),
 }));
 
-// console.log(z.parse(schema, DATA[0]));
-console.log(
-  schema.safeParse(DATA[0], {
-    skipFast: true,
-  })
-);
 console.log(schema.safeParse(DATA[0]));
-// console.log(z.safeParseC(schema, DATA[0]));
-
-// console.log(z.parse2(schema, DATA[0]));
-// console.log(z.parse3(schema, DATA[0]));
+console.log(v3schema.safeParse(DATA[0]));
 
 const bench = metabench("AB test: objects", {
-  // _parseC() {
-  //   for (const _ of DATA) z.safeParseC(schema, _);
-  // },
-  // no_fastpass() {
-  //   for (const _ of DATA) z.safeParse(schema, _, { skipFast: true });
-  // },
   zod4() {
-    for (const _ of DATA) z.safeParse(schema, _);
+    for (const _ of DATA) schema.safeParse(_);
   },
   zod3() {
     for (const _ of DATA) v3schema.safeParse(_);

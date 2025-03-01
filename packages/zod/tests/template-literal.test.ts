@@ -1,7 +1,7 @@
 import * as core from "@zod/core";
 import * as util from "@zod/core/util";
 
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
 const empty = z.templateLiteral([]);
@@ -97,62 +97,63 @@ const connectionString = z.templateLiteral([
 ]);
 
 test("template literal type inference", () => {
-  util.assertEqual<z.infer<typeof empty>, ``>(true);
-  util.assertEqual<z.infer<typeof hello>, `hello`>(true);
-  util.assertEqual<z.infer<typeof world>, `world`>(true);
-  util.assertEqual<z.infer<typeof one>, `1`>(true);
-  util.assertEqual<z.infer<typeof two>, `2`>(true);
-  util.assertEqual<z.infer<typeof truee>, `true`>(true);
-  util.assertEqual<z.infer<typeof anotherTrue>, `true`>(true);
-  util.assertEqual<z.infer<typeof falsee>, `false`>(true);
-  util.assertEqual<z.infer<typeof anotherFalse>, `false`>(true);
-  util.assertEqual<z.infer<typeof nulll>, `null`>(true);
-  util.assertEqual<z.infer<typeof anotherNull>, `null`>(true);
-  util.assertEqual<z.infer<typeof undefinedd>, `undefined`>(true);
-  util.assertEqual<z.infer<typeof anotherUndefined>, `undefined`>(true);
-  util.assertEqual<z.infer<typeof anyString>, string>(true);
-  util.assertEqual<z.infer<typeof anyNumber>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof anyFiniteNumber>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof anyInt>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof anyNegativeNumber>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof anyPositiveNumber>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof zeroButInADumbWay>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof finiteButInADumbWay>, `${number}`>(true);
-  util.assertEqual<z.infer<typeof bool>, `true` | `false`>(true);
-  util.assertEqual<z.infer<typeof bigone>, `${bigint}`>(true);
-  util.assertEqual<z.infer<typeof anyBigint>, `${bigint}`>(true);
-  util.assertEqual<z.infer<typeof nullableYo>, `yo` | `null`>(true);
-  util.assertEqual<z.infer<typeof nullableString>, string>(true);
-  util.assertEqual<z.infer<typeof optionalYeah>, `yeah` | ``>(true);
-  util.assertEqual<z.infer<typeof optionalString>, string>(true);
-  util.assertEqual<z.infer<typeof optionalNumber>, `${number}` | ``>(true);
-  util.assertEqual<z.infer<typeof nullishBruh>, `bruh` | `null` | ``>(true);
-  util.assertEqual<z.infer<typeof nullishString>, string>(true);
-  util.assertEqual<z.infer<typeof cuid>, string>(true);
-  util.assertEqual<z.infer<typeof cuidZZZ>, `${string}ZZZ`>(true);
-  util.assertEqual<z.infer<typeof cuid2>, string>(true);
-  util.assertEqual<z.infer<typeof datetime>, string>(true);
-  util.assertEqual<z.infer<typeof email>, string>(true);
-  util.assertEqual<z.infer<typeof ip>, string>(true);
-  util.assertEqual<z.infer<typeof ipv4>, string>(true);
-  util.assertEqual<z.infer<typeof ipv6>, string>(true);
-  util.assertEqual<z.infer<typeof ulid>, string>(true);
-  util.assertEqual<z.infer<typeof uuid>, string>(true);
-  util.assertEqual<z.infer<typeof stringAToZ>, string>(true);
-  util.assertEqual<z.infer<typeof stringStartsWith>, string>(true);
-  util.assertEqual<z.infer<typeof stringEndsWith>, string>(true);
-  util.assertEqual<z.infer<typeof stringMax5>, string>(true);
-  util.assertEqual<z.infer<typeof stringMin5>, string>(true);
-  util.assertEqual<z.infer<typeof stringLen5>, string>(true);
-  util.assertEqual<z.infer<typeof stringMin5Max10>, string>(true);
-  util.assertEqual<z.infer<typeof stringStartsWithMax5>, string>(true);
-  util.assertEqual<z.infer<typeof brandedString>, string>(true);
-  util.assertEqual<z.infer<typeof anything>, `${any}`>(true);
+  expectTypeOf<z.infer<typeof empty>>().toEqualTypeOf<``>();
+  expectTypeOf<z.infer<typeof hello>>().toEqualTypeOf<`hello`>();
+  expectTypeOf<z.infer<typeof world>>().toEqualTypeOf<`world`>();
+  expectTypeOf<z.infer<typeof one>>().toEqualTypeOf<`1`>();
+  expectTypeOf<z.infer<typeof two>>().toEqualTypeOf<`2`>();
+  expectTypeOf<z.infer<typeof truee>>().toEqualTypeOf<`true`>();
+  expectTypeOf<z.infer<typeof anotherTrue>>().toEqualTypeOf<`true`>();
+  expectTypeOf<z.infer<typeof falsee>>().toEqualTypeOf<`false`>();
+  expectTypeOf<z.infer<typeof anotherFalse>>().toEqualTypeOf<`false`>();
+  expectTypeOf<z.infer<typeof nulll>>().toEqualTypeOf<`null`>();
+  expectTypeOf<z.infer<typeof anotherNull>>().toEqualTypeOf<`null`>();
+  expectTypeOf<z.infer<typeof undefinedd>>().toEqualTypeOf<`undefined`>();
+  expectTypeOf<z.infer<typeof anotherUndefined>>().toEqualTypeOf<`undefined`>();
+  expectTypeOf<z.infer<typeof anyString>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof anyNumber>>().toEqualTypeOf<`${number}`>();
+  expectTypeOf<z.infer<typeof anyFiniteNumber>>().toEqualTypeOf<`${number}`>();
+  expectTypeOf<z.infer<typeof anyInt>>().toEqualTypeOf<`${number}`>();
+  expectTypeOf<z.infer<typeof anyNegativeNumber>>().toEqualTypeOf<`${number}`>();
+  expectTypeOf<z.infer<typeof anyPositiveNumber>>().toEqualTypeOf<`${number}`>();
+  expectTypeOf<z.infer<typeof zeroButInADumbWay>>().toEqualTypeOf<`${number}`>();
+  expectTypeOf<z.infer<typeof finiteButInADumbWay>>().toEqualTypeOf<`${number}`>();
+  expectTypeOf<z.infer<typeof bool>>().toEqualTypeOf<`true` | `false`>();
+  expectTypeOf<z.infer<typeof bigone>>().toEqualTypeOf<`${bigint}`>();
+  expectTypeOf<z.infer<typeof anyBigint>>().toEqualTypeOf<`${bigint}`>();
+  expectTypeOf<z.infer<typeof nullableYo>>().toEqualTypeOf<`yo` | `null`>();
+  expectTypeOf<z.infer<typeof nullableString>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof optionalYeah>>().toEqualTypeOf<`yeah` | ``>();
+  expectTypeOf<z.infer<typeof optionalString>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof optionalNumber>>().toEqualTypeOf<`${number}` | ``>();
+  expectTypeOf<z.infer<typeof nullishBruh>>().toEqualTypeOf<`bruh` | `null` | ``>();
+  expectTypeOf<z.infer<typeof nullishString>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof cuid>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof cuidZZZ>>().toEqualTypeOf<`${string}ZZZ`>();
+  expectTypeOf<z.infer<typeof cuid2>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof datetime>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof email>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof ip>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof ipv4>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof ipv6>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof ulid>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof uuid>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof stringAToZ>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof stringStartsWith>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof stringEndsWith>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof stringMax5>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof stringMin5>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof stringLen5>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof stringMin5Max10>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof stringStartsWithMax5>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof brandedString>>().toEqualTypeOf<string>();
+  expectTypeOf<z.infer<typeof anything>>().toEqualTypeOf<`${any}`>();
 
-  util.assertEqual<z.infer<typeof url>, `https://${string}.com` | `https://${string}.net`>(true);
+  expectTypeOf<z.infer<typeof url>>().toEqualTypeOf<`https://${string}.com` | `https://${string}.net`>();
 
-  util.assertEqual<
-    z.infer<typeof measurement>,
+  expectTypeOf<
+    z.infer<typeof measurement>
+  >().toEqualTypeOf<
     | `${number}`
     | `${number}px`
     | `${number}em`
@@ -161,17 +162,18 @@ test("template literal type inference", () => {
     | `${number}vw`
     | `${number}vmin`
     | `${number}vmax`
-  >(true);
+  >();
 
-  util.assertEqual<
-    z.infer<typeof connectionString>,
+  expectTypeOf<
+    z.infer<typeof connectionString>
+  >().toEqualTypeOf<
     | `mongodb://${string}:${number}`
     | `mongodb://${string}:${number}/${string}`
     | `mongodb://${string}:${number}/${string}?${string}`
     | `mongodb://${string}:${string}@${string}:${number}`
     | `mongodb://${string}:${string}@${string}:${number}/${string}`
     | `mongodb://${string}:${string}@${string}:${number}/${string}?${string}`
-  >(true);
+  >();
 });
 
 test("template literal unsupported args", () => {

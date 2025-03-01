@@ -619,7 +619,9 @@ export function object<T extends schemas.$ZodShape = Record<never, base.$ZodType
   const def: schemas.$ZodObjectDef = {
     type: "object",
     shape: shape ?? {},
-    optional: util.optionalObjectKeys(shape ?? {}),
+    get optional() {
+      return util.optionalObjectKeys(shape ?? {});
+    },
     ...util.normalizeTypeParams(params),
   };
   return new schemas.$ZodObject(def) as any;
@@ -634,7 +636,9 @@ export function strictObject<T extends schemas.$ZodShape>(
   const def: schemas.$ZodObjectDef = {
     type: "object",
     shape: shape as schemas.$ZodShape,
-    optional: util.optionalObjectKeys(shape),
+    get optional() {
+      return util.optionalObjectKeys(shape);
+    },
     catchall: never(),
     ...util.normalizeTypeParams(params),
   };
@@ -649,8 +653,10 @@ export function looseObject<T extends schemas.$ZodShape>(
 ): schemas.$ZodObject<T, { [k: string]: unknown }> {
   const def: schemas.$ZodObjectDef = {
     type: "object",
-    optional: util.optionalObjectKeys(shape),
     shape: shape as schemas.$ZodShape,
+    get optional() {
+      return util.optionalObjectKeys(shape);
+    },
     catchall: unknown(),
     ...util.normalizeTypeParams(params),
   };
@@ -685,11 +691,15 @@ export function strictInterface<T extends schemas.$ZodLooseShape>(
   shape: T,
   params?: $ZodStrictInterfaceParams
 ): schemas.$ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
-  const cleaned = util.cleanInterfaceShape(shape);
+  const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
-    shape: cleaned.shape,
-    optional: cleaned.optional,
+    get shape() {
+      return cleaned.value.shape;
+    },
+    get optional() {
+      return cleaned.value.optional;
+    },
     catchall: never(),
     ...util.normalizeTypeParams(params),
   };
@@ -702,11 +712,15 @@ export function looseInterface<T extends schemas.$ZodLooseShape>(
   shape: T,
   params?: $ZodLooseInterfaceParams
 ): schemas.$ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, Record<string, unknown>>> {
-  const cleaned = util.cleanInterfaceShape(shape);
+  const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: schemas.$ZodInterfaceDef = {
     type: "interface",
-    optional: cleaned.optional,
-    shape: cleaned.shape,
+    get optional() {
+      return cleaned.value.optional;
+    },
+    get shape() {
+      return cleaned.value.shape;
+    },
     catchall: unknown(),
     ...util.normalizeTypeParams(params),
   };
@@ -723,24 +737,28 @@ export function keyof(schema: schemas.$ZodObjectLike) {
   return literal(Object.keys(shape)) as any;
 }
 
+export function extend<T extends schemas.$ZodInterface, U extends schemas.$ZodInterface>(
+  a: T,
+  b: U
+): schemas.$ZodInterface<util.ExtendShape<T["_shape"], U["_shape"]>, util.MergeInterfaceParams<T, U>>;
+export function extend<T extends schemas.$ZodObject, U extends schemas.$ZodObject>(
+  a: T,
+  b: U
+): schemas.$ZodObject<util.ExtendObject<T["_shape"], U["_shape"]>, U["_extra"] & T["_extra"]>;
 export function extend<T extends schemas.$ZodObjectLike, U extends schemas.$ZodLooseShape>(
   schema: T,
   shape: U
-): T["_def"]["type"] extends "interface"
-  ? // T extends schemas.$ZodInterface
-    schemas.$ZodInterface<
-      util.ExtendInterfaceShape<T["_shape"], U>,
-      util.ExtendInterfaceParams<
-        {
-          optional: T["_optional"];
-          defaulted: T["_defaulted"];
-          extra: T["_extra"];
-        },
-        U
-      >
-    >
+): T extends schemas.$ZodInterface
+  ? schemas.$ZodInterface<util.ExtendInterfaceShape<T["_shape"], U>, util.ExtendInterfaceParams<T, U>>
   : schemas.$ZodObject<util.ExtendObject<T["_shape"], U>, T["_extra"]>;
 export function extend(schema: schemas.$ZodObjectLike, shape: schemas.$ZodShape): schemas.$ZodObjectLike {
+  // console.log({ schema, shape });
+  if (shape instanceof base.$ZodType) return util.mergeObjectLike(schema, shape as any);
+  if (schema instanceof schemas.$ZodInterface) {
+    console.log("schema is interface");
+    return util.mergeObjectLike(schema, _interface(shape));
+  }
+  if (schema instanceof schemas.$ZodObject) return util.mergeObjectLike(schema, object(shape));
   return util.extend(schema, shape);
 }
 
@@ -1059,16 +1077,16 @@ export function tuple(
 }
 
 // record
-export type $ZodRecordParams = util.TypeParams<schemas.$ZodRecord, "keySchema" | "valueSchema">;
+export type $ZodRecordParams = util.TypeParams<schemas.$ZodRecord, "keyType" | "valueType">;
 export function record<Key extends schemas.$ZodPropertyKey, Value extends base.$ZodType>(
-  keySchema: Key,
-  valueSchema: Value,
+  keyType: Key,
+  valueType: Value,
   params?: $ZodRecordParams
 ): schemas.$ZodRecord<Key, Value> {
   return new schemas.$ZodRecord({
     type: "record",
-    keySchema,
-    valueSchema,
+    keyType,
+    valueType,
     ...util.normalizeTypeParams(params),
   }) as schemas.$ZodRecord<Key, Value>;
 }

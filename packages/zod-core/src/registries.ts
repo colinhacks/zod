@@ -21,10 +21,7 @@ export class $ZodRegistry<Meta = unknown, Schema extends base.$ZodType = base.$Z
   _schema!: Schema;
   _map: WeakMap<Schema, $replace<Meta, Schema>> = new WeakMap();
 
-  add<S extends Schema>(
-    schema: S,
-    ...meta: undefined extends Meta ? [$replace<Meta, S>?] : [$replace<Meta, S>]
-  ): $ZodRegistry<Meta, Schema> {
+  add<S extends Schema>(schema: S, ...meta: undefined extends Meta ? [$replace<Meta, S>?] : [$replace<Meta, S>]): this {
     this._map.set(schema, (meta as any)[0]!);
     return this as any;
   }

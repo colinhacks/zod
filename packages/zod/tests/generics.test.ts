@@ -32,7 +32,7 @@ test("generics with optional", () => {
   }
 
   const result = stripOuter(z.object({ a: z.string() }), { a: "asdf" });
-  util.assertEqual<typeof result, Promise<{ a: string } | undefined>>(true);
+  expectTypeOf<typeof result>().toEqualTypeOf<Promise<{ a: string } | undefined>>();
 });
 
 // test("assignability", () => {
@@ -47,13 +47,14 @@ test("generics with optional", () => {
 //     // return inferred;
 //   };
 //   const parsed = createSchemaAndParse("foo", z.string(), { foo: "" });
-//   util.assertEqual<typeof parsed, { foo: string }>(true);
+//   expectTypeOf<typeof parsed>().toEqualTypeOf<{ foo: string }>();
 // });
 
 test("nested no undefined", () => {
   const inner = z.string().or(z.array(z.string()));
   const outer = z.object({ inner });
   type outerSchema = z.infer<typeof outer>;
-  util.assertEqual<outerSchema, { inner: string | string[] }>(true);
+  expectTypeOf<outerSchema>().toEqualTypeOf<{ inner: string | string[] }>();
+  
   expect(outer.safeParse({ inner: undefined }).success).toEqual(false);
 });

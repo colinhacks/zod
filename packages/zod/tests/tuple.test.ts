@@ -14,7 +14,7 @@ test("tuple inference", () => {
   const returns1 = z.number();
   const func1 = z.function(args1, returns1);
   type func1 = z.TypeOf<typeof func1>;
-  util.assertEqual<func1, (k: string) => number>(true);
+  expectTypeOf<func1>().toEqualTypeOf<(k: string) => number>();
 });
 
 test("successful validation", () => {
@@ -60,9 +60,9 @@ test("tuple with transformers", () => {
   const val = z.tuple([stringToNumber]);
 
   type t1 = z.input<typeof val>;
-  util.assertEqual<t1, [string]>(true);
+  expectTypeOf<t1>().toEqualTypeOf<[string]>();
   type t2 = z.output<typeof val>;
-  util.assertEqual<t2, [number]>(true);
+  expectTypeOf<t2>().toEqualTypeOf<[number]>();
   expect(val.parse(["1234"])).toEqual([4]);
 });
 
@@ -75,7 +75,7 @@ test("tuple with rest schema", () => {
   expect(() => myTuple.parse(["asdf", 1234, "asdf"])).toThrow();
   type t1 = z.output<typeof myTuple>;
 
-  util.assertEqual<t1, [string, number, ...boolean[]]>(true);
+  expectTypeOf<t1>().toEqualTypeOf<[string, number, ...boolean[]]>();
 });
 
 test("parse should fail given sparse array as tuple", () => {

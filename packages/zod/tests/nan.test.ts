@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
 import * as z from "zod";
 
@@ -7,6 +7,7 @@ const schema = z.nan();
 test("passing validations", () => {
   schema.parse(Number.NaN);
   schema.parse(Number("Not a number"));
+  expectTypeOf<typeof schema._output>().toEqualTypeOf<number>();
 });
 
 test("failing validations", () => {

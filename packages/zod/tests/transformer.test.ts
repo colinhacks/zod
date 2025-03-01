@@ -93,7 +93,7 @@ test("z.NEVER in transform", () => {
       return val;
     });
   type foo = z.infer<typeof foo>;
-  util.assertEqual<foo, number>(true);
+  expectTypeOf<foo>().toEqualTypeOf<number>();
   const arg = foo.safeParse(undefined);
   if (!arg.success) {
     expect(arg.error.issues[0].message).toEqual("bad");
@@ -185,8 +185,8 @@ test("object typing", () => {
   type t1 = z.input<typeof t1>;
   type t2 = z.output<typeof t1>;
 
-  util.assertEqual<t1, { stringToNumber: string }>(true);
-  util.assertEqual<t2, { stringToNumber: number }>(true);
+  expectTypeOf<t1>().toEqualTypeOf<{ stringToNumber: string }>();
+  expectTypeOf<t2>().toEqualTypeOf<{ stringToNumber: number }>();
 });
 
 test("transform method overloads", () => {

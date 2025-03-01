@@ -18,8 +18,8 @@ test(".describe", () => {
 
 test("adding description with z.globalRegistry", () => {
   const schema = z.string();
-  z.globalRegistry.add(schema, { description });
-  z.globalRegistry.get(schema);
+  z.core.globalRegistry.add(schema, { description });
+  z.core.globalRegistry.get(schema);
   expect(schema.description).toEqual(description);
 });
 

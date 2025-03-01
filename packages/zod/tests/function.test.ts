@@ -30,7 +30,7 @@ test("parsed function fail 2", () => {
 
 test("function inference 1", () => {
   type func1 = (typeof func1)["_input"];
-  util.assertEqual<func1, (k: string) => number>(true);
+  expectTypeOf<func1>().toEqualTypeOf<(k: string) => number>();
 });
 
 // test("method parsing", () => {
@@ -69,17 +69,17 @@ test("function inference 1", () => {
 test("args method", () => {
   const t1 = z.function();
   type t1 = (typeof t1)["_input"];
-  util.assertEqual<t1, (...args_1: unknown[]) => unknown>(true);
+  expectTypeOf<t1>().toEqualTypeOf<(...args_1: unknown[]) => unknown>();
 
   const t2args = z.tuple([z.string()], z.unknown());
 
   const t2 = t1.input(t2args);
   type t2 = (typeof t2)["_input"];
-  util.assertEqual<t2, (arg: string, ...args_1: unknown[]) => unknown>(true);
+  expectTypeOf<t2>().toEqualTypeOf<(arg: string, ...args_1: unknown[]) => unknown>();
 
   const t3 = t2.output(z.boolean());
   type t3 = (typeof t3)["_input"];
-  util.assertEqual<t3, (arg: string, ...args_1: unknown[]) => boolean>(true);
+  expectTypeOf<t3>().toEqualTypeOf<(arg: string, ...args_1: unknown[]) => boolean>();
 });
 
 const args2 = z.tuple([
@@ -98,8 +98,9 @@ const func2 = z.function({
 
 test("function inference 2", () => {
   type func2 = (typeof func2)["_input"];
-  util.assertEqual<
-    func2,
+
+  
+  expectTypeOf<func2>().toEqualTypeOf<
     (arg: {
       f1: number;
       f2: string | null;
@@ -251,37 +252,3 @@ test("extra parameters with rest", () => {
   const filteredList = ["apple", "orange", "pear", "banana", "strawberry"].filter(maxLength5);
   expect(filteredList.length).toEqual(2);
 });
-
-// test("params and returnType getters", () => {
-//   const func = z.function().input([z.string()]).output(z.string());
-
-//   func.parameters().items[0].parse("asdf");
-//   func.returnType().parse("asdf");
-// });
-
-// test("inference with transforms", () => {
-//   const funcSchema = z
-//     .function()
-//     .input([z.string().transform((val) => val.length)])
-//     .output(z.object({ val: z.number() }));
-
-//   const myFunc = funcSchema.implement((val) => {
-//     return { val, extra: "stuff" };
-//   });
-//   myFunc("asdf");
-
-//   util.assertEqual<typeof myFunc, (arg: string, ...args_1: unknown[]) => { val: number; extra: string }>(true);
-// });
-
-// test("fallback to OuterTypeOfFunction", () => {
-//   const funcSchema = z
-//     .function()
-//     .input([z.string().transform((val) => val.length)])
-//     .output(z.object({ arg: z.number() }).transform((val) => val.arg));
-
-//   const myFunc = funcSchema.implement((val) => {
-//     return { arg: val, arg2: false };
-//   });
-
-//   util.assertEqual<typeof myFunc, (arg: string, ...args_1: unknown[]) => number>(true);
-// });

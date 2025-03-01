@@ -8,8 +8,8 @@ export type {
   output as TypeOf,
   /** @deprecated Use `z.output<T>` instead. */
   output as Infer,
-  /** @deprecated Use `z.core.$ZodFirstPartySchemaTypes` instead */
-  $ZodFirstPartySchemaTypes as ZodFirstPartySchemaTypes,
+  /** @deprecated Use `z.core.$$ZodFirstPartyTypes` instead */
+  $ZodTypes as ZodFirstPartySchemaTypes,
 } from "@zod/core";
 
 /** @deprecated Use the raw string literal codes instead, e.g. "invalid_type". */
@@ -19,7 +19,7 @@ export const ZodIssueCode = {
   too_small: "too_small",
   invalid_format: "invalid_format",
   not_multiple_of: "not_multiple_of",
-  invalid_date: "invalid_date",
+  // invalid_date: "invalid_date",
   unrecognized_keys: "unrecognized_keys",
   invalid_union: "invalid_union",
   invalid_key: "invalid_key",

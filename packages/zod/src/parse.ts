@@ -6,12 +6,11 @@ export type ZodSafeParseSuccess<T> = { success: true; data: T; error?: never };
 export type ZodSafeParseError<T> = { success: false; data?: never; error: ZodError<T> };
 
 ///////////        METHODS       ///////////
-
 export function parse<T extends core.$ZodType>(schema: T, value: unknown, _ctx?: core.$ParseContext): core.output<T> {
   const ctx: core.$InternalParseContext = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._run({ value, issues: [], $payload: true }, ctx);
   if (result instanceof Promise) {
-    throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
+    throw new core.$ZodAsyncError();
   }
   if (result.issues.length) {
     throw new ZodError(result.issues.map((iss) => core.finalizeIssue(iss, ctx)));
@@ -27,7 +26,7 @@ export function safeParse<T extends core.$ZodType>(
   const ctx: core.$InternalParseContext = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._run({ value, issues: [], $payload: true }, ctx);
   if (result instanceof Promise) {
-    throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
+    throw new core.$ZodAsyncError();
   }
 
   if (result.issues.length) {

@@ -24,16 +24,20 @@ export class Doc {
       return;
     }
 
-    const line = arg as string;
-    const cleaned = line.trim().split("\n");
-    for (const line of cleaned) {
-      this.content.push(" ".repeat(this.indent * 2) + line.trim());
+    const content = arg as string;
+    const lines = content.split("\n").filter((x) => x);
+    const minIndent = Math.min(...lines.map((x) => x.length - x.trimStart().length));
+    const dedented = lines.map((x) => x.slice(minIndent)).map((x) => " ".repeat(this.indent * 2) + x);
+    for (const line of dedented) {
+      this.content.push(line);
     }
+
+    // }
   }
 
   compile() {
     const lines = [...this.content.map((x) => `  ${x}`)];
-    // console.log(lines.join("\n"));
+
     return new Function(...this.args, lines.join("\n"));
   }
 }

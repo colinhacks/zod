@@ -177,6 +177,7 @@ test("self recursive", () => {
     e: _E;
   }
   expectTypeOf<(typeof E)["_output"]["e"]["e"]["e"]>().toEqualTypeOf<_E>();
+  E;
 });
 
 test("self recursive optional", () => {
@@ -193,6 +194,8 @@ test("self recursive optional", () => {
   }
 
   expectTypeOf<(typeof F)["_output"]>().toEqualTypeOf<_F>();
+
+  expect(z.parse(F, { name: "a", f: null })).toEqual({ name: "a", f: null });
 });
 
 const userSchema = z.interface({
@@ -212,45 +215,58 @@ test("z.keyof", () => {
   expect(z.safeParse(userKeysSchema, "isAdmin").success).toBe(false);
 });
 
+// test("z.extend", () => {
+//   const extendedSchema = z.extend(userSchema, {
+//     isAdmin: z.boolean(),
+//   });
+//   type ExtendedUser = z.infer<typeof extendedSchema>;
+//   expectTypeOf<ExtendedUser>().toEqualTypeOf<{
+//     name: string;
+//     age: number;
+//     email?: string;
+//     isAdmin: boolean;
+//   }>();
+//   expect(extendedSchema).toBeDefined();
+//   expect(z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
+// });
+
 test("z.extend", () => {
-  const extendedSchema = z.extend(userSchema, {
-    isAdmin: z.boolean(),
-  });
-  type ExtendedUser = z.infer<typeof extendedSchema>;
-  expectTypeOf<ExtendedUser>().toEqualTypeOf<{
-    name: string;
-    age: number;
-    email?: string;
-    isAdmin: boolean;
-  }>();
-  expect(extendedSchema).toBeDefined();
-  expect(z.safeParse(extendedSchema, { name: "John", age: 30, isAdmin: true }).success).toBe(true);
+  const a = z.interface({ a: z.string() });
+
+  const b = z.extend(a, z.interface({ b: z.string() }));
+  expectTypeOf(b).toEqualTypeOf<
+    z.$ZodInterface<
+      { a: z.$ZodString<string>; b: z.$ZodString<string> },
+      {
+        optional: never;
+        defaulted: never;
+        extra: {};
+      }
+    >
+  >();
+  z.parse(b, { a: "a", b: "b" });
+  expect(() => z.parse(b, { a: "a" })).toThrow();
 });
 
-// clean A keys (util.CleanKeys<string>)
-// clean B keys
-// omit all A keys that are being overwritten by B
-// merge A and B
-// return new shape
-// type klasdf = util.CleanKeys;
-// type ExtendInterface<A extends z.$ZodLooseShape, B extends z.$ZodLooseShape> = util.Flatten<
-//   Omit<A, PropertyKey & util.CleanKeysMap<A>[keyof util.CleanKeysMap<B>]> & B
-// >;
-
-// type t1 = ExtendInterface<
-//   { "a?": string; "?b": string; c: string; d: string; e: string  },
-//   { a: string; b: string; c: string; "d?": string }
-// >;
-
-// function extend<T extends z.$ZodObjectLike, Shape extends z.$ZodShape>(
-//   schema: T,
-//   shape: Shape
-// ): T["_def"]["type"] extends "interface"
-//   ? z.$ZodInterface<util.ExtendInterface<T["_shape"], Shape>, util.ExtendInterfaceParams<T, Shape>>
-//   : z.$ZodObject<util.ExtendObject<T["_shape"], Shape>, T["_extra"]>;
-// function extend(schema: z.$ZodObjectLike, shape: z.$ZodShape): z.$ZodObjectLike {
-//   return util.extend(schema, shape);
-// }
+test("z.extend with optionals", () => {
+  const a = z.interface({ a: z.string(), "b?": z.string() });
+  const _ = z.interface({ "a?": z.string(), b: z.string() });
+  const b = z.extend(a, _);
+  expectTypeOf(b).toEqualTypeOf<
+    z.$ZodInterface<
+      { a: z.$ZodString<string>; b: z.$ZodString<string> },
+      {
+        optional: "a";
+        defaulted: never;
+        extra: {};
+      }
+    >
+  >();
+  z.parse(b, { a: "a", b: "b" });
+  expect(b._def.optional).toEqual(["a"]);
+  z.parse(b, { b: "b" });
+  expect(() => z.parse(b, { a: "a" })).toThrow();
+});
 
 test("z.extend with optional properties", () => {
   const a = z.interface({ "a?": z.string(), b: z.string() });

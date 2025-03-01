@@ -1,15 +1,14 @@
-import type { $ZodConfig } from "../base.js";
 import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
-const Sizable: Record<string, { dim: string; unit: string }> = {
-  string: { dim: "length", unit: "characters" },
-  file: { dim: "size", unit: "bytes" },
-  array: { dim: "length", unit: "items" },
-  set: { dim: "length", unit: "items" },
+const Sizable: Record<string, { unit: string; verb: string }> = {
+  string: { unit: "characters", verb: "to have" },
+  file: { unit: "bytes", verb: "to have" },
+  array: { unit: "items", verb: "to have" },
+  set: { unit: "items", verb: "to have" },
 };
 
-function getSizing(origin: string): { dim: string; unit: string } | null {
+function getSizing(origin: string): { unit: string; verb: string } | null {
   return Sizable[origin] ?? null;
 }
 
@@ -58,14 +57,14 @@ const error: errors.$ZodErrorMap = (issue) => {
       const adj = issue.inclusive ? "<=" : "<";
       const sizing = getSizing(issue.origin);
       if (sizing)
-        return `Too big: expected ${issue.origin ?? "value"} ${sizing.dim} to be ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
+        return `Too big: expected ${issue.origin ?? "value"} to have ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
       return `Too big: expected ${issue.origin ?? "value"} to be ${adj}${issue.maximum.toString()}1`;
     }
     case "too_small": {
       const adj = issue.inclusive ? ">=" : ">";
       const sizing = getSizing(issue.origin);
       if (sizing) {
-        return `Too small: expected ${issue.origin} ${sizing.dim} to be ${adj}${issue.minimum.toString()} ${sizing.unit}`;
+        return `Too small: expected ${issue.origin} to have ${adj}${issue.minimum.toString()} ${sizing.unit}`;
       }
 
       return `Too small: expected ${issue.origin} to be ${adj}${issue.minimum.toString()}`;
@@ -80,8 +79,8 @@ const error: errors.$ZodErrorMap = (issue) => {
       if (_issue.format === "regex") return `Invalid string: must match pattern ${_issue.pattern}`;
       return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
     }
-    case "invalid_date":
-      return "Invalid Date";
+    // case "invalid_date":
+    //   return "Invalid Date";
     case "unrecognized_keys":
       return `Unrecognized key${issue.keys.length > 1 ? "s" : ""}: ${util.joinValues(issue.keys, ", ")}`;
     case "invalid_union":

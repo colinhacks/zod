@@ -3,7 +3,7 @@ import { expectTypeOf, test } from "vitest";
 import * as z from "zod";
 
 test("first party switch", () => {
-  const myType = z.string() as core.$ZodFirstPartySchemaTypes;
+  const myType = z.string() as core.$ZodTypes;
   const def = myType._def;
   switch (def.type) {
     case "string":

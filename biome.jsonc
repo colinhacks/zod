@@ -30,7 +30,8 @@
         "noUnusedTemplateLiteral": "off", // why is this even a best practice?
         "noParameterAssign": "off", // required for performant coercion in _parse
         "noNonNullAssertion": "off",
-        "useTemplate": "off"
+        "useTemplate": "off",
+        "noUselessElse": "off"
       },
       "correctness": {
         "noUnusedImports": {

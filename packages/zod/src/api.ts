@@ -378,7 +378,9 @@ export function object<T extends schemas.ZodShape>(
   const def: core.$ZodObjectDef<schemas.ZodShape> = {
     type: "object",
     shape: shape ?? {},
-    optional: util.optionalObjectKeys(shape ?? {}),
+    get optional() {
+      return util.optionalObjectKeys(shape ?? {});
+    },
     ...util.normalizeTypeParams(params),
   };
   return new schemas.ZodObject(def) as any;
@@ -392,7 +394,9 @@ export function strictObject<T extends schemas.ZodRawShape>(
   const def: core.$ZodObjectDef<T> = {
     type: "object",
     shape,
-    optional: util.optionalObjectKeys(shape ?? {}),
+    get optional() {
+      return util.optionalObjectKeys(shape ?? {});
+    },
     catchall: never(),
     ...util.normalizeTypeParams(params),
   };
@@ -407,7 +411,9 @@ export function looseObject<T extends schemas.ZodRawShape>(
   const def: core.$ZodObjectDef<schemas.ZodShape> = {
     type: "object",
     shape,
-    optional: util.optionalObjectKeys(shape ?? {}),
+    get optional() {
+      return util.optionalObjectKeys(shape ?? {});
+    },
     catchall: unknown(),
     ...util.normalizeTypeParams(params),
   };
@@ -419,15 +425,20 @@ function _interface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: core.$ZodInterfaceParams
 ): schemas.ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
-  const cleaned = util.cleanInterfaceShape(shape);
+  const cleaned = util.cached(() => {
+    return util.cleanInterfaceShape(shape);
+  });
   const def: core.$ZodInterfaceDef = {
     type: "interface",
-    shape: cleaned.shape,
-    optional: cleaned.optional,
+    get shape() {
+      return cleaned.value.shape;
+    },
+    get optional() {
+      return cleaned.value.optional;
+    },
     ...util.normalizeTypeParams(params),
   };
   return new schemas.ZodInterface(def) as any;
-  // return core.interface(shape, params, schemas.ZodInterface) as any;
 }
 export { _interface as interface };
 
@@ -436,11 +447,15 @@ export function strictInterface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: core.$ZodStrictInterfaceParams
 ): schemas.ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
-  const cleaned = util.cleanInterfaceShape(shape);
+  const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: core.$ZodInterfaceDef = {
     type: "interface",
-    shape: cleaned.shape,
-    optional: cleaned.optional,
+    get shape() {
+      return cleaned.value.shape;
+    },
+    get optional() {
+      return cleaned.value.optional;
+    },
     catchall: never(),
     ...util.normalizeTypeParams(params),
   };
@@ -453,11 +468,15 @@ export function looseInterface<T extends core.$ZodLooseShape>(
   shape: T,
   params?: core.$ZodLooseInterfaceParams
 ): schemas.ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, Record<string, unknown>>> {
-  const cleaned = util.cleanInterfaceShape(shape);
+  const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
   const def: core.$ZodInterfaceDef = {
     type: "interface",
-    shape,
-    optional: cleaned.optional,
+    get shape() {
+      return cleaned.value.shape;
+    },
+    get optional() {
+      return cleaned.value.optional;
+    },
     catchall: unknown(),
     ...util.normalizeTypeParams(params),
   };
@@ -780,14 +799,14 @@ export function tuple(
 
 // record
 export function record<Key extends schemas.ZodPropertyKey, Value extends core.$ZodType>(
-  keySchema: Key,
-  valueSchema: Value,
+  keyType: Key,
+  valueType: Value,
   params?: core.$ZodRecordParams
 ): schemas.ZodRecord<Key, Value> {
   return new schemas.ZodRecord({
     type: "record",
-    keySchema,
-    valueSchema,
+    keyType,
+    valueType,
     ...util.normalizeTypeParams(params),
   }) as schemas.ZodRecord<Key, Value>;
 }

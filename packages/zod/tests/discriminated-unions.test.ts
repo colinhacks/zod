@@ -455,7 +455,7 @@ test("optional and nullable", () => {
   ]);
 
   type schema = z.infer<typeof schema>;
-  util.assertEqual<schema, { key?: "a" | undefined; a: true } | { key: "b" | null; b: true }>(true);
+  expectTypeOf<schema>().toEqualTypeOf<{ key?: "a" | undefined; a: true } | { key: "b" | null; b: true }>();
 
   schema.parse({ key: "a", a: true });
   schema.parse({ key: undefined, a: true });

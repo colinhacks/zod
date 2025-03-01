@@ -32,6 +32,9 @@ importers:
       '@web-std/file':
         specifier: ^3.0.3
         version: 3.0.3
+      '@zod/core':
+        specifier: ^3.23.8
+        version: link:packages/zod-core
       arktype:
         specifier: ^2.0.0
         version: 2.0.0
@@ -89,6 +92,15 @@ importers:
       vitest:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.17.14)(terser@5.39.0)
+      zod:
+        specifier: ^3.23.7
+        version: link:packages/zod
+      zod-mini:
+        specifier: ^3.23.8
+        version: link:packages/zod-mini
+      zod3:
+        specifier: npm:zod@^3.24.0
+        version: zod@3.24.2
 
   packages/benchmarks:
     dependencies:
@@ -2337,6 +2349,9 @@ packages:
   zod@3.23.7:
     resolution: {integrity: sha512-NBeIoqbtOiUMomACV/y+V3Qfs9+Okr18vR5c/5pHClPpufWOrsx8TENboDPe265lFdfewX2yBtNTLPvnmCxwog==}
 
+  zod@3.24.2:
+    resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
+
 snapshots:
 
   '@ark/schema@0.33.0':
@@ -4512,3 +4527,5 @@ snapshots:
   yoctocolors@2.1.1: {}
 
   zod@3.23.7: {}
+
+  zod@3.24.2: {}

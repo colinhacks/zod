@@ -8,7 +8,7 @@ interface Trait {
 
 export interface $constructor<T extends Trait> {
   new (def: T["_def"]): T;
-  init(inst: T, def: T["_def"]): void;
+  init(inst: T | {}, def: T["_def"]): asserts inst is T;
   extend(fns: Record<string, (this: T, ...args: any) => any>): void;
   fns: Record<string, (...args: any) => any>;
 }
@@ -19,7 +19,12 @@ export /*@__NO_SIDE_EFFECTS__*/ function $constructor<T extends Trait, D = T["_d
 ): $constructor<T> {
   class _ {
     constructor(def: D) {
-      _.init(this as any as T, def);
+      const th = this as any;
+      th._deferred ??= [];
+      _.init(th, def);
+      for (const fn of th._deferred) {
+        fn();
+      }
     }
     static init(inst: T, def: D) {
       (inst as any)._traits ??= new Set();
@@ -95,14 +100,14 @@ export type $ZodSchemaTypes =
   | "set"
   | "enum"
   | "literal"
-  | "const"
-  | "nullable"
+  // | "const"
+  // | "nullable"
   | "optional"
   | "nonoptional"
   // | "coalesce"
   | "success"
-  | "preprocess"
-  | "effect"
+  // | "preprocess"
+  // | "effect"
   | "transform"
   | "default"
   | "catch"
@@ -137,6 +142,59 @@ export interface $ZodTypeDef {
   checks?: $ZodCheck<never>[];
 }
 
+// @ts-ignore
+// type _Zod<T = {}> = T & {
+//   /** @deprecated Internal API, use with caution. Not deprecated. */
+//   _id: string;
+//   /** @deprecated Internal API, use with caution. */
+//   // _standard: number;
+//   /** @deprecated Internal API, use with caution. */
+//   // _types: $IO<this["_output"], this["_input"]>;
+//   /** @deprecated Internal API, use with caution. */
+//   _output: O;
+//   /** @deprecated Internal API, use with caution. */
+//   _input: I;
+//   /** @deprecated List of deferred initializations */
+//   _deferred?: util.AnyFunc[];
+
+//   /** @deprecated Internal API, use with caution. Stores identifiers for the set of traits implemented by this schema. */
+//   _traits: Set<string>;
+//   /** @deprecated Internal API, use with caution.
+//    *
+//    * Indicates that a schema output type should be considered optional inside objects.  */
+//   _qout?: "true" | undefined;
+//   /** @deprecated Internal API, use with caution.
+//    *
+//    * Indicates that a schema input type should be considered optional inside objects. */
+//   _qin?: "true" | undefined;
+//   /** @deprecated Internal API, use with caution. A set of literal discriminators used for the fast path in discriminated unions. */
+//   _disc?: $DiscriminatorMap;
+//   /** @deprecated Internal API, use with caution. The set of literal values that will pass validation. Must be an exhaustive set. Used to determine optionality inside record schemas.
+//    *
+//    * Defined on: enum, const, literal, null, undefined
+//    * Passthrough: optional, nullable, branded, default, catch, pipe
+//    * Todo: unions?
+//    */
+//   _values?: $PrimitiveSet | undefined;
+//   /** @deprecated Internal API, use with caution. */
+//   _def: $ZodTypeDef;
+//   /** @deprecated Internal API, use with caution.
+//    *
+//    * The constructor function of this schema.
+//    */
+//   _constr: new (
+//     def: any
+//   ) => any;
+//   /** @deprecated Internal API, use with caution. */
+//   _computed: Record<string, any>;
+//   /** The set of issues this schema might throw during type checking. */
+//   _isst?: errors.$ZodIssueBase;
+// };
+
+export interface $Zod<T extends $ZodType = $ZodType> {
+  _zod: T;
+}
+
 export interface $ZodType<out O = unknown, out I = unknown> {
   $check(...checks: ($ZodCheckFn<this["_output"]> | $ZodCheck<this["_output"]>)[]): this;
   $clone(def?: this["_def"]): this;
@@ -148,13 +206,16 @@ export interface $ZodType<out O = unknown, out I = unknown> {
         : [$ZodRegistry<R["_meta"], this>["_meta"]]
       : ["Incompatible schema"]
   ): this;
-  $brand<T extends PropertyKey = PropertyKey>(): this & {
-    _output: O & $brand<T>;
-  };
+  $brand<T extends PropertyKey = PropertyKey>(): this & Record<"_output", this["_output"] & $brand<T>>;
+  // {
+  //   _output: O & $brand<T>;
+  // };
+  _zod: this;
 
   // assertInput<T>(...args: T extends I ? [] : ["Invalid input type"]): void;
   // assertOutput<T>(...args: T extends O ? [] : ["Invalid output type"]): void;
 
+  // _zod: _Zod;
   /** @deprecated Internal API, use with caution. Not deprecated. */
   _id: string;
   /** @deprecated Internal API, use with caution. */
@@ -165,12 +226,14 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   _output: O;
   /** @deprecated Internal API, use with caution. */
   _input: I;
+  /** @deprecated List of deferred initializations */
+  _deferred?: util.AnyFunc[];
 
   /** @deprecated Internal API, use with caution. */
-  _run(payload: $ParsePayload, ctx: $InternalParseContext): util.MaybeAsync<$ParsePayload>;
+  _run(payload: $ParsePayload<any>, ctx: $InternalParseContext): util.MaybeAsync<$ParsePayload>;
 
   /** @deprecated Internal API, use with caution. */
-  _parse(payload: $ParsePayload, ctx: $InternalParseContext): util.MaybeAsync<$ParsePayload>;
+  _parse(payload: $ParsePayload<any>, ctx: $InternalParseContext): util.MaybeAsync<$ParsePayload>;
 
   /** @deprecated Internal API, use with caution. Stores identifiers for the set of traits implemented by this schema. */
   _traits: Set<string>;
@@ -211,8 +274,8 @@ export function clone<T extends $ZodType>(inst: T, def: T["_def"]): T {
 }
 
 export class $ZodAsyncError extends Error {
-  constructor(public noun: string) {
-    super(`Asynchronous ${noun} encountered. Use an async parsing function instead.`);
+  constructor() {
+    super(`Encountered Promise during synchronous parse. Use .parseAsync() instead.`);
   }
 }
 export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, def) => {
@@ -242,16 +305,21 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
   if (inst._traits.has("$ZodCheck")) {
     checks.unshift(inst as any);
   }
-  // console.log("checks", checks);
+  //
 
   for (const ch of checks) {
     ch._onattach?.(inst);
   }
 
   if (checks.length === 0) {
-    inst._run = (...args) => inst._parse(...args);
+    // deferred initializer
+    // inst._parse is not yet defined
+    inst._run = (a, b) => inst._parse(a, b);
+    inst._deferred?.push(() => {
+      inst._run = inst._parse;
+    });
   } else {
-    // console.log("running checks");
+    //
     // let runChecks = (result: $ParsePayload<any>): util.MaybeAsync<$ParsePayload> => {
     //   return result;
     // };
@@ -279,65 +347,39 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
     //   };
     // }
 
-    function runChecks(
+    const runChecks = (
       payload: $ParsePayload,
       checks: $ZodCheck<never>[],
       ctx?: $InternalParseContext | undefined
-    ): util.MaybeAsync<$ParsePayload> {
-      // let isAborted = util.aborted(payload);
-      // for (const ch of checks) {
-      //   if (ch._when) {
-      //     const shouldRun = ch._when(payload);
-      //     if (!shouldRun) continue;
-      //   } else {
-      //     if (isAborted) {
-      //       continue;
-      //     }
-      //   }
-
-      //   const currLen = payload.issues.length;
-      //   const _ = ch._check(payload as any) as any as $ParsePayload;
-      //   const nextLen = payload.issues.length;
-      //   if (nextLen === currLen) {
-      //     continue;
-      //   }
-
-      //   if (!isAborted) isAborted = util.aborted(payload, currLen);
-      // }
-      // return payload;
-      // const result = _result as $ParsePayload;
-      let isAborted = util.aborted(payload); // initialize
-      let asyncResult!: Promise<unknown> | undefined; // = Promise.resolve();;
+    ): util.MaybeAsync<$ParsePayload> => {
+      let isAborted = util.aborted(payload);
+      let asyncResult!: Promise<unknown> | undefined;
       for (const ch of checks) {
-        // console.log("running check", ch);
         if (ch._when) {
           const shouldRun = ch._when(payload);
+
           if (!shouldRun) continue;
         } else {
           if (isAborted) {
             continue;
-            // console.log("aborted...skipping check...");
           }
         }
 
         const currLen = payload.issues.length;
         const _ = ch._check(payload as any) as any as $ParsePayload;
         if (_ instanceof Promise && ctx?.async === false) {
-          throw new $ZodAsyncError("check");
+          throw new $ZodAsyncError();
         }
         if (asyncResult || _ instanceof Promise) {
           asyncResult = asyncResult ?? Promise.resolve();
           asyncResult.then(async () => {
             await _;
-            // console.log("async. issues:", payload.issues);
             const nextLen = payload.issues.length;
             if (nextLen === currLen) return;
             if (!isAborted) isAborted = util.aborted(payload, currLen);
           });
         } else {
-          // console.log("sync. issues:", payload.issues);
           const nextLen = payload.issues.length;
-          // console.log(`currLen: ${currLen}, nextLen: ${nextLen}`);
           if (nextLen === currLen) continue;
           if (!isAborted) isAborted = util.aborted(payload, currLen);
         }
@@ -349,13 +391,13 @@ export const $ZodType: $constructor<$ZodType> = $constructor("$ZodType", (inst, 
         });
       }
       return payload;
-    }
+    };
 
     inst._run = (payload, ctx) => {
       const result = inst._parse(payload, ctx);
 
       if (result instanceof Promise) {
-        if (ctx.async === false) throw new $ZodAsyncError("schema");
+        if (ctx.async === false) throw new $ZodAsyncError();
         return result.then((result) => runChecks(result, checks, ctx));
       }
 
@@ -402,8 +444,8 @@ export class $ZodError<T = unknown> implements Error {
   /** @deprecated Virtual property, do not access. */
   _t!: T;
   public issues: errors.$ZodIssue[];
-
-  name = "$ZodError";
+  name!: string;
+  stack?: string;
 
   get message(): string {
     return JSON.stringify(this.issues, util.jsonStringifyReplacer, 2);
@@ -411,6 +453,7 @@ export class $ZodError<T = unknown> implements Error {
 
   constructor(issues: errors.$ZodIssue[]) {
     Object.defineProperty(this, "_tag", { value: ZOD_ERROR, enumerable: false });
+    Object.defineProperty(this, "name", { value: "$ZodError", enumerable: false });
     this.issues = issues;
   }
 

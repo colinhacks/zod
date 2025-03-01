@@ -28,11 +28,11 @@ generate({
   path: "src/index.ts",
   // ...ZOD3,
   ...ZOD,
-  schemaType: "z.interface",
+  schemaType: "z.object",
   // ...ARKTYPE,
   // ...VALIBOT,
 
-  numSchemas: 100,
+  numSchemas: 1000,
   methods: [""],
   numKeys: 10,
   numRefs: 0,

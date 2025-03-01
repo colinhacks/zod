@@ -7,7 +7,7 @@ export function parse<T extends base.$ZodType>(schema: T, value: unknown, _ctx?:
   const ctx: base.$InternalParseContext = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._run({ value, issues: [], $payload: true }, ctx);
   if (result instanceof Promise) {
-    throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
+    throw new base.$ZodAsyncError();
   }
   if (result.issues.length) {
     throw new base.$ZodError(result.issues.map((iss) => base.finalizeIssue(iss, ctx)));
@@ -23,7 +23,7 @@ export function safeParse<T extends base.$ZodType>(
   const ctx: base.$InternalParseContext = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._run({ value, issues: [], $payload: true }, ctx);
   if (result instanceof Promise) {
-    throw new Error("Encountered Promise during synchronous .parse(). Use .parseAsync() instead.");
+    throw new base.$ZodAsyncError();
   }
 
   return (

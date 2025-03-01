@@ -24,9 +24,9 @@ test("default with transform", () => {
   expect(stringWithDefault.unwrap().out).toBeInstanceOf(z.ZodTransform);
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string | undefined>(true);
+  expectTypeOf<inp>().toEqualTypeOf<string | undefined>();
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string>(true);
+  expectTypeOf<out>().toEqualTypeOf<string>();
 });
 
 test("default on existing optional", () => {
@@ -37,18 +37,18 @@ test("default on existing optional", () => {
   expect(stringWithDefault.unwrap().unwrap()).toBeInstanceOf(z.ZodString);
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string | undefined>(true);
+  expectTypeOf<inp>().toEqualTypeOf<string | undefined>();
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string>(true);
+  expectTypeOf<out>().toEqualTypeOf<string>();
 });
 
 test("optional on default", () => {
   const stringWithDefault = z.string().default("asdf").optional();
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, string | undefined>(true);
+  expectTypeOf<inp>().toEqualTypeOf<string | undefined>();
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string | undefined>(true);
+  expectTypeOf<out>().toEqualTypeOf<string | undefined>();
 
   expect(stringWithDefault.parse(undefined)).toBe(undefined);
 });
@@ -70,7 +70,7 @@ test("removeDefault", () => {
   const stringWithRemovedDefault = z.string().default("asdf").removeDefault();
 
   type out = z.output<typeof stringWithRemovedDefault>;
-  util.assertEqual<out, string>(true);
+  expectTypeOf<out>().toEqualTypeOf<string>();
 });
 
 test("apply default at output", () => {
@@ -87,9 +87,9 @@ test("nested", () => {
     inner: "qwer",
   });
   type input = z.input<typeof outer>;
-  util.assertEqual<input, { inner?: string | undefined } | undefined>(true);
+  expectTypeOf<input>().toEqualTypeOf<{ inner?: string | undefined } | undefined>();
   type out = z.output<typeof outer>;
-  util.assertEqual<out, { inner: string }>(true);
+  expectTypeOf<out>().toEqualTypeOf<{ inner: string }>();
   expect(outer.parse(undefined)).toEqual({ inner: "qwer" });
   expect(outer.parse({})).toEqual({ inner: "asdf" });
   expect(outer.parse({ inner: undefined })).toEqual({ inner: "asdf" });

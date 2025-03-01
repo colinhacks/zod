@@ -9,7 +9,7 @@ test("check any inference", () => {
   t1.optional();
   t1.nullable();
   type t1 = z.infer<typeof t1>;
-  util.assertEqual<t1, any>(true);
+  expectTypeOf<t1>().toEqualTypeOf<any>();
 });
 
 test("check unknown inference", () => {
@@ -17,7 +17,7 @@ test("check unknown inference", () => {
   t1.optional();
   t1.nullable();
   type t1 = z.infer<typeof t1>;
-  util.assertEqual<t1, unknown>(true);
+  expectTypeOf<t1>().toEqualTypeOf<unknown>();
 });
 
 test("check never inference", () => {
