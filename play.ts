@@ -13,6 +13,6 @@ const data = { type: "a", a: "1" };
 const result = await schema.safeParseAsync(data);
 console.log(JSON.stringify(result, null, 2));
 
-z.email({});
-
+z.email({})._zod;
 z.object({});
+z.guid();

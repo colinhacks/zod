@@ -501,16 +501,16 @@ export function escapeRegex(str: string): string {
 export type Params<
   T extends base.$ZodType | base.$ZodCheck,
   IssueTypes extends errors.$ZodIssueBase,
-  OmitKeys extends keyof T["_def"] = never,
+  OmitKeys extends keyof T["_zod"]["def"] = never,
   // IssueTypes extends errors.$ZodIssueBase = errors.$ZodIssueBase,
   // Extra
   // AlsoOmit extends Exclude<
-  //   keyof T["_def"],
+  //   keyof T["_zod"]["def"],
   //   "type" | "checks" | "error"
   // > = never,
 > = Flatten<
   Partial<
-    Omit<T["_def"], OmitKeys> &
+    Omit<T["_zod"]["def"], OmitKeys> &
       ([IssueTypes] extends [never]
         ? unknown
         : {
@@ -524,36 +524,36 @@ export type Params<
 // type lkjasdf = (base.$ZodType & { _isst: never })['']
 export type TypeParams<
   T extends base.$ZodType = base.$ZodType & { _isst: never },
-  AlsoOmit extends Exclude<keyof T["_def"], "type" | "checks" | "error"> = never,
-> = Params<T, NonNullable<T["_isst"]>, "type" | "checks" | "error" | AlsoOmit>;
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "checks" | "error"> = never,
+> = Params<T, NonNullable<T["_zod"]["isst"]>, "type" | "checks" | "error" | AlsoOmit>;
 
 // strips types that are not exposed in the public factory
 // incl. `error`, `check`
 export type CheckParams<
   T extends base.$ZodCheck = base.$ZodCheck, // & { _issc: never },
-  AlsoOmit extends Exclude<keyof T["_def"], "check" | "error"> = never,
-> = Params<T, NonNullable<T["_issc"]>, "check" | "error" | AlsoOmit>;
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "check" | "error"> = never,
+> = Params<T, NonNullable<T["_zod"]["issc"]>, "check" | "error" | AlsoOmit>;
 
 // strips types that are not exposed in the public factory
 // incl. `type`, `checks`, `error`, `check`, `format`
 export type StringFormatParams<
   T extends $ZodStringFormat = $ZodStringFormat,
-  AlsoOmit extends Exclude<keyof T["_def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
 > = Params<
   T,
-  NonNullable<T["_isst"] | T["_issc"]>,
+  NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>,
   "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit
 >;
 
 export type CheckStringFormatParams<
   T extends $ZodStringFormat = $ZodStringFormat,
-  AlsoOmit extends Exclude<keyof T["_def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
-> = Params<T, NonNullable<T["_issc"]>, "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit>;
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "coerce" | "checks" | "error" | "check" | "format"> = never,
+> = Params<T, NonNullable<T["_zod"]["issc"]>, "type" | "coerce" | "checks" | "error" | "check" | "format" | AlsoOmit>;
 
 export type CheckTypeParams<
   T extends base.$ZodType & base.$ZodCheck = base.$ZodType & base.$ZodCheck,
-  AlsoOmit extends Exclude<keyof T["_def"], "type" | "checks" | "error" | "check"> = never,
-> = Params<T, NonNullable<T["_isst"] | T["_issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
+  AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "checks" | "error" | "check"> = never,
+> = Params<T, NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
 
 // export type NormalizedTypeParams<T extends TypeParams = TypeParams> = Omit<
 //   T,
@@ -564,7 +564,7 @@ export type CheckTypeParams<
 // };
 
 export type Def<T extends base.$ZodType = base.$ZodType> = Omit<
-  T["_def"],
+  T["_zod"]["def"],
   never
   // "error" | "message"
 >;
@@ -572,7 +572,7 @@ export type Def<T extends base.$ZodType = base.$ZodType> = Omit<
 // export function normalizeTypeArgs<T extends base.$ZodType = base.$ZodType>(
 //   __params?: string | TypeParams<T> | base.$ZodCheck<any>[],
 //   __checks?: base.$ZodCheck<any>[],
-//   __defaults?: Partial<T["_def"]>
+//   __defaults?: Partial<T["_zod"]["def"]>
 // ): Def<T> {
 //   const params = (Array.isArray(__params)
 //     ? {}
@@ -675,7 +675,7 @@ export function normalizeCheckParams<T>(_params: T): Normalize<T> {
 // >(
 //   Cls: Cls,
 //   defaultParams: Omit<
-//     InstanceType<Cls>["_def"],
+//     InstanceType<Cls>["_zod"]["def"],
 //     "checks" | "description" | "error"
 //   >
 // ) => PrimitiveFactory<Params, InstanceType<Cls>> = (Cls, defaultParams) => {
@@ -692,7 +692,7 @@ type ClassType<T> = { new (...args: any[]): T };
 export const factory =
   <Cls extends ClassType<base.$ZodType>>(
     _class: () => Cls,
-    _defaults: Omit<InstanceType<Cls>["_def"], "checks" | "error">
+    _defaults: Omit<InstanceType<Cls>["_zod"]["def"], "checks" | "error">
   ) =>
   (...args: any[]): InstanceType<Cls> => {
     const { checks, params } = splitChecksAndParams(...args);
@@ -705,7 +705,7 @@ export const factory =
     return new (_class())(finalParams) as any;
   };
 
-export type FactoryParams<T extends base.$ZodTypeDef, Omitted extends keyof T, Optionals extends keyof T> = Flatten<
+export type FactoryParams<T extends base._$ZodTypeDef, Omitted extends keyof T, Optionals extends keyof T> = Flatten<
   Omit<T, "error" | "checks" | Omitted | Optionals> &
     Partial<{ [k in Optionals]: T[k] }> & {
       error?: string | T["error"] | undefined;
@@ -716,7 +716,10 @@ export type FactoryParams<T extends base.$ZodTypeDef, Omitted extends keyof T, O
 
 export const makeFactory =
   <Class extends ClassType<base.$ZodType>>(_class: Class) =>
-  <Fixed extends Partial<InstanceType<Class>["_def"]>, Defaults extends Partial<InstanceType<Class>["_def"]>>(
+  <
+    Fixed extends Partial<InstanceType<Class>["_zod"]["def"]>,
+    Defaults extends Partial<InstanceType<Class>["_zod"]["def"]>,
+  >(
     fixed: Fixed,
     defaults: Defaults
   ): Factory<InstanceType<Class>, Fixed, Defaults> => {
@@ -725,13 +728,17 @@ export const makeFactory =
 
 export class Factory<
   Class extends base.$ZodType,
-  Fixed extends Partial<Class["_def"]>,
-  Defaults extends Partial<Class["_def"]>,
+  Fixed extends Partial<Class["_zod"]["def"]>,
+  Defaults extends Partial<Class["_zod"]["def"]>,
 > {
   _class: ClassType<Class>;
   _fixed: Fixed;
   _default: Defaults;
-  Params!: FactoryParams<Class["_def"], keyof Class["_def"] & keyof Fixed, keyof Class["_def"] & keyof Defaults>;
+  Params!: FactoryParams<
+    Class["_zod"]["def"],
+    keyof Class["_zod"]["def"] & keyof Fixed,
+    keyof Class["_zod"]["def"] & keyof Defaults
+  >;
 
   constructor(_class: ClassType<Class>, fixed: Fixed, defaults: Defaults) {
     this._class = _class;
@@ -827,7 +834,7 @@ export type MethodParams<Err extends errors.$ZodIssueBase, Extra = unknown> =
 
 export function optionalObjectKeys(shape: $ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
-    return shape[k]._qout === "true";
+    return shape[k]._zod.qout === "true";
   });
 }
 
@@ -864,24 +871,24 @@ export type MergeInterfaceParams<
   B extends $ZodInterface,
   // BKeys extends PropertyKey,
 > = Identity<{
-  optional: Exclude<A["_optional"], keyof B["_shape"]> | B["_optional"];
-  defaulted: Exclude<A["_defaulted"], keyof B["_shape"]> | B["_defaulted"];
-  extra: A["_extra"];
+  optional: Exclude<A["_zod"]["optional"], keyof B["_zod"]["shape"]> | B["_zod"]["optional"];
+  defaulted: Exclude<A["_zod"]["defaulted"], keyof B["_zod"]["shape"]> | B["_zod"]["defaulted"];
+  extra: A["_zod"]["extra"];
 }>;
 
 export type ExtendInterfaceParams<A extends $ZodInterface, Shape extends $ZodLooseShape> = Identity<{
-  optional: Exclude<A["_optional"], CleanKeys<keyof Shape>> | OptionalInterfaceKeys<keyof Shape>;
-  defaulted: Exclude<A["_defaulted"], CleanKeys<keyof Shape>> | DefaultedInterfaceKeys<keyof Shape>;
-  extra: A["_extra"];
+  optional: Exclude<A["_zod"]["optional"], CleanKeys<keyof Shape>> | OptionalInterfaceKeys<keyof Shape>;
+  defaulted: Exclude<A["_zod"]["defaulted"], CleanKeys<keyof Shape>> | DefaultedInterfaceKeys<keyof Shape>;
+  extra: A["_zod"]["extra"];
 }>;
 export type ExtendInterfaceShape<A extends $ZodLooseShape, B extends $ZodLooseShape> = ExtendShape<
   A,
   CleanInterfaceShape<B>
 >;
 export type InterfaceParams<T extends $ZodInterface> = {
-  optional: T["_optional"];
-  defaulted: T["_defaulted"];
-  extra: T["_extra"];
+  optional: T["_zod"]["optional"];
+  defaulted: T["_zod"]["defaulted"];
+  extra: T["_zod"]["extra"];
 };
 
 export type CleanKeysMap<T extends object> = {
@@ -894,25 +901,25 @@ export type ReconstructShape<T extends $ZodLooseShape, Params extends $ZodInterf
 export function shape<T extends $ZodInterface>(
   schema: T
 ): ReconstructShape<
-  T["_shape"],
+  T["_zod"]["shape"],
   {
-    optional: T["_optional"];
-    defaulted: T["_defaulted"];
-    extra: T["_extra"];
+    optional: T["_zod"]["optional"];
+    defaulted: T["_zod"]["defaulted"];
+    extra: T["_zod"]["extra"];
   }
 > {
   const reconstructed: any = {};
-  for (const key in schema._shape) {
-    const value = schema._shape[key];
-    if (schema._def.optional.includes(key)) {
+  for (const key in schema._zod.shape) {
+    const value = schema._zod.shape[key];
+    if (schema._zod.def.optional.includes(key)) {
       reconstructed[`${key}?`] = value;
-    } else if (schema._defaulted.includes(key)) {
+    } else if (schema._zod.defaulted.includes(key)) {
       reconstructed[`?${key}`] = value;
     } else {
       reconstructed[key] = value;
     }
   }
-  return schema._def.shape as any;
+  return schema._zod.def.shape as any;
 }
 
 export function cleanInterfaceKey(key: string): string {
@@ -959,9 +966,9 @@ export const BIGINT_FORMAT_RANGES: Record<$ZodBigIntFormats, [bigint, bigint]> =
 export function pick(schema: $ZodObjectLike, mask: object) {
   const newShape: Writeable<$ZodShape> = {};
   const newOptional: string[] = [];
-  const currShape = schema._def.shape;
-  const currOptional = new Set(schema._def.optional);
-  // const currDefaulted = new Set(schema._def.defaulted);
+  const currShape = schema._zod.def.shape;
+  const currOptional = new Set(schema._zod.def.optional);
+  // const currDefaulted = new Set(schema._zod.def.defaulted);
 
   for (const key in mask) {
     if (!(key in currShape)) {
@@ -977,7 +984,7 @@ export function pick(schema: $ZodObjectLike, mask: object) {
   }
 
   return schema.$clone({
-    ...schema._def,
+    ...schema._zod.def,
     shape: newShape,
     optional: newOptional,
     checks: [],
@@ -985,10 +992,10 @@ export function pick(schema: $ZodObjectLike, mask: object) {
 }
 
 export function omit(schema: $ZodObjectLike, mask: object) {
-  const newShape: Writeable<$ZodShape> = { ...schema._def.shape };
-  const newOptional = new Set(schema._def.optional);
+  const newShape: Writeable<$ZodShape> = { ...schema._zod.def.shape };
+  const newOptional = new Set(schema._zod.def.optional);
   for (const key in mask) {
-    if (!(key in schema._def.shape)) {
+    if (!(key in schema._zod.def.shape)) {
       throw new Error(`Unrecognized key: "${key}"`);
     }
     if (!(mask as any)[key]) continue;
@@ -997,7 +1004,7 @@ export function omit(schema: $ZodObjectLike, mask: object) {
     newOptional.delete(key);
   }
   return schema.$clone({
-    ...schema._def,
+    ...schema._zod.def,
     shape: newShape,
     optional: [...newOptional],
     checks: [],
@@ -1006,9 +1013,9 @@ export function omit(schema: $ZodObjectLike, mask: object) {
 
 export function extend(schema: $ZodObjectLike, shape: $ZodShape): any {
   return schema.$clone({
-    ...schema._def,
+    ...schema._zod.def,
     get shape() {
-      return { ...schema._def.shape, ...shape };
+      return { ...schema._zod.def.shape, ...shape };
     },
 
     checks: [], // delete existing checks
@@ -1016,27 +1023,27 @@ export function extend(schema: $ZodObjectLike, shape: $ZodShape): any {
 }
 
 export function mergeObjectLike(a: $ZodObjectLike, b: $ZodObjectLike): any {
-  const bKeys = new Set(Object.keys(b._def.shape));
-  const optional = [...a._def.optional.filter((k) => !bKeys.has(k)), ...b._def.optional];
+  const bKeys = new Set(Object.keys(b._zod.def.shape));
+  const optional = [...a._zod.def.optional.filter((k) => !bKeys.has(k)), ...b._zod.def.optional];
 
   return a.$clone({
-    ...a._def,
+    ...a._zod.def,
     get shape() {
-      return { ...a._def.shape, ...b._def.shape };
+      return { ...a._zod.def.shape, ...b._zod.def.shape };
     },
     optional,
-    catchall: b._def.catchall,
+    catchall: b._zod.def.catchall,
     checks: [], // delete existing checks
   }) as any;
 }
 
 export function extendObjectLike(a: $ZodObjectLike, b: $ZodObjectLike): any {
-  const bKeys = new Set(Object.keys(b._def.shape));
-  const optional = [...a._def.optional.filter((k) => !bKeys.has(k)), ...b._def.optional];
+  const bKeys = new Set(Object.keys(b._zod.def.shape));
+  const optional = [...a._zod.def.optional.filter((k) => !bKeys.has(k)), ...b._zod.def.optional];
   return a.$clone({
-    ...a._def,
+    ...a._zod.def,
     get shape() {
-      return { ...a._def.shape, ...b._def.shape };
+      return { ...a._zod.def.shape, ...b._zod.def.shape };
     },
     optional,
     checks: [], // delete existing checks
@@ -1048,8 +1055,8 @@ export function partialObjectLike(
   mask: object | undefined,
   Class: new (def: $ZodOptionalDef<any>) => $ZodOptional
 ): any {
-  const shape: Writeable<$ZodShape> = { ...schema._def.shape };
-  const optional: Set<string> = new Set(schema._def.optional);
+  const shape: Writeable<$ZodShape> = { ...schema._zod.def.shape };
+  const optional: Set<string> = new Set(schema._zod.def.optional);
 
   if (mask) {
     for (const key in mask) {
@@ -1059,22 +1066,22 @@ export function partialObjectLike(
       if (!(mask as any)[key]) continue;
       shape[key] = new Class({
         type: "optional",
-        innerType: schema._def.shape[key],
+        innerType: schema._zod.def.shape[key],
       });
       optional.add(key);
     }
   } else {
-    for (const key in schema._def.shape) {
+    for (const key in schema._zod.def.shape) {
       shape[key] = new Class({
         type: "optional",
-        innerType: schema._def.shape[key],
+        innerType: schema._zod.def.shape[key],
       });
       optional.add(key);
     }
   }
 
   return schema.$clone({
-    ...schema._def,
+    ...schema._zod.def,
     shape,
     optional: [...optional],
     checks: [],
@@ -1086,7 +1093,7 @@ export function requiredObjectLike(
   mask: object | undefined,
   Class: new (def: $ZodNonOptionalDef<any>) => $ZodNonOptional
 ): any {
-  const shape: Writeable<$ZodShape> = { ...schema._def.shape };
+  const shape: Writeable<$ZodShape> = { ...schema._zod.def.shape };
 
   if (mask) {
     for (const key in mask) {
@@ -1097,21 +1104,21 @@ export function requiredObjectLike(
       // overwrite with non-optional
       shape[key] = new Class({
         type: "nonoptional",
-        innerType: schema._def.shape[key],
+        innerType: schema._zod.def.shape[key],
       });
     }
   } else {
-    for (const key in schema._def.shape) {
+    for (const key in schema._zod.def.shape) {
       // overwrite with non-optional
       shape[key] = new Class({
         type: "nonoptional",
-        innerType: schema._def.shape[key],
+        innerType: schema._zod.def.shape[key],
       });
     }
   }
 
   return schema.$clone({
-    ...schema._def,
+    ...schema._zod.def,
     shape,
     optional: [],
     checks: [],
@@ -1130,23 +1137,23 @@ export type PartialInterfaceShape<T extends $ZodShape, Keys extends string> = Fl
 //   mask: object | undefined,
 //   Class: new (def: $ZodOptionalDef<any>) => $ZodOptional
 // ): any {
-//   const shape: Writeable<$ZodShape> = { ...schema._def.shape };
-//   const optional: string[] = Object.keys(schema._def.shape);
-//   for (const key in schema._def.shape) {
+//   const shape: Writeable<$ZodShape> = { ...schema._zod.def.shape };
+//   const optional: string[] = Object.keys(schema._zod.def.shape);
+//   for (const key in schema._zod.def.shape) {
 //     if (mask && key in mask) {
 //       shape[key] = new Class({
 //         type: "optional",
-//         innerType: schema._def.shape[key],
+//         innerType: schema._zod.def.shape[key],
 //       });
 //     } else {
 //       shape[key] = new Class({
 //         type: "optional",
-//         innerType: schema._def.shape[key],
+//         innerType: schema._zod.def.shape[key],
 //       });
 //     }
 //   }
 //   return schema.$clone({
-//     ...schema._def,
+//     ...schema._zod.def,
 //     shape,
 //     optional,
 //     checks: [],
@@ -1164,21 +1171,21 @@ export type PartialInterfaceShape<T extends $ZodShape, Keys extends string> = Fl
 //   mask: object | undefined,
 //   Class: new (def: $ZodNonOptionalDef<any>) => $ZodNonOptional
 // ): any {
-// const shape: Record<string, base.$ZodType> = { ...schema._def.shape };
-// for (const key in schema._def.shape) {
+// const shape: Record<string, base.$ZodType> = { ...schema._zod.def.shape };
+// for (const key in schema._zod.def.shape) {
 //   if (mask && !(key in mask)) continue;
 //   if (key[key.length - 1] === "?") {
 //     delete shape[key];
-//     shape[key.slice(0, -1)] = schema._def.shape[key];
+//     shape[key.slice(0, -1)] = schema._zod.def.shape[key];
 //   } else if (key[0] === "?") {
 //     delete shape[key];
-//     shape[key.slice(1)] = schema._def.shape[key];
+//     shape[key.slice(1)] = schema._zod.def.shape[key];
 //   } else {
 //     // do nothing, key is already required
 //   }
 // }
 // return schema.$clone({
-//   ...schema._def,
+//   ...schema._zod.def,
 //   shape,
 //   checks: [],
 // });

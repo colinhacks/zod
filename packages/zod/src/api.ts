@@ -375,7 +375,7 @@ export function object<T extends schemas.ZodShape>(
   shape?: T,
   params?: core.$ZodObjectLikeParams
 ): schemas.ZodObject<T, {}> {
-  const def: core.$ZodObjectDef<schemas.ZodShape> = {
+  const def: core._$ZodObjectDef<schemas.ZodShape> = {
     type: "object",
     shape: shape ?? {},
     get optional() {
@@ -391,7 +391,7 @@ export function strictObject<T extends schemas.ZodRawShape>(
   shape: T,
   params?: core.$ZodStrictObjectParams
 ): schemas.ZodObject<T, {}> {
-  const def: core.$ZodObjectDef<T> = {
+  const def: core._$ZodObjectDef<T> = {
     type: "object",
     shape,
     get optional() {
@@ -408,7 +408,7 @@ export function looseObject<T extends schemas.ZodRawShape>(
   shape: T,
   params?: core.$ZodLooseObjectParams
 ): schemas.ZodObject<T, Record<string, unknown>> {
-  const def: core.$ZodObjectDef<schemas.ZodShape> = {
+  const def: core._$ZodObjectDef<schemas.ZodShape> = {
     type: "object",
     shape,
     get optional() {
@@ -428,7 +428,7 @@ function _interface<T extends core.$ZodLooseShape>(
   const cleaned = util.cached(() => {
     return util.cleanInterfaceShape(shape);
   });
-  const def: core.$ZodInterfaceDef = {
+  const def: core._$ZodInterfaceDef = {
     type: "interface",
     get shape() {
       return cleaned.value.shape;
@@ -448,7 +448,7 @@ export function strictInterface<T extends core.$ZodLooseShape>(
   params?: core.$ZodStrictInterfaceParams
 ): schemas.ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, {}>> {
   const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
-  const def: core.$ZodInterfaceDef = {
+  const def: core._$ZodInterfaceDef = {
     type: "interface",
     get shape() {
       return cleaned.value.shape;
@@ -469,7 +469,7 @@ export function looseInterface<T extends core.$ZodLooseShape>(
   params?: core.$ZodLooseInterfaceParams
 ): schemas.ZodInterface<util.CleanInterfaceShape<T>, util.InitInterfaceParams<T, Record<string, unknown>>> {
   const cleaned = util.cached(() => util.cleanInterfaceShape(shape));
-  const def: core.$ZodInterfaceDef = {
+  const def: core._$ZodInterfaceDef = {
     type: "interface",
     get shape() {
       return cleaned.value.shape;
@@ -1187,15 +1187,16 @@ export function superRefine<T>(
   const ch = core.check<T>((payload) => {
     (payload as schemas.RefinementCtx).addIssue = (issue) => {
       if (typeof issue === "string") {
-        payload.issues.push(util.issue(issue, payload.value, ch._def));
+        payload.issues.push(util.issue(issue, payload.value, ch._zod.def));
       } else {
         // for Zod 3 backwards compatibility
-        if ((issue as any).fatal) issue.continue = false;
-        issue.code ??= "custom";
-        issue.input ??= payload.value;
-        issue.inst ??= ch;
-        issue.continue ??= !ch._def.abort;
-        payload.issues.push(util.issue(issue));
+        const _issue: any = issue;
+        if (_issue.fatal) _issue.continue = false;
+        _issue.code ??= "custom";
+        _issue.input ??= payload.value;
+        _issue.inst ??= ch;
+        _issue.continue ??= !ch._zod.def.abort;
+        payload.issues.push(util.issue(_issue));
       }
     };
 
