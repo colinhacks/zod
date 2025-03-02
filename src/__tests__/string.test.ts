@@ -462,6 +462,7 @@ test("checks getters", () => {
   expect(z.string().email().isUUID).toEqual(false);
   expect(z.string().email().isNANOID).toEqual(false);
   expect(z.string().email().isIP).toEqual(false);
+  expect(z.string().email().isIPRange).toEqual(false);
   expect(z.string().email().isCIDR).toEqual(false);
   expect(z.string().email().isULID).toEqual(false);
 
@@ -472,6 +473,7 @@ test("checks getters", () => {
   expect(z.string().url().isUUID).toEqual(false);
   expect(z.string().url().isNANOID).toEqual(false);
   expect(z.string().url().isIP).toEqual(false);
+  expect(z.string().url().isIPRange).toEqual(false);
   expect(z.string().url().isCIDR).toEqual(false);
   expect(z.string().url().isULID).toEqual(false);
 
@@ -482,6 +484,7 @@ test("checks getters", () => {
   expect(z.string().cuid().isUUID).toEqual(false);
   expect(z.string().cuid().isNANOID).toEqual(false);
   expect(z.string().cuid().isIP).toEqual(false);
+  expect(z.string().cuid().isIPRange).toEqual(false);
   expect(z.string().cuid().isCIDR).toEqual(false);
   expect(z.string().cuid().isULID).toEqual(false);
 
@@ -492,6 +495,7 @@ test("checks getters", () => {
   expect(z.string().cuid2().isUUID).toEqual(false);
   expect(z.string().cuid2().isNANOID).toEqual(false);
   expect(z.string().cuid2().isIP).toEqual(false);
+  expect(z.string().cuid2().isIPRange).toEqual(false);
   expect(z.string().cuid2().isCIDR).toEqual(false);
   expect(z.string().cuid2().isULID).toEqual(false);
 
@@ -502,6 +506,7 @@ test("checks getters", () => {
   expect(z.string().uuid().isUUID).toEqual(true);
   expect(z.string().uuid().isNANOID).toEqual(false);
   expect(z.string().uuid().isIP).toEqual(false);
+  expect(z.string().uuid().isIPRange).toEqual(false);
   expect(z.string().uuid().isCIDR).toEqual(false);
   expect(z.string().uuid().isULID).toEqual(false);
 
@@ -512,6 +517,7 @@ test("checks getters", () => {
   expect(z.string().nanoid().isUUID).toEqual(false);
   expect(z.string().nanoid().isNANOID).toEqual(true);
   expect(z.string().nanoid().isIP).toEqual(false);
+  expect(z.string().nanoid().isIPRange).toEqual(false);
   expect(z.string().nanoid().isCIDR).toEqual(false);
   expect(z.string().nanoid().isULID).toEqual(false);
 
@@ -522,6 +528,7 @@ test("checks getters", () => {
   expect(z.string().ip().isUUID).toEqual(false);
   expect(z.string().ip().isNANOID).toEqual(false);
   expect(z.string().ip().isIP).toEqual(true);
+  expect(z.string().ip().isIPRange).toEqual(false);
   expect(z.string().ip().isCIDR).toEqual(false);
   expect(z.string().ip().isULID).toEqual(false);
 
@@ -542,6 +549,7 @@ test("checks getters", () => {
   expect(z.string().ulid().isUUID).toEqual(false);
   expect(z.string().ulid().isNANOID).toEqual(false);
   expect(z.string().ulid().isIP).toEqual(false);
+  expect(z.string().ulid().isIPRange).toEqual(false);
   expect(z.string().ulid().isCIDR).toEqual(false);
   expect(z.string().ulid().isULID).toEqual(true);
 });
@@ -875,6 +883,88 @@ test("IP validation", () => {
   expect(
     invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)
   ).toBe(true);
+});
+
+test("IP Range validation", () => {
+  const ipv4Range = z
+    .string()
+    .ipRange({ cidr: "192.168.1.0/33", version: "v4" });
+  expect(() => ipv4Range.parse("192.168.1.1")).toThrow();
+
+  const ipv6Range = z
+    .string()
+    .ipRange({ cidr: "2001:db8::/129", version: "v6" });
+  expect(() => ipv6Range.parse("2001:db9::1")).toThrow();
+
+  const validIPv4Ranges = [
+    { ip: "192.168.1.10", cidr: "192.168.1.0/24" },
+    { ip: "192.168.1.20", cidr: "192.168.1.0/24" },
+    { ip: "172.16.0.5", cidr: "172.16.0.0/12" },
+    { ip: "10.0.0.1", cidr: "10.0.0.0/8" },
+    { ip: "2001:db8::1", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:1234:5678:abcd:ef01:2345:6789", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:85a3::8a2e:370:7334", cidr: "2001:db8::/32" },
+    { ip: "0.0.0.0", cidr: "0.0.0.0/0" },
+    { ip: "37.85.236.115", cidr: "37.85.236.0/24" },
+    { ip: "114.71.82.94", cidr: "114.71.82.0/24" },
+  ];
+
+  const invalidIPv4Ranges = [
+    { ip: "192.168.2.10", cidr: "192.168.1.0/24" },
+    { ip: "192.168.2.5", cidr: "192.168.1.0/24" },
+    { ip: "10.1.1.1", cidr: "11.0.0.0/8" },
+    { ip: "37.85.237.115", cidr: "37.85.236.0/24" },
+    { ip: "114.71.83.94", cidr: "114.71.82.0/24" },
+    { ip: "172.32.0.1", cidr: "172.16.0.0/12" },
+  ];
+
+  expect(
+    validIPv4Ranges.every(({ ip, cidr }) => {
+      const ipRangeSchema = z.string().ipRange({ cidr, version: "v4" });
+
+      return ipRangeSchema.safeParse(ip).success;
+    })
+  ).toBe(true);
+  expect(
+    invalidIPv4Ranges.every(({ ip, cidr }) => {
+      const ipRangeSchema = z.string().ipRange({ cidr, version: "v4" });
+
+      return ipRangeSchema.safeParse(ip).success === false;
+    })
+  ).toBe(true);
+
+  const validIPv6Ranges = [
+    { ip: "2001:db8::1", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:1234:5678:abcd:ef01:2345:6789", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:85a3::8a2e:370:7334", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:abcd:ef01:2345:6789:abcd:ef01", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:0:1:0:0:0:1", cidr: "2001:db8:0:1::/64" },
+    { ip: "fe80::1", cidr: "fe80::/10" },
+    { ip: "2001:4888:50:ff00:500:d::", cidr: "2001:4888:50:ff00::/64" },
+  ];
+
+  const invalidIPv6Ranges = [
+    { ip: "::1", cidr: "::/128" },
+    { ip: "2001:db9::1", cidr: "2001:db8::/32" },
+    { ip: "fe80::1", cidr: "2001:db8::/32" },
+    { ip: "ff00::1", cidr: "2001:db8::/32" },
+    { ip: "2001:db8:abcd:1234::1", cidr: "2001:db8:abcd:5678::/64" },
+  ];
+
+  expect(
+    validIPv6Ranges.every(({ ip, cidr }) => {
+      const ipRangeSchema = z.string().ipRange({ cidr, version: "v6" });
+
+      return ipRangeSchema.safeParse(ip).success;
+    })
+  ).toBe(true);
+  expect(
+    invalidIPv6Ranges.every(({ ip, cidr }) => {
+      const ipRangeSchema = z.string().ipRange({ cidr, version: "v6" });
+
+      return ipRangeSchema.safeParse(ip).success === false;
+    })
+  );
 });
 
 test("CIDR validation", () => {
