@@ -19,6 +19,7 @@ import {
   ParseReturnType,
   ParseStatus,
   SyncParseReturnType,
+  processInChunks,
 } from "./helpers/parseUtil";
 import { partialUtil } from "./helpers/partialUtil";
 import { Primitive } from "./helpers/typeAliases";
@@ -1053,7 +1054,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           status.dirty();
         }
       } else if (check.kind === "base64") {
-        if (!base64Regex.test(input.data)) {
+        if(!processInChunks(input.data, 2048, 4, (chunk)=>base64Regex(chunk))) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
             validation: "base64",
