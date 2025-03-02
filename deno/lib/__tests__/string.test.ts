@@ -39,6 +39,14 @@ test("failing validations", () => {
   expect(() => endsWith.parse("x")).toThrow();
 });
 
+test("length checks", () => {
+  expect(minFive.parse("12345").length).toBeGreaterThanOrEqual(5);
+  expect(minFive.parse("123456").length).toBeGreaterThanOrEqual(5);
+  expect(maxFive.parse("1234").length).toBeLessThanOrEqual(5);
+  expect(maxFive.parse("12345").length).toBeLessThanOrEqual(5);
+  expect(justFive.parse("12345").length).toEqual(5);
+});
+
 test("email validations", () => {
   const validEmails = [
     `email@domain.com`,
@@ -566,8 +574,47 @@ test("trim", () => {
 });
 
 test("lowerCase", () => {
-  expect(z.string().toLowerCase().parse("ASDF")).toEqual("asdf");
-  expect(z.string().toUpperCase().parse("asdf")).toEqual("ASDF");
+  const lowercase = z.string().toLowerCase();
+
+  expect(lowercase.parse("ASDF")).toEqual("asdf");
+
+  // ordering of methods is respected
+  expect(lowercase.startsWith("a").parse("ASDF")).toEqual("asdf");
+  expect(lowercase.endsWith("f").parse("ASDF")).toEqual("asdf");
+  expect(lowercase.includes("s").parse("ASDF")).toEqual("asdf");
+  expect(z.string().startsWith("A").toLowerCase().parse("ASDF")).toEqual(
+    "asdf"
+  );
+  expect(z.string().endsWith("F").toLowerCase().parse("ASDF")).toEqual("asdf");
+  expect(z.string().includes("S").toLowerCase().parse("ASDF")).toEqual("asdf");
+  // @ts-expect-error ignore case inference
+  expect(() => lowercase.startsWith("A").parse("ASDF")).toThrow();
+  // @ts-expect-error ignore case inference
+  expect(() => lowercase.endsWith("F").parse("ASDF")).toThrow();
+  // @ts-expect-error ignore case inference
+  expect(() => lowercase.includes("S").parse("ASDF")).toThrow();
+});
+
+test("upperCase", () => {
+  const uppercase = z.string().toUpperCase();
+
+  expect(uppercase.parse("asdf")).toEqual("ASDF");
+
+  // ordering of methods is respected
+  expect(uppercase.startsWith("A").parse("asdf")).toEqual("ASDF");
+  expect(uppercase.endsWith("F").parse("asdf")).toEqual("ASDF");
+  expect(uppercase.includes("S").parse("asdf")).toEqual("ASDF");
+  expect(z.string().startsWith("a").toUpperCase().parse("asdf")).toEqual(
+    "ASDF"
+  );
+  expect(z.string().endsWith("f").toUpperCase().parse("asdf")).toEqual("ASDF");
+  expect(z.string().includes("s").toUpperCase().parse("asdf")).toEqual("ASDF");
+  // @ts-expect-error ignore case inference
+  expect(() => uppercase.startsWith("a").parse("asdf")).toThrow();
+  // @ts-expect-error ignore case inference
+  expect(() => uppercase.endsWith("f").parse("asdf")).toThrow();
+  // @ts-expect-error ignore case inference
+  expect(() => uppercase.includes("s").parse("asdf")).toThrow();
 });
 
 test("datetime", () => {
