@@ -36,8 +36,8 @@
 <div align="center">
   <a href="https://mintlify.link/zod-readme">
     <picture width="85%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/4210222e-a033-46f5-b083-08b9fe409de0">
-      <img alt="mintlify logo" src="https://github.com/user-attachments/assets/4210222e-a033-46f5-b083-08b9fe409de0" width="85%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/8619eef1-fea6-4f00-b1ff-2a12fb90ca54">
+      <img alt="mintlify logo" src="https://github.com/user-attachments/assets/8619eef1-fea6-4f00-b1ff-2a12fb90ca54" width="85%">
     </picture>
   </a>
   <br/>
