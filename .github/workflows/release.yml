@@ -61,6 +61,14 @@ jobs:
         run: |
           echo "Version in package.json has not changed. Skipping."
           exit 0
+      
+      - name: Update jsr.json version
+        if: steps.publish.outputs.type != 'none'
+        uses: jossef/action-set-json-field@v2.2
+        with:
+          file: deno/lib/jsr.json
+          field: version
+          value: ${{ steps.publish.outputs.version }}
 
       - name: Push to Deno
         if: steps.publish.outputs.type != 'none'

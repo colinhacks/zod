@@ -1,0 +1,5 @@
+{
+  "name": "@colinhacks/zod",
+  "version": "3.23.8",
+  "exports": "./mod.ts"
+}
