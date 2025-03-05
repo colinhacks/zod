@@ -27,8 +27,14 @@
 </div>
 
 <br/>
-<br/>
 
+<table align="center" style="text-align:center;"><td>
+  <p align="center">The next major version of Zod (v4) is <br/>
+  under active development, supported by <br/>
+  the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.</p></td>
+</table>
+
+<br/>
 <br/>
 
 <h2 align="center">Featured sponsor: Mintlify</h2>
@@ -48,7 +54,7 @@
 <br/>
 <br/>
  
- ## Table of contents
+## Table of contents
 
 > These docs have been translated into [Chinese](./README_ZH.md) and [Korean](./README_KO.md).
 
