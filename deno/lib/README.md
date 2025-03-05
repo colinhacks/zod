@@ -28,21 +28,13 @@
 
 <br/>
 
-<div style="width: 50%; border: 1px solid black; padding: 10px;">
-  This block is 50% width. This block is 50% width. This block is 50% width. This block is 50% width. This block is 50% width. This block is 50% width. This block is 50% width.
-</div>
-
-<table align="center" width="50%" style="max-width:400px"><td>The next major version of Zod (v4) is under active development, supported by the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.</td></table>
-
-<table align="center" width="300px" style="max-width:50%;"><td>The next major version of Zod (v4) is under active development, supported by the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.</td></table>
-
-<p align="center" width="400" style="max-width:400px">The next major version of Zod (v4) is under active development, supported by the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.</p>
-
-<!-- > The next major version of Zod (v4) is under active development, supported by the [Clerk OSS Fellowship](https://clerk.com/blog/zod-fellowship). -->
+<table align="center" ><td>
+  The next major version of Zod (v4) is <br/>
+  under active development, supported by <br/>
+  the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.</td>
+</table>
 
 <br/>
-<br/>
-
 <br/>
 
 <h2 align="center">Featured sponsor: Mintlify</h2>
