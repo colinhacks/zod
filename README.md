@@ -26,6 +26,8 @@
   <br />
 </div>
 
+The next major version of Zod (v4) is under active development, supported by the [Clerk OSS Fellowship](https://clerk.com/blog/zod-fellowship).
+
 <br/>
 <br/>
 
@@ -48,7 +50,7 @@
 <br/>
 <br/>
  
- ## Table of contents
+## Table of contents
 
 > These docs have been translated into [Chinese](./README_ZH.md) and [Korean](./README_KO.md).
 
