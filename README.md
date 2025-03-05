@@ -28,10 +28,10 @@
 
 <br/>
 
-<table align="center" style="text-align:center;">
-  The next major version of Zod (v4) is <br/>
+<table align="center" style="text-align:center;"><td>
+  <p align="center">The next major version of Zod (v4) is <br/>
   under active development, supported by <br/>
-  the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.
+  the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.<p></td>
 </table>
 
 <br/>
