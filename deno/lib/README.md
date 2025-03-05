@@ -28,7 +28,7 @@
 
 <br/>
 
-<p align="center" width="400" style="width:400px">The next major version of Zod (v4) is under active development, supported by the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.</p>
+<p align="center" width="400" style="max-width:400px">The next major version of Zod (v4) is under active development, supported by the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.</p>
 
 <!-- > The next major version of Zod (v4) is under active development, supported by the [Clerk OSS Fellowship](https://clerk.com/blog/zod-fellowship). -->
 
