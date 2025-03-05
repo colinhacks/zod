@@ -29,7 +29,7 @@
 <br/>
 
 <div style="width: 50%; border: 1px solid black; padding: 10px;">
-  This block is 50% width.
+  This block is 50% width. This block is 50% width. This block is 50% width. This block is 50% width. This block is 50% width. This block is 50% width. This block is 50% width.
 </div>
 
 <table align="center" width="400" style="max-width:400px"><td>The next major version of Zod (v4) is under active development, supported by the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.</td></table>
