@@ -1,0 +1,9 @@
+{
+  "extends": "../../.configs/tsconfig.base.json",
+  "compilerOptions": {
+    "isolatedDeclarations": false,
+    "composite": true,
+    "exactOptionalPropertyTypes": true
+  },
+  "exclude": ["vitest.config.ts"]
+}

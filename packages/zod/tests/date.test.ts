@@ -1,7 +1,6 @@
-// @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import * as z from "../src/index";
+import * as z from "zod";
 
 const beforeBenchmarkDate = new Date(2022, 10, 4);
 const benchmarkDate = new Date(2022, 10, 5);
@@ -30,9 +29,7 @@ test("min max getters", () => {
   expect(minCheck.min(afterBenchmarkDate).minDate).toEqual(afterBenchmarkDate);
 
   expect(maxCheck.maxDate).toEqual(benchmarkDate);
-  expect(maxCheck.max(beforeBenchmarkDate).maxDate).toEqual(
-    beforeBenchmarkDate
-  );
+  expect(maxCheck.max(beforeBenchmarkDate).maxDate).toEqual(beforeBenchmarkDate);
 });
 
 test("coerce true", () => {

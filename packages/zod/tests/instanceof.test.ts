@@ -1,8 +1,5 @@
-// @ts-ignore TS6133
-import { expect, test } from "vitest";
-
-import { util } from "../src/helpers";
-import * as z from "../src/index";
+import { expect, expectTypeOf, test } from "vitest";
+import * as z from "zod";
 
 test("instanceof", async () => {
   class Test {}
@@ -24,14 +21,10 @@ test("instanceof", async () => {
   const bar = BarSchema.parse(new Bar("asdf"));
   expect(bar.val).toEqual("asdf");
 
-  await expect(() => SubtestSchema.parse(new Test())).toThrow(
-    /Input not instance of Subtest/
-  );
-  await expect(() => TestSchema.parse(12)).toThrow(
-    /Input not instance of Test/
-  );
+  await expect(() => SubtestSchema.parse(new Test())).toThrow(/Input not instance of Subtest/);
+  await expect(() => TestSchema.parse(12)).toThrow(/Input not instance of Test/);
 
-  util.assertEqual<Test, z.infer<typeof TestSchema>>(true);
+  expectTypeOf<Test>().toEqualTypeOf<z.infer<typeof TestSchema>>();
 });
 
 test("instanceof fatal", () => {

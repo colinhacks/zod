@@ -1,17 +1,27 @@
-// @ts-ignore TS6133
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
+import * as z from "zod";
 
-import { util } from "../src/helpers";
-import * as z from "../src/index";
+function nest<TData extends z.ZodType>(schema: TData) {
+  return z.object({
+    nested: schema,
+  });
+}
 
 test("generics", () => {
-  async function stripOuter<TData extends z.ZodTypeAny>(
-    schema: TData,
-    data: unknown
-  ) {
+  const a = nest(z.object({ a: z.string() }));
+  type a = z.infer<typeof a>;
+  expectTypeOf<a>().toEqualTypeOf<{ nested: { a: string } }>();
+
+  const b = nest(z.object({ a: z.string().optional() }));
+  type b = z.infer<typeof b>;
+  expectTypeOf<b>().toEqualTypeOf<{ nested: { a?: string | undefined } }>();
+});
+
+test("generics with optional", () => {
+  async function stripOuter<TData extends z.ZodType>(schema: TData, data: unknown) {
     return z
       .object({
-        nested: schema, // as z.ZodTypeAny,
+        nested: schema.optional(),
       })
       .transform((data) => {
         return data.nested;
@@ -20,32 +30,29 @@ test("generics", () => {
   }
 
   const result = stripOuter(z.object({ a: z.string() }), { a: "asdf" });
-  util.assertEqual<typeof result, Promise<{ a: string } | undefined>>(true);
+  expectTypeOf<typeof result>().toEqualTypeOf<Promise<{ a: string } | undefined>>();
 });
 
 // test("assignability", () => {
-//   const createSchemaAndParse = <K extends string, VS extends z.ZodString>(
-//     key: K,
-//     valueSchema: VS,
-//     data: unknown
-//   ) => {
+//   const createSchemaAndParse = <K extends string, VS extends z.ZodString>(key: K, valueSchema: VS, data: unknown) => {
 //     const schema = z.object({
 //       [key]: valueSchema,
-//     } as { [k in K]: VS });
-//     return { [key]: valueSchema };
+//     });
+//     // return { [key]: valueSchema };
 //     const parsed = schema.parse(data);
 //     return parsed;
 //     // const inferred: z.infer<z.ZodObject<{ [k in K]: VS }>> = parsed;
 //     // return inferred;
 //   };
 //   const parsed = createSchemaAndParse("foo", z.string(), { foo: "" });
-//   util.assertEqual<typeof parsed, { foo: string }>(true);
+//   expectTypeOf<typeof parsed>().toEqualTypeOf<{ foo: string }>();
 // });
 
 test("nested no undefined", () => {
   const inner = z.string().or(z.array(z.string()));
   const outer = z.object({ inner });
   type outerSchema = z.infer<typeof outer>;
-  z.util.assertEqual<outerSchema, { inner: string | string[] }>(true);
+  expectTypeOf<outerSchema>().toEqualTypeOf<{ inner: string | string[] }>();
+
   expect(outer.safeParse({ inner: undefined }).success).toEqual(false);
 });

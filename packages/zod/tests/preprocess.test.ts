@@ -1,153 +1,214 @@
-// @ts-ignore TS6133
-import { expect, test } from "vitest";
-
-import { util } from "../src/helpers";
-import * as z from "../src/index";
+import { expect, expectTypeOf, test } from "vitest";
+import * as z from "zod";
 
 test("preprocess", () => {
   const schema = z.preprocess((data) => [data], z.string().array());
-
   const value = schema.parse("asdf");
   expect(value).toEqual(["asdf"]);
-  util.assertEqual<(typeof schema)["_input"], unknown>(true);
+  expectTypeOf<(typeof schema)["_input"]>().toEqualTypeOf<unknown>();
 });
 
 test("async preprocess", async () => {
-  const schema = z.preprocess(async (data) => [data], z.string().array());
+  const schema = z.preprocess(async (data) => {
+    return [data];
+  }, z.string().array());
+  const value = await schema.safeParseAsync("asdf");
+  expect(value.data).toEqual(["asdf"]);
+  expect(value).toMatchInlineSnapshot(`
+    {
+      "data": [
+        "asdf",
+      ],
+      "success": true,
+    }
+  `);
+});
 
-  const value = await schema.parseAsync("asdf");
-  expect(value).toEqual(["asdf"]);
+test("ctx.addIssue accepts string", () => {
+  const schema = z.preprocess((val, ctx) => {
+    ctx.addIssue("bad stuff");
+  }, z.string());
+  const result = schema.safeParse("asdf");
+  expect(result.error!.issues).toHaveLength(1);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "custom",
+            "message": "bad stuff",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
 
 test("preprocess ctx.addIssue with parse", () => {
-  expect(() => {
-    z.preprocess((data, ctx) => {
-      ctx.addIssue({
-        input: data,
-        code: "custom",
-        message: `${data} is not one of our allowed strings`,
-      });
-      return data;
-    }, z.string()).parse("asdf");
-  }).toThrow(
-    JSON.stringify(
-      [
-        {
-          input: "asdf",
-          code: "custom",
-          message: "asdf is not one of our allowed strings",
-          path: [],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  const a = z.preprocess((data, ctx) => {
+    ctx.addIssue({
+      input: data,
+      code: "custom",
+      message: `${data} is not one of our allowed strings`,
+    });
+    return data;
+  }, z.string());
+
+  const result = a.safeParse("asdf");
+
+  // expect(result.error!.toJSON()).toContain("not one of our allowed strings");
+
+  expect(result.error!.issues).toHaveLength(1);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "custom",
+            "message": "asdf is not one of our allowed strings",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
 
 test("preprocess ctx.addIssue non-fatal by default", () => {
-  try {
-    z.preprocess((data, ctx) => {
-      ctx.addIssue({
-        input: data,
-        code: "custom",
-        message: `custom error`,
-      });
-      return data;
-    }, z.string()).parse(1234);
-  } catch (err) {
-    z.ZodError.assert(err);
-    expect(err.issues.length).toEqual(2);
-  }
-});
-
-test("preprocess ctx.addIssue fatal true", () => {
-  try {
-    z.preprocess((data, ctx) => {
-      ctx.addIssue({
-        input: data,
-        code: "custom",
-        message: `custom error`,
-        fatal: true,
-      });
-      return data;
-    }, z.string()).parse(1234);
-  } catch (err) {
-    z.ZodError.assert(err);
-    expect(err.issues.length).toEqual(1);
-  }
-});
-
-test("async preprocess ctx.addIssue with parse", async () => {
-  const schema = z.preprocess(async (data, ctx) => {
+  const schema = z.preprocess((data, ctx) => {
     ctx.addIssue({
-      input: data,
       code: "custom",
       message: `custom error`,
     });
     return data;
   }, z.string());
+  const result = schema.safeParse(1234);
 
-  expect(schema.parseAsync("asdf")).rejects.toThrow(
-    JSON.stringify(
-      [
-        {
-          input: "asdf",
-          code: "custom",
-          message: "custom error",
-          path: [],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  expect(result.error!.issues).toHaveLength(2);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "custom",
+            "message": "custom error",
+            "path": [],
+          },
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
 
-test("preprocess ctx.addIssue with parseAsync", async () => {
-  const result = await z
-    .preprocess(async (data, ctx) => {
-      ctx.addIssue({
-        input: data,
-        code: "custom",
-        message: `${data} is not one of our allowed strings`,
-      });
-      return data;
-    }, z.string())
-    .safeParseAsync("asdf");
+test("preprocess ctx.addIssue fatal true", () => {
+  const schema = z.preprocess((data, ctx) => {
+    ctx.addIssue({
+      input: data,
+      code: "custom",
+      origin: "custom",
+      message: `custom error`,
+      fatal: true,
+    });
+    return data;
+  }, z.string());
 
-  expect(JSON.parse(JSON.stringify(result))).toEqual({
-    success: false,
-    error: {
-      issues: [
-        {
-          code: "custom",
-          input: "asdf",
-          message: "asdf is not one of our allowed strings",
-          path: [],
-        },
-      ],
-      name: "ZodError",
-    },
-  });
+  const result = schema.safeParse(1234);
+
+  expect(result.error!.issues).toHaveLength(1);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "custom",
+            "fatal": true,
+            "message": "custom error",
+            "origin": "custom",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+});
+
+test("async preprocess ctx.addIssue with parseAsync", async () => {
+  const schema = z.preprocess(async (data, ctx) => {
+    ctx.addIssue({
+      input: data,
+      code: "custom",
+      message: `${data} is not one of our allowed strings`,
+    });
+    return data;
+  }, z.string());
+
+  const result = await schema.safeParseAsync("asdf");
+
+  expect(result.error!.issues).toHaveLength(1);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "custom",
+            "message": "asdf is not one of our allowed strings",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
 
 test("z.NEVER in preprocess", () => {
   const foo = z.preprocess((val, ctx) => {
     if (!val) {
-      ctx.addIssue({ input: val, code: z.ZodIssueCode.custom, message: "bad" });
+      ctx.addIssue({ input: val, code: "custom", message: "bad" });
       return z.NEVER;
     }
     return val;
   }, z.number());
 
   type foo = z.infer<typeof foo>;
-  util.assertEqual<foo, number>(true);
-  const arg = foo.safeParse(undefined);
-  if (!arg.success) {
-    expect(arg.error.issues[0].message).toEqual("bad");
-  }
+  expectTypeOf<foo>().toEqualTypeOf<number>();
+  const result = foo.safeParse(undefined);
+
+  expect(result.error!.issues).toHaveLength(2);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "custom",
+            "message": "bad",
+            "path": [],
+          },
+          {
+            "code": "invalid_type",
+            "expected": "number",
+            "message": "Invalid input: expected number",
+            "path": [],
+            "received": "Infinity",
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
+
 test("preprocess as the second property of object", () => {
   const schema = z.object({
     nonEmptyStr: z.string().min(1),
@@ -157,50 +218,72 @@ test("preprocess as the second property of object", () => {
     nonEmptyStr: "",
     positiveNum: "",
   });
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues.length).toEqual(2);
-    expect(result.error.issues[0].code).toEqual(z.ZodIssueCode.too_small);
-    expect(result.error.issues[1].code).toEqual(z.ZodIssueCode.too_small);
-  }
+
+  expect(result.error!.issues).toHaveLength(2);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "too_small",
+            "message": "Too small: expected string to have >1 characters",
+            "minimum": 1,
+            "origin": "string",
+            "path": [
+              "nonEmptyStr",
+            ],
+          },
+          {
+            "code": "too_small",
+            "inclusive": false,
+            "message": "Too small: expected number to be >0",
+            "minimum": 0,
+            "origin": "number",
+            "path": [
+              "positiveNum",
+            ],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
 
 test("preprocess validates with sibling errors", () => {
-  expect(() => {
-    z.object({
-      // Must be first
-      missing: z.string().refine(() => false),
-      preprocess: z.preprocess(
-        (data: any) => data?.trim(),
-        z.string().regex(/ asdf/)
-      ),
-    }).parse({ preprocess: " asdf" });
-  }).toThrow(
-    JSON.stringify(
-      [
-        {
-          code: "invalid_type",
-          input: undefined,
-          expected: "string",
-          received: "undefined",
-          path: ["missing"],
-          message: "Required",
-        },
-        {
-          code: "custom",
-          message: "Invalid input",
-          path: ["missing"],
-        },
-        {
-          input: "asdf",
-          validation: "regex",
-          code: "invalid_string",
-          message: "Invalid",
-          path: ["preprocess"],
-        },
-      ],
-      null,
-      2
-    )
-  );
+  const schema = z.object({
+    missing: z.string().refine(() => false),
+    preprocess: z.preprocess((data: any) => data?.trim(), z.string().regex(/ asdf/)),
+  });
+
+  const result = schema.safeParse({ preprocess: " asdf" });
+
+  expect(result.error!.issues).toHaveLength(2);
+  expect(result).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string",
+            "path": [
+              "missing",
+            ],
+          },
+          {
+            "code": "invalid_format",
+            "format": "regex",
+            "message": "Invalid string: must match pattern / asdf/",
+            "origin": "string",
+            "path": [
+              "preprocess",
+            ],
+            "pattern": "/ asdf/",
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });

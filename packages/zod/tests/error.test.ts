@@ -1,23 +1,20 @@
-// @ts-ignore TS6133
 import { expect, test } from "vitest";
-
-import { ZodError, ZodIssueCode } from "../src/ZodError";
-import * as z from "../src/index";
+import * as z from "zod";
 
 test("error creation", () => {
-  const err1 = ZodError.create([]);
-  err1.addIssue({
-    code: ZodIssueCode.invalid_type,
-    expected: z.ZodParsedType.object,
-    received: z.ZodParsedType.string,
+  const err1 = new z.ZodError([]);
+
+  err1.issues.push({
+    code: "invalid_type",
+    expected: "object",
     path: [],
     message: "",
-    fatal: true,
+    input: "adf",
   });
   err1.isEmpty;
 
-  const err2 = ZodError.create(err1.issues);
-  const err3 = new ZodError([]);
+  const err2 = new z.ZodError(err1.issues);
+  const err3 = new z.ZodError([]);
   err3.addIssues(err1.issues);
   err3.addIssue(err1.issues[0]);
   err1.message;
@@ -25,128 +22,199 @@ test("error creation", () => {
   err3.message;
 });
 
-const errorMap: z.ZodErrorMap = (error, ctx) => {
-  if (error.code === ZodIssueCode.invalid_type) {
-    if (error.expected === "string") {
+test("do not allow error and message together", () => {
+  expect(() =>
+    z.string().refine((val) => true, {
+      message: "override",
+      error: (iss) => (iss.input === undefined ? "asdf" : null),
+    })
+  ).toThrow();
+});
+
+const errorMap: z.ZodErrorMap = (issue) => {
+  if (issue.code === "invalid_type") {
+    if (issue.expected === "string") {
       return { message: "bad type!" };
     }
   }
-  if (error.code === ZodIssueCode.custom) {
-    return { message: `less-than-${error.params?.minimum}` };
+  if (issue.code === "custom") {
+    return { message: `less-than-${issue.params?.minimum}` };
   }
-  return { message: ctx.defaultError };
+  return undefined;
 };
 
 test("type error with custom error map", () => {
-  const result = z.string().safeParse(234, { errorMap });
-
-  expect(result.error?.issues[0].code).toEqual(z.ZodIssueCode.invalid_type);
-  expect(result.error?.issues[0].message).toEqual(`bad type!`);
+  const result = z.string().safeParse(234, { error: errorMap });
+  expect(result.success).toBe(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "bad type!",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("refinement fail with params", () => {
-  try {
-    z.number()
-      .refine((val) => val >= 3, {
-        params: { minimum: 3 },
-      })
-      .parse(2, { errorMap });
-  } catch (err) {
-    const zerr = err as unknown as z.ZodError;
-    expect(zerr.issues[0].code).toEqual(z.ZodIssueCode.custom);
-    expect(zerr.issues[0].message).toEqual(`less-than-3`);
-  }
+  const result = z
+    .number()
+    .refine((val) => val >= 3, {
+      params: { minimum: 3 },
+    })
+    .safeParse(2, { error: errorMap });
+  expect(result.success).toBe(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "less-than-3",
+          "params": {
+            "minimum": 3,
+          },
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
-test("custom error with custom errormap", () => {
-  try {
-    z.string()
-      .refine((val) => val.length > 12, {
-        params: { minimum: 13 },
-        message: "override",
-      })
-      .parse("asdf", { errorMap });
-  } catch (err) {
-    const zerr = err as unknown as z.ZodError;
-    expect(zerr.issues[0].message).toEqual("override");
-  }
+test("hard coded error  with custom errormap", () => {
+  const result = z
+    .string()
+    .refine((val) => val.length > 12, {
+      params: { minimum: 13 },
+      message: "override",
+    })
+    .safeParse("asdf", { error: () => "contextual" });
+
+  expect(result.success).toBe(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "override",
+          "params": {
+            "minimum": 13,
+          },
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("default error message", () => {
-  try {
-    z.number()
-      .refine((x) => x > 3)
-      .parse(2);
-  } catch (err) {
-    const zerr = err as unknown as z.ZodError;
-    expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual("Invalid input");
-  }
+  const result = z
+    .number()
+    .refine((x) => x > 3)
+    .safeParse(2);
+
+  expect(result.success).toBe(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "Invalid input",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("override error in refine", () => {
-  try {
-    z.number()
-      .refine((x) => x > 3, "override")
-      .parse(2);
-  } catch (err) {
-    const zerr = err as unknown as z.ZodError;
-    expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual("override");
-  }
+  const result = z
+    .number()
+    .refine((x) => x > 3, "override")
+    .safeParse(2);
+  expect(result.success).toBe(false);
+  expect(result.error!.issues.length).toEqual(1);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "override",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("override error in refinement", () => {
-  try {
-    z.number()
-      .refine((x) => x > 3, {
-        message: "override",
-      })
-      .parse(2);
-  } catch (err) {
-    const zerr = err as unknown as z.ZodError;
-    expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual("override");
-  }
+  const result = z
+    .number()
+    .refine((x) => x > 3, {
+      message: "override",
+    })
+    .safeParse(2);
+  expect(result.success).toBe(false);
+  expect(result.error!.issues.length).toEqual(1);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "override",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
 test("array minimum", () => {
-  try {
-    z.array(z.string()).min(3, "tooshort").parse(["asdf", "qwer"]);
-  } catch (err) {
-    const zerr: ZodError = err as any;
-    expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
-    expect(zerr.issues[0].message).toEqual("tooshort");
-  }
-  try {
-    z.array(z.string()).min(3).parse(["asdf", "qwer"]);
-  } catch (err) {
-    const zerr: ZodError = err as any;
-    expect(zerr.issues[0].code).toEqual(ZodIssueCode.too_small);
-    expect(zerr.issues[0].message).toEqual(
-      `Array must contain at least 3 element(s)`
-    );
-  }
+  let result = z.array(z.string()).min(3, "tooshort").safeParse(["asdf", "qwer"]);
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].code).toEqual("too_small");
+  expect(result.error!.issues[0].message).toEqual("tooshort");
+
+  result = z.array(z.string()).min(3).safeParse(["asdf", "qwer"]);
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].code).toEqual("too_small");
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "too_small",
+          "message": "Too small: expected array to have >3 items",
+          "minimum": 3,
+          "origin": "array",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });
 
-// implement test for semi-smart union logic that checks for type error on either left or right
-// test("union smart errors", () => {
-//   // expect.assertions(2);
-
-//   const p1 = z
-//     .union([z.string(), z.number().refine((x) => x > 0)])
-//     .safeParse(-3.2);
-
-//   if (p1.success === true) throw new Error();
-//   expect(p1.success).toBe(false);
-//   expect(p1.error.issues[0].code).toEqual(ZodIssueCode.custom);
-
-//   const p2 = z.union([z.string(), z.number()]).safeParse(false);
-//   // .catch(err => expect(err.issues[0].code).toEqual(ZodIssueCode.invalid_union));
-//   if (p2.success === true) throw new Error();
-//   expect(p2.success).toBe(false);
-//   expect(p2.error.issues[0].code).toEqual(ZodIssueCode.invalid_union);
-// });
+test("literal bigint default error message", () => {
+  const result = z.literal(BigInt(12)).safeParse(BigInt(13));
+  expect(result.success).toBe(false);
+  expect(result.error!.issues.length).toEqual(1);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_value",
+          "message": "Invalid input: expected 12n",
+          "path": [],
+          "values": [
+            12n,
+          ],
+        },
+      ],
+    }
+  `);
+});
 
 test("custom path in custom error map", () => {
   const schema = z.object({
@@ -155,33 +223,44 @@ test("custom path in custom error map", () => {
     }),
   });
 
-  const errorMap: z.ZodErrorMap = (error) => {
-    expect(error.path.length).toBe(2);
+  const errorMap: z.ZodErrorMap = (issue) => {
+    expect((issue.path ?? []).length).toBe(2);
     return { message: "doesnt matter" };
   };
-  const result = schema.safeParse({ items: ["first"] }, { errorMap });
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].path).toEqual(["items", "items-too-few"]);
-  }
-});
-
-test("error metadata from value", () => {
-  const dynamicRefine = z.string().refine(
-    (val) => val === val.toUpperCase(),
-    (val) => ({ params: { val } })
-  );
-
-  const result = dynamicRefine.safeParse("asdf");
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    const sub = result.error.issues[0];
-    expect(result.error.issues[0].code).toEqual("custom");
-    if (sub.code === "custom") {
-      expect(sub.params?.val).toEqual("asdf");
+  const result = schema.safeParse({ items: ["first"] }, { error: errorMap });
+  expect(result.success).toBe(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "doesnt matter",
+          "path": [
+            "items",
+            "items-too-few",
+          ],
+        },
+      ],
     }
-  }
+  `);
 });
+
+// test("error metadata from value", () => {
+//   const dynamicRefine = z.string().refine(
+//     (val) => val === val.toUpperCase(),
+//     (val) => ({ params: { val } })
+//   );
+
+//   const result = dynamicRefine.safeParse("asdf");
+//   expect(result.success).toEqual(false);
+//   if (!result.success) {
+//     const sub = result.error.issues[0];
+//     expect(result.error.issues[0].code).toEqual("custom");
+//     if (sub.code === "custom") {
+//       expect(sub.params?.val).toEqual("asdf");
+//     }
+//   }
+// });
 
 // test("don't call refine after validation failed", () => {
 //   const asdf = z
@@ -199,10 +278,9 @@ test("error metadata from value", () => {
 test("root level formatting", () => {
   const schema = z.string().email();
   const result = schema.safeParse("asdfsdf");
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.format()._errors).toEqual(["Invalid email"]);
-  }
+  expect(result.success).toBe(false);
+
+  expect(result.error!.format()._errors).toEqual(["Invalid email"]);
 });
 
 test("custom path", () => {
@@ -218,14 +296,11 @@ test("custom path", () => {
     confirm: "qeanuts",
   });
 
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    // nested errors
-    const error = result.error.format();
-    expect(error._errors).toEqual([]);
-    expect(error.password?._errors).toEqual(undefined);
-    expect(error.confirm?._errors).toEqual(["Invalid input"]);
-  }
+  expect(result.success).toBe(false);
+  const error = result.error!.format();
+  expect(error._errors).toEqual([]);
+  expect(error.password?._errors).toEqual(undefined);
+  expect(error.confirm?._errors).toEqual(["Invalid input"]);
 });
 
 test("custom path", () => {
@@ -241,10 +316,8 @@ test("custom path", () => {
     confirm: "asdf",
   });
 
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues.length).toEqual(3);
-  }
+  expect(result.success).toBe(false);
+  expect(result.error!.issues.length).toEqual(3);
 });
 
 const schema = z.object({
@@ -263,10 +336,8 @@ test("no abort early on refinements", () => {
   };
 
   const result1 = schema.safeParse(invalidItem);
-  expect(result1.success).toEqual(false);
-  if (!result1.success) {
-    expect(result1.error.issues.length).toEqual(2);
-  }
+  expect(result1.success).toBe(false);
+  expect(result1.error!.issues.length).toEqual(2);
 });
 
 test("detect issue with input fallback", () => {
@@ -280,7 +351,7 @@ test("detect issue with input fallback", () => {
         return (val ^ 2) > 10;
       } // should be number but it's a string
     );
-  expect(() => schema.parse("hello")).toThrow(ZodError);
+  expect(() => schema.parse("hello")).toThrow(z.ZodError);
 });
 
 test("formatting", () => {
@@ -293,36 +364,28 @@ test("formatting", () => {
   const result1 = schema.safeParse(invalidItem);
   const result2 = schema.safeParse(invalidArray);
 
-  expect(result1.success).toEqual(false);
-  expect(result2.success).toEqual(false);
-  if (!result1.success) {
-    const error = result1.error.format();
+  expect(result1.success).toBe(false);
+  expect(result2.success).toBe(false);
+  const error1 = result1.error!.format();
+  expect(error1._errors).toEqual([]);
+  expect(error1.inner?._errors).toEqual([]);
+  expect(error1.inner?.name?.[1]).toEqual(undefined);
 
-    expect(error._errors).toEqual([]);
-    expect(error.inner?._errors).toEqual([]);
-    // expect(error.inner?.name?._errors).toEqual(["Invalid input"]);
-    // expect(error.inner?.name?.[0]._errors).toEqual(["Invalid input"]);
-    expect(error.inner?.name?.[1]).toEqual(undefined);
-  }
-  if (!result2.success) {
-    type FormattedError = z.inferFormattedError<typeof schema>;
-    const error: FormattedError = result2.error.format();
-    expect(error._errors).toEqual([]);
-    expect(error.inner?._errors).toEqual([]);
-    expect(error.inner?.name?._errors).toEqual(["Invalid input"]);
-    expect(error.inner?.name?.[0]).toEqual(undefined);
-    expect(error.inner?.name?.[1]).toEqual(undefined);
-    expect(error.inner?.name?.[2]).toEqual(undefined);
-  }
+  type FormattedError = z.inferFormattedError<typeof schema>;
+  const error2: FormattedError = result2.error!.format();
+  expect(error2._errors).toEqual([]);
+  expect(error2.inner?._errors).toEqual([]);
+  expect(error2.inner?.name?._errors).toEqual(["Invalid input"]);
+  expect(error2.inner?.name?.[0]).toEqual(undefined);
+  expect(error2.inner?.name?.[1]).toEqual(undefined);
+  expect(error2.inner?.name?.[2]).toEqual(undefined);
 
   // test custom mapper
-  if (!result2.success) {
-    type FormattedError = z.inferFormattedError<typeof schema, number>;
-    const error: FormattedError = result2.error.format(() => 5);
-    expect(error._errors).toEqual([]);
-    expect(error.inner?._errors).toEqual([]);
-    expect(error.inner?.name?._errors).toEqual([5]);
-  }
+  type FormattedErrorWithNumber = z.inferFormattedError<typeof schema, number>;
+  const errorWithNumber: FormattedErrorWithNumber = result2.error!.format(() => 5);
+  expect(errorWithNumber._errors).toEqual([]);
+  expect(errorWithNumber.inner?._errors).toEqual([]);
+  expect(errorWithNumber.inner?.name?._errors).toEqual([5]);
 });
 
 test("formatting with nullable and optional fields", () => {
@@ -344,257 +407,233 @@ test("formatting with nullable and optional fields", () => {
     optionalTuple: ["abcd", "abcd", 1],
   };
   const result = schema.safeParse(invalidItem);
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    type FormattedError = z.inferFormattedError<typeof schema>;
-    const error: FormattedError = result.error.format();
-    expect(error._errors).toEqual([]);
-    expect(error.nullableObject?._errors).toEqual([]);
-    expect(error.nullableObject?.name?._errors).toEqual(["Invalid input"]);
-    expect(error.nullableArray?._errors).toEqual([]);
-    expect(error.nullableArray?.[0]?._errors).toEqual(["Invalid input"]);
-    expect(error.nullableTuple?._errors).toEqual([]);
-    expect(error.nullableTuple?.[0]?._errors).toEqual(["Invalid input"]);
-    expect(error.nullableTuple?.[1]?._errors).toEqual(["Invalid input"]);
-    expect(error.optionalObject?._errors).toEqual([]);
-    expect(error.optionalObject?.name?._errors).toEqual(["Invalid input"]);
-    expect(error.optionalArray?._errors).toEqual([]);
-    expect(error.optionalArray?.[0]?._errors).toEqual(["Invalid input"]);
-    expect(error.optionalTuple?._errors).toEqual([]);
-    expect(error.optionalTuple?.[0]?._errors).toEqual(["Invalid input"]);
-    expect(error.optionalTuple?.[1]?._errors).toEqual(["Invalid input"]);
-  }
+  expect(result.success).toBe(false);
+  const error: z.inferFormattedError<typeof schema> = result.error!.format();
+  expect(error._errors).toEqual([]);
+  expect(error.nullableObject?._errors).toEqual([]);
+  expect(error.nullableObject?.name?._errors).toEqual(["Invalid input"]);
+  expect(error.nullableArray?._errors).toEqual([]);
+  expect(error.nullableArray?.[0]?._errors).toEqual(["Invalid input"]);
+  expect(error.nullableTuple?._errors).toEqual([]);
+  expect(error.nullableTuple?.[0]?._errors).toEqual(["Invalid input"]);
+  expect(error.nullableTuple?.[1]?._errors).toEqual(["Invalid input"]);
+  expect(error.optionalObject?._errors).toEqual([]);
+  expect(error.optionalObject?.name?._errors).toEqual(["Invalid input"]);
+  expect(error.optionalArray?._errors).toEqual([]);
+  expect(error.optionalArray?.[0]?._errors).toEqual(["Invalid input"]);
+  expect(error.optionalTuple?._errors).toEqual([]);
+  expect(error.optionalTuple?.[0]?._errors).toEqual(["Invalid input"]);
+  expect(error.optionalTuple?.[1]?._errors).toEqual(["Invalid input"]);
+
+  expect(error).toMatchInlineSnapshot(`
+    {
+      "_errors": [],
+      "nullableArray": {
+        "0": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "_errors": [],
+      },
+      "nullableObject": {
+        "_errors": [],
+        "name": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+      },
+      "nullableTuple": {
+        "0": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "1": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "_errors": [],
+      },
+      "optionalArray": {
+        "0": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "_errors": [],
+      },
+      "optionalObject": {
+        "_errors": [],
+        "name": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+      },
+      "optionalTuple": {
+        "0": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "1": {
+          "_errors": [
+            "Invalid input",
+          ],
+        },
+        "_errors": [],
+      },
+    }
+  `);
 });
 
 test("inferFlattenedErrors", () => {
-  const schemaWithTransform = z
-    .object({ foo: z.string() })
-    .transform((o) => ({ bar: o.foo }));
+  const schemaWithTransform = z.object({ foo: z.string() }).transform((o) => ({ bar: o.foo }));
 
   const result = schemaWithTransform.safeParse({});
 
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    type ValidationErrors = z.inferFlattenedErrors<typeof schemaWithTransform>;
-    const error: ValidationErrors = result.error.flatten();
-    expect(error.formErrors).toEqual([]);
-    expect(error.fieldErrors).toEqual({ foo: ["Required"] });
-  }
+  expect(result.success).toBe(false);
+  type ValidationErrors = z.inferFlattenedErrors<typeof schemaWithTransform>;
+  const error: ValidationErrors = result.error!.flatten();
+  expect(error.formErrors).toEqual([]);
+  expect(error.fieldErrors).toEqual({ foo: ["Invalid input: expected string"] });
 });
 
 const stringWithCustomError = z.string({
-  errorMap: (issue, ctx) => ({
-    message:
-      issue.code === "invalid_type"
-        ? ctx.data
-          ? "Invalid name"
-          : "Name is required"
-        : ctx.defaultError,
-  }),
+  error: () => "bound",
 });
 
 test("schema-bound error map", () => {
   const result = stringWithCustomError.safeParse(1234);
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("Invalid name");
-  }
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].message).toEqual("bound");
+});
 
-  const result2 = stringWithCustomError.safeParse(undefined);
-  expect(result2.success).toEqual(false);
-  if (!result2.success) {
-    expect(result2.error.issues[0].message).toEqual("Name is required");
-  }
-
+test("bound error map overrides contextual", () => {
   // support contextual override
-  const result3 = stringWithCustomError.safeParse(undefined, {
-    errorMap: () => ({ message: "OVERRIDE" }),
+  const result = stringWithCustomError.safeParse(undefined, {
+    error: () => ({ message: "override" }),
   });
-  expect(result3.success).toEqual(false);
-  if (!result3.success) {
-    expect(result3.error.issues[0].message).toEqual("OVERRIDE");
-  }
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].message).toEqual("bound");
 });
 
-test("overrideErrorMap", () => {
+test("z.config customError ", () => {
   // support overrideErrorMap
-  z.setErrorMap(() => ({ message: "OVERRIDE" }));
-  const result4 = stringWithCustomError.min(10).safeParse("tooshort");
-  expect(result4.success).toEqual(false);
-  if (!result4.success) {
-    expect(result4.error.issues[0].message).toEqual("OVERRIDE");
-  }
-  z.setErrorMap(z.defaultErrorMap);
+
+  z.config({ customError: () => ({ message: "override" }) });
+  const result = stringWithCustomError.min(10).safeParse("tooshort");
+  expect(result.success).toBe(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "too_small",
+          "message": "override",
+          "minimum": 10,
+          "origin": "string",
+          "path": [],
+        },
+      ],
+    }
+  `);
+  expect(result.error!.issues[0].message).toEqual("override");
+  z.config({ customError: undefined });
 });
 
-test("invalid and required", () => {
-  const str = z.string({
-    invalid_type_error: "Invalid name",
-    required_error: "Name is required",
-  });
-  const result1 = str.safeParse(1234);
-  expect(result1.success).toEqual(false);
-  if (!result1.success) {
-    expect(result1.error.issues[0].message).toEqual("Invalid name");
-  }
-  const result2 = str.safeParse(undefined);
-  expect(result2.success).toEqual(false);
-  if (!result2.success) {
-    expect(result2.error.issues[0].message).toEqual("Name is required");
-  }
-});
-
-test("Fallback to default required error", () => {
-  const str = z.string({
-    invalid_type_error: "Invalid name",
-    // required_error: "Name is required",
-  });
-
-  const result2 = str.safeParse(undefined);
-  expect(result2.success).toEqual(false);
-  if (!result2.success) {
-    expect(result2.error.issues[0].message).toEqual("Required");
-  }
-});
-
-test("invalid and required and errorMap", () => {
-  expect(() => {
-    return z.string({
-      invalid_type_error: "Invalid name",
-      required_error: "Name is required",
-      errorMap: () => ({ message: "OVERRIDE" }),
-    });
-  }).toThrow();
-});
-
-test("strict error message", () => {
-  const errorMsg = "Invalid object";
-  const obj = z.object({ x: z.string() }).strict(errorMsg);
-  const result = obj.safeParse({ x: "a", y: "b" });
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].message).toEqual(errorMsg);
-  }
-});
-
-test("enum error message, invalid enum elementstring", () => {
-  try {
-    z.enum(["Tuna", "Trout"]).parse("Salmon");
-  } catch (err) {
-    const zerr = err as unknown as z.ZodError;
-    expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual(
-      "Invalid enum value. Expected 'Tuna' | 'Trout', received 'Salmon'"
-    );
-  }
-});
-
-test("enum error message, invalid type", () => {
-  try {
-    z.enum(["Tuna", "Trout"]).parse(12);
-  } catch (err) {
-    const zerr = err as unknown as z.ZodError;
-    expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual(
-      "Expected 'Tuna' | 'Trout', received number"
-    );
-  }
-});
-
-test("nativeEnum default error message", () => {
-  enum Fish {
-    Tuna = "Tuna",
-    Trout = "Trout",
-  }
-  try {
-    z.nativeEnum(Fish).parse("Salmon");
-  } catch (err) {
-    const zerr = err as unknown as z.ZodError;
-    expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual(
-      "Invalid enum value. Expected 'Tuna' | 'Trout', received 'Salmon'"
-    );
-  }
-});
-
-test("literal default error message", () => {
-  try {
-    z.literal("Tuna").parse("Trout");
-  } catch (err) {
-    const zerr = err as unknown as z.ZodError;
-    expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual(
-      `Invalid literal value, expected "Tuna"`
-    );
-  }
-});
-
-test("literal bigint default error message", () => {
-  try {
-    z.literal(BigInt(12)).parse(BigInt(13));
-  } catch (err) {
-    const zerr = err as unknown as z.ZodError;
-    expect(zerr.issues.length).toEqual(1);
-    expect(zerr.issues[0].message).toEqual(
-      `Invalid literal value, expected "12"`
-    );
-  }
-});
-
-test("enum with message returns the custom error message", () => {
-  const schema = z.enum(["apple", "banana"], {
-    message: "the value provided is invalid",
-  });
-
-  const result1 = schema.safeParse("berries");
-  expect(result1.success).toEqual(false);
-  if (!result1.success) {
-    expect(result1.error.issues[0].message).toEqual(
-      "the value provided is invalid"
-    );
-  }
-
-  const result2 = schema.safeParse(undefined);
-  expect(result2.success).toEqual(false);
-  if (!result2.success) {
-    expect(result2.error.issues[0].message).toEqual(
-      "the value provided is invalid"
-    );
-  }
-
-  const result3 = schema.safeParse("banana");
-  expect(result3.success).toEqual(true);
-
-  const result4 = schema.safeParse(null);
-  expect(result4.success).toEqual(false);
-  if (!result4.success) {
-    expect(result4.error.issues[0].message).toEqual(
-      "the value provided is invalid"
-    );
-  }
-});
-
-test("when the message is falsy, it is used as is provided", () => {
-  const schema = z.string().max(1, { message: "" });
-  const result = schema.safeParse("asdf");
-  expect(result.success).toEqual(false);
-  if (!result.success) {
-    expect(result.error.issues[0].message).toEqual("");
-  }
-});
-
-// test("dont short circuit on continuable errors", () => {
-//   const user = z
-//     .object({
-//       password: z.string().min(6),
-//       confirm: z.string(),
-//     })
-//     .refine((data) => data.password === data.confirm, {
-//       message: "Passwords don't match",
-//       path: ["confirm"],
-//     });
-//   const result = user.safeParse({ password: "asdf", confirm: "qwer" });
-//   if (!result.success) {
-//     expect(result.error.issues.length).toEqual(2);
+// test("invalid and required", () => {
+//   const str = z.string({
+//     invalid_type_error: "Invalid name",
+//     required_error: "Name is required",
+//   });
+//   const result1 = str.safeParse(1234);
+//   expect(result1.success).toBe(false);
+//   if (!result1.success) {
+//     expect(result1.error.issues[0].message).toEqual("Invalid name");
+//   }
+//   const result2 = str.safeParse(undefined);
+//   expect(result2.success).toBe(false);
+//   if (!result2.success) {
+//     expect(result2.error.issues[0].message).toEqual("Name is required");
 //   }
 // });
+
+// test("Fallback to default required error", () => {
+//   const str = z.string({
+//     invalid_type_error: "Invalid name",
+//     // required_error: "Name is required",
+//   });
+
+//   const result2 = str.safeParse(undefined);
+//   expect(result2.success).toBe(false);
+//   if (!result2.success) {
+//     expect(result2.error.issues[0].message).toEqual("Required");
+//   }
+// });
+
+// test("invalid and required and errorMap", () => {
+//   expect(() => {
+//     return z.string({
+//       invalid_type_error: "Invalid name",
+//       required_error: "Name is required",
+//       errorMap: () => ({ message: "override" }),
+//     });
+//   }).toThrow();
+// });
+
+// test("strict error message", () => {
+//   const errorMsg = "Invalid object";
+//   const obj = z.object({ x: z.string() }).strict(errorMsg);
+//   const result = obj.safeParse({ x: "a", y: "b" });
+//   expect(result.success).toBe(false);
+//   if (!result.success) {
+//     expect(result.error.issues[0].message).toEqual(errorMsg);
+//   }
+// });
+
+test("empty string error message", () => {
+  const schema = z.string().max(1, { message: "" });
+  const result = schema.safeParse("asdf");
+  expect(result.success).toBe(false);
+  expect(result.error!.issues[0].message).toEqual("");
+});
+
+test("dont short circuit on continuable errors", () => {
+  const user = z
+    .object({
+      password: z.string().min(6),
+      confirm: z.string(),
+    })
+    .refine((data) => data.password === data.confirm, {
+      message: "Passwords don't match",
+      path: ["confirm"],
+    });
+  const result = user.safeParse({ password: "asdf", confirm: "qwer" });
+  expect(result.success).toBe(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "too_small",
+          "message": "Too small: expected string to have >6 characters",
+          "minimum": 6,
+          "origin": "string",
+          "path": [
+            "password",
+          ],
+        },
+        {
+          "code": "custom",
+          "message": "Passwords don't match",
+          "path": [
+            "confirm",
+          ],
+        },
+      ],
+    }
+  `);
+  // expect(result.error!.issues.length).toEqual(2);
+});

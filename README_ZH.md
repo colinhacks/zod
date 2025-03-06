@@ -1247,8 +1247,8 @@ interface Category {
   subcategories: Category[];
 }
 
-// cast to z.ZodSchema<Category>
-const Category: z.ZodSchema<Category> = z.lazy(() =>
+// cast to z.ZodType<Category>
+const Category: z.ZodType<Category> = z.lazy(() =>
   z.object({
     name: z.string(),
     subcategories: z.array(Category),
@@ -1285,7 +1285,7 @@ interface Category extends z.infer<typeof BaseCategory> {
 
 // merge the base schema with
 // a new Zod schema containing relations
-const Category: z.ZodSchema<Category> = BaseCategory.merge(
+const Category: z.ZodType<Category> = BaseCategory.merge(
   z.object({
     subcategories: z.lazy(() => z.array(Category)),
   })
@@ -1300,7 +1300,7 @@ const Category: z.ZodSchema<Category> = BaseCategory.merge(
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 type Literal = z.infer<typeof literalSchema>;
 type Json = Literal | { [key: string]: Json } | Json[];
-const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
+const jsonSchema: z.ZodType<Json> = z.lazy(() =>
   z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)])
 );
 
@@ -1679,7 +1679,7 @@ stringToNumber.parse("string"); // => 6
 
 #### Chaining order
 
-注意，上面的`stringToNumber`是`ZodEffects`子类的一个实例。它不是`ZodString`的实例。如果你想使用`ZodString`的内置方法（例如`.email()`），你必须在进行任何转换 _之前_ 应用这些方法。
+注意，上面的`stringToNumber`是`ZodTransform`子类的一个实例。它不是`ZodString`的实例。如果你想使用`ZodString`的内置方法（例如`.email()`），你必须在进行任何转换 _之前_ 应用这些方法。
 
 ```ts
 const emailToDomain = z

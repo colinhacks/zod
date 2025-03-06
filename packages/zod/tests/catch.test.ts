@@ -1,8 +1,8 @@
-// @ts-ignore TS6133
-import { expect, test } from "vitest";
+import { expect, expectTypeOf, test } from "vitest";
 
-import { util } from "../src/helpers";
-import { z } from "../src/index";
+import type { $ZodRawIssue } from "@zod/core";
+import type * as util from "@zod/core/util";
+import { z } from "zod";
 
 test("basic catch", () => {
   expect(z.string().catch("default").parse(undefined)).toBe("default");
@@ -38,18 +38,18 @@ test("catch with transform", () => {
     .string()
     .transform((val) => val.toUpperCase())
     .catch("default");
+
   expect(stringWithDefault.parse(undefined)).toBe("default");
   expect(stringWithDefault.parse(15)).toBe("default");
   expect(stringWithDefault).toBeInstanceOf(z.ZodCatch);
-  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodEffects);
-  expect(stringWithDefault._def.innerType._def.schema).toBeInstanceOf(
-    z.ZodSchema
-  );
+  expect(stringWithDefault.unwrap()).toBeInstanceOf(z.ZodPipe);
+  expect(stringWithDefault.unwrap().in).toBeInstanceOf(z.ZodString);
+  expect(stringWithDefault.unwrap().out).toBeInstanceOf(z.ZodTransform);
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, unknown>(true);
+  expectTypeOf<inp>().toEqualTypeOf<util.Loose<string>>();
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string>(true);
+  expectTypeOf<out>().toEqualTypeOf<string>();
 });
 
 test("catch on existing optional", () => {
@@ -57,24 +57,22 @@ test("catch on existing optional", () => {
   expect(stringWithDefault.parse(undefined)).toBe(undefined);
   expect(stringWithDefault.parse(15)).toBe("asdf");
   expect(stringWithDefault).toBeInstanceOf(z.ZodCatch);
-  expect(stringWithDefault._def.innerType).toBeInstanceOf(z.ZodOptional);
-  expect(stringWithDefault._def.innerType._def.innerType).toBeInstanceOf(
-    z.ZodString
-  );
+  expect(stringWithDefault.unwrap()).toBeInstanceOf(z.ZodOptional);
+  expect(stringWithDefault.unwrap().unwrap()).toBeInstanceOf(z.ZodString);
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, unknown>(true);
+  expectTypeOf<inp>().toEqualTypeOf<util.Loose<string | undefined>>();
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string | undefined>(true);
+  expectTypeOf<out>().toEqualTypeOf<string | undefined>();
 });
 
 test("optional on catch", () => {
   const stringWithDefault = z.string().catch("asdf").optional();
 
   type inp = z.input<typeof stringWithDefault>;
-  util.assertEqual<inp, unknown>(true);
+  expectTypeOf<inp>().toEqualTypeOf<util.Loose<string | undefined>>();
   type out = z.output<typeof stringWithDefault>;
-  util.assertEqual<out, string | undefined>(true);
+  expectTypeOf<out>().toEqualTypeOf<string | undefined>();
 });
 
 test("complex chain example", () => {
@@ -84,7 +82,7 @@ test("complex chain example", () => {
     .transform((val) => `${val}!`)
     .transform((val) => val.toUpperCase())
     .catch("qwer")
-    .removeCatch()
+    .unwrap()
     .optional()
     .catch("asdfasdf");
 
@@ -94,10 +92,10 @@ test("complex chain example", () => {
 });
 
 test("removeCatch", () => {
-  const stringWithRemovedDefault = z.string().catch("asdf").removeCatch();
+  const stringWithRemovedDefault = z.string().catch("asdf").unwrap();
 
   type out = z.output<typeof stringWithRemovedDefault>;
-  util.assertEqual<out, string>(true);
+  expectTypeOf<out>().toEqualTypeOf<string>();
 });
 
 test("nested", () => {
@@ -106,9 +104,10 @@ test("nested", () => {
     inner: "asdf",
   });
   type input = z.input<typeof outer>;
-  util.assertEqual<input, unknown>(true);
+  expectTypeOf<input>().toEqualTypeOf<util.Loose<{ inner: util.Loose<string> }>>();
   type out = z.output<typeof outer>;
-  util.assertEqual<out, { inner: string }>(true);
+
+  expectTypeOf<out>().toEqualTypeOf<{ inner: string }>();
   expect(outer.parse(undefined)).toEqual({ inner: "asdf" });
   expect(outer.parse({})).toEqual({ inner: "asdf" });
   expect(outer.parse({ inner: undefined })).toEqual({ inner: "asdf" });
@@ -120,12 +119,6 @@ test("chained catch", () => {
   expect(result).toEqual("inner");
   const resultDiff = stringWithDefault.parse(5);
   expect(resultDiff).toEqual("inner");
-});
-
-test("factory", () => {
-  z.ZodCatch.create(z.string(), {
-    catch: "asdf",
-  }).parse(undefined);
 });
 
 test("native enum", () => {
@@ -183,19 +176,50 @@ test("reported issues with nested usage", () => {
     const issues = (error as z.ZodError).issues;
 
     expect(issues.length).toEqual(3);
-    expect(issues[0].message).toMatch("string");
-    expect(issues[1].message).toMatch("literal");
-    expect(issues[2].message).toMatch("boolean");
+    expect(issues).toMatchInlineSnapshot(`
+      [
+        {
+          "code": "invalid_type",
+          "expected": "string",
+          "message": "Invalid input: expected string",
+          "path": [
+            "string",
+          ],
+        },
+        {
+          "code": "invalid_value",
+          "message": "Invalid input: expected "a"",
+          "path": [
+            "obj",
+            "sub",
+            "lit",
+          ],
+          "values": [
+            "a",
+          ],
+        },
+        {
+          "code": "invalid_type",
+          "expected": "boolean",
+          "message": "Invalid input: expected boolean",
+          "path": [
+            "bool",
+          ],
+        },
+      ]
+    `);
+    // expect(issues[0].message).toMatch("string");
+    // expect(issues[1].message).toMatch("literal");
+    // expect(issues[2].message).toMatch("boolean");
   }
 });
 
 test("catch error", () => {
-  let catchError: z.ZodError | undefined = undefined;
-
   const schema = z.object({
     age: z.number(),
     name: z.string().catch((ctx) => {
-      catchError = ctx.error;
+      ctx.issues;
+      // issues = ctx.issues;
 
       return "John Doe";
     }),
@@ -207,16 +231,21 @@ test("catch error", () => {
   });
 
   expect(result.success).toEqual(false);
-  expect(!result.success && result.error.issues.length).toEqual(1);
-  expect(!result.success && result.error.issues[0].message).toMatch("number");
-
-  expect(catchError).toBeInstanceOf(z.ZodError);
-  expect(
-    catchError !== undefined && (catchError as z.ZodError).issues.length
-  ).toEqual(1);
-  expect(
-    catchError !== undefined && (catchError as z.ZodError).issues[0].message
-  ).toMatch("string");
+  expect(result.error!).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_type",
+          "expected": "number",
+          "message": "Invalid input: expected number",
+          "path": [
+            "age",
+          ],
+          "received": "Infinity",
+        },
+      ],
+    }
+  `);
 });
 
 test("ctx.input", () => {

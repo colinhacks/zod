@@ -1,8 +1,5 @@
-// @ts-ignore TS6133
-import { expect, test } from "vitest";
-
-import { util } from "../src/helpers";
-import * as z from "../src/index";
+import { expect, expectTypeOf, test } from "vitest";
+import * as z from "zod";
 test("void", () => {
   const v = z.void();
   v.parse(undefined);
@@ -11,5 +8,5 @@ test("void", () => {
   expect(() => v.parse("")).toThrow();
 
   type v = z.infer<typeof v>;
-  util.assertEqual<v, void>(true);
+  expectTypeOf<v>().toEqualTypeOf<void>();
 });

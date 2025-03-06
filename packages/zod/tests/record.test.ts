@@ -1,141 +1,234 @@
-// @ts-ignore TS6133
-import { expect, test } from "vitest";
-
-import { util } from "../src/helpers";
-import * as z from "../src/index";
-
-const booleanRecord = z.record(z.boolean());
-type booleanRecord = z.infer<typeof booleanRecord>;
-
-const recordWithEnumKeys = z.record(z.enum(["Tuna", "Salmon"]), z.string());
-type recordWithEnumKeys = z.infer<typeof recordWithEnumKeys>;
-
-const recordWithLiteralKeys = z.record(
-  z.union([z.literal("Tuna"), z.literal("Salmon")]),
-  z.string()
-);
-type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
+import { expect, expectTypeOf, test } from "vitest";
+import * as z from "zod";
 
 test("type inference", () => {
-  util.assertEqual<booleanRecord, Record<string, boolean>>(true);
+  const booleanRecord = z.record(z.string(), z.boolean());
+  type booleanRecord = typeof booleanRecord._output;
 
-  util.assertEqual<
-    recordWithEnumKeys,
-    Partial<Record<"Tuna" | "Salmon", string>>
-  >(true);
+  const recordWithEnumKeys = z.record(z.enum(["Tuna", "Salmon"]), z.string());
+  type recordWithEnumKeys = z.infer<typeof recordWithEnumKeys>;
 
-  util.assertEqual<
-    recordWithLiteralKeys,
-    Partial<Record<"Tuna" | "Salmon", string>>
-  >(true);
+  const recordWithLiteralKeys = z.record(z.union([z.literal("Tuna"), z.literal("Salmon")]), z.string());
+  type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
+
+  expectTypeOf<booleanRecord>().toEqualTypeOf<Record<string, boolean>>();
+  expectTypeOf<recordWithEnumKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
+  expectTypeOf<recordWithLiteralKeys>().toEqualTypeOf<Record<"Tuna" | "Salmon", string>>();
 });
 
-test("methods", () => {
-  booleanRecord.optional();
-  booleanRecord.nullable();
+test("enum exhaustiveness", () => {
+  const schema = z.record(z.enum(["Tuna", "Salmon"]), z.string());
+  expect(
+    schema.parse({
+      Tuna: "asdf",
+      Salmon: "asdf",
+    })
+  ).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
+
+  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "unrecognized_keys",
+            "keys": [
+              "Trout",
+            ],
+            "message": "Unrecognized key: "Trout"",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string",
+            "path": [
+              "Salmon",
+            ],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+});
+
+test("literal exhaustiveness", () => {
+  const schema = z.record(z.literal(["Tuna", "Salmon"]), z.string());
+  schema.parse({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
+
+  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "unrecognized_keys",
+            "keys": [
+              "Trout",
+            ],
+            "message": "Unrecognized key: "Trout"",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string",
+            "path": [
+              "Salmon",
+            ],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+});
+
+test("pipe exhaustiveness", () => {
+  const schema = z.record(z.enum(["Tuna", "Salmon"]).pipe(z.string()), z.string());
+  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf" })).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
+
+  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "unrecognized_keys",
+            "keys": [
+              "Trout",
+            ],
+            "message": "Unrecognized key: "Trout"",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string",
+            "path": [
+              "Salmon",
+            ],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+});
+
+test("union exhaustiveness", () => {
+  const schema = z.record(z.union([z.literal("Tuna"), z.literal("Salmon")]), z.string());
+  expect(schema.parse({ Tuna: "asdf", Salmon: "asdf" })).toEqual({
+    Tuna: "asdf",
+    Salmon: "asdf",
+  });
+
+  expect(schema.safeParse({ Tuna: "asdf", Salmon: "asdf", Trout: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "unrecognized_keys",
+            "keys": [
+              "Trout",
+            ],
+            "message": "Unrecognized key: "Trout"",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse({ Tuna: "asdf" })).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "string",
+            "message": "Invalid input: expected string",
+            "path": [
+              "Salmon",
+            ],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
 
 test("string record parse - pass", () => {
-  booleanRecord.parse({
+  const schema = z.record(z.string(), z.boolean());
+  schema.parse({
     k1: true,
     k2: false,
     1234: false,
   });
+
+  expect(schema.safeParse({ asdf: 1234 }).success).toEqual(false);
+  expect(schema.safeParse("asdf")).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "record",
+            "message": "Invalid input: expected record",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
-
-test("string record parse - fail", () => {
-  const badCheck = () =>
-    booleanRecord.parse({
-      asdf: 1234,
-    } as any);
-  expect(badCheck).toThrow();
-
-  expect(() => booleanRecord.parse("asdf")).toThrow();
-});
-
-test("string record parse - fail", () => {
-  const badCheck = () =>
-    booleanRecord.parse({
-      asdf: {},
-    } as any);
-  expect(badCheck).toThrow();
-});
-
-test("string record parse - fail", () => {
-  const badCheck = () =>
-    booleanRecord.parse({
-      asdf: [],
-    } as any);
-  expect(badCheck).toThrow();
-});
-
-test("key schema", () => {
-  const result1 = recordWithEnumKeys.parse({
-    Tuna: "asdf",
-    Salmon: "asdf",
-  });
-  expect(result1).toEqual({
-    Tuna: "asdf",
-    Salmon: "asdf",
-  });
-
-  const result2 = recordWithLiteralKeys.parse({
-    Tuna: "asdf",
-    Salmon: "asdf",
-  });
-  expect(result2).toEqual({
-    Tuna: "asdf",
-    Salmon: "asdf",
-  });
-
-  // shouldn't require us to specify all props in record
-  const result3 = recordWithEnumKeys.parse({
-    Tuna: "abcd",
-  });
-  expect(result3).toEqual({
-    Tuna: "abcd",
-  });
-
-  // shouldn't require us to specify all props in record
-  const result4 = recordWithLiteralKeys.parse({
-    Salmon: "abcd",
-  });
-  expect(result4).toEqual({
-    Salmon: "abcd",
-  });
-
-  expect(() =>
-    recordWithEnumKeys.parse({
-      Tuna: "asdf",
-      Salmon: "asdf",
-      Trout: "asdf",
-    })
-  ).toThrow();
-
-  expect(() =>
-    recordWithLiteralKeys.parse({
-      Tuna: "asdf",
-      Salmon: "asdf",
-
-      Trout: "asdf",
-    })
-  ).toThrow();
-});
-
-// test("record element", () => {
-//   expect(booleanRecord.element).toBeInstanceOf(z.ZodBoolean);
-// });
 
 test("key and value getters", () => {
   const rec = z.record(z.string(), z.number());
 
-  rec.keySchema.parse("asdf");
-  rec.valueSchema.parse(1234);
-  rec.element.parse(1234);
+  rec.keyType.parse("asdf");
+  rec.valueType.parse(1234);
 });
 
 test("is not vulnerable to prototype pollution", async () => {
   const rec = z.record(
+    z.string(),
     z.object({
       a: z.string(),
     })
@@ -172,7 +265,7 @@ test("is not vulnerable to prototype pollution", async () => {
 });
 
 test("dont remove undefined values", () => {
-  const result1 = z.record(z.any()).parse({ foo: undefined });
+  const result1 = z.record(z.string(), z.any()).parse({ foo: undefined });
 
   expect(result1).toEqual({
     foo: undefined,
@@ -183,7 +276,7 @@ test("allow undefined values", () => {
   const schema = z.record(z.string(), z.undefined());
 
   expect(
-    util.objectKeys(
+    Object.keys(
       schema.parse({
         _test: undefined,
       })
@@ -191,14 +284,65 @@ test("allow undefined values", () => {
   ).toEqual(["_test"]);
 });
 
-test("allow undefined values async", async () => {
-  const schemaAsync = z.record(z.string().optional()).refine(async () => true);
-
-  expect(
-    util.objectKeys(
-      await schemaAsync.parseAsync({
-        _test: undefined,
-      })
+test("async parsing", async () => {
+  const schema = z
+    .record(
+      z.string(),
+      z
+        .string()
+        .optional()
+        .refine(async () => true)
     )
-  ).toEqual(["_test"]);
+    .refine(async () => true);
+
+  const data = {
+    foo: "bar",
+    baz: "qux",
+  };
+  const result = await schema.safeParseAsync(data);
+  expect(result.data).toEqual(data);
+});
+
+test("async parsing", async () => {
+  const schema = z
+    .record(
+      z.string(),
+      z
+        .string()
+        .optional()
+        .refine(async () => false)
+    )
+    .refine(async () => false);
+
+  const data = {
+    foo: "bar",
+    baz: "qux",
+  };
+  const result = await schema.safeParseAsync(data);
+  expect(result.success).toEqual(false);
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "custom",
+          "message": "Invalid input",
+          "path": [
+            "foo",
+          ],
+        },
+        {
+          "code": "custom",
+          "message": "Invalid input",
+          "path": [
+            "baz",
+          ],
+        },
+        {
+          "code": "custom",
+          "message": "Invalid input",
+          "path": [],
+        },
+      ],
+    }
+  `);
 });

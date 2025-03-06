@@ -6,6 +6,7 @@ coverage
 .idea
 *.log
 playground.ts
+scratch
 workspace.code-workspace
 .netlify
 bun.lockb
@@ -13,3 +14,8 @@ out.png
 logos
 .zed
 dist
+.tshy
+.tshy-build
+packages/tsc-perf
+
+tsconfig.vitest-temp.json

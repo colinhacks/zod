@@ -114,7 +114,7 @@
 - [Sets](#sets)
 - [Intersections](#intersections)
 - [Recursive types](#recursive-types)
-  - [ZodType with ZodEffects](#zodtype-with-zodeffects)
+  - [ZodType with ZodTransform](#zodtype-with-ZodTransform)
   - [JSON type](#json-type)
   - [Cyclical objects](#cyclical-objects)
 - [Promises](#promises)
@@ -766,7 +766,7 @@ time.parse("00:00:00"); // fail
 
 ### IP addresses
 
-The `z.string().ip()` method by default validate IPv4 and IPv6.
+The `z.string().ip()` method by default validate IPv4 and IP 6.
 
 ```ts
 const ip = z.string().ip();
@@ -1796,9 +1796,9 @@ categorySchema.parse({
 
 Thanks to [crasite](https://github.com/crasite) for this example.
 
-### ZodType with ZodEffects
+### ZodType with ZodTransform
 
-When using `z.ZodType` with `z.ZodEffects` (
+When using `z.ZodType` with `z.ZodTransform` (
 [`.refine`](https://github.com/colinhacks/zod#refine),
 [`.transform`](https://github.com/colinhacks/zod#transform),
 [`preprocess`](https://github.com/colinhacks/zod#preprocess),
@@ -2006,7 +2006,7 @@ z.literal.template(["Hello", 3.14, true, null, undefined]);
 
 The schema components can be any literal, primitive, or enum schema.
 
-> **Note** — Refinements, transforms, and pipelines are not supported.
+> **Note** — Refinements, transforms, and pipes are not supported.
 
 ```ts
 z.template.literal([
@@ -2112,7 +2112,7 @@ But sometimes you want to apply some transform to the input _before_ parsing hap
 const castToString = z.preprocess((val) => String(val), z.string());
 ```
 
-This returns a `ZodEffects` instance. `ZodEffects` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
+This returns a `ZodTransform` instance. `ZodTransform` is a wrapper class that contains all logic pertaining to preprocessing, refinements, and transforms.
 
 ## Custom schemas
 
@@ -2432,7 +2432,7 @@ stringToNumber.parse("string"); // => 6
 
 #### Chaining order
 
-Note that `stringToNumber` above is an instance of the `ZodEffects` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transforms.
+Note that `stringToNumber` above is an instance of the `ZodTransform` subclass. It is NOT an instance of `ZodString`. If you want to use the built-in methods of `ZodString` (e.g. `.email()`) you must apply those methods _before_ any transforms.
 
 ```ts
 const emailToDomain = z
@@ -2716,7 +2716,7 @@ z.set(z.string()).readonly();
 
 ### `.pipe`
 
-Schemas can be chained into validation "pipelines". It's useful for easily validating the result after a `.transform()`:
+Schemas can be chained into validation "pipes". It's useful for easily validating the result after a `.transform()`:
 
 ```ts
 z.string()
@@ -2724,7 +2724,7 @@ z.string()
   .pipe(z.number().min(5));
 ```
 
-The `.pipe()` method returns a `ZodPipeline` instance.
+The `.pipe()` method returns a `ZodPipe` instance.
 
 #### You can use `.pipe()` to fix common issues with `z.coerce`.
 
@@ -2834,10 +2834,10 @@ inferSchema(z.string());
 
 This approach loses type information, namely _which subclass_ the input actually is (in this case, `ZodString`). That means you can't call any string-specific methods like `.min()` on the result of `inferSchema`.
 
-A better approach is to infer _the schema as a whole_ instead of merely its inferred type. You can do this with a utility type called `z.ZodTypeAny`.
+A better approach is to infer _the schema as a whole_ instead of merely its inferred type.
 
 ```ts
-function inferSchema<T extends z.ZodTypeAny>(schema: T) {
+function inferSchema<T extends z.ZodType>(schema: T) {
   return schema;
 }
 
@@ -2845,15 +2845,14 @@ inferSchema(z.string());
 // => ZodString
 ```
 
-> `ZodTypeAny` is just a shorthand for `ZodType<any, any, any>`, a type that is broad enough to match any Zod schema.
-
 The Result is now fully and properly typed, and the type system can infer the specific subclass of the schema.
 
-#### Inferring the inferred type
+#### Inferrence in generic functions
 
-If you follow the best practice of using `z.ZodTypeAny` as the generic parameter for your schema, you may encounter issues with the parsed data being typed as `any` instead of the inferred type of the schema.
+In the general case, any function that accepts a generic Zod schema as an argument should be explicitly typed.
 
 ```ts
+// doesn't work!
 function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
   return schema.parse(data);
 }
@@ -2862,12 +2861,14 @@ parseData("sup", z.string());
 // => any
 ```
 
-Due to how TypeScript inference works, it is treating `schema` like a `ZodTypeAny` instead of the inferred type. You can fix this with a type cast using `z.infer`.
+Note that the return type of `parseData` is `any` instead of `string` as you might expect. There are limits to how TypeScript inference works inside generic functions. Generally speaking, you will need to write an explicit output type.
 
 ```ts
-function parseData<T extends z.ZodTypeAny>(data: unknown, schema: T) {
-  return schema.parse(data) as z.infer<T>;
-  //                        ^^^^^^^^^^^^^^ <- add this
+function parseData<T extends z.ZodTypeAny>(
+  data: unknown,
+  schema: T
+): z.infer<T> {
+  return schema.parse(data);
 }
 
 parseData("sup", z.string());

@@ -1,7 +1,6 @@
-// @ts-ignore TS6133
 import { expect, test } from "vitest";
 
-import * as z from "../src/index";
+import * as z from "zod";
 
 const gtFive = z.bigint().gt(BigInt(5));
 const gteFive = z.bigint().gte(BigInt(5));
@@ -48,9 +47,7 @@ test("failing validations", () => {
 
 test("min max getters", () => {
   expect(z.bigint().min(BigInt(5)).minValue).toEqual(BigInt(5));
-  expect(z.bigint().min(BigInt(5)).min(BigInt(10)).minValue).toEqual(
-    BigInt(10)
-  );
+  expect(z.bigint().min(BigInt(5)).min(BigInt(10)).minValue).toEqual(BigInt(10));
 
   expect(z.bigint().max(BigInt(5)).maxValue).toEqual(BigInt(5));
   expect(z.bigint().max(BigInt(5)).max(BigInt(1)).maxValue).toEqual(BigInt(1));

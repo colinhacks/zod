@@ -2,25 +2,34 @@
   "compilerOptions": {
     "target": "es2018",
     "lib": ["es6", "dom"],
-    "moduleResolution": "Node",
-    "module": null,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "jsx": "react",
 
     "strict": true,
-    "strictPropertyInitialization": false,
+    "alwaysStrict": true,
+
+    "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "noUnusedParameters": true,
+    "noImplicitAny": true,
     "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noImplicitOverride": true,
 
     "noFallthroughCasesInSwitch": true,
     "resolveJsonModule": true,
 
-    "noEmit": true,
-    "removeComments": true,
+    "removeComments": false,
     "esModuleInterop": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
     "downlevelIteration": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+
+    "pretty": true,
+    "customConditions": ["@zod/source"]
   }
 }

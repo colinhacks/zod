@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import type { z } from "../packages/zod/src/index";
 
 type Tagged = z.ZodType & { _tag: string };
@@ -5,15 +7,9 @@ function transformer<Out extends z.ZodType>(tx: (arg: Tagged) => Out) {
   return tx;
 }
 
-type Replacer<
-  Tx extends (arg: Tagged) => z.ZodType,
-  Input extends z.ZodType,
-> = replaceTagged<ReturnType<Tx>, Input>;
+type Replacer<Tx extends (arg: Tagged) => z.ZodType, Input extends z.ZodType> = replaceTagged<ReturnType<Tx>, Input>;
 
-type replaceTagged<
-  T extends z.ZodType,
-  With extends z.ZodType,
-> = T extends Tagged
+type replaceTagged<T extends z.ZodType, With extends z.ZodType> = T extends Tagged
   ? With
   : T extends z.ZodOptional<infer U>
     ? z.ZodOptional<replaceTagged<U, With>>
@@ -32,17 +28,11 @@ type replaceTagged<
                     [k in keyof U]: replaceTagged<U[k], With>;
                   }>
                 : T extends z.ZodIntersection<infer U, infer T>
-                  ? z.ZodIntersection<
-                      replaceTagged<U, With>,
-                      replaceTagged<T, With>
-                    >
+                  ? z.ZodIntersection<replaceTagged<U, With>, replaceTagged<T, With>>
                   : T extends z.ZodTuple<infer U>
                     ? {
                         [k in keyof U]: replaceTagged<U[k], With>;
-                      } extends infer Items extends [
-                        z.ZodTypeAny,
-                        ...z.ZodTypeAny[],
-                      ]
+                      } extends infer Items extends [z.ZodTypeAny, ...z.ZodTypeAny[]]
                       ? z.ZodTuple<Items>
                       : never
                     : T extends z.ZodRecord<infer K, infer V>
