@@ -54,8 +54,8 @@ test("coerce iso", () => {
   expect(withCoerce.parse("2000-01-01T00:00:00.000Z")).toEqual(y2k);
 
   expect(() => withCoerce.parse("1/1/2000 UTC")).toThrow(
-    /Expected date, received string/
+    /Invalid input: expected date/
   );
-  expect(() => withCoerce.parse(0)).toThrow(/Expected date, received number/);
-  expect(() => withCoerce.parse(null)).toThrow(/Expected date, received null/);
+  expect(() => withCoerce.parse(0)).toThrow(/Invalid input: expected date/);
+  expect(() => withCoerce.parse(null)).toThrow(/Invalid input: expected date/);
 });
