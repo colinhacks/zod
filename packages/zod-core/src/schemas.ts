@@ -853,7 +853,7 @@ export const $ZodVoid: base.$constructor<$ZodVoid> = /*@__PURE__*/ base.$constru
 ///////////////////////////////////////
 export interface $ZodDateDef extends base.$ZodTypeDef {
   type: "date";
-  coerce?: boolean;
+  coerce?: boolean | "iso";
 }
 
 export interface $ZodDate<T = unknown> extends base.$ZodType<Date, T> {
@@ -865,7 +865,14 @@ export const $ZodDate: base.$constructor<$ZodDate> = /*@__PURE__*/ base.$constru
   base.$ZodType.init(inst, def);
 
   inst._parse = (payload, _ctx) => {
-    if (def.coerce) {
+    if (def.coerce === "iso") {
+      try {
+        const coerced = typeof payload.value === "string" ? new Date(payload.value) : null;
+        if (coerced && coerced.toISOString() === payload.value) {
+          payload.value = coerced;
+        }
+      } catch {}
+    } else if (def.coerce) {
       try {
         payload.value = new Date(payload.value as string | number | Date);
       } catch (_err: any) {}
