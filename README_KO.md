@@ -649,7 +649,7 @@ const User = z.object({
 User.parse({ username: "Ludwig" });
 
 // 추론된 타입 추출
-type User = z.infer;
+type User = z.infer<typeof User>;
 // { username: string }
 ```
 
@@ -1065,7 +1065,7 @@ z.date().max(new Date(), { message: "너무 미래의 날짜입니다!" });
 
 ```ts
 const dateSchema = z.coerce.date();
-type DateSchema = z.infer;
+type DateSchema = z.infer<typeof dateSchema>;
 // 타입 DateSchema = Date
 
 /* 유효한 날짜 */
@@ -1085,7 +1085,7 @@ console.log(dateSchema.safeParse("0000-00-00").success); // false
 
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
-type FishEnum = z.infer;
+type FishEnum = z.infer<typeof FishEnum>;
 // 'Salmon' | 'Tuna' | 'Trout'
 ```
 
@@ -1149,7 +1149,7 @@ enum Fruits {
 }
 
 const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer; // Fruits
+type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
 
 FruitEnum.parse(Fruits.Apple); // 통과
 FruitEnum.parse(Fruits.Banana); // 통과
@@ -1168,7 +1168,7 @@ enum Fruits {
 }
 
 const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer; // Fruits
+type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
 
 FruitEnum.parse(Fruits.Apple); // 통과
 FruitEnum.parse(Fruits.Cantaloupe); // 통과
@@ -1190,7 +1190,7 @@ const Fruits = {
 } as const;
 
 const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer; // "apple" | "banana" | 3
+type FruitEnum = z.infer<typeof FruitEnum>; // "apple" | "banana" | 3
 
 FruitEnum.parse("apple"); // 통과
 FruitEnum.parse("banana"); // 통과
@@ -1212,7 +1212,7 @@ FruitEnum.enum.Apple; // "apple"
 const schema = z.optional(z.string());
 
 schema.parse(undefined); // => undefined 반환
-type A = z.infer; // string | undefined
+type A = z.infer<typeof schema>; // string | undefined
 ```
 
 편의를 위해, 기존 스키마에서 `.optional()` 메서드를 직접 호출할 수도 있습니다.
@@ -1221,7 +1221,7 @@ type A = z.infer; // string | undefined
 const user = z.object({
   username: z.string().optional(),
 });
-type C = z.infer; // { username?: string | undefined };
+type C = z.infer<typeof user>; // { username?: string | undefined };
 ```
 
 `ZodOptional` 인스턴스에서 감싸진 스키마를 추출하려면 `.unwrap()`을 사용하면 됩니다.
@@ -1246,7 +1246,7 @@ nullableString.parse(null); // => null
 
 ```ts
 const E = z.string().nullable(); // nullableString과 동일
-type E = z.infer; // string | null
+type E = z.infer<typeof E>; // string | null
 ```
 
 `.unwrap()`을 사용하면 내부 스키마를 추출할 수 있습니다.
@@ -1267,7 +1267,7 @@ const Dog = z.object({
 });
 
 // 추론된 타입을 이렇게 추출할 수 있습니다.
-type Dog = z.infer;
+type Dog = z.infer<typeof Dog>;
 
 // 이는 다음과 동일합니다:
 type Dog = {
@@ -1317,7 +1317,7 @@ const BaseTeacher = z.object({ students: z.array(z.string()) });
 const HasID = z.object({ id: z.string() });
 
 const Teacher = BaseTeacher.merge(HasID);
-type Teacher = z.infer; // => { students: string[], id: string }
+type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
 ```
 
 > 두 스키마가 동일한 키를 공유할 경우, B의 속성이 A의 속성을 덮어씁니다. 반환된 스키마는 B의 "unknownKeys" 정책(strip/strict/passthrough)과 catchall 스키마를 상속받습니다.
@@ -1338,7 +1338,7 @@ const Recipe = z.object({
 
 ```ts
 const JustTheName = Recipe.pick({ name: true });
-type JustTheName = z.infer;
+type JustTheName = z.infer<typeof JustTheName>;
 // => { name: string }
 ```
 
@@ -1347,7 +1347,7 @@ type JustTheName = z.infer;
 ```ts
 const NoIDRecipe = Recipe.omit({ id: true });
 
-type NoIDRecipe = z.infer;
+type NoIDRecipe = z.infer<typeof NoIDRecipe>;
 // => { name: string, ingredients: string[] }
 ```
 
@@ -1598,7 +1598,7 @@ const athleteSchema = z.tuple([
   }), // 통계
 ]);
 
-type Athlete = z.infer;
+type Athlete = z.infer<typeof athleteSchema>;
 // type Athlete = [string, number, { pointsScored: number }]
 ```
 
@@ -1695,7 +1695,7 @@ const AB = z.discriminatedUnion("status", [...A.options, ...B.options]);
 const User = z.object({ name: z.string() });
 
 const UserStore = z.record(z.string(), User);
-type UserStore = z.infer;
+type UserStore = z.infer<typeof UserStore>;
 // => Record
 ```
 
@@ -1737,7 +1737,7 @@ for (const key in testMap) {
 ```ts
 const stringNumberMap = z.map(z.string(), z.number());
 
-type StringNumberMap = z.infer;
+type StringNumberMap = z.infer<typeof stringNumberMap>;
 // type StringNumberMap = Map<string, number>
 ```
 
@@ -1747,7 +1747,7 @@ type StringNumberMap = z.infer;
 
 ```ts
 const numberSet = z.set(z.number());
-type NumberSet = z.infer;
+type NumberSet = z.infer<typeof numberSet>;
 // type NumberSet = Set<number>
 ```
 
@@ -1786,7 +1786,7 @@ const a = z.union([z.number(), z.string()]);
 const b = z.union([z.number(), z.boolean()]);
 const c = z.intersection(a, b);
 
-type c = z.infer; // => number
+type c = z.infer<typeof c>; // => number
 ```
 
 <!-- Zod에서의 교차 타입은 똑똑하지 않습니다. `.parse()`에 전달된 데이터는 두 교차된 스키마에 그대로 전달됩니다. Zod 객체 스키마는 기본적으로 알려지지 않은 키를 허용하지 않기 때문에, 객체 스키마의 교차와 관련된 몇 가지 직관적이지 않은 동작이 있습니다. -->
@@ -1804,7 +1804,7 @@ const B = z.object({
 
 const AB = z.intersection(A, B);
 
-type Teacher = z.infer;
+type Teacher = z.infer<typeof AB>;
 // { id:string; name:string };
 ```  -->
 
@@ -1817,7 +1817,7 @@ const baseCategorySchema = z.object({
   name: z.string(),
 });
 
-type Category = z.infer & {
+type Category = z.infer<typeof baseCategorySchema> & {
   subcategories: Category[];
 };
 
@@ -1881,7 +1881,7 @@ JSON 값을 검증하고 싶다면 아래 코드 조각을 사용할 수 있습�
 
 ```ts
 const literalSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
-type Literal = z.infer;
+type Literal = z.infer<typeof literalSchema>;
 type Json = Literal | { [key: string]: Json } | Json[];
 const jsonSchema: z.ZodType = z.lazy(() =>
   z.union([literalSchema, z.array(jsonSchema), z.record(jsonSchema)])
@@ -1956,7 +1956,7 @@ Zod는 "함수 스키마"를 정의할 수 있게 해줍니다. 이를 통해 �
 ```ts
 const myFunction = z.function();
 
-type myFunction = z.infer;
+type myFunction = z.infer<typeof myFunction>;
 // => ()=>unknown
 ```
 
@@ -1968,7 +1968,7 @@ const myFunction = z
   .args(z.string(), z.number()) // 임의의 수의 인자를 받음
   .returns(z.boolean());
 
-type myFunction = z.infer;
+type myFunction = z.infer<typeof myFunction>;
 // => (arg0: string, arg1: number)=>boolean
 ```
 
@@ -2036,7 +2036,7 @@ const px = z.custom((val) => {
   return typeof val === "string" ? /^\d+px$/.test(val) : false;
 });
 
-type px = z.infer; // `${number}px`
+type px = z.infer<typeof px>; // `${number}px`
 
 px.parse("42px"); // "42px"
 px.parse("42vw"); // 에러 발생
@@ -2585,7 +2585,7 @@ petCat(fido); // 문제 없이 동작
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand();
-type Cat = z.infer;
+type Cat = z.infer<typeof Cat>;
 
 const petCat = (cat: Cat) => {};
 
@@ -2601,7 +2601,7 @@ petCat({ name: "fido" });
 
 ```ts
 const Cat = z.object({ name: z.string() }).brand();
-type Cat = z.infer;
+type Cat = z.infer<typeof Cat>;
 // {name: string} & {[symbol]: "Cat"}
 ```
 
@@ -2615,7 +2615,7 @@ type Cat = z.infer;
 
 ```ts
 const schema = z.object({ name: z.string() }).readonly();
-type schema = z.infer;
+type schema = z.infer<typeof schema>;
 // Readonly
 
 const result = schema.parse({ name: "fido" });
@@ -2716,7 +2716,7 @@ console.log(toBigInt.safeParse(null).success); // false
 
 ```ts
 const A = z.string();
-type A = z.infer; // string
+type A = z.infer<typeof A>; // string
 
 const u: A = 12; // TypeError
 const u: A = "asdf"; // 컴파일 성공
@@ -2736,7 +2736,7 @@ type input = z.input; // string
 type output = z.output; // number
 
 // z.output와 동일합니다!
-type inferred = z.infer; // number
+type inferred = z.infer<typeof stringToNumber>; // number
 ```
 
 ### 제네릭 함수 작성하기
@@ -2989,7 +2989,7 @@ const C = z.object({
   bar: z.number().optional(),
 });
 
-type C = z.infer;
+type C = z.infer<typeof C>;
 // 반환 타입: { foo: string; bar?: number | undefined }
 ```
 
