@@ -37,17 +37,17 @@
 <br/>
 <br/>
 
-<h2 align="center">Featured sponsor: Mintlify</h2>
+<h2 align="center">Featured sponsor: Clerk</h2>
 
 <div align="center">
-  <a href="https://mintlify.link/zod-readme">
+  <a href="https://go.clerk.com/PKHrcwh">
     <picture width="85%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/8619eef1-fea6-4f00-b1ff-2a12fb90ca54">
-      <img alt="mintlify logo" src="https://github.com/user-attachments/assets/8619eef1-fea6-4f00-b1ff-2a12fb90ca54" width="85%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
+      <img alt="mintlify logo" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3" width="85%">
     </picture>
   </a>
   <br/>
-  <p><sub><a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">Get in touch</a> to learn more about featured sponsorship</sub></p> 
+  <p><sub>Interested in featuring? <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">Get in touch.</a></sub></p>
 </div>
 
 <!-- <hr/> -->
