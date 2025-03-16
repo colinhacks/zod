@@ -1,4 +1,4 @@
----
+# CodeRabbit configuration
 reviews:
   path_filters:
     - "**/*.js"
