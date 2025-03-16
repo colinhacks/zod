@@ -1,15 +1,10 @@
-   # Make sure you're in the root directory of your repository
-   pwd
-   # Should show something like /path/to/zod
-   
-   
-   # Create the file
-   echo "reviews:
-     path_filters:
-       - "**/*.js"
-       - "**/*.ts"
-       - "**/*.tsx"
-       - "**/*.yaml"
-       - "**/*.yml"
-       - ".coderabbit.yaml"
-     review_status: true" > .coderabbit.yaml
+---
+reviews:
+  path_filters:
+    - "**/*.js"
+    - "**/*.ts"
+    - "**/*.tsx"
+    - "**/*.yaml"
+    - "**/*.yml"
+    - ".coderabbit.yaml"
+  review_status: true
