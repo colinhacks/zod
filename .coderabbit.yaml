@@ -1,10 +1,10 @@
----
-reviews:
-  path_filters:
-    - "**/*.js"
-    - "**/*.ts"
-    - "**/*.tsx"
-    - "**/*.yaml"
-    - "**/*.yml"
-    - ".coderabbit.yaml"
-  review_status: true
+   ---
+   reviews:
+     path_filters:
+       - "**/*.js"
+       - "**/*.ts"
+       - "**/*.tsx"
+       - "**/*.yaml"
+       - "**/*.yml"
+       - ".coderabbit.yaml"
+     review_status: true
