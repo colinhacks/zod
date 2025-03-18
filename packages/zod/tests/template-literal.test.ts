@@ -57,11 +57,23 @@ const brandedString = z.templateLiteral(["", z.string().min(1).brand("myBrand")]
 
 const url = z.templateLiteral(["https://", z.string().regex(/\w+/), ".", z.enum(["com", "net"])]);
 
-const measurement = z.templateLiteral(["", z.number().finite(), z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()]);
+const measurement = z.templateLiteral([
+  "",
+  z.number().finite(),
+  z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional(),
+]);
 
 const connectionString = z.templateLiteral([
   "mongodb://",
-  z.templateLiteral(["", z.string().regex(/\w+/).describe("username"), ":", z.string().regex(/\w+/).describe("password"), "@"]).optional(),
+  z
+    .templateLiteral([
+      "",
+      z.string().regex(/\w+/).describe("username"),
+      ":",
+      z.string().regex(/\w+/).describe("password"),
+      "@",
+    ])
+    .optional(),
   z.string().regex(/\w+/).describe("host"),
   ":",
   z.number().finite().int().positive().describe("port"),
@@ -140,7 +152,16 @@ test("template literal type inference", () => {
 
   expectTypeOf<z.infer<typeof url>>().toEqualTypeOf<`https://${string}.com` | `https://${string}.net`>();
 
-  expectTypeOf<z.infer<typeof measurement>>().toEqualTypeOf<`${number}` | `${number}px` | `${number}em` | `${number}rem` | `${number}vh` | `${number}vw` | `${number}vmin` | `${number}vmax`>();
+  expectTypeOf<z.infer<typeof measurement>>().toEqualTypeOf<
+    | `${number}`
+    | `${number}px`
+    | `${number}em`
+    | `${number}rem`
+    | `${number}vh`
+    | `${number}vw`
+    | `${number}vmin`
+    | `${number}vmax`
+  >();
 
   expectTypeOf<z.infer<typeof connectionString>>().toEqualTypeOf<
     | `mongodb://${string}:${number}`
@@ -531,16 +552,22 @@ test("regexes", () => {
   expect(datetime._zod.pattern.source).toMatchInlineSnapshot(
     `"^((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z)$"`
   );
-  expect(email._zod.pattern.source).toMatchInlineSnapshot(`"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"`);
+  expect(email._zod.pattern.source).toMatchInlineSnapshot(
+    `"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"`
+  );
   expect(ip._zod.pattern.source).toMatchInlineSnapshot(
     `"^(^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$)|(^(([a-fA-F0-9]{1,4}:){7}|::([a-fA-F0-9]{1,4}:){0,6}|([a-fA-F0-9]{1,4}:){1}:([a-fA-F0-9]{1,4}:){0,5}|([a-fA-F0-9]{1,4}:){2}:([a-fA-F0-9]{1,4}:){0,4}|([a-fA-F0-9]{1,4}:){3}:([a-fA-F0-9]{1,4}:){0,3}|([a-fA-F0-9]{1,4}:){4}:([a-fA-F0-9]{1,4}:){0,2}|([a-fA-F0-9]{1,4}:){5}:([a-fA-F0-9]{1,4}:){0,1})([a-fA-F0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$)$"`
   );
-  expect(ipv4._zod.pattern.source).toMatchInlineSnapshot(`"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"`);
+  expect(ipv4._zod.pattern.source).toMatchInlineSnapshot(
+    `"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"`
+  );
   expect(ipv6._zod.pattern.source).toMatchInlineSnapshot(
     `"^(([a-fA-F0-9]{1,4}:){7}|::([a-fA-F0-9]{1,4}:){0,6}|([a-fA-F0-9]{1,4}:){1}:([a-fA-F0-9]{1,4}:){0,5}|([a-fA-F0-9]{1,4}:){2}:([a-fA-F0-9]{1,4}:){0,4}|([a-fA-F0-9]{1,4}:){3}:([a-fA-F0-9]{1,4}:){0,3}|([a-fA-F0-9]{1,4}:){4}:([a-fA-F0-9]{1,4}:){0,2}|([a-fA-F0-9]{1,4}:){5}:([a-fA-F0-9]{1,4}:){0,1})([a-fA-F0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$"`
   );
   expect(ulid._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9A-HJKMNP-TV-Z]{26}$"`);
-  expect(uuid._zod.pattern.source).toMatchInlineSnapshot(`"^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$"`);
+  expect(uuid._zod.pattern.source).toMatchInlineSnapshot(
+    `"^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$"`
+  );
   expect(stringAToZ._zod.pattern.source).toMatchInlineSnapshot(`"^[a-z]+$"`);
   expect(stringStartsWith._zod.pattern.source).toMatchInlineSnapshot(`"^hello.*$"`);
   expect(stringEndsWith._zod.pattern.source).toMatchInlineSnapshot(`"^.*world$"`);
@@ -551,7 +578,9 @@ test("regexes", () => {
   expect(brandedString._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{1,}$"`);
   expect(url._zod.pattern.source).toMatchInlineSnapshot(`"^https:\\/\\/\\w+\\.(com|net)$"`);
   expect(measurement._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?((px|em|rem|vh|vw|vmin|vmax))?$"`);
-  expect(connectionString._zod.pattern.source).toMatchInlineSnapshot(`"^mongodb:\\/\\/(\\w+:\\w+@)?\\w+:\\d+(\\/(\\w+)?(\\?(\\w+=\\w+(&\\w+=\\w+)*)?)?)?$"`);
+  expect(connectionString._zod.pattern.source).toMatchInlineSnapshot(
+    `"^mongodb:\\/\\/(\\w+:\\w+@)?\\w+:\\d+(\\/(\\w+)?(\\?(\\w+=\\w+(&\\w+=\\w+)*)?)?)?$"`
+  );
 });
 
 test("template literal parsing - success - complex cases", () => {
@@ -615,7 +644,9 @@ test("template literal parsing - success - complex cases", () => {
   connectionString.parse("mongodb://username:password@host:1234/");
   connectionString.parse("mongodb://username:password@host:1234/defaultauthdb");
   connectionString.parse("mongodb://username:password@host:1234/defaultauthdb?authSource=admin");
-  connectionString.parse("mongodb://username:password@host:1234/defaultauthdb?authSource=admin&connectTimeoutMS=300000");
+  connectionString.parse(
+    "mongodb://username:password@host:1234/defaultauthdb?authSource=admin&connectTimeoutMS=300000"
+  );
   connectionString.parse("mongodb://username:password@host:1234/?authSource=admin");
   connectionString.parse("mongodb://username:password@host:1234/?authSource=admin&connectTimeoutMS=300000");
 });

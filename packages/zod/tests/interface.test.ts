@@ -161,7 +161,10 @@ test("inferred merged object type with optional properties", async () => {
 // declare let xx: z.ZodInterface<{a: z.ZodString}>;
 // xx._output;
 test("inferred unioned object type with optional properties", async () => {
-  const Unioned = z.union([z.interface({ a: z.string(), "b?": z.string().optional() }), z.interface({ "a?": z.string().optional(), b: z.string() })]);
+  const Unioned = z.union([
+    z.interface({ a: z.string(), "b?": z.string().optional() }),
+    z.interface({ "a?": z.string().optional(), b: z.string() }),
+  ]);
   type Unioned = z.infer<typeof Unioned>;
   expectTypeOf<Unioned>().toEqualTypeOf<{ a: string; b?: string } | { a?: string; b: string }>();
 });
@@ -192,7 +195,9 @@ test(".partial", async () => {
 });
 
 test(".required", async () => {
-  const Required = z.interface({ a: z.string(), b: z.string().optional(), "c?": z.string(), "?d": z.string() }).required();
+  const Required = z
+    .interface({ a: z.string(), b: z.string().optional(), "c?": z.string(), "?d": z.string() })
+    .required();
   type Required = z.infer<typeof Required>;
   expectTypeOf<Required>().toEqualTypeOf<{ a: string; b: string; c: string; d: string }>();
   expectTypeOf<typeof Required._zod.optional>().toEqualTypeOf<never>();

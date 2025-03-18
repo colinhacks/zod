@@ -27,25 +27,52 @@ test("_values", () => {
 });
 
 test("valid parse - object", () => {
-  expect(z.discriminatedUnion([z.object({ type: z.literal("a"), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })]).parse({ type: "a", a: "abc" })).toEqual({ type: "a", a: "abc" });
+  expect(
+    z
+      .discriminatedUnion([
+        z.object({ type: z.literal("a"), a: z.string() }),
+        z.object({ type: z.literal("b"), b: z.string() }),
+      ])
+      .parse({ type: "a", a: "abc" })
+  ).toEqual({ type: "a", a: "abc" });
 });
 
 test("valid parse - interface", () => {
-  expect(z.discriminatedUnion([z.interface({ type: z.literal("a"), a: z.string() }), z.interface({ type: z.literal("b"), b: z.string() })]).parse({ type: "a", a: "abc" })).toEqual({ type: "a", a: "abc" });
+  expect(
+    z
+      .discriminatedUnion([
+        z.interface({ type: z.literal("a"), a: z.string() }),
+        z.interface({ type: z.literal("b"), b: z.string() }),
+      ])
+      .parse({ type: "a", a: "abc" })
+  ).toEqual({ type: "a", a: "abc" });
 });
 
 test("valid - include discriminator key (deprecated)", () => {
-  expect(z.discriminatedUnion("type", [z.object({ type: z.literal("a"), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })]).parse({ type: "a", a: "abc" })).toEqual({ type: "a", a: "abc" });
+  expect(
+    z
+      .discriminatedUnion("type", [
+        z.object({ type: z.literal("a"), a: z.string() }),
+        z.object({ type: z.literal("b"), b: z.string() }),
+      ])
+      .parse({ type: "a", a: "abc" })
+  ).toEqual({ type: "a", a: "abc" });
 });
 
 test("valid - optional discriminator (object)", () => {
-  const schema = z.discriminatedUnion([z.object({ type: z.literal("a").optional(), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })]);
+  const schema = z.discriminatedUnion([
+    z.object({ type: z.literal("a").optional(), a: z.string() }),
+    z.object({ type: z.literal("b"), b: z.string() }),
+  ]);
   expect(schema.parse({ type: "a", a: "abc" })).toEqual({ type: "a", a: "abc" });
   expect(schema.parse({ a: "abc" })).toEqual({ a: "abc" });
 });
 
 test("valid - optional discriminator (interface)", () => {
-  const schema = z.discriminatedUnion([z.interface({ type: z.literal("a").optional(), a: z.string() }), z.interface({ type: z.literal("b"), b: z.string() })]);
+  const schema = z.discriminatedUnion([
+    z.interface({ type: z.literal("a").optional(), a: z.string() }),
+    z.interface({ type: z.literal("b"), b: z.string() }),
+  ]);
   expect(schema.parse({ type: "a", a: "abc" })).toEqual({ type: "a", a: "abc" });
   expect(schema.parse({ type: undefined, a: "abc" })).toEqual({ type: undefined, a: "abc" });
   expect(schema.parse({ type: "b", b: "abc" })).toEqual({ type: "b", b: "abc" });
@@ -104,7 +131,10 @@ test("valid - discriminator value of various primitive types", () => {
 
 test("invalid - null", () => {
   try {
-    z.discriminatedUnion([z.object({ type: z.literal("a"), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })]).parse(null);
+    z.discriminatedUnion([
+      z.object({ type: z.literal("a"), a: z.string() }),
+      z.object({ type: z.literal("b"), b: z.string() }),
+    ]).parse(null);
     throw new Error();
   } catch (e: any) {
     // [
@@ -133,7 +163,12 @@ test("invalid - null", () => {
 });
 
 test("invalid discriminator value", () => {
-  const result = z.discriminatedUnion([z.object({ type: z.literal("a"), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })]).safeParse({ type: "x", a: "abc" });
+  const result = z
+    .discriminatedUnion([
+      z.object({ type: z.literal("a"), a: z.string() }),
+      z.object({ type: z.literal("b"), b: z.string() }),
+    ])
+    .safeParse({ type: "x", a: "abc" });
 
   expect(result).toMatchInlineSnapshot(`
     {
@@ -154,7 +189,12 @@ test("invalid discriminator value", () => {
 });
 
 test("invalid discriminator value - unionFallback", () => {
-  const result = z.discriminatedUnion([z.object({ type: z.literal("a"), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })], { unionFallback: true }).safeParse({ type: "x", a: "abc" });
+  const result = z
+    .discriminatedUnion(
+      [z.object({ type: z.literal("a"), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })],
+      { unionFallback: true }
+    )
+    .safeParse({ type: "x", a: "abc" });
   expect(result).toMatchInlineSnapshot(`
     {
       "error": ZodError {
@@ -206,7 +246,12 @@ test("invalid discriminator value - unionFallback", () => {
 });
 
 test("valid discriminator value, invalid data", () => {
-  const result = z.discriminatedUnion([z.object({ type: z.literal("a"), a: z.string() }), z.object({ type: z.literal("b"), b: z.string() })]).safeParse({ type: "a", b: "abc" });
+  const result = z
+    .discriminatedUnion([
+      z.object({ type: z.literal("a"), a: z.string() }),
+      z.object({ type: z.literal("b"), b: z.string() }),
+    ])
+    .safeParse({ type: "a", b: "abc" });
 
   // [
   //   {
@@ -238,7 +283,8 @@ test("valid discriminator value, invalid data", () => {
 
 test("wrong schema - missing discriminator", () => {
   try {
-    z.discriminatedUnion([z.object({ type: z.literal("a"), a: z.string() }), z.object({ b: z.string() }) as any])._zod.disc;
+    z.discriminatedUnion([z.object({ type: z.literal("a"), a: z.string() }), z.object({ b: z.string() }) as any])._zod
+      .disc;
     throw new Error();
   } catch (e: any) {
     expect(e.message.includes("Invalid discriminated union option")).toBe(true);

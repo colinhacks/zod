@@ -13,10 +13,13 @@ import * as schemas from "./schemas.js";
 export interface ZodISODateTime extends schemas.ZodStringFormat {
   _zod: core.$ZodISODateTimeInternals;
 }
-export const ZodISODateTime: core.$constructor<ZodISODateTime> = /*@__PURE__*/ core.$constructor("ZodISODateTime", (inst, def) => {
-  core.$ZodISODateTime.init(inst, def);
-  schemas.ZodStringFormat.init(inst, def);
-});
+export const ZodISODateTime: core.$constructor<ZodISODateTime> = /*@__PURE__*/ core.$constructor(
+  "ZodISODateTime",
+  (inst, def) => {
+    core.$ZodISODateTime.init(inst, def);
+    schemas.ZodStringFormat.init(inst, def);
+  }
+);
 
 const _datetime = util.factory(() => ZodISODateTime, {
   type: "string",
@@ -27,7 +30,10 @@ const _datetime = util.factory(() => ZodISODateTime, {
   precision: null,
 });
 export function datetime(checks?: core.$ZodCheck<string>[]): ZodISODateTime;
-export function datetime(params?: string | core.$ZodISODateTimeParams, checks?: core.$ZodCheck<string>[]): ZodISODateTime;
+export function datetime(
+  params?: string | core.$ZodISODateTimeParams,
+  checks?: core.$ZodCheck<string>[]
+): ZodISODateTime;
 export function datetime(...args: any[]): ZodISODateTime {
   return _datetime(...args);
 }
@@ -104,10 +110,13 @@ export function time(...args: any[]): ZodISOTime {
 export interface ZodISODuration extends schemas.ZodStringFormat {
   _zod: core.$ZodISODurationInternals;
 }
-export const ZodISODuration: core.$constructor<ZodISODuration> = /*@__PURE__*/ core.$constructor("ZodISODuration", (inst, def) => {
-  core.$ZodISODuration.init(inst, def);
-  schemas.ZodStringFormat.init(inst, def);
-});
+export const ZodISODuration: core.$constructor<ZodISODuration> = /*@__PURE__*/ core.$constructor(
+  "ZodISODuration",
+  (inst, def) => {
+    core.$ZodISODuration.init(inst, def);
+    schemas.ZodStringFormat.init(inst, def);
+  }
+);
 
 const _duration = util.factory(() => ZodISODuration, {
   type: "string",
@@ -115,7 +124,10 @@ const _duration = util.factory(() => ZodISODuration, {
   check: "string_format",
 });
 export function duration(checks?: core.$ZodCheck<string>[]): ZodISODuration;
-export function duration(params?: string | core.$ZodISODurationParams, checks?: core.$ZodCheck<string>[]): ZodISODuration;
+export function duration(
+  params?: string | core.$ZodISODurationParams,
+  checks?: core.$ZodCheck<string>[]
+): ZodISODuration;
 export function duration(...args: any[]): ZodISODuration {
   return _duration(...args);
 }

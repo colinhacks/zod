@@ -180,7 +180,10 @@ test("catchall parsing", async () => {
 
   expect(result).toEqual({ name: "Foo", validExtraKey: 61 });
 
-  const result2 = z.object({ name: z.string() }).catchall(z.number()).safeParse({ name: "Foo", validExtraKey: 61, invalid: "asdf" });
+  const result2 = z
+    .object({ name: z.string() })
+    .catchall(z.number())
+    .safeParse({ name: "Foo", validExtraKey: 61, invalid: "asdf" });
 
   expect(result2.success).toEqual(false);
 });
@@ -214,7 +217,9 @@ test("test inferred merged type", async () => {
 });
 
 test("inferred merged object type with optional properties", async () => {
-  const Merged = z.object({ a: z.string(), b: z.string().optional() }).merge(z.object({ a: z.string().optional(), b: z.string() }));
+  const Merged = z
+    .object({ a: z.string(), b: z.string().optional() })
+    .merge(z.object({ a: z.string().optional(), b: z.string() }));
   type Merged = z.infer<typeof Merged>;
   expectTypeOf<Merged>().toEqualTypeOf<{ a?: string; b: string }>();
 
@@ -222,7 +227,10 @@ test("inferred merged object type with optional properties", async () => {
 });
 
 test("inferred unioned object type with optional properties", async () => {
-  const Unioned = z.union([z.object({ a: z.string(), b: z.string().optional() }), z.object({ a: z.string().optional(), b: z.string() })]);
+  const Unioned = z.union([
+    z.object({ a: z.string(), b: z.string().optional() }),
+    z.object({ a: z.string().optional(), b: z.string() }),
+  ]);
   type Unioned = z.infer<typeof Unioned>;
   expectTypeOf<Unioned>().toEqualTypeOf<{ a: string; b?: string } | { a?: string; b: string }>();
 });
