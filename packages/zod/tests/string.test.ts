@@ -293,7 +293,20 @@ test("nanoid", () => {
   expect(result).toMatchObject({ success: false });
 
   expect(result.error!.issues[0].message).toEqual("custom error");
-  expect(result.error).toMatchInlineSnapshot();
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_format",
+          "format": "nanoid",
+          "message": "custom error",
+          "origin": "string",
+          "path": [],
+          "pattern": "/^[a-zA-Z0-9_-]{21}$/",
+        },
+      ],
+    }
+  `);
 });
 
 test("bad nanoid", () => {
@@ -303,7 +316,20 @@ test("bad nanoid", () => {
   expect(result).toMatchObject({ success: false });
 
   expect(result.error!.issues[0].message).toEqual("custom error");
-  expect(result.error).toMatchInlineSnapshot();
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_format",
+          "format": "nanoid",
+          "message": "custom error",
+          "origin": "string",
+          "path": [],
+          "pattern": "/^[a-zA-Z0-9_-]{21}$/",
+        },
+      ],
+    }
+  `);
 });
 
 test("good uuid", () => {
@@ -374,7 +400,20 @@ test("cuid", () => {
   expect(result).toMatchObject({ success: false });
 
   expect(result.error!.issues[0].message).toEqual("Invalid cuid");
-  expect(result.error).toMatchInlineSnapshot();
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_format",
+          "format": "cuid",
+          "message": "Invalid cuid",
+          "origin": "string",
+          "path": [],
+          "pattern": "/^[cC][^\\s-]{8,}$/",
+        },
+      ],
+    }
+  `);
 });
 
 test("cuid2", () => {
@@ -409,7 +448,20 @@ test("ulid", () => {
   expect(ulid.safeParse(tooLong)).toMatchObject({ success: false });
 
   expect(result.error!.issues[0].message).toEqual("Invalid ULID");
-  expect(result.error).toMatchInlineSnapshot();
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_format",
+          "format": "ulid",
+          "message": "Invalid ULID",
+          "origin": "string",
+          "path": [],
+          "pattern": "/^[0-9A-HJKMNP-TV-Z]{26}$/",
+        },
+      ],
+    }
+  `);
 });
 
 test("xid", () => {
@@ -419,7 +471,20 @@ test("xid", () => {
   expect(result).toMatchObject({ success: false });
 
   expect(result.error!.issues[0].message).toEqual("Invalid XID");
-  expect(result.error).toMatchInlineSnapshot();
+  expect(result.error).toMatchInlineSnapshot(`
+    ZodError {
+      "issues": [
+        {
+          "code": "invalid_format",
+          "format": "xid",
+          "message": "Invalid XID",
+          "origin": "string",
+          "path": [],
+          "pattern": "/^[0-9a-vA-V]{20}$/",
+        },
+      ],
+    }
+  `);
 });
 
 test("ksuid", () => {
@@ -429,7 +494,18 @@ test("ksuid", () => {
   expect(result).toMatchObject({ success: false });
   const tooLong = "0o0t9hkGxgFLtd3lmJ4TSTeY0VbA";
   expect(ksuid.safeParse(tooLong)).toMatchObject({ success: false });
-  expect(result.error!.issues).toMatchInlineSnapshot();
+  expect(result.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_format",
+        "format": "ksuid",
+        "message": "Invalid KSUID",
+        "origin": "string",
+        "path": [],
+        "pattern": "/^[A-Za-z0-9]{27}$/",
+      },
+    ]
+  `);
 });
 
 test("regex", () => {
@@ -444,7 +520,18 @@ test("regexp error message", () => {
     .string()
     .regex(/^moo+$/)
     .safeParse("boooo");
-  expect(result.error!.issues).toMatchInlineSnapshot();
+  expect(result.error!.issues).toMatchInlineSnapshot(`
+    [
+      {
+        "code": "invalid_format",
+        "format": "regex",
+        "message": "Invalid string: must match pattern /^moo+$/",
+        "origin": "string",
+        "path": [],
+        "pattern": "/^moo+$/",
+      },
+    ]
+  `);
 
   expect(() => z.string().uuid().parse("purr")).toThrow();
 });
@@ -832,8 +919,9 @@ test("duration", () => {
 
   for (const val of validDurations) {
     const result = duration.safeParse(val);
-
-    throw Error(`Valid duration could not be parsed: ${val}`);
+    if (!result.success) {
+      throw Error(`Valid duration could not be parsed: ${val}`);
+    }
   }
 
   for (const val of invalidDurations) {
