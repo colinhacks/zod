@@ -4,7 +4,7 @@ import * as z from "zod";
 
 test("first party switch", () => {
   const myType = z.string() as core.$ZodTypes;
-  const def = myType._def;
+  const def = myType._zod.def;
   switch (def.type) {
     case "string":
       break;
@@ -86,7 +86,7 @@ test("first party switch", () => {
 });
 
 test("$ZodSchemaTypes", () => {
-  const type = "string" as core.$ZodSchemaTypes;
+  const type = "string" as core.$ZodTypeDef["type"];
   switch (type) {
     case "string":
       break;

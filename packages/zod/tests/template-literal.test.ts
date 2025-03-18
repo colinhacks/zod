@@ -52,28 +52,16 @@ const stringMin5 = z.templateLiteral(["", z.string().min(5)]);
 const stringLen5 = z.templateLiteral(["", z.string().length(5)]);
 const stringMin5Max10 = z.templateLiteral(["", z.string().min(5).max(10)]);
 const stringStartsWithMax5 = z.templateLiteral(["", z.string().startsWith("hello").max(5)]);
-const brandedString = z.templateLiteral(["", z.string().min(1).$brand("myBrand")]);
+const brandedString = z.templateLiteral(["", z.string().min(1).brand("myBrand")]);
 // const anything = z.templateLiteral(["", z.any()]);
 
 const url = z.templateLiteral(["https://", z.string().regex(/\w+/), ".", z.enum(["com", "net"])]);
 
-const measurement = z.templateLiteral([
-  "",
-  z.number().finite(),
-  z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional(),
-]);
+const measurement = z.templateLiteral(["", z.number().finite(), z.enum(["px", "em", "rem", "vh", "vw", "vmin", "vmax"]).optional()]);
 
 const connectionString = z.templateLiteral([
   "mongodb://",
-  z
-    .templateLiteral([
-      "",
-      z.string().regex(/\w+/).describe("username"),
-      ":",
-      z.string().regex(/\w+/).describe("password"),
-      "@",
-    ])
-    .optional(),
+  z.templateLiteral(["", z.string().regex(/\w+/).describe("username"), ":", z.string().regex(/\w+/).describe("password"), "@"]).optional(),
   z.string().regex(/\w+/).describe("host"),
   ":",
   z.number().finite().int().positive().describe("port"),
@@ -152,16 +140,7 @@ test("template literal type inference", () => {
 
   expectTypeOf<z.infer<typeof url>>().toEqualTypeOf<`https://${string}.com` | `https://${string}.net`>();
 
-  expectTypeOf<z.infer<typeof measurement>>().toEqualTypeOf<
-    | `${number}`
-    | `${number}px`
-    | `${number}em`
-    | `${number}rem`
-    | `${number}vh`
-    | `${number}vw`
-    | `${number}vmin`
-    | `${number}vmax`
-  >();
+  expectTypeOf<z.infer<typeof measurement>>().toEqualTypeOf<`${number}` | `${number}px` | `${number}em` | `${number}rem` | `${number}vh` | `${number}vw` | `${number}vmin` | `${number}vmax`>();
 
   expectTypeOf<z.infer<typeof connectionString>>().toEqualTypeOf<
     | `mongodb://${string}:${number}`
@@ -267,7 +246,7 @@ test("template literal unsupported args", () => {
   ).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral([z.object({}).$brand("brand")])
+    z.templateLiteral([z.object({}).brand("brand")])
   ).toThrow();
 
   // these constraints aren't enforced but they shouldn't throw
@@ -514,73 +493,65 @@ test("template literal parsing - failure - basic cases", () => {
 });
 
 test("regexes", () => {
-  expect(empty._pattern.source).toMatchInlineSnapshot(`"^$"`);
-  expect(hello._pattern.source).toMatchInlineSnapshot(`"^hello$"`);
-  expect(world._pattern.source).toMatchInlineSnapshot(`"^(world)$"`);
-  expect(one._pattern.source).toMatchInlineSnapshot(`"^1$"`);
-  expect(two._pattern.source).toMatchInlineSnapshot(`"^(2)$"`);
-  expect(truee._pattern.source).toMatchInlineSnapshot(`"^true$"`);
-  expect(anotherTrue._pattern.source).toMatchInlineSnapshot(`"^(true)$"`);
-  expect(falsee._pattern.source).toMatchInlineSnapshot(`"^false$"`);
-  expect(anotherFalse._pattern.source).toMatchInlineSnapshot(`"^(false)$"`);
-  expect(nulll._pattern.source).toMatchInlineSnapshot(`"^null$"`);
-  expect(anotherNull._pattern.source).toMatchInlineSnapshot(`"^null$"`);
-  expect(undefinedd._pattern.source).toMatchInlineSnapshot(`"^undefined$"`);
-  expect(anotherUndefined._pattern.source).toMatchInlineSnapshot(`"^undefined$"`);
-  expect(anyString._pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{0,}$"`);
-  expect(lazyString._pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{0,}$"`);
-  expect(anyNumber._pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
-  expect(anyInt._pattern.source).toMatchInlineSnapshot(`"^\\d+$"`);
-  // expect(anyFiniteNumber._pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
-  // expect(anyNegativeNumber._pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
-  // expect(anyPositiveNumber._pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
-  // expect(zeroButInADumbWay._pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
-  // expect(finiteButInADumbWay._pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
-  expect(bool._pattern.source).toMatchInlineSnapshot(`"^true|false$"`);
-  expect(bigone._pattern.source).toMatchInlineSnapshot(`"^(1)$"`);
-  expect(anyBigint._pattern.source).toMatchInlineSnapshot(`"^\\d+n?$"`);
-  expect(nullableYo._pattern.source).toMatchInlineSnapshot(`"^((yo)|null)$"`);
-  expect(nullableString._pattern.source).toMatchInlineSnapshot(`"^([\\s\\S]{0,}|null)$"`);
-  expect(optionalYeah._pattern.source).toMatchInlineSnapshot(`"^((yeah))?$"`);
-  expect(optionalString._pattern.source).toMatchInlineSnapshot(`"^([\\s\\S]{0,})?$"`);
-  expect(optionalNumber._pattern.source).toMatchInlineSnapshot(`"^(-?\\d+(?:\\.\\d+)?)?$"`);
-  expect(nullishBruh._pattern.source).toMatchInlineSnapshot(`"^(((bruh)|null))?$"`);
-  expect(nullishString._pattern.source).toMatchInlineSnapshot(`"^(([\\s\\S]{0,}|null))?$"`);
-  expect(cuid._pattern.source).toMatchInlineSnapshot(`"^[cC][^\\s-]{8,}$"`);
-  expect(cuidZZZ._pattern.source).toMatchInlineSnapshot(`"^[cC][^\\s-]{8,}ZZZ$"`);
-  expect(cuid2._pattern.source).toMatchInlineSnapshot(`"^[0-9a-z]+$"`);
-  expect(datetime._pattern.source).toMatchInlineSnapshot(
+  expect(empty._zod.pattern.source).toMatchInlineSnapshot(`"^$"`);
+  expect(hello._zod.pattern.source).toMatchInlineSnapshot(`"^hello$"`);
+  expect(world._zod.pattern.source).toMatchInlineSnapshot(`"^(world)$"`);
+  expect(one._zod.pattern.source).toMatchInlineSnapshot(`"^1$"`);
+  expect(two._zod.pattern.source).toMatchInlineSnapshot(`"^(2)$"`);
+  expect(truee._zod.pattern.source).toMatchInlineSnapshot(`"^true$"`);
+  expect(anotherTrue._zod.pattern.source).toMatchInlineSnapshot(`"^(true)$"`);
+  expect(falsee._zod.pattern.source).toMatchInlineSnapshot(`"^false$"`);
+  expect(anotherFalse._zod.pattern.source).toMatchInlineSnapshot(`"^(false)$"`);
+  expect(nulll._zod.pattern.source).toMatchInlineSnapshot(`"^null$"`);
+  expect(anotherNull._zod.pattern.source).toMatchInlineSnapshot(`"^null$"`);
+  expect(undefinedd._zod.pattern.source).toMatchInlineSnapshot(`"^undefined$"`);
+  expect(anotherUndefined._zod.pattern.source).toMatchInlineSnapshot(`"^undefined$"`);
+  expect(anyString._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{0,}$"`);
+  expect(lazyString._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{0,}$"`);
+  expect(anyNumber._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
+  expect(anyInt._zod.pattern.source).toMatchInlineSnapshot(`"^\\d+$"`);
+  // expect(anyFiniteNumber._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
+  // expect(anyNegativeNumber._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
+  // expect(anyPositiveNumber._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
+  // expect(zeroButInADumbWay._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
+  // expect(finiteButInADumbWay._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?$"`);
+  expect(bool._zod.pattern.source).toMatchInlineSnapshot(`"^true|false$"`);
+  expect(bigone._zod.pattern.source).toMatchInlineSnapshot(`"^(1)$"`);
+  expect(anyBigint._zod.pattern.source).toMatchInlineSnapshot(`"^\\d+n?$"`);
+  expect(nullableYo._zod.pattern.source).toMatchInlineSnapshot(`"^((yo)|null)$"`);
+  expect(nullableString._zod.pattern.source).toMatchInlineSnapshot(`"^([\\s\\S]{0,}|null)$"`);
+  expect(optionalYeah._zod.pattern.source).toMatchInlineSnapshot(`"^((yeah))?$"`);
+  expect(optionalString._zod.pattern.source).toMatchInlineSnapshot(`"^([\\s\\S]{0,})?$"`);
+  expect(optionalNumber._zod.pattern.source).toMatchInlineSnapshot(`"^(-?\\d+(?:\\.\\d+)?)?$"`);
+  expect(nullishBruh._zod.pattern.source).toMatchInlineSnapshot(`"^(((bruh)|null))?$"`);
+  expect(nullishString._zod.pattern.source).toMatchInlineSnapshot(`"^(([\\s\\S]{0,}|null))?$"`);
+  expect(cuid._zod.pattern.source).toMatchInlineSnapshot(`"^[cC][^\\s-]{8,}$"`);
+  expect(cuidZZZ._zod.pattern.source).toMatchInlineSnapshot(`"^[cC][^\\s-]{8,}ZZZ$"`);
+  expect(cuid2._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9a-z]+$"`);
+  expect(datetime._zod.pattern.source).toMatchInlineSnapshot(
     `"^((\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-((0[13578]|1[02])-(0[1-9]|[12]\\d|3[01])|(0[469]|11)-(0[1-9]|[12]\\d|30)|(02)-(0[1-9]|1\\d|2[0-8])))T([01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(\\.\\d+)?(Z)$"`
   );
-  expect(email._pattern.source).toMatchInlineSnapshot(
-    `"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"`
-  );
-  expect(ip._pattern.source).toMatchInlineSnapshot(
+  expect(email._zod.pattern.source).toMatchInlineSnapshot(`"^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"`);
+  expect(ip._zod.pattern.source).toMatchInlineSnapshot(
     `"^(^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$)|(^(([a-fA-F0-9]{1,4}:){7}|::([a-fA-F0-9]{1,4}:){0,6}|([a-fA-F0-9]{1,4}:){1}:([a-fA-F0-9]{1,4}:){0,5}|([a-fA-F0-9]{1,4}:){2}:([a-fA-F0-9]{1,4}:){0,4}|([a-fA-F0-9]{1,4}:){3}:([a-fA-F0-9]{1,4}:){0,3}|([a-fA-F0-9]{1,4}:){4}:([a-fA-F0-9]{1,4}:){0,2}|([a-fA-F0-9]{1,4}:){5}:([a-fA-F0-9]{1,4}:){0,1})([a-fA-F0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$)$"`
   );
-  expect(ipv4._pattern.source).toMatchInlineSnapshot(
-    `"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"`
-  );
-  expect(ipv6._pattern.source).toMatchInlineSnapshot(
+  expect(ipv4._zod.pattern.source).toMatchInlineSnapshot(`"^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$"`);
+  expect(ipv6._zod.pattern.source).toMatchInlineSnapshot(
     `"^(([a-fA-F0-9]{1,4}:){7}|::([a-fA-F0-9]{1,4}:){0,6}|([a-fA-F0-9]{1,4}:){1}:([a-fA-F0-9]{1,4}:){0,5}|([a-fA-F0-9]{1,4}:){2}:([a-fA-F0-9]{1,4}:){0,4}|([a-fA-F0-9]{1,4}:){3}:([a-fA-F0-9]{1,4}:){0,3}|([a-fA-F0-9]{1,4}:){4}:([a-fA-F0-9]{1,4}:){0,2}|([a-fA-F0-9]{1,4}:){5}:([a-fA-F0-9]{1,4}:){0,1})([a-fA-F0-9]{1,4}|(((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2}))\\.){3}((25[0-5])|(2[0-4][0-9])|(1[0-9]{2})|([0-9]{1,2})))$"`
   );
-  expect(ulid._pattern.source).toMatchInlineSnapshot(`"^[0-9A-HJKMNP-TV-Z]{26}$"`);
-  expect(uuid._pattern.source).toMatchInlineSnapshot(
-    `"^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$"`
-  );
-  expect(stringAToZ._pattern.source).toMatchInlineSnapshot(`"^[a-z]+$"`);
-  expect(stringStartsWith._pattern.source).toMatchInlineSnapshot(`"^hello.*$"`);
-  expect(stringEndsWith._pattern.source).toMatchInlineSnapshot(`"^.*world$"`);
-  expect(stringMax5._pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{0,5}$"`);
-  expect(stringMin5._pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{5,}$"`);
-  expect(stringLen5._pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{5,5}$"`);
-  expect(stringMin5Max10._pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{5,10}$"`);
-  expect(brandedString._pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{1,}$"`);
-  expect(url._pattern.source).toMatchInlineSnapshot(`"^https:\\/\\/\\w+\\.(com|net)$"`);
-  expect(measurement._pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?((px|em|rem|vh|vw|vmin|vmax))?$"`);
-  expect(connectionString._pattern.source).toMatchInlineSnapshot(
-    `"^mongodb:\\/\\/(\\w+:\\w+@)?\\w+:\\d+(\\/(\\w+)?(\\?(\\w+=\\w+(&\\w+=\\w+)*)?)?)?$"`
-  );
+  expect(ulid._zod.pattern.source).toMatchInlineSnapshot(`"^[0-9A-HJKMNP-TV-Z]{26}$"`);
+  expect(uuid._zod.pattern.source).toMatchInlineSnapshot(`"^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000)$"`);
+  expect(stringAToZ._zod.pattern.source).toMatchInlineSnapshot(`"^[a-z]+$"`);
+  expect(stringStartsWith._zod.pattern.source).toMatchInlineSnapshot(`"^hello.*$"`);
+  expect(stringEndsWith._zod.pattern.source).toMatchInlineSnapshot(`"^.*world$"`);
+  expect(stringMax5._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{0,5}$"`);
+  expect(stringMin5._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{5,}$"`);
+  expect(stringLen5._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{5,5}$"`);
+  expect(stringMin5Max10._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{5,10}$"`);
+  expect(brandedString._zod.pattern.source).toMatchInlineSnapshot(`"^[\\s\\S]{1,}$"`);
+  expect(url._zod.pattern.source).toMatchInlineSnapshot(`"^https:\\/\\/\\w+\\.(com|net)$"`);
+  expect(measurement._zod.pattern.source).toMatchInlineSnapshot(`"^-?\\d+(?:\\.\\d+)?((px|em|rem|vh|vw|vmin|vmax))?$"`);
+  expect(connectionString._zod.pattern.source).toMatchInlineSnapshot(`"^mongodb:\\/\\/(\\w+:\\w+@)?\\w+:\\d+(\\/(\\w+)?(\\?(\\w+=\\w+(&\\w+=\\w+)*)?)?)?$"`);
 });
 
 test("template literal parsing - success - complex cases", () => {
@@ -644,9 +615,7 @@ test("template literal parsing - success - complex cases", () => {
   connectionString.parse("mongodb://username:password@host:1234/");
   connectionString.parse("mongodb://username:password@host:1234/defaultauthdb");
   connectionString.parse("mongodb://username:password@host:1234/defaultauthdb?authSource=admin");
-  connectionString.parse(
-    "mongodb://username:password@host:1234/defaultauthdb?authSource=admin&connectTimeoutMS=300000"
-  );
+  connectionString.parse("mongodb://username:password@host:1234/defaultauthdb?authSource=admin&connectTimeoutMS=300000");
   connectionString.parse("mongodb://username:password@host:1234/?authSource=admin");
   connectionString.parse("mongodb://username:password@host:1234/?authSource=admin&connectTimeoutMS=300000");
 });

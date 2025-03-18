@@ -126,7 +126,7 @@ test("z.iso.date", () => {
   expect(z.safeParse(a, d1).success).toEqual(true);
   expect(z.safeParse(a, d2).success).toEqual(false);
 
-  const b = z.string([z.iso.date()]);
+  const b = z.string().check(z.iso.date());
   expect(z.safeParse(b, d1).success).toEqual(true);
   expect(z.safeParse(b, d2).success).toEqual(false);
 });
@@ -146,7 +146,7 @@ test("z.iso.time", () => {
   expect(z.safeParse(b, d2).success).toEqual(true);
   expect(z.safeParse(b, d3).success).toEqual(false);
 
-  const c = z.string([z.iso.time()]);
+  const c = z.string().check(z.iso.time());
   expect(z.safeParse(c, d1).success).toEqual(true);
   expect(z.safeParse(c, d2).success).toEqual(true);
   expect(z.safeParse(c, d3).success).toEqual(false);
@@ -160,7 +160,7 @@ test("z.iso.duration", () => {
   expect(z.safeParse(a, d1).success).toEqual(true);
   expect(z.safeParse(a, d2).success).toEqual(false);
 
-  const b = z.string([z.iso.duration()]);
+  const b = z.string().check(z.iso.duration());
   expect(z.safeParse(b, d1).success).toEqual(true);
   expect(z.safeParse(b, d2).success).toEqual(false);
 });
@@ -233,7 +233,7 @@ test("z.discriminatedUnion", () => {
     type: z.literal("A"),
     name: z.string(),
   });
-  expect(a._disc.get("type")).toEqual({
+  expect(a._zod.disc!.get("type")).toEqual({
     values: new Set(["A"]),
     maps: [],
   });
@@ -245,9 +245,9 @@ test("z.discriminatedUnion", () => {
 
   const c = z.discriminatedUnion([a, b]);
 
-  expect(c._def.options.length).toEqual(2);
-  expect(c._disc.get("type")!.values.has("A")).toEqual(true);
-  expect(c._disc.get("type")!.values.has("B")).toEqual(true);
+  expect(c._zod.def.options.length).toEqual(2);
+  expect(c._zod.disc!.get("type")!.values.has("A")).toEqual(true);
+  expect(c._zod.disc!.get("type")!.values.has("B")).toEqual(true);
 
   expect(z.parse(c, { type: "A", name: "john" })).toEqual({
     type: "A",
@@ -268,8 +268,8 @@ test("z.discriminatedUnion with nested discriminator", () => {
   });
 
   const c = z.discriminatedUnion([a, b]);
-  expect(c._disc!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(true);
-  expect(c._disc!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(true);
+  expect(c._zod.disc!.get("type")!.maps[0].get("key")!.values.has("A")).toEqual(true);
+  expect(c._zod.disc!.get("type")!.maps[1].get("key")!.values.has("B")).toEqual(true);
 
   expect(z.parse(c, { type: { key: "A" }, name: "john" })).toEqual({
     type: { key: "A" },
@@ -308,11 +308,11 @@ test("z.discriminatedUnion nested", () => {
   ]);
 
   const hyper = z.discriminatedUnion([schema1, schema2]);
-  expect(hyper._disc.get("num")).toEqual({
+  expect(hyper._zod.disc!.get("num")).toEqual({
     values: new Set([1, 2]),
     maps: [],
   });
-  expect(hyper._disc.get("type")).toEqual({
+  expect(hyper._zod.disc!.get("type")).toEqual({
     values: new Set(["A", "B", "C", "D"]),
     maps: [],
   });
@@ -418,7 +418,7 @@ test("z.map invalid_element", () => {
 });
 
 test("z.map async", async () => {
-  const a = z.map(z.string([z.refine(async () => true)]), z.number([z.refine(async () => true)]));
+  const a = z.map(z.string().check(z.refine(async () => true)), z.number().check(z.refine(async () => true)));
   const d1 = new Map([["hello", 123]]);
   expect(await z.parseAsync(a, d1)).toEqual(d1);
 
@@ -707,7 +707,7 @@ test("z.custom", () => {
   expect(z.parse(a, "hello")).toEqual("hello");
   expect(() => z.parse(a, 123)).toThrow();
 
-  const b = z.string([z.custom((val) => val.length > 3)]);
+  const b = z.string().check(z.custom((val) => val.length > 3));
 
   expect(z.parse(b, "hello")).toEqual("hello");
   expect(() => z.parse(b, "hi")).toThrow();
@@ -716,7 +716,7 @@ test("z.custom", () => {
 test("z.check", () => {
   // this is a more flexible version of z.custom that accepts an arbitrary _parse logic
   // the function should return base.$ZodResult
-  const a = z.any().$check(
+  const a = z.any().check(
     z.check<string>((ctx) => {
       if (typeof ctx.value === "string") return;
       ctx.issues.push({
@@ -746,7 +746,10 @@ test("z.instanceof", () => {
 });
 
 test("z.refine", () => {
-  const a = z.number([z.refine((val) => val > 3), z.refine((val) => val < 10)]);
+  const a = z.number().check(
+    z.refine((val) => val > 3),
+    z.refine((val) => val < 10)
+  );
   expect(z.parse(a, 5)).toEqual(5);
   expect(() => z.parse(a, 2)).toThrow();
   expect(() => z.parse(a, 11)).toThrow();
@@ -788,7 +791,7 @@ test("z.transform", () => {
 });
 
 test("z.$brand()", () => {
-  const a = z.string().$brand<"my-brand">();
+  const a = z.string().brand<"my-brand">();
   type a = z.output<typeof a>;
   const branded = (_: a) => {};
   // @ts-expect-error

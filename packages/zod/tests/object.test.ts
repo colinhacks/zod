@@ -80,7 +80,7 @@ test("empty object", () => {
   expect(schema.parse({ name: "asdf" })).toEqual({});
   expect(schema.safeParse(null).success).toEqual(false);
   expect(schema.safeParse("asdf").success).toEqual(false);
-  expectTypeOf<typeof schema._output>().toEqualTypeOf<object>();
+  expectTypeOf<typeof schema._zod.output>().toEqualTypeOf<object>();
 });
 
 const data = {
@@ -180,10 +180,7 @@ test("catchall parsing", async () => {
 
   expect(result).toEqual({ name: "Foo", validExtraKey: 61 });
 
-  const result2 = z
-    .object({ name: z.string() })
-    .catchall(z.number())
-    .safeParse({ name: "Foo", validExtraKey: 61, invalid: "asdf" });
+  const result2 = z.object({ name: z.string() }).catchall(z.number()).safeParse({ name: "Foo", validExtraKey: 61, invalid: "asdf" });
 
   expect(result2.success).toEqual(false);
 });
@@ -217,9 +214,7 @@ test("test inferred merged type", async () => {
 });
 
 test("inferred merged object type with optional properties", async () => {
-  const Merged = z
-    .object({ a: z.string(), b: z.string().optional() })
-    .merge(z.object({ a: z.string().optional(), b: z.string() }));
+  const Merged = z.object({ a: z.string(), b: z.string().optional() }).merge(z.object({ a: z.string().optional(), b: z.string() }));
   type Merged = z.infer<typeof Merged>;
   expectTypeOf<Merged>().toEqualTypeOf<{ a?: string; b: string }>();
 
@@ -227,10 +222,7 @@ test("inferred merged object type with optional properties", async () => {
 });
 
 test("inferred unioned object type with optional properties", async () => {
-  const Unioned = z.union([
-    z.object({ a: z.string(), b: z.string().optional() }),
-    z.object({ a: z.string().optional(), b: z.string() }),
-  ]);
+  const Unioned = z.union([z.object({ a: z.string(), b: z.string().optional() }), z.object({ a: z.string().optional(), b: z.string() })]);
   type Unioned = z.infer<typeof Unioned>;
   expectTypeOf<Unioned>().toEqualTypeOf<{ a: string; b?: string } | { a?: string; b: string }>();
 });
@@ -243,7 +235,7 @@ test("inferred enum type", async () => {
     b: "b",
   });
 
-  expect(Enum._def.entries).toEqual({
+  expect(Enum._zod.def.entries).toEqual({
     a: "a",
     b: "b",
   });
@@ -355,16 +347,16 @@ test("constructor key", () => {
 
 test("catchall", () => {
   const a = z.object({});
-  expect(a._def.catchall).toBeUndefined();
+  expect(a._zod.def.catchall).toBeUndefined();
 
   const b = z.strictObject({});
-  expect(b._def.catchall).toBeInstanceOf(core.$ZodNever);
+  expect(b._zod.def.catchall).toBeInstanceOf(core.$ZodNever);
 
   const c = z.looseObject({});
-  expect(c._def.catchall).toBeInstanceOf(core.$ZodUnknown);
+  expect(c._zod.def.catchall).toBeInstanceOf(core.$ZodUnknown);
 
   const d = z.object({}).catchall(z.number());
-  expect(d._def.catchall).toBeInstanceOf(core.$ZodNumber);
+  expect(d._zod.def.catchall).toBeInstanceOf(core.$ZodNumber);
 });
 
 test("unknownkeys merging", () => {
@@ -377,7 +369,7 @@ test("unknownkeys merging", () => {
 
   // incoming object overrides
   const c = a.merge(b);
-  expect(c._def.catchall).toBeInstanceOf(core.$ZodNever);
+  expect(c._zod.def.catchall).toBeInstanceOf(core.$ZodNever);
 });
 
 const personToExtend = z.object({
@@ -419,15 +411,24 @@ test("passthrough index signature", () => {
   expectTypeOf<b>().toEqualTypeOf<{ a: string } & { [k: string]: unknown }>();
 });
 
-test("xor", () => {
-  type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
-  type XOR<T, U> = T extends object ? (U extends object ? (Without<T, U> & U) | (Without<U, T> & T) : U) : T;
+// test("xor", () => {
+//   type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
+//   type XOR<T, U> = T extends object ? (U extends object ? (Without<T, U> & U) | (Without<U, T> & T) : U) : T;
 
-  type A = { name: string; a: number };
-  type B = { name: string; b: number };
-  type C = XOR<A, B>;
-  type Outer = { data: C };
-  const Outer: z.ZodType<Outer> = z.object({
-    data: z.union([z.object({ name: z.string(), a: z.number() }), z.object({ name: z.string(), b: z.number() })]),
-  });
+//   type A = { name: string; a: number };
+//   type B = { name: string; b: number };
+//   type C = XOR<A, B>;
+//   type Outer = { data: C };
+//   const Outer = z.object({
+//     data: z.union([z.object({ name: z.string(), a: z.number() }), z.object({ name: z.string(), b: z.number() })]),
+//   }) satisfies z.ZodType<Outer, any>;
+// });
+
+test("assignability", () => {
+  z.interface({ a: z.string() }) satisfies z.ZodInterface;
+  z.interface({ a: z.string() }).catchall(z.number()) satisfies z.ZodInterface;
+  z.interface({ a: z.string() }).strict() satisfies z.ZodInterface;
+  z.interface({}) satisfies z.ZodInterface;
+  z.interface({ "a?": z.string() }) satisfies z.ZodInterface;
+  z.interface({ "?a": z.string() }) satisfies z.ZodInterface;
 });

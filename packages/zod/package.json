@@ -66,6 +66,6 @@
     "prepublishOnly": "pnpm test && pnpm run build"
   },
   "dependencies": {
-    "@zod/core": "3.23.8"
+    "@zod/mini": "3.23.8"
   }
 }

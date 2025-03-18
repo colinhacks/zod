@@ -5,6 +5,7 @@ const args1 = z.tuple([z.string()]);
 const returns1 = z.number();
 const func1 = z.function({
   input: args1,
+
   output: returns1,
 });
 
@@ -99,11 +100,11 @@ test("function inference 2", () => {
 
   expectTypeOf<func2>().toEqualTypeOf<
     (arg: {
+      f3?: (boolean | undefined)[] | undefined;
       f1: number;
       f2: string | null;
-      f3?: (boolean | undefined)[] | undefined;
     }) => string | number
-  >(true);
+  >();
 });
 
 test("valid function run", () => {

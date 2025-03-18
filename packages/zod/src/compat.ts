@@ -1,6 +1,7 @@
 // Zod 3 compat layer
 
 import * as core from "@zod/core";
+import type { ZodType } from "./schemas.js";
 
 export * as core from "@zod/core";
 export type {
@@ -47,10 +48,11 @@ export type inferFormattedError<T extends core.$ZodType<any, any>, U = string> =
   U
 >;
 
+/** Use `z.$brand` instead */
 export type BRAND<T extends string | number | symbol = string | number | symbol> = {
-  [core.BRAND]: { [k in T]: true };
+  [core.$brand]: { [k in T]: true };
 };
-export { BRAND, config } from "@zod/core";
+export { $brand, config } from "@zod/core";
 
 /** @deprecated Use `z.config(params)` instead. */
 export function setErrorMap(map: core.$ZodErrorMap): void {
@@ -66,4 +68,7 @@ export function getErrorMap(): core.$ZodErrorMap<core.$ZodIssue> | undefined {
 
 export { parse, safeParse, parseAsync, safeParseAsync } from "@zod/core";
 
-export { json, stringbool } from "@zod/core";
+// export { json, stringbool } from "@zod/core";
+
+/** @deprecated Use z.ZodType (without generics) instead. */
+export type ZodTypeAny = ZodType;

@@ -1,18 +1,44 @@
 import * as z from "zod";
 
-z;
+/** Standard FORM:
+ * const schema = z.jwt();
+ * const data = "...";
+ * const result = z.safeParse(schema, data);
+ * console.log(JSON.stringify(result, null, 2));
+ */
 
-const schema = z.object({
-  type: z.literal("a"),
-  a: z
-    .string()
-    .refine(async () => true)
-    .transform((val) => Number(val)),
+const schema = z.interface({
+  val: z.number(),
+  get b() {
+    return b_schema;
+  },
 });
-const data = { type: "a", a: "1" };
-const result = await schema.safeParseAsync(data);
-console.log(JSON.stringify(result, null, 2));
 
-z.email({})._zod;
-z.object({});
-z.guid();
+const b_schema = z.interface({
+  val: z.number(),
+  get a() {
+    return schema.optional();
+  },
+});
+
+const data = {
+  val: 1,
+  b: {
+    val: 5,
+    a: {
+      val: 3,
+      b: {
+        val: 4,
+        a: {
+          val: 2,
+          b: {
+            val: 1,
+          },
+        },
+      },
+    },
+  },
+};
+
+const result = schema.safeParse(data);
+console.log(JSON.stringify(result, null, 2));

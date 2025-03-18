@@ -173,5 +173,5 @@ test("primitive inference", () => {
 
 test("get literal values", () => {
   expect(literalStringSchema.values).toEqual(new Set(["asdf"]));
-  expect(literalStringSchema._def.values).toEqual(["asdf"]);
+  expect(literalStringSchema._zod.def.values).toEqual(["asdf"]);
 });

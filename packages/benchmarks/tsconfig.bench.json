@@ -1,8 +1,0 @@
-{
-  "extends": "../.configs/tsconfig.base.json",
-  "compilerOptions": {
-    "noEmit": true,
-    "extendedDiagnostics": true,
-    "traceResolution": true
-  }
-}

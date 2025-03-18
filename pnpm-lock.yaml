@@ -34,7 +34,10 @@ importers:
         version: 3.0.3
       '@zod/core':
         specifier: ^3.23.8
-        version: link:packages/zod-core
+        version: link:packages/core
+      '@zod/mini':
+        specifier: ^3.23.8
+        version: link:packages/mini
       arktype:
         specifier: ^2.0.0
         version: 2.0.0
@@ -95,24 +98,21 @@ importers:
       zod:
         specifier: ^3.23.7
         version: link:packages/zod
-      zod-mini:
-        specifier: ^3.23.8
-        version: link:packages/zod-mini
       zod3:
         specifier: npm:zod@^3.24.0
         version: zod@3.24.2
 
-  packages/benchmarks:
+  packages/bench:
     dependencies:
       '@zod/core':
         specifier: ^3.23.8
-        version: link:../zod-core
+        version: link:../core
+      '@zod/mini':
+        specifier: ^3.23.8
+        version: link:../mini
       zod:
         specifier: ^3.23.7
         version: link:../zod
-      zod-mini:
-        specifier: ^3.23.8
-        version: link:../zod-mini
       zod3:
         specifier: npm:zod@3.23.7
         version: zod@3.23.7
@@ -124,16 +124,15 @@ importers:
         specifier: 1.0.0-rc.2
         version: 1.0.0-rc.2(typescript@5.7.3)
 
-  packages/effect-plugin:
-    dependencies:
-      effect:
-        specifier: ^3.0.0
-        version: 3.5.6
-      zod:
-        specifier: ^3.0.0
-        version: link:../zod
+  packages/core: {}
 
-  packages/tsperf:
+  packages/mini:
+    dependencies:
+      '@zod/core':
+        specifier: 3.23.8
+        version: link:../core
+
+  packages/tsc:
     dependencies:
       '@types/node':
         specifier: ^22.10.5
@@ -143,7 +142,7 @@ importers:
         version: 0.10.1
       '@zod/core':
         specifier: 3.23.8
-        version: link:../zod-core
+        version: link:../core
       arktype:
         specifier: 2.0.0-rc.33
         version: 2.0.0-rc.33
@@ -166,17 +165,9 @@ importers:
 
   packages/zod:
     dependencies:
-      '@zod/core':
+      '@zod/mini':
         specifier: 3.23.8
-        version: link:../zod-core
-
-  packages/zod-core: {}
-
-  packages/zod-mini:
-    dependencies:
-      '@zod/core':
-        specifier: 3.23.8
-        version: link:../zod-core
+        version: link:../mini
 
 packages:
 
@@ -1113,9 +1104,6 @@ packages:
 
   eastasianwidth@0.2.0:
     resolution: {integrity: sha512-I88TYZWc9XiYHRQ4/3c5rjjfgkjhLyW2luGIheGERbNQ6OY7yTybanSpDXZa8y7VUP9YmDcYa+eyq4ca7iLqWA==}
-
-  effect@3.5.6:
-    resolution: {integrity: sha512-3PMiC+XMaLkHx9Nlxfr6ot/8/gVq9aEjMlBvyKzJx0p4h1ZyNEjPxvAZQ9tlxAtXBvmfRpmIwHxG99hi8qhEtQ==}
 
   emoji-regex@8.0.0:
     resolution: {integrity: sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A==}
@@ -3156,8 +3144,6 @@ snapshots:
   duplexer@0.1.2: {}
 
   eastasianwidth@0.2.0: {}
-
-  effect@3.5.6: {}
 
   emoji-regex@8.0.0: {}
 

@@ -48,8 +48,8 @@ test("pick parse - fail", () => {
 
 test("pick - remove optional", () => {
   const schema = z.interface({ a: z.string, "b?": z.string() });
-  expect(schema.pick({ a: true })._def.optional).toEqual([]);
-  expect(schema.pick({ b: true })._def.optional).toEqual(["b"]);
+  expect(schema.pick({ a: true })._zod.def.optional).toEqual([]);
+  expect(schema.pick({ b: true })._zod.def.optional).toEqual(["b"]);
 });
 
 test("omit type inference", () => {
@@ -86,8 +86,8 @@ test("omit parse - fail", () => {
 
 test("omit - remove optional", () => {
   const schema = z.interface({ a: z.string(), "b?": z.string() });
-  expect(schema.omit({ a: true })._def.optional).toEqual(["b"]);
-  expect(schema.omit({ b: true })._def.optional).toEqual([]);
+  expect(schema.omit({ a: true })._zod.def.optional).toEqual(["b"]);
+  expect(schema.omit({ b: true })._zod.def.optional).toEqual([]);
 });
 
 test("nonstrict inference", () => {
