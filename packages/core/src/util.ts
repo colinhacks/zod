@@ -122,18 +122,6 @@ export type MakeReadonly<T> = T extends Map<infer K, infer V>
           ? T
           : Readonly<T>;
 
-// export type OptionalKeys<T extends object> = {
-//   [k in keyof T]: undefined extends T[k] ? k : never;
-// }[keyof T];
-// export type RequiredKeys<T extends object> = {
-//   [k in keyof T]: undefined extends T[k] ? never : k;
-// }[keyof T];
-// export type AddQuestionMarks<T extends object, _O = unknown> = {
-//   [K in RequiredKeys<T>]: T[K];
-// } & {
-//   [K in OptionalKeys<T>]?: T[K];
-// } & { [k in keyof T]?: unknown };
-
 export type SomeObject = Record<PropertyKey, any>;
 export type Identity<T> = T;
 export type Flatten<T> = Identity<{ [k in keyof T]: T[k] }>;
@@ -157,44 +145,9 @@ export type ExtendObject<A extends schemas.$ZodLooseShape, B extends schemas.$Zo
 >;
 
 export type TupleItems = ReadonlyArray<schemas.$ZodType>;
-// type UnionToIntersectionFn<T> = (
-//   T extends unknown
-//     ? (k: () => T) => void
-//     : never
-// ) extends (k: infer Intersection) => void
-//   ? Intersection
-//   : never;
-
-// type GetUnionLast<T> = UnionToIntersectionFn<T> extends () => infer Last
-//   ? Last
-//   : never;
-
-// type UnionToTuple<T, Tuple extends unknown[] = []> = [T] extends [never]
-//   ? Tuple
-//   : UnionToTuple<Exclude<T, GetUnionLast<T>>, [GetUnionLast<T>, ...Tuple]>;
-
-// type CastToStringTuple<T> = T extends [string, ...string[]] ? T : never;
-
-// export type UnionToTupleString<T> = CastToStringTuple<UnionToTuple<T>>;
 
 export type AnyFunc = (...args: any[]) => any;
 export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
-// export type IsMethod<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
-// export type OmitString<T, Pattern extends string> = T extends Pattern
-//   ? never
-//   : T;
-// export type PickProps<T> = { [k in keyof T as IsProp<T, k>]: T[k] };
-// export type Def<T extends object> = PickProps<Omit<T, keyof T & `${string}`>>;
-
-// export type MergeOverrides<
-//   Base extends object,
-//   Defaults extends Base,
-//   Overrides extends Partial<Base>,
-// > = {
-//   [k in keyof Base]: k extends keyof Overrides
-//     ? NoUndefined<Overrides[k]>
-//     : Defaults[k];
-// };
 
 export type MaybeAsync<T> = T | Promise<T>;
 
@@ -223,13 +176,6 @@ export function assertNever(_x: never): never {
   throw new Error();
 }
 export function assert<T>(_: any): asserts _ is T {}
-// export function arrayToEnum<T extends string, U extends [T, ...T[]]>(items: U): { [k in U[number]]: k } {
-//   const obj: any = {};
-//   for (const item of items) {
-//     obj[item] = item;
-//   }
-//   return obj as any;
-// }
 
 export function getValidEnumValues(obj: any): any {
   const validKeys = objectKeys(obj).filter((k: any) => typeof obj[obj[k]] !== "number");
@@ -262,9 +208,6 @@ export const isInteger: NumberConstructor["isInteger"] =
     ? (val) => Number.isInteger(val)
     : (val) => typeof val === "number" && Number.isFinite(val) && Math.floor(val) === val;
 
-// export function joinValues<T extends any[]>(array: T, separator = " | "): string {
-//   return array.map((val) => (typeof val === "string" ? `\"${val}\"` : val)).join(separator);
-// }
 export function joinValues<T extends Primitive[]>(array: T, separator = "|"): string {
   return array.map((val) => stringifyPrimitive(val)).join(separator);
 }
@@ -272,47 +215,6 @@ export function jsonStringifyReplacer(_: string, value: any): any {
   if (typeof value === "bigint") return value.toString();
   return value;
 }
-
-// export function cached<This, T>(
-//   th: This,
-//   key: string,
-//   getter: () => T & ThisType<This>
-// ): T {
-//   Object.defineProperty(th, key, {
-//     get() {
-//       const value = getter();
-//       Object.defineProperty(th, key, {
-//         value,
-//         configurable: true,
-//       });
-//       return value;
-//     },
-//     configurable: true,
-//   });
-//   return undefined as any;
-// }
-
-// export function makeCache<This, T extends { [k: string]: () => unknown }>(
-//   th: This,
-//   elements: T & ThisType<This>
-// ): { [k in keyof T]: ReturnType<T[k]> } {
-//   const cache: { [k: string]: unknown } = {};
-//   for (const key in elements) {
-//     const getter = elements[key].bind(th);
-//     Object.defineProperty(cache, key, {
-//       get() {
-//         const value = getter();
-//         Object.defineProperty(cache, key, {
-//           value,
-//           configurable: true,
-//         });
-//         return value;
-//       },
-//       configurable: true,
-//     });
-//   }
-//   return cache as any;
-// }
 
 export function cached<T>(getter: () => T): { value: T } {
   const set = false;
@@ -474,22 +376,11 @@ export function escapeRegex(str: string): string {
 export function clone<T extends schemas.$ZodType>(inst: T, def: T["_zod"]["def"]): T {
   return new inst._zod.constr(def);
 }
-// export type $ZodErrorMap<
-//   T extends errors.$ZodIssueBase = errors.$ZodIssueBase,
-// > = errors.$ZodErrorMap<T>;
 
-// strips fields that are not exposed in the public factory
-// incl. `type`, `checks`, `error`
 export type Params<
   T extends schemas.$ZodType | checks.$ZodCheck,
   IssueTypes extends errors.$ZodIssueBase,
   OmitKeys extends keyof T["_zod"]["def"] = never,
-  // IssueTypes extends errors.$ZodIssueBase = errors.$ZodIssueBase,
-  // Extra
-  // AlsoOmit extends Exclude<
-  //   keyof T["_zod"]["def"],
-  //   "type" | "checks" | "error"
-  // > = never,
 > = Flatten<
   Partial<
     Omit<T["_zod"]["def"], OmitKeys> &
@@ -502,25 +393,6 @@ export type Params<
           })
   >
 >;
-
-// export type _Params<
-//   T extends schemas.$ZodType | checks.$ZodCheck,
-//   IssueTypes extends errors.$ZodIssueBase,
-//   OmitKeys extends keyof T["_zod"]["def"] = never,
-// > = Flatten<
-//     Omit<T["_zod"]["def"], OmitKeys> &
-//       ([IssueTypes] extends [never]
-//         ? unknown
-//         : {
-//             error?: string | errors.$ZodErrorMap<IssueTypes> | undefined;
-//             /** @deprecated This parameter is deprecated. Use `error` instead. */
-//             message?: string | undefined; // supported in Zod 3
-//           })
-// >;
-// export type _TypeParams<
-//   T extends schemas.$ZodType = schemas.$ZodType & { _isst: never },
-//   AlsoOmit extends keyof T["_zod"]["def"] = never,
-// > = Params<T, NonNullable<T["_zod"]["isst"]>, "type" | "checks" | "error" | AlsoOmit>;
 
 export type TypeParams<
   T extends schemas.$ZodType = schemas.$ZodType & { _isst: never },
@@ -555,14 +427,6 @@ export type CheckTypeParams<
   AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "checks" | "error" | "check"> = never,
 > = Params<T, NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
 
-// export type NormalizedTypeParams<T extends TypeParams = TypeParams> = Omit<
-//   T,
-//   "error" | "message"
-// > & {
-//   error?: errors.$ZodErrorMap<errors.$ZodIssueBase> | undefined;
-//   // description?: string | undefined;
-// };
-
 export type Def<T extends schemas.$ZodType = schemas.$ZodType> = Omit<
   T["_zod"]["def"],
   never
@@ -596,37 +460,6 @@ export type Normalize<T> = T extends Record<any, any>
     >
   : never;
 
-// if `message`, convert to error map
-// if `error` is string, convert to error map.
-// export function normalizeTypeParams<T extends TypeParams = TypeParams<schemas.$ZodType>>(params?: any): Normalize<T> {
-//   if (!params) return {} as any;
-//   if (typeof params === "string") return { error: () => params } as any;
-//   const processed: Normalize<T> = {} as any;
-
-//   if (params?.message !== undefined) {
-//     params.error ??= params.message;
-//   }
-//   const { error: _error, description, ...rest } = params;
-//   if (_error) (processed as any).error = typeof _error === "string" ? () => _error : _error;
-//   // if (description) processed.description = description;
-//   Object.assign(processed, rest);
-//   return processed;
-// }
-
-// export function normalizeCheckParams<T>(_params: T): Normalize<T> {
-//   const params: any = _params;
-
-//   if (!params) return {} as any;
-//   if (typeof params === "string") return { error: () => params } as any;
-//   if (params?.message !== undefined) {
-//     if (params?.error !== undefined) throw new Error("Cannot specify both `message` and `error` params");
-//     params.error = params.message;
-//   }
-//   delete params.message;
-//   if (typeof params.error === "string") return { ...params, error: () => params.error } as any;
-//   return params as any;
-// }
-
 export function normalizeParams<T>(_params: T): Normalize<T> {
   const params: any = _params;
 
@@ -641,37 +474,6 @@ export function normalizeParams<T>(_params: T): Normalize<T> {
   return params as any;
 }
 
-// export type PrimitiveFactory<
-//   Params extends TypeParams,
-//   T extends schemas.$ZodType,
-// > = {
-//   (checks: checks.$ZodCheck<core.output<T>>[]): T;
-//   (
-//     params?: string | Partial<Params>,
-//     checks?: checks.$ZodCheck<core.output<T>>[]
-//   ): T;
-// };
-
-// export const factory: <
-//   Cls extends { new (...args: any[]): schemas.$ZodType },
-//   Params extends TypeParams,
-//   // T extends InstanceType<Cls> = InstanceType<Cls>,
-// >(
-//   Cls: Cls,
-//   defaultParams: Omit<
-//     InstanceType<Cls>["_zod"]["def"],
-//     "checks" | "description" | "error"
-//   >
-// ) => PrimitiveFactory<Params, InstanceType<Cls>> = (Cls, defaultParams) => {
-//   return (...args: any[]) => {
-//     const { checks, params } = splitChecksAndParams(...args);
-//     return new Cls({
-//       ...defaultParams,
-//       checks,
-//       ...normalizeTypeParams(params),
-//     }) as InstanceType<typeof Cls>;
-//   };
-// };
 export type ClassType<T> = { new (...args: any[]): T };
 export type SchemaClass<T extends schemas.$ZodType> = { new (def: T["_zod"]["def"]): T };
 
@@ -848,13 +650,6 @@ export function optionalInterfaceKeys(shape: schemas.$ZodLooseShape): string[] {
     .map((k) => k.replace(/\?$/, ""));
 }
 
-// export type CleanInterfaceShape<T extends object> = Flatten<
-//   {
-//     [k in keyof T as k extends `${infer K}?` ? K : never]?: T[k];
-//   } & {
-//     [k in Exclude<keyof T, `${string}?`> as k extends `?${infer K}` ? K : k]: T[k];
-//   }
-// >;
 export type CleanInterfaceShape<T extends object> = Identity<{
   [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : k]: T[k];
 }>;
@@ -1144,65 +939,6 @@ export type PartialInterfaceShape<T extends schemas.$ZodShape, Keys extends stri
   }
 >;
 
-// export function partialInterface(
-//   schema: schemas.$ZodInterface,
-//   mask: object | undefined,
-//   Class: new (def: schemas.$ZodOptionalDef<any>) => core.$type<$ZodOptional>
-// ): any {
-//   const shape: Writeable<$ZodShape> = { ...schema._zod.def.shape };
-//   const optional: string[] = Object.keys(schema._zod.def.shape);
-//   for (const key in schema._zod.def.shape) {
-//     if (mask && key in mask) {
-//       shape[key] = new Class({
-//         type: "optional",
-//         innerType: schema._zod.def.shape[key],
-//       });
-//     } else {
-//       shape[key] = new Class({
-//         type: "optional",
-//         innerType: schema._zod.def.shape[key],
-//       });
-//     }
-//   }
-//   return clone(schema,{
-//     ...schema._zod.def,
-//     shape,
-//     optional,
-//     checks: [],
-//   }) as any;
-// }
-
-// export type RequiredInterfaceShape<T extends schemas.$ZodShape, Keys extends string = string & keyof T> = Flatten<
-//   Omit<T, Keys> & {
-//     [k in Keys as k extends `${infer NewK}?` ? NewK : k extends `?${infer NewK}` ? NewK : k]: T[k];
-//   }
-// >;
-
-// export function requiredInterface(
-//   schema: schemas.$ZodInterface,
-//   mask: object | undefined,
-//   Class: new (def: schemas.$ZodNonOptionalDef<any>) => $ZodNonOptional
-// ): any {
-// const shape: Record<string, schemas.$ZodType> = { ...schema._zod.def.shape };
-// for (const key in schema._zod.def.shape) {
-//   if (mask && !(key in mask)) continue;
-//   if (key[key.length - 1] === "?") {
-//     delete shape[key];
-//     shape[key.slice(0, -1)] = schema._zod.def.shape[key];
-//   } else if (key[0] === "?") {
-//     delete shape[key];
-//     shape[key.slice(1)] = schema._zod.def.shape[key];
-//   } else {
-//     // do nothing, key is already required
-//   }
-// }
-// return clone(schema,{
-//   ...schema._zod.def,
-//   shape,
-//   checks: [],
-// });
-// }
-//
 export type InterfaceKeys<Keys extends string> = string extends Keys
   ? string
   : Keys extends `${infer K}?`

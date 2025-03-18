@@ -21,21 +21,8 @@ export const ZodISODateTime: core.$constructor<ZodISODateTime> = /*@__PURE__*/ c
   }
 );
 
-const _datetime = util.factory(() => ZodISODateTime, {
-  type: "string",
-  format: "iso_datetime",
-  check: "string_format",
-  offset: false,
-  local: false,
-  precision: null,
-});
-export function datetime(checks?: core.$ZodCheck<string>[]): ZodISODateTime;
-export function datetime(
-  params?: string | core.$ZodISODateTimeParams,
-  checks?: core.$ZodCheck<string>[]
-): ZodISODateTime;
-export function datetime(...args: any[]): ZodISODateTime {
-  return _datetime(...args);
+export function datetime(params?: string | core.$ZodISODateTimeParams): ZodISODateTime {
+  return core._isoDateTime(ZodISODateTime, params);
 }
 
 //////////////////////////////////////////
@@ -54,15 +41,8 @@ export const ZodISODate: core.$constructor<ZodISODate> = /*@__PURE__*/ core.$con
   schemas.ZodStringFormat.init(inst, def);
 });
 
-const _date = util.factory(() => ZodISODate, {
-  type: "string",
-  format: "iso_date",
-  check: "string_format",
-});
-export function date(checks?: core.$ZodCheck<string>[]): ZodISODate;
-export function date(params?: string | core.$ZodISODateParams, checks?: core.$ZodCheck<string>[]): ZodISODate;
-export function date(...args: any[]): ZodISODate {
-  return _date(...args);
+export function date(params?: string | core.$ZodISODateParams): ZodISODate {
+  return core._isoDate(ZodISODate, params);
 }
 
 // ZodISOTime
@@ -83,18 +63,8 @@ export const ZodISOTime: core.$constructor<ZodISOTime> = /*@__PURE__*/ core.$con
   schemas.ZodStringFormat.init(inst, def);
 });
 
-const _time = util.factory(() => ZodISOTime, {
-  type: "string",
-  format: "iso_time",
-  check: "string_format",
-  offset: false,
-  local: false,
-  precision: null,
-});
-export function time(checks?: core.$ZodCheck<string>[]): ZodISOTime;
-export function time(params?: string | core.$ZodISOTimeParams, checks?: core.$ZodCheck<string>[]): ZodISOTime;
-export function time(...args: any[]): ZodISOTime {
-  return _time(...args);
+export function time(params?: string | core.$ZodISOTimeParams): ZodISOTime {
+  return core._isoTime(ZodISOTime, params);
 }
 
 // ZodISODuration
@@ -118,16 +88,6 @@ export const ZodISODuration: core.$constructor<ZodISODuration> = /*@__PURE__*/ c
   }
 );
 
-const _duration = util.factory(() => ZodISODuration, {
-  type: "string",
-  format: "duration",
-  check: "string_format",
-});
-export function duration(checks?: core.$ZodCheck<string>[]): ZodISODuration;
-export function duration(
-  params?: string | core.$ZodISODurationParams,
-  checks?: core.$ZodCheck<string>[]
-): ZodISODuration;
-export function duration(...args: any[]): ZodISODuration {
-  return _duration(...args);
+export function duration(params?: string | core.$ZodISODurationParams): ZodISODuration {
+  return core._isoDuration(ZodISODuration, params);
 }

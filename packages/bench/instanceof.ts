@@ -10,11 +10,6 @@ class ZodFailure {
   constructor(public value: string) {}
 }
 
-// const DATA = Object.assign(Object.create(null), {
-//   tag: ZOD_FAILURE,
-//   [ZOD_FAILURE]: true,
-//   [ZOD_FAILURE]: true,
-// });
 const DATA = makeData(1000, () => {
   const random = Math.random();
   if (random > 0.75) return new ZodFailure("test");

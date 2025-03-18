@@ -13,11 +13,9 @@ export interface $ZodCheckDef {
   error?: errors.$ZodErrorMap<never> | undefined;
   /** Whether parsing should be aborted if this check fails. */
   abort?: boolean | undefined;
-  // when?: ((payload: ParsePayload) => boolean) | undefined;
 }
 
 export interface $ZodCheckInternals<T> {
-  // _zod: this;
   def: $ZodCheckDef;
   /** The set of issues this check might throw. */
   issc?: errors.$ZodIssueBase;
@@ -298,7 +296,6 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
           // });
         }
         if (!Number.isSafeInteger(input)) {
-          // origin;
           if (input > 0) {
             // too_big
             payload.issues.push({
@@ -1022,18 +1019,6 @@ export const $ZodCheckProperty: core.$constructor<$ZodCheckProperty> = core.$con
     $ZodCheck.init(inst, def);
 
     inst._zod.check = (payload) => {
-      // if (typeof payload.value !== "object") {
-      //   // invalid_type
-      //   payload.issues.push({
-      //     code: "invalid_type",
-      //     expected: "object",
-      //     input: payload.value,
-      //     inst,
-      //     // def: { error: def?.error }, // do not include def.abort if it exists
-      //   });
-      //   return;
-      // }
-
       const result = def.schema._zod.run(
         {
           value: (payload.value as any)[def.property],

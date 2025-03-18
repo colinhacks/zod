@@ -68,13 +68,11 @@ export interface $ZodTypeDef {
     | "default"
     | "catch"
     | "nan"
-    // | "branded"
     | "pipe"
     | "readonly"
     | "template_literal"
     | "promise"
     | "custom";
-  // description?: string | undefined;
   error?: errors.$ZodErrorMap<never> | undefined;
   checks?: checks.$ZodCheck<never>[];
 }
@@ -146,22 +144,6 @@ export const $ZodType: core.$constructor<$ZodType> = core.$constructor("$ZodType
   inst._zod.def = def; // set _def property
   inst._zod.computed = inst._zod.computed || {}; // initialize _computed object
 
-  // inst._zod.$check = (...checks) => {
-  //   return inst._zod.$clone({
-  //     ...dcore.ef,
-  //     checks: [
-  //       ...(def.checks ?? []),
-  //       ...checks.map((ch) => (typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" } } } : ch)),
-  //     ],
-  //   });
-  // };
-  // inst._zod.$clone = (_def) => clone(inst, _def ?? def);
-  // inst._zod.$brand = () => inst as any;
-  // inst._zod.$register = ((reg: any, meta: any) => {
-  //   reg.add(inst, meta);
-  //   return inst;
-  // }) as any;
-
   const checks = [...(inst._zod.def.checks ?? [])];
   def.type;
 
@@ -184,34 +166,6 @@ export const $ZodType: core.$constructor<$ZodType> = core.$constructor("$ZodType
       inst._zod.run = inst._zod.parse;
     });
   } else {
-    //
-    // let runChecks = (result: ParsePayload<any>): util.MaybeAsync<ParsePayload> => {
-    //   return result;
-    // };
-
-    // for (const ch of checks.slice().reverse()) {
-    //   const _curr = runChecks;
-    //   runChecks = (result) => {
-    //     const numIssues = result.issues.length;
-    //     const _ = ch._zod.check(result as any);
-    //     if (_ instanceof Promise) {
-    //       return _.then((_) => {
-    //         const len = result.issues.length;
-    //         if (len > numIssues && util.aborted(result)) return result;
-    //         return _curr(result);
-    //       });
-    //     }
-
-    //     // if ch has "when", run it
-    //     // if (ch._zod.def.when) {
-    //     // }
-    //     // otherwise, check if parse has aborted and return
-    //     if (util.aborted(result)) return result;
-    //     // if not aborted, continue running checks
-    //     return _curr(result);
-    //   };
-    // }
-
     const runChecks = (
       payload: ParsePayload,
       checks: checks.$ZodCheck<never>[],
@@ -915,15 +869,6 @@ export const $ZodBigInt: core.$constructor<$ZodBigInt> = /*@__PURE__*/ core.$con
   };
 });
 
-// export interface ZodBigInt<T = unknown> extends $ZodType {
-//   _zod: $ZodBigIntInternals<T>;
-// }
-
-// export const ZodBigInt: core.$constructor<ZodBigInt>Def = /*@__PURE__*/ core.$constructor("$ZodBigInt", (inst, def) => {
-//   inst ??= {} as any;
-//   // $ZodBigInt.init(inst, def);
-//   inst = new $ZodBigInt(def);
-// });
 ///////////////////////////////////////////////
 //////////      ZodBigIntFormat      //////////
 ///////////////////////////////////////////////
@@ -1585,32 +1530,6 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
 // looser type is required for recursive inference
 export type $ZodLooseShape = Record<string, any>;
 
-// export type $InferInterfaceOutput<
-//   T extends $ZodLooseShape,
-//   Extra extends Record<string, unknown> = Record<string, unknown>,
-// > = string extends keyof T
-//   ? Record<string, unknown>
-//   : util.Flatten<
-//       {
-//         -readonly [k in keyof T as k extends `${infer K}?` ? K : never]?: T[k]['_zod']["output"];
-//       } & {
-//         -readonly [k in Exclude<keyof T, `${string}?`> as k extends `?${infer K}` ? K : k]: T[k]['_zod']["output"];
-//       } & Extra
-//     >;
-
-// export type $InferInterfaceInput<
-//   T extends $ZodLooseShape,
-//   Extra extends Record<string, unknown> = Record<string, unknown>,
-// > = string extends keyof T
-//   ? Record<string, unknown>
-//   : util.Flatten<
-//       {
-//         -readonly [k in keyof T as k extends `${infer K}?` ? K : k extends `?${infer K}` ? K : never]?: T[k]['_zod']["input"];
-//       } & {
-//         -readonly [k in Exclude<keyof T, `${string}?` | `?${string}`>]: T[k]['_zod']["input"];
-//       } & Extra
-//     >;
-
 export type $InferInterfaceOutput<
   T extends $ZodLooseShape,
   Params extends $ZodInterfaceNamedParams,
@@ -1692,42 +1611,12 @@ type OptionalOutKeys<T extends $ZodShape> = {
 type OptionalOutProps<T extends $ZodShape> = {
   [k in OptionalOutKeys<T>]?: T[k]["_zod"]["output"];
 };
-// type OptionalOutProps<T extends $ZodShape> = {
-//   [k in keyof T]?: T[k]['_zod']["output"];
-// };
-
-// type RequiredOutKeys<T extends $ZodShape> = {
-//   [k in keyof T]: T[k] extends { _qout: "true" } ? never : k;
-// }[keyof T];
-// type RequiredOutProps<T extends $ZodShape> = {
-//   [k in RequiredOutKeys<T>]: T[k]['_zod']["output"];
-// };
 type RequiredOutProps<T extends $ZodShape> = {
   [k in keyof T as T[k]["_zod"]["qout"] extends "true" ? never : k]-?: T[k]["_zod"]["output"];
 };
 export type $InferObjectOutput<T extends $ZodShape, Extra extends Record<string, unknown>> = {} extends T
   ? object
   : util.Flatten<OptionalOutProps<T> & RequiredOutProps<T>> & Extra;
-
-// type Empty = {};
-// type RecordNever = Record<never, unknown>;
-// type KInNever = { [k in never]: unknown };
-// type A = util.Flatten<object & Empty>; // object
-// type B = util.Flatten<object & RecordNever>; // {}
-// type C = util.Flatten<object & KInNever>; // {}
-// type E = keyof {}; // true
-// type F = keyof { [k in never]?: unknown }; // false
-// type G = keyof { [k in never]: unknown }; // false
-// type H = keyof Record<never, unknown>; // false
-// type I = Empty extends RecordNever ? true : false;
-// type J = RecordNever extends Empty ? true : false;
-// type K = KInNever extends Empty ? true : false;
-// type L = Empty extends KInNever ? true : false;
-// type M = KInNever extends RecordNever ? true : false;
-// type N = RecordNever extends KInNever ? true : false;
-// type O = Empty[keyof Empty]; // never
-// type P = RecordNever[keyof RecordNever]; // unknown
-// type Q = KInNever[keyof KInNever]; // unknown
 
 // compute input type
 type OptionalInKeys<T extends $ZodShape> = {
@@ -1914,9 +1803,6 @@ export const $ZodDiscriminatedUnion: core.$constructor<$ZodDiscriminatedUnion> =
         for (const v of o.values) {
           // Removed to account for unions of unions
           // Some schemas may have the same discriminator value in this case
-          /* if (_o.values.has(v)) {
-            throw new Error(`Duplicate discriminator value: ${String(v)}`);
-          } */
           _o.values.add(v);
         }
         for (const m of o.maps) _o.maps.push(m);
@@ -2010,21 +1896,6 @@ export const $ZodIntersection: core.$constructor<$ZodIntersection> = /*@__PURE__
 
       if (async) {
         return Promise.all([left, right]).then(([left, right]) => {
-          // if (left.issues.length || right.issues.length) {
-          //   payload.issues.push(...left.issues, ...right.issues);
-          //   return payload;
-          // }
-
-          // const merged = mergeValues(left.value, right.value);
-          // if (!merged.valid) {
-          //   throw new Error(
-          //     `Unmergable intersection types at ` +
-          //       `${merged.mergeErrorPath.join(".")}: ${typeof left.value} and ${typeof right.value}`
-          //   );
-          // }
-
-          // payload.value = merged.data;
-          // return payload;
           return handleIntersectionResults(payload, left, right);
         });
       }
@@ -2100,9 +1971,6 @@ function handleIntersectionResults(result: ParsePayload, left: ParsePayload, rig
     result.issues.push(...right.issues);
   }
   if (util.aborted(result)) return result;
-  // const result = core.$result(undefined, [...(parsedLeft.issues ?? []), ...(parsedRight.issues ?? [])], true);
-
-  // if (core.$failed(result)) return result;
 
   const merged = mergeValues(left.value, right.value);
 
@@ -2193,11 +2061,8 @@ export const $ZodTuple: core.$constructor<$ZodTuple> = /*@__PURE__*/ core.$const
       return payload;
     }
 
-    // let async = false;
-    // const final = core.$result<any[]>(Array(input.length), []);
     payload.value = [];
     const proms: Promise<any>[] = [];
-    // const results: any[] = Array(input.length);
 
     if (!def.rest) {
       const tooBig = input.length > items.length;
@@ -2492,11 +2357,8 @@ function handleMapResult(
     }
   }
   if (valueResult.issues.length) {
-    // if (!fail) fail = new core.$ZodFailure();
-
     if (util.propertyKeyTypes.has(typeof key)) {
       final.issues.push(...util.prefixIssues(key as PropertyKey, valueResult.issues));
-      // fail = core.mergeFails(fail, valueResult, key as PropertyKey);
     } else {
       final.issues.push({
         origin: "map",
@@ -2507,7 +2369,6 @@ function handleMapResult(
         issues: valueResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
       });
     }
-    // return final;
   } else {
     final.value.set(keyResult.value, valueResult.value);
   }
@@ -2587,7 +2448,6 @@ export interface $ZodEnumDef<T extends util.EnumLike = util.EnumLike> extends $Z
   entries: T;
 }
 
-// type lkajsdf = $InferEnumOutput<typeof Color>;
 export interface $ZodEnumInternals<T extends util.EnumLike = util.EnumLike>
   extends $ZodTypeInternals<$InferEnumOutput<T>, $InferEnumInput<T>> {
   // enum: T;
@@ -2669,7 +2529,7 @@ export const $ZodLiteral: core.$constructor<$ZodLiteral> = /*@__PURE__*/ core.$c
     inst._zod.values = new Set<util.Primitive>(def.values);
     inst._zod.pattern = new RegExp(
       `^(${def.values
-        // .filter((k) => util.propertyKeyTypes.has(typeof k))
+
         .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? o.toString() : String(o)))
         .join("|")})$`
     );
@@ -2903,33 +2763,6 @@ export const $ZodNullable: core.$constructor<$ZodNullable> = /*@__PURE__*/ core.
     };
   }
 );
-
-// export interface $ZodNullableDef<T extends $ZodType = $ZodType> extends $ZodUnionDef {
-//   type: "nullable";
-//   innerType: T;
-// }
-
-// export interface $ZodNullableInternals<T extends $ZodType = $ZodType> extends $ZodUnion<[T, $ZodNull]> {
-//   _qin: T["_zod"]["qin"];
-//   _qout: T["_zod"]["qout"];
-//   _isst: never;
-//   _values: T["_zod"]["values"];
-// }
-
-// export const $ZodNullable: core.$constructor<{_zod: $ZodNullableInternals}> = /*@__PURE__*/ core.$constructor(
-//   "$ZodNullable",
-//   (inst, def) => {
-//     $ZodUnion.init(inst, def);
-//     const innerType = def.options[0];
-//     inst._zod.qin = innerType._zod.qin;
-//     inst._zod.qout = innerType._zod.qout;
-//     if (innerType._zod.values) inst._zod.values = new Set([...innerType._zod.values, null]);
-
-//     inst._zod.parse = (payload, ctx) => {
-//       if (payload.value === null) return payload;
-//       return innerType._zod.run(payload, ctx);
-//     };
-//   }
 // );
 
 ////////////////////////////////////////////
@@ -2965,7 +2798,7 @@ export const $ZodDefault: core.$constructor<$ZodDefault> = /*@__PURE__*/ core.$c
   "$ZodDefault",
   (inst, def) => {
     $ZodType.init(inst, def);
-    // inst._zod.qin = "true"; //def.innerType["_zod"]["qin"];
+
     inst._zod.values = def.innerType._zod.values;
 
     inst._zod.parse = (payload, ctx) => {
@@ -3247,8 +3080,6 @@ export interface $ZodPipeInternals<A extends $ZodType = $ZodType, B extends $Zod
   extends $ZodTypeInternals<B["_zod"]["output"], A["_zod"]["input"]> {
   def: $ZodPipeDef<A, B>;
   isst: never;
-  // _qin: A["_zod"]["qin"];
-  // _qout: A["_zod"]["qout"];
   values: A["_zod"]["values"];
 }
 
@@ -3528,88 +3359,6 @@ function handleRefineResult(result: unknown, payload: ParsePayload, input: unkno
     payload.issues.push(util.issue(_iss));
   }
 }
-
-/////////    STRINGBOOL   /////////
-// // stringbool
-// export interface $ZodStringBoolParams extends util.TypeParams {
-//   truthy?: string[];
-//   falsy?: string[];
-//   /**
-//    * Options `"sensitive"`, `"insensitive"`
-//    *
-//    * Defaults to `"insensitive"`
-//    */
-//   case?: "sensitive" | "insensitive" | undefined;
-// }
-
-// /** @deprecated Internal use only */
-// export function _stringbool(Classes: { Pipe?: typeof $ZodPipe; Boolean?: typeof $ZodBoolean; Unknown?: typeof $ZodUnknown }, _params?: $ZodStringBoolParams): $ZodPipe<$ZodUnknown, $ZodBoolean<boolean>> {
-//   const params = util.normalizeTypeParams<$ZodStringBoolParams>(_params);
-//   const trueValues = new Set(params?.truthy ?? ["true", "1", "yes", "on", "y", "enabled"]);
-//   const falseValues = new Set(params?.falsy ?? ["false", "0", "no", "off", "n", "disabled"]);
-
-//   const Pipe = Classes.Pipe ?? $ZodPipe;
-//   const Boolean = Classes.Boolean ?? $ZodBoolean;
-//   const Unknown = Classes.Unknown ?? $ZodUnknown;
-
-//   const inst = new Unknown({
-//     type: "unknown",
-//     checks: [
-//       {
-//         _zod: {
-//           check: (ctx: any) => {
-//             if (typeof ctx.value === "string") {
-//               let data: string = ctx.value;
-//               if (params?.case !== "sensitive") data = data.toLowerCase();
-//               if (trueValues.has(data)) {
-//                 ctx.value = true;
-//               } else if (falseValues.has(data)) {
-//                 ctx.value = false;
-//               } else {
-//                 ctx.issues.push({
-//                   code: "invalid_value",
-//                   expected: "stringbool",
-//                   values: [...trueValues, ...falseValues],
-//                   input: ctx.value,
-//                   inst,
-//                 });
-//               }
-//             } else {
-//               ctx.issues.push({
-//                 code: "invalid_type",
-//                 expected: "string",
-//                 input: ctx.value,
-//               });
-//             }
-//           },
-//           def: {
-//             check: "custom",
-//           },
-//         },
-//       },
-//     ],
-//   });
-
-//   return new Pipe({
-//     type: "pipe",
-//     in: inst,
-//     out: new Boolean({
-//       type: "boolean",
-//     }),
-//   }) as any;
-// }
-
-////////   FIRST PARTY TYPES   ////////
-// export interface $ZodStringBoolParams extends util.TypeParams {
-//   truthy?: string[];
-//   falsy?: string[];
-//   /**
-//    * Options `"sensitive"`, `"insensitive"`
-//    *
-//    * Defaults to `"insensitive"`
-//    */
-//   case?: "sensitive" | "insensitive" | undefined;
-// }
 
 export type $ZodTypes =
   | $ZodString

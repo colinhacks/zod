@@ -1,6 +1,5 @@
 import * as core from "@zod/core";
 export * from "./schemas.js";
-export * from "./api.js";
 export * from "./errors.js";
 export * from "./compat.js";
 

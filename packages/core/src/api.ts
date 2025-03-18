@@ -354,7 +354,7 @@ export function _jwt<T extends schemas.$ZodJWT>(
 // ISODateTime
 export type $ZodISODateTimeParams = util.StringFormatParams<schemas.$ZodISODateTime, "pattern">;
 export type $ZodCheckISODateTimeParams = util.CheckStringFormatParams<schemas.$ZodISODateTime, "pattern">;
-export function _isoDatetime<T extends schemas.$ZodISODateTime>(
+export function _isoDateTime<T extends schemas.$ZodISODateTime>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodISODateTimeParams | $ZodCheckISODateTimeParams
 ): T {

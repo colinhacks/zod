@@ -52,11 +52,6 @@ export interface $ZodIssueNotMultipleOf<Input extends number | bigint = number |
   input: Input;
 }
 
-// export interface $ZodIssueInvalidDate extends $ZodIssueBase {
-//   code: "invalid_date";
-//   input: Date;
-// }
-
 export interface $ZodIssueUnrecognizedKeys extends $ZodIssueBase {
   code: "unrecognized_keys";
   keys: string[];
