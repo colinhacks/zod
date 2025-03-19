@@ -20,7 +20,6 @@ export const ZodIssueCode = {
   too_small: "too_small",
   invalid_format: "invalid_format",
   not_multiple_of: "not_multiple_of",
-  // invalid_date: "invalid_date",
   unrecognized_keys: "unrecognized_keys",
   invalid_union: "invalid_union",
   invalid_key: "invalid_key",
@@ -67,8 +66,6 @@ export function getErrorMap(): core.$ZodErrorMap<core.$ZodIssue> | undefined {
 }
 
 export { parse, safeParse, parseAsync, safeParseAsync } from "@zod/core";
-
-// export { json, stringbool } from "@zod/core";
 
 /** @deprecated Use z.ZodType (without generics) instead. */
 export type ZodTypeAny = ZodType;

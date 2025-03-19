@@ -1,5 +1,4 @@
 import * as core from "@zod/core";
-import * as util from "@zod/core/util";
 import * as schemas from "./schemas.js";
 
 //////////////////////////////////////////////
@@ -66,8 +65,6 @@ export const ZodISOTime: core.$constructor<ZodISOTime> = /*@__PURE__*/ core.$con
 export function time(params?: string | core.$ZodISOTimeParams): ZodISOTime {
   return core._isoTime(ZodISOTime, params);
 }
-
-// ZodISODuration
 
 //////////////////////////////////////////////
 //////////////////////////////////////////////

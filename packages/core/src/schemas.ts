@@ -13,9 +13,9 @@ export interface ParseContext {
   /** Include the `input` field in issue objects. Default `false`. */
   readonly reportInput?: boolean;
   /** Skip eval-based fast path. Default `false`. */
-  readonly skipFast?: boolean;
+  // readonly skipFast?: boolean;
   /** Abort validation after the first error. Default `false`. */
-  readonly abortEarly?: boolean;
+  // readonly abortEarly?: boolean;
 }
 
 /** @internal */
@@ -1444,7 +1444,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
 
       const proms: Promise<any>[] = [];
 
-      if (fastEnabled && ctx.async === false && !ctx.skipFast) {
+      if (fastEnabled && ctx.async === false) {
         // always synchronous
         fastpass ??= generateFastpass();
         payload = fastpass(inst, payload, ctx);

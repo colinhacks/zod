@@ -44,4 +44,4 @@ export type {
 export type IssueData = core.$ZodRawIssue;
 
 // /** @deprecated Use `z.core.$ZodErrorMapCtx` instead. */
-// // export type ErrorMapCtx = core.$ZodErrorMapCtx;
+// export type ErrorMapCtx = core.$ZodErrorMapCtx;
