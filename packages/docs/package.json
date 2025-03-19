@@ -1,0 +1,30 @@
+{
+  "name": "@zod/docs",
+  "private": true,
+  "version": "0.0.0",
+  "author": "Colin McDonnell <hi@zod.dev>",
+  "description": "TypeScript-first schema declaration and validation library with static type inference",
+  "funding": "https://github.com/sponsors/colinhacks",
+  "homepage": "https://zod.dev",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/colinhacks/zod.git"
+  },
+  "bugs": {
+    "url": "https://github.com/colinhacks/zod/issues"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tshy",
+    "test:watch": "pnpm vitest",
+    "test": "pnpm vitest run",
+    "prepublishOnly": "pnpm test && pnpm run build"
+  },
+  "devDependencies": {
+    "mintlify": "^4.0.438"
+  },
+  "dependencies": {
+    "@mintlify/components": "^0.3.15"
+  }
+}

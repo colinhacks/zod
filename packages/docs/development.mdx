@@ -3,6 +3,8 @@ title: 'Development'
 description: 'Preview changes locally to update your docs'
 ---
 
+import {CodeGroup} from "@mintlify/components";
+
 <Info>
   **Prerequisite**: Please install Node.js (version 19 or higher) before proceeding. <br />
   Please upgrade to ```docs.json``` before proceeding and delete the legacy ```mint.json``` file.
@@ -12,19 +14,32 @@ Follow these steps to install and run Mintlify on your operating system:
 
 **Step 1**: Install Mintlify:
 
-<CodeGroup>
+<CodeGroup isSmallText={false}>
 
-  ```bash npm
+  ```bash zod
   npm i -g mintlify
   ```
 
-```bash yarn
-yarn global add mintlify
-```
+  ```bash @zod/mini
+  yarn global add mintlify
+  ```
 
 </CodeGroup>
 
 **Step 2**: Navigate to the docs directory (where the `docs.json` file is located) and execute the following command:
+
+
+<CodeGroup isSmallText={true}>
+
+  ```bash zod
+  npm i -g mintlify
+  ```
+
+  ```bash @zod/mini
+  yarn global add mintlify
+  ```
+
+</CodeGroup>
 
 ```bash
 mintlify dev

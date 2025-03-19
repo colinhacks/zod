@@ -5,7 +5,6 @@ import type * as schemas from "./schemas.js";
 
 // json
 export type JSONType = string | number | boolean | null | JSONType[] | { [key: string]: JSONType };
-
 export type JWTAlgorithm =
   | "HS256"
   | "HS384"
@@ -19,9 +18,7 @@ export type JWTAlgorithm =
   | "PS256"
   | "PS384"
   | "PS512";
-
 export type IPVersion = "v4" | "v6";
-
 export type MimeTypes =
   | "application/json"
   | "application/xml"
@@ -60,7 +57,6 @@ export type MimeTypes =
   | "font/otf"
   | "multipart/form-data"
   | (string & {});
-
 export type ParsedTypes =
   | "string"
   | "number"
@@ -79,9 +75,7 @@ export type ParsedTypes =
   | "null"
   | "promise";
 
-/////////////////////////////
-///////     UTILS     ///////
-/////////////////////////////
+// utils
 export type AssertEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? true : false;
 export type AssertNotEqual<T, U> = (<V>() => V extends T ? 1 : 2) extends <V>() => V extends U ? 1 : 2 ? false : true;
 export type AssertExtends<T, U> = T extends U ? T : never;
@@ -100,8 +94,6 @@ export type InexactPartial<T> = {
   [P in keyof T]?: T[P] | undefined;
 };
 export type EmptyObject = Record<string, never>;
-
-// readonly
 export type BuiltIn =
   | (((...args: any[]) => any) | (new (...args: any[]) => any))
   | { readonly [Symbol.toStringTag]: string }
@@ -121,48 +113,61 @@ export type MakeReadonly<T> = T extends Map<infer K, infer V>
         : T extends BuiltIn
           ? T
           : Readonly<T>;
-
 export type SomeObject = Record<PropertyKey, any>;
 export type Identity<T> = T;
 export type Flatten<T> = Identity<{ [k in keyof T]: T[k] }>;
 export type Mapped<T> = { [k in keyof T]: T[k] };
 export type Overwrite<T extends SomeObject, U extends SomeObject> = Omit<T, keyof U> & U;
-
 export type NoNeverKeys<T> = {
   [k in keyof T]: [T[k]] extends [never] ? never : k;
 }[keyof T];
-
 export type NoNever<T> = Identity<{
   [k in NoNeverKeys<T>]: k extends keyof T ? T[k] : never;
 }>;
-
 export type ExtendShape<A extends object, B extends object> = Identity<{
   [K in keyof A | keyof B]: K extends keyof B ? B[K] : K extends keyof A ? A[K] : never;
 }>;
-
 export type ExtendObject<A extends schemas.$ZodLooseShape, B extends schemas.$ZodLooseShape> = Flatten<
   ExtendShape<A, B>
 >;
-
 export type TupleItems = ReadonlyArray<schemas.$ZodType>;
-
 export type AnyFunc = (...args: any[]) => any;
 export type IsProp<T, K extends keyof T> = T[K] extends AnyFunc ? never : K;
-
 export type MaybeAsync<T> = T | Promise<T>;
-
 export type KeyOf<T> = keyof OmitIndexSignature<T>;
-
 export type OmitIndexSignature<T> = {
   [K in keyof T as string extends K ? never : K extends string ? K : never]: T[K];
 };
-
 export type ExtractIndexSignature<T> = {
   [K in keyof T as string extends K ? K : K extends string ? never : K]: T[K];
 };
-
 export type Keys<T extends object> = keyof OmitIndexSignature<T>;
 
+export type SchemaClass<T extends schemas.$ZodType> = { new (def: T["_zod"]["def"]): T };
+export type EnumValue = string | number; // | bigint | boolean | symbol;
+export type EnumLike = Readonly<Record<string, EnumValue>>;
+export type ToEnum<T extends EnumValue> = Flatten<{ [k in T]: k }>;
+export type KeysEnum<T extends object> = ToEnum<Exclude<keyof T, symbol>>;
+export type KeysArray<T extends object> = Flatten<(keyof T & string)[]>;
+export type Literal = string | number | bigint | boolean | null | undefined;
+export type LiteralArray = Array<Literal>;
+export type Primitive = string | number | symbol | bigint | boolean | null | undefined;
+export type PrimitiveArray = Array<Primitive>;
+export type HasSize = { size: number };
+export type HasLength = { length: number }; // string | Array<unknown> | Set<unknown> | File;
+export type Numeric = number | bigint | Date;
+export type SafeParseResult<T> = SafeParseSuccess<T> | SafeParseError<T>;
+export type SafeParseSuccess<T> = { success: true; data: T; error?: never };
+export type SafeParseError<T> = { success: false; data?: never; error: errors.$ZodError<T> };
+
+export type DiscriminatorMapElement = {
+  values: Set<Primitive>;
+  maps: DiscriminatorMap[];
+};
+export type DiscriminatorMap = Map<PropertyKey, DiscriminatorMapElement>;
+export type PrimitiveSet = Set<Primitive>;
+
+// functions
 export function assertEqual<A, B>(val: AssertEqual<A, B>): AssertEqual<A, B> {
   return val;
 }
@@ -172,6 +177,7 @@ export function assertNotEqual<A, B>(val: AssertNotEqual<A, B>): AssertNotEqual<
 }
 
 export function assertIs<T>(_arg: T): void {}
+
 export function assertNever(_x: never): never {
   throw new Error();
 }
@@ -211,6 +217,7 @@ export const isInteger: NumberConstructor["isInteger"] =
 export function joinValues<T extends Primitive[]>(array: T, separator = "|"): string {
   return array.map((val) => stringifyPrimitive(val)).join(separator);
 }
+
 export function jsonStringifyReplacer(_: string, value: any): any {
   if (typeof value === "bigint") return value.toString();
   return value;
@@ -228,6 +235,25 @@ export function cached<T>(getter: () => T): { value: T } {
       throw new Error("cached value already set");
     },
   };
+}
+
+export function nullish(input: any): boolean {
+  return input === null || input === undefined;
+}
+
+export function cleanRegex(source: string): string {
+  const start = source.startsWith("^") ? 1 : 0;
+  const end = source.endsWith("$") ? source.length - 1 : source.length;
+  return source.slice(start, end);
+}
+
+export function floatSafeRemainder(val: number, step: number): number {
+  const valDecCount = (val.toString().split(".")[1] || "").length;
+  const stepDecCount = (step.toString().split(".")[1] || "").length;
+  const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
+  const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
+  const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
+  return (valInt % stepInt) / 10 ** decCount;
 }
 
 export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () => T[K]): void {
@@ -366,13 +392,12 @@ export const getParsedType = (data: any): ParsedTypes => {
 };
 
 export const propertyKeyTypes: Set<string> = new Set(["string", "number", "symbol"]);
-
 export const primitiveTypes: Set<string> = new Set(["string", "number", "bigint", "boolean", "symbol", "undefined"]);
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-//////   UTILS   //////
+// zod-specific utils
 export function clone<T extends schemas.$ZodType>(inst: T, def: T["_zod"]["def"]): T {
   return new inst._zod.constr(def);
 }
@@ -427,12 +452,6 @@ export type CheckTypeParams<
   AlsoOmit extends Exclude<keyof T["_zod"]["def"], "type" | "checks" | "error" | "check"> = never,
 > = Params<T, NonNullable<T["_zod"]["isst"] | T["_zod"]["issc"]>, "type" | "checks" | "error" | "check" | AlsoOmit>;
 
-export type Def<T extends schemas.$ZodType = schemas.$ZodType> = Omit<
-  T["_zod"]["def"],
-  never
-  // "error" | "message"
->;
-
 export function splitChecksAndParams<T extends TypeParams>(
   _paramsOrChecks?: T | unknown[] | string,
   _checks?: unknown[]
@@ -473,110 +492,6 @@ export function normalizeParams<T>(_params: T): Normalize<T> {
   if (typeof params.error === "string") return { ...params, error: () => params.error } as any;
   return params as any;
 }
-
-export type ClassType<T> = { new (...args: any[]): T };
-export type SchemaClass<T extends schemas.$ZodType> = { new (def: T["_zod"]["def"]): T };
-
-export const factory =
-  <Cls extends ClassType<schemas.$ZodType>>(
-    _class: () => Cls,
-    _defaults: Omit<InstanceType<Cls>["_zod"]["def"], "checks" | "error">
-  ) =>
-  (...args: any[]): InstanceType<Cls> => {
-    const { checks, params } = splitChecksAndParams(...args);
-    const finalParams = {
-      ..._defaults,
-      checks,
-      ...normalizeParams(params),
-    };
-
-    return new (_class())(finalParams) as any;
-  };
-
-export type FactoryParams<T extends schemas.$ZodTypeDef, Omitted extends keyof T, Optionals extends keyof T> = Flatten<
-  Omit<T, "error" | "checks" | Omitted | Optionals> &
-    Partial<{ [k in Optionals]: T[k] }> & {
-      error?: string | T["error"] | undefined;
-      /** @deprecated This parameter is deprecated. Use `error` instead. */
-      message?: string | undefined;
-    }
->;
-
-export const makeFactory =
-  <Class extends ClassType<schemas.$ZodType>>(_class: Class) =>
-  <
-    Fixed extends Partial<InstanceType<Class>["_zod"]["def"]>,
-    Defaults extends Partial<InstanceType<Class>["_zod"]["def"]>,
-  >(
-    fixed: Fixed,
-    defaults: Defaults
-  ): Factory<InstanceType<Class>, Fixed, Defaults> => {
-    return new Factory<InstanceType<Class>, Fixed, Defaults>(_class as any, fixed, defaults);
-  };
-
-export class Factory<
-  Class extends schemas.$ZodType,
-  Fixed extends Partial<Class["_zod"]["def"]>,
-  Defaults extends Partial<Class["_zod"]["def"]>,
-> {
-  _class: ClassType<Class>;
-  _fixed: Fixed;
-  _default: Defaults;
-  Params!: FactoryParams<
-    Class["_zod"]["def"],
-    keyof Class["_zod"]["def"] & keyof Fixed,
-    keyof Class["_zod"]["def"] & keyof Defaults
-  >;
-
-  constructor(_class: ClassType<Class>, fixed: Fixed, defaults: Defaults) {
-    this._class = _class;
-    this._fixed = fixed;
-    this._default = defaults;
-  }
-
-  init(...params: any[]): Class {
-    const { checks, params: _params } = splitChecksAndParams(...params);
-    return new this._class({
-      ...this._fixed,
-      ...this._default,
-      checks,
-      ...normalizeParams(_params),
-    });
-  }
-}
-
-export type EnumValue = string | number; // | bigint | boolean | symbol;
-export type EnumLike = Readonly<Record<string, EnumValue>>;
-
-export type ToEnum<T extends EnumValue> = Flatten<{ [k in T]: k }>;
-export function arrayToEnum<T extends string, U extends [T, ...T[]]>(items: U): { [k in U[number]]: k } {
-  const obj: any = {};
-  for (const item of items) {
-    obj[item] = item;
-  }
-  return obj as any;
-}
-
-export type KeysEnum<T extends object> = ToEnum<Exclude<keyof T, symbol>>;
-export type KeysArray<T extends object> = Flatten<(keyof T & string)[]>;
-export type Literal = string | number | bigint | boolean | null | undefined;
-export type LiteralArray = Array<Literal>;
-export type Primitive = string | number | symbol | bigint | boolean | null | undefined;
-export type PrimitiveArray = Array<Primitive>;
-export type HasSize = { size: number };
-export type HasLength = { length: number }; // string | Array<unknown> | Set<unknown> | File;
-export type Numeric = number | bigint | Date;
-
-export type SafeParseResult<T> = SafeParseSuccess<T> | SafeParseError<T>;
-export type SafeParseSuccess<T> = { success: true; data: T; error?: never };
-export type SafeParseError<T> = { success: false; data?: never; error: errors.$ZodError<T> };
-
-export type DiscriminatorMapElement = {
-  values: Set<Primitive>;
-  maps: DiscriminatorMap[];
-};
-export type DiscriminatorMap = Map<PropertyKey, DiscriminatorMapElement>;
-export type PrimitiveSet = Set<Primitive>;
 
 export function createTransparentProxy<T extends object>(getter: () => T): T {
   let target: T;
@@ -626,15 +541,6 @@ export function stringifyPrimitive(value: any): string {
   if (typeof value === "string") return `"${value}"`;
   return `${value}`;
 }
-
-// export function removeReverse
-export type MethodParams<Err extends errors.$ZodIssueBase, Extra = unknown> =
-  | string
-  | ({
-      error?: string | errors.$ZodErrorMap<Err> | undefined;
-      /** @deprecated This parameter is deprecated. Use `error` instead. */
-      message?: string;
-    } & Extra);
 
 export function optionalObjectKeys(shape: schemas.$ZodShape): string[] {
   return Object.keys(shape).filter((k) => {
@@ -694,40 +600,6 @@ export type InterfaceParams<T extends schemas.$ZodInterface> = {
   defaulted: T["_zod"]["defaulted"];
   extra: T["_zod"]["extra"];
 };
-
-export type CleanKeysMap<T extends object> = {
-  [k in keyof T as CleanKeys<k>]: k;
-};
-export type ReconstructShape<
-  T extends schemas.$ZodLooseShape,
-  Params extends schemas.$ZodInterfaceNamedParams,
-> = Identity<{
-  [k in keyof T as k extends Params["defaulted"] ? `?${k}` : k extends Params["optional"] ? `${k}?` : k]: T[k];
-}>;
-
-export function shape<T extends schemas.$ZodInterface>(
-  schema: T
-): ReconstructShape<
-  T["_zod"]["shape"],
-  {
-    optional: T["_zod"]["optional"];
-    defaulted: T["_zod"]["defaulted"];
-    extra: T["_zod"]["extra"];
-  }
-> {
-  const reconstructed: any = {};
-  for (const key in schema._zod.shape) {
-    const value = schema._zod.shape[key];
-    if (schema._zod.def.optional.includes(key)) {
-      reconstructed[`${key}?`] = value;
-    } else if (schema._zod.defaulted.includes(key)) {
-      reconstructed[`?${key}`] = value;
-    } else {
-      reconstructed[key] = value;
-    }
-  }
-  return schema._zod.def.shape as any;
-}
 
 export function cleanInterfaceKey(key: string): string {
   return key.replace(/^\?/, "").replace(/\?$/, "");
@@ -858,7 +730,7 @@ export function extendObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObjec
 }
 
 export function partialObjectLike(
-  Class: ClassType<schemas.$ZodOptional>,
+  Class: SchemaClass<schemas.$ZodOptional>,
   schema: schemas.$ZodObjectLike,
   mask: object | undefined
 ): any {
@@ -896,7 +768,7 @@ export function partialObjectLike(
 }
 
 export function requiredObjectLike(
-  Class: ClassType<schemas.$ZodNonOptional>,
+  Class: SchemaClass<schemas.$ZodNonOptional>,
   schema: schemas.$ZodObjectLike,
   mask: object | undefined
 ): any {
@@ -948,15 +820,6 @@ export type InterfaceKeys<Keys extends string> = string extends Keys
       : Keys;
 
 export type Constructor<T, Def extends any[] = any[]> = new (...args: Def) => T;
-
-export function floatSafeRemainder(val: number, step: number): number {
-  const valDecCount = (val.toString().split(".")[1] || "").length;
-  const stepDecCount = (step.toString().split(".")[1] || "").length;
-  const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
-  const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
-  const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
-  return (valInt % stepInt) / 10 ** decCount;
-}
 
 export function normalizeObjectLikeDef(def: schemas.$ZodObjectLikeDef): {
   shape: Readonly<Record<string, schemas.$ZodType<unknown, unknown>>>;
@@ -1067,14 +930,4 @@ export function issue(...args: [string | errors.$ZodRawIssue, any?, any?]): erro
   }
 
   return { ...iss };
-}
-
-export function nullish(input: any): boolean {
-  return input === null || input === undefined;
-}
-
-export function cleanRegex(source: string): string {
-  const start = source.startsWith("^") ? 1 : 0;
-  const end = source.endsWith("$") ? source.length - 1 : source.length;
-  return source.slice(start, end);
 }
