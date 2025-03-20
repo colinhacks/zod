@@ -1,0 +1,1073 @@
+---
+title: 'API Reference'
+description: 'Complete API documentation for Zod'
+---
+
+
+
+# Zod API Reference
+
+Zod is a TypeScript-first schema declaration and validation library. This API reference documents all the schema types and methods available in Zod.
+
+## Basic Usage
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const User = z.object({
+  username: z.string(),
+});
+
+User.parse({ username: "Ludwig" });
+
+// extract the inferred type
+type User = z.infer<typeof User>;
+// { username: string }
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const User = z.object({
+  username: z.string(),
+});
+
+User.parse({ username: "Ludwig" });
+
+// extract the inferred type
+type User = z.infer<typeof User>;
+// { username: string }
+```
+</Tabs>
+
+## Primitives
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+// primitive values
+z.string();
+z.number();
+z.bigint();
+z.boolean();
+z.date();
+z.symbol();
+
+// empty types
+z.undefined();
+z.null();
+z.void(); // accepts undefined
+
+// catch-all types
+// allows any value
+z.any();
+z.unknown();
+
+// never type
+// allows no values
+z.never();
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+// primitive values
+z.string();
+z.number();
+z.bigint();
+z.boolean();
+z.date();
+z.symbol();
+
+// empty types
+z.undefined();
+z.null();
+z.void(); // accepts undefined
+
+// catch-all types
+// allows any value
+z.any();
+z.unknown();
+
+// never type
+// allows no values
+z.never();
+```
+</Tabs>
+
+## Coercion for Primitives
+
+Zod provides a convenient way to coerce primitive values.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const schema = z.coerce.string();
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // => "12"
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const schema = z.coerce.string();
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // => "12"
+```
+</Tabs>
+
+During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings.
+
+```ts
+schema.parse(12); // => "12"
+schema.parse(true); // => "true"
+schema.parse(undefined); // => "undefined"
+schema.parse(null); // => "null"
+```
+
+The returned schema is a normal `ZodString` instance so you can use all string methods.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+z.coerce.string().email().min(5);
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+z.coerce.string().email().min(5);
+```
+</Tabs>
+
+**How coercion works**
+
+All primitive types support coercion. Zod coerces all inputs using the built-in constructors: `String(input)`, `Number(input)`, `new Date(input)`, etc.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+z.coerce.string(); // String(input)
+z.coerce.number(); // Number(input)
+z.coerce.boolean(); // Boolean(input)
+z.coerce.bigint(); // BigInt(input)
+z.coerce.date(); // new Date(input)
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+z.coerce.string(); // String(input)
+z.coerce.number(); // Number(input)
+z.coerce.boolean(); // Boolean(input)
+z.coerce.bigint(); // BigInt(input)
+z.coerce.date(); // new Date(input)
+```
+</Tabs>
+
+## Literals
+
+Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types), like `"hello world"` or `5`.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const tuna = z.literal("tuna");
+const twelve = z.literal(12);
+const twobig = z.literal(2n); // bigint literal
+const tru = z.literal(true);
+
+const terrificSymbol = Symbol("terrific");
+const terrific = z.literal(terrificSymbol);
+
+// retrieve literal value
+tuna.value; // "tuna"
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const tuna = z.literal("tuna");
+const twelve = z.literal(12);
+const twobig = z.literal(2n); // bigint literal
+const tru = z.literal(true);
+
+const terrificSymbol = Symbol("terrific");
+const terrific = z.literal(terrificSymbol);
+
+// retrieve literal value
+tuna.value; // "tuna"
+```
+</Tabs>
+
+> Currently there is no support for Date literals in Zod. If you have a use case for this feature, please file an issue.
+
+## Objects
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+// all properties are required by default
+const Dog = z.object({
+  name: z.string(),
+  age: z.number(),
+});
+
+// extract the inferred type like this
+type Dog = z.infer<typeof Dog>;
+
+// equivalent to:
+type Dog = {
+  name: string;
+  age: number;
+};
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+// all properties are required by default
+const Dog = z.object({
+  name: z.string(),
+  age: z.number(),
+});
+
+// extract the inferred type like this
+type Dog = z.infer<typeof Dog>;
+
+// equivalent to:
+type Dog = {
+  name: string;
+  age: number;
+};
+```
+</Tabs>
+
+### `.shape`
+
+Use `.shape` to access the schemas for a particular key.
+
+```ts
+Dog.shape.name; // => string schema
+Dog.shape.age; // => number schema
+```
+
+### `.extend`
+
+You can add additional fields to an object schema with the `.extend` method.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const DogWithBreed = Dog.extend({
+  breed: z.string(),
+});
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const DogWithBreed = Dog.extend({
+  breed: z.string(),
+});
+```
+</Tabs>
+
+You can use `.extend` to overwrite fields! Be careful with this power!
+
+### `.merge`
+
+Equivalent to `A.extend(B.shape)`.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const BaseTeacher = z.object({ students: z.array(z.string()) });
+const HasID = z.object({ id: z.string() });
+
+const Teacher = BaseTeacher.merge(HasID);
+type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const BaseTeacher = z.object({ students: z.array(z.string()) });
+const HasID = z.object({ id: z.string() });
+
+const Teacher = BaseTeacher.merge(HasID);
+type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
+```
+</Tabs>
+
+> If the two schemas share keys, the properties of B overrides the property of A. The returned schema also inherits the "unknownKeys" policy (strip/strict/passthrough) and the catchall schema of B.
+
+## Arrays
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const stringArray = z.array(z.string());
+
+// equivalent
+const stringArray = z.string().array();
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const stringArray = z.array(z.string());
+
+// equivalent
+const stringArray = z.string().array();
+```
+</Tabs>
+
+Be careful with the `.array()` method. It returns a new `ZodArray` instance. This means the _order_ in which you call methods matters. For instance:
+
+```ts
+z.string().optional().array(); // (string | undefined)[]
+z.string().array().optional(); // string[] | undefined
+```
+
+## Parsing
+
+All Zod schemas contain the following methods:
+
+### `.parse`
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const schema = z.string();
+
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // throws ZodError
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const schema = z.string();
+
+schema.parse("tuna"); // => "tuna"
+schema.parse(12); // throws ZodError
+```
+</Tabs>
+
+### `.safeParse`
+
+If you don't want Zod to throw errors when validation fails, use `.safeParse`. This method returns an object containing either the successfully parsed data or a ZodError instance containing detailed information about the validation problems.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const schema = z.string();
+
+schema.safeParse("tuna"); // => { success: true; data: "tuna" }
+schema.safeParse(12); // => { success: false; error: ZodError }
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const schema = z.string();
+
+schema.safeParse("tuna"); // => { success: true; data: "tuna" }
+schema.safeParse(12); // => { success: false; error: ZodError }
+```
+</Tabs>
+
+### `.parseAsync`
+
+If you need to perform any asynchronous operations during validation, you can use the `.parseAsync` method.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const schema = z.string().refine(async (val) => {
+  // some async validation
+  return val.length > 3;
+});
+
+await schema.parseAsync("tuna"); // => "tuna"
+await schema.parseAsync("bad"); // throws ZodError
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const schema = z.string().refine(async (val) => {
+  // some async validation
+  return val.length > 3;
+});
+
+await schema.parseAsync("tuna"); // => "tuna"
+await schema.parseAsync("bad"); // throws ZodError
+```
+</Tabs>
+
+### `.safeParseAsync`
+
+The asynchronous version of `safeParse`.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const schema = z.string().refine(async (val) => {
+  // some async validation
+  return val.length > 3;
+});
+
+await schema.safeParseAsync("tuna"); // => { success: true; data: "tuna" }
+await schema.safeParseAsync("bad"); // => { success: false; error: ZodError }
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const schema = z.string().refine(async (val) => {
+  // some async validation
+  return val.length > 3;
+});
+
+await schema.safeParseAsync("tuna"); // => { success: true; data: "tuna" }
+await schema.safeParseAsync("bad"); // => { success: false; error: ZodError }
+```
+</Tabs>
+
+## Transformations
+
+Zod allows you to transform data during validation using the `.transform` method.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const stringToNumber = z.string().transform((str) => str.length);
+
+stringToNumber.parse("hello"); // => 5
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const stringToNumber = z.string().transform((str) => str.length);
+
+stringToNumber.parse("hello"); // => 5
+```
+</Tabs>
+
+Transformations can be chained:
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const final = z
+  .string()
+  .transform((str) => str.length)
+  .transform((len) => len * 2);
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const final = z
+  .string()
+  .transform((str) => str.length)
+  .transform((len) => len * 2);
+```
+</Tabs>
+
+## Refinements
+
+Refinements are used to add custom validation logic to your schemas.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const positiveNumber = z.number().refine((n) => n > 0, {
+  message: "Number must be positive",
+});
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const positiveNumber = z.number().refine((n) => n > 0, {
+  message: "Number must be positive",
+});
+```
+</Tabs>
+
+Refinements can also be async:
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const uniqueUsername = z.string().refine(
+  async (name) => {
+    // simulate async validation
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return name.length > 3;
+  },
+  {
+    message: "Username must be longer than 3 characters",
+  }
+);
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const uniqueUsername = z.string().refine(
+  async (name) => {
+    // simulate async validation
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return name.length > 3;
+  },
+  {
+    message: "Username must be longer than 3 characters",
+  }
+);
+```
+</Tabs>
+
+## Error Handling
+
+Zod provides detailed error information when validation fails.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const schema = z.object({
+  name: z.string(),
+  age: z.number().min(18),
+});
+
+try {
+  schema.parse({ name: "Bob", age: 12 });
+} catch (err) {
+  console.log(err.issues);
+  // [
+  //   {
+  //     code: "too_small",
+  //     minimum: 18,
+  //     type: "number",
+  //     inclusive: true,
+  //     exact: false,
+  //     message: "Number must be greater than or equal to 18",
+  //     path: ["age"],
+  //   },
+  // ]
+}
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const schema = z.object({
+  name: z.string(),
+  age: z.number().min(18),
+});
+
+try {
+  schema.parse({ name: "Bob", age: 12 });
+} catch (err) {
+  console.log(err.issues);
+  // [
+  //   {
+  //     code: "too_small",
+  //     minimum: 18,
+  //     type: "number",
+  //     inclusive: true,
+  //     exact: false,
+  //     message: "Number must be greater than or equal to 18",
+  //     path: ["age"],
+  //   },
+  // ]
+}
+```
+</Tabs>
+
+## Type Inference
+
+You can extract the TypeScript type of any schema with `z.infer<typeof schema>`.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const Person = z.object({
+  name: z.string(),
+  age: z.number(),
+});
+
+type Person = z.infer<typeof Person>;
+// { name: string; age: number }
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const Person = z.object({
+  name: z.string(),
+  age: z.number(),
+});
+
+type Person = z.infer<typeof Person>;
+// { name: string; age: number }
+```
+</Tabs>
+
+## Unions
+
+Zod includes a built-in `z.union` method for composing "OR" types.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const stringOrNumber = z.union([z.string(), z.number()]);
+
+stringOrNumber.parse("foo"); // passes
+stringOrNumber.parse(14); // passes
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const stringOrNumber = z.union([z.string(), z.number()]);
+
+stringOrNumber.parse("foo"); // passes
+stringOrNumber.parse(14); // passes
+```
+</Tabs>
+
+For convenience, you can also use the `.or` method:
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const stringOrNumber = z.string().or(z.number());
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const stringOrNumber = z.string().or(z.number());
+```
+</Tabs>
+
+## Intersections
+
+Intersections are useful for creating "AND" types.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const Person = z.object({
+  name: z.string(),
+});
+
+const Employee = z.object({
+  role: z.string(),
+});
+
+const EmployedPerson = z.intersection(Person, Employee);
+
+// equivalent to:
+const EmployedPerson = Person.and(Employee);
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const Person = z.object({
+  name: z.string(),
+});
+
+const Employee = z.object({
+  role: z.string(),
+});
+
+const EmployedPerson = z.intersection(Person, Employee);
+
+// equivalent to:
+const EmployedPerson = Person.and(Employee);
+```
+</Tabs>
+
+## Records
+
+Record schemas are used to validate objects with a specific key and value type.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const StringRecord = z.record(z.string());
+type StringRecord = z.infer<typeof StringRecord>;
+// { [k: string]: string }
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const StringRecord = z.record(z.string());
+type StringRecord = z.infer<typeof StringRecord>;
+// { [k: string]: string }
+```
+</Tabs>
+
+This is equivalent to `z.object({}).catchall(z.string())`.
+
+You can specify the key schema as well:
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const NumberRecord = z.record(z.number(), z.string());
+type NumberRecord = z.infer<typeof NumberRecord>;
+// { [k: number]: string }
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const NumberRecord = z.record(z.number(), z.string());
+type NumberRecord = z.infer<typeof NumberRecord>;
+// { [k: number]: string }
+```
+</Tabs>
+
+## Tuples
+
+Tuple schemas are used to validate arrays with a fixed number of elements, each with its own type.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const athleteSchema = z.tuple([
+  z.string(), // name
+  z.number(), // jersey number
+  z.object({
+    pointsScored: z.number(),
+  }), // statistics
+]);
+
+type Athlete = z.infer<typeof athleteSchema>;
+// [string, number, { pointsScored: number }]
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const athleteSchema = z.tuple([
+  z.string(), // name
+  z.number(), // jersey number
+  z.object({
+    pointsScored: z.number(),
+  }), // statistics
+]);
+
+type Athlete = z.infer<typeof athleteSchema>;
+// [string, number, { pointsScored: number }]
+```
+</Tabs>
+
+## Recursive Types
+
+You can define recursive schemas in Zod using `z.lazy()`.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+interface Category {
+  name: string;
+  subcategories: Category[];
+}
+
+const Category: z.ZodType<Category> = z.lazy(() =>
+  z.object({
+    name: z.string(),
+    subcategories: z.array(Category),
+  })
+);
+
+Category.parse({
+  name: "People",
+  subcategories: [
+    {
+      name: "Politicians",
+      subcategories: [
+        {
+          name: "Presidents",
+          subcategories: [],
+        },
+      ],
+    },
+  ],
+}); // passes
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+interface Category {
+  name: string;
+  subcategories: Category[];
+}
+
+const Category: z.ZodType<Category> = z.lazy(() =>
+  z.object({
+    name: z.string(),
+    subcategories: z.array(Category),
+  })
+);
+
+Category.parse({
+  name: "People",
+  subcategories: [
+    {
+      name: "Politicians",
+      subcategories: [
+        {
+          name: "Presidents",
+          subcategories: [],
+        },
+      ],
+    },
+  ],
+}); // passes
+```
+</Tabs>
+
+## Promises
+
+Zod includes a built-in way to validate promises.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const numberPromise = z.promise(z.number());
+
+numberPromise.parse(Promise.resolve(5)); // passes
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const numberPromise = z.promise(z.number());
+
+numberPromise.parse(Promise.resolve(5)); // passes
+```
+</Tabs>
+
+## Default Values
+
+You can provide default values for any schema.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const stringWithDefault = z.string().default("tuna");
+
+stringWithDefault.parse(undefined); // => "tuna"
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const stringWithDefault = z.string().default("tuna");
+
+stringWithDefault.parse(undefined); // => "tuna"
+```
+</Tabs>
+
+You can also specify a function that will be called to generate the default value.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const numberWithRandomDefault = z.number().default(Math.random);
+
+numberWithRandomDefault.parse(undefined); // => 0.4413456736055323 (or some other random number)
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const numberWithRandomDefault = z.number().default(Math.random);
+
+numberWithRandomDefault.parse(undefined); // => 0.4413456736055323 (or some other random number)
+```
+</Tabs>
+
+## Branded Types
+
+Branded types are a way to create nominal types in TypeScript.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const Password = z.string().min(8).brand("Password");
+type Password = z.infer<typeof Password>;
+
+const Email = z.string().email().brand("Email");
+type Email = z.infer<typeof Email>;
+
+// usage
+const submitForm = (email: Email, password: Password) => {
+  // ...
+};
+
+// this works
+const email = Email.parse("test@example.com");
+const password = Password.parse("12345678");
+submitForm(email, password);
+
+// this doesn't work
+submitForm("test@example.com", "12345678");
+// Type 'string' is not assignable to type 'Email'
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const Password = z.string().min(8).brand("Password");
+type Password = z.infer<typeof Password>;
+
+const Email = z.string().email().brand("Email");
+type Email = z.infer<typeof Email>;
+
+// usage
+const submitForm = (email: Email, password: Password) => {
+  // ...
+};
+
+// this works
+const email = Email.parse("test@example.com");
+const password = Password.parse("12345678");
+submitForm(email, password);
+
+// this doesn't work
+submitForm("test@example.com", "12345678");
+// Type 'string' is not assignable to type 'Email'
+```
+</Tabs>
+
+## Preprocess
+
+The `z.preprocess` method lets you transform data before it's validated.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const castToNumber = z.preprocess((val) => Number(val), z.number());
+
+castToNumber.parse("123"); // => 123
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const castToNumber = z.preprocess((val) => Number(val), z.number());
+
+castToNumber.parse("123"); // => 123
+```
+</Tabs>
+
+## Pipe
+
+The `.pipe` method allows you to chain multiple schemas together.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const schema = z
+  .string()
+  .transform((val) => val.length)
+  .pipe(z.number().min(5));
+
+schema.parse("12345"); // => 5
+schema.parse("1234"); // throws "Number must be greater than or equal to 5"
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const schema = z
+  .string()
+  .transform((val) => val.length)
+  .pipe(z.number().min(5));
+
+schema.parse("12345"); // => 5
+schema.parse("1234"); // throws "Number must be greater than or equal to 5"
+```
+</Tabs>
+
+## Custom Schemas
+
+You can create custom schemas using `z.custom()`.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const isValidId = (val: unknown): val is string => {
+  return typeof val === "string" && /^[a-z0-9]{8,}$/i.test(val);
+};
+
+const IdSchema = z.custom<string>(isValidId, {
+  message: "Invalid ID format",
+});
+
+IdSchema.parse("abcd1234"); // passes
+IdSchema.parse("abc"); // throws "Invalid ID format"
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const isValidId = (val: unknown): val is string => {
+  return typeof val === "string" && /^[a-z0-9]{8,}$/i.test(val);
+};
+
+const IdSchema = z.custom<string>(isValidId, {
+  message: "Invalid ID format",
+});
+
+IdSchema.parse("abcd1234"); // passes
+IdSchema.parse("abc"); // throws "Invalid ID format"
+```
+</Tabs>
