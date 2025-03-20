@@ -67,8 +67,10 @@ export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = core.$con
 
     inst._zod.onattach = (inst) => {
       const curr = inst._zod.computed.maximum ?? Number.POSITIVE_INFINITY;
-
-      if (def.value < curr) inst._zod.computed.maximum = def.value;
+      if (def.value < curr) {
+        inst._zod.computed.maximum = def.value;
+        inst._zod.computed.inclusive = def.inclusive;
+      }
     };
 
     inst._zod.check = (payload) => {
@@ -115,7 +117,10 @@ export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = cor
 
     inst._zod.onattach = (inst) => {
       const curr = inst._zod.computed.minimum ?? Number.NEGATIVE_INFINITY;
-      if (def.value > curr) inst._zod.computed.minimum = def.value;
+      if (def.value > curr) {
+        inst._zod.computed.minimum = def.value;
+        inst._zod.computed.inclusive = def.inclusive;
+      }
     };
 
     inst._zod.check = (payload) => {
@@ -265,9 +270,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
       inst._zod.computed.format = def.format;
       inst._zod.computed.minimum = minimum;
       inst._zod.computed.maximum = maximum;
-      if (isInt) {
-        inst._zod.computed.pattern = regexes.intRegex;
-      }
+      if (isInt) inst._zod.computed.pattern = regexes.intRegex;
     };
 
     inst._zod.check = (payload) => {
@@ -712,8 +715,38 @@ export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = c
 /////////////////////////////////////////////
 /////    $ZodCheckStringFormatRegex    /////
 /////////////////////////////////////////////
-export interface $ZodCheckStringFormatDef<Format extends errors.$ZodStringFormats = errors.$ZodStringFormats>
-  extends $ZodCheckDef {
+export type $ZodStringFormats =
+  | "regex"
+  | "email"
+  | "url"
+  | "emoji"
+  | "uuid"
+  | "guid"
+  | "nanoid"
+  | "guid"
+  | "cuid"
+  | "cuid2"
+  | "ulid"
+  | "xid"
+  | "ksuid"
+  | "iso_datetime"
+  | "iso_date"
+  | "iso_time"
+  | "iso_duration"
+  | "ip"
+  | "ipv4"
+  | "ipv6"
+  | "base64"
+  | "json_string"
+  | "e164"
+  | "lowercase"
+  | "uppercase"
+  | "regex"
+  | "jwt"
+  | "starts_with"
+  | "ends_with"
+  | "includes";
+export interface $ZodCheckStringFormatDef<Format extends $ZodStringFormats = $ZodStringFormats> extends $ZodCheckDef {
   check: "string_format";
   format: Format;
   pattern?: RegExp | undefined;
@@ -892,6 +925,12 @@ export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = core.$con
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
+    const pattern = new RegExp(util.escapeRegex(def.includes));
+    def.pattern = pattern;
+    inst._zod.onattach = (inst) => {
+      inst._zod.computed.pattern = pattern;
+    };
+
     inst._zod.check = (payload) => {
       if (payload.value.includes(def.includes, def.position)) return;
       payload.issues.push({
@@ -927,8 +966,11 @@ export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = core.
   "$ZodCheckStartsWith",
   (inst, def) => {
     $ZodCheck.init(inst, def);
+
+    const pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
+    def.pattern ??= pattern;
     inst._zod.onattach = (inst) => {
-      inst._zod.computed.pattern = new RegExp(`^${util.escapeRegex(def.prefix)}.*`);
+      inst._zod.computed.pattern = pattern;
     };
 
     inst._zod.check = (payload) => {
@@ -967,6 +1009,8 @@ export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = core.$con
   (inst, def) => {
     $ZodCheck.init(inst, def);
 
+    const pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
+    def.pattern ??= pattern;
     inst._zod.onattach = (inst) => {
       inst._zod.computed.pattern = new RegExp(`.*${util.escapeRegex(def.suffix)}$`);
     };
@@ -1023,7 +1067,6 @@ export const $ZodCheckProperty: core.$constructor<$ZodCheckProperty> = core.$con
         {
           value: (payload.value as any)[def.property],
           issues: [],
-          $payload: true,
         },
         {}
       );

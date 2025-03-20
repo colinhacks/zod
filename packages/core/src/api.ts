@@ -395,8 +395,6 @@ export function _isoTime<T extends schemas.$ZodISOTime>(
     type: "string",
     format: "iso_time",
     check: "string_format",
-    offset: false,
-    local: false,
     precision: null,
     ...util.normalizeParams(params),
   });
@@ -411,7 +409,7 @@ export function _isoDuration<T extends schemas.$ZodISODuration>(
 ): T {
   return new Class({
     type: "string",
-    format: "duration",
+    format: "iso_duration",
     check: "string_format",
     ...util.normalizeParams(params),
   });
@@ -953,9 +951,10 @@ export function _array<T extends schemas.$ZodType>(
 ): schemas.$ZodArray<T> {
   return new Class({
     type: "array",
-    get element() {
-      return element;
-    },
+    element,
+    // get element() {
+    //   return element;
+    // },
     ...util.normalizeParams(params),
   }) as schemas.$ZodArray<T>;
 }
@@ -1437,6 +1436,20 @@ export function _templateLiteral<const Parts extends schemas.$TemplateLiteralPar
   return new Class({
     type: "template_literal",
     parts,
+    ...util.normalizeParams(params),
+  }) as any;
+}
+
+// ZodLazy
+export type $ZodLazyParams = util.TypeParams<schemas.$ZodLazy, "getter">;
+export function _lazy<T extends schemas.$ZodType>(
+  Class: util.SchemaClass<schemas.$ZodLazy>,
+  getter: () => T,
+  params?: $ZodLazyParams
+): schemas.$ZodLazy<T> {
+  return new Class({
+    type: "lazy",
+    getter,
     ...util.normalizeParams(params),
   }) as any;
 }

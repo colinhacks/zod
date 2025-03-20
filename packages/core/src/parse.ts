@@ -12,7 +12,7 @@ export function _parse<T extends schemas.$ZodType>(
   _ctx?: schemas.ParseContext
 ): core.output<T> {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
-  const result = schema._zod.run({ value, issues: [], $payload: true }, ctx);
+  const result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
   }
@@ -33,7 +33,7 @@ export function _safeParse<T extends schemas.$ZodType>(
   _ctx?: schemas.ParseContext
 ): util.SafeParseResult<core.output<T>> {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
-  const result = schema._zod.run({ value, issues: [], $payload: true }, ctx);
+  const result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) {
     throw new core.$ZodAsyncError();
   }
@@ -58,7 +58,7 @@ export async function _parseAsync<T extends schemas.$ZodType>(
   _ctx?: schemas.ParseContext
 ): Promise<core.output<T>> {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
-  let result = schema._zod.run({ value, issues: [], $payload: true }, ctx);
+  let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
   if (result.issues.length) {
     throw new (this?.Error ?? errors.$ZodError)(
@@ -76,7 +76,7 @@ export async function _safeParseAsync<T extends schemas.$ZodType>(
   _ctx?: schemas.ParseContext
 ): Promise<util.SafeParseResult<core.output<T>>> {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
-  let result = schema._zod.run({ value, issues: [], $payload: true }, ctx);
+  let result = schema._zod.run({ value, issues: [] }, ctx);
   if (result instanceof Promise) result = await result;
 
   if (result.issues.length) {

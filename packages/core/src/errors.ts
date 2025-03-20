@@ -1,4 +1,4 @@
-import type { $ZodCheck } from "./checks.js";
+import type { $ZodCheck, $ZodStringFormats } from "./checks.js";
 import type { $ZodType } from "./schemas.js";
 import type * as util from "./util.js";
 import { jsonStringifyReplacer } from "./util.js";
@@ -41,7 +41,7 @@ export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase {
 
 export interface $ZodIssueInvalidStringFormat extends $ZodIssueBase {
   code: "invalid_format";
-  format: string;
+  format: $ZodStringFormats | (string & {});
   pattern?: string;
   input: string;
 }
@@ -95,35 +95,8 @@ export interface $ZodIssueCustom extends $ZodIssueBase {
 ////     first-party string formats     ////
 ////////////////////////////////////////////
 
-type CommonStringFormats =
-  | "regex"
-  | "email"
-  | "url"
-  | "emoji"
-  | "uuid"
-  | "guid"
-  | "nanoid"
-  | "guid"
-  | "cuid"
-  | "cuid2"
-  | "ulid"
-  | "xid"
-  | "ksuid"
-  | "iso_datetime"
-  | "iso_date"
-  | "iso_time"
-  | "duration"
-  | "ip"
-  | "ipv4"
-  | "ipv6"
-  | "base64"
-  | "json_string"
-  | "e164"
-  | "lowercase"
-  | "uppercase";
-
 export interface $ZodIssueStringCommonFormats extends $ZodIssueInvalidStringFormat {
-  format: CommonStringFormats;
+  format: Exclude<$ZodStringFormats, "regex" | "jwt" | "starts_with" | "ends_with" | "includes">;
 }
 
 export interface $ZodIssueStringInvalidRegex extends $ZodIssueInvalidStringFormat {
@@ -158,8 +131,6 @@ export type $ZodStringFormatIssues =
   | $ZodIssueStringStartsWith
   | $ZodIssueStringEndsWith
   | $ZodIssueStringIncludes;
-
-export type $ZodStringFormats = $ZodStringFormatIssues["format"];
 
 ////////////////////////
 ////     utils     /////

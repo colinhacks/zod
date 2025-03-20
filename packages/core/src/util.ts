@@ -694,7 +694,9 @@ export function extend(schema: schemas.$ZodObjectLike, shape: schemas.$ZodShape)
   return clone(schema, {
     ...schema._zod.def,
     get shape() {
-      return { ...schema._zod.def.shape, ...shape };
+      const _shape: any = { ...schema._zod.def.shape, ...shape };
+      this.shape = _shape;
+      return _shape;
     },
 
     checks: [], // delete existing checks

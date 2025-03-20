@@ -1,3 +1,4 @@
+import type { $ZodStringFormats } from "../checks.js";
 import type * as errors from "../errors.js";
 import * as util from "../util.js";
 
@@ -13,10 +14,7 @@ function getSizing(origin: string): { unit: string; verb: string } | null {
 }
 
 const Nouns: {
-  [k in
-    | errors.$ZodStringFormats
-    // | errors.$ZodIssue
-    | (string & {})]?: string;
+  [k in $ZodStringFormats | (string & {})]?: string;
 } = {
   regex: "string",
   email: "email",
@@ -35,7 +33,7 @@ const Nouns: {
   iso_datetime: "ISO datetime",
   iso_date: "ISO date",
   iso_time: "ISO time",
-  duration: "duration",
+  iso_duration: "ISO duration",
   ip: "IP address",
   ipv4: "IPv4 address",
   ipv6: "IPv6 address",

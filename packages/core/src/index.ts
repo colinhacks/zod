@@ -8,3 +8,5 @@ export * from "./registries.js";
 export * from "./doc.js";
 export * from "./function.js";
 export * from "./api.js";
+export * from "./to-json-schema.js";
+export * as JSONSchema from "./json-schema.js";

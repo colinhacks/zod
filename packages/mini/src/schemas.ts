@@ -541,9 +541,10 @@ export function array<T extends SomeType>(element: T, params?: core.$ZodArrayPar
 export function array<T extends SomeType>(element: SomeType, params?: any): ZodMiniArray<T> {
   return new ZodMiniArray({
     type: "array",
-    get element() {
-      return element;
-    },
+    element,
+    // get element() {
+    //   return element;
+    // },
     ...util.normalizeParams(params),
   }) as ZodMiniArray<T>;
 }
@@ -1360,6 +1361,22 @@ export function templateLiteral<const Parts extends core.$TemplateLiteralPart[]>
     parts,
     ...util.normalizeParams(params),
   }) as any;
+}
+
+// ZodMiniLazy
+export interface ZodMiniLazy<T extends SomeType = SomeType> extends ZodMiniType {
+  _zod: core.$ZodLazyInternals<T>;
+}
+export const ZodMiniLazy: core.$constructor<ZodMiniLazy> = core.$constructor("ZodMiniLazy", (inst, def) => {
+  core.$ZodLazy.init(inst, def);
+  ZodMiniType.init(inst, def);
+});
+
+export function _lazy<T extends SomeType>(getter: () => T): ZodMiniLazy<T> {
+  return new ZodMiniLazy({
+    type: "lazy",
+    getter,
+  }) as ZodMiniLazy<T>;
 }
 
 // ZodMiniPromise

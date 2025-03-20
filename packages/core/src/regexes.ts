@@ -71,8 +71,6 @@ function timeRegexSource(args: { precision?: number | null }) {
   return regex;
 }
 export function timeRegex(args: {
-  offset?: boolean;
-  local?: boolean;
   precision?: number | null;
 }): RegExp {
   return new RegExp(`^${timeRegexSource(args)}$`);

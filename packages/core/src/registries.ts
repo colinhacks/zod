@@ -42,6 +42,7 @@ export class $ZodRegistry<Meta = unknown, Schema extends $ZodType = $ZodType> {
 }
 
 export interface JSONSchemaMeta {
+  id?: string;
   title?: string;
   description?: string;
   examples?: OUTPUT[];

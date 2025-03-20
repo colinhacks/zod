@@ -41,7 +41,7 @@ export function time(params?: string | core.$ZodISOTimeParams): ZodMiniISOTime {
 }
 
 // iso duration
-export interface ZodMiniISODuration extends schemas.ZodMiniStringFormat<"duration"> {
+export interface ZodMiniISODuration extends schemas.ZodMiniStringFormat<"iso_duration"> {
   _zod: core.$ZodISODurationInternals;
 }
 export const ZodMiniISODuration: core.$constructor<ZodMiniISODuration> = core.$constructor(

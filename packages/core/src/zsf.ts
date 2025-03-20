@@ -194,7 +194,7 @@ export interface $ZSFConditional<If extends $ZSF, Then extends $ZSF, Else extend
 // }
 
 // export interface $ZSFCheckDuration {
-//   check: "duration";
+//   check: "iso_duration";
 // }
 
 // export interface $ZSFCheckIP {
