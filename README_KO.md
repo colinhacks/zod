@@ -780,7 +780,7 @@ z.string().endsWith(string); // 특정 문자열로 끝남
 z.string().datetime(); // ISO 8601 형식 (기본적으로 'Z' 시간대만 허용)
 z.string().ip(); // IPv4 및 IPv6 허용 (기본값)
 z.string().cidr(); // IPv4 및 IPv6 CIDR 허용 (기본값)
-
+z.string().creditCard();
 // 변환
 z.string().trim(); // 공백 제거
 z.string().toLowerCase(); // 소문자로 변환
