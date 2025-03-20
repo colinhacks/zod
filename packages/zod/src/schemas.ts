@@ -1,6 +1,7 @@
 import * as core from "@zod/core";
 import * as util from "@zod/core/util";
 import * as checks from "./checks.js";
+import { ZodError } from "./errors.js";
 import * as iso from "./iso.js";
 import * as parse from "./parse.js";
 

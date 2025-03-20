@@ -23,7 +23,7 @@
       "name": "tsx",
       "type": "node",
       "request": "launch",
-      // "runtimeArgs": ["--cpu-prof", "--conditions=@zod/source"],
+      "runtimeArgs": ["--conditions=@zod/source"],
 
       // Debug current file in VSCode
       "program": "${file}",

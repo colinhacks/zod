@@ -24,7 +24,6 @@ export function _parse<T extends schemas.$ZodType>(
   return result.value as core.output<T>;
 }
 export const parse: typeof _parse = _parse.bind({ Error: errors.$ZodError });
-parse;
 
 export function _safeParse<T extends schemas.$ZodType>(
   this: ParseThis,

@@ -50,7 +50,7 @@ const DATA = Array.from({ length: 1000 }, () =>
 console.log(z3schema.safeParse(DATA[0]));
 console.log(z4schema.safeParse(DATA[0]));
 
-const bench = metabench("small: z.object().safeParseAsync", {
+const bench = metabench("z.object() safeParse", {
   zod3() {
     for (const _ of DATA) z3schema.safeParse(_);
   },

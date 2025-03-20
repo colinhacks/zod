@@ -165,7 +165,6 @@ export const $ZodType: core.$constructor<$ZodType> = core.$constructor("$ZodType
   if (checks.length === 0) {
     // deferred initializer
     // inst._zod.parse is not yet defined
-    // inst._zod.run = (a, b) => inst._zod.parse(a, b);
     inst._zod.deferred ??= [];
     inst._zod.deferred?.push(() => {
       inst._zod.run = inst._zod.parse;
@@ -1366,13 +1365,13 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
 
     const generateFastpass = () => {
       const { keys, optionalKeys } = _normalized.value;
-      const doc = new Doc(["inst", "payload", "ctx"]);
+      const doc = new Doc(["shape", "payload", "ctx"]);
       const parseStr = (key: string) => {
         const k = util.esc(key);
         return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
       };
 
-      doc.write(`const shape = inst._zod.def.shape;`);
+      // doc.write(`const shape = def.shape;`);
       doc.write(`const input = payload.value;`);
 
       const ids: any = {};
@@ -1459,7 +1458,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
     let fastpass!: ReturnType<typeof generateFastpass>;
     const fastEnabled = util.allowsEval.value; // && !def.catchall;
     const isObject = util.isObject;
-    const { catchall } = def;
+    const { catchall, shape } = def;
     // const noCatchall = !def.catchall;
 
     inst._zod.parse = (payload, ctx) => {
@@ -1476,10 +1475,10 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
 
       const proms: Promise<any>[] = [];
 
-      if (fastEnabled && ctx.async === false) {
+      if (fastEnabled) {
         // always synchronous
-        fastpass ??= generateFastpass();
-        payload = fastpass(inst, payload, ctx);
+        if (!fastpass) fastpass = generateFastpass();
+        payload = fastpass(shape, payload, ctx);
       } else {
         payload.value = {};
         const normalized = _normalized.value;
@@ -1520,6 +1519,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
       }
 
       if (!catchall) {
+        // return payload;
         return proms.length ? Promise.all(proms).then(() => payload) : payload;
       }
       const unrecognized: string[] = [];
