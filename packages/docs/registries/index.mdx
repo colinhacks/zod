@@ -1,0 +1,403 @@
+---
+title: 'Registries & Metadata'
+description: 'Documentation for Zod registries and metadata functionality'
+---
+
+
+
+# Registries & Metadata
+
+Zod v4 introduces powerful registry and metadata functionality that allows you to attach additional information to your schemas and manage them globally.
+
+## Metadata with `.meta()`
+
+The `.meta()` method allows you to attach arbitrary metadata to any schema. This metadata doesn't affect validation but can be used for documentation, UI generation, or other purposes.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const UserSchema = z.object({
+  username: z.string().meta({
+    description: "The user's display name",
+    example: "johndoe",
+    min: 3,
+    max: 20
+  }),
+  email: z.string().email().meta({
+    description: "The user's email address",
+    example: "john@example.com"
+  })
+});
+
+// Access metadata
+const metadata = UserSchema.shape.username._def.meta;
+console.log(metadata.description); // "The user's display name"
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const UserSchema = z.object({
+  username: z.string().meta({
+    description: "The user's display name",
+    example: "johndoe",
+    min: 3,
+    max: 20
+  }),
+  email: z.string().email().meta({
+    description: "The user's email address",
+    example: "john@example.com"
+  })
+});
+
+// Access metadata
+const metadata = UserSchema.shape.username._def.meta;
+console.log(metadata.description); // "The user's display name"
+```
+</Tabs>
+
+## Global Metadata with `GlobalMeta`
+
+Zod v4 introduces a `GlobalMeta` type that can be used to define a global metadata structure for your schemas.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+// Define your global metadata structure
+declare module "zod" {
+  interface GlobalMeta {
+    description?: string;
+    example?: any;
+    deprecated?: boolean;
+    since?: string;
+  }
+}
+
+// Now you can use these properties in any schema
+const UserSchema = z.object({
+  username: z.string().meta({
+    description: "The user's display name",
+    example: "johndoe",
+    deprecated: false,
+    since: "1.0.0"
+  })
+});
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+// Define your global metadata structure
+declare module "@zod/mini" {
+  interface GlobalMeta {
+    description?: string;
+    example?: any;
+    deprecated?: boolean;
+    since?: string;
+  }
+}
+
+// Now you can use these properties in any schema
+const UserSchema = z.object({
+  username: z.string().meta({
+    description: "The user's display name",
+    example: "johndoe",
+    deprecated: false,
+    since: "1.0.0"
+  })
+});
+```
+</Tabs>
+
+## Global Registry with `z.globalRegistry`
+
+The global registry provides a way to register and retrieve schemas globally by name.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+// Register a schema globally
+z.globalRegistry.register("User", z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().email()
+}));
+
+// Retrieve a schema from the global registry
+const UserSchema = z.globalRegistry.get("User");
+
+// Use the schema
+const user = UserSchema.parse({
+  id: "123e4567-e89b-12d3-a456-426614174000",
+  name: "John Doe",
+  email: "john@example.com"
+});
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+// Register a schema globally
+z.globalRegistry.register("User", z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().email()
+}));
+
+// Retrieve a schema from the global registry
+const UserSchema = z.globalRegistry.get("User");
+
+// Use the schema
+const user = UserSchema.parse({
+  id: "123e4567-e89b-12d3-a456-426614174000",
+  name: "John Doe",
+  email: "john@example.com"
+});
+```
+</Tabs>
+
+## Custom Registries with `z.registry()`
+
+You can create custom registries to manage schemas in a more controlled way.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+// Create a custom registry
+const myRegistry = z.registry();
+
+// Register schemas
+myRegistry.register("User", z.object({
+  id: z.string().uuid(),
+  name: z.string()
+}));
+
+myRegistry.register("Post", z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  content: z.string(),
+  authorId: z.string().uuid()
+}));
+
+// Retrieve and use schemas
+const UserSchema = myRegistry.get("User");
+const PostSchema = myRegistry.get("Post");
+
+// Check if a schema exists
+const hasUserSchema = myRegistry.has("User"); // true
+const hasCommentSchema = myRegistry.has("Comment"); // false
+
+// Get all registered schema names
+const schemaNames = myRegistry.names(); // ["User", "Post"]
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+// Create a custom registry
+const myRegistry = z.registry();
+
+// Register schemas
+myRegistry.register("User", z.object({
+  id: z.string().uuid(),
+  name: z.string()
+}));
+
+myRegistry.register("Post", z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  content: z.string(),
+  authorId: z.string().uuid()
+}));
+
+// Retrieve and use schemas
+const UserSchema = myRegistry.get("User");
+const PostSchema = myRegistry.get("Post");
+
+// Check if a schema exists
+const hasUserSchema = myRegistry.has("User"); // true
+const hasCommentSchema = myRegistry.has("Comment"); // false
+
+// Get all registered schema names
+const schemaNames = myRegistry.names(); // ["User", "Post"]
+```
+</Tabs>
+
+## JSON Schema Registry with `z.jsonSchemaRegistry()`
+
+Zod v4 introduces a specialized registry for working with JSON Schema.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+// Create a JSON Schema registry
+const jsonSchemaRegistry = z.jsonSchemaRegistry();
+
+// Register schemas
+jsonSchemaRegistry.register("User", z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().email()
+}));
+
+// Get the JSON Schema representation
+const userJsonSchema = jsonSchemaRegistry.getSchema("User");
+console.log(JSON.stringify(userJsonSchema, null, 2));
+/*
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    }
+  },
+  "required": ["id", "name", "email"]
+}
+*/
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+// Create a JSON Schema registry
+const jsonSchemaRegistry = z.jsonSchemaRegistry();
+
+// Register schemas
+jsonSchemaRegistry.register("User", z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().email()
+}));
+
+// Get the JSON Schema representation
+const userJsonSchema = jsonSchemaRegistry.getSchema("User");
+console.log(JSON.stringify(userJsonSchema, null, 2));
+/*
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string"
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    }
+  },
+  "required": ["id", "name", "email"]
+}
+*/
+```
+</Tabs>
+
+## Use Cases for Registries and Metadata
+
+### API Documentation Generation
+
+Metadata can be used to generate API documentation automatically.
+
+```ts
+const ApiSchema = z.object({
+  endpoints: z.array(
+    z.object({
+      path: z.string().meta({ description: "API endpoint path" }),
+      method: z.enum(["GET", "POST", "PUT", "DELETE"]).meta({ 
+        description: "HTTP method" 
+      }),
+      description: z.string().meta({ 
+        description: "Description of what the endpoint does" 
+      }),
+      parameters: z.array(
+        z.object({
+          name: z.string(),
+          type: z.string(),
+          required: z.boolean(),
+          description: z.string()
+        })
+      ).meta({ description: "List of parameters for the endpoint" })
+    })
+  )
+});
+
+// Generate documentation from schema metadata
+function generateDocs(schema) {
+  // Implementation details...
+}
+```
+
+### Form Generation
+
+Metadata can be used to generate forms with proper validation.
+
+```ts
+const FormSchema = z.object({
+  username: z.string().min(3).max(20).meta({
+    label: "Username",
+    placeholder: "Enter your username",
+    helpText: "Choose a username between 3 and 20 characters"
+  }),
+  email: z.string().email().meta({
+    label: "Email Address",
+    placeholder: "you@example.com",
+    type: "email"
+  }),
+  password: z.string().min(8).meta({
+    label: "Password",
+    placeholder: "Enter a secure password",
+    type: "password",
+    helpText: "Must be at least 8 characters"
+  })
+});
+
+// Generate form from schema metadata
+function generateForm(schema) {
+  // Implementation details...
+}
+```
+
+### Schema Versioning
+
+Registries can be used to manage different versions of your schemas.
+
+```ts
+const v1Registry = z.registry();
+const v2Registry = z.registry();
+
+// v1 schema
+v1Registry.register("User", z.object({
+  id: z.string(),
+  name: z.string()
+}));
+
+// v2 schema with additional fields
+v2Registry.register("User", z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email().optional(),
+  createdAt: z.date()
+}));
+
+// Use the appropriate schema based on API version
+function handleRequest(apiVersion, data) {
+  const registry = apiVersion === "v1" ? v1Registry : v2Registry;
+  const UserSchema = registry.get("User");
+  return UserSchema.parse(data);
+}
+```

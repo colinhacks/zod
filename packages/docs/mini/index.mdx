@@ -1,0 +1,293 @@
+---
+title: '@zod/mini'
+description: 'Documentation for the lightweight @zod/mini package'
+---
+
+
+
+# @zod/mini
+
+@zod/mini is a lightweight alternative to the full Zod library, designed for environments where bundle size is critical. It provides the core validation functionality of Zod with a smaller footprint.
+
+## Installation
+
+<Tabs>
+```bash npm
+npm install @zod/mini
+```
+
+```bash yarn
+yarn add @zod/mini
+```
+
+```bash pnpm
+pnpm add @zod/mini
+```
+</Tabs>
+
+## Basic Usage
+
+@zod/mini has an API that is largely compatible with the main Zod library, making it easy to switch between them.
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const User = z.object({
+  username: z.string(),
+  age: z.number().min(18)
+});
+
+const result = User.parse({
+  username: "john_doe",
+  age: 25
+});
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const User = z.object({
+  username: z.string(),
+  age: z.number().min(18)
+});
+
+const result = User.parse({
+  username: "john_doe",
+  age: 25
+});
+```
+</Tabs>
+
+## Relationship with @zod/core
+
+@zod/mini is built on top of @zod/core, which provides the essential validation infrastructure. While @zod/core focuses on the core validation engine, @zod/mini adds a more user-friendly API layer on top of it.
+
+The relationship can be visualized as:
+
+```
+@zod/core (foundation) → @zod/mini (lightweight API) → zod (full-featured)
+```
+
+## Key Differences from Zod
+
+While @zod/mini aims to be API-compatible with Zod, there are some differences to be aware of:
+
+### 1. Import Style
+
+@zod/mini uses a different import style than the main Zod library:
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+```
+</Tabs>
+
+### 2. Bundle Size
+
+@zod/mini has a significantly smaller bundle size compared to the full Zod library:
+
+| Package | Minified Size | Gzipped Size |
+|---------|--------------|--------------|
+| zod     | ~120KB       | ~30KB        |
+| @zod/mini | ~40KB      | ~12KB        |
+
+### 3. Feature Set
+
+@zod/mini includes most of the core validation features of Zod, but omits some of the more advanced features to keep the bundle size small:
+
+✅ Included in @zod/mini:
+- All primitive types (string, number, boolean, etc.)
+- Objects, arrays, tuples
+- Unions and intersections
+- Refinements and transformations
+- Error handling
+- Type inference
+
+❌ Not included in @zod/mini (available only in full Zod):
+- Some advanced string validations
+- Some specialized types
+- Certain utility functions
+
+## Feature Comparison
+
+Here's a detailed comparison of features between @zod/mini and the full Zod library:
+
+| Feature | @zod/mini | Full Zod |
+|---------|-----------|----------|
+| Primitives (string, number, boolean) | ✅ | ✅ |
+| Objects | ✅ | ✅ |
+| Arrays | ✅ | ✅ |
+| Unions | ✅ | ✅ |
+| Literals | ✅ | ✅ |
+| Enums | ✅ | ✅ |
+| Tuples | ✅ | ✅ |
+| Records | ✅ | ✅ |
+| Maps and Sets | ✅ | ✅ |
+| Promises | ✅ | ✅ |
+| Refinements | ✅ | ✅ |
+| Transformations | ✅ | ✅ |
+| Default values | ✅ | ✅ |
+| Error formatting | ✅ | ✅ |
+| Type inference | ✅ | ✅ |
+| Advanced string validations | ⚠️ Limited | ✅ Full |
+| Custom error maps | ✅ | ✅ |
+| Recursive types | ✅ | ✅ |
+| Branded types | ✅ | ✅ |
+
+## When to Use @zod/mini
+
+@zod/mini is ideal for:
+
+- Frontend applications where bundle size is critical
+- Mobile web applications
+- Applications targeting low-bandwidth environments
+- When you need the core validation functionality of Zod but don't need all the advanced features
+
+Consider using the full Zod library when:
+
+- Bundle size is not a primary concern
+- You need access to all advanced features
+- You're working in a Node.js environment where bundle size doesn't matter
+
+## Migration Between @zod/mini and Zod
+
+Thanks to the API compatibility between @zod/mini and Zod, migrating between them is usually straightforward:
+
+### From Zod to @zod/mini
+
+<Tabs>
+```ts zod
+// Before
+import { z } from "zod";
+
+const schema = z.object({
+  name: z.string(),
+  age: z.number()
+});
+```
+
+```ts @zod/mini
+// After
+import * as z from "@zod/mini";
+
+const schema = z.object({
+  name: z.string(),
+  age: z.number()
+});
+```
+</Tabs>
+
+### From @zod/mini to Zod
+
+<Tabs>
+```ts @zod/mini
+// Before
+import * as z from "@zod/mini";
+
+const schema = z.object({
+  name: z.string(),
+  age: z.number()
+});
+```
+
+```ts zod
+// After
+import { z } from "zod";
+
+const schema = z.object({
+  name: z.string(),
+  age: z.number()
+});
+```
+</Tabs>
+
+## Examples
+
+### Form Validation
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const FormSchema = z.object({
+  username: z.string().min(3).max(20),
+  email: z.string().email(),
+  password: z.string().min(8),
+  confirmPassword: z.string()
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"]
+});
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const FormSchema = z.object({
+  username: z.string().min(3).max(20),
+  email: z.string().email(),
+  password: z.string().min(8),
+  confirmPassword: z.string()
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"]
+});
+```
+</Tabs>
+
+### API Request Validation
+
+<Tabs>
+```ts zod
+import { z } from "zod";
+
+const UserCreateRequest = z.object({
+  name: z.string(),
+  email: z.string().email(),
+  role: z.enum(["admin", "user", "guest"]),
+  metadata: z.record(z.string()).optional()
+});
+
+// Express example
+app.post('/users', (req, res) => {
+  try {
+    const userData = UserCreateRequest.parse(req.body);
+    // Process validated data
+    res.status(201).json({ success: true });
+  } catch (error) {
+    res.status(400).json({ error: error.errors });
+  }
+});
+```
+
+```ts @zod/mini
+import * as z from "@zod/mini";
+
+const UserCreateRequest = z.object({
+  name: z.string(),
+  email: z.string().email(),
+  role: z.enum(["admin", "user", "guest"]),
+  metadata: z.record(z.string()).optional()
+});
+
+// Express example
+app.post('/users', (req, res) => {
+  try {
+    const userData = UserCreateRequest.parse(req.body);
+    // Process validated data
+    res.status(201).json({ success: true });
+  } catch (error) {
+    res.status(400).json({ error: error.errors });
+  }
+});
+```
+</Tabs>
+
+## Performance Considerations
+
+@zod/mini is optimized for bundle size, but it maintains similar runtime performance to the full Zod library for most common operations. For extremely performance-critical applications, you may want to benchmark both libraries with your specific use cases.

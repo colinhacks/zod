@@ -1,0 +1,556 @@
+---
+title: 'Migrate from v3 to v4'
+description: 'Guide for migrating from Zod v3 to v4'
+---
+
+
+
+# Migrating from Zod v3 to v4
+
+This guide will help you migrate your codebase from Zod v3 to Zod v4. It covers the new features introduced in v4, breaking changes, and provides migration strategies with code examples.
+
+## New Features in v4
+
+Zod v4 introduces several powerful new features that enhance the library's capabilities:
+
+### Multiple Values in `z.literal()`
+
+Zod v4 now allows you to pass multiple values to `z.literal()`, creating a union of literals in a more concise way.
+
+<Tabs>
+```ts v3
+import { z } from "zod";
+
+// In v3, you needed to use z.union
+const StatusCode = z.union([
+  z.literal(200),
+  z.literal(400),
+  z.literal(404)
+]);
+```
+
+```ts v4
+import { z } from "zod";
+
+// In v4, you can pass multiple values directly
+const StatusCode = z.literal(200, 400, 404);
+
+// This is equivalent to
+const StatusCodeAlt = z.union([
+  z.literal(200),
+  z.literal(400),
+  z.literal(404)
+]);
+```
+</Tabs>
+
+### `z.success()` Method
+
+Zod v4 introduces a new `z.success()` method that creates a schema that always succeeds with a given value, regardless of the input.
+
+<Tabs>
+```ts v4
+import { z } from "zod";
+
+const alwaysTrue = z.success(true);
+
+alwaysTrue.parse("anything"); // => true
+alwaysTrue.parse(null); // => true
+alwaysTrue.parse(undefined); // => true
+
+// Useful for providing default values in complex scenarios
+const ApiResponse = z.object({
+  data: z.any().optional().catch(z.success(null)),
+  status: z.number()
+});
+```
+</Tabs>
+
+### `z.stringbool()`
+
+A new schema type for parsing string representations of boolean values.
+
+<Tabs>
+```ts v4
+import { z } from "zod";
+
+const stringBool = z.stringbool();
+
+stringBool.parse("true"); // => true
+stringBool.parse("false"); // => false
+stringBool.parse("1"); // => true
+stringBool.parse("0"); // => false
+stringBool.parse("yes"); // => true
+stringBool.parse("no"); // => false
+
+// Throws for invalid inputs
+stringBool.parse("maybe"); // throws ZodError
+```
+</Tabs>
+
+### `z.overwrite()` Method
+
+The new `z.overwrite()` method allows you to completely replace a schema's properties with new ones.
+
+<Tabs>
+```ts v3
+import { z } from "zod";
+
+// In v3, you might do something like this
+const BaseUser = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email()
+});
+
+// To create a new schema with different properties
+const UserWithoutEmail = z.object({
+  id: z.string(),
+  name: z.string()
+  // email is removed
+});
+```
+
+```ts v4
+import { z } from "zod";
+
+const BaseUser = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string().email()
+});
+
+// In v4, you can use overwrite
+const UserWithoutEmail = BaseUser.overwrite({
+  id: z.string(),
+  name: z.string()
+  // email is removed
+});
+```
+</Tabs>
+
+### `z.transform()` Method
+
+A new utility for creating transformation schemas.
+
+<Tabs>
+```ts v4
+import { z } from "zod";
+
+const stringToNumber = z.transform(z.string(), (val) => Number(val));
+
+stringToNumber.parse("123"); // => 123
+```
+</Tabs>
+
+### Optionals in ZodTuple
+
+Zod v4 adds support for optional elements in tuples.
+
+<Tabs>
+```ts v3
+import { z } from "zod";
+
+// In v3, all tuple elements were required
+const Point2D = z.tuple([z.number(), z.number()]);
+```
+
+```ts v4
+import { z } from "zod";
+
+// In v4, you can make elements optional
+const Point3D = z.tuple([
+  z.number(),
+  z.number(),
+  z.number().optional() // z-coordinate is optional
+]);
+
+Point3D.parse([1, 2]); // => [1, 2, undefined]
+Point3D.parse([1, 2, 3]); // => [1, 2, 3]
+```
+</Tabs>
+
+### Registries and Metadata
+
+Zod v4 introduces powerful registry and metadata functionality:
+
+<Tabs>
+```ts v4
+import { z } from "zod";
+
+// Attach metadata to schemas
+const User = z.object({
+  username: z.string().meta({
+    description: "The user's display name",
+    example: "johndoe"
+  })
+});
+
+// Global registry
+z.globalRegistry.register("User", User);
+const retrievedUser = z.globalRegistry.get("User");
+
+// Custom registries
+const myRegistry = z.registry();
+myRegistry.register("Product", z.object({
+  id: z.string(),
+  name: z.string()
+}));
+
+// JSON Schema registry
+const jsonSchemaRegistry = z.jsonSchemaRegistry();
+jsonSchemaRegistry.register("User", User);
+const userJsonSchema = jsonSchemaRegistry.getSchema("User");
+```
+</Tabs>
+
+See the [Registries & Metadata](/registries/index) page for more details.
+
+### `z.templateLiteral()`
+
+Zod v4 adds support for template literal types.
+
+<Tabs>
+```ts v4
+import { z } from "zod";
+
+const EmailTemplate = z.templateLiteral(
+  z.string().email(),
+  z.literal("@example.com")
+);
+
+EmailTemplate.parse("user@example.com"); // passes
+EmailTemplate.parse("user@gmail.com"); // fails
+```
+</Tabs>
+
+### `reportInput` Option
+
+Zod v4 adds a new option to include the input value in error messages.
+
+<Tabs>
+```ts v4
+import { z } from "zod";
+
+const schema = z.string({
+  reportInput: true
+});
+
+try {
+  schema.parse(123);
+} catch (error) {
+  console.log(error.message);
+  // Expected string, received number (123)
+}
+```
+</Tabs>
+
+## Breaking Changes
+
+Zod v4 includes several breaking changes that you need to be aware of when migrating:
+
+### New Issue Formats
+
+The format of validation issues has been updated in v4. If you're directly accessing the `issues` array in `ZodError`, you'll need to update your code.
+
+<Tabs>
+```ts v3
+import { z } from "zod";
+
+try {
+  z.string().parse(123);
+} catch (error) {
+  console.log(error.issues[0]);
+  // { code: "invalid_type", expected: "string", received: "number", ... }
+}
+```
+
+```ts v4
+import { z } from "zod";
+
+try {
+  z.string().parse(123);
+} catch (error) {
+  console.log(error.issues[0]);
+  // Updated format with additional properties
+  // { code: "invalid_type", expected: "string", received: "number", input: 123, ... }
+}
+```
+</Tabs>
+
+### New Generics
+
+The generic type parameters for Zod schemas have changed in v4. If you're using custom schemas or extending Zod's functionality, you may need to update your type definitions.
+
+<Tabs>
+```ts v3
+import { z } from "zod";
+
+// In v3
+class CustomSchema<T> extends z.ZodType<T> {
+  // ...
+}
+```
+
+```ts v4
+import { z } from "zod";
+
+// In v4, the generic parameters have changed
+class CustomSchema<T> extends z.ZodType<T, z.ZodTypeDef, unknown> {
+  // ...
+}
+```
+</Tabs>
+
+### Dropped Static `.create()` Methods
+
+Zod v4 has removed the static `.create()` methods that were available in v3.
+
+<Tabs>
+```ts v3
+import { z } from "zod";
+
+// In v3
+const schema = z.ZodString.create();
+```
+
+```ts v4
+import { z } from "zod";
+
+// In v4, use the factory functions instead
+const schema = z.string();
+```
+</Tabs>
+
+### Dropped `z.promise()`
+
+The `z.promise()` method has been removed in v4 as it was deemed unnecessary.
+
+<Tabs>
+```ts v3
+import { z } from "zod";
+
+// In v3
+const promiseSchema = z.promise(z.string());
+```
+
+```ts v4
+import { z } from "zod";
+
+// In v4, use alternative approaches
+// For example, you can validate the resolved value
+async function validatePromise(promise) {
+  const value = await promise;
+  return z.string().parse(value);
+}
+```
+</Tabs>
+
+## Migration Strategy
+
+Here's a step-by-step approach to migrating from Zod v3 to v4:
+
+### 1. Update Dependencies
+
+First, update your Zod dependency to version 4:
+
+<Tabs>
+```bash npm
+npm install zod@4
+```
+
+```bash yarn
+yarn add zod@4
+```
+
+```bash pnpm
+pnpm add zod@4
+```
+</Tabs>
+
+### 2. Handle Breaking Changes
+
+#### Update Error Handling
+
+If you're directly accessing `ZodError` issues, update your error handling code:
+
+<Tabs>
+```ts v3
+// Before (v3)
+try {
+  schema.parse(data);
+} catch (error) {
+  if (error instanceof z.ZodError) {
+    const firstIssue = error.issues[0];
+    console.log(`Error: ${firstIssue.message}`);
+    console.log(`Path: ${firstIssue.path.join(".")}`);
+  }
+}
+```
+
+```ts v4
+// After (v4)
+try {
+  schema.parse(data);
+} catch (error) {
+  if (error instanceof z.ZodError) {
+    const firstIssue = error.issues[0];
+    console.log(`Error: ${firstIssue.message}`);
+    console.log(`Path: ${firstIssue.path.join(".")}`);
+    // New in v4: access the input value
+    console.log(`Input: ${JSON.stringify(firstIssue.input)}`);
+  }
+}
+```
+</Tabs>
+
+#### Replace Static `.create()` Methods
+
+Replace any usage of static `.create()` methods with the equivalent factory functions:
+
+<Tabs>
+```ts v3
+// Before (v3)
+const stringSchema = z.ZodString.create();
+const numberSchema = z.ZodNumber.create();
+```
+
+```ts v4
+// After (v4)
+const stringSchema = z.string();
+const numberSchema = z.number();
+```
+</Tabs>
+
+#### Replace `z.promise()`
+
+If you were using `z.promise()`, you'll need to find alternative approaches:
+
+<Tabs>
+```ts v3
+// Before (v3)
+const promiseSchema = z.promise(z.string());
+const result = await promiseSchema.parseAsync(myPromise);
+```
+
+```ts v4
+// After (v4)
+// Option 1: Validate after resolution
+const value = await myPromise;
+const result = z.string().parse(value);
+
+// Option 2: Create a helper function
+async function validatePromise(promise, schema) {
+  const value = await promise;
+  return schema.parse(value);
+}
+
+const result = await validatePromise(myPromise, z.string());
+```
+</Tabs>
+
+### 3. Update Custom Schemas
+
+If you've created custom schemas by extending Zod's classes, update the generic parameters:
+
+<Tabs>
+```ts v3
+// Before (v3)
+class MyCustomSchema<T> extends z.ZodType<T> {
+  // ...
+}
+```
+
+```ts v4
+// After (v4)
+class MyCustomSchema<T> extends z.ZodType<T, z.ZodTypeDef, unknown> {
+  // ...
+}
+```
+</Tabs>
+
+### 4. Take Advantage of New Features
+
+Once you've handled the breaking changes, you can start using the new features in v4:
+
+#### Use Multiple Values in `z.literal()`
+
+<Tabs>
+```ts v3
+// Before (v3)
+const Status = z.union([
+  z.literal("pending"),
+  z.literal("processing"),
+  z.literal("completed")
+]);
+```
+
+```ts v4
+// After (v4)
+const Status = z.literal("pending", "processing", "completed");
+```
+</Tabs>
+
+#### Use Registries for Schema Management
+
+<Tabs>
+```ts v4
+// New in v4
+const userRegistry = z.registry();
+
+userRegistry.register("User", z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().email()
+}));
+
+userRegistry.register("Admin", userRegistry.get("User").extend({
+  role: z.literal("admin"),
+  permissions: z.array(z.string())
+}));
+
+// Later in your code
+const UserSchema = userRegistry.get("User");
+const AdminSchema = userRegistry.get("Admin");
+```
+</Tabs>
+
+#### Add Metadata to Schemas
+
+<Tabs>
+```ts v4
+// New in v4
+const ProductSchema = z.object({
+  id: z.string().uuid().meta({
+    description: "Unique product identifier",
+    example: "123e4567-e89b-12d3-a456-426614174000"
+  }),
+  name: z.string().meta({
+    description: "Product name",
+    example: "Ergonomic Chair"
+  }),
+  price: z.number().positive().meta({
+    description: "Product price in USD",
+    example: 199.99
+  })
+});
+```
+</Tabs>
+
+## Testing Your Migration
+
+After migrating to Zod v4, thoroughly test your validation logic to ensure everything works as expected. Pay special attention to:
+
+1. Error handling code that accesses `ZodError` properties
+2. Custom schemas that extend Zod's built-in types
+3. Complex validation pipelines that might be affected by the breaking changes
+
+## Conclusion
+
+Migrating from Zod v3 to v4 involves handling a few breaking changes, but the new features and improvements make it worthwhile. The registries and metadata system, in particular, provide powerful new capabilities for schema management and documentation.
+
+For more detailed information about specific features:
+
+- [API Reference](/api/index) - Complete documentation of Zod's API
+- [Registries & Metadata](/registries/index) - Learn more about the new registry and metadata system
+- [@zod/mini](/mini/index) - Explore the lightweight alternative to Zod

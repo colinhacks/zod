@@ -19,8 +19,20 @@
         "pages": ["docs", "quickstart", "development"]
       },
       {
+        "group": "API Reference",
+        "pages": ["api/index"]
+      },
+      {
+        "group": "Registries & Metadata",
+        "pages": ["registries/index"]
+      },
+      {
         "group": "@zod/mini",
-        "pages": ["docs"]
+        "pages": ["mini/index"]
+      },
+      {
+        "group": "Migration",
+        "pages": ["migration/v3-to-v4"]
       },
       {
         "group": "@zod/json",
