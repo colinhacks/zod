@@ -1363,7 +1363,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
       return discMap;
     });
 
-    const generateFastpass = () => {
+    const generateFastpass = (shape: any) => {
       const { keys, optionalKeys } = _normalized.value;
       const doc = new Doc(["shape", "payload", "ctx"]);
       const parseStr = (key: string) => {
@@ -1371,7 +1371,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
         return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
       };
 
-      // doc.write(`const shape = def.shape;`);
+      // doc.write(`const shape = inst._zod.def.shape;`);
       doc.write(`const input = payload.value;`);
 
       const ids: any = {};
@@ -1452,13 +1452,16 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
 
       // doc.write(`payload.value = final;`);
       doc.write(`return payload;`);
-      return doc.compile();
+      // return doc.compile().bind(null, shape);
+      const fn = doc.compile();
+      return (payload: any, ctx: any) => fn(shape, payload, ctx);
+      // return fn.bind(null, _inst._zod.def.shape);
     };
 
     let fastpass!: ReturnType<typeof generateFastpass>;
     const fastEnabled = util.allowsEval.value; // && !def.catchall;
     const isObject = util.isObject;
-    const { catchall, shape } = def;
+    const { catchall } = def;
     // const noCatchall = !def.catchall;
 
     inst._zod.parse = (payload, ctx) => {
@@ -1475,10 +1478,10 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
 
       const proms: Promise<any>[] = [];
 
-      if (fastEnabled) {
+      if (fastEnabled && ctx?.async === false) {
         // always synchronous
-        if (!fastpass) fastpass = generateFastpass();
-        payload = fastpass(shape, payload, ctx);
+        if (!fastpass) fastpass = generateFastpass(def.shape);
+        payload = fastpass(payload, ctx);
       } else {
         payload.value = {};
         const normalized = _normalized.value;
