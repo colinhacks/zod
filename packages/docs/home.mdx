@@ -1,0 +1,199 @@
+---
+sidebarTitle: Intro
+title: " "
+mode: "center"
+---
+
+
+import { MyComponent } from '/snippets/data.mdx';
+import { Platinum } from '/snippets/platinum.mdx';
+import { Gold } from '/snippets/gold.mdx';
+import { Silver } from '/snippets/silver.mdx';
+import {Bronze} from '/snippets/bronze.mdx';
+
+<MyComponent  />
+
+<style dangerouslySetInnerHTML={{__html: `
+#content-area {
+  h1 {
+  }
+  h2 {
+    /* text-align: center;
+    justify-content: center; */
+  }
+  h2 {
+    padding-top: 40px;
+    padding-bottom: 19px;
+    /* margin-bottom: 18px; */
+    border-bottom: 1px solid hsla(0, 0%, 100%, 0.1);
+  }
+}`}} />
+
+<div className="flex flex-col items-stretch text-center">
+  <div style={{height:"170px"}}>
+    <img noZoom className="block dark:hidden mx-auto m-0" alt="mintlify logo" src="/logo/logo_glow.png" width="200px" />
+    <img noZoom className="hidden dark:block mx-auto m-0" alt="mintlify logo" src="/logo/logo_glow.png" width="200px" />
+  </div>
+  <h1 className="text-3xl font-bold">Zod</h1>
+  <p className="mt-2 mb-1">TypeScript-first schema validation with static type inference</p>
+  <div style={{height: "36px"}} className="flex flex-row flex-wrap justify-center gap-1 py-2">
+    <a className="border-none" href="https://github.com/colinhacks/zod/actions?query=branch%3Amain">
+      <img noZoom className="m-0" src="https://github.com/colinhacks/zod/actions/workflows/test.yml/badge.svg?event=push&branch=main" alt="Zod CI status" />
+    </a>
+    <a className="border-none" href="https://twitter.com/colinhacks" rel="nofollow">
+      <img noZoom className="m-0" src="https://img.shields.io/badge/created%20by-@colinhacks-4BBAAB.svg" alt="Created by Colin McDonnell" />
+    </a>
+    <a className="border-none" href="https://opensource.org/licenses/MIT" rel="nofollow">
+      <img noZoom className="m-0" src="https://img.shields.io/github/license/colinhacks/zod" alt="License" />
+    </a>
+    <a className="border-none" href="https://www.npmjs.com/package/zod" rel="nofollow">
+      <img noZoom className="m-0" src="https://img.shields.io/npm/dw/zod.svg" alt="npm" />
+    </a>
+    <a className="border-none" href="https://github.com/colinhacks/zod" rel="nofollow">
+      <img noZoom className="m-0" src="https://img.shields.io/github/stars/colinhacks/zod" alt="stars" />
+    </a>
+  </div>
+  <div className="flex flex-row justify-center gap-1">
+    <a href="https://zod.dev">Website</a>
+    <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+    <a href="https://discord.gg/RcG33DQJdf">Discord</a>
+    <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+    <a href="https://twitter.com/colinhacks">𝕏</a>
+    <span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
+    <a href="https://bsky.app/profile/zod.dev">Bluesky</a>
+    <br />
+  </div>
+</div>
+
+<br/>
+
+{/* <ParamField path="param" type="string">
+  An example of a parameter field
+</ParamField>
+
+<ParamField query="filter" type="string" default="none" required>
+  The filtering command used to sort through the users
+</ParamField>
+
+<ParamField body="user_age" type="integer" default="0" required>
+  The age of the user. Cannot be less than 0
+</ParamField> */}
+
+<div className="text-red-400 mt-5 font-gray-100 max-w-[400px] text-center pt-12">
+  <span className="text-red-400">
+    The next major version of Zod (v4) is <br/>
+    under active development, supported by <br/>
+    the <a href="https://clerk.com/blog/zod-fellowship">Clerk OSS Fellowship</a>.
+  </span>
+</div>
+
+<br /><br /><br />
+
+<div className="w-full flex flex-col items-center">
+  <span style={{ borderBottom: "1px solid hsla(0, 0%, 100%, 0.1)"} } className="font-semibold w-full text-center pb-2 border-b border-gray-900 border-solid text-xl">Featured sponsor: Clerk</span>
+
+    <a href="https://go.clerk.com/PKHrcwh" className="m-0 border-none">
+      <picture noZoom style={{height: "240px",margin: "12px"}}>
+        <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3" />
+        <img noZoom alt="mintlify logo" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3" style={{height: "240px"}} />
+      </picture>
+    </a>
+    <p className="m-0 text-xs">
+      Interested in featuring? <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">Get in touch.</a>
+    </p>
+</div>
+
+
+
+
+## Introduction
+
+Zod is a TypeScript-first schema declaration and validation library. I'm using the term "schema" to broadly refer to any data type, from a simple `string` to a complex nested object.
+
+Zod is designed to be as developer-friendly as possible. The goal is to eliminate duplicative type declarations. With Zod, you declare a validator _once_ and Zod will automatically infer the static TypeScript type. It's easy to compose simpler types into complex data structures.
+
+## Features
+
+- Zero dependencies
+- Works in Node.js and all modern browsers
+- Tiny: 8kb minified + zipped
+- Immutable API: all methods return a new instance
+- Concise interface
+- Works with TypeScript and plain JS
+- Extensive ecosystem
+
+## Sponsors
+
+Sponsorship at any level is appreciated and encouraged. If you built a paid product using Zod, consider one of the [corporate tiers](https://github.com/sponsors/colinhacks).
+
+<br/>
+
+<p className="text-xl font-semibold">Platinum</p>
+
+<Platinum />
+
+
+<br/>
+
+
+<p className="text-xl font-semibold">Gold</p>
+
+
+<Gold />
+
+<br/>
+
+<p className="text-xl font-semibold">Silver</p>
+
+<Silver />
+
+<br/>
+
+<p className="text-xl font-semibold">Bronze</p>
+
+<Bronze />
+
+## Installation
+
+### Requirements
+
+You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
+
+  
+  ```ts
+  // tsconfig.json
+  {
+    // ...
+    "compilerOptions": {
+      // ...
+      "strict": true
+    }
+  }
+  ```
+
+<Info>Zod is tested against *TypesScript v5.5* and later. Older versions may work but are not officially supported.</Info>
+
+
+### From `npm`
+
+```sh
+npm install zod       # npm
+deno add npm:zod      # deno
+yarn add zod          # yarn
+bun add zod           # bun
+pnpm add zod          # pnpm
+```
+
+Zod also publishes a canary version on every commit. To install the canary:
+
+```sh
+npm install zod@canary       # npm
+deno add npm:zod@canary      # deno
+yarn add zod@canary          # yarn
+bun add zod@canary           # bun
+pnpm add zod@canary          # pnpm
+```
+
+> The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
+
+<br/>
