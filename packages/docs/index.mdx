@@ -26,10 +26,8 @@ import {Info, Note} from "@mintlify/components";
 
 <div className="flex flex-col items-stretch text-center">
   <div style={{height:"170px"}}>
-    <picture noZoom className="mx-auto m-0">
-      <source media="(prefers-color-scheme: dark)" srcset="/logo/logo_glow.png" />
-      <img noZoom className="mx-auto h-[170px] m-0" alt="mintlify logo" src="/logo/logo_glow.png" width="200px" />
-    </picture>
+    <img noZoom className="block dark:hidden mx-auto h-[170px] m-0" alt="mintlify logo" src="/logo/logo_glow.png" width="200px" />
+    <img noZoom className="hidden dark:block mx-auto h-[170px] m-0" alt="mintlify logo" src="/logo/logo_glow.png" width="200px" />
   </div>
   <h1 className="text-3xl font-bold">Zod</h1>
   <p className="mt-2 mb-1">TypeScript-first schema validation with static type inference</p>
