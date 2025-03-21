@@ -21,7 +21,7 @@
     "prepublishOnly": "pnpm test && pnpm run build"
   },
   "devDependencies": {
-    "mintlify": "^4.0.438"
+    "mintlify": "^4.0.440"
   },
   "dependencies": {
     "@mintlify/common": "^1.0.310",

@@ -20,7 +20,7 @@
     "groups": [
       {
         "group": "zod",
-        "pages": ["home", "api"]
+        "pages": ["index", "api"]
       }
     ]
   },
