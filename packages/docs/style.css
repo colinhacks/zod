@@ -1,7 +1,16 @@
+#header {
+  .eyebrow {
+    display: none;
+  }
+  div:has(> h1) {
+    justify-content: center;
+  }
+}
 #content-area {
+  h1,
   h2 {
-    /* text-align: center;
-    justify-content: center; */
+    text-align: center;
+    justify-content: center;
   }
   h2 {
     padding-top: 40px;

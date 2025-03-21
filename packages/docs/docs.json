@@ -8,6 +8,10 @@
     "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
+  "styling": {
+    "codeblocks": "dark",
+    "eyebrows": "section"
+  },
   "banner": {
     "content": "Welcome to the Mint Starter Kit 👉 [testing](https://google.com)",
     "dismissible": true
@@ -16,28 +20,13 @@
     "groups": [
       {
         "group": "zod",
-        "pages": ["docs", "quickstart", "development"]
-      },
-      {
-        "group": "@zod/mini",
-        "pages": ["docs"]
-      },
-      {
-        "group": "@zod/json",
-        "pages": [
-          "essentials/markdown",
-          "essentials/code",
-          "essentials/images",
-          "essentials/settings",
-          "essentials/navigation",
-          "essentials/reusable-snippets"
-        ]
+        "pages": ["index", "api"]
       }
     ]
   },
   "logo": {
-    "light": "../../logo.svg",
-    "dark": "../../logo.svg"
+    "light": "/logo/logo_glow.png",
+    "dark": "/logo/logo_white.png"
   },
   "navbar": {
     "links": [
@@ -52,44 +41,53 @@
       "href": "https://dashboard.mintlify.com"
     }
   },
+
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/colinhacks",
+      "github": "https://github.com/colinhacks",
+      "bluesky": "https://bluesky.com/profile/colinhacks"
     },
     "links": [
       {
-        "header": "Stuff",
+        "header": "Quick links",
         "items": [
           {
-            "label": "Blog",
-            "href": "https://mintlify.com/blog"
+            "label": "Docs",
+            "href": "https://zod.dev/docs"
           },
           {
-            "label": "Docs",
-            "href": "https://mintlify.com/docs"
+            "label": "Blog",
+            "href": "https://zod.dev/blog"
           },
           {
             "label": "Github",
-            "href": "https://github.com"
+            "href": "https://github.com/colinhacks/zod"
+          },
+          {
+            "label": "NPM",
+            "href": "https://www.npmjs.com/package/zod"
+          },
+          {
+            "label": "@colinhacks",
+            "href": "https://x.com/colinhacks"
           }
         ]
       },
       {
-        "header": "Stuff 2",
+        "header": "Social",
         "items": [
           {
-            "label": "Blog",
-            "href": "https://mintlify.com/blog"
+            "label": "X",
+            "href": "https://x.com/zodtypes"
           },
           {
-            "label": "Docs",
-            "href": "https://mintlify.com/docs"
+            "label": "Bluesky",
+            "href": "https://bsky.app/profile/zod.dev"
           },
           {
-            "label": "Github",
-            "href": "https://github.com"
+            "label": "Discord",
+            "href": "https://discord.gg/RcG33DQJdf"
           }
         ]
       }
