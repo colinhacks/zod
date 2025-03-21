@@ -227,39 +227,48 @@ export class ZodError<T = any> extends Error {
         return issue.message;
       };
     const fieldErrors: ZodFormattedError<T> = { _errors: [] } as any;
-    const processError = (error: ZodError) => {
-      for (const issue of error.issues) {
-        if (issue.code === "invalid_union") {
-          issue.unionErrors.map(processError);
-        } else if (issue.code === "invalid_return_type") {
-          processError(issue.returnTypeError);
-        } else if (issue.code === "invalid_arguments") {
-          processError(issue.argumentsError);
-        } else if (issue.path.length === 0) {
-          (fieldErrors as any)._errors.push(mapper(issue));
-        } else {
-          let curr: any = fieldErrors;
-          let i = 0;
-          while (i < issue.path.length) {
-            const el = issue.path[i];
-            const terminal = i === issue.path.length - 1;
+    const processError = (rootError: ZodError) => {
+      const stack = [rootError];
 
-            if (!terminal) {
-              curr[el] = curr[el] || { _errors: [] };
-              // if (typeof el === "string") {
-              //   curr[el] = curr[el] || { _errors: [] };
-              // } else if (typeof el === "number") {
-              //   const errorArray: any = [];
-              //   errorArray._errors = [];
-              //   curr[el] = curr[el] || errorArray;
-              // }
-            } else {
-              curr[el] = curr[el] || { _errors: [] };
-              curr[el]._errors.push(mapper(issue));
+      while (stack.length > 0) {
+        const error = stack.pop()!;
+
+        for (const issue of error.issues) {
+          if (issue.code === "invalid_union") {
+            for (const unionError of issue.unionErrors) {
+              stack.push(unionError);
             }
+          } else if (issue.code === "invalid_return_type") {
+            stack.push(issue.returnTypeError);
+          } else if (issue.code === "invalid_arguments") {
+            stack.push(issue.argumentsError);
+          } else if (issue.path.length === 0) {
+            (fieldErrors as any)._errors.push(mapper(issue));
+          } else {
+            let curr: any = fieldErrors;
+            let i = 0;
 
-            curr = curr[el];
-            i++;
+            while (i < issue.path.length) {
+              const el = issue.path[i];
+              const terminal = i === issue.path.length - 1;
+
+              if (!terminal) {
+                curr[el] = curr[el] || { _errors: [] };
+                // if (typeof el === "string") {
+                //   curr[el] = curr[el] || { _errors: [] };
+                // } else if (typeof el === "number") {
+                //   const errorArray: any = [];
+                //   errorArray._errors = [];
+                //   curr[el] = curr[el] || errorArray;
+                // }
+              } else {
+                curr[el] = curr[el] || { _errors: [] };
+                curr[el]._errors.push(mapper(issue));
+              }
+
+              curr = curr[el];
+              i++;
+            }
           }
         }
       }
