@@ -275,7 +275,7 @@ export interface $ZodString<Input = unknown> extends $ZodType {
 
 export const $ZodString: core.$constructor<$ZodString> = /*@__PURE__*/ core.$constructor("$ZodString", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = inst?._zod.computed?.pattern ?? regexes.stringRegex(inst._zod.computed);
+  inst._zod.pattern = inst?._zod.computed?.pattern ?? regexes.string(inst._zod.computed);
   inst._zod.parse = (payload, _) => {
     if (def.coerce)
       try {
@@ -327,7 +327,7 @@ export interface $ZodGUID extends $ZodType {
 }
 
 export const $ZodGUID: core.$constructor<$ZodGUID> = /*@__PURE__*/ core.$constructor("$ZodGUID", (inst, def): void => {
-  def.pattern ??= regexes.guidRegex;
+  def.pattern ??= regexes.guid;
   $ZodStringFormat.init(inst, def);
 });
 
@@ -359,8 +359,8 @@ export const $ZodUUID: core.$constructor<$ZodUUID> = /*@__PURE__*/ core.$constru
     };
     const v = versionMap[def.version];
     if (v === undefined) throw new Error(`Invalid UUID version: "${def.version}"`);
-    def.pattern ??= regexes.uuidRegex(v);
-  } else def.pattern ??= regexes.uuidRegex();
+    def.pattern ??= regexes.uuid(v);
+  } else def.pattern ??= regexes.uuid();
   $ZodStringFormat.init(inst, def);
 });
 
@@ -375,7 +375,7 @@ export interface $ZodEmail extends $ZodType {
 export const $ZodEmail: core.$constructor<$ZodEmail> = /*@__PURE__*/ core.$constructor(
   "$ZodEmail",
   (inst, def): void => {
-    def.pattern ??= regexes.emailRegex;
+    def.pattern ??= regexes.email;
     $ZodStringFormat.init(inst, def);
   }
 );
@@ -394,8 +394,8 @@ export const $ZodURL: core.$constructor<$ZodURL> = /*@__PURE__*/ core.$construct
   inst._zod.check = (payload) => {
     try {
       const url = new URL(payload.value);
-      regexes.hostnameRegex.lastIndex = 0;
-      if (!regexes.hostnameRegex.test(url.hostname)) throw new Error();
+      regexes.hostname.lastIndex = 0;
+      if (!regexes.hostname.test(url.hostname)) throw new Error();
       return;
     } catch (_) {
       payload.issues.push({
@@ -420,7 +420,7 @@ export interface $ZodEmoji extends $ZodType {
 export const $ZodEmoji: core.$constructor<$ZodEmoji> = /*@__PURE__*/ core.$constructor(
   "$ZodEmoji",
   (inst, def): void => {
-    def.pattern ??= regexes.emojiRegex();
+    def.pattern ??= regexes.emoji();
     $ZodStringFormat.init(inst, def);
   }
 );
@@ -437,7 +437,7 @@ export interface $ZodNanoID extends $ZodType {
 export const $ZodNanoID: core.$constructor<$ZodNanoID> = /*@__PURE__*/ core.$constructor(
   "$ZodNanoID",
   (inst, def): void => {
-    def.pattern ??= regexes.nanoidRegex;
+    def.pattern ??= regexes.nanoid;
     $ZodStringFormat.init(inst, def);
   }
 );
@@ -452,7 +452,7 @@ export interface $ZodCUID extends $ZodType {
 }
 
 export const $ZodCUID: core.$constructor<$ZodCUID> = /*@__PURE__*/ core.$constructor("$ZodCUID", (inst, def): void => {
-  def.pattern ??= regexes.cuidRegex;
+  def.pattern ??= regexes.cuid;
   $ZodStringFormat.init(inst, def);
 });
 
@@ -468,7 +468,7 @@ export interface $ZodCUID2 extends $ZodType {
 export const $ZodCUID2: core.$constructor<$ZodCUID2> = /*@__PURE__*/ core.$constructor(
   "$ZodCUID2",
   (inst, def): void => {
-    def.pattern ??= regexes.cuid2Regex;
+    def.pattern ??= regexes.cuid2;
     $ZodStringFormat.init(inst, def);
   }
 );
@@ -483,7 +483,7 @@ export interface $ZodULID extends $ZodType {
 }
 
 export const $ZodULID: core.$constructor<$ZodULID> = /*@__PURE__*/ core.$constructor("$ZodULID", (inst, def): void => {
-  def.pattern ??= regexes.ulidRegex;
+  def.pattern ??= regexes.ulid;
   $ZodStringFormat.init(inst, def);
 });
 
@@ -497,7 +497,7 @@ export interface $ZodXID extends $ZodType {
 }
 
 export const $ZodXID: core.$constructor<$ZodXID> = /*@__PURE__*/ core.$constructor("$ZodXID", (inst, def): void => {
-  def.pattern ??= regexes.xidRegex;
+  def.pattern ??= regexes.xid;
   $ZodStringFormat.init(inst, def);
 });
 
@@ -513,7 +513,7 @@ export interface $ZodKSUID extends $ZodType {
 export const $ZodKSUID: core.$constructor<$ZodKSUID> = /*@__PURE__*/ core.$constructor(
   "$ZodKSUID",
   (inst, def): void => {
-    def.pattern ??= regexes.ksuidRegex;
+    def.pattern ??= regexes.ksuid;
     $ZodStringFormat.init(inst, def);
   }
 );
@@ -537,7 +537,7 @@ export interface $ZodISODateTime extends $ZodType {
 export const $ZodISODateTime: core.$constructor<$ZodISODateTime> = /*@__PURE__*/ core.$constructor(
   "$ZodISODateTime",
   (inst, def): void => {
-    def.pattern ??= regexes.datetimeRegex(def);
+    def.pattern ??= regexes.datetime(def);
     $ZodStringFormat.init(inst, def);
   }
 );
@@ -554,7 +554,7 @@ export interface $ZodISODate extends $ZodType {
 export const $ZodISODate: core.$constructor<$ZodISODate> = /*@__PURE__*/ core.$constructor(
   "$ZodISODate",
   (inst, def): void => {
-    def.pattern ??= regexes.dateRegex;
+    def.pattern ??= regexes.date;
     $ZodStringFormat.init(inst, def);
   }
 );
@@ -578,7 +578,7 @@ export interface $ZodISOTime extends $ZodType {
 export const $ZodISOTime: core.$constructor<$ZodISOTime> = /*@__PURE__*/ core.$constructor(
   "$ZodISOTime",
   (inst, def): void => {
-    def.pattern ??= regexes.timeRegex(def);
+    def.pattern ??= regexes.time(def);
     $ZodStringFormat.init(inst, def);
   }
 );
@@ -595,7 +595,7 @@ export interface $ZodISODuration extends $ZodType {
 export const $ZodISODuration: core.$constructor<$ZodISODuration> = /*@__PURE__*/ core.$constructor(
   "$ZodISODuration",
   (inst, def): void => {
-    def.pattern ??= regexes.durationRegex;
+    def.pattern ??= regexes.duration;
     $ZodStringFormat.init(inst, def);
   }
 );
@@ -615,9 +615,9 @@ export interface $ZodIP extends $ZodType {
 }
 
 export const $ZodIP: core.$constructor<$ZodIP> = /*@__PURE__*/ core.$constructor("$ZodIP", (inst, def): void => {
-  if (def.version === "v4") def.pattern ??= regexes.ipv4Regex;
-  else if (def.version === "v6") def.pattern ??= regexes.ipv6Regex;
-  else def.pattern ??= regexes.ipRegex;
+  if (def.version === "v4") def.pattern ??= regexes.ipv4;
+  else if (def.version === "v6") def.pattern ??= regexes.ipv6;
+  else def.pattern ??= regexes.ip;
   $ZodStringFormat.init(inst, def);
   const superAttach = inst._zod.onattach;
   inst._zod.onattach = (inst) => {
@@ -638,10 +638,9 @@ export interface $ZodBase64 extends $ZodType {
 export const $ZodBase64: core.$constructor<$ZodBase64> = /*@__PURE__*/ core.$constructor(
   "$ZodBase64",
   (inst, def): void => {
-    def.pattern ??= regexes.base64Regex;
+    def.pattern ??= regexes.base64;
     $ZodStringFormat.init(inst, def);
 
-    console.log("setting content encoding...");
     const superAttach = inst._zod.onattach;
     inst._zod.onattach = (inst) => {
       superAttach?.(inst);
@@ -688,7 +687,7 @@ export interface $ZodE164 extends $ZodType {
 }
 
 export const $ZodE164: core.$constructor<$ZodE164> = /*@__PURE__*/ core.$constructor("$ZodE164", (inst, def): void => {
-  def.pattern ??= regexes.e164Regex;
+  def.pattern ??= regexes.e164;
   $ZodStringFormat.init(inst, def);
 });
 
@@ -762,7 +761,7 @@ export interface $ZodNumber<Input = unknown> extends $ZodType {
 
 export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$constructor("$ZodNumber", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = inst._zod.computed.pattern ?? regexes.numberRegex;
+  inst._zod.pattern = inst._zod.computed.pattern ?? regexes.number;
 
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
@@ -835,7 +834,7 @@ export const $ZodBoolean: core.$constructor<$ZodBoolean> = /*@__PURE__*/ core.$c
   "$ZodBoolean",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.pattern = regexes.booleanRegex;
+    inst._zod.pattern = regexes.boolean;
 
     inst._zod.parse = (payload, _ctx) => {
       if (def.coerce)
@@ -882,7 +881,7 @@ export interface $ZodBigInt<T = unknown> extends $ZodType {
 
 export const $ZodBigInt: core.$constructor<$ZodBigInt> = /*@__PURE__*/ core.$constructor("$ZodBigInt", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = regexes.bigintRegex;
+  inst._zod.pattern = regexes.bigint;
 
   inst._zod.parse = (payload, _ctx) => {
     if (def.coerce)
@@ -986,7 +985,7 @@ export const $ZodUndefined: core.$constructor<$ZodUndefined> = /*@__PURE__*/ cor
   "$ZodUndefined",
   (inst, def) => {
     $ZodType.init(inst, def);
-    inst._zod.pattern = regexes.undefinedRegex;
+    inst._zod.pattern = regexes.undefined;
     inst._zod.values = new Set([undefined]);
 
     inst._zod.parse = (payload, _ctx) => {
@@ -1028,7 +1027,7 @@ export interface $ZodNull extends $ZodType {
 
 export const $ZodNull: core.$constructor<$ZodNull> = /*@__PURE__*/ core.$constructor("$ZodNull", (inst, def) => {
   $ZodType.init(inst, def);
-  inst._zod.pattern = regexes.nullRegex;
+  inst._zod.pattern = regexes.null;
   inst._zod.values = new Set([null]);
 
   inst._zod.parse = (payload, _ctx) => {

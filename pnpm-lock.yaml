@@ -128,6 +128,9 @@ importers:
 
   packages/docs:
     dependencies:
+      '@mintlify/common':
+        specifier: ^1.0.310
+        version: 1.0.310(@types/react@19.0.11)(encoding@0.1.13)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@mintlify/components':
         specifier: ^0.3.15
         version: 0.3.15(@headlessui/react@1.7.19(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -6255,7 +6258,7 @@ snapshots:
 
   '@stoplight/json-ref-readers@1.2.2(encoding@0.1.13)':
     dependencies:
-      node-fetch: 2.6.7(encoding@0.1.13)
+      node-fetch: 2.7.0(encoding@0.1.13)
       tslib: 1.14.1
     transitivePeerDependencies:
       - encoding
@@ -6454,7 +6457,7 @@ snapshots:
 
   '@types/es-aggregate-error@1.0.6':
     dependencies:
-      '@types/node': 20.17.14
+      '@types/node': 22.10.5
 
   '@types/estree-jsx@1.0.5':
     dependencies:

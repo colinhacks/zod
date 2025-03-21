@@ -2,20 +2,19 @@
   .eyebrow {
     display: none;
   }
-  div:has(> h1) {
+  /* div:has(> h1) {
     justify-content: center;
-  }
+  } */
 }
 #content-area {
-  h1,
-  h2 {
+  h1 {
     text-align: center;
     justify-content: center;
   }
   h2 {
     padding-top: 40px;
     padding-bottom: 19px;
-    /* margin-bottom: 18px; */
+
     border-bottom: 1px solid hsla(0, 0%, 100%, 0.1);
   }
 }

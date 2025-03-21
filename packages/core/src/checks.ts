@@ -270,7 +270,7 @@ export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /
       inst._zod.computed.format = def.format;
       inst._zod.computed.minimum = minimum;
       inst._zod.computed.maximum = maximum;
-      if (isInt) inst._zod.computed.pattern = regexes.intRegex;
+      if (isInt) inst._zod.computed.pattern = regexes.integer;
     };
 
     inst._zod.check = (payload) => {
@@ -876,7 +876,7 @@ export interface $ZodCheckLowerCase extends $ZodCheck<string> {
 export const $ZodCheckLowerCase: core.$constructor<$ZodCheckLowerCase> = core.$constructor(
   "$ZodCheckLowerCase",
   (inst, def) => {
-    def.pattern ??= regexes.lowercaseRegex;
+    def.pattern ??= regexes.lowercase;
     $ZodCheckStringFormat.init(inst, def);
   }
 );
@@ -898,7 +898,7 @@ export interface $ZodCheckUpperCase extends $ZodCheck<string> {
 export const $ZodCheckUpperCase: core.$constructor<$ZodCheckUpperCase> = core.$constructor(
   "$ZodCheckUpperCase",
   (inst, def) => {
-    def.pattern ??= regexes.uppercaseRegex;
+    def.pattern ??= regexes.uppercase;
     $ZodCheckStringFormat.init(inst, def);
   }
 );

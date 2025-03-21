@@ -5,5 +5,7 @@
     "source.organizeImports.biome": "explicit",
     "source.fixAll": "always",
     "quickfix.biome": "explicit"
-  }
+  },
+  "editor.wordWrap": "wordWrapColumn",
+  "editor.wordWrapColumn": 120
 }

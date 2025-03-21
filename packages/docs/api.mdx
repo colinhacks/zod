@@ -2,43 +2,50 @@
 title: Defining schemas
 ---
 
+The point of Zod is to parse unknown data against a *schema* that you define. The result of this parse operation is validated and statically typed. 
+
 
 ## Basic usage
 
-Creating a simple string schema
+Let's start simple: a schema for validating `strings`.
 
 ```ts
 import { z } from "zod";
 
-// creating a schema for strings
 const mySchema = z.string();
+```
 
-// parsing
-mySchema.parse("tuna"); // => "tuna"
-mySchema.parse(12); // => throws ZodError
+Zod schemas can represent all kinds of data, including objects, arrays, tuples, and more. Here's an example of an object schema that uses `z.interface()`.
 
-// "safe" parsing (doesn't throw error if validation fails)
+```ts
+import { z } from "zod";
+
+const User = z.interface({
+  username: z.string(),
+});
+```
+
+We can use this schema to parse some data. If the data is valid, we'll get back some validated, statically typed result. Otherwise, a `ZodError` will be thrown.
+
+```ts
+User.parse({ username: "Ludwig" }); // => { username: "Ludwig" }
+User.parse({ evil: true }); // => throws ZodError
+```
+
+To avoid throwing errors, you can us the `.safeParse()` method instead, which returns an object.
+
+```ts
 mySchema.safeParse("tuna"); // => { success: true; data: "tuna" }
 mySchema.safeParse(12); // => { success: false; error: ZodError }
 ```
 
-Creating an object schema
+To extract the inferred type of a schema, use the `infer` keyword.
 
 ```ts
-import { z } from "zod";
-
-const User = z.object({
-  username: z.string(),
-});
-
-User.parse({ username: "Ludwig" });
-
-// extract the inferred type
 type User = z.infer<typeof User>;
-// { username: string }
-```
 
-<br/>
+const user: User =  { username: "Ludwig" };
+```
 
 ## Primitives
 
@@ -52,79 +59,50 @@ z.bigint();
 z.boolean();
 z.date();
 z.symbol();
-
-// empty types
-z.undefined();
-z.null();
-z.void(); // accepts undefined
-
-// catch-all types
-// allows any value
-z.any();
-z.unknown();
-
-// never type
-// allows no values
-z.never();
 ```
 
-<br/>
-
-## Coercion for primitives
-
-Zod now provides a more convenient way to coerce primitive values.
+To coerce input data to the appropriate type, use `z.coerce`. All primitive types (except `symbol`) have an coerced equivalent. 
 
 ```ts
-const schema = z.coerce.string();
-schema.parse("tuna"); // => "tuna"
-schema.parse(12); // => "12"
+z.coerce.string();    // String(input)
+z.coerce.number();    // Number(input)
+z.coerce.boolean();   // Boolean(input)
+z.coerce.bigint();    // BigInt(input)
+z.coerce.date();      // new Date(input)
 ```
 
-During the parsing step, the input is passed through the `String()` function, which is a JavaScript built-in for coercing data into strings.
+Zod coerces all inputs using the built-in constructors. 
 
-```ts
-schema.parse(12); // => "12"
-schema.parse(true); // => "true"
-schema.parse(undefined); // => "undefined"
-schema.parse(null); // => "null"
-```
+| Zod API                  | Coercion                   |
+|--------------------------|----------------------------|
+| `z.coerce.string()`      | `new String(value)`        |
+| `z.coerce.number()`      | `new Number(value)`        |
+| `z.coerce.boolean()`     | `new Boolean(value)`       |
+| `z.coerce.bigint()`      | `BigInt(value)`            |
+| `z.coerce.date()`        | `new Date(value)`          |
 
-The returned schema is a normal `ZodString` instance so you can use all string methods.
 
-```ts
-z.coerce.string().email().min(5);
-```
+<Info>
+  Boolean coercion with `z.coerce.boolean()` may not work how you expect. Any [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) value is coerced to `true`, and any [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) value is coerced to `false`.
 
-**How coercion works**
+  ```ts
+  const schema = z.coerce.boolean(); // Boolean(input)
 
-All primitive types support coercion. Zod coerces all inputs using the built-in constructors: `String(input)`, `Number(input)`, `new Date(input)`, etc.
+  schema.parse("tuna"); // => true
+  schema.parse("true"); // => true
+  schema.parse("false"); // => true
+  schema.parse(1); // => true
+  schema.parse([]); // => true
 
-```ts
-z.coerce.string(); // String(input)
-z.coerce.number(); // Number(input)
-z.coerce.boolean(); // Boolean(input)
-z.coerce.bigint(); // BigInt(input)
-z.coerce.date(); // new Date(input)
-```
+  schema.parse(0); // => false
+  schema.parse(""); // => false
+  schema.parse(undefined); // => false
+  schema.parse(null); // => false
+  ```
 
-**Note** — Boolean coercion with `z.coerce.boolean()` may not work how you expect. Any [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) value is coerced to `true`, and any [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) value is coerced to `false`.
+</Info>
 
-```ts
-const schema = z.coerce.boolean(); // Boolean(input)
-
-schema.parse("tuna"); // => true
-schema.parse("true"); // => true
-schema.parse("false"); // => true
-schema.parse(1); // => true
-schema.parse([]); // => true
-
-schema.parse(0); // => false
-schema.parse(""); // => false
-schema.parse(undefined); // => false
-schema.parse(null); // => false
-```
-
-For more control over coercion logic, consider using [`z.preprocess`](#preprocess) or [`z.pipe()`](#pipe).
+> For total control over coercion logic, consider using [`z.transform()`](#preprocess) or [`z.pipe()`](#pipe).
 
 <br/>
 
@@ -135,93 +113,136 @@ Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/h
 ```ts
 const tuna = z.literal("tuna");
 const twelve = z.literal(12);
-const twobig = z.literal(2n); // bigint literal
+const twobig = z.literal(2n);
 const tru = z.literal(true);
-
-const terrificSymbol = Symbol("terrific");
-const terrific = z.literal(terrificSymbol);
-
-// retrieve literal value
-tuna.value; // "tuna"
+const terrific = z.literal(Symbol("terrific"));
 ```
 
-> Currently there is no support for Date literals in Zod. If you have a use case for this feature, please file an issue.
+To allow multiple possible literal values:
 
-<br/>
+```ts
+const colors = z.literal(["red", "green", "blue"]);
+```
+
+To extract the set of allowed values from a literal schema:
+
+```ts
+colors.values; // => Set<"red" | "green" | "blue">
+```
+
+To represent the JavaScript literals `null` and `undefined`:
+
+```ts
+z.null();
+z.undefined(); // also z.void()
+```
 
 ## Strings
 
-Zod includes a handful of string-specific validations.
+Zod provides a handful of built-in string validation and transform APIs.
 
-```ts
-// validations
+<CodeGroup>
+```ts zod
+z.string().startsWith("fourscore")
+```
+
+```ts @zod/mini
+z.string().check(z.startsWith("fourscore"))
+```
+</CodeGroup>
+
+All of the APIs documented below support the `error` parameter for customizing the error message.
+
+<CodeGroup>
+```ts zod
+z.string().startsWith("fourscore", {error: "Nice try, buddy"})
+```
+
+```ts @zod/mini
+z.string().check(z.startsWith("fourscore", {error: "Nice try, buddy"}))
+```
+</CodeGroup>
+
+To perform some common string validations:
+
+<CodeGroup>
+```ts zod
 z.string().max(5);
 z.string().min(5);
 z.string().length(5);
-z.string().email();
-z.string().url();
-z.string().emoji();
-z.string().uuid();
-z.string().nanoid();
-z.string().cuid();
-z.string().cuid2();
-z.string().ulid();
-z.string().regex(regex);
-z.string().includes(string);
-z.string().startsWith(string);
-z.string().endsWith(string);
-z.string().datetime(); // ISO 8601; by default only `Z` timezone allowed
-z.string().ip(); // defaults to allow both IPv4 and IPv6
-z.string().cidr(); // defaults to allow both IPv4 and IPv6
+z.string().regex(/^[a-z]+$/);
+z.string().startsWith("aaa");
+z.string().endsWith("zzz");
+z.string().includes("---");
+z.string().uppercase();
+z.string().lowercase();
+```
 
-// transforms
+```ts @zod/mini
+z.string().check(z.max(5));
+z.string().check(z.min(5));
+z.string().check(z.length(5));
+z.string().check(z.regex(/^[a-z]+$/));
+z.string().check(z.startsWith("aaa"));
+z.string().check(z.endsWith("zzz"));
+z.string().check(z.includes("---"));
+z.string().check(z.uppercase());
+z.string().check(z.lowercase());
+```
+</CodeGroup>
+
+
+To perform some simple string transforms:
+
+
+
+<CodeGroup>
+```ts zod
 z.string().trim(); // trim whitespace
 z.string().toLowerCase(); // toLowerCase
 z.string().toUpperCase(); // toUpperCase
-
-// added in Zod 3.23
-z.string().date(); // ISO date format (YYYY-MM-DD)
-z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
-z.string().duration(); // ISO 8601 duration
-z.string().base64();
 ```
 
-> Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
+```ts @zod/mini
+z.string().check(z.trim()); // trim whitespace
+z.string().check(z.toLowerCase()); // toLowerCase
+z.string().check(z.toUpperCase()); // toUpperCase
+```
+</CodeGroup>
 
-You can customize some common error messages when creating a string schema.
+### String formats
+
+To validate against some common string formats:
+
+```ts zod
+z.url();
+z.emoji();         // validates a single emoji character
+z.base64();
+z.uuid();
+z.nanoid();
+z.cuid();
+z.cuid2();
+z.ulid();
+```
+
+### Emails
+
+To validate email addresses:
 
 ```ts
-const name = z.string({
-  required_error: "Name is required",
-  invalid_type_error: "Name must be a string",
-});
+z.email();
 ```
 
-When using validation methods, you can pass in an additional argument to provide a custom error message.
+This uses a relatively strict email regex. 
 
-```ts
-z.string().min(5, { message: "Must be 5 or more characters long" });
-z.string().max(5, { message: "Must be 5 or fewer characters long" });
-z.string().length(5, { message: "Must be exactly 5 characters long" });
-z.string().email({ message: "Invalid email address" });
-z.string().url({ message: "Invalid url" });
-z.string().emoji({ message: "Contains non-emoji characters" });
-z.string().uuid({ message: "Invalid UUID" });
-z.string().includes("tuna", { message: "Must include tuna" });
-z.string().startsWith("https://", { message: "Must provide secure URL" });
-z.string().endsWith(".com", { message: "Only .com domains allowed" });
-z.string().datetime({ message: "Invalid datetime string! Must be UTC." });
-z.string().date({ message: "Invalid date string!" });
-z.string().time({ message: "Invalid time string!" });
-z.string().ip({ message: "Invalid IP address" });
-z.string().cidr({ message: "Invalid CIDR" });
-```
+By default, Zod uses a relatively simple regular expression to validate email addresses. It's the 
+
 
 ### Datetimes
 
 As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
 
-The `z.string().datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
+The `z.iso.datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
 
 ```ts
 const datetime = z.string().datetime();
@@ -667,6 +688,22 @@ nullableString.unwrap() === stringSchema; // true
 ```
 
 <br/>
+
+## Unknown
+
+All values will pass validation.
+
+```ts
+z.any();
+z.unknown();
+```
+## Never
+
+No value will pass validation.
+
+```ts
+z.never();
+```
 
 ## Objects
 

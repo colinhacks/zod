@@ -758,25 +758,40 @@ test("iso_duration", () => {
   const validDurations = [
     "P3Y6M4DT12H30M5S",
     "P2Y9M3DT12H31M8.001S",
-    "+P3Y6M4DT12H30M5S",
-    "-PT0.001S",
-    "+PT0.001S",
+    // "+P3Y6M4DT12H30M5S",
+    // "-PT0.001S",
+    // "+PT0.001S",
     "PT0,001S",
     "PT12H30M5S",
-    "-P2M1D",
-    "P-2M-1D",
-    "-P5DT10H",
-    "P-5DT-10H",
+    // "-P2M1D",
+    // "P-2M-1D",
+    // "-P5DT10H",
+    // "P-5DT-10H",
     "P1Y",
     "P2MT30M",
     "PT6H",
     "P5W",
-    "P0.5Y",
-    "P0,5Y",
-    "P42YT7.004M",
+    // "P0.5Y",
+    // "P0,5Y",
+    // "P42YT7.004M",
   ];
 
-  const invalidDurations = ["foo bar", "", " ", "P", "T1H", "P0.5Y1D", "P0,5Y6M", "P1YT"];
+  const invalidDurations = [
+    "foo bar",
+    "",
+    " ",
+    "P",
+    "PT",
+    "P1Y2MT",
+    "T1H",
+    "P0.5Y1D",
+    "P0,5Y6M",
+    "P1YT",
+    "P-2M-1D",
+    "P-5DT-10H",
+    "P1W2D",
+    "-P1D",
+  ];
 
   for (const val of validDurations) {
     const result = duration.safeParse(val);

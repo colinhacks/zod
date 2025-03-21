@@ -8,4 +8,4 @@ import en from "@zod/core/locales/en.js";
 core.config(en());
 
 export type { infer, output, input } from "@zod/core";
-export { globalRegistry, registry, config, OUTPUT, INPUT, $brand, function, clone } from "@zod/core";
+export { globalRegistry, registry, config, OUTPUT, INPUT, $brand, function, clone, regexes } from "@zod/core";

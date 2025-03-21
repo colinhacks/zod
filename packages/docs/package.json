@@ -24,6 +24,7 @@
     "mintlify": "^4.0.438"
   },
   "dependencies": {
+    "@mintlify/common": "^1.0.310",
     "@mintlify/components": "^0.3.15"
   }
 }
