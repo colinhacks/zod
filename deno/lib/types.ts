@@ -3218,36 +3218,45 @@ export class ZodUnion<T extends ZodUnionOptions> extends ZodType<
 /////////////////////////////////////////////////////
 
 const getDiscriminator = <T extends ZodTypeAny>(type: T): Primitive[] => {
-  if (type instanceof ZodLazy) {
-    return getDiscriminator(type.schema);
-  } else if (type instanceof ZodEffects) {
-    return getDiscriminator(type.innerType());
-  } else if (type instanceof ZodLiteral) {
-    return [type.value];
-  } else if (type instanceof ZodEnum) {
-    return type.options;
-  } else if (type instanceof ZodNativeEnum) {
-    // eslint-disable-next-line ban/ban
-    return util.objectValues(type.enum as any);
-  } else if (type instanceof ZodDefault) {
-    return getDiscriminator(type._def.innerType);
-  } else if (type instanceof ZodUndefined) {
-    return [undefined];
-  } else if (type instanceof ZodNull) {
-    return [null];
-  } else if (type instanceof ZodOptional) {
-    return [undefined, ...getDiscriminator(type.unwrap())];
-  } else if (type instanceof ZodNullable) {
-    return [null, ...getDiscriminator(type.unwrap())];
-  } else if (type instanceof ZodBranded) {
-    return getDiscriminator(type.unwrap());
-  } else if (type instanceof ZodReadonly) {
-    return getDiscriminator(type.unwrap());
-  } else if (type instanceof ZodCatch) {
-    return getDiscriminator(type._def.innerType);
-  } else {
-    return [];
+  const result: Primitive[] = [];
+  const stack: ZodTypeAny[] = [type];
+
+  while (stack.length > 0) {
+    const current = stack.pop()!;
+
+    if (current instanceof ZodLazy) {
+      stack.push(current.schema);
+    } else if (current instanceof ZodEffects) {
+      stack.push(current.innerType());
+    } else if (current instanceof ZodLiteral) {
+      result.push(current.value);
+    } else if (current instanceof ZodEnum) {
+      result.push(...current.options);
+    } else if (current instanceof ZodNativeEnum) {
+      // eslint-disable-next-line ban/ban
+      result.push(...util.objectValues(current.enum as any));
+    } else if (current instanceof ZodDefault) {
+      stack.push(current._def.innerType);
+    } else if (current instanceof ZodUndefined) {
+      result.push(undefined);
+    } else if (current instanceof ZodNull) {
+      result.push(null);
+    } else if (current instanceof ZodOptional) {
+      result.push(undefined);
+      stack.push(current.unwrap());
+    } else if (current instanceof ZodNullable) {
+      result.push(null);
+      stack.push(current.unwrap());
+    } else if (current instanceof ZodBranded) {
+      stack.push(current.unwrap());
+    } else if (current instanceof ZodReadonly) {
+      stack.push(current.unwrap());
+    } else if (current instanceof ZodCatch) {
+      stack.push(current._def.innerType);
+    }
   }
+
+  return result;
 };
 
 export type ZodDiscriminatedUnionOption<Discriminator extends string> =
