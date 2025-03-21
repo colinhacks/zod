@@ -43,8 +43,8 @@ export function _email<T extends schemas.$ZodEmail>(
 }
 
 // GUID
-export type $ZodGUIDParams = util.StringFormatParams<schemas.$ZodGUID>;
-export type $ZodCheckGUIDParams = util.CheckStringFormatParams<schemas.$ZodGUID>;
+export type $ZodGUIDParams = util.StringFormatParams<schemas.$ZodGUID, "pattern">;
+export type $ZodCheckGUIDParams = util.CheckStringFormatParams<schemas.$ZodGUID, "pattern">;
 export function _guid<T extends schemas.$ZodGUID>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodGUIDParams | $ZodCheckGUIDParams
@@ -254,8 +254,8 @@ export function _ksuid<T extends schemas.$ZodKSUID>(
 }
 
 // IP
-export type $ZodIPParams = util.StringFormatParams<schemas.$ZodIP>;
-export type $ZodCheckIPParams = util.CheckStringFormatParams<schemas.$ZodIP>;
+export type $ZodIPParams = util.StringFormatParams<schemas.$ZodIP, "pattern">;
+export type $ZodCheckIPParams = util.CheckStringFormatParams<schemas.$ZodIP, "pattern">;
 export function _ip<T extends schemas.$ZodIP>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPParams | $ZodCheckIPParams
@@ -270,8 +270,8 @@ export function _ip<T extends schemas.$ZodIP>(
 }
 
 // IPv4
-export type $ZodIPv4Params = util.StringFormatParams<schemas.$ZodIP>;
-export type $ZodCheckIPv4Params = util.CheckStringFormatParams<schemas.$ZodIP>;
+export type $ZodIPv4Params = util.StringFormatParams<schemas.$ZodIP, "pattern">;
+export type $ZodCheckIPv4Params = util.CheckStringFormatParams<schemas.$ZodIP, "pattern">;
 export function _ipv4<T extends schemas.$ZodIP>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPv4Params | $ZodCheckIPv4Params
@@ -287,8 +287,8 @@ export function _ipv4<T extends schemas.$ZodIP>(
 }
 
 // IPv6
-export type $ZodIPv6Params = util.StringFormatParams<schemas.$ZodIP>;
-export type $ZodCheckIPv6Params = util.CheckStringFormatParams<schemas.$ZodIP>;
+export type $ZodIPv6Params = util.StringFormatParams<schemas.$ZodIP, "pattern">;
+export type $ZodCheckIPv6Params = util.CheckStringFormatParams<schemas.$ZodIP, "pattern">;
 export function _ipv6<T extends schemas.$ZodIP>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPv6Params | $ZodCheckIPv6Params
@@ -304,8 +304,8 @@ export function _ipv6<T extends schemas.$ZodIP>(
 }
 
 // Base64
-export type $ZodBase64Params = util.StringFormatParams<schemas.$ZodBase64>;
-export type $ZodCheckBase64Params = util.CheckStringFormatParams<schemas.$ZodBase64>;
+export type $ZodBase64Params = util.StringFormatParams<schemas.$ZodBase64, "pattern">;
+export type $ZodCheckBase64Params = util.CheckStringFormatParams<schemas.$ZodBase64, "pattern">;
 export function _base64<T extends schemas.$ZodBase64>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodBase64Params | $ZodCheckBase64Params
@@ -401,8 +401,8 @@ export function _isoTime<T extends schemas.$ZodISOTime>(
 }
 
 // ISODuration
-export type $ZodISODurationParams = util.StringFormatParams<schemas.$ZodISODuration, "pattern">;
-export type $ZodCheckISODurationParams = util.CheckStringFormatParams<schemas.$ZodISODuration, "pattern">;
+export type $ZodISODurationParams = util.StringFormatParams<schemas.$ZodISODuration>;
+export type $ZodCheckISODurationParams = util.CheckStringFormatParams<schemas.$ZodISODuration>;
 export function _isoDuration<T extends schemas.$ZodISODuration>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodISODurationParams | $ZodCheckISODurationParams

@@ -71,18 +71,30 @@ z.coerce.bigint();    // BigInt(input)
 z.coerce.date();      // new Date(input)
 ```
 
-Zod coerces all inputs using the built-in constructors. 
+The coerced variant of these schemas attempts to convert the input value to the appropriate type.
 
-| Zod API                  | Coercion                   |
-|--------------------------|----------------------------|
-| `z.coerce.string()`      | `new String(value)`        |
-| `z.coerce.number()`      | `new Number(value)`        |
-| `z.coerce.boolean()`     | `new Boolean(value)`       |
-| `z.coerce.bigint()`      | `BigInt(value)`            |
-| `z.coerce.date()`        | `new Date(value)`          |
+```ts
+const schema = z.coerce.string();
+
+schema.parse("tuna"); // => "tuna"
+schema.parse(42); // => "42"
+schema.parse(true); // => "true"
+schema.parse(null); // => "null"
+```
 
 
-<Info>
+<Accordion title="How coercion works in Zod">
+  Zod coerces all inputs using the built-in constructors. 
+
+  | Zod API                  | Coercion                   |
+  |--------------------------|----------------------------|
+  | `z.coerce.string()`      | `new String(value)`        |
+  | `z.coerce.number()`      | `new Number(value)`        |
+  | `z.coerce.boolean()`     | `new Boolean(value)`       |
+  | `z.coerce.bigint()`      | `BigInt(value)`            |
+  | `z.coerce.date()`        | `new Date(value)`          |
+
+
   Boolean coercion with `z.coerce.boolean()` may not work how you expect. Any [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) value is coerced to `true`, and any [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) value is coerced to `false`.
 
   ```ts
@@ -100,9 +112,9 @@ Zod coerces all inputs using the built-in constructors.
   schema.parse(null); // => false
   ```
 
-</Info>
+  For total control over coercion logic, consider using [`z.transform()`](#preprocess) or [`z.pipe()`](#pipe).
+</Accordion>
 
-> For total control over coercion logic, consider using [`z.transform()`](#preprocess) or [`z.pipe()`](#pipe).
 
 <br/>
 
@@ -118,7 +130,15 @@ const tru = z.literal(true);
 const terrific = z.literal(Symbol("terrific"));
 ```
 
-To allow multiple possible literal values:
+To represent the JavaScript literals `null` and `undefined`:
+
+```ts
+z.null();
+z.undefined();
+z.void(); // equivalent to z.undefined()
+```
+
+To allow multiple possible values:
 
 ```ts
 const colors = z.literal(["red", "green", "blue"]);
@@ -126,16 +146,17 @@ const colors = z.literal(["red", "green", "blue"]);
 
 To extract the set of allowed values from a literal schema:
 
-```ts
+<CodeGroup>
+
+```ts zod
 colors.values; // => Set<"red" | "green" | "blue">
 ```
 
-To represent the JavaScript literals `null` and `undefined`:
-
-```ts
-z.null();
-z.undefined(); // also z.void()
+```ts @zod/mini
+// no equivalent
 ```
+</CodeGroup>
+
 
 ## Strings
 
@@ -214,7 +235,7 @@ z.string().check(z.toUpperCase()); // toUpperCase
 
 To validate against some common string formats:
 
-```ts zod
+```ts
 z.url();
 z.emoji();         // validates a single emoji character
 z.base64();
@@ -233,12 +254,36 @@ To validate email addresses:
 z.email();
 ```
 
-This uses a relatively strict email regex. 
+By default, Zod uses a comparatively strict email regex designed to validate normal email addresses containing common characters. It's roughly equivalent to the rules enforced by Gmail.
 
-By default, Zod uses a relatively simple regular expression to validate email addresses. It's the 
+```ts
+/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/
+```
 
+To customize the email validation behavior, you can pass a custom regular expression to the `pattern` param.
 
-### Datetimes
+```ts
+z.email({ pattern: /your regex here/ });
+```
+
+Zod exports several useful regexes you could use.
+
+```ts
+// the default email regex
+z.regexes.email; 
+
+// the regex used by browsers to validate input[type=email] fields
+// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email
+z.regexes.html5Email;
+
+// the classic emailregex.com regex (RFC 5322)
+z.regexes.rfc5322Email;
+
+// a loose regex that allows Unicode (good for intl emails)
+z.regexes.unicodeEmail;
+```
+
+### ISO datetimes
 
 As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
 
@@ -282,9 +327,7 @@ datetime.parse("2020-01-01T00:00:00Z"); // fail
 datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
 ```
 
-### Dates
-
-> Added in Zod 3.23
+### ISO dates
 
 The `z.string().date()` method validates strings in the format `YYYY-MM-DD`.
 
@@ -296,7 +339,7 @@ date.parse("2020-1-1"); // fail
 date.parse("2020-01-32"); // fail
 ```
 
-### Times
+### ISO times
 
 > Added in Zod 3.23
 
@@ -372,293 +415,253 @@ ipv6Cidr.parse("192.168.1.1"); // fail
 
 ## Numbers
 
-You can customize certain error messages when creating a number schema.
+Use `z.number()` to validate numbers. It allows any finite number.
 
 ```ts
-const age = z.number({
-  required_error: "Age is required",
-  invalid_type_error: "Age must be a number",
-});
+const schema = z.number();
+
+schema.parse(3.14);      // ✅
+schema.parse(NaN);       // ❌
+schema.parse(Infinity);  // ❌
 ```
 
-Zod includes a handful of number-specific validations.
+Zod implements a handful of number-specific validations:
 
-```ts
+<CodeGroup>
+```ts zod
 z.number().gt(5);
-z.number().gte(5); // alias .min(5)
+z.number().gte(5);                     // alias .min(5)
 z.number().lt(5);
-z.number().lte(5); // alias .max(5)
-
-z.number().int(); // value must be an integer
-
-z.number().positive(); //     > 0
-z.number().nonnegative(); //  >= 0
-z.number().negative(); //     < 0
-z.number().nonpositive(); //  <= 0
-
-z.number().multipleOf(5); // Evenly divisible by 5. Alias .step(5)
-
-z.number().finite(); // value must be finite, not Infinity or -Infinity
-z.number().safe(); // value must be between Number.MIN_SAFE_INTEGER and Number.MAX_SAFE_INTEGER
+z.number().lte(5);                     // alias .max(5)
+z.number().positive();       
+z.number().nonnegative();    
+z.number().negative(); 
+z.number().nonpositive(); 
+z.number().multipleOf(5);              // alias .step(5)
 ```
 
-Optionally, you can pass in a second argument to provide a custom error message.
+```ts @zod/mini
+z.number().check(z.gt(5));
+z.number().check(z.gte(5));            // alias .min(5)
+z.number().check(z.lt(5));
+z.number().check(z.lte(5));            // alias .max(5)
+z.number().check(z.positive()); 
+z.number().check(z.nonnegative()); 
+z.number().check(z.negative()); 
+z.number().check(z.nonpositive()); 
+z.number().check(z.multipleOf(5));     // alias .step(5)
+```
+</CodeGroup>
+
+If (for some reason) you want to validate `NaN`, use `z.nan()`.
 
 ```ts
-z.number().lte(5, { message: "this👏is👏too👏big" });
+z.nan().parse(NaN);              // ✅
+z.nan().parse("anything else");  // ❌
 ```
 
-<br/>
+## Integers
+
+Zod supports validation of integers.
+
+```ts
+z.int();     // restricts to safe integer range
+z.int32();   // restrict to int32 range
+```
 
 ## BigInts
 
+Use `z.bigint()` to validate `bigint` values.
+
+```ts
+z.bigint();
+```
+
 Zod includes a handful of bigint-specific validations.
 
-```ts
+<CodeGroup>
+```ts zod
 z.bigint().gt(5n);
-z.bigint().gte(5n); // alias `.min(5n)`
+z.bigint().gte(5n);                    // alias `.min(5n)`
 z.bigint().lt(5n);
-z.bigint().lte(5n); // alias `.max(5n)`
-
-z.bigint().positive(); // > 0n
-z.bigint().nonnegative(); // >= 0n
-z.bigint().negative(); // < 0n
-z.bigint().nonpositive(); // <= 0n
-
-z.bigint().multipleOf(5n); // Evenly divisible by 5n.
+z.bigint().lte(5n);                    // alias `.max(5n)`
+z.bigint().positive(); 
+z.bigint().nonnegative(); 
+z.bigint().negative(); 
+z.bigint().nonpositive(); 
+z.bigint().multipleOf(5n);             // alias `.step(5n)`
+```
+```ts @zod/mini
+z.bigint().check(z.gt(5n));
+z.bigint().check(z.gte(5n));           // alias `.min(5n)`
+z.bigint().check(z.lt(5n));
+z.bigint().check(z.lte(5n));           // alias `.max(5n)`
+z.bigint().check(z.positive()); 
+z.bigint().check(z.nonnegative()); 
+z.bigint().check(z.negative()); 
+z.bigint().check(z.nonpositive()); 
+z.bigint().check(z.multipleOf(5n));    // alias `.step(5n)`
 ```
 
+</CodeGroup>
 <br/>
 
-## NaNs
-
-You can customize certain error messages when creating a nan schema.
-
-```ts
-const isNaN = z.nan({
-  required_error: "isNaN is required",
-  invalid_type_error: "isNaN must be 'not a number'",
-});
-```
-
-<br/>
 
 ## Booleans
 
-You can customize certain error messages when creating a boolean schema.
+Use `z.boolean()` to validate boolean values.
 
 ```ts
-const isActive = z.boolean({
-  required_error: "isActive is required",
-  invalid_type_error: "isActive must be a boolean",
-});
+z.boolean().parse(true); // => true
+z.boolean().parse(false); // => false
 ```
-
-<br/>
 
 ## Dates
 
-Use z.date() to validate `Date` instances.
+Use `z.date()` to validate `Date` instances.
 
 ```ts
 z.date().safeParse(new Date()); // success: true
 z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
 ```
 
-You can customize certain error messages when creating a date schema.
+To customize the error message:
 
 ```ts
-const myDateSchema = z.date({
-  required_error: "Please select a date and time",
-  invalid_type_error: "That's not a date!",
+z.date({
+  error: issue => issue.input === undefined ? "Required" : "Invalid date"
 });
 ```
 
 Zod provides a handful of date-specific validations.
 
-```ts
-z.date().min(new Date("1900-01-01"), { message: "Too old" });
-z.date().max(new Date(), { message: "Too young!" });
+<CodeGroup>
+```ts zod
+z.date().min(new Date("1900-01-01"), { error: "Too old!" });
+z.date().max(new Date(), { error: "Too young!" });
 ```
 
-**Coercion to Date**
-
-Since [zod 3.20](https://github.com/colinhacks/zod/releases/tag/v3.20), use [`z.coerce.date()`](#coercion-for-primitives) to pass the input through `new Date(input)`.
-
-```ts
-const dateSchema = z.coerce.date();
-type DateSchema = z.infer<typeof dateSchema>;
-// type DateSchema = Date
-
-/* valid dates */
-console.log(dateSchema.safeParse("2023-01-10T00:00:00.000Z").success); // true
-console.log(dateSchema.safeParse("2023-01-10").success); // true
-console.log(dateSchema.safeParse("1/10/23").success); // true
-console.log(dateSchema.safeParse(new Date("1/10/23")).success); // true
-
-/* invalid dates */
-console.log(dateSchema.safeParse("2023-13-10").success); // false
-console.log(dateSchema.safeParse("0000-00-00").success); // false
+```ts @zod/mini
+z.date().check(z.minimum(new Date("1900-01-01"), { error: "Too old!" }));
+z.date().check(z.maximum(new Date(), { error: "Too young!" }));
 ```
+</CodeGroup>
 
-For older zod versions, use [`z.preprocess`](#preprocess) like [described in this thread](https://github.com/colinhacks/zod/discussions/879#discussioncomment-2036276).
+<div id="zod-enums" style={{height:"0px" }} /> 
 
-<br/>
+## Enums
 
-## Zod enums
+Use `z.enum` to validate inputs against a fixed set of allowable _string_ values.
 
 ```ts
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
-type FishEnum = z.infer<typeof FishEnum>;
-// 'Salmon' | 'Tuna' | 'Trout'
+
+Fishenum.parse("Salmon"); // => "Salmon"
+Fishenum.parse("Swordfish"); // => ❌
 ```
 
-`z.enum` is a Zod-native way to declare a schema with a fixed set of allowable _string_ values. Pass the array of values directly into `z.enum()`. Alternatively, use `as const` to define your enum values as a tuple of strings. See the [const assertion docs](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions) for details.
+<Info>
+  Careful — If you declare your string array as a variable, Zod won't be able to infer the exact values of each element.
+
+  ```ts
+  const fish = ["Salmon", "Tuna", "Trout"];
+  
+  const FishEnum = z.enum(fish);
+  type FishEnum = z.infer<typeof FishEnum>; // string
+  ```
+
+  To fix this, always pass the values directly into the `z.enum()` function, or use [`as const`](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions).
+
+  ```ts
+  const fish = ["Salmon", "Tuna", "Trout"] as const;
+
+  const FishEnum = z.enum(fish);
+  type FishEnum = z.infer<typeof FishEnum>; // "Salmon" | "Tuna" | "Trout"
+  ```
+</Info>
+
+You can also pass in an externally declared TypeScript enum. 
+
+<Info>
+**Zod 4** — This replaces the `z.nativeEnum()` API in Zod 3. 
+
+Note that using TypeScript's `enum` keyword is [not recommended](https://www.totaltypescript.com/why-i-dont-like-typescript-enums). 
+</Info>
 
 ```ts
-const VALUES = ["Salmon", "Tuna", "Trout"] as const;
-const FishEnum = z.enum(VALUES);
-```
-
-This is not allowed, since Zod isn't able to infer the exact values of each element.
-
-```ts
-const fish = ["Salmon", "Tuna", "Trout"];
-const FishEnum = z.enum(fish);
-```
-
-**`.enum`**
-
-To get autocompletion with a Zod enum, use the `.enum` property of your schema:
-
-```ts
-FishEnum.enum.Salmon; // => autocompletes
-
-FishEnum.enum;
-/*
-=> {
-  Salmon: "Salmon",
-  Tuna: "Tuna",
-  Trout: "Trout",
+enum Fish {
+  Salmon = "Salmon",
+  Tuna = "Tuna",
+  Trout = "Trout",
 }
-*/
+
+const FishEnum = z.enum(Fish);
 ```
 
-You can also retrieve the list of options as a tuple with the `.options` property:
+### `.enum`
 
-```ts
-FishEnum.options; // ["Salmon", "Tuna", "Trout"];
+To extract the schema's values as an enum-like object:
+
+<CodeGroup>
+```ts zod
+FishEnum.enum;
+// => { Salmon: "Salmon", Tuna: "Tuna", Trout: "Trout" }
 ```
 
-**`.exclude/.extract()`**
+```ts @zod/mini
+// no equivalent
+```
+</CodeGroup>
+
+### `.exclude()/.extract()`
 
 You can create subsets of a Zod enum with the `.exclude` and `.extract` methods.
 
-```ts
+<CodeGroup>
+```ts zod
 const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+
 const SalmonAndTrout = FishEnum.extract(["Salmon", "Trout"]);
 const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 ```
-
-<br/>
-
-## Native enums
-
-Zod enums are the recommended approach to defining and validating enums. But if you need to validate against an enum from a third-party library (or you don't want to rewrite your existing enums) you can use `z.nativeEnum()`.
-
-**Numeric enums**
-
-```ts
-enum Fruits {
-  Apple,
-  Banana,
-}
-
-const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
-
-FruitEnum.parse(Fruits.Apple); // passes
-FruitEnum.parse(Fruits.Banana); // passes
-FruitEnum.parse(0); // passes
-FruitEnum.parse(1); // passes
-FruitEnum.parse(3); // fails
+```ts @zod/mini
+// no equivalent
 ```
-
-**String enums**
-
-```ts
-enum Fruits {
-  Apple = "apple",
-  Banana = "banana",
-  Cantaloupe, // you can mix numerical and string enums
-}
-
-const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer<typeof FruitEnum>; // Fruits
-
-FruitEnum.parse(Fruits.Apple); // passes
-FruitEnum.parse(Fruits.Cantaloupe); // passes
-FruitEnum.parse("apple"); // passes
-FruitEnum.parse("banana"); // passes
-FruitEnum.parse(0); // passes
-FruitEnum.parse("Cantaloupe"); // fails
-```
-
-**Const enums**
-
-The `.nativeEnum()` function works for `as const` objects as well. ⚠️ `as const` requires TypeScript 3.4+!
-
-```ts
-const Fruits = {
-  Apple: "apple",
-  Banana: "banana",
-  Cantaloupe: 3,
-} as const;
-
-const FruitEnum = z.nativeEnum(Fruits);
-type FruitEnum = z.infer<typeof FruitEnum>; // "apple" | "banana" | 3
-
-FruitEnum.parse("apple"); // passes
-FruitEnum.parse("banana"); // passes
-FruitEnum.parse(3); // passes
-FruitEnum.parse("Cantaloupe"); // fails
-```
-
-You can access the underlying object with the `.enum` property:
-
-```ts
-FruitEnum.enum.Apple; // "apple"
-```
-
-<br/>
+</CodeGroup>
 
 ## Optionals
 
-You can make any schema optional with `z.optional()`. This wraps the schema in a `ZodOptional` instance and returns the result.
+To make a schema *optional* (that is, to allow `undefined` inputs).
 
-```ts
-const schema = z.optional(z.string());
+<CodeGroup>
+```ts zod
+const schema = z.string().optional()
 
-schema.parse(undefined); // => returns undefined
+schema.parse("yoda");     // => "yoda"
+schema.parse(undefined);  // => undefined
+
 type A = z.infer<typeof schema>; // string | undefined
 ```
+```ts @zod/mini
+const optionalYoda = z.optional(z.literal("yoda"));
 
-For convenience, you can also call the `.optional()` method on an existing schema.
+optionalYoda.parse("yoda");     // => "yoda"
+optionalYoda.parse(undefined);  // => undefined
 
-```ts
-const user = z.object({
-  username: z.string().optional(),
-});
-type C = z.infer<typeof user>; // { username?: string | undefined };
+type optionalYoda = z.infer<typeof optionalYoda>; // string | undefined
 ```
+</CodeGroup>
 
-You can extract the wrapped schema from a `ZodOptional` instance with `.unwrap()`.
+This returns a `ZodOptional` instance that wraps the original schema. To extract the inner schema:
 
-```ts
-const stringSchema = z.string();
-const optionalString = stringSchema.optional();
-optionalString.unwrap() === stringSchema; // true
+<CodeGroup>
+```ts zod
+optionalYoda.unwrap(); // ZodLiteral<"yoda">
 ```
+```ts @zod/mini
+optionalYody.def.innerType; // ZodLiteral<"yoda">
+```
+</CodeGroup>
 
 <br/>
 

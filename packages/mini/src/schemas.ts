@@ -20,13 +20,15 @@ export interface ZodMiniType<out O = unknown, out I = unknown> extends core.$Zod
   brand<T extends PropertyKey = PropertyKey>(
     value?: T
   ): this & Record<"_zod", Record<"output", this["_zod"]["output"] & core.$brand<T>>>;
+
+  def: this["_zod"]["def"];
 }
 
 export const ZodMiniType: core.$constructor<ZodMiniType> = core.$constructor("ZodMiniType", (inst, def) => {
   if (!inst._zod) throw new Error("Uninitialized schema in mixin ZodMiniType.");
 
   core.$ZodType.init(inst, def);
-
+  inst.def = def;
   inst.check = (...checks) => {
     return inst.clone({
       ...def,
