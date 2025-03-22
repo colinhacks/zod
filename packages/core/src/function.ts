@@ -46,7 +46,9 @@ export class $ZodFunction<
     this._def = def;
   }
 
-  implement<F extends $InferInnerFunctionType<Args, Returns>>(func: F): $InferOuterFunctionType<Args, Returns> {
+  implement<F extends $InferInnerFunctionType<Args, Returns>>(
+    func: F
+  ): F extends this["_output"] ? F : this["_output"] {
     if (typeof func !== "function") {
       throw new Error("implement() must be called with a function");
     }
@@ -62,7 +64,7 @@ export class $ZodFunction<
 
   implementAsync<F extends $InferInnerFunctionTypeAsync<Args, Returns>>(
     func: F
-  ): $InferOuterFunctionTypeAsync<Args, Returns> {
+  ): F extends $InferOuterFunctionTypeAsync<Args, Returns> ? F : $InferOuterFunctionTypeAsync<Args, Returns> {
     if (typeof func !== "function") {
       throw new Error("implement() must be called with a function");
     }

@@ -3,9 +3,9 @@
   "theme": "maple",
   "name": "Zod",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#FF4FC1",
+    "light": "#FF83D4",
+    "dark": "#C33694"
   },
   "favicon": "/favicon.svg",
   "styling": {
@@ -20,13 +20,26 @@
     "groups": [
       {
         "group": "zod",
-        "pages": ["index", "api"]
+        "pages": [
+          "home",
+          "api",
+          "parsing",
+          "error-customization",
+          "metadata",
+          "json-schema",
+          "type-inference",
+          "ecosystem"
+        ]
+      },
+      {
+        "group": "guides",
+        "pages": ["mini", "object-vs-interface", "generic-functions"]
       }
     ]
   },
   "logo": {
-    "light": "/logo/logo_glow.png",
-    "dark": "/logo/logo_white.png"
+    "light": "/logo/logo.png",
+    "dark": "/logo/logo.png"
   },
   "navbar": {
     "links": [
@@ -44,8 +57,8 @@
 
   "footer": {
     "socials": {
-      "x": "https://x.com/colinhacks",
       "github": "https://github.com/colinhacks",
+      "x": "https://x.com/colinhacks",
       "bluesky": "https://bluesky.com/profile/colinhacks"
     },
     "links": [
@@ -61,7 +74,7 @@
             "href": "https://zod.dev/blog"
           },
           {
-            "label": "Github",
+            "label": "GitHub",
             "href": "https://github.com/colinhacks/zod"
           },
           {
@@ -80,6 +93,10 @@
           {
             "label": "X",
             "href": "https://x.com/zodtypes"
+          },
+          {
+            "label": "GitHub",
+            "href": ""
           },
           {
             "label": "Bluesky",

@@ -1203,6 +1203,11 @@ export function nullable<T extends SomeType>(innerType: T, params?: core.$ZodNul
   }) as ZodMiniNullable<T>;
 }
 
+// nullish
+export function nullish<T extends SomeType>(innerType: T): ZodMiniOptional<ZodMiniNullable<T>> {
+  return optional(nullable(innerType));
+}
+
 // ZodMiniDefault
 export interface ZodMiniDefault<T extends SomeType = SomeType> extends ZodMiniType {
   _zod: core.$ZodDefaultInternals<T>;

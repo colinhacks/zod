@@ -65,7 +65,7 @@ export const Bronze = () => {
   return (
     <div className="max-w-6xl mx-auto p-4">
       <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-md">
-        <div className="grid grid-cols-2 sm:grid-cols-4">
+        <div className="flex flex-wrap">
           {companies.map((company) => (
             <div 
               key={company.name} 
@@ -75,7 +75,7 @@ export const Bronze = () => {
                 <img 
                   src={company.logoSrc}
                   alt={`${company.name} logo`} 
-                  className="h-12 w-12 object-contain mb-2 mt-0"
+                  className="h-12 object-contain mb-0 mt-0"
                 />
               </a>
               <a href={company.href} className="hidden">

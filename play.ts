@@ -1,5 +1,7 @@
-import * as z from "@zod/mini";
-z;
+import * as zm from "@zod/mini";
+import * as z from "zod";
 
-const b = z.literal(["z.string()"]);
-b.def;
+const fish = ["Salmon", "Tuna", "Trout"];
+
+const FishEnum = z.enum(fish);
+type FishEnum = z.infer<typeof FishEnum>; // string

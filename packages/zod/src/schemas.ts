@@ -22,6 +22,9 @@ export interface RefinementCtx<T = unknown> extends core.ParsePayload<T> {
 }
 
 export interface ZodType<out Output = unknown, out Input = unknown> extends core.$ZodType<Output, Input> {
+  def: this["_zod"]["def"];
+  /** @deprecated Use `.def` instead. */
+  _def: this["_zod"]["def"];
   // base methods
   check(...checks: (core.CheckFn<this["_zod"]["output"]> | core.$ZodCheck<this["_zod"]["output"]>)[]): this;
   clone(def?: this["_zod"]["def"]): this;
@@ -84,8 +87,8 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
 
 export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$constructor("ZodType", (inst, def) => {
   core.$ZodType.init(inst, def);
-  // mini.ZodTypeMini.init(inst, def);
-  inst._zod.def = def;
+  inst.def = def;
+  inst._def = def;
 
   // base methods
   inst.check = (...checks) => {
@@ -1888,6 +1891,11 @@ export function nullable<T extends SomeType>(innerType: T, params?: core.$ZodNul
     innerType,
     ...util.normalizeParams(params),
   }) as ZodNullable<T>;
+}
+
+// nullish
+export function nullish<T extends SomeType>(innerType: T): ZodOptional<ZodNullable<T>> {
+  return optional(nullable(innerType));
 }
 
 // ZodDefault

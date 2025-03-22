@@ -89,6 +89,7 @@ import {Bronze} from '/snippets/bronze.mdx';
 
 <br /><br /><br />
 
+
 <div className="w-full flex flex-col items-center">
   <span style={{ borderBottom: "1px solid hsla(0, 0%, 100%, 0.1)"} } className="font-semibold w-full text-center pb-2 border-b border-gray-900 border-solid text-xl">Featured sponsor: Clerk</span>
 
@@ -103,14 +104,33 @@ import {Bronze} from '/snippets/bronze.mdx';
     </p>
 </div>
 
-
-
-
 ## Introduction
 
 Zod is a TypeScript-first schema declaration and validation library. I'm using the term "schema" to broadly refer to any data type, from a simple `string` to a complex nested object.
 
-Zod is designed to be as developer-friendly as possible. The goal is to eliminate duplicative type declarations. With Zod, you declare a validator _once_ and Zod will automatically infer the static TypeScript type. It's easy to compose simpler types into complex data structures.
+```ts
+import { z } from "zod";
+
+const User = z.interface({
+  username: z.string(),
+});
+```
+
+We can use Zod schemas to *parse data*. The result of this operation is properly typed and fully validated. If validation fails, a `ZodError` will be thrown.
+
+```ts
+User.parse({ username: "ludwig" });   // => { username: "ludwig" }
+User.parse({ evil: true });           // => throws ZodError
+```
+
+Zod *infers* a static type from your schemas. This way, you never need to redundantly define TypeScript types and their associated validation logic. Instead, you declare your Zod schema _once_ and can extract the type from it.
+
+```ts
+type User = z.infer<typeof User>;
+// { username: string };
+
+const myUser: User = { username: "ludwig" }
+```
 
 ## Features
 
@@ -121,6 +141,49 @@ Zod is designed to be as developer-friendly as possible. The goal is to eliminat
 - Concise interface
 - Works with TypeScript and plain JS
 - Extensive ecosystem
+
+## Installation
+
+### Requirements
+
+You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
+
+  
+  ```ts
+  // tsconfig.json
+  {
+    // ...
+    "compilerOptions": {
+      // ...
+      "strict": true
+    }
+  }
+  ```
+
+<Info>Zod is tested against *TypeScript v5.5* and later. Older versions may work but are not officially supported.</Info>
+
+
+### From `npm`
+
+```sh
+npm install zod       # npm
+deno add npm:zod      # deno
+yarn add zod          # yarn
+bun add zod           # bun
+pnpm add zod          # pnpm
+```
+
+Zod also publishes a canary version on every commit. To install the canary:
+
+```sh
+npm install zod@canary       # npm
+deno add npm:zod@canary      # deno
+yarn add zod@canary          # yarn
+bun add zod@canary           # bun
+pnpm add zod@canary          # pnpm
+```
+
+> The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
 
 ## Sponsors
 
@@ -153,47 +216,3 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
 
 <Bronze />
 
-## Installation
-
-### Requirements
-
-You must enable `strict` mode in your `tsconfig.json`. This is a best practice for all TypeScript projects.
-
-  
-  ```ts
-  // tsconfig.json
-  {
-    // ...
-    "compilerOptions": {
-      // ...
-      "strict": true
-    }
-  }
-  ```
-
-<Info>Zod is tested against *TypesScript v5.5* and later. Older versions may work but are not officially supported.</Info>
-
-
-### From `npm`
-
-```sh
-npm install zod       # npm
-deno add npm:zod      # deno
-yarn add zod          # yarn
-bun add zod           # bun
-pnpm add zod          # pnpm
-```
-
-Zod also publishes a canary version on every commit. To install the canary:
-
-```sh
-npm install zod@canary       # npm
-deno add npm:zod@canary      # deno
-yarn add zod@canary          # yarn
-bun add zod@canary           # bun
-pnpm add zod@canary          # pnpm
-```
-
-> The rest of this README assumes you are using npm and importing directly from the `"zod"` package.
-
-<br/>

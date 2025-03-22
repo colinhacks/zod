@@ -128,7 +128,7 @@ test("input validation error", () => {
   });
   const fn = schema.implement(() => 1234 as any);
 
-  const checker = () => fn(123 as any);
+  const checker = () => fn();
 
   expect(checker).toThrowErrorMatchingInlineSnapshot(`
     $ZodError {

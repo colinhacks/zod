@@ -83,7 +83,7 @@ export const Silver = () => {
   return (
     <div className="max-w-6xl mx-auto p-4">
       <div className="border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-md">
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4">
+        <div style={{gridTemplateColumns: "repeat(2, minmax(0, 1fr))"}} className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4">
           {companies.map((company) => (
             <div 
               key={company.name} 
