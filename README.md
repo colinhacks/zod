@@ -37,17 +37,17 @@
 <br/>
 <br/>
 
-<h2 align="center">Featured sponsor: Clerk</h2>
+<h2 align="center">Featured sponsor: Chromatic</h2>
 
 <div align="center">
-  <a href="https://go.clerk.com/PKHrcwh">
+  <a href="https://www.chromatic.com/features/test?utm_source=zodDev&utm_medium=placement&utm_campaign=zodDevFeaturedSponsor&utm_content=image">
     <picture width="85%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3">
-      <img alt="mintlify logo" src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3" width="85%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/18a3a5c6-fb81-41a1-a089-58297d4b316f">
+      <img alt="chromatic logo" src="https://github.com/user-attachments/assets/18a3a5c6-fb81-41a1-a089-58297d4b316f" width="85%">
     </picture>
   </a>
   <br/>
-  <p><sub>Interested in featuring? <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">Get in touch.</a></sub></p>
+  <p><sub>Learn more about <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">featured sponsorships</a></sub></p>
 </div>
 
 <!-- <hr/> -->
