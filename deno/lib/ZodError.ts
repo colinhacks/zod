@@ -109,7 +109,8 @@ export type StringValidation =
   | "base64url"
   | { includes: string; position?: number }
   | { startsWith: string }
-  | { endsWith: string };
+  | { endsWith: string }
+  | "creditCard";
 
 export interface ZodInvalidStringIssue extends ZodIssueBase {
   code: typeof ZodIssueCode.invalid_string;
