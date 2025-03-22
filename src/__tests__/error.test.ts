@@ -309,9 +309,16 @@ test("formatting", () => {
   if (!result2.success) {
     type FormattedError = z.inferFormattedError<typeof schema, number>;
     const error: FormattedError = result2.error.format(() => 5);
-    expect(error._errors).toEqual([]);
-    expect(error.inner?._errors).toEqual([]);
-    expect(error.inner?.name?._errors).toEqual([5]);
+
+    type FormattedErrors = number[] | undefined;
+    const schemaErrors: FormattedErrors = error._errors;
+    const innerErrors: FormattedErrors = error.inner?._errors;
+    // @ts-expect-error it should not be the default formatted type
+    const nameErrors: string[] | undefined = error.inner?.name?._errors;
+
+    expect(schemaErrors).toEqual([]);
+    expect(innerErrors).toEqual([]);
+    expect(nameErrors).toEqual([5]);
   }
 });
 
