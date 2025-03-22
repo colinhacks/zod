@@ -531,6 +531,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-sockets`](https://github.com/RobinTail/zod-sockets): Zod-powered Socket.IO microframework with I/O validation and built-in AsyncAPI specs
 - [`oas-tszod-gen`](https://github.com/inkognitro/oas-tszod-gen): Client SDK code generator to convert OpenApi v3 specifications into TS endpoint caller functions with Zod types.
 - [`GQLoom`](https://github.com/modevol-com/gqloom): Weave GraphQL schema and resolvers using Zod.
+- [`oRPC`](https://github.com/unnoq/orpc): Typesafe APIs Made Simple
 
 #### Form integrations
 
