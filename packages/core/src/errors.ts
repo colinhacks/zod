@@ -155,6 +155,7 @@ type RawIssue<T extends $ZodIssueBase> = util.Flatten<
   util.MakePartial<T, "message" | "path"> & {
     def?: never;
     inst?: $ZodType | $ZodCheck;
+    /** If `true`, Zod will continue executing validation despite this issue. */
     continue?: boolean | undefined;
     input?: unknown;
   } & Record<string, any>

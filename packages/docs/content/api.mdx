@@ -1,0 +1,2605 @@
+---
+title: Defining schemas
+---
+
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Tabs as CodeGroup } from "fumadocs-ui/components/tabs"
+import { Callout } from "fumadocs-ui/components/callout"
+import { Callout as Info } from "fumadocs-ui/components/callout"
+import { Callout as Note } from "fumadocs-ui/components/callout"
+import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
+
+To validate data, you must first define a *schema*. Schemas represent *types*, from simple primitive values to complex. nested objects and arrays. 
+
+## Primitives
+
+```ts
+import { z } from "zod";
+
+// primitive types
+z.string();
+z.number();
+z.bigint();
+z.boolean();
+z.symbol();
+z.undefined();
+z.null();
+```
+
+To coerce input data to the appropriate type, use `z.coerce` instead:
+
+```ts
+z.coerce.string();    // String(input)
+z.coerce.number();    // Number(input)
+z.coerce.boolean();   // Boolean(input)
+z.coerce.bigint();    // BigInt(input)
+```
+
+The coerced variant of these schemas attempts to convert the input value to the appropriate type.
+
+```ts
+const schema = z.coerce.string();
+
+schema.parse("tuna");    // => "tuna"
+schema.parse(42);        // => "42"
+schema.parse(true);      // => "true"
+schema.parse(null);      // => "null"
+```
+
+<Accordions type="single"><Accordion title="How coercion works in Zod">
+  
+  Zod coerces all inputs using the built-in constructors. 
+
+  | Zod API                  | Coercion                   |
+  |--------------------------|----------------------------|
+  | `z.coerce.string()`      | `new String(value)`        |
+  | `z.coerce.number()`      | `new Number(value)`        |
+  | `z.coerce.boolean()`     | `new Boolean(value)`       |
+  | `z.coerce.bigint()`      | `BigInt(value)`            |
+  | `z.coerce.date()`        | `new Date(value)`          |
+
+  Boolean coercion with `z.coerce.boolean()` may not work how you expect. Any [truthy](https://developer.mozilla.org/en-US/docs/Glossary/Truthy) value is coerced to `true`, and any [falsy](https://developer.mozilla.org/en-US/docs/Glossary/Falsy) value is coerced to `false`.
+
+  ```ts
+  const schema = z.coerce.boolean(); // Boolean(input)
+
+  schema.parse("tuna"); // => true
+  schema.parse("true"); // => true
+  schema.parse("false"); // => true
+  schema.parse(1); // => true
+  schema.parse([]); // => true
+
+  schema.parse(0); // => false
+  schema.parse(""); // => false
+  schema.parse(undefined); // => false
+  schema.parse(null); // => false
+  ```
+
+  For total control over coercion logic, consider using [`z.transform()`](#preprocess) or [`z.pipe()`](#pipe).
+
+</Accordion></Accordions>
+
+## Literals
+
+Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types), like `"hello world"` or `5`.
+
+```ts
+const tuna = z.literal("tuna");
+const twelve = z.literal(12);
+const twobig = z.literal(2n);
+const tru = z.literal(true);
+const terrific = z.literal(Symbol("terrific"));
+```
+
+To represent the JavaScript literals `null` and `undefined`:
+
+```ts
+z.null();
+z.undefined();
+z.void(); // equivalent to z.undefined()
+```
+
+To allow multiple literal values:
+
+```ts
+const colors = z.literal(["red", "green", "blue"]);
+
+colos.parse("green"); // ✅
+colors.parse("yellow"); // ❌
+```
+
+To extract the set of allowed values from a literal schema:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]} persist>
+<Tab value="zod">
+```ts
+colors.values; // => Set<"red" | "green" | "blue">
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+// no equivalent
+```
+</Tab>
+</Tabs>
+
+## Strings
+
+{/* Zod provides a handful of built-in string validation and transform APIs.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.string().startsWith("fourscore")
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+z.string().check(z.startsWith("fourscore"))
+```
+</Tab>
+</Tabs>
+
+All of the APIs documented below support the `error` parameter for customizing the error message.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.string().startsWith("fourscore", {error: "Nice try, buddy"})
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+z.string().check(z.startsWith("fourscore", {error: "Nice try, buddy"}))
+```
+</Tab></Tabs> */}
+
+
+Zod provides a handful of built-in string validation and transform APIs. To perform some common string validations:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.string().max(5);
+z.string().min(5);
+z.string().length(5);
+z.string().regex(/^[a-z]+$/);
+z.string().startsWith("aaa");
+z.string().endsWith("zzz");
+z.string().includes("---");
+z.string().uppercase();
+z.string().lowercase();
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+z.string().check(z.max(5));
+z.string().check(z.min(5));
+z.string().check(z.length(5));
+z.string().check(z.regex(/^[a-z]+$/));
+z.string().check(z.startsWith("aaa"));
+z.string().check(z.endsWith("zzz"));
+z.string().check(z.includes("---"));
+z.string().check(z.uppercase());
+z.string().check(z.lowercase());
+```
+</Tab>
+</Tabs>
+
+To perform some simple string transforms:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.string().trim(); // trim whitespace
+z.string().toLowerCase(); // toLowerCase
+z.string().toUpperCase(); // toUpperCase
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+z.string().check(z.trim()); // trim whitespace
+z.string().check(z.toLowerCase()); // toLowerCase
+z.string().check(z.toUpperCase()); // toUpperCase
+```
+</Tab>
+</Tabs>
+
+## String formats
+
+To validate against some common string formats:
+
+```ts
+z.email();
+z.uuid();
+z.url();
+z.emoji();         // validates a single emoji character
+z.base64();
+z.nanoid();
+z.cuid();
+z.cuid2();
+z.ulid();
+z.ipv4();
+z.ipv6();
+z.cidr();          // ip range
+z.iso.date();
+z.iso.time();
+z.iso.datetime();
+z.iso.duration();
+```
+
+### Emails
+
+To validate email addresses:
+
+```ts
+z.email();
+```
+
+By default, Zod uses a comparatively strict email regex designed to validate normal email addresses containing common characters. It's roughly equivalent to the rules enforced by Gmail. To learn more about this regex, refer to [this post](https://colinhacks.com/essays/reasonable-email-regex).
+
+```ts
+/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i
+```
+
+To customize the email validation behavior, you can pass a custom regular expression to the `pattern` param.
+
+```ts
+z.email({ pattern: /your regex here/ });
+```
+
+Zod exports several useful regexes you could use.
+
+```ts
+// Zod's default email regex
+z.email(z.regexes.emai);
+
+// the regex used by browsers to validate input[type=email] fields
+// https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email
+z.email(z.regexes.html5Email);
+
+// the classic emailregex.com regex (RFC 5322)
+z.email(z.regexes.rfc5322Email);
+
+// a loose regex that allows Unicode (good for intl emails)
+z.email(z.regexes.unicodeEmail);
+```
+
+### UUIDs
+
+To validate UUIDs:
+
+```ts
+z.uuid();
+```
+
+To specify a particular UUID version:
+
+```ts
+// supports "v1", "v2", "v3", "v4", "v5", "v6", "v7", "v8"
+z.uuid({ version: "v4" });
+
+// for convenience
+z.uuidv4();
+z.uuidv6();
+z.uuidv7();
+```
+
+The RFC 4122 UUID spec requires the first two bits of byte 8 to be `10`. Other UUID-like identifiers do not enforce this constraint. To validate any UUID-like identifier:
+
+```ts
+z.guid();
+```
+
+### ISO datetimes
+
+As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
+
+The `z.iso.datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
+
+```ts
+const datetime = z.iso.datetime();
+
+datetime.parse("2020-01-01T00:00:00Z"); // pass
+datetime.parse("2020-01-01T00:00:00.123Z"); // pass
+datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (arbitrary precision)
+datetime.parse("2020-01-01T00:00:00+02:00"); // fail (no offsets allowed)
+```
+
+Timezone offsets can be allowed by setting the `offset` option to `true`.
+
+```ts
+const datetime = z.iso.datetime({ offset: true });
+
+datetime.parse("2020-01-01T00:00:00+02:00"); // pass
+datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
+datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
+datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
+datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
+```
+
+Allow unqualified (timezone-less) datetimes with the `local` flag.
+
+```ts
+const schema = z.iso.datetime({ local: true });
+schema.parse("2020-01-01T00:00:00"); // pass
+```
+
+You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
+
+```ts
+const datetime = z.iso.datetime({ precision: 3 });
+
+datetime.parse("2020-01-01T00:00:00.123Z"); // pass
+datetime.parse("2020-01-01T00:00:00Z"); // fail
+datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
+```
+
+### ISO dates
+
+The `z.iso.date()` method validates strings in the format `YYYY-MM-DD`.
+
+```ts
+const date = z.iso.date();
+
+date.parse("2020-01-01"); // pass
+date.parse("2020-1-1"); // fail
+date.parse("2020-01-32"); // fail
+```
+
+### ISO times
+
+> Added in Zod 3.23
+
+The `z.iso.time()` method validates strings in the format `HH:MM:SS[.s+]`. The second can include arbitrary decimal precision. It does not allow timezone offsets of any kind.
+
+```ts
+const time = z.iso.time();
+
+time.parse("00:00:00"); // pass
+time.parse("09:52:31"); // pass
+time.parse("23:59:59.9999999"); // pass (arbitrary precision)
+
+time.parse("00:00:00.123Z"); // fail (no `Z` allowed)
+time.parse("00:00:00.123+02:00"); // fail (no offsets allowed)
+```
+
+You can set the `precision` option to constrain the allowable decimal precision.
+
+```ts
+const time = z.iso.time({ precision: 3 });
+
+time.parse("00:00:00.123"); // pass
+time.parse("00:00:00.123456"); // fail
+time.parse("00:00:00"); // fail
+```
+
+### IP addresses
+
+By default `.ip()` allows both IPv4 and IPv6.
+
+```ts
+const ip = z.string().ip();
+
+ip.parse("192.168.1.1"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // pass
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // pass
+
+ip.parse("256.1.1.1"); // fail
+ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // fail
+```
+
+You can additionally set the IP `version`.
+
+```ts
+const ipv4 = z.string().ip({ version: "v4" });
+ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+
+const ipv6 = z.string().ip({ version: "v6" });
+ipv6.parse("192.168.1.1"); // fail
+```
+
+### IP ranges (CIDR)
+
+Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing). By default, `.cidr()` allows both IPv4 and IPv6.
+
+```ts
+const cidr = z.string().cidr();
+cidr.parse("192.168.0.0/24"); // pass
+cidr.parse("2001:db8::/32"); // pass
+```
+
+You can specify a version with the `version` parameter.
+
+```ts
+const ipv4Cidr = z.string().cidr({ version: "v4" });
+ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+
+const ipv6Cidr = z.string().cidr({ version: "v6" });
+ipv6Cidr.parse("192.168.1.1"); // fail
+```
+
+## Numbers
+
+Use `z.number()` to validate numbers. It allows any finite number.
+
+```ts
+const schema = z.number();
+
+schema.parse(3.14);      // ✅
+schema.parse(NaN);       // ❌
+schema.parse(Infinity);  // ❌
+```
+
+Zod implements a handful of number-specific validations:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.number().gt(5);
+z.number().gte(5);                     // alias .min(5)
+z.number().lt(5);
+z.number().lte(5);                     // alias .max(5)
+z.number().positive();       
+z.number().nonnegative();    
+z.number().negative(); 
+z.number().nonpositive(); 
+z.number().multipleOf(5);              // alias .step(5)
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+z.number().check(z.gt(5));
+z.number().check(z.gte(5));            // alias .min(5)
+z.number().check(z.lt(5));
+z.number().check(z.lte(5));            // alias .max(5)
+z.number().check(z.positive()); 
+z.number().check(z.nonnegative()); 
+z.number().check(z.negative()); 
+z.number().check(z.nonpositive()); 
+z.number().check(z.multipleOf(5));     // alias .step(5)
+```
+</Tab>
+</Tabs>
+
+If (for some reason) you want to validate `NaN`, use `z.nan()`.
+
+```ts
+z.nan().parse(NaN);              // ✅
+z.nan().parse("anything else");  // ❌
+```
+
+## Integers
+
+To validate integers:
+
+```ts
+z.int();     // restricts to safe integer range
+z.int32();   // restrict to int32 range
+```
+
+## BigInts
+
+To validate BigInts:
+
+```ts
+z.bigint();
+```
+
+Zod includes a handful of bigint-specific validations.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.bigint().gt(5n);
+z.bigint().gte(5n);                    // alias `.min(5n)`
+z.bigint().lt(5n);
+z.bigint().lte(5n);                    // alias `.max(5n)`
+z.bigint().positive(); 
+z.bigint().nonnegative(); 
+z.bigint().negative(); 
+z.bigint().nonpositive(); 
+z.bigint().multipleOf(5n);             // alias `.step(5n)`
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+z.bigint().check(z.gt(5n));
+z.bigint().check(z.gte(5n));           // alias `.min(5n)`
+z.bigint().check(z.lt(5n));
+z.bigint().check(z.lte(5n));           // alias `.max(5n)`
+z.bigint().check(z.positive()); 
+z.bigint().check(z.nonnegative()); 
+z.bigint().check(z.negative()); 
+z.bigint().check(z.nonpositive()); 
+z.bigint().check(z.multipleOf(5n));    // alias `.step(5n)`
+```
+
+</Tab>
+</Tabs>
+
+## Booleans
+
+To validate boolean values:
+
+```ts
+z.boolean().parse(true); // => true
+z.boolean().parse(false); // => false
+```
+
+## Dates
+
+Use `z.date()` to validate `Date` instances.
+
+```ts
+z.date().safeParse(new Date()); // success: true
+z.date().safeParse("2022-01-12T00:00:00.000Z"); // success: false
+```
+
+To customize the error message:
+
+```ts
+z.date({
+  error: issue => issue.input === undefined ? "Required" : "Invalid date"
+});
+```
+
+Zod provides a handful of date-specific validations.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.date().min(new Date("1900-01-01"), { error: "Too old!" });
+z.date().max(new Date(), { error: "Too young!" });
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+z.date().check(z.minimum(new Date("1900-01-01"), { error: "Too old!" }));
+z.date().check(z.maximum(new Date(), { error: "Too young!" }));
+```
+</Tab>
+</Tabs>
+
+<div id="zod-enums" style={{height:"0px" }} /> 
+
+## Enums
+
+Use `z.enum` to validate inputs against a fixed set of allowable _string_ values.
+
+```ts
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+
+Fishenum.parse("Salmon"); // => "Salmon"
+Fishenum.parse("Swordfish"); // => ❌
+```
+
+<Callout>
+  Careful — If you declare your string array as a variable, Zod won't be able to properly infer the exact values of each element.
+
+  ```ts
+  const fish = ["Salmon", "Tuna", "Trout"];
+  
+  const FishEnum = z.enum(fish);
+  type FishEnum = z.infer<typeof FishEnum>; // string
+  ```
+
+  To fix this, always pass the array directly into the `z.enum()` function, or use [`as const`](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions).
+
+  ```ts
+  const fish = ["Salmon", "Tuna", "Trout"] as const;
+
+  const FishEnum = z.enum(fish);
+  type FishEnum = z.infer<typeof FishEnum>; // "Salmon" | "Tuna" | "Trout"
+  ```
+</Callout>
+
+You can also pass in an externally-declared TypeScript enum. 
+
+<Callout>
+**Zod 4** — This replaces the `z.nativeEnum()` API in Zod 3. 
+
+Note that using TypeScript's `enum` keyword is [not recommended](https://www.totaltypescript.com/why-i-dont-like-typescript-enums). 
+</Callout>
+
+```ts
+enum Fish {
+  Salmon = "Salmon",
+  Tuna = "Tuna",
+  Trout = "Trout",
+}
+
+const FishEnum = z.enum(Fish);
+```
+
+### `.enum`
+
+To extract the schema's values as an enum-like object:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+
+FishEnum.enum;
+// => { Salmon: "Salmon", Tuna: "Tuna", Trout: "Trout" }
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+
+FishEnum.def.entries;
+// => { Salmon: "Salmon", Tuna: "Tuna", Trout: "Trout" }
+```
+</Tab>
+</Tabs>
+
+### `.exclude()`
+
+To create a new enum schema, excluding certain values:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+const SalmonAndTroutOnly = FishEnum.extract(["Salmon", "Trout"]);
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+// no equivalent
+ 
+```
+</Tab>
+</Tabs>
+
+### `.extract()`
+
+To create a new enum schema, extracting certain values:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const FishEnum = z.enum(["Salmon", "Tuna", "Trout"]);
+const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+// no equivalent
+ 
+```
+</Tab>
+</Tabs>
+
+## Optionals
+
+To make a schema *optional* (that is, to allow `undefined` inputs).
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.optional(z.literal("yoda")); // or z.literal("yoda").optional()
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+z.optional(z.literal("yoda"));
+```
+</Tab>
+</Tabs>
+
+This returns a `ZodOptional` instance that wraps the original schema. To extract the inner schema:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+optionalYoda.unwrap(); // ZodLiteral<"yoda">
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+optionalYoda.def.innerType; // ZodLiteral<"yoda">
+```
+</Tab>
+</Tabs>
+
+## Nullables
+
+To make a schema *nullable* (that is, to allow `null` inputs).
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.nullable(z.literal("yoda")); // or z.literal("yoda").nullable()
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const nullableYoda = z.nullable(z.literal("yoda"));
+```
+</Tab>
+</Tabs>
+
+This returns a `ZodNullable` instance that wraps the original schema. To extract the inner schema:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+nullableYoda.unwrap(); // ZodLiteral<"yoda">
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+nullableYoda.def.innerType; // ZodLiteral<"yoda">
+```
+</Tab>
+</Tabs>
+
+## Nullish
+
+To make a schema *nullish* (both optional and nullable):
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const nullishYoda = z.nullish(z.literal("yoda"));
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const nullishYoda = z.nullish(z.literal("yoda"));
+```
+</Tab>
+</Tabs>
+
+Refer to the TypeScript manual for more about the concept of [nullish](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#nullish-coalescing).
+
+## Unknown
+
+Zod aims to mirror TypeScript's type system one-to-one. As such, Zod provides APIs to represent the following special types:
+
+```ts
+// allows any values
+z.any(); // inferred type: `any`
+z.unknown(); // inferred type: `unknown`
+```
+
+## Never
+
+No value will pass validation.
+
+```ts
+z.never(); // inferred type: `never`
+```
+
+## Objects
+
+There are two APIs for defining object schemas: `z.object()` and `z.interface()`. The two APIs are largely identical, with a small (but important!) difference in how *optional properties* are defined.
+{/* 
+<Callout>
+The `z.interface()` API was introduced in Zod 4 as a more flexible and powerful way to represent objects. Optional properties are specified with a `?` prefix in the key. This gives you more control over representing *optionality*:
+
+```ts
+z.interface({
+  email: z.string(),
+  name: z.string().optional(),
+  "bio?": z.string(),
+});
+// { email: string; name: string | undefined; bio?: string; }
+```
+
+With this new syntax, it's now possible to define recursive types directly using getters—no `z.lazy()` required.
+
+```ts
+const Node = z.interface({
+  value: z.string(),
+  get children(){
+    return z.array(Node).optional()
+  }
+});
+``` 
+
+For these reasons, `z.interface` is the recommended approach. However, `z.object()` is still fully supported. 
+</Callout> */}
+
+{/* For a detailed discussion of the differences, refer to the [introductory blog post](#) for `z.interface()`. */}
+
+<Accordions>
+<Accordion title="z.interface() vs. z.object()">
+
+{/* The `z.interface()` API fixes some shortcomings with `z.object()`. Let's run through them. */}
+
+There are a couple ways in which a key can be "optional" in TypeScript. Consider these two inferfaces.
+
+```ts
+inferface A {
+  name?: string | undefined;
+}
+
+inferface B {
+  name: string | undefined;
+}
+```
+
+In `A`, the `name` property can be set `undefined` or it can be omitted from the object entirely. By contrast, `B` requires that a `name` propertly is set.
+
+```ts
+const obj: A = { name: undefined }; // ✅
+const obj: A = {} ; // ❌ compile error
+
+const obj: B = { name: undefined }; // ✅ 
+const obj: B = {} ; // ✅ pass
+```
+
+
+The `z.object()` API can only represent `A`. When an an optional schema (e.g. `z.string().optional()`) is passed into `z.object()`, Zod automatically adds the question mark to the inferred type. 
+
+```ts
+z.object({ name: z.string().optional() });
+// { name?: string | undefined; }
+```
+
+By contrast, `z.inferface()` can represent both varieties. To make a property "key optional" (e.g. to add the question mark), prefix that key with `?`. 
+
+
+```ts
+z.interface({ "name?": z.string() });
+// { name?: string | undefined; }
+
+z.interface({ name: z.string().optional() });
+// { name: string | undefined; }
+```
+
+As a happy side-effect of this new `z.interface()` API, it's possible to define recursive types directly—no type-casting or `z.lazy()` required! See the documentation on [`Recursive objects`](#recursive-objects) for more information.
+</Accordion>
+</Accordions>
+
+To define an object type:
+
+<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
+  <Tab value="z.interface">
+  ```ts z.interface
+  // all properties are required by default
+  const Person = z.interface({
+    name: z.string(),
+    age: z.number(),
+  });
+
+  type Person = z.infer<typeof Person>;
+  // => { name: string; age: number; }
+  ```
+  </Tab>
+
+  <Tab value="z.object">
+  ```ts z.object
+  // all properties are required by default
+  const Person = z.object({
+    name: z.string(),
+    age: z.number(),
+  });
+
+  type Person = z.infer<typeof Person>;
+  // => { name: string; age: number; }
+  ```
+  </Tab>
+</Tabs>
+
+By default, all properties are required. To make certain properties optional:
+
+<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
+<Tab value="z.interface">
+```ts z.interface
+const Dog = z.interface({
+  name: z.string(),
+  "age?": z.number(), // optional field
+});
+
+Dog.parse({ name: "Yeller" }); // ✅
+```
+</Tab>
+
+<Tab value="z.object">
+```ts z.object
+const Dog = z.object({
+  name: z.string(),
+  age: z.number().optional(),
+});
+
+Dog.parse({ name: "Yeller" }); // ✅
+```
+</Tab>
+</Tabs>
+
+By default, unrecognized keys are *stripped* from the parsed result:
+
+<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
+<Tab value="z.interface">
+```ts z.interface
+Dog.parse({ name: "Yeller", extraKey: true });
+// => { name: "Yeller" }
+```
+</Tab>
+<Tab value="z.object">
+```ts z.object
+Dog.parse({ name: "Yeller", extraKey: true });
+// => { name: "Yeller" }
+```
+</Tab>
+</Tabs>
+
+To define a *strict* schema that throws an error when unknown keys are found:
+
+<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
+<Tab value="z.interface">
+```ts z.interface
+const StrictDog = z.strictInterface({
+  name: z.string(),
+});
+
+StrictDog.parse({ name: "Yeller", extraKey: true });
+// ❌ throws
+```
+</Tab>
+<Tab value="z.object">
+```ts z.object
+const StrictDog = z.strictObject({
+  name: z.string(),
+});
+
+StrictDog.parse({ name: "Yeller", extraKey: true });
+// ❌ throws
+```
+</Tab>
+</Tabs>
+
+To define a *loose* schema that allows unknown keys to pass through:
+
+<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
+<Tab value="z.interface">
+```ts z.interface
+const LooseDog = z.looseInterface({
+  name: z.string(),
+});
+
+Dog.parse({ name: "Yeller", extraKey: true });
+// => { name: "Yeller", extraKey: true }
+```
+</Tab>
+<Tab value="z.object">
+```ts z.object
+const LooseDog = z.looseObject({
+  name: z.string(),
+});
+
+Dog.parse({ name: "Yeller", extraKey: true });
+// => { name: "Yeller", extraKey: true }
+```
+</Tab>
+</Tabs>
+
+{/* 
+To validate unknown keys against a schema:
+
+<CodeGroup>
+```ts z.interface
+const Dog = z.interface({
+  name: z.string(),
+}).catchall;
+
+Dog.parse({ name: "Yeller", extraKey: true });
+// => { name: "Yeller" }
+```
+```ts z.object
+const Dog = z.strictObject({
+  name: z.string(),
+});
+
+Dog.parse({ name: "Yeller", extraKey: true });
+// => { name: "Yeller" }
+```
+</Tab></Tabs> */}
+
+### `.shape`
+
+To access the internal schemas:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+Dog.shape.name; // => string schema
+Dog.shape.age; // => number schema
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+Dog.def.shape.name; // => string schema
+Dog.def.shape.age; // => number schema
+```
+</Tab>
+</Tabs>
+
+### `.keyof()`
+
+To create a `ZodEnum` schema from the keys of an object schema:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const keySchema = Dog.keyof();
+// => ZodEnum<["name", "age"]>
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const keySchema = z.keyof(Dog);
+// => ZodEnum<["name", "age"]>
+```
+</Tab>
+</Tabs>
+
+### `.extend()`
+
+To add additional fields to an object schema:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const DogWithBreed = Dog.extend({
+  breed: z.string(),
+});
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const DogWithBreed = z.extend(Dog, {
+  breed: z.string(),
+});
+```
+</Tab>
+</Tabs>
+
+<Callout>
+  This API can be used to overwrite existing fields! Be careful with this power!
+</Callout>
+
+You can also pass another object schema into `.extend()`:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const HasBreed = z.interface({ breed: z.string() });
+const DogWithBreed = Dog.extend(HasBreed);
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const HasBreed = z.interface({ breed: z.string() });
+const DogWithBreed = z.extend(Dog, HasBreed);
+```
+</Tab>
+</Tabs>
+
+<Callout>
+If the two schemas share keys, B will override A. The returned schema also inherits the strictness level (strip, strict, loose) from B.
+</Callout>
+
+{/* 
+### `.merge()`
+
+```ts
+const BaseTeacher = z.object({ students: z.array(z.string()) });
+const HasID = z.object({ id: z.string() });
+
+const Teacher = BaseTeacher.merge(HasID);
+type Teacher = z.infer<typeof Teacher>; // => { students: string[], id: string }
+```
+
+> If the two schemas share keys, the properties of B overrides the property of A. The returned schema also inherits the "unknownKeys" policy (strip/strict/passthrough) and the catchall schema of B. */}
+
+### `.pick`
+
+Inspired by TypeScript's built-in `Pick` and `Omit` utility types, Zod provides dedicated APIs for picking and omitting certain keys from an object schema.
+
+Starting from this initial schema:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts z.interface
+const Recipe = z.interface({
+  title: z.string(),
+  "description?": z.string(),
+  ingredients: z.array(z.string()),
+});
+// { name: string; description?: string; ingredients: string[] }
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts z.object
+const Recipe = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  ingredients: z.array(z.string()),
+});
+// { id: string; name: string; ingredients: string[] }
+```
+</Tab>
+</Tabs>
+
+To pick certain keys:
+
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts zod
+const JustTheTitle = Recipe.pick({ title: true });
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const JustTheTitle = z.pick(Recipe, { title: true });
+```
+</Tab>
+</Tabs>
+
+
+### `.omit`
+
+To omit certain keys:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts zod
+const RecipeNoId = Recipe.omit({ id: true });
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const RecipeNoId = z.omit(Recipe, { id: true });
+```
+</Tab>
+</Tabs>
+
+
+### `.partial()`
+
+For convenience, Zod provides a dedicated API for make some or all properties optional, inspired by the built-in TypeScript utility type [`Partial`](https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype).
+{/* 
+
+<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
+<Tab value="z.interface">
+```ts z.interface
+const User = z.object({
+  email: z.string(),
+  username: z.string(),
+});
+// { email: string; username: string }
+```
+</Tab>
+<Tab value="z.object">
+```ts z.object
+const User = z.object({
+  email: z.string(),
+  username: z.string(),
+});
+// { email: string; username: string }
+```
+</Tab>
+</Tabs> */}
+
+To make all fields optional:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts zod
+const PartialRecipe = Recipe.partial();
+// { title?: string | undefined; discription?: string | undefined; ingredients?: string[] | undefined }
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const PartialRecipe = z.partial(Recipe);
+// { title?: string | undefined; discription?: string | undefined; ingredients?: string[] | undefined }
+```
+</Tab>
+</Tabs>
+
+To make certain properties optional:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts zod
+const RecipeOptionalIngredients = Recipe.partial({
+  ingredients: true,
+});
+// { title: string; description?: string | undefined; ingredients?: string[] | undefined }
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const RecipeOptionalIngredients = z.partial(User, {
+  ingredients: true,
+});
+// { title: string; description?: string | undefined; ingredients?: string[] | undefined }
+```
+</Tab>
+</Tabs>
+
+### `.required()`
+
+Zod provides an API for making some or all properties *required*, inspired by TypeScript's [`Required`](https://www.typescriptlang.org/docs/handbook/utility-types.html#requiredtype) utility type.
+
+{/* 
+Starting from this schema:
+
+<Tabs groupId="object-api" items={["z.interface", "z.object"]}>
+<Tab value="z.interface">
+```ts z.interface
+const User = z.object({
+  "email?": z.string(),
+  "username?": z.string(),
+});
+// { email?: string | undefined; username?: string | undefined }
+```
+</Tab>
+<Tab value="z.object">
+```ts z.object
+const User = z.object({
+  email: z.string().optional(),
+  username: z.string().optional(),
+});
+// { email?: string | undefined; username?: string | undefined }
+```
+</Tab>
+</Tabs> */}
+
+To make all properties required:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts zod
+const RequiredRecipe = Recipe.required();
+// { title: string; description: string; ingredients: string[] }
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const RequiredRecipe = z.required(Recipe);
+// { title: string; description: string; ingredients: string[] }
+```
+</Tab>
+</Tabs>
+
+To make certain properties required:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts zod
+const RecipeRequiredDescription = Recipe.required({description: true});
+// { title: string; description: string; ingredients: string[] }
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const RecipeRequiredDescription = z.required(Recipe, {description: true});
+// { title: string; description: string; ingredients: string[] }
+```
+</Tab>
+</Tabs>
+
+{/* ### `.passthrough`
+
+By default Zod object schemas strip out unrecognized keys during parsing.
+
+```ts
+const person = z.object({
+  name: z.string(),
+});
+
+person.parse({
+  name: "bob dylan",
+  extraKey: 61,
+});
+// => { name: "bob dylan" }
+// extraKey has been stripped
+```
+
+Instead, if you want to pass through unknown keys, use `.passthrough()` .
+
+```ts
+person.passthrough().parse({
+  name: "bob dylan",
+  extraKey: 61,
+});
+// => { name: "bob dylan", extraKey: 61 }
+```
+
+### `.strict`
+
+By default Zod object schemas strip out unrecognized keys during parsing. You can _disallow_ unknown keys with `.strict()` . If there are any unknown keys in the input, Zod will throw an error.
+
+```ts
+const person = z
+  .object({
+    name: z.string(),
+  })
+  .strict();
+
+person.parse({
+  name: "bob dylan",
+  extraKey: 61,
+});
+// => throws ZodError
+```
+
+### `.strip`
+
+You can use the `.strip` method to reset an object schema to the default behavior (stripping unrecognized keys).
+
+### `.catchall`
+
+You can pass a "catchall" schema into an object schema. All unknown keys will be validated against it.
+
+```ts
+const person = z
+  .object({
+    name: z.string(),
+  })
+  .catchall(z.number());
+
+person.parse({
+  name: "bob dylan",
+  validExtraKey: 61, // works fine
+});
+
+person.parse({
+  name: "bob dylan",
+  validExtraKey: false, // fails
+});
+// => throws ZodError
+```
+
+Using `.catchall()` obviates `.passthrough()` , `.strip()` , or `.strict()`. All keys are now considered "known".
+
+<br/> */}
+
+## Recursive objects
+
+The `z.interface()` API is capable of representing recursive types using [getters](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/get).
+
+```ts
+const Category = z.interface({
+  name: z.string(),
+  get subcategories(){
+    return z.array(Category)
+  }
+});
+
+type Category = z.infer<typeof Category>;
+// { name: string; subcategories: Category[] }
+```
+
+You can also represent *mutually recursive types*:
+
+```ts
+const User = z.interface({
+  email: z.email(),
+  get posts(){
+    return z.array(Post)
+  }
+});
+
+const Post = z.interface({
+  title: z.string(),
+  get author(){
+    return User
+  }
+});
+```
+
+All object APIs (pick, omit, required, partial, etc) work as you'd expect.
+
+<Accordions>
+<Accordion title="What about z.object()?">
+Due to a limitation in TypeScript, `z.object()` isn't capable of defining recursive types without a manual type definition. This means you need to redundantly define a TypeScript type in addition to your Zod schema.
+
+```ts
+interface Category {
+  name: string;
+  subcategories: Category[];
+};
+
+const categorySchema: z.ZodType<Category> = z.object({
+  name: z.string(),
+  subcategories: z.lazy(() => categorySchema.array()),
+});
+```
+
+This is verbose, error prone, and counter to the goals of Zod. The `z.interface()` API was introduced in large part so recursive types could be more readily represented in Zod.
+</Accordion>
+</Accordions>
+
+{/* ### Cyclical objects */}
+
+<Callout type="warn"> 
+  Though recursive schemas are supported, passing cyclical data into Zod will cause an infinite loop.
+</Callout>
+
+
+
+> To detect cyclical objects before they cause problems, consider [this approach](https://gist.github.com/colinhacks/d35825e505e635df27cc950776c5500b).
+
+## Arrays
+
+To define an array schema:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const stringArray = z.array(z.string()); // or z.string().array()
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const stringArray = z.array(z.string());
+```
+</Tab>
+</Tabs>
+
+To access the inner schema for an element of the array.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+stringArray.unwrap(); // => string schema
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+stringArray.def.element; // => string schema
+```
+</Tab>
+</Tabs>
+
+{/* ### `.nonempty`
+
+If you want to ensure that an array contains at least one element, use `.nonempty()`.
+
+```ts
+const nonEmptyStrings = z.string().array().nonempty();
+// the inferred type is now
+// [string, ...string[]]
+
+nonEmptyStrings.parse([]); // throws: "Array cannot be empty"
+nonEmptyStrings.parse(["Ariana Grande"]); // passes
+```
+
+You can optionally specify a custom error message:
+
+```ts
+// optional custom error message
+const nonEmptyStrings = z.string().array().nonempty({
+  message: "Can't be empty!",
+});
+``` */}
+
+### `.min/.max/.length`
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.array(z.string()).min(5); // must contain 5 or more items
+z.array(z.string()).max(5); // must contain 5 or fewer items
+z.array(z.string()).length(5); // must contain 5 items exactly
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+z.array(z.string()).check(z.minLength(5)); // must contain 5 or more items
+z.array(z.string()).check(z.maxLength(5)); // must contain 5 or fewer items
+z.array(z.string()).check(z.length(5)); // must contain 5 items exactly
+```
+</Tab>
+</Tabs>
+
+{/* Unlike `.nonempty()` these methods do not change the inferred type. */}
+
+## Tuples
+
+Unlike arrays, tuples are typically fixed-length arrays that specify different schemas for each index.
+
+```ts
+const MyTuple = z.tuple([
+  z.string(),
+  z.number(),
+  z.boolean()
+]);
+
+type MyTuple = z.infer<typeof MyTuple>;
+// [string, number, boolean]
+```
+
+To add a variadic ("rest") argument:
+
+```ts
+const variadicTuple = z.tuple([z.string()], z.number());
+// => [string, ...number[]];
+```
+
+## Unions
+
+Union types (`A | B`) represent a logical "OR". Zod union schemas will check the input against each option in order. The first value that validates successfully is returned.
+
+```ts
+const stringOrNumber = z.union([z.string(), z.number()]);
+// string | number
+
+stringOrNumber.parse("foo"); // passes
+stringOrNumber.parse(14); // passes
+```
+
+To extract the internal option schemas:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+stringOrNumber.options; // [ZodString, ZodNumber]
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+stringOrNumber.def.options; // [ZodString, ZodNumber]
+```
+</Tab>
+</Tabs>
+
+{/* For convenience, you can also use the [`.or` method](#or):
+
+```ts
+const stringOrNumber = z.string().or(z.number());
+``` */}
+
+{/* **Optional string validation:**
+
+To validate an optional form input, you can union the desired string validation with an empty string [literal](#literals).
+
+This example validates an input that is optional but needs to contain a [valid URL](#strings):
+
+```ts
+const optionalUrl = z.union([z.string().url().nullish(), z.literal("")]);
+
+console.log(optionalUrl.safeParse(undefined).success); // true
+console.log(optionalUrl.safeParse(null).success); // true
+console.log(optionalUrl.safeParse("").success); // true
+console.log(optionalUrl.safeParse("https://zod.dev").success); // true
+console.log(optionalUrl.safeParse("not a valid url").success); // false
+```
+
+<br/> */}
+
+## Discriminated unions
+
+A discriminated union is a special kind of union in which a) all the options are object schemas that b) share a particular key (the "discriminator"). Based on the value of the discriminator key, TypeScript is able to "narrow" the type signature as you'd expect.
+
+```ts
+type MyResult =
+  | { status: "success"; data: string }
+  | { status: "failed"; error: string };
+
+function handleResult(result: MyResult){
+  if(result.status === "success"){
+    result.data; // string
+  } else {
+    result.error; // string
+  }
+}
+```
+
+You could represent with with a regular `z.union()`. But regular unions are *naive*—they check the input against each option in order and return the first one that passes. This can be slow for large unions.
+
+So Zod provides a `z.discriminatedUnion()` API that leverages the discriminator key to make parsing more efficient.
+
+
+```ts
+const MyResult = z.discriminatedUnion([
+  z.interface({ status: z.literal("success"), data: z.string() }),
+  z.interface({ status: z.literal("failed"), error: z.string() }),
+]);
+```
+
+
+<Callout>
+  In Zod 3, you were required to specify the discriminator key as the first argument. This is no longer necessary, as Zod can now automatically detect the discriminator key.
+
+  ```ts
+  const MyResult = z.discriminatedUnion("status", [
+    z.interface({ status: z.literal("success"), data: z.string() }),
+    z.interface({ status: z.literal("failed"), error: z.string() }),
+  ]);
+  ```
+
+  If Zod can't find a discriminator key, it will throw an error at schema creation time.
+</Callout>
+
+<Accordions type="single"><Accordion title="Nesting discriminated unions">
+
+  For advanced use cases, discriminated unions can be nested. Zod will figure out the optimal parsing strategy to leverage the discriminators at each level.
+
+  ```ts
+  const BaseError = { status: z.literal("failed"), message: z.string() };
+  const MyErrors = z.discriminatedUnion([
+    z.interface({ ...BaseError, code: z.literal(400) }),
+    z.interface({ ...BaseError, code: z.literal(401) }),
+    z.interface({ ...BaseError, code: z.literal(500) }),
+  ]);
+
+  const MyResult = z.discriminatedUnion([
+    z.interface({ status: z.literal("success"), data: z.string() }),
+    MyErrors
+  ]);
+  ```
+
+</Accordion></Accordions>
+
+## Intersections
+
+Intersection types (`A & B`) represent a logical "AND". 
+
+```ts
+const a = z.union([z.number(), z.string()]);
+const b = z.union([z.number(), z.boolean()]);
+const c = z.intersection(a, b);
+
+type c = z.infer<typeof c>; // => number
+```
+
+This can be useful for intersecting two object types. 
+
+```ts
+const Person = z.intersection({ name: z.string() });
+type Person = z.infer<typeof Person>;
+
+const Employee = z.intersection({ role: z.string() });
+type Employee = z.infer<typeof Employee>;
+
+const EmployedPerson = z.intersection(Person, Employee);
+type EmployedPerson = z.infer<typeof EmployedPerson>;
+// Person & Employee
+```
+
+<Callout type="warn">
+  In most cases, it is better to use [`A.extend(B)`](#extend) to merge two object schemas. This approach returns a new object schema, whereas `z.intersection(A, B)` returns a `ZodIntersection` instance which lacks common object methods like `pick` and `omit`.
+</Callout>
+
+## Records
+
+Record schemas are used to validate types such as `Record<string, number>`.
+
+```ts
+const IdCache = z.record(z.string(), z.string());
+
+IdCache.parse({
+  carlotta: "77d2586b-9e8e-4ecf-8b21-ea7e0530eadd",
+  jimmie: "77d2586b-9e8e-4ecf-8b21-ea7e0530eadd",
+});
+```
+
+The key schema can be any Zod schema that as assignable to `string | number | symbol`.
+
+```ts
+const Keys = z.union([z.string(), z.number(), z.symbol()]);
+const AnyObject = z.record(Keys, z.unknown());
+// Record<string | number | symbol, unknown>
+```
+
+To create an object schemas containing keys defined by an enum:
+
+```ts
+const Keys = z.enum(["id", "name", "email"]);
+const Person = z.record(Keys, z.string());
+```
+
+<Accordions type="single"><Accordion title="A note on numeric keys">
+
+Despite the fact that TypeScript lets you define `Record` types with `number` keys (e.g. `Record<number, unknown>`), numerical keys don't actually exist in JavaScript.
+
+```ts
+const myObject = { 1: "one" };
+
+Object.keys(myObject); 
+// => ["1"]
+```
+
+As you can see, JavaScript automatically casts all numeric keys to strings under the hood. As such, using `z.number()` as a key schema inside `z.record()` will always throw an error during parsing, but Zod allows it for the sake of parity with TypeScript's type system.
+
+</Accordion></Accordions>
+
+## Maps
+
+```ts
+const StringNumberMap = z.map(z.string(), z.number());
+type StringNumberMap = z.infer<typeof StringNumberMap>; // Map<string, number>
+
+const myMap: StringNumberMap = new Map();
+myMap.set("one", 1);
+myMap.set("two", 2);
+
+StringNumberMap.parse(myMap);
+```
+
+## Sets
+
+```ts
+const NumberSet = z.set(z.number());
+type NumberSet = z.infer<typeof NumberSet>; // Set<number>
+
+const mySet: NumberSet = new Set();
+mySet.add(1);
+mySet.add(2);
+NumberSet.parse(mySet);
+```
+
+Set schemas can be further constrained with the following utility methods.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.set(z.string()).min(5); // must contain 5 or more items
+z.set(z.string()).max(5); // must contain 5 or fewer items
+z.set(z.string()).size(5); // must contain 5 items exactly
+```
+</Tab>
+<Tab value='@zod/mini'>
+```ts
+z.set(z.string()).check(z.minSize(5)); // must contain 5 or more items
+z.set(z.string()).check(z.maxSize(5)); // must contain 5 or fewer items
+z.set(z.string()).check(z.size(5)); // must contain 5 items exactly
+```
+</Tab>
+</Tabs>
+
+## Promises
+
+<Callout type="warn">
+  **Deprecated** — `z.promise()` is deprecated in Zod 4. There are vanishingly few valid uses cases for a `Promise` schema. If you suspect a value might be a `Promise`, simply `await` it before parsing it with Zod.
+</Callout>
+
+<Accordions type="single"><Accordion title="See z.promise() documentation">
+
+```ts
+const numberPromise = z.promise(z.number());
+```
+
+"Parsing" works a little differently with promise schemas. Validation happens in two parts:
+
+1. Zod synchronously checks that the input is an instance of Promise (i.e. an object with `.then` and `.catch` methods.).
+2. Zod uses `.then` to attach an additional validation step onto the existing Promise. You'll have to use `.catch` on the returned Promise to handle validation failures.
+
+```ts
+numberPromise.parse("tuna");
+// ZodError: Non-Promise type: string
+
+numberPromise.parse(Promise.resolve("tuna"));
+// => Promise<number>
+
+const test = async () => {
+  await numberPromise.parse(Promise.resolve("tuna"));
+  // ZodError: Non-number type: string
+
+  await numberPromise.parse(Promise.resolve(3.14));
+  // => 3.14
+};
+```
+
+</Accordion></Accordions>
+
+## Instanceof
+
+You can use `z.instanceof` to check that the input is an instance of a class. This is useful to validate inputs against classes that are exported from third-party libraries.
+
+```ts
+class Test {
+  name: string;
+}
+
+const TestSchema = z.instanceof(Test);
+
+TestSchema.parse(new Test()); // ✅
+TestSchema.parse("whatever"); // ❌
+```
+
+## Refinements
+
+Every Zod schema stores an array of *refinements*. Refinements are a way to perform additional custom validation that can Zod doesn't provide a native API for.
+
+### `.refine()`
+
+{/* <Callout>
+  Checks do not (in fact, cannot) change the inferred type of the schema.
+</Callout>
+
+### `.refine()` */}
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const myString = z.string().refine((val) => val.length <= 255);
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const myString = z.string().check(z.refine((val) => val.length <= 255));
+```
+</Tab>
+</Tabs>
+
+<Callout type="warn">
+  Refinement functions should never throw. Instead they should return a falsy value to signal failure. Thrown errors are not caught by Zod.
+</Callout>
+
+To customize the error message:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const myString = z.string().refine((val) => val.length > 8, { 
+  error: "Too short!" 
+});
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const myString = z.string().check(
+  z.refine((val) => val.length > 8, { error: "Too short!" })
+);
+```
+</Tab>
+</Tabs>
+
+
+By default, validation issues from checks are considered *continuable*; that is, Zod will execute *all* checks in sequence, even if one of them causes an validation error. This is usually desirable, so Zod can present a comprehensive list of validation issues in one go.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const myString = z.string()
+  .refine((val) => val.length > 8)
+  .refine((val) => val === val.toLowerCase());
+  
+
+const result = myString.safeParse("OH NO");
+result.error.issues;
+/* [
+  { "code": "custom", "message": "Too short!" },
+  { "code": "custom", "message": "Must be lowercase" }
+] */
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const myString = z.string().check(
+  z.refine((val) => val.length > 8),
+  z.refine((val) => val === val.toLowerCase())
+);
+
+const result = z.safeParse(myString, "OH NO");
+result.error.issues;
+/* [
+  { "code": "custom", "message": "Too short!" },
+  { "code": "custom", "message": "Must be lowercase" }
+] */
+```
+</Tab>
+</Tabs>
+
+To mark a particular refinement as *non-continuable*, use the `abort` parameter. Validation will terminate if the check fails.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const myString = z.string()
+  .refine((val) => val.length > 8, { abort: true })
+  .refine((val) => val === val.toLowerCase());
+
+
+const result = myString.safeParse("OH NO");
+result.error!.issues;
+// [ { "code": "custom", "message": "Too short!" }]
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const myString = z.string().check(
+  z.refine((val) => val.length > 8, { abort: true }),
+  z.refine((val) => val === val.toLowerCase(), { abort: true })
+);
+
+const result = z.safeParse(myString, "OH NO");
+result.error!.issues;
+// [ { "code": "custom", "message": "Too short!" }]
+```
+</Tab>
+</Tabs>
+
+
+
+To customize the error path, use the `path` parameter. This is typically only useful in the context of object schemas.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const passwordForm = z
+  .object({
+    password: z.string(),
+    confirm: z.string(),
+  })
+  .refine((data) => data.password === data.confirm, {
+    message: "Passwords don't match",
+    path: ["confirm"], // path of error
+  });
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const passwordForm = z
+  .object({
+    password: z.string(),
+    confirm: z.string(),
+  })
+  .check(z.refine((data) => data.password === data.confirm, {
+    message: "Passwords don't match",
+    path: ["confirm"], // path of error
+  }));
+```
+</Tab>
+</Tabs>
+
+This will set the `path` parameter in the associated issue:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const result = passwordForm.safeParse({ password: "asdf", confirm: "qwer" });
+result.error.issues;
+/* [{
+  "code": "custom",
+  "path": [ "confirm" ],
+  "message": "Passwords don't match"
+}] */
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const result = z.safeParse(passwordForm, { password: "asdf", confirm: "qwer" });
+result.error.issues;
+/* [{
+  "code": "custom",
+  "path": [ "confirm" ],
+  "message": "Passwords don't match"
+}] */
+```
+</Tab>
+</Tabs>
+
+Refinements can be `async`:
+
+```ts
+const userId = z.string().refine(async (id) => {
+  // verify that ID exists in database
+  return true;
+});
+```
+
+<Callout>
+  If you use async refinements, you must use the `.parseAsync` method to parse data! Otherwise Zod will throw an error.
+
+  <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+  <Tab value="zod">
+  ```ts
+  const result = await userId.parseAsync("abc123");
+  ```
+  </Tab>
+  <Tab value="@zod/mini">
+  ```ts
+  const result = await z.parseAsync(userId, "abc123");
+  ```
+  </Tab>
+  </Tabs>
+</Callout>
+
+### `.superRefine()`
+
+<Callout type="warn">
+  In Zod 4, `.superRefine()` has been deprecated in favor of `.check()`
+  
+  <Accordions>
+  <Accordion title="View .superRefine() example">
+    
+    <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+    <Tab value="zod">
+    ```ts
+    const UniqueStringArray = z.array(z.string()).check((ctx) => {
+      if (ctx.value.length > 3) {
+        ctx.issues.push({
+          code: "too_big",
+          maximum: 3,
+          origin: "array",
+          inclusive: true,
+          message: "Too many items 😡",
+          input: ctx.value,
+        });
+      }
+
+      if (ctx.value.length !== new Set(ctx.value).size) {
+        ctx.issues.push({
+          code: "custom",
+          message: `No duplicates allowed.`,
+          input: ctx.value,
+        });
+      }
+    });
+    ```
+    </Tab>
+    <Tab value="@zod/mini">
+    ```ts
+    const UniqueStringArray = z.array(z.string()).check((ctx) => {
+      if (ctx.value.length > 3) {
+        ctx.issues.push({
+          code: "too_big",
+          maximum: 3,
+          origin: "array",
+          inclusive: true,
+          message: "Too many items 😡",
+          input: ctx.value,
+        });
+      }
+
+      if (ctx.value.length !== new Set(ctx.value).size) {
+        ctx.issues.push({
+          code: "custom",
+          message: `No duplicates allowed.`,
+          input: ctx.value,
+        });
+      }
+    });
+    ```
+    </Tab>
+    </Tabs>
+  </Accordion>
+  </Accordions>
+</Callout>
+
+### `.check()`
+
+
+The `.refine()` API is syntactic sugar atop a more versatile (and verbose) API called `.check()`. You can use this API to create multiple issues in a single refinement or have full control of the generated issue objects.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const UniqueStringArray = z.array(z.string()).check((ctx) => {
+  if (ctx.value.length > 3) {
+    ctx.issues.push({
+      code: "too_big",
+      maximum: 3,
+      origin: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+      input: ctx.value
+    });
+  }
+
+  if (ctx.value.length !== new Set(ctx.value).size) {
+    ctx.issues.push({
+      code: "custom",
+      message: `No duplicates allowed.`,
+      input: ctx.value,
+      continue: true // make this issue continuable (default: false)
+    });
+  }
+});
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const UniqueStringArray = z.array(z.string()).check((ctx) => {
+  if (ctx.value.length > 3) {
+    ctx.issues.push({
+      code: "too_big",
+      maximum: 3,
+      origin: "array",
+      inclusive: true,
+      message: "Too many items 😡",
+      input: ctx.value,
+    });
+  }
+
+  if (ctx.value.length !== new Set(ctx.value).size) {
+    ctx.issues.push({
+      code: "custom",
+      message: `No duplicates allowed.`,
+      input: ctx.value,
+      continue: true // make this issue continuable (default: false)
+    });
+  }
+});
+```
+</Tab>
+</Tabs>
+
+The regular `.refine` API only generated create issues with a `"custom"` error code, but `.superRefine()` makes it possible to throw other issue types. For more information on Zod's internal issue types, read the [Error customization]`(/error-customization) docs.
+
+## Pipes
+
+Schemas can be chained together into "pipes". Pipes are primarily useful when used in conjunction with [Transforms](#transforms).
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const stringToLength = z.string().pipe(z.transform(val => val.length));
+
+stringToLength.parse("hello"); // => 5
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const stringToLength = z.pipe(z.string(), z.transform(val => val.length));
+
+z.parse(stringToLength, "hello"); // => 5
+```
+</Tab>
+</Tabs>
+
+
+## Transforms
+
+Transforms are a special kind of schema. Instead of validating input, they accept anything and perform some transformation on the data. To define a transform:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const castToString = z.transform((val) => String(val));
+
+castToString.parse("asdf"); // => "asdf"
+castToString.parse(123); // => "123"
+castToString.parse(true); // => "true"
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const castToString = z.transform((val) => String(val));
+
+z.parse(castToString, "asdf"); // => "asdf"
+z.parse(castToString, 123); // => "123"
+z.parse(castToString, true); // => "true"
+```
+</Tab>
+</Tabs>
+
+{/* The output type of the schema is inferred from the transform function:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const castToString = z.transform((val) => String(val));
+
+type CastToString = z.infer<typeof castToString>; // string
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts @zod/mini
+const castToString = z.transform((val) => String(val));
+
+type CastToString = z.infer<typeof castToString>; // string
+```
+</Tab>
+</Tabs> */}
+
+
+Most commonly, transforms are used in conjunction with [Pipes](#pipes). This combination is useful for performing some initial validation, then transforming the parsed data into another form.
+
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const stringToLength = z.string().pipe(z.transform(val => val.length));
+
+stringToLength.parse("hello"); // => 5
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const stringToLength = z.pipe(z.string(), z.transform(val => val.length));
+
+z.parse(stringToLength, "hello"); // => 5
+```
+</Tab>
+</Tabs>
+
+
+Since piping a schema into a transform is such a common pattern, Zod provides a convenience `.transform()` method.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const stringToLength = z.string().transform(val => val.length); 
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+// no equivalent
+```
+</Tab>
+</Tabs>
+
+Transforms can also be async:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const idToUser = z
+  .string()
+  .transform(async (id) => {
+    // fetch user from database
+    return db.getUserById(id); 
+  });
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const idToUser = z.pipe(
+  z.string(),
+  z.transform(async (id) => {
+    // fetch user from database
+    return db.getUserById(id); 
+  })
+);
+```
+</Tab>
+</Tabs>
+
+<Callout>
+  If you use async transforms, you must use a `.parseAsync` or `.safeParseAsync` when parsing data! Otherwise Zod will throw an error.
+
+  <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+  <Tab value="zod">
+  ```ts
+  const result = await idToUser.parseAsync("abc123");
+  ```
+  </Tab>
+  <Tab value="@zod/mini">
+  ```ts
+  const result = await z.parseAsync(idToUser, "abc123");
+  ```
+  </Tab>
+  </Tabs>
+</Callout>
+
+<Accordions>
+<Accordion title="Validating inside transform">
+
+To perform validation logic inside a transform, use `ctx`. To report a validation issue, push a new issue onto `ctx.issues`. This is the same as the [`.check()`](#check) API.
+
+```ts
+const coercedInt = z.transform((val, ctx) => {
+  try {
+    const parsed = Number.parseInt(String(val));
+    return parsed;
+  } catch (e) {
+    ctx.issues.push({
+      code: "custom",
+      message: "Not a number",
+      input: val,
+    });
+
+    // this is a special constant with type `never`
+    // return it to exit the transform without impacting the inferred return type
+    return z.NEVER; 
+  }
+});
+```
+</Accordion>
+</Accordions>
+
+
+## Defaults
+
+To set a default value for a schema:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const defaultTuna = z.string().default("tuna");
+
+defaultTuna.parse(undefined); // => "tuna"
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const defaultTuna = z.default(z.string(), "tuna");
+
+defaultTuna.parse(undefined); // => "tuna"
+```
+</Tab>
+</Tabs>
+
+
+{/* This value will be returned if the `input` is undefined. This is also true inside object schemas:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const Fish = z.interface({
+  name: z.string().default("tuna"),
+});
+
+Fish.parse({}); // => { name: "tuna" }
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const Fish = z.interface({
+  name: z.string().default("tuna"),
+});
+
+z.parse(Fish, {}); // => { name: "tuna" }
+```
+</Tab>
+</Tabs> */}
+
+Alternatively, you can pass a function which will be re-executed whenever a default value needs to be generated:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const randomDefault = z.number().default(Math.random);
+
+randomDefault.parse(undefined);    // => 0.4413456736055323
+randomDefault.parse(undefined);    // => 0.1871840107401901
+randomDefault.parse(undefined);    // => 0.7223408162401552
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const randomDefault = z.default(z.number(), Math.random);
+
+z.parse(randomDefault, undefined); // => 0.4413456736055323
+z.parse(randomDefault, undefined); // => 0.1871840107401901
+z.parse(randomDefault, undefined); // => 0.7223408162401552
+```
+</Tab>
+</Tabs>
+
+## Catch
+
+Use `.catch()` to define a fallback value to be returned in the event of a validation error:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const numberWithCatch = z.number().catch(42);
+
+numberWithCatch.parse(5); // => 5
+numberWithCatch.parse("tuna"); // => 42
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const numberWithCatch = z.catch(z.number(), 42);
+
+numberWithCatch.parse(5); // => 5
+numberWithCatch.parse("tuna"); // => 42
+```
+</Tab>
+</Tabs>
+
+
+Alternatively, you can pass a function which will be re-executed whenever a catch value needs to be generated.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const numberWithRandomCatch = z.number().catch((ctx) => {
+  ctx.error; // the caught ZodError
+  return Math.random();
+});
+
+numberWithRandomCatch.parse("sup"); // => 0.4413456736055323
+numberWithRandomCatch.parse("sup"); // => 0.1871840107401901
+numberWithRandomCatch.parse("sup"); // => 0.7223408162401552
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const numberWithRandomCatch = z.catch(z.number(), (ctx) => {
+  ctx.value;   // the input value
+  ctx.issues;  // the caught validation issue
+  return Math.random();
+});
+
+z.parse(numberWithRandomCatch, "sup"); // => 0.4413456736055323
+z.parse(numberWithRandomCatch, "sup"); // => 0.1871840107401901
+z.parse(numberWithRandomCatch, "sup"); // => 0.7223408162401552
+```
+</Tab>
+</Tabs>
+
+## Branded types
+
+TypeScript's type system is [structural](https://www.typescriptlang.org/docs/handbook/type-compatibility.html), meaning that two types that are structurally equivalent are considered the same.
+
+```ts
+type Cat = { name: string };
+type Dog = { name: string };
+
+const pluto: Dog = { name: "pluto" };
+const simba: Cat = fido; // works fine
+```
+
+In some cases, its can be desirable to simulate [nominal typing](https://en.wikipedia.org/wiki/Nominal_type_system) inside TypeScript. This can be achieved with *branded types* (also known as "opaque types").
+
+```ts
+const Cat = z.object({ name: z.string() }).brand<"Cat">();
+const Dog = z.object({ name: z.string() }).brand<"Dog">();
+
+type Cat = z.infer<typeof Cat>; // { name: string } & z.$brand<"Cat">
+type Dog = z.infer<typeof Dog>; // { name: string } & z.$brand<"Dog">
+
+const pluto = Dog.parse({ name: "pluto" });
+const simba: Cat = pluto; // ❌ not allowed
+```
+
+Under the hood, this works by attaching a "brand" to the schema's inferred type.
+
+```ts
+const Cat = z.object({ name: z.string() }).brand<"Cat">();
+type Cat = z.infer<typeof Cat>; // { name: string } & z.$brand<"Cat">
+```
+
+With this brand, any plain (unbranded) data structures are no longer assignable to the inferred type. You have to parse some data with the schema to get branded data.
+
+
+> Note that branded types do not affect the runtime result of `.parse`. It is a static-only construct.
+
+## Readonly
+
+To mark a schema as readonly:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const ReadonlyUser = z.object({ name: z.string() }).readonly();
+type ReadonlyUser = z.infer<typeof ReadonlyUser>;
+// Readonly<{ name: string }>
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const ReadonlyUser = z.readonly(z.object({ name: z.string() }));
+type ReadonlyUser = z.infer<typeof ReadonlyUser>;
+// Readonly<{ name: string }>
+```
+</Tab>
+</Tabs>
+
+This returns a new schema that wraps the original. The new schema's inferred type will be marked as `readonly`. Note that this only affects objects, arrays, tuples, `Set`, and `Map` in TypeScript:
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+z.object({ name: z.string() }).readonly(); // { readonly name: string }
+z.array(z.string()).readonly(); // readonly string[]
+z.tuple([z.string(), z.number()]).readonly(); // readonly [string, number]
+z.map(z.string(), z.date()).readonly(); // ReadonlyMap<string, Date>
+z.set(z.string()).readonly(); // ReadonlySet<string>
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+z.readonly(z.object({ name: z.string() })); // { readonly name: string }
+z.readonly(z.array(z.string())); // readonly string[]
+z.readonly(z.tuple([z.string(), z.number()])); // readonly [string, number]
+z.readonly(z.map(z.string(), z.date())); // ReadonlyMap<string, Date>
+z.readonly(z.set(z.string())); // ReadonlySet<string>
+```
+</Tab>
+</Tabs>
+
+Inputs will be parsed using the original schema, then the result will be frozen with [`Object.freeze()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze) to prevent modifications.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+const result = ReadonlyUser.parse({ name: "fido" });
+result.name = "simba"; // throws TypeError
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+const result = z.parse(ReadonlyUser, { name: "fido" });
+result.name = "simba"; // throws TypeError
+```
+</Tab>
+</Tabs>
+
+## Template literals
+
+> **New in Zod 4**
+
+To define a template literal schema:
+
+```ts
+const schema = z.templateLiteral("hello, ", z.string(), "!");
+// `hello, ${string}!`
+```
+
+The `z.templateLiteral` API can handle any number of string literals (e.g. `"hello"`) and schemas. Any schema with an inferred type that's assignable to `string | number | bigint | boolean | null | undefined` can be passed.
+
+```ts
+z.templateLiteral([ "hi there" ]); 
+// `hi there`
+
+z.templateLiteral([ "email: ", z.string()]); 
+// `email: ${string}`
+
+z.templateLiteral([ "high", z.literal(5) ]); 
+// `high5`
+
+z.templateLiteral([ z.nullable(z.literal("grassy")) ]); 
+// `grassy` | `null`
+
+z.templateLiteral([ z.number(), z.enum(["px", "em", "rem"]) ]); 
+// `${number}px` | `${number}em` | `${number}rem`
+```
+
+## JSON
+
+To validate any JSON-encodable value:
+
+```ts
+const jsonSchema = z.json();
+```
+
+This is a convenience API that returns the following union schema:
+
+```ts
+const jsonSchema = z.lazy(() => {
+  return z.union([
+    z.string(params), 
+    z.number(), 
+    z.boolean(), 
+    z.null(), 
+    z.array(jsonSchema), 
+    z.record(z.string(), jsonSchema)
+  ]);
+});
+```
+
+## Custom
+
+You can create a Zod schema for any TypeScript type by using `z.custom()`. This is useful for creating schemas for types that are not supported by Zod out of the box, such as template string literals.
+
+```ts
+const px = z.custom<`${number}px`>((val) => {
+  return typeof val === "string" ? /^\d+px$/.test(val) : false;
+});
+
+type px = z.infer<typeof px>; // `${number}px`
+
+px.parse("42px"); // "42px"
+px.parse("42vw"); // throws;
+```
+
+If you don't provide a validation function, Zod will allow any value. This can be dangerous!
+
+```ts
+z.custom<{ arg: string }>(); // performs no validation
+```
+
+You can customize the error message and other options by passing a second argument. This parameter works the same way as the params parameter of [`.refine`](#refine).
+
+```ts
+z.custom<...>((val) => ..., "custom error message");
+```
+

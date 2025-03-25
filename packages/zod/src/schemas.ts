@@ -70,7 +70,9 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   ): ZodPipe<this, ZodTransform<Awaited<NewOut>, core.output<this>>>;
   catch(def: core.output<this>): ZodCatch<this>;
   catch(def: (ctx: core.$ZodCatchCtx) => core.output<this>): ZodCatch<this>;
-  pipe<T extends core.$ZodType>(target: T): ZodPipe<this, T>;
+  pipe<T extends core.$ZodType<any, this["_zod"]["output"]>>(
+    target: T | core.$ZodType<any, this["_zod"]["output"]>
+  ): ZodPipe<this, T>;
   readonly(): ZodReadonly<this>;
 
   // metadata
@@ -1841,7 +1843,7 @@ export const ZodTransform: core.$constructor<ZodTransform> = core.$constructor("
 });
 
 export function transform<I = unknown, O = I>(
-  fn: (input: I, ctx?: core.ParsePayload) => O,
+  fn: (input: I, ctx: core.ParsePayload) => O,
   params?: core.$ZodTransformParams
 ): ZodTransform<Awaited<O>, I> {
   return new ZodTransform({
@@ -2227,9 +2229,9 @@ export type ZodJSONSchema = ZodUnion<
 };
 
 export function json(params?: core.$ZodCustomParams): ZodJSONSchema {
-  const jsonSchema = lazy(() => {
+  const jsonSchema: any = lazy(() => {
     return union([string(params), number(), boolean(), _null(), array(jsonSchema), record(string(), jsonSchema)]);
-  }) as any;
+  });
 
   return jsonSchema;
 }

@@ -1,0 +1,19 @@
+{
+  "root": true,
+  "pages": [
+    "---Documentation---",
+    "index",
+    "api",
+    "parsing",
+    "error-customization",
+    "metadata",
+    "json-schema",
+    "type-inference",
+    "ecosystem",
+    "---Packages---",
+    "packages/zod",
+    "packages/mini",
+    "packages/json",
+    "packages/core"
+  ]
+}

@@ -19,7 +19,7 @@
   "navigation": {
     "groups": [
       {
-        "group": "zod",
+        "group": "Docs",
         "pages": [
           "home",
           "api",
@@ -32,8 +32,8 @@
         ]
       },
       {
-        "group": "guides",
-        "pages": ["mini", "object-vs-interface", "generic-functions"]
+        "group": "Packages",
+        "pages": ["zod", "api?lib=json", "json", "core"]
       }
     ]
   },

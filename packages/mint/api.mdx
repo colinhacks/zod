@@ -1,5 +1,6 @@
 ---
 title: Defining schemas
+sidebarTitle: "Defining schemas"
 ---
 
 import {CodeGroup} from "@mintlify/components";
@@ -10,23 +11,23 @@ import {CodeGroup} from "@mintlify/components";
 ```ts
 import { z } from "zod";
 
-// primitive values
+// primitive types
 z.string();
 z.number();
 z.bigint();
 z.boolean();
-z.date();
 z.symbol();
+z.undefined();
+z.null();
 ```
 
-To coerce input data to the appropriate type, use `z.coerce`. All primitive types (except `symbol`) have an coerced equivalent. 
+To coerce input data to the appropriate type, use `z.coerce` instead:
 
 ```ts
 z.coerce.string();    // String(input)
 z.coerce.number();    // Number(input)
 z.coerce.boolean();   // Boolean(input)
 z.coerce.bigint();    // BigInt(input)
-z.coerce.date();      // new Date(input)
 ```
 
 The coerced variant of these schemas attempts to convert the input value to the appropriate type.
@@ -34,10 +35,10 @@ The coerced variant of these schemas attempts to convert the input value to the 
 ```ts
 const schema = z.coerce.string();
 
-schema.parse("tuna"); // => "tuna"
-schema.parse(42); // => "42"
-schema.parse(true); // => "true"
-schema.parse(null); // => "null"
+schema.parse("tuna");    // => "tuna"
+schema.parse(42);        // => "42"
+schema.parse(true);      // => "true"
+schema.parse(null);      // => "null"
 ```
 
 
@@ -73,10 +74,9 @@ schema.parse(null); // => "null"
   For total control over coercion logic, consider using [`z.transform()`](#preprocess) or [`z.pipe()`](#pipe).
 </Accordion>
 
-
-
-
 ## Literals
+
+<div>
 
 Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types), like `"hello world"` or `5`.
 
@@ -87,6 +87,8 @@ const twobig = z.literal(2n);
 const tru = z.literal(true);
 const terrific = z.literal(Symbol("terrific"));
 ```
+
+</div>
 
 To represent the JavaScript literals `null` and `undefined`:
 
@@ -104,7 +106,7 @@ const colors = z.literal(["red", "green", "blue"]);
 
 To extract the set of allowed values from a literal schema:
 
-<CodeGroup>
+<CodeGroup onChange={(e)=>{console.log(e)}} onCopied={()=>{console.log("copy")}}> 
 
 ```ts zod
 colors.values; // => Set<"red" | "green" | "blue">
@@ -118,7 +120,7 @@ colors.values; // => Set<"red" | "green" | "blue">
 
 ## Strings
 
-Zod provides a handful of built-in string validation and transform APIs.
+{/* Zod provides a handful of built-in string validation and transform APIs.
 
 <CodeGroup>
 ```ts zod
@@ -140,9 +142,9 @@ z.string().startsWith("fourscore", {error: "Nice try, buddy"})
 ```ts @zod/mini
 z.string().check(z.startsWith("fourscore", {error: "Nice try, buddy"}))
 ```
-</CodeGroup>
+</CodeGroup> */}
 
-To perform some common string validations:
+Zod provides a handful of built-in string validation and transform APIs. To perform some common string validations:
 
 <CodeGroup>
 ```ts zod
@@ -172,8 +174,6 @@ z.string().check(z.lowercase());
 
 
 To perform some simple string transforms:
-
-
 
 <CodeGroup>
 ```ts zod
@@ -219,10 +219,10 @@ To validate email addresses:
 z.email();
 ```
 
-By default, Zod uses a comparatively strict email regex designed to validate normal email addresses containing common characters. It's roughly equivalent to the rules enforced by Gmail.
+By default, Zod uses a comparatively strict email regex designed to validate normal email addresses containing common characters. It's roughly equivalent to the rules enforced by Gmail. To learn more about this regex, refer to [this post](https://colinhacks.com/essays/reasonable-email-regex).
 
 ```ts
-/^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/
+/^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i
 ```
 
 To customize the email validation behavior, you can pass a custom regular expression to the `pattern` param.
@@ -234,18 +234,18 @@ z.email({ pattern: /your regex here/ });
 Zod exports several useful regexes you could use.
 
 ```ts
-// the default email regex
-z.regexes.email; 
+// Zod's default email regex
+z.email(z.regexes.emai)l
 
 // the regex used by browsers to validate input[type=email] fields
 // https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email
-z.regexes.html5Email;
+z.email(z.regexes.html5Email);
 
 // the classic emailregex.com regex (RFC 5322)
-z.regexes.rfc5322Email;
+z.email(z.regexes.rfc5322Email);
 
 // a loose regex that allows Unicode (good for intl emails)
-z.regexes.unicodeEmail;
+z.email(z.regexes.unicodeEmail);
 ```
 
 ### UUIDs
@@ -697,12 +697,12 @@ const nullishYoda = z.nullish(z.literal("yoda"));
 </CodeGroup>
 
 Refer to the TypeScript manual for more about the concept of [nullish](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-7.html#nullish-coalescing).
+
 ## Unknown
 
-Zod aims to mirror TypeScript's type system one-to-one. As such, Zod provides APIs to represent the following special types:
+Zod aims to mirror TypeScript's type system one-to-one. As such, Zod provides APIs to represent certain special types.
 
 ```ts
-// allows any values
 z.any();
 z.unknown();
 ```
@@ -1549,9 +1549,9 @@ z.set(z.string()).check(z.size(5)); // must contain 5 items exactly
 
 ## Promises
 
-<Warn>
+<Warning>
   **Deprecated** — `z.promise()` is deprecated in Zod 4. There are vanishingly few valid uses cases for a `Promise` schema. If you suspect a value might be a `Promise`, simply `await` it before parsing it with Zod.
-</Warn>
+</Warning>
 
 <Accordion title="See z.promise() documentation">
 ```ts

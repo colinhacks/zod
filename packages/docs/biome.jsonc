@@ -24,7 +24,8 @@
         "noUnsafeDeclarationMerging": "off",
         "noMisleadingInstantiator": "off",
         "noEmptyInterface": "off",
-        "noConfusingVoidType": "off"
+        "noConfusingVoidType": "off",
+        "noThenProperty": "off"
       },
       "style": {
         "noUnusedTemplateLiteral": "off", // why is this even a best practice?

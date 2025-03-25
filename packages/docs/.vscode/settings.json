@@ -7,5 +7,9 @@
     "quickfix.biome": "explicit"
   },
   "editor.wordWrap": "wordWrapColumn",
-  "editor.wordWrapColumn": 120
+  "editor.wordWrapColumn": 120,
+  "[mdx]": {
+    "editor.defaultFormatter": "unifiedjs.vscode-mdx",
+    "editor.formatOnSave": true
+  }
 }

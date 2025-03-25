@@ -62,6 +62,14 @@ test("question mark optional", () => {
   expect(schema.parse({ a: "foo" })).toEqual({ a: "foo" });
 });
 
+test("default in optional key", () => {
+  const schema = z.interface({
+    "name?": z.string().default("tuna"),
+  });
+  expect(schema.parse({}).name).toEqual("tuna");
+  expect(schema.parse({ name: undefined }).name).toEqual("tuna");
+});
+
 test("defaulted key", () => {
   const schema = z.interface({
     "?a": z.string().default("asdf"),

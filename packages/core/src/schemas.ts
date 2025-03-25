@@ -14,7 +14,7 @@ export interface ParseContext {
   /** Include the `input` field in issue objects. Default `false`. */
   readonly reportInput?: boolean;
   /** Skip eval-based fast path. Default `false`. */
-  // readonly skipFast?: boolean;
+  readonly noPrecompilation?: boolean;
   /** Abort validation after the first error. Default `false`. */
   // readonly abortEarly?: boolean;
 }
@@ -1321,8 +1321,25 @@ export interface $ZodObjectLikeInternals<out O = object, out I = object> extends
 }
 
 function handleObjectResult(result: ParsePayload, final: ParsePayload, key: PropertyKey) {
+  // if(isOptional)
   if (result.issues.length) {
     final.issues.push(...util.prefixIssues(key, result.issues));
+  } else {
+    (final.value as any)[key] = result.value;
+  }
+}
+
+function handleOptionalObjectResult(result: ParsePayload, final: ParsePayload, key: PropertyKey, input: any) {
+  if (result.issues.length) {
+    if (input[key] === undefined) {
+      if (key in input) {
+        (final.value as any)[key] = undefined;
+      }
+    } else {
+      final.issues.push(...util.prefixIssues(key, result.issues));
+    }
+  } else if (result.value === undefined) {
+    if (key in input) (final.value as any)[key] = undefined;
   } else {
     (final.value as any)[key] = result.value;
   }
@@ -1425,28 +1442,59 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
       doc.write(`}`);
 
       // add in optionalKeys if defined
+
+      // OLD: only run validation if they are define in input
+      // for (const key of keys) {
+      //   if (!optionalKeys.has(key)) continue;
+      //   const id = ids[key];
+      //   doc.write(`if (${util.esc(key)} in input) {`);
+      //   doc.indented(() => {
+      //     doc.write(`if(input[${util.esc(key)}] === undefined) {`);
+      //     doc.indented(() => {
+      //       doc.write(`payload.value[${util.esc(key)}] = undefined;`);
+      //     });
+      //     doc.write(`} else {`);
+      //     doc.indented(() => {
+      //       doc.write(`const ${id} = ${parseStr(key)};`);
+      //       doc.write(`payload.value[${util.esc(key)}] = ${id}.value;`);
+      //       doc.write(`
+      //         if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({
+      //           ...iss,
+      //           path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}]
+      //         })));`);
+      //     });
+      //     doc.write(`}`);
+      //   });
+      //   doc.write(`}`);
+      // }
+
+      // NEW: always run validation
+      // this lets default values get applied to optionals
       for (const key of keys) {
         if (!optionalKeys.has(key)) continue;
         const id = ids[key];
-        doc.write(`if (${util.esc(key)} in input) {`);
-        doc.indented(() => {
-          doc.write(`if(input[${util.esc(key)}] === undefined) {`);
-          doc.indented(() => {
-            doc.write(`payload.value[${util.esc(key)}] = undefined;`);
-          });
-          doc.write(`} else {`);
-          doc.indented(() => {
-            doc.write(`const ${id} = ${parseStr(key)};`);
-            doc.write(`payload.value[${util.esc(key)}] = ${id}.value;`);
-            doc.write(`
-              if (${id}.issues.length) payload.issues = payload.issues.concat(${id}.issues.map(iss => ({ 
-                ...iss, 
-                path: iss.path ? [${util.esc(key)}, ...iss.path] : [${util.esc(key)}] 
-              })));`);
-          });
-          doc.write(`}`);
-        });
-        doc.write(`}`);
+        doc.write(`const ${id} = ${parseStr(key)};`);
+        const k = util.esc(key);
+        doc.write(`
+        if (${id}.issues.length) {
+          if (input[${k}] === undefined) {
+            if (${k} in input) {
+              payload.value[${k}] = undefined;
+            }
+          } else {
+            payload.issues = payload.issues.concat(
+              ${id}.issues.map((iss) => ({
+                ...iss,
+                path: iss.path ? [${k}, ...iss.path] : [${k}],
+              }))
+            );
+          }
+        } else if (${id}.value === undefined) {
+          if (${k} in input) payload.value[${k}] = undefined;
+        } else {
+          payload.value[${k}] = ${id}.value;
+        }  
+        `);
       }
 
       // doc.write(`payload.value = final;`);
@@ -1477,7 +1525,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
 
       const proms: Promise<any>[] = [];
 
-      if (fastEnabled && ctx?.async === false) {
+      if (fastEnabled && ctx?.async === false && ctx.noPrecompilation !== true) {
         // always synchronous
         if (!fastpass) fastpass = generateFastpass(def.shape);
         payload = fastpass(payload, ctx);
@@ -1501,21 +1549,31 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
           //   });
           // }
 
-          if (normalized.optionalKeys.has(key)) {
-            if (!(key in input)) {
-              continue;
-            }
-            if (input[key] === undefined) {
-              input[key] = undefined;
-              continue;
-            }
-          }
-
           const r = valueSchema._zod.run({ value: input[key], issues: [] }, ctx);
+          const isOptional = normalized.optionalKeys.has(key);
+          // if (isOptional) {
+          //   if (!(key in input)) {
+          //     continue;
+          //   }
+          //   if (input[key] === undefined) {
+          //     input[key] = undefined;
+          //     continue;
+          //   }
+          // }
+
+          // const r = valueSchema._zod.run({ value: input[key], issues: [] }, ctx);
           if (r instanceof Promise) {
-            proms.push(r.then((r) => handleObjectResult(r, payload, key)));
+            proms.push(
+              r.then((r) =>
+                isOptional ? handleOptionalObjectResult(r, payload, key, input) : handleObjectResult(r, payload, key)
+              )
+            );
           } else {
-            handleObjectResult(r, payload, key);
+            if (isOptional) {
+              handleOptionalObjectResult(r, payload, key, input);
+            } else {
+              handleObjectResult(r, payload, key);
+            }
           }
         }
       }

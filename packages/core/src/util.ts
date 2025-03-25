@@ -317,8 +317,10 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
 export const allowsEval: { value: boolean } = cached(() => {
   try {
     new Function("");
+    console.log("eval!");
     return true;
   } catch (_) {
+    console.log("no eval");
     return false;
   }
 });

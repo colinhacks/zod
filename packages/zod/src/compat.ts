@@ -35,7 +35,7 @@ const INVALID: INVALID = Object.freeze({
   status: "aborted",
 });
 
-/** @deprecated Not necessary in Zod 4. */
+/** A special constant with type `never` */
 export const NEVER = INVALID as never;
 
 /** @deprecated Use `z.$ZodFlattenedError` */

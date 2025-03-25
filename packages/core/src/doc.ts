@@ -35,6 +35,7 @@ export class Doc {
 
   compile() {
     const lines = [...this.content.map((x) => `  ${x}`)];
+    console.log(lines.join("\n"));
     return new Function(...this.args, lines.join("\n"));
   }
 }
