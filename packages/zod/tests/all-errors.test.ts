@@ -23,7 +23,6 @@ test("regular error", () => {
             "path": [
               "f1",
             ],
-            "received": "Infinity",
           },
           {
             "code": "invalid_type",

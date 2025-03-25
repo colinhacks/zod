@@ -143,7 +143,7 @@ export interface $ZodType<out O = unknown, out I = unknown> {
   "~standard": StandardSchemaV1.Props<this["_zod"]["input"], this["_zod"]["output"]>;
 }
 
-export const $ZodType: core.$constructor<$ZodType> = core.$constructor("$ZodType", (inst, def) => {
+export const $ZodType: core.$constructor<$ZodType> = /*@__PURE__*/ core.$constructor("$ZodType", (inst, def) => {
   inst ??= {} as any;
   inst._zod.id = def.type + "_" + util.randomString(10);
   inst._zod.def = def; // set _def property
@@ -230,11 +230,11 @@ export const $ZodType: core.$constructor<$ZodType> = core.$constructor("$ZodType
 
   util.defineLazy(inst, "~standard", () => ({
     validate: (value: unknown) => {
-      const result = inst._zod.run({ value, issues: [] }, { async: false });
+      const result = inst._zod.run({ value, issues: [] }, {});
       if (result instanceof Promise) {
-        return result.then((result) => {
-          if (result.issues.length === 0) return { value: result.value } as any;
-          return { issues: result.issues };
+        return result.then(({ issues, value }) => {
+          if (issues.length === 0) return { value } as any;
+          return { issues };
         });
       }
       if (result.issues.length === 0) return { value: result.value } as any;
@@ -600,31 +600,92 @@ export const $ZodISODuration: core.$constructor<$ZodISODuration> = /*@__PURE__*/
   }
 );
 
-//////////////////////////////   ZodIP   //////////////////////////////
+//////////////////////////////   ZodIPv4   //////////////////////////////
 
-export interface $ZodIPDef extends $ZodStringFormatDef<"ip"> {
-  version?: "v4" | "v6";
+export interface $ZodIPv4Def extends $ZodStringFormatDef<"ipv4"> {
+  version?: "v4";
 }
 
-export interface $ZodIPInternals extends $ZodStringFormatInternals<"ip"> {
-  def: $ZodIPDef;
+export interface $ZodIPv4Internals extends $ZodStringFormatInternals<"ipv4"> {
+  def: $ZodIPv4Def;
 }
 
-export interface $ZodIP extends $ZodType {
-  _zod: $ZodIPInternals;
+export interface $ZodIPv4 extends $ZodType {
+  _zod: $ZodIPv4Internals;
 }
 
-export const $ZodIP: core.$constructor<$ZodIP> = /*@__PURE__*/ core.$constructor("$ZodIP", (inst, def): void => {
-  if (def.version === "v4") def.pattern ??= regexes.ipv4;
-  else if (def.version === "v6") def.pattern ??= regexes.ipv6;
-  else def.pattern ??= regexes.ip;
+export const $ZodIPv4: core.$constructor<$ZodIPv4> = /*@__PURE__*/ core.$constructor("$ZodIPv4", (inst, def): void => {
+  def.pattern ??= regexes.ipv4;
   $ZodStringFormat.init(inst, def);
   const superAttach = inst._zod.onattach;
   inst._zod.onattach = (inst) => {
     superAttach?.(inst);
-    inst._zod.computed.format = `ip${def.version ?? ""}`;
+    inst._zod.computed.format = `ipv4`;
   };
 });
+//////////////////////////////   ZodIPv6   //////////////////////////////
+
+export interface $ZodIPv6Def extends $ZodStringFormatDef<"ipv6"> {
+  version?: "v6";
+}
+
+export interface $ZodIPv6Internals extends $ZodStringFormatInternals<"ipv6"> {
+  def: $ZodIPv6Def;
+}
+
+export interface $ZodIPv6 extends $ZodType {
+  _zod: $ZodIPv6Internals;
+}
+
+export const $ZodIPv6: core.$constructor<$ZodIPv6> = /*@__PURE__*/ core.$constructor("$ZodIPv6", (inst, def): void => {
+  def.pattern ??= regexes.ipv6;
+  $ZodStringFormat.init(inst, def);
+  const superAttach = inst._zod.onattach;
+  inst._zod.onattach = (inst) => {
+    superAttach?.(inst);
+    inst._zod.computed.format = `ipv6`;
+  };
+
+  inst._zod.check = (payload) => {
+    try {
+      new URL(`http://[${payload.value}]`);
+      // return;
+    } catch {
+      payload.issues.push({
+        code: "invalid_format",
+        format: "ipv6",
+        input: payload.value,
+        inst,
+      });
+    }
+  };
+});
+
+//////////////////////////////   ZodIP   //////////////////////////////
+
+// export interface $ZodIPDef extends $ZodStringFormatDef<"ip"> {
+//   version?: "v4" | "v6";
+// }
+
+// export interface $ZodIPInternals extends $ZodStringFormatInternals<"ip"> {
+//   def: $ZodIPDef;
+// }
+
+// export interface $ZodIP extends $ZodType {
+//   _zod: $ZodIPInternals;
+// }
+
+// export const $ZodIP: core.$constructor<$ZodIP> = /*@__PURE__*/ core.$constructor("$ZodIP", (inst, def): void => {
+//   if (def.version === "v4") def.pattern ??= regexes.ipv4;
+//   else if (def.version === "v6") def.pattern ??= regexes.ipv6;
+//   else def.pattern ??= regexes.ip;
+//   $ZodStringFormat.init(inst, def);
+//   const superAttach = inst._zod.onattach;
+//   inst._zod.onattach = (inst) => {
+//     superAttach?.(inst);
+//     inst._zod.computed.format = `ip${def.version ?? ""}`;
+//   };
+// });
 
 //////////////////////////////   ZodBase64   //////////////////////////////
 
@@ -772,7 +833,16 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
     if (typeof input === "number" && !Number.isNaN(input) && Number.isFinite(input)) {
       return payload;
     }
-    const received = Number.isNaN(input) ? "NaN" : !Number.isFinite(input) ? "Infinity" : undefined;
+
+    const received =
+      typeof input !== "number"
+        ? typeof input
+        : Number.isNaN(input)
+          ? "NaN"
+          : !Number.isFinite(input)
+            ? "Infinity"
+            : undefined;
+
     payload.issues.push({
       expected: "number",
       code: "invalid_type",
@@ -1356,12 +1426,18 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
     util.defineLazy(inst._zod, "shape", () => def.shape);
 
     const _normalized = util.cached(() => {
-      const n = util.normalizeObjectLikeDef(def);
-      return n;
+      const keys = Object.keys(def.shape);
+      return {
+        shape: def.shape,
+        keys,
+        keySet: new Set(keys),
+        numKeys: keys.length,
+        optionalKeys: new Set(def.optional),
+      };
     });
 
     util.defineLazy(inst._zod, "disc", () => {
-      const shape = _normalized.value.shape;
+      const shape = def.shape;
       const discMap: util.DiscriminatorMap = new Map();
       let hasDisc = false;
       for (const key in shape) {
@@ -1380,8 +1456,8 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
     });
 
     const generateFastpass = (shape: any) => {
-      const { keys, optionalKeys } = _normalized.value;
       const doc = new Doc(["shape", "payload", "ctx"]);
+      const { keys, optionalKeys } = _normalized.value;
       const parseStr = (key: string) => {
         const k = util.esc(key);
         return `shape[${k}]._zod.run({ value: input[${k}], issues: [] }, ctx)`;
@@ -1531,10 +1607,10 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
         payload = fastpass(payload, ctx);
       } else {
         payload.value = {};
-        const normalized = _normalized.value;
-
-        for (const key of normalized.keys) {
-          const valueSchema = normalized.shape[key];
+        // const normalized = _normalized.value;
+        const { keys, shape, optionalKeys } = _normalized.value;
+        for (const key of keys) {
+          const valueSchema = shape[key];
 
           // do not add omitted optional keys
           // if (!(key in input)) {
@@ -1550,7 +1626,7 @@ export const $ZodObjectLike: core.$constructor<$ZodObjectLike> = /*@__PURE__*/ c
           // }
 
           const r = valueSchema._zod.run({ value: input[key], issues: [] }, ctx);
-          const isOptional = normalized.optionalKeys.has(key);
+          const isOptional = optionalKeys.has(key);
           // if (isOptional) {
           //   if (!(key in input)) {
           //     continue;
@@ -3448,7 +3524,7 @@ export interface $ZodCustom<O = unknown, I = unknown> extends $ZodType {
   _zod: $ZodCustomInternals<O, I>;
 }
 
-export const $ZodCustom: core.$constructor<$ZodCustom> = core.$constructor("$ZodCustom", (inst, def) => {
+export const $ZodCustom: core.$constructor<$ZodCustom> = /*@__PURE__*/ core.$constructor("$ZodCustom", (inst, def) => {
   if (def.checks?.length) console.warn("Can't add custom checks to z.custom()");
 
   checks.$ZodCheck.init(inst, def);

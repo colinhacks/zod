@@ -31,10 +31,13 @@ export interface $ZodCheck<in T = never> {
   _zod: $ZodCheckInternals<T>;
 }
 
-export const $ZodCheck: core.$constructor<$ZodCheck<any>> = core.$constructor("$ZodCheck", (inst, def) => {
-  inst._zod ??= {} as any;
-  inst._zod.def = def;
-});
+export const $ZodCheck: core.$constructor<$ZodCheck<any>> = /*@__PURE__*/ core.$constructor(
+  "$ZodCheck",
+  (inst, def) => {
+    inst._zod ??= {} as any;
+    inst._zod.def = def;
+  }
+);
 
 ///////////////////////////////////////
 /////      $ZodCheckLessThan      /////
@@ -59,7 +62,7 @@ export interface $ZodCheckLessThan<T extends util.Numeric = util.Numeric> extend
   _zod: $ZodCheckLessThanInternals<T>;
 }
 
-export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = core.$constructor(
+export const $ZodCheckLessThan: core.$constructor<$ZodCheckLessThan> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckLessThan",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -109,7 +112,7 @@ export interface $ZodCheckGreaterThan<T extends util.Numeric = util.Numeric> ext
   _zod: $ZodCheckGreaterThanInternals<T>;
 }
 
-export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = core.$constructor(
+export const $ZodCheckGreaterThan: core.$constructor<$ZodCheckGreaterThan> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckGreaterThan",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -161,9 +164,8 @@ export interface $ZodCheckMultipleOf<T extends number | bigint = number | bigint
   _zod: $ZodCheckMultipleOfInternals<T>;
 }
 
-export const $ZodCheckMultipleOf: core.$constructor<$ZodCheckMultipleOf<number | bigint>> = core.$constructor(
-  "$ZodCheckMultipleOf",
-  (inst, def) => {
+export const $ZodCheckMultipleOf: core.$constructor<$ZodCheckMultipleOf<number | bigint>> =
+  /*@__PURE__*/ core.$constructor("$ZodCheckMultipleOf", (inst, def) => {
     $ZodCheck.init(inst, def);
 
     inst._zod.onattach = (inst) => {
@@ -188,8 +190,7 @@ export const $ZodCheckMultipleOf: core.$constructor<$ZodCheckMultipleOf<number |
         continue: !def.abort,
       });
     };
-  }
-);
+  });
 
 /////////////////////////////////////
 /////    $ZodCheckFinite    /////
@@ -430,7 +431,7 @@ export interface $ZodCheckMaxSize<T extends util.HasSize = util.HasSize> extends
   _zod: $ZodCheckMaxSizeInternals<T>;
 }
 
-export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> = core.$constructor(
+export const $ZodCheckMaxSize: core.$constructor<$ZodCheckMaxSize> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckMaxSize",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -479,7 +480,7 @@ export interface $ZodCheckMinSize<T extends util.HasSize = util.HasSize> extends
   _zod: $ZodCheckMinSizeInternals<T>;
 }
 
-export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = core.$constructor(
+export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckMinSize",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -527,7 +528,7 @@ export interface $ZodCheckSizeEquals<T extends util.HasSize = util.HasSize> exte
   _zod: $ZodCheckSizeEqualsInternals<T>;
 }
 
-export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = core.$constructor(
+export const $ZodCheckSizeEquals: core.$constructor<$ZodCheckSizeEquals> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckSizeEquals",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -578,7 +579,7 @@ export interface $ZodCheckMaxLength<T extends util.HasLength = util.HasLength> e
   _zod: $ZodCheckMaxLengthInternals<T>;
 }
 
-export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = core.$constructor(
+export const $ZodCheckMaxLength: core.$constructor<$ZodCheckMaxLength> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckMaxLength",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -628,7 +629,7 @@ export interface $ZodCheckMinLength<T extends util.HasLength = util.HasLength> e
   _zod: $ZodCheckMinLengthInternals<T>;
 }
 
-export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = core.$constructor(
+export const $ZodCheckMinLength: core.$constructor<$ZodCheckMinLength> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckMinLength",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -679,7 +680,7 @@ export interface $ZodCheckLengthEquals<T extends util.HasLength = util.HasLength
   _zod: $ZodCheckLengthEqualsInternals<T>;
 }
 
-export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = core.$constructor(
+export const $ZodCheckLengthEquals: core.$constructor<$ZodCheckLengthEquals> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckLengthEquals",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -733,7 +734,6 @@ export type $ZodStringFormats =
   | "iso_date"
   | "iso_time"
   | "iso_duration"
-  | "ip"
   | "ipv4"
   | "ipv6"
   | "base64"
@@ -761,7 +761,7 @@ export interface $ZodCheckStringFormat extends $ZodCheck<string> {
   _zod: $ZodCheckStringFormatInternals;
 }
 
-export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = core.$constructor(
+export const $ZodCheckStringFormat: core.$constructor<$ZodCheckStringFormat> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckStringFormat",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -805,23 +805,26 @@ export interface $ZodCheckRegex extends $ZodCheck<string> {
   _zod: $ZodCheckRegexInternals;
 }
 
-export const $ZodCheckRegex: core.$constructor<$ZodCheckRegex> = core.$constructor("$ZodCheckRegex", (inst, def) => {
-  $ZodCheckStringFormat.init(inst, def);
+export const $ZodCheckRegex: core.$constructor<$ZodCheckRegex> = /*@__PURE__*/ core.$constructor(
+  "$ZodCheckRegex",
+  (inst, def) => {
+    $ZodCheckStringFormat.init(inst, def);
 
-  inst._zod.check = (payload) => {
-    def.pattern.lastIndex = 0;
-    if (def.pattern.test(payload.value)) return;
-    payload.issues.push({
-      origin: "string",
-      code: "invalid_format",
-      format: "regex",
-      input: payload.value,
-      pattern: def.pattern.toString(),
-      inst,
-      continue: !def.abort,
-    });
-  };
-});
+    inst._zod.check = (payload) => {
+      def.pattern.lastIndex = 0;
+      if (def.pattern.test(payload.value)) return;
+      payload.issues.push({
+        origin: "string",
+        code: "invalid_format",
+        format: "regex",
+        input: payload.value,
+        pattern: def.pattern.toString(),
+        inst,
+        continue: !def.abort,
+      });
+    };
+  }
+);
 
 ///////////////////////////////////
 /////    $ZodCheckJSONString    /////
@@ -836,7 +839,7 @@ export const $ZodCheckRegex: core.$constructor<$ZodCheckRegex> = core.$construct
 //   _def: $ZodCheckJSONStringDef;
 // }
 
-// export const $ZodCheckJSONString: core.$constructor<$ZodCheckJSONString> = core.$constructor(
+// export const $ZodCheckJSONString: core.$constructor<$ZodCheckJSONString> = /*@__PURE__*/ core.$constructor(
 //   "$ZodCheckJSONString",
 //   (inst, def) => {
 //     $ZodCheck.init(inst, def);
@@ -873,7 +876,7 @@ export interface $ZodCheckLowerCase extends $ZodCheck<string> {
   _zod: $ZodCheckLowerCaseInternals;
 }
 
-export const $ZodCheckLowerCase: core.$constructor<$ZodCheckLowerCase> = core.$constructor(
+export const $ZodCheckLowerCase: core.$constructor<$ZodCheckLowerCase> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckLowerCase",
   (inst, def) => {
     def.pattern ??= regexes.lowercase;
@@ -895,7 +898,7 @@ export interface $ZodCheckUpperCase extends $ZodCheck<string> {
   _zod: $ZodCheckUpperCaseInternals;
 }
 
-export const $ZodCheckUpperCase: core.$constructor<$ZodCheckUpperCase> = core.$constructor(
+export const $ZodCheckUpperCase: core.$constructor<$ZodCheckUpperCase> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckUpperCase",
   (inst, def) => {
     def.pattern ??= regexes.uppercase;
@@ -920,7 +923,7 @@ export interface $ZodCheckIncludes extends $ZodCheck<string> {
   _zod: $ZodCheckIncludesInternals;
 }
 
-export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = core.$constructor(
+export const $ZodCheckIncludes: core.$constructor<$ZodCheckIncludes> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckIncludes",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -962,7 +965,7 @@ export interface $ZodCheckStartsWith extends $ZodCheck<string> {
   _zod: $ZodCheckStartsWithInternals;
 }
 
-export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = core.$constructor(
+export const $ZodCheckStartsWith: core.$constructor<$ZodCheckStartsWith> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckStartsWith",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -1004,7 +1007,7 @@ export interface $ZodCheckEndsWith extends $ZodCheckInternals<string> {
   _zod: $ZodCheckEndsWithInternals;
 }
 
-export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = core.$constructor(
+export const $ZodCheckEndsWith: core.$constructor<$ZodCheckEndsWith> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckEndsWith",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -1057,7 +1060,7 @@ export interface $ZodCheckProperty<T extends object = object> extends $ZodCheck<
   _zod: $ZodCheckPropertyInternals<T>;
 }
 
-export const $ZodCheckProperty: core.$constructor<$ZodCheckProperty> = core.$constructor(
+export const $ZodCheckProperty: core.$constructor<$ZodCheckProperty> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckProperty",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -1098,7 +1101,7 @@ export interface $ZodCheckMimeType<T extends File = File> extends $ZodCheck<T> {
   _zod: $ZodCheckMimeTypeInternals<T>;
 }
 
-export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = core.$constructor(
+export const $ZodCheckMimeType: core.$constructor<$ZodCheckMimeType> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckMimeType",
   (inst, def) => {
     $ZodCheck.init(inst, def);
@@ -1166,7 +1169,7 @@ export interface $ZodCheckOverwrite<T = unknown> extends $ZodCheck<T> {
   _zod: $ZodCheckOverwriteInternals<T>;
 }
 
-export const $ZodCheckOverwrite: core.$constructor<$ZodCheckOverwrite> = core.$constructor(
+export const $ZodCheckOverwrite: core.$constructor<$ZodCheckOverwrite> = /*@__PURE__*/ core.$constructor(
   "$ZodCheckOverwrite",
   (inst, def) => {
     $ZodCheck.init(inst, def);

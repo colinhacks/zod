@@ -41,7 +41,6 @@ test("return errors from both union arms", () => {
                 "expected": "number",
                 "message": "Invalid input: expected number",
                 "path": [],
-                "received": "Infinity",
               },
             ],
             [

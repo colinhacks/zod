@@ -14,8 +14,36 @@ test("NaN validation", () => {
 
 test("Infinity validation", () => {
   const schema = z.number();
-  expect(() => schema.parse(Number.POSITIVE_INFINITY)).toThrow();
-  expect(() => schema.parse(Number.NEGATIVE_INFINITY)).toThrow();
+  expect(schema.safeParse(Number.POSITIVE_INFINITY)).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "number",
+            "message": "Invalid input: expected number",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse(Number.NEGATIVE_INFINITY)).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "number",
+            "message": "Invalid input: expected number",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
 
 test(".gt() validation", () => {
@@ -121,8 +149,36 @@ test(".step() validation", () => {
 test(".finite() validation", () => {
   const schema = z.number().finite();
   expect(schema.parse(123)).toEqual(123);
-  expect(() => schema.parse(Number.POSITIVE_INFINITY)).toThrow();
-  expect(() => schema.parse(Number.NEGATIVE_INFINITY)).toThrow();
+  expect(schema.safeParse(Number.POSITIVE_INFINITY)).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "number",
+            "message": "Invalid input: expected number",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
+  expect(schema.safeParse(Number.NEGATIVE_INFINITY)).toMatchInlineSnapshot(`
+    {
+      "error": ZodError {
+        "issues": [
+          {
+            "code": "invalid_type",
+            "expected": "number",
+            "message": "Invalid input: expected number",
+            "path": [],
+          },
+        ],
+      },
+      "success": false,
+    }
+  `);
 });
 
 test(".safe() validation", () => {

@@ -190,12 +190,6 @@ export class $ZodError<T = unknown> implements Error {
   static [Symbol.hasInstance](inst: any) {
     return inst?._tag === ZOD_ERROR;
   }
-
-  static assert(value: unknown): asserts value is $ZodError {
-    if (!(value instanceof $ZodError)) {
-      throw new Error(`Not a $ZodError: ${value}`);
-    }
-  }
 }
 
 ///////////////////    ERROR UTILITIES   ////////////////////////

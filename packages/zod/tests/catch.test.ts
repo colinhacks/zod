@@ -241,7 +241,6 @@ test("catch error", () => {
           "path": [
             "age",
           ],
-          "received": "Infinity",
         },
       ],
     }

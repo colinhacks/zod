@@ -1,27 +1,63 @@
 ---
-title: Parsing data
+title: Basic usage
 ---
 
-Given a Zod schema, there are a number of ways to parse data with it. 
+This page will walk you through the basics of creating schemas, parsing data, and using inferred types. For complete documentation on Zod's schema API, refer to [Defining schemas](/api).
 
-## `.parse()`
+## Defining a schema
+
+Before you can do anything else, you need to define a schema. For the purposes of this guide, we'll use a simple object schema.
+
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
+```ts
+import * as z from "zod";
+
+const Player = z.interface({ 
+  username: z. string(),
+  xp: z.number()
+});
+```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+import * as z from "@zod/mini";
+
+const Player = z.interface({ 
+  username: z. string(),
+  xp: z.number()
+});
+```
+</Tab>
+</Tabs>
+
+## Parsing data
+
+Now that we have a schema, we can parse some data with it. 
+
+## `.parse`
 
 `.parse(data: unknown): T`
 
-Given any Zod schema, use `.parse` to validate an input. If it's valid, Zod returns a strongly-typed *deep clone* of the input. Otherwise Otherwise, a `ZodError` is thrown.
+Given any Zod schema, use `.parse` to validate an input. If it's valid, Zod returns a strongly-typed *deep clone* of the input. 
 
 ```ts
-const stringSchema = z.string();
+Player.parse({ username: "billie", xp: 100 }); 
+// => returns { username: "billie", xp: 100 }
+```
 
-stringSchema.parse("fish"); // => returns "fish"
-stringSchema.parse(12); // throws ZodError
+Otherwise, a `ZodError` instance is thrown with detailed information about the validation issues.
+
+```ts
+Player.parse({ username: 42, xp: "100" });
+
 ```
 
 ## `.parseAsync`
 
 `.parseAsync(data:unknown): Promise<T>`
 
-If you use asynchronous [refinements](#refine) or [transforms](#transform) (more on those later), you'll need to use `.parseAsync`.
+If you use certain asynchronous APIs (e.g. `async` [refinements](#refine) or [transforms](#transform)), you'll need to use `.parseAsync` instead. 
 
 ```ts
 const stringSchema = z.string().refine(async (val) => val.length <= 8);

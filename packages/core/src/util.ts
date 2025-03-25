@@ -317,10 +317,8 @@ export function isObject(data: any): data is Record<PropertyKey, unknown> {
 export const allowsEval: { value: boolean } = cached(() => {
   try {
     new Function("");
-    console.log("eval!");
     return true;
   } catch (_) {
-    console.log("no eval");
     return false;
   }
 });
@@ -640,8 +638,8 @@ export const NUMBER_FORMAT_RANGES: Record<checks.$ZodNumberFormats, [number, num
 };
 
 export const BIGINT_FORMAT_RANGES: Record<checks.$ZodBigIntFormats, [bigint, bigint]> = {
-  int64: [BigInt("-9223372036854775808"), BigInt("9223372036854775807")],
-  uint64: [BigInt(0), BigInt("18446744073709551615")],
+  int64: [/* @__PURE__*/ BigInt("-9223372036854775808"), /* @__PURE__*/ BigInt("9223372036854775807")],
+  uint64: [/* @__PURE__*/ BigInt(0), /* @__PURE__*/ BigInt("18446744073709551615")],
 };
 
 export function pick(schema: schemas.$ZodObjectLike, mask: object): any {

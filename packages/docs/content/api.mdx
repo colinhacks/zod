@@ -295,34 +295,34 @@ z.guid();
 
 As you may have noticed, Zod string includes a few date/time related validations. These validations are regular expression based, so they are not as strict as a full date/time library. However, they are very convenient for validating user input.
 
-The `z.iso.datetime()` method enforces ISO 8601; default is no timezone offsets and arbitrary sub-second decimal precision.
+The `z.iso.datetime()` method enforces ISO 8601; by default, no timezone offsets are allowed:
 
 ```ts
 const datetime = z.iso.datetime();
 
-datetime.parse("2020-01-01T00:00:00Z"); // pass
-datetime.parse("2020-01-01T00:00:00.123Z"); // pass
-datetime.parse("2020-01-01T00:00:00.123456Z"); // pass (arbitrary precision)
-datetime.parse("2020-01-01T00:00:00+02:00"); // fail (no offsets allowed)
+datetime.parse("2020-01-01T00:00:00Z"); // ✅
+datetime.parse("2020-01-01T00:00:00.123Z"); // ✅
+datetime.parse("2020-01-01T00:00:00.123456Z"); // ✅ (arbitrary precision)
+datetime.parse("2020-01-01T00:00:00+02:00"); // ❌ (no offsets allowed)
 ```
 
-Timezone offsets can be allowed by setting the `offset` option to `true`.
+To allow Timezone offsets can be allowed by setting the `offset` option to `true`.
 
 ```ts
 const datetime = z.iso.datetime({ offset: true });
 
-datetime.parse("2020-01-01T00:00:00+02:00"); // pass
-datetime.parse("2020-01-01T00:00:00.123+02:00"); // pass (millis optional)
-datetime.parse("2020-01-01T00:00:00.123+0200"); // pass (millis optional)
-datetime.parse("2020-01-01T00:00:00.123+02"); // pass (only offset hours)
-datetime.parse("2020-01-01T00:00:00Z"); // pass (Z still supported)
+datetime.parse("2020-01-01T00:00:00+02:00"); // ✅
+datetime.parse("2020-01-01T00:00:00.123+02:00"); // ✅ (millis optional)
+datetime.parse("2020-01-01T00:00:00.123+0200"); // ✅ (millis optional)
+datetime.parse("2020-01-01T00:00:00.123+02"); // ✅ (only offset hours)
+datetime.parse("2020-01-01T00:00:00Z"); // ✅ (Z still supported)
 ```
 
 Allow unqualified (timezone-less) datetimes with the `local` flag.
 
 ```ts
 const schema = z.iso.datetime({ local: true });
-schema.parse("2020-01-01T00:00:00"); // pass
+schema.parse("2020-01-01T00:00:00"); // ✅
 ```
 
 You can additionally constrain the allowable `precision`. By default, arbitrary sub-second precision is supported (but optional).
@@ -330,9 +330,9 @@ You can additionally constrain the allowable `precision`. By default, arbitrary 
 ```ts
 const datetime = z.iso.datetime({ precision: 3 });
 
-datetime.parse("2020-01-01T00:00:00.123Z"); // pass
-datetime.parse("2020-01-01T00:00:00Z"); // fail
-datetime.parse("2020-01-01T00:00:00.123456Z"); // fail
+datetime.parse("2020-01-01T00:00:00.123Z"); // ✅
+datetime.parse("2020-01-01T00:00:00Z"); // ❌
+datetime.parse("2020-01-01T00:00:00.123456Z"); // ❌
 ```
 
 ### ISO dates
@@ -342,9 +342,9 @@ The `z.iso.date()` method validates strings in the format `YYYY-MM-DD`.
 ```ts
 const date = z.iso.date();
 
-date.parse("2020-01-01"); // pass
-date.parse("2020-1-1"); // fail
-date.parse("2020-01-32"); // fail
+date.parse("2020-01-01"); // ✅
+date.parse("2020-1-1"); // ❌
+date.parse("2020-01-32"); // ❌
 ```
 
 ### ISO times
@@ -356,12 +356,12 @@ The `z.iso.time()` method validates strings in the format `HH:MM:SS[.s+]`. The s
 ```ts
 const time = z.iso.time();
 
-time.parse("00:00:00"); // pass
-time.parse("09:52:31"); // pass
-time.parse("23:59:59.9999999"); // pass (arbitrary precision)
+time.parse("00:00:00"); // ✅
+time.parse("09:52:31"); // ✅
+time.parse("23:59:59.9999999"); // ✅ (arbitrary precision)
 
-time.parse("00:00:00.123Z"); // fail (no `Z` allowed)
-time.parse("00:00:00.123+02:00"); // fail (no offsets allowed)
+time.parse("00:00:00.123Z"); // ❌ (no `Z` allowed)
+time.parse("00:00:00.123+02:00"); // ❌ (no offsets allowed)
 ```
 
 You can set the `precision` option to constrain the allowable decimal precision.
@@ -369,35 +369,36 @@ You can set the `precision` option to constrain the allowable decimal precision.
 ```ts
 const time = z.iso.time({ precision: 3 });
 
-time.parse("00:00:00.123"); // pass
-time.parse("00:00:00.123456"); // fail
-time.parse("00:00:00"); // fail
+time.parse("00:00:00.123"); // ✅
+time.parse("00:00:00.123456"); // ❌
+time.parse("00:00:00"); // ❌
 ```
 
 ### IP addresses
 
-By default `.ip()` allows both IPv4 and IPv6.
+```ts
+const ipv4 = z.string().ip({ version: "v4" });
+ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // ❌
+
+const ipv6 = z.string().ip({ version: "v6" });
+ipv6.parse("192.168.1.1"); // ❌
+```
+
+To allow both IPv4 and IPv6:
 
 ```ts
 const ip = z.string().ip();
 
-ip.parse("192.168.1.1"); // pass
-ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // pass
-ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // pass
+ip.parse("192.168.1.1"); // ✅
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // ✅
+ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // ✅
 
-ip.parse("256.1.1.1"); // fail
-ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // fail
+ip.parse("256.1.1.1"); // ❌
+ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // ❌
 ```
 
 You can additionally set the IP `version`.
 
-```ts
-const ipv4 = z.string().ip({ version: "v4" });
-ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
-
-const ipv6 = z.string().ip({ version: "v6" });
-ipv6.parse("192.168.1.1"); // fail
-```
 
 ### IP ranges (CIDR)
 
@@ -405,18 +406,18 @@ Validate IP address ranges specified with [CIDR notation](https://en.wikipedia.o
 
 ```ts
 const cidr = z.string().cidr();
-cidr.parse("192.168.0.0/24"); // pass
-cidr.parse("2001:db8::/32"); // pass
+cidr.parse("192.168.0.0/24"); // ✅
+cidr.parse("2001:db8::/32"); // ✅
 ```
 
 You can specify a version with the `version` parameter.
 
 ```ts
 const ipv4Cidr = z.string().cidr({ version: "v4" });
-ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // ❌
 
 const ipv6Cidr = z.string().cidr({ version: "v6" });
-ipv6Cidr.parse("192.168.1.1"); // fail
+ipv6Cidr.parse("192.168.1.1"); // ❌
 ```
 
 ## Numbers
@@ -2196,7 +2197,6 @@ type CastToString = z.infer<typeof castToString>; // string
 </Tab>
 </Tabs> */}
 
-
 Most commonly, transforms are used in conjunction with [Pipes](#pipes). This combination is useful for performing some initial validation, then transforming the parsed data into another form.
 
 
@@ -2217,6 +2217,7 @@ z.parse(stringToLength, "hello"); // => 5
 </Tab>
 </Tabs>
 
+### `.transform()`
 
 Since piping a schema into a transform is such a common pattern, Zod provides a convenience `.transform()` method.
 

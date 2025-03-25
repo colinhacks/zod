@@ -1,0 +1,24 @@
+{
+  "name": "zod-treeshake",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "bundle:rollup": "rollup -c",
+    "bundle:esbuild": "esbuild --bundle ./in.ts --outfile=./out.js --bundle --format=esm"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@types/node": "^22.13.13",
+    "@zod/mini": "3.23.8",
+    "rollup": "^4.37.0",
+    "rollup-plugin-filesize": "^10.0.0"
+  },
+  "dependencies": {
+    "rollup-plugin-bundle-size": "^1.0.3",
+    "valibot": "^1.0.0"
+  }
+}

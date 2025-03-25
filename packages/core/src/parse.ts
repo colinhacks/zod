@@ -23,7 +23,7 @@ export function _parse<T extends schemas.$ZodType>(
   }
   return result.value as core.output<T>;
 }
-export const parse: typeof _parse = _parse.bind({ Error: errors.$ZodError });
+export const parse: typeof _parse = /* @__PURE__*/ _parse.bind({ Error: errors.$ZodError });
 
 export function _safeParse<T extends schemas.$ZodType>(
   this: ParseThis,
@@ -48,7 +48,7 @@ export function _safeParse<T extends schemas.$ZodType>(
       : { success: true, data: result.value }
   ) as util.SafeParseResult<core.output<T>>;
 }
-export const safeParse: typeof _safeParse = _safeParse.bind({ Error: errors.$ZodError });
+export const safeParse: typeof _safeParse = /* @__PURE__*/ _safeParse.bind({ Error: errors.$ZodError });
 
 export async function _parseAsync<T extends schemas.$ZodType>(
   this: ParseThis,
@@ -66,7 +66,7 @@ export async function _parseAsync<T extends schemas.$ZodType>(
   }
   return result.value as core.output<T>;
 }
-export const parseAsync: typeof _parseAsync = _parseAsync.bind({ Error: errors.$ZodError });
+export const parseAsync: typeof _parseAsync = /* @__PURE__*/ _parseAsync.bind({ Error: errors.$ZodError });
 
 export async function _safeParseAsync<T extends schemas.$ZodType>(
   this: ParseThis,
@@ -88,4 +88,4 @@ export async function _safeParseAsync<T extends schemas.$ZodType>(
   }
   return { success: true, data: result.value };
 }
-export const safeParseAsync: typeof _safeParseAsync = _safeParseAsync.bind({ Error: errors.$ZodError });
+export const safeParseAsync: typeof _safeParseAsync = /* @__PURE__*/ _safeParseAsync.bind({ Error: errors.$ZodError });

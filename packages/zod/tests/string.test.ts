@@ -566,7 +566,7 @@ test("format", () => {
   // expect(z.string().json().format).toEqual("json_string");
   expect(z.string().xid().format).toEqual("xid");
   expect(z.string().ksuid().format).toEqual("ksuid");
-  expect(z.string().ip().format).toEqual("ip");
+  // expect(z.string().ip().format).toEqual("ip");
   expect(z.string().ipv4().format).toEqual("ipv4");
   expect(z.string().ipv6().format).toEqual("ipv6");
   expect(z.string().e164().format).toEqual("e164");
@@ -811,43 +811,88 @@ test("iso_duration", () => {
   }
 });
 
-test("IP validation", () => {
-  const ip = z.string().ip();
-  expect(ip.safeParse("122.122.122.122").success).toBe(true);
+// test("IP validation", () => {
+//   const ipSchema = z.string().ip();
 
-  const ipv4 = z.string().ip({ version: "v4" });
+//   // General IP validation (accepts both v4 and v6)
+//   expect(ipSchema.safeParse("114.71.82.94").success).toBe(true);
+//   expect(ipSchema.safeParse("0.0.0.0").success).toBe(true);
+//   expect(ipSchema.safeParse("37.85.236.115").success).toBe(true);
+//   expect(ipSchema.safeParse("1e5e:e6c8:daac:514b:114b:e360:d8c0:682c").success).toBe(true);
+//   expect(ipSchema.safeParse("9d4:c956:420f:5788:4339:9b3b:2418:75c3").success).toBe(true);
+//   expect(ipSchema.safeParse("a6ea::2454:a5ce:94.105.123.75").success).toBe(true);
+//   expect(ipSchema.safeParse("474f:4c83::4e40:a47:ff95:0cda").success).toBe(true);
+//   expect(ipSchema.safeParse("d329:0:25b4:db47:a9d1:0:4926:0000").success).toBe(true);
+//   expect(ipSchema.safeParse("e48:10fb:1499:3e28:e4b6:dea5:4692:912c").success).toBe(true);
+
+//   expect(ipSchema.safeParse("d329:1be4:25b4:db47:a9d1:dc71:4926:992c:14af").success).toBe(false);
+//   expect(ipSchema.safeParse("d5e7:7214:2b78::3906:85e6:53cc:709:32ba").success).toBe(false);
+//   expect(ipSchema.safeParse("8f69::c757:395e:976e::3441").success).toBe(false);
+//   expect(ipSchema.safeParse("54cb::473f:d516:0.255.256.22").success).toBe(false);
+//   expect(ipSchema.safeParse("54cb::473f:d516:192.168.1").success).toBe(false);
+//   expect(ipSchema.safeParse("256.0.4.4").success).toBe(false);
+//   expect(ipSchema.safeParse("-1.0.555.4").success).toBe(false);
+//   expect(ipSchema.safeParse("0.0.0.0.0").success).toBe(false);
+//   expect(ipSchema.safeParse("1.1.1").success).toBe(false);
+// });
+
+test("IPv4 validation", () => {
+  const ipv4 = z.string().ipv4();
+
+  // Valid IPv4 addresses
+  expect(ipv4.safeParse("114.71.82.94").success).toBe(true);
+  expect(ipv4.safeParse("0.0.0.0").success).toBe(true);
+  expect(ipv4.safeParse("37.85.236.115").success).toBe(true);
+  expect(ipv4.safeParse("192.168.0.1").success).toBe(true);
+  expect(ipv4.safeParse("255.255.255.255").success).toBe(true);
+  expect(ipv4.safeParse("1.2.3.4").success).toBe(true);
+
+  // Invalid IPv4 addresses
+  expect(ipv4.safeParse("256.0.4.4").success).toBe(false);
+  expect(ipv4.safeParse("-1.0.555.4").success).toBe(false);
+  expect(ipv4.safeParse("0.0.0.0.0").success).toBe(false);
+  expect(ipv4.safeParse("1.1.1").success).toBe(false);
+  expect(ipv4.safeParse("1e5e:e6c8:daac:514b:114b:e360:d8c0:682c").success).toBe(false);
+  expect(ipv4.safeParse("a6ea::2454:a5ce:94.105.123.75").success).toBe(false);
+  expect(ipv4.safeParse("not an ip").success).toBe(false);
+  expect(ipv4.safeParse("1.2.3").success).toBe(false);
+  expect(ipv4.safeParse("1.2.3.4.5").success).toBe(false);
+  expect(ipv4.safeParse("1.2.3.256").success).toBe(false);
+
+  // Test specific error
   expect(() => ipv4.parse("6097:adfa:6f0b:220d:db08:5021:6191:7990")).toThrow();
+});
 
-  const ipv6 = z.string().ip({ version: "v6" });
+test("IPv6 validation", () => {
+  const ipv6 = z.string().ipv6();
+
+  // Valid IPv6 addresses
+  expect(ipv6.safeParse("1e5e:e6c8:daac:514b:114b:e360:d8c0:682c").success).toBe(true);
+  expect(ipv6.safeParse("9d4:c956:420f:5788:4339:9b3b:2418:75c3").success).toBe(true);
+  expect(ipv6.safeParse("a6ea::2454:a5ce:94.105.123.75").success).toBe(true);
+  expect(ipv6.safeParse("474f:4c83::4e40:a47:ff95:0cda").success).toBe(true);
+  expect(ipv6.safeParse("d329:0:25b4:db47:a9d1:0:4926:0000").success).toBe(true);
+  expect(ipv6.safeParse("e48:10fb:1499:3e28:e4b6:dea5:4692:912c").success).toBe(true);
+  expect(ipv6.safeParse("::1").success).toBe(true);
+  expect(ipv6.safeParse("2001:db8::").success).toBe(true);
+  expect(ipv6.safeParse("2001:0db8:85a3:0000:0000:8a2e:0370:7334").success).toBe(true);
+  expect(ipv6.safeParse("2001:db8::192.168.0.1").success).toBe(true);
+  expect(ipv6.safeParse("::ffff:192.168.0.1").success).toBe(true);
+  expect(ipv6.safeParse("::ffff:c000:0280").success).toBe(true); // IPv4-mapped IPv6 address
+  expect(ipv6.safeParse("64:ff9b::192.168.0.1").success).toBe(true); // IPv4/IPv6 translation
+
+  // Invalid IPv6 addresses
+  expect(ipv6.safeParse("d329:1be4:25b4:db47:a9d1:dc71:4926:992c:14af").success).toBe(false);
+  expect(ipv6.safeParse("d5e7:7214:2b78::3906:85e6:53cc:709:32ba").success).toBe(false);
+  expect(ipv6.safeParse("8f69::c757:395e:976e::3441").success).toBe(false);
+  expect(ipv6.safeParse("54cb::473f:d516:0.255.256.22").success).toBe(false);
+  expect(ipv6.safeParse("54cb::473f:d516:192.168.1").success).toBe(false);
+  expect(ipv6.safeParse("114.71.82.94").success).toBe(false);
+  expect(ipv6.safeParse("not an ip").success).toBe(false);
+  expect(ipv6.safeParse("g123::1234:5678").success).toBe(false);
+
+  // Test specific error
   expect(() => ipv6.parse("254.164.77.1")).toThrow();
-
-  const validIPs = [
-    "1e5e:e6c8:daac:514b:114b:e360:d8c0:682c",
-    "9d4:c956:420f:5788:4339:9b3b:2418:75c3",
-    "a6ea::2454:a5ce:94.105.123.75",
-    "474f:4c83::4e40:a47:ff95:0cda",
-    "d329:0:25b4:db47:a9d1:0:4926:0000",
-    "e48:10fb:1499:3e28:e4b6:dea5:4692:912c",
-    "114.71.82.94",
-    "0.0.0.0",
-    "37.85.236.115",
-  ];
-
-  const invalidIPs = [
-    "d329:1be4:25b4:db47:a9d1:dc71:4926:992c:14af",
-    "d5e7:7214:2b78::3906:85e6:53cc:709:32ba",
-    "8f69::c757:395e:976e::3441",
-    "54cb::473f:d516:0.255.256.22",
-    "54cb::473f:d516:192.168.1",
-    "256.0.4.4",
-    "-1.0.555.4",
-    "0.0.0.0.0",
-    "1.1.1",
-  ];
-  // no parameters check IPv4 or IPv6
-  const ipSchema = z.string().ip();
-  expect(validIPs.every((ip) => ipSchema.safeParse(ip).success)).toBe(true);
-  expect(invalidIPs.every((ip) => ipSchema.safeParse(ip).success === false)).toBe(true);
 });
 
 test("E.164 validation", () => {

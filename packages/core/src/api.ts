@@ -254,51 +254,49 @@ export function _ksuid<T extends schemas.$ZodKSUID>(
 }
 
 // IP
-export type $ZodIPParams = util.StringFormatParams<schemas.$ZodIP, "pattern">;
-export type $ZodCheckIPParams = util.CheckStringFormatParams<schemas.$ZodIP, "pattern">;
-export function _ip<T extends schemas.$ZodIP>(
-  Class: util.SchemaClass<T>,
-  params?: string | $ZodIPParams | $ZodCheckIPParams
-): T {
-  return new Class({
-    type: "string",
-    format: "ip",
-    check: "string_format",
-    abort: false,
-    ...util.normalizeParams(params),
-  });
-}
+// export type $ZodIPParams = util.StringFormatParams<schemas.$ZodIP, "pattern">;
+// export type $ZodCheckIPParams = util.CheckStringFormatParams<schemas.$ZodIP, "pattern">;
+// export function _ip<T extends schemas.$ZodIP>(
+//   Class: util.SchemaClass<T>,
+//   params?: string | $ZodIPParams | $ZodCheckIPParams
+// ): T {
+//   return new Class({
+//     type: "string",
+//     format: "ip",
+//     check: "string_format",
+//     abort: false,
+//     ...util.normalizeParams(params),
+//   });
+// }
 
 // IPv4
-export type $ZodIPv4Params = util.StringFormatParams<schemas.$ZodIP, "pattern">;
-export type $ZodCheckIPv4Params = util.CheckStringFormatParams<schemas.$ZodIP, "pattern">;
-export function _ipv4<T extends schemas.$ZodIP>(
+export type $ZodIPv4Params = util.StringFormatParams<schemas.$ZodIPv4, "pattern">;
+export type $ZodCheckIPv4Params = util.CheckStringFormatParams<schemas.$ZodIPv4, "pattern">;
+export function _ipv4<T extends schemas.$ZodIPv4>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPv4Params | $ZodCheckIPv4Params
 ): T {
   return new Class({
     type: "string",
-    format: "ip",
+    format: "ipv4",
     check: "string_format",
     abort: false,
-    version: "v4",
     ...util.normalizeParams(params),
   });
 }
 
 // IPv6
-export type $ZodIPv6Params = util.StringFormatParams<schemas.$ZodIP, "pattern">;
-export type $ZodCheckIPv6Params = util.CheckStringFormatParams<schemas.$ZodIP, "pattern">;
-export function _ipv6<T extends schemas.$ZodIP>(
+export type $ZodIPv6Params = util.StringFormatParams<schemas.$ZodIPv6, "pattern">;
+export type $ZodCheckIPv6Params = util.CheckStringFormatParams<schemas.$ZodIPv6, "pattern">;
+export function _ipv6<T extends schemas.$ZodIPv6>(
   Class: util.SchemaClass<T>,
   params?: string | $ZodIPv6Params | $ZodCheckIPv6Params
 ): T {
   return new Class({
     type: "string",
-    format: "ip",
+    format: "ipv6",
     check: "string_format",
     abort: false,
-    version: "v6",
     ...util.normalizeParams(params),
   });
 }

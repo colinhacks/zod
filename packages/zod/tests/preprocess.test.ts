@@ -200,7 +200,6 @@ test("z.NEVER in preprocess", () => {
             "expected": "number",
             "message": "Invalid input: expected number",
             "path": [],
-            "received": "Infinity",
           },
         ],
       },

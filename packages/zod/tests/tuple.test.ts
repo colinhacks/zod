@@ -20,7 +20,6 @@ test("successful validation", () => {
           "path": [
             1,
           ],
-          "received": "Infinity",
         },
       ],
     }
@@ -79,7 +78,6 @@ test("async validation", async () => {
           "path": [
             1,
           ],
-          "received": "Infinity",
         },
       ],
     }
