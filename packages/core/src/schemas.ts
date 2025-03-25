@@ -835,13 +835,13 @@ export const $ZodNumber: core.$constructor<$ZodNumber> = /*@__PURE__*/ core.$con
     }
 
     const received =
-      typeof input !== "number"
-        ? typeof input
-        : Number.isNaN(input)
+      typeof input === "number"
+        ? Number.isNaN(input)
           ? "NaN"
           : !Number.isFinite(input)
             ? "Infinity"
-            : undefined;
+            : undefined
+        : undefined;
 
     payload.issues.push({
       expected: "number",
