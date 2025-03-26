@@ -584,6 +584,7 @@ export abstract class ZodType<
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type IpVersion = "v4" | "v6";
+export type CaseSensitivity = "sensitive" | "insensitive";
 export type ZodStringCheck =
   | { kind: "min"; value: number; message?: string }
   | { kind: "max"; value: number; message?: string }
@@ -630,7 +631,7 @@ export type ZodStringCheck =
       kind: "envbool";
       truthyValues?: string[];
       falsyValues?: string[];
-      caseSensitivity?: "sensitive" | "insensitive";
+      caseSensitivity?: CaseSensitivity;
       message?: string;
     };
 
@@ -781,7 +782,7 @@ function isValidEnvBool(
   value: string,
   truthyValues?: string[],
   falsyValues?: string[],
-  caseSensitivity?: "sensitive" | "insensitive"
+  caseSensitivity?: CaseSensitivity
 ): "valid" | "invalid" {
   // Initialize default values
   let truthy = ["true", "1", "on", "yes", "y", "enabled"];
@@ -1200,12 +1201,16 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return this._addCheck({ kind: "cidr", ...errorUtil.errToObj(options) });
   }
 
-  envbool(options: {
-    true?: string[];
-    false?: string[];
-    case?: "sensitive" | "insensitive";
-    message?: string;
-  }) {
+  envbool(
+    options?:
+      | string
+      | {
+          true?: string[];
+          false?: string[];
+          case?: CaseSensitivity;
+          message?: string;
+        }
+  ) {
     return this._addCheck({ kind: "envbool", ...errorUtil.errToObj(options) });
   }
 

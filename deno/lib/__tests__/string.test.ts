@@ -919,5 +919,3 @@ test("CIDR validation", () => {
     invalidCidrs.every((ip) => cidrSchema.safeParse(ip).success === false)
   ).toBe(true);
 });
-
-// TODO: add test cases for envbool here
