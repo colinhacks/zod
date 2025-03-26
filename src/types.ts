@@ -787,15 +787,18 @@ function isValidEnvBool(
   // Initialize default values
   let truthy = ["true", "1", "on", "yes", "y", "enabled"];
   let falsy = ["false", "0", "off", "no", "n", "disabled"];
-  let caseSensitive = false;
+  caseSensitivity = caseSensitivity ?? "insensitive";
 
   // Override default values if provided
   if (truthyValues) truthy = truthy.concat(truthyValues);
   if (falsyValues) falsy = falsy.concat(falsyValues);
-  caseSensitive = caseSensitivity === "sensitive";
 
   // See case sensitivity
-  if (!caseSensitive) value = value.toLowerCase();
+  if (caseSensitivity === "insensitive") {
+    value = value.toLowerCase();
+    truthy = truthy.map((val) => val.toLowerCase());
+    falsy = falsy.map((val) => val.toLowerCase());
+  }
 
   // Check if the value is in the truthy or falsy arrays
   if (truthy.includes(value)) return "valid";
