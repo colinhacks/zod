@@ -626,7 +626,13 @@ export type ZodStringCheck =
   | { kind: "cidr"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string }
   | { kind: "base64url"; message?: string }
-  | { kind: "envbool", trueValues?: string[], falseValues?: string[], caseSensitivity?: "sensitive" | "insensitive", message?: string };
+  | {
+      kind: "envbool";
+      truthyValues?: string[];
+      falsyValues?: string[];
+      caseSensitivity?: "sensitive" | "insensitive";
+      message?: string;
+    };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -771,10 +777,30 @@ function isValidCidr(ip: string, version?: IpVersion) {
   return false;
 }
 
-// TODO: add validation
-function isValidEnvBool(value: string, trueValues?: string[], falseValues?: string[], caseSensitivity?: "sensitive" | "insensitive"): boolean {
-  console.log(trueValues, falseValues, caseSensitivity);
-  return true;
+function isValidEnvBool(
+  value: string,
+  truthyValues?: string[],
+  falsyValues?: string[],
+  caseSensitivity?: "sensitive" | "insensitive"
+): "valid" | "invalid" {
+  // Initialize default values
+  let truthy = ["true", "1", "on", "yes", "y", "enabled"];
+  let falsy = ["false", "0", "off", "no", "n", "disabled"];
+  let caseSensitive = false;
+
+  // Override default values if provided
+  if (truthyValues) truthy = truthy.concat(truthyValues);
+  if (falsyValues) falsy = falsy.concat(falsyValues);
+  caseSensitive = caseSensitivity === "sensitive";
+
+  // See case sensitivity
+  if (!caseSensitive) value = value.toLowerCase();
+
+  // Check if the value is in the truthy or falsy arrays
+  if (truthy.includes(value)) return "valid";
+  if (falsy.includes(value)) return "valid";
+
+  return "invalid";
 }
 
 export class ZodString extends ZodType<string, ZodStringDef, string> {
@@ -1079,11 +1105,22 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
-      }
-      // TODO: check issue details
-      else if (check.kind === "envbool") {
-        if (!isValidEnvBool(input.data, check.trueValues, check.falseValues, check.caseSensitivity)) {
-          console.log("invalid");
+      } else if (check.kind === "envbool") {
+        if (
+          isValidEnvBool(
+            input.data,
+            check.truthyValues,
+            check.falsyValues,
+            check.caseSensitivity
+          ) === "invalid"
+        ) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "envbool",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
         }
       } else {
         util.assertNever(check);
@@ -1163,8 +1200,13 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return this._addCheck({ kind: "cidr", ...errorUtil.errToObj(options) });
   }
 
-  envbool(options: { true?: string[], false?: string[], case?: "sensitive" | "insensitive", message?: string}) {
-    return this._addCheck({kind: "envbool", ...errorUtil.errToObj(options)});
+  envbool(options: {
+    true?: string[];
+    false?: string[];
+    case?: "sensitive" | "insensitive";
+    message?: string;
+  }) {
+    return this._addCheck({ kind: "envbool", ...errorUtil.errToObj(options) });
   }
 
   datetime(

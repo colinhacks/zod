@@ -625,7 +625,14 @@ export type ZodStringCheck =
   | { kind: "ip"; version?: IpVersion; message?: string }
   | { kind: "cidr"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string }
-  | { kind: "base64url"; message?: string };
+  | { kind: "base64url"; message?: string }
+  | {
+      kind: "envbool";
+      truthyValues?: string[];
+      falsyValues?: string[];
+      caseSensitivity?: "sensitive" | "insensitive";
+      message?: string;
+    };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -768,6 +775,32 @@ function isValidCidr(ip: string, version?: IpVersion) {
   }
 
   return false;
+}
+
+function isValidEnvBool(
+  value: string,
+  truthyValues?: string[],
+  falsyValues?: string[],
+  caseSensitivity?: "sensitive" | "insensitive"
+): "valid" | "invalid" {
+  // Initialize default values
+  let truthy = ["true", "1", "on", "yes", "y", "enabled"];
+  let falsy = ["false", "0", "off", "no", "n", "disabled"];
+  let caseSensitive = false;
+
+  // Override default values if provided
+  if (truthyValues) truthy = truthy.concat(truthyValues);
+  if (falsyValues) falsy = falsy.concat(falsyValues);
+  caseSensitive = caseSensitivity === "sensitive";
+
+  // See case sensitivity
+  if (!caseSensitive) value = value.toLowerCase();
+
+  // Check if the value is in the truthy or falsy arrays
+  if (truthy.includes(value)) return "valid";
+  if (falsy.includes(value)) return "valid";
+
+  return "invalid";
 }
 
 export class ZodString extends ZodType<string, ZodStringDef, string> {
@@ -1072,6 +1105,23 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      } else if (check.kind === "envbool") {
+        if (
+          isValidEnvBool(
+            input.data,
+            check.truthyValues,
+            check.falsyValues,
+            check.caseSensitivity
+          ) === "invalid"
+        ) {
+          ctx = this._getOrReturnCtx(input, ctx);
+          addIssueToContext(ctx, {
+            validation: "envbool",
+            code: ZodIssueCode.invalid_string,
+            message: check.message,
+          });
+          status.dirty();
+        }
       } else {
         util.assertNever(check);
       }
@@ -1148,6 +1198,15 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 
   cidr(options?: string | { version?: IpVersion; message?: string }) {
     return this._addCheck({ kind: "cidr", ...errorUtil.errToObj(options) });
+  }
+
+  envbool(options: {
+    true?: string[];
+    false?: string[];
+    case?: "sensitive" | "insensitive";
+    message?: string;
+  }) {
+    return this._addCheck({ kind: "envbool", ...errorUtil.errToObj(options) });
   }
 
   datetime(
@@ -1351,6 +1410,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   get isBase64url() {
     // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return !!this._def.checks.find((ch) => ch.kind === "base64url");
+  }
+  get isEnvBool() {
+    return !!this._def.checks.find((ch) => ch.kind === "envbool");
   }
 
   get minLength() {
