@@ -1211,7 +1211,19 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           message?: string;
         }
   ) {
-    return this._addCheck({ kind: "envbool", ...errorUtil.errToObj(options) });
+    if (typeof options === "string")
+      return this._addCheck({
+        kind: "envbool",
+        ...errorUtil.errToObj(options),
+      });
+    return this._addCheck({
+      kind: "envbool",
+      truthyValues: options?.true,
+      falsyValues: options?.false,
+      caseSensitivity: options?.case,
+      message: options?.message,
+      ...errorUtil.errToObj(options?.message),
+    });
   }
 
   datetime(
