@@ -625,7 +625,8 @@ export type ZodStringCheck =
   | { kind: "ip"; version?: IpVersion; message?: string }
   | { kind: "cidr"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string }
-  | { kind: "base64url"; message?: string };
+  | { kind: "base64url"; message?: string }
+  | { kind: "envbool", trueValues?: string[], falseValues?: string[], caseSensitivity?: "sensitive" | "insensitive", message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -768,6 +769,12 @@ function isValidCidr(ip: string, version?: IpVersion) {
   }
 
   return false;
+}
+
+// TODO: add validation
+function isValidEnvBool(value: string, trueValues?: string[], falseValues?: string[], caseSensitivity?: "sensitive" | "insensitive"): boolean {
+  console.log(trueValues, falseValues, caseSensitivity);
+  return true;
 }
 
 export class ZodString extends ZodType<string, ZodStringDef, string> {
@@ -1072,6 +1079,12 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
+      }
+      // TODO: check issue details
+      else if (check.kind === "envbool") {
+        if (!isValidEnvBool(input.data, check.trueValues, check.falseValues, check.caseSensitivity)) {
+          console.log("invalid");
+        }
       } else {
         util.assertNever(check);
       }
@@ -1148,6 +1161,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 
   cidr(options?: string | { version?: IpVersion; message?: string }) {
     return this._addCheck({ kind: "cidr", ...errorUtil.errToObj(options) });
+  }
+
+  envbool(options: { true?: string[], false?: string[], case?: "sensitive" | "insensitive", message?: string}) {
+    return this._addCheck({kind: "envbool", ...errorUtil.errToObj(options)});
   }
 
   datetime(
@@ -1351,6 +1368,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   get isBase64url() {
     // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return !!this._def.checks.find((ch) => ch.kind === "base64url");
+  }
+  get isEnvBool() {
+    return !!this._def.checks.find((ch) => ch.kind === "envbool");
   }
 
   get minLength() {
