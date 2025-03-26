@@ -2,6 +2,9 @@
 title: Basic usage
 ---
 
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
+import { Callout } from "fumadocs-ui/components/callout"
+
 This page will walk you through the basics of creating schemas, parsing data, and using inferred types. For complete documentation on Zod's schema API, refer to [Defining schemas](/api).
 
 ## Defining a schema
@@ -35,7 +38,7 @@ const Player = z.interface({
 
 Now that we have a schema, we can parse some data with it. 
 
-## `.parse`
+### `.parse()`
 
 `.parse(data: unknown): T`
 
@@ -48,63 +51,125 @@ Player.parse({ username: "billie", xp: 100 });
 
 Otherwise, a `ZodError` instance is thrown with detailed information about the validation issues.
 
+<Tabs groupId="lib" items={["zod", "@zod/mini"]}>
+<Tab value="zod">
 ```ts
-Player.parse({ username: 42, xp: "100" });
-
+try {
+  Player.parse({ username: 42, xp: "100" });
+} catch(err){
+  if(error instanceof z.ZodError){
+    err.issues; 
+    /* [
+      {
+        expected: 'string',
+        code: 'invalid_type',
+        path: [ 'username' ],
+        message: 'Invalid input: expected string'
+      },
+      {
+        expected: 'number',
+        code: 'invalid_type',
+        path: [ 'xp' ],
+        message: 'Invalid input: expected number'
+      }
+    ] */
+  }
+}
 ```
+</Tab>
+<Tab value="@zod/mini">
+```ts
+try {
+  Player.parse({ username: 42, xp: "100" });
+} catch(err){
+  if(error instanceof z.core.$ZodError){
+    err.issues; 
+    /* [
+      {
+        expected: 'string',
+        code: 'invalid_type',
+        path: [ 'username' ],
+        message: 'Invalid input: expected string'
+      },
+      {
+        expected: 'number',
+        code: 'invalid_type',
+        path: [ 'xp' ],
+        message: 'Invalid input: expected number'
+      }
+    ] */
+  }
+}
+```
+</Tab>
+</Tabs>
 
-## `.parseAsync`
-
-`.parseAsync(data:unknown): Promise<T>`
-
-If you use certain asynchronous APIs (e.g. `async` [refinements](#refine) or [transforms](#transform)), you'll need to use `.parseAsync` instead. 
+<Callout>
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParse()` method instead. 
 
 ```ts
-const stringSchema = z.string().refine(async (val) => val.length <= 8);
+const schema = z.string().refine(async (val) => val.length <= 8);
 
-await stringSchema.parseAsync("hello"); // => returns "hello"
-await stringSchema.parseAsync("hello world"); // => throws error
+await schema.parseAsync("hello");
+// => "hello"
 ```
+</Callout>
 
-## `.safeParse`
+### `.safeParse()`
 
 `.safeParse(data:unknown): { success: true; data: T; } | { success: false; error: ZodError; }`
 
-If you don't want Zod to throw errors when validation fails, use `.safeParse`. This method returns an object containing either the successfully parsed data or a ZodError instance containing detailed information about the validation problems.
+To avoid `try/catch` blocks, use `.safeParse()`. This method returns an object containing either the successfully parsed data or a `ZodError`.
 
 ```ts
-stringSchema.safeParse(12);
-// => { success: false; error: ZodError }
+Player.safeParse({ username: "billie", xp: 100 });
+// => { success: true; data: { username: "billie", xp: 100 } }
 
-stringSchema.safeParse("billie");
-// => { success: true; data: 'billie' }
+Player.safeParse({ username: 42, xp: "100" });
+// => { success: false; error: ZodError }
 ```
 
-The result is a _discriminated union_, so you can handle errors very conveniently:
+The result type is a [discriminated union](https://www.typescriptlang.org/docs/handbook/unions-and-intersections.html#discriminating-unions), so you can handle both cases conveniently:
 
 ```ts
 const result = stringSchema.safeParse("billie");
 if (!result.success) {
-  // handle error then return
-  result.error;
+  result.error;   // handle error
 } else {
-  // do something
-  result.data;
+  result.data;    // do stuff
 }
 ```
 
-## `.safeParseAsync`
-
-> Alias: `.spa`
-
-An asynchronous version of `safeParse`.
+<Callout>
+**Note** — If your schema uses certain asynchronous APIs like `async` [refinements](#refine) or [transforms](#transform), you'll need to use the `.safeParseAsync()` method instead. 
 
 ```ts
-await stringSchema.safeParseAsync("billie");
-```
+const schema = z.string().refine(async (val) => val.length <= 8);
 
-For convenience, this has been aliased to `.spa`:
+await schema.safeParseAsync("hello");
+// => { success: true; data: "hello" }
+```
+</Callout>
+
+
+
+## Inferred types
+
+Zod infers a static type from your schema definitions. You can extract this type with the `z.infer<>` utility and use it however you like.
 
 ```ts
-await stringSchema.spa("billie");
+const Player = z.interface({ 
+  username: z. string(),
+  xp: z.number()
+});
+
+// extract the inferred type
+type Player = z.infer<typeof Player>;
+
+// use it in your code
+const player: Player = { username: "billie", xp: 100 };
 ```
+
+---
+
+Now that we have the basics covered, let's jump into the Schema API.

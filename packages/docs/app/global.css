@@ -31,13 +31,15 @@ aside {
   }
 }
 
-#nd-toc .prose { 
+/* #nd-toc .prose { 
   @apply font-normal;
 }
 #nd-toc .prose code { 
   @apply font-extralight;
-}
-.prose {
+} */
+
+html .prose {
+  @apply font-normal;
 
   h2,
   h2 {
@@ -45,18 +47,19 @@ aside {
     @apply border-b py-3;
   }
 
-  @apply font-extralight;
   p {
     /* @apply text-gray-700; */
-    @apply font-light;
+    /* @apply font-light; */
   }
   code {
-    @apply font-light border-none px-1.5;
+    @apply font-light;
+    @apply border-none px-1.5;
     margin-top: -4px;
   }
 
   button[role="tab"] {
-    @apply font-medium font-mono text-xs;
+    @apply font-medium;
+    @apply font-mono text-xs;
   }
 }
 
