@@ -1997,8 +1997,8 @@ export class ZodEnvBool extends ZodType<boolean, ZodEnvBoolDef, string> {
   _parse(input: ParseInput): ParseReturnType<boolean> {
     const parsedType = this._getType(input);
 
+    const ctx = this._getOrReturnCtx(input);
     if (parsedType !== ZodParsedType.string) {
-      const ctx = this._getOrReturnCtx(input);
       addIssueToContext(ctx, {
         code: ZodIssueCode.invalid_type,
         expected: ZodParsedType.string,
@@ -2017,16 +2017,14 @@ export class ZodEnvBool extends ZodType<boolean, ZodEnvBoolDef, string> {
       : this._def.false.map((v) => v.toLowerCase());
     const inputValue = isCaseSensitive ? input.data : input.data.toLowerCase();
 
+    // Check if the input value is in the true or false values
     if (trueValues.includes(inputValue)) return OK(true);
     if (falseValues.includes(inputValue)) return OK(false);
 
-    const ctx = this._getOrReturnCtx(input);
     addIssueToContext(ctx, {
-      code: ZodIssueCode.invalid_type,
-      expected: ZodParsedType.string,
-      received: ctx.parsedType,
+      code: ZodIssueCode.invalid_string,
+      validation: "envbool",
     });
-
     return INVALID;
   }
 

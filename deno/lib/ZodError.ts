@@ -108,6 +108,7 @@ export type StringValidation =
   | "jwt"
   | "base64url"
   | "bool"
+  | "envbool"
   | { includes: string; position?: number }
   | { startsWith: string }
   | { endsWith: string };
