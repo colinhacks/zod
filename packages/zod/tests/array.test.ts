@@ -113,7 +113,7 @@ test("continue parsing despite array size error", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received number",
             "path": [
               "people",
               0,
@@ -146,7 +146,7 @@ test("parse should fail given sparse array", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [
               0,
             ],
@@ -154,7 +154,7 @@ test("parse should fail given sparse array", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [
               1,
             ],
@@ -162,7 +162,7 @@ test("parse should fail given sparse array", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [
               2,
             ],

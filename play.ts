@@ -1,10 +1,17 @@
-import * as z from "zod";
-// import * as z from "zod";
+import en from "@zod/core/locales/en.js";
+import { z } from "zod";
 
-z;
+z.config(en());
 
-const Player = z.interface({
+const schema = z.object({
   username: z.string(),
-  xp: z.number(),
+  favoriteNumbers: z.array(z.number()),
 });
-Player.parse({ username: 42, xp: "100" });
+const result = schema.safeParse({
+  username: 1234,
+  favoriteNumbers: [1234, "4567"],
+});
+
+const tree = z.treeifyError(result.error!);
+const pretty = z.prettyError(result.error!);
+console.log(pretty);

@@ -867,8 +867,8 @@ export function aborted(x: schemas.ParsePayload, startIndex = 0): boolean {
 
 export function prefixIssues(path: PropertyKey, issues: errors.$ZodRawIssue[]): errors.$ZodRawIssue[] {
   return issues.map((iss) => {
-    iss.path ??= [];
-    iss.path.unshift(path);
+    (iss as any).path ??= [];
+    (iss as any).path.unshift(path);
     return iss;
   });
 }
@@ -892,14 +892,14 @@ export function finalizeIssue(
       unwrapMessage(config.customError?.(iss)) ??
       unwrapMessage(config.localeError?.(iss)) ??
       "Invalid input";
-    full.message = message;
+    (full as any).message = message;
   }
 
   // delete (full as any).def;
   delete (full as any).inst;
   delete (full as any).continue;
   if (!ctx?.reportInput) {
-    delete full.input;
+    delete (full as any).input;
   }
   return full;
 }

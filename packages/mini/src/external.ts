@@ -4,7 +4,21 @@ export * from "./schemas.js";
 export * from "./checks.js";
 
 export type { infer, output, input } from "@zod/core";
-export { globalRegistry, registry, config, OUTPUT, INPUT, $brand, function, clone, regexes } from "@zod/core";
+export {
+  globalRegistry,
+  registry,
+  config,
+  OUTPUT,
+  INPUT,
+  $brand,
+  function,
+  clone,
+  regexes,
+  flattenError,
+  formatError,
+  treeifyError,
+  prettyError,
+} from "@zod/core";
 
 /** A special constant with type `never` */
-export const NEVER = {} as never;
+// export const NEVER = {} as never;

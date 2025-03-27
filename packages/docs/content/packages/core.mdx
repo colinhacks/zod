@@ -1,3 +1,128 @@
 ---
 title: "`@zod/core`"
 ---
+
+## Issue codes
+
+All issue types extend the `$ZodIssueBase` interface.
+```ts
+///////////////////////////
+////     base type     ////
+///////////////////////////
+export interface $ZodIssueBase {
+  readonly code?: string;
+  readonly input?: unknown;
+  readonly path: PropertyKey[];
+  readonly message: string;
+}
+```
+
+Below is the list of all issue types emitted by Zod.
+
+```ts
+////////////////////////////////
+////     issue subtypes     ////
+////////////////////////////////
+export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase {
+  readonly code: "invalid_type";
+  readonly expected: $ZodType["_zod"]["def"]["type"];
+  readonly input: Input;
+}
+
+export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase {
+  readonly code: "too_big";
+  readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+  readonly maximum: number | bigint;
+  readonly inclusive?: boolean;
+  readonly input: Input;
+}
+
+export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase {
+  readonly code: "too_small";
+  readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
+  readonly minimum: number | bigint;
+  readonly inclusive?: boolean;
+  readonly input: Input;
+}
+
+export interface $ZodIssueInvalidStringFormat extends $ZodIssueBase {
+  readonly code: "invalid_format";
+  readonly format: 
+    | "regex"
+    | "email"
+    | "url"
+    | "emoji"
+    | "uuid"
+    | "guid"
+    | "nanoid"
+    | "guid"
+    | "cuid"
+    | "cuid2"
+    | "ulid"
+    | "xid"
+    | "ksuid"
+    | "iso_datetime"
+    | "iso_date"
+    | "iso_time"
+    | "iso_duration"
+    | "ipv4"
+    | "ipv6"
+    | "base64"
+    | "json_string"
+    | "e164"
+    | "lowercase"
+    | "uppercase"
+    | "regex"
+    | "jwt"
+    | "starts_with"
+    | "ends_with"
+    | "includes" | (string & {}); // custom formats supported
+  readonly pattern?: string;
+  readonly input: string;
+}
+
+export interface $ZodIssueNotMultipleOf<Input extends number | bigint = number | bigint> extends $ZodIssueBase {
+  readonly code: "not_multiple_of";
+  readonly divisor: number;
+  readonly input: Input;
+}
+
+export interface $ZodIssueUnrecognizedKeys extends $ZodIssueBase {
+  readonly code: "unrecognized_keys";
+  readonly keys: string[];
+  readonly input: Record<string, unknown>;
+}
+
+export interface $ZodIssueInvalidUnion extends $ZodIssueBase {
+  readonly code: "invalid_union";
+  readonly errors: $ZodIssue[][];
+  readonly input: unknown;
+}
+
+export interface $ZodIssueInvalidKey<Input = unknown> extends $ZodIssueBase {
+  readonly code: "invalid_key";
+  readonly origin: "map" | "record";
+  readonly issues: $ZodIssue[];
+  readonly input: Input;
+}
+
+export interface $ZodIssueInvalidElement<Input = unknown> extends $ZodIssueBase {
+  readonly code: "invalid_element";
+  readonly origin: "map" | "set";
+  readonly key: unknown;
+  readonly issues: $ZodIssue[];
+  readonly input: Input;
+}
+
+export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
+  readonly code: "invalid_value";
+  readonly values: util.Primitive[];
+  readonly input: Input;
+}
+
+export interface $ZodIssueCustom extends $ZodIssueBase {
+  readonly code?: "custom";
+  readonly params?: Record<string, any> | undefined;
+  readonly input: unknown;
+}
+```

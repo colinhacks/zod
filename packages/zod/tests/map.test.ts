@@ -73,7 +73,7 @@ test("throws when the given map has invalid key and invalid input", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received number",
             "path": [
               42,
             ],
@@ -81,7 +81,7 @@ test("throws when the given map has invalid key and invalid input", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received symbol",
             "path": [
               42,
             ],
@@ -111,7 +111,7 @@ test("throws when the given map has multiple invalid entries", () => {
         {
           "code": "invalid_type",
           "expected": "string",
-          "message": "Invalid input: expected string",
+          "message": "Invalid input: expected string, received number",
           "path": [
             1,
           ],
@@ -119,7 +119,7 @@ test("throws when the given map has multiple invalid entries", () => {
         {
           "code": "invalid_type",
           "expected": "string",
-          "message": "Invalid input: expected string",
+          "message": "Invalid input: expected string, received number",
           "path": [
             "bar",
           ],
@@ -193,7 +193,7 @@ test("map with object keys", () => {
         {
           "code": "invalid_type",
           "expected": "object",
-          "message": "Invalid input: expected object",
+          "message": "Invalid input: expected object, received string",
           "path": [
             "bad",
           ],

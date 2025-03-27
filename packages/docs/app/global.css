@@ -17,11 +17,13 @@ body {
 :root {
   --ui-color: hsl(221 92% 30%);
   --color-fd-foreground: hsl(0, 0%, 3.9%);
+  --color-fd-headings: hsl(0, 0%, 3.9%);
   --color-fd-popover-foreground: hsl(0, 0%, 3.9%);
 }
 .dark {
   --ui-color: hsl(320, 100%, 76%);
-  --color-fd-foreground: hsl(0, 0%, 70%);
+  --color-fd-foreground: hsl(0, 0%, 80%);
+  --color-fd-headings: hsl(0, 0%, 94%);
   --color-fd-popover-foreground: hsl(0, 0%, 70%);
 }
 
@@ -37,14 +39,19 @@ aside {
 #nd-toc .prose code { 
   @apply font-extralight;
 } */
+h1 {
+  @apply border-b py-3;
+  border-color: var(--color-fd-border);
+  color: var(--color-fd-headings);
+}
 
 html .prose {
   @apply font-normal;
 
-  h2,
   h2 {
     border-color: var(--color-fd-border);
     @apply border-b py-3;
+    color: var(--color-fd-headings);
   }
 
   p {

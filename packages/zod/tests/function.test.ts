@@ -136,7 +136,7 @@ test("input validation error", () => {
         {
           "code": "invalid_type",
           "expected": "string",
-          "message": "Invalid input: expected string",
+          "message": "Invalid input: expected string, received undefined",
           "path": [
             0,
           ],
@@ -158,7 +158,7 @@ test("output validation error", () => {
         {
           "code": "invalid_type",
           "expected": "string",
-          "message": "Invalid input: expected string",
+          "message": "Invalid input: expected string, received number",
           "path": [],
         },
       ],

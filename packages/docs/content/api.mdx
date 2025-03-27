@@ -1581,7 +1581,7 @@ console.log(optionalUrl.safeParse("not a valid url").success); // false
 
 ## Discriminated unions
 
-A discriminated union is a special kind of union in which a) all the options are object schemas that b) share a particular key (the "discriminator"). Based on the value of the discriminator key, TypeScript is able to "narrow" the type signature as you'd expect.
+A [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions) is a special kind of union in which a) all the options are object schemas that b) share a particular key (the "discriminator"). Based on the value of the discriminator key, TypeScript is able to "narrow" the type signature as you'd expect.
 
 ```ts
 type MyResult =
@@ -2020,23 +2020,23 @@ const userId = z.string().refine(async (id) => {
     <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
     <Tab value="zod">
     ```ts
-    const UniqueStringArray = z.array(z.string()).check((ctx) => {
-      if (ctx.value.length > 3) {
-        ctx.issues.push({
+    const UniqueStringArray = z.array(z.string()).superRefine((val, ctx) => {
+      if (val.length > 3) {
+        ctx.addIssue({
           code: "too_big",
           maximum: 3,
           origin: "array",
           inclusive: true,
           message: "Too many items 😡",
-          input: ctx.value,
+          input: val,
         });
       }
 
-      if (ctx.value.length !== new Set(ctx.value).size) {
-        ctx.issues.push({
+      if (val.length !== new Set(val).size) {
+        ctx.addIssue({
           code: "custom",
           message: `No duplicates allowed.`,
-          input: ctx.value,
+          input: val,
         });
       }
     });
@@ -2044,26 +2044,26 @@ const userId = z.string().refine(async (id) => {
     </Tab>
     <Tab value="@zod/mini">
     ```ts
-    const UniqueStringArray = z.array(z.string()).check((ctx) => {
-      if (ctx.value.length > 3) {
-        ctx.issues.push({
-          code: "too_big",
-          maximum: 3,
-          origin: "array",
-          inclusive: true,
-          message: "Too many items 😡",
-          input: ctx.value,
-        });
-      }
-
-      if (ctx.value.length !== new Set(ctx.value).size) {
-        ctx.issues.push({
-          code: "custom",
-          message: `No duplicates allowed.`,
-          input: ctx.value,
-        });
-      }
-    });
+    // no equivalent, use `z.check()` instead
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
     ```
     </Tab>
     </Tabs>
@@ -2112,7 +2112,7 @@ const UniqueStringArray = z.array(z.string()).check((ctx) => {
       origin: "array",
       inclusive: true,
       message: "Too many items 😡",
-      input: ctx.value,
+      input: ctx.value
     });
   }
 
@@ -2254,8 +2254,7 @@ const idToUser = z.pipe(
   z.transform(async (id) => {
     // fetch user from database
     return db.getUserById(id); 
-  })
-);
+  }));
 ```
 </Tab>
 </Tabs>

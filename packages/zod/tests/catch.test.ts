@@ -181,7 +181,7 @@ test("reported issues with nested usage", () => {
         {
           "code": "invalid_type",
           "expected": "string",
-          "message": "Invalid input: expected string",
+          "message": "Invalid input: expected string, received object",
           "path": [
             "string",
           ],
@@ -201,7 +201,7 @@ test("reported issues with nested usage", () => {
         {
           "code": "invalid_type",
           "expected": "boolean",
-          "message": "Invalid input: expected boolean",
+          "message": "Invalid input: expected boolean, received string",
           "path": [
             "bool",
           ],
@@ -237,7 +237,7 @@ test("catch error", () => {
         {
           "code": "invalid_type",
           "expected": "number",
-          "message": "Invalid input: expected number",
+          "message": "Invalid input: expected number, received null",
           "path": [
             "age",
           ],

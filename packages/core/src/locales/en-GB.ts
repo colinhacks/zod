@@ -13,28 +13,6 @@ function getSizing(origin: string): { unit: string; verb: string } | null {
   return Sizable[origin] ?? null;
 }
 
-export const parsedType = (data: any): string => {
-  const t = typeof data;
-
-  switch (t) {
-    case "number": {
-      return Number.isNaN(data) ? "NaN" : "number";
-    }
-    case "object": {
-      if (Array.isArray(data)) {
-        return "array";
-      }
-      if (data === null) {
-        return "null";
-      }
-      if (Object.getPrototypeOf(data) !== Object.prototype) {
-        return data.constructor.name;
-      }
-    }
-  }
-  return t;
-};
-
 const Nouns: {
   [k in $ZodStringFormats | (string & {})]?: string;
 } = {
@@ -67,7 +45,7 @@ const Nouns: {
 const error: errors.$ZodErrorMap = (issue) => {
   switch (issue.code) {
     case "invalid_type":
-      return `Invalid input: expected ${issue.expected}, received ${parsedType(issue.input)}`;
+      return `Invalid input: expected ${issue.expected}`;
     // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
     case "invalid_value":
       if (issue.values.length === 1) return `Invalid input: expected ${util.stringifyPrimitive(issue.values[0])}`;

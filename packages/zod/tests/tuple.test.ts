@@ -16,7 +16,7 @@ test("successful validation", () => {
         {
           "code": "invalid_type",
           "expected": "number",
-          "message": "Invalid input: expected number",
+          "message": "Invalid input: expected number, received string",
           "path": [
             1,
           ],
@@ -49,7 +49,7 @@ test("successful validation", () => {
         {
           "code": "invalid_type",
           "expected": "tuple",
-          "message": "Invalid input: expected tuple",
+          "message": "Invalid input: expected tuple, received object",
           "path": [],
         },
       ],
@@ -74,7 +74,7 @@ test("async validation", async () => {
         {
           "code": "invalid_type",
           "expected": "number",
-          "message": "Invalid input: expected number",
+          "message": "Invalid input: expected number, received string",
           "path": [
             1,
           ],
@@ -107,7 +107,7 @@ test("async validation", async () => {
         {
           "code": "invalid_type",
           "expected": "tuple",
-          "message": "Invalid input: expected tuple",
+          "message": "Invalid input: expected tuple, received object",
           "path": [],
         },
       ],

@@ -41,11 +41,17 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   ): this & Record<"_zod", Record<"output", this["_zod"]["output"] & core.$brand<T>>>;
 
   // parsing
-  parse(data: unknown, params?: core.ParseContext): core.output<this>;
-  safeParse(data: unknown, params?: core.ParseContext): parse.ZodSafeParseResult<core.output<this>>;
-  parseAsync(data: unknown, params?: core.ParseContext): Promise<core.output<this>>;
-  safeParseAsync(data: unknown, params?: core.ParseContext): Promise<parse.ZodSafeParseResult<core.output<this>>>;
-  spa: (data: unknown, params?: core.ParseContext) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
+  safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): parse.ZodSafeParseResult<core.output<this>>;
+  parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  safeParseAsync(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<parse.ZodSafeParseResult<core.output<this>>>;
+  spa: (
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ) => Promise<parse.ZodSafeParseResult<core.output<this>>>;
 
   // refinements
   refine(check: (arg: core.output<this>) => unknown | Promise<unknown>, params?: string | core.$ZodCustomParams): this;

@@ -24,10 +24,13 @@ export interface ZodMiniType<out O = unknown, out I = unknown> extends core.$Zod
 
   def: this["_zod"]["def"];
 
-  parse(data: unknown, params?: core.ParseContext): core.output<this>;
-  safeParse(data: unknown, params?: core.ParseContext): util.SafeParseResult<core.output<this>>;
-  parseAsync(data: unknown, params?: core.ParseContext): Promise<core.output<this>>;
-  safeParseAsync(data: unknown, params?: core.ParseContext): Promise<util.SafeParseResult<core.output<this>>>;
+  parse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): core.output<this>;
+  safeParse(data: unknown, params?: core.ParseContext<core.$ZodIssue>): util.SafeParseResult<core.output<this>>;
+  parseAsync(data: unknown, params?: core.ParseContext<core.$ZodIssue>): Promise<core.output<this>>;
+  safeParseAsync(
+    data: unknown,
+    params?: core.ParseContext<core.$ZodIssue>
+  ): Promise<util.SafeParseResult<core.output<this>>>;
 }
 
 export const ZodMiniType: core.$constructor<ZodMiniType> = /*@__PURE__*/ core.$constructor(

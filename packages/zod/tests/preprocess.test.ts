@@ -100,7 +100,7 @@ test("preprocess ctx.addIssue non-fatal by default", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received number",
             "path": [],
           },
         ],
@@ -198,7 +198,7 @@ test("z.NEVER in preprocess", () => {
           {
             "code": "invalid_type",
             "expected": "number",
-            "message": "Invalid input: expected number",
+            "message": "Invalid input: expected number, received object",
             "path": [],
           },
         ],
@@ -265,7 +265,7 @@ test("preprocess validates with sibling errors", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [
               "missing",
             ],

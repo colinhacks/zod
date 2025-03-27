@@ -280,7 +280,13 @@ test("root level formatting", () => {
   const result = schema.safeParse("asdfsdf");
   expect(result.success).toBe(false);
 
-  expect(result.error!.format()._errors).toEqual(["Invalid email"]);
+  expect(result.error!.format()).toMatchInlineSnapshot(`
+    {
+      "_errors": [
+        "Invalid email address",
+      ],
+    }
+  `);
 });
 
 test("custom path", () => {
@@ -498,8 +504,16 @@ test("inferFlattenedErrors", () => {
   expect(result.success).toBe(false);
   type ValidationErrors = z.inferFlattenedErrors<typeof schemaWithTransform>;
   const error: ValidationErrors = result.error!.flatten();
-  expect(error.formErrors).toEqual([]);
-  expect(error.fieldErrors).toEqual({ foo: ["Invalid input: expected string"] });
+  expect(error).toMatchInlineSnapshot(`
+    {
+      "fieldErrors": {
+        "foo": [
+          "Invalid input: expected string, received undefined",
+        ],
+      },
+      "formErrors": [],
+    }
+  `);
 });
 
 const stringWithCustomError = z.string({

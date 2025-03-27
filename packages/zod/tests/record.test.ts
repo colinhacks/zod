@@ -52,7 +52,7 @@ test("enum exhaustiveness", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [
               "Salmon",
             ],
@@ -95,7 +95,7 @@ test("literal exhaustiveness", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [
               "Salmon",
             ],
@@ -138,7 +138,7 @@ test("pipe exhaustiveness", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [
               "Salmon",
             ],
@@ -181,7 +181,7 @@ test("union exhaustiveness", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [
               "Salmon",
             ],
@@ -209,7 +209,7 @@ test("string record parse - pass", () => {
           {
             "code": "invalid_type",
             "expected": "record",
-            "message": "Invalid input: expected record",
+            "message": "Invalid input: expected record, received string",
             "path": [],
           },
         ],

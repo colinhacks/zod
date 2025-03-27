@@ -251,7 +251,7 @@ test("async short circuit on dirty", async () => {
         {
           "code": "invalid_type",
           "expected": "string",
-          "message": "Invalid input: expected string",
+          "message": "Invalid input: expected string, received number",
           "path": [],
         },
       ],

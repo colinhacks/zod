@@ -153,7 +153,7 @@ test("invalid - null", () => {
           {
             "code": "invalid_type",
             "expected": "object",
-            "message": "Invalid input: expected object",
+            "message": "Invalid input: expected object, received null",
             "path": [],
           },
         ],
@@ -228,7 +228,7 @@ test("invalid discriminator value - unionFallback", () => {
                 {
                   "code": "invalid_type",
                   "expected": "string",
-                  "message": "Invalid input: expected string",
+                  "message": "Invalid input: expected string, received undefined",
                   "path": [
                     "b",
                   ],
@@ -269,7 +269,7 @@ test("valid discriminator value, invalid data", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [
               "a",
             ],
@@ -356,7 +356,7 @@ test("async - invalid", async () => {
         {
           "code": "invalid_type",
           "expected": "string",
-          "message": "Invalid input: expected string",
+          "message": "Invalid input: expected string, received number",
           "path": [
             "a",
           ],

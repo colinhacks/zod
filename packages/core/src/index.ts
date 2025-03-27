@@ -4,6 +4,7 @@ export * from "./errors.js";
 export * from "./schemas.js";
 export * from "./checks.js";
 export * as regexes from "./regexes.js";
+export * as locales from "./locales.js";
 export * from "./registries.js";
 export * from "./doc.js";
 export * from "./function.js";

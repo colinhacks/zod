@@ -9,7 +9,7 @@ export function _parse<T extends schemas.$ZodType>(
   this: ParseThis | void,
   schema: T,
   value: unknown,
-  _ctx?: schemas.ParseContext
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): core.output<T> {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -29,7 +29,7 @@ export function _safeParse<T extends schemas.$ZodType>(
   this: ParseThis,
   schema: T,
   value: unknown,
-  _ctx?: schemas.ParseContext
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): util.SafeParseResult<core.output<T>> {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: false } : { async: false };
   const result = schema._zod.run({ value, issues: [] }, ctx);
@@ -54,7 +54,7 @@ export async function _parseAsync<T extends schemas.$ZodType>(
   this: ParseThis,
   schema: T,
   value: unknown,
-  _ctx?: schemas.ParseContext
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): Promise<core.output<T>> {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
   let result = schema._zod.run({ value, issues: [] }, ctx);
@@ -72,7 +72,7 @@ export async function _safeParseAsync<T extends schemas.$ZodType>(
   this: ParseThis,
   schema: T,
   value: unknown,
-  _ctx?: schemas.ParseContext
+  _ctx?: schemas.ParseContext<errors.$ZodIssue>
 ): Promise<util.SafeParseResult<core.output<T>>> {
   const ctx: schemas.ParseContextInternal = _ctx ? { ..._ctx, async: true } : { async: true };
   let result = schema._zod.run({ value, issues: [] }, ctx);

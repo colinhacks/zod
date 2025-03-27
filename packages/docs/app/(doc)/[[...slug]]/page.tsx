@@ -4,6 +4,8 @@ import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { notFound } from "next/navigation";
 
+export const revalidate = 86400;
+
 export default async function Page(props: {
   params: Promise<{ slug?: string[] }>;
 }) {

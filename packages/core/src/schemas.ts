@@ -8,9 +8,9 @@ import * as util from "./util.js";
 
 /////////////////////////////   PARSE   //////////////////////////////
 
-export interface ParseContext {
+export interface ParseContext<T extends errors.$ZodIssueBase = never> {
   /** Customize error messages. */
-  readonly error?: errors.$ZodErrorMap<never>;
+  readonly error?: errors.$ZodErrorMap<T>;
   /** Include the `input` field in issue objects. Default `false`. */
   readonly reportInput?: boolean;
   /** Skip eval-based fast path. Default `false`. */
@@ -20,7 +20,7 @@ export interface ParseContext {
 }
 
 /** @internal */
-export interface ParseContextInternal extends ParseContext {
+export interface ParseContextInternal<T extends errors.$ZodIssueBase = never> extends ParseContext<T> {
   readonly async?: boolean | undefined;
 }
 

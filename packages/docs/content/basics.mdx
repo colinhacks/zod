@@ -129,7 +129,7 @@ Player.safeParse({ username: 42, xp: "100" });
 // => { success: false; error: ZodError }
 ```
 
-The result type is a [discriminated union](https://www.typescriptlang.org/docs/handbook/unions-and-intersections.html#discriminating-unions), so you can handle both cases conveniently:
+The result type is a [discriminated union](https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions), so you can handle both cases conveniently:
 
 ```ts
 const result = stringSchema.safeParse("billie");

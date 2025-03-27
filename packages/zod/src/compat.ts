@@ -3,7 +3,6 @@
 import * as core from "@zod/core";
 import type { ZodType } from "./schemas.js";
 
-export * as core from "@zod/core";
 export type {
   /** @deprecated Use `z.output<T>` instead. */
   output as TypeOf,
@@ -64,8 +63,6 @@ export function setErrorMap(map: core.$ZodErrorMap): void {
 export function getErrorMap(): core.$ZodErrorMap<core.$ZodIssue> | undefined {
   return core.config().customError;
 }
-
-export { parse, safeParse, parseAsync, safeParseAsync } from "@zod/core";
 
 /** @deprecated Use z.ZodType (without generics) instead. */
 export type ZodTypeAny = ZodType;

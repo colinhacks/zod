@@ -19,7 +19,7 @@ test("regular error", () => {
           {
             "code": "invalid_type",
             "expected": "number",
-            "message": "Invalid input: expected number",
+            "message": "Invalid input: expected number, received undefined",
             "path": [
               "f1",
             ],
@@ -27,7 +27,7 @@ test("regular error", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [
               "f3",
             ],
@@ -35,7 +35,7 @@ test("regular error", () => {
           {
             "code": "invalid_type",
             "expected": "array",
-            "message": "Invalid input: expected array",
+            "message": "Invalid input: expected array, received undefined",
             "path": [
               "f4",
             ],
@@ -63,13 +63,13 @@ test(".flatten()", () => {
     {
       "fieldErrors": {
         "f1": [
-          "Invalid input: expected number",
+          "Invalid input: expected number, received undefined",
         ],
         "f3": [
-          "Invalid input: expected string",
+          "Invalid input: expected string, received undefined",
         ],
         "f4": [
-          "Invalid input: expected array",
+          "Invalid input: expected array, received undefined",
         ],
       },
       "formErrors": [],
@@ -96,19 +96,19 @@ test("custom .flatten()", () => {
         "f1": [
           {
             "code": 1234,
-            "message": "Invalid input: expected number",
+            "message": "Invalid input: expected number, received undefined",
           },
         ],
         "f3": [
           {
             "code": 1234,
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
           },
         ],
         "f4": [
           {
             "code": 1234,
-            "message": "Invalid input: expected array",
+            "message": "Invalid input: expected array, received undefined",
           },
         ],
       },
@@ -140,17 +140,17 @@ test(".format()", () => {
       "_errors": [],
       "f1": {
         "_errors": [
-          "Invalid input: expected number",
+          "Invalid input: expected number, received undefined",
         ],
       },
       "f3": {
         "_errors": [
-          "Invalid input: expected string",
+          "Invalid input: expected string, received undefined",
         ],
       },
       "f4": {
         "_errors": [
-          "Invalid input: expected array",
+          "Invalid input: expected array, received undefined",
         ],
       },
     }
@@ -183,7 +183,7 @@ test("custom .format()", () => {
         "_errors": [
           {
             "code": 1234,
-            "message": "Invalid input: expected number",
+            "message": "Invalid input: expected number, received undefined",
           },
         ],
       },
@@ -191,7 +191,7 @@ test("custom .format()", () => {
         "_errors": [
           {
             "code": 1234,
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
           },
         ],
       },
@@ -199,7 +199,7 @@ test("custom .format()", () => {
         "_errors": [
           {
             "code": 1234,
-            "message": "Invalid input: expected array",
+            "message": "Invalid input: expected array, received undefined",
           },
         ],
       },
@@ -237,21 +237,33 @@ test("all errors", () => {
   });
 
   // const error = _error as z.ZodError;
-  expect(z.flattenError(r2.error!)).toEqual({
-    formErrors: [],
-    fieldErrors: {
-      a: ["Invalid input: expected string"],
-      b: ["Invalid input: expected string"],
-    },
-  });
+  expect(z.flattenError(r2.error!)).toMatchInlineSnapshot(`
+    {
+      "fieldErrors": {
+        "a": [
+          "Invalid input: expected string, received null",
+        ],
+        "b": [
+          "Invalid input: expected string, received null",
+        ],
+      },
+      "formErrors": [],
+    }
+  `);
 
-  expect(z.flattenError(r2.error!, (iss) => iss.message.toUpperCase())).toEqual({
-    formErrors: [],
-    fieldErrors: {
-      a: ["INVALID INPUT: EXPECTED STRING"],
-      b: ["INVALID INPUT: EXPECTED STRING"],
-    },
-  });
+  expect(z.flattenError(r2.error!, (iss) => iss.message.toUpperCase())).toMatchInlineSnapshot(`
+    {
+      "fieldErrors": {
+        "a": [
+          "INVALID INPUT: EXPECTED STRING, RECEIVED NULL",
+        ],
+        "b": [
+          "INVALID INPUT: EXPECTED STRING, RECEIVED NULL",
+        ],
+      },
+      "formErrors": [],
+    }
+  `);
   // Test identity
 
   expect(z.flattenError(r2.error!, (i: z.ZodIssue) => i)).toMatchInlineSnapshot(`
@@ -261,7 +273,7 @@ test("all errors", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received null",
             "path": [
               "a",
             ],
@@ -271,7 +283,7 @@ test("all errors", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received null",
             "path": [
               "b",
             ],
@@ -284,12 +296,82 @@ test("all errors", () => {
 
   // Test mapping
   const f1 = z.flattenError(r2.error!, (i: z.ZodIssue) => i.message.length);
-  expect(f1.fieldErrors.a![0]).toEqual("Invalid input: expected string".length);
-  expect(f1).toMatchObject({
-    formErrors: [],
-    fieldErrors: {
-      a: ["Invalid input: expected string".length],
-      b: ["Invalid input: expected string".length],
-    },
-  });
+  expect(f1).toMatchInlineSnapshot(`
+    {
+      "fieldErrors": {
+        "a": [
+          45,
+        ],
+        "b": [
+          45,
+        ],
+      },
+      "formErrors": [],
+    }
+  `);
+  // expect(f1.fieldErrors.a![0]).toEqual("Invalid input: expected string".length);
+  // expect(f1).toMatchObject({
+  //   formErrors: [],
+  //   fieldErrors: {
+  //     a: ["Invalid input: expected string".length],
+  //     b: ["Invalid input: expected string".length],
+  //   },
+  // });
+});
+
+const schema = z.object({
+  username: z.string(),
+  favoriteNumbers: z.array(
+    z
+      .number()
+      .min(5)
+      .refine(() => false, { error: "Boo" })
+  ),
+});
+const result = schema.safeParse({
+  username: 1234,
+  favoriteNumbers: [true, 3],
+});
+
+test("z.treeifyError", () => {
+  expect(z.treeifyError(result.error!)).toMatchInlineSnapshot(`
+    {
+      "errors": [],
+      "fields": {
+        "favoriteNumbers": {
+          "errors": [],
+          "items": [
+            {
+              "errors": [
+                "Invalid input: expected number, received boolean",
+              ],
+            },
+            {
+              "errors": [
+                "Too small: expected number to be >=5",
+                "Boo",
+              ],
+            },
+          ],
+        },
+        "username": {
+          "errors": [
+            "Invalid input: expected string, received number",
+          ],
+        },
+      },
+    }
+  `);
+});
+
+test("z.prettyError", () => {
+  expect(z.prettyError(result.error!)).toMatchInlineSnapshot(`
+    "username
+      ✖ Invalid input: expected string, received number
+    favoriteNumbers[0]
+      ✖ Invalid input: expected number, received boolean
+    favoriteNumbers[1]
+      ✖ Too small: expected number to be >=5
+      ✖ Boo"
+  `);
 });

@@ -15,7 +15,7 @@ test("nonoptional", () => {
           {
             "code": "invalid_type",
             "expected": "string",
-            "message": "Invalid input: expected string",
+            "message": "Invalid input: expected string, received undefined",
             "path": [],
           },
         ],
@@ -39,7 +39,7 @@ test("nonoptional with default", () => {
           {
             "code": "invalid_type",
             "expected": "nonoptional",
-            "message": "Invalid input: expected nonoptional",
+            "message": "Invalid input: expected nonoptional, received undefined",
             "path": [],
           },
         ],
@@ -66,7 +66,7 @@ test("nonoptional in object", () => {
         {
           "code": "invalid_type",
           "expected": "nonoptional",
-          "message": "Invalid input: expected nonoptional",
+          "message": "Invalid input: expected nonoptional, received undefined",
           "path": [
             "hi",
           ],
@@ -83,7 +83,7 @@ test("nonoptional in object", () => {
         {
           "code": "invalid_type",
           "expected": "nonoptional",
-          "message": "Invalid input: expected nonoptional",
+          "message": "Invalid input: expected nonoptional, received undefined",
           "path": [
             "hi",
           ],

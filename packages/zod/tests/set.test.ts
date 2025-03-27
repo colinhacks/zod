@@ -99,7 +99,7 @@ test("throws when a Map is given", () => {
         {
           "code": "invalid_type",
           "expected": "set",
-          "message": "Invalid input: expected set",
+          "message": "Invalid input: expected set, received Map",
           "path": [],
         },
       ],
@@ -117,7 +117,7 @@ test("throws when the given set has invalid input", () => {
         {
           "code": "invalid_type",
           "expected": "string",
-          "message": "Invalid input: expected string",
+          "message": "Invalid input: expected string, received symbol",
           "path": [],
         },
       ],
@@ -135,13 +135,13 @@ test("throws when the given set has multiple invalid entries", () => {
         {
           "code": "invalid_type",
           "expected": "string",
-          "message": "Invalid input: expected string",
+          "message": "Invalid input: expected string, received number",
           "path": [],
         },
         {
           "code": "invalid_type",
           "expected": "string",
-          "message": "Invalid input: expected string",
+          "message": "Invalid input: expected string, received number",
           "path": [],
         },
       ],
