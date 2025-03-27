@@ -535,6 +535,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 #### Form integrations
 
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form.
+- [`TanStack Form`](https://github.com/TanStack/form): Headless, performant, and type-safe form state management for TS/JS, React, Vue, Angular, Solid, and Lit
 - [`zod-validation-error`](https://github.com/causaly/zod-validation-error): Generate user-friendly error messages from `ZodError`s.
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod.
