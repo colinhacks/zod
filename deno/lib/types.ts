@@ -584,7 +584,6 @@ export abstract class ZodType<
 /////////////////////////////////////////
 /////////////////////////////////////////
 export type IpVersion = "v4" | "v6";
-export type CaseSensitivity = "sensitive" | "insensitive";
 export type ZodStringCheck =
   | { kind: "min"; value: number; message?: string }
   | { kind: "max"; value: number; message?: string }
@@ -1945,8 +1944,53 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef, boolean> {
 //////////                     ///////////
 //////////////////////////////////////////
 //////////////////////////////////////////
+export type CaseSensitivity = "sensitive" | "insensitive";
+export const defaultTruthyValues: Set<string> = new Set([
+  "true",
+  "1",
+  "on",
+  "yes",
+  "y",
+  "enabled",
+]);
+export const defaultFalsyValues: Set<string> = new Set([
+  "false",
+  "0",
+  "off",
+  "n",
+  "disabled",
+]);
+export const defaultCaseSensitivity: CaseSensitivity = "insensitive";
+
 export interface ZodEnvBoolDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodEnvBool;
+  true: string[];
+  false: string[];
+  case: CaseSensitivity;
+}
+
+function safeMergeTruthy(newValues?: string[]): string[] {
+  const merged = defaultTruthyValues;
+  if (newValues) {
+    for (const value of newValues) {
+      if (value === "") continue;
+      merged.add(value);
+    }
+  }
+
+  return Array.from(merged);
+}
+
+function safeMergeFalsy(newValues?: string[]): string[] {
+  const merged = defaultFalsyValues;
+  if (newValues) {
+    for (const value of newValues) {
+      if (value === "") continue;
+      merged.add(value);
+    }
+  }
+
+  return Array.from(merged);
 }
 
 export class ZodEnvBool extends ZodType<boolean, ZodEnvBoolDef, string> {
@@ -1963,14 +2007,41 @@ export class ZodEnvBool extends ZodType<boolean, ZodEnvBoolDef, string> {
       return INVALID;
     }
 
-    // TODO: add validation
+    // Check for case sensitivity
+    const isCaseSensitive = this._def.case === "sensitive";
+    const trueValues = isCaseSensitive
+      ? this._def.true
+      : this._def.true.map((v) => v.toLowerCase());
+    const falseValues = isCaseSensitive
+      ? this._def.false
+      : this._def.false.map((v) => v.toLowerCase());
+    const inputValue = isCaseSensitive ? input.data : input.data.toLowerCase();
 
-    return OK(Boolean(input.data));
+    if (trueValues.includes(inputValue)) return OK(true);
+    if (falseValues.includes(inputValue)) return OK(false);
+
+    const ctx = this._getOrReturnCtx(input);
+    addIssueToContext(ctx, {
+      code: ZodIssueCode.invalid_type,
+      expected: ZodParsedType.string,
+      received: ctx.parsedType,
+    });
+
+    return INVALID;
   }
 
-  static create = (params?: RawCreateParams): ZodEnvBool => {
+  static create = (
+    params?: RawCreateParams & {
+      true?: string[];
+      false?: string[];
+      case?: CaseSensitivity;
+    }
+  ): ZodEnvBool => {
     return new ZodEnvBool({
       typeName: ZodFirstPartyTypeKind.ZodEnvBool,
+      true: safeMergeTruthy(params?.true),
+      false: safeMergeFalsy(params?.false),
+      case: params?.case || defaultCaseSensitivity,
       ...processCreateParams(params),
     });
   };
