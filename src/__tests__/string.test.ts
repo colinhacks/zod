@@ -919,177 +919,165 @@ test("CIDR validation", () => {
   ).toBe(true);
 });
 
-// TODO: refactor this
 test("envbool", () => {
-  const insensitiveBool = z.string().envbool();
+  const insensitiveValues = {
+    true: [
+      "1",
+      "true",
+      "True",
+      "TRUE",
+      "yes",
+      "Yes",
+      "YES",
+      "on",
+      "On",
+      "ON",
+      "enabled",
+      "Enabled",
+      "ENABLED",
+    ],
+    false: [
+      "0",
+      "false",
+      "False",
+      "FALSE",
+      "no",
+      "No",
+      "NO",
+      "off",
+      "Off",
+      "OFF",
+      "disabled",
+      "Disabled",
+      "DISABLED",
+    ],
+    invalid: ["foo", "bar", "baz", "", " ", "true false", "yes no", "on off"],
+  };
+  const sensitiveValues = {
+    true: ["1", "true", "yes", "on", "enabled"],
+    false: ["0", "false", "no", "off", "disabled"],
+    invalid: [
+      "True",
+      "TRUE",
+      "Yes",
+      "YES",
+      "On",
+      "On",
+      "ON",
+      "Enabled",
+      "Enabled",
+      "ENABLED",
+    ],
+  };
+  const customValues = {
+    insensitive: {
+      true: ["always", "Always", "ALWAYS", "hellYeah", "hellyeah", "HELLYEAH"],
+      false: ["never", "Never", "NEVER", "hellNah", "hellnah", "HELLNAH"],
+    },
+    sensitive: {
+      true: ["always", "hellYeah"],
+      false: ["never", "hellNah"],
+      invalid: ["Always", "ALWAYS", "Never", "NEVER", "HellYeah", "HellNah"],
+    },
+  };
 
   // Insensitive Case
-  const insensitiveTruthyValues = [
-    "1",
-    "true",
-    "True",
-    "TRUE",
-    "yes",
-    "Yes",
-    "YES",
-    "on",
-    "On",
-    "ON",
-    "enabled",
-    "Enabled",
-    "ENABLED"
-  ];
-
-  insensitiveTruthyValues.forEach((val) => {
-    expect(insensitiveBool.safeParse(val).success).toEqual(true);
-  });
-
-  const insensitiveFalsyValues = [
-    "0",
-    "false",
-    "False",
-    "FALSE",
-    "no",
-    "No",
-    "NO",
-    "off",
-    "Off",
-    "OFF",
-    "disabled",
-    "Disabled",
-    "DISABLED"
-  ];
-
-  insensitiveFalsyValues.forEach((val) => {
-    expect(insensitiveBool.safeParse(val).success).toEqual(true);
-  });
-
-  const insensitiveInvalidValues = [
-    "foo",
-    "bar",
-    "baz",
-    "",
-    " ",
-    "true false",
-    "yes no",
-    "on off",
-  ]
-
-  insensitiveInvalidValues.forEach((val) => {
-    expect(insensitiveBool.safeParse(val).success).toEqual(false);
-  });
+  const insensitiveBool = z.string().envbool();
+  expect(
+    insensitiveValues.true.every(
+      (val) => insensitiveBool.safeParse(val).success
+    )
+  ).toBe(true);
+  expect(
+    insensitiveValues.false.every(
+      (val) => insensitiveBool.safeParse(val).success
+    )
+  ).toBe(true);
+  expect(
+    insensitiveValues.invalid.every(
+      (val) => insensitiveBool.safeParse(val).success === false
+    )
+  ).toBe(true);
 
   // Sensitive Case
   const sensitiveBool = z.string().envbool({ case: "sensitive" });
-
-  const sensitiveTruthyValues = [
-    "1",
-    "true",
-    "yes",
-    "on",
-    "enabled"
-  ]
-
-  sensitiveTruthyValues.forEach((val) => {
-    expect(sensitiveBool.safeParse(val).success).toEqual(true);
-  });
-
-  const sensitiveFalsyValues = [
-    "0",
-    "false",
-    "no",
-    "off",
-    "disabled"
-  ]
-
-  sensitiveFalsyValues.forEach((val) => {
-    expect(sensitiveBool.safeParse(val).success).toEqual(true);
-  });
-
-  const sensitiveInvalidValues = [
-    "True",
-    "TRUE",
-    "Yes",
-    "YES",
-    "On",
-    "On",
-    "ON",
-    "Enabled",
-    "Enabled",
-    "ENABLED"
-  ]
-
-  sensitiveInvalidValues.forEach((val) => {
-    expect(sensitiveBool.safeParse(val).success).toEqual(false);
-  });
+  expect(
+    sensitiveValues.true.every((val) => sensitiveBool.safeParse(val).success)
+  ).toBe(true);
+  expect(
+    sensitiveValues.false.every((val) => sensitiveBool.safeParse(val).success)
+  ).toBe(true);
+  expect(
+    sensitiveValues.invalid.every(
+      (val) => sensitiveBool.safeParse(val).success === false
+    )
+  ).toBe(true);
 
   // Custom insensitive values
   const customInsensitiveBool = z.string().envbool({
     true: ["always", "hellYeah"],
     false: ["never", "hellNah"],
   });
-
-  const customInsensitiveTruthyValues = [
-    "always",
-    "Always",
-    "ALWAYS",
-    "hellYeah",
-    "hellyeah",
-    "HELLYEAH",
-  ];
-
-  customInsensitiveTruthyValues.forEach((val) => {
-    expect(customInsensitiveBool.safeParse(val).success).toEqual(true);
-  });
-  insensitiveTruthyValues.forEach((val) => {
-    expect(customInsensitiveBool.safeParse(val).success).toBe(true);
-  })
-
-  const customInsensitiveFalsyValues = [
-    "never",
-    "Never",
-    "NEVER",
-    "hellNah",
-    "hellnah",
-    "HELLNAH",
-  ];
-
-  customInsensitiveFalsyValues.forEach((val) => {
-    expect(customInsensitiveBool.safeParse(val).success).toEqual(true);
-  });
-  insensitiveFalsyValues.forEach((val) => {
-    expect(customInsensitiveBool.safeParse(val).success).toBe(true);
-  })
+  expect(
+    customValues.insensitive.true.every(
+      (val) => customInsensitiveBool.safeParse(val).success
+    )
+  ).toBe(true);
+  expect(
+    customValues.insensitive.false.every(
+      (val) => customInsensitiveBool.safeParse(val).success
+    )
+  ).toBe(true);
+  expect(
+    insensitiveValues.true.every(
+      (val) => customInsensitiveBool.safeParse(val).success
+    )
+  ).toBe(true);
+  expect(
+    insensitiveValues.false.every(
+      (val) => customInsensitiveBool.safeParse(val).success
+    )
+  ).toBe(true);
+  expect(
+    insensitiveValues.invalid.every(
+      (val) => customInsensitiveBool.safeParse(val).success === false
+    )
+  ).toBe(true);
 
   // Custom sensitive values
   const customSensitiveBool = z.string().envbool({
     true: ["always", "hellYeah"],
     false: ["never", "hellNah"],
-    case: "sensitive"
-  })
-
-  const customSensitiveTruthyValues = [
-    "always",
-    "hellYeah"
-  ]
-
-  customSensitiveTruthyValues.forEach(val => {
-    expect(customSensitiveBool.safeParse(val).success).toBe(true)
-  })
-  sensitiveTruthyValues.forEach(val => {
-    expect(customSensitiveBool.safeParse(val).success).toBe(true);
-  })
-
-  const customSensitiveFalseValues = [
-    "never",
-    "hellNah"
-  ]
-
-  customSensitiveFalseValues.forEach(val => {
-    expect(customSensitiveBool.safeParse(val).success).toBe(true)
-  })
-  sensitiveFalsyValues.forEach(val => {
-    expect(customSensitiveBool.safeParse(val).success).toBe(true);
-  })
-
-})
+    case: "sensitive",
+  });
+  expect(
+    customValues.sensitive.true.every(
+      (val) => customSensitiveBool.safeParse(val).success
+    )
+  ).toBe(true);
+  expect(
+    customValues.sensitive.false.every(
+      (val) => customSensitiveBool.safeParse(val).success
+    )
+  ).toBe(true);
+  expect(
+    customValues.sensitive.invalid.every(
+      (val) => customSensitiveBool.safeParse(val).success === false
+    )
+  ).toBe(true);
+  expect(
+    sensitiveValues.true.every(
+      (val) => customSensitiveBool.safeParse(val).success
+    )
+  ).toBe(true);
+  expect(
+    sensitiveValues.false.every(
+      (val) => customSensitiveBool.safeParse(val).success
+    )
+  ).toBe(true);
+  expect(
+    sensitiveValues.invalid.every(
+      (val) => customSensitiveBool.safeParse(val).success === false
+    )
+  ).toBe(true);
+});
