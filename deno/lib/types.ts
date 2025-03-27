@@ -1945,7 +1945,7 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef, boolean> {
 //////////////////////////////////////////
 //////////////////////////////////////////
 export type CaseSensitivity = "sensitive" | "insensitive";
-export const defaultTruthyValues: Set<string> = new Set([
+export const truthyValues: Set<string> = new Set([
   "true",
   "1",
   "on",
@@ -1953,14 +1953,14 @@ export const defaultTruthyValues: Set<string> = new Set([
   "y",
   "enabled",
 ]);
-export const defaultFalsyValues: Set<string> = new Set([
+export const falsyValues: Set<string> = new Set([
   "false",
   "0",
   "off",
   "n",
   "disabled",
 ]);
-export const defaultCaseSensitivity: CaseSensitivity = "insensitive";
+export const caseSensitivity: CaseSensitivity = "insensitive";
 
 export interface ZodEnvBoolDef extends ZodTypeDef {
   typeName: ZodFirstPartyTypeKind.ZodEnvBool;
@@ -1970,7 +1970,7 @@ export interface ZodEnvBoolDef extends ZodTypeDef {
 }
 
 function safeMergeTruthy(newValues?: string[]): string[] {
-  const merged = defaultTruthyValues;
+  const merged = new Set<string>(truthyValues);
   if (newValues) {
     for (const value of newValues) {
       if (value === "") continue;
@@ -1982,7 +1982,7 @@ function safeMergeTruthy(newValues?: string[]): string[] {
 }
 
 function safeMergeFalsy(newValues?: string[]): string[] {
-  const merged = defaultFalsyValues;
+  const merged = new Set<string>(falsyValues);
   if (newValues) {
     for (const value of newValues) {
       if (value === "") continue;
@@ -2028,6 +2028,27 @@ export class ZodEnvBool extends ZodType<boolean, ZodEnvBoolDef, string> {
     return INVALID;
   }
 
+  /**
+   * Get default truthy values
+   */
+  get _truthyValues(): string[] {
+    return Array.from(truthyValues);
+  }
+
+  /**
+   * Get default falsy values
+   */
+  get _falsyValues(): string[] {
+    return Array.from(falsyValues);
+  }
+
+  /**
+   * Get default case sensitivity
+   */
+  get _caseSensitivity(): CaseSensitivity {
+    return caseSensitivity;
+  }
+
   static create = (
     params?: RawCreateParams & {
       true?: string[];
@@ -2039,7 +2060,7 @@ export class ZodEnvBool extends ZodType<boolean, ZodEnvBoolDef, string> {
       typeName: ZodFirstPartyTypeKind.ZodEnvBool,
       true: safeMergeTruthy(params?.true),
       false: safeMergeFalsy(params?.false),
-      case: params?.case || defaultCaseSensitivity,
+      case: params?.case || caseSensitivity,
       ...processCreateParams(params),
     });
   };
