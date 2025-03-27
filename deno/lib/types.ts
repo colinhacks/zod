@@ -626,14 +626,7 @@ export type ZodStringCheck =
   | { kind: "ip"; version?: IpVersion; message?: string }
   | { kind: "cidr"; version?: IpVersion; message?: string }
   | { kind: "base64"; message?: string }
-  | { kind: "base64url"; message?: string }
-  | {
-      kind: "bool";
-      truthyValues?: string[];
-      falsyValues?: string[];
-      caseSensitivity?: CaseSensitivity;
-      message?: string;
-    };
+  | { kind: "base64url"; message?: string };
 
 export interface ZodStringDef extends ZodTypeDef {
   checks: ZodStringCheck[];
@@ -776,35 +769,6 @@ function isValidCidr(ip: string, version?: IpVersion) {
   }
 
   return false;
-}
-
-function isValidBool(
-  value: string,
-  truthyValues?: string[],
-  falsyValues?: string[],
-  caseSensitivity?: CaseSensitivity
-): "valid" | "invalid" {
-  // Initialize default values
-  let truthy = ["true", "1", "on", "yes", "y", "enabled"];
-  let falsy = ["false", "0", "off", "no", "n", "disabled"];
-  caseSensitivity = caseSensitivity ?? "insensitive";
-
-  // Override default values if provided
-  if (truthyValues) truthy = truthy.concat(truthyValues);
-  if (falsyValues) falsy = falsy.concat(falsyValues);
-
-  // See case sensitivity
-  if (caseSensitivity === "insensitive") {
-    value = value.toLowerCase();
-    truthy = truthy.map((val) => val.toLowerCase());
-    falsy = falsy.map((val) => val.toLowerCase());
-  }
-
-  // Check if the value is in the truthy or falsy arrays
-  if (truthy.includes(value)) return "valid";
-  if (falsy.includes(value)) return "valid";
-
-  return "invalid";
 }
 
 export class ZodString extends ZodType<string, ZodStringDef, string> {
@@ -1109,23 +1073,6 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
-      } else if (check.kind === "bool") {
-        if (
-          isValidBool(
-            input.data,
-            check.truthyValues,
-            check.falsyValues,
-            check.caseSensitivity
-          ) === "invalid"
-        ) {
-          ctx = this._getOrReturnCtx(input, ctx);
-          addIssueToContext(ctx, {
-            validation: "bool",
-            code: ZodIssueCode.invalid_string,
-            message: check.message,
-          });
-          status.dirty();
-        }
       } else {
         util.assertNever(check);
       }
@@ -1202,31 +1149,6 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
 
   cidr(options?: string | { version?: IpVersion; message?: string }) {
     return this._addCheck({ kind: "cidr", ...errorUtil.errToObj(options) });
-  }
-
-  bool(
-    options?:
-      | string
-      | {
-          true?: string[];
-          false?: string[];
-          case?: CaseSensitivity;
-          message?: string;
-        }
-  ) {
-    if (typeof options === "string")
-      return this._addCheck({
-        kind: "bool",
-        ...errorUtil.errToObj(options),
-      });
-    return this._addCheck({
-      kind: "bool",
-      truthyValues: options?.true,
-      falsyValues: options?.false,
-      caseSensitivity: options?.case,
-      message: options?.message,
-      ...errorUtil.errToObj(options?.message),
-    });
   }
 
   datetime(
@@ -1430,9 +1352,6 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   get isBase64url() {
     // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return !!this._def.checks.find((ch) => ch.kind === "base64url");
-  }
-  get isBool() {
-    return !!this._def.checks.find((ch) => ch.kind === "bool");
   }
 
   get minLength() {
@@ -2014,6 +1933,44 @@ export class ZodBoolean extends ZodType<boolean, ZodBooleanDef, boolean> {
     return new ZodBoolean({
       typeName: ZodFirstPartyTypeKind.ZodBoolean,
       coerce: params?.coerce || false,
+      ...processCreateParams(params),
+    });
+  };
+}
+
+//////////////////////////////////////////
+//////////////////////////////////////////
+//////////                     ///////////
+//////////      ZodEnvBool     ///////////
+//////////                     ///////////
+//////////////////////////////////////////
+//////////////////////////////////////////
+export interface ZodEnvBoolDef extends ZodTypeDef {
+  typeName: ZodFirstPartyTypeKind.ZodEnvBool;
+}
+
+export class ZodEnvBool extends ZodType<boolean, ZodEnvBoolDef, string> {
+  _parse(input: ParseInput): ParseReturnType<boolean> {
+    const parsedType = this._getType(input);
+
+    if (parsedType !== ZodParsedType.string) {
+      const ctx = this._getOrReturnCtx(input);
+      addIssueToContext(ctx, {
+        code: ZodIssueCode.invalid_type,
+        expected: ZodParsedType.string,
+        received: ctx.parsedType,
+      });
+      return INVALID;
+    }
+
+    // TODO: add validation
+
+    return OK(Boolean(input.data));
+  }
+
+  static create = (params?: RawCreateParams): ZodEnvBool => {
+    return new ZodEnvBool({
+      typeName: ZodFirstPartyTypeKind.ZodEnvBool,
       ...processCreateParams(params),
     });
   };
@@ -5409,6 +5366,7 @@ export enum ZodFirstPartyTypeKind {
   ZodBranded = "ZodBranded",
   ZodPipeline = "ZodPipeline",
   ZodReadonly = "ZodReadonly",
+  ZodEnvBool = "ZodEnvBool",
 }
 export type ZodFirstPartySchemaTypes =
   | ZodString
@@ -5494,6 +5452,7 @@ const optionalType = ZodOptional.create;
 const nullableType = ZodNullable.create;
 const preprocessType = ZodEffects.createWithPreprocess;
 const pipelineType = ZodPipeline.create;
+const envboolType = ZodEnvBool.create;
 const ostring = () => stringType().optional();
 const onumber = () => numberType().optional();
 const oboolean = () => booleanType().optional();
@@ -5523,6 +5482,7 @@ export {
   discriminatedUnionType as discriminatedUnion,
   effectsType as effect,
   enumType as enum,
+  envboolType as envbool,
   functionType as function,
   instanceOfType as instanceof,
   intersectionType as intersection,
