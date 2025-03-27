@@ -1957,6 +1957,7 @@ export const falsyValues: Set<string> = new Set([
   "false",
   "0",
   "off",
+  "no",
   "n",
   "disabled",
 ]);

@@ -986,12 +986,12 @@ test("envbool", () => {
   const insensitiveBool = z.envbool();
   expect(
     insensitiveValues.true.every(
-      (val) => insensitiveBool.safeParse(val)
+      (val) => insensitiveBool.safeParse(val).success
     )
   ).toBe(true);
   expect(
     insensitiveValues.false.every(
-      (val) => insensitiveBool.safeParse(val)
+      (val) => insensitiveBool.safeParse(val).success
     )
   ).toBe(true);
   expect(
@@ -1003,10 +1003,10 @@ test("envbool", () => {
   // Sensitive Case
   const sensitiveBool = z.envbool({ case: "sensitive" });
   expect(
-    sensitiveValues.true.every((val) => sensitiveBool.safeParse(val))
+    sensitiveValues.true.every((val) => sensitiveBool.safeParse(val).success)
   ).toBe(true);
   expect(
-    sensitiveValues.false.every((val) => sensitiveBool.safeParse(val))
+    sensitiveValues.false.every((val) => sensitiveBool.safeParse(val).success)
   ).toBe(true);
   expect(
     sensitiveValues.invalid.every(
@@ -1021,22 +1021,22 @@ test("envbool", () => {
   });
   expect(
     customValues.insensitive.true.every(
-      (val) => customInsensitiveBool.safeParse(val)
+      (val) => customInsensitiveBool.safeParse(val).success
     )
   ).toBe(true);
   expect(
     customValues.insensitive.false.every(
-      (val) => customInsensitiveBool.safeParse(val)
+      (val) => customInsensitiveBool.safeParse(val).success
     )
   ).toBe(true);
   expect(
     insensitiveValues.true.every(
-      (val) => customInsensitiveBool.safeParse(val)
+      (val) => customInsensitiveBool.safeParse(val).success
     )
   ).toBe(true);
   expect(
     insensitiveValues.false.every(
-      (val) => customInsensitiveBool.safeParse(val)
+      (val) => customInsensitiveBool.safeParse(val).success
     )
   ).toBe(true);
   expect(
@@ -1053,12 +1053,12 @@ test("envbool", () => {
   });
   expect(
     customValues.sensitive.true.every(
-      (val) => customSensitiveBool.safeParse(val)
+      (val) => customSensitiveBool.safeParse(val).success
     )
   ).toBe(true);
   expect(
     customValues.sensitive.false.every(
-      (val) => customSensitiveBool.safeParse(val)
+      (val) => customSensitiveBool.safeParse(val).success
     )
   ).toBe(true);
   expect(
@@ -1068,12 +1068,12 @@ test("envbool", () => {
   ).toBe(true);
   expect(
     sensitiveValues.true.every(
-      (val) => customSensitiveBool.safeParse(val)
+      (val) => customSensitiveBool.safeParse(val).success
     )
   ).toBe(true);
   expect(
     sensitiveValues.false.every(
-      (val) => customSensitiveBool.safeParse(val)
+      (val) => customSensitiveBool.safeParse(val).success
     )
   ).toBe(true);
   expect(
