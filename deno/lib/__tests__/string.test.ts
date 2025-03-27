@@ -920,7 +920,7 @@ test("CIDR validation", () => {
   ).toBe(true);
 });
 
-test("envbool", () => {
+test("bool", () => {
   const insensitiveValues = {
     true: [
       "1",
@@ -983,7 +983,7 @@ test("envbool", () => {
   };
 
   // Insensitive Case
-  const insensitiveBool = z.string().envbool();
+  const insensitiveBool = z.string().bool();
   expect(
     insensitiveValues.true.every(
       (val) => insensitiveBool.safeParse(val).success
@@ -1001,7 +1001,7 @@ test("envbool", () => {
   ).toBe(true);
 
   // Sensitive Case
-  const sensitiveBool = z.string().envbool({ case: "sensitive" });
+  const sensitiveBool = z.string().bool({ case: "sensitive" });
   expect(
     sensitiveValues.true.every((val) => sensitiveBool.safeParse(val).success)
   ).toBe(true);
@@ -1015,7 +1015,7 @@ test("envbool", () => {
   ).toBe(true);
 
   // Custom insensitive values
-  const customInsensitiveBool = z.string().envbool({
+  const customInsensitiveBool = z.string().bool({
     true: ["always", "hellYeah"],
     false: ["never", "hellNah"],
   });
@@ -1046,7 +1046,7 @@ test("envbool", () => {
   ).toBe(true);
 
   // Custom sensitive values
-  const customSensitiveBool = z.string().envbool({
+  const customSensitiveBool = z.string().bool({
     true: ["always", "hellYeah"],
     false: ["never", "hellNah"],
     case: "sensitive",

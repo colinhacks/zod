@@ -628,7 +628,7 @@ export type ZodStringCheck =
   | { kind: "base64"; message?: string }
   | { kind: "base64url"; message?: string }
   | {
-      kind: "envbool";
+      kind: "bool";
       truthyValues?: string[];
       falsyValues?: string[];
       caseSensitivity?: CaseSensitivity;
@@ -778,7 +778,7 @@ function isValidCidr(ip: string, version?: IpVersion) {
   return false;
 }
 
-function isValidEnvBool(
+function isValidBool(
   value: string,
   truthyValues?: string[],
   falsyValues?: string[],
@@ -1109,9 +1109,9 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
           });
           status.dirty();
         }
-      } else if (check.kind === "envbool") {
+      } else if (check.kind === "bool") {
         if (
-          isValidEnvBool(
+          isValidBool(
             input.data,
             check.truthyValues,
             check.falsyValues,
@@ -1120,7 +1120,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         ) {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
-            validation: "envbool",
+            validation: "bool",
             code: ZodIssueCode.invalid_string,
             message: check.message,
           });
@@ -1204,7 +1204,7 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     return this._addCheck({ kind: "cidr", ...errorUtil.errToObj(options) });
   }
 
-  envbool(
+  bool(
     options?:
       | string
       | {
@@ -1216,11 +1216,11 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
   ) {
     if (typeof options === "string")
       return this._addCheck({
-        kind: "envbool",
+        kind: "bool",
         ...errorUtil.errToObj(options),
       });
     return this._addCheck({
-      kind: "envbool",
+      kind: "bool",
       truthyValues: options?.true,
       falsyValues: options?.false,
       caseSensitivity: options?.case,
@@ -1431,8 +1431,8 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     // base64url encoding is a modification of base64 that can safely be used in URLs and filenames
     return !!this._def.checks.find((ch) => ch.kind === "base64url");
   }
-  get isEnvBool() {
-    return !!this._def.checks.find((ch) => ch.kind === "envbool");
+  get isBool() {
+    return !!this._def.checks.find((ch) => ch.kind === "bool");
   }
 
   get minLength() {
