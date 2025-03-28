@@ -2748,36 +2748,6 @@ z.string()
 
 The `.pipe()` method returns a `ZodPipeline` instance.
 
-#### You can use `.pipe()` to fix common issues with `z.coerce`.
-
-You can constrain the input to types that work well with your chosen coercion. Then use `.pipe()` to apply the coercion.
-
-without constrained input:
-
-```ts
-const toDate = z.coerce.date();
-
-// works intuitively
-console.log(toDate.safeParse("2023-01-01").success); // true
-
-// might not be what you want
-console.log(toDate.safeParse(null).success); // true
-```
-
-with constrained input:
-
-```ts
-const datelike = z.union([z.number(), z.string(), z.date()]);
-const datelikeToDate = datelike.pipe(z.coerce.date());
-
-// still works intuitively
-console.log(datelikeToDate.safeParse("2023-01-01").success); // true
-
-// more likely what you want
-console.log(datelikeToDate.safeParse(null).success); // false
-```
-
-
 <br/>
 
 ## Guides and concepts
