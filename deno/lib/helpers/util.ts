@@ -68,6 +68,16 @@ export namespace util {
     return undefined;
   };
 
+  export const findIndex = <T>(
+    arr: T[],
+    checker: (arg: T) => any
+  ): number => {
+    for (let i = 0; i < arr.length; i++) {
+      if (checker(arr[i])) return i;
+    }
+    return -1;
+  };
+
   export type identity<T> = objectUtil.identity<T>;
   export type flatten<T> = objectUtil.flatten<T>;
 
