@@ -37,13 +37,13 @@
 <br/>
 <br/>
 
-<h2 align="center">Featured sponsor: Chromatic</h2>
+<h2 align="center">Featured sponsor: Fern</h2>
 
 <div align="center">
-  <a href="https://www.chromatic.com/features/test?utm_source=zodDev&utm_medium=placement&utm_campaign=zodDevFeaturedSponsor&utm_content=image">
+  <a href="https://cdn.prod.website-files.com/67880ff570cdb1a85eee946f/67ae353584e465dc8dfad3d2_fern_og_image%20(3).png">
     <picture width="85%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/18a3a5c6-fb81-41a1-a089-58297d4b316f">
-      <img alt="chromatic logo" src="https://github.com/user-attachments/assets/18a3a5c6-fb81-41a1-a089-58297d4b316f" width="85%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://cdn.prod.website-files.com/67880ff570cdb1a85eee946f/67ae353584e465dc8dfad3d2_fern_og_image%20(3).png">
+      <img alt="fern logo" src="https://cdn.prod.website-files.com/67880ff570cdb1a85eee946f/67ae353584e465dc8dfad3d2_fern_og_image%20(3).png" width="85%">
     </picture>
   </a>
   <br/>
@@ -536,6 +536,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 #### Form integrations
 
 - [`react-hook-form`](https://github.com/react-hook-form/resolvers#zod): A first-party Zod resolver for React Hook Form.
+- [`TanStack Form`](https://github.com/TanStack/form): Headless, performant, and type-safe form state management for TS/JS, React, Vue, Angular, Solid, and Lit
 - [`zod-validation-error`](https://github.com/causaly/zod-validation-error): Generate user-friendly error messages from `ZodError`s.
 - [`zod-formik-adapter`](https://github.com/robertLichtnow/zod-formik-adapter): A community-maintained Formik adapter for Zod.
 - [`react-zorm`](https://github.com/esamattis/react-zorm): Standalone `<form>` generation and validation for React using Zod.
