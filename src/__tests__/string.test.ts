@@ -70,9 +70,9 @@ test("email validations", () => {
   ];
   const invalidEmails = [
     // no "printable characters"
-    // `user%example.com@example.org`,
-    // `mailhost!username@example.org`,
-    // `test/test@test.com`,
+    `user%example.com@example.org`,
+    `mailhost!username@example.org`,
+    `test/test@test.com`,
 
     // double @
     `francois@@etu.inp-n7.fr`,
