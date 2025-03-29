@@ -17,6 +17,20 @@ const recordWithLiteralKeys = z.record(
 );
 type recordWithLiteralKeys = z.infer<typeof recordWithLiteralKeys>;
 
+const StringBrand = z.string().brand("StringBrand");
+type StringBrand = z.infer<typeof StringBrand>;
+const NumberBrand = z.number().brand("NumberBrand");
+type NumberBrand = z.infer<typeof NumberBrand>;
+const SymbolBrand = z.symbol().brand("SymbolBrand");
+type SymbolBrand = z.infer<typeof SymbolBrand>;
+
+const recordWithBrandedStringKeys = z.record(StringBrand, z.number());
+type recordWithBrandedStringKeys = z.infer<typeof recordWithBrandedStringKeys>;
+const recordWithBrandedNumberKeys = z.record(NumberBrand, z.number());
+type recordWithBrandedNumberKeys = z.infer<typeof recordWithBrandedNumberKeys>;
+const recordWithBrandedSymbolKeys = z.record(SymbolBrand, z.number());
+type recordWithBrandedSymbolKeys = z.infer<typeof recordWithBrandedSymbolKeys>;
+
 test("type inference", () => {
   util.assertEqual<booleanRecord, Record<string, boolean>>(true);
 
@@ -29,6 +43,16 @@ test("type inference", () => {
     recordWithLiteralKeys,
     Partial<Record<"Tuna" | "Salmon", string>>
   >(true);
+
+  util.assertEqual<recordWithBrandedStringKeys, Record<StringBrand, number>>(
+    true
+  );
+  util.assertEqual<recordWithBrandedNumberKeys, Record<NumberBrand, number>>(
+    true
+  );
+  util.assertEqual<recordWithBrandedSymbolKeys, Record<SymbolBrand, number>>(
+    true
+  );
 });
 
 test("methods", () => {
