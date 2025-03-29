@@ -475,6 +475,7 @@ z.string().startsWith(string);
 z.string().endsWith(string);
 z.string().datetime(); // ISO 8601；默认值为无 UTC 偏移，选项见下文
 z.string().ip(); // 默认为 IPv4 和 IPv6，选项见下文
+z.string().creditCard();
 
 // 转变
 z.string().trim(); // 减除空白
