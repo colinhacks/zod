@@ -640,6 +640,7 @@ const ulidRegex = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 //   /^([a-f0-9]{8}-[a-f0-9]{4}-[1-5][a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}|00000000-0000-0000-0000-000000000000)$/i;
 const uuidRegex =
   /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/i;
+const urlRegex = /^([a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*)(:\d+)?(\/[^\s,]*)?$/;
 const nanoidRegex = /^[a-z0-9_-]{21}$/i;
 const jwtRegex = /^[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]*$/;
 const durationRegex =
@@ -918,7 +919,10 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
         }
       } else if (check.kind === "url") {
         try {
-          new URL(input.data);
+          const parsed = new URL(input.data);
+          if (!urlRegex.test(parsed.host + parsed.pathname)) {
+            throw new Error();
+          }
         } catch {
           ctx = this._getOrReturnCtx(input, ctx);
           addIssueToContext(ctx, {
