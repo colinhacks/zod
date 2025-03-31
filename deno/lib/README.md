@@ -40,7 +40,7 @@
 <h2 align="center">Featured sponsor: Fern</h2>
 
 <div align="center">
-  <a href="https://cdn.prod.website-files.com/67880ff570cdb1a85eee946f/67ae353584e465dc8dfad3d2_fern_og_image%20(3).png">
+  <a href="https://buildwithfern.com/">
     <picture width="85%" >
       <source media="(prefers-color-scheme: dark)" srcset="https://cdn.prod.website-files.com/67880ff570cdb1a85eee946f/67ae353584e465dc8dfad3d2_fern_og_image%20(3).png">
       <img alt="fern logo" src="https://cdn.prod.website-files.com/67880ff570cdb1a85eee946f/67ae353584e465dc8dfad3d2_fern_og_image%20(3).png" width="85%">
