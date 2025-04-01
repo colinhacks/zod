@@ -40,10 +40,10 @@
 <h2 align="center">Featured sponsor: Fern</h2>
 
 <div align="center">
-  <a href="https://buildwithfern.com/">
-    <picture width="85%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://cdn.prod.website-files.com/67880ff570cdb1a85eee946f/67ae353584e465dc8dfad3d2_fern_og_image%20(3).png">
-      <img alt="fern logo" src="https://cdn.prod.website-files.com/67880ff570cdb1a85eee946f/67ae353584e465dc8dfad3d2_fern_og_image%20(3).png" width="85%">
+  <a href="https://link.buildwithfern.com/zod-partnership">
+    <picture width="95%" >
+      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/995d60b8-2ad9-4ba5-9b08-c41ec8c2cb45">
+      <img alt="fern logo" src="https://github.com/user-attachments/assets/b140d9bd-dfd3-4d97-a059-c3eda10d2840" width="95%">
     </picture>
   </a>
   <br/>
