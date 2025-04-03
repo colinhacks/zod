@@ -544,38 +544,61 @@ export function Table(props: { resources: ZodResource[] }) {
   );
 }
 
-export async function Ecosystem() {
-  console.log("fetching stars for apiLibraries...");
-  await fetchStars(apiLibraries);
-  console.log("fetching stars for formIntegrations...");
-  await fetchStars(formIntegrations);
-  console.log("fetching stars for zodToXConverters...");
-  await fetchStars(zodToXConverters);
-  console.log("fetching stars for xToZodConverters...");
-  await fetchStars(xToZodConverters);
-  console.log("fetching stars for mockingLibraries...");
-  await fetchStars(mockingLibraries);
-  console.log("fetching stars for poweredByZodProjects...");
-  await fetchStars(poweredByZodProjects);
-  console.log("fetching stars for zodUtilities...");
-  await fetchStars(zodUtilities);
+type ResourceTableProps = {
+  title: string;
+  resources: ZodResource[];
+  slug: string;
+};
+
+async function ResourceTable({ title, resources, slug }: ResourceTableProps) {
+  console.log(`Fetching stars for ${slug}...`);
+  await fetchStars(resources);
 
   return (
     <>
-      <h2>API Libraries</h2>
-      <Table resources={apiLibraries} />
-      <h2>Form Integrations</h2>
-      <Table resources={formIntegrations} />
-      <h2>Zod to X</h2>
-      <Table resources={zodToXConverters} />
-      <h2>X to Zod</h2>
-      <Table resources={xToZodConverters} />
-      <h2>Mocking Libraries</h2>
-      <Table resources={mockingLibraries} />
-      <h2>Powered by Zod</h2>
-      <Table resources={poweredByZodProjects} />
-      <h2>Zod Utilities</h2>
-      <Table resources={zodUtilities} />
+      <Table resources={resources} />
+    </>
+  );
+}
+
+export async function ApiLibraries() {
+  return <ResourceTable title="API Libraries" resources={apiLibraries} slug="apiLibraries" />;
+}
+
+export async function FormIntegrations() {
+  return <ResourceTable title="Form Integrations" resources={formIntegrations} slug="formIntegrations" />;
+}
+
+export async function ZodToX() {
+  return <ResourceTable title="Zod to X" resources={zodToXConverters} slug="zodToXConverters" />;
+}
+
+export async function XToZod() {
+  return <ResourceTable title="X to Zod" resources={xToZodConverters} slug="xToZodConverters" />;
+}
+
+export async function MockingLibraries() {
+  return <ResourceTable title="Mocking Libraries" resources={mockingLibraries} slug="mockingLibraries" />;
+}
+
+export async function PoweredByZod() {
+  return <ResourceTable title="Powered by Zod" resources={poweredByZodProjects} slug="poweredByZodProjects" />;
+}
+
+export async function ZodUtilities() {
+  return <ResourceTable title="Zod Utilities" resources={zodUtilities} slug="zodUtilities" />;
+}
+
+export async function Ecosystem() {
+  return (
+    <>
+      <ApiLibraries />
+      <FormIntegrations />
+      <ZodToX />
+      <XToZod />
+      <MockingLibraries />
+      <PoweredByZod />
+      <ZodUtilities />
     </>
   );
 }
