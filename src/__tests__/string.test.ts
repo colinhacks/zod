@@ -660,6 +660,22 @@ test("datetime parsing", () => {
 test("date", () => {
   const a = z.string().date();
   expect(a.isDate).toEqual(true);
+
+  // Custom error message as string
+  const badDate = "not a date";
+  const customMsg = "I am custom";
+  const strResult = z.string().date(customMsg).safeParse(badDate);
+  expect(strResult.success).toEqual(false);
+  if (!strResult.success) {
+    expect(strResult.error.issues[0].message).toEqual(customMsg);
+  }
+
+  // Custom error message as string within object
+  const objResult = z.string().date({ message: customMsg }).safeParse(badDate);
+  expect(objResult.success).toEqual(false);
+  if (!objResult.success) {
+    expect(objResult.error.issues[0].message).toEqual(customMsg);
+  }
 });
 
 test("date parsing", () => {
