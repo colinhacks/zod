@@ -99,38 +99,38 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.base64())).toMatchInlineSnapshot(`
       {
         "contentEncoding": "base64",
-        "pattern": /\\^\\(\\[0-9a-zA-Z\\+/\\]\\{4\\}\\)\\*\\(\\(\\[0-9a-zA-Z\\+/\\]\\{2\\}==\\)\\|\\(\\[0-9a-zA-Z\\+/\\]\\{3\\}=\\)\\)\\?\\$/,
+        "pattern": "^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.cuid())).toMatchInlineSnapshot(`
       {
-        "pattern": /\\^\\[cC\\]\\[\\^\\\\s-\\]\\{8,\\}\\$/,
+        "pattern": "^[cC][^\\s-]{8,}$",
         "type": "string",
       }
     `);
     // expect(toJSONSchema(z.regex(/asdf/))).toMatchInlineSnapshot();
     expect(toJSONSchema(z.emoji())).toMatchInlineSnapshot(`
       {
-        "pattern": /\\^\\(\\\\p\\{Extended_Pictographic\\}\\|\\\\p\\{Emoji_Component\\}\\)\\+\\$/u,
+        "pattern": "^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.nanoid())).toMatchInlineSnapshot(`
       {
-        "pattern": /\\^\\[a-zA-Z0-9_-\\]\\{21\\}\\$/,
+        "pattern": "^[a-zA-Z0-9_-]{21}$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.cuid2())).toMatchInlineSnapshot(`
       {
-        "pattern": /\\^\\[0-9a-z\\]\\+\\$/,
+        "pattern": "^[0-9a-z]+$",
         "type": "string",
       }
     `);
     expect(toJSONSchema(z.ulid())).toMatchInlineSnapshot(`
       {
-        "pattern": /\\^\\[0-9A-HJKMNP-TV-Z\\]\\{26\\}\\$/,
+        "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
         "type": "string",
       }
     `);
@@ -275,7 +275,7 @@ describe("toJSONSchema", () => {
     expect(toJSONSchema(z.base64())).toMatchInlineSnapshot(`
       {
         "contentEncoding": "base64",
-        "pattern": /\\^\\(\\[0-9a-zA-Z\\+/\\]\\{4\\}\\)\\*\\(\\(\\[0-9a-zA-Z\\+/\\]\\{2\\}==\\)\\|\\(\\[0-9a-zA-Z\\+/\\]\\{3\\}=\\)\\)\\?\\$/,
+        "pattern": "^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$",
         "type": "string",
       }
     `);
@@ -615,27 +615,22 @@ describe("toJSONSchema", () => {
     const result = toJSONSchema(categorySchema);
     expect(result).toMatchInlineSnapshot(`
       {
-        "$defs": {
-          "schema_0": {
-            "properties": {
-              "name": {
-                "type": "string",
-              },
-              "subcategories": {
-                "items": {
-                  "$ref": "#/$defs/schema_0",
-                },
-                "type": "array",
-              },
+        "properties": {
+          "name": {
+            "type": "string",
+          },
+          "subcategories": {
+            "items": {
+              "$ref": "#",
             },
-            "required": [
-              "name",
-              "subcategories",
-            ],
-            "type": "object",
+            "type": "array",
           },
         },
-        "$ref": "#/$defs/schema_0",
+        "required": [
+          "name",
+          "subcategories",
+        ],
+        "type": "object",
       }
     `);
   });
@@ -754,24 +749,19 @@ describe("toJSONSchema", () => {
     expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
       `
       "{
-        "$defs": {
-          "schema_0": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "children": {
-                "$ref": "#/$defs/schema_0"
-              }
-            },
-            "required": [
-              "id",
-              "children"
-            ]
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "children": {
+            "$ref": "#"
           }
         },
-        "$ref": "#/$defs/schema_0"
+        "required": [
+          "id",
+          "children"
+        ]
       }"
     `
     );
@@ -798,39 +788,34 @@ describe("toJSONSchema", () => {
     expect(JSON.stringify(result, null, 2)).toMatchInlineSnapshot(
       `
       "{
-        "$defs": {
-          "schema_0": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "files": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "parent": {
-                      "$ref": "#/$defs/schema_0"
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "parent"
-                  ]
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "parent": {
+                  "$ref": "#"
                 }
-              }
-            },
-            "required": [
-              "name",
-              "files"
-            ]
+              },
+              "required": [
+                "name",
+                "parent"
+              ]
+            }
           }
         },
-        "$ref": "#/$defs/schema_0"
+        "required": [
+          "name",
+          "files"
+        ]
       }"
     `
     );

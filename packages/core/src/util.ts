@@ -279,6 +279,19 @@ export function defineLazy<T, K extends keyof T>(object: T, key: K, getter: () =
   });
 }
 
+export function assignProp<T extends object, K extends PropertyKey>(
+  target: T,
+  prop: K,
+  value: K extends keyof T ? T[K] : any
+): void {
+  Object.defineProperty(target, prop, {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  });
+}
+
 export function getElementAtPath(obj: any, path: (string | number)[] | null | undefined): any {
   if (!path) return obj;
   return path.reduce((acc, key) => acc?.[key], obj);
@@ -695,7 +708,7 @@ export function extend(schema: schemas.$ZodObjectLike, shape: schemas.$ZodShape)
     ...schema._zod.def,
     get shape() {
       const _shape = { ...schema._zod.def.shape, ...shape };
-      Object.defineProperty(this, "shape", _shape);
+      assignProp(this, "shape", _shape);
       return _shape;
     },
     checks: [], // delete existing checks
@@ -712,7 +725,7 @@ export function mergeObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObject
     ...a._zod.def,
     get shape() {
       const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
-      Object.defineProperty(this, "shape", _shape);
+      assignProp(this, "shape", _shape);
       return _shape;
       // return { ...a._zod.def.shape, ...b._zod.def.shape };
     },
@@ -729,7 +742,7 @@ export function extendObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObjec
     ...a._zod.def,
     get shape() {
       const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
-      Object.defineProperty(this, "shape", _shape);
+      assignProp(this, "shape", _shape);
       return _shape;
       // return { ...a._zod.def.shape, ...b._zod.def.shape };
     },

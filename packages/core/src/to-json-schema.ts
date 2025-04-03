@@ -26,6 +26,7 @@ interface JSONSchemaGeneratorParams {
 interface ProcessParams {
   schemaPath: schemas.$ZodType[];
   path: (string | number)[];
+  initial?: Seen | undefined;
 }
 
 interface EmitParams {
@@ -91,6 +92,15 @@ export class JSONSchemaGenerator {
   }
 
   process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
+    const def = (schema as schemas.$ZodTypes)._zod.def;
+    // if (def.type === "lazy") {
+    //   return this.process((schema as schemas.$ZodLazy)._zod._getter, _params);
+    // } else if (def.type === "promise") {
+    //   return this.process(def.innerType, _params);
+    // } else if (def.type === "pipe") {
+    //   return this.process(def.out, _params);
+    // }
+
     // check for schema in seens
     const seen = this.seen.get(schema);
     if (seen) {
@@ -108,7 +118,7 @@ export class JSONSchemaGenerator {
     }
 
     // initialize
-    const result: Seen = { schema: {}, cached: {}, count: 1, cycle: undefined };
+    const result: Seen = _params.initial ?? { schema: {}, cached: {}, count: 1, cycle: undefined };
     this.seen.set(schema, result);
 
     if (schema._zod.toJSONSchema) {
@@ -137,7 +147,7 @@ export class JSONSchemaGenerator {
       // if (meta.example) _json.examples = [meta.example];
     }
 
-    const def = (schema as schemas.$ZodTypes)._zod.def;
+    // const def = (schema as schemas.$ZodTypes)._zod.def;
     const params = {
       ..._params,
       schemaPath: [..._params.schemaPath, schema],
@@ -424,10 +434,17 @@ export class JSONSchemaGenerator {
         throw new Error("NaN cannot be represented in JSON Schema");
       }
       case "pipe": {
-        // Object.assign(_json, this.process(def.out, params));
-        const inner = this.process(def.out, params);
-        Object.assign(_json, inner);
+        // this.seen.delete(schema);
+        const innerType = def.out;
+        this.process(innerType, params);
+        const inner = this.seen.get(innerType)!;
+        this.seen.set(schema, inner);
         break;
+        // const innerType = def.out;
+        // const inner = this.process(def.out, params);
+        // Object.assign(_json, inner);
+        // this.seen.set(schema, this.seen.get(innerType)!);
+        // return inner;
       }
       case "readonly": {
         const inner = this.process(def.innerType, params);
@@ -444,16 +461,28 @@ export class JSONSchemaGenerator {
         break;
       }
       case "promise": {
-        // Object.assign(_json, this.process(def.innerType, params, _json));
-        const inner = this.process(def.innerType, params);
-        Object.assign(_json, inner);
+        // this.seen.delete(schema);
+        // const innerType = def.innerType;
+        // const inner = this.process(def.innerType, params);
+        // Object.assign(_json, inner);
+        // this.seen.set(schema, this.seen.get(innerType)!);
+        // return inner;
+
+        const innerType = def.innerType;
+        this.process(innerType, params);
+        const inner = this.seen.get(innerType)!;
+        this.seen.set(schema, inner);
         break;
       }
       case "lazy": {
-        const inner = this.process((schema as schemas.$ZodLazy)._zod._getter, params);
-        Object.assign(_json, inner);
-
+        const innerType = (schema as schemas.$ZodLazy)._zod._getter;
+        this.process(innerType, params);
+        const inner = this.seen.get(innerType)!;
+        this.seen.set(schema, inner);
         break;
+        // Object.assign(_json, inner);
+        // this.seen.set(schema, this.seen.get(innerType)!);
+        // return inner;
       }
       case "custom": {
         throw new Error("Custom types cannot be represented in JSON Schema");
@@ -463,8 +492,10 @@ export class JSONSchemaGenerator {
       }
     }
 
-    Object.assign(result.cached, _json);
-    return _json;
+    // pulling fresh from this.seen in case it was overwritten
+    const _result = this.seen.get(schema)!;
+    Object.assign(_result.cached, _result.schema);
+    return _result.schema;
   }
 
   emit(schema: schemas.$ZodType, _params?: EmitParams): JSONSchema.BaseSchema {
@@ -484,7 +515,10 @@ export class JSONSchemaGenerator {
     Object.assign(result, seen.cached);
 
     const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
-      if (entry[0] === schema) {
+      // comparing the seen objects because sometimes
+      // multiple schemas map to the same seen object.
+      // e.g. lazy
+      if (entry[1] === seen) {
         return { ref: "#" };
       }
 
@@ -578,8 +612,11 @@ export class JSONSchemaGenerator {
       // this essentially "finalizes" this schema
       // each call to .emit() is functionally independent
       // though the seen map is shared
+      // console.dir(result, { depth: 10 });
+      // console.log(JSON.stringify(result, null, 2));
       return JSON.parse(JSON.stringify(result));
     } catch (_err) {
+      console.log(_err);
       throw new Error("Error converting schema to JSON.");
     }
   }
@@ -640,5 +677,6 @@ export function toJSONSchema(input: schemas.$ZodType | $ZodRegistry, _params?: T
 
   const gen = new JSONSchemaGenerator(_params);
   gen.process(input);
+  // console.log(gen.seen);
   return gen.emit(input, _params);
 }

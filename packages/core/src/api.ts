@@ -971,7 +971,7 @@ export function _interface<T extends schemas.$ZodLooseShape>(
     type: "interface",
     get shape() {
       const _shape = cleaned.value.shape;
-      Object.defineProperty(this, "shape", _shape);
+      util.assignProp(this, "shape", _shape);
       return _shape;
       // return cleaned.value.shape;
     },
@@ -994,7 +994,7 @@ export function _strictInterface<T extends schemas.$ZodLooseShape>(
     type: "interface",
     get shape() {
       const _shape = cleaned.value.shape;
-      Object.defineProperty(this, "shape", _shape);
+      util.assignProp(this, "shape", _shape);
       return _shape;
       // return cleaned.value.shape;
     },
@@ -1021,7 +1021,7 @@ export function _looseInterface<T extends schemas.$ZodLooseShape>(
     },
     get shape() {
       const _shape = cleaned.value.shape;
-      Object.defineProperty(this, "shape", _shape);
+      util.assignProp(this, "shape", _shape);
       return _shape;
       // return cleaned.value.shape;
     },

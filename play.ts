@@ -1,30 +1,27 @@
 import { toJSONSchema } from "@zod/core";
 import { z } from "zod";
 
-const email = z.email();
-const A = z.interface({
-  email,
-  get b() {
-    return B;
+const data = {
+  value: 1,
+  next: {
+    value: 2,
+    next: {
+      value: 3,
+      next: {
+        value: 4,
+        next: null,
+      },
+    },
   },
-  get a() {
-    return A;
+};
+
+const LinkedListSchema = z.interface({
+  value: z.number(),
+  get next() {
+    return LinkedListSchema.or(z.null());
   },
 });
 
-const B = z.interface({
-  email,
-  get a() {
-    return A;
-  },
-  get b() {
-    return B;
-  },
-});
+console.log(LinkedListSchema._zod.def.shape);
 
-const myReg = z.registry<{ id: string }>();
-myReg.add(A, { id: "A" });
-myReg.add(B, { id: "B" });
-
-const result = toJSONSchema(myReg, { reused: "ref", uri: (id) => `https://stuff.org/${id}.json` });
-console.log(JSON.stringify(result, null, 2));
+LinkedListSchema.parse(data);
