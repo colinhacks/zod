@@ -53,7 +53,6 @@
 <!-- <hr/> -->
 <br/>
 <br/>
- 
 ## Table of contents
 
 > These docs have been translated into [Chinese](./README_ZH.md) and [Korean](./README_KO.md).
@@ -88,6 +87,7 @@
   - [Times](#times)
   - [IP addresses](#ip-addresses)
   - [IP ranges](#ip-ranges-cidr)
+  - [JWTs](#jwts)
 - [Numbers](#numbers)
 - [BigInts](#bigints)
 - [NaNs](#nans)
@@ -216,7 +216,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="CodeRabbit logo" height="80px" src="https://github.com/user-attachments/assets/d791bc7d-dc60-4d55-9c31-97779839cb74">
         </picture>
       </a>
-      <br  />   
+      <br  />
       Cut code review time & bugs in half
       <br/>
       <a href="https://www.coderabbit.ai/" style="text-decoration:none;">coderabbit.ai</a>
@@ -241,7 +241,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="Courier logo" height="62px" src="https://github.com/user-attachments/assets/6b09506a-78de-47e8-a8c1-792efe31910a">
         </picture>
       </a>
-      <br  />   
+      <br  />
       The API platform for sending notifications
       <br/>
       <a href="https://www.courier.com/?utm_source=zod&utm_campaign=osssponsors" style="text-decoration:none;">courier.com</a>
@@ -257,7 +257,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="LibLab" height="62px" src="https://github.com/user-attachments/assets/3de0b617-5137-49c4-b72d-a033cbe602d8">
         </picture>
       </a>
-      <br  />   
+      <br  />
       Generate better SDKs for your APIs
       <br/>
       <a href="https://liblab.com/?utm_source=zod" style="text-decoration:none;">liblab.com</a>
@@ -275,7 +275,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="Neon" height="68px" src="https://github.com/user-attachments/assets/b5799fc8-81ff-4053-a1c3-b29adf85e7a1">
         </picture>
       </a>
-      <br  />   
+      <br  />
       Serverless Postgres — Ship faster
       <br/>
       <a href="https://neon.tech" style="text-decoration:none;">neon.tech</a>
@@ -291,7 +291,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="stainless" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/5ef4c11b-efeb-4495-90a8-41b83f798600">
         </picture>
       </a>
-      <br  />   
+      <br  />
       Build AI apps and workflows with <a href="https://retool.com/products/ai?utm_source=github&utm_medium=referral&utm_campaign=zod">Retool AI</a>
       <br/>
       <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod" style="text-decoration:none;">retool.com</a>
@@ -309,7 +309,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="stainless" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/e9444e44-d991-4bba-a697-dbcfad608e47">
         </picture>
       </a>
-      <br  />   
+      <br  />
       Generate best-in-class SDKs
       <br/>
       <a href="https://stainlessapi.com" style="text-decoration:none;">stainlessapi.com</a>
@@ -325,7 +325,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
           <img alt="speakeasy" height="40px" src="https://github.com/colinhacks/zod/assets/3084745/647524a4-22bb-4199-be70-404207a5a2b5">
         </picture>
       </a>
-      <br  />   
+      <br  />
       SDKs & Terraform providers for your API
       <br/>
       <a href="https://speakeasy.com/?utm_source=zod+docs" style="text-decoration:none;">speakeasy.com</a>
@@ -843,6 +843,9 @@ z.string().date(); // ISO date format (YYYY-MM-DD)
 z.string().time(); // ISO time format (HH:mm:ss[.SSSSSS])
 z.string().duration(); // ISO 8601 duration
 z.string().base64();
+
+// added in Zod 3.24
+z.string().jwt();
 ```
 
 > Check out [validator.js](https://github.com/validatorjs/validator.js) for a bunch of other useful string validation functions that can be used in conjunction with [Refinements](#refine).
@@ -1004,6 +1007,20 @@ ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
 
 const ipv6Cidr = z.string().cidr({ version: "v6" });
 ipv6Cidr.parse("192.168.1.1"); // fail
+```
+
+### JWTs
+
+> Added in Zod 3.24
+
+The `z.string().jwt()` method validates the string is a valid 3-part JWT. The JWT must contain type claim in the protected header.
+
+> This does not verify your JWT cryptographically! It merely ensures its in the proper format. Use a library like [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) to verify the JWT signature, parse the token, and read the claims.
+
+To constrain the JWT to a specific algorithm:
+
+```ts
+z.string().jwt({ alg: "RS256" });
 ```
 
 <br/>
