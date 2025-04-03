@@ -1,27 +1,26 @@
-import { toJSONSchema } from "@zod/core";
+// import { toJSONSchema } from "@zod/core";
 import { z } from "zod";
 
-const data = {
-  value: 1,
-  next: {
-    value: 2,
-    next: {
-      value: 3,
-      next: {
-        value: 4,
-        next: null,
-      },
+const User = z
+  .interface({
+    name: z.string(),
+    get posts() {
+      return z.array(Post);
     },
-  },
-};
+  })
+  .meta({ id: "User" });
 
-const LinkedListSchema = z.interface({
-  value: z.number(),
-  get next() {
-    return LinkedListSchema.or(z.null());
-  },
+const Post = z
+  .interface({
+    title: z.string(),
+    content: z.string(),
+    get author() {
+      return User;
+    },
+  })
+  .meta({ id: "Post" });
+
+const result = z.toJSONSchema(z.globalRegistry, {
+  uri: (id) => `https://example.com/${id}.json`,
 });
-
-console.log(LinkedListSchema._zod.def.shape);
-
-LinkedListSchema.parse(data);
+console.dir(result, { depth: 5 });

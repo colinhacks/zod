@@ -667,12 +667,14 @@ export function toJSONSchema(input: schemas.$ZodType | $ZodRegistry, _params?: T
       });
     }
 
-    const defsSegment = gen.target === "draft-2020-12" ? "$defs" : "definitions";
-    schemas.__shared = {
-      [defsSegment]: defs,
-    };
+    if (Object.keys(defs).length > 0) {
+      const defsSegment = gen.target === "draft-2020-12" ? "$defs" : "definitions";
+      schemas.__shared = {
+        [defsSegment]: defs,
+      };
+    }
 
-    return schemas;
+    return { schemas };
   }
 
   const gen = new JSONSchemaGenerator(_params);

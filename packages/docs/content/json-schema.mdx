@@ -7,27 +7,124 @@ import { Callout } from "fumadocs-ui/components/callout"
 import { Accordion, Accordions } from 'fumadocs-ui/components/accordion';
 
 <Callout icon={'💎'}>
-  New in Zod 4
+  **New** — Zod 4 introduces a new feature: native [JSON Schema](https://json-schema.org/) conversion. JSON Schema is a standard for describing the structure of JSON (with JSON). It's widely used in [OpenAPI](https://www.openapis.org/) definitions and defining [structured outputs](https://platform.openai.com/docs/guides/structured-outputs?api-mode=chat) for AI.
 </Callout>
 
-Zod 4 introduces a new feature: native [JSON Schema](https://json-schema.org/) conversion. JSON Schema is a standard for describing the structure of JSON (with JSON). It's widely used in [OpenAPI](https://www.openapis.org/) definitions and defining [structured outputs](https://platform.openai.com/docs/guides/structured-outputs?api-mode=chat) for AI.
-
-{/* > Zod's approach to JSON Schema conversion is strongly coupled to its registry-based metadata system. If you haven't already, read through the [Metadata and registries](/metadata) page for complete context. */}
-
-## `z.toJSONSchema()`
 
 To convert a Zod schema to JSON Schema, use the `z.toJSONSchema()` function.
 
 ```ts
 import * as z from "zod";
 
-const schema = z.string();
+const schema = z.interface({
+  name: z.string(),
+  age: z.number(),
+});
 
 z.toJSONSchema(schema)
-// => { type: "string" }
+// => {
+//   type: 'object',
+//   properties: { name: { type: 'string' }, age: { type: 'number' } },
+//   required: [ 'name', 'age' ]
+// }
 ```
 
-{/* This supports all Zod schemas & checks that can reasonably by converted to JSON Schema. This page does not aim to provide a comprehensive reference for how conversion works—for details, see the [implementation](https://github.com/colinhacks/zod/blob/v4/packages/core/src/to-json-schema.ts).  */}
+All schema & checks are converted to their closest JSON Schema equivalent. Some types have no analog and cannot be reasonably represented. See the [`unrepresentable'](#unrepresentable) section below for more information on handling these cases.
+
+```ts
+z.bigint(); // ❌
+z.int64(); // ❌
+z.symbol(); // ❌
+z.void(); // ❌
+z.date(); // ❌
+z.map(); // ❌
+z.set(); // ❌
+z.file(); // ❌
+z.transform(); // ❌
+z.nan(); // ❌
+z.custom(); // ❌
+```
+
+
+## String formats
+
+Zod converts the following schema types to the equivalent JSON Schema `format`:
+
+```ts
+// Supported via `format`
+z.email(); // => { type: "string", format: "email" }
+z.iso.datetime(); // => { type: "string", format: "date-time" }
+z.iso.date(); // => { type: "string", format: "date" }
+z.iso.time(); // => { type: "string", format: "time" }
+z.iso.duration(); // => { type: "string", format: "duration" }
+z.ipv4(); // => { type: "string", format: "ipv4" }
+z.ipv6(); // => { type: "string", format: "ipv6" }
+z.uuid(); // => { type: "string", format: "uuid" }
+z.guid(); // => { type: "string", format: "uuid" }
+z.url(); // => { type: "string", format: "uri" }
+```
+
+These schemas are supported via `contentEncoding`:
+
+```ts
+z.base64(); // => { type: "string", contentEncoding: "base64" }
+```
+
+All other string formats are supported via `pattern`:
+
+```ts
+z.cuid();
+z.regex();
+z.emoji();
+z.nanoid();
+z.cuid2();
+z.ulid();
+z.cidr();
+```
+
+## Numeric types
+
+Zod converts the following numeric types to JSON Schema:
+
+```ts
+// number
+z.number(); // => { type: "number" }
+z.float32(); // => { type: "number", exclusiveMinimum: ..., exclusiveMaximum: ... }
+z.float64(); // => { type: "number", exclusiveMinimum: ..., exclusiveMaximum: ... }
+
+// integer
+z.int(); // => { type: "integer" }
+z.int32(); // => { type: "integer", exclusiveMinimum: ..., exclusiveMaximum: ... }
+```
+
+## Nullability
+
+Zod converts both `undefined`/`null` to `{ type: "null" }` in JSON Schema.
+
+```ts
+z.null(); 
+// => { type: "null" }
+
+z.undefined(); 
+// => { type: "null" }
+```
+
+Similarly, `optional` and `nullable` are made nullable via `oneOf`:
+
+```ts
+z.optional(z.string());
+// => { oneOf: [{ type: "string" }, { type: "null" }] }
+
+z.nullable(z.string());
+// => { oneOf: [{ type: "string" }, { type: "null" }] }
+```
+
+{/* ### Pipes
+
+Pipes contain and input and and output schema. Zod uses the *output schema* for JSON Schema conversion. */}
+
+
+## Configuration
 
 A second argument can be used to customize the conversion logic.
 
@@ -41,14 +138,14 @@ Below is a quick reference for each supported parameter. Each one is explained i
 
 ```ts
 interface ToJSONSchemaParams {
-  /** A registry used to look up metadata for each schema. 
-   * Any schema with an `id` property will be extracted as a $def. */
-  metadata?: $ZodRegistry<Record<string, any>>;
-
   /** The JSON Schema version to target.
    * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
    * - `"draft-7"` — Default. JSON Schema Draft 7 */
   target?: "draft-7" | "draft-2020-12";
+
+  /** A registry used to look up metadata for each schema. 
+   * Any schema with an `id` property will be extracted as a $def. */
+  metadata?: $ZodRegistry<Record<string, any>>;
 
   /** How to handle unrepresentable types.
    * - `"throw"` — Default. Unrepresentable types throw an error
@@ -60,24 +157,16 @@ interface ToJSONSchemaParams {
    * - `"throw"` — Cycles will throw an error if encountered */
   cycles?: "ref" | "throw";
 
-
   /* How to handle reused schemas.
    * - `"inline"` — Default. Reused schemas will be inlined
    * - `"ref"` — Reused schemas will be extracted as $defs */
   reused?: "ref" | "inline";
 
-  /** A registry used to look up external schemas. Default: null.
-   * If defined, any schema with an `id` property in this registry 
-   * is extracted as an external $ref. To customize the URI of the generated ref, 
-   * use `externalURI`.  */
-  external?: $ZodRegistry<{ id?: string | undefined }> | null;
-
   /** A function used to convert `id` values to URIs to be used in *external* $refs.
    *
    * Default is `(id) => id`.
    */
-  externalURI?: (id: string) => string;
-
+  uri?: (id: string) => string;
 }
 ```
 
@@ -209,37 +298,7 @@ z.toJSONSchema(emailSchema);
 </Tabs>
 
 
-### `unrepresentable`
-
-
-The following APIs are not representable in JSON Schema. By default Zod will throw an error if they are encountered. It is unsound to attempt a conversion to JSON Schema; you should modify your schemas  as they have no equivalent in JSON. An error will be thrown if any of these are encountered.
-
-```ts
-z.bigint(); // ❌
-z.int64(); // ❌
-z.symbol(); // ❌
-z.void(); // ❌
-z.date(); // ❌
-z.map(); // ❌
-z.set(); // ❌
-z.file(); // ❌
-z.transform(); // ❌
-z.nan(); // ❌
-z.custom(); // ❌
-```
-
-### `cycles`
-
-If a cycle is encountered as `z.toJSONSchema()` traverses the schema, it will extract the origin of the cycle into `$defs`. This breaks the cycle. 
-
-
-
-### `reused`
-
-### `baseURI`
-
-
-## `unrepresentable` 
+### `unrepresentable` 
 
 The following APIs are not representable in JSON Schema. By default Zod will throw an error if they are encountered. It is unsound to attempt a conversion to JSON Schema; you should modify your schemas  as they have no equivalent in JSON. An error will be thrown if any of these are encountered.
 
@@ -256,12 +315,11 @@ z.transform(); // ❌
 z.nan(); // ❌
 z.custom(); // ❌
 ```
-
 
 By default, Zod will throw an error if any of these are encountered. 
 
 ```ts
-z.toJSONSchema(z.bigint(), { unrepresentable: "any" });
+z.toJSONSchema(z.bigint());
 // => throws Error
 ```
 
@@ -271,14 +329,82 @@ You can change this behavior by setting the `unrepresentable` option to `"any"`.
 z.toJSONSchema(z.bigint(), { unrepresentable: "any" });
 // => {}
 ```
+### `cycles`
 
-> Any Zod API not listed above is supported in some way. This page does not aim to provide a comprehensive reference for how conversion works—for details, see the [implementation](https://github.com/colinhacks/zod/blob/v4/packages/core/src/to-json-schema.ts). 
+How to handle cycles. If a cycle is encountered as `z.toJSONSchema()` traverses the schema, it will be represented using `$ref`. 
 
-### FAQ
+```ts
+const User = z.interface({
+  name: z.string(),
+  get friend() {
+    return User;
+  },
+});
 
-Some frequently asked questions are addressed below.
+toJSONSchema(User);
+// => {
+//   type: 'object',
+//   properties: { name: { type: 'string' }, friend: { '$ref': '#' } },
+//   required: [ 'name', 'friend' ]
+// }
+```
 
-<Accordions>
+If instead you want to throw an error, set the `cycles` option to `"throw"`.
+
+```ts
+z.toJSONSchema(User, { cycles: "throw" });
+// => throws Error
+```
+
+
+### `reused`
+
+How to handle schemas that occur multiple times in the same schema. By default, Zod will inline these schemas. 
+
+```ts
+const name = z.string();
+const User = z.interface({
+  firstName: name,
+  lastName: name,
+});
+
+z.toJSONSchema(User);
+// => {
+//   type: 'object',
+//   properties: { 
+//     firstName: { type: 'string' }, 
+//     lastName: { type: 'string' } 
+//   },
+//   required: [ 'firstName', 'lastName' ]
+// }
+```
+
+Instead you can set the `reused` option to `"ref"` to extract these schemas into `$defs`.
+
+```ts
+z.toJSONSchema(User, { reused: "ref" });
+// => {
+//   type: 'object',
+//   properties: {
+//     firstName: { '$ref': '#/$defs/__schema0' },
+//     lastName: { '$ref': '#/$defs/__schema0' }
+//   },
+//   required: [ 'firstName', 'lastName' ],
+//   '$defs': { __schema0: { type: 'string' } }
+// }
+```
+
+{/* ### `uri`
+
+To customize all *external* `$ref` URIs, use the `uri` option. This expects a function that converts an `id` to a fully-qualified URI.
+
+```ts
+const myRegistry = z.registry();
+const mySchema = z.string().meta({ id: "my-schema" });
+``` */}
+
+
+{/* <Accordions>
 
   <Accordion title="What about string formats?">
     Zod converts the following schema types to the equivalent JSON Schema `format`:
@@ -372,7 +498,7 @@ Some frequently asked questions are addressed below.
     Pipes contain and input and and output schema. Zod uses the *output schema* for JSON Schema conversion.
   </Accordion>
 
-</Accordions>
+</Accordions> */}
 
 {/* ### Primitives
 
@@ -638,3 +764,96 @@ There is a popular existing third-party library for `zod-to-json-schema` availab
   </td>
 </tr>
 </table> */}
+
+## Registries
+
+Passing a schema into `z.toJSONSchema()` will return a *self-contained* JSON Schema. 
+
+In other cases, you may have a set of Zod schemas you'd like to represent using multiple interlinked JSON Schemas, perhaps to write to `.json` files and serve from a web server. To achieve this, you can pass a [registry](/metadata#registries) into `z.toJSONSchema()`.
+
+```ts
+import * as z from "zod";
+
+const User = z.interface({
+  name: z.string(),
+  get posts(){
+    return z.array(Post);
+  }
+});
+
+const Post = z.interface({
+  title: z.string(),
+  content: z.string(),
+  get author(){
+    return User;
+  }
+});
+
+z.globalRegistry.add(User, {id: "User"});
+z.globalRegistry.add(Post, {id: "Post"});
+```
+
+The schemas above both have an `id` property registered in `z.globalRegistry`. To convert these to JSON Schema, pass the entire registry into `z.toJSONSchema()`.
+
+```ts
+z.toJSONSchema(z.globalRegistry);
+// => {
+//   schemas: {
+//     User: {
+//       id: 'User',
+//       type: 'object',
+//       properties: {
+//         name: { type: 'string' },
+//         posts: { type: 'array', items: { '$ref': 'Post' } }
+//       },
+//       required: [ 'name', 'posts' ]
+//     },
+//     Post: {
+//       id: 'Post',
+//       type: 'object',
+//       properties: {
+//         title: { type: 'string' },
+//         content: { type: 'string' },
+//         author: { '$ref': 'User' }
+//       },
+//       required: [ 'title', 'content', 'author' ]
+//     }
+//   }
+// }
+```
+
+> Any schema with an `id` property in the registry will be extracted into `schemas`. 
+
+By default the `$ref` URIs are relative paths like `"User"`. To make these absolute URIs, use the `uri` option. This expects a function that converts an `id` to a fully-qualified URI.
+
+```ts
+z.toJSONSchema(z.globalRegistry, {
+  uri: (id) => `https://example.com/${id}.json`
+});
+// => {
+//   schemas: {
+//     User: {
+//       id: 'User',
+//       type: 'object',
+//       properties: {
+//         name: { type: 'string' },
+//         posts: {
+//           type: 'array',
+//           items: { '$ref': 'https://example.com/Post.json' }
+//         }
+//       },
+//       required: [ 'name', 'posts' ]
+//     },
+//     Post: {
+//       id: 'Post',
+//       type: 'object',
+//       properties: {
+//         title: { type: 'string' },
+//         content: { type: 'string' },
+//         author: { '$ref': 'https://example.com/User.json' }
+//       },
+//       required: [ 'title', 'content', 'author' ]
+//     }
+//   }
+// }
+```
