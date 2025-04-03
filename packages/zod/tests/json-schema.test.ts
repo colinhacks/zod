@@ -9,14 +9,6 @@ describe("toJSONSchema", () => {
         "type": "string",
       }
     `);
-
-    expect(toJSONSchema(z.string().default("hello"))).toMatchInlineSnapshot(`
-      {
-        "default": "hello",
-        "type": "string",
-      }
-    `);
-
     expect(toJSONSchema(z.number())).toMatchInlineSnapshot(`
       {
         "type": "number",
@@ -32,10 +24,160 @@ describe("toJSONSchema", () => {
         "type": "null",
       }
     `);
+    expect(toJSONSchema(z.undefined())).toMatchInlineSnapshot(`
+      {
+        "type": "null",
+      }
+    `);
+    expect(toJSONSchema(z.any())).toMatchInlineSnapshot(`{}`);
+    expect(toJSONSchema(z.unknown())).toMatchInlineSnapshot(`{}`);
+    expect(toJSONSchema(z.never())).toMatchInlineSnapshot(`
+      {
+        "not": {},
+      }
+    `);
+    expect(toJSONSchema(z.email())).toMatchInlineSnapshot(`
+      {
+        "format": "email",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.iso.datetime())).toMatchInlineSnapshot(`
+      {
+        "format": "date-time",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.iso.date())).toMatchInlineSnapshot(`
+      {
+        "format": "date",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.iso.time())).toMatchInlineSnapshot(`
+      {
+        "format": "time",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.iso.duration())).toMatchInlineSnapshot(`
+      {
+        "format": "duration",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.ipv4())).toMatchInlineSnapshot(`
+      {
+        "format": "ipv4",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.ipv6())).toMatchInlineSnapshot(`
+      {
+        "format": "ipv6",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.uuid())).toMatchInlineSnapshot(`
+      {
+        "format": "uuid",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.guid())).toMatchInlineSnapshot(`
+      {
+        "format": "uuid",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.url())).toMatchInlineSnapshot(`
+      {
+        "format": "uri",
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.base64())).toMatchInlineSnapshot(`
+      {
+        "contentEncoding": "base64",
+        "pattern": /\\^\\(\\[0-9a-zA-Z\\+/\\]\\{4\\}\\)\\*\\(\\(\\[0-9a-zA-Z\\+/\\]\\{2\\}==\\)\\|\\(\\[0-9a-zA-Z\\+/\\]\\{3\\}=\\)\\)\\?\\$/,
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.cuid())).toMatchInlineSnapshot(`
+      {
+        "pattern": /\\^\\[cC\\]\\[\\^\\\\s-\\]\\{8,\\}\\$/,
+        "type": "string",
+      }
+    `);
+    // expect(toJSONSchema(z.regex(/asdf/))).toMatchInlineSnapshot();
+    expect(toJSONSchema(z.emoji())).toMatchInlineSnapshot(`
+      {
+        "pattern": /\\^\\(\\\\p\\{Extended_Pictographic\\}\\|\\\\p\\{Emoji_Component\\}\\)\\+\\$/u,
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.nanoid())).toMatchInlineSnapshot(`
+      {
+        "pattern": /\\^\\[a-zA-Z0-9_-\\]\\{21\\}\\$/,
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.cuid2())).toMatchInlineSnapshot(`
+      {
+        "pattern": /\\^\\[0-9a-z\\]\\+\\$/,
+        "type": "string",
+      }
+    `);
+    expect(toJSONSchema(z.ulid())).toMatchInlineSnapshot(`
+      {
+        "pattern": /\\^\\[0-9A-HJKMNP-TV-Z\\]\\{26\\}\\$/,
+        "type": "string",
+      }
+    `);
+    // expect(toJSONSchema(z.cidr())).toMatchInlineSnapshot();
+    expect(toJSONSchema(z.number())).toMatchInlineSnapshot(`
+      {
+        "type": "number",
+      }
+    `);
+    expect(toJSONSchema(z.int())).toMatchInlineSnapshot(`
+      {
+        "exclusiveMaximum": 9007199254740991,
+        "exclusiveMinimum": -9007199254740991,
+        "type": "integer",
+      }
+    `);
+    expect(toJSONSchema(z.int32())).toMatchInlineSnapshot(`
+      {
+        "exclusiveMaximum": 2147483647,
+        "exclusiveMinimum": -2147483648,
+        "type": "integer",
+      }
+    `);
+    expect(toJSONSchema(z.float32())).toMatchInlineSnapshot(`
+      {
+        "exclusiveMaximum": 3.4028234663852886e+38,
+        "exclusiveMinimum": -3.4028234663852886e+38,
+        "type": "number",
+      }
+    `);
+    expect(toJSONSchema(z.float64())).toMatchInlineSnapshot(`
+      {
+        "exclusiveMaximum": 1.7976931348623157e+308,
+        "exclusiveMinimum": -1.7976931348623157e+308,
+        "type": "number",
+      }
+    `);
+    expect(toJSONSchema(z.jwt())).toMatchInlineSnapshot(`
+      {
+        "type": "string",
+      }
+    `);
   });
 
   it("unsupported schema types", () => {
     expect(() => toJSONSchema(z.bigint())).toThrow("BigInt cannot be represented in JSON Schema");
+    expect(() => toJSONSchema(z.int64())).toThrow("BigInt cannot be represented in JSON Schema");
     expect(() => toJSONSchema(z.symbol())).toThrow("Symbols cannot be represented in JSON Schema");
     expect(() => toJSONSchema(z.void())).toThrow("Void cannot be represented in JSON Schema");
     expect(() => toJSONSchema(z.date())).toThrow("Date cannot be represented in JSON Schema");
@@ -318,7 +460,10 @@ describe("toJSONSchema", () => {
 
   // pipe
   it("pipe", () => {
-    const schema = z.string().pipe(z.number());
+    const schema = z
+      .string()
+      .transform((val) => Number.parseInt(val))
+      .pipe(z.number());
     expect(toJSONSchema(schema)).toMatchInlineSnapshot(`
       {
         "type": "number",

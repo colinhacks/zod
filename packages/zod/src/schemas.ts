@@ -81,11 +81,12 @@ export interface ZodType<out Output = unknown, out Input = unknown> extends core
   ): ZodPipe<this, T>;
   readonly(): ZodReadonly<this>;
 
-  // metadata
+  /** Returns a new instance that has been registered in `z.globalRegistry` with the specified description */
   describe(description: string): this;
   description?: string;
-  /** Registers schema to z.globalRegistry with the specified metadata */
+  /** Returns the metadata associated with this instance in `z.globalRegistry` */
   meta(): core.$replace<core.GlobalMeta, this> | undefined;
+  /** Returns a new instance that has been registered in `z.globalRegistry` with the specified metadata */
   meta(data: core.$replace<core.GlobalMeta, this>): this;
 
   // helpers
@@ -144,10 +145,11 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
 
   // meta
   inst.describe = (description) => {
+    const cl = inst.clone();
     const meta = core.globalRegistry.get(inst) ?? {};
     meta.description = description;
-    core.globalRegistry.add(inst, meta);
-    return inst;
+    core.globalRegistry.add(cl, meta);
+    return cl;
   };
   Object.defineProperty(inst, "description", {
     get() {
@@ -157,8 +159,9 @@ export const ZodType: core.$constructor<ZodType> = /*@__PURE__*/ core.$construct
   });
   inst.meta = (...args: any) => {
     if (args.length === 0) return core.globalRegistry.get(inst);
-    core.globalRegistry.add(inst, args[0]);
-    return inst as any;
+    const cl = inst.clone();
+    core.globalRegistry.add(cl, args[0]);
+    return cl as any;
   };
 
   // helpers
@@ -1127,7 +1130,10 @@ function _interface<T extends core.$ZodLooseShape>(
   const def: core.$ZodInterfaceDef = {
     type: "interface",
     get shape() {
-      return cleaned.value.shape;
+      // return cleaned.value.shape;
+      const _shape = cleaned.value.shape;
+      Object.defineProperty(this, "shape", _shape);
+      return _shape;
     },
     get optional() {
       return cleaned.value.optional;
@@ -1148,7 +1154,10 @@ export function strictInterface<T extends core.$ZodLooseShape>(
   const def: core.$ZodInterfaceDef = {
     type: "interface",
     get shape() {
-      return cleaned.value.shape;
+      // return cleaned.value.shape;
+      const _shape = cleaned.value.shape;
+      Object.defineProperty(this, "shape", _shape);
+      return _shape;
     },
     get optional() {
       return cleaned.value.optional;
@@ -1172,7 +1181,10 @@ export function looseInterface<T extends core.$ZodLooseShape>(
       return cleaned.value.optional;
     },
     get shape() {
-      return cleaned.value.shape;
+      // return cleaned.value.shape;
+      const _shape = cleaned.value.shape;
+      Object.defineProperty(this, "shape", _shape);
+      return _shape;
     },
     catchall: unknown(),
     ...util.normalizeParams(params),
@@ -2301,7 +2313,7 @@ export function json(params?: core.$ZodCustomParams): ZodJSONSchema {
 // preprocess
 interface ZodPreprocessParams extends core.$ZodTransformParams, core.$ZodPipeParams {}
 
-/** @deprecated Use `z.pipe()` and `z.transform()` instead. */
+// /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
 export function preprocess<A, U extends core.$ZodType>(
   fn: (arg: unknown, ctx: RefinementCtx) => A,
   schema: U,

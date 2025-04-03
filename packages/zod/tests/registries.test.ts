@@ -1,5 +1,5 @@
-import * as z from "@zod/mini";
 import { expect, expectTypeOf, test } from "vitest";
+import * as z from "zod";
 
 test("globalRegistry", () => {
   const reg = z.registry();
@@ -43,7 +43,7 @@ test("z.registry no metadata", () => {
 });
 
 test("z.registry with schema constraints", () => {
-  const fieldRegistry = z.registry<{ name: string; description: string }, z.ZodMiniString>();
+  const fieldRegistry = z.registry<{ name: string; description: string }, z.ZodString>();
 
   const a = z.string();
   fieldRegistry.add(a, { name: "hello", description: "world" });
@@ -122,4 +122,29 @@ test("input type in registry meta - objects and arrays", () => {
   // @ts-expect-error
   reg.add(a, { name: "hello", examples: "world" });
   expectTypeOf(reg.get(a)).toEqualTypeOf<{ name: string; examples: number[] } | undefined>();
+});
+
+test(".meta method", () => {
+  const a1 = z.string();
+  const a2 = a1.meta({ name: "hello" });
+
+  expect(a1.meta()).toEqual(undefined);
+  expect(a2.meta()).toEqual({ name: "hello" });
+  expect(a1 === a2).toEqual(false);
+});
+
+test(".meta metadata does not bubble up", () => {
+  const a1 = z.string().meta({ name: "hello" });
+  const a2 = a1.optional();
+
+  expect(a1.meta()).toEqual({ name: "hello" });
+  expect(a2.meta()).toEqual(undefined);
+});
+
+test(".describe", () => {
+  const a1 = z.string();
+  const a2 = a1.describe("Hello");
+
+  expect(a1.description).toEqual(undefined);
+  expect(a2.description).toEqual("Hello");
 });

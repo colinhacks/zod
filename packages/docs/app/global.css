@@ -19,12 +19,14 @@ body {
   --color-fd-foreground: hsl(0, 0%, 3.9%);
   --color-fd-headings: hsl(0, 0%, 3.9%);
   --color-fd-popover-foreground: hsl(0, 0%, 3.9%);
+  --color-fd-muted: hsl(0, 0%, 89%);
 }
 .dark {
   --ui-color: hsl(320, 100%, 76%);
   --color-fd-foreground: hsl(0, 0%, 80%);
   --color-fd-headings: hsl(0, 0%, 94%);
   --color-fd-popover-foreground: hsl(0, 0%, 70%);
+  --color-fd-muted: hsl(0, 0%, 15%);
 }
 
 aside {
@@ -53,6 +55,9 @@ html .prose {
     @apply border-b py-3;
     color: var(--color-fd-headings);
   }
+  & > h3 {
+    @apply mt-16;
+  }
 
   p {
     /* @apply text-gray-700; */
@@ -67,6 +72,14 @@ html .prose {
   button[role="tab"] {
     @apply font-medium;
     @apply font-mono text-xs;
+  }
+
+  td > p:first-child {
+    margin-top: 0;
+  }
+
+  td > p:last-child {
+    margin-bottom: 0;
   }
 }
 

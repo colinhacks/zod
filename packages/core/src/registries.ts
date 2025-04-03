@@ -1,14 +1,14 @@
 import type * as core from "./core.js";
 import type { $ZodType } from "./schemas.js";
 
-export const OUTPUT: unique symbol = Symbol("ZodOutput");
-export type OUTPUT = typeof OUTPUT;
-export const INPUT: unique symbol = Symbol("ZodInput");
-export type INPUT = typeof INPUT;
+export const $output: unique symbol = Symbol("ZodOutput");
+export type $output = typeof $output;
+export const $input: unique symbol = Symbol("ZodInput");
+export type $input = typeof $input;
 
-export type $replace<Meta, S extends $ZodType> = Meta extends OUTPUT
+export type $replace<Meta, S extends $ZodType> = Meta extends $output
   ? core.output<S>
-  : Meta extends INPUT
+  : Meta extends $input
     ? core.input<S>
     : Meta extends (infer M)[]
       ? $replace<M, S>[]
@@ -17,13 +17,25 @@ export type $replace<Meta, S extends $ZodType> = Meta extends OUTPUT
         ? { [K in keyof Meta]: $replace<Meta[K], S> }
         : Meta;
 
+interface $ZodBaseRegistry<Meta = unknown> {}
 export class $ZodRegistry<Meta = unknown, Schema extends $ZodType = $ZodType> {
   _meta!: Meta;
   _schema!: Schema;
   _map: WeakMap<Schema, $replace<Meta, Schema>> = new WeakMap();
+  _idmap: Map<string, Schema> = new Map();
 
-  add<S extends Schema>(schema: S, ...meta: undefined extends Meta ? [$replace<Meta, S>?] : [$replace<Meta, S>]): this {
-    this._map.set(schema, (meta as any)[0]!);
+  add<S extends Schema>(
+    schema: S,
+    ..._meta: undefined extends Meta ? [$replace<Meta, S>?] : [$replace<Meta, S>]
+  ): this {
+    const meta: any = _meta[0];
+    this._map.set(schema, meta!);
+    if (meta && typeof meta === "object" && "id" in meta) {
+      if (this._idmap.has(meta.id!)) {
+        throw new Error(`ID ${meta.id} already exists in the registry`);
+      }
+      this._idmap.set(meta.id!, schema);
+    }
     return this as any;
   }
 
@@ -42,10 +54,10 @@ export class $ZodRegistry<Meta = unknown, Schema extends $ZodType = $ZodType> {
 }
 
 export interface JSONSchemaMeta {
-  id?: string;
-  title?: string;
-  description?: string;
-  examples?: OUTPUT[];
+  id?: string | undefined;
+  title?: string | undefined;
+  description?: string | undefined;
+  examples?: $output[] | undefined;
   [k: string]: unknown;
 }
 

@@ -403,31 +403,40 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
  *   ✖ Invalid input: expected number
  * ```
  */
+export function toDotPath(path: (string | number | symbol)[]): string {
+  const segs: string[] = [];
+  for (const seg of path) {
+    if (typeof seg === "number") segs.push(`[${seg}]`);
+    else if (typeof seg === "symbol") segs.push(`["${String(seg)}"]`);
+    else if (seg.includes(".")) segs.push(`["${seg}"]`);
+    else {
+      if (segs.length) segs.push(".");
+      segs.push(seg);
+    }
+  }
+
+  return segs.join("");
+}
+
 export function prettyError(error: $ZodError): string {
   // Create a Map to group issues by path
-  const issuesMap = new Map<string, string[]>();
+  // const issuesMap = new Map<string, string[]>();
+  const lines: string[] = [];
+  // issuesMap.set("", []);
+
+  // if(error.issues.every(issue => issue.path.length === 0)) {
+  //   return error.issues.map(issue => `✖ ${issue.message}`).join("\n");
+  // }
+
+  // sort by path length
+  const issues = [...error.issues].sort((a, b) => a.path.length - b.path.length);
 
   // Process each issue
-  for (const issue of error.issues) {
-    // Format the path (convert array indices to bracket notation)
-    const path = issue.path.map((part) => (typeof part === "number" ? `[${part}]` : part)).join("");
-
-    // Determine the error message
-    const message = issue.message;
-
-    // Add message to the corresponding path
-    if (!issuesMap.has(path)) {
-      issuesMap.set(path, []);
-    }
-    issuesMap.get(path)!.push(message);
+  for (const issue of issues) {
+    lines.push(`✖ ${issue.message}`);
+    if (issue.path?.length) lines.push(`  → at ${toDotPath(issue.path)}`);
   }
 
   // Convert Map to formatted string
-  return Array.from(issuesMap.entries())
-    .map(([path, messages]) => {
-      const formattedMessages = messages.map((msg) => `  ✖ ${msg}`).join("\n");
-
-      return `${path}\n${formattedMessages}`;
-    })
-    .join("\n");
+  return lines.join("\n");
 }

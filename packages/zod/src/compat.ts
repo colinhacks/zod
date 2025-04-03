@@ -64,5 +64,11 @@ export function getErrorMap(): core.$ZodErrorMap<core.$ZodIssue> | undefined {
   return core.config().customError;
 }
 
-/** @deprecated Use z.ZodType (without generics) instead. */
-export type ZodTypeAny = ZodType;
+export type {
+  /** @deprecated Use z.ZodType (without generics) instead. */
+  ZodType as ZodTypeAny,
+  /** @deprecated Use `z.ZodType` */
+  ZodType as ZodSchema,
+  /** @deprecated Use `z.ZodType` */
+  ZodType as Schema,
+};

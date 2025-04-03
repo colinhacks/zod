@@ -6,6 +6,7 @@
     "basics",
     "api",
     "error-customization",
+    "error-formatting",
     "metadata",
     "json-schema",
     "ecosystem",

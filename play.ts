@@ -1,17 +1,30 @@
-import en from "@zod/core/locales/en.js";
+import { toJSONSchema } from "@zod/core";
 import { z } from "zod";
 
-z.config(en());
-
-const schema = z.object({
-  username: z.string(),
-  favoriteNumbers: z.array(z.number()),
+const email = z.email();
+const A = z.interface({
+  email,
+  get b() {
+    return B;
+  },
+  get a() {
+    return A;
+  },
 });
-const result = schema.safeParse({
-  username: 1234,
-  favoriteNumbers: [1234, "4567"],
+
+const B = z.interface({
+  email,
+  get a() {
+    return A;
+  },
+  get b() {
+    return B;
+  },
 });
 
-const tree = z.treeifyError(result.error!);
-const pretty = z.prettyError(result.error!);
-console.log(pretty);
+const myReg = z.registry<{ id: string }>();
+myReg.add(A, { id: "A" });
+myReg.add(B, { id: "B" });
+
+const result = toJSONSchema(myReg, { reused: "ref", uri: (id) => `https://stuff.org/${id}.json` });
+console.log(JSON.stringify(result, null, 2));

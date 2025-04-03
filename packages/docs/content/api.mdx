@@ -75,7 +75,7 @@ schema.parse(null);      // => "null"
   schema.parse(null); // => false
   ```
 
-  For total control over coercion logic, consider using [`z.transform()`](#preprocess) or [`z.pipe()`](#pipe).
+  For total control over coercion logic, consider using [`z.transform()`](#transforms) or [`z.pipe()`](#pipes).
 
 </Accordion></Accordions>
 
@@ -377,28 +377,9 @@ time.parse("00:00:00"); // ❌
 ### IP addresses
 
 ```ts
-const ipv4 = z.string().ip({ version: "v4" });
-ipv4.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // ❌
-
-const ipv6 = z.string().ip({ version: "v6" });
-ipv6.parse("192.168.1.1"); // ❌
+const ipv4 = z.ipv4();
+const ipv6 = z.ipv6();
 ```
-
-To allow both IPv4 and IPv6:
-
-```ts
-const ip = z.string().ip();
-
-ip.parse("192.168.1.1"); // ✅
-ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // ✅
-ip.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:192.168.1.1"); // ✅
-
-ip.parse("256.1.1.1"); // ❌
-ip.parse("84d5:51a0:9114:gggg:4cfa:f2d7:1f12:7003"); // ❌
-```
-
-You can additionally set the IP `version`.
-
 
 ### IP ranges (CIDR)
 
@@ -2197,6 +2178,29 @@ type CastToString = z.infer<typeof castToString>; // string
 </Tab>
 </Tabs> */}
 
+
+To perform validation logic inside a transform, use `ctx`. To report a validation issue, push a new issue onto `ctx.issues` (similar to the [`.check()`](#check) API).
+
+```ts
+const coercedInt = z.transform((val, ctx) => {
+  try {
+    const parsed = Number.parseInt(String(val));
+    return parsed;
+  } catch (e) {
+    ctx.issues.push({
+      code: "custom",
+      message: "Not a number",
+      input: val,
+    });
+
+    // this is a special constant with type `never`
+    // return it to exit the transform without impacting the inferred return type
+    return z.NEVER; 
+  }
+});
+```
+
+
 Most commonly, transforms are used in conjunction with [Pipes](#pipes). This combination is useful for performing some initial validation, then transforming the parsed data into another form.
 
 
@@ -2219,7 +2223,7 @@ z.parse(stringToLength, "hello"); // => 5
 
 ### `.transform()`
 
-Since piping a schema into a transform is such a common pattern, Zod provides a convenience `.transform()` method.
+Piping some schema into a transform is a common pattern, so Zod provides a convenience `.transform()` method.
 
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
 <Tab value="zod">
@@ -2245,6 +2249,8 @@ const idToUser = z
     // fetch user from database
     return db.getUserById(id); 
   });
+
+const user = await idToUser.parseAsync("abc123");
 ```
 </Tab>
 <Tab value="@zod/mini">
@@ -2255,53 +2261,19 @@ const idToUser = z.pipe(
     // fetch user from database
     return db.getUserById(id); 
   }));
+
+const user = await idToUser.parse("abc123");
 ```
 </Tab>
 </Tabs>
 
 <Callout>
   If you use async transforms, you must use a `.parseAsync` or `.safeParseAsync` when parsing data! Otherwise Zod will throw an error.
-
-  <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
-  <Tab value="zod">
-  ```ts
-  const result = await idToUser.parseAsync("abc123");
-  ```
-  </Tab>
-  <Tab value="@zod/mini">
-  ```ts
-  const result = await z.parseAsync(idToUser, "abc123");
-  ```
-  </Tab>
-  </Tabs>
 </Callout>
 
-<Accordions>
-<Accordion title="Validating inside transform">
+### `.preprocess()` 
 
-To perform validation logic inside a transform, use `ctx`. To report a validation issue, push a new issue onto `ctx.issues`. This is the same as the [`.check()`](#check) API.
-
-```ts
-const coercedInt = z.transform((val, ctx) => {
-  try {
-    const parsed = Number.parseInt(String(val));
-    return parsed;
-  } catch (e) {
-    ctx.issues.push({
-      code: "custom",
-      message: "Not a number",
-      input: val,
-    });
-
-    // this is a special constant with type `never`
-    // return it to exit the transform without impacting the inferred return type
-    return z.NEVER; 
-  }
-});
-```
-</Accordion>
-</Accordions>
-
+Piping a transform into another schema is another common pattern, so Zod provides a convenience `z.preprocess()` function.
 
 ## Defaults
 
@@ -2602,4 +2574,3 @@ You can customize the error message and other options by passing a second argume
 ```ts
 z.custom<...>((val) => ..., "custom error message");
 ```
-

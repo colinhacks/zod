@@ -1,58 +1,56 @@
 import type * as checks from "./checks.js";
 import type * as JSONSchema from "./json-schema.js";
-import { type $ZodJSONSchemaRegistry, globalRegistry } from "./registries.js";
+import { $ZodRegistry, globalRegistry } from "./registries.js";
 import type * as schemas from "./schemas.js";
 
-interface ToJSONSchemaParams {
-  path: string[];
-  registry: $ZodJSONSchemaRegistry;
-  seen: Map<schemas.$ZodType, JSONSchema.BaseSchema>;
-  defs: Map<schemas.$ZodType, { id: string; schema: JSONSchema.BaseSchema }>;
-  shapeCache: Map<schemas.$ZodType, schemas.$ZodShape>;
-  counter: number;
+interface JSONSchemaGeneratorParams {
+  /** A registry used to look up metadata for each schema. Any schema with an `id` property will be extracted as a $def. */
+  metadata?: $ZodRegistry<Record<string, any>>;
+  /** The JSON Schema version to target.
+   * - `"draft-2020-12"` — Default. JSON Schema Draft 2020-12
+   * - `"draft-7"` — Default. JSON Schema Draft 7 */
+  target?: "draft-7" | "draft-2020-12";
+  /** How to handle unrepresentable types.
+   * - `"throw"` — Default. Unrepresentable types throw an error
+   * - `"any"` — Unrepresentable types become `{}` */
+  unrepresentable?: "throw" | "any";
+  /** A registry used to look up external schemas. Default: null (schemas are self-contained).
+   *
+   * Any schema with an `id` property in this registry will be extracted as an *external* $ref. To customize the URI of the generated ref, use `uri`.  */
+  external?: {
+    registry: $ZodRegistry<{ id?: string | undefined }>;
+    uri: (id: string) => string;
+  };
 }
 
-export function toJSONSchema(
-  schema: schemas.$ZodType,
-  params?: Pick<ToJSONSchemaParams, "registry">
-): JSONSchema.Schema | JSONSchema.BaseSchema {
-  const _params: ToJSONSchemaParams = {
-    registry: params?.registry ?? globalRegistry,
-    path: [],
-    seen: new Map(),
-    defs: new Map(),
-    shapeCache: new Map(),
-    counter: 0,
-  };
-  const json = _toJSONSchema(schema as schemas.$ZodTypes, _params);
-  const final: JSONSchema.BaseSchema = {};
+interface ProcessParams {
+  schemaPath: schemas.$ZodType[];
+  path: (string | number)[];
+}
 
-  if (_params.defs.size > 0) {
-    const $defs: Record<string, JSONSchema.BaseSchema> = {};
-    const seenIds = new Set<string>();
-    for (const [schema, value] of _params.defs) {
-      // check for duplicate ids
-      if (seenIds.has(value.id)) throw new Error(`Duplicate $id: ${value.id}`);
-      seenIds.add(value.id);
+interface EmitParams {
+  /** How to handle cycles.
+   * - `"ref"` — Default. Cycles will be broken using $defs
+   * - `"throw"` — Cycles will throw an error if encountered */
+  cycles?: "ref" | "throw";
 
-      // copy schema contents to $defs
-      const _json = value.schema;
-
-      $defs[value.id] = { ..._json };
-
-      // clear out schema contents and replace with ref
-
-      for (const key in _json) {
-        delete (_json as any)[key];
-        _json.$ref = `#/$defs/${value.id}`;
+  /* How to handle reused schemas.
+   * - `"inline"` — Default. Reused schemas will be inlined
+   * - `"ref"` — Reused schemas will be extracted as $defs */
+  reused?: "ref" | "inline";
+  /** A function used to convert `id` values to URIs to be used in *external* $refs.
+   *
+   * Default is `(id) => id`.
+   */
+  // uri?: (id: string) => string;
+  external?:
+    | {
+        registry: $ZodRegistry<{ id?: string | undefined }>;
+        uri: (id: string) => string;
+        // __shared: boolean;
+        defs: Record<string, JSONSchema.BaseSchema>;
       }
-    }
-
-    final.$defs = $defs;
-  }
-
-  Object.assign(final, json);
-  return final;
+    | undefined;
 }
 
 const formatMap: Partial<Record<checks.$ZodStringFormats, string>> = {
@@ -69,354 +67,578 @@ const formatMap: Partial<Record<checks.$ZodStringFormats, string>> = {
   url: "uri",
 };
 
-/**
- *
- * - as you recurse, add all schemas to seen
- * - if a schema has metadata, add it to $defs
- * - if a cycle is detected:
- *   - check if it's in defs. if so, return $ref
- *   - otherwise,
- *
- */
+interface Seen {
+  schema: JSONSchema.BaseSchema;
+  cached: JSONSchema.BaseSchema;
+  count: number;
+  cycle?: (string | number)[] | undefined;
+  defId?: string | undefined;
+  // external?: string | undefined;
+}
+export class JSONSchemaGenerator {
+  // external: (schema: schemas.$ZodType) => string | void;
 
-function _toJSONSchema(
-  schema: schemas.$ZodType,
-  _params: ToJSONSchemaParams,
-  startingSchema: JSONSchema.BaseSchema = {}
-): JSONSchema.Schema | JSONSchema.BaseSchema {
-  // check for schema in defs
-  const def = _params.defs.get(schema);
-  if (def) {
-    return { $ref: `#/$defs/${def.id}` };
+  metadataRegistry: $ZodRegistry<Record<string, any>>;
+  target: "draft-7" | "draft-2020-12";
+  counter = 0;
+  seen: Map<schemas.$ZodType, Seen>;
+
+  constructor(params?: JSONSchemaGeneratorParams) {
+    // this.external = params?.external;
+    this.metadataRegistry = params?.metadata ?? globalRegistry;
+    this.target = params?.target ?? "draft-2020-12";
+    this.seen = new Map();
   }
 
-  // check for cycle
-  const seen = _params.seen.get(schema);
-  if (seen && (seen.type === "object" || seen.type === "array")) {
-    // cycle occured. adding schema to def.
-    const id = `schema_${_params.counter++}`;
+  process(schema: schemas.$ZodType, _params: ProcessParams = { path: [], schemaPath: [] }): JSONSchema.BaseSchema {
+    // check for schema in seens
+    const seen = this.seen.get(schema);
+    if (seen) {
+      seen.count++;
 
-    _params.defs.set(schema, { id, schema: seen });
+      // check if cycle
+      const isCycle = _params.schemaPath.includes(schema);
+      if (isCycle) {
+        seen.cycle = _params.path;
+      }
 
-    return { $ref: `#/$defs/${id}` };
-  }
+      seen.count++;
+      // break cycle
+      return seen.schema;
+    }
 
-  // add to seen
-  const json: JSONSchema.BaseSchema = startingSchema;
-  _params.seen.set(schema, json);
+    // initialize
+    const result: Seen = { schema: {}, cached: {}, count: 1, cycle: undefined };
+    this.seen.set(schema, result);
 
-  // populate schema object
-  const params: ToJSONSchemaParams = { ..._params, seen: new Map([..._params.seen.entries(), [schema, json]]) };
-  populateJSONSchema(schema as schemas.$ZodTypes, params);
+    if (schema._zod.toJSONSchema) {
+      // custom method overrides default behavior
+      result.schema = schema._zod.toJSONSchema() as any;
+      // return
+    }
 
-  // check metadata
-  const meta = _params.registry.get(schema);
-  if (meta && typeof meta === "object") {
-    // schema exists in registry. add to $defs.
+    const _json = result.schema;
 
-    json.$id = meta.id ?? `schema_${_params.counter++}`;
-
-    if (meta.description) json.description = meta.description;
-    if (meta.title) json.title = meta.title;
-    if (meta.examples) json.examples = meta.examples;
-    if (meta.example) json.examples = [meta.example];
-
-    // add to defs
-    _params.defs.set(schema, { id: json.$id, schema: json });
-
-    // return { $ref: `#/$defs/${json.$id}` };
-
-    // empty out existing schema, replace with ref
-    // const id = json.$id;
-    // for (const key in json) {
-    //   delete (json as any)[key];
-    //   json.$ref = `#/$defs/${id}`;
+    // check if external
+    // const ext = this.external?.registry.get(schema)?.id;
+    // if (ext) {
+    //   result.external = ext;
     // }
+
+    // metadata
+    const meta = this.metadataRegistry.get(schema);
+    if (meta) {
+      Object.assign(_json, meta);
+      // schema exists in registry. add to $defs.
+      // if (meta.id) _json.id = meta.id;
+      // if (meta.description) _json.description = meta.description;
+      // if (meta.title) _json.title = meta.title;
+      // if (meta.examples) _json.examples = meta.examples;
+      // if (meta.example) _json.examples = [meta.example];
+    }
+
+    const def = (schema as schemas.$ZodTypes)._zod.def;
+    const params = {
+      ..._params,
+      schemaPath: [..._params.schemaPath, schema],
+      path: _params.path,
+    };
+
+    switch (def.type) {
+      case "string": {
+        const json: JSONSchema.StringSchema = _json as any;
+        json.type = "string";
+        const { minimum, maximum, format, pattern, contentEncoding } = schema._zod.computed as {
+          minimum?: number;
+          maximum?: number;
+          format?: checks.$ZodStringFormats;
+          pattern?: RegExp;
+          contentEncoding?: string;
+        };
+        if (minimum) json.minLength = minimum;
+        if (maximum) json.maxLength = maximum;
+        // custom pattern overrides format
+        if (format && formatMap[format]) {
+          json.format = formatMap[format];
+        } else if (pattern) {
+          json.pattern = pattern.source;
+        }
+        if (contentEncoding) json.contentEncoding = contentEncoding;
+
+        break;
+      }
+      case "number": {
+        const json: JSONSchema.NumberSchema | JSONSchema.IntegerSchema = _json as any;
+        const { minimum, maximum, format, multipleOf, inclusive } = schema._zod.computed as {
+          minimum?: number;
+          maximum?: number;
+          format?: checks.$ZodNumberFormats;
+          multipleOf?: number;
+          inclusive?: boolean;
+        };
+        if (format?.includes("int")) json.type = "integer";
+        else json.type = "number";
+
+        if (minimum) {
+          if (inclusive) json.minimum = minimum;
+          else json.exclusiveMinimum = minimum;
+        }
+        if (maximum) {
+          if (inclusive) json.maximum = maximum;
+          else json.exclusiveMaximum = maximum;
+        }
+        if (multipleOf) json.multipleOf = multipleOf;
+
+        break;
+      }
+      case "boolean": {
+        const json = _json as JSONSchema.BooleanSchema;
+        json.type = "boolean";
+        break;
+      }
+      case "bigint": {
+        throw new Error("BigInt cannot be represented in JSON Schema");
+      }
+      case "symbol": {
+        throw new Error("Symbols cannot be represented in JSON Schema");
+      }
+      case "undefined": {
+        // throw new Error("Undefined cannot be represented in JSON Schema");
+        const json = _json as JSONSchema.NullSchema;
+        json.type = "null";
+        break;
+      }
+      case "null": {
+        _json.type = "null";
+        // const json = { type: "null" } as JSONSchema.NullSchema;
+        break;
+      }
+      case "any": {
+        break;
+      }
+      case "unknown": {
+        break;
+      }
+      case "never": {
+        _json.not = {};
+        break;
+      }
+      case "void": {
+        throw new Error("Void cannot be represented in JSON Schema");
+      }
+      case "date": {
+        throw new Error("Date cannot be represented in JSON Schema");
+      }
+      case "array": {
+        const json: JSONSchema.ArraySchema = _json as any;
+        const { minimum, maximum } = schema._zod.computed as {
+          minimum?: number;
+          maximum?: number;
+        };
+        if (minimum) json.minItems = minimum;
+        if (maximum) json.maxItems = maximum;
+        json.type = "array";
+        json.items = this.process(def.element, { ...params, path: [...params.path, "items"] });
+        break;
+      }
+      case "object":
+      case "interface": {
+        const json: JSONSchema.ObjectSchema = _json as any;
+        json.type = "object";
+        json.properties = {};
+        const shape = def.shape; // params.shapeCache.get(schema)!;
+        // if (!shape) {
+        //   shape = def.shape;
+        //   params.shapeCache.set(schema, shape);
+        // }
+        for (const key in shape) {
+          json.properties[key] = this.process(shape[key], {
+            ...params,
+            path: [...params.path, "properties", key],
+          });
+        }
+
+        // required keys
+        const allKeys = new Set(Object.keys(shape));
+        const optionalKeys = new Set(def.optional);
+        const requiredKeys = new Set([...allKeys].filter((key) => !optionalKeys.has(key)));
+        json.required = Array.from(requiredKeys);
+
+        // catchall
+        if (def.catchall) {
+          json.additionalProperties = this.process(def.catchall, {
+            ...params,
+            path: [...params.path, "additionalProperties"],
+          });
+        }
+
+        break;
+      }
+      case "union": {
+        const json: JSONSchema.BaseSchema = _json as any;
+        json.oneOf = def.options.map((x, i) =>
+          this.process(x, {
+            ...params,
+            path: [...params.path, "oneOf", i],
+          })
+        );
+        break;
+      }
+      case "intersection": {
+        const json: JSONSchema.BaseSchema = _json as any;
+        json.allOf = [
+          this.process(def.left, {
+            ...params,
+            path: [...params.path, "allOf", 0],
+          }),
+          this.process(def.right, {
+            ...params,
+            path: [...params.path, "allOf", 1],
+          }),
+        ];
+        break;
+      }
+      case "tuple": {
+        const json: JSONSchema.ArraySchema = _json as any;
+        json.type = "array";
+        const prefixItems = def.items.map((x, i) =>
+          this.process(x, { ...params, path: [...params.path, "prefixItems", i] })
+        );
+        if (this.target === "draft-2020-12") {
+          json.prefixItems = prefixItems;
+        } else {
+          json.items = prefixItems;
+        }
+
+        if (def.rest) {
+          const rest = this.process(def.rest, {
+            ...params,
+            path: [...params.path, "items"],
+          });
+          if (this.target === "draft-2020-12") {
+            json.items = rest;
+          } else {
+            json.additionalItems = rest;
+          }
+        }
+
+        // additionalItems
+        if (def.rest) {
+          json.items = this.process(def.rest, {
+            ...params,
+            path: [...params.path, "items"],
+          });
+        }
+
+        // length
+        const { minimum, maximum } = schema._zod.computed as {
+          minimum?: number;
+          maximum?: number;
+        };
+        if (minimum) json.minItems = minimum;
+        if (maximum) json.maxItems = maximum;
+        break;
+      }
+      case "record": {
+        const json: JSONSchema.ObjectSchema = _json as any;
+        json.type = "object";
+        json.propertyNames = this.process(def.keyType, { ...params, path: [...params.path, "propertyNames"] });
+        json.additionalProperties = this.process(def.valueType, {
+          ...params,
+          path: [...params.path, "additionalProperties"],
+        });
+        break;
+      }
+      case "map": {
+        throw new Error("Map cannot be represented in JSON Schema");
+      }
+      case "set": {
+        throw new Error("Set cannot be represented in JSON Schema");
+      }
+      case "enum": {
+        const json: JSONSchema.BaseSchema = _json as any;
+        json.enum = Object.values(def.entries);
+        break;
+      }
+      case "literal": {
+        const json: JSONSchema.BaseSchema = _json as any;
+        for (const val of def.values) {
+          if (val === undefined) throw new Error("Undefined cannot be represented in JSON Schema");
+          if (typeof val === "bigint") throw new Error("BigInt cannot be represented in JSON Schema");
+        }
+        json.enum = def.values as any;
+        break;
+      }
+      case "file": {
+        throw new Error("File cannot be represented in JSON Schema");
+      }
+      case "transform": {
+        throw new Error("Transforms cannot be represented in JSON Schema");
+      }
+      case "optional": {
+        const inner = this.process(def.innerType, params);
+        const json: JSONSchema.BaseSchema = _json as any;
+        json!.oneOf = [inner, { type: "null" }];
+        break;
+      }
+      case "nullable": {
+        const inner = this.process(def.innerType, params);
+        _json.oneOf = [inner, { type: "null" }];
+        break;
+      }
+      case "nonoptional": {
+        const inner = this.process(def.innerType, params);
+        Object.assign(_json, inner);
+        _json.not = { type: "null" };
+        break;
+      }
+      case "success": {
+        // _json.if = this.process(def.innerType, params);
+        // _json.then = { const: true };
+        // _json.else = { const: false };
+        const json = _json as JSONSchema.BooleanSchema;
+        json.type = "boolean";
+        break;
+      }
+      case "default": {
+        const inner = this.process(def.innerType, params);
+        Object.assign(_json, inner);
+        _json.default = def.defaultValue();
+        break;
+      }
+      case "catch": {
+        // use conditionals
+        const inner = this.process(def.innerType, params);
+        let catchValue: any;
+        try {
+          catchValue = def.catchValue(undefined as any);
+        } catch {
+          throw new Error("Dynamic catch values are not supported in JSON Schema");
+        }
+        _json.if = inner;
+        _json.then = inner;
+        _json.else = { const: catchValue };
+        break;
+      }
+      case "nan": {
+        throw new Error("NaN cannot be represented in JSON Schema");
+      }
+      case "pipe": {
+        // Object.assign(_json, this.process(def.out, params));
+        const inner = this.process(def.out, params);
+        Object.assign(_json, inner);
+        break;
+      }
+      case "readonly": {
+        const inner = this.process(def.innerType, params);
+        Object.assign(_json, inner);
+        _json.readOnly = true;
+        break;
+      }
+      case "template_literal": {
+        const json = _json as JSONSchema.StringSchema;
+        const pattern = schema._zod.pattern;
+        if (!pattern) throw new Error("Pattern not found in template literal");
+        json.type = "string";
+        json.pattern = pattern.source;
+        break;
+      }
+      case "promise": {
+        // Object.assign(_json, this.process(def.innerType, params, _json));
+        const inner = this.process(def.innerType, params);
+        Object.assign(_json, inner);
+        break;
+      }
+      case "lazy": {
+        const inner = this.process((schema as schemas.$ZodLazy)._zod._getter, params);
+        Object.assign(_json, inner);
+
+        break;
+      }
+      case "custom": {
+        throw new Error("Custom types cannot be represented in JSON Schema");
+      }
+      default: {
+        def satisfies never;
+      }
+    }
+
+    Object.assign(result.cached, _json);
+    return _json;
   }
 
-  return json;
+  emit(schema: schemas.$ZodType, _params?: EmitParams): JSONSchema.BaseSchema {
+    const params = {
+      cycles: _params?.cycles ?? "ref",
+      reused: _params?.reused ?? "inline",
+      // unrepresentable: _params?.unrepresentable ?? "throw",
+      // uri: _params?.uri ?? ((id) => `${id}`),
+      external: _params?.external ?? undefined,
+    } satisfies EmitParams;
+
+    // iterate over seen map
+    const result: JSONSchema.BaseSchema = {};
+    const defs: JSONSchema.BaseSchema["$defs"] = params.external?.defs ?? {};
+    const seen = this.seen.get(schema);
+    if (!seen) throw new Error("Unprocessed schema. This is a bug in Zod.");
+    Object.assign(result, seen.cached);
+
+    const makeURI = (entry: [schemas.$ZodType<unknown, unknown>, Seen]): { ref: string; defId?: string } => {
+      if (entry[0] === schema) {
+        return { ref: "#" };
+      }
+
+      const defsSegment = this.target === "draft-2020-12" ? "$defs" : "definitions";
+      if (params.external) {
+        const externalId = params.external.registry.get(entry[0])?.id; // ?? "__shared";// `__schema${this.counter++}`;
+        if (externalId) return { ref: params.external.uri(externalId) };
+        const id = entry[1].defId ?? entry[1].schema.id ?? `schema${this.counter++}`;
+        entry[1].defId = id;
+        return { defId: id, ref: `${params.external.uri("__shared")}#/${defsSegment}/${id}` };
+      }
+
+      // if (entry[0] === schema) {
+      //   return { ref: "#" };
+      // }
+      const uriPrefix = `#`;
+      const defUriPrefix = `${uriPrefix}/${defsSegment}/`;
+      const defId = entry[1].schema.id ?? `__schema${this.counter++}`;
+
+      return { defId, ref: defUriPrefix + defId };
+    };
+
+    for (const entry of this.seen.entries()) {
+      const seen = entry[1];
+      if (schema === entry[0]) {
+        schemaToRef({
+          schema: seen.schema,
+          ref: "#",
+        });
+        continue;
+      }
+
+      // external
+      if (params.external) {
+        const ext = params.external.registry.get(entry[0])?.id;
+        if (schema !== entry[0] && ext) {
+          // does not write to defs
+          const { ref, defId } = makeURI(entry); // params.external.uri(ext);
+          if (defId) defs[defId] = { ...seen.cached };
+          schemaToRef({
+            schema: seen.schema,
+            ref,
+          });
+          continue;
+        }
+      }
+
+      // handle cycles
+      if (seen.cycle) {
+        if (params.cycles === "throw") {
+          throw new Error(
+            "Cycle detected: " +
+              `#/${seen.cycle?.join("/")}/<root>` +
+              '\n\nSet the `cycles` parameter to `"ref"` to resolve cyclical schemas with defs.'
+          );
+        } else if (params.cycles === "ref") {
+          const { ref, defId } = makeURI(entry); // schema === entry[0] ? "#" : defUriPrefix + id;
+          if (defId) defs[defId] = { ...seen.cached };
+          schemaToRef({
+            schema: seen.schema,
+            ref,
+          });
+        }
+        continue;
+      }
+
+      // handle reused schemas
+      if (seen.count > 1) {
+        if (params.reused === "ref") {
+          const { ref, defId } = makeURI(entry);
+          if (defId) defs[defId] = { ...seen.cached };
+          schemaToRef({
+            schema: seen.schema,
+            ref,
+          });
+          // biome-ignore lint:
+          continue;
+        }
+      }
+    }
+
+    if (!params.external && Object.keys(defs).length > 0) {
+      if (this.target === "draft-2020-12") {
+        result.$defs = defs;
+      } else {
+        result.definitions = defs;
+      }
+    }
+
+    try {
+      // this essentially "finalizes" this schema
+      // each call to .emit() is functionally independent
+      // though the seen map is shared
+      return JSON.parse(JSON.stringify(result));
+    } catch (_err) {
+      throw new Error("Error converting schema to JSON.");
+    }
+  }
 }
 
-function populateJSONSchema(schema: schemas.$ZodTypes, params: ToJSONSchemaParams): void {
-  const _json = params.seen.get(schema);
-  if (!_json) throw new Error("Schema not found in seen map");
+function schemaToRef(params: {
+  schema: JSONSchema.BaseSchema;
+  ref: string;
+}) {
+  const { schema, ref } = params;
+  for (const key in schema) {
+    delete schema[key];
+    schema.$ref = ref;
+  }
+}
 
-  if (schema._zod.toJSONSchema) {
-    Object.assign(_json, schema._zod.toJSONSchema());
-    return;
+interface ToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> {}
+interface RegistryToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & EmitParams, never> {
+  uri?: (id: string) => string;
+}
+
+export function toJSONSchema(schema: schemas.$ZodType, _params?: ToJSONSchemaParams): JSONSchema.BaseSchema;
+export function toJSONSchema(
+  registry: $ZodRegistry,
+  _params?: RegistryToJSONSchemaParams
+): { schemas: Record<string, JSONSchema.BaseSchema> };
+export function toJSONSchema(input: schemas.$ZodType | $ZodRegistry, _params?: ToJSONSchemaParams): any {
+  if (input instanceof $ZodRegistry) {
+    const gen = new JSONSchemaGenerator(_params);
+    const defs: any = {};
+    for (const entry of input._idmap.entries()) {
+      const [key, schema] = entry;
+      gen.process(schema);
+    }
+
+    console.log(gen.seen.size);
+    const schemas: Record<string, JSONSchema.BaseSchema> = {};
+    const external = {
+      registry: input,
+      uri: (_params as RegistryToJSONSchemaParams)?.uri || ((id) => id),
+      defs,
+    };
+    for (const entry of input._idmap.entries()) {
+      const [key, schema] = entry;
+      schemas[key] = gen.emit(schema, {
+        ..._params,
+        external,
+      });
+    }
+
+    const defsSegment = gen.target === "draft-2020-12" ? "$defs" : "definitions";
+    schemas.__shared = {
+      [defsSegment]: defs,
+    };
+
+    return schemas;
   }
 
-  const def = schema._zod.def;
-
-  switch (def.type) {
-    case "string": {
-      const json: JSONSchema.StringSchema = _json as any;
-      json.type = "string";
-      const { minimum, maximum, format, pattern, contentEncoding } = schema._zod.computed as {
-        minimum?: number;
-        maximum?: number;
-        format?: checks.$ZodStringFormats;
-        pattern?: string;
-        contentEncoding?: string;
-      };
-      if (minimum) json.minLength = minimum;
-      if (maximum) json.maxLength = maximum;
-      // custom pattern overrides format
-      if (format && formatMap[format]) {
-        json.format = formatMap[format];
-      } else if (pattern) {
-        json.pattern = pattern;
-      }
-      if (contentEncoding) json.contentEncoding = contentEncoding;
-
-      break;
-    }
-    case "number": {
-      const json: JSONSchema.NumberSchema | JSONSchema.IntegerSchema = _json as any;
-      const { minimum, maximum, format, multipleOf, inclusive } = schema._zod.computed as {
-        minimum?: number;
-        maximum?: number;
-        format?: checks.$ZodNumberFormats;
-        multipleOf?: number;
-        inclusive?: boolean;
-      };
-      if (format?.includes("int")) json.type = "integer";
-      else json.type = "number";
-
-      if (minimum) {
-        if (inclusive) json.minimum = minimum;
-        else json.exclusiveMinimum = minimum;
-      }
-      if (maximum) {
-        if (inclusive) json.maximum = maximum;
-        else json.exclusiveMaximum = maximum;
-      }
-      if (multipleOf) json.multipleOf = multipleOf;
-
-      break;
-    }
-    case "boolean": {
-      const json = _json as JSONSchema.BooleanSchema;
-      json.type = "boolean";
-      break;
-    }
-    case "bigint": {
-      throw new Error("BigInt cannot be represented in JSON Schema");
-    }
-    case "symbol": {
-      throw new Error("Symbols cannot be represented in JSON Schema");
-    }
-    case "undefined": {
-      // throw new Error("Undefined cannot be represented in JSON Schema");
-      const json = _json as JSONSchema.NullSchema;
-      json.type = "null";
-      break;
-    }
-    case "null": {
-      _json.type = "null";
-      // const json = { type: "null" } as JSONSchema.NullSchema;
-      break;
-    }
-    case "any": {
-      break;
-    }
-    case "unknown": {
-      break;
-    }
-    case "never": {
-      _json.not = {};
-      break;
-    }
-    case "void": {
-      throw new Error("Void cannot be represented in JSON Schema");
-    }
-    case "date": {
-      throw new Error("Date cannot be represented in JSON Schema");
-    }
-    case "array": {
-      const json: JSONSchema.ArraySchema = _json as any;
-      const { minimum, maximum } = schema._zod.computed as {
-        minimum?: number;
-        maximum?: number;
-      };
-      if (minimum) json.minItems = minimum;
-      if (maximum) json.maxItems = maximum;
-      json.type = "array";
-      json.items = _toJSONSchema(def.element, params);
-      break;
-    }
-    case "object":
-    case "interface": {
-      const json: JSONSchema.ObjectSchema = _json as any;
-      json.type = "object";
-      json.properties = {};
-      let shape = params.shapeCache.get(schema)!;
-      if (!shape) {
-        shape = def.shape;
-        params.shapeCache.set(schema, shape);
-      }
-      for (const key in shape) {
-        json.properties[key] = _toJSONSchema(shape[key], params);
-      }
-
-      // required keys
-      const allKeys = new Set(Object.keys(shape));
-      const optionalKeys = new Set(def.optional);
-      const requiredKeys = new Set([...allKeys].filter((key) => !optionalKeys.has(key)));
-      json.required = Array.from(requiredKeys);
-
-      // catchall
-      if (def.catchall) {
-        json.additionalProperties = _toJSONSchema(def.catchall, params);
-      }
-
-      break;
-    }
-    case "union": {
-      const json: JSONSchema.BaseSchema = _json as any;
-      json.oneOf = def.options.map((x) => _toJSONSchema(x, params));
-      break;
-    }
-    case "intersection": {
-      const json: JSONSchema.BaseSchema = _json as any;
-      json.allOf = [toJSONSchema(def.left, params), _toJSONSchema(def.right, params)];
-      break;
-    }
-    case "tuple": {
-      const json: JSONSchema.ArraySchema = _json as any;
-      json.type = "array";
-      json.prefixItems = def.items.map((x) => _toJSONSchema(x, params));
-
-      // additionalItems
-      if (def.rest) {
-        json.items = _toJSONSchema(def.rest, params);
-      }
-
-      // length
-      const { minimum, maximum } = schema._zod.computed as {
-        minimum?: number;
-        maximum?: number;
-      };
-      if (minimum) json.minItems = minimum;
-      if (maximum) json.maxItems = maximum;
-      break;
-    }
-    case "record": {
-      const json: JSONSchema.ObjectSchema = _json as any;
-      json.type = "object";
-      json.propertyNames = _toJSONSchema(def.keyType, params);
-      json.additionalProperties = _toJSONSchema(def.valueType, params);
-      break;
-    }
-    case "map": {
-      throw new Error("Map cannot be represented in JSON Schema");
-    }
-    case "set": {
-      throw new Error("Set cannot be represented in JSON Schema");
-    }
-    case "enum": {
-      const json: JSONSchema.BaseSchema = _json as any;
-      json.enum = Object.values(def.entries);
-      break;
-    }
-    case "literal": {
-      const json: JSONSchema.BaseSchema = _json as any;
-      for (const val of def.values) {
-        if (val === undefined) throw new Error("Undefined cannot be represented in JSON Schema");
-        if (typeof val === "bigint") throw new Error("BigInt cannot be represented in JSON Schema");
-      }
-      json.enum = def.values as any;
-      break;
-    }
-    case "file": {
-      throw new Error("File cannot be represented in JSON Schema");
-    }
-    case "transform": {
-      throw new Error("Transforms cannot be represented in JSON Schema");
-    }
-    case "optional": {
-      const inner = _toJSONSchema(def.innerType, params);
-      const json: JSONSchema.BaseSchema = _json as any;
-      json!.oneOf = [inner, { type: "null" }];
-      break;
-    }
-    case "nullable": {
-      const inner = _toJSONSchema(def.innerType, params);
-      _json.oneOf = [inner, { type: "null" }];
-      break;
-    }
-    case "nonoptional": {
-      const inner = _toJSONSchema(def.innerType, params, _json);
-      if (inner !== _json) Object.assign(_json, inner);
-      _json.not = { type: "null" };
-      break;
-    }
-    case "success": {
-      _json.if = _toJSONSchema(def.innerType, params);
-      _json.then = { const: true };
-      _json.else = { const: false };
-      break;
-    }
-    case "default": {
-      const inner = _toJSONSchema(def.innerType, params, _json);
-      if (inner !== _json) Object.assign(_json, inner);
-      _json.default = def.defaultValue();
-      break;
-    }
-    case "catch": {
-      // use conditionals
-      const inner = _toJSONSchema(def.innerType, params);
-      let catchValue: any;
-      try {
-        catchValue = def.catchValue(undefined as any);
-      } catch {
-        throw new Error("Dynamic catch values are not supported in JSON Schema");
-      }
-      _json.if = inner;
-      _json.then = inner;
-      _json.else = { const: catchValue };
-      break;
-    }
-    case "nan": {
-      throw new Error("NaN cannot be represented in JSON Schema");
-    }
-    case "pipe": {
-      // Object.assign(_json, _toJSONSchema(def.out, params));
-      const inner = _toJSONSchema(def.out, params, _json);
-      if (inner !== _json) Object.assign(_json, inner);
-      break;
-    }
-    case "readonly": {
-      const inner = _toJSONSchema(def.innerType, params, _json);
-      if (inner !== _json) Object.assign(_json, inner);
-      _json.readOnly = true;
-      break;
-    }
-    case "template_literal": {
-      const json = _json as JSONSchema.StringSchema;
-      const pattern = schema._zod.pattern;
-      if (!pattern) throw new Error("Pattern not found in template literal");
-      json.type = "string";
-      json.pattern = pattern.source;
-      break;
-    }
-    case "promise": {
-      // Object.assign(_json, _toJSONSchema(def.innerType, params, _json));
-      const inner = _toJSONSchema(def.innerType, params, _json);
-      if (inner !== _json) Object.assign(_json, inner);
-      break;
-    }
-    case "lazy": {
-      const inner = _toJSONSchema((schema as schemas.$ZodLazy)._zod._getter, params, _json);
-      if (inner !== _json) Object.assign(_json, inner);
-
-      break;
-    }
-    case "custom": {
-      throw new Error("Custom types cannot be represented in JSON Schema");
-    }
-    default: {
-      def satisfies never;
-    }
-  }
+  const gen = new JSONSchemaGenerator(_params);
+  gen.process(input);
+  return gen.emit(input, _params);
 }

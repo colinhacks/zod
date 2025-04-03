@@ -319,40 +319,49 @@ test("all errors", () => {
   // });
 });
 
-const schema = z.object({
+const schema = z.strictObject({
   username: z.string(),
-  favoriteNumbers: z.array(
-    z
-      .number()
-      .min(5)
-      .refine(() => false, { error: "Boo" })
-  ),
+  favoriteNumbers: z.array(z.number()),
+  nesting: z.object({
+    a: z.string(),
+  }),
 });
 const result = schema.safeParse({
   username: 1234,
-  favoriteNumbers: [true, 3],
+  favoriteNumbers: [1234, "4567"],
+  nesting: {
+    a: 123,
+  },
+  extra: 1234,
 });
 
 test("z.treeifyError", () => {
   expect(z.treeifyError(result.error!)).toMatchInlineSnapshot(`
     {
-      "errors": [],
+      "errors": [
+        "Unrecognized key: "extra"",
+      ],
       "fields": {
         "favoriteNumbers": {
           "errors": [],
           "items": [
+            ,
             {
               "errors": [
-                "Invalid input: expected number, received boolean",
-              ],
-            },
-            {
-              "errors": [
-                "Too small: expected number to be >=5",
-                "Boo",
+                "Invalid input: expected number, received string",
               ],
             },
           ],
+        },
+        "nesting": {
+          "errors": [],
+          "fields": {
+            "a": {
+              "errors": [
+                "Invalid input: expected string, received number",
+              ],
+            },
+          },
         },
         "username": {
           "errors": [
@@ -366,12 +375,43 @@ test("z.treeifyError", () => {
 
 test("z.prettyError", () => {
   expect(z.prettyError(result.error!)).toMatchInlineSnapshot(`
-    "username
-      ✖ Invalid input: expected string, received number
-    favoriteNumbers[0]
-      ✖ Invalid input: expected number, received boolean
-    favoriteNumbers[1]
-      ✖ Too small: expected number to be >=5
-      ✖ Boo"
+    "✖ Unrecognized key: "extra"
+    ✖ Invalid input: expected string, received number
+      → at username
+    ✖ Invalid input: expected number, received string
+      → at favoriteNumbers[1]
+    ✖ Invalid input: expected string, received number
+      → at nesting.a"
   `);
+});
+
+test("z.toDotPath", () => {
+  expect(z.core.toDotPath(["a", "b", 0, "c"])).toMatchInlineSnapshot(`"a.b[0].c"`);
+
+  expect(z.core.toDotPath(["a", Symbol("b"), 0, "c"])).toMatchInlineSnapshot(`"a["Symbol(b)"][0].c"`);
+
+  // Test with periods in keys
+  expect(z.core.toDotPath(["user.name", "first.last"])).toMatchInlineSnapshot(`"["user.name"]["first.last"]"`);
+
+  // Test with special characters
+  expect(z.core.toDotPath(["user", "$special", Symbol("#symbol")])).toMatchInlineSnapshot(
+    `"user.$special["Symbol(#symbol)"]"`
+  );
+
+  // Test with empty strings
+  expect(z.core.toDotPath(["", "empty"])).toMatchInlineSnapshot(`".empty"`);
+
+  // Test with array indices
+  expect(z.core.toDotPath(["items", 0, 1, 2])).toMatchInlineSnapshot(`"items[0][1][2]"`);
+
+  // Test with mixed path elements
+  expect(z.core.toDotPath(["users", "user.config", 0, "settings.theme"])).toMatchInlineSnapshot(
+    `"users["user.config"][0]["settings.theme"]"`
+  );
+
+  // Test with square brackets in keys
+  expect(z.core.toDotPath(["data[0]", "value"])).toMatchInlineSnapshot(`"data[0].value"`);
+
+  // Test with empty path
+  expect(z.core.toDotPath([])).toMatchInlineSnapshot(`""`);
 });

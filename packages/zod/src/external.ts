@@ -15,8 +15,8 @@ export {
   globalRegistry,
   registry,
   config,
-  OUTPUT,
-  INPUT,
+  $output,
+  $input,
   $brand,
   function,
   clone,
@@ -25,4 +25,5 @@ export {
   formatError,
   treeifyError,
   prettyError,
+  toJSONSchema,
 } from "@zod/core";

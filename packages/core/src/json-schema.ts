@@ -11,10 +11,12 @@ export type Schema =
 export interface BaseSchema {
   type?: string | undefined;
   $id?: string | undefined;
+  id?: string | undefined;
   $schema?: string | undefined;
   $ref?: string | undefined;
   $anchor?: string | undefined;
   $defs?: { [key: string]: BaseSchema } | undefined;
+  definitions?: { [key: string]: BaseSchema } | undefined;
   $comment?: string | undefined;
   title?: string | undefined;
   description?: string | undefined;
@@ -51,9 +53,9 @@ export interface ObjectSchema extends BaseSchema {
 
 export interface ArraySchema extends BaseSchema {
   type: "array";
-  items?: BaseSchema | undefined;
+  items?: BaseSchema | BaseSchema[] | undefined;
   prefixItems?: BaseSchema[] | undefined;
-  // additionalItems?: BaseSchema | boolean; (deprecated | undefined)
+  additionalItems?: BaseSchema | boolean; // (deprecated | undefined)
   contains?: BaseSchema | undefined;
   minItems?: number | undefined;
   maxItems?: number | undefined;

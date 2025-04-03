@@ -706,7 +706,10 @@ function _interface<T extends core.$ZodLooseShape>(
   const def: core.$ZodInterfaceDef = {
     type: "interface",
     get shape() {
-      return cleaned.value.shape;
+      const _shape = cleaned.value.shape;
+      Object.defineProperty(this, "shape", _shape);
+      return _shape;
+      // return cleaned.value.shape;
     },
     get optional() {
       return cleaned.value.optional;
@@ -727,7 +730,10 @@ export function strictInterface<T extends core.$ZodLooseShape>(
   const def: core.$ZodInterfaceDef = {
     type: "interface",
     get shape() {
-      return cleaned.value.shape;
+      const _shape = cleaned.value.shape;
+      Object.defineProperty(this, "shape", _shape);
+      return _shape;
+      // return cleaned.value.shape;
     },
     get optional() {
       return cleaned.value.optional;
@@ -751,7 +757,10 @@ export function looseInterface<T extends core.$ZodLooseShape>(
       return cleaned.value.optional;
     },
     get shape() {
-      return cleaned.value.shape;
+      // return cleaned.value.shape;
+      const _shape = cleaned.value.shape;
+      Object.defineProperty(this, "shape", _shape);
+      return _shape;
     },
     catchall: unknown(),
     ...util.normalizeParams(params),
@@ -1471,6 +1480,15 @@ export function pipe(in_: core.$ZodType, out: core.$ZodType, params?: core.$ZodP
     ...util.normalizeParams(params),
   });
 }
+
+// /** @deprecated Use `z.pipe()` and `z.transform()` instead. */
+// export function preprocess<A, U extends core.$ZodType>(
+//   fn: (arg: unknown, ctx: core.ParsePayload) => A,
+//   schema: U,
+//   params?: ZodPreprocessParams
+// ): ZodPipe<ZodTransform<A, unknown>, U> {
+//   return pipe(transform(fn as any, params), schema as any, params);
+// }
 
 // ZodMiniReadonly
 export interface ZodMiniReadonly<T extends SomeType = SomeType> extends ZodMiniType {

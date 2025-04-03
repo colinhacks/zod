@@ -691,16 +691,17 @@ export function omit(schema: schemas.$ZodObjectLike, mask: object): any {
 }
 
 export function extend(schema: schemas.$ZodObjectLike, shape: schemas.$ZodShape): any {
-  return clone(schema, {
+  const def = {
     ...schema._zod.def,
     get shape() {
-      const _shape: any = { ...schema._zod.def.shape, ...shape };
-      this.shape = _shape;
+      const _shape = { ...schema._zod.def.shape, ...shape };
+      Object.defineProperty(this, "shape", _shape);
       return _shape;
     },
-
     checks: [], // delete existing checks
-  }) as any;
+  } as any;
+  defineLazy(def, "shape", () => ({ ...schema._zod.def.shape, ...shape }));
+  return clone(schema, def) as any;
 }
 
 export function mergeObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObjectLike): any {
@@ -710,7 +711,10 @@ export function mergeObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObject
   return clone(a, {
     ...a._zod.def,
     get shape() {
-      return { ...a._zod.def.shape, ...b._zod.def.shape };
+      const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
+      Object.defineProperty(this, "shape", _shape);
+      return _shape;
+      // return { ...a._zod.def.shape, ...b._zod.def.shape };
     },
     optional,
     catchall: b._zod.def.catchall,
@@ -724,10 +728,13 @@ export function extendObjectLike(a: schemas.$ZodObjectLike, b: schemas.$ZodObjec
   return clone(a, {
     ...a._zod.def,
     get shape() {
-      return { ...a._zod.def.shape, ...b._zod.def.shape };
+      const _shape = { ...a._zod.def.shape, ...b._zod.def.shape };
+      Object.defineProperty(this, "shape", _shape);
+      return _shape;
+      // return { ...a._zod.def.shape, ...b._zod.def.shape };
     },
     optional,
-    checks: [], // delete existing checks
+    checks: [], // delete existinet checks
   }) as any;
 }
 
