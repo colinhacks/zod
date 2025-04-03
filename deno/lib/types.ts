@@ -1180,8 +1180,8 @@ export class ZodString extends ZodType<string, ZodStringDef, string> {
     });
   }
 
-  date(message?: string) {
-    return this._addCheck({ kind: "date", message });
+  date(message?: errorUtil.ErrMessage) {
+    return this._addCheck({ kind: "date", ...errorUtil.errToObj(message) });
   }
 
   time(
