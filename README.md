@@ -1000,10 +1000,10 @@ You can specify a version with the `version` parameter.
 
 ```ts
 const ipv4Cidr = z.string().cidr({ version: "v4" });
-ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003"); // fail
+ipv4Cidr.parse("84d5:51a0:9114:1855:4cfa:f2d7:1f12:7003/32"); // fail
 
 const ipv6Cidr = z.string().cidr({ version: "v6" });
-ipv6Cidr.parse("192.168.1.1"); // fail
+ipv6Cidr.parse("192.168.1.1/24"); // fail
 ```
 
 <br/>
