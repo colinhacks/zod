@@ -516,6 +516,7 @@ export const $ZodCheckMinSize: core.$constructor<$ZodCheckMinSize> = /*@__PURE__
 /////    $ZodCheckSizeEquals    /////
 /////////////////////////////////////
 interface $ZodCheckSizeEqualsDef extends $ZodCheckDef {
+  check: "size_equals";
   size: number;
 }
 
@@ -1225,9 +1226,7 @@ export type $ZodChecks =
   | $ZodCheckLessThan
   | $ZodCheckGreaterThan
   | $ZodCheckMultipleOf
-  | $ZodCheckNumberFormatDef
   | $ZodCheckNumberFormat
-  | $ZodCheckBigIntFormatDef
   | $ZodCheckBigIntFormat
   | $ZodCheckMaxSize
   | $ZodCheckMinSize
@@ -1235,14 +1234,45 @@ export type $ZodChecks =
   | $ZodCheckMaxLength
   | $ZodCheckMinLength
   | $ZodCheckLengthEquals
-  | $ZodCheckStringFormatDef
   | $ZodCheckStringFormat
+  | $ZodCheckProperty
+  | $ZodCheckMimeType
+  | $ZodCheckOverwrite;
+
+export type $ZodStringFormatChecks =
   | $ZodCheckRegex
   | $ZodCheckLowerCase
   | $ZodCheckUpperCase
   | $ZodCheckIncludes
   | $ZodCheckStartsWith
   | $ZodCheckEndsWith
-  | $ZodCheckProperty
-  | $ZodCheckMimeType
-  | $ZodCheckOverwrite;
+  | schemas.$ZodGUID
+  | schemas.$ZodUUID
+  | schemas.$ZodEmail
+  | schemas.$ZodURL
+  | schemas.$ZodEmoji
+  | schemas.$ZodNanoID
+  | schemas.$ZodCUID
+  | schemas.$ZodCUID2
+  | schemas.$ZodULID
+  | schemas.$ZodXID
+  | schemas.$ZodKSUID
+  | schemas.$ZodISODateTime
+  | schemas.$ZodISODate
+  | schemas.$ZodISOTime
+  | schemas.$ZodISODuration
+  | schemas.$ZodIPv4
+  | schemas.$ZodIPv6
+  | schemas.$ZodBase64
+  | schemas.$ZodE164
+  | schemas.$ZodJWT;
+
+const check = {} as $ZodChecks;
+const def = check._zod.def;
+
+switch (def.check) {
+  case "less_than":
+  case "greater_than":
+    // ...
+    break;
+}

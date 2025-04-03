@@ -1,21 +1,257 @@
 ---
-title: "`@zod/core`"
+title: "@zod/core"
 ---
 
-## Classes
+> If you are build a library on top of Zod, you should build against the `@zod/core` package. This package exports the core classes that are extended by `zod` and `@zod/mini`.
+
+The `@zod/core` package implements Zod's core parsing logic and additional utilities. It is not intended to be used directly; instead it's designed to be extended by other packages like `zod` and `@zod/mini`. It implements:
+
+- base *schema classes* (e.g. `$ZodString`)
+- base *check classes* (e.g. `$ZodCheckMultipleOf`)
+- utility types and functions
+
+For simplicity, the `zod` and `@zod/mini` packages re-export their `@zod/core` dependency as `z.core`. 
+
+```ts
+import * as z from "zod";
+
+z.core.$ZodString;
+// the base class for string schemas
+```
+
+## Schemas
+
+The base class for all Zod schemas is `$ZodType`. It accepts two generic parameters: `Output` and `Input`.
+
+```ts
+export class $ZodType<Output = unknown, Input = unknown> {
+  _zod: { /* internals */}
+}
+```
+
+`@zod/core` exports a number of subclasses that implement some common parsers. A union of all first-party subclasses is exported as `z.$ZodTypes`.
+
+```ts
+export type $ZodTypes =
+  | $ZodString
+  | $ZodNumber
+  | $ZodBigInt
+  | $ZodBoolean
+  | $ZodDate
+  | $ZodSymbol
+  | $ZodUndefined
+  | $ZodNullable
+  | $ZodNull
+  | $ZodAny
+  | $ZodUnknown
+  | $ZodNever
+  | $ZodVoid
+  | $ZodArray
+  | $ZodObject
+  | $ZodInterface
+  | $ZodUnion
+  | $ZodIntersection
+  | $ZodTuple
+  | $ZodRecord
+  | $ZodMap
+  | $ZodSet
+  | $ZodLiteral
+  | $ZodEnum
+  | $ZodPromise
+  | $ZodLazy
+  | $ZodOptional
+  | $ZodDefault
+  | $ZodTemplateLiteral
+  | $ZodCustom
+  | $ZodTransform
+  | $ZodNonOptional
+  | $ZodReadonly
+  | $ZodNaN
+  | $ZodPipe
+  | $ZodSuccess
+  | $ZodCatch
+  | $ZodFile;
+```
+
+All `@zod/core` subclasses only contain a single property: `_zod`. This property is an object containing the schemas *internals*: it's state, implemention, etc. The goal is to make `@zod/core` as extensible and unopinionated as possible. Other libraries can "build their own Zod" or otherwise integrate Zod's super-optimized parsing logic into their own library by leveraging the subclasses in `@zod/core`. 
+
+The `_zod` internals property contains some notable properties:
+
+- `.def` — The schema's *definition*: this is the object you pass into the class's constructor to create an instance. It completely describes the schema, and it's JSON-serializable.
+  - `.def.type` — A string representing the schema's type, e.g. `"string"`, `"object"`, `"array"`, etc.
+  - `.def.checks` — An array of *checks* that are executed by the schema after parsing.
+- `.input` — A virtual property that "stores" the schema's *inferred input type*.
+- `.output` — A virtual property that "stores" the schema's *inferred output type*.
+- `.run()` — The schema's internal parser implementation.
+
+If you are implementing a tool (say, a code generator) that must traverse Zod schemas, you can cast any schema to `$ZodTypes` and use the `def` property to discriminate between these classes.
+
+```ts
+export function walk(_schema: z.$ZodType) {
+  const schema = _schema as z.$ZodTypes;
+  const def = schema._zod.def;
+  switch (def.type) {
+    case "string": {
+      // ...
+      break;
+    }
+    case "object": {
+      // ...
+      break;
+    }
+  }
+}
+```
+
+There are a number of subclasses of `$ZodString` that implement various *string formats*. These are exported as `z.$ZodStringFormatTypes`.
+
+
+```ts
+export type $ZodStringFormatTypes =
+  | $ZodGUID
+  | $ZodUUID
+  | $ZodEmail
+  | $ZodURL
+  | $ZodEmoji
+  | $ZodNanoID
+  | $ZodCUID
+  | $ZodCUID2
+  | $ZodULID
+  | $ZodXID
+  | $ZodKSUID
+  | $ZodISODateTime
+  | $ZodISODate
+  | $ZodISOTime
+  | $ZodISODuration
+  | $ZodIPv4
+  | $ZodIPv6
+  | $ZodBase64
+  | $ZodE164
+  | $ZodJWT
+```
 
 ## Checks
 
-## Error class
+Every Zod schema contains an array of *checks*. These perform post-parsing refinements (and occasionally mutations) that *do not affect* the inferred type.
 
 
-## Issue codes
-
-All issue types extend the `$ZodIssueBase` interface.
 ```ts
-///////////////////////////
-////     base type     ////
-///////////////////////////
+const schema = z.string().check(z.email()).check(z.min(5));
+// => ZodString
+
+schema._zod.def.checks;
+// => [ZodCheckEmail, ZodCheckMinLength]
+```
+
+The base class for all Zod checks is `$ZodCheck`. It accepts a single generic parameter `T`.
+
+```ts
+export class $ZodCheck<in T = unknown> {
+  // ...
+}
+```
+
+`@zod/core` exports a number of subclasses that perform some common refinements. All first-party subclasses are exported as a union called `z.$ZodChecks`.
+
+```ts
+export type $ZodChecks =
+  | $ZodCheckLessThan
+  | $ZodCheckGreaterThan
+  | $ZodCheckMultipleOf
+  | $ZodCheckNumberFormat
+  | $ZodCheckBigIntFormat
+  | $ZodCheckMaxSize
+  | $ZodCheckMinSize
+  | $ZodCheckSizeEquals
+  | $ZodCheckMaxLength
+  | $ZodCheckMinLength
+  | $ZodCheckLengthEquals
+  | $ZodCheckProperty
+  | $ZodCheckMimeType
+  | $ZodCheckOverwrite
+  | $ZodCheckStringFormat
+```
+
+As with schema types, there are a number of subclasses of `$ZodCheckStringFormat` that implement various *string formats*. 
+
+
+```ts
+export type $ZodStringFormatChecks =
+  | $ZodCheckRegex
+  | $ZodCheckLowerCase
+  | $ZodCheckUpperCase
+  | $ZodCheckIncludes
+  | $ZodCheckStartsWith
+  | $ZodCheckEndsWith
+  | $ZodGUID
+  | $ZodUUID
+  | $ZodEmail
+  | $ZodURL
+  | $ZodEmoji
+  | $ZodNanoID
+  | $ZodCUID
+  | $ZodCUID2
+  | $ZodULID
+  | $ZodXID
+  | $ZodKSUID
+  | $ZodISODateTime
+  | $ZodISODate
+  | $ZodISOTime
+  | $ZodISODuration
+  | $ZodIPv4
+  | $ZodIPv6
+  | $ZodBase64
+  | $ZodE164
+  | $ZodJWT;
+```
+
+You'll notice some of these string format *checks* overlap with the string format *types* above. That's because these classes implement both the `$ZodCheck` and `$ZodType` interfaces. That is, they can be used as either a check or a type.
+
+> **Note** — If an instance implements `$ZodCheck`, it gets preprended to the array of checks (`.def.checks`) during parsing.
+
+```ts
+// as a type
+z.email().parse("user@example.com");
+
+// as a check
+z.string().check(z.email()).parse("user@example.com")
+```
+
+As with `z.$ZodTypes`, you can use the `._zod.def.check` property to discriminate between these classes.
+
+```ts
+const check = {} as $ZodChecks;
+const def = check._zod.def;
+
+switch (def.check) {
+  case "less_than":
+  case "greater_than":
+    // ...
+    break;
+}
+
+```
+
+## Errors
+
+The base class for all errors in Zod is `$ZodError`.
+
+> For performance reasons, `$ZodError` *does not* extend the built-in `Error` class! So using `instanceof Error` will return `false`.
+
+- The `zod` package implements a subclass of `$ZodError` called `ZodError` with some additional convenience methods.
+- The `@zod/mini` package directly uses `$ZodError`
+
+```ts
+export class $ZodError<T = unknown> implements Error {
+ public issues: $ZodIssue[];
+}
+```
+
+## Issues
+
+The `issues` property corresponds to an array of `$ZodIssue` objects. All issues extend the `z.$ZodIssueBase` interface.
+
+```ts
 export interface $ZodIssueBase {
   readonly code?: string;
   readonly input?: unknown;
@@ -24,112 +260,21 @@ export interface $ZodIssueBase {
 }
 ```
 
-Below is the list of all issue types emitted by Zod.
+Zod defines the following issue subtypes:
 
 ```ts
-////////////////////////////////
-////     issue subtypes     ////
-////////////////////////////////
-export interface $ZodIssueInvalidType<Input = unknown> extends $ZodIssueBase {
-  readonly code: "invalid_type";
-  readonly expected: $ZodType["_zod"]["def"]["type"];
-  readonly input: Input;
-}
+export type $ZodIssue =
+  | $ZodIssueInvalidType
+  | $ZodIssueTooBig
+  | $ZodIssueTooSmall
+  | $ZodIssueInvalidStringFormat
+  | $ZodIssueNotMultipleOf
+  | $ZodIssueUnrecognizedKeys
+  | $ZodIssueInvalidUnion
+  | $ZodIssueInvalidKey
+  | $ZodIssueInvalidElement
+  | $ZodIssueInvalidValue
+  | $ZodIssueCustom;
+  ```
 
-export interface $ZodIssueTooBig<Input = unknown> extends $ZodIssueBase {
-  readonly code: "too_big";
-  readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
-  readonly maximum: number | bigint;
-  readonly inclusive?: boolean;
-  readonly input: Input;
-}
-
-export interface $ZodIssueTooSmall<Input = unknown> extends $ZodIssueBase {
-  readonly code: "too_small";
-  readonly origin: "number" | "int" | "bigint" | "date" | "string" | "array" | "set" | "file" | (string & {});
-  readonly minimum: number | bigint;
-  readonly inclusive?: boolean;
-  readonly input: Input;
-}
-
-export interface $ZodIssueInvalidStringFormat extends $ZodIssueBase {
-  readonly code: "invalid_format";
-  readonly format: 
-    | "regex"
-    | "email"
-    | "url"
-    | "emoji"
-    | "uuid"
-    | "guid"
-    | "nanoid"
-    | "guid"
-    | "cuid"
-    | "cuid2"
-    | "ulid"
-    | "xid"
-    | "ksuid"
-    | "iso_datetime"
-    | "iso_date"
-    | "iso_time"
-    | "iso_duration"
-    | "ipv4"
-    | "ipv6"
-    | "base64"
-    | "json_string"
-    | "e164"
-    | "lowercase"
-    | "uppercase"
-    | "regex"
-    | "jwt"
-    | "starts_with"
-    | "ends_with"
-    | "includes" | (string & {}); // custom formats supported
-  readonly pattern?: string;
-  readonly input: string;
-}
-
-export interface $ZodIssueNotMultipleOf<Input extends number | bigint = number | bigint> extends $ZodIssueBase {
-  readonly code: "not_multiple_of";
-  readonly divisor: number;
-  readonly input: Input;
-}
-
-export interface $ZodIssueUnrecognizedKeys extends $ZodIssueBase {
-  readonly code: "unrecognized_keys";
-  readonly keys: string[];
-  readonly input: Record<string, unknown>;
-}
-
-export interface $ZodIssueInvalidUnion extends $ZodIssueBase {
-  readonly code: "invalid_union";
-  readonly errors: $ZodIssue[][];
-  readonly input: unknown;
-}
-
-export interface $ZodIssueInvalidKey<Input = unknown> extends $ZodIssueBase {
-  readonly code: "invalid_key";
-  readonly origin: "map" | "record";
-  readonly issues: $ZodIssue[];
-  readonly input: Input;
-}
-
-export interface $ZodIssueInvalidElement<Input = unknown> extends $ZodIssueBase {
-  readonly code: "invalid_element";
-  readonly origin: "map" | "set";
-  readonly key: unknown;
-  readonly issues: $ZodIssue[];
-  readonly input: Input;
-}
-
-export interface $ZodIssueInvalidValue<Input = unknown> extends $ZodIssueBase {
-  readonly code: "invalid_value";
-  readonly values: util.Primitive[];
-  readonly input: Input;
-}
-
-export interface $ZodIssueCustom extends $ZodIssueBase {
-  readonly code?: "custom";
-  readonly params?: Record<string, any> | undefined;
-  readonly input: unknown;
-}
-```
+For details on each type, refer to [the implementation](https://github.com/colinhacks/zod/blob/v4/packages/core/src/errors.ts).

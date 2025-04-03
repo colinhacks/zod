@@ -684,30 +684,32 @@ export const ZodNumberFormat: core.$constructor<ZodNumberFormat> = /*@__PURE__*/
 );
 
 // int
-export function int(params?: string | core.$ZodCheckNumberFormatParams): ZodNumberFormat {
+interface ZodInt extends ZodNumberFormat {}
+export function int(params?: string | core.$ZodCheckNumberFormatParams): ZodInt {
   return core._int(ZodNumberFormat, params);
 }
 
 // float32
-
-export function float32(params?: string | core.$ZodCheckNumberFormatParams): ZodNumberFormat {
+interface ZodFloat32 extends ZodNumberFormat {}
+export function float32(params?: string | core.$ZodCheckNumberFormatParams): ZodFloat32 {
   return core._float32(ZodNumberFormat, params);
 }
 
 // float64
-
-export function float64(params?: string | core.$ZodCheckNumberFormatParams): ZodNumberFormat {
+interface ZodFloat64 extends ZodNumberFormat {}
+export function float64(params?: string | core.$ZodCheckNumberFormatParams): ZodFloat64 {
   return core._float64(ZodNumberFormat, params);
 }
 
 // int32
-export function int32(params?: string | core.$ZodCheckNumberFormatParams): ZodNumberFormat {
+interface ZodInt32 extends ZodNumberFormat {}
+export function int32(params?: string | core.$ZodCheckNumberFormatParams): ZodInt32 {
   return core._int32(ZodNumberFormat, params);
 }
 
 // uint32
-
-export function uint32(params?: string | core.$ZodCheckNumberFormatParams): ZodNumberFormat {
+interface ZodUInt32 extends ZodNumberFormat {}
+export function uint32(params?: string | core.$ZodCheckNumberFormatParams): ZodUInt32 {
   return core._uint32(ZodNumberFormat, params);
 }
 
@@ -790,7 +792,6 @@ export const ZodBigIntFormat: core.$constructor<ZodBigIntFormat> = /*@__PURE__*/
 );
 
 // int64
-
 export function int64(params?: string | core.$ZodBigIntFormatParams): ZodBigIntFormat {
   return core._int64(ZodBigIntFormat, params);
 }

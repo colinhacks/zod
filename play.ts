@@ -1,26 +1,14 @@
-// import { toJSONSchema } from "@zod/core";
-import { z } from "zod";
+import * as z from "@zod/mini";
 
-const User = z
-  .interface({
-    name: z.string(),
-    get posts() {
-      return z.array(Post);
-    },
-  })
-  .meta({ id: "User" });
+z.string().check(
+  z.minLength(5),
+  z.maxLength(64),
+  z.refine((val) => val.includes("@")),
+  z.trim()
+);
 
-const Post = z
-  .interface({
-    title: z.string(),
-    content: z.string(),
-    get author() {
-      return User;
-    },
-  })
-  .meta({ id: "Post" });
+z.string();
 
-const result = z.toJSONSchema(z.globalRegistry, {
-  uri: (id) => `https://example.com/${id}.json`,
-});
-console.dir(result, { depth: 5 });
+const t: z.core.$ZodString;
+
+t._zod;

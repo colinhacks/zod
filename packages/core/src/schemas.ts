@@ -3599,3 +3599,25 @@ export type $ZodTypes =
   | $ZodSuccess
   | $ZodCatch
   | $ZodFile;
+
+export type $ZodStringFormatTypes =
+  | $ZodGUID
+  | $ZodUUID
+  | $ZodEmail
+  | $ZodURL
+  | $ZodEmoji
+  | $ZodNanoID
+  | $ZodCUID
+  | $ZodCUID2
+  | $ZodULID
+  | $ZodXID
+  | $ZodKSUID
+  | $ZodISODateTime
+  | $ZodISODate
+  | $ZodISOTime
+  | $ZodISODuration
+  | $ZodIPv4
+  | $ZodIPv6
+  | $ZodBase64
+  | $ZodE164
+  | $ZodJWT;

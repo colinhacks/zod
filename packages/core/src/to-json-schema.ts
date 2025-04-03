@@ -14,13 +14,9 @@ interface JSONSchemaGeneratorParams {
    * - `"throw"` — Default. Unrepresentable types throw an error
    * - `"any"` — Unrepresentable types become `{}` */
   unrepresentable?: "throw" | "any";
-  /** A registry used to look up external schemas. Default: null (schemas are self-contained).
-   *
-   * Any schema with an `id` property in this registry will be extracted as an *external* $ref. To customize the URI of the generated ref, use `uri`.  */
-  external?: {
-    registry: $ZodRegistry<{ id?: string | undefined }>;
-    uri: (id: string) => string;
-  };
+
+  /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
+  override?: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
 }
 
 interface ProcessParams {
@@ -77,10 +73,11 @@ interface Seen {
   // external?: string | undefined;
 }
 export class JSONSchemaGenerator {
-  // external: (schema: schemas.$ZodType) => string | void;
-
   metadataRegistry: $ZodRegistry<Record<string, any>>;
   target: "draft-7" | "draft-2020-12";
+  unrepresentable: "throw" | "any";
+  override: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
+
   counter = 0;
   seen: Map<schemas.$ZodType, Seen>;
 
@@ -88,6 +85,8 @@ export class JSONSchemaGenerator {
     // this.external = params?.external;
     this.metadataRegistry = params?.metadata ?? globalRegistry;
     this.target = params?.target ?? "draft-2020-12";
+    this.unrepresentable = params?.unrepresentable ?? "throw";
+    this.override = params?.override ?? (() => {});
     this.seen = new Map();
   }
 
@@ -207,13 +206,18 @@ export class JSONSchemaGenerator {
         break;
       }
       case "bigint": {
-        throw new Error("BigInt cannot be represented in JSON Schema");
+        if (this.unrepresentable === "throw") {
+          throw new Error("BigInt cannot be represented in JSON Schema");
+        }
+        break;
       }
       case "symbol": {
-        throw new Error("Symbols cannot be represented in JSON Schema");
+        if (this.unrepresentable === "throw") {
+          throw new Error("Symbols cannot be represented in JSON Schema");
+        }
+        break;
       }
       case "undefined": {
-        // throw new Error("Undefined cannot be represented in JSON Schema");
         const json = _json as JSONSchema.NullSchema;
         json.type = "null";
         break;
@@ -234,10 +238,16 @@ export class JSONSchemaGenerator {
         break;
       }
       case "void": {
-        throw new Error("Void cannot be represented in JSON Schema");
+        if (this.unrepresentable === "throw") {
+          throw new Error("Void cannot be represented in JSON Schema");
+        }
+        break;
       }
       case "date": {
-        throw new Error("Date cannot be represented in JSON Schema");
+        if (this.unrepresentable === "throw") {
+          throw new Error("Date cannot be represented in JSON Schema");
+        }
+        break;
       }
       case "array": {
         const json: JSONSchema.ArraySchema = _json as any;
@@ -360,10 +370,16 @@ export class JSONSchemaGenerator {
         break;
       }
       case "map": {
-        throw new Error("Map cannot be represented in JSON Schema");
+        if (this.unrepresentable === "throw") {
+          throw new Error("Map cannot be represented in JSON Schema");
+        }
+        break;
       }
       case "set": {
-        throw new Error("Set cannot be represented in JSON Schema");
+        if (this.unrepresentable === "throw") {
+          throw new Error("Set cannot be represented in JSON Schema");
+        }
+        break;
       }
       case "enum": {
         const json: JSONSchema.BaseSchema = _json as any;
@@ -373,17 +389,26 @@ export class JSONSchemaGenerator {
       case "literal": {
         const json: JSONSchema.BaseSchema = _json as any;
         for (const val of def.values) {
-          if (val === undefined) throw new Error("Undefined cannot be represented in JSON Schema");
-          if (typeof val === "bigint") throw new Error("BigInt cannot be represented in JSON Schema");
+          if (val === undefined)
+            if (this.unrepresentable === "throw") {
+              throw new Error("Undefined cannot be represented in JSON Schema");
+            }
+          break;
         }
         json.enum = def.values as any;
         break;
       }
       case "file": {
-        throw new Error("File cannot be represented in JSON Schema");
+        if (this.unrepresentable === "throw") {
+          throw new Error("File cannot be represented in JSON Schema");
+        }
+        break;
       }
       case "transform": {
-        throw new Error("Transforms cannot be represented in JSON Schema");
+        if (this.unrepresentable === "throw") {
+          throw new Error("Transforms cannot be represented in JSON Schema");
+        }
+        break;
       }
       case "optional": {
         const inner = this.process(def.innerType, params);
@@ -431,7 +456,10 @@ export class JSONSchemaGenerator {
         break;
       }
       case "nan": {
-        throw new Error("NaN cannot be represented in JSON Schema");
+        if (this.unrepresentable === "throw") {
+          throw new Error("NaN cannot be represented in JSON Schema");
+        }
+        break;
       }
       case "pipe": {
         // this.seen.delete(schema);
@@ -485,7 +513,10 @@ export class JSONSchemaGenerator {
         // return inner;
       }
       case "custom": {
-        throw new Error("Custom types cannot be represented in JSON Schema");
+        if (this.unrepresentable === "throw") {
+          throw new Error("Custom types cannot be represented in JSON Schema");
+        }
+        break;
       }
       default: {
         def satisfies never;
@@ -494,6 +525,11 @@ export class JSONSchemaGenerator {
 
     // pulling fresh from this.seen in case it was overwritten
     const _result = this.seen.get(schema)!;
+    this.override({
+      zodSchema: schema,
+      jsonSchema: _result.schema,
+    });
+
     Object.assign(_result.cached, _result.schema);
     return _result.schema;
   }
@@ -648,7 +684,7 @@ export function toJSONSchema(input: schemas.$ZodType | $ZodRegistry, _params?: T
     const gen = new JSONSchemaGenerator(_params);
     const defs: any = {};
     for (const entry of input._idmap.entries()) {
-      const [key, schema] = entry;
+      const [_, schema] = entry;
       gen.process(schema);
     }
 

@@ -1,5 +1,5 @@
 {
   "root": true,
   "title": "Packages",
-  "pages": ["---Packages---", "zod", "mini", "json", "core"]
+  "pages": ["---Packages---", "zod", "mini", "core"]
 }
