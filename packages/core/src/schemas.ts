@@ -3525,7 +3525,7 @@ export interface $ZodCustom<O = unknown, I = unknown> extends $ZodType {
 }
 
 export const $ZodCustom: core.$constructor<$ZodCustom> = /*@__PURE__*/ core.$constructor("$ZodCustom", (inst, def) => {
-  if (def.checks?.length) console.warn("Can't add custom checks to z.custom()");
+  // if (def.checks?.length) console.warn("Can't add custom checks to z.custom()");
 
   checks.$ZodCheck.init(inst, def);
   $ZodType.init(inst, def);

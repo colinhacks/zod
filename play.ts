@@ -1,14 +1,5 @@
-import * as z from "@zod/mini";
+import * as z from "zod";
 
-z.string().check(
-  z.minLength(5),
-  z.maxLength(64),
-  z.refine((val) => val.includes("@")),
-  z.trim()
-);
-
-z.string();
-
-const t: z.core.$ZodString;
-
-t._zod;
+const b = z.literal(["hello", undefined, null, 5, BigInt(1324)]);
+const res = z.toJSONSchema(b);
+console.log(res);

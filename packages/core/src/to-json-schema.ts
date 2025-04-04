@@ -389,11 +389,8 @@ export class JSONSchemaGenerator {
       case "literal": {
         const json: JSONSchema.BaseSchema = _json as any;
         for (const val of def.values) {
-          if (val === undefined)
-            if (this.unrepresentable === "throw") {
-              throw new Error("Undefined cannot be represented in JSON Schema");
-            }
-          break;
+          if (val === undefined) throw new Error("Literal `undefined` cannot be represented in JSON Schema");
+          if (typeof val === "bigint") throw new Error("BigInt literals cannot be represented in JSON Schema");
         }
         json.enum = def.values as any;
         break;

@@ -1266,13 +1266,3 @@ export type $ZodStringFormatChecks =
   | schemas.$ZodBase64
   | schemas.$ZodE164
   | schemas.$ZodJWT;
-
-const check = {} as $ZodChecks;
-const def = check._zod.def;
-
-switch (def.check) {
-  case "less_than":
-  case "greater_than":
-    // ...
-    break;
-}
