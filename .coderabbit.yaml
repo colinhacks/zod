@@ -1,0 +1,10 @@
+# CodeRabbit configuration
+reviews:
+  path_filters:
+    - "**/*.js"
+    - "**/*.ts"
+    - "**/*.tsx"
+    - "**/*.yaml"
+    - "**/*.yml"
+    - ".coderabbit.yaml"
+  review_status: true
