@@ -288,7 +288,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod">
         <picture height="45px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/ac65013f-aeb4-48dd-a2ee-41040b69cbe6">
-          <img alt="stainless" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/5ef4c11b-efeb-4495-90a8-41b83f798600">
+          <img alt="Retool" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/5ef4c11b-efeb-4495-90a8-41b83f798600">
         </picture>
       </a>
       <br  />   
@@ -303,7 +303,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://stainlessapi.com">
+      <a href="https://stainless.com">
         <picture height="45px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/f20759c1-3e51-49d0-a31e-bbc43abec665">
           <img alt="stainless" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/e9444e44-d991-4bba-a697-dbcfad608e47">
@@ -312,7 +312,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br  />   
       Generate best-in-class SDKs
       <br/>
-      <a href="https://stainlessapi.com" style="text-decoration:none;">stainlessapi.com</a>
+      <a href="https://stainless.com" style="text-decoration:none;">stainless.com</a>
       </p>
       <p></p>
     </td>
