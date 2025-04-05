@@ -1,4 +1,5 @@
 export * from "./errors";
+export * from "./helpers/enumUtil";
 export * from "./helpers/parseUtil";
 export * from "./helpers/typeAliases";
 export * from "./helpers/util";
