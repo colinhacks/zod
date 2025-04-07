@@ -4,6 +4,7 @@ import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { notFound } from "next/navigation";
+import { Tabs } from "@/components/tabs";
 
 export const revalidate = 86400;
 
@@ -36,6 +37,7 @@ export default async function Page(props: {
             a: createRelativeLink(source, page),
             // you can add other MDX components here
             blockquote: Callout,
+            Tabs,
           }}
         />
       </DocsBody>
