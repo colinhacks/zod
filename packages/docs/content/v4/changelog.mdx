@@ -116,10 +116,10 @@ In Zod 4 the `ZodError` class no longer extends the plain JavaScript `Error` cla
 ```ts
 try {
   z.string().parse(data)
-}catch(err){
+} catch(err) {
   if (err instanceof Error) {
     // handle regular Error
-  }else if(err instanceof z.ZodError){
+  } else if (err instanceof z.ZodError) {
     // handle ZodError
   }
 }
@@ -386,7 +386,7 @@ myFunction.implement((input) => {
 });
 ```
 </Tab>
-<Tab value="Zod 4">
+<Tab value="Zod 3">
 ```ts
 const myFunction = z.function()
   .args(z.object({
@@ -498,7 +498,7 @@ const myRecord = z.record(z.enum(["a", "b", "c"]), z.number());
 
 ### throws `Error` on merge conflict
 
-Zod intersection parses the input against two schemas, then attempts to merge the results. In Zod 3, when the results were unmergable, Zod through a `ZodError` with a special `"invalid_intersection_types"` issue. 
+Zod intersection parses the input against two schemas, then attempts to merge the results. In Zod 3, when the results were unmergable, Zod threw a `ZodError` with a special `"invalid_intersection_types"` issue. 
 
 In Zod 4, this will throw a regular `Error` instead. The existence of unmergable results indicates a structural problem with the schema: an intersection of two incompatible types. Thus, a regular error is more appropriate than a validation error. 
 
@@ -614,7 +614,7 @@ z.string().check(
 
 ### adds `ZodTransform`
 
-Meanwhile, transforms have been moved into a dedicated `ZodTransform` class. This schema class represents a input transform; in fact, you can actually define standalone transformations now:
+Meanwhile, transforms have been moved into a dedicated `ZodTransform` class. This schema class represents an input transform; in fact, you can actually define standalone transformations now:
 
 ```ts
 import * as z from "zod";

@@ -413,7 +413,7 @@ This means Zod can finally represent commonly cyclical data structure like ORM s
 
 ## Metadata
 
-Zod 4 introduces a new system for adding strongly-typed metadata to your schemas. Metadata isn't stored inside the schema itself; instead it's stored in a "schema registry" that associated a schema with some typed metadata. To create a registry with `z.registry()`:
+Zod 4 introduces a new system for adding strongly-typed metadata to your schemas. Metadata isn't stored inside the schema itself; instead it's stored in a "schema registry" that associates a schema with some typed metadata. To create a registry with `z.registry()`:
 
 ```ts
 import * as z from "zod";
@@ -552,7 +552,7 @@ At the time of this writing only the English locale is available; I'll be doing 
 
 ## Error pretty-printing
 
-The success of the [`zod-validation-error`](https://www.npmjs.com/package/zod-validation-error) package demonstrates that there's significanyt demand for an official API for pretty-printing errors. If you are using that package currently, by all means continue using it. 
+The success of the [`zod-validation-error`](https://www.npmjs.com/package/zod-validation-error) package demonstrates that there's significant demand for an official API for pretty-printing errors. If you are using that package currently, by all means continue using it. 
 
 Zod now implements a top-level `z.prettifyError` function for converting a `ZodError` to a user-friendly formatted string.
 
@@ -583,7 +583,7 @@ const myError = new z.ZodError([
 z.prettifyError(myError);
 ```
 
-The returns the following pretty-printable multi-line string:
+This returns the following pretty-printable multi-line string:
 
 ```ts
 ✖ Unrecognized key: "extraField"
@@ -646,7 +646,7 @@ const hello = z.templateLiteral(["hello, ", z.string()]);
 // `hello, ${string}`
 
 const cssUnits = z.enum(["px", "em", "rem", "%"]);
-const css = z.templateLiteral([z.number(), cssUnits ]);
+const css = z.templateLiteral([z.number(), cssUnits]);
 // `${number}px` | `${number}em` | `${number}rem` | `${number}%`
 
 const email = z.templateLiteral([

@@ -9,17 +9,10 @@ export function Featured() {
       </span>
 
       <a href="https://link.buildwithfern.com/zod-partnership" className="mt-0 mb-0 border-none">
-        <div className="h-[260px] flex justify-center items-center m-3">
-          <picture className="h-[240px] flex items-center">
-            <source
-              media="(prefers-color-scheme: dark)"
-              srcSet="https://github.com/user-attachments/assets/995d60b8-2ad9-4ba5-9b08-c41ec8c2cb45"
-            />
-            <img
-              alt="fern logo"
-              src="https://github.com/user-attachments/assets/b140d9bd-dfd3-4d97-a059-c3eda10d2840"
-              className="max-h-[240px] w-auto"
-            />
+        <div className="h-[320px] flex justify-center items-center m-3">
+          <picture className="h-[300px] flex items-center">
+            <source media="(prefers-color-scheme: dark)" srcSet="https://i.imgur.com/ntvK08h.png" />
+            <img alt="fern logo" src="https://i.imgur.com/pqyEkg5.png" className="max-h-[300px] w-auto" />
           </picture>
         </div>
       </a>
