@@ -61,6 +61,7 @@
   "scripts": {
     "clean": "rm -rf dist",
     "build": "tshy",
+    "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm test && pnpm run build"
