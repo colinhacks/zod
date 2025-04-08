@@ -123,6 +123,6 @@
     "build": "tshy",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
-    "prepublishOnly": "pnpm test && pnpm run build"
+    "prepublishOnly": "pnpm run build"
   }
 }
