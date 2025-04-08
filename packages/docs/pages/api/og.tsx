@@ -1,4 +1,5 @@
 import { ImageResponse } from "@vercel/og";
+import Image from "next/image";
 import type { NextRequest } from "next/server";
 
 export const config = {
@@ -42,7 +43,7 @@ export default async function (request: NextRequest) {
             justifyContent: "center",
           }}
         >
-          <img alt="Zod logo" src={`${imagePrefix}/logo/logo.png`} />
+          <Image width="1304" height="1076" alt="Zod logo" src={`${imagePrefix}/logo/logo.png`} />
         </div>
 
         {/* Main content */}
@@ -75,7 +76,13 @@ export default async function (request: NextRequest) {
 
             {/* Project name */}
             <div tw="flex items-center ">
-              <img alt="GitHub logo" src={`${imagePrefix}/github-white.png`} tw="h-10 w-10 mr-2" />
+              <img
+                alt="GitHub logo"
+                src={`${imagePrefix}/github-white.png`}
+                width={230}
+                height={225}
+                tw="h-10 w-10 mr-2"
+              />
               <span tw="text-3xl font-semibold text-gray-300">colinhacks/zod</span>
             </div>
           </div>
