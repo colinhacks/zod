@@ -1,7 +1,7 @@
 {
   "name": "@zod/mini",
-  "type": "module",
   "version": "4.0.0-beta.0",
+  "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
   "files": ["src", "dist"],
@@ -102,6 +102,6 @@
     "prepublishOnly": "pnpm test && pnpm run build"
   },
   "dependencies": {
-    "@zod/core": "0.1.0"
+    "@zod/core": "workspace:*"
   }
 }

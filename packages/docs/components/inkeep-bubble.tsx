@@ -6,8 +6,8 @@ import { useEffect, useState } from "react";
 export function InkeepBubble() {
   // color mode sync target
   const [syncTarget, setSyncTarget] = useState<HTMLElement | null>(null);
-  const [isOpen, onOpenChange] = useState(false);
-  // We do this because document is not available in the server
+
+  // document is not available in the server
   useEffect(() => {
     setSyncTarget(document.documentElement);
   }, []);
@@ -25,11 +25,6 @@ export function InkeepBubble() {
           isDarkMode: (attributes: any) => !!attributes.class?.includes("dark"),
         },
       },
-    },
-    modalSettings: {
-      // optional settings
-      isOpen,
-      onOpenChange,
     },
     searchSettings: {
       // optional settings

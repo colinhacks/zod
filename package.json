@@ -37,9 +37,9 @@
     "tsx": "^4.19.2",
     "typescript": "~5.5.0",
     "vitest": "^2.0.0",
-    "@zod/core": "*",
-    "zod": "4.0.0-beta.0",
-    "@zod/mini": "4.0.0-beta.0",
+    "@zod/core": "workspace:*",
+    "zod": "workspace:*",
+    "@zod/mini": "workspace:*",
     "zod3": "npm:zod@^3.24.0"
   },
   "lint-staged": {

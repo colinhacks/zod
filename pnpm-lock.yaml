@@ -24,10 +24,10 @@ importers:
         specifier: ^3.0.3
         version: 3.0.3
       '@zod/core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:packages/core
       '@zod/mini':
-        specifier: 4.0.0-beta.0
+        specifier: workspace:*
         version: link:packages/mini
       arktype:
         specifier: ^2.0.0
@@ -81,33 +81,32 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.17.14)(lightningcss@1.29.3)(terser@5.39.0)
       zod:
-        specifier: 4.0.0-beta.0
+        specifier: workspace:*
         version: link:packages/zod
       zod3:
         specifier: npm:zod@^3.24.0
         version: zod@3.24.2
 
   packages/bench:
-    dependencies:
+    devDependencies:
       '@zod/core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../core
       '@zod/mini':
-        specifier: 4.0.0-beta.0
+        specifier: workspace:*
         version: link:../mini
-      zod:
-        specifier: 4.0.0-beta.0
-        version: link:../zod
-      zod3:
-        specifier: npm:zod@3.23.7
-        version: zod@3.23.7
-    devDependencies:
       arktype:
         specifier: 2.0.0
         version: 2.0.0
       valibot:
         specifier: 1.0.0-rc.2
         version: 1.0.0-rc.2(typescript@5.8.2)
+      zod:
+        specifier: workspace:*
+        version: link:../zod
+      zod3:
+        specifier: npm:zod@3.23.7
+        version: zod@3.23.7
 
   packages/core: {}
 
@@ -175,17 +174,10 @@ importers:
   packages/mini:
     dependencies:
       '@zod/core':
-        specifier: 0.1.0
+        specifier: workspace:*
         version: link:../core
 
   packages/treeshake:
-    dependencies:
-      rollup-plugin-bundle-size:
-        specifier: ^1.0.3
-        version: 1.0.3
-      valibot:
-        specifier: ^1.0.0
-        version: 1.0.0(typescript@5.8.2)
     devDependencies:
       '@rollup/plugin-commonjs':
         specifier: ^28.0.3
@@ -203,17 +195,26 @@ importers:
         specifier: ^22.13.13
         version: 22.13.13
       '@zod/mini':
-        specifier: 4.0.0-beta.0
+        specifier: workspace:*
         version: link:../mini
       rollup:
         specifier: ^4.37.0
         version: 4.37.0
+      rollup-plugin-bundle-size:
+        specifier: ^1.0.3
+        version: 1.0.3
       rollup-plugin-filesize:
         specifier: ^10.0.0
         version: 10.0.0
+      valibot:
+        specifier: ^1.0.0
+        version: 1.0.0(typescript@5.8.2)
+      zod:
+        specifier: workspace:*
+        version: link:../zod
 
   packages/tsc:
-    dependencies:
+    devDependencies:
       '@types/node':
         specifier: ^22.10.5
         version: 22.10.5
@@ -221,11 +222,17 @@ importers:
         specifier: ^0.10.1
         version: 0.10.1
       '@zod/core':
-        specifier: '*'
+        specifier: workspace:*
         version: link:../core
+      '@zod/mini':
+        specifier: workspace:*
+        version: link:../mini
       arktype:
         specifier: 2.0.0-rc.33
         version: 2.0.0-rc.33
+      execa:
+        specifier: ^9.5.2
+        version: 9.5.2
       typescript:
         specifier: ^5.2.2
         version: 5.5.3
@@ -233,20 +240,16 @@ importers:
         specifier: 1.0.0-beta.12
         version: 1.0.0-beta.12(typescript@5.5.3)
       zod:
-        specifier: 4.0.0-beta.0
+        specifier: workspace:*
         version: link:../zod
       zod3:
         specifier: npm:zod@3.23.7
         version: zod@3.23.7
-    devDependencies:
-      execa:
-        specifier: ^9.5.2
-        version: 9.5.2
 
   packages/zod:
     dependencies:
       '@zod/core':
-        specifier: 0.1.0
+        specifier: workspace:*
         version: link:../core
 
 packages:
