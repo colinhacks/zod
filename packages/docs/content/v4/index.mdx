@@ -351,18 +351,23 @@ Zod 4 introduces a new API for defining object types: `z.interface()`. This may 
 In TypeScript a property can be "optional" in two disctint ways:
 
 ```ts
-type ValueIsOptional = { value: string | undefined };
-type KeyIsOptional = { value?: string };
+type KeyOptional = { prop?: string };
+type ValueOptional = { prop: string | undefined };
 ```
+
+In `KeyOptional`, the `prop` key can be omitted from the object ("key optional"). In `ValueOptional`, the `prop` key *must be set* however it can be set to `undefined` ("value optional").
 
 Zod v3 cannot represent `ValueOptional`. Instead, `z.object()` automatically adds question marks to any key that accepts a value of `undefined`:
 
 ```ts
-z.object({ name: z.string().optional() }); // { name?: string | undefined }
-z.object({ name: z.union([z.string(), z.undefined()]) }); // { name?: string | undefined }
+z.object({ name: z.string().optional() }); 
+// { name?: string | undefined }
+
+z.object({ name: z.union([z.string(), z.undefined()]) }); 
+// { name?: string | undefined }
 ```
 
-The question mark also gets added for things lik `z.unknown()`:
+This includes special schema types like `z.unknown()`:
 
 ```ts
 z.object({ name: z.unknown() }); // { name?: unknown } 
