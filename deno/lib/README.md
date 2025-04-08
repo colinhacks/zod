@@ -42,8 +42,8 @@
 <div align="center">
   <a href="https://link.buildwithfern.com/zod-partnership">
     <picture width="95%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/995d60b8-2ad9-4ba5-9b08-c41ec8c2cb45">
-      <img alt="fern logo" src="https://github.com/user-attachments/assets/b140d9bd-dfd3-4d97-a059-c3eda10d2840" width="95%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/ntvK08h.png">
+      <img alt="fern logo" src="https://i.imgur.com/pqyEkg5.png" width="95%">
     </picture>
   </a>
   <br/>
@@ -288,7 +288,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <a href="https://retool.com/?utm_source=github&utm_medium=referral&utm_campaign=zod">
         <picture height="45px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/ac65013f-aeb4-48dd-a2ee-41040b69cbe6">
-          <img alt="stainless" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/5ef4c11b-efeb-4495-90a8-41b83f798600">
+          <img alt="Retool" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/5ef4c11b-efeb-4495-90a8-41b83f798600">
         </picture>
       </a>
       <br  />   
@@ -303,7 +303,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
     <td align="center">
       <p></p>
       <p>
-      <a href="https://stainlessapi.com">
+      <a href="https://stainless.com">
         <picture height="45px">
           <source media="(prefers-color-scheme: dark)" srcset="https://github.com/colinhacks/zod/assets/3084745/f20759c1-3e51-49d0-a31e-bbc43abec665">
           <img alt="stainless" height="45px" src="https://github.com/colinhacks/zod/assets/3084745/e9444e44-d991-4bba-a697-dbcfad608e47">
@@ -312,7 +312,7 @@ Sponsorship at any level is appreciated and encouraged. If you built a paid prod
       <br  />   
       Generate best-in-class SDKs
       <br/>
-      <a href="https://stainlessapi.com" style="text-decoration:none;">stainlessapi.com</a>
+      <a href="https://stainless.com" style="text-decoration:none;">stainless.com</a>
       </p>
       <p></p>
     </td>

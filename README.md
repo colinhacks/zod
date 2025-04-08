@@ -42,8 +42,8 @@
 <div align="center">
   <a href="https://link.buildwithfern.com/zod-partnership">
     <picture width="95%" >
-      <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/995d60b8-2ad9-4ba5-9b08-c41ec8c2cb45">
-      <img alt="fern logo" src="https://github.com/user-attachments/assets/b140d9bd-dfd3-4d97-a059-c3eda10d2840" width="95%">
+      <source media="(prefers-color-scheme: dark)" srcset="https://i.imgur.com/ntvK08h.png">
+      <img alt="fern logo" src="https://i.imgur.com/pqyEkg5.png" width="95%">
     </picture>
   </a>
   <br/>
