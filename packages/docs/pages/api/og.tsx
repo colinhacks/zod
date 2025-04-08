@@ -8,6 +8,7 @@ export const config = {
 export default async function (request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const imagePrefix = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}/` : "http://localhost:3000/";
 
     // Get dynamic params
     const title = searchParams.get("title") || "Zod Documentation";
@@ -41,7 +42,7 @@ export default async function (request: NextRequest) {
             justifyContent: "center",
           }}
         >
-          <img alt="Zod logo" src="http://localhost:3000/logo/logo.png" />
+          <img alt="Zod logo" src={`${imagePrefix}/logo/logo.png`} />
         </div>
 
         {/* Main content */}
@@ -74,7 +75,7 @@ export default async function (request: NextRequest) {
 
             {/* Project name */}
             <div tw="flex items-center ">
-              <img alt="GitHub logo" src="http://localhost:3000/github-white.png" tw="h-10 w-10 mr-2" />
+              <img alt="GitHub logo" src={`${imagePrefix}/github-white.png`} tw="h-10 w-10 mr-2" />
               <span tw="text-3xl font-semibold text-gray-300">colinhacks/zod</span>
             </div>
           </div>

@@ -56,7 +56,8 @@ export async function generateMetadata(props: {
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
-  const title = page.data.title ?? "Home"; // + " | Zod Docs";
+  const rootTitle = page.data.title ?? "Home";
+  const title = rootTitle + " | Zod Docs";
   const description = page.data.description;
   return {
     title,
@@ -69,7 +70,7 @@ export async function generateMetadata(props: {
       url: `https://zod.dev/${page.slugs.join("/")}`,
       images: [
         {
-          url: `/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description ?? "")}&path=${encodeURIComponent(`zod.dev/${page.slugs.join("/")}`)}`,
+          url: `/api/og?title=${encodeURIComponent(rootTitle)}&description=${encodeURIComponent(description ?? "")}&path=${encodeURIComponent(`${["zod.dev", ...page.slugs].join("/")}`)}`,
           width: 1200,
           height: 630,
           alt: title,

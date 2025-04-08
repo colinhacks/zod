@@ -5,19 +5,19 @@ export function Featured() {
         style={{ borderBottom: "1px solid hsla(0, 0%, 100%, 0.1)" }}
         className="font-semibold w-full text-center pb-2 border-b border-gray-900 border-solid text-xl"
       >
-        Featured sponsor: Clerk
+        Featured sponsor: Fern
       </span>
 
-      <a href="https://go.clerk.com/PKHrcwh" className="mt-0 mb-0 border-none">
+      <a href="https://link.buildwithfern.com/zod-partnership" className="mt-0 mb-0 border-none">
         <div className="h-[260px] flex justify-center items-center m-3">
           <picture className="h-[240px] flex items-center">
             <source
               media="(prefers-color-scheme: dark)"
-              srcSet="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3"
+              srcSet="https://github.com/user-attachments/assets/995d60b8-2ad9-4ba5-9b08-c41ec8c2cb45"
             />
             <img
-              alt="mintlify logo"
-              src="https://github.com/colinhacks/zod/assets/3084745/15c8c8be-189d-44ed-b3db-59bf2a21cbe3"
+              alt="fern logo"
+              src="https://github.com/user-attachments/assets/b140d9bd-dfd3-4d97-a059-c3eda10d2840"
               className="max-h-[240px] w-auto"
             />
           </picture>
@@ -32,3 +32,16 @@ export function Featured() {
     </div>
   );
 }
+
+// <h2 align="center">Featured sponsor: Fern</h2>
+
+// <div align="center">
+//   <a href="https://link.buildwithfern.com/zod-partnership">
+//     <picture width="95%" >
+//       <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/995d60b8-2ad9-4ba5-9b08-c41ec8c2cb45">
+//       <img alt="fern logo" src="https://github.com/user-attachments/assets/b140d9bd-dfd3-4d97-a059-c3eda10d2840" width="95%">
+//     </picture>
+//   </a>
+//   <br/>
+//   <p><sub>Learn more about <a target="_blank" rel="noopener noreferrer" href="mailto:sponsorship@colinhacks.com">featured sponsorships</a></sub></p>
+// </div>
