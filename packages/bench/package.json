@@ -3,9 +3,9 @@
   "type": "module",
   "name": "@zod/bench",
   "dependencies": {
-    "@zod/core": "^3.23.8",
-    "zod": "^3.23.7",
-    "@zod/mini": "^3.23.8",
+    "@zod/core": "*",
+    "zod": "4.0.0-beta.0",
+    "@zod/mini": "4.0.0-beta.0",
     "zod3": "npm:zod@3.23.7"
   },
   "devDependencies": {

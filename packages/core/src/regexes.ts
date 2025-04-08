@@ -33,12 +33,6 @@ export const uuid7: RegExp = uuid(7);
 /** Practical email validation */
 export const email: RegExp =
   /^(?!\.)(?!.*\.\.)([A-Za-z0-9_'+\-\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\-]*\.)+[A-Za-z]{2,}$/;
-// /^(?!\.)(?!.*\.\.)([a-z0-9_'+-\.]*)[a-z0-9_'+-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i;
-
-// original post
-/^([A-Z0-9_+-]+\.?)*[A-Z0-9_+-]@([A-Z0-9][A-Z0-9-]*\.)+[A-Z]{2,}$/i;
-// twitter
-/^([a-z0-9_'+-]\.?)*[a-z0-9_'+-]@([a-z0-9][a-z0-9-]*\.)+[a-z]{2,}$/;
 
 /** Equivalent to the HTML5 input[type=email] validation implemented by browsers. Source: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/email */
 export const html5Email: RegExp =

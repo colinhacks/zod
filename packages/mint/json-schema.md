@@ -1,3 +1,0 @@
----
-title: JSON schema
----

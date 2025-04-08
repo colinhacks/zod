@@ -1,6 +1,9 @@
 {
   "root": true,
   "pages": [
+    "---Beta---",
+    "v4/index",
+    "v4/changelog",
     "---Documentation---",
     "index",
     "basics",

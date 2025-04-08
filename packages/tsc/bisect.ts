@@ -1,5 +1,5 @@
 import { $ } from "execa";
-import { ARKTYPE, VALIBOT, ZOD, generate } from "./generate.js";
+import { ARKTYPE, VALIBOT, ZOD, ZOD3, generate } from "./generate.js";
 
 // detect control c and process.exit()
 process.on("SIGINT", () => {
@@ -44,8 +44,8 @@ while (!MAX || MAX - MIN > 10) {
     path: "src/index.ts",
     // ...ZOD,
     // ...ARKTYPE,
-    ...VALIBOT,
-
+    ...ZOD,
+    schemaType: "z.interface",
     methods: [""],
     numSchemas: CURR,
     numKeys: 3,
@@ -56,7 +56,7 @@ while (!MAX || MAX - MIN > 10) {
   });
 
   console.log(`Attempting tsc compilation...`);
-  const _proc = $`pnpm run bench`;
+  const _proc = $`pnpm run build:bench`;
 
   try {
     procs.push(_proc);

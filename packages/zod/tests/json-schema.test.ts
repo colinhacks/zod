@@ -821,3 +821,43 @@ describe("toJSONSchema", () => {
     );
   });
 });
+
+it("override", () => {
+  const schema = z.toJSONSchema(z.string(), {
+    override: (ctx) => {
+      ctx.zodSchema;
+      ctx.jsonSchema;
+      ctx.jsonSchema.whatever = "sup";
+    },
+  });
+  expect(schema).toMatchInlineSnapshot(`
+    {
+      "type": "string",
+      "whatever": "sup",
+    }
+  `);
+});
+
+it("pipe", () => {
+  const mySchema = z
+    .string()
+    .transform((val) => val.length)
+    .pipe(z.number());
+  // ZodPipe
+
+  const a = z.toJSONSchema(mySchema);
+  expect(a).toMatchInlineSnapshot(`
+    {
+      "type": "number",
+    }
+  `);
+  // => { type: "number" }
+
+  const b = z.toJSONSchema(mySchema, { pipes: "input" });
+  expect(b).toMatchInlineSnapshot(`
+    {
+      "type": "string",
+    }
+  `);
+  // => { type: "string" }
+});

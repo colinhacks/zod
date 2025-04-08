@@ -47,15 +47,15 @@ const DATA = Array.from({ length: 1000 }, () =>
   })
 );
 
-console.log(z3schema.safeParse(DATA[0]));
-console.log(z4schema.safeParse(DATA[0]));
+console.log(z3schema.parse(DATA[0]));
+console.log(z4schema.parse(DATA[0]));
 
 const bench = metabench("z.object() safeParse", {
   zod3() {
-    for (const _ of DATA) z3schema.safeParse(_);
+    for (const _ of DATA) z3schema.parse(_);
   },
   zod4() {
-    for (const _ of DATA) z4schema.safeParse(_);
+    for (const _ of DATA) z4schema.parse(_);
   },
 });
 

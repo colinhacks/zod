@@ -17,8 +17,8 @@ export type $replace<Meta, S extends $ZodType> = Meta extends $output
         ? { [K in keyof Meta]: $replace<Meta[K], S> }
         : Meta;
 
-// interface $ZodBaseRegistry<Meta = unknown> {}
-export class $ZodRegistry<Meta extends object = Record<string, unknown>, Schema extends $ZodType = $ZodType> {
+type MetadataType = Record<string, unknown> | undefined;
+export class $ZodRegistry<Meta extends MetadataType = MetadataType, Schema extends $ZodType = $ZodType> {
   _meta!: Meta;
   _schema!: Schema;
   _map: WeakMap<Schema, $replace<Meta, Schema>> = new WeakMap();
@@ -76,8 +76,8 @@ export const globalRegistry: $ZodJSONSchemaRegistry<GlobalMeta> =
   /*@__PURE__*/ new $ZodJSONSchemaRegistry<GlobalMeta>();
 
 // registries
-export function registry<T extends object = undefined, S extends $ZodType = $ZodType>(): $ZodRegistry<T, S> {
-  return new $ZodRegistry<T>();
+export function registry<T extends MetadataType = MetadataType, S extends $ZodType = $ZodType>(): $ZodRegistry<T, S> {
+  return new $ZodRegistry<T, S>();
 }
 
 export function jsonSchemaRegistry<

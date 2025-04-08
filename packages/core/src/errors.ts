@@ -142,7 +142,6 @@ export type $ZodIssue =
   | $ZodIssueTooSmall
   | $ZodIssueInvalidStringFormat
   | $ZodIssueNotMultipleOf
-  // | $ZodIssueInvalidDate
   | $ZodIssueUnrecognizedKeys
   | $ZodIssueInvalidUnion
   | $ZodIssueInvalidKey
@@ -220,7 +219,7 @@ export function flattenError(error: $ZodError, mapper = (issue: $ZodIssue) => is
   return { formErrors, fieldErrors };
 }
 
-export type _ZodFormattedError<T, U = string> = T extends [any, ...any[]]
+type _ZodFormattedError<T, U = string> = T extends [any, ...any[]]
   ? { [K in keyof T]?: $ZodFormattedError<T[K], U> }
   : T extends any[]
     ? { [k: number]: $ZodFormattedError<T[number], U> }
@@ -232,7 +231,9 @@ export type $ZodFormattedError<T, U = string> = {
   _errors: U[];
 } & util.Flatten<_ZodFormattedError<T, U>>;
 
+/** @deprecated Use `z.treeifyError()` instead. */
 export function formatError<T>(error: $ZodError<T>): $ZodFormattedError<T>;
+/** @deprecated Use `z.treeifyError()` instead. */
 export function formatError<T, U>(error: $ZodError<T>, mapper?: (issue: $ZodIssue) => U): $ZodFormattedError<T, U>;
 export function formatError<T>(error: $ZodError, _mapper?: any) {
   const mapper: (issue: $ZodIssue) => any =
@@ -275,7 +276,7 @@ export function formatError<T>(error: $ZodError, _mapper?: any) {
   return fieldErrors;
 }
 
-export type _ZodErrorTree<T, U = string> = T extends [any, ...any[]]
+type _ZodErrorTree<T, U = string> = T extends [any, ...any[]]
   ? { [K in keyof T]?: $ZodFormattedError<T[K], U> }
   : T extends any[]
     ? { [k: number]: $ZodFormattedError<T[number], U> }
@@ -298,7 +299,7 @@ export type $ZodErrorTree<T, U = string> = T extends [any, ...any[]]
   : T extends any[]
     ? { errors: U[]; items?: Array<$ZodErrorTree<T[number], U>> }
     : T extends object
-      ? { errors: U[]; fields?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
+      ? { errors: U[]; properties?: { [K in keyof T]?: $ZodErrorTree<T[K], U> } }
       : { errors: U[] };
 
 export function treeifyError<T>(error: $ZodError<T>): $ZodErrorTree<T>;
@@ -329,9 +330,9 @@ export function treeifyError<T>(error: $ZodError, _mapper?: any) {
 
           const terminal = i === issue.path.length - 1;
           if (typeof el === "string") {
-            curr.fields ??= {};
-            curr.fields[el] ??= { errors: [] };
-            curr = curr.fields[el];
+            curr.properties ??= {};
+            curr.properties[el] ??= { errors: [] };
+            curr = curr.properties[el];
           } else {
             curr.items ??= [];
             curr.items[el] ??= { errors: [] };

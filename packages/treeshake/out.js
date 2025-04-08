@@ -1,429 +1,195 @@
-function $constructor(name, initializer) {
-  class _ {
-    constructor(def) {
-      var _a;
-
-      _.init(this, def);
-      (_a = this._zod).deferred ?? (_a.deferred = []);
-      for (const fn of this._zod.deferred) {
-        fn();
-      }
-    }
-    static init(inst, def) {
-      var _a;
-      inst._zod ?? (inst._zod = {});
-      (_a = inst._zod).traits ?? (_a.traits = new Set());
-      // const seen = inst._zod.traits.has(name);
-      inst._zod.traits.add(name);
-      initializer(inst, def);
-      // support prototype modifications
-      for (const k in _.prototype) {
-        Object.defineProperty(inst, k, { value: _.prototype[k].bind(inst) });
-      }
-      inst._zod.constr = _;
-      inst._zod.def = def;
-    }
-    static [Symbol.hasInstance](inst) {
-      return inst?._zod?.traits?.has(name);
-    }
-  }
-  Object.defineProperty(_, "name", { value: name });
-  return _;
-}
-class $ZodAsyncError extends Error {
-  constructor() {
-    super(`Encountered Promise during synchronous parse. Use .parseAsync() instead.`);
-  }
-}
-const globalConfig = {};
-function config(config) {
-  if (config) Object.assign(globalConfig, config);
-  return globalConfig;
+// src/storages/globalConfig/globalConfig.ts
+var store;
+// @__NO_SIDE_EFFECTS__
+function getGlobalConfig(config2) {
+  return {
+    lang: store?.lang,
+    message: config2?.message,
+    abortEarly: store?.abortEarly,
+    abortPipeEarly: store?.abortPipeEarly
+  };
 }
 
-// functions
-function joinValues(array, separator = "|") {
-  return array.map((val) => stringifyPrimitive(val)).join(separator);
-}
-function jsonStringifyReplacer(_, value) {
-  if (typeof value === "bigint") return value.toString();
-  return value;
-}
-function defineLazy(object, key, getter) {
-  Object.defineProperty(object, key, {
-    get() {
-      {
-        const value = getter();
-        object[key] = value;
-        // Object.defineProperty(object, key, { value });
-        return value;
-      }
-    },
-    set(v) {
-      Object.defineProperty(object, key, {
-        value: v,
-        // configurable: true,
-      });
-      // object[key] = v;
-    },
-    configurable: true,
-  });
-}
-function randomString(length = 10) {
-  const chars = "abcdefghijklmnopqrstuvwxyz";
-  let str = "";
-  for (let i = 0; i < length; i++) {
-    str += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return str;
-}
-// zod-specific utils
-function clone(inst, def) {
-  return new inst._zod.constr(def);
-}
-function normalizeParams(_params) {
-  return {};
-}
-function stringifyPrimitive(value) {
-  if (typeof value === "bigint") return value.toString() + "n";
-  if (typeof value === "string") return `"${value}"`;
-  return `${value}`;
-}
-function aborted(x, startIndex = 0) {
-  for (let i = startIndex; i < x.issues.length; i++) {
-    if (x.issues[i].continue !== true) return true;
-  }
-  return false;
-}
-function unwrapMessage(message) {
-  return typeof message === "string" ? message : message?.message;
-}
-function finalizeIssue(iss, ctx, config) {
-  const full = { ...iss, path: iss.path ?? [] };
-  // for backwards compatibility
-  // const _ctx: errors.$ZodErrorMapCtx = { data: iss.input, defaultError: undefined as any };
-  if (!iss.message) {
-    const message =
-      unwrapMessage(iss.inst?._zod.def?.error?.(iss)) ??
-      unwrapMessage(ctx?.error?.(iss)) ??
-      unwrapMessage(config.customError?.(iss)) ??
-      unwrapMessage(config.localeError?.(iss)) ??
-      "Invalid input";
-    full.message = message;
-  }
-  // delete (full as any).def;
-  delete full.inst;
-  delete full.continue;
-  if (!ctx?.reportInput) {
-    delete full.input;
-  }
-  return full;
+// src/storages/globalMessage/globalMessage.ts
+var store2;
+// @__NO_SIDE_EFFECTS__
+function getGlobalMessage(lang) {
+  return store2?.get(lang);
 }
 
-////////////////////////    ERROR CLASS   ////////////////////////
-const ZOD_ERROR = Symbol.for("{{zod.error}}");
-class $ZodError {
-  get message() {
-    return JSON.stringify(this.issues, jsonStringifyReplacer, 2);
+// src/storages/schemaMessage/schemaMessage.ts
+var store3;
+// @__NO_SIDE_EFFECTS__
+function getSchemaMessage(lang) {
+  return store3?.get(lang);
+}
+
+// src/storages/specificMessage/specificMessage.ts
+var store4;
+// @__NO_SIDE_EFFECTS__
+function getSpecificMessage(reference, lang) {
+  return store4?.get(reference)?.get(lang);
+}
+
+// src/utils/_stringify/_stringify.ts
+// @__NO_SIDE_EFFECTS__
+function _stringify(input) {
+  const type = typeof input;
+  if (type === "string") {
+    return `"${input}"`;
   }
+  if (type === "number" || type === "bigint" || type === "boolean") {
+    return `${input}`;
+  }
+  if (type === "object" || type === "function") {
+    return (input && Object.getPrototypeOf(input)?.constructor?.name) ?? "null";
+  }
+  return type;
+}
+
+// src/utils/_addIssue/_addIssue.ts
+function _addIssue(context, label, dataset, config2, other) {
+  const input = other && "input" in other ? other.input : dataset.value;
+  const expected = other?.expected ?? context.expects ?? null;
+  const received = other?.received ?? _stringify(input);
+  const issue = {
+    kind: context.kind,
+    type: context.type,
+    input,
+    expected,
+    received,
+    message: `Invalid ${label}: ${expected ? `Expected ${expected} but r` : "R"}eceived ${received}`,
+    requirement: context.requirement,
+    path: other?.path,
+    issues: other?.issues,
+    lang: config2.lang,
+    abortEarly: config2.abortEarly,
+    abortPipeEarly: config2.abortPipeEarly
+  };
+  const isSchema = context.kind === "schema";
+  const message = other?.message ?? context.message ?? getSpecificMessage(context.reference, issue.lang) ?? (isSchema ? getSchemaMessage(issue.lang) : null) ?? config2.message ?? getGlobalMessage(issue.lang);
+  if (message !== void 0) {
+    issue.message = typeof message === "function" ? (
+      // @ts-expect-error
+      message(issue)
+    ) : message;
+  }
+  if (isSchema) {
+    dataset.typed = false;
+  }
+  if (dataset.issues) {
+    dataset.issues.push(issue);
+  } else {
+    dataset.issues = [issue];
+  }
+}
+
+// src/utils/_getStandardProps/_getStandardProps.ts
+// @__NO_SIDE_EFFECTS__
+function _getStandardProps(context) {
+  return {
+    version: 1,
+    vendor: "valibot",
+    validate(value2) {
+      return context["~run"]({ value: value2 }, getGlobalConfig());
+    }
+  };
+}
+
+// src/utils/ValiError/ValiError.ts
+var ValiError = class extends Error {
+  /**
+   * Creates a Valibot error with useful information.
+   *
+   * @param issues The error issues.
+   */
   constructor(issues) {
-    Object.defineProperty(this, "_tag", { value: ZOD_ERROR, enumerable: false });
-    Object.defineProperty(this, "name", { value: "$ZodError", enumerable: false });
+    super(issues[0].message);
+    this.name = "ValiError";
     this.issues = issues;
   }
-  // @ts-ignore
-  static [Symbol.hasInstance](inst) {
-    return inst?._tag === ZOD_ERROR;
-  }
-}
-
-function _parse(schema, value, _ctx) {
-  const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
-  const result = schema._zod.run({ value, issues: [] }, ctx);
-  if (result instanceof Promise) {
-    throw new $ZodAsyncError();
-  }
-  if (result.issues.length) {
-    throw new (this?.Error ?? $ZodError)(result.issues.map((iss) => finalizeIssue(iss, ctx, config())));
-  }
-  return result.value;
-}
-function _safeParse(schema, value, _ctx) {
-  const ctx = _ctx ? { ..._ctx, async: false } : { async: false };
-  const result = schema._zod.run({ value, issues: [] }, ctx);
-  if (result instanceof Promise) {
-    throw new $ZodAsyncError();
-  }
-  return result.issues.length
-    ? {
-        success: false,
-        error: new (this?.Error ?? $ZodError)(result.issues.map((iss) => finalizeIssue(iss, ctx, config()))),
-      }
-    : { success: true, data: result.value };
-}
-async function _parseAsync(schema, value, _ctx) {
-  const ctx = _ctx ? { ..._ctx, async: true } : { async: true };
-  let result = schema._zod.run({ value, issues: [] }, ctx);
-  if (result instanceof Promise) result = await result;
-  if (result.issues.length) {
-    throw new (this?.Error ?? $ZodError)(result.issues.map((iss) => finalizeIssue(iss, ctx, config())));
-  }
-  return result.value;
-}
-async function _safeParseAsync(schema, value, _ctx) {
-  const ctx = _ctx ? { ..._ctx, async: true } : { async: true };
-  let result = schema._zod.run({ value, issues: [] }, ctx);
-  if (result instanceof Promise) result = await result;
-  if (result.issues.length) {
-    return {
-      success: false,
-      error: new (this?.Error ?? $ZodError)(result.issues.map((iss) => finalizeIssue(iss, ctx, config()))),
-    };
-  }
-  return { success: true, data: result.value };
-}
-
-const string$1 = (params) => {
-  const regex = params ? `[\\s\\S]{${params?.minimum ?? 0},${params?.maximum ?? ""}}` : `[\\s\\S]*`;
-  return new RegExp(`^${regex}$`);
 };
 
-const $ZodType = /*@__PURE__*/ $constructor("$ZodType", (inst, def) => {
-  var _a;
-  inst ?? (inst = {});
-  inst._zod.id = def.type + "_" + randomString(10);
-  inst._zod.def = def; // set _def property
-  inst._zod.computed = inst._zod.computed || {}; // initialize _computed object
-  const checks = [...(inst._zod.def.checks ?? [])];
-  // if inst is itself a checks.$ZodCheck, run it as a check
-  if (inst._zod.traits.has("$ZodCheck")) {
-    checks.unshift(inst);
+// src/actions/minLength/minLength.ts
+// @__NO_SIDE_EFFECTS__
+function minLength(requirement, message) {
+  return {
+    kind: "validation",
+    type: "min_length",
+    reference: minLength,
+    async: false,
+    expects: `>=${requirement}`,
+    requirement,
+    message,
+    "~run"(dataset, config2) {
+      if (dataset.typed && dataset.value.length < this.requirement) {
+        _addIssue(this, "length", dataset, config2, {
+          received: `${dataset.value.length}`
+        });
+      }
+      return dataset;
+    }
+  };
+}
+
+// src/schemas/string/string.ts
+// @__NO_SIDE_EFFECTS__
+function string(message) {
+  return {
+    kind: "schema",
+    type: "string",
+    reference: string,
+    expects: "string",
+    async: false,
+    message,
+    get "~standard"() {
+      return _getStandardProps(this);
+    },
+    "~run"(dataset, config2) {
+      if (typeof dataset.value === "string") {
+        dataset.typed = true;
+      } else {
+        _addIssue(this, "type", dataset, config2);
+      }
+      return dataset;
+    }
+  };
+}
+
+// src/methods/parse/parse.ts
+function parse(schema, input, config2) {
+  const dataset = schema["~run"]({ value: input }, getGlobalConfig(config2));
+  if (dataset.issues) {
+    throw new ValiError(dataset.issues);
   }
-  //
-  for (const ch of checks) {
-    ch._zod.onattach?.(inst);
-  }
-  if (checks.length === 0) {
-    // deferred initializer
-    // inst._zod.parse is not yet defined
-    (_a = inst._zod).deferred ?? (_a.deferred = []);
-    inst._zod.deferred?.push(() => {
-      inst._zod.run = inst._zod.parse;
-    });
-  } else {
-    const runChecks = (payload, checks, ctx) => {
-      let isAborted = aborted(payload);
-      let asyncResult;
-      for (const ch of checks) {
-        if (ch._zod.when) {
-          const shouldRun = ch._zod.when(payload);
-          if (!shouldRun) continue;
-        } else {
-          if (isAborted) {
-            continue;
+  return dataset.value;
+}
+
+// src/methods/pipe/pipe.ts
+// @__NO_SIDE_EFFECTS__
+function pipe(...pipe2) {
+  return {
+    ...pipe2[0],
+    pipe: pipe2,
+    get "~standard"() {
+      return _getStandardProps(this);
+    },
+    "~run"(dataset, config2) {
+      for (const item of pipe2) {
+        if (item.kind !== "metadata") {
+          if (dataset.issues && (item.kind === "schema" || item.kind === "transformation")) {
+            dataset.typed = false;
+            break;
+          }
+          if (!dataset.issues || !config2.abortEarly && !config2.abortPipeEarly) {
+            dataset = item["~run"](dataset, config2);
           }
         }
-        const currLen = payload.issues.length;
-        const _ = ch._zod.check(payload);
-        if (_ instanceof Promise && ctx?.async === false) {
-          throw new $ZodAsyncError();
-        }
-        if (asyncResult || _ instanceof Promise) {
-          asyncResult = asyncResult ?? Promise.resolve();
-          asyncResult.then(async () => {
-            await _;
-            const nextLen = payload.issues.length;
-            if (nextLen === currLen) return;
-            if (!isAborted) isAborted = aborted(payload, currLen);
-          });
-        } else {
-          const nextLen = payload.issues.length;
-          if (nextLen === currLen) continue;
-          if (!isAborted) isAborted = aborted(payload, currLen);
-        }
       }
-      if (asyncResult) {
-        return asyncResult.then(() => {
-          return payload;
-        });
-      }
-      return payload;
-    };
-    inst._zod.run = (payload, ctx) => {
-      const result = inst._zod.parse(payload, ctx);
-      if (result instanceof Promise) {
-        if (ctx.async === false) throw new $ZodAsyncError();
-        return result.then((result) => runChecks(result, checks, ctx));
-      }
-      return runChecks(result, checks, ctx);
-    };
-  }
-  defineLazy(inst, "~standard", () => ({
-    validate: (value) => {
-      const result = inst._zod.run({ value, issues: [] }, {});
-      if (result instanceof Promise) {
-        return result.then(({ issues, value }) => {
-          if (issues.length === 0) return { value };
-          return { issues };
-        });
-      }
-      if (result.issues.length === 0) return { value: result.value };
-      return { issues: result.issues };
-    },
-    vendor: "zod",
-    version: 1,
-  }));
-});
-const $ZodString = /*@__PURE__*/ $constructor("$ZodString", (inst, def) => {
-  $ZodType.init(inst, def);
-  inst._zod.pattern = inst?._zod.computed?.pattern ?? string$1(inst._zod.computed);
-  inst._zod.parse = (payload, _) => {
-    if (def.coerce)
-      try {
-        payload.value = String(payload.value);
-      } catch (_) {}
-    if (typeof payload.value === "string") return payload;
-    payload.issues.push({
-      expected: "string",
-      code: "invalid_type",
-      input: payload.value,
-      inst,
-    });
-    return payload;
-  };
-});
-
-const Sizable = {
-  string: { unit: "characters", verb: "to have" },
-  file: { unit: "bytes", verb: "to have" },
-  array: { unit: "items", verb: "to have" },
-  set: { unit: "items", verb: "to have" },
-};
-function getSizing(origin) {
-  return Sizable[origin] ?? null;
-}
-const Nouns = {
-  regex: "string",
-  email: "email address",
-  url: "URL",
-  emoji: "emoji",
-  uuid: "UUID",
-  uuidv4: "UUIDv4",
-  uuidv6: "UUIDv6",
-  nanoid: "nanoid",
-  guid: "GUID",
-  cuid: "cuid",
-  cuid2: "cuid2",
-  ulid: "ULID",
-  xid: "XID",
-  ksuid: "KSUID",
-  iso_datetime: "ISO datetime",
-  iso_date: "ISO date",
-  iso_time: "ISO time",
-  iso_duration: "ISO duration",
-  ipv4: "IPv4 address",
-  ipv6: "IPv6 address",
-  base64: "base64-encoded string",
-  json_string: "JSON string",
-  e164: "E.164 number",
-  jwt: "JWT",
-};
-const error = (issue) => {
-  switch (issue.code) {
-    case "invalid_type":
-      return `Invalid input: expected ${issue.expected}`;
-    // return `Invalid input: expected ${issue.expected}, received ${util.getParsedType(issue.input)}`;
-    case "invalid_value":
-      if (issue.values.length === 1) return `Invalid input: expected ${stringifyPrimitive(issue.values[0])}`;
-      return `Invalid option: expected one of ${joinValues(issue.values, "|")}`;
-    case "too_big": {
-      const adj = issue.inclusive ? "<=" : "<";
-      const sizing = getSizing(issue.origin);
-      if (sizing)
-        return `Too big: expected ${issue.origin ?? "value"} to have ${adj}${issue.maximum.toString()} ${sizing.unit ?? "elements"}`;
-      return `Too big: expected ${issue.origin ?? "value"} to be ${adj}${issue.maximum.toString()}`;
+      return dataset;
     }
-    case "too_small": {
-      const adj = issue.inclusive ? ">=" : ">";
-      const sizing = getSizing(issue.origin);
-      if (sizing) {
-        return `Too small: expected ${issue.origin} to have ${adj}${issue.minimum.toString()} ${sizing.unit}`;
-      }
-      return `Too small: expected ${issue.origin} to be ${adj}${issue.minimum.toString()}`;
-    }
-    case "invalid_format": {
-      const _issue = issue;
-      if (_issue.format === "starts_with") return `Invalid string: must start with "${issue}"`;
-      if (_issue.format === "ends_with") return `Invalid string: must end with "${_issue.suffix}"`;
-      if (_issue.format === "includes") return `Invalid string: must include "${_issue.includes}"`;
-      if (_issue.format === "regex") return `Invalid string: must match pattern ${_issue.pattern}`;
-      return `Invalid ${Nouns[_issue.format] ?? issue.format}`;
-    }
-    case "not_multiple_of":
-      return `Invalid number: must be a multiple of ${issue.divisor}`;
-    case "unrecognized_keys":
-      return `Unrecognized key${issue.keys.length > 1 ? "s" : ""}: ${joinValues(issue.keys, ", ")}`;
-    case "invalid_key":
-      return `Invalid key in ${issue.origin}`;
-    case "invalid_union":
-      return "Invalid input";
-    case "invalid_element":
-      return `Invalid value in ${issue.origin}`;
-    default:
-      return `Invalid input`;
-  }
-};
-function en() {
-  return {
-    localeError: error,
   };
 }
 
-function _string(Class, params) {
-  return new Class({
-    type: "string",
-    ...normalizeParams(),
-  });
-}
-
-const parse = /* @__PURE__ */ _parse.bind({ Error: $ZodError });
-const safeParse = /* @__PURE__ */ _safeParse.bind({ Error: $ZodError });
-const parseAsync = /* @__PURE__ */ _parseAsync.bind({ Error: $ZodError });
-const safeParseAsync = /* @__PURE__ */ _safeParseAsync.bind({
-  Error: $ZodError,
-});
-
-const ZodMiniType = /*@__PURE__*/ $constructor("ZodMiniType", (inst, def) => {
-  if (!inst._zod) throw new Error("Uninitialized schema in mixin ZodMiniType.");
-  $ZodType.init(inst, def);
-  inst.def = def;
-  inst.parse = (data, params) => parse(inst, data, params);
-  inst.safeParse = (data, params) => safeParse(inst, data, params);
-  inst.parseAsync = async (data, params) => parseAsync(inst, data, params);
-  inst.safeParseAsync = async (data, params) => safeParseAsync(inst, data, params);
-  inst.check = (...checks) => {
-    return inst.clone({
-      ...def,
-      checks: [
-        ...(def.checks ?? []),
-        ...checks.map((ch) => (typeof ch === "function" ? { _zod: { check: ch, def: { check: "custom" } } } : ch)),
-      ],
-    });
-  };
-  inst.clone = (_def) => clone(inst, _def ?? def);
-  inst.brand = () => inst;
-  inst.register = (reg, meta) => {
-    reg.add(inst, meta);
-    return inst;
-  };
-});
-const ZodMiniString = /*@__PURE__*/ $constructor("ZodMiniString", (inst, def) => {
-  $ZodString.init(inst, def);
-  ZodMiniType.init(inst, def);
-});
-function string(params) {
-  return _string(ZodMiniString);
-}
-
-config(en());
-string().parse(12);
+var schema = pipe(string(), minLength(1));
+console.log(parse(schema, "hi"));

@@ -1135,29 +1135,26 @@ export function _intersection<T extends schemas.$ZodObject, U extends schemas.$Z
 
 // ZodTuple
 export type $ZodTupleParams = util.TypeParams<schemas.$ZodTuple, "items" | "rest">;
-export function _tuple<T extends readonly [schemas.$ZodObject, ...schemas.$ZodObject[]]>(
+export function _tuple<T extends readonly [schemas.$ZodType, ...schemas.$ZodType[]]>(
   Class: util.SchemaClass<schemas.$ZodTuple>,
   items: T,
   params?: $ZodTupleParams
 ): schemas.$ZodTuple<T, null>;
-export function _tuple<
-  T extends readonly [schemas.$ZodObject, ...schemas.$ZodObject[]],
-  Rest extends schemas.$ZodObject,
->(
+export function _tuple<T extends readonly [schemas.$ZodType, ...schemas.$ZodType[]], Rest extends schemas.$ZodType>(
   Class: util.SchemaClass<schemas.$ZodTuple>,
   items: T,
   rest: Rest,
   params?: $ZodTupleParams
 ): schemas.$ZodTuple<T, Rest>;
+// export function _tuple(
+//   Class: util.SchemaClass<schemas.$ZodTuple>,
+//   items: [],
+//   params?: $ZodTupleParams
+// ): schemas.$ZodTuple<[], null>;
 export function _tuple(
   Class: util.SchemaClass<schemas.$ZodTuple>,
-  items: [],
-  params?: $ZodTupleParams
-): schemas.$ZodTuple<[], null>;
-export function _tuple(
-  Class: util.SchemaClass<schemas.$ZodTuple>,
-  items: schemas.$ZodObject[],
-  _paramsOrRest?: $ZodTupleParams | schemas.$ZodObject,
+  items: schemas.$ZodType[],
+  _paramsOrRest?: $ZodTupleParams | schemas.$ZodType,
   _params?: $ZodTupleParams
 ) {
   const hasRest = _paramsOrRest instanceof schemas.$ZodType;

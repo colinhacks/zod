@@ -18,6 +18,10 @@ export function randomString(length: number): string {
   return result;
 }
 
+export function randomPick(options: any[]): any {
+  return options[Math.floor(Math.random() * options.length)];
+}
+
 export function makeData(count: number, factory: object | (() => any)): any[] {
   return Array.from({ length: count }, () => {
     // clone non primitive data

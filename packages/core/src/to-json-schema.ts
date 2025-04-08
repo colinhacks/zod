@@ -14,9 +14,12 @@ interface JSONSchemaGeneratorParams {
    * - `"throw"` — Default. Unrepresentable types throw an error
    * - `"any"` — Unrepresentable types become `{}` */
   unrepresentable?: "throw" | "any";
-
   /** Arbitrary custom logic that can be used to modify the generated JSON Schema. */
   override?: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
+  /** How to handle pipes. Pipes contain an input and output schema.
+   * - `"output" — Default. Convert the output schema.
+   * - `"input"` — Convert the input schema. */
+  pipes?: "input" | "output";
 }
 
 interface ProcessParams {
@@ -77,6 +80,7 @@ export class JSONSchemaGenerator {
   target: "draft-7" | "draft-2020-12";
   unrepresentable: "throw" | "any";
   override: (ctx: { zodSchema: schemas.$ZodType; jsonSchema: JSONSchema.BaseSchema }) => void;
+  pipes: "input" | "output";
 
   counter = 0;
   seen: Map<schemas.$ZodType, Seen>;
@@ -87,6 +91,8 @@ export class JSONSchemaGenerator {
     this.target = params?.target ?? "draft-2020-12";
     this.unrepresentable = params?.unrepresentable ?? "throw";
     this.override = params?.override ?? (() => {});
+    this.pipes = params?.pipes ?? "output";
+
     this.seen = new Map();
   }
 
@@ -460,7 +466,7 @@ export class JSONSchemaGenerator {
       }
       case "pipe": {
         // this.seen.delete(schema);
-        const innerType = def.out;
+        const innerType = this.pipes === "input" ? def.in : def.out;
         this.process(innerType, params);
         const inner = this.seen.get(innerType)!;
         this.seen.set(schema, inner);
@@ -673,10 +679,13 @@ interface RegistryToJSONSchemaParams extends Omit<JSONSchemaGeneratorParams & Em
 
 export function toJSONSchema(schema: schemas.$ZodType, _params?: ToJSONSchemaParams): JSONSchema.BaseSchema;
 export function toJSONSchema(
-  registry: $ZodRegistry,
+  registry: $ZodRegistry<{ id?: string | undefined }>,
   _params?: RegistryToJSONSchemaParams
 ): { schemas: Record<string, JSONSchema.BaseSchema> };
-export function toJSONSchema(input: schemas.$ZodType | $ZodRegistry, _params?: ToJSONSchemaParams): any {
+export function toJSONSchema(
+  input: schemas.$ZodType | $ZodRegistry<{ id?: string | undefined }>,
+  _params?: ToJSONSchemaParams
+): any {
   if (input instanceof $ZodRegistry) {
     const gen = new JSONSchemaGenerator(_params);
     const defs: any = {};

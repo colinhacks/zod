@@ -1,5 +1,6 @@
+import { _tuple } from "./api.js";
 import { parse, parseAsync } from "./parse.js";
-import type * as schemas from "./schemas.js";
+import * as schemas from "./schemas.js";
 import { $ZodTuple } from "./schemas.js";
 import type * as util from "./util.js";
 
@@ -116,12 +117,20 @@ export interface $ZodFunctionParams<I extends $ZodFunctionArgs, O extends schema
   input?: I;
   output?: O;
 }
+function _function<
+  const In extends Array<schemas.$ZodType> = Array<schemas.$ZodType>,
+  Out extends schemas.$ZodType = schemas.$ZodType,
+>(params?: { input?: In; output?: Out }): $ZodFunction<$ZodTuple<In, null>, Out>;
 function _function<In extends $ZodFunctionArgs = $ZodFunctionArgs, Out extends schemas.$ZodType = schemas.$ZodType>(
   params?: $ZodFunctionParams<In, Out>
-): $ZodFunction<In, Out> {
+): $ZodFunction<In, Out>;
+function _function(params?: {
+  output?: schemas.$ZodType;
+  input?: $ZodFunctionArgs | Array<schemas.$ZodType>;
+}): any {
   return new $ZodFunction({
     type: "function",
-    input: params?.input ?? null,
+    input: Array.isArray(params?.input) ? _tuple(schemas.$ZodTuple, params?.input as any) : (params?.input ?? null),
     output: params?.output ?? null,
   });
 }

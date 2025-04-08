@@ -13,7 +13,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/node": "^22.13.13",
-    "@zod/mini": "3.23.8",
+    "@zod/mini": "4.0.0-beta.0",
     "rollup": "^4.37.0",
     "rollup-plugin-filesize": "^10.0.0"
   },

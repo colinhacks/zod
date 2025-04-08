@@ -1,0 +1,1 @@
+Allow: /api/og/*

@@ -1,6 +1,5 @@
 import { z } from "@zod/mini";
 
-// const schema = z.string().check(z.minLength(1));
-// console.log(z.parse(schema, "hi"));
+const schema = z.string().check(z.minLength(5));
 
-z.string();
+console.log(z.parse(schema, "hi"));

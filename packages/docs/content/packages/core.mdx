@@ -19,6 +19,10 @@ z.core.$ZodString;
 // the base class for string schemas
 ```
 
+## Versioning
+
+Though Zod 4 is in beta, the `@zod/core` package is published as `latest`. The plan is to keep `@zod/core` in the It will remain in the `v0.x` version range ("initial development" according to semver) until the first stable release of Zod 4, at which point `v1.0.0` will be released.
+
 ## Schemas
 
 The base class for all Zod schemas is `$ZodType`. It accepts two generic parameters: `Output` and `Input`.
@@ -278,3 +282,47 @@ export type $ZodIssue =
   ```
 
 For details on each type, refer to [the implementation](https://github.com/colinhacks/zod/blob/v4/packages/core/src/errors.ts).
+
+## Best practices
+
+If you're reading this page, you're likely trying to build some kind of tool or library on top of Zod. This section breaks down some best practices for doing so.
+
+1. If you're just accepted user-defined schemas, use Standard Schema instead
+
+Zod implements the [Standard Schema](https://standardschema.dev/) specification, a standard interface for schema libraries to expose their validation logic and inferred types to third-party tools. If your goal is to accept user-defined schemas, extracting their inferred types, and using them to parse data, then Standard Schema is all you need. Refer to the Standard Schema website/docs for more information.
+
+2. Set up `peerDependencies` properly!
+
+If your tool accepts Zod schemas from a consumer/user, you should add `"@zod/core"` to `peerDependencies`. This lets your users "bring their own Zod". Be as flexible as possible with the version range. For example, if your tool is compatible with `@zod/core`, you can use the following. This allows your users to bring any version of `@zod/core`, avoiding accidental duplicate installs.
+
+
+```json
+{
+  "peerDependencies": {
+    "@zod/core": "*"
+  }
+}
+```
+
+Since package managers generally won't install your own `peerDependencies`, you'll need to add `@zod/core` to your `devDependencies` as well. As new versions of `@zod/core` are released, you can update your `devDependencies` to match the latest version. This is important for testing and development purposes.
+
+```json
+{
+  "peerDependencies": {
+    "@zod/core": "*"
+  },
+  "devDependencies": {
+    "@zod/core": "^0.1.0"
+  }
+}
+```
+
+2. Allow for new schemas and checks to be added
+
+If you are `switch`ing over `$ZodTypes` or `$ZodChecks`, account for the possibility that new types or checks will be added in future *minor versions*. The addition of new APIs is *not considered a breaking change*. 
+
+Moreover, some users may define their own custom subclasses of `$ZodType`. This is less likely 
+
+
+Consider printing an informative warning to the console and providing some reasonable fallback behavior if you encounter an unknown schema type.
+

@@ -23,11 +23,14 @@ const mySchema = z.string().optional().nullable();
 </Tab>
 </Tabs>
 
-> **Tree-shaking** — In `zod`, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). It isn't possible for bundlers to [tree-shake](https://en.wikipedia.org/wiki/Tree_shaking) these methods; that is, bundlers have a hard time ¸removing method implementations from your bundle, even if they aren't used anywhere. By contrast, it's easy for bundlers to remove an unused top-level function. This is why `@zod/mini` relies so heavilty on functions.
+> **Tree-shaking** — In `zod`, schemas provide a range of convenience methods to perform some common operations (e.g. `.min()` on string schemas). It isn't possible for bundlers to [tree-shake](https://en.wikipedia.org/wiki/Tree_shaking) these methods; that is, bundlers have a hard time removing method implementations from your bundle, even if they aren't used anywhere. By contrast, it's easy for bundlers to remove an unused top-level function. This is why `@zod/mini` relies so heavilty on functions.
+
+## `ZodMiniType`
 
 All `@zod/mini` schemas extend the `z.ZodMiniType` base class, which in turn extends `z.core.$ZodType` from [`@zod/core`](/packages/core). While this class implements far fewer methods than `ZodType` in `zod`, some particularly useful methods remain.
 
-## `.parse`
+
+### `.parse`
 
 This is an obvious one. All `@zod/mini` schemas implement the same parsing methods as `zod`.
 
@@ -42,7 +45,7 @@ mySchema.safeParse('asdf')
 await mySchema.safeParseAsync('asdf')
 ```
 
-## `.check()`
+### `.check()`
 
 In `zod` there are dedicated methods on schema subclasses for performing common checks:
 
@@ -104,7 +107,7 @@ z.toLowerCase();
 z.toUpperCase();
 ```
 
-## `.register()`
+### `.register()`
 
 For registering a schema in a [registry](/metadata#registries).
 
@@ -114,18 +117,18 @@ const myReg = z.registry<{title: string}>();
 z.string().register(myReg, { title: "My cool string schema" });
 ```
 
-## `.brand()`
+### `.brand()`
 
 For *branding* a schema. Refer to the [Branded types](/api#branded-types) docs for more information.
 
 ```ts
 import * as z from "@zod/mini";
 
-const USD = z.string().brand("USD$");
+const USD = z.string().brand("USD");
 ```
 
 
-## `.clone(def)`
+### `.clone(def)`
 
 Returns an identical clone of the current schema using the provided `def`.
 
@@ -134,3 +137,17 @@ const mySchema = z.string()
 
 mySchema.clone(mySchema._zod.def);
 ```
+
+## No default locale
+
+While `zod` automatically loads the English (`en`) locale, `@zod/mini` does not. This reduces the bundle size in scenarios where error messages are unnecessary, localized to a non-English language, or otherwise customized.
+
+This means, by default the `message` property of all issues will simply read `"Invalid input"`. To load the English locale:
+
+```ts
+import * as z from "@zod/mini";
+
+z.config(z.core.locales.en());
+```
+
+Refer to the [Locales](/error-customization#internationalization) docs for more on localization.

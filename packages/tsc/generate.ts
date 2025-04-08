@@ -2,7 +2,7 @@ import { writeFileSync } from "node:fs";
 
 export const ZOD = {
   imports: [`import * as z from "zod";`],
-  schemaType: "z.interface" as const,
+  schemaType: "z.object" as const,
   valueTypes: [`z.string()`],
 };
 
@@ -24,29 +24,28 @@ export const ARKTYPE = {
   valueTypes: [`"string"`],
 };
 
-generate({
-  path: "src/index.ts",
-  // ...ZOD3,
-  ...ZOD,
-  schemaType: "z.object",
-  // ...ARKTYPE,
-  // ...VALIBOT,
-
-  numSchemas: 1000,
-  methods: [""],
-  numKeys: 10,
-  numRefs: 0,
-  // numOmits: 10,
-  // numPicks: 10,
-  // numExtends: 10,
-});
+// generate({
+//   path: "src/index.ts",
+//   // ...ZOD3,
+//   // ...ZOD,
+//   // schemaType: "z.object",
+//   // ...ARKTYPE,
+//   ...ZOD3,
+//   numSchemas: 1000,
+//   methods: [""],
+//   numKeys: 5,
+//   numRefs: 0,
+//   // numOmits: 10,
+//   // numPicks: 10,
+//   // numExtends: 10,
+// });
 
 interface GenerateParams {
   path: string;
   imports: string[];
   schemaType: "z.object" | "z.interface" | "arktype" | "valibot";
   valueTypes: string[];
-  methods: string[];
+  methods?: string[];
   numSchemas: number;
   numKeys: number;
   numRefs?: number;
@@ -56,7 +55,17 @@ interface GenerateParams {
 }
 // Step 4: Write the generated schemas to a file
 export function generate(params: GenerateParams) {
-  const { path, imports, schemaType, numSchemas, numRefs = 0, numOmits = 0, numPicks = 0, numExtends = 0 } = params;
+  const {
+    path,
+    imports,
+    schemaType,
+    numSchemas,
+    numRefs = 0,
+    numOmits = 0,
+    numPicks = 0,
+    numExtends = 0,
+    methods = [""],
+  } = params;
   // console.log(params);
   let file: string[] = [];
   // const file: string[] = params.imports;
@@ -101,9 +110,9 @@ export function generate(params: GenerateParams) {
     }
 
     file.push("});");
-
     file.push(``);
 
+    // extracting types
     // file.push(
     //   `export type ${variableName}_input = z.input<typeof ${variableName}>;`
     // );
@@ -178,7 +187,7 @@ function randomStr(length: number) {
 // Step 3: Generate a random Zod schema
 function generateFields(params: GenerateParams): { key: string; schema: string }[] {
   //Math.floor(Math.random() * 30) + 1; // 1-30 keys
-
+  const { methods = [""] } = params;
   // let schema = `z.interface({`;
   // const keys = [];
   const fields: { key: string; schema: string }[] = [];
@@ -186,7 +195,7 @@ function generateFields(params: GenerateParams): { key: string; schema: string }
     const key = randomStr(8); // Key name of 8 chars
     // keys.push(key);
     const randomTypeIndex = Math.floor(Math.random() * params.valueTypes.length);
-    const randomChainMethodIndex = Math.floor(Math.random() * params.methods.length);
+    const randomChainMethodIndex = Math.floor(Math.random() * methods.length);
     const randomType = params.valueTypes[randomTypeIndex];
     // const randomChance = Math.random();
     // if (randomChance > 0.98) {
@@ -194,7 +203,7 @@ function generateFields(params: GenerateParams): { key: string; schema: string }
     //   schema += ` ${key}: ${nestedSchema},`;
     //   continue;
     // }
-    const type = randomType + params.methods[randomChainMethodIndex];
+    const type = randomType + methods[randomChainMethodIndex];
 
     fields.push({ key, schema: type });
     // schema += ` ${key}: ${type},`;

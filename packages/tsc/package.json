@@ -10,8 +10,8 @@
     "arktype": "2.0.0-rc.33",
     "typescript": "^5.2.2",
     "valibot": "1.0.0-beta.12",
-    "zod": "3.23.8",
-    "@zod/core": "3.23.8",
+    "zod": "4.0.0-beta.0",
+    "@zod/core": "*",
     "zod3": "npm:zod@3.23.7"
   },
   "files": ["./bin/*", "./lib/*"],
@@ -19,9 +19,10 @@
   "scripts": {
     "generate": "tsx generate.ts",
     "build": "tsc",
-    "bench": "tsc -p tsconfig.bench.json",
+    "build:bench": "tsc -p tsconfig.bench.json",
     "lint": "tslint -c tslint.json src/**/*.ts",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "bench": "tsx ./bench/index.ts"
   },
   "devDependencies": {
     "execa": "^9.5.2"

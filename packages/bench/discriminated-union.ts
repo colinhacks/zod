@@ -1,4 +1,4 @@
-import { makeSchema } from "./benchUtil.js";
+import { makeData, makeSchema, randomPick, randomString } from "./benchUtil.js";
 import { metabench } from "./metabench.js";
 
 const { zod3, zod4 } = makeSchema((z) => {
@@ -17,13 +17,17 @@ const { zod3, zod4 } = makeSchema((z) => {
   return z.discriminatedUnion("type", [aSchema, bSchema, cSchema]);
 });
 
-const DATA = { type: "c" };
+const DATA = makeData(1000, () => ({ type: randomPick(["a", "b", "c"]) }));
+
+console.log(zod3.parse(DATA[0]));
+console.log(zod4.parse(DATA[0]));
+
 const bench = metabench("z.disriminatedUnion().parse")
   .add("zod3", () => {
-    zod3.parse(DATA);
+    for (const x of DATA) zod3.parse(x);
   })
   .add("zod4", () => {
-    zod4.parse(DATA);
+    for (const x of DATA) zod4.parse(x);
   });
 
 await bench.run();

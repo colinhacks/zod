@@ -76,6 +76,7 @@ schema.parse(null);      // => "null"
 
 </Accordion></Accordions>
 
+
 ## Literals
 
 Literal schemas represent a [literal type](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html#literal-types), like `"hello world"` or `5`.
@@ -652,6 +653,49 @@ const TunaOnly = FishEnum.exclude(["Salmon", "Trout"]);
 </Tab>
 </Tabs>
 
+## Stringbool
+
+> **💎 New in Zod 4**
+
+In some cases (e.g. parsing environment variables) it's valuable to parse certain string "boolish" values to a plain `boolean` value. To support this, Zod 4 introduces `z.stringbool()`:
+
+```ts
+const strbool = z.stringbool();
+
+strbool.parse("true")         // => true
+strbool.parse("1")            // => true
+strbool.parse("yes")          // => true
+strbool.parse("on")           // => true
+strbool.parse("y")            // => true
+strbool.parse("enable")       // => true
+
+strbool.parse("false");       // => false
+strbool.parse("0");           // => false
+strbool.parse("no");          // => false
+strbool.parse("off");         // => false
+strbool.parse("n");           // => false
+strbool.parse("disabled");    // => false
+
+strbool.parse(/* anything else */); // ZodError<[{ code: "invalid_value" }]>
+```
+
+To customize the truthy and falsy values:
+
+```ts
+z.stringbool({
+  truthy: ["yes", "true"],
+  falsy: ["no", "false"]
+})
+```
+
+Be default the schema is *case-insensitive*; all inputs are converted to lowercase before comparison to the `truthy`/`falsy` values. To make it case-sensitive:
+
+```ts
+z.stringbool({
+  case: "sensitive"
+});
+```
+
 ## Optionals
 
 To make a schema *optional* (that is, to allow `undefined` inputs).
@@ -751,6 +795,29 @@ No value will pass validation.
 
 ```ts
 z.never(); // inferred type: `never`
+```
+
+## Template literals
+
+
+> **💎 New in Zod 4**
+
+Zod 4 finally implements one of the last remaining unrepresented features of TypeScript's type system: template literals. Virtually all primitive schemas can be used in `z.templateLiteral`: strings, string formats like `z.email()`, numbers, booleans, enums, literals (of the non-template variety), optional/nullable, and other template literals.
+
+```ts
+const hello = z.templateLiteral(["hello, ", z.string()]);
+// `hello, ${string}`
+
+const cssUnits = z.enum(["px", "em", "rem", "%"]);
+const css = z.templateLiteral([z.number(), cssUnits ]);
+// `${number}px` | `${number}em` | `${number}rem` | `${number}%`
+
+const email = z.templateLiteral([
+  z.string().min(1),
+  "@",
+  z.string().max(64),
+]);
+// `${string}@${string}` (the min/max refinements are enforced!)
 ```
 
 ## Objects
