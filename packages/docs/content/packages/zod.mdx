@@ -11,7 +11,7 @@ Zod aims to provide a schema API that maps one-to-one to TypeScript's type syste
 ```ts
 import * as z from "zod";
 
-const schema = z.object({
+const schema = z.interface({
   name: z.string(),
   age: z.number().int().positive(),
   email: z.string().email(),

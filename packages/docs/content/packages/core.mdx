@@ -6,9 +6,11 @@ title: "@zod/core"
 
 The `@zod/core` package implements Zod's core parsing logic and additional utilities. It is not intended to be used directly; instead it's designed to be extended by other packages like `zod` and `@zod/mini`. It implements:
 
-- base *schema classes* (e.g. `$ZodString`)
-- base *check classes* (e.g. `$ZodCheckMultipleOf`)
+- base schema class `$ZodType` and subclasses like `$ZodString`, etc.
+- base check class `$ZodCheck` and subclasses like `$ZodCheckMultipleOf`, etc.
+- base error class `$ZodError` and shared issue formats
 - utility types and functions
+
 
 For simplicity, the `zod` and `@zod/mini` packages re-export their `@zod/core` dependency as `z.core`. 
 
