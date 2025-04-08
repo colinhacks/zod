@@ -25,6 +25,18 @@ export function InkeepBubble() {
           isDarkMode: (attributes: any) => !!attributes.class?.includes("dark"),
         },
       },
+      theme: {
+        styles: [
+          {
+            key: "custom-theme",
+            type: "style",
+            value: `
+             .ikp-chat-button__container {
+                z-index: var(--ikp-z-index-overlay);
+            }`,
+          },
+        ],
+      },
     },
     modalSettings: {
       // optional settings
