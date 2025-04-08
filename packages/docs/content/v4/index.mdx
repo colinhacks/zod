@@ -5,13 +5,17 @@ title: Introducing Zod 4
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
-Zod 4 is now in beta after over a year of active development. It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features, including an entirely new `@zod/mini` library. Refer to the [Changelog](/v4/changelog) for a complete list of breaking changes. 
+Zod 4 is now in beta after over a year of active development. It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features, including an entirely new `@zod/mini` library.
+
+To try the beta:
 
 ```
 pnpm upgrade zod@v4 
 ```
 
-Development will continue on the [`v4` branch](https://github.com/colinhacks/zod/tree/v4) over a 4-6 week beta period as I work with libraries to ensure day-one compatibility with the first stable release.
+Development will continue on the [`v4`](https://github.com/colinhacks/zod/tree/v4) branch over a 4-6 week beta period as I work with libraries to ensure day-one compatibility with the first stable release.
+
+> Refer to the [Changelog](/v4/changelog) for a complete list of breaking changes. 
 
 ## Why a new major version?
 
@@ -259,9 +263,9 @@ export const q = p.extend({
 });
 ```
 
-In Zod 3, this took 4 seconds to compile; adding additional called to `.extend()` would trigger a "Possibly infinite" error. In Zod 4, this compiles in 400ms. Adding additional method calls scales the compile time linearly.
+In Zod 3, this took `4000ms` to compile; and adding additional called to `.extend()` would trigger a "Possibly infinite" error. In Zod 4, this compiles in `400ms`, and compile time increases linearly with the number of calls to `.extend()`.
 
-Coupled with the upcoming `tsgo` compiler, Zod 4's editor performance will scale to vastly larger schemas and codebases.
+> Coupled with the upcoming [`tsgo`](https://github.com/microsoft/typescript-go) compiler, Zod 4's editor performance will scale to vastly larger schemas and codebases.
 
 ## 30% reduction in core bundle size
 
@@ -270,7 +274,8 @@ Consider the following simple script.
 ```ts
 import * as z from "zod";
 
-const schema = z.string();
+const schema = z.string().min(5);
+
 schema.parse("hello world");
 ```
 
@@ -282,13 +287,13 @@ Let's bundle this with `rollup` using both Zod 3 and Zod 4 and compare the final
 | `zod@4`   | `8.77kb`       |
 
 
-This indicates that the "core bundle" (the code that will get bundled in the most minimal cases) is ~30% smaller in Zod 4. That's good, but ultimately the method-driven API of `zod` is fundamentally difficult to tree-shake. Writing slimmer implementations can only get you so far.
+This indicates that the "core bundle" (the code that will get bundled in the most minimal cases) is ~30% smaller in Zod 4. That's good!
 
-Which brings us to the biggest announcement of Zod 4: the introduction of `@zod/mini`.
+But ultimately the method-driven API of `zod` is fundamentally difficult to tree-shake. Writing slimmer implementations can only get you so far. Which brings us to the biggest announcement of Zod 4: the introduction of `@zod/mini`.
 
 ## Introducing `@zod/mini`
 
-The `@zod/mini` package provides a functional tree-shakable API that maps one-to-one to the existing `zod` API. While `zod` is still recommended for the majority of use cases, any projects will uncommonly strict bundle size constraints should consider `@zod/mini`. 
+The `@zod/mini` package provides a functional, tree-shakable API that maps one-to-one to the existing `zod` API. While `zod` is still recommended for the majority of use cases, any projects will uncommonly strict bundle size constraints should consider `@zod/mini`. 
 
 Everything in `zod` can be represented in `@zod/mini`; their APIs map one-to-one. But instead of Zod's method-first chainable API, `@zod/mini` is more function-forward. Use the tabs to compare the two.
 
@@ -301,6 +306,7 @@ z.optional(z.string());
 z.union([z.string(), z.number()]);
 z.string().check(z.refine(val => val.includes("@")));
 z.array(z.number()).check(z.minLength(5), z.maxLength(10));
+z.extend(z.object({ name: z.string() }), { age: z.number() });
 ```
 </Tab>
 <Tab value="zod">
@@ -311,6 +317,7 @@ z.string().optional();
 z.string().or(z.number());
 z.string().refine(val => val.includes("@"));
 z.array(z.number()).min(5).max(10);
+z.object({ name: z.string() }).extend({ age: z.number() });
 ```
 </Tab>
 </Tabs>
@@ -336,7 +343,7 @@ The `@zod/mini` package doesn't have its own documentation. Instead, all code bl
 
 ## Exact(er) optional properties
 
-Zod 4 introduces a new API for defining object types: `z.interface()`. This is probably surprising, and may introduce some possibility for confusion down the road, so I'll briefly explain the reasoning here. (A full blog post on this topic is coming soon.)
+Zod 4 introduces a new API for defining object types: `z.interface()`. This may seem surprising or confusing, so I'll briefly explain the reasoning here. (A full blog post on this topic is coming soon.)
 
 In TypeScript a property can be "optional" in two disctint ways:
 
@@ -359,8 +366,7 @@ z.object({ name: z.unknown() }); // { name?: unknown }
 z.object({ name: z.any() }); // { name?: any } 
 ```
 
-This is a little inside-out. Depending on the schema associated with a given key, the question mark may or may not "bubble up" into the wrapping object type. Ideally the API for marking a property as "key optional" should be part of the object API. 
-
+To properly represent "key optionality", Zod needed an *object-level* API for marking keys as optional, instead of trying to guess based on the value schema.
 
 ### `z.interface()`
 
@@ -382,7 +388,7 @@ The `z.object()` API is *not deprecated*; feel free to continue using it if you 
 
 ## True recursive types
 
-But wait there's more! After implementing `z.interface()`, I had a huge realization. The `?`-suffix lets Zod sidestep a TypeScript limitation that long prevented Zod from cleanly representing recursive (cyclical) types. Take this example from the old Zod 3 docs: 
+But wait there's more! After implementing `z.interface()`, I had a huge realization. The `?`-suffix API in `z.interface()` lets Zod sidestep a TypeScript limitation that long prevented Zod from cleanly representing recursive (cyclical) types. Take this example from the old Zod 3 docs: 
 
 ```ts
 import * as z from "zod"; // zod@3
@@ -693,6 +699,43 @@ z.int64();    // [-9223372036854775808n, 9223372036854775807n]
 z.uint64();   // [0n, 18446744073709551615n]
 ```
 
+## Stringbool
+
+The existing `z.coerce.boolean()` API is very simple: falsy values (`false`, `undefined`, `null`, `0`, `""`, `NaN` etc) become `false`, truthy values become `true`.
+
+This is still a good API, and it's behavior aligns with the other `z.coerce` APIs. But some users requested a more sophisticated "env-style" boolean coercion. To support this, Zod 4 introduces `z.stringbool()`:
+
+```ts
+const strbool = z.stringbool();
+
+strbool.parse("true")         // => true
+strbool.parse("1")            // => true
+strbool.parse("yes")          // => true
+strbool.parse("on")           // => true
+strbool.parse("y")            // => true
+strbool.parse("enable")       // => true
+
+strbool.parse("false");       // => false
+strbool.parse("0");           // => false
+strbool.parse("no");          // => false
+strbool.parse("off");         // => false
+strbool.parse("n");           // => false
+strbool.parse("disabled");    // => false
+
+strbool.parse(/* anything else */); // ZodError<[{ code: "invalid_value" }]>
+```
+
+To customize the truthy and falsy values:
+
+```ts
+z.stringbool({
+  truthy: ["yes", "true"],
+  falsy: ["no", "false"]
+})
+```
+
+Refer to the [`z.stringbool()` docs](/api#stringbools) for complete information.
+
 ## Simplified error customization
 
 The majority of breaking changes in Zod 4 revolve around the error customization APIs. They were a bit of a mess in Zod 3; Zod 4 makes things significantly more elegant, to the point where I think it's worth highlighting here. 
@@ -747,10 +790,10 @@ Replace `errorMap` with `error` (function syntax):
 
 ## Upgraded `z.discriminatedUnion()`
 
-Discriminated union support has improved in a couple ways. First, you no longer need to specify the discriminator key:
+Discriminated union support has improved in a couple ways. First, you no longer need to specify the discriminator key. Zod now has a robust way to identify the discriminator key automatically. 
 
 ```ts
-in Zod 4:
+// in Zod 4:
 const myUnion = z.discriminatedUnion([
   z.object({ type: z.literal("a"), a: z.string() }),
   z.object({ type: z.literal("b"), b: z.number() }),
@@ -763,9 +806,9 @@ const myUnion = z.discriminatedUnion("type", [
 ]);
 ```
 
-Zod now has a robust way to identify the discriminator key automatically. If no shared discriminator key is found, Zod will throw an error at schema initialization time.
+If no shared discriminator key is found, Zod will throw an error at schema initialization time.
 
-Discriminated unions schema now finally *compose*—you can use one discriminated union as a member of another. Zod determines the optimal way to discriminate among the elements for a given input.
+Discriminated unions schema now finally *compose*—you can use one discriminated union as a member of another. Zod determines the optimal discrimination strategy.
 
 ```ts
 const BaseError = z.object({ status: z.literal("failed"), message: z.string() });
@@ -801,43 +844,6 @@ const httpCodes = z.union([
 ]);
 ```
 
-## Env-style boolean coercion
-
-The existing `z.coerce.boolean()` API is very simple: falsy values (`false`, `undefined`, `null`, `0`, `""`, `NaN` etc) become `false`, truthy values become `true`.
-
-This is still a good API, and it's behavior aligns with the other `z.coerce` APIs. But some users requested a more sophisticated "env-style" boolean coercion. To support this, Zod 4 introduces `z.stringbool()`:
-
-```ts
-const strbool = z.stringbool();
-
-strbool.parse("true")         // => true
-strbool.parse("1")            // => true
-strbool.parse("yes")          // => true
-strbool.parse("on")           // => true
-strbool.parse("y")            // => true
-strbool.parse("enable")       // => true
-
-strbool.parse("false");       // => false
-strbool.parse("0");           // => false
-strbool.parse("no");          // => false
-strbool.parse("off");         // => false
-strbool.parse("n");           // => false
-strbool.parse("disabled");    // => false
-
-strbool.parse(/* anything else */); // ZodError<[{ code: "invalid_value" }]>
-```
-
-To customize the truthy and falsy values:
-
-```ts
-z.stringbool({
-  truthy: ["yes", "true"],
-  falsy: ["no", "false"]
-})
-```
-
-Refer to the [`z.stringbool()` docs](/api#stringbools) for complete information.
-
 ## Refinements live inside schemas
 
 In Zod 3, they were stored in a `ZodEffects` class that wrapped the original schema. This was inconvenient, as it meant you couldn't interleave `.refine()` with other schema methods like `.min()`.
@@ -851,7 +857,7 @@ z.string()
 
 In Zod 4, refinements are stored inside the schemas themselves, so the code above works as expected.
 
-### Overwriting values
+### `.overwrite()`
 
 The `.transform()` method is extremely useful, but it has one major downside: the output type is no longer *introspectable* at runtime. The transform function is a black box that can return anything. This means (among other things) there's no sound way to convert the schema to JSON Schema.
 
@@ -866,6 +872,8 @@ Zod 4 introduces a new `.overwrite()` method for representing *transforms that d
 z.number().overwrite(val => val ** 2);
 // => ZodNumber
 ```
+
+> The existing `.trim()`, `.toLowerCase()` and `.toUpperCase()` methods have been reimplemented using `.overwrite()`.
 
 ## An extensible foundation: `@zod/core`
 

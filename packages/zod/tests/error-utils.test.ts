@@ -341,7 +341,7 @@ test("z.treeifyError", () => {
       "errors": [
         "Unrecognized key: "extra"",
       ],
-      "fields": {
+      "properties": {
         "favoriteNumbers": {
           "errors": [],
           "items": [
@@ -355,7 +355,7 @@ test("z.treeifyError", () => {
         },
         "nesting": {
           "errors": [],
-          "fields": {
+          "properties": {
             "a": {
               "errors": [
                 "Invalid input: expected string, received number",
