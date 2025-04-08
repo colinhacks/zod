@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@inkeep/cxkit-react": "^0.5.52",
+    "@radix-ui/react-accordion": "^1.2.4",
     "@vercel/og": "^0.6.8",
     "fumadocs-core": "15.1.0",
     "fumadocs-mdx": "11.5.6",

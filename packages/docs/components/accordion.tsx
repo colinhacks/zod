@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import * as AccordionPrimitive from '@radix-ui/react-accordion';
-import { forwardRef, type ComponentPropsWithoutRef, useState, useEffect } from 'react';
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
+import { ChevronRight } from "lucide-react";
+import { type ComponentPropsWithoutRef, forwardRef } from "react";
 
 export const Accordion = forwardRef<
   HTMLDivElement,
-  Omit<ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>, 'value'> & {
+  Omit<ComponentPropsWithoutRef<typeof AccordionPrimitive.Item>, "value"> & {
     title: string;
   }
 >(({ title, className, children, ...props }, ref) => {
@@ -13,7 +14,7 @@ export const Accordion = forwardRef<
     <AccordionPrimitive.Item
       ref={ref}
       value={title}
-      className={`group/accordion relative scroll-m-20 ${className ?? ''}`}
+      className={`group/accordion relative scroll-m-20 ${className ?? ""}`}
       {...props}
     >
       <AccordionPrimitive.Header className="not-prose flex flex-row items-center font-medium text-fd-foreground">
@@ -32,4 +33,4 @@ export const Accordion = forwardRef<
   );
 });
 
-Accordion.displayName = 'Accordion';
+Accordion.displayName = "Accordion";
