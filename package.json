@@ -63,6 +63,7 @@
     "bench": "tsx --conditions @zod/source packages/bench/index.ts",
     "moltar": "pnpm bench object-moltar",
     "prepare": "husky install && pnpm format:check",
+    "postbuild": "biome format --write .",
     "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",
     "bundle:esbuild": "esbuild --bundle ./scratch/input.ts --outfile=./scratch/out_esbuild.js --bundle --format=esm"
