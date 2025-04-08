@@ -17,8 +17,8 @@ export default function InkeepSearchBox(props: SharedProps) {
   const config: InkeepModalSearchAndChatProps = {
     baseSettings: {
       apiKey: process.env.NEXT_PUBLIC_INKEEP_KEY, // required
-      primaryBrandColor: "#26D6FF", // your brand color, widget color scheme is derived from this
-      organizationDisplayName: "Inkeep",
+      primaryBrandColor: "#EE63C0", // your brand color, widget color scheme is derived from this
+      organizationDisplayName: "Zod",
       // ...optional settings
       colorMode: {
         sync: {
@@ -33,14 +33,14 @@ export default function InkeepSearchBox(props: SharedProps) {
       onOpenChange,
       // optional settings
     },
-    searchSettings: {
-      // optional settings
-    },
-    aiChatSettings: {
-      // optional settings
-      aiAssistantAvatar: "https://mydomain.com/mylogo", // use your own ai assistant avatar
-      exampleQuestions: ["Example question 1?", "Example question 2?", "Example question 3?"],
-    },
+    // searchSettings: {
+    //   // optional settings
+    // },
+    // aiChatSettings: {
+    //   // optional settings
+    //   aiAssistantAvatar: "https://mydomain.com/mylogo", // use your own ai assistant avatar
+    //   exampleQuestions: ["Example question 1?", "Example question 2?", "Example question 3?"],
+    // },
   };
   return <InkeepModalSearchAndChat {...config} />;
 }

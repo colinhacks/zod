@@ -419,7 +419,7 @@ export function toDotPath(path: (string | number | symbol)[]): string {
   return segs.join("");
 }
 
-export function prettyError(error: $ZodError): string {
+export function prettifyError(error: $ZodError): string {
   // Create a Map to group issues by path
   // const issuesMap = new Map<string, string[]>();
   const lines: string[] = [];

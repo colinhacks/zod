@@ -341,9 +341,12 @@ When we build this will `rollup`, the gzipped bundle size is `2.23kb`. That's a 
 
 The `@zod/mini` package doesn't have its own documentation. Instead, all code blocks in the [Defining schemas](/api) now have separate code tabs for `zod` and `@zod/mini`.
 
-## Exact(er) optional properties
+## `z.interface()`
+
 
 Zod 4 introduces a new API for defining object types: `z.interface()`. This may seem surprising or confusing, so I'll briefly explain the reasoning here. (A full blog post on this topic is coming soon.)
+
+### Exact(er) optional properties
 
 In TypeScript a property can be "optional" in two disctint ways:
 
@@ -368,8 +371,6 @@ z.object({ name: z.any() }); // { name?: any }
 
 To properly represent "key optionality", Zod needed an *object-level* API for marking keys as optional, instead of trying to guess based on the value schema.
 
-### `z.interface()`
-
 This is why Zod 4 introduces a new API for defining object types: `z.interface()`.
 
 ```ts
@@ -386,7 +387,7 @@ Key optionality is now defined with a `?` suffix in the key itself. This way, yo
 
 The `z.object()` API is *not deprecated*; feel free to continue using it if you prefer it! For the sake of backwards compatibility `z.interface()` was added as an opt-in API.
 
-## True recursive types
+### True recursive types
 
 But wait there's more! After implementing `z.interface()`, I had a huge realization. The `?`-suffix API in `z.interface()` lets Zod sidestep a TypeScript limitation that long prevented Zod from cleanly representing recursive (cyclical) types. Take this example from the old Zod 3 docs: 
 
@@ -572,7 +573,7 @@ At the time of this writing only the English locale is available; I'll be doing 
 
 The success of the [`zod-validation-error`](https://www.npmjs.com/package/zod-validation-error) package demonstrates that there's significanyt demand for an official API for pretty-printing errors. If you are using that package currently, by all means continue using it. 
 
-Zod now implements a top-level `z.prettyError` function for converting a `ZodError` to a user-friendly formatted string.
+Zod now implements a top-level `z.prettifyError` function for converting a `ZodError` to a user-friendly formatted string.
 
 ```ts
 const myError = new z.ZodError([
@@ -598,7 +599,7 @@ const myError = new z.ZodError([
   }
 ]);
 
-z.prettyError(myError);
+z.prettifyError(myError);
 ```
 
 The returns the following pretty-printable multi-line string:

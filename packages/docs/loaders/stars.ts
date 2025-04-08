@@ -3,6 +3,7 @@ const API_URL = "https://api.github.com/graphql";
 
 export async function fetchStars(resources: { slug: string; stars?: number }[]) {
   try {
+    if (resources.length === 0) return;
     const uniqueSlugs = Array.from(
       new Set(
         resources

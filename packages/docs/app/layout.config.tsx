@@ -1,5 +1,5 @@
 import Logo from "@/public/logo/logo.png";
-// import LogoWhite from "@/public/logo/logo_white.png";
+// import LogoWhite from "@/public/logo/logo-white.png";
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
 import Image from "next/image";
 export const logo = (

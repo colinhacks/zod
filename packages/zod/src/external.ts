@@ -24,6 +24,6 @@ export {
   flattenError,
   formatError,
   treeifyError,
-  prettyError,
+  prettifyError,
   toJSONSchema,
 } from "@zod/core";

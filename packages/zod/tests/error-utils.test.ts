@@ -373,8 +373,8 @@ test("z.treeifyError", () => {
   `);
 });
 
-test("z.prettyError", () => {
-  expect(z.prettyError(result.error!)).toMatchInlineSnapshot(`
+test("z.prettifyError", () => {
+  expect(z.prettifyError(result.error!)).toMatchInlineSnapshot(`
     "✖ Unrecognized key: "extra"
     ✖ Invalid input: expected string, received number
       → at username

@@ -41,7 +41,9 @@ z.string().min(5, { message: "Too short." });
 
 ### drops `invalid_type_error` and `required_error`
 
-The `invalid_type_error` / `required_error` params are dropped. These can now be more cleanly with the new `error` parameter. 
+The `invalid_type_error` / `required_error` params have been dropped. These were hastily added years ago as a way to customize errors that was less verbose than `errorMap`. They came with all sorts of footguns (they can't be used in conjunction with `errorMap`) and do not align with Zod's actual issue codes (there is no `required` issue code). 
+
+These can now be cleanly represented with the new `error` parameter. 
 
 <Tabs groupId="error-type" items={["Zod 4", "Zod 3"]} persist>
 <Tab value="Zod 4">

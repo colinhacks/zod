@@ -38,9 +38,16 @@ aside {
 /* #nd-toc .prose { 
   @apply font-normal;
 }
-#nd-toc .prose code { 
-  @apply font-extralight;
-} */
+*/
+
+#nd-toc .prose {
+  code {
+    padding: 2px 5px;
+  }
+  a {
+    line-height: 24px;
+  }
+}
 h1 {
   @apply border-b py-3;
   border-color: var(--color-fd-border);
@@ -91,4 +98,8 @@ h3.not-prose button {
   /* color: red; */
   color: var(--color-fd-popover-foreground);
   @apply font-light;
+}
+
+.ikp-chat-button__container {
+  z-index: var(--ikp-z-index-overlay);
 }
