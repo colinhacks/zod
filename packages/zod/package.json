@@ -64,7 +64,8 @@
     "postbuild": "pnpm biome check --write .",
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
-    "prepublishOnly": "pnpm test && pnpm run build"
+    "prepublishOnly": "pnpm test && pnpm run build",
+    "pub": "pnpm publish --tag next --dry-run"
   },
   "dependencies": {
     "@zod/core": "workspace:*"
