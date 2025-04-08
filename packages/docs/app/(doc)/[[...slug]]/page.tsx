@@ -1,5 +1,5 @@
 import { Tabs } from "@/components/tabs";
-import { metadataImage } from "@/loaders/metadata";
+
 import { source } from "@/loaders/source";
 import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
@@ -56,9 +56,9 @@ export async function generateMetadata(props: {
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
-  const title = (page.data.title ?? "Home") + " | Zod Docs";
+  const title = page.data.title ?? "Home"; // + " | Zod Docs";
   const description = page.data.description;
-  return metadataImage.withImage(page.slugs, {
+  return {
     title,
     description,
     openGraph: {
@@ -84,5 +84,5 @@ export async function generateMetadata(props: {
       site: "@colinhacks",
     },
     keywords: ["zod", "typescript", "validation", "schema"],
-  });
+  };
 }

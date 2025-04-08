@@ -30,6 +30,7 @@ export function InkeepBubble() {
           {
             key: "custom-theme",
             type: "style",
+
             value: `
              .ikp-chat-button__container {
                 z-index: var(--ikp-z-index-overlay);

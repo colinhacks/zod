@@ -11,9 +11,8 @@ export default async function (request: NextRequest) {
 
     // Get dynamic params
     const title = searchParams.get("title") || "Zod Documentation";
-    const description =
-      searchParams.get("description") || "TypeScript-first schema validation with static type inference";
-    const path = "zod.dev/" + (searchParams.get("path") || "packages/core");
+    const description = searchParams.get("description"); // || "TypeScript-first schema validation with static type inference";
+    const path = searchParams.get("path");
 
     // Format breadcrumbs from path
     // const breadcrumbs = path.split("/").map((crumb) => crumb.toUpperCase());
@@ -35,7 +34,7 @@ export default async function (request: NextRequest) {
       >
         {/* Logo in upper right corner */}
         <div
-          tw="absolute top-12 right-12 w-28 h-28"
+          tw="absolute top-[60px] right-[60px] w-36 h-36"
           style={{
             display: "flex",
             alignItems: "center",
@@ -46,31 +45,37 @@ export default async function (request: NextRequest) {
         </div>
 
         {/* Main content */}
-        <div tw="flex flex-col w-full pr-24">
-          {" "}
+        <div tw="flex flex-col w-full pr-36">
           {/* Added right padding to avoid text overlapping with logo */}
-          <h1 tw="text-6xl font-bold tracking-tight text-white m-0 leading-none">{title}</h1>
-          <p tw="text-2xl text-gray-300 mt-6 max-w-4xl">{description}</p>
+          {/* <p tw="text-4xl font-bold tracking-tight text-white m-0 leading-none mb-6 border-b border-gray-700 pb-4">
+            Zod Docs
+          </p> */}
+          <h1 tw="text-8xl font-bold tracking-tight text-white m-0 leading-none">{title}</h1>
+          {description ? <p tw="text-2xl text-gray-300 mt-6 max-w-4xl">{description}</p> : null}
         </div>
 
         {/* Bottom section with divider */}
-        <div tw="flex flex-col w-full">
+        <div tw="flex flex-col w-full ">
           {/* Divider line */}
-          <div tw="w-full h-px bg-gray-700 my-8" />
+          <div tw="w-full h-px bg-gray-700 mb-[45px]" />
 
           {/* Bottom row with breadcrumbs and project info */}
-          <div tw="flex justify-between items-center w-full">
+          <div tw="flex justify-between items-center w-full ">
             {/* Breadcrumbs */}
-            <div tw="flex items-center gap-3">
-              <div tw="flex items-center font-mono">
-                <span tw="text-gray-300 text-xl font-mono">{path}</span>
+            {path ? (
+              <div tw="flex items-center gap-3">
+                <div tw="flex items-center font-mono ">
+                  <span tw="text-gray-300 text-3xl font-mono">{path}</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div />
+            )}
 
             {/* Project name */}
-            <div tw="flex items-center">
-              <img alt="GitHub logo" src="http://localhost:3000/github-white.png" tw="h-6 w-6 mr-2" />
-              <span tw="text-xl font-semibold text-gray-300">colinhacks/zod</span>
+            <div tw="flex items-center ">
+              <img alt="GitHub logo" src="http://localhost:3000/github-white.png" tw="h-10 w-10 mr-2" />
+              <span tw="text-3xl font-semibold text-gray-300">colinhacks/zod</span>
             </div>
           </div>
         </div>

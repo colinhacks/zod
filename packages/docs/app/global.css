@@ -15,7 +15,8 @@ body {
 }
 
 :root {
-  --ui-color: hsl(221, 98%, 59%);
+  /* --ui-color: hsl(221, 98%, 59%); */
+  --ui-color: hsl(320, 80%, 40%);
   --color-fd-foreground: hsl(0, 0%, 3.9%);
   --color-fd-headings: hsl(0, 0%, 3.9%);
   --color-fd-popover-foreground: hsl(0, 0%, 3.9%);
