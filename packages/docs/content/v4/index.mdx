@@ -132,7 +132,7 @@ $ pnpm bench object-with-extend
 </Callout>
 
 
-More importantly, Zod 4 has redesigned and simplified the generics of `ZodObject` and other schema classes to avoid some pernicioius "instantiation explosions". The following script contains a number of chained called to `.extend()` and `.omit()`.
+More importantly, Zod 4 has redesigned and simplified the generics of `ZodObject` and other schema classes to avoid some pernicioius "instantiation explosions". The following script contains a number of chained calls to `.extend()` and `.omit()`.
 
 ```ts
 import * as z from "zod";
@@ -240,7 +240,7 @@ export const q = p.extend({
 });
 ```
 
-In Zod 3, this took `4000ms` to compile; and adding additional called to `.extend()` would trigger a "Possibly infinite" error. In Zod 4, this compiles in `400ms`, `10x` faster.
+In Zod 3, this took `4000ms` to compile; and adding additional calls to `.extend()` would trigger a "Possibly infinite" error. In Zod 4, this compiles in `400ms`, `10x` faster.
 
 > Coupled with the upcoming [`tsgo`](https://github.com/microsoft/typescript-go) compiler, Zod 4's editor performance will scale to vastly larger schemas and codebases.
 
@@ -270,7 +270,7 @@ But ultimately Zod's method-heavy API is fundamentally difficult to tree-shake. 
 
 ## Introducing `@zod/mini`
 
-The `@zod/mini` package provides a functional, tree-shakable API that maps one-to-one onto the existing `zod` API. While `zod` is still recommended for the majority of use cases, any projects will uncommonly strict bundle size constraints should consider `@zod/mini`. 
+The `@zod/mini` package provides a functional, tree-shakable API that maps one-to-one onto the existing `zod` API. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `@zod/mini`. 
 
 Everything in `zod` can be represented in `@zod/mini`. But instead of Zod's fluent/chainable API, `@zod/mini` is more function-forward. Use the tabs to compare the two.
 
@@ -308,7 +308,7 @@ const schema = z.string().check(z.minLength(5));
 schema.parse("hello world");
 ```
 
-When we build this will `rollup`, the gzipped bundle size is `2.23kb`. That's a 5.7x reduction in bundle size compared to `zod@3`.
+When we build this with `rollup`, the gzipped bundle size is `2.23kb`. That's a 5.7x reduction in bundle size compared to `zod@3`.
 
 | Package   | Bundle (gzip) |
 |-----------|--------------|
