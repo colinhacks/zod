@@ -99,7 +99,3 @@ h3.not-prose button {
   color: var(--color-fd-popover-foreground);
   @apply font-light;
 }
-
-.ikp-chat-button__container {
-  z-index: var(--ikp-z-index-overlay);
-}
