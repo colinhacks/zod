@@ -52,7 +52,7 @@ export function Table(props: { resources: ZodResource[] }) {
         </tr>
       </thead>
       <tbody>
-        {props.resources.map((resource, i) => (
+        {props.resources.map((resource) => (
           <tr key={resource.slug}>
             <td>
               <a href={resource.url}>

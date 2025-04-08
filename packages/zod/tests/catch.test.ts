@@ -1,7 +1,5 @@
-import { expect, expectTypeOf, test } from "vitest";
-
-import type { $ZodRawIssue } from "@zod/core";
 import type * as util from "@zod/core/util";
+import { expect, expectTypeOf, test } from "vitest";
 import { z } from "zod";
 
 test("basic catch", () => {

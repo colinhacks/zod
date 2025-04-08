@@ -190,7 +190,7 @@ test("template literal unsupported args", () => {
   expect(() => z.templateLiteral([z.date()])).toThrow();
   expect(() =>
     // @ts-expect-error
-    z.templateLiteral([z.custom<object>((data) => true)])
+    z.templateLiteral([z.custom<object>((_) => true)])
   ).toThrow();
   expect(() =>
     z.templateLiteral([

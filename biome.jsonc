@@ -59,6 +59,19 @@
     }
   },
   "files": {
-    "ignore": ["lib", "coverage", "dist", ".tshy", ".tshy-build", "experiments"]
+    "ignore": [
+      "lib",
+      "coverage",
+      "dist",
+      ".tshy",
+      ".tshy-build",
+      "experiments",
+      "node_modules",
+      ".next",
+      "packages/bench",
+      "packages/treeshake",
+      "packages/tsc",
+      ".source"
+    ]
   }
 }

@@ -51,7 +51,7 @@ html .prose {
   @apply font-normal;
 
   h2 {
-    border-color: var(--color-fd-border);]
+    border-color: var(--color-fd-border);
     color: var(--color-fd-headings);
     @apply border-b py-3 mt-12;
   }

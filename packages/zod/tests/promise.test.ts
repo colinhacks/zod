@@ -43,7 +43,6 @@ test("promise parsing fail 2", async () => {
 });
 
 test("promise parsing fail", () => {
-  // biome-ignore lint:
   const bad = () => promSchema.parse({ then: () => {}, catch: {} });
   expect(bad).toThrow();
 });

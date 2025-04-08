@@ -24,7 +24,7 @@ test("error creation", () => {
 
 test("do not allow error and message together", () => {
   expect(() =>
-    z.string().refine((val) => true, {
+    z.string().refine((_) => true, {
       message: "override",
       error: (iss) => (iss.input === undefined ? "asdf" : null),
     })

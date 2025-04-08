@@ -25,7 +25,7 @@ test("async preprocess", async () => {
 });
 
 test("ctx.addIssue accepts string", () => {
-  const schema = z.preprocess((val, ctx) => {
+  const schema = z.preprocess((_, ctx) => {
     ctx.addIssue("bad stuff");
   }, z.string());
   const result = schema.safeParse("asdf");

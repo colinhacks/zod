@@ -38,21 +38,15 @@
 }
 
 .prose {
-  --tw-prose-body: color-mix(in oklab,
-      var(--color-fd-foreground) 85%,
-      transparent);
-  --tw-prose-headings: color-mix(in oklab,
-      var(--color-fd-foreground) 85%,
-      transparent);
+  --tw-prose-body: color-mix(in oklab, var(--color-fd-foreground) 85%, transparent);
+  --tw-prose-headings: color-mix(in oklab, var(--color-fd-foreground) 85%, transparent);
   --tw-prose-links: var(--color-fd-primary);
   --tw-prose-code: var(--color-fd-primary);
 }
 
-.prose :where(code):not(:where([class~='not-prose'], [class~='not-prose'] *)) {
+.prose :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
   border: none;
-  background-color: color-mix(in oklab,
-      var(--color-fd-primary) 10%,
-      transparent);
+  background-color: color-mix(in oklab, var(--color-fd-primary) 10%, transparent);
 }
 
 #nd-sidebar {
@@ -63,7 +57,7 @@
   background-color: hsl(240, 4%, 9%);
 }
 
-#nd-sidebar>div {
+#nd-sidebar > div {
   border-color: transparent;
 }
 

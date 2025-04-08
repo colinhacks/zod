@@ -413,7 +413,7 @@ test("xor", () => {
   type B = { name: string; b: number };
   type C = XOR<A, B>;
   type Outer = { data: C };
-  const Outer: z.ZodType<Outer> = z.interface({
+  const _Outer: z.ZodType<Outer> = z.interface({
     data: z.union([z.interface({ name: z.string(), a: z.number() }), z.interface({ name: z.string(), b: z.number() })]),
   });
 });

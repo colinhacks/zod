@@ -119,6 +119,11 @@ test("pick and omit with recursive interface", () => {
   });
 
   type Category = z.infer<typeof Category>;
+  interface _Category {
+    name: string;
+    subcategories: _Category[];
+  }
+  expectTypeOf<Category>().toEqualTypeOf<_Category>();
 
   const PickedCategory = Category.pick({ name: true });
   const OmittedCategory = Category.omit({ subcategories: true });

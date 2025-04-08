@@ -56,5 +56,7 @@ export async function fetchStars(resources: { slug: string; stars?: number }[]) 
 
     // sort by star coun (descending) in place
     resources.sort((a, b) => (b.stars || 0) - (a.stars || 0));
-  } catch (err) {}
+  } catch (_) {
+    throw new Error("Failed to fetch GitHub stars");
+  }
 }

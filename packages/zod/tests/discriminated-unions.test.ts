@@ -22,7 +22,7 @@ test("_values", () => {
   const pre = z.preprocess((val) => String(val), z.string()).pipe(z.literal("test"));
   expect(pre._zod.values).toEqual(undefined);
 
-  const post = z.literal("test").transform((val) => Math.random());
+  const post = z.literal("test").transform((_) => Math.random());
   expect(post._zod.values).toEqual(new Set(["test"]));
 });
 
@@ -409,6 +409,7 @@ test("enum and nativeEnum", () => {
   ]);
 
   type schema = z.infer<typeof schema>;
+  expectTypeOf<schema>().toEqualTypeOf<{ key: "a" } | { key: "b" | "c" } | { key: MyEnum.d | MyEnum.e }>();
 
   schema.parse({ key: "a" });
   schema.parse({ key: "b" });
@@ -431,6 +432,8 @@ test("branded", () => {
   ]);
 
   type schema = z.infer<typeof schema>;
+  expectTypeOf<schema>().toEqualTypeOf<{ key: "a" } | { key: "b" & { _type: "asdfasdf" } }>();
+
   schema.parse({ key: "a" });
   schema.parse({ key: "b" });
   expect(() => {

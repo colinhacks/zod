@@ -354,6 +354,8 @@ test("z.tuple", () => {
   // tuple with readonly args
   const cArgs = [z.string(), z.number(), z.optional(z.string())] as const;
   const c = z.tuple(cArgs, z.boolean());
+  type c = z.output<typeof c>;
+  expectTypeOf<c>().toEqualTypeOf<[string, number, string?, ...boolean[]]>();
   // type c = z.output<typeof c>;
 });
 
@@ -689,7 +691,6 @@ test("z.templateLiteral", () => {
   expect(() => z.parse(d, "world123")).toThrow();
 
   // include literal union
-  const arg = z.literal(["aa", "bb"]);
   const e = z.templateLiteral([z.literal(["aa", "bb"]), z.number()]);
   type e = z.output<typeof e>;
   expectTypeOf<e>().toEqualTypeOf<`aa${number}` | `bb${number}`>();

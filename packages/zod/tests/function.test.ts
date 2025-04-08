@@ -203,13 +203,13 @@ test("function with async refinements", async () => {
   try {
     await func("asdfasdf");
     results.push("success");
-  } catch (err) {
+  } catch (_) {
     results.push("fail");
   }
   try {
     await func("asdflkjasdflkjsf");
     results.push("success");
-  } catch (err) {
+  } catch (_) {
     results.push("fail");
   }
 
@@ -229,7 +229,7 @@ test("non async function with async refinements should fail", async () => {
   try {
     await func("asdasdfasdffasdf");
     results.push("success");
-  } catch (err) {
+  } catch (_) {
     results.push("fail");
   }
 

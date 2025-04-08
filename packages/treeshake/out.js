@@ -6,7 +6,7 @@ function getGlobalConfig(config2) {
     lang: store?.lang,
     message: config2?.message,
     abortEarly: store?.abortEarly,
-    abortPipeEarly: store?.abortPipeEarly
+    abortPipeEarly: store?.abortPipeEarly,
   };
 }
 
@@ -64,15 +64,22 @@ function _addIssue(context, label, dataset, config2, other) {
     issues: other?.issues,
     lang: config2.lang,
     abortEarly: config2.abortEarly,
-    abortPipeEarly: config2.abortPipeEarly
+    abortPipeEarly: config2.abortPipeEarly,
   };
   const isSchema = context.kind === "schema";
-  const message = other?.message ?? context.message ?? getSpecificMessage(context.reference, issue.lang) ?? (isSchema ? getSchemaMessage(issue.lang) : null) ?? config2.message ?? getGlobalMessage(issue.lang);
+  const message =
+    other?.message ??
+    context.message ??
+    getSpecificMessage(context.reference, issue.lang) ??
+    (isSchema ? getSchemaMessage(issue.lang) : null) ??
+    config2.message ??
+    getGlobalMessage(issue.lang);
   if (message !== void 0) {
-    issue.message = typeof message === "function" ? (
-      // @ts-expect-error
-      message(issue)
-    ) : message;
+    issue.message =
+      typeof message === "function"
+        ? // @ts-expect-error
+          message(issue)
+        : message;
   }
   if (isSchema) {
     dataset.typed = false;
@@ -92,7 +99,7 @@ function _getStandardProps(context) {
     vendor: "valibot",
     validate(value2) {
       return context["~run"]({ value: value2 }, getGlobalConfig());
-    }
+    },
   };
 }
 
@@ -124,11 +131,11 @@ function minLength(requirement, message) {
     "~run"(dataset, config2) {
       if (dataset.typed && dataset.value.length < this.requirement) {
         _addIssue(this, "length", dataset, config2, {
-          received: `${dataset.value.length}`
+          received: `${dataset.value.length}`,
         });
       }
       return dataset;
-    }
+    },
   };
 }
 
@@ -152,7 +159,7 @@ function string(message) {
         _addIssue(this, "type", dataset, config2);
       }
       return dataset;
-    }
+    },
   };
 }
 
@@ -181,13 +188,13 @@ function pipe(...pipe2) {
             dataset.typed = false;
             break;
           }
-          if (!dataset.issues || !config2.abortEarly && !config2.abortPipeEarly) {
+          if (!dataset.issues || (!config2.abortEarly && !config2.abortPipeEarly)) {
             dataset = item["~run"](dataset, config2);
           }
         }
       }
       return dataset;
-    }
+    },
   };
 }
 

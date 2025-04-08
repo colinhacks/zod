@@ -63,6 +63,6 @@
     }
   },
   "files": {
-    "ignore": ["lib", "coverage", "dist", ".tshy", ".tshy-build", "experiments"]
+    "ignore": ["lib", "coverage", "dist", ".tshy", ".tshy-build", "experiments", ".source"]
   }
 }

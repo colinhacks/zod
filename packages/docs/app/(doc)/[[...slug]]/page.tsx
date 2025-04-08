@@ -1,10 +1,10 @@
+import { Tabs } from "@/components/tabs";
 import { metadataImage } from "@/loaders/metadata";
 import { source } from "@/loaders/source";
 import { Callout } from "fumadocs-ui/components/callout";
 import defaultMdxComponents, { createRelativeLink } from "fumadocs-ui/mdx";
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from "fumadocs-ui/page";
 import { notFound } from "next/navigation";
-import { Tabs } from "@/components/tabs";
 
 export const revalidate = 86400;
 
