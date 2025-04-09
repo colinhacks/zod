@@ -25,7 +25,7 @@ Zod v3.0 was released in May 2021 (!). Back then Zod had 2700 stars on GitHub an
 
 Zod 4 implements all of these in one fell swoop. It uses an entirely new internal architecture that solves some long-standing design limitations, lays the groundwork for some long-requested features, and closes 9 of Zod's [10 most upvoted open issues](https://github.com/colinhacks/zod/issues?q=is%3Aissue%20state%3Aopen%20sort%3Areactions-%2B1-desc). With luck, it will serve a the new foundation for many more years to come.
 
-For a scannable breakdown of what's new, scan through the table of contents. Click on any item to jump to that section.
+For a scannable breakdown of what's new, see the table of contents. Click on any item to jump to that section.
 
 ## Benchmarks
 
@@ -618,6 +618,8 @@ z.iso.duration();
 z.iso.time();
 ```
 
+### Custom email regex
+
 The `z.email()` API now supports a custom regular expression. There is no one canonical email regex; different applications may choose to be more or less strict. For convenience Zod exports some common ones.
 
 ```ts
@@ -657,7 +659,7 @@ const email = z.templateLiteral([
 // `${string}@${string}` (the min/max refinements are enforced!)
 ```
 
-Every Zod schema type that can be stringified stores an internal regex: strings, string formats like `z.email()`, numbers, boolean, bigint, enums, literals, undefined/optional, null/nullable, and other template literals. The `z.templateLiteral` constructor concatenates these into a super-regex.
+Every Zod schema type that can be stringified stores an internal regex: strings, string formats like `z.email()`, numbers, boolean, bigint, enums, literals, undefined/optional, null/nullable, and other template literals. The `z.templateLiteral` constructor concatenates these into a super-regex, so things like string formats (`z.email()`) are propertly enforced (but custom refinements are not!).
 
 Read the [template literal docs](/api#template-literals) for more info.
 
