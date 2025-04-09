@@ -1,5 +1,5 @@
 {
-  "name": "@zod/zod",
+  "name": "@zod/mini",
   "version": "4.0.0-alpha.0",
   "exports": {
     ".": "./src/index.ts",
