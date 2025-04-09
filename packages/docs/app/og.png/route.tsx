@@ -42,14 +42,14 @@ export async function GET(request: Request) {
       >
         {/* Logo in upper right corner */}
         <div
-          tw="absolute top-[60px] right-[60px]"
+          tw="absolute top-[52px] right-[60px]"
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <img width="200" height="165" alt="Zod logo" src={`${imagePrefix}/logo/logo.png`} />
+          <img width="150" height="125" alt="Zod logo" src={`${imagePrefix}/logo/logo.png`} />
         </div>
 
         {/* Main content */}
@@ -58,19 +58,20 @@ export async function GET(request: Request) {
           {/* <p tw="text-4xl font-bold tracking-tight text-white m-0 leading-none mb-6 border-b border-gray-700 pb-4">
             Zod Docs
           </p> */}
-          <h1 tw="text-8xl font-bold tracking-tight text-white m-0 leading-none">{title}</h1>
+          <h1 tw="text-7xl font-bold tracking-tight text-white m-0 leading-tight">{title}</h1>
           {description ? <p tw="text-2xl text-gray-300 mt-6 max-w-4xl">{description}</p> : null}
         </div>
 
         {/* Bottom section with divider */}
         <div tw="flex flex-col w-full ">
           {/* Divider line */}
-          <div tw="w-full h-px bg-gray-700 mb-[45px]" />
+          <div tw="w-full h-px bg-gray-700 mb-[48px]" />
 
           {/* Bottom row with breadcrumbs and project info */}
-          <div tw="flex justify-between items-center w-full ">
+          <div tw="flex justify-between items-center w-full">
             {/* Breadcrumbs */}
-            {path ? (
+            <p> </p>
+            {/* {path ? (
               <div tw="flex items-center gap-3">
                 <div tw="flex items-center font-mono ">
                   <span tw="text-gray-300 text-3xl font-mono">{path}</span>
@@ -78,7 +79,7 @@ export async function GET(request: Request) {
               </div>
             ) : (
               <div />
-            )}
+            )} */}
 
             {/* Project name */}
             <div tw="flex items-center ">
