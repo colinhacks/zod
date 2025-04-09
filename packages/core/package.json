@@ -1,6 +1,6 @@
 {
   "name": "@zod/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
