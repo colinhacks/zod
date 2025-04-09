@@ -101,7 +101,7 @@
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm test && pnpm run build",
-    "pub": "pnpm publish --tag next --dry-run --publish-branch v4"
+    "pub": "pnpm publish --tag next --publish-branch v4"
   },
   "dependencies": {
     "@zod/core": "workspace:*"

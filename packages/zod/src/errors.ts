@@ -5,27 +5,32 @@ import type { AnyFunc } from "@zod/core/util";
 export type ZodIssue = core.$ZodIssue;
 
 export class ZodError<T = unknown> extends core.$ZodError<T> {
-  /** @deprecated Use the `z.formatError(err)` function instead. */
+  /** @deprecated Use the `z.treeifyError(err)` function instead. */
   format(): core.$ZodFormattedError<T>;
+  /** @deprecated Use the `z.treeifyError(err)` function instead. */
   format<U>(mapper: (issue: core.$ZodIssue) => U): core.$ZodFormattedError<T, U>;
   format(mapper?: AnyFunc): any {
     return core.formatError(this, mapper);
   }
 
-  /** @deprecated Use the `z.flattenError(err)` function instead. */
+  /** @deprecated Use the `z.treeifyError(err)` function instead. */
   flatten(): core.$ZodFlattenedError<T>;
+  /** @deprecated Use the `z.treeifyError(err)` function instead. */
   flatten<U>(mapper: (issue: core.$ZodIssue) => U): core.$ZodFlattenedError<T, U>;
   flatten(mapper?: AnyFunc): core.$ZodFlattenedError<T> {
     return core.flattenError(this, mapper);
   }
 
+  /** @deprecated Push directly to `.issues` instead. */
   addIssue(issue: core.$ZodIssue): void {
     this.issues.push(issue);
   }
+  /** @deprecated Push directly to `.issues` instead. */
   addIssues(issues: core.$ZodIssue[]): void {
     this.issues.push(...issues);
   }
 
+  /** @deprecated Check `err.issues.length === 0` instead. */
   get isEmpty(): boolean {
     return this.issues.length === 0;
   }

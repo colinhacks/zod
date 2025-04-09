@@ -125,6 +125,6 @@
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm run build",
-    "pub": "pnpm publish --publish-branch v4 --dry-run"
+    "pub": "pnpm publish --publish-branch v4"
   }
 }

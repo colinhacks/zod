@@ -226,7 +226,7 @@ test("all errors", () => {
     b: "qwer",
   });
 
-  expect(z.flattenError(r1.error!)).toEqual({
+  expect(z.core.flattenError(r1.error!)).toEqual({
     formErrors: ["Must be equal"],
     fieldErrors: {},
   });
@@ -237,7 +237,7 @@ test("all errors", () => {
   });
 
   // const error = _error as z.ZodError;
-  expect(z.flattenError(r2.error!)).toMatchInlineSnapshot(`
+  expect(z.core.flattenError(r2.error!)).toMatchInlineSnapshot(`
     {
       "fieldErrors": {
         "a": [
@@ -251,7 +251,7 @@ test("all errors", () => {
     }
   `);
 
-  expect(z.flattenError(r2.error!, (iss) => iss.message.toUpperCase())).toMatchInlineSnapshot(`
+  expect(z.core.flattenError(r2.error!, (iss) => iss.message.toUpperCase())).toMatchInlineSnapshot(`
     {
       "fieldErrors": {
         "a": [
@@ -266,7 +266,7 @@ test("all errors", () => {
   `);
   // Test identity
 
-  expect(z.flattenError(r2.error!, (i: z.ZodIssue) => i)).toMatchInlineSnapshot(`
+  expect(z.core.flattenError(r2.error!, (i: z.ZodIssue) => i)).toMatchInlineSnapshot(`
     {
       "fieldErrors": {
         "a": [
@@ -295,7 +295,7 @@ test("all errors", () => {
   `);
 
   // Test mapping
-  const f1 = z.flattenError(r2.error!, (i: z.ZodIssue) => i.message.length);
+  const f1 = z.core.flattenError(r2.error!, (i: z.ZodIssue) => i.message.length);
   expect(f1).toMatchInlineSnapshot(`
     {
       "fieldErrors": {

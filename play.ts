@@ -1,4 +1,4 @@
-import * as z from "@zod/mini";
+import * as z from "zod";
 
 z;
 
@@ -27,3 +27,5 @@ z;
 // const schema = z.coerce.string();
 // type schemaInput = z.input<typeof schema>;
 // type schemaOutput = z.output<typeof schema>;
+
+z.string();
