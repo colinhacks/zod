@@ -3,12 +3,9 @@ name: test
 on:
   push:
     branches:
-      - "master"
       - "main"
-      - "v4"
   pull_request:
     branches:
-      - master
       - main
       - v4
 
