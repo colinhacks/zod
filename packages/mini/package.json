@@ -25,50 +25,6 @@
         "types": "./dist/commonjs/index.d.ts",
         "default": "./dist/commonjs/index.js"
       }
-    },
-    "./locales/*": {
-      "import": {
-        "@zod/source": "./src/locales/*",
-        "types": "./dist/esm/locales/*",
-        "default": "./dist/esm/locales/*"
-      },
-      "require": {
-        "types": "./dist/commonjs/locales/*",
-        "default": "./dist/commonjs/locales/*"
-      }
-    },
-    "./util": {
-      "import": {
-        "@zod/source": "./src/util.ts",
-        "types": "./dist/esm/util.d.ts",
-        "default": "./dist/esm/util.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/util.d.ts",
-        "default": "./dist/commonjs/util.js"
-      }
-    },
-    "./errors": {
-      "import": {
-        "@zod/source": "./src/errors.ts",
-        "types": "./dist/esm/errors.d.ts",
-        "default": "./dist/esm/errors.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/errors.d.ts",
-        "default": "./dist/commonjs/errors.js"
-      }
-    },
-    "./api": {
-      "import": {
-        "@zod/source": "./src/api.ts",
-        "types": "./dist/esm/api.d.ts",
-        "default": "./dist/esm/api.js"
-      },
-      "require": {
-        "types": "./dist/commonjs/api.d.ts",
-        "default": "./dist/commonjs/api.js"
-      }
     }
   },
   "tshy": {

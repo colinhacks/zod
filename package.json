@@ -15,11 +15,14 @@
     }
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "^0.17.4",
     "@biomejs/biome": "^1.9.4",
     "@types/benchmark": "^2.1.5",
     "@types/chalk": "^2.2.4",
     "@types/node": "^20.17.14",
     "@web-std/file": "^3.0.3",
+    "@zod/core": "workspace:*",
+    "@zod/mini": "workspace:*",
     "arktype": "^2.0.0",
     "benchmark": "^2.1.4",
     "chalk": "^5.4.1",
@@ -37,9 +40,7 @@
     "tsx": "^4.19.2",
     "typescript": "~5.5.0",
     "vitest": "^2.0.0",
-    "@zod/core": "workspace:*",
     "zod": "workspace:*",
-    "@zod/mini": "workspace:*",
     "zod3": "npm:zod@^3.24.0"
   },
   "lint-staged": {
