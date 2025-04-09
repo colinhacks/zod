@@ -12,7 +12,6 @@ const Tags: Record<string, string> = {
   "/json-schema": "New",
   "/metadata": "New",
   "/v4": "Beta",
-  // '/': ''
 };
 export const SidebarItem = ({
   item,
@@ -25,17 +24,19 @@ export const SidebarItem = ({
   // const tag = tagMatch ? tagMatch[1] : null;
   // const cleanName = tagMatch ? name.replace(/#\w+$/, "").trim() : name;
 
-  const tag = Tags[item.url]?.toUpperCase();
+  const tag = Tags[item.url]; //?.toUpperCase();
   return (
     <InternalSidebarItem key={item.url} href={item.url} external={item.external} icon={item.icon}>
-      <>
-        {name}
-        {tag && (
-          <span className="ml-0 mb-[-1px] text-xs px-1.5 py-0.5 bg-[#00000010] dark:bg-[#ffffff10] rounded-md">
-            {tag}
-          </span>
-        )}
-      </>
+      <div className="w-full flex flex-row justify-between">
+        <p className="flex-grow">{name}</p>
+        <p>
+          {tag && (
+            <span className="ml-0 mb-[-1px] text-xs px-1.5 py-0.5 bg-[#00000010] dark:bg-[#ffffff10] rounded-md">
+              {tag}
+            </span>
+          )}
+        </p>
+      </div>
     </InternalSidebarItem>
   );
 };
