@@ -1,11 +1,17 @@
+// import fs from "node:fs";
+// import path from "node:path";
 import { ImageResponse } from "@vercel/og";
-import Image from "next/image";
 import type { NextRequest } from "next/server";
 
 export const config = {
   runtime: "edge",
 };
 
+// export const loadImage = (img: string) => {
+//   const p = path.join(process.cwd(), img);
+//   const image = fs.readFileSync(p);
+//   return image.toString("base64");
+// };
 export default async function (request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -36,23 +42,23 @@ export default async function (request: NextRequest) {
       >
         {/* Logo in upper right corner */}
         <div
-          tw="absolute top-[60px] right-[60px] w-36 h-36"
+          tw="absolute top-[60px] right-[60px]"
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
           }}
         >
-          <Image width="1304" height="1076" alt="Zod logo" src={`${imagePrefix}/logo/logo.png`} />
+          <img width="200" height="165" alt="Zod logo" src={`${imagePrefix}/logo/logo.png`} />
         </div>
 
         {/* Main content */}
-        <div tw="flex flex-col w-full pr-36">
+        <div tw="flex flex-col w-full pr-52">
           {/* Added right padding to avoid text overlapping with logo */}
           {/* <p tw="text-4xl font-bold tracking-tight text-white m-0 leading-none mb-6 border-b border-gray-700 pb-4">
             Zod Docs
           </p> */}
-          <h1 tw="text-8xl font-bold tracking-tight text-white m-0 leading-none">{title}</h1>
+          <h1 tw="text-8xl font-bold tracking-tight text-white m-0 leading-none border border-white">{title}</h1>
           {description ? <p tw="text-2xl text-gray-300 mt-6 max-w-4xl">{description}</p> : null}
         </div>
 
