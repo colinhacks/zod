@@ -102,7 +102,7 @@
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm test && pnpm run build",
     "bump:beta": "pnpm version v4.0.0-beta.$(date +%Y%m%dT%H%M%S)",
-    "pub:beta": "pnpm bump:beta && pnpm publish --tag next --publish-branch v4 --dry-run"
+    "pub:beta": "pnpm bump:beta && pnpm publish --tag next --publish-branch v4 --no-git-checks"
   },
   "dependencies": {
     "@zod/core": "workspace:*"
