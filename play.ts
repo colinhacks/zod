@@ -23,3 +23,7 @@ z;
 // z.string().check(z.refine((val) => val.includes("@")));
 // z.array(z.number()).check(z.minLength(5), z.maxLength(10));
 // z.extend(z.object({ name: z.string() }), { age: z.number() });
+
+// const schema = z.coerce.string();
+// type schemaInput = z.input<typeof schema>;
+// type schemaOutput = z.output<typeof schema>;

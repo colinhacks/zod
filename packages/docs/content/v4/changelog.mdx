@@ -222,9 +222,20 @@ myError.issues.push({
 });
 ```
 
-## `z.string()` updates
+## `z.coerce` updates
 
-### deprecates `.email()` etc
+The input type of all coerced booleans is now `unknown`. 
+
+```ts
+const schema = z.coerce.string();
+type schemaInput = z.input<typeof schema>;
+
+// Zod 3: string;
+// Zod 4: unknown;
+```
+
+## `z.string()` updates
+{/* ### deprecates `.email()` etc
 
 String formats are now represented as schema classes of their own that extend `ZodString`. As such, these APIs have been moved to the top-level `z` namespace. 
 
@@ -247,7 +258,7 @@ z.iso.datetime();
 z.iso.duration();
 ```
 
-The method forms (`z.string().email()`) still exist and work as before, but are now deprecated. They may be removed in a future version.
+The method forms (`z.string().email()`) still exist and work as before, but are now deprecated. They may be removed in a future version. */}
 
 ### drops `z.string().ip()`
 

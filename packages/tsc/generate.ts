@@ -24,21 +24,24 @@ export const ARKTYPE = {
   valueTypes: [`"string"`],
 };
 
-// generate({
-//   path: "src/index.ts",
-//   // ...ZOD3,
-//   // ...ZOD,
-//   // schemaType: "z.object",
-//   // ...ARKTYPE,
-//   ...ZOD3,
-//   numSchemas: 1000,
-//   methods: [""],
-//   numKeys: 5,
-//   numRefs: 0,
-//   // numOmits: 10,
-//   // numPicks: 10,
-//   // numExtends: 10,
-// });
+generate({
+  path: "src/index.ts",
+  // ...ZOD3,
+  // ...ZOD,
+  // schemaType: "z.object",
+  // ...ARKTYPE,
+  ...ZOD3,
+  numSchemas: 10, 
+  numKeys: 3,
+  
+  // numSchemas: 1000,
+  // methods: [""],
+  // numKeys: 5,
+  // numRefs: 0,
+  // numOmits: 10,
+  // numPicks: 10,
+  // numExtends: 10,
+});
 
 interface GenerateParams {
   path: string;
@@ -52,6 +55,7 @@ interface GenerateParams {
   numOmits?: number;
   numPicks?: number;
   numExtends?: number;
+  custom?: string;
 }
 // Step 4: Write the generated schemas to a file
 export function generate(params: GenerateParams) {
@@ -65,6 +69,7 @@ export function generate(params: GenerateParams) {
     numPicks = 0,
     numExtends = 0,
     methods = [""],
+    custom = ""
   } = params;
   // console.log(params);
   let file: string[] = [];
@@ -169,6 +174,8 @@ export function generate(params: GenerateParams) {
 
     // generated.push(variableName);
   }
+
+  file.push(custom)
 
   writeFileSync(path, file.join("\n"), { flag: "w" });
 }
