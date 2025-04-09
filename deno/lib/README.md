@@ -609,6 +609,7 @@ There are a growing number of tools that are built atop or support Zod natively!
 - [`zod-config`](https://github.com/alexmarqs/zod-config): Load configurations across multiple sources with flexible adapters, ensuring type safety with Zod.
 - [`unplugin-environment`](https://github.com/r17x/js/tree/main/packages/unplugin-environment#readme): A plugin for loading enviroment variables safely with schema validation, simple with virtual module, type-safe with intellisense, and better DX 🔥 🚀 👷. Powered by Zod.
 - [`zod-struct`](https://codeberg.org/reesericci/zod-struct): Create runtime-checked structs with Zod.
+- [`zod-csv`](https://github.com/bartoszgolebiowski/zod-csv): Validation helpers for zod for parsing CSV data.
 
 #### Utilities for Zod
 
