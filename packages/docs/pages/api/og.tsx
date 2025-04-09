@@ -58,7 +58,7 @@ export default async function (request: NextRequest) {
           {/* <p tw="text-4xl font-bold tracking-tight text-white m-0 leading-none mb-6 border-b border-gray-700 pb-4">
             Zod Docs
           </p> */}
-          <h1 tw="text-8xl font-bold tracking-tight text-white m-0 leading-none border border-white">{title}</h1>
+          <h1 tw="text-8xl font-bold tracking-tight text-white m-0 leading-none">{title}</h1>
           {description ? <p tw="text-2xl text-gray-300 mt-6 max-w-4xl">{description}</p> : null}
         </div>
 
