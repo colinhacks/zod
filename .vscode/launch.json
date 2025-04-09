@@ -6,7 +6,7 @@
   "configurations": [
     {
       "type": "node",
-      "runtimeExecutable": "~/.nvm/versions/node/v22.13.0/bin/node",
+      "runtimeExecutable": "node",
       "request": "launch",
       "name": "node",
       "args": [],
