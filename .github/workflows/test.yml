@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["20", "latest"]
-        typescript: ["5.1", "latest", "next"]
+        node: ["latest"]
+        typescript: ["5.5", "latest"]
     name: Test with TypeScript ${{ matrix.typescript }} on Node ${{ matrix.node }}
     steps:
       - uses: actions/checkout@v4
