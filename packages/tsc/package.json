@@ -9,7 +9,6 @@
     "@types/node": "^22.10.5",
     "@typescript/analyze-trace": "^0.10.1",
     "arktype": "2.0.0-rc.33",
-    "typescript": "^5.2.2",
     "valibot": "1.0.0-beta.12",
     "zod": "workspace:*",
     "@zod/core": "workspace:*",

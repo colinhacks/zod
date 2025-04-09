@@ -1,6 +1,6 @@
 # .github/release.yml
 
-name: Test and publish Zod (beta)
+name: Release betas
 on:
   push:
     branches:
