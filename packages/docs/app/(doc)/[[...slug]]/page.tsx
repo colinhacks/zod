@@ -70,7 +70,7 @@ export async function generateMetadata(props: {
       url: `https://zod.dev/${page.slugs.join("/")}`,
       images: [
         {
-          url: `/api/og?title=${encodeURIComponent(rootTitle)}&description=${encodeURIComponent(description ?? "")}&path=${encodeURIComponent(`${["zod.dev", ...page.slugs].join("/")}`)}`,
+          url: `/og.png?title=${encodeURIComponent(rootTitle)}&description=${encodeURIComponent(description ?? "")}&path=${encodeURIComponent(`${["zod.dev", ...page.slugs].join("/")}`)}`,
           width: 1200,
           height: 630,
           alt: title,
