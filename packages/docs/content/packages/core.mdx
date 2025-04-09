@@ -4,7 +4,7 @@ title: "@zod/core"
 
 > If you are build a library on top of Zod, you should build against the `@zod/core` package. This package exports the core classes that are extended by `zod` and `@zod/mini`.
 
-The `@zod/core` package implements Zod's core parsing logic and additional utilities. It is not intended to be used directly; instead it's designed to be extended by other packages like `zod` and `@zod/mini`. It implements:
+The `@zod/core` package implements the parsers and utilities that are shared by `zod` and `@zod/mini`. It is not intended to be used directly; instead it's designed to be extended by other packages. It implements:
 
 - base schema class `$ZodType` and subclasses like `$ZodString`, etc.
 - base check class `$ZodCheck` and subclasses like `$ZodCheckMultipleOf`, etc.

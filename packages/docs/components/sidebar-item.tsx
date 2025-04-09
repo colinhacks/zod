@@ -6,31 +6,37 @@ import {
   SidebarSeparator as InternalSidebarSeparator,
 } from "fumadocs-ui/layouts/docs/sidebar";
 
+const Tags: Record<string, string> = {
+  "/packages/core": "New",
+  "/packages/mini": "New",
+  "/json-schema": "New",
+  "/metadata": "New",
+  "/v4": "BETA",
+  // '/': ''
+};
 export const SidebarItem = ({
   item,
 }: {
   item: PageTree.Item;
 }) => {
+  console.log(item);
   const name = `${item.name}`;
-  const isCode = name.startsWith("`") && name.endsWith("`");
-  const tagMatch = name.match(/#(\w+)$/);
-  const tag = tagMatch ? tagMatch[1] : null;
-  const cleanName = tagMatch ? name.replace(/#\w+$/, "").trim() : name;
+  // const isCode = name.startsWith("`") && name.endsWith("`");
+  // const tagMatch = name.match(/#(\w+)$/);
+  // const tag = tagMatch ? tagMatch[1] : null;
+  // const cleanName = tagMatch ? name.replace(/#\w+$/, "").trim() : name;
 
+  const tag = Tags[item.url];
   return (
     <InternalSidebarItem key={item.url} href={item.url} external={item.external} icon={item.icon}>
-      {isCode ? (
-        <code className="bg-[#00000010] dark:bg-[#ffffff10] px-1.5 py-0.5 rounded-[3px]">{cleanName.slice(1, -1)}</code>
-      ) : (
-        <>
-          {cleanName}
-          {tag && (
-            <span className="ml-0 mb-[-1px] text-xs px-1.5 py-0.5 bg-[#00000010] dark:bg-[#ffffff10] rounded-md">
-              {"💎 " + tag}
-            </span>
-          )}
-        </>
-      )}
+      <>
+        {name}
+        {tag && (
+          <span className="ml-0 mb-[-1px] text-xs px-1.5 py-0.5 bg-[#00000010] dark:bg-[#ffffff10] rounded-md">
+            {tag}
+          </span>
+        )}
+      </>
     </InternalSidebarItem>
   );
 };

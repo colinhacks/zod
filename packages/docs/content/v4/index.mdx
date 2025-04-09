@@ -1,11 +1,13 @@
 ---
-title: Introducing Zod 4
+title: Zod 4 is now in beta
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
 import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
-Zod 4 is now in beta after over a year of active development. It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features, including an entirely new `@zod/mini` library.
+> Refer to the [Changelog](/v4/changelog) for a complete list of breaking changes. 
+
+Zod 4 is now in beta after over a year of active development. It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features, including an new `@zod/mini` library.
 
 To try the beta:
 
@@ -13,11 +15,12 @@ To try the beta:
 pnpm upgrade zod@next 
 ```
 
-Huge thanks to Clerk, who [sponsored my work](https://go.clerk.com/zod-clerk) on Zod 4 via their OSS Fellowship. They were an amazing partner throughout the (much longer than anticipated!) development process.
-
 Development will continue on the [`v4`](https://github.com/colinhacks/zod/tree/v4) branch over a 4-6 week beta period as I work with libraries to ensure day-one compatibility with the first stable release.
 
-> Refer to the [Changelog](/v4/changelog) for a complete list of breaking changes. 
+
+<Callout icon="❤️"> 
+Huge thanks to [Clerk](https://go.clerk.com/zod-clerk), who my work on Zod 4 through their extremely generous [OSS Fellowship](https://clerk.com/blog/zod-fellowship). They were an amazing partner throughout the (much longer than anticipated!) development process.
+</Callout>
 
 ## Why a new major version?
 
@@ -662,7 +665,6 @@ const email = z.templateLiteral([
 Every Zod schema type that can be stringified stores an internal regex: strings, string formats like `z.email()`, numbers, boolean, bigint, enums, literals, undefined/optional, null/nullable, and other template literals. The `z.templateLiteral` constructor concatenates these into a super-regex, so things like string formats (`z.email()`) are propertly enforced (but custom refinements are not!).
 
 Read the [template literal docs](/api#template-literals) for more info.
-
 
 ## Number formats
 
