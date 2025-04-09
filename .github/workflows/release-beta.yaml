@@ -1,0 +1,36 @@
+# .github/release.yml
+
+name: Test and publish Zod (beta)
+on:
+  push:
+    branches:
+      - v4
+    paths:
+      - 'packages/core/package.json'
+jobs:
+  build_and_publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: latest
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+      - name: Install dependencies
+        run: |
+          pnpm install
+
+      - id: publish
+        name: Publish to NPM
+        run: |
+          pnpm run pub:beta

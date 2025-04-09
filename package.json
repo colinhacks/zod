@@ -68,6 +68,6 @@
     "publish:jsr": "jsr publish --dry-run",
     "bundle:rollup": "rollup -c",
     "bundle:esbuild": "esbuild --bundle ./scratch/input.ts --outfile=./scratch/out_esbuild.js --bundle --format=esm",
-    "pub": "pnpm run -r pub"
+    "pub:beta": "pnpm run -r pub:beta"
   }
 }

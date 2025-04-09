@@ -1,6 +1,6 @@
 {
   "name": "zod",
-  "version": "4.0.0-beta.1",
+  "version": "4.0.0-beta.20250409T141254",
   "type": "module",
   "author": "Colin McDonnell <zod@colinhacks.com>",
   "description": "TypeScript-first schema declaration and validation library with static type inference",
@@ -65,7 +65,8 @@
     "test:watch": "pnpm vitest",
     "test": "pnpm vitest run",
     "prepublishOnly": "pnpm test && pnpm run build",
-    "pub": "pnpm publish --tag next --publish-branch v4"
+    "bump:beta": "pnpm version v4.0.0-beta.$(date +%Y%m%dT%H%M%S)",
+    "pub:beta": "pnpm bump:beta && pnpm publish --tag next --publish-branch v4 --dry-run"
   },
   "dependencies": {
     "@zod/core": "workspace:*"

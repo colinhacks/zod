@@ -11,12 +11,12 @@ It's often useful to associate a schema with some additional *metadata* for docu
 
 ## Registries
 
-Metadata in Zod is handled via *registries*. Registries are collections of schemas, each associated with some *arbitrary, strongly-typed* metadata. To create a simple registry:
+Metadata in Zod is handled via *registries*. Registries are collections of schemas, each associated with some *strongly-typed* metadata. To create a simple registry:
 
 ```ts
 import * as z from "zod";
 
-const myRegistry = z.registry<{ description: string };>();
+const myRegistry = z.registry<{ description: string }>();
 ```
 
 To register, lookup, and remove schemas from this registry:
@@ -39,7 +39,7 @@ myRegistry.add(mySchema, { description: 123 }); // ❌
 
 ### `.register()`
 
-> **Note** — This method is special in that it does not return a new schema; instead, it returns the original schema. No other Zod method does this (including `.meta` and `.describe`, documented below).
+> **Note** — This method is special in that it does not return a new schema; instead, it returns the original schema. No other Zod method does this! That includes `.meta()` and `.describe()` (documented below) which return a new instance.
 
 Schemas provide a `.register()` method to more conveniently add it to a registry.
 
@@ -138,7 +138,7 @@ emailSchema.meta();
 The `.describe()` method still exists for compatibility with Zod 3, but `.meta()` is now the recommended approach.
 </Callout>
 
-The `.describe()` method is a shorthand for registering a schema in the global registry with a `description` field.
+The `.describe()` method is a shorthand for registering a schema in `z.globalRegistry` with just a `description` field.
 
 
 <Tabs groupId="lib" items={["zod", "@zod/mini"]}>
