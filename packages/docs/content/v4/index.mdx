@@ -1,5 +1,5 @@
 ---
-title: Zod 4 is now in beta
+title: Introducing Zod 4
 ---
 
 import { Callout } from "fumadocs-ui/components/callout";
@@ -7,7 +7,7 @@ import { Tabs, Tab } from "fumadocs-ui/components/tabs";
 
 > Refer to the [Changelog](/v4/changelog) for a complete list of breaking changes. 
 
-Zod 4 is now in beta after over a year of active development. It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features, including an new `@zod/mini` library.
+Zod 4 is now in beta after over a year of active development. It's faster, slimmer, more `tsc`-efficient, and implements some long-requested features.
 
 To try the beta:
 
@@ -133,7 +133,6 @@ $ cd packages/tsc
 $ pnpm bench object-with-extend
 ```
 </Callout>
-
 
 More importantly, Zod 4 has redesigned and simplified the generics of `ZodObject` and other schema classes to avoid some pernicioius "instantiation explosions". The following script contains a number of chained calls to `.extend()` and `.omit()`.
 
@@ -267,15 +266,13 @@ Let's bundle this with `rollup` using both Zod 3 and Zod 4 and compare the final
 | `zod@4`   | `8.77kb`       |
 
 
-This indicates that the "core bundle" (the code that will get bundled in the most minimal cases) is ~30% smaller in Zod 4. That's good!
+The size of the "core bundle" (the code that will get bundled in the most minimal cases) is ~30% smaller in Zod 4. That's good!
 
 But ultimately Zod's method-heavy API is fundamentally difficult to tree-shake. Writing slimmer implementations can only get you so far. This brings us to the biggest announcement of Zod 4: `@zod/mini`.
 
 ## Introducing `@zod/mini`
 
-The `@zod/mini` package provides a functional, tree-shakable API that maps one-to-one onto the existing `zod` API. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `@zod/mini`. 
-
-Everything in `zod` can be represented in `@zod/mini`. But instead of Zod's fluent/chainable API, `@zod/mini` is more function-forward. Use the tabs to compare the two.
+The `@zod/mini` package provides a functional, tree-shakable API that corresponds one-to-one onto the existing `zod` API. Use the tabs to compare the two APIs.
 
 <Tabs groupId="lib" items={[ "@zod/mini", "zod"]}>
 <Tab value="@zod/mini">
@@ -302,7 +299,11 @@ z.object({ name: z.string() }).extend({ age: z.number() });
 </Tab>
 </Tabs>
 
-The more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. Here's the script from above, updated to use `"@zod/mini"` instead of `"zod"`.
+Everything in `zod` can be represented in `@zod/mini`; their APIs correspond one-to-one.But instead of Zod's fluent/chainable API, `@zod/mini` is more function-forward. 
+
+The more functional API makes it easier for bundlers to tree-shaking the APIs you don't use. While `zod` is still recommended for the majority of use cases, any projects with uncommonly strict bundle size constraints should consider `@zod/mini`. 
+
+Here's the script from above, updated to use `"@zod/mini"` instead of `"zod"`.
 
 ```ts
 import * as z from "@zod/mini";
