@@ -258,7 +258,7 @@ export interface $ZodCheckNumberFormat extends $ZodCheck<number> {
 }
 
 export const $ZodCheckNumberFormat: core.$constructor<$ZodCheckNumberFormat> = /*@__PURE__*/ core.$constructor(
-  "$ZodNumber",
+  "$ZodCheckNumberFormat",
   (inst, def) => {
     $ZodCheck.init(inst, def); // no format checks
     def.format = def.format || "float64";
