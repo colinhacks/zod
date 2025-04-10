@@ -220,13 +220,13 @@ test("jwt token", () => {
 
   expect(() => jwtSchema.parse(ONE_PART)).toThrow();
   expect(() => jwtSchema.parse(NOT_BASE64)).toThrow();
-  expect(() => jwtSchema.parse(NO_TYP)).toThrow();
   expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
   expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
   expect(() => jwtSchema.parse(TYP_NOT_JWT)).toThrow();
   expect(() => z.string().jwt({ alg: "ES256" }).parse(GOOD_JWT_HS256)).toThrow();
   expect(() => z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_ES256)).toThrow();
   //Success
+  jwtSchema.parse(NO_TYP); // allow no typ
   expect(() => jwtSchema.parse(GOOD_JWT_HS256)).not.toThrow();
   expect(() => jwtSchema.parse(GOOD_JWT_ES256)).not.toThrow();
   expect(() => z.string().jwt({ alg: "HS256" }).parse(GOOD_JWT_HS256)).not.toThrow();

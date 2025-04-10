@@ -29,6 +29,7 @@
     "console-table-printer": "^2.12.1",
     "execa": "^9.5.2",
     "husky": "^7.0.4",
+    "jsonwebtoken": "^9.0.2",
     "jsr": "^0.12.4",
     "lint-staged": "^12.5.0",
     "mitata": "^0.1.14",
